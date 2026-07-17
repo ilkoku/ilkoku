@@ -1,0 +1,1 @@
+Sprint 022\n\nKopyalanacak dosyalar:\n- src/app/page.tsx\n- src/app/landing.css\n\nRol kartları /kayit?rol=... adresine gider. Kayıt sayfasının rol parametresini işlemesi canlı testte doğrulanmalıdır.\n

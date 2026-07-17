@@ -1,0 +1,58 @@
+import { commonContent } from "./navigation";
+
+export const writerContent = {
+  homeLabel: commonContent.homeLabel,
+  logoAlt: commonContent.logoAlt,
+  initialChapter: "Bölüm 1",
+  saveStatus: {
+    unsaved: "Henüz kaydedilmedi",
+    saving: "Otomatik kaydediliyor…",
+    saved: "Taslak olarak kaydedildi",
+  },
+  create: {
+    eyebrow: "Yeni bir başlangıç",
+    title: "Yeni Eser",
+    closeLabel: "Yeni eser penceresini kapat",
+    titleLabel: "Başlık",
+    titlePlaceholder: "Eserinin adı",
+    genreLabel: "Tür",
+    genrePlaceholder: "Bir tür seç",
+    genres: ["Roman", "Öykü", "Fantastik", "Bilim Kurgu", "Polisiye"],
+    summaryLabel: "Özet (opsiyonel)",
+    summaryPlaceholder: "Hikâyeni birkaç cümleyle anlat",
+    submit: "Oluştur",
+  },
+  editor: {
+    editorLabel: (title: string) => `${title} yazma editörü`,
+    streakLabel: "Yazma serisi 8 gün",
+    streak: "🔥 8 gün",
+    saveDraft: "Taslak Kaydet",
+    preview: "Yayın Önizleme",
+    publish: "Yayınla",
+    dailyGoal: "Günlük kelime hedefi",
+    goalLabel: (progress: number) =>
+      `Günlük yazma hedefinin yüzde ${progress} kadarı tamamlandı`,
+    exitFocus: "Dikkat Modundan Çık",
+    focus: "Dikkat Modu",
+    chapterTitleLabel: "Bölüm başlığı",
+    subtitle: "Hikâyenin ritmini bul ve ilk taslağını özgürce yaz.",
+    bodyLabel: "Bölüm metni",
+    bodyPlaceholder: "Hikâyen burada başlıyor…",
+    statisticsLabel: "Yazı istatistikleri",
+    wordCount: "Kelime Sayısı",
+    characterCount: "Karakter Sayısı",
+    readingTime: "Tahmini Okuma Süresi",
+    writingGoal: "Yazma Hedefi",
+    minuteUnit: "dk",
+  },
+  preview: {
+    back: "Editöre Dön",
+    title: "Yayın Önizleme",
+    publish: "Yayınla",
+  },
+  success: {
+    title: "Tebrikler.",
+    description: "Hikâyen ilk okurlarını bekliyor.",
+    action: "Geri Bildirimleri Gör",
+  },
+} as const;

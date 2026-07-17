@@ -1,0 +1,20 @@
+export const validationContent = {
+  serviceNotConfigured:
+    "Kimlik doğrulama servisi henüz yapılandırılmamış. Ortam ayarlarını tamamlayın.",
+  requiredCredentials: "E-posta ve şifre alanlarını doldur.",
+  invalidCredentials: "E-posta veya şifre hatalı.",
+  emailNotConfirmed: "Giriş yapmadan önce e-posta adresini doğrula.",
+  emailAlreadyRegistered: "Bu e-posta adresiyle daha önce hesap oluşturulmuş.",
+  invalidPassword: "Şifre en az 8 karakter olmalı ve harf ile sayı içermeli.",
+  rateLimited: "Çok fazla deneme yapıldı. Lütfen kısa bir süre sonra tekrar dene.",
+  genericFailure: "İşlem tamamlanamadı. Bilgilerini kontrol edip tekrar dene.",
+  profileUnavailable: "Profil bilgisi doğrulanamadı. Lütfen tekrar giriş yap.",
+  fullNameRequired: "Ad ve soyadını gir.",
+  invalidEmail: "Geçerli bir e-posta adresi gir.",
+  passwordsDoNotMatch: "Şifreler birbiriyle eşleşmiyor.",
+  invalidRole: "Geçerli bir rol seç.",
+  roleSaveFailed: "Rol bilgisi kaydedilemedi. Lütfen tekrar dene.",
+  roleRequestFailed: "Rol talebi oluşturulamadı. Lütfen tekrar dene.",
+  expiredResetLink: "Şifre yenileme bağlantısının süresi dolmuş. Yeni bağlantı iste.",
+  maximumCharacters: (count: number) => `En fazla ${count} karakter`,
+} as const;

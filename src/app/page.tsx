@@ -59,33 +59,11 @@ const roles = [
 ] as const;
 
 const benefits = [
-  ["◈", "Güvenli Platform", "Kişisel verilerin ve eserlerin güvende."],
-  [
-    "◌",
-    "Editör Geri Bildirimi",
-    "Uzman editörlerden yapıcı ve detaylı geri bildirim.",
-  ],
-  [
-    "▥",
-    "Yayınevleriyle Bağlantı",
-    "Eserlerini doğrudan yayınevlerine ulaştır.",
-  ],
-  ["↗", "Yazma Takibi", "İlerlemeni takip et, hedeflerine ulaş."],
-  [
-    "◎",
-    "Okuyucu Topluluğu",
-    "Okuyucularla etkileşime geç, fikirlerini paylaş.",
-  ],
-  ["ϟ", "Tek Platform", "Yaz, geliştir, paylaş ve yayınlan."],
-] as const;
-
-const stats = [
-  ["2.847+", "Yazar"],
-  ["18.592+", "Okuyucu"],
-  ["412+", "Editör"],
-  ["78+", "Yayınevi"],
-  ["6.215+", "Eser"],
-  ["34.760+", "Yorum"],
+  ["▤", "Eserlerini Tek Yerde Yönet", "Eserlerini oluştur, düzenle ve arşivle."],
+  ["✎", "Yazmaya Devam Et", "Bölümlerini yaz ve taslaklarını kaydet."],
+  ["◌", "Editörlerle İletişim Kur", "Eserin için editör değerlendirmesi talep et."],
+  ["⌂", "Yayınevlerine Başvur", "Eserini yayınevlerinin incelemesine sun."],
+  ["◎", "Geri Bildirimlerini Takip Et", "Eserlerine gelen geri bildirimleri görüntüle."],
 ] as const;
 
 export default function HomePage() {
@@ -206,42 +184,14 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="landing-hero__visual" aria-hidden="true">
-            <div className="landing-sun" />
-            <div className="landing-mountain landing-mountain--back" />
-            <div className="landing-mountain landing-mountain--front" />
-
-            <div className="landing-book">
-              <div className="landing-book__page landing-book__page--left">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
-
-              <div className="landing-book__page landing-book__page--right">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
-
-              <div className="landing-feather">❧</div>
-            </div>
-
-            <div className="landing-writer">
-              <div className="landing-writer__head" />
-              <div className="landing-writer__body" />
-              <div className="landing-writer__arm" />
-              <div className="landing-writer__notebook" />
-            </div>
-
-            <span className="landing-star landing-star--one">✦</span>
-            <span className="landing-star landing-star--two">✧</span>
-            <span className="landing-bird landing-bird--one">⌁</span>
-            <span className="landing-bird landing-bird--two">⌁</span>
+          <div className="landing-hero__visual">
+            <Image
+              src="/landing/ilkoku-hero.webp"
+              alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon"
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 54vw"
+            />
           </div>
         </div>
       </section>
@@ -358,17 +308,6 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div
-            className="landing-stats"
-            aria-label="Platform istatistikleri"
-          >
-            {stats.map(([value, label]) => (
-              <div key={label}>
-                <strong>{value}</strong>
-                <span>{label}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -376,10 +315,6 @@ export default function HomePage() {
         <div className="landing-container">
           <div className="landing-cta__inner">
             <div>
-              <span className="landing-section-heading__eyebrow">
-                Hikâyen burada başlıyor
-              </span>
-
               <h2>İlk cümleni yazmaya hazır mısın?</h2>
 
               <p>
@@ -435,25 +370,6 @@ export default function HomePage() {
           <div>
             <h3>Destek</h3>
             <a href="mailto:destek@ilkoku.com">Yardım Merkezi</a>
-            <span>Kullanım Şartları</span>
-            <span>Gizlilik Politikası</span>
-            <span>KVKK</span>
-          </div>
-
-          <div>
-            <h3>Bizi Takip Edin</h3>
-
-            <div className="landing-socials">
-              <a href="#iletisim" aria-label="Instagram">
-                ◎
-              </a>
-              <a href="#iletisim" aria-label="X">
-                𝕏
-              </a>
-              <a href="#iletisim" aria-label="LinkedIn">
-                in
-              </a>
-            </div>
           </div>
         </div>
 

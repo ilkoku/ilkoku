@@ -69,6 +69,22 @@ const benefits = [
 export default function HomePage() {
   return (
     <main className="landing-page">
+      <svg
+        className="landing-brand-filter"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <filter
+          id="landing-brand-filter"
+          colorInterpolationFilters="sRGB"
+        >
+          <feColorMatrix
+            type="matrix"
+            values="0 0 0 0 .408 0 0 0 0 .278 0 0 0 0 .91 1.35 1.35 1.35 0 -2.6"
+          />
+        </filter>
+      </svg>
+
       <header className="landing-header">
         <div className="landing-container landing-header__inner">
           <Link
@@ -76,7 +92,12 @@ export default function HomePage() {
             href="/"
             aria-label="İlkOku ana sayfa"
           >
-            <Image src={logo} alt="İlkOku" priority />
+            <Image
+              src={logo}
+              alt="İlkOku"
+              priority
+              sizes="(max-width: 480px) 136px, (max-width: 768px) 144px, (max-width: 1024px) 172px, 180px"
+            />
           </Link>
 
           <nav className="landing-nav" aria-label="Ana menü">
@@ -359,7 +380,11 @@ export default function HomePage() {
               href="/"
               aria-label="İlkOku ana sayfa"
             >
-              <Image src={logo} alt="İlkOku" />
+              <Image
+                src={logo}
+                alt="İlkOku"
+                sizes="(max-width: 480px) 128px, 156px"
+              />
             </Link>
 
             <p>

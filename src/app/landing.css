@@ -61,6 +61,14 @@ body {
   margin-inline: auto;
 }
 
+.landing-brand-filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 /* Header ve navigasyon */
 .landing-header {
   position: sticky;
@@ -76,22 +84,31 @@ body {
 .landing-header__inner {
   min-height: 4.75rem;
   display: grid;
-  grid-template-columns: 11rem minmax(0, 1fr) auto;
+  grid-template-columns: 11.25rem minmax(0, 1fr) auto;
   align-items: center;
   gap: clamp(1.5rem, 4vw, 4rem);
 }
 
 .landing-logo {
-  width: 10.25rem;
+  position: relative;
+  width: 11.25rem;
+  aspect-ratio: 407 / 146;
+  overflow: hidden;
   display: block;
+  border-radius: 1.25rem;
   flex: 0 0 auto;
 }
 
 .landing-logo img {
-  width: 100%;
+  position: absolute;
+  top: -9.5%;
+  left: -3.7%;
+  width: 107.1%;
+  max-width: none;
   height: auto;
   display: block;
   object-fit: contain;
+  filter: url("#landing-brand-filter");
 }
 
 .landing-nav {
@@ -275,12 +292,12 @@ body {
 }
 
 .landing-hero__grid {
-  min-height: 44rem;
+  min-height: 41rem;
   display: grid;
   grid-template-columns: minmax(0, 0.88fr) minmax(31rem, 1.12fr);
   align-items: center;
   gap: clamp(2.5rem, 6vw, 6rem);
-  padding-block: clamp(4.5rem, 7vw, 7rem);
+  padding-block: clamp(3.75rem, 6vw, 5.5rem);
 }
 
 .landing-hero__content {
@@ -480,7 +497,7 @@ body {
 /* Bölümler ve başlıklar */
 .landing-section {
   position: relative;
-  padding-block: clamp(4.75rem, 7vw, 6.75rem);
+  padding-block: clamp(3.75rem, 5.5vw, 5.25rem);
   background: var(--landing-white);
   scroll-margin-top: 5.25rem;
 }
@@ -499,7 +516,7 @@ body {
 
 .landing-section-heading {
   max-width: 46rem;
-  margin: 0 auto clamp(2.5rem, 4vw, 3.75rem);
+  margin: 0 auto clamp(2rem, 3vw, 3rem);
   text-align: center;
 }
 
@@ -538,7 +555,7 @@ body {
   --landing-role-soft: var(--landing-lavender);
   position: relative;
   isolation: isolate;
-  min-height: 20rem;
+  min-height: 18.5rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -599,7 +616,7 @@ body {
 }
 
 .landing-role__label {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
   color: var(--landing-role-accent);
   font-size: 0.625rem;
   font-weight: 850;
@@ -612,7 +629,7 @@ body {
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.125rem;
   border: 1px solid color-mix(in srgb, var(--landing-role-accent) 16%, transparent);
   border-radius: 1.25rem;
   color: var(--landing-role-accent);
@@ -631,7 +648,7 @@ body {
 }
 
 .landing-role p {
-  margin: 0 0 1.75rem;
+  margin: 0 0 1.25rem;
   color: var(--landing-muted);
   font-size: 0.875rem;
   line-height: 1.7;
@@ -858,7 +875,7 @@ body {
 .landing-trust-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: clamp(3rem, 5vw, 4.5rem) 0 0;
+  margin: clamp(2.25rem, 4vw, 3.5rem) 0 0;
   padding: 0;
   border-block: 1px solid rgba(75, 55, 148, 0.12);
   list-style: none;
@@ -894,7 +911,7 @@ body {
 
 /* CTA banner */
 .landing-cta {
-  padding: clamp(4rem, 7vw, 6.5rem) 0;
+  padding: clamp(3.25rem, 5vw, 4.75rem) 0;
   background: var(--landing-white);
 }
 
@@ -988,7 +1005,7 @@ body {
 
 /* Footer */
 .landing-footer {
-  padding: 4.5rem 0 1.5rem;
+  padding: 3.5rem 0 1.5rem;
   border-top: 1px solid var(--landing-border);
   background: linear-gradient(180deg, #fbfaff, #f7f5fc);
 }
@@ -1056,7 +1073,7 @@ body {
   }
 
   .landing-hero__grid {
-    min-height: 47rem;
+    min-height: 43rem;
   }
 
   .landing-hero__visual {
@@ -1067,12 +1084,12 @@ body {
 /* 1024px: tablet yatay / küçük masaüstü */
 @media (max-width: 64rem) {
   .landing-header__inner {
-    grid-template-columns: 9.5rem minmax(0, 1fr) auto;
+    grid-template-columns: 10.75rem minmax(0, 1fr) auto;
     gap: 1.25rem;
   }
 
   .landing-logo {
-    width: 9.25rem;
+    width: 10.75rem;
   }
 
   .landing-nav {
@@ -1131,7 +1148,7 @@ body {
   }
 
   .landing-logo {
-    width: 8.5rem;
+    width: 9rem;
   }
 
   .landing-nav {
@@ -1146,7 +1163,7 @@ body {
     min-height: auto;
     grid-template-columns: 1fr;
     gap: 3rem;
-    padding-block: 4.5rem 5rem;
+    padding-block: 3.75rem 4.25rem;
   }
 
   .landing-hero__content {
@@ -1180,7 +1197,7 @@ body {
   }
 
   .landing-section {
-    padding-block: 5rem;
+    padding-block: 4rem;
     scroll-margin-top: 4.75rem;
   }
 
@@ -1285,7 +1302,7 @@ body {
   }
 
   .landing-logo {
-    width: 7.5rem;
+    width: 8.5rem;
   }
 
   .landing-account__menu {
@@ -1294,7 +1311,7 @@ body {
 
   .landing-hero__grid {
     gap: 2.5rem;
-    padding-block: 3.5rem 4rem;
+    padding-block: 3rem 3.5rem;
   }
 
   .landing-hero h1 {
@@ -1322,7 +1339,7 @@ body {
   }
 
   .landing-section {
-    padding-block: 4.25rem;
+    padding-block: 3.5rem;
   }
 
   .landing-section-heading {
@@ -1339,7 +1356,7 @@ body {
   }
 
   .landing-role {
-    min-height: 18rem;
+    min-height: 17rem;
     padding: 1.5rem;
   }
 
@@ -1372,7 +1389,7 @@ body {
   }
 
   .landing-cta {
-    padding-block: 4rem;
+    padding-block: 3.25rem;
   }
 
   .landing-cta__inner {
@@ -1386,7 +1403,7 @@ body {
   }
 
   .landing-footer {
-    padding-top: 3.5rem;
+    padding-top: 3rem;
   }
 
   .landing-footer__grid {

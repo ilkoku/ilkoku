@@ -221,6 +221,10 @@ export default function HomePage() {
                 href={`/kayit?rol=${role.key}`}
                 key={role.key}
               >
+                <span className="landing-role__label">
+                  {role.title} rolü
+                </span>
+
                 <span className="landing-role__icon" aria-hidden="true">
                   {role.icon}
                 </span>
@@ -289,7 +293,7 @@ export default function HomePage() {
       </section>
 
       <section className="landing-section landing-section--benefits">
-        <div className="landing-container">
+        <div className="landing-container landing-benefits-layout">
           <div className="landing-section-heading">
             <span className="landing-section-heading__eyebrow">
               Her şey tek yerde
@@ -307,7 +311,18 @@ export default function HomePage() {
               </article>
             ))}
           </div>
+        </div>
 
+        <div className="landing-container">
+          <ul
+            className="landing-trust-strip"
+            aria-label="İlkOku ürün özellikleri"
+          >
+            <li>Yazar, okuyucu, editör ve yayınevi rolleri</li>
+            <li>Tek platformda içerik ve geri bildirim</li>
+            <li>Rol bazlı kayıt akışı</li>
+            <li>Eser ve keşif odaklı yapı</li>
+          </ul>
         </div>
       </section>
 

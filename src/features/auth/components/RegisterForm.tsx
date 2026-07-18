@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { authContent } from "@/content";
 import { registerAction } from "../actions";
+import { roleOptions } from "../data";
 import { initialAuthState } from "../state";
+import type { UserRole } from "../types";
 
 export function RegisterForm() {
+  const [selectedRole, setSelectedRole] = useState<UserRole>("writer");
   const [state, formAction, pending] = useActionState(registerAction, initialAuthState);
 
   return (
@@ -19,7 +22,35 @@ export function RegisterForm() {
         <Field control="email" label={authContent.common.email} name="email" autoComplete="email" placeholder={authContent.common.emailPlaceholder} required />
         <Field control="password" label={authContent.common.password} name="password" autoComplete="new-password" placeholder={authContent.register.passwordPlaceholder} minLength={8} required />
         <Field control="password" label={authContent.register.passwordConfirmation} name="password-confirmation" autoComplete="new-password" placeholder={authContent.register.passwordConfirmationPlaceholder} minLength={8} required />
-        <p className="auth-form__note">{authContent.register.terms}</p>
+        <fieldset className="auth-register-role">
+          <legend>{authContent.register.roleLegend}</legend>
+          <p>{authContent.register.roleDescription}</p>
+          <div className="auth-register-role__grid">
+            {roleOptions.map((role) => {
+              const descriptionId = `register-role-${role.id}-description`;
+              const isSelected = selectedRole === role.id;
+              return (
+                <label className="auth-register-role__card" data-selected={isSelected} key={role.id}>
+                  <input
+                    aria-describedby={descriptionId}
+                    checked={isSelected}
+                    name="role"
+                    onChange={() => setSelectedRole(role.id)}
+                    type="radio"
+                    value={role.id}
+                  />
+                  <span aria-hidden="true">{role.icon}</span>
+                  <strong>{role.title}</strong>
+                  <small id={descriptionId}>{role.description}</small>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+        <label className="auth-checkbox auth-terms">
+          <input name="terms" required type="checkbox" value="accepted" />
+          <span>{authContent.register.terms}</span>
+        </label>
         <Button className="auth-submit" type="submit" loading={pending}>{authContent.register.submit}</Button>
       </form>
       {state.message && <p className={`auth-status auth-status--${state.status}`} role={state.status === "error" ? "alert" : "status"}>{state.message}</p>}

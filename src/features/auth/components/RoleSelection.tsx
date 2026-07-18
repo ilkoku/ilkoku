@@ -8,8 +8,8 @@ import { initialAuthState } from "../state";
 import { roleOptions } from "../data";
 import type { UserRole } from "../types";
 
-export function RoleSelection() {
-  const [selectedRole, setSelectedRole] = useState<UserRole>("writer");
+export function RoleSelection({ initialRole = "writer" }: { initialRole?: UserRole }) {
+  const [selectedRole, setSelectedRole] = useState<UserRole>(initialRole);
   const [state, formAction, pending] = useActionState(updateRoleAction, initialAuthState);
   const selected = roleOptions.find((role) => role.id === selectedRole) ?? roleOptions[1];
 

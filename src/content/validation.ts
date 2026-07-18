@@ -13,6 +13,7 @@ export const validationContent = {
   invalidEmail: "Geçerli bir e-posta adresi gir.",
   passwordsDoNotMatch: "Şifreler birbiriyle eşleşmiyor.",
   invalidRole: "Geçerli bir rol seç.",
+  termsRequired: "Kayıt olmak için kullanım koşullarını ve gizlilik politikasını kabul et.",
   roleSaveFailed: "Rol bilgisi kaydedilemedi. Lütfen tekrar dene.",
   roleRequestFailed: "Rol talebi oluşturulamadı. Lütfen tekrar dene.",
   expiredResetLink: "Şifre yenileme bağlantısının süresi dolmuş. Yeni bağlantı iste.",

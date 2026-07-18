@@ -4,18 +4,12 @@ import { redirect } from "next/navigation";
 import { notificationContent, validationContent } from "@/content";
 import { getSiteUrl, isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { roleDestinations } from "./data";
 import type { UserRole } from "./types";
 
 export type AuthActionState = {
   message: string;
   status: "idle" | "error" | "success";
-};
-
-const roleDestinations: Record<UserRole, string> = {
-  editor: "/editörler",
-  publisher: "/yayinevi",
-  reader: "/kitap/kayip-sehir",
-  writer: "/yazar",
 };
 
 const roles: UserRole[] = ["reader", "writer", "editor", "publisher"];
@@ -85,22 +79,33 @@ export async function registerAction(_state: AuthActionState, formData: FormData
   const email = getText(formData, "email");
   const password = getText(formData, "password");
   const confirmation = getText(formData, "password-confirmation");
+  const role = getText(formData, "role") as UserRole;
+  const termsAccepted = formData.get("terms") === "accepted";
   if (fullName.length < 2) return error(validationContent.fullNameRequired);
   if (!/^\S+@\S+\.\S+$/.test(email)) return error(validationContent.invalidEmail);
   if (!validPassword(password)) return error(validationContent.invalidPassword);
   if (password !== confirmation) return error(validationContent.passwordsDoNotMatch);
+  if (!roles.includes(role)) return error(validationContent.invalidRole);
+  if (!termsAccepted) return error(validationContent.termsRequired);
 
   const supabase = await createClient();
   const { data, error: signUpError } = await supabase.auth.signUp({
     email,
     options: {
-      data: { avatar_url: null, full_name: fullName },
+      data: { avatar_url: null, full_name: fullName, signup_role_intent: role },
       emailRedirectTo: `${getSiteUrl()}/auth/confirm?next=/rol-secimi`,
     },
     password,
   });
   if (signUpError) return error(authMessage(signUpError.message));
-  if (data.session) redirect("/rol-secimi");
+  if (data.session) {
+    const { error: roleError } = standardRoles.includes(role)
+      ? await supabase.rpc("set_standard_role", { selected_role: role })
+      : await supabase.rpc("request_privileged_role", { requested: role });
+    if (roleError) return error(validationContent.roleSaveFailed);
+    if (standardRoles.includes(role)) redirect(roleDestinations[role]);
+    redirect(`/rol-secimi?durum=talep-alindi&rol=${role}`);
+  }
   return success(notificationContent.verificationSent);
 }
 

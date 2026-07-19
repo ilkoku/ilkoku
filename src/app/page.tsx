@@ -127,13 +127,6 @@ function LandingIcon({ name }: { name: IconName }) {
   );
 }
 
-const navLinks = [
-  { href: "#hakkimizda", label: "Hakkımızda", internal: false },
-  { href: "#nasil-calisir", label: "Nasıl Çalışır?", internal: false },
-  { href: "/yayinevleri", label: "Yayınevleri", internal: true },
-  { href: "#iletisim", label: "İletişim", internal: false },
-] as const;
-
 const roles = [
   { key: "writer", title: "Yazar", description: "Hikâyelerini yaz, geliştir ve yayınevlerine ulaştır.", icon: "writer", cta: "Yazar Ol", className: "landing-role--writer" },
   { key: "reader", title: "Okuyucu", description: "Yeni eserler keşfet, oku ve favorilerini oluştur.", icon: "reader", cta: "Okuyucu Ol", className: "landing-role--reader" },
@@ -159,30 +152,12 @@ const stats = [
   { icon: "message", value: "34.760+", label: "Yorum" },
 ] as const;
 
-function NavigationLinks() {
-  return navLinks.map((item) =>
-    item.internal ? (
-      <Link href={item.href} key={item.href}>{item.label}</Link>
-    ) : (
-      <a href={item.href} key={item.href}>{item.label}</a>
-    ),
-  );
-}
-
 export default function HomePage() {
   return (
     <main className="landing-page">
       <style>{`
-        .landing-how-v2 { padding-block: clamp(4rem, 7vw, 6.5rem); background: #fff; }
-        .landing-how-v2 .landing-section-heading { margin-bottom: clamp(3rem, 5vw, 4.75rem); }
-        .landing-how-v2__grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; gap:clamp(2rem,6vw,6rem); position:relative; }
-        .landing-how-v2__grid::before { content:""; position:absolute; top:3.8rem; left:18%; right:18%; border-top:2px dotted rgba(104,71,232,.45); }
-        .landing-how-v2__item { position:relative; z-index:1; text-align:center; }
-        .landing-how-v2__icon { width:6.5rem; height:6.5rem; display:grid; place-items:center; margin:0 auto 1rem; border:1px solid rgba(104,71,232,.2); border-radius:50%; color:var(--landing-primary-strong); background:#fff; box-shadow:0 1rem 2.75rem rgba(67,45,161,.12), 0 0 0 .65rem #fff; }
-        .landing-how-v2__icon svg { width:3.55rem; height:3.55rem; stroke-width:1.55; }
-        .landing-how-v2__number { width:2.15rem; height:2.15rem; display:grid; place-items:center; margin:-.15rem auto 1.15rem; border-radius:50%; color:#fff; background:linear-gradient(135deg,var(--landing-primary),var(--landing-primary-strong)); font-weight:800; box-shadow:0 .5rem 1.25rem rgba(81,50,194,.25); }
-        .landing-how-v2 h3 { max-width:17rem; margin:0 auto .75rem; color:var(--landing-night); font-family:var(--landing-font-display); font-size:1.35rem; line-height:1.25; }
-        .landing-how-v2 p { max-width:18rem; margin:0 auto; color:var(--landing-muted); font-size:.84rem; line-height:1.75; }
+        .landing-header__inner { grid-template-columns:11.25rem minmax(0,1fr) auto; }
+        .landing-header__kicker { justify-self:center; min-width:clamp(14rem,28vw,24rem); justify-content:center; padding:.7rem clamp(1.25rem,3vw,2.5rem); font-size:clamp(.68rem,.8vw,.78rem); letter-spacing:.17em; white-space:nowrap; }
         .landing-why-v2 { padding-block:clamp(3.75rem,6vw,5.75rem); border-block:1px solid rgba(78,60,151,.08); background:linear-gradient(180deg,#faf9ff 0%,#f5f2ff 100%); }
         .landing-why-v2 .landing-section-heading { margin-bottom:2.5rem; }
         .landing-why-v2 .landing-section-heading h2::after { content:"✦"; display:block; margin:.55rem auto 0; color:var(--landing-primary); font-family:var(--landing-font-sans); font-size:.85rem; letter-spacing:.7rem; }
@@ -203,8 +178,14 @@ export default function HomePage() {
         .landing-stat-v2__icon svg { width:1.45rem; height:1.45rem; }
         .landing-stat-v2 strong { display:block; color:var(--landing-primary-strong); font-size:1.35rem; line-height:1.1; }
         .landing-stat-v2 span { display:block; margin-top:.25rem; color:var(--landing-night-soft); font-size:.75rem; }
+        .landing-footer { position:relative; isolation:isolate; overflow:hidden; border-top:0; color:#fff; background:radial-gradient(circle at 78% 20%,rgba(155,126,255,.5),transparent 19rem),radial-gradient(circle at 12% 110%,rgba(116,80,240,.38),transparent 22rem),linear-gradient(135deg,#0f0e2d 0%,#28205e 54%,#4e32b5 100%); }
+        .landing-footer::before { content:""; position:absolute; z-index:-1; top:-9rem; right:8%; width:22rem; aspect-ratio:1; border:1px solid rgba(255,255,255,.09); border-radius:50%; box-shadow:0 0 0 2rem rgba(255,255,255,.025),0 0 0 5rem rgba(255,255,255,.018); }
+        .landing-footer h3,.landing-footer__grid>div:first-child p strong { color:#fff; }
+        .landing-footer__grid>div:first-child p,.landing-footer__grid>div>a { color:#dedaf4; }
+        .landing-footer__grid>div>a:hover { color:#fff; }
+        .landing-footer__copyright { border-top-color:rgba(255,255,255,.14); color:#c9c4e5; }
         @media (max-width:64rem) { .landing-benefits-v2 { grid-template-columns:repeat(3,1fr); } .landing-stats-v2 { grid-template-columns:repeat(3,1fr); } .landing-stat-v2:nth-child(3) { border-right:0; } .landing-stat-v2:nth-child(-n+3) { border-bottom:1px solid rgba(104,71,232,.14); } }
-        @media (max-width:48rem) { .landing-how-v2__grid { grid-template-columns:1fr; gap:3rem; } .landing-how-v2__grid::before { top:4rem; bottom:4rem; left:50%; right:auto; border-top:0; border-left:2px dotted rgba(104,71,232,.35); } .landing-how-v2__item { background:#fff; } .landing-benefits-v2 { grid-template-columns:repeat(2,1fr); } .landing-stats-v2 { grid-template-columns:repeat(2,1fr); } .landing-stat-v2 { border-bottom:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(3) { border-right:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(even) { border-right:0; } .landing-stat-v2:nth-last-child(-n+2) { border-bottom:0; } }
+        @media (max-width:48rem) { .landing-header__inner { grid-template-columns:1fr auto; } .landing-header__kicker { grid-row:2; grid-column:1/-1; width:100%; min-width:0; margin:0 0 .75rem; } .landing-benefits-v2 { grid-template-columns:repeat(2,1fr); } .landing-stats-v2 { grid-template-columns:repeat(2,1fr); } .landing-stat-v2 { border-bottom:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(3) { border-right:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(even) { border-right:0; } .landing-stat-v2:nth-last-child(-n+2) { border-bottom:0; } }
         @media (max-width:34rem) { .landing-benefits-v2 { grid-template-columns:1fr; } .landing-benefit-v2 { min-height:auto; } }
       `}</style>
 
@@ -219,15 +200,11 @@ export default function HomePage() {
           <Link className="landing-logo" href="/" aria-label="İlkOku ana sayfa">
             <Image src={logo} alt="İlkOku" priority sizes="(max-width: 480px) 136px, (max-width: 768px) 144px, (max-width: 1024px) 172px, 180px" />
           </Link>
-          <nav className="landing-nav" aria-label="Ana menü"><NavigationLinks /></nav>
+          <span className="landing-kicker landing-header__kicker">Dijital edebiyat platformu</span>
           <div className="landing-header__tools">
             <details className="landing-account">
               <summary aria-label="Hesap menüsünü aç"><LandingIcon name="account" /></summary>
               <div className="landing-account__menu"><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a></div>
-            </details>
-            <details className="landing-mobile-menu">
-              <summary aria-label="Mobil menüyü aç"><svg aria-hidden="true" fill="none" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" /></svg></summary>
-              <nav aria-label="Mobil menü"><NavigationLinks /><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a></nav>
             </details>
           </div>
         </div>
@@ -236,10 +213,9 @@ export default function HomePage() {
       <section className="landing-hero" id="hakkimizda">
         <div className="landing-container landing-hero__grid">
           <div className="landing-hero__content">
-            <span className="landing-kicker">Dijital edebiyat platformu</span>
             <h1>İlk cümle,<br />ilk okurun,<br /><span>ilk adımın.</span></h1>
             <p>Yazarları, editörleri, okuyucuları ve yayınevlerini aynı platformda buluşturan dijital edebiyat ekosistemi.</p>
-            <div className="landing-hero__actions"><a className="landing-button landing-button--primary landing-button--large" href="#roller">Rolünü Seç <span aria-hidden="true">→</span></a><a className="landing-button landing-button--soft landing-button--large" href="#nasil-calisir">Platformu Keşfet</a></div>
+            <div className="landing-hero__actions"><a className="landing-button landing-button--primary landing-button--large" href="#roller">Rolünü Seç <span aria-hidden="true">→</span></a><a className="landing-button landing-button--soft landing-button--large" href="#neden-ilkoku">Platformu Keşfet</a></div>
           </div>
           <div className="landing-hero__visual"><Image src="/landing/ilkoku-hero.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 768px) 100vw, 54vw" /></div>
         </div>
@@ -252,7 +228,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="landing-why-v2">
+      <section className="landing-why-v2" id="neden-ilkoku">
         <div className="landing-container">
           <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">Her şey tek yerde</span><h2>Neden İlkOku?</h2></div>
           <div className="landing-benefits-v2">{benefits.map((benefit) => (<article className={`landing-benefit-v2 ${benefit.className}`} key={benefit.title}><span className="landing-benefit-v2__icon"><LandingIcon name={benefit.icon} /></span><h3>{benefit.title}</h3><p>{benefit.description}</p></article>))}</div>
@@ -260,9 +236,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="landing-cta"><div className="landing-container"><div className="landing-cta__inner"><div><h2>İlk cümleni yazmaya hazır mısın?</h2><p>Rolünü seç, hesabını oluştur ve İlkOku topluluğuna katıl.</p></div><a className="landing-button landing-button--white landing-button--large" href="#roller">Hemen Katıl <span aria-hidden="true">→</span></a><div className="landing-cta__book" aria-hidden="true"><LandingIcon name="book" /></div></div></div></section>
-
-      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p>İlk cümle, ilk okurun, <strong>ilk adımın.</strong></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><a href="#nasil-calisir">Nasıl Çalışır?</a><Link href="/yayinevleri">Yayınevleri</Link><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></div><div><h3>Destek</h3><a href="mailto:destek@ilkoku.com">Yardım Merkezi</a></div></div><p className="landing-footer__copyright">© {new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.</p></footer>
+      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p>İlk cümle, ilk okurun, <strong>ilk adımın.</strong></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/yayinevleri">Yayınevleri</Link><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></div><div><h3>Destek</h3><a href="mailto:destek@ilkoku.com">Yardım Merkezi</a></div></div><p className="landing-footer__copyright">© {new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.</p></footer>
     </main>
   );
 }

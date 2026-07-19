@@ -28,12 +28,24 @@
 .breadcrumb__link:hover, .breadcrumb__link:focus-visible { color: var(--color-text); outline: none; }
 .breadcrumb__current { color: var(--color-text); font-weight: 600; }
 .breadcrumb__separator { color: var(--color-text-secondary); opacity: 0.45; }
-.user-area { display: flex; min-width: 0; align-items: center; justify-content: flex-end; gap: 0.85rem; }
-.user-area__identity { display: grid; justify-items: end; gap: 0.1rem; }
+.user-area { position: relative; display: flex; min-width: 0; align-items: center; justify-content: flex-end; gap: 0.85rem; }
+.user-area__identity { display: grid; min-width: 0; justify-items: end; gap: 0.1rem; }
 .user-area__greeting { color: var(--color-text-secondary); font-size: 0.7rem; }
-.user-area__name { font-size: 0.85rem; font-weight: 600; }
-.user-area__avatar { display: grid; width: 2.5rem; height: 2.5rem; place-items: center; color: var(--color-primary); background: var(--color-card); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 50%; font-family: var(--font-playfair), serif; }
+.user-area__name { max-width: 12rem; overflow: hidden; font-size: 0.85rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.user-area__menu { position: relative; }
+.user-area__menu summary { display: flex; min-height: 2.75rem; align-items: center; gap: var(--space-2); padding: 0.1rem 0.35rem 0.1rem 0.1rem; background: transparent; border: 1px solid transparent; border-radius: var(--radius-full); cursor: pointer; list-style: none; transition: background var(--transition-base), border-color var(--transition-base); }
+.user-area__menu summary::-webkit-details-marker { display: none; }
+.user-area__menu summary:hover, .user-area__menu summary:focus-visible, .user-area__menu[open] summary { background: var(--color-card); border-color: var(--color-border); outline: none; }
+.user-area__menu summary:focus-visible { box-shadow: var(--shadow-focus); }
+.user-area__avatar { display: grid; width: 2.5rem; height: 2.5rem; place-items: center; flex: 0 0 auto; color: var(--color-primary); background: var(--color-card); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 50%; font-family: var(--font-playfair), serif; }
 .user-area__avatar--image { object-fit: cover; }
+.user-area__chevron { display: inline-block; color: var(--color-text-secondary); font-size: 0.8rem; line-height: 1; transition: transform var(--transition-base); }
+.user-area__menu[open] .user-area__chevron { transform: rotate(180deg); }
+.user-area__popover { position: absolute; top: calc(100% + var(--space-2)); right: 0; z-index: 12; display: grid; width: min(17rem, calc(100vw - 2rem)); gap: var(--space-3); padding: var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-medium); box-shadow: var(--shadow-large); }
+.user-area__popover-copy { display: grid; min-width: 0; gap: 0.15rem; padding: 0 var(--space-1); }
+.user-area__popover-copy strong { overflow: hidden; font-size: 0.8rem; text-overflow: ellipsis; white-space: nowrap; }
+.user-area__popover-copy small { color: var(--color-text-secondary); font-size: 0.65rem; }
+.user-area__popover form { display: grid; }
 .user-area__logout, .protected-account button { min-height: 2.25rem; padding: 0 var(--space-3); color: var(--color-text-secondary); background: transparent; border: 1px solid var(--color-border); border-radius: var(--radius-small); cursor: pointer; font: inherit; font-size: 0.6875rem; transition: color var(--transition-base), border-color var(--transition-base), background var(--transition-base); }
 .user-area__logout:hover, .protected-account button:hover { color: var(--color-text); background: var(--color-card); border-color: var(--color-border-strong); }
 .user-area__logout:focus-visible, .protected-account button:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
@@ -90,8 +102,8 @@
   .breadcrumb__item:not(:last-child) { display: none; }
   .breadcrumb__list > li:first-child:not(:last-child) { display: none; }
   .breadcrumb__item:last-child .breadcrumb__separator { display: none; }
-  .user-area__greeting { display: none; }
-  .user-area__logout { padding-inline: var(--space-2); }
+  .user-area__identity { display: none; }
+  .user-area__popover { right: -0.25rem; }
   .protected-account__copy, .protected-account form { display: none; }
   .welcome h1 { font-size: clamp(2.5rem, 14vw, 4rem); }
   .system-state { padding: var(--space-5); }

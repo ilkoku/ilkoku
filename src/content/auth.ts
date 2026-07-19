@@ -12,6 +12,8 @@ export const authContent = {
     password: "Şifre",
     logout: "Çıkış Yap",
     shortLogout: "Çıkış",
+    accountMenu: "Hesap menüsü",
+    openAccountMenu: (name: string) => `${name} için hesap menüsünü aç`,
     roleAccount: (role: string) => `${role} hesabı`,
     profilePhoto: (name: string) => `${name} profil fotoğrafı`,
     profilePlaceholder: (name: string) => `${name} için profil yer tutucusu`,

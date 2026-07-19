@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { UserArea } from "@/components/layout/UserArea";
 import type { AuthProfile } from "@/features/auth/profile";
@@ -13,7 +14,10 @@ export function AppShell({ children, profile }: AppShellProps) {
     <div className="app-shell">
       <Sidebar />
       <main className="main-area">
-        <UserArea profile={profile} />
+        <header className="dashboard-header">
+          <Breadcrumb />
+          <UserArea profile={profile} />
+        </header>
         <div className="main-area__content">{children}</div>
       </main>
     </div>

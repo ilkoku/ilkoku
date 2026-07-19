@@ -252,17 +252,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="landing-how-v2" id="nasil-calisir">
-        <div className="landing-container">
-          <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">Üç kolay adım</span><h2>Nasıl Çalışır?</h2></div>
-          <div className="landing-how-v2__grid">
-            <article className="landing-how-v2__item"><span className="landing-how-v2__icon"><LandingIcon name="account" /></span><span className="landing-how-v2__number">1</span><h3>Rolünü Seç</h3><p>Sana en uygun rolü seçerek İlkOku’ya katıl.</p></article>
-            <article className="landing-how-v2__item"><span className="landing-how-v2__icon"><LandingIcon name="create" /></span><span className="landing-how-v2__number">2</span><h3>Hesabını Oluştur</h3><p>Hızlı ve kolay bir şekilde hesabını oluştur.</p></article>
-            <article className="landing-how-v2__item"><span className="landing-how-v2__icon"><LandingIcon name="book" /></span><span className="landing-how-v2__number">3</span><h3>Yazmaya veya Keşfetmeye Başla</h3><p>Eserlerini paylaş, geri bildirim al veya yeni eserler keşfet.</p></article>
-          </div>
-        </div>
-      </section>
-
       <section className="landing-why-v2">
         <div className="landing-container">
           <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">Her şey tek yerde</span><h2>Neden İlkOku?</h2></div>

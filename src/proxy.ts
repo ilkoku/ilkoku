@@ -4,7 +4,7 @@ import type { UserRole } from "@/types/database";
 
 const publicEditorsPath = "/editörler";
 const internalEditorsPath = "/editorler";
-const protectedPaths = ["/yazar", "/eserlerim", "/yazmaya-devam", "/geri-bildirimler", "/yayinevleri", publicEditorsPath, internalEditorsPath, "/yayinevi", "/rol-secimi"];
+const protectedPaths = ["/admin", "/yazar", "/eserlerim", "/yazmaya-devam", "/geri-bildirimler", "/yayinevleri", publicEditorsPath, internalEditorsPath, "/yayinevi", "/rol-secimi"];
 
 interface RouteRoleRule {
   approved: boolean;
@@ -43,6 +43,7 @@ function copySession(source: NextResponse, destination: NextResponse) {
 export async function proxy(request: NextRequest) {
   const pathname = decodeURIComponent(request.nextUrl.pathname);
   const roleRule = getRoleRule(pathname);
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
   const session = await refreshSupabaseSession(request, Boolean(roleRule));
 
   if (isProtected(pathname) && !session.authenticated) {
@@ -51,6 +52,14 @@ export async function proxy(request: NextRequest) {
     destination.search = "";
     destination.searchParams.set("sonraki", pathname.replace(internalEditorsPath, publicEditorsPath));
     if (!session.configured) destination.searchParams.set("durum", "yapilandirma");
+    return copySession(session.response, NextResponse.redirect(destination));
+  }
+
+  if (isAdminRoute && !session.isAdmin) {
+    const destination = request.nextUrl.clone();
+    destination.pathname = "/erisim-reddedildi";
+    destination.search = "";
+    destination.searchParams.set("kaynak", "admin");
     return copySession(session.response, NextResponse.redirect(destination));
   }
 

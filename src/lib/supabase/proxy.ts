@@ -3,8 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { UserRole } from "@/types/database";
 import { getSupabaseConfig, isSupabaseConfigured } from "./config";
 
+export type SessionRole = UserRole | "admin";
+
 export interface SessionProfile {
-  role: UserRole;
+  role: SessionRole;
   roleApprovedAt: string | null;
 }
 
@@ -12,7 +14,7 @@ export async function refreshSupabaseSession(request: NextRequest, includeProfil
   let response = NextResponse.next({ request });
 
   if (!isSupabaseConfigured()) {
-    return { authenticated: false, configured: false, isAdmin: false, profile: null, response };
+    return { authenticated: false, configured: false, profile: null, response };
   }
 
   const { publishableKey, url } = getSupabaseConfig();
@@ -30,8 +32,6 @@ export async function refreshSupabaseSession(request: NextRequest, includeProfil
 
   const { data } = await supabase.auth.getClaims();
   const authenticated = Boolean(data?.claims);
-  const appMetadata = data?.claims?.app_metadata as Record<string, unknown> | undefined;
-  const isAdmin = appMetadata?.role === "admin" || appMetadata?.is_admin === true;
   let profile: SessionProfile | null = null;
 
   if (includeProfile && data?.claims?.sub) {
@@ -43,11 +43,11 @@ export async function refreshSupabaseSession(request: NextRequest, includeProfil
 
     if (profileData) {
       profile = {
-        role: profileData.role as UserRole,
+        role: profileData.role as SessionRole,
         roleApprovedAt: profileData.role_approved_at,
       };
     }
   }
 
-  return { authenticated, configured: true, isAdmin, profile, response };
+  return { authenticated, configured: true, profile, response };
 }

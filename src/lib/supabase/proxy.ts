@@ -12,7 +12,7 @@ export async function refreshSupabaseSession(request: NextRequest, includeProfil
   let response = NextResponse.next({ request });
 
   if (!isSupabaseConfigured()) {
-    return { authenticated: false, configured: false, response };
+    return { authenticated: false, configured: false, isAdmin: false, profile: null, response };
   }
 
   const { publishableKey, url } = getSupabaseConfig();
@@ -30,6 +30,8 @@ export async function refreshSupabaseSession(request: NextRequest, includeProfil
 
   const { data } = await supabase.auth.getClaims();
   const authenticated = Boolean(data?.claims);
+  const appMetadata = data?.claims?.app_metadata as Record<string, unknown> | undefined;
+  const isAdmin = appMetadata?.role === "admin" || appMetadata?.is_admin === true;
   let profile: SessionProfile | null = null;
 
   if (includeProfile && data?.claims?.sub) {
@@ -47,5 +49,5 @@ export async function refreshSupabaseSession(request: NextRequest, includeProfil
     }
   }
 
-  return { authenticated, configured: true, profile, response };
+  return { authenticated, configured: true, isAdmin, profile, response };
 }

@@ -44,7 +44,7 @@ export async function proxy(request: NextRequest) {
   const pathname = decodeURIComponent(request.nextUrl.pathname);
   const roleRule = getRoleRule(pathname);
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
-  const session = await refreshSupabaseSession(request, Boolean(roleRule));
+  const session = await refreshSupabaseSession(request, Boolean(roleRule) || isAdminRoute);
 
   if (isProtected(pathname) && !session.authenticated) {
     const destination = request.nextUrl.clone();
@@ -55,7 +55,7 @@ export async function proxy(request: NextRequest) {
     return copySession(session.response, NextResponse.redirect(destination));
   }
 
-  if (isAdminRoute && !session.isAdmin) {
+  if (isAdminRoute && session.profile?.role !== "admin") {
     const destination = request.nextUrl.clone();
     destination.pathname = "/erisim-reddedildi";
     destination.search = "";

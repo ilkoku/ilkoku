@@ -12,6 +12,7 @@ export const adminNavigation: AdminNavItem[] = [
   { href: "/admin/editorler", label: "Editörler", icon: "editors" },
   { href: "/admin/yayinevleri", label: "Yayınevleri", icon: "publishers" },
   { href: "/admin/basvurular", label: "Başvurular", icon: "applications", badge: "25" },
+  { href: "/admin/roller", label: "Rol ve Yetkiler", icon: "settings" },
   { href: "/admin/audit-log", label: "Audit Log", icon: "audit" },
   { href: "/admin/ayarlar", label: "Ayarlar", icon: "settings" },
 ];

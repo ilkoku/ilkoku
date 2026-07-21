@@ -61,6 +61,7 @@ export async function getRequestSession(request: NextRequest, includeProfile = f
 
     return { authenticated: true, configured: true, profile, response };
   } catch {
+    response.cookies.delete(SESSION_COOKIE);
     return { authenticated: false, configured: false, profile: null, response };
   }
 }

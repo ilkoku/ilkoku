@@ -9,30 +9,40 @@ export async function getCurrentUser() {
     return null;
   }
 
-  const session = await prisma.session.findUnique({
-    where: {
-      tokenHash: hashSessionToken(token),
-    },
-    include: {
-      user: true,
-    },
-  });
-
-  if (!session) {
-    await clearSessionCookie();
-    return null;
-  }
-
-  if (session.expiresAt <= new Date()) {
-    await prisma.session.deleteMany({
+  try {
+    const session = await prisma.session.findUnique({
       where: {
-        id: session.id,
+        tokenHash: hashSessionToken(token),
+      },
+      include: {
+        user: true,
       },
     });
-    await clearSessionCookie();
+
+    if (!session) {
+      await clearSessionCookie();
+      return null;
+    }
+
+    if (session.expiresAt <= new Date()) {
+      await prisma.session.deleteMany({
+        where: {
+          id: session.id,
+        },
+      });
+      await clearSessionCookie();
+
+      return null;
+    }
+
+    return session.user;
+  } catch {
+    try {
+      await clearSessionCookie();
+    } catch {
+      // Server Component bağlamında çerez silme yanıt katmanına bırakılır.
+    }
 
     return null;
   }
-
-  return session.user;
 }

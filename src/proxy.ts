@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { refreshSupabaseSession } from "@/lib/supabase/proxy";
+import { getRequestSession } from "@/lib/auth/request-session";
 import type { UserRole } from "@/types/database";
 
 const publicEditorsPath = "/editörler";
@@ -44,7 +44,7 @@ export async function proxy(request: NextRequest) {
   const pathname = decodeURIComponent(request.nextUrl.pathname);
   const roleRule = getRoleRule(pathname);
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
-  const session = await refreshSupabaseSession(request, Boolean(roleRule) || isAdminRoute);
+  const session = await getRequestSession(request, Boolean(roleRule) || isAdminRoute);
 
   if (isProtected(pathname) && !session.authenticated) {
     const destination = request.nextUrl.clone();

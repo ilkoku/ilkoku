@@ -15,24 +15,52 @@ enum UserRole {
   admin
 }
 
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String
-  fullName      String
-  role          UserRole  @default(reader)
-  emailVerified DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+enum UserStatus {
+  active
+  suspended
+  disabled
+}
 
-  sessions            Session[]
-  passwordResetTokens PasswordResetToken[]
+enum RoleRequestStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique @db.VarChar(191)
+  passwordHash String  @db.VarChar(255)
+  fullName     String  @db.VarChar(160)
+  avatarUrl    String? @db.VarChar(500)
+
+  role   UserRole   @default(reader)
+  status UserStatus @default(active)
+
+  emailVerified   DateTime?
+  termsAcceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions                Session[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+
+  roleRequests         RoleRequest[] @relation("RoleRequestOwner")
+  reviewedRoleRequests RoleRequest[] @relation("RoleRequestReviewer")
+
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique
+  id        String @id @default(cuid())
+  tokenHash String @unique @db.Char(64)
   userId    String
+
   expiresAt DateTime
   createdAt DateTime @default(now())
 
@@ -43,9 +71,10 @@ model Session {
 }
 
 model PasswordResetToken {
-  id        String    @id @default(cuid())
-  tokenHash String    @unique
+  id        String @id @default(cuid())
+  tokenHash String @unique @db.Char(64)
   userId    String
+
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
@@ -54,4 +83,42 @@ model PasswordResetToken {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String @id @default(cuid())
+  tokenHash String @unique @db.Char(64)
+  userId    String
+
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model RoleRequest {
+  id            String            @id @default(cuid())
+  userId        String
+  requestedRole UserRole
+  status        RoleRequestStatus @default(pending)
+
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNote   String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation("RoleRequestOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  reviewedBy User? @relation("RoleRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([requestedRole, status])
+  @@index([reviewedById])
+  @@index([createdAt])
 }

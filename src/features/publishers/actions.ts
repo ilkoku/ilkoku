@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 import { createSubmission, withdrawSubmission } from "./mutations";
 import type { PublisherActionState } from "./types";
@@ -9,11 +10,11 @@ import { createSubmissionSchema, submissionIdSchema } from "./validators";
 const result = (status: PublisherActionState["status"], message: string): PublisherActionState => ({ message, status });
 
 async function writerClient() {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "writer") return null;
+
   const client = await createClient();
-  const { data, error } = await client.auth.getUser();
-  if (error || !data.user) return null;
-  const { data: profile } = await client.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
-  return profile?.role === "writer" ? client : null;
+  return client;
 }
 
 function refresh() { revalidatePath("/yayinevleri"); revalidatePath("/yazar"); }

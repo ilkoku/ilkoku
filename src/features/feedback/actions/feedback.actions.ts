@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { feedbackContent } from "@/content";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/types/database";
 import { archiveFeedback, createEditorFeedback, markFeedbackRead } from "../mutations/feedback.mutations";
@@ -9,12 +10,11 @@ import type { FeedbackActionState } from "../types";
 import { createEditorFeedbackSchema, feedbackIdSchema } from "../validators/feedback.validators";
 
 async function authenticatedClient(requiredRole: UserRole) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== requiredRole) return null;
+
   const client = await createClient();
-  const { data, error } = await client.auth.getUser();
-  if (error || !data.user) return null;
-  const { data: profile } = await client.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
-  if (profile?.role !== requiredRole) return null;
-  return { client, userId: data.user.id };
+  return { client, userId: user.id };
 }
 
 function result(status: FeedbackActionState["status"], message: string): FeedbackActionState {

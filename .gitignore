@@ -42,3 +42,13 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Local environment
+hostinger.env
+hostinger2.env
+
+# Supabase local temp files
+supabase/.temp/
+
+# Local Supabase config
+src/lib/supabase/config.ts

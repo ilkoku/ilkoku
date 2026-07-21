@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 import {
   archiveWork,
@@ -25,16 +26,11 @@ function error(message: string): WorkActionState {
 }
 
 async function authenticatedClient() {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "writer") return null;
+
   const client = await createClient();
-  const { data, error: userError } = await client.auth.getUser();
-  if (userError || !data.user) return null;
-  const { data: profile, error: profileError } = await client
-    .from("profiles")
-    .select("role")
-    .eq("id", data.user.id)
-    .maybeSingle();
-  if (profileError || profile?.role !== "writer") return null;
-  return { authorId: data.user.id, client };
+  return { authorId: user.id, client };
 }
 
 function revalidateWorkPaths(slug?: string) {

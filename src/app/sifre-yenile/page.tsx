@@ -5,6 +5,9 @@ import { UpdatePasswordForm } from "@/features/auth/components/UpdatePasswordFor
 
 export const metadata: Metadata = { title: authContent.updatePassword.metadataTitle, description: authContent.updatePassword.metadataDescription };
 
-export default function UpdatePasswordPage() {
-  return <AuthShell eyebrow={authContent.updatePassword.eyebrow} title={authContent.updatePassword.title} description={authContent.updatePassword.description}><UpdatePasswordForm /></AuthShell>;
+export default async function UpdatePasswordPage({ searchParams }: { searchParams: Promise<{ token?: string | string[] }> }) {
+  const { token } = await searchParams;
+  const resetToken = typeof token === "string" ? token : "";
+
+  return <AuthShell eyebrow={authContent.updatePassword.eyebrow} title={authContent.updatePassword.title} description={authContent.updatePassword.description}><UpdatePasswordForm token={resetToken} /></AuthShell>;
 }

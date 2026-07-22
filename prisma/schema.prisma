@@ -28,25 +28,49 @@ enum RoleRequestStatus {
   cancelled
 }
 
+enum AuditAction {
+  register
+  login
+  logout
+  password_changed
+  password_reset_requested
+  email_verified
+  profile_updated
+  role_requested
+  role_request_reviewed
+  work_created
+  work_published
+  ownership_stamp_created
+}
+
 model User {
-  id           String  @id @default(cuid())
+  id           String  @id @default(uuid()) @db.Char(36)
   email        String  @unique @db.VarChar(191)
   passwordHash String  @db.VarChar(255)
   fullName     String  @db.VarChar(160)
+  displayName  String? @db.VarChar(160)
+  username     String? @unique @db.VarChar(64)
   avatarUrl    String? @db.VarChar(500)
+  bio          String? @db.Text
 
   role   UserRole   @default(reader)
   status UserStatus @default(active)
 
   emailVerified   DateTime?
   termsAcceptedAt DateTime?
+  lastLoginAt     DateTime?
+  isPremium       Boolean   @default(false)
+  isBanned        Boolean   @default(false)
+  deletedAt       DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  profile                 Profile?
   sessions                Session[]
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
+  auditLogs                AuditLog[]   @relation("AuditLogActor")
 
   roleRequests         RoleRequest[] @relation("RoleRequestOwner")
   reviewedRoleRequests RoleRequest[] @relation("RoleRequestReviewer")
@@ -54,12 +78,39 @@ model User {
   @@index([role])
   @@index([status])
   @@index([createdAt])
+  @@index([lastLoginAt])
+  @@index([deletedAt])
+}
+
+model Profile {
+  id     String @id @default(uuid()) @db.Char(36)
+  userId String @unique @db.Char(36)
+
+  website   String? @db.VarChar(500)
+  instagram String? @db.VarChar(191)
+  linkedin  String? @db.VarChar(500)
+  twitter   String? @db.VarChar(191)
+
+  country   String? @db.VarChar(100)
+  city      String? @db.VarChar(100)
+  birthYear Int?
+
+  writingGenres       Json?
+  completionPercentage Int @default(0) @db.UnsignedTinyInt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([country, city])
+  @@index([completionPercentage])
 }
 
 model Session {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid()) @db.Char(36)
   tokenHash String @unique @db.Char(64)
-  userId    String
+  userId    String @db.Char(36)
 
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -71,9 +122,9 @@ model Session {
 }
 
 model PasswordResetToken {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid()) @db.Char(36)
   tokenHash String @unique @db.Char(64)
-  userId    String
+  userId    String @db.Char(36)
 
   expiresAt DateTime
   usedAt    DateTime?
@@ -86,9 +137,9 @@ model PasswordResetToken {
 }
 
 model EmailVerificationToken {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid()) @db.Char(36)
   tokenHash String @unique @db.Char(64)
-  userId    String
+  userId    String @db.Char(36)
 
   expiresAt DateTime
   usedAt    DateTime?
@@ -101,12 +152,12 @@ model EmailVerificationToken {
 }
 
 model RoleRequest {
-  id            String            @id @default(cuid())
-  userId        String
+  id            String            @id @default(uuid()) @db.Char(36)
+  userId        String            @db.Char(36)
   requestedRole UserRole
   status        RoleRequestStatus @default(pending)
 
-  reviewedById String?
+  reviewedById String? @db.Char(36)
   reviewedAt   DateTime?
   reviewNote   String?   @db.Text
 
@@ -120,5 +171,24 @@ model RoleRequest {
   @@index([userId, status])
   @@index([requestedRole, status])
   @@index([reviewedById])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String      @id @default(uuid()) @db.Char(36)
+  actorId   String?     @db.Char(36)
+  action    AuditAction
+  entityType String?    @db.VarChar(80)
+  entityId   String?    @db.VarChar(191)
+  metadata   Json?
+  ipAddress  String?    @db.VarChar(45)
+  userAgent  String?    @db.VarChar(500)
+  createdAt  DateTime    @default(now())
+
+  actor User? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
   @@index([createdAt])
 }

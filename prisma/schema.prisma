@@ -70,7 +70,7 @@ model User {
   sessions                Session[]
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
-  auditLogs                AuditLog[]   @relation("AuditLogActor")
+  auditLogs               AuditLog[]               @relation("AuditLogActor")
 
   roleRequests         RoleRequest[] @relation("RoleRequestOwner")
   reviewedRoleRequests RoleRequest[] @relation("RoleRequestReviewer")
@@ -95,8 +95,8 @@ model Profile {
   city      String? @db.VarChar(100)
   birthYear Int?
 
-  writingGenres       Json?
-  completionPercentage Int @default(0) @db.UnsignedTinyInt
+  writingGenres        Json?
+  completionPercentage Int   @default(0) @db.UnsignedTinyInt
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -157,7 +157,7 @@ model RoleRequest {
   requestedRole UserRole
   status        RoleRequestStatus @default(pending)
 
-  reviewedById String? @db.Char(36)
+  reviewedById String?   @db.Char(36)
   reviewedAt   DateTime?
   reviewNote   String?   @db.Text
 
@@ -175,14 +175,14 @@ model RoleRequest {
 }
 
 model AuditLog {
-  id        String      @id @default(uuid()) @db.Char(36)
-  actorId   String?     @db.Char(36)
-  action    AuditAction
-  entityType String?    @db.VarChar(80)
-  entityId   String?    @db.VarChar(191)
+  id         String      @id @default(uuid()) @db.Char(36)
+  actorId    String?     @db.Char(36)
+  action     AuditAction
+  entityType String?     @db.VarChar(80)
+  entityId   String?     @db.VarChar(191)
   metadata   Json?
-  ipAddress  String?    @db.VarChar(45)
-  userAgent  String?    @db.VarChar(500)
+  ipAddress  String?     @db.VarChar(45)
+  userAgent  String?     @db.VarChar(500)
   createdAt  DateTime    @default(now())
 
   actor User? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)

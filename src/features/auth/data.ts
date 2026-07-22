@@ -2,6 +2,7 @@ import { authContent } from "@/content";
 import type { RoleOption, UserRole } from "./types";
 
 export const roleDestinations: Record<UserRole, string> = {
+  admin: "/admin",
   editor: "/editörler",
   publisher: "/yayinevi",
   reader: "/kitap/kayip-sehir",

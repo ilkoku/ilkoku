@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
 import type { UserRole } from "@/types/database";
 import { hashSessionToken, SESSION_COOKIE } from "./session";
 
@@ -19,6 +18,7 @@ export async function getRequestSession(request: NextRequest, includeProfile = f
   }
 
   try {
+    const { prisma } = await import("@/lib/prisma");
     const session = await prisma.session.findUnique({
       where: { tokenHash: hashSessionToken(token) },
       include: { user: true },

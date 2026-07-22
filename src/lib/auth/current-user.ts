@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/prisma";
 import { clearSessionCookie, getSessionCookie } from "./cookies";
 import { hashSessionToken } from "./session";
 
@@ -10,6 +9,7 @@ export async function getCurrentUser() {
   }
 
   try {
+    const { prisma } = await import("@/lib/prisma");
     const session = await prisma.session.findUnique({
       where: {
         tokenHash: hashSessionToken(token),

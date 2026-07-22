@@ -44,9 +44,12 @@ export async function proxy(request: NextRequest) {
   const pathname = decodeURIComponent(request.nextUrl.pathname);
   const roleRule = getRoleRule(pathname);
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
-  const session = await getRequestSession(request, Boolean(roleRule) || isAdminRoute);
+  const protectedRoute = isProtected(pathname);
+  const session = protectedRoute
+    ? await getRequestSession(request, Boolean(roleRule) || isAdminRoute)
+    : { authenticated: false, configured: true, profile: null, response: NextResponse.next({ request }) };
 
-  if (isProtected(pathname) && !session.authenticated) {
+  if (protectedRoute && !session.authenticated) {
     const destination = request.nextUrl.clone();
     destination.pathname = "/giris";
     destination.search = "";

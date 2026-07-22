@@ -1,0 +1,65 @@
+.admin-users-panel {
+  margin-top: 24px;
+}
+
+.admin-users-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  padding: 16px;
+  border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-users-table th {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.admin-users-table td:first-child strong,
+.admin-users-table td:first-child span {
+  display: block;
+}
+
+.admin-users-table td:first-child span {
+  margin-top: 4px;
+  font-size: 13px;
+  opacity: 0.65;
+}
+
+.admin-user-control {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-user-control select,
+.admin-user-control button {
+  min-height: 36px;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  padding: 0 10px;
+}
+
+.admin-user-control button {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.admin-user-control button:hover,
+.admin-user-control button:focus-visible {
+  border-color: currentColor;
+}

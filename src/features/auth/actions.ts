@@ -34,10 +34,6 @@ function getText(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
-function safeNextPath(value: string) {
-  return value.startsWith("/") && !value.startsWith("//") ? value : null;
-}
-
 function validPassword(password: string) {
   return password.length >= 8 && /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(password) && /\d/.test(password);
 }

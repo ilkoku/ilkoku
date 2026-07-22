@@ -1,10 +1,4 @@
-const metrics = [
-  { label: "Toplam Okuma", value: "2,8 Mn", delta: "+18,6%", detail: "Geçen aya göre", tone: "indigo", icon: "book" },
-  { label: "Aktif Kullanıcı", value: "18.420", delta: "+9,2%", detail: "Son 30 gün", tone: "violet", icon: "users" },
-  { label: "Yayımlanan Eser", value: "1.284", delta: "+124", detail: "Bu ay eklenen", tone: "cyan", icon: "spark" },
-  { label: "Editör Başvurusu", value: "18", delta: "İncelenmeli", detail: "6 belge doğrulandı", tone: "amber", icon: "editor" },
-  { label: "Yayınevi Başvurusu", value: "7", delta: "Bekliyor", detail: "3 öncelikli", tone: "rose", icon: "building" },
-] as const;
+import { prisma } from "@/lib/prisma";
 
 const weekly = [
   { day: "Pzt", reads: 620, members: 260 },
@@ -47,11 +41,35 @@ function Icon({ name }: { name: string }) {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
 
-export function AdminDashboard() {
+export async function AdminDashboard() {
+  const [totalUsers, activeUsers, writers, pendingEditorRequests, pendingPublisherRequests] = await Promise.all([
+    prisma.user.count({ where: { deletedAt: null } }),
+    prisma.user.count({ where: { status: "active", deletedAt: null } }),
+    prisma.user.count({ where: { role: "writer", deletedAt: null } }),
+    prisma.roleRequest.count({ where: { requestedRole: "editor", status: "pending" } }),
+    prisma.roleRequest.count({ where: { requestedRole: "publisher", status: "pending" } }),
+  ]);
+
+  const pendingApplications = pendingEditorRequests + pendingPublisherRequests;
+  const metrics = [
+    { label: "Toplam Kullanıcı", value: totalUsers.toLocaleString("tr-TR"), delta: "Canlı veri", detail: "Tüm aktif kayıtlar", tone: "indigo", icon: "users" },
+    { label: "Aktif Kullanıcı", value: activeUsers.toLocaleString("tr-TR"), delta: totalUsers ? `%${Math.round((activeUsers / totalUsers) * 100)}` : "%0", detail: "Hesabı aktif üyeler", tone: "violet", icon: "spark" },
+    { label: "Yazar", value: writers.toLocaleString("tr-TR"), delta: "Canlı veri", detail: "Yazar rolündeki üyeler", tone: "cyan", icon: "book" },
+    { label: "Editör Başvurusu", value: pendingEditorRequests.toLocaleString("tr-TR"), delta: pendingEditorRequests ? "İncelenmeli" : "Temiz", detail: "Bekleyen başvurular", tone: "amber", icon: "editor" },
+    { label: "Yayınevi Başvurusu", value: pendingPublisherRequests.toLocaleString("tr-TR"), delta: pendingPublisherRequests ? "İncelenmeli" : "Temiz", detail: "Bekleyen başvurular", tone: "rose", icon: "building" },
+  ] as const;
+
+  const today = new Intl.DateTimeFormat("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    weekday: "long",
+  }).format(new Date());
   const max = 1300;
+
   return <>
     <section className="admin-page-heading">
-      <div><span className="admin-eyebrow">20 Temmuz 2026 · Pazartesi</span><h1>Günaydın, Yönetici.</h1><p>İlkOku ekosisteminin performansı, büyümesi ve bekleyen yönetim aksiyonları.</p></div>
+      <div><span className="admin-eyebrow">{today}</span><h1>Günaydın, Yönetici.</h1><p>İlkOku ekosisteminin performansı, büyümesi ve bekleyen yönetim aksiyonları.</p></div>
       <div className="admin-heading-actions"><button className="admin-button admin-button--ghost">Raporu indir</button><button className="admin-button admin-button--primary">Yeni duyuru</button></div>
     </section>
 
@@ -65,37 +83,37 @@ export function AdminDashboard() {
     <section className="admin-dashboard-grid admin-dashboard-grid--analytics">
       <article className="admin-panel admin-panel--wide">
         <div className="admin-panel__heading"><div><span>Platform hareketliliği</span><h2>Haftalık büyüme</h2></div><div className="admin-chart-legend"><span><i/>Okuma</span><span><i/>Yeni üye</span><button>Son 7 gün⌄</button></div></div>
-        <div className="admin-bar-chart" role="img" aria-label="Okuma ve yeni üye sayılarını gösteren haftalık grafik">
+        <div className="admin-bar-chart" role="img" aria-label="Okuma ve yeni üye sayılarını gösteren haftalık örnek grafik">
           <div className="admin-bar-chart__scale"><span>1.3K</span><span>975</span><span>650</span><span>325</span><span>0</span></div>
           <div className="admin-bar-chart__plot">{weekly.map((item) => <div className="admin-bar-chart__group" key={item.day}><div className="admin-bar-chart__bars"><i style={{height:`${item.reads/max*100}%`}}/><i style={{height:`${item.members/max*100}%`}}/></div><span>{item.day}</span></div>)}</div>
         </div>
       </article>
 
       <article className="admin-panel admin-panel--tasks">
-        <div className="admin-panel__heading"><div><span>Aksiyon merkezi</span><h2>Bekleyen işler</h2></div><b>66</b></div>
+        <div className="admin-panel__heading"><div><span>Aksiyon merkezi</span><h2>Bekleyen işler</h2></div><b>{pendingApplications}</b></div>
         <div className="admin-task-list">
-          <button><span className="admin-task-icon">E</span><div><strong>Eser onayları</strong><small>41 eser incelenmeyi bekliyor</small></div><em>41</em><i>→</i></button>
-          <button><span className="admin-task-icon">B</span><div><strong>Başvurular</strong><small>25 editör ve yayınevi başvurusu</small></div><em>25</em><i>→</i></button>
-          <button><span className="admin-task-icon">R</span><div><strong>Riskli içerikler</strong><small>3 içerik moderasyon kuyruğunda</small></div><em>3</em><i>→</i></button>
+          <button><span className="admin-task-icon">E</span><div><strong>Editör başvuruları</strong><small>{pendingEditorRequests} başvuru incelenmeyi bekliyor</small></div><em>{pendingEditorRequests}</em><i>→</i></button>
+          <button><span className="admin-task-icon">Y</span><div><strong>Yayınevi başvuruları</strong><small>{pendingPublisherRequests} başvuru incelenmeyi bekliyor</small></div><em>{pendingPublisherRequests}</em><i>→</i></button>
+          <button><span className="admin-task-icon">K</span><div><strong>Kullanıcı yönetimi</strong><small>{totalUsers} kayıtlı kullanıcı bulunuyor</small></div><em>{totalUsers}</em><i>→</i></button>
         </div>
-        <div className="admin-task-summary"><span><i/>Ortalama yanıt süresi</span><strong>4 sa 18 dk</strong></div>
+        <div className="admin-task-summary"><span><i/>Veritabanı durumu</span><strong>Canlı ve bağlı</strong></div>
       </article>
     </section>
 
     <section className="admin-insight-grid">
       <article className="admin-panel">
-        <div className="admin-panel__heading"><div><span>İçerik performansı</span><h2>En çok okunan eserler</h2></div><button>Tüm eserler</button></div>
+        <div className="admin-panel__heading"><div><span>İçerik performansı · örnek görünüm</span><h2>En çok okunan eserler</h2></div><button>Tüm eserler</button></div>
         <div className="admin-ranking-list">{popularWorks.map((work,index) => <div className="admin-ranking" key={work.title}><b>{String(index+1).padStart(2,"0")}</b><div><strong>{work.title}</strong><span>{work.author}</span><i><em style={{width:`${work.progress}%`}}/></i></div><small>{work.reads}</small></div>)}</div>
       </article>
 
       <article className="admin-panel">
-        <div className="admin-panel__heading"><div><span>Topluluk</span><h2>Yükselen yazarlar</h2></div><button>Tüm yazarlar</button></div>
+        <div className="admin-panel__heading"><div><span>Topluluk · örnek görünüm</span><h2>Yükselen yazarlar</h2></div><button>Tüm yazarlar</button></div>
         <div className="admin-author-list">{authors.map(author => <div className="admin-author" key={author.name}><span>{author.initials}</span><div><strong>{author.name}</strong><small>{author.genre} · {author.followers} takipçi</small></div><b>{author.change}</b></div>)}</div>
-        <div className="admin-mini-callout"><div><span>Yeni kayıt dönüşümü</span><strong>%64,8</strong></div><i><em style={{width:"64.8%"}}/></i><small>Hedefin %8,4 üzerinde</small></div>
+        <div className="admin-mini-callout"><div><span>Aktif kullanıcı oranı</span><strong>{totalUsers ? `%${Math.round((activeUsers / totalUsers) * 100)}` : "%0"}</strong></div><i><em style={{width:`${totalUsers ? Math.round((activeUsers / totalUsers) * 100) : 0}%`}}/></i><small>Canlı kullanıcı verisinden hesaplandı</small></div>
       </article>
 
       <article className="admin-panel admin-panel--activity">
-        <div className="admin-panel__heading"><div><span>Canlı akış</span><h2>Son aktiviteler</h2></div><button>Tümünü gör</button></div>
+        <div className="admin-panel__heading"><div><span>Canlı akış · örnek görünüm</span><h2>Son aktiviteler</h2></div><button>Tümünü gör</button></div>
         <div className="admin-activity-list">{activities.map(activity => <div className="admin-activity" key={activity.title}><span className={`admin-activity__dot admin-activity__dot--${activity.tone}`}/><div><strong>{activity.title}</strong><p>{activity.detail}</p></div><time>{activity.time}</time></div>)}</div>
       </article>
     </section>

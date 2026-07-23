@@ -90,11 +90,11 @@ export async function createWork(input: CreateWorkInput) {
         action: "work_created",
         entityType: "Work",
         entityId: work.id,
-        metadata: {
+        metadata: JSON.stringify({
           title: work.title,
           slug: work.slug,
           stampCode,
-        },
+        }),
       },
     });
 

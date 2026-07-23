@@ -3,18 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { feedbackContent } from "@/content";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { createClient } from "@/lib/supabase/server";
-import type { UserRole } from "@/types/database";
 import { archiveFeedback, createEditorFeedback, markFeedbackRead } from "../mutations/feedback.mutations";
 import type { FeedbackActionState } from "../types";
 import { createEditorFeedbackSchema, feedbackIdSchema } from "../validators/feedback.validators";
 
-async function authenticatedClient(requiredRole: UserRole) {
+async function authenticatedUser(requiredRole: "writer" | "editor") {
   const user = await getCurrentUser();
   if (!user || user.role !== requiredRole) return null;
-
-  const client = await createClient();
-  return { client, userId: user.id };
+  return user;
 }
 
 function result(status: FeedbackActionState["status"], message: string): FeedbackActionState {
@@ -29,10 +25,11 @@ function revalidateFeedback() {
 export async function markFeedbackReadAction(feedbackId: string): Promise<FeedbackActionState> {
   const parsed = feedbackIdSchema.safeParse(feedbackId);
   if (!parsed.success) return result("error", feedbackContent.errors.invalid);
-  const auth = await authenticatedClient("writer");
-  if (!auth) return result("error", feedbackContent.errors.auth);
+  const user = await authenticatedUser("writer");
+  if (!user) return result("error", feedbackContent.errors.auth);
+
   try {
-    await markFeedbackRead(auth.client, auth.userId, parsed.data);
+    await markFeedbackRead(user.id, parsed.data);
     revalidateFeedback();
     return result("success", feedbackContent.success.read);
   } catch {
@@ -43,10 +40,11 @@ export async function markFeedbackReadAction(feedbackId: string): Promise<Feedba
 export async function archiveFeedbackAction(feedbackId: string): Promise<FeedbackActionState> {
   const parsed = feedbackIdSchema.safeParse(feedbackId);
   if (!parsed.success) return result("error", feedbackContent.errors.invalid);
-  const auth = await authenticatedClient("writer");
-  if (!auth) return result("error", feedbackContent.errors.auth);
+  const user = await authenticatedUser("writer");
+  if (!user) return result("error", feedbackContent.errors.auth);
+
   try {
-    await archiveFeedback(auth.client, auth.userId, parsed.data);
+    await archiveFeedback(user.id, parsed.data);
     revalidateFeedback();
     return result("success", feedbackContent.success.archived);
   } catch {
@@ -66,11 +64,16 @@ export async function createEditorFeedbackAction(
     title: formData.get("title"),
     workId: formData.get("workId"),
   });
-  if (!parsed.success) return result("error", parsed.error.issues[0]?.message ?? feedbackContent.errors.invalid);
-  const auth = await authenticatedClient("editor");
-  if (!auth) return result("error", feedbackContent.errors.permission);
+
+  if (!parsed.success) {
+    return result("error", parsed.error.issues[0]?.message ?? feedbackContent.errors.invalid);
+  }
+
+  const user = await authenticatedUser("editor");
+  if (!user) return result("error", feedbackContent.errors.permission);
+
   try {
-    await createEditorFeedback(auth.client, parsed.data);
+    await createEditorFeedback(user.id, parsed.data);
     revalidateFeedback();
     return result("success", feedbackContent.success.created);
   } catch {

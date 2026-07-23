@@ -1,47 +1,62 @@
-import type { Database, WorkStatus, WorkType } from "@/types/database";
+import type { Prisma } from "@/generated/prisma/client";
+import type { ChapterModel } from "@/generated/prisma/models/Chapter";
+import type { WorkModel } from "@/generated/prisma/models/Work";
 
-export type Work = Database["public"]["Tables"]["works"]["Row"];
-export type WorkInsert = Database["public"]["Tables"]["works"]["Insert"];
-export type WorkUpdate = Database["public"]["Tables"]["works"]["Update"];
+export type Work = WorkModel;
+
+export type WorkInsert =
+  Prisma.WorkUncheckedCreateInput;
+
+export type WorkUpdate =
+  Prisma.WorkUncheckedUpdateInput;
 
 export interface WorkSummary {
-  authorId: string;
-  coverUrl: string | null;
-  genre: string;
-  id: string;
-  isPublic: boolean;
-  slug: string;
-  status: WorkStatus;
-  title: string;
-  type: WorkType;
-  updatedAt: string;
+  authorId: WorkModel["authorId"];
+  coverUrl: WorkModel["coverUrl"];
+  description: WorkModel["description"];
+  genre: WorkModel["genre"];
+  id: WorkModel["id"];
+  language: WorkModel["language"];
+  slug: WorkModel["slug"];
+  status: WorkModel["status"];
+  title: WorkModel["title"];
+  updatedAt: WorkModel["updatedAt"];
+  visibility: WorkModel["visibility"];
 }
 
-export type WorkWithChapterSummary = Work & {
-  chapterCount: number;
-  latestChapter: {
-    content: string;
-    id: string;
-    position: number;
-    slug: string;
-    status: Database["public"]["Tables"]["chapters"]["Row"]["status"];
-    title: string;
-    updatedAt: string;
-    wordCount: number;
-  } | null;
-  totalWords: number;
-};
+export type WorkWithChapterSummary =
+  WorkModel & {
+    chapterCount: number;
 
-export type PublicWorkDetail = Work & {
-  authorName: string;
-  chapterCount: number;
-};
+    latestChapter: {
+      content: ChapterModel["content"];
+      id: ChapterModel["id"];
+      position: ChapterModel["position"];
+      slug: string;
+      status: ChapterModel["status"];
+      title: ChapterModel["title"];
+      updatedAt: string;
+      wordCount: number;
+    } | null;
 
-export type PublicChapterDetail = Database["public"]["Tables"]["chapters"]["Row"] & {
-  work: PublicWorkDetail;
-};
+    totalWords: number;
+  };
 
-export type WorkActionStatus = "idle" | "error" | "success";
+export type PublicWorkDetail =
+  WorkModel & {
+    authorName: string;
+    chapterCount: number;
+  };
+
+export type PublicChapterDetail =
+  ChapterModel & {
+    work: PublicWorkDetail;
+  };
+
+export type WorkActionStatus =
+  | "idle"
+  | "error"
+  | "success";
 
 export interface WorkActionState {
   chapterId?: string;

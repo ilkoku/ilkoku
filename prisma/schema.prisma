@@ -7,6 +7,49 @@ datasource db {
   provider = "mysql"
 }
 
+enum WorkStatus {
+  draft
+  in_review
+  published
+  archived
+}
+
+enum WorkVisibility {
+  private
+  unlisted
+  public
+}
+
+enum ChapterStatus {
+  draft
+  published
+  archived
+}
+
+enum OwnershipStampStatus {
+  active
+  revoked
+}
+
+enum FeedbackStatus {
+  unread
+  read
+  archived
+}
+
+enum FeedbackPriority {
+  normal
+  important
+}
+
+enum PublisherSubmissionStatus {
+  pending
+  reviewing
+  accepted
+  rejected
+  withdrawn
+}
+
 enum UserRole {
   reader
   writer
@@ -72,8 +115,13 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   auditLogs               AuditLog[]               @relation("AuditLogActor")
 
-  roleRequests         RoleRequest[] @relation("RoleRequestOwner")
-  reviewedRoleRequests RoleRequest[] @relation("RoleRequestReviewer")
+  roleRequests         RoleRequest[]         @relation("RoleRequestOwner")
+  reviewedRoleRequests RoleRequest[]         @relation("RoleRequestReviewer")
+  works                Work[]
+  ownershipStamps      OwnershipStamp[]
+  feedbackReceived     EditorFeedback[]      @relation("FeedbackAuthor")
+  feedbackWritten      EditorFeedback[]      @relation("FeedbackEditor")
+  publisherSubmissions PublisherSubmission[] @relation("SubmissionAuthor")
 
   @@index([role])
   @@index([status])
@@ -191,4 +239,183 @@ model AuditLog {
   @@index([action, createdAt])
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+model Work {
+  id          String         @id @default(uuid()) @db.Char(36)
+  authorId    String         @db.Char(36)
+  title       String         @db.VarChar(220)
+  subtitle    String?        @db.VarChar(280)
+  slug        String         @unique @db.VarChar(260)
+  description String?        @db.Text
+  genre       String?        @db.VarChar(120)
+  language    String         @default("tr") @db.VarChar(10)
+  coverUrl    String?        @db.VarChar(500)
+  status      WorkStatus     @default(draft)
+  visibility  WorkVisibility @default(private)
+
+  publishedAt DateTime?
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author               User                  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  chapters             Chapter[]
+  versions             WorkVersion[]
+  ownershipStamps      OwnershipStamp[]
+  editorFeedback       EditorFeedback[]
+  publisherSubmissions PublisherSubmission[]
+
+  @@index([authorId])
+  @@index([status])
+  @@index([visibility])
+  @@index([language])
+  @@index([createdAt])
+  @@index([updatedAt])
+}
+
+model Chapter {
+  id       String @id @default(uuid()) @db.Char(36)
+  workId   String @db.Char(36)
+  authorId String @db.Char(36)
+
+  title    String        @db.VarChar(220)
+  content  String        @db.LongText
+  position Int
+  status   ChapterStatus @default(draft)
+
+  publishedAt DateTime?
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  work           Work             @relation(fields: [workId], references: [id], onDelete: Cascade)
+  versions       WorkVersion[]
+  editorFeedback EditorFeedback[]
+
+  @@unique([workId, position])
+  @@index([workId])
+  @@index([authorId])
+  @@index([status])
+  @@index([updatedAt])
+}
+
+model WorkVersion {
+  id        String  @id @default(uuid()) @db.Char(36)
+  workId    String  @db.Char(36)
+  chapterId String? @db.Char(36)
+
+  versionNumber Int
+  title         String? @db.VarChar(220)
+  subtitle      String? @db.VarChar(280)
+  description   String? @db.Text
+  content       String? @db.LongText
+  contentHash   String  @db.VarChar(128)
+
+  createdAt DateTime @default(now())
+
+  work    Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([workId, versionNumber])
+  @@index([workId])
+  @@index([chapterId])
+  @@index([createdAt])
+}
+
+model OwnershipStamp {
+  id       String @id @default(uuid()) @db.Char(36)
+  workId   String @db.Char(36)
+  authorId String @db.Char(36)
+
+  stampCode   String               @unique @db.VarChar(100)
+  contentHash String               @db.VarChar(128)
+  version     Int                  @default(1)
+  status      OwnershipStampStatus @default(active)
+
+  stampedAt DateTime  @default(now())
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  work   Work @relation(fields: [workId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([workId])
+  @@index([authorId])
+  @@index([status])
+  @@index([stampedAt])
+}
+
+model EditorFeedback {
+  id        String  @id @default(uuid()) @db.Char(36)
+  workId    String  @db.Char(36)
+  chapterId String? @db.Char(36)
+  editorId  String  @db.Char(36)
+  authorId  String  @db.Char(36)
+
+  title    String           @db.VarChar(160)
+  content  String           @db.LongText
+  category String           @db.VarChar(60)
+  status   FeedbackStatus   @default(unread)
+  priority FeedbackPriority @default(normal)
+
+  readAt     DateTime?
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  work    Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  editor  User     @relation("FeedbackEditor", fields: [editorId], references: [id], onDelete: Restrict)
+  author  User     @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, status, createdAt])
+  @@index([editorId, createdAt])
+  @@index([workId])
+  @@index([chapterId])
+}
+
+model Publisher {
+  id                 String    @id @default(uuid()) @db.Char(36)
+  companyName        String    @db.VarChar(191)
+  slug               String    @unique @db.VarChar(220)
+  description        String?   @db.Text
+  websiteUrl         String?   @db.VarChar(500)
+  logoUrl            String?   @db.VarChar(500)
+  verified           Boolean   @default(false)
+  acceptsSubmissions Boolean   @default(true)
+  active             Boolean   @default(true)
+  archivedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  submissions PublisherSubmission[]
+
+  @@index([active, verified, archivedAt])
+  @@index([companyName])
+}
+
+model PublisherSubmission {
+  id          String @id @default(uuid()) @db.Char(36)
+  publisherId String @db.Char(36)
+  workId      String @db.Char(36)
+  authorId    String @db.Char(36)
+
+  coverLetter   String                    @db.Text
+  publisherNote String?                   @db.Text
+  status        PublisherSubmissionStatus @default(pending)
+  submittedAt   DateTime                  @default(now())
+  archivedAt    DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  publisher Publisher @relation(fields: [publisherId], references: [id], onDelete: Restrict)
+  work      Work      @relation(fields: [workId], references: [id], onDelete: Cascade)
+  author    User      @relation("SubmissionAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([authorId, publisherId, workId, archivedAt])
+  @@index([authorId, status, updatedAt])
+  @@index([publisherId, status])
+  @@index([workId])
 }

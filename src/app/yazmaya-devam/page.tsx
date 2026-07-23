@@ -26,7 +26,7 @@ export default async function ContinueWritingPage({ searchParams }: { searchPara
         <h1>{latestWork ? `${latestWork.title} eserine dönülüyor…` : "İlk eserini oluşturmaya başla."}</h1>
         {latestWork && !latestWork.latestChapter
           ? <CreateChapterForm workId={latestWork.id} />
-          : <NewWorkFlow autoOpen initialWork={latestWork} triggerLabel={latestWork ? "Editörü Aç" : "Yeni Eser"} />}
+          : <NewWorkFlow autoOpen initialWork={latestWork || undefined} triggerLabel={latestWork ? "Editörü Aç" : "Yeni Eser"} />}
       </section>
     </AppShell>
   );

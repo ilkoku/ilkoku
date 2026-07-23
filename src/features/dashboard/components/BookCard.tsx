@@ -10,32 +10,100 @@ type BookCardProps = {
   work: WorkWithChapterSummary;
 };
 
+const workStatusLabels: Record<
+  WorkWithChapterSummary["status"],
+  string
+> = {
+  archived: "Arşivlendi",
+  draft: "Taslak",
+  in_review: "İncelemede",
+  published: "Yayınlandı",
+};
+
 function workProgress(work: WorkWithChapterSummary) {
-  if (work.status === "published" || work.status === "completed") return 100;
-  if (work.status === "draft") return work.totalWords > 0 ? 15 : 5;
-  return Math.min(95, Math.max(20, Math.round(work.totalWords / 100)));
+  if (work.status === "published") {
+    return 100;
+  }
+
+  if (work.status === "archived") {
+    return Math.min(
+      100,
+      Math.max(
+        5,
+        Math.round(work.totalWords / 100),
+      ),
+    );
+  }
+
+  if (work.status === "draft") {
+    return work.totalWords > 0 ? 15 : 5;
+  }
+
+  return Math.min(
+    95,
+    Math.max(
+      20,
+      Math.round(work.totalWords / 100),
+    ),
+  );
 }
 
-export function BookCard({ coverVariant, work }: BookCardProps) {
+export function BookCard({
+  coverVariant,
+  work,
+}: BookCardProps) {
   const progress = workProgress(work);
+  const statusLabel = workStatusLabels[work.status];
+
   return (
-    <Card className="book-card" variant="hover">
-      <div className={`book-cover book-cover--${coverVariant}`} aria-hidden="true">
-        <span className="book-cover__ornament">✦</span>
+    <Card
+      className="book-card"
+      variant="hover"
+    >
+      <div
+        className={`book-cover book-cover--${coverVariant}`}
+        aria-hidden="true"
+      >
+        <span className="book-cover__ornament">
+          ✦
+        </span>
+
         <strong>{work.title}</strong>
-        <small>{dashboardContent.brandName}</small>
+
+        <small>
+          {dashboardContent.brandName}
+        </small>
       </div>
+
       <div className="book-card__content">
-        <p className="book-card__genre">{work.genre}</p>
+        <p className="book-card__genre">
+          {work.genre ?? "Tür belirtilmedi"}
+        </p>
+
         <h3>{work.title}</h3>
+
         <div className="book-card__status-row">
-          <span className="status-badge">{dashboardContent.statusLabels[work.status]}</span>
+          <span className="status-badge">
+            {statusLabel}
+          </span>
+
           <span>{progress}%</span>
         </div>
-        <ProgressBar value={progress} label={`${work.title} ilerleme durumu`} />
+
+        <ProgressBar
+          value={progress}
+          label={`${work.title} ilerleme durumu`}
+        />
+
         <div className="book-card__actions">
-          <NewWorkFlow initialWork={work} triggerLabel={dashboardContent.edit} />
-          <ArchiveWorkButton workId={work.id} />
+          <NewWorkFlow
+            initialWork={work}
+            triggerLabel={dashboardContent.edit}
+          />
+
+          <ArchiveWorkButton
+            workId={work.id}
+          />
         </div>
       </div>
     </Card>

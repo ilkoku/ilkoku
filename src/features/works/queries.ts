@@ -1,16 +1,19 @@
 import { cache } from "react";
+
 import { worksRepository } from "./repository";
 import type {
+  ChapterSummary,
   PublicChapterDetail,
   PublicWorkDetail,
   WorkWithChapterSummary,
 } from "./types";
 
 function countWords(content: string) {
-  return content
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
+  const normalized = content.trim();
+
+  return normalized
+    ? normalized.split(/\s+/u).length
+    : 0;
 }
 
 function chapterSlug(position: number) {
@@ -24,7 +27,7 @@ function mapChapterSummary(chapter: {
   position: number;
   status: "draft" | "published" | "archived";
   updatedAt: Date;
-}) {
+}): ChapterSummary {
   return {
     id: chapter.id,
     title: chapter.title,
@@ -37,86 +40,92 @@ function mapChapterSummary(chapter: {
   };
 }
 
+function mapAuthorWork(
+  work: Awaited<
+    ReturnType<
+      typeof worksRepository.getAuthorWorks
+    >
+  >[number],
+): WorkWithChapterSummary {
+  const chapters = (work.chapters ?? [])
+    .map(mapChapterSummary)
+    .sort(
+      (left, right) =>
+        left.position - right.position,
+    );
+
+  const latestChapter =
+    chapters.length === 0
+      ? null
+      : [...chapters].sort(
+          (left, right) =>
+            new Date(
+              right.updatedAt,
+            ).getTime() -
+            new Date(
+              left.updatedAt,
+            ).getTime(),
+        )[0];
+
+  return {
+    ...work,
+    chapters,
+    chapterCount: chapters.length,
+    latestChapter,
+    totalWords: chapters.reduce(
+      (sum, chapter) =>
+        sum + chapter.wordCount,
+      0,
+    ),
+  };
+}
+
 export const getAuthorWorks = cache(
-  async (authorId: string): Promise<WorkWithChapterSummary[]> => {
-    const works = await worksRepository.getAuthorWorks(authorId);
-
-    return works.map((work) => {
-      const chapters = work.chapters ?? [];
-
-      const latest =
-        chapters.length === 0
-          ? null
-          : [...chapters].sort(
-              (a, b) =>
-                b.updatedAt.getTime() -
-                a.updatedAt.getTime(),
-            )[0];
-
-      return {
-        ...work,
-        chapterCount: chapters.length,
-        latestChapter: latest
-          ? mapChapterSummary(latest)
-          : null,
-        totalWords: chapters.reduce(
-          (sum, chapter) =>
-            sum + countWords(chapter.content),
-          0,
-        ),
-      };
-    });
-  },
-);
-
-export const getAuthorWorkspaceWorks = cache(
   async (
     authorId: string,
-  ): Promise<WorkWithChapterSummary[]> => {
+  ): Promise<
+    WorkWithChapterSummary[]
+  > => {
     const works =
       await worksRepository.getAuthorWorks(
         authorId,
-        true,
       );
 
-    return works.map((work) => {
-      const chapters = work.chapters ?? [];
-
-      const latest =
-        chapters.length === 0
-          ? null
-          : [...chapters].sort(
-              (a, b) =>
-                b.updatedAt.getTime() -
-                a.updatedAt.getTime(),
-            )[0];
-
-      return {
-        ...work,
-        chapterCount: chapters.length,
-        latestChapter: latest
-          ? mapChapterSummary(latest)
-          : null,
-        totalWords: chapters.reduce(
-          (sum, chapter) =>
-            sum + countWords(chapter.content),
-          0,
-        ),
-      };
-    });
+    return works.map(mapAuthorWork);
   },
 );
+
+export const getAuthorWorkspaceWorks =
+  cache(
+    async (
+      authorId: string,
+    ): Promise<
+      WorkWithChapterSummary[]
+    > => {
+      const works =
+        await worksRepository.getAuthorWorks(
+          authorId,
+          true,
+        );
+
+      return works.map(mapAuthorWork);
+    },
+  );
 
 export async function getContinueWritingWork(
   authorId: string,
   workId?: string,
   chapterId?: string,
-) {
-  const works = await getAuthorWorks(authorId);
+): Promise<WorkWithChapterSummary | null> {
+  const works =
+    await getAuthorWorks(authorId);
 
   const selected =
     (workId
-      ? works.find((w) => w.id === workId)
+      ? works.find(
+          (work) =>
+            work.id === workId,
+        )
       : works[0]) ??
     works[0] ??
     null;
@@ -125,55 +134,54 @@ export async function getContinueWritingWork(
     return null;
   }
 
-  if (
-    !chapterId ||
-    selected.latestChapter?.id === chapterId
-  ) {
+  if (!chapterId) {
     return selected;
   }
 
-  const chapter =
-    await worksRepository.getAuthorChapterById(
-      authorId,
-      selected.id,
-      chapterId,
+  const requestedChapter =
+    selected.chapters.find(
+      (chapter) =>
+        chapter.id === chapterId,
     );
 
-  if (!chapter) {
+  if (!requestedChapter) {
     return selected;
   }
 
   return {
     ...selected,
-    latestChapter: mapChapterSummary(chapter),
-  } satisfies WorkWithChapterSummary;
+    latestChapter: requestedChapter,
+  };
 }
 
-export const getPublicWorkBySlug = cache(
-  async (
-    slug: string,
-  ): Promise<PublicWorkDetail | null> => {
-    const work =
-      await worksRepository.getPublicWork(slug);
+export const getPublicWorkBySlug =
+  cache(
+    async (
+      slug: string,
+    ): Promise<PublicWorkDetail | null> => {
+      const work =
+        await worksRepository.getPublicWork(
+          slug,
+        );
 
-    if (!work) {
-      return null;
-    }
+      if (!work) {
+        return null;
+      }
 
-    const chapterCount =
-      await worksRepository.getPublishedChapterCount(
-        work.id,
-      );
+      const chapterCount =
+        await worksRepository.getPublishedChapterCount(
+          work.id,
+        );
 
-    return {
-      ...work,
-      authorName:
-        work.author.displayName ??
-        work.author.fullName,
-      chapterCount,
-    };
-  },
-);
+      return {
+        ...work,
+        authorName:
+          work.author.displayName ??
+          work.author.fullName,
+        chapterCount,
+      };
+    },
+  );
 
 export const getPublicChapter = cache(
   async (
@@ -181,15 +189,20 @@ export const getPublicChapter = cache(
     chapterNumber: string,
   ): Promise<PublicChapterDetail | null> => {
     const work =
-      await getPublicWorkBySlug(workSlug);
+      await getPublicWorkBySlug(
+        workSlug,
+      );
 
     if (!work) {
       return null;
     }
 
-    const position = Number(chapterNumber);
+    const position =
+      Number(chapterNumber);
 
-    if (Number.isNaN(position)) {
+    if (
+      Number.isNaN(position)
+    ) {
       return null;
     }
 

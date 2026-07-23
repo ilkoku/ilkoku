@@ -24,21 +24,22 @@ export interface WorkSummary {
   visibility: WorkModel["visibility"];
 }
 
+export type ChapterSummary = {
+  content: ChapterModel["content"];
+  id: ChapterModel["id"];
+  position: ChapterModel["position"];
+  slug: string;
+  status: ChapterModel["status"];
+  title: ChapterModel["title"];
+  updatedAt: string;
+  wordCount: number;
+};
+
 export type WorkWithChapterSummary =
   WorkModel & {
     chapterCount: number;
-
-    latestChapter: {
-      content: ChapterModel["content"];
-      id: ChapterModel["id"];
-      position: ChapterModel["position"];
-      slug: string;
-      status: ChapterModel["status"];
-      title: ChapterModel["title"];
-      updatedAt: string;
-      wordCount: number;
-    } | null;
-
+    chapters: ChapterSummary[];
+    latestChapter: ChapterSummary | null;
     totalWords: number;
   };
 

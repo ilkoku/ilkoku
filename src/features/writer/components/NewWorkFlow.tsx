@@ -7,7 +7,9 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
@@ -35,14 +37,35 @@ const initialDraft: WorkDraft = {
 
 const dailyWordGoal = 1000;
 
+function subscribeToClient() {
+  return () => {};
+}
+
+function getClientSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
 type SaveState =
   | "kaydedilmedi"
   | "kaydediliyor"
   | "kaydedildi";
 
+type ChapterSummary = NonNullable<
+  WorkWithChapterSummary["latestChapter"]
+>;
+
+type WorkWithChapters =
+  WorkWithChapterSummary & {
+    chapters?: ChapterSummary[];
+  };
+
 type NewWorkFlowProps = {
   autoOpen?: boolean;
-  initialWork?: WorkWithChapterSummary;
+  initialWork?: WorkWithChapters;
   triggerLabel?: string;
 };
 
@@ -54,20 +77,65 @@ function countWords(value: string) {
     : 0;
 }
 
+function getInitialChapters(
+  work?: WorkWithChapters,
+): ChapterSummary[] {
+  if (!work) {
+    return [];
+  }
+
+  if (work.chapters?.length) {
+    return [...work.chapters].sort(
+      (left, right) =>
+        left.position - right.position,
+    );
+  }
+
+  return work.latestChapter
+    ? [work.latestChapter]
+    : [];
+}
+
+function getInitialChapter(
+  work?: WorkWithChapters,
+) {
+  const chapters = getInitialChapters(work);
+
+  if (!chapters.length) {
+    return null;
+  }
+
+  if (work?.latestChapter) {
+    return (
+      chapters.find(
+        (chapter) =>
+          chapter.id ===
+          work.latestChapter?.id,
+      ) ?? chapters[0]
+    );
+  }
+
+  return chapters[0];
+}
+
 function workToDraft(
-  work?: WorkWithChapterSummary,
+  work?: WorkWithChapters,
+  chapter?: ChapterSummary | null,
 ): WorkDraft {
   if (!work) {
     return initialDraft;
   }
 
+  const selectedChapter =
+    chapter ?? getInitialChapter(work);
+
   return {
     chapterTitle:
-      work.latestChapter?.title ??
+      selectedChapter?.title ??
       writerContent.initialChapter,
 
     content:
-      work.latestChapter?.content ?? "",
+      selectedChapter?.content ?? "",
 
     genre:
       work.genre ?? "",
@@ -85,28 +153,50 @@ export function NewWorkFlow({
   initialWork,
   triggerLabel = dashboardContent.newWork,
 }: NewWorkFlowProps) {
-  const [isOpen, setIsOpen] = useState(autoOpen);
+  const initialChapter =
+    getInitialChapter(initialWork);
 
-  const [step, setStep] = useState<WriterStep>(
-    autoOpen && initialWork
-      ? "editor"
-      : "create",
+  const mounted = useSyncExternalStore(
+    subscribeToClient,
+    getClientSnapshot,
+    getServerSnapshot,
   );
 
-  const [draft, setDraft] = useState<WorkDraft>(
-    () => workToDraft(initialWork),
-  );
+  const [isOpen, setIsOpen] =
+    useState(autoOpen);
 
-  const [workId, setWorkId] = useState(
-    initialWork?.id ?? "",
-  );
+  const [step, setStep] =
+    useState<WriterStep>(
+      autoOpen && initialWork
+        ? "editor"
+        : "create",
+    );
 
-  const [chapterId, setChapterId] = useState(
-    initialWork?.latestChapter?.id ?? "",
-  );
+  const [chapters, setChapters] =
+    useState<ChapterSummary[]>(() =>
+      getInitialChapters(initialWork),
+    );
+
+  const [draft, setDraft] =
+    useState<WorkDraft>(() =>
+      workToDraft(
+        initialWork,
+        initialChapter,
+      ),
+    );
+
+  const [workId, setWorkId] =
+    useState(initialWork?.id ?? "");
+
+  const [chapterId, setChapterId] =
+    useState(initialChapter?.id ?? "");
 
   const [saveState, setSaveState] =
-    useState<SaveState>("kaydedilmedi");
+    useState<SaveState>(
+      initialWork
+        ? "kaydedildi"
+        : "kaydedilmedi",
+    );
 
   const [isFocusMode, setIsFocusMode] =
     useState(false);
@@ -116,22 +206,47 @@ export function NewWorkFlow({
       null,
     );
 
+  const activeChapter = useMemo(
+    () =>
+      chapters.find(
+        (chapter) =>
+          chapter.id === chapterId,
+      ) ?? null,
+    [chapterId, chapters],
+  );
+
   async function handleCreate(
     state: typeof initialWorkActionState,
     formData: FormData,
   ) {
-    const nextState = await createWorkAction(
-      state,
-      formData,
-    );
+    const nextState =
+      await createWorkAction(
+        state,
+        formData,
+      );
 
     if (
       nextState.status === "success" &&
       nextState.workId &&
       nextState.chapterId
     ) {
+      const createdChapter: ChapterSummary = {
+        content: "",
+        id: nextState.chapterId,
+        position: 1,
+        slug: "bolum-1",
+        status: "draft",
+        title:
+          draft.chapterTitle ||
+          writerContent.initialChapter,
+        updatedAt:
+          new Date().toISOString(),
+        wordCount: 0,
+      };
+
       setWorkId(nextState.workId);
       setChapterId(nextState.chapterId);
+      setChapters([createdChapter]);
       setSaveState("kaydedildi");
       setStep("editor");
     }
@@ -143,17 +258,51 @@ export function NewWorkFlow({
     state: typeof initialWorkActionState,
     formData: FormData,
   ) {
+    const savedChapterId =
+      String(
+        formData.get("chapterId") ?? "",
+      );
+
+    const savedChapterTitle =
+      String(
+        formData.get("chapterTitle") ?? "",
+      );
+
+    const savedContent =
+      String(
+        formData.get("content") ?? "",
+      );
+
     const nextState =
       await saveChapterDraftAction(
         state,
         formData,
       );
 
-    setSaveState(
+    if (
       nextState.status === "success"
-        ? "kaydedildi"
-        : "kaydedilmedi",
-    );
+    ) {
+      setChapters((current) =>
+        current.map((chapter) =>
+          chapter.id === savedChapterId
+            ? {
+                ...chapter,
+                content: savedContent,
+                title:
+                  savedChapterTitle,
+                updatedAt:
+                  new Date().toISOString(),
+                wordCount:
+                  countWords(savedContent),
+              }
+            : chapter,
+        ),
+      );
+
+      setSaveState("kaydedildi");
+    } else {
+      setSaveState("kaydedilmedi");
+    }
 
     return nextState;
   }
@@ -162,12 +311,34 @@ export function NewWorkFlow({
     state: typeof initialWorkActionState,
     formData: FormData,
   ) {
-    const nextState = await publishWorkAction(
-      state,
-      formData,
-    );
+    const publishedChapterId =
+      String(
+        formData.get("chapterId") ?? "",
+      );
 
-    if (nextState.status === "success") {
+    const nextState =
+      await publishWorkAction(
+        state,
+        formData,
+      );
+
+    if (
+      nextState.status === "success"
+    ) {
+      setChapters((current) =>
+        current.map((chapter) =>
+          chapter.id ===
+          publishedChapterId
+            ? {
+                ...chapter,
+                status: "published",
+                updatedAt:
+                  new Date().toISOString(),
+              }
+            : chapter,
+        ),
+      );
+
       setSaveState("kaydedildi");
       setStep("success");
     }
@@ -207,7 +378,21 @@ export function NewWorkFlow({
     [draft.content],
   );
 
-  const characterCount = draft.content.length;
+  const totalWordCount = useMemo(
+    () =>
+      chapters.reduce(
+        (total, chapter) =>
+          total +
+          (chapter.id === chapterId
+            ? wordCount
+            : chapter.wordCount),
+        0,
+      ),
+    [chapterId, chapters, wordCount],
+  );
+
+  const characterCount =
+    draft.content.length;
 
   const readingTime = Math.max(
     1,
@@ -217,7 +402,8 @@ export function NewWorkFlow({
   const goalProgress = Math.min(
     100,
     Math.round(
-      (wordCount / dailyWordGoal) * 100,
+      (wordCount / dailyWordGoal) *
+        100,
     ),
   );
 
@@ -230,15 +416,62 @@ export function NewWorkFlow({
       writerContent.saveStatus.saved,
   }[saveState];
 
-  function openFlow() {
-    setDraft(workToDraft(initialWork));
+  const hasUnsavedChanges =
+    useMemo(() => {
+      if (!isOpen) {
+        return false;
+      }
+
+      if (step === "create") {
+        return Boolean(
+          draft.title.trim() ||
+            draft.genre.trim() ||
+            draft.summary.trim(),
+        );
+      }
+
+      if (
+        step === "editor" ||
+        step === "preview"
+      ) {
+        return (
+          saveState ===
+            "kaydedilmedi" ||
+          saveState ===
+            "kaydediliyor"
+        );
+      }
+
+      return false;
+    }, [
+      draft,
+      isOpen,
+      saveState,
+      step,
+    ]);
+
+  function resetFromInitialWork() {
+    const nextChapters =
+      getInitialChapters(initialWork);
+
+    const nextChapter =
+      getInitialChapter(initialWork);
+
+    setChapters(nextChapters);
+
+    setDraft(
+      workToDraft(
+        initialWork,
+        nextChapter,
+      ),
+    );
 
     setWorkId(
       initialWork?.id ?? "",
     );
 
     setChapterId(
-      initialWork?.latestChapter?.id ?? "",
+      nextChapter?.id ?? "",
     );
 
     setSaveState(
@@ -254,11 +487,40 @@ export function NewWorkFlow({
         ? "editor"
         : "create",
     );
+  }
 
+  function openFlow() {
+    resetFromInitialWork();
     setIsOpen(true);
   }
 
+  function clearAutosave() {
+    if (
+      autosaveTimeout.current
+    ) {
+      clearTimeout(
+        autosaveTimeout.current,
+      );
+
+      autosaveTimeout.current =
+        null;
+    }
+  }
+
   function closeFlow() {
+    if (hasUnsavedChanges) {
+      const shouldClose =
+        window.confirm(
+          "Kaydedilmemiş değişiklikleriniz var. Çıkmak istediğinize emin misiniz?",
+        );
+
+      if (!shouldClose) {
+        return;
+      }
+    }
+
+    clearAutosave();
+    setIsFocusMode(false);
     setIsOpen(false);
   }
 
@@ -274,86 +536,227 @@ export function NewWorkFlow({
     }));
 
     if (step === "editor") {
-      setSaveState("kaydedilmedi");
+      setSaveState(
+        "kaydedilmedi",
+      );
     }
   }
 
-  useEffect(() => {
-    if (!isOpen || step !== "editor") {
+  function selectChapter(
+    nextChapter: ChapterSummary,
+  ) {
+    if (
+      nextChapter.id === chapterId
+    ) {
       return;
     }
 
-    if (!workId || !chapterId) {
-      return;
-    }
-
-    if (saveState !== "kaydedilmedi") {
-      return;
-    }
-
-    if (autosaveTimeout.current) {
-      clearTimeout(
-        autosaveTimeout.current,
+    if (
+      saveState === "kaydediliyor" ||
+      isSaving
+    ) {
+      window.alert(
+        "Kayıt işlemi tamamlanmadan bölüm değiştiremezsiniz.",
       );
+
+      return;
     }
 
-    autosaveTimeout.current = setTimeout(
-      () => {
-        const formData = new FormData();
+    if (
+      saveState === "kaydedilmedi"
+    ) {
+      const shouldSwitch =
+        window.confirm(
+          "Bu bölümde kaydedilmemiş değişiklikler var. Bölüm değiştirmek istediğinize emin misiniz?",
+        );
+
+      if (!shouldSwitch) {
+        return;
+      }
+    }
+
+    clearAutosave();
+
+    setChapterId(nextChapter.id);
+
+    setDraft((current) => ({
+      ...current,
+      chapterTitle:
+        nextChapter.title,
+      content:
+        nextChapter.content,
+    }));
+
+    setSaveState("kaydedildi");
+  }
+
+  useEffect(() => {
+    if (
+      !mounted ||
+      !isOpen
+    ) {
+      return;
+    }
+
+    document.body.classList.add(
+      "writer-flow-open",
+    );
+
+    function closeOnEscape(
+      event: KeyboardEvent,
+    ) {
+      if (
+        event.key !== "Escape"
+      ) {
+        return;
+      }
+
+      if (hasUnsavedChanges) {
+        const shouldClose =
+          window.confirm(
+            "Kaydedilmemiş değişiklikleriniz var. Çıkmak istediğinize emin misiniz?",
+          );
+
+        if (!shouldClose) {
+          return;
+        }
+      }
+
+      clearAutosave();
+      setIsFocusMode(false);
+      setIsOpen(false);
+    }
+
+    document.addEventListener(
+      "keydown",
+      closeOnEscape,
+    );
+
+    return () => {
+      document.body.classList.remove(
+        "writer-flow-open",
+      );
+
+      document.removeEventListener(
+        "keydown",
+        closeOnEscape,
+      );
+    };
+  }, [
+    hasUnsavedChanges,
+    isOpen,
+    mounted,
+  ]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      return;
+    }
+
+    function warnBeforeUnload(
+      event: BeforeUnloadEvent,
+    ) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener(
+      "beforeunload",
+      warnBeforeUnload,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "beforeunload",
+        warnBeforeUnload,
+      );
+    };
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (
+      !isOpen ||
+      step !== "editor"
+    ) {
+      return;
+    }
+
+    if (
+      !workId ||
+      !chapterId
+    ) {
+      return;
+    }
+
+    if (
+      saveState !==
+      "kaydedilmedi"
+    ) {
+      return;
+    }
+
+    clearAutosave();
+
+    const autosaveWorkId =
+      workId;
+
+    const autosaveChapterId =
+      chapterId;
+
+    const autosaveDraft = {
+      ...draft,
+    };
+
+    autosaveTimeout.current =
+      setTimeout(() => {
+        const formData =
+          new FormData();
 
         formData.set(
           "workId",
-          workId,
+          autosaveWorkId,
         );
 
         formData.set(
           "chapterId",
-          chapterId,
+          autosaveChapterId,
         );
 
         formData.set(
           "workTitle",
-          draft.title,
+          autosaveDraft.title,
         );
 
         formData.set(
           "chapterTitle",
-          draft.chapterTitle,
+          autosaveDraft.chapterTitle,
         );
 
         formData.set(
           "genre",
-          draft.genre,
+          autosaveDraft.genre,
         );
 
         formData.set(
           "summary",
-          draft.summary,
+          autosaveDraft.summary,
         );
 
         formData.set(
           "content",
-          draft.content,
+          autosaveDraft.content,
         );
 
-        setSaveState("kaydediliyor");
+        setSaveState(
+          "kaydediliyor",
+        );
 
         startTransition(() => {
           saveAction(formData);
         });
-      },
-      15000,
-    );
+      }, 15000);
 
-    return () => {
-      if (autosaveTimeout.current) {
-        clearTimeout(
-          autosaveTimeout.current,
-        );
-
-        autosaveTimeout.current = null;
-      }
-    };
+    return clearAutosave;
   }, [
     chapterId,
     draft,
@@ -365,604 +768,986 @@ export function NewWorkFlow({
   ]);
 
   function openPreview() {
+    clearAutosave();
     setStep("preview");
   }
 
   function finishFlow() {
+    clearAutosave();
     setIsOpen(false);
   }
 
   return (
     <>
-      <Button
-        type="button"
-        onClick={openFlow}
-      >
-        {triggerLabel}
-      </Button>
-
-      {isOpen && step === "create" && (
-        <div
-          className="flow-layer flow-layer--form"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="new-work-title"
+      {!autoOpen && (
+        <Button
+          type="button"
+          onClick={openFlow}
         >
-          <section className="new-work-panel">
-            <WriterBrand compact />
+          {triggerLabel}
+        </Button>
+      )}
 
-            <div className="new-work-panel__heading">
-              <div>
-                <p>
-                  {writerContent.create.eyebrow}
-                </p>
-
-                <h2 id="new-work-title">
-                  {writerContent.create.title}
-                </h2>
-              </div>
-
-              <button
-                className="flow-close"
-                type="button"
-                onClick={closeFlow}
-                aria-label={
-                  writerContent.create
-                    .closeLabel
-                }
-              >
-                ×
-              </button>
-            </div>
-
-            <form
-              action={createAction}
-              className="new-work-form"
-            >
-              <input
-                name="workType"
-                type="hidden"
-                value="novel"
-              />
-
-              <Field
-                label={
-                  writerContent.create
-                    .titleLabel
-                }
-                name="title"
-                required
-                autoFocus
-                value={draft.title}
-                onChange={(event) =>
-                  updateDraft(
-                    "title",
-                    event.target.value,
-                  )
-                }
-                placeholder={
-                  writerContent.create
-                    .titlePlaceholder
-                }
-              />
-
-              <Field
-                control="select"
-                label={
-                  writerContent.create
-                    .genreLabel
-                }
-                name="genre"
-                required
-                value={draft.genre}
-                onChange={(event) =>
-                  updateDraft(
-                    "genre",
-                    event.target.value,
-                  )
-                }
-              >
-                <option
-                  value=""
-                  disabled
+      {mounted && isOpen
+        ? createPortal(
+            <>
+              {step ===
+                "create" && (
+                <div
+                  className="flow-layer flow-layer--form"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="new-work-title"
                 >
-                  {
-                    writerContent.create
-                      .genrePlaceholder
-                  }
-                </option>
+                  <section className="new-work-panel">
+                    <WriterBrand
+                      compact
+                    />
 
-                {writerContent.create.genres.map(
-                  (genre) => (
-                    <option
-                      value={genre}
-                      key={genre}
+                    <div className="new-work-panel__heading">
+                      <div>
+                        <p>
+                          {
+                            writerContent
+                              .create
+                              .eyebrow
+                          }
+                        </p>
+
+                        <h2 id="new-work-title">
+                          {
+                            writerContent
+                              .create
+                              .title
+                          }
+                        </h2>
+                      </div>
+
+                      <button
+                        className="flow-close"
+                        type="button"
+                        onClick={
+                          closeFlow
+                        }
+                        aria-label={
+                          writerContent
+                            .create
+                            .closeLabel
+                        }
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    <form
+                      action={
+                        createAction
+                      }
+                      className="new-work-form"
                     >
-                      {genre}
-                    </option>
-                  ),
-                )}
-              </Field>
+                      <input
+                        name="workType"
+                        type="hidden"
+                        value="novel"
+                      />
 
-              <Field
-                control="textarea"
-                label={
-                  writerContent.create
-                    .summaryLabel
-                }
-                name="summary"
-                value={draft.summary}
-                onChange={(event) =>
-                  updateDraft(
-                    "summary",
-                    event.target.value,
-                  )
-                }
-                placeholder={
-                  writerContent.create
-                    .summaryPlaceholder
-                }
-                rows={4}
-              />
+                      <Field
+                        label={
+                          writerContent
+                            .create
+                            .titleLabel
+                        }
+                        name="title"
+                        required
+                        autoFocus
+                        value={
+                          draft.title
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateDraft(
+                            "title",
+                            event
+                              .target
+                              .value,
+                          )
+                        }
+                        placeholder={
+                          writerContent
+                            .create
+                            .titlePlaceholder
+                        }
+                      />
 
-              {createState.message && (
-                <p
-                  className="work-action-message"
-                  data-state={
-                    createState.status
-                  }
-                  role="status"
-                >
-                  {createState.message}
-                </p>
+                      <Field
+                        control="select"
+                        label={
+                          writerContent
+                            .create
+                            .genreLabel
+                        }
+                        name="genre"
+                        required
+                        value={
+                          draft.genre
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateDraft(
+                            "genre",
+                            event
+                              .target
+                              .value,
+                          )
+                        }
+                      >
+                        <option
+                          value=""
+                          disabled
+                        >
+                          {
+                            writerContent
+                              .create
+                              .genrePlaceholder
+                          }
+                        </option>
+
+                        {writerContent.create.genres.map(
+                          (
+                            genre,
+                          ) => (
+                            <option
+                              value={
+                                genre
+                              }
+                              key={
+                                genre
+                              }
+                            >
+                              {
+                                genre
+                              }
+                            </option>
+                          ),
+                        )}
+                      </Field>
+
+                      <Field
+                        control="textarea"
+                        label={
+                          writerContent
+                            .create
+                            .summaryLabel
+                        }
+                        name="summary"
+                        value={
+                          draft.summary
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateDraft(
+                            "summary",
+                            event
+                              .target
+                              .value,
+                          )
+                        }
+                        placeholder={
+                          writerContent
+                            .create
+                            .summaryPlaceholder
+                        }
+                        rows={4}
+                      />
+
+                      {createState.message && (
+                        <p
+                          className="work-action-message"
+                          data-state={
+                            createState.status
+                          }
+                          role="status"
+                        >
+                          {
+                            createState.message
+                          }
+                        </p>
+                      )}
+
+                      <Button
+                        className="new-work-form__submit"
+                        loading={
+                          isCreating
+                        }
+                        type="submit"
+                      >
+                        {
+                          writerContent
+                            .create
+                            .submit
+                        }
+                      </Button>
+                    </form>
+                  </section>
+                </div>
               )}
 
-              <Button
-                className="new-work-form__submit"
-                loading={isCreating}
-                type="submit"
-              >
-                {writerContent.create.submit}
-              </Button>
-            </form>
-          </section>
-        </div>
-      )}
-
-      {isOpen && step === "editor" && (
-        <form
-          action={saveAction}
-          className={
-            isFocusMode
-              ? "writer-screen writer-screen--focus"
-              : "writer-screen"
-          }
-          role="dialog"
-          aria-modal="true"
-          aria-label={
-            writerContent.editor.editorLabel(
-              draft.title,
-            )
-          }
-        >
-          <input
-            name="workId"
-            type="hidden"
-            value={workId}
-          />
-
-          <input
-            name="chapterId"
-            type="hidden"
-            value={chapterId}
-          />
-
-          <input
-            name="genre"
-            type="hidden"
-            value={draft.genre}
-          />
-
-          <input
-            name="summary"
-            type="hidden"
-            value={draft.summary}
-          />
-
-          <header className="writer-toolbar">
-            <div className="writer-toolbar__document">
-              <WriterBrand compact />
-
-              <div className="writer-toolbar__identity">
-                <strong>{draft.title}</strong>
-                <span>
-                  {draft.chapterTitle}
-                </span>
-                <small>{saveStatus}</small>
-              </div>
-            </div>
-
-            <div className="writer-toolbar__session">
-              <span
-                className="writer-save-status"
-                data-state={saveState}
-                role="status"
-              >
-                <i aria-hidden="true" />
-                {saveStatus}
-              </span>
-
-              <span
-                className="writer-streak"
-                aria-label={
-                  writerContent.editor
-                    .streakLabel
-                }
-              >
-                {writerContent.editor.streak}
-              </span>
-            </div>
-
-            <div className="writer-toolbar__actions">
-              <Button
-                loading={isSaving}
-                type="submit"
-                variant="ghost"
-              >
-                {
-                  writerContent.editor
-                    .saveDraft
-                }
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={openPreview}
-                disabled={
-                  !draft.content.trim()
-                }
-              >
-                {writerContent.editor.preview}
-              </Button>
-
-              <Button
-                formAction={publishAction}
-                loading={isPublishing}
-                type="submit"
-                disabled={
-                  !draft.content.trim()
-                }
-              >
-                {writerContent.editor.publish}
-              </Button>
-            </div>
-          </header>
-
-          <div className="writer-context-bar">
-            <div
-              className="writer-goal"
-              aria-label={
-                writerContent.editor.goalLabel(
-                  goalProgress,
-                )
-              }
-            >
-              <div>
-                <span>
-                  {
-                    writerContent.editor
-                      .dailyGoal
+              {step ===
+                "editor" && (
+                <form
+                  action={
+                    saveAction
                   }
-                </span>
+                  className={
+                    isFocusMode
+                      ? "writer-screen writer-screen--focus"
+                      : "writer-screen"
+                  }
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={writerContent.editor.editorLabel(
+                    draft.title,
+                  )}
+                >
+                  <input
+                    name="workId"
+                    type="hidden"
+                    value={workId}
+                  />
 
-                <strong>
-                  {wordCount} /{" "}
-                  {dailyWordGoal}
-                </strong>
-              </div>
+                  <input
+                    name="chapterId"
+                    type="hidden"
+                    value={
+                      chapterId
+                    }
+                  />
 
-              <progress
-                max={100}
-                value={goalProgress}
-              >
-                %{goalProgress}
-              </progress>
+                  <input
+                    name="genre"
+                    type="hidden"
+                    value={
+                      draft.genre
+                    }
+                  />
 
-              <span>%{goalProgress}</span>
-            </div>
+                  <input
+                    name="summary"
+                    type="hidden"
+                    value={
+                      draft.summary
+                    }
+                  />
 
-            <button
-              className="focus-mode-toggle"
-              type="button"
-              aria-pressed={isFocusMode}
-              onClick={() =>
-                setIsFocusMode(
-                  (current) => !current,
-                )
-              }
-            >
-              <span aria-hidden="true">
-                ◉
-              </span>
+                  <header className="writer-toolbar">
+                    <div className="writer-toolbar__document">
+                      <WriterBrand
+                        compact
+                      />
 
-              {isFocusMode
-                ? writerContent.editor
-                    .exitFocus
-                : writerContent.editor
-                    .focus}
-            </button>
-          </div>
+                      <div className="writer-toolbar__identity">
+                        <strong>
+                          {
+                            draft.title
+                          }
+                        </strong>
 
-          <main className="writer-canvas">
-            <input
-              className="writer-work-title"
-              name="workTitle"
-              aria-label={
-                writerContent.create
-                  .titleLabel
-              }
-              value={draft.title}
-              onChange={(event) =>
-                updateDraft(
-                  "title",
-                  event.target.value,
-                )
-              }
-            />
+                        <span>
+                          {
+                            draft.chapterTitle
+                          }
+                        </span>
 
-            <input
-              className="writer-title"
-              name="chapterTitle"
-              aria-label={
-                writerContent.editor
-                  .chapterTitleLabel
-              }
-              value={draft.chapterTitle}
-              onChange={(event) =>
-                updateDraft(
-                  "chapterTitle",
-                  event.target.value,
-                )
-              }
-              autoFocus
-            />
+                        <small>
+                          {
+                            saveStatus
+                          }
+                        </small>
+                      </div>
+                    </div>
 
-            <p className="writer-subtitle">
-              {writerContent.editor.subtitle}
-            </p>
+                    <div className="writer-toolbar__session">
+                      <span
+                        className="writer-save-status"
+                        data-state={
+                          saveState
+                        }
+                        role="status"
+                      >
+                        <i
+                          aria-hidden="true"
+                        />
 
-            <textarea
-              className="writer-textarea"
-              name="content"
-              aria-label={
-                writerContent.editor
-                  .bodyLabel
-              }
-              value={draft.content}
-              onChange={(event) =>
-                updateDraft(
-                  "content",
-                  event.target.value,
-                )
-              }
-              placeholder={
-                writerContent.editor
-                  .bodyPlaceholder
-              }
-            />
+                        {
+                          saveStatus
+                        }
+                      </span>
 
-            {(draftState.message ||
-              publishState.message) && (
-              <p
-                className="work-action-message"
-                data-state={
-                  publishState.status ===
-                  "error"
-                    ? "error"
-                    : draftState.status
-                }
-                role="status"
-              >
-                {publishState.status ===
-                "error"
-                  ? publishState.message
-                  : draftState.message}
-              </p>
-            )}
-          </main>
+                      <span
+                        className="writer-streak"
+                        aria-label={
+                          writerContent
+                            .editor
+                            .streakLabel
+                        }
+                      >
+                        {
+                          writerContent
+                            .editor
+                            .streak
+                        }
+                      </span>
+                    </div>
 
-          <footer
-            className="writer-footer"
-            aria-label={
-              writerContent.editor
-                .statisticsLabel
-            }
-          >
-            <div className="writer-footer__stat">
-              <span>
-                {
-                  writerContent.editor
-                    .wordCount
-                }
-              </span>
+                    <div className="writer-toolbar__actions">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={
+                          closeFlow
+                        }
+                      >
+                        ← Geri
+                      </Button>
 
-              <strong>{wordCount}</strong>
-            </div>
+                      <Button
+                        loading={
+                          isSaving
+                        }
+                        type="submit"
+                        variant="ghost"
+                      >
+                        {
+                          writerContent
+                            .editor
+                            .saveDraft
+                        }
+                      </Button>
 
-            <div className="writer-footer__stat">
-              <span>
-                {
-                  writerContent.editor
-                    .characterCount
-                }
-              </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={
+                          openPreview
+                        }
+                        disabled={
+                          !draft.content.trim()
+                        }
+                      >
+                        {
+                          writerContent
+                            .editor
+                            .preview
+                        }
+                      </Button>
 
-              <strong>
-                {characterCount}
-              </strong>
-            </div>
+                      <Button
+                        formAction={
+                          publishAction
+                        }
+                        loading={
+                          isPublishing
+                        }
+                        type="submit"
+                        disabled={
+                          !draft.content.trim()
+                        }
+                      >
+                        {
+                          writerContent
+                            .editor
+                            .publish
+                        }
+                      </Button>
+                    </div>
+                  </header>
 
-            <div className="writer-footer__stat">
-              <span>
-                {
-                  writerContent.editor
-                    .readingTime
-                }
-              </span>
+                  <div className="writer-context-bar">
+                    <div
+                      className="writer-goal"
+                      aria-label={writerContent.editor.goalLabel(
+                        goalProgress,
+                      )}
+                    >
+                      <div>
+                        <span>
+                          {
+                            writerContent
+                              .editor
+                              .dailyGoal
+                          }
+                        </span>
 
-              <strong>
-                {readingTime}{" "}
-                {
-                  writerContent.editor
-                    .minuteUnit
-                }
-              </strong>
-            </div>
+                        <strong>
+                          {
+                            wordCount
+                          }{" "}
+                          /{" "}
+                          {
+                            dailyWordGoal
+                          }
+                        </strong>
+                      </div>
 
-            <div className="writer-footer__stat">
-              <span>
-                {
-                  writerContent.editor
-                    .writingGoal
-                }
-              </span>
+                      <progress
+                        max={
+                          100
+                        }
+                        value={
+                          goalProgress
+                        }
+                      >
+                        %
+                        {
+                          goalProgress
+                        }
+                      </progress>
 
-              <strong>
-                %{goalProgress}
-              </strong>
-            </div>
-          </footer>
-        </form>
-      )}
+                      <span>
+                        %
+                        {
+                          goalProgress
+                        }
+                      </span>
+                    </div>
 
-      {isOpen && step === "preview" && (
-        <div
-          className="publish-preview"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="preview-title"
-        >
-          <header className="preview-toolbar">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() =>
-                setStep("editor")
-              }
-            >
-              {writerContent.preview.back}
-            </Button>
+                    <button
+                      className="focus-mode-toggle"
+                      type="button"
+                      aria-pressed={
+                        isFocusMode
+                      }
+                      onClick={() =>
+                        setIsFocusMode(
+                          (
+                            current,
+                          ) =>
+                            !current,
+                        )
+                      }
+                    >
+                      <span
+                        aria-hidden="true"
+                      >
+                        ◉
+                      </span>
 
-            <div className="preview-toolbar__brand">
-              <WriterBrand compact />
+                      {isFocusMode
+                        ? writerContent
+                            .editor
+                            .exitFocus
+                        : writerContent
+                            .editor
+                            .focus}
+                    </button>
+                  </div>
 
-              <span>
-                {writerContent.preview.title}
-              </span>
-            </div>
+                  <div className="writer-editor-layout">
+                    <aside
+                      className="writer-chapters"
+                      aria-label="Eser bölümleri"
+                    >
+                      <div className="writer-chapters__header">
+                        <div>
+                          <span>
+                            Bölümler
+                          </span>
 
-            <form action={publishAction}>
-              <input
-                name="workId"
-                type="hidden"
-                value={workId}
-              />
+                          <strong>
+                            {
+                              chapters.length
+                            }
+                          </strong>
+                        </div>
 
-              <input
-                name="chapterId"
-                type="hidden"
-                value={chapterId}
-              />
+                        <button
+                          type="button"
+                          disabled
+                          title="Yeni bölüm ekleme bir sonraki adımda açılacak."
+                          aria-label="Yeni bölüm ekle"
+                        >
+                          +
+                        </button>
+                      </div>
 
-              <input
-                name="workTitle"
-                type="hidden"
-                value={draft.title}
-              />
+                      <div className="writer-chapters__summary">
+                        <span>
+                          Toplam
+                        </span>
 
-              <input
-                name="genre"
-                type="hidden"
-                value={draft.genre}
-              />
+                        <strong>
+                          {totalWordCount.toLocaleString(
+                            "tr-TR",
+                          )}{" "}
+                          kelime
+                        </strong>
+                      </div>
 
-              <input
-                name="summary"
-                type="hidden"
-                value={draft.summary}
-              />
+                      <nav className="writer-chapters__list">
+                        {chapters.map(
+                          (
+                            chapter,
+                          ) => {
+                            const isActive =
+                              chapter.id ===
+                              chapterId;
 
-              <input
-                name="chapterTitle"
-                type="hidden"
-                value={draft.chapterTitle}
-              />
+                            const chapterWords =
+                              isActive
+                                ? wordCount
+                                : chapter.wordCount;
 
-              <input
-                name="content"
-                type="hidden"
-                value={draft.content}
-              />
+                            return (
+                              <button
+                                type="button"
+                                className="writer-chapter-item"
+                                data-active={
+                                  isActive
+                                }
+                                aria-current={
+                                  isActive
+                                    ? "page"
+                                    : undefined
+                                }
+                                onClick={() =>
+                                  selectChapter(
+                                    chapter,
+                                  )
+                                }
+                                key={
+                                  chapter.id
+                                }
+                              >
+                                <span className="writer-chapter-item__position">
+                                  {
+                                    chapter.position
+                                  }
+                                </span>
 
-              <Button
-                loading={isPublishing}
-                type="submit"
-              >
-                {
-                  writerContent.preview
-                    .publish
-                }
-              </Button>
-            </form>
-          </header>
+                                <span className="writer-chapter-item__content">
+                                  <strong>
+                                    {
+                                      chapter.title
+                                    }
+                                  </strong>
 
-          <article className="preview-article">
-            <p>{draft.genre}</p>
+                                  <small>
+                                    {chapterWords.toLocaleString(
+                                      "tr-TR",
+                                    )}{" "}
+                                    kelime
+                                  </small>
+                                </span>
 
-            <h1 id="preview-title">
-              {draft.chapterTitle}
-            </h1>
+                                <span
+                                  className="writer-chapter-item__status"
+                                  aria-hidden="true"
+                                >
+                                  {isActive
+                                    ? "●"
+                                    : "›"}
+                                </span>
+                              </button>
+                            );
+                          },
+                        )}
+                      </nav>
 
-            <span>{draft.title}</span>
+                      {activeChapter && (
+                        <p className="writer-chapters__updated">
+                          Son düzenleme:{" "}
+                          {new Intl.DateTimeFormat(
+                            "tr-TR",
+                            {
+                              dateStyle:
+                                "medium",
+                              timeStyle:
+                                "short",
+                            },
+                          ).format(
+                            new Date(
+                              activeChapter.updatedAt,
+                            ),
+                          )}
+                        </p>
+                      )}
+                    </aside>
 
-            <div className="preview-article__body">
-              {draft.content}
-            </div>
-          </article>
-        </div>
-      )}
+                    <main className="writer-canvas">
+                      <input
+                        className="writer-work-title"
+                        name="workTitle"
+                        aria-label={
+                          writerContent
+                            .create
+                            .titleLabel
+                        }
+                        value={
+                          draft.title
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateDraft(
+                            "title",
+                            event
+                              .target
+                              .value,
+                          )
+                        }
+                      />
 
-      {isOpen && step === "success" && (
-        <div
-          className="publish-success"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="success-title"
-        >
-          <WriterBrand compact />
+                      <input
+                        className="writer-title"
+                        name="chapterTitle"
+                        aria-label={
+                          writerContent
+                            .editor
+                            .chapterTitleLabel
+                        }
+                        value={
+                          draft.chapterTitle
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateDraft(
+                            "chapterTitle",
+                            event
+                              .target
+                              .value,
+                          )
+                        }
+                        autoFocus
+                      />
 
-          <div className="publish-success__content">
-            <h2 id="success-title">
-              {writerContent.success.title}
-            </h2>
+                      <p className="writer-subtitle">
+                        {
+                          writerContent
+                            .editor
+                            .subtitle
+                        }
+                      </p>
 
-            <p>
-              {
-                writerContent.success
-                  .description
-              }
-            </p>
+                      <textarea
+                        className="writer-textarea"
+                        name="content"
+                        aria-label={
+                          writerContent
+                            .editor
+                            .bodyLabel
+                        }
+                        value={
+                          draft.content
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateDraft(
+                            "content",
+                            event
+                              .target
+                              .value,
+                          )
+                        }
+                        placeholder={
+                          writerContent
+                            .editor
+                            .bodyPlaceholder
+                        }
+                      />
 
-            <Button
-              type="button"
-              onClick={finishFlow}
-            >
-              {writerContent.success.action}
-            </Button>
-          </div>
-        </div>
-      )}
+                      {(draftState.message ||
+                        publishState.message) && (
+                        <p
+                          className="work-action-message"
+                          data-state={
+                            publishState.status ===
+                            "error"
+                              ? "error"
+                              : draftState.status
+                          }
+                          role="status"
+                        >
+                          {publishState.status ===
+                          "error"
+                            ? publishState.message
+                            : draftState.message}
+                        </p>
+                      )}
+                    </main>
+                  </div>
+
+                  <footer
+                    className="writer-footer"
+                    aria-label={
+                      writerContent
+                        .editor
+                        .statisticsLabel
+                    }
+                  >
+                    <div className="writer-footer__stat">
+                      <span>
+                        {
+                          writerContent
+                            .editor
+                            .wordCount
+                        }
+                      </span>
+
+                      <strong>
+                        {
+                          wordCount
+                        }
+                      </strong>
+                    </div>
+
+                    <div className="writer-footer__stat">
+                      <span>
+                        {
+                          writerContent
+                            .editor
+                            .characterCount
+                        }
+                      </span>
+
+                      <strong>
+                        {
+                          characterCount
+                        }
+                      </strong>
+                    </div>
+
+                    <div className="writer-footer__stat">
+                      <span>
+                        {
+                          writerContent
+                            .editor
+                            .readingTime
+                        }
+                      </span>
+
+                      <strong>
+                        {
+                          readingTime
+                        }{" "}
+                        {
+                          writerContent
+                            .editor
+                            .minuteUnit
+                        }
+                      </strong>
+                    </div>
+
+                    <div className="writer-footer__stat">
+                      <span>
+                        Toplam eser
+                      </span>
+
+                      <strong>
+                        {totalWordCount.toLocaleString(
+                          "tr-TR",
+                        )}
+                      </strong>
+                    </div>
+                  </footer>
+                </form>
+              )}
+
+              {step ===
+                "preview" && (
+                <div
+                  className="publish-preview"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="preview-title"
+                >
+                  <header className="preview-toolbar">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() =>
+                        setStep(
+                          "editor",
+                        )
+                      }
+                    >
+                      {
+                        writerContent
+                          .preview
+                          .back
+                      }
+                    </Button>
+
+                    <div className="preview-toolbar__brand">
+                      <WriterBrand
+                        compact
+                      />
+
+                      <span>
+                        {
+                          writerContent
+                            .preview
+                            .title
+                        }
+                      </span>
+                    </div>
+
+                    <form
+                      action={
+                        publishAction
+                      }
+                    >
+                      <input
+                        name="workId"
+                        type="hidden"
+                        value={
+                          workId
+                        }
+                      />
+
+                      <input
+                        name="chapterId"
+                        type="hidden"
+                        value={
+                          chapterId
+                        }
+                      />
+
+                      <input
+                        name="workTitle"
+                        type="hidden"
+                        value={
+                          draft.title
+                        }
+                      />
+
+                      <input
+                        name="genre"
+                        type="hidden"
+                        value={
+                          draft.genre
+                        }
+                      />
+
+                      <input
+                        name="summary"
+                        type="hidden"
+                        value={
+                          draft.summary
+                        }
+                      />
+
+                      <input
+                        name="chapterTitle"
+                        type="hidden"
+                        value={
+                          draft.chapterTitle
+                        }
+                      />
+
+                      <input
+                        name="content"
+                        type="hidden"
+                        value={
+                          draft.content
+                        }
+                      />
+
+                      <Button
+                        loading={
+                          isPublishing
+                        }
+                        type="submit"
+                      >
+                        {
+                          writerContent
+                            .preview
+                            .publish
+                        }
+                      </Button>
+                    </form>
+                  </header>
+
+                  <article className="preview-article">
+                    <p>
+                      {
+                        draft.genre
+                      }
+                    </p>
+
+                    <h1 id="preview-title">
+                      {
+                        draft.chapterTitle
+                      }
+                    </h1>
+
+                    <span>
+                      {
+                        draft.title
+                      }
+                    </span>
+
+                    <div className="preview-article__body">
+                      {
+                        draft.content
+                      }
+                    </div>
+                  </article>
+                </div>
+              )}
+
+              {step ===
+                "success" && (
+                <div
+                  className="publish-success"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="success-title"
+                >
+                  <WriterBrand
+                    compact
+                  />
+
+                  <div className="publish-success__content">
+                    <h2 id="success-title">
+                      {
+                        writerContent
+                          .success
+                          .title
+                      }
+                    </h2>
+
+                    <p>
+                      {
+                        writerContent
+                          .success
+                          .description
+                      }
+                    </p>
+
+                    <Button
+                      type="button"
+                      onClick={
+                        finishFlow
+                      }
+                    >
+                      {
+                        writerContent
+                          .success
+                          .action
+                      }
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

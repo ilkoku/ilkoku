@@ -7,6 +7,302 @@ datasource db {
   provider = "mysql"
 }
 
+model User {
+  id                      String                   @id @default(uuid()) @db.Char(36)
+  email                   String                   @unique
+  passwordHash            String                   @db.VarChar(255)
+  fullName                String                   @db.VarChar(160)
+  displayName             String?                  @db.VarChar(160)
+  username                String?                  @unique @db.VarChar(64)
+  avatarUrl               String?                  @db.VarChar(500)
+  bio                     String?                  @db.Text
+  role                    UserRole                 @default(reader)
+  status                  UserStatus               @default(active)
+  emailVerified           DateTime?
+  termsAcceptedAt         DateTime?
+  lastLoginAt             DateTime?
+  isPremium               Boolean                  @default(false)
+  isBanned                Boolean                  @default(false)
+  deletedAt               DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  auditLogs               AuditLog[]               @relation("AuditLogActor")
+  feedbackReceived        EditorFeedback[]         @relation("FeedbackAuthor")
+  feedbackWritten         EditorFeedback[]         @relation("FeedbackEditor")
+  emailVerificationTokens EmailVerificationToken[]
+  ownershipStamps         OwnershipStamp[]
+  passwordResetTokens     PasswordResetToken[]
+  profile                 Profile?
+  publisherSubmissions    PublisherSubmission[]    @relation("SubmissionAuthor")
+  reviewedRoleRequests    RoleRequest[]            @relation("RoleRequestReviewer")
+  roleRequests            RoleRequest[]            @relation("RoleRequestOwner")
+  sessions                Session[]
+  works                   Work[]
+
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+  @@index([lastLoginAt])
+  @@index([deletedAt])
+}
+
+model Profile {
+  id                   String   @id @default(uuid()) @db.Char(36)
+  userId               String   @unique @db.Char(36)
+  website              String?  @db.VarChar(500)
+  instagram            String?
+  linkedin             String?  @db.VarChar(500)
+  twitter              String?
+  country              String?  @db.VarChar(100)
+  city                 String?  @db.VarChar(100)
+  birthYear            Int?
+  writingGenres        String?  @db.LongText
+  completionPercentage Int      @default(0) @db.UnsignedTinyInt
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([country, city])
+  @@index([completionPercentage])
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Char(36)
+  tokenHash String   @unique @db.Char(64)
+  userId    String   @db.Char(36)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Char(36)
+  tokenHash String    @unique @db.Char(64)
+  userId    String    @db.Char(36)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid()) @db.Char(36)
+  tokenHash String    @unique @db.Char(64)
+  userId    String    @db.Char(36)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model RoleRequest {
+  id            String            @id @default(uuid()) @db.Char(36)
+  userId        String            @db.Char(36)
+  requestedRole UserRole
+  status        RoleRequestStatus @default(pending)
+  reviewedById  String?           @db.Char(36)
+  reviewedAt    DateTime?
+  reviewNote    String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  reviewedBy    User?             @relation("RoleRequestReviewer", fields: [reviewedById], references: [id])
+  user          User              @relation("RoleRequestOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([requestedRole, status])
+  @@index([reviewedById])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String      @id @default(uuid()) @db.Char(36)
+  actorId    String?     @db.Char(36)
+  action     AuditAction
+  entityType String?     @db.VarChar(80)
+  entityId   String?
+  metadata   String?     @db.LongText
+  ipAddress  String?     @db.VarChar(45)
+  userAgent  String?     @db.VarChar(500)
+  createdAt  DateTime    @default(now())
+  actor      User?       @relation("AuditLogActor", fields: [actorId], references: [id])
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model Work {
+  id                   String                @id @default(uuid()) @db.Char(36)
+  authorId             String                @db.Char(36)
+  title                String                @db.VarChar(220)
+  subtitle             String?               @db.VarChar(280)
+  slug                 String                @unique @db.VarChar(260)
+  description          String?               @db.Text
+  genre                String?               @db.VarChar(120)
+  language             String                @default("tr") @db.VarChar(10)
+  coverUrl             String?               @db.VarChar(500)
+  status               WorkStatus            @default(draft)
+  visibility           WorkVisibility        @default(private)
+  publishedAt          DateTime?
+  archivedAt           DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  chapters             Chapter[]
+  editorFeedback       EditorFeedback[]
+  ownershipStamps      OwnershipStamp[]
+  publisherSubmissions PublisherSubmission[]
+  author               User                  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  versions             WorkVersion[]
+
+  @@index([authorId])
+  @@index([status])
+  @@index([visibility])
+  @@index([language])
+  @@index([createdAt])
+  @@index([updatedAt])
+}
+
+model Chapter {
+  id             String           @id @default(uuid()) @db.Char(36)
+  workId         String           @db.Char(36)
+  authorId       String           @db.Char(36)
+  title          String           @db.VarChar(220)
+  content        String           @db.LongText
+  position       Int
+  status         ChapterStatus    @default(draft)
+  publishedAt    DateTime?
+  archivedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  work           Work             @relation(fields: [workId], references: [id], onDelete: Cascade)
+  editorFeedback EditorFeedback[]
+  versions       WorkVersion[]
+
+  @@unique([workId, position])
+  @@index([workId])
+  @@index([authorId])
+  @@index([status])
+  @@index([updatedAt])
+}
+
+model WorkVersion {
+  id            String   @id @default(uuid()) @db.Char(36)
+  workId        String   @db.Char(36)
+  chapterId     String?  @db.Char(36)
+  versionNumber Int
+  title         String?  @db.VarChar(220)
+  subtitle      String?  @db.VarChar(280)
+  description   String?  @db.Text
+  content       String?  @db.LongText
+  contentHash   String   @db.VarChar(128)
+  createdAt     DateTime @default(now())
+  chapter       Chapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  work          Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@unique([workId, versionNumber])
+  @@index([workId])
+  @@index([chapterId])
+  @@index([createdAt])
+}
+
+model OwnershipStamp {
+  id          String               @id @default(uuid()) @db.Char(36)
+  workId      String               @db.Char(36)
+  authorId    String               @db.Char(36)
+  stampCode   String               @unique @db.VarChar(100)
+  contentHash String               @db.VarChar(128)
+  version     Int                  @default(1)
+  status      OwnershipStampStatus @default(active)
+  stampedAt   DateTime             @default(now())
+  revokedAt   DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  author      User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  work        Work                 @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@index([workId])
+  @@index([authorId])
+  @@index([status])
+  @@index([stampedAt])
+}
+
+model EditorFeedback {
+  id         String           @id @default(uuid()) @db.Char(36)
+  workId     String           @db.Char(36)
+  chapterId  String?          @db.Char(36)
+  editorId   String           @db.Char(36)
+  authorId   String           @db.Char(36)
+  title      String           @db.VarChar(160)
+  content    String           @db.LongText
+  category   String           @db.VarChar(60)
+  status     FeedbackStatus   @default(unread)
+  priority   FeedbackPriority @default(normal)
+  readAt     DateTime?
+  archivedAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  author     User             @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  chapter    Chapter?         @relation(fields: [chapterId], references: [id])
+  editor     User             @relation("FeedbackEditor", fields: [editorId], references: [id])
+  work       Work             @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, status, createdAt])
+  @@index([editorId, createdAt])
+  @@index([workId])
+  @@index([chapterId])
+}
+
+model Publisher {
+  id                 String                @id @default(uuid()) @db.Char(36)
+  companyName        String
+  slug               String                @unique @db.VarChar(220)
+  description        String?               @db.Text
+  websiteUrl         String?               @db.VarChar(500)
+  logoUrl            String?               @db.VarChar(500)
+  verified           Boolean               @default(false)
+  acceptsSubmissions Boolean               @default(true)
+  active             Boolean               @default(true)
+  archivedAt         DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  submissions        PublisherSubmission[]
+
+  @@index([active, verified, archivedAt])
+  @@index([companyName])
+}
+
+model PublisherSubmission {
+  id            String                    @id @default(uuid()) @db.Char(36)
+  publisherId   String                    @db.Char(36)
+  workId        String                    @db.Char(36)
+  authorId      String                    @db.Char(36)
+  coverLetter   String                    @db.Text
+  publisherNote String?                   @db.Text
+  status        PublisherSubmissionStatus @default(pending)
+  submittedAt   DateTime                  @default(now())
+  archivedAt    DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  author        User                      @relation("SubmissionAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  publisher     Publisher                 @relation(fields: [publisherId], references: [id])
+  work          Work                      @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@unique([authorId, publisherId, workId, archivedAt])
+  @@index([authorId, status, updatedAt])
+  @@index([publisherId, status])
+  @@index([workId])
+}
+
 enum WorkStatus {
   draft
   in_review
@@ -84,338 +380,4 @@ enum AuditAction {
   work_created
   work_published
   ownership_stamp_created
-}
-
-model User {
-  id           String  @id @default(uuid()) @db.Char(36)
-  email        String  @unique @db.VarChar(191)
-  passwordHash String  @db.VarChar(255)
-  fullName     String  @db.VarChar(160)
-  displayName  String? @db.VarChar(160)
-  username     String? @unique @db.VarChar(64)
-  avatarUrl    String? @db.VarChar(500)
-  bio          String? @db.Text
-
-  role   UserRole   @default(reader)
-  status UserStatus @default(active)
-
-  emailVerified   DateTime?
-  termsAcceptedAt DateTime?
-  lastLoginAt     DateTime?
-  isPremium       Boolean   @default(false)
-  isBanned        Boolean   @default(false)
-  deletedAt       DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  profile                 Profile?
-  sessions                Session[]
-  passwordResetTokens     PasswordResetToken[]
-  emailVerificationTokens EmailVerificationToken[]
-  auditLogs               AuditLog[]               @relation("AuditLogActor")
-
-  roleRequests         RoleRequest[]         @relation("RoleRequestOwner")
-  reviewedRoleRequests RoleRequest[]         @relation("RoleRequestReviewer")
-  works                Work[]
-  ownershipStamps      OwnershipStamp[]
-  feedbackReceived     EditorFeedback[]      @relation("FeedbackAuthor")
-  feedbackWritten      EditorFeedback[]      @relation("FeedbackEditor")
-  publisherSubmissions PublisherSubmission[] @relation("SubmissionAuthor")
-
-  @@index([role])
-  @@index([status])
-  @@index([createdAt])
-  @@index([lastLoginAt])
-  @@index([deletedAt])
-}
-
-model Profile {
-  id     String @id @default(uuid()) @db.Char(36)
-  userId String @unique @db.Char(36)
-
-  website   String? @db.VarChar(500)
-  instagram String? @db.VarChar(191)
-  linkedin  String? @db.VarChar(500)
-  twitter   String? @db.VarChar(191)
-
-  country   String? @db.VarChar(100)
-  city      String? @db.VarChar(100)
-  birthYear Int?
-
-  writingGenres        Json?
-  completionPercentage Int   @default(0) @db.UnsignedTinyInt
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([country, city])
-  @@index([completionPercentage])
-}
-
-model Session {
-  id        String @id @default(uuid()) @db.Char(36)
-  tokenHash String @unique @db.Char(64)
-  userId    String @db.Char(36)
-
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
-}
-
-model PasswordResetToken {
-  id        String @id @default(uuid()) @db.Char(36)
-  tokenHash String @unique @db.Char(64)
-  userId    String @db.Char(36)
-
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
-}
-
-model EmailVerificationToken {
-  id        String @id @default(uuid()) @db.Char(36)
-  tokenHash String @unique @db.Char(64)
-  userId    String @db.Char(36)
-
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
-}
-
-model RoleRequest {
-  id            String            @id @default(uuid()) @db.Char(36)
-  userId        String            @db.Char(36)
-  requestedRole UserRole
-  status        RoleRequestStatus @default(pending)
-
-  reviewedById String?   @db.Char(36)
-  reviewedAt   DateTime?
-  reviewNote   String?   @db.Text
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation("RoleRequestOwner", fields: [userId], references: [id], onDelete: Cascade)
-
-  reviewedBy User? @relation("RoleRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
-
-  @@index([userId, status])
-  @@index([requestedRole, status])
-  @@index([reviewedById])
-  @@index([createdAt])
-}
-
-model AuditLog {
-  id         String      @id @default(uuid()) @db.Char(36)
-  actorId    String?     @db.Char(36)
-  action     AuditAction
-  entityType String?     @db.VarChar(80)
-  entityId   String?     @db.VarChar(191)
-  metadata   Json?
-  ipAddress  String?     @db.VarChar(45)
-  userAgent  String?     @db.VarChar(500)
-  createdAt  DateTime    @default(now())
-
-  actor User? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
-
-  @@index([actorId, createdAt])
-  @@index([action, createdAt])
-  @@index([entityType, entityId])
-  @@index([createdAt])
-}
-
-model Work {
-  id          String         @id @default(uuid()) @db.Char(36)
-  authorId    String         @db.Char(36)
-  title       String         @db.VarChar(220)
-  subtitle    String?        @db.VarChar(280)
-  slug        String         @unique @db.VarChar(260)
-  description String?        @db.Text
-  genre       String?        @db.VarChar(120)
-  language    String         @default("tr") @db.VarChar(10)
-  coverUrl    String?        @db.VarChar(500)
-  status      WorkStatus     @default(draft)
-  visibility  WorkVisibility @default(private)
-
-  publishedAt DateTime?
-  archivedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  author               User                  @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  chapters             Chapter[]
-  versions             WorkVersion[]
-  ownershipStamps      OwnershipStamp[]
-  editorFeedback       EditorFeedback[]
-  publisherSubmissions PublisherSubmission[]
-
-  @@index([authorId])
-  @@index([status])
-  @@index([visibility])
-  @@index([language])
-  @@index([createdAt])
-  @@index([updatedAt])
-}
-
-model Chapter {
-  id       String @id @default(uuid()) @db.Char(36)
-  workId   String @db.Char(36)
-  authorId String @db.Char(36)
-
-  title    String        @db.VarChar(220)
-  content  String        @db.LongText
-  position Int
-  status   ChapterStatus @default(draft)
-
-  publishedAt DateTime?
-  archivedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  work           Work             @relation(fields: [workId], references: [id], onDelete: Cascade)
-  versions       WorkVersion[]
-  editorFeedback EditorFeedback[]
-
-  @@unique([workId, position])
-  @@index([workId])
-  @@index([authorId])
-  @@index([status])
-  @@index([updatedAt])
-}
-
-model WorkVersion {
-  id        String  @id @default(uuid()) @db.Char(36)
-  workId    String  @db.Char(36)
-  chapterId String? @db.Char(36)
-
-  versionNumber Int
-  title         String? @db.VarChar(220)
-  subtitle      String? @db.VarChar(280)
-  description   String? @db.Text
-  content       String? @db.LongText
-  contentHash   String  @db.VarChar(128)
-
-  createdAt DateTime @default(now())
-
-  work    Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
-  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-
-  @@unique([workId, versionNumber])
-  @@index([workId])
-  @@index([chapterId])
-  @@index([createdAt])
-}
-
-model OwnershipStamp {
-  id       String @id @default(uuid()) @db.Char(36)
-  workId   String @db.Char(36)
-  authorId String @db.Char(36)
-
-  stampCode   String               @unique @db.VarChar(100)
-  contentHash String               @db.VarChar(128)
-  version     Int                  @default(1)
-  status      OwnershipStampStatus @default(active)
-
-  stampedAt DateTime  @default(now())
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  work   Work @relation(fields: [workId], references: [id], onDelete: Cascade)
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@index([workId])
-  @@index([authorId])
-  @@index([status])
-  @@index([stampedAt])
-}
-
-model EditorFeedback {
-  id        String  @id @default(uuid()) @db.Char(36)
-  workId    String  @db.Char(36)
-  chapterId String? @db.Char(36)
-  editorId  String  @db.Char(36)
-  authorId  String  @db.Char(36)
-
-  title    String           @db.VarChar(160)
-  content  String           @db.LongText
-  category String           @db.VarChar(60)
-  status   FeedbackStatus   @default(unread)
-  priority FeedbackPriority @default(normal)
-
-  readAt     DateTime?
-  archivedAt DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  work    Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
-  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
-  editor  User     @relation("FeedbackEditor", fields: [editorId], references: [id], onDelete: Restrict)
-  author  User     @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@index([authorId, status, createdAt])
-  @@index([editorId, createdAt])
-  @@index([workId])
-  @@index([chapterId])
-}
-
-model Publisher {
-  id                 String    @id @default(uuid()) @db.Char(36)
-  companyName        String    @db.VarChar(191)
-  slug               String    @unique @db.VarChar(220)
-  description        String?   @db.Text
-  websiteUrl         String?   @db.VarChar(500)
-  logoUrl            String?   @db.VarChar(500)
-  verified           Boolean   @default(false)
-  acceptsSubmissions Boolean   @default(true)
-  active             Boolean   @default(true)
-  archivedAt         DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  submissions PublisherSubmission[]
-
-  @@index([active, verified, archivedAt])
-  @@index([companyName])
-}
-
-model PublisherSubmission {
-  id          String @id @default(uuid()) @db.Char(36)
-  publisherId String @db.Char(36)
-  workId      String @db.Char(36)
-  authorId    String @db.Char(36)
-
-  coverLetter   String                    @db.Text
-  publisherNote String?                   @db.Text
-  status        PublisherSubmissionStatus @default(pending)
-  submittedAt   DateTime                  @default(now())
-  archivedAt    DateTime?
-  createdAt     DateTime                  @default(now())
-  updatedAt     DateTime                  @updatedAt
-
-  publisher Publisher @relation(fields: [publisherId], references: [id], onDelete: Restrict)
-  work      Work      @relation(fields: [workId], references: [id], onDelete: Cascade)
-  author    User      @relation("SubmissionAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@unique([authorId, publisherId, workId, archivedAt])
-  @@index([authorId, status, updatedAt])
-  @@index([publisherId, status])
-  @@index([workId])
 }

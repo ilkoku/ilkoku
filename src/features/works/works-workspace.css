@@ -1,4 +1,4 @@
-.works-workspace { display: grid; width: 100%; max-width: 100%; gap: var(--space-8); overflow: clip; }
+.works-workspace { display: grid; width: 100%; max-width: 100%; gap: var(--space-8); overflow: visible; }
 .continue-writing { display: grid; min-height: 60vh; place-content: center; justify-items: start; }
 .continue-writing > p:first-child { margin: 0; color: var(--color-primary); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
 .continue-writing h1 { max-width: 50rem; margin: var(--space-3) 0 var(--space-6); font-family: var(--font-playfair), serif; font-size: clamp(2.5rem, 7vw, 5rem); font-weight: 500; line-height: 1; }

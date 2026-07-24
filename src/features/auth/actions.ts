@@ -3,7 +3,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { notificationContent, validationContent } from "@/content";
-import { getSiteUrl } from "@/lib/supabase/config";
+import { getSiteUrl } from "@/lib/site-url";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { loginUser } from "@/lib/auth/login";
 import { hashPassword } from "@/lib/auth/password";

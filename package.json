@@ -11,8 +11,6 @@
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.9.0",
     "@prisma/client": "^7.8.0",
-    "@supabase/ssr": "^0.12.3",
-    "@supabase/supabase-js": "^2.110.5",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/bcrypt": "^6.0.0",
     "bcrypt": "^6.0.0",

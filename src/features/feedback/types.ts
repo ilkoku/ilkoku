@@ -1,4 +1,14 @@
-import type { FeedbackCategory, FeedbackPriority, FeedbackStatus } from "@/types/database";
+export type FeedbackCategory =
+  | "genel"
+  | "kurgu"
+  | "karakter"
+  | "anlatım"
+  | "dil"
+  | "yapı"
+  | "yayın_hazırlığı";
+
+export type FeedbackPriority = "normal" | "important";
+export type FeedbackStatus = "unread" | "read" | "archived";
 
 export type FeedbackTab = "unread" | "all" | "archived";
 export type FeedbackOrder = "newest" | "oldest";
@@ -31,4 +41,7 @@ export interface FeedbackActionState {
   status: "idle" | "success" | "error";
 }
 
-export const initialFeedbackActionState: FeedbackActionState = { message: "", status: "idle" };
+export const initialFeedbackActionState: FeedbackActionState = {
+  message: "",
+  status: "idle",
+};

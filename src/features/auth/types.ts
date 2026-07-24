@@ -1,7 +1,8 @@
-export type UserRole = "reader" | "writer" | "editor" | "publisher";
+export type UserRole = "reader" | "writer" | "editor" | "publisher" | "admin";
+export type RegistrationRole = Exclude<UserRole, "admin">;
 
 export interface RoleOption {
-  id: UserRole;
+  id: RegistrationRole;
   icon: string;
   title: string;
   description: string;

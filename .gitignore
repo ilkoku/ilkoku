@@ -52,3 +52,7 @@ supabase/.temp/
 
 # Local Supabase config
 src/lib/supabase/config.ts
+# Local backup artifacts
+*.sql
+*.zip
+*.backup.prisma

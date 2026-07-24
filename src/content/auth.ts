@@ -161,6 +161,7 @@ export const authContent = {
     home: commonContent.homeAction,
   },
   roles: {
+    admin: "Yönetici",
     editor: "Editör",
     publisher: "Yayınevi",
     reader: "Okur",

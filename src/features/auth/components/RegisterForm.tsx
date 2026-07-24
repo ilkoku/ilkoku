@@ -8,10 +8,10 @@ import { authContent } from "@/content";
 import { registerAction } from "../actions";
 import { roleOptions } from "../data";
 import { initialAuthState } from "../state";
-import type { UserRole } from "../types";
+import type { RegistrationRole } from "../types";
 
 export function RegisterForm() {
-  const [selectedRole, setSelectedRole] = useState<UserRole>("writer");
+  const [selectedRole, setSelectedRole] = useState<RegistrationRole>("reader");
   const [state, formAction, pending] = useActionState(registerAction, initialAuthState);
 
   return (
@@ -22,6 +22,7 @@ export function RegisterForm() {
         <Field control="email" label={authContent.common.email} name="email" autoComplete="email" placeholder={authContent.common.emailPlaceholder} required />
         <Field control="password" label={authContent.common.password} name="password" autoComplete="new-password" placeholder={authContent.register.passwordPlaceholder} minLength={8} required />
         <Field control="password" label={authContent.register.passwordConfirmation} name="password-confirmation" autoComplete="new-password" placeholder={authContent.register.passwordConfirmationPlaceholder} minLength={8} required />
+        <input name="role" type="hidden" value={selectedRole} />
         <fieldset className="auth-register-role">
           <legend>{authContent.register.roleLegend}</legend>
           <p>{authContent.register.roleDescription}</p>
@@ -34,7 +35,6 @@ export function RegisterForm() {
                   <input
                     aria-describedby={descriptionId}
                     checked={isSelected}
-                    name="role"
                     onChange={() => setSelectedRole(role.id)}
                     type="radio"
                     value={role.id}

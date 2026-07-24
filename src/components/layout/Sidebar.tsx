@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Brand } from "@/components/ui/Brand";
 import { NavItem } from "@/components/ui/NavItem";
@@ -14,11 +14,12 @@ function isActiveRoute(pathname: string, href: string) {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const [menuState, setMenuState] = useState({ isOpen: false, pathname });
+  const isOpen = menuState.pathname === pathname && menuState.isOpen;
 
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+  function setMenuOpen(nextIsOpen: boolean) {
+    setMenuState({ isOpen: nextIsOpen, pathname });
+  }
 
   return (
     <>
@@ -28,7 +29,7 @@ export function Sidebar() {
         aria-controls="dashboard-sidebar"
         aria-expanded={isOpen}
         aria-label={isOpen ? "Menüyü kapat" : "Menüyü aç"}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => setMenuOpen(!isOpen)}
       >
         <span aria-hidden="true" />
         <span aria-hidden="true" />
@@ -40,7 +41,7 @@ export function Sidebar() {
         type="button"
         aria-label="Menüyü kapat"
         data-open={isOpen || undefined}
-        onClick={() => setIsOpen(false)}
+        onClick={() => setMenuOpen(false)}
       />
 
       <aside id="dashboard-sidebar" className="sidebar" data-open={isOpen || undefined}>

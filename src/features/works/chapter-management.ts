@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 function normalizeText(value: string) {
@@ -20,7 +21,7 @@ function hashContent(value: string) {
 }
 
 async function createVersionSnapshot(
-  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  tx: Prisma.TransactionClient,
   chapter: {
     id: string;
     workId: string;
@@ -53,7 +54,7 @@ async function createVersionSnapshot(
 }
 
 async function getOwnedChapter(
-  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  tx: Prisma.TransactionClient,
   authorId: string,
   chapterId: string,
 ) {

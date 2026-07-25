@@ -18,7 +18,10 @@ function parseDatabaseUrl(value?: string): MariaDbConfig | null {
 
   try {
     const url = new URL(value);
-    if (url.protocol !== "mysql:" && url.protocol !== "mariadb:") return null;
+
+    if (url.protocol !== "mysql:" && url.protocol !== "mariadb:") {
+      return null;
+    }
 
     return {
       database: url.pathname.replace(/^\//, ""),
@@ -34,13 +37,22 @@ function parseDatabaseUrl(value?: string): MariaDbConfig | null {
 
 function getEnvMariaDbConfig(): MariaDbConfig | null {
   const { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER } = process.env;
-  if (!DB_HOST || !DB_NAME || !DB_USER || DB_PASSWORD === undefined) return null;
+
+  if (!DB_HOST || !DB_NAME || !DB_USER || DB_PASSWORD === undefined) {
+    return null;
+  }
+
+  const port = Number(DB_PORT ?? 3306);
+
+  if (!Number.isInteger(port) || port <= 0) {
+    throw new Error("DB_PORT must be a positive integer.");
+  }
 
   return {
     database: DB_NAME,
     host: DB_HOST,
     password: DB_PASSWORD,
-    port: Number(DB_PORT ?? 3306),
+    port,
     user: DB_USER,
   };
 }
@@ -52,20 +64,21 @@ function getMariaDbConfig(): MariaDbConfig {
   if (envConfig) return envConfig;
   if (urlConfig) return urlConfig;
 
-  throw new Error("MariaDB runtime configuration is missing. Set DB_HOST/DB_USER/DB_PASSWORD/DB_NAME or DATABASE_URL.");
+  throw new Error(
+    "MariaDB runtime configuration is missing. Set DB_HOST/DB_USER/DB_PASSWORD/DB_NAME or DATABASE_URL.",
+  );
 }
 
-const adapter = new PrismaMariaDb({
-  ...getMariaDbConfig(),
-  connectionLimit: 5,
-});
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter,
+function createPrismaClient() {
+  const adapter = new PrismaMariaDb({
+    ...getMariaDbConfig(),
+    connectionLimit: 2,
   });
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  return new PrismaClient({
+    adapter,
+  });
 }
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+globalForPrisma.prisma = prisma;

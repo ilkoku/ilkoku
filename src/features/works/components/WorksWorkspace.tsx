@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { workspaceContent } from "@/content";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
+import { submitForEditorAction } from "@/features/editor-review/actions/editor-review.actions";
 
 import type { WorkWithChapterSummary } from "../types";
 import { WorkArchiveAction } from "./WorkArchiveAction";
@@ -439,6 +440,36 @@ export function WorksWorkspace({
                         </dd>
                       </div>
                     </dl>
+
+                    {work.status === "published" && (
+                      <section className="workspace-editor-review" aria-label="Profesyonel editör incelemesi">
+                        <div>
+                          <strong>Profesyonel Editör İncelemesi</strong>
+                          <span>
+                            {work.editorReviewStatus === "requested"
+                              ? "Eser editör incelemesinde."
+                              : work.editorReviewStatus === "completed"
+                                ? "Eser değerlendirmesi tamamlandı."
+                                : "Yayımlanmış eserini bütün olarak editör incelemesine gönder."}
+                          </span>
+                        </div>
+
+                        {work.editorReviewStatus === "not_requested" ? (
+                          <form action={submitForEditorAction}>
+                            <input name="workId" type="hidden" value={work.id} />
+                            <Button type="submit" variant="outline">
+                              Editör İncelemesine Gönder
+                            </Button>
+                          </form>
+                        ) : (
+                          <span className="workspace-editor-review__status">
+                            {work.editorReviewStatus === "requested"
+                              ? "İnceleme bekliyor"
+                              : "Tamamlandı"}
+                          </span>
+                        )}
+                      </section>
+                    )}
 
                     <div className="workspace-work-card__actions">
                       {work.status !==

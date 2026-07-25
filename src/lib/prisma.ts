@@ -18,7 +18,10 @@ function parseDatabaseUrl(value?: string): MariaDbConfig | null {
 
   try {
     const url = new URL(value);
-    if (url.protocol !== "mysql:" && url.protocol !== "mariadb:") return null;
+
+    if (url.protocol !== "mysql:" && url.protocol !== "mariadb:") {
+      return null;
+    }
 
     return {
       database: url.pathname.replace(/^\//, ""),
@@ -33,8 +36,22 @@ function parseDatabaseUrl(value?: string): MariaDbConfig | null {
 }
 
 function getEnvMariaDbConfig(): MariaDbConfig | null {
-  const { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER } = process.env;
-  if (!DB_HOST || !DB_NAME || !DB_USER || DB_PASSWORD === undefined) return null;
+  const {
+    DB_HOST,
+    DB_NAME,
+    DB_PASSWORD,
+    DB_PORT,
+    DB_USER,
+  } = process.env;
+
+  if (
+    !DB_HOST ||
+    !DB_NAME ||
+    !DB_USER ||
+    DB_PASSWORD === undefined
+  ) {
+    return null;
+  }
 
   return {
     database: DB_NAME,
@@ -52,19 +69,29 @@ function getMariaDbConfig(): MariaDbConfig {
   if (envConfig) return envConfig;
   if (urlConfig) return urlConfig;
 
-  throw new Error("MariaDB runtime configuration is missing. Set DB_HOST/DB_USER/DB_PASSWORD/DB_NAME or DATABASE_URL.");
+  throw new Error(
+    "MariaDB runtime configuration is missing. " +
+      "Set DB_HOST/DB_USER/DB_PASSWORD/DB_NAME or DATABASE_URL.",
+  );
 }
 
-const adapter = new PrismaMariaDb({
-  ...getMariaDbConfig(),
-  connectionLimit: 5,
-});
+function createPrismaClient() {
+  const adapter = new PrismaMariaDb({
+    ...getMariaDbConfig(),
+
+    // Hostinger paylaşımlı MariaDB kotasını korumak için
+    // uygulama örneği başına tek bağlantı kullanılır.
+    connectionLimit: 1,
+  });
+
+  return new PrismaClient({
+    adapter,
+  });
+}
 
 export const prisma =
   globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter,
-  });
+  createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

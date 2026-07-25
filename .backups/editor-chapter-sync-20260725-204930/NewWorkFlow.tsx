@@ -202,59 +202,6 @@ export function NewWorkFlow({
   const [isFocusMode, setIsFocusMode] =
     useState(false);
 
-  /*
-   * URL'den seçilen eser/bölüm değiştiğinde editörü yeni bölümle
-   * senkronize eder. Böylece "Yazmaya Başla" ve "Devam Et"
-   * doğru bölümü açar.
-   */
-  useEffect(() => {
-    const nextChapters =
-      getInitialChapters(initialWork);
-
-    const nextChapter =
-      getInitialChapter(initialWork);
-
-    setChapters(nextChapters);
-
-    setDraft(
-      workToDraft(
-        initialWork,
-        nextChapter,
-      ),
-    );
-
-    setWorkId(
-      initialWork?.id ?? "",
-    );
-
-    setChapterId(
-      nextChapter?.id ?? "",
-    );
-
-    setSaveState(
-      initialWork
-        ? "kaydedildi"
-        : "kaydedilmedi",
-    );
-
-    setIsFocusMode(false);
-
-    if (autoOpen) {
-      setIsOpen(true);
-
-      setStep(
-        initialWork
-          ? "editor"
-          : "create",
-      );
-    }
-  }, [
-    autoOpen,
-    initialWork?.id,
-    initialWork?.latestChapter?.id,
-  ]);
-
-
   const autosaveTimeout =
     useRef<ReturnType<typeof setTimeout> | null>(
       null,
@@ -1205,13 +1152,17 @@ export function NewWorkFlow({
                       </Button>
 
                       <Button
-                        className="writer-save-button"
                         loading={
                           isSaving
                         }
                         type="submit"
+                        variant="ghost"
                       >
-                        Taslak Olarak Kaydet
+                        {
+                          writerContent
+                            .editor
+                            .saveDraft
+                        }
                       </Button>
 
                       <Button
@@ -1299,17 +1250,6 @@ export function NewWorkFlow({
                           goalProgress
                         }
                       </span>
-
-                      <small className="writer-goal__remaining">
-                        {wordCount >= dailyWordGoal
-                          ? "Bugünkü hedef tamamlandı 🎉"
-                          : `${Math.max(
-                              dailyWordGoal - wordCount,
-                              0,
-                            ).toLocaleString(
-                              "tr-TR",
-                            )} kelime kaldı`}
-                      </small>
                     </div>
 
                     <button
@@ -1585,6 +1525,7 @@ export function NewWorkFlow({
                         </p>
                       )}
                     </main>
+                  </div>
 
                   <footer
                     className="writer-footer"
@@ -1659,7 +1600,6 @@ export function NewWorkFlow({
                       </strong>
                     </div>
                   </footer>
-                  </div>
                 </form>
               )}
 

@@ -4,6 +4,8 @@ import { readingContent } from "@/content";
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
 import { getPublicChapter } from "@/features/works/queries";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: readingContent.chapter.metadataTitle,
   description: readingContent.chapter.metadataDescription,

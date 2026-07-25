@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
@@ -13,19 +12,12 @@ export const metadata: Metadata = {
   title: "Yazmaya Devam Et | İlkOku",
   description: "Son eserinde kaldığın yerden yazmaya devam et.",
 };
-
 export const dynamic = "force-dynamic";
 
-type ContinueWritingPageProps = {
-  searchParams: Promise<{ bolum?: string; eser?: string }>;
-};
-
-export default async function ContinueWritingPage({ searchParams }: ContinueWritingPageProps) {
+export default async function ContinueWritingPage({ searchParams }: { searchParams: Promise<{ bolum?: string; eser?: string }> }) {
   const profile = await getCurrentProfile();
-
   if (!profile) redirect("/giris?sonraki=/yazmaya-devam");
   if (profile.role !== "writer") redirect("/erisim-reddedildi");
-
   const parameters = await searchParams;
   const latestWork = await getContinueWritingWork(profile.id, parameters.eser, parameters.bolum);
 
@@ -34,15 +26,12 @@ export default async function ContinueWritingPage({ searchParams }: ContinueWrit
       <section className="continue-writing">
         <p>Yazma Alanı</p>
         <h1>{latestWork ? `${latestWork.title} eserine dönülüyor…` : "İlk eserini oluşturmaya başla."}</h1>
-
-        {latestWork && !latestWork.latestChapter ? (
-          <CreateChapterForm workId={latestWork.id} />
-        ) : (
-          <NewWorkFlow autoOpen initialWork={latestWork || undefined} triggerLabel={latestWork ? "Editörü Aç" : "Yeni Eser"} />
-        )}
+        {latestWork && !latestWork.latestChapter
+          ? <CreateChapterForm workId={latestWork.id} />
+          : <NewWorkFlow autoOpen initialWork={latestWork || undefined} triggerLabel={latestWork ? "Editörü Aç" : "Yeni Eser"} />}
 
         {latestWork?.chapters?.length ? (
-          <ChapterManagementPanel authorId={profile.id} workId={latestWork.id} chapters={latestWork.chapters} />
+          <ChapterManagementPanel authorId={profile.id} chapters={latestWork.chapters} />
         ) : null}
       </section>
     </AppShell>

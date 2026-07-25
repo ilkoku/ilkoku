@@ -1,92 +1,334 @@
-import { permissionLabels, roleLabels, rolePermissions, type PlatformRole } from "@/lib/admin-permissions";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import {
+  approveRoleRequestAction,
+  rejectRoleRequestAction,
+} from "@/features/admin-role-requests/actions/role-request.actions";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { prisma } from "@/lib/prisma";
+import "../roles.css";
 
-const roleDescriptions: Record<PlatformRole, string> = {
-  admin: "Platform genelindeki tüm yönetim, denetim ve yetkilendirme işlemlerini yürütür.",
-  publisher: "Eser havuzunu inceler, başvuruları değerlendirir ve yayınevi çalışma alanını yönetir.",
-  editor: "Yetkilendirildiği eserlerde editoryal inceleme ve geri bildirim süreçlerini yürütür.",
-  writer: "Kendi eserlerini üretir, yönetir ve editör ya da yayınevleriyle paylaşır.",
-  reader: "Yayımlanan eserleri keşfeder, okur ve kişisel kütüphanesini yönetir.",
+export const metadata: Metadata = {
+  title: "Rol Başvuruları | İlkOku Yönetim",
+  description: "Editör ve yayınevi rol başvurularını yönetin.",
 };
 
-const memberCounts: Record<PlatformRole, number> = {
-  admin: 3,
-  publisher: 28,
-  editor: 87,
-  writer: 463,
-  reader: 2846,
-};
+export const dynamic = "force-dynamic";
 
-const roles = Object.keys(roleLabels) as PlatformRole[];
+const roleLabels = {
+  editor: "Editör",
+  publisher: "Yayınevi",
+  writer: "Yazar",
+  reader: "Okur",
+  admin: "Yönetici",
+} as const;
 
-export default function AdminRolesPage() {
+const statusLabels = {
+  pending: "İnceleme bekliyor",
+  approved: "Onaylandı",
+  rejected: "Reddedildi",
+  cancelled: "İptal edildi",
+} as const;
+
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value);
+}
+
+export default async function AdminRolesPage() {
+  const admin = await getCurrentUser();
+
+  if (!admin) {
+    redirect("/giris");
+  }
+
+  if (admin.role !== "admin") {
+    redirect("/erisim-reddedildi");
+  }
+
+  const [pendingRequests, recentRequests] = await Promise.all([
+    prisma.roleRequest.findMany({
+      where: {
+        status: "pending",
+        requestedRole: {
+          in: ["editor", "publisher", "writer"],
+        },
+      },
+      include: {
+        user: {
+          select: {
+            avatarUrl: true,
+            bio: true,
+            createdAt: true,
+            displayName: true,
+            email: true,
+            fullName: true,
+            id: true,
+            role: true,
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    }),
+
+    prisma.roleRequest.findMany({
+      where: {
+        status: {
+          in: ["approved", "rejected"],
+        },
+      },
+      include: {
+        reviewedBy: {
+          select: {
+            fullName: true,
+          },
+        },
+        user: {
+          select: {
+            email: true,
+            fullName: true,
+          },
+        },
+      },
+      orderBy: {
+        reviewedAt: "desc",
+      },
+      take: 12,
+    }),
+  ]);
+
+  const editorCount = pendingRequests.filter(
+    (request) => request.requestedRole === "editor",
+  ).length;
+
+  const publisherCount = pendingRequests.filter(
+    (request) => request.requestedRole === "publisher",
+  ).length;
+
   return (
-    <>
-      <section className="admin-page-heading">
+    <main className="admin-roles-page">
+      <header className="admin-roles-hero">
         <div>
-          <span className="admin-eyebrow">Erişim yönetimi</span>
-          <h1>Rol ve Yetkiler</h1>
-          <p>Platform rollerini, erişim sınırlarını ve kritik yönetim izinlerini tek merkezden izleyin.</p>
+          <span className="admin-roles-eyebrow">
+            İlkOku Yönetim Merkezi
+          </span>
+
+          <h1>Rol başvuruları</h1>
+
+          <p>
+            Editör, yayınevi ve yazar başvurularını inceleyin.
+            Onaylanan kullanıcının sistem rolü anında güncellenir.
+          </p>
         </div>
-        <div className="admin-heading-actions">
-          <button className="admin-button admin-button--ghost">Yetki geçmişi</button>
-          <button className="admin-button admin-button--primary">Yeni yönetici davet et</button>
+
+        <div className="admin-roles-total">
+          <span>Bekleyen başvuru</span>
+          <strong>{pendingRequests.length}</strong>
         </div>
+      </header>
+
+      <section className="admin-roles-stats">
+        <article>
+          <span>Editör başvuruları</span>
+          <strong>{editorCount}</strong>
+          <small>Admin onayı bekliyor</small>
+        </article>
+
+        <article>
+          <span>Yayınevi başvuruları</span>
+          <strong>{publisherCount}</strong>
+          <small>Admin onayı bekliyor</small>
+        </article>
+
+        <article>
+          <span>Diğer başvurular</span>
+          <strong>
+            {pendingRequests.length - editorCount - publisherCount}
+          </strong>
+          <small>Yazar ve diğer roller</small>
+        </article>
       </section>
 
-      <section className="admin-role-summary" aria-label="Rol özeti">
-        {roles.map((role) => (
-          <article key={role}>
-            <span>{roleLabels[role]}</span>
-            <strong>{memberCounts[role].toLocaleString("tr-TR")}</strong>
-            <small>{rolePermissions[role].length} etkin yetki</small>
-          </article>
-        ))}
-      </section>
-
-      <section className="admin-role-layout">
-        <div className="admin-role-cards">
-          {roles.map((role) => (
-            <article className={`admin-role-card admin-role-card--${role}`} key={role}>
-              <div className="admin-role-card__heading">
-                <div>
-                  <span className="admin-role-card__badge">{role.slice(0, 2).toUpperCase()}</span>
-                  <div>
-                    <h2>{roleLabels[role]}</h2>
-                    <p>{memberCounts[role].toLocaleString("tr-TR")} kullanıcı</p>
-                  </div>
-                </div>
-                <button aria-label={`${roleLabels[role]} rolünü düzenle`}>Düzenle</button>
-              </div>
-              <p className="admin-role-card__description">{roleDescriptions[role]}</p>
-              <div className="admin-role-card__permissions">
-                {rolePermissions[role].slice(0, 4).map((permission) => (
-                  <span key={permission}>✓ {permissionLabels[permission]}</span>
-                ))}
-                {rolePermissions[role].length > 4 && <span>+{rolePermissions[role].length - 4} ek yetki</span>}
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <aside className="admin-permission-panel">
-          <div className="admin-panel__heading">
-            <div><span>RBAC matrisi</span><h2>Yetki kapsamı</h2></div>
-            <b>{Object.keys(permissionLabels).length}</b>
+      <section className="admin-role-section">
+        <div className="admin-role-section__heading">
+          <div>
+            <span>Onay merkezi</span>
+            <h2>İnceleme bekleyenler</h2>
           </div>
-          <div className="admin-permission-list">
-            {(Object.entries(permissionLabels) as [keyof typeof permissionLabels, string][]).map(([permission, label]) => (
-              <div key={permission}>
-                <div><strong>{label}</strong><small>{permission}</small></div>
-                <span>{roles.filter((role) => rolePermissions[role].includes(permission)).length} rol</span>
-              </div>
+
+          <strong>{pendingRequests.length}</strong>
+        </div>
+
+        {pendingRequests.length === 0 ? (
+          <div className="admin-role-empty">
+            <span aria-hidden="true">✓</span>
+            <h3>Bekleyen başvuru yok</h3>
+            <p>Tüm rol başvuruları sonuçlandırılmış.</p>
+          </div>
+        ) : (
+          <div className="admin-role-list">
+            {pendingRequests.map((request) => {
+              const displayName =
+                request.user.displayName ||
+                request.user.fullName;
+
+              return (
+                <article className="admin-role-card" key={request.id}>
+                  <header className="admin-role-card__header">
+                    <div className="admin-role-avatar">
+                      {displayName.slice(0, 1).toLocaleUpperCase("tr-TR")}
+                    </div>
+
+                    <div className="admin-role-identity">
+                      <span className="admin-role-badge">
+                        {roleLabels[request.requestedRole]}
+                      </span>
+
+                      <h3>{displayName}</h3>
+
+                      <p>{request.user.email}</p>
+                    </div>
+
+                    <time dateTime={request.createdAt.toISOString()}>
+                      {formatDate(request.createdAt)}
+                    </time>
+                  </header>
+
+                  <dl className="admin-role-details">
+                    <div>
+                      <dt>Mevcut rol</dt>
+                      <dd>{roleLabels[request.user.role]}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Talep edilen rol</dt>
+                      <dd>{roleLabels[request.requestedRole]}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Kullanıcı adı</dt>
+                      <dd>{request.user.username || "Belirtilmemiş"}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Üyelik tarihi</dt>
+                      <dd>{formatDate(request.user.createdAt)}</dd>
+                    </div>
+                  </dl>
+
+                  {request.user.bio && (
+                    <div className="admin-role-biography">
+                      <span>Başvuru profili</span>
+                      <p>{request.user.bio}</p>
+                    </div>
+                  )}
+
+                  <div className="admin-role-actions">
+                    <form action={approveRoleRequestAction}>
+                      <input
+                        name="requestId"
+                        type="hidden"
+                        value={request.id}
+                      />
+
+                      <label>
+                        <span>Admin notu</span>
+                        <textarea
+                          maxLength={2000}
+                          name="reviewNote"
+                          placeholder="Onay notu veya kısa değerlendirme…"
+                        />
+                      </label>
+
+                      <button
+                        className="admin-role-button admin-role-button--approve"
+                        type="submit"
+                      >
+                        Başvuruyu Onayla
+                      </button>
+                    </form>
+
+                    <form action={rejectRoleRequestAction}>
+                      <input
+                        name="requestId"
+                        type="hidden"
+                        value={request.id}
+                      />
+
+                      <label>
+                        <span>Ret gerekçesi</span>
+                        <textarea
+                          maxLength={2000}
+                          name="reviewNote"
+                          placeholder="Başvurunun neden reddedildiğini yazın…"
+                        />
+                      </label>
+
+                      <button
+                        className="admin-role-button admin-role-button--reject"
+                        type="submit"
+                      >
+                        Başvuruyu Reddet
+                      </button>
+                    </form>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="admin-role-section">
+        <div className="admin-role-section__heading">
+          <div>
+            <span>İşlem geçmişi</span>
+            <h2>Sonuçlandırılan başvurular</h2>
+          </div>
+        </div>
+
+        {recentRequests.length === 0 ? (
+          <div className="admin-role-history-empty">
+            Henüz sonuçlandırılan başvuru bulunmuyor.
+          </div>
+        ) : (
+          <div className="admin-role-history">
+            {recentRequests.map((request) => (
+              <article key={request.id}>
+                <div>
+                  <strong>{request.user.fullName}</strong>
+                  <span>{request.user.email}</span>
+                </div>
+
+                <div>
+                  <span>{roleLabels[request.requestedRole]}</span>
+                  <strong
+                    data-status={request.status}
+                  >
+                    {statusLabels[request.status]}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    {request.reviewedBy?.fullName || "Yönetici"}
+                  </span>
+                  <time>
+                    {request.reviewedAt
+                      ? formatDate(request.reviewedAt)
+                      : "—"}
+                  </time>
+                </div>
+              </article>
             ))}
           </div>
-          <div className="admin-security-note">
-            <strong>Güvenlik ilkesi</strong>
-            <p>Yönetici erişimi yalnızca Supabase Auth içindeki güvenilir <code>app_metadata.role=admin</code> veya <code>is_admin=true</code> claim’i ile verilir.</p>
-          </div>
-        </aside>
+        )}
       </section>
-    </>
+    </main>
   );
 }

@@ -10,12 +10,6 @@ import {
   rewriteChapter,
 } from "./chapter-management";
 
-export type ChapterArchiveActionResult = {
-  chapterId?: string;
-  message: string;
-  status: "error" | "success";
-};
-
 function revalidateWriterPaths() {
   revalidatePath("/yazar");
   revalidatePath("/eserlerim");
@@ -32,154 +26,182 @@ async function getWriterId() {
   return user.id;
 }
 
-function readRequiredId(formData: FormData, key: string) {
-  return String(formData.get(key) ?? "").trim();
+function readRequiredId(
+  formData: FormData,
+  key: string,
+) {
+  return String(
+    formData.get(key) ?? "",
+  ).trim();
 }
 
-function actionError(error: unknown, fallback: string): ChapterArchiveActionResult {
-  return {
-    message: error instanceof Error ? error.message : fallback,
-    status: "error",
-  };
+function getErrorMessage(
+  error: unknown,
+  fallback: string,
+) {
+  return error instanceof Error
+    ? error.message
+    : fallback;
 }
 
 export async function archiveChapterAction(
   formData: FormData,
-): Promise<ChapterArchiveActionResult> {
+): Promise<void> {
   const authorId = await getWriterId();
 
   if (!authorId) {
-    return {
-      message: "Bölümü arşivlemek için yazar hesabınla yeniden giriş yapmalısın.",
-      status: "error",
-    };
+    throw new Error(
+      "Bölümü arşivlemek için yazar hesabınla yeniden giriş yapmalısın.",
+    );
   }
 
-  const chapterId = readRequiredId(formData, "chapterId");
+  const chapterId = readRequiredId(
+    formData,
+    "chapterId",
+  );
 
   if (!chapterId) {
-    return {
-      message: "Arşivlenecek bölüm seçilemedi.",
-      status: "error",
-    };
+    throw new Error(
+      "Arşivlenecek bölüm seçilemedi.",
+    );
   }
 
   try {
-    await archiveChapter(authorId, chapterId);
-    revalidateWriterPaths();
-
-    return {
+    await archiveChapter(
+      authorId,
       chapterId,
-      message: "Bölüm güvenli şekilde arşive alındı.",
-      status: "success",
-    };
+    );
+
+    revalidateWriterPaths();
   } catch (error) {
-    return actionError(error, "Bölüm arşivlenemedi.");
+    throw new Error(
+      getErrorMessage(
+        error,
+        "Bölüm arşivlenemedi.",
+      ),
+    );
   }
 }
 
 export async function deleteEmptyChapterAction(
   formData: FormData,
-): Promise<ChapterArchiveActionResult> {
+): Promise<void> {
   const authorId = await getWriterId();
 
   if (!authorId) {
-    return {
-      message: "Bölümü silmek için yazar hesabınla yeniden giriş yapmalısın.",
-      status: "error",
-    };
+    throw new Error(
+      "Bölümü silmek için yazar hesabınla yeniden giriş yapmalısın.",
+    );
   }
 
-  const chapterId = readRequiredId(formData, "chapterId");
+  const chapterId = readRequiredId(
+    formData,
+    "chapterId",
+  );
 
   if (!chapterId) {
-    return {
-      message: "Silinecek bölüm seçilemedi.",
-      status: "error",
-    };
+    throw new Error(
+      "Silinecek bölüm seçilemedi.",
+    );
   }
 
   try {
-    await deleteEmptyChapter(authorId, chapterId);
-    revalidateWriterPaths();
-
-    return {
+    await deleteEmptyChapter(
+      authorId,
       chapterId,
-      message: "Boş bölüm silindi.",
-      status: "success",
-    };
+    );
+
+    revalidateWriterPaths();
   } catch (error) {
-    return actionError(error, "Bölüm silinemedi.");
+    throw new Error(
+      getErrorMessage(
+        error,
+        "Bölüm silinemedi.",
+      ),
+    );
   }
 }
 
 export async function rewriteChapterAction(
   formData: FormData,
-): Promise<ChapterArchiveActionResult> {
+): Promise<void> {
   const authorId = await getWriterId();
 
   if (!authorId) {
-    return {
-      message: "Bölümü yeniden yazmak için yazar hesabınla yeniden giriş yapmalısın.",
-      status: "error",
-    };
+    throw new Error(
+      "Bölümü yeniden yazmak için yazar hesabınla yeniden giriş yapmalısın.",
+    );
   }
 
-  const chapterId = readRequiredId(formData, "chapterId");
+  const chapterId = readRequiredId(
+    formData,
+    "chapterId",
+  );
 
   if (!chapterId) {
-    return {
-      message: "Yeniden yazılacak bölüm seçilemedi.",
-      status: "error",
-    };
+    throw new Error(
+      "Yeniden yazılacak bölüm seçilemedi.",
+    );
   }
 
   try {
-    await rewriteChapter(authorId, chapterId);
-    revalidateWriterPaths();
-
-    return {
+    await rewriteChapter(
+      authorId,
       chapterId,
-      message: "Mevcut sürüm arşive alındı ve bölüm yeniden yazıma hazırlandı.",
-      status: "success",
-    };
+    );
+
+    revalidateWriterPaths();
   } catch (error) {
-    return actionError(error, "Bölüm yeniden yazıma hazırlanamadı.");
+    throw new Error(
+      getErrorMessage(
+        error,
+        "Bölüm yeniden yazıma hazırlanamadı.",
+      ),
+    );
   }
 }
 
 export async function restoreChapterAction(
   formData: FormData,
-): Promise<ChapterArchiveActionResult> {
+): Promise<void> {
   const authorId = await getWriterId();
 
   if (!authorId) {
-    return {
-      message: "Bölümü geri yüklemek için yazar hesabınla yeniden giriş yapmalısın.",
-      status: "error",
-    };
+    throw new Error(
+      "Bölümü geri yüklemek için yazar hesabınla yeniden giriş yapmalısın.",
+    );
   }
 
-  const chapterId = readRequiredId(formData, "chapterId");
-  const versionId = readRequiredId(formData, "versionId");
+  const chapterId = readRequiredId(
+    formData,
+    "chapterId",
+  );
+
+  const versionId = readRequiredId(
+    formData,
+    "versionId",
+  );
 
   if (!chapterId || !versionId) {
-    return {
-      message: "Geri yüklenecek bölüm sürümü seçilemedi.",
-      status: "error",
-    };
+    throw new Error(
+      "Geri yüklenecek bölüm sürümü seçilemedi.",
+    );
   }
 
   try {
-    await restoreChapter(authorId, chapterId, versionId);
-    revalidateWriterPaths();
-
-    return {
+    await restoreChapter(
+      authorId,
       chapterId,
-      message: "Seçilen sürüm geri yüklendi; mevcut sürüm arşive alındı.",
-      status: "success",
-    };
+      versionId,
+    );
+
+    revalidateWriterPaths();
   } catch (error) {
-    return actionError(error, "Bölüm sürümü geri yüklenemedi.");
+    throw new Error(
+      getErrorMessage(
+        error,
+        "Bölüm sürümü geri yüklenemedi.",
+      ),
+    );
   }
 }

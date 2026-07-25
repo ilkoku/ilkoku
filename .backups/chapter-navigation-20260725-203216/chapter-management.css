@@ -491,19 +491,3 @@
     width: min(20rem, calc(100vw - 3rem));
   }
 }
-
-/* İlkOku — bölüm gezinme bağlantıları */
-.chapter-primary-action {
-  align-items: center;
-  display: inline-flex;
-  justify-content: center;
-  text-decoration: none;
-}
-
-.chapter-primary-action:visited {
-  color: inherit;
-}
-
-.chapter-menu-action {
-  width: 100%;
-}

@@ -1205,11 +1205,11 @@ export function NewWorkFlow({
                       </Button>
 
                       <Button
-                        className="writer-save-button"
                         loading={
                           isSaving
                         }
                         type="submit"
+                        variant="ghost"
                       >
                         Taslak Olarak Kaydet
                       </Button>
@@ -1299,17 +1299,6 @@ export function NewWorkFlow({
                           goalProgress
                         }
                       </span>
-
-                      <small className="writer-goal__remaining">
-                        {wordCount >= dailyWordGoal
-                          ? "Bugünkü hedef tamamlandı 🎉"
-                          : `${Math.max(
-                              dailyWordGoal - wordCount,
-                              0,
-                            ).toLocaleString(
-                              "tr-TR",
-                            )} kelime kaldı`}
-                      </small>
                     </div>
 
                     <button
@@ -1585,6 +1574,7 @@ export function NewWorkFlow({
                         </p>
                       )}
                     </main>
+                  </div>
 
                   <footer
                     className="writer-footer"
@@ -1659,7 +1649,6 @@ export function NewWorkFlow({
                       </strong>
                     </div>
                   </footer>
-                  </div>
                 </form>
               )}
 

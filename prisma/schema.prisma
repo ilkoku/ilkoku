@@ -157,6 +157,9 @@ model Work {
   archivedAt           DateTime?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
+  editorReviewStatus      EditorReviewStatus @default(not_requested)
+  editorReviewRequestedAt DateTime?
+  editorReviewCompletedAt DateTime?
   chapters             Chapter[]
   editorFeedback       EditorFeedback[]
   ownershipStamps      OwnershipStamp[]
@@ -170,6 +173,7 @@ model Work {
   @@index([language])
   @@index([createdAt])
   @@index([updatedAt])
+  @@index([editorReviewStatus])
 }
 
 model Chapter {
@@ -314,6 +318,12 @@ enum WorkVisibility {
   private
   unlisted
   public
+}
+
+enum EditorReviewStatus {
+  not_requested
+  requested
+  completed
 }
 
 enum ChapterStatus {

@@ -4,6 +4,8 @@ import { readingContent } from "@/content";
 import { BookShowcase } from "@/features/showcase/components/BookShowcase";
 import { getPublicWorkBySlug } from "@/features/works/queries";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: readingContent.showcase.metadataTitle,
   description: readingContent.showcase.metadataDescription,

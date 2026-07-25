@@ -6,6 +6,7 @@ import "./admin.css";
 import "./dashboard.css";
 import "./roles.css";
 import "./users.css";
+import "./yazarlar/writers.css";
 
 export const metadata: Metadata = {
   title: "İlkOku Yönetim Merkezi",

@@ -56,3 +56,4 @@ src/lib/supabase/config.ts
 *.sql
 *.zip
 *.backup.prisma
+tmp/

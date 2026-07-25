@@ -1,3 +1,4 @@
+import { GENRE_LABELS } from "@/lib/genres";
 import { commonContent } from "./navigation";
 
 export const writerContent = {
@@ -17,7 +18,7 @@ export const writerContent = {
     titlePlaceholder: "Eserinin adı",
     genreLabel: "Tür",
     genrePlaceholder: "Bir tür seç",
-    genres: ["Roman", "Öykü", "Fantastik", "Bilim Kurgu", "Polisiye"],
+    genres: GENRE_LABELS,
     summaryLabel: "Özet (opsiyonel)",
     summaryPlaceholder: "Hikâyeni birkaç cümleyle anlat",
     submit: "Oluştur",

@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
+import { ChapterManagementPanel } from "@/features/works/components/ChapterManagementPanel";
 import { CreateChapterForm } from "@/features/works/components/CreateChapterForm";
+import "@/features/works/components/chapter-management.css";
 import { getContinueWritingWork } from "@/features/works/queries";
 
 export const metadata: Metadata = {
@@ -27,6 +29,10 @@ export default async function ContinueWritingPage({ searchParams }: { searchPara
         {latestWork && !latestWork.latestChapter
           ? <CreateChapterForm workId={latestWork.id} />
           : <NewWorkFlow autoOpen initialWork={latestWork || undefined} triggerLabel={latestWork ? "Editörü Aç" : "Yeni Eser"} />}
+
+        {latestWork?.chapters?.length ? (
+          <ChapterManagementPanel authorId={profile.id} chapters={latestWork.chapters} />
+        ) : null}
       </section>
     </AppShell>
   );

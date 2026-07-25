@@ -1,8 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import {
-  getRequestSession,
-  INTERNAL_SESSION_USER_HEADER,
-} from "@/lib/auth/request-session";
+import { getRequestSession } from "@/lib/auth/request-session";
 import type { UserRole } from "@/types/database";
 
 const publicEditorsPath = "/editörler";
@@ -50,12 +47,6 @@ function getRoleRule(pathname: string) {
   return routeRoleRules.find(({ path }) => matchesPath(pathname, path));
 }
 
-function createSanitizedRequestHeaders(request: NextRequest) {
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.delete(INTERNAL_SESSION_USER_HEADER);
-  return requestHeaders;
-}
-
 function copySession(source: NextResponse, destination: NextResponse) {
   source.cookies.getAll().forEach((cookie) => {
     destination.cookies.set(cookie);
@@ -92,20 +83,16 @@ export async function proxy(request: NextRequest) {
   const isAdminRoute = matchesPath(pathname, "/admin");
   const protectedRoute = isProtected(pathname);
 
-  if (!protectedRoute) {
-    return NextResponse.next({
-      request: {
-        headers: createSanitizedRequestHeaders(request),
-      },
-    });
-  }
+  const session = protectedRoute
+    ? await getRequestSession(request, Boolean(roleRule) || isAdminRoute)
+    : {
+        authenticated: false,
+        configured: true,
+        profile: null,
+        response: NextResponse.next({ request }),
+      };
 
-  const session = await getRequestSession(
-    request,
-    Boolean(roleRule) || isAdminRoute,
-  );
-
-  if (!session.authenticated) {
+  if (protectedRoute && !session.authenticated) {
     const destination = request.nextUrl.clone();
 
     destination.pathname = "/giris";
@@ -125,10 +112,23 @@ export async function proxy(request: NextRequest) {
   const currentRole = session.profile?.role;
   const isAdmin = currentRole === "admin";
 
+  /*
+   * Admin sayfaları yalnızca admin rolüne açıktır.
+   * Writer/editor/publisher gibi roller burada açık bir erişim
+   * reddedildi ekranına gönderilir.
+   */
   if (isAdminRoute && !isAdmin) {
-    return createAccessDeniedRedirect(request, session.response, "admin");
+    return createAccessDeniedRedirect(
+      request,
+      session.response,
+      "admin",
+    );
   }
 
+  /*
+   * Admin bütün kullanıcı panellerini inceleyebilir.
+   * Diğer kullanıcılar yalnızca kendi rollerine ait alanlara girebilir.
+   */
   if (roleRule && !isAdmin) {
     const hasRequiredRole = currentRole === roleRule.role;
     const hasRequiredApproval =
@@ -143,6 +143,9 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  /*
+   * Türkçe URL dışarıda korunur, uygulama içindeki gerçek klasöre rewrite edilir.
+   */
   if (matchesPath(pathname, publicEditorsPath)) {
     const destination = request.nextUrl.clone();
 
@@ -153,11 +156,7 @@ export async function proxy(request: NextRequest) {
 
     return copySession(
       session.response,
-      NextResponse.rewrite(destination, {
-        request: {
-          headers: session.requestHeaders,
-        },
-      }),
+      NextResponse.rewrite(destination),
     );
   }
 

@@ -1,0 +1,18 @@
+/* Sprint 2.3 chapter management UI */
+.chapter-management-panel{margin:1.5rem 0;padding:1.25rem;border:1px solid var(--color-border,#e6e8ec);border-radius:1rem;background:var(--color-white,#fff)}
+.chapter-management-panel__heading,.chapter-management-card,.chapter-version-row{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.chapter-management-panel__heading p{margin:0;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;opacity:.65}
+.chapter-management-panel__heading h2{margin:.25rem 0 0;font-size:1.25rem}
+.chapter-management-panel__list{display:grid;gap:.75rem;margin-top:1rem}
+.chapter-management-card{padding:1rem;border:1px solid var(--color-border,#e6e8ec);border-radius:.8rem}
+.chapter-management-card__summary{display:flex;align-items:center;gap:.75rem}
+.chapter-management-card__summary>span{display:grid;place-items:center;width:2rem;height:2rem;border-radius:999px;background:#f2f2f2;font-weight:700}
+.chapter-management-card__summary div,.chapter-version-row div{display:grid;gap:.15rem}
+.chapter-management-card__summary small,.chapter-version-row small{opacity:.65}
+.chapter-management-card__actions{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
+.chapter-management-card button,.chapter-management-card summary{border:1px solid currentColor;border-radius:.55rem;background:transparent;padding:.55rem .8rem;font:inherit;cursor:pointer}
+.chapter-danger-action{color:#b42318}
+.chapter-version-list{display:grid;gap:.5rem;min-width:19rem;margin-top:.6rem;padding:.65rem;border:1px solid var(--color-border,#e6e8ec);border-radius:.65rem;background:#fff}
+.chapter-version-row{padding:.45rem 0;border-bottom:1px solid var(--color-border,#e6e8ec)}
+.chapter-version-row:last-child{border-bottom:0}
+@media(max-width:760px){.chapter-management-panel__heading,.chapter-management-card{align-items:flex-start;flex-direction:column}.chapter-management-card__actions{width:100%}.chapter-version-list{min-width:0;width:min(80vw,22rem)}}

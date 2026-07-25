@@ -3,21 +3,18 @@
 import { revalidatePath } from "next/cache";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { prisma } from "@/lib/prisma";
-
-const ARCHIVE_RETENTION_DAYS = 30;
+import {
+  archiveChapter,
+  deleteEmptyChapter,
+  restoreChapter,
+  rewriteChapter,
+} from "./chapter-management";
 
 export type ChapterArchiveActionResult = {
   chapterId?: string;
   message: string;
   status: "error" | "success";
 };
-
-function addDays(date: Date, days: number) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
 
 function revalidateWriterPaths() {
   revalidatePath("/yazar");
@@ -35,6 +32,17 @@ async function getWriterId() {
   return user.id;
 }
 
+function readRequiredId(formData: FormData, key: string) {
+  return String(formData.get(key) ?? "").trim();
+}
+
+function actionError(error: unknown, fallback: string): ChapterArchiveActionResult {
+  return {
+    message: error instanceof Error ? error.message : fallback,
+    status: "error",
+  };
+}
+
 export async function archiveChapterAction(
   formData: FormData,
 ): Promise<ChapterArchiveActionResult> {
@@ -47,74 +55,97 @@ export async function archiveChapterAction(
     };
   }
 
-  const chapterId = String(formData.get("chapterId") ?? "").trim();
-  const workId = String(formData.get("workId") ?? "").trim();
+  const chapterId = readRequiredId(formData, "chapterId");
 
-  if (!chapterId || !workId) {
+  if (!chapterId) {
     return {
       message: "Arşivlenecek bölüm seçilemedi.",
       status: "error",
     };
   }
 
-  const chapter = await prisma.chapter.findFirst({
-    where: {
-      authorId,
-      id: chapterId,
-      status: {
-        not: "archived",
-      },
-      workId,
-    },
-    select: {
-      id: true,
-    },
-  });
+  try {
+    await archiveChapter(authorId, chapterId);
+    revalidateWriterPaths();
 
-  if (!chapter) {
     return {
-      message: "Bölüm bulunamadı veya bu bölümü arşivleme yetkin yok.",
+      chapterId,
+      message: "Bölüm güvenli şekilde arşive alındı.",
+      status: "success",
+    };
+  } catch (error) {
+    return actionError(error, "Bölüm arşivlenemedi.");
+  }
+}
+
+export async function deleteEmptyChapterAction(
+  formData: FormData,
+): Promise<ChapterArchiveActionResult> {
+  const authorId = await getWriterId();
+
+  if (!authorId) {
+    return {
+      message: "Bölümü silmek için yazar hesabınla yeniden giriş yapmalısın.",
       status: "error",
     };
   }
 
-  const activeChapterCount = await prisma.chapter.count({
-    where: {
-      authorId,
-      status: {
-        not: "archived",
-      },
-      workId,
-    },
-  });
+  const chapterId = readRequiredId(formData, "chapterId");
 
-  if (activeChapterCount <= 1) {
+  if (!chapterId) {
     return {
-      message: "Eserde en az bir aktif bölüm kalmalıdır. Son bölüm arşivlenemez.",
+      message: "Silinecek bölüm seçilemedi.",
       status: "error",
     };
   }
 
-  const archivedAt = new Date();
+  try {
+    await deleteEmptyChapter(authorId, chapterId);
+    revalidateWriterPaths();
 
-  await prisma.chapter.update({
-    where: {
-      id: chapter.id,
-    },
-    data: {
-      archivedAt,
-      publishedAt: null,
-      status: "archived",
-    },
-  });
+    return {
+      chapterId,
+      message: "Boş bölüm silindi.",
+      status: "success",
+    };
+  } catch (error) {
+    return actionError(error, "Bölüm silinemedi.");
+  }
+}
 
-  revalidateWriterPaths();
+export async function rewriteChapterAction(
+  formData: FormData,
+): Promise<ChapterArchiveActionResult> {
+  const authorId = await getWriterId();
 
-  return {
-    chapterId,
-    message: `Bölüm arşive taşındı. ${ARCHIVE_RETENTION_DAYS} gün boyunca geri yüklenebilir.`,
-    status: "success",
-  };
+  if (!authorId) {
+    return {
+      message: "Bölümü yeniden yazmak için yazar hesabınla yeniden giriş yapmalısın.",
+      status: "error",
+    };
+  }
+
+  const chapterId = readRequiredId(formData, "chapterId");
+
+  if (!chapterId) {
+    return {
+      message: "Yeniden yazılacak bölüm seçilemedi.",
+      status: "error",
+    };
+  }
+
+  try {
+    await rewriteChapter(authorId, chapterId);
+    revalidateWriterPaths();
+
+    return {
+      chapterId,
+      message: "Mevcut sürüm arşive alındı ve bölüm yeniden yazıma hazırlandı.",
+      status: "success",
+    };
+  } catch (error) {
+    return actionError(error, "Bölüm yeniden yazıma hazırlanamadı.");
+  }
 }
 
 export async function restoreChapterAction(
@@ -129,68 +160,26 @@ export async function restoreChapterAction(
     };
   }
 
-  const chapterId = String(formData.get("chapterId") ?? "").trim();
-  const workId = String(formData.get("workId") ?? "").trim();
+  const chapterId = readRequiredId(formData, "chapterId");
+  const versionId = readRequiredId(formData, "versionId");
 
-  if (!chapterId || !workId) {
+  if (!chapterId || !versionId) {
     return {
-      message: "Geri yüklenecek bölüm seçilemedi.",
+      message: "Geri yüklenecek bölüm sürümü seçilemedi.",
       status: "error",
     };
   }
 
-  const chapter = await prisma.chapter.findFirst({
-    where: {
-      archivedAt: {
-        gte: addDays(new Date(), -ARCHIVE_RETENTION_DAYS),
-      },
-      authorId,
-      id: chapterId,
-      status: "archived",
-      workId,
-    },
-    select: {
-      id: true,
-    },
-  });
+  try {
+    await restoreChapter(authorId, chapterId, versionId);
+    revalidateWriterPaths();
 
-  if (!chapter) {
     return {
-      message: "Bölüm bulunamadı, geri yükleme süresi dolmuş olabilir.",
-      status: "error",
+      chapterId,
+      message: "Seçilen sürüm geri yüklendi; mevcut sürüm arşive alındı.",
+      status: "success",
     };
+  } catch (error) {
+    return actionError(error, "Bölüm sürümü geri yüklenemedi.");
   }
-
-  await prisma.chapter.update({
-    where: {
-      id: chapter.id,
-    },
-    data: {
-      archivedAt: null,
-      status: "draft",
-    },
-  });
-
-  revalidateWriterPaths();
-
-  return {
-    chapterId,
-    message: "Bölüm arşivden çıkarıldı ve taslak olarak geri yüklendi.",
-    status: "success",
-  };
 }
-
-export async function purgeExpiredArchivedChapters() {
-  const cutoff = addDays(new Date(), -ARCHIVE_RETENTION_DAYS);
-
-  return prisma.chapter.deleteMany({
-    where: {
-      archivedAt: {
-        lte: cutoff,
-      },
-      status: "archived",
-    },
-  });
-}
-
-export { ARCHIVE_RETENTION_DAYS };

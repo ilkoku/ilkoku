@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { dashboardContent, writerContent } from "@/content";
 import {
+  createNextChapterAction,
   createWorkAction,
   publishWorkAction,
   saveChapterDraftAction,
@@ -767,6 +768,43 @@ export function NewWorkFlow({
     workId,
   ]);
 
+  function handleCreateNextChapter() {
+    if (!workId) {
+      window.alert(
+        "Yeni bölüm oluşturmak için önce eserin oluşturulması gerekir.",
+      );
+      return;
+    }
+
+    if (
+      saveState === "kaydediliyor" ||
+      isSaving
+    ) {
+      window.alert(
+        "Kayıt işlemi tamamlanmadan yeni bölüm oluşturamazsınız.",
+      );
+      return;
+    }
+
+    if (saveState === "kaydedilmedi") {
+      window.alert(
+        "Yeni bölüm oluşturmadan önce mevcut bölümü kaydedin.",
+      );
+      return;
+    }
+
+    clearAutosave();
+
+    const formData = new FormData();
+    formData.set("workId", workId);
+
+    startTransition(() => {
+      void createNextChapterAction(
+        formData,
+      );
+    });
+  }
+
   function openPreview() {
     clearAutosave();
     setStep("preview");
@@ -1265,8 +1303,16 @@ export function NewWorkFlow({
 
                         <button
                           type="button"
-                          disabled
-                          title="Yeni bölüm ekleme bir sonraki adımda açılacak."
+                          onClick={
+                            handleCreateNextChapter
+                          }
+                          disabled={
+                            !workId ||
+                            isSaving ||
+                            saveState ===
+                              "kaydediliyor"
+                          }
+                          title="Yeni bölüm ekle"
                           aria-label="Yeni bölüm ekle"
                         >
                           +

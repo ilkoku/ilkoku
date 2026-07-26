@@ -12,6 +12,7 @@
 @import "../features/auth/auth.css";
 @import "../features/feedback/feedback.css";
 @import "../features/editor-workspace/editor-workspace.css";
+@import "../features/profile/profile.css";
 
 * {
   box-sizing: border-box;

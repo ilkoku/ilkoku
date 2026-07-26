@@ -5,6 +5,8 @@ import mobileLogo from "@/assets/brand/ilkoku-logo-mobile.png";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { readingContent, tr } from "@/content";
+import { EditorReviewBadge } from "@/features/editor-workspace/components/EditorReviewBadge";
+import { toggleFavoriteAction } from "@/features/reader/favorites";
 import type { PublicWorkDetail } from "@/features/works/types";
 
 import { BookCover } from "./BookCover";
@@ -29,49 +31,40 @@ function initials(value: string) {
     .toLocaleUpperCase("tr");
 }
 
-function getStatusLabel(status: PublicWorkDetail["status"]) {
-  switch (status) {
-    case "published":
-      return "Yayında";
+function countWords(content: string) {
+  const normalized = content.trim();
 
-    case "in_review":
-      return "İncelemede";
-
-    case "archived":
-      return "Arşivlendi";
-
-    case "draft":
-    default:
-      return "Taslak";
-  }
+  return normalized ? normalized.split(/\s+/u).length : 0;
 }
 
-function getCompletion(status: PublicWorkDetail["status"]) {
-  switch (status) {
-    case "published":
-      return 100;
-
-    case "in_review":
-      return 75;
-
-    case "draft":
-      return 25;
-
-    case "archived":
-    default:
-      return 0;
-  }
+function getLanguageLabel(language: string) {
+  if (language === "tr") return "Türkçe";
+  if (language === "en") return "İngilizce";
+  return language.toLocaleUpperCase("tr");
 }
 
 export function BookShowcase({
+  canFavorite = false,
+  isFavorite = false,
+  readingProgress,
   work,
 }: {
+  canFavorite?: boolean;
+  isFavorite?: boolean;
+  readingProgress?: {
+    lastPosition: number | null;
+    progressPercent: number;
+  } | null;
   work: PublicWorkDetail;
 }) {
-  const completion = getCompletion(work.status);
+  const completion = work.isCompleted ? 100 : 75;
   const genreLabel = work.genre ?? "Eser";
-
   const tags = [genreLabel, "Eser"];
+  const firstChapter = work.chapters[0] ?? null;
+  const resumeChapter =
+    work.chapters.find(
+      (chapter) => chapter.position === readingProgress?.lastPosition,
+    ) ?? firstChapter;
 
   return (
     <div className="showcase-page">
@@ -160,8 +153,15 @@ export function BookShowcase({
               </div>
 
               <div>
-                <dt>{readingContent.showcase.status}</dt>
-                <dd>{getStatusLabel(work.status)}</dd>
+                <dt>Dil</dt>
+                <dd>{getLanguageLabel(work.language)}</dd>
+              </div>
+
+              <div>
+                <dt>Tamamlanma durumu</dt>
+                <dd>
+                  {work.isCompleted ? "Tamamlandı" : "Devam ediyor"}
+                </dd>
               </div>
 
               <div>
@@ -170,13 +170,15 @@ export function BookShowcase({
               </div>
 
               <div>
-                <dt>{readingContent.showcase.reads}</dt>
-                <dd>—</dd>
-              </div>
-
-              <div>
-                <dt>{readingContent.showcase.comment}</dt>
-                <dd>0</dd>
+                <dt>Profesyonel editör</dt>
+                <dd>
+                  {work.editorReviewStatus === "in_progress" ||
+                  work.editorReviewStatus === "completed" ? (
+                    <EditorReviewBadge status={work.editorReviewStatus} />
+                  ) : (
+                    "Henüz incelenmedi"
+                  )}
+                </dd>
               </div>
 
               <div>
@@ -207,15 +209,45 @@ export function BookShowcase({
               </progress>
             </div>
 
-            <Link
-              className="button button--primary showcase-cta"
-              href={`/oku/${work.slug}/bolum-1`}
-            >
-              <span className="button__label">
-                <span aria-hidden="true">📖</span>{" "}
-                {readingContent.showcase.firstChapter}
-              </span>
-            </Link>
+            {readingProgress && (
+              <div className="showcase-progress">
+                <div>
+                  <span>Okuma ilerlemen</span>
+                  <strong>%{readingProgress.progressPercent}</strong>
+                </div>
+
+                <progress
+                  aria-label={`Okuma ilerlemesi yüzde ${readingProgress.progressPercent}`}
+                  max={100}
+                  value={readingProgress.progressPercent}
+                >
+                  %{readingProgress.progressPercent}
+                </progress>
+              </div>
+            )}
+
+            <div className="book-card__actions">
+              {resumeChapter && (
+                <Link
+                  className="button button--primary showcase-cta"
+                  href={`/oku/${work.slug}/bolum-${resumeChapter.position}`}
+                >
+                  <span className="button__label">
+                    <span aria-hidden="true">📖</span>{" "}
+                    {readingProgress ? "Okumaya Devam Et" : "Okumaya Başla"}
+                  </span>
+                </Link>
+              )}
+
+              {canFavorite && (
+                <form action={toggleFavoriteAction}>
+                  <input name="workId" type="hidden" value={work.id} />
+                  <button className="button button--outline" type="submit">
+                    {isFavorite ? "Favoriden Çıkar" : "Favoriye Ekle"}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </section>
 
@@ -248,6 +280,58 @@ export function BookShowcase({
                   <li key={tag}>{tag}</li>
                 ))}
               </ul>
+            </section>
+
+            <section
+              className="showcase-section"
+              aria-labelledby="bolumler-basligi"
+            >
+              <div className="showcase-section__heading">
+                <p>Okuma sırası</p>
+                <h2 id="bolumler-basligi">Bölümler</h2>
+              </div>
+
+              {work.chapters.length > 0 ? (
+                <div className="editor-review-list">
+                  {work.chapters.map((chapter, index) => {
+                    const readingMinutes = Math.max(
+                      1,
+                      Math.ceil(countWords(chapter.content) / 200),
+                    );
+
+                    return (
+                      <article
+                        className="editor-review-row"
+                        key={chapter.id}
+                      >
+                        <div>
+                          <span>{chapter.position}. Bölüm</span>
+                          <h2>{chapter.title}</h2>
+                          <p>{readingMinutes} dakika okuma</p>
+                        </div>
+
+                        <div className="editor-review-row__report">
+                          <p>Kilitli değil · Okumaya hazır</p>
+                        </div>
+
+                        <Link
+                          className="button button--outline"
+                          href={`/oku/${work.slug}/bolum-${chapter.position}`}
+                        >
+                          {index === 0 ? "Okumaya Başla" : "Bölümü Oku"}
+                        </Link>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Card className="workspace-empty">
+                  <h3>Henüz yayımlanmış bölüm bulunmuyor</h3>
+                  <p>
+                    Yazar ilk bölümü yayımladığında burada görünecek.
+                  </p>
+                </Card>
+              )}
             </section>
 
             <section
@@ -329,6 +413,54 @@ export function BookShowcase({
 
         <section
           className="showcase-similar"
+          aria-labelledby="ayni-yazar-basligi"
+        >
+          <div className="showcase-section__heading">
+            <p>Yazarın dünyası</p>
+            <h2 id="ayni-yazar-basligi">
+              Aynı Yazarın Diğer Eserleri
+            </h2>
+          </div>
+
+          {work.sameAuthorWorks.length > 0 ? (
+            <div className="showcase-similar__grid">
+              {work.sameAuthorWorks.map((related, index) => (
+                <Card
+                  className="showcase-similar-card"
+                  key={related.id}
+                  variant="hover"
+                >
+                  <BookCover
+                    compact
+                    title={related.title}
+                    variant={
+                      (["one", "two", "three"] as const)[index % 3]
+                    }
+                  />
+                  <div>
+                    <span>{related.genre ?? "Tür belirtilmedi"}</span>
+                    <h3>{related.title}</h3>
+                    <p>{related.authorName}</p>
+                    <Link
+                      className="showcase-text-link"
+                      href={`/kitap/${related.slug}`}
+                    >
+                      Eseri İncele <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="workspace-empty">
+              <h3>Yazarın başka yayımlanmış eseri bulunmuyor</h3>
+              <p>Yeni eserler yayımlandığında burada yer alacak.</p>
+            </Card>
+          )}
+        </section>
+
+        <section
+          className="showcase-similar"
           id="benzer-eserler"
           aria-labelledby="benzer-basligi"
         >
@@ -342,10 +474,43 @@ export function BookShowcase({
             </h2>
           </div>
 
-          <p>
-            Benzer eserler gerçek yayın verileri oluştukça
-            burada listelenecek.
-          </p>
+          {work.similarWorks.length > 0 ? (
+            <div className="showcase-similar__grid">
+              {work.similarWorks.map((related, index) => (
+                <Card
+                  className="showcase-similar-card"
+                  key={related.id}
+                  variant="hover"
+                >
+                  <BookCover
+                    compact
+                    title={related.title}
+                    variant={
+                      (["one", "two", "three"] as const)[index % 3]
+                    }
+                  />
+                  <div>
+                    <span>{related.genre ?? "Tür belirtilmedi"}</span>
+                    <h3>{related.title}</h3>
+                    <p>{related.authorName}</p>
+                    <Link
+                      className="showcase-text-link"
+                      href={`/kitap/${related.slug}`}
+                    >
+                      Eseri İncele <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="workspace-empty">
+              <h3>Benzer eser bulunmuyor</h3>
+              <p>
+                Aynı türde yeni eserler yayımlandığında burada yer alacak.
+              </p>
+            </Card>
+          )}
         </section>
       </main>
     </div>

@@ -8,6 +8,7 @@ export function getAuthorFeedbackRows(
   return prisma.editorFeedback.findMany({
     where: {
       authorId,
+      reportStatus: "completed",
       ...(options?.excludeArchived ? { status: { not: "archived" } } : {}),
     },
     include: {
@@ -22,7 +23,7 @@ export function getAuthorFeedbackRows(
 
 export function getUnreadFeedbackCount(authorId: string) {
   return prisma.editorFeedback.count({
-    where: { authorId, status: "unread" },
+    where: { authorId, reportStatus: "completed", status: "unread" },
   });
 }
 

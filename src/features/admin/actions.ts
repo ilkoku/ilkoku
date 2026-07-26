@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
-const roles = ["reader", "writer", "editor", "publisher", "admin"] as const;
+const roles = ["reader", "writer", "editor_pending", "editor", "publisher", "admin"] as const;
 const statuses = ["active", "suspended", "disabled"] as const;
 
 async function requireAdmin() {

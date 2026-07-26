@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 const roleLabels = {
   editor: "Editör",
+  editor_pending: "Editör adayı",
   publisher: "Yayınevi",
   writer: "Yazar",
   reader: "Okur",

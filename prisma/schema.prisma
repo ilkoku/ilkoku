@@ -29,6 +29,16 @@ model User {
   auditLogs               AuditLog[]               @relation("AuditLogActor")
   feedbackReceived        EditorFeedback[]         @relation("FeedbackAuthor")
   feedbackWritten         EditorFeedback[]         @relation("FeedbackEditor")
+  assignedEditorWorks     Work[]                   @relation("AssignedEditor")
+  bookmarks               Bookmark[]
+  comments                Comment[]
+  editorFavorites         EditorFavorite[]
+  editorInvitesAccepted   EditorInvite[]           @relation("EditorInviteAcceptedBy")
+  editorInvitesSent       EditorInvite[]           @relation("EditorInviteSender")
+  favorites               Favorite[]
+  recommendationsReceived EditorRecommendation[]   @relation("EditorRecommendationRecipient")
+  recommendationsSent     EditorRecommendation[]   @relation("EditorRecommendationSender")
+  notifications           Notification[]
   emailVerificationTokens EmailVerificationToken[]
   ownershipStamps         OwnershipStamp[]
   passwordResetTokens     PasswordResetToken[]
@@ -36,6 +46,7 @@ model User {
   publisherSubmissions    PublisherSubmission[]    @relation("SubmissionAuthor")
   reviewedRoleRequests    RoleRequest[]            @relation("RoleRequestReviewer")
   roleRequests            RoleRequest[]            @relation("RoleRequestOwner")
+  readingProgress         ReadingProgress[]
   sessions                Session[]
   works                   Work[]
 
@@ -142,30 +153,40 @@ model AuditLog {
 }
 
 model Work {
-  id                   String                @id @default(uuid()) @db.Char(36)
-  authorId             String                @db.Char(36)
-  title                String                @db.VarChar(220)
-  subtitle             String?               @db.VarChar(280)
-  slug                 String                @unique @db.VarChar(260)
-  description          String?               @db.Text
-  genre                String?               @db.VarChar(120)
-  language             String                @default("tr") @db.VarChar(10)
-  coverUrl             String?               @db.VarChar(500)
-  status               WorkStatus            @default(draft)
-  visibility           WorkVisibility        @default(private)
-  publishedAt          DateTime?
-  archivedAt           DateTime?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  editorReviewStatus      EditorReviewStatus @default(not_requested)
+  id                      String                 @id @default(uuid()) @db.Char(36)
+  authorId                String                 @db.Char(36)
+  title                   String                 @db.VarChar(220)
+  subtitle                String?                @db.VarChar(280)
+  slug                    String                 @unique @db.VarChar(260)
+  description             String?                @db.Text
+  genre                   String?                @db.VarChar(120)
+  language                String                 @default("tr") @db.VarChar(10)
+  coverUrl                String?                @db.VarChar(500)
+  status                  WorkStatus             @default(draft)
+  visibility              WorkVisibility         @default(private)
+  publishedAt             DateTime?
+  archivedAt              DateTime?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  editorReviewStatus      EditorReviewStatus     @default(not_requested)
   editorReviewRequestedAt DateTime?
   editorReviewCompletedAt DateTime?
-  chapters             Chapter[]
-  editorFeedback       EditorFeedback[]
-  ownershipStamps      OwnershipStamp[]
-  publisherSubmissions PublisherSubmission[]
-  author               User                  @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  versions             WorkVersion[]
+  assignedEditorId        String?                @db.Char(36)
+  assignedAt              DateTime?
+  chapters                Chapter[]
+  assignedEditor          User?                  @relation("AssignedEditor", fields: [assignedEditorId], references: [id], onDelete: SetNull)
+  bookmarks               Bookmark[]
+  comments                Comment[]
+  editorFeedback          EditorFeedback[]
+  editorFavorites         EditorFavorite[]
+  editorInvites           EditorInvite[]
+  editorRecommendations   EditorRecommendation[]
+  favorites               Favorite[]
+  ownershipStamps         OwnershipStamp[]
+  publisherSubmissions    PublisherSubmission[]
+  readingProgress         ReadingProgress[]
+  author                  User                   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  versions                WorkVersion[]
 
   @@index([authorId])
   @@index([status])
@@ -174,29 +195,114 @@ model Work {
   @@index([createdAt])
   @@index([updatedAt])
   @@index([editorReviewStatus])
+  @@index([assignedEditorId, editorReviewStatus])
 }
 
 model Chapter {
-  id             String           @id @default(uuid()) @db.Char(36)
-  workId         String           @db.Char(36)
-  authorId       String           @db.Char(36)
-  title          String           @db.VarChar(220)
-  content        String           @db.LongText
-  position       Int
-  status         ChapterStatus    @default(draft)
-  publishedAt    DateTime?
-  archivedAt     DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  work           Work             @relation(fields: [workId], references: [id], onDelete: Cascade)
-  editorFeedback EditorFeedback[]
-  versions       WorkVersion[]
+  id              String            @id @default(uuid()) @db.Char(36)
+  workId          String            @db.Char(36)
+  authorId        String            @db.Char(36)
+  title           String            @db.VarChar(220)
+  content         String            @db.LongText
+  position        Int
+  status          ChapterStatus     @default(draft)
+  publishedAt     DateTime?
+  archivedAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  work            Work              @relation(fields: [workId], references: [id], onDelete: Cascade)
+  bookmarks       Bookmark[]
+  comments        Comment[]
+  editorFeedback  EditorFeedback[]
+  readingProgress ReadingProgress[]
+  versions        WorkVersion[]
 
   @@unique([workId, position])
   @@index([workId])
   @@index([authorId])
   @@index([status])
   @@index([updatedAt])
+}
+
+model Favorite {
+  id        String   @id @default(uuid()) @db.Char(36)
+  userId    String   @db.Char(36)
+  workId    String   @db.Char(36)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  work      Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workId])
+  @@index([userId, createdAt])
+  @@index([workId])
+}
+
+model ReadingProgress {
+  id              String    @id @default(uuid()) @db.Char(36)
+  userId          String    @db.Char(36)
+  workId          String    @db.Char(36)
+  chapterId       String    @db.Char(36)
+  progressPercent Int       @default(0) @db.UnsignedTinyInt
+  lastPosition    Int?      @db.UnsignedInt
+  completed       Boolean   @default(false)
+  startedAt       DateTime  @default(now())
+  lastReadAt      DateTime  @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  work            Work      @relation(fields: [workId], references: [id], onDelete: Cascade)
+  chapter         Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workId])
+  @@index([userId, lastReadAt])
+  @@index([workId])
+  @@index([chapterId])
+  @@index([completed, lastReadAt])
+}
+
+model Bookmark {
+  id        String   @id @default(uuid()) @db.Char(36)
+  userId    String   @db.Char(36)
+  workId    String   @db.Char(36)
+  chapterId String   @db.Char(36)
+  position  Int      @db.UnsignedInt
+  label     String?  @db.VarChar(160)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  work      Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chapterId, position])
+  @@index([userId, updatedAt])
+  @@index([workId])
+  @@index([chapterId])
+}
+
+model Comment {
+  id        String        @id @default(uuid()) @db.Char(36)
+  userId    String        @db.Char(36)
+  workId    String        @db.Char(36)
+  chapterId String?       @db.Char(36)
+  parentId  String?       @db.Char(36)
+  content   String        @db.Text
+  status    CommentStatus @default(visible)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  editedAt  DateTime?
+  deletedAt DateTime?
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  work      Work          @relation(fields: [workId], references: [id], onDelete: Cascade)
+  chapter   Chapter?      @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies   Comment[]     @relation("CommentReplies")
+
+  @@index([userId, createdAt])
+  @@index([workId, status, createdAt])
+  @@index([chapterId, status, createdAt])
+  @@index([parentId, createdAt])
+  @@index([deletedAt])
 }
 
 model WorkVersion {
@@ -241,29 +347,99 @@ model OwnershipStamp {
 }
 
 model EditorFeedback {
-  id         String           @id @default(uuid()) @db.Char(36)
-  workId     String           @db.Char(36)
-  chapterId  String?          @db.Char(36)
-  editorId   String           @db.Char(36)
-  authorId   String           @db.Char(36)
-  title      String           @db.VarChar(160)
-  content    String           @db.LongText
-  category   String           @db.VarChar(60)
-  status     FeedbackStatus   @default(unread)
-  priority   FeedbackPriority @default(normal)
-  readAt     DateTime?
-  archivedAt DateTime?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  author     User             @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  chapter    Chapter?         @relation(fields: [chapterId], references: [id])
-  editor     User             @relation("FeedbackEditor", fields: [editorId], references: [id])
-  work       Work             @relation(fields: [workId], references: [id], onDelete: Cascade)
+  id                   String             @id @default(uuid()) @db.Char(36)
+  workId               String             @db.Char(36)
+  chapterId            String?            @db.Char(36)
+  editorId             String             @db.Char(36)
+  authorId             String             @db.Char(36)
+  title                String             @db.VarChar(160)
+  content              String             @db.LongText
+  category             String             @db.VarChar(60)
+  status               FeedbackStatus     @default(unread)
+  priority             FeedbackPriority   @default(normal)
+  isProfessionalReview Boolean            @default(false)
+  reportStatus         EditorReportStatus @default(completed)
+  readAt               DateTime?
+  archivedAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  author               User               @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  chapter              Chapter?           @relation(fields: [chapterId], references: [id])
+  editor               User               @relation("FeedbackEditor", fields: [editorId], references: [id])
+  work                 Work               @relation(fields: [workId], references: [id], onDelete: Cascade)
 
   @@index([authorId, status, createdAt])
   @@index([editorId, createdAt])
   @@index([workId])
+  @@index([workId, editorId, isProfessionalReview])
+  @@index([workId, reportStatus])
   @@index([chapterId])
+}
+
+model EditorFavorite {
+  id        String   @id @default(uuid()) @db.Char(36)
+  editorId  String   @db.Char(36)
+  workId    String   @db.Char(36)
+  createdAt DateTime @default(now())
+  editor    User     @relation(fields: [editorId], references: [id], onDelete: Cascade)
+  work      Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@unique([editorId, workId])
+  @@index([workId])
+  @@index([createdAt])
+}
+
+model EditorRecommendation {
+  id                String                     @id @default(uuid()) @db.Char(36)
+  workId            String                     @db.Char(36)
+  senderEditorId    String                     @db.Char(36)
+  recipientEditorId String                     @db.Char(36)
+  status            EditorRecommendationStatus @default(pending)
+  viewedAt          DateTime?
+  createdAt         DateTime                   @default(now())
+  senderEditor      User                       @relation("EditorRecommendationSender", fields: [senderEditorId], references: [id], onDelete: Cascade)
+  recipientEditor   User                       @relation("EditorRecommendationRecipient", fields: [recipientEditorId], references: [id], onDelete: Cascade)
+  work              Work                       @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@unique([senderEditorId, recipientEditorId, workId])
+  @@index([recipientEditorId, status, createdAt])
+  @@index([workId])
+}
+
+model EditorInvite {
+  id           String    @id @default(uuid()) @db.Char(36)
+  workId       String    @db.Char(36)
+  invitedById  String    @db.Char(36)
+  invitedEmail String    @db.VarChar(320)
+  tokenHash    String    @unique @db.Char(64)
+  expiresAt    DateTime
+  usedAt       DateTime?
+  acceptedById String?   @db.Char(36)
+  createdAt    DateTime  @default(now())
+  invitedBy    User      @relation("EditorInviteSender", fields: [invitedById], references: [id], onDelete: Cascade)
+  acceptedBy   User?     @relation("EditorInviteAcceptedBy", fields: [acceptedById], references: [id], onDelete: SetNull)
+  work         Work      @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@unique([workId, invitedEmail])
+  @@index([invitedById, createdAt])
+  @@index([invitedEmail])
+  @@index([expiresAt])
+}
+
+model Notification {
+  id                String           @id @default(uuid()) @db.Char(36)
+  userId            String           @db.Char(36)
+  type              NotificationType
+  title             String           @db.VarChar(160)
+  message           String           @db.VarChar(500)
+  relatedEntityType String?          @db.VarChar(80)
+  relatedEntityId   String?          @db.Char(36)
+  readAt            DateTime?
+  createdAt         DateTime         @default(now())
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([relatedEntityType, relatedEntityId])
 }
 
 model Publisher {
@@ -323,7 +499,34 @@ enum WorkVisibility {
 enum EditorReviewStatus {
   not_requested
   requested
+  in_progress
   completed
+}
+
+enum EditorReportStatus {
+  draft
+  completed
+}
+
+enum EditorRecommendationStatus {
+  pending
+  viewed
+}
+
+enum NotificationType {
+  system
+  editor_review
+  editor_recommendation
+  reader_comment_reply
+  reader_work_editor_review_started
+  reader_work_editor_review_completed
+  reader_favorite_work_completed
+}
+
+enum CommentStatus {
+  visible
+  reported
+  hidden
 }
 
 enum ChapterStatus {
@@ -359,6 +562,7 @@ enum PublisherSubmissionStatus {
 enum UserRole {
   reader
   writer
+  editor_pending
   editor
   publisher
   admin

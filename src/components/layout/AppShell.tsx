@@ -12,7 +12,7 @@ type AppShellProps = {
 export function AppShell({ children, profile }: AppShellProps) {
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar role={profile.role} />
       <main className="main-area">
         <header className="dashboard-header">
           <Breadcrumb />

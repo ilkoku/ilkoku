@@ -10,6 +10,13 @@ const segmentLabels: Record<string, string> = {
   profil: "Profil",
   ayarlar: "Ayarlar",
   bildirimler: "Bildirimler",
+  okuyucu: "Okuyucu",
+  editor: "Editör",
+  kesfet: "Keşfet",
+  favoriler: "Favorilerim",
+  seckiler: "Editör Seçkilerim",
+  incelemeler: "İncelemelerim",
+  onerilenler: "Bana Önerilenler",
 };
 
 function formatSegment(segment: string) {

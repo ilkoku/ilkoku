@@ -3,9 +3,10 @@ import type { RoleOption, UserRole } from "./types";
 
 export const roleDestinations: Record<UserRole, string> = {
   admin: "/admin",
-  editor: "/editörler",
+  editor_pending: "/rol-secimi?durum=talep-alindi&rol=editor",
+  editor: "/editor/kesfet",
   publisher: "/yayinevi",
-  reader: "/kitap/kayip-sehir",
+  reader: "/okuyucu",
   writer: "/yazar",
 };
 

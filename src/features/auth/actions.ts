@@ -19,7 +19,7 @@ export type AuthActionState = {
   status: "idle" | "error" | "success";
 };
 
-const loginRoles: UserRole[] = ["reader", "writer", "editor", "publisher", "admin"];
+const loginRoles: UserRole[] = ["reader", "writer", "editor_pending", "editor", "publisher", "admin"];
 const registrationRoles: RegistrationRole[] = ["reader", "writer", "editor", "publisher"];
 const standardRoles: RegistrationRole[] = ["reader", "writer"];
 
@@ -65,6 +65,7 @@ export async function registerAction(_state: AuthActionState, formData: FormData
   const password = getText(formData, "password");
   const confirmation = getText(formData, "password-confirmation");
   const role = getText(formData, "role") as RegistrationRole;
+  const editorInviteToken = getText(formData, "editor-invite-token");
   const termsAccepted = formData.get("terms") === "accepted";
 
   if (fullName.length < 2) return error(validationContent.fullNameRequired);
@@ -75,7 +76,14 @@ export async function registerAction(_state: AuthActionState, formData: FormData
   if (!termsAccepted) return error(validationContent.termsRequired);
 
   try {
-    const result = await registerUser({ fullName, email, password, role, termsAcceptedAt: new Date() });
+    const result = await registerUser({
+      editorInviteToken: editorInviteToken || undefined,
+      email,
+      fullName,
+      password,
+      role,
+      termsAcceptedAt: new Date(),
+    });
     await setSessionCookie(result.token);
     if (result.requestedRole) {
       redirect(`/rol-secimi?durum=talep-alindi&rol=${result.requestedRole}`);

@@ -1,6 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export type UserRole = "reader" | "writer" | "editor" | "publisher";
+export type UserRole = "reader" | "writer" | "editor_pending" | "editor" | "publisher";
 
 type TableDefinition<Row, Insert, Update> = {
   Row: Row;

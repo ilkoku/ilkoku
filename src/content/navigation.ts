@@ -20,3 +20,28 @@ export const navigationContent = {
     { label: "Profilim", href: "#", disabled: true, badge: "Yakında" },
   ],
 } as const;
+
+export const readerNavigationContent = {
+  ariaLabel: "Okuyucu menüsü",
+  items: [
+    { label: "Ana Sayfa", href: "/okuyucu" },
+    { label: "Keşfet", href: "/kesfet" },
+    { label: "Favorilerim", href: "/favorilerim" },
+    { label: "Okumaya Devam Et", href: "#", disabled: true, badge: "Yakında" },
+    { label: "Bildirimler", href: "#", disabled: true, badge: "Yakında" },
+    { label: "Profil", href: "#", disabled: true, badge: "Yakında" },
+  ],
+} as const;
+
+export const editorNavigationContent = {
+  ariaLabel: "Editör menüsü",
+  items: [
+    { label: "Keşfet", href: "/editor/kesfet" },
+    { label: "Favorilerim", href: "/editor/favoriler" },
+    { label: "Editör Seçkilerim", href: "/editor/seckiler" },
+    { label: "İncelemelerim", href: "/editor/incelemeler" },
+    { label: "Bana Önerilenler", href: "/editor/onerilenler" },
+    { label: "Bildirimler", href: "/editor/bildirimler" },
+    { label: "Profil", href: "/editor/profil" },
+  ],
+} as const;

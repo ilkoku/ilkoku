@@ -10,14 +10,27 @@ import { roleOptions } from "../data";
 import { initialAuthState } from "../state";
 import type { RegistrationRole } from "../types";
 
-export function RegisterForm() {
-  const [selectedRole, setSelectedRole] = useState<RegistrationRole>("reader");
+export function RegisterForm({
+  editorInviteToken,
+}: {
+  editorInviteToken?: string;
+}) {
+  const [selectedRole, setSelectedRole] = useState<RegistrationRole>(
+    editorInviteToken ? "editor" : "reader",
+  );
   const [state, formAction, pending] = useActionState(registerAction, initialAuthState);
 
   return (
     <div className="auth-form-card">
       <header><p>{authContent.register.cardEyebrow}</p><h2>{authContent.register.cardTitle}</h2><span>{authContent.register.cardDescription}</span></header>
       <form className="auth-form" action={formAction}>
+        {editorInviteToken && (
+          <input
+            name="editor-invite-token"
+            type="hidden"
+            value={editorInviteToken}
+          />
+        )}
         <Field label={authContent.register.fullName} name="full-name" autoComplete="name" placeholder={authContent.register.fullNamePlaceholder} required />
         <Field control="email" label={authContent.common.email} name="email" autoComplete="email" placeholder={authContent.common.emailPlaceholder} required />
         <Field control="password" label={authContent.common.password} name="password" autoComplete="new-password" placeholder={authContent.register.passwordPlaceholder} minLength={8} required />
@@ -27,7 +40,9 @@ export function RegisterForm() {
           <legend>{authContent.register.roleLegend}</legend>
           <p>{authContent.register.roleDescription}</p>
           <div className="auth-register-role__grid">
-            {roleOptions.map((role) => {
+            {roleOptions
+              .filter((role) => !editorInviteToken || role.id === "editor")
+              .map((role) => {
               const descriptionId = `register-role-${role.id}-description`;
               const isSelected = selectedRole === role.id;
               return (
@@ -44,7 +59,7 @@ export function RegisterForm() {
                   <small id={descriptionId}>{role.description}</small>
                 </label>
               );
-            })}
+              })}
           </div>
         </fieldset>
         <label className="auth-checkbox auth-terms">

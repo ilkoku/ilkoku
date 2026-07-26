@@ -9,6 +9,8 @@ import {
   tr,
   validationContent,
 } from "@/content";
+import { EditorReviewBadge } from "@/features/editor-workspace/components/EditorReviewBadge";
+import { ProfessionalReviewTools } from "@/features/editor-workspace/components/ProfessionalReviewTools";
 import type { PublicChapterDetail } from "@/features/works/types";
 
 function formatDate(value: Date | string) {
@@ -30,8 +32,20 @@ function countWords(content: string) {
 
 export function ReadingExperience({
   chapter,
+  professionalReview,
+  readingProgress,
 }: {
   chapter: PublicChapterDetail;
+  professionalReview?: {
+    draft: {
+      category: string;
+      content: string;
+      priority: "normal" | "important";
+      title: string;
+    } | null;
+    workId: string;
+  } | null;
+  readingProgress?: number | null;
 }) {
   const wordCount = countWords(chapter.content);
 
@@ -44,6 +58,7 @@ export function ReadingExperience({
     chapter.work.status === "published"
       ? 100
       : 0;
+  const displayedProgress = readingProgress ?? completion;
 
   const paragraphs = chapter.content
     .split(/\n{2,}/u)
@@ -175,6 +190,8 @@ export function ReadingExperience({
               <p className="book-intro__author">
                 {chapter.work.authorName}
               </p>
+
+              <EditorReviewBadge status={chapter.work.editorReviewStatus} />
 
               <dl className="book-meta">
                 <div>
@@ -361,13 +378,13 @@ export function ReadingExperience({
 
               <div>
                 <dt>
-                  {
-                    readingContent.common
-                      .completion
-                  }
+                  {readingProgress === null ||
+                  readingProgress === undefined
+                    ? readingContent.common.completion
+                    : "Okuma ilerlemen"}
                 </dt>
 
-                <dd>%{completion}</dd>
+                <dd>%{displayedProgress}</dd>
               </div>
 
               <div>
@@ -388,14 +405,21 @@ export function ReadingExperience({
 
             <progress
               aria-label={readingContent.common.completionLabel(
-                completion,
+                displayedProgress,
               )}
               max={100}
-              value={completion}
+              value={displayedProgress}
             >
-              %{completion}
+              %{displayedProgress}
             </progress>
           </Card>
+
+          {professionalReview && (
+            <ProfessionalReviewTools
+              draft={professionalReview.draft}
+              workId={professionalReview.workId}
+            />
+          )}
         </aside>
       </main>
     </div>

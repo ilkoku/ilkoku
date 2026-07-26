@@ -5,6 +5,7 @@ import type {
   ChapterSummary,
   PublicChapterDetail,
   PublicWorkDetail,
+  PublicWorkSummary,
   WorkWithChapterSummary,
 } from "./types";
 
@@ -168,17 +169,42 @@ export const getPublicWorkBySlug =
         return null;
       }
 
-      const chapterCount =
-        await worksRepository.getPublishedChapterCount(
+      const relatedWorks =
+        await worksRepository.getRelatedPublicWorks(
+          work.authorId,
           work.id,
+          work.genre,
         );
+
+      function mapRelatedWork(
+        related: (typeof relatedWorks.sameAuthor)[number],
+      ): PublicWorkSummary {
+        return {
+          authorName:
+            related.author.displayName ??
+            related.author.fullName,
+          chapterCount: related._count.chapters,
+          editorReviewStatus: related.editorReviewStatus,
+          genre: related.genre,
+          id: related.id,
+          slug: related.slug,
+          title: related.title,
+        };
+      }
 
       return {
         ...work,
         authorName:
           work.author.displayName ??
           work.author.fullName,
-        chapterCount,
+        chapterCount: work.chapters.length,
+        isCompleted:
+          work.chapters.length > 0 &&
+          work._count.chapters === work.chapters.length,
+        sameAuthorWorks:
+          relatedWorks.sameAuthor.map(mapRelatedWork),
+        similarWorks:
+          relatedWorks.similar.map(mapRelatedWork),
       };
     },
   );
@@ -197,11 +223,12 @@ export const getPublicChapter = cache(
       return null;
     }
 
-    const position =
-      Number(chapterNumber);
+    const normalizedChapterNumber = chapterNumber.replace(/^bolum-/u, "");
+    const position = Number(normalizedChapterNumber);
 
     if (
-      Number.isNaN(position)
+      !Number.isInteger(position) ||
+      position < 1
     ) {
       return null;
     }

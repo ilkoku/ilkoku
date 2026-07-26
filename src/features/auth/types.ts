@@ -1,5 +1,5 @@
-export type UserRole = "reader" | "writer" | "editor" | "publisher" | "admin";
-export type RegistrationRole = Exclude<UserRole, "admin">;
+export type UserRole = "reader" | "writer" | "editor_pending" | "editor" | "publisher" | "admin";
+export type RegistrationRole = Exclude<UserRole, "admin" | "editor_pending">;
 
 export interface RoleOption {
   id: RegistrationRole;

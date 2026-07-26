@@ -6,6 +6,7 @@ import { updateUserRoleAction, updateUserStatusAction } from "@/features/admin/a
 const roleLabels = {
   reader: "Okur",
   writer: "Yazar",
+  editor_pending: "Editör adayı",
   editor: "Editör",
   publisher: "Yayınevi",
   admin: "Admin",

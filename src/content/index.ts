@@ -2,7 +2,12 @@ export { authContent } from "./auth";
 export { dashboardContent } from "./dashboard";
 export { editorsContent } from "./editors";
 export { feedbackContent } from "./feedback";
-export { commonContent, navigationContent } from "./navigation";
+export {
+  commonContent,
+  editorNavigationContent,
+  navigationContent,
+  readerNavigationContent,
+} from "./navigation";
 export { notificationContent } from "./notifications";
 export { publisherContent } from "./publisher";
 export { publishersContent } from "./publishers";

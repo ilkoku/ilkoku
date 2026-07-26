@@ -191,6 +191,15 @@ export const worksRepository = {
         visibility: "public",
       },
       include: {
+        _count: {
+          select: {
+            chapters: {
+              where: {
+                archivedAt: null,
+              },
+            },
+          },
+        },
         author: {
           select: {
             avatarUrl: true,
@@ -213,6 +222,88 @@ export const worksRepository = {
         },
       },
     });
+  },
+
+  async getRelatedPublicWorks(
+    authorId: string,
+    workId: string,
+    genre: string | null,
+  ) {
+    const publicWorkWhere = {
+      archivedAt: null,
+      publishedAt: {
+        not: null,
+      },
+      status: "published" as const,
+      visibility: "public" as const,
+    };
+    const select = {
+      _count: {
+        select: {
+          chapters: {
+            where: {
+              archivedAt: null,
+              publishedAt: {
+                not: null,
+              },
+              status: "published" as const,
+            },
+          },
+        },
+      },
+      author: {
+        select: {
+          displayName: true,
+          fullName: true,
+        },
+      },
+      editorReviewStatus: true,
+      genre: true,
+      id: true,
+      slug: true,
+      title: true,
+    } as const;
+
+    const [sameAuthor, similar] = await Promise.all([
+      prisma.work.findMany({
+        where: {
+          ...publicWorkWhere,
+          authorId,
+          id: {
+            not: workId,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        select,
+        take: 3,
+      }),
+      genre
+        ? prisma.work.findMany({
+            where: {
+              ...publicWorkWhere,
+              authorId: {
+                not: authorId,
+              },
+              genre,
+              id: {
+                not: workId,
+              },
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            select,
+            take: 3,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    return {
+      sameAuthor,
+      similar,
+    };
   },
 
   async getPublicChapter(workId: string, position: number) {

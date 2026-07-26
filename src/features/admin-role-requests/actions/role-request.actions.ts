@@ -39,6 +39,7 @@ function revalidateRolePages() {
   revalidatePath("/admin/roller");
   revalidatePath("/rol-secimi");
   revalidatePath("/editor-paneli");
+  revalidatePath("/editor");
   revalidatePath("/yayinevi");
   revalidatePath("/yazar");
 }
@@ -172,6 +173,18 @@ export async function rejectRoleRequestAction(
       throw new Error(
         "Başvuru başka bir yönetici tarafından sonuçlandırılmış.",
       );
+    }
+
+    if (roleRequest.requestedRole === "editor") {
+      await prisma.user.updateMany({
+        where: {
+          id: roleRequest.userId,
+          role: "editor_pending",
+        },
+        data: {
+          role: "reader",
+        },
+      });
     }
 
     await prisma.auditLog.create({

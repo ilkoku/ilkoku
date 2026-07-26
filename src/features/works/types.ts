@@ -47,7 +47,19 @@ export type PublicWorkDetail =
   WorkModel & {
     authorName: string;
     chapterCount: number;
+    chapters: ChapterModel[];
+    isCompleted: boolean;
+    sameAuthorWorks: PublicWorkSummary[];
+    similarWorks: PublicWorkSummary[];
   };
+
+export type PublicWorkSummary = Pick<
+  WorkModel,
+  "editorReviewStatus" | "genre" | "id" | "slug" | "title"
+> & {
+  authorName: string;
+  chapterCount: number;
+};
 
 export type PublicChapterDetail =
   ChapterModel & {

@@ -9,7 +9,7 @@ export interface AuthProfile {
   role: UserRole;
 }
 
-const validRoles: UserRole[] = ["reader", "writer", "editor", "publisher"];
+const validRoles: UserRole[] = ["reader", "writer", "editor_pending", "editor", "publisher"];
 
 export async function getCurrentProfile(): Promise<AuthProfile | null> {
   const user = await getCurrentUser();

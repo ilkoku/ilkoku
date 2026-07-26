@@ -7,6 +7,10 @@ const internalEditorsPath = "/editorler";
 
 const protectedPaths = [
   "/admin",
+  "/editor",
+  "/favorilerim",
+  "/kesfet",
+  "/okuyucu",
   "/yazar",
   "/eserlerim",
   "/yazmaya-devam",
@@ -21,18 +25,22 @@ const protectedPaths = [
 interface RouteRoleRule {
   approved: boolean;
   path: string;
-  role: UserRole;
+  roles: UserRole[];
 }
 
 const routeRoleRules: RouteRoleRule[] = [
-  { approved: false, path: "/yazar", role: "writer" },
-  { approved: false, path: "/eserlerim", role: "writer" },
-  { approved: false, path: "/yazmaya-devam", role: "writer" },
-  { approved: false, path: "/geri-bildirimler", role: "writer" },
-  { approved: false, path: "/yayinevleri", role: "writer" },
-  { approved: true, path: publicEditorsPath, role: "editor" },
-  { approved: true, path: internalEditorsPath, role: "editor" },
-  { approved: true, path: "/yayinevi", role: "publisher" },
+  { approved: false, path: "/favorilerim", roles: ["reader", "editor"] },
+  { approved: false, path: "/kesfet", roles: ["reader", "editor"] },
+  { approved: false, path: "/okuyucu", roles: ["reader", "editor"] },
+  { approved: false, path: "/yazar", roles: ["writer"] },
+  { approved: false, path: "/eserlerim", roles: ["writer"] },
+  { approved: false, path: "/yazmaya-devam", roles: ["writer"] },
+  { approved: false, path: "/geri-bildirimler", roles: ["writer"] },
+  { approved: false, path: "/yayinevleri", roles: ["writer"] },
+  { approved: true, path: "/editor", roles: ["editor"] },
+  { approved: true, path: publicEditorsPath, roles: ["editor"] },
+  { approved: true, path: internalEditorsPath, roles: ["editor"] },
+  { approved: true, path: "/yayinevi", roles: ["publisher"] },
 ];
 
 function matchesPath(pathname: string, path: string) {
@@ -130,7 +138,8 @@ export async function proxy(request: NextRequest) {
    * Diğer kullanıcılar yalnızca kendi rollerine ait alanlara girebilir.
    */
   if (roleRule && !isAdmin) {
-    const hasRequiredRole = currentRole === roleRule.role;
+    const hasRequiredRole =
+      Boolean(currentRole) && roleRule.roles.includes(currentRole as UserRole);
     const hasRequiredApproval =
       !roleRule.approved || Boolean(session.profile?.roleApprovedAt);
 
@@ -138,7 +147,7 @@ export async function proxy(request: NextRequest) {
       return createAccessDeniedRedirect(
         request,
         session.response,
-        roleRule.role,
+        roleRule.roles[0],
       );
     }
   }

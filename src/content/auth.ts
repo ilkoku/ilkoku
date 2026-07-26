@@ -130,7 +130,7 @@ export const authContent = {
         previewDescription:
           "Uzmanlık profilini görünür kıl, değerlendirme taleplerini incele ve yazarlara yol göster.",
         highlights: ["Mesleki profil", "Değerlendirme talepleri", "Yazar iletişimi"],
-        href: "/editörler",
+        href: "/editor/kesfet",
         actionLabel: "Editör rolü talep et",
       },
       {
@@ -162,6 +162,7 @@ export const authContent = {
   },
   roles: {
     admin: "Yönetici",
+    editor_pending: "Editör adayı",
     editor: "Editör",
     publisher: "Yayınevi",
     reader: "Okur",

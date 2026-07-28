@@ -40,3 +40,29 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# Local environment
+hostinger.env
+hostinger2.env
+
+# Supabase local temp files
+supabase/.temp/
+
+# Local Supabase config
+src/lib/supabase/config.ts
+# Local backup artifacts
+*.sql
+*.zip
+*.backup.prisma
+tmp/
+tmp/
+
+# Local development artifacts
+*.bak
+*.backup
+*.zip
+.DS_Store
+.next/
+node_modules/

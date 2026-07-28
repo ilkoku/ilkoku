@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+
+import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   archiveWork,
   createNextChapter,
@@ -12,7 +13,10 @@ import {
   saveChapterDraft,
   updateWork,
 } from "./mutations";
-import type { WorkActionState } from "./types";
+import {
+  initialWorkActionState,
+  type WorkActionState,
+} from "./types";
 import {
   chapterDraftSchema,
   createWorkSchema,
@@ -21,43 +25,30 @@ import {
 } from "./validators";
 
 function error(message: string): WorkActionState {
-  return { message, status: "error" };
+  return {
+    ...initialWorkActionState,
+    message,
+    status: "error",
+  };
 }
 
-async function authenticatedClient() {
-  const client = await createClient();
-  const { data, error: userError } = await client.auth.getUser();
-  if (userError || !data.user) return null;
-  const { data: profile, error: profileError } = await client
-    .from("profiles")
-    .select("role")
-    .eq("id", data.user.id)
-    .maybeSingle();
-  if (profileError || profile?.role !== "writer") return null;
-  return { authorId: data.user.id, client };
+async function authenticatedAuthor() {
+  const user = await getCurrentUser();
+
+  if (!user || user.role !== "writer") {
+    return null;
+  }
+
+  return {
+    authorId: user.id,
+    user,
+  };
 }
 
-function revalidateWorkPaths(slug?: string) {
+function revalidateWorkPaths() {
   revalidatePath("/yazar");
   revalidatePath("/eserlerim");
-  if (slug) revalidatePath(`/kitap/${slug}`);
-}
-
-async function updateSubmittedMetadata(
-  auth: NonNullable<Awaited<ReturnType<typeof authenticatedClient>>>,
-  formData: FormData,
-) {
-  const workTitle = formData.get("workTitle");
-  if (typeof workTitle !== "string") return;
-
-  const parsed = updateWorkSchema.safeParse({
-    genre: formData.get("genre") || undefined,
-    id: formData.get("workId"),
-    summary: formData.get("summary") || undefined,
-    title: workTitle,
-  });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Eser bilgileri geçersiz.");
-  await updateWork(auth.client, auth.authorId, parsed.data);
+  revalidatePath("/yazmaya-devam");
 }
 
 export async function createWorkAction(
@@ -65,55 +56,77 @@ export async function createWorkAction(
   formData: FormData,
 ): Promise<WorkActionState> {
   const parsed = createWorkSchema.safeParse({
+    title: formData.get("title"),
     genre: formData.get("genre"),
     summary: formData.get("summary"),
-    title: formData.get("title"),
-    workType: formData.get("workType") || undefined,
+    workType: formData.get("workType"),
   });
-  if (!parsed.success) return error(parsed.error.issues[0]?.message ?? "Eser bilgileri geçersiz.");
 
-  const auth = await authenticatedClient();
-  if (!auth) return error("Eser oluşturmak için yeniden giriş yapmalısın.");
+  if (!parsed.success) {
+    return error(
+      parsed.error.issues[0]?.message ??
+        "Eser bilgileri doğrulanamadı.",
+    );
+  }
+
+  const auth = await authenticatedAuthor();
+
+  if (!auth) {
+    return error(
+      "Yeni eser oluşturmak için yazar hesabınla giriş yapmalısın.",
+    );
+  }
 
   try {
-    const { chapter, work } = await createWorkWithFirstChapter(auth.client, auth.authorId, parsed.data);
-    revalidateWorkPaths(work.slug);
+    const created = await createWorkWithFirstChapter(
+      auth.authorId,
+      parsed.data,
+    );
+
+    revalidateWorkPaths();
+
     return {
-      chapterId: chapter.id,
-      message: "Eserin oluşturuldu. İlk bölümünü yazmaya başlayabilirsin.",
+      chapterId: created.chapter.id,
+      message: "Eser ve ilk bölüm oluşturuldu.",
       status: "success",
-      workId: work.id,
-      workSlug: work.slug,
+      workId: created.work.id,
+      workSlug: created.work.slug,
     };
-  } catch {
-    return error("Eser oluşturulamadı. Bilgilerini kontrol edip tekrar dene.");
+  } catch (caughtError) {
+    console.error("CREATE_WORK_ERROR:", caughtError);
+
+    return error(
+      caughtError instanceof Error
+        ? caughtError.message
+        : "Eser oluşturulamadı. Lütfen tekrar dene.",
+    );
   }
 }
 
-export async function updateWorkAction(
-  _state: WorkActionState,
-  formData: FormData,
-): Promise<WorkActionState> {
-  const parsed = updateWorkSchema.safeParse({
-    genre: formData.get("genre") || undefined,
-    coverUrl: formData.get("coverUrl") ?? undefined,
-    id: formData.get("workId"),
-    language: formData.get("language") || undefined,
-    summary: formData.get("summary") || undefined,
-    status: formData.get("status") || undefined,
-    title: formData.get("title") || undefined,
-    workType: formData.get("workType") || undefined,
+function parseChapterDraft(formData: FormData) {
+  return chapterDraftSchema.safeParse({
+    chapterId: formData.get("chapterId"),
+    content: formData.get("content"),
+    title: formData.get("chapterTitle"),
+    workId: formData.get("workId"),
   });
-  if (!parsed.success) return error(parsed.error.issues[0]?.message ?? "Eser bilgileri geçersiz.");
-  const auth = await authenticatedClient();
-  if (!auth) return error("Eseri güncellemek için yeniden giriş yapmalısın.");
+}
 
-  try {
-    const work = await updateWork(auth.client, auth.authorId, parsed.data);
-    revalidateWorkPaths(work.slug);
-    return { message: "Eser bilgileri güncellendi.", status: "success", workId: parsed.data.id };
-  } catch {
-    return error("Eser bilgileri güncellenemedi.");
+async function updateWorkMetadata(
+  authorId: string,
+  formData: FormData,
+  workId: string,
+) {
+  const parsed = updateWorkSchema.safeParse({
+    id: workId,
+    title: formData.get("workTitle"),
+    genre: formData.get("genre"),
+    summary: formData.get("summary"),
+    status: "draft",
+  });
+
+  if (parsed.success) {
+    await updateWork(authorId, parsed.data);
   }
 }
 
@@ -121,28 +134,46 @@ export async function saveChapterDraftAction(
   _state: WorkActionState,
   formData: FormData,
 ): Promise<WorkActionState> {
-  const parsed = chapterDraftSchema.safeParse({
-    chapterId: formData.get("chapterId"),
-    content: formData.get("content"),
-    title: formData.get("chapterTitle"),
-    workId: formData.get("workId"),
-  });
-  if (!parsed.success) return error(parsed.error.issues[0]?.message ?? "Bölüm bilgileri geçersiz.");
-  const auth = await authenticatedClient();
-  if (!auth) return error("Taslağı kaydetmek için yeniden giriş yapmalısın.");
+  const parsed = parseChapterDraft(formData);
+
+  if (!parsed.success) {
+    return error(
+      parsed.error.issues[0]?.message ??
+        "Taslak bilgileri doğrulanamadı.",
+    );
+  }
+
+  const auth = await authenticatedAuthor();
+
+  if (!auth) {
+    return error(
+      "Taslağı kaydetmek için yeniden giriş yapmalısın.",
+    );
+  }
 
   try {
-    await updateSubmittedMetadata(auth, formData);
-    await saveChapterDraft(auth.client, auth.authorId, parsed.data);
+    await updateWorkMetadata(
+      auth.authorId,
+      formData,
+      parsed.data.workId,
+    );
+    await saveChapterDraft(auth.authorId, parsed.data);
     revalidateWorkPaths();
+
     return {
       chapterId: parsed.data.chapterId,
       message: "Taslak kaydedildi.",
       status: "success",
       workId: parsed.data.workId,
     };
-  } catch {
-    return error("Taslak kaydedilemedi. Lütfen tekrar dene.");
+  } catch (caughtError) {
+    console.error("SAVE_CHAPTER_DRAFT_ERROR:", caughtError);
+
+    return error(
+      caughtError instanceof Error
+        ? caughtError.message
+        : "Taslak kaydedilemedi. Lütfen tekrar dene.",
+    );
   }
 }
 
@@ -150,32 +181,106 @@ export async function publishWorkAction(
   _state: WorkActionState,
   formData: FormData,
 ): Promise<WorkActionState> {
-  const parsed = chapterDraftSchema.safeParse({
-    chapterId: formData.get("chapterId"),
-    content: formData.get("content"),
-    title: formData.get("chapterTitle"),
-    workId: formData.get("workId"),
-  });
-  if (!parsed.success) return error(parsed.error.issues[0]?.message ?? "Bölüm bilgileri geçersiz.");
-  if (!parsed.data.content.trim()) return error("Yayınlamadan önce bölüm metnini yazmalısın.");
-  const auth = await authenticatedClient();
-  if (!auth) return error("Eseri yayınlamak için yeniden giriş yapmalısın.");
+  const parsed = parseChapterDraft(formData);
+
+  if (!parsed.success) {
+    return error(
+      parsed.error.issues[0]?.message ??
+        "Yayın bilgileri doğrulanamadı.",
+    );
+  }
+
+  const auth = await authenticatedAuthor();
+
+  if (!auth) {
+    return error(
+      "Eseri yayınlamak için yeniden giriş yapmalısın.",
+    );
+  }
 
   try {
-    await updateSubmittedMetadata(auth, formData);
-    const work = await publishWork(auth.client, auth.authorId, parsed.data);
-    revalidateWorkPaths(work.slug);
-    revalidatePath(`/kitap/${work.slug}`);
-    revalidatePath(`/oku/${work.slug}/bolum-1`);
+    await updateWorkMetadata(
+      auth.authorId,
+      formData,
+      parsed.data.workId,
+    );
+    await publishWork(auth.authorId, parsed.data);
+    revalidateWorkPaths();
+
     return {
       chapterId: parsed.data.chapterId,
-      message: "Eserin yayınlandı.",
+      message: "Eser yayınlandı.",
       status: "success",
       workId: parsed.data.workId,
-      workSlug: work.slug,
     };
-  } catch {
-    return error("Eser yayınlanamadı. Lütfen tekrar dene.");
+  } catch (caughtError) {
+    console.error("PUBLISH_WORK_ERROR:", caughtError);
+
+    return error(
+      caughtError instanceof Error
+        ? caughtError.message
+        : "Eser yayınlanamadı. Lütfen tekrar dene.",
+    );
+  }
+}
+
+export async function updateWorkAction(
+  _state: WorkActionState,
+  formData: FormData,
+): Promise<WorkActionState> {
+  const statusValue = String(formData.get("status") ?? "draft");
+  const normalizedStatus =
+    statusValue === "in_review" ? "in_progress" : statusValue;
+
+  if (normalizedStatus === "archived") {
+    const archiveData = new FormData();
+    archiveData.set("workId", String(formData.get("workId") ?? ""));
+    return archiveWorkAction(_state, archiveData);
+  }
+
+  const parsed = updateWorkSchema.safeParse({
+    id: formData.get("workId"),
+    title: formData.get("title"),
+    summary: formData.get("summary"),
+    genre: formData.get("genre"),
+    language: formData.get("language"),
+    coverUrl: formData.get("coverUrl"),
+    status: normalizedStatus,
+  });
+
+  if (!parsed.success) {
+    return error(
+      parsed.error.issues[0]?.message ??
+        "Eser bilgileri doğrulanamadı.",
+    );
+  }
+
+  const auth = await authenticatedAuthor();
+
+  if (!auth) {
+    return error(
+      "Eseri güncellemek için yazar hesabınla giriş yapmalısın.",
+    );
+  }
+
+  try {
+    const updated = await updateWork(auth.authorId, parsed.data);
+    revalidateWorkPaths();
+
+    return {
+      message: "Eser bilgileri güncellendi.",
+      status: "success",
+      workId: updated.id,
+      workSlug: updated.slug,
+    };
+  } catch (caughtError) {
+    console.error("UPDATE_WORK_ERROR:", caughtError);
+
+    return error(
+      caughtError instanceof Error
+        ? caughtError.message
+        : "Eser güncellenemedi.",
+    );
   }
 }
 
@@ -183,17 +288,43 @@ export async function archiveWorkAction(
   _state: WorkActionState,
   formData: FormData,
 ): Promise<WorkActionState> {
-  const parsed = workIdSchema.safeParse({ workId: formData.get("workId") });
-  if (!parsed.success) return error(parsed.error.issues[0]?.message ?? "Geçerli bir eser seçilmelidir.");
-  const auth = await authenticatedClient();
-  if (!auth) return error("Eseri arşivlemek için yeniden giriş yapmalısın.");
+  const parsed = workIdSchema.safeParse({
+    workId: formData.get("workId"),
+  });
+
+  if (!parsed.success) {
+    return error(
+      parsed.error.issues[0]?.message ??
+        "Geçerli bir eser seçilmelidir.",
+    );
+  }
+
+  const auth = await authenticatedAuthor();
+
+  if (!auth) {
+    return error(
+      "Eseri arşivlemek için yeniden giriş yapmalısın.",
+    );
+  }
 
   try {
-    await archiveWork(auth.client, auth.authorId, parsed.data.workId);
+    await archiveWork(auth.authorId, parsed.data.workId);
     revalidateWorkPaths();
-    return { message: "Eser arşive taşındı.", status: "success", workId: parsed.data.workId };
-  } catch {
-    return error("Eser arşive taşınamadı.");
+
+    return {
+      message:
+        "Eser arşive taşındı. 30 gün boyunca geri yükleyebilirsin. Bu sürenin sonunda eser ve bölümleri kalıcı olarak silinecektir.",
+      status: "success",
+      workId: parsed.data.workId,
+    };
+  } catch (caughtError) {
+    console.error("ARCHIVE_WORK_ERROR:", caughtError);
+
+    return error(
+      caughtError instanceof Error
+        ? caughtError.message
+        : "Eser arşive taşınamadı.",
+    );
   }
 }
 
@@ -201,26 +332,61 @@ export async function restoreWorkAction(
   _state: WorkActionState,
   formData: FormData,
 ): Promise<WorkActionState> {
-  const parsed = workIdSchema.safeParse({ workId: formData.get("workId") });
-  if (!parsed.success) return error(parsed.error.issues[0]?.message ?? "Geçerli bir eser seçilmelidir.");
-  const auth = await authenticatedClient();
-  if (!auth) return error("Eseri geri almak için writer rolüyle giriş yapmalısın.");
+  const parsed = workIdSchema.safeParse({
+    workId: formData.get("workId"),
+  });
+
+  if (!parsed.success) {
+    return error(
+      parsed.error.issues[0]?.message ??
+        "Geçerli bir eser seçilmelidir.",
+    );
+  }
+
+  const auth = await authenticatedAuthor();
+
+  if (!auth) {
+    return error(
+      "Eseri geri almak için yazar hesabınla giriş yapmalısın.",
+    );
+  }
 
   try {
-    await restoreWork(auth.client, auth.authorId, parsed.data.workId);
+    await restoreWork(auth.authorId, parsed.data.workId);
     revalidateWorkPaths();
-    return { message: "Eser arşivden çıkarıldı.", status: "success", workId: parsed.data.workId };
-  } catch {
-    return error("Eser arşivden çıkarılamadı.");
+
+    return {
+      message: "Eser arşivden çıkarıldı ve yeniden kullanıma açıldı.",
+      status: "success",
+      workId: parsed.data.workId,
+    };
+  } catch (caughtError) {
+    console.error("RESTORE_WORK_ERROR:", caughtError);
+
+    return error(
+      caughtError instanceof Error
+        ? caughtError.message
+        : "Eser arşivden çıkarılamadı.",
+    );
   }
 }
 
 export async function createNextChapterAction(formData: FormData) {
-  const parsed = workIdSchema.safeParse({ workId: formData.get("workId") });
-  if (!parsed.success) redirect("/eserlerim");
-  const auth = await authenticatedClient();
-  if (!auth) redirect("/giris?sonraki=/yazmaya-devam");
-  await createNextChapter(auth.client, auth.authorId, parsed.data.workId);
+  const parsed = workIdSchema.safeParse({
+    workId: formData.get("workId"),
+  });
+
+  if (!parsed.success) {
+    redirect("/eserlerim");
+  }
+
+  const auth = await authenticatedAuthor();
+
+  if (!auth) {
+    redirect("/giris?sonraki=/yazmaya-devam");
+  }
+
+  await createNextChapter(auth.authorId, parsed.data.workId);
   revalidateWorkPaths();
   redirect("/yazmaya-devam");
 }

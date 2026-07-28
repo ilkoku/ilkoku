@@ -12,6 +12,8 @@ export const authContent = {
     password: "Şifre",
     logout: "Çıkış Yap",
     shortLogout: "Çıkış",
+    accountMenu: "Hesap menüsü",
+    openAccountMenu: (name: string) => `${name} için hesap menüsünü aç`,
     roleAccount: (role: string) => `${role} hesabı`,
     profilePhoto: (name: string) => `${name} profil fotoğrafı`,
     profilePlaceholder: (name: string) => `${name} için profil yer tutucusu`,
@@ -128,7 +130,7 @@ export const authContent = {
         previewDescription:
           "Uzmanlık profilini görünür kıl, değerlendirme taleplerini incele ve yazarlara yol göster.",
         highlights: ["Mesleki profil", "Değerlendirme talepleri", "Yazar iletişimi"],
-        href: "/editörler",
+        href: "/editor/kesfet",
         actionLabel: "Editör rolü talep et",
       },
       {
@@ -159,6 +161,8 @@ export const authContent = {
     home: commonContent.homeAction,
   },
   roles: {
+    admin: "Yönetici",
+    editor_pending: "Editör adayı",
     editor: "Editör",
     publisher: "Yayınevi",
     reader: "Okur",

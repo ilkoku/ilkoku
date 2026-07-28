@@ -1,4 +1,9 @@
-import type { PublisherSubmissionStatus } from "@/types/database";
+export type PublisherSubmissionStatus =
+  | "pending"
+  | "reviewing"
+  | "accepted"
+  | "rejected"
+  | "withdrawn";
 
 export interface PublisherItem {
   acceptsSubmissions: boolean;

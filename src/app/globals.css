@@ -11,6 +11,8 @@
 @import "../features/publisher/publisher.css";
 @import "../features/auth/auth.css";
 @import "../features/feedback/feedback.css";
+@import "../features/editor-workspace/editor-workspace.css";
+@import "../features/profile/profile.css";
 
 * {
   box-sizing: border-box;
@@ -48,4 +50,106 @@ a {
 ::selection {
   background: color-mix(in srgb, var(--color-primary) 32%, transparent);
   color: var(--color-text);
+}
+
+
+/* SIDEBAR GROUPED NAVIGATION — SPRINT 2.4 */
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.sidebar__nav-heading {
+  margin: 1.35rem 0 0.38rem;
+  padding: 0 0.9rem;
+  color: rgba(156, 151, 137, 0.7);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.sidebar__nav-heading:first-child {
+  margin-top: 0.7rem;
+}
+
+.sidebar__nav-item {
+  width: 100%;
+}
+
+.sidebar__nav-item .nav-item {
+  position: relative;
+  min-height: 2.85rem;
+  border: 1px solid transparent;
+  border-radius: 0.82rem;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.sidebar__nav-item .nav-item:hover {
+  border-color: rgba(201, 161, 90, 0.12);
+  background: rgba(201, 161, 90, 0.055);
+  transform: translateX(2px);
+}
+
+.sidebar__nav-item .nav-item[data-active] {
+  border-color: rgba(201, 161, 90, 0.22);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(201, 161, 90, 0.15),
+      rgba(201, 161, 90, 0.045)
+    );
+  color: #f5f1e8;
+}
+
+.sidebar__nav-item
+  .nav-item[data-active]
+  .nav-item__indicator {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.sidebar__nav-item .nav-item__indicator {
+  width: 0.18rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: #c9a15a;
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.sidebar__nav-item .nav-item small {
+  margin-left: auto;
+  padding: 0.18rem 0.42rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 241, 232, 0.55);
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.sidebar__nav-item .nav-item--disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+@media (max-width: 900px) {
+  .sidebar__nav-heading {
+    margin-top: 1.05rem;
+  }
+
+  .sidebar__nav-item .nav-item {
+    min-height: 3rem;
+  }
 }

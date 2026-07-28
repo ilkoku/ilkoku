@@ -1,25 +1,22 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
-import { createFeedbackRepository } from "../repository/feedback.repository";
+import { insertEditorFeedback, updateAuthorFeedbackStatus } from "../repository/feedback.repository";
 import type { CreateEditorFeedbackInput } from "../validators/feedback.validators";
 
-export async function markFeedbackRead(client: SupabaseClient<Database>, authorId: string, feedbackId: string) {
-  const { data, error } = await createFeedbackRepository(client).updateAuthorStatus(authorId, feedbackId, "read");
-  if (error) throw error;
-  return data;
+export async function markFeedbackRead(authorId: string, feedbackId: string) {
+  const result = await updateAuthorFeedbackStatus(authorId, feedbackId, "read");
+  if (result.count === 0) throw new Error("FEEDBACK_NOT_FOUND");
+  return result;
 }
 
-export async function archiveFeedback(client: SupabaseClient<Database>, authorId: string, feedbackId: string) {
-  const { data, error } = await createFeedbackRepository(client).updateAuthorStatus(authorId, feedbackId, "archived");
-  if (error) throw error;
-  return data;
+export async function archiveFeedback(authorId: string, feedbackId: string) {
+  const result = await updateAuthorFeedbackStatus(authorId, feedbackId, "archived");
+  if (result.count === 0) throw new Error("FEEDBACK_NOT_FOUND");
+  return result;
 }
 
-export async function createEditorFeedback(client: SupabaseClient<Database>, input: CreateEditorFeedbackInput) {
-  const { data, error } = await createFeedbackRepository(client).createEditorFeedback({
+export function createEditorFeedback(editorId: string, input: CreateEditorFeedbackInput) {
+  return insertEditorFeedback({
     ...input,
     chapterId: input.chapterId || null,
+    editorId,
   });
-  if (error) throw error;
-  return data;
 }

@@ -8,13 +8,45 @@ import { getAuthorWorks } from "@/features/works/queries";
 import { getDashboardFeedback } from "@/features/feedback/queries/feedback.queries";
 import { getPublisherDashboard } from "@/features/publishers/queries";
 
-export const metadata: Metadata = { title: dashboardContent.metadataTitle, description: dashboardContent.metadataDescription };
+export const metadata: Metadata = {
+  title: dashboardContent.metadataTitle,
+  description: dashboardContent.metadataDescription,
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function WriterPage() {
   const profile = await getCurrentProfile();
-  if (!profile) redirect("/giris?sonraki=/yazar");
-  if (profile.role !== "writer") redirect("/erisim-reddedildi");
-  const [works, feedback, publishers] = await Promise.all([getAuthorWorks(profile.id), getDashboardFeedback(profile.id), getPublisherDashboard(profile.id)]);
-  return <AppShell profile={profile}><WriterDashboard feedback={feedback} publishers={publishers} works={works} /></AppShell>;
+
+  if (!profile) {
+    redirect("/giris?sonraki=/yazar");
+  }
+
+  if (profile.role !== "writer") {
+    redirect("/erisim-reddedildi");
+  }
+
+  const [works, feedback] = await Promise.all([
+    getAuthorWorks(profile.id),
+    getDashboardFeedback(),
+  ]);
+
+  const publishers: Awaited<
+    ReturnType<typeof getPublisherDashboard>
+  > = {
+    accepted: 0,
+    items: [],
+    pending: 0,
+    reviewing: 0,
+  };
+
+  return (
+    <AppShell profile={profile}>
+      <WriterDashboard
+        feedback={feedback}
+        publishers={publishers}
+        works={works}
+      />
+    </AppShell>
+  );
 }

@@ -1,14 +1,13 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
-import { createPublishersRepository } from "./repository";
+import { insertSubmission, withdrawAuthorSubmission } from "./repository";
 
-export async function createSubmission(client: SupabaseClient<Database>, input: { coverLetter: string; publisherId: string; workId: string }) {
-  const { data, error } = await createPublishersRepository(client).createSubmission(input);
-  if (error) throw error;
-  return data;
+export function createSubmission(
+  authorId: string,
+  input: { coverLetter: string; publisherId: string; workId: string },
+) {
+  return insertSubmission({ authorId, ...input });
 }
 
-export async function withdrawSubmission(client: SupabaseClient<Database>, id: string) {
-  const { error } = await createPublishersRepository(client).withdrawSubmission(id);
-  if (error) throw error;
+export async function withdrawSubmission(authorId: string, id: string) {
+  const result = await withdrawAuthorSubmission(authorId, id);
+  if (result.count === 0) throw new Error("SUBMISSION_NOT_FOUND");
 }

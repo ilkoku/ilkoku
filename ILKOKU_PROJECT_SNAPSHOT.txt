@@ -1,0 +1,389 @@
+=== ILKOKU PROJECT SNAPSHOT ===
+Tarih: 27 Tem 2026 Pzt +03 22:18:27
+
+=== GIT STATUS ===
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   prisma.config.ts
+	modified:   prisma/schema.prisma
+	modified:   src/app/editor/kesfet/page.tsx
+	modified:   src/app/globals.css
+	modified:   src/components/layout/Sidebar.tsx
+	modified:   src/content/navigation.ts
+	modified:   src/features/editor-workspace/actions.ts
+	modified:   src/features/editor-workspace/editor-workspace.css
+	modified:   src/features/editor-workspace/queries.ts
+	modified:   src/features/editor-workspace/types.ts
+	modified:   src/features/writer/components/NewWorkFlow.tsx
+	modified:   src/lib/navigation.ts
+	modified:   src/types/navigation.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	ILKOKU_PROJECT_SNAPSHOT.txt
+	src/features/editor-workspace/components/EditorWorksTable.tsx
+	src/features/editor-workspace/second-editor.actions.ts
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+=== BRANCH ===
+main
+
+=== SON COMMITLER ===
+2db3487 feat: complete writer profile and genre preferences
+e9883a0 chore: remove backup and temporary files
+a855f80 release: reader v1 and platform baseline
+ff157f7 Fix package json syntax
+3368f46 fix: run database migrations during deploy build
+aa17a63 fix: add work-level editor review migration
+62e3d65 Sprint 2.3 Phase 1: Work-level editor review foundation
+75c61c6 feat: wire chapter management UI into continue writing page
+cce4f30 style: add chapter management panel styles
+8af8e04 feat: add chapter management panel UI
+
+=== NODE / NPM ===
+v26.5.0
+11.17.0
+
+=== DOSYA AGACI ===
+./.DS_Store
+./.env
+./.env.example
+./.env.local
+./.github/workflows/ci.yml
+./.gitignore
+./AGENTS.md
+./artifacts/auth-flow.png
+./artifacts/auth-real.png
+./artifacts/book-showcase.png
+./artifacts/brand-polish.png
+./artifacts/first-chapter-success.png
+./artifacts/geri-bildirimler-desktop-final.png
+./artifacts/geri-bildirimler-mobile-360-final.png
+./artifacts/geri-bildirimler-mobile-390-final.png
+./artifacts/geri-bildirimler-tablet-final.png
+./artifacts/human-editors.png
+./artifacts/publisher-panel.png
+./artifacts/qa-1440x1000.png
+./artifacts/qa-360x800.png
+./artifacts/qa-375x812.png
+./artifacts/qa-390x844.png
+./artifacts/qa-768x1024.png
+./artifacts/reading-experience.png
+./artifacts/turkce-arayuz.png
+./artifacts/works-crud-mobile.png
+./artifacts/works-crud-tablet.png
+./artifacts/works-crud.png
+./artifacts/writer-dashboard.png
+./artifacts/writer-route-fix.png
+./artifacts/writing-editor-pro.png
+./artifacts/yazar-calisma-alani-mobile-final.png
+./artifacts/yazar-calisma-alani-mobile.png
+./artifacts/yazar-calisma-alani-tablet.png
+./artifacts/yazar-calisma-alani.png
+./artifacts/yazar-son-geri-bildirimler-final.png
+./check-chapters.ts
+./check-users.ts
+./CLAUDE.md
+./docs/supabase-auth-setup.md
+./eslint.config.mjs
+./ILKOKU_PROJECT_SNAPSHOT.txt
+./next-env.d.ts
+./next.config.ts
+./package-lock.json
+./package.json
+./postcss.config.mjs
+./prisma.config.ts
+./prisma/migrations/20260725_work_level_editor_review/migration.sql
+./prisma/migrations/20260727010000_second_editor_workflow/migration.sql
+./prisma/schema.prisma
+./public/.DS_Store
+./public/icons/ilkoku-180.png
+./public/icons/ilkoku-192.png
+./public/icons/ilkoku-32.png
+./public/icons/ilkoku-512.png
+./public/landing/ilkoku-hero.webp
+./README.md
+./src/.DS_Store
+./src/app/admin/admin.css
+./src/app/admin/dashboard.css
+./src/app/admin/layout.tsx
+./src/app/admin/page.tsx
+./src/app/admin/roles.css
+./src/app/admin/roller/page.tsx
+./src/app/admin/users.css
+./src/app/admin/yazarlar/page.tsx
+./src/app/admin/yazarlar/writers.css
+./src/app/auth/confirm/route.ts
+./src/app/editor-paneli/editor-panel.css
+./src/app/editor-paneli/page.tsx
+./src/app/editor/bildirimler/page.tsx
+./src/app/editor/favoriler/page.tsx
+./src/app/editor/incelemeler/page.tsx
+./src/app/editor/kesfet/page.tsx
+./src/app/editor/onerilenler/page.tsx
+./src/app/editor/page.tsx
+./src/app/editor/profil/page.tsx
+./src/app/editor/seckiler/page.tsx
+./src/app/editorler/[slug]/page.tsx
+./src/app/editorler/page.tsx
+./src/app/erisim-reddedildi/page.tsx
+./src/app/error.tsx
+./src/app/eserlerim/page.tsx
+./src/app/favicon.ico
+./src/app/favorilerim/page.tsx
+./src/app/geri-bildirimler/error.tsx
+./src/app/geri-bildirimler/loading.tsx
+./src/app/geri-bildirimler/page.tsx
+./src/app/giris/page.tsx
+./src/app/global-error.tsx
+./src/app/globals.css
+./src/app/kayit/page.tsx
+./src/app/kesfet/page.tsx
+./src/app/kitap/[slug]/page.tsx
+./src/app/kitap/kayip-sehir/page.tsx
+./src/app/landing.css
+./src/app/layout.tsx
+./src/app/not-found.tsx
+./src/app/oku/[slug]/[chapterSlug]/page.tsx
+./src/app/oku/kayip-sehir/bolum-1/page.tsx
+./src/app/okuyucu/page.tsx
+./src/app/page.backup.tsx
+./src/app/page.tsx
+./src/app/profilim/page.tsx
+./src/app/rol-secimi/page.tsx
+./src/app/sifre-yenile/page.tsx
+./src/app/sifremi-unuttum/page.tsx
+./src/app/yayinevi/eser/kayip-sehir/page.tsx
+./src/app/yayinevi/page.tsx
+./src/app/yayinevleri/error.tsx
+./src/app/yayinevleri/loading.tsx
+./src/app/yayinevleri/page.tsx
+./src/app/yazar/page.tsx
+./src/app/yazmaya-devam/page.tsx
+./src/assets/.gitkeep
+./src/assets/brand/ilkoku-logo-desktop-retina.png
+./src/assets/brand/ilkoku-logo-desktop.png
+./src/assets/brand/ilkoku-logo-mobile.png
+./src/components/admin/AdminDashboard.tsx
+./src/components/admin/AdminShell.tsx
+./src/components/admin/UserManagement.tsx
+./src/components/layout/AppShell.tsx
+./src/components/layout/AuthenticatedUser.tsx
+./src/components/layout/Breadcrumb.tsx
+./src/components/layout/Sidebar.tsx
+./src/components/layout/UserArea.tsx
+./src/components/ui/Brand.tsx
+./src/components/ui/Button.tsx
+./src/components/ui/Card.tsx
+./src/components/ui/Field.tsx
+./src/components/ui/NavItem.tsx
+./src/content/auth.ts
+./src/content/dashboard.ts
+./src/content/editors.ts
+./src/content/feedback.ts
+./src/content/genres-complete.ts
+./src/content/index.ts
+./src/content/navigation.ts
+./src/content/notifications.ts
+./src/content/publisher.ts
+./src/content/publishers.ts
+./src/content/reading.ts
+./src/content/tr.ts
+./src/content/validation.ts
+./src/content/workspace.ts
+./src/content/writer.ts
+./src/design/animations.ts
+./src/design/colors.ts
+./src/design/icons.ts
+./src/design/index.ts
+./src/design/radius.ts
+./src/design/shadows.ts
+./src/design/spacing.ts
+./src/design/theme.ts
+./src/design/typography.ts
+./src/features/.DS_Store
+./src/features/.gitkeep
+./src/features/admin-role-requests/actions/role-request.actions.ts
+./src/features/admin/actions.ts
+./src/features/auth/actions.ts
+./src/features/auth/auth.css
+./src/features/auth/components/AuthShell.tsx
+./src/features/auth/components/LoginForm.tsx
+./src/features/auth/components/PasswordResetForm.tsx
+./src/features/auth/components/RegisterForm.tsx
+./src/features/auth/components/RoleSelection.tsx
+./src/features/auth/components/UpdatePasswordForm.tsx
+./src/features/auth/data.ts
+./src/features/auth/profile.ts
+./src/features/auth/state.ts
+./src/features/auth/types.ts
+./src/features/chapters/types.ts
+./src/features/comments/types.ts
+./src/features/dashboard/components/BookCard.tsx
+./src/features/dashboard/components/FeedbackList.tsx
+./src/features/dashboard/components/MetricCard.tsx
+./src/features/dashboard/components/ProgressBar.tsx
+./src/features/dashboard/components/WriterDashboard.tsx
+./src/features/dashboard/dashboard.css
+./src/features/dashboard/types.ts
+./src/features/editor-review/actions/editor-review.actions.ts
+./src/features/editor-workspace/access.ts
+./src/features/editor-workspace/actions.ts
+./src/features/editor-workspace/components/EditorPageHeader.tsx
+./src/features/editor-workspace/components/EditorReviewBadge.tsx
+./src/features/editor-workspace/components/EditorWorkCard.tsx
+./src/features/editor-workspace/components/EditorWorksTable.tsx
+./src/features/editor-workspace/components/ProfessionalReviewTools.tsx
+./src/features/editor-workspace/components/RecommendationForm.tsx
+./src/features/editor-workspace/components/ReviewClaimDialog.tsx
+./src/features/editor-workspace/editor-workspace.css
+./src/features/editor-workspace/eligibility.ts
+./src/features/editor-workspace/queries.ts
+./src/features/editor-workspace/second-editor.actions.ts
+./src/features/editor-workspace/types.ts
+./src/features/editors/components/EditorAvatar.tsx
+./src/features/editors/components/EditorDirectory.tsx
+./src/features/editors/components/EditorProfile.tsx
+./src/features/editors/components/EditorsHeader.tsx
+./src/features/editors/components/EvaluationRequest.tsx
+./src/features/editors/data.ts
+./src/features/editors/editors.css
+./src/features/editors/types.ts
+./src/features/feedback/actions/feedback.actions.ts
+./src/features/feedback/components/DashboardFeedback.tsx
+./src/features/feedback/components/FeedbackCard.tsx
+./src/features/feedback/components/FeedbackDetailDialog.tsx
+./src/features/feedback/components/FeedbackEmptyState.tsx
+./src/features/feedback/components/FeedbackStats.tsx
+./src/features/feedback/components/FeedbackWorkspace.tsx
+./src/features/feedback/feedback.css
+./src/features/feedback/mutations/feedback.mutations.ts
+./src/features/feedback/queries/feedback.queries.ts
+./src/features/feedback/repository/feedback.repository.ts
+./src/features/feedback/types.ts
+./src/features/feedback/validators/feedback.validators.ts
+./src/features/landing/page.tsx
+./src/features/profile/actions.ts
+./src/features/profile/components/PasswordForm.tsx
+./src/features/profile/components/ProfileForm.tsx
+./src/features/profile/data.ts
+./src/features/profile/profile.css
+./src/features/profile/queries.ts
+./src/features/profile/state.ts
+./src/features/publisher/components/ContactRequest.tsx
+./src/features/publisher/components/PublisherDashboard.tsx
+./src/features/publisher/components/PublisherHeader.tsx
+./src/features/publisher/components/PublisherWorkDetail.tsx
+./src/features/publisher/components/ReviewListButton.tsx
+./src/features/publisher/data.ts
+./src/features/publisher/publisher.css
+./src/features/publisher/types.ts
+./src/features/publishers/actions.ts
+./src/features/publishers/components/DashboardPublishers.tsx
+./src/features/publishers/components/PublisherDialog.tsx
+./src/features/publishers/components/PublisherWorkspace.tsx
+./src/features/publishers/mutations.ts
+./src/features/publishers/publishers.css
+./src/features/publishers/queries.ts
+./src/features/publishers/repository.ts
+./src/features/publishers/types.ts
+./src/features/publishers/validators.ts
+./src/features/reader/favorites.ts
+./src/features/reading/components/ReadingExperience.tsx
+./src/features/reading/progress.ts
+./src/features/reading/reading.css
+./src/features/showcase/book-showcase.css
+./src/features/showcase/components/BookCover.tsx
+./src/features/showcase/components/BookShowcase.tsx
+./src/features/works/actions.ts
+./src/features/works/actions.ts.bak
+./src/features/works/chapter-archive-actions.ts
+./src/features/works/chapter-management.ts
+./src/features/works/components/ArchiveWorkButton.tsx
+./src/features/works/components/chapter-management.css
+./src/features/works/components/chapter-management.css.backup
+./src/features/works/components/ChapterManagementPanel.tsx
+./src/features/works/components/ChapterManagementPanel.tsx.backup
+./src/features/works/components/CreateChapterForm.tsx
+./src/features/works/components/WorkArchiveAction.tsx
+./src/features/works/components/WorkEditDialog.tsx
+./src/features/works/components/WorksWorkspace.tsx
+./src/features/works/mutations.ts
+./src/features/works/queries.ts
+./src/features/works/repository.ts
+./src/features/works/types.ts
+./src/features/works/validators.ts
+./src/features/works/works-workspace.css
+./src/features/writer/.DS_Store
+./src/features/writer/components/NewWorkFlow.tsx
+./src/features/writer/components/WriterBrand.tsx
+./src/features/writer/types.ts
+./src/features/writer/writer-flow.css
+./src/generated/prisma/browser.ts
+./src/generated/prisma/client.ts
+./src/generated/prisma/commonInputTypes.ts
+./src/generated/prisma/enums.ts
+./src/generated/prisma/internal/class.ts
+./src/generated/prisma/internal/prismaNamespace.ts
+./src/generated/prisma/internal/prismaNamespaceBrowser.ts
+./src/generated/prisma/models.ts
+./src/generated/prisma/models/AuditLog.ts
+./src/generated/prisma/models/Bookmark.ts
+./src/generated/prisma/models/Chapter.ts
+./src/generated/prisma/models/Comment.ts
+./src/generated/prisma/models/EditorFavorite.ts
+./src/generated/prisma/models/EditorFeedback.ts
+./src/generated/prisma/models/EditorInvite.ts
+./src/generated/prisma/models/EditorRecommendation.ts
+./src/generated/prisma/models/EditorReviewAssignment.ts
+./src/generated/prisma/models/EmailVerificationToken.ts
+./src/generated/prisma/models/Favorite.ts
+./src/generated/prisma/models/Notification.ts
+./src/generated/prisma/models/OwnershipStamp.ts
+./src/generated/prisma/models/PasswordResetToken.ts
+./src/generated/prisma/models/Profile.ts
+./src/generated/prisma/models/Publisher.ts
+./src/generated/prisma/models/PublisherSubmission.ts
+./src/generated/prisma/models/ReadingProgress.ts
+./src/generated/prisma/models/RoleRequest.ts
+./src/generated/prisma/models/Session.ts
+./src/generated/prisma/models/User.ts
+./src/generated/prisma/models/Work.ts
+./src/generated/prisma/models/WorkVersion.ts
+./src/hooks/.gitkeep
+./src/lib/admin-navigation.ts
+./src/lib/admin-permissions.ts
+./src/lib/auth/cookies.ts
+./src/lib/auth/current-user.ts
+./src/lib/auth/login.ts
+./src/lib/auth/password.ts
+./src/lib/auth/register.ts
+./src/lib/auth/request-session.ts
+./src/lib/auth/session.ts
+./src/lib/genres.ts
+./src/lib/navigation.ts
+./src/lib/prisma.ts
+./src/lib/site-url.ts
+./src/lib/works/create-work.ts
+./src/proxy.ts
+./src/services/.gitkeep
+./src/styles/components.css
+./src/styles/layout.css
+./src/styles/tokens.css
+./src/types/database.ts
+./src/types/navigation.ts
+./supabase/migrations/202607150001_create_profiles.sql
+./supabase/migrations/202607150002_create_content_core.sql
+./supabase/migrations/202607150003_create_editorial_and_publisher.sql
+./supabase/migrations/202607150004_create_notifications.sql
+./supabase/migrations/202607150005_harden_profiles_and_roles.sql
+./supabase/migrations/202607150006_create_editor_feedback.sql
+./supabase/migrations/202607150007_create_publisher_submissions.sql
+./supabase/migrations/202607200001_add_admin_role.sql
+./tsconfig.json
+./UYGULAMA.md

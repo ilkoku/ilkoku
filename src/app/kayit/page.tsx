@@ -8,8 +8,13 @@ import { getCurrentProfile } from "@/features/auth/profile";
 
 export const metadata: Metadata = { title: authContent.register.metadataTitle, description: authContent.register.metadataDescription };
 
-export default async function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ davet?: string }>;
+}) {
+  const { davet } = await searchParams;
   const profile = await getCurrentProfile();
   if (profile) redirect(roleDestinations[profile.role]);
-  return <AuthShell eyebrow={authContent.register.eyebrow} title={authContent.register.title} description={authContent.register.description}><RegisterForm /></AuthShell>;
+  return <AuthShell eyebrow={authContent.register.eyebrow} title={authContent.register.title} description={authContent.register.description}><RegisterForm editorInviteToken={davet} /></AuthShell>;
 }

@@ -1,0 +1,163 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { AppShell } from "@/components/layout/AppShell";
+import { requireEditorProfile } from "@/features/editor-workspace/access";
+import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
+import { countWords } from "@/features/editor-workspace/eligibility";
+import {
+  getEditorReviews,
+  type EditorReviewListStatus,
+} from "@/features/editor-workspace/queries";
+
+export const metadata: Metadata = {
+  title: "İncelemelerim | İlkOku",
+};
+export const dynamic = "force-dynamic";
+
+type EditorReviewsPageProps = {
+  searchParams: Promise<{ durum?: string }>;
+};
+
+function formatDate(value: Date | null) {
+  if (!value) return "Tarih kaydı yok";
+
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(value);
+}
+
+function getStatusLabel(status: string) {
+  if (status === "awaiting_second_editor") return "2. editör bekleniyor";
+  if (status === "second_in_progress") return "2. editör inceliyor";
+  return "İnceleme devam ediyor";
+}
+
+export default async function EditorReviewsPage({
+  searchParams,
+}: EditorReviewsPageProps) {
+  const { durum } = await searchParams;
+  const view: EditorReviewListStatus =
+    durum === "tamamlanan" ? "completed" : "active";
+  const isCompleted = view === "completed";
+
+  const profile = await requireEditorProfile(
+    isCompleted
+      ? "/editor/incelemeler?durum=tamamlanan"
+      : "/editor/incelemeler",
+  );
+  const works = await getEditorReviews(profile.id, view);
+
+  return (
+    <AppShell profile={profile}>
+      <div className="editor-workspace">
+        <EditorPageHeader
+          description={
+            isCompleted
+              ? "Sonuçlandırdığınız profesyonel incelemeleri ve teslim edilen raporları görüntüleyin."
+              : "Üzerinize aldığınız ve incelemesi devam eden eserleri yönetin."
+          }
+          title={isCompleted ? "Tamamlanan İncelemeler" : "İncelemeye Aldıklarım"}
+        />
+
+        <nav aria-label="İnceleme görünümü" className="editor-review-tabs">
+          <Link
+            aria-current={!isCompleted ? "page" : undefined}
+            className={!isCompleted ? "is-active" : undefined}
+            href="/editor/incelemeler"
+          >
+            Devam Edenler
+          </Link>
+          <Link
+            aria-current={isCompleted ? "page" : undefined}
+            className={isCompleted ? "is-active" : undefined}
+            href="/editor/incelemeler?durum=tamamlanan"
+          >
+            Tamamlananlar
+          </Link>
+        </nav>
+
+        <div className="editor-review-list">
+          {works.map((work) => {
+            const report = work.editorFeedback[0] ?? null;
+            const authorName = work.author.displayName ?? work.author.fullName;
+            const totalWords = work.chapters.reduce(
+              (total, chapter) => total + countWords(chapter.content),
+              0,
+            );
+
+            return (
+              <article
+                className={`editor-review-row ${
+                  isCompleted ? "editor-review-row--completed" : ""
+                }`}
+                key={work.id}
+              >
+                <div>
+                  <span>
+                    {isCompleted
+                      ? `Tamamlandı · ${formatDate(work.editorReviewCompletedAt)}`
+                      : getStatusLabel(work.editorReviewStatus)}
+                  </span>
+                  <h2>{work.title}</h2>
+                  <p>
+                    {authorName} · {totalWords.toLocaleString("tr-TR")} kelime
+                  </p>
+                </div>
+
+                {isCompleted ? (
+                  <div className="editor-review-row__report">
+                    <strong>{report?.title ?? "Profesyonel inceleme raporu"}</strong>
+                    <p>
+                      {report?.content ??
+                        "Tamamlanan incelemeye ait rapor kaydı görüntülenmeye hazır."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="editor-review-row__progress">
+                    <strong>
+                      {work.chapters.length.toLocaleString("tr-TR")} yayımlanmış bölüm
+                    </strong>
+                    <p>Notlarınızı tamamlayıp inceleme raporunu teslim edin.</p>
+                  </div>
+                )}
+
+                <Link
+                  className="button button--outline"
+                  href={
+                    isCompleted
+                      ? `/editor/incelemeler/${work.id}`
+                      : `/oku/${work.slug}/bolum-1`
+                  }
+                >
+                  {isCompleted ? "Raporu Görüntüle" : "İncelemeye Devam Et"}
+                </Link>
+              </article>
+            );
+          })}
+        </div>
+
+        {works.length === 0 && (
+          <div className="editor-empty">
+            <h2>
+              {isCompleted
+                ? "Tamamlanan inceleme bulunmuyor"
+                : "Devam eden inceleme bulunmuyor"}
+            </h2>
+            <p>
+              {isCompleted
+                ? "Teslim ettiğiniz profesyonel incelemeler burada listelenecek."
+                : "Genel Editör Havuzu'ndan uygun bir eseri incelemeye alabilirsiniz."}
+            </p>
+            {!isCompleted && (
+              <Link className="button button--outline" href="/editor/kesfet">
+                Genel Editör Havuzuna Git
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
+    </AppShell>
+  );
+}

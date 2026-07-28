@@ -1,82 +1,179 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { refreshSupabaseSession } from "@/lib/supabase/proxy";
+import { getRequestSession } from "@/lib/auth/request-session";
 import type { UserRole } from "@/types/database";
 
 const publicEditorsPath = "/editörler";
 const internalEditorsPath = "/editorler";
-const protectedPaths = ["/yazar", "/eserlerim", "/yazmaya-devam", "/geri-bildirimler", "/yayinevleri", publicEditorsPath, internalEditorsPath, "/yayinevi", "/rol-secimi"];
+
+const protectedPaths = [
+  "/admin",
+  "/editor",
+  "/favorilerim",
+  "/kesfet",
+  "/okuyucu",
+  "/yazar",
+  "/eserlerim",
+  "/yazmaya-devam",
+  "/geri-bildirimler",
+  "/yayinevleri",
+  publicEditorsPath,
+  internalEditorsPath,
+  "/yayinevi",
+  "/rol-secimi",
+];
 
 interface RouteRoleRule {
   approved: boolean;
   path: string;
-  role: UserRole;
+  roles: UserRole[];
 }
 
 const routeRoleRules: RouteRoleRule[] = [
-  { approved: false, path: "/yazar", role: "writer" },
-  { approved: false, path: "/eserlerim", role: "writer" },
-  { approved: false, path: "/yazmaya-devam", role: "writer" },
-  { approved: false, path: "/geri-bildirimler", role: "writer" },
-  { approved: false, path: "/yayinevleri", role: "writer" },
-  { approved: true, path: publicEditorsPath, role: "editor" },
-  { approved: true, path: internalEditorsPath, role: "editor" },
-  { approved: true, path: "/yayinevi", role: "publisher" },
+  { approved: false, path: "/favorilerim", roles: ["reader", "editor"] },
+  { approved: false, path: "/kesfet", roles: ["reader", "editor"] },
+  { approved: false, path: "/okuyucu", roles: ["reader", "editor"] },
+  { approved: false, path: "/yazar", roles: ["writer"] },
+  { approved: false, path: "/eserlerim", roles: ["writer"] },
+  { approved: false, path: "/yazmaya-devam", roles: ["writer"] },
+  { approved: false, path: "/geri-bildirimler", roles: ["writer"] },
+  { approved: false, path: "/yayinevleri", roles: ["writer"] },
+  { approved: true, path: "/editor", roles: ["editor"] },
+  { approved: true, path: publicEditorsPath, roles: ["editor"] },
+  { approved: true, path: internalEditorsPath, roles: ["editor"] },
+  { approved: true, path: "/yayinevi", roles: ["publisher"] },
 ];
 
+function matchesPath(pathname: string, path: string) {
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
 function isProtected(pathname: string) {
-  return protectedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  return protectedPaths.some((path) => matchesPath(pathname, path));
 }
 
 function getRoleRule(pathname: string) {
-  return routeRoleRules.find(({ path }) => pathname === path || pathname.startsWith(`${path}/`));
+  return routeRoleRules.find(({ path }) => matchesPath(pathname, path));
 }
 
 function copySession(source: NextResponse, destination: NextResponse) {
-  source.cookies.getAll().forEach((cookie) => destination.cookies.set(cookie));
+  source.cookies.getAll().forEach((cookie) => {
+    destination.cookies.set(cookie);
+  });
+
   for (const header of ["cache-control", "expires", "pragma"]) {
     const value = source.headers.get(header);
-    if (value) destination.headers.set(header, value);
+
+    if (value) {
+      destination.headers.set(header, value);
+    }
   }
+
   return destination;
+}
+
+function createAccessDeniedRedirect(
+  request: NextRequest,
+  sessionResponse: NextResponse,
+  source: string,
+) {
+  const destination = request.nextUrl.clone();
+
+  destination.pathname = "/erisim-reddedildi";
+  destination.search = "";
+  destination.searchParams.set("kaynak", source);
+
+  return copySession(sessionResponse, NextResponse.redirect(destination));
 }
 
 export async function proxy(request: NextRequest) {
   const pathname = decodeURIComponent(request.nextUrl.pathname);
   const roleRule = getRoleRule(pathname);
-  const session = await refreshSupabaseSession(request, Boolean(roleRule));
+  const isAdminRoute = matchesPath(pathname, "/admin");
+  const protectedRoute = isProtected(pathname);
 
-  if (isProtected(pathname) && !session.authenticated) {
+  const session = protectedRoute
+    ? await getRequestSession(request, Boolean(roleRule) || isAdminRoute)
+    : {
+        authenticated: false,
+        configured: true,
+        profile: null,
+        response: NextResponse.next({ request }),
+      };
+
+  if (protectedRoute && !session.authenticated) {
     const destination = request.nextUrl.clone();
+
     destination.pathname = "/giris";
     destination.search = "";
-    destination.searchParams.set("sonraki", pathname.replace(internalEditorsPath, publicEditorsPath));
-    if (!session.configured) destination.searchParams.set("durum", "yapilandirma");
+    destination.searchParams.set(
+      "sonraki",
+      pathname.replace(internalEditorsPath, publicEditorsPath),
+    );
+
+    if (!session.configured) {
+      destination.searchParams.set("durum", "yapilandirma");
+    }
+
     return copySession(session.response, NextResponse.redirect(destination));
   }
 
-  if (
-    roleRule
-    && (
-      !session.profile
-      || session.profile.role !== roleRule.role
-      || (roleRule.approved && !session.profile.roleApprovedAt)
-    )
-  ) {
-    const destination = request.nextUrl.clone();
-    destination.pathname = "/erisim-reddedildi";
-    destination.search = "";
-    return copySession(session.response, NextResponse.redirect(destination));
+  const currentRole = session.profile?.role;
+  const isAdmin = currentRole === "admin";
+
+  /*
+   * Admin sayfaları yalnızca admin rolüne açıktır.
+   * Writer/editor/publisher gibi roller burada açık bir erişim
+   * reddedildi ekranına gönderilir.
+   */
+  if (isAdminRoute && !isAdmin) {
+    return createAccessDeniedRedirect(
+      request,
+      session.response,
+      "admin",
+    );
   }
 
-  if (pathname === publicEditorsPath || pathname.startsWith(`${publicEditorsPath}/`)) {
+  /*
+   * Admin bütün kullanıcı panellerini inceleyebilir.
+   * Diğer kullanıcılar yalnızca kendi rollerine ait alanlara girebilir.
+   */
+  if (roleRule && !isAdmin) {
+    const hasRequiredRole =
+      Boolean(currentRole) && roleRule.roles.includes(currentRole as UserRole);
+    const hasRequiredApproval =
+      !roleRule.approved || Boolean(session.profile?.roleApprovedAt);
+
+    if (!session.profile || !hasRequiredRole || !hasRequiredApproval) {
+      return createAccessDeniedRedirect(
+        request,
+        session.response,
+        roleRule.roles[0],
+      );
+    }
+  }
+
+  /*
+   * Türkçe URL dışarıda korunur, uygulama içindeki gerçek klasöre rewrite edilir.
+   */
+  if (matchesPath(pathname, publicEditorsPath)) {
     const destination = request.nextUrl.clone();
-    destination.pathname = pathname.replace(publicEditorsPath, internalEditorsPath);
-    return copySession(session.response, NextResponse.rewrite(destination));
+
+    destination.pathname = pathname.replace(
+      publicEditorsPath,
+      internalEditorsPath,
+    );
+
+    return copySession(
+      session.response,
+      NextResponse.rewrite(destination),
+    );
   }
 
   return session.response;
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons/|assets/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icons/|assets/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

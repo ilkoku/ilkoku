@@ -2,9 +2,11 @@ import { authContent } from "@/content";
 import type { RoleOption, UserRole } from "./types";
 
 export const roleDestinations: Record<UserRole, string> = {
-  editor: "/editörler",
+  admin: "/admin",
+  editor_pending: "/rol-secimi?durum=talep-alindi&rol=editor",
+  editor: "/editor/kesfet",
   publisher: "/yayinevi",
-  reader: "/kitap/kayip-sehir",
+  reader: "/okuyucu",
   writer: "/yazar",
 };
 

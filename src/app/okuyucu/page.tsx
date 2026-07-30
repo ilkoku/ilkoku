@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/features/dashboard/components/ProgressBar";
+import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { EditorReviewBadge } from "@/features/editor-workspace/components/EditorReviewBadge";
 import { getContinueReading } from "@/features/reading/progress";
@@ -50,7 +51,7 @@ export default async function ReaderHomePage() {
     redirect("/giris?sonraki=/okuyucu");
   }
 
-  if (profile.role !== "reader" && profile.role !== "editor") {
+  if (!canAccessReaderWorkspace(profile.role)) {
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
+import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { markNotificationReadAction } from "@/features/editor-workspace/actions";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
@@ -19,7 +20,7 @@ function formatDate(value: Date) {
 export default async function ReaderNotificationsPage() {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/giris?sonraki=/bildirimler");
-  if (profile.role !== "reader" && profile.role !== "editor") {
+  if (!canAccessReaderWorkspace(profile.role)) {
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 

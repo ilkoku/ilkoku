@@ -5,6 +5,10 @@ import {
   generateSessionToken,
   hashSessionToken,
 } from "./session";
+import {
+  toPublisherApplicationData,
+  type PublisherApplicationInput,
+} from "@/features/publisher-applications/schema";
 
 type RegistrationRole = "reader" | "writer" | "editor" | "publisher";
 
@@ -12,6 +16,7 @@ export async function registerUser(input: {
   fullName: string;
   email: string;
   password: string;
+  publisherApplication?: PublisherApplicationInput;
   role: RegistrationRole;
   termsAcceptedAt: Date;
   editorInviteToken?: string;
@@ -61,6 +66,10 @@ export async function registerUser(input: {
   const requiresApproval =
     requestedRole === "editor" || requestedRole === "publisher";
 
+  if (requestedRole === "publisher" && !input.publisherApplication) {
+    throw new Error("PUBLISHER_APPLICATION_REQUIRED");
+  }
+
   const token = generateSessionToken();
   const tokenHash = hashSessionToken(token);
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
@@ -71,7 +80,7 @@ export async function registerUser(input: {
         fullName: input.fullName.trim(),
         email: normalizedEmail,
         passwordHash,
-        role: editorInvite
+        role: requestedRole === "editor"
           ? "editor_pending"
           : requiresApproval
             ? "reader"
@@ -81,12 +90,26 @@ export async function registerUser(input: {
     });
 
     if (requiresApproval) {
-      await transaction.roleRequest.create({
+      const roleRequest = await transaction.roleRequest.create({
         data: {
+          pendingKey: `${createdUser.id}:${requestedRole}`,
           userId: createdUser.id,
           requestedRole,
         },
+        select: { id: true },
       });
+
+      if (requestedRole === "publisher" && input.publisherApplication) {
+        await transaction.publisherApplication.create({
+          data: {
+            ...toPublisherApplicationData(input.publisherApplication),
+            applicantUserId: createdUser.id,
+            roleRequestId: roleRequest.id,
+            submittedAt: new Date(),
+            verificationStatus: "submitted",
+          },
+        });
+      }
     }
 
     if (editorInvite) {

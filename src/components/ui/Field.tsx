@@ -4,7 +4,7 @@ type FieldStatus = "default" | "error" | "success";
 type CommonFieldProps = { label: string; message?: string; status?: FieldStatus; className?: string };
 
 type InputFieldProps = CommonFieldProps & InputHTMLAttributes<HTMLInputElement> & {
-  control?: "text" | "email" | "search" | "password";
+  control?: "text" | "email" | "search" | "password" | "number" | "tel" | "url";
 };
 
 type TextareaFieldProps = CommonFieldProps & TextareaHTMLAttributes<HTMLTextAreaElement> & {

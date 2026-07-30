@@ -8,48 +8,55 @@ datasource db {
 }
 
 model User {
-  id                      String                   @id @default(uuid()) @db.Char(36)
-  email                   String                   @unique
-  passwordHash            String                   @db.VarChar(255)
-  fullName                String                   @db.VarChar(160)
-  displayName             String?                  @db.VarChar(160)
-  username                String?                  @unique @db.VarChar(64)
-  avatarUrl               String?                  @db.VarChar(500)
-  bio                     String?                  @db.Text
-  role                    UserRole                 @default(reader)
-  status                  UserStatus               @default(active)
-  emailVerified           DateTime?
-  termsAcceptedAt         DateTime?
-  lastLoginAt             DateTime?
-  isPremium               Boolean                  @default(false)
-  isBanned                Boolean                  @default(false)
-  deletedAt               DateTime?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  auditLogs               AuditLog[]               @relation("AuditLogActor")
-  feedbackReceived        EditorFeedback[]         @relation("FeedbackAuthor")
-  feedbackWritten         EditorFeedback[]         @relation("FeedbackEditor")
-  assignedEditorWorks     Work[]                   @relation("AssignedEditor")
-  editorReviewAssignments EditorReviewAssignment[] @relation("EditorReviewAssignmentEditor")
-  bookmarks               Bookmark[]
-  comments                Comment[]
-  editorFavorites         EditorFavorite[]
-  editorInvitesAccepted   EditorInvite[]           @relation("EditorInviteAcceptedBy")
-  editorInvitesSent       EditorInvite[]           @relation("EditorInviteSender")
-  favorites               Favorite[]
-  recommendationsReceived EditorRecommendation[]   @relation("EditorRecommendationRecipient")
-  recommendationsSent     EditorRecommendation[]   @relation("EditorRecommendationSender")
-  notifications           Notification[]
-  emailVerificationTokens EmailVerificationToken[]
-  ownershipStamps         OwnershipStamp[]
-  passwordResetTokens     PasswordResetToken[]
-  profile                 Profile?
-  publisherSubmissions    PublisherSubmission[]    @relation("SubmissionAuthor")
-  reviewedRoleRequests    RoleRequest[]            @relation("RoleRequestReviewer")
-  roleRequests            RoleRequest[]            @relation("RoleRequestOwner")
-  readingProgress         ReadingProgress[]
-  sessions                Session[]
-  works                   Work[]
+  id                           String                     @id @default(uuid()) @db.Char(36)
+  email                        String                     @unique
+  passwordHash                 String                     @db.VarChar(255)
+  fullName                     String                     @db.VarChar(160)
+  displayName                  String?                    @db.VarChar(160)
+  username                     String?                    @unique @db.VarChar(64)
+  avatarUrl                    String?                    @db.VarChar(500)
+  bio                          String?                    @db.Text
+  role                         UserRole                   @default(reader)
+  status                       UserStatus                 @default(active)
+  emailVerified                DateTime?
+  termsAcceptedAt              DateTime?
+  lastLoginAt                  DateTime?
+  isPremium                    Boolean                    @default(false)
+  isBanned                     Boolean                    @default(false)
+  deletedAt                    DateTime?
+  createdAt                    DateTime                   @default(now())
+  updatedAt                    DateTime                   @updatedAt
+  auditLogs                    AuditLog[]                 @relation("AuditLogActor")
+  feedbackReceived             EditorFeedback[]           @relation("FeedbackAuthor")
+  feedbackWritten              EditorFeedback[]           @relation("FeedbackEditor")
+  assignedEditorWorks          Work[]                     @relation("AssignedEditor")
+  editorReviewAssignments      EditorReviewAssignment[]   @relation("EditorReviewAssignmentEditor")
+  bookmarks                    Bookmark[]
+  comments                     Comment[]
+  editorFavorites              EditorFavorite[]
+  editorInvitesAccepted        EditorInvite[]             @relation("EditorInviteAcceptedBy")
+  editorInvitesSent            EditorInvite[]             @relation("EditorInviteSender")
+  favorites                    Favorite[]
+  recommendationsReceived      EditorRecommendation[]     @relation("EditorRecommendationRecipient")
+  recommendationsSent          EditorRecommendation[]     @relation("EditorRecommendationSender")
+  notifications                Notification[]
+  emailVerificationTokens      EmailVerificationToken[]
+  ownershipStamps              OwnershipStamp[]
+  passwordResetTokens          PasswordResetToken[]
+  profile                      Profile?
+  publisherApplications        PublisherApplication[]
+  publisherSubmissions         PublisherSubmission[]      @relation("SubmissionAuthor")
+  publisherMemberships         PublisherMembership[]
+  publisherInvitationsSent     PublisherInvitation[]      @relation("PublisherInvitationSender")
+  publisherInvitationsAccepted PublisherInvitation[]      @relation("PublisherInvitationAcceptedBy")
+  publisherSubmissionEvents    PublisherSubmissionEvent[] @relation("PublisherSubmissionEventActor")
+  publishingContractsCreated   PublishingContract[]       @relation("PublishingContractCreator")
+  publisherFilesUploaded       PublisherFile[]            @relation("PublisherFileUploader")
+  reviewedRoleRequests         RoleRequest[]              @relation("RoleRequestReviewer")
+  roleRequests                 RoleRequest[]              @relation("RoleRequestOwner")
+  readingProgress              ReadingProgress[]
+  sessions                     Session[]
+  works                        Work[]
 
   @@index([role])
   @@index([status])
@@ -117,17 +124,19 @@ model EmailVerificationToken {
 }
 
 model RoleRequest {
-  id            String            @id @default(uuid()) @db.Char(36)
-  userId        String            @db.Char(36)
-  requestedRole UserRole
-  status        RoleRequestStatus @default(pending)
-  reviewedById  String?           @db.Char(36)
-  reviewedAt    DateTime?
-  reviewNote    String?           @db.Text
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  reviewedBy    User?             @relation("RoleRequestReviewer", fields: [reviewedById], references: [id])
-  user          User              @relation("RoleRequestOwner", fields: [userId], references: [id], onDelete: Cascade)
+  id                   String                @id @default(uuid()) @db.Char(36)
+  userId               String                @db.Char(36)
+  requestedRole        UserRole
+  status               RoleRequestStatus     @default(pending)
+  pendingKey           String?               @unique @db.VarChar(96)
+  reviewedById         String?               @db.Char(36)
+  reviewedAt           DateTime?
+  reviewNote           String?               @db.Text
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  reviewedBy           User?                 @relation("RoleRequestReviewer", fields: [reviewedById], references: [id])
+  user                 User                  @relation("RoleRequestOwner", fields: [userId], references: [id], onDelete: Cascade)
+  publisherApplication PublisherApplication?
 
   @@index([userId, status])
   @@index([requestedRole, status])
@@ -471,44 +480,224 @@ model Notification {
 }
 
 model Publisher {
-  id                 String                @id @default(uuid()) @db.Char(36)
-  companyName        String
-  slug               String                @unique @db.VarChar(220)
-  description        String?               @db.Text
-  websiteUrl         String?               @db.VarChar(500)
-  logoUrl            String?               @db.VarChar(500)
-  verified           Boolean               @default(false)
-  acceptsSubmissions Boolean               @default(true)
-  active             Boolean               @default(true)
-  archivedAt         DateTime?
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
-  submissions        PublisherSubmission[]
+  id                    String                 @id @default(uuid()) @db.Char(36)
+  companyName           String                 @db.VarChar(220)
+  legalCompanyName      String?                @db.VarChar(240)
+  companyType           String?                @db.VarChar(80)
+  establishmentYear     Int?                   @db.UnsignedSmallInt
+  taxOffice             String?                @db.VarChar(160)
+  taxNumber             String?                @db.VarChar(32)
+  registryNumber        String?                @db.VarChar(64)
+  address               String?                @db.Text
+  city                  String?                @db.VarChar(120)
+  district              String?                @db.VarChar(120)
+  corporatePhone        String?                @db.VarChar(32)
+  corporateEmail        String?                @db.VarChar(320)
+  publicationCategories String?                @db.LongText
+  slug                  String                 @unique @db.VarChar(220)
+  description           String?                @db.Text
+  websiteUrl            String?                @db.VarChar(500)
+  logoUrl               String?                @db.VarChar(500)
+  verified              Boolean                @default(false)
+  acceptsSubmissions    Boolean                @default(true)
+  active                Boolean                @default(true)
+  archivedAt            DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  submissions           PublisherSubmission[]
+  members               PublisherMembership[]
+  invitations           PublisherInvitation[]
+  applications          PublisherApplication[]
 
   @@index([active, verified, archivedAt])
   @@index([companyName])
 }
 
+model PublisherApplication {
+  id                        String                     @id @default(uuid()) @db.Char(36)
+  roleRequestId             String                     @unique @db.Char(36)
+  applicantUserId           String                     @db.Char(36)
+  publisherId               String?                    @db.Char(36)
+  publisherName             String                     @db.VarChar(220)
+  legalCompanyName          String                     @db.VarChar(240)
+  companyType               String                     @db.VarChar(80)
+  establishmentYear         Int                        @db.UnsignedSmallInt
+  taxOffice                 String                     @db.VarChar(160)
+  taxNumber                 String                     @db.VarChar(32)
+  mersisOrRegistryNumber    String                     @db.VarChar(64)
+  address                   String                     @db.Text
+  city                      String                     @db.VarChar(120)
+  district                  String                     @db.VarChar(120)
+  corporatePhone            String                     @db.VarChar(32)
+  corporateEmail            String                     @db.VarChar(320)
+  websiteUrl                String?                    @db.VarChar(500)
+  authorizedPersonFirstName String                     @db.VarChar(100)
+  authorizedPersonLastName  String                     @db.VarChar(100)
+  authorizedPersonTitle     String                     @db.VarChar(160)
+  authorizedPersonPhone     String                     @db.VarChar(32)
+  authorizedPersonEmail     String                     @db.VarChar(320)
+  logoUrl                   String?                    @db.VarChar(500)
+  description               String                     @db.Text
+  publicationCategories     String                     @db.LongText
+  acceptsSubmissions        Boolean                    @default(true)
+  verificationDocumentUrls  String                     @db.LongText
+  verificationStatus        PublisherApplicationStatus @default(submitted)
+  correctionNote            String?                    @db.Text
+  submittedAt               DateTime?
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  applicant                 User                       @relation(fields: [applicantUserId], references: [id], onDelete: Cascade)
+  publisher                 Publisher?                 @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+  roleRequest               RoleRequest                @relation(fields: [roleRequestId], references: [id], onDelete: Cascade)
+
+  @@index([applicantUserId, verificationStatus])
+  @@index([publisherId])
+  @@index([verificationStatus, submittedAt])
+}
+
+model PublisherMembership {
+  id          String              @id @default(uuid()) @db.Char(36)
+  publisherId String              @db.Char(36)
+  userId      String              @db.Char(36)
+  role        PublisherMemberRole @default(reviewer)
+  active      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  publisher   Publisher           @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([publisherId, userId])
+  @@index([userId, active])
+  @@index([publisherId, active])
+}
+
+model PublisherInvitation {
+  id           String                    @id @default(uuid()) @db.Char(36)
+  publisherId  String                    @db.Char(36)
+  invitedById  String                    @db.Char(36)
+  invitedEmail String                    @db.VarChar(320)
+  role         PublisherMemberRole       @default(reviewer)
+  tokenHash    String                    @unique @db.Char(64)
+  status       PublisherInvitationStatus @default(pending)
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  declinedAt   DateTime?
+  cancelledAt  DateTime?
+  acceptedById String?                   @db.Char(36)
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  publisher  Publisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  invitedBy  User      @relation("PublisherInvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
+  acceptedBy User?     @relation("PublisherInvitationAcceptedBy", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@index([publisherId, status, createdAt])
+  @@index([publisherId, invitedEmail, status])
+  @@index([invitedEmail, status])
+  @@index([invitedById, createdAt])
+  @@index([expiresAt, status])
+}
+
 model PublisherSubmission {
-  id            String                    @id @default(uuid()) @db.Char(36)
-  publisherId   String                    @db.Char(36)
-  workId        String                    @db.Char(36)
-  authorId      String                    @db.Char(36)
-  coverLetter   String                    @db.Text
-  publisherNote String?                   @db.Text
-  status        PublisherSubmissionStatus @default(pending)
-  submittedAt   DateTime                  @default(now())
-  archivedAt    DateTime?
-  createdAt     DateTime                  @default(now())
-  updatedAt     DateTime                  @updatedAt
-  author        User                      @relation("SubmissionAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  publisher     Publisher                 @relation(fields: [publisherId], references: [id])
-  work          Work                      @relation(fields: [workId], references: [id], onDelete: Cascade)
+  id              String                     @id @default(uuid()) @db.Char(36)
+  publisherId     String                     @db.Char(36)
+  workId          String                     @db.Char(36)
+  authorId        String                     @db.Char(36)
+  coverLetter     String                     @db.Text
+  publisherNote   String?                    @db.Text
+  status          PublisherSubmissionStatus  @default(pending)
+  submittedAt     DateTime                   @default(now())
+  archivedAt      DateTime?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+  author          User                       @relation("SubmissionAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  publisher       Publisher                  @relation(fields: [publisherId], references: [id])
+  work            Work                       @relation(fields: [workId], references: [id], onDelete: Cascade)
+  events          PublisherSubmissionEvent[]
+  contract        PublishingContract?
+  publicationPlan PublicationPlan?
+  files           PublisherFile[]
 
   @@unique([authorId, publisherId, workId, archivedAt])
   @@index([authorId, status, updatedAt])
   @@index([publisherId, status])
   @@index([workId])
+}
+
+model PublishingContract {
+  id                 String                   @id @default(uuid()) @db.Char(36)
+  submissionId       String                   @unique @db.Char(36)
+  createdById        String                   @db.Char(36)
+  status             PublishingContractStatus @default(draft)
+  version            Int                      @default(1) @db.UnsignedInt
+  royaltyPercentage  Decimal                  @db.Decimal(5, 2)
+  advanceAmount      Decimal?                 @db.Decimal(12, 2)
+  rightsPeriodMonths Int                      @default(60) @db.UnsignedSmallInt
+  territory          String                   @default("Türkiye") @db.VarChar(180)
+  notes              String?                  @db.Text
+  sentAt             DateTime?
+  acceptedAt         DateTime?
+  rejectedAt         DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  submission         PublisherSubmission      @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  createdBy          User                     @relation("PublishingContractCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([status, updatedAt])
+  @@index([createdById, createdAt])
+}
+
+model PublicationPlan {
+  id                    String                @id @default(uuid()) @db.Char(36)
+  submissionId          String                @unique @db.Char(36)
+  status                PublicationPlanStatus @default(planning)
+  targetPublicationDate DateTime?
+  isbn                  String?               @db.VarChar(32)
+  coverStatus           ProductionTaskStatus  @default(not_started)
+  layoutStatus          ProductionTaskStatus  @default(not_started)
+  printRun              Int?                  @db.UnsignedInt
+  notes                 String?               @db.Text
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  submission            PublisherSubmission   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([status, targetPublicationDate])
+}
+
+model PublisherSubmissionEvent {
+  id           String                       @id @default(uuid()) @db.Char(36)
+  submissionId String                       @db.Char(36)
+  actorId      String?                      @db.Char(36)
+  type         PublisherSubmissionEventType
+  title        String                       @db.VarChar(180)
+  detail       String?                      @db.Text
+  metadata     String?                      @db.LongText
+  createdAt    DateTime                     @default(now())
+  submission   PublisherSubmission          @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  actor        User?                        @relation("PublisherSubmissionEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([submissionId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([type, createdAt])
+}
+
+model PublisherFile {
+  id           String                @id @default(uuid()) @db.Char(36)
+  submissionId String                @db.Char(36)
+  uploadedById String?               @db.Char(36)
+  category     PublisherFileCategory
+  fileName     String                @db.VarChar(255)
+  mimeType     String                @db.VarChar(160)
+  sizeBytes    BigInt                @db.UnsignedBigInt
+  storageUrl   String                @db.VarChar(1000)
+  createdAt    DateTime              @default(now())
+  archivedAt   DateTime?
+  submission   PublisherSubmission   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  uploadedBy   User?                 @relation("PublisherFileUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([submissionId, category, createdAt])
+  @@index([uploadedById, createdAt])
+  @@index([archivedAt])
 }
 
 enum WorkStatus {
@@ -601,6 +790,61 @@ enum FeedbackPriority {
   important
 }
 
+enum PublisherMemberRole {
+  owner
+  manager
+  submissions_manager
+  editorial
+  contract_manager
+  reviewer
+  viewer
+}
+
+enum PublisherInvitationStatus {
+  pending
+  accepted
+  declined
+  cancelled
+  expired
+}
+
+enum PublisherFileCategory {
+  work_file
+  editor_report
+  author_attachment
+  contract
+  publication_plan
+}
+
+enum PublishingContractStatus {
+  draft
+  sent
+  accepted
+  rejected
+}
+
+enum PublicationPlanStatus {
+  planning
+  preproduction
+  production
+  distribution
+  published
+}
+
+enum ProductionTaskStatus {
+  not_started
+  in_progress
+  completed
+}
+
+enum PublisherSubmissionEventType {
+  submitted
+  review_started
+  decision_changed
+  internal_note
+  contract_requested
+}
+
 enum PublisherSubmissionStatus {
   pending
   reviewing
@@ -629,6 +873,14 @@ enum RoleRequestStatus {
   approved
   rejected
   cancelled
+}
+
+enum PublisherApplicationStatus {
+  draft
+  submitted
+  changes_requested
+  approved
+  rejected
 }
 
 enum AuditAction {

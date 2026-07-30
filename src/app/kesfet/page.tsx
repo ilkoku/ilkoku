@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import type { Prisma } from "@/generated/prisma/client";
+import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { countWords } from "@/features/editor-workspace/eligibility";
@@ -48,7 +49,7 @@ export default async function ReaderExplorePage({
   const profile = await getCurrentProfile();
 
   if (!profile) redirect("/giris?sonraki=/kesfet");
-  if (profile.role !== "reader" && profile.role !== "editor") {
+  if (!canAccessReaderWorkspace(profile.role)) {
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 

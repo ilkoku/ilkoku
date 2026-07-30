@@ -6,6 +6,7 @@ export {
   commonContent,
   editorNavigationContent,
   navigationContent,
+  publisherNavigationContent,
   readerNavigationContent,
 } from "./navigation";
 export { notificationContent } from "./notifications";

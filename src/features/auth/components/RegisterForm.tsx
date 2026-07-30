@@ -9,6 +9,7 @@ import { registerAction } from "../actions";
 import { roleOptions } from "../data";
 import { initialAuthState } from "../state";
 import type { RegistrationRole } from "../types";
+import { PublisherApplicationFields } from "@/features/publisher-applications/components/PublisherApplicationFields";
 
 export function RegisterForm({
   editorInviteToken,
@@ -62,6 +63,7 @@ export function RegisterForm({
               })}
           </div>
         </fieldset>
+        {selectedRole === "publisher" ? <PublisherApplicationFields /> : null}
         <label className="auth-checkbox auth-terms">
           <input name="terms" required type="checkbox" value="accepted" />
           <span>{authContent.register.terms}</span>

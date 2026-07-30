@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
+import { authContent } from "@/content";
+import { logoutAction } from "@/features/auth/actions";
+import { getRoleNavigation } from "@/features/auth/destination";
+import { getCurrentProfile } from "@/features/auth/profile";
 import "./landing.css";
 
 export const metadata: Metadata = {
@@ -22,6 +26,7 @@ export const metadata: Metadata = {
       "Yazarları, okuyucuları, editörleri ve yayınevlerini aynı platformda buluşturan dijital edebiyat ekosistemi.",
   },
 };
+export const dynamic = "force-dynamic";
 
 type IconName =
   | "writer"
@@ -152,7 +157,12 @@ const stats = [
   { icon: "message", value: "34.760+", label: "Yorum" },
 ] as const;
 
-export default function HomePage() {
+export default async function HomePage() {
+  const profile = await getCurrentProfile();
+  const navigation = profile ? await getRoleNavigation(profile) : null;
+  const pendingRole = navigation?.pendingRequest?.requestedRole
+    ?? (profile?.role === "editor_pending" ? "editor" : null);
+
   return (
     <main className="landing-page">
       <style>{`
@@ -203,8 +213,19 @@ export default function HomePage() {
           <span className="landing-kicker landing-header__kicker">Dijital edebiyat platformu</span>
           <div className="landing-header__tools">
             <details className="landing-account">
-              <summary aria-label="Hesap menüsünü aç"><LandingIcon name="account" /></summary>
-              <div className="landing-account__menu"><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a></div>
+              <summary aria-label={profile ? `${profile.fullName} hesap menüsünü aç` : "Hesap menüsünü aç"}><LandingIcon name="account" /></summary>
+              <div className="landing-account__menu">
+                {profile && navigation ? <>
+                  <div className="landing-account__identity">
+                    <strong>{profile.fullName}</strong>
+                    <span>Aktif rol: {authContent.roles[profile.role]}</span>
+                    {navigation.hasPendingRequest ? <small>{pendingRole ? `${authContent.roles[pendingRole]} başvurunuz inceleniyor` : "Başvurunuz inceleniyor"}</small> : null}
+                  </div>
+                  <Link href="/hesabim">Hesabım</Link>
+                  <Link href={navigation.workspaceHref}>{navigation.hasPendingRequest ? "Mevcut çalışma alanına dön" : "Çalışma Alanım"}</Link>
+                  <form action={logoutAction}><button className="landing-account__logout" type="submit">Çıkış Yap</button></form>
+                </> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a></>}
+              </div>
             </details>
           </div>
         </div>
@@ -236,7 +257,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p>İlk cümle, ilk okurun, <strong>ilk adımın.</strong></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/yayinevleri">Yayınevleri</Link><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></div><div><h3>Destek</h3><a href="mailto:destek@ilkoku.com">Yardım Merkezi</a></div></div><p className="landing-footer__copyright">© {new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.</p></footer>
+      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p>İlk cümle, ilk okurun, <strong>ilk adımın.</strong></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/yayinevleri">Yayınevleri</Link><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div><div><h3>Destek</h3><a href="mailto:destek@ilkoku.com">Yardım Merkezi</a></div></div><p className="landing-footer__copyright">© {new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.</p></footer>
     </main>
   );
 }

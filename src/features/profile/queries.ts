@@ -18,6 +18,14 @@ export async function getProfilePageData(userId: string) {
           writingGenres: true,
         },
       },
+      roleRequests: {
+        include: {
+          publisherApplication: true,
+          reviewedBy: { select: { fullName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
     },
   });
 
@@ -32,6 +40,15 @@ export async function getProfilePageData(userId: string) {
     email: user.email,
     firstName,
     lastName: surnameParts.join(" "),
+    latestRoleRequest: user.roleRequests[0] ? {
+      adminName: user.roleRequests[0].reviewedBy?.fullName ?? null,
+      createdAt: user.roleRequests[0].createdAt,
+      publisherApplication: user.roleRequests[0].publisherApplication,
+      requestedRole: user.roleRequests[0].requestedRole,
+      reviewNote: user.roleRequests[0].reviewNote,
+      reviewedAt: user.roleRequests[0].reviewedAt,
+      status: user.roleRequests[0].status,
+    } : null,
     role: user.role,
     username: user.username ?? "",
     website: user.profile?.website ?? "",

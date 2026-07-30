@@ -109,3 +109,20 @@ export const editorNavigationContent = {
     },
   ],
 } as const;
+
+export const publisherNavigationContent = {
+  ariaLabel: "Yayınevi menüsü",
+  items: [
+    { type: "item", label: "Panel", href: "/yayinevi" },
+    { type: "heading", label: "Başvurular" },
+    { type: "item", label: "Yeni Başvurular", href: "/yayinevi?durum=pending" },
+    { type: "item", label: "İncelenenler", href: "/yayinevi?durum=reviewing" },
+    { type: "item", label: "Kararlar", href: "/yayinevi?durum=completed" },
+    { type: "heading", label: "Operasyon" },
+    { type: "item", label: "Dosya Merkezi", href: "/yayinevi/dosyalar" },
+    { type: "item", label: "Bildirimler", href: "/yayinevi/bildirimler" },
+    { type: "item", label: "Ekip ve Yetkiler", href: "/yayinevi/uyeler" },
+    { type: "heading", label: "Hesap" },
+    { type: "item", label: "Profilim", href: "/profilim" },
+  ],
+} as const;

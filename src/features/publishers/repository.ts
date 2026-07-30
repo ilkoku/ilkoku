@@ -64,14 +64,54 @@ export async function insertSubmission(input: {
   if (!work) throw new Error("WORK_NOT_FOUND");
   if (existing) throw new Error("SUBMISSION_EXISTS");
 
-  return prisma.publisherSubmission.create({
-    data: input,
+  return prisma.$transaction(async (transaction) => {
+    const submission = await transaction.publisherSubmission.create({ data: input });
+    const recipients = await transaction.publisherMembership.findMany({
+      where: { active: true, publisherId: input.publisherId },
+      select: { userId: true },
+    });
+    if (recipients.length) {
+      await transaction.notification.createMany({
+        data: recipients.map(({ userId }) => ({
+          message: "Yeni bir eser başvurusu yayınevi çalışma alanınıza ulaştı.",
+          relatedEntityId: submission.id,
+          relatedEntityType: "publisher_submission",
+          title: "Yeni eser başvurusu",
+          type: "system" as const,
+          userId,
+        })),
+      });
+    }
+    return submission;
   });
 }
 
-export function withdrawAuthorSubmission(authorId: string, id: string) {
-  return prisma.publisherSubmission.updateMany({
+export async function withdrawAuthorSubmission(authorId: string, id: string) {
+  const submission = await prisma.publisherSubmission.findFirst({
     where: { id, authorId, archivedAt: null, status: { in: ["pending", "reviewing"] } },
-    data: { status: "withdrawn", archivedAt: new Date() },
+    select: { id: true, publisherId: true, work: { select: { title: true } } },
+  });
+  if (!submission) return { count: 0 };
+  return prisma.$transaction(async (transaction) => {
+    const result = await transaction.publisherSubmission.updateMany({
+      where: { id: submission.id, authorId, archivedAt: null, status: { in: ["pending", "reviewing"] } },
+      data: { status: "withdrawn", archivedAt: new Date() },
+    });
+    if (!result.count) return result;
+    const recipients = await transaction.publisherMembership.findMany({
+      where: { active: true, publisherId: submission.publisherId },
+      select: { userId: true },
+    });
+    if (recipients.length) await transaction.notification.createMany({
+      data: recipients.map(({ userId }) => ({
+        message: `${submission.work.title} başvurusu yazar tarafından geri çekildi.`,
+        relatedEntityId: submission.id,
+        relatedEntityType: "publisher_submission",
+        title: "Başvuru güncellendi",
+        type: "system" as const,
+        userId,
+      })),
+    });
+    return result;
   });
 }

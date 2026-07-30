@@ -214,7 +214,7 @@ body {
   z-index: 1010;
   top: calc(100% + 0.75rem);
   right: 0;
-  width: 11.25rem;
+  width: min(17rem, calc(100vw - 2rem));
   padding: 0.5rem;
   border: 1px solid rgba(65, 49, 129, 0.14);
   border-radius: 0.875rem;
@@ -227,6 +227,7 @@ body {
 }
 
 .landing-account__menu a,
+.landing-account__logout,
 .landing-mobile-menu nav a {
   min-height: 2.875rem;
   display: flex;
@@ -236,15 +237,80 @@ body {
   color: var(--landing-text);
   font-size: 0.8125rem;
   font-weight: 720;
+  text-align: left;
   transition: color var(--landing-transition), background var(--landing-transition),
     transform var(--landing-transition);
 }
 
 .landing-account__menu a:hover,
+.landing-account__logout:hover,
 .landing-mobile-menu nav a:hover {
   color: var(--landing-primary-strong);
   background: var(--landing-lavender-soft);
   transform: translateX(0.1875rem);
+}
+
+.landing-account__identity {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.375rem;
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid rgba(65, 49, 129, 0.12);
+}
+
+.landing-account__identity strong {
+  overflow: hidden;
+  color: var(--landing-night);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.landing-account__identity span,
+.landing-account__identity small {
+  color: var(--landing-muted);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.landing-account__identity small {
+  color: var(--landing-primary-strong);
+  font-weight: 750;
+}
+
+.landing-account__menu form {
+  display: grid;
+}
+
+.landing-account__logout,
+.landing-footer__logout {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.landing-account__logout {
+  background: transparent;
+}
+
+.landing-account__menu a:focus-visible,
+.landing-account__logout:focus-visible,
+.landing-footer__logout:focus-visible {
+  outline: 0.1875rem solid rgba(104, 71, 232, 0.38);
+  outline-offset: 0.125rem;
+}
+
+.landing-footer__logout {
+  display: block;
+  padding: 0;
+  color: #dedaf4;
+  background: transparent;
+  text-align: left;
+}
+
+.landing-footer__logout:hover {
+  color: #fff;
 }
 
 .landing-mobile-menu {
@@ -1306,7 +1372,7 @@ body {
   }
 
   .landing-account__menu {
-    right: -3.25rem;
+    right: 0;
   }
 
   .landing-hero__grid {

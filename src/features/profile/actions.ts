@@ -39,7 +39,7 @@ export async function updateProfileAction(
   formData: FormData,
 ): Promise<ProfileActionState> {
   const user = await getCurrentUser();
-  if (!user) redirect("/giris?sonraki=/profilim");
+  if (!user) redirect("/giris?sonraki=/hesabim");
 
   const firstName = getText(formData, "firstName");
   const lastName = getText(formData, "lastName");
@@ -100,6 +100,7 @@ export async function updateProfileAction(
   }
 
   revalidatePath("/profilim");
+  revalidatePath("/hesabim");
   revalidatePath("/yazar");
   return success("Profil bilgileriniz kaydedildi.");
 }
@@ -109,7 +110,7 @@ export async function changePasswordAction(
   formData: FormData,
 ): Promise<ProfileActionState> {
   const user = await getCurrentUser();
-  if (!user) redirect("/giris?sonraki=/profilim");
+  if (!user) redirect("/giris?sonraki=/hesabim");
 
   const currentPassword = getText(formData, "currentPassword");
   const newPassword = getText(formData, "newPassword");

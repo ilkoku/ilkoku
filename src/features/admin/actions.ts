@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
-const roles = ["reader", "writer", "editor_pending", "editor", "publisher", "admin"] as const;
+const standardRoles = ["reader", "writer"] as const;
 const statuses = ["active", "suspended", "disabled"] as const;
 
 async function requireAdmin() {
@@ -18,10 +18,10 @@ async function requireAdmin() {
 export async function updateUserRoleAction(formData: FormData) {
   const currentUser = await requireAdmin();
   const userId = String(formData.get("userId") ?? "");
-  const role = String(formData.get("role") ?? "") as (typeof roles)[number];
+  const role = String(formData.get("role") ?? "") as (typeof standardRoles)[number];
 
-  if (!userId || !roles.includes(role)) return;
-  if (userId === currentUser.id && role !== "admin") return;
+  if (!userId || !standardRoles.includes(role)) return;
+  if (userId === currentUser.id) return;
 
   await prisma.user.update({ where: { id: userId }, data: { role } });
   revalidatePath("/admin");

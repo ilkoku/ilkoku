@@ -11,7 +11,12 @@ import { registerUser } from "@/lib/auth/register";
 import { clearSessionCookie, getSessionCookie, setSessionCookie } from "@/lib/auth/cookies";
 import { hashSessionToken } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import {
+  toPublisherApplicationData,
+  validatePublisherApplicationFormData,
+} from "@/features/publisher-applications/schema";
 import { roleDestinations } from "./data";
+import { getAuthenticatedDestination } from "./destination";
 import type { RegistrationRole, UserRole } from "./types";
 
 export type AuthActionState = {
@@ -42,6 +47,12 @@ function validPassword(password: string) {
 export async function loginAction(_state: AuthActionState, formData: FormData): Promise<AuthActionState> {
   const email = getText(formData, "email");
   const password = getText(formData, "password");
+  const nextPath = getText(formData, "next");
+  const safeNextPath =
+    nextPath.startsWith("/") && !nextPath.startsWith("//")
+      ? nextPath
+      : "";
+
   if (!email || !password) return error(validationContent.requiredCredentials);
 
   try {
@@ -49,7 +60,13 @@ export async function loginAction(_state: AuthActionState, formData: FormData): 
     const role = result.user.role as UserRole;
     if (!loginRoles.includes(role)) return error(validationContent.genericFailure);
     await setSessionCookie(result.token);
-    redirect(roleDestinations[role]);
+    redirect(
+      safeNextPath ||
+        await getAuthenticatedDestination({
+          id: result.user.id,
+          role,
+        }),
+    );
   } catch (loginError) {
     unstable_rethrow(loginError);
     if (loginError instanceof Error && loginError.message === "INVALID_CREDENTIALS") {
@@ -75,18 +92,29 @@ export async function registerAction(_state: AuthActionState, formData: FormData
   if (!registrationRoles.includes(role)) return error(validationContent.invalidRole);
   if (!termsAccepted) return error(validationContent.termsRequired);
 
+  const publisherApplication = role === "publisher"
+    ? validatePublisherApplicationFormData(formData)
+    : null;
+
+  if (publisherApplication && !publisherApplication.success) {
+    return error(publisherApplication.message);
+  }
+
   try {
     const result = await registerUser({
       editorInviteToken: editorInviteToken || undefined,
       email,
       fullName,
       password,
+      publisherApplication: publisherApplication?.success
+        ? publisherApplication.data
+        : undefined,
       role,
       termsAcceptedAt: new Date(),
     });
     await setSessionCookie(result.token);
     if (result.requestedRole) {
-      redirect(`/rol-secimi?durum=talep-alindi&rol=${result.requestedRole}`);
+      redirect("/hesabim?sekme=rol-basvurusu");
     }
     redirect(roleDestinations[role]);
   } catch (registrationError) {
@@ -168,6 +196,14 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
   const role = getText(formData, "role") as RegistrationRole;
   if (!registrationRoles.includes(role)) return error(validationContent.invalidRole);
 
+  const publisherApplication = role === "publisher"
+    ? validatePublisherApplicationFormData(formData)
+    : null;
+
+  if (publisherApplication && !publisherApplication.success) {
+    return error(publisherApplication.message);
+  }
+
   const user = await getCurrentUser();
   if (!user) redirect("/giris?sonraki=/rol-secimi");
 
@@ -177,7 +213,7 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
         prisma.user.update({ where: { id: user.id }, data: { role } }),
         prisma.roleRequest.updateMany({
           where: { userId: user.id, status: "pending" },
-          data: { status: "cancelled" },
+          data: { pendingKey: null, status: "cancelled" },
         }),
       ]);
     } catch {
@@ -188,22 +224,74 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
 
   try {
     await prisma.$transaction(async (transaction) => {
-      await transaction.user.update({ where: { id: user.id }, data: { role: "reader" } });
+      await transaction.user.update({
+        where: { id: user.id },
+        data: { role: role === "editor" ? "editor_pending" : "reader" },
+      });
       await transaction.roleRequest.updateMany({
         where: { userId: user.id, status: "pending", requestedRole: { not: role } },
-        data: { status: "cancelled" },
+        data: { pendingKey: null, status: "cancelled" },
       });
-      const existing = await transaction.roleRequest.findFirst({
+      const existingRequests = await transaction.roleRequest.findMany({
         where: { userId: user.id, requestedRole: role, status: "pending" },
+        orderBy: { createdAt: "asc" },
         select: { id: true },
       });
-      if (!existing) await transaction.roleRequest.create({ data: { userId: user.id, requestedRole: role } });
+      const [existing, ...duplicates] = existingRequests;
+      if (duplicates.length) {
+        await transaction.roleRequest.updateMany({
+          where: { id: { in: duplicates.map((request) => request.id) } },
+          data: { pendingKey: null, status: "cancelled" },
+        });
+      }
+      if (existing) {
+        await transaction.roleRequest.update({
+          where: { id: existing.id },
+          data: { pendingKey: `${user.id}:${role}` },
+        });
+
+        if (role === "publisher" && publisherApplication?.success) {
+          await transaction.publisherApplication.upsert({
+            where: { roleRequestId: existing.id },
+            create: {
+              ...toPublisherApplicationData(publisherApplication.data),
+              applicantUserId: user.id,
+              roleRequestId: existing.id,
+              submittedAt: new Date(),
+              verificationStatus: "submitted",
+            },
+            update: {
+              ...toPublisherApplicationData(publisherApplication.data),
+              correctionNote: null,
+              submittedAt: new Date(),
+              verificationStatus: "submitted",
+            },
+          });
+        }
+      } else {
+        const roleRequest = await transaction.roleRequest.create({
+          data: { pendingKey: `${user.id}:${role}`, requestedRole: role, userId: user.id },
+          select: { id: true },
+        });
+
+        if (role === "publisher" && publisherApplication?.success) {
+          await transaction.publisherApplication.create({
+            data: {
+              ...toPublisherApplicationData(publisherApplication.data),
+              applicantUserId: user.id,
+              roleRequestId: roleRequest.id,
+              submittedAt: new Date(),
+              verificationStatus: "submitted",
+            },
+          });
+        }
+      }
     });
   } catch {
     return error(validationContent.roleRequestFailed);
   }
 
-  return success(role === "editor" ? notificationContent.editorRoleRequested : notificationContent.publisherRoleRequested);
+  redirect("/hesabim?sekme=rol-basvurusu");
 }
 
 export async function logoutAction() {
@@ -215,5 +303,5 @@ export async function logoutAction() {
   } finally {
     await clearSessionCookie();
   }
-  redirect("/giris");
+  redirect("/");
 }

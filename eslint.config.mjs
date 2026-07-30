@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // One-off database repair script intentionally uses CommonJS.
+    "ilkoku-repair-editor-workflow.cjs",
   ]),
 ]);
 

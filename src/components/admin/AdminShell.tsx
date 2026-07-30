@@ -147,7 +147,7 @@ export function AdminShell({
 
         <div className="admin-sidebar__footer">
           <span className="admin-status-dot" />
-          Tüm sistemler çalışıyor
+          Yönetici oturumu etkin
         </div>
       </aside>
 
@@ -167,22 +167,26 @@ export function AdminShell({
             <strong>Kontrol Merkezi</strong>
           </div>
 
-          <label className="admin-search">
+          <form action="/admin/eserler" className="admin-search" method="get">
             <span>⌕</span>
+            <label className="sr-only" htmlFor="admin-global-search">
+              Yönetim panelinde eser ara
+            </label>
             <input
-              aria-label="Yönetim panelinde ara"
-              placeholder="Eser, yazar veya başvuru ara..."
+              id="admin-global-search"
+              name="q"
+              placeholder="Eser veya yazar ara..."
+              type="search"
             />
-          </label>
+          </form>
 
-          <button
-            type="button"
+          <Link
             className="admin-icon-button"
-            aria-label="Bildirimler"
+            aria-label="Sistem hareketlerini görüntüle"
+            href="/admin/audit-log"
           >
             ♢
-            <i>4</i>
-          </button>
+          </Link>
 
           <div className="admin-profile">
             <span>{initials}</span>
@@ -191,6 +195,8 @@ export function AdminShell({
               <strong>{user.fullName}</strong>
               <small>{user.email}</small>
             </div>
+
+            <Link className="admin-profile__logout" href="/hesabim">Hesabım</Link>
 
             <form action={logoutAction}>
               <button

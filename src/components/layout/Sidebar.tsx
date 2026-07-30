@@ -8,11 +8,13 @@ import {
   editorNavigationContent,
   navigationContent,
   readerNavigationContent,
+  publisherNavigationContent,
 } from "@/content";
 import {
   editorNavigationItems,
   navigationItems,
   readerNavigationItems,
+  publisherNavigationItems,
 } from "@/lib/navigation";
 import type { UserRole } from "@/features/auth/types";
 import type {
@@ -51,8 +53,12 @@ function navigationForRole(role: UserRole): readonly NavigationNode[] {
     return editorNavigationItems;
   }
 
-  if (role === "reader") {
+  if (role === "reader" || role === "editor_pending") {
     return readerNavigationItems;
+  }
+
+  if (role === "publisher") {
+    return publisherNavigationItems;
   }
 
   return navigationItems;
@@ -63,8 +69,12 @@ function ariaLabelForRole(role: UserRole) {
     return editorNavigationContent.ariaLabel;
   }
 
-  if (role === "reader") {
+  if (role === "reader" || role === "editor_pending") {
     return readerNavigationContent.ariaLabel;
+  }
+
+  if (role === "publisher") {
+    return publisherNavigationContent.ariaLabel;
   }
 
   return navigationContent.ariaLabel;

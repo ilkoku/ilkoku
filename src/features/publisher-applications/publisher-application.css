@@ -1,0 +1,180 @@
+.publisher-application-fields {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--space-5);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.publisher-application-fields > legend {
+  margin-bottom: var(--space-2);
+  color: var(--color-text);
+  font-family: var(--font-playfair), serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.publisher-application-fields__intro {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
+  background: var(--color-primary-muted);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+  border-radius: var(--radius-medium);
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+.publisher-application-fields > section {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+}
+
+.publisher-application-fields > section > header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.publisher-application-fields > section > header > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--color-primary);
+  background: var(--color-primary-muted);
+  border-radius: var(--radius-small);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.publisher-application-fields h3,
+.publisher-application-fields header p {
+  margin: 0;
+}
+
+.publisher-application-fields h3 {
+  font-size: 0.95rem;
+}
+
+.publisher-application-fields header p {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.publisher-application-fields__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.publisher-category-picker {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.publisher-category-picker > legend {
+  margin-bottom: var(--space-3);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.publisher-category-picker > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.publisher-category-picker label,
+.publisher-application-toggle {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  color: var(--color-text-secondary);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+
+.publisher-category-picker input,
+.publisher-application-toggle input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.publisher-category-picker label:has(input:checked),
+.publisher-application-toggle:has(input:checked) {
+  color: var(--color-primary);
+  background: var(--color-primary-muted);
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+}
+
+.publisher-category-picker label:has(input:focus-visible),
+.publisher-application-toggle:has(input:focus-visible) {
+  box-shadow: var(--shadow-focus);
+}
+
+.publisher-application-completion {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.publisher-application-completion > .button {
+  justify-self: start;
+}
+
+.publisher-application-message {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  font-size: 0.78rem;
+}
+
+.publisher-application-message[data-status="error"] {
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+}
+
+.publisher-application-message[data-status="success"] {
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border));
+}
+
+@media (max-width: 48rem) {
+  .publisher-application-fields__grid,
+  .publisher-category-picker > div {
+    grid-template-columns: 1fr;
+  }
+
+  .publisher-application-fields > section {
+    padding: var(--space-4);
+  }
+
+  .publisher-application-completion > .button {
+    width: 100%;
+  }
+}

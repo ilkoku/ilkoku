@@ -7,6 +7,7 @@ import { updateRoleAction } from "../actions";
 import { initialAuthState } from "../state";
 import { roleOptions } from "../data";
 import type { UserRole } from "../types";
+import { PublisherApplicationFields } from "@/features/publisher-applications/components/PublisherApplicationFields";
 
 export function RoleSelection({ initialRole = "writer" }: { initialRole?: UserRole }) {
   const [selectedRole, setSelectedRole] = useState<UserRole>(initialRole);
@@ -38,6 +39,7 @@ export function RoleSelection({ initialRole = "writer" }: { initialRole?: UserRo
           <h2 id="role-preview-title">{selected.previewTitle}</h2>
           <span>{selected.previewDescription}</span>
           <ul>{selected.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>
+          {selectedRole === "publisher" ? <PublisherApplicationFields /> : null}
           <Button type="submit" loading={pending}>{selected.actionLabel}</Button>
           {state.message && <small className={`auth-status auth-status--${state.status}`} role="alert">{state.message}</small>}
           <small>{authContent.roleSelection.changeLater}</small>

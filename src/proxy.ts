@@ -1,16 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { readerWorkspaceRoles } from "@/features/auth/data";
+import type { UserRole } from "@/features/auth/types";
 import { getRequestSession } from "@/lib/auth/request-session";
-import type { UserRole } from "@/types/database";
 
 const publicEditorsPath = "/editörler";
 const internalEditorsPath = "/editorler";
 
 const protectedPaths = [
   "/admin",
+  "/hesabim",
   "/editor",
   "/favorilerim",
+  "/bildirimler",
   "/kesfet",
   "/okuyucu",
+  "/okumaya-devam",
   "/yazar",
   "/eserlerim",
   "/yazmaya-devam",
@@ -29,9 +33,11 @@ interface RouteRoleRule {
 }
 
 const routeRoleRules: RouteRoleRule[] = [
-  { approved: false, path: "/favorilerim", roles: ["reader", "editor"] },
-  { approved: false, path: "/kesfet", roles: ["reader", "editor"] },
-  { approved: false, path: "/okuyucu", roles: ["reader", "editor"] },
+  { approved: false, path: "/favorilerim", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/bildirimler", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/kesfet", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/okuyucu", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/okumaya-devam", roles: [...readerWorkspaceRoles] },
   { approved: false, path: "/yazar", roles: ["writer"] },
   { approved: false, path: "/eserlerim", roles: ["writer"] },
   { approved: false, path: "/yazmaya-devam", roles: ["writer"] },
@@ -107,7 +113,9 @@ export async function proxy(request: NextRequest) {
     destination.search = "";
     destination.searchParams.set(
       "sonraki",
-      pathname.replace(internalEditorsPath, publicEditorsPath),
+      matchesPath(pathname, internalEditorsPath)
+        ? pathname.replace(internalEditorsPath, publicEditorsPath)
+        : pathname,
     );
 
     if (!session.configured) {

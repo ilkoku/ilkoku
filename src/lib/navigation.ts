@@ -2,6 +2,7 @@ import {
   editorNavigationContent,
   navigationContent,
   readerNavigationContent,
+  publisherNavigationContent,
 } from "@/content";
 import type {
   NavigationItem,
@@ -16,3 +17,5 @@ export const readerNavigationItems: readonly NavigationItem[] =
 
 export const editorNavigationItems: readonly NavigationNode[] =
   editorNavigationContent.items;
+
+export const publisherNavigationItems: readonly NavigationNode[] = publisherNavigationContent.items;

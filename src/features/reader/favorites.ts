@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { countWords } from "@/features/editor-workspace/eligibility";
 import type { EditorWorkCardData } from "@/features/editor-workspace/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -14,7 +15,7 @@ async function requireReader() {
 
   if (
     !user ||
-    (user.role !== "reader" && user.role !== "editor") ||
+    !canAccessReaderWorkspace(user.role) ||
     user.status !== "active"
   ) {
     throw new Error("READER_PERMISSION_REQUIRED");

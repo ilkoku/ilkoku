@@ -54,15 +54,12 @@ supabase/.temp/
 src/lib/supabase/config.ts
 # Local backup artifacts
 *.sql
+
+# Prisma migration SQL dosyaları sürüm kontrolüne alınır
+!prisma/migrations/**/migration.sql
 *.zip
 *.backup.prisma
 tmp/
 tmp/
 
-# Local development artifacts
-*.bak
-*.backup
-*.zip
-.DS_Store
-.next/
-node_modules/
+.local-backups/

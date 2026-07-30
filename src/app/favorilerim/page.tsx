@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
+import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { ReaderWorksTable } from "@/features/reader/components/ReaderWorksTable";
@@ -20,7 +21,7 @@ export default async function ReaderFavoritesPage() {
     redirect("/giris?sonraki=/favorilerim");
   }
 
-  if (profile.role !== "reader" && profile.role !== "editor") {
+  if (!canAccessReaderWorkspace(profile.role)) {
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 

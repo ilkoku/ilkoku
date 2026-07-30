@@ -1,0 +1,4 @@
+-- No-op migration.
+-- PublisherInvitation tablosu önceki
+-- 20260729212547_publisher_team_invitations
+-- migration'ı tarafından oluşturuldu.

@@ -19,6 +19,10 @@ const statusLabels = {
 } as const;
 
 const PAGE_SIZE = 20;
+const standardRoleLabels = {
+  reader: "Okur",
+  writer: "Yazar",
+} as const;
 
 type UserFilters = {
   q?: string;
@@ -157,7 +161,10 @@ export async function UserManagement({ filters = {} }: UserManagementProps) {
                   <form action={updateUserRoleAction} className="admin-user-control">
                     <input name="userId" type="hidden" value={user.id} />
                     <select aria-label={`${user.email} rolü`} defaultValue={user.role} name="role">
-                      {Object.entries(roleLabels).map(([value, label]) => (
+                      {!Object.hasOwn(standardRoleLabels, user.role) ? (
+                        <option value={user.role}>{roleLabels[user.role]} · mevcut</option>
+                      ) : null}
+                      {Object.entries(standardRoleLabels).map(([value, label]) => (
                         <option key={value} value={value}>{label}</option>
                       ))}
                     </select>

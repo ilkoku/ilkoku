@@ -15,8 +15,8 @@ export const navigationContent = {
     { label: "Ana Sayfa", href: "/yazar" },
     { label: "Yazmaya Devam Et", href: "/yazmaya-devam" },
     { label: "Eserlerim", href: "/eserlerim" },
+    { label: "Yorumlarım", href: "/yorumlarim" },
     { label: "Geri Bildirimler", href: "/geri-bildirimler" },
-    { label: "Yayınevleri", href: "/yayinevleri" },
     { label: "Profilim", href: "/profilim" },
   ],
 } as const;
@@ -38,6 +38,10 @@ export const readerNavigationContent = {
     {
       label: "Okumaya Devam Et",
       href: "/okumaya-devam",
+    },
+    {
+      label: "Tamamlanan Eserler",
+      href: "/tamamlanan-eserler",
     },
     {
       label: "Bildirimler",

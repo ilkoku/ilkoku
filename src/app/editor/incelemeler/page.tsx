@@ -3,8 +3,10 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
+import { SecondEditorAssignmentDialog } from "@/features/editor-workspace/components/SecondEditorAssignmentDialog";
 import { countWords } from "@/features/editor-workspace/eligibility";
 import {
+  getAvailableSecondEditors,
   getEditorReviews,
   type EditorReviewListStatus,
 } from "@/features/editor-workspace/queries";
@@ -47,7 +49,12 @@ export default async function EditorReviewsPage({
       ? "/editor/incelemeler?durum=tamamlanan"
       : "/editor/incelemeler",
   );
-  const works = await getEditorReviews(profile.id, view);
+  const [works, availableSecondEditors] = await Promise.all([
+    getEditorReviews(profile.id, view),
+    isCompleted
+      ? Promise.resolve([])
+      : getAvailableSecondEditors(profile.id),
+  ]);
 
   return (
     <AppShell profile={profile}>
@@ -81,11 +88,30 @@ export default async function EditorReviewsPage({
         <div className="editor-review-list">
           {works.map((work) => {
             const report = work.editorFeedback[0] ?? null;
-            const authorName = work.author.displayName ?? work.author.fullName;
+            const currentAssignment =
+              work.editorReviewAssignments[0] ?? null;
+            const authorName =
+              work.author.displayName ?? work.author.fullName;
             const totalWords = work.chapters.reduce(
               (total, chapter) => total + countWords(chapter.content),
               0,
             );
+
+            const isFirstEditor =
+              work.assignedEditorId === profile.id;
+
+            const isSecondEditor =
+              currentAssignment?.stage === "second";
+
+            const canContinueReview =
+              (isFirstEditor &&
+                work.editorReviewStatus === "in_progress") ||
+              (isSecondEditor &&
+                work.editorReviewStatus === "second_in_progress");
+
+            const canAssignSecondEditor =
+              isFirstEditor &&
+              work.editorReviewStatus === "awaiting_second_editor";
 
             return (
               <article
@@ -123,16 +149,35 @@ export default async function EditorReviewsPage({
                   </div>
                 )}
 
-                <Link
-                  className="button button--outline"
-                  href={
-                    isCompleted
-                      ? `/editor/incelemeler/${work.id}`
-                      : `/oku/${work.slug}/bolum-1`
-                  }
-                >
-                  {isCompleted ? "Raporu Görüntüle" : "İncelemeye Devam Et"}
-                </Link>
+                {isCompleted ? (
+                  <Link
+                    className="button button--outline"
+                    href={`/editor/incelemeler/${work.id}`}
+                  >
+                    Raporu Görüntüle
+                  </Link>
+                ) : canAssignSecondEditor ? (
+                  <SecondEditorAssignmentDialog
+                    editors={availableSecondEditors}
+                    workAuthorId={work.authorId}
+                    workId={work.id}
+                    workTitle={work.title}
+                  />
+                ) : canContinueReview && work.chapters[0] ? (
+                  <Link
+                    className="button button--outline"
+                    href={`/oku/${work.slug}/bolum-${work.chapters[0].position}`}
+                  >
+                    İncelemeye Devam Et
+                  </Link>
+                ) : (
+                  <Link
+                    className="button button--outline"
+                    href={`/kitap/${work.slug}`}
+                  >
+                    Eseri Görüntüle
+                  </Link>
+                )}
               </article>
             );
           })}

@@ -433,3 +433,46 @@
     width: 100%;
   }
 }
+
+/* READER RICH WORK DETAILS */
+
+.workspace-detail-panel__description {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.workspace-review-status {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
+  max-width: 145px;
+  padding: 5px 8px;
+}
+
+.workspace-review-status--completed {
+  background: rgba(56, 177, 119, 0.12);
+  border-color: rgba(56, 177, 119, 0.34);
+  color: #79d6a9;
+}
+
+.workspace-review-status--in_progress,
+.workspace-review-status--second_in_progress {
+  background: rgba(215, 180, 63, 0.1);
+  border-color: rgba(215, 180, 63, 0.35);
+  color: #d7b43f;
+}
+
+.workspace-review-status--awaiting_second_editor,
+.workspace-review-status--requested {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.workspace-review-status--not_requested {
+  color: rgba(255, 255, 255, 0.5);
+}

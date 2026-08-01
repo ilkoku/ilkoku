@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { restartReadingAction } from "@/features/reading/progress";
 import "./reader-works-table.css";
 
 export type ReaderWorkRow = {
   authorName: string;
+  authorUsername?: string | null;
   chapterCount: number;
   commentCount: number;
+  completedAt?: string | null;
   coverUrl: string | null;
+  description?: string | null;
   editorReviewStatus:
     | "not_requested"
     | "requested"
@@ -20,17 +24,45 @@ export type ReaderWorkRow = {
   genre: string | null;
   id: string;
   isFavorite?: boolean;
+  language?: string | null;
   lastReadLabel?: string | null;
   progressPercent?: number | null;
+  publishedAt?: string | null;
   readerCount: number;
   readingHref?: string | null;
+  readingState?:
+    | "unread"
+    | "in_progress"
+    | "completed";
   slug: string;
   title: string;
   totalWords?: number;
+  updatedAt?: string | null;
 };
 
 function formatNumber(value: number) {
   return value.toLocaleString("tr-TR");
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "long",
+  }).format(new Date(value));
+}
+
+function languageLabel(value: string) {
+  if (value === "tr") return "Türkçe";
+  if (value === "en") return "İngilizce";
+  if (value === "de") return "Almanca";
+  if (value === "fr") return "Fransızca";
+
+  return value.toLocaleUpperCase("tr-TR");
+}
+
+function usernameLabel(value: string) {
+  return value.startsWith("@")
+    ? value
+    : `@${value}`;
 }
 
 function reviewLabel(status: ReaderWorkRow["editorReviewStatus"]) {
@@ -105,9 +137,10 @@ export function ReaderWorksTable({
                 <th>Tür</th>
                 <th>Bölüm</th>
                 <th>İlerleme</th>
-                <th>Okunma</th>
-                <th>Favori</th>
+                <th>Okur</th>
+                <th>Beğeni</th>
                 <th>Yorum</th>
+                <th>Editör</th>
                 <th>İşlem</th>
               </tr>
             </thead>
@@ -156,9 +189,16 @@ export function ReaderWorksTable({
                         "—"
                       )}
                     </td>
-                    <td data-label="Okunma">{formatNumber(work.readerCount)}</td>
-                    <td data-label="Favori">{formatNumber(work.favoriteCount)}</td>
+                    <td data-label="Okur">{formatNumber(work.readerCount)}</td>
+                    <td data-label="Beğeni">{formatNumber(work.favoriteCount)}</td>
                     <td data-label="Yorum">{formatNumber(work.commentCount)}</td>
+                    <td data-label="Editör">
+                      <span
+                        className={`workspace-review-status workspace-review-status--${work.editorReviewStatus}`}
+                      >
+                        {reviewLabel(work.editorReviewStatus)}
+                      </span>
+                    </td>
                     <td data-label="İşlem">
                       <div className="workspace-row-actions">
                         <button
@@ -169,15 +209,42 @@ export function ReaderWorksTable({
                         >
                           Detay
                         </button>
-                        <Link
-                          className="workspace-row-action workspace-row-action--primary"
-                          href={appendReturnPath(
-                            work.readingHref ?? `/kitap/${work.slug}`,
-                            returnTo,
-                          )}
-                        >
-                          {work.readingHref ? "Devam Et" : "Aç"}
-                        </Link>
+                        {work.readingState === "completed" ? (
+                          <form action={restartReadingAction}>
+                            <input
+                              name="workId"
+                              type="hidden"
+                              value={work.id}
+                            />
+                            <input
+                              name="returnTo"
+                              type="hidden"
+                              value={returnTo}
+                            />
+                            <button
+                              className="workspace-row-action workspace-row-action--primary"
+                              type="submit"
+                            >
+                              Yeniden Oku
+                            </button>
+                          </form>
+                        ) : (
+                          <Link
+                            className="workspace-row-action workspace-row-action--primary"
+                            href={appendReturnPath(
+                              work.readingHref ??
+                                `/kitap/${work.slug}`,
+                              returnTo,
+                            )}
+                          >
+                            {work.readingHref
+                              ? typeof work.progressPercent ===
+                                "number"
+                                ? "Devam Et"
+                                : "Oku"
+                              : "Aç"}
+                          </Link>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -209,19 +276,156 @@ export function ReaderWorksTable({
           </header>
 
           <div className="workspace-detail-panel__body">
+            <p className="workspace-detail-panel__description">
+              {selectedWork.description?.trim() ||
+                "Yazar bu eser için henüz bir tanıtım metni eklemedi."}
+            </p>
+
             <dl>
-              <div><dt>Yazar</dt><dd>{selectedWork.authorName}</dd></div>
-              <div><dt>Tür</dt><dd>{selectedWork.genre ?? "Belirtilmedi"}</dd></div>
-              <div><dt>Bölüm</dt><dd>{formatNumber(selectedWork.chapterCount)}</dd></div>
-              {typeof selectedWork.totalWords === "number" && (
-                <div><dt>Kelime</dt><dd>{formatNumber(selectedWork.totalWords)}</dd></div>
+              <div>
+                <dt>Yazar</dt>
+                <dd>{selectedWork.authorName}</dd>
+              </div>
+
+              {selectedWork.authorUsername && (
+                <div>
+                  <dt>Yazar profili</dt>
+                  <dd>
+                    {usernameLabel(
+                      selectedWork.authorUsername,
+                    )}
+                  </dd>
+                </div>
               )}
-              <div><dt>Okunma</dt><dd>{formatNumber(selectedWork.readerCount)}</dd></div>
-              <div><dt>Favori</dt><dd>{formatNumber(selectedWork.favoriteCount)}</dd></div>
-              <div><dt>Yorum</dt><dd>{formatNumber(selectedWork.commentCount)}</dd></div>
-              <div><dt>Editör durumu</dt><dd>{reviewLabel(selectedWork.editorReviewStatus)}</dd></div>
+
+              <div>
+                <dt>Tür</dt>
+                <dd>
+                  {selectedWork.genre ??
+                    "Belirtilmedi"}
+                </dd>
+              </div>
+
+              {selectedWork.language && (
+                <div>
+                  <dt>Dil</dt>
+                  <dd>
+                    {languageLabel(
+                      selectedWork.language,
+                    )}
+                  </dd>
+                </div>
+              )}
+
+              <div>
+                <dt>Bölüm</dt>
+                <dd>
+                  {formatNumber(
+                    selectedWork.chapterCount,
+                  )}
+                </dd>
+              </div>
+
+              {typeof selectedWork.totalWords ===
+                "number" && (
+                <div>
+                  <dt>Toplam kelime</dt>
+                  <dd>
+                    {formatNumber(
+                      selectedWork.totalWords,
+                    )}
+                  </dd>
+                </div>
+              )}
+
+              <div>
+                <dt>Okur</dt>
+                <dd>
+                  {formatNumber(
+                    selectedWork.readerCount,
+                  )}
+                </dd>
+              </div>
+
+              <div>
+                <dt>Beğeni</dt>
+                <dd>
+                  {formatNumber(
+                    selectedWork.favoriteCount,
+                  )}
+                </dd>
+              </div>
+
+              <div>
+                <dt>Yorum</dt>
+                <dd>
+                  {formatNumber(
+                    selectedWork.commentCount,
+                  )}
+                </dd>
+              </div>
+
+              <div>
+                <dt>Editör durumu</dt>
+                <dd>
+                  {reviewLabel(
+                    selectedWork.editorReviewStatus,
+                  )}
+                </dd>
+              </div>
+
+              {selectedWork.publishedAt && (
+                <div>
+                  <dt>Yayımlanma</dt>
+                  <dd>
+                    {formatDate(
+                      selectedWork.publishedAt,
+                    )}
+                  </dd>
+                </div>
+              )}
+
+              {selectedWork.updatedAt && (
+                <div>
+                  <dt>Son güncelleme</dt>
+                  <dd>
+                    {formatDate(
+                      selectedWork.updatedAt,
+                    )}
+                  </dd>
+                </div>
+              )}
+
+              {selectedWork.completedAt && (
+                <div>
+                  <dt>Okuma tamamlandı</dt>
+                  <dd>
+                    {formatDate(
+                      selectedWork.completedAt,
+                    )}
+                  </dd>
+                </div>
+              )}
+
               {selectedWork.lastReadLabel && (
-                <div><dt>Son okuma</dt><dd>{selectedWork.lastReadLabel}</dd></div>
+                <div>
+                  <dt>Son okunan bölüm</dt>
+                  <dd>
+                    {selectedWork.lastReadLabel}
+                  </dd>
+                </div>
+              )}
+
+              {typeof selectedWork.isFavorite ===
+                "boolean" && (
+                <div>
+                  <dt>Okuma listem</dt>
+                  <dd>
+                    {selectedWork.isFavorite
+                      ? "Beğenilerimde"
+                      : "Beğenilerimde değil"}
+                  </dd>
+                </div>
               )}
             </dl>
 
@@ -243,15 +447,43 @@ export function ReaderWorksTable({
             >
               Eser Sayfası
             </Link>
-            <Link
-              className="button button--primary"
-              href={appendReturnPath(
-                selectedWork.readingHref ?? `/kitap/${selectedWork.slug}`,
-                returnTo,
-              )}
-            >
-              {selectedWork.readingHref ? "Okumaya Devam Et" : "Eseri Aç"}
-            </Link>
+            {selectedWork.readingState ===
+            "completed" ? (
+              <form action={restartReadingAction}>
+                <input
+                  name="workId"
+                  type="hidden"
+                  value={selectedWork.id}
+                />
+                <input
+                  name="returnTo"
+                  type="hidden"
+                  value={returnTo}
+                />
+                <button
+                  className="button button--primary"
+                  type="submit"
+                >
+                  Yeniden Oku
+                </button>
+              </form>
+            ) : (
+              <Link
+                className="button button--primary"
+                href={appendReturnPath(
+                  selectedWork.readingHref ??
+                    `/kitap/${selectedWork.slug}`,
+                  returnTo,
+                )}
+              >
+                {selectedWork.readingHref
+                  ? typeof selectedWork.progressPercent ===
+                    "number"
+                    ? "Okumaya Devam Et"
+                    : "Okumaya Başla"
+                  : "Eseri Aç"}
+              </Link>
+            )}
           </footer>
         </aside>
       )}

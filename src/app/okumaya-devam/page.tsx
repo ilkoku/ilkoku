@@ -14,6 +14,14 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+function countWords(content: string) {
+  const normalized = content.trim();
+
+  return normalized
+    ? normalized.split(/\s+/u).length
+    : 0;
+}
+
 export default async function ContinueReadingPage() {
   const profile = await getCurrentProfile();
 
@@ -23,22 +31,58 @@ export default async function ContinueReadingPage() {
   }
 
   const progressRecords = await getContinueReading(profile.id, 100);
-  const rows: ReaderWorkRow[] = progressRecords.map((progress) => ({
-    authorName: progress.work.author.displayName ?? progress.work.author.fullName,
-    chapterCount: progress.work.chapters.length,
-    commentCount: 0,
-    coverUrl: null,
-    editorReviewStatus: progress.work.editorReviewStatus,
-    favoriteCount: 0,
-    genre: progress.work.genre,
-    id: progress.work.id,
-    lastReadLabel: progress.chapter.title,
-    progressPercent: progress.progressPercent,
-    readerCount: 0,
-    readingHref: `/oku/${progress.work.slug}/bolum-${progress.chapter.position}`,
-    slug: progress.work.slug,
-    title: progress.work.title,
-  }));
+  const rows: ReaderWorkRow[] =
+    progressRecords.map((progress) => ({
+      authorName:
+        progress.work.author.displayName ??
+        progress.work.author.fullName,
+      authorUsername:
+        progress.work.author.username,
+      chapterCount:
+        progress.work.chapters.length,
+      commentCount:
+        progress.work._count.comments,
+      coverUrl:
+        progress.work.coverUrl,
+      description:
+        progress.work.description,
+      editorReviewStatus:
+        progress.work.editorReviewStatus,
+      favoriteCount:
+        progress.work._count.favorites,
+      genre:
+        progress.work.genre,
+      id:
+        progress.work.id,
+      isFavorite:
+        progress.work.favorites.length > 0,
+      language:
+        progress.work.language,
+      lastReadLabel:
+        progress.chapter.title,
+      progressPercent:
+        progress.progressPercent,
+      publishedAt:
+        progress.work.publishedAt?.toISOString() ??
+        null,
+      readerCount:
+        progress.work._count.readingProgress,
+      readingHref:
+        `/oku/${progress.work.slug}/bolum-${progress.chapter.position}`,
+      slug:
+        progress.work.slug,
+      title:
+        progress.work.title,
+      totalWords:
+        progress.work.chapters.reduce(
+          (total, chapter) =>
+            total +
+            countWords(chapter.content),
+          0,
+        ),
+      updatedAt:
+        progress.work.updatedAt.toISOString(),
+    }));
 
   return (
     <AppShell profile={profile}>

@@ -6,7 +6,6 @@ import { WriterDashboard } from "@/features/dashboard/components/WriterDashboard
 import { getCurrentProfile } from "@/features/auth/profile";
 import { getAuthorWorks } from "@/features/works/queries";
 import { getDashboardFeedback } from "@/features/feedback/queries/feedback.queries";
-import { getPublisherDashboard } from "@/features/publishers/queries";
 
 export const metadata: Metadata = {
   title: dashboardContent.metadataTitle,
@@ -28,23 +27,13 @@ export default async function WriterPage() {
 
   const [works, feedback] = await Promise.all([
     getAuthorWorks(profile.id),
-    getDashboardFeedback(),
+    getDashboardFeedback(profile.id),
   ]);
-
-  const publishers: Awaited<
-    ReturnType<typeof getPublisherDashboard>
-  > = {
-    accepted: 0,
-    items: [],
-    pending: 0,
-    reviewing: 0,
-  };
 
   return (
     <AppShell profile={profile}>
       <WriterDashboard
         feedback={feedback}
-        publishers={publishers}
         works={works}
       />
     </AppShell>

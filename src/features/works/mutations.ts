@@ -5,6 +5,15 @@ import type {
   UpdateWorkInput,
 } from "./validators";
 
+function hasMeaningfulText(value: string) {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .length > 0;
+}
+
 export function createSlug(value: string) {
   const transliterated = value
     .trim()
@@ -142,6 +151,19 @@ export async function saveChapterDraft(
   authorId: string,
   input: ChapterDraftInput,
 ) {
+  const ownedChapter =
+    await worksRepository.getAuthorChapterById(
+      authorId,
+      input.workId,
+      input.chapterId,
+    );
+
+  if (!ownedChapter) {
+    throw new Error(
+      "Bölüm bu esere ait değil veya bölümü düzenleme yetkin yok.",
+    );
+  }
+
   const chapter =
     await worksRepository.updateChapter(
       authorId,
@@ -172,6 +194,12 @@ export async function publishWork(
   authorId: string,
   input: ChapterDraftInput,
 ) {
+  if (!hasMeaningfulText(input.content)) {
+    throw new Error(
+      "Boş bir bölüm yayımlanamaz. Bölüm metnini yazdıktan sonra tekrar dene.",
+    );
+  }
+
   await saveChapterDraft(authorId, input);
 
   await worksRepository.publishChapter(

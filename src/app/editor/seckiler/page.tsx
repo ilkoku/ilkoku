@@ -12,8 +12,9 @@ export const dynamic = "force-dynamic";
 
 export default async function EditorSelectionsPage() {
   const profile = await requireEditorProfile("/editor/seckiler");
-  const works = (await getEditorReviews(profile.id)).filter(
-    (work) => work.editorReviewStatus === "completed",
+  const works = await getEditorReviews(
+    profile.id,
+    "completed",
   );
 
   return (

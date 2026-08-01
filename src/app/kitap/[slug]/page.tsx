@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { readingContent } from "@/content";
+import { getWorkLatestComments } from "@/features/reader/comments";
 import { getFavoriteStatus } from "@/features/reader/favorites";
 import { getReadingProgress } from "@/features/reading/progress";
 import { BookShowcase } from "@/features/showcase/components/BookShowcase";
@@ -34,6 +35,11 @@ export default async function DynamicBookShowcasePage({
   const work = await getPublicWorkBySlug(slug);
   if (!work) notFound();
 
+  const comments =
+    await getWorkLatestComments(
+      work.id,
+    );
+
   const user = await getCurrentUser();
   const readerUser =
     user && (user.role === "reader" || user.role === "editor")
@@ -51,6 +57,7 @@ export default async function DynamicBookShowcasePage({
   return (
     <BookShowcase
       canFavorite={Boolean(readerUser)}
+      comments={comments}
       isFavorite={isFavorite}
       readingProgress={readingProgress}
       returnTo={returnTo}

@@ -1,9 +1,7 @@
 import { Card } from "@/components/ui/Card";
 import { dashboardContent } from "@/content";
 import { DashboardFeedback } from "@/features/feedback/components/DashboardFeedback";
-import type { FeedbackItem } from "@/features/feedback/types";
-import { DashboardPublishers } from "@/features/publishers/components/DashboardPublishers";
-import type { PublisherDashboardData } from "@/features/publishers/types";
+import type { DashboardFeedbackItem } from "@/features/feedback/types";
 import type { WorkWithChapterSummary } from "@/features/works/types";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 
@@ -13,10 +11,9 @@ import { ProgressBar } from "./ProgressBar";
 
 interface WriterDashboardProps {
   feedback: {
-    items: FeedbackItem[];
+    items: DashboardFeedbackItem[];
     unreadCount: number;
   };
-  publishers: PublisherDashboardData;
   works: WorkWithChapterSummary[];
 }
 
@@ -29,7 +26,6 @@ function formatDate(value: string | Date) {
 
 export function WriterDashboard({
   feedback,
-  publishers,
   works,
 }: WriterDashboardProps) {
   const latestWork = works[0] ?? null;
@@ -218,8 +214,6 @@ export function WriterDashboard({
           items={feedback.items}
           unreadCount={feedback.unreadCount}
         />
-
-        <DashboardPublishers data={publishers} />
 
         <section
           className="dashboard-section"

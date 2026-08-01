@@ -86,7 +86,13 @@ function isHeading(
   return node.type === "heading";
 }
 
-export function Sidebar({ role }: { role: UserRole }) {
+export function Sidebar({
+  badges = {},
+  role,
+}: {
+  badges?: Record<string, string>;
+  role: UserRole;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [menuState, setMenuState] = useState({
@@ -97,8 +103,19 @@ export function Sidebar({ role }: { role: UserRole }) {
   const isOpen =
     menuState.pathname === pathname && menuState.isOpen;
 
-  const items = navigationForRole(role);
-  const ariaLabel = ariaLabelForRole(role);
+  const isPublisherWorkspace =
+    pathname === "/yayinevi" ||
+    (
+      pathname.startsWith("/yayinevi/") &&
+      !pathname.startsWith("/yayinevi/davet/")
+    );
+
+  const navigationRole: UserRole = isPublisherWorkspace
+    ? "publisher"
+    : role;
+
+  const items = navigationForRole(navigationRole);
+  const ariaLabel = ariaLabelForRole(navigationRole);
 
   function setMenuOpen(nextIsOpen: boolean) {
     setMenuState({
@@ -167,6 +184,10 @@ export function Sidebar({ role }: { role: UserRole }) {
               >
                 <NavItem
                   {...item}
+                  badge={
+                    badges[item.href] ??
+                    item.badge
+                  }
                   active={
                     !item.disabled &&
                     isActiveRoute(pathname, searchParams, item.href)

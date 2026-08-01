@@ -2,11 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 
 import mobileLogo from "@/assets/brand/ilkoku-logo-mobile.png";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { readingContent, tr } from "@/content";
 import { EditorReviewBadge } from "@/features/editor-workspace/components/EditorReviewBadge";
+import type { ReaderCommentFeed } from "@/features/reader/comments";
+import { ReaderCommentList } from "@/features/reader/components/ReaderCommentList";
 import { toggleFavoriteAction } from "@/features/reader/favorites";
+import { WorkShareActions } from "@/features/reading/components/WorkShareActions";
 import type { PublicWorkDetail } from "@/features/works/types";
 
 import { BookCover } from "./BookCover";
@@ -45,14 +47,18 @@ function getLanguageLabel(language: string) {
 
 export function BookShowcase({
   canFavorite = false,
+  comments,
   isFavorite = false,
   readingProgress,
   returnTo = "/kesfet",
   work,
 }: {
   canFavorite?: boolean;
+  comments: ReaderCommentFeed;
   isFavorite?: boolean;
   readingProgress?: {
+    chapterPosition: number;
+    completed: boolean;
     lastPosition: number | null;
     progressPercent: number;
   } | null;
@@ -65,7 +71,9 @@ export function BookShowcase({
   const firstChapter = work.chapters[0] ?? null;
   const resumeChapter =
     work.chapters.find(
-      (chapter) => chapter.position === readingProgress?.lastPosition,
+      (chapter) =>
+        chapter.position ===
+        readingProgress?.chapterPosition,
     ) ?? firstChapter;
   const encodedReturnTo = encodeURIComponent(returnTo);
 
@@ -108,21 +116,10 @@ export function BookShowcase({
             <span>{tr.brand.name}</span>
           </Link>
 
-          <div className="showcase-actions">
-            <Button
-              variant="ghost"
-              aria-label={readingContent.showcase.shareLabel}
-            >
-              {readingContent.common.share}
-            </Button>
-
-            <Button
-              variant="outline"
-              aria-label={readingContent.showcase.saveLabel}
-            >
-              {readingContent.common.save}
-            </Button>
-          </div>
+          <span
+            aria-hidden="true"
+            className="showcase-topbar__spacer"
+          />
         </nav>
       </header>
 
@@ -242,11 +239,26 @@ export function BookShowcase({
                 </Link>
               )}
 
+              <WorkShareActions
+                authorName={work.authorName}
+                genre={work.genre}
+                title={work.title}
+                workSlug={work.slug}
+              />
+
               {canFavorite && (
                 <form action={toggleFavoriteAction}>
                   <input name="workId" type="hidden" value={work.id} />
+
+                  <input
+                    name="returnPath"
+                    type="hidden"
+                    value={`/kitap/${work.slug}`}
+                  />
                   <button className="button button--outline" type="submit">
-                    {isFavorite ? "Favoriden Çıkar" : "Favoriye Ekle"}
+                    {isFavorite
+                      ? "Beğeniyi Kaldır"
+                      : "Beğen"}
                   </button>
                 </form>
               )}
@@ -358,7 +370,11 @@ export function BookShowcase({
                   </h2>
                 </div>
 
-                <span>0 yorum</span>
+                <span>
+                  {comments.total.toLocaleString(
+                    "tr-TR",
+                  )} yorum
+                </span>
               </div>
 
               <div
@@ -368,9 +384,10 @@ export function BookShowcase({
                     .latestFiveComments
                 }
               >
-                <p>
-                  Bu eser için henüz okur yorumu yok.
-                </p>
+                <ReaderCommentList
+                  emptyText="Bu eser için henüz okur yorumu yok."
+                  feed={comments}
+                />
               </div>
             </section>
           </div>

@@ -7,6 +7,10 @@ import {
   completeProfessionalReviewAction,
   saveProfessionalReviewDraftAction,
 } from "../actions";
+import {
+  completeSecondEditorReviewAction,
+  saveSecondEditorReviewDraftAction,
+} from "../second-editor.actions";
 import { initialEditorActionState } from "../types";
 
 type Draft = {
@@ -16,29 +20,53 @@ type Draft = {
   title: string;
 } | null;
 
+type ReviewStage = "first" | "second";
+
 export function ProfessionalReviewTools({
   draft,
+  stage,
   workId,
 }: {
   draft: Draft;
+  stage: ReviewStage;
   workId: string;
 }) {
+  const saveAction =
+    stage === "second"
+      ? saveSecondEditorReviewDraftAction
+      : saveProfessionalReviewDraftAction;
+
+  const completeAction =
+    stage === "second"
+      ? completeSecondEditorReviewAction
+      : completeProfessionalReviewAction;
+
   const [draftState, draftAction, draftPending] = useActionState(
-    saveProfessionalReviewDraftAction,
+    saveAction,
     initialEditorActionState,
   );
-  const [completeState, completeAction, completePending] = useActionState(
-    completeProfessionalReviewAction,
-    initialEditorActionState,
-  );
+
+  const [completeState, completeFormAction, completePending] =
+    useActionState(
+      completeAction,
+      initialEditorActionState,
+    );
+
+  const stageLabel =
+    stage === "second" ? "İkinci editör incelemesi" : "Birinci editör incelemesi";
 
   return (
     <form className="professional-review-tools">
       <input name="workId" type="hidden" value={workId} />
+
       <header>
         <p>Yalnızca size görünür</p>
-        <h2>Profesyonel inceleme</h2>
-        <span>Taslağınız tamamlanana kadar yazara gösterilmez.</span>
+        <h2>{stageLabel}</h2>
+        <span>
+          {stage === "second"
+            ? "İkinci editör raporu tamamlanana kadar her iki rapor da yazara gösterilmez."
+            : "Raporu doğrudan yazara gönderebilir veya isteğe bağlı olarak ikinci editör incelemesine aktarabilirsiniz."}
+        </span>
       </header>
 
       <Field
@@ -54,6 +82,7 @@ export function ProfessionalReviewTools({
         <option value="tempo">Tempo</option>
         <option value="ozgunluk">Özgünlük</option>
       </Field>
+
       <Field
         defaultValue={draft?.title ?? ""}
         label="Rapor başlığı"
@@ -63,6 +92,7 @@ export function ProfessionalReviewTools({
         placeholder="Eserin profesyonel değerlendirmesi"
         required
       />
+
       <Field
         control="textarea"
         defaultValue={draft?.content ?? ""}
@@ -74,6 +104,7 @@ export function ProfessionalReviewTools({
         required
         rows={12}
       />
+
       <label className="professional-review-tools__priority">
         <input
           defaultChecked={draft?.priority === "important"}
@@ -93,13 +124,39 @@ export function ProfessionalReviewTools({
         >
           Taslak Kaydet
         </Button>
-        <Button
-          formAction={completeAction}
-          loading={completePending}
-          type="submit"
-        >
-          İncelemeyi Tamamla
-        </Button>
+
+        {stage === "second" ? (
+          <Button
+            formAction={completeFormAction}
+            loading={completePending}
+            type="submit"
+          >
+            Nihai İncelemeyi Tamamla
+          </Button>
+        ) : (
+          <>
+            <Button
+              formAction={completeFormAction}
+              loading={completePending}
+              name="intent"
+              type="submit"
+              value="complete"
+            >
+              Raporu Yazara Gönder ve Tamamla
+            </Button>
+
+            <Button
+              formAction={completeFormAction}
+              loading={completePending}
+              name="intent"
+              type="submit"
+              value="second"
+              variant="outline"
+            >
+              2. Editöre Gönder
+            </Button>
+          </>
+        )}
       </div>
 
       {[draftState, completeState]

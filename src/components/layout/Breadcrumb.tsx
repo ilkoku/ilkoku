@@ -10,6 +10,7 @@ const segmentLabels: Record<string, string> = {
   profil: "Profil",
   ayarlar: "Ayarlar",
   bildirimler: "Bildirimler",
+  yorumlarim: "Yorumlarım",
   okuyucu: "Okuyucu",
   editor: "Editör",
   kesfet: "Keşfet",

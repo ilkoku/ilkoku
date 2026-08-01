@@ -10,6 +10,16 @@ import { prisma } from "@/lib/prisma";
 
 const workIdSchema = z.string().uuid();
 
+const returnPathSchema = z
+  .string()
+  .max(500)
+  .refine(
+    (value) =>
+      value.startsWith("/") &&
+      !value.startsWith("//"),
+    "INVALID_RETURN_PATH",
+  );
+
 async function requireReader() {
   const user = await getCurrentUser();
 
@@ -27,9 +37,22 @@ async function requireReader() {
 export async function toggleFavoriteAction(formData: FormData): Promise<void> {
   const user = await requireReader();
   const parsedWorkId = workIdSchema.safeParse(formData.get("workId"));
+  const rawReturnPath = formData.get("returnPath");
+
+  const parsedReturnPath =
+    rawReturnPath === null
+      ? null
+      : returnPathSchema.safeParse(rawReturnPath);
 
   if (!parsedWorkId.success) {
     throw new Error("INVALID_WORK_ID");
+  }
+
+  if (
+    parsedReturnPath &&
+    !parsedReturnPath.success
+  ) {
+    throw new Error("INVALID_RETURN_PATH");
   }
 
   const work = await prisma.work.findFirst({
@@ -81,8 +104,14 @@ export async function toggleFavoriteAction(formData: FormData): Promise<void> {
 
   revalidatePath("/favorilerim");
   revalidatePath("/kesfet");
+  revalidatePath("/okumaya-devam");
+  revalidatePath("/tamamlanan-eserler");
   revalidatePath("/okuyucu");
   revalidatePath(`/kitap/${work.slug}`);
+
+  if (parsedReturnPath?.success) {
+    revalidatePath(parsedReturnPath.data);
+  }
 }
 
 export async function getFavoriteStatus(userId: string, workId: string) {
@@ -101,9 +130,27 @@ export async function getFavoriteStatus(userId: string, workId: string) {
   return Boolean(favorite);
 }
 
+export type ReaderFavoriteWork =
+  EditorWorkCardData & {
+    authorUsername: string | null;
+    commentCount: number;
+    description: string | null;
+    favoriteCount: number;
+    lastReadLabel: string | null;
+    progressPercent: number | null;
+    publishedAt: Date | null;
+    readerCount: number;
+    readingHref: string | null;
+    readingState:
+      | "unread"
+      | "in_progress"
+      | "completed";
+    updatedAt: Date;
+  };
+
 export async function getFavoriteWorks(
   userId: string,
-): Promise<EditorWorkCardData[]> {
+): Promise<ReaderFavoriteWork[]> {
   const favorites = await prisma.favorite.findMany({
     where: {
       userId,
@@ -121,10 +168,23 @@ export async function getFavoriteWorks(
     include: {
       work: {
         include: {
+          _count: {
+            select: {
+              comments: {
+                where: {
+                  deletedAt: null,
+                  status: "visible",
+                },
+              },
+              favorites: true,
+              readingProgress: true,
+            },
+          },
           author: {
             select: {
               displayName: true,
               fullName: true,
+              username: true,
             },
           },
           chapters: {
@@ -135,9 +195,42 @@ export async function getFavoriteWorks(
               },
               status: "published",
             },
+            orderBy: {
+              position: "asc",
+            },
             select: {
               content: true,
+              id: true,
+              position: true,
             },
+          },
+          readingProgress: {
+            where: {
+              userId,
+              chapter: {
+                is: {
+                  archivedAt: null,
+                  publishedAt: {
+                    not: null,
+                  },
+                  status: "published",
+                },
+              },
+            },
+            orderBy: {
+              lastReadAt: "desc",
+            },
+            select: {
+              chapter: {
+                select: {
+                  position: true,
+                  title: true,
+                },
+              },
+              completed: true,
+              progressPercent: true,
+            },
+            take: 1,
           },
         },
       },
@@ -147,21 +240,80 @@ export async function getFavoriteWorks(
     },
   });
 
-  return favorites.map(({ work }) => ({
-    assignedEditorId: work.assignedEditorId,
-    authorName: work.author.displayName ?? work.author.fullName,
-    chapterCount: work.chapters.length,
-    coverUrl: work.coverUrl,
-    editorReviewStatus: work.editorReviewStatus,
-    genre: work.genre,
-    id: work.id,
-    isFavorite: true,
-    language: work.language,
-    slug: work.slug,
-    title: work.title,
-    totalWords: work.chapters.reduce(
-      (total, chapter) => total + countWords(chapter.content),
-      0,
-    ),
-  }));
+  return favorites.map(({ work }) => {
+    const progress =
+      work.readingProgress[0] ?? null;
+
+    const firstChapter =
+      work.chapters[0] ?? null;
+
+    const readingState =
+      progress?.completed
+        ? "completed"
+        : progress
+          ? "in_progress"
+          : "unread";
+
+    const targetPosition =
+      readingState === "completed"
+        ? firstChapter?.position
+        : progress?.chapter.position ??
+          firstChapter?.position;
+
+    return {
+      assignedEditorId:
+        work.assignedEditorId,
+      authorName:
+        work.author.displayName ??
+        work.author.fullName,
+      authorUsername:
+        work.author.username,
+      chapterCount:
+        work.chapters.length,
+      commentCount:
+        work._count.comments,
+      coverUrl:
+        work.coverUrl,
+      description:
+        work.description,
+      editorReviewStatus:
+        work.editorReviewStatus,
+      favoriteCount:
+        work._count.favorites,
+      genre:
+        work.genre,
+      id:
+        work.id,
+      isFavorite:
+        true,
+      language:
+        work.language,
+      lastReadLabel:
+        progress?.chapter.title ?? null,
+      progressPercent:
+        progress?.progressPercent ?? null,
+      publishedAt:
+        work.publishedAt,
+      readerCount:
+        work._count.readingProgress,
+      readingHref:
+        typeof targetPosition === "number"
+          ? `/oku/${work.slug}/bolum-${targetPosition}`
+          : null,
+      readingState,
+      slug:
+        work.slug,
+      title:
+        work.title,
+      totalWords:
+        work.chapters.reduce(
+          (total, chapter) =>
+            total +
+            countWords(chapter.content),
+          0,
+        ),
+      updatedAt:
+        work.updatedAt,
+    };
+  });
 }

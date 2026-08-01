@@ -11,7 +11,15 @@ import {
 } from "@/content";
 import { EditorReviewBadge } from "@/features/editor-workspace/components/EditorReviewBadge";
 import { ProfessionalReviewTools } from "@/features/editor-workspace/components/ProfessionalReviewTools";
+import {
+  createChapterCommentAction,
+  type ReaderCommentFeed,
+} from "@/features/reader/comments";
+import { ReaderCommentList } from "@/features/reader/components/ReaderCommentList";
+import { toggleFavoriteAction } from "@/features/reader/favorites";
 import type { PublicChapterDetail } from "@/features/works/types";
+import { ReadingProgressTracker } from "./ReadingProgressTracker";
+import { WorkShareActions } from "./WorkShareActions";
 
 function formatDate(value: Date | string) {
   return new Intl.DateTimeFormat("tr-TR", {
@@ -31,12 +39,22 @@ function countWords(content: string) {
 }
 
 export function ReadingExperience({
+  canComment = false,
+  canFavorite = false,
+  canTrackReading = false,
   chapter,
+  comments,
+  isFavorite = false,
   professionalReview,
   readingProgress,
   returnTo = "/kesfet",
 }: {
+  canComment?: boolean;
+  canFavorite?: boolean;
+  canTrackReading?: boolean;
   chapter: PublicChapterDetail;
+  comments: ReaderCommentFeed;
+  isFavorite?: boolean;
   professionalReview?: {
     draft: {
       category: string;
@@ -44,6 +62,7 @@ export function ReadingExperience({
       priority: "normal" | "important";
       title: string;
     } | null;
+    stage: "first" | "second";
     workId: string;
   } | null;
   readingProgress?: number | null;
@@ -56,12 +75,6 @@ export function ReadingExperience({
     Math.ceil(wordCount / 200),
   );
 
-  const completion =
-    chapter.work.status === "published"
-      ? 100
-      : 0;
-  const displayedProgress = readingProgress ?? completion;
-
   const paragraphs = chapter.content
     .split(/\n{2,}/u)
     .map((paragraph: string) =>
@@ -70,10 +83,49 @@ export function ReadingExperience({
     .filter(Boolean);
 
   const authorInitials: string = chapter.work.authorName
-  .split(" ")
-  .filter((part: string) => part.length > 0)
-  .map((part: string) => part.charAt(0))
-  .join("");
+    .split(" ")
+    .filter((part: string) => part.length > 0)
+    .map((part: string) => part.charAt(0))
+    .join("");
+
+  const publishedChapters = [
+    ...chapter.work.chapters,
+  ]
+    .filter(
+      (item) =>
+        item.status === "published" &&
+        item.publishedAt !== null &&
+        item.archivedAt === null,
+    )
+    .sort(
+      (left, right) =>
+        left.position - right.position,
+    );
+
+  const activeChapterIndex =
+    publishedChapters.findIndex(
+      (item) => item.id === chapter.id,
+    );
+
+  const previousChapter =
+    activeChapterIndex > 0
+      ? publishedChapters[
+          activeChapterIndex - 1
+        ]
+      : null;
+
+  const nextChapter =
+    activeChapterIndex >= 0 &&
+    activeChapterIndex <
+      publishedChapters.length - 1
+      ? publishedChapters[
+          activeChapterIndex + 1
+        ]
+      : null;
+
+  function getChapterHref(position: number) {
+    return `/oku/${chapter.work.slug}/bolum-${position}`;
+  }
 
   return (
     <div className="reading-page">
@@ -122,23 +174,68 @@ export function ReadingExperience({
           </Link>
 
           <div className="reader-actions">
-            <Button
-              variant="ghost"
-              aria-label={
-                readingContent.chapter.shareLabel
-              }
-            >
-              {readingContent.common.share}
-            </Button>
+            <details className="reader-menu">
+              <summary>
+                <span>Okuma Menüsü</span>
+                <span
+                  aria-hidden="true"
+                  className="reader-menu__chevron"
+                >
+                 ⌄
+                </span>
+              </summary>
 
-            <Button
-              variant="outline"
-              aria-label={
-                readingContent.chapter.saveLabel
-              }
-            >
-              {readingContent.common.save}
-            </Button>
+              <div
+                aria-label="Okuma menüsü bağlantıları"
+                className="reader-menu__popover"
+              >
+                <div className="reader-menu__heading">
+                  <strong>Okuma Alanı</strong>
+                  <small>
+                    Okuma listelerinize ve hesabınıza geçin.
+                  </small>
+                </div>
+
+                <nav aria-label="Okuyucu hızlı menüsü">
+                  <Link href="/okuyucu">
+                    <span>Okuyucu Ana Sayfası</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+
+                  <Link href="/kesfet">
+                    <span>Keşfet</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+
+                  <Link href="/okumaya-devam">
+                    <span>Okumaya Devam Et</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+
+                  <Link href="/tamamlanan-eserler">
+                    <span>Tamamlanan Eserler</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+
+                  <Link href="/favorilerim">
+                    <span>Favorilerim</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+
+                  <Link href="/bildirimler">
+                    <span>Bildirimler</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+
+                  <Link
+                    href={`/kitap/${chapter.work.slug}?from=${encodeURIComponent(returnTo)}`}
+                  >
+                    <span>Eser Sayfasına Dön</span>
+                    <span aria-hidden="true">←</span>
+                  </Link>
+                </nav>
+              </div>
+            </details>
           </div>
         </nav>
       </header>
@@ -223,6 +320,40 @@ export function ReadingExperience({
                   </dd>
                 </div>
               </dl>
+
+              <div className="book-intro__actions">
+                <WorkShareActions
+                  authorName={chapter.work.authorName}
+                  genre={chapter.work.genre}
+                  title={chapter.work.title}
+                  workSlug={chapter.work.slug}
+                />
+
+                {canFavorite && (
+                  <form action={toggleFavoriteAction}>
+                    <input
+                      name="workId"
+                      type="hidden"
+                      value={chapter.work.id}
+                    />
+
+                    <input
+                      name="returnPath"
+                      type="hidden"
+                      value={`/oku/${chapter.work.slug}/bolum-${chapter.position}`}
+                    />
+
+                    <button
+                      className="button button--outline"
+                      type="submit"
+                    >
+                      {isFavorite
+                        ? "Beğeniyi Kaldır"
+                        : "Beğen"}
+                    </button>
+                  </form>
+                )}
+              </div>
             </div>
           </header>
 
@@ -250,6 +381,64 @@ export function ReadingExperience({
             </div>
           </section>
 
+          <nav
+            aria-label="Bölüm geçişleri"
+            className="chapter-navigation"
+          >
+            {previousChapter ? (
+              <Link
+                className="chapter-navigation__button chapter-navigation__button--previous"
+                href={getChapterHref(
+                  previousChapter.position,
+                )}
+              >
+                <span aria-hidden="true">←</span>
+
+                <span>
+                  <small>Önceki Bölüm</small>
+                  <strong>
+                    {previousChapter.title}
+                  </strong>
+                </span>
+              </Link>
+            ) : (
+              <span
+                aria-hidden="true"
+                className="chapter-navigation__spacer"
+              />
+            )}
+
+            <div className="chapter-navigation__current">
+              <small>Şu anda okunuyor</small>
+              <strong>
+                {chapter.position}. Bölüm
+              </strong>
+            </div>
+
+            {nextChapter ? (
+              <Link
+                className="chapter-navigation__button chapter-navigation__button--next"
+                href={getChapterHref(
+                  nextChapter.position,
+                )}
+              >
+                <span>
+                  <small>Sonraki Bölüm</small>
+                  <strong>
+                    {nextChapter.title}
+                  </strong>
+                </span>
+
+                <span aria-hidden="true">→</span>
+              </Link>
+            ) : (
+              <span
+                aria-hidden="true"
+                className="chapter-navigation__spacer"
+              />
+            )}
+          </nav>
+
           <section
             className="reader-comments"
             aria-labelledby="yorumlar-basligi"
@@ -271,55 +460,87 @@ export function ReadingExperience({
                 </h2>
               </div>
 
-              <span>0 yorum</span>
+              <span>
+                {comments.total.toLocaleString(
+                  "tr-TR",
+                )} yorum
+              </span>
             </div>
 
-            <form className="comment-form">
-              <h3>
-                {
-                  readingContent.chapter
-                    .writeOpinion
+            {canComment ? (
+              <form
+                action={
+                  createChapterCommentAction
                 }
-              </h3>
+                className="comment-form"
+              >
+                <h3>
+                  {
+                    readingContent.chapter
+                      .writeOpinion
+                  }
+                </h3>
 
-              <Field
-                control="textarea"
-                id="okur-yorumu"
-                label={
-                  readingContent.chapter
-                    .commentLabel
-                }
-                placeholder={
-                  readingContent.chapter
-                    .commentPlaceholder
-                }
-                rows={5}
-                maxLength={600}
-                message={validationContent.maximumCharacters(
-                  600,
-                )}
-              />
+                <input
+                  name="chapterId"
+                  type="hidden"
+                  value={chapter.id}
+                />
 
-              <Button type="button">
-                {
-                  readingContent.chapter
-                    .submitComment
-                }
-              </Button>
-            </form>
+                <input
+                  name="workId"
+                  type="hidden"
+                  value={chapter.work.id}
+                />
 
-            <div
-              className="comment-list"
-              aria-label={
-                readingContent.chapter
-                  .readerComments
-              }
-            >
-              <p>
-                Bu bölüm için henüz okur
-                yorumu yok.
+                <input
+                  name="returnPath"
+                  type="hidden"
+                  value={`/oku/${chapter.work.slug}/bolum-${chapter.position}`}
+                />
+
+                <Field
+                  control="textarea"
+                  id="okur-yorumu"
+                  label={
+                    readingContent.chapter
+                      .commentLabel
+                  }
+                  maxLength={600}
+                  message={
+                    validationContent.maximumCharacters(
+                      600,
+                    )
+                  }
+                  minLength={3}
+                  name="content"
+                  placeholder={
+                    readingContent.chapter
+                      .commentPlaceholder
+                  }
+                  required
+                  rows={5}
+                />
+
+                <Button type="submit">
+                  {
+                    readingContent.chapter
+                      .submitComment
+                  }
+                </Button>
+              </form>
+            ) : (
+              <p className="comment-login-note">
+                Yorum yazmak için okuyucu
+                hesabınızla giriş yapmanız
+                gerekir.
               </p>
-            </div>
+            )}
+
+            <ReaderCommentList
+              emptyText="Bu bölüm için henüz okur yorumu yok."
+              feed={comments}
+            />
           </section>
         </article>
 
@@ -363,6 +584,75 @@ export function ReadingExperience({
             </p>
           </Card>
 
+          <Card className="chapters-card">
+            <div className="chapters-card__heading">
+              <div>
+                <p>Bölüm listesi</p>
+                <h2>Bölümler</h2>
+              </div>
+
+              <span>
+                {publishedChapters.length} bölüm
+              </span>
+            </div>
+
+            <nav
+              aria-label={`${chapter.work.title} bölümleri`}
+            >
+              <ol className="chapters-list">
+                {publishedChapters.map(
+                  (item) => {
+                    const isActive =
+                      item.id === chapter.id;
+
+                    return (
+                      <li key={item.id}>
+                        <Link
+                          aria-current={
+                            isActive
+                              ? "page"
+                              : undefined
+                          }
+                          className={
+                            isActive
+                              ? "chapter-link chapter-link--active"
+                              : "chapter-link"
+                          }
+                          href={getChapterHref(
+                            item.position,
+                          )}
+                        >
+                          <span className="chapter-link__number">
+                            {item.position}
+                          </span>
+
+                          <span className="chapter-link__content">
+                            <strong>
+                              {item.title}
+                            </strong>
+
+                            <small>
+                              {isActive
+                                ? "Okunuyor"
+                                : "Bölümü aç"}
+                            </small>
+                          </span>
+
+                          <span
+                            aria-hidden="true"
+                            className="chapter-link__arrow"
+                          >
+                            {isActive ? "•" : "→"}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  },
+                )}
+              </ol>
+            </nav>
+          </Card>
+
           <Card className="reading-stats">
             <dl>
               <div>
@@ -376,17 +666,6 @@ export function ReadingExperience({
                 <dd>
                   {chapter.work.chapterCount}
                 </dd>
-              </div>
-
-              <div>
-                <dt>
-                  {readingProgress === null ||
-                  readingProgress === undefined
-                    ? readingContent.common.completion
-                    : "Okuma ilerlemen"}
-                </dt>
-
-                <dd>%{displayedProgress}</dd>
               </div>
 
               <div>
@@ -405,20 +684,17 @@ export function ReadingExperience({
               </div>
             </dl>
 
-            <progress
-              aria-label={readingContent.common.completionLabel(
-                displayedProgress,
-              )}
-              max={100}
-              value={displayedProgress}
-            >
-              %{displayedProgress}
-            </progress>
+            <ReadingProgressTracker
+              chapterId={chapter.id}
+              enabled={canTrackReading}
+              initialProgress={readingProgress ?? null}
+            />
           </Card>
 
           {professionalReview && (
             <ProfessionalReviewTools
               draft={professionalReview.draft}
+              stage={professionalReview.stage}
               workId={professionalReview.workId}
             />
           )}

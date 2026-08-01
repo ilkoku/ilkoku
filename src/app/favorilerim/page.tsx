@@ -29,18 +29,31 @@ export default async function ReaderFavoritesPage() {
 
   const rows = works.map((work) => ({
     authorName: work.authorName,
+    authorUsername: work.authorUsername,
     chapterCount: work.chapterCount,
-    commentCount: 0,
+    commentCount: work.commentCount,
     coverUrl: work.coverUrl,
-    editorReviewStatus: work.editorReviewStatus,
-    favoriteCount: 1,
+    description: work.description,
+    editorReviewStatus:
+      work.editorReviewStatus,
+    favoriteCount: work.favoriteCount,
     genre: work.genre,
     id: work.id,
     isFavorite: work.isFavorite,
-    readerCount: 0,
+    language: work.language,
+    lastReadLabel: work.lastReadLabel,
+    progressPercent: work.progressPercent,
+    publishedAt:
+      work.publishedAt?.toISOString() ??
+      null,
+    readerCount: work.readerCount,
+    readingHref: work.readingHref,
+    readingState: work.readingState,
     slug: work.slug,
     title: work.title,
     totalWords: work.totalWords,
+    updatedAt:
+      work.updatedAt.toISOString(),
   }));
 
   return (
@@ -55,6 +68,7 @@ export default async function ReaderFavoritesPage() {
         <ReaderWorksTable
           emptyDescription="Keşfet sayfasındaki eserleri favorilerine ekleyerek okuma listeni oluşturabilirsin."
           emptyTitle="Henüz favori eserin yok"
+          returnTo="/favorilerim"
           rows={rows}
         />
       </div>

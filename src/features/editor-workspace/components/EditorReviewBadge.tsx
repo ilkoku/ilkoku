@@ -9,7 +9,7 @@ export function EditorReviewBadge({
     in_progress: "Profesyonel Editör İncelemesinde",
     awaiting_second_editor: "İkinci Editör Bekleniyor",
     second_in_progress: "İkinci Editör İncelemesinde",
-    completed: "Profesyonel Editörler Tarafından İncelendi",
+    completed: "Profesyonel Editör İncelemesi Tamamlandı",
   };
   const label = labels[status];
 

@@ -28,8 +28,7 @@ export function EditorWorkCard({
     !isReaderContext &&
     allowClaim &&
     !work.assignedEditorId &&
-    (work.editorReviewStatus === "not_requested" ||
-      work.editorReviewStatus === "requested");
+    work.editorReviewStatus === "requested";
 
   return (
     <article className="editor-work-card">

@@ -386,7 +386,14 @@ export async function createNextChapterAction(formData: FormData) {
     redirect("/giris?sonraki=/yazmaya-devam");
   }
 
-  await createNextChapter(auth.authorId, parsed.data.workId);
+  const chapter = await createNextChapter(
+    auth.authorId,
+    parsed.data.workId,
+  );
+
   revalidateWorkPaths();
-  redirect("/yazmaya-devam");
+
+  redirect(
+    `/yazmaya-devam?eser=${encodeURIComponent(parsed.data.workId)}&bolum=${encodeURIComponent(chapter.id)}`,
+  );
 }

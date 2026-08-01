@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { EditorWorkTableData } from "../types";
 import { ReviewClaimDialog } from "./ReviewClaimDialog";
+import { SecondReviewClaimDialog } from "./SecondReviewClaimDialog";
 
 function formatNumber(value: number) {
   return value.toLocaleString("tr-TR");
@@ -92,7 +93,7 @@ function WorkAction({
   work,
 }: {
   currentEditorId: string;
-  mode: "discovery" | "requests";
+  mode: "discovery" | "requests" | "secondPool";
   work: EditorWorkTableData;
 }) {
   const isMine =
@@ -107,6 +108,15 @@ function WorkAction({
       >
         Eseri Aç
       </Link>
+    );
+  }
+
+  if (mode === "secondPool") {
+    return (
+      <SecondReviewClaimDialog
+        workId={work.id}
+        workTitle={work.title}
+      />
     );
   }
 
@@ -163,7 +173,7 @@ export function EditorWorksTable({
   works,
 }: {
   currentEditorId: string;
-  mode?: "discovery" | "requests";
+  mode?: "discovery" | "requests" | "secondPool";
   works: EditorWorkTableData[];
 }) {
   return (

@@ -9,12 +9,50 @@ export function getAuthorFeedbackRows(
     where: {
       authorId,
       reportStatus: "completed",
-      ...(options?.excludeArchived ? { status: { not: "archived" } } : {}),
+      OR: [
+        {
+          isProfessionalReview: false,
+        },
+        {
+          isProfessionalReview: true,
+          work: {
+            editorReviewStatus: "completed",
+          },
+        },
+      ],
+      ...(options?.excludeArchived
+        ? {
+            status: {
+              not: "archived",
+            },
+          }
+        : {}),
     },
     include: {
-      chapter: { select: { id: true, position: true, title: true } },
-      editor: { select: { fullName: true } },
-      work: { select: { id: true, slug: true, title: true } },
+      assignment: {
+        select: {
+          stage: true,
+        },
+      },
+      chapter: {
+        select: {
+          id: true,
+          position: true,
+          title: true,
+        },
+      },
+      editor: {
+        select: {
+          fullName: true,
+        },
+      },
+      work: {
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     ...(options?.limit ? { take: options.limit } : {}),
@@ -23,7 +61,22 @@ export function getAuthorFeedbackRows(
 
 export function getUnreadFeedbackCount(authorId: string) {
   return prisma.editorFeedback.count({
-    where: { authorId, reportStatus: "completed", status: "unread" },
+    where: {
+      authorId,
+      reportStatus: "completed",
+      status: "unread",
+      OR: [
+        {
+          isProfessionalReview: false,
+        },
+        {
+          isProfessionalReview: true,
+          work: {
+            editorReviewStatus: "completed",
+          },
+        },
+      ],
+    },
   });
 }
 
@@ -35,48 +88,25 @@ export function updateAuthorFeedbackStatus(
   const now = new Date();
 
   return prisma.editorFeedback.updateMany({
-    where: { id: feedbackId, authorId },
+    where: {
+      id: feedbackId,
+      authorId,
+      reportStatus: "completed",
+      OR: [
+        {
+          isProfessionalReview: false,
+        },
+        {
+          isProfessionalReview: true,
+          work: {
+            editorReviewStatus: "completed",
+          },
+        },
+      ],
+    },
     data:
       status === "read"
         ? { readAt: now, status }
         : { archivedAt: now, status },
-  });
-}
-
-export async function insertEditorFeedback(input: {
-  category: string;
-  chapterId: string | null;
-  content: string;
-  editorId: string;
-  priority: "normal" | "important";
-  title: string;
-  workId: string;
-}) {
-  const work = await prisma.work.findUnique({
-    where: { id: input.workId },
-    select: { authorId: true },
-  });
-
-  if (!work) throw new Error("WORK_NOT_FOUND");
-
-  if (input.chapterId) {
-    const chapter = await prisma.chapter.findFirst({
-      where: { id: input.chapterId, workId: input.workId },
-      select: { id: true },
-    });
-    if (!chapter) throw new Error("CHAPTER_NOT_FOUND");
-  }
-
-  return prisma.editorFeedback.create({
-    data: {
-      authorId: work.authorId,
-      category: input.category,
-      chapterId: input.chapterId,
-      content: input.content,
-      editorId: input.editorId,
-      priority: input.priority,
-      title: input.title,
-      workId: input.workId,
-    },
   });
 }

@@ -22,11 +22,32 @@ export interface FeedbackItem {
   editorId: string;
   editorName: string;
   id: string;
+  isProfessionalReview: boolean;
   priority: FeedbackPriority;
   readAt: string | null;
+  reviewStage: "first" | "second" | null;
   status: FeedbackStatus;
   title: string;
   work: { id: string; slug: string; title: string };
+}
+
+export interface DashboardFeedbackItem {
+  createdAt: string;
+  editorName: string;
+  id: string;
+  isProfessionalGroup: boolean;
+  status: FeedbackStatus;
+  title: string;
+  work: FeedbackItem["work"];
+}
+
+export interface ProfessionalReviewGroup {
+  createdAt: string;
+  id: string;
+  priority: FeedbackPriority;
+  reports: FeedbackItem[];
+  status: FeedbackStatus;
+  work: FeedbackItem["work"];
 }
 
 export interface FeedbackStatsData {

@@ -15,10 +15,12 @@ const protectedPaths = [
   "/kesfet",
   "/okuyucu",
   "/okumaya-devam",
+  "/tamamlanan-eserler",
   "/yazar",
   "/eserlerim",
   "/yazmaya-devam",
   "/geri-bildirimler",
+  "/yorumlarim",
   "/yayinevleri",
   publicEditorsPath,
   internalEditorsPath,
@@ -38,10 +40,12 @@ const routeRoleRules: RouteRoleRule[] = [
   { approved: false, path: "/kesfet", roles: [...readerWorkspaceRoles] },
   { approved: false, path: "/okuyucu", roles: [...readerWorkspaceRoles] },
   { approved: false, path: "/okumaya-devam", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/tamamlanan-eserler", roles: [...readerWorkspaceRoles] },
   { approved: false, path: "/yazar", roles: ["writer"] },
   { approved: false, path: "/eserlerim", roles: ["writer"] },
   { approved: false, path: "/yazmaya-devam", roles: ["writer"] },
   { approved: false, path: "/geri-bildirimler", roles: ["writer"] },
+  { approved: false, path: "/yorumlarim", roles: ["writer"] },
   { approved: false, path: "/yayinevleri", roles: ["writer"] },
   { approved: true, path: "/editor", roles: ["editor"] },
   { approved: true, path: publicEditorsPath, roles: ["editor"] },
@@ -148,10 +152,7 @@ export async function proxy(request: NextRequest) {
   if (roleRule && !isAdmin) {
     const hasRequiredRole =
       Boolean(currentRole) && roleRule.roles.includes(currentRole as UserRole);
-    const hasRequiredApproval =
-      !roleRule.approved || Boolean(session.profile?.roleApprovedAt);
-
-    if (!session.profile || !hasRequiredRole || !hasRequiredApproval) {
+    if (!session.profile || !hasRequiredRole) {
       return createAccessDeniedRedirect(
         request,
         session.response,

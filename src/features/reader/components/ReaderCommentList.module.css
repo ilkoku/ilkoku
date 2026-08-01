@@ -1,0 +1,254 @@
+.list {
+  display: grid;
+  gap: 14px;
+}
+
+.comment {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 14px;
+  scroll-margin-top: 7rem;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: var(--color-card);
+}
+
+.avatar,
+.replyAvatar {
+  display: grid;
+  place-items: center;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+}
+
+.replyAvatar {
+  width: 36px;
+  height: 36px;
+  font-size: 10px;
+}
+
+.body {
+  min-width: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.identity {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.identity strong {
+  font-size: 13px;
+}
+
+.identity small,
+.meta time,
+.context {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.context {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.content {
+  margin: 10px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.replies {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding-left: 16px;
+  border-left: 2px solid var(--color-border);
+}
+
+.reply {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  scroll-margin-top: 7rem;
+  padding: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+}
+
+.reply[data-author-reply="true"] {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--color-primary) 45%,
+      var(--color-border)
+    );
+}
+
+.replyIdentity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.authorBadge,
+.answeredBadge,
+.waitingBadge {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.authorBadge,
+.answeredBadge {
+  color: var(--color-primary);
+  background:
+    color-mix(
+      in srgb,
+      var(--color-primary) 12%,
+      transparent
+    );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--color-primary) 28%,
+      var(--color-border)
+    );
+}
+
+.waitingBadge {
+  margin-top: 12px;
+  color: var(--color-warning);
+  background:
+    color-mix(
+      in srgb,
+      var(--color-warning) 10%,
+      transparent
+    );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--color-warning) 28%,
+      var(--color-border)
+    );
+}
+
+.answeredBadge {
+  display: inline-block;
+  margin-top: 12px;
+}
+
+.replyComposer {
+  margin-top: 14px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+}
+
+.replyComposer summary {
+  width: fit-content;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.replyComposer form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.replyComposer label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.replyComposer textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  padding: 12px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  font: inherit;
+  line-height: 1.6;
+}
+
+.replyComposer textarea:focus {
+  border-color: var(--color-primary);
+  outline: 2px solid
+    color-mix(
+      in srgb,
+      var(--color-primary) 22%,
+      transparent
+    );
+  outline-offset: 1px;
+}
+
+.replyActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.replyActions small {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.empty {
+  margin: 0;
+  padding: 18px;
+  color: var(--color-text-secondary);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+@media (max-width: 36rem) {
+  .comment,
+  .reply {
+    grid-template-columns: 1fr;
+  }
+
+  .meta,
+  .replyActions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .replies {
+    padding-left: 10px;
+  }
+}

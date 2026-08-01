@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   completedPublishedWorkWhere,
@@ -103,6 +104,9 @@ export async function getEditorDiscovery(
   const works = await prisma.work.findMany({
     where: {
       ...completedPublishedWorkWhere,
+      authorId: {
+        not: editorId,
+      },
       ...(filters.genre ? { genre: filters.genre } : {}),
       ...(filters.language ? { language: filters.language } : {}),
       ...(filters.reviewStatus
@@ -164,7 +168,18 @@ export async function getEditorReviewRequests(editorId: string) {
   const works = await prisma.work.findMany({
     where: {
       ...completedPublishedWorkWhere,
+      authorId: {
+        not: editorId,
+      },
       assignedEditorId: null,
+      editorReviewAssignments: {
+        some: {
+          editorId: null,
+          source: "pool",
+          stage: "first",
+          status: "waiting",
+        },
+      },
       editorReviewStatus: "requested",
     },
     include: {
@@ -191,6 +206,78 @@ export async function getEditorReviewRequests(editorId: string) {
   });
 
   return works.map(mapDiscoveryWork);
+}
+
+export async function getSecondEditorPoolRequests(
+  editorId: string,
+) {
+  const assignments =
+    await prisma.editorReviewAssignment.findMany({
+      where: {
+        editorId: null,
+        source: "pool",
+        stage: "second",
+        status: "waiting",
+        work: {
+          assignedEditorId: {
+            not: editorId,
+          },
+          authorId: {
+            not: editorId,
+          },
+          editorReviewStatus: "awaiting_second_editor",
+        },
+      },
+      include: {
+        work: {
+          include: {
+            _count: {
+              select: {
+                comments: {
+                  where: {
+                    deletedAt: null,
+                    status: "visible",
+                  },
+                },
+                favorites: true,
+                readingProgress: true,
+              },
+            },
+            author: {
+              select: {
+                displayName: true,
+                fullName: true,
+                username: true,
+              },
+            },
+            chapters: {
+              where: {
+                archivedAt: null,
+                status: "published",
+              },
+              select: {
+                content: true,
+              },
+            },
+            editorFavorites: {
+              where: {
+                editorId,
+              },
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+  return assignments.map(({ work }) =>
+    mapDiscoveryWork(work),
+  );
 }
 
 export async function getEditorFavorites(editorId: string) {
@@ -236,22 +323,87 @@ export async function getEditorFavorites(editorId: string) {
   return favorites.map(({ work }) => mapWork(work));
 }
 
+type EditorReviewWorkResult = Prisma.WorkGetPayload<{
+  include: {
+    author: {
+      select: {
+        displayName: true;
+        fullName: true;
+        username: true;
+      };
+    };
+    chapters: {
+      select: {
+        content: true;
+        position: true;
+        title: true;
+      };
+    };
+    editorReviewAssignments: {
+      select: {
+        assignedAt: true;
+        completedAt: true;
+        id: true;
+        stage: true;
+        status: true;
+      };
+    };
+    editorFeedback: true;
+  };
+}>;
+
 export type EditorReviewListStatus = "active" | "completed";
 
 export async function getEditorReviews(
   editorId: string,
   status: EditorReviewListStatus = "active",
-) {
-  return prisma.work.findMany({
-    where: {
-      assignedEditorId: editorId,
-      editorReviewStatus:
-        status === "completed"
-          ? "completed"
-          : {
-              in: ["in_progress", "awaiting_second_editor", "second_in_progress"],
-            },
-    },
+): Promise<EditorReviewWorkResult[]> {
+  const works = await prisma.work.findMany({
+    where:
+      status === "completed"
+        ? {
+            editorReviewStatus: "completed",
+            OR: [
+              {
+                assignedEditorId: editorId,
+              },
+              {
+                editorReviewAssignments: {
+                  some: {
+                    editorId,
+                    stage: "second",
+                    status: "completed",
+                  },
+                },
+              },
+            ],
+          }
+        : {
+            OR: [
+              {
+                assignedEditorId: editorId,
+                editorReviewStatus: {
+                  in: [
+                    "in_progress",
+                    "awaiting_second_editor",
+                    "second_in_progress",
+                  ],
+                },
+              },
+              {
+                editorReviewStatus: "second_in_progress",
+                editorReviewAssignments: {
+                  some: {
+                    editorId,
+                    stage: "second",
+                    status: {
+                      in: ["assigned", "in_progress"],
+                    },
+                  },
+                },
+              },
+            ],
+          },
     include: {
       author: {
         select: {
@@ -274,10 +426,26 @@ export async function getEditorReviews(
           title: true,
         },
       },
+      editorReviewAssignments: {
+        where: {
+          editorId,
+        },
+        select: {
+          assignedAt: true,
+          completedAt: true,
+          id: true,
+          stage: true,
+          status: true,
+        },
+      },
       editorFeedback: {
         where: {
           editorId,
           isProfessionalReview: true,
+          reportStatus:
+            status === "completed"
+              ? "completed"
+              : "draft",
         },
         orderBy: {
           updatedAt: "desc",
@@ -286,9 +454,11 @@ export async function getEditorReviews(
       },
     },
     orderBy: {
-      assignedAt: "desc",
+      updatedAt: "desc",
     },
   });
+
+  return works as EditorReviewWorkResult[];
 }
 
 export async function getEditorRecommendations(editorId: string) {
@@ -401,12 +571,51 @@ export async function searchRegisteredEditors(
   });
 }
 
-export async function getEditorReviewDetail(editorId: string, workId: string) {
-  return prisma.work.findFirst({
+export async function getAvailableSecondEditors(
+  currentEditorId: string,
+) {
+  return prisma.user.findMany({
+    where: {
+      id: {
+        not: currentEditorId,
+      },
+      role: "editor",
+      status: "active",
+    },
+    select: {
+      displayName: true,
+      fullName: true,
+      id: true,
+    },
+    orderBy: {
+      fullName: "asc",
+    },
+    take: 100,
+  });
+}
+
+export async function getEditorReviewDetail(
+  editorId: string,
+  workId: string,
+): Promise<EditorReviewWorkResult | null> {
+  const work = await prisma.work.findFirst({
     where: {
       id: workId,
-      assignedEditorId: editorId,
       editorReviewStatus: "completed",
+      OR: [
+        {
+          assignedEditorId: editorId,
+        },
+        {
+          editorReviewAssignments: {
+            some: {
+              editorId,
+              stage: "second",
+              status: "completed",
+            },
+          },
+        },
+      ],
     },
     include: {
       author: {
@@ -430,6 +639,18 @@ export async function getEditorReviewDetail(editorId: string, workId: string) {
           title: true,
         },
       },
+      editorReviewAssignments: {
+        where: {
+          editorId,
+        },
+        select: {
+          assignedAt: true,
+          completedAt: true,
+          id: true,
+          stage: true,
+          status: true,
+        },
+      },
       editorFeedback: {
         where: {
           editorId,
@@ -443,4 +664,6 @@ export async function getEditorReviewDetail(editorId: string, workId: string) {
       },
     },
   });
+
+  return work as EditorReviewWorkResult | null;
 }

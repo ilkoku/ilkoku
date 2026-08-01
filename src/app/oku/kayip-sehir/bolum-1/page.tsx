@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { readingContent } from "@/content";
+import { getChapterComments } from "@/features/reader/comments";
+import { getFavoriteStatus } from "@/features/reader/favorites";
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
-import { recordReadingProgress } from "@/features/reading/progress";
+import { getReadingProgress } from "@/features/reading/progress";
 import { getPublicChapter } from "@/features/works/queries";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
@@ -14,17 +16,49 @@ export const metadata: Metadata = {
 };
 
 export default async function FirstChapterPage() {
-  const chapter = await getPublicChapter("kayip-sehir", "bolum-1");
-  if (!chapter) notFound();
+  const chapter = await getPublicChapter(
+    "kayip-sehir",
+    "bolum-1",
+  );
+
+  if (!chapter) {
+    notFound();
+  }
+
+  const comments =
+    await getChapterComments(
+      chapter.id,
+    );
+
   const user = await getCurrentUser();
-  const readingProgress =
-    user?.role === "reader" || user?.role === "editor"
-      ? await recordReadingProgress(user.id, chapter)
+  const readerUser =
+    user &&
+    (user.role === "reader" || user.role === "editor")
+      ? user
       : null;
+
+  const [readingProgress, isFavorite] =
+    readerUser
+      ? await Promise.all([
+          getReadingProgress(
+            readerUser.id,
+            chapter.work.id,
+          ),
+          getFavoriteStatus(
+            readerUser.id,
+            chapter.work.id,
+          ),
+        ])
+      : [null, false];
 
   return (
     <ReadingExperience
+      canComment={Boolean(readerUser)}
+      canFavorite={Boolean(readerUser)}
+      canTrackReading={Boolean(readerUser)}
       chapter={chapter}
+      comments={comments}
+      isFavorite={isFavorite}
       readingProgress={readingProgress?.progressPercent ?? null}
     />
   );

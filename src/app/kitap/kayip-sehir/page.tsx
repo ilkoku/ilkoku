@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { readingContent } from "@/content";
+import { getWorkLatestComments } from "@/features/reader/comments";
 import { getFavoriteStatus } from "@/features/reader/favorites";
 import { getReadingProgress } from "@/features/reading/progress";
 import { BookShowcase } from "@/features/showcase/components/BookShowcase";
@@ -16,7 +17,16 @@ export const metadata: Metadata = {
 
 export default async function BookShowcasePage() {
   const work = await getPublicWorkBySlug("kayip-sehir");
-  if (!work) notFound();
+
+  if (!work) {
+    notFound();
+  }
+
+  const comments =
+    await getWorkLatestComments(
+      work.id,
+    );
+
   const user = await getCurrentUser();
   const readerUser =
     user && (user.role === "reader" || user.role === "editor")
@@ -32,6 +42,7 @@ export default async function BookShowcasePage() {
   return (
     <BookShowcase
       canFavorite={Boolean(readerUser)}
+      comments={comments}
       isFavorite={isFavorite}
       readingProgress={readingProgress}
       work={work}

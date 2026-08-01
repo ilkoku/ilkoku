@@ -24,6 +24,8 @@ const reviewFilters = [
   "not_requested",
   "requested",
   "in_progress",
+  "awaiting_second_editor",
+  "second_in_progress",
   "completed",
 ] as const;
 
@@ -69,6 +71,11 @@ export default async function ReaderExplorePage({
     publishedAt: { not: null },
     status: "published",
     visibility: "public",
+    readingProgress: {
+      none: {
+        userId: profile.id,
+      },
+    },
     ...(genre ? { genre } : {}),
     ...(language ? { language } : {}),
     ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
@@ -101,14 +108,76 @@ export default async function ReaderExplorePage({
   const works = await prisma.work.findMany({
     where,
     include: {
-      author: { select: { displayName: true, fullName: true } },
+      _count: {
+        select: {
+          comments: {
+            where: {
+              deletedAt: null,
+              status: "visible",
+            },
+          },
+          favorites: true,
+          readingProgress: true,
+        },
+      },
+      author: {
+        select: {
+          displayName: true,
+          fullName: true,
+          username: true,
+        },
+      },
       chapters: {
-        where: { archivedAt: null },
-        select: { content: true },
+        where: {
+          archivedAt: null,
+          publishedAt: {
+            not: null,
+          },
+          status: "published",
+        },
+        orderBy: {
+          position: "asc",
+        },
+        select: {
+          content: true,
+          position: true,
+          title: true,
+        },
       },
       favorites: {
-        where: { userId: profile.id },
-        select: { id: true },
+        where: {
+          userId: profile.id,
+        },
+        select: {
+          id: true,
+        },
+      },
+      readingProgress: {
+        where: {
+          userId: profile.id,
+          chapter: {
+            is: {
+              archivedAt: null,
+              publishedAt: {
+                not: null,
+              },
+              status: "published",
+            },
+          },
+        },
+        orderBy: {
+          lastReadAt: "desc",
+        },
+        select: {
+          chapter: {
+            select: {
+              position: true,
+              title: true,
+            },
+          },
+          progressPercent: true,
+        },
+        take: 1,
       },
     },
     orderBy: { createdAt: "desc" },
@@ -126,26 +195,43 @@ export default async function ReaderExplorePage({
       })
     : works;
 
-  const rows: ReaderWorkRow[] = filteredWorks.slice(0, 48).map((work) => ({
-    authorName: work.author.displayName ?? work.author.fullName,
-    chapterCount: work.chapters.length,
-    commentCount: 0,
-    coverUrl: work.coverUrl,
-    editorReviewStatus: work.editorReviewStatus,
-    favoriteCount: 0,
-    genre: work.genre,
-    id: work.id,
-    isFavorite: work.favorites.length > 0,
-    progressPercent: null,
-    readerCount: 0,
-    readingHref: null,
-    slug: work.slug,
-    title: work.title,
-    totalWords: work.chapters.reduce(
-      (total, chapter) => total + countWords(chapter.content),
-      0,
-    ),
-  }));
+  const rows: ReaderWorkRow[] = filteredWorks.slice(0, 48).map((work) => {
+    const firstChapter = work.chapters[0] ?? null;
+    const progress = work.readingProgress[0] ?? null;
+
+    return {
+      authorName: work.author.displayName ?? work.author.fullName,
+      authorUsername: work.author.username,
+      chapterCount: work.chapters.length,
+      commentCount: work._count.comments,
+      coverUrl: work.coverUrl,
+      description: work.description,
+      editorReviewStatus: work.editorReviewStatus,
+      favoriteCount: work._count.favorites,
+      genre: work.genre,
+      id: work.id,
+      isFavorite: work.favorites.length > 0,
+      language: work.language,
+      lastReadLabel: progress?.chapter.title ?? null,
+      progressPercent: progress?.progressPercent ?? null,
+      publishedAt:
+        work.publishedAt?.toISOString() ?? null,
+      readerCount: work._count.readingProgress,
+      readingHref: progress
+        ? `/oku/${work.slug}/bolum-${progress.chapter.position}`
+        : firstChapter
+          ? `/oku/${work.slug}/bolum-${firstChapter.position}`
+          : null,
+      slug: work.slug,
+      title: work.title,
+      totalWords: work.chapters.reduce(
+        (total, chapter) =>
+          total + countWords(chapter.content),
+        0,
+      ),
+      updatedAt: work.updatedAt.toISOString(),
+    };
+  });
 
   return (
     <AppShell profile={profile}>
@@ -196,7 +282,11 @@ export default async function ReaderExplorePage({
               <option value="">Tümü</option>
               <option value="not_requested">Henüz incelenmedi</option>
               <option value="requested">İnceleme talep edildi</option>
-              <option value="in_progress">İncelemede</option>
+              <option value="in_progress">İlk editörde</option>
+              <option value="awaiting_second_editor">
+                İkinci editör bekleniyor
+              </option>
+              <option value="second_in_progress">İkinci editörde</option>
               <option value="completed">İncelendi</option>
             </select>
           </label>

@@ -6,6 +6,8 @@ import {
   useState,
 } from "react";
 
+import Link from "next/link";
+
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { workspaceContent } from "@/content";
@@ -447,10 +449,16 @@ export function WorksWorkspace({
                           <strong>Profesyonel Editör İncelemesi</strong>
                           <span>
                             {work.editorReviewStatus === "requested"
-                              ? "Eser editör incelemesinde."
-                              : work.editorReviewStatus === "completed"
-                                ? "Eser değerlendirmesi tamamlandı."
-                                : "Yayımlanmış eserini bütün olarak editör incelemesine gönder."}
+                              ? "Eser editör havuzunda değerlendirme bekliyor."
+                              : work.editorReviewStatus === "in_progress"
+                                ? "Birinci editör eserini inceliyor."
+                                : work.editorReviewStatus === "awaiting_second_editor"
+                                  ? "Birinci editör raporu tamamlandı; ikinci editör bekleniyor."
+                                  : work.editorReviewStatus === "second_in_progress"
+                                    ? "İkinci editör eserini inceliyor."
+                                    : work.editorReviewStatus === "completed"
+                                      ? "Eser değerlendirmesi tamamlandı."
+                                      : "Yayımlanmış eserini bütün olarak editör incelemesine gönder."}
                           </span>
                         </div>
 
@@ -461,11 +469,24 @@ export function WorksWorkspace({
                               Editör İncelemesine Gönder
                             </Button>
                           </form>
+                        ) : work.editorReviewStatus === "completed" ? (
+                          <Link
+                            className="button button--outline"
+                            href={`/geri-bildirimler?eser=${encodeURIComponent(
+                              work.id,
+                            )}`}
+                          >
+                            Editör Raporunu Görüntüle
+                          </Link>
                         ) : (
                           <span className="workspace-editor-review__status">
                             {work.editorReviewStatus === "requested"
                               ? "İnceleme bekliyor"
-                              : "Tamamlandı"}
+                              : work.editorReviewStatus === "in_progress"
+                                ? "Birinci editörde"
+                                : work.editorReviewStatus === "awaiting_second_editor"
+                                  ? "İkinci editör bekleniyor"
+                                  : "İkinci editörde"}
                           </span>
                         )}
                       </section>

@@ -202,6 +202,9 @@ export function getOptionalEmailCategory(
   if (
     template === "reader_comment_reply" ||
     template === "author_publisher_work_liked" ||
+    template === "author_publisher_work_favorited" ||
+    template === "author_publisher_author_liked" ||
+    template === "author_publisher_author_favorited" ||
     template === "author_publisher_followed"
   ) {
     return "social";

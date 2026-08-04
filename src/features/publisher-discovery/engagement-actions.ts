@@ -173,6 +173,7 @@ export async function togglePublisherWorkLikeAction(
     formData.get("returnPath"),
     [
       "/yayinevi/kesfet/eserler",
+      "/yayinevi/begenilerim",
       "/yayinevi/favorilerim",
     ],
     "/yayinevi/kesfet/eserler",
@@ -229,6 +230,9 @@ export async function togglePublisherWorkLikeAction(
   );
   revalidatePath(
     "/yayinevi/kesfet/eserler",
+  );
+  revalidatePath(
+    "/yayinevi/begenilerim",
   );
   revalidatePath(
     "/yayinevi/favorilerim",

@@ -23,94 +23,30 @@ export const navigationContent = {
 export const readerNavigationContent = {
   ariaLabel: "Okuyucu menüsü",
   items: [
-    {
-      label: "Ana Sayfa",
-      href: "/okuyucu",
-    },
-    {
-      label: "Keşfet",
-      href: "/kesfet",
-    },
-    {
-      label: "Favorilerim",
-      href: "/favorilerim",
-    },
-    {
-      label: "Okumaya Devam Et",
-      href: "/okumaya-devam",
-    },
-    {
-      label: "Tamamlanan Eserler",
-      href: "/tamamlanan-eserler",
-    },
-    {
-      label: "Bildirimler",
-      href: "/bildirimler",
-    },
-    {
-      label: "Profilim",
-      href: "/profilim",
-    },
+    { label: "Ana Sayfa", href: "/okuyucu" },
+    { label: "Keşfet", href: "/kesfet" },
+    { label: "Favorilerim", href: "/favorilerim" },
+    { label: "Okumaya Devam Et", href: "/okumaya-devam" },
+    { label: "Tamamlanan Eserler", href: "/tamamlanan-eserler" },
+    { label: "Bildirimler", href: "/bildirimler" },
+    { label: "Profilim", href: "/profilim" },
   ],
 } as const;
 
 export const editorNavigationContent = {
   ariaLabel: "Editör menüsü",
   items: [
-    {
-      type: "heading",
-      label: "Keşif",
-    },
-    {
-      type: "item",
-      label: "Eser Keşfet",
-      href: "/editor/kesfet",
-    },
-    {
-      type: "item",
-      label: "Yazar Keşfet",
-      href: "/editor/yazarlar",
-    },
-    {
-      type: "item",
-      label: "Favorilerim",
-      href: "/editor/favoriler",
-    },
-    {
-      type: "item",
-      label: "Editör Seçkilerim",
-      href: "/editor/seckiler",
-    },
-
-    {
-      type: "heading",
-      label: "Çalışma Alanı",
-    },
-    {
-      type: "item",
-      label: "Yeni İnceleme Talepleri",
-      href: "/editor/talepler",
-    },
-    {
-      type: "item",
-      label: "İncelemeye Aldıklarım",
-      href: "/editor/incelemeler",
-    },
-    {
-      type: "item",
-      label: "Tamamlanan İncelemeler",
-      href: "/editor/incelemeler?durum=tamamlanan",
-    },
-    {
-      type: "item",
-      label: "Bildirimler",
-      href: "/editor/bildirimler",
-    },
-    {
-      type: "item",
-      label: "Profilim",
-      href: "/editor/profil",
-    },
+    { type: "heading", label: "Keşif" },
+    { type: "item", label: "Eser Keşfet", href: "/editor/kesfet" },
+    { type: "item", label: "Yazar Keşfet", href: "/editor/yazarlar" },
+    { type: "item", label: "Favorilerim", href: "/editor/favoriler" },
+    { type: "item", label: "Editör Seçkilerim", href: "/editor/seckiler" },
+    { type: "heading", label: "Çalışma Alanı" },
+    { type: "item", label: "Yeni İnceleme Talepleri", href: "/editor/talepler" },
+    { type: "item", label: "İncelemeye Aldıklarım", href: "/editor/incelemeler" },
+    { type: "item", label: "Tamamlanan İncelemeler", href: "/editor/incelemeler?durum=tamamlanan" },
+    { type: "item", label: "Bildirimler", href: "/editor/bildirimler" },
+    { type: "item", label: "Profilim", href: "/editor/profil" },
   ],
 } as const;
 
@@ -121,8 +57,10 @@ export const publisherNavigationContent = {
     { type: "heading", label: "KEŞİF" },
     { type: "item", label: "Eser Keşfet", href: "/yayinevi/kesfet/eserler" },
     { type: "item", label: "Yazar Keşfet", href: "/yayinevi/kesfet/yazarlar" },
+    { type: "item", label: "Beğendiklerim", href: "/yayinevi/begenilerim" },
     { type: "item", label: "Favorilerim", href: "/yayinevi/favorilerim" },
     { type: "item", label: "Takip Ettiklerim", href: "/yayinevi/takip-ettiklerim" },
+    { type: "item", label: "Benimle Paylaşılanlar", href: "/yayinevi/paylasilanlar" },
     { type: "heading", label: "Başvurular" },
     { type: "item", label: "Yeni Başvurular", href: "/yayinevi?durum=pending" },
     { type: "item", label: "İncelenenler", href: "/yayinevi?durum=reviewing" },

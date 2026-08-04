@@ -1,0 +1,215 @@
+.publisher-share-panel {
+  border: 1px solid rgb(139 92 246 / 24%);
+  border-radius: 12px;
+  margin-top: 8px;
+  max-width: 560px;
+}
+
+.publisher-share-panel > summary {
+  color: #c4b5fd;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  list-style: none;
+  padding: 10px 12px;
+}
+
+.publisher-share-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.publisher-share-panel[open] > summary {
+  border-bottom: 1px solid rgb(139 92 246 / 18%);
+}
+
+.publisher-share-panel__content {
+  display: grid;
+  gap: 14px;
+  padding: 12px;
+}
+
+.publisher-share-panel__content > section {
+  background: rgb(255 255 255 / 3%);
+  border: 1px solid rgb(148 163 184 / 12%);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.publisher-share-panel__content h3 {
+  color: #f8fafc;
+  font-size: 14px;
+  margin: 0;
+}
+
+.publisher-share-panel__content section > p {
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 5px 0 12px;
+}
+
+.publisher-share-form {
+  display: grid;
+  gap: 12px;
+}
+
+.publisher-share-form > label,
+.publisher-share-form fieldset {
+  border: 0;
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+}
+
+.publisher-share-form > label > span,
+.publisher-share-form legend {
+  color: #dbe4f1;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.publisher-share-form input[type="email"],
+.publisher-share-form textarea {
+  background: #0d1320;
+  border: 1px solid rgb(148 163 184 / 18%);
+  border-radius: 9px;
+  color: #f8fafc;
+  font: inherit;
+  padding: 10px;
+}
+
+.publisher-share-form textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.publisher-share-form__members {
+  display: grid;
+  gap: 7px;
+}
+
+.publisher-share-form__members label {
+  align-items: flex-start;
+  background: rgb(255 255 255 / 3%);
+  border: 1px solid rgb(148 163 184 / 10%);
+  border-radius: 9px;
+  display: flex;
+  gap: 9px;
+  padding: 9px;
+}
+
+.publisher-share-form__members input {
+  accent-color: #8b5cf6;
+  margin-top: 3px;
+}
+
+.publisher-share-form__members span,
+.publisher-share-form__members strong,
+.publisher-share-form__members small {
+  display: block;
+}
+
+.publisher-share-form__members small {
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.publisher-share-form__result {
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 9px 10px;
+}
+
+.publisher-share-form__result[data-status="success"] {
+  background: rgb(16 185 129 / 12%);
+  color: #6ee7b7;
+}
+
+.publisher-share-form__result[data-status="error"] {
+  background: rgb(239 68 68 / 12%);
+  color: #fca5a5;
+}
+
+.publisher-share-form__empty {
+  color: #94a3b8;
+  font-size: 12px;
+  margin: 0;
+}
+
+.publisher-shared-list {
+  display: grid;
+  gap: 14px;
+}
+
+.publisher-shared-card {
+  background: rgb(255 255 255 / 3%);
+  border: 1px solid rgb(148 163 184 / 14%);
+  border-radius: 16px;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.publisher-shared-card[data-unread="true"] {
+  border-color: rgb(139 92 246 / 42%);
+  box-shadow: 0 0 0 1px rgb(139 92 246 / 12%);
+}
+
+.publisher-shared-card__heading,
+.publisher-shared-card__footer {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.publisher-shared-card__heading span {
+  background: rgb(139 92 246 / 14%);
+  border-radius: 999px;
+  color: #c4b5fd;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 9px;
+}
+
+.publisher-shared-card h2 {
+  color: #f8fafc;
+  font-size: 18px;
+  margin: 0;
+}
+
+.publisher-shared-card blockquote {
+  background: #0d1320;
+  border-left: 3px solid #8b5cf6;
+  border-radius: 0 10px 10px 0;
+  color: #dbe4f1;
+  line-height: 1.65;
+  margin: 0;
+  padding: 12px 14px;
+}
+
+.publisher-shared-card small {
+  color: #94a3b8;
+}
+
+.publisher-shared-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 700px) {
+  .publisher-share-panel__content {
+    padding: 9px;
+  }
+
+  .publisher-shared-card__heading,
+  .publisher-shared-card__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -83,30 +83,50 @@ export async function getPublisherNavigationPermissions(
   );
 }
 
+function accessResult(input: Awaited<ReturnType<typeof requirePublisherMembership>>): PublisherDiscoveryAccess {
+  return {
+    companyName:
+      input.membership.publisher.companyName,
+    permissions: input.permissions,
+    profile: input.profile,
+    publisherId:
+      input.membership.publisherId,
+  };
+}
+
 export async function requirePublisherDiscoveryAccess(
   path: string,
   permission: PublisherPermission,
 ): Promise<PublisherDiscoveryAccess> {
-  const {
-    membership,
-    permissions,
-    profile,
-  } = await requirePublisherMembership(path);
+  const context = await requirePublisherMembership(path);
 
-  if (!permissions.includes(permission)) {
+  if (!context.permissions.includes(permission)) {
     redirect(
       `/erisim-reddedildi?gerekli=${permission}`,
     );
   }
 
-  return {
-    companyName:
-      membership.publisher.companyName,
-    permissions,
-    profile,
-    publisherId:
-      membership.publisherId,
-  };
+  return accessResult(context);
+}
+
+export async function requirePublisherAnyDiscoveryAccess(
+  path: string,
+  requiredPermissions: readonly PublisherPermission[],
+): Promise<PublisherDiscoveryAccess> {
+  const context = await requirePublisherMembership(path);
+
+  if (
+    requiredPermissions.length === 0 ||
+    !requiredPermissions.some((permission) =>
+      context.permissions.includes(permission),
+    )
+  ) {
+    redirect(
+      `/erisim-reddedildi?gerekli=${encodeURIComponent(requiredPermissions.join("_or_"))}`,
+    );
+  }
+
+  return accessResult(context);
 }
 
 export async function requirePublisherWorkPassportAccess(

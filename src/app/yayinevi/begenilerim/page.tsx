@@ -10,18 +10,18 @@ import {
   getPublisherSavedAuthors,
   normalizePublisherFollowingFilters,
 } from "@/features/publisher-discovery/author-saved-query";
-import { PublisherFavoriteWorksTable } from "@/features/publisher-discovery/components/PublisherFavoriteWorksTable";
+import { PublisherLikedWorksTable } from "@/features/publisher-discovery/components/PublisherLikedWorksTable";
 import { PublisherSavedAuthorsTable } from "@/features/publisher-discovery/components/PublisherSavedAuthorsTable";
 import {
-  getPublisherFavoriteWorks,
+  getPublisherLikedWorks,
   normalizePublisherFavoriteFilters,
-} from "@/features/publisher-discovery/work-favorites-query";
+} from "@/features/publisher-discovery/favorites-query";
 import "@/features/publisher-discovery/publisher-discovery.css";
 
 export const metadata: Metadata = {
   description:
-    "Yayınevinizin favorilediği public eserleri ve yazarları listeleyin.",
-  title: "Yayınevi Favorilerim | İlkOku",
+    "Yayınevinizin beğendiği public eserleri ve yazarları listeleyin.",
+  title: "Yayınevi Beğendiklerim | İlkOku",
 };
 
 export const dynamic = "force-dynamic";
@@ -41,22 +41,22 @@ function pageHref(input: {
   if (input.page > 1) params.set("sayfa", String(input.page));
   const query = params.toString();
   return query
-    ? `/yayinevi/favorilerim?${query}`
-    : "/yayinevi/favorilerim";
+    ? `/yayinevi/begenilerim?${query}`
+    : "/yayinevi/begenilerim";
 }
 
-export default async function PublisherFavoritesPage({
+export default async function PublisherLikesPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const access = await requirePublisherAnyDiscoveryAccess(
-    "/yayinevi/favorilerim",
-    ["favorite_work", "favorite_author"],
+    "/yayinevi/begenilerim",
+    ["like_work", "like_author"],
   );
   const params = await searchParams;
-  const canWork = access.permissions.includes("favorite_work");
-  const canAuthor = access.permissions.includes("favorite_author");
+  const canWork = access.permissions.includes("like_work");
+  const canAuthor = access.permissions.includes("like_author");
   const requestedType = firstValue(params.tip) === "yazar"
     ? "author"
     : "work";
@@ -75,20 +75,20 @@ export default async function PublisherFavoritesPage({
   const authorFilters = normalizePublisherFollowingFilters(params);
   const workData =
     type === "work"
-      ? await getPublisherFavoriteWorks(access.publisherId, workFilters)
+      ? await getPublisherLikedWorks(access.publisherId, workFilters)
       : null;
   const authorData =
     type === "author"
       ? await getPublisherSavedAuthors(
           access.publisherId,
           authorFilters,
-          "favorite",
+          "like",
         )
       : null;
   const data = workData ?? authorData;
 
   if (!data) {
-    throw new Error("FAVORI_LISTESI_HAZIRLANAMADI");
+    throw new Error("BEGENI_LISTESI_HAZIRLANAMADI");
   }
 
   const query =
@@ -105,16 +105,16 @@ export default async function PublisherFavoritesPage({
     <AppShell profile={access.profile}>
       <div className="publisher-discovery">
         <EditorPageHeader
-          description="Yayınevinizin kurumsal favorilerine eklediği public eser ve yazarları ayrı listelerde yönetin."
+          description="Yayıneviniz adına beğenilen public eser ve yazarları ayrı listelerde yönetin."
           eyebrow={access.companyName}
-          title="Favorilerim"
+          title="Beğendiklerim"
         />
 
-        <nav className="publisher-discovery-filter-actions" aria-label="Favori türü">
+        <nav className="publisher-discovery-filter-actions" aria-label="Beğeni türü">
           {canWork ? (
             <Link
               className={type === "work" ? "button button--primary" : "button button--ghost"}
-              href="/yayinevi/favorilerim"
+              href="/yayinevi/begenilerim"
             >
               Eserler
             </Link>
@@ -122,7 +122,7 @@ export default async function PublisherFavoritesPage({
           {canAuthor ? (
             <Link
               className={type === "author" ? "button button--primary" : "button button--ghost"}
-              href="/yayinevi/favorilerim?tip=yazar"
+              href="/yayinevi/begenilerim?tip=yazar"
             >
               Yazarlar
             </Link>
@@ -152,7 +152,7 @@ export default async function PublisherFavoritesPage({
             {query ? (
               <Link
                 className="button button--ghost"
-                href={type === "author" ? "/yayinevi/favorilerim?tip=yazar" : "/yayinevi/favorilerim"}
+                href={type === "author" ? "/yayinevi/begenilerim?tip=yazar" : "/yayinevi/begenilerim"}
               >
                 Temizle
               </Link>
@@ -162,16 +162,16 @@ export default async function PublisherFavoritesPage({
 
         <section className="publisher-discovery-summary">
           <div>
-            <span>{type === "work" ? "Favori eserler" : "Favori yazarlar"}</span>
+            <span>{type === "work" ? "Beğenilen eserler" : "Beğenilen yazarlar"}</span>
             <strong>{data.totalCount} kayıt</strong>
           </div>
-          <p>Favoriler beğenilerden ayrı tutulur ve aynı yayınevi adına tekil kaydedilir.</p>
+          <p>Beğeni kayıtları yayınevi adına tekildir; aynı ekipte ikinci bir beğeni kaydı oluşmaz.</p>
         </section>
 
         {data.rows.length === 0 ? (
           <section className="publisher-discovery-empty">
-            <h2>Favori kayıt bulunmuyor</h2>
-            <p>Keşif ekranından favoriye ekleme işlemini kullanın.</p>
+            <h2>Beğenilen kayıt bulunmuyor</h2>
+            <p>Keşif ekranından beğeni işlemini kullanın.</p>
             <Link
               className="button button--primary"
               href={type === "work" ? "/yayinevi/kesfet/eserler" : "/yayinevi/kesfet/yazarlar"}
@@ -180,7 +180,7 @@ export default async function PublisherFavoritesPage({
             </Link>
           </section>
         ) : workData ? (
-          <PublisherFavoriteWorksTable
+          <PublisherLikedWorksTable
             canMutate={canMutate}
             canViewPassport={canViewPassport}
             returnTo={returnTo}
@@ -189,7 +189,7 @@ export default async function PublisherFavoritesPage({
         ) : authorData ? (
           <PublisherSavedAuthorsTable
             canMutate={canMutate}
-            mode="favorite"
+            mode="like"
             returnTo={returnTo}
             rows={authorData.rows}
           />

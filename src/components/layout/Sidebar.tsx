@@ -102,56 +102,51 @@ function filterPublisherNavigation(
   nodes: readonly NavigationNode[],
   permissions: readonly PublisherPermission[],
 ) {
-  const canDiscoverWorks =
-    permissions.includes("discover_works");
-  const canDiscoverAuthors =
-    permissions.includes("discover_authors");
+  const canDiscoverWorks = permissions.includes("discover_works");
+  const canDiscoverAuthors = permissions.includes("discover_authors");
+  const canUseLikes =
+    permissions.includes("like_work") ||
+    permissions.includes("like_author");
   const canUseFavorites =
-    canDiscoverWorks &&
-    permissions.includes("like_work");
-  const canUseFollowing =
-    canDiscoverAuthors &&
-    permissions.includes("follow_author");
+    permissions.includes("favorite_work") ||
+    permissions.includes("favorite_author");
+  const canUseFollowing = permissions.includes("follow_author");
+  const canViewSharedItems = permissions.includes("view_shared_items");
   const canUseDiscovery =
     canDiscoverWorks ||
     canDiscoverAuthors ||
+    canUseLikes ||
     canUseFavorites ||
-    canUseFollowing;
+    canUseFollowing ||
+    canViewSharedItems;
 
   return nodes.filter((node) => {
     if (isHeading(node)) {
-      return (
-        node.label !== "KEŞİF" ||
-        canUseDiscovery
-      );
+      return node.label !== "KEŞİF" || canUseDiscovery;
     }
 
-    if (
-      node.href ===
-      "/yayinevi/kesfet/eserler"
-    ) {
+    if (node.href === "/yayinevi/kesfet/eserler") {
       return canDiscoverWorks;
     }
 
-    if (
-      node.href ===
-      "/yayinevi/kesfet/yazarlar"
-    ) {
+    if (node.href === "/yayinevi/kesfet/yazarlar") {
       return canDiscoverAuthors;
     }
 
-    if (
-      node.href ===
-      "/yayinevi/favorilerim"
-    ) {
+    if (node.href === "/yayinevi/begenilerim") {
+      return canUseLikes;
+    }
+
+    if (node.href === "/yayinevi/favorilerim") {
       return canUseFavorites;
     }
 
-    if (
-      node.href ===
-      "/yayinevi/takip-ettiklerim"
-    ) {
+    if (node.href === "/yayinevi/takip-ettiklerim") {
       return canUseFollowing;
+    }
+
+    if (node.href === "/yayinevi/paylasilanlar") {
+      return canViewSharedItems;
     }
 
     return true;
@@ -204,8 +199,7 @@ export function Sidebar({
     ? "publisher"
     : role;
 
-  const baseItems =
-    navigationForRole(navigationRole);
+  const baseItems = navigationForRole(navigationRole);
   const items =
     navigationRole === "publisher"
       ? filterPublisherNavigation(
@@ -213,8 +207,7 @@ export function Sidebar({
           publisherPermissions,
         )
       : baseItems;
-  const ariaLabel =
-    ariaLabelForRole(navigationRole);
+  const ariaLabel = ariaLabelForRole(navigationRole);
 
   function setMenuOpen(nextIsOpen: boolean) {
     setMenuState({

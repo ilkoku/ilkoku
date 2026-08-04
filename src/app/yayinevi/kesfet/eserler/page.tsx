@@ -7,7 +7,13 @@ import {
   requirePublisherDiscoveryAccess,
 } from "@/features/publisher-discovery/access";
 import { PublisherWorksTable } from "@/features/publisher-discovery/components/PublisherWorksTable";
-import { getPublisherWorkLikeIds } from "@/features/publisher-discovery/engagement-query";
+import {
+  getPublisherWorkFavoriteIds,
+  getPublisherWorkLikeIds,
+} from "@/features/publisher-discovery/engagement-query";
+import {
+  getPublisherShareRecipientOptions,
+} from "@/features/publisher-discovery/sharing-repository";
 import {
   getPublisherWorkDiscovery,
   normalizePublisherWorkDiscoveryFilters,
@@ -87,14 +93,38 @@ export default async function PublisherWorkDiscoveryPage({
     );
   const data =
     await getPublisherWorkDiscovery(filters);
-  const likedWorkIds =
-    await getPublisherWorkLikeIds(
+  const workIds = data.rows.map((row) => row.id);
+  const [
+    likedWorkIds,
+    favoriteWorkIds,
+    shareMembers,
+  ] = await Promise.all([
+    getPublisherWorkLikeIds(
       access.publisherId,
-      data.rows.map((row) => row.id),
-    );
+      workIds,
+    ),
+    getPublisherWorkFavoriteIds(
+      access.publisherId,
+      workIds,
+    ),
+    getPublisherShareRecipientOptions(
+      access.profile.id,
+    ),
+  ]);
+  const canMutate =
+    !access.profile.adminPublisherView;
   const canLike =
-    !access.profile.adminPublisherView &&
+    canMutate &&
     access.permissions.includes("like_work");
+  const canFavorite =
+    canMutate &&
+    access.permissions.includes("favorite_work");
+  const canShareInternal =
+    canMutate &&
+    access.permissions.includes("share_internal");
+  const canShareEmail =
+    canMutate &&
+    access.permissions.includes("share_email");
   const hasFilters = Boolean(
     filters.query ||
       filters.genre ||
@@ -107,12 +137,16 @@ export default async function PublisherWorkDiscoveryPage({
     access.permissions.includes(
       "view_authorized_passport",
     );
+  const returnTo = pageHref(
+    filters,
+    data.currentPage,
+  );
 
   return (
     <AppShell profile={access.profile}>
       <div className="publisher-discovery">
         <EditorPageHeader
-          description="Herkese açık ve yayımlanmış eserleri liste halinde inceleyin; yetkiniz varsa gerçek Eser Pasaportu kayıtlarını workId üzerinden açın."
+          description="Herkese açık eserleri inceleyin; yetkinize göre beğenin, favorileyin, zorunlu notla paylaşın ve Eser Pasaportu'nu açın."
           eyebrow={access.companyName}
           title="Eser Keşfet"
         />
@@ -232,10 +266,9 @@ export default async function PublisherWorkDiscoveryPage({
             </strong>
           </div>
           <p>
-            Pasaport erişimi özel/tam eser
-            içeriği erişiminden ayrıdır.
-            Beğeni, favori, takip ve paylaşım
-            işlemleri bu revizyonda açılmamıştır.
+            Beğeni, favori ve paylaşım işlemleri
+            yayınevi adına tekil kaydedilir ve
+            üyeye atanmış yetkilere göre açılır.
           </p>
         </section>
 
@@ -249,14 +282,16 @@ export default async function PublisherWorkDiscoveryPage({
           </section>
         ) : (
           <PublisherWorksTable
+            canFavorite={canFavorite}
             canLike={canLike}
+            canShareEmail={canShareEmail}
+            canShareInternal={canShareInternal}
             canViewPassport={canViewPassport}
-            returnTo={pageHref(
-              filters,
-              data.currentPage,
-            )}
-            rows={data.rows}
+            favoriteWorkIds={favoriteWorkIds}
             likedWorkIds={likedWorkIds}
+            returnTo={returnTo}
+            rows={data.rows}
+            shareMembers={shareMembers}
           />
         )}
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { togglePublisherWorkFavoriteAction } from "../engagement-extended-actions";
-import type { PublisherFavoriteWorkRow } from "../work-favorites-query";
+import { togglePublisherWorkLikeAction } from "../engagement-actions";
+import type { PublisherLikedWorkRow } from "../favorites-query";
 
 function formatNumber(value: number) {
   return value.toLocaleString("tr-TR");
@@ -26,7 +26,7 @@ function reviewLabel(value: string) {
   return labels[value] ?? value;
 }
 
-export function PublisherFavoriteWorksTable({
+export function PublisherLikedWorksTable({
   canMutate,
   canViewPassport,
   returnTo,
@@ -35,7 +35,7 @@ export function PublisherFavoriteWorksTable({
   canMutate: boolean;
   canViewPassport: boolean;
   returnTo: string;
-  rows: PublisherFavoriteWorkRow[];
+  rows: PublisherLikedWorkRow[];
 }) {
   return (
     <div className="publisher-discovery-table-wrap">
@@ -47,14 +47,14 @@ export function PublisherFavoriteWorksTable({
             <th>Tür / Dil</th>
             <th>Yayın ve editör</th>
             <th>Metrikler</th>
-            <th>Favori tarihi</th>
+            <th>Beğeni tarihi</th>
             <th>İşlemler</th>
           </tr>
         </thead>
 
         <tbody>
           {rows.map((work) => (
-            <tr key={work.favoriteId}>
+            <tr key={work.likeId}>
               <td data-label="Eser">
                 <div className="publisher-discovery-table__work">
                   <span
@@ -109,8 +109,8 @@ export function PublisherFavoriteWorksTable({
                 </div>
               </td>
 
-              <td data-label="Favori tarihi">
-                <strong>{formatDate(work.favoritedAt)}</strong>
+              <td data-label="Beğeni tarihi">
+                <strong>{formatDate(work.likedAt)}</strong>
                 <small>{work.versionCount} sürüm</small>
               </td>
 
@@ -143,7 +143,7 @@ export function PublisherFavoriteWorksTable({
 
                   {canMutate ? (
                     <form
-                      action={togglePublisherWorkFavoriteAction}
+                      action={togglePublisherWorkLikeAction}
                       className="publisher-discovery-engagement-form"
                     >
                       <input name="workId" type="hidden" value={work.id} />
@@ -157,7 +157,7 @@ export function PublisherFavoriteWorksTable({
                         className="button button--outline"
                         type="submit"
                       >
-                        Favoriden çıkar
+                        Beğenmekten vazgeç
                       </button>
                     </form>
                   ) : (

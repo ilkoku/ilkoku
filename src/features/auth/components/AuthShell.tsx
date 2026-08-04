@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import mobileLogo from "@/assets/brand/ilkoku-logo-mobile.png";
+import retinaLogo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { authContent, tr } from "@/content";
 
 interface AuthShellProps {
@@ -18,13 +18,11 @@ export function AuthShell({ children, description, eyebrow, title, wide = false 
       <header className="auth-header">
         <Link className="auth-brand" href="/" aria-label={authContent.common.homeLabel}>
           <Image
-            src={mobileLogo}
+            src={retinaLogo}
             alt=""
             aria-hidden="true"
-            width={768}
-            height={768}
-            unoptimized
             priority
+            sizes="(max-width: 767px) 72px, 96px"
           />
         </Link>
         <span>{authContent.common.tagline}</span>

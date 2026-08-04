@@ -12,7 +12,14 @@ import {
   type PublisherAuthorDiscoveryFilters,
 } from "@/features/publisher-discovery/author-query";
 import { PublisherAuthorsTable } from "@/features/publisher-discovery/components/PublisherAuthorsTable";
-import { getPublisherAuthorFollowIds } from "@/features/publisher-discovery/engagement-query";
+import {
+  getPublisherAuthorFavoriteIds,
+  getPublisherAuthorFollowIds,
+  getPublisherAuthorLikeIds,
+} from "@/features/publisher-discovery/engagement-query";
+import {
+  getPublisherShareRecipientOptions,
+} from "@/features/publisher-discovery/sharing-repository";
 import "@/features/publisher-discovery/publisher-discovery.css";
 
 export const metadata: Metadata = {
@@ -74,25 +81,61 @@ export default async function PublisherAuthorDiscoveryPage({
     );
   const data =
     await getPublisherAuthorDiscovery(filters);
-  const followedAuthorIds =
-    await getPublisherAuthorFollowIds(
+  const authorIds = data.rows.map((row) => row.id);
+  const [
+    likedAuthorIds,
+    favoriteAuthorIds,
+    followedAuthorIds,
+    shareMembers,
+  ] = await Promise.all([
+    getPublisherAuthorLikeIds(
       access.publisherId,
-      data.rows.map((row) => row.id),
-    );
+      authorIds,
+    ),
+    getPublisherAuthorFavoriteIds(
+      access.publisherId,
+      authorIds,
+    ),
+    getPublisherAuthorFollowIds(
+      access.publisherId,
+      authorIds,
+    ),
+    getPublisherShareRecipientOptions(
+      access.profile.id,
+    ),
+  ]);
+  const canMutate =
+    !access.profile.adminPublisherView;
+  const canLike =
+    canMutate &&
+    access.permissions.includes("like_author");
+  const canFavorite =
+    canMutate &&
+    access.permissions.includes("favorite_author");
   const canFollow =
-    !access.profile.adminPublisherView &&
+    canMutate &&
     access.permissions.includes("follow_author");
+  const canShareInternal =
+    canMutate &&
+    access.permissions.includes("share_internal");
+  const canShareEmail =
+    canMutate &&
+    access.permissions.includes("share_email");
   const hasFilters = Boolean(
     filters.query ||
       filters.genre ||
       filters.city,
+  );
+  const returnTo = pageHref(
+    filters,
+    data.currentPage,
   );
 
   return (
     <AppShell profile={access.profile}>
       <div className="publisher-discovery">
         <EditorPageHeader
-          description="En az bir public ve yayımlanmış eseri bulunan aktif yazarların yalnızca herkese açık kimlik, profil ve eser verilerini inceleyin."
+          description="Public eseri bulunan yazarları inceleyin; yetkinize göre beğenin, favorileyin, takip edin veya zorunlu notla paylaşın."
           eyebrow={access.companyName}
           title="Yazar Keşfet"
         />
@@ -156,10 +199,10 @@ export default async function PublisherAuthorDiscoveryPage({
             </strong>
           </div>
           <p>
-            Bu ekran salt okunurdur.
-            Yazar beğenme, favorileme ve
-            takip işlemleri sonraki sprintte
-            yetkileriyle birlikte açılacaktır.
+            Beğeni, favori ve takip kayıtları
+            aynı yayınevi adına tekilleştirilir;
+            ekip paylaşımı yalnızca seçilen
+            yetkili üyelerde görünür.
           </p>
         </section>
 
@@ -175,13 +218,17 @@ export default async function PublisherAuthorDiscoveryPage({
           </section>
         ) : (
           <PublisherAuthorsTable
+            canFavorite={canFavorite}
             canFollow={canFollow}
-            returnTo={pageHref(
-              filters,
-              data.currentPage,
-            )}
-            rows={data.rows}
+            canLike={canLike}
+            canShareEmail={canShareEmail}
+            canShareInternal={canShareInternal}
+            favoriteAuthorIds={favoriteAuthorIds}
             followedAuthorIds={followedAuthorIds}
+            likedAuthorIds={likedAuthorIds}
+            returnTo={returnTo}
+            rows={data.rows}
+            shareMembers={shareMembers}
           />
         )}
 

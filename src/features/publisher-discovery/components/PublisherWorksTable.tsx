@@ -1,23 +1,18 @@
 import Link from "next/link";
-import { togglePublisherWorkLikeAction } from "../engagement-actions";
 
-import type {
-  PublisherWorkDiscoveryRow,
-} from "../work-query";
+import { togglePublisherWorkLikeAction } from "../engagement-actions";
+import { togglePublisherWorkFavoriteAction } from "../engagement-extended-actions";
+import type { PublisherWorkDiscoveryRow } from "../work-query";
+import type { PublisherShareRecipientOption } from "../sharing-repository";
+import { PublisherDiscoveryShareForm } from "./PublisherDiscoveryShareForm";
 
 const reviewLabels = {
-  awaiting_second_editor:
-    "İkinci editör bekleniyor",
-  completed:
-    "Editör incelemesi tamamlandı",
-  in_progress:
-    "İlk editörde",
-  not_requested:
-    "Henüz incelenmedi",
-  requested:
-    "İnceleme talep edildi",
-  second_in_progress:
-    "İkinci editörde",
+  awaiting_second_editor: "İkinci editör bekleniyor",
+  completed: "Editör incelemesi tamamlandı",
+  in_progress: "İlk editörde",
+  not_requested: "Henüz incelenmedi",
+  requested: "İnceleme talep edildi",
+  second_in_progress: "İkinci editörde",
 } as const;
 
 function languageLabel(value: string) {
@@ -37,19 +32,31 @@ function formatNumber(value: number) {
 }
 
 export function PublisherWorksTable({
+  canFavorite,
   canLike,
+  canShareEmail,
+  canShareInternal,
   canViewPassport,
+  favoriteWorkIds,
   likedWorkIds,
   returnTo,
   rows,
+  shareMembers,
 }: {
+  canFavorite: boolean;
   canLike: boolean;
+  canShareEmail: boolean;
+  canShareInternal: boolean;
   canViewPassport: boolean;
+  favoriteWorkIds: string[];
   likedWorkIds: string[];
   returnTo: string;
   rows: PublisherWorkDiscoveryRow[];
+  shareMembers: PublisherShareRecipientOption[];
 }) {
   const liked = new Set(likedWorkIds);
+  const favorited = new Set(favoriteWorkIds);
+
   return (
     <div className="publisher-discovery-table-wrap">
       <table className="publisher-discovery-table">
@@ -78,95 +85,48 @@ export function PublisherWorksTable({
                     {work.title
                       .trim()
                       .charAt(0)
-                      .toLocaleUpperCase("tr-TR") ||
-                      "E"}
+                      .toLocaleUpperCase("tr-TR") || "E"}
                   </span>
 
                   <div>
                     <strong>{work.title}</strong>
-                    {work.subtitle ? (
-                      <small>
-                        {work.subtitle}
-                      </small>
-                    ) : null}
-                    <small>
-                      {dateLabel(
-                        work.publishedAt,
-                      )}
-                    </small>
+                    {work.subtitle ? <small>{work.subtitle}</small> : null}
+                    <small>{dateLabel(work.publishedAt)}</small>
                   </div>
                 </div>
               </td>
 
               <td data-label="Yazar">
-                <strong>
-                  {work.authorName}
-                </strong>
-                <small>
-                  {work.authorAlias}
-                </small>
+                <strong>{work.authorName}</strong>
+                <small>{work.authorAlias}</small>
               </td>
 
               <td data-label="Tür / Dil">
-                <span>
-                  {work.genre ||
-                    "Tür belirtilmedi"}
-                </span>
-                <small>
-                  {languageLabel(
-                    work.language,
-                  )}
-                </small>
+                <span>{work.genre || "Tür belirtilmedi"}</span>
+                <small>{languageLabel(work.language)}</small>
               </td>
 
               <td data-label="Durum">
                 <span
                   className="publisher-discovery-status"
-                  data-status={
-                    work.completion
-                  }
+                  data-status={work.completion}
                 >
-                  {work.completion ===
-                  "completed"
+                  {work.completion === "completed"
                     ? "Tamamlandı"
                     : "Devam ediyor"}
                 </span>
-                <small>
-                  {work.chapterCount} yayımlanmış
-                  bölüm
-                </small>
+                <small>{work.chapterCount} yayımlanmış bölüm</small>
               </td>
 
               <td data-label="Editör">
-                <span>
-                  {
-                    reviewLabels[
-                      work.editorReviewStatus
-                    ]
-                  }
-                </span>
+                <span>{reviewLabels[work.editorReviewStatus]}</span>
               </td>
 
               <td data-label="Metrikler">
                 <div className="publisher-discovery-table__metrics">
-                  <span>
-                    {formatNumber(
-                      work.readerCount,
-                    )}{" "}
-                    okur
-                  </span>
-                  <span>
-                    {formatNumber(
-                      work.favoriteCount,
-                    )}{" "}
-                    favori
-                  </span>
-                  <span>
-                    {formatNumber(
-                      work.commentCount,
-                    )}{" "}
-                    yorum
-                  </span>
+                  <span>{formatNumber(work.readerCount)} okur</span>
+                  <span>{formatNumber(work.favoriteCount)} favori</span>
+                  <span>{formatNumber(work.commentCount)} yorum</span>
                 </div>
               </td>
 
@@ -174,18 +134,12 @@ export function PublisherWorksTable({
                 <span
                   className="publisher-discovery-status"
                   data-status={
-                    work.hasPassportRecord
-                      ? "available"
-                      : "pending"
+                    work.hasPassportRecord ? "available" : "pending"
                   }
                 >
-                  {work.hasPassportRecord
-                    ? "Kayıtlı"
-                    : "Kanıt bekliyor"}
+                  {work.hasPassportRecord ? "Kayıtlı" : "Kanıt bekliyor"}
                 </span>
-                <small>
-                  {work.versionCount} sürüm
-                </small>
+                <small>{work.versionCount} sürüm</small>
               </td>
 
               <td data-label="İşlemler">
@@ -195,19 +149,11 @@ export function PublisherWorksTable({
                       action={togglePublisherWorkLikeAction}
                       className="publisher-discovery-engagement-form"
                     >
-                      <input
-                        name="workId"
-                        type="hidden"
-                        value={work.id}
-                      />
+                      <input name="workId" type="hidden" value={work.id} />
                       <input
                         name="active"
                         type="hidden"
-                        value={
-                          liked.has(work.id)
-                            ? "false"
-                            : "true"
-                        }
+                        value={liked.has(work.id) ? "false" : "true"}
                       />
                       <input
                         name="returnPath"
@@ -227,11 +173,38 @@ export function PublisherWorksTable({
                           : "Eseri beğen"}
                       </button>
                     </form>
-                  ) : (
-                    <span className="publisher-discovery-table__permission">
-                      Beğeni yetkisi gerekli
-                    </span>
-                  )}
+                  ) : null}
+
+                  {canFavorite ? (
+                    <form
+                      action={togglePublisherWorkFavoriteAction}
+                      className="publisher-discovery-engagement-form"
+                    >
+                      <input name="workId" type="hidden" value={work.id} />
+                      <input
+                        name="active"
+                        type="hidden"
+                        value={favorited.has(work.id) ? "false" : "true"}
+                      />
+                      <input
+                        name="returnPath"
+                        type="hidden"
+                        value={returnTo}
+                      />
+                      <button
+                        className={
+                          favorited.has(work.id)
+                            ? "button button--primary"
+                            : "button button--outline"
+                        }
+                        type="submit"
+                      >
+                        {favorited.has(work.id)
+                          ? "Favoriden çıkar"
+                          : "Favoriye ekle"}
+                      </button>
+                    </form>
+                  ) : null}
 
                   <Link
                     className="button button--outline"
@@ -247,11 +220,25 @@ export function PublisherWorksTable({
                     >
                       Eser Pasaportu
                     </Link>
-                  ) : (
+                  ) : null}
+
+                  <PublisherDiscoveryShareForm
+                    canShareEmail={canShareEmail}
+                    canShareInternal={canShareInternal}
+                    entityId={work.id}
+                    entityKind="work"
+                    members={shareMembers}
+                    returnPath={returnTo}
+                  />
+
+                  {!canLike &&
+                  !canFavorite &&
+                  !canShareEmail &&
+                  !canShareInternal ? (
                     <span className="publisher-discovery-table__permission">
-                      Pasaport yetkisi gerekli
+                      Etkileşim yetkisi gerekli
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </td>
             </tr>

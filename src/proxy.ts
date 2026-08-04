@@ -5,8 +5,6 @@ import { getRequestSession } from "@/lib/auth/request-session";
 
 const publicEditorsPath = "/editörler";
 const internalEditorsPath = "/editorler";
-const publisherPath = "/yayinevi";
-const publisherInvitationPath = "/yayinevi/davet";
 
 const protectedPaths = [
   "/admin",
@@ -17,7 +15,6 @@ const protectedPaths = [
   "/kesfet",
   "/okuyucu",
   "/okumaya-devam",
-  "/oku",
   "/tamamlanan-eserler",
   "/yazar",
   "/eserlerim",
@@ -53,6 +50,7 @@ const routeRoleRules: RouteRoleRule[] = [
   { approved: true, path: "/editor", roles: ["editor"] },
   { approved: true, path: publicEditorsPath, roles: ["editor"] },
   { approved: true, path: internalEditorsPath, roles: ["editor"] },
+  { approved: true, path: "/yayinevi", roles: ["publisher"] },
 ];
 
 function matchesPath(pathname: string, path: string) {
@@ -65,29 +63,6 @@ function isProtected(pathname: string) {
 
 function getRoleRule(pathname: string) {
   return routeRoleRules.find(({ path }) => matchesPath(pathname, path));
-}
-
-function applyReadingSecurityHeaders(
-  response: NextResponse,
-  pathname: string,
-) {
-  if (!matchesPath(pathname, "/oku")) {
-    return response;
-  }
-
-  response.headers.set(
-    "Cache-Control",
-    "private, no-store, max-age=0, must-revalidate",
-  );
-  response.headers.set("Pragma", "no-cache");
-  response.headers.set("Expires", "0");
-  response.headers.set(
-    "X-Robots-Tag",
-    "noindex, nofollow, noarchive, nosnippet",
-  );
-  response.headers.set("Referrer-Policy", "same-origin");
-
-  return response;
 }
 
 function copySession(source: NextResponse, destination: NextResponse) {
@@ -124,18 +99,10 @@ export async function proxy(request: NextRequest) {
   const pathname = decodeURIComponent(request.nextUrl.pathname);
   const roleRule = getRoleRule(pathname);
   const isAdminRoute = matchesPath(pathname, "/admin");
-  const isPublisherRoute = matchesPath(pathname, publisherPath);
-  const isPublisherInvitationRoute = matchesPath(
-    pathname,
-    publisherInvitationPath,
-  );
   const protectedRoute = isProtected(pathname);
 
   const session = protectedRoute
-    ? await getRequestSession(
-        request,
-        Boolean(roleRule) || isAdminRoute || isPublisherRoute,
-      )
+    ? await getRequestSession(request, Boolean(roleRule) || isAdminRoute)
     : {
         authenticated: false,
         configured: true,
@@ -159,10 +126,7 @@ export async function proxy(request: NextRequest) {
       destination.searchParams.set("durum", "yapilandirma");
     }
 
-    return applyReadingSecurityHeaders(
-      copySession(session.response, NextResponse.redirect(destination)),
-      pathname,
-    );
+    return copySession(session.response, NextResponse.redirect(destination));
   }
 
   const currentRole = session.profile?.role;
@@ -182,50 +146,17 @@ export async function proxy(request: NextRequest) {
   }
 
   /*
-   * Doğrulanmış yayınevinin aktif ekip üyeleri ayrıca platform
-   * admin rol onayı beklemeden çalışma alanına girebilir. Davet
-   * kabul route'u, üyelik henüz oluşmadan aktif hesaba açık kalır.
-   */
-  if (
-    isPublisherRoute &&
-    !isPublisherInvitationRoute &&
-    !isAdmin &&
-    !session.profile?.hasActivePublisherMembership
-  ) {
-    return createAccessDeniedRedirect(
-      request,
-      session.response,
-      "publisher_membership",
-    );
-  }
-
-  /*
    * Admin bütün kullanıcı panellerini inceleyebilir.
    * Diğer kullanıcılar yalnızca kendi rollerine ait alanlara girebilir.
    */
   if (roleRule && !isAdmin) {
     const hasRequiredRole =
-      Boolean(currentRole) &&
-      roleRule.roles.includes(
-        currentRole as UserRole,
-      );
-
+      Boolean(currentRole) && roleRule.roles.includes(currentRole as UserRole);
     if (!session.profile || !hasRequiredRole) {
       return createAccessDeniedRedirect(
         request,
         session.response,
         roleRule.roles[0],
-      );
-    }
-
-    if (
-      roleRule.approved &&
-      !session.profile.roleApprovedAt
-    ) {
-      return createAccessDeniedRedirect(
-        request,
-        session.response,
-        "approved",
       );
     }
   }
@@ -247,10 +178,7 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  return applyReadingSecurityHeaders(
-    session.response,
-    pathname,
-  );
+  return session.response;
 }
 
 export const config = {

@@ -520,13 +520,6 @@ export function WorksWorkspace({
                         />
                       )}
 
-                      <Link
-                        className="button button--outline"
-                        href={`/eserlerim/${work.id}/pasaport`}
-                      >
-                        Eser Pasaportu
-                      </Link>
-
                       <WorkArchiveAction
                         archived={
                           work.status ===

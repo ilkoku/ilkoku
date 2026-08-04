@@ -8,88 +8,61 @@ datasource db {
 }
 
 model User {
-  id                           String                       @id @default(uuid()) @db.Char(36)
-  publicId                     String                       @unique @db.VarChar(24)
-  email                        String                       @unique
-  passwordHash                 String                       @db.VarChar(255)
-  fullName                     String                       @db.VarChar(160)
-  displayName                  String?                      @db.VarChar(160)
-  username                     String?                      @unique @db.VarChar(64)
-  avatarUrl                    String?                      @db.VarChar(500)
-  bio                          String?                      @db.Text
-  role                         UserRole                     @default(reader)
-  status                       UserStatus                   @default(active)
+  id                           String                     @id @default(uuid()) @db.Char(36)
+  email                        String                     @unique
+  passwordHash                 String                     @db.VarChar(255)
+  fullName                     String                     @db.VarChar(160)
+  displayName                  String?                    @db.VarChar(160)
+  username                     String?                    @unique @db.VarChar(64)
+  avatarUrl                    String?                    @db.VarChar(500)
+  bio                          String?                    @db.Text
+  role                         UserRole                   @default(reader)
+  status                       UserStatus                 @default(active)
   emailVerified                DateTime?
   termsAcceptedAt              DateTime?
   lastLoginAt                  DateTime?
-  isPremium                    Boolean                      @default(false)
-  isBanned                     Boolean                      @default(false)
+  isPremium                    Boolean                    @default(false)
+  isBanned                     Boolean                    @default(false)
   deletedAt                    DateTime?
-  createdAt                    DateTime                     @default(now())
-  updatedAt                    DateTime                     @updatedAt
-  auditLogs                    AuditLog[]                   @relation("AuditLogActor")
-  feedbackReceived             EditorFeedback[]             @relation("FeedbackAuthor")
-  feedbackWritten              EditorFeedback[]             @relation("FeedbackEditor")
-  assignedEditorWorks          Work[]                       @relation("AssignedEditor")
-  editorReviewAssignments      EditorReviewAssignment[]     @relation("EditorReviewAssignmentEditor")
+  createdAt                    DateTime                   @default(now())
+  updatedAt                    DateTime                   @updatedAt
+  auditLogs                    AuditLog[]                 @relation("AuditLogActor")
+  feedbackReceived             EditorFeedback[]           @relation("FeedbackAuthor")
+  feedbackWritten              EditorFeedback[]           @relation("FeedbackEditor")
+  assignedEditorWorks          Work[]                     @relation("AssignedEditor")
+  editorReviewAssignments      EditorReviewAssignment[]   @relation("EditorReviewAssignmentEditor")
   bookmarks                    Bookmark[]
   comments                     Comment[]
   editorFavorites              EditorFavorite[]
-  editorInvitesAccepted        EditorInvite[]               @relation("EditorInviteAcceptedBy")
-  editorInvitesSent            EditorInvite[]               @relation("EditorInviteSender")
+  editorInvitesAccepted        EditorInvite[]             @relation("EditorInviteAcceptedBy")
+  editorInvitesSent            EditorInvite[]             @relation("EditorInviteSender")
   favorites                    Favorite[]
-  recommendationsReceived      EditorRecommendation[]       @relation("EditorRecommendationRecipient")
-  recommendationsSent          EditorRecommendation[]       @relation("EditorRecommendationSender")
+  recommendationsReceived      EditorRecommendation[]     @relation("EditorRecommendationRecipient")
+  recommendationsSent          EditorRecommendation[]     @relation("EditorRecommendationSender")
   notifications                Notification[]
   emailVerificationTokens      EmailVerificationToken[]
   ownershipStamps              OwnershipStamp[]
   passwordResetTokens          PasswordResetToken[]
   profile                      Profile?
   publisherApplications        PublisherApplication[]
-  publisherSubmissions         PublisherSubmission[]        @relation("SubmissionAuthor")
+  publisherSubmissions         PublisherSubmission[]      @relation("SubmissionAuthor")
   publisherMemberships         PublisherMembership[]
-  publisherPermissionRequests  PublisherPermissionRequest[] @relation("PublisherPermissionRequester")
-  publisherPermissionReviews   PublisherPermissionRequest[] @relation("PublisherPermissionReviewer")
-  publisherInvitationsSent     PublisherInvitation[]        @relation("PublisherInvitationSender")
-  publisherInvitationsAccepted PublisherInvitation[]        @relation("PublisherInvitationAcceptedBy")
-  publisherSubmissionEvents    PublisherSubmissionEvent[]   @relation("PublisherSubmissionEventActor")
-  publishingContractsCreated   PublishingContract[]         @relation("PublishingContractCreator")
-  publisherFilesUploaded       PublisherFile[]              @relation("PublisherFileUploader")
-  reviewedRoleRequests         RoleRequest[]                @relation("RoleRequestReviewer")
-  roleRequests                 RoleRequest[]                @relation("RoleRequestOwner")
-  readingAccesses              ReadingAccess[]
+  publisherInvitationsSent     PublisherInvitation[]      @relation("PublisherInvitationSender")
+  publisherInvitationsAccepted PublisherInvitation[]      @relation("PublisherInvitationAcceptedBy")
+  publisherSubmissionEvents    PublisherSubmissionEvent[] @relation("PublisherSubmissionEventActor")
+  publishingContractsCreated   PublishingContract[]       @relation("PublishingContractCreator")
+  publisherFilesUploaded       PublisherFile[]            @relation("PublisherFileUploader")
+  reviewedRoleRequests         RoleRequest[]              @relation("RoleRequestReviewer")
+  roleRequests                 RoleRequest[]              @relation("RoleRequestOwner")
   readingProgress              ReadingProgress[]
   sessions                     Session[]
   works                        Work[]
-
-  publisherWorkLikesCreated        PublisherWorkLike[]       @relation("PublisherWorkLikeCreator")
-  publisherWorkFavoritesCreated    PublisherWorkFavorite[]   @relation("PublisherWorkFavoriteCreator")
-  publisherAuthorLikesCreated      PublisherAuthorLike[]     @relation("PublisherAuthorLikeCreator")
-  publisherAuthorLikesReceived     PublisherAuthorLike[]     @relation("PublisherAuthorLikeAuthor")
-  publisherAuthorFavoritesCreated  PublisherAuthorFavorite[] @relation("PublisherAuthorFavoriteCreator")
-  publisherAuthorFavoritesReceived PublisherAuthorFavorite[] @relation("PublisherAuthorFavoriteAuthor")
-  publisherAuthorFollowsCreated    PublisherAuthorFollow[]   @relation("PublisherAuthorFollowCreator")
-  publisherAuthorFollowsReceived   PublisherAuthorFollow[]   @relation("PublisherAuthorFollowAuthor")
-  publisherDiscoverySharesCreated  PublisherDiscoveryShare[] @relation("PublisherDiscoveryShareCreator")
-  publisherDiscoverySharesReceived PublisherDiscoveryShare[] @relation("PublisherDiscoveryShareAuthor")
 
   @@index([role])
   @@index([status])
   @@index([createdAt])
   @@index([lastLoginAt])
   @@index([deletedAt])
-}
-
-model IdentitySequence {
-  id         String       @id @default(uuid()) @db.Char(36)
-  type       IdentityType
-  year       Int          @db.UnsignedSmallInt
-  lastNumber Int          @default(0) @db.UnsignedInt
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-
-  @@unique([type, year])
-  @@index([updatedAt])
 }
 
 model Profile {
@@ -113,13 +86,12 @@ model Profile {
 }
 
 model Session {
-  id              String          @id @default(uuid()) @db.Char(36)
-  tokenHash       String          @unique @db.Char(64)
-  userId          String          @db.Char(36)
-  expiresAt       DateTime
-  createdAt       DateTime        @default(now())
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  readingAccesses ReadingAccess[]
+  id        String   @id @default(uuid()) @db.Char(36)
+  tokenHash String   @unique @db.Char(64)
+  userId    String   @db.Char(36)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -136,34 +108,6 @@ model PasswordResetToken {
 
   @@index([userId])
   @@index([expiresAt])
-}
-
-model EmailDelivery {
-  id                String              @id @default(uuid()) @db.Char(36)
-  channel           String              @db.VarChar(32)
-  deliveryMode      EmailDeliveryMode
-  status            EmailDeliveryStatus @default(pending)
-  fromAddress       String              @db.VarChar(320)
-  fromName          String              @db.VarChar(120)
-  replyTo           String              @db.VarChar(320)
-  toAddress         String              @db.VarChar(320)
-  subject           String              @db.VarChar(500)
-  template          String              @db.VarChar(120)
-  providerMessageId String?             @db.VarChar(500)
-  failureCode       String?             @db.VarChar(120)
-  failureMessage    String?             @db.VarChar(1000)
-  attemptCount      Int                 @default(1)
-  attemptedAt       DateTime            @default(now())
-  sentAt            DateTime?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  @@index([status, createdAt])
-  @@index([deliveryMode, createdAt])
-  @@index([channel, createdAt])
-  @@index([template, createdAt])
-  @@index([toAddress, createdAt])
-  @@index([createdAt])
 }
 
 model EmailVerificationToken {
@@ -220,7 +164,6 @@ model AuditLog {
 
 model Work {
   id                      String                   @id @default(uuid()) @db.Char(36)
-  publicId                String                   @unique @db.VarChar(24)
   authorId                String                   @db.Char(36)
   title                   String                   @db.VarChar(220)
   subtitle                String?                  @db.VarChar(280)
@@ -252,14 +195,9 @@ model Work {
   favorites               Favorite[]
   ownershipStamps         OwnershipStamp[]
   publisherSubmissions    PublisherSubmission[]
-  readingAccesses         ReadingAccess[]
   readingProgress         ReadingProgress[]
   author                  User                     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   versions                WorkVersion[]
-
-  publisherWorkLikes       PublisherWorkLike[]
-  publisherWorkFavorites   PublisherWorkFavorite[]
-  publisherDiscoveryShares PublisherDiscoveryShare[]
 
   @@index([authorId])
   @@index([status])
@@ -287,7 +225,6 @@ model Chapter {
   bookmarks       Bookmark[]
   comments        Comment[]
   editorFeedback  EditorFeedback[]
-  readingAccesses ReadingAccess[]
   readingProgress ReadingProgress[]
   versions        WorkVersion[]
 
@@ -335,40 +272,6 @@ model ReadingProgress {
   @@index([completed, lastReadAt])
 }
 
-model ReadingAccess {
-  id            String             @id @default(uuid()) @db.Char(36)
-  dedupeKey     String             @unique @db.Char(64)
-  userId        String             @db.Char(36)
-  sessionId     String?            @db.Char(36)
-  workId        String             @db.Char(36)
-  chapterId     String             @db.Char(36)
-  ipHash        String?            @db.Char(64)
-  userAgentHash String?            @db.Char(64)
-  deviceClass   ReadingDeviceClass @default(unknown)
-  riskLevel     ReadingAccessRisk  @default(normal)
-  riskScore     Int                @default(0) @db.UnsignedTinyInt
-  riskFlags     String?            @db.VarChar(500)
-  ruleVersion   Int                @default(1) @db.UnsignedSmallInt
-  viewCount     Int                @default(1) @db.UnsignedInt
-  openedAt      DateTime           @default(now())
-  lastSeenAt    DateTime           @default(now())
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session       Session?           @relation(fields: [sessionId], references: [id], onDelete: SetNull)
-  work          Work               @relation(fields: [workId], references: [id], onDelete: Cascade)
-  chapter       Chapter            @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-
-  @@index([userId, lastSeenAt])
-  @@index([workId, lastSeenAt])
-  @@index([chapterId, lastSeenAt])
-  @@index([sessionId, lastSeenAt])
-  @@index([riskLevel, lastSeenAt])
-  @@index([ipHash, lastSeenAt])
-  @@index([userAgentHash, lastSeenAt])
-  @@index([lastSeenAt])
-}
-
 model Bookmark {
   id        String   @id @default(uuid()) @db.Char(36)
   userId    String   @db.Char(36)
@@ -390,7 +293,6 @@ model Bookmark {
 
 model Comment {
   id        String        @id @default(uuid()) @db.Char(36)
-  publicId  String        @unique @db.VarChar(24)
   userId    String        @db.Char(36)
   workId    String        @db.Char(36)
   chapterId String?       @db.Char(36)
@@ -578,43 +480,34 @@ model Notification {
 }
 
 model Publisher {
-  id                    String                       @id @default(uuid()) @db.Char(36)
-  publicId              String                       @unique @db.VarChar(24)
-  companyName           String                       @db.VarChar(220)
-  legalCompanyName      String?                      @db.VarChar(240)
-  companyType           String?                      @db.VarChar(80)
-  establishmentYear     Int?                         @db.UnsignedSmallInt
-  taxOffice             String?                      @db.VarChar(160)
-  taxNumber             String?                      @db.VarChar(32)
-  registryNumber        String?                      @db.VarChar(64)
-  address               String?                      @db.Text
-  city                  String?                      @db.VarChar(120)
-  district              String?                      @db.VarChar(120)
-  corporatePhone        String?                      @db.VarChar(32)
-  corporateEmail        String?                      @db.VarChar(320)
-  publicationCategories String?                      @db.LongText
-  slug                  String                       @unique @db.VarChar(220)
-  description           String?                      @db.Text
-  websiteUrl            String?                      @db.VarChar(500)
-  logoUrl               String?                      @db.VarChar(500)
-  verified              Boolean                      @default(false)
-  acceptsSubmissions    Boolean                      @default(true)
-  active                Boolean                      @default(true)
+  id                    String                 @id @default(uuid()) @db.Char(36)
+  companyName           String                 @db.VarChar(220)
+  legalCompanyName      String?                @db.VarChar(240)
+  companyType           String?                @db.VarChar(80)
+  establishmentYear     Int?                   @db.UnsignedSmallInt
+  taxOffice             String?                @db.VarChar(160)
+  taxNumber             String?                @db.VarChar(32)
+  registryNumber        String?                @db.VarChar(64)
+  address               String?                @db.Text
+  city                  String?                @db.VarChar(120)
+  district              String?                @db.VarChar(120)
+  corporatePhone        String?                @db.VarChar(32)
+  corporateEmail        String?                @db.VarChar(320)
+  publicationCategories String?                @db.LongText
+  slug                  String                 @unique @db.VarChar(220)
+  description           String?                @db.Text
+  websiteUrl            String?                @db.VarChar(500)
+  logoUrl               String?                @db.VarChar(500)
+  verified              Boolean                @default(false)
+  acceptsSubmissions    Boolean                @default(true)
+  active                Boolean                @default(true)
   archivedAt            DateTime?
-  createdAt             DateTime                     @default(now())
-  updatedAt             DateTime                     @updatedAt
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
   submissions           PublisherSubmission[]
   members               PublisherMembership[]
   invitations           PublisherInvitation[]
   applications          PublisherApplication[]
-  permissionRequests    PublisherPermissionRequest[]
-
-  workLikes       PublisherWorkLike[]
-  workFavorites   PublisherWorkFavorite[]
-  authorLikes     PublisherAuthorLike[]
-  authorFavorites PublisherAuthorFavorite[]
-  authorFollows   PublisherAuthorFollow[]
-  discoveryShares PublisherDiscoveryShare[]
 
   @@index([active, verified, archivedAt])
   @@index([companyName])
@@ -663,19 +556,15 @@ model PublisherApplication {
 }
 
 model PublisherMembership {
-  id                  String                       @id @default(uuid()) @db.Char(36)
-  publisherId         String                       @db.Char(36)
-  userId              String                       @db.Char(36)
-  role                PublisherMemberRole          @default(reviewer)
-  active              Boolean                      @default(true)
-  permissionOverrides Json?
-  createdAt           DateTime                     @default(now())
-  updatedAt           DateTime                     @updatedAt
-  publisher           Publisher                    @relation(fields: [publisherId], references: [id], onDelete: Cascade)
-  user                User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  permissionRequests  PublisherPermissionRequest[]
-
-  discoveryShareRecipients PublisherDiscoveryShareRecipient[]
+  id          String              @id @default(uuid()) @db.Char(36)
+  publisherId String              @db.Char(36)
+  userId      String              @db.Char(36)
+  role        PublisherMemberRole @default(reviewer)
+  active      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  publisher   Publisher           @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([publisherId, userId])
   @@index([userId, active])
@@ -683,21 +572,20 @@ model PublisherMembership {
 }
 
 model PublisherInvitation {
-  id                  String                    @id @default(uuid()) @db.Char(36)
-  publisherId         String                    @db.Char(36)
-  invitedById         String                    @db.Char(36)
-  invitedEmail        String                    @db.VarChar(320)
-  role                PublisherMemberRole       @default(reviewer)
-  permissionOverrides Json?
-  tokenHash           String                    @unique @db.Char(64)
-  status              PublisherInvitationStatus @default(pending)
-  expiresAt           DateTime
-  acceptedAt          DateTime?
-  declinedAt          DateTime?
-  cancelledAt         DateTime?
-  acceptedById        String?                   @db.Char(36)
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
+  id           String                    @id @default(uuid()) @db.Char(36)
+  publisherId  String                    @db.Char(36)
+  invitedById  String                    @db.Char(36)
+  invitedEmail String                    @db.VarChar(320)
+  role         PublisherMemberRole       @default(reviewer)
+  tokenHash    String                    @unique @db.Char(64)
+  status       PublisherInvitationStatus @default(pending)
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  declinedAt   DateTime?
+  cancelledAt  DateTime?
+  acceptedById String?                   @db.Char(36)
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
 
   publisher  Publisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
   invitedBy  User      @relation("PublisherInvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
@@ -812,13 +700,6 @@ model PublisherFile {
   @@index([archivedAt])
 }
 
-enum IdentityType {
-  user
-  work
-  publisher
-  comment
-}
-
 enum WorkStatus {
   draft
   in_review
@@ -879,8 +760,6 @@ enum NotificationType {
   reader_work_editor_review_started
   reader_work_editor_review_completed
   reader_favorite_work_completed
-  publisher_followed_author_published
-  publisher_discovery_shared
 }
 
 enum CommentStatus {
@@ -1004,37 +883,12 @@ enum PublisherApplicationStatus {
   rejected
 }
 
-enum ReadingDeviceClass {
-  mobile
-  tablet
-  desktop
-  bot
-  unknown
-}
-
-enum ReadingAccessRisk {
-  normal
-  watch
-}
-
-enum EmailDeliveryMode {
-  local
-  smtp
-}
-
-enum EmailDeliveryStatus {
-  pending
-  sent
-  failed
-}
-
 enum AuditAction {
   register
   login
   logout
   password_changed
   password_reset_requested
-  email_test_sent
   email_verified
   profile_updated
   role_requested
@@ -1042,172 +896,4 @@ enum AuditAction {
   work_created
   work_published
   ownership_stamp_created
-  user_status_changed
-  work_status_changed
-  publisher_status_changed
-  comment_status_changed
-  reading_access_flagged
-  admin_role_view_changed
-  publisher_permission_requested
-  publisher_permission_reviewed
-  publisher_work_liked
-  publisher_author_liked
-  publisher_work_favorited
-  publisher_author_favorited
-  publisher_author_followed
-  publisher_discovery_shared
-}
-
-enum PublisherPermissionRequestStatus {
-  pending
-  approved
-  rejected
-  cancelled
-}
-
-model PublisherPermissionRequest {
-  id            String                           @id @default(uuid()) @db.Char(36)
-  publisherId   String                           @db.Char(36)
-  membershipId  String                           @db.Char(36)
-  requestedById String                           @db.Char(36)
-  permission    String                           @db.VarChar(64)
-  status        PublisherPermissionRequestStatus @default(pending)
-  pendingKey    String?                          @unique @db.VarChar(140)
-  requestNote   String?                          @db.VarChar(500)
-  reviewNote    String?                          @db.VarChar(500)
-  reviewedById  String?                          @db.Char(36)
-  reviewedAt    DateTime?
-  createdAt     DateTime                         @default(now())
-  updatedAt     DateTime                         @updatedAt
-  publisher     Publisher                        @relation(fields: [publisherId], references: [id], onDelete: Cascade)
-  membership    PublisherMembership              @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  requestedBy   User                             @relation("PublisherPermissionRequester", fields: [requestedById], references: [id], onDelete: Cascade)
-  reviewedBy    User?                            @relation("PublisherPermissionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
-
-  @@index([publisherId, status, createdAt])
-  @@index([membershipId, status, createdAt])
-  @@index([requestedById, createdAt])
-  @@index([reviewedById, reviewedAt])
-  @@index([permission, status])
-}
-
-enum PublisherDiscoveryShareChannel {
-  team
-  email
-}
-
-model PublisherWorkLike {
-  id          String    @id @default(uuid()) @db.Char(36)
-  publisherId String    @db.Char(36)
-  workId      String    @db.Char(36)
-  createdById String?   @db.Char(36)
-  createdAt   DateTime  @default(now())
-  publisher   Publisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
-  work        Work      @relation(fields: [workId], references: [id], onDelete: Cascade)
-  createdBy   User?     @relation("PublisherWorkLikeCreator", fields: [createdById], references: [id], onDelete: SetNull)
-
-  @@unique([publisherId, workId])
-  @@index([publisherId, createdAt])
-  @@index([workId, createdAt])
-  @@index([createdById, createdAt])
-}
-
-model PublisherAuthorLike {
-  id          String    @id @default(uuid()) @db.Char(36)
-  publisherId String    @db.Char(36)
-  authorId    String    @db.Char(36)
-  createdById String?   @db.Char(36)
-  createdAt   DateTime  @default(now())
-  publisher   Publisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
-  author      User      @relation("PublisherAuthorLikeAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  createdBy   User?     @relation("PublisherAuthorLikeCreator", fields: [createdById], references: [id], onDelete: SetNull)
-
-  @@unique([publisherId, authorId])
-  @@index([publisherId, createdAt])
-  @@index([authorId, createdAt])
-  @@index([createdById, createdAt])
-}
-
-model PublisherWorkFavorite {
-  id          String    @id @default(uuid()) @db.Char(36)
-  publisherId String    @db.Char(36)
-  workId      String    @db.Char(36)
-  createdById String?   @db.Char(36)
-  createdAt   DateTime  @default(now())
-  publisher   Publisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
-  work        Work      @relation(fields: [workId], references: [id], onDelete: Cascade)
-  createdBy   User?     @relation("PublisherWorkFavoriteCreator", fields: [createdById], references: [id], onDelete: SetNull)
-
-  @@unique([publisherId, workId])
-  @@index([publisherId, createdAt])
-  @@index([workId, createdAt])
-  @@index([createdById, createdAt])
-}
-
-model PublisherAuthorFavorite {
-  id          String    @id @default(uuid()) @db.Char(36)
-  publisherId String    @db.Char(36)
-  authorId    String    @db.Char(36)
-  createdById String?   @db.Char(36)
-  createdAt   DateTime  @default(now())
-  publisher   Publisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
-  author      User      @relation("PublisherAuthorFavoriteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  createdBy   User?     @relation("PublisherAuthorFavoriteCreator", fields: [createdById], references: [id], onDelete: SetNull)
-
-  @@unique([publisherId, authorId])
-  @@index([publisherId, createdAt])
-  @@index([authorId, createdAt])
-  @@index([createdById, createdAt])
-}
-
-model PublisherAuthorFollow {
-  id          String    @id @default(uuid()) @db.Char(36)
-  publisherId String    @db.Char(36)
-  authorId    String    @db.Char(36)
-  createdById String?   @db.Char(36)
-  createdAt   DateTime  @default(now())
-  publisher   Publisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
-  author      User      @relation("PublisherAuthorFollowAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  createdBy   User?     @relation("PublisherAuthorFollowCreator", fields: [createdById], references: [id], onDelete: SetNull)
-
-  @@unique([publisherId, authorId])
-  @@index([publisherId, createdAt])
-  @@index([authorId, createdAt])
-  @@index([createdById, createdAt])
-}
-
-model PublisherDiscoveryShare {
-  id             String                             @id @default(uuid()) @db.Char(36)
-  publisherId    String                             @db.Char(36)
-  workId         String?                            @db.Char(36)
-  authorId       String?                            @db.Char(36)
-  createdById    String?                            @db.Char(36)
-  channel        PublisherDiscoveryShareChannel
-  recipientEmail String?                            @db.VarChar(320)
-  note           String                             @db.VarChar(1000)
-  createdAt      DateTime                           @default(now())
-  publisher      Publisher                          @relation(fields: [publisherId], references: [id], onDelete: Cascade)
-  work           Work?                              @relation(fields: [workId], references: [id], onDelete: Cascade)
-  author         User?                              @relation("PublisherDiscoveryShareAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  createdBy      User?                              @relation("PublisherDiscoveryShareCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  recipients     PublisherDiscoveryShareRecipient[]
-
-  @@index([publisherId, createdAt])
-  @@index([workId, createdAt])
-  @@index([authorId, createdAt])
-  @@index([createdById, createdAt])
-  @@index([channel, createdAt])
-}
-
-model PublisherDiscoveryShareRecipient {
-  id           String                  @id @default(uuid()) @db.Char(36)
-  shareId      String                  @db.Char(36)
-  membershipId String                  @db.Char(36)
-  readAt       DateTime?
-  createdAt    DateTime                @default(now())
-  share        PublisherDiscoveryShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
-  membership   PublisherMembership     @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-
-  @@unique([shareId, membershipId])
-  @@index([membershipId, readAt, createdAt])
 }

@@ -5,7 +5,6 @@ import { hashSessionToken, SESSION_COOKIE } from "./session";
 export type SessionRole = UserRole | "admin";
 
 export interface SessionProfile {
-  hasActivePublisherMembership: boolean;
   role: SessionRole;
   roleApprovedAt: string | null;
 }
@@ -30,45 +29,16 @@ export async function getRequestSession(request: NextRequest, includeProfile = f
       return { authenticated: false, configured: true, profile: null, response };
     }
 
-    const accountUnavailable =
-      session.user.status !== "active" ||
-      session.user.isBanned ||
-      session.user.deletedAt !== null;
-
-    if (
-      session.expiresAt <= new Date() ||
-      accountUnavailable
-    ) {
-      await prisma.session.deleteMany({
-        where: { id: session.id },
-      });
+    if (session.expiresAt <= new Date()) {
+      await prisma.session.deleteMany({ where: { id: session.id } });
       response.cookies.delete(SESSION_COOKIE);
-
-      return {
-        authenticated: false,
-        configured: true,
-        profile: null,
-        response,
-      };
+      return { authenticated: false, configured: true, profile: null, response };
     }
 
     let profile: SessionProfile | null = null;
 
     if (includeProfile) {
       let roleApprovedAt: string | null = null;
-      const activePublisherMembership =
-        await prisma.publisherMembership.findFirst({
-          where: {
-            active: true,
-            publisher: {
-              active: true,
-              archivedAt: null,
-              verified: true,
-            },
-            userId: session.user.id,
-          },
-          select: { id: true },
-        });
 
       if (session.user.role === "editor" || session.user.role === "publisher") {
         const approval = await prisma.roleRequest.findFirst({
@@ -84,9 +54,6 @@ export async function getRequestSession(request: NextRequest, includeProfile = f
       }
 
       profile = {
-        hasActivePublisherMembership: Boolean(
-          activePublisherMembership,
-        ),
         role: session.user.role as SessionRole,
         roleApprovedAt,
       };

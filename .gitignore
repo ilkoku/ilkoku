@@ -54,13 +54,9 @@ supabase/.temp/
 src/lib/supabase/config.ts
 # Local backup artifacts
 *.sql
-# Prisma migration SQL dosyaları kaynak kodudur ve Git'te tutulmalıdır.
-!prisma/migrations/**/migration.sql
 *.zip
 *.backup.prisma
 tmp/
 tmp/
 
 .local-backups/
-/node_modules/
-/src/generated/prisma/

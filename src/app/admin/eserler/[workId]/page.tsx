@@ -22,15 +22,6 @@ export default async function AdminWorkDetailPage({ params }: { params: Promise<
 
   return <div className="admin-directory-page">
     <header className="admin-page-heading"><div><span className="admin-eyebrow">Eser kaydı</span><h1>{work.title}</h1><p>{work.author.fullName} · {work.author.email}</p></div><Link className="admin-button admin-button--ghost" href="/admin/eserler">Eserlere dön</Link></header>
-    <div className="admin-page-actions">
-      <Link
-        className="admin-button admin-button--ghost"
-        href={`/admin/eserler/${work.id}/pasaport`}
-      >
-        Eser Pasaportunu Aç
-      </Link>
-    </div>
-
     <section className="admin-detail-grid">
       <article className="admin-panel"><h2>Eser bilgileri</h2><dl className="admin-detail-list"><div><dt>Durum</dt><dd>{work.status}</dd></div><div><dt>Görünürlük</dt><dd>{work.visibility}</dd></div><div><dt>Tür / Dil</dt><dd>{work.genre || "Belirtilmedi"} · {work.language}</dd></div><div><dt>Editör durumu</dt><dd>{work.editorReviewStatus}</dd></div><div><dt>Atanan editör</dt><dd>{work.assignedEditor ? `${work.assignedEditor.fullName} · ${work.assignedEditor.email}` : "Atanmadı"}</dd></div><div><dt>Oluşturma</dt><dd>{formatDate(work.createdAt)}</dd></div><div><dt>Güncelleme</dt><dd>{formatDate(work.updatedAt)}</dd></div></dl></article>
       <article className="admin-panel"><h2>Gerçek etkileşim özeti</h2><dl className="admin-detail-list"><div><dt>Bölüm</dt><dd>{work.chapters.length}</dd></div><div><dt>Favori</dt><dd>{work._count.favorites}</dd></div><div><dt>Okuma ilerlemesi</dt><dd>{work._count.readingProgress}</dd></div><div><dt>Yorum</dt><dd>{work._count.comments}</dd></div><div><dt>Yayınevi başvurusu</dt><dd>{work._count.publisherSubmissions}</dd></div></dl></article>

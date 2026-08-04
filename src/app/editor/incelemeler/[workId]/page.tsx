@@ -74,12 +74,6 @@ export default async function EditorReviewDetailPage({
           <footer>
             <Link
               className="button button--outline"
-              href={`/editor/incelemeler/${work.id}/pasaport`}
-            >
-              Eser Pasaportu
-            </Link>
-            <Link
-              className="button button--outline"
               href="/editor/incelemeler?durum=tamamlanan"
             >
               Tamamlananlara Dön

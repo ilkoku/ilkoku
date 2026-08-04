@@ -30,40 +30,18 @@ export async function loginUser(input: {
     throw new Error("INVALID_CREDENTIALS");
   }
 
-  if (
-    user.status !== "active" ||
-    user.isBanned ||
-    user.deletedAt !== null
-  ) {
+  if (user.status !== "active") {
     throw new Error("ACCOUNT_DISABLED");
   }
 
   const token = generateSessionToken();
 
-  await prisma.$transaction(async (transaction) => {
-    await transaction.session.create({
-      data: {
-        tokenHash: hashSessionToken(token),
-        userId: user.id,
-        expiresAt:
-          new Date(
-            Date.now() +
-              1000 * 60 * 60 * 24 * 30,
-          ),
-      },
-    });
-
-    await transaction.auditLog.create({
-      data: {
-        action: "login",
-        actorId: user.id,
-        entityId: user.id,
-        entityType: "User",
-        metadata: JSON.stringify({
-          role: user.role,
-        }),
-      },
-    });
+  await prisma.session.create({
+    data: {
+      tokenHash: hashSessionToken(token),
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+    },
   });
 
   return {

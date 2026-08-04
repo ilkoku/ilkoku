@@ -1,6 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import { allocatePublicId } from "@/lib/public-id";
 import { prisma } from "@/lib/prisma";
 
 type CreateWorkInput = {
@@ -51,18 +50,9 @@ export async function createWork(input: CreateWorkInput) {
     .toUpperCase()}`;
 
   return prisma.$transaction(async (tx) => {
-    const workCreatedAt = new Date();
-    const publicId = await allocatePublicId(
-      tx,
-      "work",
-      workCreatedAt,
-    );
-
     const work = await tx.work.create({
       data: {
         authorId: input.authorId,
-        createdAt: workCreatedAt,
-        publicId,
         title,
         slug,
         subtitle: input.subtitle?.trim() || null,
@@ -84,7 +74,7 @@ export async function createWork(input: CreateWorkInput) {
       },
     });
 
-    const ownershipStamp = await tx.ownershipStamp.create({
+    await tx.ownershipStamp.create({
       data: {
         workId: work.id,
         authorId: input.authorId,
@@ -104,20 +94,6 @@ export async function createWork(input: CreateWorkInput) {
           title: work.title,
           slug: work.slug,
           stampCode,
-        }),
-      },
-    });
-
-    await tx.auditLog.create({
-      data: {
-        actorId: input.authorId,
-        action: "ownership_stamp_created",
-        entityType: "OwnershipStamp",
-        entityId: ownershipStamp.id,
-        metadata: JSON.stringify({
-          stampCode,
-          workId: work.id,
-          workPublicId: work.publicId,
         }),
       },
     });

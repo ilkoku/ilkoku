@@ -2,75 +2,33 @@ import type { ReactNode } from "react";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { UserArea } from "@/components/layout/UserArea";
-import { AdminRoleViewBanner } from "@/components/layout/AdminRoleViewBanner";
 import type { AuthProfile } from "@/features/auth/profile";
 import { getSidebarBadges } from "@/features/navigation/sidebar-badges";
-import {
-  getPublisherNavigationPermissions,
-} from "@/features/publisher-discovery/access";
-import styles from "@/features/admin-role-view/AdminRoleView.module.css";
 
 type AppShellProps = {
   children: ReactNode;
   profile: AuthProfile;
 };
 
-export async function AppShell({
-  children,
-  profile,
-}: AppShellProps) {
-  const badges = profile.adminPublisherView
-    ? {}
-    : await getSidebarBadges({
-        id: profile.id,
-        role: profile.role,
-      });
-  const publisherPermissions =
-    await getPublisherNavigationPermissions(
-      profile.id,
-    );
+export async function AppShell({ children, profile }: AppShellProps) {
+  const badges =
+    await getSidebarBadges({
+      id: profile.id,
+      role: profile.role,
+    });
 
   return (
     <div className="app-shell">
       <Sidebar
-        adminPublisherView={profile.adminPublisherView}
         badges={badges}
-        publisherPermissions={
-          publisherPermissions
-        }
         role={profile.role}
       />
-
       <main className="main-area">
-        {profile.adminRoleView ? (
-          <AdminRoleViewBanner
-            publisherView={profile.adminPublisherView}
-            role={profile.adminRoleView}
-          />
-        ) : null}
-
         <header className="dashboard-header">
           <Breadcrumb />
           <UserArea profile={profile} />
         </header>
-
-        <div
-          className={[
-            "main-area__content",
-            profile.adminPublisherView
-              ? styles.previewContent
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          data-admin-publisher-readonly={
-            profile.adminPublisherView
-              ? "true"
-              : undefined
-          }
-        >
-          {children}
-        </div>
+        <div className="main-area__content">{children}</div>
       </main>
     </div>
   );

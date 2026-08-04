@@ -18,7 +18,6 @@ import {
 import { ReaderCommentList } from "@/features/reader/components/ReaderCommentList";
 import { toggleFavoriteAction } from "@/features/reader/favorites";
 import type { PublicChapterDetail } from "@/features/works/types";
-import { ProtectedChapterContent } from "./ProtectedChapterContent";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import { WorkShareActions } from "./WorkShareActions";
 
@@ -47,7 +46,6 @@ export function ReadingExperience({
   comments,
   isFavorite = false,
   professionalReview,
-  protectionIdentity,
   readingProgress,
   returnTo = "/kesfet",
 }: {
@@ -67,7 +65,6 @@ export function ReadingExperience({
     stage: "first" | "second";
     workId: string;
   } | null;
-  protectionIdentity: string;
   readingProgress?: number | null;
   returnTo?: string;
 }) {
@@ -373,11 +370,15 @@ export function ReadingExperience({
               {chapter.title}
             </h2>
 
-            <ProtectedChapterContent
-              chapterId={chapter.id}
-              identity={protectionIdentity}
-              paragraphs={paragraphs}
-            />
+            <div className="chapter__body">
+              {paragraphs.map(
+                (paragraph: string, index: number) => (
+                  <p key={`${chapter.id}-${index}`}>
+                  {paragraph}
+                </p>
+              ),
+            )}
+            </div>
           </section>
 
           <nav

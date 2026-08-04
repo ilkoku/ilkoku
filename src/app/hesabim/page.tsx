@@ -3,12 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserArea } from "@/components/layout/UserArea";
-import { AdminRoleViewControl } from "@/components/account/AdminRoleViewControl";
 import { Brand } from "@/components/ui/Brand";
 import { logoutAction } from "@/features/auth/actions";
 import { roleDestinations } from "@/features/auth/data";
 import { getRoleNavigation } from "@/features/auth/destination";
-import { getCurrentAdminRoleView } from "@/features/admin-role-view/cookie";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { PublisherApplicationCompletionForm } from "@/features/publisher-applications/components/PublisherApplicationCompletionForm";
 import { getPublisherApplicationDefaults } from "@/features/publisher-applications/schema";
@@ -52,13 +50,10 @@ const formatDate = (value: Date | null) => value
   : "—";
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ sekme?: string }> }) {
-  const profile = await getCurrentProfile({ ignoreAdminRoleView: true });
+  const profile = await getCurrentProfile();
   if (!profile) redirect("/giris?sonraki=/hesabim");
   const data = await getProfilePageData(profile.id);
   if (!data) redirect("/giris?sonraki=/hesabim");
-  const adminRoleView = profile.role === "admin"
-    ? await getCurrentAdminRoleView()
-    : null;
   const { sekme } = await searchParams;
   const initial = (data.username || profile.fullName).charAt(0).toLocaleUpperCase("tr");
   const navigation = await getRoleNavigation(profile);
@@ -83,10 +78,6 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <div><p className="profile-page__eyebrow">Hesap ve güvenlik</p><h1>Hesabım</h1><p>Kişisel bilgilerinizi, aktif rolünüzü, şifrenizi ve rol başvurularınızı tek yerden yönetin.</p></div>
         <div className="profile-identity">{data.avatarUrl ? <Image alt={`${profile.fullName} profil fotoğrafı`} className="profile-identity__avatar" height={72} src={data.avatarUrl} width={72} /> : <span className="profile-identity__avatar" aria-hidden="true">{initial}</span>}<div><strong>{data.username ? `@${data.username}` : profile.fullName}</strong><span>Aktif rol: {roleLabels[data.role]}</span><small>Üyelik: {formatDate(data.createdAt)}</small></div></div>
       </header>
-
-      {profile.role === "admin" ? (
-        <AdminRoleViewControl currentRole={adminRoleView?.role ?? null} />
-      ) : null}
 
       <section className="profile-card account-role-request" data-highlight={sekme === "rol-basvurusu" || undefined} id="rol-basvurusu">
         <div className="profile-card__heading"><div><p>Rol başvurusu</p><h2>Son başvuru durumu</h2></div></div>

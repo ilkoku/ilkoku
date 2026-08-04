@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
@@ -117,13 +116,6 @@ export function ProfessionalReviewTools({
       </label>
 
       <div className="professional-review-tools__actions">
-        <Link
-          className="button button--outline"
-          href={`/editor/incelemeler/${workId}/pasaport`}
-        >
-          Eser Pasaportu
-        </Link>
-
         <Button
           formAction={draftAction}
           loading={draftPending}

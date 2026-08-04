@@ -18,10 +18,3 @@
 @media(max-width:760px){.admin-directory-filters,.admin-detail-grid,.admin-settings-grid{grid-template-columns:1fr}.admin-pagination{align-items:flex-start;flex-direction:column}.admin-record-list li{grid-template-columns:1fr}.admin-record-list li>*{grid-column:1!important}.admin-topbar{height:auto;min-height:4.5rem;flex-wrap:wrap;padding-block:.65rem}.admin-profile{margin-left:auto}}
 @media(max-width:520px){.admin-overview-stats{grid-template-columns:1fr}.admin-tabs{margin-inline:-.25rem}.admin-table-wrap{margin-inline:-.25rem}.admin-data-table{min-width:48rem}}
 @media(prefers-reduced-motion:reduce){.admin-sidebar,.admin-stat,.admin-sidebar nav a{transition:none}.admin-route-state>span:empty{animation:none}}
-
-
-.admin-page-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-}

@@ -1,5 +1,3 @@
-import { createHash, randomUUID } from "node:crypto";
-import { allocatePublicId } from "@/lib/public-id";
 import { prisma } from "@/lib/prisma";
 
 export type CreateWorkRecord = {
@@ -43,101 +41,17 @@ export type UpdateChapterRecord = {
 
 export const worksRepository = {
   async createWork(input: CreateWorkRecord) {
-    return prisma.$transaction(async (transaction) => {
-      const workCreatedAt = new Date();
-      const title = input.title.trim();
-      const description =
-        input.description?.trim() || null;
-      const language = input.language ?? "tr";
-
-      const publicId = await allocatePublicId(
-        transaction,
-        "work",
-        workCreatedAt,
-      );
-
-      const contentHash = createHash("sha256")
-        .update(
-          JSON.stringify({
-            description,
-            genre: input.genre ?? null,
-            language,
-            title,
-          }),
-        )
-        .digest("hex");
-
-      const stampCode =
-        `ILKOKU-${workCreatedAt.getFullYear()}-${randomUUID()
-          .replaceAll("-", "")
-          .slice(0, 12)
-          .toUpperCase()}`;
-
-      const work = await transaction.work.create({
-        data: {
-          authorId: input.authorId,
-          createdAt: workCreatedAt,
-          description,
-          genre: input.genre ?? null,
-          language,
-          publicId,
-          slug: input.slug,
-          status: "draft",
-          title,
-          visibility: "private",
-        },
-      });
-
-      await transaction.workVersion.create({
-        data: {
-          contentHash,
-          description: work.description,
-          subtitle: work.subtitle,
-          title: work.title,
-          versionNumber: 1,
-          workId: work.id,
-        },
-      });
-
-      const ownershipStamp =
-        await transaction.ownershipStamp.create({
-          data: {
-            authorId: input.authorId,
-            contentHash,
-            stampCode,
-            version: 1,
-            workId: work.id,
-          },
-        });
-
-      await transaction.auditLog.create({
-        data: {
-          action: "work_created",
-          actorId: input.authorId,
-          entityId: work.id,
-          entityType: "Work",
-          metadata: JSON.stringify({
-            publicId: work.publicId,
-            title: work.title,
-          }),
-        },
-      });
-
-      await transaction.auditLog.create({
-        data: {
-          action: "ownership_stamp_created",
-          actorId: input.authorId,
-          entityId: ownershipStamp.id,
-          entityType: "OwnershipStamp",
-          metadata: JSON.stringify({
-            stampCode,
-            workId: work.id,
-            workPublicId: work.publicId,
-          }),
-        },
-      });
-
-      return work;
+    return prisma.work.create({
+      data: {
+        authorId: input.authorId,
+        description: input.description ?? null,
+        genre: input.genre ?? null,
+        language: input.language ?? "tr",
+        slug: input.slug,
+        status: "draft",
+        title: input.title,
+        visibility: "private",
+      },
     });
   },
 
@@ -528,37 +442,16 @@ export const worksRepository = {
       throw new Error("Yayınlanacak eser bulunamadı.");
     }
 
-    return prisma.$transaction(async (transaction) => {
-      const publishedAt = new Date();
-
-      const work = await transaction.work.update({
-        where: {
-          id: existingWork.id,
-        },
-        data: {
-          archivedAt: null,
-          publishedAt,
-          status: "published",
-          visibility: "public",
-        },
-      });
-
-      await transaction.auditLog.create({
-        data: {
-          action: "work_published",
-          actorId: authorId,
-          entityId: work.id,
-          entityType: "Work",
-          metadata: JSON.stringify({
-            publicId: work.publicId,
-            publishedAt:
-              publishedAt.toISOString(),
-            title: work.title,
-          }),
-        },
-      });
-
-      return work;
+    return prisma.work.update({
+      where: {
+        id: existingWork.id,
+      },
+      data: {
+        archivedAt: null,
+        publishedAt: new Date(),
+        status: "published",
+        visibility: "public",
+      },
     });
   },
 
@@ -617,10 +510,7 @@ export const worksRepository = {
     });
   },
 
-  async deleteWorkAfterFailedCreation(
-    authorId: string,
-    workId: string,
-  ) {
+  async deleteWorkAfterFailedCreation(authorId: string, workId: string) {
     const existingWork = await prisma.work.findFirst({
       where: {
         authorId,
@@ -633,43 +523,10 @@ export const worksRepository = {
 
     if (!existingWork) return null;
 
-    return prisma.$transaction(async (transaction) => {
-      const stamps =
-        await transaction.ownershipStamp.findMany({
-          where: {
-            workId: existingWork.id,
-          },
-          select: {
-            id: true,
-          },
-        });
-
-      await transaction.auditLog.deleteMany({
-        where: {
-          OR: [
-            {
-              action: "work_created",
-              entityId: existingWork.id,
-              entityType: "Work",
-            },
-            {
-              action: "ownership_stamp_created",
-              entityId: {
-                in: stamps.map(
-                  (stamp) => stamp.id,
-                ),
-              },
-              entityType: "OwnershipStamp",
-            },
-          ],
-        },
-      });
-
-      return transaction.work.delete({
-        where: {
-          id: existingWork.id,
-        },
-      });
+    return prisma.work.delete({
+      where: {
+        id: existingWork.id,
+      },
     });
   },
 };

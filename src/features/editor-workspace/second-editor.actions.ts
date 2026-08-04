@@ -1,10 +1,5 @@
 "use server";
 
-import {
-  sendAuthorEditorStatusEmail,
-  sendSecondEditorAssignmentEmail,
-} from "@/lib/email/editor-emails";
-
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
@@ -114,11 +109,7 @@ export async function sendToSecondEditorAction(
       };
     }
 
-    let targetEditor: {
-      email: string;
-      fullName: string;
-      id: string;
-    } | null = null;
+    let targetEditor: { id: string; fullName: string } | null = null;
 
     if (mode === "specific") {
       if (
@@ -135,11 +126,7 @@ export async function sendToSecondEditorAction(
 
       targetEditor = await prisma.user.findFirst({
         where: { id: editorId, role: "editor", status: "active" },
-        select: {
-          email: true,
-          fullName: true,
-          id: true,
-        },
+        select: { id: true, fullName: true },
       });
 
       if (!targetEditor) {
@@ -269,29 +256,6 @@ export async function sendToSecondEditorAction(
         });
       }
     });
-
-    if (targetEditor) {
-      try {
-        await sendSecondEditorAssignmentEmail({
-          editorName: targetEditor.fullName,
-          email: targetEditor.email,
-          workId: work.id,
-          workTitle: work.title,
-        });
-      } catch (emailError) {
-        console.error(
-          "EDITOR_EMAIL_DELIVERY_FAILED",
-          {
-            event: "second_editor_assigned",
-            workId: work.id,
-            error:
-              emailError instanceof Error
-                ? emailError.message
-                : "UNKNOWN_ERROR",
-          },
-        );
-      }
-    }
 
     refreshEditorFlow(work.slug);
 
@@ -646,12 +610,6 @@ export async function completeSecondEditorReviewAction(
           startedAt: true,
           work: {
             select: {
-              author: {
-                select: {
-                  email: true,
-                  fullName: true,
-                },
-              },
               authorId: true,
               id: true,
               slug: true,
@@ -782,28 +740,6 @@ export async function completeSecondEditorReviewAction(
         },
       });
     });
-
-    try {
-      await sendAuthorEditorStatusEmail({
-        email: assignment.work.author.email,
-        fullName: assignment.work.author.fullName,
-        stage: "completed",
-        workId: assignment.work.id,
-        workTitle: assignment.work.title,
-      });
-    } catch (emailError) {
-      console.error(
-        "EDITOR_EMAIL_DELIVERY_FAILED",
-        {
-          event: "second_review_completed",
-          workId: assignment.work.id,
-          error:
-            emailError instanceof Error
-              ? emailError.message
-              : "UNKNOWN_ERROR",
-        },
-      );
-    }
 
     refreshEditorFlow(assignment.work.slug);
     revalidatePath("/geri-bildirimler");

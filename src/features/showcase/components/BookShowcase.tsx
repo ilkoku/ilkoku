@@ -291,13 +291,7 @@ export function BookShowcase({
                 className="showcase-tags"
                 aria-label={readingContent.showcase.tags}
               >
-                {Array.from(
-                  new Set(
-                    tags
-                      .map((tag) => tag.trim())
-                      .filter(Boolean),
-                  ),
-                ).map((tag) => (
+                {tags.map((tag) => (
                   <li key={tag}>{tag}</li>
                 ))}
               </ul>

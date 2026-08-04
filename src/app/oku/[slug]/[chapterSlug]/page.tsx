@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { readingContent } from "@/content";
 import { getChapterComments } from "@/features/reader/comments";
 import { getFavoriteStatus } from "@/features/reader/favorites";
-import { recordReadingAccessSafely } from "@/features/reading/access";
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
 import { getReadingProgress } from "@/features/reading/progress";
 import { getPublicChapter } from "@/features/works/queries";
-import { getCurrentSessionContext } from "@/lib/auth/current-user";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +14,6 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: readingContent.chapter.metadataTitle,
   description: readingContent.chapter.metadataDescription,
-  robots: { index: false, follow: false },
 };
 
 export default async function DynamicReadingPage({
@@ -25,32 +22,16 @@ export default async function DynamicReadingPage({
   params: Promise<{ chapterSlug: string; slug: string }>;
 }) {
   const { chapterSlug, slug } = await params;
-  const auth = await getCurrentSessionContext();
-
-  if (!auth) {
-    const returnPath = `/oku/${slug}/${chapterSlug}`;
-    redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`);
-  }
-
-  const { sessionId, user } = auth;
   const chapter = await getPublicChapter(slug, chapterSlug);
 
   if (!chapter) notFound();
-
-  const requestHeaders = await headers();
-
-  await recordReadingAccessSafely({
-    chapterId: chapter.id,
-    requestHeaders,
-    sessionId,
-    userId: user.id,
-    workId: chapter.work.id,
-  });
 
   const comments =
     await getChapterComments(
       chapter.id,
     );
+
+  const user = await getCurrentUser();
 
   const reviewAssignment =
     user?.role === "editor"
@@ -145,7 +126,6 @@ export default async function DynamicReadingPage({
       chapter={chapter}
       comments={comments}
       isFavorite={isFavorite}
-      protectionIdentity={user.publicId}
       readingProgress={readingProgress?.progressPercent ?? null}
       professionalReview={
         reviewAssignment

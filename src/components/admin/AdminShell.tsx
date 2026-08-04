@@ -29,26 +29,6 @@ function Icon({ name }: { name: AdminNavItem["icon"] }) {
         <rect x="14" y="14" width="7" height="7" rx="2" />
       </>
     ),
-    users: (
-      <>
-        <circle cx="9" cy="8" r="3" />
-        <circle cx="17" cy="9" r="2.5" />
-        <path d="M3 20a6 6 0 0 1 12 0" />
-        <path d="M14 15a5 5 0 0 1 7 4.5" />
-      </>
-    ),
-    readers: (
-      <>
-        <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" />
-        <circle cx="12" cy="12" r="2.5" />
-      </>
-    ),
-    comments: (
-      <>
-        <path d="M4 4h16v12H9l-5 4Z" />
-        <path d="M8 9h8M8 12h5" />
-      </>
-    ),
     works: (
       <>
         <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22Z" />
@@ -82,18 +62,6 @@ function Icon({ name }: { name: AdminNavItem["icon"] }) {
       <>
         <path d="M12 22a10 10 0 1 0-10-10" />
         <path d="M2 4v6h6M12 6v6l4 2" />
-      </>
-    ),
-    email: (
-      <>
-        <rect
-          x="3"
-          y="5"
-          width="18"
-          height="14"
-          rx="2"
-        />
-        <path d="m4 7 8 6 8-6" />
       </>
     ),
     settings: (

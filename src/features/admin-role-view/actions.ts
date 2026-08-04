@@ -48,25 +48,33 @@ async function auditViewChange(input: {
   source: "account" | "publisher_detail";
   toRole: string;
 }) {
-  await prisma.auditLog.create({
-    data: {
-      action: "admin_role_view_changed",
-      actorId: input.actorId,
-      entityId: input.publisherId ?? input.sessionId,
-      entityType: input.publisherId
-        ? "Publisher"
-        : "Session",
-      metadata: JSON.stringify({
-        fromPublisherId: input.fromPublisherId ?? null,
-        fromPublisherRole: input.fromPublisherRole ?? null,
-        fromRole: input.fromRole,
-        publisherId: input.publisherId ?? null,
-        publisherRole: input.publisherRole ?? null,
-        source: input.source,
-        toRole: input.toRole,
-      }),
-    },
-  });
+  try {
+    await prisma.auditLog.create({
+      data: {
+        action: "admin_role_view_changed",
+        actorId: input.actorId,
+        entityId: input.publisherId ?? input.sessionId,
+        entityType: input.publisherId
+          ? "Publisher"
+          : "Session",
+        metadata: JSON.stringify({
+          fromPublisherId: input.fromPublisherId ?? null,
+          fromPublisherRole:
+            input.fromPublisherRole ?? null,
+          fromRole: input.fromRole,
+          publisherId: input.publisherId ?? null,
+          publisherRole: input.publisherRole ?? null,
+          source: input.source,
+          toRole: input.toRole,
+        }),
+      },
+    });
+  } catch (error) {
+    console.error(
+      "ADMIN_ROLE_VIEW_AUDIT_FAILED",
+      error,
+    );
+  }
 }
 
 export async function setAdminRoleViewAction(

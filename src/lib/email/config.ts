@@ -42,17 +42,34 @@ function valueOf(key: string) {
   return process.env[key]?.trim() || "";
 }
 
+function shouldUseChannelSenderAddresses() {
+  return (
+    valueOf("MAIL_ALLOW_CHANNEL_SENDERS")
+      .toLowerCase() === "true"
+  );
+}
+
 export function getEmailSender(
   channel: EmailChannel,
 ) {
   const key =
     environmentKeys[channel];
+  const smtpUser =
+    valueOf("SMTP_USER");
+  const configuredAddress =
+    valueOf(key);
+  const forceAuthenticatedSender =
+    process.env.NODE_ENV === "production" &&
+    Boolean(smtpUser) &&
+    !shouldUseChannelSenderAddresses();
 
   return {
     address:
-      valueOf(key) ||
-      valueOf("SMTP_USER") ||
-      addresses[channel],
+      forceAuthenticatedSender
+        ? smtpUser
+        : configuredAddress ||
+          smtpUser ||
+          addresses[channel],
     name: displayNames[channel],
   };
 }

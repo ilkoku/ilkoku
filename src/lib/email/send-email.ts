@@ -112,7 +112,7 @@ async function sendWithSmtp(
   input: SendEmailInput,
 ) {
   const host =
-    process.env.SMTP_HOST;
+    process.env.SMTP_HOST?.trim();
 
   const port =
     Number(
@@ -121,7 +121,7 @@ async function sendWithSmtp(
     );
 
   const user =
-    process.env.SMTP_USER;
+    process.env.SMTP_USER?.trim();
 
   const password =
     process.env.SMTP_PASSWORD;
@@ -148,40 +148,54 @@ async function sendWithSmtp(
         pass: password,
         user,
       },
+      connectionTimeout:
+        10_000,
+      greetingTimeout:
+        10_000,
       host,
       port,
       secure:
         process.env
           .SMTP_SECURE !==
         "false",
+      socketTimeout:
+        20_000,
     });
 
-  const result =
-    await transport.sendMail({
-      from: {
-        address:
-          sender.address,
-        name:
-          sender.name,
-      },
-      html:
-        input.html,
-      replyTo:
-        getEmailReplyTo(),
-      subject:
-        input.subject,
-      text:
-        input.text,
-      to:
-        input.to,
-    });
+  try {
+    const result =
+      await transport.sendMail({
+        envelope: {
+          from: user,
+          to: input.to,
+        },
+        from: {
+          address:
+            sender.address,
+          name:
+            sender.name,
+        },
+        html:
+          input.html,
+        replyTo:
+          getEmailReplyTo(),
+        subject:
+          input.subject,
+        text:
+          input.text,
+        to:
+          input.to,
+      });
 
-  return {
-    delivery:
-      "smtp" as const,
-    id:
-      result.messageId,
-  };
+    return {
+      delivery:
+        "smtp" as const,
+      id:
+        result.messageId,
+    };
+  } finally {
+    transport.close();
+  }
 }
 
 function emailFailureDetails(

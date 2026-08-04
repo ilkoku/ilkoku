@@ -124,6 +124,21 @@ export async function GET(
           });
 
         await transaction
+          .emailVerificationToken
+          .deleteMany({
+            where: {
+              id: {
+                not:
+                  verificationToken.id,
+              },
+              usedAt: null,
+              userId:
+                verificationToken
+                  .userId,
+            },
+          });
+
+        await transaction
           .auditLog.create({
             data: {
               action:

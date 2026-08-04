@@ -5,6 +5,7 @@ import {
 import { cookies } from "next/headers";
 import type { UserRole } from "@/features/auth/types";
 import { getCurrentSessionContext } from "@/lib/auth/current-user";
+import { prisma } from "@/lib/prisma";
 import {
   isAdminPublisherViewRole,
   isAdminRoleViewRole,
@@ -33,9 +34,27 @@ type RoleViewContext = {
   userRole: UserRole;
 };
 
-function getSecret() {
-  const secret = process.env.ADMIN_ROLE_VIEW_SECRET?.trim();
-  return secret && secret.length >= 64 ? secret : null;
+async function getSecret(sessionId: string) {
+  const configuredSecret =
+    process.env.ADMIN_ROLE_VIEW_SECRET?.trim();
+
+  if (
+    configuredSecret &&
+    configuredSecret.length >= 64
+  ) {
+    return configuredSecret;
+  }
+
+  const session = await prisma.session.findUnique({
+    where: {
+      id: sessionId,
+    },
+    select: {
+      tokenHash: true,
+    },
+  });
+
+  return session?.tokenHash ?? null;
 }
 
 function sign(body: string, secret: string) {
@@ -72,10 +91,8 @@ function validBasePayload(
 function decodePayload(
   value: string,
   context: RoleViewContext,
+  secret: string,
 ): AdminRoleViewPayload | null {
-  const secret = getSecret();
-  if (!secret) return null;
-
   const [body, signature, extra] = value.split(".");
   if (!body || !signature || extra) return null;
 
@@ -158,10 +175,12 @@ async function writeCookie(
     sessionId: string;
   },
 ) {
-  const secret = getSecret();
+  const secret = await getSecret(input.sessionId);
 
   if (!secret) {
-    throw new Error("ADMIN_ROLE_VIEW_NOT_CONFIGURED");
+    throw new Error(
+      "ADMIN_ROLE_VIEW_SESSION_UNAVAILABLE",
+    );
   }
 
   const payload: AdminRoleViewPayload = {
@@ -197,7 +216,15 @@ export async function readAdminRoleView(
     ADMIN_ROLE_VIEW_COOKIE,
   )?.value;
 
-  return value ? decodePayload(value, context) : null;
+  if (!value) {
+    return null;
+  }
+
+  const secret = await getSecret(context.sessionId);
+
+  return secret
+    ? decodePayload(value, context, secret)
+    : null;
 }
 
 export async function getCurrentAdminRoleView() {

@@ -200,3 +200,68 @@ export async function sendPasswordChangedEmail(
     to: input.email,
   });
 }
+
+export async function sendNewDeviceLoginEmail(
+  input: {
+    device: string;
+    email: string;
+    fullName: string;
+    ipAddress?: string | null;
+    loggedInAt?: Date;
+  },
+) {
+  const loggedInAt =
+    input.loggedInAt ?? new Date();
+  const loggedInAtText =
+    new Intl.DateTimeFormat(
+      "tr-TR",
+      {
+        dateStyle: "long",
+        timeStyle: "short",
+        timeZone: "Europe/Istanbul",
+      },
+    ).format(loggedInAt);
+  const recoveryUrl =
+    absoluteUrl(
+      "/sifremi-unuttum",
+    );
+  const accountUrl =
+    absoluteUrl("/hesabim");
+  const ipText =
+    input.ipAddress ||
+    "Belirlenemedi";
+
+  return sendEmail({
+    channel: "system",
+    html: `
+      <h1>Yeni bir cihazdan giriş yapıldı</h1>
+      <p>Merhaba ${escapeHtml(input.fullName)},</p>
+      <p>İlkOku hesabınıza yeni veya daha önce tanınmayan bir cihazdan giriş yapıldı.</p>
+      <p><strong>Cihaz:</strong> ${escapeHtml(input.device)}</p>
+      <p><strong>İşlem zamanı:</strong> ${escapeHtml(loggedInAtText)}</p>
+      <p><strong>IP adresi:</strong> ${escapeHtml(ipText)}</p>
+      <p>Bu giriş size aitse herhangi bir işlem yapmanız gerekmez.</p>
+      <p>Bu giriş size ait değilse hemen şifrenizi değiştirin:</p>
+      <p><a href="${escapeHtml(recoveryUrl)}">Hesabımı güvene al</a></p>
+      <p><a href="${escapeHtml(accountUrl)}">Hesap güvenliği ayarları</a></p>
+    `.trim(),
+    subject:
+      "Güvenlik bildirimi: Yeni bir cihazdan giriş yapıldı",
+    template:
+      "new_device_login",
+    text: [
+      `Merhaba ${input.fullName},`,
+      "",
+      "İlkOku hesabınıza yeni veya daha önce tanınmayan bir cihazdan giriş yapıldı.",
+      `Cihaz: ${input.device}`,
+      `İşlem zamanı: ${loggedInAtText}`,
+      `IP adresi: ${ipText}`,
+      "",
+      "Bu giriş size ait değilse hemen şifrenizi değiştirin:",
+      recoveryUrl,
+      "",
+      `Hesap güvenliği: ${accountUrl}`,
+    ].join("\n"),
+    to: input.email,
+  });
+}

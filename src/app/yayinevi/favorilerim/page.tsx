@@ -73,14 +73,24 @@ export default async function PublisherFavoritesPage({
 
   const workFilters = normalizePublisherFavoriteFilters(params);
   const authorFilters = normalizePublisherFollowingFilters(params);
-  const data =
+  const workData =
     type === "work"
       ? await getPublisherFavoriteWorks(access.publisherId, workFilters)
-      : await getPublisherSavedAuthors(
+      : null;
+  const authorData =
+    type === "author"
+      ? await getPublisherSavedAuthors(
           access.publisherId,
           authorFilters,
           "favorite",
-        );
+        )
+      : null;
+  const data = workData ?? authorData;
+
+  if (!data) {
+    throw new Error("FAVORI_LISTESI_HAZIRLANAMADI");
+  }
+
   const query =
     type === "work"
       ? workFilters.query
@@ -169,21 +179,21 @@ export default async function PublisherFavoritesPage({
               Keşfe git
             </Link>
           </section>
-        ) : type === "work" ? (
+        ) : workData ? (
           <PublisherFavoriteWorksTable
             canMutate={canMutate}
             canViewPassport={canViewPassport}
             returnTo={returnTo}
-            rows={data.rows}
+            rows={workData.rows}
           />
-        ) : (
+        ) : authorData ? (
           <PublisherSavedAuthorsTable
             canMutate={canMutate}
             mode="favorite"
             returnTo={returnTo}
-            rows={data.rows}
+            rows={authorData.rows}
           />
-        )}
+        ) : null}
 
         <footer className="publisher-discovery-pagination">
           <span>

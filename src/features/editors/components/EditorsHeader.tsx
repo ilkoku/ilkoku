@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import mobileLogo from "@/assets/brand/ilkoku-logo-mobile.png";
+import retinaLogo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { AuthenticatedUser } from "@/components/layout/AuthenticatedUser";
 import { editorsContent, tr } from "@/content";
 
@@ -18,11 +18,24 @@ export async function EditorsHeader({ backHref = "/", backLabel = editorsContent
           <span>{editorsContent.back}</span>
         </Link>
         <Link className="editors-brand" href="/" aria-label={editorsContent.homeLabel}>
-          <Image src={mobileLogo} alt="" aria-hidden="true" width={36} height={36} priority />
+          <Image src={retinaLogo} alt="" aria-hidden="true" width={72} height={72} sizes="48px" priority />
           <span>{tr.brand.name}</span>
         </Link>
         <AuthenticatedUser />
       </nav>
+      <style>{`
+        @media (max-width: 47.99rem) {
+          .editors-topbar__inner {
+            min-height: 4.75rem !important;
+          }
+
+          .editors-brand img {
+            width: 3.25rem !important;
+            max-width: 3.25rem !important;
+            height: 3.25rem !important;
+          }
+        }
+      `}</style>
     </header>
   );
 }

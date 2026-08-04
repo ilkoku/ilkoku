@@ -22,7 +22,7 @@ export function AuthShell({ children, description, eyebrow, title, wide = false 
             alt=""
             aria-hidden="true"
             priority
-            sizes="(max-width: 767px) 72px, 96px"
+            sizes="(max-width: 767px) 76px, 96px"
           />
         </Link>
         <span>{authContent.common.tagline}</span>
@@ -43,6 +43,26 @@ export function AuthShell({ children, description, eyebrow, title, wide = false 
         <section className="auth-content" aria-label={authContent.shell.contentArea(title)}>{children}</section>
       </main>
       <footer className="auth-footer"><span>© 2026 {tr.brand.name}</span><span>{authContent.common.secureAuthentication}</span></footer>
+      <style>{`
+        @media (max-width: 47.99rem) {
+          .auth-header {
+            min-height: 6.5rem !important;
+          }
+
+          .auth-brand {
+            width: 5.25rem !important;
+            min-width: 5.25rem !important;
+            min-height: 5.25rem !important;
+            padding: 0.3rem !important;
+          }
+
+          .auth-brand img {
+            width: 4.75rem !important;
+            max-width: 4.75rem !important;
+            height: 4.75rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

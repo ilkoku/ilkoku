@@ -1,4 +1,7 @@
 import { worksRepository } from "./repository";
+import {
+  deliverPublicationNotifications,
+} from "./publication-notifications";
 import type {
   ChapterDraftInput,
   CreateWorkInput,
@@ -207,10 +210,32 @@ export async function publishWork(
     input.chapterId,
   );
 
-  return worksRepository.publishWork(
-    authorId,
-    input.workId,
-  );
+  const publishedWork =
+    await worksRepository.publishWork(
+      authorId,
+      input.workId,
+    );
+
+  try {
+    await deliverPublicationNotifications({
+      authorId,
+      chapterId: input.chapterId,
+      workId: input.workId,
+    });
+  } catch (notificationError) {
+    console.error(
+      "PUBLICATION_POST_COMMIT_NOTIFICATION_FAILED",
+      {
+        error:
+          notificationError instanceof Error
+            ? notificationError.message
+            : "UNKNOWN_ERROR",
+        workId: input.workId,
+      },
+    );
+  }
+
+  return publishedWork;
 }
 
 export async function archiveWork(

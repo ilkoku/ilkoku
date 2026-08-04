@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import desktopLogo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
-import mobileLogo from "@/assets/brand/ilkoku-logo-mobile.png";
+import retinaLogo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { tr } from "@/content";
 
 type BrandAppearance = "dark" | "light";
@@ -19,18 +18,18 @@ export function Brand({ appearance = "dark" }: BrandProps) {
     >
       <Image
         className="brand__logo brand__logo--desktop"
-        src={desktopLogo}
+        src={retinaLogo}
         alt={tr.brand.logoAlt}
         priority
-        sizes="(max-width: 767px) 0px, (max-width: 1024px) 152px, 200px"
+        sizes="(max-width: 767px) 72px, (max-width: 1024px) 112px, 144px"
       />
       <Image
         className="brand__logo brand__logo--mobile"
-        src={mobileLogo}
+        src={retinaLogo}
         alt=""
         aria-hidden="true"
         priority
-        sizes="(max-width: 480px) 48px, (max-width: 767px) 52px, 0px"
+        sizes="72px"
       />
     </Link>
   );

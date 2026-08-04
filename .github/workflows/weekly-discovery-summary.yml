@@ -1,0 +1,33 @@
+name: Weekly discovery summary
+
+on:
+  schedule:
+    - cron: "20 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-discovery-summary
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger weekly discovery summaries
+        env:
+          SUMMARY_SECRET: ${{ secrets.WRITER_DAILY_SUMMARY_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$SUMMARY_SECRET"
+          curl \
+            --fail-with-body \
+            --max-time 300 \
+            --retry 2 \
+            --retry-all-errors \
+            --request POST \
+            --header "Authorization: Bearer $SUMMARY_SECRET" \
+            https://ilkoku.com/api/internal/weekly-discovery-summary

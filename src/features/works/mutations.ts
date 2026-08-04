@@ -1,3 +1,10 @@
+import {
+  sendPublisherFollowedAuthorPublishedEmail,
+} from "@/lib/email/publisher-engagement-emails";
+import {
+  sendReaderFavoriteWorkUpdateEmail,
+} from "@/lib/email/reader-emails";
+import { prisma } from "@/lib/prisma";
 import { worksRepository } from "./repository";
 import type {
   ChapterDraftInput,
@@ -12,6 +19,36 @@ function hasMeaningfulText(value: string) {
     .replace(/\s+/g, " ")
     .trim()
     .length > 0;
+}
+
+function publicName(user: {
+  displayName: string | null;
+  fullName: string;
+  username: string | null;
+}) {
+  return (
+    user.displayName ??
+    user.username ??
+    user.fullName
+  );
+}
+
+function logPublicationNotificationFailure(
+  event: string,
+  workId: string,
+  error: unknown,
+) {
+  console.error(
+    "PUBLICATION_NOTIFICATION_FAILED",
+    {
+      event,
+      workId,
+      error:
+        error instanceof Error
+          ? error.message
+          : "UNKNOWN_ERROR",
+    },
+  );
 }
 
 export function createSlug(value: string) {
@@ -190,6 +227,227 @@ export async function saveChapterDraft(
   return chapter;
 }
 
+async function deliverPublicationNotifications(input: {
+  author: {
+    displayName: string | null;
+    fullName: string;
+    id: string;
+    username: string | null;
+  };
+  chapter: {
+    position: number;
+    publishedAt: Date | null;
+    status: string;
+    title: string;
+  } | null;
+  favorites: {
+    user: {
+      deletedAt: Date | null;
+      email: string;
+      emailVerified: Date | null;
+      fullName: string;
+      id: string;
+      status: string;
+    };
+  }[];
+  publishedAt: Date | null;
+  slug: string;
+  title: string;
+  workId: string;
+}) {
+  const isNewChapter = Boolean(
+    input.publishedAt &&
+      input.chapter &&
+      (
+        input.chapter.publishedAt === null ||
+        input.chapter.status !== "published"
+      ),
+  );
+  const isNewWork =
+    input.publishedAt === null;
+
+  if (
+    isNewChapter &&
+    input.chapter
+  ) {
+    const readers = input.favorites
+      .map((favorite) => favorite.user)
+      .filter(
+        (reader) =>
+          reader.status === "active" &&
+          reader.deletedAt === null,
+      );
+
+    if (readers.length > 0) {
+      try {
+        await prisma.notification.createMany({
+          data: readers.map((reader) => ({
+            message:
+              `${input.title} favori eserinizin ${input.chapter!.title} bölümü yayımlandı.`,
+            relatedEntityId: input.workId,
+            relatedEntityType: "work",
+            title:
+              "Favorinizdeki esere yeni bölüm eklendi",
+            type: "system" as const,
+            userId: reader.id,
+          })),
+        });
+      } catch (notificationError) {
+        logPublicationNotificationFailure(
+          "reader_favorite_notification",
+          input.workId,
+          notificationError,
+        );
+      }
+
+      const deliveryResults =
+        await Promise.allSettled(
+          readers
+            .filter(
+              (reader) =>
+                reader.emailVerified !== null,
+            )
+            .map((reader) =>
+              sendReaderFavoriteWorkUpdateEmail({
+                chapterPosition:
+                  input.chapter!.position,
+                chapterTitle:
+                  input.chapter!.title,
+                email: reader.email,
+                readerName:
+                  reader.fullName,
+                workSlug: input.slug,
+                workTitle: input.title,
+              }),
+            ),
+        );
+
+      deliveryResults.forEach(
+        (delivery, index) => {
+          if (
+            delivery.status ===
+            "rejected"
+          ) {
+            logPublicationNotificationFailure(
+              `reader_favorite_email_${index}`,
+              input.workId,
+              delivery.reason,
+            );
+          }
+        },
+      );
+    }
+  }
+
+  if (isNewWork) {
+    try {
+      const follows =
+        await prisma.publisherAuthorFollow.findMany({
+          where: {
+            authorId: input.author.id,
+            createdBy: {
+              is: {
+                deletedAt: null,
+                status: "active",
+              },
+            },
+          },
+          select: {
+            createdBy: {
+              select: {
+                email: true,
+                emailVerified: true,
+                fullName: true,
+                id: true,
+              },
+            },
+          },
+        });
+
+      const recipientMap = new Map<
+        string,
+        {
+          email: string;
+          emailVerified: Date | null;
+          fullName: string;
+          id: string;
+        }
+      >();
+
+      for (const follow of follows) {
+        if (follow.createdBy) {
+          recipientMap.set(
+            follow.createdBy.id,
+            follow.createdBy,
+          );
+        }
+      }
+
+      const recipients =
+        Array.from(
+          recipientMap.values(),
+        );
+
+      if (recipients.length > 0) {
+        await prisma.notification.createMany({
+          data: recipients.map((member) => ({
+            message:
+              `${publicName(input.author)}, ${input.title} adlı yeni eserini yayımladı.`,
+            relatedEntityId: input.workId,
+            relatedEntityType: "work",
+            title:
+              "Takip ettiğiniz yazar yeni eser yayımladı",
+            type:
+              "publisher_followed_author_published" as const,
+            userId: member.id,
+          })),
+        });
+
+        const deliveryResults =
+          await Promise.allSettled(
+            recipients
+              .filter(
+                (member) =>
+                  member.emailVerified !== null,
+              )
+              .map((member) =>
+                sendPublisherFollowedAuthorPublishedEmail({
+                  authorName:
+                    publicName(input.author),
+                  email: member.email,
+                  memberName:
+                    member.fullName,
+                  workSlug: input.slug,
+                  workTitle: input.title,
+                }),
+              ),
+          );
+
+        deliveryResults.forEach(
+          (delivery, index) => {
+            if (
+              delivery.status ===
+              "rejected"
+            ) {
+              logPublicationNotificationFailure(
+                `publisher_follow_email_${index}`,
+                input.workId,
+                delivery.reason,
+              );
+            }
+          },
+        );
+      }
+    } catch (publisherError) {
+      logPublicationNotificationFailure(
+        "publisher_followed_author_published",
+        input.workId,
+        publisherError,
+      );
+    }
+  }
+}
+
 export async function publishWork(
   authorId: string,
   input: ChapterDraftInput,
@@ -200,6 +458,53 @@ export async function publishWork(
     );
   }
 
+  const before = await prisma.work.findFirst({
+    where: {
+      authorId,
+      id: input.workId,
+    },
+    select: {
+      author: {
+        select: {
+          displayName: true,
+          fullName: true,
+          id: true,
+          username: true,
+        },
+      },
+      chapters: {
+        where: {
+          id: input.chapterId,
+        },
+        select: {
+          position: true,
+          publishedAt: true,
+          status: true,
+          title: true,
+        },
+        take: 1,
+      },
+      favorites: {
+        select: {
+          user: {
+            select: {
+              deletedAt: true,
+              email: true,
+              emailVerified: true,
+              fullName: true,
+              id: true,
+              status: true,
+            },
+          },
+        },
+      },
+      id: true,
+      publishedAt: true,
+      slug: true,
+      title: true,
+    },
+  });
+
   await saveChapterDraft(authorId, input);
 
   await worksRepository.publishChapter(
@@ -207,10 +512,34 @@ export async function publishWork(
     input.chapterId,
   );
 
-  return worksRepository.publishWork(
-    authorId,
-    input.workId,
-  );
+  const publishedWork =
+    await worksRepository.publishWork(
+      authorId,
+      input.workId,
+    );
+
+  if (before) {
+    try {
+      await deliverPublicationNotifications({
+        author: before.author,
+        chapter:
+          before.chapters[0] ?? null,
+        favorites: before.favorites,
+        publishedAt: before.publishedAt,
+        slug: before.slug,
+        title: before.title,
+        workId: before.id,
+      });
+    } catch (notificationError) {
+      logPublicationNotificationFailure(
+        "publication_post_commit",
+        before.id,
+        notificationError,
+      );
+    }
+  }
+
+  return publishedWork;
 }
 
 export async function archiveWork(

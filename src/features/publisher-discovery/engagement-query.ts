@@ -18,24 +18,74 @@ export async function getPublisherWorkLikeIds(
 ) {
   const ids = uniqueIds(workIds);
 
-  if (!publisherId || ids.length === 0) {
-    return [];
-  }
+  if (!publisherId || ids.length === 0) return [];
 
-  const records =
-    await prisma.publisherWorkLike.findMany({
-      where: {
-        publisherId,
-        workId: {
-          in: ids,
-        },
-      },
-      select: {
-        workId: true,
-      },
-    });
+  const records = await prisma.publisherWorkLike.findMany({
+    where: {
+      publisherId,
+      workId: { in: ids },
+    },
+    select: { workId: true },
+  });
 
   return records.map((record) => record.workId);
+}
+
+export async function getPublisherWorkFavoriteIds(
+  publisherId: string,
+  workIds: readonly string[],
+) {
+  const ids = uniqueIds(workIds);
+
+  if (!publisherId || ids.length === 0) return [];
+
+  const records = await prisma.publisherWorkFavorite.findMany({
+    where: {
+      publisherId,
+      workId: { in: ids },
+    },
+    select: { workId: true },
+  });
+
+  return records.map((record) => record.workId);
+}
+
+export async function getPublisherAuthorLikeIds(
+  publisherId: string,
+  authorIds: readonly string[],
+) {
+  const ids = uniqueIds(authorIds);
+
+  if (!publisherId || ids.length === 0) return [];
+
+  const records = await prisma.publisherAuthorLike.findMany({
+    where: {
+      authorId: { in: ids },
+      publisherId,
+    },
+    select: { authorId: true },
+  });
+
+  return records.map((record) => record.authorId);
+}
+
+export async function getPublisherAuthorFavoriteIds(
+  publisherId: string,
+  authorIds: readonly string[],
+) {
+  const ids = uniqueIds(authorIds);
+
+  if (!publisherId || ids.length === 0) return [];
+
+  const records = await prisma.publisherAuthorFavorite.findMany({
+    where: {
+      authorId: { in: ids },
+      publisherId,
+    },
+    select: { authorId: true },
+  });
+
+  return records.map((record) => record.authorId);
 }
 
 export async function getPublisherAuthorFollowIds(
@@ -44,22 +94,15 @@ export async function getPublisherAuthorFollowIds(
 ) {
   const ids = uniqueIds(authorIds);
 
-  if (!publisherId || ids.length === 0) {
-    return [];
-  }
+  if (!publisherId || ids.length === 0) return [];
 
-  const records =
-    await prisma.publisherAuthorFollow.findMany({
-      where: {
-        authorId: {
-          in: ids,
-        },
-        publisherId,
-      },
-      select: {
-        authorId: true,
-      },
-    });
+  const records = await prisma.publisherAuthorFollow.findMany({
+    where: {
+      authorId: { in: ids },
+      publisherId,
+    },
+    select: { authorId: true },
+  });
 
   return records.map((record) => record.authorId);
 }

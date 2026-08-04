@@ -2,7 +2,9 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
-import { acceptPublisherInvitationAction } from "../actions";
+import {
+  acceptPublisherInvitationAction,
+} from "../invitation-email.actions";
 import type { PublisherActionState } from "../types";
 
 const initialState: PublisherActionState = {

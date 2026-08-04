@@ -1,39 +1,26 @@
 import Link from "next/link";
 
-import {
-  togglePublisherWorkLikeAction,
-} from "../engagement-actions";
-import type {
-  PublisherLikedWorkRow,
-} from "../favorites-query";
+import { togglePublisherWorkFavoriteAction } from "../engagement-extended-actions";
+import type { PublisherFavoriteWorkRow } from "../work-favorites-query";
 
 function formatNumber(value: number) {
   return value.toLocaleString("tr-TR");
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat(
-    "tr-TR",
-    {
-      dateStyle: "medium",
-    },
-  ).format(new Date(value));
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "medium",
+  }).format(new Date(value));
 }
 
 function reviewLabel(value: string) {
   const labels: Record<string, string> = {
-    awaiting_second_editor:
-      "İkinci editör bekleniyor",
-    completed:
-      "Editör incelemesi tamamlandı",
-    in_progress:
-      "İlk editörde",
-    not_requested:
-      "Henüz incelenmedi",
-    requested:
-      "İnceleme talep edildi",
-    second_in_progress:
-      "İkinci editörde",
+    awaiting_second_editor: "İkinci editör bekleniyor",
+    completed: "Editör incelemesi tamamlandı",
+    in_progress: "İlk editörde",
+    not_requested: "Henüz incelenmedi",
+    requested: "İnceleme talep edildi",
+    second_in_progress: "İkinci editörde",
   };
 
   return labels[value] ?? value;
@@ -48,7 +35,7 @@ export function PublisherFavoriteWorksTable({
   canMutate: boolean;
   canViewPassport: boolean;
   returnTo: string;
-  rows: PublisherLikedWorkRow[];
+  rows: PublisherFavoriteWorkRow[];
 }) {
   return (
     <div className="publisher-discovery-table-wrap">
@@ -60,14 +47,14 @@ export function PublisherFavoriteWorksTable({
             <th>Tür / Dil</th>
             <th>Yayın ve editör</th>
             <th>Metrikler</th>
-            <th>Beğeni tarihi</th>
+            <th>Favori tarihi</th>
             <th>İşlemler</th>
           </tr>
         </thead>
 
         <tbody>
           {rows.map((work) => (
-            <tr key={work.likeId}>
+            <tr key={work.favoriteId}>
               <td data-label="Eser">
                 <div className="publisher-discovery-table__work">
                   <span
@@ -77,8 +64,7 @@ export function PublisherFavoriteWorksTable({
                     {work.title
                       .trim()
                       .charAt(0)
-                      .toLocaleUpperCase("tr-TR") ||
-                      "E"}
+                      .toLocaleUpperCase("tr-TR") || "E"}
                   </span>
 
                   <div>
@@ -88,95 +74,49 @@ export function PublisherFavoriteWorksTable({
                     >
                       {work.title}
                     </Link>
-                    {work.subtitle ? (
-                      <small>
-                        {work.subtitle}
-                      </small>
-                    ) : null}
-                    <small>
-                      {work.chapterCount} yayımlanmış bölüm
-                    </small>
+                    {work.subtitle ? <small>{work.subtitle}</small> : null}
+                    <small>{work.chapterCount} yayımlanmış bölüm</small>
                   </div>
                 </div>
               </td>
 
               <td data-label="Yazar">
-                <strong>
-                  {work.authorName}
-                </strong>
-                <small>
-                  {work.authorAlias}
-                </small>
+                <strong>{work.authorName}</strong>
+                <small>{work.authorAlias}</small>
               </td>
 
               <td data-label="Tür / Dil">
-                <span>
-                  {work.genre ||
-                    "Tür belirtilmedi"}
-                </span>
+                <span>{work.genre || "Tür belirtilmedi"}</span>
                 <small>
                   {work.language === "tr"
                     ? "Türkçe"
                     : work.language === "en"
                       ? "İngilizce"
-                      : work.language.toLocaleUpperCase(
-                          "tr-TR",
-                        )}
+                      : work.language.toLocaleUpperCase("tr-TR")}
                 </small>
               </td>
 
               <td data-label="Yayın ve editör">
-                <span>
-                  {reviewLabel(
-                    work.editorReviewStatus,
-                  )}
-                </span>
-                <small>
-                  Yayımlanma:{" "}
-                  {formatDate(
-                    work.publishedAt,
-                  )}
-                </small>
+                <span>{reviewLabel(work.editorReviewStatus)}</span>
+                <small>Yayımlanma: {formatDate(work.publishedAt)}</small>
               </td>
 
               <td data-label="Metrikler">
                 <div className="publisher-discovery-table__metrics">
-                  <span>
-                    {formatNumber(
-                      work.readerCount,
-                    )}{" "}
-                    okur
-                  </span>
-                  <span>
-                    {formatNumber(
-                      work.favoriteCount,
-                    )}{" "}
-                    okur favorisi
-                  </span>
-                  <span>
-                    {formatNumber(
-                      work.commentCount,
-                    )}{" "}
-                    yorum
-                  </span>
+                  <span>{formatNumber(work.readerCount)} okur</span>
+                  <span>{formatNumber(work.favoriteCount)} okur favorisi</span>
+                  <span>{formatNumber(work.commentCount)} yorum</span>
                 </div>
               </td>
 
-              <td data-label="Beğeni tarihi">
-                <strong>
-                  {formatDate(
-                    work.likedAt,
-                  )}
-                </strong>
-                <small>
-                  {work.versionCount} sürüm
-                </small>
+              <td data-label="Favori tarihi">
+                <strong>{formatDate(work.favoritedAt)}</strong>
+                <small>{work.versionCount} sürüm</small>
               </td>
 
               <td data-label="İşlemler">
                 <div className="publisher-discovery-table__actions">
-                  {work.firstChapterPosition !==
-                  null ? (
+                  {work.firstChapterPosition !== null ? (
                     <Link
                       className="button button--primary"
                       href={`/oku/${work.slug}/bolum-${work.firstChapterPosition}?from=${encodeURIComponent(returnTo)}`}
@@ -192,8 +132,7 @@ export function PublisherFavoriteWorksTable({
                     Eser sayfası
                   </Link>
 
-                  {canViewPassport &&
-                  work.hasPassportRecord ? (
+                  {canViewPassport && work.hasPassportRecord ? (
                     <Link
                       className="button button--outline"
                       href={`/yayinevi/kesfet/eserler/${work.id}/pasaport`}
@@ -204,19 +143,11 @@ export function PublisherFavoriteWorksTable({
 
                   {canMutate ? (
                     <form
-                      action={togglePublisherWorkLikeAction}
+                      action={togglePublisherWorkFavoriteAction}
                       className="publisher-discovery-engagement-form"
                     >
-                      <input
-                        name="workId"
-                        type="hidden"
-                        value={work.id}
-                      />
-                      <input
-                        name="active"
-                        type="hidden"
-                        value="false"
-                      />
+                      <input name="workId" type="hidden" value={work.id} />
+                      <input name="active" type="hidden" value="false" />
                       <input
                         name="returnPath"
                         type="hidden"
@@ -226,7 +157,7 @@ export function PublisherFavoriteWorksTable({
                         className="button button--outline"
                         type="submit"
                       >
-                        Beğenmekten vazgeç
+                        Favoriden çıkar
                       </button>
                     </form>
                   ) : (

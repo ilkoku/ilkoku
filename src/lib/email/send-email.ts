@@ -242,7 +242,7 @@ export async function sendEmail(
     return {
       delivery:
         "skipped" as const,
-      deliveryId: null,
+      deliveryId: undefined,
       id:
         "preference-disabled",
     };

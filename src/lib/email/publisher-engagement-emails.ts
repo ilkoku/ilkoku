@@ -1,9 +1,5 @@
-import {
-  getEmailSiteUrl,
-} from "./config";
-import {
-  sendEmail,
-} from "./send-email";
+import { getEmailSiteUrl } from "./config";
+import { sendEmail } from "./send-email";
 
 function escapeHtml(value: string) {
   return value
@@ -15,48 +11,76 @@ function escapeHtml(value: string) {
 }
 
 function absoluteUrl(pathname: string) {
-  return new URL(
-    pathname,
-    getEmailSiteUrl(),
-  ).toString();
+  return new URL(pathname, getEmailSiteUrl()).toString();
 }
+
+export type AuthorPublisherInterestKind =
+  | "author_favorited"
+  | "author_followed"
+  | "author_liked"
+  | "work_favorited"
+  | "work_liked";
 
 export async function sendAuthorPublisherInterestEmail(input: {
   email: string;
   fullName: string;
-  kind:
-    | "author_followed"
-    | "work_liked";
+  kind: AuthorPublisherInterestKind;
   workSlug?: string;
   workTitle?: string;
 }) {
-  const state =
-    input.kind === "work_liked"
-      ? {
-          detail:
-            `Bir yayınevi ${input.workTitle ?? "eserinizi"} beğendi. Yayınevi kimliği, kurumsal anonimlik kuralı gereği bu aşamada paylaşılmaz.`,
-          subject:
-            "Bir yayınevi eserinizi beğendi",
-          targetPath:
-            input.workSlug
-              ? `/kitap/${encodeURIComponent(input.workSlug)}`
-              : "/eserlerim",
-          template:
-            "author_publisher_work_liked",
-        }
-      : {
-          detail:
-            "Bir yayınevi yazar profilinizi takip etmeye başladı. Yayınevi kimliği, kurumsal anonimlik kuralı gereği bu aşamada paylaşılmaz.",
-          subject:
-            "Bir yayınevi sizi takip etmeye başladı",
-          targetPath:
-            "/yazar",
-          template:
-            "author_publisher_followed",
-        };
-  const targetUrl = absoluteUrl(
-    state.targetPath,
-  );
+  const workTitle = input.workTitle ?? "eserinizi";
+  const workPath = input.workSlug
+    ? `/kitap/${encodeURIComponent(input.workSlug)}`
+    : "/eserlerim";
+
+  const states: Record<
+    AuthorPublisherInterestKind,
+    {
+      detail: string;
+      subject: string;
+      targetPath: string;
+      template: string;
+    }
+  > = {
+    author_favorited: {
+      detail:
+        "Bir yayınevi yazar profilinizi kurumsal favorilerine ekledi. Yayınevi kimliği bu aşamada anonim tutulur.",
+      subject: "Bir yayınevi profilinizi favoriledi",
+      targetPath: "/yazar",
+      template: "author_publisher_author_favorited",
+    },
+    author_followed: {
+      detail:
+        "Bir yayınevi yazar profilinizi takip etmeye başladı. Yayınevi kimliği bu aşamada anonim tutulur.",
+      subject: "Bir yayınevi sizi takip etmeye başladı",
+      targetPath: "/yazar",
+      template: "author_publisher_followed",
+    },
+    author_liked: {
+      detail:
+        "Bir yayınevi yazar profilinizi beğendi. Yayınevi kimliği bu aşamada anonim tutulur.",
+      subject: "Bir yayınevi profilinizi beğendi",
+      targetPath: "/yazar",
+      template: "author_publisher_author_liked",
+    },
+    work_favorited: {
+      detail:
+        `Bir yayınevi ${workTitle} kurumsal favorilerine ekledi. Yayınevi kimliği bu aşamada anonim tutulur.`,
+      subject: "Bir yayınevi eserinizi favoriledi",
+      targetPath: workPath,
+      template: "author_publisher_work_favorited",
+    },
+    work_liked: {
+      detail:
+        `Bir yayınevi ${workTitle} beğendi. Yayınevi kimliği bu aşamada anonim tutulur.`,
+      subject: "Bir yayınevi eserinizi beğendi",
+      targetPath: workPath,
+      template: "author_publisher_work_liked",
+    },
+  };
+
+  const state = states[input.kind];
+  const targetUrl = absoluteUrl(state.targetPath);
 
   return sendEmail({
     channel: "publisher",
@@ -98,10 +122,8 @@ export async function sendPublisherFollowedAuthorPublishedEmail(input: {
       <p><strong>${escapeHtml(input.authorName)}</strong>, <strong>${escapeHtml(input.workTitle)}</strong> adlı yeni eserini yayımladı.</p>
       <p><a href="${escapeHtml(targetUrl)}">Eseri incele</a></p>
     `.trim(),
-    subject:
-      `Yeni eser: ${input.workTitle}`,
-    template:
-      "publisher_followed_author_published",
+    subject: `Yeni eser: ${input.workTitle}`,
+    template: "publisher_followed_author_published",
     text: [
       `Merhaba ${input.memberName},`,
       "",
@@ -118,9 +140,7 @@ export async function sendPublisherInvitationAcceptedEmail(input: {
   inviterName: string;
   publisherName: string;
 }) {
-  const targetUrl = absoluteUrl(
-    "/yayinevi/uyeler",
-  );
+  const targetUrl = absoluteUrl("/yayinevi/uyeler");
 
   return sendEmail({
     channel: "publisher",
@@ -130,10 +150,8 @@ export async function sendPublisherInvitationAcceptedEmail(input: {
       <p><strong>${escapeHtml(input.acceptedMemberName)}</strong>, <strong>${escapeHtml(input.publisherName)}</strong> ekip davetini kabul etti.</p>
       <p><a href="${escapeHtml(targetUrl)}">Ekip üyelerini görüntüle</a></p>
     `.trim(),
-    subject:
-      `${input.publisherName} ekip daveti kabul edildi`,
-    template:
-      "publisher_team_invitation_accepted",
+    subject: `${input.publisherName} ekip daveti kabul edildi`,
+    template: "publisher_team_invitation_accepted",
     text: [
       `Merhaba ${input.inviterName},`,
       "",

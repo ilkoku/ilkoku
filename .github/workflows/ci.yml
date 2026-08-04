@@ -23,9 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
-      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3306/ilkoku_ci"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      SITE_URL: "http://localhost:3000"
+      EMAIL_DELIVERY_MODE: "local"
+      ADMIN_ROLE_VIEW_SECRET: "ci-admin-role-view-secret-0000000000000000000000000000000000000000"
+      READING_ACCESS_HASH_SECRET: "ci-reading-access-hash-secret-00000000000000000000000000000000000000"
 
     steps:
       - name: Checkout repository
@@ -34,7 +37,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies

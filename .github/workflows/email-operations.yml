@@ -1,0 +1,33 @@
+name: Email operations
+
+on:
+  schedule:
+    - cron: "35 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: email-operations
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check email delivery operations
+        env:
+          SUMMARY_SECRET: ${{ secrets.WRITER_DAILY_SUMMARY_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$SUMMARY_SECRET"
+          curl \
+            --fail-with-body \
+            --max-time 300 \
+            --retry 2 \
+            --retry-all-errors \
+            --request POST \
+            --header "Authorization: Bearer $SUMMARY_SECRET" \
+            https://ilkoku.com/api/internal/email-operations

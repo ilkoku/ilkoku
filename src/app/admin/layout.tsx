@@ -6,6 +6,7 @@ import "./admin.css";
 import "./dashboard.css";
 import "./directory.css";
 import "./email.css";
+import "./email-operations.css";
 import "./management.css";
 import "./roles.css";
 import "./users.css";

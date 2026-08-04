@@ -30,6 +30,7 @@ export const adminNavigation: AdminNavItem[] = [
   { href: "/admin/roller", label: "Rol ve Yetkiler", icon: "settings" },
   { href: "/admin/arsiv", label: "Arşiv Merkezi", icon: "audit" },
   { href: "/admin/epostalar", label: "E-postalar", icon: "email" },
+  { href: "/admin/eposta-operasyonlari", label: "E-posta Operasyonları", icon: "email" },
   { href: "/admin/okuma-guvenligi", label: "Okuma Güvenliği", icon: "audit" },
   { href: "/admin/audit-log", label: "Audit Log", icon: "audit" },
   { href: "/admin/ayarlar", label: "Ayarlar", icon: "settings" },

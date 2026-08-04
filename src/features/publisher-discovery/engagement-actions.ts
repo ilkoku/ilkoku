@@ -217,6 +217,7 @@ export async function togglePublisherWorkLikeAction(
   }
 
   if (
+    result.status === "ok" &&
     result.active &&
     result.changed
   ) {
@@ -233,7 +234,10 @@ export async function togglePublisherWorkLikeAction(
     "/yayinevi/favorilerim",
   );
 
-  if (result.slug) {
+  if (
+    result.status === "ok" &&
+    result.slug
+  ) {
     revalidatePath(`/kitap/${result.slug}`);
   }
 
@@ -292,6 +296,7 @@ export async function togglePublisherAuthorFollowAction(
   }
 
   if (
+    result.status === "ok" &&
     result.active &&
     result.changed
   ) {

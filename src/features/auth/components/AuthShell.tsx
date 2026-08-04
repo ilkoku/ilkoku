@@ -17,8 +17,15 @@ export function AuthShell({ children, description, eyebrow, title, wide = false 
       <a className="auth-skip-link" href="#auth-main">{authContent.common.skipToContent}</a>
       <header className="auth-header">
         <Link className="auth-brand" href="/" aria-label={authContent.common.homeLabel}>
-          <Image src={mobileLogo} alt="" aria-hidden="true" width={44} height={44} priority />
-          <span>{tr.brand.name}</span>
+          <Image
+            src={mobileLogo}
+            alt=""
+            aria-hidden="true"
+            width={768}
+            height={768}
+            unoptimized
+            priority
+          />
         </Link>
         <span>{authContent.common.tagline}</span>
       </header>

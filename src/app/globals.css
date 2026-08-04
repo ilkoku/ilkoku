@@ -200,3 +200,203 @@ a {
     rgba(201, 161, 90, .68);
   background-clip: padding-box;
 }
+
+/* ILKOKU_LOGO_FINAL_SIPS_START */
+
+.brand {
+  min-height: 11.5rem !important;
+  padding: 0.65rem !important;
+}
+
+.brand__logo--desktop {
+  display: block !important;
+  width: 10rem !important;
+  max-width: 10rem !important;
+  height: 10rem !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+}
+
+.brand__logo--mobile {
+  width: 5.5rem !important;
+  height: 5.5rem !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+}
+
+.auth-header {
+  min-height: 10.5rem !important;
+}
+
+.auth-brand {
+  display: inline-flex !important;
+  width: 9rem !important;
+  min-width: 9rem !important;
+  min-height: 9rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  padding: 0.55rem !important;
+  border-radius: 1.25rem !important;
+}
+
+.auth-brand img {
+  display: block !important;
+  width: 8rem !important;
+  max-width: 8rem !important;
+  height: 8rem !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+}
+
+.auth-brand > span {
+  display: none !important;
+}
+
+.admin-brand a {
+  display: flex !important;
+  min-height: 10.5rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+}
+
+.admin-brand img {
+  display: block !important;
+  width: 9.25rem !important;
+  max-width: 9.25rem !important;
+  height: 9.25rem !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+  transform: none !important;
+}
+
+.writer-brand__desktop {
+  display: block !important;
+  width: 9.5rem !important;
+  max-width: 9.5rem !important;
+  height: 9.5rem !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+}
+
+.writer-brand--compact .writer-brand__desktop {
+  width: 8.5rem !important;
+  max-width: 8.5rem !important;
+  height: 8.5rem !important;
+}
+
+.writer-brand__mobile {
+  width: 5rem !important;
+  height: 5rem !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+}
+
+.editors-topbar__inner,
+.reader-topbar__inner,
+.showcase-topbar__inner {
+  min-height: 6.25rem !important;
+}
+
+.editors-brand img,
+.reader-brand img,
+.showcase-brand img {
+  width: 4.5rem !important;
+  max-width: 4.5rem !important;
+  height: 4.5rem !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+}
+
+@media (max-width: 64rem) {
+  .brand {
+    min-height: 10.75rem !important;
+  }
+
+  .brand__logo--desktop {
+    width: 9.25rem !important;
+    max-width: 9.25rem !important;
+    height: 9.25rem !important;
+  }
+
+  .admin-brand a {
+    min-height: 9.75rem !important;
+  }
+
+  .admin-brand img {
+    width: 8.5rem !important;
+    max-width: 8.5rem !important;
+    height: 8.5rem !important;
+  }
+
+  .writer-brand__desktop {
+    width: 8.75rem !important;
+    max-width: 8.75rem !important;
+    height: 8.75rem !important;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .brand {
+    min-height: 9.75rem !important;
+  }
+
+  .brand__logo--desktop {
+    width: 8.25rem !important;
+    max-width: 8.25rem !important;
+    height: 8.25rem !important;
+  }
+
+  .auth-header {
+    min-height: 9rem !important;
+  }
+
+  .auth-brand {
+    width: 7.75rem !important;
+    min-width: 7.75rem !important;
+    min-height: 7.75rem !important;
+  }
+
+  .auth-brand img {
+    width: 6.75rem !important;
+    max-width: 6.75rem !important;
+    height: 6.75rem !important;
+  }
+
+  .admin-brand a {
+    min-height: 8.75rem !important;
+  }
+
+  .admin-brand img {
+    width: 7.75rem !important;
+    max-width: 7.75rem !important;
+    height: 7.75rem !important;
+  }
+
+  .writer-brand__desktop {
+    display: none !important;
+  }
+
+  .writer-brand__mobile {
+    display: block !important;
+    width: 5.25rem !important;
+    height: 5.25rem !important;
+  }
+
+  .editors-topbar__inner,
+  .reader-topbar__inner,
+  .showcase-topbar__inner {
+    min-height: 5.75rem !important;
+  }
+
+  .editors-brand img,
+  .reader-brand img,
+  .showcase-brand img {
+    width: 4rem !important;
+    max-width: 4rem !important;
+    height: 4rem !important;
+  }
+}
+
+/* ILKOKU_LOGO_FINAL_SIPS_END */

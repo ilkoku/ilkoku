@@ -38,6 +38,10 @@ const displayNames: Record<
   publisher: "İlkOku Yayınevi",
 };
 
+function valueOf(key: string) {
+  return process.env[key]?.trim() || "";
+}
+
 export function getEmailSender(
   channel: EmailChannel,
 ) {
@@ -46,7 +50,8 @@ export function getEmailSender(
 
   return {
     address:
-      process.env[key] ||
+      valueOf(key) ||
+      valueOf("SMTP_USER") ||
       addresses[channel],
     name: displayNames[channel],
   };
@@ -54,15 +59,34 @@ export function getEmailSender(
 
 export function getEmailReplyTo() {
   return (
-    process.env.MAIL_REPLY_TO ||
+    valueOf("MAIL_REPLY_TO") ||
+    valueOf("SMTP_USER") ||
     addresses.support
   );
 }
 
 export function getEmailDeliveryMode() {
+  const configuredMode =
+    valueOf("EMAIL_DELIVERY_MODE")
+      .toLowerCase();
+
+  if (configuredMode === "smtp") {
+    return "smtp";
+  }
+
+  if (configuredMode === "local") {
+    return "local";
+  }
+
+  const smtpReady = Boolean(
+    valueOf("SMTP_HOST") &&
+    valueOf("SMTP_USER") &&
+    valueOf("SMTP_PASSWORD"),
+  );
+
   return (
-    process.env.EMAIL_DELIVERY_MODE ===
-      "smtp"
+    process.env.NODE_ENV === "production" &&
+    smtpReady
       ? "smtp"
       : "local"
   );

@@ -6,19 +6,26 @@ import {
 } from "./session";
 
 export async function loginUser(input: {
+  deviceHash?: string;
   email: string;
+  ipAddress?: string | null;
   password: string;
+  userAgent?: string;
 }) {
-  const email = input.email.trim().toLowerCase();
+  const email =
+    input.email.trim().toLowerCase();
 
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
+  const user =
+    await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
 
   if (!user) {
-    throw new Error("INVALID_CREDENTIALS");
+    throw new Error(
+      "INVALID_CREDENTIALS",
+    );
   }
 
   const valid = await verifyPassword(
@@ -27,7 +34,9 @@ export async function loginUser(input: {
   );
 
   if (!valid) {
-    throw new Error("INVALID_CREDENTIALS");
+    throw new Error(
+      "INVALID_CREDENTIALS",
+    );
   }
 
   if (
@@ -35,39 +44,83 @@ export async function loginUser(input: {
     user.isBanned ||
     user.deletedAt !== null
   ) {
-    throw new Error("ACCOUNT_DISABLED");
+    throw new Error(
+      "ACCOUNT_DISABLED",
+    );
   }
 
-  const token = generateSessionToken();
+  const knownDevice =
+    input.deviceHash
+      ? await prisma.auditLog.findFirst({
+          where: {
+            action: "login",
+            actorId: user.id,
+            metadata: {
+              contains:
+                input.deviceHash,
+            },
+          },
+          select: {
+            id: true,
+          },
+        })
+      : null;
+  const isNewDevice = Boolean(
+    input.deviceHash &&
+      !knownDevice,
+  );
+  const loggedInAt = new Date();
+  const token =
+    generateSessionToken();
 
-  await prisma.$transaction(async (transaction) => {
-    await transaction.session.create({
-      data: {
-        tokenHash: hashSessionToken(token),
-        userId: user.id,
-        expiresAt:
-          new Date(
+  await prisma.$transaction(
+    async (transaction) => {
+      await transaction.session.create({
+        data: {
+          expiresAt: new Date(
             Date.now() +
               1000 * 60 * 60 * 24 * 30,
           ),
-      },
-    });
+          tokenHash:
+            hashSessionToken(token),
+          userId: user.id,
+        },
+      });
 
-    await transaction.auditLog.create({
-      data: {
-        action: "login",
-        actorId: user.id,
-        entityId: user.id,
-        entityType: "User",
-        metadata: JSON.stringify({
-          role: user.role,
-        }),
-      },
-    });
-  });
+      await transaction.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          lastLoginAt: loggedInAt,
+        },
+      });
+
+      await transaction.auditLog.create({
+        data: {
+          action: "login",
+          actorId: user.id,
+          entityId: user.id,
+          entityType: "User",
+          ipAddress:
+            input.ipAddress || null,
+          metadata: JSON.stringify({
+            deviceHash:
+              input.deviceHash || null,
+            isNewDevice,
+            role: user.role,
+          }),
+          userAgent:
+            input.userAgent || null,
+        },
+      });
+    },
+  );
 
   return {
-    user,
+    isNewDevice,
+    loggedInAt,
     token,
+    user,
   };
 }

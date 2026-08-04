@@ -73,14 +73,24 @@ export default async function PublisherLikesPage({
 
   const workFilters = normalizePublisherFavoriteFilters(params);
   const authorFilters = normalizePublisherFollowingFilters(params);
-  const data =
+  const workData =
     type === "work"
       ? await getPublisherLikedWorks(access.publisherId, workFilters)
-      : await getPublisherSavedAuthors(
+      : null;
+  const authorData =
+    type === "author"
+      ? await getPublisherSavedAuthors(
           access.publisherId,
           authorFilters,
           "like",
-        );
+        )
+      : null;
+  const data = workData ?? authorData;
+
+  if (!data) {
+    throw new Error("BEGENI_LISTESI_HAZIRLANAMADI");
+  }
+
   const query =
     type === "work"
       ? workFilters.query
@@ -169,21 +179,21 @@ export default async function PublisherLikesPage({
               Keşfe git
             </Link>
           </section>
-        ) : type === "work" ? (
+        ) : workData ? (
           <PublisherLikedWorksTable
             canMutate={canMutate}
             canViewPassport={canViewPassport}
             returnTo={returnTo}
-            rows={data.rows}
+            rows={workData.rows}
           />
-        ) : (
+        ) : authorData ? (
           <PublisherSavedAuthorsTable
             canMutate={canMutate}
             mode="like"
             returnTo={returnTo}
-            rows={data.rows}
+            rows={authorData.rows}
           />
-        )}
+        ) : null}
 
         <footer className="publisher-discovery-pagination">
           <span>

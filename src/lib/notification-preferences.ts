@@ -56,26 +56,53 @@ function normalize(row: NotificationPreferenceRow): NotificationPreferences {
   };
 }
 
+function logReadFailure(
+  operation: string,
+  error: unknown,
+) {
+  console.error(
+    "NOTIFICATION_PREFERENCES_READ_FAILED",
+    {
+      operation,
+      error:
+        error instanceof Error
+          ? error.message
+          : "UNKNOWN_ERROR",
+    },
+  );
+}
+
 export async function getNotificationPreferences(
   userId: string,
 ): Promise<NotificationPreferences> {
-  const rows = await prisma.$queryRaw<NotificationPreferenceRow[]>`
-    SELECT
-      socialEmail,
-      followedContentEmail,
-      editorWorkflowEmail,
-      publisherWorkflowEmail,
-      dailySummaryEmail,
-      weeklySummaryEmail,
-      productUpdatesEmail
-    FROM NotificationPreference
-    WHERE userId = ${userId}
-    LIMIT 1
-  `;
+  try {
+    const rows = await prisma.$queryRaw<NotificationPreferenceRow[]>`
+      SELECT
+        socialEmail,
+        followedContentEmail,
+        editorWorkflowEmail,
+        publisherWorkflowEmail,
+        dailySummaryEmail,
+        weeklySummaryEmail,
+        productUpdatesEmail
+      FROM NotificationPreference
+      WHERE userId = ${userId}
+      LIMIT 1
+    `;
 
-  return rows[0]
-    ? normalize(rows[0])
-    : defaultNotificationPreferences;
+    return rows[0]
+      ? normalize(rows[0])
+      : { ...defaultNotificationPreferences };
+  } catch (error) {
+    logReadFailure(
+      "get_by_user_id",
+      error,
+    );
+
+    return {
+      ...defaultNotificationPreferences,
+    };
+  }
 }
 
 export async function saveNotificationPreferences(
@@ -141,23 +168,32 @@ export async function shouldSendOptionalEmail(
   email: string,
   category: OptionalEmailCategory,
 ) {
-  const users = await prisma.$queryRaw<Array<{ id: string }>>`
-    SELECT id
-    FROM User
-    WHERE LOWER(email) = LOWER(${email.trim()})
-      AND status = 'active'
-      AND deletedAt IS NULL
-    LIMIT 1
-  `;
+  try {
+    const users = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id
+      FROM User
+      WHERE LOWER(email) = LOWER(${email.trim()})
+        AND status = 'active'
+        AND deletedAt IS NULL
+      LIMIT 1
+    `;
 
-  const user = users[0];
+    const user = users[0];
 
-  if (!user) {
+    if (!user) {
+      return true;
+    }
+
+    const preferences = await getNotificationPreferences(user.id);
+    return categoryEnabled(preferences, category);
+  } catch (error) {
+    logReadFailure(
+      "should_send_optional_email",
+      error,
+    );
+
     return true;
   }
-
-  const preferences = await getNotificationPreferences(user.id);
-  return categoryEnabled(preferences, category);
 }
 
 export function getOptionalEmailCategory(

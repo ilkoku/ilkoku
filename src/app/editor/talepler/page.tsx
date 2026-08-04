@@ -9,8 +9,9 @@ import {
 } from "@/features/editor-workspace/queries";
 
 export const metadata: Metadata = {
-  title: "Yeni İnceleme Talepleri | İlkOku",
-  description: "Yazarların profesyonel editör incelemesi talep ettiği eserler.",
+  title: "Genel Editör Havuzu | İlkOku",
+  description:
+    "Birinci ve ikinci editör bekleyen profesyonel inceleme görevleri.",
 };
 export const dynamic = "force-dynamic";
 
@@ -25,13 +26,14 @@ export default async function EditorReviewRequestsPage() {
     <AppShell profile={profile}>
       <div className="editor-workspace">
         <EditorPageHeader
-          description="Yazarların profesyonel inceleme talebi oluşturduğu ve henüz bir editöre atanmamış eserler."
-          title="Yeni İnceleme Talepleri"
+          description="İlkOku'daki profesyonel inceleme taleplerini görev aşamasına göre görüntüleyin. Bir görevi ilk alan editörün ataması güvenli biçimde kilitlenir."
+          title="Genel Editör Havuzu"
         />
+
         <section className="editor-review-list">
           <EditorPageHeader
             description="Henüz birinci editör tarafından alınmamış profesyonel inceleme talepleri."
-            title="Birinci Editör Havuzu"
+            title="1. Editör Havuzu"
           />
 
           {works.length === 0 ? (
@@ -51,13 +53,15 @@ export default async function EditorReviewRequestsPage() {
         <section className="editor-review-list">
           <EditorPageHeader
             description="Birinci incelemesi tamamlanmış ve bağımsız ikinci editör bekleyen eserler."
-            title="İkinci Editör Havuzu"
+            title="2. Editör Havuzu"
           />
 
           {secondEditorWorks.length === 0 ? (
             <div className="editor-empty">
               <h2>Bekleyen ikinci editör görevi bulunmuyor</h2>
-              <p>Genel havuza bırakılan ikinci inceleme görevleri burada listelenecek.</p>
+              <p>
+                Birinci editör tarafından genel havuza bırakılan ikinci inceleme görevleri burada listelenecek.
+              </p>
             </div>
           ) : (
             <EditorWorksTable

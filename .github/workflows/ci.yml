@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - test-branch-chatgpt-2
+      - deploy/2026-08-04-production
   pull_request:
     branches:
       - main

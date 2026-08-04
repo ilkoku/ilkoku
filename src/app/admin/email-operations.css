@@ -1,0 +1,207 @@
+.admin-email-operations-page {
+  display: grid;
+  gap: 24px;
+}
+
+.admin-email-operations-health {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-email-operations-health span {
+  color: var(--color-text-muted, #8f98ac);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-email-operations-health strong {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.admin-email-operations-health[data-status="healthy"] strong {
+  background: rgb(34 197 94 / 14%);
+  border-color: rgb(74 222 128 / 24%);
+  color: #86efac;
+}
+
+.admin-email-operations-health[data-status="warning"] strong {
+  background: rgb(245 158 11 / 13%);
+  border-color: rgb(251 191 36 / 25%);
+  color: #fcd34d;
+}
+
+.admin-email-operations-health[data-status="critical"] strong {
+  background: rgb(239 68 68 / 14%);
+  border-color: rgb(248 113 113 / 25%);
+  color: #fca5a5;
+}
+
+.admin-email-operations-summary {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.admin-email-operations-summary article {
+  background:
+    radial-gradient(circle at 100% 0, rgb(124 58 237 / 10%), transparent 8rem),
+    linear-gradient(155deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 2%));
+  border: 1px solid rgb(148 163 184 / 16%);
+  border-radius: 18px;
+  box-shadow: 0 18px 42px rgb(0 0 0 / 16%);
+  display: grid;
+  gap: 7px;
+  padding: 18px;
+}
+
+.admin-email-operations-summary span,
+.admin-email-operations-summary small {
+  color: #8f99ad;
+}
+
+.admin-email-operations-summary strong {
+  color: #eef2f8;
+  font-size: 30px;
+}
+
+.admin-email-operations-rules .admin-panel__heading > a {
+  color: #c4b5fd;
+  font-weight: 750;
+}
+
+.admin-email-operations-rule-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-email-operations-rule-grid article {
+  background: rgb(255 255 255 / 3%);
+  border: 1px solid rgb(148 163 184 / 10%);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.admin-email-operations-rule-grid strong {
+  color: #eef2f8;
+}
+
+.admin-email-operations-rule-grid p {
+  color: #8f99ad;
+  line-height: 1.55;
+  margin: 8px 0 0;
+}
+
+.admin-email-operations-table td {
+  vertical-align: top;
+}
+
+.admin-email-operations-table td strong,
+.admin-email-operations-table td small {
+  display: block;
+}
+
+.admin-email-operations-table td small {
+  color: #8f99ad;
+  line-height: 1.45;
+  margin-top: 4px;
+  max-width: 280px;
+}
+
+.admin-email-operations-status {
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+.admin-email-operations-status[data-status="failed"] {
+  background: rgb(239 68 68 / 14%);
+  color: #fca5a5;
+}
+
+.admin-email-operations-status[data-status="stale"] {
+  background: rgb(245 158 11 / 14%);
+  color: #fcd34d;
+}
+
+.admin-email-operations-table strong[data-retry-status="sent"] {
+  color: #86efac;
+}
+
+.admin-email-operations-table strong[data-retry-status="failed"] {
+  color: #fca5a5;
+}
+
+.admin-email-operations-table strong[data-retry-status="pending"] {
+  color: #fcd34d;
+}
+
+.admin-email-retry-form {
+  display: grid;
+  gap: 7px;
+  min-width: 180px;
+}
+
+.admin-email-retry-form button {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgb(109 40 217 / 22%);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 750;
+  min-height: 40px;
+  padding: 9px 13px;
+}
+
+.admin-email-retry-form button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.admin-email-retry-form small.is-success {
+  color: #86efac;
+}
+
+.admin-email-retry-form small.is-error {
+  color: #fca5a5;
+}
+
+.admin-email-operations-blocked {
+  display: grid;
+  gap: 4px;
+  max-width: 230px;
+}
+
+.admin-email-operations-blocked strong {
+  color: #fcd34d;
+}
+
+@media (max-width: 1280px) {
+  .admin-email-operations-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-email-operations-rule-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-email-operations-health {
+    align-items: flex-start;
+  }
+
+  .admin-email-operations-summary,
+  .admin-email-operations-rule-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
+  sendAuthorPublisherInterestEmail,
+} from "@/lib/email/publisher-engagement-emails";
+import { prisma } from "@/lib/prisma";
+import {
   setPublisherAuthorFollowV2,
   setPublisherWorkLikeV2,
 } from "./engagement-repository";
@@ -40,6 +44,126 @@ function pathWithoutQuery(path: string) {
     path,
     "http://ilkoku.local",
   ).pathname;
+}
+
+function logInterestFailure(
+  event: string,
+  entityId: string,
+  error: unknown,
+) {
+  console.error(
+    "PUBLISHER_INTEREST_NOTIFICATION_FAILED",
+    {
+      entityId,
+      event,
+      error:
+        error instanceof Error
+          ? error.message
+          : "UNKNOWN_ERROR",
+    },
+  );
+}
+
+async function notifyAuthorWorkLiked(
+  workId: string,
+) {
+  try {
+    const work = await prisma.work.findUnique({
+      where: {
+        id: workId,
+      },
+      select: {
+        author: {
+          select: {
+            email: true,
+            emailVerified: true,
+            fullName: true,
+            id: true,
+          },
+        },
+        id: true,
+        slug: true,
+        title: true,
+      },
+    });
+
+    if (!work) return;
+
+    await prisma.notification.create({
+      data: {
+        message:
+          `${work.title} adlı eseriniz bir yayınevi tarafından beğenildi. Yayınevi kimliği bu aşamada anonim tutulur.`,
+        relatedEntityId: work.id,
+        relatedEntityType: "work",
+        title: "Bir yayınevi eserinizi beğendi",
+        type: "system",
+        userId: work.author.id,
+      },
+    });
+
+    if (work.author.emailVerified) {
+      await sendAuthorPublisherInterestEmail({
+        email: work.author.email,
+        fullName: work.author.fullName,
+        kind: "work_liked",
+        workSlug: work.slug,
+        workTitle: work.title,
+      });
+    }
+  } catch (error) {
+    logInterestFailure(
+      "publisher_work_liked",
+      workId,
+      error,
+    );
+  }
+}
+
+async function notifyAuthorFollowed(
+  authorId: string,
+) {
+  try {
+    const author = await prisma.user.findUnique({
+      where: {
+        id: authorId,
+      },
+      select: {
+        email: true,
+        emailVerified: true,
+        fullName: true,
+        id: true,
+      },
+    });
+
+    if (!author) return;
+
+    await prisma.notification.create({
+      data: {
+        message:
+          "Bir yayınevi yazar profilinizi takip etmeye başladı. Yayınevi kimliği bu aşamada anonim tutulur.",
+        relatedEntityId: author.id,
+        relatedEntityType: "user",
+        title:
+          "Bir yayınevi sizi takip etmeye başladı",
+        type: "system",
+        userId: author.id,
+      },
+    });
+
+    if (author.emailVerified) {
+      await sendAuthorPublisherInterestEmail({
+        email: author.email,
+        fullName: author.fullName,
+        kind: "author_followed",
+      });
+    }
+  } catch (error) {
+    logInterestFailure(
+      "publisher_author_followed",
+      authorId,
+      error,
+    );
+  }
 }
 
 export async function togglePublisherWorkLikeAction(
@@ -92,6 +216,13 @@ export async function togglePublisherWorkLikeAction(
     );
   }
 
+  if (
+    result.active &&
+    result.changed
+  ) {
+    await notifyAuthorWorkLiked(workId);
+  }
+
   revalidatePath(
     pathWithoutQuery(returnPath),
   );
@@ -102,10 +233,7 @@ export async function togglePublisherWorkLikeAction(
     "/yayinevi/favorilerim",
   );
 
-  if (
-    result.status === "ok" &&
-    result.slug
-  ) {
+  if (result.slug) {
     revalidatePath(`/kitap/${result.slug}`);
   }
 
@@ -161,6 +289,13 @@ export async function togglePublisherAuthorFollowAction(
     throw new Error(
       "Takip edilecek public yazar bulunamadı.",
     );
+  }
+
+  if (
+    result.active &&
+    result.changed
+  ) {
+    await notifyAuthorFollowed(authorId);
   }
 
   revalidatePath(

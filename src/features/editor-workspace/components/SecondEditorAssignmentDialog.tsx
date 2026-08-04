@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
-import { sendToSecondEditorAction } from "../second-editor.actions";
+import { sendToSecondEditorAction } from "../second-editor-email.actions";
 import { initialEditorActionState } from "../types";
 
 type AvailableEditor = {

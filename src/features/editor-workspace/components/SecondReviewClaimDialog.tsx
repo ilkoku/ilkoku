@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
-import { claimSecondEditorReviewAction } from "../second-editor.actions";
+import { claimSecondEditorReviewAction } from "../second-editor-email.actions";
 import { initialEditorActionState } from "../types";
 
 export function SecondReviewClaimDialog({

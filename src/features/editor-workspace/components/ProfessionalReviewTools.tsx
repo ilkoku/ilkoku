@@ -11,7 +11,7 @@ import {
 import {
   completeSecondEditorReviewAction,
   saveSecondEditorReviewDraftAction,
-} from "../second-editor.actions";
+} from "../second-editor-email.actions";
 import { initialEditorActionState } from "../types";
 
 type Draft = {

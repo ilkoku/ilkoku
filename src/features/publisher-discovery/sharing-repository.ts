@@ -176,16 +176,18 @@ async function resolveShareEntity(
     },
   });
 
-  return author
-    ? {
-        authorId: author.id,
-        entityKind,
-        entityTitle: publicAuthorName(author),
-        targetPath:
-          `/kesfet?arama=${encodeURIComponent(publicAuthorName(author))}`,
-        workId: null,
-      }
-    : null;
+  if (!author) return null;
+
+  const authorName = publicAuthorName(author);
+
+  return {
+    authorId: author.id,
+    entityKind,
+    entityTitle: authorName,
+    targetPath:
+      `/kesfet?arama=${encodeURIComponent(authorName)}`,
+    workId: null,
+  };
 }
 
 export async function createPublisherDiscoveryShare(input: {
@@ -246,7 +248,10 @@ export async function createPublisherDiscoveryShare(input: {
     const recipients = await prisma.publisherMembership.findMany({
       where: {
         active: true,
-        id: { in: recipientIds, not: membership.id },
+        id: {
+          in: recipientIds,
+          not: membership.id,
+        },
         publisherId: membership.publisherId,
         user: {
           deletedAt: null,
@@ -323,10 +328,15 @@ export async function createPublisherDiscoveryShare(input: {
       return created;
     });
 
-    return { shareId: share.id, status: "created" };
+    return {
+      shareId: share.id,
+      status: "created",
+    };
   }
 
-  const recipientEmail = input.recipientEmail?.trim().toLowerCase() ?? "";
+  const recipientEmail =
+    input.recipientEmail?.trim().toLowerCase() ?? "";
+
   if (!validEmail(recipientEmail)) {
     return { status: "invalid_email" };
   }
@@ -382,10 +392,16 @@ export async function createPublisherDiscoveryShare(input: {
       shareId: share.id,
     });
 
-    return { shareId: share.id, status: "email_failed" };
+    return {
+      shareId: share.id,
+      status: "email_failed",
+    };
   }
 
-  return { shareId: share.id, status: "created" };
+  return {
+    shareId: share.id,
+    status: "created",
+  };
 }
 
 export interface PublisherSharedItem {
@@ -404,6 +420,75 @@ export interface PublisherSharedItem {
     slug: string;
     title: string;
   } | null;
+}
+
+const sharedItemSelect = {
+  author: {
+    select: {
+      displayName: true,
+      id: true,
+      publicId: true,
+      username: true,
+    },
+  },
+  createdAt: true,
+  createdBy: {
+    select: {
+      displayName: true,
+      fullName: true,
+    },
+  },
+  id: true,
+  note: true,
+  work: {
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+    },
+  },
+} as const;
+
+function mapShareRecord(
+  record: {
+    author: {
+      displayName: string | null;
+      id: string;
+      publicId: string;
+      username: string | null;
+    } | null;
+    createdAt: Date;
+    createdBy: {
+      displayName: string | null;
+      fullName: string;
+    } | null;
+    id: string;
+    note: string;
+    work: {
+      id: string;
+      slug: string;
+      title: string;
+    } | null;
+  },
+  readAt: Date | null,
+): PublisherSharedItem {
+  return {
+    author: record.author
+      ? {
+          id: record.author.id,
+          name: publicAuthorName(record.author),
+          publicId: record.author.publicId,
+        }
+      : null,
+    createdAt: record.createdAt.toISOString(),
+    createdByName: record.createdBy
+      ? displayName(record.createdBy)
+      : "Yayınevi ekibi",
+    id: record.id,
+    note: record.note,
+    readAt: readAt?.toISOString() ?? null,
+    work: record.work,
+  };
 }
 
 export async function getPublisherSharedItems(
@@ -426,120 +511,50 @@ export async function getPublisherSharedItems(
     return null;
   }
 
-  const adminReadOnly = isPublisherAdminReadOnlyMembership(membership);
+  const adminReadOnly =
+    isPublisherAdminReadOnlyMembership(membership);
 
-  const records = adminReadOnly
-    ? await prisma.publisherDiscoveryShare.findMany({
-        where: {
-          channel: "team",
-          publisherId: membership.publisherId,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-        select: {
-          author: {
-            select: {
-              displayName: true,
-              id: true,
-              publicId: true,
-              username: true,
-            },
-          },
-          createdAt: true,
-          createdBy: {
-            select: {
-              displayName: true,
-              fullName: true,
-            },
-          },
-          id: true,
-          note: true,
-          work: {
-            select: {
-              id: true,
-              slug: true,
-              title: true,
-            },
-          },
-        },
-      })
-    : await prisma.publisherDiscoveryShareRecipient.findMany({
-        where: { membershipId: membership.id },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-        select: {
-          readAt: true,
-          share: {
-            select: {
-              author: {
-                select: {
-                  displayName: true,
-                  id: true,
-                  publicId: true,
-                  username: true,
-                },
-              },
-              createdAt: true,
-              createdBy: {
-                select: {
-                  displayName: true,
-                  fullName: true,
-                },
-              },
-              id: true,
-              note: true,
-              work: {
-                select: {
-                  id: true,
-                  slug: true,
-                  title: true,
-                },
-              },
-            },
-          },
-        },
-      });
+  if (adminReadOnly) {
+    const records = await prisma.publisherDiscoveryShare.findMany({
+      where: {
+        channel: "team",
+        publisherId: membership.publisherId,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: sharedItemSelect,
+    });
 
-  const items: PublisherSharedItem[] = adminReadOnly
-    ? records.map((record) => ({
-        author: record.author
-          ? {
-              id: record.author.id,
-              name: publicAuthorName(record.author),
-              publicId: record.author.publicId,
-            }
-          : null,
-        createdAt: record.createdAt.toISOString(),
-        createdByName: record.createdBy
-          ? displayName(record.createdBy)
-          : "Yayınevi ekibi",
-        id: record.id,
-        note: record.note,
-        readAt: null,
-        work: record.work,
-      }))
-    : records.map((record) => ({
-        author: record.share.author
-          ? {
-              id: record.share.author.id,
-              name: publicAuthorName(record.share.author),
-              publicId: record.share.author.publicId,
-            }
-          : null,
-        createdAt: record.share.createdAt.toISOString(),
-        createdByName: record.share.createdBy
-          ? displayName(record.share.createdBy)
-          : "Yayınevi ekibi",
-        id: record.share.id,
-        note: record.share.note,
-        readAt: record.readAt?.toISOString() ?? null,
-        work: record.share.work,
-      }));
+    return {
+      adminReadOnly: true,
+      companyName: membership.publisher.companyName,
+      items: records.map((record) =>
+        mapShareRecord(record, null),
+      ),
+    };
+  }
+
+  const recipientRecords =
+    await prisma.publisherDiscoveryShareRecipient.findMany({
+      where: {
+        membershipId: membership.id,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        readAt: true,
+        share: {
+          select: sharedItemSelect,
+        },
+      },
+    });
 
   return {
-    adminReadOnly,
+    adminReadOnly: false,
     companyName: membership.publisher.companyName,
-    items,
+    items: recipientRecords.map((record) =>
+      mapShareRecord(record.share, record.readAt),
+    ),
   };
 }
 
@@ -563,14 +578,15 @@ export async function markPublisherSharedItemRead(input: {
     return false;
   }
 
-  const updated = await prisma.publisherDiscoveryShareRecipient.updateMany({
-    where: {
-      membershipId: membership.id,
-      readAt: null,
-      shareId: input.shareId,
-    },
-    data: { readAt: new Date() },
-  });
+  const updated =
+    await prisma.publisherDiscoveryShareRecipient.updateMany({
+      where: {
+        membershipId: membership.id,
+        readAt: null,
+        shareId: input.shareId,
+      },
+      data: { readAt: new Date() },
+    });
 
   return updated.count === 1;
 }

@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { authContent } from "@/content";
-import { updatePasswordAction } from "../actions";
+import { updatePasswordAction } from "../password-security-actions";
 import { initialAuthState } from "../state";
 
 export function UpdatePasswordForm({ token }: { token: string }) {

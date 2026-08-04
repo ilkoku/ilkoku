@@ -12,10 +12,13 @@ import { getCurrentAdminRoleView } from "@/features/admin-role-view/cookie";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { PublisherApplicationCompletionForm } from "@/features/publisher-applications/components/PublisherApplicationCompletionForm";
 import { getPublisherApplicationDefaults } from "@/features/publisher-applications/schema";
+import { NotificationPreferencesForm } from "@/features/profile/components/NotificationPreferencesForm";
 import { PasswordForm } from "@/features/profile/components/PasswordForm";
 import { ProfileForm } from "@/features/profile/components/ProfileForm";
 import { getProfilePageData } from "@/features/profile/queries";
+import { getNotificationPreferences } from "@/lib/notification-preferences";
 import "@/features/profile/profile.css";
+import "@/features/profile/notification-preferences.css";
 
 export const metadata: Metadata = {
   title: "Hesabım | İlkOku",
@@ -54,7 +57,10 @@ const formatDate = (value: Date | null) => value
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ sekme?: string }> }) {
   const profile = await getCurrentProfile({ ignoreAdminRoleView: true });
   if (!profile) redirect("/giris?sonraki=/hesabim");
-  const data = await getProfilePageData(profile.id);
+  const [data, notificationPreferences] = await Promise.all([
+    getProfilePageData(profile.id),
+    getNotificationPreferences(profile.id),
+  ]);
   if (!data) redirect("/giris?sonraki=/hesabim");
   const adminRoleView = profile.role === "admin"
     ? await getCurrentAdminRoleView()
@@ -126,6 +132,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       </section>
 
       <section className="profile-card"><div className="profile-card__heading"><div><p>Kişisel bilgiler</p><h2>Profil bilgileri</h2></div></div><ProfileForm data={data} /></section>
+      <section className="profile-card" id="bildirim-tercihleri"><div className="profile-card__heading"><div><p>E-posta bildirimleri</p><h2>Bildirim tercihleri</h2></div></div><NotificationPreferencesForm preferences={notificationPreferences} /></section>
       <div className="profile-page__lower-grid"><section className="profile-card"><div className="profile-card__heading"><div><p>Güvenlik</p><h2>Şifre değiştir</h2></div></div><PasswordForm /></section><section className="profile-card profile-card--session"><div className="profile-card__heading"><div><p>Oturum</p><h2>Hesaptan çıkış</h2></div></div><p>Bu cihazdaki İlkOku oturumunuzu güvenli şekilde sonlandırır.</p><form action={logoutAction}><button className="button button--outline" type="submit"><span className="button__label">Oturumu kapat</span></button></form></section></div>
     </main>
   </div>;

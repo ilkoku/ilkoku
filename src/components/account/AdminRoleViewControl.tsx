@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   adminRoleViewLabels,
   adminRoleViewRoles,
@@ -38,9 +37,7 @@ export function AdminRoleViewControl({
             Admin
           </button>
         </form>
-        {adminRoleViewRoles
-          .filter((role) => role !== "publisher")
-          .map((role) => (
+        {adminRoleViewRoles.map((role) => (
           <form action={setAdminRoleViewAction} key={role}>
             <input name="role" type="hidden" value={role} />
             <button
@@ -52,13 +49,6 @@ export function AdminRoleViewControl({
             </button>
           </form>
         ))}
-
-        <Link
-          className={styles.choice}
-          href="/admin/yayinevleri"
-        >
-          Yayınevi
-        </Link>
       </div>
     </section>
   );

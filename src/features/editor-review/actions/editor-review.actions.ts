@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import {
+  sendAuthorReviewRequestReceivedEmail,
+} from "@/lib/email/editor-emails";
 import { prisma } from "@/lib/prisma";
 
 export async function submitForEditorAction(
@@ -25,13 +28,37 @@ export async function submitForEditorAction(
 
   const submitted = await prisma.$transaction(
     async (transaction) => {
+      const work = await transaction.work.findFirst({
+        where: {
+          archivedAt: null,
+          authorId: user.id,
+          editorReviewStatus: "not_requested",
+          id: workId,
+          status: "published",
+        },
+        select: {
+          author: {
+            select: {
+              email: true,
+              fullName: true,
+            },
+          },
+          id: true,
+          title: true,
+        },
+      });
+
+      if (!work) {
+        return null;
+      }
+
       const updated = await transaction.work.updateMany({
         where: {
-          id: workId,
-          authorId: user.id,
           archivedAt: null,
-          status: "published",
+          authorId: user.id,
           editorReviewStatus: "not_requested",
+          id: work.id,
+          status: "published",
         },
         data: {
           assignedAt: null,
@@ -43,21 +70,21 @@ export async function submitForEditorAction(
       });
 
       if (updated.count !== 1) {
-        return false;
+        return null;
       }
 
       await transaction.editorReviewAssignment.upsert({
         where: {
           workId_stage: {
             stage: "first",
-            workId,
+            workId: work.id,
           },
         },
         create: {
           source: "pool",
           stage: "first",
           status: "waiting",
-          workId,
+          workId: work.id,
         },
         update: {
           assignedAt: null,
@@ -70,7 +97,7 @@ export async function submitForEditorAction(
         },
       });
 
-      return true;
+      return work;
     },
   );
 
@@ -78,9 +105,31 @@ export async function submitForEditorAction(
     throw new Error("WORK_NOT_FOUND");
   }
 
+  try {
+    await sendAuthorReviewRequestReceivedEmail({
+      email: submitted.author.email,
+      fullName: submitted.author.fullName,
+      workId: submitted.id,
+      workTitle: submitted.title,
+    });
+  } catch (emailError) {
+    console.error(
+      "EDITOR_EMAIL_DELIVERY_FAILED",
+      {
+        event: "editor_review_requested",
+        workId: submitted.id,
+        error:
+          emailError instanceof Error
+            ? emailError.message
+            : "UNKNOWN_ERROR",
+      },
+    );
+  }
+
   revalidatePath("/yazar");
   revalidatePath("/eserlerim");
   revalidatePath("/yazmaya-devam");
+  revalidatePath("/geri-bildirimler");
   revalidatePath("/editor/kesfet");
   revalidatePath("/editor/talepler");
 }

@@ -1,4 +1,7 @@
 import { sendVerificationEmail } from "@/lib/email/auth-emails";
+import {
+  sendEditorInviteAcceptedEmail,
+} from "@/lib/email/editor-emails";
 import { allocatePublicId } from "@/lib/public-id";
 import { prisma } from "@/lib/prisma";
 import { createHash, randomBytes } from "node:crypto";
@@ -54,7 +57,18 @@ export async function registerUser(input: {
         },
         select: {
           id: true,
+          invitedBy: {
+            select: {
+              email: true,
+              fullName: true,
+            },
+          },
           invitedById: true,
+          work: {
+            select: {
+              title: true,
+            },
+          },
           workId: true,
         },
       })
@@ -178,6 +192,17 @@ export async function registerUser(input: {
           usedAt: new Date(),
         },
       });
+
+      await transaction.notification.create({
+        data: {
+          message: `${createdUser.fullName}, ${editorInvite.work.title} adlı eser için gönderdiğiniz editör davetini kabul etti.`,
+          relatedEntityId: editorInvite.workId,
+          relatedEntityType: "work",
+          title: "Editör daveti kabul edildi",
+          type: "editor_recommendation",
+          userId: editorInvite.invitedById,
+        },
+      });
     }
 
     await transaction.session.create({
@@ -222,6 +247,30 @@ export async function registerUser(input: {
       "EMAIL_VERIFICATION_DELIVERY_FAILED",
       emailError,
     );
+  }
+
+  if (editorInvite) {
+    try {
+      await sendEditorInviteAcceptedEmail({
+        acceptedEditorName: user.fullName,
+        email: editorInvite.invitedBy.email,
+        inviterName: editorInvite.invitedBy.fullName,
+        workId: editorInvite.workId,
+        workTitle: editorInvite.work.title,
+      });
+    } catch (emailError) {
+      console.error(
+        "EDITOR_EMAIL_DELIVERY_FAILED",
+        {
+          event: "external_editor_invitation_accepted",
+          workId: editorInvite.workId,
+          error:
+            emailError instanceof Error
+              ? emailError.message
+              : "UNKNOWN_ERROR",
+        },
+      );
+    }
   }
 
   return {

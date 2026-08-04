@@ -130,7 +130,7 @@ function WorkAction({
     return (
       <Link
         className="editor-table-action editor-table-action--primary"
-        href="/editor/incelemeler"
+        href="/editor/incelemeler?asama=birinci"
       >
         Devam Et
       </Link>
@@ -141,7 +141,7 @@ function WorkAction({
     return (
       <Link
         className="editor-table-action"
-        href="/editor/incelemeler"
+        href="/editor/incelemeler?durum=tamamlanan"
       >
         Raporu Gör
       </Link>

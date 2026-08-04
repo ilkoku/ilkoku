@@ -7,9 +7,12 @@ import { SecondEditorAssignmentDialog } from "@/features/editor-workspace/compon
 import { countWords } from "@/features/editor-workspace/eligibility";
 import {
   getAvailableSecondEditors,
-  getEditorReviews,
   type EditorReviewListStatus,
 } from "@/features/editor-workspace/queries";
+import {
+  getEditorReviewsByStage,
+  type EditorReviewStage,
+} from "@/features/editor-workspace/stage-queries";
 
 export const metadata: Metadata = {
   title: "İncelemelerim | İlkOku",
@@ -17,7 +20,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 type EditorReviewsPageProps = {
-  searchParams: Promise<{ durum?: string }>;
+  searchParams: Promise<{
+    asama?: string;
+    durum?: string;
+  }>;
 };
 
 function formatDate(value: Date | null) {
@@ -36,45 +42,94 @@ function getStatusLabel(status: string) {
   return "İnceleme devam ediyor";
 }
 
+function pageState(input: {
+  stage: EditorReviewStage;
+  status: EditorReviewListStatus;
+}) {
+  if (input.status === "completed") {
+    return {
+      description:
+        "Birinci veya ikinci editör olarak sonuçlandırdığınız profesyonel incelemeleri ve teslim edilen raporları görüntüleyin.",
+      emptyDescription:
+        "Teslim ettiğiniz profesyonel incelemeler burada listelenecek.",
+      emptyTitle: "Tamamlanan inceleme bulunmuyor",
+      title: "Tamamlanan İncelemeler",
+    };
+  }
+
+  if (input.stage === "second") {
+    return {
+      description:
+        "Belirli olarak atandığınız veya genel havuzdan aldığınız bağımsız ikinci editör görevlerini yönetin.",
+      emptyDescription:
+        "Genel Editör Havuzu'ndaki ikinci editör görevlerinden birini alabilir veya size yapılan atamayı bekleyebilirsiniz.",
+      emptyTitle: "Aktif ikinci editör görevi bulunmuyor",
+      title: "2. Editör İncelemelerim",
+    };
+  }
+
+  return {
+    description:
+      "Genel Editör Havuzu'ndan aldığınız birinci editör görevlerini, rapor teslimini ve ikinci editöre gönderim sürecini yönetin.",
+    emptyDescription:
+      "Genel Editör Havuzu'ndan uygun bir birinci editör görevini incelemeye alabilirsiniz.",
+    emptyTitle: "Aktif birinci editör görevi bulunmuyor",
+    title: "1. Editör İncelemelerim",
+  };
+}
+
 export default async function EditorReviewsPage({
   searchParams,
 }: EditorReviewsPageProps) {
-  const { durum } = await searchParams;
-  const view: EditorReviewListStatus =
-    durum === "tamamlanan" ? "completed" : "active";
-  const isCompleted = view === "completed";
+  const parameters = await searchParams;
+  const status: EditorReviewListStatus =
+    parameters.durum === "tamamlanan"
+      ? "completed"
+      : "active";
+  const stage: EditorReviewStage =
+    status === "completed"
+      ? "all"
+      : parameters.asama === "ikinci"
+        ? "second"
+        : "first";
+  const isCompleted = status === "completed";
+  const state = pageState({ stage, status });
+  const currentPath = isCompleted
+    ? "/editor/incelemeler?durum=tamamlanan"
+    : stage === "second"
+      ? "/editor/incelemeler?asama=ikinci"
+      : "/editor/incelemeler?asama=birinci";
 
-  const profile = await requireEditorProfile(
-    isCompleted
-      ? "/editor/incelemeler?durum=tamamlanan"
-      : "/editor/incelemeler",
-  );
+  const profile = await requireEditorProfile(currentPath);
   const [works, availableSecondEditors] = await Promise.all([
-    getEditorReviews(profile.id, view),
-    isCompleted
-      ? Promise.resolve([])
-      : getAvailableSecondEditors(profile.id),
+    getEditorReviewsByStage(profile.id, status, stage),
+    !isCompleted && stage === "first"
+      ? getAvailableSecondEditors(profile.id)
+      : Promise.resolve([]),
   ]);
 
   return (
     <AppShell profile={profile}>
       <div className="editor-workspace">
         <EditorPageHeader
-          description={
-            isCompleted
-              ? "Sonuçlandırdığınız profesyonel incelemeleri ve teslim edilen raporları görüntüleyin."
-              : "Üzerinize aldığınız ve incelemesi devam eden eserleri yönetin."
-          }
-          title={isCompleted ? "Tamamlanan İncelemeler" : "İncelemeye Aldıklarım"}
+          description={state.description}
+          title={state.title}
         />
 
         <nav aria-label="İnceleme görünümü" className="editor-review-tabs">
           <Link
-            aria-current={!isCompleted ? "page" : undefined}
-            className={!isCompleted ? "is-active" : undefined}
-            href="/editor/incelemeler"
+            aria-current={!isCompleted && stage === "first" ? "page" : undefined}
+            className={!isCompleted && stage === "first" ? "is-active" : undefined}
+            href="/editor/incelemeler?asama=birinci"
           >
-            Devam Edenler
+            1. Editör
+          </Link>
+          <Link
+            aria-current={!isCompleted && stage === "second" ? "page" : undefined}
+            className={!isCompleted && stage === "second" ? "is-active" : undefined}
+            href="/editor/incelemeler?asama=ikinci"
+          >
+            2. Editör
           </Link>
           <Link
             aria-current={isCompleted ? "page" : undefined}
@@ -99,7 +154,6 @@ export default async function EditorReviewsPage({
 
             const isFirstEditor =
               work.assignedEditorId === profile.id;
-
             const isSecondEditor =
               currentAssignment?.stage === "second";
 
@@ -145,7 +199,11 @@ export default async function EditorReviewsPage({
                     <strong>
                       {work.chapters.length.toLocaleString("tr-TR")} yayımlanmış bölüm
                     </strong>
-                    <p>Notlarınızı tamamlayıp inceleme raporunu teslim edin.</p>
+                    <p>
+                      {stage === "second"
+                        ? "Bağımsız ikinci editör raporunuzu tamamlayıp teslim edin."
+                        : "Birinci editör raporunuzu tamamlayıp ikinci editör aşamasını başlatın."}
+                    </p>
                   </div>
                 )}
 
@@ -185,18 +243,10 @@ export default async function EditorReviewsPage({
 
         {works.length === 0 && (
           <div className="editor-empty">
-            <h2>
-              {isCompleted
-                ? "Tamamlanan inceleme bulunmuyor"
-                : "Devam eden inceleme bulunmuyor"}
-            </h2>
-            <p>
-              {isCompleted
-                ? "Teslim ettiğiniz profesyonel incelemeler burada listelenecek."
-                : "Genel Editör Havuzu'ndan uygun bir eseri incelemeye alabilirsiniz."}
-            </p>
+            <h2>{state.emptyTitle}</h2>
+            <p>{state.emptyDescription}</p>
             {!isCompleted && (
-              <Link className="button button--outline" href="/editor/kesfet">
+              <Link className="button button--outline" href="/editor/talepler">
                 Genel Editör Havuzuna Git
               </Link>
             )}

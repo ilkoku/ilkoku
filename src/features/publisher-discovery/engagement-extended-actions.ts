@@ -211,7 +211,11 @@ export async function togglePublisherWorkFavoriteAction(
     throw new Error("Favoriye alınacak public eser bulunamadı.");
   }
 
-  if (result.active && result.changed) {
+  if (
+    result.status === "ok" &&
+    result.active &&
+    result.changed
+  ) {
     await notifyWorkInterest(workId, "work_favorited");
   }
 
@@ -254,7 +258,11 @@ export async function togglePublisherAuthorLikeAction(
     throw new Error("Beğenilecek public yazar bulunamadı.");
   }
 
-  if (result.active && result.changed) {
+  if (
+    result.status === "ok" &&
+    result.active &&
+    result.changed
+  ) {
     await notifyAuthorInterest(authorId, "author_liked");
   }
 
@@ -297,7 +305,11 @@ export async function togglePublisherAuthorFavoriteAction(
     throw new Error("Favoriye alınacak public yazar bulunamadı.");
   }
 
-  if (result.active && result.changed) {
+  if (
+    result.status === "ok" &&
+    result.active &&
+    result.changed
+  ) {
     await notifyAuthorInterest(authorId, "author_favorited");
   }
 

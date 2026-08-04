@@ -1,0 +1,122 @@
+.notification-preferences {
+  display: grid;
+  gap: 1rem;
+}
+
+.notification-preferences__locked,
+.notification-preferences__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.notification-preferences__locked {
+  border-color: rgba(201, 161, 90, 0.24);
+  background: rgba(201, 161, 90, 0.07);
+}
+
+.notification-preferences__locked > div,
+.notification-preferences__item > span {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.notification-preferences__locked strong,
+.notification-preferences__item strong {
+  color: var(--color-text);
+  font-size: 0.96rem;
+}
+
+.notification-preferences__locked span,
+.notification-preferences__item small,
+.notification-preferences__footer p {
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+
+.notification-preferences__required {
+  flex: 0 0 auto;
+  padding: 0.38rem 0.68rem;
+  border: 1px solid rgba(201, 161, 90, 0.28);
+  border-radius: 999px;
+  color: #e8c86f !important;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.notification-preferences__list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.notification-preferences__item {
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.notification-preferences__item:hover {
+  border-color: rgba(201, 161, 90, 0.22);
+  background: rgba(201, 161, 90, 0.045);
+}
+
+.notification-preferences__item input {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  accent-color: #c9a15a;
+}
+
+.notification-preferences__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.notification-preferences__footer p {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.notification-preferences__message {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-radius: 0.85rem;
+  font-size: 0.88rem;
+}
+
+.notification-preferences__message[data-status="success"] {
+  border: 1px solid rgba(87, 197, 132, 0.3);
+  background: rgba(87, 197, 132, 0.08);
+  color: #9ce0b7;
+}
+
+.notification-preferences__message[data-status="error"] {
+  border: 1px solid rgba(230, 95, 95, 0.3);
+  background: rgba(230, 95, 95, 0.08);
+  color: #f1aaaa;
+}
+
+@media (max-width: 47.99rem) {
+  .notification-preferences__locked,
+  .notification-preferences__item {
+    align-items: flex-start;
+  }
+
+  .notification-preferences__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .notification-preferences__footer .button {
+    width: 100%;
+  }
+}

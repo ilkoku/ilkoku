@@ -7,6 +7,10 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import nodemailer from "nodemailer";
+import {
+  getOptionalEmailCategory,
+  shouldSendOptionalEmail,
+} from "@/lib/notification-preferences";
 import { prisma } from "@/lib/prisma";
 import {
   getEmailDeliveryMode,
@@ -223,6 +227,27 @@ function emailFailureDetails(
 export async function sendEmail(
   input: SendEmailInput,
 ) {
+  const optionalCategory =
+    getOptionalEmailCategory(
+      input.template,
+    );
+
+  if (
+    optionalCategory &&
+    !(await shouldSendOptionalEmail(
+      input.to,
+      optionalCategory,
+    ))
+  ) {
+    return {
+      delivery:
+        "skipped" as const,
+      deliveryId: undefined,
+      id:
+        "preference-disabled",
+    };
+  }
+
   const deliveryMode =
     getEmailDeliveryMode();
 

@@ -1,0 +1,79 @@
+name: Production smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Verify live İlkOku routes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Wait for Hostinger deployment and verify routes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          check_public_route() {
+            local url="$1"
+            local expected="$2"
+            local code
+
+            code="$(curl --silent --show-error --location --max-time 20 --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            printf '%s -> HTTP %s\n' "$url" "$code"
+            [[ "$code" == "$expected" ]]
+          }
+
+          check_protected_route() {
+            local url="$1"
+            local headers
+            local code
+            local location
+
+            headers="$(mktemp)"
+            code="$(curl --silent --show-error --max-time 20 --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            rm -f "$headers"
+
+            printf '%s -> HTTP %s | Location: %s\n' "$url" "$code" "${location:-YOK}"
+
+            case "$code" in
+              301|302|303|307|308) ;;
+              *) return 1 ;;
+            esac
+
+            [[ "$location" == *"/giris"* ]]
+          }
+
+          for attempt in $(seq 1 30); do
+            echo "Deneme $attempt/30"
+
+            if check_public_route "https://ilkoku.com/" "200" \
+              && check_public_route "https://ilkoku.com/giris" "200" \
+              && check_protected_route "https://ilkoku.com/admin/epostalar" \
+              && check_protected_route "https://ilkoku.com/admin/okuma-guvenligi" \
+              && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
+              && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
+              echo "PASS: Yeni production route'ları canlı ve auth yönlendirmeleri çalışıyor."
+              exit 0
+            fi
+
+            sleep 10
+          done
+
+          echo "FAIL: Production deployment 5 dakika içinde doğrulanamadı." >&2
+          exit 1

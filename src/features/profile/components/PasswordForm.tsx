@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
-import { changePasswordAction } from "../actions";
+import { changePasswordAction } from "../password-security-actions";
 import { initialProfileState } from "../state";
 
 export function PasswordForm() {
@@ -14,6 +14,10 @@ export function PasswordForm() {
       <Field control="password" label="Mevcut şifre" name="currentPassword" autoComplete="current-password" required />
       <Field control="password" label="Yeni şifre" name="newPassword" autoComplete="new-password" required message="En az 8 karakter, bir harf ve bir rakam." />
       <Field control="password" label="Yeni şifre tekrar" name="confirmation" autoComplete="new-password" required />
+      <label className="profile-password-session-option">
+        <input defaultChecked name="closeOtherSessions" type="checkbox" value="yes" />
+        <span>Diğer cihazlardaki açık oturumları kapat</span>
+      </label>
       {state.message && (
         <p className={`profile-status profile-status--${state.status}`} role="status">
           {state.message}

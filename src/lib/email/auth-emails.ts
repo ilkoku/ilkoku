@@ -19,6 +19,15 @@ function escapeHtml(
     );
 }
 
+function absoluteUrl(
+  pathname: string,
+) {
+  return new URL(
+    pathname,
+    getEmailSiteUrl(),
+  ).toString();
+}
+
 function createLink(
   pathname: string,
   token: string,
@@ -117,6 +126,76 @@ export async function sendPasswordResetEmail(
       resetUrl,
       "",
       "Bu bağlantı 1 saat geçerlidir.",
+    ].join("\n"),
+    to: input.email,
+  });
+}
+
+export async function sendPasswordChangedEmail(
+  input: {
+    changedAt?: Date;
+    email: string;
+    fullName: string;
+    otherSessionsClosed: boolean;
+    source:
+      | "password_reset"
+      | "profile";
+  },
+) {
+  const changedAt =
+    input.changedAt ?? new Date();
+  const changedAtText =
+    new Intl.DateTimeFormat(
+      "tr-TR",
+      {
+        dateStyle: "long",
+        timeStyle: "short",
+        timeZone: "Europe/Istanbul",
+      },
+    ).format(changedAt);
+  const recoveryUrl =
+    absoluteUrl(
+      "/sifremi-unuttum",
+    );
+  const loginUrl =
+    absoluteUrl("/giris");
+  const sourceText =
+    input.source === "password_reset"
+      ? "şifre yenileme bağlantısı kullanılarak"
+      : "hesap güvenliği ekranından";
+  const sessionText =
+    input.otherSessionsClosed
+      ? "Diğer açık oturumlar güvenlik amacıyla kapatıldı."
+      : "Bu cihazdaki mevcut oturumunuz açık bırakıldı.";
+
+  return sendEmail({
+    channel: "system",
+    html: `
+      <h1>İlkOku şifreniz değiştirildi</h1>
+      <p>Merhaba ${escapeHtml(input.fullName)},</p>
+      <p>Hesap şifreniz ${escapeHtml(sourceText)} değiştirildi.</p>
+      <p><strong>İşlem zamanı:</strong> ${escapeHtml(changedAtText)}</p>
+      <p>${escapeHtml(sessionText)}</p>
+      <p>Bu işlemi siz yaptıysanız başka bir işlem yapmanız gerekmez.</p>
+      <p>Bu işlemi siz yapmadıysanız hemen yeni bir şifre oluşturun:</p>
+      <p><a href="${escapeHtml(recoveryUrl)}">Hesabımı güvene al</a></p>
+      <p><a href="${escapeHtml(loginUrl)}">İlkOku giriş sayfası</a></p>
+    `.trim(),
+    subject:
+      "Güvenlik bildirimi: İlkOku şifreniz değiştirildi",
+    template:
+      "password_changed",
+    text: [
+      `Merhaba ${input.fullName},`,
+      "",
+      `Hesap şifreniz ${sourceText} değiştirildi.`,
+      `İşlem zamanı: ${changedAtText}`,
+      sessionText,
+      "",
+      "Bu işlemi siz yapmadıysanız hemen yeni bir şifre oluşturun:",
+      recoveryUrl,
+      "",
+      `Giriş: ${loginUrl}`,
     ].join("\n"),
     to: input.email,
   });

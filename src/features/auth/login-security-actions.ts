@@ -161,24 +161,45 @@ export async function loginAction(
   }
 
   try {
-    const requestHeaders =
-      await headers();
-    const userAgent =
-      requestHeaders
-        .get("user-agent")
-        ?.trim()
-        .slice(0, 500) || "";
-    const ipAddress =
-      getRequestIp(requestHeaders);
-    const existingDeviceToken =
-      await getKnownDeviceToken();
-    const deviceToken =
-      existingDeviceToken ||
-      createKnownDeviceToken();
-    const deviceHash =
-      hashKnownDeviceToken(
-        deviceToken,
+    let userAgent = "";
+    let ipAddress: string | null = null;
+
+    try {
+      const requestHeaders =
+        await headers();
+      userAgent =
+        requestHeaders
+          .get("user-agent")
+          ?.trim()
+          .slice(0, 500) || "";
+      ipAddress =
+        getRequestIp(requestHeaders);
+    } catch (requestMetadataError) {
+      console.error(
+        "LOGIN_REQUEST_METADATA_FAILED",
+        requestMetadataError,
       );
+    }
+
+    let deviceToken: string | null = null;
+    let deviceHash: string | undefined;
+
+    try {
+      const existingDeviceToken =
+        await getKnownDeviceToken();
+      deviceToken =
+        existingDeviceToken ||
+        createKnownDeviceToken();
+      deviceHash =
+        hashKnownDeviceToken(
+          deviceToken,
+        );
+    } catch (knownDeviceError) {
+      console.error(
+        "KNOWN_DEVICE_PREPARATION_FAILED",
+        knownDeviceError,
+      );
+    }
 
     const result = await loginUser({
       deviceHash,
@@ -196,10 +217,21 @@ export async function loginAction(
       );
     }
 
+    // Başarılı şifre doğrulamasından sonra oturum çerezi kritik adımdır.
     await setSessionCookie(result.token);
-    await setKnownDeviceCookie(
-      deviceToken,
-    );
+
+    if (deviceToken) {
+      try {
+        await setKnownDeviceCookie(
+          deviceToken,
+        );
+      } catch (knownDeviceCookieError) {
+        console.error(
+          "KNOWN_DEVICE_COOKIE_FAILED",
+          knownDeviceCookieError,
+        );
+      }
+    }
 
     if (result.isNewDevice) {
       try {

@@ -49,9 +49,12 @@ export async function loginUser(input: {
     );
   }
 
-  const knownDevice =
-    input.deviceHash
-      ? await prisma.auditLog.findFirst({
+  let isNewDevice = false;
+
+  if (input.deviceHash) {
+    try {
+      const knownDevice =
+        await prisma.auditLog.findFirst({
           where: {
             action: "login",
             actorId: user.id,
@@ -63,40 +66,51 @@ export async function loginUser(input: {
           select: {
             id: true,
           },
-        })
-      : null;
-  const isNewDevice = Boolean(
-    input.deviceHash &&
-      !knownDevice,
-  );
+        });
+
+      isNewDevice = !knownDevice;
+    } catch (deviceLookupError) {
+      console.error(
+        "KNOWN_DEVICE_LOOKUP_FAILED",
+        deviceLookupError,
+      );
+
+      // Cihaz tanıma yardımcı bir güvenlik katmanıdır;
+      // başarılı şifre doğrulamasını ve kullanıcı girişini engellemez.
+      isNewDevice = false;
+    }
+  }
+
   const loggedInAt = new Date();
   const token =
     generateSessionToken();
 
-  await prisma.$transaction(
-    async (transaction) => {
-      await transaction.session.create({
-        data: {
-          expiresAt: new Date(
-            Date.now() +
-              1000 * 60 * 60 * 24 * 30,
-          ),
-          tokenHash:
-            hashSessionToken(token),
-          userId: user.id,
-        },
-      });
+  // Oturum oluşturma giriş için tek kritik yazma işlemidir.
+  await prisma.session.create({
+    data: {
+      expiresAt: new Date(
+        Date.now() +
+          1000 * 60 * 60 * 24 * 30,
+      ),
+      tokenHash:
+        hashSessionToken(token),
+      userId: user.id,
+    },
+  });
 
-      await transaction.user.update({
+  // Son giriş tarihi ve audit kaydı yardımcı telemetridir.
+  // Bunlardan biri başarısız olursa geçerli oturum geri alınmaz.
+  try {
+    await prisma.$transaction([
+      prisma.user.update({
         where: {
           id: user.id,
         },
         data: {
           lastLoginAt: loggedInAt,
         },
-      });
-
-      await transaction.auditLog.create({
+      }),
+      prisma.auditLog.create({
         data: {
           action: "login",
           actorId: user.id,
@@ -113,9 +127,14 @@ export async function loginUser(input: {
           userAgent:
             input.userAgent || null,
         },
-      });
-    },
-  );
+      }),
+    ]);
+  } catch (securityTelemetryError) {
+    console.error(
+      "LOGIN_SECURITY_TELEMETRY_FAILED",
+      securityTelemetryError,
+    );
+  }
 
   return {
     isNewDevice,

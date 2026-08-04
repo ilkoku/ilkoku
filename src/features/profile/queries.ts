@@ -9,6 +9,7 @@ export async function getProfilePageData(userId: string) {
       bio: true,
       createdAt: true,
       email: true,
+      emailVerified: true,
       fullName: true,
       role: true,
       username: true,
@@ -38,6 +39,7 @@ export async function getProfilePageData(userId: string) {
     bio: user.bio ?? "",
     createdAt: user.createdAt,
     email: user.email,
+    emailVerified: user.emailVerified !== null,
     firstName,
     lastName: surnameParts.join(" "),
     latestRoleRequest: user.roleRequests[0] ? {

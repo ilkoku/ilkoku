@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { authContent } from "@/content";
-import { loginAction } from "../actions";
+import { loginAction } from "../login-security-actions";
 import { initialAuthState } from "../state";
 
 export function LoginForm({ nextPath = "" }: { nextPath?: string }) {

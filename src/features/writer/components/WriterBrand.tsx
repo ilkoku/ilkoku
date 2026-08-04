@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import desktopLogo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
-import mobileLogo from "@/assets/brand/ilkoku-logo-mobile.png";
+import retinaLogo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { writerContent } from "@/content";
 
 interface WriterBrandProps {
@@ -17,18 +16,18 @@ export function WriterBrand({ compact = false }: WriterBrandProps) {
     >
       <Image
         className="writer-brand__desktop"
-        src={desktopLogo}
+        src={retinaLogo}
         alt={writerContent.logoAlt}
         priority
-        sizes="132px"
+        sizes="(max-width: 767px) 72px, 120px"
       />
       <Image
         className="writer-brand__mobile"
-        src={mobileLogo}
+        src={retinaLogo}
         alt=""
         aria-hidden="true"
         priority
-        sizes="40px"
+        sizes="72px"
       />
     </Link>
   );

@@ -37,6 +37,8 @@ function success(
 export async function resendVerificationEmailAction(
   _state: ProfileActionState,
 ): Promise<ProfileActionState> {
+  void _state;
+
   const user = await getCurrentUser();
 
   if (!user) {

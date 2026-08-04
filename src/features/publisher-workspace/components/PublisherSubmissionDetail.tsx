@@ -33,6 +33,9 @@ export function PublisherSubmissionDetailView({ data }: { data: PublisherSubmiss
       <nav className="publisher-submission-detail__nav" aria-label="Başvuru navigasyonu">
         <Link href="/yayinevi">← Başvuru havuzuna dön</Link>
         <Link href={`/kitap/${data.work.slug}`}>Eser sayfasını aç</Link>
+        <Link href={`/yayinevi/basvurular/${data.id}/pasaport`}>
+          Eser Pasaportu
+        </Link>
       </nav>
 
       <section className="publisher-submission-detail__grid">

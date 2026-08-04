@@ -16,7 +16,19 @@ import {
   readerNavigationItems,
   publisherNavigationItems,
 } from "@/lib/navigation";
+import {
+  setAdminPublisherRoleViewAction,
+} from "@/features/admin-role-view/actions";
+import {
+  adminPublisherViewRoleLabels,
+  adminPublisherViewRoles,
+  type AdminPublisherViewRole,
+} from "@/features/admin-role-view/config";
+import styles from "@/features/admin-role-view/AdminRoleView.module.css";
 import type { UserRole } from "@/features/auth/types";
+import type {
+  PublisherPermission,
+} from "@/features/publisher-workspace/permissions";
 import type {
   NavigationItem,
   NavigationNode,
@@ -86,11 +98,78 @@ function isHeading(
   return node.type === "heading";
 }
 
+function filterPublisherNavigation(
+  nodes: readonly NavigationNode[],
+  permissions: readonly PublisherPermission[],
+) {
+  const canDiscoverWorks =
+    permissions.includes("discover_works");
+  const canDiscoverAuthors =
+    permissions.includes("discover_authors");
+  const canUseFavorites =
+    canDiscoverWorks &&
+    permissions.includes("like_work");
+  const canUseFollowing =
+    canDiscoverAuthors &&
+    permissions.includes("follow_author");
+  const canUseDiscovery =
+    canDiscoverWorks ||
+    canDiscoverAuthors ||
+    canUseFavorites ||
+    canUseFollowing;
+
+  return nodes.filter((node) => {
+    if (isHeading(node)) {
+      return (
+        node.label !== "KEŞİF" ||
+        canUseDiscovery
+      );
+    }
+
+    if (
+      node.href ===
+      "/yayinevi/kesfet/eserler"
+    ) {
+      return canDiscoverWorks;
+    }
+
+    if (
+      node.href ===
+      "/yayinevi/kesfet/yazarlar"
+    ) {
+      return canDiscoverAuthors;
+    }
+
+    if (
+      node.href ===
+      "/yayinevi/favorilerim"
+    ) {
+      return canUseFavorites;
+    }
+
+    if (
+      node.href ===
+      "/yayinevi/takip-ettiklerim"
+    ) {
+      return canUseFollowing;
+    }
+
+    return true;
+  });
+}
+
 export function Sidebar({
+  adminPublisherView = null,
   badges = {},
+  publisherPermissions = [],
   role,
 }: {
+  adminPublisherView?: {
+    publisherId: string;
+    role: AdminPublisherViewRole;
+  } | null;
   badges?: Record<string, string>;
+  publisherPermissions?: readonly PublisherPermission[];
   role: UserRole;
 }) {
   const pathname = usePathname();
@@ -99,9 +178,20 @@ export function Sidebar({
     isOpen: false,
     pathname,
   });
+  const [
+    publisherRoleMenuState,
+    setPublisherRoleMenuState,
+  ] = useState({
+    isOpen: pathname === "/yayinevi/uyeler",
+    pathname,
+  });
 
   const isOpen =
     menuState.pathname === pathname && menuState.isOpen;
+  const isPublisherRoleMenuOpen =
+    publisherRoleMenuState.pathname === pathname
+      ? publisherRoleMenuState.isOpen
+      : pathname === "/yayinevi/uyeler";
 
   const isPublisherWorkspace =
     pathname === "/yayinevi" ||
@@ -114,8 +204,17 @@ export function Sidebar({
     ? "publisher"
     : role;
 
-  const items = navigationForRole(navigationRole);
-  const ariaLabel = ariaLabelForRole(navigationRole);
+  const baseItems =
+    navigationForRole(navigationRole);
+  const items =
+    navigationRole === "publisher"
+      ? filterPublisherNavigation(
+          baseItems,
+          publisherPermissions,
+        )
+      : baseItems;
+  const ariaLabel =
+    ariaLabelForRole(navigationRole);
 
   function setMenuOpen(nextIsOpen: boolean) {
     setMenuState({
@@ -126,6 +225,13 @@ export function Sidebar({
 
   function closeMobileMenu() {
     setMenuOpen(false);
+  }
+
+  function togglePublisherRoleMenu() {
+    setPublisherRoleMenuState({
+      isOpen: !isPublisherRoleMenuOpen,
+      pathname,
+    });
   }
 
   return (
@@ -178,7 +284,15 @@ export function Sidebar({
 
             return (
               <div
-                className="sidebar__nav-item"
+                className={[
+                  "sidebar__nav-item",
+                  adminPublisherView &&
+                  item.href === "/yayinevi/uyeler"
+                    ? styles.sidebarRoleHost
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 key={`${item.href}-${item.label}`}
                 onClick={closeMobileMenu}
               >
@@ -193,6 +307,103 @@ export function Sidebar({
                     isActiveRoute(pathname, searchParams, item.href)
                   }
                 />
+
+                {adminPublisherView &&
+                item.href === "/yayinevi/uyeler" ? (
+                  <>
+                    <button
+                      aria-controls="publisher-admin-role-menu"
+                      aria-expanded={isPublisherRoleMenuOpen}
+                      aria-label={
+                        isPublisherRoleMenuOpen
+                          ? "Görünüm rollerini kapat"
+                          : "Görünüm rollerini aç"
+                      }
+                      className={styles.sidebarRoleToggle}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        togglePublisherRoleMenu();
+                      }}
+                      type="button"
+                    >
+                      <span aria-hidden="true">
+                        {isPublisherRoleMenuOpen ? "⌄" : "›"}
+                      </span>
+                    </button>
+
+                    <div
+                      className={styles.sidebarRoleCollapse}
+                      data-open={
+                        isPublisherRoleMenuOpen
+                          ? "true"
+                          : undefined
+                      }
+                      id="publisher-admin-role-menu"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                      }}
+                    >
+                      <div>
+                        <div
+                          className={
+                            styles.sidebarRoleSwitcher
+                          }
+                        >
+                          <span
+                            className={
+                              styles.sidebarRoleTitle
+                            }
+                          >
+                            Admin görünüm rolü
+                          </span>
+
+                          {adminPublisherViewRoles.map(
+                            (publisherRole) => (
+                              <form
+                                action={
+                                  setAdminPublisherRoleViewAction
+                                }
+                                key={publisherRole}
+                              >
+                                <input
+                                  name="publisherId"
+                                  type="hidden"
+                                  value={
+                                    adminPublisherView.publisherId
+                                  }
+                                />
+                                <input
+                                  name="publisherRole"
+                                  type="hidden"
+                                  value={publisherRole}
+                                />
+                                <button
+                                  className={
+                                    styles.sidebarRoleChoice
+                                  }
+                                  data-current={
+                                    adminPublisherView.role ===
+                                    publisherRole
+                                      ? "true"
+                                      : undefined
+                                  }
+                                  type="submit"
+                                >
+                                  {
+                                    adminPublisherViewRoleLabels[
+                                      publisherRole
+                                    ]
+                                  }
+                                </button>
+                              </form>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
               </div>
             );
           })}

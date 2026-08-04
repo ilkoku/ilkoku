@@ -6,6 +6,11 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 import {
+  sendPublisherContractEmail,
+  sendPublisherSubmissionDecisionEmail,
+  sendPublisherTeamInvitationEmail,
+} from "@/lib/email/publisher-emails";
+import {
   addPublisherInternalNote,
   acceptPublisherInvitation,
   cancelPublisherInvitation,
@@ -15,12 +20,28 @@ import {
   upsertPublicationPlan,
   upsertPublisherContract,
 } from "./repository";
+import {
+  customizablePublisherPermissionKeys,
+  publisherPermissionLabels,
+  publisherRoleLabels,
+  type PublisherPermission,
+} from "./permissions";
 import type {
   PublisherDecisionActionState,
   PublisherInternalNoteActionState,
   PublisherContractActionState,
   PublisherWorkspaceSubmissionStatus,
 } from "./types";
+
+async function getPublisherWriteUser() {
+  const user = await getCurrentUser();
+
+  if (!user || user.role === "admin") {
+    return null;
+  }
+
+  return user;
+}
 
 const allowedStatuses = new Set<PublisherWorkspaceSubmissionStatus>([
   "pending",
@@ -33,7 +54,7 @@ export async function updatePublisherDecisionAction(
   _state: PublisherDecisionActionState,
   formData: FormData,
 ): Promise<PublisherDecisionActionState> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
   if (!user) {
     return { message: "Bu işlem için giriş yapmalısınız.", status: "error" };
   }
@@ -61,17 +82,59 @@ export async function updatePublisherDecisionAction(
     return { message: "Başvuru bulunamadı veya bu yayınevine ait değil.", status: "error" };
   }
 
+  let emailSent = true;
+
+  if (
+    updated.statusChanged &&
+    (
+      status === "reviewing" ||
+      status === "accepted" ||
+      status === "rejected"
+    )
+  ) {
+    try {
+      await sendPublisherSubmissionDecisionEmail({
+        email: updated.author.email,
+        fullName: updated.author.fullName,
+        note: noteValue || null,
+        status,
+        submissionId,
+        workTitle: updated.work.title,
+      });
+    } catch (error) {
+      emailSent = false;
+
+      console.error(
+        "PUBLISHER_SUBMISSION_EMAIL_FAILED",
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "UNKNOWN_ERROR",
+          status,
+          submissionId,
+        },
+      );
+    }
+  }
+
   revalidatePath("/yayinevi");
   revalidatePath(`/yayinevi/basvurular/${submissionId}`);
 
-  return { message: "Başvuru kararı güncellendi ve geçmişe kaydedildi.", status: "success" };
+  return {
+    message:
+      emailSent
+        ? "Başvuru kararı güncellendi ve geçmişe kaydedildi."
+        : "Başvuru kararı güncellendi; e-posta gönderilemedi.",
+    status: "success",
+  };
 }
 
 export async function addPublisherInternalNoteAction(
   _state: PublisherInternalNoteActionState,
   formData: FormData,
 ): Promise<PublisherInternalNoteActionState> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
   if (!user) {
     return { message: "Bu işlem için giriş yapmalısınız.", status: "error" };
   }
@@ -97,7 +160,7 @@ export async function savePublisherContractAction(
   _state: PublisherContractActionState,
   formData: FormData,
 ): Promise<PublisherContractActionState> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
   if (!user) return { message: "Bu işlem için giriş yapmalısınız.", status: "error" };
 
   const submissionId = String(formData.get("submissionId") ?? "").trim();
@@ -126,15 +189,51 @@ export async function savePublisherContractAction(
   });
   if (!saved) return { message: "Yalnızca kabul edilmiş ve yayınevinize ait başvurularda sözleşme oluşturabilirsiniz.", status: "error" };
 
+  let emailSent = true;
+
+  if (intent === "send") {
+    try {
+      await sendPublisherContractEmail({
+        email: saved.author.email,
+        fullName: saved.author.fullName,
+        submissionId,
+        workTitle: saved.work.title,
+      });
+    } catch (error) {
+      emailSent = false;
+
+      console.error(
+        "PUBLISHER_CONTRACT_EMAIL_FAILED",
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "UNKNOWN_ERROR",
+          submissionId,
+        },
+      );
+    }
+  }
+
   revalidatePath(`/yayinevi/basvurular/${submissionId}`);
-  return { message: intent === "send" ? "Sözleşme yazara gönderildi." : "Sözleşme taslağı kaydedildi.", status: "success" };
+  return {
+    message:
+      intent === "send"
+        ? (
+            emailSent
+              ? "Sözleşme yazara gönderildi."
+              : "Sözleşme kaydedildi; e-posta gönderilemedi."
+          )
+        : "Sözleşme taslağı kaydedildi.",
+    status: "success",
+  };
 }
 
 export async function savePublicationPlanAction(
   _state: PublisherContractActionState,
   formData: FormData,
 ): Promise<PublisherContractActionState> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
   if (!user) return { message: "Bu işlem için giriş yapmalısınız.", status: "error" };
 
   const submissionId = String(formData.get("submissionId") ?? "").trim();
@@ -170,7 +269,7 @@ export async function savePublicationPlanAction(
 }
 
 export async function markPublisherNotificationReadAction(formData: FormData): Promise<void> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
   if (!user) throw new Error("PUBLISHER_PERMISSION_REQUIRED");
   const notificationId = String(formData.get("notificationId") ?? "").trim();
   if (!notificationId) throw new Error("NOTIFICATION_REQUIRED");
@@ -179,7 +278,7 @@ export async function markPublisherNotificationReadAction(formData: FormData): P
 }
 
 export async function markAllPublisherNotificationsReadAction(): Promise<void> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
   if (!user) throw new Error("PUBLISHER_PERMISSION_REQUIRED");
   await prisma.notification.updateMany({ where: { userId: user.id, readAt: null }, data: { readAt: new Date() } });
   revalidatePath("/yayinevi/bildirimler");
@@ -187,19 +286,46 @@ export async function markAllPublisherNotificationsReadAction(): Promise<void> {
 
 const editableMemberRoles = new Set(["manager", "submissions_manager", "editorial", "contract_manager", "reviewer", "viewer"]);
 
+const editablePublisherPermissions = new Set<PublisherPermission>(
+  customizablePublisherPermissionKeys,
+);
+
+function readPublisherPermissions(formData: FormData): PublisherPermission[] | null {
+  const raw = formData
+    .getAll("permissions")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  if (
+    raw.length === 0 ||
+    raw.some(
+      (permission) =>
+        !editablePublisherPermissions.has(
+          permission as PublisherPermission,
+        ),
+    )
+  ) {
+    return null;
+  }
+
+  return Array.from(new Set(raw)) as PublisherPermission[];
+}
+
 export async function updatePublisherMemberAction(
   _state: PublisherContractActionState,
   formData: FormData,
 ): Promise<PublisherContractActionState> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
   if (!user) return { message: "Bu işlem için giriş yapmalısınız.", status: "error" };
   const memberId = String(formData.get("memberId") ?? "").trim();
   const role = String(formData.get("role") ?? "").trim();
+  const permissions = readPublisherPermissions(formData);
   const active = formData.get("active") === "true";
-  if (!memberId || !editableMemberRoles.has(role)) return { message: "Üye veya yetki bilgisi geçersiz.", status: "error" };
+  if (!memberId || !editableMemberRoles.has(role) || !permissions) return { message: "Üye, rol veya yetki bilgisi geçersiz.", status: "error" };
   const updated = await updatePublisherMember({
     active,
     memberId,
+    permissions,
     role: role as "manager" | "submissions_manager" | "editorial" | "contract_manager" | "reviewer" | "viewer",
     userId: user.id,
   });
@@ -212,7 +338,7 @@ export async function invitePublisherMemberAction(
   _state: PublisherContractActionState,
   formData: FormData,
 ): Promise<PublisherContractActionState> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
 
   if (!user) {
     return {
@@ -226,6 +352,7 @@ export async function invitePublisherMemberAction(
     .toLowerCase();
 
   const role = String(formData.get("role") ?? "").trim();
+  const permissions = readPublisherPermissions(formData);
 
   const emailIsValid =
     email.length <= 320 &&
@@ -245,6 +372,13 @@ export async function invitePublisherMemberAction(
     };
   }
 
+  if (!permissions) {
+    return {
+      message: "Davet için en az bir geçerli çalışma yetkisi seçin.",
+      status: "error",
+    };
+  }
+
   const rawToken = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256")
     .update(rawToken)
@@ -256,6 +390,7 @@ export async function invitePublisherMemberAction(
       expiresAt: new Date(
         Date.now() + 7 * 24 * 60 * 60 * 1000,
       ),
+      permissions,
       role: role as
         | "manager"
         | "submissions_manager"
@@ -288,12 +423,45 @@ export async function invitePublisherMemberAction(
       };
     }
 
+    let emailSent = true;
+
+    try {
+      await sendPublisherTeamInvitationEmail({
+        email,
+        inviterName: user.fullName,
+        permissions: permissions.map(
+          (permission) => publisherPermissionLabels[permission],
+        ),
+        publisherName: result.publisherName,
+        rawToken,
+        role: publisherRoleLabels[
+          role as keyof typeof publisherRoleLabels
+        ],
+      });
+    } catch (error) {
+      emailSent = false;
+
+      console.error(
+        "PUBLISHER_INVITATION_EMAIL_FAILED",
+        {
+          email,
+          error:
+            error instanceof Error
+              ? error.message
+              : "UNKNOWN_ERROR",
+          invitationId: result.invitation.id,
+          userId: user.id,
+        },
+      );
+    }
+
     revalidatePath("/yayinevi/uyeler");
 
     return {
       message:
-        `Davet oluşturuldu. Test bağlantısı: ` +
-        `/yayinevi/davet/${rawToken}`,
+        emailSent
+          ? "Davet oluşturuldu ve e-posta adresine gönderildi."
+          : "Davet oluşturuldu; e-posta gönderilemedi.",
       status: "success",
     };
   } catch (error) {
@@ -317,7 +485,7 @@ export async function cancelPublisherInvitationAction(
   _state: PublisherContractActionState,
   formData: FormData,
 ): Promise<PublisherContractActionState> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
 
   if (!user) {
     return {
@@ -378,7 +546,7 @@ export async function acceptPublisherInvitationAction(
   _state: PublisherContractActionState,
   formData: FormData,
 ): Promise<PublisherContractActionState> {
-  const user = await getCurrentUser();
+  const user = await getPublisherWriteUser();
 
   if (!user) {
     return {

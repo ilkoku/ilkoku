@@ -3,7 +3,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { notificationContent, validationContent } from "@/content";
-import { getSiteUrl } from "@/lib/site-url";
+import { clearAdminRoleViewCookie } from "@/features/admin-role-view/cookie";
+import { sendPasswordResetEmail } from "@/lib/email/auth-emails";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { loginUser } from "@/lib/auth/login";
 import { hashPassword } from "@/lib/auth/password";
@@ -131,19 +132,49 @@ export async function resetPasswordAction(_state: AuthActionState, formData: For
   if (!/^\S+@\S+\.\S+$/.test(email)) return error(validationContent.invalidEmail);
 
   try {
-    const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    const user = await prisma.user.findUnique({ where: { email }, select: { fullName: true, id: true } });
     if (user) {
       const token = randomBytes(32).toString("base64url");
       const tokenHash = createHash("sha256").update(token).digest("hex");
       await prisma.$transaction([
-        prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } }),
+        prisma.passwordResetToken.deleteMany({
+          where: {
+            userId: user.id,
+            usedAt: null,
+          },
+        }),
         prisma.passwordResetToken.create({
-          data: { expiresAt: new Date(Date.now() + 60 * 60 * 1000), tokenHash, userId: user.id },
+          data: {
+            expiresAt:
+              new Date(
+                Date.now() + 60 * 60 * 1000,
+              ),
+            tokenHash,
+            userId: user.id,
+          },
+        }),
+        prisma.auditLog.create({
+          data: {
+            action: "password_reset_requested",
+            actorId: user.id,
+            entityId: user.id,
+            entityType: "User",
+          },
         }),
       ]);
-      const resetUrl = new URL("/sifre-yenile", getSiteUrl());
-      resetUrl.searchParams.set("token", token);
-      void resetUrl;
+      try {
+        await sendPasswordResetEmail({
+          email,
+          fullName:
+            user.fullName,
+          token,
+        });
+      } catch (emailError) {
+        console.error(
+          "PASSWORD_RESET_DELIVERY_FAILED",
+          emailError,
+        );
+      }
     }
   } catch {
     return error(validationContent.genericFailure);
@@ -182,7 +213,23 @@ export async function updatePasswordAction(_state: AuthActionState, formData: Fo
         where: { id: resetToken.userId },
         data: { passwordHash: await hashPassword(password) },
       });
-      await transaction.session.deleteMany({ where: { userId: resetToken.userId } });
+      await transaction.session.deleteMany({
+        where: {
+          userId: resetToken.userId,
+        },
+      });
+
+      await transaction.auditLog.create({
+        data: {
+          action: "password_changed",
+          actorId: resetToken.userId,
+          entityId: resetToken.userId,
+          entityType: "User",
+          metadata: JSON.stringify({
+            source: "password_reset",
+          }),
+        },
+      });
     });
   } catch {
     return error(validationContent.expiredResetLink);
@@ -286,6 +333,39 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
           });
         }
       }
+
+      const activeRequest =
+        await transaction.roleRequest.findFirst({
+          where: {
+            requestedRole: role,
+            status: "pending",
+            userId: user.id,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            id: true,
+          },
+        });
+
+      if (!activeRequest) {
+        throw new Error(
+          "ACTIVE_ROLE_REQUEST_NOT_FOUND",
+        );
+      }
+
+      await transaction.auditLog.create({
+        data: {
+          action: "role_requested",
+          actorId: user.id,
+          entityId: activeRequest.id,
+          entityType: "RoleRequest",
+          metadata: JSON.stringify({
+            requestedRole: role,
+          }),
+        },
+      });
     });
   } catch {
     return error(validationContent.roleRequestFailed);
@@ -296,12 +376,46 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
 
 export async function logoutAction() {
   const token = await getSessionCookie();
+
   try {
     if (token) {
-      await prisma.session.deleteMany({ where: { tokenHash: hashSessionToken(token) } });
+      const tokenHash = hashSessionToken(token);
+
+      await prisma.$transaction(
+        async (transaction) => {
+          const session =
+            await transaction.session.findUnique({
+              where: {
+                tokenHash,
+              },
+              select: {
+                userId: true,
+              },
+            });
+
+          await transaction.session.deleteMany({
+            where: {
+              tokenHash,
+            },
+          });
+
+          if (session) {
+            await transaction.auditLog.create({
+              data: {
+                action: "logout",
+                actorId: session.userId,
+                entityId: session.userId,
+                entityType: "User",
+              },
+            });
+          }
+        },
+      );
     }
   } finally {
     await clearSessionCookie();
+    await clearAdminRoleViewCookie();
   }
+
   redirect("/");
 }

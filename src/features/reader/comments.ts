@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { allocatePublicId } from "@/lib/public-id";
 import { prisma } from "@/lib/prisma";
 
 const publicWorkWhere = {
@@ -198,14 +199,25 @@ export async function createChapterCommentAction(
     );
   }
 
-  await prisma.comment.create({
-    data: {
-      chapterId,
-      content,
-      status: "visible",
-      userId: user.id,
-      workId: chapter.work.id,
-    },
+  await prisma.$transaction(async (transaction) => {
+    const commentCreatedAt = new Date();
+    const publicId = await allocatePublicId(
+      transaction,
+      "comment",
+      commentCreatedAt,
+    );
+
+    await transaction.comment.create({
+      data: {
+        chapterId,
+        content,
+        createdAt: commentCreatedAt,
+        publicId,
+        status: "visible",
+        userId: user.id,
+        workId: chapter.work.id,
+      },
+    });
   });
 
   const chapterPath =
@@ -307,24 +319,31 @@ export async function createCommentReplyAction(
     );
   }
 
-  const replyCreate =
-    prisma.comment.create({
+  const parentChapter = parent.chapter;
+
+  await prisma.$transaction(async (transaction) => {
+    const commentCreatedAt = new Date();
+    const publicId = await allocatePublicId(
+      transaction,
+      "comment",
+      commentCreatedAt,
+    );
+
+    await transaction.comment.create({
       data: {
-        chapterId: parent.chapter.id,
+        chapterId: parentChapter.id,
         content,
+        createdAt: commentCreatedAt,
         parentId,
+        publicId,
         status: "visible",
         userId: writer.id,
         workId: parent.work.id,
       },
     });
 
-  if (parent.userId === writer.id) {
-    await replyCreate;
-  } else {
-    await prisma.$transaction([
-      replyCreate,
-      prisma.notification.create({
+    if (parent.userId !== writer.id) {
+      await transaction.notification.create({
         data: {
           message:
             `${displayName(writer)}, ${parent.work.title} eserindeki yorumunuza yanıt verdi.`,
@@ -336,9 +355,9 @@ export async function createCommentReplyAction(
             "reader_comment_reply",
           userId: parent.userId,
         },
-      }),
-    ]);
-  }
+      });
+    }
+  });
 
   const chapterPath =
     `/oku/${parent.work.slug}/bolum-${parent.chapter.position}`;

@@ -5,7 +5,11 @@ import { Card } from "@/components/ui/Card";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { publisherRoleLabels } from "@/features/publisher-workspace/permissions";
+import {
+  getCustomizablePublisherPermissions,
+  publisherPermissionLabels,
+  publisherRoleLabels,
+} from "@/features/publisher-workspace/permissions";
 import { getPublisherInvitationByToken } from "@/features/publisher-workspace/repository";
 import { PublisherInvitationAcceptForm } from "@/features/publisher-workspace/components/PublisherInvitationAcceptForm";
 import "@/features/publisher-workspace/publisher-workspace.css";
@@ -29,12 +33,14 @@ function InvitationContent({
   companyName,
   invitedByName,
   invitedEmail,
+  permissionLabels,
   roleLabel,
 }: {
   children: React.ReactNode;
   companyName: string;
   invitedByName: string;
   invitedEmail: string;
+  permissionLabels: string[];
   roleLabel: string;
 }) {
   return (
@@ -54,6 +60,15 @@ function InvitationContent({
           <span>Davet ayrıntıları</span>
           <h2>{roleLabel}</h2>
           <p>Davet edilen e-posta: {invitedEmail}</p>
+        </div>
+
+        <div className="publisher-invite-permissions">
+          <strong>Bu çalışma alanındaki yetkileriniz</strong>
+          <ul>
+            {permissionLabels.map((label) => (
+              <li key={label}>{label}</li>
+            ))}
+          </ul>
         </div>
 
         {children}
@@ -156,6 +171,10 @@ export default async function PublisherInvitationPage({
       companyName={invitation.publisher.companyName}
       invitedByName={invitedByName}
       invitedEmail={invitation.invitedEmail}
+      permissionLabels={getCustomizablePublisherPermissions(
+        invitation.role,
+        invitation.permissionOverrides,
+      ).map((permission) => publisherPermissionLabels[permission])}
       roleLabel={publisherRoleLabels[invitation.role]}
     >
       {invitationBody}

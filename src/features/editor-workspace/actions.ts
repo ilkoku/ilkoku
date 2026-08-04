@@ -1,5 +1,11 @@
 "use server";
 
+import {
+  sendAuthorEditorStatusEmail,
+  sendEditorRecommendationEmail,
+  sendExternalEditorInvitationEmail,
+} from "@/lib/email/editor-emails";
+
 import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -159,6 +165,12 @@ export async function claimProfessionalReviewAction(
         id: workId,
       },
       select: {
+        author: {
+          select: {
+            email: true,
+            fullName: true,
+          },
+        },
         authorId: true,
         editorReviewStatus: true,
         id: true,
@@ -260,6 +272,28 @@ export async function claimProfessionalReviewAction(
         message: "Bu eser başka bir editör tarafından incelemeye alınmış.",
         status: "error",
       };
+    }
+
+    try {
+      await sendAuthorEditorStatusEmail({
+        email: work.author.email,
+        fullName: work.author.fullName,
+        stage: "claimed",
+        workId: work.id,
+        workTitle: work.title,
+      });
+    } catch (emailError) {
+      console.error(
+        "EDITOR_EMAIL_DELIVERY_FAILED",
+        {
+          event: "first_review_claimed",
+          workId: work.id,
+          error:
+            emailError instanceof Error
+              ? emailError.message
+              : "UNKNOWN_ERROR",
+        },
+      );
     }
 
     revalidateEditorWork(work.slug);
@@ -407,6 +441,12 @@ export async function completeProfessionalReviewAction(
           id: true,
           work: {
             select: {
+              author: {
+                select: {
+                  email: true,
+                  fullName: true,
+                },
+              },
               authorId: true,
               id: true,
               slug: true,
@@ -524,6 +564,34 @@ export async function completeProfessionalReviewAction(
       }
     });
 
+    try {
+      await sendAuthorEditorStatusEmail({
+        email: assignment.work.author.email,
+        fullName: assignment.work.author.fullName,
+        stage:
+          intent === "complete"
+            ? "completed"
+            : "first_completed",
+        workId: assignment.work.id,
+        workTitle: assignment.work.title,
+      });
+    } catch (emailError) {
+      console.error(
+        "EDITOR_EMAIL_DELIVERY_FAILED",
+        {
+          event:
+            intent === "complete"
+              ? "first_review_completed"
+              : "first_review_ready_for_second",
+          workId: assignment.work.id,
+          error:
+            emailError instanceof Error
+              ? emailError.message
+              : "UNKNOWN_ERROR",
+        },
+      );
+    }
+
     revalidateEditorWork(assignment.work.slug);
     revalidatePath("/yazar");
     revalidatePath("/eserlerim");
@@ -604,6 +672,8 @@ export async function recommendWorkToEditorAction(
         ],
       },
       select: {
+        email: true,
+        fullName: true,
         id: true,
       },
     });
@@ -648,6 +718,28 @@ export async function recommendWorkToEditorAction(
           },
         }),
       ]);
+
+      try {
+        await sendEditorRecommendationEmail({
+          editorName: registeredEditor.fullName,
+          email: registeredEditor.email,
+          senderName: sender.fullName,
+          workId: work.id,
+          workTitle: work.title,
+        });
+      } catch (emailError) {
+        console.error(
+          "EDITOR_EMAIL_DELIVERY_FAILED",
+          {
+            event: "registered_editor_recommendation",
+            workId: work.id,
+            error:
+              emailError instanceof Error
+                ? emailError.message
+                : "UNKNOWN_ERROR",
+          },
+        );
+      }
 
       revalidatePath("/editor/onerilenler");
       revalidatePath("/editor/bildirimler");
@@ -701,10 +793,31 @@ export async function recommendWorkToEditorAction(
     const inviteUrl = new URL("/kayit", getSiteUrl());
     inviteUrl.searchParams.set("davet", rawToken);
 
+    try {
+      await sendExternalEditorInvitationEmail({
+        email,
+        inviterName: sender.fullName,
+        inviteUrl: inviteUrl.toString(),
+        workTitle: work.title,
+      });
+    } catch (emailError) {
+      console.error(
+        "EDITOR_EMAIL_DELIVERY_FAILED",
+        {
+          event: "external_editor_invitation",
+          workId: work.id,
+          error:
+            emailError instanceof Error
+              ? emailError.message
+              : "UNKNOWN_ERROR",
+        },
+      );
+    }
+
     return {
       inviteUrl: inviteUrl.toString(),
       message:
-        "Güvenli davet oluşturuldu. E-posta teslim altyapısı yapılandırılana kadar bağlantıyı güvenli biçimde paylaşın.",
+        "Güvenli editör daveti oluşturuldu ve e-posta teslimat kuyruğuna alındı.",
       status: "success",
     };
   } catch {

@@ -1,0 +1,131 @@
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.summary article {
+  min-height: 9rem;
+  padding: 1.3rem;
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 100% 0, rgba(124, 58, 237, 0.16), transparent 8rem),
+    #111724;
+}
+
+.summary span,
+.summary small {
+  display: block;
+  color: #929caf;
+}
+
+.summary span {
+  font-size: 0.78rem;
+}
+
+.summary strong {
+  display: block;
+  margin: 0.65rem 0;
+  color: #f8fafc;
+  font-size: 2rem;
+}
+
+.summary small {
+  font-size: 0.7rem;
+}
+
+.auditLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.65rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid rgba(139, 92, 246, 0.32);
+  border-radius: 0.75rem;
+  background: rgba(124, 58, 237, 0.13);
+  color: #ddd6fe;
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.privacyNote {
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 0.9rem;
+  background: rgba(16, 185, 129, 0.065);
+}
+
+.privacyNote strong {
+  color: #a7f3d0;
+  font-size: 0.82rem;
+}
+
+.privacyNote p {
+  max-width: 74rem;
+  margin: 0.35rem 0 0;
+  color: #9da8b9;
+  font-size: 0.74rem;
+  line-height: 1.65;
+}
+
+.filters {
+  grid-template-columns: minmax(15rem, 2fr) repeat(3, minmax(9rem, 1fr)) auto auto;
+}
+
+.table {
+  min-width: 82rem;
+}
+
+.riskBadge {
+  display: inline-flex !important;
+  width: fit-content;
+  padding: 0.32rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.67rem;
+  font-weight: 800;
+}
+
+.normal {
+  background: rgba(16, 185, 129, 0.13);
+  color: #a7f3d0 !important;
+}
+
+.watch {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fde68a !important;
+}
+
+.flags {
+  display: grid;
+  gap: 0.28rem;
+  margin: 0;
+  padding-left: 1rem;
+  color: #fcd34d;
+  font-size: 0.7rem;
+}
+
+@media (max-width: 1180px) {
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .summary,
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .summary article {
+    min-height: auto;
+  }
+
+  .auditLink {
+    width: 100%;
+    justify-content: center;
+  }
+}

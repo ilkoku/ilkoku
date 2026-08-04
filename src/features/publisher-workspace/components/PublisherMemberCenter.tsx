@@ -4,7 +4,13 @@ import "../publisher-workspace.css";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { publisherRoleLabels } from "../permissions";
+import {
+  customizablePublisherPermissionKeys,
+  publisherPermissionGroups,
+  publisherPermissionLabels,
+  publisherRoleLabels,
+  type PublisherPermission,
+} from "../permissions";
 import {
   cancelPublisherInvitationAction,
   invitePublisherMemberAction,
@@ -20,6 +26,11 @@ const initialState: PublisherActionState = {
   message: "",
   status: "idle",
 };
+
+const customizablePermissionSet =
+  new Set<PublisherPermission>(
+    customizablePublisherPermissionKeys,
+  );
 
 const invitationStatusLabels: Record<
   PublisherInvitationData["status"],
@@ -43,6 +54,112 @@ function formatDate(value: string) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+function PublisherPermissionFields({
+  selected,
+}: {
+  selected: readonly PublisherPermission[];
+}) {
+  const selectedSet = new Set(selected);
+
+  return (
+    <fieldset className="publisher-permission-fields">
+      <legend>Çalışma alanı yetkileri</legend>
+      <p>
+        Bu üyeye verilecek işlemleri kategori bazında
+        seçin. Sözleşme yetkileri mevcut rol kurallarıyla
+        korunur.
+      </p>
+
+      <div className="publisher-permission-groups">
+        {publisherPermissionGroups.map((group) => {
+          const permissions = group.permissions.filter(
+            (permission) =>
+              customizablePermissionSet.has(permission),
+          );
+
+          if (permissions.length === 0) {
+            return null;
+          }
+
+          return (
+            <section
+              className="publisher-permission-group"
+              key={group.id}
+            >
+              <header>
+                <strong>{group.title}</strong>
+                <span>{permissions.length} yetki</span>
+              </header>
+
+              <div className="publisher-permission-group__options">
+                {permissions.map((permission) => (
+                  <label key={permission}>
+                    <input
+                      defaultChecked={
+                        selectedSet.has(permission)
+                      }
+                      name="permissions"
+                      type="checkbox"
+                      value={permission}
+                    />
+                    <span>
+                      {publisherPermissionLabels[permission]}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+function PublisherPermissionList({
+  permissions,
+}: {
+  permissions: readonly PublisherPermission[];
+}) {
+  const permissionSet =
+    new Set<PublisherPermission>(permissions);
+
+  return (
+    <details className="publisher-permission-summary">
+      <summary>
+        <span>Tanımlı yetkiler</span>
+        <strong>{permissions.length} yetki</strong>
+      </summary>
+
+      <div className="publisher-permission-summary__groups">
+        {publisherPermissionGroups.map((group) => {
+          const activePermissions =
+            group.permissions.filter((permission) =>
+              permissionSet.has(permission),
+            );
+
+          if (activePermissions.length === 0) {
+            return null;
+          }
+
+          return (
+            <section key={group.id}>
+              <h3>{group.title}</h3>
+              <ul>
+                {activePermissions.map((permission) => (
+                  <li key={permission}>
+                    {publisherPermissionLabels[permission]}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
+    </details>
+  );
 }
 
 function PublisherInviteForm() {
@@ -78,11 +195,11 @@ function PublisherInviteForm() {
         </label>
 
         <label>
-          <span>Yetki</span>
+          <span>Ekip rolü</span>
           <select defaultValue="editorial" name="role" required>
             <option value="manager">Yönetici</option>
             <option value="submissions_manager">
-              Başvuru yöneticisi
+              Editoryal yönetici
             </option>
             <option value="editorial">Editoryal kullanıcı</option>
             <option value="contract_manager">
@@ -92,6 +209,14 @@ function PublisherInviteForm() {
             <option value="viewer">Salt okunur</option>
           </select>
         </label>
+
+        <PublisherPermissionFields
+          selected={[
+            "view_submission",
+            "add_internal_note",
+            "download_file",
+          ]}
+        />
 
         <Button loading={pending} type="submit">
           Davet oluştur
@@ -164,11 +289,11 @@ function PublisherMemberForm({
       <input name="memberId" type="hidden" value={member.id} />
 
       <label>
-        <span>Yetki</span>
+        <span>Ekip rolü</span>
         <select defaultValue={member.role} name="role">
           <option value="manager">Yönetici</option>
           <option value="submissions_manager">
-            Başvuru yöneticisi
+            Editoryal yönetici
           </option>
           <option value="editorial">Editoryal kullanıcı</option>
           <option value="contract_manager">
@@ -189,6 +314,8 @@ function PublisherMemberForm({
           <option value="false">Pasif</option>
         </select>
       </label>
+
+      <PublisherPermissionFields selected={member.permissions} />
 
       <Button
         disabled={pending}
@@ -242,6 +369,10 @@ function PublisherInvitationList({
                 <strong>
                   {publisherRoleLabels[invitation.role]}
                 </strong>
+
+                <PublisherPermissionList
+                  permissions={invitation.permissions}
+                />
 
                 <dl>
                   <div>
@@ -301,7 +432,7 @@ export function PublisherMemberCenter({
       <header className="publisher-workspace__hero">
         <div>
           <p>{companyName}</p>
-          <h1>Ekip ve üyeler</h1>
+          <h1>Ekip ve yetkiler</h1>
           <span>
             Yayınevi içindeki erişimleri görev alanına göre yönetin.
           </span>
@@ -321,26 +452,59 @@ export function PublisherMemberCenter({
 
         <div className="publisher-member-list">
           {members.map((member) => (
-            <Card key={member.id}>
-              <div>
-                <span data-active={member.active}>
-                  {member.active ? "Aktif" : "Pasif"}
-                </span>
-                <h2>{member.displayName}</h2>
-                <p>{member.email}</p>
-                <strong>
-                  {publisherRoleLabels[member.role]}
-                </strong>
+            <Card
+              className="publisher-member-card"
+              key={member.id}
+            >
+              <div className="publisher-member-card__header">
+                <div className="publisher-member-card__identity">
+                  <span data-active={member.active}>
+                    {member.active ? "Aktif" : "Pasif"}
+                  </span>
+                  <h2>{member.displayName}</h2>
+                  <p>{member.email}</p>
+                </div>
+
+                <div className="publisher-member-card__role">
+                  <strong>
+                    {publisherRoleLabels[member.role]}
+                  </strong>
+
+                  {member.role === "owner" ? (
+                    <span
+                      className="publisher-member-card__lock"
+                      title="Sahip hesabı"
+                    >
+                      Sahip hesap
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
+              <PublisherPermissionList
+                permissions={member.permissions}
+              />
+
               {canManage && member.role !== "owner" ? (
-                <PublisherMemberForm member={member} />
+                <details className="publisher-member-editor">
+                  <summary>
+                    Rol ve yetkileri düzenle
+                  </summary>
+                  <PublisherMemberForm member={member} />
+                </details>
               ) : (
-                <p className="publisher-member-list__notice">
-                  {member.role === "owner"
-                    ? "Sahip hesabı bu ekrandan değiştirilemez."
-                    : "Bu hesap salt okunur görüntüleniyor."}
-                </p>
+                <div className="publisher-member-list__notice">
+                  <strong>
+                    {member.role === "owner"
+                      ? "Sahip hesabı korunuyor"
+                      : "Salt okunur görünüm"}
+                  </strong>
+                  <span>
+                    {member.role === "owner"
+                      ? "Sahip rolü ve üyelik durumu bu ekrandan değiştirilemez."
+                      : "Bu hesabın rol ve yetkilerini değiştirme izniniz yok."}
+                  </span>
+                </div>
               )}
             </Card>
           ))}

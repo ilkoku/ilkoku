@@ -3,6 +3,7 @@ import type {
   PublisherInvitationStatus,
   PublisherMemberRole,
 } from "@/generated/prisma/client";
+import type { PublisherPermission } from "./permissions";
 
 export type PublisherWorkspaceSubmissionStatus =
   | "pending"
@@ -95,6 +96,7 @@ export interface PublisherInvitationData {
   id: string;
   invitedByName: string;
   invitedEmail: string;
+  permissions: PublisherPermission[];
   role: PublisherMemberRole;
   status: PublisherInvitationStatus;
 }
@@ -104,6 +106,7 @@ export interface PublisherMemberData {
   displayName: string;
   email: string;
   id: string;
+  permissions: PublisherPermission[];
   role: PublisherMemberRole;
 }
 

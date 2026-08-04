@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: authContent.login.metadataTitle, desc
 
 const statusMessages: Record<string, string> = {
   "baglanti-gecersiz": notificationContent.routeStatus.invalidLink,
+  "email-dogrulandi": "E-posta adresiniz doğrulandı. Hesabınıza güvenle giriş yapabilirsiniz.",
   "sifre-guncellendi": notificationContent.routeStatus.passwordUpdated,
   yapilandirma: notificationContent.routeStatus.configurationPending,
 };

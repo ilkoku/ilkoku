@@ -1,5 +1,7 @@
+import { sendVerificationEmail } from "@/lib/email/auth-emails";
+import { allocatePublicId } from "@/lib/public-id";
 import { prisma } from "@/lib/prisma";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { hashPassword } from "./password";
 import {
   generateSessionToken,
@@ -74,9 +76,32 @@ export async function registerUser(input: {
   const tokenHash = hashSessionToken(token);
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
 
+  const emailVerificationToken =
+    randomBytes(32).toString("base64url");
+
+  const emailVerificationTokenHash =
+    createHash("sha256")
+      .update(emailVerificationToken)
+      .digest("hex");
+
+  const emailVerificationExpiresAt =
+    new Date(
+      Date.now() +
+        1000 * 60 * 60 * 24,
+    );
+
   const user = await prisma.$transaction(async (transaction) => {
+    const userCreatedAt = new Date();
+    const publicId = await allocatePublicId(
+      transaction,
+      "user",
+      userCreatedAt,
+    );
+
     const createdUser = await transaction.user.create({
       data: {
+        createdAt: userCreatedAt,
+        publicId,
         fullName: input.fullName.trim(),
         email: normalizedEmail,
         passwordHash,
@@ -86,6 +111,17 @@ export async function registerUser(input: {
             ? "reader"
             : input.role,
         termsAcceptedAt: input.termsAcceptedAt,
+      },
+    });
+
+    await transaction.emailVerificationToken.create({
+      data: {
+        expiresAt:
+          emailVerificationExpiresAt,
+        tokenHash:
+          emailVerificationTokenHash,
+        userId:
+          createdUser.id,
       },
     });
 
@@ -110,6 +146,18 @@ export async function registerUser(input: {
           },
         });
       }
+
+      await transaction.auditLog.create({
+        data: {
+          action: "role_requested",
+          actorId: createdUser.id,
+          entityId: roleRequest.id,
+          entityType: "RoleRequest",
+          metadata: JSON.stringify({
+            requestedRole,
+          }),
+        },
+      });
     }
 
     if (editorInvite) {
@@ -140,12 +188,49 @@ export async function registerUser(input: {
       },
     });
 
+    await transaction.auditLog.create({
+      data: {
+        action: "register",
+        actorId: createdUser.id,
+        entityId: createdUser.id,
+        entityType: "User",
+        metadata: JSON.stringify({
+          role: createdUser.role,
+        }),
+      },
+    });
+
     return createdUser;
   });
+
+  let verificationEmailQueued =
+    false;
+
+  try {
+    await sendVerificationEmail({
+      email:
+        user.email,
+      fullName:
+        user.fullName,
+      token:
+        emailVerificationToken,
+    });
+
+    verificationEmailQueued = true;
+  } catch (emailError) {
+    console.error(
+      "EMAIL_VERIFICATION_DELIVERY_FAILED",
+      emailError,
+    );
+  }
 
   return {
     user,
     token,
-    requestedRole: requiresApproval ? requestedRole : null,
+    requestedRole:
+      requiresApproval
+        ? requestedRole
+        : null,
+    verificationEmailQueued,
   };
 }

@@ -46,6 +46,7 @@ export function PublisherDashboard({ data }: { data: PublisherWorkspaceData }) {
           <Link href="/yayinevi/dosyalar">Dosya merkezi</Link>
           <Link href="/yayinevi/bildirimler">Bildirimler</Link>
           <Link href="/yayinevi/uyeler">Ekip ve yetkiler</Link>
+          <Link href="/yayinevi/yetkilerim">Yetkilerim</Link>
         </div>
       </header>
 

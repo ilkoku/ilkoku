@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { allocatePublicId } from "@/lib/public-id";
 import { prisma } from "@/lib/prisma";
+import {
+  sendRoleRequestDecisionEmail,
+} from "@/lib/email/publisher-emails";
 import { validateStoredPublisherApplication } from "@/features/publisher-applications/schema";
 
 export interface RoleRequestActionState {
@@ -147,6 +151,65 @@ function errorState(
   };
 }
 
+type RoleRequestEmailDecision =
+  | "approved"
+  | "changes_requested"
+  | "rejected";
+
+async function sendRoleRequestDecisionEmailSafely(input: {
+  decision: RoleRequestEmailDecision;
+  note?: string | null;
+  requestId: string;
+}) {
+  const request =
+    await prisma.roleRequest.findUnique({
+      where: {
+        id: input.requestId,
+      },
+      select: {
+        requestedRole: true,
+        user: {
+          select: {
+            email: true,
+            fullName: true,
+          },
+        },
+      },
+    });
+
+  if (
+    !request ||
+    (
+      request.requestedRole !== "editor" &&
+      request.requestedRole !== "publisher"
+    )
+  ) {
+    return;
+  }
+
+  try {
+    await sendRoleRequestDecisionEmail({
+      decision: input.decision,
+      email: request.user.email,
+      fullName: request.user.fullName,
+      note: input.note,
+      requestedRole: request.requestedRole,
+    });
+  } catch (error) {
+    console.error(
+      "ROLE_REQUEST_EMAIL_FAILED",
+      {
+        decision: input.decision,
+        error:
+          error instanceof Error
+            ? error.message
+            : "UNKNOWN_ERROR",
+        requestId: input.requestId,
+      },
+    );
+  }
+}
+
 export async function approveRoleRequestAction(
   _previousState: RoleRequestActionState,
   formData: FormData,
@@ -236,9 +299,18 @@ export async function approveRoleRequestAction(
           });
           if (duplicate) throw new Error("PUBLISHER_SLUG_CONFLICT");
 
+          const publisherCreatedAt = new Date();
+          const publisherPublicId = await allocatePublicId(
+            transaction,
+            "publisher",
+            publisherCreatedAt,
+          );
+
           const publisher = await transaction.publisher.create({
             data: {
               acceptsSubmissions: application.acceptsSubmissions,
+              createdAt: publisherCreatedAt,
+              publicId: publisherPublicId,
               active: true,
               address: application.address,
               city: application.city,
@@ -356,6 +428,12 @@ export async function approveRoleRequestAction(
       });
     });
 
+    await sendRoleRequestDecisionEmailSafely({
+      decision: "approved",
+      note: reviewNote,
+      requestId,
+    });
+
     revalidateRolePages();
 
     return {
@@ -442,6 +520,12 @@ export async function requestPublisherCorrectionAction(
       });
     });
 
+    await sendRoleRequestDecisionEmailSafely({
+      decision: "changes_requested",
+      note: reviewNote,
+      requestId,
+    });
+
     revalidateRolePages();
 
     return {
@@ -516,6 +600,12 @@ export async function rejectRoleRequestAction(
           metadata: JSON.stringify({ decision: "rejected", requestedRole: roleRequest.requestedRole, userId: roleRequest.userId }),
         },
       });
+    });
+
+    await sendRoleRequestDecisionEmailSafely({
+      decision: "rejected",
+      note: reviewNote,
+      requestId,
     });
 
     revalidateRolePages();

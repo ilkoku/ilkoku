@@ -1,0 +1,433 @@
+import type {
+  Prisma,
+} from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
+
+const PAGE_SIZE = 24;
+
+const reviewStatuses = [
+  "not_requested",
+  "requested",
+  "in_progress",
+  "awaiting_second_editor",
+  "second_in_progress",
+  "completed",
+] as const;
+
+type ReviewStatus =
+  (typeof reviewStatuses)[number];
+
+export interface PublisherWorkDiscoveryFilters {
+  completion: "" | "completed" | "ongoing";
+  genre: string;
+  language: string;
+  page: number;
+  query: string;
+  reviewStatus: ReviewStatus | "";
+  sort: "newest" | "updated";
+}
+
+export interface PublisherWorkDiscoveryRow {
+  authorAlias: string;
+  authorName: string;
+  chapterCount: number;
+  commentCount: number;
+  completion: "completed" | "ongoing";
+  coverUrl: string | null;
+  editorReviewStatus: ReviewStatus;
+  favoriteCount: number;
+  genre: string | null;
+  hasPassportRecord: boolean;
+  id: string;
+  language: string;
+  publishedAt: string;
+  readerCount: number;
+  slug: string;
+  subtitle: string | null;
+  title: string;
+  versionCount: number;
+}
+
+export interface PublisherWorkDiscoveryData {
+  currentPage: number;
+  first: number;
+  last: number;
+  rows: PublisherWorkDiscoveryRow[];
+  totalCount: number;
+  totalPages: number;
+}
+
+function firstValue(
+  value: string | string[] | undefined,
+) {
+  return (
+    Array.isArray(value)
+      ? value[0]
+      : value
+  )?.trim() ?? "";
+}
+
+function isReviewStatus(
+  value: string,
+): value is ReviewStatus {
+  return reviewStatuses.includes(
+    value as ReviewStatus,
+  );
+}
+
+export function normalizePublisherWorkDiscoveryFilters(
+  input: Record<
+    string,
+    string | string[] | undefined
+  >,
+): PublisherWorkDiscoveryFilters {
+  const rawPage = Number.parseInt(
+    firstValue(input.sayfa),
+    10,
+  );
+  const completion =
+    firstValue(input.tamamlanma);
+  const reviewStatus =
+    firstValue(input.editor);
+  const sort =
+    firstValue(input.siralama);
+
+  return {
+    completion:
+      completion === "completed" ||
+      completion === "ongoing"
+        ? completion
+        : "",
+    genre:
+      firstValue(input.tur).slice(0, 120),
+    language:
+      firstValue(input.dil).slice(0, 10),
+    page:
+      Number.isFinite(rawPage) &&
+      rawPage > 0
+        ? rawPage
+        : 1,
+    query:
+      firstValue(input.arama).slice(0, 220),
+    reviewStatus:
+      isReviewStatus(reviewStatus)
+        ? reviewStatus
+        : "",
+    sort:
+      sort === "updated"
+        ? "updated"
+        : "newest",
+  };
+}
+
+function publicWriterName(writer: {
+  displayName: string | null;
+  username: string | null;
+}) {
+  return (
+    writer.displayName?.trim() ||
+    writer.username?.trim() ||
+    "İlkOku Yazarı"
+  );
+}
+
+function publicWriterAlias(writer: {
+  displayName: string | null;
+  username: string | null;
+}) {
+  if (writer.username?.trim()) {
+    return `@${writer.username.trim()}`;
+  }
+
+  const slug = (
+    writer.displayName?.trim() ||
+    "ilkoku-yazari"
+  )
+    .toLocaleLowerCase("tr-TR")
+    .replace(/\s+/gu, "-")
+    .replace(
+      /[^a-z0-9çğıöşü_-]/giu,
+      "",
+    );
+
+  return `@${slug || "ilkoku-yazari"}`;
+}
+
+const publishedChapterWhere = {
+  archivedAt: null,
+  publishedAt: {
+    not: null,
+  },
+  status: "published",
+} satisfies Prisma.ChapterWhereInput;
+
+export async function getPublisherWorkDiscovery(
+  filters: PublisherWorkDiscoveryFilters,
+): Promise<PublisherWorkDiscoveryData> {
+  const where: Prisma.WorkWhereInput = {
+    archivedAt: null,
+    publishedAt: {
+      not: null,
+    },
+    status: "published",
+    visibility: "public",
+    author: {
+      is: {
+        deletedAt: null,
+        role: "writer",
+        status: "active",
+      },
+    },
+    ...(filters.query
+      ? {
+          OR: [
+            {
+              title: {
+                contains: filters.query,
+              },
+            },
+            {
+              subtitle: {
+                contains: filters.query,
+              },
+            },
+            {
+              author: {
+                is: {
+                  OR: [
+                    {
+                      displayName: {
+                        contains:
+                          filters.query,
+                      },
+                    },
+                    {
+                      username: {
+                        contains:
+                          filters.query,
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        }
+      : {}),
+    ...(filters.genre
+      ? {
+          genre: {
+            contains: filters.genre,
+          },
+        }
+      : {}),
+    ...(filters.language
+      ? {
+          language: filters.language,
+        }
+      : {}),
+    ...(filters.reviewStatus
+      ? {
+          editorReviewStatus:
+            filters.reviewStatus,
+        }
+      : {}),
+    ...(filters.completion === "completed"
+      ? {
+          chapters: {
+            none: {
+              archivedAt: null,
+              OR: [
+                {
+                  publishedAt: null,
+                },
+                {
+                  status: {
+                    not: "published",
+                  },
+                },
+              ],
+            },
+            some: publishedChapterWhere,
+          },
+        }
+      : filters.completion === "ongoing"
+        ? {
+            chapters: {
+              some: {
+                archivedAt: null,
+                OR: [
+                  {
+                    publishedAt: null,
+                  },
+                  {
+                    status: {
+                      not: "published",
+                    },
+                  },
+                ],
+              },
+            },
+          }
+        : {}),
+  };
+
+  const totalCount =
+    await prisma.work.count({ where });
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalCount / PAGE_SIZE),
+  );
+  const currentPage = Math.min(
+    filters.page,
+    totalPages,
+  );
+
+  const works = await prisma.work.findMany({
+    where,
+    orderBy:
+      filters.sort === "updated"
+        ? [
+            {
+              updatedAt: "desc",
+            },
+            {
+              publishedAt: "desc",
+            },
+          ]
+        : [
+            {
+              publishedAt: "desc",
+            },
+            {
+              createdAt: "desc",
+            },
+          ],
+    skip:
+      (currentPage - 1) *
+      PAGE_SIZE,
+    take:
+      PAGE_SIZE,
+    select: {
+      _count: {
+        select: {
+          comments: {
+            where: {
+              deletedAt: null,
+              status: "visible",
+            },
+          },
+          favorites: true,
+          ownershipStamps: true,
+          readingProgress: true,
+          versions: true,
+        },
+      },
+      author: {
+        select: {
+          displayName: true,
+          username: true,
+        },
+      },
+      chapters: {
+        where: {
+          archivedAt: null,
+        },
+        orderBy: {
+          position: "asc",
+        },
+        select: {
+          id: true,
+          publishedAt: true,
+          status: true,
+        },
+      },
+      coverUrl: true,
+      editorReviewStatus: true,
+      genre: true,
+      id: true,
+      language: true,
+      publishedAt: true,
+      slug: true,
+      subtitle: true,
+      title: true,
+    },
+  });
+
+  const first =
+    totalCount === 0
+      ? 0
+      : (currentPage - 1) *
+          PAGE_SIZE +
+        1;
+  const last = Math.min(
+    currentPage * PAGE_SIZE,
+    totalCount,
+  );
+
+  return {
+    currentPage,
+    first,
+    last,
+    rows: works.map((work) => {
+      const publishedChapterCount =
+        work.chapters.filter(
+          (chapter) =>
+            chapter.status === "published" &&
+            chapter.publishedAt !== null,
+        ).length;
+      const hasPendingChapter =
+        work.chapters.some(
+          (chapter) =>
+            chapter.status !== "published" ||
+            chapter.publishedAt === null,
+        );
+
+      return {
+        authorAlias:
+          publicWriterAlias(work.author),
+        authorName:
+          publicWriterName(work.author),
+        chapterCount:
+          publishedChapterCount,
+        commentCount:
+          work._count.comments,
+        completion:
+          publishedChapterCount > 0 &&
+          !hasPendingChapter
+            ? "completed"
+            : "ongoing",
+        coverUrl:
+          work.coverUrl,
+        editorReviewStatus:
+          work.editorReviewStatus,
+        favoriteCount:
+          work._count.favorites,
+        genre:
+          work.genre,
+        hasPassportRecord:
+          work._count.ownershipStamps > 0 ||
+          work._count.versions > 0,
+        id:
+          work.id,
+        language:
+          work.language,
+        publishedAt:
+          work.publishedAt?.toISOString() ??
+          new Date(0).toISOString(),
+        readerCount:
+          work._count.readingProgress,
+        slug:
+          work.slug,
+        subtitle:
+          work.subtitle,
+        title:
+          work.title,
+        versionCount:
+          work._count.versions,
+      };
+    }),
+    totalCount,
+    totalPages,
+  };
+}

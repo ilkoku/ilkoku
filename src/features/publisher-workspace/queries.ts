@@ -1,6 +1,10 @@
 import { cache } from "react";
-import { hasPublisherPermission } from "./permissions";
 import {
+  getCustomizablePublisherPermissions,
+  hasPublisherPermission,
+} from "./permissions";
+import {
+  getPublisherMembership,
   getPublisherFiles,
   getPublisherInvitations,
   getPublisherMembers,
@@ -101,9 +105,13 @@ export async function getPublisherNotificationCenter(userId: string): Promise<Pu
   if (!notifications) return null;
   return notifications.map((notification) => ({
     createdAt: notification.createdAt.toISOString(),
-    href: notification.relatedEntityType === "publisher_submission" && notification.relatedEntityId
-      ? `/yayinevi/basvurular/${notification.relatedEntityId}`
-      : null,
+    href:
+      notification.relatedEntityType === "publisher_submission" &&
+      notification.relatedEntityId
+        ? `/yayinevi/basvurular/${notification.relatedEntityId}`
+        : notification.relatedEntityType === "publisher_permission_request"
+          ? "/yayinevi/yetkilerim"
+          : null,
     id: notification.id,
     message: notification.message,
     readAt: notification.readAt?.toISOString() ?? null,
@@ -124,6 +132,7 @@ export async function getPublisherMemberCenter(userId: string): Promise<{
   const canManage = hasPublisherPermission(
     result.membership.role,
     "manage_members",
+    result.membership.permissionOverrides,
   );
 
   const invitations = canManage
@@ -145,25 +154,48 @@ export async function getPublisherMemberCenter(userId: string): Promise<{
       id: invitation.id,
       invitedByName: displayName(invitation.invitedBy),
       invitedEmail: invitation.invitedEmail,
+      permissions: getCustomizablePublisherPermissions(
+        invitation.role,
+        invitation.permissionOverrides,
+      ),
       role: invitation.role,
       status: invitation.status,
     })),
-    members: result.members.map((member) => ({
+    members: result.members
+      .filter((member) => canManage || member.userId === userId)
+      .map((member) => ({
       active: member.active,
       displayName: displayName(member.user),
       email: member.user.email,
       id: member.id,
-      role: member.role,
-    })),
+      permissions: getCustomizablePublisherPermissions(
+        member.role,
+        member.permissionOverrides,
+      ),
+        role: member.role,
+      })),
   };
 }
 
 export const getPublisherSubmissionDetail = cache(
   async (userId: string, submissionId: string): Promise<PublisherSubmissionDetail | null> => {
-    const submission = await getPublisherSubmissionForMember(userId, submissionId);
-    if (!submission) return null;
-    const membership = submission.publisher.members[0];
-    if (!membership || !hasPublisherPermission(membership.role, "view_submission")) return null;
+    const [submission, membership] = await Promise.all([
+      getPublisherSubmissionForMember(userId, submissionId),
+      getPublisherMembership(userId),
+    ]);
+
+    if (
+      !submission ||
+      !membership ||
+      membership.publisherId !== submission.publisherId ||
+      !hasPublisherPermission(
+        membership.role,
+        "view_submission",
+        membership.permissionOverrides,
+      )
+    ) {
+      return null;
+    }
 
     return {
       author: { displayName: displayName(submission.author), email: submission.author.email, id: submission.author.id },
@@ -210,10 +242,26 @@ export const getPublisherSubmissionDetail = cache(
       id: submission.id,
       membershipRole: membership.role,
       permissions: {
-        addInternalNote: hasPublisherPermission(membership.role, "add_internal_note"),
-        decide: hasPublisherPermission(membership.role, "decide_submission"),
-        manageContract: hasPublisherPermission(membership.role, "manage_contract"),
-        managePublicationPlan: hasPublisherPermission(membership.role, "manage_publication_plan"),
+        addInternalNote: hasPublisherPermission(
+          membership.role,
+          "add_internal_note",
+          membership.permissionOverrides,
+        ),
+        decide: hasPublisherPermission(
+          membership.role,
+          "decide_submission",
+          membership.permissionOverrides,
+        ),
+        manageContract: hasPublisherPermission(
+          membership.role,
+          "manage_contract",
+          membership.permissionOverrides,
+        ),
+        managePublicationPlan: hasPublisherPermission(
+          membership.role,
+          "manage_publication_plan",
+          membership.permissionOverrides,
+        ),
       },
       publisher: { companyName: submission.publisher.companyName, id: submission.publisher.id },
       publicationPlan: submission.publicationPlan ? {

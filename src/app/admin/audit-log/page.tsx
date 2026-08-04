@@ -4,6 +4,21 @@ import { prisma } from "@/lib/prisma";
 
 const PAGE_SIZE = 30;
 const actionLabels: Record<AuditAction, string> = {
+  user_status_changed: "Kullanıcı durumu değiştirildi",
+  work_status_changed: "Eser durumu değiştirildi",
+  publisher_status_changed: "Yayınevi durumu değiştirildi",
+  comment_status_changed: "Yorum durumu değiştirildi",
+  reading_access_flagged: "Şüpheli okuma erişimi işaretlendi",
+  admin_role_view_changed: "Admin rol görünümü değiştirildi",
+  publisher_permission_requested: "Yayınevi yetkisi talep edildi",
+  publisher_permission_reviewed: "Yayınevi yetki talebi sonuçlandırıldı",
+  publisher_work_liked: "Yayınevi eseri beğendi",
+  publisher_author_liked: "Yayınevi yazarı beğendi",
+  publisher_work_favorited: "Yayınevi eseri favoriledi",
+  publisher_author_favorited: "Yayınevi yazarı favoriledi",
+  publisher_author_followed: "Yayınevi yazarı takip etti",
+  publisher_discovery_shared: "Yayınevi keşif kaydını paylaştı",
+  email_test_sent: "Admin test e-postası gönderdi",
   email_verified: "E-posta doğrulandı",
   login: "Oturum açıldı",
   logout: "Oturum kapatıldı",
@@ -46,7 +61,22 @@ function safeMetadata(value: string | null) {
   if (!value) return null;
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>;
-    const allowed = ["decision", "requestedRole", "status", "entityType", "userId"];
+    const allowed = [
+      "channel",
+      "decision",
+      "deliveryId",
+      "deliveryMode",
+      "newStatus",
+      "oldStatus",
+      "recipient",
+      "requestedRole",
+      "role",
+      "sessionsRevoked",
+      "source",
+      "status",
+      "template",
+      "userId",
+    ];
     return allowed.flatMap((key) => key in parsed ? [`${key}: ${String(parsed[key])}`] : []);
   } catch {
     return ["Yapılandırılmış metadata okunamadı."];

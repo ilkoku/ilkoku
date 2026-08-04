@@ -94,6 +94,26 @@ export async function updateProfileAction(
           completionPercentage: 100,
         },
       });
+
+      await transaction.auditLog.create({
+        data: {
+          action: "profile_updated",
+          actorId: user.id,
+          entityId: user.id,
+          entityType: "User",
+          metadata: JSON.stringify({
+            fields: [
+              "avatarUrl",
+              "bio",
+              "displayName",
+              "fullName",
+              "username",
+              "website",
+              "writingGenres",
+            ],
+          }),
+        },
+      });
     });
   } catch {
     return failure("Profil kaydedilemedi. Lütfen tekrar deneyin.");
@@ -132,10 +152,33 @@ export async function changePasswordAction(
   }
 
   try {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: await hashPassword(newPassword) },
-    });
+    const passwordHash =
+      await hashPassword(newPassword);
+
+    await prisma.$transaction(
+      async (transaction) => {
+        await transaction.user.update({
+          where: {
+            id: user.id,
+          },
+          data: {
+            passwordHash,
+          },
+        });
+
+        await transaction.auditLog.create({
+          data: {
+            action: "password_changed",
+            actorId: user.id,
+            entityId: user.id,
+            entityType: "User",
+            metadata: JSON.stringify({
+              source: "profile",
+            }),
+          },
+        });
+      },
+    );
   } catch {
     return failure("Şifre güncellenemedi. Lütfen tekrar deneyin.");
   }

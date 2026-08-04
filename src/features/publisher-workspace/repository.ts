@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { getCurrentAdminRoleView } from "@/features/admin-role-view/cookie";
+import { getCurrentSessionContext } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 import type {
   EditorReviewStatus,
@@ -6,7 +8,11 @@ import type {
   PublisherMemberRole,
   PublisherSubmissionStatus,
 } from "@/generated/prisma/client";
-import { hasPublisherPermission, type PublisherPermission } from "./permissions";
+import {
+  getCustomizablePublisherPermissions,
+  hasPublisherPermission,
+  type PublisherPermission,
+} from "./permissions";
 import type { PublisherWorkspaceFilters, PublisherWorkspaceSubmissionStatus } from "./types";
 
 const PAGE_SIZE = 10;
@@ -28,14 +34,75 @@ interface PublisherWorkspaceRecord {
   };
 }
 
-export function getPublisherMembership(userId: string) {
+export function isPublisherAdminReadOnlyMembership(
+  membership: unknown,
+): membership is { adminReadOnly: true } {
+  return Boolean(
+    membership &&
+    typeof membership === "object" &&
+    "adminReadOnly" in membership &&
+    membership.adminReadOnly === true,
+  );
+}
+
+export async function getPublisherMembership(
+  userId: string,
+) {
+  const session = await getCurrentSessionContext();
+
+  if (
+    session?.user.id === userId &&
+    session.user.role === "admin"
+  ) {
+    const roleView = await getCurrentAdminRoleView();
+
+    if (
+      roleView?.role === "publisher" &&
+      roleView.publisherId &&
+      roleView.publisherRole
+    ) {
+      const publisher =
+        await prisma.publisher.findFirst({
+          where: {
+            active: true,
+            archivedAt: null,
+            id: roleView.publisherId,
+            verified: true,
+          },
+        });
+
+      if (!publisher) return null;
+
+      return {
+        active: true,
+        adminReadOnly: true as const,
+        createdAt: publisher.createdAt,
+        id:
+          `admin-preview:${publisher.id}:` +
+          roleView.publisherRole,
+        permissionOverrides: null,
+        publisher,
+        publisherId: publisher.id,
+        role: roleView.publisherRole,
+        updatedAt: publisher.updatedAt,
+        userId,
+      };
+    }
+  }
+
   return prisma.publisherMembership.findFirst({
     where: {
       active: true,
       userId,
-      publisher: { active: true, archivedAt: null },
+      publisher: {
+        active: true,
+        archivedAt: null,
+        verified: true,
+      },
     },
-    include: { publisher: true },
+    include: {
+      publisher: true,
+    },
   });
 }
 
@@ -44,7 +111,19 @@ export async function requirePublisherMembershipPermission(
   permission: PublisherPermission,
 ) {
   const membership = await getPublisherMembership(userId);
-  if (!membership || !hasPublisherPermission(membership.role, permission)) return null;
+
+  if (
+    !membership ||
+    isPublisherAdminReadOnlyMembership(membership) ||
+    !hasPublisherPermission(
+      membership.role,
+      permission,
+      membership.permissionOverrides,
+    )
+  ) {
+    return null;
+  }
+
   return membership;
 }
 
@@ -53,7 +132,16 @@ export async function getPublisherWorkspaceRecords(
   filters: PublisherWorkspaceFilters,
 ) {
   const membership = await getPublisherMembership(userId);
-  if (!membership) return null;
+  if (
+    !membership ||
+    !hasPublisherPermission(
+      membership.role,
+      "view_submission",
+      membership.permissionOverrides,
+    )
+  ) {
+    return null;
+  }
 
   const dateFrom = filters.dateFrom ? new Date(`${filters.dateFrom}T00:00:00`) : null;
   const dateTo = filters.dateTo ? new Date(`${filters.dateTo}T23:59:59.999`) : null;
@@ -151,37 +239,106 @@ export async function getPublisherWorkspaceRecords(
   };
 }
 
-export function getPublisherSubmissionForMember(userId: string, submissionId: string) {
+export async function getPublisherSubmissionForMember(
+  userId: string,
+  submissionId: string,
+) {
+  const membership =
+    await getPublisherMembership(userId);
+
+  if (
+    !membership ||
+    !hasPublisherPermission(
+      membership.role,
+      "view_submission",
+      membership.permissionOverrides,
+    )
+  ) {
+    return null;
+  }
+
   return prisma.publisherSubmission.findFirst({
     where: {
-      id: submissionId,
       archivedAt: null,
-      publisher: { active: true, archivedAt: null, members: { some: { active: true, userId } } },
+      id: submissionId,
+      publisherId: membership.publisherId,
+      publisher: {
+        active: true,
+        archivedAt: null,
+      },
     },
     include: {
       contract: true,
       publicationPlan: true,
-      author: { select: { displayName: true, email: true, fullName: true, id: true } },
+      author: {
+        select: {
+          displayName: true,
+          email: true,
+          fullName: true,
+          id: true,
+        },
+      },
       events: {
-        include: { actor: { select: { displayName: true, fullName: true } } },
-        orderBy: { createdAt: "desc" },
+        include: {
+          actor: {
+            select: {
+              displayName: true,
+              fullName: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
       },
       files: {
-        where: { archivedAt: null },
-        include: { uploadedBy: { select: { displayName: true, fullName: true } } },
-        orderBy: { createdAt: "desc" },
+        where: {
+          archivedAt: null,
+        },
+        include: {
+          uploadedBy: {
+            select: {
+              displayName: true,
+              fullName: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
       },
-      publisher: { include: { members: { where: { active: true, userId }, select: { role: true } } } },
+      publisher: true,
       work: {
         include: {
-          chapters: { where: { archivedAt: null }, select: { id: true } },
-          editorFeedback: {
-            where: { archivedAt: null, isProfessionalReview: true },
-            include: {
-              assignment: { select: { stage: true } },
-              editor: { select: { displayName: true, fullName: true } },
+          chapters: {
+            where: {
+              archivedAt: null,
             },
-            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+            },
+          },
+          editorFeedback: {
+            where: {
+              archivedAt: null,
+              isProfessionalReview: true,
+            },
+            include: {
+              assignment: {
+                select: {
+                  stage: true,
+                },
+              },
+              editor: {
+                select: {
+                  displayName: true,
+                  fullName: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: "asc",
+            },
           },
         },
       },
@@ -199,7 +356,22 @@ export async function updatePublisherSubmissionDecision(input: {
   if (!membership) return null;
   const submission = await prisma.publisherSubmission.findFirst({
     where: { id: input.submissionId, archivedAt: null, publisherId: membership.publisherId, status: { not: "withdrawn" } },
-    select: { authorId: true, id: true, status: true, work: { select: { title: true } } },
+    select: {
+      author: {
+        select: {
+          email: true,
+          fullName: true,
+        },
+      },
+      authorId: true,
+      id: true,
+      status: true,
+      work: {
+        select: {
+          title: true,
+        },
+      },
+    },
   });
   if (!submission) return null;
 
@@ -232,7 +404,13 @@ export async function updatePublisherSubmissionDecision(input: {
         },
       });
     }
-    return updated;
+    return {
+      author: submission.author,
+      statusChanged:
+        submission.status !== input.status,
+      updated,
+      work: submission.work,
+    };
   });
 }
 
@@ -258,7 +436,21 @@ export async function upsertPublisherContract(input: {
   if (!membership) return null;
   const submission = await prisma.publisherSubmission.findFirst({
     where: { id: input.submissionId, archivedAt: null, status: "accepted", publisherId: membership.publisherId },
-    select: { authorId: true, id: true, work: { select: { title: true } } },
+    select: {
+      author: {
+        select: {
+          email: true,
+          fullName: true,
+        },
+      },
+      authorId: true,
+      id: true,
+      work: {
+        select: {
+          title: true,
+        },
+      },
+    },
   });
   if (!submission) return null;
   return prisma.$transaction(async (tx) => {
@@ -281,7 +473,11 @@ export async function upsertPublisherContract(input: {
         userId: submission.authorId,
       },
     });
-    return contract;
+    return {
+      author: submission.author,
+      contract,
+      work: submission.work,
+    };
   });
 }
 
@@ -318,38 +514,111 @@ export async function upsertPublicationPlan(input: {
   });
 }
 
-export async function getPublisherFiles(userId: string) {
-  const membership = await requirePublisherMembershipPermission(userId, "download_file");
-  if (!membership) return null;
+export async function getPublisherFiles(
+  userId: string,
+) {
+  const membership =
+    await getPublisherMembership(userId);
+
+  if (
+    !membership ||
+    !hasPublisherPermission(
+      membership.role,
+      "download_file",
+      membership.permissionOverrides,
+    )
+  ) {
+    return null;
+  }
+
   return prisma.publisherFile.findMany({
-    where: { archivedAt: null, submission: { archivedAt: null, publisherId: membership.publisherId } },
-    include: {
-      submission: { select: { id: true, work: { select: { title: true } } } },
-      uploadedBy: { select: { displayName: true, fullName: true } },
+    where: {
+      archivedAt: null,
+      submission: {
+        archivedAt: null,
+        publisherId: membership.publisherId,
+      },
     },
-    orderBy: { createdAt: "desc" },
+    include: {
+      submission: {
+        select: {
+          id: true,
+          work: {
+            select: {
+              title: true,
+            },
+          },
+        },
+      },
+      uploadedBy: {
+        select: {
+          displayName: true,
+          fullName: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 }
 
-export async function getPublisherFileForDownload(userId: string, fileId: string) {
-  const membership = await requirePublisherMembershipPermission(userId, "download_file");
-  if (!membership) return null;
+export async function getPublisherFileForDownload(
+  userId: string,
+  fileId: string,
+) {
+  const membership =
+    await getPublisherMembership(userId);
+
+  if (
+    !membership ||
+    isPublisherAdminReadOnlyMembership(membership) ||
+    !hasPublisherPermission(
+      membership.role,
+      "download_file",
+      membership.permissionOverrides,
+    )
+  ) {
+    return null;
+  }
+
   return prisma.publisherFile.findFirst({
     where: {
-      id: fileId,
       archivedAt: null,
-      submission: { archivedAt: null, publisherId: membership.publisherId },
+      id: fileId,
+      submission: {
+        archivedAt: null,
+        publisherId: membership.publisherId,
+      },
     },
-    select: { fileName: true, storageUrl: true },
+    select: {
+      fileName: true,
+      storageUrl: true,
+    },
   });
 }
 
-export async function getPublisherNotifications(userId: string) {
-  const membership = await getPublisherMembership(userId);
+export async function getPublisherNotifications(
+  userId: string,
+) {
+  const membership =
+    await getPublisherMembership(userId);
+
   if (!membership) return null;
+
+  if (
+    isPublisherAdminReadOnlyMembership(membership)
+  ) {
+    return [];
+  }
+
   return prisma.notification.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
+    where: {
+      userId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
     take: 100,
   });
 }
@@ -368,6 +637,7 @@ export async function getPublisherMembers(userId: string) {
 export async function updatePublisherMember(input: {
   active: boolean;
   memberId: string;
+  permissions: PublisherPermission[];
   role: "manager" | "submissions_manager" | "editorial" | "contract_manager" | "reviewer" | "viewer";
   userId: string;
 }) {
@@ -380,7 +650,11 @@ export async function updatePublisherMember(input: {
   if (!target || target.role === "owner" || target.userId === input.userId) return null;
   return prisma.publisherMembership.update({
     where: { id: target.id },
-    data: { active: input.active, role: input.role },
+    data: {
+      active: input.active,
+      permissionOverrides: input.permissions,
+      role: input.role,
+    },
   });
 }
 
@@ -389,6 +663,7 @@ type InviteablePublisherRole = Exclude<PublisherMemberRole, "owner">;
 export async function createPublisherInvitation(input: {
   email: string;
   expiresAt: Date;
+  permissions: PublisherPermission[];
   role: InviteablePublisherRole;
   tokenHash: string;
   userId: string;
@@ -468,6 +743,7 @@ export async function createPublisherInvitation(input: {
         expiresAt: input.expiresAt,
         invitedById: caller.userId,
         invitedEmail: email,
+        permissionOverrides: input.permissions,
         publisherId: caller.publisherId,
         role: input.role,
         tokenHash: input.tokenHash,
@@ -477,6 +753,7 @@ export async function createPublisherInvitation(input: {
         expiresAt: true,
         id: true,
         invitedEmail: true,
+        permissionOverrides: true,
         role: true,
       },
     });
@@ -495,26 +772,41 @@ export async function createPublisherInvitation(input: {
   });
 }
 
-export async function getPublisherInvitations(userId: string) {
-  const membership = await requirePublisherMembershipPermission(
-    userId,
-    "manage_members",
-  );
+export async function getPublisherInvitations(
+  userId: string,
+) {
+  const membership =
+    await getPublisherMembership(userId);
 
-  if (!membership) return null;
+  if (
+    !membership ||
+    !hasPublisherPermission(
+      membership.role,
+      "manage_members",
+      membership.permissionOverrides,
+    )
+  ) {
+    return null;
+  }
 
   const now = new Date();
 
-  await prisma.publisherInvitation.updateMany({
-    where: {
-      expiresAt: { lte: now },
-      publisherId: membership.publisherId,
-      status: "pending",
-    },
-    data: {
-      status: "expired",
-    },
-  });
+  if (
+    !isPublisherAdminReadOnlyMembership(membership)
+  ) {
+    await prisma.publisherInvitation.updateMany({
+      where: {
+        expiresAt: {
+          lte: now,
+        },
+        publisherId: membership.publisherId,
+        status: "pending",
+      },
+      data: {
+        status: "expired",
+      },
+    });
+  }
 
   return prisma.publisherInvitation.findMany({
     where: {
@@ -665,12 +957,18 @@ export async function acceptPublisherInvitation(input: {
       await transaction.publisherInvitation.findFirst({
         where: {
           expiresAt: { gt: now },
+          publisher: {
+            active: true,
+            archivedAt: null,
+            verified: true,
+          },
           status: "pending",
           tokenHash,
         },
         select: {
           id: true,
           invitedEmail: true,
+          permissionOverrides: true,
           publisherId: true,
           role: true,
         },
@@ -708,6 +1006,12 @@ export async function acceptPublisherInvitation(input: {
       return { status: "invalid" as const };
     }
 
+    const invitationPermissions =
+      getCustomizablePublisherPermissions(
+        invitation.role,
+        invitation.permissionOverrides,
+      );
+
     const existingMembership =
       await transaction.publisherMembership.findUnique({
         where: {
@@ -730,17 +1034,22 @@ export async function acceptPublisherInvitation(input: {
       },
       create: {
         active: true,
+        permissionOverrides: invitationPermissions,
         publisherId: invitation.publisherId,
         role: invitation.role,
         userId: user.id,
       },
-      update: {
-        active: true,
-        role:
-          existingMembership?.role === "owner"
-            ? "owner"
-            : invitation.role,
-      },
+      update:
+        existingMembership?.role === "owner"
+          ? {
+              active: true,
+              role: "owner",
+            }
+          : {
+              active: true,
+              permissionOverrides: invitationPermissions,
+              role: invitation.role,
+            },
     });
 
     return {

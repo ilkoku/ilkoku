@@ -1,7 +1,7 @@
 import { clearSessionCookie, getSessionCookie } from "./cookies";
 import { hashSessionToken } from "./session";
 
-export async function getCurrentUser() {
+export async function getCurrentSessionContext() {
   const token = await getSessionCookie();
 
   if (!token) {
@@ -24,7 +24,15 @@ export async function getCurrentUser() {
       return null;
     }
 
-    if (session.expiresAt <= new Date()) {
+    const accountUnavailable =
+      session.user.status !== "active" ||
+      session.user.isBanned ||
+      session.user.deletedAt !== null;
+
+    if (
+      session.expiresAt <= new Date() ||
+      accountUnavailable
+    ) {
       await prisma.session.deleteMany({
         where: {
           id: session.id,
@@ -35,7 +43,10 @@ export async function getCurrentUser() {
       return null;
     }
 
-    return session.user;
+    return {
+      sessionId: session.id,
+      user: session.user,
+    };
   } catch {
     try {
       await clearSessionCookie();
@@ -45,4 +56,9 @@ export async function getCurrentUser() {
 
     return null;
   }
+}
+
+export async function getCurrentUser() {
+  const context = await getCurrentSessionContext();
+  return context?.user ?? null;
 }

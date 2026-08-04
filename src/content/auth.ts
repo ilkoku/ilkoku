@@ -106,7 +106,7 @@ export const authContent = {
         previewDescription:
           "İlgini çeken eserleri takip et, kaldığın yerden okumaya devam et ve düşüncelerini paylaş.",
         highlights: ["Kişisel okuma listesi", "Yeni bölüm takibi", "Yazar geri bildirimleri"],
-        href: "/kitap/kayip-sehir",
+        href: "/kesfet",
         actionLabel: "Okur görünümünü keşfet",
       },
       {

@@ -18,10 +18,16 @@ import {
   getEmailSender,
   type EmailChannel,
 } from "./config";
+import {
+  attachEmailDeliveryDedupe,
+  buildEmailDedupeKey,
+  claimEmailDeliveryDedupe,
+} from "./dedupe";
 
 export type SendEmailInput = {
   channel: EmailChannel;
   html: string;
+  idempotencyKey?: string;
   subject: string;
   template: string;
   text: string;
@@ -248,6 +254,31 @@ export async function sendEmail(
     };
   }
 
+  const dedupeKey =
+    buildEmailDedupeKey(
+      input,
+      Boolean(optionalCategory),
+    );
+
+  const dedupeClaim =
+    await claimEmailDeliveryDedupe(
+      dedupeKey,
+    );
+
+  if (
+    !dedupeClaim.claimed &&
+    dedupeClaim.duplicateDeliveryId
+  ) {
+    return {
+      delivery:
+        "deduplicated" as const,
+      deliveryId:
+        dedupeClaim.duplicateDeliveryId,
+      id:
+        "deduplicated",
+    };
+  }
+
   const deliveryMode =
     getEmailDeliveryMode();
 
@@ -287,6 +318,11 @@ export async function sendEmail(
         id: true,
       },
     });
+
+  await attachEmailDeliveryDedupe(
+    dedupeKey,
+    delivery.id,
+  );
 
   let result:
     | Awaited<

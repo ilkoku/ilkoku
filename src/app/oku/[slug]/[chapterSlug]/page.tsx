@@ -38,7 +38,7 @@ export default async function DynamicReadingPage({
   searchParams,
 }: {
   params: Promise<{ chapterSlug: string; slug: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; inceleme?: string }>;
 }) {
   const { chapterSlug, slug } = await params;
   const query = await searchParams;
@@ -62,6 +62,10 @@ export default async function DynamicReadingPage({
         })
       : null;
 
+  const isReviewReading =
+    Boolean(reviewAssignment) ||
+    (user.role === "editor" && query.inceleme === "1");
+
   const requestHeaders = await headers();
 
   await recordReadingAccessSafely({
@@ -72,7 +76,7 @@ export default async function DynamicReadingPage({
     workId: chapter.work.id,
   });
 
-  const comments = reviewAssignment
+  const comments = isReviewReading
     ? { items: [], total: 0 }
     : await getChapterComments(chapter.id);
 
@@ -150,13 +154,13 @@ export default async function DynamicReadingPage({
     />
   );
 
-  if (!reviewAssignment) {
+  if (!isReviewReading) {
     return experience;
   }
 
   return (
     <EditorReviewReadingMode
-      stage={reviewAssignment.stage}
+      stage={reviewAssignment?.stage ?? "first"}
       variant="chapter"
     >
       {experience}

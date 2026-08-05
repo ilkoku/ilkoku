@@ -1,0 +1,8 @@
+.embed {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.embed :global(a) {
+  display: none;
+}

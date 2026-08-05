@@ -30,28 +30,32 @@
     0 0.35rem 1.7rem rgba(104, 71, 232, 0.1);
 }
 
-/* Hero bilgi kartları: fotoğrafı görünür bırakan cam yüzeyler. */
-.landing-page .landing-product-card {
-  border-color: rgba(255, 255, 255, 0.52);
-  background: rgba(255, 255, 255, 0.68);
-  box-shadow:
-    0 1rem 2.8rem rgba(17, 16, 47, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.58);
-  backdrop-filter: blur(0.85rem) saturate(1.08);
-  -webkit-backdrop-filter: blur(0.85rem) saturate(1.08);
-}
-
+/* Hero bilgi kartları: hero fotoğrafını belirgin bırakan yüksek şeffaflık. */
+.landing-page .landing-product-card,
 .landing-page .landing-product-card--review,
-.landing-page .landing-product-card--publisher {
-  background: rgba(255, 255, 255, 0.60);
+.landing-page .landing-product-card--publisher,
+.landing-page .landing-product-card--passport {
+  border-color: rgba(255, 255, 255, 0.46);
+  background: rgba(255, 255, 255, 0.24);
+  box-shadow:
+    0 0.8rem 2rem rgba(17, 16, 47, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(0.24rem) saturate(1.02);
+  -webkit-backdrop-filter: blur(0.24rem) saturate(1.02);
 }
 
-.landing-page .landing-product-card--passport {
-  background: rgba(255, 255, 255, 0.76);
+.landing-page .landing-product-card small,
+.landing-page .landing-product-card__eyebrow {
+  color: rgba(29, 27, 56, 0.8);
+}
+
+.landing-page .landing-product-card strong {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.46);
 }
 
 .landing-page .landing-product-card__metrics span {
-  background: rgba(248, 246, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(248, 246, 255, 0.20);
 }
 
 /* Mobil hero: onaylı çerçeveli görünümü korurken kartları kompakt tut. */
@@ -65,7 +69,7 @@
     gap: 0.5rem;
     padding: 0.68rem 0.78rem;
     border-radius: 0.9rem;
-    background: rgba(255, 255, 255, 0.56);
+    background: rgba(255, 255, 255, 0.22);
   }
 
   .landing-page .landing-product-card--review {
@@ -104,7 +108,7 @@
     width: calc(100% - 1.3rem);
     padding: 0.9rem;
     border-radius: 1.15rem;
-    background: rgba(255, 255, 255, 0.70);
+    background: rgba(255, 255, 255, 0.24);
   }
 
   .landing-page .landing-product-card__eyebrow {
@@ -131,7 +135,7 @@
     min-width: 0;
     padding: 0.58rem;
     font-size: 0.58rem;
-    background: rgba(248, 246, 255, 0.66);
+    background: rgba(248, 246, 255, 0.18);
   }
 
   .landing-page .landing-product-card__metrics strong {

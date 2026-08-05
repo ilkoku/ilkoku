@@ -1,8 +1,16 @@
 .embed {
   min-height: 100vh;
-  background: #f8fafc;
+  padding: 16px;
+  background: #0b101a;
+  box-sizing: border-box;
 }
 
 .embed :global(a) {
   display: none;
+}
+
+@media (max-width: 720px) {
+  .embed {
+    padding: 10px;
+  }
 }

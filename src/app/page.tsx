@@ -140,12 +140,12 @@ const roles = [
 ] as const;
 
 const benefits = [
-  { icon: "shield", title: "Güvenli Platform", description: "Kişisel verilerin ve eserlerin güvende.", className: "landing-benefit-v2--purple" },
-  { icon: "message", title: "Editör Geri Bildirimi", description: "Uzman editörlerden yapıcı ve detaylı geri bildirim al.", className: "landing-benefit-v2--blue" },
-  { icon: "publisher", title: "Yayınevleriyle Bağlantı", description: "Eserlerini doğrudan yayınevlerine ulaştır.", className: "landing-benefit-v2--orange" },
-  { icon: "trend", title: "Yazma Takibi", description: "İlerlemeni takip et, hedeflerine ulaş.", className: "landing-benefit-v2--green" },
-  { icon: "create", title: "Okuyucu Topluluğu", description: "Okuyucularla etkileşime geç, fikirlerini paylaş.", className: "landing-benefit-v2--blue" },
-  { icon: "bolt", title: "Tek Platform", description: "Yaz, geliştir, paylaş ve yayınlan.", className: "landing-benefit-v2--purple" },
+  { icon: "shield", title: "Kayıtlı Eser Süreci", description: "Yazım oturumları, revizyonlar ve sürüm geçmişi eser süreci boyunca kayıt altında tutulur.", className: "landing-benefit-v2--purple" },
+  { icon: "feedback", title: "Yetkili Erişim", description: "Eserler, platformdaki rol ve erişim kuralları kapsamında ilgili kullanıcılara gösterilir.", className: "landing-benefit-v2--blue" },
+  { icon: "editor", title: "Profesyonel Editör İncelemesi", description: "Yazarlar eserleri için profesyonel editör değerlendirmesi talep edebilir.", className: "landing-benefit-v2--orange" },
+  { icon: "message", title: "Okur Geri Bildirimi", description: "Bölüm yorumları ve okur görüşleri, yazarın çalışma alanında düzenli biçimde toplanır.", className: "landing-benefit-v2--green" },
+  { icon: "publisher", title: "Yayınevi Keşfi", description: "Yayınevi hesapları, görünür eserleri ve yazarları platform içinde keşfedebilir.", className: "landing-benefit-v2--blue" },
+  { icon: "book", title: "Eser Pasaportu", description: "Eserin yazım geçmişi, inceleme durumu ve doğrulama bilgileri tek yerde görüntülenir.", className: "landing-benefit-v2--purple" },
 ] as const;
 
 const stats = [
@@ -251,7 +251,7 @@ export default async function HomePage() {
 
       <section className="landing-why-v2" id="neden-ilkoku">
         <div className="landing-container">
-          <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">Her şey tek yerde</span><h2>Neden İlkOku?</h2></div>
+          <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">Güven, kayıt ve keşif</span><h2>Neden İlkOku?</h2></div>
           <div className="landing-benefits-v2">{benefits.map((benefit) => (<article className={`landing-benefit-v2 ${benefit.className}`} key={benefit.title}><span className="landing-benefit-v2__icon"><LandingIcon name={benefit.icon} /></span><h3>{benefit.title}</h3><p>{benefit.description}</p></article>))}</div>
           <div className="landing-stats-v2" aria-label="İlkOku platform istatistikleri">{stats.map((stat) => (<div className="landing-stat-v2" key={stat.label}><span className="landing-stat-v2__icon"><LandingIcon name={stat.icon} /></span><div><strong>{stat.value}</strong><span>{stat.label}</span></div></div>))}</div>
         </div>

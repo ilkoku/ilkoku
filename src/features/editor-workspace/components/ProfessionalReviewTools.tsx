@@ -1,16 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
+
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { saveProfessionalReviewDraftAction } from "../actions";
 import {
-  completeProfessionalReviewAction,
   completeSecondEditorReviewAction,
 } from "../editor-workflow.actions";
+import {
+  completeFirstEditorReviewAction,
+  sendFirstEditorReviewToSecondAction,
+} from "../first-review-submit.actions";
 import { saveSecondEditorReviewDraftAction } from "../second-editor-email.actions";
 import { initialEditorActionState } from "../types";
+import { EditorPassportDialog } from "./EditorPassportDialog";
 
 type Draft = {
   category: string;
@@ -38,7 +42,7 @@ export function ProfessionalReviewTools({
   const completeAction =
     stage === "second"
       ? completeSecondEditorReviewAction
-      : completeProfessionalReviewAction;
+      : completeFirstEditorReviewAction;
 
   const [draftState, draftAction, draftPending] = useActionState(
     saveAction,
@@ -51,8 +55,16 @@ export function ProfessionalReviewTools({
       initialEditorActionState,
     );
 
+  const [secondState, secondFormAction, secondPending] =
+    useActionState(
+      sendFirstEditorReviewToSecondAction,
+      initialEditorActionState,
+    );
+
   const stageLabel =
-    stage === "second" ? "İkinci editör incelemesi" : "Birinci editör incelemesi";
+    stage === "second"
+      ? "İkinci editör incelemesi"
+      : "Birinci editör incelemesi";
 
   return (
     <form className="professional-review-tools">
@@ -115,12 +127,7 @@ export function ProfessionalReviewTools({
       </label>
 
       <div className="professional-review-tools__actions">
-        <Link
-          className="button button--outline"
-          href={`/editor/incelemeler/${workId}/pasaport`}
-        >
-          Eser Pasaportu
-        </Link>
+        <EditorPassportDialog workId={workId} />
 
         <Button
           formAction={draftAction}
@@ -144,19 +151,15 @@ export function ProfessionalReviewTools({
             <Button
               formAction={completeFormAction}
               loading={completePending}
-              name="intent"
               type="submit"
-              value="complete"
             >
               Raporu Yazara Gönder ve Tamamla
             </Button>
 
             <Button
-              formAction={completeFormAction}
-              loading={completePending}
-              name="intent"
+              formAction={secondFormAction}
+              loading={secondPending}
               type="submit"
-              value="second"
               variant="outline"
             >
               2. Editöre Gönder
@@ -165,7 +168,7 @@ export function ProfessionalReviewTools({
         )}
       </div>
 
-      {[draftState, completeState]
+      {[draftState, completeState, secondState]
         .filter((state) => state.message)
         .map((state) => (
           <p

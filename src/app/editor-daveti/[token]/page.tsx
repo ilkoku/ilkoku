@@ -56,13 +56,12 @@ export default async function ExternalSecondEditorInvitationPage({
     invite.invitedBy.displayName?.trim() ||
     invite.invitedBy.fullName.trim() ||
     "İlkOku editörü";
-  const expired = invite.expiresAt.getTime() <= Date.now();
   const expectedEmail = invite.invitedEmail.trim().toLowerCase();
   const assignmentEmail = assignment?.invitedEmail?.trim().toLowerCase();
 
   let invitationBody: React.ReactNode;
 
-  if (expired) {
+  if (invite.expired) {
     invitationBody = (
       <p className="auth-route-status" role="alert">
         Bu davetin yedi günlük kullanım süresi dolmuş.

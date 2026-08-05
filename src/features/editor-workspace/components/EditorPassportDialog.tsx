@@ -7,7 +7,6 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { Button } from "@/components/ui/Button";
 import styles from "./EditorPassportDialog.module.css";
 
 const subscribe = () => () => undefined;
@@ -94,14 +93,14 @@ export function EditorPassportDialog({
 
   return (
     <>
-      <Button
+      <button
+        className="button button--outline"
         onClick={openDialog}
         ref={openerRef}
         type="button"
-        variant="outline"
       >
-        Eser Pasaportu
-      </Button>
+        <span className="button__label">Eser Pasaportu</span>
+      </button>
 
       {canUseDom ? createPortal(dialog, document.body) : null}
     </>

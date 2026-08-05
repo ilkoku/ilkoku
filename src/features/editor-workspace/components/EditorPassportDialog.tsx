@@ -60,7 +60,7 @@ export function EditorPassportDialog({
             <iframe
               className={styles.frame}
               loading="lazy"
-              src={`/editor/incelemeler/${workId}/pasaport?gorunum=modal`}
+              src={`/editor/incelemeler/${workId}/pasaport-modal`}
               title="Eser Pasaportu"
             />
           </div>

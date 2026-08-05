@@ -58,6 +58,22 @@
   background: rgba(248, 246, 255, 0.20);
 }
 
+/* Eser Pasaportu: koyu görsel alanında üstteki iki kartla aynı açık cam algısı. */
+.landing-page .landing-product-card--passport {
+  border-color: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.40);
+  box-shadow:
+    0 0.8rem 2rem rgba(17, 16, 47, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(0.3rem) saturate(1.02);
+  -webkit-backdrop-filter: blur(0.3rem) saturate(1.02);
+}
+
+.landing-page .landing-product-card--passport .landing-product-card__metrics span {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.26);
+}
+
 /* Mobil hero: onaylı çerçeveli görünümü korurken kartları kompakt tut. */
 @media (max-width: 34rem) {
   .landing-page .landing-hero-product {
@@ -108,7 +124,7 @@
     width: calc(100% - 1.3rem);
     padding: 0.9rem;
     border-radius: 1.15rem;
-    background: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.40);
   }
 
   .landing-page .landing-product-card__eyebrow {
@@ -136,6 +152,10 @@
     padding: 0.58rem;
     font-size: 0.58rem;
     background: rgba(248, 246, 255, 0.18);
+  }
+
+  .landing-page .landing-product-card--passport .landing-product-card__metrics span {
+    background: rgba(255, 255, 255, 0.26);
   }
 
   .landing-page .landing-product-card__metrics strong {

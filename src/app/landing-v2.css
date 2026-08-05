@@ -29,3 +29,85 @@
     0 -0.35rem 1.7rem rgba(128, 101, 242, 0.12),
     0 0.35rem 1.7rem rgba(104, 71, 232, 0.1);
 }
+
+/* Mobil hero: onaylı çerçeveli görünümü korurken kartları kompakt tut. */
+@media (max-width: 34rem) {
+  .landing-page .landing-hero-product {
+    min-height: 31rem;
+  }
+
+  .landing-page .landing-product-card--review,
+  .landing-page .landing-product-card--publisher {
+    gap: 0.5rem;
+    padding: 0.68rem 0.78rem;
+    border-radius: 0.9rem;
+  }
+
+  .landing-page .landing-product-card--review {
+    top: 0.75rem;
+    left: 0.75rem;
+  }
+
+  .landing-page .landing-product-card--publisher {
+    top: 5.4rem;
+    right: 0.65rem;
+  }
+
+  .landing-page .landing-product-card__icon {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 0.7rem;
+  }
+
+  .landing-page .landing-product-card__icon svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .landing-page .landing-product-card small {
+    font-size: 0.56rem;
+  }
+
+  .landing-page .landing-product-card--review strong,
+  .landing-page .landing-product-card--publisher strong {
+    font-size: 0.7rem;
+  }
+
+  .landing-page .landing-product-card--passport {
+    right: 0.65rem;
+    bottom: 0.65rem;
+    width: calc(100% - 1.3rem);
+    padding: 0.9rem;
+    border-radius: 1.15rem;
+  }
+
+  .landing-page .landing-product-card__eyebrow {
+    margin-bottom: 0.45rem;
+    font-size: 0.54rem;
+  }
+
+  .landing-page .landing-product-card__title strong {
+    font-size: 1.05rem;
+  }
+
+  .landing-page .landing-product-card__title svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .landing-page .landing-product-card__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-top: 0.65rem;
+  }
+
+  .landing-page .landing-product-card__metrics span {
+    min-width: 0;
+    padding: 0.58rem;
+    font-size: 0.58rem;
+  }
+
+  .landing-page .landing-product-card__metrics strong {
+    font-size: 1rem;
+  }
+}

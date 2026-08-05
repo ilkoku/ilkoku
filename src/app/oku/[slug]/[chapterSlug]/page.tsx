@@ -62,25 +62,22 @@ export default async function DynamicReadingPage({
         })
       : null;
 
-  if (!reviewAssignment) {
-    const requestHeaders = await headers();
+  const requestHeaders = await headers();
 
-    await recordReadingAccessSafely({
-      chapterId: chapter.id,
-      requestHeaders,
-      sessionId,
-      userId: user.id,
-      workId: chapter.work.id,
-    });
-  }
+  await recordReadingAccessSafely({
+    chapterId: chapter.id,
+    requestHeaders,
+    sessionId,
+    userId: user.id,
+    workId: chapter.work.id,
+  });
 
   const comments = reviewAssignment
     ? { items: [], total: 0 }
     : await getChapterComments(chapter.id);
 
   const readerUser =
-    !reviewAssignment &&
-    (user.role === "reader" || user.role === "editor")
+    user.role === "reader" || user.role === "editor"
       ? user
       : null;
 

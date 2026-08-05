@@ -11,7 +11,7 @@ export async function getExternalSecondEditorInvite(token: string) {
     .update(normalizedToken)
     .digest("hex");
 
-  return prisma.editorInvite.findUnique({
+  const invite = await prisma.editorInvite.findUnique({
     where: {
       tokenHash,
     },
@@ -50,4 +50,11 @@ export async function getExternalSecondEditorInvite(token: string) {
       },
     },
   });
+
+  if (!invite) return null;
+
+  return {
+    ...invite,
+    expired: invite.expiresAt.getTime() <= new Date().getTime(),
+  };
 }

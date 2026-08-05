@@ -7,6 +7,7 @@ import { logoutAction } from "@/features/auth/actions";
 import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
 import "./landing.css";
+import "./landing-v2.css";
 
 export const metadata: Metadata = {
   title: "İlkOku | İlk cümle, ilk okurun, ilk adımın.",
@@ -133,10 +134,42 @@ function LandingIcon({ name }: { name: IconName }) {
 }
 
 const roles = [
-  { key: "writer", title: "Yazar", description: "Hikâyelerini yaz, geliştir ve yayınevlerine ulaştır.", icon: "writer", cta: "Yazar Ol", className: "landing-role--writer" },
-  { key: "reader", title: "Okuyucu", description: "Yeni eserler keşfet, oku ve favorilerini oluştur.", icon: "reader", cta: "Okuyucu Ol", className: "landing-role--reader" },
-  { key: "editor", title: "Editör", description: "Yazarlara profesyonel ve yapıcı geri bildirim ver.", icon: "editor", cta: "Editör Başvurusu", className: "landing-role--editor" },
-  { key: "publisher", title: "Yayınevi", description: "Yeni yazarları keşfet ve başvuruları yönet.", icon: "publisher", cta: "Yayınevi Başvurusu", className: "landing-role--publisher" },
+  {
+    key: "writer",
+    title: "Yazar",
+    description: "Eserini bölüm bölüm oluştur, okur geri bildirimiyle geliştir ve profesyonel incelemeye taşı.",
+    icon: "writer",
+    cta: "Yazar Ol",
+    className: "landing-role--writer",
+    highlights: ["Bölüm bazlı yayın", "Eser Pasaportu"],
+  },
+  {
+    key: "reader",
+    title: "Okuyucu",
+    description: "Yeni eserler keşfet, okumaya devam et, favorilerini oluştur ve yazara görüşünü ilet.",
+    icon: "reader",
+    cta: "Okuyucu Ol",
+    className: "landing-role--reader",
+    highlights: ["Yeni eser keşfi", "Bölüm yorumları"],
+  },
+  {
+    key: "editor",
+    title: "Editör",
+    description: "Eserleri bağımsız biçimde incele, profesyonel rapor hazırla ve yazara yol göster.",
+    icon: "editor",
+    cta: "Editör Başvurusu",
+    className: "landing-role--editor",
+    highlights: ["Bağımsız inceleme", "Profesyonel rapor"],
+  },
+  {
+    key: "publisher",
+    title: "Yayınevi",
+    description: "Görünür eserleri ve yazarları keşfet, ilgilendiğin çalışmaları takip alanında topla.",
+    icon: "publisher",
+    cta: "Yayınevi Başvurusu",
+    className: "landing-role--publisher",
+    highlights: ["Eser ve yazar keşfi", "Kurumsal takip"],
+  },
 ] as const;
 
 const benefits = [
@@ -234,18 +267,94 @@ export default async function HomePage() {
       <section className="landing-hero" id="hakkimizda">
         <div className="landing-container landing-hero__grid">
           <div className="landing-hero__content">
+            <span className="landing-hero__badge"><LandingIcon name="book" /> Yazardan yayınevine tek bir edebiyat ekosistemi</span>
             <h1>İlk cümle,<br />ilk okurun,<br /><span>ilk adımın.</span></h1>
-            <p>Yazarları, editörleri, okuyucuları ve yayınevlerini aynı platformda buluşturan dijital edebiyat ekosistemi.</p>
-            <div className="landing-hero__actions"><a className="landing-button landing-button--primary landing-button--large" href="#roller">Rolünü Seç <span aria-hidden="true">→</span></a><a className="landing-button landing-button--soft landing-button--large" href="#neden-ilkoku">Platformu Keşfet</a></div>
+            <p>Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil.</p>
+            <div className="landing-hero__actions">
+              <Link className="landing-button landing-button--primary landing-button--large" href="/kayit?rol=writer">Eserini Yazmaya Başla <span aria-hidden="true">→</span></Link>
+              <Link className="landing-button landing-button--soft landing-button--large" href="/kesfet">Eserleri Keşfet</Link>
+            </div>
+            <div className="landing-hero__proof" aria-label="İlkOku temel özellikleri">
+              <span><LandingIcon name="shield" /> Sürüm geçmişi</span>
+              <span><LandingIcon name="editor" /> Editör incelemesi</span>
+              <span><LandingIcon name="publisher" /> Yayınevi keşfi</span>
+            </div>
           </div>
-          <div className="landing-hero__visual"><Image src="/landing/ilkoku-hero.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 768px) 100vw, 54vw" /></div>
+
+          <div className="landing-hero__visual landing-hero-product">
+            <Image src="/landing/ilkoku-hero.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 768px) 100vw, 54vw" />
+            <span className="landing-hero-product__veil" aria-hidden="true" />
+            <div className="landing-product-card landing-product-card--passport">
+              <span className="landing-product-card__eyebrow">Örnek eser kaydı</span>
+              <div className="landing-product-card__title"><LandingIcon name="book" /><strong>Eser Pasaportu</strong></div>
+              <div className="landing-product-card__metrics">
+                <span><strong>41</strong> yazım oturumu</span>
+                <span><strong>19</strong> revizyon</span>
+              </div>
+            </div>
+            <div className="landing-product-card landing-product-card--review">
+              <span className="landing-product-card__icon"><LandingIcon name="feedback" /></span>
+              <div><small>Profesyonel inceleme</small><strong>Tamamlandı</strong></div>
+            </div>
+            <div className="landing-product-card landing-product-card--publisher">
+              <span className="landing-product-card__icon"><LandingIcon name="publisher" /></span>
+              <div><small>Yayınevi görünürlüğü</small><strong>Keşfe açık</strong></div>
+            </div>
+          </div>
         </div>
       </section>
 
       <section className="landing-section landing-section--roles" id="roller">
         <div className="landing-container">
           <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">Topluluğa katıl</span><h2>İlkOku’ya nasıl katılmak istiyorsun?</h2><p>Rolünü seç; kayıt akışını sana uygun şekilde başlatalım.</p></div>
-          <div className="landing-role-grid">{roles.map((role) => (<Link aria-label={`${role.title} olarak kayıt ol`} className={`landing-role ${role.className}`} href={`/kayit?rol=${role.key}`} key={role.key}><span className="landing-role__label">{role.title} rolü</span><span className="landing-role__icon" aria-hidden="true"><LandingIcon name={role.icon} /></span><h3>{role.title}</h3><p>{role.description}</p><strong>{role.cta} <span aria-hidden="true">→</span></strong></Link>))}</div>
+          <div className="landing-role-grid landing-role-grid--v2">
+            {roles.map((role, index) => (
+              <Link aria-label={`${role.title} olarak kayıt ol`} className={`landing-role ${role.className}`} href={`/kayit?rol=${role.key}`} key={role.key}>
+                <span className="landing-role__number">0{index + 1}</span>
+                <span className="landing-role__label">{role.title} rolü</span>
+                <span className="landing-role__icon" aria-hidden="true"><LandingIcon name={role.icon} /></span>
+                <h3>{role.title}</h3>
+                <p>{role.description}</p>
+                <span className="landing-role__highlights">{role.highlights.map((highlight) => <small key={highlight}>{highlight}</small>)}</span>
+                <strong>{role.cta} <span aria-hidden="true">→</span></strong>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="landing-passport" id="eser-pasaportu">
+        <div className="landing-container landing-passport__grid">
+          <div className="landing-passport__content">
+            <span className="landing-section-heading__eyebrow">Eserin dijital izi</span>
+            <h2>Bir eserin yalnızca sonucunu değil, oluşum sürecini de görün.</h2>
+            <p>Eser Pasaportu; yazım oturumlarını, revizyonları, sürüm geçmişini ve profesyonel inceleme durumunu tek bir kayıt altında birleştirir.</p>
+            <ul>
+              <li><span>✓</span> Platform üzerinde oluşan yazım ve revizyon geçmişi</li>
+              <li><span>✓</span> Bölüm ve sürüm hareketlerinin düzenli kaydı</li>
+              <li><span>✓</span> Profesyonel editör inceleme durumu</li>
+              <li><span>✓</span> Yayınevi keşif ve takip görünürlüğü</li>
+            </ul>
+            <a className="landing-button landing-button--white landing-button--large" href="#roller">Rolünü Seç <span aria-hidden="true">→</span></a>
+          </div>
+
+          <div className="landing-passport-card" aria-label="Örnek Eser Pasaportu görünümü">
+            <div className="landing-passport-card__header">
+              <div><small>Örnek görünüm</small><strong>Eser Pasaportu</strong></div>
+              <span><LandingIcon name="shield" /></span>
+            </div>
+            <div className="landing-passport-card__status"><span>Süreç kaydı</span><strong>Aktif</strong></div>
+            <div className="landing-passport-card__numbers">
+              <div><strong>41</strong><span>Yazım oturumu</span></div>
+              <div><strong>19</strong><span>Revizyon</span></div>
+              <div><strong>7</strong><span>Sürüm</span></div>
+            </div>
+            <div className="landing-passport-card__timeline">
+              <span><i /><b>Platform üzerinde yazıldı</b><small>Kayıtlı süreç</small></span>
+              <span><i /><b>Profesyonel inceleme</b><small>Tamamlandı</small></span>
+              <span><i /><b>Yayınevi görünürlüğü</b><small>Keşfe açık</small></span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -257,7 +366,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p>İlk cümle, ilk okurun, <strong>ilk adımın.</strong></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div><div><h3>Destek</h3><a href="mailto:destek@ilkoku.com">Yardım Merkezi</a></div></div><p className="landing-footer__copyright">© {new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.</p></footer>
+      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p>İlk cümle, ilk okurun, <strong>ilk adımın.</strong></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div><div><h3>Destek</h3><a href="mailto:destek@ilkoku.com">Yardım Merkezi</a></div></div><p className="landing-footer__copyright">© {new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.</p></footer>
     </main>
   );
 }

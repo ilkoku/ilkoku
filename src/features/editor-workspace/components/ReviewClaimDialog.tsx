@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
-import { claimProfessionalReviewAction } from "../actions";
+import { claimProfessionalReviewAction } from "../editor-workflow.actions";
 import { initialEditorActionState } from "../types";
 
 export function ReviewClaimDialog({

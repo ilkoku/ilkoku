@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
-import { sendToSecondEditorAction } from "../second-editor-email.actions";
+import { sendToSecondEditorAction } from "../editor-workflow.actions";
 import { initialEditorActionState } from "../types";
 
 type AvailableEditor = {
@@ -67,8 +67,9 @@ export function SecondEditorAssignmentDialog({
           </h2>
 
           <span>
-            “{workTitle}” eserini genel editör havuzuna bırakabilir
-            veya belirli bir platform editörüne atayabilirsiniz.
+            “{workTitle}” eserini genel havuza bırakabilir, belirli bir
+            platform editörüne atayabilir veya dış editöre e-posta daveti
+            gönderebilirsiniz.
           </span>
 
           <Field
@@ -78,7 +79,8 @@ export function SecondEditorAssignmentDialog({
             name="mode"
           >
             <option value="pool">Genel editör havuzuna bırak</option>
-            <option value="specific">Belirli bir editöre ata</option>
+            <option value="specific">Belirli bir platform editörüne ata</option>
+            <option value="external">Dış editörü e-posta ile davet et</option>
           </Field>
 
           <Field
@@ -96,10 +98,23 @@ export function SecondEditorAssignmentDialog({
             ))}
           </Field>
 
+          <Field
+            label="Dış editör e-posta adresi"
+            name="externalEmail"
+            placeholder="editor@example.com"
+            type="email"
+          />
+
+          <p className="editor-action-status">
+            Yalnızca seçtiğiniz gönderim yöntemine ait alan dikkate alınır.
+            Dış editör daveti yedi gün geçerlidir.
+          </p>
+
           {availableEditors.length === 0 && (
             <p className="editor-action-status">
               Atanabilecek başka aktif platform editörü bulunmuyor.
-              Eseri genel havuza bırakabilirsiniz.
+              Eseri genel havuza bırakabilir veya dış editör daveti
+              oluşturabilirsiniz.
             </p>
           )}
 

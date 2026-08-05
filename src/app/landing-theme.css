@@ -1,112 +1,124 @@
-/* İlkOku ana sayfa marka renk katmanı
-   Kaynak palet: #5B4BFF, #7C6CFF, #FFB86B, #2E2E43, #F7F7FB, #E6E6EF
-   Bu dosya yalnızca .landing-page altında çalışır. */
+/* İlkOku ana sayfa — logo merkezli marka renk katmanı
+   Palet: #6847E8, #8065F2, #4B2DBF, #11102F,
+   #1D1B38, #69667E, #EDE9FF, #F8F6FF.
+   Yalnızca .landing-page altında çalışır. */
 
 .landing-page {
-  --landing-primary: #5b4bff;
-  --landing-primary-bright: #7c6cff;
-  --landing-primary-strong: #4938e8;
-  --landing-night: #2e2e43;
-  --landing-night-soft: #45445b;
-  --landing-text: #2e2e43;
-  --landing-muted: #6e6d7c;
-  --landing-lavender: #e6e6ef;
-  --landing-lavender-soft: #f7f7fb;
-  --landing-border: rgba(46, 46, 67, 0.13);
-  --landing-accent-warm: #ffb86b;
-  --landing-shadow-sm: 0 0.75rem 2rem rgba(46, 46, 67, 0.08);
-  background: #f7f7fb;
+  --landing-primary: #6847e8;
+  --landing-primary-bright: #8065f2;
+  --landing-primary-strong: #4b2dbf;
+  --landing-night: #11102f;
+  --landing-night-soft: #242052;
+  --landing-text: #1d1b38;
+  --landing-muted: #69667e;
+  --landing-lavender: #ede9ff;
+  --landing-lavender-soft: #f8f6ff;
+  --landing-border: rgba(64, 49, 126, 0.13);
+  --landing-shadow-sm: 0 0.75rem 2rem rgba(37, 26, 89, 0.08);
+  background: #f8f6ff;
 }
 
+/* Header */
 .landing-page .landing-header {
-  border-bottom-color: rgba(46, 46, 67, 0.1);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 0.5rem 2rem rgba(46, 46, 67, 0.045);
+  border-bottom-color: rgba(64, 49, 126, 0.09);
+  background: rgba(255, 255, 255, 0.93);
+  box-shadow: 0 0.5rem 2rem rgba(26, 20, 67, 0.04);
+}
+
+.landing-page .landing-logo {
+  background: transparent;
+  box-shadow: none;
 }
 
 .landing-page .landing-nav a::after {
   background: linear-gradient(
     90deg,
+    var(--landing-primary-strong),
     var(--landing-primary),
-    var(--landing-primary-bright),
-    var(--landing-accent-warm)
+    var(--landing-primary-bright)
   );
 }
 
 .landing-page .landing-account summary,
 .landing-page .landing-mobile-menu summary {
-  border-color: rgba(46, 46, 67, 0.14);
-  background: rgba(247, 247, 251, 0.9);
-  box-shadow: 0 0.5rem 1.5rem rgba(46, 46, 67, 0.08);
+  border-color: rgba(64, 49, 126, 0.14);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 0.5rem 1.5rem rgba(31, 24, 80, 0.08);
 }
 
 .landing-page .landing-account summary:hover,
 .landing-page .landing-mobile-menu summary:hover,
 .landing-page .landing-account[open] summary,
 .landing-page .landing-mobile-menu[open] summary {
-  border-color: rgba(91, 75, 255, 0.4);
-  background: #f1efff;
-  box-shadow: 0 0.75rem 2rem rgba(91, 75, 255, 0.15);
+  border-color: rgba(104, 71, 232, 0.42);
+  background: #f8f6ff;
+  box-shadow: 0 0.75rem 2rem rgba(75, 45, 191, 0.16);
 }
 
 .landing-page .landing-account__menu,
 .landing-page .landing-mobile-menu nav {
-  border-color: rgba(46, 46, 67, 0.13);
-  box-shadow: 0 1.5rem 4rem rgba(46, 46, 67, 0.16);
+  border-color: rgba(64, 49, 126, 0.14);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 1.5rem 4rem rgba(28, 20, 79, 0.18);
 }
 
-/* Hero açık ve ferah kalır; geniş mor blok kullanılmaz. */
+/* Hero — açık, ferah ve logo moru merkezli */
 .landing-page .landing-hero {
-  border-bottom-color: rgba(46, 46, 67, 0.08);
+  border-bottom-color: rgba(79, 59, 158, 0.08);
   background:
-    radial-gradient(circle at 8% 18%, rgba(124, 108, 255, 0.18), transparent 27rem),
-    radial-gradient(circle at 91% 12%, rgba(255, 184, 107, 0.16), transparent 24rem),
-    linear-gradient(180deg, #ffffff 0%, #fbfbfd 68%, #f7f7fb 100%) !important;
+    radial-gradient(circle at 8% 20%, rgba(208, 198, 255, 0.7), transparent 29rem),
+    radial-gradient(circle at 88% 14%, rgba(128, 101, 242, 0.18), transparent 27rem),
+    linear-gradient(180deg, #ffffff 0%, #fbfaff 72%, #f8f6ff 100%) !important;
 }
 
 .landing-page .landing-hero::before {
-  opacity: 0.42;
+  opacity: 0.46;
   background-image:
-    linear-gradient(rgba(46, 46, 67, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(46, 46, 67, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(80, 61, 151, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(80, 61, 151, 0.035) 1px, transparent 1px);
 }
 
 .landing-page .landing-hero__content::before {
-  border-color: rgba(91, 75, 255, 0.12);
+  border-color: rgba(104, 71, 232, 0.11);
   box-shadow:
-    0 0 0 1.25rem rgba(124, 108, 255, 0.035),
-    0 0 0 2.5rem rgba(255, 184, 107, 0.018);
+    0 0 0 1.25rem rgba(104, 71, 232, 0.028),
+    0 0 0 2.5rem rgba(128, 101, 242, 0.016);
 }
 
 .landing-page .landing-kicker {
-  border-color: rgba(91, 75, 255, 0.18);
-  background: rgba(241, 239, 255, 0.82);
+  border-color: rgba(104, 71, 232, 0.16);
+  color: var(--landing-primary-strong);
+  background: rgba(241, 238, 255, 0.82);
+}
+
+.landing-page .landing-hero h1 span {
+  color: var(--landing-primary);
 }
 
 .landing-page .landing-hero h1 span::after {
   background: linear-gradient(
     90deg,
+    var(--landing-primary-strong),
     var(--landing-primary),
-    var(--landing-primary-bright) 62%,
-    var(--landing-accent-warm) 86%,
+    var(--landing-primary-bright) 82%,
     transparent 100%
   );
 }
 
 .landing-page .landing-hero__visual {
-  border-color: rgba(255, 255, 255, 0.82);
-  background: #f7f7fb;
+  border-color: rgba(255, 255, 255, 0.8);
+  background: #f8f6ff;
   box-shadow:
-    0 3rem 6rem rgba(46, 46, 67, 0.17),
-    0 0 0 1px rgba(91, 75, 255, 0.12);
+    0 3rem 6rem rgba(53, 36, 137, 0.2),
+    0 0 0 1px rgba(104, 71, 232, 0.11);
 }
 
 .landing-page .landing-hero__visual::after {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.2),
-    transparent 38%,
-    rgba(91, 75, 255, 0.07)
+    rgba(255, 255, 255, 0.22),
+    transparent 36%,
+    rgba(75, 45, 191, 0.08)
   );
 }
 
@@ -119,24 +131,25 @@
     var(--landing-primary-strong) 100%
   );
   box-shadow:
-    0 1rem 2.25rem rgba(91, 75, 255, 0.25),
+    0 1rem 2.25rem rgba(82, 52, 199, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .landing-page .landing-button--primary:hover {
   box-shadow:
-    0 1.25rem 2.75rem rgba(91, 75, 255, 0.32),
-    0 0 0 0.2rem rgba(255, 184, 107, 0.18),
+    0 1.25rem 2.75rem rgba(82, 52, 199, 0.36),
+    0 0 0 0.2rem rgba(128, 101, 242, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .landing-page .landing-button--soft {
-  border-color: rgba(91, 75, 255, 0.2);
-  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(104, 71, 232, 0.2);
+  color: var(--landing-primary-strong) !important;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .landing-page .landing-button--soft:hover {
-  border-color: rgba(91, 75, 255, 0.4);
+  border-color: rgba(104, 71, 232, 0.4);
   background: #ffffff;
 }
 
@@ -146,111 +159,159 @@
 }
 
 .landing-page .landing-section--roles {
-  background: linear-gradient(180deg, #f7f7fb 0%, #ffffff 78%);
+  background: linear-gradient(180deg, #f8f6ff 0%, #ffffff 78%);
 }
 
 .landing-page .landing-section--benefits {
-  border-block-color: rgba(46, 46, 67, 0.08);
+  border-block-color: rgba(78, 60, 151, 0.08);
   background:
-    radial-gradient(circle at 13% 24%, rgba(124, 108, 255, 0.1), transparent 22rem),
-    radial-gradient(circle at 88% 78%, rgba(255, 184, 107, 0.09), transparent 20rem),
-    linear-gradient(135deg, #fbfbfd 0%, #f7f7fb 100%);
+    radial-gradient(circle at 13% 24%, rgba(128, 101, 242, 0.11), transparent 22rem),
+    radial-gradient(circle at 88% 78%, rgba(104, 71, 232, 0.08), transparent 20rem),
+    linear-gradient(135deg, #fbfaff 0%, #f4f1ff 100%);
 }
 
 .landing-page .landing-why-v2 {
-  border-block-color: rgba(46, 46, 67, 0.08) !important;
-  background: linear-gradient(180deg, #ffffff 0%, #f7f7fb 100%) !important;
+  border-block-color: rgba(78, 60, 151, 0.08) !important;
+  background: linear-gradient(180deg, #faf9ff 0%, #f5f2ff 100%) !important;
 }
 
-/* Rol kartları: tek marka ailesi, kontrollü sıcak vurgu. */
+/* Rol kartları — aynı marka ailesinin dört tonu */
 .landing-page .landing-role {
-  border-color: rgba(46, 46, 67, 0.12);
-  background: linear-gradient(155deg, #ffffff, rgba(247, 247, 251, 0.92));
-  box-shadow: 0 0.75rem 2.5rem rgba(46, 46, 67, 0.07);
+  border-color: rgba(69, 54, 127, 0.12);
+  background: linear-gradient(155deg, #ffffff, rgba(249, 247, 255, 0.9));
+  box-shadow: 0 0.75rem 2.5rem rgba(35, 25, 86, 0.07);
 }
 
 .landing-page .landing-role--writer {
-  --landing-role-accent: #5b4bff;
-  --landing-role-soft: #ece9ff;
+  --landing-role-accent: #6847e8;
+  --landing-role-soft: #ede9ff;
 }
 
 .landing-page .landing-role--reader {
-  --landing-role-accent: #6b5af2;
-  --landing-role-soft: #f0eeff;
+  --landing-role-accent: #8065f2;
+  --landing-role-soft: #f1eeff;
 }
 
 .landing-page .landing-role--editor {
-  --landing-role-accent: #2e2e43;
-  --landing-role-soft: #ececf2;
+  --landing-role-accent: #4b2dbf;
+  --landing-role-soft: #e8e1ff;
 }
 
 .landing-page .landing-role--publisher {
-  --landing-role-accent: #9a4e12;
-  --landing-role-soft: #fff1e2;
+  --landing-role-accent: #5d3ac9;
+  --landing-role-soft: #ece7ff;
+}
+
+/* Nasıl çalışır */
+.landing-page .landing-steps::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(104, 71, 232, 0.38) 12%,
+    rgba(128, 101, 242, 0.38) 88%,
+    transparent
+  );
+}
+
+.landing-page .landing-step__number {
+  color: rgba(104, 71, 232, 0.11);
+}
+
+.landing-page .landing-step__icon {
+  border-color: rgba(104, 71, 232, 0.2);
+  color: var(--landing-primary-strong);
+}
+
+.landing-page .landing-step__arrow {
+  background: var(--landing-primary-bright);
 }
 
 /* Neden İlkOku kartları */
 .landing-page .landing-benefit-v2 {
-  border-color: rgba(46, 46, 67, 0.11) !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  box-shadow: 0 0.75rem 2rem rgba(46, 46, 67, 0.055) !important;
+  border-color: rgba(70, 54, 134, 0.12) !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+  box-shadow: 0 0.75rem 2rem rgba(45, 31, 103, 0.055) !important;
 }
 
 .landing-page .landing-benefit-v2--purple {
-  --benefit-accent: #5b4bff !important;
-  --benefit-soft: #ece9ff !important;
+  --benefit-accent: #6847e8 !important;
+  --benefit-soft: #ede9ff !important;
 }
 
 .landing-page .landing-benefit-v2--blue {
-  --benefit-accent: #6b5af2 !important;
-  --benefit-soft: #f0eeff !important;
+  --benefit-accent: #8065f2 !important;
+  --benefit-soft: #f1eeff !important;
 }
 
 .landing-page .landing-benefit-v2--orange {
-  --benefit-accent: #9a4e12 !important;
-  --benefit-soft: #fff1e2 !important;
+  --benefit-accent: #4b2dbf !important;
+  --benefit-soft: #e8e1ff !important;
 }
 
 .landing-page .landing-benefit-v2--green {
-  --benefit-accent: #2e2e43 !important;
-  --benefit-soft: #ececf2 !important;
+  --benefit-accent: #5d3ac9 !important;
+  --benefit-soft: #ece7ff !important;
 }
 
 /* İstatistikler */
 .landing-page .landing-stats-v2 {
-  border-color: rgba(91, 75, 255, 0.18) !important;
-  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(104, 71, 232, 0.2) !important;
+  background: rgba(255, 255, 255, 0.74) !important;
 }
 
 .landing-page .landing-stat-v2 {
-  border-right-color: rgba(46, 46, 67, 0.1) !important;
+  border-right-color: rgba(104, 71, 232, 0.14) !important;
 }
 
 .landing-page .landing-stat-v2__icon {
-  color: var(--landing-primary) !important;
-  background: #efedff !important;
+  color: var(--landing-primary-strong) !important;
+  background: #f0ecff !important;
 }
 
 .landing-page .landing-stat-v2 strong {
   color: var(--landing-primary-strong) !important;
 }
 
-/* Footer: koyu lacivert taban, mor ve sıcak turuncu ışık. */
+/* CTA */
+.landing-page .landing-cta {
+  background: #ffffff;
+}
+
+.landing-page .landing-cta__inner {
+  background:
+    radial-gradient(circle at 78% 20%, rgba(155, 126, 255, 0.5), transparent 19rem),
+    radial-gradient(circle at 12% 110%, rgba(104, 71, 232, 0.34), transparent 22rem),
+    linear-gradient(135deg, #11102f 0%, #242052 54%, #4b2dbf 100%) !important;
+  box-shadow: 0 2.25rem 5rem rgba(30, 22, 82, 0.25);
+}
+
+/* Footer */
 .landing-page .landing-footer {
   background:
-    radial-gradient(circle at 82% 18%, rgba(124, 108, 255, 0.42), transparent 20rem),
-    radial-gradient(circle at 12% 110%, rgba(255, 184, 107, 0.18), transparent 22rem),
-    linear-gradient(135deg, #242438 0%, #2e2e43 52%, #3e357f 100%) !important;
+    radial-gradient(circle at 78% 20%, rgba(155, 126, 255, 0.46), transparent 19rem),
+    radial-gradient(circle at 12% 110%, rgba(104, 71, 232, 0.32), transparent 22rem),
+    linear-gradient(135deg, #11102f 0%, #242052 54%, #4b2dbf 100%) !important;
+}
+
+.landing-page .landing-footer h3,
+.landing-page .landing-footer__grid > div:first-child p strong {
+  color: #ffffff;
+}
+
+.landing-page .landing-footer__grid > div:first-child p,
+.landing-page .landing-footer__grid > div > a,
+.landing-page .landing-footer__logout {
+  color: #dedaf4;
 }
 
 .landing-page .landing-footer__grid > div > a:hover,
 .landing-page .landing-footer__logout:hover {
-  color: #ffcf9b;
+  color: #ffffff;
 }
 
 .landing-page .landing-footer__copyright {
-  border-top-color: rgba(230, 230, 239, 0.16) !important;
-  color: #d7d6e0 !important;
+  border-top-color: rgba(255, 255, 255, 0.14) !important;
+  color: #c9c4e5 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

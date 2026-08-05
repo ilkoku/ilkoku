@@ -4,14 +4,12 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
+import { saveProfessionalReviewDraftAction } from "../actions";
 import {
   completeProfessionalReviewAction,
-  saveProfessionalReviewDraftAction,
-} from "../actions";
-import {
   completeSecondEditorReviewAction,
-  saveSecondEditorReviewDraftAction,
-} from "../second-editor-email.actions";
+} from "../editor-workflow.actions";
+import { saveSecondEditorReviewDraftAction } from "../second-editor-email.actions";
 import { initialEditorActionState } from "../types";
 
 type Draft = {

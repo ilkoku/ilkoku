@@ -227,16 +227,8 @@ export default async function HomePage() {
         .landing-footer__grid>div:first-child p,.landing-footer__grid>div>a { color:#dedaf4; }
         .landing-footer__grid>div>a:hover { color:#fff; }
         .landing-footer__copyright { border-top-color:rgba(255,255,255,.14); color:#c9c4e5; }
-        .landing-hero-product { overflow:visible; border:0; background:transparent; box-shadow:none; animation:none; }
-        .landing-hero-product::after { display:none; }
-        .landing-hero-product>img { border-radius:2.4rem 2.4rem 2.4rem 5.5rem; box-shadow:0 2rem 4.8rem rgba(50,31,125,.22); }
-        .landing-product-card { border:0; background:rgba(255,255,255,.78); box-shadow:0 1.1rem 2.8rem rgba(23,15,69,.22); backdrop-filter:blur(1.15rem); -webkit-backdrop-filter:blur(1.15rem); }
-        .landing-product-card__summary { margin:.55rem 0 0; color:#69667e; font-size:.68rem; line-height:1.5; }
-        .landing-role-grid--v2 .landing-role { isolation:isolate; overflow:hidden; border:1px solid rgba(104,71,232,.13); background:radial-gradient(ellipse at 50% -10%,rgba(128,101,242,.17),transparent 42%),radial-gradient(ellipse at 50% 112%,rgba(104,71,232,.15),transparent 45%),linear-gradient(180deg,#fff 0%,#fff 100%); box-shadow:0 1rem 3rem rgba(43,29,104,.08),inset 0 .2rem 1rem rgba(255,255,255,.95); }
-        .landing-role-grid--v2 .landing-role::before { display:none; }
-        .landing-role-grid--v2 .landing-role:hover { border-color:rgba(104,71,232,.28); box-shadow:0 1.4rem 3.4rem rgba(43,29,104,.14),0 -.35rem 1.7rem rgba(128,101,242,.12),0 .35rem 1.7rem rgba(104,71,232,.1); }
         @media (max-width:64rem) { .landing-benefits-v2 { grid-template-columns:repeat(3,1fr); } .landing-stats-v2 { grid-template-columns:repeat(3,1fr); } .landing-stat-v2:nth-child(3) { border-right:0; } .landing-stat-v2:nth-child(-n+3) { border-bottom:1px solid rgba(104,71,232,.14); } }
-        @media (max-width:48rem) { .landing-header__inner { grid-template-columns:1fr auto; } .landing-header__kicker { grid-row:2; grid-column:1/-1; width:100%; min-width:0; margin:0 0 .75rem; } .landing-benefits-v2 { grid-template-columns:repeat(2,1fr); } .landing-stats-v2 { grid-template-columns:repeat(2,1fr); } .landing-stat-v2 { border-bottom:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(3) { border-right:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(even) { border-right:0; } .landing-stat-v2:nth-last-child(-n+2) { border-bottom:0; } .landing-hero-product>img { border-radius:1.8rem 1.8rem 1.8rem 3.8rem; } }
+        @media (max-width:48rem) { .landing-header__inner { grid-template-columns:1fr auto; } .landing-header__kicker { grid-row:2; grid-column:1/-1; width:100%; min-width:0; margin:0 0 .75rem; } .landing-benefits-v2 { grid-template-columns:repeat(2,1fr); } .landing-stats-v2 { grid-template-columns:repeat(2,1fr); } .landing-stat-v2 { border-bottom:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(3) { border-right:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(even) { border-right:0; } .landing-stat-v2:nth-last-child(-n+2) { border-bottom:0; } }
         @media (max-width:34rem) { .landing-benefits-v2 { grid-template-columns:1fr; } .landing-benefit-v2 { min-height:auto; } }
       `}</style>
 
@@ -293,8 +285,8 @@ export default async function HomePage() {
             <Image src="/landing/ilkoku-hero.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 768px) 100vw, 54vw" />
             <span className="landing-hero-product__veil" aria-hidden="true" />
             <div className="landing-product-card landing-product-card--passport">
+              <span className="landing-product-card__eyebrow">Örnek eser kaydı</span>
               <div className="landing-product-card__title"><LandingIcon name="book" /><strong>Eser Pasaportu</strong></div>
-              <p className="landing-product-card__summary">Yazım geçmişi, inceleme ve görünürlük tek yerde.</p>
               <div className="landing-product-card__metrics">
                 <span><strong>41</strong> yazım oturumu</span>
                 <span><strong>19</strong> revizyon</span>
@@ -316,8 +308,9 @@ export default async function HomePage() {
         <div className="landing-container">
           <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">Topluluğa katıl</span><h2>İlkOku’ya nasıl katılmak istiyorsun?</h2><p>Rolünü seç; kayıt akışını sana uygun şekilde başlatalım.</p></div>
           <div className="landing-role-grid landing-role-grid--v2">
-            {roles.map((role) => (
+            {roles.map((role, index) => (
               <Link aria-label={`${role.title} olarak kayıt ol`} className={`landing-role ${role.className}`} href={`/kayit?rol=${role.key}`} key={role.key}>
+                <span className="landing-role__number">0{index + 1}</span>
                 <span className="landing-role__label">{role.title} rolü</span>
                 <span className="landing-role__icon" aria-hidden="true"><LandingIcon name={role.icon} /></span>
                 <h3>{role.title}</h3>

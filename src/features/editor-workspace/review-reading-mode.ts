@@ -6,74 +6,38 @@ export async function getActiveEditorReviewAssignment(input: {
   editorId: string;
   workId: string;
 }) {
-  const work = await prisma.work.findUnique({
+  return prisma.editorReviewAssignment.findFirst({
     where: {
-      id: input.workId,
-    },
-    select: {
-      assignedEditorId: true,
-      editorReviewStatus: true,
-    },
-  });
-
-  if (!work) return null;
-
-  if (
-    work.assignedEditorId === input.editorId &&
-    work.editorReviewStatus === "in_progress"
-  ) {
-    const assignment =
-      await prisma.editorReviewAssignment.findFirst({
-        where: {
-          editorId: input.editorId,
+      editorId: input.editorId,
+      workId: input.workId,
+      OR: [
+        {
           stage: "first",
-          status: {
-            in: ["assigned", "in_progress"],
+          status: "in_progress",
+          work: {
+            assignedEditorId: input.editorId,
+            editorReviewStatus: "in_progress",
           },
-          workId: input.workId,
         },
-        orderBy: {
-          createdAt: "desc",
-        },
-        select: {
-          id: true,
-        },
-      });
-
-    return {
-      id: assignment?.id ?? null,
-      stage: "first" as const,
-    };
-  }
-
-  if (work.editorReviewStatus === "second_in_progress") {
-    const assignment =
-      await prisma.editorReviewAssignment.findFirst({
-        where: {
-          editorId: input.editorId,
+        {
           stage: "second",
           status: {
             in: ["assigned", "in_progress"],
           },
-          workId: input.workId,
+          work: {
+            assignedEditorId: {
+              not: input.editorId,
+            },
+            editorReviewStatus: "second_in_progress",
+          },
         },
-        orderBy: {
-          createdAt: "desc",
-        },
-        select: {
-          id: true,
-        },
-      });
-
-    if (assignment) {
-      return {
-        id: assignment.id,
-        stage: "second" as const,
-      };
-    }
-  }
-
-  return null;
+      ],
+    },
+    select: {
+      id: true,
+      stage: true,
+    },
+  });
 }
 
 export function getEditorReviewReturnPath(

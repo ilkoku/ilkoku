@@ -62,9 +62,13 @@ export default async function DynamicReadingPage({
         })
       : null;
 
+  const isEditorReadingContext =
+    user.role === "editor" &&
+    (query.inceleme === "1" ||
+      query.from?.startsWith("/editor/") === true);
+
   const isReviewReading =
-    Boolean(reviewAssignment) ||
-    (user.role === "editor" && query.inceleme === "1");
+    Boolean(reviewAssignment) || isEditorReadingContext;
 
   const requestHeaders = await headers();
 

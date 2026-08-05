@@ -18,16 +18,6 @@ export function EditorReviewReadingMode({
       data-review-variant={variant}
     >
       {children}
-
-      <aside className={styles.notice} aria-label="Editör inceleme modu">
-        <span>Bağımsız inceleme modu</span>
-        <strong>
-          {stage === "second" ? "2. Editör" : "1. Editör"}
-        </strong>
-        <small>
-          Okur yorumları, beğeniler ve sosyal yönlendirmeler gizlidir.
-        </small>
-      </aside>
     </div>
   );
 }

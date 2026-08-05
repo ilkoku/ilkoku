@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { tr } from "@/content";
 import "./globals.css";
+import "./landing-theme.css";
 
 export const metadata: Metadata = {
   title: tr.brand.name,

@@ -2,59 +2,67 @@
 /* Sprite: writer | reader / editor | publisher */
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon {
-  overflow: visible;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  transform: none;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::before {
-  display: none;
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon > svg {
   opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::after {
-  content: "";
-  position: absolute;
-  z-index: 2;
-  inset: -0.35rem;
-  background-image: url("/icons/roles/roles-sprite.png");
-  background-repeat: no-repeat;
-  background-size: 200% 200%;
-  filter: drop-shadow(0 0.65rem 1rem rgba(46, 24, 112, 0.2));
-  pointer-events: none;
+  content: "" !important;
+  position: absolute !important;
+  z-index: 2 !important;
+  inset: -0.35rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-image: url("/icons/roles/roles-sprite.png") !important;
+  background-repeat: no-repeat !important;
+  background-size: 200% 200% !important;
+  filter: drop-shadow(0 0.65rem 1rem rgba(46, 24, 112, 0.2)) !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
   transform-origin: 50% 70%;
   will-change: transform, filter;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--writer .landing-role__icon::after {
-  background-position: 0 0;
+  background-position: 0 0 !important;
   animation: landing-role-writer 4.8s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--reader .landing-role__icon::after {
-  background-position: 100% 0;
+  background-position: 100% 0 !important;
   animation: landing-role-reader 4.4s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--editor .landing-role__icon::after {
-  background-position: 0 100%;
+  background-position: 0 100% !important;
   animation: landing-role-editor 4.6s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--publisher .landing-role__icon::after {
-  background-position: 100% 100%;
+  background-position: 100% 100% !important;
   animation: landing-role-publisher 5s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role:hover .landing-role__icon::after {
   animation-duration: 2.2s;
-  filter: drop-shadow(0 0.9rem 1.25rem rgba(68, 38, 156, 0.28)) saturate(1.08);
+  filter: drop-shadow(0 0.9rem 1.25rem rgba(68, 38, 156, 0.28)) saturate(1.08) !important;
 }
 
 @keyframes landing-role-writer {
@@ -81,7 +89,7 @@
 
 @media (max-width: 48rem) {
   .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::after {
-    inset: -0.2rem;
+    inset: -0.2rem !important;
     animation-duration: 6s;
   }
 }
@@ -89,6 +97,6 @@
 @media (prefers-reduced-motion: reduce) {
   .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::after {
     animation: none !important;
-    transition: none;
+    transition: none !important;
   }
 }

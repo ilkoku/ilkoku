@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Yazar">
+  <defs>
+    <linearGradient id="book" x1="34" y1="122" x2="146" y2="166" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F3FF"/><stop offset="1" stop-color="#DDD2FF"/>
+    </linearGradient>
+    <linearGradient id="feather" x1="74" y1="28" x2="134" y2="117" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9A7CFF"/><stop offset=".55" stop-color="#6847E8"/><stop offset="1" stop-color="#3B209A"/>
+    </linearGradient>
+  </defs>
+  <path d="M25 132c19-8 41-7 63 5v31c-22-12-44-13-63-5z" fill="url(#book)" stroke="#4B2DBF" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M167 132c-19-8-41-7-63 5v31c22-12 44-13 63-5z" fill="url(#book)" stroke="#4B2DBF" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M96 137v31" stroke="#4B2DBF" stroke-width="5" stroke-linecap="round"/>
+  <path d="M38 145c15-3 29-1 42 5M154 145c-15-3-29-1-42 5" fill="none" stroke="#8065F2" stroke-width="4" stroke-linecap="round"/>
+  <path d="M62 127c13-30 30-60 57-91 8-9 22-7 26 5 3 9-1 18-8 25-22 22-45 42-72 62z" fill="url(#feather)" stroke="#351982" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M67 124 55 141l20-10" fill="#EDE9FF" stroke="#351982" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M73 115c21-15 40-34 57-56M86 102l-13-2M98 90l-14-3M111 76l-13-4M121 62l-11-4" fill="none" stroke="#FFF" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="146" cy="31" r="5" fill="#B7A6FF"/><path d="M158 21v20M148 31h20" stroke="#8065F2" stroke-width="4" stroke-linecap="round"/>
+</svg>

@@ -1,6 +1,6 @@
 /* İlkOku rol kartları — daha güçlü, kurumsal ve ürün odaklı görünüm. */
 
-.landing-page .landing-role-grid--v2 .landing-role {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role {
   position: relative;
   min-height: 19.5rem;
   padding: 2.15rem 2.2rem 2rem;
@@ -15,7 +15,7 @@
   transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
 }
 
-.landing-page .landing-role-grid--v2 .landing-role::after {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role::after {
   content: "";
   position: absolute;
   inset: auto 2.2rem 0 2.2rem;
@@ -25,7 +25,7 @@
   opacity: 0.88;
 }
 
-.landing-page .landing-role-grid--v2 .landing-role:hover {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role:hover {
   transform: translateY(-0.35rem);
   border-color: rgba(75, 45, 191, 0.34);
   box-shadow:
@@ -34,7 +34,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.98);
 }
 
-.landing-page .landing-role-grid--v2 .landing-role__icon {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon {
   position: relative;
   width: 5.35rem;
   height: 5.35rem;
@@ -54,7 +54,7 @@
   transform: rotate(-2deg);
 }
 
-.landing-page .landing-role-grid--v2 .landing-role__icon::before {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::before {
   content: "";
   position: absolute;
   inset: 0.48rem;
@@ -63,7 +63,7 @@
   pointer-events: none;
 }
 
-.landing-page .landing-role-grid--v2 .landing-role__icon svg {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon svg {
   position: relative;
   z-index: 1;
   width: 2.75rem;
@@ -72,25 +72,25 @@
   filter: drop-shadow(0 0.18rem 0.2rem rgba(22, 12, 68, 0.2));
 }
 
-.landing-page .landing-role-grid--v2 .landing-role--reader .landing-role__icon {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--reader .landing-role__icon {
   background:
     radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.42), transparent 30%),
     linear-gradient(145deg, #967fff 0%, #6847e8 48%, #3e249f 100%);
 }
 
-.landing-page .landing-role-grid--v2 .landing-role--editor .landing-role__icon {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--editor .landing-role__icon {
   background:
     radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.4), transparent 30%),
     linear-gradient(145deg, #7355ef 0%, #5937cf 48%, #321c85 100%);
 }
 
-.landing-page .landing-role-grid--v2 .landing-role--publisher .landing-role__icon {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--publisher .landing-role__icon {
   background:
     radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.38), transparent 30%),
     linear-gradient(145deg, #5e3de0 0%, #4b2dbf 48%, #25156d 100%);
 }
 
-.landing-page .landing-role-grid--v2 .landing-role h3 {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role h3 {
   margin-bottom: 0.72rem;
   color: #11102f;
   font-size: clamp(2rem, 2.5vw, 2.35rem);
@@ -98,7 +98,7 @@
   letter-spacing: -0.035em;
 }
 
-.landing-page .landing-role-grid--v2 .landing-role p {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role p {
   max-width: 35rem;
   margin-bottom: 1.2rem;
   color: #5f5b73;
@@ -106,12 +106,12 @@
   line-height: 1.75;
 }
 
-.landing-page .landing-role__highlights {
+.landing-page .landing-section--roles .landing-role__highlights {
   gap: 0.55rem;
   margin-bottom: 1.45rem;
 }
 
-.landing-page .landing-role__highlights small {
+.landing-page .landing-section--roles .landing-role__highlights small {
   padding: 0.48rem 0.72rem;
   border: 1px solid rgba(104, 71, 232, 0.18);
   border-radius: 0.72rem;
@@ -123,7 +123,7 @@
   letter-spacing: 0.01em;
 }
 
-.landing-page .landing-role-grid--v2 .landing-role > a {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role > a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -141,30 +141,30 @@
   transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
 }
 
-.landing-page .landing-role-grid--v2 .landing-role > a:hover {
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role > a:hover {
   transform: translateY(-0.12rem);
   box-shadow: 0 0.85rem 1.7rem rgba(75, 45, 191, 0.27);
   filter: brightness(1.04);
 }
 
 @media (max-width: 48rem) {
-  .landing-page .landing-role-grid--v2 .landing-role {
+  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role {
     min-height: 0;
     padding: 1.55rem;
   }
 
-  .landing-page .landing-role-grid--v2 .landing-role__icon {
+  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon {
     width: 4.65rem;
     height: 4.65rem;
     border-radius: 1.25rem;
   }
 
-  .landing-page .landing-role-grid--v2 .landing-role__icon svg {
+  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon svg {
     width: 2.35rem;
     height: 2.35rem;
   }
 
-  .landing-page .landing-role-grid--v2 .landing-role > a {
+  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role > a {
     width: 100%;
   }
 }

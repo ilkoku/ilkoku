@@ -1,7 +1,10 @@
 /* İlkOku rol kartları — onaylanan gerçek PNG ikonlar ve sakin hareket sistemi. */
-/* Sprite: writer | reader / editor | publisher */
+/* Sprite hücreleri CSS ile gerçek sembol sınırlarından kırpılır. */
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon {
+  position: relative !important;
+  width: 7rem !important;
+  height: 7rem !important;
   overflow: visible !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -26,14 +29,18 @@
   content: "" !important;
   position: absolute !important;
   z-index: 2 !important;
-  inset: -0.35rem !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 7rem !important;
+  height: 7rem !important;
+  margin: -3.5rem 0 0 -3.5rem !important;
   border: 0 !important;
   border-radius: 0 !important;
   background-color: transparent !important;
   background-image: url("/icons/roles/roles-sprite.png") !important;
   background-repeat: no-repeat !important;
-  background-size: 200% 200% !important;
-  filter: drop-shadow(0 0.65rem 1rem rgba(46, 24, 112, 0.2)) !important;
+  background-size: 17.8rem 17.8rem !important;
+  filter: drop-shadow(0 0.55rem 0.9rem rgba(46, 24, 112, 0.2)) !important;
   box-shadow: none !important;
   pointer-events: none !important;
   transform-origin: 50% 70%;
@@ -41,28 +48,28 @@
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--writer .landing-role__icon::after {
-  background-position: 0 0 !important;
+  background-position: -0.95rem -0.25rem !important;
   animation: landing-role-writer 4.8s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--reader .landing-role__icon::after {
-  background-position: 100% 0 !important;
+  background-position: -9.45rem 0.2rem !important;
   animation: landing-role-reader 4.4s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--editor .landing-role__icon::after {
-  background-position: 0 100% !important;
+  background-position: -0.7rem -5.45rem !important;
   animation: landing-role-editor 4.6s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--publisher .landing-role__icon::after {
-  background-position: 100% 100% !important;
+  background-position: -9.4rem -5.5rem !important;
   animation: landing-role-publisher 5s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role:hover .landing-role__icon::after {
   animation-duration: 2.2s;
-  filter: drop-shadow(0 0.9rem 1.25rem rgba(68, 38, 156, 0.28)) saturate(1.08) !important;
+  filter: drop-shadow(0 0.8rem 1.1rem rgba(68, 38, 156, 0.28)) saturate(1.08) !important;
 }
 
 @keyframes landing-role-writer {
@@ -88,8 +95,12 @@
 }
 
 @media (max-width: 48rem) {
+  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon {
+    width: 6.25rem !important;
+    height: 6.25rem !important;
+  }
+
   .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::after {
-    inset: -0.2rem !important;
     animation-duration: 6s;
   }
 }

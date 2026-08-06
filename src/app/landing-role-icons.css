@@ -1,11 +1,11 @@
-/* İlkOku rol kartları — gerçek marka varlığı ve temiz kurumsal ikonlar. */
+/* İlkOku rol kartları — düz, net ve kurumsal 2D ikon seti. */
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon {
-  overflow: hidden;
-  border: 1px solid rgba(104, 71, 232, 0.16);
-  border-radius: 1.35rem;
-  background: #ffffff;
-  box-shadow: 0 0.75rem 1.8rem rgba(47, 30, 112, 0.12);
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   transform: none;
 }
 
@@ -24,49 +24,28 @@
   inset: 0;
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;
+  filter: none;
   pointer-events: none;
   transition: transform 180ms ease;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role:hover .landing-role__icon::after {
-  transform: scale(1.025);
+  transform: translateY(-0.08rem);
 }
 
-/* Yazar — doğrudan İlkOku logosundaki gerçek tüy kalem bölümü. */
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--writer .landing-role__icon::after {
-  background-image: url("../assets/brand/ilkoku-logo-mobile.png");
-  background-size: 205%;
-  background-position: 50% 18%;
+  background-image: url("/icons/roles/writer.svg");
 }
 
-/* Okuyucu — doğrudan İlkOku logosundaki gerçek açık kitap bölümü. */
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--reader .landing-role__icon::after {
-  background-image: url("../assets/brand/ilkoku-logo-mobile.png");
-  background-size: 205%;
-  background-position: 50% 72%;
+  background-image: url("/icons/roles/reader.svg");
 }
 
-/* Editör — temiz, dolgun ve profesyonel belge-onay simgesi. */
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--editor .landing-role__icon::after {
-  inset: 0.52rem;
   background-image: url("/icons/roles/editor.svg");
-  background-size: contain;
 }
 
-/* Yayınevi — temiz, dolgun ve kurumsal yapı simgesi. */
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--publisher .landing-role__icon::after {
-  inset: 0.52rem;
   background-image: url("/icons/roles/publisher.svg");
-  background-size: contain;
-}
-
-@media (max-width: 48rem) {
-  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon {
-    border-radius: 1.15rem;
-  }
-
-  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--editor .landing-role__icon::after,
-  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--publisher .landing-role__icon::after {
-    inset: 0.46rem;
-  }
 }

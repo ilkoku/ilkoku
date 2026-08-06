@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { tr } from "@/content";
 import "./globals.css";
 import "./landing-theme.css";
-import "./landing-role-icons.css";
 
 export const metadata: Metadata = {
   title: tr.brand.name,

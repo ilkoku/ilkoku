@@ -1,4 +1,4 @@
-/* İlkOku rol kartları — düz, net ve kurumsal 2D ikon seti. */
+/* İlkOku rol kartları — onaylanan gerçek PNG ikonlar ve sakin hareket sistemi. */
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon {
   overflow: visible;
@@ -21,31 +21,73 @@
   content: "";
   position: absolute;
   z-index: 2;
-  inset: 0;
-  background-position: center;
+  inset: -0.35rem;
+  background-image: url("/icons/roles/roles-sprite.png");
   background-repeat: no-repeat;
-  background-size: contain;
-  filter: none;
+  background-size: 200% 200%;
+  filter: drop-shadow(0 0.65rem 1rem rgba(46, 24, 112, 0.2));
   pointer-events: none;
-  transition: transform 180ms ease;
-}
-
-.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role:hover .landing-role__icon::after {
-  transform: translateY(-0.08rem);
+  transform-origin: 50% 70%;
+  will-change: transform, filter;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--writer .landing-role__icon::after {
-  background-image: url("/icons/roles/writer.svg");
+  background-position: 0 0;
+  animation: landing-role-writer 4.8s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--reader .landing-role__icon::after {
-  background-image: url("/icons/roles/reader.svg");
+  background-position: 100% 0;
+  animation: landing-role-reader 4.4s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--editor .landing-role__icon::after {
-  background-image: url("/icons/roles/editor.svg");
+  background-position: 0 100%;
+  animation: landing-role-editor 4.6s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--publisher .landing-role__icon::after {
-  background-image: url("/icons/roles/publisher.svg");
+  background-position: 100% 100%;
+  animation: landing-role-publisher 5s ease-in-out infinite;
+}
+
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role:hover .landing-role__icon::after {
+  animation-duration: 2.2s;
+  filter: drop-shadow(0 0.9rem 1.25rem rgba(68, 38, 156, 0.28)) saturate(1.08);
+}
+
+@keyframes landing-role-writer {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  45% { transform: translateY(-0.16rem) rotate(-1.8deg); }
+  65% { transform: translateY(-0.08rem) rotate(1deg); }
+}
+
+@keyframes landing-role-reader {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-0.18rem) scale(1.025); }
+}
+
+@keyframes landing-role-editor {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  48% { transform: translateY(-0.13rem) rotate(1.5deg); }
+  62% { transform: translateY(-0.08rem) rotate(-0.8deg); }
+}
+
+@keyframes landing-role-publisher {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-0.14rem) scale(1.018); }
+}
+
+@media (max-width: 48rem) {
+  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::after {
+    inset: -0.2rem;
+    animation-duration: 6s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::after {
+    animation: none !important;
+    transition: none;
+  }
 }

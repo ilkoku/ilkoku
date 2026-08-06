@@ -1,0 +1,43 @@
+/* İlkOku rol kartları — marka sembollerine dayalı özgün ikon seti. */
+
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon > svg {
+  opacity: 0 !important;
+}
+
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0.82rem;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 0.22rem 0.26rem rgba(19, 9, 67, 0.24));
+  pointer-events: none;
+}
+
+/* Yazar — İlkOku logosundaki tüy kalem yaklaşımı. */
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--writer .landing-role__icon::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M50 7C37 8 25 16 18 28c-4 7-5 14-3 20l10-9 8 7 5-11c9-6 15-17 12-28Z' fill='white' fill-opacity='.16' stroke-width='3'/%3E%3Cpath d='M17 48 47 14' stroke-width='3.6'/%3E%3Cpath d='m25 39 10-1M30 32l10-1M36 24l8-1' stroke-width='2.5'/%3E%3Cpath d='m12 54 8-3-5-5-3 8Z' fill='white' stroke='none'/%3E%3Cpath d='M51 14v7m-3.5-3.5h7' stroke-width='2.2'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Okuyucu — İlkOku logosundaki açık kitap yaklaşımı. */
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--reader .landing-role__icon::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 15c9-2 17 1 24 7v33c-7-6-15-9-24-7V15Z' fill='white' fill-opacity='.13' stroke-width='3.2'/%3E%3Cpath d='M56 15c-9-2-17 1-24 7v33c7-6 15-9 24-7V15Z' fill='white' fill-opacity='.13' stroke-width='3.2'/%3E%3Cpath d='M32 22v33M14 24c5 0 9 1 13 4M50 24c-5 0-9 1-13 4M14 32c5 0 9 1 13 4M50 32c-5 0-9 1-13 4' stroke-width='2.4'/%3E%3Cpath d='M32 7v7m-3.5-3.5h7' stroke-width='2.2'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Editör — değerlendirme raporu, onay ve düzenleme kalemi. */
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--editor .landing-role__icon::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 7h25l10 10v39H15V7Z' fill='white' fill-opacity='.12' stroke-width='3'/%3E%3Cpath d='M40 7v10h10M22 25h16M22 32h12' stroke-width='2.6'/%3E%3Ccircle cx='27' cy='43' r='8' fill='white' fill-opacity='.1' stroke-width='2.6'/%3E%3Cpath d='m23.5 43 2.5 2.6 5-5.5' stroke-width='2.8'/%3E%3Cpath d='m37 50 14-14 5 5-14 14-7 2 2-7Z' fill='white' fill-opacity='.13' stroke-width='2.8'/%3E%3Cpath d='m48.5 38.5 5 5' stroke-width='2.2'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Yayınevi — kurumsal yapı ve yayın kataloğunu temsil eden açık kitap. */
+.landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--publisher .landing-role__icon::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 24 32 8l24 16H8Z' fill='white' fill-opacity='.15' stroke-width='3'/%3E%3Cpath d='M13 25h38v25M19 29v17M29 29v17M39 29v17M49 29v17M8 50h48' stroke-width='2.7'/%3E%3Cpath d='M18 49c5-1 10 1 14 5 4-4 9-6 14-5v9c-5-1-10 1-14 5-4-4-9-6-14-5v-9Z' fill='white' fill-opacity='.14' stroke-width='2.6'/%3E%3Cpath d='M32 54v9' stroke-width='2.4'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+@media (max-width: 48rem) {
+  .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role__icon::after {
+    inset: 0.72rem;
+  }
+}

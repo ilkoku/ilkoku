@@ -75,22 +75,35 @@
 }
 
 .landing-page .landing-header .landing-account summary {
-  width: 3.25rem !important;
-  height: 3.25rem !important;
-  border-color: rgba(66, 50, 130, 0.13) !important;
-  color: #11102f !important;
-  background: rgba(255, 255, 255, 0.76) !important;
+  width: 2.9rem !important;
+  height: 2.9rem !important;
+  border: 1px solid rgba(104, 71, 232, 0.2) !important;
+  border-radius: 50% !important;
+  color: #3f2b78 !important;
+  background: linear-gradient(145deg, rgba(246, 242, 255, 0.58), rgba(225, 216, 255, 0.42)) !important;
   box-shadow:
-    0 0.55rem 1.5rem rgba(31, 24, 80, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
-  backdrop-filter: blur(0.95rem) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(0.95rem) saturate(120%) !important;
+    0 0.35rem 1rem rgba(61, 42, 132, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74) !important;
+  backdrop-filter: blur(1rem) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(1rem) saturate(120%) !important;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease !important;
+}
+
+.landing-page .landing-header .landing-account summary:hover,
+.landing-page .landing-header .landing-account[open] summary {
+  border-color: rgba(104, 71, 232, 0.32) !important;
+  color: #4b2dbf !important;
+  background: linear-gradient(145deg, rgba(241, 236, 255, 0.72), rgba(215, 203, 255, 0.58)) !important;
+  box-shadow:
+    0 0.45rem 1.15rem rgba(75, 45, 191, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82) !important;
+  transform: translateY(-1px) !important;
 }
 
 .landing-page .landing-header .landing-account summary svg {
-  width: 1.8rem !important;
-  height: 1.8rem !important;
-  stroke-width: 1.65 !important;
+  width: 1.55rem !important;
+  height: 1.55rem !important;
+  stroke-width: 1.7 !important;
 }
 
 @media (max-width: 48rem) {
@@ -125,8 +138,8 @@
   }
 
   .landing-page .landing-header .landing-account summary {
-    width: 3rem !important;
-    height: 3rem !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
   }
 
   .landing-page .landing-header .landing-header__kicker {
@@ -156,13 +169,13 @@
   }
 
   .landing-page .landing-header .landing-account summary {
-    width: 2.85rem !important;
-    height: 2.85rem !important;
+    width: 2.65rem !important;
+    height: 2.65rem !important;
   }
 
   .landing-page .landing-header .landing-account summary svg {
-    width: 1.65rem !important;
-    height: 1.65rem !important;
+    width: 1.45rem !important;
+    height: 1.45rem !important;
   }
 
   .landing-page .landing-header .landing-header__kicker {

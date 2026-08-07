@@ -55,49 +55,117 @@
   padding: .65rem 0 .78rem !important;
 }
 
+/* Üçüncü sıkılaştırma: eski landing.css içindeki 2.875rem link yüksekliğini kesin kaldır. */
+.landing-page .landing-footer {
+  padding-top: clamp(1.2rem, 1.8vw, 1.55rem) !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid {
+  width: min(calc(100% - 2rem), 66rem) !important;
+  grid-template-columns: minmax(14rem, 1.08fr) repeat(3, minmax(7rem, .72fr)) !important;
+  column-gap: clamp(.8rem, 1.35vw, 1.2rem) !important;
+  row-gap: .65rem !important;
+  padding-bottom: .7rem !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid > div:not(:first-child) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: .08rem !important;
+}
+
+.landing-page .landing-footer .landing-logo--footer {
+  margin-bottom: .4rem !important;
+}
+
+.landing-page .landing-footer .landing-logo--footer img {
+  width: clamp(10.4rem, 10.6vw, 11.4rem) !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid > div:first-child > p {
+  max-width: 19rem !important;
+  font-size: .82rem !important;
+  line-height: 1.32 !important;
+}
+
+.landing-page .landing-footer h3 {
+  margin: 0 0 .32rem !important;
+  padding-bottom: .34rem !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid > div > a,
+.landing-page .landing-footer a:not(.landing-logo),
+.landing-page .landing-footer .landing-footer__logout {
+  min-width: 0 !important;
+  min-height: 1.6rem !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: .05rem 0 !important;
+  line-height: 1.2 !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid > div:not(:first-child) > form {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid > div:last-child > a[href^="mailto:"]::after {
+  margin-top: .12rem !important;
+  line-height: 1.15 !important;
+}
+
+.landing-page .landing-footer .landing-footer__copyright {
+  width: min(calc(100% - 2rem), 66rem) !important;
+  padding: .48rem 0 .58rem !important;
+}
+
 @media (max-width: 58rem) {
   .landing-page .landing-footer .landing-footer__grid {
     width: min(calc(100% - 2rem), 46rem) !important;
     grid-template-columns: minmax(13rem, 1.15fr) repeat(2, minmax(8rem, .8fr)) !important;
-    gap: 1.2rem 1.35rem !important;
+    gap: .85rem 1.1rem !important;
   }
 
   .landing-page .landing-footer .landing-logo--footer img {
-    width: 8.6rem !important;
+    width: 10rem !important;
   }
 }
 
 @media (max-width: 40rem) {
   .landing-page .landing-footer {
-    padding-top: 1.45rem !important;
+    padding-top: 1.1rem !important;
   }
 
   .landing-page .landing-footer .landing-footer__grid {
     width: calc(100% - 1.5rem) !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 1.15rem 1rem !important;
-    padding-bottom: 1rem !important;
+    gap: .8rem .85rem !important;
+    padding-bottom: .65rem !important;
   }
 
   .landing-page .landing-footer .landing-logo--footer img {
-    width: 8.9rem !important;
+    width: 10.2rem !important;
   }
 
   .landing-page .landing-footer .landing-footer__grid > div:first-child > p {
-    max-width: 18rem !important;
+    max-width: 19rem !important;
   }
 
   .landing-page .landing-footer h3 {
-    margin-bottom: .5rem !important;
+    margin-bottom: .28rem !important;
   }
 
   .landing-page .landing-footer a:not(.landing-logo),
   .landing-page .landing-footer .landing-footer__logout {
-    margin-bottom: .32rem !important;
+    min-height: 1.55rem !important;
+    margin: 0 !important;
   }
 
   .landing-page .landing-footer .landing-footer__copyright {
     width: calc(100% - 1.5rem) !important;
-    padding: .62rem 0 .72rem !important;
+    padding: .46rem 0 .54rem !important;
   }
 }

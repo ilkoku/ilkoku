@@ -1,0 +1,260 @@
+/* İlkOku — kompakt ve kurumsal footer */
+
+.landing-page .landing-footer {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  padding: clamp(2.6rem, 4.5vw, 3.9rem) 0 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background:
+    radial-gradient(circle at 92% 6%, rgba(126, 92, 236, 0.24), transparent 25%),
+    linear-gradient(112deg, #17152f 0%, #1d1a3c 55%, #322367 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+/* Eski büyük dekoratif halkayı küçült ve sakinleştir. */
+.landing-page .landing-footer::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  top: -9rem !important;
+  right: -5.5rem !important;
+  width: 20rem !important;
+  height: 20rem !important;
+  border: 1px solid rgba(171, 147, 255, 0.13) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow:
+    0 0 0 3.2rem rgba(126, 92, 236, 0.04),
+    0 0 0 6.4rem rgba(126, 92, 236, 0.025) !important;
+  opacity: 0.9 !important;
+  pointer-events: none !important;
+}
+
+.landing-page .landing-footer::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  left: -7rem !important;
+  bottom: -9rem !important;
+  width: 18rem !important;
+  height: 18rem !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle, rgba(105, 74, 216, 0.11), transparent 68%) !important;
+  opacity: 0.72 !important;
+  pointer-events: none !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid {
+  display: grid !important;
+  grid-template-columns: minmax(13rem, 1.45fr) repeat(3, minmax(8.5rem, 0.72fr)) !important;
+  align-items: start !important;
+  gap: clamp(2rem, 5vw, 4.75rem) !important;
+  padding-bottom: clamp(2.1rem, 3.7vw, 3rem) !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid > div {
+  min-width: 0 !important;
+}
+
+.landing-page .landing-footer .landing-logo--footer {
+  display: inline-flex !important;
+  width: auto !important;
+  margin: 0 0 1rem !important;
+}
+
+.landing-page .landing-footer .landing-logo--footer img {
+  width: clamp(7.4rem, 8vw, 8.8rem) !important;
+  height: auto !important;
+  filter: drop-shadow(0 0.8rem 1.8rem rgba(0, 0, 0, 0.22)) !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid > div:first-child > p {
+  max-width: 20rem !important;
+  margin: 0 !important;
+  color: rgba(244, 241, 255, 0.76) !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid > div:first-child > p strong {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.landing-page .landing-footer h3 {
+  position: relative !important;
+  margin: 0 0 1.05rem !important;
+  padding-bottom: 0.7rem !important;
+  color: #ffffff !important;
+  font-size: 0.96rem !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.landing-page .landing-footer h3::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 1.85rem !important;
+  height: 0.12rem !important;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, #a990ff, #6e49e4) !important;
+  box-shadow: 0 0 0.8rem rgba(132, 96, 238, 0.34) !important;
+}
+
+.landing-page .landing-footer .landing-footer__grid > div:not(:first-child) > a,
+.landing-page .landing-footer .landing-footer__grid > div:not(:first-child) > form,
+.landing-page .landing-footer .landing-footer__grid > div:not(:first-child) > .landing-footer__logout {
+  margin-top: 0 !important;
+}
+
+.landing-page .landing-footer a:not(.landing-logo),
+.landing-page .landing-footer .landing-footer__logout {
+  position: relative !important;
+  display: block !important;
+  width: fit-content !important;
+  margin-bottom: 0.72rem !important;
+  padding: 0.08rem 0 !important;
+  border: 0 !important;
+  color: rgba(238, 234, 255, 0.72) !important;
+  background: transparent !important;
+  font: inherit !important;
+  font-size: 0.82rem !important;
+  line-height: 1.4 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: color 180ms ease, transform 180ms ease !important;
+}
+
+.landing-page .landing-footer a:not(.landing-logo)::before,
+.landing-page .landing-footer .landing-footer__logout::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  bottom: -0.08rem !important;
+  width: 0 !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, #a990ff, transparent) !important;
+  transition: width 180ms ease !important;
+}
+
+.landing-page .landing-footer a:not(.landing-logo):hover,
+.landing-page .landing-footer .landing-footer__logout:hover {
+  color: #ffffff !important;
+  transform: translateX(0.16rem) !important;
+}
+
+.landing-page .landing-footer a:not(.landing-logo):hover::before,
+.landing-page .landing-footer .landing-footer__logout:hover::before {
+  width: 100% !important;
+}
+
+/* Destek bağlantısının altında gerçek e-posta adresini görünür kıl. */
+.landing-page .landing-footer .landing-footer__grid > div:last-child > a[href^="mailto:"]::after {
+  content: "destek@ilkoku.com" !important;
+  display: block !important;
+  margin-top: 0.42rem !important;
+  color: rgba(185, 170, 242, 0.82) !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+}
+
+.landing-page .landing-footer .landing-footer__copyright {
+  width: min(calc(100% - 3rem), 86rem) !important;
+  margin: 0 auto !important;
+  padding: 1rem 0 1.15rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.09) !important;
+  color: rgba(226, 221, 247, 0.55) !important;
+  font-size: 0.72rem !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+}
+
+@media (max-width: 58rem) {
+  .landing-page .landing-footer .landing-footer__grid {
+    grid-template-columns: minmax(13rem, 1.2fr) repeat(2, minmax(9rem, 0.8fr)) !important;
+    gap: 2.1rem 2.5rem !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__grid > div:last-child {
+    grid-column: 2 / 3 !important;
+  }
+}
+
+@media (max-width: 40rem) {
+  .landing-page .landing-footer {
+    padding-top: 2.35rem !important;
+  }
+
+  .landing-page .landing-footer::before {
+    top: -7rem !important;
+    right: -8rem !important;
+    width: 17rem !important;
+    height: 17rem !important;
+    opacity: 0.58 !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1.8rem 1.4rem !important;
+    padding-bottom: 1.8rem !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__grid > div:first-child {
+    grid-column: 1 / -1 !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__grid > div:last-child {
+    grid-column: auto !important;
+  }
+
+  .landing-page .landing-footer .landing-logo--footer img {
+    width: 7.2rem !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__grid > div:first-child > p {
+    max-width: 17rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  .landing-page .landing-footer h3 {
+    margin-bottom: 0.85rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .landing-page .landing-footer a:not(.landing-logo),
+  .landing-page .landing-footer .landing-footer__logout {
+    margin-bottom: 0.62rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__copyright {
+    width: calc(100% - 2rem) !important;
+    padding: 0.9rem 0 1rem !important;
+    font-size: 0.68rem !important;
+  }
+}
+
+@media (max-width: 27rem) {
+  .landing-page .landing-footer .landing-footer__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__grid > div:first-child,
+  .landing-page .landing-footer .landing-footer__grid > div:last-child {
+    grid-column: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .landing-footer a:not(.landing-logo),
+  .landing-page .landing-footer .landing-footer__logout,
+  .landing-page .landing-footer a:not(.landing-logo)::before,
+  .landing-page .landing-footer .landing-footer__logout::before {
+    transition: none !important;
+  }
+}

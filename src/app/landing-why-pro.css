@@ -1,0 +1,261 @@
+/* İlkOku — Neden İlkOku? premium güven bölümü */
+
+.landing-page .landing-why-v2 {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-block: clamp(4.5rem, 7vw, 7rem) !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(104, 71, 232, 0.12), transparent 34%),
+    radial-gradient(circle at 88% 8%, rgba(128, 101, 242, 0.14), transparent 32%),
+    linear-gradient(180deg, #fbfaff 0%, #f4f1ff 100%) !important;
+}
+
+.landing-page .landing-why-v2::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(104, 71, 232, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(104, 71, 232, 0.025) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 76%, transparent);
+}
+
+.landing-page .landing-why-v2 .landing-section-heading {
+  max-width: 48rem;
+  margin: 0 auto clamp(3rem, 5vw, 4.5rem) !important;
+}
+
+.landing-page .landing-why-v2 .landing-section-heading p {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .48rem .85rem;
+  border: 1px solid rgba(104, 71, 232, .16);
+  border-radius: 999px;
+  color: #5b35dd;
+  background: rgba(255, 255, 255, .72);
+  box-shadow: 0 .45rem 1.2rem rgba(58, 35, 126, .06);
+}
+
+.landing-page .landing-why-v2 .landing-section-heading h2 {
+  margin-top: .85rem;
+  font-size: clamp(2.8rem, 5vw, 5.1rem);
+  letter-spacing: -.045em;
+}
+
+.landing-page .landing-why-v2 .landing-section-heading h2::after {
+  width: 3.75rem;
+  height: .22rem;
+  margin: 1.15rem auto 0 !important;
+  border-radius: 999px;
+  content: "" !important;
+  background: linear-gradient(90deg, #8065f2, #4b2dbf);
+  box-shadow: 0 0 1.2rem rgba(104, 71, 232, .28);
+}
+
+.landing-page .landing-benefits-v2 {
+  gap: 1rem !important;
+}
+
+.landing-page .landing-benefit-v2 {
+  position: relative;
+  isolation: isolate;
+  min-height: 17.5rem !important;
+  align-items: flex-start !important;
+  padding: 1.65rem 1.4rem 1.5rem !important;
+  overflow: hidden;
+  border: 1px solid rgba(83, 59, 173, .14) !important;
+  border-radius: 1.35rem !important;
+  text-align: left !important;
+  background:
+    radial-gradient(circle at 85% 8%, color-mix(in srgb, var(--benefit-accent, #6847e8) 12%, transparent), transparent 38%),
+    linear-gradient(145deg, rgba(255,255,255,.98), rgba(250,248,255,.94)) !important;
+  box-shadow:
+    0 1.1rem 2.8rem rgba(43, 29, 104, .08),
+    inset 0 1px 0 rgba(255,255,255,.95) !important;
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+}
+
+.landing-page .landing-benefit-v2::after {
+  content: "";
+  position: absolute;
+  inset: auto 1.4rem 0;
+  height: .2rem;
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(90deg, var(--benefit-accent, #6847e8), transparent);
+  opacity: .72;
+}
+
+.landing-page .landing-benefit-v2:hover {
+  transform: translateY(-.35rem);
+  border-color: color-mix(in srgb, var(--benefit-accent, #6847e8) 34%, transparent) !important;
+  box-shadow:
+    0 1.45rem 3.3rem rgba(43, 29, 104, .14),
+    inset 0 1px 0 rgba(255,255,255,.98) !important;
+}
+
+.landing-page .landing-benefit-v2__icon {
+  position: relative;
+  width: 4.8rem !important;
+  height: 4.8rem !important;
+  margin: 0 0 1.35rem !important;
+  border: 1px solid color-mix(in srgb, var(--benefit-accent, #6847e8) 20%, white);
+  border-radius: 1.25rem !important;
+  color: #fff !important;
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--benefit-accent, #6847e8) 86%, white),
+      color-mix(in srgb, var(--benefit-accent, #6847e8) 78%, #281366)) !important;
+  box-shadow:
+    0 .8rem 1.8rem color-mix(in srgb, var(--benefit-accent, #6847e8) 20%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.38);
+}
+
+.landing-page .landing-benefit-v2__icon::after {
+  content: "";
+  position: absolute;
+  inset: .35rem;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: .95rem;
+  pointer-events: none;
+}
+
+.landing-page .landing-benefit-v2__icon svg {
+  width: 2.35rem !important;
+  height: 2.35rem !important;
+  stroke-width: 1.9;
+}
+
+.landing-page .landing-benefit-v2 h3 {
+  margin: 0 0 .75rem !important;
+  color: #17142f !important;
+  font-size: 1rem !important;
+  line-height: 1.35 !important;
+  letter-spacing: -.015em;
+}
+
+.landing-page .landing-benefit-v2 p {
+  margin: 0 !important;
+  color: #67637a !important;
+  font-size: .78rem !important;
+  line-height: 1.72 !important;
+}
+
+.landing-page .landing-stats-v2 {
+  position: relative;
+  margin-top: 1.35rem !important;
+  overflow: hidden;
+  border: 1px solid rgba(88, 60, 190, .18) !important;
+  border-radius: 1.35rem !important;
+  background:
+    linear-gradient(105deg, rgba(255,255,255,.96), rgba(244,239,255,.96)) !important;
+  box-shadow:
+    0 1rem 2.8rem rgba(52, 34, 121, .09),
+    inset 0 1px 0 rgba(255,255,255,.96) !important;
+}
+
+.landing-page .landing-stat-v2 {
+  position: relative;
+  min-height: 7.25rem !important;
+  gap: .95rem !important;
+  padding: 1.15rem 1rem !important;
+  border-right-color: rgba(104, 71, 232, .11) !important;
+}
+
+.landing-page .landing-stat-v2::before {
+  content: "";
+  position: absolute;
+  left: 1.1rem;
+  right: 1.1rem;
+  bottom: 0;
+  height: .18rem;
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(90deg, transparent, rgba(104,71,232,.58), transparent);
+  opacity: .48;
+}
+
+.landing-page .landing-stat-v2__icon {
+  width: 3.05rem !important;
+  height: 3.05rem !important;
+  border: 1px solid rgba(104,71,232,.14);
+  color: #5b35dd !important;
+  background: linear-gradient(145deg, #f4f0ff, #e9e1ff) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+.landing-page .landing-stat-v2__icon svg {
+  width: 1.55rem !important;
+  height: 1.55rem !important;
+}
+
+.landing-page .landing-stat-v2 strong {
+  color: #4b2dbf !important;
+  font-size: clamp(1.35rem, 1.8vw, 1.65rem) !important;
+  letter-spacing: -.03em;
+}
+
+.landing-page .landing-stat-v2 span {
+  margin-top: .3rem !important;
+  color: #302b50 !important;
+  font-size: .77rem !important;
+  font-weight: 600;
+}
+
+@media (max-width: 72rem) {
+  .landing-page .landing-benefits-v2 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .landing-page .landing-stats-v2 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .landing-page .landing-stat-v2:nth-child(3n) {
+    border-right: 0 !important;
+  }
+}
+
+@media (max-width: 44rem) {
+  .landing-page .landing-why-v2 {
+    padding-block: 3.5rem !important;
+  }
+
+  .landing-page .landing-why-v2 .landing-section-heading {
+    margin-bottom: 2.25rem !important;
+  }
+
+  .landing-page .landing-why-v2 .landing-section-heading h2 {
+    font-size: clamp(2.35rem, 13vw, 3.4rem);
+  }
+
+  .landing-page .landing-benefits-v2 {
+    grid-template-columns: 1fr !important;
+    gap: .85rem !important;
+  }
+
+  .landing-page .landing-benefit-v2 {
+    min-height: 0 !important;
+    padding: 1.35rem !important;
+  }
+
+  .landing-page .landing-stats-v2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .landing-page .landing-stat-v2 {
+    min-height: 6.35rem !important;
+    justify-content: flex-start !important;
+  }
+
+  .landing-page .landing-stat-v2:nth-child(3n) {
+    border-right: 1px solid rgba(104, 71, 232, .11) !important;
+  }
+
+  .landing-page .landing-stat-v2:nth-child(2n) {
+    border-right: 0 !important;
+  }
+}

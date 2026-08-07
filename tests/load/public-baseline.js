@@ -5,6 +5,7 @@ import { Counter, Rate, Trend } from "k6/metrics";
 const BASE_URL = (__ENV.BASE_URL || "https://ilkoku.com").replace(/\/$/, "");
 const PROFILE = (__ENV.PROFILE || "smoke").toLowerCase();
 const SHARD_ID = __ENV.SHARD_ID || "single";
+const FAILURE_DIAGNOSTICS = (__ENV.FAILURE_DIAGNOSTICS || "0") === "1";
 
 const pageFailureRate = new Rate("page_failure_rate");
 const pageDuration = new Trend("page_duration", true);
@@ -15,12 +16,19 @@ const httpStatus403 = new Counter("http_status_403");
 const httpStatus429 = new Counter("http_status_429");
 const httpStatusOther4xx = new Counter("http_status_other_4xx");
 const httpStatus5xx = new Counter("http_status_5xx");
+const httpStatus500 = new Counter("http_status_500");
+const httpStatus502 = new Counter("http_status_502");
+const httpStatus503 = new Counter("http_status_503");
+const httpStatus504 = new Counter("http_status_504");
+const httpStatusOther5xx = new Counter("http_status_other_5xx");
 const httpStatusOther = new Counter("http_status_other");
 const transportErrors = new Counter("transport_errors");
 const timeoutErrors = new Counter("timeout_errors");
 const endpointFailuresHome = new Counter("endpoint_failures_home");
 const endpointFailuresLogin = new Counter("endpoint_failures_login");
 const endpointFailuresRegister = new Counter("endpoint_failures_register");
+
+let diagnosticSamplesLogged = 0;
 
 const profiles = {
   smoke: [
@@ -68,11 +76,17 @@ const profiles = {
     { duration: "2m", target: 150 },
     { duration: "30s", target: 0 },
   ],
+  distributedprobe100: [
+    { duration: "20s", target: 50 },
+    { duration: "20s", target: 100 },
+    { duration: "1m", target: 100 },
+    { duration: "20s", target: 0 },
+  ],
 };
 
 if (!profiles[PROFILE]) {
   throw new Error(
-    `Unknown PROFILE=${PROFILE}. Use smoke, baseline, capacity100, capacity200 or diagnostic150.`,
+    `Unknown PROFILE=${PROFILE}. Use smoke, baseline, capacity100, capacity200, diagnostic150 or distributedProbe100.`,
   );
 }
 
@@ -92,6 +106,7 @@ export const options = {
     http_req_duration: ["p(95)<1500", "p(99)<3000"],
     page_duration: ["p(95)<1500", "p(99)<3000"],
   },
+  summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
   discardResponseBodies: true,
   userAgent: `IlkOku-k6-capacity-test/1.0 shard/${SHARD_ID}`,
 };
@@ -102,21 +117,51 @@ const pages = [
   { name: "register", path: "/kayit" },
 ];
 
+function header(response, name) {
+  return response.headers[name] || response.headers[name.toLowerCase()] || "";
+}
+
+function clean(value) {
+  return String(value || "").replace(/[\r\n\t]+/g, " ").replace(/"/g, "'").slice(0, 220);
+}
+
+function maybeLogFailure(response, page) {
+  if (!FAILURE_DIAGNOSTICS || __VU > 8 || diagnosticSamplesLogged >= 1) return;
+
+  diagnosticSamplesLogged += 1;
+  console.warn(
+    `EDGE_DIAGNOSTIC profile=${PROFILE} shard=${SHARD_ID} vu=${__VU} endpoint=${page.name} ` +
+      `status=${response.status} error="${clean(response.error)}" ` +
+      `server="${clean(header(response, "Server"))}" ` +
+      `retry_after="${clean(header(response, "Retry-After"))}" ` +
+      `cf_ray="${clean(header(response, "Cf-Ray"))}" ` +
+      `cf_cache_status="${clean(header(response, "Cf-Cache-Status"))}" ` +
+      `hcdn_request_id="${clean(header(response, "Hcdn-Request-Id"))}"`,
+  );
+}
+
 function classifyResponse(response, page) {
   const status = response.status;
+  const tags = { endpoint: page.name, shard: SHARD_ID };
 
-  if (status === 200) httpStatus200.add(1, { endpoint: page.name });
-  else if (status >= 300 && status < 400) httpStatus3xx.add(1, { endpoint: page.name });
-  else if (status === 403) httpStatus403.add(1, { endpoint: page.name });
-  else if (status === 429) httpStatus429.add(1, { endpoint: page.name });
-  else if (status >= 400 && status < 500) httpStatusOther4xx.add(1, { endpoint: page.name });
-  else if (status >= 500 && status < 600) httpStatus5xx.add(1, { endpoint: page.name });
-  else if (status === 0) {
-    transportErrors.add(1, { endpoint: page.name });
+  if (status === 200) httpStatus200.add(1, tags);
+  else if (status >= 300 && status < 400) httpStatus3xx.add(1, tags);
+  else if (status === 403) httpStatus403.add(1, tags);
+  else if (status === 429) httpStatus429.add(1, tags);
+  else if (status >= 400 && status < 500) httpStatusOther4xx.add(1, tags);
+  else if (status >= 500 && status < 600) {
+    httpStatus5xx.add(1, tags);
+    if (status === 500) httpStatus500.add(1, tags);
+    else if (status === 502) httpStatus502.add(1, tags);
+    else if (status === 503) httpStatus503.add(1, tags);
+    else if (status === 504) httpStatus504.add(1, tags);
+    else httpStatusOther5xx.add(1, tags);
+  } else if (status === 0) {
+    transportErrors.add(1, tags);
     if ((response.error || "").toLowerCase().includes("timeout")) {
-      timeoutErrors.add(1, { endpoint: page.name });
+      timeoutErrors.add(1, tags);
     }
-  } else httpStatusOther.add(1, { endpoint: page.name });
+  } else httpStatusOther.add(1, tags);
 }
 
 function recordEndpointFailure(page) {
@@ -146,6 +191,7 @@ function requestPage(page) {
 
   if (!ok) {
     recordEndpointFailure(page);
+    maybeLogFailure(response, page);
   }
 
   pageFailureRate.add(!ok, { endpoint: page.name, shard: SHARD_ID });
@@ -162,15 +208,14 @@ export default function () {
 }
 
 export function handleSummary(data) {
-  const profile = PROFILE;
   const generatedAt = new Date().toISOString();
 
   return {
-    stdout: `\nİlkOku public load test tamamlandı. profile=${profile} shard=${SHARD_ID} target=${BASE_URL}\n`,
+    stdout: `\nİlkOku public load test tamamlandı. profile=${PROFILE} shard=${SHARD_ID} target=${BASE_URL}\n`,
     "load-summary.json": JSON.stringify(
       {
         generatedAt,
-        profile,
+        profile: PROFILE,
         shardId: SHARD_ID,
         baseUrl: BASE_URL,
         metrics: data.metrics,

@@ -19,3 +19,201 @@
     0 1rem 3rem rgba(43, 29, 104, 0.08),
     inset 0 0.2rem 1rem rgba(255, 255, 255, 0.95);
 }
+
+.landing-page .landing-role-grid--v2 .landing-role::before {
+  display: none;
+}
+
+.landing-page .landing-role-grid--v2 .landing-role:hover {
+  border-color: rgba(104, 71, 232, 0.28);
+  box-shadow:
+    0 1.4rem 3.4rem rgba(43, 29, 104, 0.14),
+    0 -0.35rem 1.7rem rgba(128, 101, 242, 0.12),
+    0 0.35rem 1.7rem rgba(104, 71, 232, 0.1);
+}
+
+/* Hero bilgi kartları: hero fotoğrafını belirgin bırakan yüksek şeffaflık. */
+.landing-page .landing-product-card,
+.landing-page .landing-product-card--review,
+.landing-page .landing-product-card--publisher,
+.landing-page .landing-product-card--passport {
+  border-color: rgba(255, 255, 255, 0.46);
+  background: rgba(255, 255, 255, 0.24);
+  box-shadow:
+    0 0.8rem 2rem rgba(17, 16, 47, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(0.24rem) saturate(1.02);
+  -webkit-backdrop-filter: blur(0.24rem) saturate(1.02);
+}
+
+.landing-page .landing-product-card small,
+.landing-page .landing-product-card__eyebrow {
+  color: rgba(29, 27, 56, 0.8);
+}
+
+.landing-page .landing-product-card strong {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+/* Eser Pasaportu: küçük, tıklanabilir düşünce balonu. */
+.landing-page .landing-product-card--passport {
+  right: 1.15rem;
+  bottom: 1.15rem;
+  width: auto;
+  min-width: 9.75rem;
+  padding: 0.68rem 0.82rem;
+  border-color: rgba(255, 255, 255, 0.58);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.27);
+  box-shadow:
+    0 0.8rem 2rem rgba(17, 16, 47, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(0.34rem) saturate(1.04);
+  -webkit-backdrop-filter: blur(0.34rem) saturate(1.04);
+  cursor: pointer;
+  overflow: visible;
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.landing-page .landing-product-card--passport:hover {
+  transform: translateY(-0.18rem);
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow:
+    0 1rem 2.35rem rgba(17, 16, 47, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.landing-page .landing-product-card--passport .landing-product-card__eyebrow,
+.landing-page .landing-product-card--passport .landing-product-card__metrics {
+  display: none;
+}
+
+.landing-page .landing-product-card--passport .landing-product-card__title {
+  gap: 0.5rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.landing-page .landing-product-card--passport .landing-product-card__title svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.landing-page .landing-product-card--passport .landing-product-card__title strong {
+  font-size: 0.76rem;
+  letter-spacing: -0.01em;
+}
+
+.landing-page .landing-product-card--passport::before,
+.landing-page .landing-product-card--passport::after {
+  position: absolute;
+  z-index: 8;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(0.45rem) scale(0.96);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.landing-page .landing-product-card--passport::before {
+  content: "";
+  right: 1.15rem;
+  bottom: calc(100% + 0.3rem);
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: -0.78rem 0.5rem 0 -0.14rem rgba(255, 255, 255, 0.76);
+}
+
+.landing-page .landing-product-card--passport::after {
+  content: "ESER PASAPORTU\A ✓ Platform üzerinde yazıldı\A ✓ 41 yazım oturumu\A ✓ 19 revizyon\A ✓ Versiyon geçmişi\A ✓ Doğal yazım akışı\A ✓ Profesyonel inceleme tamamlandı\A ✓ Yayınevi keşfine açık";
+  white-space: pre-line;
+  right: -0.35rem;
+  bottom: calc(100% + 1.25rem);
+  width: 14.4rem;
+  padding: 0.92rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 1.35rem;
+  color: #292342;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1rem 2.6rem rgba(26, 20, 67, 0.18);
+  backdrop-filter: blur(0.75rem) saturate(1.08);
+  -webkit-backdrop-filter: blur(0.75rem) saturate(1.08);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.72;
+  text-align: left;
+}
+
+.landing-page .landing-product-card--passport:hover::before,
+.landing-page .landing-product-card--passport:hover::after,
+.landing-page .landing-product-card--passport:active::before,
+.landing-page .landing-product-card--passport:active::after {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Mobil hero: kartları kompakt ve hero görselini açık tut. */
+@media (max-width: 34rem) {
+  .landing-page .landing-hero-product {
+    min-height: 31rem;
+  }
+
+  .landing-page .landing-product-card--review,
+  .landing-page .landing-product-card--publisher {
+    gap: 0.5rem;
+    padding: 0.68rem 0.78rem;
+    border-radius: 0.9rem;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .landing-page .landing-product-card--review {
+    top: 0.75rem;
+    left: 0.75rem;
+  }
+
+  .landing-page .landing-product-card--publisher {
+    top: 5.4rem;
+    right: 0.65rem;
+  }
+
+  .landing-page .landing-product-card__icon {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 0.7rem;
+  }
+
+  .landing-page .landing-product-card__icon svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .landing-page .landing-product-card small {
+    font-size: 0.56rem;
+  }
+
+  .landing-page .landing-product-card--review strong,
+  .landing-page .landing-product-card--publisher strong {
+    font-size: 0.7rem;
+  }
+
+  .landing-page .landing-product-card--passport {
+    right: 0.7rem;
+    bottom: 0.7rem;
+    min-width: 8.8rem;
+    padding: 0.62rem 0.72rem;
+    border-radius: 0.9rem;
+  }
+
+  .landing-page .landing-product-card--passport .landing-product-card__title strong {
+    font-size: 0.69rem;
+  }
+
+  .landing-page .landing-product-card--passport::after {
+    right: -0.15rem;
+    width: min(13.7rem, calc(100vw - 2.4rem));
+    padding: 0.82rem 0.9rem;
+    font-size: 0.62rem;
+    line-height: 1.65;
+  }
+}

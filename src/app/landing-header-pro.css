@@ -4,12 +4,15 @@
   min-height: 0 !important;
   border-bottom: 1px solid rgba(78, 60, 151, 0.07) !important;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.86) 0%, rgba(250, 248, 255, 0.78) 36%, rgba(244, 240, 255, 0.68) 68%, rgba(235, 229, 255, 0.6) 100%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(235, 229, 255, 0.44) 100%),
-    url("/landing/ilkoku-hero.webp") center 43% / cover no-repeat !important;
-  box-shadow: 0 0.45rem 1.8rem rgba(31, 24, 80, 0.045) !important;
-  backdrop-filter: saturate(145%) blur(0.8rem) !important;
-  -webkit-backdrop-filter: saturate(145%) blur(0.8rem) !important;
+    radial-gradient(circle at 13% 48%, rgba(245, 241, 255, 0.94) 0%, rgba(248, 246, 255, 0.9) 30%, rgba(245, 241, 255, 0.72) 54%, transparent 72%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.92) 0%, rgba(250, 247, 255, 0.88) 36%, rgba(244, 239, 255, 0.84) 68%, rgba(236, 229, 255, 0.8) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(231, 224, 255, 0.62) 100%),
+    url("/landing/ilkoku-hero.webp") center 46% / cover no-repeat !important;
+  box-shadow:
+    inset 0 -1.6rem 2.8rem -1.8rem rgba(202, 190, 255, 0.72),
+    0 0.45rem 1.8rem rgba(31, 24, 80, 0.04) !important;
+  backdrop-filter: saturate(138%) blur(0.9rem) !important;
+  -webkit-backdrop-filter: saturate(138%) blur(0.9rem) !important;
 }
 
 .landing-page .landing-header .landing-header__inner {
@@ -51,12 +54,12 @@
   border-color: rgba(104, 71, 232, 0.2) !important;
   border-radius: 999px !important;
   color: #4b2dbf !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(245, 241, 255, 0.58)) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(246, 242, 255, 0.68)) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.88),
-    0 0.55rem 1.45rem rgba(75, 45, 191, 0.06) !important;
-  backdrop-filter: blur(0.85rem) saturate(130%) !important;
-  -webkit-backdrop-filter: blur(0.85rem) saturate(130%) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0.55rem 1.45rem rgba(75, 45, 191, 0.055) !important;
+  backdrop-filter: blur(1rem) saturate(125%) !important;
+  -webkit-backdrop-filter: blur(1rem) saturate(125%) !important;
   font-size: clamp(0.67rem, 0.76vw, 0.78rem) !important;
   font-weight: 820 !important;
   line-height: 1 !important;
@@ -76,12 +79,12 @@
   height: 3.25rem !important;
   border-color: rgba(66, 50, 130, 0.13) !important;
   color: #11102f !important;
-  background: rgba(255, 255, 255, 0.68) !important;
+  background: rgba(255, 255, 255, 0.76) !important;
   box-shadow:
-    0 0.55rem 1.5rem rgba(31, 24, 80, 0.075),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(0.8rem) saturate(125%) !important;
-  -webkit-backdrop-filter: blur(0.8rem) saturate(125%) !important;
+    0 0.55rem 1.5rem rgba(31, 24, 80, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(0.95rem) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(0.95rem) saturate(120%) !important;
 }
 
 .landing-page .landing-header .landing-account summary svg {
@@ -93,9 +96,13 @@
 @media (max-width: 48rem) {
   .landing-page .landing-header {
     background:
-      linear-gradient(90deg, rgba(255, 255, 255, 0.88), rgba(243, 239, 255, 0.72)),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(235, 229, 255, 0.46)),
-      url("/landing/ilkoku-hero.webp") 58% 42% / cover no-repeat !important;
+      radial-gradient(circle at 16% 40%, rgba(247, 244, 255, 0.96), rgba(247, 243, 255, 0.84) 45%, transparent 72%),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.93), rgba(244, 239, 255, 0.84)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(229, 221, 255, 0.64)),
+      url("/landing/ilkoku-hero.webp") 58% 45% / cover no-repeat !important;
+    box-shadow:
+      inset 0 -1.35rem 2.4rem -1.6rem rgba(202, 190, 255, 0.68),
+      0 0.4rem 1.5rem rgba(31, 24, 80, 0.035) !important;
   }
 
   .landing-page .landing-header .landing-header__inner {

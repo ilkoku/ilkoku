@@ -20,6 +20,15 @@ const httpStatus500 = new Counter("http_status_500");
 const httpStatus502 = new Counter("http_status_502");
 const httpStatus503 = new Counter("http_status_503");
 const httpStatus504 = new Counter("http_status_504");
+const httpStatus520 = new Counter("http_status_520");
+const httpStatus521 = new Counter("http_status_521");
+const httpStatus522 = new Counter("http_status_522");
+const httpStatus523 = new Counter("http_status_523");
+const httpStatus524 = new Counter("http_status_524");
+const httpStatus525 = new Counter("http_status_525");
+const httpStatus526 = new Counter("http_status_526");
+const httpStatus527 = new Counter("http_status_527");
+const httpStatus530 = new Counter("http_status_530");
 const httpStatusOther5xx = new Counter("http_status_other_5xx");
 const httpStatusOther = new Counter("http_status_other");
 const transportErrors = new Counter("transport_errors");
@@ -28,7 +37,9 @@ const endpointFailuresHome = new Counter("endpoint_failures_home");
 const endpointFailuresLogin = new Counter("endpoint_failures_login");
 const endpointFailuresRegister = new Counter("endpoint_failures_register");
 
-let diagnosticSamplesLogged = 0;
+let diagnostic403Logged = false;
+let diagnostic5xxLogged = false;
+let diagnosticTransportLogged = false;
 
 const profiles = {
   smoke: [
@@ -126,12 +137,27 @@ function clean(value) {
 }
 
 function maybeLogFailure(response, page) {
-  if (!FAILURE_DIAGNOSTICS || __VU > 8 || diagnosticSamplesLogged >= 1) return;
+  if (!FAILURE_DIAGNOSTICS || __VU > 8) return;
 
-  diagnosticSamplesLogged += 1;
+  const status = response.status;
+  let shouldLog = false;
+
+  if (status === 403 && !diagnostic403Logged) {
+    diagnostic403Logged = true;
+    shouldLog = true;
+  } else if (status >= 500 && status < 600 && !diagnostic5xxLogged) {
+    diagnostic5xxLogged = true;
+    shouldLog = true;
+  } else if (status === 0 && !diagnosticTransportLogged) {
+    diagnosticTransportLogged = true;
+    shouldLog = true;
+  }
+
+  if (!shouldLog) return;
+
   console.warn(
     `EDGE_DIAGNOSTIC profile=${PROFILE} shard=${SHARD_ID} vu=${__VU} endpoint=${page.name} ` +
-      `status=${response.status} error="${clean(response.error)}" ` +
+      `status=${status} error="${clean(response.error)}" ` +
       `server="${clean(header(response, "Server"))}" ` +
       `retry_after="${clean(header(response, "Retry-After"))}" ` +
       `cf_ray="${clean(header(response, "Cf-Ray"))}" ` +
@@ -155,6 +181,15 @@ function classifyResponse(response, page) {
     else if (status === 502) httpStatus502.add(1, tags);
     else if (status === 503) httpStatus503.add(1, tags);
     else if (status === 504) httpStatus504.add(1, tags);
+    else if (status === 520) httpStatus520.add(1, tags);
+    else if (status === 521) httpStatus521.add(1, tags);
+    else if (status === 522) httpStatus522.add(1, tags);
+    else if (status === 523) httpStatus523.add(1, tags);
+    else if (status === 524) httpStatus524.add(1, tags);
+    else if (status === 525) httpStatus525.add(1, tags);
+    else if (status === 526) httpStatus526.add(1, tags);
+    else if (status === 527) httpStatus527.add(1, tags);
+    else if (status === 530) httpStatus530.add(1, tags);
     else httpStatusOther5xx.add(1, tags);
   } else if (status === 0) {
     transportErrors.add(1, tags);

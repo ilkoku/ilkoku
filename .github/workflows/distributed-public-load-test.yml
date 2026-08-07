@@ -172,10 +172,8 @@ jobs:
           print(f"status_403: {count('http_status_403')}")
           print(f"status_429: {count('http_status_429')}")
           print(f"status_5xx: {count('http_status_5xx')}")
-          print(f"status_500: {count('http_status_500')}")
-          print(f"status_502: {count('http_status_502')}")
-          print(f"status_503: {count('http_status_503')}")
-          print(f"status_504: {count('http_status_504')}")
+          for code in [500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 530]:
+              print(f"status_{code}: {count(f'http_status_{code}')}")
           print(f"other_5xx: {count('http_status_other_5xx')}")
           print(f"timeouts: {count('timeout_errors')}")
           print(f"http_req_failed_rate: {rate('http_req_failed')}")
@@ -241,6 +239,15 @@ jobs:
               "http_status_502",
               "http_status_503",
               "http_status_504",
+              "http_status_520",
+              "http_status_521",
+              "http_status_522",
+              "http_status_523",
+              "http_status_524",
+              "http_status_525",
+              "http_status_526",
+              "http_status_527",
+              "http_status_530",
               "http_status_other_5xx",
               "transport_errors",
               "timeout_errors",
@@ -289,10 +296,8 @@ jobs:
           print(f"status_429: {totals['http_status_429']}")
           print(f"other_4xx: {totals['http_status_other_4xx']}")
           print(f"status_5xx: {totals['http_status_5xx']}")
-          print(f"status_500: {totals['http_status_500']}")
-          print(f"status_502: {totals['http_status_502']}")
-          print(f"status_503: {totals['http_status_503']}")
-          print(f"status_504: {totals['http_status_504']}")
+          for code in [500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 530]:
+              print(f"status_{code}: {totals[f'http_status_{code}']}")
           print(f"other_5xx: {totals['http_status_other_5xx']}")
           print(f"transport_errors: {totals['transport_errors']}")
           print(f"timeouts: {totals['timeout_errors']}")

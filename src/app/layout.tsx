@@ -3,6 +3,7 @@ import { tr } from "@/content";
 import "./globals.css";
 import "./landing-theme.css";
 import "./landing-role-icons.css";
+import "./landing-footer-pro.css";
 
 export const metadata: Metadata = {
   title: tr.brand.name,

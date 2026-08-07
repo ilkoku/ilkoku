@@ -82,12 +82,12 @@ jobs:
           printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s"}\n' \
             "$TEST_IP" "$START_TR" "$END_TR" > hostinger-waf-test-meta.json
 
-      - name: Wait for Hostinger WAF allowlist
+      - name: Wait for Hostinger and Cloudflare allowlists
         env:
           WAIT_MINUTES: ${{ inputs.wait_minutes }}
         run: |
           set -euo pipefail
-          echo "Hostinger allowlist işlemi için $WAIT_MINUTES dakika bekleniyor."
+          echo "Hostinger + Cloudflare allowlist işlemleri için $WAIT_MINUTES dakika bekleniyor."
           sleep "$((WAIT_MINUTES * 60))"
 
       - name: Verify runner IPv4 did not change
@@ -101,21 +101,44 @@ jobs:
             exit 1
           fi
 
-      - name: Verify WAF allowlist with k6 user agent
+      - name: Verify allowlists with k6 user agent burst
         run: |
           set -euo pipefail
-          headers="$(mktemp)"
-          code="$(curl -sS --connect-timeout 10 --max-time 30 \
-            -A 'Grafana k6' \
-            -D "$headers" -o /dev/null -w '%{http_code}' \
-            https://ilkoku.com/)"
-          server="$(grep -i '^server:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
-          cf_ray="$(grep -i '^cf-ray:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
-          echo "Preflight status=$code server=${server:-none} cf_ray=${cf_ray:-none} source_ip=$TEST_RUNNER_IPV4"
-          if [ "$code" != "200" ]; then
-            echo "WAF allowlist is not effective yet. Expected HTTP 200, received HTTP $code. Stress test will not start."
+          failures=0
+          first_headers="$(mktemp)"
+
+          for i in $(seq 1 20); do
+            headers="$(mktemp)"
+            code="$(curl -sS --connect-timeout 10 --max-time 30 \
+              -A 'Grafana k6' \
+              -D "$headers" -o /dev/null -w '%{http_code}' \
+              https://ilkoku.com/ || printf '000')"
+
+            if [ "$i" -eq 1 ]; then
+              cp "$headers" "$first_headers"
+            fi
+
+            echo "Preflight[$i] status=$code source_ip=$TEST_RUNNER_IPV4"
+            if [ "$code" != "200" ]; then
+              failures=$((failures + 1))
+            fi
+            rm -f "$headers"
+          done
+
+          server="$(grep -i '^server:' "$first_headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+          cf_ray="$(grep -i '^cf-ray:' "$first_headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+          echo "Preflight summary failures=$failures/20 server=${server:-none} cf_ray=${cf_ray:-none} source_ip=$TEST_RUNNER_IPV4"
+
+          if [ "$failures" -ne 0 ]; then
+            echo "Allowlist is not clean: $failures of 20 preflight requests were not HTTP 200. Stress test will not start."
             exit 1
           fi
+
+      - name: Prepare writable k6 evidence directory
+        run: |
+          set -euo pipefail
+          mkdir -p .k6-output
+          chmod 0777 .k6-output
 
       - name: Run Hostinger support 1000 VU stress profile
         id: k6
@@ -126,7 +149,7 @@ jobs:
             -v "$PWD:/work" \
             -w /work \
             grafana/k6:latest \
-            run --summary-export=/work/hostinger-waf-summary.json tests/load/hostinger-support-1000.js
+            run --summary-export=/work/.k6-output/hostinger-waf-summary.json tests/load/hostinger-support-1000.js
 
       - name: Upload WAF allowlist test evidence
         if: always()
@@ -135,7 +158,7 @@ jobs:
           name: hostinger-waf-allowlist-stress-${{ github.run_id }}
           path: |
             hostinger-waf-test-meta.json
-            hostinger-waf-summary.json
+            .k6-output/hostinger-waf-summary.json
           if-no-files-found: warn
           retention-days: 7
 

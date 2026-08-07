@@ -1,0 +1,95 @@
+name: Public Load Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Yük profili"
+        required: true
+        default: "smoke"
+        type: choice
+        options:
+          - smoke
+          - baseline
+      base_url:
+        description: "Hedef site"
+        required: true
+        default: "https://ilkoku.com"
+        type: string
+      confirmation:
+        description: "Çalıştırmak için RUN-PUBLIC-LOAD-TEST yazın"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-load-test-production
+  cancel-in-progress: false
+
+jobs:
+  load-test:
+    name: k6 public load test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Validate explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          BASE_URL: ${{ inputs.base_url }}
+          PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRMATION" != "RUN-PUBLIC-LOAD-TEST" ]; then
+            echo "Explicit confirmation is required."
+            exit 1
+          fi
+
+          case "$PROFILE" in
+            smoke|baseline) ;;
+            *) echo "Unsupported profile: $PROFILE"; exit 1 ;;
+          esac
+
+          case "$BASE_URL" in
+            https://ilkoku.com|https://www.ilkoku.com) ;;
+            *) echo "This workflow is restricted to the approved İlkOku production host."; exit 1 ;;
+          esac
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run k6 public load test
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -e BASE_URL="$BASE_URL" \
+            -e PROFILE="$PROFILE" \
+            -v "$PWD:/work" \
+            -w /work \
+            grafana/k6:latest \
+            run tests/load/public-baseline.js
+
+      - name: Verify summary output
+        if: always()
+        run: |
+          if [ -f load-summary.json ]; then
+            echo "load-summary.json generated."
+            python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("load-summary.json")
+          data = json.loads(path.read_text())
+          metrics = data.get("metrics", {})
+          for name in ["http_req_failed", "http_req_duration", "checks", "page_failure_rate", "page_duration"]:
+              metric = metrics.get(name, {})
+              print(f"{name}: {metric.get('values', {})}")
+          PY
+          else
+            echo "No load-summary.json was produced."
+          fi

@@ -12,6 +12,7 @@ on:
           - smoke
           - baseline
           - capacity100
+          - capacity200
       base_url:
         description: "Hedef site"
         required: true
@@ -49,7 +50,7 @@ jobs:
           fi
 
           case "$PROFILE" in
-            smoke|baseline|capacity100) ;;
+            smoke|baseline|capacity100|capacity200) ;;
             *) echo "Unsupported profile: $PROFILE"; exit 1 ;;
           esac
 

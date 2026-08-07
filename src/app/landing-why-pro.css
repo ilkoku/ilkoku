@@ -205,6 +205,74 @@
   font-weight: 600;
 }
 
+/* Neden İlkOku? ikonları — rol kartlarında kullanılan aynı görsel varlıkları. */
+.landing-page .landing-why-v2 .landing-benefit-v2__icon,
+.landing-page .landing-why-v2 .landing-stat-v2__icon {
+  overflow: visible !important;
+  border-color: rgba(104, 71, 232, .12) !important;
+  background: linear-gradient(145deg, #ffffff, #f1ecff) !important;
+  box-shadow:
+    0 .7rem 1.7rem rgba(55, 34, 135, .12),
+    inset 0 1px 0 rgba(255,255,255,.98) !important;
+}
+
+.landing-page .landing-why-v2 .landing-benefit-v2__icon::after,
+.landing-page .landing-why-v2 .landing-stat-v2__icon::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: .28rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  filter: drop-shadow(0 .38rem .55rem rgba(46,24,112,.16));
+  pointer-events: none;
+}
+
+.landing-page .landing-why-v2 .landing-benefit-v2__icon > svg,
+.landing-page .landing-why-v2 .landing-stat-v2__icon > svg {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Fayda kartları */
+.landing-page .landing-benefit-v2:nth-child(1) .landing-benefit-v2__icon::after {
+  background-image: url("/icons/roles/writer-fixed.svg") !important;
+}
+.landing-page .landing-benefit-v2:nth-child(2) .landing-benefit-v2__icon::after,
+.landing-page .landing-benefit-v2:nth-child(4) .landing-benefit-v2__icon::after,
+.landing-page .landing-benefit-v2:nth-child(6) .landing-benefit-v2__icon::after {
+  background-image: url("/icons/roles/reader-fixed.svg") !important;
+}
+.landing-page .landing-benefit-v2:nth-child(3) .landing-benefit-v2__icon::after {
+  background-image: url("/icons/roles/editor.webp") !important;
+}
+.landing-page .landing-benefit-v2:nth-child(5) .landing-benefit-v2__icon::after {
+  background-image: url("/icons/roles/publisher.webp") !important;
+}
+
+/* İstatistik şeridi */
+.landing-page .landing-stat-v2:nth-child(1) .landing-stat-v2__icon::after {
+  background-image: url("/icons/roles/writer-fixed.svg") !important;
+}
+.landing-page .landing-stat-v2:nth-child(2) .landing-stat-v2__icon::after,
+.landing-page .landing-stat-v2:nth-child(5) .landing-stat-v2__icon::after,
+.landing-page .landing-stat-v2:nth-child(6) .landing-stat-v2__icon::after {
+  background-image: url("/icons/roles/reader-fixed.svg") !important;
+}
+.landing-page .landing-stat-v2:nth-child(3) .landing-stat-v2__icon::after {
+  background-image: url("/icons/roles/editor.webp") !important;
+}
+.landing-page .landing-stat-v2:nth-child(4) .landing-stat-v2__icon::after {
+  background-image: url("/icons/roles/publisher.webp") !important;
+}
+
+.landing-page .landing-why-v2 .landing-benefit-v2:hover .landing-benefit-v2__icon::after {
+  transform: translateY(-.08rem) scale(1.04);
+  transition: transform .22s ease;
+}
+
 @media (max-width: 72rem) {
   .landing-page .landing-benefits-v2 {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -257,5 +325,12 @@
 
   .landing-page .landing-stat-v2:nth-child(2n) {
     border-right: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .landing-why-v2 .landing-benefit-v2:hover .landing-benefit-v2__icon::after {
+    transform: none !important;
+    transition: none !important;
   }
 }

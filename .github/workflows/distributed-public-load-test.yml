@@ -9,6 +9,7 @@ on:
         default: "distributed500"
         type: choice
         options:
+          - diagnostic500
           - distributed500
           - distributed1000
       base_url:
@@ -49,7 +50,7 @@ jobs:
           fi
 
           case "$PROFILE" in
-            distributed500|distributed1000) ;;
+            diagnostic500|distributed500|distributed1000) ;;
             *) echo "Unsupported profile: $PROFILE"; exit 1 ;;
           esac
 
@@ -115,18 +116,22 @@ jobs:
           : > load-summary.json
           chmod 666 load-summary.json
 
-      - name: Run 100 VU shard
+      - name: Run shard load profile
         id: k6
         continue-on-error: true
         env:
           BASE_URL: ${{ inputs.base_url }}
           SHARD_ID: ${{ matrix.shard }}
+          K6_PROFILE: ${{ inputs.profile == 'diagnostic500' && 'distributedProbe100' || 'capacity100' }}
+          FAILURE_DIAGNOSTICS: ${{ inputs.profile == 'diagnostic500' && '1' || '0' }}
         run: |
           set -euo pipefail
+          echo "Shard $SHARD_ID k6 profile: $K6_PROFILE diagnostics=$FAILURE_DIAGNOSTICS"
           docker run --rm \
             -e BASE_URL="$BASE_URL" \
-            -e PROFILE="capacity100" \
+            -e PROFILE="$K6_PROFILE" \
             -e SHARD_ID="$SHARD_ID" \
+            -e FAILURE_DIAGNOSTICS="$FAILURE_DIAGNOSTICS" \
             -v "$PWD:/work" \
             -w /work \
             grafana/k6:latest \
@@ -167,6 +172,11 @@ jobs:
           print(f"status_403: {count('http_status_403')}")
           print(f"status_429: {count('http_status_429')}")
           print(f"status_5xx: {count('http_status_5xx')}")
+          print(f"status_500: {count('http_status_500')}")
+          print(f"status_502: {count('http_status_502')}")
+          print(f"status_503: {count('http_status_503')}")
+          print(f"status_504: {count('http_status_504')}")
+          print(f"other_5xx: {count('http_status_other_5xx')}")
           print(f"timeouts: {count('timeout_errors')}")
           print(f"http_req_failed_rate: {rate('http_req_failed')}")
           print(f"p95_ms: {duration.get('p(95)')}")
@@ -227,6 +237,11 @@ jobs:
               "http_status_429",
               "http_status_other_4xx",
               "http_status_5xx",
+              "http_status_500",
+              "http_status_502",
+              "http_status_503",
+              "http_status_504",
+              "http_status_other_5xx",
               "transport_errors",
               "timeout_errors",
           ]
@@ -234,7 +249,6 @@ jobs:
           totals = {name: 0 for name in metric_names}
           p95_values = []
           p99_values = []
-          avg_values = []
           failure_rates = []
 
           for path in summaries:
@@ -248,8 +262,6 @@ jobs:
                   p95_values.append(duration["p(95)"])
               if duration.get("p(99)") is not None:
                   p99_values.append(duration["p(99)"])
-              if duration.get("avg") is not None:
-                  avg_values.append(duration["avg"])
 
               failed = metrics.get("http_req_failed", {}).get("values", {}).get("rate")
               if failed is not None:
@@ -277,6 +289,11 @@ jobs:
           print(f"status_429: {totals['http_status_429']}")
           print(f"other_4xx: {totals['http_status_other_4xx']}")
           print(f"status_5xx: {totals['http_status_5xx']}")
+          print(f"status_500: {totals['http_status_500']}")
+          print(f"status_502: {totals['http_status_502']}")
+          print(f"status_503: {totals['http_status_503']}")
+          print(f"status_504: {totals['http_status_504']}")
+          print(f"other_5xx: {totals['http_status_other_5xx']}")
           print(f"transport_errors: {totals['transport_errors']}")
           print(f"timeouts: {totals['timeout_errors']}")
           print(f"max_shard_p95_ms: {max(p95_values) if p95_values else None}")

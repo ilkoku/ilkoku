@@ -1,0 +1,311 @@
+name: Hostinger Preview Load Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Hostinger önizleme yük profili"
+        required: true
+        default: "preview-smoke"
+        type: choice
+        options:
+          - preview-smoke
+          - preview100
+          - preview500
+          - preview1000
+      confirmation:
+        description: "Çalıştırmak için RUN-HOSTINGER-PREVIEW-LOAD-TEST yazın"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-preview-load-test
+  cancel-in-progress: false
+
+env:
+  PREVIEW_BASE_URL: https://moccassin-narwhal-139065.hostingersite.com
+
+jobs:
+  prepare:
+    name: Validate preview target
+    runs-on: ubuntu-latest
+    outputs:
+      start_epoch: ${{ steps.sync.outputs.start_epoch }}
+    steps:
+      - name: Validate explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+
+          if [ "$CONFIRMATION" != "RUN-HOSTINGER-PREVIEW-LOAD-TEST" ]; then
+            echo "Explicit confirmation is required."
+            exit 1
+          fi
+
+          case "$PROFILE" in
+            preview-smoke|preview100|preview500|preview1000) ;;
+            *) echo "Unsupported profile: $PROFILE"; exit 1 ;;
+          esac
+
+      - name: Probe preview routes and proxy headers
+        env:
+          BASE_URL: ${{ env.PREVIEW_BASE_URL }}
+        run: |
+          set -euo pipefail
+
+          for path in / /giris /kayit; do
+            headers="$(mktemp)"
+            result="$(curl -sS -L --max-redirs 2 --connect-timeout 10 --max-time 20 \
+              -D "$headers" -o /dev/null -w '%{http_code}|%{url_effective}' \
+              "${BASE_URL}${path}")"
+            code="${result%%|*}"
+            effective="${result#*|}"
+            server="$(grep -i '^server:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+            cf_ray="$(grep -i '^cf-ray:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+            cf_cache="$(grep -i '^cf-cache-status:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+            hcdn="$(grep -i '^hcdn-request-id:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+
+            echo "path=$path status=$code effective=$effective server=${server:-none} cf_ray=${cf_ray:-none} cf_cache=${cf_cache:-none} hcdn_request_id=${hcdn:-none}"
+
+            if [ "$code" != "200" ]; then
+              echo "Preview preflight failed: $path returned HTTP $code."
+              exit 1
+            fi
+
+            case "$effective" in
+              "${BASE_URL}"*) ;;
+              *)
+                echo "Preview preflight failed: $path escaped the approved preview host to $effective."
+                exit 1
+                ;;
+            esac
+
+            if [ -n "$cf_ray" ] || printf '%s' "$server" | grep -qi 'cloudflare'; then
+              echo "Preview preflight failed: Cloudflare is still present on the preview route."
+              exit 1
+            fi
+          done
+
+      - name: Create synchronized start barrier
+        id: sync
+        run: |
+          set -euo pipefail
+          start_epoch=$(( $(date +%s) + 90 ))
+          echo "start_epoch=$start_epoch" >> "$GITHUB_OUTPUT"
+          echo "All shards will target start epoch: $start_epoch"
+
+  load:
+    name: "Preview shard ${{ matrix.shard }}"
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        shard: ${{ fromJSON(inputs.profile == 'preview1000' && '[1,2,3,4,5,6,7,8,9,10]' || inputs.profile == 'preview500' && '[1,2,3,4,5]' || '[1]') }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Record shard network identity
+        id: network
+        env:
+          SHARD_ID: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          egress_ip="$(curl -fsS --max-time 10 https://api.ipify.org || true)"
+          if [ -z "$egress_ip" ]; then
+            egress_ip="unavailable"
+          fi
+          printf '{"shard":%s,"egressIp":"%s"}\n' "$SHARD_ID" "$egress_ip" > shard-meta.json
+          echo "egress_ip=$egress_ip" >> "$GITHUB_OUTPUT"
+          echo "Shard $SHARD_ID egress IP: $egress_ip"
+
+      - name: Wait for synchronized start
+        env:
+          START_EPOCH: ${{ needs.prepare.outputs.start_epoch }}
+          SHARD_ID: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          now="$(date +%s)"
+          if [ "$now" -lt "$START_EPOCH" ]; then
+            wait_seconds=$(( START_EPOCH - now ))
+            echo "Shard $SHARD_ID waiting ${wait_seconds}s for synchronized start."
+            sleep "$wait_seconds"
+          fi
+          echo "Shard $SHARD_ID starting at $(date -u +%FT%TZ)."
+
+      - name: Prepare writable summary file
+        run: |
+          set -euo pipefail
+          : > load-summary.json
+          chmod 666 load-summary.json
+
+      - name: Run preview load profile
+        id: k6
+        continue-on-error: true
+        env:
+          BASE_URL: ${{ env.PREVIEW_BASE_URL }}
+          SHARD_ID: ${{ matrix.shard }}
+          K6_PROFILE: ${{ inputs.profile == 'preview-smoke' && 'smoke' || 'capacity100' }}
+        run: |
+          set -euo pipefail
+          echo "Shard $SHARD_ID k6 profile: $K6_PROFILE target=$BASE_URL"
+          docker run --rm \
+            -e BASE_URL="$BASE_URL" \
+            -e PROFILE="$K6_PROFILE" \
+            -e SHARD_ID="$SHARD_ID" \
+            -e FAILURE_DIAGNOSTICS=1 \
+            -v "$PWD:/work" \
+            -w /work \
+            grafana/k6:latest \
+            run tests/load/public-baseline.js
+
+      - name: Verify shard summary
+        if: always()
+        env:
+          SHARD_ID: ${{ matrix.shard }}
+          EGRESS_IP: ${{ steps.network.outputs.egress_ip }}
+        run: |
+          set -euo pipefail
+          if [ ! -s load-summary.json ]; then
+            echo "load-summary.json was not produced or is empty."
+            exit 1
+          fi
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(Path("load-summary.json").read_text())
+          metrics = data.get("metrics", {})
+
+          def count(name):
+              return metrics.get(name, {}).get("values", {}).get("count", 0) or 0
+
+          def rate(name):
+              return metrics.get(name, {}).get("values", {}).get("rate", 0) or 0
+
+          duration = metrics.get("http_req_duration", {}).get("values", {})
+          print(f"shard: {os.environ['SHARD_ID']}")
+          print(f"egressIp: {os.environ.get('EGRESS_IP', 'unknown')}")
+          print(f"http_reqs: {count('http_reqs')}")
+          print(f"status_200: {count('http_status_200')}")
+          print(f"status_403: {count('http_status_403')}")
+          print(f"status_429: {count('http_status_429')}")
+          print(f"status_5xx: {count('http_status_5xx')}")
+          for code in [500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 530]:
+              print(f"status_{code}: {count(f'http_status_{code}')}")
+          print(f"transport_errors: {count('transport_errors')}")
+          print(f"timeouts: {count('timeout_errors')}")
+          print(f"http_req_failed_rate: {rate('http_req_failed')}")
+          print(f"p95_ms: {duration.get('p(95)')}")
+          print(f"p99_ms: {duration.get('p(99)')}")
+          PY
+
+      - name: Upload shard result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hostinger-${{ inputs.profile }}-shard-${{ matrix.shard }}
+          path: |
+            load-summary.json
+            shard-meta.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Preserve k6 threshold result
+        if: always() && steps.k6.outcome == 'failure'
+        run: |
+          echo "Shard ${{ matrix.shard }} crossed one or more k6 thresholds."
+          exit 1
+
+  aggregate:
+    name: Aggregate Hostinger preview result
+    needs: load
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all shard artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: hostinger-${{ inputs.profile }}-shard-*
+          path: preview-results
+
+      - name: Aggregate metrics
+        env:
+          PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          profile = os.environ["PROFILE"]
+          expected = {
+              "preview-smoke": (1, 2),
+              "preview100": (1, 100),
+              "preview500": (5, 500),
+              "preview1000": (10, 1000),
+          }
+          expected_shards, expected_peak_vus = expected[profile]
+
+          root = Path("preview-results")
+          summaries = list(root.rglob("load-summary.json"))
+          metas = list(root.rglob("shard-meta.json"))
+          if not summaries:
+              raise SystemExit("No shard summaries found.")
+
+          names = [
+              "http_reqs", "iterations", "http_status_200", "http_status_403",
+              "http_status_429", "http_status_5xx", "http_status_500", "http_status_502",
+              "http_status_503", "http_status_504", "http_status_520", "http_status_521",
+              "http_status_522", "http_status_523", "http_status_524", "http_status_525",
+              "http_status_526", "http_status_527", "http_status_530", "transport_errors",
+              "timeout_errors",
+          ]
+          totals = {name: 0 for name in names}
+          p95s, p99s, failure_rates = [], [], []
+
+          for path in summaries:
+              metrics = json.loads(path.read_text()).get("metrics", {})
+              for name in names:
+                  totals[name] += metrics.get(name, {}).get("values", {}).get("count", 0) or 0
+              duration = metrics.get("http_req_duration", {}).get("values", {})
+              if duration.get("p(95)") is not None:
+                  p95s.append(duration["p(95)"])
+              if duration.get("p(99)") is not None:
+                  p99s.append(duration["p(99)"])
+              failed = metrics.get("http_req_failed", {}).get("values", {}).get("rate")
+              if failed is not None:
+                  failure_rates.append(failed)
+
+          ips = []
+          for path in metas:
+              ip = json.loads(path.read_text()).get("egressIp")
+              if ip and ip != "unavailable":
+                  ips.append(ip)
+
+          print("=== İlkOku Hostinger Preview Load Test ===")
+          print(f"profile: {profile}")
+          print(f"expected_peak_vus: {expected_peak_vus}")
+          print(f"summaries_found: {len(summaries)}/{expected_shards}")
+          print(f"distinct_egress_ips: {len(set(ips))}/{len(ips)}")
+          for name in names:
+              print(f"{name}: {totals[name]}")
+          print(f"max_shard_p95_ms: {max(p95s) if p95s else None}")
+          print(f"max_shard_p99_ms: {max(p99s) if p99s else None}")
+          print(f"max_shard_failure_rate: {max(failure_rates) if failure_rates else None}")
+
+          if len(summaries) != expected_shards:
+              raise SystemExit("Not all shard summaries were collected.")
+          PY

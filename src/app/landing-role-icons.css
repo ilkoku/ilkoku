@@ -104,3 +104,44 @@
     transition: none !important;
   }
 }
+
+/* Neden İlkOku? alt istatistik şeridi — rol görsellerini doğrudan kutuya uygula. */
+.landing-page .landing-why-v2 .landing-stats-v2 .landing-stat-v2 > .landing-stat-v2__icon {
+  position: relative !important;
+  overflow: hidden !important;
+  background-color: #f4f0ff !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 72% 72% !important;
+}
+
+.landing-page .landing-why-v2 .landing-stats-v2 .landing-stat-v2 > .landing-stat-v2__icon > svg {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.landing-page .landing-why-v2 .landing-stats-v2 .landing-stat-v2 > .landing-stat-v2__icon::after {
+  content: none !important;
+  display: none !important;
+}
+
+.landing-page .landing-why-v2 .landing-stats-v2 .landing-stat-v2:nth-child(1) > .landing-stat-v2__icon {
+  background-image: url("/icons/roles/writer-fixed.svg") !important;
+}
+
+.landing-page .landing-why-v2 .landing-stats-v2 .landing-stat-v2:nth-child(2) > .landing-stat-v2__icon,
+.landing-page .landing-why-v2 .landing-stats-v2 .landing-stat-v2:nth-child(5) > .landing-stat-v2__icon,
+.landing-page .landing-why-v2 .landing-stats-v2 .landing-stat-v2:nth-child(6) > .landing-stat-v2__icon {
+  background-image: url("/icons/roles/reader-fixed.svg") !important;
+}
+
+.landing-page .landing-why-v2 .landing-stats-v2 .landing-stat-v2:nth-child(3) > .landing-stat-v2__icon {
+  background-image: url("/icons/roles/editor.webp") !important;
+  background-size: 82% 82% !important;
+}
+
+.landing-page .landing-why-v2 .landing-stats-v2 .landing-stat-v2:nth-child(4) > .landing-stat-v2__icon {
+  background-image: url("/icons/roles/publisher.webp") !important;
+  background-size: 82% 82% !important;
+}

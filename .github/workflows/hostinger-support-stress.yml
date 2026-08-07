@@ -1,0 +1,44 @@
+name: Hostinger Support Stress Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Çalıştırmak için RUN-HOSTINGER-SUPPORT-STRESS yazın"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-support-stress
+  cancel-in-progress: false
+
+jobs:
+  stress:
+    name: k6 Hostinger support 1000 VU stress
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Validate explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRMATION" != "RUN-HOSTINGER-SUPPORT-STRESS" ]; then
+            echo "Explicit confirmation is required."
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run Hostinger support stress profile
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD:/work" \
+            -w /work \
+            grafana/k6:latest \
+            run tests/load/hostinger-support-1000.js

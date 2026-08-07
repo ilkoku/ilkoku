@@ -1,0 +1,111 @@
+name: Hostinger WAF Allowlist Diagnostic
+
+on:
+  workflow_dispatch:
+    inputs:
+      wait_minutes:
+        description: "Hostinger allowlist işlemi için bekleme süresi"
+        required: true
+        default: "20"
+        type: choice
+        options:
+          - "15"
+          - "20"
+          - "30"
+      confirmation:
+        description: "Çalıştırmak için RUN-HOSTINGER-WAF-DIAGNOSTIC yazın"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-waf-allowlist-diagnostic
+  cancel-in-progress: false
+
+jobs:
+  diagnostic:
+    name: WAF allowlist diagnostic 100 VU
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Validate explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WAIT_MINUTES: ${{ inputs.wait_minutes }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRMATION" != "RUN-HOSTINGER-WAF-DIAGNOSTIC" ]; then
+            echo "Explicit confirmation is required."
+            exit 1
+          fi
+          case "$WAIT_MINUTES" in
+            15|20|30) ;;
+            *) echo "Unsupported wait_minutes: $WAIT_MINUTES"; exit 1 ;;
+          esac
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Capture test runner IPv4 and schedule
+        env:
+          WAIT_MINUTES: ${{ inputs.wait_minutes }}
+        run: |
+          set -euo pipefail
+          TEST_IP="$(curl -4 -fsS --connect-timeout 10 --max-time 20 https://api.ipify.org)"
+          if ! printf '%s' "$TEST_IP" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+            echo "Could not resolve a valid public IPv4: $TEST_IP"
+            exit 1
+          fi
+          START_EPOCH=$(( $(date +%s) + WAIT_MINUTES * 60 ))
+          END_EPOCH=$(( START_EPOCH + 5 * 60 ))
+          START_TR="$(TZ=Europe/Istanbul date -d "@$START_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
+          END_TR="$(TZ=Europe/Istanbul date -d "@$END_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
+          echo "TEST_RUNNER_IPV4=$TEST_IP" >> "$GITHUB_ENV"
+          echo "HOSTINGER'A VERİLECEK BİLGİLER"
+          echo "Test sunucusu genel IPv4: $TEST_IP"
+          echo "Planlanan diagnostic başlangıcı: $START_TR"
+          echo "Planlanan diagnostic bitişi: $END_TR"
+          echo "Alan adı: ilkoku.com"
+
+      - name: Wait for Hostinger WAF allowlist
+        env:
+          WAIT_MINUTES: ${{ inputs.wait_minutes }}
+        run: |
+          set -euo pipefail
+          echo "Hostinger allowlist işlemi için $WAIT_MINUTES dakika bekleniyor."
+          sleep "$((WAIT_MINUTES * 60))"
+
+      - name: Verify runner IPv4 did not change
+        run: |
+          set -euo pipefail
+          CURRENT_IP="$(curl -4 -fsS --connect-timeout 10 --max-time 20 https://api.ipify.org)"
+          echo "Initial IP: $TEST_RUNNER_IPV4"
+          echo "Current IP: $CURRENT_IP"
+          if [ "$CURRENT_IP" != "$TEST_RUNNER_IPV4" ]; then
+            echo "Runner public IPv4 changed while waiting. Aborting."
+            exit 1
+          fi
+
+      - name: Run low-risk k6 allowlist diagnostic
+        id: k6
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD:/work" \
+            -w /work \
+            grafana/k6:latest \
+            run tests/load/waf-allowlist-diagnostic.js
+
+      - name: Preserve diagnostic threshold result
+        if: always()
+        env:
+          K6_OUTCOME: ${{ steps.k6.outcome }}
+        run: |
+          set -euo pipefail
+          if [ "$K6_OUTCOME" != "success" ]; then
+            echo "Diagnostic thresholds failed. Review status counters and DIAGNOSTIC_FAILURE lines above."
+            exit 1
+          fi

@@ -60,6 +60,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Prepare writable summary file
+        run: |
+          set -euo pipefail
+          : > load-summary.json
+          chmod 666 load-summary.json
+
       - name: Run k6 public load test
         env:
           BASE_URL: ${{ inputs.base_url }}
@@ -74,22 +80,35 @@ jobs:
             grafana/k6:latest \
             run tests/load/public-baseline.js
 
-      - name: Verify summary output
+      - name: Verify and print summary
         if: always()
         run: |
-          if [ -f load-summary.json ]; then
-            echo "load-summary.json generated."
-            python - <<'PY'
+          set -euo pipefail
+          if [ ! -s load-summary.json ]; then
+            echo "load-summary.json was not produced or is empty."
+            exit 1
+          fi
+
+          echo "load-summary.json generated."
+          python - <<'PY'
           import json
           from pathlib import Path
 
           path = Path("load-summary.json")
           data = json.loads(path.read_text())
           metrics = data.get("metrics", {})
-          for name in ["http_req_failed", "http_req_duration", "checks", "page_failure_rate", "page_duration"]:
+
+          print(f"profile: {data.get('profile')}")
+          print(f"baseUrl: {data.get('baseUrl')}")
+          for name in [
+              "http_reqs",
+              "iterations",
+              "http_req_failed",
+              "http_req_duration",
+              "checks",
+              "page_failure_rate",
+              "page_duration",
+          ]:
               metric = metrics.get(name, {})
               print(f"{name}: {metric.get('values', {})}")
           PY
-          else
-            echo "No load-summary.json was produced."
-          fi

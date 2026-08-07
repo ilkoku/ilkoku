@@ -40,6 +40,10 @@ Kontrollü public kapasite başlangıcı:
 k6 run -e BASE_URL=https://ilkoku.com -e PROFILE=baseline tests/load/public-baseline.js
 ```
 
+## GitHub Actions ile çalışma
+
+`Public Load Test` workflow'u yalnızca manuel `workflow_dispatch` ile çalışır. Production üzerinde yanlışlıkla yük oluşturmamak için `RUN-PUBLIC-LOAD-TEST` onay metni zorunludur. Workflow yalnızca `https://ilkoku.com` veya `https://www.ilkoku.com` hedefini kabul eder.
+
 ## PASS eşikleri
 
 Test aşağıdaki eşikleri kullanır:
@@ -53,7 +57,7 @@ Bu değerler ilk teknik eşiklerdir. Gerçek kapasite kararı yalnızca sonuçla
 
 ## Sonuç dosyası
 
-Her çalışma sonunda `load-summary.json` üretilir. GitHub Actions üzerinden çalıştırıldığında bu dosya artifact olarak saklanır.
+Her çalışma sonunda `load-summary.json` üretilir. GitHub Actions çalışmasında önemli metrikler ayrıca workflow loguna yazdırılır.
 
 Önemli metrikler:
 

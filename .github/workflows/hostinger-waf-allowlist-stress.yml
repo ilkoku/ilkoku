@@ -1,0 +1,151 @@
+name: Hostinger WAF Allowlist Stress Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      wait_minutes:
+        description: "Hostinger allowlist işlemi için bekleme süresi"
+        required: true
+        default: "20"
+        type: choice
+        options:
+          - "15"
+          - "20"
+          - "30"
+      confirmation:
+        description: "Çalıştırmak için RUN-HOSTINGER-WAF-ALLOWLIST-TEST yazın"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-waf-allowlist-stress
+  cancel-in-progress: false
+
+jobs:
+  stress:
+    name: WAF allowlist 1000 VU stress
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+
+    steps:
+      - name: Validate explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WAIT_MINUTES: ${{ inputs.wait_minutes }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRMATION" != "RUN-HOSTINGER-WAF-ALLOWLIST-TEST" ]; then
+            echo "Explicit confirmation is required."
+            exit 1
+          fi
+          case "$WAIT_MINUTES" in
+            15|20|30) ;;
+            *) echo "Unsupported wait_minutes: $WAIT_MINUTES"; exit 1 ;;
+          esac
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Capture test runner IPv4 and schedule
+        env:
+          WAIT_MINUTES: ${{ inputs.wait_minutes }}
+        run: |
+          set -euo pipefail
+          TEST_IP="$(curl -4 -fsS --connect-timeout 10 --max-time 20 https://api.ipify.org)"
+          if ! printf '%s' "$TEST_IP" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+            echo "Could not resolve a valid public IPv4: $TEST_IP"
+            exit 1
+          fi
+
+          START_EPOCH=$(( $(date +%s) + WAIT_MINUTES * 60 ))
+          END_EPOCH=$(( START_EPOCH + 12 * 60 ))
+          START_TR="$(TZ=Europe/Istanbul date -d "@$START_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
+          END_TR="$(TZ=Europe/Istanbul date -d "@$END_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
+
+          echo "TEST_RUNNER_IPV4=$TEST_IP" >> "$GITHUB_ENV"
+          echo "PLANNED_START_EPOCH=$START_EPOCH" >> "$GITHUB_ENV"
+          echo "PLANNED_END_EPOCH=$END_EPOCH" >> "$GITHUB_ENV"
+
+          cat <<EOF
+          ============================================================
+          HOSTINGER'A VERİLECEK BİLGİLER
+          Test sunucusu genel IPv4: $TEST_IP
+          Planlanan test başlangıcı: $START_TR
+          Planlanan test bitişi: $END_TR
+          Alan adı: ilkoku.com
+          ============================================================
+          EOF
+
+          printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s"}\n' \
+            "$TEST_IP" "$START_TR" "$END_TR" > hostinger-waf-test-meta.json
+
+      - name: Wait for Hostinger WAF allowlist
+        env:
+          WAIT_MINUTES: ${{ inputs.wait_minutes }}
+        run: |
+          set -euo pipefail
+          echo "Hostinger allowlist işlemi için $WAIT_MINUTES dakika bekleniyor."
+          sleep "$((WAIT_MINUTES * 60))"
+
+      - name: Verify runner IPv4 did not change
+        run: |
+          set -euo pipefail
+          CURRENT_IP="$(curl -4 -fsS --connect-timeout 10 --max-time 20 https://api.ipify.org)"
+          echo "Initial IP: $TEST_RUNNER_IPV4"
+          echo "Current IP: $CURRENT_IP"
+          if [ "$CURRENT_IP" != "$TEST_RUNNER_IPV4" ]; then
+            echo "Runner public IPv4 changed while waiting. Aborting before load test."
+            exit 1
+          fi
+
+      - name: Verify WAF allowlist with k6 user agent
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          code="$(curl -sS --connect-timeout 10 --max-time 30 \
+            -A 'Grafana k6' \
+            -D "$headers" -o /dev/null -w '%{http_code}' \
+            https://ilkoku.com/)"
+          server="$(grep -i '^server:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+          cf_ray="$(grep -i '^cf-ray:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+          echo "Preflight status=$code server=${server:-none} cf_ray=${cf_ray:-none} source_ip=$TEST_RUNNER_IPV4"
+          if [ "$code" != "200" ]; then
+            echo "WAF allowlist is not effective yet. Expected HTTP 200, received HTTP $code. Stress test will not start."
+            exit 1
+          fi
+
+      - name: Run Hostinger support 1000 VU stress profile
+        id: k6
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD:/work" \
+            -w /work \
+            grafana/k6:latest \
+            run --summary-export=/work/hostinger-waf-summary.json tests/load/hostinger-support-1000.js
+
+      - name: Upload WAF allowlist test evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: hostinger-waf-allowlist-stress-${{ github.run_id }}
+          path: |
+            hostinger-waf-test-meta.json
+            hostinger-waf-summary.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Preserve k6 threshold result
+        if: always()
+        env:
+          K6_OUTCOME: ${{ steps.k6.outcome }}
+        run: |
+          set -euo pipefail
+          if [ "$K6_OUTCOME" != "success" ]; then
+            echo "k6 thresholds failed. See logs and uploaded summary artifact."
+            exit 1
+          fi

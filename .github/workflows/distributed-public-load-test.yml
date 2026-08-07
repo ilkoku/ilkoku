@@ -1,0 +1,288 @@
+name: Distributed Public Load Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Dağıtık yük profili"
+        required: true
+        default: "distributed500"
+        type: choice
+        options:
+          - distributed500
+          - distributed1000
+      base_url:
+        description: "Hedef site"
+        required: true
+        default: "https://ilkoku.com"
+        type: string
+      confirmation:
+        description: "Çalıştırmak için RUN-DISTRIBUTED-LOAD-TEST yazın"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: distributed-public-load-test-production
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate and synchronize
+    runs-on: ubuntu-latest
+    outputs:
+      start_epoch: ${{ steps.sync.outputs.start_epoch }}
+    steps:
+      - name: Validate explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          BASE_URL: ${{ inputs.base_url }}
+          PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+
+          if [ "$CONFIRMATION" != "RUN-DISTRIBUTED-LOAD-TEST" ]; then
+            echo "Explicit confirmation is required."
+            exit 1
+          fi
+
+          case "$PROFILE" in
+            distributed500|distributed1000) ;;
+            *) echo "Unsupported profile: $PROFILE"; exit 1 ;;
+          esac
+
+          case "$BASE_URL" in
+            https://ilkoku.com|https://www.ilkoku.com) ;;
+            *) echo "This workflow is restricted to the approved İlkOku production host."; exit 1 ;;
+          esac
+
+      - name: Create synchronized start barrier
+        id: sync
+        run: |
+          set -euo pipefail
+          start_epoch=$(( $(date +%s) + 120 ))
+          echo "start_epoch=$start_epoch" >> "$GITHUB_OUTPUT"
+          echo "All shards will target start epoch: $start_epoch"
+
+  distributed:
+    name: "Shard ${{ matrix.shard }}"
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        shard: ${{ fromJSON(inputs.profile == 'distributed1000' && '[1,2,3,4,5,6,7,8,9,10]' || '[1,2,3,4,5]') }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Record shard network identity
+        id: network
+        env:
+          SHARD_ID: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          egress_ip="$(curl -fsS --max-time 10 https://api.ipify.org || true)"
+          if [ -z "$egress_ip" ]; then
+            egress_ip="unavailable"
+          fi
+          printf '{"shard":%s,"egressIp":"%s"}\n' "$SHARD_ID" "$egress_ip" > shard-meta.json
+          echo "egress_ip=$egress_ip" >> "$GITHUB_OUTPUT"
+          echo "Shard $SHARD_ID egress IP: $egress_ip"
+
+      - name: Wait for synchronized start
+        env:
+          START_EPOCH: ${{ needs.prepare.outputs.start_epoch }}
+          SHARD_ID: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          now="$(date +%s)"
+          if [ "$now" -lt "$START_EPOCH" ]; then
+            wait_seconds=$(( START_EPOCH - now ))
+            echo "Shard $SHARD_ID waiting ${wait_seconds}s for synchronized start."
+            sleep "$wait_seconds"
+          fi
+          echo "Shard $SHARD_ID starting at $(date -u +%FT%TZ)."
+
+      - name: Prepare writable summary file
+        run: |
+          set -euo pipefail
+          : > load-summary.json
+          chmod 666 load-summary.json
+
+      - name: Run 100 VU shard
+        id: k6
+        continue-on-error: true
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          SHARD_ID: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -e BASE_URL="$BASE_URL" \
+            -e PROFILE="capacity100" \
+            -e SHARD_ID="$SHARD_ID" \
+            -v "$PWD:/work" \
+            -w /work \
+            grafana/k6:latest \
+            run tests/load/public-baseline.js
+
+      - name: Verify shard summary
+        if: always()
+        env:
+          SHARD_ID: ${{ matrix.shard }}
+          EGRESS_IP: ${{ steps.network.outputs.egress_ip }}
+        run: |
+          set -euo pipefail
+          if [ ! -s load-summary.json ]; then
+            echo "load-summary.json was not produced or is empty."
+            exit 1
+          fi
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(Path("load-summary.json").read_text())
+          metrics = data.get("metrics", {})
+
+          def count(name):
+              return metrics.get(name, {}).get("values", {}).get("count", 0)
+
+          def rate(name):
+              return metrics.get(name, {}).get("values", {}).get("rate", 0)
+
+          duration = metrics.get("http_req_duration", {}).get("values", {})
+
+          print(f"shard: {os.environ['SHARD_ID']}")
+          print(f"egressIp: {os.environ.get('EGRESS_IP', 'unknown')}")
+          print(f"http_reqs: {count('http_reqs')}")
+          print(f"status_200: {count('http_status_200')}")
+          print(f"status_403: {count('http_status_403')}")
+          print(f"status_429: {count('http_status_429')}")
+          print(f"status_5xx: {count('http_status_5xx')}")
+          print(f"timeouts: {count('timeout_errors')}")
+          print(f"http_req_failed_rate: {rate('http_req_failed')}")
+          print(f"p95_ms: {duration.get('p(95)')}")
+          print(f"p99_ms: {duration.get('p(99)')}")
+          PY
+
+      - name: Upload shard result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: distributed-${{ inputs.profile }}-shard-${{ matrix.shard }}
+          path: |
+            load-summary.json
+            shard-meta.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Preserve k6 threshold result
+        if: always() && steps.k6.outcome == 'failure'
+        run: |
+          echo "Shard ${{ matrix.shard }} crossed one or more k6 thresholds."
+          exit 1
+
+  aggregate:
+    name: Aggregate distributed result
+    needs: distributed
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all shard artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: distributed-${{ inputs.profile }}-shard-*
+          path: distributed-results
+
+      - name: Aggregate metrics
+        env:
+          PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path("distributed-results")
+          summaries = list(root.rglob("load-summary.json"))
+          metas = list(root.rglob("shard-meta.json"))
+
+          if not summaries:
+              raise SystemExit("No shard summaries found.")
+
+          metric_names = [
+              "http_reqs",
+              "iterations",
+              "http_status_200",
+              "http_status_403",
+              "http_status_429",
+              "http_status_other_4xx",
+              "http_status_5xx",
+              "transport_errors",
+              "timeout_errors",
+          ]
+
+          totals = {name: 0 for name in metric_names}
+          p95_values = []
+          p99_values = []
+          avg_values = []
+          failure_rates = []
+
+          for path in summaries:
+              data = json.loads(path.read_text())
+              metrics = data.get("metrics", {})
+              for name in metric_names:
+                  totals[name] += metrics.get(name, {}).get("values", {}).get("count", 0) or 0
+
+              duration = metrics.get("http_req_duration", {}).get("values", {})
+              if duration.get("p(95)") is not None:
+                  p95_values.append(duration["p(95)"])
+              if duration.get("p(99)") is not None:
+                  p99_values.append(duration["p(99)"])
+              if duration.get("avg") is not None:
+                  avg_values.append(duration["avg"])
+
+              failed = metrics.get("http_req_failed", {}).get("values", {}).get("rate")
+              if failed is not None:
+                  failure_rates.append(failed)
+
+          ips = []
+          for path in metas:
+              meta = json.loads(path.read_text())
+              ip = meta.get("egressIp")
+              if ip and ip != "unavailable":
+                  ips.append(ip)
+
+          expected_shards = 10 if os.environ["PROFILE"] == "distributed1000" else 5
+          expected_peak_vus = 1000 if os.environ["PROFILE"] == "distributed1000" else 500
+
+          print("=== İlkOku Distributed Public Load Test ===")
+          print(f"profile: {os.environ['PROFILE']}")
+          print(f"expected_peak_vus: {expected_peak_vus}")
+          print(f"summaries_found: {len(summaries)}/{expected_shards}")
+          print(f"distinct_egress_ips: {len(set(ips))}/{len(ips)}")
+          print(f"http_reqs: {totals['http_reqs']}")
+          print(f"iterations: {totals['iterations']}")
+          print(f"status_200: {totals['http_status_200']}")
+          print(f"status_403: {totals['http_status_403']}")
+          print(f"status_429: {totals['http_status_429']}")
+          print(f"other_4xx: {totals['http_status_other_4xx']}")
+          print(f"status_5xx: {totals['http_status_5xx']}")
+          print(f"transport_errors: {totals['transport_errors']}")
+          print(f"timeouts: {totals['timeout_errors']}")
+          print(f"max_shard_p95_ms: {max(p95_values) if p95_values else None}")
+          print(f"max_shard_p99_ms: {max(p99_values) if p99_values else None}")
+          print(f"max_shard_failure_rate: {max(failure_rates) if failure_rates else None}")
+
+          if len(summaries) != expected_shards:
+              raise SystemExit("Not all shard summaries were collected.")
+          PY

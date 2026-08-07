@@ -4,25 +4,23 @@ import { Counter, Rate, Trend } from "k6/metrics";
 
 const BASE_URL = (__ENV.BASE_URL || "https://ilkoku.com").replace(/\/$/, "");
 const PROFILE = (__ENV.PROFILE || "smoke").toLowerCase();
+const SHARD_ID = __ENV.SHARD_ID || "single";
 
 const pageFailureRate = new Rate("page_failure_rate");
 const pageDuration = new Trend("page_duration", true);
 
-const status200 = new Counter("http_status_200");
-const status3xx = new Counter("http_status_3xx");
-const status403 = new Counter("http_status_403");
-const status429 = new Counter("http_status_429");
-const statusOther4xx = new Counter("http_status_other_4xx");
-const status5xx = new Counter("http_status_5xx");
-const statusOther = new Counter("http_status_other");
+const httpStatus200 = new Counter("http_status_200");
+const httpStatus3xx = new Counter("http_status_3xx");
+const httpStatus403 = new Counter("http_status_403");
+const httpStatus429 = new Counter("http_status_429");
+const httpStatusOther4xx = new Counter("http_status_other_4xx");
+const httpStatus5xx = new Counter("http_status_5xx");
+const httpStatusOther = new Counter("http_status_other");
 const transportErrors = new Counter("transport_errors");
 const timeoutErrors = new Counter("timeout_errors");
-
-const endpointFailures = {
-  home: new Counter("endpoint_failures_home"),
-  login: new Counter("endpoint_failures_login"),
-  register: new Counter("endpoint_failures_register"),
-};
+const endpointFailuresHome = new Counter("endpoint_failures_home");
+const endpointFailuresLogin = new Counter("endpoint_failures_login");
+const endpointFailuresRegister = new Counter("endpoint_failures_register");
 
 const profiles = {
   smoke: [
@@ -95,7 +93,7 @@ export const options = {
     page_duration: ["p(95)<1500", "p(99)<3000"],
   },
   discardResponseBodies: true,
-  userAgent: "IlkOku-k6-capacity-test/1.0",
+  userAgent: `IlkOku-k6-capacity-test/1.0 shard/${SHARD_ID}`,
 };
 
 const pages = [
@@ -104,59 +102,27 @@ const pages = [
   { name: "register", path: "/kayit" },
 ];
 
-let failureFingerprintLogged = false;
+function classifyResponse(response, page) {
+  const status = response.status;
 
-function getHeader(response, headerName) {
-  const target = headerName.toLowerCase();
-  for (const [name, value] of Object.entries(response.headers || {})) {
-    if (name.toLowerCase() === target) {
-      return String(value);
+  if (status === 200) httpStatus200.add(1, { endpoint: page.name });
+  else if (status >= 300 && status < 400) httpStatus3xx.add(1, { endpoint: page.name });
+  else if (status === 403) httpStatus403.add(1, { endpoint: page.name });
+  else if (status === 429) httpStatus429.add(1, { endpoint: page.name });
+  else if (status >= 400 && status < 500) httpStatusOther4xx.add(1, { endpoint: page.name });
+  else if (status >= 500 && status < 600) httpStatus5xx.add(1, { endpoint: page.name });
+  else if (status === 0) {
+    transportErrors.add(1, { endpoint: page.name });
+    if ((response.error || "").toLowerCase().includes("timeout")) {
+      timeoutErrors.add(1, { endpoint: page.name });
     }
-  }
-  return "";
+  } else httpStatusOther.add(1, { endpoint: page.name });
 }
 
-function recordResponse(response, endpoint) {
-  const status = Number(response.status || 0);
-  const errorText = String(response.error || "");
-
-  if (status === 200) {
-    status200.add(1);
-  } else if (status >= 300 && status < 400) {
-    status3xx.add(1);
-  } else if (status === 403) {
-    status403.add(1);
-  } else if (status === 429) {
-    status429.add(1);
-  } else if (status >= 400 && status < 500) {
-    statusOther4xx.add(1);
-  } else if (status >= 500 && status < 600) {
-    status5xx.add(1);
-  } else if (status === 0) {
-    transportErrors.add(1);
-  } else {
-    statusOther.add(1);
-  }
-
-  if (errorText.toLowerCase().includes("timeout")) {
-    timeoutErrors.add(1);
-  }
-
-  if (status !== 200 || errorText) {
-    endpointFailures[endpoint].add(1);
-
-    // En fazla VU başına bir hata parmak izi loglanır. Böylece yüksek yükte log fırtınası oluşmaz.
-    if (!failureFingerprintLogged) {
-      const server = getHeader(response, "server");
-      const retryAfter = getHeader(response, "retry-after");
-      const cfRay = getHeader(response, "cf-ray");
-      const hcdnRequestId = getHeader(response, "x-hcdn-request-id");
-      console.warn(
-        `DIAGNOSTIC_FAIL profile=${PROFILE} vu=${__VU} endpoint=${endpoint} status=${status} error=${JSON.stringify(errorText)} server=${JSON.stringify(server)} retry_after=${JSON.stringify(retryAfter)} cf_ray=${JSON.stringify(cfRay)} hcdn_request_id=${JSON.stringify(hcdnRequestId)}`,
-      );
-      failureFingerprintLogged = true;
-    }
-  }
+function recordEndpointFailure(page) {
+  if (page.name === "home") endpointFailuresHome.add(1);
+  if (page.name === "login") endpointFailuresLogin.add(1);
+  if (page.name === "register") endpointFailuresRegister.add(1);
 }
 
 function requestPage(page) {
@@ -165,11 +131,12 @@ function requestPage(page) {
     tags: {
       endpoint: page.name,
       test_type: `public_${PROFILE}`,
+      shard: SHARD_ID,
     },
     timeout: "10s",
   });
 
-  recordResponse(response, page.name);
+  classifyResponse(response, page);
 
   const ok = check(response, {
     [`${page.name}: status 200`]: (res) => res.status === 200,
@@ -177,8 +144,12 @@ function requestPage(page) {
       (res.headers["Content-Type"] || "").includes("text/html"),
   });
 
-  pageFailureRate.add(!ok, { endpoint: page.name });
-  pageDuration.add(response.timings.duration, { endpoint: page.name });
+  if (!ok) {
+    recordEndpointFailure(page);
+  }
+
+  pageFailureRate.add(!ok, { endpoint: page.name, shard: SHARD_ID });
+  pageDuration.add(response.timings.duration, { endpoint: page.name, shard: SHARD_ID });
 }
 
 export default function () {
@@ -187,7 +158,6 @@ export default function () {
     sleep(0.35 + Math.random() * 0.65);
   }
 
-  // Gerçek kullanıcı düşünme süresini taklit eder; gereksiz istek fırtınasını önler.
   sleep(1 + Math.random() * 2);
 }
 
@@ -196,11 +166,12 @@ export function handleSummary(data) {
   const generatedAt = new Date().toISOString();
 
   return {
-    stdout: `\nİlkOku public load test tamamlandı. profile=${profile} target=${BASE_URL}\n`,
+    stdout: `\nİlkOku public load test tamamlandı. profile=${profile} shard=${SHARD_ID} target=${BASE_URL}\n`,
     "load-summary.json": JSON.stringify(
       {
         generatedAt,
         profile,
+        shardId: SHARD_ID,
         baseUrl: BASE_URL,
         metrics: data.metrics,
         rootGroup: data.root_group,

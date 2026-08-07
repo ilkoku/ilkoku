@@ -23,10 +23,21 @@ const profiles = {
     { duration: "3m", target: 50 },
     { duration: "30s", target: 0 },
   ],
+  capacity100: [
+    { duration: "45s", target: 50 },
+    { duration: "1m", target: 50 },
+    { duration: "30s", target: 75 },
+    { duration: "2m", target: 75 },
+    { duration: "30s", target: 100 },
+    { duration: "3m", target: 100 },
+    { duration: "30s", target: 0 },
+  ],
 };
 
 if (!profiles[PROFILE]) {
-  throw new Error(`Unknown PROFILE=${PROFILE}. Use smoke or baseline.`);
+  throw new Error(
+    `Unknown PROFILE=${PROFILE}. Use smoke, baseline or capacity100.`,
+  );
 }
 
 export const options = {
@@ -60,7 +71,7 @@ function requestPage(page) {
     redirects: 2,
     tags: {
       endpoint: page.name,
-      test_type: "public_baseline",
+      test_type: `public_${PROFILE}`,
     },
     timeout: "10s",
   });

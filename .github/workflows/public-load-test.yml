@@ -13,6 +13,7 @@ on:
           - baseline
           - capacity100
           - capacity200
+          - diagnostic150
       base_url:
         description: "Hedef site"
         required: true
@@ -50,7 +51,7 @@ jobs:
           fi
 
           case "$PROFILE" in
-            smoke|baseline|capacity100|capacity200) ;;
+            smoke|baseline|capacity100|capacity200|diagnostic150) ;;
             *) echo "Unsupported profile: $PROFILE"; exit 1 ;;
           esac
 
@@ -110,6 +111,18 @@ jobs:
               "checks",
               "page_failure_rate",
               "page_duration",
+              "http_status_200",
+              "http_status_3xx",
+              "http_status_403",
+              "http_status_429",
+              "http_status_other_4xx",
+              "http_status_5xx",
+              "http_status_other",
+              "transport_errors",
+              "timeout_errors",
+              "endpoint_failures_home",
+              "endpoint_failures_login",
+              "endpoint_failures_register",
           ]:
               metric = metrics.get(name, {})
               print(f"{name}: {metric.get('values', {})}")

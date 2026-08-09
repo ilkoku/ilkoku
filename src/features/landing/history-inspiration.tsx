@@ -1,40 +1,66 @@
 function EnheduannaArtifact() {
+  const glyphs = [
+    [55, 48, 10, 18], [74, 41, 8, 22], [90, 53, 9, 17], [225, 47, 9, 19], [242, 58, 8, 18],
+    [50, 83, 8, 18], [68, 92, 10, 17], [246, 91, 9, 17], [56, 126, 9, 18], [77, 140, 10, 16],
+    [232, 132, 8, 18], [247, 149, 10, 16], [96, 34, 7, 17], [211, 36, 7, 17],
+  ];
+
   return (
     <svg viewBox="0 0 320 235" className="landing-history-art" aria-hidden="true" focusable="false">
       <defs>
-        <radialGradient id="enheduanna-bronze" cx="40%" cy="34%" r="72%">
-          <stop offset="0" stopColor="#d7b26f" />
-          <stop offset="0.58" stopColor="#a66c31" />
-          <stop offset="1" stopColor="#6a3b1d" />
+        <radialGradient id="enheduanna-relief" cx="38%" cy="30%" r="76%">
+          <stop offset="0" stopColor="#d7aa63" />
+          <stop offset="0.45" stopColor="#a9682f" />
+          <stop offset="1" stopColor="#5d321b" />
         </radialGradient>
+        <filter id="enheduanna-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="7" stdDeviation="7" floodColor="#4c2e1b" floodOpacity=".35" />
+        </filter>
       </defs>
-      <circle cx="160" cy="112" r="82" fill="url(#enheduanna-bronze)" stroke="#4f2b19" strokeWidth="6" />
-      <circle cx="160" cy="112" r="68" fill="none" stroke="#5f351d" strokeWidth="2" opacity=".7" />
-      <g fill="#4f2d1c" opacity=".9">
-        <rect x="91" y="54" width="9" height="18" rx="1" /><rect x="106" y="47" width="7" height="20" rx="1" /><rect x="120" y="58" width="8" height="16" rx="1" />
-        <rect x="203" y="52" width="8" height="18" rx="1" /><rect x="218" y="61" width="7" height="16" rx="1" /><rect x="193" y="72" width="9" height="15" rx="1" />
-        <rect x="83" y="91" width="9" height="18" rx="1" /><rect x="97" y="82" width="8" height="17" rx="1" /><rect x="223" y="92" width="9" height="17" rx="1" />
-        <rect x="88" y="129" width="8" height="16" rx="1" /><rect x="103" y="141" width="10" height="15" rx="1" /><rect x="208" y="137" width="8" height="17" rx="1" />
-      </g>
-      <g fill="#3f2418">
-        <circle cx="160" cy="78" r="14" />
-        <path d="M145 96h30l11 66h-52l11-66Zm-2 16-27 34 10 7 24-26m27-17 27 31-9 8-25-25" />
-        <path d="M139 73h42l-9-17h-24l-9 17Z" />
+      <g filter="url(#enheduanna-shadow)">
+        <circle cx="160" cy="112" r="87" fill="url(#enheduanna-relief)" stroke="#4e2b19" strokeWidth="7" />
+        <circle cx="160" cy="112" r="72" fill="none" stroke="#6f4427" strokeWidth="2.5" opacity=".9" />
+        <circle cx="160" cy="112" r="61" fill="#9a5e2b" opacity=".28" />
+        <g fill="#422519" opacity=".92">
+          {glyphs.map(([x, y, w, h], i) => <rect key={i} x={x} y={y} width={w} height={h} rx="1" />)}
+        </g>
+        <g fill="#3f2418">
+          <path d="M143 69h34l-6-13h-22l-6 13Z" />
+          <circle cx="160" cy="79" r="14" />
+          <path d="M145 98h30l9 62h-48l9-62Z" />
+          <path d="m146 109-30 35 9 8 25-28m24-15 31 29-8 9-27-24" />
+          <path d="M136 160h48l-7 13h-34l-7-13Z" />
+        </g>
+        <path d="M129 176c22 8 42 8 63 0" fill="none" stroke="#d8ae6a" strokeWidth="2" opacity=".34" />
       </g>
     </svg>
   );
 }
 
 function PapyrusArtifact() {
+  const rows = [66, 84, 103, 122, 141, 160, 179, 198];
   return (
     <svg viewBox="0 0 300 300" className="landing-history-art" aria-hidden="true" focusable="false">
-      <path d="M34 25 254 40l-11 222-220-13 13-57-9-43 11-55-4-69Z" fill="#c49348" />
-      <path d="M43 35 245 48l-9 205-203-12 11-51-8-39 10-52-3-64Z" fill="#d7ae68" opacity=".95" />
-      <g stroke="#64431e" strokeWidth="2.7" opacity=".88" strokeLinecap="round">
-        <path d="M61 72h92m14 3h48M57 91h74m13 2h78M54 111h55m18 2h84M60 130h83m17 3h56M53 151h69m16 2h76M60 171h45m14 2h99M57 191h82m19 2h49M53 212h63m16 2h78" />
+      <defs>
+        <linearGradient id="papyrus-sheet" x1="0" x2="1">
+          <stop offset="0" stopColor="#b97831" />
+          <stop offset=".14" stopColor="#d6a252" />
+          <stop offset=".54" stopColor="#e5bd73" />
+          <stop offset="1" stopColor="#bd7e38" />
+        </linearGradient>
+      </defs>
+      <path d="M37 25 257 41l-9 220-23-6-19 11-31-5-26 8-28-11-31 6-25-12-27 3 9-46-8-31 10-48-6-38 11-67Z" fill="url(#papyrus-sheet)" stroke="#875525" strokeWidth="3" />
+      <path d="M58 45c40 8 79 5 116 8 29 2 46 7 62 10M52 230c51 8 114 7 178 11" stroke="#8c5a2b" strokeWidth="1.5" opacity=".45" fill="none" />
+      <g stroke="#6a411f" strokeWidth="2.4" opacity=".88" strokeLinecap="round">
+        {rows.map((y, i) => (
+          <g key={y}>
+            <path d={`M61 ${y}h20m8 0h12m8 0h28m10 0h11m8 0h22m8 0h22`} />
+            <path d={`M68 ${y + 7}h13m7 0h24m8 0h18m9 0h30m9 0h21`} opacity={i % 2 ? .78 : .9} />
+          </g>
+        ))}
       </g>
-      <g stroke="#8a642f" strokeWidth="1.2" opacity=".35">
-        <path d="M73 48 58 239M111 50 97 241M151 53l-12 191M192 56l-10 190M225 60l-9 186" />
+      <g stroke="#7f552a" strokeWidth="1.1" opacity=".26">
+        <path d="M82 44 65 244M119 48 105 252M157 50l-11 205M196 53l-8 202M225 56l-6 195" />
       </g>
     </svg>
   );
@@ -43,21 +69,29 @@ function PapyrusArtifact() {
 function CambridgeArtifact() {
   return (
     <svg viewBox="0 0 430 430" className="landing-history-art" aria-hidden="true" focusable="false">
-      <rect x="45" y="30" width="330" height="340" rx="8" fill="#ecd9aa" stroke="#b88d54" strokeWidth="3" />
-      <text x="210" y="78" textAnchor="middle" fill="#55412d" fontFamily="Georgia, serif" fontSize="13" letterSpacing="2.4">{"TO THE KING'S MOST"}</text>
-      <text x="210" y="96" textAnchor="middle" fill="#55412d" fontFamily="Georgia, serif" fontSize="13" letterSpacing="2.4">EXCELLENT MAJESTIE.</text>
-      <rect x="88" y="122" width="71" height="86" fill="#6b5639" opacity=".92" />
-      <text x="123" y="180" textAnchor="middle" fill="#e8d7af" fontFamily="Georgia, serif" fontSize="53">T</text>
-      <text x="178" y="135" fill="#4c3b2c" fontFamily="Georgia, serif" fontSize="14" fontWeight="700">The Affignes of</text>
-      <text x="178" y="155" fill="#4c3b2c" fontFamily="Georgia, serif" fontSize="12">John Skelton, Knight;</text>
-      <g stroke="#6c573d" strokeWidth="2.6" opacity=".76" strokeLinecap="round">
-        <path d="M178 177h137M178 191h122M90 229h225M90 244h218M90 259h224M90 274h197M90 289h216" />
+      <defs>
+        <linearGradient id="cambridge-paper" x1="0" x2="1">
+          <stop offset="0" stopColor="#e4c98f" />
+          <stop offset=".5" stopColor="#f0dfb9" />
+          <stop offset="1" stopColor="#d8b779" />
+        </linearGradient>
+      </defs>
+      <rect x="43" y="28" width="334" height="342" rx="7" fill="url(#cambridge-paper)" stroke="#a97d44" strokeWidth="3" />
+      <rect x="53" y="38" width="314" height="322" rx="4" fill="none" stroke="#b88d54" strokeWidth="1.5" opacity=".7" />
+      <text x="210" y="76" textAnchor="middle" fill="#59452f" fontFamily="Georgia, serif" fontSize="13" letterSpacing="2.3">{"TO THE KING'S MOST"}</text>
+      <text x="210" y="95" textAnchor="middle" fill="#59452f" fontFamily="Georgia, serif" fontSize="13" letterSpacing="2.3">EXCELLENT MAJESTIE.</text>
+      <rect x="86" y="121" width="73" height="88" fill="#6f593a" />
+      <text x="123" y="180" textAnchor="middle" fill="#eadbb8" fontFamily="Georgia, serif" fontSize="54">T</text>
+      <text x="177" y="137" fill="#463629" fontFamily="Georgia, serif" fontSize="14" fontWeight="700">The Affignes of</text>
+      <text x="177" y="156" fill="#463629" fontFamily="Georgia, serif" fontSize="12">John Skelton, Knight;</text>
+      <g stroke="#66513a" strokeWidth="2.4" opacity=".78" strokeLinecap="round">
+        <path d="M177 177h138M177 191h116M89 228h226M89 243h218M89 258h226M89 273h198M89 288h218" />
       </g>
-      <text x="210" y="328" textAnchor="middle" fill="#59432d" fontFamily="Georgia, serif" fontSize="18" letterSpacing="5">1534</text>
-      <circle cx="316" cy="338" r="44" fill="#7d351e" stroke="#512417" strokeWidth="5" />
-      <circle cx="316" cy="338" r="28" fill="none" stroke="#b56d45" strokeWidth="2" opacity=".72" />
-      <path d="M306 322h20v31h-20zM296 332h40M301 346h30" stroke="#d18c64" strokeWidth="2.2" fill="none" opacity=".65" />
-      <path d="m341 356 39 21m-58-2 22 31" stroke="#6f3e24" strokeWidth="7" strokeLinecap="round" />
+      <text x="210" y="327" textAnchor="middle" fill="#59432d" fontFamily="Georgia, serif" fontSize="18" letterSpacing="5">1534</text>
+      <circle cx="317" cy="337" r="44" fill="#7a321d" stroke="#4d2317" strokeWidth="5" />
+      <circle cx="317" cy="337" r="28" fill="none" stroke="#bd7249" strokeWidth="2" opacity=".75" />
+      <path d="M307 321h20v31h-20zM297 331h40M302 345h30" stroke="#d08c63" strokeWidth="2.1" fill="none" opacity=".68" />
+      <path d="m342 355 39 22m-58-2 22 31" stroke="#704026" strokeWidth="7" strokeLinecap="round" />
     </svg>
   );
 }
@@ -65,40 +99,60 @@ function CambridgeArtifact() {
 function FilmArtifact() {
   return (
     <svg viewBox="0 0 500 230" className="landing-history-art" aria-hidden="true" focusable="false">
-      <rect x="8" y="8" width="484" height="214" rx="8" fill="#181719" />
+      <defs>
+        <linearGradient id="film-sky" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#e8e3d8" />
+          <stop offset="1" stopColor="#a9a49a" />
+        </linearGradient>
+      </defs>
+      <rect x="7" y="7" width="486" height="216" rx="9" fill="#151416" />
       <g fill="#eee9df">
         {Array.from({ length: 14 }).map((_, i) => <rect key={`ft-${i}`} x={20 + i * 34} y="18" width="18" height="10" rx="1.5" />)}
         {Array.from({ length: 14 }).map((_, i) => <rect key={`fb-${i}`} x={20 + i * 34} y="202" width="18" height="10" rx="1.5" />)}
       </g>
-      <rect x="24" y="40" width="452" height="150" fill="#d9d6cf" />
-      <path d="M24 142c77-43 148-58 218-45 62 11 118 42 234 45v48H24v-48Z" fill="#8e8b84" />
-      <path d="M24 105c59-37 117-55 172-52 67 4 154 43 280 89v22c-102-20-184-17-251 2-62 18-118 20-201 24v-85Z" fill="#b6b2aa" />
-      <g fill="#454341">
-        <circle cx="355" cy="108" r="12" /><path d="M350 119h11v42h-11z" /><path d="m353 130-18 23m21-20 18 23" stroke="#454341" strokeWidth="7" strokeLinecap="round" />
-        <circle cx="395" cy="118" r="11" /><path d="M390 129h11v36h-11z" />
-        <circle cx="431" cy="127" r="10" /><path d="M426 137h10v31h-10z" />
+      <rect x="24" y="40" width="452" height="150" fill="url(#film-sky)" />
+      <path d="M24 126c72-38 132-49 187-39 42 7 79 25 121 39 43 14 88 16 144 12v52H24v-64Z" fill="#77736e" />
+      <path d="M24 86c65-37 123-47 174-40 59 9 113 42 171 58 33 9 68 11 107 7v25c-77 0-126-12-178-30-51-18-95-25-145-17-44 8-83 21-129 44V86Z" fill="#aaa59c" opacity=".86" />
+      <g fill="#1d1c1d">
+        <rect x="86" y="111" width="122" height="42" rx="3" />
+        <rect x="118" y="78" width="54" height="38" rx="2" />
+        <rect x="175" y="91" width="40" height="62" rx="3" />
+        <rect x="71" y="131" width="31" height="22" />
+        <circle cx="112" cy="159" r="19" /><circle cx="183" cy="159" r="19" />
+        <circle cx="223" cy="156" r="13" />
+        <rect x="205" y="104" width="9" height="28" />
+        <path d="M210 101c7-14 7-28 2-43 18 11 23 26 14 45Z" opacity=".5" />
       </g>
-      <path d="M70 155h145l-22-35h-92l-31 35Z" fill="#444240" />
-      <circle cx="106" cy="158" r="14" fill="#1c1b1c" /><circle cx="184" cy="158" r="14" fill="#1c1b1c" />
-      <text x="422" y="35" fill="#d1a960" fontFamily="Georgia, serif" fontSize="11" letterSpacing="3">1895</text>
+      <path d="M49 174h382M52 183h375" stroke="#383638" strokeWidth="3" opacity=".75" />
+      <g fill="#444142">
+        <circle cx="360" cy="118" r="8" /><rect x="356" y="126" width="8" height="27" rx="2" />
+        <circle cx="396" cy="121" r="7" /><rect x="393" y="128" width="7" height="25" rx="2" />
+      </g>
+      <text x="421" y="35" fill="#d2aa60" fontFamily="Georgia, serif" fontSize="11" letterSpacing="3">1895</text>
     </svg>
   );
 }
 
 function DeskProps() {
   return (
-    <svg viewBox="0 0 520 250" className="landing-history-props" aria-hidden="true" focusable="false">
-      <path d="M7 54 141 20l54 173-137 34Z" fill="#33261e" />
-      <path d="M16 64 132 35l45 145-116 29Z" fill="#4b382c" />
-      <path d="M36 83 125 61" stroke="#c79a59" strokeWidth="3" opacity=".55" />
-      <rect x="153" y="122" width="78" height="92" rx="12" fill="#171313" />
-      <rect x="168" y="104" width="48" height="28" rx="8" fill="#2b2220" />
-      <ellipse cx="192" cy="124" rx="39" ry="10" fill="#080707" opacity=".72" />
-      <path d="M217 206 455 138" stroke="#3a2a20" strokeWidth="14" strokeLinecap="round" />
-      <path d="m447 141 60-18-48 36Z" fill="#a87338" />
-      <path d="M205 207 452 142" stroke="#b3864f" strokeWidth="2" opacity=".7" />
-      <path d="M0 229c91-16 164-17 240-7 83 11 166 10 280-15v43H0v-21Z" fill="#d8b27c" opacity=".32" />
-      <path d="M9 228c88-12 177-5 265 5" stroke="#8d6f4e" strokeWidth="1.2" opacity=".42" />
+    <svg viewBox="0 0 560 260" className="landing-history-props" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="book-cover" x1="0" x2="1">
+          <stop offset="0" stopColor="#2f211a" />
+          <stop offset="1" stopColor="#513828" />
+        </linearGradient>
+      </defs>
+      <path d="M12 58 156 18l58 177-146 39Z" fill="url(#book-cover)" />
+      <path d="M23 68 145 35l48 147-122 33Z" fill="none" stroke="#b58b55" strokeWidth="2" opacity=".48" />
+      <path d="M44 84 135 60" stroke="#c7a167" strokeWidth="3" opacity=".65" />
+      <rect x="176" y="126" width="83" height="94" rx="12" fill="#151212" />
+      <rect x="193" y="106" width="50" height="30" rx="8" fill="#2a2220" />
+      <ellipse cx="217" cy="128" rx="41" ry="11" fill="#080707" opacity=".76" />
+      <path d="M247 214 486 143" stroke="#3b291f" strokeWidth="14" strokeLinecap="round" />
+      <path d="m477 146 67-23-52 42Z" fill="#a67339" />
+      <path d="M237 214 484 147" stroke="#c09a69" strokeWidth="2" opacity=".62" />
+      <path d="M2 233c100-18 180-18 263-6 88 12 178 11 295-17v50H2v-27Z" fill="#d7b27e" opacity=".32" />
+      <path d="M14 233c94-12 190-5 282 5" stroke="#8d6f4e" strokeWidth="1.2" opacity=".42" />
     </svg>
   );
 }
@@ -108,7 +162,7 @@ export function HistoryInspiration() {
     <section className="landing-history" id="hikayenin-yolculugu" aria-labelledby="history-heading">
       <style>{`
         .landing-history {
-          background: transparent !important;
+          background: #f8f6ff !important;
           border-block: 0 !important;
         }
         .landing-history::before,
@@ -118,6 +172,7 @@ export function HistoryInspiration() {
           display: none !important;
         }
       `}</style>
+
       <div className="landing-container">
         <header className="landing-history__heading">
           <span className="landing-history__eyebrow">HİKÂYENİN YOLCULUĞU</span>

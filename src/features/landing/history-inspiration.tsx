@@ -1,12 +1,120 @@
 type HistorySprite = "enheduanna" | "papyrus" | "cambridge" | "film" | "desk" | "seal";
 
+const sourceImage = "/landing/history/history-journey-final.webp";
+
 function Sprite({ kind, className = "" }: { kind: HistorySprite; className?: string }) {
-  return <span className={`landing-history-sprite landing-history-sprite--${kind} ${className}`.trim()} aria-hidden="true" />;
+  const common = {
+    className: `landing-history-sprite landing-history-sprite--${kind} ${className}`.trim(),
+    "aria-hidden": true,
+    focusable: "false" as const,
+    style: { backgroundImage: "none", aspectRatio: "auto" },
+  };
+
+  if (kind === "enheduanna") {
+    return (
+      <svg {...common} viewBox="100 250 240 250">
+        <defs>
+          <clipPath id="history-enheduanna-clip">
+            <ellipse cx="216" cy="378" rx="104" ry="114" />
+          </clipPath>
+        </defs>
+        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-enheduanna-clip)" />
+      </svg>
+    );
+  }
+
+  if (kind === "papyrus") {
+    return (
+      <svg {...common} viewBox="350 335 265 310">
+        <defs>
+          <clipPath id="history-papyrus-clip">
+            <polygon points="381,349 582,366 579,584 566,610 540,603 511,618 478,606 447,615 414,600 382,605 390,565 379,523 387,474 379,430" />
+          </clipPath>
+        </defs>
+        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-papyrus-clip)" />
+      </svg>
+    );
+  }
+
+  if (kind === "cambridge") {
+    return (
+      <svg {...common} viewBox="585 225 420 395">
+        <defs>
+          <clipPath id="history-cambridge-clip">
+            <polygon points="598,236 986,226 991,574 970,597 611,603 596,578" />
+          </clipPath>
+        </defs>
+        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-cambridge-clip)" />
+      </svg>
+    );
+  }
+
+  if (kind === "film") {
+    return (
+      <svg {...common} viewBox="970 175 490 320">
+        <defs>
+          <clipPath id="history-film-clip">
+            <polygon points="987,214 1431,184 1449,449 1000,488" />
+          </clipPath>
+        </defs>
+        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-film-clip)" />
+      </svg>
+    );
+  }
+
+  if (kind === "desk") {
+    return (
+      <svg {...common} viewBox="0 720 720 334">
+        <defs>
+          <clipPath id="history-desk-clip">
+            <polygon points="0,724 150,758 220,807 338,836 470,895 610,955 720,1015 720,1054 0,1054" />
+          </clipPath>
+        </defs>
+        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-desk-clip)" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common} viewBox="1280 620 110 110">
+      <defs>
+        <clipPath id="history-seal-clip">
+          <ellipse cx="1336" cy="676" rx="44" ry="46" />
+        </clipPath>
+      </defs>
+      <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-seal-clip)" />
+    </svg>
+  );
 }
 
 export function HistoryInspiration() {
   return (
     <section className="landing-history" id="hikayenin-yolculugu" aria-labelledby="history-heading">
+      <style>{`
+        .landing-history-sprite {
+          background-image: none !important;
+          background-color: transparent !important;
+          background-size: auto !important;
+          background-position: 0 0 !important;
+          height: auto !important;
+        }
+
+        .landing-history-card--publisher {
+          min-height: 38rem;
+        }
+
+        .landing-history__desk {
+          width: 50%;
+          left: -3.5%;
+        }
+
+        @media (max-width: 860px) {
+          .landing-history-card--publisher {
+            min-height: 0;
+          }
+        }
+      `}</style>
+
       <div className="landing-container">
         <header className="landing-history__heading">
           <span className="landing-history__eyebrow">HİKÂYENİN YOLCULUĞU</span>

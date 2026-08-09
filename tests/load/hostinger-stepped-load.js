@@ -16,12 +16,14 @@ const statusOther5xx = new Counter("status_other_5xx");
 const statusOtherHttp = new Counter("status_other_http");
 const transportErrors = new Counter("transport_errors");
 const timeouts = new Counter("timeouts");
+const captchaChallenges = new Counter("captcha_challenges");
 
 const status200Rate = new Rate("status_200_rate");
 const status403Rate = new Rate("status_403_rate");
 const status429Rate = new Rate("status_429_rate");
 const origin5xxRate = new Rate("origin_5xx_rate");
 const transportErrorRate = new Rate("transport_error_rate");
+const captchaRate = new Rate("captcha_rate");
 const successfulReqDuration = new Trend("status_200_duration", true);
 
 export const options = {
@@ -30,7 +32,12 @@ export const options = {
   thresholds: {
     status_200_rate: ["rate>0.98"],
     status_403_rate: ["rate<0.01"],
-    status_429_rate: ["rate<0.01"],
+    status_429_rate: [
+      { threshold: "rate==0", abortOnFail: true, delayAbortEval: "1s" },
+    ],
+    captcha_rate: [
+      { threshold: "rate==0", abortOnFail: true, delayAbortEval: "1s" },
+    ],
     origin_5xx_rate: ["rate<0.005"],
     transport_error_rate: ["rate<0.001"],
     status_200_duration: ["p(95)<2000", "p(99)<4000"],
@@ -50,7 +57,12 @@ export default function () {
   });
 
   const status = response.status || 0;
-  const is200 = status === 200;
+  const finalUrl = String(response.url || "");
+  const body = typeof response.body === "string" ? response.body : "";
+  const isCaptcha =
+    finalUrl.includes("/.lsrecap/recaptcha") ||
+    body.includes("/.lsrecap/recaptcha");
+  const is200 = status === 200 && !isCaptcha;
   const is403 = status === 403;
   const is429 = status === 429;
   const is5xx = status >= 500 && status <= 599;
@@ -63,8 +75,11 @@ export default function () {
   status429Rate.add(is429);
   origin5xxRate.add(is5xx);
   transportErrorRate.add(isTransportError);
+  captchaRate.add(isCaptcha);
 
-  if (is200) {
+  if (isCaptcha) {
+    captchaChallenges.add(1);
+  } else if (is200) {
     status200.add(1);
     successfulReqDuration.add(response.timings.duration);
   } else if (is403) {

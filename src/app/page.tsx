@@ -6,8 +6,10 @@ import { authContent } from "@/content";
 import { logoutAction } from "@/features/auth/actions";
 import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { HistoryInspiration } from "@/features/landing/history-inspiration";
 import "./landing.css";
 import "./landing-v2.css";
+import "./landing-history.css";
 
 export const metadata: Metadata = {
   title: "İlkOku | İlk cümle, ilk okurun, ilk adımın.",
@@ -303,6 +305,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <HistoryInspiration />
 
       <section className="landing-section landing-section--roles" id="roller">
         <div className="landing-container">

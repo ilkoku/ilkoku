@@ -1,60 +1,60 @@
-type HistorySprite = "enheduanna" | "papyrus" | "cambridge" | "film" | "desk" | "seal";
+type HistoryPiece = "writer" | "editor" | "publisher" | "film" | "filmNote" | "desk" | "seal";
 
 const sourceImage = "/landing/history/history-journey-final.webp";
 
-function Sprite({ kind, className = "" }: { kind: HistorySprite; className?: string }) {
+function HistoryPiece({ kind, className = "" }: { kind: HistoryPiece; className?: string }) {
   const common = {
     className: `landing-history-sprite landing-history-sprite--${kind} ${className}`.trim(),
     "aria-hidden": true,
     focusable: "false" as const,
-    style: { backgroundImage: "none", aspectRatio: "auto" },
+    preserveAspectRatio: "xMidYMid meet",
   };
 
-  if (kind === "enheduanna") {
+  if (kind === "writer") {
     return (
-      <svg {...common} viewBox="100 250 240 250">
+      <svg {...common} viewBox="72 224 338 520">
         <defs>
-          <clipPath id="history-enheduanna-clip">
-            <ellipse cx="216" cy="378" rx="104" ry="114" />
+          <clipPath id="history-writer-card-clip">
+            <polygon points="82,246 382,228 397,714 382,735 86,728 77,698 79,273" />
           </clipPath>
         </defs>
-        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-enheduanna-clip)" />
+        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-writer-card-clip)" />
       </svg>
     );
   }
 
-  if (kind === "papyrus") {
+  if (kind === "editor") {
     return (
-      <svg {...common} viewBox="350 335 265 310">
+      <svg {...common} viewBox="305 316 320 560">
         <defs>
-          <clipPath id="history-papyrus-clip">
-            <polygon points="381,349 582,366 579,584 566,610 540,603 511,618 478,606 447,615 414,600 382,605 390,565 379,523 387,474 379,430" />
+          <clipPath id="history-editor-card-clip">
+            <polygon points="341,329 602,351 606,835 590,865 326,855 315,829 323,356" />
           </clipPath>
         </defs>
-        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-papyrus-clip)" />
+        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-editor-card-clip)" />
       </svg>
     );
   }
 
-  if (kind === "cambridge") {
+  if (kind === "publisher") {
     return (
-      <svg {...common} viewBox="585 225 420 395">
+      <svg {...common} viewBox="574 214 448 664">
         <defs>
-          <clipPath id="history-cambridge-clip">
-            <polygon points="598,236 986,226 991,574 970,597 611,603 596,578" />
+          <clipPath id="history-publisher-card-clip">
+            <polygon points="596,231 989,221 1008,839 994,864 604,865 589,843 591,250" />
           </clipPath>
         </defs>
-        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-cambridge-clip)" />
+        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-publisher-card-clip)" />
       </svg>
     );
   }
 
   if (kind === "film") {
     return (
-      <svg {...common} viewBox="970 175 490 320">
+      <svg {...common} viewBox="969 176 493 322">
         <defs>
           <clipPath id="history-film-clip">
-            <polygon points="987,214 1431,184 1449,449 1000,488" />
+            <polygon points="986,214 1432,184 1448,447 1001,487" />
           </clipPath>
         </defs>
         <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-film-clip)" />
@@ -62,12 +62,25 @@ function Sprite({ kind, className = "" }: { kind: HistorySprite; className?: str
     );
   }
 
+  if (kind === "filmNote") {
+    return (
+      <svg {...common} viewBox="1023 421 376 205">
+        <defs>
+          <clipPath id="history-film-note-clip">
+            <polygon points="1033,431 1385,420 1392,605 1374,619 1040,616 1028,599" />
+          </clipPath>
+        </defs>
+        <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-film-note-clip)" />
+      </svg>
+    );
+  }
+
   if (kind === "desk") {
     return (
-      <svg {...common} viewBox="0 720 720 334">
+      <svg {...common} viewBox="0 718 725 336">
         <defs>
           <clipPath id="history-desk-clip">
-            <polygon points="0,724 150,758 220,807 338,836 470,895 610,955 720,1015 720,1054 0,1054" />
+            <polygon points="0,724 151,757 222,806 337,834 470,894 611,955 724,1015 724,1054 0,1054" />
           </clipPath>
         </defs>
         <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-desk-clip)" />
@@ -76,10 +89,10 @@ function Sprite({ kind, className = "" }: { kind: HistorySprite; className?: str
   }
 
   return (
-    <svg {...common} viewBox="1280 620 110 110">
+    <svg {...common} viewBox="1286 616 105 111">
       <defs>
         <clipPath id="history-seal-clip">
-          <ellipse cx="1336" cy="676" rx="44" ry="46" />
+          <ellipse cx="1337" cy="674" rx="45" ry="47" />
         </clipPath>
       </defs>
       <image href={sourceImage} x="0" y="0" width="1492" height="1054" clipPath="url(#history-seal-clip)" />
@@ -91,26 +104,77 @@ export function HistoryInspiration() {
   return (
     <section className="landing-history" id="hikayenin-yolculugu" aria-labelledby="history-heading">
       <style>{`
+        .landing-history {
+          background: #f8f6ff !important;
+          border-block: 0 !important;
+        }
+
         .landing-history-sprite {
-          background-image: none !important;
-          background-color: transparent !important;
-          background-size: auto !important;
-          background-position: 0 0 !important;
+          display: block !important;
+          width: 100% !important;
+          height: auto !important;
+          margin: 0 !important;
+          background: none !important;
+          filter: none !important;
+          aspect-ratio: auto !important;
+        }
+
+        .landing-history-card,
+        .landing-history-cinema__note {
+          min-height: 0 !important;
+          overflow: visible !important;
+          border: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          clip-path: none !important;
+        }
+
+        .landing-history-card::before,
+        .landing-history-cinema__note::before {
+          display: none !important;
+        }
+
+        .landing-history-card__visual,
+        .landing-history-card__visual--writer,
+        .landing-history-card__visual--editor,
+        .landing-history-card__visual--publisher {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        .landing-history-card__copy {
+          display: none !important;
+        }
+
+        .landing-history-card--publisher .landing-history-card__copy {
+          display: none !important;
+        }
+
+        .landing-history-cinema__note {
+          width: 73% !important;
+          margin: -0.72rem 0 0 8.5% !important;
+          padding: 0 !important;
+          transform: rotate(1deg) !important;
+        }
+
+        .landing-history-now__seal {
+          width: 4.25rem !important;
           height: auto !important;
         }
 
-        .landing-history-card--publisher {
-          min-height: 38rem;
-        }
-
         .landing-history__desk {
-          width: 50%;
-          left: -3.5%;
+          width: 48% !important;
+          left: -2.8% !important;
+          bottom: -1.2% !important;
         }
 
         @media (max-width: 860px) {
-          .landing-history-card--publisher {
-            min-height: 0;
+          .landing-history-card__copy {
+            display: none !important;
+          }
+
+          .landing-history__desk {
+            display: none !important;
           }
         }
       `}</style>
@@ -126,58 +190,37 @@ export function HistoryInspiration() {
         </header>
 
         <div className="landing-history__collage">
-          <Sprite kind="desk" className="landing-history__desk" />
+          <HistoryPiece kind="desk" className="landing-history__desk" />
 
-          <article className="landing-history-card landing-history-card--writer">
+          <article className="landing-history-card landing-history-card--writer" aria-label="MÖ 23. yüzyıl — Enheduanna">
             <div className="landing-history-card__visual landing-history-card__visual--writer">
-              <Sprite kind="enheduanna" />
-            </div>
-            <div className="landing-history-card__copy">
-              <span>MÖ 23. YÜZYIL · YAZ</span>
-              <h3>Enheduanna</h3>
-              <strong>Bir yazar, adını eserinin yanında bıraktı.</strong>
-              <p>Binlerce yıl geçti.<br />Adı hâlâ okunuyor.</p>
+              <HistoryPiece kind="writer" />
             </div>
           </article>
 
-          <article className="landing-history-card landing-history-card--editor">
+          <article className="landing-history-card landing-history-card--editor" aria-label="MÖ 3. yüzyıl — Zenodotos">
             <div className="landing-history-card__visual landing-history-card__visual--editor">
-              <Sprite kind="papyrus" />
-            </div>
-            <div className="landing-history-card__copy">
-              <span>MÖ 3. YÜZYIL · GELİŞTİR</span>
-              <h3>Zenodotos</h3>
-              <strong>Birisi yazılmış bir metne yeniden baktı.</strong>
-              <p>Çünkü bazen bir eser, ikinci bir bakışla daha da güçlenir.</p>
+              <HistoryPiece kind="editor" />
             </div>
           </article>
 
-          <article className="landing-history-card landing-history-card--publisher">
+          <article className="landing-history-card landing-history-card--publisher" aria-label="1534 — Cambridge University Press">
             <div className="landing-history-card__visual landing-history-card__visual--publisher">
-              <Sprite kind="cambridge" />
-            </div>
-            <div className="landing-history-card__copy">
-              <span>1534 · İNAN</span>
-              <h3>Cambridge<br />University Press</h3>
-              <strong>Bir eserin dünyaya ulaşması için birilerinin ona inanması gerekiyordu.</strong>
-              <p>Yazarın yolculuğuna yayıncı da katıldı.</p>
+              <HistoryPiece kind="publisher" />
             </div>
           </article>
 
-          <article className="landing-history-cinema">
+          <article className="landing-history-cinema" aria-label="1895 — Hikâye perdeye çıktı">
             <div className="landing-history-cinema__visual">
-              <Sprite kind="film" />
+              <HistoryPiece kind="film" />
             </div>
             <div className="landing-history-cinema__note">
-              <span>1895 · HAYATA GEÇİR</span>
-              <h3>Hikâye perdeye çıktı.</h3>
-              <p>Hikâyeler artık yalnızca okunmuyordu, izlenmeye de başlandı.</p>
-              <p>Bir eser, yaşadığı yerde kalmak zorunda değildi.</p>
+              <HistoryPiece kind="filmNote" />
             </div>
           </article>
 
           <article className="landing-history-now">
-            <Sprite kind="seal" className="landing-history-now__seal" />
+            <HistoryPiece kind="seal" className="landing-history-now__seal" />
             <span className="landing-history-now__year">2026 · ŞİMDİ SIRA SENDE.</span>
             <h3>Bugünün ilk cümlesi,<br />yarının kitabı olabilir.</h3>
             <ul>

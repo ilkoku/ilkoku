@@ -1,10 +1,10 @@
-name: Hostinger WAF Allowlist Stepped Stress Test
+name: Hostinger WAF Capacity Boundary Test
 
 on:
   workflow_dispatch:
     inputs:
       wait_minutes:
-        description: "Cloudflare test kurallarını runner IP için hazırlama süresi"
+        description: "Cloudflare test kuralını yeni runner IP için hazırlama süresi"
         required: true
         default: "10"
         type: choice
@@ -13,9 +13,8 @@ on:
           - "10"
           - "15"
           - "20"
-          - "30"
       confirmation:
-        description: "Çalıştırmak için RUN-STEPPED-WAF-STRESS-TEST yazın"
+        description: "Çalıştırmak için RUN-CAPACITY-BOUNDARY-TEST yazın"
         required: true
         type: string
 
@@ -23,14 +22,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: hostinger-waf-allowlist-stress
+  group: hostinger-waf-capacity-boundary
   cancel-in-progress: false
 
 jobs:
   stress:
-    name: Stepped 25-500 VU production stress
+    name: Boundary 30-45 VU production test
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 35
 
     steps:
       - name: Validate explicit confirmation
@@ -39,12 +38,12 @@ jobs:
           WAIT_MINUTES: ${{ inputs.wait_minutes }}
         run: |
           set -euo pipefail
-          if [ "$CONFIRMATION" != "RUN-STEPPED-WAF-STRESS-TEST" ]; then
+          if [ "$CONFIRMATION" != "RUN-CAPACITY-BOUNDARY-TEST" ]; then
             echo "Explicit confirmation is required."
             exit 1
           fi
           case "$WAIT_MINUTES" in
-            5|10|15|20|30) ;;
+            5|10|15|20) ;;
             *) echo "Unsupported wait_minutes: $WAIT_MINUTES"; exit 1 ;;
           esac
 
@@ -63,7 +62,7 @@ jobs:
           fi
 
           START_EPOCH=$(( $(date +%s) + WAIT_MINUTES * 60 ))
-          END_EPOCH=$(( START_EPOCH + 22 * 60 ))
+          END_EPOCH=$(( START_EPOCH + 12 * 60 ))
           START_TR="$(TZ=Europe/Istanbul date -d "@$START_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
           END_TR="$(TZ=Europe/Istanbul date -d "@$END_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
 
@@ -76,22 +75,23 @@ jobs:
           Planlanan test başlangıcı: $START_TR
           Tahmini test bitişi: $END_TR
           Alan adı: ilkoku.com
-          Profil: 25 -> 50 -> 100 -> 150 -> 200 -> 300 -> 400 -> 500 VU
+          Profil: 30 -> 35 -> 40 -> 45 VU
           Her basamak: 2 dakika.
-          Hostinger LiteSpeed CAPTCHA veya ilk HTTP 429 görülürse test durur.
+          İlk LiteSpeed CAPTCHA veya HTTP 429 görülürse test durur.
+          Bilinen sonuç: 25 VU PASS, 50 VU CAPTCHA ile STOP.
           ============================================================
           EOF_META
 
-          printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s","profile":"25,50,100,150,200,300,400,500","stageDuration":"2m","stopOn":"LiteSpeed CAPTCHA or HTTP 429"}\n' \
-            "$TEST_IP" "$START_TR" "$END_TR" > hostinger-waf-test-meta.json
+          printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s","profile":"30,35,40,45","stageDuration":"2m","knownLowerPass":25,"knownUpperFail":50,"stopOn":"LiteSpeed CAPTCHA or HTTP 429"}\n' \
+            "$TEST_IP" "$START_TR" "$END_TR" > hostinger-capacity-boundary-meta.json
 
-      - name: Wait for Cloudflare test rules
+      - name: Wait for Cloudflare test rule
         env:
           WAIT_MINUTES: ${{ inputs.wait_minutes }}
         run: |
           set -euo pipefail
-          echo "Cloudflare geçici test kurallarını runner IP için hazırlamanız amacıyla $WAIT_MINUTES dakika bekleniyor."
-          echo "Hostinger tarafında bu IP için allowlist varsayılmıyor."
+          echo "Cloudflare geçici Skip kuralını yeni runner IP için güncellemeniz amacıyla $WAIT_MINUTES dakika bekleniyor."
+          echo "Hostinger tarafında bu IP için allowlist yoktur."
           sleep "$((WAIT_MINUTES * 60))"
 
       - name: Verify runner IPv4 did not change
@@ -105,7 +105,7 @@ jobs:
             exit 1
           fi
 
-      - name: Verify Cloudflare and LiteSpeed path with k6 user agent burst
+      - name: Verify Cloudflare and LiteSpeed path
         run: |
           set -euo pipefail
           failures=0
@@ -136,68 +136,46 @@ jobs:
           echo "Preflight summary failures=$failures/10 server=${server:-none} cf_ray=${cf_ray:-none} source_ip=$TEST_RUNNER_IPV4"
 
           if [ "$failures" -ne 0 ]; then
-            echo "Preflight is not clean. CAPTCHA, non-200, or transport failure detected. Stress test will not start."
+            echo "Preflight is not clean. CAPTCHA, non-200, or transport failure detected. Test will not start."
             exit 1
           fi
 
-      - name: Prepare writable k6 evidence directory
+      - name: Prepare evidence directory
         run: |
           set -euo pipefail
-          mkdir -p .k6-output
-          chmod 0777 .k6-output
-          printf 'vus\ttotal\t200\tcaptcha\t403\t429\t520\tother5xx\ttransport\ttimeout\tp95_200_ms\tp99_200_ms\tresult\n' > .k6-output/stepped-results.tsv
+          mkdir -p k6-output
+          chmod 0777 k6-output
+          printf 'vus\tresult\texit_code\n' > k6-output/boundary-results.tsv
 
-      - name: Run stepped production stress profile
-        id: stepped
+      - name: Run capacity boundary profile
+        id: boundary
         continue-on-error: true
         run: |
           set -uo pipefail
-          levels=(25 50 100 150 200 300 400 500)
+          levels=(30 35 40 45)
           failed_level=""
-
-          metric_value() {
-            local file="$1"
-            local metric="$2"
-            local value="$3"
-            jq -r --arg metric "$metric" --arg value "$value" '.metrics[$metric].values[$value] // 0' "$file"
-          }
 
           for vus in "${levels[@]}"; do
             padded="$(printf '%03d' "$vus")"
-            summary="/work/.k6-output/stage-${padded}.json"
+            summary="/work/k6-output/stage-${padded}.json"
+            logfile="k6-output/stage-${padded}.log"
 
             echo "============================================================"
             echo "START STAGE: ${vus} VU / 2m"
             echo "STOP CONDITIONS: LiteSpeed CAPTCHA or HTTP 429"
             echo "============================================================"
 
+            set +e
             docker run --rm \
               -e TARGET_VUS="$vus" \
               -e TEST_DURATION="2m" \
               -v "$PWD:/work" \
               -w /work \
               grafana/k6:latest \
-              run --summary-export="$summary" tests/load/hostinger-stepped-load.js
-            rc=$?
-
-            host_summary=".k6-output/stage-${padded}.json"
-            if [ ! -s "$host_summary" ]; then
-              echo "Missing summary for ${vus} VU. Stopping."
-              failed_level="$vus"
-              break
-            fi
-
-            total="$(metric_value "$host_summary" http_reqs count)"
-            c200="$(metric_value "$host_summary" status_200 count)"
-            ccaptcha="$(metric_value "$host_summary" captcha_challenges count)"
-            c403="$(metric_value "$host_summary" status_403 count)"
-            c429="$(metric_value "$host_summary" status_429 count)"
-            c520="$(metric_value "$host_summary" status_520 count)"
-            c5xx="$(metric_value "$host_summary" status_other_5xx count)"
-            ctransport="$(metric_value "$host_summary" transport_errors count)"
-            ctimeout="$(metric_value "$host_summary" timeouts count)"
-            p95="$(metric_value "$host_summary" status_200_duration 'p(95)')"
-            p99="$(metric_value "$host_summary" status_200_duration 'p(99)')"
+              run --summary-export="$summary" tests/load/hostinger-stepped-load.js \
+              2>&1 | tee "$logfile"
+            rc=${PIPESTATUS[0]}
+            set -e
 
             result="PASS"
             if [ "$rc" -ne 0 ]; then
@@ -205,48 +183,48 @@ jobs:
               failed_level="$vus"
             fi
 
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-              "$vus" "$total" "$c200" "$ccaptcha" "$c403" "$c429" "$c520" "$c5xx" "$ctransport" "$ctimeout" "$p95" "$p99" "$result" \
-              | tee -a .k6-output/stepped-results.tsv
+            printf '%s\t%s\t%s\n' "$vus" "$result" "$rc" | tee -a k6-output/boundary-results.tsv
 
             if [ -n "$failed_level" ]; then
-              echo "Test stopped at ${vus} VU. Higher load levels will NOT run."
+              echo "FAILED_LEVEL=$failed_level" >> "$GITHUB_ENV"
+              echo "Test stopped at ${vus} VU. Higher levels will NOT run."
               break
             fi
 
-            echo "${vus} VU passed. Cooling down for 15 seconds before next level."
-            sleep 15
+            echo "${vus} VU passed. Cooling down for 30 seconds before next level."
+            sleep 30
           done
 
           echo "============================================================"
-          column -t -s $'\t' .k6-output/stepped-results.tsv || cat .k6-output/stepped-results.tsv
+          cat k6-output/boundary-results.tsv
           echo "============================================================"
 
           if [ -n "$failed_level" ]; then
-            echo "FAILED_LEVEL=$failed_level" >> "$GITHUB_ENV"
             exit 1
           fi
 
-      - name: Upload stepped stress evidence
+      - name: Upload capacity boundary evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: hostinger-waf-stepped-stress-${{ github.run_id }}
+          name: hostinger-capacity-boundary-${{ github.run_id }}
           path: |
-            hostinger-waf-test-meta.json
-            .k6-output/stepped-results.tsv
-            .k6-output/stage-*.json
+            hostinger-capacity-boundary-meta.json
+            k6-output/boundary-results.tsv
+            k6-output/stage-*.json
+            k6-output/stage-*.log
           if-no-files-found: warn
           retention-days: 7
 
-      - name: Preserve stepped threshold result
+      - name: Preserve boundary result
         if: always()
         env:
-          STEPPED_OUTCOME: ${{ steps.stepped.outcome }}
+          BOUNDARY_OUTCOME: ${{ steps.boundary.outcome }}
         run: |
           set -euo pipefail
-          if [ "$STEPPED_OUTCOME" != "success" ]; then
-            echo "Stepped stress test stopped at the first failing load level: ${FAILED_LEVEL:-unknown} VU."
-            echo "See stepped-results.tsv and stage summaries for CAPTCHA/200/403/429/520/5xx/transport/timeout and 200-only p95/p99."
+          if [ "$BOUNDARY_OUTCOME" != "success" ]; then
+            echo "Capacity boundary reached at ${FAILED_LEVEL:-unknown} VU."
+            echo "See the uploaded stage log and summary for the exact CAPTCHA/429/latency metrics."
             exit 1
           fi
+          echo "30, 35, 40 and 45 VU all passed. Known upper failure remains 50 VU."

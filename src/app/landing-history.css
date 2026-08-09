@@ -2,44 +2,28 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: clamp(3.5rem, 6vw, 5.2rem) 0 clamp(4rem, 7vw, 6rem);
-  border-block: 1px solid rgba(69, 52, 133, 0.06);
-  background:
-    radial-gradient(circle at 49% 10%, rgba(255, 255, 255, 0.98), transparent 30rem),
-    radial-gradient(circle at 17% 60%, rgba(230, 218, 245, 0.54), transparent 34rem),
-    radial-gradient(circle at 83% 66%, rgba(221, 210, 240, 0.48), transparent 32rem),
-    #f8f6ff;
-}
-
-.landing-history::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, transparent 0 9%, rgba(91, 67, 141, 0.025) 9.1% 9.2%, transparent 9.3% 90.5%, rgba(91, 67, 141, 0.025) 90.6% 90.7%, transparent 90.8%),
-    repeating-linear-gradient(0deg, rgba(77, 58, 111, 0.012) 0 1px, transparent 1px 5px);
-  opacity: 0.7;
+  padding: clamp(3.2rem, 5vw, 4.6rem) 0 clamp(4rem, 6vw, 5.5rem);
+  background: #f8f6ff;
 }
 
 .landing-history .landing-container {
   position: relative;
-  width: min(76rem, calc(100% - 3rem));
+  width: min(88rem, calc(100% - 2rem));
 }
 
 .landing-history__heading {
   position: relative;
-  z-index: 20;
-  max-width: 58rem;
-  margin: 0 auto clamp(1.8rem, 3.2vw, 2.8rem);
+  z-index: 30;
+  max-width: 66rem;
+  margin: 0 auto clamp(2rem, 3vw, 2.8rem);
   text-align: center;
 }
 
 .landing-history__eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.65rem;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
   color: var(--landing-primary-strong);
   font-size: 0.68rem;
   font-weight: 850;
@@ -49,19 +33,19 @@
 .landing-history__eyebrow::before,
 .landing-history__eyebrow::after {
   content: "";
-  width: 2.35rem;
+  width: 2.2rem;
   height: 1px;
-  background: rgba(104, 71, 232, 0.52);
+  background: rgba(104, 71, 232, 0.46);
 }
 
 .landing-history__heading h2 {
   margin: 0;
-  color: #16131f;
+  color: #17141d;
   font-family: var(--landing-font-display);
-  font-size: clamp(2.45rem, 4.55vw, 4.25rem);
+  font-size: clamp(2.8rem, 4.7vw, 4.8rem);
   font-weight: 650;
   line-height: 0.98;
-  letter-spacing: -0.048em;
+  letter-spacing: -0.05em;
 }
 
 .landing-history__heading h2 em {
@@ -81,96 +65,37 @@
   border-radius: 999px;
   background: var(--landing-primary);
   transform: rotate(-1deg);
-  opacity: 0.88;
+  opacity: 0.9;
 }
 
 .landing-history__heading p {
   margin: 1rem auto 0;
-  color: #504c59;
-  font-size: clamp(0.86rem, 1.15vw, 0.98rem);
-  line-height: 1.55;
+  color: #514d59;
+  font-size: clamp(0.9rem, 1.05vw, 1rem);
+  line-height: 1.58;
 }
 
 .landing-history__collage {
   position: relative;
-  width: 100%;
-  min-height: 48rem;
+  width: min(100%, 84rem);
+  min-height: 50rem;
   margin: 0 auto;
-}
-
-.landing-history__collage::before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  left: 4%;
-  right: 5%;
-  bottom: 2%;
-  height: 19rem;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(101, 75, 142, 0.08), transparent 69%);
-  filter: blur(8px);
-}
-
-.landing-history__script {
-  position: absolute;
-  z-index: 0;
-  top: -2.5%;
-  right: 1.5%;
-  width: 17rem;
-  color: #766988;
-  font-family: var(--landing-font-display);
-  font-size: 0.8rem;
-  font-style: italic;
-  line-height: 1.6;
-  opacity: 0.08;
-  transform: rotate(-2deg);
-}
-
-.landing-history__quill {
-  position: absolute;
-  z-index: 0;
-  top: -1%;
-  left: 0.5%;
-  width: 7.5rem;
-  height: 16rem;
-  opacity: 0.1;
-  transform: rotate(23deg);
-}
-
-.landing-history__quill::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-left: 2px solid #64577a;
-  border-radius: 50%;
-  transform: skewX(-13deg);
-}
-
-.landing-history__quill::after {
-  content: "";
-  position: absolute;
-  top: 0.4rem;
-  left: 1.3rem;
-  width: 4.5rem;
-  height: 12rem;
-  border: 1px solid #64577a;
-  border-left: 0;
-  border-radius: 0 100% 0 100%;
-  transform: rotate(-9deg);
 }
 
 .landing-history-card,
 .landing-history-cinema__note {
-  color: #2f241c;
+  color: #30241b;
   background:
-    radial-gradient(circle at 18% 12%, rgba(151, 94, 42, 0.14) 0 0.09rem, transparent 0.12rem),
-    radial-gradient(circle at 82% 66%, rgba(126, 72, 31, 0.09) 0 0.08rem, transparent 0.12rem),
-    linear-gradient(93deg, rgba(125, 74, 31, 0.065), transparent 18%, rgba(255,255,255,0.07) 55%, rgba(125,74,31,0.055)),
-    #e5bf80;
-  background-size: 2.8rem 2.6rem, 3.6rem 3.2rem, auto, auto;
-  border: 1px solid rgba(105, 67, 31, 0.32);
-  box-shadow: 0 1.1rem 2.5rem rgba(78, 55, 33, 0.17), inset 0 0 2rem rgba(105, 67, 31, 0.06);
-  clip-path: polygon(1.4% 1.2%, 98.3% 0.2%, 99.2% 97.2%, 97.2% 99.2%, 2% 98.8%, 0.7% 54%);
+    radial-gradient(circle at 14% 11%, rgba(115, 67, 25, 0.12) 0 0.07rem, transparent 0.11rem),
+    radial-gradient(circle at 82% 64%, rgba(115, 67, 25, 0.1) 0 0.06rem, transparent 0.1rem),
+    linear-gradient(94deg, rgba(110, 66, 27, 0.07), transparent 19%, rgba(255,255,255,0.08) 58%, rgba(105,63,26,0.06)),
+    #e6bd7a;
+  background-size: 2.5rem 2.6rem, 3rem 3.1rem, auto, auto;
+  border: 1px solid rgba(104, 66, 29, 0.33);
+  box-shadow:
+    0 1rem 2.5rem rgba(74, 51, 30, 0.17),
+    inset 0 0 2rem rgba(96, 60, 28, 0.08);
+  clip-path: polygon(1.2% 1%, 98.5% 0.3%, 99.2% 97.2%, 97.5% 99.1%, 2% 98.7%, 0.7% 55%);
 }
 
 .landing-history-card {
@@ -182,15 +107,17 @@
   transform-origin: center;
 }
 
-.landing-history-card::after,
-.landing-history-cinema__note::after {
+.landing-history-card::before,
+.landing-history-cinema__note::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(8deg, rgba(94, 60, 30, 0.03) 0 1px, transparent 1px 5px);
+  background:
+    linear-gradient(90deg, rgba(86,51,24,0.08), transparent 6%, transparent 94%, rgba(86,51,24,0.08)),
+    linear-gradient(180deg, rgba(255,255,255,0.08), transparent 10%, transparent 92%, rgba(91,52,23,0.08));
   mix-blend-mode: multiply;
-  opacity: 0.55;
 }
 
 .landing-history-card__visual,
@@ -208,137 +135,139 @@
 .landing-history-card__copy {
   position: relative;
   z-index: 2;
-  padding: 0.55rem 1.25rem 1.3rem;
+  padding: 0.45rem 1.2rem 1.3rem;
 }
 
 .landing-history-card__copy > span,
 .landing-history-cinema__note > span,
 .landing-history-now__year {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.48rem;
   color: var(--landing-primary-strong);
-  font-size: 0.64rem;
+  font-size: 0.63rem;
   font-weight: 850;
   letter-spacing: 0.025em;
 }
 
 .landing-history-card__copy h3,
 .landing-history-cinema__note h3 {
-  margin: 0 0 0.82rem;
-  color: #2b211a;
+  margin: 0 0 0.72rem;
+  color: #2d2119;
   font-family: var(--landing-font-display);
-  font-size: clamp(1.35rem, 1.7vw, 1.85rem);
+  font-size: clamp(1.45rem, 1.72vw, 1.95rem);
   font-weight: 700;
   line-height: 1.02;
 }
 
 .landing-history-card__copy strong {
   display: block;
-  color: #33261d;
+  color: #34261d;
   font-family: var(--landing-font-display);
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   font-weight: 700;
   line-height: 1.42;
 }
 
 .landing-history-card__copy p,
 .landing-history-cinema__note p {
-  margin: 0.62rem 0 0;
-  color: #5c4c3f;
-  font-size: 0.71rem;
-  line-height: 1.55;
+  margin: 0.58rem 0 0;
+  color: #5b4b3e;
+  font-size: 0.72rem;
+  line-height: 1.52;
 }
 
 .landing-history-card--writer {
-  left: 4.2%;
-  top: 7%;
-  width: 20.2%;
-  min-height: 27.4rem;
-  transform: rotate(-1.5deg);
+  left: 2.5%;
+  top: 8%;
+  width: 20.5%;
+  min-height: 27.5rem;
+  transform: rotate(-1.6deg);
 }
 
 .landing-history-card--writer .landing-history-card__visual {
-  padding: 0.7rem 0.55rem 0;
+  padding: 0.4rem 0.35rem 0;
 }
 
 .landing-history-card--editor {
-  z-index: 6;
-  left: 20.4%;
+  z-index: 7;
+  left: 20.3%;
   top: 19.5%;
-  width: 19%;
-  min-height: 29.5rem;
-  transform: rotate(1.4deg);
+  width: 19.7%;
+  min-height: 29.7rem;
+  transform: rotate(1.25deg);
 }
 
 .landing-history-card--editor .landing-history-card__visual {
-  padding: 0.2rem 0.15rem 0;
+  padding: 0.1rem 0 0;
 }
 
 .landing-history-card--publisher {
   z-index: 5;
-  left: 37.5%;
-  top: 6.2%;
-  width: 27.8%;
-  min-height: 34rem;
+  left: 38.2%;
+  top: 7%;
+  width: 28.2%;
+  min-height: 34.2rem;
   transform: rotate(-0.35deg);
 }
 
 .landing-history-card--publisher .landing-history-card__visual {
-  margin: -0.2rem -0.25rem -0.3rem;
+  margin: -0.2rem -0.15rem -0.6rem;
 }
 
 .landing-history-card--publisher .landing-history-card__copy {
-  margin-top: -2.2rem;
-  padding: 0 1.5rem 1.45rem;
+  margin-top: -2rem;
+  padding: 0 1.45rem 1.45rem;
 }
 
 .landing-history-cinema {
   position: absolute;
-  z-index: 8;
-  top: 1.3%;
-  left: 61.1%;
-  width: 35.3%;
-  transform: rotate(-1deg);
+  z-index: 9;
+  top: 1%;
+  left: 63.2%;
+  width: 34.5%;
+  transform: rotate(-0.9deg);
 }
 
 .landing-history-cinema__visual {
   overflow: hidden;
-  border-radius: 0.45rem;
-  box-shadow: 0 1.1rem 2.2rem rgba(37, 31, 30, 0.22);
+  border-radius: 0.5rem;
+  box-shadow: 0 1.1rem 2.2rem rgba(30, 27, 25, 0.22);
 }
 
 .landing-history-cinema__note {
   position: relative;
   z-index: 3;
-  width: 70%;
-  margin: -0.4rem 0 0 7.5%;
-  padding: 1.05rem 1.15rem 1.2rem;
-  transform: rotate(1.35deg);
+  width: 72%;
+  margin: -0.2rem 0 0 7.5%;
+  padding: 1rem 1.1rem 1.15rem;
+  transform: rotate(1.2deg);
 }
 
 .landing-history-cinema__note h3 {
-  margin-bottom: 0.5rem;
-  font-size: clamp(1.15rem, 1.45vw, 1.5rem);
+  margin-bottom: 0.45rem;
+  font-size: clamp(1.15rem, 1.45vw, 1.55rem);
 }
 
 .landing-history-cinema__note p + p {
-  margin-top: 0.3rem;
+  margin-top: 0.28rem;
 }
 
 .landing-history-now {
   position: absolute;
-  z-index: 12;
-  left: 59.5%;
-  top: 53.7%;
-  width: 34.3%;
+  z-index: 13;
+  left: 63%;
+  top: 52.5%;
+  width: 32.5%;
   padding: 1.45rem 1.55rem 1.25rem;
   border: 1px solid rgba(104, 71, 232, 0.28);
-  border-radius: 1.25rem;
+  border-radius: 1.2rem;
   color: #40365a;
   background:
-    radial-gradient(circle at 94% 8%, rgba(104, 71, 232, 0.09), transparent 8rem),
+    radial-gradient(circle at 94% 8%, rgba(104, 71, 232, 0.08), transparent 8rem),
     linear-gradient(145deg, rgba(255,255,255,0.98), rgba(249,247,255,0.98));
-  box-shadow: 0 1.1rem 2.8rem rgba(66, 43, 143, 0.22), inset 0 0 0 0.25rem rgba(104,71,232,0.025);
+  box-shadow:
+    0 1.2rem 3rem rgba(66, 43, 143, 0.2),
+    inset 0 0 0 0.22rem rgba(104, 71, 232, 0.024);
 }
 
 .landing-history-now__year {
@@ -346,21 +275,21 @@
 }
 
 .landing-history-now h3 {
-  max-width: 21rem;
-  margin: 0 4rem 0.85rem 0;
+  max-width: 20rem;
+  margin: 0 4rem 0.9rem 0;
   color: var(--landing-primary-strong);
   font-family: var(--landing-font-display);
-  font-size: clamp(1.55rem, 2.05vw, 2.2rem);
+  font-size: clamp(1.7rem, 2.05vw, 2.25rem);
   font-weight: 700;
   line-height: 1.02;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.026em;
 }
 
 .landing-history-now ul {
   display: grid;
   gap: 0.42rem;
   margin: 0;
-  padding: 0 0 0 1.25rem;
+  padding: 0 0 0 1.2rem;
   color: #4f4960;
   font-size: 0.73rem;
   line-height: 1.38;
@@ -372,86 +301,90 @@
 
 .landing-history-now__question {
   display: block;
-  margin-top: 1rem;
-  padding-top: 0.8rem;
+  margin-top: 0.95rem;
+  padding-top: 0.78rem;
   border-top: 1px solid rgba(104, 71, 232, 0.16);
   color: var(--landing-primary-strong);
   font-family: var(--landing-font-display);
-  font-size: 0.86rem;
+  font-size: 0.87rem;
 }
 
 .landing-history-now__closing {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 0.75rem;
+  margin-top: 0.72rem;
   text-align: center;
 }
 
 .landing-history-now__closing span {
-  font-size: 0.66rem;
+  font-size: 0.65rem;
   color: #5a5566;
 }
 
 .landing-history-now__closing b {
-  margin-top: 0.12rem;
+  margin-top: 0.1rem;
   color: var(--landing-primary-strong);
   font-family: var(--landing-font-display);
-  font-size: clamp(2rem, 2.5vw, 2.7rem);
+  font-size: clamp(2rem, 2.5vw, 2.75rem);
   line-height: 1;
 }
 
 .landing-history-now__seal {
   position: absolute;
-  top: 1rem;
-  right: 1.05rem;
-  width: 3.7rem;
-  height: 3.7rem;
+  top: 0.95rem;
+  right: 1rem;
+  width: 3.75rem;
+  height: 3.75rem;
   display: grid;
   place-items: center;
-  border: 0.25rem double #6c3b21;
+  border: 0.24rem double #6a391f;
   border-radius: 50%;
-  color: #d8b37f;
-  background: radial-gradient(circle at 35% 30%, #a45b31, #66331e 72%);
-  box-shadow: 0 0.25rem 0.75rem rgba(75, 43, 28, 0.26);
+  color: #e0be8a;
+  background: radial-gradient(circle at 35% 30%, #a85e32, #61301d 72%);
+  box-shadow: 0 0.3rem 0.85rem rgba(74, 42, 27, 0.27);
   font-family: var(--landing-font-display);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 800;
 }
 
 .landing-history-props {
   position: absolute;
-  z-index: 10;
-  left: -2.2%;
-  bottom: -1.3%;
-  width: 44%;
+  z-index: 11;
+  left: -1.8%;
+  bottom: -0.8%;
+  width: 43%;
   height: auto;
   filter: drop-shadow(0 0.9rem 1.3rem rgba(65, 47, 34, 0.18));
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1160px) {
   .landing-history .landing-container {
-    width: min(72rem, calc(100% - 2rem));
+    width: min(76rem, calc(100% - 2rem));
   }
 
   .landing-history__collage {
-    min-height: 45rem;
+    min-height: 47rem;
   }
 
-  .landing-history-card--writer { left: 2.5%; width: 21.5%; }
+  .landing-history-card--writer { left: 1.5%; width: 21%; }
   .landing-history-card--editor { left: 20%; width: 20%; }
-  .landing-history-card--publisher { left: 37%; width: 28.5%; }
-  .landing-history-cinema { left: 61%; width: 37%; }
-  .landing-history-now { left: 59%; width: 36%; }
+  .landing-history-card--publisher { left: 37.5%; width: 29%; }
+  .landing-history-cinema { left: 62%; width: 36%; }
+  .landing-history-now { left: 61.5%; width: 35%; }
 }
 
 @media (max-width: 860px) {
   .landing-history {
-    padding-top: 3.2rem;
+    padding-top: 3rem;
   }
 
   .landing-history .landing-container {
     width: min(42rem, calc(100% - 2rem));
+  }
+
+  .landing-history__heading h2 {
+    font-size: clamp(2.3rem, 9vw, 3.7rem);
   }
 
   .landing-history__heading p br {
@@ -465,11 +398,7 @@
     min-height: 0;
   }
 
-  .landing-history__quill,
-  .landing-history__script,
-  .landing-history__props,
-  .landing-history-props,
-  .landing-history__collage::before {
+  .landing-history-props {
     display: none;
   }
 
@@ -493,49 +422,42 @@
     transform: none;
   }
 
-  .landing-history-card--publisher {
+  .landing-history-card--publisher,
+  .landing-history-cinema,
+  .landing-history-now {
     grid-column: 1 / -1;
   }
 
   .landing-history-card--publisher .landing-history-card__visual {
     max-width: 28rem;
-    margin: -0.2rem auto -1rem;
+    margin: -0.15rem auto -0.9rem;
   }
 
   .landing-history-card--publisher .landing-history-card__copy {
     margin-top: 0;
   }
 
-  .landing-history-cinema {
-    grid-column: 1 / -1;
-  }
-
-  .landing-history-cinema__visual {
-    width: 100%;
-  }
-
   .landing-history-cinema__note {
-    width: min(80%, 28rem);
-    margin: -0.8rem 1.5rem 0 auto;
+    width: min(82%, 28rem);
+    margin: -0.65rem 1.3rem 0 auto;
   }
 
   .landing-history-now {
-    grid-column: 1 / -1;
-    padding: 1.55rem;
+    padding: 1.4rem;
   }
 }
 
-@media (max-width: 580px) {
+@media (max-width: 620px) {
   .landing-history {
-    padding: 2.8rem 0 3.5rem;
+    padding: 2.6rem 0 3.5rem;
   }
 
   .landing-history .landing-container {
-    width: calc(100% - 1.25rem);
+    width: min(34rem, calc(100% - 1.25rem));
   }
 
   .landing-history__heading {
-    margin-bottom: 1.65rem;
+    margin-bottom: 1.6rem;
   }
 
   .landing-history__eyebrow {
@@ -544,15 +466,15 @@
 
   .landing-history__eyebrow::before,
   .landing-history__eyebrow::after {
-    width: 1.55rem;
+    width: 1.4rem;
   }
 
   .landing-history__heading h2 {
-    font-size: clamp(2.15rem, 11vw, 3.1rem);
+    font-size: clamp(2rem, 11vw, 3rem);
   }
 
   .landing-history__heading p {
-    font-size: 0.82rem;
+    font-size: 0.86rem;
   }
 
   .landing-history__collage {
@@ -566,28 +488,12 @@
     grid-column: auto;
   }
 
-  .landing-history-card,
   .landing-history-cinema__note {
-    clip-path: none;
-    border-radius: 0.9rem;
-  }
-
-  .landing-history-card--writer .landing-history-card__visual,
-  .landing-history-card--editor .landing-history-card__visual {
-    max-width: 21rem;
-    margin: 0 auto;
-  }
-
-  .landing-history-cinema__note {
-    width: calc(100% - 1.25rem);
-    margin: -0.6rem auto 0;
+    width: 90%;
+    margin: -0.5rem auto 0;
   }
 
   .landing-history-now h3 {
-    margin-right: 3.4rem;
-  }
-
-  .landing-history-now__year {
-    margin-right: 3.6rem;
+    margin-right: 3.5rem;
   }
 }

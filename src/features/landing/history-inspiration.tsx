@@ -118,7 +118,7 @@ export function HistoryInspiration() {
 
         <div className="landing-history__collage">
           <div className="landing-history__quill" aria-hidden="true" />
-          <div className="landing-history__script" aria-hidden="true">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+          <div className="landing-history__script" aria-hidden="true" />
           <DeskProps />
 
           <article className="landing-history-card landing-history-card--writer">

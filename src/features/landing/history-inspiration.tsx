@@ -106,6 +106,18 @@ function DeskProps() {
 export function HistoryInspiration() {
   return (
     <section className="landing-history" id="hikayenin-yolculugu" aria-labelledby="history-heading">
+      <style>{`
+        .landing-history {
+          background: transparent !important;
+          border-block: 0 !important;
+        }
+        .landing-history::before,
+        .landing-history__collage::before,
+        .landing-history__quill,
+        .landing-history__script {
+          display: none !important;
+        }
+      `}</style>
       <div className="landing-container">
         <header className="landing-history__heading">
           <span className="landing-history__eyebrow">HİKÂYENİN YOLCULUĞU</span>
@@ -117,8 +129,6 @@ export function HistoryInspiration() {
         </header>
 
         <div className="landing-history__collage">
-          <div className="landing-history__quill" aria-hidden="true" />
-          <div className="landing-history__script" aria-hidden="true" />
           <DeskProps />
 
           <article className="landing-history-card landing-history-card--writer">

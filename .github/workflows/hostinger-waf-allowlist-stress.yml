@@ -77,11 +77,12 @@ jobs:
           Tahmini test bitişi: $END_TR
           Alan adı: ilkoku.com
           Profil: 25 -> 50 -> 100 -> 150 -> 200 -> 300 -> 400 -> 500 VU
-          Her basamak: 2 dakika; hata threshold'u aşılırsa sonraki basamak çalışmaz.
+          Her basamak: 2 dakika.
+          Hostinger LiteSpeed CAPTCHA veya ilk HTTP 429 görülürse test durur.
           ============================================================
           EOF_META
 
-          printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s","profile":"25,50,100,150,200,300,400,500","stageDuration":"2m"}\n' \
+          printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s","profile":"25,50,100,150,200,300,400,500","stageDuration":"2m","stopOn":"LiteSpeed CAPTCHA or HTTP 429"}\n' \
             "$TEST_IP" "$START_TR" "$END_TR" > hostinger-waf-test-meta.json
 
       - name: Wait for Cloudflare test rules
@@ -104,7 +105,7 @@ jobs:
             exit 1
           fi
 
-      - name: Verify Cloudflare path with k6 user agent burst
+      - name: Verify Cloudflare and LiteSpeed path with k6 user agent burst
         run: |
           set -euo pipefail
           failures=0
@@ -112,17 +113,19 @@ jobs:
 
           for i in $(seq 1 10); do
             headers="$(mktemp)"
-            code="$(curl -sS --connect-timeout 10 --max-time 30 \
+            result="$(curl -L -sS --connect-timeout 10 --max-time 30 \
               -A 'Grafana k6/2.1.0' \
-              -D "$headers" -o /dev/null -w '%{http_code}' \
-              https://ilkoku.com/ || printf '000')"
+              -D "$headers" -o /dev/null -w '%{http_code}\t%{url_effective}' \
+              https://ilkoku.com/ || printf '000\ttransport-error')"
+            code="${result%%$'\t'*}"
+            effective_url="${result#*$'\t'}"
 
             if [ "$i" -eq 1 ]; then
               cp "$headers" "$first_headers"
             fi
 
-            echo "Preflight[$i] status=$code source_ip=$TEST_RUNNER_IPV4"
-            if [ "$code" != "200" ]; then
+            echo "Preflight[$i] status=$code effective_url=$effective_url source_ip=$TEST_RUNNER_IPV4"
+            if [ "$code" != "200" ] || [[ "$effective_url" == *"/.lsrecap/recaptcha"* ]]; then
               failures=$((failures + 1))
             fi
             rm -f "$headers"
@@ -133,7 +136,7 @@ jobs:
           echo "Preflight summary failures=$failures/10 server=${server:-none} cf_ray=${cf_ray:-none} source_ip=$TEST_RUNNER_IPV4"
 
           if [ "$failures" -ne 0 ]; then
-            echo "Preflight is not clean: $failures of 10 requests were not HTTP 200. Stress test will not start."
+            echo "Preflight is not clean. CAPTCHA, non-200, or transport failure detected. Stress test will not start."
             exit 1
           fi
 
@@ -142,7 +145,7 @@ jobs:
           set -euo pipefail
           mkdir -p .k6-output
           chmod 0777 .k6-output
-          printf 'vus\ttotal\t200\t403\t429\t520\tother5xx\ttransport\ttimeout\tp95_200_ms\tp99_200_ms\tresult\n' > .k6-output/stepped-results.tsv
+          printf 'vus\ttotal\t200\tcaptcha\t403\t429\t520\tother5xx\ttransport\ttimeout\tp95_200_ms\tp99_200_ms\tresult\n' > .k6-output/stepped-results.tsv
 
       - name: Run stepped production stress profile
         id: stepped
@@ -165,6 +168,7 @@ jobs:
 
             echo "============================================================"
             echo "START STAGE: ${vus} VU / 2m"
+            echo "STOP CONDITIONS: LiteSpeed CAPTCHA or HTTP 429"
             echo "============================================================"
 
             docker run --rm \
@@ -185,6 +189,7 @@ jobs:
 
             total="$(metric_value "$host_summary" http_reqs count)"
             c200="$(metric_value "$host_summary" status_200 count)"
+            ccaptcha="$(metric_value "$host_summary" captcha_challenges count)"
             c403="$(metric_value "$host_summary" status_403 count)"
             c429="$(metric_value "$host_summary" status_429 count)"
             c520="$(metric_value "$host_summary" status_520 count)"
@@ -200,12 +205,12 @@ jobs:
               failed_level="$vus"
             fi
 
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-              "$vus" "$total" "$c200" "$c403" "$c429" "$c520" "$c5xx" "$ctransport" "$ctimeout" "$p95" "$p99" "$result" \
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$vus" "$total" "$c200" "$ccaptcha" "$c403" "$c429" "$c520" "$c5xx" "$ctransport" "$ctimeout" "$p95" "$p99" "$result" \
               | tee -a .k6-output/stepped-results.tsv
 
             if [ -n "$failed_level" ]; then
-              echo "Threshold failed at ${vus} VU. Higher load levels will NOT run."
+              echo "Test stopped at ${vus} VU. Higher load levels will NOT run."
               break
             fi
 
@@ -242,6 +247,6 @@ jobs:
           set -euo pipefail
           if [ "$STEPPED_OUTCOME" != "success" ]; then
             echo "Stepped stress test stopped at the first failing load level: ${FAILED_LEVEL:-unknown} VU."
-            echo "See stepped-results.tsv and stage summary artifacts for 200/403/429/520/5xx/transport/timeout and 200-only p95/p99."
+            echo "See stepped-results.tsv and stage summaries for CAPTCHA/200/403/429/520/5xx/transport/timeout and 200-only p95/p99."
             exit 1
           fi

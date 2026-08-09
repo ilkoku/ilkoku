@@ -1,19 +1,21 @@
-name: Hostinger WAF Allowlist Stress Test
+name: Hostinger WAF Allowlist Stepped Stress Test
 
 on:
   workflow_dispatch:
     inputs:
       wait_minutes:
-        description: "Hostinger allowlist işlemi için bekleme süresi"
+        description: "Cloudflare test kurallarını runner IP için hazırlama süresi"
         required: true
-        default: "20"
+        default: "10"
         type: choice
         options:
+          - "5"
+          - "10"
           - "15"
           - "20"
           - "30"
       confirmation:
-        description: "Çalıştırmak için RUN-HOSTINGER-WAF-ALLOWLIST-TEST yazın"
+        description: "Çalıştırmak için RUN-STEPPED-WAF-STRESS-TEST yazın"
         required: true
         type: string
 
@@ -26,9 +28,9 @@ concurrency:
 
 jobs:
   stress:
-    name: WAF allowlist 1000 VU stress
+    name: Stepped 25-500 VU production stress
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 55
 
     steps:
       - name: Validate explicit confirmation
@@ -37,12 +39,12 @@ jobs:
           WAIT_MINUTES: ${{ inputs.wait_minutes }}
         run: |
           set -euo pipefail
-          if [ "$CONFIRMATION" != "RUN-HOSTINGER-WAF-ALLOWLIST-TEST" ]; then
+          if [ "$CONFIRMATION" != "RUN-STEPPED-WAF-STRESS-TEST" ]; then
             echo "Explicit confirmation is required."
             exit 1
           fi
           case "$WAIT_MINUTES" in
-            15|20|30) ;;
+            5|10|15|20|30) ;;
             *) echo "Unsupported wait_minutes: $WAIT_MINUTES"; exit 1 ;;
           esac
 
@@ -61,33 +63,34 @@ jobs:
           fi
 
           START_EPOCH=$(( $(date +%s) + WAIT_MINUTES * 60 ))
-          END_EPOCH=$(( START_EPOCH + 12 * 60 ))
+          END_EPOCH=$(( START_EPOCH + 22 * 60 ))
           START_TR="$(TZ=Europe/Istanbul date -d "@$START_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
           END_TR="$(TZ=Europe/Istanbul date -d "@$END_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
 
           echo "TEST_RUNNER_IPV4=$TEST_IP" >> "$GITHUB_ENV"
-          echo "PLANNED_START_EPOCH=$START_EPOCH" >> "$GITHUB_ENV"
-          echo "PLANNED_END_EPOCH=$END_EPOCH" >> "$GITHUB_ENV"
 
-          cat <<EOF
+          cat <<EOF_META
           ============================================================
-          HOSTINGER'A VERİLECEK BİLGİLER
+          CLOUDFLARE TEST KURALI İÇİN RUNNER BİLGİSİ
           Test sunucusu genel IPv4: $TEST_IP
           Planlanan test başlangıcı: $START_TR
-          Planlanan test bitişi: $END_TR
+          Tahmini test bitişi: $END_TR
           Alan adı: ilkoku.com
+          Profil: 25 -> 50 -> 100 -> 150 -> 200 -> 300 -> 400 -> 500 VU
+          Her basamak: 2 dakika; hata threshold'u aşılırsa sonraki basamak çalışmaz.
           ============================================================
-          EOF
+          EOF_META
 
-          printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s"}\n' \
+          printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s","profile":"25,50,100,150,200,300,400,500","stageDuration":"2m"}\n' \
             "$TEST_IP" "$START_TR" "$END_TR" > hostinger-waf-test-meta.json
 
-      - name: Wait for Hostinger and Cloudflare allowlists
+      - name: Wait for Cloudflare test rules
         env:
           WAIT_MINUTES: ${{ inputs.wait_minutes }}
         run: |
           set -euo pipefail
-          echo "Hostinger + Cloudflare allowlist işlemleri için $WAIT_MINUTES dakika bekleniyor."
+          echo "Cloudflare geçici test kurallarını runner IP için hazırlamanız amacıyla $WAIT_MINUTES dakika bekleniyor."
+          echo "Hostinger tarafında bu IP için allowlist varsayılmıyor."
           sleep "$((WAIT_MINUTES * 60))"
 
       - name: Verify runner IPv4 did not change
@@ -101,16 +104,16 @@ jobs:
             exit 1
           fi
 
-      - name: Verify allowlists with k6 user agent burst
+      - name: Verify Cloudflare path with k6 user agent burst
         run: |
           set -euo pipefail
           failures=0
           first_headers="$(mktemp)"
 
-          for i in $(seq 1 20); do
+          for i in $(seq 1 10); do
             headers="$(mktemp)"
             code="$(curl -sS --connect-timeout 10 --max-time 30 \
-              -A 'Grafana k6' \
+              -A 'Grafana k6/2.1.0' \
               -D "$headers" -o /dev/null -w '%{http_code}' \
               https://ilkoku.com/ || printf '000')"
 
@@ -127,10 +130,10 @@ jobs:
 
           server="$(grep -i '^server:' "$first_headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
           cf_ray="$(grep -i '^cf-ray:' "$first_headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
-          echo "Preflight summary failures=$failures/20 server=${server:-none} cf_ray=${cf_ray:-none} source_ip=$TEST_RUNNER_IPV4"
+          echo "Preflight summary failures=$failures/10 server=${server:-none} cf_ray=${cf_ray:-none} source_ip=$TEST_RUNNER_IPV4"
 
           if [ "$failures" -ne 0 ]; then
-            echo "Allowlist is not clean: $failures of 20 preflight requests were not HTTP 200. Stress test will not start."
+            echo "Preflight is not clean: $failures of 10 requests were not HTTP 200. Stress test will not start."
             exit 1
           fi
 
@@ -139,36 +142,106 @@ jobs:
           set -euo pipefail
           mkdir -p .k6-output
           chmod 0777 .k6-output
+          printf 'vus\ttotal\t200\t403\t429\t520\tother5xx\ttransport\ttimeout\tp95_200_ms\tp99_200_ms\tresult\n' > .k6-output/stepped-results.tsv
 
-      - name: Run Hostinger support 1000 VU stress profile
-        id: k6
+      - name: Run stepped production stress profile
+        id: stepped
         continue-on-error: true
         run: |
-          set -euo pipefail
-          docker run --rm \
-            -v "$PWD:/work" \
-            -w /work \
-            grafana/k6:latest \
-            run --summary-export=/work/.k6-output/hostinger-waf-summary.json tests/load/hostinger-support-1000.js
+          set -uo pipefail
+          levels=(25 50 100 150 200 300 400 500)
+          failed_level=""
 
-      - name: Upload WAF allowlist test evidence
+          metric_value() {
+            local file="$1"
+            local metric="$2"
+            local value="$3"
+            jq -r --arg metric "$metric" --arg value "$value" '.metrics[$metric].values[$value] // 0' "$file"
+          }
+
+          for vus in "${levels[@]}"; do
+            padded="$(printf '%03d' "$vus")"
+            summary="/work/.k6-output/stage-${padded}.json"
+
+            echo "============================================================"
+            echo "START STAGE: ${vus} VU / 2m"
+            echo "============================================================"
+
+            docker run --rm \
+              -e TARGET_VUS="$vus" \
+              -e TEST_DURATION="2m" \
+              -v "$PWD:/work" \
+              -w /work \
+              grafana/k6:latest \
+              run --summary-export="$summary" tests/load/hostinger-stepped-load.js
+            rc=$?
+
+            host_summary=".k6-output/stage-${padded}.json"
+            if [ ! -s "$host_summary" ]; then
+              echo "Missing summary for ${vus} VU. Stopping."
+              failed_level="$vus"
+              break
+            fi
+
+            total="$(metric_value "$host_summary" http_reqs count)"
+            c200="$(metric_value "$host_summary" status_200 count)"
+            c403="$(metric_value "$host_summary" status_403 count)"
+            c429="$(metric_value "$host_summary" status_429 count)"
+            c520="$(metric_value "$host_summary" status_520 count)"
+            c5xx="$(metric_value "$host_summary" status_other_5xx count)"
+            ctransport="$(metric_value "$host_summary" transport_errors count)"
+            ctimeout="$(metric_value "$host_summary" timeouts count)"
+            p95="$(metric_value "$host_summary" status_200_duration 'p(95)')"
+            p99="$(metric_value "$host_summary" status_200_duration 'p(99)')"
+
+            result="PASS"
+            if [ "$rc" -ne 0 ]; then
+              result="STOP"
+              failed_level="$vus"
+            fi
+
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$vus" "$total" "$c200" "$c403" "$c429" "$c520" "$c5xx" "$ctransport" "$ctimeout" "$p95" "$p99" "$result" \
+              | tee -a .k6-output/stepped-results.tsv
+
+            if [ -n "$failed_level" ]; then
+              echo "Threshold failed at ${vus} VU. Higher load levels will NOT run."
+              break
+            fi
+
+            echo "${vus} VU passed. Cooling down for 15 seconds before next level."
+            sleep 15
+          done
+
+          echo "============================================================"
+          column -t -s $'\t' .k6-output/stepped-results.tsv || cat .k6-output/stepped-results.tsv
+          echo "============================================================"
+
+          if [ -n "$failed_level" ]; then
+            echo "FAILED_LEVEL=$failed_level" >> "$GITHUB_ENV"
+            exit 1
+          fi
+
+      - name: Upload stepped stress evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: hostinger-waf-allowlist-stress-${{ github.run_id }}
+          name: hostinger-waf-stepped-stress-${{ github.run_id }}
           path: |
             hostinger-waf-test-meta.json
-            .k6-output/hostinger-waf-summary.json
+            .k6-output/stepped-results.tsv
+            .k6-output/stage-*.json
           if-no-files-found: warn
           retention-days: 7
 
-      - name: Preserve k6 threshold result
+      - name: Preserve stepped threshold result
         if: always()
         env:
-          K6_OUTCOME: ${{ steps.k6.outcome }}
+          STEPPED_OUTCOME: ${{ steps.stepped.outcome }}
         run: |
           set -euo pipefail
-          if [ "$K6_OUTCOME" != "success" ]; then
-            echo "k6 thresholds failed. See logs and uploaded summary artifact."
+          if [ "$STEPPED_OUTCOME" != "success" ]; then
+            echo "Stepped stress test stopped at the first failing load level: ${FAILED_LEVEL:-unknown} VU."
+            echo "See stepped-results.tsv and stage summary artifacts for 200/403/429/520/5xx/transport/timeout and 200-only p95/p99."
             exit 1
           fi

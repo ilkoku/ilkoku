@@ -29,7 +29,7 @@ jobs:
   stress:
     name: Boundary 30-45 VU production test
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
 
     steps:
       - name: Validate explicit confirmation
@@ -62,7 +62,7 @@ jobs:
           fi
 
           START_EPOCH=$(( $(date +%s) + WAIT_MINUTES * 60 ))
-          END_EPOCH=$(( START_EPOCH + 12 * 60 ))
+          END_EPOCH=$(( START_EPOCH + 17 * 60 ))
           START_TR="$(TZ=Europe/Istanbul date -d "@$START_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
           END_TR="$(TZ=Europe/Istanbul date -d "@$END_EPOCH" '+%d.%m.%Y %H:%M:%S %Z')"
 
@@ -72,17 +72,18 @@ jobs:
           ============================================================
           CLOUDFLARE TEST KURALI İÇİN RUNNER BİLGİSİ
           Test sunucusu genel IPv4: $TEST_IP
-          Planlanan test başlangıcı: $START_TR
+          Planlanan en erken test başlangıcı: $START_TR
           Tahmini test bitişi: $END_TR
           Alan adı: ilkoku.com
           Profil: 30 -> 35 -> 40 -> 45 VU
           Her basamak: 2 dakika.
+          Yük başlamadan önce 10 ardışık temiz HTTP 200 gerekir.
           İlk LiteSpeed CAPTCHA veya HTTP 429 görülürse test durur.
           Bilinen sonuç: 25 VU PASS, 50 VU CAPTCHA ile STOP.
           ============================================================
           EOF_META
 
-          printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s","profile":"30,35,40,45","stageDuration":"2m","knownLowerPass":25,"knownUpperFail":50,"stopOn":"LiteSpeed CAPTCHA or HTTP 429"}\n' \
+          printf '{"testRunnerIPv4":"%s","plannedStartTR":"%s","plannedEndTR":"%s","profile":"30,35,40,45","stageDuration":"2m","knownLowerPass":25,"knownUpperFail":50,"preflight":"10 consecutive clean HTTP 200 within 5 minutes","stopOn":"LiteSpeed CAPTCHA or HTTP 429"}\n' \
             "$TEST_IP" "$START_TR" "$END_TR" > hostinger-capacity-boundary-meta.json
 
       - name: Wait for Cloudflare test rule
@@ -105,49 +106,64 @@ jobs:
             exit 1
           fi
 
-      - name: Verify Cloudflare and LiteSpeed path
+      - name: Wait for 10 consecutive clean preflight responses
+        id: preflight
+        continue-on-error: true
         run: |
-          set -euo pipefail
-          failures=0
-          first_headers="$(mktemp)"
+          set -uo pipefail
+          deadline=$(( $(date +%s) + 300 ))
+          consecutive=0
+          attempt=0
+          mkdir -p k6-output
+          : > k6-output/preflight.log
 
-          for i in $(seq 1 10); do
+          while [ "$(date +%s)" -lt "$deadline" ]; do
+            attempt=$((attempt + 1))
             headers="$(mktemp)"
-            result="$(curl -L -sS --connect-timeout 10 --max-time 30 \
+            result="$(curl -L -sS --connect-timeout 8 --max-time 20 \
               -A 'Grafana k6/2.1.0' \
               -D "$headers" -o /dev/null -w '%{http_code}\t%{url_effective}' \
               https://ilkoku.com/ || printf '000\ttransport-error')"
             code="${result%%$'\t'*}"
             effective_url="${result#*$'\t'}"
-
-            if [ "$i" -eq 1 ]; then
-              cp "$headers" "$first_headers"
-            fi
-
-            echo "Preflight[$i] status=$code effective_url=$effective_url source_ip=$TEST_RUNNER_IPV4"
-            if [ "$code" != "200" ] || [[ "$effective_url" == *"/.lsrecap/recaptcha"* ]]; then
-              failures=$((failures + 1))
-            fi
+            server="$(grep -i '^server:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+            cf_ray="$(grep -i '^cf-ray:' "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
             rm -f "$headers"
+
+            clean=0
+            if [ "$code" = "200" ] && [[ "$effective_url" != *"/.lsrecap/recaptcha"* ]]; then
+              clean=1
+            fi
+
+            if [ "$clean" -eq 1 ]; then
+              consecutive=$((consecutive + 1))
+            else
+              consecutive=0
+            fi
+
+            line="Preflight[$attempt] status=$code effective_url=$effective_url consecutive_clean=$consecutive/10 server=${server:-none} cf_ray=${cf_ray:-none} source_ip=$TEST_RUNNER_IPV4"
+            echo "$line" | tee -a k6-output/preflight.log
+
+            if [ "$consecutive" -ge 10 ]; then
+              echo "Preflight PASS: 10 consecutive clean HTTP 200 responses."
+              exit 0
+            fi
+
+            sleep 2
           done
 
-          server="$(grep -i '^server:' "$first_headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
-          cf_ray="$(grep -i '^cf-ray:' "$first_headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
-          echo "Preflight summary failures=$failures/10 server=${server:-none} cf_ray=${cf_ray:-none} source_ip=$TEST_RUNNER_IPV4"
-
-          if [ "$failures" -ne 0 ]; then
-            echo "Preflight is not clean. CAPTCHA, non-200, or transport failure detected. Test will not start."
-            exit 1
-          fi
+          echo "Preflight FAILED: could not obtain 10 consecutive clean HTTP 200 responses within 5 minutes."
+          exit 1
 
       - name: Prepare evidence directory
+        if: steps.preflight.outcome == 'success'
         run: |
           set -euo pipefail
-          mkdir -p k6-output
           chmod 0777 k6-output
           printf 'vus\tresult\texit_code\n' > k6-output/boundary-results.tsv
 
       - name: Run capacity boundary profile
+        if: steps.preflight.outcome == 'success'
         id: boundary
         continue-on-error: true
         run: |
@@ -210,6 +226,7 @@ jobs:
           name: hostinger-capacity-boundary-${{ github.run_id }}
           path: |
             hostinger-capacity-boundary-meta.json
+            k6-output/preflight.log
             k6-output/boundary-results.tsv
             k6-output/stage-*.json
             k6-output/stage-*.log
@@ -219,12 +236,20 @@ jobs:
       - name: Preserve boundary result
         if: always()
         env:
+          PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
           BOUNDARY_OUTCOME: ${{ steps.boundary.outcome }}
         run: |
           set -euo pipefail
-          if [ "$BOUNDARY_OUTCOME" != "success" ]; then
-            echo "Capacity boundary reached at ${FAILED_LEVEL:-unknown} VU."
-            echo "See the uploaded stage log and summary for the exact CAPTCHA/429/latency metrics."
+
+          if [ "$PREFLIGHT_OUTCOME" != "success" ]; then
+            echo "PRECHECK_FAILED: 10 consecutive clean HTTP 200 responses were not obtained. No load stage was started."
             exit 1
           fi
+
+          if [ "$BOUNDARY_OUTCOME" != "success" ]; then
+            echo "CAPACITY_BOUNDARY: test stopped at ${FAILED_LEVEL:-unknown} VU."
+            echo "See the uploaded stage log and summary for CAPTCHA/429/latency metrics."
+            exit 1
+          fi
+
           echo "30, 35, 40 and 45 VU all passed. Known upper failure remains 50 VU."

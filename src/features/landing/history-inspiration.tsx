@@ -44,7 +44,7 @@ function CambridgeArtifact() {
   return (
     <svg viewBox="0 0 430 430" className="landing-history-art" aria-hidden="true" focusable="false">
       <rect x="45" y="30" width="330" height="340" rx="8" fill="#ecd9aa" stroke="#b88d54" strokeWidth="3" />
-      <text x="210" y="78" textAnchor="middle" fill="#55412d" fontFamily="Georgia, serif" fontSize="13" letterSpacing="2.4">TO THE KING'S MOST</text>
+      <text x="210" y="78" textAnchor="middle" fill="#55412d" fontFamily="Georgia, serif" fontSize="13" letterSpacing="2.4">{"TO THE KING'S MOST"}</text>
       <text x="210" y="96" textAnchor="middle" fill="#55412d" fontFamily="Georgia, serif" fontSize="13" letterSpacing="2.4">EXCELLENT MAJESTIE.</text>
       <rect x="88" y="122" width="71" height="86" fill="#6b5639" opacity=".92" />
       <text x="123" y="180" textAnchor="middle" fill="#e8d7af" fontFamily="Georgia, serif" fontSize="53">T</text>

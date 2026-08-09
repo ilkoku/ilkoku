@@ -47,38 +47,56 @@ function PapyrusArtifact() {
 
 function CharterArtifact() {
   return (
-    <svg className="landing-history-art" viewBox="0 0 320 220" aria-hidden="true" focusable="false">
-      <path d="M45 18h224l7 181-231 3-5-44 7-41-6-38 4-61Z" fill="#e0c99e" />
-      <path d="M60 35h193v143H60Z" fill="#f0dfbd" opacity=".78" />
-      <path d="M102 53h112M83 70h151M78 82h162M86 94h147M76 106h166M92 118h136M79 130h159M88 142h137" stroke="#66533d" strokeWidth="4" strokeLinecap="round" opacity=".7" />
-      <path d="M104 39h105" stroke="#66533d" strokeWidth="3" opacity=".55" />
-      <circle cx="220" cy="169" r="28" fill="#70402f" stroke="#4e2b22" strokeWidth="4" />
-      <circle cx="220" cy="169" r="18" fill="none" stroke="#aa765c" strokeWidth="2" opacity=".72" />
-      <path d="m210 190-20 29m39-28 20 26" stroke="#6d4938" strokeWidth="6" strokeLinecap="round" />
-      <text x="151" y="166" textAnchor="middle" fill="#63503b" fontSize="18" fontFamily="Georgia, serif" letterSpacing="4">1534</text>
+    <svg className="landing-history-art" viewBox="0 0 360 260" aria-hidden="true" focusable="false">
+      <path d="M42 15h271l7 223-278 3-5-55 7-49-6-47 4-75Z" fill="#dfc79a" />
+      <path d="M62 34h232v170H62Z" fill="#f0dfbd" opacity=".8" />
+      <text x="178" y="57" textAnchor="middle" fill="#63503b" fontSize="10" fontFamily="Georgia, serif" letterSpacing="2.2">TO THE KING'S MOST EXCELLENT MAIESTIE.</text>
+      <path d="M105 78h146M88 94h177M82 109h190M93 124h167M80 139h192M103 154h151M86 169h183" stroke="#66533d" strokeWidth="4" strokeLinecap="round" opacity=".7" />
+      <text x="164" y="193" textAnchor="middle" fill="#63503b" fontSize="18" fontFamily="Georgia, serif" letterSpacing="4">1534</text>
+      <circle cx="271" cy="200" r="31" fill="#70402f" stroke="#4e2b22" strokeWidth="4" />
+      <circle cx="271" cy="200" r="19" fill="none" stroke="#aa765c" strokeWidth="2" opacity=".72" />
+      <path d="m260 222-21 31m42-30 22 28" stroke="#6d4938" strokeWidth="6" strokeLinecap="round" />
     </svg>
   );
 }
 
 function FilmArtifact() {
   return (
-    <svg className="landing-history-art" viewBox="0 0 320 220" aria-hidden="true" focusable="false">
-      <rect x="18" y="25" width="284" height="170" rx="5" fill="#211f22" />
+    <svg className="landing-history-art" viewBox="0 0 420 250" aria-hidden="true" focusable="false">
+      <rect x="10" y="15" width="400" height="220" rx="5" fill="#211f22" />
       <g fill="#eee8dc">
-        {Array.from({ length: 9 }).map((_, index) => <rect key={`top-${index}`} x={30 + index * 31} y="33" width="17" height="10" rx="2" />)}
-        {Array.from({ length: 9 }).map((_, index) => <rect key={`bottom-${index}`} x={30 + index * 31} y="177" width="17" height="10" rx="2" />)}
+        {Array.from({ length: 12 }).map((_, index) => <rect key={`top-${index}`} x={22 + index * 32} y="24" width="17" height="11" rx="2" />)}
+        {Array.from({ length: 12 }).map((_, index) => <rect key={`bottom-${index}`} x={22 + index * 32} y="214" width="17" height="11" rx="2" />)}
       </g>
-      <rect x="35" y="52" width="250" height="116" fill="#d8d4ca" />
-      <path d="M36 142c48-25 90-34 131-27 38 7 76 20 118 15v38H35l1-26Z" fill="#8e8c86" />
-      <path d="M36 116c35-31 74-47 113-48 37-1 79 17 136 51v17c-57-15-109-17-151-7-34 8-65 20-98 36v-49Z" fill="#b7b4ab" />
-      <path d="M61 135h130" stroke="#4d4b49" strokeWidth="5" />
-      <path d="m80 126 52-24 48 5 35 27H80Z" fill="#4e4c4a" />
-      <circle cx="112" cy="137" r="13" fill="#252426" />
-      <circle cx="187" cy="137" r="13" fill="#252426" />
-      <path d="M229 93v56m18-43v43m17-30v30" stroke="#4e4c4a" strokeWidth="7" strokeLinecap="round" />
-      <circle cx="229" cy="81" r="9" fill="#4e4c4a" />
-      <circle cx="247" cy="95" r="8" fill="#4e4c4a" />
-      <circle cx="264" cy="108" r="8" fill="#4e4c4a" />
+      <rect x="25" y="45" width="370" height="158" fill="#d8d4ca" />
+      <path d="M25 171c59-31 111-43 162-35 45 7 95 29 208 22v45H25v-32Z" fill="#8e8c86" />
+      <path d="M25 135c43-39 94-61 145-62 53-2 119 24 225 72v24c-85-24-155-25-211-11-52 13-100 31-159 45v-68Z" fill="#b7b4ab" />
+      <path d="M70 163h150" stroke="#4d4b49" strokeWidth="6" />
+      <path d="m92 153 58-31 55 6 40 35H92Z" fill="#4e4c4a" />
+      <circle cx="132" cy="166" r="15" fill="#252426" />
+      <circle cx="218" cy="166" r="15" fill="#252426" />
+      <path d="M298 102v74m27-56v56m27-37v37" stroke="#4e4c4a" strokeWidth="8" strokeLinecap="round" />
+      <circle cx="298" cy="88" r="10" fill="#4e4c4a" />
+      <circle cx="325" cy="106" r="9" fill="#4e4c4a" />
+      <circle cx="352" cy="126" r="9" fill="#4e4c4a" />
+      <text x="334" y="37" fill="#d6b470" fontSize="12" fontFamily="Georgia, serif" letterSpacing="3">1895</text>
+    </svg>
+  );
+}
+
+function DeskProps() {
+  return (
+    <svg className="landing-history-props" viewBox="0 0 430 250" aria-hidden="true" focusable="false">
+      <path d="M8 76 120 42l57 142-111 40Z" fill="#382a20" opacity=".94" />
+      <path d="M17 84 111 55l47 119-93 33Z" fill="#514033" />
+      <path d="M45 115 102 99" stroke="#b38b52" strokeWidth="4" opacity=".6" />
+      <rect x="95" y="135" width="72" height="83" rx="12" fill="#151314" />
+      <rect x="111" y="115" width="40" height="29" rx="8" fill="#282124" />
+      <ellipse cx="131" cy="136" rx="35" ry="9" fill="#080808" opacity=".72" />
+      <path d="M160 206 371 142" stroke="#3c2b20" strokeWidth="13" strokeLinecap="round" />
+      <path d="m364 144 51-16-40 34Z" fill="#b18342" />
+      <path d="m375 151 25-13" stroke="#6d4b28" strokeWidth="2" />
+      <path d="M151 208 366 145" stroke="#9c6d37" strokeWidth="2" opacity=".7" />
     </svg>
   );
 }
@@ -102,6 +120,7 @@ export function HistoryInspiration() {
 
         <div className="landing-history__collage">
           <span className="landing-history__thread" aria-hidden="true" />
+          <DeskProps />
 
           <article className="landing-history-card landing-history-card--writer">
             <div className="landing-history-card__visual"><DiskArtifact /></div>
@@ -138,7 +157,7 @@ export function HistoryInspiration() {
             <div className="landing-history-card__copy">
               <span>1895 · HAYATA GEÇİR</span>
               <h3>Hikâye perdeye çıktı.</h3>
-              <strong>Hikâyeler artık yalnızca okunmuyordu.</strong>
+              <strong>Hikâyeler artık yalnızca okunmuyordu. İzlenmeye de başlandı.</strong>
               <p>Bir eser, başladığı yerde kalmak zorunda değildir.</p>
             </div>
           </article>

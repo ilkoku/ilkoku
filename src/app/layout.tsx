@@ -10,10 +10,7 @@ import "./landing-account-bubble.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ilkoku.com"),
-  title: {
-    default: tr.brand.name,
-    template: `%s | ${tr.brand.name}`,
-  },
+  title: tr.brand.name,
   description: tr.brand.tagline,
   openGraph: {
     type: "website",

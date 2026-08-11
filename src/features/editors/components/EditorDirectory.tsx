@@ -66,7 +66,7 @@ export function EditorDirectory() {
                   <div><dt>{editorsContent.directory.review}</dt><dd>{editor.completedReviews}</dd></div>
                   <div><dt>{editorsContent.directory.satisfaction}</dt><dd>%{editor.satisfaction}</dd></div>
                 </dl>
-                <Link className="button button--outline editor-card__link" href={`/editörler/${editor.slug}`}>
+                <Link className="button button--outline editor-card__link" href={`/editorler/${editor.slug}`}>
                   <span className="button__label">{editorsContent.directory.inspectProfile}</span>
                 </Link>
               </article>

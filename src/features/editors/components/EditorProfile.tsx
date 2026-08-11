@@ -13,7 +13,7 @@ export function EditorProfile({ editor }: EditorProfileProps) {
   return (
     <div className="editors-page editor-profile-page">
       <a className="editors-skip-link" href="#editor-profili">{editorsContent.profile.skip}</a>
-      <EditorsHeader backHref="/editörler" backLabel={editorsContent.profile.backLabel} />
+      <EditorsHeader backHref="/editorler" backLabel={editorsContent.profile.backLabel} />
 
       <main id="editor-profili">
         <section className="editor-profile-hero" aria-labelledby="editor-adi">
@@ -87,7 +87,7 @@ export function EditorProfile({ editor }: EditorProfileProps) {
         </div>
 
         <footer className="editor-profile-footer">
-          <Link href="/editörler">{editorsContent.profile.allEditors}</Link>
+          <Link href="/editorler">{editorsContent.profile.allEditors}</Link>
         </footer>
       </main>
     </div>

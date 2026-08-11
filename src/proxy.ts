@@ -3,8 +3,8 @@ import { readerWorkspaceRoles } from "@/features/auth/data";
 import type { UserRole } from "@/features/auth/types";
 import { getRequestSession } from "@/lib/auth/request-session";
 
-const publicEditorsPath = "/editörler";
-const internalEditorsPath = "/editorler";
+const legacyEditorsPath = "/editörler";
+const publicEditorsPath = "/editorler";
 const publisherPath = "/yayinevi";
 const publisherInvitationPath = "/yayinevi/davet";
 
@@ -25,8 +25,6 @@ const protectedPaths = [
   "/geri-bildirimler",
   "/yorumlarim",
   "/yayinevleri",
-  publicEditorsPath,
-  internalEditorsPath,
   "/yayinevi",
   "/rol-secimi",
 ];
@@ -51,8 +49,6 @@ const routeRoleRules: RouteRoleRule[] = [
   { approved: false, path: "/yorumlarim", roles: ["writer"] },
   { approved: false, path: "/yayinevleri", roles: ["writer"] },
   { approved: true, path: "/editor", roles: ["editor"] },
-  { approved: true, path: publicEditorsPath, roles: ["editor"] },
-  { approved: true, path: internalEditorsPath, roles: ["editor"] },
 ];
 
 function matchesPath(pathname: string, path: string) {
@@ -148,12 +144,7 @@ export async function proxy(request: NextRequest) {
 
     destination.pathname = "/giris";
     destination.search = "";
-    destination.searchParams.set(
-      "sonraki",
-      matchesPath(pathname, internalEditorsPath)
-        ? pathname.replace(internalEditorsPath, publicEditorsPath)
-        : pathname,
-    );
+    destination.searchParams.set("sonraki", pathname);
 
     if (!session.configured) {
       destination.searchParams.set("durum", "yapilandirma");
@@ -231,20 +222,17 @@ export async function proxy(request: NextRequest) {
   }
 
   /*
-   * Türkçe URL dışarıda korunur, uygulama içindeki gerçek klasöre rewrite edilir.
+   * Eski Türkçe karakterli editör URL'lerini tek canonical public URL'ye yönlendir.
    */
-  if (matchesPath(pathname, publicEditorsPath)) {
+  if (matchesPath(pathname, legacyEditorsPath)) {
     const destination = request.nextUrl.clone();
 
     destination.pathname = pathname.replace(
+      legacyEditorsPath,
       publicEditorsPath,
-      internalEditorsPath,
     );
 
-    return copySession(
-      session.response,
-      NextResponse.rewrite(destination),
-    );
+    return NextResponse.redirect(destination, 308);
   }
 
   return applyReadingSecurityHeaders(

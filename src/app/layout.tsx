@@ -9,8 +9,24 @@ import "./landing-header-pro.css";
 import "./landing-account-bubble.css";
 
 export const metadata: Metadata = {
-  title: tr.brand.name,
+  metadataBase: new URL("https://ilkoku.com"),
+  title: {
+    default: tr.brand.name,
+    template: `%s | ${tr.brand.name}`,
+  },
   description: tr.brand.tagline,
+  openGraph: {
+    type: "website",
+    locale: "tr_TR",
+    siteName: tr.brand.name,
+    title: tr.brand.name,
+    description: tr.brand.tagline,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: tr.brand.name,
+    description: tr.brand.tagline,
+  },
   icons: {
     icon: [
       { url: "/icons/ilkoku-32.png", sizes: "32x32", type: "image/png" },

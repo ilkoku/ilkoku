@@ -273,3 +273,23 @@ export async function completePublisherEditorReviewAction(
     return { message: "İnceleme tamamlanamadı.", status: "error" };
   }
 }
+
+export async function submitPublisherEditorReviewAction(
+  state: PublisherEditorActionState,
+  formData: FormData,
+): Promise<PublisherEditorActionState> {
+  const intent = text(formData, "intent");
+
+  if (intent === "save") {
+    return savePublisherEditorReviewDraftAction(state, formData);
+  }
+
+  if (intent === "complete") {
+    return completePublisherEditorReviewAction(state, formData);
+  }
+
+  return {
+    message: "Geçerli bir inceleme işlemi seçin.",
+    status: "error",
+  };
+}

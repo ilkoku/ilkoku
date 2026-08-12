@@ -257,14 +257,14 @@ export default function HomePage() {
             <h3>Destek</h3>
             <a href="mailto:destek@ilkoku.com">Yardım Merkezi</a>
             <a href="mailto:destek@ilkoku.com">Sıkça Sorulan Sorular</a>
-            <span>Kullanım Şartları</span>
-            <span>Gizlilik Politikası</span>
+            <Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link>
+            <Link href="/yasal/gizlilik-politikasi">Gizlilik Politikası</Link>
           </div>
           <div>
             <h3>Yasal</h3>
-            <span>KVKK</span>
-            <span>Çerez Politikası</span>
-            <span>Telif Hakkı Politikası</span>
+            <Link href="/yasal/kvkk">KVKK</Link>
+            <Link href="/yasal/cerez-politikasi">Çerez Politikası</Link>
+            <Link href="/yasal/telif-hakki-politikasi">Telif Hakkı Politikası</Link>
           </div>
           <div>
             <h3>Bizi Takip Edin</h3>

@@ -163,7 +163,7 @@ const legalPages: Record<string, LegalPage> = {
       {
         title: "1. Veri sorumlusunun kimliği",
         paragraphs: [
-          `Veri sorumlusu / platform işletmecisi: ${operatorIdentity}.`,
+          `Veri sorumlusu: ${operatorIdentity}.`,
           `İletişim e-postası: ${contactEmail}.`,
         ],
       },

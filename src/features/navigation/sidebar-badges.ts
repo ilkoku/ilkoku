@@ -113,6 +113,7 @@ export async function getSidebarBadges({
     const [
       newRequests,
       activeReviews,
+      publisherRequests,
       unreadNotifications,
     ] = await Promise.all([
       prisma.editorReviewAssignment.count({
@@ -146,6 +147,20 @@ export async function getSidebarBadges({
           },
         },
       }),
+      prisma.publisherEditorRequest.count({
+        where: {
+          OR: [
+            {
+              assignedEditorId: null,
+              status: "waiting",
+            },
+            {
+              assignedEditorId: userId,
+              status: "in_progress",
+            },
+          ],
+        },
+      }),
       prisma.notification.count({
         where: {
           readAt: null,
@@ -158,6 +173,12 @@ export async function getSidebarBadges({
       badges,
       "/editor/talepler",
       newRequests,
+    );
+
+    addBadge(
+      badges,
+      "/editor/yayinevi-talepleri",
+      publisherRequests,
     );
 
     addBadge(
@@ -214,6 +235,7 @@ export async function getSidebarBadges({
     const [
       pending,
       reviewing,
+      activeEditorRequests,
     ] = await Promise.all([
       prisma.publisherSubmission.count({
         where: {
@@ -231,6 +253,14 @@ export async function getSidebarBadges({
           status: "reviewing",
         },
       }),
+      prisma.publisherEditorRequest.count({
+        where: {
+          publisherId: membership.publisherId,
+          status: {
+            in: ["waiting", "in_progress"],
+          },
+        },
+      }),
     ]);
 
     addBadge(
@@ -243,6 +273,12 @@ export async function getSidebarBadges({
       badges,
       "/yayinevi?durum=reviewing",
       reviewing,
+    );
+
+    addBadge(
+      badges,
+      "/yayinevi/editor-talepleri",
+      activeEditorRequests,
     );
   }
 

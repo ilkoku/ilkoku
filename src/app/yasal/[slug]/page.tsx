@@ -16,8 +16,7 @@ type LegalPage = {
   sections: LegalSection[];
 };
 
-const operatorIdentity =
-  "YAYIN ÖNCESİ VERİ SORUMLUSU / PLATFORM İŞLETMECİSİ KİMLİĞİ EKLENECEK";
+const operatorIdentity = "Ersin UZUN";
 const contactEmail = "destek@ilkoku.com";
 
 const legalPages: Record<string, LegalPage> = {
@@ -166,7 +165,6 @@ const legalPages: Record<string, LegalPage> = {
         paragraphs: [
           `Veri sorumlusu / platform işletmecisi: ${operatorIdentity}.`,
           `İletişim e-postası: ${contactEmail}.`,
-          "Bu kimlik alanı, aydınlatma metni yayına alınmadan önce gerçek veya tüzel kişi veri sorumlusunun tam hukuki kimliğiyle tamamlanmalıdır.",
         ],
       },
       {

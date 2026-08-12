@@ -20,6 +20,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.7,
     },
+    ...[
+      "kullanim-sartlari",
+      "gizlilik-politikasi",
+      "kvkk",
+      "cerez-politikasi",
+      "telif-hakki-politikasi",
+    ].map((slug) => ({
+      url: `${baseUrl}/yasal/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.4,
+    })),
     ...editors.map((editor) => ({
       url: `${baseUrl}/editorler/${editor.slug}`,
       lastModified: new Date(),

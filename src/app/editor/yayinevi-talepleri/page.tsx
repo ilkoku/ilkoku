@@ -46,8 +46,8 @@ function RequestCard({
       <div className="publisher-editor-request-card__meta">
         <span>Talep: {dateLabel(item.createdAt)}</span>
         <span>Talebi açan: {item.requestedByName}</span>
-        {item.compensationEligible ? (
-          <span>Görev kaydı: ücret hakkına uygun</span>
+        {item.status === "completed" && item.compensationEligible ? (
+          <span>Ücret sistemi için uygun tamamlanmış görev kaydı</span>
         ) : null}
       </div>
 

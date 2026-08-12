@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PublisherEditorRequestForm } from "@/features/publisher-editor-requests/components/PublisherEditorRequestForm";
 import { togglePublisherWorkLikeAction } from "../engagement-actions";
 import { togglePublisherWorkFavoriteAction } from "../engagement-extended-actions";
 import type { PublisherWorkDiscoveryRow } from "../work-query";
@@ -32,8 +33,10 @@ function formatNumber(value: number) {
 }
 
 export function PublisherWorksTable({
+  activeEditorRequestWorkIds,
   canFavorite,
   canLike,
+  canRequestEditorReview,
   canShareEmail,
   canShareInternal,
   canViewPassport,
@@ -43,8 +46,10 @@ export function PublisherWorksTable({
   rows,
   shareMembers,
 }: {
+  activeEditorRequestWorkIds: string[];
   canFavorite: boolean;
   canLike: boolean;
+  canRequestEditorReview: boolean;
   canShareEmail: boolean;
   canShareInternal: boolean;
   canViewPassport: boolean;
@@ -56,6 +61,7 @@ export function PublisherWorksTable({
 }) {
   const liked = new Set(likedWorkIds);
   const favorited = new Set(favoriteWorkIds);
+  const activeEditorRequests = new Set(activeEditorRequestWorkIds);
 
   return (
     <div className="publisher-discovery-table-wrap">
@@ -222,6 +228,14 @@ export function PublisherWorksTable({
                     </Link>
                   ) : null}
 
+                  {canRequestEditorReview ? (
+                    <PublisherEditorRequestForm
+                      active={activeEditorRequests.has(work.id)}
+                      eligible={work.completion === "completed"}
+                      workId={work.id}
+                    />
+                  ) : null}
+
                   <PublisherDiscoveryShareForm
                     canShareEmail={canShareEmail}
                     canShareInternal={canShareInternal}
@@ -233,6 +247,7 @@ export function PublisherWorksTable({
 
                   {!canLike &&
                   !canFavorite &&
+                  !canRequestEditorReview &&
                   !canShareEmail &&
                   !canShareInternal ? (
                     <span className="publisher-discovery-table__permission">

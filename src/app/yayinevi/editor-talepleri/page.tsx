@@ -86,8 +86,8 @@ export default async function PublisherEditorRequestsPage() {
                   {item.assignedEditorName ? (
                     <span>Editör: {item.assignedEditorName}</span>
                   ) : null}
-                  {item.compensationEligible ? (
-                    <span>Görev kaydı: ücret hakkına uygun</span>
+                  {item.status === "completed" && item.compensationEligible ? (
+                    <span>Ücret sistemi için uygun tamamlanmış görev kaydı</span>
                   ) : null}
                 </div>
 

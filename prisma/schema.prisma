@@ -1211,3 +1211,56 @@ model PublisherDiscoveryShareRecipient {
   @@unique([shareId, membershipId])
   @@index([membershipId, readAt, createdAt])
 }
+
+enum PublisherEditorRequestStatus {
+  waiting
+  in_progress
+  completed
+  cancelled
+}
+
+enum PublisherEditorReviewStatus {
+  draft
+  completed
+}
+
+model PublisherEditorRequest {
+  id                   String                       @id @default(uuid()) @db.Char(36)
+  publisherId          String                       @db.Char(36)
+  workId               String                       @db.Char(36)
+  requestedById        String                       @db.Char(36)
+  assignedEditorId     String?                      @db.Char(36)
+  requestNote          String                       @db.VarChar(1000)
+  status               PublisherEditorRequestStatus @default(waiting)
+  activeKey            String?                      @unique @db.VarChar(80)
+  compensationEligible Boolean                      @default(true)
+  claimedAt            DateTime?
+  startedAt            DateTime?
+  completedAt          DateTime?
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  review               PublisherEditorReview?
+
+  @@index([publisherId, status, createdAt])
+  @@index([workId, status, createdAt])
+  @@index([requestedById, createdAt])
+  @@index([assignedEditorId, status, updatedAt])
+  @@index([status, createdAt])
+}
+
+model PublisherEditorReview {
+  id          String                      @id @default(uuid()) @db.Char(36)
+  requestId   String                      @unique @db.Char(36)
+  editorId    String                      @db.Char(36)
+  title       String                      @db.VarChar(160)
+  category    String                      @db.VarChar(60)
+  content     String                      @db.LongText
+  status      PublisherEditorReviewStatus @default(draft)
+  completedAt DateTime?
+  createdAt   DateTime                    @default(now())
+  updatedAt   DateTime                    @updatedAt
+  request     PublisherEditorRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([editorId, status, updatedAt])
+  @@index([status, updatedAt])
+}

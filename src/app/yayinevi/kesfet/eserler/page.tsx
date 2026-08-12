@@ -19,7 +19,9 @@ import {
   normalizePublisherWorkDiscoveryFilters,
   type PublisherWorkDiscoveryFilters,
 } from "@/features/publisher-discovery/work-query";
+import { getActivePublisherEditorRequestWorkIds } from "@/features/publisher-editor-requests/repository";
 import "@/features/publisher-discovery/publisher-discovery.css";
+import "@/features/publisher-editor-requests/publisher-editor-requests.css";
 
 export const metadata: Metadata = {
   description:
@@ -98,6 +100,7 @@ export default async function PublisherWorkDiscoveryPage({
     likedWorkIds,
     favoriteWorkIds,
     shareMembers,
+    activeEditorRequestWorkIds,
   ] = await Promise.all([
     getPublisherWorkLikeIds(
       access.publisherId,
@@ -110,6 +113,10 @@ export default async function PublisherWorkDiscoveryPage({
     getPublisherShareRecipientOptions(
       access.profile.id,
     ),
+    getActivePublisherEditorRequestWorkIds(
+      access.publisherId,
+      workIds,
+    ),
   ]);
   const canMutate =
     !access.profile.adminPublisherView;
@@ -119,6 +126,9 @@ export default async function PublisherWorkDiscoveryPage({
   const canFavorite =
     canMutate &&
     access.permissions.includes("favorite_work");
+  const canRequestEditorReview =
+    canMutate &&
+    access.permissions.includes("request_editor_review");
   const canShareInternal =
     canMutate &&
     access.permissions.includes("share_internal");
@@ -146,7 +156,7 @@ export default async function PublisherWorkDiscoveryPage({
     <AppShell profile={access.profile}>
       <div className="publisher-discovery">
         <EditorPageHeader
-          description="Herkese açık eserleri inceleyin; yetkinize göre beğenin, favorileyin, zorunlu notla paylaşın ve Eser Pasaportu'nu açın."
+          description="Herkese açık eserleri inceleyin; yetkinize göre beğenin, favorileyin, zorunlu notla paylaşın, tamamlanmış eser için İlkOku editör incelemesi isteyin ve Eser Pasaportu'nu açın."
           eyebrow={access.companyName}
           title="Eser Keşfet"
         />
@@ -266,9 +276,7 @@ export default async function PublisherWorkDiscoveryPage({
             </strong>
           </div>
           <p>
-            Beğeni, favori ve paylaşım işlemleri
-            yayınevi adına tekil kaydedilir ve
-            üyeye atanmış yetkilere göre açılır.
+            Beğeni, favori, paylaşım ve editör talebi işlemleri yayınevi adına kaydedilir ve üyeye atanmış yetkilere göre açılır.
           </p>
         </section>
 
@@ -282,8 +290,10 @@ export default async function PublisherWorkDiscoveryPage({
           </section>
         ) : (
           <PublisherWorksTable
+            activeEditorRequestWorkIds={activeEditorRequestWorkIds}
             canFavorite={canFavorite}
             canLike={canLike}
+            canRequestEditorReview={canRequestEditorReview}
             canShareEmail={canShareEmail}
             canShareInternal={canShareInternal}
             canViewPassport={canViewPassport}

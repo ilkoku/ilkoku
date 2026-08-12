@@ -25,10 +25,8 @@ export type PublisherPermission =
   | "share_email"
   | "view_shared_items"
   | "add_share_note"
+  | "request_editor_review"
   | "view_editor_requests"
-  | "route_editor_request"
-  | "claim_editor_assignment"
-  | "write_editor_review"
   | "view_authorized_passport"
   | "view_authorized_content"
   | "view_files"
@@ -61,10 +59,8 @@ export const customizablePublisherPermissionKeys = [
   "share_email",
   "view_shared_items",
   "add_share_note",
+  "request_editor_review",
   "view_editor_requests",
-  "route_editor_request",
-  "claim_editor_assignment",
-  "write_editor_review",
   "view_authorized_passport",
   "view_authorized_content",
   "view_files",
@@ -112,12 +108,10 @@ export const publisherPermissionGroups = [
   },
   {
     id: "editorial",
-    title: "Editörlük",
+    title: "İlkOku editör talepleri",
     permissions: [
+      "request_editor_review",
       "view_editor_requests",
-      "route_editor_request",
-      "claim_editor_assignment",
-      "write_editor_review",
     ],
   },
   {
@@ -145,7 +139,6 @@ export const publisherPermissionGroups = [
   permissions: readonly PublisherPermission[];
 }[];
 
-
 const rolePermissions: Record<
   PublisherMemberRole,
   ReadonlySet<PublisherPermission>
@@ -165,8 +158,8 @@ const rolePermissions: Record<
     "share_email",
     "view_shared_items",
     "add_share_note",
+    "request_editor_review",
     "view_editor_requests",
-    "route_editor_request",
     "view_authorized_passport",
     "view_authorized_content",
     "view_files",
@@ -182,8 +175,8 @@ const rolePermissions: Record<
     "share_internal",
     "view_shared_items",
     "add_share_note",
+    "request_editor_review",
     "view_editor_requests",
-    "route_editor_request",
     "view_authorized_passport",
     "view_authorized_content",
     "view_files",
@@ -192,8 +185,6 @@ const rolePermissions: Record<
 
   editorial: new Set([
     "view_shared_items",
-    "claim_editor_assignment",
-    "write_editor_review",
     "view_authorized_passport",
     "view_authorized_content",
     "view_files",
@@ -349,14 +340,10 @@ export const publisherPermissionLabels:
       "Kendisiyle paylaşılan kayıtları görme",
     add_share_note:
       "Paylaşım notu ekleme",
+    request_editor_review:
+      "Tamamlanmış eser için İlkOku editör incelemesi isteme",
     view_editor_requests:
-      "Editör talebi isteyen eserleri görme",
-    route_editor_request:
-      "Editör talebini ekip editörüne yönlendirme",
-    claim_editor_assignment:
-      "Editör görevini alma",
-    write_editor_review:
-      "Editör incelemesi hazırlama",
+      "Yayınevinin İlkOku editör taleplerini ve raporlarını görme",
     view_authorized_passport:
       "Yetki verilen Eser Pasaportu'nu görme",
     view_authorized_content:

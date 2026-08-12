@@ -7,7 +7,7 @@ CREATE TABLE `PublisherEditorRequest` (
   `requestNote` VARCHAR(1000) NOT NULL,
   `status` ENUM('waiting', 'in_progress', 'completed', 'cancelled') NOT NULL DEFAULT 'waiting',
   `activeKey` VARCHAR(80) NULL,
-  `compensationEligible` BOOLEAN NOT NULL DEFAULT false,
+  `compensationEligible` BOOLEAN NOT NULL DEFAULT true,
   `claimedAt` DATETIME(3) NULL,
   `startedAt` DATETIME(3) NULL,
   `completedAt` DATETIME(3) NULL,

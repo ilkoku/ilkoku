@@ -118,6 +118,30 @@ async function writeLocalOutbox(
   };
 }
 
+function getSmtpPassword() {
+  const encoded =
+    process.env
+      .SMTP_PASSWORD_B64?.trim();
+
+  if (encoded) {
+    const decoded =
+      Buffer.from(
+        encoded,
+        "base64",
+      ).toString("utf8");
+
+    if (!decoded) {
+      throw new Error(
+        "SMTP_PASSWORD_B64_INVALID",
+      );
+    }
+
+    return decoded;
+  }
+
+  return process.env.SMTP_PASSWORD;
+}
+
 async function sendWithSmtp(
   input: SendEmailInput,
 ) {
@@ -134,7 +158,7 @@ async function sendWithSmtp(
     process.env.SMTP_USER?.trim();
 
   const password =
-    process.env.SMTP_PASSWORD;
+    getSmtpPassword();
 
   if (
     !host ||

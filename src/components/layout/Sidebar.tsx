@@ -112,6 +112,9 @@ function filterPublisherNavigation(
     permissions.includes("favorite_author");
   const canUseFollowing = permissions.includes("follow_author");
   const canViewSharedItems = permissions.includes("view_shared_items");
+  const canUseEditorRequests =
+    permissions.includes("request_editor_review") ||
+    permissions.includes("view_editor_requests");
   const canUseDiscovery =
     canDiscoverWorks ||
     canDiscoverAuthors ||
@@ -122,7 +125,9 @@ function filterPublisherNavigation(
 
   return nodes.filter((node) => {
     if (isHeading(node)) {
-      return node.label !== "KEŞİF" || canUseDiscovery;
+      if (node.label === "KEŞİF") return canUseDiscovery;
+      if (node.label === "EDİTORYAL") return canUseEditorRequests;
+      return true;
     }
 
     if (node.href === "/yayinevi/kesfet/eserler") {
@@ -147,6 +152,10 @@ function filterPublisherNavigation(
 
     if (node.href === "/yayinevi/paylasilanlar") {
       return canViewSharedItems;
+    }
+
+    if (node.href === "/yayinevi/editor-talepleri") {
+      return canUseEditorRequests;
     }
 
     return true;

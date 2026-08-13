@@ -1,3 +1,5 @@
+import { PublishedFaqList } from "@/components/content/PublishedFaqList";
+
 export default function Page() {
   return (
     <section className="content-editor-page">
@@ -12,6 +14,9 @@ export default function Page() {
           <label><span>Cevap</span><textarea name="answer" required rows={8} maxLength={4000} /></label>
           <div className="content-form-actions"><button type="submit">Yayınla</button></div>
         </form>
+      </div>
+      <div className="content-panel" style={{ marginTop: "1rem" }}>
+        <PublishedFaqList />
       </div>
     </section>
   );

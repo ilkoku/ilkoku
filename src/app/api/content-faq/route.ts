@@ -1,4 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
 type Row = { contentKey: string; valueJson: string };
@@ -21,4 +23,31 @@ export async function GET() {
   } catch {
     return NextResponse.json({ items: [] });
   }
+}
+
+export async function POST(request: Request) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") return NextResponse.json({ ok: false }, { status: 403 });
+
+  const body = await request.json().catch(() => ({}));
+  const question = String(body?.question ?? "").trim().slice(0, 300);
+  const answer = String(body?.answer ?? "").trim().slice(0, 4000);
+  if (!question || !answer) return NextResponse.json({ ok: false }, { status: 400 });
+
+  const id = randomUUID();
+  const payload = JSON.stringify({
+    id,
+    question,
+    answer,
+    category: String(body?.category ?? "Genel").trim().slice(0, 80) || "Genel",
+    audience: String(body?.audience ?? "all").trim().slice(0, 40) || "all",
+    position: Number.isFinite(Number(body?.position)) ? Number(body.position) : 0,
+  });
+
+  await prisma.$executeRaw`
+    INSERT INTO SiteContent (id, namespace, contentKey, valueJson, valueType, status, updatedById, createdAt, updatedAt)
+    VALUES (${id}, 'faq', ${`item_${id}`}, ${payload}, 'json', 'published', ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
+  `;
+
+  return NextResponse.json({ ok: true });
 }

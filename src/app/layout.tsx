@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { tr } from "@/content";
 import "./globals.css";
 import "./landing-theme.css";
@@ -37,7 +38,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr" data-scroll-behavior="smooth">
-      <body>{children}</body>
+      <body>
+        {children}
+        <PublicCmsHydrator />
+      </body>
     </html>
   );
 }

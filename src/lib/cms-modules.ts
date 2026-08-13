@@ -11,7 +11,7 @@ export const cmsModules: CmsModule[] = [
   { href: "/icerik/ana-sayfa", label: "Ana Sayfa", description: "Hero, bölümler, CTA ve footer", group: "Site", enabled: true },
   { href: "/icerik/sayfalar", label: "Sayfalar", description: "Kurumsal ve bilgilendirme sayfaları", group: "Site", enabled: true },
   { href: "/icerik/menuler", label: "Menüler & Footer", description: "Navigasyon, linkler ve footer alanları", group: "Site", enabled: true },
-  { href: "/icerik/yasal", label: "Yasal Sayfalar", description: "KVKK, gizlilik, çerez ve telif metinleri", group: "Site", enabled: false },
+  { href: "/icerik/yasal", label: "Yasal Sayfalar", description: "KVKK, gizlilik, çerez ve telif metinleri", group: "Site", enabled: true },
   { href: "/icerik/medya", label: "Medya", description: "Görseller, dosyalar ve alt metinler", group: "İçerik", enabled: false },
   { href: "/icerik/sss", label: "SSS & Yardım", description: "Rol bazlı yardım ve sık sorulan sorular", group: "İçerik", enabled: false },
   { href: "/icerik/duyurular", label: "Duyurular", description: "Platform ve bakım duyuruları", group: "İçerik", enabled: false },

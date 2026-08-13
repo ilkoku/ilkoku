@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { PublicDocumentHydrator } from "@/components/content/PublicDocumentHydrator";
 
 function renderHeroTitle(element: HTMLElement, title: string) {
   const lines = title
@@ -62,5 +63,5 @@ export function PublicCmsHydrator() {
     };
   }, []);
 
-  return null;
+  return <PublicDocumentHydrator />;
 }

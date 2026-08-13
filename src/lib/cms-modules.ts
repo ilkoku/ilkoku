@@ -20,6 +20,6 @@ export const cmsModules: CmsModule[] = [
   { href: "/icerik/formlar", label: "Formlar & Talepler", description: "Kurumsal formlar ve gelen talepler", group: "Büyüme", enabled: false },
   { href: "/icerik/yonlendirmeler", label: "Yönlendirmeler", description: "Eski URL ve 301 yönlendirme kuralları", group: "Büyüme", enabled: false },
   { href: "/icerik/diller", label: "Dil Altyapısı", description: "Gelecekte çok dil için içerik sözleşmesi", group: "Büyüme", enabled: false },
-  { href: "/icerik/gecmis", label: "Değişiklik Geçmişi", description: "Revision ve yayın hareketleri", group: "Sistem", enabled: false },
+  { href: "/icerik/gecmis", label: "Değişiklik Geçmişi", description: "Revision ve yayın hareketleri", group: "Sistem", enabled: true },
   { href: "/icerik/ayarlar", label: "İçerik Ayarları", description: "CMS davranış ve yayın ayarları", group: "Sistem", enabled: false },
 ];

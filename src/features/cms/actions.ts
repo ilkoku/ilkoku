@@ -20,22 +20,20 @@ async function requireAdmin() {
   return user;
 }
 
-export async function saveHomepageHeroAction(formData: FormData) {
-  const user = await requireAdmin();
-  const title = String(formData.get("title") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-
-  if (!title || !description) return;
-
-  const valueJson = JSON.stringify({ title, description });
+async function saveHomepageSection(
+  userId: string,
+  contentKey: string,
+  value: Record<string, string>,
+) {
+  const valueJson = JSON.stringify(value);
 
   await prisma.$executeRaw`
     INSERT INTO SiteContent (
       id, namespace, contentKey, valueJson, valueType, status,
       updatedById, createdAt, updatedAt
     ) VALUES (
-      ${randomUUID()}, 'homepage', 'hero', ${valueJson}, 'json', 'draft',
-      ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+      ${randomUUID()}, 'homepage', ${contentKey}, ${valueJson}, 'json', 'draft',
+      ${userId}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
     )
     ON DUPLICATE KEY UPDATE
       valueJson = VALUES(valueJson),
@@ -48,19 +46,111 @@ export async function saveHomepageHeroAction(formData: FormData) {
   revalidatePath("/icerik/ana-sayfa");
 }
 
-export async function publishHomepageHeroAction() {
-  const user = await requireAdmin();
-
+async function publishHomepageSection(userId: string, contentKey: string) {
   await prisma.$executeRaw`
     UPDATE SiteContent
     SET status = 'published',
       publishedAt = CURRENT_TIMESTAMP(3),
-      updatedById = ${user.id},
+      updatedById = ${userId},
       updatedAt = CURRENT_TIMESTAMP(3)
     WHERE namespace = 'homepage'
-      AND contentKey = 'hero'
+      AND contentKey = ${contentKey}
   `;
 
   revalidatePath("/");
   revalidatePath("/icerik/ana-sayfa");
+}
+
+function field(formData: FormData, name: string, maxLength: number) {
+  return String(formData.get(name) ?? "").trim().slice(0, maxLength);
+}
+
+export async function saveHomepageHeroAction(formData: FormData) {
+  const user = await requireAdmin();
+  const title = field(formData, "title", 220);
+  const description = field(formData, "description", 1000);
+  const primaryCtaLabel = field(formData, "primaryCtaLabel", 80);
+  const primaryCtaHref = field(formData, "primaryCtaHref", 300);
+  const secondaryCtaLabel = field(formData, "secondaryCtaLabel", 80);
+  const secondaryCtaHref = field(formData, "secondaryCtaHref", 300);
+
+  if (!title || !description) return;
+
+  await saveHomepageSection(user.id, "hero", {
+    title,
+    description,
+    primaryCtaLabel,
+    primaryCtaHref,
+    secondaryCtaLabel,
+    secondaryCtaHref,
+  });
+}
+
+export async function publishHomepageHeroAction() {
+  const user = await requireAdmin();
+  await publishHomepageSection(user.id, "hero");
+}
+
+export async function saveHomepageRolesAction(formData: FormData) {
+  const user = await requireAdmin();
+  const eyebrow = field(formData, "eyebrow", 120);
+  const title = field(formData, "title", 220);
+  const description = field(formData, "description", 700);
+  if (!title) return;
+  await saveHomepageSection(user.id, "roles", { eyebrow, title, description });
+}
+
+export async function publishHomepageRolesAction() {
+  const user = await requireAdmin();
+  await publishHomepageSection(user.id, "roles");
+}
+
+export async function saveHomepagePassportAction(formData: FormData) {
+  const user = await requireAdmin();
+  const eyebrow = field(formData, "eyebrow", 120);
+  const title = field(formData, "title", 260);
+  const description = field(formData, "description", 1200);
+  const ctaLabel = field(formData, "ctaLabel", 80);
+  const ctaHref = field(formData, "ctaHref", 300);
+  if (!title || !description) return;
+  await saveHomepageSection(user.id, "passport", {
+    eyebrow,
+    title,
+    description,
+    ctaLabel,
+    ctaHref,
+  });
+}
+
+export async function publishHomepagePassportAction() {
+  const user = await requireAdmin();
+  await publishHomepageSection(user.id, "passport");
+}
+
+export async function saveHomepageWhyAction(formData: FormData) {
+  const user = await requireAdmin();
+  const eyebrow = field(formData, "eyebrow", 120);
+  const title = field(formData, "title", 220);
+  const description = field(formData, "description", 700);
+  if (!title) return;
+  await saveHomepageSection(user.id, "why", { eyebrow, title, description });
+}
+
+export async function publishHomepageWhyAction() {
+  const user = await requireAdmin();
+  await publishHomepageSection(user.id, "why");
+}
+
+export async function saveHomepageFooterAction(formData: FormData) {
+  const user = await requireAdmin();
+  const slogan = field(formData, "slogan", 220);
+  const supportEmail = field(formData, "supportEmail", 220);
+  const copyright = field(formData, "copyright", 300);
+  if (!slogan) return;
+  await saveHomepageSection(user.id, "footer", { slogan, supportEmail, copyright });
+}
+
+export async function publishHomepageFooterAction() {
+  const user = await requireAdmin();
+  await publishHomepageSection(user.id, "footer");
 }

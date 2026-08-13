@@ -7,4 +7,6 @@ export type ContentNavItem = {
   group: "Site" | "İçerik" | "Büyüme" | "Sistem";
 };
 
-export const contentNavigation: ContentNavItem[] = cmsModules;
+export const contentNavigation: ContentNavItem[] = cmsModules
+  .filter((item) => item.enabled)
+  .map(({ href, label, description, group }) => ({ href, label, description, group }));

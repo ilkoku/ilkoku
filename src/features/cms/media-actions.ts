@@ -2,16 +2,8 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { requireCmsEdit } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
-
-async function requireAdmin() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/giris?sonraki=/icerik/medya");
-  if (user.role !== "admin") redirect("/erisim-reddedildi?kaynak=icerik");
-  return user;
-}
 
 function value(formData: FormData, key: string, max = 500) {
   return String(formData.get(key) ?? "").trim().slice(0, max);
@@ -24,7 +16,7 @@ function safeMediaUrl(input: string) {
 }
 
 export async function createMediaAssetAction(formData: FormData) {
-  const user = await requireAdmin();
+  const { user } = await requireCmsEdit();
   const id = randomUUID();
   const mediaUrl = safeMediaUrl(value(formData, "url"));
   const title = value(formData, "title", 180);
@@ -55,7 +47,7 @@ export async function createMediaAssetAction(formData: FormData) {
 }
 
 export async function archiveMediaAssetAction(formData: FormData) {
-  const user = await requireAdmin();
+  const { user } = await requireCmsEdit();
   const contentKey = value(formData, "contentKey", 200);
   if (!contentKey.startsWith("asset_")) return;
 

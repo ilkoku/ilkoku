@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { PublicDocumentHydrator } from "@/components/content/PublicDocumentHydrator";
+import { PublicFooterHydrator } from "@/components/content/PublicFooterHydrator";
 
 function renderHeroTitle(element: HTMLElement, title: string) {
   const lines = title
@@ -63,5 +64,10 @@ export function PublicCmsHydrator() {
     };
   }, []);
 
-  return <PublicDocumentHydrator />;
+  return (
+    <>
+      <PublicDocumentHydrator />
+      <PublicFooterHydrator />
+    </>
+  );
 }

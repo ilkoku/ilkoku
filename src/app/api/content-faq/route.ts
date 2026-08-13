@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
+import { isSameOriginRequest } from "@/lib/same-origin";
 
 type Row = { contentKey: string; valueJson: string };
 
@@ -28,6 +29,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") return NextResponse.json({ ok: false }, { status: 403 });
+  if (!isSameOriginRequest(request)) return NextResponse.json({ ok: false }, { status: 403 });
 
   const formData = await request.formData();
   const question = String(formData.get("question") ?? "").trim().slice(0, 300);

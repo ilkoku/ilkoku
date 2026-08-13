@@ -21,11 +21,6 @@ export const contentNavigation: ContentNavItem[] = [
     description: "Kurumsal ve bilgilendirme sayfaları",
   },
   {
-    href: "/icerik/yasal",
-    label: "Yasal Sayfalar",
-    description: "KVKK, gizlilik ve diğer yasal metinler",
-  },
-  {
     href: "/icerik/seo",
     label: "SEO",
     description: "Başlık, açıklama ve indeks ayarları",

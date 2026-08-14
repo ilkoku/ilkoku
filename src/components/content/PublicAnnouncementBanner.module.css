@@ -1,0 +1,50 @@
+.stack {
+  position: relative;
+  z-index: 60;
+  display: grid;
+  gap: 0;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.72rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: #2f2851;
+  color: #fff;
+}
+
+.notice strong {
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.notice span {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  opacity: 0.88;
+}
+
+.info {
+  background: #2f2851;
+}
+
+.warning {
+  background: #684b14;
+}
+
+.maintenance {
+  background: #3c3346;
+}
+
+@media (max-width: 720px) {
+  .notice {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.2rem;
+    text-align: left;
+  }
+}

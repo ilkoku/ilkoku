@@ -1,7 +1,21 @@
 import { prisma } from "@/lib/prisma";
 
 type Row = { valueJson: string };
-type Faq = { question?: string; answer?: string; category?: string; audience?: string; position?: number };
+type Faq = {
+  question?: string;
+  answer?: string;
+  category?: string;
+  audience?: string;
+  position?: number;
+};
+
+const audienceLabels: Record<string, string> = {
+  all: "Herkes için",
+  reader: "Okuyucular için",
+  writer: "Yazarlar için",
+  editor: "Editörler için",
+  publisher: "Yayınevleri için",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +29,20 @@ export default async function HelpPage() {
       ORDER BY updatedAt ASC
       LIMIT 300
     `;
-    items = rows.map((row) => {
-      try { return JSON.parse(row.valueJson) as Faq; } catch { return {}; }
-    }).filter((item) => item.question && item.answer)
-      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+    items = rows
+      .map((row) => {
+        try {
+          return JSON.parse(row.valueJson) as Faq;
+        } catch {
+          return {};
+        }
+      })
+      .filter((item) => item.question && item.answer)
+      .sort((a, b) => {
+        const positionDiff = (a.position ?? 0) - (b.position ?? 0);
+        if (positionDiff !== 0) return positionDiff;
+        return (a.category || "Genel").localeCompare(b.category || "Genel", "tr");
+      });
   } catch {
     items = [];
   }
@@ -45,7 +69,12 @@ export default async function HelpPage() {
               {items.filter((item) => (item.category || "Genel") === category).map((item, index) => (
                 <details key={`${category}-${index}`} style={{ padding: "1rem 1.15rem", background: "white", border: "1px solid #e8e5f0", borderRadius: ".9rem" }}>
                   <summary style={{ cursor: "pointer", fontWeight: 750 }}>{item.question}</summary>
-                  <p style={{ margin: ".8rem 0 0", color: "#5f5a6c", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{item.answer}</p>
+                  <div style={{ marginTop: ".8rem" }}>
+                    <span style={{ display: "inline-block", marginBottom: ".35rem", color: "#6847e8", fontSize: ".78rem", fontWeight: 750 }}>
+                      {audienceLabels[item.audience || "all"] || audienceLabels.all}
+                    </span>
+                    <p style={{ margin: 0, color: "#5f5a6c", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{item.answer}</p>
+                  </div>
                 </details>
               ))}
             </div>

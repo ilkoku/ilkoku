@@ -7,6 +7,7 @@ import {
   unpublishFaqAction,
 } from "@/features/cms/faq-actions";
 import { requireCmsManager } from "@/lib/cms-access";
+import { getCmsDraftsByPrefix } from "@/lib/cms-drafts";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import { cmsLocaleNamespace, normalizeCmsLocale } from "@/lib/cms-locales";
 import { prisma } from "@/lib/prisma";
@@ -46,32 +47,43 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
     `;
   } catch { rows = []; }
 
-  const items = rows.map((row) => ({ ...row, item: parseFaq(row.valueJson) }));
+  const draftRows = await getCmsDraftsByPrefix<FaqItem>(`faq:${locale}:`).catch(() => []);
+  const draftMap = new Map(draftRows.map((draft) => [draft.contentKey.replace(`faq:${locale}:`, ""), draft]));
+  const items = rows.map((row) => {
+    const staged = draftMap.get(row.contentKey);
+    return {
+      ...row,
+      item: staged?.payload ?? parseFaq(row.valueJson),
+      hasPendingDraft: Boolean(staged),
+      displayUpdatedAt: staged?.updatedAt ?? row.updatedAt,
+    };
+  });
   const publishedCount = items.filter((item) => item.status === "published").length;
-  const draftCount = items.filter((item) => item.status === "draft").length;
+  const pendingDraftCount = items.filter((item) => item.hasPendingDraft || item.status === "draft").length;
   const archivedCount = items.filter((item) => item.status === "archived").length;
 
   return (
     <section className="content-editor-page">
-      <div className="content-page-heading"><div><span>İçerik · {locale.toUpperCase()}</span><h1>SSS & Yardım</h1><p>Her dilin Yardım Merkezi kayıtları birbirinden bağımsızdır.</p></div></div>
+      <div className="content-page-heading"><div><span>İçerik · {locale.toUpperCase()}</span><h1>SSS & Yardım</h1><p>Yayındaki SSS değişmeden kalır; düzenlemeler ayrı taslak olarak hazırlanır ve yalnız yayın komutuyla canlıya aktarılır.</p></div></div>
 
-      <div className="content-form-actions" style={{ marginBottom: "1rem" }}>
+      <div className="content-form-actions" style={{ marginBottom: "1rem", flexWrap: "wrap" }}>
         <Link href="/icerik/sss?dil=tr">Türkçe</Link>
         <Link href="/icerik/sss?dil=en">English</Link>
+        <Link href={`/icerik/onizleme/sss?dil=${locale}`}>Taslakları Önizle ↗</Link>
         {isEn ? <Link href="/icerik/diller">Dil Yönetimi</Link> : null}
       </div>
 
       {isEn && !localeEnabled ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }}>
           <strong>İngilizce public yayın kapalı.</strong>
-          <p>EN SSS kayıtları taslak olarak hazırlanabilir; dil açılmadan yeni bir kayıt yayınlanamaz.</p>
+          <p>EN SSS kayıtları taslak olarak hazırlanabilir ve önizlenebilir; dil açılmadan yayınlanamaz.</p>
         </div>
       ) : null}
 
       <div className="content-metric-grid">
         <article className="content-metric-card"><span>Toplam</span><strong>{items.length}</strong><small>{locale.toUpperCase()} SSS</small></article>
         <article className="content-metric-card"><span>Yayında</span><strong>{publishedCount}</strong><small>{localeEnabled ? "Public Yardım Merkezi" : "Public dil kapalı"}</small></article>
-        <article className="content-metric-card"><span>Taslak</span><strong>{draftCount}</strong><small>Yayın bekliyor</small></article>
+        <article className="content-metric-card"><span>Bekleyen taslak</span><strong>{pendingDraftCount}</strong><small>Canlıyı değiştirmiyor</small></article>
         <article className="content-metric-card"><span>Arşiv</span><strong>{archivedCount}</strong><small>Publicte görünmüyor</small></article>
       </div>
 
@@ -91,29 +103,29 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
       </div>
 
       <div style={{ marginTop: "1rem", display: "grid", gap: "1rem" }}>
-        {items.length === 0 ? <div className="content-panel"><div className="content-empty-state"><strong>Bu dilde henüz SSS yok.</strong><p>İlk taslağı yukarıdaki formdan oluşturabilirsin.</p></div></div> : items.map(({ contentKey, status, updatedAt, item }, index) => {
-          const canChangeLive = status !== "published" || access.canPublish;
+        {items.length === 0 ? <div className="content-panel"><div className="content-empty-state"><strong>Bu dilde henüz SSS yok.</strong><p>İlk taslağı yukarıdaki formdan oluşturabilirsin.</p></div></div> : items.map(({ contentKey, status, displayUpdatedAt, item, hasPendingDraft }, index) => {
+          const canEdit = status !== "archived";
           const canArchive = status !== "published" || access.canPublish;
-          const hiddenLocale = <input type="hidden" name="locale" value={locale} />;
+          const visibleStatus = status === "published" && hasPendingDraft ? "Yayında · taslak hazır" : statusLabels[status];
           return (
             <div className="content-panel" key={contentKey}>
-              <div className="content-section-heading"><div><span>{String(index + 2).padStart(2, "0")}</span><h2>{item.question || "İsimsiz SSS"}</h2></div><p>{statusLabels[status]} · {item.category || (isEn ? "General" : "Genel")} · {audienceLabels[item.audience || "all"] || "Herkes"} · {formatDate(updatedAt)}</p></div>
+              <div className="content-section-heading"><div><span>{String(index + 2).padStart(2, "0")}</span><h2>{item.question || "İsimsiz SSS"}</h2></div><p>{visibleStatus} · {item.category || (isEn ? "General" : "Genel")} · {audienceLabels[item.audience || "all"] || "Herkes"} · {formatDate(displayUpdatedAt)}</p></div>
               <form className="content-form" action={saveFaqAction}>
-                {hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} />
-                <label><span>Soru</span><input name="question" required maxLength={300} defaultValue={item.question || ""} disabled={!canChangeLive} /></label>
-                <label><span>Cevap</span><textarea name="answer" required rows={6} maxLength={4000} defaultValue={item.answer || ""} disabled={!canChangeLive} /></label>
+                <input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} />
+                <label><span>Soru</span><input name="question" required maxLength={300} defaultValue={item.question || ""} disabled={!canEdit} /></label>
+                <label><span>Cevap</span><textarea name="answer" required rows={6} maxLength={4000} defaultValue={item.answer || ""} disabled={!canEdit} /></label>
                 <div className="content-form-grid">
-                  <label><span>Kategori</span><input name="category" maxLength={80} defaultValue={item.category || (isEn ? "General" : "Genel")} disabled={!canChangeLive} /></label>
-                  <label><span>Hedef kitle</span><select name="audience" defaultValue={item.audience || "all"} disabled={!canChangeLive}><option value="all">Herkes</option><option value="reader">Okuyucu</option><option value="writer">Yazar</option><option value="editor">Editör</option><option value="publisher">Yayınevi</option></select></label>
-                  <label><span>Sıra</span><input name="position" type="number" min={0} max={9999} defaultValue={item.position ?? 0} disabled={!canChangeLive} /></label>
+                  <label><span>Kategori</span><input name="category" maxLength={80} defaultValue={item.category || (isEn ? "General" : "Genel")} disabled={!canEdit} /></label>
+                  <label><span>Hedef kitle</span><select name="audience" defaultValue={item.audience || "all"} disabled={!canEdit}><option value="all">Herkes</option><option value="reader">Okuyucu</option><option value="writer">Yazar</option><option value="editor">Editör</option><option value="publisher">Yayınevi</option></select></label>
+                  <label><span>Sıra</span><input name="position" type="number" min={0} max={9999} defaultValue={item.position ?? 0} disabled={!canEdit} /></label>
                 </div>
-                <div className="content-form-actions">{canChangeLive ? <button type="submit">Değişiklikleri Kaydet</button> : <span>Yayındaki içeriği değiştirmek için yayın yetkisi gerekir.</span>}</div>
+                <div className="content-form-actions">{canEdit ? <button type="submit">Taslak Kaydet</button> : <span>Arşivdeki kaydı önce taslağa geri alın.</span>}</div>
               </form>
               <div className="content-form-actions" style={{ marginTop: ".9rem", flexWrap: "wrap" }}>
-                {status === "draft" && canPublishLocale ? <form action={publishFaqAction}>{hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Yayınla</button></form> : null}
-                {status === "published" && access.canPublish ? <form action={unpublishFaqAction}>{hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Al</button></form> : null}
-                {status !== "archived" && canArchive ? <form action={archiveFaqAction}>{hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Arşivle</button></form> : null}
-                {status === "archived" ? <form action={restoreFaqDraftAction}>{hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Geri Al</button></form> : null}
+                {(status === "draft" || hasPendingDraft) && canPublishLocale ? <form action={publishFaqAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">{hasPendingDraft ? "Taslağı Yayınla" : "Yayınla"}</button></form> : null}
+                {status === "published" && access.canPublish ? <form action={unpublishFaqAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Al</button></form> : null}
+                {status !== "archived" && canArchive ? <form action={archiveFaqAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Arşivle</button></form> : null}
+                {status === "archived" ? <form action={restoreFaqDraftAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Geri Al</button></form> : null}
               </div>
             </div>
           );

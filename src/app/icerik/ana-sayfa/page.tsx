@@ -27,7 +27,7 @@ function parse(valueJson: string): Section {
   }
 }
 
-async function load(locale: CmsLocaleCode) {
+async function load(locale: CmsLocaleCode): Promise<Map<string, Section>> {
   const namespace = cmsLocaleNamespace("homepage", locale);
   try {
     const rows = await prisma.$queryRaw<Row[]>`
@@ -35,7 +35,11 @@ async function load(locale: CmsLocaleCode) {
       FROM SiteContent
       WHERE namespace = ${namespace}
     `;
-    return new Map(rows.map((row) => [row.contentKey, { ...parse(row.valueJson), _status: row.status }]));
+    const sections = new Map<string, Section>();
+    for (const row of rows) {
+      sections.set(row.contentKey, { ...parse(row.valueJson), _status: row.status });
+    }
+    return sections;
   } catch {
     return new Map<string, Section>();
   }

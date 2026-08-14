@@ -33,6 +33,35 @@ function setText(selector: string, value?: string) {
   if (element) element.textContent = value;
 }
 
+function setFooterSlogan(value?: string) {
+  if (!value) return;
+  const element = document.querySelector<HTMLElement>(".landing-footer__grid > div:first-child > p");
+  if (!element) return;
+
+  const currentStrongText = element.querySelector("strong")?.textContent?.trim();
+  const normalized = value.trim();
+  if (currentStrongText && normalized.endsWith(currentStrongText)) {
+    const prefix = normalized.slice(0, normalized.length - currentStrongText.length);
+    const strong = document.createElement("strong");
+    strong.textContent = currentStrongText;
+    element.replaceChildren(document.createTextNode(prefix), strong);
+    return;
+  }
+
+  element.textContent = value;
+}
+
+function setFooterCopyright(value?: string) {
+  if (!value) return;
+  const text = document.querySelector<HTMLElement>(".landing-footer__copyright-text");
+  if (text) {
+    text.textContent = value;
+    return;
+  }
+  const copyright = document.querySelector<HTMLElement>(".landing-footer__copyright");
+  if (copyright) copyright.textContent = value;
+}
+
 function setLinkText(selector: string, value?: string) {
   if (!value) return;
   const anchor = document.querySelector<HTMLAnchorElement>(selector);
@@ -81,8 +110,8 @@ function applyHomepage(content: HomepageContent) {
   setText(".landing-why-v2 .landing-section-heading h2", why?.title);
 
   const footer = content.footer;
-  setText(".landing-footer__grid > div:first-child > p", footer?.slogan);
-  setText(".landing-footer__copyright", footer?.copyright);
+  setFooterSlogan(footer?.slogan);
+  setFooterCopyright(footer?.copyright);
 }
 
 export function PublicCmsHydrator() {

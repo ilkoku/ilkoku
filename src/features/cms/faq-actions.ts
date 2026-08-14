@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCmsAccess, requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
+import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import {
   cmsLocaleNamespace,
   cmsLocalePublicPath,
@@ -111,6 +112,10 @@ export async function saveFaqAction(formData: FormData) {
 export async function publishFaqAction(formData: FormData) {
   const access = await requireCmsPublisher("/icerik/sss");
   const locale = localeFromForm(formData);
+  if (!(await isCmsLocaleEnabled(locale))) {
+    redirect(`/icerik/sss?dil=${locale}&hata=dil-pasif`);
+  }
+
   const namespace = cmsLocaleNamespace("faq", locale);
   const contentKey = field(formData, "contentKey", 140);
   if (!contentKey.startsWith("item_")) return;

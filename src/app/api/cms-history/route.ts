@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { getCmsAccess } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
 
 type Row = { id: string; pageId: string; version: number; createdAt: Date };
 
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "admin") {
+  const access = await getCmsAccess();
+  if (!access.canManage) {
     return NextResponse.json({ items: [] }, { status: 403 });
   }
 

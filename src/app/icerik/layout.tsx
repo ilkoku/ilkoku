@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { ContentShell } from "@/components/content/ContentShell";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { requireCmsManager } from "@/lib/cms-access";
 import "./content.css";
 
 export const metadata: Metadata = {
@@ -14,18 +13,12 @@ export const dynamic = "force-dynamic";
 export default async function ContentLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/giris?sonraki=/icerik");
-  }
-
-  if (user.role !== "admin") {
-    redirect("/erisim-reddedildi?kaynak=icerik");
-  }
+  const access = await requireCmsManager("/icerik");
+  const user = access.user!;
 
   return (
     <ContentShell
+      isAdmin={access.isAdmin}
       user={{
         email: user.email,
         fullName: user.displayName || user.fullName,

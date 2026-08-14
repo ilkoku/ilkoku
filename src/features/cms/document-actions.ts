@@ -2,19 +2,21 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
 import { getCmsLegalDocument } from "@/lib/cms-legal";
 import { prisma } from "@/lib/prisma";
 
 export async function saveCmsDocumentAction(formData: FormData) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== "admin") return;
+  const mode = String(formData.get("mode") ?? "draft");
+  const access = mode === "publish"
+    ? await requireCmsPublisher("/icerik/yasal")
+    : await requireCmsManager("/icerik/yasal");
+  const currentUser = access.user!;
 
   const slug = String(formData.get("slug") ?? "").trim();
   const document = getCmsLegalDocument(slug);
   if (!document) return;
 
-  const mode = String(formData.get("mode") ?? "draft");
   const status = mode === "publish" ? "published" : "draft";
   const title = String(formData.get("title") ?? "").trim().slice(0, 220);
   const description = String(formData.get("description") ?? "").trim().slice(0, 500);
@@ -62,4 +64,5 @@ export async function saveCmsDocumentAction(formData: FormData) {
 
   revalidatePath("/icerik/yasal");
   revalidatePath(`/icerik/yasal/${slug}`);
+  if (status === "published") revalidatePath(path);
 }

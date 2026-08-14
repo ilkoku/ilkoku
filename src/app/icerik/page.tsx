@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { requireCmsManager } from "@/lib/cms-access";
 import { cmsModules } from "@/lib/cms-modules";
 
-export default function ContentDashboardPage() {
-  const areas = cmsModules.filter((module) => module.enabled && module.href !== "/icerik");
+export default async function ContentDashboardPage() {
+  const access = await requireCmsManager("/icerik");
+  const areas = cmsModules.filter((module) =>
+    module.enabled && module.href !== "/icerik" && (access.isAdmin || !module.adminOnly),
+  );
 
   return (
     <section>

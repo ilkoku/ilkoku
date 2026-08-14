@@ -2,23 +2,8 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
-
-async function requireAdmin() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/giris?sonraki=/icerik/ana-sayfa");
-  }
-
-  if (user.role !== "admin") {
-    redirect("/erisim-reddedildi?kaynak=icerik");
-  }
-
-  return user;
-}
 
 async function saveHomepageSection(
   userId: string,
@@ -66,7 +51,7 @@ function field(formData: FormData, name: string, maxLength: number) {
 }
 
 export async function saveHomepageHeroAction(formData: FormData) {
-  const user = await requireAdmin();
+  const { user } = await requireCmsManager("/icerik/ana-sayfa");
   const title = field(formData, "title", 220);
   const description = field(formData, "description", 1000);
   const primaryCtaLabel = field(formData, "primaryCtaLabel", 80);
@@ -76,7 +61,7 @@ export async function saveHomepageHeroAction(formData: FormData) {
 
   if (!title || !description) return;
 
-  await saveHomepageSection(user.id, "hero", {
+  await saveHomepageSection(user!.id, "hero", {
     title,
     description,
     primaryCtaLabel,
@@ -87,33 +72,33 @@ export async function saveHomepageHeroAction(formData: FormData) {
 }
 
 export async function publishHomepageHeroAction() {
-  const user = await requireAdmin();
-  await publishHomepageSection(user.id, "hero");
+  const { user } = await requireCmsPublisher("/icerik/ana-sayfa");
+  await publishHomepageSection(user!.id, "hero");
 }
 
 export async function saveHomepageRolesAction(formData: FormData) {
-  const user = await requireAdmin();
+  const { user } = await requireCmsManager("/icerik/ana-sayfa");
   const eyebrow = field(formData, "eyebrow", 120);
   const title = field(formData, "title", 220);
   const description = field(formData, "description", 700);
   if (!title) return;
-  await saveHomepageSection(user.id, "roles", { eyebrow, title, description });
+  await saveHomepageSection(user!.id, "roles", { eyebrow, title, description });
 }
 
 export async function publishHomepageRolesAction() {
-  const user = await requireAdmin();
-  await publishHomepageSection(user.id, "roles");
+  const { user } = await requireCmsPublisher("/icerik/ana-sayfa");
+  await publishHomepageSection(user!.id, "roles");
 }
 
 export async function saveHomepagePassportAction(formData: FormData) {
-  const user = await requireAdmin();
+  const { user } = await requireCmsManager("/icerik/ana-sayfa");
   const eyebrow = field(formData, "eyebrow", 120);
   const title = field(formData, "title", 260);
   const description = field(formData, "description", 1200);
   const ctaLabel = field(formData, "ctaLabel", 80);
   const ctaHref = field(formData, "ctaHref", 300);
   if (!title || !description) return;
-  await saveHomepageSection(user.id, "passport", {
+  await saveHomepageSection(user!.id, "passport", {
     eyebrow,
     title,
     description,
@@ -123,34 +108,34 @@ export async function saveHomepagePassportAction(formData: FormData) {
 }
 
 export async function publishHomepagePassportAction() {
-  const user = await requireAdmin();
-  await publishHomepageSection(user.id, "passport");
+  const { user } = await requireCmsPublisher("/icerik/ana-sayfa");
+  await publishHomepageSection(user!.id, "passport");
 }
 
 export async function saveHomepageWhyAction(formData: FormData) {
-  const user = await requireAdmin();
+  const { user } = await requireCmsManager("/icerik/ana-sayfa");
   const eyebrow = field(formData, "eyebrow", 120);
   const title = field(formData, "title", 220);
   const description = field(formData, "description", 700);
   if (!title) return;
-  await saveHomepageSection(user.id, "why", { eyebrow, title, description });
+  await saveHomepageSection(user!.id, "why", { eyebrow, title, description });
 }
 
 export async function publishHomepageWhyAction() {
-  const user = await requireAdmin();
-  await publishHomepageSection(user.id, "why");
+  const { user } = await requireCmsPublisher("/icerik/ana-sayfa");
+  await publishHomepageSection(user!.id, "why");
 }
 
 export async function saveHomepageFooterAction(formData: FormData) {
-  const user = await requireAdmin();
+  const { user } = await requireCmsManager("/icerik/ana-sayfa");
   const slogan = field(formData, "slogan", 220);
   const supportEmail = field(formData, "supportEmail", 220);
   const copyright = field(formData, "copyright", 300);
   if (!slogan) return;
-  await saveHomepageSection(user.id, "footer", { slogan, supportEmail, copyright });
+  await saveHomepageSection(user!.id, "footer", { slogan, supportEmail, copyright });
 }
 
 export async function publishHomepageFooterAction() {
-  const user = await requireAdmin();
-  await publishHomepageSection(user.id, "footer");
+  const { user } = await requireCmsPublisher("/icerik/ana-sayfa");
+  await publishHomepageSection(user!.id, "footer");
 }

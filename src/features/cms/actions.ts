@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
+import { deleteCmsDraft, getCmsDraft, homepageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import {
   cmsLocaleNamespace,
@@ -28,26 +29,9 @@ async function saveHomepageSection(
   contentKey: string,
   value: Record<string, string>,
 ) {
-  const namespace = cmsLocaleNamespace("homepage", locale);
-  const valueJson = JSON.stringify(value);
-
-  await prisma.$executeRaw`
-    INSERT INTO SiteContent (
-      id, namespace, contentKey, valueJson, valueType, status,
-      updatedById, createdAt, updatedAt
-    ) VALUES (
-      ${randomUUID()}, ${namespace}, ${contentKey}, ${valueJson}, 'json', 'draft',
-      ${userId}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
-    )
-    ON DUPLICATE KEY UPDATE
-      valueJson = VALUES(valueJson),
-      status = 'draft',
-      publishedAt = NULL,
-      updatedById = VALUES(updatedById),
-      updatedAt = CURRENT_TIMESTAMP(3)
-  `;
-
+  await saveCmsDraft(userId, homepageDraftKey(locale, contentKey), value);
   revalidatePath("/icerik/ana-sayfa");
+  revalidatePath("/icerik/onizleme/ana-sayfa");
 }
 
 async function publishHomepageSection(
@@ -60,19 +44,31 @@ async function publishHomepageSection(
   }
 
   const namespace = cmsLocaleNamespace("homepage", locale);
+  const draftKey = homepageDraftKey(locale, contentKey);
+  const draft = await getCmsDraft<Record<string, string>>(draftKey);
+  if (!draft) return;
+  const valueJson = JSON.stringify(draft.payload);
 
   await prisma.$executeRaw`
-    UPDATE SiteContent
-    SET status = 'published',
+    INSERT INTO SiteContent (
+      id, namespace, contentKey, valueJson, valueType, status,
+      publishedAt, updatedById, createdAt, updatedAt
+    ) VALUES (
+      ${randomUUID()}, ${namespace}, ${contentKey}, ${valueJson}, 'json', 'published',
+      CURRENT_TIMESTAMP(3), ${userId}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+    )
+    ON DUPLICATE KEY UPDATE
+      valueJson = VALUES(valueJson),
+      status = 'published',
       publishedAt = CURRENT_TIMESTAMP(3),
-      updatedById = ${userId},
+      updatedById = VALUES(updatedById),
       updatedAt = CURRENT_TIMESTAMP(3)
-    WHERE namespace = ${namespace}
-      AND contentKey = ${contentKey}
   `;
 
+  await deleteCmsDraft(draftKey);
   revalidatePath(cmsLocalePublicPath("/", locale));
   revalidatePath("/icerik/ana-sayfa");
+  revalidatePath("/icerik/onizleme/ana-sayfa");
 }
 
 export async function saveHomepageHeroAction(formData: FormData) {

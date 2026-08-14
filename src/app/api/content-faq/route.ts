@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { getCmsAccess } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
 import { isSameOriginRequest } from "@/lib/same-origin";
 
@@ -27,8 +27,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "admin") return NextResponse.json({ ok: false }, { status: 403 });
+  const access = await getCmsAccess();
+  if (!access.user || !access.canPublish) return NextResponse.json({ ok: false }, { status: 403 });
   if (!isSameOriginRequest(request)) return NextResponse.json({ ok: false }, { status: 403 });
 
   const formData = await request.formData();
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
   await prisma.$executeRaw`
     INSERT INTO SiteContent (id, namespace, contentKey, valueJson, valueType, status, updatedById, createdAt, updatedAt)
-    VALUES (${id}, 'faq', ${`item_${id}`}, ${payload}, 'json', 'published', ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
+    VALUES (${id}, 'faq', ${`item_${id}`}, ${payload}, 'json', 'published', ${access.user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
   `;
 
   return NextResponse.redirect(new URL("/icerik/sss", request.url), 303);

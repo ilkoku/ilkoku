@@ -2,12 +2,25 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
-import { getCmsLegalDocument } from "@/lib/cms-legal";
+import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
+import { normalizeCmsLocale } from "@/lib/cms-locales";
+import {
+  cmsLegalContentKey,
+  cmsLegalPublicPath,
+  getCmsLegalDocument,
+} from "@/lib/cms-legal";
 import { prisma } from "@/lib/prisma";
 
 export async function saveCmsDocumentAction(formData: FormData) {
   const mode = String(formData.get("mode") ?? "draft");
+  const locale = normalizeCmsLocale(String(formData.get("locale") ?? "tr"));
+
+  if (mode === "publish" && !(await isCmsLocaleEnabled(locale))) {
+    redirect(`/icerik/yasal?hata=dil-pasif&dil=${locale}`);
+  }
+
   const access = mode === "publish"
     ? await requireCmsPublisher("/icerik/yasal")
     : await requireCmsManager("/icerik/yasal");
@@ -25,7 +38,8 @@ export async function saveCmsDocumentAction(formData: FormData) {
   if (!title || !body) return;
 
   const bodyJson = JSON.stringify({ description, updatedLabel, body });
-  const path = `/yasal/${slug}`;
+  const contentKey = cmsLegalContentKey(document.slug, locale);
+  const path = cmsLegalPublicPath(document.slug, locale);
 
   await prisma.$executeRaw`
     INSERT INTO ContentPage (
@@ -33,7 +47,7 @@ export async function saveCmsDocumentAction(formData: FormData) {
       seoDescription, canonicalUrl, noIndex, publishedAt,
       createdById, updatedById, createdAt, updatedAt
     ) VALUES (
-      ${randomUUID()}, ${document.key}, ${path}, ${title}, ${status}, ${bodyJson},
+      ${randomUUID()}, ${contentKey}, ${path}, ${title}, ${status}, ${bodyJson},
       ${description || null}, ${path}, false,
       ${status === "published" ? new Date() : null},
       ${currentUser.id}, ${currentUser.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
@@ -46,7 +60,7 @@ export async function saveCmsDocumentAction(formData: FormData) {
   `;
 
   const pages = await prisma.$queryRaw<Array<{ id: string }>>`
-    SELECT id FROM ContentPage WHERE contentKey = ${document.key} LIMIT 1
+    SELECT id FROM ContentPage WHERE contentKey = ${contentKey} LIMIT 1
   `;
   const pageId = pages[0]?.id;
   if (!pageId) return;
@@ -55,7 +69,7 @@ export async function saveCmsDocumentAction(formData: FormData) {
     SELECT COALESCE(MAX(version), 0) + 1 AS version FROM ContentRevision WHERE pageId = ${pageId}
   `;
   const version = Number(versions[0]?.version ?? 1);
-  const snapshotJson = JSON.stringify({ title, description, updatedLabel, body, status });
+  const snapshotJson = JSON.stringify({ locale, title, description, updatedLabel, body, status });
 
   await prisma.$executeRaw`
     INSERT INTO ContentRevision (id, pageId, version, snapshotJson, createdById, createdAt)

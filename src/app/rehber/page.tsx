@@ -27,7 +27,6 @@ export default async function GuidesPage() {
       FROM ContentPage
       WHERE contentKey LIKE 'guide:%'
         AND status = 'published'
-        AND noIndex = false
       ORDER BY publishedAt DESC, updatedAt DESC
       LIMIT 100
     `;

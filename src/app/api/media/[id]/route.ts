@@ -47,7 +47,10 @@ export async function GET(_request: Request, { params }: RouteProps) {
   }
   if (body.length !== blob.sizeBytes) return new Response("Not found", { status: 404 });
 
-  return new Response(body, {
+  const responseBytes = new Uint8Array(body.length);
+  responseBytes.set(body);
+
+  return new Response(responseBytes.buffer, {
     status: 200,
     headers: {
       "Content-Type": blob.mimeType,

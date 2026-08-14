@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsLocaleStates } from "@/lib/cms-locale-state";
 import { prisma } from "@/lib/prisma";
+import { HealthMetricCards } from "./HealthMetricCards";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,11 @@ function levelStyle(level: HealthLevel) {
   if (level === "warn") return { borderColor: "#c9972b" };
   if (level === "blocker") return { borderColor: "#d15050" };
   return { borderColor: "#65758b" };
+}
+
+function normalizeHealthLevel(value: string | undefined): HealthLevel | undefined {
+  if (value === "pass" || value === "warn" || value === "blocker" || value === "info") return value;
+  return undefined;
 }
 
 async function loadHealth() {
@@ -192,8 +198,14 @@ async function loadHealth() {
   };
 }
 
-export default async function CmsHealthPage() {
+export default async function CmsHealthPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ durum?: string }>;
+}) {
   await requireCmsManager("/icerik/saglik");
+  const params = await searchParams;
+  const activeLevel = normalizeHealthLevel(params.durum);
 
   let data: Awaited<ReturnType<typeof loadHealth>> | null = null;
   let loadError = false;
@@ -332,13 +344,20 @@ export default async function CmsHealthPage() {
   const blockerCount = checks.filter((check) => check.level === "blocker").length;
   const infoCount = checks.filter((check) => check.level === "info").length;
   const finalPass = blockerCount === 0;
+  const visibleChecks = activeLevel ? checks.filter((check) => check.level === activeLevel) : checks;
   const groups = ["Yayın", "İçerik", "SEO & Erişim", "Sistem"] as const;
+  const metrics = [
+    { level: "pass" as const, label: "PASS", value: passCount, note: "sağlıklı kontrol" },
+    { level: "warn" as const, label: "Uyarı", value: warnCount, note: "inceleme önerilir" },
+    { level: "blocker" as const, label: "Blokaj", value: blockerCount, note: "yayın güvenliği" },
+    { level: "info" as const, label: "Bilgi", value: infoCount, note: "operasyonel durum" },
+  ];
 
   return (
     <section className="content-dashboard">
       <div className="content-page-heading content-dashboard-heading">
         <div>
-          <span>40. İşlem · Final Kontrol</span>
+          <span>41. İşlem · Müdahale Merkezi</span>
           <h1>CMS Sistem Sağlığı</h1>
           <p>İçerik, yayın, SEO, dil, zamanlama ve erişim sözleşmelerini canlı veritabanı durumuna göre çapraz kontrol eder.</p>
         </div>
@@ -349,15 +368,30 @@ export default async function CmsHealthPage() {
         </div>
       </div>
 
-      <div className="content-metric-grid">
-        <article className="content-metric-card"><span>PASS</span><strong>{passCount}</strong><small>sağlıklı kontrol</small></article>
-        <article className="content-metric-card"><span>Uyarı</span><strong>{warnCount}</strong><small>inceleme önerilir</small></article>
-        <article className="content-metric-card"><span>Blokaj</span><strong>{blockerCount}</strong><small>yayın güvenliği</small></article>
-        <article className="content-metric-card"><span>Bilgi</span><strong>{infoCount}</strong><small>operasyonel durum</small></article>
+      <HealthMetricCards metrics={metrics} activeLevel={activeLevel} />
+
+      <div id="kontroller" className="content-panel" style={{ marginTop: "1rem" }}>
+        <div className="content-dashboard-section-title">
+          <div>
+            <span>Müdahale görünümü</span>
+            <h2>{activeLevel ? `${levelLabel(activeLevel)} kontrolleri` : "Tüm kontroller"}</h2>
+          </div>
+          {activeLevel ? <Link href="/icerik/saglik#kontroller">Tüm kontrolleri göster →</Link> : <small>Kartlardan birine tıklayarak filtrele</small>}
+        </div>
+        <p>{activeLevel ? `${visibleChecks.length} kayıt gösteriliyor. İlgili satırdaki Müdahale et bağlantısı sizi doğrudan yönetim ekranına götürür.` : "PASS, Uyarı, Blokaj veya Bilgi kartına tıklayarak yalnız o durumdaki kayıtları açabilirsiniz."}</p>
       </div>
 
+      {visibleChecks.length === 0 ? (
+        <div className="content-panel" style={{ marginTop: "1rem" }}>
+          <div className="content-empty">
+            <strong>Bu durumda kayıt yok.</strong>
+            <p>Başka bir sağlık kartı seçebilir veya tüm kontrolleri gösterebilirsiniz.</p>
+          </div>
+        </div>
+      ) : null}
+
       {groups.map((group) => {
-        const groupChecks = checks.filter((check) => check.group === group);
+        const groupChecks = visibleChecks.filter((check) => check.group === group);
         if (groupChecks.length === 0) return null;
         return (
           <div className="content-panel" key={group} style={{ marginTop: "1rem" }}>
@@ -373,7 +407,7 @@ export default async function CmsHealthPage() {
                     <strong>{check.title}</strong>
                     <p>{check.detail}</p>
                   </div>
-                  {check.href ? <Link href={check.href}>İncele →</Link> : null}
+                  {check.href ? <Link href={check.href}>Müdahale et →</Link> : null}
                 </article>
               ))}
             </div>

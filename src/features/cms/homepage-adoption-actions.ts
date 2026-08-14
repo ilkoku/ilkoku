@@ -15,10 +15,10 @@ function adoptionValue(key: HomepagePublicSectionKey) {
   const value = homepagePublicFallback[key];
   if (key !== "footer") return value;
 
-  // Footer sloganındaki mevcut <strong> vurgusu public markup'ta korunur.
-  // CMS sahipliği için diğer footer alanlarını devralır; slogan ilk editte mevcut fallback ile formda görünür.
-  const { slogan: _slogan, ...withoutSlogan } = value;
-  return withoutSlogan;
+  // Footer sloganındaki kalın vurgu ve copyright satırındaki yasal link barı
+  // mevcut public markup tarafından korunur. İlk devralma yalnız CMS sahipliğini
+  // oluşturur; bu iki alan kullanıcı açıkça düzenleyip yayınlayana kadar hydrate edilmez.
+  return { supportEmail: value.supportEmail };
 }
 
 export async function adoptHomepageFallbackAction() {

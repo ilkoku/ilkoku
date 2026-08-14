@@ -7,6 +7,7 @@ import {
   unpublishFaqAction,
 } from "@/features/cms/faq-actions";
 import { requireCmsManager } from "@/lib/cms-access";
+import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import { cmsLocaleNamespace, normalizeCmsLocale } from "@/lib/cms-locales";
 import { prisma } from "@/lib/prisma";
 
@@ -30,7 +31,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
   const params = await searchParams;
   const locale = normalizeCmsLocale(params.dil);
   const namespace = cmsLocaleNamespace("faq", locale);
+  const localeEnabled = await isCmsLocaleEnabled(locale);
   const isEn = locale === "en";
+  const canPublishLocale = access.canPublish && localeEnabled;
 
   let rows: FaqRow[] = [];
   try {
@@ -58,9 +61,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
         {isEn ? <Link href="/icerik/diller">Dil Yönetimi</Link> : null}
       </div>
 
+      {isEn && !localeEnabled ? (
+        <div className="content-panel" style={{ marginBottom: "1rem" }}>
+          <strong>İngilizce public yayın kapalı.</strong>
+          <p>EN SSS kayıtları taslak olarak hazırlanabilir; dil açılmadan yeni bir kayıt yayınlanamaz.</p>
+        </div>
+      ) : null}
+
       <div className="content-metric-grid">
         <article className="content-metric-card"><span>Toplam</span><strong>{items.length}</strong><small>{locale.toUpperCase()} SSS</small></article>
-        <article className="content-metric-card"><span>Yayında</span><strong>{publishedCount}</strong><small>Public Yardım Merkezi</small></article>
+        <article className="content-metric-card"><span>Yayında</span><strong>{publishedCount}</strong><small>{localeEnabled ? "Public Yardım Merkezi" : "Public dil kapalı"}</small></article>
         <article className="content-metric-card"><span>Taslak</span><strong>{draftCount}</strong><small>Yayın bekliyor</small></article>
         <article className="content-metric-card"><span>Arşiv</span><strong>{archivedCount}</strong><small>Publicte görünmüyor</small></article>
       </div>
@@ -100,7 +110,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
                 <div className="content-form-actions">{canChangeLive ? <button type="submit">Değişiklikleri Kaydet</button> : <span>Yayındaki içeriği değiştirmek için yayın yetkisi gerekir.</span>}</div>
               </form>
               <div className="content-form-actions" style={{ marginTop: ".9rem", flexWrap: "wrap" }}>
-                {status === "draft" && access.canPublish ? <form action={publishFaqAction}>{hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Yayınla</button></form> : null}
+                {status === "draft" && canPublishLocale ? <form action={publishFaqAction}>{hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Yayınla</button></form> : null}
                 {status === "published" && access.canPublish ? <form action={unpublishFaqAction}>{hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Al</button></form> : null}
                 {status !== "archived" && canArchive ? <form action={archiveFaqAction}>{hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Arşivle</button></form> : null}
                 {status === "archived" ? <form action={restoreFaqDraftAction}>{hiddenLocale}<input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Geri Al</button></form> : null}

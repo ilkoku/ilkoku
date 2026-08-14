@@ -38,15 +38,6 @@ jobs:
             [[ "$code" == "$expected" ]]
           }
 
-          check_optional_locale_route() {
-            local url="$1"
-            local code
-
-            code="$(curl --silent --show-error --location --max-time 20 --output /dev/null --write-out '%{http_code}' "$url" || true)"
-            printf '%s -> HTTP %s\n' "$url" "$code"
-            [[ "$code" == "200" || "$code" == "404" ]]
-          }
-
           check_protected_route() {
             local url="$1"
             local headers
@@ -99,18 +90,24 @@ jobs:
             if check_public_route "https://ilkoku.com/" "200" \
               && check_public_route "https://ilkoku.com/giris" "200" \
               && check_public_route "https://ilkoku.com/yardim" "200" \
-              && check_optional_locale_route "https://ilkoku.com/en" \
-              && check_optional_locale_route "https://ilkoku.com/en/yardim" \
+              && check_public_route "https://ilkoku.com/yasal/kullanim-sartlari" "200" \
+              && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
+              && check_public_route "https://ilkoku.com/yasal/kvkk" "200" \
+              && check_public_route "https://ilkoku.com/yasal/cerez-politikasi" "200" \
+              && check_public_route "https://ilkoku.com/yasal/telif-hakki-politikasi" "200" \
+              && check_public_route "https://ilkoku.com/en" "404" \
+              && check_public_route "https://ilkoku.com/en/yardim" "404" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/zamanlama" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/onizleme/ana-sayfa" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/yayin-kuyrugu" \
+              && check_post_merge_protected_route "https://ilkoku.com/icerik/saglik" \
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/epostalar" \
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/okuma-guvenligi" \
               && check_redirect_route "https://ilkoku.com/admin/epostalar" "/sistem-yonetimi/epostalar" \
               && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production route'ları canlı ve auth/canonical/dil/zamanlama/önizleme/yayın-kuyruğu yönlendirmeleri çalışıyor."
+              echo "PASS: Production route'ları, 5 yasal sayfa, EN kapalı sözleşmesi ve CMS final sağlık rotası doğrulandı."
               exit 0
             fi
 

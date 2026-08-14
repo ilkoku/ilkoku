@@ -3,6 +3,7 @@ import { ContentShell } from "@/components/content/ContentShell";
 import { requireCmsManager } from "@/lib/cms-access";
 import "./content.css";
 import "./dashboard.css";
+import "./revision.css";
 
 export const metadata: Metadata = {
   title: "İlkOku İçerik Yönetimi",

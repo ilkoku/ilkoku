@@ -1,14 +1,26 @@
 import { NextResponse } from "next/server";
+import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
+import { cmsLocaleNamespace, normalizeCmsLocale } from "@/lib/cms-locales";
 import { prisma } from "@/lib/prisma";
 
 type Row = { contentKey: string; valueJson: string };
 
-export async function GET() {
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const locale = normalizeCmsLocale(url.searchParams.get("dil"));
+  const enabled = await isCmsLocaleEnabled(locale);
+
+  if (!enabled) {
+    return NextResponse.json({ locale, enabled: false, content: {} });
+  }
+
+  const namespace = cmsLocaleNamespace("homepage", locale);
+
   try {
     const rows = await prisma.$queryRaw<Row[]>`
       SELECT contentKey, valueJson
       FROM SiteContent
-      WHERE namespace = 'homepage'
+      WHERE namespace = ${namespace}
         AND status = 'published'
     `;
 
@@ -27,8 +39,8 @@ export async function GET() {
       } catch {}
     }
 
-    return NextResponse.json({ content });
+    return NextResponse.json({ locale, enabled: true, content });
   } catch {
-    return NextResponse.json({ content: {} });
+    return NextResponse.json({ locale, enabled: true, content: {} });
   }
 }

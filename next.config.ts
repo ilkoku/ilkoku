@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const privateRouteHeaders = [
   "/admin/:path*",
+  "/sistem-yonetimi/:path*",
   "/bildirimler/:path*",
   "/editor/:path*",
   "/editor-daveti/:path*",
@@ -35,6 +36,34 @@ const nextConfig: NextConfig = {
         },
       ],
     }));
+  },
+  async redirects() {
+    return [
+      {
+        source: "/admin",
+        destination: "/sistem-yonetimi",
+        permanent: true,
+      },
+      {
+        source: "/admin/:path+",
+        destination: "/sistem-yonetimi/:path+",
+        permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/sistem-yonetimi",
+          destination: "/admin",
+        },
+        {
+          source: "/sistem-yonetimi/:path+",
+          destination: "/admin/:path+",
+        },
+      ],
+    };
   },
 };
 

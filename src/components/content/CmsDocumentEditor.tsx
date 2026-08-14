@@ -123,7 +123,7 @@ export async function CmsDocumentEditor({ slug, locale }: { slug: string; locale
               placeholder={"## 1. Bölüm başlığı\n\nParagraf metni.\n\n- Liste maddesi\n- Liste maddesi"}
             />
           </label>
-          <p className="content-form-help">Bölüm başlığı için ##, liste maddesi için - kullanabilirsiniz. Taslak kaydı canlı içeriği değiştirmez ve Revision Center'a yeni sürüm ekler.</p>
+          <p className="content-form-help">Bölüm başlığı için ##, liste maddesi için - kullanabilirsiniz. Taslak kaydı canlı içeriği değiştirmez ve Revision Center içine yeni sürüm ekler.</p>
           <div className="content-form-actions">
             <button type="submit" name="mode" value="draft">Taslak Kaydet</button>
             {canPublish ? <button type="submit" name="mode" value="publish">Kaydet ve Yayınla</button> : null}

@@ -3,6 +3,7 @@ import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsLocaleStates } from "@/lib/cms-locale-state";
 import { prisma } from "@/lib/prisma";
 import { HealthMetricCards } from "./HealthMetricCards";
+import "./health-ui.css";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,12 @@ function levelStyle(level: HealthLevel) {
 function normalizeHealthLevel(value: string | undefined): HealthLevel | undefined {
   if (value === "pass" || value === "warn" || value === "blocker" || value === "info") return value;
   return undefined;
+}
+
+function actionLabel(level: HealthLevel) {
+  if (level === "blocker" || level === "warn") return "Müdahale et →";
+  if (level === "info") return "Yönet →";
+  return "Görüntüle →";
 }
 
 async function loadHealth() {
@@ -222,7 +229,7 @@ export default async function CmsHealthPage({
           group: "Yayın",
           level: data.legal === 5 ? "pass" : "blocker",
           title: "TR yasal sayfalar",
-          detail: `${data.legal}/5 zorunlu yasal belge CMS üzerinden yayında.`,
+          detail: `${data.legal}/5 zorunlu yasal belge CMS üzerinden yayında. Public yasal URL'ler fallback ile erişilebilir olsa bile CMS sahipliği için 5/5 yayınlanmalıdır.`,
           href: "/icerik/yasal?dil=tr",
         },
         {
@@ -262,9 +269,9 @@ export default async function CmsHealthPage({
         },
         {
           group: "İçerik",
-          level: data.faq > 0 ? "pass" : "warn",
+          level: data.faq > 0 ? "pass" : "info",
           title: "SSS & Yardım",
-          detail: `${data.faq} TR SSS kaydı yayında.`,
+          detail: data.faq > 0 ? `${data.faq} TR SSS kaydı yayında.` : "Henüz TR SSS kaydı yayınlanmamış; bu durum canlı yayın blokajı değildir.",
           href: "/icerik/sss?dil=tr",
         },
         {
@@ -311,9 +318,9 @@ export default async function CmsHealthPage({
         },
         {
           group: "Sistem",
-          level: data.revisions > 0 ? "pass" : "warn",
+          level: data.revisions > 0 ? "pass" : "info",
           title: "Revision geçmişi",
-          detail: `${data.revisions} içerik revision kaydı saklanıyor.`,
+          detail: data.revisions > 0 ? `${data.revisions} içerik revision kaydı saklanıyor.` : "Henüz revision kaydı oluşmamış; ilk CMS düzenlemesinden sonra otomatik oluşur.",
           href: "/icerik/gecmis",
         },
         {
@@ -357,7 +364,7 @@ export default async function CmsHealthPage({
     <section className="content-dashboard">
       <div className="content-page-heading content-dashboard-heading">
         <div>
-          <span>41. İşlem · Müdahale Merkezi</span>
+          <span>42. İşlem · Akıllı Müdahale</span>
           <h1>CMS Sistem Sağlığı</h1>
           <p>İçerik, yayın, SEO, dil, zamanlama ve erişim sözleşmelerini canlı veritabanı durumuna göre çapraz kontrol eder.</p>
         </div>
@@ -378,7 +385,7 @@ export default async function CmsHealthPage({
           </div>
           {activeLevel ? <Link href="/icerik/saglik#kontroller">Tüm kontrolleri göster →</Link> : <small>Kartlardan birine tıklayarak filtrele</small>}
         </div>
-        <p>{activeLevel ? `${visibleChecks.length} kayıt gösteriliyor. İlgili satırdaki Müdahale et bağlantısı sizi doğrudan yönetim ekranına götürür.` : "PASS, Uyarı, Blokaj veya Bilgi kartına tıklayarak yalnız o durumdaki kayıtları açabilirsiniz."}</p>
+        <p>{activeLevel ? `${visibleChecks.length} kayıt gösteriliyor. WARN/BLOCKER kayıtlarında doğrudan müdahale, INFO/PASS kayıtlarında yönetim veya görüntüleme bağlantısı sunulur.` : "PASS, Uyarı, Blokaj veya Bilgi kartına tıklayarak yalnız o durumdaki kayıtları açabilirsiniz."}</p>
       </div>
 
       {visibleChecks.length === 0 ? (
@@ -402,12 +409,12 @@ export default async function CmsHealthPage({
             <div className="content-list">
               {groupChecks.map((check) => (
                 <article className="content-list-row" key={`${group}-${check.title}`} style={{ borderLeft: "4px solid", ...levelStyle(check.level) }}>
-                  <div>
-                    <small>{levelLabel(check.level)}</small>
-                    <strong>{check.title}</strong>
+                  <div className="cms-health-check-copy">
+                    <small className="cms-health-check-level">{levelLabel(check.level)}</small>
+                    <strong className="cms-health-check-title">{check.title}</strong>
                     <p>{check.detail}</p>
                   </div>
-                  {check.href ? <Link href={check.href}>Müdahale et →</Link> : null}
+                  {check.href ? <Link className="cms-health-check-action" href={check.href}>{actionLabel(check.level)}</Link> : null}
                 </article>
               ))}
             </div>

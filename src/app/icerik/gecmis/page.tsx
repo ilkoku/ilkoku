@@ -63,8 +63,7 @@ export default async function RevisionCenterPage() {
 
   const distinctPages = new Set(prepared.map((item) => item.pageId)).size;
   const restorable = prepared.filter((item) => item.restorable).length;
-  const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recent = prepared.filter((item) => new Date(item.createdAt).getTime() >= since).length;
+  const restores = prepared.filter((item) => item.snapshot._meta?.action === "restore").length;
 
   return (
     <section className="content-editor-page revision-center">
@@ -80,7 +79,7 @@ export default async function RevisionCenterPage() {
         <article className="content-metric-card"><span>Toplam sürüm</span><strong>{prepared.length}</strong><small>son 250 kayıt</small></article>
         <article className="content-metric-card"><span>İçerik</span><strong>{distinctPages}</strong><small>sürümü bulunan</small></article>
         <article className="content-metric-card"><span>Geri yüklenebilir</span><strong>{restorable}</strong><small>tam snapshot</small></article>
-        <article className="content-metric-card"><span>Son 7 gün</span><strong>{recent}</strong><small>revision hareketi</small></article>
+        <article className="content-metric-card"><span>Restore</span><strong>{restores}</strong><small>geri yükleme işlemi</small></article>
       </div>
 
       <div className="content-panel revision-list-panel">

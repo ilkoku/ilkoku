@@ -1,5 +1,6 @@
 import "server-only";
 
+import { defaultCmsLocale, type CmsLocaleCode } from "@/lib/cms-locales";
 import { prisma } from "@/lib/prisma";
 
 export type CmsGuideBody = {
@@ -35,6 +36,26 @@ export function normalizeGuideSlug(value: string) {
     .slice(0, 120);
 }
 
+export function cmsGuideContentKey(slugPart: string, locale: CmsLocaleCode) {
+  const clean = normalizeGuideSlug(slugPart);
+  if (locale === defaultCmsLocale) return `guide:${clean}`;
+  return `guide:${locale}:${clean}`;
+}
+
+export function cmsGuidePublicPath(slugPart: string, locale: CmsLocaleCode) {
+  const clean = normalizeGuideSlug(slugPart);
+  if (locale === defaultCmsLocale) return `/rehber/${clean}`;
+  return `/${locale}/rehber/${clean}`;
+}
+
+export function cmsGuideContentPattern(locale: CmsLocaleCode) {
+  return locale === defaultCmsLocale ? "guide:%" : `guide:${locale}:%`;
+}
+
+export function cmsGuideLocaleFromContentKey(contentKey: string): CmsLocaleCode {
+  return contentKey.startsWith("guide:en:") ? "en" : defaultCmsLocale;
+}
+
 export function parseGuideBody(value: string): CmsGuideBody {
   try {
     const parsed = JSON.parse(value) as CmsGuideBody;
@@ -47,9 +68,10 @@ export function parseGuideBody(value: string): CmsGuideBody {
   }
 }
 
-export async function getPublishedGuideBySlug(slugPart: string) {
-  const fullSlug = `/rehber/${normalizeGuideSlug(slugPart)}`;
-  if (fullSlug === "/rehber/") return null;
+export async function getPublishedGuideBySlug(slugPart: string, locale: CmsLocaleCode = defaultCmsLocale) {
+  const fullSlug = cmsGuidePublicPath(slugPart, locale);
+  if (fullSlug.endsWith("/rehber/")) return null;
+  const contentKey = cmsGuideContentKey(slugPart, locale);
 
   try {
     const rows = await prisma.$queryRaw<PublishedGuide[]>`
@@ -58,7 +80,7 @@ export async function getPublishedGuideBySlug(slugPart: string) {
       FROM ContentPage
       WHERE slug = ${fullSlug}
         AND status = 'published'
-        AND contentKey LIKE 'guide:%'
+        AND contentKey = ${contentKey}
       LIMIT 1
     `;
     return rows[0] ?? null;

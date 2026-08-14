@@ -26,6 +26,7 @@ export default async function GuidesPage() {
       SELECT slug, title, bodyJson, seoDescription, updatedAt
       FROM ContentPage
       WHERE contentKey LIKE 'guide:%'
+        AND contentKey NOT LIKE 'guide:en:%'
         AND status = 'published'
       ORDER BY publishedAt DESC, updatedAt DESC
       LIMIT 100

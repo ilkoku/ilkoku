@@ -2,7 +2,9 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
+import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import {
   cmsLocaleNamespace,
   cmsLocalePublicPath,
@@ -53,6 +55,10 @@ async function publishHomepageSection(
   locale: CmsLocaleCode,
   contentKey: string,
 ) {
+  if (!(await isCmsLocaleEnabled(locale))) {
+    redirect(`/icerik/ana-sayfa?dil=${locale}&hata=dil-pasif`);
+  }
+
   const namespace = cmsLocaleNamespace("homepage", locale);
 
   await prisma.$executeRaw`

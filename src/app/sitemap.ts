@@ -46,6 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       SELECT slug, updatedAt
       FROM ContentPage
       WHERE contentKey LIKE 'guide:%'
+        AND contentKey NOT LIKE 'guide:en:%'
         AND status = 'published'
         AND noIndex = false
       ORDER BY updatedAt DESC

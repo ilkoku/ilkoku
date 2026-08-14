@@ -79,25 +79,13 @@ jobs:
           for attempt in $(seq 1 30); do
             echo "Deneme $attempt/30"
 
-            if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-              system_routes_ok=false
-              if check_protected_route "https://ilkoku.com/sistem-yonetimi/epostalar" \
-                && check_protected_route "https://ilkoku.com/sistem-yonetimi/okuma-guvenligi" \
-                && check_redirect_route "https://ilkoku.com/admin/epostalar" "/sistem-yonetimi/epostalar" \
-                && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi"; then
-                system_routes_ok=true
-              fi
-            else
-              system_routes_ok=false
-              if check_protected_route "https://ilkoku.com/admin/epostalar" \
-                && check_protected_route "https://ilkoku.com/admin/okuma-guvenligi"; then
-                system_routes_ok=true
-              fi
-            fi
-
             if check_public_route "https://ilkoku.com/" "200" \
               && check_public_route "https://ilkoku.com/giris" "200" \
-              && [[ "$system_routes_ok" == "true" ]] \
+              && check_public_route "https://ilkoku.com/yardim" "200" \
+              && check_protected_route "https://ilkoku.com/sistem-yonetimi/epostalar" \
+              && check_protected_route "https://ilkoku.com/sistem-yonetimi/okuma-guvenligi" \
+              && check_redirect_route "https://ilkoku.com/admin/epostalar" "/sistem-yonetimi/epostalar" \
+              && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
               echo "PASS: Production route'ları canlı ve auth/canonical yönlendirmeleri çalışıyor."

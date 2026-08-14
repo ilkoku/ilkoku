@@ -31,9 +31,8 @@ function findColumn(footer: HTMLElement, title: string) {
 }
 
 function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
-  const grid = footer.querySelector<HTMLElement>(".landing-footer__grid");
   const copyright = footer.querySelector<HTMLElement>(".landing-footer__copyright");
-  if (!grid || !copyright) return;
+  if (!copyright) return;
 
   for (const column of columns(footer)) {
     if (column.querySelector("h3")?.textContent?.trim() === "Yasal") {
@@ -41,12 +40,35 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
     }
   }
 
-  let legal = footer.querySelector<HTMLElement>(".landing-footer__legal");
+  let copyrightText = copyright.querySelector<HTMLElement>(".landing-footer__copyright-text");
+  if (!copyrightText) {
+    const originalText = copyright.textContent?.trim() || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`;
+    copyright.replaceChildren();
+    copyrightText = document.createElement("span");
+    copyrightText.className = "landing-footer__copyright-text";
+    copyrightText.textContent = originalText;
+    copyright.append(copyrightText);
+  }
+
+  let legal = copyright.querySelector<HTMLElement>(".landing-footer__legal");
   if (!legal) {
     legal = document.createElement("nav");
     legal.className = "landing-footer__legal";
-    copyright.before(legal);
+    copyright.append(legal);
   }
+
+  copyright.style.setProperty("display", "flex", "important");
+  copyright.style.setProperty("align-items", "center", "important");
+  copyright.style.setProperty("justify-content", "space-between", "important");
+  copyright.style.setProperty("gap", ".8rem 1.5rem", "important");
+  copyright.style.setProperty("flex-wrap", "wrap", "important");
+
+  legal.style.setProperty("display", "flex", "important");
+  legal.style.setProperty("align-items", "center", "important");
+  legal.style.setProperty("justify-content", "flex-end", "important");
+  legal.style.setProperty("gap", ".35rem 1rem", "important");
+  legal.style.setProperty("flex-wrap", "wrap", "important");
+  legal.style.setProperty("margin-left", "auto", "important");
 
   legal.setAttribute("aria-label", content.legalTitle || "Yasal bağlantılar");
   legal.replaceChildren();
@@ -57,6 +79,11 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
     const anchor = document.createElement("a");
     anchor.textContent = content[`${key}Label`] || defaultLabel;
     anchor.setAttribute("href", internalHref(content[`${key}Href`], defaultHref));
+    anchor.style.setProperty("display", "inline-flex", "important");
+    anchor.style.setProperty("margin", "0", "important");
+    anchor.style.setProperty("padding", ".12rem 0", "important");
+    anchor.style.setProperty("font-size", ".7rem", "important");
+    anchor.style.setProperty("white-space", "nowrap", "important");
     legal?.append(anchor);
   });
 }

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 const baseUrl = "https://ilkoku.com";
 
+type GuideSitemapRow = { slug: string; updatedAt: Date };
+
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -19,6 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/rehber`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.6,
     },
     ...[
       "kullanim-sartlari",
@@ -56,6 +64,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 50000,
     });
 
+    const guides = await prisma.$queryRaw<GuideSitemapRow[]>`
+      SELECT slug, updatedAt
+      FROM ContentPage
+      WHERE contentKey LIKE 'guide:%'
+        AND status = 'published'
+        AND noIndex = false
+      ORDER BY updatedAt DESC
+      LIMIT 5000
+    `;
+
     return [
       ...staticEntries,
       ...works.map((work) => ({
@@ -63,6 +81,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: work.updatedAt,
         changeFrequency: "weekly" as const,
         priority: 0.8,
+      })),
+      ...guides.map((guide) => ({
+        url: `${baseUrl}${guide.slug}`,
+        lastModified: guide.updatedAt,
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
       })),
     ];
   } catch {

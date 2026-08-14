@@ -18,7 +18,7 @@ export type CmsRevisionSnapshot = Record<string, unknown> & {
   };
 };
 
-export type CmsRevisionKind = "legal" | "guide" | "other";
+export type CmsRevisionKind = "legal" | "guide" | "page" | "other";
 
 export function parseCmsRevisionSnapshot(value: string): CmsRevisionSnapshot {
   try {
@@ -34,18 +34,19 @@ export function parseCmsRevisionSnapshot(value: string): CmsRevisionSnapshot {
 export function cmsRevisionKind(contentKey: string): CmsRevisionKind {
   if (contentKey.startsWith("legal:")) return "legal";
   if (contentKey.startsWith("guide:")) return "guide";
+  if (contentKey.startsWith("page:tr:") || contentKey.startsWith("page:en:")) return "page";
   return "other";
 }
 
 export function cmsRevisionLocale(contentKey: string, snapshot: CmsRevisionSnapshot) {
   if (snapshot.locale === "en") return "en";
-  if (contentKey.startsWith("legal:en:") || contentKey.startsWith("guide:en:")) return "en";
+  if (contentKey.startsWith("legal:en:") || contentKey.startsWith("guide:en:") || contentKey.startsWith("page:en:")) return "en";
   return "tr";
 }
 
 export function isRestorableCmsRevision(contentKey: string, snapshot: CmsRevisionSnapshot) {
   const kind = cmsRevisionKind(contentKey);
-  if (kind !== "legal" && kind !== "guide") return false;
+  if (kind !== "legal" && kind !== "guide" && kind !== "page") return false;
   if (typeof snapshot.title !== "string" || typeof snapshot.body !== "string") return false;
   if (!snapshot.title.trim() || !snapshot.body.trim()) return false;
   return snapshot.status === "draft" || snapshot.status === "published" || snapshot.status === "archived";
@@ -55,6 +56,7 @@ export function cmsRevisionTypeLabel(contentKey: string) {
   const kind = cmsRevisionKind(contentKey);
   if (kind === "legal") return "Yasal Sayfa";
   if (kind === "guide") return "Rehber";
+  if (kind === "page") return "Kurumsal Sayfa";
   return "İçerik";
 }
 

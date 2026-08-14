@@ -86,11 +86,11 @@ export default async function Page() {
         </div>
       </div>
 
-      <div className="content-stats-grid">
-        <article><span>Toplam</span><strong>{items.length}</strong><small>SSS kaydı</small></article>
-        <article><span>Yayında</span><strong>{publishedCount}</strong><small>Public Yardım Merkezi</small></article>
-        <article><span>Taslak</span><strong>{draftCount}</strong><small>Yayın bekliyor</small></article>
-        <article><span>Arşiv</span><strong>{archivedCount}</strong><small>Publicte görünmüyor</small></article>
+      <div className="content-metric-grid">
+        <article className="content-metric-card"><span>Toplam</span><strong>{items.length}</strong><small>SSS kaydı</small></article>
+        <article className="content-metric-card"><span>Yayında</span><strong>{publishedCount}</strong><small>Public Yardım Merkezi</small></article>
+        <article className="content-metric-card"><span>Taslak</span><strong>{draftCount}</strong><small>Yayın bekliyor</small></article>
+        <article className="content-metric-card"><span>Arşiv</span><strong>{archivedCount}</strong><small>Publicte görünmüyor</small></article>
       </div>
 
       <div className="content-panel">

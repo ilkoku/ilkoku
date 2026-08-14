@@ -51,3 +51,9 @@ export async function requireCmsPublisher(next = "/icerik") {
   if (!access.canPublish) redirect("/erisim-reddedildi?kaynak=icerik-yayin");
   return access;
 }
+
+export async function requireCmsAdmin(next = "/icerik") {
+  const access = await requireCmsManager(next);
+  if (!access.isAdmin) redirect("/erisim-reddedildi?kaynak=icerik-admin");
+  return access;
+}

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { PublicDocumentHydrator } from "@/components/content/PublicDocumentHydrator";
 import { PublicFooterHydrator } from "@/components/content/PublicFooterHydrator";
+import { safeCmsInternalHref } from "@/lib/cms-links";
 
 type Section = Record<string, string>;
 type HomepageContent = Record<string, Section>;
@@ -44,6 +45,13 @@ function setLinkText(selector: string, value?: string) {
   }
 }
 
+function setLinkHref(selector: string, value?: string) {
+  const safeHref = safeCmsInternalHref(value);
+  if (!safeHref) return;
+  const anchor = document.querySelector<HTMLAnchorElement>(selector);
+  if (anchor) anchor.setAttribute("href", safeHref);
+}
+
 function applyHomepage(content: HomepageContent) {
   const hero = content.hero;
   if (hero?.title) {
@@ -52,7 +60,9 @@ function applyHomepage(content: HomepageContent) {
   }
   setText(".landing-hero__content > p", hero?.description);
   setLinkText(".landing-hero__actions a:nth-child(1)", hero?.primaryCtaLabel);
+  setLinkHref(".landing-hero__actions a:nth-child(1)", hero?.primaryCtaHref);
   setLinkText(".landing-hero__actions a:nth-child(2)", hero?.secondaryCtaLabel);
+  setLinkHref(".landing-hero__actions a:nth-child(2)", hero?.secondaryCtaHref);
 
   const roles = content.roles;
   setText(".landing-section--roles .landing-section-heading__eyebrow", roles?.eyebrow);
@@ -64,6 +74,7 @@ function applyHomepage(content: HomepageContent) {
   setText(".landing-passport__content h2", passport?.title);
   setText(".landing-passport__content > p", passport?.description);
   setLinkText(".landing-passport__content a.landing-button", passport?.ctaLabel);
+  setLinkHref(".landing-passport__content a.landing-button", passport?.ctaHref);
 
   const why = content.why;
   setText(".landing-why-v2 .landing-section-heading__eyebrow", why?.eyebrow);

@@ -10,6 +10,12 @@ type RouteProps = {
   params: Promise<{ id: string }>;
 };
 
+function contentDisposition(filename: string) {
+  const fallback = filename.replace(/[^\x20-\x7e]/g, "-").replace(/["\\]/g, "-");
+  const encoded = encodeURIComponent(filename).replace(/[!'()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
+  return `inline; filename="${fallback}"; filename*=UTF-8''${encoded}`;
+}
+
 export async function GET(_request: Request, { params }: RouteProps) {
   const { id } = await params;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
@@ -46,7 +52,7 @@ export async function GET(_request: Request, { params }: RouteProps) {
     headers: {
       "Content-Type": blob.mimeType,
       "Content-Length": String(body.length),
-      "Content-Disposition": `inline; filename="${blob.filename}"`,
+      "Content-Disposition": contentDisposition(blob.filename),
       "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
       "X-Content-Type-Options": "nosniff",
     },

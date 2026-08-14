@@ -5,11 +5,14 @@ import { getRequestSession } from "@/lib/auth/request-session";
 
 const legacyEditorsPath = "/editörler";
 const publicEditorsPath = "/editorler";
+const legacyAdminPath = "/admin";
+const systemManagementPath = "/sistem-yonetimi";
 const publisherPath = "/yayinevi";
 const publisherInvitationPath = "/yayinevi/davet";
 
 const protectedPaths = [
-  "/admin",
+  legacyAdminPath,
+  systemManagementPath,
   "/hesabim",
   "/editor",
   "/favorilerim",
@@ -119,7 +122,9 @@ function createAccessDeniedRedirect(
 export async function proxy(request: NextRequest) {
   const pathname = decodeURIComponent(request.nextUrl.pathname);
   const roleRule = getRoleRule(pathname);
-  const isAdminRoute = matchesPath(pathname, "/admin");
+  const isAdminRoute =
+    matchesPath(pathname, systemManagementPath) ||
+    matchesPath(pathname, legacyAdminPath);
   const isPublisherRoute = matchesPath(pathname, publisherPath);
   const isPublisherInvitationRoute = matchesPath(
     pathname,
@@ -160,15 +165,15 @@ export async function proxy(request: NextRequest) {
   const isAdmin = currentRole === "admin";
 
   /*
-   * Admin sayfaları yalnızca admin rolüne açıktır.
-   * Writer/editor/publisher gibi roller burada açık bir erişim
-   * reddedildi ekranına gönderilir.
+   * Sistem yönetimi yalnızca admin rolüne açıktır.
+   * Legacy /admin dışarıdan canonical /sistem-yonetimi adresine
+   * yönlendirilir; iki yol da güvenlik katmanında admin olarak ele alınır.
    */
   if (isAdminRoute && !isAdmin) {
     return createAccessDeniedRedirect(
       request,
       session.response,
-      "admin",
+      "system_management",
     );
   }
 

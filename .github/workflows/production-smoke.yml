@@ -59,16 +59,48 @@ jobs:
             [[ "$location" == *"/giris"* ]]
           }
 
+          check_redirect_route() {
+            local url="$1"
+            local expected_location="$2"
+            local headers
+            local code
+            local location
+
+            headers="$(mktemp)"
+            code="$(curl --silent --show-error --max-time 20 --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            rm -f "$headers"
+
+            printf '%s -> HTTP %s | Location: %s\n' "$url" "$code" "${location:-YOK}"
+            [[ "$code" == "308" ]]
+            [[ "$location" == *"$expected_location"* ]]
+          }
+
           for attempt in $(seq 1 30); do
             echo "Deneme $attempt/30"
 
+            if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+              system_routes_ok=false
+              if check_protected_route "https://ilkoku.com/sistem-yonetimi/epostalar" \
+                && check_protected_route "https://ilkoku.com/sistem-yonetimi/okuma-guvenligi" \
+                && check_redirect_route "https://ilkoku.com/admin/epostalar" "/sistem-yonetimi/epostalar" \
+                && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi"; then
+                system_routes_ok=true
+              fi
+            else
+              system_routes_ok=false
+              if check_protected_route "https://ilkoku.com/admin/epostalar" \
+                && check_protected_route "https://ilkoku.com/admin/okuma-guvenligi"; then
+                system_routes_ok=true
+              fi
+            fi
+
             if check_public_route "https://ilkoku.com/" "200" \
               && check_public_route "https://ilkoku.com/giris" "200" \
-              && check_protected_route "https://ilkoku.com/admin/epostalar" \
-              && check_protected_route "https://ilkoku.com/admin/okuma-guvenligi" \
+              && [[ "$system_routes_ok" == "true" ]] \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Yeni production route'ları canlı ve auth yönlendirmeleri çalışıyor."
+              echo "PASS: Production route'ları canlı ve auth/canonical yönlendirmeleri çalışıyor."
               exit 0
             fi
 

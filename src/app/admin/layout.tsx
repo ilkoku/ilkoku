@@ -13,8 +13,8 @@ import "./users.css";
 import "./yazarlar/writers.css";
 
 export const metadata: Metadata = {
-  title: "İlkOku Yönetim Merkezi",
-  description: "İlkOku platform yönetim paneli",
+  title: "İlkOku Sistem Yönetimi",
+  description: "İlkOku teknik sistem yönetim merkezi",
 };
 
 export const dynamic = "force-dynamic";
@@ -27,11 +27,11 @@ export default async function AdminLayout({
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect("/giris?sonraki=/admin");
+    redirect("/giris?sonraki=/sistem-yonetimi");
   }
 
   if (user.role !== "admin") {
-    redirect("/erisim-reddedildi?kaynak=admin");
+    redirect("/erisim-reddedildi?kaynak=system_management");
   }
 
   return (

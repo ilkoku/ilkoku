@@ -62,7 +62,7 @@ function currentFullSnapshot(page: PageRow): CmsRevisionSnapshot {
     };
   }
 
-  if (kind === "guide") {
+  if (kind === "guide" || kind === "page") {
     return {
       locale,
       title: page.title,
@@ -174,7 +174,7 @@ export async function restoreCmsRevisionAction(formData: FormData) {
             updatedAt = CURRENT_TIMESTAMP(3)
         WHERE id = ${page.id}
       `;
-    } else if (kind === "guide") {
+    } else if (kind === "guide" || kind === "page") {
       const summary = typeof snapshot.summary === "string" ? snapshot.summary : "";
       const body = String(snapshot.body ?? "");
       const seoTitle = typeof snapshot.seoTitle === "string" ? snapshot.seoTitle : "";
@@ -236,6 +236,13 @@ export async function restoreCmsRevisionAction(formData: FormData) {
       revalidatePath("/rehber");
       revalidatePath(page.slug);
     }
+  }
+  if (kind === "page") {
+    revalidatePath("/icerik/sayfalar");
+    revalidatePath(`/icerik/sayfalar/${page.id}`);
+    revalidatePath(`/icerik/onizleme/sayfa/${page.id}`);
+    if (!restoreIntoWorkingDraft && locale === "tr") revalidatePath(page.slug);
+    revalidatePath("/sitemap.xml");
   }
 
   redirect(`/icerik/gecmis/${restoredId}?geri-yuklendi=1${restoreIntoWorkingDraft ? "&taslak=1" : ""}`);

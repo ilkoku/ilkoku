@@ -25,6 +25,8 @@ export async function POST(request: Request) {
     SELECT id, role
     FROM User
     WHERE email = ${email}
+      AND status = 'active'
+      AND isBanned = false
       AND deletedAt IS NULL
     LIMIT 1
   `;

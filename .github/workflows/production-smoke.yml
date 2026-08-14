@@ -38,6 +38,15 @@ jobs:
             [[ "$code" == "$expected" ]]
           }
 
+          check_optional_locale_route() {
+            local url="$1"
+            local code
+
+            code="$(curl --silent --show-error --location --max-time 20 --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            printf '%s -> HTTP %s\n' "$url" "$code"
+            [[ "$code" == "200" || "$code" == "404" ]]
+          }
+
           check_protected_route() {
             local url="$1"
             local headers
@@ -82,13 +91,15 @@ jobs:
             if check_public_route "https://ilkoku.com/" "200" \
               && check_public_route "https://ilkoku.com/giris" "200" \
               && check_public_route "https://ilkoku.com/yardim" "200" \
+              && check_optional_locale_route "https://ilkoku.com/en" \
+              && check_optional_locale_route "https://ilkoku.com/en/yardim" \
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/epostalar" \
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/okuma-guvenligi" \
               && check_redirect_route "https://ilkoku.com/admin/epostalar" "/sistem-yonetimi/epostalar" \
               && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production route'ları canlı ve auth/canonical yönlendirmeleri çalışıyor."
+              echo "PASS: Production route'ları canlı ve auth/canonical/dil yönlendirmeleri çalışıyor."
               exit 0
             fi
 

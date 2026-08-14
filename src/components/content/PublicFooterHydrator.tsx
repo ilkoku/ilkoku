@@ -30,20 +30,48 @@ function findColumn(footer: HTMLElement, title: string) {
   return columns(footer).find((column) => column.querySelector("h3")?.textContent?.trim() === title);
 }
 
-function ensureLegalColumn(footer: HTMLElement, content: FooterContent) {
-  const grid = footer.querySelector<HTMLElement>(".landing-footer__grid");
-  if (!grid) return;
+function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
+  const copyright = footer.querySelector<HTMLElement>(".landing-footer__copyright");
+  if (!copyright) return;
 
-  let column = findColumn(footer, "Yasal");
-  if (!column) {
-    column = document.createElement("div");
-    grid.append(column);
+  for (const column of columns(footer)) {
+    if (column.querySelector("h3")?.textContent?.trim() === "Yasal") {
+      column.remove();
+    }
   }
 
-  column.replaceChildren();
-  const heading = document.createElement("h3");
-  heading.textContent = content.legalTitle || "Yasal";
-  column.append(heading);
+  let copyrightText = copyright.querySelector<HTMLElement>(".landing-footer__copyright-text");
+  if (!copyrightText) {
+    const originalText = copyright.textContent?.trim() || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`;
+    copyright.replaceChildren();
+    copyrightText = document.createElement("span");
+    copyrightText.className = "landing-footer__copyright-text";
+    copyrightText.textContent = originalText;
+    copyright.append(copyrightText);
+  }
+
+  let legal = copyright.querySelector<HTMLElement>(".landing-footer__legal");
+  if (!legal) {
+    legal = document.createElement("nav");
+    legal.className = "landing-footer__legal";
+    copyright.append(legal);
+  }
+
+  copyright.style.setProperty("display", "flex", "important");
+  copyright.style.setProperty("align-items", "center", "important");
+  copyright.style.setProperty("justify-content", "space-between", "important");
+  copyright.style.setProperty("gap", ".8rem 1.5rem", "important");
+  copyright.style.setProperty("flex-wrap", "wrap", "important");
+
+  legal.style.setProperty("display", "flex", "important");
+  legal.style.setProperty("align-items", "center", "important");
+  legal.style.setProperty("justify-content", "flex-end", "important");
+  legal.style.setProperty("gap", ".35rem 1rem", "important");
+  legal.style.setProperty("flex-wrap", "wrap", "important");
+  legal.style.setProperty("margin-left", "auto", "important");
+
+  legal.setAttribute("aria-label", content.legalTitle || "Yasal bağlantılar");
+  legal.replaceChildren();
 
   const keys = ["terms", "privacy", "kvkk", "cookie", "copyright"] as const;
   legalLinks.forEach(([defaultLabel, defaultHref], index) => {
@@ -51,7 +79,12 @@ function ensureLegalColumn(footer: HTMLElement, content: FooterContent) {
     const anchor = document.createElement("a");
     anchor.textContent = content[`${key}Label`] || defaultLabel;
     anchor.setAttribute("href", internalHref(content[`${key}Href`], defaultHref));
-    column?.append(anchor);
+    anchor.style.setProperty("display", "inline-flex", "important");
+    anchor.style.setProperty("margin", "0", "important");
+    anchor.style.setProperty("padding", ".12rem 0", "important");
+    anchor.style.setProperty("font-size", ".7rem", "important");
+    anchor.style.setProperty("white-space", "nowrap", "important");
+    legal?.append(anchor);
   });
 }
 
@@ -76,13 +109,13 @@ export function PublicFooterHydrator() {
     const footer = document.querySelector<HTMLElement>(".landing-footer");
     if (!footer) return;
 
-    ensureLegalColumn(footer, {});
+    ensureLegalBar(footer, {});
 
     void fetch("/api/site-content/footer-navigation", { cache: "no-store", credentials: "same-origin" })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         const content = (payload?.content ?? {}) as FooterContent;
-        ensureLegalColumn(footer, content);
+        ensureLegalBar(footer, content);
         updateColumn(findColumn(footer, "Platform"), content.platformTitle, content, "platform", 3);
         updateColumn(findColumn(footer, "Destek"), content.supportTitle, content, "support", 1);
       })

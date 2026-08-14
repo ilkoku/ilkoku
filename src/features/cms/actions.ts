@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
+import { safeCmsInternalHref } from "@/lib/cms-links";
 import { prisma } from "@/lib/prisma";
 
 async function saveHomepageSection(
@@ -55,9 +56,9 @@ export async function saveHomepageHeroAction(formData: FormData) {
   const title = field(formData, "title", 220);
   const description = field(formData, "description", 1000);
   const primaryCtaLabel = field(formData, "primaryCtaLabel", 80);
-  const primaryCtaHref = field(formData, "primaryCtaHref", 300);
+  const primaryCtaHref = safeCmsInternalHref(field(formData, "primaryCtaHref", 300));
   const secondaryCtaLabel = field(formData, "secondaryCtaLabel", 80);
-  const secondaryCtaHref = field(formData, "secondaryCtaHref", 300);
+  const secondaryCtaHref = safeCmsInternalHref(field(formData, "secondaryCtaHref", 300));
 
   if (!title || !description) return;
 
@@ -96,7 +97,7 @@ export async function saveHomepagePassportAction(formData: FormData) {
   const title = field(formData, "title", 260);
   const description = field(formData, "description", 1200);
   const ctaLabel = field(formData, "ctaLabel", 80);
-  const ctaHref = field(formData, "ctaHref", 300);
+  const ctaHref = safeCmsInternalHref(field(formData, "ctaHref", 300));
   if (!title || !description) return;
   await saveHomepageSection(user!.id, "passport", {
     eyebrow,

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { updateCmsLocaleAction } from "@/features/cms/locale-actions";
 import { requireCmsAdmin } from "@/lib/cms-access";
 import { getCmsLocaleStates } from "@/lib/cms-locale-state";
-import { cmsLocaleNamespace, type CmsLocaleCode } from "@/lib/cms-locales";
+import { cmsLocaleNamespace } from "@/lib/cms-locales";
 import { prisma } from "@/lib/prisma";
 
 type CountRow = { total: bigint | number; status: "draft" | "published" | "archived" };

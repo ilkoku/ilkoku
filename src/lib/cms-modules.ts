@@ -18,7 +18,7 @@ export const cmsModules: CmsModule[] = [
   { href: "/icerik/rehber", label: "Rehber & İçerikler", description: "Editoryal kurumsal içerikler", group: "İçerik", enabled: false },
   { href: "/icerik/seo", label: "SEO", description: "Meta, canonical, index ve sosyal paylaşım", group: "Büyüme", enabled: true },
   { href: "/icerik/formlar", label: "Formlar & Talepler", description: "Kurumsal formlar ve gelen talepler", group: "Büyüme", enabled: false },
-  { href: "/icerik/yonlendirmeler", label: "Yönlendirmeler", description: "Eski URL ve 301 yönlendirme kuralları", group: "Büyüme", enabled: false },
+  { href: "/icerik/yonlendirmeler", label: "Yönlendirmeler", description: "Eski URL ve 301/308 yönlendirme kuralları", group: "Büyüme", enabled: true },
   { href: "/icerik/diller", label: "Dil Altyapısı", description: "Gelecekte çok dil için içerik sözleşmesi", group: "Büyüme", enabled: true },
   { href: "/icerik/gecmis", label: "Değişiklik Geçmişi", description: "Revision ve yayın hareketleri", group: "Sistem", enabled: true },
   { href: "/icerik/ayarlar", label: "İçerik Ayarları", description: "CMS davranış ve yayın ayarları", group: "Sistem", enabled: false },

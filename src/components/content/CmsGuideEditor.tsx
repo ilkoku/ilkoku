@@ -109,9 +109,9 @@ export async function CmsGuideEditor({ id }: { id?: string }) {
             <textarea name="seoDescription" rows={3} maxLength={500} defaultValue={guide?.seoDescription ?? ""} />
           </label>
 
-          <label style={{ display: "flex", gridTemplateColumns: "auto 1fr", alignItems: "center" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: ".7rem" }}>
             <input name="noIndex" type="checkbox" defaultChecked={Boolean(guide?.noIndex)} style={{ width: "auto" }} />
-            <span>Arama motorlarında indeksleme</span>
+            <span>Arama motorlarında gösterme (noindex)</span>
           </label>
 
           <p className="content-form-help">Slug ilk kayıttan sonra sabitlenir. Her kaydetme ContentRevision içinde yeni sürüm oluşturur.</p>

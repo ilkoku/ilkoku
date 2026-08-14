@@ -4,7 +4,14 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
-import { normalizeGuideSlug } from "@/lib/cms-guides";
+import {
+  cmsGuideContentKey,
+  cmsGuideLocaleFromContentKey,
+  cmsGuidePublicPath,
+  normalizeGuideSlug,
+} from "@/lib/cms-guides";
+import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
+import { normalizeCmsLocale, type CmsLocaleCode } from "@/lib/cms-locales";
 import { prisma } from "@/lib/prisma";
 
 type ExistingGuide = {
@@ -13,6 +20,15 @@ type ExistingGuide = {
   slug: string;
   status: "draft" | "published" | "archived";
 };
+
+function localeFromForm(formData: FormData) {
+  return normalizeCmsLocale(String(formData.get("locale") ?? "tr"));
+}
+
+function cmsListPath(locale: CmsLocaleCode, suffix = "") {
+  const join = suffix ? `&${suffix}` : "";
+  return `/icerik/rehber?dil=${locale}${join}`;
+}
 
 async function addRevision(pageId: string, userId: string, snapshot: Record<string, unknown>) {
   const rows = await prisma.$queryRaw<Array<{ version: number | bigint }>>`
@@ -47,12 +63,19 @@ export async function saveCmsGuideAction(formData: FormData) {
     if (!existing) redirect("/icerik/rehber?hata=kayit");
   }
 
+  const locale = existing ? cmsGuideLocaleFromContentKey(existing.contentKey) : localeFromForm(formData);
+
+  if (mode === "publish" && !(await isCmsLocaleEnabled(locale))) {
+    redirect(cmsListPath(locale, "hata=dil-pasif"));
+  }
+
   if (mode === "publish" || existing?.status === "published") {
     access = await requireCmsPublisher("/icerik/rehber");
   }
   const user = access.user!;
 
-  const rawSlug = existing?.slug.replace(/^\/rehber\//, "") ?? String(formData.get("slug") ?? "");
+  const prefix = locale === "en" ? /^\/en\/rehber\// : /^\/rehber\//;
+  const rawSlug = existing?.slug.replace(prefix, "") ?? String(formData.get("slug") ?? "");
   const slugPart = normalizeGuideSlug(rawSlug);
   const title = String(formData.get("title") ?? "").trim().slice(0, 220);
   const summary = String(formData.get("summary") ?? "").trim().slice(0, 500);
@@ -61,10 +84,10 @@ export async function saveCmsGuideAction(formData: FormData) {
   const seoDescription = String(formData.get("seoDescription") ?? "").trim().slice(0, 500);
   const noIndex = formData.get("noIndex") === "on";
 
-  if (!slugPart || !title || !body) redirect("/icerik/rehber?hata=zorunlu");
+  if (!slugPart || !title || !body) redirect(cmsListPath(locale, "hata=zorunlu"));
 
-  const fullSlug = `/rehber/${slugPart}`;
-  const contentKey = existing?.contentKey ?? `guide:${slugPart}`;
+  const fullSlug = cmsGuidePublicPath(slugPart, locale);
+  const contentKey = existing?.contentKey ?? cmsGuideContentKey(slugPart, locale);
   const status = mode === "publish" ? "published" : "draft";
   const bodyJson = JSON.stringify({ summary, body });
 
@@ -74,7 +97,7 @@ export async function saveCmsGuideAction(formData: FormData) {
       FROM ContentPage
       WHERE slug = ${fullSlug} OR contentKey = ${contentKey}
     `;
-    if (Number(duplicate[0]?.total ?? 0) > 0) redirect("/icerik/rehber?hata=slug");
+    if (Number(duplicate[0]?.total ?? 0) > 0) redirect(cmsListPath(locale, "hata=slug"));
 
     const id = randomUUID();
     await prisma.$executeRaw`
@@ -89,13 +112,15 @@ export async function saveCmsGuideAction(formData: FormData) {
         ${user.id}, ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
       )
     `;
-    await addRevision(id, user.id, { title, summary, body, seoTitle, seoDescription, noIndex, status });
+    await addRevision(id, user.id, { locale, title, summary, body, seoTitle, seoDescription, noIndex, status });
 
     revalidatePath("/icerik");
     revalidatePath("/icerik/rehber");
-    revalidatePath("/rehber");
-    revalidatePath(fullSlug);
-    redirect(`/icerik/rehber/${id}?kayit=1`);
+    if (locale === "tr") {
+      revalidatePath("/rehber");
+      revalidatePath(fullSlug);
+    }
+    redirect(`/icerik/rehber/${id}?dil=${locale}&kayit=1`);
   }
 
   await prisma.$executeRaw`
@@ -113,14 +138,16 @@ export async function saveCmsGuideAction(formData: FormData) {
     WHERE id = ${existing.id}
   `;
 
-  await addRevision(existing.id, user.id, { title, summary, body, seoTitle, seoDescription, noIndex, status });
+  await addRevision(existing.id, user.id, { locale, title, summary, body, seoTitle, seoDescription, noIndex, status });
 
   revalidatePath("/icerik");
   revalidatePath("/icerik/rehber");
   revalidatePath(`/icerik/rehber/${existing.id}`);
-  revalidatePath("/rehber");
-  revalidatePath(existing.slug);
-  redirect(`/icerik/rehber/${existing.id}?kayit=1`);
+  if (locale === "tr") {
+    revalidatePath("/rehber");
+    revalidatePath(existing.slug);
+  }
+  redirect(`/icerik/rehber/${existing.id}?dil=${locale}&kayit=1`);
 }
 
 export async function archiveCmsGuideAction(formData: FormData) {
@@ -138,6 +165,7 @@ export async function archiveCmsGuideAction(formData: FormData) {
   const guide = rows[0];
   if (!guide) return;
 
+  const locale = cmsGuideLocaleFromContentKey(guide.contentKey);
   if (guide.status === "published") {
     access = await requireCmsPublisher("/icerik/rehber");
   }
@@ -148,11 +176,13 @@ export async function archiveCmsGuideAction(formData: FormData) {
     SET status = 'archived', publishedAt = NULL, updatedById = ${user.id}, updatedAt = CURRENT_TIMESTAMP(3)
     WHERE id = ${guide.id}
   `;
-  await addRevision(guide.id, user.id, { status: "archived" });
+  await addRevision(guide.id, user.id, { locale, status: "archived" });
 
   revalidatePath("/icerik");
   revalidatePath("/icerik/rehber");
-  revalidatePath("/rehber");
-  revalidatePath(guide.slug);
-  redirect("/icerik/rehber?arsiv=1");
+  if (locale === "tr") {
+    revalidatePath("/rehber");
+    revalidatePath(guide.slug);
+  }
+  redirect(cmsListPath(locale, "arsiv=1"));
 }

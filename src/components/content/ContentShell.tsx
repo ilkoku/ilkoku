@@ -10,10 +10,12 @@ import { contentNavigation } from "@/lib/content-navigation";
 type ContentShellProps = {
   children: ReactNode;
   user: { email: string; fullName: string };
+  isAdmin: boolean;
 };
 
-export function ContentShell({ children, user }: ContentShellProps) {
+export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
   const pathname = usePathname();
+  const navigation = contentNavigation.filter((item) => isAdmin || !item.adminOnly);
 
   return (
     <div className="content-shell">
@@ -26,7 +28,7 @@ export function ContentShell({ children, user }: ContentShellProps) {
         </div>
 
         <nav aria-label="İçerik yönetimi menüsü">
-          {contentNavigation.map((item) => {
+          {navigation.map((item) => {
             const active = item.href === "/icerik"
               ? pathname === item.href
               : pathname.startsWith(item.href);

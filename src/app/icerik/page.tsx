@@ -15,6 +15,7 @@ type SiteCountRow = {
   announcements: bigint;
   forms: bigint;
   media: bigint;
+  schedules: bigint;
 };
 
 type CountRow = { total: bigint };
@@ -50,6 +51,7 @@ const namespaceLabels: Record<string, string> = {
   faq: "SSS & Yardım",
   announcement: "Duyurular",
   form_submission: "Formlar & Talepler",
+  cms_schedule: "Yayın Zamanlama",
   settings: "İçerik Ayarları",
   locale: "Dil Altyapısı",
 };
@@ -96,7 +98,8 @@ async function loadDashboardData() {
         SELECT
           COUNT(CASE WHEN namespace = 'announcement' AND status = 'published' THEN 1 END) AS announcements,
           COUNT(CASE WHEN namespace = 'form_submission' AND status <> 'archived' THEN 1 END) AS forms,
-          COUNT(CASE WHEN namespace = 'media' AND status <> 'archived' THEN 1 END) AS media
+          COUNT(CASE WHEN namespace = 'media' AND status <> 'archived' THEN 1 END) AS media,
+          COUNT(CASE WHEN namespace = 'cms_schedule' AND status = 'published' THEN 1 END) AS schedules
         FROM SiteContent
       `,
       prisma.$queryRaw<CountRow[]>`
@@ -129,6 +132,7 @@ async function loadDashboardData() {
       announcements: number(siteCounts[0]?.announcements),
       forms: number(siteCounts[0]?.forms),
       media: number(siteCounts[0]?.media),
+      schedules: number(siteCounts[0]?.schedules),
       revisions: number(revisions[0]?.total),
       recentPages,
       recentSite,
@@ -140,6 +144,7 @@ async function loadDashboardData() {
       announcements: 0,
       forms: 0,
       media: 0,
+      schedules: 0,
       revisions: 0,
       recentPages: [] as RecentPageRow[],
       recentSite: [] as RecentSiteRow[],
@@ -191,6 +196,7 @@ export default async function ContentDashboardPage() {
   const metrics = [
     { label: "CMS sayfaları", value: data.pages.total, note: `${data.pages.published} yayında` },
     { label: "Taslak", value: data.pages.drafts, note: "yayın bekleyen" },
+    { label: "Planlı yayın", value: data.schedules, note: "aktif zamanlama" },
     { label: "SEO eksiği", value: data.seoIssues, note: "sayfa kontrolü" },
     { label: "Aktif duyuru", value: data.announcements, note: "yayında" },
     { label: "Form talebi", value: data.forms, note: "açık kayıt" },
@@ -204,7 +210,7 @@ export default async function ContentDashboardPage() {
         <div>
           <span>Kontrol Merkezi</span>
           <h1>İçerik Genel Bakış</h1>
-          <p>İlkOku.com içeriklerinin yayın, SEO, duyuru ve talep durumunu tek ekrandan izleyin.</p>
+          <p>İlkOku.com içeriklerinin yayın, zamanlama, SEO, duyuru ve talep durumunu tek ekrandan izleyin.</p>
         </div>
         <div className={`content-health-badge ${healthClass}`}>
           <small>İçerik sağlığı</small>

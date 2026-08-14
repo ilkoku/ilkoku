@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { archiveCmsGuideAction, saveCmsGuideAction } from "@/features/cms/guide-actions";
 import { requireCmsManager } from "@/lib/cms-access";
+import { getCmsDraft, pageDraftKey } from "@/lib/cms-drafts";
 import {
   cmsGuideLocaleFromContentKey,
   parseGuideBody,
@@ -24,6 +25,14 @@ type GuideRow = {
 };
 
 type RevisionRow = { total: number | bigint };
+type GuideDraft = {
+  title?: string;
+  summary?: string;
+  body?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  noIndex?: boolean;
+};
 
 export async function CmsGuideEditor({ id, locale: requestedLocale }: { id?: string; locale: CmsLocaleCode }) {
   const access = await requireCmsManager(id ? `/icerik/rehber/${id}` : "/icerik/rehber/yeni");
@@ -54,21 +63,29 @@ export async function CmsGuideEditor({ id, locale: requestedLocale }: { id?: str
   const locale = guide ? cmsGuideLocaleFromContentKey(guide.contentKey) : requestedLocale;
   const localeEnabled = await isCmsLocaleEnabled(locale);
   const stored = parseGuideBody(guide?.bodyJson ?? "{}");
+  const staged = guide?.status === "published"
+    ? await getCmsDraft<GuideDraft>(pageDraftKey(guide.id)).catch(() => null)
+    : null;
+  const draft = staged?.payload;
+  const hasPendingDraft = Boolean(draft);
   const prefix = locale === "en" ? /^\/en\/rehber\// : /^\/rehber\//;
   const slugPart = guide?.slug.replace(prefix, "") ?? "";
   const isEn = locale === "en";
   const canPublish = access.canPublish && localeEnabled;
+  const statusLabel = guide?.status === "published" && hasPendingDraft
+    ? "Yayında · taslak hazır"
+    : guide?.status === "published" ? "Yayında" : guide?.status === "archived" ? "Arşiv" : "Taslak";
 
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
         <div>
           <span>Rehber · {locale.toUpperCase()}</span>
-          <h1>{guide ? guide.title : isEn ? "New English guide" : "Yeni rehber"}</h1>
-          <p>{isEn ? "İngilizce rehber taslağını Türkçe içerikten bağımsız hazırlayın." : "Rehber metnini, kısa açıklamasını ve SEO alanlarını tek kayıtta yönetin."}</p>
+          <h1>{guide ? (draft?.title ?? guide.title) : isEn ? "New English guide" : "Yeni rehber"}</h1>
+          <p>{isEn ? "İngilizce rehber taslağını Türkçe içerikten bağımsız hazırlayın." : "Yayındaki rehber korunur; kaydettiğiniz düzenlemeler ayrı çalışma taslağında bekler."}</p>
         </div>
         <div className="content-profile">
-          <strong>{guide?.status === "published" ? "Yayında" : guide?.status === "archived" ? "Arşiv" : "Taslak"}</strong>
+          <strong>{statusLabel}</strong>
           <small>{guide ? `${revisionCount} sürüm` : "Yeni içerik"}</small>
         </div>
       </div>
@@ -76,13 +93,21 @@ export async function CmsGuideEditor({ id, locale: requestedLocale }: { id?: str
       <div className="content-form-actions" style={{ marginBottom: "1rem", flexWrap: "wrap" }}>
         <Link href="/icerik/rehber?dil=tr">Türkçe</Link>
         <Link href="/icerik/rehber?dil=en">English</Link>
+        {guide ? <Link href={`/icerik/onizleme/rehber/${guide.id}?dil=${locale}`}>Taslağı Önizle ↗</Link> : null}
         <Link href={`/icerik/rehber?dil=${locale}`}>← Rehber listesi</Link>
       </div>
+
+      {hasPendingDraft ? (
+        <div className="content-panel" style={{ marginBottom: "1rem" }}>
+          <strong>Bekleyen çalışma taslağı var.</strong>
+          <p>Public rehber hâlâ son yayınlanmış sürümü gösteriyor. Taslağı önizleyebilir veya yayın yetkisiyle canlıya aktarabilirsiniz.</p>
+        </div>
+      ) : null}
 
       {isEn && !localeEnabled ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }}>
           <strong>EN yayın kilitli.</strong>
-          <p>Rehber taslak olarak kaydedilebilir ve sürümlenebilir. İngilizce public dili açılmadan yayınlanamaz.</p>
+          <p>Rehber taslak olarak kaydedilebilir, önizlenebilir ve sürümlenebilir. İngilizce public dili açılmadan yayınlanamaz.</p>
         </div>
       ) : null}
 
@@ -105,12 +130,12 @@ export async function CmsGuideEditor({ id, locale: requestedLocale }: { id?: str
 
           <label>
             <span>Başlık</span>
-            <input name="title" required maxLength={220} defaultValue={guide?.title ?? ""} />
+            <input name="title" required maxLength={220} defaultValue={draft?.title ?? guide?.title ?? ""} />
           </label>
 
           <label>
             <span>Kısa özet</span>
-            <textarea name="summary" rows={4} maxLength={500} defaultValue={stored.summary ?? ""} />
+            <textarea name="summary" rows={4} maxLength={500} defaultValue={draft?.summary ?? stored.summary ?? ""} />
           </label>
 
           <label>
@@ -119,27 +144,27 @@ export async function CmsGuideEditor({ id, locale: requestedLocale }: { id?: str
               name="body"
               required
               rows={24}
-              defaultValue={stored.body ?? ""}
+              defaultValue={draft?.body ?? stored.body ?? ""}
               placeholder={"Giriş paragrafı.\n\n## Bölüm başlığı\n\nAçıklama metni.\n\n- Birinci madde\n- İkinci madde"}
             />
           </label>
 
           <label>
             <span>SEO başlığı</span>
-            <input name="seoTitle" maxLength={220} defaultValue={guide?.seoTitle ?? ""} />
+            <input name="seoTitle" maxLength={220} defaultValue={draft?.seoTitle ?? guide?.seoTitle ?? ""} />
           </label>
 
           <label>
             <span>SEO açıklaması</span>
-            <textarea name="seoDescription" rows={3} maxLength={500} defaultValue={guide?.seoDescription ?? ""} />
+            <textarea name="seoDescription" rows={3} maxLength={500} defaultValue={draft?.seoDescription ?? guide?.seoDescription ?? ""} />
           </label>
 
           <label style={{ display: "flex", alignItems: "center", gap: ".7rem" }}>
-            <input name="noIndex" type="checkbox" defaultChecked={Boolean(guide?.noIndex)} style={{ width: "auto" }} />
+            <input name="noIndex" type="checkbox" defaultChecked={draft?.noIndex ?? Boolean(guide?.noIndex)} style={{ width: "auto" }} />
             <span>Arama motorlarında gösterme (noindex)</span>
           </label>
 
-          <p className="content-form-help">Slug ilk kayıttan sonra sabitlenir. Her kaydetme ContentRevision içinde yeni sürüm oluşturur.</p>
+          <p className="content-form-help">Slug ilk kayıttan sonra sabitlenir. Taslak kaydı canlı içeriği değiştirmez ve ContentRevision içinde yeni sürüm oluşturur.</p>
 
           <div className="content-form-actions" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
             <Link href={`/icerik/rehber?dil=${locale}`}>← Rehber listesi</Link>

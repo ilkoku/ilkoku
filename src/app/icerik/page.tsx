@@ -49,9 +49,11 @@ const namespaceLabels: Record<string, string> = {
   site: "Site",
   media: "Medya",
   faq: "SSS & Yardım",
+  faq_en: "SSS & Yardım · EN",
   announcement: "Duyurular",
   form_submission: "Formlar & Talepler",
   cms_schedule: "Yayın Zamanlama",
+  cms_draft: "Çalışma Taslağı",
   settings: "İçerik Ayarları",
   locale: "Dil Altyapısı",
 };
@@ -75,7 +77,7 @@ function formatDate(value: Date) {
 
 async function loadDashboardData() {
   try {
-    const [pageCounts, seoIssues, siteCounts, revisions, recentPages, recentSite] = await Promise.all([
+    const [pageCounts, seoIssues, siteCounts, revisions, publishQueue, recentPages, recentSite] = await Promise.all([
       prisma.$queryRaw<PageCountRow[]>`
         SELECT
           COUNT(*) AS total,
@@ -107,6 +109,20 @@ async function loadDashboardData() {
         FROM ContentRevision
         WHERE createdAt >= DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 7 DAY)
       `,
+      prisma.$queryRaw<CountRow[]>`
+        SELECT
+          (
+            SELECT COUNT(*) FROM SiteContent
+            WHERE namespace = 'cms_draft' AND status = 'draft'
+          ) + (
+            SELECT COUNT(*) FROM SiteContent
+            WHERE namespace IN ('faq', 'faq_en') AND status = 'draft'
+          ) + (
+            SELECT COUNT(*) FROM ContentPage
+            WHERE status = 'draft'
+              AND (contentKey LIKE 'legal:%' OR contentKey LIKE 'guide:%')
+          ) AS total
+      `,
       prisma.$queryRaw<RecentPageRow[]>`
         SELECT id, title, slug, status, updatedAt
         FROM ContentPage
@@ -134,6 +150,7 @@ async function loadDashboardData() {
       media: number(siteCounts[0]?.media),
       schedules: number(siteCounts[0]?.schedules),
       revisions: number(revisions[0]?.total),
+      publishQueue: number(publishQueue[0]?.total),
       recentPages,
       recentSite,
     };
@@ -146,6 +163,7 @@ async function loadDashboardData() {
       media: 0,
       schedules: 0,
       revisions: 0,
+      publishQueue: 0,
       recentPages: [] as RecentPageRow[],
       recentSite: [] as RecentSiteRow[],
     };
@@ -179,8 +197,8 @@ export default async function ContentDashboardPage() {
     .slice(0, 8);
 
   const tasks = [
-    data.pages.drafts > 0
-      ? { href: "/icerik/sayfalar", title: `${data.pages.drafts} taslak sayfa bekliyor`, text: "Yayınlanacak veya arşivlenecek taslakları gözden geçirin." }
+    data.publishQueue > 0
+      ? { href: "/icerik/yayin-kuyrugu", title: `${data.publishQueue} içerik yayın bekliyor`, text: "Taslakları önizleyin, düzenleyin ve yayın yetkisiyle canlıya alın." }
       : null,
     data.seoIssues > 0
       ? { href: "/icerik/seo", title: `${data.seoIssues} sayfada SEO alanı eksik`, text: "Title, description veya canonical eksiklerini tamamlayın." }
@@ -195,7 +213,7 @@ export default async function ContentDashboardPage() {
 
   const metrics = [
     { label: "CMS sayfaları", value: data.pages.total, note: `${data.pages.published} yayında` },
-    { label: "Taslak", value: data.pages.drafts, note: "yayın bekleyen" },
+    { label: "Yayın kuyruğu", value: data.publishQueue, note: "bekleyen içerik" },
     { label: "Planlı yayın", value: data.schedules, note: "aktif zamanlama" },
     { label: "SEO eksiği", value: data.seoIssues, note: "sayfa kontrolü" },
     { label: "Aktif duyuru", value: data.announcements, note: "yayında" },

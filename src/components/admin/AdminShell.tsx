@@ -8,6 +8,7 @@ import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { logoutAction } from "@/features/auth/actions";
 import {
   adminNavigation,
+  SYSTEM_MANAGEMENT_PATH,
   type AdminNavItem,
 } from "@/lib/admin-navigation";
 
@@ -152,13 +153,13 @@ export function AdminShell({
           <Link href="/">
             <Image src={logo} alt="İlkOku" priority />
           </Link>
-          <span>Yönetim Merkezi</span>
+          <span>Sistem Yönetimi</span>
         </div>
 
-        <nav aria-label="Yönetim menüsü">
+        <nav aria-label="Sistem yönetimi menüsü">
           {adminNavigation.map((item) => {
             const active =
-              item.href === "/admin"
+              item.href === SYSTEM_MANAGEMENT_PATH
                 ? pathname === item.href
                 : pathname.startsWith(item.href);
 
@@ -195,14 +196,14 @@ export function AdminShell({
           </button>
 
           <div>
-            <p>İlkOku Admin</p>
-            <strong>Kontrol Merkezi</strong>
+            <p>İlkOku Sistem</p>
+            <strong>Yönetim Merkezi</strong>
           </div>
 
-          <form action="/admin/eserler" className="admin-search" method="get">
+          <form action={`${SYSTEM_MANAGEMENT_PATH}/eserler`} className="admin-search" method="get">
             <span>⌕</span>
             <label className="sr-only" htmlFor="admin-global-search">
-              Yönetim panelinde eser ara
+              Sistem yönetiminde eser ara
             </label>
             <input
               id="admin-global-search"
@@ -215,7 +216,7 @@ export function AdminShell({
           <Link
             className="admin-icon-button"
             aria-label="Sistem hareketlerini görüntüle"
-            href="/admin/audit-log"
+            href={`${SYSTEM_MANAGEMENT_PATH}/audit-log`}
           >
             ♢
           </Link>

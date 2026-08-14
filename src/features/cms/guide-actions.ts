@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
+import { deleteCmsDraft, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
 import {
   cmsGuideContentKey,
   cmsGuideLocaleFromContentKey,
@@ -44,6 +45,16 @@ async function addRevision(pageId: string, userId: string, snapshot: Record<stri
   `;
 }
 
+function refreshGuideCms(id?: string) {
+  revalidatePath("/icerik");
+  revalidatePath("/icerik/rehber");
+  revalidatePath("/icerik/onizleme/rehber");
+  if (id) {
+    revalidatePath(`/icerik/rehber/${id}`);
+    revalidatePath(`/icerik/onizleme/rehber/${id}`);
+  }
+}
+
 export async function saveCmsGuideAction(formData: FormData) {
   const mode = String(formData.get("mode") ?? "draft");
   let access = await requireCmsManager("/icerik/rehber");
@@ -69,7 +80,7 @@ export async function saveCmsGuideAction(formData: FormData) {
     redirect(cmsListPath(locale, "hata=dil-pasif"));
   }
 
-  if (mode === "publish" || existing?.status === "published") {
+  if (mode === "publish") {
     access = await requireCmsPublisher("/icerik/rehber");
   }
   const user = access.user!;
@@ -88,6 +99,15 @@ export async function saveCmsGuideAction(formData: FormData) {
 
   const fullSlug = cmsGuidePublicPath(slugPart, locale);
   const contentKey = existing?.contentKey ?? cmsGuideContentKey(slugPart, locale);
+  const snapshot = { kind: "guide", locale, title, summary, body, seoTitle, seoDescription, noIndex, status: mode === "publish" ? "published" : "draft" };
+
+  if (existing?.status === "published" && mode !== "publish") {
+    await saveCmsDraft(user.id, pageDraftKey(existing.id), snapshot);
+    await addRevision(existing.id, user.id, snapshot);
+    refreshGuideCms(existing.id);
+    redirect(`/icerik/rehber/${existing.id}?dil=${locale}&taslak=1`);
+  }
+
   const status = mode === "publish" ? "published" : "draft";
   const bodyJson = JSON.stringify({ summary, body });
 
@@ -112,11 +132,9 @@ export async function saveCmsGuideAction(formData: FormData) {
         ${user.id}, ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
       )
     `;
-    await addRevision(id, user.id, { locale, title, summary, body, seoTitle, seoDescription, noIndex, status });
-
-    revalidatePath("/icerik");
-    revalidatePath("/icerik/rehber");
-    if (locale === "tr") {
+    await addRevision(id, user.id, snapshot);
+    refreshGuideCms(id);
+    if (locale === "tr" && status === "published") {
       revalidatePath("/rehber");
       revalidatePath(fullSlug);
     }
@@ -138,12 +156,11 @@ export async function saveCmsGuideAction(formData: FormData) {
     WHERE id = ${existing.id}
   `;
 
-  await addRevision(existing.id, user.id, { locale, title, summary, body, seoTitle, seoDescription, noIndex, status });
+  await addRevision(existing.id, user.id, snapshot);
+  if (mode === "publish") await deleteCmsDraft(pageDraftKey(existing.id));
 
-  revalidatePath("/icerik");
-  revalidatePath("/icerik/rehber");
-  revalidatePath(`/icerik/rehber/${existing.id}`);
-  if (locale === "tr") {
+  refreshGuideCms(existing.id);
+  if (locale === "tr" && status === "published") {
     revalidatePath("/rehber");
     revalidatePath(existing.slug);
   }
@@ -176,10 +193,10 @@ export async function archiveCmsGuideAction(formData: FormData) {
     SET status = 'archived', publishedAt = NULL, updatedById = ${user.id}, updatedAt = CURRENT_TIMESTAMP(3)
     WHERE id = ${guide.id}
   `;
-  await addRevision(guide.id, user.id, { locale, status: "archived" });
+  await deleteCmsDraft(pageDraftKey(guide.id));
+  await addRevision(guide.id, user.id, { kind: "guide", locale, status: "archived" });
 
-  revalidatePath("/icerik");
-  revalidatePath("/icerik/rehber");
+  refreshGuideCms(guide.id);
   if (locale === "tr") {
     revalidatePath("/rehber");
     revalidatePath(guide.slug);

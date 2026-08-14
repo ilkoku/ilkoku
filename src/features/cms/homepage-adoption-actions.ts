@@ -11,18 +11,8 @@ const sectionKeys: HomepagePublicSectionKey[] = ["hero", "roles", "passport", "w
 
 type ExistingRow = { contentKey: string };
 
-function adoptionValue(key: HomepagePublicSectionKey) {
-  const value = homepagePublicFallback[key];
-  if (key !== "footer") return value;
-
-  // Footer sloganındaki kalın vurgu ve copyright satırındaki yasal link barı
-  // mevcut public markup tarafından korunur. İlk devralma yalnız CMS sahipliğini
-  // oluşturur; bu iki alan kullanıcı açıkça düzenleyip yayınlayana kadar hydrate edilmez.
-  return { supportEmail: value.supportEmail };
-}
-
 export async function adoptHomepageFallbackAction() {
-  const access = await requireCmsPublisher("/icerik/ana-sayfa?dil=tr");
+  const access = await requireCmsPublisher("/icerik/ana-sayfa/devral");
   const userId = access.user!.id;
 
   const existingRows = await prisma.$queryRaw<ExistingRow[]>`
@@ -36,7 +26,7 @@ export async function adoptHomepageFallbackAction() {
 
   for (const key of sectionKeys) {
     if (existing.has(key)) continue;
-    const valueJson = JSON.stringify(adoptionValue(key));
+    const valueJson = JSON.stringify(homepagePublicFallback[key]);
     await prisma.$executeRaw`
       INSERT INTO SiteContent (
         id, namespace, contentKey, valueJson, valueType, status,
@@ -52,6 +42,7 @@ export async function adoptHomepageFallbackAction() {
   revalidatePath("/");
   revalidatePath("/icerik");
   revalidatePath("/icerik/ana-sayfa");
+  revalidatePath("/icerik/ana-sayfa/devral");
   revalidatePath("/icerik/saglik");
-  redirect(`/icerik/ana-sayfa?dil=tr&devralindi=${created}`);
+  redirect(`/icerik/ana-sayfa/devral?devralindi=${created}`);
 }

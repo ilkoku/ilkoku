@@ -30,6 +30,7 @@ export async function createMediaAssetAction(formData: FormData) {
     kind: value(formData, "kind", 40) || "image",
     usage: value(formData, "usage", 180),
     notes: value(formData, "notes", 800),
+    storage: "public-path",
     uploadedBy: user!.displayName || user!.fullName,
   });
 
@@ -43,6 +44,7 @@ export async function createMediaAssetAction(formData: FormData) {
     )
   `;
 
+  revalidatePath("/icerik");
   revalidatePath("/icerik/medya");
 }
 
@@ -51,11 +53,21 @@ export async function archiveMediaAssetAction(formData: FormData) {
   const contentKey = value(formData, "contentKey", 200);
   if (!contentKey.startsWith("asset_")) return;
 
-  await prisma.$executeRaw`
-    UPDATE SiteContent
-    SET status = 'archived', updatedById = ${user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
-    WHERE namespace = 'media' AND contentKey = ${contentKey}
-  `;
+  const assetId = contentKey.slice("asset_".length);
 
+  await prisma.$transaction([
+    prisma.$executeRaw`
+      UPDATE SiteContent
+      SET status = 'archived', updatedById = ${user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = 'media' AND contentKey = ${contentKey}
+    `,
+    prisma.$executeRaw`
+      UPDATE SiteContent
+      SET status = 'archived', updatedById = ${user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = 'media_blob' AND contentKey = ${`blob_${assetId}`}
+    `,
+  ]);
+
+  revalidatePath("/icerik");
   revalidatePath("/icerik/medya");
 }

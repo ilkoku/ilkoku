@@ -18,6 +18,7 @@ export default async function ContentLayout({
 
   return (
     <ContentShell
+      isAdmin={access.isAdmin}
       user={{
         email: user.email,
         fullName: user.displayName || user.fullName,

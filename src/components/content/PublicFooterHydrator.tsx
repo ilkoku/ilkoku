@@ -30,20 +30,26 @@ function findColumn(footer: HTMLElement, title: string) {
   return columns(footer).find((column) => column.querySelector("h3")?.textContent?.trim() === title);
 }
 
-function ensureLegalColumn(footer: HTMLElement, content: FooterContent) {
+function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
   const grid = footer.querySelector<HTMLElement>(".landing-footer__grid");
-  if (!grid) return;
+  const copyright = footer.querySelector<HTMLElement>(".landing-footer__copyright");
+  if (!grid || !copyright) return;
 
-  let column = findColumn(footer, "Yasal");
-  if (!column) {
-    column = document.createElement("div");
-    grid.append(column);
+  for (const column of columns(footer)) {
+    if (column.querySelector("h3")?.textContent?.trim() === "Yasal") {
+      column.remove();
+    }
   }
 
-  column.replaceChildren();
-  const heading = document.createElement("h3");
-  heading.textContent = content.legalTitle || "Yasal";
-  column.append(heading);
+  let legal = footer.querySelector<HTMLElement>(".landing-footer__legal");
+  if (!legal) {
+    legal = document.createElement("nav");
+    legal.className = "landing-footer__legal";
+    copyright.before(legal);
+  }
+
+  legal.setAttribute("aria-label", content.legalTitle || "Yasal bağlantılar");
+  legal.replaceChildren();
 
   const keys = ["terms", "privacy", "kvkk", "cookie", "copyright"] as const;
   legalLinks.forEach(([defaultLabel, defaultHref], index) => {
@@ -51,7 +57,7 @@ function ensureLegalColumn(footer: HTMLElement, content: FooterContent) {
     const anchor = document.createElement("a");
     anchor.textContent = content[`${key}Label`] || defaultLabel;
     anchor.setAttribute("href", internalHref(content[`${key}Href`], defaultHref));
-    column?.append(anchor);
+    legal?.append(anchor);
   });
 }
 
@@ -76,13 +82,13 @@ export function PublicFooterHydrator() {
     const footer = document.querySelector<HTMLElement>(".landing-footer");
     if (!footer) return;
 
-    ensureLegalColumn(footer, {});
+    ensureLegalBar(footer, {});
 
     void fetch("/api/site-content/footer-navigation", { cache: "no-store", credentials: "same-origin" })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         const content = (payload?.content ?? {}) as FooterContent;
-        ensureLegalColumn(footer, content);
+        ensureLegalBar(footer, content);
         updateColumn(findColumn(footer, "Platform"), content.platformTitle, content, "platform", 3);
         updateColumn(findColumn(footer, "Destek"), content.supportTitle, content, "support", 1);
       })

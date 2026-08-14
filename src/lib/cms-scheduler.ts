@@ -1,6 +1,13 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import {
+  deleteCmsDraft,
+  faqDraftKey,
+  getCmsDraft,
+  homepageDraftKey,
+  pageDraftKey,
+} from "@/lib/cms-drafts";
 import { prisma } from "@/lib/prisma";
 
 export type CmsScheduleTargetType = "site_content" | "content_page";
@@ -51,6 +58,8 @@ type PageTargetRow = {
   canonicalUrl: string | null;
   noIndex: boolean;
 };
+
+type DraftPayload = Record<string, unknown>;
 
 export function parseIstanbulLocalDateTime(value: string) {
   const normalized = value.trim();
@@ -141,6 +150,12 @@ async function addScheduledPageRevision(
   `;
 }
 
+function siteWorkingDraftKey(target: SiteTargetRow) {
+  if (target.namespace === "homepage") return homepageDraftKey("tr", target.contentKey);
+  if (target.namespace === "faq") return faqDraftKey("tr", target.contentKey);
+  return null;
+}
+
 async function applySiteTarget(
   payload: CmsSchedulePayload,
   desired: "draft" | "published",
@@ -158,26 +173,89 @@ async function applySiteTarget(
   if (desired === "published" && target.status === "archived") {
     return { ok: false as const, code: "SITE_TARGET_ARCHIVED" };
   }
-  if (target.status === desired || (desired === "draft" && target.status === "archived")) {
+  if (desired === "draft" && target.status === "archived") {
+    return { ok: true as const, changed: false };
+  }
+
+  const draftKey = siteWorkingDraftKey(target);
+  const staged = draftKey ? await getCmsDraft<DraftPayload>(draftKey) : null;
+  const stagedJson = staged ? JSON.stringify(staged.payload) : null;
+
+  if (!staged && target.status === desired) {
     return { ok: true as const, changed: false };
   }
 
   if (desired === "published") {
     await prisma.$executeRaw`
       UPDATE SiteContent
-      SET status = 'published', publishedAt = CURRENT_TIMESTAMP(3),
+      SET valueJson = COALESCE(${stagedJson}, valueJson),
+          status = 'published', publishedAt = CURRENT_TIMESTAMP(3),
           updatedById = ${payload.createdById}, updatedAt = CURRENT_TIMESTAMP(3)
       WHERE id = ${target.id}
     `;
   } else {
     await prisma.$executeRaw`
       UPDATE SiteContent
-      SET status = 'draft', publishedAt = NULL,
+      SET valueJson = COALESCE(${stagedJson}, valueJson),
+          status = 'draft', publishedAt = NULL,
           updatedById = ${payload.createdById}, updatedAt = CURRENT_TIMESTAMP(3)
       WHERE id = ${target.id}
     `;
   }
+
+  if (staged && draftKey) await deleteCmsDraft(draftKey);
   return { ok: true as const, changed: true };
+}
+
+function value(payload: DraftPayload, key: string) {
+  return typeof payload[key] === "string" ? String(payload[key]) : "";
+}
+
+async function applyStagedPageContent(target: PageTargetRow, staged: DraftPayload, desired: "draft" | "published", actorId: string) {
+  const publishedAt = desired === "published" ? new Date() : null;
+
+  if (target.contentKey.startsWith("legal:")) {
+    const title = value(staged, "title") || target.title;
+    const description = value(staged, "description");
+    const updatedLabel = value(staged, "updatedLabel");
+    const body = value(staged, "body");
+    const bodyJson = JSON.stringify({ description, updatedLabel, body });
+    await prisma.$executeRaw`
+      UPDATE ContentPage
+      SET title = ${title}, status = ${desired}, bodyJson = ${bodyJson},
+          seoDescription = ${description || null}, publishedAt = ${publishedAt},
+          updatedById = ${actorId}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE id = ${target.id}
+    `;
+    return;
+  }
+
+  const title = value(staged, "title") || target.title;
+  const summary = value(staged, "summary");
+  const body = value(staged, "body");
+  const seoTitle = value(staged, "seoTitle");
+  const seoDescription = value(staged, "seoDescription");
+  const noIndex = staged.noIndex === true;
+  const bodyJson = JSON.stringify({ summary, body });
+  await prisma.$executeRaw`
+    UPDATE ContentPage
+    SET title = ${title}, status = ${desired}, bodyJson = ${bodyJson},
+        seoTitle = ${seoTitle || null}, seoDescription = ${seoDescription || summary || null},
+        noIndex = ${noIndex}, publishedAt = ${publishedAt},
+        updatedById = ${actorId}, updatedAt = CURRENT_TIMESTAMP(3)
+    WHERE id = ${target.id}
+  `;
+}
+
+async function loadPageTarget(id: string) {
+  const rows = await prisma.$queryRaw<PageTargetRow[]>`
+    SELECT id, contentKey, slug, title, status, bodyJson,
+           seoTitle, seoDescription, canonicalUrl, noIndex
+    FROM ContentPage
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
 }
 
 async function applyPageTarget(
@@ -185,32 +263,33 @@ async function applyPageTarget(
   desired: "draft" | "published",
   scheduleKey: string,
 ) {
-  const rows = await prisma.$queryRaw<PageTargetRow[]>`
-    SELECT id, contentKey, slug, title, status, bodyJson,
-           seoTitle, seoDescription, canonicalUrl, noIndex
-    FROM ContentPage
-    WHERE id = ${payload.targetId}
-    LIMIT 1
-  `;
-  const target = rows[0];
+  const target = await loadPageTarget(payload.targetId);
   if (!target || !isTrSchedulablePageKey(target.contentKey)) {
     return { ok: false as const, code: "PAGE_TARGET_NOT_FOUND" };
   }
   if (desired === "published" && target.status === "archived") {
     return { ok: false as const, code: "PAGE_TARGET_ARCHIVED" };
   }
-  if (target.status === desired || (desired === "draft" && target.status === "archived")) {
+  if (desired === "draft" && target.status === "archived") {
     return { ok: true as const, changed: false };
   }
 
-  if (desired === "published") {
+  const draftKey = pageDraftKey(target.id);
+  const staged = await getCmsDraft<DraftPayload>(draftKey);
+  if (!staged && target.status === desired) {
+    return { ok: true as const, changed: false };
+  }
+
+  if (staged) {
+    await applyStagedPageContent(target, staged.payload, desired, payload.createdById);
+    await deleteCmsDraft(draftKey);
+  } else if (desired === "published") {
     await prisma.$executeRaw`
       UPDATE ContentPage
       SET status = 'published', publishedAt = CURRENT_TIMESTAMP(3),
           updatedById = ${payload.createdById}, updatedAt = CURRENT_TIMESTAMP(3)
       WHERE id = ${target.id}
     `;
-    await addScheduledPageRevision(target, payload.createdById, scheduleKey, "published", "scheduled_publish");
   } else {
     await prisma.$executeRaw`
       UPDATE ContentPage
@@ -218,7 +297,17 @@ async function applyPageTarget(
           updatedById = ${payload.createdById}, updatedAt = CURRENT_TIMESTAMP(3)
       WHERE id = ${target.id}
     `;
-    await addScheduledPageRevision(target, payload.createdById, scheduleKey, "draft", "scheduled_unpublish");
+  }
+
+  const fresh = await loadPageTarget(target.id);
+  if (fresh) {
+    await addScheduledPageRevision(
+      fresh,
+      payload.createdById,
+      scheduleKey,
+      desired,
+      desired === "published" ? "scheduled_publish" : "scheduled_unpublish",
+    );
   }
   return { ok: true as const, changed: true };
 }

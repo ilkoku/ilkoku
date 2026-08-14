@@ -4,6 +4,7 @@ import { requireCmsManager } from "@/lib/cms-access";
 import "./content.css";
 import "./dashboard.css";
 import "./revision.css";
+import "./preview.css";
 
 export const metadata: Metadata = {
   title: "İlkOku İçerik Yönetimi",

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsPublisher } from "@/lib/cms-access";
+import { CMS_DRAFT_NAMESPACE, pageDraftKey } from "@/lib/cms-drafts";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import {
   cmsRevisionKind,
@@ -116,6 +117,8 @@ export async function restoreCmsRevisionAction(formData: FormData) {
   const backupSnapshot = currentFullSnapshot(page);
   const backupId = randomUUID();
   const restoredId = randomUUID();
+  const draftKey = pageDraftKey(page.id);
+  const restoreIntoWorkingDraft = page.status === "published" && snapshot.status === "draft";
 
   await prisma.$transaction(async (tx) => {
     const versions = await tx.$queryRaw<Array<{ version: number | bigint }>>`
@@ -137,7 +140,24 @@ export async function restoreCmsRevisionAction(formData: FormData) {
       VALUES (${backupId}, ${page.id}, ${backupVersion}, ${backup}, ${user.id}, CURRENT_TIMESTAMP(3))
     `;
 
-    if (kind === "legal") {
+    if (restoreIntoWorkingDraft) {
+      const draftJson = JSON.stringify(snapshot);
+      await tx.$executeRaw`
+        INSERT INTO SiteContent (
+          id, namespace, contentKey, valueJson, valueType, status,
+          updatedById, createdAt, updatedAt
+        ) VALUES (
+          ${randomUUID()}, ${CMS_DRAFT_NAMESPACE}, ${draftKey}, ${draftJson}, 'json', 'draft',
+          ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+        )
+        ON DUPLICATE KEY UPDATE
+          valueJson = VALUES(valueJson),
+          status = 'draft',
+          publishedAt = NULL,
+          updatedById = VALUES(updatedById),
+          updatedAt = CURRENT_TIMESTAMP(3)
+      `;
+    } else if (kind === "legal") {
       const description = typeof snapshot.description === "string" ? snapshot.description : "";
       const updatedLabel = typeof snapshot.updatedLabel === "string" ? snapshot.updatedLabel : "";
       const body = String(snapshot.body ?? "");
@@ -177,9 +197,20 @@ export async function restoreCmsRevisionAction(formData: FormData) {
       `;
     }
 
+    if (!restoreIntoWorkingDraft && snapshot.status === "published") {
+      await tx.$executeRaw`
+        DELETE FROM SiteContent
+        WHERE namespace = ${CMS_DRAFT_NAMESPACE}
+          AND contentKey = ${draftKey}
+      `;
+    }
+
     const restored = JSON.stringify({
       ...snapshot,
-      _meta: { action: "restore", restoredFromVersion: revision.version },
+      _meta: {
+        action: restoreIntoWorkingDraft ? "restore-to-working-draft" : "restore",
+        restoredFromVersion: revision.version,
+      },
     });
 
     await tx.$executeRaw`
@@ -194,16 +225,18 @@ export async function restoreCmsRevisionAction(formData: FormData) {
 
   if (kind === "legal") {
     revalidatePath("/icerik/yasal");
-    if (locale === "tr") revalidatePath(page.slug);
+    revalidatePath(`/icerik/onizleme/yasal/${page.slug.split("/").filter(Boolean).at(-1) ?? ""}`);
+    if (!restoreIntoWorkingDraft && locale === "tr") revalidatePath(page.slug);
   }
   if (kind === "guide") {
     revalidatePath("/icerik/rehber");
     revalidatePath(`/icerik/rehber/${page.id}`);
-    if (locale === "tr") {
+    revalidatePath(`/icerik/onizleme/rehber/${page.id}`);
+    if (!restoreIntoWorkingDraft && locale === "tr") {
       revalidatePath("/rehber");
       revalidatePath(page.slug);
     }
   }
 
-  redirect(`/icerik/gecmis/${restoredId}?geri-yuklendi=1`);
+  redirect(`/icerik/gecmis/${restoredId}?geri-yuklendi=1${restoreIntoWorkingDraft ? "&taslak=1" : ""}`);
 }

@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ revisionId: string }>;
-  searchParams: Promise<{ hata?: string; "geri-yuklendi"?: string }>;
+  searchParams: Promise<{ hata?: string; "geri-yuklendi"?: string; taslak?: string }>;
 };
 
 type RevisionRow = {
@@ -46,7 +46,8 @@ function formatDate(value: Date) {
   }).format(new Date(value));
 }
 
-function message(error?: string, restored?: string) {
+function message(error?: string, restored?: string, draft?: string) {
+  if (restored === "1" && draft === "1") return { tone: "success", text: "Sürüm çalışma taslağına geri yüklendi. Mevcut canlı içerik değişmedi." };
   if (restored === "1") return { tone: "success", text: "Sürüm başarıyla geri yüklendi. Restore işlemi de yeni bir revision olarak kaydedildi." };
   if (error === "geri-yuklenemez") return { tone: "error", text: "Bu kayıt yalnız durum değişikliği içeriyor; tam içerik snapshot’ı olmadığı için geri yüklenemez." };
   if (error === "dil-pasif") return { tone: "error", text: "Pasif dildeki bir sürüm yayın durumuna geri yüklenemez." };
@@ -87,8 +88,9 @@ export default async function RevisionDetailPage({ params, searchParams }: PageP
   const diffs = diffCmsRevisionSnapshots(previousSnapshot, snapshot);
   const restorable = isRestorableCmsRevision(revision.contentKey, snapshot);
   const locale = cmsRevisionLocale(revision.contentKey, snapshot);
-  const notice = message(query.hata, query["geri-yuklendi"]);
+  const notice = message(query.hata, query["geri-yuklendi"], query.taslak);
   const metaAction = snapshot._meta?.action;
+  const restoresToWorkingDraft = revision.currentStatus === "published" && snapshot.status === "draft";
 
   return (
     <section className="content-editor-page revision-detail">
@@ -107,12 +109,12 @@ export default async function RevisionDetailPage({ params, searchParams }: PageP
         <article className="content-metric-card"><span>Sürüm</span><strong>v{revision.version}</strong><small>{previous ? `önceki v${previous.version}` : "ilk kayıt"}</small></article>
         <article className="content-metric-card"><span>Bu sürüm</span><strong>{cmsRevisionStatusLabel(snapshot.status)}</strong><small>snapshot durumu</small></article>
         <article className="content-metric-card"><span>Şu an</span><strong>{cmsRevisionStatusLabel(revision.currentStatus)}</strong><small>mevcut içerik</small></article>
-        <article className="content-metric-card"><span>Restore</span><strong>{restorable ? "Hazır" : "Kapalı"}</strong><small>{restorable ? "tam snapshot" : "durum kaydı"}</small></article>
+        <article className="content-metric-card"><span>Restore</span><strong>{restorable ? "Hazır" : "Kapalı"}</strong><small>{restoresToWorkingDraft ? "çalışma taslağına" : restorable ? "tam snapshot" : "durum kaydı"}</small></article>
       </div>
 
       {metaAction ? (
         <div className="revision-notice is-info">
-          {metaAction === "restore" ? `Bu revision, v${snapshot._meta?.restoredFromVersion ?? "?"} sürümünden geri yükleme sonucu oluştu.` : "Bu revision geri yükleme öncesi otomatik güvenlik yedeğidir."}
+          {metaAction === "restore" ? `Bu revision, v${snapshot._meta?.restoredFromVersion ?? "?"} sürümünden canlı geri yükleme sonucu oluştu.` : metaAction === "restore-to-working-draft" ? `Bu revision, v${snapshot._meta?.restoredFromVersion ?? "?"} sürümünün çalışma taslağına geri yüklenmesi sonucu oluştu.` : "Bu revision geri yükleme öncesi otomatik güvenlik yedeğidir."}
         </div>
       ) : null}
 
@@ -142,18 +144,18 @@ export default async function RevisionDetailPage({ params, searchParams }: PageP
       <div className="content-panel revision-restore-panel">
         <div>
           <span className="content-eyebrow">Geri yükleme</span>
-          <h2>Bu sürümü yeniden kullan</h2>
-          <p>Restore işleminden önce mevcut içerik otomatik olarak tam snapshot şeklinde yedeklenir. Ardından seçilen sürüm uygulanır ve işlem yeni bir revision olarak kaydedilir.</p>
+          <h2>{restoresToWorkingDraft ? "Bu sürümü çalışma taslağına geri al" : "Bu sürümü yeniden kullan"}</h2>
+          <p>{restoresToWorkingDraft ? "Seçilen taslak sürüm CMS çalışma taslağına alınır; mevcut canlı sayfa aynen yayında kalır. Daha sonra önizleyip ayrıca yayınlayabilirsiniz." : "Restore işleminden önce mevcut içerik otomatik olarak tam snapshot şeklinde yedeklenir. Ardından seçilen sürüm uygulanır ve işlem yeni bir revision olarak kaydedilir."}</p>
         </div>
         {restorable && access.canPublish ? (
           <form action={restoreCmsRevisionAction}>
             <input type="hidden" name="revisionId" value={revision.id} />
-            <button className="content-button" type="submit">v{revision.version} sürümünü geri yükle</button>
+            <button className="content-button" type="submit">{restoresToWorkingDraft ? `v${revision.version} sürümünü taslağa al` : `v${revision.version} sürümünü geri yükle`}</button>
           </form>
         ) : (
           <div className="revision-restore-disabled">
             <strong>{restorable ? "Yayın yetkisi gerekli" : "Bu sürüm geri yüklenemez"}</strong>
-            <small>{restorable ? "Canlı içerik durumunu değiştirebildiği için restore yalnız yayın yetkisi olan kullanıcıya açıktır." : "Tam başlık + içerik snapshot’ı olmayan durum kayıtları yalnız inceleme içindir."}</small>
+            <small>{restorable ? "Restore işlemi çalışma veya canlı içerik durumunu değiştirebildiği için yalnız yayın yetkisi olan kullanıcıya açıktır." : "Tam başlık + içerik snapshot’ı olmayan durum kayıtları yalnız inceleme içindir."}</small>
           </div>
         )}
       </div>

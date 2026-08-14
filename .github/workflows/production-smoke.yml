@@ -102,13 +102,14 @@ jobs:
               && check_optional_locale_route "https://ilkoku.com/en" \
               && check_optional_locale_route "https://ilkoku.com/en/yardim" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/zamanlama" \
+              && check_post_merge_protected_route "https://ilkoku.com/icerik/onizleme/ana-sayfa" \
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/epostalar" \
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/okuma-guvenligi" \
               && check_redirect_route "https://ilkoku.com/admin/epostalar" "/sistem-yonetimi/epostalar" \
               && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production route'ları canlı ve auth/canonical/dil/zamanlama yönlendirmeleri çalışıyor."
+              echo "PASS: Production route'ları canlı ve auth/canonical/dil/zamanlama/önizleme yönlendirmeleri çalışıyor."
               exit 0
             fi
 

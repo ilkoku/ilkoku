@@ -23,7 +23,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
-        <div><span>Sistem</span><h1>İçerik Ayarları</h1><p>CMS'in varsayılan yayın, revision ve SEO davranışlarını yönetin.</p></div>
+        <div><span>Sistem</span><h1>İçerik Ayarları</h1><p>CMS’in varsayılan yayın, revision ve SEO davranışlarını yönetin.</p></div>
       </div>
       {params.durum === "kaydedildi" ? <p className="content-status-success">Ayarlar kaydedildi.</p> : null}
       {params.durum === "hata" ? <p className="content-status-error">Ayarlar kaydedilemedi.</p> : null}

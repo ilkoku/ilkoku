@@ -11,6 +11,7 @@ type ExistingGuide = {
   id: string;
   contentKey: string;
   slug: string;
+  status: "draft" | "published" | "archived";
 };
 
 async function addRevision(pageId: string, userId: string, snapshot: Record<string, unknown>) {
@@ -29,17 +30,14 @@ async function addRevision(pageId: string, userId: string, snapshot: Record<stri
 
 export async function saveCmsGuideAction(formData: FormData) {
   const mode = String(formData.get("mode") ?? "draft");
-  const access = mode === "publish"
-    ? await requireCmsPublisher("/icerik/rehber")
-    : await requireCmsManager("/icerik/rehber");
-  const user = access.user!;
+  let access = await requireCmsManager("/icerik/rehber");
 
   const requestedId = String(formData.get("id") ?? "").trim();
   let existing: ExistingGuide | null = null;
 
   if (requestedId) {
     const rows = await prisma.$queryRaw<ExistingGuide[]>`
-      SELECT id, contentKey, slug
+      SELECT id, contentKey, slug, status
       FROM ContentPage
       WHERE id = ${requestedId}
         AND contentKey LIKE 'guide:%'
@@ -48,6 +46,11 @@ export async function saveCmsGuideAction(formData: FormData) {
     existing = rows[0] ?? null;
     if (!existing) redirect("/icerik/rehber?hata=kayit");
   }
+
+  if (mode === "publish" || existing?.status === "published") {
+    access = await requireCmsPublisher("/icerik/rehber");
+  }
+  const user = access.user!;
 
   const rawSlug = existing?.slug.replace(/^\/rehber\//, "") ?? String(formData.get("slug") ?? "");
   const slugPart = normalizeGuideSlug(rawSlug);
@@ -121,13 +124,12 @@ export async function saveCmsGuideAction(formData: FormData) {
 }
 
 export async function archiveCmsGuideAction(formData: FormData) {
-  const access = await requireCmsManager("/icerik/rehber");
-  const user = access.user!;
+  let access = await requireCmsManager("/icerik/rehber");
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return;
 
   const rows = await prisma.$queryRaw<ExistingGuide[]>`
-    SELECT id, contentKey, slug
+    SELECT id, contentKey, slug, status
     FROM ContentPage
     WHERE id = ${id}
       AND contentKey LIKE 'guide:%'
@@ -135,6 +137,11 @@ export async function archiveCmsGuideAction(formData: FormData) {
   `;
   const guide = rows[0];
   if (!guide) return;
+
+  if (guide.status === "published") {
+    access = await requireCmsPublisher("/icerik/rehber");
+  }
+  const user = access.user!;
 
   await prisma.$executeRaw`
     UPDATE ContentPage

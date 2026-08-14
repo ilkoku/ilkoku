@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncementBanner";
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { tr } from "@/content";
 import "./globals.css";
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="tr" data-scroll-behavior="smooth">
       <body>
+        <PublicAnnouncementBanner />
         {children}
         <PublicCmsHydrator />
       </body>

@@ -1,0 +1,33 @@
+name: CMS publishing scheduler
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cms-publishing-scheduler
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Run CMS publishing scheduler
+        env:
+          SCHEDULER_SECRET: ${{ secrets.WRITER_DAILY_SUMMARY_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$SCHEDULER_SECRET"
+          curl \
+            --fail-with-body \
+            --max-time 60 \
+            --retry 2 \
+            --retry-all-errors \
+            --request POST \
+            --header "Authorization: Bearer $SCHEDULER_SECRET" \
+            https://ilkoku.com/api/internal/cms-scheduler

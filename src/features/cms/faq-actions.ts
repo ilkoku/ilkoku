@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCmsAccess, requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
+import { deleteCmsDraft, faqDraftKey, getCmsDraft, saveCmsDraft } from "@/lib/cms-drafts";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import {
   cmsLocaleNamespace,
@@ -65,6 +66,7 @@ async function getFaq(contentKey: string, locale: CmsLocaleCode) {
 
 function refreshFaq(locale: CmsLocaleCode) {
   revalidatePath("/icerik/sss");
+  revalidatePath("/icerik/onizleme/sss");
   revalidatePath(cmsLocalePublicPath("/yardim", locale));
 }
 
@@ -74,10 +76,6 @@ export async function saveFaqAction(formData: FormData) {
   const namespace = cmsLocaleNamespace("faq", locale);
   const requestedKey = field(formData, "contentKey", 140);
   const existing = requestedKey ? await getFaq(requestedKey, locale) : null;
-
-  if (existing?.status === "published" && !access.canPublish) {
-    redirect("/erisim-reddedildi?kaynak=icerik-yayin");
-  }
 
   const question = field(formData, "question", 300);
   const answer = field(formData, "answer", 4000);
@@ -89,9 +87,16 @@ export async function saveFaqAction(formData: FormData) {
   const existingPayload = existing ? parsePayload(existing.valueJson) : {};
   const id = existingPayload.id || randomUUID();
   const contentKey = existing?.contentKey || `item_${id}`;
-  const status: FaqStatus = existing?.status ?? "draft";
-  const valueJson = JSON.stringify({ id, question, answer, category, audience, position } satisfies FaqPayload);
+  const payload = { id, question, answer, category, audience, position } satisfies FaqPayload;
 
+  if (existing?.status === "published") {
+    await saveCmsDraft(access.user!.id, faqDraftKey(locale, contentKey), payload);
+    refreshFaq(locale);
+    return;
+  }
+
+  const status: FaqStatus = existing?.status === "archived" ? "archived" : "draft";
+  const valueJson = JSON.stringify(payload);
   await prisma.$executeRaw`
     INSERT INTO SiteContent (
       id, namespace, contentKey, valueJson, valueType, status,
@@ -120,12 +125,25 @@ export async function publishFaqAction(formData: FormData) {
   const contentKey = field(formData, "contentKey", 140);
   if (!contentKey.startsWith("item_")) return;
 
-  await prisma.$executeRaw`
-    UPDATE SiteContent
-    SET status = 'published', publishedAt = CURRENT_TIMESTAMP(3),
-      updatedById = ${access.user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
-    WHERE namespace = ${namespace} AND contentKey = ${contentKey}
-  `;
+  const draftKey = faqDraftKey(locale, contentKey);
+  const staged = await getCmsDraft<FaqPayload>(draftKey);
+  if (staged) {
+    const valueJson = JSON.stringify(staged.payload);
+    await prisma.$executeRaw`
+      UPDATE SiteContent
+      SET valueJson = ${valueJson}, status = 'published', publishedAt = CURRENT_TIMESTAMP(3),
+        updatedById = ${access.user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = ${namespace} AND contentKey = ${contentKey}
+    `;
+    await deleteCmsDraft(draftKey);
+  } else {
+    await prisma.$executeRaw`
+      UPDATE SiteContent
+      SET status = 'published', publishedAt = CURRENT_TIMESTAMP(3),
+        updatedById = ${access.user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = ${namespace} AND contentKey = ${contentKey}
+    `;
+  }
   refreshFaq(locale);
 }
 
@@ -136,12 +154,25 @@ export async function unpublishFaqAction(formData: FormData) {
   const contentKey = field(formData, "contentKey", 140);
   if (!contentKey.startsWith("item_")) return;
 
-  await prisma.$executeRaw`
-    UPDATE SiteContent
-    SET status = 'draft', publishedAt = NULL,
-      updatedById = ${access.user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
-    WHERE namespace = ${namespace} AND contentKey = ${contentKey} AND status = 'published'
-  `;
+  const draftKey = faqDraftKey(locale, contentKey);
+  const staged = await getCmsDraft<FaqPayload>(draftKey);
+  if (staged) {
+    const valueJson = JSON.stringify(staged.payload);
+    await prisma.$executeRaw`
+      UPDATE SiteContent
+      SET valueJson = ${valueJson}, status = 'draft', publishedAt = NULL,
+        updatedById = ${access.user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = ${namespace} AND contentKey = ${contentKey} AND status = 'published'
+    `;
+    await deleteCmsDraft(draftKey);
+  } else {
+    await prisma.$executeRaw`
+      UPDATE SiteContent
+      SET status = 'draft', publishedAt = NULL,
+        updatedById = ${access.user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = ${namespace} AND contentKey = ${contentKey} AND status = 'published'
+    `;
+  }
   refreshFaq(locale);
 }
 
@@ -155,11 +186,16 @@ export async function archiveFaqAction(formData: FormData) {
   if (!existing) return;
   if (existing.status === "published" && !access.canPublish) redirect("/erisim-reddedildi?kaynak=icerik-yayin");
 
+  const draftKey = faqDraftKey(locale, contentKey);
+  const staged = await getCmsDraft<FaqPayload>(draftKey);
+  const stagedJson = staged ? JSON.stringify(staged.payload) : null;
   await prisma.$executeRaw`
     UPDATE SiteContent
-    SET status = 'archived', updatedById = ${access.user.id}, updatedAt = CURRENT_TIMESTAMP(3)
+    SET valueJson = COALESCE(${stagedJson}, valueJson), status = 'archived', publishedAt = NULL,
+      updatedById = ${access.user.id}, updatedAt = CURRENT_TIMESTAMP(3)
     WHERE namespace = ${namespace} AND contentKey = ${contentKey}
   `;
+  if (staged) await deleteCmsDraft(draftKey);
   refreshFaq(locale);
 }
 

@@ -16,7 +16,7 @@ type Row = {
 
 export async function GET() {
   const access = await getCmsAccess();
-  if (!access.canManage) return NextResponse.json({ pages: [] }, { status: 403 });
+  if (!access.canManage) return NextResponse.json({ error: "CMS_ACCESS_REQUIRED" }, { status: 403 });
 
   try {
     const pages = await prisma.$queryRaw<Row[]>`
@@ -31,6 +31,6 @@ export async function GET() {
     `;
     return NextResponse.json({ pages });
   } catch {
-    return NextResponse.json({ pages: [] });
+    return NextResponse.json({ error: "CMS_SEO_AUDIT_READ_FAILED" }, { status: 500 });
   }
 }

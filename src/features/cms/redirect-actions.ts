@@ -35,10 +35,11 @@ export async function saveCmsRedirectAction(formData: FormData) {
       AND status = 'published'
   `;
 
-  const active = rows.flatMap((row) => {
-    const value = parseCmsRedirectValue(row.valueJson);
-    return value ? [{ source: value.source || row.contentKey, target: value.target }] : [];
-  });
+  const parsed = rows.map((row) => ({ row, value: parseCmsRedirectValue(row.valueJson) }));
+  if (parsed.some((item) => !item.value)) {
+    redirect("/icerik/yonlendirmeler?hata=veri");
+  }
+  const active = parsed.flatMap(({ row, value }) => value ? [{ source: value.source || row.contentKey, target: value.target }] : []);
 
   if (createsCmsRedirectCycle(source, target, active)) {
     redirect("/icerik/yonlendirmeler?hata=dongu");

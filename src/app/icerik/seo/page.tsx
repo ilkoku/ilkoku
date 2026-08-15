@@ -15,6 +15,8 @@ type SeoPage = {
   noIndex: boolean;
 };
 
+type LoadState = "loading" | "ready" | "error";
+
 function editHref(page: SeoPage) {
   if (page.contentKey.startsWith("legal:")) {
     const parts = page.contentKey.split(":");
@@ -32,13 +34,29 @@ function editHref(page: SeoPage) {
 
 export default function Page() {
   const [pages, setPages] = useState<SeoPage[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [loadState, setLoadState] = useState<LoadState>("loading");
 
   useEffect(() => {
-    fetch("/api/cms-seo-audit")
-      .then((response) => (response.ok ? response.json() : { pages: [] }))
-      .then((payload) => setPages(Array.isArray(payload.pages) ? payload.pages : []))
-      .finally(() => setLoaded(true));
+    let cancelled = false;
+    async function load() {
+      try {
+        const response = await fetch("/api/cms-seo-audit", { cache: "no-store" });
+        if (!response.ok) throw new Error(`SEO_AUDIT_HTTP_${response.status}`);
+        const payload = await response.json() as { pages?: unknown };
+        if (!Array.isArray(payload.pages)) throw new Error("SEO_AUDIT_INVALID_PAYLOAD");
+        if (!cancelled) {
+          setPages(payload.pages as SeoPage[]);
+          setLoadState("ready");
+        }
+      } catch {
+        if (!cancelled) {
+          setPages([]);
+          setLoadState("error");
+        }
+      }
+    }
+    void load();
+    return () => { cancelled = true; };
   }, []);
 
   const stats = useMemo(() => ({
@@ -54,15 +72,25 @@ export default function Page() {
         <div><span>Büyüme · TR</span><h1>SEO Merkezi</h1><p>Yayındaki Türkçe CMS sayfalarının meta başlığı, açıklaması, canonical ve indeks durumunu denetleyin.</p></div>
       </div>
 
-      <div className="content-grid">
-        <article className="content-card"><h2>{stats.total}</h2><p>Yayındaki TR CMS sayfası</p></article>
-        <article className="content-card"><h2>{stats.title}</h2><p>SEO başlığı eksik</p></article>
-        <article className="content-card"><h2>{stats.description}</h2><p>Meta açıklaması eksik</p></article>
-        <article className="content-card"><h2>{stats.canonical}</h2><p>Canonical eksik</p></article>
-      </div>
+      {loadState === "ready" ? (
+        <div className="content-grid">
+          <article className="content-card"><h2>{stats.total}</h2><p>Yayındaki TR CMS sayfası</p></article>
+          <article className="content-card"><h2>{stats.title}</h2><p>SEO başlığı eksik</p></article>
+          <article className="content-card"><h2>{stats.description}</h2><p>Meta açıklaması eksik</p></article>
+          <article className="content-card"><h2>{stats.canonical}</h2><p>Canonical eksik</p></article>
+        </div>
+      ) : null}
 
       <div className="content-panel" style={{ marginTop: "1rem" }}>
-        {!loaded ? <div className="content-empty"><strong>SEO verileri yükleniyor…</strong></div> : pages.length === 0 ? (
+        {loadState === "loading" ? (
+          <div className="content-empty"><strong>SEO verileri yükleniyor…</strong></div>
+        ) : loadState === "error" ? (
+          <div className="content-empty" role="alert">
+            <strong>SEO denetim verileri okunamadı.</strong>
+            <p>Bu durum “yayında sayfa yok” anlamına gelmez. Güvenilir veri gelmeden SEO kararı üretilmedi.</p>
+            <div className="content-form-actions" style={{ justifyContent: "center", flexWrap: "wrap" }}><Link href="/icerik/saglik">Sistem Sağlığı →</Link><Link href="/icerik/seo">Tekrar dene</Link></div>
+          </div>
+        ) : pages.length === 0 ? (
           <div className="content-empty"><strong>Yayında Türkçe CMS sayfası yok.</strong></div>
         ) : (
           <div className="content-list">

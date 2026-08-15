@@ -38,6 +38,37 @@ jobs:
             [[ "$code" == "$expected" ]]
           }
 
+          check_body_contains() {
+            local url="$1"
+            shift
+            local body
+            local code
+            local expected
+
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 20 --output "$body" --write-out '%{http_code}' "$url" || true)"
+            printf '%s -> HTTP %s\n' "$url" "$code"
+            if [[ "$code" != "200" ]]; then
+              rm -f "$body"
+              return 1
+            fi
+
+            for expected in "$@"; do
+              if ! grep -Fq "$expected" "$body"; then
+                printf 'Eksik içerik: %s -> %s\n' "$url" "$expected" >&2
+                rm -f "$body"
+                return 1
+              fi
+            done
+
+            if [[ "$url" == *"/sitemap.xml" ]]; then
+              echo "Sitemap URL'leri:"
+              grep -oE '<loc>[^<]+' "$body" | sed 's#<loc>##' | head -80 || true
+            fi
+
+            rm -f "$body"
+          }
+
           check_protected_route() {
             local url="$1"
             local headers
@@ -67,6 +98,22 @@ jobs:
             check_protected_route "$url"
           }
 
+          check_post_merge_public_route() {
+            local url="$1"
+            local expected="$2"
+            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+              return 0
+            fi
+            check_public_route "$url" "$expected"
+          }
+
+          check_post_merge_body_contains() {
+            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+              return 0
+            fi
+            check_body_contains "$@"
+          }
+
           check_redirect_route() {
             local url="$1"
             local expected_location="$2"
@@ -90,6 +137,7 @@ jobs:
             if check_public_route "https://ilkoku.com/" "200" \
               && check_public_route "https://ilkoku.com/giris" "200" \
               && check_public_route "https://ilkoku.com/yardim" "200" \
+              && check_public_route "https://ilkoku.com/editorler" "200" \
               && check_public_route "https://ilkoku.com/yasal/kullanim-sartlari" "200" \
               && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
               && check_public_route "https://ilkoku.com/yasal/kvkk" "200" \
@@ -97,6 +145,27 @@ jobs:
               && check_public_route "https://ilkoku.com/yasal/telif-hakki-politikasi" "200" \
               && check_public_route "https://ilkoku.com/en" "404" \
               && check_public_route "https://ilkoku.com/en/yardim" "404" \
+              && check_body_contains "https://ilkoku.com/sitemap.xml" \
+                "https://ilkoku.com/yardim" \
+                "https://ilkoku.com/editorler" \
+                "https://ilkoku.com/rehber" \
+                "https://ilkoku.com/yasal/kullanim-sartlari" \
+                "https://ilkoku.com/yasal/gizlilik-politikasi" \
+                "https://ilkoku.com/yasal/kvkk" \
+                "https://ilkoku.com/yasal/cerez-politikasi" \
+                "https://ilkoku.com/yasal/telif-hakki-politikasi" \
+              && check_post_merge_public_route "https://ilkoku.com/editorler/merve-kaya" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/editorler/baris-erdem" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/editorler/derya-unal" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/editorler/kaan-sahin" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/kitap/test0408-2959175c" "404" \
+              && check_post_merge_body_contains "https://ilkoku.com/robots.txt" \
+                "Disallow: /admin" \
+                "Disallow: /icerik" \
+                "Disallow: /sistem-yonetimi" \
+                "Disallow: /api" \
+                "Disallow: /auth" \
+                "Sitemap: https://ilkoku.com/sitemap.xml" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/zamanlama" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/onizleme/ana-sayfa" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/yayin-kuyrugu" \
@@ -111,7 +180,7 @@ jobs:
               && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production route'ları, 5 yasal sayfa, EN kapalı sözleşmesi ve Sprint 2 CMS yönetim rotaları doğrulandı."
+              echo "PASS: Production route'ları, 5 yasal sayfa, sitemap, robots ve Sprint 3 public içerik güvenliği doğrulandı."
               exit 0
             fi
 

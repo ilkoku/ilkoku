@@ -6,6 +6,7 @@ import { getReadingProgress } from "@/features/reading/progress";
 import { BookShowcase } from "@/features/showcase/components/BookShowcase";
 import { getPublicWorkBySlug } from "@/features/works/queries";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
 
 const baseUrl = "https://ilkoku.com";
 
@@ -41,6 +42,14 @@ function absoluteUrl(value: string | null) {
 
 export async function generateMetadata({ params }: Pick<BookShowcasePageProps, "params">): Promise<Metadata> {
   const { slug } = await params;
+
+  if (isBlockedPublicWorkSlug(slug)) {
+    return {
+      title: "Eser bulunamadı | İlkOku",
+      robots: { index: false, follow: false },
+    };
+  }
+
   const work = await getPublicWorkBySlug(slug);
 
   if (!work) {
@@ -87,6 +96,8 @@ export default async function DynamicBookShowcasePage({
   const { slug } = await params;
   const query = await searchParams;
   const returnTo = getSafeReturnPath(query.from);
+
+  if (isBlockedPublicWorkSlug(slug)) notFound();
 
   const work = await getPublicWorkBySlug(slug);
   if (!work) notFound();

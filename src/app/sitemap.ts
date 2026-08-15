@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { editors } from "@/features/editors/data";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import { prisma } from "@/lib/prisma";
+import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
 
 const baseUrl = "https://ilkoku.com";
 type CmsSitemapRow = { slug: string; updatedAt: Date };
@@ -65,7 +66,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [
       ...staticEntries,
-      ...works.map((work) => ({ url: `${baseUrl}/kitap/${work.slug}`, lastModified: work.updatedAt, changeFrequency: "weekly" as const, priority: 0.8 })),
+      ...works
+        .filter((work) => !isBlockedPublicWorkSlug(work.slug))
+        .map((work) => ({ url: `${baseUrl}/kitap/${work.slug}`, lastModified: work.updatedAt, changeFrequency: "weekly" as const, priority: 0.8 })),
       ...guides.map((guide) => ({ url: `${baseUrl}${guide.slug}`, lastModified: guide.updatedAt, changeFrequency: "monthly" as const, priority: 0.6 })),
       ...pages.map((page) => ({ url: `${baseUrl}${page.slug}`, lastModified: page.updatedAt, changeFrequency: "monthly" as const, priority: 0.6 })),
     ];

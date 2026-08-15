@@ -7,6 +7,8 @@ import type { ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { contentNavigation } from "@/lib/content-navigation";
 
+const groupOrder = ["Site", "İçerik", "Büyüme", "Sistem"] as const;
+
 type ContentShellProps = {
   children: ReactNode;
   user: { email: string; fullName: string };
@@ -16,10 +18,20 @@ type ContentShellProps = {
 export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
   const pathname = usePathname();
   const navigation = contentNavigation.filter((item) => isAdmin || !item.adminOnly);
+  const currentItem = navigation
+    .filter((item) => item.href !== "/icerik" && pathname.startsWith(item.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]
+    ?? navigation.find((item) => item.href === "/icerik");
+
+  const groups = groupOrder
+    .map((group) => ({ group, items: navigation.filter((item) => item.group === group) }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <div className="content-shell">
-      <aside className="content-sidebar">
+      <a className="content-skip-link" href="#icerik-ana">İçeriğe geç</a>
+
+      <aside className="content-sidebar" aria-label="İçerik yönetimi gezinmesi">
         <div className="content-brand">
           <Link href="/" aria-label="İlkOku ana sayfa">
             <Image src={logo} alt="İlkOku" priority />
@@ -28,18 +40,30 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
         </div>
 
         <nav aria-label="İçerik yönetimi menüsü">
-          {navigation.map((item) => {
-            const active = item.href === "/icerik"
-              ? pathname === item.href
-              : pathname.startsWith(item.href);
+          {groups.map((section) => (
+            <section className="content-nav-group" aria-labelledby={`cms-nav-${section.group}`} key={section.group}>
+              <span className="content-nav-group__title" id={`cms-nav-${section.group}`}>{section.group}</span>
+              <div className="content-nav-group__links">
+                {section.items.map((item) => {
+                  const active = item.href === "/icerik"
+                    ? pathname === item.href
+                    : pathname.startsWith(item.href);
 
-            return (
-              <Link key={item.href} href={item.href} className={active ? "is-active" : ""}>
-                <strong>{item.label}</strong>
-                <small>{item.description}</small>
-              </Link>
-            );
-          })}
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={active ? "is-active" : ""}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      <strong>{item.label}</strong>
+                      <small>{item.description}</small>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </nav>
 
         <div className="content-sidebar__footer">
@@ -51,15 +75,18 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
       <section className="content-main">
         <header className="content-topbar">
           <div>
-            <p>İlkOku</p>
-            <strong>İçerik Yönetim Merkezi</strong>
+            <p>{currentItem?.group ?? "İlkOku"}</p>
+            <strong>{currentItem?.label ?? "İçerik Yönetim Merkezi"}</strong>
+            <small className="content-topbar__description">
+              {currentItem?.description ?? "İlkOku site içerik yönetim merkezi"}
+            </small>
           </div>
           <div className="content-profile">
             <strong>{user.fullName}</strong>
             <small>{user.email}</small>
           </div>
         </header>
-        <main className="content-area">{children}</main>
+        <main id="icerik-ana" className="content-area" tabIndex={-1}>{children}</main>
       </section>
     </div>
   );

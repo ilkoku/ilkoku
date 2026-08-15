@@ -138,6 +138,7 @@ export default async function ContentDashboardPage() {
   const corporateHref = data.readiness.corporateId ? `/icerik/sayfalar/${data.readiness.corporateId}` : "/icerik/sayfalar";
   const guideHref = data.readiness.guideId ? `/icerik/rehber/${data.readiness.guideId}?dil=tr` : "/icerik/rehber?dil=tr";
   const faqHref = data.readiness.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqFocusKey}` : "/icerik/sss?dil=tr";
+  const faqArchivedHref = data.readiness.faqArchivedKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqArchivedKey}` : "/icerik/sss?dil=tr";
 
   const activity: ActivityItem[] = [
     ...data.recentPages.map((page) => ({ key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt })),
@@ -173,7 +174,7 @@ export default async function ContentDashboardPage() {
           href: faqHref, title: `${data.readiness.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı · ${data.readiness.faq}/${cmsReadinessTargets.faq} yayında`,
           text: "Panel ilk işlem gerektiren temel SSS kartına gider. Soruyu ve cevabı gözden geçirip uygun aksiyonu uygulayın.", action: access.canPublish ? "İncele ve yayınla" : "Taslağı incele", level: "warn" as const,
         } : data.readiness.faqArchived > 0 ? {
-          href: faqHref, title: `${data.readiness.faqArchived} temel SSS arşivde`,
+          href: faqArchivedHref, title: `${data.readiness.faqArchived} temel SSS arşivde`,
           text: `${data.readiness.faqCreated}/${cmsStarterTargets.faq} aktif kayıt var. İlgili arşiv kartına gidip taslağa geri alın; yeni kopya oluşturmayın.`, action: "Arşiv SSS'yi aç", level: "warn" as const,
         } : {
           href: "/icerik/hazirlik", title: `Temel SSS seti ${data.readiness.faqCreated}/${cmsStarterTargets.faq} kayıtlı`,

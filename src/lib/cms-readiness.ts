@@ -43,6 +43,7 @@ export type CmsReadinessSnapshot = {
   faqCreated: number;
   faqArchived: number;
   faqFocusKey: string | null;
+  faqArchivedKey: string | null;
   guides: number;
   guidesCreated: number;
   guidesArchived: number;
@@ -67,6 +68,7 @@ type ReadinessRow = {
   faqCreated: bigint | number;
   faqArchived: bigint | number;
   faqFocusKey: string | null;
+  faqArchivedKey: string | null;
   guides: bigint | number;
   guidesCreated: bigint | number;
   guidesArchived: bigint | number;
@@ -167,6 +169,22 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
             ELSE 3
           END
         LIMIT 1) AS faqFocusKey,
+      (SELECT contentKey FROM SiteContent
+        WHERE namespace = 'faq'
+          AND status = 'archived'
+          AND contentKey IN (
+            'item_starter_ilkoku_nedir',
+            'item_starter_yazar_yayin',
+            'item_starter_editor_inceleme',
+            'item_starter_yayinevi_kesif'
+          )
+        ORDER BY CASE contentKey
+          WHEN 'item_starter_ilkoku_nedir' THEN 0
+          WHEN 'item_starter_yazar_yayin' THEN 1
+          WHEN 'item_starter_editor_inceleme' THEN 2
+          ELSE 3
+        END
+        LIMIT 1) AS faqArchivedKey,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status = 'published'
           AND contentKey = 'guide:ilkoku-nasil-calisir'
@@ -237,6 +255,7 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
     faqCreated: value(row?.faqCreated),
     faqArchived: value(row?.faqArchived),
     faqFocusKey: row?.faqFocusKey ?? null,
+    faqArchivedKey: row?.faqArchivedKey ?? null,
     guides: value(row?.guides),
     guidesCreated: value(row?.guidesCreated),
     guidesArchived: value(row?.guidesArchived),

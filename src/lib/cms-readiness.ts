@@ -38,14 +38,14 @@ export type CmsReadinessSnapshot = {
   corporateArchived: number;
   corporateSeoReady: number;
   corporatePendingDraft: number;
-  corporatePendingAt: Date | null;
+  corporatePendingAgeHours: number | null;
   corporateId: string | null;
   corporateStatus: CmsContentStatus | null;
   faq: number;
   faqCreated: number;
   faqArchived: number;
   faqPendingDrafts: number;
-  faqPendingOldestAt: Date | null;
+  faqPendingAgeHours: number | null;
   faqFocusKey: string | null;
   faqArchivedKey: string | null;
   faqPendingDraftKey: string | null;
@@ -54,7 +54,7 @@ export type CmsReadinessSnapshot = {
   guidesArchived: number;
   guidesSeoReady: number;
   guidesPendingDraft: number;
-  guidesPendingAt: Date | null;
+  guidesPendingAgeHours: number | null;
   guideId: string | null;
   guideStatus: CmsContentStatus | null;
   media: number;
@@ -70,14 +70,14 @@ type ReadinessRow = {
   corporateArchived: bigint | number;
   corporateSeoReady: bigint | number;
   corporatePendingDraft: bigint | number;
-  corporatePendingAt: Date | null;
+  corporatePendingAgeHours: bigint | number | null;
   corporateId: string | null;
   corporateStatus: CmsContentStatus | null;
   faq: bigint | number;
   faqCreated: bigint | number;
   faqArchived: bigint | number;
   faqPendingDrafts: bigint | number;
-  faqPendingOldestAt: Date | null;
+  faqPendingAgeHours: bigint | number | null;
   faqFocusKey: string | null;
   faqArchivedKey: string | null;
   faqPendingDraftKey: string | null;
@@ -86,7 +86,7 @@ type ReadinessRow = {
   guidesArchived: bigint | number;
   guidesSeoReady: bigint | number;
   guidesPendingDraft: bigint | number;
-  guidesPendingAt: Date | null;
+  guidesPendingAgeHours: bigint | number | null;
   guideId: string | null;
   guideStatus: CmsContentStatus | null;
   media: bigint | number;
@@ -96,6 +96,10 @@ type ReadinessRow = {
 
 function value(input: bigint | number | null | undefined) {
   return Number(input ?? 0);
+}
+
+function nullableValue(input: bigint | number | null | undefined) {
+  return input === null || input === undefined ? null : Number(input);
 }
 
 export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
@@ -137,12 +141,12 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
           AND draft.status = 'draft'
           AND page.contentKey = 'page:tr:hakkimizda'
           AND page.status = 'published') AS corporatePendingDraft,
-      (SELECT MIN(draft.updatedAt) FROM SiteContent draft
+      (SELECT TIMESTAMPDIFF(HOUR, MIN(draft.updatedAt), CURRENT_TIMESTAMP(3)) FROM SiteContent draft
         INNER JOIN ContentPage page ON draft.contentKey = CONCAT('page:', page.id)
         WHERE draft.namespace = 'cms_draft'
           AND draft.status = 'draft'
           AND page.contentKey = 'page:tr:hakkimizda'
-          AND page.status = 'published') AS corporatePendingAt,
+          AND page.status = 'published') AS corporatePendingAgeHours,
       (SELECT id FROM ContentPage
         WHERE contentKey = 'page:tr:hakkimizda'
         ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
@@ -187,7 +191,7 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
             'faq:tr:item_starter_editor_inceleme',
             'faq:tr:item_starter_yayinevi_kesif'
           )) AS faqPendingDrafts,
-      (SELECT MIN(updatedAt) FROM SiteContent
+      (SELECT TIMESTAMPDIFF(HOUR, MIN(updatedAt), CURRENT_TIMESTAMP(3)) FROM SiteContent
         WHERE namespace = 'cms_draft'
           AND status = 'draft'
           AND contentKey IN (
@@ -195,7 +199,7 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
             'faq:tr:item_starter_yazar_yayin',
             'faq:tr:item_starter_editor_inceleme',
             'faq:tr:item_starter_yayinevi_kesif'
-          )) AS faqPendingOldestAt,
+          )) AS faqPendingAgeHours,
       (SELECT contentKey FROM SiteContent
         WHERE namespace = 'faq'
           AND contentKey IN (
@@ -269,12 +273,12 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
           AND draft.status = 'draft'
           AND page.contentKey = 'guide:ilkoku-nasil-calisir'
           AND page.status = 'published') AS guidesPendingDraft,
-      (SELECT MIN(draft.updatedAt) FROM SiteContent draft
+      (SELECT TIMESTAMPDIFF(HOUR, MIN(draft.updatedAt), CURRENT_TIMESTAMP(3)) FROM SiteContent draft
         INNER JOIN ContentPage page ON draft.contentKey = CONCAT('page:', page.id)
         WHERE draft.namespace = 'cms_draft'
           AND draft.status = 'draft'
           AND page.contentKey = 'guide:ilkoku-nasil-calisir'
-          AND page.status = 'published') AS guidesPendingAt,
+          AND page.status = 'published') AS guidesPendingAgeHours,
       (SELECT id FROM ContentPage
         WHERE contentKey = 'guide:ilkoku-nasil-calisir'
         ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
@@ -323,14 +327,14 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
     corporateArchived: value(row?.corporateArchived),
     corporateSeoReady: value(row?.corporateSeoReady),
     corporatePendingDraft: value(row?.corporatePendingDraft),
-    corporatePendingAt: row?.corporatePendingAt ?? null,
+    corporatePendingAgeHours: nullableValue(row?.corporatePendingAgeHours),
     corporateId: row?.corporateId ?? null,
     corporateStatus: row?.corporateStatus ?? null,
     faq: value(row?.faq),
     faqCreated: value(row?.faqCreated),
     faqArchived: value(row?.faqArchived),
     faqPendingDrafts: value(row?.faqPendingDrafts),
-    faqPendingOldestAt: row?.faqPendingOldestAt ?? null,
+    faqPendingAgeHours: nullableValue(row?.faqPendingAgeHours),
     faqFocusKey: row?.faqFocusKey ?? null,
     faqArchivedKey: row?.faqArchivedKey ?? null,
     faqPendingDraftKey: row?.faqPendingDraftKey ?? null,
@@ -339,7 +343,7 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
     guidesArchived: value(row?.guidesArchived),
     guidesSeoReady: value(row?.guidesSeoReady),
     guidesPendingDraft: value(row?.guidesPendingDraft),
-    guidesPendingAt: row?.guidesPendingAt ?? null,
+    guidesPendingAgeHours: nullableValue(row?.guidesPendingAgeHours),
     guideId: row?.guideId ?? null,
     guideStatus: row?.guideStatus ?? null,
     media: value(row?.media),
@@ -364,9 +368,8 @@ export function getCmsStarterSummary(data: CmsReadinessSnapshot) {
   const pendingTotal = Math.min(data.corporatePendingDraft, cmsStarterTargets.corporate)
     + Math.min(data.faqPendingDrafts, cmsStarterTargets.faq)
     + Math.min(data.guidesPendingDraft, cmsStarterTargets.guides);
-  const pendingDates = [data.corporatePendingAt, data.faqPendingOldestAt, data.guidesPendingAt]
-    .filter((date): date is Date => date instanceof Date)
-    .sort((a, b) => a.getTime() - b.getTime());
+  const pendingAges = [data.corporatePendingAgeHours, data.faqPendingAgeHours, data.guidesPendingAgeHours]
+    .filter((age): age is number => age !== null);
 
   return {
     createdTotal,
@@ -378,7 +381,7 @@ export function getCmsStarterSummary(data: CmsReadinessSnapshot) {
     seoReady,
     seoTotal: cmsStarterTargets.seo,
     pendingTotal,
-    pendingOldestAt: pendingDates[0] ?? null,
+    pendingOldestAgeHours: pendingAges.length > 0 ? Math.max(...pendingAges) : null,
     complete: createdTotal >= cmsStarterTargets.total,
   };
 }

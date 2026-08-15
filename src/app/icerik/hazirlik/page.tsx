@@ -3,7 +3,9 @@ import { createStarterContentDraftsAction } from "@/features/cms/starter-content
 import { requireCmsManager } from "@/lib/cms-access";
 import {
   cmsReadinessTargets,
+  cmsStarterTargets,
   getCmsReadinessSummary,
+  getCmsStarterSummary,
   loadCmsReadiness,
   type CmsReadinessSnapshot,
 } from "@/lib/cms-readiness";
@@ -28,6 +30,28 @@ function levelLabel(level: ReadinessLevel) {
 }
 
 function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
+  const corporateDetail = data.corporate >= cmsReadinessTargets.corporate
+    ? "Hakkımızda yayında ve indexlenebilir."
+    : data.corporateCreated >= cmsStarterTargets.corporate
+      ? data.corporateSeoReady >= cmsStarterTargets.corporate
+        ? "Hakkımızda taslağı ve temel SEO alanları hazır. Önizleme ve yayın bekliyor."
+        : "Hakkımızda taslağı hazır. Yayından önce SEO alanlarını kontrol edin."
+      : "Hakkımızda kaydı henüz yok. Sprint 3 başlangıç setinden güvenli taslak oluşturabilirsiniz.";
+
+  const faqDetail = data.faq >= cmsReadinessTargets.faq
+    ? "Dört temel TR yardım kaydının tamamı yayında."
+    : data.faqCreated >= cmsStarterTargets.faq
+      ? `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı; ${data.faq}/${cmsReadinessTargets.faq} yayında. Taslakları inceleyip yayınlayın.`
+      : `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı. Eksik başlangıç kayıtlarını tamamlayın.`;
+
+  const guideDetail = data.guides >= cmsReadinessTargets.guides
+    ? "İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir."
+    : data.guidesCreated >= cmsStarterTargets.guides
+      ? data.guidesSeoReady >= cmsStarterTargets.guides
+        ? "İlkOku Nasıl Çalışır taslağı ve temel SEO alanları hazır. Önizleme ve yayın bekliyor."
+        : "İlkOku Nasıl Çalışır taslağı hazır. Yayından önce SEO alanlarını kontrol edin."
+      : "İlkOku Nasıl Çalışır rehber kaydı henüz yok.";
+
   return [
     {
       label: "Ana Sayfa",
@@ -44,30 +68,24 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
       href: "/icerik/yasal?dil=tr",
     },
     {
-      label: "Kurumsal Sayfalar",
-      value: `${data.corporate}/${cmsReadinessTargets.corporate}`,
+      label: "Hakkımızda",
+      value: `Kayıt ${data.corporateCreated}/${cmsStarterTargets.corporate} · Canlı ${data.corporate}/${cmsReadinessTargets.corporate}`,
       level: data.corporate >= cmsReadinessTargets.corporate ? "pass" : "warn",
-      detail: data.corporate >= cmsReadinessTargets.corporate
-        ? "En az bir indexlenebilir TR kurumsal sayfa yayında."
-        : "Henüz indexlenebilir TR kurumsal CMS sayfası yok. Sprint 3 içerik kabulü tamamlanmış sayılmaz.",
+      detail: corporateDetail,
       href: "/icerik/sayfalar",
     },
     {
-      label: "SSS & Yardım",
-      value: `${data.faq}/${cmsReadinessTargets.faq}`,
+      label: "Temel SSS",
+      value: `Kayıt ${data.faqCreated}/${cmsStarterTargets.faq} · Canlı ${data.faq}/${cmsReadinessTargets.faq}`,
       level: data.faq >= cmsReadinessTargets.faq ? "pass" : "warn",
-      detail: data.faq >= cmsReadinessTargets.faq
-        ? "Temel TR yardım seti yayında."
-        : `Canlı kabul için en az ${cmsReadinessTargets.faq} temel TR SSS yayını hedefleniyor.`,
+      detail: faqDetail,
       href: "/icerik/sss?dil=tr",
     },
     {
-      label: "Rehberler",
-      value: `${data.guides}/${cmsReadinessTargets.guides}`,
+      label: "İlkOku Nasıl Çalışır",
+      value: `Kayıt ${data.guidesCreated}/${cmsStarterTargets.guides} · Canlı ${data.guides}/${cmsReadinessTargets.guides}`,
       level: data.guides >= cmsReadinessTargets.guides ? "pass" : "warn",
-      detail: data.guides >= cmsReadinessTargets.guides
-        ? "Indexlenebilir TR rehber detayı yayında."
-        : "Rehber dizini açık ancak henüz yayınlanmış rehber detayı yok.",
+      detail: guideDetail,
       href: "/icerik/rehber?dil=tr",
     },
     {
@@ -115,6 +133,9 @@ export default async function ContentReadinessPage({
   const summary = data
     ? getCmsReadinessSummary(data)
     : { corePassed: 0, coreTotal: 5, blockers: 0, warnings: 0, ready: false };
+  const starter = data
+    ? getCmsStarterSummary(data)
+    : { createdTotal: 0, publishedTotal: 0, total: cmsStarterTargets.total, seoReady: 0, seoTotal: cmsStarterTargets.seo, complete: false };
   const blockers = items.filter((item) => item.level === "blocker").length;
   const warnings = items.filter((item) => item.level === "warn").length;
   const passes = items.filter((item) => item.level === "pass").length;
@@ -128,7 +149,7 @@ export default async function ContentReadinessPage({
         <div>
           <span>Sprint 3 · Canlı İçerik</span>
           <h1>Yayın Hazırlığı</h1>
-          <p>Canlı İlkOku içeriğinin gerçekten doldurulup doldurulmadığını tek ekrandan kontrol edin. Teknik CMS sağlığından farklı olarak bu ekran içerik kabulünü ölçer.</p>
+          <p>Taslak oluşumundan canlı yayına kadar temel Sprint 3 içeriklerini tek ekrandan izleyin. Teknik CMS sağlığından farklı olarak bu ekran içerik kabulünü ölçer.</p>
         </div>
         <div className="content-profile">
           <strong>{ready ? "YAYINA HAZIR" : "İÇERİK EKSİĞİ VAR"}</strong>
@@ -146,7 +167,7 @@ export default async function ContentReadinessPage({
 
       {starterCreated ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }} role="status">
-          <strong>Başlangıç taslakları hazırlandı.</strong>
+          <strong>Başlangıç taslakları kontrol edildi.</strong>
           <p>{params.sayfa ?? "0"} sayfa/rehber ve {params.sss ?? "0"} SSS taslağı oluşturuldu. Mevcut kayıtların üzerine yazılmadı ve hiçbir içerik otomatik yayınlanmadı.</p>
         </div>
       ) : null}
@@ -166,15 +187,43 @@ export default async function ContentReadinessPage({
             <article className="content-metric-card"><span>Durum</span><strong>{ready ? "HAZIR" : "AÇIK"}</strong><small>{summary.corePassed}/{summary.coreTotal} temel alan</small></article>
           </div>
 
-          {!ready ? (
+          <div className="content-panel" style={{ marginTop: "1rem" }}>
+            <div className="content-section-heading">
+              <div><span>Sprint 3 Akışı</span><h2>Taslak → SEO → Yayın</h2></div>
+              <p>Başlangıç setinin oluşturulması ile canlı yayın birbirinden ayrı izlenir.</p>
+            </div>
+            <div className="content-metric-grid">
+              <article className="content-metric-card"><span>Başlangıç seti</span><strong>{starter.createdTotal}/{starter.total}</strong><small>kayıt mevcut</small></article>
+              <article className="content-metric-card"><span>Canlı temel içerik</span><strong>{starter.publishedTotal}/{starter.total}</strong><small>yayında</small></article>
+              <article className="content-metric-card"><span>SEO hazır</span><strong>{starter.seoReady}/{starter.seoTotal}</strong><small>Hakkımızda + Rehber</small></article>
+              <article className="content-metric-card"><span>Yayın kuyruğu</span><strong>{data.queue}</strong><small>bekleyen taslak</small></article>
+            </div>
+          </div>
+
+          {!ready && !starter.complete ? (
             <div className="content-panel" style={{ marginTop: "1rem" }}>
               <div className="content-section-heading">
                 <div><span>Başlangıç Seti</span><h2>Eksik içeriklere güvenli taslak oluştur</h2></div>
               </div>
               <p>Yalnız mevcut olmayan kayıtlar için Hakkımızda, İlkOku Nasıl Çalışır rehberi ve dört temel SSS taslağı oluşturulur. Mevcut içerik değiştirilmez. Tüm kayıtlar taslak kalır; inceleme ve yayın işlemi ayrıca yapılır.</p>
               <form action={createStarterContentDraftsAction} className="content-form-actions">
-                <button type="submit">Başlangıç taslaklarını oluştur</button>
+                <button type="submit">{starter.createdTotal > 0 ? "Eksik başlangıç taslaklarını tamamla" : "Başlangıç taslaklarını oluştur"}</button>
               </form>
+            </div>
+          ) : null}
+
+          {!ready && starter.complete ? (
+            <div className="content-panel" style={{ marginTop: "1rem" }}>
+              <div className="content-section-heading">
+                <div><span>Sıradaki Adım</span><h2>6/6 başlangıç kaydı hazır</h2></div>
+              </div>
+              <p>Başlangıç içeriği artık yeniden oluşturulmayacak. Sıradaki iş taslakları gözden geçirmek, önizlemek ve yayın yetkisiyle canlıya almak.</p>
+              <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
+                <Link href="/icerik/sayfalar">Hakkımızda →</Link>
+                <Link href="/icerik/rehber?dil=tr">Rehber →</Link>
+                <Link href="/icerik/sss?dil=tr">4 temel SSS →</Link>
+                <Link href="/icerik/yayin-kuyrugu">Yayın Kuyruğu →</Link>
+              </div>
             </div>
           ) : null}
 

@@ -20,12 +20,25 @@ export const cmsReadinessRequiredContent = {
   ],
 } as const;
 
+export const cmsStarterTargets = {
+  corporate: 1,
+  faq: 4,
+  guides: 1,
+  total: 6,
+  seo: 2,
+} as const;
+
 export type CmsReadinessSnapshot = {
   homepage: number;
   legal: number;
   corporate: number;
+  corporateCreated: number;
+  corporateSeoReady: number;
   faq: number;
+  faqCreated: number;
   guides: number;
+  guidesCreated: number;
+  guidesSeoReady: number;
   media: number;
   seoMissing: number;
   queue: number;
@@ -35,8 +48,13 @@ type ReadinessRow = {
   homepage: bigint | number;
   legal: bigint | number;
   corporate: bigint | number;
+  corporateCreated: bigint | number;
+  corporateSeoReady: bigint | number;
   faq: bigint | number;
+  faqCreated: bigint | number;
   guides: bigint | number;
+  guidesCreated: bigint | number;
+  guidesSeoReady: bigint | number;
   media: bigint | number;
   seoMissing: bigint | number;
   queue: bigint | number;
@@ -66,6 +84,16 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
         WHERE status = 'published'
           AND contentKey = 'page:tr:hakkimizda'
           AND noIndex = false) AS corporate,
+      (SELECT COUNT(*) FROM ContentPage
+        WHERE status IN ('draft', 'published')
+          AND contentKey = 'page:tr:hakkimizda') AS corporateCreated,
+      (SELECT COUNT(*) FROM ContentPage
+        WHERE status IN ('draft', 'published')
+          AND contentKey = 'page:tr:hakkimizda'
+          AND noIndex = false
+          AND COALESCE(TRIM(seoTitle), '') <> ''
+          AND COALESCE(TRIM(seoDescription), '') <> ''
+          AND COALESCE(TRIM(canonicalUrl), '') <> '') AS corporateSeoReady,
       (SELECT COUNT(*) FROM SiteContent
         WHERE namespace = 'faq'
           AND status = 'published'
@@ -75,10 +103,29 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
             'item_starter_editor_inceleme',
             'item_starter_yayinevi_kesif'
           )) AS faq,
+      (SELECT COUNT(*) FROM SiteContent
+        WHERE namespace = 'faq'
+          AND status IN ('draft', 'published')
+          AND contentKey IN (
+            'item_starter_ilkoku_nedir',
+            'item_starter_yazar_yayin',
+            'item_starter_editor_inceleme',
+            'item_starter_yayinevi_kesif'
+          )) AS faqCreated,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status = 'published'
           AND contentKey = 'guide:ilkoku-nasil-calisir'
           AND noIndex = false) AS guides,
+      (SELECT COUNT(*) FROM ContentPage
+        WHERE status IN ('draft', 'published')
+          AND contentKey = 'guide:ilkoku-nasil-calisir') AS guidesCreated,
+      (SELECT COUNT(*) FROM ContentPage
+        WHERE status IN ('draft', 'published')
+          AND contentKey = 'guide:ilkoku-nasil-calisir'
+          AND noIndex = false
+          AND COALESCE(TRIM(seoTitle), '') <> ''
+          AND COALESCE(TRIM(seoDescription), '') <> ''
+          AND COALESCE(TRIM(canonicalUrl), '') <> '') AS guidesSeoReady,
       (SELECT COUNT(*) FROM SiteContent
         WHERE namespace = 'media'
           AND status <> 'archived') AS media,
@@ -115,11 +162,36 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
     homepage: value(row?.homepage),
     legal: value(row?.legal),
     corporate: value(row?.corporate),
+    corporateCreated: value(row?.corporateCreated),
+    corporateSeoReady: value(row?.corporateSeoReady),
     faq: value(row?.faq),
+    faqCreated: value(row?.faqCreated),
     guides: value(row?.guides),
+    guidesCreated: value(row?.guidesCreated),
+    guidesSeoReady: value(row?.guidesSeoReady),
     media: value(row?.media),
     seoMissing: value(row?.seoMissing),
     queue: value(row?.queue),
+  };
+}
+
+export function getCmsStarterSummary(data: CmsReadinessSnapshot) {
+  const createdTotal = Math.min(data.corporateCreated, cmsStarterTargets.corporate)
+    + Math.min(data.faqCreated, cmsStarterTargets.faq)
+    + Math.min(data.guidesCreated, cmsStarterTargets.guides);
+  const publishedTotal = Math.min(data.corporate, cmsStarterTargets.corporate)
+    + Math.min(data.faq, cmsStarterTargets.faq)
+    + Math.min(data.guides, cmsStarterTargets.guides);
+  const seoReady = Math.min(data.corporateSeoReady, cmsStarterTargets.corporate)
+    + Math.min(data.guidesSeoReady, cmsStarterTargets.guides);
+
+  return {
+    createdTotal,
+    publishedTotal,
+    total: cmsStarterTargets.total,
+    seoReady,
+    seoTotal: cmsStarterTargets.seo,
+    complete: createdTotal >= cmsStarterTargets.total,
   };
 }
 

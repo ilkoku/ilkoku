@@ -3,7 +3,9 @@ import { requireCmsManager } from "@/lib/cms-access";
 import { cmsModules } from "@/lib/cms-modules";
 import {
   cmsReadinessTargets,
+  cmsStarterTargets,
   getCmsReadinessSummary,
+  getCmsStarterSummary,
   loadCmsReadiness,
   type CmsReadinessSnapshot,
 } from "@/lib/cms-readiness";
@@ -63,8 +65,13 @@ const emptyReadiness: CmsReadinessSnapshot = {
   homepage: 0,
   legal: 0,
   corporate: 0,
+  corporateCreated: 0,
+  corporateSeoReady: 0,
   faq: 0,
+  faqCreated: 0,
   guides: 0,
+  guidesCreated: 0,
+  guidesSeoReady: 0,
   media: 0,
   seoMissing: 0,
   queue: 0,
@@ -184,6 +191,7 @@ export default async function ContentDashboardPage() {
   const access = await requireCmsManager("/icerik");
   const data = await loadDashboardData();
   const summary = getCmsReadinessSummary(data.readiness);
+  const starter = getCmsStarterSummary(data.readiness);
   const areas = cmsModules.filter((module) =>
     module.enabled && module.href !== "/icerik" && (access.isAdmin || !module.adminOnly),
   );
@@ -227,31 +235,59 @@ export default async function ContentDashboardPage() {
         }
       : null,
     data.readiness.corporate < cmsReadinessTargets.corporate
-      ? {
-          href: "/icerik/sayfalar",
-          title: "Kurumsal sayfa yayını bekleniyor",
-          text: "En az bir indexlenebilir TR kurumsal sayfa yayınlanmalı. Başlangıç için Hakkımızda taslağını kullanabilirsiniz.",
-          action: "Sayfaları yönet",
-          level: "warn" as const,
-        }
+      ? data.readiness.corporateCreated >= cmsStarterTargets.corporate
+        ? {
+            href: "/icerik/sayfalar",
+            title: "Hakkımızda taslağı hazır · yayın bekliyor",
+            text: data.readiness.corporateSeoReady >= cmsStarterTargets.corporate
+              ? "Taslak ve temel SEO alanları hazır. Metni önizleyip yayın kararını verin."
+              : "Taslak hazır. Yayından önce SEO title, description ve canonical alanlarını kontrol edin.",
+            action: "Hakkımızda'yı incele",
+            level: "warn" as const,
+          }
+        : {
+            href: "/icerik/hazirlik",
+            title: "Hakkımızda başlangıç kaydı eksik",
+            text: "Sprint 3 başlangıç setinden güvenli Hakkımızda taslağı oluşturun.",
+            action: "Başlangıç setini aç",
+            level: "warn" as const,
+          }
       : null,
     data.readiness.faq < cmsReadinessTargets.faq
-      ? {
-          href: "/icerik/sss?dil=tr",
-          title: `Temel SSS seti ${data.readiness.faq}/${cmsReadinessTargets.faq}`,
-          text: "İlkOku nedir, yazar yayını, editör incelemesi ve yayınevi keşfi için temel yardım setini tamamlayın.",
-          action: "SSS'leri yönet",
-          level: "warn" as const,
-        }
+      ? data.readiness.faqCreated >= cmsStarterTargets.faq
+        ? {
+            href: "/icerik/sss?dil=tr",
+            title: `${data.readiness.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı · ${data.readiness.faq}/${cmsReadinessTargets.faq} yayında`,
+            text: "Dört temel yardım kaydı hazır. Soruları ve cevapları gözden geçirip uygun olanları yayınlayın.",
+            action: "SSS taslaklarını incele",
+            level: "warn" as const,
+          }
+        : {
+            href: "/icerik/hazirlik",
+            title: `Temel SSS seti ${data.readiness.faqCreated}/${cmsStarterTargets.faq} kayıtlı`,
+            text: "Eksik temel yardım kayıtlarını başlangıç seti üzerinden tamamlayın.",
+            action: "Eksikleri tamamla",
+            level: "warn" as const,
+          }
       : null,
     data.readiness.guides < cmsReadinessTargets.guides
-      ? {
-          href: "/icerik/rehber?dil=tr",
-          title: "Rehber detayı yayını bekleniyor",
-          text: "Rehber dizini açık ancak indexlenebilir bir TR rehber detayı henüz yayında değil.",
-          action: "Rehberleri yönet",
-          level: "warn" as const,
-        }
+      ? data.readiness.guidesCreated >= cmsStarterTargets.guides
+        ? {
+            href: "/icerik/rehber?dil=tr",
+            title: "İlkOku Nasıl Çalışır taslağı hazır · yayın bekliyor",
+            text: data.readiness.guidesSeoReady >= cmsStarterTargets.guides
+              ? "Rehber taslağı ve temel SEO alanları hazır. Önizleme ve yayın kontrolüne geçin."
+              : "Rehber taslağı hazır. Yayından önce SEO alanlarını tamamlayın.",
+            action: "Rehberi incele",
+            level: "warn" as const,
+          }
+        : {
+            href: "/icerik/hazirlik",
+            title: "İlkOku Nasıl Çalışır kaydı eksik",
+            text: "Sprint 3 başlangıç setinden rehber taslağını oluşturun.",
+            action: "Başlangıç setini aç",
+            level: "warn" as const,
+          }
       : null,
     data.publishQueue > 0
       ? {
@@ -305,6 +341,7 @@ export default async function ContentDashboardPage() {
 
   const metrics = [
     { label: "Yayın hazırlığı", value: `${summary.corePassed}/${summary.coreTotal}`, note: "temel içerik alanı", href: "/icerik/hazirlik" },
+    { label: "Başlangıç seti", value: `${starter.createdTotal}/${starter.total}`, note: `${starter.publishedTotal} canlı`, href: "/icerik/hazirlik" },
     { label: "Yayın kuyruğu", value: data.publishQueue, note: "bekleyen içerik", href: "/icerik/yayin-kuyrugu" },
     { label: "SEO eksiği", value: data.seoIssues, note: "yayındaki TR sayfa", href: "/icerik/seo" },
     { label: "Form talebi", value: data.forms, note: "açık kayıt", href: "/icerik/formlar" },
@@ -314,12 +351,20 @@ export default async function ContentDashboardPage() {
     { label: "Revizyon", value: data.revisions, note: "son 7 gün", href: "/icerik/gecmis" },
   ];
 
-  const quickActions = [
-    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 kabul durumunu aç" },
-    { href: "/icerik/sayfalar/yeni", label: "+ Yeni Sayfa", text: "Kurumsal taslak oluştur" },
-    { href: "/icerik/rehber/yeni?dil=tr", label: "+ Yeni Rehber", text: "Editoryal içerik oluştur" },
-    { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen taslakları incele" },
-  ];
+  const quickActions = starter.complete
+    ? [
+        { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 kabul durumunu aç" },
+        { href: "/icerik/sayfalar", label: "Hakkımızda", text: "Kurumsal taslağı incele" },
+        { href: "/icerik/sss?dil=tr", label: "Temel SSS", text: "4 yardım kaydını incele" },
+        { href: "/icerik/rehber?dil=tr", label: "İlkOku Nasıl Çalışır", text: "Rehber taslağını incele" },
+        { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen taslakları yönet" },
+      ]
+    : [
+        { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 kabul durumunu aç" },
+        { href: "/icerik/sayfalar/yeni", label: "+ Yeni Sayfa", text: "Kurumsal taslak oluştur" },
+        { href: "/icerik/rehber/yeni?dil=tr", label: "+ Yeni Rehber", text: "Editoryal içerik oluştur" },
+        { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen taslakları incele" },
+      ];
 
   return (
     <section className="content-dashboard">
@@ -332,7 +377,7 @@ export default async function ContentDashboardPage() {
         <div className={`content-health-badge ${healthClass}`}>
           <small>Canlı içerik durumu</small>
           <strong>{healthLabel}</strong>
-          <span>{summary.corePassed}/{summary.coreTotal} temel alan hazır · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span>
+          <span>{summary.corePassed}/{summary.coreTotal} temel alan hazır · {starter.createdTotal}/{starter.total} başlangıç kaydı · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span>
         </div>
       </div>
 

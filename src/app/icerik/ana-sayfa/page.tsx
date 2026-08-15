@@ -115,6 +115,24 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
   const footer = sections.get("footer");
   const isEn = locale === "en";
 
+  const statDefaults = isEn
+    ? [
+        ["2.847+", "Writers"],
+        ["18.592+", "Readers"],
+        ["412+", "Editors"],
+        ["78+", "Publishers"],
+        ["6.215+", "Works"],
+        ["34.760+", "Comments"],
+      ]
+    : [
+        ["2.847+", "Yazar"],
+        ["18.592+", "Okuyucu"],
+        ["412+", "Editör"],
+        ["78+", "Yayınevi"],
+        ["6.215+", "Eser"],
+        ["34.760+", "Yorum"],
+      ];
+
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
@@ -194,9 +212,28 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
           <label><span>Üst etiket</span><input name="eyebrow" maxLength={120} defaultValue={why?.values.eyebrow || ""} /></label>
           <label><span>Başlık</span><input name="title" required maxLength={220} defaultValue={why?.values.title || ""} placeholder={isEn ? "Why İlkOku?" : "Neden İlkOku?"} /></label>
           <label><span>Açıklama</span><textarea name="description" maxLength={700} rows={3} defaultValue={why?.values.description || ""} /></label>
+
+          <div className="content-panel" style={{ margin: ".5rem 0" }}>
+            <strong>İstatistik şeridi · manuel yönetim</strong>
+            <p>Bu değerler gerçek zamanlı veritabanı sayacı değildir. Site tam faaliyete geçene kadar başlık ve rakamlar buradan manuel yönetilir; daha sonra aynı görünüm korunarak otomatik veri kaynağına bağlanabilir.</p>
+          </div>
+
+          <div className="content-form-grid">
+            {statDefaults.map(([fallbackValue, fallbackLabel], index) => {
+              const item = index + 1;
+              return (
+                <div key={item} className="content-panel" style={{ margin: 0 }}>
+                  <strong>Kart {item}</strong>
+                  <label><span>Rakam</span><input name={`stat${item}Value`} maxLength={40} defaultValue={why?.values[`stat${item}Value`] || fallbackValue} /></label>
+                  <label><span>Başlık</span><input name={`stat${item}Label`} maxLength={80} defaultValue={why?.values[`stat${item}Label`] || fallbackLabel} /></label>
+                </div>
+              );
+            })}
+          </div>
+
           <div className="content-form-actions"><button type="submit">Taslak Kaydet</button></div>
         </form>
-        <PublishBox action={publishHomepageWhyAction} label="Neden İlkOku" locale={locale} section={why} enabled={localeEnabled} canPublish={access.canPublish} />
+        <PublishBox action={publishHomepageWhyAction} label="Neden İlkOku ve istatistik şeridi" locale={locale} section={why} enabled={localeEnabled} canPublish={access.canPublish} />
       </div>
 
       <div className="content-panel">

@@ -41,6 +41,10 @@ export default async function HomepagePreview({ searchParams }: { searchParams: 
   const why = section("why");
   const footer = section("footer");
   const pending = drafts.length;
+  const isEn = locale === "en";
+  const statDefaults = isEn
+    ? [["2.847+", "Writers"], ["18.592+", "Readers"], ["412+", "Editors"], ["78+", "Publishers"], ["6.215+", "Works"], ["34.760+", "Comments"]]
+    : [["2.847+", "Yazar"], ["18.592+", "Okuyucu"], ["412+", "Editör"], ["78+", "Yayınevi"], ["6.215+", "Eser"], ["34.760+", "Yorum"]];
 
   return (
     <section className="content-editor-page">
@@ -79,6 +83,12 @@ export default async function HomepagePreview({ searchParams }: { searchParams: 
 
           <section className="cms-preview-section">
             <div><span className="cms-preview-eyebrow">{why.eyebrow || "Güven, kayıt ve keşif"}</span><h2>{why.title || "Neden İlkOku?"}</h2><p>{why.description || "Yazar, okuyucu, editör ve yayınevlerini kayıtlı bir edebiyat ekosisteminde buluşturur."}</p></div>
+            <div className="cms-preview-role-grid" aria-label="Manuel istatistik şeridi önizlemesi">
+              {statDefaults.map(([fallbackValue, fallbackLabel], index) => {
+                const item = index + 1;
+                return <article key={item}><strong>{why[`stat${item}Value`] || fallbackValue}</strong><p>{why[`stat${item}Label`] || fallbackLabel}</p></article>;
+              })}
+            </div>
           </section>
 
           <footer className="cms-preview-footer"><strong>İlkOku</strong><p>{footer.slogan || "İlk cümle, ilk okurun, ilk adımın."}</p><small>{footer.copyright || "© 2026 İlkOku. Tüm hakları saklıdır."}</small></footer>

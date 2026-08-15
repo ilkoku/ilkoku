@@ -141,8 +141,36 @@ export async function saveHomepageWhyAction(formData: FormData) {
   const eyebrow = field(formData, "eyebrow", 120);
   const title = field(formData, "title", 220);
   const description = field(formData, "description", 700);
+  const stat1Value = field(formData, "stat1Value", 40);
+  const stat1Label = field(formData, "stat1Label", 80);
+  const stat2Value = field(formData, "stat2Value", 40);
+  const stat2Label = field(formData, "stat2Label", 80);
+  const stat3Value = field(formData, "stat3Value", 40);
+  const stat3Label = field(formData, "stat3Label", 80);
+  const stat4Value = field(formData, "stat4Value", 40);
+  const stat4Label = field(formData, "stat4Label", 80);
+  const stat5Value = field(formData, "stat5Value", 40);
+  const stat5Label = field(formData, "stat5Label", 80);
+  const stat6Value = field(formData, "stat6Value", 40);
+  const stat6Label = field(formData, "stat6Label", 80);
   if (!title) return;
-  await saveHomepageSection(user!.id, locale, "why", { eyebrow, title, description });
+  await saveHomepageSection(user!.id, locale, "why", {
+    eyebrow,
+    title,
+    description,
+    stat1Value,
+    stat1Label,
+    stat2Value,
+    stat2Label,
+    stat3Value,
+    stat3Label,
+    stat4Value,
+    stat4Label,
+    stat5Value,
+    stat5Label,
+    stat6Value,
+    stat6Label,
+  });
 }
 
 export async function publishHomepageWhyAction(formData: FormData) {

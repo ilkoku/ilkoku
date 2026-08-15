@@ -81,6 +81,14 @@ function setLinkHref(selector: string, value?: string) {
   if (anchor) anchor.setAttribute("href", safeHref);
 }
 
+function applyManualStats(why?: Section) {
+  if (!why) return;
+  for (let index = 1; index <= 6; index += 1) {
+    setText(`.landing-stat-v2:nth-child(${index}) strong`, why[`stat${index}Value`]);
+    setText(`.landing-stat-v2:nth-child(${index}) div > span`, why[`stat${index}Label`]);
+  }
+}
+
 function applyHomepage(content: HomepageContent) {
   const hero = content.hero;
   if (hero?.title) {
@@ -108,6 +116,7 @@ function applyHomepage(content: HomepageContent) {
   const why = content.why;
   setText(".landing-why-v2 .landing-section-heading__eyebrow", why?.eyebrow);
   setText(".landing-why-v2 .landing-section-heading h2", why?.title);
+  applyManualStats(why);
 
   const footer = content.footer;
   setFooterSlogan(footer?.slogan);

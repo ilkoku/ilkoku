@@ -108,7 +108,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
           const canArchive = status !== "published" || access.canPublish;
           const visibleStatus = status === "published" && hasPendingDraft ? "Yayında · taslak hazır" : statusLabels[status];
           return (
-            <div className="content-panel" key={contentKey}>
+            <div className="content-panel" id={`faq-${contentKey}`} key={contentKey} style={{ scrollMarginTop: "1rem" }}>
               <div className="content-section-heading"><div><span>{String(index + 2).padStart(2, "0")}</span><h2>{item.question || "İsimsiz SSS"}</h2></div><p>{visibleStatus} · {item.category || (isEn ? "General" : "Genel")} · {audienceLabels[item.audience || "all"] || "Herkes"} · {formatDate(displayUpdatedAt)}</p></div>
               <form className="content-form" action={saveFaqAction}>
                 <input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} />

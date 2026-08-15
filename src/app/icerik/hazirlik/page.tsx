@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { createStarterContentDraftsAction } from "@/features/cms/starter-content-actions";
 import { requireCmsManager } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
 
@@ -106,8 +107,13 @@ async function loadReadiness() {
   };
 }
 
-export default async function ContentReadinessPage() {
+export default async function ContentReadinessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ baslangic?: string; sayfa?: string; sss?: string }>;
+}) {
   await requireCmsManager("/icerik/hazirlik");
+  const params = await searchParams;
 
   let data: Awaited<ReturnType<typeof loadReadiness>> | null = null;
   try {
@@ -183,6 +189,7 @@ export default async function ContentReadinessPage() {
   const warnings = items.filter((item) => item.level === "warn").length;
   const passes = items.filter((item) => item.level === "pass").length;
   const ready = Boolean(data && blockers === 0 && warnings === 0);
+  const starterCreated = params.baslangic === "1";
 
   return (
     <section className="content-editor-page">
@@ -198,6 +205,13 @@ export default async function ContentReadinessPage() {
         </div>
       </div>
 
+      {starterCreated ? (
+        <div className="content-panel" style={{ marginBottom: "1rem" }}>
+          <strong>Başlangıç taslakları hazırlandı.</strong>
+          <p>{params.sayfa ?? "0"} sayfa/rehber ve {params.sss ?? "0"} SSS taslağı oluşturuldu. Mevcut kayıtların üzerine yazılmadı ve hiçbir içerik otomatik yayınlanmadı.</p>
+        </div>
+      ) : null}
+
       {!data ? (
         <div className="content-panel">
           <strong>İçerik hazırlık verileri okunamadı.</strong>
@@ -212,6 +226,18 @@ export default async function ContentReadinessPage() {
             <article className="content-metric-card"><span>BLOCKER</span><strong>{blockers}</strong><small>yayın öncesi zorunlu</small></article>
             <article className="content-metric-card"><span>Durum</span><strong>{ready ? "HAZIR" : "AÇIK"}</strong><small>Sprint 3 içerik kabulü</small></article>
           </div>
+
+          {!ready ? (
+            <div className="content-panel" style={{ marginTop: "1rem" }}>
+              <div className="content-section-heading">
+                <div><span>Başlangıç Seti</span><h2>Eksik içeriklere güvenli taslak oluştur</h2></div>
+              </div>
+              <p>Yalnız mevcut olmayan kayıtlar için Hakkımızda, İlkOku Nasıl Çalışır rehberi ve dört temel SSS taslağı oluşturulur. Mevcut içerik değiştirilmez. Tüm kayıtlar taslak kalır; inceleme ve yayın işlemi ayrıca yapılır.</p>
+              <form action={createStarterContentDraftsAction} className="content-form-actions">
+                <button type="submit">Başlangıç taslaklarını oluştur</button>
+              </form>
+            </div>
+          ) : null}
 
           <div className="content-panel" style={{ marginTop: "1rem" }}>
             <div className="content-list">

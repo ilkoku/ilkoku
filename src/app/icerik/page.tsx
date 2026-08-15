@@ -135,6 +135,9 @@ export default async function ContentDashboardPage() {
 
   const summary = getCmsReadinessSummary(data.readiness);
   const starter = getCmsStarterSummary(data.readiness);
+  const corporateHref = data.readiness.corporateId ? `/icerik/sayfalar/${data.readiness.corporateId}` : "/icerik/sayfalar";
+  const guideHref = data.readiness.guideId ? `/icerik/rehber/${data.readiness.guideId}?dil=tr` : "/icerik/rehber?dil=tr";
+  const faqHref = data.readiness.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqFocusKey}` : "/icerik/sss?dil=tr";
 
   const activity: ActivityItem[] = [
     ...data.recentPages.map((page) => ({ key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt })),
@@ -152,12 +155,14 @@ export default async function ContentDashboardPage() {
     } : null,
     data.readiness.corporate < cmsReadinessTargets.corporate
       ? data.readiness.corporateCreated >= cmsStarterTargets.corporate ? {
-          href: "/icerik/sayfalar", title: "Hakkımızda taslağı hazır · yayın bekliyor",
-          text: data.readiness.corporateSeoReady >= cmsStarterTargets.corporate ? "Taslak ve temel SEO alanları hazır. Metni önizleyip yayın kararını verin." : "Taslak hazır. Yayından önce SEO title, description ve canonical alanlarını kontrol edin.",
-          action: "Hakkımızda'yı incele", level: "warn" as const,
+          href: corporateHref, title: "Hakkımızda taslağı hazır · yayın bekliyor",
+          text: data.readiness.corporateSeoReady >= cmsStarterTargets.corporate
+            ? access.canPublish ? "Taslak ve temel SEO alanları hazır. Doğrudan kaydı açıp önizleme sonrası yayın kararını verin." : "Taslak ve temel SEO alanları hazır. Doğrudan kaydı açıp metni ve önizlemeyi kontrol edin."
+            : "Taslak hazır. Doğrudan kaydı açıp SEO title, description ve canonical alanlarını kontrol edin.",
+          action: access.canPublish ? "İncele ve yayınla" : "Taslağı incele", level: "warn" as const,
         } : data.readiness.corporateArchived > 0 ? {
-          href: "/icerik/sayfalar", title: "Hakkımızda arşivde",
-          text: "Yeni kopya oluşturmak yerine mevcut kaydı açıp taslak olarak kaydedin; içerik anahtarı ve sürüm geçmişi korunsun.", action: "Arşiv kaydını aç", level: "warn" as const,
+          href: corporateHref, title: "Hakkımızda arşivde",
+          text: "Yeni kopya oluşturmak yerine mevcut kaydı doğrudan açıp taslak olarak kaydedin; içerik anahtarı ve sürüm geçmişi korunsun.", action: "Arşiv kaydını aç", level: "warn" as const,
         } : {
           href: "/icerik/hazirlik", title: "Hakkımızda başlangıç kaydı eksik",
           text: "Sprint 3 başlangıç setinden güvenli Hakkımızda taslağı oluşturun.", action: "Başlangıç setini aç", level: "warn" as const,
@@ -165,11 +170,11 @@ export default async function ContentDashboardPage() {
       : null,
     data.readiness.faq < cmsReadinessTargets.faq
       ? data.readiness.faqCreated >= cmsStarterTargets.faq ? {
-          href: "/icerik/sss?dil=tr", title: `${data.readiness.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı · ${data.readiness.faq}/${cmsReadinessTargets.faq} yayında`,
-          text: "Dört temel yardım kaydı hazır. Soruları ve cevapları gözden geçirip uygun olanları yayınlayın.", action: "SSS taslaklarını incele", level: "warn" as const,
+          href: faqHref, title: `${data.readiness.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı · ${data.readiness.faq}/${cmsReadinessTargets.faq} yayında`,
+          text: "Panel ilk işlem gerektiren temel SSS kartına gider. Soruyu ve cevabı gözden geçirip uygun aksiyonu uygulayın.", action: access.canPublish ? "İncele ve yayınla" : "Taslağı incele", level: "warn" as const,
         } : data.readiness.faqArchived > 0 ? {
-          href: "/icerik/sss?dil=tr", title: `${data.readiness.faqArchived} temel SSS arşivde`,
-          text: `${data.readiness.faqCreated}/${cmsStarterTargets.faq} aktif kayıt var. Arşivdeki temel kayıtları taslağa geri alın; yeni kopya oluşturmayın.`, action: "Arşiv SSS'leri aç", level: "warn" as const,
+          href: faqHref, title: `${data.readiness.faqArchived} temel SSS arşivde`,
+          text: `${data.readiness.faqCreated}/${cmsStarterTargets.faq} aktif kayıt var. İlgili arşiv kartına gidip taslağa geri alın; yeni kopya oluşturmayın.`, action: "Arşiv SSS'yi aç", level: "warn" as const,
         } : {
           href: "/icerik/hazirlik", title: `Temel SSS seti ${data.readiness.faqCreated}/${cmsStarterTargets.faq} kayıtlı`,
           text: "Eksik temel yardım kayıtlarını başlangıç seti üzerinden tamamlayın.", action: "Eksikleri tamamla", level: "warn" as const,
@@ -177,12 +182,14 @@ export default async function ContentDashboardPage() {
       : null,
     data.readiness.guides < cmsReadinessTargets.guides
       ? data.readiness.guidesCreated >= cmsStarterTargets.guides ? {
-          href: "/icerik/rehber?dil=tr", title: "İlkOku Nasıl Çalışır taslağı hazır · yayın bekliyor",
-          text: data.readiness.guidesSeoReady >= cmsStarterTargets.guides ? "Rehber taslağı ve temel SEO alanları hazır. Önizleme ve yayın kontrolüne geçin." : "Rehber taslağı hazır. Yayından önce SEO alanlarını tamamlayın.",
-          action: "Rehberi incele", level: "warn" as const,
+          href: guideHref, title: "İlkOku Nasıl Çalışır taslağı hazır · yayın bekliyor",
+          text: data.readiness.guidesSeoReady >= cmsStarterTargets.guides
+            ? access.canPublish ? "Rehber taslağı ve temel SEO alanları hazır. Doğrudan kaydı açıp önizleme sonrası yayınlayın." : "Rehber taslağı ve temel SEO alanları hazır. Doğrudan kaydı açıp önizlemeyi kontrol edin."
+            : "Rehber taslağı hazır. Doğrudan kaydı açıp SEO alanlarını tamamlayın.",
+          action: access.canPublish ? "İncele ve yayınla" : "Taslağı incele", level: "warn" as const,
         } : data.readiness.guidesArchived > 0 ? {
-          href: "/icerik/rehber?dil=tr", title: "İlkOku Nasıl Çalışır rehberi arşivde",
-          text: "Yeni rehber kopyası oluşturmak yerine mevcut kaydı taslağa geri alın.", action: "Arşiv rehberi aç", level: "warn" as const,
+          href: guideHref, title: "İlkOku Nasıl Çalışır rehberi arşivde",
+          text: "Yeni rehber kopyası oluşturmak yerine mevcut kaydı doğrudan açıp taslağa geri alın.", action: "Arşiv rehberi aç", level: "warn" as const,
         } : {
           href: "/icerik/hazirlik", title: "İlkOku Nasıl Çalışır kaydı eksik",
           text: "Sprint 3 başlangıç setinden rehber taslağını oluşturun.", action: "Başlangıç setini aç", level: "warn" as const,
@@ -221,9 +228,9 @@ export default async function ContentDashboardPage() {
 
   const quickActions = starter.complete ? [
     { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 canlı kabul durumunu aç" },
-    { href: "/icerik/sayfalar", label: "Hakkımızda", text: "Kurumsal taslağı incele" },
-    { href: "/icerik/sss?dil=tr", label: "Temel SSS", text: "4 yardım kaydını incele" },
-    { href: "/icerik/rehber?dil=tr", label: "İlkOku Nasıl Çalışır", text: "Rehber taslağını incele" },
+    { href: corporateHref, label: "Hakkımızda", text: access.canPublish ? "Kaydı incele / yayınla" : "Kurumsal taslağı incele" },
+    { href: faqHref, label: "Temel SSS", text: access.canPublish ? "İlk açık kaydı incele / yayınla" : "İlk açık yardım kaydını incele" },
+    { href: guideHref, label: "İlkOku Nasıl Çalışır", text: access.canPublish ? "Rehberi incele / yayınla" : "Rehber taslağını incele" },
     { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen taslakları yönet" },
   ] : [
     { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 canlı kabul durumunu aç" },
@@ -240,7 +247,7 @@ export default async function ContentDashboardPage() {
       </div>
 
       <div className="content-dashboard-quick-actions" aria-label="Hızlı işlemler">
-        {quickActions.map((action) => <Link href={action.href} key={action.href}><strong>{action.label}</strong><small>{action.text}</small></Link>)}
+        {quickActions.map((action) => <Link href={action.href} key={`${action.href}-${action.label}`}><strong>{action.label}</strong><small>{action.text}</small></Link>)}
       </div>
 
       <div className="content-metric-grid">

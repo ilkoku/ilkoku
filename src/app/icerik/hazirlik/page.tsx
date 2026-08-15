@@ -36,13 +36,17 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
       ? data.corporateSeoReady >= cmsStarterTargets.corporate
         ? "Hakkımızda taslağı ve temel SEO alanları hazır. Önizleme ve yayın bekliyor."
         : "Hakkımızda taslağı hazır. Yayından önce SEO alanlarını kontrol edin."
-      : "Hakkımızda kaydı henüz yok. Sprint 3 başlangıç setinden güvenli taslak oluşturabilirsiniz.";
+      : data.corporateArchived > 0
+        ? "Hakkımızda kaydı arşivde. Kurumsal Sayfalar'dan açıp taslak olarak kaydedin; yeni kopya oluşturulmayacak."
+        : "Hakkımızda kaydı henüz yok. Sprint 3 başlangıç setinden güvenli taslak oluşturabilirsiniz.";
 
   const faqDetail = data.faq >= cmsReadinessTargets.faq
     ? "Dört temel TR yardım kaydının tamamı yayında."
     : data.faqCreated >= cmsStarterTargets.faq
       ? `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı; ${data.faq}/${cmsReadinessTargets.faq} yayında. Taslakları inceleyip yayınlayın.`
-      : `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı. Eksik başlangıç kayıtlarını tamamlayın.`;
+      : data.faqArchived > 0
+        ? `${data.faqCreated}/${cmsStarterTargets.faq} aktif kayıt · ${data.faqArchived} arşivde. Arşivdeki temel SSS'leri geri alın; yalnız gerçekten eksik kayıtlar yeniden oluşturulabilir.`
+        : `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı. Eksik başlangıç kayıtlarını tamamlayın.`;
 
   const guideDetail = data.guides >= cmsReadinessTargets.guides
     ? "İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir."
@@ -50,7 +54,9 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
       ? data.guidesSeoReady >= cmsStarterTargets.guides
         ? "İlkOku Nasıl Çalışır taslağı ve temel SEO alanları hazır. Önizleme ve yayın bekliyor."
         : "İlkOku Nasıl Çalışır taslağı hazır. Yayından önce SEO alanlarını kontrol edin."
-      : "İlkOku Nasıl Çalışır rehber kaydı henüz yok.";
+      : data.guidesArchived > 0
+        ? "İlkOku Nasıl Çalışır rehberi arşivde. Rehber modülünden açıp taslağa geri alın; yeni kopya oluşturulmayacak."
+        : "İlkOku Nasıl Çalışır rehber kaydı henüz yok.";
 
   return [
     {
@@ -135,7 +141,17 @@ export default async function ContentReadinessPage({
     : { corePassed: 0, coreTotal: 5, blockers: 0, warnings: 0, ready: false };
   const starter = data
     ? getCmsStarterSummary(data)
-    : { createdTotal: 0, publishedTotal: 0, total: cmsStarterTargets.total, seoReady: 0, seoTotal: cmsStarterTargets.seo, complete: false };
+    : {
+        createdTotal: 0,
+        archivedTotal: 0,
+        accountedTotal: 0,
+        missingTotal: cmsStarterTargets.total,
+        publishedTotal: 0,
+        total: cmsStarterTargets.total,
+        seoReady: 0,
+        seoTotal: cmsStarterTargets.seo,
+        complete: false,
+      };
   const blockers = items.filter((item) => item.level === "blocker").length;
   const warnings = items.filter((item) => item.level === "warn").length;
   const passes = items.filter((item) => item.level === "pass").length;
@@ -193,21 +209,35 @@ export default async function ContentReadinessPage({
               <p>Başlangıç setinin oluşturulması ile canlı yayın birbirinden ayrı izlenir.</p>
             </div>
             <div className="content-metric-grid">
-              <article className="content-metric-card"><span>Başlangıç seti</span><strong>{starter.createdTotal}/{starter.total}</strong><small>kayıt mevcut</small></article>
+              <article className="content-metric-card"><span>Başlangıç seti</span><strong>{starter.createdTotal}/{starter.total}</strong><small>{starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : "aktif kayıt"}</small></article>
               <article className="content-metric-card"><span>Canlı temel içerik</span><strong>{starter.publishedTotal}/{starter.total}</strong><small>yayında</small></article>
               <article className="content-metric-card"><span>SEO hazır</span><strong>{starter.seoReady}/{starter.seoTotal}</strong><small>Hakkımızda + Rehber</small></article>
               <article className="content-metric-card"><span>Yayın kuyruğu</span><strong>{data.queue}</strong><small>bekleyen taslak</small></article>
             </div>
           </div>
 
-          {!ready && !starter.complete ? (
+          {starter.archivedTotal > 0 ? (
+            <div className="content-panel" style={{ marginTop: "1rem" }} role="alert">
+              <div className="content-section-heading">
+                <div><span>Yaşam Döngüsü</span><h2>{starter.archivedTotal} temel içerik arşivde</h2></div>
+              </div>
+              <p>Arşivdeki başlangıç kayıtlarının üzerine yeni kopya oluşturulmaz. İlgili modülden kaydı açıp taslağa geri alın; böylece içerik anahtarı ve sürüm geçmişi korunur.</p>
+              <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
+                {data.corporateArchived > 0 ? <Link href="/icerik/sayfalar">Hakkımızda →</Link> : null}
+                {data.guidesArchived > 0 ? <Link href="/icerik/rehber?dil=tr">Rehber →</Link> : null}
+                {data.faqArchived > 0 ? <Link href="/icerik/sss?dil=tr">SSS →</Link> : null}
+              </div>
+            </div>
+          ) : null}
+
+          {!ready && starter.missingTotal > 0 ? (
             <div className="content-panel" style={{ marginTop: "1rem" }}>
               <div className="content-section-heading">
-                <div><span>Başlangıç Seti</span><h2>Eksik içeriklere güvenli taslak oluştur</h2></div>
+                <div><span>Başlangıç Seti</span><h2>{starter.missingTotal} gerçekten eksik kayıt var</h2></div>
               </div>
-              <p>Yalnız mevcut olmayan kayıtlar için Hakkımızda, İlkOku Nasıl Çalışır rehberi ve dört temel SSS taslağı oluşturulur. Mevcut içerik değiştirilmez. Tüm kayıtlar taslak kalır; inceleme ve yayın işlemi ayrıca yapılır.</p>
+              <p>Yalnız mevcut olmayan kayıtlar için Hakkımızda, İlkOku Nasıl Çalışır rehberi ve dört temel SSS taslağı oluşturulur. Arşivdeki içerik yeni kopya sayılmaz ve üzerine yazılmaz.</p>
               <form action={createStarterContentDraftsAction} className="content-form-actions">
-                <button type="submit">{starter.createdTotal > 0 ? "Eksik başlangıç taslaklarını tamamla" : "Başlangıç taslaklarını oluştur"}</button>
+                <button type="submit">{starter.accountedTotal > 0 ? "Eksik başlangıç taslaklarını tamamla" : "Başlangıç taslaklarını oluştur"}</button>
               </form>
             </div>
           ) : null}

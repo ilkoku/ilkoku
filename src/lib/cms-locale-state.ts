@@ -26,18 +26,12 @@ function parseEnabled(valueJson: string) {
 }
 
 export async function getCmsLocaleStates(): Promise<CmsLocaleState[]> {
-  let rows: LocaleRow[] = [];
-
-  try {
-    rows = await prisma.$queryRaw<LocaleRow[]>`
-      SELECT contentKey, valueJson, status
-      FROM SiteContent
-      WHERE namespace = 'cms_locale'
-      LIMIT 20
-    `;
-  } catch {
-    rows = [];
-  }
+  const rows = await prisma.$queryRaw<LocaleRow[]>`
+    SELECT contentKey, valueJson, status
+    FROM SiteContent
+    WHERE namespace = 'cms_locale'
+    LIMIT 20
+  `;
 
   const stateByCode = new Map(
     rows.map((row) => [
@@ -59,4 +53,13 @@ export async function isCmsLocaleEnabled(locale: CmsLocaleCode) {
   if (locale === defaultCmsLocale) return true;
   const states = await getCmsLocaleStates();
   return states.some((state) => state.code === locale && state.enabled);
+}
+
+export async function isCmsLocaleEnabledForPublic(locale: CmsLocaleCode) {
+  if (locale === defaultCmsLocale) return true;
+  try {
+    return await isCmsLocaleEnabled(locale);
+  } catch {
+    return false;
+  }
 }

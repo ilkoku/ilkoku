@@ -89,7 +89,10 @@ async function loadDashboardData() {
       prisma.$queryRaw<CountRow[]>`
         SELECT COUNT(*) AS total
         FROM ContentPage
-        WHERE status <> 'archived'
+        WHERE status = 'published'
+          AND contentKey NOT LIKE 'legal:en:%'
+          AND contentKey NOT LIKE 'guide:en:%'
+          AND contentKey NOT LIKE 'page:en:%'
           AND (
             COALESCE(TRIM(seoTitle), '') = ''
             OR COALESCE(TRIM(seoDescription), '') = ''
@@ -120,7 +123,12 @@ async function loadDashboardData() {
           ) + (
             SELECT COUNT(*) FROM ContentPage
             WHERE status = 'draft'
-              AND (contentKey LIKE 'legal:%' OR contentKey LIKE 'guide:%')
+              AND (
+                contentKey LIKE 'legal:%'
+                OR contentKey LIKE 'guide:%'
+                OR contentKey LIKE 'page:tr:%'
+                OR contentKey LIKE 'page:en:%'
+              )
           ) AS total
       `,
       prisma.$queryRaw<RecentPageRow[]>`
@@ -201,7 +209,7 @@ export default async function ContentDashboardPage() {
       ? { href: "/icerik/yayin-kuyrugu", title: `${data.publishQueue} içerik yayın bekliyor`, text: "Taslakları önizleyin, düzenleyin ve yayın yetkisiyle canlıya alın." }
       : null,
     data.seoIssues > 0
-      ? { href: "/icerik/seo", title: `${data.seoIssues} sayfada SEO alanı eksik`, text: "Title, description veya canonical eksiklerini tamamlayın." }
+      ? { href: "/icerik/seo", title: `${data.seoIssues} yayındaki TR sayfada SEO alanı eksik`, text: "Title, description veya canonical eksiklerini tamamlayın." }
       : null,
     data.forms > 0
       ? { href: "/icerik/formlar", title: `${data.forms} açık form talebi var`, text: "Gelen kurumsal talepleri inceleyip sonuçlananları arşivleyin." }
@@ -215,7 +223,7 @@ export default async function ContentDashboardPage() {
     { label: "CMS sayfaları", value: data.pages.total, note: `${data.pages.published} yayında` },
     { label: "Yayın kuyruğu", value: data.publishQueue, note: "bekleyen içerik" },
     { label: "Planlı yayın", value: data.schedules, note: "aktif zamanlama" },
-    { label: "SEO eksiği", value: data.seoIssues, note: "sayfa kontrolü" },
+    { label: "SEO eksiği", value: data.seoIssues, note: "yayındaki TR sayfa" },
     { label: "Aktif duyuru", value: data.announcements, note: "yayında" },
     { label: "Form talebi", value: data.forms, note: "açık kayıt" },
     { label: "Medya", value: data.media, note: "aktif varlık" },

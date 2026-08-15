@@ -113,8 +113,10 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
     {
       label: "Yayın Kuyruğu",
       value: String(data.queue),
-      level: data.queue === 0 ? "pass" : "warn",
-      detail: data.queue === 0 ? "Bekleyen taslak yok." : "İnceleme veya ilk yayın bekleyen içerikler var.",
+      level: data.queue === 0 ? "pass" : "info",
+      detail: data.queue === 0
+        ? "Bekleyen taslak yok."
+        : "Operasyon kuyruğunda taslaklar var. Bu kayıtlar mevcut canlı içeriğin yayın kabulünü bozmaz; ayrı olarak incelenip planlanır.",
       href: "/icerik/yayin-kuyrugu",
     },
   ];
@@ -138,7 +140,7 @@ export default async function ContentReadinessPage({
   const items = data ? readinessItems(data) : [];
   const summary = data
     ? getCmsReadinessSummary(data)
-    : { corePassed: 0, coreTotal: 5, blockers: 0, warnings: 0, ready: false };
+    : { corePassed: 0, coreTotal: 5, blockers: 0, warnings: 0, operationalQueue: 0, ready: false };
   const starter = data
     ? getCmsStarterSummary(data)
     : {
@@ -154,6 +156,7 @@ export default async function ContentReadinessPage({
       };
   const blockers = items.filter((item) => item.level === "blocker").length;
   const warnings = items.filter((item) => item.level === "warn").length;
+  const infos = items.filter((item) => item.level === "info").length;
   const passes = items.filter((item) => item.level === "pass").length;
   const ready = summary.ready;
   const starterCreated = params.baslangic === "1";
@@ -165,11 +168,11 @@ export default async function ContentReadinessPage({
         <div>
           <span>Sprint 3 · Canlı İçerik</span>
           <h1>Yayın Hazırlığı</h1>
-          <p>Taslak oluşumundan canlı yayına kadar temel Sprint 3 içeriklerini tek ekrandan izleyin. Teknik CMS sağlığından farklı olarak bu ekran içerik kabulünü ölçer.</p>
+          <p>Taslak oluşumundan canlı yayına kadar temel Sprint 3 içeriklerini tek ekrandan izleyin. Canlı kabul ile operasyon kuyruğu ayrı değerlendirilir.</p>
         </div>
         <div className="content-profile">
           <strong>{ready ? "YAYINA HAZIR" : "İÇERİK EKSİĞİ VAR"}</strong>
-          <small>{passes} PASS · {warnings} WARN · {blockers} BLOCKER</small>
+          <small>{passes} PASS · {warnings} WARN · {blockers} BLOCKER · {infos} INFO</small>
         </div>
       </div>
 
@@ -198,7 +201,7 @@ export default async function ContentReadinessPage({
         <>
           <div className="content-metric-grid">
             <article className="content-metric-card"><span>PASS</span><strong>{passes}</strong><small>kabul edilen alan</small></article>
-            <article className="content-metric-card"><span>WARN</span><strong>{warnings}</strong><small>içerik tamamlanmalı</small></article>
+            <article className="content-metric-card"><span>WARN</span><strong>{warnings}</strong><small>canlı içerik tamamlanmalı</small></article>
             <article className="content-metric-card"><span>BLOCKER</span><strong>{blockers}</strong><small>yayın öncesi zorunlu</small></article>
             <article className="content-metric-card"><span>Durum</span><strong>{ready ? "HAZIR" : "AÇIK"}</strong><small>{summary.corePassed}/{summary.coreTotal} temel alan</small></article>
           </div>
@@ -212,7 +215,7 @@ export default async function ContentReadinessPage({
               <article className="content-metric-card"><span>Başlangıç seti</span><strong>{starter.createdTotal}/{starter.total}</strong><small>{starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : "aktif kayıt"}</small></article>
               <article className="content-metric-card"><span>Canlı temel içerik</span><strong>{starter.publishedTotal}/{starter.total}</strong><small>yayında</small></article>
               <article className="content-metric-card"><span>SEO hazır</span><strong>{starter.seoReady}/{starter.seoTotal}</strong><small>Hakkımızda + Rehber</small></article>
-              <article className="content-metric-card"><span>Yayın kuyruğu</span><strong>{data.queue}</strong><small>bekleyen taslak</small></article>
+              <article className="content-metric-card"><span>Operasyon kuyruğu</span><strong>{data.queue}</strong><small>canlı kabulden bağımsız</small></article>
             </div>
           </div>
 

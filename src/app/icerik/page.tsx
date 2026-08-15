@@ -189,7 +189,8 @@ export default async function ContentDashboardPage() {
         }
       : null,
     data.publishQueue > 0 ? {
-      href: "/icerik/yayin-kuyrugu", title: `${data.publishQueue} içerik yayın bekliyor`, text: "Taslakları önizleyin, düzenleyin ve yayın yetkisiyle canlıya alın.", action: "Kuyruğu aç", level: "warn" as const,
+      href: "/icerik/yayin-kuyrugu", title: `${data.publishQueue} içerik operasyon kuyruğunda`,
+      text: "Bu taslaklar mevcut canlı kabul sonucunu bozmaz. Önizleyin, planlayın veya yayın yetkisiyle canlıya alın.", action: "Kuyruğu aç", level: "info" as const,
     } : null,
     data.seoIssues > 0 ? {
       href: "/icerik/seo", title: `${data.seoIssues} yayındaki TR sayfada SEO alanı eksik`, text: "Title, description veya canonical eksiklerini tamamlayın.", action: "SEO'yu düzelt", level: "warn" as const,
@@ -207,9 +208,9 @@ export default async function ContentDashboardPage() {
   const healthClass = blockerCount > 0 ? "is-blocked" : warningCount > 0 ? "is-attention" : tasks.length > 0 ? "is-watch" : "is-good";
 
   const metrics = [
-    { label: "Yayın hazırlığı", value: `${summary.corePassed}/${summary.coreTotal}`, note: "temel içerik alanı", href: "/icerik/hazirlik" },
+    { label: "Yayın hazırlığı", value: `${summary.corePassed}/${summary.coreTotal}`, note: "canlı kabul alanı", href: "/icerik/hazirlik" },
     { label: "Başlangıç seti", value: `${starter.createdTotal}/${starter.total}`, note: starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : `${starter.publishedTotal} canlı`, href: "/icerik/hazirlik" },
-    { label: "Yayın kuyruğu", value: data.publishQueue, note: "bekleyen içerik", href: "/icerik/yayin-kuyrugu" },
+    { label: "Operasyon kuyruğu", value: data.publishQueue, note: "canlı kabulden bağımsız", href: "/icerik/yayin-kuyrugu" },
     { label: "SEO eksiği", value: data.seoIssues, note: "yayındaki TR sayfa", href: "/icerik/seo" },
     { label: "Form talebi", value: data.forms, note: "açık kayıt", href: "/icerik/formlar" },
     { label: "CMS sayfaları", value: data.pages.total, note: `${data.pages.published} yayında`, href: "/icerik/sayfalar" },
@@ -219,13 +220,13 @@ export default async function ContentDashboardPage() {
   ];
 
   const quickActions = starter.complete ? [
-    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 kabul durumunu aç" },
+    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 canlı kabul durumunu aç" },
     { href: "/icerik/sayfalar", label: "Hakkımızda", text: "Kurumsal taslağı incele" },
     { href: "/icerik/sss?dil=tr", label: "Temel SSS", text: "4 yardım kaydını incele" },
     { href: "/icerik/rehber?dil=tr", label: "İlkOku Nasıl Çalışır", text: "Rehber taslağını incele" },
     { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen taslakları yönet" },
   ] : [
-    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 kabul durumunu aç" },
+    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 canlı kabul durumunu aç" },
     { href: "/icerik/sayfalar/yeni", label: "+ Yeni Sayfa", text: "Kurumsal taslak oluştur" },
     { href: "/icerik/rehber/yeni?dil=tr", label: "+ Yeni Rehber", text: "Editoryal içerik oluştur" },
     { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen taslakları incele" },
@@ -234,7 +235,7 @@ export default async function ContentDashboardPage() {
   return (
     <section className="content-dashboard">
       <div className="content-page-heading content-dashboard-heading">
-        <div><span>Operasyon Merkezi</span><h1>İçerik Genel Bakış</h1><p>İlkOku.com için bugün ne yapılması gerektiğini, yayın hazırlığını ve son değişiklikleri tek ekrandan yönetin.</p></div>
+        <div><span>Operasyon Merkezi</span><h1>İçerik Genel Bakış</h1><p>İlkOku.com için bugün ne yapılması gerektiğini, canlı yayın kabulünü ve son değişiklikleri tek ekrandan yönetin.</p></div>
         <div className={`content-health-badge ${healthClass}`}><small>Canlı içerik durumu</small><strong>{healthLabel}</strong><span>{summary.corePassed}/{summary.coreTotal} temel alan hazır · {starter.createdTotal}/{starter.total} aktif başlangıç kaydı · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span></div>
       </div>
 
@@ -249,7 +250,7 @@ export default async function ContentDashboardPage() {
       <div className="content-dashboard-columns">
         <div className="content-panel content-dashboard-panel">
           <div className="content-dashboard-section-title"><div><span>Bugün</span><h2>Yapılması gerekenler</h2></div><Link href="/icerik/hazirlik">Tüm kabul →</Link></div>
-          {tasks.length === 0 ? <div className="content-dashboard-success"><strong>İçerik operasyonunda açık konu görünmüyor.</strong><p>Temel yayın hazırlığı, kuyruk ve SEO kontrolleri temiz.</p></div> : (
+          {tasks.length === 0 ? <div className="content-dashboard-success"><strong>İçerik operasyonunda açık konu görünmüyor.</strong><p>Temel canlı yayın kabulü ve SEO kontrolleri temiz.</p></div> : (
             <div className="content-task-list">{tasks.map((task, index) => (
               <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}>
                 <div className="content-task-item__body"><div className="content-task-item__meta"><span>{taskLevelLabel(task.level)}</span><small>#{index + 1}</small></div><strong>{task.title}</strong><p>{task.text}</p></div>

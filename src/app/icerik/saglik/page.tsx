@@ -25,9 +25,12 @@ function count(rows: CountRow[]) {
 function parseScheduleState(valueJson: string) {
   try {
     const value = JSON.parse(valueJson) as Record<string, unknown>;
-    return typeof value.state === "string" ? value.state : "unknown";
+    const state = typeof value.state === "string" ? value.state : "failed";
+    return state === "scheduled" || state === "completed" || state === "cancelled" || state === "failed"
+      ? state
+      : "failed";
   } catch {
-    return "invalid";
+    return "failed";
   }
 }
 

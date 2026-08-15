@@ -32,6 +32,15 @@ function levelLabel(level: ReadinessLevel) {
   return "INFO";
 }
 
+function pendingAge(value: Date | null) {
+  if (!value) return null;
+  const elapsed = Math.max(0, Date.now() - new Date(value).getTime());
+  const hours = Math.floor(elapsed / 3_600_000);
+  if (hours < 1) return "1 saatten az";
+  if (hours < 24) return `${hours} saat`;
+  return `${Math.floor(hours / 24)} gün`;
+}
+
 function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): ReadinessItem[] {
   const corporateHref = data.corporateId ? `/icerik/sayfalar/${data.corporateId}` : "/icerik/hazirlik";
   const corporatePreviewHref = data.corporateId && data.corporateStatus !== "archived"
@@ -45,10 +54,13 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
   const guidePreviewHref = data.guideId && data.guideStatus !== "archived"
     ? `/icerik/onizleme/rehber/${data.guideId}?dil=tr`
     : undefined;
+  const corporateAge = pendingAge(data.corporatePendingAt);
+  const faqAge = pendingAge(data.faqPendingOldestAt);
+  const guideAge = pendingAge(data.guidesPendingAt);
 
   const corporateDetail = data.corporate >= cmsReadinessTargets.corporate
     ? data.corporatePendingDraft > 0
-      ? "Hakkımızda yayında ve indexlenebilir. Canlı yayını değiştirmeyen bir değişiklik taslağı bekliyor."
+      ? `Hakkımızda yayında ve indexlenebilir. Canlı yayını değiştirmeyen bir değişiklik taslağı${corporateAge ? ` ${corporateAge}dır` : ""} bekliyor.`
       : "Hakkımızda yayında ve indexlenebilir."
     : data.corporateCreated >= cmsStarterTargets.corporate
       ? data.corporateSeoReady >= cmsStarterTargets.corporate
@@ -60,7 +72,7 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
 
   const faqDetail = data.faq >= cmsReadinessTargets.faq
     ? data.faqPendingDrafts > 0
-      ? `Dört temel TR yardım kaydının tamamı yayında. ${data.faqPendingDrafts} temel SSS için canlıyı değiştirmeyen değişiklik taslağı bekliyor.`
+      ? `Dört temel TR yardım kaydının tamamı yayında. ${data.faqPendingDrafts} temel SSS için canlıyı değiştirmeyen değişiklik taslağı var${faqAge ? `; en eskisi ${faqAge}dır bekliyor` : ""}.`
       : "Dört temel TR yardım kaydının tamamı yayında."
     : data.faqCreated >= cmsStarterTargets.faq
       ? `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı; ${data.faq}/${cmsReadinessTargets.faq} yayında. Panel ilk işlem gerektiren temel SSS'ye gider.`
@@ -70,7 +82,7 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
 
   const guideDetail = data.guides >= cmsReadinessTargets.guides
     ? data.guidesPendingDraft > 0
-      ? "İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir. Canlı yayını değiştirmeyen bir değişiklik taslağı bekliyor."
+      ? `İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir. Canlı yayını değiştirmeyen bir değişiklik taslağı${guideAge ? ` ${guideAge}dır` : ""} bekliyor.`
       : "İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir."
     : data.guidesCreated >= cmsStarterTargets.guides
       ? data.guidesSeoReady >= cmsStarterTargets.guides
@@ -207,6 +219,7 @@ export default async function ContentReadinessPage({
         seoReady: 0,
         seoTotal: cmsStarterTargets.seo,
         pendingTotal: 0,
+        pendingOldestAt: null,
         complete: false,
       };
   const blockers = items.filter((item) => item.level === "blocker").length;
@@ -222,6 +235,7 @@ export default async function ContentReadinessPage({
   const faqHref = data?.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.faqFocusKey}` : "/icerik/sss?dil=tr";
   const faqArchivedHref = data?.faqArchivedKey ? `/icerik/sss?dil=tr#faq-${data.faqArchivedKey}` : "/icerik/sss?dil=tr";
   const faqPendingHref = data?.faqPendingDraftKey ? `/icerik/sss?dil=tr#faq-${data.faqPendingDraftKey}` : faqHref;
+  const oldestPendingAge = pendingAge(starter.pendingOldestAt);
 
   return (
     <section className="content-editor-page">
@@ -276,7 +290,7 @@ export default async function ContentReadinessPage({
               <article className="content-metric-card"><span>Başlangıç seti</span><strong>{starter.createdTotal}/{starter.total}</strong><small>{starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : "aktif kayıt"}</small></article>
               <article className="content-metric-card"><span>Canlı temel içerik</span><strong>{starter.publishedTotal}/{starter.total}</strong><small>yayında</small></article>
               <article className="content-metric-card"><span>SEO hazır</span><strong>{starter.seoReady}/{starter.seoTotal}</strong><small>Hakkımızda + Rehber</small></article>
-              <article className="content-metric-card"><span>Bekleyen temel değişiklik</span><strong>{starter.pendingTotal}</strong><small>canlı kabulü bozmaz</small></article>
+              <article className="content-metric-card"><span>Bekleyen temel değişiklik</span><strong>{starter.pendingTotal}</strong><small>{oldestPendingAge ? `en eskisi ${oldestPendingAge}` : "canlı kabulü bozmaz"}</small></article>
               <article className="content-metric-card"><span>Operasyon kuyruğu</span><strong>{data.queue}</strong><small>tüm bekleyen taslaklar</small></article>
             </div>
           </div>
@@ -285,12 +299,13 @@ export default async function ContentReadinessPage({
             <div className="content-panel" style={{ marginTop: "1rem" }} role="status">
               <div className="content-section-heading">
                 <div><span>Editoryal Takip</span><h2>Yayındaki içerikte {starter.pendingTotal} bekleyen temel değişiklik var</h2></div>
+                <p>{oldestPendingAge ? `En eski değişiklik ${oldestPendingAge}dır bekliyor.` : "Canlı kabul etkilenmiyor."}</p>
               </div>
               <p>Canlı içerik mevcut haliyle yayında kalır ve yayın kabulü değişmez. Aşağıdaki taslaklar yalnız ayrıca yayınlandığında canlı içeriğin yerini alır.</p>
               <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
-                {data.corporatePendingDraft > 0 ? <Link href={corporateHref}>{access.canPublish ? "Hakkımızda değişikliğini incele/yayınla" : "Hakkımızda değişikliğini incele"} →</Link> : null}
-                {data.faqPendingDrafts > 0 ? <Link href={faqPendingHref}>{access.canPublish ? `SSS değişikliğini incele/yayınla (${data.faqPendingDrafts})` : `SSS değişikliğini incele (${data.faqPendingDrafts})`} →</Link> : null}
-                {data.guidesPendingDraft > 0 ? <Link href={guideHref}>{access.canPublish ? "Rehber değişikliğini incele/yayınla" : "Rehber değişikliğini incele"} →</Link> : null}
+                {data.corporatePendingDraft > 0 ? <Link href={corporateHref}>{access.canPublish ? `Hakkımızda değişikliğini incele/yayınla${pendingAge(data.corporatePendingAt) ? ` · ${pendingAge(data.corporatePendingAt)}` : ""}` : `Hakkımızda değişikliğini incele${pendingAge(data.corporatePendingAt) ? ` · ${pendingAge(data.corporatePendingAt)}` : ""}`} →</Link> : null}
+                {data.faqPendingDrafts > 0 ? <Link href={faqPendingHref}>{access.canPublish ? `SSS değişikliğini incele/yayınla (${data.faqPendingDrafts})${pendingAge(data.faqPendingOldestAt) ? ` · ${pendingAge(data.faqPendingOldestAt)}` : ""}` : `SSS değişikliğini incele (${data.faqPendingDrafts})${pendingAge(data.faqPendingOldestAt) ? ` · ${pendingAge(data.faqPendingOldestAt)}` : ""}`} →</Link> : null}
+                {data.guidesPendingDraft > 0 ? <Link href={guideHref}>{access.canPublish ? `Rehber değişikliğini incele/yayınla${pendingAge(data.guidesPendingAt) ? ` · ${pendingAge(data.guidesPendingAt)}` : ""}` : `Rehber değişikliğini incele${pendingAge(data.guidesPendingAt) ? ` · ${pendingAge(data.guidesPendingAt)}` : ""}`} →</Link> : null}
               </div>
             </div>
           ) : null}

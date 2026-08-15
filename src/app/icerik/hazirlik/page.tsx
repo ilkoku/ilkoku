@@ -99,7 +99,7 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
 export default async function ContentReadinessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ baslangic?: string; sayfa?: string; sss?: string }>;
+  searchParams: Promise<{ baslangic?: string; sayfa?: string; sss?: string; hata?: string }>;
 }) {
   await requireCmsManager("/icerik/hazirlik");
   const params = await searchParams;
@@ -120,6 +120,7 @@ export default async function ContentReadinessPage({
   const passes = items.filter((item) => item.level === "pass").length;
   const ready = summary.ready;
   const starterCreated = params.baslangic === "1";
+  const starterError = params.hata === "baslangic";
 
   return (
     <section className="content-editor-page">
@@ -134,6 +135,14 @@ export default async function ContentReadinessPage({
           <small>{passes} PASS · {warnings} WARN · {blockers} BLOCKER</small>
         </div>
       </div>
+
+      {starterError ? (
+        <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert">
+          <strong>Başlangıç taslakları oluşturulamadı.</strong>
+          <p>İşlem güvenli biçimde geri alındı; yarım içerik bırakılmadı. Sistem Sağlığını kontrol edip işlemi yeniden deneyin.</p>
+          <Link href="/icerik/saglik">Sistem Sağlığı →</Link>
+        </div>
+      ) : null}
 
       {starterCreated ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }} role="status">

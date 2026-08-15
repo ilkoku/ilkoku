@@ -115,6 +115,10 @@ export async function restoreCmsRevisionAction(formData: FormData) {
 
   const kind = cmsRevisionKind(page.contentKey);
   const backupSnapshot = currentFullSnapshot(page);
+  if (!isRestorableCmsRevision(page.contentKey, backupSnapshot)) {
+    redirect(`/icerik/gecmis/${revision.id}?hata=mevcut-yedek`);
+  }
+
   const backupId = randomUUID();
   const restoredId = randomUUID();
   const draftKey = pageDraftKey(page.id);
@@ -162,16 +166,11 @@ export async function restoreCmsRevisionAction(formData: FormData) {
       const updatedLabel = typeof snapshot.updatedLabel === "string" ? snapshot.updatedLabel : "";
       const body = String(snapshot.body ?? "");
       const bodyJson = JSON.stringify({ description, updatedLabel, body });
-
       await tx.$executeRaw`
         UPDATE ContentPage
-        SET title = ${String(snapshot.title)},
-            status = ${snapshot.status!},
-            bodyJson = ${bodyJson},
-            seoDescription = ${description || null},
-            publishedAt = ${snapshot.status === "published" ? new Date() : null},
-            updatedById = ${user.id},
-            updatedAt = CURRENT_TIMESTAMP(3)
+        SET title = ${String(snapshot.title)}, status = ${snapshot.status!}, bodyJson = ${bodyJson},
+            seoDescription = ${description || null}, publishedAt = ${snapshot.status === "published" ? new Date() : null},
+            updatedById = ${user.id}, updatedAt = CURRENT_TIMESTAMP(3)
         WHERE id = ${page.id}
       `;
     } else if (kind === "guide" || kind === "page") {
@@ -181,18 +180,12 @@ export async function restoreCmsRevisionAction(formData: FormData) {
       const seoDescription = typeof snapshot.seoDescription === "string" ? snapshot.seoDescription : "";
       const noIndex = snapshot.noIndex === true;
       const bodyJson = JSON.stringify({ summary, body });
-
       await tx.$executeRaw`
         UPDATE ContentPage
-        SET title = ${String(snapshot.title)},
-            status = ${snapshot.status!},
-            bodyJson = ${bodyJson},
-            seoTitle = ${seoTitle || null},
-            seoDescription = ${seoDescription || summary || null},
-            noIndex = ${noIndex},
+        SET title = ${String(snapshot.title)}, status = ${snapshot.status!}, bodyJson = ${bodyJson},
+            seoTitle = ${seoTitle || null}, seoDescription = ${seoDescription || summary || null}, noIndex = ${noIndex},
             publishedAt = ${snapshot.status === "published" ? new Date() : null},
-            updatedById = ${user.id},
-            updatedAt = CURRENT_TIMESTAMP(3)
+            updatedById = ${user.id}, updatedAt = CURRENT_TIMESTAMP(3)
         WHERE id = ${page.id}
       `;
     }

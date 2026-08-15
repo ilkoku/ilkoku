@@ -8,6 +8,7 @@ import {
   cmsRevisionTypeLabel,
   diffCmsRevisionSnapshots,
   isRestorableCmsRevision,
+  isValidCmsRevisionSnapshotJson,
   parseCmsRevisionSnapshot,
 } from "@/lib/cms-revisions";
 import { prisma } from "@/lib/prisma";
@@ -33,24 +34,18 @@ type RevisionRow = {
   actorEmail: string | null;
 };
 
-type PreviousRow = {
-  id: string;
-  version: number;
-  snapshotJson: string;
-};
+type PreviousRow = { id: string; version: number; snapshotJson: string };
 
 function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("tr-TR", {
-    dateStyle: "long",
-    timeStyle: "short",
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeStyle: "short" }).format(new Date(value));
 }
 
 function message(error?: string, restored?: string, draft?: string) {
   if (restored === "1" && draft === "1") return { tone: "success", text: "Sürüm çalışma taslağına geri yüklendi. Mevcut canlı içerik değişmedi." };
   if (restored === "1") return { tone: "success", text: "Sürüm başarıyla geri yüklendi. Restore işlemi de yeni bir revision olarak kaydedildi." };
-  if (error === "geri-yuklenemez") return { tone: "error", text: "Bu kayıt yalnız durum değişikliği içeriyor; tam içerik snapshot’ı olmadığı için geri yüklenemez." };
+  if (error === "geri-yuklenemez") return { tone: "error", text: "Bu revision tam ve geçerli bir içerik snapshot’ı olmadığı için geri yüklenemez." };
   if (error === "dil-pasif") return { tone: "error", text: "Pasif dildeki bir sürüm yayın durumuna geri yüklenemez." };
+  if (error === "mevcut-yedek") return { tone: "error", text: "Restore durduruldu: mevcut içerikten geri yüklenebilir tam bir güvenlik yedeği üretilemedi. Mevcut sayfa verisini doğrulamadan restore yapılmaz." };
   return null;
 }
 
@@ -83,81 +78,47 @@ export default async function RevisionDetailPage({ params, searchParams }: PageP
   `;
   const previous = previousRows[0] ?? null;
 
+  const validJson = isValidCmsRevisionSnapshotJson(revision.snapshotJson);
+  const previousValid = previous ? isValidCmsRevisionSnapshotJson(previous.snapshotJson) : false;
   const snapshot = parseCmsRevisionSnapshot(revision.snapshotJson);
-  const previousSnapshot = previous ? parseCmsRevisionSnapshot(previous.snapshotJson) : null;
-  const diffs = diffCmsRevisionSnapshots(previousSnapshot, snapshot);
-  const restorable = isRestorableCmsRevision(revision.contentKey, snapshot);
+  const previousSnapshot = previous && previousValid ? parseCmsRevisionSnapshot(previous.snapshotJson) : null;
+  const diffs = validJson ? diffCmsRevisionSnapshots(previousSnapshot, snapshot) : [];
+  const restorable = validJson && isRestorableCmsRevision(revision.contentKey, snapshot);
   const locale = cmsRevisionLocale(revision.contentKey, snapshot);
   const notice = message(query.hata, query["geri-yuklendi"], query.taslak);
-  const metaAction = snapshot._meta?.action;
-  const restoresToWorkingDraft = revision.currentStatus === "published" && snapshot.status === "draft";
+  const metaAction = validJson ? snapshot._meta?.action : undefined;
+  const restoresToWorkingDraft = restorable && revision.currentStatus === "published" && snapshot.status === "draft";
 
   return (
     <section className="content-editor-page revision-detail">
       <div className="content-page-heading revision-detail__heading">
-        <div>
-          <span>{cmsRevisionTypeLabel(revision.contentKey)} · {locale.toUpperCase()}</span>
-          <h1>{snapshot.title || revision.title}</h1>
-          <p>Sürüm v{revision.version} · {formatDate(revision.createdAt)} · {revision.actorName || revision.actorEmail || "Sistem"}</p>
-        </div>
+        <div><span>{cmsRevisionTypeLabel(revision.contentKey)} · {locale.toUpperCase()}</span><h1>{validJson ? snapshot.title || revision.title : revision.title}</h1><p>Sürüm v{revision.version} · {formatDate(revision.createdAt)} · {revision.actorName || revision.actorEmail || "Sistem"}</p></div>
         <Link className="content-button content-button--secondary" href="/icerik/gecmis">← Tüm sürümler</Link>
       </div>
 
       {notice ? <div className={`revision-notice is-${notice.tone}`}>{notice.text}</div> : null}
+      {!validJson ? <div className="revision-notice is-error"><strong>Revision snapshot JSON bozuk.</strong><p>Ham kayıt korunuyor ancak içerik alanları güvenilir biçimde okunamadığı için karşılaştırma ve restore kilitli.</p></div> : null}
+      {previous && !previousValid ? <div className="revision-notice is-info">Önceki v{previous.version} snapshot’ı parse edilemediği için karşılaştırmada güvenilir “önceki” veri olarak kullanılmadı.</div> : null}
 
       <div className="content-metric-grid revision-detail__metrics">
         <article className="content-metric-card"><span>Sürüm</span><strong>v{revision.version}</strong><small>{previous ? `önceki v${previous.version}` : "ilk kayıt"}</small></article>
-        <article className="content-metric-card"><span>Bu sürüm</span><strong>{cmsRevisionStatusLabel(snapshot.status)}</strong><small>snapshot durumu</small></article>
+        <article className="content-metric-card"><span>Snapshot</span><strong>{validJson ? cmsRevisionStatusLabel(snapshot.status) : "BOZUK"}</strong><small>{validJson ? "snapshot durumu" : "parse edilemiyor"}</small></article>
         <article className="content-metric-card"><span>Şu an</span><strong>{cmsRevisionStatusLabel(revision.currentStatus)}</strong><small>mevcut içerik</small></article>
-        <article className="content-metric-card"><span>Restore</span><strong>{restorable ? "Hazır" : "Kapalı"}</strong><small>{restoresToWorkingDraft ? "çalışma taslağına" : restorable ? "tam snapshot" : "durum kaydı"}</small></article>
+        <article className="content-metric-card"><span>Restore</span><strong>{restorable ? "Hazır" : "Kapalı"}</strong><small>{restoresToWorkingDraft ? "çalışma taslağına" : restorable ? "tam snapshot" : validJson ? "durum/eksik kayıt" : "bozuk snapshot"}</small></article>
       </div>
 
-      {metaAction ? (
-        <div className="revision-notice is-info">
-          {metaAction === "restore" ? `Bu revision, v${snapshot._meta?.restoredFromVersion ?? "?"} sürümünden canlı geri yükleme sonucu oluştu.` : metaAction === "restore-to-working-draft" ? `Bu revision, v${snapshot._meta?.restoredFromVersion ?? "?"} sürümünün çalışma taslağına geri yüklenmesi sonucu oluştu.` : "Bu revision geri yükleme öncesi otomatik güvenlik yedeğidir."}
-        </div>
-      ) : null}
+      {metaAction ? <div className="revision-notice is-info">{metaAction === "restore" ? `Bu revision, v${snapshot._meta?.restoredFromVersion ?? "?"} sürümünden canlı geri yükleme sonucu oluştu.` : metaAction === "restore-to-working-draft" ? `Bu revision, v${snapshot._meta?.restoredFromVersion ?? "?"} sürümünün çalışma taslağına geri yüklenmesi sonucu oluştu.` : "Bu revision geri yükleme öncesi otomatik güvenlik yedeğidir."}</div> : null}
 
       <div className="content-panel revision-compare-panel">
-        <div className="content-dashboard-section-title">
-          <div><span>Karşılaştırma</span><h2>{previous ? `v${previous.version} → v${revision.version}` : `v${revision.version} içeriği`}</h2></div>
-          <small>{diffs.length} değişen alan</small>
-        </div>
-
-        {diffs.length === 0 ? (
-          <div className="content-empty"><strong>Alan farkı bulunamadı.</strong><p>Bu kayıt durum/işlem metadatası nedeniyle oluşmuş olabilir.</p></div>
-        ) : (
-          <div className="revision-diff-list">
-            {diffs.map((diff) => (
-              <article className={`revision-diff ${diff.key === "body" ? "is-body" : ""}`} key={diff.key}>
-                <h3>{diff.label}</h3>
-                <div className="revision-diff__columns">
-                  <div><span>Önceki</span><pre>{diff.before}</pre></div>
-                  <div><span>Bu sürüm</span><pre>{diff.after}</pre></div>
-                </div>
-              </article>
-            ))}
-          </div>
+        <div className="content-dashboard-section-title"><div><span>Karşılaştırma</span><h2>{previous && previousValid ? `v${previous.version} → v${revision.version}` : `v${revision.version} içeriği`}</h2></div><small>{diffs.length} değişen alan</small></div>
+        {!validJson ? <div className="content-empty"><strong>Karşılaştırma kapalı.</strong><p>Snapshot parse edilemediği için alan farkı üretmek güvenilir değildir.</p></div> : diffs.length === 0 ? <div className="content-empty"><strong>Alan farkı bulunamadı.</strong><p>Bu kayıt durum/işlem metadatası nedeniyle oluşmuş olabilir.</p></div> : (
+          <div className="revision-diff-list">{diffs.map((diff) => <article className={`revision-diff ${diff.key === "body" ? "is-body" : ""}`} key={diff.key}><h3>{diff.label}</h3><div className="revision-diff__columns"><div><span>Önceki</span><pre>{diff.before}</pre></div><div><span>Bu sürüm</span><pre>{diff.after}</pre></div></div></article>)}</div>
         )}
       </div>
 
       <div className="content-panel revision-restore-panel">
-        <div>
-          <span className="content-eyebrow">Geri yükleme</span>
-          <h2>{restoresToWorkingDraft ? "Bu sürümü çalışma taslağına geri al" : "Bu sürümü yeniden kullan"}</h2>
-          <p>{restoresToWorkingDraft ? "Seçilen taslak sürüm CMS çalışma taslağına alınır; mevcut canlı sayfa aynen yayında kalır. Daha sonra önizleyip ayrıca yayınlayabilirsiniz." : "Restore işleminden önce mevcut içerik otomatik olarak tam snapshot şeklinde yedeklenir. Ardından seçilen sürüm uygulanır ve işlem yeni bir revision olarak kaydedilir."}</p>
-        </div>
-        {restorable && access.canPublish ? (
-          <form action={restoreCmsRevisionAction}>
-            <input type="hidden" name="revisionId" value={revision.id} />
-            <button className="content-button" type="submit">{restoresToWorkingDraft ? `v${revision.version} sürümünü taslağa al` : `v${revision.version} sürümünü geri yükle`}</button>
-          </form>
-        ) : (
-          <div className="revision-restore-disabled">
-            <strong>{restorable ? "Yayın yetkisi gerekli" : "Bu sürüm geri yüklenemez"}</strong>
-            <small>{restorable ? "Restore işlemi çalışma veya canlı içerik durumunu değiştirebildiği için yalnız yayın yetkisi olan kullanıcıya açıktır." : "Tam başlık + içerik snapshot’ı olmayan durum kayıtları yalnız inceleme içindir."}</small>
-          </div>
-        )}
+        <div><span className="content-eyebrow">Geri yükleme</span><h2>{restoresToWorkingDraft ? "Bu sürümü çalışma taslağına geri al" : "Bu sürümü yeniden kullan"}</h2><p>{restoresToWorkingDraft ? "Seçilen taslak sürüm CMS çalışma taslağına alınır; mevcut canlı sayfa aynen yayında kalır. Daha sonra önizleyip ayrıca yayınlayabilirsiniz." : "Restore işleminden önce mevcut içerikten geri yüklenebilir tam snapshot yedeği zorunludur. Ardından seçilen sürüm uygulanır ve işlem yeni bir revision olarak kaydedilir."}</p></div>
+        {restorable && access.canPublish ? <form action={restoreCmsRevisionAction}><input type="hidden" name="revisionId" value={revision.id} /><button className="content-button" type="submit">{restoresToWorkingDraft ? `v${revision.version} sürümünü taslağa al` : `v${revision.version} sürümünü geri yükle`}</button></form> : <div className="revision-restore-disabled"><strong>{restorable ? "Yayın yetkisi gerekli" : "Bu sürüm geri yüklenemez"}</strong><small>{restorable ? "Restore işlemi çalışma veya canlı içerik durumunu değiştirebildiği için yalnız yayın yetkisi olan kullanıcıya açıktır." : validJson ? "Tam başlık + içerik snapshot’ı olmayan durum kayıtları yalnız inceleme içindir." : "Bozuk snapshot üzerinde restore yapılmaz."}</small></div>}
       </div>
     </section>
   );

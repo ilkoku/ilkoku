@@ -16,18 +16,19 @@ function safeMediaUrl(input: string) {
   return input.replace(/[\r\n]/g, "").slice(0, 500);
 }
 
-function mediaUrlFromJson(valueJson: string) {
+function mediaUrlFromJson(valueJson: string): string | null {
   try {
     const payload = JSON.parse(valueJson) as { url?: unknown };
-    return typeof payload.url === "string" ? safeMediaUrl(payload.url) : "";
+    if (!payload || typeof payload !== "object") return null;
+    if (typeof payload.url !== "string") return null;
+    const mediaUrl = safeMediaUrl(payload.url);
+    return mediaUrl || null;
   } catch {
-    return "";
+    return null;
   }
 }
 
 async function isMediaReferencedByPublishedContent(mediaUrl: string) {
-  if (!mediaUrl) return false;
-
   const [siteRows, pageRows] = await Promise.all([
     prisma.$queryRaw<Array<{ total: bigint | number }>>`
       SELECT COUNT(*) AS total
@@ -93,7 +94,12 @@ export async function archiveMediaAssetAction(formData: FormData) {
       AND status <> 'archived'
     LIMIT 1
   `;
-  const mediaUrl = assetRows[0] ? mediaUrlFromJson(assetRows[0].valueJson) : "";
+  if (!assetRows[0]) return;
+
+  const mediaUrl = mediaUrlFromJson(assetRows[0].valueJson);
+  if (!mediaUrl) {
+    redirect("/icerik/medya?hata=metadata");
+  }
 
   if (await isMediaReferencedByPublishedContent(mediaUrl)) {
     redirect("/icerik/medya?hata=kullanimda");

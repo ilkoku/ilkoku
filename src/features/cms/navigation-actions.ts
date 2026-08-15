@@ -6,6 +6,36 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
+const FOOTER_LIVE_KEY = "footer_navigation";
+const FOOTER_DRAFT_KEY = "footer_navigation_draft";
+
+const footerFields = [
+  "platformTitle",
+  "platform1Label",
+  "platform1Href",
+  "platform2Label",
+  "platform2Href",
+  "platform3Label",
+  "platform3Href",
+  "supportTitle",
+  "supportLabel",
+  "supportHref",
+  "legalTitle",
+  "termsLabel",
+  "termsHref",
+  "privacyLabel",
+  "privacyHref",
+  "kvkkLabel",
+  "kvkkHref",
+  "cookieLabel",
+  "cookieHref",
+  "copyrightLabel",
+  "copyrightHref",
+] as const;
+
+type FooterPayload = Record<(typeof footerFields)[number], string>;
+type FooterRow = { valueJson: string };
+
 async function requireAdmin() {
   const user = await getCurrentUser();
   if (!user) redirect("/giris?sonraki=/icerik/menuler");
@@ -17,9 +47,8 @@ function value(formData: FormData, key: string, max = 300) {
   return String(formData.get(key) ?? "").trim().slice(0, max);
 }
 
-export async function saveFooterNavigationAction(formData: FormData) {
-  const user = await requireAdmin();
-  const payload = {
+function footerPayload(formData: FormData): FooterPayload {
+  return {
     platformTitle: value(formData, "platformTitle", 80),
     platform1Label: value(formData, "platform1Label", 100),
     platform1Href: value(formData, "platform1Href"),
@@ -42,18 +71,35 @@ export async function saveFooterNavigationAction(formData: FormData) {
     copyrightLabel: value(formData, "copyrightLabel", 100),
     copyrightHref: value(formData, "copyrightHref"),
   };
-  const valueJson = JSON.stringify(payload);
+}
+
+function parseFooterPayload(valueJson: string): FooterPayload | null {
+  try {
+    const parsed = JSON.parse(valueJson) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    const record = parsed as Record<string, unknown>;
+    if (footerFields.some((field) => typeof record[field] !== "string")) return null;
+    return Object.fromEntries(footerFields.map((field) => [field, String(record[field])])) as FooterPayload;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveFooterNavigationAction(formData: FormData) {
+  const user = await requireAdmin();
+  const valueJson = JSON.stringify(footerPayload(formData));
 
   await prisma.$executeRaw`
     INSERT INTO SiteContent (
       id, namespace, contentKey, valueJson, valueType, status,
       updatedById, createdAt, updatedAt
     ) VALUES (
-      ${randomUUID()}, 'site', 'footer_navigation', ${valueJson}, 'json', 'draft',
+      ${randomUUID()}, 'site', ${FOOTER_DRAFT_KEY}, ${valueJson}, 'json', 'draft',
       ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
     )
     ON DUPLICATE KEY UPDATE
       valueJson = VALUES(valueJson),
+      valueType = 'json',
       status = 'draft',
       publishedAt = NULL,
       updatedById = VALUES(updatedById),
@@ -61,19 +107,52 @@ export async function saveFooterNavigationAction(formData: FormData) {
   `;
 
   revalidatePath("/icerik/menuler");
+  redirect("/icerik/menuler?taslak=1");
 }
 
 export async function publishFooterNavigationAction() {
   const user = await requireAdmin();
-  await prisma.$executeRaw`
-    UPDATE SiteContent
-    SET status = 'published',
-      publishedAt = CURRENT_TIMESTAMP(3),
-      updatedById = ${user.id},
-      updatedAt = CURRENT_TIMESTAMP(3)
+  const rows = await prisma.$queryRaw<FooterRow[]>`
+    SELECT valueJson
+    FROM SiteContent
     WHERE namespace = 'site'
-      AND contentKey = 'footer_navigation'
+      AND contentKey = ${FOOTER_DRAFT_KEY}
+      AND status = 'draft'
+    LIMIT 1
   `;
+  const draft = rows[0];
+  if (!draft || !parseFooterPayload(draft.valueJson)) {
+    redirect("/icerik/menuler?hata=taslak");
+  }
+
+  await prisma.$transaction([
+    prisma.$executeRaw`
+      INSERT INTO SiteContent (
+        id, namespace, contentKey, valueJson, valueType, status,
+        publishedAt, updatedById, createdAt, updatedAt
+      ) VALUES (
+        ${randomUUID()}, 'site', ${FOOTER_LIVE_KEY}, ${draft.valueJson}, 'json', 'published',
+        CURRENT_TIMESTAMP(3), ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+      )
+      ON DUPLICATE KEY UPDATE
+        valueJson = VALUES(valueJson),
+        valueType = 'json',
+        status = 'published',
+        publishedAt = CURRENT_TIMESTAMP(3),
+        updatedById = VALUES(updatedById),
+        updatedAt = CURRENT_TIMESTAMP(3)
+    `,
+    prisma.$executeRaw`
+      UPDATE SiteContent
+      SET status = 'archived', publishedAt = NULL,
+          updatedById = ${user.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = 'site'
+        AND contentKey = ${FOOTER_DRAFT_KEY}
+        AND status = 'draft'
+    `,
+  ]);
+
   revalidatePath("/");
   revalidatePath("/icerik/menuler");
+  redirect("/icerik/menuler?yayin=1");
 }

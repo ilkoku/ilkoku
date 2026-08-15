@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
+import { PublicEditorialDocument } from "@/components/content/PublicEditorialDocument";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { normalizeCmsRedirectPath, parseCmsRedirectValue } from "@/lib/cms-redirects";
 import { prisma } from "@/lib/prisma";
@@ -14,6 +14,7 @@ type PublicPageRow = {
   seoDescription: string | null;
   canonicalUrl: string | null;
   noIndex: boolean;
+  updatedAt: Date;
 };
 
 type PageProps = { params: Promise<{ path: string[] }> };
@@ -28,7 +29,7 @@ async function loadPublicPage(source: string) {
   if (source.split("/").filter(Boolean).length !== 1) return null;
   try {
     const rows = await prisma.$queryRaw<PublicPageRow[]>`
-      SELECT slug, title, bodyJson, seoTitle, seoDescription, canonicalUrl, noIndex
+      SELECT slug, title, bodyJson, seoTitle, seoDescription, canonicalUrl, noIndex, updatedAt
       FROM ContentPage
       WHERE slug = ${source}
         AND contentKey LIKE 'page:tr:%'
@@ -68,26 +69,16 @@ export default async function CmsPageOrRedirectFallback({ params }: PageProps) {
 
   if (page) {
     const content = parseCmsPageBody(page.bodyJson);
-    const blocks = content.body.split(/\n{2,}/).map((item) => item.trim()).filter(Boolean);
     return (
-      <main style={{ minHeight: "100vh", background: "linear-gradient(180deg,#fbfaff 0%,#f4f1ff 100%)", color: "#171426", padding: "clamp(1.25rem,4vw,3rem) 1rem 4rem" }}>
-        <article style={{ width: "min(900px,100%)", margin: "0 auto" }}>
-          <nav style={{ marginBottom: "clamp(2rem,5vw,4rem)", display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center" }}>
-            <Link href="/" style={{ fontWeight: 800, color: "#5b35dd", textDecoration: "none" }}>İlkOku</Link>
-            <Link href="/" style={{ color: "#4f4964", textDecoration: "none", fontSize: ".9rem" }}>Ana sayfa →</Link>
-          </nav>
-          <header style={{ marginBottom: "2.4rem" }}>
-            <h1 style={{ margin: 0, fontSize: "clamp(2.25rem,6vw,4.8rem)", lineHeight: 1.02, letterSpacing: "-.045em" }}>{page.title}</h1>
-            {content.summary ? <p style={{ margin: "1.35rem 0 0", maxWidth: 760, fontSize: "clamp(1.02rem,2vw,1.2rem)", lineHeight: 1.75, color: "#655e78" }}>{content.summary}</p> : null}
-          </header>
-          <section style={{ background: "rgba(255,255,255,.88)", border: "1px solid rgba(91,53,221,.12)", borderRadius: 20, padding: "clamp(1.3rem,4vw,3rem)", boxShadow: "0 18px 50px rgba(43,31,91,.06)", fontSize: "1rem", lineHeight: 1.88 }}>
-            {blocks.map((block, index) => {
-              if (block.startsWith("## ")) return <h2 key={index} style={{ margin: index === 0 ? "0 0 1rem" : "2.2rem 0 1rem", fontSize: "1.55rem" }}>{block.slice(3)}</h2>;
-              return <p key={index} style={{ margin: index === 0 ? 0 : "1.25rem 0 0", whiteSpace: "pre-line" }}>{block}</p>;
-            })}
-          </section>
-        </article>
-      </main>
+      <PublicEditorialDocument
+        eyebrow="İlkOku"
+        title={page.title}
+        summary={content.summary}
+        body={content.body}
+        backHref="/"
+        backLabel="Ana sayfa"
+        updatedAt={page.updatedAt}
+      />
     );
   }
 

@@ -194,6 +194,10 @@ jobs:
               && check_post_merge_private_index_header "https://ilkoku.com/icerik" \
               && check_post_merge_private_index_header "https://ilkoku.com/icerik/hazirlik" \
               && check_post_merge_private_index_header "https://ilkoku.com/sistem-yonetimi/epostalar" \
+              && check_post_merge_private_index_header "https://ilkoku.com/hesabim" \
+              && check_post_merge_private_index_header "https://ilkoku.com/yazmaya-devam" \
+              && check_post_merge_protected_route "https://ilkoku.com/hesabim" \
+              && check_post_merge_protected_route "https://ilkoku.com/yazmaya-devam" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/hazirlik" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/zamanlama" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/onizleme/ana-sayfa" \

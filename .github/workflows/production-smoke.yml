@@ -166,6 +166,8 @@ jobs:
                 "Disallow: /api" \
                 "Disallow: /auth" \
                 "Sitemap: https://ilkoku.com/sitemap.xml" \
+              && check_post_merge_protected_route "https://ilkoku.com/icerik" \
+              && check_post_merge_protected_route "https://ilkoku.com/icerik/hazirlik" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/zamanlama" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/onizleme/ana-sayfa" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/yayin-kuyrugu" \
@@ -180,7 +182,7 @@ jobs:
               && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production route'ları, 5 yasal sayfa, sitemap, robots ve Sprint 3 public içerik güvenliği doğrulandı."
+              echo "PASS: Production route'ları, 5 yasal sayfa, sitemap, robots ve Sprint 3 içerik operasyon rotaları doğrulandı."
               exit 0
             fi
 

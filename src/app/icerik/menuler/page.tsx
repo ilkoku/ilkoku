@@ -4,6 +4,12 @@ import {
   saveFooterNavigationAction,
 } from "@/features/cms/navigation-actions";
 import { requireCmsAdmin } from "@/lib/cms-access";
+import {
+  defaultFooterNavigation,
+  FOOTER_DRAFT_KEY,
+  FOOTER_LIVE_KEY,
+  parseFooterNavigation,
+} from "@/lib/cms-footer-navigation";
 import { prisma } from "@/lib/prisma";
 
 type FooterRow = {
@@ -13,75 +19,7 @@ type FooterRow = {
   updatedAt: Date;
 };
 
-type FooterPayload = {
-  platformTitle: string;
-  platform1Label: string;
-  platform1Href: string;
-  platform2Label: string;
-  platform2Href: string;
-  platform3Label: string;
-  platform3Href: string;
-  supportTitle: string;
-  supportLabel: string;
-  supportHref: string;
-  legalTitle: string;
-  termsLabel: string;
-  termsHref: string;
-  privacyLabel: string;
-  privacyHref: string;
-  kvkkLabel: string;
-  kvkkHref: string;
-  cookieLabel: string;
-  cookieHref: string;
-  copyrightLabel: string;
-  copyrightHref: string;
-};
-
 type PageProps = { searchParams: Promise<{ taslak?: string; yayin?: string; hata?: string }> };
-
-const FOOTER_LIVE_KEY = "footer_navigation";
-const FOOTER_DRAFT_KEY = "footer_navigation_draft";
-const footerFields = [
-  "platformTitle", "platform1Label", "platform1Href", "platform2Label", "platform2Href", "platform3Label", "platform3Href",
-  "supportTitle", "supportLabel", "supportHref", "legalTitle", "termsLabel", "termsHref", "privacyLabel", "privacyHref",
-  "kvkkLabel", "kvkkHref", "cookieLabel", "cookieHref", "copyrightLabel", "copyrightHref",
-] as const;
-
-const defaults: FooterPayload = {
-  platformTitle: "Platform",
-  platform1Label: "Hakkımızda",
-  platform1Href: "#hakkimizda",
-  platform2Label: "Eser Pasaportu",
-  platform2Href: "#eser-pasaportu",
-  platform3Label: "Neden İlkOku?",
-  platform3Href: "#neden-ilkoku",
-  supportTitle: "Destek",
-  supportLabel: "Yardım Merkezi",
-  supportHref: "",
-  legalTitle: "Yasal",
-  termsLabel: "Kullanım Şartları",
-  termsHref: "",
-  privacyLabel: "Gizlilik Politikası",
-  privacyHref: "",
-  kvkkLabel: "KVKK",
-  kvkkHref: "",
-  cookieLabel: "Çerez Politikası",
-  cookieHref: "",
-  copyrightLabel: "Telif Hakkı Politikası",
-  copyrightHref: "",
-};
-
-function parseFooter(valueJson: string): FooterPayload | null {
-  try {
-    const parsed = JSON.parse(valueJson) as unknown;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-    const record = parsed as Record<string, unknown>;
-    if (footerFields.some((field) => typeof record[field] !== "string")) return null;
-    return Object.fromEntries(footerFields.map((field) => [field, String(record[field])])) as FooterPayload;
-  } catch {
-    return null;
-  }
-}
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -115,8 +53,8 @@ export default async function Page({ searchParams }: PageProps) {
 
   const liveRow = rows.find((row) => row.contentKey === FOOTER_LIVE_KEY) ?? null;
   const draftRow = rows.find((row) => row.contentKey === FOOTER_DRAFT_KEY && row.status === "draft") ?? null;
-  const draftPayload = draftRow ? parseFooter(draftRow.valueJson) : null;
-  const livePayload = liveRow ? parseFooter(liveRow.valueJson) : null;
+  const draftPayload = draftRow ? parseFooterNavigation(draftRow.valueJson) : null;
+  const livePayload = liveRow ? parseFooterNavigation(liveRow.valueJson) : null;
   const invalidDraft = Boolean(draftRow && !draftPayload);
   const invalidLive = Boolean(liveRow && !livePayload);
 
@@ -129,7 +67,7 @@ export default async function Page({ searchParams }: PageProps) {
     );
   }
 
-  let payload = defaults;
+  let payload = defaultFooterNavigation;
   let sourceLabel = "İlk kurulum";
   let sourceDetail = "Henüz footer kaydı yok; kod varsayılanları gösteriliyor.";
   if (draftPayload) {

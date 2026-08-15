@@ -32,22 +32,35 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
   const params = await searchParams;
   const locale = normalizeCmsLocale(params.dil);
   const namespace = cmsLocaleNamespace("faq", locale);
-  const localeEnabled = await isCmsLocaleEnabled(locale);
   const isEn = locale === "en";
-  const canPublishLocale = access.canPublish && localeEnabled;
 
+  let localeEnabled = false;
   let rows: FaqRow[] = [];
-  try {
-    rows = await prisma.$queryRaw<FaqRow[]>`
-      SELECT contentKey, valueJson, status, updatedAt
-      FROM SiteContent
-      WHERE namespace = ${namespace}
-      ORDER BY updatedAt DESC
-      LIMIT 300
-    `;
-  } catch { rows = []; }
+  let sourceReadError = false;
 
-  const draftRows = await getCmsDraftsByPrefix<FaqItem>(`faq:${locale}:`).catch(() => []);
+  try {
+    [localeEnabled, rows] = await Promise.all([
+      isCmsLocaleEnabled(locale),
+      prisma.$queryRaw<FaqRow[]>`
+        SELECT contentKey, valueJson, status, updatedAt
+        FROM SiteContent
+        WHERE namespace = ${namespace}
+        ORDER BY updatedAt DESC
+        LIMIT 300
+      `,
+    ]);
+  } catch {
+    sourceReadError = true;
+  }
+
+  let draftReadError = false;
+  const draftRows = await getCmsDraftsByPrefix<FaqItem>(`faq:${locale}:`).catch(() => {
+    draftReadError = true;
+    return [];
+  });
+  const dataError = sourceReadError || draftReadError;
+  const canPublishLocale = access.canPublish && localeEnabled && !dataError;
+
   const draftMap = new Map(draftRows.map((draft) => [draft.contentKey.replace(`faq:${locale}:`, ""), draft]));
   const items = rows.map((row) => {
     const staged = draftMap.get(row.contentKey);
@@ -64,73 +77,100 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
 
   return (
     <section className="content-editor-page">
-      <div className="content-page-heading"><div><span>İçerik · {locale.toUpperCase()}</span><h1>SSS & Yardım</h1><p>Yayındaki SSS değişmeden kalır; düzenlemeler ayrı taslak olarak hazırlanır ve yalnız yayın komutuyla canlıya aktarılır.</p></div></div>
+      <div className="content-page-heading">
+        <div>
+          <span>İçerik · {locale.toUpperCase()}</span>
+          <h1>SSS & Yardım</h1>
+          <p>Yayındaki SSS değişmeden kalır; düzenlemeler ayrı taslak olarak hazırlanır ve yalnız yayın komutuyla canlıya aktarılır.</p>
+        </div>
+      </div>
 
       <div className="content-form-actions" style={{ marginBottom: "1rem", flexWrap: "wrap" }}>
         <Link href="/icerik/sss?dil=tr">Türkçe</Link>
         <Link href="/icerik/sss?dil=en">English</Link>
-        <Link href={`/icerik/onizleme/sss?dil=${locale}`}>Taslakları Önizle ↗</Link>
-        {isEn ? <Link href="/icerik/diller">Dil Yönetimi</Link> : null}
+        {!dataError ? <Link href={`/icerik/onizleme/sss?dil=${locale}`}>Taslakları Önizle ↗</Link> : null}
+        {isEn && !dataError ? <Link href="/icerik/diller">Dil Yönetimi</Link> : null}
       </div>
 
-      {isEn && !localeEnabled ? (
-        <div className="content-panel" style={{ marginBottom: "1rem" }}>
-          <strong>İngilizce public yayın kapalı.</strong>
-          <p>EN SSS kayıtları taslak olarak hazırlanabilir ve önizlenebilir; dil açılmadan yayınlanamaz.</p>
-        </div>
-      ) : null}
-
-      <div className="content-metric-grid">
-        <article className="content-metric-card"><span>Toplam</span><strong>{items.length}</strong><small>{locale.toUpperCase()} SSS</small></article>
-        <article className="content-metric-card"><span>Yayında</span><strong>{publishedCount}</strong><small>{localeEnabled ? "Public Yardım Merkezi" : "Public dil kapalı"}</small></article>
-        <article className="content-metric-card"><span>Bekleyen taslak</span><strong>{pendingDraftCount}</strong><small>Canlıyı değiştirmiyor</small></article>
-        <article className="content-metric-card"><span>Arşiv</span><strong>{archivedCount}</strong><small>Publicte görünmüyor</small></article>
-      </div>
-
-      <div className="content-panel">
-        <div className="content-section-heading"><div><span>01</span><h2>Yeni SSS taslağı</h2></div><p>{locale.toUpperCase()} kayıt kümesine eklenir.</p></div>
-        <form className="content-form" action={saveFaqAction}>
-          <input type="hidden" name="locale" value={locale} />
-          <label><span>Soru</span><input name="question" required maxLength={300} /></label>
-          <label><span>Cevap</span><textarea name="answer" required rows={7} maxLength={4000} /></label>
-          <div className="content-form-grid">
-            <label><span>Kategori</span><input name="category" maxLength={80} defaultValue={isEn ? "General" : "Genel"} /></label>
-            <label><span>Hedef kitle</span><select name="audience" defaultValue="all"><option value="all">Herkes</option><option value="reader">Okuyucu</option><option value="writer">Yazar</option><option value="editor">Editör</option><option value="publisher">Yayınevi</option></select></label>
-            <label><span>Sıra</span><input name="position" type="number" min={0} max={9999} defaultValue={0} /></label>
+      {dataError ? (
+        <div className="content-panel" role="alert">
+          <strong>SSS kayıtları, taslak katmanı veya dil durumu okunamadı.</strong>
+          <p>Canlı kayıtlar ile staged taslakların tamamı doğrulanmadan sayaç, düzenleme, yeni SSS ve yayın işlemleri güvenli biçimde durduruldu. Böylece görünmeyen bir taslağın üzerine yanlışlıkla yazılmaz.</p>
+          <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
+            <Link href="/icerik/saglik">Sistem Sağlığı →</Link>
+            <Link href="/icerik/hazirlik">Yayın Hazırlığı →</Link>
+            <Link href={`/icerik/sss?dil=${locale}`}>Tekrar dene ↻</Link>
           </div>
-          <div className="content-form-actions"><button type="submit">Taslak Kaydet</button></div>
-        </form>
-      </div>
-
-      <div style={{ marginTop: "1rem", display: "grid", gap: "1rem" }}>
-        {items.length === 0 ? <div className="content-panel"><div className="content-empty-state"><strong>Bu dilde henüz SSS yok.</strong><p>İlk taslağı yukarıdaki formdan oluşturabilirsin.</p></div></div> : items.map(({ contentKey, status, displayUpdatedAt, item, hasPendingDraft }, index) => {
-          const canEdit = status !== "archived";
-          const canArchive = status !== "published" || access.canPublish;
-          const visibleStatus = status === "published" && hasPendingDraft ? "Yayında · taslak hazır" : statusLabels[status];
-          return (
-            <div className="content-panel" id={`faq-${contentKey}`} key={contentKey} style={{ scrollMarginTop: "1rem" }}>
-              <div className="content-section-heading"><div><span>{String(index + 2).padStart(2, "0")}</span><h2>{item.question || "İsimsiz SSS"}</h2></div><p>{visibleStatus} · {item.category || (isEn ? "General" : "Genel")} · {audienceLabels[item.audience || "all"] || "Herkes"} · {formatDate(displayUpdatedAt)}</p></div>
-              <form className="content-form" action={saveFaqAction}>
-                <input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} />
-                <label><span>Soru</span><input name="question" required maxLength={300} defaultValue={item.question || ""} disabled={!canEdit} /></label>
-                <label><span>Cevap</span><textarea name="answer" required rows={6} maxLength={4000} defaultValue={item.answer || ""} disabled={!canEdit} /></label>
-                <div className="content-form-grid">
-                  <label><span>Kategori</span><input name="category" maxLength={80} defaultValue={item.category || (isEn ? "General" : "Genel")} disabled={!canEdit} /></label>
-                  <label><span>Hedef kitle</span><select name="audience" defaultValue={item.audience || "all"} disabled={!canEdit}><option value="all">Herkes</option><option value="reader">Okuyucu</option><option value="writer">Yazar</option><option value="editor">Editör</option><option value="publisher">Yayınevi</option></select></label>
-                  <label><span>Sıra</span><input name="position" type="number" min={0} max={9999} defaultValue={item.position ?? 0} disabled={!canEdit} /></label>
-                </div>
-                <div className="content-form-actions">{canEdit ? <button type="submit">Taslak Kaydet</button> : <span>Arşivdeki kaydı önce taslağa geri alın.</span>}</div>
-              </form>
-              <div className="content-form-actions" style={{ marginTop: ".9rem", flexWrap: "wrap" }}>
-                {(status === "draft" || hasPendingDraft) && canPublishLocale ? <form action={publishFaqAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">{hasPendingDraft ? "Taslağı Yayınla" : "Yayınla"}</button></form> : null}
-                {status === "published" && access.canPublish ? <form action={unpublishFaqAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Al</button></form> : null}
-                {status !== "archived" && canArchive ? <form action={archiveFaqAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Arşivle</button></form> : null}
-                {status === "archived" ? <form action={restoreFaqDraftAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Geri Al</button></form> : null}
-              </div>
+        </div>
+      ) : (
+        <>
+          {isEn && !localeEnabled ? (
+            <div className="content-panel" style={{ marginBottom: "1rem" }}>
+              <strong>İngilizce public yayın kapalı.</strong>
+              <p>EN SSS kayıtları taslak olarak hazırlanabilir ve önizlenebilir; dil açılmadan yayınlanamaz.</p>
             </div>
-          );
-        })}
-      </div>
+          ) : null}
+
+          <div className="content-metric-grid">
+            <article className="content-metric-card"><span>Toplam</span><strong>{items.length}</strong><small>{locale.toUpperCase()} SSS</small></article>
+            <article className="content-metric-card"><span>Yayında</span><strong>{publishedCount}</strong><small>{localeEnabled ? "Public Yardım Merkezi" : "Public dil kapalı"}</small></article>
+            <article className="content-metric-card"><span>Bekleyen taslak</span><strong>{pendingDraftCount}</strong><small>Canlıyı değiştirmiyor</small></article>
+            <article className="content-metric-card"><span>Arşiv</span><strong>{archivedCount}</strong><small>Publicte görünmüyor</small></article>
+          </div>
+
+          <div className="content-panel">
+            <div className="content-section-heading"><div><span>01</span><h2>Yeni SSS taslağı</h2></div><p>{locale.toUpperCase()} kayıt kümesine eklenir.</p></div>
+            <form className="content-form" action={saveFaqAction}>
+              <input type="hidden" name="locale" value={locale} />
+              <label><span>Soru</span><input name="question" required maxLength={300} /></label>
+              <label><span>Cevap</span><textarea name="answer" required rows={7} maxLength={4000} /></label>
+              <div className="content-form-grid">
+                <label><span>Kategori</span><input name="category" maxLength={80} defaultValue={isEn ? "General" : "Genel"} /></label>
+                <label><span>Hedef kitle</span><select name="audience" defaultValue="all"><option value="all">Herkes</option><option value="reader">Okuyucu</option><option value="writer">Yazar</option><option value="editor">Editör</option><option value="publisher">Yayınevi</option></select></label>
+                <label><span>Sıra</span><input name="position" type="number" min={0} max={9999} defaultValue={0} /></label>
+              </div>
+              <div className="content-form-actions"><button type="submit">Taslak Kaydet</button></div>
+            </form>
+          </div>
+
+          <div style={{ marginTop: "1rem", display: "grid", gap: "1rem" }}>
+            {items.length === 0 ? (
+              <div className="content-panel">
+                <div className="content-empty-state">
+                  <strong>Bu dilde henüz SSS yok.</strong>
+                  <p>Bu boş durum yalnız canlı kayıtlar ve taslak katmanı başarıyla okunduğunda gösterilir. İlk taslağı yukarıdaki formdan oluşturabilirsiniz.</p>
+                </div>
+              </div>
+            ) : items.map(({ contentKey, status, displayUpdatedAt, item, hasPendingDraft }, index) => {
+              const canEdit = status !== "archived";
+              const canArchive = status !== "published" || access.canPublish;
+              const visibleStatus = status === "published" && hasPendingDraft ? "Yayında · taslak hazır" : statusLabels[status];
+              return (
+                <div className="content-panel" id={`faq-${contentKey}`} key={contentKey} style={{ scrollMarginTop: "1rem" }}>
+                  <div className="content-section-heading"><div><span>{String(index + 2).padStart(2, "0")}</span><h2>{item.question || "İsimsiz SSS"}</h2></div><p>{visibleStatus} · {item.category || (isEn ? "General" : "Genel")} · {audienceLabels[item.audience || "all"] || "Herkes"} · {formatDate(displayUpdatedAt)}</p></div>
+                  <form className="content-form" action={saveFaqAction}>
+                    <input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} />
+                    <label><span>Soru</span><input name="question" required maxLength={300} defaultValue={item.question || ""} disabled={!canEdit} /></label>
+                    <label><span>Cevap</span><textarea name="answer" required rows={6} maxLength={4000} defaultValue={item.answer || ""} disabled={!canEdit} /></label>
+                    <div className="content-form-grid">
+                      <label><span>Kategori</span><input name="category" maxLength={80} defaultValue={item.category || (isEn ? "General" : "Genel")} disabled={!canEdit} /></label>
+                      <label><span>Hedef kitle</span><select name="audience" defaultValue={item.audience || "all"} disabled={!canEdit}><option value="all">Herkes</option><option value="reader">Okuyucu</option><option value="writer">Yazar</option><option value="editor">Editör</option><option value="publisher">Yayınevi</option></select></label>
+                      <label><span>Sıra</span><input name="position" type="number" min={0} max={9999} defaultValue={item.position ?? 0} disabled={!canEdit} /></label>
+                    </div>
+                    <div className="content-form-actions">{canEdit ? <button type="submit">Taslak Kaydet</button> : <span>Arşivdeki kaydı önce taslağa geri alın.</span>}</div>
+                  </form>
+                  <div className="content-form-actions" style={{ marginTop: ".9rem", flexWrap: "wrap" }}>
+                    {(status === "draft" || hasPendingDraft) && canPublishLocale ? <form action={publishFaqAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">{hasPendingDraft ? "Taslağı Yayınla" : "Yayınla"}</button></form> : null}
+                    {status === "published" && access.canPublish ? <form action={unpublishFaqAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Al</button></form> : null}
+                    {status !== "archived" && canArchive ? <form action={archiveFaqAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Arşivle</button></form> : null}
+                    {status === "archived" ? <form action={restoreFaqDraftAction}><input type="hidden" name="locale" value={locale} /><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Taslağa Geri Al</button></form> : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </section>
   );
 }

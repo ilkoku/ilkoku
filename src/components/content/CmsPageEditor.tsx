@@ -59,6 +59,7 @@ export async function CmsPageEditor({ id }: { id?: string }) {
   const statusLabel = page?.status === "published" && hasPendingDraft
     ? "Yayında · taslak hazır"
     : page?.status === "published" ? "Yayında" : page?.status === "archived" ? "Arşiv" : "Taslak";
+  const canArchive = Boolean(page && (page.status !== "published" || access.canPublish));
 
   return (
     <section className="content-editor-page">
@@ -79,6 +80,13 @@ export async function CmsPageEditor({ id }: { id?: string }) {
         {page?.status === "published" ? <Link href={page.slug} target="_blank">Canlı sayfayı aç ↗</Link> : null}
         <Link href="/icerik/sayfalar">← Sayfa listesi</Link>
       </div>
+
+      {!access.canPublish ? (
+        <div className="content-panel" style={{ marginBottom: "1rem" }}>
+          <strong>Taslak yönetim yetkisi</strong>
+          <p>Bu hesap sayfa içeriği hazırlayabilir ve önizleyebilir. Yayına alma veya yayındaki bir sayfayı arşivleme işlemi için yayın yetkisi gerekir.</p>
+        </div>
+      ) : null}
 
       {hasPendingDraft ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }}>
@@ -140,12 +148,14 @@ export async function CmsPageEditor({ id }: { id?: string }) {
           <div className="content-publish-box">
             <div>
               <strong>Arşivleme</strong>
-              <p>Arşivlenen kurumsal sayfa public siteden kaldırılır; sürüm geçmişi korunur.</p>
+              <p>{page.status === "published" && !access.canPublish ? "Yayındaki bir sayfayı arşivlemek canlı durumu değiştirdiği için yayın yetkisi gerekir." : "Arşivlenen kurumsal sayfa public siteden kaldırılır; sürüm geçmişi korunur."}</p>
             </div>
-            <form action={archiveCmsPageAction}>
-              <input type="hidden" name="id" value={page.id} />
-              <button type="submit">Arşivle</button>
-            </form>
+            {canArchive ? (
+              <form action={archiveCmsPageAction}>
+                <input type="hidden" name="id" value={page.id} />
+                <button type="submit">Arşivle</button>
+              </form>
+            ) : null}
           </div>
         ) : null}
       </div>

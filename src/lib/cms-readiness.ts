@@ -28,6 +28,8 @@ export const cmsStarterTargets = {
   seo: 2,
 } as const;
 
+export type CmsContentStatus = "draft" | "published" | "archived";
+
 export type CmsReadinessSnapshot = {
   homepage: number;
   legal: number;
@@ -35,13 +37,19 @@ export type CmsReadinessSnapshot = {
   corporateCreated: number;
   corporateArchived: number;
   corporateSeoReady: number;
+  corporateId: string | null;
+  corporateStatus: CmsContentStatus | null;
   faq: number;
   faqCreated: number;
   faqArchived: number;
+  faqFocusKey: string | null;
+  faqArchivedKey: string | null;
   guides: number;
   guidesCreated: number;
   guidesArchived: number;
   guidesSeoReady: number;
+  guideId: string | null;
+  guideStatus: CmsContentStatus | null;
   media: number;
   seoMissing: number;
   queue: number;
@@ -54,13 +62,19 @@ type ReadinessRow = {
   corporateCreated: bigint | number;
   corporateArchived: bigint | number;
   corporateSeoReady: bigint | number;
+  corporateId: string | null;
+  corporateStatus: CmsContentStatus | null;
   faq: bigint | number;
   faqCreated: bigint | number;
   faqArchived: bigint | number;
+  faqFocusKey: string | null;
+  faqArchivedKey: string | null;
   guides: bigint | number;
   guidesCreated: bigint | number;
   guidesArchived: bigint | number;
   guidesSeoReady: bigint | number;
+  guideId: string | null;
+  guideStatus: CmsContentStatus | null;
   media: bigint | number;
   seoMissing: bigint | number;
   queue: bigint | number;
@@ -103,6 +117,14 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
           AND COALESCE(TRIM(seoTitle), '') <> ''
           AND COALESCE(TRIM(seoDescription), '') <> ''
           AND COALESCE(TRIM(canonicalUrl), '') <> '') AS corporateSeoReady,
+      (SELECT id FROM ContentPage
+        WHERE contentKey = 'page:tr:hakkimizda'
+        ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
+        LIMIT 1) AS corporateId,
+      (SELECT status FROM ContentPage
+        WHERE contentKey = 'page:tr:hakkimizda'
+        ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
+        LIMIT 1) AS corporateStatus,
       (SELECT COUNT(*) FROM SiteContent
         WHERE namespace = 'faq'
           AND status = 'published'
@@ -130,6 +152,39 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
             'item_starter_editor_inceleme',
             'item_starter_yayinevi_kesif'
           )) AS faqArchived,
+      (SELECT contentKey FROM SiteContent
+        WHERE namespace = 'faq'
+          AND contentKey IN (
+            'item_starter_ilkoku_nedir',
+            'item_starter_yazar_yayin',
+            'item_starter_editor_inceleme',
+            'item_starter_yayinevi_kesif'
+          )
+        ORDER BY
+          CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END,
+          CASE contentKey
+            WHEN 'item_starter_ilkoku_nedir' THEN 0
+            WHEN 'item_starter_yazar_yayin' THEN 1
+            WHEN 'item_starter_editor_inceleme' THEN 2
+            ELSE 3
+          END
+        LIMIT 1) AS faqFocusKey,
+      (SELECT contentKey FROM SiteContent
+        WHERE namespace = 'faq'
+          AND status = 'archived'
+          AND contentKey IN (
+            'item_starter_ilkoku_nedir',
+            'item_starter_yazar_yayin',
+            'item_starter_editor_inceleme',
+            'item_starter_yayinevi_kesif'
+          )
+        ORDER BY CASE contentKey
+          WHEN 'item_starter_ilkoku_nedir' THEN 0
+          WHEN 'item_starter_yazar_yayin' THEN 1
+          WHEN 'item_starter_editor_inceleme' THEN 2
+          ELSE 3
+        END
+        LIMIT 1) AS faqArchivedKey,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status = 'published'
           AND contentKey = 'guide:ilkoku-nasil-calisir'
@@ -147,6 +202,14 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
           AND COALESCE(TRIM(seoTitle), '') <> ''
           AND COALESCE(TRIM(seoDescription), '') <> ''
           AND COALESCE(TRIM(canonicalUrl), '') <> '') AS guidesSeoReady,
+      (SELECT id FROM ContentPage
+        WHERE contentKey = 'guide:ilkoku-nasil-calisir'
+        ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
+        LIMIT 1) AS guideId,
+      (SELECT status FROM ContentPage
+        WHERE contentKey = 'guide:ilkoku-nasil-calisir'
+        ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
+        LIMIT 1) AS guideStatus,
       (SELECT COUNT(*) FROM SiteContent
         WHERE namespace = 'media'
           AND status <> 'archived') AS media,
@@ -186,13 +249,19 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
     corporateCreated: value(row?.corporateCreated),
     corporateArchived: value(row?.corporateArchived),
     corporateSeoReady: value(row?.corporateSeoReady),
+    corporateId: row?.corporateId ?? null,
+    corporateStatus: row?.corporateStatus ?? null,
     faq: value(row?.faq),
     faqCreated: value(row?.faqCreated),
     faqArchived: value(row?.faqArchived),
+    faqFocusKey: row?.faqFocusKey ?? null,
+    faqArchivedKey: row?.faqArchivedKey ?? null,
     guides: value(row?.guides),
     guidesCreated: value(row?.guidesCreated),
     guidesArchived: value(row?.guidesArchived),
     guidesSeoReady: value(row?.guidesSeoReady),
+    guideId: row?.guideId ?? null,
+    guideStatus: row?.guideStatus ?? null,
     media: value(row?.media),
     seoMissing: value(row?.seoMissing),
     queue: value(row?.queue),

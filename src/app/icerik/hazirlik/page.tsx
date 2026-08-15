@@ -20,6 +20,9 @@ type ReadinessItem = {
   level: ReadinessLevel;
   detail: string;
   href: string;
+  action: string;
+  previewHref?: string;
+  liveHref?: string;
 };
 
 function levelLabel(level: ReadinessLevel) {
@@ -29,7 +32,17 @@ function levelLabel(level: ReadinessLevel) {
   return "INFO";
 }
 
-function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
+function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): ReadinessItem[] {
+  const corporateHref = data.corporateId ? `/icerik/sayfalar/${data.corporateId}` : "/icerik/hazirlik";
+  const corporatePreviewHref = data.corporateId && data.corporateStatus !== "archived"
+    ? `/icerik/onizleme/sayfa/${data.corporateId}`
+    : undefined;
+  const faqHref = data.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.faqFocusKey}` : "/icerik/sss?dil=tr";
+  const guideHref = data.guideId ? `/icerik/rehber/${data.guideId}?dil=tr` : "/icerik/hazirlik";
+  const guidePreviewHref = data.guideId && data.guideStatus !== "archived"
+    ? `/icerik/onizleme/rehber/${data.guideId}?dil=tr`
+    : undefined;
+
   const corporateDetail = data.corporate >= cmsReadinessTargets.corporate
     ? "Hakkımızda yayında ve indexlenebilir."
     : data.corporateCreated >= cmsStarterTargets.corporate
@@ -37,13 +50,13 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
         ? "Hakkımızda taslağı ve temel SEO alanları hazır. Önizleme ve yayın bekliyor."
         : "Hakkımızda taslağı hazır. Yayından önce SEO alanlarını kontrol edin."
       : data.corporateArchived > 0
-        ? "Hakkımızda kaydı arşivde. Kurumsal Sayfalar'dan açıp taslak olarak kaydedin; yeni kopya oluşturulmayacak."
+        ? "Hakkımızda kaydı arşivde. Mevcut kaydı açıp taslak olarak kaydedin; yeni kopya oluşturulmayacak."
         : "Hakkımızda kaydı henüz yok. Sprint 3 başlangıç setinden güvenli taslak oluşturabilirsiniz.";
 
   const faqDetail = data.faq >= cmsReadinessTargets.faq
     ? "Dört temel TR yardım kaydının tamamı yayında."
     : data.faqCreated >= cmsStarterTargets.faq
-      ? `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı; ${data.faq}/${cmsReadinessTargets.faq} yayında. Taslakları inceleyip yayınlayın.`
+      ? `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı; ${data.faq}/${cmsReadinessTargets.faq} yayında. Panel ilk işlem gerektiren temel SSS'ye gider.`
       : data.faqArchived > 0
         ? `${data.faqCreated}/${cmsStarterTargets.faq} aktif kayıt · ${data.faqArchived} arşivde. Arşivdeki temel SSS'leri geri alın; yalnız gerçekten eksik kayıtlar yeniden oluşturulabilir.`
         : `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı. Eksik başlangıç kayıtlarını tamamlayın.`;
@@ -55,7 +68,7 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
         ? "İlkOku Nasıl Çalışır taslağı ve temel SEO alanları hazır. Önizleme ve yayın bekliyor."
         : "İlkOku Nasıl Çalışır taslağı hazır. Yayından önce SEO alanlarını kontrol edin."
       : data.guidesArchived > 0
-        ? "İlkOku Nasıl Çalışır rehberi arşivde. Rehber modülünden açıp taslağa geri alın; yeni kopya oluşturulmayacak."
+        ? "İlkOku Nasıl Çalışır rehberi arşivde. Mevcut kaydı açıp taslağa geri alın; yeni kopya oluşturulmayacak."
         : "İlkOku Nasıl Çalışır rehber kaydı henüz yok.";
 
   return [
@@ -65,6 +78,7 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
       level: data.homepage >= cmsReadinessTargets.homepage ? "pass" : "warn",
       detail: "Hero, rol seçimi, Eser Pasaportu, Neden İlkOku ve footer CMS yayını.",
       href: "/icerik/ana-sayfa?dil=tr",
+      action: "Kontrol et",
     },
     {
       label: "Yasal Sayfalar",
@@ -72,27 +86,49 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
       level: data.legal >= cmsReadinessTargets.legal ? "pass" : "blocker",
       detail: "Kullanım, Gizlilik, KVKK, Çerez ve Telif metinlerinin CMS sahipliği.",
       href: "/icerik/yasal?dil=tr",
+      action: "Belgeleri aç",
     },
     {
       label: "Hakkımızda",
       value: `Kayıt ${data.corporateCreated}/${cmsStarterTargets.corporate} · Canlı ${data.corporate}/${cmsReadinessTargets.corporate}`,
       level: data.corporate >= cmsReadinessTargets.corporate ? "pass" : "warn",
       detail: corporateDetail,
-      href: "/icerik/sayfalar",
+      href: corporateHref,
+      action: data.corporate >= cmsReadinessTargets.corporate
+        ? "Kaydı aç"
+        : data.corporateCreated >= cmsStarterTargets.corporate
+          ? canPublish ? "İncele ve yayınla" : "Taslağı incele"
+          : data.corporateArchived > 0 ? "Arşiv kaydını aç" : "Başlangıç setini aç",
+      previewHref: corporatePreviewHref,
+      liveHref: data.corporate >= cmsReadinessTargets.corporate ? "/hakkimizda" : undefined,
     },
     {
       label: "Temel SSS",
       value: `Kayıt ${data.faqCreated}/${cmsStarterTargets.faq} · Canlı ${data.faq}/${cmsReadinessTargets.faq}`,
       level: data.faq >= cmsReadinessTargets.faq ? "pass" : "warn",
       detail: faqDetail,
-      href: "/icerik/sss?dil=tr",
+      href: faqHref,
+      action: data.faq >= cmsReadinessTargets.faq
+        ? "Temel SSS'leri aç"
+        : data.faqCreated > 0 || data.faqArchived > 0
+          ? canPublish ? "İncele ve yayınla" : "Taslakları incele"
+          : "SSS modülünü aç",
+      previewHref: data.faqCreated > 0 ? "/icerik/onizleme/sss?dil=tr" : undefined,
+      liveHref: data.faq > 0 ? "/yardim" : undefined,
     },
     {
       label: "İlkOku Nasıl Çalışır",
       value: `Kayıt ${data.guidesCreated}/${cmsStarterTargets.guides} · Canlı ${data.guides}/${cmsReadinessTargets.guides}`,
       level: data.guides >= cmsReadinessTargets.guides ? "pass" : "warn",
       detail: guideDetail,
-      href: "/icerik/rehber?dil=tr",
+      href: guideHref,
+      action: data.guides >= cmsReadinessTargets.guides
+        ? "Kaydı aç"
+        : data.guidesCreated >= cmsStarterTargets.guides
+          ? canPublish ? "İncele ve yayınla" : "Taslağı incele"
+          : data.guidesArchived > 0 ? "Arşiv kaydını aç" : "Başlangıç setini aç",
+      previewHref: guidePreviewHref,
+      liveHref: data.guides >= cmsReadinessTargets.guides ? "/rehber/ilkoku-nasil-calisir" : undefined,
     },
     {
       label: "Medya",
@@ -100,6 +136,7 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
       level: data.media > 0 ? "pass" : "info",
       detail: data.media > 0 ? "Aktif medya varlıkları mevcut." : "CMS medya kütüphanesinde aktif kayıt yok.",
       href: "/icerik/medya",
+      action: "Medya'yı aç",
     },
     {
       label: "SEO Eksikleri",
@@ -109,6 +146,7 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
         ? "Yayındaki TR CMS sayfalarında temel SEO eksiği yok."
         : "Yayındaki TR CMS sayfalarında title, description veya canonical eksiği var.",
       href: "/icerik/seo",
+      action: data.seoMissing === 0 ? "SEO'yu aç" : "Eksikleri düzelt",
     },
     {
       label: "Yayın Kuyruğu",
@@ -118,6 +156,7 @@ function readinessItems(data: CmsReadinessSnapshot): ReadinessItem[] {
         ? "Bekleyen taslak yok."
         : "Operasyon kuyruğunda taslaklar var. Bu kayıtlar mevcut canlı içeriğin yayın kabulünü bozmaz; ayrı olarak incelenip planlanır.",
       href: "/icerik/yayin-kuyrugu",
+      action: data.queue === 0 ? "Kuyruğu aç" : "Taslakları yönet",
     },
   ];
 }
@@ -127,7 +166,7 @@ export default async function ContentReadinessPage({
 }: {
   searchParams: Promise<{ baslangic?: string; sayfa?: string; sss?: string; hata?: string }>;
 }) {
-  await requireCmsManager("/icerik/hazirlik");
+  const access = await requireCmsManager("/icerik/hazirlik");
   const params = await searchParams;
 
   let data: CmsReadinessSnapshot | null = null;
@@ -137,7 +176,7 @@ export default async function ContentReadinessPage({
     data = null;
   }
 
-  const items = data ? readinessItems(data) : [];
+  const items = data ? readinessItems(data, access.canPublish) : [];
   const summary = data
     ? getCmsReadinessSummary(data)
     : { corePassed: 0, coreTotal: 5, blockers: 0, warnings: 0, operationalQueue: 0, ready: false };
@@ -161,6 +200,11 @@ export default async function ContentReadinessPage({
   const ready = summary.ready;
   const starterCreated = params.baslangic === "1";
   const starterError = params.hata === "baslangic";
+
+  const corporateHref = data?.corporateId ? `/icerik/sayfalar/${data.corporateId}` : "/icerik/sayfalar";
+  const guideHref = data?.guideId ? `/icerik/rehber/${data.guideId}?dil=tr` : "/icerik/rehber?dil=tr";
+  const faqHref = data?.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.faqFocusKey}` : "/icerik/sss?dil=tr";
+  const faqArchivedHref = data?.faqArchivedKey ? `/icerik/sss?dil=tr#faq-${data.faqArchivedKey}` : "/icerik/sss?dil=tr";
 
   return (
     <section className="content-editor-page">
@@ -224,11 +268,11 @@ export default async function ContentReadinessPage({
               <div className="content-section-heading">
                 <div><span>Yaşam Döngüsü</span><h2>{starter.archivedTotal} temel içerik arşivde</h2></div>
               </div>
-              <p>Arşivdeki başlangıç kayıtlarının üzerine yeni kopya oluşturulmaz. İlgili modülden kaydı açıp taslağa geri alın; böylece içerik anahtarı ve sürüm geçmişi korunur.</p>
+              <p>Arşivdeki başlangıç kayıtlarının üzerine yeni kopya oluşturulmaz. İlgili kaydı doğrudan açıp taslağa geri alın; böylece içerik anahtarı ve sürüm geçmişi korunur.</p>
               <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
-                {data.corporateArchived > 0 ? <Link href="/icerik/sayfalar">Hakkımızda →</Link> : null}
-                {data.guidesArchived > 0 ? <Link href="/icerik/rehber?dil=tr">Rehber →</Link> : null}
-                {data.faqArchived > 0 ? <Link href="/icerik/sss?dil=tr">SSS →</Link> : null}
+                {data.corporateArchived > 0 ? <Link href={corporateHref}>Hakkımızda kaydını aç →</Link> : null}
+                {data.guidesArchived > 0 ? <Link href={guideHref}>Rehber kaydını aç →</Link> : null}
+                {data.faqArchived > 0 ? <Link href={faqArchivedHref}>Arşiv SSS kaydına git →</Link> : null}
               </div>
             </div>
           ) : null}
@@ -250,12 +294,14 @@ export default async function ContentReadinessPage({
               <div className="content-section-heading">
                 <div><span>Sıradaki Adım</span><h2>6/6 başlangıç kaydı hazır</h2></div>
               </div>
-              <p>Başlangıç içeriği artık yeniden oluşturulmayacak. Sıradaki iş taslakları gözden geçirmek, önizlemek ve yayın yetkisiyle canlıya almak.</p>
+              <p>{access.canPublish
+                ? "Doğrudan ilgili kayda gidin; metin ve önizlemeyi kontrol ettikten sonra aynı editör ekranından yayınlayabilirsiniz."
+                : "Doğrudan ilgili kayda gidip metin ve önizlemeyi kontrol edin. Bu hesap taslak hazırlayabilir; canlı yayın için yayın yetkili kullanıcı gerekir."}</p>
               <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
-                <Link href="/icerik/sayfalar">Hakkımızda →</Link>
-                <Link href="/icerik/rehber?dil=tr">Rehber →</Link>
-                <Link href="/icerik/sss?dil=tr">4 temel SSS →</Link>
-                <Link href="/icerik/yayin-kuyrugu">Yayın Kuyruğu →</Link>
+                <Link href={corporateHref}>{access.canPublish ? "Hakkımızda · incele/yayınla" : "Hakkımızda · incele"} →</Link>
+                <Link href={guideHref}>{access.canPublish ? "Rehber · incele/yayınla" : "Rehber · incele"} →</Link>
+                <Link href={faqHref}>{access.canPublish ? "Temel SSS · incele/yayınla" : "Temel SSS · incele"} →</Link>
+                <Link href="/icerik/yayin-kuyrugu">Operasyon Kuyruğu →</Link>
               </div>
             </div>
           ) : null}
@@ -266,7 +312,11 @@ export default async function ContentReadinessPage({
                 <div className="content-list-row" key={item.label} style={{ alignItems: "flex-start", gap: "1rem" }}>
                   <div style={{ minWidth: 110 }}><strong>{levelLabel(item.level)}</strong><br /><small>{item.value}</small></div>
                   <div style={{ flex: 1 }}><strong>{item.label}</strong><p style={{ margin: ".35rem 0 0" }}>{item.detail}</p></div>
-                  <Link href={item.href}>Yönet →</Link>
+                  <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    <Link href={item.href}>{item.action} →</Link>
+                    {item.previewHref ? <Link href={item.previewHref}>Önizle ↗</Link> : null}
+                    {item.liveHref ? <Link href={item.liveHref} target="_blank">Canlı ↗</Link> : null}
+                  </div>
                 </div>
               ))}
             </div>

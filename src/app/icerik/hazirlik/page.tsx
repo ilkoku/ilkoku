@@ -112,11 +112,13 @@ export default async function ContentReadinessPage({
   }
 
   const items = data ? readinessItems(data) : [];
-  const summary = data ? getCmsReadinessSummary(data) : null;
+  const summary = data
+    ? getCmsReadinessSummary(data)
+    : { corePassed: 0, coreTotal: 5, blockers: 0, warnings: 0, ready: false };
   const blockers = items.filter((item) => item.level === "blocker").length;
   const warnings = items.filter((item) => item.level === "warn").length;
   const passes = items.filter((item) => item.level === "pass").length;
-  const ready = summary?.ready ?? false;
+  const ready = summary.ready;
   const starterCreated = params.baslangic === "1";
 
   return (

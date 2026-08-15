@@ -33,58 +33,92 @@ const pageSeeds: PageSeed[] = [
     contentKey: "page:tr:hakkimizda",
     slug: "/hakkimizda",
     title: "Hakkımızda",
-    summary: "İlkOku; yazarları, okuyucuları, editörleri ve yayınevlerini aynı eser yolculuğunda buluşturan dijital yayın platformudur.",
-    body: `İlkOku, yazarların eserlerini bölüm bölüm yayımlayabildiği; okuyucularla buluşabildiği; editör değerlendirmeleri ve yayınevi keşfiyle desteklenen bir dijital yayın platformudur.
+    summary: "İlkOku, bir eserin ilk taslağından okur geri bildirimine, editör incelemesinden yayınevi keşfine uzanan yolculuğu tek dijital ortamda buluşturur.",
+    body: `İlkOku, yazarların eserlerini geliştirebildiği, okuyucularla buluşturabildiği, profesyonel editör incelemesine taşıyabildiği ve yayınevleri tarafından keşfedilebildiği dijital bir edebiyat platformudur.
 
-## Yazarlar için
+Amacımız yalnızca bir eserin son halini göstermek değil; eserin oluşum ve gelişim yolculuğunu daha düzenli, görünür ve izlenebilir hale getirmektir.
 
-Yazarlar eserlerini oluşturur, bölümlerini düzenler ve yayına alır. İstediklerinde editör incelemesi talep ederek eserlerini yapılandırılmış bir değerlendirme sürecine taşıyabilirler.
+## Yazarın çalışma alanı
 
-## Okuyucular için
+Yazarlar eserlerini oluşturur, bölümlerini düzenler ve hazır olduklarında platformda yayımlar. Okur geri bildirimlerini takip edebilir, çalışmalarını geliştirebilir ve isterlerse eserleri için profesyonel editör incelemesi talep edebilirler.
 
-Okuyucular yayınlanmış eserleri keşfeder, okumalarını sürdürebilir ve platformun izin verdiği etkileşim araçlarıyla eser yolculuğuna katılabilir.
+Platformda yayımlanan bir eser, yayıneviyle yapılmış bir basım veya yayın sözleşmesi anlamına gelmez. İlkOku; eserin okuyucuyla buluştuğu, geliştiği ve profesyonel keşfe açıldığı dijital çalışma ortamını sağlar.
 
-## Editörler için
+## Okurun katkısı
 
-Editörler inceleme havuzundaki uygun eserleri değerlendirir. İnceleme akışında birinci ve ikinci editörün bağımsız değerlendirmeleri eserin gelişimine katkı sağlar.
+Okuyucular yayındaki eserleri keşfeder, okumaya devam eder ve kendilerine açık etkileşim araçlarıyla yazara geri bildirim verebilir. Böylece yazar, eserinin okuyucuda nasıl karşılık bulduğunu geliştirme sürecinin içinde görebilir.
 
-## Yayınevleri için
+## İki aşamalı editör incelemesi
 
-Yayınevleri kendilerine açık keşif alanlarında eser ve yazarları inceleyebilir. İlkOku'nun amacı, nitelikli içeriğin doğru profesyoneller tarafından daha görünür hale gelmesini sağlamaktır.
+Yazar editör incelemesi talep ettiğinde eser Genel Editör Havuzu'na girer. İlk editör görevi üzerine alır, eseri bağımsız biçimde değerlendirir ve incelemesini tamamlar. Ardından eser ikinci editör değerlendirmesine geçer; ikinci editör de bağımsız bir inceleme yapar.
 
-İlkOku, yayın kararının ve eser üzerindeki hakların taraflara ait olduğu şeffaf bir keşif ve değerlendirme altyapısı kurmayı hedefler.`,
-    seoTitle: "Hakkımızda | İlkOku",
-    seoDescription: "İlkOku'nun yazar, okuyucu, editör ve yayınevlerini aynı eser yolculuğunda nasıl buluşturduğunu keşfedin.",
+İki incelemenin tamamlanmasıyla yazarın kullanabileceği düzenli bir değerlendirme sonucu oluşur. Bu yapı, editoryal görüşü tek bir bakış açısına bağlı bırakmadan daha sistemli bir inceleme süreci oluşturmayı amaçlar.
+
+## Yayınevi keşfi
+
+Yayınevi hesapları kendilerine açık keşif alanlarında görünür eserleri ve yazarları inceleyebilir. Bu görünürlük, yayınevinin kendi editoryal ve ticari değerlendirme sürecini destekler; otomatik sözleşme, basım veya yayın taahhüdü oluşturmaz.
+
+## Eser Pasaportu
+
+Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile inceleme durumunu tek yerde görünür kılmak için tasarlanmıştır. Amaç, eserin yalnızca sonucunu değil, İlkOku içindeki gelişim sürecini de anlaşılır bir kayıt yapısıyla sunmaktır.
+
+İlkOku; yazar, okuyucu, editör ve yayınevini aynı eserin etrafında buluşturan, her rolün sınırlarını koruyan ve eser yolculuğunu daha şeffaf hale getiren bir dijital edebiyat ekosistemi kurmayı hedefler.`,
+    seoTitle: "Hakkımızda | İlkOku Dijital Edebiyat Platformu",
+    seoDescription: "İlkOku’nun yazarları, okuyucuları, editörleri ve yayınevlerini eser geliştirme, değerlendirme ve keşif sürecinde nasıl buluşturduğunu öğrenin.",
     kind: "page",
   },
   {
     contentKey: "guide:ilkoku-nasil-calisir",
     slug: "/rehber/ilkoku-nasil-calisir",
     title: "İlkOku Nasıl Çalışır?",
-    summary: "Yazar, okuyucu, editör ve yayınevi rollerinin İlkOku içindeki temel yolculuğunu adım adım öğrenin.",
-    body: `İlkOku'da her rol aynı esere farklı bir noktadan katkı sağlar. Bu rehber temel akışı özetler.
+    summary: "İlkOku'da bir eserin yazardan okuyucuya, iki aşamalı editör incelemesinden yayınevi keşfine uzanan temel yolculuğunu adım adım öğrenin.",
+    body: `İlkOku'da yazar, okuyucu, editör ve yayınevi aynı esere farklı bir noktadan katkı sağlar. Aşağıdaki akış, platformun temel çalışma mantığını özetler.
 
-## 1. Yazar eserini oluşturur ve yayımlar
+## 1. Yazar eserini oluşturur
 
-Yazar eser kaydını oluşturur, bölümlerini hazırlar ve okuyuculara açmak istediğinde eserini yayımlar. Editör incelemesi istiyorsa ayrıca inceleme talebi oluşturabilir.
+Yazar hesabından yeni bir eser kaydı açar, bölümlerini oluşturur ve çalışmasını kendi alanında geliştirir. Yazım sürecindeki içerik ve revizyon hareketleri, platformun sunduğu kayıt yapısı içinde ilerler.
 
-## 2. Okuyucular eseri keşfeder
+## 2. Eser platformda yayımlanır
 
-Yayındaki eserler keşif alanlarında okuyucularla buluşur. Okuyucu eseri inceleyebilir, okumaya devam edebilir ve kendisine açık etkileşim araçlarını kullanabilir.
+Yazar hazır olduğunda eserini okuyuculara açar. Platformda yayımlama, eserin İlkOku içindeki görünürlüğünü başlatır; yayınevi tarafından basılacağı veya ticari olarak yayımlanacağı anlamına gelmez.
 
-## 3. Editör inceleme akışı başlar
+Editör incelemesi de otomatik başlamaz. Yazar profesyonel değerlendirme istiyorsa ayrıca editör incelemesi talebi oluşturur.
 
-Editör incelemesi talep edilen eser Genel Editör Havuzu'na düşer. İlk editör görevi üzerine aldığında aynı görev başka bir ilk editör tarafından alınamaz. Birinci inceleme tamamlandıktan sonra eser ikinci editör değerlendirmesine geçer. İkinci editör bağımsız bir değerlendirme yapar.
+## 3. Okuyucular eseri keşfeder
 
-## 4. Değerlendirme yazara ulaşır
+Yayındaki eserler, görünürlük kurallarına göre keşif alanlarında okuyucularla buluşur. Okuyucular eserleri inceleyebilir, okumaya devam edebilir ve kendilerine açık geri bildirim araçlarını kullanabilir.
 
-İki inceleme tamamlandığında sistem yazarın kullanabileceği değerlendirme sonucunu oluşturur. Amaç eserin gelişimine yardımcı olacak düzenli ve izlenebilir bir editoryal süreç sağlamaktır.
+Bu etkileşim, yazarın eserini gerçek okur tepkileriyle geliştirmesine yardımcı olur.
 
-## 5. Yayınevi keşfi
+## 4. Birinci editör incelemeyi üstlenir
 
-Yayınevleri kendilerine açık keşif alanlarında yayınlanmış eser ve yazarları inceleyebilir. Bu alan, yayınevi ile yazar arasında otomatik bir yayın taahhüdü oluşturmaz; keşif ve değerlendirme için görünürlük sağlar.`,
-    seoTitle: "İlkOku Nasıl Çalışır? | Rehber",
-    seoDescription: "İlkOku'da yazar, okuyucu, editör ve yayınevi rollerinin eser yolculuğundaki temel adımlarını öğrenin.",
+Editör incelemesi talep edilen eser Genel Editör Havuzu'nda görünür. İlk uygun editör görevi üzerine aldığında görev kilitlenir ve aynı birinci inceleme başka bir editör tarafından eş zamanlı olarak alınamaz.
+
+Birinci editör eseri okur, notlarını oluşturur ve kendi değerlendirmesini tamamlar.
+
+## 5. Eser ikinci editöre geçer
+
+Birinci inceleme tamamlandıktan sonra eser ikinci editör değerlendirmesine yönlendirilir. İkinci editör eseri bağımsız biçimde inceler ve kendi değerlendirmesini oluşturur.
+
+Bu aşamanın amacı, eserin profesyonel değerlendirmesini tek bir editör görüşüne bağlı bırakmamaktır.
+
+## 6. Değerlendirme sonucu yazara ulaşır
+
+İki inceleme tamamlandığında sistem, tamamlanan editoryal değerlendirmelerden yazarın kullanabileceği sonuç akışını oluşturur. Yazar bu sonucu eserini geliştirmek için kullanabilir.
+
+Editör değerlendirmesi bir yayınevi kabulü, basım garantisi veya ticari yayın taahhüdü değildir.
+
+## 7. Eser Pasaportu süreci görünür kılar
+
+Eser Pasaportu; platform üzerinde oluşan yazım ve revizyon geçmişi ile profesyonel inceleme durumunu tek kayıt yapısında göstermeyi amaçlar. Böylece eserin yalnızca son hali değil, İlkOku içindeki gelişim yolculuğu da daha anlaşılır hale gelir.
+
+## 8. Yayınevi keşfi başlar
+
+Yayınevleri kendilerine açık keşif alanlarında görünür eserleri ve yazarları inceleyebilir. İlgilendikleri çalışmalar yayınevinin kendi değerlendirme sürecine girebilir.
+
+İlkOku'daki keşif görünürlüğü tek başına sözleşme, basım veya yayın kararı oluşturmaz. Nihai değerlendirme ve olası ticari süreç ilgili tarafların kendi kararlarıyla ilerler.`,
+    seoTitle: "İlkOku Nasıl Çalışır? | Yazar, Editör ve Yayınevi Rehberi",
+    seoDescription: "İlkOku’da eser yayımlama, okur geri bildirimi, iki editörlü inceleme, Eser Pasaportu ve yayınevi keşfi süreçlerini adım adım öğrenin.",
     kind: "guide",
   },
 ];
@@ -93,7 +127,7 @@ const faqSeeds: FaqSeed[] = [
   {
     contentKey: "item_starter_ilkoku_nedir",
     question: "İlkOku nedir?",
-    answer: "İlkOku; yazarların eserlerini yayımlayabildiği, okuyucuların eserleri keşfedebildiği, editör incelemelerinin yürütülebildiği ve yayınevlerinin kendilerine açık keşif alanlarından eser ve yazarları inceleyebildiği dijital bir yayın platformudur.",
+    answer: "İlkOku; yazarların eserlerini oluşturup platformda yayımlayabildiği, okuyucuların eserleri keşfedip geri bildirim verebildiği, profesyonel editör incelemelerinin yürütülebildiği ve yayınevlerinin kendilerine açık alanlarda eser ve yazarları keşfedebildiği dijital bir edebiyat platformudur. İlkOku'nun amacı, bir eserin gelişim yolculuğunu daha düzenli, görünür ve izlenebilir hale getirmektir.",
     category: "Genel",
     audience: "all",
     position: 10,
@@ -101,7 +135,7 @@ const faqSeeds: FaqSeed[] = [
   {
     contentKey: "item_starter_yazar_yayin",
     question: "Yazar eserini nasıl yayımlar?",
-    answer: "Yazar hesabından eser kaydını oluşturur, bölümlerini hazırlar ve yayın akışı üzerinden eserini okuyuculara açar. Editör incelemesi istiyorsa yayın sürecinden ayrı olarak editör incelemesi talep edebilir.",
+    answer: "Yazar hesabından eser kaydını oluşturur, bölümlerini hazırlar ve hazır olduğunda yayın akışı üzerinden eserini İlkOku'da okuyuculara açar. Platformda yayımlama, yayıneviyle yapılmış bir basım veya yayın sözleşmesi anlamına gelmez. Yazar profesyonel değerlendirme istiyorsa yayın işleminden ayrı olarak editör incelemesi talep eder.",
     category: "Yazar",
     audience: "writer",
     position: 20,
@@ -109,7 +143,7 @@ const faqSeeds: FaqSeed[] = [
   {
     contentKey: "item_starter_editor_inceleme",
     question: "Editör incelemesi nasıl çalışır?",
-    answer: "İnceleme talebi Genel Editör Havuzu'nda görünür. İlk editör görevi üzerine alır ve değerlendirmesini tamamlar. Ardından eser ikinci editöre gider; ikinci editör bağımsız inceleme yapar. İki inceleme tamamlandığında yazara iletilecek sonuç oluşturulur.",
+    answer: "Yazarın inceleme talebi Genel Editör Havuzu'nda görünür. İlk editör görevi üzerine aldığında birinci inceleme kilitlenir; editör eseri bağımsız biçimde değerlendirip incelemesini tamamlar. Ardından eser ikinci editör değerlendirmesine geçer ve ikinci editör bağımsız bir inceleme yapar. İki inceleme tamamlandığında yazarın kullanabileceği değerlendirme sonucu oluşur. Bu süreç yayınevi kabulü veya basım garantisi anlamına gelmez.",
     category: "Editör",
     audience: "editor",
     position: 30,
@@ -117,7 +151,7 @@ const faqSeeds: FaqSeed[] = [
   {
     contentKey: "item_starter_yayinevi_kesif",
     question: "Yayınevleri İlkOku'da ne yapabilir?",
-    answer: "Yayınevleri kendilerine açık keşif alanlarında yayınlanmış eser ve yazarları inceleyebilir. Bu görünürlük tek başına sözleşme veya yayın taahhüdü anlamına gelmez; yayınevinin kendi değerlendirme sürecini destekleyen bir keşif alanıdır.",
+    answer: "Yayınevi hesapları kendilerine açık keşif alanlarında görünür eserleri ve yazarları inceleyebilir. Bu alan, yayınevlerinin kendi editoryal değerlendirme sürecini destekleyen bir keşif ortamıdır. Bir eserin yayınevi tarafından görüntülenmesi veya ilgi görmesi otomatik sözleşme, basım kararı ya da yayın taahhüdü oluşturmaz; olası ticari süreç tarafların kendi değerlendirme ve kararlarıyla ilerler.",
     category: "Yayınevi",
     audience: "publisher",
     position: 40,

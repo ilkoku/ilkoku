@@ -47,6 +47,7 @@ const uploadErrors: Record<string, string> = {
   tip: "Bu dosya türü desteklenmiyor veya dosya imzası geçersiz.",
   okuma: "Dosya okunamadı.",
   kayit: "Dosya kaydedilemedi. Lütfen tekrar deneyin.",
+  kullanimda: "Bu medya yayındaki CMS içeriğinde kullanılıyor. Önce ilgili canlı içerikten kaldırın veya başka bir medya ile değiştirin.",
 };
 
 export default async function MediaPage({ searchParams }: PageProps) {
@@ -95,7 +96,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
 
       {errorKey && uploadErrors[errorKey] ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }}>
-          <strong>Yükleme tamamlanamadı:</strong> {uploadErrors[errorKey]}
+          <strong>İşlem tamamlanamadı:</strong> {uploadErrors[errorKey]}
         </div>
       ) : null}
 

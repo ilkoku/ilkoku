@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CopyMediaUrlButton } from "@/components/content/CopyMediaUrlButton";
 import { archiveMediaAssetAction, createMediaAssetAction } from "@/features/cms/media-actions";
+import { requireCmsManager } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
 
 type MediaRow = {
@@ -50,6 +51,7 @@ const uploadErrors: Record<string, string> = {
 };
 
 export default async function MediaPage({ searchParams }: PageProps) {
+  const access = await requireCmsManager("/icerik/medya");
   const query = (await searchParams) ?? {};
   const errorKey = typeof query.hata === "string" ? query.hata : "";
   const uploaded = query.yuklendi === "1";
@@ -83,9 +85,16 @@ export default async function MediaPage({ searchParams }: PageProps) {
         </div>
         <div className="content-profile">
           <strong>{assets.length} aktif medya</strong>
-          <small>DB-backed kalıcı depolama</small>
+          <small>{access.canPublish ? "Yönet + arşiv yetkisi" : "Yönetim yetkisi"}</small>
         </div>
       </div>
+
+      {!access.canPublish ? (
+        <div className="content-panel" style={{ marginBottom: "1rem" }}>
+          <strong>Medya arşivleme yayın yetkisi gerektirir.</strong>
+          <p>Yeni dosya yükleyebilir ve kütüphaneyi yönetebilirsiniz. Aktif bir medya URL&apos;sini kapatmak public içerikleri etkileyebileceği için arşivleme yalnız yayın yetkili kullanıcıya açıktır.</p>
+        </div>
+      ) : null}
 
       {uploaded ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }}>
@@ -186,10 +195,14 @@ export default async function MediaPage({ searchParams }: PageProps) {
                     </div>
                   ) : null}
 
-                  <form action={archiveMediaAssetAction} style={{ marginTop: "auto" }}>
-                    <input type="hidden" name="contentKey" value={contentKey} />
-                    <button type="submit">Arşivle</button>
-                  </form>
+                  {access.canPublish ? (
+                    <form action={archiveMediaAssetAction} style={{ marginTop: "auto" }}>
+                      <input type="hidden" name="contentKey" value={contentKey} />
+                      <button type="submit">Arşivle</button>
+                    </form>
+                  ) : (
+                    <small style={{ marginTop: "auto" }}>Arşivleme için yayın yetkisi gerekir.</small>
+                  )}
                 </article>
               );
             })}

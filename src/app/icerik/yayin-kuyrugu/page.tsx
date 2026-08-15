@@ -9,6 +9,7 @@ import {
 import { saveCmsDocumentAction } from "@/features/cms/document-actions";
 import { publishFaqAction } from "@/features/cms/faq-actions";
 import { saveCmsGuideAction } from "@/features/cms/guide-actions";
+import { saveCmsPageAction } from "@/features/cms/page-actions";
 import { requireCmsManager } from "@/lib/cms-access";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import type { CmsLocaleCode } from "@/lib/cms-locales";
@@ -52,7 +53,7 @@ type PublishAction = (formData: FormData) => Promise<void>;
 
 type QueueItem = {
   key: string;
-  kind: "homepage" | "faq" | "legal" | "guide";
+  kind: "homepage" | "faq" | "legal" | "guide" | "page";
   title: string;
   detail: string;
   locale: CmsLocaleCode;
@@ -65,7 +66,8 @@ type QueueItem = {
     | { type: "homepage"; action: PublishAction; locale: CmsLocaleCode }
     | { type: "faq"; locale: CmsLocaleCode; contentKey: string }
     | { type: "legal"; locale: CmsLocaleCode; slug: string; payload: Payload }
-    | { type: "guide"; locale: CmsLocaleCode; id: string; slug: string; payload: Payload };
+    | { type: "guide"; locale: CmsLocaleCode; id: string; slug: string; payload: Payload }
+    | { type: "page"; locale: CmsLocaleCode; id: string; slug: string; payload: Payload };
 };
 
 const homepageActions: Record<string, PublishAction> = {
@@ -106,7 +108,7 @@ function actor(row: ActorRow) {
 }
 
 function localeFromPageKey(contentKey: string): CmsLocaleCode {
-  return contentKey.startsWith("legal:en:") || contentKey.startsWith("guide:en:") ? "en" : "tr";
+  return contentKey.startsWith("legal:en:") || contentKey.startsWith("guide:en:") || contentKey.startsWith("page:en:") ? "en" : "tr";
 }
 
 function legalSlug(contentKey: string) {
@@ -160,6 +162,24 @@ function PublishButton({ item, enabled }: { item: QueueItem; enabled: boolean })
     );
   }
 
+  if (item.publish.type === "page") {
+    const payload = item.publish.payload;
+    return (
+      <form action={saveCmsPageAction}>
+        <input type="hidden" name="mode" value="publish" />
+        <input type="hidden" name="id" value={item.publish.id} />
+        <input type="hidden" name="slug" value={item.publish.slug} />
+        <input type="hidden" name="title" value={text(payload.title)} />
+        <input type="hidden" name="summary" value={text(payload.summary)} />
+        <input type="hidden" name="body" value={text(payload.body)} />
+        <input type="hidden" name="seoTitle" value={text(payload.seoTitle)} />
+        <input type="hidden" name="seoDescription" value={text(payload.seoDescription)} />
+        {bool(payload.noIndex) ? <input type="hidden" name="noIndex" value="on" /> : null}
+        <button type="submit">Yayınla</button>
+      </form>
+    );
+  }
+
   const payload = item.publish.payload;
   return (
     <form action={saveCmsGuideAction}>
@@ -204,7 +224,12 @@ export default async function PublishQueuePage() {
                COALESCE(u.displayName, u.fullName) AS actorName, u.email AS actorEmail
         FROM ContentPage p
         LEFT JOIN User u ON u.id = p.updatedById
-        WHERE (p.contentKey LIKE 'legal:%' OR p.contentKey LIKE 'guide:%')
+        WHERE (
+          p.contentKey LIKE 'legal:%'
+          OR p.contentKey LIKE 'guide:%'
+          OR p.contentKey LIKE 'page:tr:%'
+          OR p.contentKey LIKE 'page:en:%'
+        )
           AND p.status <> 'archived'
         ORDER BY p.updatedAt DESC
         LIMIT 500
@@ -309,6 +334,20 @@ export default async function PublishQueuePage() {
           previewHref: `/icerik/onizleme/rehber/${page.id}?dil=${locale}`,
           publish: { type: "guide", locale, id: page.id, slug, payload },
         });
+      } else if (page.contentKey.startsWith("page:")) {
+        items.push({
+          key: `staged-${row.contentKey}`,
+          kind: "page",
+          title: text(payload.title) || page.title,
+          detail: "Yayındaki kurumsal sayfanın çalışma taslağı",
+          locale,
+          stage: "working",
+          updatedAt: row.updatedAt,
+          actor: actor(row),
+          editHref: `/icerik/sayfalar/${page.id}`,
+          previewHref: `/icerik/onizleme/sayfa/${page.id}`,
+          publish: { type: "page", locale, id: page.id, slug: page.slug.replace(/^\//, ""), payload },
+        });
       }
     }
   }
@@ -359,6 +398,28 @@ export default async function PublishQueuePage() {
         editHref: `/icerik/rehber/${page.id}?dil=${locale}`,
         previewHref: `/icerik/onizleme/rehber/${page.id}?dil=${locale}`,
         publish: { type: "guide", locale, id: page.id, slug, payload },
+      });
+    } else if (page.contentKey.startsWith("page:")) {
+      const payload: Payload = {
+        title: page.title,
+        summary: text(body.summary),
+        body: text(body.body),
+        seoTitle: page.seoTitle || "",
+        seoDescription: page.seoDescription || "",
+        noIndex: Boolean(page.noIndex),
+      };
+      items.push({
+        key: `initial-page-${page.id}`,
+        kind: "page",
+        title: page.title,
+        detail: "Henüz ilk kez yayınlanmamış kurumsal sayfa",
+        locale,
+        stage: "initial",
+        updatedAt: page.updatedAt,
+        actor: actor(page),
+        editHref: `/icerik/sayfalar/${page.id}`,
+        previewHref: `/icerik/onizleme/sayfa/${page.id}`,
+        publish: { type: "page", locale, id: page.id, slug: page.slug.replace(/^\//, ""), payload },
       });
     }
   }

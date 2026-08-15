@@ -109,6 +109,7 @@ async function loadHealth() {
       WHERE status = 'published'
         AND contentKey NOT LIKE 'legal:en:%'
         AND contentKey NOT LIKE 'guide:en:%'
+        AND contentKey NOT LIKE 'page:en:%'
         AND (
           COALESCE(TRIM(seoTitle), '') = ''
           OR COALESCE(TRIM(seoDescription), '') = ''
@@ -122,7 +123,12 @@ async function loadHealth() {
     prisma.$queryRaw<CountRow[]>`
       SELECT COUNT(*) AS total FROM ContentPage
       WHERE status = 'draft'
-        AND (contentKey LIKE 'legal:%' OR contentKey LIKE 'guide:%')
+        AND (
+          contentKey LIKE 'legal:%'
+          OR contentKey LIKE 'guide:%'
+          OR contentKey LIKE 'page:tr:%'
+          OR contentKey LIKE 'page:en:%'
+        )
     `,
     prisma.$queryRaw<CountRow[]>`
       SELECT COUNT(*) AS total FROM SiteContent

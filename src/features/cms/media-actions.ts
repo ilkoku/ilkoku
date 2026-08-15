@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { requireCmsManager } from "@/lib/cms-access";
+import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
 
 function value(formData: FormData, key: string, max = 500) {
@@ -49,7 +49,7 @@ export async function createMediaAssetAction(formData: FormData) {
 }
 
 export async function archiveMediaAssetAction(formData: FormData) {
-  const { user } = await requireCmsManager("/icerik/medya");
+  const { user } = await requireCmsPublisher("/icerik/medya");
   const contentKey = value(formData, "contentKey", 200);
   if (!contentKey.startsWith("asset_")) return;
 

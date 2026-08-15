@@ -44,6 +44,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Diagnose production dependency audit
+        shell: bash
+        run: |
+          echo "=== PRODUCTION DEPENDENCIES ==="
+          npm audit --omit=dev --audit-level=high || true
+          echo
+          echo "=== ALL DEPENDENCIES ==="
+          npm audit --audit-level=high || true
+
       - name: Run lint
         run: npm run lint
 

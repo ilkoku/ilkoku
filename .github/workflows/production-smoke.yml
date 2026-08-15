@@ -98,6 +98,15 @@ jobs:
             check_protected_route "$url"
           }
 
+          check_post_merge_public_route() {
+            local url="$1"
+            local expected="$2"
+            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+              return 0
+            fi
+            check_public_route "$url" "$expected"
+          }
+
           check_post_merge_body_contains() {
             if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
               return 0
@@ -128,6 +137,7 @@ jobs:
             if check_public_route "https://ilkoku.com/" "200" \
               && check_public_route "https://ilkoku.com/giris" "200" \
               && check_public_route "https://ilkoku.com/yardim" "200" \
+              && check_public_route "https://ilkoku.com/editorler" "200" \
               && check_public_route "https://ilkoku.com/yasal/kullanim-sartlari" "200" \
               && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
               && check_public_route "https://ilkoku.com/yasal/kvkk" "200" \
@@ -144,6 +154,11 @@ jobs:
                 "https://ilkoku.com/yasal/kvkk" \
                 "https://ilkoku.com/yasal/cerez-politikasi" \
                 "https://ilkoku.com/yasal/telif-hakki-politikasi" \
+              && check_post_merge_public_route "https://ilkoku.com/editorler/merve-kaya" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/editorler/baris-erdem" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/editorler/derya-unal" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/editorler/kaan-sahin" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/kitap/test0408-2959175c" "404" \
               && check_post_merge_body_contains "https://ilkoku.com/robots.txt" \
                 "Disallow: /admin" \
                 "Disallow: /icerik" \
@@ -165,7 +180,7 @@ jobs:
               && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production route'ları, 5 yasal sayfa, sitemap, robots ve Sprint 3 public SEO sözleşmesi doğrulandı."
+              echo "PASS: Production route'ları, 5 yasal sayfa, sitemap, robots ve Sprint 3 public içerik güvenliği doğrulandı."
               exit 0
             fi
 

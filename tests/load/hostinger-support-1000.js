@@ -29,7 +29,7 @@ export const options = {
   summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
 };
 
-export default function () {
+export default function hostingerSupportLoadScenario() {
   const response = http.get("https://ilkoku.com", { timeout: "30s" });
   const status = response.status;
 

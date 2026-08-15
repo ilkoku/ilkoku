@@ -1,13 +1,9 @@
-import { editorsContent } from "@/content";
 import type { HumanEditor } from "./types";
 
-export const editors: readonly HumanEditor[] = editorsContent.data.map((editor) => ({
-  ...editor,
-  specialties: [...editor.specialties],
-  genres: [...editor.genres],
-  sampleTopics: [...editor.sampleTopics],
-  authorReviews: editor.authorReviews.map((review) => ({ ...review })),
-}));
+// Public editor profiles must represent verified real people only.
+// The previous entries were product/demo fixtures and are intentionally
+// excluded from the live directory until a verified editor data source is used.
+export const editors: readonly HumanEditor[] = [];
 
 export function findEditorBySlug(slug: string) {
   return editors.find((editor) => editor.slug === slug);

@@ -71,7 +71,7 @@ export default async function RevisionCenterPage() {
         <div>
           <span>Sistem</span>
           <h1>Revision Center</h1>
-          <p>Yasal sayfa ve rehber sürümlerini inceleyin, değişiklikleri karşılaştırın ve uygun sürümleri güvenle geri yükleyin.</p>
+          <p>Yasal sayfa, rehber ve kurumsal sayfa sürümlerini inceleyin, değişiklikleri karşılaştırın ve uygun sürümleri güvenle geri yükleyin.</p>
         </div>
       </div>
 
@@ -89,7 +89,7 @@ export default async function RevisionCenterPage() {
         </div>
 
         {prepared.length === 0 ? (
-          <div className="content-empty"><strong>Henüz sürüm kaydı yok.</strong><p>Yasal sayfa veya rehber kaydedildiğinde revision kayıtları burada görünür.</p></div>
+          <div className="content-empty"><strong>Henüz sürüm kaydı yok.</strong><p>Yasal sayfa, rehber veya kurumsal sayfa kaydedildiğinde revision kayıtları burada görünür.</p></div>
         ) : (
           <div className="revision-list">
             {prepared.map((item) => (

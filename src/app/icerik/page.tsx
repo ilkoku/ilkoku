@@ -139,6 +139,7 @@ export default async function ContentDashboardPage() {
   const guideHref = data.readiness.guideId ? `/icerik/rehber/${data.readiness.guideId}?dil=tr` : "/icerik/rehber?dil=tr";
   const faqHref = data.readiness.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqFocusKey}` : "/icerik/sss?dil=tr";
   const faqArchivedHref = data.readiness.faqArchivedKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqArchivedKey}` : "/icerik/sss?dil=tr";
+  const faqPendingHref = data.readiness.faqPendingDraftKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqPendingDraftKey}` : faqHref;
 
   const activity: ActivityItem[] = [
     ...data.recentPages.map((page) => ({ key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt })),
@@ -196,9 +197,33 @@ export default async function ContentDashboardPage() {
           text: "Sprint 3 başlangıç setinden rehber taslağını oluşturun.", action: "Başlangıç setini aç", level: "warn" as const,
         }
       : null,
+    data.readiness.corporate >= cmsReadinessTargets.corporate && data.readiness.corporatePendingDraft > 0 ? {
+      href: corporateHref,
+      title: "Hakkımızda yayında · değişiklik taslağı var",
+      text: "Mevcut Hakkımızda canlı ve kabul edilmiş durumda. Bekleyen değişiklik yayınlanana kadar canlı metin değişmez.",
+      action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele",
+      level: "info" as const,
+    } : null,
+    data.readiness.faq >= cmsReadinessTargets.faq && data.readiness.faqPendingDrafts > 0 ? {
+      href: faqPendingHref,
+      title: `${data.readiness.faqPendingDrafts} temel SSS için değişiklik taslağı var`,
+      text: "Dört temel SSS canlı kalmaya devam ediyor. Panel ilk bekleyen starter SSS değişikliğine doğrudan gider.",
+      action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele",
+      level: "info" as const,
+    } : null,
+    data.readiness.guides >= cmsReadinessTargets.guides && data.readiness.guidesPendingDraft > 0 ? {
+      href: guideHref,
+      title: "İlkOku Nasıl Çalışır yayında · değişiklik taslağı var",
+      text: "Canlı rehber kabul edilmiş durumda. Bekleyen editoryal değişiklik ayrıca yayınlanana kadar public rehber değişmez.",
+      action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele",
+      level: "info" as const,
+    } : null,
     data.publishQueue > 0 ? {
       href: "/icerik/yayin-kuyrugu", title: `${data.publishQueue} içerik operasyon kuyruğunda`,
-      text: "Bu taslaklar mevcut canlı kabul sonucunu bozmaz. Önizleyin, planlayın veya yayın yetkisiyle canlıya alın.", action: "Kuyruğu aç", level: "info" as const,
+      text: starter.pendingTotal > 0
+        ? `${starter.pendingTotal} kayıt temel Sprint 3 içeriğindeki değişikliklerden oluşuyor; kuyruk diğer taslakları da kapsar. Canlı kabul sonucu değişmez.`
+        : "Bu taslaklar mevcut canlı kabul sonucunu bozmaz. Önizleyin, planlayın veya yayın yetkisiyle canlıya alın.",
+      action: "Kuyruğu aç", level: "info" as const,
     } : null,
     data.seoIssues > 0 ? {
       href: "/icerik/seo", title: `${data.seoIssues} yayındaki TR sayfada SEO alanı eksik`, text: "Title, description veya canonical eksiklerini tamamlayın.", action: "SEO'yu düzelt", level: "warn" as const,
@@ -218,6 +243,7 @@ export default async function ContentDashboardPage() {
   const metrics = [
     { label: "Yayın hazırlığı", value: `${summary.corePassed}/${summary.coreTotal}`, note: "canlı kabul alanı", href: "/icerik/hazirlik" },
     { label: "Başlangıç seti", value: `${starter.createdTotal}/${starter.total}`, note: starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : `${starter.publishedTotal} canlı`, href: "/icerik/hazirlik" },
+    { label: "Bekleyen temel değişiklik", value: starter.pendingTotal, note: "canlı yayını bozmuyor", href: "/icerik/hazirlik" },
     { label: "Operasyon kuyruğu", value: data.publishQueue, note: "canlı kabulden bağımsız", href: "/icerik/yayin-kuyrugu" },
     { label: "SEO eksiği", value: data.seoIssues, note: "yayındaki TR sayfa", href: "/icerik/seo" },
     { label: "Form talebi", value: data.forms, note: "açık kayıt", href: "/icerik/formlar" },
@@ -228,11 +254,29 @@ export default async function ContentDashboardPage() {
   ];
 
   const quickActions = starter.complete ? [
-    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 canlı kabul durumunu aç" },
-    { href: corporateHref, label: "Hakkımızda", text: access.canPublish ? "Kaydı incele / yayınla" : "Kurumsal taslağı incele" },
-    { href: faqHref, label: "Temel SSS", text: access.canPublish ? "İlk açık kaydı incele / yayınla" : "İlk açık yardım kaydını incele" },
-    { href: guideHref, label: "İlkOku Nasıl Çalışır", text: access.canPublish ? "Rehberi incele / yayınla" : "Rehber taslağını incele" },
-    { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen taslakları yönet" },
+    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: starter.pendingTotal > 0 ? `${starter.pendingTotal} temel değişiklik bekliyor` : "Sprint 3 canlı kabul durumunu aç" },
+    {
+      href: corporateHref,
+      label: "Hakkımızda",
+      text: data.readiness.corporatePendingDraft > 0
+        ? access.canPublish ? "Bekleyen değişikliği incele / yayınla" : "Bekleyen değişikliği incele"
+        : access.canPublish ? "Kaydı incele / yayınla" : "Kurumsal taslağı incele",
+    },
+    {
+      href: data.readiness.faqPendingDrafts > 0 ? faqPendingHref : faqHref,
+      label: "Temel SSS",
+      text: data.readiness.faqPendingDrafts > 0
+        ? access.canPublish ? `Bekleyen değişikliği incele / yayınla (${data.readiness.faqPendingDrafts})` : `Bekleyen değişikliği incele (${data.readiness.faqPendingDrafts})`
+        : access.canPublish ? "İlk açık kaydı incele / yayınla" : "İlk açık yardım kaydını incele",
+    },
+    {
+      href: guideHref,
+      label: "İlkOku Nasıl Çalışır",
+      text: data.readiness.guidesPendingDraft > 0
+        ? access.canPublish ? "Bekleyen değişikliği incele / yayınla" : "Bekleyen değişikliği incele"
+        : access.canPublish ? "Rehberi incele / yayınla" : "Rehber taslağını incele",
+    },
+    { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen tüm taslakları yönet" },
   ] : [
     { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 canlı kabul durumunu aç" },
     { href: "/icerik/sayfalar/yeni", label: "+ Yeni Sayfa", text: "Kurumsal taslak oluştur" },
@@ -244,7 +288,7 @@ export default async function ContentDashboardPage() {
     <section className="content-dashboard">
       <div className="content-page-heading content-dashboard-heading">
         <div><span>Operasyon Merkezi</span><h1>İçerik Genel Bakış</h1><p>İlkOku.com için bugün ne yapılması gerektiğini, canlı yayın kabulünü ve son değişiklikleri tek ekrandan yönetin.</p></div>
-        <div className={`content-health-badge ${healthClass}`}><small>Canlı içerik durumu</small><strong>{healthLabel}</strong><span>{summary.corePassed}/{summary.coreTotal} temel alan hazır · {starter.createdTotal}/{starter.total} aktif başlangıç kaydı · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span></div>
+        <div className={`content-health-badge ${healthClass}`}><small>Canlı içerik durumu</small><strong>{healthLabel}</strong><span>{summary.corePassed}/{summary.coreTotal} temel alan hazır · {starter.createdTotal}/{starter.total} aktif başlangıç kaydı · {starter.pendingTotal} bekleyen temel değişiklik · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span></div>
       </div>
 
       <div className="content-dashboard-quick-actions" aria-label="Hızlı işlemler">
@@ -258,7 +302,7 @@ export default async function ContentDashboardPage() {
       <div className="content-dashboard-columns">
         <div className="content-panel content-dashboard-panel">
           <div className="content-dashboard-section-title"><div><span>Bugün</span><h2>Yapılması gerekenler</h2></div><Link href="/icerik/hazirlik">Tüm kabul →</Link></div>
-          {tasks.length === 0 ? <div className="content-dashboard-success"><strong>İçerik operasyonunda açık konu görünmüyor.</strong><p>Temel canlı yayın kabulü ve SEO kontrolleri temiz.</p></div> : (
+          {tasks.length === 0 ? <div className="content-dashboard-success"><strong>İçerik operasyonunda açık konu görünmüyor.</strong><p>Temel canlı yayın kabulü, bekleyen temel değişiklikler ve SEO kontrolleri temiz.</p></div> : (
             <div className="content-task-list">{tasks.map((task, index) => (
               <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}>
                 <div className="content-task-item__body"><div className="content-task-item__meta"><span>{taskLevelLabel(task.level)}</span><small>#{index + 1}</small></div><strong>{task.title}</strong><p>{task.text}</p></div>

@@ -37,17 +37,21 @@ export type CmsReadinessSnapshot = {
   corporateCreated: number;
   corporateArchived: number;
   corporateSeoReady: number;
+  corporatePendingDraft: number;
   corporateId: string | null;
   corporateStatus: CmsContentStatus | null;
   faq: number;
   faqCreated: number;
   faqArchived: number;
+  faqPendingDrafts: number;
   faqFocusKey: string | null;
   faqArchivedKey: string | null;
+  faqPendingDraftKey: string | null;
   guides: number;
   guidesCreated: number;
   guidesArchived: number;
   guidesSeoReady: number;
+  guidesPendingDraft: number;
   guideId: string | null;
   guideStatus: CmsContentStatus | null;
   media: number;
@@ -62,17 +66,21 @@ type ReadinessRow = {
   corporateCreated: bigint | number;
   corporateArchived: bigint | number;
   corporateSeoReady: bigint | number;
+  corporatePendingDraft: bigint | number;
   corporateId: string | null;
   corporateStatus: CmsContentStatus | null;
   faq: bigint | number;
   faqCreated: bigint | number;
   faqArchived: bigint | number;
+  faqPendingDrafts: bigint | number;
   faqFocusKey: string | null;
   faqArchivedKey: string | null;
+  faqPendingDraftKey: string | null;
   guides: bigint | number;
   guidesCreated: bigint | number;
   guidesArchived: bigint | number;
   guidesSeoReady: bigint | number;
+  guidesPendingDraft: bigint | number;
   guideId: string | null;
   guideStatus: CmsContentStatus | null;
   media: bigint | number;
@@ -117,6 +125,12 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
           AND COALESCE(TRIM(seoTitle), '') <> ''
           AND COALESCE(TRIM(seoDescription), '') <> ''
           AND COALESCE(TRIM(canonicalUrl), '') <> '') AS corporateSeoReady,
+      (SELECT COUNT(*) FROM SiteContent draft
+        INNER JOIN ContentPage page ON draft.contentKey = CONCAT('page:', page.id)
+        WHERE draft.namespace = 'cms_draft'
+          AND draft.status = 'draft'
+          AND page.contentKey = 'page:tr:hakkimizda'
+          AND page.status = 'published') AS corporatePendingDraft,
       (SELECT id FROM ContentPage
         WHERE contentKey = 'page:tr:hakkimizda'
         ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
@@ -152,6 +166,15 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
             'item_starter_editor_inceleme',
             'item_starter_yayinevi_kesif'
           )) AS faqArchived,
+      (SELECT COUNT(*) FROM SiteContent
+        WHERE namespace = 'cms_draft'
+          AND status = 'draft'
+          AND contentKey IN (
+            'faq:tr:item_starter_ilkoku_nedir',
+            'faq:tr:item_starter_yazar_yayin',
+            'faq:tr:item_starter_editor_inceleme',
+            'faq:tr:item_starter_yayinevi_kesif'
+          )) AS faqPendingDrafts,
       (SELECT contentKey FROM SiteContent
         WHERE namespace = 'faq'
           AND contentKey IN (
@@ -185,6 +208,22 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
           ELSE 3
         END
         LIMIT 1) AS faqArchivedKey,
+      (SELECT REPLACE(contentKey, 'faq:tr:', '') FROM SiteContent
+        WHERE namespace = 'cms_draft'
+          AND status = 'draft'
+          AND contentKey IN (
+            'faq:tr:item_starter_ilkoku_nedir',
+            'faq:tr:item_starter_yazar_yayin',
+            'faq:tr:item_starter_editor_inceleme',
+            'faq:tr:item_starter_yayinevi_kesif'
+          )
+        ORDER BY CASE contentKey
+          WHEN 'faq:tr:item_starter_ilkoku_nedir' THEN 0
+          WHEN 'faq:tr:item_starter_yazar_yayin' THEN 1
+          WHEN 'faq:tr:item_starter_editor_inceleme' THEN 2
+          ELSE 3
+        END
+        LIMIT 1) AS faqPendingDraftKey,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status = 'published'
           AND contentKey = 'guide:ilkoku-nasil-calisir'
@@ -202,6 +241,12 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
           AND COALESCE(TRIM(seoTitle), '') <> ''
           AND COALESCE(TRIM(seoDescription), '') <> ''
           AND COALESCE(TRIM(canonicalUrl), '') <> '') AS guidesSeoReady,
+      (SELECT COUNT(*) FROM SiteContent draft
+        INNER JOIN ContentPage page ON draft.contentKey = CONCAT('page:', page.id)
+        WHERE draft.namespace = 'cms_draft'
+          AND draft.status = 'draft'
+          AND page.contentKey = 'guide:ilkoku-nasil-calisir'
+          AND page.status = 'published') AS guidesPendingDraft,
       (SELECT id FROM ContentPage
         WHERE contentKey = 'guide:ilkoku-nasil-calisir'
         ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
@@ -249,17 +294,21 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
     corporateCreated: value(row?.corporateCreated),
     corporateArchived: value(row?.corporateArchived),
     corporateSeoReady: value(row?.corporateSeoReady),
+    corporatePendingDraft: value(row?.corporatePendingDraft),
     corporateId: row?.corporateId ?? null,
     corporateStatus: row?.corporateStatus ?? null,
     faq: value(row?.faq),
     faqCreated: value(row?.faqCreated),
     faqArchived: value(row?.faqArchived),
+    faqPendingDrafts: value(row?.faqPendingDrafts),
     faqFocusKey: row?.faqFocusKey ?? null,
     faqArchivedKey: row?.faqArchivedKey ?? null,
+    faqPendingDraftKey: row?.faqPendingDraftKey ?? null,
     guides: value(row?.guides),
     guidesCreated: value(row?.guidesCreated),
     guidesArchived: value(row?.guidesArchived),
     guidesSeoReady: value(row?.guidesSeoReady),
+    guidesPendingDraft: value(row?.guidesPendingDraft),
     guideId: row?.guideId ?? null,
     guideStatus: row?.guideStatus ?? null,
     media: value(row?.media),
@@ -281,6 +330,9 @@ export function getCmsStarterSummary(data: CmsReadinessSnapshot) {
     + Math.min(data.guides, cmsStarterTargets.guides);
   const seoReady = Math.min(data.corporateSeoReady, cmsStarterTargets.corporate)
     + Math.min(data.guidesSeoReady, cmsStarterTargets.guides);
+  const pendingTotal = Math.min(data.corporatePendingDraft, cmsStarterTargets.corporate)
+    + Math.min(data.faqPendingDrafts, cmsStarterTargets.faq)
+    + Math.min(data.guidesPendingDraft, cmsStarterTargets.guides);
 
   return {
     createdTotal,
@@ -291,6 +343,7 @@ export function getCmsStarterSummary(data: CmsReadinessSnapshot) {
     total: cmsStarterTargets.total,
     seoReady,
     seoTotal: cmsStarterTargets.seo,
+    pendingTotal,
     complete: createdTotal >= cmsStarterTargets.total,
   };
 }

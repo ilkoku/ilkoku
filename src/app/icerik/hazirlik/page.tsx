@@ -38,13 +38,18 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
     ? `/icerik/onizleme/sayfa/${data.corporateId}`
     : undefined;
   const faqHref = data.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.faqFocusKey}` : "/icerik/sss?dil=tr";
+  const faqPendingHref = data.faqPendingDraftKey
+    ? `/icerik/sss?dil=tr#faq-${data.faqPendingDraftKey}`
+    : faqHref;
   const guideHref = data.guideId ? `/icerik/rehber/${data.guideId}?dil=tr` : "/icerik/hazirlik";
   const guidePreviewHref = data.guideId && data.guideStatus !== "archived"
     ? `/icerik/onizleme/rehber/${data.guideId}?dil=tr`
     : undefined;
 
   const corporateDetail = data.corporate >= cmsReadinessTargets.corporate
-    ? "Hakkımızda yayında ve indexlenebilir."
+    ? data.corporatePendingDraft > 0
+      ? "Hakkımızda yayında ve indexlenebilir. Canlı yayını değiştirmeyen bir değişiklik taslağı bekliyor."
+      : "Hakkımızda yayında ve indexlenebilir."
     : data.corporateCreated >= cmsStarterTargets.corporate
       ? data.corporateSeoReady >= cmsStarterTargets.corporate
         ? "Hakkımızda taslağı ve temel SEO alanları hazır. Önizleme ve yayın bekliyor."
@@ -54,7 +59,9 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
         : "Hakkımızda kaydı henüz yok. Sprint 3 başlangıç setinden güvenli taslak oluşturabilirsiniz.";
 
   const faqDetail = data.faq >= cmsReadinessTargets.faq
-    ? "Dört temel TR yardım kaydının tamamı yayında."
+    ? data.faqPendingDrafts > 0
+      ? `Dört temel TR yardım kaydının tamamı yayında. ${data.faqPendingDrafts} temel SSS için canlıyı değiştirmeyen değişiklik taslağı bekliyor.`
+      : "Dört temel TR yardım kaydının tamamı yayında."
     : data.faqCreated >= cmsStarterTargets.faq
       ? `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı; ${data.faq}/${cmsReadinessTargets.faq} yayında. Panel ilk işlem gerektiren temel SSS'ye gider.`
       : data.faqArchived > 0
@@ -62,7 +69,9 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
         : `${data.faqCreated}/${cmsStarterTargets.faq} temel SSS kayıtlı. Eksik başlangıç kayıtlarını tamamlayın.`;
 
   const guideDetail = data.guides >= cmsReadinessTargets.guides
-    ? "İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir."
+    ? data.guidesPendingDraft > 0
+      ? "İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir. Canlı yayını değiştirmeyen bir değişiklik taslağı bekliyor."
+      : "İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir."
     : data.guidesCreated >= cmsStarterTargets.guides
       ? data.guidesSeoReady >= cmsStarterTargets.guides
         ? "İlkOku Nasıl Çalışır taslağı ve temel SEO alanları hazır. Önizleme ve yayın bekliyor."
@@ -90,12 +99,14 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
     },
     {
       label: "Hakkımızda",
-      value: `Kayıt ${data.corporateCreated}/${cmsStarterTargets.corporate} · Canlı ${data.corporate}/${cmsReadinessTargets.corporate}`,
+      value: `Kayıt ${data.corporateCreated}/${cmsStarterTargets.corporate} · Canlı ${data.corporate}/${cmsReadinessTargets.corporate}${data.corporatePendingDraft > 0 ? " · Değişiklik 1" : ""}`,
       level: data.corporate >= cmsReadinessTargets.corporate ? "pass" : "warn",
       detail: corporateDetail,
       href: corporateHref,
       action: data.corporate >= cmsReadinessTargets.corporate
-        ? "Kaydı aç"
+        ? data.corporatePendingDraft > 0
+          ? canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele"
+          : "Kaydı aç"
         : data.corporateCreated >= cmsStarterTargets.corporate
           ? canPublish ? "İncele ve yayınla" : "Taslağı incele"
           : data.corporateArchived > 0 ? "Arşiv kaydını aç" : "Başlangıç setini aç",
@@ -104,12 +115,14 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
     },
     {
       label: "Temel SSS",
-      value: `Kayıt ${data.faqCreated}/${cmsStarterTargets.faq} · Canlı ${data.faq}/${cmsReadinessTargets.faq}`,
+      value: `Kayıt ${data.faqCreated}/${cmsStarterTargets.faq} · Canlı ${data.faq}/${cmsReadinessTargets.faq}${data.faqPendingDrafts > 0 ? ` · Değişiklik ${data.faqPendingDrafts}` : ""}`,
       level: data.faq >= cmsReadinessTargets.faq ? "pass" : "warn",
       detail: faqDetail,
-      href: faqHref,
+      href: data.faq >= cmsReadinessTargets.faq && data.faqPendingDrafts > 0 ? faqPendingHref : faqHref,
       action: data.faq >= cmsReadinessTargets.faq
-        ? "Temel SSS'leri aç"
+        ? data.faqPendingDrafts > 0
+          ? canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele"
+          : "Temel SSS'leri aç"
         : data.faqCreated > 0 || data.faqArchived > 0
           ? canPublish ? "İncele ve yayınla" : "Taslakları incele"
           : "SSS modülünü aç",
@@ -118,12 +131,14 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
     },
     {
       label: "İlkOku Nasıl Çalışır",
-      value: `Kayıt ${data.guidesCreated}/${cmsStarterTargets.guides} · Canlı ${data.guides}/${cmsReadinessTargets.guides}`,
+      value: `Kayıt ${data.guidesCreated}/${cmsStarterTargets.guides} · Canlı ${data.guides}/${cmsReadinessTargets.guides}${data.guidesPendingDraft > 0 ? " · Değişiklik 1" : ""}`,
       level: data.guides >= cmsReadinessTargets.guides ? "pass" : "warn",
       detail: guideDetail,
       href: guideHref,
       action: data.guides >= cmsReadinessTargets.guides
-        ? "Kaydı aç"
+        ? data.guidesPendingDraft > 0
+          ? canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele"
+          : "Kaydı aç"
         : data.guidesCreated >= cmsStarterTargets.guides
           ? canPublish ? "İncele ve yayınla" : "Taslağı incele"
           : data.guidesArchived > 0 ? "Arşiv kaydını aç" : "Başlangıç setini aç",
@@ -191,6 +206,7 @@ export default async function ContentReadinessPage({
         total: cmsStarterTargets.total,
         seoReady: 0,
         seoTotal: cmsStarterTargets.seo,
+        pendingTotal: 0,
         complete: false,
       };
   const blockers = items.filter((item) => item.level === "blocker").length;
@@ -205,6 +221,7 @@ export default async function ContentReadinessPage({
   const guideHref = data?.guideId ? `/icerik/rehber/${data.guideId}?dil=tr` : "/icerik/rehber?dil=tr";
   const faqHref = data?.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.faqFocusKey}` : "/icerik/sss?dil=tr";
   const faqArchivedHref = data?.faqArchivedKey ? `/icerik/sss?dil=tr#faq-${data.faqArchivedKey}` : "/icerik/sss?dil=tr";
+  const faqPendingHref = data?.faqPendingDraftKey ? `/icerik/sss?dil=tr#faq-${data.faqPendingDraftKey}` : faqHref;
 
   return (
     <section className="content-editor-page">
@@ -253,15 +270,30 @@ export default async function ContentReadinessPage({
           <div className="content-panel" style={{ marginTop: "1rem" }}>
             <div className="content-section-heading">
               <div><span>Sprint 3 Akışı</span><h2>Taslak → SEO → Yayın</h2></div>
-              <p>Başlangıç setinin oluşturulması ile canlı yayın birbirinden ayrı izlenir.</p>
+              <p>Başlangıç setinin oluşturulması, canlı yayın ve sonradan hazırlanan değişiklikler ayrı izlenir.</p>
             </div>
             <div className="content-metric-grid">
               <article className="content-metric-card"><span>Başlangıç seti</span><strong>{starter.createdTotal}/{starter.total}</strong><small>{starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : "aktif kayıt"}</small></article>
               <article className="content-metric-card"><span>Canlı temel içerik</span><strong>{starter.publishedTotal}/{starter.total}</strong><small>yayında</small></article>
               <article className="content-metric-card"><span>SEO hazır</span><strong>{starter.seoReady}/{starter.seoTotal}</strong><small>Hakkımızda + Rehber</small></article>
-              <article className="content-metric-card"><span>Operasyon kuyruğu</span><strong>{data.queue}</strong><small>canlı kabulden bağımsız</small></article>
+              <article className="content-metric-card"><span>Bekleyen temel değişiklik</span><strong>{starter.pendingTotal}</strong><small>canlı kabulü bozmaz</small></article>
+              <article className="content-metric-card"><span>Operasyon kuyruğu</span><strong>{data.queue}</strong><small>tüm bekleyen taslaklar</small></article>
             </div>
           </div>
+
+          {starter.pendingTotal > 0 ? (
+            <div className="content-panel" style={{ marginTop: "1rem" }} role="status">
+              <div className="content-section-heading">
+                <div><span>Editoryal Takip</span><h2>Yayındaki içerikte {starter.pendingTotal} bekleyen temel değişiklik var</h2></div>
+              </div>
+              <p>Canlı içerik mevcut haliyle yayında kalır ve yayın kabulü değişmez. Aşağıdaki taslaklar yalnız ayrıca yayınlandığında canlı içeriğin yerini alır.</p>
+              <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
+                {data.corporatePendingDraft > 0 ? <Link href={corporateHref}>{access.canPublish ? "Hakkımızda değişikliğini incele/yayınla" : "Hakkımızda değişikliğini incele"} →</Link> : null}
+                {data.faqPendingDrafts > 0 ? <Link href={faqPendingHref}>{access.canPublish ? `SSS değişikliğini incele/yayınla (${data.faqPendingDrafts})` : `SSS değişikliğini incele (${data.faqPendingDrafts})`} →</Link> : null}
+                {data.guidesPendingDraft > 0 ? <Link href={guideHref}>{access.canPublish ? "Rehber değişikliğini incele/yayınla" : "Rehber değişikliğini incele"} →</Link> : null}
+              </div>
+            </div>
+          ) : null}
 
           {starter.archivedTotal > 0 ? (
             <div className="content-panel" style={{ marginTop: "1rem" }} role="alert">

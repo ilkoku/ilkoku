@@ -128,8 +128,8 @@ function total(rows: CountRow[]) {
   return Number(rows[0]?.total ?? 0);
 }
 
-async function addInitialRevision(pageId: string, userId: string, seed: PageSeed) {
-  const snapshot = {
+function initialRevisionSnapshot(seed: PageSeed) {
+  return {
     kind: seed.kind,
     locale: "tr",
     title: seed.title,
@@ -141,79 +141,75 @@ async function addInitialRevision(pageId: string, userId: string, seed: PageSeed
     status: "draft",
     _meta: { action: "starter-draft" },
   };
-
-  await prisma.$executeRaw`
-    INSERT INTO ContentRevision (id, pageId, version, snapshotJson, createdById, createdAt)
-    VALUES (${randomUUID()}, ${pageId}, 1, ${JSON.stringify(snapshot)}, ${userId}, CURRENT_TIMESTAMP(3))
-  `;
-}
-
-async function createPageSeed(seed: PageSeed, userId: string) {
-  const existing = await prisma.$queryRaw<CountRow[]>`
-    SELECT COUNT(*) AS total FROM ContentPage
-    WHERE contentKey = ${seed.contentKey} OR slug = ${seed.slug}
-  `;
-  if (total(existing) > 0) return false;
-
-  const id = randomUUID();
-  const bodyJson = JSON.stringify({ summary: seed.summary, body: seed.body });
-  await prisma.$executeRaw`
-    INSERT INTO ContentPage (
-      id, contentKey, slug, title, status, bodyJson,
-      seoTitle, seoDescription, canonicalUrl, noIndex, publishedAt,
-      createdById, updatedById, createdAt, updatedAt
-    ) VALUES (
-      ${id}, ${seed.contentKey}, ${seed.slug}, ${seed.title}, 'draft', ${bodyJson},
-      ${seed.seoTitle}, ${seed.seoDescription}, ${seed.slug}, false, NULL,
-      ${userId}, ${userId}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
-    )
-  `;
-  await addInitialRevision(id, userId, seed);
-  return true;
-}
-
-async function createFaqSeed(seed: FaqSeed, userId: string) {
-  const existing = await prisma.$queryRaw<CountRow[]>`
-    SELECT COUNT(*) AS total FROM SiteContent
-    WHERE namespace = 'faq' AND contentKey = ${seed.contentKey}
-  `;
-  if (total(existing) > 0) return false;
-
-  const payload = JSON.stringify({
-    id: seed.contentKey.replace(/^item_/, ""),
-    question: seed.question,
-    answer: seed.answer,
-    category: seed.category,
-    audience: seed.audience,
-    position: seed.position,
-  });
-
-  await prisma.$executeRaw`
-    INSERT INTO SiteContent (
-      id, namespace, contentKey, valueJson, valueType, status,
-      updatedById, createdAt, updatedAt
-    ) VALUES (
-      ${randomUUID()}, 'faq', ${seed.contentKey}, ${payload}, 'json', 'draft',
-      ${userId}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
-    )
-  `;
-  return true;
 }
 
 export async function createStarterContentDraftsAction() {
   const access = await requireCmsManager("/icerik/hazirlik");
   const userId = access.user!.id;
 
-  let pagesCreated = 0;
-  let faqsCreated = 0;
+  const { pagesCreated, faqsCreated } = await prisma.$transaction(async (tx) => {
+    let pagesCreated = 0;
+    let faqsCreated = 0;
 
-  for (const seed of pageSeeds) {
-    if (await createPageSeed(seed, userId)) pagesCreated += 1;
-  }
+    for (const seed of pageSeeds) {
+      const existing = await tx.$queryRaw<CountRow[]>`
+        SELECT COUNT(*) AS total FROM ContentPage
+        WHERE contentKey = ${seed.contentKey} OR slug = ${seed.slug}
+      `;
+      if (total(existing) > 0) continue;
 
-  for (const seed of faqSeeds) {
-    if (await createFaqSeed(seed, userId)) faqsCreated += 1;
-  }
+      const id = randomUUID();
+      const bodyJson = JSON.stringify({ summary: seed.summary, body: seed.body });
+      await tx.$executeRaw`
+        INSERT INTO ContentPage (
+          id, contentKey, slug, title, status, bodyJson,
+          seoTitle, seoDescription, canonicalUrl, noIndex, publishedAt,
+          createdById, updatedById, createdAt, updatedAt
+        ) VALUES (
+          ${id}, ${seed.contentKey}, ${seed.slug}, ${seed.title}, 'draft', ${bodyJson},
+          ${seed.seoTitle}, ${seed.seoDescription}, ${seed.slug}, false, NULL,
+          ${userId}, ${userId}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+        )
+      `;
+
+      const snapshot = JSON.stringify(initialRevisionSnapshot(seed));
+      await tx.$executeRaw`
+        INSERT INTO ContentRevision (id, pageId, version, snapshotJson, createdById, createdAt)
+        VALUES (${randomUUID()}, ${id}, 1, ${snapshot}, ${userId}, CURRENT_TIMESTAMP(3))
+      `;
+      pagesCreated += 1;
+    }
+
+    for (const seed of faqSeeds) {
+      const existing = await tx.$queryRaw<CountRow[]>`
+        SELECT COUNT(*) AS total FROM SiteContent
+        WHERE namespace = 'faq' AND contentKey = ${seed.contentKey}
+      `;
+      if (total(existing) > 0) continue;
+
+      const payload = JSON.stringify({
+        id: seed.contentKey.replace(/^item_/, ""),
+        question: seed.question,
+        answer: seed.answer,
+        category: seed.category,
+        audience: seed.audience,
+        position: seed.position,
+      });
+
+      await tx.$executeRaw`
+        INSERT INTO SiteContent (
+          id, namespace, contentKey, valueJson, valueType, status,
+          updatedById, createdAt, updatedAt
+        ) VALUES (
+          ${randomUUID()}, 'faq', ${seed.contentKey}, ${payload}, 'json', 'draft',
+          ${userId}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+        )
+      `;
+      faqsCreated += 1;
+    }
+
+    return { pagesCreated, faqsCreated };
+  });
 
   revalidatePath("/icerik");
   revalidatePath("/icerik/hazirlik");

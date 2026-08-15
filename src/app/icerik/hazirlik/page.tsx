@@ -139,7 +139,7 @@ export default async function ContentReadinessPage({
       {starterError ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert">
           <strong>Başlangıç taslakları oluşturulamadı.</strong>
-          <p>İşlem güvenli biçimde geri alındı; yarım içerik bırakılmadı. Sistem Sağlığı'nı kontrol edip işlemi yeniden deneyin.</p>
+          <p>İşlem güvenli biçimde geri alındı; yarım içerik bırakılmadı. Sistem Sağlığını kontrol edip işlemi yeniden deneyin.</p>
           <Link href="/icerik/saglik">Sistem Sağlığı →</Link>
         </div>
       ) : null}

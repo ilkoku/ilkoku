@@ -28,12 +28,24 @@ jobs:
         run: |
           set -Eeuo pipefail
 
+          USER_AGENT="IlkOku-Production-Smoke/1.0"
+          VERIFY_WINDOW_SECONDS=300
+          EDGE_BLOCKED=0
+
+          mark_edge_block() {
+            local code="$1"
+            if [[ "$code" == "403" ]]; then
+              EDGE_BLOCKED=1
+            fi
+          }
+
           check_public_route() {
             local url="$1"
             local expected="$2"
             local code
 
-            code="$(curl --silent --show-error --location --max-time 20 --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            mark_edge_block "$code"
             printf '%s -> HTTP %s\n' "$url" "$code"
             [[ "$code" == "$expected" ]]
           }
@@ -46,7 +58,8 @@ jobs:
             local expected
 
             body="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 20 --output "$body" --write-out '%{http_code}' "$url" || true)"
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            mark_edge_block "$code"
             printf '%s -> HTTP %s\n' "$url" "$code"
             if [[ "$code" != "200" ]]; then
               rm -f "$body"
@@ -76,7 +89,8 @@ jobs:
             local location
 
             headers="$(mktemp)"
-            code="$(curl --silent --show-error --max-time 20 --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            code="$(curl --silent --show-error --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            mark_edge_block "$code"
             location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
             rm -f "$headers"
 
@@ -97,7 +111,8 @@ jobs:
             local robots
 
             headers="$(mktemp)"
-            code="$(curl --silent --show-error --max-time 20 --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            code="$(curl --silent --show-error --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            mark_edge_block "$code"
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
             rm -f "$headers"
 
@@ -146,7 +161,8 @@ jobs:
             local location
 
             headers="$(mktemp)"
-            code="$(curl --silent --show-error --max-time 20 --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            code="$(curl --silent --show-error --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            mark_edge_block "$code"
             location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
             rm -f "$headers"
 
@@ -155,8 +171,14 @@ jobs:
             [[ "$location" == *"$expected_location"* ]]
           }
 
-          for attempt in $(seq 1 30); do
-            echo "Deneme $attempt/30"
+          deadline=$((SECONDS + VERIFY_WINDOW_SECONDS))
+          attempt=0
+
+          while (( SECONDS < deadline )); do
+            attempt=$((attempt + 1))
+            EDGE_BLOCKED=0
+            remaining=$((deadline - SECONDS))
+            echo "Deneme $attempt | doğrulama penceresinde kalan: ${remaining}s"
 
             if check_public_route "https://ilkoku.com/" "200" \
               && check_public_route "https://ilkoku.com/giris" "200" \
@@ -217,8 +239,23 @@ jobs:
               exit 0
             fi
 
-            sleep 10
+            remaining=$((deadline - SECONDS))
+            if (( remaining <= 0 )); then
+              break
+            fi
+
+            if [[ "$EDGE_BLOCKED" == "1" ]]; then
+              delay=30
+              echo "EDGE/WAF 403 algılandı; tüm rota paketini hemen tekrar taramak yerine kontrollü backoff uygulanıyor."
+            else
+              delay=10
+            fi
+
+            if (( delay > remaining )); then
+              delay=$remaining
+            fi
+            sleep "$delay"
           done
 
-          echo "FAIL: Production deployment 5 dakika içinde doğrulanamadı." >&2
+          echo "FAIL: Production deployment 5 dakikalık doğrulama penceresi içinde doğrulanamadı." >&2
           exit 1

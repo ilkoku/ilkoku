@@ -20,6 +20,15 @@ export type CmsRevisionSnapshot = Record<string, unknown> & {
 
 export type CmsRevisionKind = "legal" | "guide" | "page" | "other";
 
+export function isValidCmsRevisionSnapshotJson(value: string) {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Boolean(parsed && typeof parsed === "object" && !Array.isArray(parsed));
+  } catch {
+    return false;
+  }
+}
+
 export function parseCmsRevisionSnapshot(value: string): CmsRevisionSnapshot {
   try {
     const parsed = JSON.parse(value) as unknown;

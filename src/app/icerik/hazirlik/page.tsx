@@ -204,6 +204,7 @@ export default async function ContentReadinessPage({
   const corporateHref = data?.corporateId ? `/icerik/sayfalar/${data.corporateId}` : "/icerik/sayfalar";
   const guideHref = data?.guideId ? `/icerik/rehber/${data.guideId}?dil=tr` : "/icerik/rehber?dil=tr";
   const faqHref = data?.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.faqFocusKey}` : "/icerik/sss?dil=tr";
+  const faqArchivedHref = data?.faqArchivedKey ? `/icerik/sss?dil=tr#faq-${data.faqArchivedKey}` : "/icerik/sss?dil=tr";
 
   return (
     <section className="content-editor-page">
@@ -271,7 +272,7 @@ export default async function ContentReadinessPage({
               <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
                 {data.corporateArchived > 0 ? <Link href={corporateHref}>Hakkımızda kaydını aç →</Link> : null}
                 {data.guidesArchived > 0 ? <Link href={guideHref}>Rehber kaydını aç →</Link> : null}
-                {data.faqArchived > 0 ? <Link href={faqHref}>Arşiv SSS'ye git →</Link> : null}
+                {data.faqArchived > 0 ? <Link href={faqArchivedHref}>Arşiv SSS'ye git →</Link> : null}
               </div>
             </div>
           ) : null}

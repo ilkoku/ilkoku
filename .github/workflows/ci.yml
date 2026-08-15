@@ -52,6 +52,15 @@ jobs:
           echo
           echo "=== ALL DEPENDENCIES ==="
           npm audit --audit-level=high || true
+          echo
+          echo "=== NANOID 3.X REGISTRY VERSIONS ==="
+          npm view nanoid@3 version || true
+          echo
+          echo "=== NANOID 3.3.18 REGISTRY PROBE ==="
+          npm view nanoid@3.3.18 version || true
+          echo
+          echo "=== AUDIT FIX DRY RUN ==="
+          npm audit fix --package-lock-only --dry-run || true
 
       - name: Run lint
         run: npm run lint

@@ -4,36 +4,14 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import {
+  FOOTER_DRAFT_KEY,
+  FOOTER_LIVE_KEY,
+  parseFooterNavigation,
+  type FooterNavigationPayload,
+} from "@/lib/cms-footer-navigation";
 import { prisma } from "@/lib/prisma";
 
-const FOOTER_LIVE_KEY = "footer_navigation";
-const FOOTER_DRAFT_KEY = "footer_navigation_draft";
-
-const footerFields = [
-  "platformTitle",
-  "platform1Label",
-  "platform1Href",
-  "platform2Label",
-  "platform2Href",
-  "platform3Label",
-  "platform3Href",
-  "supportTitle",
-  "supportLabel",
-  "supportHref",
-  "legalTitle",
-  "termsLabel",
-  "termsHref",
-  "privacyLabel",
-  "privacyHref",
-  "kvkkLabel",
-  "kvkkHref",
-  "cookieLabel",
-  "cookieHref",
-  "copyrightLabel",
-  "copyrightHref",
-] as const;
-
-type FooterPayload = Record<(typeof footerFields)[number], string>;
 type FooterRow = { valueJson: string };
 
 async function requireAdmin() {
@@ -47,7 +25,7 @@ function value(formData: FormData, key: string, max = 300) {
   return String(formData.get(key) ?? "").trim().slice(0, max);
 }
 
-function footerPayload(formData: FormData): FooterPayload {
+function footerPayload(formData: FormData): FooterNavigationPayload {
   return {
     platformTitle: value(formData, "platformTitle", 80),
     platform1Label: value(formData, "platform1Label", 100),
@@ -71,18 +49,6 @@ function footerPayload(formData: FormData): FooterPayload {
     copyrightLabel: value(formData, "copyrightLabel", 100),
     copyrightHref: value(formData, "copyrightHref"),
   };
-}
-
-function parseFooterPayload(valueJson: string): FooterPayload | null {
-  try {
-    const parsed = JSON.parse(valueJson) as unknown;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-    const record = parsed as Record<string, unknown>;
-    if (footerFields.some((field) => typeof record[field] !== "string")) return null;
-    return Object.fromEntries(footerFields.map((field) => [field, String(record[field])])) as FooterPayload;
-  } catch {
-    return null;
-  }
 }
 
 export async function saveFooterNavigationAction(formData: FormData) {
@@ -121,7 +87,7 @@ export async function publishFooterNavigationAction() {
     LIMIT 1
   `;
   const draft = rows[0];
-  if (!draft || !parseFooterPayload(draft.valueJson)) {
+  if (!draft || !parseFooterNavigation(draft.valueJson)) {
     redirect("/icerik/menuler?hata=taslak");
   }
 

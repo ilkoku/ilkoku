@@ -39,6 +39,14 @@ function number(value: bigint | number | null | undefined) { return Number(value
 function statusLabel(status: string) { if (status === "published") return "Yayında"; if (status === "archived") return "Arşiv"; return "Taslak"; }
 function taskLevelLabel(level: TaskLevel) { if (level === "blocker") return "BLOCKER"; if (level === "warn") return "ÖNCELİK"; return "TAKİP"; }
 function formatDate(value: Date) { return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
+function pendingAge(value: Date | null) {
+  if (!value) return null;
+  const elapsed = Math.max(0, Date.now() - new Date(value).getTime());
+  const hours = Math.floor(elapsed / 3_600_000);
+  if (hours < 1) return "1 saatten az";
+  if (hours < 24) return `${hours} saat`;
+  return `${Math.floor(hours / 24)} gün`;
+}
 
 async function loadDashboardData() {
   try {
@@ -140,6 +148,10 @@ export default async function ContentDashboardPage() {
   const faqHref = data.readiness.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqFocusKey}` : "/icerik/sss?dil=tr";
   const faqArchivedHref = data.readiness.faqArchivedKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqArchivedKey}` : "/icerik/sss?dil=tr";
   const faqPendingHref = data.readiness.faqPendingDraftKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqPendingDraftKey}` : faqHref;
+  const corporateAge = pendingAge(data.readiness.corporatePendingAt);
+  const faqAge = pendingAge(data.readiness.faqPendingOldestAt);
+  const guideAge = pendingAge(data.readiness.guidesPendingAt);
+  const oldestPendingAge = pendingAge(starter.pendingOldestAt);
 
   const activity: ActivityItem[] = [
     ...data.recentPages.map((page) => ({ key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt })),
@@ -199,21 +211,21 @@ export default async function ContentDashboardPage() {
       : null,
     data.readiness.corporate >= cmsReadinessTargets.corporate && data.readiness.corporatePendingDraft > 0 ? {
       href: corporateHref,
-      title: "Hakkımızda yayında · değişiklik taslağı var",
+      title: `Hakkımızda yayında · değişiklik taslağı var${corporateAge ? ` · ${corporateAge}` : ""}`,
       text: "Mevcut Hakkımızda canlı ve kabul edilmiş durumda. Bekleyen değişiklik yayınlanana kadar canlı metin değişmez.",
       action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele",
       level: "info" as const,
     } : null,
     data.readiness.faq >= cmsReadinessTargets.faq && data.readiness.faqPendingDrafts > 0 ? {
       href: faqPendingHref,
-      title: `${data.readiness.faqPendingDrafts} temel SSS için değişiklik taslağı var`,
-      text: "Dört temel SSS canlı kalmaya devam ediyor. Panel ilk bekleyen starter SSS değişikliğine doğrudan gider.",
+      title: `${data.readiness.faqPendingDrafts} temel SSS için değişiklik taslağı var${faqAge ? ` · en eskisi ${faqAge}` : ""}`,
+      text: "Dört temel SSS canlı kalmaya devam ediyor. Panel en eski bekleyen starter SSS değişikliğine doğrudan gider.",
       action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele",
       level: "info" as const,
     } : null,
     data.readiness.guides >= cmsReadinessTargets.guides && data.readiness.guidesPendingDraft > 0 ? {
       href: guideHref,
-      title: "İlkOku Nasıl Çalışır yayında · değişiklik taslağı var",
+      title: `İlkOku Nasıl Çalışır yayında · değişiklik taslağı var${guideAge ? ` · ${guideAge}` : ""}`,
       text: "Canlı rehber kabul edilmiş durumda. Bekleyen editoryal değişiklik ayrıca yayınlanana kadar public rehber değişmez.",
       action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele",
       level: "info" as const,
@@ -221,7 +233,7 @@ export default async function ContentDashboardPage() {
     data.publishQueue > 0 ? {
       href: "/icerik/yayin-kuyrugu", title: `${data.publishQueue} içerik operasyon kuyruğunda`,
       text: starter.pendingTotal > 0
-        ? `${starter.pendingTotal} kayıt temel Sprint 3 içeriğindeki değişikliklerden oluşuyor; kuyruk diğer taslakları da kapsar. Canlı kabul sonucu değişmez.`
+        ? `${starter.pendingTotal} kayıt temel Sprint 3 içeriğindeki değişikliklerden oluşuyor${oldestPendingAge ? `; en eskisi ${oldestPendingAge}dır bekliyor` : ""}. Kuyruk diğer taslakları da kapsar.`
         : "Bu taslaklar mevcut canlı kabul sonucunu bozmaz. Önizleyin, planlayın veya yayın yetkisiyle canlıya alın.",
       action: "Kuyruğu aç", level: "info" as const,
     } : null,
@@ -243,7 +255,7 @@ export default async function ContentDashboardPage() {
   const metrics = [
     { label: "Yayın hazırlığı", value: `${summary.corePassed}/${summary.coreTotal}`, note: "canlı kabul alanı", href: "/icerik/hazirlik" },
     { label: "Başlangıç seti", value: `${starter.createdTotal}/${starter.total}`, note: starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : `${starter.publishedTotal} canlı`, href: "/icerik/hazirlik" },
-    { label: "Bekleyen temel değişiklik", value: starter.pendingTotal, note: "canlı yayını bozmuyor", href: "/icerik/hazirlik" },
+    { label: "Bekleyen temel değişiklik", value: starter.pendingTotal, note: oldestPendingAge ? `en eskisi ${oldestPendingAge}` : "canlı yayını bozmuyor", href: "/icerik/hazirlik" },
     { label: "Operasyon kuyruğu", value: data.publishQueue, note: "canlı kabulden bağımsız", href: "/icerik/yayin-kuyrugu" },
     { label: "SEO eksiği", value: data.seoIssues, note: "yayındaki TR sayfa", href: "/icerik/seo" },
     { label: "Form talebi", value: data.forms, note: "açık kayıt", href: "/icerik/formlar" },
@@ -254,26 +266,26 @@ export default async function ContentDashboardPage() {
   ];
 
   const quickActions = starter.complete ? [
-    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: starter.pendingTotal > 0 ? `${starter.pendingTotal} temel değişiklik bekliyor` : "Sprint 3 canlı kabul durumunu aç" },
+    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: starter.pendingTotal > 0 ? `${starter.pendingTotal} temel değişiklik bekliyor${oldestPendingAge ? ` · ${oldestPendingAge}` : ""}` : "Sprint 3 canlı kabul durumunu aç" },
     {
       href: corporateHref,
       label: "Hakkımızda",
       text: data.readiness.corporatePendingDraft > 0
-        ? access.canPublish ? "Bekleyen değişikliği incele / yayınla" : "Bekleyen değişikliği incele"
+        ? access.canPublish ? `Bekleyen değişikliği incele / yayınla${corporateAge ? ` · ${corporateAge}` : ""}` : `Bekleyen değişikliği incele${corporateAge ? ` · ${corporateAge}` : ""}`
         : access.canPublish ? "Kaydı incele / yayınla" : "Kurumsal taslağı incele",
     },
     {
       href: data.readiness.faqPendingDrafts > 0 ? faqPendingHref : faqHref,
       label: "Temel SSS",
       text: data.readiness.faqPendingDrafts > 0
-        ? access.canPublish ? `Bekleyen değişikliği incele / yayınla (${data.readiness.faqPendingDrafts})` : `Bekleyen değişikliği incele (${data.readiness.faqPendingDrafts})`
+        ? access.canPublish ? `Bekleyen değişikliği incele / yayınla (${data.readiness.faqPendingDrafts})${faqAge ? ` · ${faqAge}` : ""}` : `Bekleyen değişikliği incele (${data.readiness.faqPendingDrafts})${faqAge ? ` · ${faqAge}` : ""}`
         : access.canPublish ? "İlk açık kaydı incele / yayınla" : "İlk açık yardım kaydını incele",
     },
     {
       href: guideHref,
       label: "İlkOku Nasıl Çalışır",
       text: data.readiness.guidesPendingDraft > 0
-        ? access.canPublish ? "Bekleyen değişikliği incele / yayınla" : "Bekleyen değişikliği incele"
+        ? access.canPublish ? `Bekleyen değişikliği incele / yayınla${guideAge ? ` · ${guideAge}` : ""}` : `Bekleyen değişikliği incele${guideAge ? ` · ${guideAge}` : ""}`
         : access.canPublish ? "Rehberi incele / yayınla" : "Rehber taslağını incele",
     },
     { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen tüm taslakları yönet" },

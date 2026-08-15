@@ -128,10 +128,15 @@ export async function createCmsScheduleAction(formData: FormData) {
     ORDER BY createdAt DESC
     LIMIT 500
   `;
-  const duplicate = activeRows.some((row) => {
-    const payload = parseCmsSchedulePayload(row.valueJson);
-    return payload?.state === "scheduled" && payload.targetType === targetType && payload.targetId === targetId;
-  });
+  const activePayloads = activeRows.map((row) => parseCmsSchedulePayload(row.valueJson));
+  if (activePayloads.some((payload) => !payload)) {
+    redirect("/icerik/zamanlama?hata=plan-veri");
+  }
+  const duplicate = activePayloads.some((payload) => (
+    payload?.state === "scheduled"
+    && payload.targetType === targetType
+    && payload.targetId === targetId
+  ));
   if (duplicate) redirect("/icerik/zamanlama?hata=mevcut");
 
   const id = randomUUID();

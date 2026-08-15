@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { quarantineMalformedActiveSchedules } from "@/lib/cms-schedule-integrity";
 import { runCmsPublishingScheduler } from "@/lib/cms-scheduler";
 
 export const dynamic = "force-dynamic";
@@ -28,8 +29,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const integrity = await quarantineMalformedActiveSchedules();
     const result = await runCmsPublishingScheduler();
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, integrity, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "UNKNOWN_CMS_SCHEDULER_ERROR";
     console.error("CMS_SCHEDULER_RUN_FAILED", { error: message });

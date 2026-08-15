@@ -10,6 +10,10 @@ import "./shell-polish.css";
 export const metadata: Metadata = {
   title: "İlkOku İçerik Yönetimi",
   description: "İlkOku site içerik yönetim merkezi",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export const dynamic = "force-dynamic";

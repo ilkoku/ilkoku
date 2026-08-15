@@ -100,6 +100,9 @@ jobs:
               && check_post_merge_protected_route "https://ilkoku.com/icerik/zamanlama" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/onizleme/ana-sayfa" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/yayin-kuyrugu" \
+              && check_post_merge_protected_route "https://ilkoku.com/icerik/medya" \
+              && check_post_merge_protected_route "https://ilkoku.com/icerik/seo" \
+              && check_post_merge_protected_route "https://ilkoku.com/icerik/gecmis" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/saglik" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/sayfalar/yeni" \
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/epostalar" \
@@ -108,7 +111,7 @@ jobs:
               && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production route'ları, 5 yasal sayfa, EN kapalı sözleşmesi ve CMS yönetim rotaları doğrulandı."
+              echo "PASS: Production route'ları, 5 yasal sayfa, EN kapalı sözleşmesi ve Sprint 2 CMS yönetim rotaları doğrulandı."
               exit 0
             fi
 

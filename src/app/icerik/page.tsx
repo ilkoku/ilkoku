@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { requireCmsManager } from "@/lib/cms-access";
 import { cmsModules } from "@/lib/cms-modules";
+import {
+  cmsReadinessTargets,
+  getCmsReadinessSummary,
+  loadCmsReadiness,
+  type CmsReadinessSnapshot,
+} from "@/lib/cms-readiness";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -14,16 +20,7 @@ type PageCountRow = {
 type SiteCountRow = {
   announcements: bigint;
   forms: bigint;
-  media: bigint;
   schedules: bigint;
-};
-
-type ReadinessRow = {
-  homepage: bigint;
-  legal: bigint;
-  corporate: bigint;
-  faq: bigint;
-  guides: bigint;
 };
 
 type CountRow = { total: bigint };
@@ -60,6 +57,17 @@ type DashboardTask = {
   text: string;
   action: string;
   level: TaskLevel;
+};
+
+const emptyReadiness: CmsReadinessSnapshot = {
+  homepage: 0,
+  legal: 0,
+  corporate: 0,
+  faq: 0,
+  guides: 0,
+  media: 0,
+  seoMissing: 0,
+  queue: 0,
 };
 
 const namespaceLabels: Record<string, string> = {
@@ -101,7 +109,7 @@ function formatDate(value: Date) {
 
 async function loadDashboardData() {
   try {
-    const [pageCounts, seoIssues, siteCounts, revisions, publishQueue, readinessRows, recentPages, recentSite] = await Promise.all([
+    const [pageCounts, siteCounts, revisions, readiness, recentPages, recentSite] = await Promise.all([
       prisma.$queryRaw<PageCountRow[]>`
         SELECT
           COUNT(*) AS total,
@@ -110,24 +118,10 @@ async function loadDashboardData() {
         FROM ContentPage
         WHERE status <> 'archived'
       `,
-      prisma.$queryRaw<CountRow[]>`
-        SELECT COUNT(*) AS total
-        FROM ContentPage
-        WHERE status = 'published'
-          AND contentKey NOT LIKE 'legal:en:%'
-          AND contentKey NOT LIKE 'guide:en:%'
-          AND contentKey NOT LIKE 'page:en:%'
-          AND (
-            COALESCE(TRIM(seoTitle), '') = ''
-            OR COALESCE(TRIM(seoDescription), '') = ''
-            OR COALESCE(TRIM(canonicalUrl), '') = ''
-          )
-      `,
       prisma.$queryRaw<SiteCountRow[]>`
         SELECT
           COUNT(CASE WHEN namespace = 'announcement' AND status = 'published' THEN 1 END) AS announcements,
           COUNT(CASE WHEN namespace = 'form_submission' AND status <> 'archived' THEN 1 END) AS forms,
-          COUNT(CASE WHEN namespace = 'media' AND status <> 'archived' THEN 1 END) AS media,
           COUNT(CASE WHEN namespace = 'cms_schedule' AND status = 'published' THEN 1 END) AS schedules
         FROM SiteContent
       `,
@@ -136,51 +130,7 @@ async function loadDashboardData() {
         FROM ContentRevision
         WHERE createdAt >= DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 7 DAY)
       `,
-      prisma.$queryRaw<CountRow[]>`
-        SELECT
-          (
-            SELECT COUNT(*) FROM SiteContent
-            WHERE namespace = 'cms_draft' AND status = 'draft'
-          ) + (
-            SELECT COUNT(*) FROM SiteContent
-            WHERE namespace IN ('faq', 'faq_en') AND status = 'draft'
-          ) + (
-            SELECT COUNT(*) FROM ContentPage
-            WHERE status = 'draft'
-              AND (
-                contentKey LIKE 'legal:%'
-                OR contentKey LIKE 'guide:%'
-                OR contentKey LIKE 'page:tr:%'
-                OR contentKey LIKE 'page:en:%'
-              )
-          ) AS total
-      `,
-      prisma.$queryRaw<ReadinessRow[]>`
-        SELECT
-          (SELECT COUNT(*) FROM SiteContent
-            WHERE namespace = 'homepage' AND status = 'published'
-              AND contentKey IN ('hero', 'roles', 'passport', 'why', 'footer')) AS homepage,
-          (SELECT COUNT(*) FROM ContentPage
-            WHERE status = 'published'
-              AND contentKey IN (
-                'legal:kullanim-sartlari',
-                'legal:gizlilik-politikasi',
-                'legal:kvkk',
-                'legal:cerez-politikasi',
-                'legal:telif-hakki-politikasi'
-              )) AS legal,
-          (SELECT COUNT(*) FROM ContentPage
-            WHERE status = 'published'
-              AND contentKey LIKE 'page:tr:%'
-              AND noIndex = false) AS corporate,
-          (SELECT COUNT(*) FROM SiteContent
-            WHERE namespace = 'faq' AND status = 'published') AS faq,
-          (SELECT COUNT(*) FROM ContentPage
-            WHERE status = 'published'
-              AND contentKey LIKE 'guide:%'
-              AND contentKey NOT LIKE 'guide:en:%'
-              AND noIndex = false) AS guides
-      `,
+      loadCmsReadiness(),
       prisma.$queryRaw<RecentPageRow[]>`
         SELECT id, title, slug, status, updatedAt
         FROM ContentPage
@@ -196,28 +146,20 @@ async function loadDashboardData() {
       `,
     ]);
 
-    const readiness = readinessRows[0];
-
     return {
       pages: {
         total: number(pageCounts[0]?.total),
         drafts: number(pageCounts[0]?.drafts),
         published: number(pageCounts[0]?.published),
       },
-      seoIssues: number(seoIssues[0]?.total),
+      seoIssues: readiness.seoMissing,
       announcements: number(siteCounts[0]?.announcements),
       forms: number(siteCounts[0]?.forms),
-      media: number(siteCounts[0]?.media),
+      media: readiness.media,
       schedules: number(siteCounts[0]?.schedules),
       revisions: number(revisions[0]?.total),
-      publishQueue: number(publishQueue[0]?.total),
-      readiness: {
-        homepage: number(readiness?.homepage),
-        legal: number(readiness?.legal),
-        corporate: number(readiness?.corporate),
-        faq: number(readiness?.faq),
-        guides: number(readiness?.guides),
-      },
+      publishQueue: readiness.queue,
+      readiness,
       recentPages,
       recentSite,
     };
@@ -231,7 +173,7 @@ async function loadDashboardData() {
       schedules: 0,
       revisions: 0,
       publishQueue: 0,
-      readiness: { homepage: 0, legal: 0, corporate: 0, faq: 0, guides: 0 },
+      readiness: emptyReadiness,
       recentPages: [] as RecentPageRow[],
       recentSite: [] as RecentSiteRow[],
     };
@@ -241,6 +183,7 @@ async function loadDashboardData() {
 export default async function ContentDashboardPage() {
   const access = await requireCmsManager("/icerik");
   const data = await loadDashboardData();
+  const summary = getCmsReadinessSummary(data.readiness);
   const areas = cmsModules.filter((module) =>
     module.enabled && module.href !== "/icerik" && (access.isAdmin || !module.adminOnly),
   );
@@ -265,25 +208,25 @@ export default async function ContentDashboardPage() {
     .slice(0, 8);
 
   const tasks: DashboardTask[] = [
-    data.readiness.legal < 5
+    data.readiness.legal < cmsReadinessTargets.legal
       ? {
           href: "/icerik/yasal?dil=tr",
-          title: `Yasal CMS sahipliği ${data.readiness.legal}/5`,
+          title: `Yasal CMS sahipliği ${data.readiness.legal}/${cmsReadinessTargets.legal}`,
           text: "Zorunlu beş yasal belgenin tamamı CMS üzerinden yayınlanmadan içerik kabulü tamamlanmaz.",
           action: "Yasalı tamamla",
           level: "blocker" as const,
         }
       : null,
-    data.readiness.homepage < 5
+    data.readiness.homepage < cmsReadinessTargets.homepage
       ? {
           href: "/icerik/ana-sayfa?dil=tr",
-          title: `Ana Sayfa CMS kapsamı ${data.readiness.homepage}/5`,
+          title: `Ana Sayfa CMS kapsamı ${data.readiness.homepage}/${cmsReadinessTargets.homepage}`,
           text: "Hero, roller, Eser Pasaportu, Neden İlkOku ve footer bölümlerinin yayın durumunu tamamlayın.",
           action: "Ana Sayfayı aç",
           level: "warn" as const,
         }
       : null,
-    data.readiness.corporate === 0
+    data.readiness.corporate < cmsReadinessTargets.corporate
       ? {
           href: "/icerik/sayfalar",
           title: "Kurumsal sayfa yayını bekleniyor",
@@ -292,16 +235,16 @@ export default async function ContentDashboardPage() {
           level: "warn" as const,
         }
       : null,
-    data.readiness.faq === 0
+    data.readiness.faq < cmsReadinessTargets.faq
       ? {
           href: "/icerik/sss?dil=tr",
-          title: "Yardım Merkezi içerik bekliyor",
-          text: "En az bir TR SSS yayını olmadan Yardım Merkezi içerik açısından boş kalır.",
+          title: `Temel SSS seti ${data.readiness.faq}/${cmsReadinessTargets.faq}`,
+          text: "İlkOku nedir, yazar yayını, editör incelemesi ve yayınevi keşfi için temel yardım setini tamamlayın.",
           action: "SSS'leri yönet",
           level: "warn" as const,
         }
       : null,
-    data.readiness.guides === 0
+    data.readiness.guides < cmsReadinessTargets.guides
       ? {
           href: "/icerik/rehber?dil=tr",
           title: "Rehber detayı yayını bekleniyor",
@@ -342,14 +285,6 @@ export default async function ContentDashboardPage() {
   const priority = { blocker: 0, warn: 1, info: 2 } satisfies Record<TaskLevel, number>;
   tasks.sort((a, b) => priority[a.level] - priority[b.level]);
 
-  const readinessChecks = [
-    data.readiness.homepage === 5,
-    data.readiness.legal === 5,
-    data.readiness.corporate > 0,
-    data.readiness.faq > 0,
-    data.readiness.guides > 0,
-  ];
-  const readinessPassed = readinessChecks.filter(Boolean).length;
   const blockerCount = tasks.filter((task) => task.level === "blocker").length;
   const warningCount = tasks.filter((task) => task.level === "warn").length;
 
@@ -369,7 +304,7 @@ export default async function ContentDashboardPage() {
         : "is-good";
 
   const metrics = [
-    { label: "Yayın hazırlığı", value: `${readinessPassed}/5`, note: "temel içerik alanı", href: "/icerik/hazirlik" },
+    { label: "Yayın hazırlığı", value: `${summary.corePassed}/${summary.coreTotal}`, note: "temel içerik alanı", href: "/icerik/hazirlik" },
     { label: "Yayın kuyruğu", value: data.publishQueue, note: "bekleyen içerik", href: "/icerik/yayin-kuyrugu" },
     { label: "SEO eksiği", value: data.seoIssues, note: "yayındaki TR sayfa", href: "/icerik/seo" },
     { label: "Form talebi", value: data.forms, note: "açık kayıt", href: "/icerik/formlar" },
@@ -397,7 +332,7 @@ export default async function ContentDashboardPage() {
         <div className={`content-health-badge ${healthClass}`}>
           <small>Canlı içerik durumu</small>
           <strong>{healthLabel}</strong>
-          <span>{readinessPassed}/5 temel alan hazır · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span>
+          <span>{summary.corePassed}/{summary.coreTotal} temel alan hazır · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span>
         </div>
       </div>
 

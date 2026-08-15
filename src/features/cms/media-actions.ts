@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireCmsManager } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
 
@@ -13,6 +14,37 @@ function safeMediaUrl(input: string) {
   if (!input.startsWith("/")) return "";
   if (input.startsWith("//")) return "";
   return input.replace(/[\r\n]/g, "").slice(0, 500);
+}
+
+function mediaUrlFromJson(valueJson: string) {
+  try {
+    const payload = JSON.parse(valueJson) as { url?: unknown };
+    return typeof payload.url === "string" ? safeMediaUrl(payload.url) : "";
+  } catch {
+    return "";
+  }
+}
+
+async function isMediaReferencedByPublishedContent(mediaUrl: string) {
+  if (!mediaUrl) return false;
+
+  const [siteRows, pageRows] = await Promise.all([
+    prisma.$queryRaw<Array<{ total: bigint | number }>>`
+      SELECT COUNT(*) AS total
+      FROM SiteContent
+      WHERE status = 'published'
+        AND namespace NOT IN ('media', 'media_blob')
+        AND LOCATE(${mediaUrl}, valueJson) > 0
+    `,
+    prisma.$queryRaw<Array<{ total: bigint | number }>>`
+      SELECT COUNT(*) AS total
+      FROM ContentPage
+      WHERE status = 'published'
+        AND LOCATE(${mediaUrl}, bodyJson) > 0
+    `,
+  ]);
+
+  return Number(siteRows[0]?.total ?? 0) + Number(pageRows[0]?.total ?? 0) > 0;
 }
 
 export async function createMediaAssetAction(formData: FormData) {
@@ -52,6 +84,20 @@ export async function archiveMediaAssetAction(formData: FormData) {
   const { user } = await requireCmsManager("/icerik/medya");
   const contentKey = value(formData, "contentKey", 200);
   if (!contentKey.startsWith("asset_")) return;
+
+  const assetRows = await prisma.$queryRaw<Array<{ valueJson: string }>>`
+    SELECT valueJson
+    FROM SiteContent
+    WHERE namespace = 'media'
+      AND contentKey = ${contentKey}
+      AND status <> 'archived'
+    LIMIT 1
+  `;
+  const mediaUrl = assetRows[0] ? mediaUrlFromJson(assetRows[0].valueJson) : "";
+
+  if (await isMediaReferencedByPublishedContent(mediaUrl)) {
+    redirect("/icerik/medya?hata=kullanimda");
+  }
 
   const assetId = contentKey.slice("asset_".length);
 

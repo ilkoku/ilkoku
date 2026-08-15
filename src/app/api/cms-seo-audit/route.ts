@@ -2,7 +2,17 @@ import { NextResponse } from "next/server";
 import { getCmsAccess } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
 
-type Row = { id: string; slug: string; title: string; status: string; seoTitle: string | null; seoDescription: string | null; canonicalUrl: string | null; noIndex: boolean };
+type Row = {
+  id: string;
+  contentKey: string;
+  slug: string;
+  title: string;
+  status: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  canonicalUrl: string | null;
+  noIndex: boolean;
+};
 
 export async function GET() {
   const access = await getCmsAccess();
@@ -10,7 +20,7 @@ export async function GET() {
 
   try {
     const pages = await prisma.$queryRaw<Row[]>`
-      SELECT id, slug, title, status, seoTitle, seoDescription, canonicalUrl, noIndex
+      SELECT id, contentKey, slug, title, status, seoTitle, seoDescription, canonicalUrl, noIndex
       FROM ContentPage
       ORDER BY updatedAt DESC
       LIMIT 250

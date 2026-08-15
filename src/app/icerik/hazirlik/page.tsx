@@ -272,7 +272,7 @@ export default async function ContentReadinessPage({
               <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
                 {data.corporateArchived > 0 ? <Link href={corporateHref}>Hakkımızda kaydını aç →</Link> : null}
                 {data.guidesArchived > 0 ? <Link href={guideHref}>Rehber kaydını aç →</Link> : null}
-                {data.faqArchived > 0 ? <Link href={faqArchivedHref}>Arşiv SSS'ye git →</Link> : null}
+                {data.faqArchived > 0 ? <Link href={faqArchivedHref}>Arşiv SSS kaydına git →</Link> : null}
               </div>
             </div>
           ) : null}

@@ -33,11 +33,14 @@ export type CmsReadinessSnapshot = {
   legal: number;
   corporate: number;
   corporateCreated: number;
+  corporateArchived: number;
   corporateSeoReady: number;
   faq: number;
   faqCreated: number;
+  faqArchived: number;
   guides: number;
   guidesCreated: number;
+  guidesArchived: number;
   guidesSeoReady: number;
   media: number;
   seoMissing: number;
@@ -49,11 +52,14 @@ type ReadinessRow = {
   legal: bigint | number;
   corporate: bigint | number;
   corporateCreated: bigint | number;
+  corporateArchived: bigint | number;
   corporateSeoReady: bigint | number;
   faq: bigint | number;
   faqCreated: bigint | number;
+  faqArchived: bigint | number;
   guides: bigint | number;
   guidesCreated: bigint | number;
+  guidesArchived: bigint | number;
   guidesSeoReady: bigint | number;
   media: bigint | number;
   seoMissing: bigint | number;
@@ -88,6 +94,9 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
         WHERE status IN ('draft', 'published')
           AND contentKey = 'page:tr:hakkimizda') AS corporateCreated,
       (SELECT COUNT(*) FROM ContentPage
+        WHERE status = 'archived'
+          AND contentKey = 'page:tr:hakkimizda') AS corporateArchived,
+      (SELECT COUNT(*) FROM ContentPage
         WHERE status IN ('draft', 'published')
           AND contentKey = 'page:tr:hakkimizda'
           AND noIndex = false
@@ -112,6 +121,15 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
             'item_starter_editor_inceleme',
             'item_starter_yayinevi_kesif'
           )) AS faqCreated,
+      (SELECT COUNT(*) FROM SiteContent
+        WHERE namespace = 'faq'
+          AND status = 'archived'
+          AND contentKey IN (
+            'item_starter_ilkoku_nedir',
+            'item_starter_yazar_yayin',
+            'item_starter_editor_inceleme',
+            'item_starter_yayinevi_kesif'
+          )) AS faqArchived,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status = 'published'
           AND contentKey = 'guide:ilkoku-nasil-calisir'
@@ -119,6 +137,9 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
       (SELECT COUNT(*) FROM ContentPage
         WHERE status IN ('draft', 'published')
           AND contentKey = 'guide:ilkoku-nasil-calisir') AS guidesCreated,
+      (SELECT COUNT(*) FROM ContentPage
+        WHERE status = 'archived'
+          AND contentKey = 'guide:ilkoku-nasil-calisir') AS guidesArchived,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status IN ('draft', 'published')
           AND contentKey = 'guide:ilkoku-nasil-calisir'
@@ -163,11 +184,14 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
     legal: value(row?.legal),
     corporate: value(row?.corporate),
     corporateCreated: value(row?.corporateCreated),
+    corporateArchived: value(row?.corporateArchived),
     corporateSeoReady: value(row?.corporateSeoReady),
     faq: value(row?.faq),
     faqCreated: value(row?.faqCreated),
+    faqArchived: value(row?.faqArchived),
     guides: value(row?.guides),
     guidesCreated: value(row?.guidesCreated),
+    guidesArchived: value(row?.guidesArchived),
     guidesSeoReady: value(row?.guidesSeoReady),
     media: value(row?.media),
     seoMissing: value(row?.seoMissing),
@@ -179,6 +203,10 @@ export function getCmsStarterSummary(data: CmsReadinessSnapshot) {
   const createdTotal = Math.min(data.corporateCreated, cmsStarterTargets.corporate)
     + Math.min(data.faqCreated, cmsStarterTargets.faq)
     + Math.min(data.guidesCreated, cmsStarterTargets.guides);
+  const archivedTotal = Math.min(data.corporateArchived, cmsStarterTargets.corporate)
+    + Math.min(data.faqArchived, cmsStarterTargets.faq)
+    + Math.min(data.guidesArchived, cmsStarterTargets.guides);
+  const accountedTotal = Math.min(createdTotal + archivedTotal, cmsStarterTargets.total);
   const publishedTotal = Math.min(data.corporate, cmsStarterTargets.corporate)
     + Math.min(data.faq, cmsStarterTargets.faq)
     + Math.min(data.guides, cmsStarterTargets.guides);
@@ -187,6 +215,9 @@ export function getCmsStarterSummary(data: CmsReadinessSnapshot) {
 
   return {
     createdTotal,
+    archivedTotal,
+    accountedTotal,
+    missingTotal: Math.max(cmsStarterTargets.total - accountedTotal, 0),
     publishedTotal,
     total: cmsStarterTargets.total,
     seoReady,

@@ -9,6 +9,17 @@ export const cmsReadinessTargets = {
   guides: 1,
 } as const;
 
+export const cmsReadinessRequiredContent = {
+  corporate: "page:tr:hakkimizda",
+  guide: "guide:ilkoku-nasil-calisir",
+  faq: [
+    "item_starter_ilkoku_nedir",
+    "item_starter_yazar_yayin",
+    "item_starter_editor_inceleme",
+    "item_starter_yayinevi_kesif",
+  ],
+} as const;
+
 export type CmsReadinessSnapshot = {
   homepage: number;
   legal: number;
@@ -53,15 +64,20 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
           )) AS legal,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status = 'published'
-          AND contentKey LIKE 'page:tr:%'
+          AND contentKey = 'page:tr:hakkimizda'
           AND noIndex = false) AS corporate,
       (SELECT COUNT(*) FROM SiteContent
         WHERE namespace = 'faq'
-          AND status = 'published') AS faq,
+          AND status = 'published'
+          AND contentKey IN (
+            'item_starter_ilkoku_nedir',
+            'item_starter_yazar_yayin',
+            'item_starter_editor_inceleme',
+            'item_starter_yayinevi_kesif'
+          )) AS faq,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status = 'published'
-          AND contentKey LIKE 'guide:%'
-          AND contentKey NOT LIKE 'guide:en:%'
+          AND contentKey = 'guide:ilkoku-nasil-calisir'
           AND noIndex = false) AS guides,
       (SELECT COUNT(*) FROM SiteContent
         WHERE namespace = 'media'

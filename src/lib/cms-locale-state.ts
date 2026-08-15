@@ -49,16 +49,16 @@ export async function getCmsLocaleStates(): Promise<CmsLocaleState[]> {
   }));
 }
 
-export async function isCmsLocaleEnabled(locale: CmsLocaleCode) {
+export async function isCmsLocaleEnabledStrict(locale: CmsLocaleCode) {
   if (locale === defaultCmsLocale) return true;
   const states = await getCmsLocaleStates();
   return states.some((state) => state.code === locale && state.enabled);
 }
 
-export async function isCmsLocaleEnabledForPublic(locale: CmsLocaleCode) {
+export async function isCmsLocaleEnabled(locale: CmsLocaleCode) {
   if (locale === defaultCmsLocale) return true;
   try {
-    return await isCmsLocaleEnabled(locale);
+    return await isCmsLocaleEnabledStrict(locale);
   } catch {
     return false;
   }

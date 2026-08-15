@@ -45,7 +45,7 @@ export const options = {
   summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
 };
 
-export default function () {
+export default function steppedLoadScenario() {
   const response = http.get("https://ilkoku.com/", {
     timeout: "30s",
     headers: {

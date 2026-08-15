@@ -26,7 +26,7 @@ export const options = {
   summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
 };
 
-export default function () {
+export default function wafAllowlistDiagnosticScenario() {
   const res = http.get("https://ilkoku.com", {
     redirects: 0,
     timeout: "15s",

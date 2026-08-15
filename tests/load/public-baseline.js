@@ -233,7 +233,7 @@ function requestPage(page) {
   pageDuration.add(response.timings.duration, { endpoint: page.name, shard: SHARD_ID });
 }
 
-export default function () {
+export default function publicBaselineScenario() {
   for (const page of pages) {
     requestPage(page);
     sleep(0.35 + Math.random() * 0.65);

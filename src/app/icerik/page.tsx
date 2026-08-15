@@ -7,7 +7,6 @@ import {
   getCmsReadinessSummary,
   getCmsStarterSummary,
   loadCmsReadiness,
-  type CmsReadinessSnapshot,
 } from "@/lib/cms-readiness";
 import { prisma } from "@/lib/prisma";
 
@@ -21,25 +20,6 @@ type RecentSiteRow = { id: string; namespace: string; contentKey: string; status
 type ActivityItem = { key: string; label: string; detail: string; status: string; updatedAt: Date };
 type TaskLevel = "blocker" | "warn" | "info";
 type DashboardTask = { href: string; title: string; text: string; action: string; level: TaskLevel };
-
-const emptyReadiness: CmsReadinessSnapshot = {
-  homepage: 0,
-  legal: 0,
-  corporate: 0,
-  corporateCreated: 0,
-  corporateArchived: 0,
-  corporateSeoReady: 0,
-  faq: 0,
-  faqCreated: 0,
-  faqArchived: 0,
-  guides: 0,
-  guidesCreated: 0,
-  guidesArchived: 0,
-  guidesSeoReady: 0,
-  media: 0,
-  seoMissing: 0,
-  queue: 0,
-};
 
 const namespaceLabels: Record<string, string> = {
   homepage: "Ana Sayfa",
@@ -104,28 +84,57 @@ async function loadDashboardData() {
       recentSite,
     };
   } catch {
-    return {
-      pages: { total: 0, drafts: 0, published: 0 },
-      seoIssues: 0,
-      announcements: 0,
-      forms: 0,
-      media: 0,
-      schedules: 0,
-      revisions: 0,
-      publishQueue: 0,
-      readiness: emptyReadiness,
-      recentPages: [] as RecentPageRow[],
-      recentSite: [] as RecentSiteRow[],
-    };
+    return null;
   }
 }
 
 export default async function ContentDashboardPage() {
   const access = await requireCmsManager("/icerik");
   const data = await loadDashboardData();
+  const areas = cmsModules.filter((module) => module.enabled && module.href !== "/icerik" && (access.isAdmin || !module.adminOnly));
+
+  if (!data) {
+    return (
+      <section className="content-dashboard">
+        <div className="content-page-heading content-dashboard-heading">
+          <div>
+            <span>Operasyon Merkezi</span>
+            <h1>İçerik Genel Bakış</h1>
+            <p>İlkOku.com içerik operasyonu için canlı veriler okunamadığında panel yanlış sıfır değer üretmez.</p>
+          </div>
+          <div className="content-health-badge is-blocked">
+            <small>Panel verisi</small>
+            <strong>OKUNAMADI</strong>
+            <span>Görev ve metrik üretimi güvenli biçimde durduruldu.</span>
+          </div>
+        </div>
+
+        <div className="content-panel" role="alert">
+          <strong>Operasyon verileri okunamadı.</strong>
+          <p>Veritabanı sorgularından en az biri tamamlanamadı. Gerçek içerik durumunu “0” kabul edip yanlış aksiyon üretmemek için dashboard metrikleri gizlendi. İçerik yayınlamadan önce Sistem Sağlığını kontrol edin.</p>
+          <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
+            <Link href="/icerik/saglik">Sistem Sağlığı →</Link>
+            <Link href="/icerik/hazirlik">Yayın Hazırlığı →</Link>
+          </div>
+        </div>
+
+        <div className="content-dashboard-section-title content-dashboard-modules-title">
+          <div><span>Modüller</span><h2>Yönetim alanları</h2></div>
+          <small>{areas.length} aktif modül</small>
+        </div>
+        <div className="content-grid content-dashboard-module-grid">
+          {areas.map((area) => (
+            <article className="content-card" key={area.href}>
+              <small>{area.group}</small><h2>{area.label}</h2><p>{area.description}</p><Link href={area.href}>Yönet →</Link>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   const summary = getCmsReadinessSummary(data.readiness);
   const starter = getCmsStarterSummary(data.readiness);
-  const areas = cmsModules.filter((module) => module.enabled && module.href !== "/icerik" && (access.isAdmin || !module.adminOnly));
 
   const activity: ActivityItem[] = [
     ...data.recentPages.map((page) => ({ key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt })),

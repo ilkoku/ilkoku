@@ -23,6 +23,7 @@ export const cmsModules: CmsModule[] = [
   { href: "/icerik/formlar", label: "Formlar & Talepler", description: "Kurumsal formlar ve gelen talepler", group: "Büyüme", enabled: true },
   { href: "/icerik/yonlendirmeler", label: "Yönlendirmeler", description: "Eski URL ve kalıcı 308 yönlendirme kuralları", group: "Büyüme", enabled: true, adminOnly: true },
   { href: "/icerik/diller", label: "Dil Yönetimi", description: "Public diller ve dil bazlı içerik kapsamı", group: "Büyüme", enabled: true, adminOnly: true },
+  { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", description: "Sprint 3 canlı içerik kabul kontrolü", group: "Sistem", enabled: true },
   { href: "/icerik/saglik", label: "Sistem Sağlığı", description: "CMS yayın, içerik, SEO ve erişim bütünlük kontrolleri", group: "Sistem", enabled: true },
   { href: "/icerik/gecmis", label: "Sürüm Geçmişi", description: "Revision karşılaştırma ve güvenli geri yükleme", group: "Sistem", enabled: true },
   { href: "/icerik/erisim", label: "İçerik Yetkileri", description: "İçerik yöneticisi ve yayın yetkileri", group: "Sistem", enabled: true, adminOnly: true },

@@ -53,15 +53,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
     sourceReadError = true;
   }
 
-  let draftReadError = false;
-  const draftRows = await getCmsDraftsByPrefix<FaqItem>(`faq:${locale}:`).catch(() => {
-    draftReadError = true;
-    return [];
-  });
-  const dataError = sourceReadError || draftReadError;
+  const draftResult = await getCmsDraftsByPrefix<FaqItem>(`faq:${locale}:`).then(
+    (draftRows) => ({ draftRows, error: false as const }),
+    () => ({ draftRows: [], error: true as const }),
+  );
+  const dataError = sourceReadError || draftResult.error;
   const canPublishLocale = access.canPublish && localeEnabled && !dataError;
 
-  const draftMap = new Map(draftRows.map((draft) => [draft.contentKey.replace(`faq:${locale}:`, ""), draft]));
+  const draftMap = new Map(draftResult.draftRows.map((draft) => [draft.contentKey.replace(`faq:${locale}:`, ""), draft]));
   const items = rows.map((row) => {
     const staged = draftMap.get(row.contentKey);
     return {

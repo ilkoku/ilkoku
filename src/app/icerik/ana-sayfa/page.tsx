@@ -11,6 +11,7 @@ import {
   saveHomepageRolesAction,
   saveHomepageWhyAction,
 } from "@/features/cms/actions";
+import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsDraftsByPrefix } from "@/lib/cms-drafts";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import { cmsLocaleNamespace, normalizeCmsLocale, type CmsLocaleCode } from "@/lib/cms-locales";
@@ -74,20 +75,29 @@ function status(section?: SectionState) {
   return "Kayıt yok";
 }
 
-function PublishBox({ action, label, locale, section, enabled }: {
+function PublishBox({ action, label, locale, section, enabled, canPublish }: {
   action: PublishAction;
   label: string;
   locale: CmsLocaleCode;
   section?: SectionState;
   enabled: boolean;
+  canPublish: boolean;
 }) {
+  const detail = !section?.hasDraft
+    ? "Yayınlanmayı bekleyen yeni taslak yok."
+    : !enabled
+      ? `${locale.toUpperCase()} public dili kapalı; taslak canlıya aktarılamaz.`
+      : !canPublish
+        ? "Bu hesap taslak hazırlayabilir ancak yayın yetkisine sahip değildir. Yayınlama işlemini yetkili bir kullanıcı tamamlamalıdır."
+        : `${label} çalışma taslağını canlı ${locale.toUpperCase()} ana sayfaya aktarır.`;
+
   return (
     <div className="content-publish-box">
       <div>
         <strong>Yayınlama · {status(section)}</strong>
-        <p>{section?.hasDraft ? (enabled ? `${label} çalışma taslağını canlı ${locale.toUpperCase()} ana sayfaya aktarır.` : `${locale.toUpperCase()} public dili kapalı; taslak canlıya aktarılamaz.`) : "Yayınlanmayı bekleyen yeni taslak yok."}</p>
+        <p>{detail}</p>
       </div>
-      {enabled && section?.hasDraft ? <form action={action}><input type="hidden" name="locale" value={locale} /><button type="submit">Taslağı Yayınla</button></form> : null}
+      {enabled && canPublish && section?.hasDraft ? <form action={action}><input type="hidden" name="locale" value={locale} /><button type="submit">Taslağı Yayınla</button></form> : null}
     </div>
   );
 }
@@ -95,6 +105,7 @@ function PublishBox({ action, label, locale, section, enabled }: {
 export default async function Page({ searchParams }: { searchParams: Promise<{ dil?: string }> }) {
   const params = await searchParams;
   const locale = normalizeCmsLocale(params.dil);
+  const access = await requireCmsManager("/icerik/ana-sayfa");
   const localeEnabled = await isCmsLocaleEnabled(locale);
   const sections = await load(locale);
   const hero = sections.get("hero");
@@ -117,6 +128,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
         {isEn ? <Link href="/icerik/diller">Dil Yönetimi</Link> : null}
       </div>
 
+      {!access.canPublish ? (
+        <div className="content-panel" style={{ marginBottom: "1rem" }}>
+          <strong>Taslak yönetim yetkisi</strong>
+          <p>Bu hesap içerik hazırlayabilir ve önizleyebilir. Canlı yayınlama için ayrıca yayın yetkisi gerekir.</p>
+        </div>
+      ) : null}
+
       {isEn && !localeEnabled ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }}>
           <strong>İngilizce public yayın kapalı.</strong>
@@ -138,7 +156,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
           </div>
           <div className="content-form-actions"><button type="submit">Taslak Kaydet</button></div>
         </form>
-        <PublishBox action={publishHomepageHeroAction} label="Hero" locale={locale} section={hero} enabled={localeEnabled} />
+        <PublishBox action={publishHomepageHeroAction} label="Hero" locale={locale} section={hero} enabled={localeEnabled} canPublish={access.canPublish} />
       </div>
 
       <div className="content-panel">
@@ -150,7 +168,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
           <label><span>Açıklama</span><textarea name="description" maxLength={700} rows={3} defaultValue={roles?.values.description || ""} /></label>
           <div className="content-form-actions"><button type="submit">Taslak Kaydet</button></div>
         </form>
-        <PublishBox action={publishHomepageRolesAction} label="Rol seçimi alanı" locale={locale} section={roles} enabled={localeEnabled} />
+        <PublishBox action={publishHomepageRolesAction} label="Rol seçimi alanı" locale={locale} section={roles} enabled={localeEnabled} canPublish={access.canPublish} />
       </div>
 
       <div className="content-panel">
@@ -166,7 +184,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
           </div>
           <div className="content-form-actions"><button type="submit">Taslak Kaydet</button></div>
         </form>
-        <PublishBox action={publishHomepagePassportAction} label="Eser Pasaportu" locale={locale} section={passport} enabled={localeEnabled} />
+        <PublishBox action={publishHomepagePassportAction} label="Eser Pasaportu" locale={locale} section={passport} enabled={localeEnabled} canPublish={access.canPublish} />
       </div>
 
       <div className="content-panel">
@@ -178,7 +196,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
           <label><span>Açıklama</span><textarea name="description" maxLength={700} rows={3} defaultValue={why?.values.description || ""} /></label>
           <div className="content-form-actions"><button type="submit">Taslak Kaydet</button></div>
         </form>
-        <PublishBox action={publishHomepageWhyAction} label="Neden İlkOku" locale={locale} section={why} enabled={localeEnabled} />
+        <PublishBox action={publishHomepageWhyAction} label="Neden İlkOku" locale={locale} section={why} enabled={localeEnabled} canPublish={access.canPublish} />
       </div>
 
       <div className="content-panel">
@@ -190,7 +208,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
           <label><span>Copyright metni</span><input name="copyright" maxLength={300} defaultValue={footer?.values.copyright || ""} /></label>
           <div className="content-form-actions"><button type="submit">Taslak Kaydet</button></div>
         </form>
-        <PublishBox action={publishHomepageFooterAction} label="Footer" locale={locale} section={footer} enabled={localeEnabled} />
+        <PublishBox action={publishHomepageFooterAction} label="Footer" locale={locale} section={footer} enabled={localeEnabled} canPublish={access.canPublish} />
       </div>
     </section>
   );

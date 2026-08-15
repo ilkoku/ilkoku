@@ -15,6 +15,10 @@ import "./yazarlar/writers.css";
 export const metadata: Metadata = {
   title: "İlkOku Sistem Yönetimi",
   description: "İlkOku teknik sistem yönetim merkezi",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export const dynamic = "force-dynamic";

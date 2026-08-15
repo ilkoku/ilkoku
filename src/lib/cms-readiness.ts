@@ -242,7 +242,6 @@ export function getCmsReadinessSummary(data: CmsReadinessSnapshot) {
     data.faq < cmsReadinessTargets.faq,
     data.guides < cmsReadinessTargets.guides,
     data.seoMissing > 0,
-    data.queue > 0,
   ].filter(Boolean).length;
 
   return {
@@ -250,6 +249,7 @@ export function getCmsReadinessSummary(data: CmsReadinessSnapshot) {
     coreTotal: coreChecks.length,
     blockers,
     warnings,
+    operationalQueue: data.queue,
     ready: blockers === 0 && warnings === 0,
   };
 }

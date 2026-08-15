@@ -18,6 +18,14 @@ type SiteCountRow = {
   schedules: bigint;
 };
 
+type ReadinessRow = {
+  homepage: bigint;
+  legal: bigint;
+  corporate: bigint;
+  faq: bigint;
+  guides: bigint;
+};
+
 type CountRow = { total: bigint };
 
 type RecentPageRow = {
@@ -44,6 +52,16 @@ type ActivityItem = {
   updatedAt: Date;
 };
 
+type TaskLevel = "blocker" | "warn" | "info";
+
+type DashboardTask = {
+  href: string;
+  title: string;
+  text: string;
+  action: string;
+  level: TaskLevel;
+};
+
 const namespaceLabels: Record<string, string> = {
   homepage: "Ana Sayfa",
   site: "Site",
@@ -68,6 +86,12 @@ function statusLabel(status: string) {
   return "Taslak";
 }
 
+function taskLevelLabel(level: TaskLevel) {
+  if (level === "blocker") return "BLOCKER";
+  if (level === "warn") return "ÖNCELİK";
+  return "TAKİP";
+}
+
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("tr-TR", {
     dateStyle: "medium",
@@ -77,7 +101,7 @@ function formatDate(value: Date) {
 
 async function loadDashboardData() {
   try {
-    const [pageCounts, seoIssues, siteCounts, revisions, publishQueue, recentPages, recentSite] = await Promise.all([
+    const [pageCounts, seoIssues, siteCounts, revisions, publishQueue, readinessRows, recentPages, recentSite] = await Promise.all([
       prisma.$queryRaw<PageCountRow[]>`
         SELECT
           COUNT(*) AS total,
@@ -131,6 +155,32 @@ async function loadDashboardData() {
               )
           ) AS total
       `,
+      prisma.$queryRaw<ReadinessRow[]>`
+        SELECT
+          (SELECT COUNT(*) FROM SiteContent
+            WHERE namespace = 'homepage' AND status = 'published'
+              AND contentKey IN ('hero', 'roles', 'passport', 'why', 'footer')) AS homepage,
+          (SELECT COUNT(*) FROM ContentPage
+            WHERE status = 'published'
+              AND contentKey IN (
+                'legal:kullanim-sartlari',
+                'legal:gizlilik-politikasi',
+                'legal:kvkk',
+                'legal:cerez-politikasi',
+                'legal:telif-hakki-politikasi'
+              )) AS legal,
+          (SELECT COUNT(*) FROM ContentPage
+            WHERE status = 'published'
+              AND contentKey LIKE 'page:tr:%'
+              AND noIndex = false) AS corporate,
+          (SELECT COUNT(*) FROM SiteContent
+            WHERE namespace = 'faq' AND status = 'published') AS faq,
+          (SELECT COUNT(*) FROM ContentPage
+            WHERE status = 'published'
+              AND contentKey LIKE 'guide:%'
+              AND contentKey NOT LIKE 'guide:en:%'
+              AND noIndex = false) AS guides
+      `,
       prisma.$queryRaw<RecentPageRow[]>`
         SELECT id, title, slug, status, updatedAt
         FROM ContentPage
@@ -146,6 +196,8 @@ async function loadDashboardData() {
       `,
     ]);
 
+    const readiness = readinessRows[0];
+
     return {
       pages: {
         total: number(pageCounts[0]?.total),
@@ -159,6 +211,13 @@ async function loadDashboardData() {
       schedules: number(siteCounts[0]?.schedules),
       revisions: number(revisions[0]?.total),
       publishQueue: number(publishQueue[0]?.total),
+      readiness: {
+        homepage: number(readiness?.homepage),
+        legal: number(readiness?.legal),
+        corporate: number(readiness?.corporate),
+        faq: number(readiness?.faq),
+        guides: number(readiness?.guides),
+      },
       recentPages,
       recentSite,
     };
@@ -172,6 +231,7 @@ async function loadDashboardData() {
       schedules: 0,
       revisions: 0,
       publishQueue: 0,
+      readiness: { homepage: 0, legal: 0, corporate: 0, faq: 0, guides: 0 },
       recentPages: [] as RecentPageRow[],
       recentSite: [] as RecentSiteRow[],
     };
@@ -204,74 +264,186 @@ export default async function ContentDashboardPage() {
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 8);
 
-  const tasks = [
+  const tasks: DashboardTask[] = [
+    data.readiness.legal < 5
+      ? {
+          href: "/icerik/yasal?dil=tr",
+          title: `Yasal CMS sahipliği ${data.readiness.legal}/5`,
+          text: "Zorunlu beş yasal belgenin tamamı CMS üzerinden yayınlanmadan içerik kabulü tamamlanmaz.",
+          action: "Yasalı tamamla",
+          level: "blocker" as const,
+        }
+      : null,
+    data.readiness.homepage < 5
+      ? {
+          href: "/icerik/ana-sayfa?dil=tr",
+          title: `Ana Sayfa CMS kapsamı ${data.readiness.homepage}/5`,
+          text: "Hero, roller, Eser Pasaportu, Neden İlkOku ve footer bölümlerinin yayın durumunu tamamlayın.",
+          action: "Ana Sayfayı aç",
+          level: "warn" as const,
+        }
+      : null,
+    data.readiness.corporate === 0
+      ? {
+          href: "/icerik/sayfalar",
+          title: "Kurumsal sayfa yayını bekleniyor",
+          text: "En az bir indexlenebilir TR kurumsal sayfa yayınlanmalı. Başlangıç için Hakkımızda taslağını kullanabilirsiniz.",
+          action: "Sayfaları yönet",
+          level: "warn" as const,
+        }
+      : null,
+    data.readiness.faq === 0
+      ? {
+          href: "/icerik/sss?dil=tr",
+          title: "Yardım Merkezi içerik bekliyor",
+          text: "En az bir TR SSS yayını olmadan Yardım Merkezi içerik açısından boş kalır.",
+          action: "SSS'leri yönet",
+          level: "warn" as const,
+        }
+      : null,
+    data.readiness.guides === 0
+      ? {
+          href: "/icerik/rehber?dil=tr",
+          title: "Rehber detayı yayını bekleniyor",
+          text: "Rehber dizini açık ancak indexlenebilir bir TR rehber detayı henüz yayında değil.",
+          action: "Rehberleri yönet",
+          level: "warn" as const,
+        }
+      : null,
     data.publishQueue > 0
-      ? { href: "/icerik/yayin-kuyrugu", title: `${data.publishQueue} içerik yayın bekliyor`, text: "Taslakları önizleyin, düzenleyin ve yayın yetkisiyle canlıya alın." }
+      ? {
+          href: "/icerik/yayin-kuyrugu",
+          title: `${data.publishQueue} içerik yayın bekliyor`,
+          text: "Taslakları önizleyin, düzenleyin ve yayın yetkisiyle canlıya alın.",
+          action: "Kuyruğu aç",
+          level: "warn" as const,
+        }
       : null,
     data.seoIssues > 0
-      ? { href: "/icerik/seo", title: `${data.seoIssues} yayındaki TR sayfada SEO alanı eksik`, text: "Title, description veya canonical eksiklerini tamamlayın." }
+      ? {
+          href: "/icerik/seo",
+          title: `${data.seoIssues} yayındaki TR sayfada SEO alanı eksik`,
+          text: "Title, description veya canonical eksiklerini tamamlayın.",
+          action: "SEO'yu düzelt",
+          level: "warn" as const,
+        }
       : null,
     data.forms > 0
-      ? { href: "/icerik/formlar", title: `${data.forms} açık form talebi var`, text: "Gelen kurumsal talepleri inceleyip sonuçlananları arşivleyin." }
+      ? {
+          href: "/icerik/formlar",
+          title: `${data.forms} açık form talebi var`,
+          text: "Gelen kurumsal talepleri inceleyip sonuçlanan kayıtları arşivleyin.",
+          action: "Talepleri aç",
+          level: "info" as const,
+        }
       : null,
-  ].filter(Boolean) as Array<{ href: string; title: string; text: string }>;
+  ].filter(Boolean) as DashboardTask[];
 
-  const healthLabel = tasks.length === 0 ? "İyi" : tasks.length <= 2 ? "Kontrol gerekli" : "Dikkat gerekli";
-  const healthClass = tasks.length === 0 ? "is-good" : tasks.length <= 2 ? "is-watch" : "is-attention";
+  const priority = { blocker: 0, warn: 1, info: 2 } satisfies Record<TaskLevel, number>;
+  tasks.sort((a, b) => priority[a.level] - priority[b.level]);
+
+  const readinessChecks = [
+    data.readiness.homepage === 5,
+    data.readiness.legal === 5,
+    data.readiness.corporate > 0,
+    data.readiness.faq > 0,
+    data.readiness.guides > 0,
+  ];
+  const readinessPassed = readinessChecks.filter(Boolean).length;
+  const blockerCount = tasks.filter((task) => task.level === "blocker").length;
+  const warningCount = tasks.filter((task) => task.level === "warn").length;
+
+  const healthLabel = blockerCount > 0
+    ? "Blokaj var"
+    : warningCount > 0
+      ? "İçerik işi var"
+      : tasks.length > 0
+        ? "Takip gerekli"
+        : "Hazır";
+  const healthClass = blockerCount > 0
+    ? "is-blocked"
+    : warningCount > 0
+      ? "is-attention"
+      : tasks.length > 0
+        ? "is-watch"
+        : "is-good";
 
   const metrics = [
-    { label: "CMS sayfaları", value: data.pages.total, note: `${data.pages.published} yayında` },
-    { label: "Yayın kuyruğu", value: data.publishQueue, note: "bekleyen içerik" },
-    { label: "Planlı yayın", value: data.schedules, note: "aktif zamanlama" },
-    { label: "SEO eksiği", value: data.seoIssues, note: "yayındaki TR sayfa" },
-    { label: "Aktif duyuru", value: data.announcements, note: "yayında" },
-    { label: "Form talebi", value: data.forms, note: "açık kayıt" },
-    { label: "Medya", value: data.media, note: "aktif varlık" },
-    { label: "Revizyon", value: data.revisions, note: "son 7 gün" },
+    { label: "Yayın hazırlığı", value: `${readinessPassed}/5`, note: "temel içerik alanı", href: "/icerik/hazirlik" },
+    { label: "Yayın kuyruğu", value: data.publishQueue, note: "bekleyen içerik", href: "/icerik/yayin-kuyrugu" },
+    { label: "SEO eksiği", value: data.seoIssues, note: "yayındaki TR sayfa", href: "/icerik/seo" },
+    { label: "Form talebi", value: data.forms, note: "açık kayıt", href: "/icerik/formlar" },
+    { label: "CMS sayfaları", value: data.pages.total, note: `${data.pages.published} yayında`, href: "/icerik/sayfalar" },
+    { label: "Planlı yayın", value: data.schedules, note: "aktif zamanlama", href: "/icerik/zamanlama" },
+    { label: "Medya", value: data.media, note: "aktif varlık", href: "/icerik/medya" },
+    { label: "Revizyon", value: data.revisions, note: "son 7 gün", href: "/icerik/gecmis" },
+  ];
+
+  const quickActions = [
+    { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "Sprint 3 kabul durumunu aç" },
+    { href: "/icerik/sayfalar/yeni", label: "+ Yeni Sayfa", text: "Kurumsal taslak oluştur" },
+    { href: "/icerik/rehber/yeni?dil=tr", label: "+ Yeni Rehber", text: "Editoryal içerik oluştur" },
+    { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen taslakları incele" },
   ];
 
   return (
     <section className="content-dashboard">
       <div className="content-page-heading content-dashboard-heading">
         <div>
-          <span>Kontrol Merkezi</span>
+          <span>Operasyon Merkezi</span>
           <h1>İçerik Genel Bakış</h1>
-          <p>İlkOku.com içeriklerinin yayın, zamanlama, SEO, duyuru ve talep durumunu tek ekrandan izleyin.</p>
+          <p>İlkOku.com için bugün ne yapılması gerektiğini, yayın hazırlığını ve son değişiklikleri tek ekrandan yönetin.</p>
         </div>
         <div className={`content-health-badge ${healthClass}`}>
-          <small>İçerik sağlığı</small>
+          <small>Canlı içerik durumu</small>
           <strong>{healthLabel}</strong>
-          <span>{access.canPublish ? "Yönet + yayın yetkisi" : "İçerik yönetim yetkisi"}</span>
+          <span>{readinessPassed}/5 temel alan hazır · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span>
         </div>
+      </div>
+
+      <div className="content-dashboard-quick-actions" aria-label="Hızlı işlemler">
+        {quickActions.map((action) => (
+          <Link href={action.href} key={action.href}>
+            <strong>{action.label}</strong>
+            <small>{action.text}</small>
+          </Link>
+        ))}
       </div>
 
       <div className="content-metric-grid">
         {metrics.map((metric) => (
-          <article className="content-metric-card" key={metric.label}>
+          <Link href={metric.href} className="content-metric-card content-metric-card--link" key={metric.label}>
             <span>{metric.label}</span>
             <strong>{metric.value}</strong>
             <small>{metric.note}</small>
-          </article>
+          </Link>
         ))}
       </div>
 
       <div className="content-dashboard-columns">
         <div className="content-panel content-dashboard-panel">
           <div className="content-dashboard-section-title">
-            <div><span>Öncelik</span><h2>Yapılması gerekenler</h2></div>
-            <small>{tasks.length} açık konu</small>
+            <div><span>Bugün</span><h2>Yapılması gerekenler</h2></div>
+            <Link href="/icerik/hazirlik">Tüm kabul →</Link>
           </div>
           {tasks.length === 0 ? (
             <div className="content-dashboard-success">
-              <strong>Kritik içerik işi görünmüyor.</strong>
-              <p>Yayın, SEO ve kurumsal talepler açısından açık bir uyarı yok.</p>
+              <strong>İçerik operasyonunda açık konu görünmüyor.</strong>
+              <p>Temel yayın hazırlığı, kuyruk ve SEO kontrolleri temiz.</p>
             </div>
           ) : (
             <div className="content-task-list">
-              {tasks.map((task) => (
-                <Link href={task.href} className="content-task-item" key={task.href}>
-                  <div><strong>{task.title}</strong><p>{task.text}</p></div>
-                  <span>İncele →</span>
+              {tasks.map((task, index) => (
+                <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}>
+                  <div className="content-task-item__body">
+                    <div className="content-task-item__meta">
+                      <span>{taskLevelLabel(task.level)}</span>
+                      <small>#{index + 1}</small>
+                    </div>
+                    <strong>{task.title}</strong>
+                    <p>{task.text}</p>
+                  </div>
+                  <span className="content-task-item__action">{task.action} →</span>
                 </Link>
               ))}
             </div>
@@ -299,7 +471,7 @@ export default async function ContentDashboardPage() {
       </div>
 
       <div className="content-dashboard-section-title content-dashboard-modules-title">
-        <div><span>Modüller</span><h2>Hızlı erişim</h2></div>
+        <div><span>Modüller</span><h2>Tüm yönetim alanları</h2></div>
         <small>{areas.length} aktif modül</small>
       </div>
 

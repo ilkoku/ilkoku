@@ -131,3 +131,19 @@ test("publisher file downloads re-authorize, lock and audit before redirect", ()
   assertNotContains(route, "getLegacyPublisherFileForDownload", "publisher file download route");
   assertContains(audit, "publisher_submission_file_downloaded", "admin file download audit label");
 });
+
+test("second editor draft and completion share one locked live state machine", () => {
+  const state = source("src/features/editor-workspace/second-editor-review-state.actions.ts");
+  const email = source("src/features/editor-workspace/second-editor-email.actions.ts");
+
+  assertContains(state, "lockLiveSecondReviewContext", "second editor review state");
+  assert.ok(
+    state.split("FOR UPDATE").length - 1 >= 3,
+    "second editor state must lock editor, assignment and work rows",
+  );
+  assertContains(state, 'editor.status !== "active"', "second editor live authorization");
+  assertContains(state, 'assignment.status === "assigned" || assignment.status === "in_progress"', "second editor terminal-state guard");
+  assertContains(state, 'existing?.reportStatus === "completed"', "second editor completed-report downgrade guard");
+  assertContains(email, 'from "./second-editor-review-state.actions"', "second editor canonical write path");
+  assertNotContains(email, "completeSecondEditorReviewAction as completeSecondEditorReviewCoreAction,\n  saveSecondEditorReviewDraftAction,\n  sendToSecondEditorAction", "second editor legacy write import");
+});

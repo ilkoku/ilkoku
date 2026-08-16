@@ -14,6 +14,7 @@ export async function sendPublisherDiscoveryShareEmail(input: {
   email: string;
   entityKind: "author" | "work";
   entityTitle: string;
+  idempotencyKey: string;
   note: string;
   publisherName: string;
   targetPath: string;
@@ -35,6 +36,7 @@ export async function sendPublisherDiscoveryShareEmail(input: {
       <blockquote>${escapeHtml(input.note)}</blockquote>
       <p><a href="${escapeHtml(targetUrl)}">Paylaşılan kaydı aç</a></p>
     `.trim(),
+    idempotencyKey: input.idempotencyKey,
     subject:
       `${input.publisherName} bir ${input.entityKind === "work" ? "eser" : "yazar"} paylaştı`,
     template: "publisher_discovery_share_email",

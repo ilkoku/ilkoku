@@ -78,7 +78,7 @@ test("stale contract server-action names cannot bypass the canonical lifecycle",
   assertNotContains(text, "upsertPublicationPlan({", "publication compatibility action");
 });
 
-test("writer publisher workspace is live and hides internal draft contracts", () => {
+test("writer publisher workspace is live and hides internal draft contracts and plan notes", () => {
   const route = source("src/app/yayinevleri/page.tsx");
   const query = source("src/features/publishers/queries.ts");
   const workspace = source("src/features/publishers/components/PublisherWorkspace.tsx");
@@ -88,9 +88,11 @@ test("writer publisher workspace is live and hides internal draft contracts", ()
   assertContains(route, "<PublisherWorkspace", "writer publisher route");
   assertNotContains(route, 'redirect("/yazar")', "writer publisher route");
   assertContains(query, 'item.contract.status !== "draft"', "writer publisher query");
+  assertNotContains(query, "item.publicationPlan.notes", "writer publisher query");
   assertContains(workspace, "focusedSubmissionId", "writer publisher workspace");
   assertContains(workspace, "item.contract", "writer publisher workspace");
   assertContains(workspace, "item.publicationPlan", "writer publisher workspace");
+  assertNotContains(workspace, "item.publicationPlan.notes", "writer publisher workspace");
   assertContains(navigation, '{ label: "Yayınevleri", href: "/yayinevleri" }', "writer navigation");
 });
 

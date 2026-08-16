@@ -1,6 +1,9 @@
 import "server-only";
 
-import type { NotificationType } from "@/generated/prisma/client";
+import type {
+  EditorAssignmentStatus,
+  NotificationType,
+} from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type NotificationTargetScope =
@@ -35,7 +38,7 @@ type IdRow = {
 };
 
 type EditorAssignmentRow = {
-  status: "waiting" | "assigned" | "in_progress" | "completed" | "cancelled";
+  status: EditorAssignmentStatus;
   workId: string;
 };
 
@@ -327,7 +330,7 @@ export async function resolveNotificationTargets(input: {
     if (
       !href &&
       input.scope === "publisher" &&
-      notification.type === "publisher_discovery_share"
+      notification.type === "publisher_discovery_shared"
     ) {
       href = "/yayinevi/paylasilanlar";
     }

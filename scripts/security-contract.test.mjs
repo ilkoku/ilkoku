@@ -314,13 +314,17 @@ test("publisher sensitive routes preserve granular capability gates", () => {
   const download = source(
     "src/app/yayinevi/dosyalar/[fileId]/indir/route.ts",
   );
+  const auditedDownload = source(
+    "src/features/publisher-submissions/file-download.ts",
+  );
 
   assertContains(detail, "viewAuthorizedContent", "publisher submission detail");
   assertContains(detail, "viewAuthorizedPassport", "publisher submission detail");
   assertContains(detail, "viewFiles", "publisher submission detail");
   assertContains(detail, "downloadFiles", "publisher submission detail");
   assertContains(passport, "viewAuthorizedPassport", "publisher passport route");
-  assertContains(download, "getLegacyPublisherFileForDownload", "publisher file download route");
+  assertContains(download, "authorizeAuditedPublisherFileDownload", "publisher file download route");
+  assertContains(auditedDownload, '"download_files"', "publisher file download authorization");
   assertContains(download, '"Cache-Control": "private, no-store"', "publisher file download route");
   assertContains(download, '"X-Content-Type-Options": "nosniff"', "publisher file download route");
 });
@@ -332,6 +336,7 @@ test("admin audit log keeps source-aware publisher workflow labels", () => {
     "publisher_submission_withdrawn",
     "publisher_submission_decision_updated",
     "publisher_submission_internal_note_added",
+    "publisher_submission_file_downloaded",
     "publisher_editor_request_created",
     "publisher_editor_request_claimed",
     "publisher_editor_request_completed",

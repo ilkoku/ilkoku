@@ -102,25 +102,6 @@ export async function getPublisherFileCenter(userId: string): Promise<PublisherF
   }));
 }
 
-export async function getPublisherNotificationCenter(userId: string): Promise<PublisherNotificationData[] | null> {
-  const notifications = await getPublisherNotifications(userId);
-  if (!notifications) return null;
-  return notifications.map((notification) => ({
-    createdAt: notification.createdAt.toISOString(),
-    href:
-      notification.relatedEntityType === "publisher_submission" &&
-      notification.relatedEntityId
-        ? `/yayinevi/basvurular/${notification.relatedEntityId}`
-        : notification.relatedEntityType === "publisher_permission_request"
-          ? "/yayinevi/yetkilerim"
-          : null,
-    id: notification.id,
-    message: notification.message,
-    readAt: notification.readAt?.toISOString() ?? null,
-    title: notification.title,
-  }));
-}
-
 export async function getPublisherMemberCenter(userId: string): Promise<{
   canManage: boolean;
   companyName: string;

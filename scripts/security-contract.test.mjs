@@ -22,7 +22,7 @@ function loadPureTypeScriptModule(relativePath) {
     fileName: filename,
   }).outputText;
 
-  const module = { exports: {} };
+  const commonJsModule = { exports: {} };
   const runtimeRequire = (specifier) => {
     throw new Error(
       `Security contract expected a pure module but ${relativePath} required ${specifier} at runtime.`,
@@ -31,11 +31,11 @@ function loadPureTypeScriptModule(relativePath) {
 
   new Function("require", "module", "exports", compiled)(
     runtimeRequire,
-    module,
-    module.exports,
+    commonJsModule,
+    commonJsModule.exports,
   );
 
-  return module.exports;
+  return commonJsModule.exports;
 }
 
 function sorted(values) {

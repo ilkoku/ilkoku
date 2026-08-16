@@ -85,10 +85,9 @@ export function parseCmsHomepageSectionStrict(contentKey: string, valueJson: str
             : null;
 
   if (!required || required.some((key) => !nonEmpty(value[key]))) return null;
-  const strings = Object.fromEntries(
+  return Object.fromEntries(
     Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
   );
-  return strings;
 }
 
 export function isCmsContentPagePayloadStrict(contentKey: string, valueJson: string) {
@@ -100,6 +99,23 @@ export function isCmsContentPagePayloadStrict(contentKey: string, valueJson: str
   }
   if (contentKey.startsWith("page:tr:")) {
     return Boolean(parseCmsPageBodyStrict(valueJson));
+  }
+  return true;
+}
+
+export function isCmsStagedPayloadStrict(contentKey: string, payload: Record<string, unknown>) {
+  const serialized = JSON.stringify(payload);
+
+  if (contentKey.startsWith("homepage:")) {
+    const parts = contentKey.split(":");
+    const section = parts.slice(2).join(":");
+    return Boolean(parseCmsHomepageSectionStrict(section, serialized));
+  }
+  if (contentKey.startsWith("faq:")) {
+    return Boolean(parseCmsFaqPayloadStrict(serialized));
+  }
+  if (contentKey.startsWith("page:")) {
+    return nonEmpty(payload.title) && nonEmpty(payload.body);
   }
   return true;
 }

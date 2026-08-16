@@ -146,7 +146,6 @@ export function PublisherWorkspace({
                   <div><dt>Kapak</dt><dd>{taskStatusLabels[item.publicationPlan.coverStatus]}</dd></div>
                   <div><dt>Mizanpaj</dt><dd>{taskStatusLabels[item.publicationPlan.layoutStatus]}</dd></div>
                 </dl>
-                {item.publicationPlan.notes ? <p>{item.publicationPlan.notes}</p> : null}
               </section>
             ) : null}
 

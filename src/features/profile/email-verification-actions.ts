@@ -6,12 +6,15 @@ import {
 } from "node:crypto";
 import { redirect } from "next/navigation";
 import {
+  issueEmailVerification,
+  revokeIssuedEmailVerification,
+} from "@/features/auth/email-verification-state";
+import {
   getCurrentUser,
 } from "@/lib/auth/current-user";
 import {
   sendVerificationEmail,
 } from "@/lib/email/auth-emails";
-import { prisma } from "@/lib/prisma";
 import type {
   ProfileActionState,
 } from "./state";
@@ -47,64 +50,6 @@ export async function resendVerificationEmailAction(
     );
   }
 
-  const account =
-    await prisma.user.findUnique({
-      where: {
-        id: user.id,
-      },
-      select: {
-        email: true,
-        emailVerificationTokens: {
-          orderBy: {
-            createdAt: "desc",
-          },
-          select: {
-            createdAt: true,
-          },
-          take: 1,
-          where: {
-            usedAt: null,
-          },
-        },
-        emailVerified: true,
-        fullName: true,
-      },
-    });
-
-  if (!account) {
-    return failure(
-      "Hesap bilgileri bulunamadı.",
-    );
-  }
-
-  if (account.emailVerified) {
-    return success(
-      "E-posta adresiniz zaten doğrulanmış.",
-    );
-  }
-
-  const latestToken =
-    account.emailVerificationTokens[0];
-  const retryAfter =
-    latestToken
-      ? latestToken.createdAt.getTime() +
-        60 * 1000
-      : 0;
-
-  if (retryAfter > Date.now()) {
-    const seconds = Math.max(
-      1,
-      Math.ceil(
-        (retryAfter - Date.now()) /
-          1000,
-      ),
-    );
-
-    return failure(
-      `Yeni e-posta göndermek için ${seconds} saniye bekleyin.`,
-    );
-  }
-
   const token =
     randomBytes(32).toString(
       "base64url",
@@ -113,37 +58,44 @@ export async function resendVerificationEmailAction(
     createHash("sha256")
       .update(token)
       .digest("hex");
-  const expiresAt = new Date(
-    Date.now() +
-      24 * 60 * 60 * 1000,
-  );
+
+  let issued:
+    | Awaited<ReturnType<typeof issueEmailVerification>>
+    | null = null;
 
   try {
-    await prisma.$transaction([
-      prisma.emailVerificationToken.deleteMany({
-        where: {
-          usedAt: null,
-          userId: user.id,
-        },
-      }),
-      prisma.emailVerificationToken.create({
-        data: {
-          expiresAt,
-          tokenHash,
-          userId: user.id,
-        },
-      }),
-    ]);
+    issued = await issueEmailVerification({
+      tokenHash,
+      userId: user.id,
+    });
   } catch {
     return failure(
       "Doğrulama bağlantısı oluşturulamadı. Lütfen tekrar deneyin.",
     );
   }
 
+  if (issued.status === "account_unavailable") {
+    return failure(
+      "Hesap bilgileri bulunamadı.",
+    );
+  }
+
+  if (issued.status === "already_verified") {
+    return success(
+      "E-posta adresiniz zaten doğrulanmış.",
+    );
+  }
+
+  if (issued.status === "cooldown") {
+    return failure(
+      `Yeni e-posta göndermek için ${issued.retryAfterSeconds} saniye bekleyin.`,
+    );
+  }
+
   try {
     await sendVerificationEmail({
-      email: account.email,
-      fullName: account.fullName,
+      email: issued.email,
+      fullName: issued.fullName,
       token,
     });
   } catch (emailError) {
@@ -153,11 +105,9 @@ export async function resendVerificationEmailAction(
     );
 
     try {
-      await prisma.emailVerificationToken.deleteMany({
-        where: {
-          tokenHash,
-          usedAt: null,
-        },
+      await revokeIssuedEmailVerification({
+        tokenHash,
+        userId: issued.userId,
       });
     } catch (cleanupError) {
       console.error(

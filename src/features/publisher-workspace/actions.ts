@@ -4,13 +4,16 @@ import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  saveSecurePublicationPlanAction,
+  saveSecurePublisherContractAction,
+} from "@/features/publisher-contracts/actions";
+import {
   addSecurePublisherInternalNoteAction,
   updateSecurePublisherDecisionAction,
 } from "@/features/publisher-submissions/actions";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 import {
-  sendPublisherContractEmail,
   sendPublisherTeamInvitationEmail,
 } from "@/lib/email/publisher-emails";
 import {
@@ -18,8 +21,6 @@ import {
   cancelPublisherInvitation,
   createPublisherInvitation,
   updatePublisherMember,
-  upsertPublicationPlan,
-  upsertPublisherContract,
 } from "./repository";
 import {
   customizablePublisherPermissionKeys,
@@ -58,115 +59,17 @@ export async function addPublisherInternalNoteAction(
 }
 
 export async function savePublisherContractAction(
-  _state: PublisherContractActionState,
+  state: PublisherContractActionState,
   formData: FormData,
 ): Promise<PublisherContractActionState> {
-  const user = await getPublisherWriteUser();
-  if (!user) return { message: "Bu işlem için giriş yapmalısınız.", status: "error" };
-
-  const submissionId = String(formData.get("submissionId") ?? "").trim();
-  const territory = String(formData.get("territory") ?? "").trim();
-  const notes = String(formData.get("notes") ?? "").trim() || null;
-  const royaltyPercentage = Number(formData.get("royaltyPercentage"));
-  const advanceRaw = String(formData.get("advanceAmount") ?? "").trim();
-  const advanceAmount = advanceRaw ? Number(advanceRaw) : null;
-  const rightsPeriodMonths = Number(formData.get("rightsPeriodMonths"));
-  const intent = String(formData.get("intent") ?? "draft");
-
-  if (!submissionId || !territory) return { message: "Sözleşme bilgileri eksik.", status: "error" };
-  if (!Number.isFinite(royaltyPercentage) || royaltyPercentage < 0 || royaltyPercentage > 100) return { message: "Telif oranı 0 ile 100 arasında olmalı.", status: "error" };
-  if (!Number.isInteger(rightsPeriodMonths) || rightsPeriodMonths < 1 || rightsPeriodMonths > 240) return { message: "Hak süresi 1–240 ay arasında olmalı.", status: "error" };
-  if (advanceAmount !== null && (!Number.isFinite(advanceAmount) || advanceAmount < 0)) return { message: "Avans tutarı geçersiz.", status: "error" };
-
-  const saved = await upsertPublisherContract({
-    advanceAmount,
-    notes,
-    rightsPeriodMonths,
-    royaltyPercentage,
-    status: intent === "send" ? "sent" : "draft",
-    submissionId,
-    territory,
-    userId: user.id,
-  });
-  if (!saved) return { message: "Yalnızca kabul edilmiş ve yayınevinize ait başvurularda sözleşme oluşturabilirsiniz.", status: "error" };
-
-  let emailSent = true;
-
-  if (intent === "send") {
-    try {
-      await sendPublisherContractEmail({
-        email: saved.author.email,
-        fullName: saved.author.fullName,
-        submissionId,
-        workTitle: saved.work.title,
-      });
-    } catch (error) {
-      emailSent = false;
-
-      console.error(
-        "PUBLISHER_CONTRACT_EMAIL_FAILED",
-        {
-          error:
-            error instanceof Error
-              ? error.message
-              : "UNKNOWN_ERROR",
-          submissionId,
-        },
-      );
-    }
-  }
-
-  revalidatePath(`/yayinevi/basvurular/${submissionId}`);
-  return {
-    message:
-      intent === "send"
-        ? (
-            emailSent
-              ? "Sözleşme yazara gönderildi."
-              : "Sözleşme kaydedildi; e-posta gönderilemedi."
-          )
-        : "Sözleşme taslağı kaydedildi.",
-    status: "success",
-  };
+  return saveSecurePublisherContractAction(state, formData);
 }
 
 export async function savePublicationPlanAction(
-  _state: PublisherContractActionState,
+  state: PublisherContractActionState,
   formData: FormData,
 ): Promise<PublisherContractActionState> {
-  const user = await getPublisherWriteUser();
-  if (!user) return { message: "Bu işlem için giriş yapmalısınız.", status: "error" };
-
-  const submissionId = String(formData.get("submissionId") ?? "").trim();
-  const targetRaw = String(formData.get("targetPublicationDate") ?? "").trim();
-  const printRunRaw = String(formData.get("printRun") ?? "").trim();
-  const printRun = printRunRaw ? Number(printRunRaw) : null;
-  const allowedPlanStatuses = new Set(["planning", "preproduction", "production", "distribution", "published"]);
-  const allowedTaskStatuses = new Set(["not_started", "in_progress", "completed"]);
-  const status = String(formData.get("planStatus") ?? "planning");
-  const coverStatus = String(formData.get("coverStatus") ?? "not_started");
-  const layoutStatus = String(formData.get("layoutStatus") ?? "not_started");
-
-  if (!submissionId || !allowedPlanStatuses.has(status) || !allowedTaskStatuses.has(coverStatus) || !allowedTaskStatuses.has(layoutStatus)) return { message: "Yayın planı bilgileri geçersiz.", status: "error" };
-  if (printRun !== null && (!Number.isInteger(printRun) || printRun < 1)) return { message: "Baskı adedi pozitif tam sayı olmalı.", status: "error" };
-  const targetPublicationDate = targetRaw ? new Date(`${targetRaw}T12:00:00`) : null;
-  if (targetPublicationDate && Number.isNaN(targetPublicationDate.getTime())) return { message: "Yayın tarihi geçersiz.", status: "error" };
-
-  const saved = await upsertPublicationPlan({
-    coverStatus: coverStatus as "not_started" | "in_progress" | "completed",
-    isbn: String(formData.get("isbn") ?? "").trim() || null,
-    layoutStatus: layoutStatus as "not_started" | "in_progress" | "completed",
-    notes: String(formData.get("planNotes") ?? "").trim() || null,
-    printRun,
-    status: status as "planning" | "preproduction" | "production" | "distribution" | "published",
-    submissionId,
-    targetPublicationDate,
-    userId: user.id,
-  });
-  if (!saved) return { message: "Yayın planı yalnızca kabul edilmiş ve yayınevinize ait başvurularda oluşturulabilir.", status: "error" };
-
-  revalidatePath(`/yayinevi/basvurular/${submissionId}`);
-  return { message: "Yayın planı kaydedildi.", status: "success" };
+  return saveSecurePublicationPlanAction(state, formData);
 }
 
 export async function markPublisherNotificationReadAction(formData: FormData): Promise<void> {

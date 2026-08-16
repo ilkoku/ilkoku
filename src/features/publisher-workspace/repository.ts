@@ -346,87 +346,6 @@ export async function getPublisherSubmissionForMember(
   });
 }
 
-export async function updatePublisherSubmissionDecision(input: {
-  note: string | null;
-  status: Exclude<PublisherWorkspaceSubmissionStatus, "withdrawn">;
-  submissionId: string;
-  userId: string;
-}) {
-  const membership = await requirePublisherMembershipPermission(input.userId, "decide_submission");
-  if (!membership) return null;
-  const submission = await prisma.publisherSubmission.findFirst({
-    where: { id: input.submissionId, archivedAt: null, publisherId: membership.publisherId, status: { not: "withdrawn" } },
-    select: {
-      author: {
-        select: {
-          email: true,
-          fullName: true,
-        },
-      },
-      authorId: true,
-      id: true,
-      status: true,
-      work: {
-        select: {
-          title: true,
-        },
-      },
-    },
-  });
-  if (!submission) return null;
-
-  return prisma.$transaction(async (tx) => {
-    const updated = await tx.publisherSubmission.update({
-      where: { id: submission.id },
-      data: { publisherNote: input.note, status: input.status },
-    });
-    if (submission.status !== input.status || input.note) {
-      await tx.publisherSubmissionEvent.create({
-        data: {
-          actorId: input.userId,
-          detail: input.note,
-          metadata: JSON.stringify({ from: submission.status, to: input.status }),
-          submissionId: submission.id,
-          title: input.status === "reviewing" ? "Başvuru incelemeye alındı" : input.status === "accepted" ? "Başvuru kabul edildi" : input.status === "rejected" ? "Başvuru reddedildi" : "Başvuru güncellendi",
-          type: input.status === "reviewing" ? "review_started" : "decision_changed",
-        },
-      });
-    }
-    if (submission.status !== input.status) {
-      await tx.notification.create({
-        data: {
-          message: `${submission.work.title} eserinizin yayınevi başvuru durumu güncellendi.`,
-          relatedEntityId: submission.id,
-          relatedEntityType: "publisher_submission",
-          title: input.status === "accepted" ? "Başvurunuz kabul edildi" : input.status === "rejected" ? "Başvurunuz sonuçlandı" : "Başvurunuz inceleniyor",
-          type: "system",
-          userId: submission.authorId,
-        },
-      });
-    }
-    return {
-      author: submission.author,
-      statusChanged:
-        submission.status !== input.status,
-      updated,
-      work: submission.work,
-    };
-  });
-}
-
-export async function addPublisherInternalNote(input: { note: string; submissionId: string; userId: string }) {
-  const membership = await requirePublisherMembershipPermission(input.userId, "add_internal_note");
-  if (!membership) return null;
-  const submission = await prisma.publisherSubmission.findFirst({
-    where: { id: input.submissionId, archivedAt: null, publisherId: membership.publisherId },
-    select: { id: true },
-  });
-  if (!submission) return null;
-  return prisma.publisherSubmissionEvent.create({
-    data: { actorId: input.userId, detail: input.note, submissionId: submission.id, title: "Yayınevi iç notu eklendi", type: "internal_note" },
-  });
-}
-
 export async function upsertPublisherContract(input: {
   advanceAmount: number | null; notes: string | null; rightsPeriodMonths: number;
   royaltyPercentage: number; status: "draft" | "sent"; submissionId: string;
@@ -860,7 +779,6 @@ export async function cancelPublisherInvitation(input: {
 
   return result.count === 1;
 }
-
 
 export async function getPublisherInvitationByToken(token: string) {
   const normalizedToken = token.trim();

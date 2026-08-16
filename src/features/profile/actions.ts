@@ -2,10 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/current-user";
-import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import {
+  getCurrentSessionContext,
+  getCurrentUser,
+} from "@/lib/auth/current-user";
+import { hashPassword } from "@/lib/auth/password";
+import { sendPasswordChangedEmail } from "@/lib/email/auth-emails";
 import { prisma } from "@/lib/prisma";
 import { writingGenreOptions } from "./data";
+import { changeProfilePassword } from "./password-change-state";
 import type { ProfileActionState } from "./state";
 
 function getText(formData: FormData, key: string) {
@@ -129,8 +134,8 @@ export async function changePasswordAction(
   _state: ProfileActionState,
   formData: FormData,
 ): Promise<ProfileActionState> {
-  const user = await getCurrentUser();
-  if (!user) redirect("/giris?sonraki=/hesabim");
+  const context = await getCurrentSessionContext();
+  if (!context) redirect("/giris?sonraki=/hesabim");
 
   const currentPassword = getText(formData, "currentPassword");
   const newPassword = getText(formData, "newPassword");
@@ -143,44 +148,38 @@ export async function changePasswordAction(
   if (newPassword !== confirmation) return failure("Yeni şifreler eşleşmiyor.");
   if (currentPassword === newPassword) return failure("Yeni şifre mevcut şifreden farklı olmalıdır.");
 
-  const account = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { passwordHash: true },
-  });
-  if (!account || !(await verifyPassword(currentPassword, account.passwordHash))) {
+  let result: Awaited<ReturnType<typeof changeProfilePassword>> | null = null;
+
+  try {
+    const passwordHash = await hashPassword(newPassword);
+    result = await changeProfilePassword({
+      closeOtherSessions: false,
+      currentPassword,
+      passwordHash,
+      sessionId: context.sessionId,
+      userId: context.user.id,
+    });
+  } catch {
+    return failure("Şifre güncellenemedi. Lütfen tekrar deneyin.");
+  }
+
+  if (result.status === "invalid_current_password") {
     return failure("Mevcut şifre doğru değil.");
+  }
+  if (result.status !== "changed") {
+    return failure("Şifre güncellenemedi. Lütfen tekrar giriş yapıp deneyin.");
   }
 
   try {
-    const passwordHash =
-      await hashPassword(newPassword);
-
-    await prisma.$transaction(
-      async (transaction) => {
-        await transaction.user.update({
-          where: {
-            id: user.id,
-          },
-          data: {
-            passwordHash,
-          },
-        });
-
-        await transaction.auditLog.create({
-          data: {
-            action: "password_changed",
-            actorId: user.id,
-            entityId: user.id,
-            entityType: "User",
-            metadata: JSON.stringify({
-              source: "profile",
-            }),
-          },
-        });
-      },
-    );
-  } catch {
-    return failure("Şifre güncellenemedi. Lütfen tekrar deneyin.");
+    await sendPasswordChangedEmail({
+      changedAt: result.changedAt,
+      email: result.email,
+      fullName: result.fullName,
+      otherSessionsClosed: false,
+      source: "profile",
+    });
+  } catch (emailError) {
+    console.error("PASSWORD_CHANGED_DELIVERY_FAILED", emailError);
   }
 
   return success("Şifreniz başarıyla değiştirildi.");

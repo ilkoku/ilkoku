@@ -109,6 +109,62 @@ test("all public password reset server-action surfaces delegate writes to the ca
   );
 });
 
+test("profile password changes serialize on live account and current session state", () => {
+  const state = source("src/features/profile/password-change-state.ts");
+  const action = source("src/features/profile/password-security-actions.ts");
+  const legacyActions = source("src/features/profile/actions.ts");
+  const legacyPasswordStart = legacyActions.indexOf("export async function changePasswordAction");
+  const legacyPassword = legacyActions.slice(legacyPasswordStart);
+  const changeStart = state.indexOf("export async function changeProfilePassword");
+  const change = state.slice(changeStart);
+  const userLock = change.indexOf("FROM User");
+  const sessionLockCall = change.indexOf("const session = await lockCurrentSession");
+  const passwordVerification = change.indexOf("verifyPassword(input.currentPassword, user.passwordHash)");
+
+  assertContains(state, "FROM Session", "profile password session lock helper");
+  assertContains(state, "FOR UPDATE", "profile password state locks");
+  assert.ok(userLock >= 0, "profile password change must lock User");
+  assert.ok(
+    sessionLockCall > userLock,
+    "profile password change must request the current Session lock after User is locked",
+  );
+  assert.ok(
+    passwordVerification > sessionLockCall,
+    "current password must be verified only after live User and Session state are locked",
+  );
+  assertContains(state, 'user.status === "active"', "profile password account eligibility");
+  assertContains(state, "!Boolean(user.isBanned)", "profile password banned-account guard");
+  assertContains(state, "!user.deletedAt", "profile password deleted-account guard");
+  assertContains(state, "transaction.passwordResetToken.deleteMany", "profile password reset-token revocation");
+  assertContains(state, "transaction.session.deleteMany", "profile password other-session revocation");
+  assertContains(state, 'source: "profile"', "profile password audit source");
+
+  assertContains(action, "changeProfilePassword({", "profile password action delegation");
+  assert.ok(
+    !action.includes('from "@/lib/prisma"'),
+    "profile password action must not own credential database writes",
+  );
+  assert.ok(
+    !action.includes("verifyPassword("),
+    "profile password action must not verify a stale password outside the locked state boundary",
+  );
+
+  assert.ok(legacyPasswordStart >= 0, "legacy profile password action must remain discoverable for compatibility");
+  assertContains(legacyPassword, "changeProfilePassword({", "legacy profile password action delegation");
+  assert.ok(
+    !legacyPassword.includes("verifyPassword("),
+    "legacy profile password action must not verify a stale password outside the locked state boundary",
+  );
+  assert.ok(
+    !legacyPassword.includes("prisma.user.findUnique"),
+    "legacy profile password action must not read credential state outside the locked boundary",
+  );
+  assert.ok(
+    !legacyPassword.includes("transaction.user.update"),
+    "legacy profile password action must not own a parallel password write transaction",
+  );
+});
+
 test("role selection UI is limited to the same self-service role sources as the write boundary", () => {
   const page = source("src/app/rol-secimi/page.tsx");
   const actions = source("src/features/auth/actions.ts");

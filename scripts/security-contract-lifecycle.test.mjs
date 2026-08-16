@@ -147,3 +147,22 @@ test("second editor draft and completion share one locked live state machine", (
   assertContains(email, 'from "./second-editor-review-state.actions"', "second editor canonical write path");
   assertNotContains(email, "completeSecondEditorReviewAction as completeSecondEditorReviewCoreAction,\n  saveSecondEditorReviewDraftAction,\n  sendToSecondEditorAction", "second editor legacy write import");
 });
+
+test("first editor draft and completion share one locked live state machine", () => {
+  const state = source("src/features/editor-workspace/first-editor-review-state.actions.ts");
+  const tools = source("src/features/editor-workspace/components/ProfessionalReviewTools.tsx");
+  const submit = source("src/features/editor-workspace/first-review-submit.actions.ts");
+
+  assertContains(state, "lockLiveFirstReviewContext", "first editor review state");
+  assert.ok(
+    state.split("FOR UPDATE").length - 1 >= 3,
+    "first editor state must lock editor, assignment and work rows",
+  );
+  assertContains(state, 'editor.status !== "active"', "first editor live authorization");
+  assertContains(state, 'assignment.status === "in_progress"', "first editor terminal-state guard");
+  assertContains(state, 'existing?.reportStatus === "completed"', "first editor completed-report downgrade guard");
+  assertContains(tools, "saveFirstEditorReviewDraftAction", "first editor canonical draft path");
+  assertNotContains(tools, "saveProfessionalReviewDraftAction", "first editor legacy draft path");
+  assertContains(submit, "completeFirstEditorReviewStateAction", "first editor canonical completion path");
+  assertNotContains(submit, 'from "./editor-workflow.actions"', "first editor legacy completion path");
+});

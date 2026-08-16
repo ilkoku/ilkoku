@@ -4,7 +4,7 @@ import { useActionState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
-import { saveProfessionalReviewDraftAction } from "../actions";
+import { saveFirstEditorReviewDraftAction } from "../first-editor-review-state.actions";
 import {
   completeSecondEditorReviewAction,
 } from "../editor-workflow.actions";
@@ -37,7 +37,7 @@ export function ProfessionalReviewTools({
   const saveAction =
     stage === "second"
       ? saveSecondEditorReviewDraftAction
-      : saveProfessionalReviewDraftAction;
+      : saveFirstEditorReviewDraftAction;
 
   const completeAction =
     stage === "second"

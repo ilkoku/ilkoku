@@ -21,13 +21,25 @@ const formatSize = (value: string) => {
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium" }).format(new Date(value));
 
-export function PublisherFileCenter({ companyName, files }: { companyName: string; files: PublisherFileData[] }) {
+export function PublisherFileCenter({
+  canDownload,
+  companyName,
+  files,
+}: {
+  canDownload: boolean;
+  companyName: string;
+  files: PublisherFileData[];
+}) {
   return <div className="publisher-workspace">
     <header className="publisher-workspace__hero"><div><p>{companyName}</p><h1>Dosya merkezi</h1><span>Yayınevinize ait başvurulardaki erişilebilir dosyalar.</span></div></header>
     {files.length ? <div className="publisher-file-list">{files.map((file) => <Card key={file.id}>
       <div><span>{categoryLabels[file.category]}</span><h2>{file.fileName}</h2><p>{file.workTitle}</p></div>
       <dl><div><dt>Tür</dt><dd>{file.mimeType}</dd></div><div><dt>Boyut</dt><dd>{formatSize(file.sizeBytes)}</dd></div><div><dt>Yükleyen</dt><dd>{file.uploaderName || "Sistem"}</dd></div><div><dt>Tarih</dt><dd>{formatDate(file.createdAt)}</dd></div></dl>
-      <a href={`/yayinevi/dosyalar/${file.id}/indir`}>Güvenli indir</a>
+      {canDownload ? (
+        <a href={`/yayinevi/dosyalar/${file.id}/indir`}>Güvenli indir</a>
+      ) : (
+        <small>Dosyayı görüntüleme yetkiniz var; indirme yetkiniz bulunmuyor.</small>
+      )}
     </Card>)}</div> : <Card className="publisher-workspace__empty"><h2>Henüz dosya yok</h2><p>Başvurulara eklenen eser, rapor, sözleşme ve yayın planı belgeleri burada listelenecek.</p></Card>}
   </div>;
 }

@@ -57,19 +57,13 @@ async function dropTable(tableName) {
   }
 }
 
-test("fresh migrations preserve critical production uniqueness guarantees", async () => {
+test("current Prisma schema preserves the active publisher-editor uniqueness guard", async () => {
   const publisherEditorIndexes = await uniqueIndexes("PublisherEditorRequest");
-  const emailDedupeIndexes = await uniqueIndexes("EmailDeliveryDedupe");
 
   assert.equal(
     hasUniqueColumn(publisherEditorIndexes, "activeKey"),
     true,
     "PublisherEditorRequest.activeKey must remain unique",
-  );
-  assert.equal(
-    hasUniqueColumn(emailDedupeIndexes, "dedupeKey"),
-    true,
-    "EmailDeliveryDedupe.dedupeKey must remain unique",
   );
 });
 

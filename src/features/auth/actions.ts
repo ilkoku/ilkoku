@@ -253,6 +253,9 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
 
   const user = await getCurrentUser();
   if (!user) redirect("/giris?sonraki=/rol-secimi");
+  if (user.role === "admin") {
+    return error(validationContent.adminRoleImmutable);
+  }
 
   if (standardRoles.includes(role)) {
     try {

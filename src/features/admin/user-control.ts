@@ -1,6 +1,10 @@
 import "server-only";
 
-import type { UserRole, UserStatus } from "@/generated/prisma/client";
+import type {
+  Prisma,
+  UserRole,
+  UserStatus,
+} from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const standardRoles = new Set<UserRole>(["reader", "writer"]);
@@ -18,7 +22,7 @@ type ActiveAdminRow = {
 };
 
 async function lockAdminControlPlane(
-  transaction: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  transaction: Prisma.TransactionClient,
   actorId: string,
   targetId: string,
 ) {

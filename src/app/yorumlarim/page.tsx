@@ -103,12 +103,12 @@ export default async function WriterCommentsPage() {
               </p>
             </div>
             <div className={styles.actions}>
-              <Link
+              <a
                 className="button button--outline"
                 href="/yorumlarim/disa-aktar/csv"
               >
                 Tam CSV İndir
-              </Link>
+              </a>
               <Link
                 className="button button--primary"
                 href="/yorumlarim/rapor"

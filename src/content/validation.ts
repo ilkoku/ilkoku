@@ -16,6 +16,8 @@ export const validationContent = {
   termsRequired: "Kayıt olmak için kullanım koşullarını ve gizlilik politikasını kabul et.",
   roleSaveFailed: "Rol bilgisi kaydedilemedi. Lütfen tekrar dene.",
   roleRequestFailed: "Rol talebi oluşturulamadı. Lütfen tekrar dene.",
+  adminRoleImmutable:
+    "Yönetici rolü bu ekrandan değiştirilemez. Rol önizlemesini Hesabım alanından yönetin.",
   expiredResetLink: "Şifre yenileme bağlantısının süresi dolmuş. Yeni bağlantı iste.",
   maximumCharacters: (count: number) => `En fazla ${count} karakter`,
 } as const;

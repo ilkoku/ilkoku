@@ -2,6 +2,7 @@ import { worksRepository } from "./repository";
 import {
   deliverPublicationNotifications,
 } from "./publication-notifications";
+import { publishWorkWithEvent } from "./publish-work-event";
 import type {
   ChapterDraftInput,
   CreateWorkInput,
@@ -112,13 +113,11 @@ export async function updateWork(
   const { id, ...changes } = input;
 
   const status =
-    changes.status === "published"
-      ? "published"
-      : changes.status === "in_progress"
-        ? "in_review"
-        : changes.status === "draft"
-          ? "draft"
-          : undefined;
+    changes.status === "in_progress"
+      ? "in_review"
+      : changes.status === "draft"
+        ? "draft"
+        : undefined;
 
   return worksRepository.updateWork(
     authorId,
@@ -133,19 +132,13 @@ export async function updateWork(
       language: changes.language,
       status,
       title: changes.title,
-      ...(status === "published"
+      ...(status
         ? {
             archivedAt: null,
-            publishedAt: new Date(),
-            visibility: "public",
+            publishedAt: null,
+            visibility: "private",
           }
-        : status
-          ? {
-              archivedAt: null,
-              publishedAt: null,
-              visibility: "private",
-            }
-          : {}),
+        : {}),
     },
   );
 }
@@ -205,21 +198,20 @@ export async function publishWork(
 
   await saveChapterDraft(authorId, input);
 
-  await worksRepository.publishChapter(
+  const {
+    publicationEvent,
+    work: publishedWork,
+  } = await publishWorkWithEvent(
     authorId,
+    input.workId,
     input.chapterId,
   );
-
-  const publishedWork =
-    await worksRepository.publishWork(
-      authorId,
-      input.workId,
-    );
 
   try {
     await deliverPublicationNotifications({
       authorId,
       chapterId: input.chapterId,
+      publicationEvent,
       workId: input.workId,
     });
   } catch (notificationError) {

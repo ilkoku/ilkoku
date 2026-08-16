@@ -40,17 +40,18 @@ export default async function Page() {
           <h1>Kurumsal Sayfalar</h1>
           <p>Hakkımızda ve benzeri bilgilendirme sayfalarını taslak, önizleme, yayın, SEO ve sürüm geçmişiyle yönetin.</p>
         </div>
-        <div className="content-profile">
+        <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : "success"} aria-label="Kurumsal sayfa özeti">
+          <span className="cms-editor-status-card__label">İçerik özeti</span>
           {dataError ? (
-            <><strong>VERİ OKUNAMADI</strong><small>Sayaçlar güvenli biçimde durduruldu</small></>
+            <><strong>Veri okunamadı</strong><div className="cms-editor-status-card__meta"><span className="cms-editor-chip is-danger">Sayaçlar durduruldu</span></div></>
           ) : (
-            <><strong>{published} yayında</strong><small>{drafts} taslak · {archived} arşiv</small></>
+            <><strong>{published} sayfa yayında</strong><div className="cms-editor-status-card__meta"><span className="cms-editor-chip is-warning">{drafts} taslak</span><span className="cms-editor-chip">{archived} arşiv</span></div></>
           )}
-        </div>
+        </aside>
       </div>
 
       {dataError ? (
-        <div className="content-panel" role="alert">
+        <div className="content-panel cms-editor-notice is-danger" role="alert">
           <strong>Kurumsal sayfa kayıtları okunamadı.</strong>
           <p>Gerçek kayıtları “0 sayfa” kabul edip yeni içerik veya yanlış aksiyon önermemek için liste ve oluşturma işlemleri güvenli biçimde durduruldu. Veritabanı durumunu kontrol ettikten sonra bu ekranı yeniden açın.</p>
           <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
@@ -61,11 +62,15 @@ export default async function Page() {
         </div>
       ) : (
         <>
-          <div className="content-form-actions" style={{ marginBottom: "1rem", flexWrap: "wrap" }}>
-            <Link href="/icerik/sayfalar/yeni">+ Yeni kurumsal sayfa</Link>
-            <Link href="/icerik/yayin-kuyrugu">Yayın Kuyruğu</Link>
-            <Link href="/icerik/gecmis">Sürüm Geçmişi</Link>
-          </div>
+          <nav className="cms-editor-toolbar" aria-label="Kurumsal sayfa hızlı işlemleri">
+            <div className="cms-editor-toolbar__cluster">
+              <Link href="/icerik/sayfalar/yeni">+ Yeni kurumsal sayfa</Link>
+            </div>
+            <div className="cms-editor-toolbar__cluster">
+              <Link href="/icerik/yayin-kuyrugu">Yayın Kuyruğu</Link>
+              <Link href="/icerik/gecmis">Sürüm Geçmişi</Link>
+            </div>
+          </nav>
 
           <div className="content-panel">
             {pages.length === 0 ? (
@@ -92,11 +97,11 @@ export default async function Page() {
                       <tr key={page.id}>
                         <td><strong>{page.title}</strong></td>
                         <td>{page.slug}</td>
-                        <td>{page.status === "published" ? "Yayında" : page.status === "archived" ? "Arşiv" : "Taslak"}</td>
-                        <td>{page.noIndex ? "Noindex" : "Index"}</td>
+                        <td><span className={`cms-status-pill is-${page.status}`}>{page.status === "published" ? "Yayında" : page.status === "archived" ? "Arşiv" : "Taslak"}</span></td>
+                        <td><span className={`cms-status-pill ${page.noIndex ? "is-noindex" : "is-index"}`}>{page.noIndex ? "Noindex" : "Index"}</span></td>
                         <td>{new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(page.updatedAt))}</td>
                         <td>
-                          <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap" }}>
+                          <div className="cms-editor-toolbar__cluster">
                             <Link href={`/icerik/sayfalar/${page.id}`}>Düzenle →</Link>
                             <Link href={`/icerik/onizleme/sayfa/${page.id}`}>Önizle ↗</Link>
                             {page.status === "published" ? <Link href={page.slug} target="_blank">Canlı ↗</Link> : null}

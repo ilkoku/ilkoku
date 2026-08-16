@@ -31,10 +31,11 @@ export type CmsOperationalIntegrity = {
   invalidFooterLive: number;
   invalidFooterDraft: number;
   invalidSettings: number;
+  invalidStagedDrafts: number;
 };
 
 export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegrity> {
-  const [redirectRows, mediaRows, mediaBlobRows, revisionRows, formRows, announcementRows, footerRows, settingsRows] = await Promise.all([
+  const [redirectRows, mediaRows, mediaBlobRows, revisionRows, formRows, announcementRows, footerRows, settingsRows, stagedDraftRows] = await Promise.all([
     prisma.$queryRaw<JsonRow[]>`
       SELECT contentKey, valueJson, status
       FROM SiteContent
@@ -76,6 +77,11 @@ export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegr
       WHERE namespace = 'cms_settings' AND contentKey = 'global'
       LIMIT 1
     `,
+    prisma.$queryRaw<JsonRow[]>`
+      SELECT contentKey, valueJson, status
+      FROM SiteContent
+      WHERE namespace = 'cms_draft' AND status = 'draft'
+    `,
   ]);
 
   const liveFooter = footerRows.find((row) => row.contentKey === FOOTER_LIVE_KEY && row.status === "published");
@@ -114,5 +120,6 @@ export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegr
     invalidFooterLive: liveFooter && !parseFooterNavigation(liveFooter.valueJson) ? 1 : 0,
     invalidFooterDraft: draftFooter && !parseFooterNavigation(draftFooter.valueJson) ? 1 : 0,
     invalidSettings: settings && !parseCmsSettingsStrict(settings.valueJson) ? 1 : 0,
+    invalidStagedDrafts: stagedDraftRows.filter((row) => !isObjectJson(row.valueJson)).length,
   };
 }

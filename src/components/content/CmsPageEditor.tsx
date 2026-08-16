@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { archiveCmsPageAction, saveCmsPageAction } from "@/features/cms/page-actions";
 import { requireCmsManager } from "@/lib/cms-access";
-import { getCmsDraft, pageDraftKey } from "@/lib/cms-drafts";
+import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 
@@ -50,16 +50,19 @@ export async function CmsPageEditor({ id }: { id?: string }) {
   }
 
   const stored = parseCmsPageBody(page?.bodyJson ?? "{}");
-  const staged = page?.status === "published"
-    ? await getCmsDraft<PageDraft>(pageDraftKey(page.id)).catch(() => null)
-    : null;
-  const draft = staged?.payload;
-  const hasPendingDraft = Boolean(draft);
+  const stagedState = page?.status === "published"
+    ? await getCmsDraftState<PageDraft>(pageDraftKey(page.id))
+    : { state: "missing" as const };
+  const corruptDraft = stagedState.state === "corrupt";
+  const draft = stagedState.state === "valid" ? stagedState.record.payload : undefined;
+  const hasPendingDraft = stagedState.state === "valid";
   const slugPart = page?.slug.replace(/^\//, "") ?? "";
-  const statusLabel = page?.status === "published" && hasPendingDraft
-    ? "Yayında · taslak hazır"
-    : page?.status === "published" ? "Yayında" : page?.status === "archived" ? "Arşiv" : "Taslak";
-  const canArchive = Boolean(page && (page.status !== "published" || access.canPublish));
+  const statusLabel = corruptDraft
+    ? "Yayında · taslak bütünlüğü bozuk"
+    : page?.status === "published" && hasPendingDraft
+      ? "Yayında · taslak hazır"
+      : page?.status === "published" ? "Yayında" : page?.status === "archived" ? "Arşiv" : "Taslak";
+  const canArchive = Boolean(page && !corruptDraft && (page.status !== "published" || access.canPublish));
 
   return (
     <section className="content-editor-page">
@@ -76,12 +79,20 @@ export async function CmsPageEditor({ id }: { id?: string }) {
       </div>
 
       <div className="content-form-actions" style={{ marginBottom: "1rem", flexWrap: "wrap" }}>
-        {page ? <Link href={`/icerik/onizleme/sayfa/${page.id}`}>Taslağı Önizle ↗</Link> : null}
+        {page && !corruptDraft ? <Link href={`/icerik/onizleme/sayfa/${page.id}`}>Taslağı Önizle ↗</Link> : null}
         {page?.status === "published" ? <Link href={page.slug} target="_blank">Canlı sayfayı aç ↗</Link> : null}
         <Link href="/icerik/sayfalar">← Sayfa listesi</Link>
       </div>
 
-      {!access.canPublish ? (
+      {corruptDraft ? (
+        <div className="content-panel" role="alert" style={{ marginBottom: "1rem" }}>
+          <strong>Çalışma taslağının bütünlüğü bozuk.</strong>
+          <p>Ham taslak kaydı korunuyor. Veri doğrulanmadan düzenleme, önizleme, yayınlama ve arşivleme işlemleri durduruldu; canlı sayfa değiştirilmedi.</p>
+          <div className="content-form-actions"><Link href="/icerik/saglik">Sistem Sağlığı →</Link><Link href="/icerik/gecmis">Revision Center →</Link></div>
+        </div>
+      ) : null}
+
+      {!access.canPublish && !corruptDraft ? (
         <div className="content-panel" style={{ marginBottom: "1rem" }}>
           <strong>Taslak yönetim yetkisi</strong>
           <p>Bu hesap sayfa içeriği hazırlayabilir ve önizleyebilir. Yayına alma veya yayındaki bir sayfayı arşivleme işlemi için yayın yetkisi gerekir.</p>
@@ -95,70 +106,34 @@ export async function CmsPageEditor({ id }: { id?: string }) {
         </div>
       ) : null}
 
-      <div className="content-panel">
-        <form action={saveCmsPageAction} className="content-form">
-          {page ? <input type="hidden" name="id" value={page.id} /> : null}
+      {!corruptDraft ? (
+        <div className="content-panel">
+          <form action={saveCmsPageAction} className="content-form">
+            {page ? <input type="hidden" name="id" value={page.id} /> : null}
 
-          <label>
-            <span>URL kısa adı</span>
-            <input name="slug" required maxLength={120} defaultValue={slugPart} readOnly={Boolean(page)} placeholder="hakkimizda" />
-          </label>
-          <p className="content-form-help">Yalnız a-z, 0-9 ve tire. İlk kayıttan sonra URL sabitlenir. Ürün ve yönetim rotaları kullanılamaz.</p>
+            <label><span>URL kısa adı</span><input name="slug" required maxLength={120} defaultValue={slugPart} readOnly={Boolean(page)} placeholder="hakkimizda" /></label>
+            <p className="content-form-help">Yalnız a-z, 0-9 ve tire. İlk kayıttan sonra URL sabitlenir. Ürün ve yönetim rotaları kullanılamaz.</p>
+            <label><span>Başlık</span><input name="title" required maxLength={220} defaultValue={draft?.title ?? page?.title ?? ""} /></label>
+            <label><span>Kısa özet</span><textarea name="summary" rows={4} maxLength={500} defaultValue={draft?.summary ?? stored.summary} /></label>
+            <label><span>Sayfa metni</span><textarea name="body" required rows={24} defaultValue={draft?.body ?? stored.body} placeholder={"İlk paragraf.\n\nİkinci paragraf.\n\n## Ara başlık\n\nAçıklama metni."} /></label>
+            <label><span>SEO başlığı</span><input name="seoTitle" maxLength={220} defaultValue={draft?.seoTitle ?? page?.seoTitle ?? ""} /></label>
+            <label><span>SEO açıklaması</span><textarea name="seoDescription" rows={3} maxLength={500} defaultValue={draft?.seoDescription ?? page?.seoDescription ?? ""} /></label>
+            <label style={{ display: "flex", alignItems: "center", gap: ".7rem" }}><input name="noIndex" type="checkbox" defaultChecked={draft?.noIndex ?? Boolean(page?.noIndex)} style={{ width: "auto" }} /><span>Arama motorlarında gösterme (noindex)</span></label>
 
-          <label>
-            <span>Başlık</span>
-            <input name="title" required maxLength={220} defaultValue={draft?.title ?? page?.title ?? ""} />
-          </label>
-
-          <label>
-            <span>Kısa özet</span>
-            <textarea name="summary" rows={4} maxLength={500} defaultValue={draft?.summary ?? stored.summary} />
-          </label>
-
-          <label>
-            <span>Sayfa metni</span>
-            <textarea name="body" required rows={24} defaultValue={draft?.body ?? stored.body} placeholder={"İlk paragraf.\n\nİkinci paragraf.\n\n## Ara başlık\n\nAçıklama metni."} />
-          </label>
-
-          <label>
-            <span>SEO başlığı</span>
-            <input name="seoTitle" maxLength={220} defaultValue={draft?.seoTitle ?? page?.seoTitle ?? ""} />
-          </label>
-
-          <label>
-            <span>SEO açıklaması</span>
-            <textarea name="seoDescription" rows={3} maxLength={500} defaultValue={draft?.seoDescription ?? page?.seoDescription ?? ""} />
-          </label>
-
-          <label style={{ display: "flex", alignItems: "center", gap: ".7rem" }}>
-            <input name="noIndex" type="checkbox" defaultChecked={draft?.noIndex ?? Boolean(page?.noIndex)} style={{ width: "auto" }} />
-            <span>Arama motorlarında gösterme (noindex)</span>
-          </label>
-
-          <div className="content-form-actions" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
-            <Link href="/icerik/sayfalar">← Sayfa listesi</Link>
-            <div style={{ display: "flex", gap: ".7rem", flexWrap: "wrap" }}>
-              <button type="submit" name="mode" value="draft">Taslak Kaydet</button>
-              {access.canPublish ? <button type="submit" name="mode" value="publish">Kaydet ve Yayınla</button> : null}
+            <div className="content-form-actions" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
+              <Link href="/icerik/sayfalar">← Sayfa listesi</Link>
+              <div style={{ display: "flex", gap: ".7rem", flexWrap: "wrap" }}><button type="submit" name="mode" value="draft">Taslak Kaydet</button>{access.canPublish ? <button type="submit" name="mode" value="publish">Kaydet ve Yayınla</button> : null}</div>
             </div>
-          </div>
-        </form>
+          </form>
 
-        {page ? (
-          <div className="content-publish-box">
-            <div>
-              <strong>Arşivleme</strong>
-              <p>{page.status === "published" && !access.canPublish ? "Yayındaki bir sayfayı arşivlemek canlı durumu değiştirdiği için yayın yetkisi gerekir." : "Arşivlenen kurumsal sayfa public siteden kaldırılır; sürüm geçmişi korunur."}</p>
+          {page ? (
+            <div className="content-publish-box">
+              <div><strong>Arşivleme</strong><p>{page.status === "published" && !access.canPublish ? "Yayındaki bir sayfayı arşivlemek canlı durumu değiştirdiği için yayın yetkisi gerekir." : "Arşivlenen kurumsal sayfa public siteden kaldırılır; sürüm geçmişi korunur."}</p></div>
+              {canArchive ? <form action={archiveCmsPageAction}><input type="hidden" name="id" value={page.id} /><button type="submit">Arşivle</button></form> : null}
             </div>
-            {canArchive ? (
-              <form action={archiveCmsPageAction}>
-                <input type="hidden" name="id" value={page.id} />
-                <button type="submit">Arşivle</button>
-              </form>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

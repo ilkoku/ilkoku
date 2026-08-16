@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCmsDraft, pageDraftKey } from "@/lib/cms-drafts";
+import { requireCmsManager } from "@/lib/cms-access";
+import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { cmsLegalContentKey, getCmsLegalDocument } from "@/lib/cms-legal";
 import { normalizeCmsLocale } from "@/lib/cms-locales";
 import { prisma } from "@/lib/prisma";
@@ -25,6 +26,7 @@ export default async function LegalPreview({ params, searchParams }: { params: P
   const { slug } = await params;
   const query = await searchParams;
   const locale = normalizeCmsLocale(query.dil);
+  await requireCmsManager(`/icerik/onizleme/yasal/${slug}`);
   const document = getCmsLegalDocument(slug);
   if (!document) notFound();
 
@@ -32,16 +34,21 @@ export default async function LegalPreview({ params, searchParams }: { params: P
   const rows = await prisma.$queryRaw<PageRow[]>`
     SELECT id, title, bodyJson, seoDescription, status
     FROM ContentPage WHERE contentKey = ${contentKey} LIMIT 1
-  `.catch(() => [] as PageRow[]);
+  `;
   const page = rows[0] ?? null;
   if (!page) notFound();
 
   let stored: Stored = {};
   try { stored = JSON.parse(page.bodyJson) as Stored; } catch {}
-  const staged = page.status === "published"
-    ? await getCmsDraft<Draft>(pageDraftKey(page.id)).catch(() => null)
-    : null;
-  const draft = staged?.payload;
+  const state = page.status === "published"
+    ? await getCmsDraftState<Draft>(pageDraftKey(page.id))
+    : { state: "missing" as const };
+
+  if (state.state === "corrupt") {
+    return <section className="content-editor-page"><div className="content-panel" role="alert"><strong>Taslak önizlenemiyor.</strong><p>Yasal belge çalışma taslağının JSON bütünlüğü bozuk. Ham kayıt korunuyor ve canlı belge değiştirilmedi.</p><div className="content-form-actions"><Link href={`/icerik/yasal/${slug}?dil=${locale}`}>← Düzenlemeye dön</Link><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div></div></section>;
+  }
+
+  const draft = state.state === "valid" ? state.record.payload : undefined;
   const title = draft?.title ?? page.title;
   const description = draft?.description ?? stored.description ?? page.seoDescription ?? "";
   const updatedLabel = draft?.updatedLabel ?? stored.updatedLabel ?? "";
@@ -49,17 +56,8 @@ export default async function LegalPreview({ params, searchParams }: { params: P
 
   return (
     <section className="content-editor-page">
-      <div className="content-page-heading">
-        <div><span>Önizleme · {locale.toUpperCase()}</span><h1>{document.title}</h1><p>Taslak görünümü CMS oturumuna özeldir; public yasal sayfayı değiştirmez.</p></div>
-        <div className="content-form-actions"><Link href={`/icerik/yasal/${slug}?dil=${locale}`}>← Düzenlemeye dön</Link></div>
-      </div>
-      <div className="cms-preview-shell">
-        <div className="cms-preview-banner"><span>Taslak Önizleme · Public Değil</span><span>{staged ? "Bekleyen çalışma taslağı" : `Kayıt durumu: ${page.status}`}</span></div>
-        <article className="cms-preview-article">
-          <header><span className="cms-preview-eyebrow">İlkOku · Yasal</span><h1>{title}</h1>{description ? <p>{description}</p> : null}{updatedLabel ? <p><small>Son güncelleme: {updatedLabel}</small></p> : null}</header>
-          <Body body={body} />
-        </article>
-      </div>
+      <div className="content-page-heading"><div><span>Önizleme · {locale.toUpperCase()}</span><h1>{document.title}</h1><p>Taslak görünümü CMS oturumuna özeldir; public yasal sayfayı değiştirmez.</p></div><div className="content-form-actions"><Link href={`/icerik/yasal/${slug}?dil=${locale}`}>← Düzenlemeye dön</Link></div></div>
+      <div className="cms-preview-shell"><div className="cms-preview-banner"><span>Taslak Önizleme · Public Değil</span><span>{draft ? "Bekleyen çalışma taslağı" : `Kayıt durumu: ${page.status}`}</span></div><article className="cms-preview-article"><header><span className="cms-preview-eyebrow">İlkOku · Yasal</span><h1>{title}</h1>{description ? <p>{description}</p> : null}{updatedLabel ? <p><small>Son güncelleme: {updatedLabel}</small></p> : null}</header><Body body={body} /></article></div>
     </section>
   );
 }

@@ -4,7 +4,13 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
-import { deleteCmsDraft, getCmsDraft, homepageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
+import {
+  deleteCmsDraft,
+  getCmsDraftState,
+  homepageDraftKey,
+  isCmsDraftCorruptionError,
+  saveCmsDraft,
+} from "@/lib/cms-drafts";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import {
   cmsLocaleNamespace,
@@ -23,13 +29,22 @@ function localeFromForm(formData: FormData) {
   return normalizeCmsLocale(field(formData, "locale", 8));
 }
 
+function corruptDraftRedirect(locale: CmsLocaleCode): never {
+  redirect(`/icerik/ana-sayfa?dil=${locale}&hata=taslak-bozuk`);
+}
+
 async function saveHomepageSection(
   userId: string,
   locale: CmsLocaleCode,
   contentKey: string,
   value: Record<string, string>,
 ) {
-  await saveCmsDraft(userId, homepageDraftKey(locale, contentKey), value);
+  try {
+    await saveCmsDraft(userId, homepageDraftKey(locale, contentKey), value);
+  } catch (error) {
+    if (isCmsDraftCorruptionError(error)) corruptDraftRedirect(locale);
+    throw error;
+  }
   revalidatePath("/icerik/ana-sayfa");
   revalidatePath("/icerik/onizleme/ana-sayfa");
 }
@@ -45,9 +60,10 @@ async function publishHomepageSection(
 
   const namespace = cmsLocaleNamespace("homepage", locale);
   const draftKey = homepageDraftKey(locale, contentKey);
-  const draft = await getCmsDraft<Record<string, string>>(draftKey);
-  if (!draft) return;
-  const valueJson = JSON.stringify(draft.payload);
+  const draftState = await getCmsDraftState<Record<string, string>>(draftKey);
+  if (draftState.state === "corrupt") corruptDraftRedirect(locale);
+  if (draftState.state === "missing") return;
+  const valueJson = JSON.stringify(draftState.record.payload);
 
   await prisma.$executeRaw`
     INSERT INTO SiteContent (

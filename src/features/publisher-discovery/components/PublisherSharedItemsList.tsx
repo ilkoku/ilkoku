@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { markPublisherSharedItemReadAction } from "../sharing-actions";
+import { markPublisherSharedItemReadAction } from "../sharing-read-actions";
 import type { PublisherSharedItem } from "../sharing-repository";
 
 function formatDate(value: string) {
@@ -25,8 +25,12 @@ export function PublisherSharedItemsList({
         const title =
           item.work?.title ||
           item.author?.name ||
-          "Paylaşılan kayıt";
-        const entityLabel = item.work ? "Eser" : "Yazar";
+          "Paylaşılan kayıt artık public değil";
+        const entityLabel = item.work
+          ? "Eser"
+          : item.author
+            ? "Yazar"
+            : "Geçmiş paylaşım";
 
         return (
           <article

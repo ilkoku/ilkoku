@@ -11,6 +11,7 @@ export type WorkPublicationEvent = {
 export async function publishWorkWithEvent(
   authorId: string,
   workId: string,
+  chapterId: string,
 ) {
   return prisma.$transaction(async (transaction) => {
     const locked = await transaction.$queryRaw<Array<{ id: string }>>`
@@ -24,6 +25,21 @@ export async function publishWorkWithEvent(
 
     if (!locked[0]) {
       throw new Error("Yayınlanacak eser bulunamadı.");
+    }
+
+    const chapter = await transaction.chapter.findFirst({
+      where: {
+        authorId,
+        id: chapterId,
+        workId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!chapter) {
+      throw new Error("Yayınlanacak bölüm bulunamadı.");
     }
 
     const previousPublications = await transaction.auditLog.findMany({
@@ -45,6 +61,17 @@ export async function publishWorkWithEvent(
       previousPublications[0]?.createdAt ?? null;
     const publishedAt = new Date();
 
+    await transaction.chapter.update({
+      where: {
+        id: chapter.id,
+      },
+      data: {
+        archivedAt: null,
+        publishedAt,
+        status: "published",
+      },
+    });
+
     const work = await transaction.work.update({
       where: {
         id: workId,
@@ -64,6 +91,7 @@ export async function publishWorkWithEvent(
         entityId: work.id,
         entityType: "Work",
         metadata: JSON.stringify({
+          chapterId,
           publicId: work.publicId,
           publishedAt: publishedAt.toISOString(),
           title: work.title,

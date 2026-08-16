@@ -41,6 +41,24 @@ test("admin user control plane serializes privileged state and preserves special
   assertContains(control, "session.deleteMany", "admin suspension session revocation");
 });
 
+test("admin role review locks live authority, target user and request state before mutation", () => {
+  const review = source("src/features/admin-role-requests/actions/role-request.actions.ts");
+
+  assertContains(review, "lockLiveRoleReviewContext", "admin role review boundary");
+  assertContains(review, "Array.from(new Set([actorId, requestHint.userId])).sort()", "admin role review user lock order");
+  assert.ok(
+    review.split("FOR UPDATE").length - 1 >= 4,
+    "admin role review must lock users, role request, application/publisher and memberships",
+  );
+  assertContains(review, 'actor.role !== "admin"', "admin role review live role gate");
+  assertContains(review, 'actor.status !== "active"', "admin role review live status gate");
+  assertContains(review, "actor.deletedAt !== null", "admin role review deleted-admin gate");
+  assertContains(review, "context.target.status !== \"active\"", "admin role approval target gate");
+  assertContains(review, "FROM RoleRequest", "admin role request row lock");
+  assertContains(review, "FROM PublisherApplication", "publisher application row lock");
+  assertContains(review, "FROM PublisherMembership", "publisher membership row lock");
+});
+
 test("self-service role mutation locks the live user and cannot demote special roles", () => {
   const actions = source("src/features/auth/actions.ts");
 

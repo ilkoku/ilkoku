@@ -16,9 +16,31 @@ export interface PublisherItem {
   websiteUrl: string | null;
 }
 
+export interface SubmissionContractSummary {
+  advanceAmount: string | null;
+  notes: string | null;
+  rightsPeriodMonths: number;
+  royaltyPercentage: string;
+  sentAt: string | null;
+  status: "sent" | "accepted" | "rejected";
+  territory: string;
+  version: number;
+}
+
+export interface SubmissionPublicationPlanSummary {
+  coverStatus: "not_started" | "in_progress" | "completed";
+  isbn: string | null;
+  layoutStatus: "not_started" | "in_progress" | "completed";
+  printRun: number | null;
+  status: "planning" | "preproduction" | "production" | "distribution" | "published";
+  targetPublicationDate: string | null;
+}
+
 export interface SubmissionItem {
+  contract: SubmissionContractSummary | null;
   coverLetter: string;
   id: string;
+  publicationPlan: SubmissionPublicationPlanSummary | null;
   publisher: Pick<PublisherItem, "companyName" | "id" | "logoUrl">;
   publisherNote: string | null;
   status: PublisherSubmissionStatus;

@@ -5,8 +5,32 @@ import type { PublisherDashboardData, PublisherItem, SubmissionItem, SubmissionW
 async function hydrateSubmissions(authorId: string, limit?: number): Promise<SubmissionItem[]> {
   const rows = await getAuthorSubmissions(authorId, limit);
   return rows.map((item) => ({
+    contract:
+      item.contract && item.contract.status !== "draft"
+        ? {
+            advanceAmount: item.contract.advanceAmount?.toString() ?? null,
+            notes: item.contract.notes,
+            rightsPeriodMonths: item.contract.rightsPeriodMonths,
+            royaltyPercentage: item.contract.royaltyPercentage.toString(),
+            sentAt: item.contract.sentAt?.toISOString() ?? null,
+            status: item.contract.status,
+            territory: item.contract.territory,
+            version: item.contract.version,
+          }
+        : null,
     coverLetter: item.coverLetter,
     id: item.id,
+    publicationPlan: item.publicationPlan
+      ? {
+          coverStatus: item.publicationPlan.coverStatus,
+          isbn: item.publicationPlan.isbn,
+          layoutStatus: item.publicationPlan.layoutStatus,
+          printRun: item.publicationPlan.printRun,
+          status: item.publicationPlan.status,
+          targetPublicationDate:
+            item.publicationPlan.targetPublicationDate?.toISOString() ?? null,
+        }
+      : null,
     publisher: item.publisher,
     publisherNote: item.publisherNote,
     status: item.status,

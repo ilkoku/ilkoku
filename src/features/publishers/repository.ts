@@ -11,6 +11,8 @@ export function getAuthorSubmissions(authorId: string, limit?: number) {
   return prisma.publisherSubmission.findMany({
     where: { authorId, archivedAt: null },
     include: {
+      contract: true,
+      publicationPlan: true,
       publisher: { select: { companyName: true, id: true, logoUrl: true } },
       work: { select: { id: true, title: true } },
     },

@@ -1,6 +1,11 @@
 import "server-only";
 
 import { parseFooterNavigation, FOOTER_DRAFT_KEY, FOOTER_LIVE_KEY } from "@/lib/cms-footer-navigation";
+import {
+  isCmsContentPagePayloadStrict,
+  parseCmsFaqPayloadStrict,
+  parseCmsHomepageSectionStrict,
+} from "@/lib/cms-live-payload-integrity";
 import { parseCmsMediaAssetMetadata, parseStoredMediaBlob } from "@/lib/cms-media";
 import { parseCmsRedirectValue } from "@/lib/cms-redirects";
 import { isValidCmsRevisionSnapshotJson } from "@/lib/cms-revisions";
@@ -9,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 
 type JsonRow = { contentKey: string; valueJson: string; status: string };
 type RevisionJsonRow = { snapshotJson: string };
+type PagePayloadRow = { contentKey: string; bodyJson: string };
 
 function isObjectJson(valueJson: string) {
   try {
@@ -32,55 +38,74 @@ export type CmsOperationalIntegrity = {
   invalidFooterDraft: number;
   invalidSettings: number;
   invalidStagedDrafts: number;
+  invalidPublishedHomepage: number;
+  invalidPublishedFaqs: number;
+  invalidPublishedPages: number;
 };
 
 export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegrity> {
-  const [redirectRows, mediaRows, mediaBlobRows, revisionRows, formRows, announcementRows, footerRows, settingsRows, stagedDraftRows] = await Promise.all([
+  const [
+    redirectRows,
+    mediaRows,
+    mediaBlobRows,
+    revisionRows,
+    formRows,
+    announcementRows,
+    footerRows,
+    settingsRows,
+    stagedDraftRows,
+    homepageRows,
+    faqRows,
+    pageRows,
+  ] = await Promise.all([
     prisma.$queryRaw<JsonRow[]>`
-      SELECT contentKey, valueJson, status
-      FROM SiteContent
+      SELECT contentKey, valueJson, status FROM SiteContent
       WHERE namespace = 'redirect' AND status = 'published'
     `,
     prisma.$queryRaw<JsonRow[]>`
-      SELECT contentKey, valueJson, status
-      FROM SiteContent
+      SELECT contentKey, valueJson, status FROM SiteContent
       WHERE namespace = 'media' AND status <> 'archived'
     `,
     prisma.$queryRaw<JsonRow[]>`
-      SELECT contentKey, valueJson, status
-      FROM SiteContent
+      SELECT contentKey, valueJson, status FROM SiteContent
       WHERE namespace = 'media_blob' AND status = 'published'
     `,
-    prisma.$queryRaw<RevisionJsonRow[]>`
-      SELECT snapshotJson
-      FROM ContentRevision
+    prisma.$queryRaw<RevisionJsonRow[]>`SELECT snapshotJson FROM ContentRevision`,
+    prisma.$queryRaw<JsonRow[]>`
+      SELECT contentKey, valueJson, status FROM SiteContent WHERE namespace = 'form_submission'
     `,
     prisma.$queryRaw<JsonRow[]>`
-      SELECT contentKey, valueJson, status
-      FROM SiteContent
-      WHERE namespace = 'form_submission'
+      SELECT contentKey, valueJson, status FROM SiteContent WHERE namespace = 'announcement'
     `,
     prisma.$queryRaw<JsonRow[]>`
-      SELECT contentKey, valueJson, status
-      FROM SiteContent
-      WHERE namespace = 'announcement'
+      SELECT contentKey, valueJson, status FROM SiteContent
+      WHERE namespace = 'site' AND contentKey IN (${FOOTER_LIVE_KEY}, ${FOOTER_DRAFT_KEY})
     `,
     prisma.$queryRaw<JsonRow[]>`
-      SELECT contentKey, valueJson, status
-      FROM SiteContent
-      WHERE namespace = 'site'
-        AND contentKey IN (${FOOTER_LIVE_KEY}, ${FOOTER_DRAFT_KEY})
+      SELECT contentKey, valueJson, status FROM SiteContent
+      WHERE namespace = 'cms_settings' AND contentKey = 'global' LIMIT 1
     `,
     prisma.$queryRaw<JsonRow[]>`
-      SELECT contentKey, valueJson, status
-      FROM SiteContent
-      WHERE namespace = 'cms_settings' AND contentKey = 'global'
-      LIMIT 1
-    `,
-    prisma.$queryRaw<JsonRow[]>`
-      SELECT contentKey, valueJson, status
-      FROM SiteContent
+      SELECT contentKey, valueJson, status FROM SiteContent
       WHERE namespace = 'cms_draft' AND status = 'draft'
+    `,
+    prisma.$queryRaw<JsonRow[]>`
+      SELECT contentKey, valueJson, status FROM SiteContent
+      WHERE namespace = 'homepage' AND status = 'published'
+        AND contentKey IN ('hero', 'roles', 'passport', 'why', 'footer')
+    `,
+    prisma.$queryRaw<JsonRow[]>`
+      SELECT contentKey, valueJson, status FROM SiteContent
+      WHERE namespace = 'faq' AND status = 'published'
+    `,
+    prisma.$queryRaw<PagePayloadRow[]>`
+      SELECT contentKey, bodyJson FROM ContentPage
+      WHERE status = 'published'
+        AND (
+          (contentKey LIKE 'legal:%' AND contentKey NOT LIKE 'legal:en:%')
+          OR (contentKey LIKE 'guide:%' AND contentKey NOT LIKE 'guide:en:%')
+          OR contentKey LIKE 'page:tr:%'
+        )
     `,
   ]);
 
@@ -121,5 +146,8 @@ export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegr
     invalidFooterDraft: draftFooter && !parseFooterNavigation(draftFooter.valueJson) ? 1 : 0,
     invalidSettings: settings && !parseCmsSettingsStrict(settings.valueJson) ? 1 : 0,
     invalidStagedDrafts: stagedDraftRows.filter((row) => !isObjectJson(row.valueJson)).length,
+    invalidPublishedHomepage: homepageRows.filter((row) => !parseCmsHomepageSectionStrict(row.contentKey, row.valueJson)).length,
+    invalidPublishedFaqs: faqRows.filter((row) => !parseCmsFaqPayloadStrict(row.valueJson)).length,
+    invalidPublishedPages: pageRows.filter((row) => !isCmsContentPagePayloadStrict(row.contentKey, row.bodyJson)).length,
   };
 }

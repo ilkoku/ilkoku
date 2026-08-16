@@ -25,7 +25,6 @@ async function hydrateSubmissions(authorId: string, limit?: number): Promise<Sub
           coverStatus: item.publicationPlan.coverStatus,
           isbn: item.publicationPlan.isbn,
           layoutStatus: item.publicationPlan.layoutStatus,
-          notes: item.publicationPlan.notes,
           printRun: item.publicationPlan.printRun,
           status: item.publicationPlan.status,
           targetPublicationDate:

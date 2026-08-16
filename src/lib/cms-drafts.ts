@@ -72,6 +72,7 @@ export async function getCmsDraftState<T extends Record<string, unknown>>(conten
 
 export async function getCmsDraft<T extends Record<string, unknown>>(contentKey: string): Promise<CmsDraftRecord<T> | null> {
   const state = await getCmsDraftState<T>(contentKey);
+  if (state.state === "corrupt") throw corruptError(contentKey);
   return state.state === "valid" ? state.record : null;
 }
 

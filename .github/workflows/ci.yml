@@ -68,8 +68,8 @@ jobs:
       - name: Run security contract tests
         run: npm run test:security
 
-      - name: Deploy migrations to fresh MariaDB
-        run: npx prisma migrate deploy
+      - name: Build disposable MariaDB schema
+        run: npx prisma db push --skip-generate
 
       - name: Run MariaDB security integration contracts
         run: npm run test:security:db

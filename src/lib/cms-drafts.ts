@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import type { CmsLocaleCode } from "@/lib/cms-locales";
 
 export const CMS_DRAFT_NAMESPACE = "cms_draft";
+export const CMS_DRAFT_CORRUPT = "CMS_DRAFT_CORRUPT";
 
 export type CmsDraftRecord<T extends Record<string, unknown> = Record<string, unknown>> = {
   contentKey: string;
@@ -31,6 +32,14 @@ function parsePayload<T extends Record<string, unknown>>(valueJson: string): T |
   } catch {
     return null;
   }
+}
+
+function corruptError(contentKey: string) {
+  return new Error(`${CMS_DRAFT_CORRUPT}:${contentKey}`);
+}
+
+export function isCmsDraftCorruptionError(error: unknown) {
+  return error instanceof Error && error.message.startsWith(`${CMS_DRAFT_CORRUPT}:`);
 }
 
 export function homepageDraftKey(locale: CmsLocaleCode, section: string) {
@@ -79,7 +88,7 @@ export async function getCmsDraftsByPrefix<T extends Record<string, unknown>>(pr
   const records: CmsDraftRecord<T>[] = [];
   for (const row of rows) {
     const payload = parsePayload<T>(row.valueJson);
-    if (!payload) throw new Error(`CMS_DRAFT_CORRUPT:${row.contentKey}`);
+    if (!payload) throw corruptError(row.contentKey);
     records.push({ contentKey: row.contentKey, payload, updatedAt: row.updatedAt });
   }
   return records;
@@ -87,7 +96,7 @@ export async function getCmsDraftsByPrefix<T extends Record<string, unknown>>(pr
 
 export async function saveCmsDraft(userId: string, contentKey: string, payload: Record<string, unknown>) {
   const existing = await getCmsDraftState(contentKey);
-  if (existing.state === "corrupt") throw new Error(`CMS_DRAFT_CORRUPT:${contentKey}`);
+  if (existing.state === "corrupt") throw corruptError(contentKey);
 
   const valueJson = JSON.stringify(payload);
   await prisma.$executeRaw`
@@ -109,7 +118,7 @@ export async function saveCmsDraft(userId: string, contentKey: string, payload: 
 
 export async function deleteCmsDraft(contentKey: string) {
   const existing = await getCmsDraftState(contentKey);
-  if (existing.state === "corrupt") throw new Error(`CMS_DRAFT_CORRUPT:${contentKey}`);
+  if (existing.state === "corrupt") throw corruptError(contentKey);
   await prisma.$executeRaw`
     DELETE FROM SiteContent
     WHERE namespace = ${CMS_DRAFT_NAMESPACE}

@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
-import { deleteCmsDraft, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
+import { deleteCmsDraft, getCmsDraftState, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
 import {
   cmsGuideContentKey,
   cmsGuideLocaleFromContentKey,
@@ -29,6 +29,13 @@ function localeFromForm(formData: FormData) {
 function cmsListPath(locale: CmsLocaleCode, suffix = "") {
   const join = suffix ? `&${suffix}` : "";
   return `/icerik/rehber?dil=${locale}${join}`;
+}
+
+async function assertGuideDraftIntegrity(id: string, locale: CmsLocaleCode) {
+  const draft = await getCmsDraftState(pageDraftKey(id));
+  if (draft.state === "corrupt") {
+    redirect(`/icerik/rehber/${id}?dil=${locale}&hata=taslak-bozuk`);
+  }
 }
 
 async function addRevision(pageId: string, userId: string, snapshot: Record<string, unknown>) {
@@ -75,6 +82,7 @@ export async function saveCmsGuideAction(formData: FormData) {
   }
 
   const locale = existing ? cmsGuideLocaleFromContentKey(existing.contentKey) : localeFromForm(formData);
+  if (existing) await assertGuideDraftIntegrity(existing.id, locale);
 
   if (mode === "publish" && !(await isCmsLocaleEnabled(locale))) {
     redirect(cmsListPath(locale, "hata=dil-pasif"));
@@ -183,6 +191,7 @@ export async function archiveCmsGuideAction(formData: FormData) {
   if (!guide) return;
 
   const locale = cmsGuideLocaleFromContentKey(guide.contentKey);
+  await assertGuideDraftIntegrity(guide.id, locale);
   if (guide.status === "published") {
     access = await requireCmsPublisher("/icerik/rehber");
   }

@@ -330,7 +330,7 @@ export async function resolveNotificationTargets(input: {
     if (
       !href &&
       input.scope === "publisher" &&
-      notification.type === "publisher_discovery_share"
+      notification.type === "publisher_discovery_shared"
     ) {
       href = "/yayinevi/paylasilanlar";
     }

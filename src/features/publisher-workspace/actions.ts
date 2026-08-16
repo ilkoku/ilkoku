@@ -16,8 +16,8 @@ import { prisma } from "@/lib/prisma";
 import {
   sendPublisherTeamInvitationEmail,
 } from "@/lib/email/publisher-emails";
+import { acceptPublisherInvitationLocked } from "./invitation-acceptance-state";
 import {
-  acceptPublisherInvitation,
   cancelPublisherInvitation,
   createPublisherInvitation,
   updatePublisherMember,
@@ -368,7 +368,7 @@ export async function acceptPublisherInvitationAction(
   }
 
   try {
-    const result = await acceptPublisherInvitation({
+    const result = await acceptPublisherInvitationLocked({
       token,
       userId: user.id,
     });

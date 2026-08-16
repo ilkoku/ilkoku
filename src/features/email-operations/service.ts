@@ -141,6 +141,10 @@ export async function runEmailOperationsCheck() {
     await prisma.$executeRaw`
       DELETE FROM EmailDeliveryDedupe
       WHERE expiresAt < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 1 DAY)
+        OR (
+          deliveryId IS NULL
+          AND updatedAt < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 1 DAY)
+        )
     `;
   } catch (error) {
     console.error("EMAIL_DEDUPE_CLEANUP_FAILED", {

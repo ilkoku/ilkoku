@@ -8,6 +8,9 @@ import {
   hasPublisherPermission,
   publisherRoleLabels,
 } from "@/features/publisher-workspace/permissions";
+import {
+  getEmailDeliveryIdForIdempotencyKey,
+} from "@/lib/email/dedupe";
 import { sendPublisherDiscoveryShareEmail } from "@/lib/email/publisher-sharing-emails";
 import { prisma } from "@/lib/prisma";
 
@@ -17,6 +20,10 @@ const publicWorkWhere = {
   status: "published" as const,
   visibility: "public" as const,
 };
+
+const EMAIL_SHARE_BURST_WINDOW_MS = 10 * 60 * 1000;
+const EMAIL_SHARE_BURST_LIMIT = 12;
+const EMAIL_SHARE_RECIPIENT_COOLDOWN_MS = 5 * 60 * 1000;
 
 function displayName(user: {
   displayName: string | null;
@@ -44,6 +51,20 @@ function validEmail(value: string) {
   );
 }
 
+function publisherDiscoveryShareEmailIdempotencyKey(
+  shareId: string,
+) {
+  return `publisher-discovery-share:${shareId}`;
+}
+
+export async function getPublisherDiscoveryShareEmailDeliveryId(
+  shareId: string,
+) {
+  return getEmailDeliveryIdForIdempotencyKey(
+    publisherDiscoveryShareEmailIdempotencyKey(shareId),
+  );
+}
+
 export interface PublisherShareRecipientOption {
   id: string;
   label: string;
@@ -63,7 +84,9 @@ export type CreatePublisherShareResult =
         | "invalid_entity"
         | "invalid_note"
         | "invalid_recipients"
-        | "membership_not_found";
+        | "membership_not_found"
+        | "rate_limited"
+        | "recipient_rate_limited";
     };
 
 export async function getPublisherShareRecipientOptions(
@@ -341,7 +364,57 @@ export async function createPublisherDiscoveryShare(input: {
     return { status: "invalid_email" };
   }
 
-  const share = await prisma.$transaction(async (transaction) => {
+  const now = new Date();
+  const burstStart = new Date(
+    now.getTime() - EMAIL_SHARE_BURST_WINDOW_MS,
+  );
+  const recipientCooldownStart = new Date(
+    now.getTime() - EMAIL_SHARE_RECIPIENT_COOLDOWN_MS,
+  );
+  const recipientDomain =
+    recipientEmail.split("@")[1] ?? null;
+
+  const createResult = await prisma.$transaction(async (transaction) => {
+    const lockedActor = await transaction.$queryRaw<Array<{ id: string }>>`
+      SELECT id
+      FROM User
+      WHERE id = ${input.userId}
+      LIMIT 1
+      FOR UPDATE
+    `;
+
+    if (!lockedActor[0]) {
+      throw new Error("PUBLISHER_DISCOVERY_SHARE_ACTOR_NOT_FOUND");
+    }
+
+    const recentActorShareCount =
+      await transaction.publisherDiscoveryShare.count({
+        where: {
+          channel: "email",
+          createdAt: { gte: burstStart },
+          createdById: input.userId,
+        },
+      });
+
+    if (recentActorShareCount >= EMAIL_SHARE_BURST_LIMIT) {
+      return { status: "rate_limited" as const };
+    }
+
+    const recentRecipientShare =
+      await transaction.publisherDiscoveryShare.findFirst({
+        where: {
+          channel: "email",
+          createdAt: { gte: recipientCooldownStart },
+          publisherId: membership.publisherId,
+          recipientEmail,
+        },
+        select: { id: true },
+      });
+
+    if (recentRecipientShare) {
+      return { status: "recipient_rate_limited" as const };
+    }
+
     const created = await transaction.publisherDiscoveryShare.create({
       data: {
         authorId: entity.authorId,
@@ -365,26 +438,70 @@ export async function createPublisherDiscoveryShare(input: {
           channel: "email",
           entityKind: input.entityKind,
           publisherId: membership.publisherId,
-          recipientDomain:
-            recipientEmail.split("@")[1] ?? null,
+          recipientDomain,
         }),
       },
     });
 
-    return created;
+    return {
+      share: created,
+      status: "created" as const,
+    };
   });
 
+  if (createResult.status === "rate_limited") {
+    return { status: "rate_limited" };
+  }
+
+  if (createResult.status === "recipient_rate_limited") {
+    return { status: "recipient_rate_limited" };
+  }
+
+  const share = createResult.share;
+  const idempotencyKey =
+    publisherDiscoveryShareEmailIdempotencyKey(share.id);
+
   try {
-    await sendPublisherDiscoveryShareEmail({
+    const delivery = await sendPublisherDiscoveryShareEmail({
       email: recipientEmail,
       entityKind: input.entityKind,
       entityTitle: entity.entityTitle,
+      idempotencyKey,
       note,
       publisherName: membership.publisher.companyName,
       targetPath: entity.targetPath,
     });
+
+    const deliveryId =
+      delivery.deliveryId ??
+      await getEmailDeliveryIdForIdempotencyKey(idempotencyKey);
+
+    if (!deliveryId) {
+      throw new Error(
+        "PUBLISHER_DISCOVERY_SHARE_DELIVERY_LINK_MISSING",
+      );
+    }
   } catch (error) {
+    let deliveryId: string | null = null;
+
+    try {
+      deliveryId =
+        await getEmailDeliveryIdForIdempotencyKey(idempotencyKey);
+    } catch (trackingError) {
+      console.error(
+        "PUBLISHER_DISCOVERY_EMAIL_SHARE_TRACKING_LOOKUP_FAILED",
+        {
+          error:
+            trackingError instanceof Error
+              ? trackingError.message
+              : "UNKNOWN_ERROR",
+          shareId: share.id,
+        },
+      );
+    }
+
     console.error("PUBLISHER_DISCOVERY_EMAIL_SHARE_FAILED", {
+      deliveryId,
       error:
         error instanceof Error
           ? error.message

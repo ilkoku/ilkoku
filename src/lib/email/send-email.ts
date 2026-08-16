@@ -278,6 +278,9 @@ export async function sendEmail(
     };
   }
 
+  const explicitIdempotency =
+    Boolean(input.idempotencyKey?.trim());
+
   const dedupeKey =
     buildEmailDedupeKey(
       input,
@@ -290,16 +293,24 @@ export async function sendEmail(
     );
 
   if (
-    !dedupeClaim.claimed &&
-    dedupeClaim.duplicateDeliveryId
+    explicitIdempotency &&
+    dedupeClaim.claimFailed
   ) {
+    throw new Error(
+      "EMAIL_IDEMPOTENCY_CLAIM_FAILED",
+    );
+  }
+
+  if (!dedupeClaim.claimed) {
     return {
       delivery:
         "deduplicated" as const,
       deliveryId:
-        dedupeClaim.duplicateDeliveryId,
+        dedupeClaim.duplicateDeliveryId ?? undefined,
       id:
-        "deduplicated",
+        dedupeClaim.duplicateDeliveryId
+          ? "deduplicated"
+          : "dedupe-in-progress",
     };
   }
 
@@ -343,10 +354,52 @@ export async function sendEmail(
       },
     });
 
-  await attachEmailDeliveryDedupe(
-    dedupeKey,
-    delivery.id,
-  );
+  const dedupeAttached =
+    await attachEmailDeliveryDedupe(
+      dedupeKey,
+      delivery.id,
+      {
+        persistent:
+          explicitIdempotency,
+      },
+    );
+
+  if (
+    explicitIdempotency &&
+    !dedupeAttached
+  ) {
+    try {
+      await prisma.emailDelivery.update({
+        where: {
+          id: delivery.id,
+        },
+        data: {
+          failureCode:
+            "EMAIL_IDEMPOTENCY_ATTACH_FAILED",
+          failureMessage:
+            "Explicit idempotency kaydı delivery ile bağlanamadığı için gönderim transport öncesinde durduruldu.",
+          status:
+            "failed",
+        },
+      });
+    } catch (logError) {
+      console.error(
+        "EMAIL_IDEMPOTENCY_ATTACH_FAILURE_LOG_UPDATE_FAILED",
+        {
+          deliveryId:
+            delivery.id,
+          error:
+            logError instanceof Error
+              ? logError.message
+              : "UNKNOWN_ERROR",
+        },
+      );
+    }
+
+    throw new Error(
+      "EMAIL_IDEMPOTENCY_ATTACH_FAILED",
+    );
+  }
 
   let result:
     | Awaited<

@@ -5,9 +5,14 @@ import { prisma } from "@/lib/prisma";
 
 const AUTOMATIC_DEDUPE_WINDOW_MS = 30_000;
 const CLAIM_TTL_MS = 5 * 60 * 1000;
+const EXPLICIT_DEDUPE_EXPIRES_AT = new Date(
+  Date.UTC(9999, 11, 31, 23, 59, 59, 999),
+);
+const ATTACH_WAIT_DELAYS_MS = [50, 100, 200] as const;
 
 type DedupeRow = {
   deliveryId: string | null;
+  expiresAt: Date | string;
 };
 
 type DedupeInput = {
@@ -24,6 +29,16 @@ function digest(value: string) {
     .digest("hex");
 }
 
+function explicitDedupeKey(idempotencyKey: string) {
+  return digest(`explicit:${idempotencyKey.trim()}`);
+}
+
+function rowExpiry(row: DedupeRow) {
+  return row.expiresAt instanceof Date
+    ? row.expiresAt
+    : new Date(row.expiresAt);
+}
+
 export function buildEmailDedupeKey(
   input: DedupeInput,
   automatic: boolean,
@@ -31,7 +46,7 @@ export function buildEmailDedupeKey(
   const explicit = input.idempotencyKey?.trim();
 
   if (explicit) {
-    return digest(`explicit:${explicit}`);
+    return explicitDedupeKey(explicit);
   }
 
   if (!automatic) {
@@ -52,15 +67,43 @@ export function buildEmailDedupeKey(
   ].join(":"));
 }
 
-async function readDeliveryId(dedupeKey: string) {
+async function readDedupeRow(dedupeKey: string) {
   const rows = await prisma.$queryRaw<DedupeRow[]>`
-    SELECT deliveryId
+    SELECT deliveryId, expiresAt
     FROM EmailDeliveryDedupe
     WHERE dedupeKey = ${dedupeKey}
     LIMIT 1
   `;
 
-  return rows[0]?.deliveryId ?? null;
+  return rows[0] ?? null;
+}
+
+async function tryTakeOverExpiredClaim(
+  dedupeKey: string,
+  now: Date,
+) {
+  const updated = await prisma.$executeRaw`
+    UPDATE EmailDeliveryDedupe
+    SET expiresAt = ${new Date(now.getTime() + CLAIM_TTL_MS)},
+      updatedAt = CURRENT_TIMESTAMP(3)
+    WHERE dedupeKey = ${dedupeKey}
+      AND deliveryId IS NULL
+      AND expiresAt <= ${now}
+  `;
+
+  return updated === 1;
+}
+
+async function waitForAttachedDelivery(dedupeKey: string) {
+  for (const delay of ATTACH_WAIT_DELAYS_MS) {
+    await new Promise((resolve) => setTimeout(resolve, delay));
+
+    const row = await readDedupeRow(dedupeKey);
+    if (!row) return null;
+    if (row.deliveryId) return row.deliveryId;
+  }
+
+  return null;
 }
 
 export async function claimEmailDeliveryDedupe(
@@ -69,11 +112,13 @@ export async function claimEmailDeliveryDedupe(
   if (!dedupeKey) {
     return {
       claimed: true,
+      claimFailed: false,
       duplicateDeliveryId: null,
     };
   }
 
   try {
+    const now = new Date();
     const inserted = await prisma.$executeRaw`
       INSERT IGNORE INTO EmailDeliveryDedupe (
         id,
@@ -84,7 +129,7 @@ export async function claimEmailDeliveryDedupe(
       ) VALUES (
         ${randomUUID()},
         ${dedupeKey},
-        ${new Date(Date.now() + CLAIM_TTL_MS)},
+        ${new Date(now.getTime() + CLAIM_TTL_MS)},
         CURRENT_TIMESTAMP(3),
         CURRENT_TIMESTAMP(3)
       )
@@ -93,31 +138,52 @@ export async function claimEmailDeliveryDedupe(
     if (inserted === 1) {
       return {
         claimed: true,
+        claimFailed: false,
         duplicateDeliveryId: null,
       };
     }
 
-    let duplicateDeliveryId = await readDeliveryId(dedupeKey);
+    const existing = await readDedupeRow(dedupeKey);
 
-    if (!duplicateDeliveryId) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      duplicateDeliveryId = await readDeliveryId(dedupeKey);
+    if (existing?.deliveryId) {
+      return {
+        claimed: false,
+        claimFailed: false,
+        duplicateDeliveryId: existing.deliveryId,
+      };
     }
 
-    if (!duplicateDeliveryId) {
-      console.warn("EMAIL_DEDUPE_CLAIM_INCOMPLETE", {
-        dedupeKey,
-      });
-
+    if (
+      existing &&
+      rowExpiry(existing).getTime() <= now.getTime() &&
+      await tryTakeOverExpiredClaim(dedupeKey, now)
+    ) {
       return {
         claimed: true,
+        claimFailed: false,
         duplicateDeliveryId: null,
       };
     }
+
+    const duplicateDeliveryId =
+      await waitForAttachedDelivery(dedupeKey);
+
+    if (duplicateDeliveryId) {
+      return {
+        claimed: false,
+        claimFailed: false,
+        duplicateDeliveryId,
+      };
+    }
+
+    console.warn("EMAIL_DEDUPE_CLAIM_IN_PROGRESS", {
+      dedupeKey,
+    });
 
     return {
       claimed: false,
-      duplicateDeliveryId,
+      claimFailed: false,
+      duplicateDeliveryId: null,
     };
   } catch (error) {
     console.error("EMAIL_DEDUPE_CLAIM_FAILED", {
@@ -129,6 +195,7 @@ export async function claimEmailDeliveryDedupe(
 
     return {
       claimed: true,
+      claimFailed: true,
       duplicateDeliveryId: null,
     };
   }
@@ -137,17 +204,33 @@ export async function claimEmailDeliveryDedupe(
 export async function attachEmailDeliveryDedupe(
   dedupeKey: string | null,
   deliveryId: string,
+  options?: {
+    persistent?: boolean;
+  },
 ) {
-  if (!dedupeKey) return;
+  if (!dedupeKey) return true;
 
   try {
-    await prisma.$executeRaw`
+    if (options?.persistent) {
+      const updated = await prisma.$executeRaw`
+        UPDATE EmailDeliveryDedupe
+        SET deliveryId = ${deliveryId},
+          expiresAt = ${EXPLICIT_DEDUPE_EXPIRES_AT},
+          updatedAt = CURRENT_TIMESTAMP(3)
+        WHERE dedupeKey = ${dedupeKey}
+          AND deliveryId IS NULL
+      `;
+      return updated === 1;
+    }
+
+    const updated = await prisma.$executeRaw`
       UPDATE EmailDeliveryDedupe
       SET deliveryId = ${deliveryId},
         updatedAt = CURRENT_TIMESTAMP(3)
       WHERE dedupeKey = ${dedupeKey}
         AND deliveryId IS NULL
     `;
+    return updated === 1;
   } catch (error) {
     console.error("EMAIL_DEDUPE_ATTACH_FAILED", {
       deliveryId,
@@ -156,5 +239,19 @@ export async function attachEmailDeliveryDedupe(
           ? error.message
           : "UNKNOWN_ERROR",
     });
+    return false;
   }
+}
+
+export async function getEmailDeliveryIdForIdempotencyKey(
+  idempotencyKey: string,
+) {
+  const normalized = idempotencyKey.trim();
+  if (!normalized) return null;
+
+  const row = await readDedupeRow(
+    explicitDedupeKey(normalized),
+  );
+
+  return row?.deliveryId ?? null;
 }

@@ -10,6 +10,7 @@ import {
   getPublisherMembership,
   isPublisherAdminReadOnlyMembership,
 } from "@/features/publisher-workspace/repository";
+import type { Prisma } from "@/generated/prisma/client";
 import type {
   PublisherPermissionCenterData,
   PublisherPermissionRequestData,
@@ -58,6 +59,73 @@ function serializeRequest(request: {
       : null,
     status: request.status,
   };
+}
+
+async function lockMemberships(
+  transaction: Prisma.TransactionClient,
+  membershipIds: string[],
+) {
+  const ids = Array.from(new Set(membershipIds)).sort();
+
+  for (const membershipId of ids) {
+    const rows = await transaction.$queryRaw<Array<{ id: string }>>`
+      SELECT id
+      FROM PublisherMembership
+      WHERE id = ${membershipId}
+      LIMIT 1
+      FOR UPDATE
+    `;
+
+    if (!rows[0]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function getLiveMembership(
+  transaction: Prisma.TransactionClient,
+  membershipId: string,
+) {
+  return transaction.publisherMembership.findUnique({
+    where: { id: membershipId },
+    select: {
+      active: true,
+      id: true,
+      permissionOverrides: true,
+      publisherId: true,
+      role: true,
+      userId: true,
+      publisher: {
+        select: {
+          active: true,
+          archivedAt: true,
+          verified: true,
+        },
+      },
+      user: {
+        select: {
+          deletedAt: true,
+          status: true,
+        },
+      },
+    },
+  });
+}
+
+function isLiveMembership(
+  membership: Awaited<ReturnType<typeof getLiveMembership>>,
+) {
+  return Boolean(
+    membership &&
+    membership.active &&
+    membership.publisher.active &&
+    membership.publisher.archivedAt === null &&
+    membership.publisher.verified &&
+    membership.user.deletedAt === null &&
+    membership.user.status === "active",
+  );
 }
 
 export async function getPublisherPermissionCenter(
@@ -164,31 +232,44 @@ export async function createPublisherPermissionRequest(input: {
     return "membership_not_found";
   }
 
-  if (
-    hasPublisherPermission(
-      membership.role,
-      permission,
-      membership.permissionOverrides,
-    )
-  ) {
-    return "already_granted";
-  }
-
-  const pendingKey = `${membership.id}:${permission}`;
-  const existing = await prisma.publisherPermissionRequest.findUnique({
-    where: { pendingKey },
-    select: { id: true },
-  });
-  if (existing) return "already_pending";
-
   try {
-    await prisma.$transaction(async (transaction) => {
+    return await prisma.$transaction(async (transaction) => {
+      const locked = await lockMemberships(transaction, [membership.id]);
+      if (!locked) return "membership_not_found" as const;
+
+      const liveMembership = await getLiveMembership(transaction, membership.id);
+      if (
+        !isLiveMembership(liveMembership) ||
+        !liveMembership ||
+        liveMembership.userId !== input.userId ||
+        liveMembership.publisherId !== membership.publisherId
+      ) {
+        return "membership_not_found" as const;
+      }
+
+      if (
+        hasPublisherPermission(
+          liveMembership.role,
+          permission,
+          liveMembership.permissionOverrides,
+        )
+      ) {
+        return "already_granted" as const;
+      }
+
+      const pendingKey = `${liveMembership.id}:${permission}`;
+      const existing = await transaction.publisherPermissionRequest.findUnique({
+        where: { pendingKey },
+        select: { id: true },
+      });
+      if (existing) return "already_pending" as const;
+
       const request = await transaction.publisherPermissionRequest.create({
         data: {
-          membershipId: membership.id,
+          membershipId: liveMembership.id,
           pendingKey,
-          permission: permission,
-          publisherId: membership.publisherId,
+          permission,
+          publisherId: liveMembership.publisherId,
           requestedById: input.userId,
           requestNote: input.requestNote,
         },
@@ -197,8 +278,13 @@ export async function createPublisherPermissionRequest(input: {
       const candidates = await transaction.publisherMembership.findMany({
         where: {
           active: true,
-          publisherId: membership.publisherId,
+          publisherId: liveMembership.publisherId,
           userId: { not: input.userId },
+          publisher: {
+            active: true,
+            archivedAt: null,
+            verified: true,
+          },
           user: {
             deletedAt: null,
             status: "active",
@@ -245,12 +331,14 @@ export async function createPublisherPermissionRequest(input: {
           entityId: request.id,
           entityType: "PublisherPermissionRequest",
           metadata: JSON.stringify({
-            membershipId: membership.id,
-            permission: permission,
-            publisherId: membership.publisherId,
+            membershipId: liveMembership.id,
+            permission,
+            publisherId: liveMembership.publisherId,
           }),
         },
       });
+
+      return "created" as const;
     });
   } catch (error) {
     if (
@@ -263,8 +351,6 @@ export async function createPublisherPermissionRequest(input: {
     }
     throw error;
   }
-
-  return "created";
 }
 
 export type ReviewPermissionRequestResult =
@@ -285,40 +371,92 @@ export async function reviewPublisherPermissionRequest(input: {
   const reviewerMembership = await getPublisherMembership(input.userId);
   if (
     !reviewerMembership ||
-    !hasPublisherPermission(
-      reviewerMembership.role,
-      "manage_permissions",
-      reviewerMembership.permissionOverrides,
-    )
+    isPublisherAdminReadOnlyMembership(reviewerMembership)
   ) {
     return "forbidden";
   }
 
+  const requestHint = await prisma.publisherPermissionRequest.findUnique({
+    where: { id: input.requestId },
+    select: {
+      membershipId: true,
+      publisherId: true,
+      status: true,
+    },
+  });
+
+  if (!requestHint || requestHint.status !== "pending") {
+    return "not_found";
+  }
+
   return prisma.$transaction(async (transaction) => {
-    const request = await transaction.publisherPermissionRequest.findFirst({
-      where: {
-        id: input.requestId,
-        publisherId: reviewerMembership.publisherId,
-        status: "pending",
-      },
-      include: {
-        membership: {
-          select: {
-            active: true,
-            id: true,
-            permissionOverrides: true,
-            role: true,
-            userId: true,
-          },
-        },
+    const locked = await lockMemberships(transaction, [
+      reviewerMembership.id,
+      requestHint.membershipId,
+    ]);
+    if (!locked) return "not_found" as const;
+
+    const [liveReviewer, liveTarget] = await Promise.all([
+      getLiveMembership(transaction, reviewerMembership.id),
+      getLiveMembership(transaction, requestHint.membershipId),
+    ]);
+
+    if (
+      !isLiveMembership(liveReviewer) ||
+      !liveReviewer ||
+      liveReviewer.userId !== input.userId ||
+      !hasPublisherPermission(
+        liveReviewer.role,
+        "manage_permissions",
+        liveReviewer.permissionOverrides,
+      )
+    ) {
+      return "forbidden" as const;
+    }
+
+    const lockedRequest = await transaction.$queryRaw<Array<{ id: string }>>`
+      SELECT id
+      FROM PublisherPermissionRequest
+      WHERE id = ${input.requestId}
+      LIMIT 1
+      FOR UPDATE
+    `;
+    if (!lockedRequest[0]) return "not_found" as const;
+
+    const request = await transaction.publisherPermissionRequest.findUnique({
+      where: { id: input.requestId },
+      select: {
+        id: true,
+        membershipId: true,
+        permission: true,
+        publisherId: true,
+        requestedById: true,
+        status: true,
       },
     });
 
-    if (!request) return "not_found";
+    if (
+      !request ||
+      request.status !== "pending" ||
+      request.publisherId !== liveReviewer.publisherId ||
+      request.publisherId !== requestHint.publisherId ||
+      request.membershipId !== requestHint.membershipId
+    ) {
+      return "not_found" as const;
+    }
+
     if (!isRequestablePublisherPermission(request.permission)) return "invalid";
     const permission = request.permission;
     if (request.requestedById === input.userId) return "self_review";
-    if (!request.membership.active) return "target_inactive";
+
+    if (
+      !isLiveMembership(liveTarget) ||
+      !liveTarget ||
+      liveTarget.id !== request.membershipId ||
+      liveTarget.publisherId !== request.publisherId
+    ) {
+      return "target_inactive" as const;
+    }
 
     const claimed = await transaction.publisherPermissionRequest.updateMany({
       where: {
@@ -334,21 +472,21 @@ export async function reviewPublisherPermissionRequest(input: {
       },
     });
 
-    if (claimed.count !== 1) return "not_found";
+    if (claimed.count !== 1) return "not_found" as const;
 
     if (input.decision === "approved") {
       const permissions = Array.from(
         new Set([
           ...getCustomizablePublisherPermissions(
-            request.membership.role,
-            request.membership.permissionOverrides,
+            liveTarget.role,
+            liveTarget.permissionOverrides,
           ),
           permission,
         ]),
       );
 
       await transaction.publisherMembership.update({
-        where: { id: request.membership.id },
+        where: { id: liveTarget.id },
         data: { permissionOverrides: permissions },
       });
     }
@@ -379,7 +517,7 @@ export async function reviewPublisherPermissionRequest(input: {
         metadata: JSON.stringify({
           decision: input.decision,
           membershipId: request.membershipId,
-          permission: permission,
+          permission,
           publisherId: request.publisherId,
         }),
       },

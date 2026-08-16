@@ -208,11 +208,11 @@ export async function attachEmailDeliveryDedupe(
     persistent?: boolean;
   },
 ) {
-  if (!dedupeKey) return;
+  if (!dedupeKey) return true;
 
   try {
     if (options?.persistent) {
-      await prisma.$executeRaw`
+      const updated = await prisma.$executeRaw`
         UPDATE EmailDeliveryDedupe
         SET deliveryId = ${deliveryId},
           expiresAt = ${EXPLICIT_DEDUPE_EXPIRES_AT},
@@ -220,16 +220,17 @@ export async function attachEmailDeliveryDedupe(
         WHERE dedupeKey = ${dedupeKey}
           AND deliveryId IS NULL
       `;
-      return;
+      return updated === 1;
     }
 
-    await prisma.$executeRaw`
+    const updated = await prisma.$executeRaw`
       UPDATE EmailDeliveryDedupe
       SET deliveryId = ${deliveryId},
         updatedAt = CURRENT_TIMESTAMP(3)
       WHERE dedupeKey = ${dedupeKey}
         AND deliveryId IS NULL
     `;
+    return updated === 1;
   } catch (error) {
     console.error("EMAIL_DEDUPE_ATTACH_FAILED", {
       deliveryId,
@@ -238,6 +239,7 @@ export async function attachEmailDeliveryDedupe(
           ? error.message
           : "UNKNOWN_ERROR",
     });
+    return false;
   }
 }
 

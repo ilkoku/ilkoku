@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import type { PublisherMemberRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCustomizablePublisherPermissions } from "./permissions";
@@ -35,11 +36,17 @@ function asDate(value: Date | string) {
 }
 
 export async function acceptPublisherInvitationLocked(input: {
-  tokenHash: string;
+  token: string;
   userId: string;
 }) {
+  const normalizedToken = input.token.trim();
+  if (!normalizedToken) return { status: "invalid" as const };
+
+  const tokenHash = createHash("sha256")
+    .update(normalizedToken)
+    .digest("hex");
   const candidate = await prisma.publisherInvitation.findUnique({
-    where: { tokenHash: input.tokenHash },
+    where: { tokenHash },
     select: { id: true, publisherId: true },
   });
 
@@ -97,7 +104,7 @@ export async function acceptPublisherInvitationLocked(input: {
 
     if (
       !invitation ||
-      invitation.tokenHash !== input.tokenHash ||
+      invitation.tokenHash !== tokenHash ||
       invitation.status !== "pending" ||
       asDate(invitation.expiresAt).getTime() <= now.getTime()
     ) {
@@ -120,7 +127,7 @@ export async function acceptPublisherInvitationLocked(input: {
         id: invitation.id,
         publisherId: publisher.id,
         status: "pending",
-        tokenHash: input.tokenHash,
+        tokenHash,
       },
       data: {
         acceptedAt: now,
@@ -129,9 +136,7 @@ export async function acceptPublisherInvitationLocked(input: {
       },
     });
 
-    if (claimed.count !== 1) {
-      return { status: "invalid" as const };
-    }
+    if (claimed.count !== 1) return { status: "invalid" as const };
 
     const invitationPermissions = getCustomizablePublisherPermissions(
       invitation.role,

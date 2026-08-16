@@ -513,18 +513,6 @@ export async function getEditorRecommendations(editorId: string) {
   }));
 }
 
-export async function getEditorNotifications(editorId: string) {
-  return prisma.notification.findMany({
-    where: {
-      userId: editorId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 100,
-  });
-}
-
 export async function searchRegisteredEditors(
   currentEditorId: string,
   query: string,

@@ -64,6 +64,23 @@ test("publisher application resubmission locks the pending role request before s
   assertContains(application, 'verificationStatus: "submitted"', "publisher application resubmission");
 });
 
+test("publisher permission requests re-authorize live memberships and serialize permission overrides", () => {
+  const repository = source("src/features/publisher-permission-requests/repository.ts");
+
+  assertContains(repository, "lockMemberships", "publisher permission boundary");
+  assertContains(repository, "Array.from(new Set(membershipIds)).sort()", "publisher permission lock ordering");
+  assert.ok(
+    repository.split("FOR UPDATE").length - 1 >= 2,
+    "publisher permission boundary must lock memberships and permission request rows",
+  );
+  assertContains(repository, "getLiveMembership", "publisher permission live membership reload");
+  assertContains(repository, "isLiveMembership", "publisher permission active-state gate");
+  assertContains(repository, '"manage_permissions"', "publisher permission reviewer reauthorization");
+  assertContains(repository, "liveTarget.permissionOverrides", "publisher permission lost-update guard");
+  assertContains(repository, "liveReviewer.permissionOverrides", "publisher permission stale reviewer guard");
+  assertContains(repository, "request.status !== \"pending\"", "publisher permission terminal request guard");
+});
+
 test("CMS access fails closed and access grants stay admin-only", () => {
   const access = source("src/lib/cms-access.ts");
   const manageAccess = source("src/app/api/cms-access-manage/route.ts");

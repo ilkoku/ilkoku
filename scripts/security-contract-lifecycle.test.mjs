@@ -112,3 +112,22 @@ test("admin audit explains contract and publication sources", () => {
     assertContains(text, event, "admin contract lifecycle labels");
   }
 });
+
+test("publisher file downloads re-authorize, lock and audit before redirect", () => {
+  const helper = source("src/features/publisher-submissions/file-download.ts");
+  const route = source("src/app/yayinevi/dosyalar/[fileId]/indir/route.ts");
+  const audit = source("src/app/admin/audit-log/page.tsx");
+
+  assertContains(helper, "prisma.$transaction", "publisher file download");
+  assertContains(helper, "lockDownloadPermission", "publisher file download");
+  assertContains(helper, '"download_files"', "publisher file download");
+  assert.ok(
+    helper.split("FOR UPDATE").length - 1 >= 2,
+    "publisher file download must lock membership and file/submission state",
+  );
+  assertContains(helper, "auditLog.create", "publisher file download audit");
+  assertContains(helper, "publisher_submission_file_downloaded", "publisher file download audit");
+  assertContains(route, "authorizeAuditedPublisherFileDownload", "publisher file download route");
+  assertNotContains(route, "getLegacyPublisherFileForDownload", "publisher file download route");
+  assertContains(audit, "publisher_submission_file_downloaded", "admin file download audit label");
+});

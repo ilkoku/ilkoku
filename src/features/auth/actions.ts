@@ -28,6 +28,14 @@ export type AuthActionState = {
 const loginRoles: UserRole[] = ["reader", "writer", "editor_pending", "editor", "publisher", "admin"];
 const registrationRoles: RegistrationRole[] = ["reader", "writer", "editor", "publisher"];
 const standardRoles: RegistrationRole[] = ["reader", "writer"];
+const selfServiceRoleSources: UserRole[] = ["reader", "writer", "editor_pending"];
+
+type SelfServiceRoleUserRow = {
+  deletedAt: Date | null;
+  id: string;
+  role: UserRole;
+  status: "active" | "suspended" | "disabled";
+};
 
 function error(message: string): AuthActionState {
   return { message, status: "error" };
@@ -256,13 +264,48 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
 
   if (standardRoles.includes(role)) {
     try {
-      await prisma.$transaction([
-        prisma.user.update({ where: { id: user.id }, data: { role } }),
-        prisma.roleRequest.updateMany({
-          where: { userId: user.id, status: "pending" },
+      await prisma.$transaction(async (transaction) => {
+        const rows = await transaction.$queryRaw<SelfServiceRoleUserRow[]>`
+          SELECT id, role, status, deletedAt
+          FROM User
+          WHERE id = ${user.id}
+          LIMIT 1
+          FOR UPDATE
+        `;
+        const current = rows[0] ?? null;
+        if (
+          !current ||
+          current.status !== "active" ||
+          current.deletedAt ||
+          !selfServiceRoleSources.includes(current.role)
+        ) {
+          throw new Error("SELF_SERVICE_ROLE_CHANGE_FORBIDDEN");
+        }
+
+        await transaction.user.update({
+          where: { id: current.id },
+          data: { role },
+        });
+        await transaction.roleRequest.updateMany({
+          where: { userId: current.id, status: "pending" },
           data: { pendingKey: null, status: "cancelled" },
-        }),
-      ]);
+        });
+        if (current.role !== role) {
+          await transaction.auditLog.create({
+            data: {
+              action: "profile_updated",
+              actorId: current.id,
+              entityId: current.id,
+              entityType: "User",
+              metadata: JSON.stringify({
+                newRole: role,
+                oldRole: current.role,
+                source: "self_service_role_changed",
+              }),
+            },
+          });
+        }
+      });
     } catch {
       return error(validationContent.roleSaveFailed);
     }
@@ -271,16 +314,33 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
 
   try {
     await prisma.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRaw<SelfServiceRoleUserRow[]>`
+        SELECT id, role, status, deletedAt
+        FROM User
+        WHERE id = ${user.id}
+        LIMIT 1
+        FOR UPDATE
+      `;
+      const current = rows[0] ?? null;
+      if (
+        !current ||
+        current.status !== "active" ||
+        current.deletedAt ||
+        !selfServiceRoleSources.includes(current.role)
+      ) {
+        throw new Error("SELF_SERVICE_ROLE_CHANGE_FORBIDDEN");
+      }
+
       await transaction.user.update({
-        where: { id: user.id },
+        where: { id: current.id },
         data: { role: role === "editor" ? "editor_pending" : "reader" },
       });
       await transaction.roleRequest.updateMany({
-        where: { userId: user.id, status: "pending", requestedRole: { not: role } },
+        where: { userId: current.id, status: "pending", requestedRole: { not: role } },
         data: { pendingKey: null, status: "cancelled" },
       });
       const existingRequests = await transaction.roleRequest.findMany({
-        where: { userId: user.id, requestedRole: role, status: "pending" },
+        where: { userId: current.id, requestedRole: role, status: "pending" },
         orderBy: { createdAt: "asc" },
         select: { id: true },
       });
@@ -294,7 +354,7 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
       if (existing) {
         await transaction.roleRequest.update({
           where: { id: existing.id },
-          data: { pendingKey: `${user.id}:${role}` },
+          data: { pendingKey: `${current.id}:${role}` },
         });
 
         if (role === "publisher" && publisherApplication?.success) {
@@ -302,7 +362,7 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
             where: { roleRequestId: existing.id },
             create: {
               ...toPublisherApplicationData(publisherApplication.data),
-              applicantUserId: user.id,
+              applicantUserId: current.id,
               roleRequestId: existing.id,
               submittedAt: new Date(),
               verificationStatus: "submitted",
@@ -317,7 +377,7 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
         }
       } else {
         const roleRequest = await transaction.roleRequest.create({
-          data: { pendingKey: `${user.id}:${role}`, requestedRole: role, userId: user.id },
+          data: { pendingKey: `${current.id}:${role}`, requestedRole: role, userId: current.id },
           select: { id: true },
         });
 
@@ -325,7 +385,7 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
           await transaction.publisherApplication.create({
             data: {
               ...toPublisherApplicationData(publisherApplication.data),
-              applicantUserId: user.id,
+              applicantUserId: current.id,
               roleRequestId: roleRequest.id,
               submittedAt: new Date(),
               verificationStatus: "submitted",
@@ -339,7 +399,7 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
           where: {
             requestedRole: role,
             status: "pending",
-            userId: user.id,
+            userId: current.id,
           },
           orderBy: {
             createdAt: "desc",
@@ -358,7 +418,7 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
       await transaction.auditLog.create({
         data: {
           action: "role_requested",
-          actorId: user.id,
+          actorId: current.id,
           entityId: activeRequest.id,
           entityType: "RoleRequest",
           metadata: JSON.stringify({

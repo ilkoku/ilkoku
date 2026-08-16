@@ -109,96 +109,98 @@ export async function getWriterCommentAnalysis(
     Date.now() - 30 * 24 * 60 * 60 * 1000,
   );
 
-  const [
-    total,
-    unanswered,
-    last30Days,
-    latest,
-    totalsByWork,
-    unansweredByWork,
-  ] = await Promise.all([
-    prisma.comment.count({ where: rootWhere }),
-    prisma.comment.count({ where: unansweredWhere }),
-    prisma.comment.count({
-      where: {
-        ...rootWhere,
-        createdAt: { gte: last30DaysStart },
-      },
-    }),
-    prisma.comment.aggregate({
-      where: rootWhere,
-      _max: { createdAt: true },
-    }),
-    prisma.comment.groupBy({
-      by: ["workId"],
-      where: rootWhere,
-      _count: { _all: true },
-    }),
-    prisma.comment.groupBy({
-      by: ["workId"],
-      where: unansweredWhere,
-      _count: { _all: true },
-    }),
-  ]);
-
-  const workIds = totalsByWork.map((row) => row.workId);
-  const works = workIds.length
-    ? await prisma.work.findMany({
+  return prisma.$transaction(async (transaction) => {
+    const [
+      total,
+      unanswered,
+      last30Days,
+      latest,
+      totalsByWork,
+      unansweredByWork,
+    ] = await Promise.all([
+      transaction.comment.count({ where: rootWhere }),
+      transaction.comment.count({ where: unansweredWhere }),
+      transaction.comment.count({
         where: {
-          ...publicWorkWhere,
-          authorId,
-          id: { in: workIds },
+          ...rootWhere,
+          createdAt: { gte: last30DaysStart },
         },
-        select: {
-          id: true,
-          title: true,
-        },
-      })
-    : [];
+      }),
+      transaction.comment.aggregate({
+        where: rootWhere,
+        _max: { createdAt: true },
+      }),
+      transaction.comment.groupBy({
+        by: ["workId"],
+        where: rootWhere,
+        _count: { _all: true },
+      }),
+      transaction.comment.groupBy({
+        by: ["workId"],
+        where: unansweredWhere,
+        _count: { _all: true },
+      }),
+    ]);
 
-  const titleById = new Map(
-    works.map((work) => [work.id, work.title]),
-  );
-  const unansweredById = new Map(
-    unansweredByWork.map((row) => [
-      row.workId,
-      row._count._all,
-    ]),
-  );
+    const workIds = totalsByWork.map((row) => row.workId);
+    const works = workIds.length
+      ? await transaction.work.findMany({
+          where: {
+            ...publicWorkWhere,
+            authorId,
+            id: { in: workIds },
+          },
+          select: {
+            id: true,
+            title: true,
+          },
+        })
+      : [];
 
-  const workBreakdown = totalsByWork
-    .flatMap((row) => {
-      const title = titleById.get(row.workId);
-      if (!title) return [];
-
-      const workUnanswered =
-        unansweredById.get(row.workId) ?? 0;
-
-      return [{
-        id: row.workId,
-        responseRate: responseRate(
-          row._count._all,
-          workUnanswered,
-        ),
-        title,
-        total: row._count._all,
-        unanswered: workUnanswered,
-      }];
-    })
-    .sort((a, b) =>
-      b.total - a.total ||
-      a.title.localeCompare(b.title, "tr-TR"),
+    const titleById = new Map(
+      works.map((work) => [work.id, work.title]),
+    );
+    const unansweredById = new Map(
+      unansweredByWork.map((row) => [
+        row.workId,
+        row._count._all,
+      ]),
     );
 
-  return {
-    answered: Math.max(0, total - unanswered),
-    latestCommentAt: latest._max.createdAt,
-    last30Days,
-    responseRate: responseRate(total, unanswered),
-    total,
-    unanswered,
-    works: workBreakdown,
-  };
+    const workBreakdown = totalsByWork
+      .flatMap((row) => {
+        const title = titleById.get(row.workId);
+        if (!title) return [];
+
+        const workUnanswered =
+          unansweredById.get(row.workId) ?? 0;
+
+        return [{
+          id: row.workId,
+          responseRate: responseRate(
+            row._count._all,
+            workUnanswered,
+          ),
+          title,
+          total: row._count._all,
+          unanswered: workUnanswered,
+        }];
+      })
+      .sort((a, b) =>
+        b.total - a.total ||
+        a.title.localeCompare(b.title, "tr-TR"),
+      );
+
+    return {
+      answered: Math.max(0, total - unanswered),
+      latestCommentAt: latest._max.createdAt,
+      last30Days,
+      responseRate: responseRate(total, unanswered),
+      total,
+      unanswered,
+      works: workBreakdown,
+    };
+  });
 }
 
 export type WriterCommentExportRow = {
@@ -216,9 +218,13 @@ export type WriterCommentExportRow = {
 export async function getWriterCommentExportPage(input: {
   authorId: string;
   cursor?: string | null;
+  createdAtLte: Date;
 }) {
   const comments = await prisma.comment.findMany({
-    where: writerRootCommentWhere(input.authorId),
+    where: {
+      ...writerRootCommentWhere(input.authorId),
+      createdAt: { lte: input.createdAtLte },
+    },
     orderBy: { id: "asc" },
     ...(input.cursor
       ? {
@@ -238,6 +244,7 @@ export async function getWriterCommentExportPage(input: {
       replies: {
         where: {
           ...visibleCommentWhere,
+          createdAt: { lte: input.createdAtLte },
           userId: input.authorId,
         },
         orderBy: { createdAt: "asc" },

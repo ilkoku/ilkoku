@@ -14,6 +14,8 @@ const roles: UserRole[] = ["reader", "writer", "editor", "publisher"];
 
 export default async function RoleSelectionPage({ searchParams }: { searchParams: Promise<{ durum?: string; rol?: string }> }) {
   const profile = await getCurrentProfile();
+  if (profile?.actualRole === "admin") redirect("/hesabim");
+
   const navigation = profile ? await getRoleNavigation(profile) : null;
   if (profile) {
     if (navigation?.hasPendingRequest) redirect("/hesabim?sekme=rol-basvurusu");

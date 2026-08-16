@@ -140,7 +140,7 @@ export async function sendPublisherSubmissionDecisionEmail(input: {
     input.note?.trim() || "";
 
   const targetUrl = absoluteUrl(
-    `/yazar?yayineviBasvuru=${encodeURIComponent(input.submissionId)}`,
+    `/yayinevleri?basvuru=${encodeURIComponent(input.submissionId)}`,
   );
 
   return sendEmail({
@@ -177,11 +177,12 @@ export async function sendPublisherSubmissionDecisionEmail(input: {
 export async function sendPublisherContractEmail(input: {
   email: string;
   fullName: string;
+  idempotencyKey: string;
   submissionId: string;
   workTitle: string;
 }) {
   const targetUrl = absoluteUrl(
-    `/yazar?yayineviBasvuru=${encodeURIComponent(input.submissionId)}`,
+    `/yayinevleri?basvuru=${encodeURIComponent(input.submissionId)}`,
   );
 
   return sendEmail({
@@ -192,6 +193,7 @@ export async function sendPublisherContractEmail(input: {
       <p><strong>${escapeHtml(input.workTitle)}</strong> eseriniz için yayınevi sözleşmesi gönderildi.</p>
       <p><a href="${escapeHtml(targetUrl)}">Sözleşmeyi görüntüle</a></p>
     `.trim(),
+    idempotencyKey: input.idempotencyKey,
     subject:
       `Yayınevi sözleşmesi: ${input.workTitle}`,
     template:

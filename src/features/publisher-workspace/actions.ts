@@ -11,15 +11,17 @@ import {
   sendPublisherTeamInvitationEmail,
 } from "@/lib/email/publisher-emails";
 import {
-  addPublisherInternalNote,
   acceptPublisherInvitation,
   cancelPublisherInvitation,
   createPublisherInvitation,
   updatePublisherMember,
-  updatePublisherSubmissionDecision,
-  upsertPublicationPlan,
-  upsertPublisherContract,
 } from "./repository";
+import {
+  addPublisherInternalNoteSecure as addPublisherInternalNote,
+  updatePublisherSubmissionDecisionSecure as updatePublisherSubmissionDecision,
+  upsertPublicationPlanSecure as upsertPublicationPlan,
+  upsertPublisherContractSecure as upsertPublisherContract,
+} from "./legacy-operations";
 import {
   customizablePublisherPermissionKeys,
   publisherPermissionLabels,

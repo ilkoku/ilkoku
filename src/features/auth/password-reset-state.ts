@@ -98,10 +98,10 @@ export async function redeemPasswordReset(input: {
   });
 
   if (!candidate) {
-    return false;
+    return null;
   }
 
-  const now = new Date();
+  const changedAt = new Date();
 
   return prisma.$transaction(async (transaction) => {
     const users = await transaction.$queryRaw<LockedResetUserRow[]>`
@@ -114,7 +114,7 @@ export async function redeemPasswordReset(input: {
     const user = users[0] ?? null;
 
     if (!availableUser(user)) {
-      return false;
+      return null;
     }
 
     const tokens = await transaction.$queryRaw<LockedResetTokenRow[]>`
@@ -131,25 +131,25 @@ export async function redeemPasswordReset(input: {
       !resetToken ||
       resetToken.userId !== user.id ||
       resetToken.usedAt ||
-      asDate(resetToken.expiresAt).getTime() <= now.getTime()
+      asDate(resetToken.expiresAt).getTime() <= changedAt.getTime()
     ) {
-      return false;
+      return null;
     }
 
     const claimed = await transaction.passwordResetToken.updateMany({
       where: {
-        expiresAt: { gt: now },
+        expiresAt: { gt: changedAt },
         id: resetToken.id,
         usedAt: null,
         userId: user.id,
       },
       data: {
-        usedAt: now,
+        usedAt: changedAt,
       },
     });
 
     if (claimed.count !== 1) {
-      return false;
+      return null;
     }
 
     await transaction.user.update({
@@ -182,11 +182,17 @@ export async function redeemPasswordReset(input: {
         entityId: user.id,
         entityType: "User",
         metadata: JSON.stringify({
+          otherSessionsClosed: true,
           source: "password_reset",
         }),
       },
     });
 
-    return true;
+    return {
+      changedAt,
+      email: user.email,
+      fullName: user.fullName,
+      userId: user.id,
+    };
   });
 }

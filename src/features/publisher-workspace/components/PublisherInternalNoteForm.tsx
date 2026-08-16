@@ -2,13 +2,13 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
-import { addPublisherInternalNoteAction } from "../actions";
+import { addSecurePublisherInternalNoteAction } from "@/features/publisher-submissions/actions";
 import type { PublisherInternalNoteActionState } from "../types";
 
 const initialState: PublisherInternalNoteActionState = { message: "", status: "idle" };
 
 export function PublisherInternalNoteForm({ submissionId }: { submissionId: string }) {
-  const [state, formAction, pending] = useActionState(addPublisherInternalNoteAction, initialState);
+  const [state, formAction, pending] = useActionState(addSecurePublisherInternalNoteAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {

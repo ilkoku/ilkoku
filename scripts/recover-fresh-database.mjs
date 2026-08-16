@@ -164,7 +164,7 @@ async function main() {
   await assertDatabaseIsEmpty(databaseUrl);
 
   process.stdout.write("[fresh-db-recovery] create frozen Prisma baseline\n");
-  prisma(["db", "push", "--schema", "prisma/recovery/baseline.schema.prisma", "--skip-generate"]);
+  prisma(["db", "push", "--schema", "prisma/recovery/baseline.schema.prisma"]);
 
   await replayRawBaselineMigrations(databaseUrl, manifest);
 

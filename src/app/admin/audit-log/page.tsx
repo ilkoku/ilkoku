@@ -44,6 +44,11 @@ const sourceLabels: Record<string, string> = {
   publisher_editor_request_completed: "Yayınevi editör incelemesi tamamlandı",
   publisher_editor_request_cancelled: "Yayınevi editör talebi iptal edildi",
   publisher_editor_request_auto_cancelled_ineligible: "Yayınevi editör talebi otomatik kapatıldı",
+  publisher_contract_created: "Yayın sözleşmesi oluşturuldu",
+  publisher_contract_updated: "Yayın sözleşmesi yeni sürüme taşındı",
+  publisher_contract_sent: "Yayın sözleşmesi yazara gönderildi",
+  publisher_publication_plan_created: "Yayın planı oluşturuldu",
+  publisher_publication_plan_updated: "Yayın planı güncellendi",
 };
 
 type SearchParams = Promise<{ baslangic?: string; islem?: string; kullanici?: string; page?: string }>;
@@ -71,18 +76,23 @@ function maskIp(value: string | null) {
 
 function safeMetadata(value: string | null) {
   if (!value) return { lines: [] as string[], source: null as string | null };
+
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>;
     const allowed = [
       "channel",
+      "changedFields",
+      "contractId",
       "decision",
       "deliveryId",
       "deliveryMode",
       "from",
+      "fromStatus",
       "newStatus",
       "noteChanged",
       "noteLength",
       "oldStatus",
+      "publicationPlanId",
       "publisherId",
       "publisherSubmissionId",
       "recipient",
@@ -93,11 +103,16 @@ function safeMetadata(value: string | null) {
       "status",
       "template",
       "to",
+      "toStatus",
       "userId",
+      "version",
     ];
     const source = typeof parsed.source === "string" ? parsed.source : null;
+
     return {
-      lines: allowed.flatMap((key) => key in parsed ? [`${key}: ${String(parsed[key])}`] : []),
+      lines: allowed.flatMap((key) =>
+        key in parsed ? [`${key}: ${Array.isArray(parsed[key]) ? parsed[key].join(", ") : String(parsed[key])}`] : [],
+      ),
       source,
     };
   } catch {
@@ -130,14 +145,90 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Sea
   const where: Prisma.AuditLogWhereInput = {
     ...(selectedAction ? { action: selectedAction } : {}),
     ...(startDate ? { createdAt: { gte: startDate } } : {}),
-    ...(userQuery ? { actor: { is: { OR: [{ email: { contains: userQuery } }, { fullName: { contains: userQuery } }, { displayName: { contains: userQuery } }] } } } : {}),
+    ...(userQuery
+      ? {
+          actor: {
+            is: {
+              OR: [
+                { email: { contains: userQuery } },
+                { fullName: { contains: userQuery } },
+                { displayName: { contains: userQuery } },
+              ],
+            },
+          },
+        }
+      : {}),
   };
   const filteredCount = await prisma.auditLog.count({ where });
   const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
-  const records = await prisma.auditLog.findMany({ where, include: { actor: { select: { displayName: true, email: true, fullName: true } } }, orderBy: { createdAt: "desc" }, skip: (safePage - 1) * PAGE_SIZE, take: PAGE_SIZE });
+  const records = await prisma.auditLog.findMany({
+    where,
+    include: {
+      actor: {
+        select: { displayName: true, email: true, fullName: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    skip: (safePage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
   const first = filteredCount ? (safePage - 1) * PAGE_SIZE + 1 : 0;
   const last = Math.min(safePage * PAGE_SIZE, filteredCount);
 
-  return <div className="admin-directory-page"><header className="admin-page-heading"><div><span className="admin-eyebrow">Denetlenebilirlik</span><h1>Audit Log</h1><p>Gerçek sistem hareketlerini kullanıcı, işlem ve tarihe göre inceleyin.</p></div></header><section className="admin-panel admin-directory-panel"><form className="admin-directory-filters" method="get"><label><span>Kullanıcı</span><input defaultValue={userQuery} name="kullanici" placeholder="Ad veya e-posta" type="search" /></label><label><span>İşlem</span><select defaultValue={selectedAction} name="islem"><option value="">Tüm işlemler</option>{actions.map((action) => <option key={action} value={action}>{actionLabels[action]}</option>)}</select></label><label><span>Başlangıç tarihi</span><input defaultValue={params.baslangic ?? ""} name="baslangic" type="date" /></label><button type="submit">Filtrele</button>{(userQuery || selectedAction || startDate) ? <Link href="/admin/audit-log">Temizle</Link> : null}</form>{records.length ? <div className="admin-table-wrap"><table className="admin-data-table"><thead><tr><th>İşlemi yapan</th><th>İşlem</th><th>Etkilenen kayıt</th><th>Özet</th><th>Teknik bilgi</th><th>Tarih</th></tr></thead><tbody>{records.map((record) => { const metadata = safeMetadata(record.metadata); return <tr key={record.id}><td><strong>{record.actor?.displayName || record.actor?.fullName || "Sistem"}</strong><span>{record.actor?.email || "Otomatik işlem"}</span></td><td>{actionLabel(record.action, metadata.source)}</td><td><span>{record.entityType || "—"}</span><small>{record.entityId || "Kimlik yok"}</small></td><td>{metadata.lines.length ? <details><summary>Güvenli özeti aç</summary><ul>{metadata.lines.map((item) => <li key={item}>{item}</li>)}</ul></details> : "Metadata yok"}</td><td><span>IP: {maskIp(record.ipAddress)}</span><small>{record.userAgent ? "İstemci bilgisi kaydedildi" : "İstemci bilgisi yok"}</small></td><td><time dateTime={record.createdAt.toISOString()}>{formatDate(record.createdAt)}</time></td></tr>; })}</tbody></table></div> : <div className="admin-empty-state"><strong>Audit kaydı bulunamadı</strong><p>Sahte veri gösterilmez; filtreleri temizleyerek yeniden deneyin.</p></div>}<footer className="admin-pagination"><span>{first}–{last} / {filteredCount} kayıt</span><div>{safePage > 1 ? <Link href={pageHref(userQuery, selectedAction, params.baslangic ?? "", safePage - 1)}>← Önceki</Link> : <span>← Önceki</span>}<b>{safePage} / {totalPages}</b>{safePage < totalPages ? <Link href={pageHref(userQuery, selectedAction, params.baslangic ?? "", safePage + 1)}>Sonraki →</Link> : <span>Sonraki →</span>}</div></footer></section></div>;
+  return (
+    <div className="admin-directory-page">
+      <header className="admin-page-heading">
+        <div>
+          <span className="admin-eyebrow">Denetlenebilirlik</span>
+          <h1>Audit Log</h1>
+          <p>Gerçek sistem hareketlerini kullanıcı, işlem ve tarihe göre inceleyin.</p>
+        </div>
+      </header>
+
+      <section className="admin-panel admin-directory-panel">
+        <form className="admin-directory-filters" method="get">
+          <label><span>Kullanıcı</span><input defaultValue={userQuery} name="kullanici" placeholder="Ad veya e-posta" type="search" /></label>
+          <label><span>İşlem</span><select defaultValue={selectedAction} name="islem"><option value="">Tüm işlemler</option>{actions.map((action) => <option key={action} value={action}>{actionLabels[action]}</option>)}</select></label>
+          <label><span>Başlangıç tarihi</span><input defaultValue={params.baslangic ?? ""} name="baslangic" type="date" /></label>
+          <button type="submit">Filtrele</button>
+          {(userQuery || selectedAction || startDate) ? <Link href="/admin/audit-log">Temizle</Link> : null}
+        </form>
+
+        {records.length ? (
+          <div className="admin-table-wrap">
+            <table className="admin-data-table">
+              <thead><tr><th>İşlemi yapan</th><th>İşlem</th><th>Etkilenen kayıt</th><th>Özet</th><th>Teknik bilgi</th><th>Tarih</th></tr></thead>
+              <tbody>
+                {records.map((record) => {
+                  const metadata = safeMetadata(record.metadata);
+                  return (
+                    <tr key={record.id}>
+                      <td><strong>{record.actor?.displayName || record.actor?.fullName || "Sistem"}</strong><span>{record.actor?.email || "Otomatik işlem"}</span></td>
+                      <td>{actionLabel(record.action, metadata.source)}</td>
+                      <td><span>{record.entityType || "—"}</span><small>{record.entityId || "Kimlik yok"}</small></td>
+                      <td>{metadata.lines.length ? <details><summary>Güvenli özeti aç</summary><ul>{metadata.lines.map((item) => <li key={item}>{item}</li>)}</ul></details> : "Metadata yok"}</td>
+                      <td><span>IP: {maskIp(record.ipAddress)}</span><small>{record.userAgent ? "İstemci bilgisi kaydedildi" : "İstemci bilgisi yok"}</small></td>
+                      <td><time dateTime={record.createdAt.toISOString()}>{formatDate(record.createdAt)}</time></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="admin-empty-state"><strong>Audit kaydı bulunamadı</strong><p>Sahte veri gösterilmez; filtreleri temizleyerek yeniden deneyin.</p></div>
+        )}
+
+        <footer className="admin-pagination">
+          <span>{first}–{last} / {filteredCount} kayıt</span>
+          <div>
+            {safePage > 1 ? <Link href={pageHref(userQuery, selectedAction, params.baslangic ?? "", safePage - 1)}>← Önceki</Link> : <span>← Önceki</span>}
+            <b>{safePage} / {totalPages}</b>
+            {safePage < totalPages ? <Link href={pageHref(userQuery, selectedAction, params.baslangic ?? "", safePage + 1)}>Sonraki →</Link> : <span>Sonraki →</span>}
+          </div>
+        </footer>
+      </section>
+    </div>
+  );
 }

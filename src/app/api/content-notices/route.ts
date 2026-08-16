@@ -25,6 +25,7 @@ export async function POST(request: Request) {
   if (!access.user || !access.canManage || !isSameOriginRequest(request)) {
     return NextResponse.json({ ok: false }, { status: 403 });
   }
+  const userId = access.user.id;
 
   const form = await request.formData();
   const action = text(form, "action", 40);
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
         publishedAt, updatedById, createdAt, updatedAt
       ) VALUES (
         ${id}, 'announcement', ${`notice_${id}`}, ${payload}, 'json', ${status},
-        ${publishNow ? new Date() : null}, ${access.user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+        ${publishNow ? new Date() : null}, ${userId}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
       )
     `;
 
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
     await prisma.$executeRaw`
       UPDATE SiteContent
       SET status = 'published', publishedAt = CURRENT_TIMESTAMP(3),
-          updatedById = ${access.user.id}, updatedAt = CURRENT_TIMESTAMP(3)
+          updatedById = ${userId}, updatedAt = CURRENT_TIMESTAMP(3)
       WHERE namespace = 'announcement' AND contentKey = ${key}
     `;
     return back(request, "yayinda");
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
     await prisma.$executeRaw`
       UPDATE SiteContent
       SET status = 'draft', publishedAt = NULL,
-          updatedById = ${access.user.id}, updatedAt = CURRENT_TIMESTAMP(3)
+          updatedById = ${userId}, updatedAt = CURRENT_TIMESTAMP(3)
       WHERE namespace = 'announcement' AND contentKey = ${key}
     `;
     return back(request, "taslak");
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
       await transaction.$executeRaw`
         UPDATE SiteContent
         SET status = 'archived', publishedAt = NULL,
-            updatedById = ${access.user.id}, updatedAt = CURRENT_TIMESTAMP(3)
+            updatedById = ${userId}, updatedAt = CURRENT_TIMESTAMP(3)
         WHERE namespace = 'announcement' AND contentKey = ${key}
       `;
       return "archived" as const;

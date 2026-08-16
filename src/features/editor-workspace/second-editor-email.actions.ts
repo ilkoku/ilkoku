@@ -7,10 +7,12 @@ import {
 import { prisma } from "@/lib/prisma";
 import {
   claimSecondEditorReviewAction as claimSecondEditorReviewCoreAction,
-  completeSecondEditorReviewAction as completeSecondEditorReviewCoreAction,
-  saveSecondEditorReviewDraftAction,
   sendToSecondEditorAction as sendToSecondEditorCoreAction,
 } from "./second-editor.actions";
+import {
+  completeSecondEditorReviewAction as completeSecondEditorReviewCoreAction,
+  saveSecondEditorReviewDraftAction,
+} from "./second-editor-review-state.actions";
 import type { EditorActionState } from "./types";
 
 function value(formData: FormData, key: string) {

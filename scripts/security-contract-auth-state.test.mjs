@@ -70,3 +70,34 @@ test("legacy auth server actions delegate password reset state to the canonical 
     "legacy parallel reset-token transaction must stay removed",
   );
 });
+
+test("role selection UI is limited to the same self-service role sources as the write boundary", () => {
+  const page = source("src/app/rol-secimi/page.tsx");
+  const actions = source("src/features/auth/actions.ts");
+
+  assertContains(
+    page,
+    'const selfServiceRoles: UserRole[] = ["reader", "writer", "editor_pending"]',
+    "role selection page self-service source roles",
+  );
+  assertContains(
+    actions,
+    'const selfServiceRoleSources: UserRole[] = ["reader", "writer", "editor_pending"]',
+    "role selection write boundary source roles",
+  );
+  assertContains(
+    page,
+    "!selfServiceRoles.includes(profile.actualRole)",
+    "special-role role-selection redirect gate",
+  );
+  assertContains(
+    page,
+    "role: profile.actualRole",
+    "special-role canonical navigation",
+  );
+  assertContains(
+    page,
+    "redirect(actualNavigation.workspaceHref)",
+    "special-role canonical redirect",
+  );
+});

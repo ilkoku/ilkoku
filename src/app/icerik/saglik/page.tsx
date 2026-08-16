@@ -317,6 +317,20 @@ export default async function CmsHealthPage({
         },
         {
           group: "İçerik",
+          level: data.integrity.brokenDatabaseMedia > 0 ? "blocker" : "pass",
+          title: "Medya dosya servis bütünlüğü",
+          detail: data.integrity.brokenDatabaseMedia > 0 ? `${data.integrity.brokenDatabaseMedia} database-storage medya kaydının metadata ↔ blob/id/URL bağı bozuk. Public /api/media dosyası 404 verebilir; FINAL PASS engellendi.` : "Database-storage medya kayıtlarının metadata ↔ blob bağı geçerli.",
+          href: "/icerik/medya",
+        },
+        {
+          group: "İçerik",
+          level: data.integrity.invalidMediaBlobs > 0 || data.integrity.orphanMediaBlobs > 0 ? "warn" : "pass",
+          title: "Medya blob hijyeni",
+          detail: data.integrity.invalidMediaBlobs > 0 || data.integrity.orphanMediaBlobs > 0 ? `${data.integrity.invalidMediaBlobs} geçersiz published blob · ${data.integrity.orphanMediaBlobs} sahipsiz published blob. Ham veri korunuyor; manuel teşhis önerilir.` : "Published media blob kayıtlarında yapısal veya sahipsiz kayıt görünmüyor.",
+          href: "/icerik/medya",
+        },
+        {
+          group: "İçerik",
           level: data.orphanDrafts > 0 ? "warn" : "pass",
           title: "Taslak referans bütünlüğü",
           detail: data.orphanDrafts > 0 ? `${data.orphanDrafts} çalışma taslağı artık var olmayan bir sayfayı işaret ediyor.` : "Sayfa tabanlı çalışma taslaklarında yetim kayıt yok.",

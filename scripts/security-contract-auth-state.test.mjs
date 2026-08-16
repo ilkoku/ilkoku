@@ -112,6 +112,9 @@ test("all public password reset server-action surfaces delegate writes to the ca
 test("profile password changes serialize on live account and current session state", () => {
   const state = source("src/features/profile/password-change-state.ts");
   const action = source("src/features/profile/password-security-actions.ts");
+  const legacyActions = source("src/features/profile/actions.ts");
+  const legacyPasswordStart = legacyActions.indexOf("export async function changePasswordAction");
+  const legacyPassword = legacyActions.slice(legacyPasswordStart);
   const userLock = state.indexOf("FROM User");
   const sessionLock = state.indexOf("FROM Session");
   const passwordVerification = state.indexOf("verifyPassword(input.currentPassword, user.passwordHash)");
@@ -128,6 +131,7 @@ test("profile password changes serialize on live account and current session sta
   assertContains(state, "transaction.passwordResetToken.deleteMany", "profile password reset-token revocation");
   assertContains(state, "transaction.session.deleteMany", "profile password other-session revocation");
   assertContains(state, 'source: "profile"', "profile password audit source");
+
   assertContains(action, "changeProfilePassword({", "profile password action delegation");
   assert.ok(
     !action.includes('from "@/lib/prisma"'),
@@ -136,6 +140,21 @@ test("profile password changes serialize on live account and current session sta
   assert.ok(
     !action.includes("verifyPassword("),
     "profile password action must not verify a stale password outside the locked state boundary",
+  );
+
+  assert.ok(legacyPasswordStart >= 0, "legacy profile password action must remain discoverable for compatibility");
+  assertContains(legacyPassword, "changeProfilePassword({", "legacy profile password action delegation");
+  assert.ok(
+    !legacyPassword.includes("verifyPassword("),
+    "legacy profile password action must not verify a stale password outside the locked state boundary",
+  );
+  assert.ok(
+    !legacyPassword.includes("prisma.user.findUnique"),
+    "legacy profile password action must not read credential state outside the locked boundary",
+  );
+  assert.ok(
+    !legacyPassword.includes("transaction.user.update"),
+    "legacy profile password action must not own a parallel password write transaction",
   );
 });
 

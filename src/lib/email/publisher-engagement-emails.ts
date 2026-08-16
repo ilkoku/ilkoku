@@ -106,6 +106,7 @@ export async function sendAuthorPublisherInterestEmail(input: {
 export async function sendPublisherFollowedAuthorPublishedEmail(input: {
   authorName: string;
   email: string;
+  idempotencyKey?: string;
   memberName: string;
   workSlug: string;
   workTitle: string;
@@ -122,6 +123,7 @@ export async function sendPublisherFollowedAuthorPublishedEmail(input: {
       <p><strong>${escapeHtml(input.authorName)}</strong>, <strong>${escapeHtml(input.workTitle)}</strong> adlı yeni eserini yayımladı.</p>
       <p><a href="${escapeHtml(targetUrl)}">Eseri incele</a></p>
     `.trim(),
+    idempotencyKey: input.idempotencyKey,
     subject: `Yeni eser: ${input.workTitle}`,
     template: "publisher_followed_author_published",
     text: [

@@ -354,14 +354,52 @@ export async function sendEmail(
       },
     });
 
-  await attachEmailDeliveryDedupe(
-    dedupeKey,
-    delivery.id,
-    {
-      persistent:
-        explicitIdempotency,
-    },
-  );
+  const dedupeAttached =
+    await attachEmailDeliveryDedupe(
+      dedupeKey,
+      delivery.id,
+      {
+        persistent:
+          explicitIdempotency,
+      },
+    );
+
+  if (
+    explicitIdempotency &&
+    !dedupeAttached
+  ) {
+    try {
+      await prisma.emailDelivery.update({
+        where: {
+          id: delivery.id,
+        },
+        data: {
+          failureCode:
+            "EMAIL_IDEMPOTENCY_ATTACH_FAILED",
+          failureMessage:
+            "Explicit idempotency kaydı delivery ile bağlanamadığı için gönderim transport öncesinde durduruldu.",
+          status:
+            "failed",
+        },
+      });
+    } catch (logError) {
+      console.error(
+        "EMAIL_IDEMPOTENCY_ATTACH_FAILURE_LOG_UPDATE_FAILED",
+        {
+          deliveryId:
+            delivery.id,
+          error:
+            logError instanceof Error
+              ? logError.message
+              : "UNKNOWN_ERROR",
+        },
+      );
+    }
+
+    throw new Error(
+      "EMAIL_IDEMPOTENCY_ATTACH_FAILED",
+    );
+  }
 
   let result:
     | Awaited<

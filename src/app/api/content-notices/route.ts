@@ -8,6 +8,10 @@ const keyPattern = /^notice_[0-9a-f-]{36}$/i;
 const audiences = new Set(["all", "reader", "writer", "editor", "publisher"]);
 const levels = new Set(["info", "warning", "maintenance"]);
 
+type NoticeStatusRow = {
+  status: "draft" | "published" | "archived";
+};
+
 function back(request: Request, durum: string) {
   return NextResponse.redirect(new URL(`/icerik/duyurular?durum=${durum}`, request.url), 303);
 }
@@ -91,11 +95,34 @@ export async function POST(request: Request) {
   }
 
   if (action === "archive") {
-    await prisma.$executeRaw`
-      UPDATE SiteContent
-      SET status = 'archived', updatedById = ${access.user.id}, updatedAt = CURRENT_TIMESTAMP(3)
-      WHERE namespace = 'announcement' AND contentKey = ${key}
-    `;
+    const archiveResult = await prisma.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRaw<NoticeStatusRow[]>`
+        SELECT status
+        FROM SiteContent
+        WHERE namespace = 'announcement'
+          AND contentKey = ${key}
+        LIMIT 1
+        FOR UPDATE
+      `;
+      const notice = rows[0];
+      if (!notice) return "missing" as const;
+      if (notice.status === "published" && !access.canPublish) {
+        return "publish_forbidden" as const;
+      }
+
+      await transaction.$executeRaw`
+        UPDATE SiteContent
+        SET status = 'archived', publishedAt = NULL,
+            updatedById = ${access.user.id}, updatedAt = CURRENT_TIMESTAMP(3)
+        WHERE namespace = 'announcement' AND contentKey = ${key}
+      `;
+      return "archived" as const;
+    });
+
+    if (archiveResult === "publish_forbidden") {
+      return back(request, "yayin-yetkisi-yok");
+    }
+    if (archiveResult === "missing") return back(request, "gecersiz");
     return back(request, "arsiv");
   }
 

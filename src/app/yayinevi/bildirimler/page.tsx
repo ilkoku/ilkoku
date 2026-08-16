@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { PublisherNotificationCenter } from "@/features/publisher-workspace/components/PublisherNotificationCenter";
-import { getPublisherNotificationCenter } from "@/features/publisher-workspace/queries";
+import { getPublisherNotificationCenterWithWorkLinks } from "@/features/publisher-workspace/notification-center";
 import { getPublisherMembership } from "@/features/publisher-workspace/repository";
 
 export const metadata: Metadata = { title: "Yayınevi Bildirimleri | İlkOku" };
@@ -13,7 +13,7 @@ export default async function PublisherNotificationsPage() {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/giris?sonraki=/yayinevi/bildirimler");
   const [notifications, membership] = await Promise.all([
-    getPublisherNotificationCenter(profile.id),
+    getPublisherNotificationCenterWithWorkLinks(profile.id),
     getPublisherMembership(profile.id),
   ]);
   if (!notifications || !membership) notFound();

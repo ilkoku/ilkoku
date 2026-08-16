@@ -18,6 +18,10 @@ import {
 } from "@/features/publisher-applications/schema";
 import { roleDestinations } from "./data";
 import { getAuthenticatedDestination } from "./destination";
+import {
+  issuePasswordReset,
+  redeemPasswordReset,
+} from "./password-reset-state";
 import type { RegistrationRole, UserRole } from "./types";
 
 export type AuthActionState = {
@@ -140,41 +144,18 @@ export async function resetPasswordAction(_state: AuthActionState, formData: For
   if (!/^\S+@\S+\.\S+$/.test(email)) return error(validationContent.invalidEmail);
 
   try {
-    const user = await prisma.user.findUnique({ where: { email }, select: { fullName: true, id: true } });
-    if (user) {
-      const token = randomBytes(32).toString("base64url");
-      const tokenHash = createHash("sha256").update(token).digest("hex");
-      await prisma.$transaction([
-        prisma.passwordResetToken.deleteMany({
-          where: {
-            userId: user.id,
-            usedAt: null,
-          },
-        }),
-        prisma.passwordResetToken.create({
-          data: {
-            expiresAt:
-              new Date(
-                Date.now() + 60 * 60 * 1000,
-              ),
-            tokenHash,
-            userId: user.id,
-          },
-        }),
-        prisma.auditLog.create({
-          data: {
-            action: "password_reset_requested",
-            actorId: user.id,
-            entityId: user.id,
-            entityType: "User",
-          },
-        }),
-      ]);
+    const token = randomBytes(32).toString("base64url");
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    const issued = await issuePasswordReset({
+      email,
+      tokenHash,
+    });
+
+    if (issued) {
       try {
         await sendPasswordResetEmail({
-          email,
-          fullName:
-            user.fullName,
+          email: issued.email,
+          fullName: issued.fullName,
           token,
         });
       } catch (emailError) {
@@ -200,45 +181,24 @@ export async function updatePasswordAction(_state: AuthActionState, formData: Fo
   if (!token) return error(validationContent.expiredResetLink);
 
   const tokenHash = createHash("sha256").update(token).digest("hex");
-  const now = new Date();
 
   try {
-    const resetToken = await prisma.passwordResetToken.findUnique({
+    const candidate = await prisma.passwordResetToken.findUnique({
       where: { tokenHash },
-      select: { expiresAt: true, id: true, usedAt: true, userId: true },
+      select: { id: true },
     });
-    if (!resetToken || resetToken.usedAt || resetToken.expiresAt <= now) {
+    if (!candidate) {
       return error(validationContent.expiredResetLink);
     }
 
-    await prisma.$transaction(async (transaction) => {
-      const claimed = await transaction.passwordResetToken.updateMany({
-        where: { id: resetToken.id, usedAt: null, expiresAt: { gt: now } },
-        data: { usedAt: now },
-      });
-      if (claimed.count !== 1) throw new Error("INVALID_RESET_TOKEN");
-      await transaction.user.update({
-        where: { id: resetToken.userId },
-        data: { passwordHash: await hashPassword(password) },
-      });
-      await transaction.session.deleteMany({
-        where: {
-          userId: resetToken.userId,
-        },
-      });
-
-      await transaction.auditLog.create({
-        data: {
-          action: "password_changed",
-          actorId: resetToken.userId,
-          entityId: resetToken.userId,
-          entityType: "User",
-          metadata: JSON.stringify({
-            source: "password_reset",
-          }),
-        },
-      });
+    const passwordHash = await hashPassword(password);
+    const redeemed = await redeemPasswordReset({
+      passwordHash,
+      tokenHash,
     });
+    if (!redeemed) {
+      return error(validationContent.expiredResetLink);
+    }
   } catch {
     return error(validationContent.expiredResetLink);
   }

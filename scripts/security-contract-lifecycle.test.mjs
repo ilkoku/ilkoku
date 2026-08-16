@@ -59,12 +59,15 @@ test("contract versions and publication notifications are meaningful-change only
   assertContains(text, "publisher_publication_plan_updated", "publication audit");
 });
 
-test("contract email is version-idempotent and points to a live writer workspace", () => {
+test("contract email is version-idempotent, status-aware and points to a live writer workspace", () => {
   const lifecycle = source("src/features/publisher-contracts/lifecycle.ts");
+  const actions = source("src/features/publisher-contracts/actions.ts");
   const emails = source("src/lib/email/publisher-emails.ts");
 
   assertContains(lifecycle, "publisher-contract:${contract.id}:v${contract.version}", "contract lifecycle idempotency");
   assertContains(emails, "idempotencyKey: input.idempotencyKey", "contract email");
+  assertContains(actions, 'result.delivery !== "deduplicated"', "contract delivery resolver");
+  assertContains(actions, "prisma.emailDelivery.findUnique", "contract delivery resolver");
   assertContains(emails, "/yayinevleri?basvuru=", "publisher emails");
   assertNotContains(emails, "/yazar?yayineviBasvuru=", "publisher emails");
 });

@@ -41,6 +41,17 @@ test("admin user control plane serializes privileged state and preserves special
   assertContains(control, "session.deleteMany", "admin suspension session revocation");
 });
 
+test("publisher application resubmission locks the pending role request before state mutation", () => {
+  const application = source("src/features/publisher-applications/actions.ts");
+
+  assertContains(application, "prisma.$transaction", "publisher application resubmission");
+  assertContains(application, "FROM RoleRequest", "publisher application resubmission");
+  assertContains(application, "FOR UPDATE", "publisher application resubmission");
+  assertContains(application, "status = 'pending'", "publisher application resubmission");
+  assertContains(application, "lockedRequestId", "publisher application resubmission");
+  assertContains(application, 'verificationStatus: "submitted"', "publisher application resubmission");
+});
+
 test("CMS access fails closed and access grants stay admin-only", () => {
   const access = source("src/lib/cms-access.ts");
   const manageAccess = source("src/app/api/cms-access-manage/route.ts");

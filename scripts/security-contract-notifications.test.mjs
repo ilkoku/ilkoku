@@ -63,10 +63,11 @@ test("editor work notifications disambiguate assignments from recommendations", 
   assertContains(text, 'href = "/editor/onerilenler"', "editor notification resolver");
 });
 
-test("all role notification pages use the central resolver", () => {
+test("all role notification pages use the central resolver and writer navigation exposes notifications", () => {
   const reader = source("src/app/bildirimler/page.tsx");
   const editor = source("src/app/editor/bildirimler/page.tsx");
   const publisher = source("src/features/publisher-workspace/notification-center.ts");
+  const navigation = source("src/content/navigation.ts");
 
   assertContains(reader, "resolveNotificationTargets", "reader notification page");
   assertContains(reader, "İlgili kaydı aç", "reader notification page");
@@ -74,6 +75,7 @@ test("all role notification pages use the central resolver", () => {
   assertContains(editor, "İlgili kaydı aç", "editor notification page");
   assertContains(publisher, "resolveNotificationTargets", "publisher notification center");
   assertNotContains(publisher, "workSlugById", "publisher notification center");
+  assertContains(navigation, '{ label: "Bildirimler", href: "/bildirimler" }', "writer navigation");
 });
 
 test("production smoke covers newly critical role surfaces", () => {

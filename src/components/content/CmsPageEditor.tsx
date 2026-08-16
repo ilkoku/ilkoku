@@ -62,6 +62,15 @@ export async function CmsPageEditor({ id }: { id?: string }) {
     : page?.status === "published" && hasPendingDraft
       ? "Yayında · taslak hazır"
       : page?.status === "published" ? "Yayında" : page?.status === "archived" ? "Arşiv" : "Taslak";
+  const statusTone = corruptDraft
+    ? "danger"
+    : page?.status === "published" && hasPendingDraft
+      ? "warning"
+      : page?.status === "published"
+        ? "success"
+        : page?.status === "archived"
+          ? "muted"
+          : "info";
   const canArchive = Boolean(page && !corruptDraft && (page.status !== "published" || access.canPublish));
 
   return (
@@ -72,20 +81,32 @@ export async function CmsPageEditor({ id }: { id?: string }) {
           <h1>{page ? (draft?.title ?? page.title) : "Yeni kurumsal sayfa"}</h1>
           <p>Kurumsal ve bilgilendirme sayfalarını kod değişikliği olmadan yönetin. Yayındaki sürüm, yeni taslak açıkça yayınlanana kadar korunur.</p>
         </div>
-        <div className="content-profile">
+        <aside className="cms-editor-status-card" data-tone={statusTone} aria-label="İçerik durumu">
+          <span className="cms-editor-status-card__label">İçerik durumu</span>
           <strong>{statusLabel}</strong>
-          <small>{page ? `${revisionCount} sürüm` : "Yeni içerik"}</small>
-        </div>
+          <div className="cms-editor-status-card__meta">
+            <span className="cms-editor-chip">{page ? `${revisionCount} sürüm` : "Yeni içerik"}</span>
+            <span className={`cms-editor-chip ${access.canPublish ? "is-positive" : "is-warning"}`}>
+              {access.canPublish ? "Yayın yetkisi açık" : "Taslak yetkisi"}
+            </span>
+          </div>
+        </aside>
       </div>
 
-      <div className="content-form-actions" style={{ marginBottom: "1rem", flexWrap: "wrap" }}>
-        {page && !corruptDraft ? <Link href={`/icerik/onizleme/sayfa/${page.id}`}>Taslağı Önizle ↗</Link> : null}
-        {page?.status === "published" ? <Link href={page.slug} target="_blank">Canlı sayfayı aç ↗</Link> : null}
-        <Link href="/icerik/sayfalar">← Sayfa listesi</Link>
-      </div>
+      <nav className="cms-editor-toolbar" aria-label="Sayfa editörü hızlı işlemleri">
+        <div className="cms-editor-toolbar__cluster">
+          <Link href="/icerik/sayfalar">← Sayfa listesi</Link>
+          <Link href="/icerik/yayin-kuyrugu">Yayın Kuyruğu</Link>
+          <Link href="/icerik/gecmis">Sürüm Geçmişi</Link>
+        </div>
+        <div className="cms-editor-toolbar__cluster">
+          {page && !corruptDraft ? <Link href={`/icerik/onizleme/sayfa/${page.id}`}>Taslağı Önizle ↗</Link> : null}
+          {page?.status === "published" ? <Link href={page.slug} target="_blank">Canlı sayfa ↗</Link> : null}
+        </div>
+      </nav>
 
       {corruptDraft ? (
-        <div className="content-panel" role="alert" style={{ marginBottom: "1rem" }}>
+        <div className="content-panel cms-editor-notice is-danger" role="alert">
           <strong>Çalışma taslağının bütünlüğü bozuk.</strong>
           <p>Ham taslak kaydı korunuyor. Veri doğrulanmadan düzenleme, önizleme, yayınlama ve arşivleme işlemleri durduruldu; canlı sayfa değiştirilmedi.</p>
           <div className="content-form-actions"><Link href="/icerik/saglik">Sistem Sağlığı →</Link><Link href="/icerik/gecmis">Revision Center →</Link></div>
@@ -93,14 +114,14 @@ export async function CmsPageEditor({ id }: { id?: string }) {
       ) : null}
 
       {!access.canPublish && !corruptDraft ? (
-        <div className="content-panel" style={{ marginBottom: "1rem" }}>
+        <div className="content-panel cms-editor-notice is-info">
           <strong>Taslak yönetim yetkisi</strong>
           <p>Bu hesap sayfa içeriği hazırlayabilir ve önizleyebilir. Yayına alma veya yayındaki bir sayfayı arşivleme işlemi için yayın yetkisi gerekir.</p>
         </div>
       ) : null}
 
       {hasPendingDraft ? (
-        <div className="content-panel" style={{ marginBottom: "1rem" }}>
+        <div className="content-panel cms-editor-notice is-warning">
           <strong>Bekleyen çalışma taslağı var.</strong>
           <p>Public sayfa son yayınlanmış sürümü göstermeye devam ediyor. Taslağı önizleyip hazır olduğunda yayınlayabilirsiniz.</p>
         </div>
@@ -111,25 +132,31 @@ export async function CmsPageEditor({ id }: { id?: string }) {
           <form action={saveCmsPageAction} className="content-form">
             {page ? <input type="hidden" name="id" value={page.id} /> : null}
 
+            <div className="cms-editor-section-label"><span>İçerik</span><small>Public sayfanın metin alanları</small></div>
             <label><span>URL kısa adı</span><input name="slug" required maxLength={120} defaultValue={slugPart} readOnly={Boolean(page)} placeholder="hakkimizda" /></label>
             <p className="content-form-help">Yalnız a-z, 0-9 ve tire. İlk kayıttan sonra URL sabitlenir. Ürün ve yönetim rotaları kullanılamaz.</p>
             <label><span>Başlık</span><input name="title" required maxLength={220} defaultValue={draft?.title ?? page?.title ?? ""} /></label>
             <label><span>Kısa özet</span><textarea name="summary" rows={4} maxLength={500} defaultValue={draft?.summary ?? stored.summary} /></label>
             <label><span>Sayfa metni</span><textarea name="body" required rows={24} defaultValue={draft?.body ?? stored.body} placeholder={"İlk paragraf.\n\nİkinci paragraf.\n\n## Ara başlık\n\nAçıklama metni."} /></label>
+
+            <div className="cms-editor-section-label"><span>Arama görünümü</span><small>SEO ve indeksleme</small></div>
             <label><span>SEO başlığı</span><input name="seoTitle" maxLength={220} defaultValue={draft?.seoTitle ?? page?.seoTitle ?? ""} /></label>
             <label><span>SEO açıklaması</span><textarea name="seoDescription" rows={3} maxLength={500} defaultValue={draft?.seoDescription ?? page?.seoDescription ?? ""} /></label>
             <label style={{ display: "flex", alignItems: "center", gap: ".7rem" }}><input name="noIndex" type="checkbox" defaultChecked={draft?.noIndex ?? Boolean(page?.noIndex)} style={{ width: "auto" }} /><span>Arama motorlarında gösterme (noindex)</span></label>
 
-            <div className="content-form-actions" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
-              <Link href="/icerik/sayfalar">← Sayfa listesi</Link>
-              <div style={{ display: "flex", gap: ".7rem", flexWrap: "wrap" }}><button type="submit" name="mode" value="draft">Taslak Kaydet</button>{access.canPublish ? <button type="submit" name="mode" value="publish">Kaydet ve Yayınla</button> : null}</div>
+            <div className="cms-editor-savebar">
+              <Link href="/icerik/sayfalar">← Listeye dön</Link>
+              <div className="cms-editor-savebar__actions">
+                <button className="cms-button--secondary" type="submit" name="mode" value="draft">Taslak Kaydet</button>
+                {access.canPublish ? <button type="submit" name="mode" value="publish">Kaydet ve Yayınla</button> : null}
+              </div>
             </div>
           </form>
 
           {page ? (
             <div className="content-publish-box">
               <div><strong>Arşivleme</strong><p>{page.status === "published" && !access.canPublish ? "Yayındaki bir sayfayı arşivlemek canlı durumu değiştirdiği için yayın yetkisi gerekir." : "Arşivlenen kurumsal sayfa public siteden kaldırılır; sürüm geçmişi korunur."}</p></div>
-              {canArchive ? <form action={archiveCmsPageAction}><input type="hidden" name="id" value={page.id} /><button type="submit">Arşivle</button></form> : null}
+              {canArchive ? <form action={archiveCmsPageAction}><input type="hidden" name="id" value={page.id} /><button className="cms-button--danger" type="submit">Arşivle</button></form> : null}
             </div>
           ) : null}
         </div>

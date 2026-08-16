@@ -115,14 +115,21 @@ test("profile password changes serialize on live account and current session sta
   const legacyActions = source("src/features/profile/actions.ts");
   const legacyPasswordStart = legacyActions.indexOf("export async function changePasswordAction");
   const legacyPassword = legacyActions.slice(legacyPasswordStart);
-  const userLock = state.indexOf("FROM User");
-  const sessionLock = state.indexOf("FROM Session");
-  const passwordVerification = state.indexOf("verifyPassword(input.currentPassword, user.passwordHash)");
+  const changeStart = state.indexOf("export async function changeProfilePassword");
+  const change = state.slice(changeStart);
+  const userLock = change.indexOf("FROM User");
+  const sessionLockCall = change.indexOf("const session = await lockCurrentSession");
+  const passwordVerification = change.indexOf("verifyPassword(input.currentPassword, user.passwordHash)");
 
+  assertContains(state, "FROM Session", "profile password session lock helper");
+  assertContains(state, "FOR UPDATE", "profile password state locks");
   assert.ok(userLock >= 0, "profile password change must lock User");
-  assert.ok(sessionLock > userLock, "profile password change must lock User before Session");
   assert.ok(
-    passwordVerification > sessionLock,
+    sessionLockCall > userLock,
+    "profile password change must request the current Session lock after User is locked",
+  );
+  assert.ok(
+    passwordVerification > sessionLockCall,
     "current password must be verified only after live User and Session state are locked",
   );
   assertContains(state, 'user.status === "active"', "profile password account eligibility");

@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
-import { deleteCmsDraft, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
+import { deleteCmsDraft, getCmsDraftState, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
 import { cmsPageContentKey, cmsPagePublicPath, normalizeCmsPageSlug } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 
@@ -26,6 +26,12 @@ async function addRevision(pageId: string, userId: string, snapshot: Record<stri
     INSERT INTO ContentRevision (id, pageId, version, snapshotJson, createdById, createdAt)
     VALUES (${randomUUID()}, ${pageId}, ${version}, ${JSON.stringify(snapshot)}, ${userId}, CURRENT_TIMESTAMP(3))
   `;
+}
+
+async function requireHealthyPageDraft(pageId: string) {
+  const state = await getCmsDraftState(pageDraftKey(pageId));
+  if (state.state === "corrupt") redirect(`/icerik/sayfalar/${pageId}?hata=taslak-bozuk`);
+  return state;
 }
 
 function refreshCmsPage(id?: string, slug?: string) {
@@ -60,6 +66,7 @@ export async function saveCmsPageAction(formData: FormData) {
     `;
     existing = rows[0] ?? null;
     if (!existing) redirect("/icerik/sayfalar?hata=kayit");
+    await requireHealthyPageDraft(existing.id);
   }
 
   let slugPart = "";
@@ -161,6 +168,7 @@ export async function archiveCmsPageAction(formData: FormData) {
   if (page.status === "published") access = await requireCmsPublisher("/icerik/sayfalar");
   const user = access.user!;
 
+  await requireHealthyPageDraft(page.id);
   await prisma.$executeRaw`
     UPDATE ContentPage
     SET status = 'archived', publishedAt = NULL, updatedById = ${user.id}, updatedAt = CURRENT_TIMESTAMP(3)

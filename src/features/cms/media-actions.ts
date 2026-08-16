@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
+import { parseCmsMediaAssetMetadata } from "@/lib/cms-media";
 import { prisma } from "@/lib/prisma";
 
 function value(formData: FormData, key: string, max = 500) {
@@ -14,18 +15,6 @@ function safeMediaUrl(input: string) {
   if (!input.startsWith("/")) return "";
   if (input.startsWith("//")) return "";
   return input.replace(/[\r\n]/g, "").slice(0, 500);
-}
-
-function mediaUrlFromJson(valueJson: string): string | null {
-  try {
-    const payload = JSON.parse(valueJson) as { url?: unknown };
-    if (!payload || typeof payload !== "object") return null;
-    if (typeof payload.url !== "string") return null;
-    const mediaUrl = safeMediaUrl(payload.url);
-    return mediaUrl || null;
-  } catch {
-    return null;
-  }
 }
 
 async function isMediaReferencedByPublishedContent(mediaUrl: string) {
@@ -96,12 +85,12 @@ export async function archiveMediaAssetAction(formData: FormData) {
   `;
   if (!assetRows[0]) return;
 
-  const mediaUrl = mediaUrlFromJson(assetRows[0].valueJson);
-  if (!mediaUrl) {
+  const asset = parseCmsMediaAssetMetadata(assetRows[0].valueJson);
+  if (!asset) {
     redirect("/icerik/medya?hata=metadata");
   }
 
-  if (await isMediaReferencedByPublishedContent(mediaUrl)) {
+  if (await isMediaReferencedByPublishedContent(asset.url)) {
     redirect("/icerik/medya?hata=kullanimda");
   }
 

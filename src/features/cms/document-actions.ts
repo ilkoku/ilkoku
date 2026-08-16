@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
-import { deleteCmsDraft, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
+import { deleteCmsDraft, getCmsDraftState, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import { normalizeCmsLocale } from "@/lib/cms-locales";
 import {
@@ -56,6 +56,13 @@ export async function saveCmsDocumentAction(formData: FormData) {
     SELECT id, status FROM ContentPage WHERE contentKey = ${contentKey} LIMIT 1
   `;
   const existing = existingRows[0] ?? null;
+  if (existing) {
+    const state = await getCmsDraftState(pageDraftKey(existing.id));
+    if (state.state === "corrupt") {
+      redirect(`/icerik/yasal/${slug}?dil=${locale}&hata=taslak-bozuk`);
+    }
+  }
+
   const snapshot = { kind: "legal", locale, title, description, updatedLabel, body, status: mode === "publish" ? "published" : "draft" };
 
   if (mode !== "publish" && existing?.status === "published") {

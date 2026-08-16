@@ -20,9 +20,24 @@ concurrency:
 
 jobs:
   quality:
-    name: Lint, security contracts and build
+    name: Lint, security contracts, DB contracts and build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ilkoku_ci
+          MARIADB_USER: ci_user
+          MARIADB_PASSWORD: ci_password
+          MARIADB_ROOT_PASSWORD: ci_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
     env:
       DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3306/ilkoku_ci"
       NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
@@ -52,6 +67,12 @@ jobs:
 
       - name: Run security contract tests
         run: npm run test:security
+
+      - name: Deploy migrations to fresh MariaDB
+        run: npx prisma migrate deploy
+
+      - name: Run MariaDB security integration contracts
+        run: npm run test:security:db
 
       - name: Build application
         shell: bash

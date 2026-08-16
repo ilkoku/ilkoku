@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  updateStandardUserRoleFromAdmin,
+  updateUserStatusFromAdmin,
+} from "@/features/admin/user-control";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
@@ -72,16 +76,15 @@ export async function updateUserRoleAction(
     return;
   }
 
-  if (userId === currentUser.id) {
-    return;
-  }
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { role },
+  const result = await updateStandardUserRoleFromAdmin({
+    actorId: currentUser.id,
+    role,
+    targetId: userId,
   });
 
-  revalidateAdminViews();
+  if (result) {
+    revalidateAdminViews(result.publicId);
+  }
 }
 
 export async function updateUserStatusAction(
@@ -101,86 +104,15 @@ export async function updateUserStatusAction(
     return;
   }
 
-  const target = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      publicId: true,
-      role: true,
-      status: true,
-      deletedAt: true,
-    },
+  const result = await updateUserStatusFromAdmin({
+    actorId: currentUser.id,
+    status,
+    targetId: userId,
   });
 
-  if (!target) {
-    return;
+  if (result) {
+    revalidateAdminViews(result.publicId);
   }
-
-  if (
-    target.id === currentUser.id &&
-    status !== "active"
-  ) {
-    return;
-  }
-
-  if (
-    target.role === "admin" &&
-    status !== "active"
-  ) {
-    const activeAdmins = await prisma.user.count({
-      where: {
-        deletedAt: null,
-        role: "admin",
-        status: "active",
-      },
-    });
-
-    if (activeAdmins <= 1) {
-      return;
-    }
-  }
-
-  if (
-    target.status === status &&
-    !(status === "active" && target.deletedAt)
-  ) {
-    return;
-  }
-
-  await prisma.$transaction(async (transaction) => {
-    await transaction.user.update({
-      where: { id: target.id },
-      data: {
-        status,
-        ...(status === "active"
-          ? { deletedAt: null }
-          : {}),
-      },
-    });
-
-    if (status !== "active") {
-      await transaction.session.deleteMany({
-        where: { userId: target.id },
-      });
-    }
-
-    await transaction.auditLog.create({
-      data: {
-        action: "user_status_changed",
-        actorId: currentUser.id,
-        entityId: target.id,
-        entityType: "user",
-        metadata: JSON.stringify({
-          newStatus: status,
-          oldStatus: target.status,
-          publicId: target.publicId,
-          sessionsRevoked: status !== "active",
-        }),
-      },
-    });
-  });
-
-  revalidateAdminViews(target.publicId);
 }
 
 export async function updateWorkArchiveStatusAction(

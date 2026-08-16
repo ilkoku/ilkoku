@@ -25,6 +25,22 @@ test("role workspaces preserve explicit role gates", () => {
   assertContains(adminLayout, 'user.role !== "admin"', "admin workspace gate");
 });
 
+test("admin user control plane serializes privileged state and preserves special-role lifecycles", () => {
+  const actions = source("src/features/admin/actions.ts");
+  const control = source("src/features/admin/user-control.ts");
+
+  assertContains(actions, "updateStandardUserRoleFromAdmin", "admin role action");
+  assertContains(actions, "updateUserStatusFromAdmin", "admin status action");
+  assertContains(control, "prisma.$transaction", "admin user control plane");
+  assertContains(control, "FOR UPDATE", "admin user control plane");
+  assertContains(control, "activeAdminCount", "last active admin guard");
+  assertContains(control, "actorIsActiveAdmin", "stale admin session guard");
+  assertContains(control, "!standardRoles.has(target.role)", "special role lifecycle guard");
+  assertContains(control, 'source: "admin_user_role_changed"', "admin role audit");
+  assertContains(control, 'source: "admin_user_status_changed"', "admin status audit");
+  assertContains(control, "session.deleteMany", "admin suspension session revocation");
+});
+
 test("CMS access fails closed and access grants stay admin-only", () => {
   const access = source("src/lib/cms-access.ts");
   const manageAccess = source("src/app/api/cms-access-manage/route.ts");

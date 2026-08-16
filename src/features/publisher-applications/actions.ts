@@ -9,6 +9,10 @@ import {
 } from "./schema";
 import type { PublisherApplicationActionState } from "./state";
 
+type RoleRequestLockRow = {
+  id: string;
+};
+
 export async function completePublisherApplicationAction(
   _previousState: PublisherApplicationActionState,
   formData: FormData,
@@ -30,13 +34,30 @@ export async function completePublisherApplicationAction(
 
   try {
     await prisma.$transaction(async (transaction) => {
+      const lockedRequests = await transaction.$queryRaw<RoleRequestLockRow[]>`
+        SELECT id
+        FROM RoleRequest
+        WHERE userId = ${user.id}
+          AND requestedRole = 'publisher'
+          AND status = 'pending'
+        ORDER BY createdAt ASC
+        LIMIT 1
+        FOR UPDATE
+      `;
+
+      const lockedRequestId = lockedRequests[0]?.id;
+
+      if (!lockedRequestId) {
+        throw new Error("PUBLISHER_ROLE_REQUEST_NOT_FOUND");
+      }
+
       const roleRequest = await transaction.roleRequest.findFirst({
         where: {
+          id: lockedRequestId,
           requestedRole: "publisher",
           status: "pending",
           userId: user.id,
         },
-        orderBy: { createdAt: "asc" },
         select: { id: true },
       });
 

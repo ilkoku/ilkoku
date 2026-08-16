@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireCmsManager } from "@/lib/cms-access";
+import { getCmsOperationalIntegrity } from "@/lib/cms-health-integrity";
 import { getCmsLocaleStates } from "@/lib/cms-locale-state";
 import { prisma } from "@/lib/prisma";
 import { HealthMetricCards } from "./HealthMetricCards";
@@ -80,6 +81,7 @@ async function loadHealth() {
     announcementRows,
     scheduleRows,
     localeStates,
+    integrity,
   ] = await Promise.all([
     prisma.$queryRaw<CountRow[]>`
       SELECT COUNT(*) AS total FROM SiteContent
@@ -185,6 +187,7 @@ async function loadHealth() {
       LIMIT 500
     `,
     getCmsLocaleStates(),
+    getCmsOperationalIntegrity(),
   ]);
 
   const activeSchedules = scheduleRows.filter((row) => row.status === "published" && parseScheduleState(row.valueJson) === "scheduled").length;
@@ -211,6 +214,7 @@ async function loadHealth() {
     activeSchedules,
     failedSchedules,
     enEnabled,
+    integrity,
   };
 }
 
@@ -264,6 +268,20 @@ export default async function CmsHealthPage({
         },
         {
           group: "Yayın",
+          level: data.integrity.invalidFooterLive > 0 ? "blocker" : "pass",
+          title: "Canlı footer yapılandırması",
+          detail: data.integrity.invalidFooterLive > 0 ? "Yayındaki footer JSON sözleşmesi bozuk. Kod fallback'i devreye girebilir; CMS kaydı düzeltilmeden güvenli kabul verilmez." : "Yayındaki footer kaydı varsa yapı sözleşmesi geçerli.",
+          href: "/icerik/menuler",
+        },
+        {
+          group: "Yayın",
+          level: data.integrity.invalidRedirects > 0 ? "blocker" : "pass",
+          title: "Aktif yönlendirme bütünlüğü",
+          detail: data.integrity.invalidRedirects > 0 ? `${data.integrity.invalidRedirects} aktif 308 kaydı parse edilemiyor; eksik graph ile yönlendirme güvenliği doğrulanamaz.` : "Aktif 308 yönlendirme kayıtları geçerli.",
+          href: "/icerik/yonlendirmeler",
+        },
+        {
+          group: "Yayın",
           level: "info",
           title: "Aktif yayın planları",
           detail: `${data.activeSchedules} aktif zamanlama kaydı var.`,
@@ -292,9 +310,9 @@ export default async function CmsHealthPage({
         },
         {
           group: "İçerik",
-          level: "info",
-          title: "Medya varlıkları",
-          detail: `${data.media} aktif medya kaydı var.`,
+          level: data.integrity.invalidMedia > 0 ? "warn" : "pass",
+          title: "Medya metadata bütünlüğü",
+          detail: data.integrity.invalidMedia > 0 ? `${data.integrity.invalidMedia} aktif medya metadata kaydı geçersiz; referans/arşiv kararları kilitli tutulmalıdır.` : `${data.media} aktif medya kaydının metadata sözleşmesi geçerli.`,
           href: "/icerik/medya",
         },
         {
@@ -303,6 +321,13 @@ export default async function CmsHealthPage({
           title: "Taslak referans bütünlüğü",
           detail: data.orphanDrafts > 0 ? `${data.orphanDrafts} çalışma taslağı artık var olmayan bir sayfayı işaret ediyor.` : "Sayfa tabanlı çalışma taslaklarında yetim kayıt yok.",
           href: "/icerik/yayin-kuyrugu",
+        },
+        {
+          group: "İçerik",
+          level: data.integrity.invalidFooterDraft > 0 ? "warn" : "pass",
+          title: "Footer çalışma taslağı",
+          detail: data.integrity.invalidFooterDraft > 0 ? "Footer çalışma taslağı parse edilemiyor; canlı footer korunuyor ancak taslak yayınlanamaz." : "Footer çalışma taslağı varsa yapı sözleşmesi geçerli.",
+          href: "/icerik/menuler",
         },
         {
           group: "SEO & Erişim",
@@ -327,9 +352,16 @@ export default async function CmsHealthPage({
         },
         {
           group: "Sistem",
-          level: data.revisions > 0 ? "pass" : "info",
+          level: data.integrity.invalidSettings > 0 ? "blocker" : "pass",
+          title: "CMS global ayar bütünlüğü",
+          detail: data.integrity.invalidSettings > 0 ? "Global cms_settings kaydı strict şema doğrulamasından geçmiyor; default değerlerle üzerine yazma engellenmiştir." : "Global ayar kaydı varsa strict şema sözleşmesi geçerli.",
+          href: "/icerik/ayarlar",
+        },
+        {
+          group: "Sistem",
+          level: data.integrity.invalidRevisions > 0 ? "warn" : (data.revisions > 0 ? "pass" : "info"),
           title: "Revision geçmişi",
-          detail: data.revisions > 0 ? `${data.revisions} içerik revision kaydı saklanıyor.` : "Henüz revision kaydı oluşmamış; ilk CMS düzenlemesinden sonra otomatik oluşur.",
+          detail: data.integrity.invalidRevisions > 0 ? `${data.integrity.invalidRevisions} revision snapshot yapısal olarak bozuk; restore kilitli ve ham kayıt korunuyor.` : data.revisions > 0 ? `${data.revisions} içerik revision kaydı geçerli JSON nesnesi olarak saklanıyor.` : "Henüz revision kaydı oluşmamış; ilk CMS düzenlemesinden sonra otomatik oluşur.",
           href: "/icerik/gecmis",
         },
         {
@@ -341,16 +373,16 @@ export default async function CmsHealthPage({
         },
         {
           group: "Sistem",
-          level: "info",
+          level: data.integrity.invalidForms > 0 ? "warn" : "info",
           title: "Açık form talepleri",
-          detail: `${data.forms} arşivlenmemiş form kaydı var.`,
+          detail: data.integrity.invalidForms > 0 ? `${data.integrity.invalidForms} form payload kaydı parse edilemiyor; normal arşiv akışına alınmıyor.` : `${data.forms} arşivlenmemiş form kaydı var.`,
           href: "/icerik/formlar",
         },
         {
           group: "Sistem",
-          level: "info",
-          title: "Aktif duyurular",
-          detail: `${data.announcements} yayın durumunda duyuru kaydı var.`,
+          level: data.integrity.invalidAnnouncements > 0 ? "warn" : "info",
+          title: "Duyuru veri bütünlüğü",
+          detail: data.integrity.invalidAnnouncements > 0 ? `${data.integrity.invalidAnnouncements} duyuru payload kaydı parse edilemiyor; normal yayın/arşiv aksiyonları kilitli.` : `${data.announcements} yayın durumunda duyuru kaydı var.`,
           href: "/icerik/duyurular",
         },
       ];
@@ -375,7 +407,7 @@ export default async function CmsHealthPage({
         <div>
           <span>42. İşlem · Akıllı Müdahale</span>
           <h1>CMS Sistem Sağlığı</h1>
-          <p>İçerik, yayın, SEO, dil, zamanlama ve erişim sözleşmelerini canlı veritabanı durumuna göre çapraz kontrol eder.</p>
+          <p>İçerik, yayın, SEO, dil, zamanlama, yapılandırma ve veri bütünlüğü sözleşmelerini canlı veritabanı durumuna göre çapraz kontrol eder.</p>
         </div>
         <div className={`content-health-badge ${finalPass ? "is-good" : "is-attention"}`}>
           <small>CMS sonucu</small>
@@ -433,7 +465,7 @@ export default async function CmsHealthPage({
 
       <div className="content-panel" style={{ marginTop: "1rem" }}>
         <strong>Kontrol kapsamı</strong>
-        <p>Bu ekran her açılışta güncel CMS verisini yeniden okur. Public route erişilebilirliği ayrıca Production Smoke tarafından doğrulanır; sağlık ekranı Lighthouse/Core Web Vitals testi değildir.</p>
+        <p>Bu ekran her açılışta güncel CMS verisini yeniden okur. Public route erişilebilirliği ve korumalı CMS rotaları ayrıca Production Smoke tarafından doğrulanır; sağlık ekranı Lighthouse/Core Web Vitals testi değildir.</p>
       </div>
     </section>
   );

@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsPublisher } from "@/lib/cms-access";
-import { CMS_DRAFT_NAMESPACE, pageDraftKey } from "@/lib/cms-drafts";
+import { CMS_DRAFT_NAMESPACE, getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import {
   cmsRevisionKind,
@@ -122,6 +122,10 @@ export async function restoreCmsRevisionAction(formData: FormData) {
   const backupId = randomUUID();
   const restoredId = randomUUID();
   const draftKey = pageDraftKey(page.id);
+  const stagedState = await getCmsDraftState(draftKey);
+  if (stagedState.state === "corrupt") {
+    redirect(`/icerik/gecmis/${revision.id}?hata=taslak-bozuk`);
+  }
   const restoreIntoWorkingDraft = page.status === "published" && snapshot.status === "draft";
 
   await prisma.$transaction(async (tx) => {

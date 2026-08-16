@@ -1,0 +1,154 @@
+name: Temporary dead surface cleanup
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-dead-surface-cleanup-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3306/ilkoku_ci"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      SITE_URL: "http://localhost:3000"
+      EMAIL_DELIVERY_MODE: "local"
+      ADMIN_ROLE_VIEW_SECRET: "ci-admin-role-view-secret-0000000000000000000000000000000000000000"
+      READING_ACCESS_HASH_SECRET: "ci-reading-access-hash-secret-00000000000000000000000000000000000000"
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify symbols are definition-only and remove them with TypeScript AST
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const ts = require('typescript');
+
+          const targets = [
+            {
+              file: 'src/features/publisher-workspace/repository.ts',
+              names: ['upsertPublisherContract', 'upsertPublicationPlan'],
+            },
+            {
+              file: 'src/features/editor-workspace/queries.ts',
+              names: ['getEditorNotifications'],
+            },
+          ];
+
+          function sourceFiles(dir) {
+            const rows = [];
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) rows.push(...sourceFiles(full));
+              else if (/\.(ts|tsx)$/.test(entry.name)) rows.push(full);
+            }
+            return rows;
+          }
+
+          const allSources = sourceFiles('src');
+          for (const target of targets) {
+            for (const name of target.names) {
+              const pattern = new RegExp(`\\b${name}\\b`, 'g');
+              let count = 0;
+              for (const file of allSources) {
+                const text = fs.readFileSync(file, 'utf8');
+                count += (text.match(pattern) || []).length;
+              }
+              if (count !== 1) {
+                throw new Error(`${name} is not definition-only; src reference count=${count}`);
+              }
+            }
+          }
+
+          for (const target of targets) {
+            let text = fs.readFileSync(target.file, 'utf8');
+            const sf = ts.createSourceFile(
+              target.file,
+              text,
+              ts.ScriptTarget.Latest,
+              true,
+              target.file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+            );
+            const ranges = [];
+
+            for (const statement of sf.statements) {
+              if (
+                ts.isFunctionDeclaration(statement) &&
+                statement.name &&
+                target.names.includes(statement.name.text)
+              ) {
+                ranges.push({
+                  name: statement.name.text,
+                  start: statement.getFullStart(),
+                  end: statement.getEnd(),
+                });
+              }
+            }
+
+            for (const name of target.names) {
+              if (!ranges.some((range) => range.name === name)) {
+                throw new Error(`Could not locate function declaration ${name} in ${target.file}`);
+              }
+            }
+
+            ranges.sort((a, b) => b.start - a.start);
+            for (const range of ranges) {
+              text = text.slice(0, range.start) + text.slice(range.end);
+            }
+
+            text = text.replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
+            fs.writeFileSync(target.file, text);
+          }
+
+          const packagePath = 'package.json';
+          const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+          pkg.scripts['test:security'] =
+            'node --test scripts/security-contract.test.mjs scripts/security-contract-lifecycle.test.mjs scripts/security-contract-notifications.test.mjs scripts/security-contract-dead-surfaces.test.mjs';
+          fs.writeFileSync(packagePath, JSON.stringify(pkg, null, 2) + '\n');
+          NODE
+
+      - name: Validate cleanup
+        run: |
+          npm run lint
+          npm run test:security
+          npm run build:ci
+
+      - name: Commit validated cleanup and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/temp-dead-surface-cleanup.yml
+          git config user.name "ilkoku"
+          git config user.email "ilkoku@ilkoku.com"
+          git add \
+            src/features/publisher-workspace/repository.ts \
+            src/features/editor-workspace/queries.ts \
+            scripts/security-contract-dead-surfaces.test.mjs \
+            package.json \
+            .github/workflows/temp-dead-surface-cleanup.yml
+          git commit -m "Remove obsolete contract and notification repository surfaces"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}

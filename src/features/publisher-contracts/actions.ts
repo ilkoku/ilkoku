@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   sendPublisherContractEmail,
 } from "@/lib/email/publisher-emails";
+import { prisma } from "@/lib/prisma";
 
 import {
   savePublicationPlanLifecycle,
@@ -29,6 +30,31 @@ function revalidateContractSurfaces(submissionId: string) {
   revalidatePath(`/yayinevi/basvurular/${submissionId}`);
   revalidatePath("/yayinevi");
   revalidatePath("/yayinevleri");
+}
+
+async function resolveContractEmailOutcome(
+  result: Awaited<ReturnType<typeof sendPublisherContractEmail>>,
+) {
+  if (result.delivery === "smtp" || result.delivery === "local") {
+    return "sent" as const;
+  }
+
+  if (result.delivery !== "deduplicated") {
+    return "failed" as const;
+  }
+
+  if (!result.deliveryId) {
+    return "pending" as const;
+  }
+
+  const delivery = await prisma.emailDelivery.findUnique({
+    where: { id: result.deliveryId },
+    select: { status: true },
+  });
+
+  if (delivery?.status === "sent") return "sent" as const;
+  if (delivery?.status === "pending") return "pending" as const;
+  return "failed" as const;
 }
 
 export async function saveSecurePublisherContractAction(
@@ -159,19 +185,20 @@ export async function saveSecurePublisherContractAction(
     };
   }
 
-  let emailDelivered = true;
+  let emailOutcome: "sent" | "pending" | "failed" = "sent";
 
   if (result.emailRequired) {
     try {
-      await sendPublisherContractEmail({
+      const emailResult = await sendPublisherContractEmail({
         email: result.author.email,
         fullName: result.author.fullName,
         idempotencyKey: result.idempotencyKey,
         submissionId,
         workTitle: result.work.title,
       });
+      emailOutcome = await resolveContractEmailOutcome(emailResult);
     } catch (error) {
-      emailDelivered = false;
+      emailOutcome = "failed";
       console.error("PUBLISHER_CONTRACT_EMAIL_FAILED", {
         contractId: result.contract.id,
         error:
@@ -187,14 +214,26 @@ export async function saveSecurePublisherContractAction(
   revalidateContractSurfaces(submissionId);
 
   if (intent === "send") {
+    if (emailOutcome === "pending") {
+      return {
+        message:
+          "Bu sözleşme sürümünün e-posta teslimatı zaten işleniyor. İkinci fiziksel e-posta oluşturulmadı.",
+        status: "success",
+      };
+    }
+
+    if (emailOutcome === "failed") {
+      return {
+        message:
+          "Sözleşme kaydedildi; bu sürüme bağlı e-posta teslimatı başarısız. İkinci fiziksel e-posta oluşturulmadı; E-posta Operasyonları üzerinden retry uygulanabilir.",
+        status: "success",
+      };
+    }
+
     return {
-      message: emailDelivered
-        ? (
-            result.changed
-              ? `Sözleşme sürüm ${result.contract.version} yazara gönderildi.`
-              : "Bu sözleşme sürümü zaten kaydedilmişti; e-posta teslimi idempotent olarak doğrulandı."
-          )
-        : "Sözleşme kaydedildi; e-posta teslimi başarısız oldu ve E-posta Operasyonları üzerinden izlenebilir.",
+      message: result.changed
+        ? `Sözleşme sürüm ${result.contract.version} yazara gönderildi.`
+        : "Bu sözleşme sürümü daha önce gönderildi; aynı sürüm için ikinci fiziksel e-posta oluşturulmadı.",
       status: "success",
     };
   }
@@ -232,18 +271,18 @@ export async function saveSecurePublicationPlanAction(
   const printRun = printRunRaw
     ? Number(printRunRaw)
     : null;
-  const allowedPlanStatuses = new Set([
+  const allowedPlanStatuses = [
     "planning",
     "preproduction",
     "production",
     "distribution",
     "published",
-  ] as const);
-  const allowedTaskStatuses = new Set([
+  ] as const;
+  const allowedTaskStatuses = [
     "not_started",
     "in_progress",
     "completed",
-  ] as const);
+  ] as const;
   const status = String(
     formData.get("planStatus") ?? "planning",
   );
@@ -262,14 +301,14 @@ export async function saveSecurePublicationPlanAction(
 
   if (
     !submissionId ||
-    !allowedPlanStatuses.has(
-      status as Parameters<typeof allowedPlanStatuses.has>[0],
+    !allowedPlanStatuses.includes(
+      status as (typeof allowedPlanStatuses)[number],
     ) ||
-    !allowedTaskStatuses.has(
-      coverStatus as Parameters<typeof allowedTaskStatuses.has>[0],
+    !allowedTaskStatuses.includes(
+      coverStatus as (typeof allowedTaskStatuses)[number],
     ) ||
-    !allowedTaskStatuses.has(
-      layoutStatus as Parameters<typeof allowedTaskStatuses.has>[0],
+    !allowedTaskStatuses.includes(
+      layoutStatus as (typeof allowedTaskStatuses)[number],
     ) ||
     (isbn?.length ?? 0) > 32 ||
     (notes?.length ?? 0) > 10000

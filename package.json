@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "db:recover:fresh": "node scripts/recover-fresh-database.mjs",
     "build": "prisma migrate deploy && prisma generate && next build",
     "build:ci": "prisma generate && next build",
     "start": "next start",

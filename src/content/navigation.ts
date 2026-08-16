@@ -18,6 +18,7 @@ export const navigationContent = {
     { label: "Yorumlarım", href: "/yorumlarim" },
     { label: "Geri Bildirimler", href: "/geri-bildirimler" },
     { label: "Yayınevleri", href: "/yayinevleri" },
+    { label: "Bildirimler", href: "/bildirimler" },
     { label: "Profilim", href: "/profilim" },
   ],
 } as const;

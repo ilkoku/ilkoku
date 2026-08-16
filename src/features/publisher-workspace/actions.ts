@@ -3,20 +3,21 @@
 import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  addSecurePublisherInternalNoteAction,
+  updateSecurePublisherDecisionAction,
+} from "@/features/publisher-submissions/actions";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 import {
   sendPublisherContractEmail,
-  sendPublisherSubmissionDecisionEmail,
   sendPublisherTeamInvitationEmail,
 } from "@/lib/email/publisher-emails";
 import {
-  addPublisherInternalNote,
   acceptPublisherInvitation,
   cancelPublisherInvitation,
   createPublisherInvitation,
   updatePublisherMember,
-  updatePublisherSubmissionDecision,
   upsertPublicationPlan,
   upsertPublisherContract,
 } from "./repository";
@@ -30,7 +31,6 @@ import type {
   PublisherDecisionActionState,
   PublisherInternalNoteActionState,
   PublisherContractActionState,
-  PublisherWorkspaceSubmissionStatus,
 } from "./types";
 
 async function getPublisherWriteUser() {
@@ -43,118 +43,19 @@ async function getPublisherWriteUser() {
   return user;
 }
 
-const allowedStatuses = new Set<PublisherWorkspaceSubmissionStatus>([
-  "pending",
-  "reviewing",
-  "accepted",
-  "rejected",
-]);
-
 export async function updatePublisherDecisionAction(
-  _state: PublisherDecisionActionState,
+  state: PublisherDecisionActionState,
   formData: FormData,
 ): Promise<PublisherDecisionActionState> {
-  const user = await getPublisherWriteUser();
-  if (!user) {
-    return { message: "Bu işlem için giriş yapmalısınız.", status: "error" };
-  }
-
-  const submissionId = String(formData.get("submissionId") ?? "").trim();
-  const status = String(formData.get("status") ?? "").trim() as PublisherWorkspaceSubmissionStatus;
-  const noteValue = String(formData.get("publisherNote") ?? "").trim();
-
-  if (!submissionId || !allowedStatuses.has(status)) {
-    return { message: "Başvuru veya karar bilgisi geçersiz.", status: "error" };
-  }
-
-  if ((status === "accepted" || status === "rejected") && noteValue.length < 10) {
-    return { message: "Kabul veya red kararında en az 10 karakterlik karar notu yazın.", status: "error" };
-  }
-
-  const updated = await updatePublisherSubmissionDecision({
-    note: noteValue || null,
-    status: status as Exclude<PublisherWorkspaceSubmissionStatus, "withdrawn">,
-    submissionId,
-    userId: user.id,
-  });
-
-  if (!updated) {
-    return { message: "Başvuru bulunamadı veya bu yayınevine ait değil.", status: "error" };
-  }
-
-  let emailSent = true;
-
-  if (
-    updated.statusChanged &&
-    (
-      status === "reviewing" ||
-      status === "accepted" ||
-      status === "rejected"
-    )
-  ) {
-    try {
-      await sendPublisherSubmissionDecisionEmail({
-        email: updated.author.email,
-        fullName: updated.author.fullName,
-        note: noteValue || null,
-        status,
-        submissionId,
-        workTitle: updated.work.title,
-      });
-    } catch (error) {
-      emailSent = false;
-
-      console.error(
-        "PUBLISHER_SUBMISSION_EMAIL_FAILED",
-        {
-          error:
-            error instanceof Error
-              ? error.message
-              : "UNKNOWN_ERROR",
-          status,
-          submissionId,
-        },
-      );
-    }
-  }
-
-  revalidatePath("/yayinevi");
-  revalidatePath(`/yayinevi/basvurular/${submissionId}`);
-
-  return {
-    message:
-      emailSent
-        ? "Başvuru kararı güncellendi ve geçmişe kaydedildi."
-        : "Başvuru kararı güncellendi; e-posta gönderilemedi.",
-    status: "success",
-  };
+  return updateSecurePublisherDecisionAction(state, formData);
 }
 
 export async function addPublisherInternalNoteAction(
-  _state: PublisherInternalNoteActionState,
+  state: PublisherInternalNoteActionState,
   formData: FormData,
 ): Promise<PublisherInternalNoteActionState> {
-  const user = await getPublisherWriteUser();
-  if (!user) {
-    return { message: "Bu işlem için giriş yapmalısınız.", status: "error" };
-  }
-
-  const submissionId = String(formData.get("submissionId") ?? "").trim();
-  const note = String(formData.get("internalNote") ?? "").trim();
-
-  if (!submissionId) return { message: "Başvuru bilgisi eksik.", status: "error" };
-  if (note.length < 3) return { message: "İç not en az 3 karakter olmalı.", status: "error" };
-  if (note.length > 3000) return { message: "İç not 3000 karakteri geçemez.", status: "error" };
-
-  const created = await addPublisherInternalNote({ note, submissionId, userId: user.id });
-  if (!created) {
-    return { message: "Başvuru bulunamadı veya bu yayınevine ait değil.", status: "error" };
-  }
-
-  revalidatePath(`/yayinevi/basvurular/${submissionId}`);
-  return { message: "İç not geçmişe eklendi.", status: "success" };
+  return addSecurePublisherInternalNoteAction(state, formData);
 }
-
 
 export async function savePublisherContractAction(
   _state: PublisherContractActionState,
@@ -497,7 +398,6 @@ export async function cancelPublisherInvitationAction(
   const invitationId = String(
     formData.get("invitationId") ?? "",
   ).trim();
-
   if (!invitationId) {
     return {
       message: "İptal edilecek davet bulunamadı.",

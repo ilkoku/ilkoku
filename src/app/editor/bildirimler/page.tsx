@@ -4,8 +4,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { markNotificationReadAction } from "@/features/editor-workspace/actions";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
-import { getEditorNotifications } from "@/features/editor-workspace/queries";
 import { resolveNotificationTargets } from "@/features/notifications/targets";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Editör Bildirimleri | İlkOku",
@@ -21,7 +21,11 @@ function formatDate(value: Date) {
 
 export default async function EditorNotificationsPage() {
   const profile = await requireEditorProfile("/editor/bildirimler");
-  const notifications = await getEditorNotifications(profile.id);
+  const notifications = await prisma.notification.findMany({
+    where: { userId: profile.id },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
   const targets = await resolveNotificationTargets({
     notifications,
     scope: "editor",

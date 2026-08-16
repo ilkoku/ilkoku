@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Lint and build
+    name: Lint, security contracts and build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -49,6 +49,9 @@ jobs:
 
       - name: Run lint
         run: npm run lint
+
+      - name: Run security contract tests
+        run: npm run test:security
 
       - name: Build application
         run: npm run build:ci

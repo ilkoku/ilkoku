@@ -59,6 +59,7 @@ test("writer submission notifications only link to submissions owned by that wri
 test("editor work notifications disambiguate assignments from recommendations", () => {
   const text = source("src/features/notifications/targets.ts");
 
+  assertContains(text, "EditorAssignmentStatus", "editor notification resolver");
   assertContains(text, 'stage: "second"', "editor notification resolver");
   assertContains(text, 'href = "/editor/incelemeler?asama=ikinci"', "editor notification resolver");
   assertContains(text, 'href = "/editor/incelemeler?durum=tamamlanan"', "editor notification resolver");

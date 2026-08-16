@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
+  cancelPublisherEditorRequest,
   claimPublisherEditorRequest,
   completePublisherEditorReview,
   createPublisherEditorRequest,
@@ -104,6 +105,62 @@ export async function createPublisherEditorRequestAction(
   }
 }
 
+export async function cancelPublisherEditorRequestAction(
+  _state: PublisherEditorActionState,
+  formData: FormData,
+): Promise<PublisherEditorActionState> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return {
+      message: "Oturum bilgisi bulunamadı. Yeniden giriş yapın.",
+      status: "error",
+    };
+  }
+
+  const requestId = text(formData, "requestId");
+  if (!UUID_PATTERN.test(requestId)) {
+    return {
+      message: "Talep bilgisi doğrulanamadı.",
+      status: "error",
+    };
+  }
+
+  try {
+    const result = await cancelPublisherEditorRequest({
+      requestId,
+      userId: user.id,
+    });
+
+    if (result.status === "forbidden") {
+      return {
+        message: "Bu editör talebini iptal etme yetkiniz bulunmuyor.",
+        status: "error",
+      };
+    }
+
+    if (result.status === "not_cancellable") {
+      return {
+        message:
+          "Bu talep artık beklemede değil. Bir editör görevi almış veya talep daha önce kapanmış olabilir.",
+        status: "error",
+      };
+    }
+
+    revalidatePublisherEditorFlow();
+
+    return {
+      message: "Bekleyen editör talebi iptal edildi.",
+      status: "success",
+    };
+  } catch (error) {
+    console.error("PUBLISHER_EDITOR_REQUEST_CANCEL_FAILED", error);
+    return {
+      message: "Editör talebi iptal edilemedi.",
+      status: "error",
+    };
+  }
+}
+
 async function requireEditor() {
   const user = await getCurrentUser();
 
@@ -143,6 +200,15 @@ export async function claimPublisherEditorRequestAction(
     if (result.status === "already_claimed") {
       return {
         message: "Bu görev başka bir editör tarafından alınmış olabilir.",
+        status: "error",
+      };
+    }
+
+    if (result.status === "work_unavailable") {
+      revalidatePublisherEditorFlow();
+      return {
+        message:
+          "Eser artık yayınevi editör incelemesi için uygun değil. Bekleyen talep güvenli şekilde kapatıldı.",
         status: "error",
       };
     }
@@ -206,6 +272,15 @@ export async function savePublisherEditorReviewDraftAction(
       };
     }
 
+    if (result.status === "work_unavailable") {
+      revalidatePublisherEditorFlow();
+      return {
+        message:
+          "Eser artık inceleme için uygun değil. Görev kapatıldı ve yeni taslak kaydı yapılmadı.",
+        status: "error",
+      };
+    }
+
     if (result.status === "forbidden") {
       return {
         message: "Bu yayınevi editör görevi için inceleme yetkiniz bulunmuyor.",
@@ -249,6 +324,15 @@ export async function completePublisherEditorReviewAction(
       return {
         message:
           "Başlık 3–160, kategori 2–60 ve değerlendirme 20–10000 karakter arasında olmalıdır.",
+        status: "error",
+      };
+    }
+
+    if (result.status === "work_unavailable") {
+      revalidatePublisherEditorFlow();
+      return {
+        message:
+          "Eser artık inceleme için uygun değil. Görev tamamlanmadan kapatıldı.",
         status: "error",
       };
     }

@@ -4,8 +4,6 @@ import type {
   Prisma,
   PublicationPlanStatus,
   ProductionTaskStatus,
-  PublisherPermission,
-  PublishingContractStatus,
 } from "@/generated/prisma/client";
 import {
   getPublisherMembership,
@@ -13,6 +11,7 @@ import {
 } from "@/features/publisher-workspace/repository";
 import {
   hasPublisherPermission,
+  type PublisherPermission,
 } from "@/features/publisher-workspace/permissions";
 import { prisma } from "@/lib/prisma";
 

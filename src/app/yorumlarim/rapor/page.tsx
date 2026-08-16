@@ -57,12 +57,14 @@ export default async function WriterCommentReportPage() {
         <Link className="button button--outline" href="/yorumlarim">
           Yorumlara Dön
         </Link>
-        <a
+        <Link
           className="button button--outline"
+          download
           href="/yorumlarim/disa-aktar/csv"
+          prefetch={false}
         >
           Tam Veriyi CSV İndir
-        </a>
+        </Link>
         <PrintReportButton />
       </div>
 

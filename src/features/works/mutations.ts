@@ -2,6 +2,7 @@ import { worksRepository } from "./repository";
 import {
   deliverPublicationNotifications,
 } from "./publication-notifications";
+import { publishWorkWithEvent } from "./publish-work-event";
 import type {
   ChapterDraftInput,
   CreateWorkInput,
@@ -210,16 +211,19 @@ export async function publishWork(
     input.chapterId,
   );
 
-  const publishedWork =
-    await worksRepository.publishWork(
-      authorId,
-      input.workId,
-    );
+  const {
+    publicationEvent,
+    work: publishedWork,
+  } = await publishWorkWithEvent(
+    authorId,
+    input.workId,
+  );
 
   try {
     await deliverPublicationNotifications({
       authorId,
       chapterId: input.chapterId,
+      publicationEvent,
       workId: input.workId,
     });
   } catch (notificationError) {

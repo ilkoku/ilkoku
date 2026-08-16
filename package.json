@@ -8,7 +8,7 @@
     "build:ci": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:security": "node --test scripts/security-contract.test.mjs scripts/security-contract-lifecycle.test.mjs scripts/security-contract-notifications.test.mjs scripts/security-contract-residual-surfaces.test.mjs scripts/security-contract-dead-surfaces.test.mjs scripts/security-contract-role-boundaries.test.mjs scripts/security-contract-auth-state.test.mjs scripts/security-contract-login-session.test.mjs scripts/security-contract-email-verification.test.mjs",
+    "test:security": "node --test scripts/security-contract.test.mjs scripts/security-contract-lifecycle.test.mjs scripts/security-contract-notifications.test.mjs scripts/security-contract-residual-surfaces.test.mjs scripts/security-contract-dead-surfaces.test.mjs scripts/security-contract-role-boundaries.test.mjs scripts/security-contract-auth-state.test.mjs scripts/security-contract-login-session.test.mjs scripts/security-contract-email-verification.test.mjs scripts/security-contract-publisher-invitations.test.mjs",
     "test:security:db": "node --test scripts/security-db-contract.test.mjs"
   },
   "dependencies": {

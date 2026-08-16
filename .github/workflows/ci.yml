@@ -69,7 +69,7 @@ jobs:
         run: npm run test:security
 
       - name: Build disposable MariaDB schema
-        run: npx prisma db push --skip-generate
+        run: npx prisma db push
 
       - name: Run MariaDB security integration contracts
         run: npm run test:security:db

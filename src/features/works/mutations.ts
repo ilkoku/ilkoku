@@ -113,13 +113,11 @@ export async function updateWork(
   const { id, ...changes } = input;
 
   const status =
-    changes.status === "published"
-      ? "published"
-      : changes.status === "in_progress"
-        ? "in_review"
-        : changes.status === "draft"
-          ? "draft"
-          : undefined;
+    changes.status === "in_progress"
+      ? "in_review"
+      : changes.status === "draft"
+        ? "draft"
+        : undefined;
 
   return worksRepository.updateWork(
     authorId,
@@ -134,19 +132,13 @@ export async function updateWork(
       language: changes.language,
       status,
       title: changes.title,
-      ...(status === "published"
+      ...(status
         ? {
             archivedAt: null,
-            publishedAt: new Date(),
-            visibility: "public",
+            publishedAt: null,
+            visibility: "private",
           }
-        : status
-          ? {
-              archivedAt: null,
-              publishedAt: null,
-              visibility: "private",
-            }
-          : {}),
+        : {}),
     },
   );
 }

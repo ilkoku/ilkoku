@@ -1,7 +1,10 @@
 import "../publisher-workspace.css";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { markAllPublisherNotificationsReadAction, markPublisherNotificationReadAction } from "../actions";
+import {
+  markAllPublisherNotificationsReadAction,
+  markPublisherNotificationReadAction,
+} from "../notification-read-actions";
 import type { PublisherNotificationData } from "../types";
 
 const formatDate = (value: string) => new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));

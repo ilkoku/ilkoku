@@ -112,6 +112,7 @@ export async function claimEmailDeliveryDedupe(
   if (!dedupeKey) {
     return {
       claimed: true,
+      claimFailed: false,
       duplicateDeliveryId: null,
     };
   }
@@ -137,6 +138,7 @@ export async function claimEmailDeliveryDedupe(
     if (inserted === 1) {
       return {
         claimed: true,
+        claimFailed: false,
         duplicateDeliveryId: null,
       };
     }
@@ -146,6 +148,7 @@ export async function claimEmailDeliveryDedupe(
     if (existing?.deliveryId) {
       return {
         claimed: false,
+        claimFailed: false,
         duplicateDeliveryId: existing.deliveryId,
       };
     }
@@ -157,6 +160,7 @@ export async function claimEmailDeliveryDedupe(
     ) {
       return {
         claimed: true,
+        claimFailed: false,
         duplicateDeliveryId: null,
       };
     }
@@ -167,6 +171,7 @@ export async function claimEmailDeliveryDedupe(
     if (duplicateDeliveryId) {
       return {
         claimed: false,
+        claimFailed: false,
         duplicateDeliveryId,
       };
     }
@@ -177,6 +182,7 @@ export async function claimEmailDeliveryDedupe(
 
     return {
       claimed: false,
+      claimFailed: false,
       duplicateDeliveryId: null,
     };
   } catch (error) {
@@ -189,6 +195,7 @@ export async function claimEmailDeliveryDedupe(
 
     return {
       claimed: true,
+      claimFailed: true,
       duplicateDeliveryId: null,
     };
   }

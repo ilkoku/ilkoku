@@ -1,29 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireCmsManager } from "@/lib/cms-access";
-import { getCmsDraft, pageDraftKey } from "@/lib/cms-drafts";
+import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 
-type PageRow = {
-  id: string;
-  slug: string;
-  title: string;
-  status: "draft" | "published" | "archived";
-  bodyJson: string;
-  seoTitle: string | null;
-  seoDescription: string | null;
-  noIndex: boolean;
-};
-
-type Draft = {
-  title?: string;
-  summary?: string;
-  body?: string;
-  seoTitle?: string;
-  seoDescription?: string;
-  noIndex?: boolean;
-};
+type PageRow = { id: string; slug: string; title: string; status: "draft" | "published" | "archived"; bodyJson: string; seoTitle: string | null; seoDescription: string | null; noIndex: boolean };
+type Draft = { title?: string; summary?: string; body?: string; seoTitle?: string; seoDescription?: string; noIndex?: boolean };
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -42,10 +25,15 @@ export default async function CmsPagePreview({ params }: { params: Promise<{ id:
   if (!page) notFound();
 
   const stored = parseCmsPageBody(page.bodyJson);
-  const staged = page.status === "published"
-    ? await getCmsDraft<Draft>(pageDraftKey(page.id)).catch(() => null)
-    : null;
-  const draft = staged?.payload;
+  const state = page.status === "published"
+    ? await getCmsDraftState<Draft>(pageDraftKey(page.id))
+    : { state: "missing" as const };
+
+  if (state.state === "corrupt") {
+    return <main style={{ minHeight: "100vh", padding: "2rem 1rem" }}><section className="content-editor-page"><div className="content-panel" role="alert"><strong>Taslak önizlenemiyor.</strong><p>Çalışma taslağının JSON bütünlüğü bozuk. Ham kayıt korunuyor ve canlı sayfa değiştirilmedi.</p><div className="content-form-actions"><Link href={`/icerik/sayfalar/${page.id}`}>← Editöre dön</Link><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div></div></section></main>;
+  }
+
+  const draft = state.state === "valid" ? state.record.payload : undefined;
   const title = draft?.title ?? page.title;
   const summary = draft?.summary ?? stored.summary;
   const body = draft?.body ?? stored.body;
@@ -53,21 +41,9 @@ export default async function CmsPagePreview({ params }: { params: Promise<{ id:
   return (
     <main style={{ minHeight: "100vh", background: "#f7f5ff", padding: "2rem 1rem", color: "#18162a" }}>
       <article style={{ maxWidth: 880, margin: "0 auto", background: "#fff", border: "1px solid #e8e2ff", borderRadius: 18, padding: "clamp(1.4rem,4vw,3.5rem)", boxShadow: "0 20px 60px rgba(48,35,100,.08)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", marginBottom: "2rem" }}>
-          <div><strong>CMS Taslak Önizleme</strong><div style={{ fontSize: ".82rem", opacity: .65, marginTop: ".25rem" }}>{page.slug} · {draft ? "Bekleyen taslak" : "Kayıtlı sürüm"}</div></div>
-          <Link href={`/icerik/sayfalar/${page.id}`}>← Editöre dön</Link>
-        </div>
-        <header style={{ marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "clamp(2rem,5vw,3.8rem)", lineHeight: 1.06, margin: 0 }}>{title}</h1>
-          {summary ? <p style={{ fontSize: "1.1rem", lineHeight: 1.75, opacity: .72, marginTop: "1.2rem" }}>{summary}</p> : null}
-        </header>
-        <div style={{ fontSize: "1rem", lineHeight: 1.85 }}>
-          {body.split(/\n{2,}/).filter(Boolean).map((block, index) => {
-            const trimmed = block.trim();
-            if (trimmed.startsWith("## ")) return <h2 key={index} style={{ marginTop: "2rem" }}>{trimmed.slice(3)}</h2>;
-            return <p key={index} style={{ whiteSpace: "pre-line" }}>{trimmed}</p>;
-          })}
-        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", marginBottom: "2rem" }}><div><strong>CMS Taslak Önizleme</strong><div style={{ fontSize: ".82rem", opacity: .65, marginTop: ".25rem" }}>{page.slug} · {draft ? "Bekleyen taslak" : "Kayıtlı sürüm"}</div></div><Link href={`/icerik/sayfalar/${page.id}`}>← Editöre dön</Link></div>
+        <header style={{ marginBottom: "2rem" }}><h1 style={{ fontSize: "clamp(2rem,5vw,3.8rem)", lineHeight: 1.06, margin: 0 }}>{title}</h1>{summary ? <p style={{ fontSize: "1.1rem", lineHeight: 1.75, opacity: .72, marginTop: "1.2rem" }}>{summary}</p> : null}</header>
+        <div style={{ fontSize: "1rem", lineHeight: 1.85 }}>{body.split(/\n{2,}/).filter(Boolean).map((block, index) => { const trimmed = block.trim(); if (trimmed.startsWith("## ")) return <h2 key={index} style={{ marginTop: "2rem" }}>{trimmed.slice(3)}</h2>; return <p key={index} style={{ whiteSpace: "pre-line" }}>{trimmed}</p>; })}</div>
       </article>
     </main>
   );

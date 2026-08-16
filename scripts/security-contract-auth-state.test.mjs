@@ -53,21 +53,59 @@ test("password reset redemption locks user before token and invalidates all othe
     "password reset sibling-token revocation",
   );
   assertContains(redeem, 'source: "password_reset"', "password reset audit source");
+  assertContains(redeem, "otherSessionsClosed: true", "password reset session audit metadata");
+  assertContains(redeem, "changedAt,", "password reset canonical redemption result");
+  assertContains(redeem, "email: user.email", "password reset canonical account result");
+  assertContains(redeem, "fullName: user.fullName", "password reset canonical account result");
 });
 
-test("legacy auth server actions delegate password reset state to the canonical locked boundary", () => {
+test("all public password reset server-action surfaces delegate writes to the canonical locked boundary", () => {
   const actions = source("src/features/auth/actions.ts");
+  const compatibilityActions = source("src/features/auth/password-security-actions.ts");
 
-  assertContains(actions, "issuePasswordReset({", "password reset request action");
-  assertContains(actions, "redeemPasswordReset({", "password reset redemption action");
+  for (const [label, actionSource] of [
+    ["primary auth actions", actions],
+    ["password compatibility actions", compatibilityActions],
+  ]) {
+    assertContains(actionSource, "issuePasswordReset({", `${label} reset issuance`);
+    assertContains(actionSource, "redeemPasswordReset({", `${label} reset redemption`);
+  }
+
   assertContains(
     actions,
     "return success(notificationContent.passwordResetSent)",
-    "password reset anti-enumeration response",
+    "primary password reset anti-enumeration response",
+  );
+  assertContains(
+    compatibilityActions,
+    "notificationContent.passwordResetSent",
+    "compatibility password reset anti-enumeration response",
+  );
+  assertContains(
+    compatibilityActions,
+    "sendPasswordChangedEmail({",
+    "compatibility password changed security notice",
+  );
+
+  assert.ok(
+    !compatibilityActions.includes('from "@/lib/prisma"'),
+    "password compatibility actions must not import Prisma directly",
+  );
+  assert.ok(
+    !compatibilityActions.includes("prisma.passwordResetToken"),
+    "password compatibility actions must not access reset-token storage directly",
+  );
+  assert.ok(
+    !compatibilityActions.includes("prisma.$transaction"),
+    "password compatibility actions must not own a parallel credential transaction",
+  );
+  assert.ok(
+    !compatibilityActions.includes("transaction.passwordResetToken"),
+    "password compatibility actions must not mutate reset-token storage directly",
   );
   assert.ok(
     !actions.includes("prisma.$transaction([\n        prisma.passwordResetToken.deleteMany"),
-    "legacy parallel reset-token transaction must stay removed",
+    "legacy parallel reset-token transaction must stay removed from primary actions",
   );
 });
 

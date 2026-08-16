@@ -6,12 +6,13 @@ import {
 } from "@/lib/auth/current-user";
 import {
   hashPassword,
-  verifyPassword,
 } from "@/lib/auth/password";
 import {
   sendPasswordChangedEmail,
 } from "@/lib/email/auth-emails";
-import { prisma } from "@/lib/prisma";
+import {
+  changeProfilePassword,
+} from "./password-change-state";
 import type {
   ProfileActionState,
 } from "./state";
@@ -68,7 +69,6 @@ export async function changePasswordAction(
     );
   }
 
-  const user = context.user;
   const currentPassword = getText(
     formData,
     "currentPassword",
@@ -110,91 +110,44 @@ export async function changePasswordAction(
     );
   }
 
-  const account =
-    await prisma.user.findUnique({
-      where: {
-        id: user.id,
-      },
-      select: {
-        email: true,
-        fullName: true,
-        passwordHash: true,
-      },
-    });
-
-  if (
-    !account ||
-    !(await verifyPassword(
-      currentPassword,
-      account.passwordHash,
-    ))
-  ) {
-    return failure(
-      "Mevcut şifre doğru değil.",
-    );
-  }
-
-  const changedAt = new Date();
+  let result:
+    | Awaited<ReturnType<typeof changeProfilePassword>>
+    | null = null;
 
   try {
     const passwordHash =
       await hashPassword(newPassword);
 
-    await prisma.$transaction(
-      async (transaction) => {
-        await transaction.user.update({
-          where: {
-            id: user.id,
-          },
-          data: {
-            passwordHash,
-          },
-        });
-
-        await transaction.passwordResetToken.deleteMany({
-          where: {
-            usedAt: null,
-            userId: user.id,
-          },
-        });
-
-        if (closeOtherSessions) {
-          await transaction.session.deleteMany({
-            where: {
-              id: {
-                not: context.sessionId,
-              },
-              userId: user.id,
-            },
-          });
-        }
-
-        await transaction.auditLog.create({
-          data: {
-            action: "password_changed",
-            actorId: user.id,
-            entityId: user.id,
-            entityType: "User",
-            metadata: JSON.stringify({
-              otherSessionsClosed:
-                closeOtherSessions,
-              source: "profile",
-            }),
-          },
-        });
-      },
-    );
+    result = await changeProfilePassword({
+      closeOtherSessions,
+      currentPassword,
+      passwordHash,
+      sessionId: context.sessionId,
+      userId: context.user.id,
+    });
   } catch {
     return failure(
       "Şifre güncellenemedi. Lütfen tekrar deneyin.",
     );
   }
 
+  if (result.status === "invalid_current_password") {
+    return failure(
+      "Mevcut şifre doğru değil.",
+    );
+  }
+
+  if (result.status !== "changed") {
+    return failure(
+      "Şifre güncellenemedi. Lütfen tekrar giriş yapıp deneyin.",
+    );
+  }
+
   try {
     await sendPasswordChangedEmail({
-      changedAt,
-      email: account.email,
-      fullName: account.fullName,
+      changedAt: result.changedAt,
+      email: result.email,
+      fullName: result.fullName,
       otherSessionsClosed:
         closeOtherSessions,
       source: "profile",

@@ -15,6 +15,34 @@ export type NotificationTargetInput = {
   type: NotificationType;
 };
 
+type PublicWorkRow = {
+  id: string;
+  slug: string;
+};
+
+type VisibleCommentRow = {
+  chapter: {
+    position: number;
+  } | null;
+  id: string;
+  work: {
+    slug: string;
+  };
+};
+
+type IdRow = {
+  id: string;
+};
+
+type EditorAssignmentRow = {
+  status: "waiting" | "assigned" | "in_progress" | "completed" | "cancelled";
+  workId: string;
+};
+
+type EditorRecommendationRow = {
+  workId: string;
+};
+
 const publicWorkWhere = {
   archivedAt: null,
   publishedAt: { not: null },
@@ -26,16 +54,18 @@ function uniqueEntityIds(
   notifications: NotificationTargetInput[],
   entityType: string,
 ) {
-  return Array.from(
-    new Set(
-      notifications.flatMap((notification) =>
-        notification.relatedEntityType === entityType &&
-        notification.relatedEntityId
-          ? [notification.relatedEntityId]
-          : [],
-      ),
-    ),
-  );
+  const ids = new Set<string>();
+
+  for (const notification of notifications) {
+    if (
+      notification.relatedEntityType === entityType &&
+      notification.relatedEntityId
+    ) {
+      ids.add(notification.relatedEntityId);
+    }
+  }
+
+  return Array.from(ids);
 }
 
 export async function resolveNotificationTargets(input: {
@@ -54,79 +84,84 @@ export async function resolveNotificationTargets(input: {
     "publisher_editor_request",
   );
 
-  const [works, comments] = await Promise.all([
-    workIds.length
-      ? prisma.work.findMany({
-          where: {
-            ...publicWorkWhere,
-            id: { in: workIds },
-          },
-          select: { id: true, slug: true },
-        })
-      : Promise.resolve([]),
-    commentIds.length
-      ? prisma.comment.findMany({
-          where: {
-            deletedAt: null,
-            id: { in: commentIds },
-            parentId: null,
-            status: "visible",
-            chapter: {
-              is: {
-                archivedAt: null,
-                publishedAt: { not: null },
-                status: "published",
-              },
-            },
-            work: {
-              is: publicWorkWhere,
-            },
-          },
-          select: {
-            id: true,
-            chapter: {
-              select: { position: true },
-            },
-            work: {
-              select: { slug: true },
-            },
-          },
-        })
-      : Promise.resolve([]),
-  ]);
+  let works: PublicWorkRow[] = [];
+  let comments: VisibleCommentRow[] = [];
 
-  const workSlugById = new Map(
-    works.map((work) => [work.id, work.slug]),
-  );
-  const commentHrefById = new Map(
-    comments.flatMap((comment) =>
-      comment.chapter
-        ? [[
-            comment.id,
-            `/oku/${encodeURIComponent(comment.work.slug)}/bolum-${comment.chapter.position}#yorum-${comment.id}`,
-          ] as const]
-        : [],
-    ),
-  );
+  if (workIds.length) {
+    works = await prisma.work.findMany({
+      where: {
+        ...publicWorkWhere,
+        id: { in: workIds },
+      },
+      select: { id: true, slug: true },
+    });
+  }
 
-  const writerSubmissionIds =
-    input.scope === "default" && submissionIds.length
-      ? new Set(
-          (
-            await prisma.publisherSubmission.findMany({
-              where: {
-                archivedAt: null,
-                authorId: input.userId,
-                id: { in: submissionIds },
-              },
-              select: { id: true },
-            })
-          ).map((submission) => submission.id),
-        )
-      : new Set<string>();
+  if (commentIds.length) {
+    comments = await prisma.comment.findMany({
+      where: {
+        deletedAt: null,
+        id: { in: commentIds },
+        parentId: null,
+        status: "visible",
+        chapter: {
+          is: {
+            archivedAt: null,
+            publishedAt: { not: null },
+            status: "published",
+          },
+        },
+        work: {
+          is: publicWorkWhere,
+        },
+      },
+      select: {
+        id: true,
+        chapter: {
+          select: { position: true },
+        },
+        work: {
+          select: { slug: true },
+        },
+      },
+    });
+  }
 
-  let publisherSubmissionIdSet = new Set<string>();
-  let publisherEditorRequestIdSet = new Set<string>();
+  const workSlugById = new Map<string, string>();
+  for (const work of works) {
+    workSlugById.set(work.id, work.slug);
+  }
+
+  const commentHrefById = new Map<string, string>();
+  for (const comment of comments) {
+    if (!comment.chapter) continue;
+
+    commentHrefById.set(
+      comment.id,
+      `/oku/${encodeURIComponent(comment.work.slug)}/bolum-${comment.chapter.position}#yorum-${comment.id}`,
+    );
+  }
+
+  const writerSubmissionIds = new Set<string>();
+
+  if (input.scope === "default" && submissionIds.length) {
+    const submissions: IdRow[] =
+      await prisma.publisherSubmission.findMany({
+        where: {
+          archivedAt: null,
+          authorId: input.userId,
+          id: { in: submissionIds },
+        },
+        select: { id: true },
+      });
+
+    for (const submission of submissions) {
+      writerSubmissionIds.add(submission.id);
+    }
+  }
+
+  const publisherSubmissionIdSet = new Set<string>();
+  const publisherEditorRequestIdSet = new Set<string>();
 
   if (
     input.scope === "publisher" &&
@@ -137,54 +172,58 @@ export async function resolveNotificationTargets(input: {
         active: true,
         userId: input.userId,
         publisher: {
-          active: true,
-          archivedAt: null,
+          is: {
+            active: true,
+            archivedAt: null,
+          },
         },
       },
       select: { publisherId: true },
     });
 
     if (membership) {
-      const [submissions, editorRequests] = await Promise.all([
-        submissionIds.length
-          ? prisma.publisherSubmission.findMany({
-              where: {
-                archivedAt: null,
-                id: { in: submissionIds },
-                publisherId: membership.publisherId,
-              },
-              select: { id: true },
-            })
-          : Promise.resolve([]),
-        publisherEditorRequestIds.length
-          ? prisma.publisherEditorRequest.findMany({
-              where: {
-                id: { in: publisherEditorRequestIds },
-                publisherId: membership.publisherId,
-              },
-              select: { id: true },
-            })
-          : Promise.resolve([]),
-      ]);
+      if (submissionIds.length) {
+        const submissions: IdRow[] =
+          await prisma.publisherSubmission.findMany({
+            where: {
+              archivedAt: null,
+              id: { in: submissionIds },
+              publisherId: membership.publisherId,
+            },
+            select: { id: true },
+          });
 
-      publisherSubmissionIdSet = new Set(
-        submissions.map((submission) => submission.id),
-      );
-      publisherEditorRequestIdSet = new Set(
-        editorRequests.map((request) => request.id),
-      );
+        for (const submission of submissions) {
+          publisherSubmissionIdSet.add(submission.id);
+        }
+      }
+
+      if (publisherEditorRequestIds.length) {
+        const editorRequests: IdRow[] =
+          await prisma.publisherEditorRequest.findMany({
+            where: {
+              id: { in: publisherEditorRequestIds },
+              publisherId: membership.publisherId,
+            },
+            select: { id: true },
+          });
+
+        for (const request of editorRequests) {
+          publisherEditorRequestIdSet.add(request.id);
+        }
+      }
     }
   }
 
-  let editorSecondAssignmentByWork = new Map<
+  const editorSecondAssignmentByWork = new Map<
     string,
     "active" | "completed"
   >();
-  let editorRecommendationWorkIds = new Set<string>();
+  const editorRecommendationWorkIds = new Set<string>();
 
   if (input.scope === "editor" && workIds.length) {
-    const [assignments, recommendations] = await Promise.all([
-      prisma.editorReviewAssignment.findMany({
+    const assignments: EditorAssignmentRow[] =
+      await prisma.editorReviewAssignment.findMany({
         where: {
           editorId: input.userId,
           stage: "second",
@@ -194,33 +233,37 @@ export async function resolveNotificationTargets(input: {
           status: true,
           workId: true,
         },
-      }),
-      prisma.editorRecommendation.findMany({
+      });
+
+    const recommendations: EditorRecommendationRow[] =
+      await prisma.editorRecommendation.findMany({
         where: {
           recipientEditorId: input.userId,
           workId: { in: workIds },
         },
         select: { workId: true },
-      }),
-    ]);
+      });
 
-    editorSecondAssignmentByWork = new Map(
-      assignments.flatMap((assignment) => {
-        if (assignment.status === "completed") {
-          return [[assignment.workId, "completed"] as const];
-        }
-        if (
-          assignment.status === "assigned" ||
-          assignment.status === "in_progress"
-        ) {
-          return [[assignment.workId, "active"] as const];
-        }
-        return [];
-      }),
-    );
-    editorRecommendationWorkIds = new Set(
-      recommendations.map((recommendation) => recommendation.workId),
-    );
+    for (const assignment of assignments) {
+      if (assignment.status === "completed") {
+        editorSecondAssignmentByWork.set(
+          assignment.workId,
+          "completed",
+        );
+      } else if (
+        assignment.status === "assigned" ||
+        assignment.status === "in_progress"
+      ) {
+        editorSecondAssignmentByWork.set(
+          assignment.workId,
+          "active",
+        );
+      }
+    }
+
+    for (const recommendation of recommendations) {
+      editorRecommendationWorkIds.add(recommendation.workId);
+    }
   }
 
   const targets = new Map<string, string>();

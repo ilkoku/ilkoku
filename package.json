@@ -8,7 +8,7 @@
     "build:ci": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:security": "node --test scripts/security-contract.test.mjs scripts/security-contract-lifecycle.test.mjs scripts/security-contract-notifications.test.mjs scripts/security-contract-dead-surfaces.test.mjs"
+    "test:security": "node --test scripts/security-contract.test.mjs scripts/security-contract-lifecycle.test.mjs scripts/security-contract-notifications.test.mjs scripts/security-contract-residual-surfaces.test.mjs scripts/security-contract-dead-surfaces.test.mjs"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "7.9.1",

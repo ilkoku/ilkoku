@@ -397,24 +397,6 @@ export async function createPublisherDiscoveryShare(input: {
       });
 
     if (recentActorShareCount >= EMAIL_SHARE_BURST_LIMIT) {
-      await transaction.auditLog.create({
-        data: {
-          action: "publisher_discovery_email_share_rate_limited",
-          actorId: input.userId,
-          entityId: membership.publisherId,
-          entityType: "Publisher",
-          metadata: JSON.stringify({
-            entityKind: input.entityKind,
-            limit: EMAIL_SHARE_BURST_LIMIT,
-            publisherId: membership.publisherId,
-            reason: "actor_burst",
-            recipientDomain,
-            windowMinutes:
-              EMAIL_SHARE_BURST_WINDOW_MS / 60_000,
-          }),
-        },
-      });
-
       return { status: "rate_limited" as const };
     }
 
@@ -430,23 +412,6 @@ export async function createPublisherDiscoveryShare(input: {
       });
 
     if (recentRecipientShare) {
-      await transaction.auditLog.create({
-        data: {
-          action: "publisher_discovery_email_share_rate_limited",
-          actorId: input.userId,
-          entityId: membership.publisherId,
-          entityType: "Publisher",
-          metadata: JSON.stringify({
-            cooldownMinutes:
-              EMAIL_SHARE_RECIPIENT_COOLDOWN_MS / 60_000,
-            entityKind: input.entityKind,
-            publisherId: membership.publisherId,
-            reason: "recipient_cooldown",
-            recipientDomain,
-          }),
-        },
-      });
-
       return { status: "recipient_rate_limited" as const };
     }
 

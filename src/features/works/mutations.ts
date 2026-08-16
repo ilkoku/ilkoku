@@ -198,17 +198,13 @@ export async function publishWork(
 
   await saveChapterDraft(authorId, input);
 
-  await worksRepository.publishChapter(
-    authorId,
-    input.chapterId,
-  );
-
   const {
     publicationEvent,
     work: publishedWork,
   } = await publishWorkWithEvent(
     authorId,
     input.workId,
+    input.chapterId,
   );
 
   try {

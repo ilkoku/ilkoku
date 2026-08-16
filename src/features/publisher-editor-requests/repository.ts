@@ -6,15 +6,186 @@ import {
   isPublisherAdminReadOnlyMembership,
 } from "@/features/publisher-workspace/repository";
 import { hasPublisherPermission } from "@/features/publisher-workspace/permissions";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const activeRequestStatuses = ["waiting", "in_progress"] as const;
+
+const eligiblePublisherEditorWorkWhere = {
+  ...completedPublishedWorkWhere,
+  author: {
+    is: {
+      deletedAt: null,
+      role: "writer",
+      status: "active",
+    },
+  },
+} satisfies Prisma.WorkWhereInput;
+
+const requestRecordSelect = {
+  assignedEditorId: true,
+  compensationEligible: true,
+  completedAt: true,
+  createdAt: true,
+  id: true,
+  publisherId: true,
+  requestNote: true,
+  requestedById: true,
+  status: true,
+  workId: true,
+} as const;
+
+type LockedPublisherEditorRequest = {
+  assignedEditorId: string | null;
+  compensationEligible: boolean;
+  id: string;
+  publisherId: string;
+  requestedById: string;
+  status: "waiting" | "in_progress" | "completed" | "cancelled";
+  workId: string;
+};
 
 function personName(user: {
   displayName: string | null;
   fullName: string;
 }) {
   return user.displayName?.trim() || user.fullName.trim();
+}
+
+async function lockPublisherEditorRequest(
+  transaction: Prisma.TransactionClient,
+  requestId: string,
+) {
+  const rows = await transaction.$queryRaw<LockedPublisherEditorRequest[]>`
+    SELECT
+      id,
+      publisherId,
+      workId,
+      requestedById,
+      assignedEditorId,
+      compensationEligible,
+      status
+    FROM PublisherEditorRequest
+    WHERE id = ${requestId}
+    LIMIT 1
+    FOR UPDATE
+  `;
+
+  return rows[0] ?? null;
+}
+
+async function lockActiveEditor(
+  transaction: Prisma.TransactionClient,
+  editorId: string,
+) {
+  const rows = await transaction.$queryRaw<Array<{ id: string }>>`
+    SELECT id
+    FROM User
+    WHERE id = ${editorId}
+      AND deletedAt IS NULL
+      AND role = 'editor'
+      AND status = 'active'
+    LIMIT 1
+    FOR UPDATE
+  `;
+
+  return rows[0] ?? null;
+}
+
+async function lockAndValidateEligibleWork(
+  transaction: Prisma.TransactionClient,
+  workId: string,
+) {
+  const workRows = await transaction.$queryRaw<
+    Array<{ authorId: string; id: string }>
+  >`
+    SELECT id, authorId
+    FROM Work
+    WHERE id = ${workId}
+    LIMIT 1
+    FOR UPDATE
+  `;
+
+  const lockedWork = workRows[0];
+  if (!lockedWork) return false;
+
+  await transaction.$queryRaw<Array<{ id: string }>>`
+    SELECT id
+    FROM Chapter
+    WHERE workId = ${workId}
+    ORDER BY id
+    FOR UPDATE
+  `;
+
+  const authorRows = await transaction.$queryRaw<Array<{ id: string }>>`
+    SELECT id
+    FROM User
+    WHERE id = ${lockedWork.authorId}
+      AND deletedAt IS NULL
+      AND role = 'writer'
+      AND status = 'active'
+    LIMIT 1
+    FOR UPDATE
+  `;
+
+  if (!authorRows[0]) return false;
+
+  const eligible = await transaction.work.findFirst({
+    where: {
+      ...eligiblePublisherEditorWorkWhere,
+      id: workId,
+    },
+    select: { id: true },
+  });
+
+  return Boolean(eligible);
+}
+
+async function cancelLockedIneligibleRequest(
+  transaction: Prisma.TransactionClient,
+  request: LockedPublisherEditorRequest,
+  actorId: string,
+) {
+  const updated = await transaction.publisherEditorRequest.updateMany({
+    where: {
+      id: request.id,
+      status: { in: [...activeRequestStatuses] },
+    },
+    data: {
+      activeKey: null,
+      status: "cancelled",
+    },
+  });
+
+  if (updated.count !== 1) {
+    throw new Error("PUBLISHER_EDITOR_REQUEST_STATE_CHANGED");
+  }
+
+  await transaction.notification.create({
+    data: {
+      message:
+        "Editör talebine bağlı eser artık yayınevi editör incelemesi için uygun olmadığı için talep kapatıldı.",
+      relatedEntityId: request.id,
+      relatedEntityType: "publisher_editor_request",
+      title: "Editör talebi kapatıldı",
+      type: "system",
+      userId: request.requestedById,
+    },
+  });
+
+  await transaction.auditLog.create({
+    data: {
+      action: "work_status_changed",
+      actorId,
+      entityId: request.workId,
+      entityType: "Work",
+      metadata: JSON.stringify({
+        publisherEditorRequestId: request.id,
+        publisherId: request.publisherId,
+        source: "publisher_editor_request_auto_cancelled_ineligible",
+      }),
+    },
+  });
 }
 
 export type PublisherEditorRequestListItem = {
@@ -203,22 +374,18 @@ export async function getPublisherEditorRequestsForMember(userId: string) {
     where: { publisherId: membership.publisherId },
     orderBy: { createdAt: "desc" },
     take: 100,
-    select: {
-      assignedEditorId: true,
-      compensationEligible: true,
-      completedAt: true,
-      createdAt: true,
-      id: true,
-      publisherId: true,
-      requestNote: true,
-      requestedById: true,
-      status: true,
-      workId: true,
-    },
+    select: requestRecordSelect,
   });
 
   return {
     adminReadOnly: isPublisherAdminReadOnlyMembership(membership),
+    canCancelWaitingRequests:
+      !isPublisherAdminReadOnlyMembership(membership) &&
+      hasPublisherPermission(
+        membership.role,
+        "request_editor_review",
+        membership.permissionOverrides,
+      ),
     companyName: membership.publisher.companyName,
     items: await hydrateRequests(records),
   };
@@ -250,14 +417,7 @@ export async function createPublisherEditorRequest(input: {
 
   const work = await prisma.work.findFirst({
     where: {
-      ...completedPublishedWorkWhere,
-      author: {
-        is: {
-          deletedAt: null,
-          role: "writer",
-          status: "active",
-        },
-      },
+      ...eligiblePublisherEditorWorkWhere,
       id: input.workId,
     },
     select: {
@@ -286,6 +446,13 @@ export async function createPublisherEditorRequest(input: {
 
   try {
     const request = await prisma.$transaction(async (transaction) => {
+      const eligible = await lockAndValidateEligibleWork(
+        transaction,
+        work.id,
+      );
+
+      if (!eligible) return null;
+
       const created = await transaction.publisherEditorRequest.create({
         data: {
           activeKey,
@@ -316,6 +483,10 @@ export async function createPublisherEditorRequest(input: {
       return created;
     });
 
+    if (!request) {
+      return { status: "invalid_work" as const };
+    }
+
     return {
       requestId: request.id,
       status: "created" as const,
@@ -337,6 +508,93 @@ export async function createPublisherEditorRequest(input: {
   }
 }
 
+export async function cancelPublisherEditorRequest(input: {
+  requestId: string;
+  userId: string;
+}) {
+  const membership = await getPublisherMembership(input.userId);
+
+  if (
+    !membership ||
+    isPublisherAdminReadOnlyMembership(membership) ||
+    !hasPublisherPermission(
+      membership.role,
+      "request_editor_review",
+      membership.permissionOverrides,
+    )
+  ) {
+    return { status: "forbidden" as const };
+  }
+
+  return prisma.$transaction(async (transaction) => {
+    const request = await lockPublisherEditorRequest(
+      transaction,
+      input.requestId,
+    );
+
+    if (!request || request.publisherId !== membership.publisherId) {
+      return { status: "forbidden" as const };
+    }
+
+    if (
+      request.status !== "waiting" ||
+      request.assignedEditorId !== null
+    ) {
+      return { status: "not_cancellable" as const };
+    }
+
+    const updated = await transaction.publisherEditorRequest.updateMany({
+      where: {
+        assignedEditorId: null,
+        id: request.id,
+        publisherId: membership.publisherId,
+        status: "waiting",
+      },
+      data: {
+        activeKey: null,
+        status: "cancelled",
+      },
+    });
+
+    if (updated.count !== 1) {
+      return { status: "not_cancellable" as const };
+    }
+
+    await transaction.auditLog.create({
+      data: {
+        action: "work_status_changed",
+        actorId: input.userId,
+        entityId: request.workId,
+        entityType: "Work",
+        metadata: JSON.stringify({
+          publisherEditorRequestId: request.id,
+          publisherId: request.publisherId,
+          source: "publisher_editor_request_cancelled",
+        }),
+      },
+    });
+
+    if (request.requestedById !== input.userId) {
+      await transaction.notification.create({
+        data: {
+          message:
+            "Açtığınız yayınevi editör talebi, yayınevinizde yetkili bir ekip üyesi tarafından iptal edildi.",
+          relatedEntityId: request.id,
+          relatedEntityType: "publisher_editor_request",
+          title: "Editör talebi iptal edildi",
+          type: "system",
+          userId: request.requestedById,
+        },
+      });
+    }
+
+    return {
+      requestId: request.id,
+      status: "cancelled" as const,
+    };
+  });
+}
+
 export async function getEditorPublisherRequestLists(editorId: string) {
   const [openRecords, activeRecords, completedRecords] = await Promise.all([
     prisma.publisherEditorRequest.findMany({
@@ -346,18 +604,7 @@ export async function getEditorPublisherRequestLists(editorId: string) {
       },
       orderBy: { createdAt: "asc" },
       take: 100,
-      select: {
-        assignedEditorId: true,
-        compensationEligible: true,
-        completedAt: true,
-        createdAt: true,
-        id: true,
-        publisherId: true,
-        requestNote: true,
-        requestedById: true,
-        status: true,
-        workId: true,
-      },
+      select: requestRecordSelect,
     }),
     prisma.publisherEditorRequest.findMany({
       where: {
@@ -366,18 +613,7 @@ export async function getEditorPublisherRequestLists(editorId: string) {
       },
       orderBy: { claimedAt: "desc" },
       take: 100,
-      select: {
-        assignedEditorId: true,
-        compensationEligible: true,
-        completedAt: true,
-        createdAt: true,
-        id: true,
-        publisherId: true,
-        requestNote: true,
-        requestedById: true,
-        status: true,
-        workId: true,
-      },
+      select: requestRecordSelect,
     }),
     prisma.publisherEditorRequest.findMany({
       where: {
@@ -386,18 +622,7 @@ export async function getEditorPublisherRequestLists(editorId: string) {
       },
       orderBy: { completedAt: "desc" },
       take: 100,
-      select: {
-        assignedEditorId: true,
-        compensationEligible: true,
-        completedAt: true,
-        createdAt: true,
-        id: true,
-        publisherId: true,
-        requestNote: true,
-        requestedById: true,
-        status: true,
-        workId: true,
-      },
+      select: requestRecordSelect,
     }),
   ]);
 
@@ -414,36 +639,44 @@ export async function claimPublisherEditorRequest(input: {
   editorId: string;
   requestId: string;
 }) {
-  const editor = await prisma.user.findFirst({
-    where: {
-      deletedAt: null,
-      id: input.editorId,
-      role: "editor",
-      status: "active",
-    },
-    select: { id: true },
-  });
-
-  if (!editor) return { status: "forbidden" as const };
-
   const now = new Date();
 
-  const result = await prisma.$transaction(async (transaction) => {
-    const request = await transaction.publisherEditorRequest.findFirst({
-      where: {
-        assignedEditorId: null,
-        id: input.requestId,
-        status: "waiting",
-      },
-      select: {
-        id: true,
-        publisherId: true,
-        requestedById: true,
-        workId: true,
-      },
-    });
+  return prisma.$transaction(async (transaction) => {
+    const request = await lockPublisherEditorRequest(
+      transaction,
+      input.requestId,
+    );
 
-    if (!request) return null;
+    if (
+      !request ||
+      request.assignedEditorId !== null ||
+      request.status !== "waiting"
+    ) {
+      return { status: "already_claimed" as const };
+    }
+
+    const eligible = await lockAndValidateEligibleWork(
+      transaction,
+      request.workId,
+    );
+
+    if (!eligible) {
+      await cancelLockedIneligibleRequest(
+        transaction,
+        request,
+        input.editorId,
+      );
+      return { status: "work_unavailable" as const };
+    }
+
+    const editor = await lockActiveEditor(
+      transaction,
+      input.editorId,
+    );
+
+    if (!editor) {
+      return { status: "forbidden" as const };
+    }
 
     const updated = await transaction.publisherEditorRequest.updateMany({
       where: {
@@ -459,7 +692,9 @@ export async function claimPublisherEditorRequest(input: {
       },
     });
 
-    if (updated.count !== 1) return null;
+    if (updated.count !== 1) {
+      throw new Error("PUBLISHER_EDITOR_REQUEST_STATE_CHANGED");
+    }
 
     await transaction.notification.create({
       data: {
@@ -487,12 +722,11 @@ export async function claimPublisherEditorRequest(input: {
       },
     });
 
-    return request;
+    return {
+      requestId: request.id,
+      status: "claimed" as const,
+    };
   });
-
-  return result
-    ? { requestId: result.id, status: "claimed" as const }
-    : { status: "already_claimed" as const };
 }
 
 function validateReview(input: {
@@ -521,18 +755,7 @@ export async function getEditorPublisherRequestDetail(
       id: requestId,
       status: { in: ["in_progress", "completed"] },
     },
-    select: {
-      assignedEditorId: true,
-      compensationEligible: true,
-      completedAt: true,
-      createdAt: true,
-      id: true,
-      publisherId: true,
-      requestNote: true,
-      requestedById: true,
-      status: true,
-      workId: true,
-    },
+    select: requestRecordSelect,
   });
 
   if (!request) return null;
@@ -551,34 +774,61 @@ export async function savePublisherEditorReviewDraft(input: {
   const values = validateReview(input);
   if (!values) return { status: "invalid_review" as const };
 
-  const request = await prisma.publisherEditorRequest.findFirst({
-    where: {
-      assignedEditorId: input.editorId,
-      id: input.requestId,
-      status: "in_progress",
-    },
-    select: { id: true },
+  return prisma.$transaction(async (transaction) => {
+    const request = await lockPublisherEditorRequest(
+      transaction,
+      input.requestId,
+    );
+
+    if (
+      !request ||
+      request.assignedEditorId !== input.editorId ||
+      request.status !== "in_progress"
+    ) {
+      return { status: "forbidden" as const };
+    }
+
+    const eligible = await lockAndValidateEligibleWork(
+      transaction,
+      request.workId,
+    );
+
+    if (!eligible) {
+      await cancelLockedIneligibleRequest(
+        transaction,
+        request,
+        input.editorId,
+      );
+      return { status: "work_unavailable" as const };
+    }
+
+    const editor = await lockActiveEditor(
+      transaction,
+      input.editorId,
+    );
+
+    if (!editor) {
+      return { status: "forbidden" as const };
+    }
+
+    await transaction.publisherEditorReview.upsert({
+      where: { requestId: request.id },
+      create: {
+        ...values,
+        editorId: input.editorId,
+        requestId: request.id,
+        status: "draft",
+      },
+      update: {
+        ...values,
+        completedAt: null,
+        editorId: input.editorId,
+        status: "draft",
+      },
+    });
+
+    return { status: "saved" as const };
   });
-
-  if (!request) return { status: "forbidden" as const };
-
-  await prisma.publisherEditorReview.upsert({
-    where: { requestId: request.id },
-    create: {
-      ...values,
-      editorId: input.editorId,
-      requestId: request.id,
-      status: "draft",
-    },
-    update: {
-      ...values,
-      completedAt: null,
-      editorId: input.editorId,
-      status: "draft",
-    },
-  });
-
-  return { status: "saved" as const };
 }
 
 export async function completePublisherEditorReview(input: {
@@ -593,22 +843,42 @@ export async function completePublisherEditorReview(input: {
 
   const completedAt = new Date();
 
-  const result = await prisma.$transaction(async (transaction) => {
-    const request = await transaction.publisherEditorRequest.findFirst({
-      where: {
-        assignedEditorId: input.editorId,
-        id: input.requestId,
-        status: "in_progress",
-      },
-      select: {
-        id: true,
-        publisherId: true,
-        requestedById: true,
-        workId: true,
-      },
-    });
+  return prisma.$transaction(async (transaction) => {
+    const request = await lockPublisherEditorRequest(
+      transaction,
+      input.requestId,
+    );
 
-    if (!request) return null;
+    if (
+      !request ||
+      request.assignedEditorId !== input.editorId ||
+      request.status !== "in_progress"
+    ) {
+      return { status: "forbidden" as const };
+    }
+
+    const eligible = await lockAndValidateEligibleWork(
+      transaction,
+      request.workId,
+    );
+
+    if (!eligible) {
+      await cancelLockedIneligibleRequest(
+        transaction,
+        request,
+        input.editorId,
+      );
+      return { status: "work_unavailable" as const };
+    }
+
+    const editor = await lockActiveEditor(
+      transaction,
+      input.editorId,
+    );
+
+    if (!editor) {
+      return { status: "forbidden" as const };
+    }
 
     await transaction.publisherEditorReview.upsert({
       where: { requestId: request.id },
@@ -663,7 +933,7 @@ export async function completePublisherEditorReview(input: {
         entityId: request.workId,
         entityType: "Work",
         metadata: JSON.stringify({
-          compensationEligible: true,
+          compensationEligible: request.compensationEligible,
           publisherEditorRequestId: request.id,
           publisherId: request.publisherId,
           source: "publisher_editor_request_completed",
@@ -671,10 +941,9 @@ export async function completePublisherEditorReview(input: {
       },
     });
 
-    return request;
+    return {
+      requestId: request.id,
+      status: "completed" as const,
+    };
   });
-
-  return result
-    ? { requestId: result.id, status: "completed" as const }
-    : { status: "forbidden" as const };
 }

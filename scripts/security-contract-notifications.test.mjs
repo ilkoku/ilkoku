@@ -43,6 +43,9 @@ test("publisher notification targets validate publisher ownership before deep li
   assertContains(text, 'href = "/yayinevi/editor-talepleri"', "publisher notification resolver");
   assertContains(text, "publisherSubmissionIdSet.has(entityId)", "publisher notification resolver");
   assertContains(text, "publisherId: membership.publisherId", "publisher notification resolver");
+  assertContains(text, 'notification.type === "publisher_discovery_shared"', "publisher share notification resolver");
+  assertContains(text, 'href = "/yayinevi/paylasilanlar"', "publisher share notification resolver");
+  assertNotContains(text, 'notification.type === "publisher_discovery_share"', "publisher share notification resolver");
 });
 
 test("writer submission notifications only link to submissions owned by that writer", () => {

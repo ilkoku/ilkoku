@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AppShell } from "@/components/layout/AppShell";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { requirePublisherAnyDiscoveryAccess } from "@/features/publisher-discovery/access";
+import { PublisherEditorCancelForm } from "@/features/publisher-editor-requests/components/PublisherEditorCancelForm";
 import { getPublisherEditorRequestsForMember } from "@/features/publisher-editor-requests/repository";
 import "@/features/publisher-editor-requests/publisher-editor-requests.css";
 
@@ -108,6 +109,9 @@ export default async function PublisherEditorRequestsPage() {
                   >
                     Eser sayfası
                   </Link>
+                  {item.status === "waiting" && data.canCancelWaitingRequests ? (
+                    <PublisherEditorCancelForm requestId={item.id} />
+                  ) : null}
                 </div>
               </article>
             ))}

@@ -67,6 +67,9 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
         </nav>
 
         <div className="content-sidebar__footer">
+          {isAdmin && (
+            <Link href="/sistem-yonetimi">Sistem Yönetimine Dön</Link>
+          )}
           <Link href="/">Siteye Dön</Link>
           <Link href="/hesabim">Hesabım</Link>
         </div>

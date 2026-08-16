@@ -5,13 +5,15 @@ import {
 } from "./permissions";
 import {
   getPublisherMembership,
-  getPublisherFiles,
   getPublisherInvitations,
   getPublisherMembers,
   getPublisherNotifications,
   getPublisherSubmissionForMember,
   getPublisherWorkspaceRecords,
 } from "./repository";
+import {
+  getLegacyPublisherFiles,
+} from "@/features/publisher-submissions/legacy-security";
 import type {
   PublisherSubmissionDetail,
   PublisherFileData,
@@ -85,7 +87,7 @@ export const getPublisherWorkspace = cache(
 );
 
 export async function getPublisherFileCenter(userId: string): Promise<PublisherFileData[] | null> {
-  const files = await getPublisherFiles(userId);
+  const files = await getLegacyPublisherFiles(userId);
   if (!files) return null;
   return files.map((file) => ({
     category: file.category,
@@ -197,6 +199,27 @@ export const getPublisherSubmissionDetail = cache(
       return null;
     }
 
+    const canViewFiles = hasPublisherPermission(
+      membership.role,
+      "view_files",
+      membership.permissionOverrides,
+    );
+    const canDownloadFiles = hasPublisherPermission(
+      membership.role,
+      "download_files",
+      membership.permissionOverrides,
+    );
+    const canViewAuthorizedPassport = hasPublisherPermission(
+      membership.role,
+      "view_authorized_passport",
+      membership.permissionOverrides,
+    );
+    const canViewAuthorizedContent = hasPublisherPermission(
+      membership.role,
+      "view_authorized_content",
+      membership.permissionOverrides,
+    );
+
     return {
       author: { displayName: displayName(submission.author), email: submission.author.email, id: submission.author.id },
       contract: submission.contract ? {
@@ -228,17 +251,19 @@ export const getPublisherSubmissionDetail = cache(
           type: "submitted" as const,
         },
       ].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-      files: submission.files.map((file) => ({
-        category: file.category,
-        createdAt: file.createdAt.toISOString(),
-        fileName: file.fileName,
-        id: file.id,
-        mimeType: file.mimeType,
-        sizeBytes: file.sizeBytes.toString(),
-        submissionId: submission.id,
-        uploaderName: file.uploadedBy ? displayName(file.uploadedBy) : null,
-        workTitle: submission.work.title,
-      })),
+      files: canViewFiles
+        ? submission.files.map((file) => ({
+            category: file.category,
+            createdAt: file.createdAt.toISOString(),
+            fileName: file.fileName,
+            id: file.id,
+            mimeType: file.mimeType,
+            sizeBytes: file.sizeBytes.toString(),
+            submissionId: submission.id,
+            uploaderName: file.uploadedBy ? displayName(file.uploadedBy) : null,
+            workTitle: submission.work.title,
+          }))
+        : [],
       id: submission.id,
       membershipRole: membership.role,
       permissions: {
@@ -252,6 +277,7 @@ export const getPublisherSubmissionDetail = cache(
           "decide_submission",
           membership.permissionOverrides,
         ),
+        downloadFiles: canDownloadFiles,
         manageContract: hasPublisherPermission(
           membership.role,
           "manage_contract",
@@ -262,6 +288,9 @@ export const getPublisherSubmissionDetail = cache(
           "manage_publication_plan",
           membership.permissionOverrides,
         ),
+        viewAuthorizedContent: canViewAuthorizedContent,
+        viewAuthorizedPassport: canViewAuthorizedPassport,
+        viewFiles: canViewFiles,
       },
       publisher: { companyName: submission.publisher.companyName, id: submission.publisher.id },
       publicationPlan: submission.publicationPlan ? {
@@ -282,14 +311,16 @@ export const getPublisherSubmissionDetail = cache(
         chapterCount: submission.work.chapters.length,
         description: submission.work.description,
         editorReviewStatus: submission.work.editorReviewStatus,
-        feedback: submission.work.editorFeedback.map((feedback) => ({
-          category: feedback.category,
-          content: feedback.content,
-          editorName: displayName(feedback.editor),
-          id: feedback.id,
-          stage: feedback.assignment?.stage ?? null,
-          title: feedback.title,
-        })),
+        feedback: canViewAuthorizedContent
+          ? submission.work.editorFeedback.map((feedback) => ({
+              category: feedback.category,
+              content: feedback.content,
+              editorName: displayName(feedback.editor),
+              id: feedback.id,
+              stage: feedback.assignment?.stage ?? null,
+              title: feedback.title,
+            }))
+          : [],
         genre: submission.work.genre,
         id: submission.work.id,
         slug: submission.work.slug,

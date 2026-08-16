@@ -109,6 +109,36 @@ test("all public password reset server-action surfaces delegate writes to the ca
   );
 });
 
+test("profile password changes serialize on live account and current session state", () => {
+  const state = source("src/features/profile/password-change-state.ts");
+  const action = source("src/features/profile/password-security-actions.ts");
+  const userLock = state.indexOf("FROM User");
+  const sessionLock = state.indexOf("FROM Session");
+  const passwordVerification = state.indexOf("verifyPassword(input.currentPassword, user.passwordHash)");
+
+  assert.ok(userLock >= 0, "profile password change must lock User");
+  assert.ok(sessionLock > userLock, "profile password change must lock User before Session");
+  assert.ok(
+    passwordVerification > sessionLock,
+    "current password must be verified only after live User and Session state are locked",
+  );
+  assertContains(state, 'user.status === "active"', "profile password account eligibility");
+  assertContains(state, "!Boolean(user.isBanned)", "profile password banned-account guard");
+  assertContains(state, "!user.deletedAt", "profile password deleted-account guard");
+  assertContains(state, "transaction.passwordResetToken.deleteMany", "profile password reset-token revocation");
+  assertContains(state, "transaction.session.deleteMany", "profile password other-session revocation");
+  assertContains(state, 'source: "profile"', "profile password audit source");
+  assertContains(action, "changeProfilePassword({", "profile password action delegation");
+  assert.ok(
+    !action.includes('from "@/lib/prisma"'),
+    "profile password action must not own credential database writes",
+  );
+  assert.ok(
+    !action.includes("verifyPassword("),
+    "profile password action must not verify a stale password outside the locked state boundary",
+  );
+});
+
 test("role selection UI is limited to the same self-service role sources as the write boundary", () => {
   const page = source("src/app/rol-secimi/page.tsx");
   const actions = source("src/features/auth/actions.ts");

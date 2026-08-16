@@ -1,19 +1,31 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { validateStoredPublisherApplication } from "@/features/publisher-applications/schema";
+import type { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { allocatePublicId } from "@/lib/public-id";
-import { prisma } from "@/lib/prisma";
 import {
   sendRoleRequestDecisionEmail,
 } from "@/lib/email/publisher-emails";
-import { validateStoredPublisherApplication } from "@/features/publisher-applications/schema";
+import { prisma } from "@/lib/prisma";
+import { allocatePublicId } from "@/lib/public-id";
+import { revalidatePath } from "next/cache";
 
 export interface RoleRequestActionState {
   code?: string;
   message: string;
   status: "idle" | "success" | "error";
 }
+
+type LockedUserRow = {
+  deletedAt: Date | null;
+  id: string;
+  role: string;
+  status: string;
+};
+
+type LockedMembershipRow = {
+  publisherId: string;
+};
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -23,6 +35,106 @@ async function requireAdmin() {
   }
 
   return user;
+}
+
+async function lockLiveRoleReviewContext(
+  transaction: Prisma.TransactionClient,
+  actorId: string,
+  requestId: string,
+) {
+  const requestHint = await transaction.roleRequest.findUnique({
+    where: { id: requestId },
+    select: { userId: true },
+  });
+
+  if (!requestHint) {
+    throw new Error("ROLE_REQUEST_NOT_FOUND");
+  }
+
+  const userIds = Array.from(new Set([actorId, requestHint.userId])).sort();
+  const lockedUsers: LockedUserRow[] = [];
+
+  for (const userId of userIds) {
+    const rows = await transaction.$queryRaw<LockedUserRow[]>`
+      SELECT id, role, status, deletedAt
+      FROM User
+      WHERE id = ${userId}
+      LIMIT 1
+      FOR UPDATE
+    `;
+
+    if (rows[0]) {
+      lockedUsers.push(rows[0]);
+    }
+  }
+
+  const actor = lockedUsers.find((row) => row.id === actorId) ?? null;
+  const target = lockedUsers.find((row) => row.id === requestHint.userId) ?? null;
+
+  if (
+    !actor ||
+    actor.role !== "admin" ||
+    actor.status !== "active" ||
+    actor.deletedAt !== null
+  ) {
+    throw new Error("ADMIN_UNAUTHORIZED");
+  }
+
+  if (!target) {
+    throw new Error("ROLE_REQUEST_NOT_FOUND");
+  }
+
+  const lockedRequest = await transaction.$queryRaw<Array<{ id: string }>>`
+    SELECT id
+    FROM RoleRequest
+    WHERE id = ${requestId}
+    LIMIT 1
+    FOR UPDATE
+  `;
+
+  if (!lockedRequest[0]) {
+    throw new Error("ROLE_REQUEST_NOT_FOUND");
+  }
+
+  const applicationHint = await transaction.roleRequest.findUnique({
+    where: { id: requestId },
+    select: {
+      publisherApplication: {
+        select: { id: true },
+      },
+    },
+  });
+
+  if (applicationHint?.publisherApplication?.id) {
+    await transaction.$queryRaw<Array<{ id: string }>>`
+      SELECT id
+      FROM PublisherApplication
+      WHERE id = ${applicationHint.publisherApplication.id}
+      LIMIT 1
+      FOR UPDATE
+    `;
+  }
+
+  const roleRequest = await transaction.roleRequest.findUnique({
+    where: { id: requestId },
+    include: {
+      publisherApplication: true,
+      user: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+
+  if (!roleRequest) {
+    throw new Error("ROLE_REQUEST_NOT_FOUND");
+  }
+
+  return {
+    roleRequest,
+    target,
+  };
 }
 
 function requestIdFrom(formData: FormData) {
@@ -88,10 +200,13 @@ function revalidateRolePages() {
   revalidatePath("/erisim-reddedildi");
 }
 
-function actionErrorMessage(code: string, decision: "approve" | "correction" | "reject") {
+function actionErrorMessage(
+  code: string,
+  decision: "approve" | "correction" | "reject",
+) {
   const messages: Record<string, string> = {
     ADMIN_PERMISSION_REQUIRED: "Bu işlem yalnızca yöneticiler tarafından yapılabilir.",
-    ADMIN_UNAUTHORIZED: "Bu işlem yalnızca yöneticiler tarafından yapılabilir.",
+    ADMIN_UNAUTHORIZED: "Bu işlem yalnızca aktif yöneticiler tarafından yapılabilir.",
     DATABASE_ERROR: "Veritabanı işlemi tamamlanamadı. Hiçbir değişiklik uygulanmadı.",
     DECISION_CONFIRMATION_REQUIRED: "Kararı uygulamadan önce teyit alanını işaretleyin.",
     INVALID_REQUEST_ROLE: "Bu başvuru yayınevi onay akışıyla işlenemez.",
@@ -111,6 +226,7 @@ function actionErrorMessage(code: string, decision: "approve" | "correction" | "
     ROLE_REQUEST_ID_REQUIRED: "İşlenecek başvuru belirlenemedi.",
     ROLE_REQUEST_NOT_FOUND: "Başvuru bulunamadı.",
     ROLE_REQUEST_NOT_PENDING: "Başvuru bulunamadı veya daha önce sonuçlandırılmış.",
+    TARGET_USER_INACTIVE: "Başvuru sahibi aktif olmadığı için rol onayı uygulanmadı.",
     UNSUPPORTED_ROLE_REQUEST: "Bu rol başvurusu mevcut ürün kurallarıyla işlenemiyor.",
   };
 
@@ -161,28 +277,22 @@ async function sendRoleRequestDecisionEmailSafely(input: {
   note?: string | null;
   requestId: string;
 }) {
-  const request =
-    await prisma.roleRequest.findUnique({
-      where: {
-        id: input.requestId,
-      },
-      select: {
-        requestedRole: true,
-        user: {
-          select: {
-            email: true,
-            fullName: true,
-          },
+  const request = await prisma.roleRequest.findUnique({
+    where: { id: input.requestId },
+    select: {
+      requestedRole: true,
+      user: {
+        select: {
+          email: true,
+          fullName: true,
         },
       },
-    });
+    },
+  });
 
   if (
     !request ||
-    (
-      request.requestedRole !== "editor" &&
-      request.requestedRole !== "publisher"
-    )
+    (request.requestedRole !== "editor" && request.requestedRole !== "publisher")
   ) {
     return;
   }
@@ -196,17 +306,11 @@ async function sendRoleRequestDecisionEmailSafely(input: {
       requestedRole: request.requestedRole,
     });
   } catch (error) {
-    console.error(
-      "ROLE_REQUEST_EMAIL_FAILED",
-      {
-        decision: input.decision,
-        error:
-          error instanceof Error
-            ? error.message
-            : "UNKNOWN_ERROR",
-        requestId: input.requestId,
-      },
-    );
+    console.error("ROLE_REQUEST_EMAIL_FAILED", {
+      decision: input.decision,
+      error: error instanceof Error ? error.message : "UNKNOWN_ERROR",
+      requestId: input.requestId,
+    });
   }
 }
 
@@ -221,27 +325,16 @@ export async function approveRoleRequestAction(
     requestId = requestIdFrom(formData);
     const reviewNote = reviewNoteFrom(formData);
     const publisherApproval = publisherApprovalFrom(formData);
-
     confirmationFrom(formData);
 
     await prisma.$transaction(async (transaction) => {
-      const roleRequest = await transaction.roleRequest.findUnique({
-        where: { id: requestId },
-        include: {
-          publisherApplication: true,
-          user: {
-            select: {
-              id: true,
-              publisherMemberships: {
-                where: { active: true },
-                select: { publisherId: true },
-              },
-            },
-          },
-        },
-      });
+      const context = await lockLiveRoleReviewContext(
+        transaction,
+        admin.id,
+        requestId,
+      );
+      const roleRequest = context.roleRequest;
 
-      if (!roleRequest) throw new Error("REQUEST_NOT_FOUND");
       if (roleRequest.status !== "pending") {
         throw new Error("REQUEST_ALREADY_REVIEWED");
       }
@@ -251,6 +344,12 @@ export async function approveRoleRequestAction(
         && roleRequest.requestedRole !== "writer"
       ) {
         throw new Error("INVALID_REQUEST_ROLE");
+      }
+      if (
+        context.target.status !== "active" ||
+        context.target.deletedAt !== null
+      ) {
+        throw new Error("TARGET_USER_INACTIVE");
       }
 
       let publisherId: string | null = null;
@@ -281,8 +380,22 @@ export async function approveRoleRequestAction(
           if (!publisherApproval.publisherId) {
             throw new Error("PUBLISHER_REQUIRED");
           }
+
+          await transaction.$queryRaw<Array<{ id: string }>>`
+            SELECT id
+            FROM Publisher
+            WHERE id = ${publisherApproval.publisherId}
+            LIMIT 1
+            FOR UPDATE
+          `;
+
           const publisher = await transaction.publisher.findFirst({
-            where: { active: true, archivedAt: null, id: publisherApproval.publisherId },
+            where: {
+              active: true,
+              archivedAt: null,
+              id: publisherApproval.publisherId,
+              verified: true,
+            },
             select: { id: true },
           });
           if (!publisher) throw new Error("PUBLISHER_NOT_FOUND");
@@ -336,20 +449,36 @@ export async function approveRoleRequestAction(
           publisherId = publisher.id;
         }
 
-        const conflictingMembership = roleRequest.user.publisherMemberships.find(
+        const memberships = await transaction.$queryRaw<LockedMembershipRow[]>`
+          SELECT publisherId
+          FROM PublisherMembership
+          WHERE userId = ${roleRequest.userId}
+            AND active = 1
+          ORDER BY id
+          FOR UPDATE
+        `;
+        const conflictingMembership = memberships.find(
           (membership) => membership.publisherId !== publisherId,
         );
         if (conflictingMembership) throw new Error("MEMBERSHIP_CONFLICT");
 
         await transaction.publisherMembership.upsert({
-          where: { publisherId_userId: { publisherId, userId: roleRequest.userId } },
+          where: {
+            publisherId_userId: {
+              publisherId,
+              userId: roleRequest.userId,
+            },
+          },
           create: {
             active: true,
             publisherId,
             role: "owner",
             userId: roleRequest.userId,
           },
-          update: { active: true, role: "owner" },
+          update: {
+            active: true,
+            role: "owner",
+          },
         });
 
         const membership = await transaction.publisherMembership.findFirst({
@@ -361,7 +490,6 @@ export async function approveRoleRequestAction(
           },
           select: { id: true },
         });
-
         if (!membership) {
           throw new Error("PUBLISHER_MEMBERSHIP_REQUIRED");
         }
@@ -377,12 +505,8 @@ export async function approveRoleRequestAction(
       }
 
       await transaction.user.update({
-        where: {
-          id: roleRequest.userId,
-        },
-        data: {
-          role: roleRequest.requestedRole,
-        },
+        where: { id: roleRequest.userId },
+        data: { role: roleRequest.requestedRole },
       });
 
       const claimedRequest = await transaction.roleRequest.updateMany({
@@ -398,7 +522,6 @@ export async function approveRoleRequestAction(
           status: "approved",
         },
       });
-
       if (claimedRequest.count !== 1) {
         throw new Error("REQUEST_ALREADY_REVIEWED");
       }
@@ -410,7 +533,10 @@ export async function approveRoleRequestAction(
           status: "pending",
           userId: roleRequest.userId,
         },
-        data: { pendingKey: null, status: "cancelled" },
+        data: {
+          pendingKey: null,
+          status: "cancelled",
+        },
       });
 
       await transaction.auditLog.create({
@@ -433,7 +559,6 @@ export async function approveRoleRequestAction(
       note: reviewNote,
       requestId,
     });
-
     revalidateRolePages();
 
     return {
@@ -462,12 +587,13 @@ export async function requestPublisherCorrectionAction(
     confirmationFrom(formData);
 
     await prisma.$transaction(async (transaction) => {
-      const roleRequest = await transaction.roleRequest.findUnique({
-        where: { id: requestId },
-        include: { publisherApplication: { select: { id: true } } },
-      });
+      const context = await lockLiveRoleReviewContext(
+        transaction,
+        admin.id,
+        requestId,
+      );
+      const roleRequest = context.roleRequest;
 
-      if (!roleRequest) throw new Error("ROLE_REQUEST_NOT_FOUND");
       if (roleRequest.status !== "pending") {
         throw new Error("ROLE_REQUEST_ALREADY_REVIEWED");
       }
@@ -485,14 +611,20 @@ export async function requestPublisherCorrectionAction(
         });
       }
 
-      await transaction.roleRequest.update({
-        where: { id: roleRequest.id },
+      const reviewed = await transaction.roleRequest.updateMany({
+        where: {
+          id: roleRequest.id,
+          status: "pending",
+        },
         data: {
           reviewNote,
           reviewedAt: new Date(),
           reviewedById: admin.id,
         },
       });
+      if (reviewed.count !== 1) {
+        throw new Error("ROLE_REQUEST_ALREADY_REVIEWED");
+      }
 
       await transaction.notification.create({
         data: {
@@ -525,7 +657,6 @@ export async function requestPublisherCorrectionAction(
       note: reviewNote,
       requestId,
     });
-
     revalidateRolePages();
 
     return {
@@ -551,31 +682,37 @@ export async function rejectRoleRequestAction(
     const admin = await requireAdmin();
     requestId = requestIdFrom(formData);
     const reviewNote = rejectionNoteFrom(formData);
-
     confirmationFrom(formData);
 
-    const roleRequest = await prisma.roleRequest.findFirst({
-      where: {
-        id: requestId,
-        status: "pending",
-      },
-      select: {
-        id: true,
-        requestedRole: true,
-        userId: true,
-      },
-    });
-
-    if (!roleRequest) {
-      throw new Error("ROLE_REQUEST_NOT_PENDING");
-    }
-
     await prisma.$transaction(async (transaction) => {
+      const context = await lockLiveRoleReviewContext(
+        transaction,
+        admin.id,
+        requestId,
+      );
+      const roleRequest = context.roleRequest;
+
+      if (roleRequest.status !== "pending") {
+        throw new Error("ROLE_REQUEST_NOT_PENDING");
+      }
+
       const updatedRequest = await transaction.roleRequest.updateMany({
-        where: { id: roleRequest.id, status: "pending" },
-        data: { pendingKey: null, reviewedAt: new Date(), reviewedById: admin.id, reviewNote, status: "rejected" },
+        where: {
+          id: roleRequest.id,
+          status: "pending",
+        },
+        data: {
+          pendingKey: null,
+          reviewedAt: new Date(),
+          reviewedById: admin.id,
+          reviewNote,
+          status: "rejected",
+        },
       });
-      if (updatedRequest.count !== 1) throw new Error("ROLE_REQUEST_ALREADY_REVIEWED");
+      if (updatedRequest.count !== 1) {
+        throw new Error("ROLE_REQUEST_ALREADY_REVIEWED");
+      }
+
       if (roleRequest.requestedRole === "publisher") {
         await transaction.publisherApplication.updateMany({
           where: { roleRequestId: roleRequest.id },
@@ -585,19 +722,28 @@ export async function rejectRoleRequestAction(
           },
         });
       }
+
       if (roleRequest.requestedRole === "editor") {
         await transaction.user.updateMany({
-          where: { id: roleRequest.userId, role: "editor_pending" },
+          where: {
+            id: roleRequest.userId,
+            role: "editor_pending",
+          },
           data: { role: "reader" },
         });
       }
+
       await transaction.auditLog.create({
         data: {
           action: "role_request_reviewed",
           actorId: admin.id,
           entityId: roleRequest.id,
           entityType: "RoleRequest",
-          metadata: JSON.stringify({ decision: "rejected", requestedRole: roleRequest.requestedRole, userId: roleRequest.userId }),
+          metadata: JSON.stringify({
+            decision: "rejected",
+            requestedRole: roleRequest.requestedRole,
+            userId: roleRequest.userId,
+          }),
         },
       });
     });
@@ -607,7 +753,6 @@ export async function rejectRoleRequestAction(
       note: reviewNote,
       requestId,
     });
-
     revalidateRolePages();
 
     return {

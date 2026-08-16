@@ -33,9 +33,11 @@ export function PublisherSubmissionDetailView({ data }: { data: PublisherSubmiss
       <nav className="publisher-submission-detail__nav" aria-label="Başvuru navigasyonu">
         <Link href="/yayinevi">← Başvuru havuzuna dön</Link>
         <Link href={`/kitap/${data.work.slug}`}>Eser sayfasını aç</Link>
-        <Link href={`/yayinevi/basvurular/${data.id}/pasaport`}>
-          Eser Pasaportu
-        </Link>
+        {data.permissions.viewAuthorizedPassport ? (
+          <Link href={`/yayinevi/basvurular/${data.id}/pasaport`}>
+            Eser Pasaportu
+          </Link>
+        ) : null}
       </nav>
 
       <section className="publisher-submission-detail__grid">
@@ -57,28 +59,36 @@ export function PublisherSubmissionDetailView({ data }: { data: PublisherSubmiss
             <p className="publisher-cover-letter">{data.coverLetter}</p>
           </Card>
 
-          <section className="publisher-reports" aria-labelledby="publisher-reports-title">
-            <header><p className="publisher-eyebrow">Editör değerlendirmeleri</p><h2 id="publisher-reports-title">Profesyonel raporlar</h2></header>
-            {data.work.feedback.length ? data.work.feedback.map((report) => (
-              <Card key={report.id}>
-                <div className="publisher-report__meta">
-                  <strong>{report.stage === "second" ? "2. Editör" : "1. Editör"}</strong>
-                  <span>{report.editorName}</span>
-                  <span>{report.category}</span>
-                </div>
-                <h3>{report.title}</h3>
-                <p>{report.content}</p>
-              </Card>
-            )) : <Card><p>Bu eser için tamamlanmış profesyonel editör raporu bulunmuyor.</p></Card>}
-          </section>
+          {data.permissions.viewAuthorizedContent ? (
+            <section className="publisher-reports" aria-labelledby="publisher-reports-title">
+              <header><p className="publisher-eyebrow">Editör değerlendirmeleri</p><h2 id="publisher-reports-title">Profesyonel raporlar</h2></header>
+              {data.work.feedback.length ? data.work.feedback.map((report) => (
+                <Card key={report.id}>
+                  <div className="publisher-report__meta">
+                    <strong>{report.stage === "second" ? "2. Editör" : "1. Editör"}</strong>
+                    <span>{report.editorName}</span>
+                    <span>{report.category}</span>
+                  </div>
+                  <h3>{report.title}</h3>
+                  <p>{report.content}</p>
+                </Card>
+              )) : <Card><p>Bu eser için tamamlanmış profesyonel editör raporu bulunmuyor.</p></Card>}
+            </section>
+          ) : null}
 
-          <section className="publisher-reports" aria-labelledby="publisher-files-title">
-            <header><p className="publisher-eyebrow">Başvuru belgeleri</p><h2 id="publisher-files-title">Dosyalar</h2></header>
-            {data.files.length ? data.files.map((file) => <Card key={file.id}>
-              <div className="publisher-report__meta"><strong>{file.fileName}</strong><span>{file.mimeType}</span><span>{file.uploaderName || "Sistem"}</span></div>
-              <a href={`/yayinevi/dosyalar/${file.id}/indir`}>Güvenli indir</a>
-            </Card>) : <Card><p>Bu başvuruya eklenmiş dosya bulunmuyor.</p></Card>}
-          </section>
+          {data.permissions.viewFiles ? (
+            <section className="publisher-reports" aria-labelledby="publisher-files-title">
+              <header><p className="publisher-eyebrow">Başvuru belgeleri</p><h2 id="publisher-files-title">Dosyalar</h2></header>
+              {data.files.length ? data.files.map((file) => <Card key={file.id}>
+                <div className="publisher-report__meta"><strong>{file.fileName}</strong><span>{file.mimeType}</span><span>{file.uploaderName || "Sistem"}</span></div>
+                {data.permissions.downloadFiles ? (
+                  <a href={`/yayinevi/dosyalar/${file.id}/indir`}>Güvenli indir</a>
+                ) : (
+                  <small>Bu dosyayı görüntüleyebilirsiniz; indirme yetkiniz bulunmuyor.</small>
+                )}
+              </Card>) : <Card><p>Bu başvuruya eklenmiş dosya bulunmuyor.</p></Card>}
+            </section>
+          ) : null}
 
           {data.status === "accepted" && (data.permissions.manageContract || data.permissions.managePublicationPlan) ? (
             <Card>

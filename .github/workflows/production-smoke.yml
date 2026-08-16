@@ -260,9 +260,17 @@ jobs:
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/okuma-guvenligi" \
               && check_redirect_route "https://ilkoku.com/admin/epostalar" "/sistem-yonetimi/epostalar" \
               && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
+              && check_protected_route "https://ilkoku.com/yayinevleri" \
+              && check_protected_route "https://ilkoku.com/bildirimler" \
+              && check_protected_route "https://ilkoku.com/yorumlarim" \
+              && check_protected_route "https://ilkoku.com/yorumlarim/rapor" \
+              && check_protected_route "https://ilkoku.com/editor/bildirimler" \
+              && check_protected_route "https://ilkoku.com/editor/yayinevi-talepleri" \
+              && check_protected_route "https://ilkoku.com/yayinevi/bildirimler" \
+              && check_protected_route "https://ilkoku.com/yayinevi/editor-talepleri" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production route'ları, sitemap/robots ve 20 ana CMS rotasının auth + noindex yüzeyi doğrulandı."
+              echo "PASS: Production public/private route paketi, bildirim yüzeyleri, writer/publisher/editor kritik rotaları, sitemap/robots ve 20 ana CMS rotası doğrulandı."
               exit 0
             fi
 

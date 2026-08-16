@@ -54,4 +54,13 @@ jobs:
         run: npm run test:security
 
       - name: Build application
-        run: npm run build:ci
+        shell: bash
+        run: |
+          set +e
+          npm run build:ci 2>&1 | tee /tmp/ilkoku-build.log
+          status=${PIPESTATUS[0]}
+          if [[ "$status" -ne 0 ]]; then
+            diagnostic="$(tail -n 80 /tmp/ilkoku-build.log | sed 's/%/%25/g; s/\r/%0D/g' | awk 'BEGIN{ORS="%0A"}{print}')"
+            echo "::error title=Production build compiler diagnostic::$diagnostic"
+            exit "$status"
+          fi

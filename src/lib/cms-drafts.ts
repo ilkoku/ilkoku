@@ -1,6 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import { isCmsStagedPayloadStrict } from "@/lib/cms-live-payload-integrity";
 import { prisma } from "@/lib/prisma";
 import type { CmsLocaleCode } from "@/lib/cms-locales";
 
@@ -24,11 +25,12 @@ type DraftRow = {
   updatedAt: Date;
 };
 
-function parsePayload<T extends Record<string, unknown>>(valueJson: string): T | null {
+function parsePayload<T extends Record<string, unknown>>(contentKey: string, valueJson: string): T | null {
   try {
     const value = JSON.parse(valueJson) as unknown;
     if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-    return value as T;
+    const payload = value as T;
+    return isCmsStagedPayloadStrict(contentKey, payload) ? payload : null;
   } catch {
     return null;
   }
@@ -65,7 +67,7 @@ export async function getCmsDraftState<T extends Record<string, unknown>>(conten
   `;
   const row = rows[0];
   if (!row) return { state: "missing" };
-  const payload = parsePayload<T>(row.valueJson);
+  const payload = parsePayload<T>(row.contentKey, row.valueJson);
   if (!payload) return { state: "corrupt", contentKey: row.contentKey, updatedAt: row.updatedAt };
   return { state: "valid", record: { contentKey: row.contentKey, payload, updatedAt: row.updatedAt } };
 }
@@ -88,7 +90,7 @@ export async function getCmsDraftsByPrefix<T extends Record<string, unknown>>(pr
   `;
   const records: CmsDraftRecord<T>[] = [];
   for (const row of rows) {
-    const payload = parsePayload<T>(row.valueJson);
+    const payload = parsePayload<T>(row.contentKey, row.valueJson);
     if (!payload) throw corruptError(row.contentKey);
     records.push({ contentKey: row.contentKey, payload, updatedAt: row.updatedAt });
   }
@@ -97,7 +99,7 @@ export async function getCmsDraftsByPrefix<T extends Record<string, unknown>>(pr
 
 export async function saveCmsDraft(userId: string, contentKey: string, payload: Record<string, unknown>) {
   const existing = await getCmsDraftState(contentKey);
-  if (existing.state === "corrupt") throw corruptError(contentKey);
+  if (existing.state === "corrupt" || !isCmsStagedPayloadStrict(contentKey, payload)) throw corruptError(contentKey);
 
   const valueJson = JSON.stringify(payload);
   await prisma.$executeRaw`

@@ -12,6 +12,21 @@ export type StoredMediaBlob = {
   base64: string;
 };
 
+export type CmsMediaAssetMetadata = {
+  id?: string;
+  title?: string;
+  url: string;
+  altText?: string;
+  kind?: string;
+  usage?: string;
+  notes?: string;
+  filename?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+  storage?: string;
+  uploadedBy?: string;
+};
+
 const MIME_KIND: Record<string, CmsMediaKind> = {
   "image/jpeg": "image",
   "image/png": "image",
@@ -69,6 +84,18 @@ export function detectAllowedMediaMime(bytes: Uint8Array): string | null {
     return "application/pdf";
   }
   return null;
+}
+
+export function parseCmsMediaAssetMetadata(valueJson: string): CmsMediaAssetMetadata | null {
+  try {
+    const value = JSON.parse(valueJson) as unknown;
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const asset = value as Record<string, unknown>;
+    if (typeof asset.url !== "string" || !asset.url.startsWith("/") || asset.url.startsWith("//")) return null;
+    return { ...asset, url: asset.url } as CmsMediaAssetMetadata;
+  } catch {
+    return null;
+  }
 }
 
 export function parseStoredMediaBlob(valueJson: string): StoredMediaBlob | null {

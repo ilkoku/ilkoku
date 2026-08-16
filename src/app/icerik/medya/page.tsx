@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CopyMediaUrlButton } from "@/components/content/CopyMediaUrlButton";
 import { archiveMediaAssetAction, createMediaAssetAction } from "@/features/cms/media-actions";
 import { requireCmsManager } from "@/lib/cms-access";
+import { parseCmsMediaAssetMetadata } from "@/lib/cms-media";
 import { prisma } from "@/lib/prisma";
 
 type MediaRow = {
@@ -10,21 +11,6 @@ type MediaRow = {
   valueJson: string;
   status: "draft" | "published" | "archived";
   updatedAt: Date;
-};
-
-type MediaAsset = {
-  id?: string;
-  title?: string;
-  url?: string;
-  altText?: string;
-  kind?: string;
-  usage?: string;
-  notes?: string;
-  filename?: string;
-  mimeType?: string;
-  sizeBytes?: number;
-  storage?: string;
-  uploadedBy?: string;
 };
 
 type PageProps = { searchParams?: Promise<Record<string, string | string[] | undefined>> };
@@ -37,18 +23,6 @@ function formatBytes(input?: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-function parseAsset(valueJson: string): MediaAsset | null {
-  try {
-    const value = JSON.parse(valueJson) as unknown;
-    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-    const asset = value as MediaAsset;
-    if (typeof asset.url !== "string" || !asset.url.startsWith("/") || asset.url.startsWith("//")) return null;
-    return asset;
-  } catch {
-    return null;
-  }
 }
 
 const uploadErrors: Record<string, string> = {
@@ -90,7 +64,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
     );
   }
 
-  const prepared = rows.map((row) => ({ row, asset: parseAsset(row.valueJson) }));
+  const prepared = rows.map((row) => ({ row, asset: parseCmsMediaAssetMetadata(row.valueJson) }));
   const invalid = prepared.filter((item) => !item.asset);
   const assets = prepared.flatMap(({ row, asset }) => asset ? [{ ...row, asset }] : []);
 
@@ -123,7 +97,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
         {assets.length === 0 && invalid.length === 0 ? <div className="content-empty"><strong>Medya kaydı henüz yok.</strong><p>İlk dosyayı yukarıdan yüklediğinizde burada önizlemesiyle birlikte görünecek.</p></div> : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
             {invalid.map(({ row }) => <article className="content-panel" key={`invalid-${row.contentKey}`} style={{ margin: 0 }}><strong>Bozuk medya metadata</strong><p><small>{row.contentKey}</small></p><p>Geçerli URL çıkarılamıyor. Ham kayıt korunuyor; arşivleme kilitli.</p><small>Güncelleme: {new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short" }).format(new Date(row.updatedAt))}</small></article>)}
-            {assets.map(({ contentKey, asset, updatedAt }) => { const isImage = asset.kind === "image" || asset.kind === "icon"; return <article className="content-panel" key={contentKey} style={{ margin: 0, display: "flex", flexDirection: "column", gap: ".8rem" }}><div style={{ minHeight: 150, display: "grid", placeItems: "center", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,.08)" }}>{isImage && asset.url ? <Image src={asset.url} alt={asset.altText || asset.title || "İlkOku medya"} width={640} height={360} unoptimized style={{ width: "100%", height: 150, objectFit: "contain" }} /> : <div style={{ textAlign: "center", padding: "2rem 1rem" }}><strong>{asset.kind === "document" ? "PDF / Doküman" : "Dosya"}</strong><br /><small>{asset.filename || asset.url || "—"}</small></div>}</div><div><strong>{asset.title || "İsimsiz medya"}</strong><p style={{ margin: ".35rem 0 0" }}><small>{asset.filename || asset.url}</small></p></div><div style={{ display: "grid", gap: ".3rem" }}><small>Tür: {asset.mimeType || asset.kind || "—"}</small><small>Boyut: {formatBytes(asset.sizeBytes)}</small><small>Kullanım: {asset.usage || "Belirtilmedi"}</small><small>Depolama: {asset.storage === "database" ? "Veritabanı" : "Public dosya yolu"}</small><small>Güncelleme: {new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short" }).format(new Date(updatedAt))}</small>{asset.altText ? <small>Alt: {asset.altText}</small> : null}</div><div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}><CopyMediaUrlButton url={asset.url!} /><Link href={asset.url!} target="_blank">Dosyayı aç</Link></div>{access.canPublish ? <form action={archiveMediaAssetAction} style={{ marginTop: "auto" }}><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Arşivle</button></form> : <small style={{ marginTop: "auto" }}>Arşivleme için yayın yetkisi gerekir.</small>}</article>; })}
+            {assets.map(({ contentKey, asset, updatedAt }) => { const isImage = asset.kind === "image" || asset.kind === "icon"; return <article className="content-panel" key={contentKey} style={{ margin: 0, display: "flex", flexDirection: "column", gap: ".8rem" }}><div style={{ minHeight: 150, display: "grid", placeItems: "center", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,.08)" }}>{isImage ? <Image src={asset.url} alt={asset.altText || asset.title || "İlkOku medya"} width={640} height={360} unoptimized style={{ width: "100%", height: 150, objectFit: "contain" }} /> : <div style={{ textAlign: "center", padding: "2rem 1rem" }}><strong>{asset.kind === "document" ? "PDF / Doküman" : "Dosya"}</strong><br /><small>{asset.filename || asset.url}</small></div>}</div><div><strong>{asset.title || "İsimsiz medya"}</strong><p style={{ margin: ".35rem 0 0" }}><small>{asset.filename || asset.url}</small></p></div><div style={{ display: "grid", gap: ".3rem" }}><small>Tür: {asset.mimeType || asset.kind || "—"}</small><small>Boyut: {formatBytes(asset.sizeBytes)}</small><small>Kullanım: {asset.usage || "Belirtilmedi"}</small><small>Depolama: {asset.storage === "database" ? "Veritabanı" : "Public dosya yolu"}</small><small>Güncelleme: {new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short" }).format(new Date(updatedAt))}</small>{asset.altText ? <small>Alt: {asset.altText}</small> : null}</div><div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}><CopyMediaUrlButton url={asset.url} /><Link href={asset.url} target="_blank">Dosyayı aç</Link></div>{access.canPublish ? <form action={archiveMediaAssetAction} style={{ marginTop: "auto" }}><input type="hidden" name="contentKey" value={contentKey} /><button type="submit">Arşivle</button></form> : <small style={{ marginTop: "auto" }}>Arşivleme için yayın yetkisi gerekir.</small>}</article>; })}
           </div>
         )}
       </div>

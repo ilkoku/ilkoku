@@ -153,6 +153,42 @@ jobs:
             check_body_contains "$@"
           }
 
+          check_post_merge_cms_surface() {
+            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+              return 0
+            fi
+
+            local path
+            local routes=(
+              "/icerik"
+              "/icerik/ana-sayfa"
+              "/icerik/sayfalar"
+              "/icerik/menuler"
+              "/icerik/yasal"
+              "/icerik/medya"
+              "/icerik/sss"
+              "/icerik/duyurular"
+              "/icerik/rehber"
+              "/icerik/yayin-kuyrugu"
+              "/icerik/zamanlama"
+              "/icerik/seo"
+              "/icerik/formlar"
+              "/icerik/yonlendirmeler"
+              "/icerik/diller"
+              "/icerik/hazirlik"
+              "/icerik/saglik"
+              "/icerik/gecmis"
+              "/icerik/erisim"
+              "/icerik/ayarlar"
+            )
+
+            echo "CMS yüzey taraması: ${#routes[@]} ana rota"
+            for path in "${routes[@]}"; do
+              check_protected_route "https://ilkoku.com${path}" || return 1
+              check_private_index_header "https://ilkoku.com${path}" || return 1
+            done
+          }
+
           check_redirect_route() {
             local url="$1"
             local expected_location="$2"
@@ -212,22 +248,13 @@ jobs:
                 "Disallow: /api" \
                 "Disallow: /auth" \
                 "Sitemap: https://ilkoku.com/sitemap.xml" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik" \
-              && check_post_merge_private_index_header "https://ilkoku.com/icerik" \
-              && check_post_merge_private_index_header "https://ilkoku.com/icerik/hazirlik" \
+              && check_post_merge_cms_surface \
               && check_post_merge_private_index_header "https://ilkoku.com/sistem-yonetimi/epostalar" \
               && check_post_merge_private_index_header "https://ilkoku.com/hesabim" \
               && check_post_merge_private_index_header "https://ilkoku.com/yazmaya-devam" \
               && check_post_merge_protected_route "https://ilkoku.com/hesabim" \
               && check_post_merge_protected_route "https://ilkoku.com/yazmaya-devam" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik/hazirlik" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik/zamanlama" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/onizleme/ana-sayfa" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik/yayin-kuyrugu" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik/medya" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik/seo" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik/gecmis" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik/saglik" \
               && check_post_merge_protected_route "https://ilkoku.com/icerik/sayfalar/yeni" \
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/epostalar" \
               && check_protected_route "https://ilkoku.com/sistem-yonetimi/okuma-guvenligi" \
@@ -235,7 +262,7 @@ jobs:
               && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production route'ları, 5 yasal sayfa, sitemap, robots, private noindex header'ları ve Sprint 3 içerik operasyon rotaları doğrulandı."
+              echo "PASS: Production route'ları, sitemap/robots ve 20 ana CMS rotasının auth + noindex yüzeyi doğrulandı."
               exit 0
             fi
 

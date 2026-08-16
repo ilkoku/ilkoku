@@ -130,8 +130,12 @@ export interface PublisherSubmissionDetail {
   permissions: {
     addInternalNote: boolean;
     decide: boolean;
+    downloadFiles: boolean;
     manageContract: boolean;
     managePublicationPlan: boolean;
+    viewAuthorizedContent: boolean;
+    viewAuthorizedPassport: boolean;
+    viewFiles: boolean;
   };
   publisher: { companyName: string; id: string };
   publicationPlan: PublisherPublicationPlanData | null;

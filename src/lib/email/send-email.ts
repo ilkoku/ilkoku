@@ -278,6 +278,9 @@ export async function sendEmail(
     };
   }
 
+  const explicitIdempotency =
+    Boolean(input.idempotencyKey?.trim());
+
   const dedupeKey =
     buildEmailDedupeKey(
       input,
@@ -289,17 +292,16 @@ export async function sendEmail(
       dedupeKey,
     );
 
-  if (
-    !dedupeClaim.claimed &&
-    dedupeClaim.duplicateDeliveryId
-  ) {
+  if (!dedupeClaim.claimed) {
     return {
       delivery:
         "deduplicated" as const,
       deliveryId:
-        dedupeClaim.duplicateDeliveryId,
+        dedupeClaim.duplicateDeliveryId ?? undefined,
       id:
-        "deduplicated",
+        dedupeClaim.duplicateDeliveryId
+          ? "deduplicated"
+          : "dedupe-in-progress",
     };
   }
 
@@ -346,6 +348,10 @@ export async function sendEmail(
   await attachEmailDeliveryDedupe(
     dedupeKey,
     delivery.id,
+    {
+      persistent:
+        explicitIdempotency,
+    },
   );
 
   let result:

@@ -42,6 +42,7 @@ export async function GET() {
     });
   }
 
+  const exportCutoff = new Date();
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -69,6 +70,7 @@ export async function GET() {
         do {
           const page = await getWriterCommentExportPage({
             authorId: writer.id,
+            createdAtLte: exportCutoff,
             cursor,
           });
 
@@ -108,7 +110,7 @@ export async function GET() {
     },
   });
 
-  const date = new Date().toISOString().slice(0, 10);
+  const date = exportCutoff.toISOString().slice(0, 10);
 
   return new Response(stream, {
     headers: {

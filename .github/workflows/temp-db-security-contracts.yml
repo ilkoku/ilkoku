@@ -1,0 +1,180 @@
+name: Temporary DB security contracts setup
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-db-security-contracts-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ilkoku_ci
+          MARIADB_USER: ci_user
+          MARIADB_PASSWORD: ci_password
+          MARIADB_ROOT_PASSWORD: ci_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3306/ilkoku_ci"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      SITE_URL: "http://localhost:3000"
+      EMAIL_DELIVERY_MODE: "local"
+      ADMIN_ROLE_VIEW_SECRET: "ci-admin-role-view-secret-0000000000000000000000000000000000000000"
+      READING_ACCESS_HASH_SECRET: "ci-reading-access-hash-secret-00000000000000000000000000000000000000"
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare final DB security scripts and CI
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          pkg.scripts['test:security:db'] = 'node --test scripts/security-db-contract.test.mjs';
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          NODE
+
+          cat > .github/workflows/ci.yml <<'YAML'
+          name: CI
+
+          on:
+            workflow_dispatch:
+            push:
+              branches:
+                - main
+                - test-branch-chatgpt-2
+                - deploy/2026-08-04-production
+            pull_request:
+              branches:
+                - main
+
+          permissions:
+            contents: read
+
+          concurrency:
+            group: ci-${{ github.workflow }}-${{ github.ref }}
+            cancel-in-progress: true
+
+          jobs:
+            quality:
+              name: Lint, security contracts, DB contracts and build
+              runs-on: ubuntu-latest
+              timeout-minutes: 20
+              services:
+                mariadb:
+                  image: mariadb:11.4
+                  env:
+                    MARIADB_DATABASE: ilkoku_ci
+                    MARIADB_USER: ci_user
+                    MARIADB_PASSWORD: ci_password
+                    MARIADB_ROOT_PASSWORD: ci_root_password
+                  ports:
+                    - 3306:3306
+                  options: >-
+                    --health-cmd="healthcheck.sh --connect --innodb_initialized"
+                    --health-interval=5s
+                    --health-timeout=5s
+                    --health-retries=20
+              env:
+                DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3306/ilkoku_ci"
+                NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+                SITE_URL: "http://localhost:3000"
+                EMAIL_DELIVERY_MODE: "local"
+                ADMIN_ROLE_VIEW_SECRET: "ci-admin-role-view-secret-0000000000000000000000000000000000000000"
+                READING_ACCESS_HASH_SECRET: "ci-reading-access-hash-secret-00000000000000000000000000000000000000"
+
+              steps:
+                - name: Checkout repository
+                  uses: actions/checkout@v6
+
+                - name: Set up Node.js
+                  uses: actions/setup-node@v6
+                  with:
+                    node-version: 22
+                    cache: npm
+
+                - name: Install dependencies
+                  run: npm ci
+
+                - name: Audit high-severity dependencies
+                  run: npm audit --audit-level=high
+
+                - name: Run lint
+                  run: npm run lint
+
+                - name: Run security contract tests
+                  run: npm run test:security
+
+                - name: Deploy migrations to fresh MariaDB
+                  run: npx prisma migrate deploy
+
+                - name: Run MariaDB security integration contracts
+                  run: npm run test:security:db
+
+                - name: Build application
+                  run: npm run build:ci
+          YAML
+          sed -i 's/^          //' .github/workflows/ci.yml
+
+      - name: Validate dependency audit and lint
+        run: |
+          npm audit --audit-level=high
+          npm run lint
+
+      - name: Validate existing security contracts
+        run: npm run test:security
+
+      - name: Deploy migrations to fresh MariaDB
+        run: npx prisma migrate deploy
+
+      - name: Validate MariaDB security integration contracts
+        run: npm run test:security:db
+
+      - name: Validate production build
+        run: npm run build:ci
+
+      - name: Commit validated DB security setup and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/temp-db-security-contracts.yml
+          git config user.name "ilkoku"
+          git config user.email "ilkoku@ilkoku.com"
+          git add \
+            scripts/security-db-contract.test.mjs \
+            package.json \
+            .github/workflows/ci.yml \
+            .github/workflows/temp-db-security-contracts.yml
+          git commit -m "Add MariaDB-backed security integration contracts"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}

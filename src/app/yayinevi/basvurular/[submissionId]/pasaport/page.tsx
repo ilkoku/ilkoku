@@ -36,7 +36,10 @@ export default async function PublisherOwnershipPassportPage({
       submissionId,
     );
 
-  if (!submission) {
+  if (
+    !submission ||
+    !submission.permissions.viewAuthorizedPassport
+  ) {
     notFound();
   }
 

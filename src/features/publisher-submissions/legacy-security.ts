@@ -20,16 +20,12 @@ const ACTIVE_SUBMISSION_STATUSES = [
   "rejected",
 ] as const satisfies readonly PublisherSubmissionStatus[];
 
-const WITHDRAWABLE_SUBMISSION_STATUSES = [
-  "pending",
-  "reviewing",
-] as const satisfies readonly PublisherSubmissionStatus[];
-
 type LockedSubmission = {
   archivedAt: Date | null;
   authorId: string;
   id: string;
   publisherId: string;
+  publisherNote: string | null;
   status: PublisherSubmissionStatus;
   workId: string;
 };
@@ -48,6 +44,7 @@ async function lockSubmission(
       publisherId,
       workId,
       authorId,
+      publisherNote,
       status,
       archivedAt
     FROM PublisherSubmission
@@ -206,8 +203,9 @@ export async function withdrawLegacyPublisherSubmission(
       !submission ||
       submission.authorId !== authorId ||
       submission.archivedAt ||
-      !WITHDRAWABLE_SUBMISSION_STATUSES.includes(
-        submission.status as (typeof WITHDRAWABLE_SUBMISSION_STATUSES)[number],
+      (
+        submission.status !== "pending" &&
+        submission.status !== "reviewing"
       )
     ) {
       return { count: 0 };
@@ -345,7 +343,19 @@ export async function updateLegacyPublisherSubmissionDecision(input: {
     }
 
     const statusChanged = locked.status !== input.status;
-    const noteChanged = input.note !== null;
+    const noteChanged = locked.publisherNote !== input.note;
+
+    if (!statusChanged && !noteChanged) {
+      return {
+        author: submission.author,
+        status: "updated" as const,
+        statusChanged: false,
+        updated: await transaction.publisherSubmission.findUniqueOrThrow({
+          where: { id: locked.id },
+        }),
+        work: submission.work,
+      };
+    }
 
     const updated = await transaction.publisherSubmission.update({
       where: { id: locked.id },
@@ -355,48 +365,46 @@ export async function updateLegacyPublisherSubmissionDecision(input: {
       },
     });
 
-    if (statusChanged || noteChanged) {
-      await transaction.publisherSubmissionEvent.create({
-        data: {
-          actorId: input.userId,
-          detail: input.note,
-          metadata: auditMetadata({
-            from: locked.status,
-            to: input.status,
-          }),
-          submissionId: locked.id,
-          title:
-            input.status === "reviewing"
-              ? "Başvuru incelemeye alındı"
-              : input.status === "accepted"
-                ? "Başvuru kabul edildi"
-                : input.status === "rejected"
-                  ? "Başvuru reddedildi"
-                  : "Başvuru güncellendi",
-          type:
-            input.status === "reviewing"
-              ? "review_started"
-              : "decision_changed",
-        },
-      });
+    await transaction.publisherSubmissionEvent.create({
+      data: {
+        actorId: input.userId,
+        detail: input.note,
+        metadata: auditMetadata({
+          from: locked.status,
+          to: input.status,
+        }),
+        submissionId: locked.id,
+        title:
+          input.status === "reviewing"
+            ? "Başvuru incelemeye alındı"
+            : input.status === "accepted"
+              ? "Başvuru kabul edildi"
+              : input.status === "rejected"
+                ? "Başvuru reddedildi"
+                : "Başvuru güncellendi",
+        type:
+          input.status === "reviewing"
+            ? "review_started"
+            : "decision_changed",
+      },
+    });
 
-      await transaction.auditLog.create({
-        data: {
-          action: "work_status_changed",
-          actorId: input.userId,
-          entityId: locked.workId,
-          entityType: "Work",
-          metadata: auditMetadata({
-            from: locked.status,
-            noteChanged,
-            publisherId: locked.publisherId,
-            publisherSubmissionId: locked.id,
-            source: "publisher_submission_decision_updated",
-            to: input.status,
-          }),
-        },
-      });
-    }
+    await transaction.auditLog.create({
+      data: {
+        action: "work_status_changed",
+        actorId: input.userId,
+        entityId: locked.workId,
+        entityType: "Work",
+        metadata: auditMetadata({
+          from: locked.status,
+          noteChanged,
+          publisherId: locked.publisherId,
+          publisherSubmissionId: locked.id,
+          source: "publisher_submission_decision_updated",
+          to: input.status,
+        }),
+      },
+    });
 
     if (statusChanged) {
       await transaction.notification.create({

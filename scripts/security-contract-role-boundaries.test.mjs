@@ -41,6 +41,18 @@ test("admin user control plane serializes privileged state and preserves special
   assertContains(control, "session.deleteMany", "admin suspension session revocation");
 });
 
+test("self-service role mutation locks the live user and cannot demote special roles", () => {
+  const actions = source("src/features/auth/actions.ts");
+
+  assertContains(actions, "selfServiceRoleSources", "self-service role boundary");
+  assertContains(actions, '"reader", "writer", "editor_pending"', "self-service role boundary");
+  assertContains(actions, "FROM User", "self-service role boundary");
+  assertContains(actions, "FOR UPDATE", "self-service role boundary");
+  assertContains(actions, "!selfServiceRoleSources.includes(current.role)", "self-service role boundary");
+  assertContains(actions, "SELF_SERVICE_ROLE_CHANGE_FORBIDDEN", "self-service role boundary");
+  assertContains(actions, 'source: "self_service_role_changed"', "self-service role audit");
+});
+
 test("publisher application resubmission locks the pending role request before state mutation", () => {
   const application = source("src/features/publisher-applications/actions.ts");
 

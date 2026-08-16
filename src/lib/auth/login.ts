@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { issueLoginSession } from "./login-session-state";
 import { verifyPassword } from "./password";
 import {
   generateSessionToken,
@@ -84,19 +85,37 @@ export async function loginUser(input: {
   const loggedInAt = new Date();
   const token =
     generateSessionToken();
+  const tokenHash =
+    hashSessionToken(token);
+  const expiresAt = new Date(
+    Date.now() +
+      1000 * 60 * 60 * 24 * 30,
+  );
 
-  // Oturum oluşturma giriş için tek kritik yazma işlemidir.
-  await prisma.session.create({
-    data: {
-      expiresAt: new Date(
-        Date.now() +
-          1000 * 60 * 60 * 24 * 30,
-      ),
-      tokenHash:
-        hashSessionToken(token),
-      userId: user.id,
-    },
+  // Session issuance is serialized on the live User row so account disable,
+  // credential reset and login cannot leave a session behind after revocation.
+  const issuance = await issueLoginSession({
+    expiresAt,
+    password: input.password,
+    preverifiedPasswordHash:
+      user.passwordHash,
+    tokenHash,
+    userId: user.id,
   });
+
+  if (issuance.status === "invalid_credentials") {
+    throw new Error(
+      "INVALID_CREDENTIALS",
+    );
+  }
+
+  if (issuance.status !== "issued") {
+    throw new Error(
+      "ACCOUNT_DISABLED",
+    );
+  }
+
+  const authenticatedUser = issuance.user;
 
   // Son giriş tarihi ve audit kaydı yardımcı telemetridir.
   // Bunlardan biri başarısız olursa geçerli oturum geri alınmaz.
@@ -104,7 +123,7 @@ export async function loginUser(input: {
     await prisma.$transaction([
       prisma.user.update({
         where: {
-          id: user.id,
+          id: authenticatedUser.id,
         },
         data: {
           lastLoginAt: loggedInAt,
@@ -113,8 +132,8 @@ export async function loginUser(input: {
       prisma.auditLog.create({
         data: {
           action: "login",
-          actorId: user.id,
-          entityId: user.id,
+          actorId: authenticatedUser.id,
+          entityId: authenticatedUser.id,
           entityType: "User",
           ipAddress:
             input.ipAddress || null,
@@ -122,7 +141,7 @@ export async function loginUser(input: {
             deviceHash:
               input.deviceHash || null,
             isNewDevice,
-            role: user.role,
+            role: authenticatedUser.role,
           }),
           userAgent:
             input.userAgent || null,
@@ -140,6 +159,6 @@ export async function loginUser(input: {
     isNewDevice,
     loggedInAt,
     token,
-    user,
+    user: authenticatedUser,
   };
 }

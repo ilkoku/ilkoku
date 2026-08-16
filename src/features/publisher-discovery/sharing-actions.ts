@@ -152,6 +152,22 @@ export async function createPublisherDiscoveryShareAction(
     };
   }
 
+  if (result.status === "rate_limited") {
+    return {
+      message:
+        "Güvenlik sınırına ulaşıldı: dış e-posta paylaşımı 10 dakikada en fazla 12 kez yapılabilir. Pencere yenilendiğinde tekrar deneyin.",
+      status: "error",
+    };
+  }
+
+  if (result.status === "recipient_rate_limited") {
+    return {
+      message:
+        "Aynı e-posta adresine son 5 dakika içinde zaten paylaşım yapıldı. Yeni gönderim için kısa süre sonra tekrar deneyin.",
+      status: "error",
+    };
+  }
+
   revalidatePath(returnPath.split("?")[0]);
   revalidatePath("/yayinevi/paylasilanlar");
   revalidatePath("/yayinevi/bildirimler");
@@ -159,7 +175,7 @@ export async function createPublisherDiscoveryShareAction(
   if (result.status === "email_failed") {
     return {
       message:
-        "Paylaşım kaydı oluşturuldu ancak e-posta gönderilemedi. E-posta Operasyonları kaydını kontrol edin ve gerekirse yeniden paylaşın.",
+        "Paylaşım kaydı oluşturuldu ancak e-posta teslimi başarısız görünüyor. Önce E-posta Operasyonları delivery kaydını kontrol edin; otomatik olarak yeni bir paylaşım oluşturmayın.",
       status: "error",
     };
   }

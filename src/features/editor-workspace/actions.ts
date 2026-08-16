@@ -12,6 +12,10 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/site-url";
 import { completedPublishedWorkWhere } from "./eligibility";
+import {
+  completeFirstEditorReviewStateAction,
+  saveFirstEditorReviewDraftAction,
+} from "./first-editor-review-state.actions";
 import type { EditorActionState } from "./types";
 
 const idleError: EditorActionState = {
@@ -54,35 +58,6 @@ function revalidateEditorWork(workSlug?: string) {
     revalidatePath(`/kitap/${workSlug}`);
     revalidatePath(`/oku/${workSlug}`);
   }
-}
-
-function reviewValues(formData: FormData) {
-  const title = text(formData, "title");
-  const content = text(formData, "content");
-  const category = text(formData, "category") || "genel";
-  const priority =
-    formData.get("priority") === "important"
-      ? ("important" as const)
-      : ("normal" as const);
-
-  if (title.length < 3 || title.length > 160) {
-    throw new Error("INVALID_REVIEW_TITLE");
-  }
-
-  if (content.length < 20 || content.length > 10000) {
-    throw new Error("INVALID_REVIEW_CONTENT");
-  }
-
-  if (category.length < 2 || category.length > 60) {
-    throw new Error("INVALID_REVIEW_CATEGORY");
-  }
-
-  return {
-    category,
-    content,
-    priority,
-    title,
-  };
 }
 
 export async function toggleEditorFavoriteAction(
@@ -309,308 +284,26 @@ export async function claimProfessionalReviewAction(
   }
 }
 
+/**
+ * Legacy action id compatibility: old clients still land on the canonical,
+ * row-locked first-editor state machine.
+ */
 export async function saveProfessionalReviewDraftAction(
-  _state: EditorActionState,
+  state: EditorActionState,
   formData: FormData,
 ): Promise<EditorActionState> {
-  try {
-    const editor = await requireEditor();
-    const workId = text(formData, "workId");
-    const values = reviewValues(formData);
-
-    const assignment =
-      await prisma.editorReviewAssignment.findFirst({
-        where: {
-          editorId: editor.id,
-          stage: "first",
-          status: "in_progress",
-          work: {
-            assignedEditorId: editor.id,
-            editorReviewStatus: "in_progress",
-            id: workId,
-          },
-        },
-        select: {
-          id: true,
-          work: {
-            select: {
-              authorId: true,
-              id: true,
-              slug: true,
-            },
-          },
-        },
-      });
-
-    if (!assignment) {
-      return {
-        message: "Bu eser için profesyonel inceleme yetkiniz bulunmuyor.",
-        status: "error",
-      };
-    }
-
-    const existing = await prisma.editorFeedback.findFirst({
-      where: {
-        editorId: editor.id,
-        isProfessionalReview: true,
-        workId: assignment.work.id,
-        OR: [
-          {
-            assignmentId: assignment.id,
-          },
-          {
-            assignmentId: null,
-          },
-        ],
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (existing) {
-      await prisma.editorFeedback.update({
-        where: {
-          id: existing.id,
-        },
-        data: {
-          ...values,
-          assignmentId: assignment.id,
-          reportStatus: "draft",
-        },
-      });
-    } else {
-      await prisma.editorFeedback.create({
-        data: {
-          ...values,
-          assignmentId: assignment.id,
-          authorId: assignment.work.authorId,
-          editorId: editor.id,
-          isProfessionalReview: true,
-          reportStatus: "draft",
-          workId: assignment.work.id,
-        },
-      });
-    }
-
-    revalidateEditorWork(assignment.work.slug);
-
-    return {
-      message: "Birinci editör inceleme taslağı kaydedildi.",
-      status: "success",
-    };
-  } catch {
-    return idleError;
-  }
+  return saveFirstEditorReviewDraftAction(state, formData);
 }
 
+/**
+ * Legacy action id compatibility: completion is delegated to the canonical,
+ * terminal-state-safe first-editor state machine.
+ */
 export async function completeProfessionalReviewAction(
-  _state: EditorActionState,
+  state: EditorActionState,
   formData: FormData,
 ): Promise<EditorActionState> {
-  try {
-    const editor = await requireEditor();
-    const workId = text(formData, "workId");
-    const intent = text(formData, "intent");
-    const values = reviewValues(formData);
-
-    if (
-      intent !== "complete" &&
-      intent !== "second"
-    ) {
-      return {
-        message: "Geçerli bir inceleme sonucu seçin.",
-        status: "error",
-      };
-    }
-    const completedAt = new Date();
-
-    const assignment =
-      await prisma.editorReviewAssignment.findFirst({
-        where: {
-          editorId: editor.id,
-          stage: "first",
-          status: "in_progress",
-          work: {
-            assignedEditorId: editor.id,
-            editorReviewStatus: "in_progress",
-            id: workId,
-          },
-        },
-        select: {
-          id: true,
-          work: {
-            select: {
-              author: {
-                select: {
-                  email: true,
-                  fullName: true,
-                },
-              },
-              authorId: true,
-              id: true,
-              slug: true,
-              title: true,
-            },
-          },
-        },
-      });
-
-    if (!assignment) {
-      return {
-        message: "Bu eser için tamamlanabilir bir inceleme bulunmuyor.",
-        status: "error",
-      };
-    }
-
-    await prisma.$transaction(async (transaction) => {
-      const completedAssignment =
-        await transaction.editorReviewAssignment.updateMany({
-          where: {
-            editorId: editor.id,
-            id: assignment.id,
-            stage: "first",
-            status: "in_progress",
-            workId: assignment.work.id,
-          },
-          data: {
-            completedAt,
-            status: "completed",
-          },
-        });
-
-      if (completedAssignment.count !== 1) {
-        throw new Error("REVIEW_ALREADY_COMPLETED");
-      }
-
-      const updatedWork = await transaction.work.updateMany({
-        where: {
-          assignedEditorId: editor.id,
-          editorReviewStatus: "in_progress",
-          id: assignment.work.id,
-        },
-        data:
-          intent === "complete"
-            ? {
-                editorReviewCompletedAt: completedAt,
-                editorReviewStatus: "completed",
-              }
-            : {
-                editorReviewCompletedAt: null,
-                editorReviewStatus: "awaiting_second_editor",
-              },
-      });
-
-      if (updatedWork.count !== 1) {
-        throw new Error("REVIEW_STATE_CHANGED");
-      }
-
-      const existing = await transaction.editorFeedback.findFirst({
-        where: {
-          editorId: editor.id,
-          isProfessionalReview: true,
-          workId: assignment.work.id,
-          OR: [
-            {
-              assignmentId: assignment.id,
-            },
-            {
-              assignmentId: null,
-            },
-          ],
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (existing) {
-        await transaction.editorFeedback.update({
-          where: {
-            id: existing.id,
-          },
-          data: {
-            ...values,
-            assignmentId: assignment.id,
-            reportStatus: "completed",
-          },
-        });
-      } else {
-        await transaction.editorFeedback.create({
-          data: {
-            ...values,
-            assignmentId: assignment.id,
-            authorId: assignment.work.authorId,
-            editorId: editor.id,
-            isProfessionalReview: true,
-            reportStatus: "completed",
-            workId: assignment.work.id,
-          },
-        });
-      }
-
-      if (intent === "complete") {
-        await transaction.notification.create({
-          data: {
-            userId: assignment.work.authorId,
-            type: "editor_review",
-            title: "Profesyonel inceleme tamamlandı",
-            message:
-              `${assignment.work.title} adlı eserinizin profesyonel editör incelemesi tamamlandı.`,
-            relatedEntityType: "work",
-            relatedEntityId: assignment.work.id,
-          },
-        });
-      }
-    });
-
-    try {
-      await sendAuthorEditorStatusEmail({
-        email: assignment.work.author.email,
-        fullName: assignment.work.author.fullName,
-        stage:
-          intent === "complete"
-            ? "completed"
-            : "first_completed",
-        workId: assignment.work.id,
-        workTitle: assignment.work.title,
-      });
-    } catch (emailError) {
-      console.error(
-        "EDITOR_EMAIL_DELIVERY_FAILED",
-        {
-          event:
-            intent === "complete"
-              ? "first_review_completed"
-              : "first_review_ready_for_second",
-          workId: assignment.work.id,
-          error:
-            emailError instanceof Error
-              ? emailError.message
-              : "UNKNOWN_ERROR",
-        },
-      );
-    }
-
-    revalidateEditorWork(assignment.work.slug);
-    revalidatePath("/yazar");
-    revalidatePath("/eserlerim");
-    revalidatePath("/geri-bildirimler");
-
-    return intent === "complete"
-      ? {
-          message:
-            "Rapor yazara gönderildi ve profesyonel inceleme tamamlandı.",
-          status: "success",
-        }
-      : {
-          message:
-            "Birinci editör raporu tamamlandı. Eser isteğe bağlı ikinci editör seçimine hazır.",
-          status: "success",
-        };
-  } catch {
-    return idleError;
-  }
+  return completeFirstEditorReviewStateAction(state, formData);
 }
 
 export async function recommendWorkToEditorAction(

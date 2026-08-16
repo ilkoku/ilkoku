@@ -31,7 +31,6 @@ export interface SubmissionPublicationPlanSummary {
   coverStatus: "not_started" | "in_progress" | "completed";
   isbn: string | null;
   layoutStatus: "not_started" | "in_progress" | "completed";
-  notes: string | null;
   printRun: number | null;
   status: "planning" | "preproduction" | "production" | "distribution" | "published";
   targetPublicationDate: string | null;

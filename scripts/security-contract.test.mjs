@@ -289,19 +289,33 @@ test("stale publisher server-action names delegate to the canonical secure actio
 });
 
 test("legacy publisher lifecycle is row-locked, auditable and permission-scoped", () => {
-  const text = source("src/features/publisher-submissions/legacy-security.ts");
-  const lockCount = text.split("FOR UPDATE").length - 1;
+  const lifecycle = source(
+    "src/features/publisher-submissions/legacy-lifecycle-state.ts",
+  );
+  const writes = source(
+    "src/features/publisher-submissions/submission-write-state.ts",
+  );
+  const facade = source(
+    "src/features/publisher-submissions/legacy-security.ts",
+  );
+  const lockCount =
+    lifecycle.split("FOR UPDATE").length - 1 +
+    (writes.split("FOR UPDATE").length - 1);
+  const canonical = `${lifecycle}\n${writes}`;
 
   assert.ok(lockCount >= 3, "legacy publisher lifecycle lost a database lock");
-  assertContains(text, '"decide_submission"', "legacy publisher security bridge");
-  assertContains(text, '"add_internal_note"', "legacy publisher security bridge");
-  assertContains(text, '"view_files"', "legacy publisher security bridge");
-  assertContains(text, '"download_files"', "legacy publisher security bridge");
-  assertContains(text, "isPublisherAdminReadOnlyMembership", "legacy publisher security bridge");
-  assertContains(text, "publisher_submission_created", "legacy publisher security bridge");
-  assertContains(text, "publisher_submission_withdrawn", "legacy publisher security bridge");
-  assertContains(text, "publisher_submission_decision_updated", "legacy publisher security bridge");
-  assertContains(text, "publisher_submission_internal_note_added", "legacy publisher security bridge");
+  assertContains(canonical, '"decide_submission"', "legacy publisher lifecycle");
+  assertContains(canonical, '"add_internal_note"', "legacy publisher lifecycle");
+  assertContains(canonical, '"view_files"', "legacy publisher lifecycle");
+  assertContains(canonical, '"download_files"', "legacy publisher lifecycle");
+  assertContains(lifecycle, "isPublisherAdminReadOnlyMembership", "legacy publisher lifecycle");
+  assertContains(canonical, "publisher_submission_created", "legacy publisher lifecycle");
+  assertContains(canonical, "publisher_submission_withdrawn", "legacy publisher lifecycle");
+  assertContains(canonical, "publisher_submission_decision_updated", "legacy publisher lifecycle");
+  assertContains(canonical, "publisher_submission_internal_note_added", "legacy publisher lifecycle");
+  assertContains(facade, 'from "./legacy-lifecycle-state"', "legacy publisher facade");
+  assertContains(facade, 'from "./submission-write-state"', "legacy publisher facade");
+  assertNotContains(facade, "prisma.$transaction", "legacy publisher facade");
 });
 
 test("publisher sensitive routes preserve granular capability gates", () => {

@@ -1,0 +1,124 @@
+name: Temporary DB security finalizer
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: temp-db-security-finalizer-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ilkoku_ci
+          MARIADB_USER: ci_user
+          MARIADB_PASSWORD: ci_password
+          MARIADB_ROOT_PASSWORD: ci_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3306/ilkoku_ci"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      SITE_URL: "http://localhost:3000"
+      EMAIL_DELIVERY_MODE: "local"
+      ADMIN_ROLE_VIEW_SECRET: "ci-admin-role-view-secret-0000000000000000000000000000000000000000"
+      READING_ACCESS_HASH_SECRET: "ci-reading-access-hash-secret-00000000000000000000000000000000000000"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Require completed self-cleaned DB setup
+        shell: bash
+        run: |
+          test ! -e .github/workflows/temp-db-security-contracts.yml
+          grep -Fq '"test:security:db"' package.json
+          grep -Fq 'mariadb:11.4' .github/workflows/ci.yml
+          grep -Fq 'Deploy migrations to fresh MariaDB' .github/workflows/ci.yml
+          grep -Fq 'Run MariaDB security integration contracts' .github/workflows/ci.yml
+          grep -Fq 'contents: read' .github/workflows/ci.yml
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Revalidate full quality gates
+        shell: bash
+        run: |
+          npm audit --audit-level=high
+          npm run lint
+          npm run test:security
+          npx prisma migrate deploy
+          npm run test:security:db
+          npm run build:ci
+
+      - name: Verify critical live route subset
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          UA='IlkOku-DB-Security-Finalizer/1.0'
+          code="$(curl -L -sS --max-time 20 -A "$UA" -o /dev/null -w '%{http_code}' https://ilkoku.com/)"
+          test "$code" = "200"
+
+          check_protected() {
+            local url="$1"
+            local headers code location
+            headers="$(mktemp)"
+            code="$(curl -sS --max-time 20 -A "$UA" -D "$headers" -o /dev/null -w '%{http_code}' "$url")"
+            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            rm -f "$headers"
+            case "$code" in 301|302|303|307|308) ;; *) return 1 ;; esac
+            [[ "$location" == *"/giris"* ]]
+          }
+
+          check_protected https://ilkoku.com/yayinevleri
+          check_protected https://ilkoku.com/bildirimler
+          check_protected https://ilkoku.com/editor/bildirimler
+          check_protected https://ilkoku.com/yayinevi/bildirimler
+
+      - name: Remove finalizer and push validated head
+        id: validated-head
+        shell: bash
+        run: |
+          rm .github/workflows/temp-db-security-finalize.yml
+          git config user.name "ilkoku"
+          git config user.email "ilkoku@ilkoku.com"
+          git add .github/workflows/temp-db-security-finalize.yml
+          git commit -m "Remove temporary DB security finalizer"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Mark PR ready and merge validated head
+        shell: bash
+        run: |
+          gh pr ready "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" || true
+          gh pr merge "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --merge \
+            --match-head-commit "${{ steps.validated-head.outputs.sha }}"

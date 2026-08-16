@@ -6,8 +6,8 @@ import {
   type NextRequest,
 } from "next/server";
 import {
-  prisma,
-} from "@/lib/prisma";
+  redeemEmailVerification,
+} from "@/features/auth/email-verification-state";
 
 function redirectResult(
   request: NextRequest,
@@ -53,113 +53,18 @@ export async function GET(
       .update(token)
       .digest("hex");
 
-  const now = new Date();
-
-  const verificationToken =
-    await prisma
-      .emailVerificationToken
-      .findUnique({
-        where: {
-          tokenHash,
-        },
-        select: {
-          expiresAt: true,
-          id: true,
-          usedAt: true,
-          userId: true,
-        },
+  try {
+    const result =
+      await redeemEmailVerification({
+        tokenHash,
       });
 
-  if (
-    !verificationToken ||
-    verificationToken.usedAt ||
-    verificationToken.expiresAt <=
-      now
-  ) {
-    return redirectResult(
-      request,
-      "baglanti-gecersiz",
-    );
-  }
-
-  try {
-    await prisma.$transaction(
-      async (transaction) => {
-        const claimed =
-          await transaction
-            .emailVerificationToken
-            .updateMany({
-              where: {
-                expiresAt: {
-                  gt: now,
-                },
-                id:
-                  verificationToken.id,
-                usedAt: null,
-              },
-              data: {
-                usedAt: now,
-              },
-            });
-
-        if (
-          claimed.count !== 1
-        ) {
-          throw new Error(
-            "TOKEN_ALREADY_USED",
-          );
-        }
-
-        await transaction
-          .user.update({
-            where: {
-              id:
-                verificationToken
-                  .userId,
-            },
-            data: {
-              emailVerified:
-                now,
-            },
-          });
-
-        await transaction
-          .emailVerificationToken
-          .deleteMany({
-            where: {
-              id: {
-                not:
-                  verificationToken.id,
-              },
-              usedAt: null,
-              userId:
-                verificationToken
-                  .userId,
-            },
-          });
-
-        await transaction
-          .auditLog.create({
-            data: {
-              action:
-                "email_verified",
-              actorId:
-                verificationToken
-                  .userId,
-              entityId:
-                verificationToken
-                  .userId,
-              entityType:
-                "User",
-              metadata:
-                JSON.stringify({
-                  source:
-                    "verification_link",
-                }),
-            },
-          });
-      },
-    );
+    if (result.status !== "verified") {
+      return redirectResult(
+        request,
+        "baglanti-gecersiz",
+      );
+    }
   } catch {
     return redirectResult(
       request,

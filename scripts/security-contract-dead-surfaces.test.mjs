@@ -90,6 +90,42 @@ test("legacy second-editor module cannot expose draft or completion write action
   );
 });
 
+test("legacy first-editor review actions only delegate to the canonical locked state machine", () => {
+  const legacy = source("src/features/editor-workspace/actions.ts");
+  const canonical = source("src/features/editor-workspace/first-editor-review-state.actions.ts");
+
+  assertContains(
+    legacy,
+    "saveFirstEditorReviewDraftAction(state, formData)",
+    "legacy first-editor draft compatibility action",
+  );
+  assertContains(
+    legacy,
+    "completeFirstEditorReviewStateAction(state, formData)",
+    "legacy first-editor completion compatibility action",
+  );
+  assertNotContains(
+    legacy,
+    'reportStatus: "draft"',
+    "legacy first-editor review write surface",
+  );
+  assertNotContains(
+    legacy,
+    'reportStatus: "completed"',
+    "legacy first-editor review write surface",
+  );
+  assertContains(
+    canonical,
+    "lockLiveFirstReviewContext",
+    "canonical first-editor review state",
+  );
+  assertContains(
+    canonical,
+    'existing?.reportStatus === "completed"',
+    "canonical first-editor terminal-state guard",
+  );
+});
+
 test("admin and content management provide explicit two-way navigation", () => {
   const admin = source("src/components/admin/AdminShell.tsx");
   const content = source("src/components/content/ContentShell.tsx");

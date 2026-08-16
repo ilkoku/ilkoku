@@ -5,7 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { requirePublisherDiscoveryAccess } from "@/features/publisher-discovery/access";
 import { PublisherSharedItemsList } from "@/features/publisher-discovery/components/PublisherSharedItemsList";
-import { getPublisherSharedItems } from "@/features/publisher-discovery/sharing-repository";
+import { getPublisherSharedItemsCurrentPublic } from "@/features/publisher-discovery/sharing-read-model";
 import "@/features/publisher-discovery/publisher-discovery.css";
 import "@/features/publisher-discovery/publisher-sharing.css";
 
@@ -22,7 +22,9 @@ export default async function PublisherSharedItemsPage() {
     "/yayinevi/paylasilanlar",
     "view_shared_items",
   );
-  const data = await getPublisherSharedItems(access.profile.id);
+  const data = await getPublisherSharedItemsCurrentPublic(
+    access.profile.id,
+  );
 
   if (!data) {
     redirect("/erisim-reddedildi?gerekli=view_shared_items");

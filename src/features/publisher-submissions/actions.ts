@@ -11,9 +11,9 @@ import type {
 } from "@/features/publisher-workspace/types";
 
 import {
-  addLegacyPublisherInternalNote,
-  updateLegacyPublisherSubmissionDecision,
-} from "./legacy-security";
+  addPublisherInternalNoteLocked,
+  updatePublisherSubmissionDecisionLocked,
+} from "./submission-write-state";
 
 const allowedStatuses = new Set<PublisherWorkspaceSubmissionStatus>([
   "pending",
@@ -73,7 +73,7 @@ export async function updateSecurePublisherDecisionAction(
     };
   }
 
-  const result = await updateLegacyPublisherSubmissionDecision({
+  const result = await updatePublisherSubmissionDecisionLocked({
     note: noteValue || null,
     status: status as Exclude<
       PublisherWorkspaceSubmissionStatus,
@@ -196,7 +196,7 @@ export async function addSecurePublisherInternalNoteAction(
     };
   }
 
-  const result = await addLegacyPublisherInternalNote({
+  const result = await addPublisherInternalNoteLocked({
     note,
     submissionId,
     userId: user.id,

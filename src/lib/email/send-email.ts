@@ -292,6 +292,15 @@ export async function sendEmail(
       dedupeKey,
     );
 
+  if (
+    explicitIdempotency &&
+    dedupeClaim.claimFailed
+  ) {
+    throw new Error(
+      "EMAIL_IDEMPOTENCY_CLAIM_FAILED",
+    );
+  }
+
   if (!dedupeClaim.claimed) {
     return {
       delivery:

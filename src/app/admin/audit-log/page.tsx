@@ -34,6 +34,20 @@ const actionLabels: Record<AuditAction, string> = {
 };
 const actions = Object.keys(actionLabels) as AuditAction[];
 
+const sourceLabels: Record<string, string> = {
+  publisher_submission_decision: "Yayınevi başvuru kararı güncellendi",
+  publisher_submission_internal_note: "Yayınevi başvurusuna iç not eklendi",
+  publisher_contract_updated: "Yayınevi sözleşmesi güncellendi",
+  publisher_publication_plan_updated: "Yayınevi yayın planı güncellendi",
+  publisher_file_downloaded: "Yayınevi dosyası indirildi",
+  publisher_editor_request_created: "Yayınevi editör talebi oluşturuldu",
+  publisher_editor_request_claimed: "Yayınevi editör talebi göreve alındı",
+  publisher_editor_request_cancelled: "Yayınevi editör talebi iptal edildi",
+  publisher_editor_request_auto_cancelled_ineligible:
+    "Uygunluğunu kaybeden yayınevi editör talebi kapatıldı",
+  publisher_editor_request_completed: "Yayınevi editör talebi tamamlandı",
+};
+
 type SearchParams = Promise<{ baslangic?: string; islem?: string; kullanici?: string; page?: string }>;
 
 function isAction(value: string | undefined): value is AuditAction {
@@ -57,30 +71,53 @@ function maskIp(value: string | null) {
   return parts.length === 4 ? `${parts[0]}.${parts[1]}.…` : "Maskelendi";
 }
 
-function safeMetadata(value: string | null) {
+function parseMetadata(value: string | null) {
   if (!value) return null;
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>;
-    const allowed = [
-      "channel",
-      "decision",
-      "deliveryId",
-      "deliveryMode",
-      "newStatus",
-      "oldStatus",
-      "recipient",
-      "requestedRole",
-      "role",
-      "sessionsRevoked",
-      "source",
-      "status",
-      "template",
-      "userId",
-    ];
-    return allowed.flatMap((key) => key in parsed ? [`${key}: ${String(parsed[key])}`] : []);
+    return parsed && typeof parsed === "object" ? parsed : null;
   } catch {
-    return ["Yapılandırılmış metadata okunamadı."];
+    return null;
   }
+}
+
+function safeMetadata(value: string | null) {
+  if (!value) return null;
+  const parsed = parseMetadata(value);
+  if (!parsed) return ["Yapılandırılmış metadata okunamadı."];
+
+  const allowed = [
+    "channel",
+    "contractId",
+    "decision",
+    "deliveryId",
+    "deliveryMode",
+    "from",
+    "newStatus",
+    "oldStatus",
+    "publisherId",
+    "recipient",
+    "requestedRole",
+    "role",
+    "sessionsRevoked",
+    "source",
+    "status",
+    "submissionId",
+    "template",
+    "to",
+    "userId",
+    "version",
+  ];
+
+  return allowed.flatMap((key) =>
+    key in parsed ? [`${key}: ${String(parsed[key])}`] : [],
+  );
+}
+
+function semanticActionLabel(action: AuditAction, metadata: string | null) {
+  const parsed = parseMetadata(metadata);
+  const source = typeof parsed?.source === "string" ? parsed.source : null;
+  return source && sourceLabels[source] ? sourceLabels[source] : actionLabels[action];
 }
 
 function pageHref(user: string, action: string, start: string, page: number) {
@@ -110,5 +147,5 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Sea
   const first = filteredCount ? (safePage - 1) * PAGE_SIZE + 1 : 0;
   const last = Math.min(safePage * PAGE_SIZE, filteredCount);
 
-  return <div className="admin-directory-page"><header className="admin-page-heading"><div><span className="admin-eyebrow">Denetlenebilirlik</span><h1>Audit Log</h1><p>Gerçek sistem hareketlerini kullanıcı, işlem ve tarihe göre inceleyin.</p></div></header><section className="admin-panel admin-directory-panel"><form className="admin-directory-filters" method="get"><label><span>Kullanıcı</span><input defaultValue={userQuery} name="kullanici" placeholder="Ad veya e-posta" type="search" /></label><label><span>İşlem</span><select defaultValue={selectedAction} name="islem"><option value="">Tüm işlemler</option>{actions.map((action) => <option key={action} value={action}>{actionLabels[action]}</option>)}</select></label><label><span>Başlangıç tarihi</span><input defaultValue={params.baslangic ?? ""} name="baslangic" type="date" /></label><button type="submit">Filtrele</button>{(userQuery || selectedAction || startDate) ? <Link href="/admin/audit-log">Temizle</Link> : null}</form>{records.length ? <div className="admin-table-wrap"><table className="admin-data-table"><thead><tr><th>İşlemi yapan</th><th>İşlem</th><th>Etkilenen kayıt</th><th>Özet</th><th>Teknik bilgi</th><th>Tarih</th></tr></thead><tbody>{records.map((record) => { const metadata = safeMetadata(record.metadata); return <tr key={record.id}><td><strong>{record.actor?.displayName || record.actor?.fullName || "Sistem"}</strong><span>{record.actor?.email || "Otomatik işlem"}</span></td><td>{actionLabels[record.action]}</td><td><span>{record.entityType || "—"}</span><small>{record.entityId || "Kimlik yok"}</small></td><td>{metadata?.length ? <details><summary>Güvenli özeti aç</summary><ul>{metadata.map((item) => <li key={item}>{item}</li>)}</ul></details> : "Metadata yok"}</td><td><span>IP: {maskIp(record.ipAddress)}</span><small>{record.userAgent ? "İstemci bilgisi kaydedildi" : "İstemci bilgisi yok"}</small></td><td><time dateTime={record.createdAt.toISOString()}>{formatDate(record.createdAt)}</time></td></tr>; })}</tbody></table></div> : <div className="admin-empty-state"><strong>Audit kaydı bulunamadı</strong><p>Sahte veri gösterilmez; filtreleri temizleyerek yeniden deneyin.</p></div>}<footer className="admin-pagination"><span>{first}–{last} / {filteredCount} kayıt</span><div>{safePage > 1 ? <Link href={pageHref(userQuery, selectedAction, params.baslangic ?? "", safePage - 1)}>← Önceki</Link> : <span>← Önceki</span>}<b>{safePage} / {totalPages}</b>{safePage < totalPages ? <Link href={pageHref(userQuery, selectedAction, params.baslangic ?? "", safePage + 1)}>Sonraki →</Link> : <span>Sonraki →</span>}</div></footer></section></div>;
+  return <div className="admin-directory-page"><header className="admin-page-heading"><div><span className="admin-eyebrow">Denetlenebilirlik</span><h1>Audit Log</h1><p>Gerçek sistem hareketlerini kullanıcı, işlem ve tarihe göre inceleyin.</p></div></header><section className="admin-panel admin-directory-panel"><form className="admin-directory-filters" method="get"><label><span>Kullanıcı</span><input defaultValue={userQuery} name="kullanici" placeholder="Ad veya e-posta" type="search" /></label><label><span>İşlem</span><select defaultValue={selectedAction} name="islem"><option value="">Tüm işlemler</option>{actions.map((action) => <option key={action} value={action}>{actionLabels[action]}</option>)}</select></label><label><span>Başlangıç tarihi</span><input defaultValue={params.baslangic ?? ""} name="baslangic" type="date" /></label><button type="submit">Filtrele</button>{(userQuery || selectedAction || startDate) ? <Link href="/admin/audit-log">Temizle</Link> : null}</form>{records.length ? <div className="admin-table-wrap"><table className="admin-data-table"><thead><tr><th>İşlemi yapan</th><th>İşlem</th><th>Etkilenen kayıt</th><th>Özet</th><th>Teknik bilgi</th><th>Tarih</th></tr></thead><tbody>{records.map((record) => { const metadata = safeMetadata(record.metadata); return <tr key={record.id}><td><strong>{record.actor?.displayName || record.actor?.fullName || "Sistem"}</strong><span>{record.actor?.email || "Otomatik işlem"}</span></td><td>{semanticActionLabel(record.action, record.metadata)}</td><td><span>{record.entityType || "—"}</span><small>{record.entityId || "Kimlik yok"}</small></td><td>{metadata?.length ? <details><summary>Güvenli özeti aç</summary><ul>{metadata.map((item) => <li key={item}>{item}</li>)}</ul></details> : "Metadata yok"}</td><td><span>IP: {maskIp(record.ipAddress)}</span><small>{record.userAgent ? "İstemci bilgisi kaydedildi" : "İstemci bilgisi yok"}</small></td><td><time dateTime={record.createdAt.toISOString()}>{formatDate(record.createdAt)}</time></td></tr>; })}</tbody></table></div> : <div className="admin-empty-state"><strong>Audit kaydı bulunamadı</strong><p>Sahte veri gösterilmez; filtreleri temizleyerek yeniden deneyin.</p></div>}<footer className="admin-pagination"><span>{first}–{last} / {filteredCount} kayıt</span><div>{safePage > 1 ? <Link href={pageHref(userQuery, selectedAction, params.baslangic ?? "", safePage - 1)}>← Önceki</Link> : <span>← Önceki</span>}<b>{safePage} / {totalPages}</b>{safePage < totalPages ? <Link href={pageHref(userQuery, selectedAction, params.baslangic ?? "", safePage + 1)}>Sonraki →</Link> : <span>Sonraki →</span>}</div></footer></section></div>;
 }

@@ -8,7 +8,7 @@
     "build:ci": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:security": "node --test scripts/security-contract.test.mjs scripts/security-contract-lifecycle.test.mjs scripts/security-contract-notifications.test.mjs scripts/security-contract-residual-surfaces.test.mjs"
+    "test:security": "node --test scripts/security-contract.test.mjs scripts/security-contract-lifecycle.test.mjs scripts/security-contract-notifications.test.mjs scripts/security-contract-residual-surfaces.test.mjs scripts/security-contract-dead-surfaces.test.mjs"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "7.9.1",
@@ -34,14 +34,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
-    "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  "overrides": {
-    "next": {
-      "sharp": "0.35.3"
-    },
-    "nanoid": "3.3.18",
-    "postcss": "8.5.25"
   }
 }

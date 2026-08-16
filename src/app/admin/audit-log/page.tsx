@@ -35,6 +35,8 @@ const actionLabels: Record<AuditAction, string> = {
 const actions = Object.keys(actionLabels) as AuditAction[];
 
 const sourceLabels: Record<string, string> = {
+  admin_user_role_changed: "Admin kullanıcı rolünü değiştirdi",
+  admin_user_status_changed: "Admin kullanıcı durumunu değiştirdi",
   publisher_submission_created: "Yayınevi başvurusu oluşturuldu",
   publisher_submission_withdrawn: "Yayınevi başvurusu geri çekildi",
   publisher_submission_decision_updated: "Yayınevi başvuru kararı güncellendi",
@@ -89,11 +91,14 @@ function safeMetadata(value: string | null) {
       "deliveryMode",
       "from",
       "fromStatus",
+      "newRole",
       "newStatus",
       "noteChanged",
       "noteLength",
+      "oldRole",
       "oldStatus",
       "publicationPlanId",
+      "publicId",
       "publisherFileId",
       "publisherId",
       "publisherSubmissionId",

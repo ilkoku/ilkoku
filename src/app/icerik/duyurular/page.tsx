@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCmsAccess } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
 
-type Row = { contentKey: string; valueJson: string; status: string; updatedAt: Date };
+type Row = { contentKey: string; valueJson: string; status: string; updatedAt: Date; currentTime: Date };
 type Notice = {
   title?: string;
   body?: string;
@@ -78,7 +78,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
 
   try {
     rows = await prisma.$queryRaw<Row[]>`
-      SELECT contentKey, valueJson, status, updatedAt
+      SELECT contentKey, valueJson, status, updatedAt, CURRENT_TIMESTAMP(3) AS currentTime
       FROM SiteContent
       WHERE namespace = 'announcement'
       ORDER BY updatedAt DESC
@@ -99,7 +99,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
 
   const prepared = rows.map((row) => ({ row, data: parseNotice(row.valueJson) }));
   const invalid = prepared.filter((item) => !item.data);
-  const now = Date.now();
+  const now = rows[0]?.currentTime.getTime() ?? 0;
   const items = prepared.flatMap(({ row, data }) => data
     ? [{ ...row, ...data, operational: operationalState({ ...row, ...data }, now) }]
     : []);

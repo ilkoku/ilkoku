@@ -47,7 +47,8 @@ test("writer notification route uses the same dedicated role boundary in proxy a
   assertContains(page, "canAccessNotificationWorkspace", "notification page boundary");
 });
 
-test("release role-matrix routes exist and production smoke exercises every role root", () => {
+test("release role matrix keeps every workspace route present and explicitly protected", () => {
+  const proxy = source("src/proxy.ts");
   const smoke = source(".github/workflows/production-smoke.yml");
   const routeFiles = [
     "src/app/okuyucu/page.tsx",
@@ -59,27 +60,41 @@ test("release role-matrix routes exist and production smoke exercises every role
     "src/app/admin/page.tsx",
     "src/app/bildirimler/page.tsx",
   ];
-  const liveRoutes = [
-    "/okuyucu",
-    "/kesfet",
-    "/yazar",
-    "/eserlerim",
-    "/yazmaya-devam",
-    "/bildirimler",
-    "/editor",
-    "/editor/bildirimler",
-    "/yayinevi",
-    "/yayinevi/kesfet/eserler",
-    "/yayinevi/kesfet/yazarlar",
-    "/yayinevi/bildirimler",
-    "/admin",
-  ];
 
   for (const file of routeFiles) {
     assert.equal(existsSync(join(ROOT, file)), true, `${file} must exist`);
   }
-  for (const route of liveRoutes) {
-    assertContains(smoke, `https://ilkoku.com${route}`, `production smoke ${route}`);
+
+  for (const path of [
+    '"/okuyucu"',
+    '"/kesfet"',
+    '"/yazar"',
+    '"/eserlerim"',
+    '"/yazmaya-devam"',
+    '"/bildirimler"',
+    '"/editor"',
+    '"/yayinevi"',
+  ]) {
+    assertContains(proxy, path, `protected role path ${path}`);
+  }
+
+  assertContains(proxy, 'path: "/yazar", roles: ["writer"]', "writer role gate");
+  assertContains(proxy, 'path: "/eserlerim", roles: ["writer"]', "writer role gate");
+  assertContains(proxy, 'path: "/editor", roles: ["editor"]', "editor role gate");
+  assertContains(proxy, "isPublisherRoute", "publisher membership gate");
+  assertContains(proxy, "hasActivePublisherMembership", "publisher membership gate");
+  assertContains(proxy, "isAdminRoute && !isAdmin", "admin role gate");
+
+  for (const route of [
+    "/bildirimler",
+    "/editor/bildirimler",
+    "/editor/yayinevi-talepleri",
+    "/yayinevi/bildirimler",
+    "/yayinevi/editor-talepleri",
+    "/yayinevi/kesfet/eserler",
+    "/yazmaya-devam",
+  ]) {
+    assertContains(smoke, `https://ilkoku.com${route}`, `critical live smoke ${route}`);
   }
 });
 
@@ -158,7 +173,7 @@ test("publisher engagement audit metadata remains measurement-safe", () => {
   }
 });
 
-test("release CI rehearses both measurement and fresh-database recovery", () => {
+test("release CI rehearses measurement on both disposable and recovered databases", () => {
   const ci = source(".github/workflows/ci.yml");
   const packageJson = source("package.json");
 

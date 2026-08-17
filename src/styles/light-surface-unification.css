@@ -54,6 +54,23 @@
   box-shadow: 0 0.75rem 1.8rem rgba(104, 71, 232, 0.06) !important;
 }
 
+/* Active writer navigation — slightly stronger, still restrained. */
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item[data-active] {
+  color: #4b2dbf !important;
+  border-color: rgba(104, 71, 232, 0.24) !important;
+  background: linear-gradient(
+    90deg,
+    rgba(104, 71, 232, 0.13),
+    rgba(104, 71, 232, 0.05)
+  ) !important;
+  box-shadow: 0 0.5rem 1.25rem rgba(104, 71, 232, 0.08) !important;
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item[data-active] .nav-item__indicator {
+  background: #6847e8 !important;
+  box-shadow: 0 0 0 0.3rem rgba(104, 71, 232, 0.10) !important;
+}
+
 /* Main cards and structural panels: the same warm-white as the dashboard hero. */
 .app-shell[data-role="writer"] .user-area__popover,
 .app-shell[data-role="writer"] .card,

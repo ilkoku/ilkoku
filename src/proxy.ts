@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { readerWorkspaceRoles } from "@/features/auth/data";
+import {
+  notificationWorkspaceRoles,
+  readerWorkspaceRoles,
+} from "@/features/auth/data";
 import type { UserRole } from "@/features/auth/types";
 import { getRequestSession } from "@/lib/auth/request-session";
 
@@ -40,7 +43,7 @@ interface RouteRoleRule {
 
 const routeRoleRules: RouteRoleRule[] = [
   { approved: false, path: "/favorilerim", roles: [...readerWorkspaceRoles] },
-  { approved: false, path: "/bildirimler", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/bildirimler", roles: [...notificationWorkspaceRoles] },
   { approved: false, path: "/kesfet", roles: [...readerWorkspaceRoles] },
   { approved: false, path: "/okuyucu", roles: [...readerWorkspaceRoles] },
   { approved: false, path: "/okumaya-devam", roles: [...readerWorkspaceRoles] },

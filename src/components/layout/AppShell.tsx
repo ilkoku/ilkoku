@@ -10,6 +10,7 @@ import {
 } from "@/features/publisher-discovery/access";
 import styles from "@/features/admin-role-view/AdminRoleView.module.css";
 import "@/features/writer/writer-role-theme.css";
+import "@/features/writer/writer-purple-continuity.css";
 
 type AppShellProps = {
   children: ReactNode;

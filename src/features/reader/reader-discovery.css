@@ -1,0 +1,83 @@
+.reader-discovery-filter-actions {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.reader-discovery-summary {
+  display: grid;
+  gap: 0.2rem;
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  background: var(--color-card);
+  box-shadow: var(--shadow-small);
+}
+
+.reader-discovery-summary > span {
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reader-discovery-summary > strong {
+  color: var(--color-text);
+  font-size: 1.15rem;
+}
+
+.reader-discovery-summary > small {
+  color: var(--color-text-secondary);
+}
+
+.reader-discovery-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  background: var(--color-card);
+}
+
+.reader-discovery-pagination > span {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.reader-discovery-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.reader-discovery-pagination [aria-disabled="true"] {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: 0.52rem 0.78rem;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 0.72rem;
+  opacity: 0.55;
+}
+
+@media (max-width: 47.99rem) {
+  .reader-discovery-filter-actions,
+  .reader-discovery-pagination,
+  .reader-discovery-pagination > div {
+    width: 100%;
+  }
+
+  .reader-discovery-pagination > div > * {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}

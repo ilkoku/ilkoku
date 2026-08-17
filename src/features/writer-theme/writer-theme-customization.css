@@ -52,7 +52,14 @@
 .app-shell[data-role="writer"] .dashboard-hero,
 .app-shell[data-role="writer"] .works-workspace__hero,
 .app-shell[data-role="writer"] .editor-page-header,
-.app-shell[data-role="writer"] .user-area__popover {
+.app-shell[data-role="writer"] .user-area__popover,
+.app-shell[data-role="writer"] .new-work-panel,
+.app-shell[data-role="writer"] .writer-toolbar,
+.app-shell[data-role="writer"] .writer-canvas,
+.app-shell[data-role="writer"] .writer-footer__stat,
+.app-shell[data-role="writer"] .workspace-cover,
+.app-shell[data-role="writer"] .book-cover,
+.app-shell[data-role="writer"] .latest-work__cover {
   background: var(--writer-custom-card-surface) !important;
   color: var(--writer-custom-text) !important;
   border-color: var(--writer-custom-border) !important;
@@ -65,15 +72,40 @@
 .app-shell[data-role="writer"] .editor-filters select,
 .app-shell[data-role="writer"] .workspace-editor-review,
 .app-shell[data-role="writer"] .workspace-tabs button,
-.app-shell[data-role="writer"] .sidebar-toggle {
+.app-shell[data-role="writer"] .sidebar-toggle,
+.app-shell[data-role="writer"] .writer-chapters,
+.app-shell[data-role="writer"] .writer-footer,
+.app-shell[data-role="writer"] .writer-context-bar,
+.app-shell[data-role="writer"] .new-work-panel input,
+.app-shell[data-role="writer"] .new-work-panel textarea,
+.app-shell[data-role="writer"] .new-work-panel select {
   background: var(--writer-custom-control-surface) !important;
   border-color: var(--writer-custom-border) !important;
+}
+
+.app-shell[data-role="writer"] .flow-layer--form,
+.app-shell[data-role="writer"] .writer-screen {
+  --writer-paper-shell: var(--writer-custom-page-canvas) !important;
+  --writer-paper-ui: var(--writer-custom-control-surface) !important;
+  --writer-paper: var(--writer-custom-card-surface) !important;
+  --color-background: var(--writer-custom-page-canvas) !important;
+  --color-surface: var(--writer-custom-main-surface) !important;
+  --color-surface-raised: var(--writer-custom-card-surface) !important;
+  --color-card: var(--writer-custom-card-surface) !important;
+  --color-text: var(--writer-custom-text) !important;
+  --color-text-secondary: var(--writer-custom-text-muted) !important;
+  --color-primary: var(--writer-custom-primary) !important;
+  --color-primary-hover: var(--writer-custom-primary-hover) !important;
+  background: var(--writer-custom-page-canvas) !important;
+  color: var(--writer-custom-text) !important;
 }
 
 .app-shell[data-role="writer"] h1,
 .app-shell[data-role="writer"] h2,
 .app-shell[data-role="writer"] h3,
-.app-shell[data-role="writer"] .dashboard-hero__title {
+.app-shell[data-role="writer"] .dashboard-hero__title,
+.app-shell[data-role="writer"] .writer-screen__title,
+.app-shell[data-role="writer"] .new-work-panel__title {
   color: var(--writer-custom-heading) !important;
 }
 

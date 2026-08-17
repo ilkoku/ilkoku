@@ -1,10 +1,10 @@
 /*
- * Light surface unification.
- * User-locked palette rule: former rows 5-11 all resolve to #F8F6FF.
- * This changes color only; layout, typography and behavior stay untouched.
+ * Light surface palette.
+ * Keep /giris on the current light lavender rule and harmonize writer surfaces
+ * with the approved Writer Panel palette. Color-only: no layout or behavior changes.
  */
 
-/* /giris — replace the former cream/beige surface family. */
+/* /giris — keep the existing light lavender surface family. */
 .login-brand-scope .auth-page--purple {
   --color-background: #f8f6ff !important;
   --color-surface: #f8f6ff !important;
@@ -23,14 +23,27 @@
   background: #f8f6ff !important;
 }
 
-/* Writer shell — replace former #FFFEFB/#F8F6F1/#F3F0EA/#F1EEE8 surfaces. */
+/* --------------------------------------------------------------------------
+   WRITER PANEL PALETTE
+   - canvas: #F8F6FF
+   - card/panel/paper: #FFFEFB
+   - primary text: #292620
+   - secondary text: #746F66
+   - brand purple family: #8065F2 / #6847E8 / #5B38D1 / #4B2DBF
+   -------------------------------------------------------------------------- */
+
 .app-shell[data-role="writer"] {
   --color-background: #f8f6ff !important;
   --color-surface: #f8f6ff !important;
-  --color-surface-raised: #f8f6ff !important;
-  --color-card: #f8f6ff !important;
+  --color-surface-raised: #fffefb !important;
+  --color-card: #fffefb !important;
+  --color-primary: #6847e8 !important;
+  --color-primary-hover: #4b2dbf !important;
+  --color-text: #292620 !important;
+  --color-text-secondary: #746f66 !important;
 }
 
+/* Structural light surfaces use the Writer Panel's warm-white card face. */
 .app-shell[data-role="writer"] .sidebar,
 .app-shell[data-role="writer"] .brand,
 .app-shell[data-role="writer"] .user-area__popover,
@@ -45,14 +58,18 @@
 .app-shell[data-role="writer"] .editor-selection-grid article,
 .app-shell[data-role="writer"] .editor-notification-list article,
 .app-shell[data-role="writer"] .editor-profile-card,
+.app-shell[data-role="writer"] .sidebar-toggle {
+  background: #fffefb !important;
+}
+
+/* Controls stay softly lavender so cards and controls remain distinguishable. */
 .app-shell[data-role="writer"] .field__control,
 .app-shell[data-role="writer"] .workspace-search input,
 .app-shell[data-role="writer"] .workspace-sort select,
 .app-shell[data-role="writer"] .editor-filters input,
 .app-shell[data-role="writer"] .editor-filters select,
 .app-shell[data-role="writer"] .workspace-editor-review,
-.app-shell[data-role="writer"] .workspace-tabs button,
-.app-shell[data-role="writer"] .sidebar-toggle {
+.app-shell[data-role="writer"] .workspace-tabs button {
   background: #f8f6ff !important;
 }
 
@@ -60,13 +77,76 @@
   background: color-mix(in srgb, #f8f6ff 92%, transparent) !important;
 }
 
-/* New Work + manuscript workspace — rows 5, 6, 10 and 11 become #F8F6FF. */
+/* Hero uses the exact color language visible in the approved Writer Panel. */
+.app-shell[data-role="writer"] .dashboard-hero,
+.app-shell[data-role="writer"] .works-workspace__hero,
+.app-shell[data-role="writer"] .editor-page-header {
+  color: #292620 !important;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(104, 71, 232, 0.08), transparent 18rem),
+    #fffefb !important;
+}
+
+.app-shell[data-role="writer"] .dashboard-hero__eyebrow,
+.app-shell[data-role="writer"] .section-heading p,
+.app-shell[data-role="writer"] .latest-work__content > p,
+.app-shell[data-role="writer"] .book-card__genre,
+.app-shell[data-role="writer"] .status-badge {
+  color: #6847e8 !important;
+}
+
+/* Writer Panel progress language. */
+.app-shell[data-role="writer"] .daily-goal .progress__bar,
+.app-shell[data-role="writer"] .daily-goal .progress__bar::-webkit-progress-bar {
+  background: #ece7df !important;
+}
+
+.app-shell[data-role="writer"] .daily-goal .progress__bar::-webkit-progress-value,
+.app-shell[data-role="writer"] .daily-goal .progress__bar::-moz-progress-bar {
+  background: linear-gradient(90deg, #6847e8, #8065f2) !important;
+}
+
+/* All generated/default work covers use the same Writer Panel purple family. */
+.app-shell[data-role="writer"] .latest-work__cover,
+.app-shell[data-role="writer"] .book-cover,
+.app-shell[data-role="writer"] .workspace-cover,
+.app-shell[data-role="writer"] .book-cover--two,
+.app-shell[data-role="writer"] .book-cover--three,
+.app-shell[data-role="writer"] .workspace-cover--2,
+.app-shell[data-role="writer"] .workspace-cover--3 {
+  color: #ffffff !important;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255, 255, 255, 0.18), transparent 8rem),
+    linear-gradient(145deg, #8065f2 0%, #6847e8 52%, #5b38d1 100%) !important;
+  border-color: rgba(104, 71, 232, 0.18) !important;
+}
+
+/* New Work + manuscript: lavender shell, warm-white paper, purple accents. */
 .flow-layer--form,
 .writer-screen {
   --writer-paper-shell: #f8f6ff !important;
   --writer-paper-ui: #f8f6ff !important;
-  --writer-paper: #f8f6ff !important;
+  --writer-paper: #fffefb !important;
+  --writer-paper-ink: #292620 !important;
+  --writer-paper-muted: #746f66 !important;
+  --writer-paper-accent: #6847e8 !important;
+  --writer-paper-accent-hover: #4b2dbf !important;
+  --color-background: #f8f6ff !important;
   --color-surface: #f8f6ff !important;
-  --color-surface-raised: #f8f6ff !important;
-  --color-card: #f8f6ff !important;
+  --color-surface-raised: #fffefb !important;
+  --color-card: #fffefb !important;
+  --color-primary: #6847e8 !important;
+  --color-primary-hover: #4b2dbf !important;
+  --color-text: #292620 !important;
+  --color-text-secondary: #746f66 !important;
+}
+
+.writer-screen .writer-goal progress,
+.writer-screen .writer-goal progress::-webkit-progress-bar {
+  background: #ece7df !important;
+}
+
+.writer-screen .writer-goal progress::-webkit-progress-value,
+.writer-screen .writer-goal progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #4b2dbf, #8065f2) !important;
 }

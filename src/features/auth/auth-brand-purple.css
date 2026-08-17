@@ -1,0 +1,33 @@
+/* İlkOku login brand accent — scoped only to /giris through login-brand-scope. */
+
+.login-brand-scope .auth-page {
+  --color-primary: #6847e8;
+  --color-primary-hover: #4b2dbf;
+  --color-primary-muted: rgba(104, 71, 232, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(104, 71, 232, 0.2);
+}
+
+.login-brand-scope .auth-page .button--primary {
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    #8065f2 0%,
+    #6847e8 52%,
+    #4b2dbf 100%
+  );
+  box-shadow: 0 0.9rem 2rem rgba(104, 71, 232, 0.22);
+}
+
+.login-brand-scope .auth-page .button--primary:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    #8b73f5 0%,
+    #6847e8 48%,
+    #4326ad 100%
+  );
+  box-shadow: 0 1rem 2.3rem rgba(104, 71, 232, 0.3);
+}
+
+.login-brand-scope .auth-page .auth-form-card::before {
+  background: rgba(104, 71, 232, 0.18);
+}

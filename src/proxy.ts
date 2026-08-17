@@ -31,6 +31,7 @@ const protectedPaths = [
   "/geri-bildirimler",
   "/yorumlarim",
   "/yayinevleri",
+  "/sayfa-renkleri",
   "/yayinevi",
   "/rol-secimi",
 ];
@@ -54,6 +55,7 @@ const routeRoleRules: RouteRoleRule[] = [
   { approved: false, path: "/geri-bildirimler", roles: ["writer"] },
   { approved: false, path: "/yorumlarim", roles: ["writer"] },
   { approved: false, path: "/yayinevleri", roles: ["writer"] },
+  { approved: false, path: "/sayfa-renkleri", roles: ["writer"] },
   { approved: true, path: "/editor", roles: ["editor"] },
 ];
 

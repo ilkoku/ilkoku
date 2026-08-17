@@ -52,9 +52,18 @@ export function WriterThemeEditor({ userId }: { userId: string }) {
 
   useEffect(() => {
     const stored = loadWriterTheme(userId);
-    setTheme(stored);
-    setSavedTheme(stored);
+    let active = true;
+
     applyWriterTheme(stored);
+    queueMicrotask(() => {
+      if (!active) return;
+      setTheme(stored);
+      setSavedTheme(stored);
+    });
+
+    return () => {
+      active = false;
+    };
   }, [userId]);
 
   const dirty = useMemo(

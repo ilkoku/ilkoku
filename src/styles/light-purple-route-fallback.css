@@ -1,0 +1,8 @@
+/* Route-scoped fallback only: prevent the global dark html/body background from showing through. */
+html:has(.login-brand-scope),
+body:has(.login-brand-scope),
+html:has(.app-shell[data-role="writer"]),
+body:has(.app-shell[data-role="writer"]) {
+  background: #f8f6ff !important;
+  color-scheme: light;
+}

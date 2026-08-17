@@ -9,7 +9,7 @@
     "build:ci": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:security": "node --test scripts/security-contract.test.mjs scripts/security-contract-lifecycle.test.mjs scripts/security-contract-notifications.test.mjs scripts/security-contract-residual-surfaces.test.mjs scripts/security-contract-dead-surfaces.test.mjs scripts/security-contract-role-boundaries.test.mjs scripts/security-contract-auth-state.test.mjs scripts/security-contract-login-session.test.mjs scripts/security-contract-email-verification.test.mjs scripts/security-contract-publisher-invitations.test.mjs scripts/security-contract-publisher-submission-writes.test.mjs",
+    "test:security": "node --test scripts/security-contract.test.mjs scripts/security-contract-lifecycle.test.mjs scripts/security-contract-notifications.test.mjs scripts/security-contract-discovery.test.mjs scripts/security-contract-residual-surfaces.test.mjs scripts/security-contract-dead-surfaces.test.mjs scripts/security-contract-role-boundaries.test.mjs scripts/security-contract-auth-state.test.mjs scripts/security-contract-login-session.test.mjs scripts/security-contract-email-verification.test.mjs scripts/security-contract-publisher-invitations.test.mjs scripts/security-contract-publisher-submission-writes.test.mjs",
     "test:security:db": "node --test scripts/security-db-contract.test.mjs"
   },
   "dependencies": {
@@ -32,11 +32,11 @@
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^19.2.4",
+    "@types/react-dom": "^19.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5"
   },
   "overrides": {

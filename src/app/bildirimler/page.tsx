@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
-import { canAccessReaderWorkspace } from "@/features/auth/data";
+import { canAccessNotificationWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { markNotificationReadAction } from "@/features/editor-workspace/actions";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
@@ -19,11 +19,11 @@ function formatDate(value: Date) {
   }).format(value);
 }
 
-export default async function ReaderNotificationsPage() {
+export default async function NotificationsPage() {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/giris?sonraki=/bildirimler");
-  if (!canAccessReaderWorkspace(profile.role)) {
-    redirect("/erisim-reddedildi?kaynak=reader");
+  if (!canAccessNotificationWorkspace(profile.role)) {
+    redirect("/erisim-reddedildi?kaynak=bildirimler");
   }
 
   const notifications = await prisma.notification.findMany({
@@ -36,13 +36,14 @@ export default async function ReaderNotificationsPage() {
     scope: "default",
     userId: profile.id,
   });
+  const eyebrow = profile.role === "writer" ? "Yazar alanı" : "Okuyucu alanı";
 
   return (
     <AppShell profile={profile}>
       <div className="editor-workspace">
         <EditorPageHeader
-          description="Takip ettiğiniz eserler, yorumlar ve okuma etkinlikleriyle ilgili güncellemeler."
-          eyebrow="Okuyucu alanı"
+          description="Eserler, yorumlar, yayın ve hesap etkinlikleriyle ilgili güncellemeler."
+          eyebrow={eyebrow}
           title="Bildirimler"
         />
         <div className="editor-notification-list">

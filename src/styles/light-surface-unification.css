@@ -102,7 +102,7 @@
   background: linear-gradient(90deg, #6847e8, #8065f2) !important;
 }
 
-/* Work-cover placeholders use the same purple family as the New Work CTA. */
+/* Work-cover placeholders now use the same light panel palette instead of a full-purple fill. */
 .app-shell[data-role="writer"] .latest-work__cover,
 .app-shell[data-role="writer"] .book-cover,
 .app-shell[data-role="writer"] .workspace-cover,
@@ -110,10 +110,10 @@
 .app-shell[data-role="writer"] .book-cover--three,
 .app-shell[data-role="writer"] .workspace-cover--2,
 .app-shell[data-role="writer"] .workspace-cover--3 {
-  color: #ffffff !important;
+  color: #292620 !important;
   background:
-    radial-gradient(circle at 82% 14%, rgba(255, 255, 255, 0.18), transparent 8rem),
-    linear-gradient(145deg, #8065f2 0%, #6847e8 55%, #5b38d1 100%) !important;
+    radial-gradient(circle at 88% 10%, rgba(104, 71, 232, 0.10), transparent 9rem),
+    #fffefb !important;
   border-color: rgba(104, 71, 232, 0.18) !important;
 }
 

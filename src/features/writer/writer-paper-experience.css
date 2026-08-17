@@ -1,0 +1,391 @@
+/*
+ * Sprint 5B — Writer Paper Experience
+ * Visual-only layer for writer production surfaces.
+ * Functional UI stays on the existing system/Inter typography;
+ * manuscript content uses a typewriter-style stack.
+ */
+
+.flow-layer--form,
+.writer-screen {
+  --writer-paper-ink: #25231f;
+  --writer-paper-muted: #746f66;
+  --writer-paper-faint: #9b958b;
+  --writer-paper-shell: #efede7;
+  --writer-paper-ui: #f8f6f1;
+  --writer-paper: #fffefb;
+  --writer-paper-border: #d9d4cb;
+  --writer-paper-border-strong: #c8c1b6;
+  --writer-paper-accent: #a77a23;
+  --writer-paper-accent-hover: #8e671e;
+  --writer-paper-accent-muted: rgba(167, 122, 35, 0.11);
+  --writer-typewriter: "Courier New", Courier, ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* Keep shared controls readable when they are rendered inside the light writer surface. */
+  --color-background: #f4f1eb;
+  --color-surface: #f8f6f1;
+  --color-surface-raised: #efebe4;
+  --color-card: #fffefb;
+  --color-primary: #a77a23;
+  --color-primary-hover: #8e671e;
+  --color-primary-muted: rgba(167, 122, 35, 0.11);
+  --color-text: #25231f;
+  --color-text-secondary: #746f66;
+  --color-border: rgba(37, 35, 31, 0.13);
+  --color-border-strong: rgba(37, 35, 31, 0.24);
+  --color-overlay-hover: rgba(37, 35, 31, 0.05);
+  --shadow-focus: 0 0 0 3px rgba(167, 122, 35, 0.18);
+
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------
+   NEW WORK — clean white paper entry point
+   -------------------------------------------------------------------------- */
+
+.flow-layer--form {
+  background: var(--writer-paper-shell) !important;
+}
+
+.flow-layer--form .new-work-panel {
+  background: var(--writer-paper) !important;
+  border-color: var(--writer-paper-border) !important;
+  box-shadow: 0 1.5rem 4rem rgba(64, 56, 45, 0.12) !important;
+}
+
+.flow-layer--form .new-work-panel__heading h2 {
+  color: var(--writer-paper-ink);
+  font-family: var(--writer-typewriter);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.flow-layer--form .new-work-panel__heading p {
+  color: var(--writer-paper-accent);
+}
+
+.flow-layer--form .flow-close {
+  color: var(--writer-paper-muted);
+  background: var(--writer-paper);
+  border-color: var(--writer-paper-border);
+}
+
+.flow-layer--form .flow-close:hover {
+  color: var(--writer-paper-ink);
+  background: var(--writer-paper-ui);
+}
+
+/* --------------------------------------------------------------------------
+   WRITER SHELL — light, quiet and functional
+   -------------------------------------------------------------------------- */
+
+.writer-screen {
+  background: var(--writer-paper-shell) !important;
+  color: var(--writer-paper-ink);
+}
+
+.writer-screen .writer-toolbar {
+  background: var(--writer-paper) !important;
+  border-bottom-color: var(--writer-paper-border) !important;
+}
+
+.writer-screen .writer-toolbar__identity strong {
+  color: var(--writer-paper-ink);
+  font-family: var(--writer-typewriter);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.writer-screen .writer-toolbar__identity span,
+.writer-screen .writer-toolbar__identity small,
+.writer-screen .writer-toolbar__session {
+  color: var(--writer-paper-muted);
+}
+
+.writer-screen .writer-save-status i {
+  background: var(--writer-paper-faint);
+}
+
+.writer-screen .writer-streak {
+  color: var(--writer-paper-accent);
+}
+
+.writer-screen .writer-context-bar,
+.writer-screen.writer-screen--focus .writer-context-bar {
+  background: var(--writer-paper-ui) !important;
+  border-top-color: rgba(37, 35, 31, 0.05) !important;
+  border-bottom-color: var(--writer-paper-border) !important;
+}
+
+.writer-screen .writer-goal > div span {
+  color: var(--writer-paper-muted) !important;
+}
+
+.writer-screen .writer-goal > div strong {
+  color: var(--writer-paper-ink) !important;
+  font-family: var(--writer-typewriter);
+}
+
+.writer-screen .writer-goal progress,
+.writer-screen .writer-goal progress::-webkit-progress-bar {
+  background: #e2ded6 !important;
+}
+
+.writer-screen .writer-goal progress::-webkit-progress-value,
+.writer-screen .writer-goal progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #8e671e, #c89a3c) !important;
+}
+
+.writer-screen .writer-goal__remaining {
+  color: var(--writer-paper-muted) !important;
+}
+
+.writer-screen .focus-mode-toggle {
+  color: var(--writer-paper-muted);
+  background: transparent;
+  border-color: var(--writer-paper-border);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.writer-screen .focus-mode-toggle:hover,
+.writer-screen .focus-mode-toggle[aria-pressed="true"] {
+  color: var(--writer-paper-accent);
+  background: var(--writer-paper-accent-muted);
+  border-color: rgba(167, 122, 35, 0.48);
+}
+
+/* --------------------------------------------------------------------------
+   THREE-COLUMN WORKSPACE — paper in the middle, tools around it
+   -------------------------------------------------------------------------- */
+
+.writer-screen .writer-editor-layout {
+  background: var(--writer-paper-shell);
+}
+
+.writer-screen .writer-chapters,
+.writer-screen .writer-editor-layout > .writer-footer {
+  background: var(--writer-paper-ui) !important;
+  border-color: var(--writer-paper-border) !important;
+  box-shadow: 0 1rem 2.5rem rgba(64, 56, 45, 0.08) !important;
+  backdrop-filter: none !important;
+}
+
+.writer-screen .writer-chapters__header span,
+.writer-screen .writer-chapters__summary,
+.writer-screen .writer-chapter-item__content small,
+.writer-screen .writer-chapter-item__status {
+  color: var(--writer-paper-muted);
+}
+
+.writer-screen .writer-chapters__header strong,
+.writer-screen .writer-chapters__summary strong {
+  color: var(--writer-paper-accent);
+  font-family: var(--writer-typewriter);
+}
+
+.writer-screen .writer-chapters__header button {
+  color: var(--writer-paper-muted);
+  background: var(--writer-paper);
+  border-color: var(--writer-paper-border);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.writer-screen .writer-chapter-item {
+  color: var(--writer-paper-ink);
+  background: transparent;
+  border-color: transparent;
+}
+
+.writer-screen .writer-chapter-item:hover {
+  transform: translateX(0.12rem);
+  background: rgba(37, 35, 31, 0.035);
+  border-color: var(--writer-paper-border);
+}
+
+.writer-screen .writer-chapter-item[data-active="true"] {
+  background: var(--writer-paper-accent-muted) !important;
+  border-color: rgba(167, 122, 35, 0.38) !important;
+  box-shadow: inset 0 0 0 1px rgba(167, 122, 35, 0.08) !important;
+}
+
+.writer-screen .writer-chapter-item__position {
+  color: var(--writer-paper-muted);
+  background: var(--writer-paper);
+  border-color: var(--writer-paper-border);
+  font-family: var(--writer-typewriter);
+}
+
+.writer-screen .writer-chapter-item[data-active="true"] .writer-chapter-item__position {
+  color: var(--writer-paper-accent);
+  border-color: var(--writer-paper-accent);
+}
+
+.writer-screen .writer-chapter-item[data-active="true"] .writer-chapter-item__status {
+  color: var(--writer-paper-accent);
+  filter: none;
+}
+
+.writer-screen .writer-chapter-item__content strong {
+  color: var(--writer-paper-ink);
+  font-family: var(--writer-typewriter);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.writer-screen .writer-chapters__updated {
+  color: var(--writer-paper-muted);
+  border-top-color: var(--writer-paper-border);
+  font-family: var(--writer-typewriter);
+  line-height: 1.65;
+}
+
+/* --------------------------------------------------------------------------
+   MANUSCRIPT — deliberately typewriter-like
+   -------------------------------------------------------------------------- */
+
+.writer-screen .writer-canvas {
+  background: var(--writer-paper) !important;
+  border: 1px solid var(--writer-paper-border) !important;
+  border-radius: 0.35rem !important;
+  box-shadow: 0 1.5rem 3.5rem rgba(64, 56, 45, 0.11) !important;
+}
+
+.writer-screen .writer-work-title,
+.writer-screen .writer-title,
+.writer-screen .writer-textarea {
+  color: var(--writer-paper-ink) !important;
+  caret-color: var(--writer-paper-accent) !important;
+  font-family: var(--writer-typewriter) !important;
+}
+
+.writer-screen .writer-work-title {
+  color: var(--writer-paper-accent) !important;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.86;
+}
+
+.writer-screen .writer-title {
+  color: #1f1e1b !important;
+  font-size: clamp(1.9rem, 4vw, 3.25rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+}
+
+.writer-screen .writer-subtitle {
+  color: var(--writer-paper-muted);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.writer-screen .writer-textarea {
+  min-height: 56vh !important;
+  padding: 1.4rem 0 3rem !important;
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  font-size: clamp(1.05rem, 1.2vw, 1.18rem) !important;
+  font-weight: 400;
+  letter-spacing: 0.018em;
+  line-height: 1.9 !important;
+}
+
+.writer-screen .writer-textarea::placeholder {
+  color: var(--writer-paper-faint) !important;
+}
+
+.writer-screen .writer-work-title::selection,
+.writer-screen .writer-title::selection,
+.writer-screen .writer-textarea::selection {
+  color: var(--writer-paper-ink);
+  background: rgba(200, 154, 60, 0.2);
+}
+
+.writer-screen .work-action-message {
+  color: var(--writer-paper-muted);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   WRITING STATISTICS — functional labels, typewriter values
+   -------------------------------------------------------------------------- */
+
+.writer-screen .writer-editor-layout > .writer-footer::before {
+  color: var(--writer-paper-muted) !important;
+  border-bottom-color: var(--writer-paper-border) !important;
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.writer-screen .writer-editor-layout > .writer-footer .writer-footer__stat {
+  background: var(--writer-paper) !important;
+  border-color: var(--writer-paper-border) !important;
+}
+
+.writer-screen .writer-editor-layout > .writer-footer .writer-footer__stat span {
+  color: var(--writer-paper-muted) !important;
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.writer-screen .writer-editor-layout > .writer-footer .writer-footer__stat strong {
+  color: var(--writer-paper-ink) !important;
+  font-family: var(--writer-typewriter);
+  font-weight: 700;
+}
+
+/* Keep all actions unmistakably UI, not manuscript typography. */
+.writer-screen .button,
+.writer-screen button:not(.writer-chapter-item),
+.flow-layer--form .button,
+.flow-layer--form button,
+.flow-layer--form .field__label,
+.flow-layer--form .field__control {
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.writer-screen .writer-save-button {
+  box-shadow: 0 0.65rem 1.5rem rgba(167, 122, 35, 0.17);
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE PAPER BEHAVIOR
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 82rem) {
+  .writer-screen .writer-editor-layout > .writer-footer .writer-footer__stat strong {
+    color: var(--writer-paper-ink) !important;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .writer-screen .writer-editor-layout {
+    padding: 0.75rem !important;
+    background: var(--writer-paper-shell);
+  }
+
+  .writer-screen .writer-chapters,
+  .writer-screen .writer-editor-layout > .writer-footer {
+    box-shadow: none !important;
+  }
+
+  .writer-screen .writer-canvas {
+    padding: 1.8rem 1.3rem !important;
+    border-radius: 0.25rem !important;
+    box-shadow: 0 0.8rem 2rem rgba(64, 56, 45, 0.08) !important;
+  }
+
+  .writer-screen .writer-title {
+    font-size: clamp(1.7rem, 8vw, 2.35rem);
+  }
+
+  .writer-screen .writer-textarea {
+    min-height: 52vh !important;
+    font-size: 1rem !important;
+    line-height: 1.85 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .writer-screen .writer-chapter-item:hover {
+    transform: none;
+  }
+}

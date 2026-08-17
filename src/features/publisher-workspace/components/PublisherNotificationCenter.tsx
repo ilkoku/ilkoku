@@ -1,5 +1,4 @@
 import "../publisher-workspace.css";
-import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import {
   markAllPublisherNotificationsReadAction,
@@ -25,7 +24,7 @@ export function PublisherNotificationCenter({ companyName, notifications }: { co
       const href = notificationHref(notification);
       return <Card data-read={Boolean(notification.readAt)} key={notification.id}>
         <div><strong>{notification.title}</strong><p>{notification.message}</p><time dateTime={notification.createdAt}>{formatDate(notification.createdAt)}</time></div>
-        <div className="publisher-notification-list__actions">{href ? <Link href={href}>İlgili kaydı aç</Link> : null}{!notification.readAt ? <form action={markPublisherNotificationReadAction}><input name="notificationId" type="hidden" value={notification.id} /><button type="submit">Okundu</button></form> : null}</div>
+        <div className="publisher-notification-list__actions">{href ? <a href={href}>İlgili kaydı aç</a> : null}{!notification.readAt ? <form action={markPublisherNotificationReadAction}><input name="notificationId" type="hidden" value={notification.id} /><button type="submit">Okundu</button></form> : null}</div>
       </Card>;
     })}</div> : <Card className="publisher-workspace__empty"><h2>Bildirim yok</h2><p>Başvurular ve yayın operasyonlarıyla ilgili güncellemeler burada görünecek.</p></Card>}
   </div>;

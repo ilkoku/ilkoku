@@ -101,6 +101,32 @@ test("all role notification pages use the central resolver", () => {
   assertNotContains(publisher, "workSlugById", "publisher notification center");
 });
 
+test("related-record CTAs use native browser navigation on every notification surface", () => {
+  const shared = source("src/app/bildirimler/page.tsx");
+  const editor = source("src/app/editor/bildirimler/page.tsx");
+  const publisher = source(
+    "src/features/publisher-workspace/components/PublisherNotificationCenter.tsx",
+  );
+
+  assertContains(shared, '<a className="button button--ghost" href={href}>', "shared notification CTA");
+  assertContains(editor, '<a className="button button--ghost" href={href}>', "editor notification CTA");
+  assertContains(publisher, '<a href={href}>İlgili kaydı aç</a>', "publisher notification CTA");
+  assertNotContains(shared, 'from "next/link"', "shared notification CTA");
+  assertNotContains(editor, 'from "next/link"', "editor notification CTA");
+  assertNotContains(publisher, 'from "next/link"', "publisher notification CTA");
+});
+
+test("notification work and comment href shapes stay backed by real App Router routes", () => {
+  const targets = source("src/features/notifications/targets.ts");
+  const showcaseRoute = source("src/app/kitap/[slug]/page.tsx");
+  const readingRoute = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
+
+  assertContains(targets, "`/kitap/${encodeURIComponent(slug)}`", "work notification target");
+  assertContains(targets, "`/oku/${encodeURIComponent(comment.work.slug)}/bolum-${comment.chapter.position}#yorum-${comment.id}`", "comment notification target");
+  assertContains(showcaseRoute, "DynamicBookShowcasePage", "work target route");
+  assertContains(readingRoute, "DynamicReadingPage", "comment target route");
+});
+
 test("production smoke covers newly critical role surfaces", () => {
   const text = source(".github/workflows/production-smoke.yml");
 

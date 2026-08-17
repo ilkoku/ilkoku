@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
@@ -59,9 +58,9 @@ export default async function NotificationsPage() {
                     {formatDate(notification.createdAt)}
                   </time>
                   {href ? (
-                    <Link className="button button--ghost" href={href}>
+                    <a className="button button--ghost" href={href}>
                       İlgili kaydı aç
-                    </Link>
+                    </a>
                   ) : null}
                 </div>
                 {!notification.readAt && (

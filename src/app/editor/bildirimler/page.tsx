@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { AppShell } from "@/components/layout/AppShell";
 import { markNotificationReadAction } from "@/features/editor-workspace/actions";
@@ -52,9 +51,9 @@ export default async function EditorNotificationsPage() {
                     {formatDate(notification.createdAt)}
                   </time>
                   {href ? (
-                    <Link className="button button--ghost" href={href}>
+                    <a className="button button--ghost" href={href}>
                       İlgili kaydı aç
-                    </Link>
+                    </a>
                   ) : null}
                 </div>
                 {!notification.readAt && (

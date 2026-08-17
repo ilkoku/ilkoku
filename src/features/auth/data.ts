@@ -16,8 +16,19 @@ export const readerWorkspaceRoles: readonly UserRole[] = [
   "editor",
 ];
 
+export const notificationWorkspaceRoles: readonly UserRole[] = [
+  "reader",
+  "writer",
+  "editor_pending",
+  "editor",
+];
+
 export function canAccessReaderWorkspace(role: UserRole) {
   return readerWorkspaceRoles.includes(role);
+}
+
+export function canAccessNotificationWorkspace(role: UserRole) {
+  return notificationWorkspaceRoles.includes(role);
 }
 
 export function getWorkspaceDestination(role: UserRole) {

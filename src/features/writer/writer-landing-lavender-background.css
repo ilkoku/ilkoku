@@ -1,0 +1,38 @@
+/* Writer background only: reuse the existing landing-page writer-card white/lavender language. */
+
+html:has(.app-shell[data-role="writer"]),
+body:has(.app-shell[data-role="writer"]) {
+  background: #f8f6ff;
+  color-scheme: light;
+}
+
+.app-shell[data-role="writer"] {
+  --color-background: #f8f6ff;
+  background:
+    radial-gradient(
+      circle 8rem at calc(100% + 2rem) 1rem,
+      rgba(237, 233, 255, 0.68) 0%,
+      rgba(237, 233, 255, 0.68) 72%,
+      transparent 100%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(249, 247, 255, 0.86)
+    );
+}
+
+.app-shell[data-role="writer"] .main-area {
+  background:
+    radial-gradient(
+      circle 8rem at calc(100% + 2rem) 1rem,
+      rgba(237, 233, 255, 0.68) 0%,
+      rgba(237, 233, 255, 0.68) 72%,
+      transparent 100%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(249, 247, 255, 0.86)
+    );
+}

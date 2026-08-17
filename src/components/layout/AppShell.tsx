@@ -8,11 +8,13 @@ import { getSidebarBadges } from "@/features/navigation/sidebar-badges";
 import {
   getPublisherNavigationPermissions,
 } from "@/features/publisher-discovery/access";
+import { WriterThemeHydrator } from "@/features/writer-theme/WriterThemeHydrator";
 import styles from "@/features/admin-role-view/AdminRoleView.module.css";
 import "@/features/writer/writer-role-theme.css";
 import "@/features/writer/writer-purple-continuity.css";
 import "@/features/writer/writer-landing-lavender-background.css";
 import "@/styles/light-surface-unification.css";
+import "@/features/writer-theme/writer-theme-customization.css";
 
 type AppShellProps = {
   children: ReactNode;
@@ -36,6 +38,10 @@ export async function AppShell({
 
   return (
     <div className="app-shell" data-role={profile.role}>
+      {profile.role === "writer" ? (
+        <WriterThemeHydrator userId={profile.id} />
+      ) : null}
+
       <Sidebar
         adminPublisherView={profile.adminPublisherView}
         badges={badges}

@@ -19,6 +19,7 @@ export const navigationContent = {
     { label: "Geri Bildirimler", href: "/geri-bildirimler" },
     { label: "Yayınevleri", href: "/yayinevleri" },
     { label: "Bildirimler", href: "/bildirimler" },
+    { label: "Sayfa Renkleri", href: "/sayfa-renkleri" },
     { label: "Profilim", href: "/profilim" },
   ],
 } as const;

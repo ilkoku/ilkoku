@@ -1,10 +1,12 @@
 /*
- * Light surface unification.
- * User-locked palette rule: former rows 5-11 all resolve to #F8F6FF.
- * This changes color only; layout, typography and behavior stay untouched.
+ * Light surface palette.
+ * /giris keeps the canonical light-lavender unification.
+ * Writer surfaces follow the approved dashboard-panel palette:
+ * lavender page canvas, warm-white cards, dark readable text and İlkOku purple accents.
+ * Color-only layer: no layout, typography, permissions or behavior changes.
  */
 
-/* /giris — replace the former cream/beige surface family. */
+/* /giris — keep the existing light-lavender family. */
 .login-brand-scope .auth-page--purple {
   --color-background: #f8f6ff !important;
   --color-surface: #f8f6ff !important;
@@ -23,14 +25,19 @@
   background: #f8f6ff !important;
 }
 
-/* Writer shell — replace former #FFFEFB/#F8F6F1/#F3F0EA/#F1EEE8 surfaces. */
+/* Writer shell — use the palette visible in the approved dashboard hero. */
 .app-shell[data-role="writer"] {
   --color-background: #f8f6ff !important;
   --color-surface: #f8f6ff !important;
-  --color-surface-raised: #f8f6ff !important;
-  --color-card: #f8f6ff !important;
+  --color-surface-raised: #fffefb !important;
+  --color-card: #fffefb !important;
+  --color-primary: #6847e8 !important;
+  --color-primary-hover: #4b2dbf !important;
+  --color-text: #292620 !important;
+  --color-text-secondary: #746f66 !important;
 }
 
+/* Main cards and structural panels: the same warm-white as the dashboard hero. */
 .app-shell[data-role="writer"] .sidebar,
 .app-shell[data-role="writer"] .brand,
 .app-shell[data-role="writer"] .user-area__popover,
@@ -44,7 +51,12 @@
 .app-shell[data-role="writer"] .editor-review-row,
 .app-shell[data-role="writer"] .editor-selection-grid article,
 .app-shell[data-role="writer"] .editor-notification-list article,
-.app-shell[data-role="writer"] .editor-profile-card,
+.app-shell[data-role="writer"] .editor-profile-card {
+  color: #292620 !important;
+  background: #fffefb !important;
+}
+
+/* Input and secondary UI surfaces stay inside the pale lavender family. */
 .app-shell[data-role="writer"] .field__control,
 .app-shell[data-role="writer"] .workspace-search input,
 .app-shell[data-role="writer"] .workspace-sort select,
@@ -60,13 +72,73 @@
   background: color-mix(in srgb, #f8f6ff 92%, transparent) !important;
 }
 
-/* New Work + manuscript workspace — rows 5, 6, 10 and 11 become #F8F6FF. */
+/* Hero/page headers: exact dashboard-panel language — warm white + subtle purple glow. */
+.app-shell[data-role="writer"] .dashboard-hero,
+.app-shell[data-role="writer"] .works-workspace__hero,
+.app-shell[data-role="writer"] .editor-page-header {
+  color: #292620 !important;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(104, 71, 232, 0.08), transparent 18rem),
+    #fffefb !important;
+  border-color: rgba(41, 38, 32, 0.10) !important;
+}
+
+.app-shell[data-role="writer"] .dashboard-hero__eyebrow,
+.app-shell[data-role="writer"] .section-heading p,
+.app-shell[data-role="writer"] .latest-work__content > p,
+.app-shell[data-role="writer"] .book-card__genre,
+.app-shell[data-role="writer"] .status-badge {
+  color: #6847e8 !important;
+}
+
+/* Dashboard progress uses the approved warm track and purple fill. */
+.app-shell[data-role="writer"] .daily-goal .progress__bar,
+.app-shell[data-role="writer"] .daily-goal .progress__bar::-webkit-progress-bar {
+  background: #ece7df !important;
+}
+
+.app-shell[data-role="writer"] .daily-goal .progress__bar::-webkit-progress-value,
+.app-shell[data-role="writer"] .daily-goal .progress__bar::-moz-progress-bar {
+  background: linear-gradient(90deg, #6847e8, #8065f2) !important;
+}
+
+/* Work-cover placeholders use the same purple family as the New Work CTA. */
+.app-shell[data-role="writer"] .latest-work__cover,
+.app-shell[data-role="writer"] .book-cover,
+.app-shell[data-role="writer"] .workspace-cover,
+.app-shell[data-role="writer"] .book-cover--two,
+.app-shell[data-role="writer"] .book-cover--three,
+.app-shell[data-role="writer"] .workspace-cover--2,
+.app-shell[data-role="writer"] .workspace-cover--3 {
+  color: #ffffff !important;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255, 255, 255, 0.18), transparent 8rem),
+    linear-gradient(145deg, #8065f2 0%, #6847e8 55%, #5b38d1 100%) !important;
+  border-color: rgba(104, 71, 232, 0.18) !important;
+}
+
+/* New Work + manuscript: lavender workspace with warm-white paper. */
 .flow-layer--form,
 .writer-screen {
   --writer-paper-shell: #f8f6ff !important;
   --writer-paper-ui: #f8f6ff !important;
-  --writer-paper: #f8f6ff !important;
+  --writer-paper: #fffefb !important;
+  --color-background: #f8f6ff !important;
   --color-surface: #f8f6ff !important;
-  --color-surface-raised: #f8f6ff !important;
-  --color-card: #f8f6ff !important;
+  --color-surface-raised: #fffefb !important;
+  --color-card: #fffefb !important;
+}
+
+.flow-layer--form .new-work-panel,
+.writer-screen .writer-toolbar,
+.writer-screen .writer-canvas,
+.writer-screen .writer-editor-layout > .writer-footer .writer-footer__stat {
+  background: #fffefb !important;
+}
+
+.writer-screen .writer-chapters,
+.writer-screen .writer-editor-layout > .writer-footer,
+.writer-screen .writer-context-bar,
+.writer-screen.writer-screen--focus .writer-context-bar {
+  background: #f8f6ff !important;
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
@@ -10,6 +11,7 @@ import {
   ReaderWorksTable,
   type ReaderWorkRow,
 } from "@/features/reader/components/ReaderWorksTable";
+import "@/features/reader/reader-discovery.css";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -19,6 +21,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 24;
 const completionFilters = ["completed", "ongoing"] as const;
 const reviewFilters = [
   "not_requested",
@@ -28,12 +31,41 @@ const reviewFilters = [
   "second_in_progress",
   "completed",
 ] as const;
+const sortFilters = ["newest", "updated"] as const;
+
+type CompletionFilter = (typeof completionFilters)[number];
+type ReviewFilter = (typeof reviewFilters)[number];
+type SortFilter = (typeof sortFilters)[number];
+
+type ReaderExploreFilters = {
+  completion?: CompletionFilter;
+  genre?: string;
+  language?: string;
+  reviewStatus?: ReviewFilter;
+  search?: string;
+  sort: SortFilter;
+};
 
 function includesValue<T extends string>(
   values: readonly T[],
   value: string | undefined,
 ): value is T {
   return Boolean(value && values.includes(value as T));
+}
+
+function pageHref(filters: ReaderExploreFilters, page: number) {
+  const params = new URLSearchParams();
+
+  if (filters.search) params.set("arama", filters.search);
+  if (filters.genre) params.set("tur", filters.genre);
+  if (filters.language) params.set("dil", filters.language);
+  if (filters.completion) params.set("tamamlanma", filters.completion);
+  if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
+  if (filters.sort !== "newest") params.set("siralama", filters.sort);
+  if (page > 1) params.set("sayfa", String(page));
+
+  const query = params.toString();
+  return query ? `/kesfet?${query}` : "/kesfet";
 }
 
 export default async function ReaderExplorePage({
@@ -43,6 +75,7 @@ export default async function ReaderExplorePage({
     arama?: string;
     dil?: string;
     editor?: string;
+    sayfa?: string;
     siralama?: string;
     tamamlanma?: string;
     tur?: string;
@@ -65,18 +98,56 @@ export default async function ReaderExplorePage({
   const reviewStatus = includesValue(reviewFilters, parameters.editor)
     ? parameters.editor
     : undefined;
+  const sort = includesValue(sortFilters, parameters.siralama)
+    ? parameters.siralama
+    : "newest";
+  const rawPage = Number.parseInt(parameters.sayfa ?? "", 10);
+  const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const filters: ReaderExploreFilters = {
+    completion,
+    genre,
+    language,
+    reviewStatus,
+    search,
+    sort,
+  };
 
   const where: Prisma.WorkWhereInput = {
     archivedAt: null,
     publishedAt: { not: null },
     status: "published",
     visibility: "public",
+    author: {
+      is: {
+        deletedAt: null,
+        status: "active",
+      },
+    },
     readingProgress: {
       none: {
         userId: profile.id,
       },
     },
-    ...(genre ? { genre } : {}),
+    ...(search
+      ? {
+          OR: [
+            { title: { contains: search } },
+            { subtitle: { contains: search } },
+            {
+              author: {
+                is: {
+                  OR: [
+                    { displayName: { contains: search } },
+                    { fullName: { contains: search } },
+                    { username: { contains: search } },
+                  ],
+                },
+              },
+            },
+          ],
+        }
+      : {}),
+    ...(genre ? { genre: { contains: genre } } : {}),
     ...(language ? { language } : {}),
     ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
     ...(completion === "completed"
@@ -104,6 +175,10 @@ export default async function ReaderExplorePage({
           }
         : {}),
   };
+
+  const totalCount = await prisma.work.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
 
   const works = await prisma.work.findMany({
     where,
@@ -180,22 +255,15 @@ export default async function ReaderExplorePage({
         take: 1,
       },
     },
-    orderBy: { createdAt: "desc" },
-    take: search ? undefined : 48,
+    orderBy:
+      sort === "updated"
+        ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
+        : [{ publishedAt: "desc" }, { createdAt: "desc" }],
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
   });
 
-  const normalizedSearch = search?.toLocaleLowerCase("tr");
-  const filteredWorks = normalizedSearch
-    ? works.filter((work) => {
-        const authorName = work.author.displayName ?? work.author.fullName;
-        return (
-          work.title.toLocaleLowerCase("tr").includes(normalizedSearch) ||
-          authorName.toLocaleLowerCase("tr").includes(normalizedSearch)
-        );
-      })
-    : works;
-
-  const rows: ReaderWorkRow[] = filteredWorks.slice(0, 48).map((work) => {
+  const rows: ReaderWorkRow[] = works.map((work) => {
     const firstChapter = work.chapters[0] ?? null;
     const progress = work.readingProgress[0] ?? null;
 
@@ -214,8 +282,7 @@ export default async function ReaderExplorePage({
       language: work.language,
       lastReadLabel: progress?.chapter.title ?? null,
       progressPercent: progress?.progressPercent ?? null,
-      publishedAt:
-        work.publishedAt?.toISOString() ?? null,
+      publishedAt: work.publishedAt?.toISOString() ?? null,
       readerCount: work._count.readingProgress,
       readingHref: progress
         ? `/oku/${work.slug}/bolum-${progress.chapter.position}`
@@ -225,13 +292,19 @@ export default async function ReaderExplorePage({
       slug: work.slug,
       title: work.title,
       totalWords: work.chapters.reduce(
-        (total, chapter) =>
-          total + countWords(chapter.content),
+        (total, chapter) => total + countWords(chapter.content),
         0,
       ),
       updatedAt: work.updatedAt.toISOString(),
     };
   });
+
+  const hasFilters = Boolean(
+    search || genre || language || completion || reviewStatus || sort !== "newest",
+  );
+  const returnTo = pageHref(filters, currentPage);
+  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const last = totalCount === 0 ? 0 : first + rows.length - 1;
 
   return (
     <AppShell profile={profile}>
@@ -283,9 +356,7 @@ export default async function ReaderExplorePage({
               <option value="not_requested">Henüz incelenmedi</option>
               <option value="requested">İnceleme talep edildi</option>
               <option value="in_progress">İlk editörde</option>
-              <option value="awaiting_second_editor">
-                İkinci editör bekleniyor
-              </option>
+              <option value="awaiting_second_editor">İkinci editör bekleniyor</option>
               <option value="second_in_progress">İkinci editörde</option>
               <option value="completed">İncelendi</option>
             </select>
@@ -293,23 +364,64 @@ export default async function ReaderExplorePage({
 
           <label>
             <span>Sıralama</span>
-            <select defaultValue="newest" name="siralama">
+            <select defaultValue={sort} name="siralama">
               <option value="newest">En Yeni</option>
-              <option disabled value="popular">En Çok Okunan</option>
+              <option value="updated">Son Güncellenen</option>
             </select>
           </label>
 
-          <button className="button button--primary" type="submit">
-            Sonuçları Göster
-          </button>
+          <div className="reader-discovery-filter-actions">
+            <button className="button button--primary" type="submit">
+              Sonuçları Göster
+            </button>
+            {hasFilters ? (
+              <Link className="button button--ghost" href="/kesfet">
+                Temizle
+              </Link>
+            ) : null}
+          </div>
         </form>
+
+        <section className="reader-discovery-summary" aria-live="polite">
+          <span>Keşif sonucu</span>
+          <strong>{totalCount} eser</strong>
+          <small>
+            {totalCount === 0
+              ? "Filtreleri değiştirerek yeniden deneyin."
+              : `${first}–${last} arası gösteriliyor.`}
+          </small>
+        </section>
 
         <ReaderWorksTable
           emptyDescription="Arama ifadenizi veya filtreleri değiştirerek yeniden deneyin."
           emptyTitle="Eşleşen eser bulunamadı"
-          returnTo="/kesfet"
+          returnTo={returnTo}
           rows={rows}
         />
+
+        {totalCount > 0 ? (
+          <footer aria-label="Keşif sayfalama" className="reader-discovery-pagination">
+            <span>
+              Sayfa {currentPage} / {totalPages}
+            </span>
+            <div>
+              {currentPage > 1 ? (
+                <Link className="button button--ghost" href={pageHref(filters, currentPage - 1)}>
+                  Önceki
+                </Link>
+              ) : (
+                <span aria-disabled="true">Önceki</span>
+              )}
+              {currentPage < totalPages ? (
+                <Link className="button button--ghost" href={pageHref(filters, currentPage + 1)}>
+                  Sonraki
+                </Link>
+              ) : (
+                <span aria-disabled="true">Sonraki</span>
+              )}
+            </div>
+          </footer>
+        ) : null}
       </div>
     </AppShell>
   );

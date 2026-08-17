@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import retinaLogo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { authContent, tr } from "@/content";
+import "@/features/auth/auth-purple-continuity.css";
 
 interface AuthShellProps {
   children: React.ReactNode;
@@ -9,11 +10,20 @@ interface AuthShellProps {
   eyebrow: string;
   title: string;
   wide?: boolean;
+  purple?: boolean;
 }
 
-export function AuthShell({ children, description, eyebrow, title, wide = false }: AuthShellProps) {
+export function AuthShell({ children, description, eyebrow, title, wide = false, purple = false }: AuthShellProps) {
+  const pageClassName = [
+    "auth-page",
+    wide ? "auth-page--wide" : "",
+    purple ? "auth-page--purple" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={wide ? "auth-page auth-page--wide" : "auth-page"}>
+    <div className={pageClassName}>
       <a className="auth-skip-link" href="#auth-main">{authContent.common.skipToContent}</a>
       <header className="auth-header">
         <Link className="auth-brand" href="/" aria-label={authContent.common.homeLabel}>

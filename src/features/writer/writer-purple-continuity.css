@@ -1,0 +1,160 @@
+/* Writer purple continuity — no black/night surfaces between login and writer workspace. */
+
+.app-shell[data-role="writer"] {
+  --color-background: #5a3bc8;
+  --color-surface: #5f43ce;
+  --color-surface-raised: #7258e3;
+  --color-card: #6246d2;
+  --color-primary: #ede9ff;
+  --color-primary-hover: #ffffff;
+  --color-primary-muted: rgba(255, 255, 255, 0.14);
+  --color-text: #ffffff;
+  --color-text-secondary: #e4defa;
+  --color-border: rgba(255, 255, 255, 0.18);
+  --color-border-strong: rgba(255, 255, 255, 0.32);
+  --color-overlay-hover: rgba(255, 255, 255, 0.09);
+  --shadow-small: 0 0.35rem 1rem rgba(75, 45, 191, 0.18);
+  --shadow-medium: 0 1rem 2.8rem rgba(75, 45, 191, 0.22);
+  --shadow-large: 0 1.5rem 4rem rgba(75, 45, 191, 0.28);
+  --shadow-focus: 0 0 0 3px rgba(237, 233, 255, 0.28);
+  background:
+    radial-gradient(circle at 78% 0%, rgba(255, 255, 255, 0.14), transparent 30rem),
+    linear-gradient(145deg, #4b2dbf 0%, #6847e8 52%, #8065f2 100%);
+  color-scheme: dark;
+}
+
+.app-shell[data-role="writer"] .main-area {
+  background:
+    radial-gradient(circle at 86% 8%, rgba(255, 255, 255, 0.10), transparent 26rem),
+    linear-gradient(155deg, #5938c8 0%, #6847e8 55%, #765bed 100%);
+}
+
+.app-shell[data-role="writer"] .sidebar {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.12), transparent 18rem),
+    linear-gradient(180deg, #4b2dbf 0%, #5a38c9 100%);
+  border-right-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 1rem 0 3rem rgba(75, 45, 191, 0.18);
+}
+
+.app-shell[data-role="writer"] .brand {
+  background: linear-gradient(145deg, rgba(128, 101, 242, 0.96), rgba(104, 71, 232, 0.96));
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1rem 2.5rem rgba(75, 45, 191, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.app-shell[data-role="writer"] .brand::before {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-heading,
+.app-shell[data-role="writer"] .sidebar__edition {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item:hover,
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item:focus-visible {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item[data-active] {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
+}
+
+.app-shell[data-role="writer"] .dashboard-header {
+  background: color-mix(in srgb, #5b3bd0 86%, transparent);
+  border-bottom-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0.4rem 1.8rem rgba(75, 45, 191, 0.14);
+}
+
+.app-shell[data-role="writer"] .user-area__avatar,
+.app-shell[data-role="writer"] .protected-account__avatar,
+.app-shell[data-role="writer"] .user-area__popover {
+  background: linear-gradient(145deg, #765bed, #6847e8);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.app-shell[data-role="writer"] .card,
+.app-shell[data-role="writer"] .workspace-work-card,
+.app-shell[data-role="writer"] .workspace-dialog__panel,
+.app-shell[data-role="writer"] .editor-table-shell,
+.app-shell[data-role="writer"] .editor-empty,
+.app-shell[data-role="writer"] .editor-filters,
+.app-shell[data-role="writer"] .editor-work-card,
+.app-shell[data-role="writer"] .editor-review-row,
+.app-shell[data-role="writer"] .editor-selection-grid article,
+.app-shell[data-role="writer"] .editor-notification-list article,
+.app-shell[data-role="writer"] .editor-profile-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.08));
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0.9rem 2.4rem rgba(75, 45, 191, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.app-shell[data-role="writer"] .field__control,
+.app-shell[data-role="writer"] .workspace-search input,
+.app-shell[data-role="writer"] .workspace-sort select,
+.app-shell[data-role="writer"] .editor-filters input,
+.app-shell[data-role="writer"] .editor-filters select,
+.app-shell[data-role="writer"] .workspace-editor-review {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.app-shell[data-role="writer"] .dashboard-hero,
+.app-shell[data-role="writer"] .works-workspace__hero,
+.app-shell[data-role="writer"] .editor-page-header {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.16), transparent 16rem),
+    linear-gradient(135deg, rgba(75, 45, 191, 0.72), rgba(128, 101, 242, 0.72));
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1.2rem 3rem rgba(75, 45, 191, 0.18);
+}
+
+.app-shell[data-role="writer"] .latest-work__cover,
+.app-shell[data-role="writer"] .book-cover,
+.app-shell[data-role="writer"] .workspace-cover,
+.app-shell[data-role="writer"] .book-cover--two,
+.app-shell[data-role="writer"] .book-cover--three,
+.app-shell[data-role="writer"] .workspace-cover--2,
+.app-shell[data-role="writer"] .workspace-cover--3 {
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255, 255, 255, 0.18), transparent 8rem),
+    linear-gradient(145deg, #765bed, #5b3bd0);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.app-shell[data-role="writer"] .workspace-tabs button {
+  color: #f0edff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.app-shell[data-role="writer"] .workspace-tabs button[aria-selected="true"] {
+  color: #4b2dbf;
+  background: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 0.55rem 1.4rem rgba(75, 45, 191, 0.18);
+}
+
+.app-shell[data-role="writer"] .workspace-editor-review__status,
+.app-shell[data-role="writer"] .editor-table-status,
+.app-shell[data-role="writer"] .editor-table-action--primary {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+@media (max-width: 47.99rem) {
+  .app-shell[data-role="writer"] .sidebar {
+    box-shadow: 1.2rem 0 3rem rgba(75, 45, 191, 0.28);
+  }
+
+  .app-shell[data-role="writer"] .sidebar-toggle {
+    color: #ffffff;
+    background: #6847e8;
+    border-color: rgba(255, 255, 255, 0.24);
+  }
+}

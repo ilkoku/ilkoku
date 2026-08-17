@@ -1,0 +1,111 @@
+/* /giris purple continuity — no black/night background before writer workspace. */
+
+.auth-page--purple {
+  --color-background: #5a3bc8;
+  --color-surface: #6847e8;
+  --color-surface-raised: #765bed;
+  --color-card: rgba(255, 255, 255, 0.12);
+  --color-primary: #ffffff;
+  --color-primary-hover: #f3efff;
+  --color-primary-muted: rgba(255, 255, 255, 0.14);
+  --color-text: #ffffff;
+  --color-text-secondary: #e8e3ff;
+  --color-border: rgba(255, 255, 255, 0.18);
+  --color-border-strong: rgba(255, 255, 255, 0.32);
+  --shadow-small: 0 0.35rem 1rem rgba(75, 45, 191, 0.18);
+  --shadow-medium: 0 1rem 2.8rem rgba(75, 45, 191, 0.22);
+  --shadow-large: 0 1.5rem 4rem rgba(75, 45, 191, 0.26);
+  --shadow-focus: 0 0 0 3px rgba(255, 255, 255, 0.26);
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 76% 6%, rgba(255, 255, 255, 0.16), transparent 28rem),
+    radial-gradient(circle at 12% 78%, rgba(237, 233, 255, 0.12), transparent 24rem),
+    linear-gradient(145deg, #4b2dbf 0%, #6847e8 54%, #8065f2 100%);
+  color-scheme: dark;
+}
+
+.auth-page--purple .auth-header,
+.auth-page--purple .auth-footer {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.auth-page--purple .auth-brand {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0.8rem 2.2rem rgba(75, 45, 191, 0.18);
+}
+
+.auth-page--purple .auth-header > span,
+.auth-page--purple .auth-intro > div > p:last-child,
+.auth-page--purple .auth-intro blockquote p,
+.auth-page--purple .auth-checkbox,
+.auth-page--purple .auth-form__note,
+.auth-page--purple .auth-switch,
+.auth-page--purple .auth-forgot-note,
+.auth-page--purple .field__label,
+.auth-page--purple .auth-form-card > header span {
+  color: #e8e3ff;
+}
+
+.auth-page--purple .auth-eyebrow,
+.auth-page--purple .auth-intro blockquote footer,
+.auth-page--purple .auth-form-card > header > p,
+.auth-page--purple .auth-form__options > a,
+.auth-page--purple .auth-switch a {
+  color: #ffffff;
+}
+
+.auth-page--purple .auth-intro blockquote {
+  border-left-color: rgba(255, 255, 255, 0.58);
+}
+
+.auth-page--purple .auth-intro blockquote > span {
+  color: #ffffff;
+}
+
+.auth-page--purple .auth-form-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.09));
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1.5rem 4rem rgba(75, 45, 191, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(18px);
+}
+
+.auth-page--purple .auth-form-card::before {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.auth-page--purple .auth-form .field__control,
+.auth-page--purple .auth-route-status,
+.auth-page--purple .auth-status {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.auth-page--purple .auth-form .field__control::placeholder {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.auth-page--purple .auth-form .field__control:focus {
+  border-color: rgba(255, 255, 255, 0.68);
+  box-shadow: var(--shadow-focus);
+}
+
+.auth-page--purple .button--primary,
+.auth-page--purple .auth-submit {
+  color: #4b2dbf;
+  background: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 0.8rem 2rem rgba(75, 45, 191, 0.18);
+}
+
+.auth-page--purple .button--primary:hover:not(:disabled),
+.auth-page--purple .auth-submit:hover:not(:disabled) {
+  color: #4b2dbf;
+  background: #f3efff;
+  border-color: #f3efff;
+}
+
+.auth-page--purple .auth-switch {
+  border-top-color: rgba(255, 255, 255, 0.18);
+}

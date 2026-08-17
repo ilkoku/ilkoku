@@ -1,80 +1,102 @@
-/* Writer purple continuity — no black/night surfaces between login and writer workspace. */
+/* Writer continuity — light paper workspace with İlkOku purple accents. */
 
 .app-shell[data-role="writer"] {
-  --color-background: #5a3bc8;
-  --color-surface: #5f43ce;
-  --color-surface-raised: #7258e3;
-  --color-card: #6246d2;
-  --color-primary: #ede9ff;
-  --color-primary-hover: #ffffff;
-  --color-primary-muted: rgba(255, 255, 255, 0.14);
-  --color-text: #ffffff;
-  --color-text-secondary: #e4defa;
-  --color-border: rgba(255, 255, 255, 0.18);
-  --color-border-strong: rgba(255, 255, 255, 0.32);
-  --color-overlay-hover: rgba(255, 255, 255, 0.09);
-  --shadow-small: 0 0.35rem 1rem rgba(75, 45, 191, 0.18);
-  --shadow-medium: 0 1rem 2.8rem rgba(75, 45, 191, 0.22);
-  --shadow-large: 0 1.5rem 4rem rgba(75, 45, 191, 0.28);
-  --shadow-focus: 0 0 0 3px rgba(237, 233, 255, 0.28);
-  background:
-    radial-gradient(circle at 78% 0%, rgba(255, 255, 255, 0.14), transparent 30rem),
-    linear-gradient(145deg, #4b2dbf 0%, #6847e8 52%, #8065f2 100%);
-  color-scheme: dark;
+  --color-background: #f1eee8;
+  --color-surface: #f8f6f1;
+  --color-surface-raised: #f3f0ea;
+  --color-card: #fffefb;
+  --color-primary: #6847e8;
+  --color-primary-hover: #4b2dbf;
+  --color-primary-muted: rgba(104, 71, 232, 0.10);
+  --color-text: #292620;
+  --color-text-secondary: #746f66;
+  --color-border: rgba(41, 38, 32, 0.11);
+  --color-border-strong: rgba(104, 71, 232, 0.28);
+  --color-overlay-hover: rgba(104, 71, 232, 0.06);
+  --shadow-small: 0 0.35rem 1rem rgba(55, 48, 38, 0.07);
+  --shadow-medium: 0 1rem 2.8rem rgba(55, 48, 38, 0.10);
+  --shadow-large: 0 1.5rem 4rem rgba(55, 48, 38, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(104, 71, 232, 0.18);
+  min-height: 100vh;
+  color: var(--color-text);
+  background: #f1eee8;
+  color-scheme: light;
 }
 
 .app-shell[data-role="writer"] .main-area {
+  min-height: 100vh;
   background:
-    radial-gradient(circle at 86% 8%, rgba(255, 255, 255, 0.10), transparent 26rem),
-    linear-gradient(155deg, #5938c8 0%, #6847e8 55%, #765bed 100%);
+    radial-gradient(circle at 88% 4%, rgba(104, 71, 232, 0.055), transparent 28rem),
+    linear-gradient(180deg, #f5f2ec 0%, #efebe4 100%);
 }
 
 .app-shell[data-role="writer"] .sidebar {
-  background:
-    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.12), transparent 18rem),
-    linear-gradient(180deg, #4b2dbf 0%, #5a38c9 100%);
-  border-right-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 1rem 0 3rem rgba(75, 45, 191, 0.18);
+  background: #f8f6f1;
+  border-right-color: rgba(41, 38, 32, 0.10);
+  box-shadow: 0.8rem 0 2.6rem rgba(55, 48, 38, 0.05);
 }
 
 .app-shell[data-role="writer"] .brand {
-  background: linear-gradient(145deg, rgba(128, 101, 242, 0.96), rgba(104, 71, 232, 0.96));
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 1rem 2.5rem rgba(75, 45, 191, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: #fffefb;
+  border-color: rgba(41, 38, 32, 0.10);
+  box-shadow: 0 0.9rem 2.2rem rgba(55, 48, 38, 0.08);
 }
 
 .app-shell[data-role="writer"] .brand::before {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(104, 71, 232, 0.08);
 }
 
 .app-shell[data-role="writer"] .sidebar__nav-heading,
 .app-shell[data-role="writer"] .sidebar__edition {
-  color: rgba(255, 255, 255, 0.68);
+  color: #9b958b;
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item {
+  color: #4d4942;
 }
 
 .app-shell[data-role="writer"] .sidebar__nav-item .nav-item:hover,
 .app-shell[data-role="writer"] .sidebar__nav-item .nav-item:focus-visible {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.09);
+  color: #4b2dbf;
+  border-color: rgba(104, 71, 232, 0.16);
+  background: rgba(104, 71, 232, 0.055);
 }
 
 .app-shell[data-role="writer"] .sidebar__nav-item .nav-item[data-active] {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
+  color: #4b2dbf;
+  border-color: rgba(104, 71, 232, 0.24);
+  background: linear-gradient(90deg, rgba(104, 71, 232, 0.12), rgba(104, 71, 232, 0.035));
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item__indicator,
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item[data-active] .nav-item__indicator {
+  background: #6847e8;
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item small {
+  color: #6847e8;
+  background: rgba(104, 71, 232, 0.08);
+  border-color: rgba(104, 71, 232, 0.15);
 }
 
 .app-shell[data-role="writer"] .dashboard-header {
-  background: color-mix(in srgb, #5b3bd0 86%, transparent);
-  border-bottom-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 0.4rem 1.8rem rgba(75, 45, 191, 0.14);
+  background: color-mix(in srgb, #f5f2ec 92%, transparent);
+  border-bottom-color: rgba(41, 38, 32, 0.09);
+  box-shadow: 0 0.35rem 1.4rem rgba(55, 48, 38, 0.04);
 }
 
 .app-shell[data-role="writer"] .user-area__avatar,
-.app-shell[data-role="writer"] .protected-account__avatar,
+.app-shell[data-role="writer"] .protected-account__avatar {
+  color: #ffffff;
+  background: linear-gradient(145deg, #8065f2, #6847e8);
+  border-color: rgba(104, 71, 232, 0.26);
+}
+
 .app-shell[data-role="writer"] .user-area__popover {
-  background: linear-gradient(145deg, #765bed, #6847e8);
-  border-color: rgba(255, 255, 255, 0.24);
+  color: #292620;
+  background: #fffefb;
+  border-color: rgba(41, 38, 32, 0.11);
+  box-shadow: 0 1.2rem 3rem rgba(55, 48, 38, 0.12);
 }
 
 .app-shell[data-role="writer"] .card,
@@ -88,9 +110,40 @@
 .app-shell[data-role="writer"] .editor-selection-grid article,
 .app-shell[data-role="writer"] .editor-notification-list article,
 .app-shell[data-role="writer"] .editor-profile-card {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.08));
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 0.9rem 2.4rem rgba(75, 45, 191, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #292620;
+  background: #fffefb;
+  border-color: rgba(41, 38, 32, 0.10);
+  box-shadow: 0 0.9rem 2.4rem rgba(55, 48, 38, 0.075);
+}
+
+.app-shell[data-role="writer"] .card--hover:hover,
+.app-shell[data-role="writer"] .card--interactive:hover {
+  border-color: rgba(104, 71, 232, 0.24);
+  box-shadow: 0 1.1rem 2.8rem rgba(55, 48, 38, 0.11);
+}
+
+.app-shell[data-role="writer"] .button--primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, #8065f2 0%, #6847e8 55%, #5b38d1 100%);
+  border-color: #6847e8;
+  box-shadow: 0 0.7rem 1.6rem rgba(104, 71, 232, 0.18);
+}
+
+.app-shell[data-role="writer"] .button--primary:hover:not(:disabled) {
+  color: #ffffff;
+  background: #4b2dbf;
+  border-color: #4b2dbf;
+}
+
+.app-shell[data-role="writer"] .button--secondary {
+  color: #4b2dbf;
+  background: rgba(104, 71, 232, 0.06);
+  border-color: rgba(104, 71, 232, 0.18);
+}
+
+.app-shell[data-role="writer"] .button--secondary:hover:not(:disabled),
+.app-shell[data-role="writer"] .button--ghost:hover:not(:disabled) {
+  background: rgba(104, 71, 232, 0.10);
 }
 
 .app-shell[data-role="writer"] .field__control,
@@ -99,18 +152,48 @@
 .app-shell[data-role="writer"] .editor-filters input,
 .app-shell[data-role="writer"] .editor-filters select,
 .app-shell[data-role="writer"] .workspace-editor-review {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.18);
+  color: #292620;
+  background: #f8f6f1;
+  border-color: rgba(41, 38, 32, 0.11);
+}
+
+.app-shell[data-role="writer"] .field__control:focus,
+.app-shell[data-role="writer"] .workspace-search input:focus-visible,
+.app-shell[data-role="writer"] .workspace-sort select:focus-visible,
+.app-shell[data-role="writer"] .editor-filters input:focus-visible,
+.app-shell[data-role="writer"] .editor-filters select:focus-visible {
+  outline: none;
+  border-color: #8065f2;
+  box-shadow: var(--shadow-focus);
 }
 
 .app-shell[data-role="writer"] .dashboard-hero,
 .app-shell[data-role="writer"] .works-workspace__hero,
 .app-shell[data-role="writer"] .editor-page-header {
+  color: #292620;
   background:
-    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.16), transparent 16rem),
-    linear-gradient(135deg, rgba(75, 45, 191, 0.72), rgba(128, 101, 242, 0.72));
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 1.2rem 3rem rgba(75, 45, 191, 0.18);
+    radial-gradient(circle at 92% 12%, rgba(104, 71, 232, 0.08), transparent 18rem),
+    #fffefb;
+  border: 1px solid rgba(41, 38, 32, 0.10);
+  box-shadow: 0 1rem 2.8rem rgba(55, 48, 38, 0.08);
+}
+
+.app-shell[data-role="writer"] .dashboard-hero__eyebrow,
+.app-shell[data-role="writer"] .section-heading p,
+.app-shell[data-role="writer"] .latest-work__content > p,
+.app-shell[data-role="writer"] .book-card__genre,
+.app-shell[data-role="writer"] .status-badge {
+  color: #6847e8;
+}
+
+.app-shell[data-role="writer"] .daily-goal .progress__bar,
+.app-shell[data-role="writer"] .daily-goal .progress__bar::-webkit-progress-bar {
+  background: #ece7df;
+}
+
+.app-shell[data-role="writer"] .daily-goal .progress__bar::-webkit-progress-value,
+.app-shell[data-role="writer"] .daily-goal .progress__bar::-moz-progress-bar {
+  background: linear-gradient(90deg, #6847e8, #8065f2);
 }
 
 .app-shell[data-role="writer"] .latest-work__cover,
@@ -120,41 +203,53 @@
 .app-shell[data-role="writer"] .book-cover--three,
 .app-shell[data-role="writer"] .workspace-cover--2,
 .app-shell[data-role="writer"] .workspace-cover--3 {
+  color: #ffffff;
   background:
     radial-gradient(circle at 82% 14%, rgba(255, 255, 255, 0.18), transparent 8rem),
-    linear-gradient(145deg, #765bed, #5b3bd0);
-  border-color: rgba(255, 255, 255, 0.2);
+    linear-gradient(145deg, #8065f2, #5b38d1);
+  border-color: rgba(104, 71, 232, 0.18);
+}
+
+.app-shell[data-role="writer"] .metric-card__value,
+.app-shell[data-role="writer"] .workspace-stats strong {
+  color: #292620;
 }
 
 .app-shell[data-role="writer"] .workspace-tabs button {
-  color: #f0edff;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
+  color: #746f66;
+  background: #f8f6f1;
+  border-color: rgba(41, 38, 32, 0.10);
 }
 
 .app-shell[data-role="writer"] .workspace-tabs button[aria-selected="true"] {
-  color: #4b2dbf;
-  background: #ffffff;
-  border-color: #ffffff;
-  box-shadow: 0 0.55rem 1.4rem rgba(75, 45, 191, 0.18);
+  color: #ffffff;
+  background: #6847e8;
+  border-color: #6847e8;
+  box-shadow: 0 0.45rem 1.2rem rgba(104, 71, 232, 0.18);
 }
 
 .app-shell[data-role="writer"] .workspace-editor-review__status,
 .app-shell[data-role="writer"] .editor-table-status,
 .app-shell[data-role="writer"] .editor-table-action--primary {
-  color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.22);
+  color: #6847e8 !important;
+  background: rgba(104, 71, 232, 0.07);
+  border-color: rgba(104, 71, 232, 0.18);
+}
+
+/* Locked exception: manuscript/new-work paper remains white with typewriter content. */
+.app-shell[data-role="writer"] .writer-screen,
+.app-shell[data-role="writer"] .flow-layer--form {
+  color-scheme: light;
 }
 
 @media (max-width: 47.99rem) {
   .app-shell[data-role="writer"] .sidebar {
-    box-shadow: 1.2rem 0 3rem rgba(75, 45, 191, 0.28);
+    box-shadow: 1.2rem 0 3rem rgba(55, 48, 38, 0.10);
   }
 
   .app-shell[data-role="writer"] .sidebar-toggle {
-    color: #ffffff;
-    background: #6847e8;
-    border-color: rgba(255, 255, 255, 0.24);
+    color: #6847e8;
+    background: #fffefb;
+    border-color: rgba(104, 71, 232, 0.18);
   }
 }

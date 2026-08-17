@@ -88,11 +88,19 @@ jobs:
       - name: Run MariaDB security integration contracts
         run: npm run test:security:db
 
+      - name: Run release measurement report
+        run: npm run release:measure:strict
+
       - name: Recover brand-new MariaDB from version-controlled baseline
         env:
           DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
           RECOVERY_CONFIRM_EMPTY_DATABASE: "YES"
         run: npm run db:recover:fresh
+
+      - name: Validate release measurement on recovered database
+        env:
+          DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
+        run: npm run release:measure:strict
 
       - name: Build application
         shell: bash

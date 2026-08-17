@@ -1,0 +1,147 @@
+/* Sprint 5B — apply the existing editor workbench language to legacy CMS surfaces.
+ * Presentation only: no draft/live, permission or publish semantics change here.
+ */
+
+.content-editor-page > .content-form-actions:first-of-type {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 12;
+  padding: 0.7rem;
+  border: 1px solid var(--content-border);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--content-surface) 94%, transparent);
+  box-shadow: 0 0.65rem 1.8rem rgba(13, 18, 35, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.content-editor-page > .content-form-actions:first-of-type > a,
+.content-editor-page > .content-form-actions:first-of-type > button {
+  min-height: 2.35rem;
+}
+
+.content-editor-page .content-section-heading > p {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  max-width: 100%;
+  padding: 0.34rem 0.62rem;
+  border: 1px solid rgba(104, 71, 232, 0.15);
+  border-radius: 999px;
+  color: var(--content-muted);
+  background: rgba(104, 71, 232, 0.045);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.content-editor-page .content-panel > .content-section-heading {
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.cms-operation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.cms-operation-card {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--content-border);
+  border-radius: 0.9rem;
+  background: var(--content-surface);
+  box-shadow: 0 0.55rem 1.5rem rgba(13, 18, 35, 0.055);
+}
+
+.cms-operation-card > span {
+  color: var(--content-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.cms-operation-card > strong {
+  color: var(--content-text);
+  font-size: 1.25rem;
+}
+
+.cms-operation-card > small {
+  color: var(--content-muted);
+}
+
+.cms-operational-state {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 1.85rem;
+  padding: 0.3rem 0.58rem;
+  border: 1px solid var(--content-border);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.cms-operational-state[data-tone="success"] {
+  color: #286640;
+  border-color: rgba(40, 102, 64, 0.22);
+  background: rgba(40, 102, 64, 0.07);
+}
+
+.cms-operational-state[data-tone="warning"] {
+  color: #845a12;
+  border-color: rgba(132, 90, 18, 0.24);
+  background: rgba(132, 90, 18, 0.075);
+}
+
+.cms-operational-state[data-tone="info"] {
+  color: #4b2dbf;
+  border-color: rgba(104, 71, 232, 0.22);
+  background: rgba(104, 71, 232, 0.07);
+}
+
+.cms-operational-state[data-tone="danger"] {
+  color: #a33b3b;
+  border-color: rgba(163, 59, 59, 0.23);
+  background: rgba(163, 59, 59, 0.07);
+}
+
+.cms-announcement-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.cms-announcement-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.cms-announcement-card .content-form-actions {
+  margin-top: auto;
+}
+
+@media (max-width: 47.99rem) {
+  .content-editor-page > .content-form-actions:first-of-type {
+    top: 0.45rem;
+  }
+
+  .content-editor-page > .content-form-actions:first-of-type > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .content-editor-page .content-section-heading {
+    align-items: flex-start;
+  }
+
+  .content-editor-page .content-section-heading > p {
+    width: fit-content;
+  }
+}

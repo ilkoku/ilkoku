@@ -1,0 +1,72 @@
+/*
+ * Light surface unification.
+ * User-locked palette rule: former rows 5-11 all resolve to #F8F6FF.
+ * This changes color only; layout, typography and behavior stay untouched.
+ */
+
+/* /giris — replace the former cream/beige surface family. */
+.login-brand-scope .auth-page--purple {
+  --color-background: #f8f6ff !important;
+  --color-surface: #f8f6ff !important;
+  --color-surface-raised: #f8f6ff !important;
+  --color-card: #f8f6ff !important;
+  background:
+    radial-gradient(circle at 78% 8%, rgba(104, 71, 232, 0.07), transparent 30rem),
+    linear-gradient(180deg, #f8f6ff 0%, #f8f6ff 100%) !important;
+}
+
+.login-brand-scope .auth-page--purple .auth-brand,
+.login-brand-scope .auth-page--purple .auth-form-card,
+.login-brand-scope .auth-page--purple .auth-form .field__control,
+.login-brand-scope .auth-page--purple .auth-route-status,
+.login-brand-scope .auth-page--purple .auth-status {
+  background: #f8f6ff !important;
+}
+
+/* Writer shell — replace former #FFFEFB/#F8F6F1/#F3F0EA/#F1EEE8 surfaces. */
+.app-shell[data-role="writer"] {
+  --color-background: #f8f6ff !important;
+  --color-surface: #f8f6ff !important;
+  --color-surface-raised: #f8f6ff !important;
+  --color-card: #f8f6ff !important;
+}
+
+.app-shell[data-role="writer"] .sidebar,
+.app-shell[data-role="writer"] .brand,
+.app-shell[data-role="writer"] .user-area__popover,
+.app-shell[data-role="writer"] .card,
+.app-shell[data-role="writer"] .workspace-work-card,
+.app-shell[data-role="writer"] .workspace-dialog__panel,
+.app-shell[data-role="writer"] .editor-table-shell,
+.app-shell[data-role="writer"] .editor-empty,
+.app-shell[data-role="writer"] .editor-filters,
+.app-shell[data-role="writer"] .editor-work-card,
+.app-shell[data-role="writer"] .editor-review-row,
+.app-shell[data-role="writer"] .editor-selection-grid article,
+.app-shell[data-role="writer"] .editor-notification-list article,
+.app-shell[data-role="writer"] .editor-profile-card,
+.app-shell[data-role="writer"] .field__control,
+.app-shell[data-role="writer"] .workspace-search input,
+.app-shell[data-role="writer"] .workspace-sort select,
+.app-shell[data-role="writer"] .editor-filters input,
+.app-shell[data-role="writer"] .editor-filters select,
+.app-shell[data-role="writer"] .workspace-editor-review,
+.app-shell[data-role="writer"] .workspace-tabs button,
+.app-shell[data-role="writer"] .sidebar-toggle {
+  background: #f8f6ff !important;
+}
+
+.app-shell[data-role="writer"] .dashboard-header {
+  background: color-mix(in srgb, #f8f6ff 92%, transparent) !important;
+}
+
+/* New Work + manuscript workspace — rows 5, 6, 10 and 11 become #F8F6FF. */
+.flow-layer--form,
+.writer-screen {
+  --writer-paper-shell: #f8f6ff !important;
+  --writer-paper-ui: #f8f6ff !important;
+  --writer-paper: #f8f6ff !important;
+  --color-surface: #f8f6ff !important;
+  --color-surface-raised: #f8f6ff !important;
+  --color-card: #f8f6ff !important;
+}

@@ -9,6 +9,7 @@ import {
   getPublisherNavigationPermissions,
 } from "@/features/publisher-discovery/access";
 import styles from "@/features/admin-role-view/AdminRoleView.module.css";
+import "@/features/writer/writer-role-theme.css";
 
 type AppShellProps = {
   children: ReactNode;
@@ -31,7 +32,7 @@ export async function AppShell({
     );
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-role={profile.role}>
       <Sidebar
         adminPublisherView={profile.adminPublisherView}
         badges={badges}

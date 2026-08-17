@@ -7,6 +7,7 @@ import "./revision.css";
 import "./preview.css";
 import "./shell-polish.css";
 import "./editor-workbench.css";
+import "./surface-finalization.css";
 
 export const metadata: Metadata = {
   title: "İlkOku İçerik Yönetimi",

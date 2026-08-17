@@ -46,3 +46,26 @@ test("obsolete publisher notification query helper stays removed", () => {
     "publisher notification center must stay on the central target resolver",
   );
 });
+
+test("CMS global search stays read-only and excludes sensitive operational namespaces", () => {
+  const searchPage = source("src/app/icerik/arama/page.tsx");
+
+  assert.ok(
+    searchPage.includes("requireCmsManager(\"/icerik/arama\")"),
+    "CMS search must keep the CMS manager boundary",
+  );
+  assert.ok(
+    searchPage.includes("namespace IN ('homepage', 'homepage_en', 'faq', 'faq_en', 'announcement', 'media')"),
+    "CMS search must use an explicit editorial namespace allowlist",
+  );
+  assert.ok(
+    searchPage.includes("namespace = 'cms_draft'"),
+    "CMS search must include staged working copies through the dedicated draft namespace",
+  );
+  assertNotContains(searchPage, "form_submission", "CMS global search");
+  assertNotContains(searchPage, "AuditLog", "CMS global search");
+  assertNotContains(searchPage, "FROM User", "CMS global search");
+  assertNotContains(searchPage, "publisher_application", "CMS global search");
+  assertNotContains(searchPage, "$executeRaw", "CMS global search");
+  assertNotContains(searchPage, "$transaction", "CMS global search");
+});

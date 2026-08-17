@@ -56,6 +56,36 @@ test("writer submission notifications only link to submissions owned by that wri
   assertContains(text, "/yayinevleri?basvuru=", "writer notification resolver");
 });
 
+test("writer-owned work notifications stay inside the writer workspace", () => {
+  const targets = source("src/features/notifications/targets.ts");
+  const passportRoute = source("src/app/eserlerim/[workId]/pasaport/page.tsx");
+
+  assertContains(targets, "writerOwnedWorkIds", "writer work notification resolver");
+  assertContains(targets, "authorId: input.userId", "writer work notification resolver");
+  assertContains(
+    targets,
+    "`/eserlerim/${encodeURIComponent(entityId)}/pasaport`",
+    "writer work notification resolver",
+  );
+  assertContains(passportRoute, "AuthorOwnershipPassportPage", "writer work target route");
+});
+
+test("blocked public work slugs never receive public notification links", () => {
+  const targets = source("src/features/notifications/targets.ts");
+
+  assertContains(targets, "isBlockedPublicWorkSlug", "notification public target resolver");
+  assertContains(
+    targets,
+    "if (isBlockedPublicWorkSlug(work.slug)) continue;",
+    "notification public work target resolver",
+  );
+  assertContains(
+    targets,
+    "isBlockedPublicWorkSlug(comment.work.slug)",
+    "notification public comment target resolver",
+  );
+});
+
 test("editor work notifications disambiguate assignments from recommendations", () => {
   const text = source("src/features/notifications/targets.ts");
 

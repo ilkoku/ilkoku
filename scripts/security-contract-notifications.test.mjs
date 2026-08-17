@@ -67,19 +67,38 @@ test("editor work notifications disambiguate assignments from recommendations", 
   assertContains(text, 'href = "/editor/onerilenler"', "editor notification resolver");
 });
 
-test("all role notification pages use the central resolver and writer navigation exposes notifications", () => {
+test("shared notification page explicitly allows writer without widening reader workspace", () => {
+  const page = source("src/app/bildirimler/page.tsx");
+  const authData = source("src/features/auth/data.ts");
+  const navigation = source("src/content/navigation.ts");
+
+  assertContains(page, "canAccessNotificationWorkspace", "shared notification page");
+  assertNotContains(page, "canAccessReaderWorkspace", "shared notification page");
+  assertContains(authData, "notificationWorkspaceRoles", "notification role boundary");
+  assertContains(authData, '  "writer",', "notification role boundary");
+  assertContains(authData, "readerWorkspaceRoles", "reader role boundary");
+  assertNotContains(
+    authData.slice(
+      authData.indexOf("export const readerWorkspaceRoles"),
+      authData.indexOf("export const notificationWorkspaceRoles"),
+    ),
+    '"writer"',
+    "reader role boundary",
+  );
+  assertContains(navigation, '{ label: "Bildirimler", href: "/bildirimler" }', "writer navigation");
+});
+
+test("all role notification pages use the central resolver", () => {
   const reader = source("src/app/bildirimler/page.tsx");
   const editor = source("src/app/editor/bildirimler/page.tsx");
   const publisher = source("src/features/publisher-workspace/notification-center.ts");
-  const navigation = source("src/content/navigation.ts");
 
-  assertContains(reader, "resolveNotificationTargets", "reader notification page");
-  assertContains(reader, "İlgili kaydı aç", "reader notification page");
+  assertContains(reader, "resolveNotificationTargets", "shared notification page");
+  assertContains(reader, "İlgili kaydı aç", "shared notification page");
   assertContains(editor, "resolveNotificationTargets", "editor notification page");
   assertContains(editor, "İlgili kaydı aç", "editor notification page");
   assertContains(publisher, "resolveNotificationTargets", "publisher notification center");
   assertNotContains(publisher, "workSlugById", "publisher notification center");
-  assertContains(navigation, '{ label: "Bildirimler", href: "/bildirimler" }', "writer navigation");
 });
 
 test("production smoke covers newly critical role surfaces", () => {

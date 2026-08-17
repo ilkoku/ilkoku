@@ -5,6 +5,7 @@ import type {
   NotificationType,
 } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
 
 export type NotificationTargetScope =
   | "default"
@@ -132,17 +133,36 @@ export async function resolveNotificationTargets(input: {
 
   const workSlugById = new Map<string, string>();
   for (const work of works) {
+    if (isBlockedPublicWorkSlug(work.slug)) continue;
     workSlugById.set(work.id, work.slug);
   }
 
   const commentHrefById = new Map<string, string>();
   for (const comment of comments) {
-    if (!comment.chapter) continue;
+    if (!comment.chapter || isBlockedPublicWorkSlug(comment.work.slug)) {
+      continue;
+    }
 
     commentHrefById.set(
       comment.id,
       `/oku/${encodeURIComponent(comment.work.slug)}/bolum-${comment.chapter.position}#yorum-${comment.id}`,
     );
+  }
+
+  const writerOwnedWorkIds = new Set<string>();
+
+  if (input.scope === "default" && workIds.length) {
+    const ownedWorks: IdRow[] = await prisma.work.findMany({
+      where: {
+        authorId: input.userId,
+        id: { in: workIds },
+      },
+      select: { id: true },
+    });
+
+    for (const work of ownedWorks) {
+      writerOwnedWorkIds.add(work.id);
+    }
   }
 
   const writerSubmissionIds = new Set<string>();
@@ -279,7 +299,12 @@ export async function resolveNotificationTargets(input: {
     if (entityType === "comment" && entityId) {
       href = commentHrefById.get(entityId) ?? null;
     } else if (entityType === "work" && entityId) {
-      if (input.scope === "editor") {
+      if (
+        input.scope === "default" &&
+        writerOwnedWorkIds.has(entityId)
+      ) {
+        href = `/eserlerim/${encodeURIComponent(entityId)}/pasaport`;
+      } else if (input.scope === "editor") {
         const assignmentState =
           editorSecondAssignmentByWork.get(entityId);
 

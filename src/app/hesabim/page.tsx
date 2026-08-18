@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { UserArea } from "@/components/layout/UserArea";
 import { AdminRoleViewControl } from "@/components/account/AdminRoleViewControl";
+import { UserArea } from "@/components/layout/UserArea";
 import { Brand } from "@/components/ui/Brand";
+import { getCurrentAdminRoleView } from "@/features/admin-role-view/cookie";
 import { logoutAction } from "@/features/auth/actions";
 import { roleDestinations } from "@/features/auth/data";
 import { getRoleNavigation } from "@/features/auth/destination";
-import { getCurrentAdminRoleView } from "@/features/admin-role-view/cookie";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { PublisherApplicationCompletionForm } from "@/features/publisher-applications/components/PublisherApplicationCompletionForm";
 import { getPublisherApplicationDefaults } from "@/features/publisher-applications/schema";
@@ -19,6 +19,7 @@ import { getProfilePageData } from "@/features/profile/queries";
 import { getNotificationPreferences } from "@/lib/notification-preferences";
 import "@/features/profile/profile.css";
 import "@/features/profile/notification-preferences.css";
+import "@/features/profile/account-navigation.css";
 
 export const metadata: Metadata = {
   title: "Hesabım | İlkOku",
@@ -50,18 +51,32 @@ const publisherApplicationStatusLabels = {
   submitted: "İncelemeye gönderildi",
 } as const;
 
+const accountSections = [
+  { href: "#genel-bakis", label: "Genel Bakış", helper: "Hesap ve rol özeti" },
+  { href: "#kisisel-bilgiler", label: "Kişisel Bilgiler", helper: "Profil ve yazar bilgileri" },
+  { href: "#rol-basvurusu", label: "Rol & Başvurular", helper: "Başvuru ve doğrulama durumu" },
+  { href: "#bildirim-tercihleri", label: "Bildirim Tercihleri", helper: "E-posta ve bildirim ayarları" },
+  { href: "#guvenlik", label: "Güvenlik", helper: "Şifre ve oturum işlemleri" },
+] as const;
+
 const formatDate = (value: Date | null) => value
   ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeStyle: "short" }).format(value)
   : "—";
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ sekme?: string }> }) {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sekme?: string }>;
+}) {
   const profile = await getCurrentProfile({ ignoreAdminRoleView: true });
   if (!profile) redirect("/giris?sonraki=/hesabim");
+
   const [data, notificationPreferences] = await Promise.all([
     getProfilePageData(profile.id),
     getNotificationPreferences(profile.id),
   ]);
   if (!data) redirect("/giris?sonraki=/hesabim");
+
   const adminRoleView = profile.role === "admin"
     ? await getCurrentAdminRoleView()
     : null;
@@ -80,60 +95,242 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const publisherApplicationDefaults = getPublisherApplicationDefaults(
     publisherApplication,
   );
+  const accountName = data.username ? `@${data.username}` : profile.fullName;
 
-  return <div className="account-shell">
-    <header className="account-shell__header"><Brand /><UserArea profile={profile} workspaceHref={navigation.workspaceHref} /></header>
-    <main className="profile-page">
-      <nav className="account-breadcrumb" aria-label="Hesap bağlantıları"><Link href="/">Ana Sayfa</Link><Link href={navigation.workspaceHref}>Çalışma Alanıma Dön</Link><form action={logoutAction}><button type="submit">Çıkış Yap</button></form></nav>
-      <header className="profile-page__header">
-        <div><p className="profile-page__eyebrow">Hesap ve güvenlik</p><h1>Hesabım</h1><p>Kişisel bilgilerinizi, aktif rolünüzü, şifrenizi ve rol başvurularınızı tek yerden yönetin.</p></div>
-        <div className="profile-identity">{data.avatarUrl ? <Image alt={`${profile.fullName} profil fotoğrafı`} className="profile-identity__avatar" height={72} src={data.avatarUrl} width={72} /> : <span className="profile-identity__avatar" aria-hidden="true">{initial}</span>}<div><strong>{data.username ? `@${data.username}` : profile.fullName}</strong><span>Aktif rol: {roleLabels[data.role]}</span><small>Üyelik: {formatDate(data.createdAt)}</small></div></div>
+  return (
+    <div className="account-shell">
+      <header className="account-shell__header">
+        <Brand />
+        <UserArea profile={profile} workspaceHref={navigation.workspaceHref} />
       </header>
 
-      {profile.role === "admin" ? (
-        <AdminRoleViewControl currentRole={adminRoleView?.role ?? null} />
-      ) : null}
+      <main className="account-page">
+        <div className="account-layout">
+          <aside className="account-sidebar" aria-label="Hesap menüsü">
+            <p className="account-sidebar__label">Hesap ayarları</p>
 
-      <section className="profile-card account-role-request" data-highlight={sekme === "rol-basvurusu" || undefined} id="rol-basvurusu">
-        <div className="profile-card__heading"><div><p>Rol başvurusu</p><h2>Son başvuru durumu</h2></div></div>
-        {data.latestRoleRequest ? (
-          <>
-            <dl className="account-role-request__details">
-              <div><dt>Talep edilen rol</dt><dd>{roleLabels[data.latestRoleRequest.requestedRole]}</dd></div>
-              <div><dt>Durum</dt><dd data-status={data.latestRoleRequest.status}>{requestStatusLabels[data.latestRoleRequest.status]}</dd></div>
-              <div><dt>Başvuru tarihi</dt><dd>{formatDate(data.latestRoleRequest.createdAt)}</dd></div>
-              <div><dt>Değerlendirme</dt><dd>{formatDate(data.latestRoleRequest.reviewedAt)}</dd></div>
-              <div><dt>Değerlendiren</dt><dd>{data.latestRoleRequest.adminName || "—"}</dd></div>
-              <div><dt>Admin notu</dt><dd>{data.latestRoleRequest.reviewNote || "Henüz değerlendirme notu yok."}</dd></div>
-              {data.latestRoleRequest.requestedRole === "publisher" ? (
+            <div className="account-sidebar__profile">
+              {data.avatarUrl ? (
+                <Image
+                  alt={`${profile.fullName} profil fotoğrafı`}
+                  className="account-sidebar__avatar"
+                  height={48}
+                  src={data.avatarUrl}
+                  width={48}
+                />
+              ) : (
+                <span className="account-sidebar__avatar" aria-hidden="true">
+                  {initial}
+                </span>
+              )}
+              <div className="account-sidebar__profile-copy">
+                <strong>{accountName}</strong>
+                <span>{roleLabels[data.role]}</span>
+                <small>Üyelik: {formatDate(data.createdAt)}</small>
+              </div>
+            </div>
+
+            <nav className="account-sidebar__nav" aria-label="Hesap bölümleri">
+              {accountSections.map((item) => (
+                <a href={item.href} key={item.href}>
+                  <strong>{item.label}</strong>
+                  <small>{item.helper}</small>
+                </a>
+              ))}
+            </nav>
+
+            <div className="account-sidebar__footer">
+              <Link href={navigation.workspaceHref}>← Çalışma Alanıma Dön</Link>
+              <Link href="/">Ana Sayfa</Link>
+              <form action={logoutAction}>
+                <button type="submit">Çıkış Yap</button>
+              </form>
+            </div>
+          </aside>
+
+          <div className="account-content">
+            <header className="profile-page__header" id="genel-bakis">
+              <div>
+                <p className="profile-page__eyebrow">Hesap ve güvenlik</p>
+                <h1>Hesabım</h1>
+                <p>
+                  Kişisel bilgilerinizi, aktif rolünüzü, bildirimlerinizi ve
+                  güvenlik ayarlarınızı tek yerden yönetin.
+                </p>
+              </div>
+
+              <div className="account-overview" aria-label="Hesap özeti">
+                <div className="account-overview__item">
+                  <span>Kullanıcı</span>
+                  <strong>{accountName}</strong>
+                </div>
+                <div className="account-overview__item">
+                  <span>Aktif rol</span>
+                  <strong>{roleLabels[data.role]}</strong>
+                </div>
+                <div className="account-overview__item">
+                  <span>Üyelik</span>
+                  <strong>{formatDate(data.createdAt)}</strong>
+                </div>
+              </div>
+            </header>
+
+            {profile.role === "admin" ? (
+              <AdminRoleViewControl currentRole={adminRoleView?.role ?? null} />
+            ) : null}
+
+            <section className="profile-card" id="kisisel-bilgiler">
+              <div className="profile-card__heading">
+                <div>
+                  <p>Kişisel bilgiler</p>
+                  <h2>Profil bilgileri</h2>
+                </div>
+              </div>
+              <ProfileForm data={data} />
+            </section>
+
+            <section
+              className="profile-card account-role-request"
+              data-highlight={sekme === "rol-basvurusu" || undefined}
+              id="rol-basvurusu"
+            >
+              <div className="profile-card__heading">
+                <div>
+                  <p>Rol başvurusu</p>
+                  <h2>Son başvuru durumu</h2>
+                </div>
+              </div>
+
+              {data.latestRoleRequest ? (
                 <>
-                  <div><dt>Başvurulan yayınevi</dt><dd>{publisherApplication?.publisherName || "Kurumsal bilgi eksik"}</dd></div>
-                  <div><dt>Kurumsal doğrulama</dt><dd data-status={publisherApplication?.verificationStatus || "draft"}>{publisherApplication ? publisherApplicationStatusLabels[publisherApplication.verificationStatus] : "Bilgilerinizi tamamlayın"}</dd></div>
-                  <div><dt>Düzeltme açıklaması</dt><dd>{publisherApplication?.correctionNote || "—"}</dd></div>
+                  <dl className="account-role-request__details">
+                    <div>
+                      <dt>Talep edilen rol</dt>
+                      <dd>{roleLabels[data.latestRoleRequest.requestedRole]}</dd>
+                    </div>
+                    <div>
+                      <dt>Durum</dt>
+                      <dd data-status={data.latestRoleRequest.status}>
+                        {requestStatusLabels[data.latestRoleRequest.status]}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Başvuru tarihi</dt>
+                      <dd>{formatDate(data.latestRoleRequest.createdAt)}</dd>
+                    </div>
+                    <div>
+                      <dt>Değerlendirme</dt>
+                      <dd>{formatDate(data.latestRoleRequest.reviewedAt)}</dd>
+                    </div>
+                    <div>
+                      <dt>Değerlendiren</dt>
+                      <dd>{data.latestRoleRequest.adminName || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>Admin notu</dt>
+                      <dd>
+                        {data.latestRoleRequest.reviewNote
+                          || "Henüz değerlendirme notu yok."}
+                      </dd>
+                    </div>
+                    {data.latestRoleRequest.requestedRole === "publisher" ? (
+                      <>
+                        <div>
+                          <dt>Başvurulan yayınevi</dt>
+                          <dd>
+                            {publisherApplication?.publisherName
+                              || "Kurumsal bilgi eksik"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Kurumsal doğrulama</dt>
+                          <dd
+                            data-status={publisherApplication?.verificationStatus || "draft"}
+                          >
+                            {publisherApplication
+                              ? publisherApplicationStatusLabels[
+                                publisherApplication.verificationStatus
+                              ]
+                              : "Bilgilerinizi tamamlayın"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Düzeltme açıklaması</dt>
+                          <dd>{publisherApplication?.correctionNote || "—"}</dd>
+                        </div>
+                      </>
+                    ) : null}
+                  </dl>
+
+                  {needsPublisherApplication ? (
+                    <div className="account-publisher-application">
+                      <div className="profile-card__heading">
+                        <div>
+                          <p>Kurumsal doğrulama</p>
+                          <h2>Yayınevi bilgilerini tamamlayın</h2>
+                        </div>
+                      </div>
+                      <PublisherApplicationCompletionForm
+                        defaults={publisherApplicationDefaults}
+                      />
+                    </div>
+                  ) : null}
+
+                  {approvedRoleHref ? (
+                    <Link
+                      className="button button--primary account-role-request__workspace"
+                      href={approvedRoleHref}
+                    >
+                      Onaylanan çalışma alanına geç
+                    </Link>
+                  ) : null}
                 </>
-              ) : null}
-            </dl>
-            {needsPublisherApplication ? (
-              <div className="account-publisher-application">
+              ) : (
+                <p className="account-role-request__empty">
+                  Henüz bir rol başvurunuz bulunmuyor.
+                </p>
+              )}
+            </section>
+
+            <section className="profile-card" id="bildirim-tercihleri">
+              <div className="profile-card__heading">
+                <div>
+                  <p>E-posta bildirimleri</p>
+                  <h2>Bildirim tercihleri</h2>
+                </div>
+              </div>
+              <NotificationPreferencesForm preferences={notificationPreferences} />
+            </section>
+
+            <div className="profile-page__lower-grid" id="guvenlik">
+              <section className="profile-card">
                 <div className="profile-card__heading">
                   <div>
-                    <p>Kurumsal doğrulama</p>
-                    <h2>Yayınevi bilgilerini tamamlayın</h2>
+                    <p>Güvenlik</p>
+                    <h2>Şifre değiştir</h2>
                   </div>
                 </div>
-                <PublisherApplicationCompletionForm
-                  defaults={publisherApplicationDefaults}
-                />
-              </div>
-            ) : null}
-            {approvedRoleHref ? <Link className="button button--primary account-role-request__workspace" href={approvedRoleHref}>Onaylanan çalışma alanına geç</Link> : null}
-          </>
-        ) : <p className="account-role-request__empty">Henüz bir rol başvurunuz bulunmuyor.</p>}
-      </section>
+                <PasswordForm />
+              </section>
 
-      <section className="profile-card"><div className="profile-card__heading"><div><p>Kişisel bilgiler</p><h2>Profil bilgileri</h2></div></div><ProfileForm data={data} /></section>
-      <section className="profile-card" id="bildirim-tercihleri"><div className="profile-card__heading"><div><p>E-posta bildirimleri</p><h2>Bildirim tercihleri</h2></div></div><NotificationPreferencesForm preferences={notificationPreferences} /></section>
-      <div className="profile-page__lower-grid"><section className="profile-card"><div className="profile-card__heading"><div><p>Güvenlik</p><h2>Şifre değiştir</h2></div></div><PasswordForm /></section><section className="profile-card profile-card--session"><div className="profile-card__heading"><div><p>Oturum</p><h2>Hesaptan çıkış</h2></div></div><p>Bu cihazdaki İlkOku oturumunuzu güvenli şekilde sonlandırır.</p><form action={logoutAction}><button className="button button--outline" type="submit"><span className="button__label">Oturumu kapat</span></button></form></section></div>
-    </main>
-  </div>;
+              <section className="profile-card profile-card--session">
+                <div className="profile-card__heading">
+                  <div>
+                    <p>Oturum</p>
+                    <h2>Hesaptan çıkış</h2>
+                  </div>
+                </div>
+                <p>Bu cihazdaki İlkOku oturumunuzu güvenli şekilde sonlandırır.</p>
+                <form action={logoutAction}>
+                  <button className="button button--outline" type="submit">
+                    <span className="button__label">Oturumu kapat</span>
+                  </button>
+                </form>
+              </section>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }

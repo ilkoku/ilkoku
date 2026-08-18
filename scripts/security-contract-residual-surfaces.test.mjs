@@ -70,7 +70,7 @@ test("CMS global search stays read-only and excludes sensitive operational names
   assertNotContains(searchPage, "$transaction", "CMS global search");
 });
 
-test("professional feedback groups follow the editor review lifecycle without weakening ownership checks", () => {
+test("professional feedback mutations stay limited to reports already delivered to the writer", () => {
   const mutations = source(
     "src/features/feedback/mutations/feedback.mutations.ts",
   );
@@ -86,15 +86,23 @@ test("professional feedback groups follow the editor review lifecycle without we
     "professional feedback groups must accept one or two unique report ids only",
   );
   assert.ok(
-    mutations.includes('"awaiting_second_editor"') &&
-      mutations.includes('"second_in_progress"') &&
-      mutations.includes('"completed"'),
-    "a completed first-editor report must stay readable while the work advances through the second-editor lifecycle",
+    mutations.includes('editorReviewStatus: "completed"'),
+    "professional feedback status changes must stay behind the writer-visible completed review boundary",
+  );
+  assertNotContains(
+    mutations,
+    '"awaiting_second_editor"',
+    "professional feedback mutation",
+  );
+  assertNotContains(
+    mutations,
+    '"second_in_progress"',
+    "professional feedback mutation",
   );
   assert.ok(
     mutations.includes("reports.length !== uniqueIds.length") &&
       mutations.includes("!uniqueIds.includes(report.id)"),
-    "the requested report ids must exactly match the authorized completed professional group",
+    "the requested report ids must exactly match the authorized delivered professional group",
   );
   assert.ok(
     mutations.includes("stages.has(\"first\")") &&
@@ -102,12 +110,54 @@ test("professional feedback groups follow the editor review lifecycle without we
     "professional groups must preserve first-stage presence and require a second stage for two-report groups",
   );
   assert.ok(
-    mutations.includes('reports.length === 1') &&
-      mutations.includes('reviewStatus === "completed"'),
-    "single-report and final two-report lifecycle states must be validated explicitly",
-  );
-  assert.ok(
     mutations.includes("updated.count !== uniqueIds.length"),
     "professional feedback status updates must change every authorized requested report",
+  );
+});
+
+test("writer feedback sidebar badge counts only visible unread feedback events", () => {
+  const badges = source(
+    "src/features/navigation/sidebar-badges.ts",
+  );
+
+  assert.ok(
+    badges.includes("getUnreadWriterFeedbackBadgeCount"),
+    "writer feedback badge must use its visibility-aware counter",
+  );
+  assert.ok(
+    badges.includes('reportStatus: "completed"') &&
+      badges.includes('isProfessionalReview: false') &&
+      badges.includes('isProfessionalReview: true'),
+    "writer feedback badge must ignore draft or incomplete feedback rows",
+  );
+  assert.ok(
+    badges.includes('editorReviewStatus: "completed"'),
+    "professional feedback must not reach the sidebar badge before the review is writer-visible",
+  );
+  assert.ok(
+    badges.includes('distinct: ["workId"]'),
+    "a completed professional review group must count as one sidebar feedback event instead of one badge per editor report",
+  );
+});
+
+test("sidebar navigation stays client-side and writer shells skip publisher membership lookups", () => {
+  const navItem = source("src/components/ui/NavItem.tsx");
+  const appShell = source("src/components/layout/AppShell.tsx");
+
+  assert.ok(
+    navItem.includes('import Link from "next/link"') &&
+      navItem.includes("<Link"),
+    "internal sidebar navigation must use Next.js client navigation",
+  );
+  assertNotContains(
+    navItem,
+    '<a className="nav-item"',
+    "sidebar navigation",
+  );
+  assert.ok(
+    appShell.includes("shouldLoadPublisherPermissions") &&
+      appShell.includes('profile.role === "publisher"') &&
+      appShell.includes("Promise.all"),
+    "non-publisher app shells must skip the publisher membership query and independent shell lookups should run in parallel",
   );
 });

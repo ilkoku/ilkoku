@@ -45,9 +45,7 @@ export function NotificationListItem({
   const [read, setRead] = useState(initialRead);
   const [isPending, startTransition] = useTransition();
   const detailsId = `notification-details-${notificationId}`;
-  const readActionLabel = read
-    ? "Okunmadı olarak işaretle"
-    : "Okundu olarak işaretle";
+  const readActionLabel = read ? "Okunmadı olarak işaretle" : "Okundu olarak işaretle";
 
   function markReadIfNeeded() {
     if (read) return;

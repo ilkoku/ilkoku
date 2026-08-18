@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { feedbackContent } from "@/content";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
@@ -41,6 +41,7 @@ function result(
 function revalidateFeedback() {
   revalidatePath("/geri-bildirimler");
   revalidatePath("/yazar");
+  refresh();
 }
 
 export async function markFeedbackReadAction(

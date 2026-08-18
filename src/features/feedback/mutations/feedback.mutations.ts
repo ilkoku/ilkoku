@@ -2,6 +2,13 @@ import { prisma } from "@/lib/prisma";
 import {
   updateAuthorFeedbackStatus,
 } from "../repository/feedback.repository";
+
+const readableProfessionalReviewStatuses = [
+  "awaiting_second_editor",
+  "second_in_progress",
+  "completed",
+] as const;
+
 export async function markFeedbackRead(
   authorId: string,
   feedbackId: string,
@@ -60,9 +67,6 @@ export async function updateFeedbackGroupStatus(
       const reports =
         await transaction.editorFeedback.findMany({
           where: {
-            id: {
-              in: uniqueIds,
-            },
             assignmentId: {
               not: null,
             },
@@ -71,7 +75,9 @@ export async function updateFeedbackGroupStatus(
             reportStatus: "completed",
             workId,
             work: {
-              editorReviewStatus: "completed",
+              editorReviewStatus: {
+                in: [...readableProfessionalReviewStatuses],
+              },
             },
           },
           select: {
@@ -83,10 +89,22 @@ export async function updateFeedbackGroupStatus(
                 workId: true,
               },
             },
+            work: {
+              select: {
+                editorReviewStatus: true,
+              },
+            },
           },
         });
 
-      if (reports.length !== uniqueIds.length) {
+      if (
+        reports.length < 1 ||
+        reports.length > 2 ||
+        reports.length !== uniqueIds.length ||
+        reports.some(
+          (report) => !uniqueIds.includes(report.id),
+        )
+      ) {
         throw new Error(
           "PROFESSIONAL_REVIEW_GROUP_NOT_FOUND",
         );
@@ -110,7 +128,11 @@ export async function updateFeedbackGroupStatus(
             ),
         ) &&
         stages.size === reports.length &&
-        stages.has("first");
+        stages.has("first") &&
+        (
+          reports.length === 1 ||
+          stages.has("second")
+        );
 
       if (!assignmentsAreValid) {
         throw new Error(
@@ -118,7 +140,27 @@ export async function updateFeedbackGroupStatus(
         );
       }
 
+      const reviewStatus =
+        reports[0]?.work.editorReviewStatus;
+
+      const lifecycleIsValid =
+        reports.length === 1
+          ? reviewStatus === "awaiting_second_editor" ||
+            reviewStatus === "second_in_progress" ||
+            reviewStatus === "completed"
+          : reviewStatus === "completed";
+
+      if (!lifecycleIsValid) {
+        throw new Error(
+          "INVALID_PROFESSIONAL_REVIEW_LIFECYCLE",
+        );
+      }
+
       const now = new Date();
+      const allowedStatuses =
+        reports.length === 1
+          ? [...readableProfessionalReviewStatuses]
+          : ["completed" as const];
 
       const updated =
         await transaction.editorFeedback.updateMany({
@@ -134,7 +176,9 @@ export async function updateFeedbackGroupStatus(
             reportStatus: "completed",
             workId,
             work: {
-              editorReviewStatus: "completed",
+              editorReviewStatus: {
+                in: allowedStatuses,
+              },
             },
           },
           data:

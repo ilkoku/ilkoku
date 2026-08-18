@@ -1,18 +1,26 @@
 export type WriterThemeKey =
   | "pageCanvas"
   | "sidebar"
+  | "brandSurface"
   | "mainSurface"
+  | "headerSurface"
   | "cardSurface"
+  | "coverSurface"
   | "controlSurface"
   | "border"
   | "text"
   | "textMuted"
   | "heading"
+  | "navText"
+  | "navMuted"
   | "activeNav"
+  | "activeNavSurface"
   | "hover"
   | "primary"
   | "primaryHover"
+  | "buttonText"
   | "accent"
+  | "coverText"
   | "progressTrack";
 
 export type WriterTheme = Record<WriterThemeKey, string>;
@@ -20,18 +28,26 @@ export type WriterTheme = Record<WriterThemeKey, string>;
 export const defaultWriterTheme: WriterTheme = {
   pageCanvas: "#F8F6FF",
   sidebar: "#F8F6FF",
+  brandSurface: "#F8F6FF",
   mainSurface: "#F8F6FF",
+  headerSurface: "#F8F6FF",
   cardSurface: "#FFFEFB",
+  coverSurface: "#FFFEFB",
   controlSurface: "#F8F6FF",
   border: "#D9D0FA",
   text: "#292620",
   textMuted: "#746F66",
   heading: "#292620",
+  navText: "#4D4942",
+  navMuted: "#9B958B",
   activeNav: "#6847E8",
+  activeNavSurface: "#EDE9FF",
   hover: "#EDE9FF",
   primary: "#6847E8",
   primaryHover: "#4B2DBF",
+  buttonText: "#FFFFFF",
   accent: "#8065F2",
+  coverText: "#292620",
   progressTrack: "#ECE7DF",
 };
 
@@ -142,20 +158,28 @@ export const writerThemeLayers: Array<{
   description: string;
 }> = [
   { key: "pageCanvas", label: "1. Genel sayfa zemini", description: "En dip katman; tüm çalışma alanının ana tuvali." },
-  { key: "sidebar", label: "2. Sol menü zemini", description: "Logo ve yazar menüsünün arka planı." },
-  { key: "mainSurface", label: "3. Ana içerik zemini", description: "Sidebar dışındaki ana çalışma alanı." },
-  { key: "cardSurface", label: "4. Kart ve panel yüzeyi", description: "Kartlar, hero alanları ve açılır paneller." },
-  { key: "controlSurface", label: "5. Form ve araç yüzeyi", description: "Input, select, sekme, toolbar ve ikincil kontroller." },
-  { key: "border", label: "6. Kenarlıklar", description: "Kart, menü ve kontrol ayırıcılarının rengi." },
-  { key: "text", label: "7. Ana metin", description: "Normal içerik ve menü metinleri." },
-  { key: "textMuted", label: "8. İkincil metin", description: "Açıklama, tarih ve yardımcı metinler." },
-  { key: "heading", label: "9. Başlıklar", description: "Sayfa ve kart başlıklarının ana rengi." },
-  { key: "activeNav", label: "10. Aktif menü", description: "Seçili sol menü öğesi ve göstergesi." },
-  { key: "hover", label: "11. Hover yüzeyi", description: "Fareyle üzerine gelinen açık vurgu yüzeyi." },
-  { key: "primary", label: "12. Ana buton / vurgu", description: "Birincil aksiyonlar ve ana vurgu rengi." },
-  { key: "primaryHover", label: "13. Buton hover", description: "Birincil aksiyonların hover / güçlü tonu." },
-  { key: "accent", label: "14. Accent", description: "Badge, progress ve ikincil mor vurgu." },
-  { key: "progressTrack", label: "15. Progress zemini", description: "İlerleme çubuklarının en alttaki ray rengi." },
+  { key: "sidebar", label: "2. Sol menü zemini", description: "Yazar menüsünün ana arka planı." },
+  { key: "brandSurface", label: "3. Logo alanı zemini", description: "Sol menüde mevcut İlkOku logosunu çevreleyen alan." },
+  { key: "mainSurface", label: "4. Ana içerik zemini", description: "Sidebar dışındaki ana çalışma alanı." },
+  { key: "headerSurface", label: "5. Üst bar zemini", description: "Yazar çalışma alanının üst başlık / kullanıcı barı." },
+  { key: "cardSurface", label: "6. Kart ve panel yüzeyi", description: "Kartlar, hero alanları ve açılır paneller." },
+  { key: "coverSurface", label: "7. Eser kapağı zemini", description: "Eser kartlarında ve çalışma alanında görünen kapak yüzeyi." },
+  { key: "controlSurface", label: "8. Form ve araç yüzeyi", description: "Input, select, sekme, toolbar ve ikincil kontroller." },
+  { key: "border", label: "9. Kenarlıklar", description: "Kart, menü ve kontrol ayırıcılarının rengi." },
+  { key: "text", label: "10. Ana metin", description: "Normal içerik metinlerinin ana rengi." },
+  { key: "textMuted", label: "11. İkincil metin", description: "Açıklama, tarih ve yardımcı metinler." },
+  { key: "heading", label: "12. Başlıklar", description: "Sayfa ve kart başlıklarının ana rengi." },
+  { key: "navText", label: "13. Menü yazıları", description: "Aktif olmayan sol menü öğelerinin yazı rengi." },
+  { key: "navMuted", label: "14. Menü yardımcı yazıları", description: "Menü bölüm başlıkları ve sürüm gibi ikincil metinler." },
+  { key: "activeNav", label: "15. Aktif menü yazısı / işareti", description: "Seçili sol menü öğesinin yazısı ve göstergesi." },
+  { key: "activeNavSurface", label: "16. Aktif menü zemini", description: "Seçili sol menü öğesinin arka plan rengi." },
+  { key: "hover", label: "17. Hover yüzeyi", description: "Fareyle üzerine gelinen açık vurgu yüzeyi." },
+  { key: "primary", label: "18. Ana buton / vurgu", description: "Birincil aksiyonlar ve ana vurgu rengi." },
+  { key: "primaryHover", label: "19. Buton hover", description: "Birincil aksiyonların hover / güçlü tonu." },
+  { key: "buttonText", label: "20. Ana buton yazısı", description: "Birincil butonların üzerindeki metin rengi." },
+  { key: "accent", label: "21. Accent", description: "Badge, progress ve ikincil vurgu rengi." },
+  { key: "coverText", label: "22. Eser kapağı yazısı", description: "Eser kapağı üzerindeki başlık ve metinlerin ana rengi." },
+  { key: "progressTrack", label: "23. Progress zemini", description: "İlerleme çubuklarının en alttaki ray rengi." },
 ];
 
 export function writerThemeStorageKey(userId: string) {

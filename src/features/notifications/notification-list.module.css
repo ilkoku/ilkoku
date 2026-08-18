@@ -1,0 +1,142 @@
+.notificationList {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.notificationItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-small);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.notificationItem[data-read="false"] {
+  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  box-shadow:
+    inset 3px 0 0 color-mix(in srgb, var(--color-primary) 72%, transparent),
+    var(--shadow-small);
+}
+
+.notificationContent {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.notificationItem[data-read="true"] .notificationContent {
+  opacity: 0.72;
+}
+
+.notificationTitle {
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 720;
+}
+
+.notificationItem[data-read="false"] .notificationTitle {
+  font-weight: 800;
+}
+
+.notificationMessage {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.notificationTime {
+  color: var(--color-text-secondary);
+  font-size: 0.6875rem;
+}
+
+.relatedAction {
+  width: fit-content;
+  margin-top: var(--space-2);
+}
+
+.relatedAction :global(.button) {
+  min-height: 2.6rem;
+  padding-inline: 0.9rem;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 34%, var(--color-border));
+  border-radius: var(--radius-medium);
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.relatedAction :global(.button):hover,
+.relatedAction :global(.button):focus-visible {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 58%, var(--color-border));
+}
+
+.readStateForm {
+  align-self: center;
+}
+
+.readStateButton {
+  display: inline-grid;
+  width: 2.85rem;
+  height: 2.85rem;
+  place-items: center;
+  padding: 0;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 38%, var(--color-border));
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.readStateButton:hover {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 62%, var(--color-border));
+  transform: translateY(-1px);
+}
+
+.readStateButton:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.readStateButton[data-read="true"] {
+  color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--color-text-secondary) 6%, transparent);
+  border-color: var(--color-border);
+}
+
+.readStateButton svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+@media (max-width: 47.99rem) {
+  .notificationItem {
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .relatedAction {
+    width: 100%;
+  }
+
+  .relatedAction :global(.button) {
+    width: 100%;
+  }
+}

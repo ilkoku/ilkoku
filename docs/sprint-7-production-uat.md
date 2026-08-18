@@ -19,7 +19,7 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 - Do not create artificial admin/editor/publisher privileges only to satisfy UAT.
 - Every write must remain on the canonical server action/state-machine for that role.
 - A failed human step is a release blocker only for the affected critical flow; record the symptom and open a small corrective PR.
-- Do not mark the sprint closed while any critical row remains `HUMAN_PENDING` or `BLOCKED`.
+- Do not mark **Final Release UAT / release readiness** complete while any critical row remains `HUMAN_PENDING` or `BLOCKED`. Sprint 8 technical development may continue independently.
 
 ## Reader
 
@@ -97,7 +97,7 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 
 ## Closure record
 
-Sprint 7.3 remains **OPEN** while any critical row above is `HUMAN_PENDING` or `BLOCKED`.
+Sprint 7 **technical scope is closed** as of 2026-08-19. The unfinished authenticated rows above are intentionally retained as `HUMAN_PENDING` and transferred to **Final Release UAT** rather than being marked passed without evidence. They remain a release-readiness gate, not a blocker for Sprint 8 `/icerik` development.
 
 Current automated baseline at creation of this matrix:
 

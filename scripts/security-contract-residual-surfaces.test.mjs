@@ -115,6 +115,23 @@ test("professional feedback mutations stay limited to reports already delivered 
   );
 });
 
+test("professional feedback validator accepts the same one-or-two report group shape as the mutation", () => {
+  const validators = source(
+    "src/features/feedback/validators/feedback.validators.ts",
+  );
+
+  assertNotContains(
+    validators,
+    ".length(\n      2,",
+    "professional feedback group validator",
+  );
+  assert.ok(
+    validators.includes(".min(\n      1,") &&
+      validators.includes(".max(\n      2,"),
+    "professional feedback group validator must accept one or two report ids",
+  );
+});
+
 test("writer feedback sidebar badge counts only visible unread feedback events", () => {
   const badges = source(
     "src/features/navigation/sidebar-badges.ts",

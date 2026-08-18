@@ -35,20 +35,106 @@ export const defaultWriterTheme: WriterTheme = {
   progressTrack: "#ECE7DF",
 };
 
-export const writerThemePalette = [
-  "#F8F6FF",
-  "#EDE9FF",
-  "#FFFFFF",
-  "#FFFEFB",
-  "#ECE7DF",
-  "#D9D0FA",
-  "#746F66",
-  "#292620",
-  "#6847E8",
-  "#8065F2",
-  "#4B2DBF",
-  "#5B38D1",
+export const writerThemePaletteGroups = [
+  {
+    label: "İlkOku ve nötr",
+    colors: [
+      "#F8F6FF",
+      "#EDE9FF",
+      "#FFFFFF",
+      "#FFFEFB",
+      "#ECE7DF",
+      "#D9D0FA",
+      "#D1D5DB",
+      "#9CA3AF",
+      "#746F66",
+      "#4D4942",
+      "#292620",
+      "#111827",
+      "#000000",
+    ],
+  },
+  {
+    label: "Mor ve lila",
+    colors: [
+      "#F3E8FF",
+      "#E9D5FF",
+      "#D8B4FE",
+      "#C084FC",
+      "#A855F7",
+      "#9333EA",
+      "#8065F2",
+      "#6847E8",
+      "#5B38D1",
+      "#4B2DBF",
+      "#3B1D9A",
+    ],
+  },
+  {
+    label: "Mavi",
+    colors: [
+      "#DBEAFE",
+      "#BFDBFE",
+      "#93C5FD",
+      "#60A5FA",
+      "#3B82F6",
+      "#2563EB",
+      "#1D4ED8",
+      "#1E3A8A",
+    ],
+  },
+  {
+    label: "Turkuaz ve petrol",
+    colors: [
+      "#CFFAFE",
+      "#67E8F9",
+      "#06B6D4",
+      "#0891B2",
+      "#CCFBF1",
+      "#5EEAD4",
+      "#14B8A6",
+      "#0F766E",
+    ],
+  },
+  {
+    label: "Yeşil",
+    colors: [
+      "#DCFCE7",
+      "#86EFAC",
+      "#4ADE80",
+      "#22C55E",
+      "#16A34A",
+      "#166534",
+    ],
+  },
+  {
+    label: "Sarı ve turuncu",
+    colors: [
+      "#FEF9C3",
+      "#FDE047",
+      "#EAB308",
+      "#FFF7ED",
+      "#FDBA74",
+      "#F97316",
+      "#C2410C",
+    ],
+  },
+  {
+    label: "Kırmızı ve pembe",
+    colors: [
+      "#FEE2E2",
+      "#FCA5A5",
+      "#EF4444",
+      "#B91C1C",
+      "#FCE7F3",
+      "#F9A8D4",
+      "#EC4899",
+      "#BE185D",
+    ],
+  },
 ] as const;
+
+export const writerThemePalette = writerThemePaletteGroups.flatMap((group) => [...group.colors]);
 
 export const writerThemeLayers: Array<{
   key: WriterThemeKey;
@@ -78,7 +164,17 @@ export function writerThemeStorageKey(userId: string) {
 
 export function normalizeHex(value: string) {
   const trimmed = value.trim().toUpperCase();
-  if (/^#[0-9A-F]{6}$/.test(trimmed)) return trimmed;
+  const withHash = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+
+  if (/^#[0-9A-F]{6}$/.test(withHash)) return withHash;
+  if (/^#[0-9A-F]{3}$/.test(withHash)) {
+    return `#${withHash
+      .slice(1)
+      .split("")
+      .map((part) => `${part}${part}`)
+      .join("")}`;
+  }
+
   return null;
 }
 

@@ -19,6 +19,11 @@
   position: relative;
 }
 
+/* The Eserlerim hero description styles spans; keep the primary button label on its own theme color. */
+.app-shell[data-role="writer"] .works-workspace__hero .button--primary .button__label {
+  color: inherit !important;
+}
+
 @media (max-width: 47.99rem) {
   .app-shell[data-role="writer"] .dashboard-hero,
   .app-shell[data-role="writer"] .works-workspace__hero,

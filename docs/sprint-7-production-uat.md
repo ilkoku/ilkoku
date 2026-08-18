@@ -36,12 +36,12 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 | Flow | Production path | Expected result | Automated | Human |
 | --- | --- | --- | --- | --- |
 | Writer workspace | `/yazar` | Writer lands in writer shell and sees writer-only navigation | AUTOMATED_PASS | HUMAN_PASS |
-| Create/edit work | `/eserlerim` | Work CRUD remains writer-owned; hidden publish bypass is unavailable | AUTOMATED_PASS | HUMAN_PENDING |
-| Chapter writing | `/yazmaya-devam` | Chapter editing/autosave surface opens for owned work | AUTOMATED_PASS | HUMAN_PENDING |
-| Canonical publish | writer publish action | Publication validates chapter content and updates Chapter + Work + audit atomically | AUTOMATED_PASS | HUMAN_PENDING |
-| Writer notifications | `/bildirimler` | Open/read/unread/related-target behavior works from writer account | AUTOMATED_PASS | HUMAN_PENDING |
-| Account settings | `/hesabim` | Sidebar sections, personal data, writing genres, notification preferences and security are usable | AUTOMATED_PASS | HUMAN_PENDING |
-| Publisher area | `/yayinevleri` | No new direct legacy application CTA exists; historical processes remain readable and pending/reviewing rows can still be withdrawn | AUTOMATED_PASS | HUMAN_PENDING |
+| Create/edit work | `/eserlerim` | Work CRUD remains writer-owned; hidden publish bypass is unavailable | AUTOMATED_PASS | HUMAN_PASS |
+| Chapter writing | `/yazmaya-devam` | Chapter editing/autosave surface opens for owned work | AUTOMATED_PASS | HUMAN_PASS |
+| Canonical publish | writer publish action | Publication validates chapter content and updates Chapter + Work + audit atomically | AUTOMATED_PASS | HUMAN_PASS |
+| Writer notifications | `/bildirimler` | Open/read/unread/related-target behavior works from writer account | AUTOMATED_PASS | HUMAN_PASS |
+| Account settings | `/hesabim` | Sidebar sections, personal data, writing genres, notification preferences and security are usable | AUTOMATED_PASS | HUMAN_PASS |
+| Publisher area | `/yayinevleri` | No new direct legacy application CTA exists; historical processes remain readable and pending/reviewing rows can still be withdrawn | AUTOMATED_PASS | HUMAN_PASS |
 
 ## Editor
 
@@ -87,6 +87,13 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 ## Human acceptance evidence
 
 - 2026-08-18 — Writer workspace `/yazar`: a real production writer account reached the writer shell and displayed writer-only navigation in the live browser acceptance session. No credential, cookie, session token or screenshot is stored in the repository.
+- 2026-08-19 — Writer `/eserlerim`: owned-work listing/editing was exercised in production and the writer confirmed the flow passed without exposing a direct publish-status bypass.
+- 2026-08-19 — Writer `/yazmaya-devam`: owned chapter editing/autosave was exercised in production and accepted.
+- 2026-08-19 — Writer canonical publish action: a test/draft work was published through the normal publish flow; the user confirmed the public work/chapter remained available and content was preserved.
+- 2026-08-19 — Writer `/bildirimler`: open/read/unread/related-record behavior was exercised and accepted in production.
+- 2026-08-19 — Writer `/hesabim`: account navigation, personal data, writing genres, notification preferences and security sections were exercised and accepted.
+- 2026-08-19 — Writer `/yayinevleri`: discovery/process tracking, filters and retirement of the new direct legacy application CTA were accepted in production.
+- 2026-08-19 — Writer `/geri-bildirimler` corrective UAT: after PRs #258 and #259, a visible single professional report was successfully marked read in production; the unread card/status/count cleared as expected. This is supporting regression evidence and is not an additional closure-matrix row.
 
 ## Closure record
 

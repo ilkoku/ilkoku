@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 
 const ALLOWED_ADVISORIES = new Map([
   [
-    "GHSA-ggr8-5vv4-36mx",
+    "GHSA-GGR8-5VV4-36MX",
     {
       packageName: "deepmerge-ts",
       expiresAt: "2026-08-25T23:59:59Z",

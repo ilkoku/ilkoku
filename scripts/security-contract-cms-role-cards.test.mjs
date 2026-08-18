@@ -1,0 +1,79 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import test from "node:test";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
+
+function assertContains(text, fragment, label) {
+  assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
+}
+
+function assertNotContains(text, fragment, label) {
+  assert.equal(text.includes(fragment), false, `${label} must not contain ${JSON.stringify(fragment)}`);
+}
+
+test("role card CMS keeps role identity and registration targets fixed", () => {
+  const contract = source("src/lib/cms-role-cards.ts");
+  const page = source("src/app/icerik/rol-kartlari/page.tsx");
+
+  for (const [role, href] of [
+    ["writer", "/kayit?rol=writer"],
+    ["reader", "/kayit?rol=reader"],
+    ["editor", "/kayit?rol=editor"],
+    ["publisher", "/kayit?rol=publisher"],
+  ]) {
+    assertContains(contract, `${role}: { icon: "${role}"`, `${role} locked icon`);
+    assertContains(contract, `fixedHref: "${href}"`, `${role} locked registration target`);
+  }
+
+  assertContains(page, "cmsRoleMeta[role]", "role card page locked metadata display");
+  assertNotContains(page, "CtaHref", "role card page editable CTA target");
+});
+
+test("role card draft and publish flow preserves CMS permission and locale boundaries", () => {
+  const actions = source("src/features/cms/role-card-actions.ts");
+  const integrity = source("src/lib/cms-live-payload-integrity.ts");
+
+  assertContains(actions, 'requireCmsManager("/icerik/rol-kartlari")', "role card draft manager boundary");
+  assertContains(actions, 'requireCmsPublisher("/icerik/rol-kartlari")', "role card publish boundary");
+  assertContains(actions, "isCmsLocaleEnabled(locale)", "role card locale publish lock");
+  assertContains(actions, "roleCardsDraftKey(locale)", "role card staged draft key");
+  assertContains(actions, "deleteCmsDraft(draftKey)", "role card draft cleanup after publish");
+  assertContains(integrity, 'contentKey.startsWith("role-cards:")', "role card staged payload integrity boundary");
+  assertContains(integrity, "parseCmsRoleCardsPayloadStrict", "role card strict payload parser");
+});
+
+test("role card payload enforces complete cards and unique ordering", () => {
+  const contract = source("src/lib/cms-role-cards.ts");
+
+  assertContains(contract, '["Title", "Description", "CtaLabel", "Highlight1", "Highlight2"]', "role card required fields");
+  assertContains(contract, 'visible !== "true" && visible !== "false"', "role card visibility enum");
+  assertContains(contract, '!/^[1-4]$/.test(positionRaw)', "role card position range");
+  assertContains(contract, "positions.has(position)", "role card duplicate position rejection");
+  assertContains(contract, "positions.size !== cmsRoleKeys.length", "role card complete ordering requirement");
+});
+
+test("role cards are a dedicated CMS module with fail-safe public delivery", () => {
+  const modules = source("src/lib/cms-modules.ts");
+  const api = source("src/app/api/site-content/role-cards/route.ts");
+  const hydrator = source("src/components/content/PublicCmsHydrator.tsx");
+  const english = source("src/app/en/page.tsx");
+  const queue = source("src/app/icerik/yayin-kuyrugu/page.tsx");
+
+  assertContains(modules, 'href: "/icerik/rol-kartlari"', "role card CMS navigation");
+  assertContains(api, "getPublishedRoleCardsState(locale)", "role card public published-state read");
+  assertContains(api, 'status: 503', "role card corrupt/unavailable fail-safe response");
+  assertContains(hydrator, 'fetch("/api/site-content/role-cards?dil=tr"', "TR public role card hydration");
+  assertContains(hydrator, "if (cancelled || !payload?.published", "TR role card fallback boundary");
+  assertContains(hydrator, "element.hidden = !card.visible", "TR role card visibility control");
+  assertContains(hydrator, 'querySelector<HTMLElement>(".landing-role__number")', "TR role card order number synchronization");
+  assertContains(english, 'getPublishedRoleCardsState("en")', "EN published role card read");
+  assertContains(english, 'roleCardsDefaults("en")', "EN safe role card fallback");
+  assertContains(queue, 'type: "role-cards"', "role card central publish queue type");
+  assertContains(queue, "parseCmsRoleCardsPayloadStrict(row.valueJson)", "role card queue strict validation");
+  assertContains(queue, "publishRoleCardsAction", "role card queue canonical publish action");
+  assertContains(queue, 'editHref: `/icerik/rol-kartlari?dil=${locale}`', "role card queue editor deep link");
+});

@@ -159,3 +159,46 @@ test("legacy security facade cannot retain a second mutable submission implement
   assert.ok(!facade.includes("prisma.$transaction"), "compatibility facade must not mutate the database");
   assert.ok(!facade.includes("FROM PublisherSubmission"), "compatibility facade must not own row-lock logic");
 });
+
+test("writer-facing legacy submission creation stays retired while historical lifecycle remains available", () => {
+  const writerActions = source("src/features/publishers/actions.ts");
+  const workspace = source("src/features/publishers/components/PublisherWorkspace.tsx");
+  const queries = source("src/features/publishers/queries.ts");
+  const types = source("src/features/publishers/types.ts");
+  const facade = source("src/features/publisher-submissions/legacy-security.ts");
+
+  assertContains(
+    writerActions,
+    "Yeni doğrudan yayınevi başvuruları kapatıldı",
+    "stale writer create action fail-closed response",
+  );
+  assert.ok(
+    !writerActions.includes("createLegacyPublisherSubmission"),
+    "writer actions must not reach legacy submission creation",
+  );
+  assert.ok(
+    !writerActions.includes("createSubmission("),
+    "writer actions must not delegate to the retired creation mutation",
+  );
+  assertContains(
+    writerActions,
+    "withdrawLegacyPublisherSubmission",
+    "historical writer withdrawal path",
+  );
+  assert.ok(
+    !facade.includes("createLegacyPublisherSubmission"),
+    "legacy compatibility facade must not expose new submission creation",
+  );
+  assert.ok(
+    !workspace.includes("PublisherDialog"),
+    "writer publisher workspace must not expose the retired application dialog",
+  );
+  assert.ok(
+    !queries.includes("getEligibleWorks"),
+    "writer publisher workspace must not load works solely for retired applications",
+  );
+  assert.ok(
+    !types.includes("SubmissionWork"),
+    "retired application-only work type must stay removed",
+  );
+});

@@ -87,7 +87,7 @@ export function WriterDashboard({
   ];
 
   return (
-    <div className="dashboard">
+    <div className="dashboard dashboard--writer">
       <div className="dashboard__main">
         <header className="dashboard-hero">
           <div className="dashboard-hero__heading">

@@ -50,6 +50,10 @@ test("Page Colors exposes broad presets plus unrestricted picker, HEX/RGB/HSL an
   ]) {
     includes(theme, `label: "${group}"`, `writer palette group ${group}`);
   }
+  assert.ok(
+    (theme.match(/"#[0-9A-F]{6}"/g) ?? []).length >= 75,
+    "writer theme must keep a broad preset/default color inventory",
+  );
   includes(editor, 'type="color"', "unrestricted custom color picker");
   includes(editor, "HEX değeri", "HEX field");
   includes(editor, "RGB değeri", "RGB field");

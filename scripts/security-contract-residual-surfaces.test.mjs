@@ -69,3 +69,32 @@ test("CMS global search stays read-only and excludes sensitive operational names
   assertNotContains(searchPage, "$executeRaw", "CMS global search");
   assertNotContains(searchPage, "$transaction", "CMS global search");
 });
+
+test("professional feedback groups support one completed first-editor report without weakening ownership checks", () => {
+  const mutations = source(
+    "src/features/feedback/mutations/feedback.mutations.ts",
+  );
+
+  assertNotContains(
+    mutations,
+    "uniqueIds.length !== 2",
+    "professional feedback group mutation",
+  );
+  assert.ok(
+    mutations.includes("uniqueIds.length < 1") &&
+      mutations.includes("uniqueIds.length > 2"),
+    "professional feedback groups must accept one or two unique report ids only",
+  );
+  assert.ok(
+    mutations.includes("reports.length !== uniqueIds.length"),
+    "every requested professional report id must resolve inside the authorized group",
+  );
+  assert.ok(
+    mutations.includes("stages.has(\"first\")"),
+    "a single professional report group must still be the first-editor report",
+  );
+  assert.ok(
+    mutations.includes("updated.count !== uniqueIds.length"),
+    "professional feedback status updates must change every authorized requested report",
+  );
+});

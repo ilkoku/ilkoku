@@ -46,7 +46,10 @@ export async function updateFeedbackGroupStatus(
 ) {
   const uniqueIds = [...new Set(feedbackIds)];
 
-  if (uniqueIds.length !== 2) {
+  if (
+    uniqueIds.length < 1 ||
+    uniqueIds.length > 2
+  ) {
     throw new Error(
       "INVALID_PROFESSIONAL_REVIEW_GROUP",
     );
@@ -83,10 +86,7 @@ export async function updateFeedbackGroupStatus(
           },
         });
 
-      if (
-        reports.length < 1 ||
-        reports.length > 2
-      ) {
+      if (reports.length !== uniqueIds.length) {
         throw new Error(
           "PROFESSIONAL_REVIEW_GROUP_NOT_FOUND",
         );
@@ -149,7 +149,7 @@ export async function updateFeedbackGroupStatus(
                 },
         });
 
-      if (updated.count !== 2) {
+      if (updated.count !== uniqueIds.length) {
         throw new Error(
           "PROFESSIONAL_REVIEW_GROUP_CHANGED",
         );

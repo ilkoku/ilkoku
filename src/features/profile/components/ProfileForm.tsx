@@ -118,7 +118,11 @@ export function ProfileForm({ data }: ProfileFormProps) {
           />
         </section>
 
-        <section className="profile-form__section">
+        <section
+          className="profile-form__section"
+          id="yazdiginiz-turler"
+          style={{ scrollMarginTop: "6.25rem" }}
+        >
           <div className="profile-section-title profile-section-title--genres">
             <div>
               <span>02</span>

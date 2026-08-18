@@ -17,7 +17,7 @@ function assertNotContains(text, fragment, label) {
 
 test("role card CMS keeps role identity and registration targets fixed", () => {
   const contract = source("src/lib/cms-role-cards.ts");
-  const page = source("src/app/icerik/rol-kartlari/page.tsx");
+  const workbench = source("src/components/content/RoleCardsWorkbench.tsx");
 
   for (const [role, href] of [
     ["writer", "/kayit?rol=writer"],
@@ -29,8 +29,32 @@ test("role card CMS keeps role identity and registration targets fixed", () => {
     assertContains(contract, `fixedHref: "${href}"`, `${role} locked registration target`);
   }
 
-  assertContains(page, "cmsRoleMeta[role]", "role card page locked metadata display");
-  assertNotContains(page, "CtaHref", "role card page editable CTA target");
+  assertContains(workbench, "cmsRoleMeta[selected.key].fixedHref", "role card locked target display");
+  assertNotContains(workbench, "CtaHref", "role card editable CTA target");
+  assertNotContains(workbench, 'name={`${selected.key}Href`}', "role card editable registration target field");
+});
+
+test("role card workbench hides technical ordering mechanics from content managers", () => {
+  const workbench = source("src/components/content/RoleCardsWorkbench.tsx");
+
+  assertContains(workbench, "function moveSelected(direction: -1 | 1)", "role card direct reorder control");
+  assertContains(workbench, "position: index + 1", "role card automatic normalized positions");
+  assertContains(workbench, "↑ Yukarı", "role card move-up control");
+  assertContains(workbench, "↓ Aşağı", "role card move-down control");
+  assertNotContains(workbench, '<select name={`${role}Position`}', "legacy manual position selector");
+  assertNotContains(workbench, "[1, 2, 3, 4].map((position)", "legacy manual ordering options");
+});
+
+test("role card workbench provides focused editing, live preview and safe publish handoff", () => {
+  const workbench = source("src/components/content/RoleCardsWorkbench.tsx");
+
+  assertContains(workbench, "selectedKey", "single selected role editor");
+  assertContains(workbench, "Anlık önizleme", "unsaved live preview");
+  assertContains(workbench, "Kaydedilmemiş değişiklik var", "dirty state visibility");
+  assertContains(workbench, "hasDraft && !dirty", "publish requires saved draft without local changes");
+  assertContains(workbench, "Taslağı Kaydet", "explicit draft save");
+  assertContains(workbench, "Publicte gösteriliyor", "human visibility control");
+  assertContains(workbench, "Kaydedilmiş taslağı tam sayfada gör", "saved preview deep link");
 });
 
 test("role card draft and publish flow preserves CMS permission and locale boundaries", () => {

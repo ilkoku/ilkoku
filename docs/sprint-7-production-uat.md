@@ -35,7 +35,7 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 
 | Flow | Production path | Expected result | Automated | Human |
 | --- | --- | --- | --- | --- |
-| Writer workspace | `/yazar` | Writer lands in writer shell and sees writer-only navigation | AUTOMATED_PASS | HUMAN_PENDING |
+| Writer workspace | `/yazar` | Writer lands in writer shell and sees writer-only navigation | AUTOMATED_PASS | HUMAN_PASS |
 | Create/edit work | `/eserlerim` | Work CRUD remains writer-owned; hidden publish bypass is unavailable | AUTOMATED_PASS | HUMAN_PENDING |
 | Chapter writing | `/yazmaya-devam` | Chapter editing/autosave surface opens for owned work | AUTOMATED_PASS | HUMAN_PENDING |
 | Canonical publish | writer publish action | Publication validates chapter content and updates Chapter + Work + audit atomically | AUTOMATED_PASS | HUMAN_PENDING |
@@ -83,6 +83,10 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 | Editor cannot acquire publisher/admin authority | Access denied | AUTOMATED_PASS | HUMAN_PENDING |
 | Publisher member without a permission cannot use its write action | Server-side denial; hidden UI is not the authority boundary | AUTOMATED_PASS | HUMAN_PENDING |
 | Admin role preview cannot mutate as previewed role | Preview remains read-only | AUTOMATED_PASS | HUMAN_PENDING |
+
+## Human acceptance evidence
+
+- 2026-08-18 — Writer workspace `/yazar`: a real production writer account reached the writer shell and displayed writer-only navigation. Recorded from the live browser acceptance session; no credential, session token or screenshot is stored in the repository.
 
 ## Closure record
 

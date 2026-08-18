@@ -36,9 +36,9 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 | Flow | Production path | Expected result | Automated | Human |
 | --- | --- | --- | --- | --- |
 | Writer workspace | `/yazar` | Writer lands in writer shell and sees writer-only navigation | AUTOMATED_PASS | HUMAN_PASS |
-| Create/edit work | `/eserlerim` | Work CRUD remains writer-owned; hidden publish bypass is unavailable | AUTOMATED_PASS | HUMAN_PENDING |
-| Chapter writing | `/yazmaya-devam` | Chapter editing/autosave surface opens for owned work | AUTOMATED_PASS | HUMAN_PENDING |
-| Canonical publish | writer publish action | Publication validates chapter content and updates Chapter + Work + audit atomically | AUTOMATED_PASS | HUMAN_PENDING |
+| Create/edit work | `/eserlerim` | Work CRUD remains writer-owned; hidden publish bypass is unavailable | AUTOMATED_PASS | HUMAN_PASS |
+| Chapter writing | `/yazmaya-devam` | Chapter editing/autosave surface opens for owned work | AUTOMATED_PASS | HUMAN_PASS |
+| Canonical publish | writer publish action | Publication validates chapter content and updates Chapter + Work + audit atomically | AUTOMATED_PASS | HUMAN_PASS |
 | Writer notifications | `/bildirimler` | Open/read/unread/related-target behavior works from writer account | AUTOMATED_PASS | HUMAN_PENDING |
 | Account settings | `/hesabim` | Sidebar sections, personal data, writing genres, notification preferences and security are usable | AUTOMATED_PASS | HUMAN_PENDING |
 | Publisher area | `/yayinevleri` | No new direct legacy application CTA exists; historical processes remain readable and pending/reviewing rows can still be withdrawn | AUTOMATED_PASS | HUMAN_PENDING |
@@ -87,6 +87,9 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 ## Human acceptance evidence
 
 - 2026-08-18 — Writer workspace `/yazar`: a real production writer account reached the writer shell and displayed writer-only navigation in the live browser acceptance session. No credential, cookie, session token or screenshot is stored in the repository.
+- 2026-08-18 — Writer create/edit `/eserlerim`: the live writer account opened the works surface and completed the create/edit acceptance flow without exposing a direct publish-status bypass.
+- 2026-08-18 — Chapter writing `/yazmaya-devam`: the live writer account opened an owned chapter editing surface and completed the writing/save acceptance flow without data-loss symptoms.
+- 2026-08-18 — Canonical publish: the live writer account published through the normal writer publish flow; the published work and chapter were reachable afterward and content remained intact.
 
 ## Closure record
 

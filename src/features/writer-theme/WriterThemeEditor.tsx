@@ -14,7 +14,6 @@ import {
   defaultWriterTheme,
   normalizeHex,
   writerThemeLayers,
-  writerThemePaletteGroups,
   type WriterTheme,
   type WriterThemeKey,
 } from "./theme";
@@ -187,10 +186,8 @@ export function WriterThemeEditor({ userId }: { userId: string }) {
         <p className="dashboard-hero__eyebrow">Kişisel çalışma alanın</p>
         <h1>Sayfa Renkleri</h1>
         <p>
-          Renkleri en dip sayfa zemininden en üst vurgu katmanına doğru düzenle.
-          Hazır kartelalar yalnızca hızlı seçim içindir; renk seçimin bunlarla sınırlı değildir.
-          Tam renk seçiciyi açabilir veya istediğin HEX, RGB ya da HSL değerini girebilirsin.
-          Değişiklikleri bu ekranda anında görürsün.
+          Her alanın yanındaki renk dairesine dokun ve istediğin rengi seç.
+          Hazır renk sınırı yok; tarayıcının tam renk seçicisi açılır ve değişiklikleri anında görürsün.
         </p>
       </section>
 
@@ -198,113 +195,89 @@ export function WriterThemeEditor({ userId }: { userId: string }) {
         {writerThemeLayers.map((layer) => (
           <section className="writer-theme-editor__layer" key={layer.key}>
             <div className="writer-theme-editor__layer-header">
-              <div>
+              <div className="writer-theme-editor__layer-copy">
                 <h2>{layer.label}</h2>
                 <p>{layer.description}</p>
               </div>
-              <span
-                aria-label={`Seçili renk ${theme[layer.key]}`}
-                className="writer-theme-editor__selected"
-                style={{ background: theme[layer.key] }}
-              />
-            </div>
 
-            <div className="writer-theme-editor__palette-groups">
-              {writerThemePaletteGroups.map((group) => (
-                <div className="writer-theme-editor__palette-group" key={group.label}>
-                  <span className="writer-theme-editor__palette-label">{group.label}</span>
-                  <div aria-label={`${layer.label} ${group.label} renk kartelası`} className="writer-theme-editor__palette">
-                    {group.colors.map((color) => (
-                      <button
-                        aria-label={`${color} rengini seç`}
-                        className="writer-theme-editor__swatch"
-                        data-selected={theme[layer.key] === color ? "true" : undefined}
-                        key={color}
-                        onClick={() => updateColor(layer.key, color)}
-                        style={{ background: color }}
-                        title={color}
-                        type="button"
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="writer-theme-editor__custom">
-              <label title="Sınırsız özel renk seç">
-                <span className="sr-only">{layer.label} özel renk seçici</span>
+              <label className="writer-theme-editor__picker-label" title={`${layer.label} rengini seç`}>
                 <input
-                  aria-label={`${layer.label} özel renk seçici`}
+                  aria-label={`${layer.label} sınırsız renk seçici`}
                   className="writer-theme-editor__picker"
                   onChange={(event) => updateColor(layer.key, event.target.value)}
                   type="color"
                   value={theme[layer.key]}
                 />
-              </label>
-
-              <label>
-                <span className="writer-theme-editor__field-label">HEX</span>
-                <input
-                  aria-label={`${layer.label} HEX değeri`}
-                  maxLength={7}
-                  onBlur={(event) => {
-                    const normalized = normalizeHex(event.target.value);
-                    event.target.value = normalized ?? theme[layer.key];
-                    if (normalized) updateColor(layer.key, normalized);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") event.currentTarget.blur();
-                  }}
-                  type="text"
-                  defaultValue={theme[layer.key]}
-                  key={`hex-${layer.key}-${theme[layer.key]}`}
-                  placeholder="#6847E8"
-                />
-              </label>
-
-              <label>
-                <span className="writer-theme-editor__field-label">RGB</span>
-                <input
-                  aria-label={`${layer.label} RGB değeri`}
-                  onBlur={(event) => {
-                    const normalized = rgbToHex(event.target.value);
-                    event.target.value = normalized ? hexToRgb(normalized) : hexToRgb(theme[layer.key]);
-                    if (normalized) updateColor(layer.key, normalized);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") event.currentTarget.blur();
-                  }}
-                  type="text"
-                  defaultValue={hexToRgb(theme[layer.key])}
-                  key={`rgb-${layer.key}-${theme[layer.key]}`}
-                  placeholder="104, 71, 232"
-                />
-              </label>
-
-              <label>
-                <span className="writer-theme-editor__field-label">HSL</span>
-                <input
-                  aria-label={`${layer.label} HSL değeri`}
-                  onBlur={(event) => {
-                    const normalized = hslToHex(event.target.value);
-                    event.target.value = normalized ? hexToHsl(normalized) : hexToHsl(theme[layer.key]);
-                    if (normalized) updateColor(layer.key, normalized);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") event.currentTarget.blur();
-                  }}
-                  type="text"
-                  defaultValue={hexToHsl(theme[layer.key])}
-                  key={`hsl-${layer.key}-${theme[layer.key]}`}
-                  placeholder="252, 78%, 59%"
-                />
+                <span className="writer-theme-editor__picker-value">{theme[layer.key]}</span>
               </label>
             </div>
 
-            <div>
+            <details className="writer-theme-editor__advanced">
+              <summary>Renk koduyla gir</summary>
+              <div className="writer-theme-editor__custom">
+                <label>
+                  <span className="writer-theme-editor__field-label">HEX</span>
+                  <input
+                    aria-label={`${layer.label} HEX değeri`}
+                    maxLength={7}
+                    onBlur={(event) => {
+                      const normalized = normalizeHex(event.target.value);
+                      event.target.value = normalized ?? theme[layer.key];
+                      if (normalized) updateColor(layer.key, normalized);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") event.currentTarget.blur();
+                    }}
+                    type="text"
+                    defaultValue={theme[layer.key]}
+                    key={`hex-${layer.key}-${theme[layer.key]}`}
+                    placeholder="#6847E8"
+                  />
+                </label>
+
+                <label>
+                  <span className="writer-theme-editor__field-label">RGB</span>
+                  <input
+                    aria-label={`${layer.label} RGB değeri`}
+                    onBlur={(event) => {
+                      const normalized = rgbToHex(event.target.value);
+                      event.target.value = normalized ? hexToRgb(normalized) : hexToRgb(theme[layer.key]);
+                      if (normalized) updateColor(layer.key, normalized);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") event.currentTarget.blur();
+                    }}
+                    type="text"
+                    defaultValue={hexToRgb(theme[layer.key])}
+                    key={`rgb-${layer.key}-${theme[layer.key]}`}
+                    placeholder="104, 71, 232"
+                  />
+                </label>
+
+                <label>
+                  <span className="writer-theme-editor__field-label">HSL</span>
+                  <input
+                    aria-label={`${layer.label} HSL değeri`}
+                    onBlur={(event) => {
+                      const normalized = hslToHex(event.target.value);
+                      event.target.value = normalized ? hexToHsl(normalized) : hexToHsl(theme[layer.key]);
+                      if (normalized) updateColor(layer.key, normalized);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") event.currentTarget.blur();
+                    }}
+                    type="text"
+                    defaultValue={hexToHsl(theme[layer.key])}
+                    key={`hsl-${layer.key}-${theme[layer.key]}`}
+                    placeholder="252, 78%, 59%"
+                  />
+                </label>
+              </div>
+            </details>
+
+            <div className="writer-theme-editor__layer-actions">
               <Button onClick={() => resetLayer(layer.key)} type="button" variant="ghost">
-                Bu rengi varsayılana döndür
+                Varsayılana döndür
               </Button>
             </div>
           </section>

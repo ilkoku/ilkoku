@@ -8,6 +8,7 @@ import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { BookCard } from "./BookCard";
 import { MetricCard } from "./MetricCard";
 import { ProgressBar } from "./ProgressBar";
+import styles from "./WriterDashboard.module.css";
 
 interface WriterDashboardProps {
   feedback: {
@@ -87,7 +88,7 @@ export function WriterDashboard({
   ];
 
   return (
-    <div className="dashboard dashboard--writer">
+    <div className={`dashboard dashboard--writer ${styles.root}`}>
       <div className="dashboard__main">
         <header className="dashboard-hero">
           <div className="dashboard-hero__heading">

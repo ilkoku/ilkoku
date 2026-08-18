@@ -33,11 +33,7 @@
 }
 
 .notificationItem {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--space-5);
-  padding: var(--space-5);
+  overflow: hidden;
   background: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-large);
@@ -49,37 +45,66 @@
 }
 
 .notificationItem[data-read="false"] {
-  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
   box-shadow:
-    inset 3px 0 0 color-mix(in srgb, var(--color-primary) 72%, transparent),
+    inset 3px 0 0 color-mix(in srgb, var(--color-primary) 78%, transparent),
     var(--shadow-small);
 }
 
-.notificationContent {
-  display: grid;
-  gap: var(--space-2);
-  min-width: 0;
+.notificationItem[data-expanded="true"] {
+  border-color: color-mix(in srgb, var(--color-primary) 38%, var(--color-border));
+  box-shadow: var(--shadow-medium);
 }
 
-.notificationItem[data-read="true"] .notificationContent {
-  opacity: 0.72;
+.notificationHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+.notificationOpenButton {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.notificationOpenButton:focus-visible {
+  outline: none;
+  border-radius: var(--radius-medium);
+  box-shadow: var(--shadow-focus);
+}
+
+.notificationHeadline {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .notificationTitle {
   color: var(--color-text);
   font-size: 1rem;
   font-weight: 720;
+  line-height: 1.35;
 }
 
 .notificationItem[data-read="false"] .notificationTitle {
   font-weight: 800;
 }
 
-.notificationMessage {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 0.8125rem;
-  line-height: 1.55;
+.notificationItem[data-read="true"] .notificationTitle,
+.notificationItem[data-read="true"] .notificationTime {
+  opacity: 0.72;
 }
 
 .notificationTime {
@@ -87,38 +112,38 @@
   font-size: 0.6875rem;
 }
 
-.relatedAction {
-  width: fit-content;
-  margin-top: var(--space-2);
-}
-
-.relatedAction :global(.button) {
-  min-height: 2.6rem;
-  padding-inline: 0.9rem;
-  color: var(--color-text);
-  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 34%, var(--color-border));
+.openHint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding-inline: 0.8rem;
+  color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--color-text-secondary) 5%, transparent);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-medium);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  box-shadow: none;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
 }
 
-.relatedAction :global(.button):hover,
-.relatedAction :global(.button):focus-visible {
+.notificationOpenButton:hover .openHint,
+.notificationOpenButton:focus-visible .openHint,
+.notificationItem[data-expanded="true"] .openHint {
   color: var(--color-text);
-  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 58%, var(--color-border));
-}
-
-.readStateForm {
-  align-self: center;
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
 }
 
 .readStateButton {
   display: inline-grid;
   width: 2.85rem;
   height: 2.85rem;
+  align-self: center;
   place-items: center;
   padding: 0;
   color: var(--color-primary);
@@ -130,10 +155,11 @@
     color 160ms ease,
     background-color 160ms ease,
     border-color 160ms ease,
+    opacity 160ms ease,
     transform 160ms ease;
 }
 
-.readStateButton:hover {
+.readStateButton:hover:not(:disabled) {
   background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   border-color: color-mix(in srgb, var(--color-primary) 62%, var(--color-border));
   transform: translateY(-1px);
@@ -142,6 +168,11 @@
 .readStateButton:focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
+}
+
+.readStateButton:disabled {
+  cursor: wait;
+  opacity: 0.58;
 }
 
 .readStateButton[data-read="true"] {
@@ -155,13 +186,65 @@
   height: 1.2rem;
 }
 
+.notificationDetails {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 2.5%, transparent);
+}
+
+.notificationMessage {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.relatedAction {
+  width: fit-content;
+}
+
+.relatedAction :global(.button) {
+  min-height: 2.6rem;
+  padding-inline: 0.95rem;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 38%, var(--color-border));
+  border-radius: var(--radius-medium);
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.relatedAction :global(.button):hover,
+.relatedAction :global(.button):focus-visible {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 62%, var(--color-border));
+}
+
 @media (max-width: 47.99rem) {
   .backRow {
     margin-bottom: calc(var(--space-2) * -1);
   }
 
-  .notificationItem {
-    gap: var(--space-3);
+  .notificationHeader {
+    gap: var(--space-2);
+    padding: var(--space-4);
+  }
+
+  .notificationOpenButton {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .openHint {
+    width: fit-content;
+  }
+
+  .notificationDetails {
     padding: var(--space-4);
   }
 

@@ -28,49 +28,77 @@ test("writer theme storage is isolated per user and sanitized", () => {
   const theme = source("src/features/writer-theme/theme.ts");
 
   includes(theme, "ilkoku:writer-theme:${userId}", "writer theme storage");
-  includes(theme, "/^#[0-9A-F]{6}$/", "writer theme hex sanitizer");
+  includes(theme, "/^#[0-9A-F]{6}$/", "writer theme six-digit hex sanitizer");
+  includes(theme, "/^#[0-9A-F]{3}$/", "writer theme shorthand hex sanitizer");
   includes(theme, "sanitizeWriterTheme", "writer theme sanitizer");
 });
 
-test("Page Colors includes palette, round native picker, HEX/RGB and reset controls", () => {
+test("Page Colors exposes broad presets plus unrestricted picker, HEX/RGB/HSL and reset controls", () => {
   const editor = source("src/features/writer-theme/WriterThemeEditor.tsx");
+  const theme = source("src/features/writer-theme/theme.ts");
   const css = source("src/features/writer-theme/writer-theme-customization.css");
 
-  includes(editor, "writerThemePalette.map", "writer theme palette");
-  includes(editor, 'type="color"', "custom color picker");
+  includes(editor, "writerThemePaletteGroups.map", "writer theme grouped palettes");
+  for (const group of [
+    "İlkOku ve nötr",
+    "Mor ve lila",
+    "Mavi",
+    "Turkuaz ve petrol",
+    "Yeşil",
+    "Sarı ve turuncu",
+    "Kırmızı ve pembe",
+  ]) {
+    includes(theme, `label: "${group}"`, `writer palette group ${group}`);
+  }
+  assert.ok(
+    (theme.match(/"#[0-9A-F]{6}"/g) ?? []).length >= 75,
+    "writer theme must keep a broad preset/default color inventory",
+  );
+  includes(editor, 'type="color"', "unrestricted custom color picker");
   includes(editor, "HEX değeri", "HEX field");
   includes(editor, "RGB değeri", "RGB field");
+  includes(editor, "HSL değeri", "HSL field");
+  includes(editor, "renk seçimin bunlarla sınırlı değildir", "unrestricted color guidance");
   includes(editor, "Bu rengi varsayılana döndür", "per-layer reset");
   includes(editor, "Tümünü varsayılana döndür", "full reset");
   includes(css, "border-radius: 50%", "round color controls");
 });
 
-test("writer theme exposes all 15 requested visual layers", () => {
+test("writer theme exposes 23 independently editable visual layers", () => {
   const theme = source("src/features/writer-theme/theme.ts");
 
   for (const key of [
     "pageCanvas",
     "sidebar",
+    "brandSurface",
     "mainSurface",
+    "headerSurface",
     "cardSurface",
+    "coverSurface",
     "controlSurface",
     "border",
     "text",
     "textMuted",
     "heading",
+    "navText",
+    "navMuted",
     "activeNav",
+    "activeNavSurface",
     "hover",
     "primary",
     "primaryHover",
+    "buttonText",
     "accent",
+    "coverText",
     "progressTrack",
   ]) {
     includes(theme, `key: "${key}"`, `writer theme layer ${key}`);
   }
 });
 
-test("writer theme hydrates only writer shells after canonical palette", () => {
+test("expanded writer theme variables are hydrated and wired only to writer shells", () => {
   const shell = source("src/components/layout/AppShell.tsx");
+  const hydrator = source("src/features/writer-theme/WriterThemeHydrator.tsx");
   const css = source("src/features/writer-theme/writer-theme-customization.css");
 
   includes(shell, 'profile.role === "writer"', "writer theme hydrator");
@@ -78,6 +106,21 @@ test("writer theme hydrates only writer shells after canonical palette", () => {
   const canonicalIndex = shell.indexOf('import "@/styles/light-surface-unification.css"');
   const customIndex = shell.indexOf('import "@/features/writer-theme/writer-theme-customization.css"');
   assert.ok(canonicalIndex >= 0 && customIndex > canonicalIndex, "custom writer theme CSS must load after canonical palette");
+
+  for (const variable of [
+    "--writer-custom-brand-surface",
+    "--writer-custom-header-surface",
+    "--writer-custom-cover-surface",
+    "--writer-custom-nav-text",
+    "--writer-custom-nav-muted",
+    "--writer-custom-active-nav-surface",
+    "--writer-custom-button-text",
+    "--writer-custom-cover-text",
+  ]) {
+    includes(hydrator, variable, `writer theme hydrator ${variable}`);
+    includes(css, variable, `writer theme CSS ${variable}`);
+  }
+
   includes(css, '.app-shell[data-role="writer"]', "writer-scoped theme CSS");
   includes(css, ".nav-item[data-active]", "writer active navigation color hook");
 });

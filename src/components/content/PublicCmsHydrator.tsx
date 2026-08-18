@@ -136,6 +136,8 @@ function applyRoleCards(cards: CmsRoleCard[]) {
     element.hidden = !card.visible;
     element.setAttribute("aria-label", `${card.title} olarak kayıt ol`);
 
+    const number = element.querySelector<HTMLElement>(".landing-role__number");
+    if (number) number.textContent = String(card.position).padStart(2, "0");
     const roleLabel = element.querySelector<HTMLElement>(".landing-role__label");
     if (roleLabel) roleLabel.textContent = `${card.title} rolü`;
     const heading = element.querySelector<HTMLElement>("h3");

@@ -11,6 +11,7 @@ import {
 import { WriterThemeHydrator } from "@/features/writer-theme/WriterThemeHydrator";
 import styles from "@/features/admin-role-view/AdminRoleView.module.css";
 import "@/features/writer-theme/writer-theme-customization.css";
+import "@/features/writer/writer-dashboard-hero-border.css";
 
 type AppShellProps = {
   children: ReactNode;

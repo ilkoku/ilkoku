@@ -9,7 +9,7 @@ import { getPublishersWorkspace } from "@/features/publishers/queries";
 export const metadata: Metadata = {
   title: "Yayınevleri | İlkOku",
   description:
-    "Yayınevlerini keşfedin, eser başvurularınızı ve gönderilmiş sözleşme ile yayın planlarını takip edin.",
+    "Yayınevlerini keşfedin ve daha önce başlayan yayınevi, sözleşme ve yayın planı süreçlerinizi takip edin.",
 };
 
 export const dynamic = "force-dynamic";
@@ -43,7 +43,6 @@ export default async function PublishersPage({
         focusedSubmissionId={focusedSubmissionId}
         initialPublishers={workspace.publishers}
         initialSubmissions={workspace.submissions}
-        works={workspace.works}
       />
     </AppShell>
   );

@@ -1,0 +1,131 @@
+name: Sprint 7 dependency override validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sprint7-deepmerge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-override:
+    name: Validate deepmerge-ts 8 override across full release gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ilkoku_ci
+          MARIADB_USER: ci_user
+          MARIADB_PASSWORD: ci_password
+          MARIADB_ROOT_PASSWORD: ci_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+      recoverydb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ilkoku_recovery
+          MARIADB_USER: ci_user
+          MARIADB_PASSWORD: ci_password
+          MARIADB_ROOT_PASSWORD: ci_root_password
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3306/ilkoku_ci"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      SITE_URL: "http://localhost:3000"
+      EMAIL_DELIVERY_MODE: "local"
+      ADMIN_ROLE_VIEW_SECRET: "ci-admin-role-view-secret-0000000000000000000000000000000000000000"
+      READING_ACCESS_HASH_SECRET: "ci-reading-access-hash-secret-00000000000000000000000000000000000000"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Generate controlled deepmerge override lockfile
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm pkg set 'overrides.deepmerge-ts=8.0.1'
+          npm install --package-lock-only --ignore-scripts
+
+      - name: Install generated dependency graph
+        run: npm ci
+
+      - name: Verify patched deepmerge resolution
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node - <<'NODE'
+          const lock = require('./package-lock.json');
+          const entry = lock.packages?.['node_modules/deepmerge-ts'];
+          if (!entry || entry.version !== '8.0.1') {
+            console.error(`Expected deepmerge-ts 8.0.1, got ${entry?.version ?? 'missing'}`);
+            process.exit(1);
+          }
+          console.log('PASS: deepmerge-ts resolved to 8.0.1');
+          NODE
+
+      - name: Prove high-severity audit is clean without an allowance
+        run: npm audit --audit-level=high
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run security contract tests
+        run: npm run test:security
+
+      - name: Build disposable MariaDB schema
+        run: npx prisma db push
+
+      - name: Run MariaDB security integration contracts
+        run: npm run test:security:db
+
+      - name: Run release measurement report
+        run: npm run release:measure:strict
+
+      - name: Recover brand-new MariaDB from version-controlled baseline
+        env:
+          DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
+          RECOVERY_CONFIRM_EMPTY_DATABASE: "YES"
+        run: npm run db:recover:fresh
+
+      - name: Validate release measurement on recovered database
+        env:
+          DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
+        run: npm run release:measure:strict
+
+      - name: Build application
+        run: npm run build:ci
+
+      - name: Upload generated dependency files
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint7-deepmerge-override-lockfiles
+          path: |
+            package.json
+            package-lock.json
+          if-no-files-found: error
+          retention-days: 1

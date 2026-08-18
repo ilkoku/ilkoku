@@ -161,6 +161,7 @@ jobs:
             local path
             local routes=(
               "/icerik"
+              "/icerik/arama"
               "/icerik/ana-sayfa"
               "/icerik/sayfalar"
               "/icerik/menuler"
@@ -270,7 +271,7 @@ jobs:
               && check_protected_route "https://ilkoku.com/yayinevi/editor-talepleri" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production public/private route paketi, bildirim yüzeyleri, writer/publisher/editor kritik rotaları, sitemap/robots ve 20 ana CMS rotası doğrulandı."
+              echo "PASS: Production public/private route paketi, bildirim yüzeyleri, writer/publisher/editor kritik rotaları, sitemap/robots ve 21 ana CMS rotası doğrulandı."
               exit 0
             fi
 

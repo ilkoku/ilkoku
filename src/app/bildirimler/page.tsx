@@ -4,7 +4,11 @@ import { AppShell } from "@/components/layout/AppShell";
 import { canAccessNotificationWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
-import { toggleNotificationReadAction } from "@/features/notifications/actions";
+import {
+  openNotificationTargetAction,
+  toggleNotificationReadAction,
+} from "@/features/notifications/actions";
+import { NotificationBackButton } from "@/features/notifications/components/NotificationBackButton";
 import { NotificationEnvelopeIcon } from "@/features/notifications/components/NotificationEnvelopeIcon";
 import styles from "@/features/notifications/notification-list.module.css";
 import { resolveNotificationTargets } from "@/features/notifications/targets";
@@ -38,10 +42,17 @@ export default async function NotificationsPage() {
     userId: profile.id,
   });
   const eyebrow = profile.role === "writer" ? "Yazar alanı" : "Okuyucu alanı";
+  const backFallback = profile.role === "writer" ? "/yazar" : "/okuyucu";
 
   return (
     <AppShell profile={profile}>
       <div className="editor-workspace">
+        <div className={styles.backRow}>
+          <NotificationBackButton
+            className={`button button--ghost ${styles.backButton}`}
+            fallbackHref={backFallback}
+          />
+        </div>
         <EditorPageHeader
           description="Eserler, yorumlar, yayın ve hesap etkinlikleriyle ilgili güncellemeler."
           eyebrow={eyebrow}
@@ -73,11 +84,20 @@ export default async function NotificationsPage() {
                     {formatDate(notification.createdAt)}
                   </time>
                   {href ? (
-                    <div className={styles.relatedAction}>
-                      <a className="button button--ghost" href={href}>
+                    <form
+                      action={openNotificationTargetAction}
+                      className={styles.relatedAction}
+                    >
+                      <input
+                        name="notificationId"
+                        type="hidden"
+                        value={notification.id}
+                      />
+                      <input name="returnPath" type="hidden" value="/bildirimler" />
+                      <button className="button button--ghost" type="submit">
                         İlgili kaydı aç
-                      </a>
-                    </div>
+                      </button>
+                    </form>
                   ) : null}
                 </div>
                 <form

@@ -1,3 +1,32 @@
+.backRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: calc(var(--space-4) * -1);
+}
+
+.backButton {
+  width: fit-content;
+  min-height: 2.5rem;
+  gap: var(--space-2);
+  padding-inline: var(--space-3);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.backButton:hover,
+.backButton:focus-visible {
+  color: var(--color-text);
+  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+}
+
+.backButton:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
 .notificationList {
   display: grid;
   gap: var(--space-4);
@@ -127,6 +156,10 @@
 }
 
 @media (max-width: 47.99rem) {
+  .backRow {
+    margin-bottom: calc(var(--space-2) * -1);
+  }
+
   .notificationItem {
     gap: var(--space-3);
     padding: var(--space-4);

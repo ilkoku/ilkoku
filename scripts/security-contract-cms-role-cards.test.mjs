@@ -61,6 +61,7 @@ test("role cards are a dedicated CMS module with fail-safe public delivery", () 
   const api = source("src/app/api/site-content/role-cards/route.ts");
   const hydrator = source("src/components/content/PublicCmsHydrator.tsx");
   const english = source("src/app/en/page.tsx");
+  const queue = source("src/app/icerik/yayin-kuyrugu/page.tsx");
 
   assertContains(modules, 'href: "/icerik/rol-kartlari"', "role card CMS navigation");
   assertContains(api, "getPublishedRoleCardsState(locale)", "role card public published-state read");
@@ -68,6 +69,11 @@ test("role cards are a dedicated CMS module with fail-safe public delivery", () 
   assertContains(hydrator, 'fetch("/api/site-content/role-cards?dil=tr"', "TR public role card hydration");
   assertContains(hydrator, "if (cancelled || !payload?.published", "TR role card fallback boundary");
   assertContains(hydrator, "element.hidden = !card.visible", "TR role card visibility control");
+  assertContains(hydrator, 'querySelector<HTMLElement>(".landing-role__number")', "TR role card order number synchronization");
   assertContains(english, 'getPublishedRoleCardsState("en")', "EN published role card read");
   assertContains(english, 'roleCardsDefaults("en")', "EN safe role card fallback");
+  assertContains(queue, 'type: "role-cards"', "role card central publish queue type");
+  assertContains(queue, "parseCmsRoleCardsPayloadStrict(row.valueJson)", "role card queue strict validation");
+  assertContains(queue, "publishRoleCardsAction", "role card queue canonical publish action");
+  assertContains(queue, 'editHref: `/icerik/rol-kartlari?dil=${locale}`', "role card queue editor deep link");
 });

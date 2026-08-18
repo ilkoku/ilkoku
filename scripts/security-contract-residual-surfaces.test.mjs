@@ -70,7 +70,7 @@ test("CMS global search stays read-only and excludes sensitive operational names
   assertNotContains(searchPage, "$transaction", "CMS global search");
 });
 
-test("professional feedback groups support one completed first-editor report without weakening ownership checks", () => {
+test("professional feedback groups follow the editor review lifecycle without weakening ownership checks", () => {
   const mutations = source(
     "src/features/feedback/mutations/feedback.mutations.ts",
   );
@@ -86,12 +86,25 @@ test("professional feedback groups support one completed first-editor report wit
     "professional feedback groups must accept one or two unique report ids only",
   );
   assert.ok(
-    mutations.includes("reports.length !== uniqueIds.length"),
-    "every requested professional report id must resolve inside the authorized group",
+    mutations.includes('"awaiting_second_editor"') &&
+      mutations.includes('"second_in_progress"') &&
+      mutations.includes('"completed"'),
+    "a completed first-editor report must stay readable while the work advances through the second-editor lifecycle",
   );
   assert.ok(
-    mutations.includes("stages.has(\"first\")"),
-    "a single professional report group must still be the first-editor report",
+    mutations.includes("reports.length !== uniqueIds.length") &&
+      mutations.includes("!uniqueIds.includes(report.id)"),
+    "the requested report ids must exactly match the authorized completed professional group",
+  );
+  assert.ok(
+    mutations.includes("stages.has(\"first\")") &&
+      mutations.includes("stages.has(\"second\")"),
+    "professional groups must preserve first-stage presence and require a second stage for two-report groups",
+  );
+  assert.ok(
+    mutations.includes('reports.length === 1') &&
+      mutations.includes('reviewStatus === "completed"'),
+    "single-report and final two-report lifecycle states must be validated explicitly",
   );
   assert.ok(
     mutations.includes("updated.count !== uniqueIds.length"),

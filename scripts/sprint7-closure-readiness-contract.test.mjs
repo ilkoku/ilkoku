@@ -11,7 +11,7 @@ function assertContains(text, fragment, label) {
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
 }
 
-test("Sprint 7 closure gate is explicit, strict and human-UAT bound", () => {
+test("Sprint 7 final release gate stays explicit, strict and human-UAT bound", () => {
   const gate = source("scripts/sprint7-closure-readiness.mjs");
 
   assertContains(gate, "EXPECTED_CRITICAL_ROWS = 33", "Sprint 7 critical-row floor");
@@ -45,13 +45,18 @@ test("Sprint 7 UAT matrix keeps the complete critical human acceptance set", () 
   }
 });
 
-test("Sprint 7 closure record cannot claim completion before human UAT", () => {
+test("Sprint 7 technical closure preserves strict final release human UAT", () => {
   const closure = source("docs/sprint-7-closure.md");
   const packageJson = source("package.json");
 
-  assertContains(closure, "`OPEN_HUMAN_UAT`", "Sprint 7 current closure status");
-  assertContains(closure, "33/33 human passes", "Sprint 7 final human acceptance requirement");
-  assertContains(closure, "Close issue #246 only after", "Sprint 7 issue closure guard");
+  assertContains(closure, "`CLOSED_TECHNICAL_SCOPE`", "Sprint 7 technical closure status");
+  assertContains(closure, "Final Release UAT", "Sprint 7 deferred human acceptance handoff");
+  assertContains(closure, "33/33 human pass", "Sprint 7 final human acceptance requirement");
+  assertContains(
+    closure,
+    "Sprint 7 issue #246 teknik kapsam tamamlandı olarak kapatılır.",
+    "Sprint 7 issue technical closure record",
+  );
   assertContains(packageJson, '"release:sprint7:status"', "Sprint 7 status command");
   assertContains(packageJson, '"release:sprint7:close"', "Sprint 7 strict closure command");
   assertContains(

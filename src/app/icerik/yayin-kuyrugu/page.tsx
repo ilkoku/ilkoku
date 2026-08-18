@@ -10,9 +10,11 @@ import { saveCmsDocumentAction } from "@/features/cms/document-actions";
 import { publishFaqAction } from "@/features/cms/faq-actions";
 import { saveCmsGuideAction } from "@/features/cms/guide-actions";
 import { saveCmsPageAction } from "@/features/cms/page-actions";
+import { publishRoleCardsAction } from "@/features/cms/role-card-actions";
 import { requireCmsManager } from "@/lib/cms-access";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import type { CmsLocaleCode } from "@/lib/cms-locales";
+import { parseCmsRoleCardsPayloadStrict } from "@/lib/cms-role-cards";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +36,11 @@ type PageRow = ActorRow & {
 type FaqRow = ActorRow & { namespace: string; contentKey: string; valueJson: string; updatedAt: Date };
 type Payload = Record<string, unknown>;
 type PublishAction = (formData: FormData) => Promise<void>;
-type QueueKind = "homepage" | "faq" | "legal" | "guide" | "page" | "diagnostic";
+type QueueKind = "homepage" | "role-cards" | "faq" | "legal" | "guide" | "page" | "diagnostic";
 type QueueStage = "working" | "initial" | "blocked";
 type PublishSpec =
   | { type: "homepage"; action: PublishAction; locale: CmsLocaleCode }
+  | { type: "role-cards"; locale: CmsLocaleCode }
   | { type: "faq"; locale: CmsLocaleCode; contentKey: string }
   | { type: "legal"; locale: CmsLocaleCode; slug: string; payload: Payload }
   | { type: "guide"; locale: CmsLocaleCode; id: string; slug: string; payload: Payload }
@@ -175,6 +178,9 @@ function PublishButton({ item, enabled }: { item: QueueItem; enabled: boolean })
     const action = item.publish.action;
     return <form action={action}><input type="hidden" name="locale" value={item.publish.locale} /><button type="submit">Yayınla</button></form>;
   }
+  if (item.publish.type === "role-cards") {
+    return <form action={publishRoleCardsAction}><input type="hidden" name="locale" value={item.publish.locale} /><button type="submit">Yayınla</button></form>;
+  }
   if (item.publish.type === "faq") {
     return <form action={publishFaqAction}><input type="hidden" name="locale" value={item.publish.locale} /><input type="hidden" name="contentKey" value={item.publish.contentKey} /><button type="submit">Yayınla</button></form>;
   }
@@ -234,6 +240,13 @@ export default async function PublishQueuePage() {
     const parts = row.contentKey.split(":");
     const hintedLocale: CmsLocaleCode = parts.includes("en") ? "en" : "tr";
     if (!payload) { items.push(diagnostic(row, "Taslak JSON verisi bozuk veya desteklenmeyen biçimde. Yayın engellendi.", hintedLocale)); continue; }
+
+    if (parts[0] === "role-cards" && (parts[1] === "tr" || parts[1] === "en")) {
+      const locale = parts[1] as CmsLocaleCode;
+      if (!parseCmsRoleCardsPayloadStrict(row.valueJson)) { items.push(diagnostic(row, "Rol kartları taslağı eksik, sırası çakışıyor veya veri biçimi geçersiz. Yayın engellendi.", locale)); continue; }
+      items.push({ key: `staged-${row.contentKey}`, kind: "role-cards", title: "Rol Kartları", detail: "Yazar, Okuyucu, Editör ve Yayınevi kartlarının atomik çalışma taslağı", locale, stage: "working", updatedAt: row.updatedAt, actor: actor(row), editHref: `/icerik/rol-kartlari?dil=${locale}`, previewHref: `/icerik/onizleme/rol-kartlari?dil=${locale}`, publish: { type: "role-cards", locale } });
+      continue;
+    }
 
     if (parts[0] === "homepage" && (parts[1] === "tr" || parts[1] === "en")) {
       const locale = parts[1] as CmsLocaleCode;

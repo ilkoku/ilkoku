@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { PublicDocumentHydrator } from "@/components/content/PublicDocumentHydrator";
 import { PublicFooterHydrator } from "@/components/content/PublicFooterHydrator";
 import { safeCmsInternalHref } from "@/lib/cms-links";
+import type { CmsRoleCard } from "@/lib/cms-role-cards";
 
 type Section = Record<string, string>;
 type HomepageContent = Record<string, Section>;
@@ -123,6 +124,50 @@ function applyHomepage(content: HomepageContent) {
   setFooterCopyright(footer?.copyright);
 }
 
+function applyRoleCards(cards: CmsRoleCard[]) {
+  const grid = document.querySelector<HTMLElement>(".landing-role-grid");
+  if (!grid) return;
+
+  const ordered: Array<{ card: CmsRoleCard; element: HTMLAnchorElement }> = [];
+  for (const card of cards) {
+    const element = grid.querySelector<HTMLAnchorElement>(`a.landing-role[href="/kayit?rol=${card.key}"]`);
+    if (!element) continue;
+
+    element.hidden = !card.visible;
+    element.setAttribute("aria-label", `${card.title} olarak kayıt ol`);
+
+    const roleLabel = element.querySelector<HTMLElement>(".landing-role__label");
+    if (roleLabel) roleLabel.textContent = `${card.title} rolü`;
+    const heading = element.querySelector<HTMLElement>("h3");
+    if (heading) heading.textContent = card.title;
+    const description = element.querySelector<HTMLElement>("p");
+    if (description) description.textContent = card.description;
+
+    const highlights = element.querySelector<HTMLElement>(".landing-role__highlights");
+    if (highlights) {
+      const first = document.createElement("small");
+      first.textContent = card.highlight1;
+      const second = document.createElement("small");
+      second.textContent = card.highlight2;
+      highlights.replaceChildren(first, second);
+    }
+
+    const cta = element.querySelector<HTMLElement>(":scope > strong");
+    if (cta) {
+      const arrow = document.createElement("span");
+      arrow.setAttribute("aria-hidden", "true");
+      arrow.textContent = "→";
+      cta.replaceChildren(document.createTextNode(`${card.ctaLabel} `), arrow);
+    }
+
+    ordered.push({ card, element });
+  }
+
+  ordered
+    .sort((a, b) => a.card.position - b.card.position)
+    .forEach(({ element }) => grid.append(element));
+}
+
 export function PublicCmsHydrator() {
   useEffect(() => {
     if (window.location.pathname !== "/") return;
@@ -136,6 +181,16 @@ export function PublicCmsHydrator() {
       })
       .catch(() => {
         // Kod içeriği güvenli fallback olarak kalır.
+      });
+
+    void fetch("/api/site-content/role-cards?dil=tr", { cache: "no-store", credentials: "same-origin" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (cancelled || !payload?.published || !Array.isArray(payload.cards)) return;
+        applyRoleCards(payload.cards as CmsRoleCard[]);
+      })
+      .catch(() => {
+        // Kod içindeki rol kartları güvenli fallback olarak kalır.
       });
 
     return () => {

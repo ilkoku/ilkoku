@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { canAccessNotificationWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
-import { markNotificationReadAction } from "@/features/editor-workspace/actions";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
+import { toggleNotificationReadAction } from "@/features/notifications/actions";
+import { NotificationEnvelopeIcon } from "@/features/notifications/components/NotificationEnvelopeIcon";
+import styles from "@/features/notifications/notification-list.module.css";
 import { resolveNotificationTargets } from "@/features/notifications/targets";
 import { prisma } from "@/lib/prisma";
 
@@ -45,33 +47,56 @@ export default async function NotificationsPage() {
           eyebrow={eyebrow}
           title="Bildirimler"
         />
-        <div className="editor-notification-list">
+        <div className={styles.notificationList}>
           {notifications.map((notification) => {
             const href = targets.get(notification.id) ?? null;
+            const read = Boolean(notification.readAt);
+            const readActionLabel = read
+              ? "Okunmadı olarak işaretle"
+              : "Okundu olarak işaretle";
 
             return (
-              <article data-read={Boolean(notification.readAt)} key={notification.id}>
-                <div>
-                  <strong>{notification.title}</strong>
-                  <p>{notification.message}</p>
-                  <time dateTime={notification.createdAt.toISOString()}>
+              <article
+                className={styles.notificationItem}
+                data-read={read}
+                key={notification.id}
+              >
+                <div className={styles.notificationContent}>
+                  <strong className={styles.notificationTitle}>
+                    {notification.title}
+                  </strong>
+                  <p className={styles.notificationMessage}>{notification.message}</p>
+                  <time
+                    className={styles.notificationTime}
+                    dateTime={notification.createdAt.toISOString()}
+                  >
                     {formatDate(notification.createdAt)}
                   </time>
                   {href ? (
-                    <a className="button button--ghost" href={href}>
-                      İlgili kaydı aç
-                    </a>
+                    <div className={styles.relatedAction}>
+                      <a className="button button--ghost" href={href}>
+                        İlgili kaydı aç
+                      </a>
+                    </div>
                   ) : null}
                 </div>
-                {!notification.readAt && (
-                  <form action={markNotificationReadAction}>
-                    <input name="notificationId" type="hidden" value={notification.id} />
-                    <input name="returnPath" type="hidden" value="/bildirimler" />
-                    <button className="button button--ghost" type="submit">
-                      Okundu İşaretle
-                    </button>
-                  </form>
-                )}
+                <form
+                  action={toggleNotificationReadAction}
+                  className={styles.readStateForm}
+                >
+                  <input name="notificationId" type="hidden" value={notification.id} />
+                  <input name="returnPath" type="hidden" value="/bildirimler" />
+                  <button
+                    aria-label={readActionLabel}
+                    aria-pressed={read}
+                    className={styles.readStateButton}
+                    data-read={read}
+                    title={readActionLabel}
+                    type="submit"
+                  >
+                    <NotificationEnvelopeIcon read={read} />
+                  </button>
+                </form>
               </article>
             );
           })}

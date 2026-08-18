@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { NavigationItem as NavigationItemType } from "@/types/navigation";
 
 type NavItemProps = NavigationItemType & {
@@ -18,8 +19,13 @@ export function NavItem({ active = false, badge, disabled, href, label }: NavIte
   }
 
   return (
-    <a className="nav-item" data-active={active || undefined} href={href} aria-current={active ? "page" : undefined}>
+    <Link
+      aria-current={active ? "page" : undefined}
+      className="nav-item"
+      data-active={active || undefined}
+      href={href}
+    >
       {content}
-    </a>
+    </Link>
   );
 }

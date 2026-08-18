@@ -22,16 +22,24 @@ export async function AppShell({
   children,
   profile,
 }: AppShellProps) {
-  const badges = profile.adminPublisherView
-    ? {}
-    : await getSidebarBadges({
-        id: profile.id,
-        role: profile.role,
-      });
-  const publisherPermissions =
-    await getPublisherNavigationPermissions(
-      profile.id,
-    );
+  const shouldLoadPublisherPermissions =
+    profile.role === "publisher" ||
+    Boolean(profile.adminPublisherView);
+
+  const [badges, publisherPermissions] =
+    await Promise.all([
+      profile.adminPublisherView
+        ? Promise.resolve({})
+        : getSidebarBadges({
+            id: profile.id,
+            role: profile.role,
+          }),
+      shouldLoadPublisherPermissions
+        ? getPublisherNavigationPermissions(
+            profile.id,
+          )
+        : Promise.resolve([]),
+    ]);
 
   return (
     <div className="app-shell" data-role={profile.role}>

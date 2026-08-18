@@ -3,12 +3,6 @@ import {
   updateAuthorFeedbackStatus,
 } from "../repository/feedback.repository";
 
-const readableProfessionalReviewStatuses = [
-  "awaiting_second_editor",
-  "second_in_progress",
-  "completed",
-] as const;
-
 export async function markFeedbackRead(
   authorId: string,
   feedbackId: string,
@@ -75,9 +69,7 @@ export async function updateFeedbackGroupStatus(
             reportStatus: "completed",
             workId,
             work: {
-              editorReviewStatus: {
-                in: [...readableProfessionalReviewStatuses],
-              },
+              editorReviewStatus: "completed",
             },
           },
           select: {
@@ -87,11 +79,6 @@ export async function updateFeedbackGroupStatus(
                 stage: true,
                 status: true,
                 workId: true,
-              },
-            },
-            work: {
-              select: {
-                editorReviewStatus: true,
               },
             },
           },
@@ -140,27 +127,7 @@ export async function updateFeedbackGroupStatus(
         );
       }
 
-      const reviewStatus =
-        reports[0]?.work.editorReviewStatus;
-
-      const lifecycleIsValid =
-        reports.length === 1
-          ? reviewStatus === "awaiting_second_editor" ||
-            reviewStatus === "second_in_progress" ||
-            reviewStatus === "completed"
-          : reviewStatus === "completed";
-
-      if (!lifecycleIsValid) {
-        throw new Error(
-          "INVALID_PROFESSIONAL_REVIEW_LIFECYCLE",
-        );
-      }
-
       const now = new Date();
-      const allowedStatuses =
-        reports.length === 1
-          ? [...readableProfessionalReviewStatuses]
-          : ["completed" as const];
 
       const updated =
         await transaction.editorFeedback.updateMany({
@@ -176,9 +143,7 @@ export async function updateFeedbackGroupStatus(
             reportStatus: "completed",
             workId,
             work: {
-              editorReviewStatus: {
-                in: allowedStatuses,
-              },
+              editorReviewStatus: "completed",
             },
           },
           data:

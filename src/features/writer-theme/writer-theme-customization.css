@@ -1,50 +1,64 @@
-/* Writer-owned theme layer. Imported after the canonical writer palette. */
+/* Writer-owned theme layer. Default is the original İlkOku dark / black + gold palette. */
 .app-shell[data-role="writer"] {
-  --writer-custom-page-canvas: #f8f6ff;
-  --writer-custom-sidebar: #f8f6ff;
-  --writer-custom-brand-surface: #f8f6ff;
-  --writer-custom-main-surface: #f8f6ff;
-  --writer-custom-header-surface: #f8f6ff;
-  --writer-custom-card-surface: #fffefb;
-  --writer-custom-cover-surface: #fffefb;
-  --writer-custom-control-surface: #f8f6ff;
-  --writer-custom-border: #d9d0fa;
-  --writer-custom-text: #292620;
-  --writer-custom-text-muted: #746f66;
-  --writer-custom-heading: #292620;
-  --writer-custom-nav-text: #4d4942;
-  --writer-custom-nav-muted: #9b958b;
-  --writer-custom-active-nav: #6847e8;
-  --writer-custom-active-nav-surface: #ede9ff;
-  --writer-custom-hover: #ede9ff;
-  --writer-custom-primary: #6847e8;
-  --writer-custom-primary-hover: #4b2dbf;
-  --writer-custom-button-text: #ffffff;
-  --writer-custom-accent: #8065f2;
-  --writer-custom-cover-text: #292620;
-  --writer-custom-progress-track: #ece7df;
+  --writer-custom-page-canvas: #0b0d10;
+  --writer-custom-sidebar: #13161b;
+  --writer-custom-brand-surface: #1a1f27;
+  --writer-custom-main-surface: #0b0d10;
+  --writer-custom-header-surface: #0b0d10;
+  --writer-custom-card-surface: #1a1f27;
+  --writer-custom-cover-surface: #202631;
+  --writer-custom-control-surface: #13161b;
+  --writer-custom-border: #2a2f37;
+  --writer-custom-text: #ffffff;
+  --writer-custom-text-muted: #9ca3af;
+  --writer-custom-heading: #f5f1e8;
+  --writer-custom-nav-text: #9ca3af;
+  --writer-custom-nav-muted: #626975;
+  --writer-custom-active-nav: #c9a15a;
+  --writer-custom-active-nav-surface: #211e15;
+  --writer-custom-hover: #1f232a;
+  --writer-custom-primary: #d4af37;
+  --writer-custom-primary-hover: #e5c75a;
+  --writer-custom-button-text: #0b0d10;
+  --writer-custom-accent: #c9a15a;
+  --writer-custom-cover-text: #f5f1e8;
+  --writer-custom-progress-track: #202631;
 
   --color-background: var(--writer-custom-page-canvas) !important;
   --color-surface: var(--writer-custom-main-surface) !important;
-  --color-surface-raised: var(--writer-custom-card-surface) !important;
+  --color-surface-raised: var(--writer-custom-cover-surface) !important;
   --color-card: var(--writer-custom-card-surface) !important;
   --color-primary: var(--writer-custom-primary) !important;
   --color-primary-hover: var(--writer-custom-primary-hover) !important;
+  --color-primary-muted: color-mix(in srgb, var(--writer-custom-primary) 12%, transparent) !important;
   --color-text: var(--writer-custom-text) !important;
   --color-text-secondary: var(--writer-custom-text-muted) !important;
+  --color-border: var(--writer-custom-border) !important;
+  --color-border-strong: color-mix(in srgb, var(--writer-custom-primary) 32%, var(--writer-custom-border)) !important;
+  --color-overlay-hover: var(--writer-custom-hover) !important;
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--writer-custom-primary) 22%, transparent) !important;
+  min-height: 100vh;
   background: var(--writer-custom-page-canvas) !important;
   color: var(--writer-custom-text) !important;
+  color-scheme: dark;
 }
 
 .app-shell[data-role="writer"] .sidebar {
   background: var(--writer-custom-sidebar) !important;
   color: var(--writer-custom-text) !important;
   border-right-color: var(--writer-custom-border) !important;
+  box-shadow: 0.8rem 0 2.4rem rgba(0, 0, 0, 0.18) !important;
 }
 
 .app-shell[data-role="writer"] .brand {
   background: var(--writer-custom-brand-surface) !important;
   color: var(--writer-custom-text) !important;
+  border-color: var(--writer-custom-border) !important;
+  box-shadow: var(--shadow-small) !important;
+}
+
+.app-shell[data-role="writer"] .brand::before {
+  background: color-mix(in srgb, var(--writer-custom-primary) 14%, transparent) !important;
 }
 
 .app-shell[data-role="writer"] .main-area,
@@ -53,12 +67,19 @@
 }
 
 .app-shell[data-role="writer"] .dashboard-header {
-  background: var(--writer-custom-header-surface) !important;
+  background: color-mix(in srgb, var(--writer-custom-header-surface) 90%, transparent) !important;
+  border-bottom-color: var(--writer-custom-border) !important;
 }
 
 .app-shell[data-role="writer"] .card,
 .app-shell[data-role="writer"] .workspace-work-card,
 .app-shell[data-role="writer"] .workspace-dialog__panel,
+.app-shell[data-role="writer"] .editor-table-shell,
+.app-shell[data-role="writer"] .editor-empty,
+.app-shell[data-role="writer"] .editor-filters,
+.app-shell[data-role="writer"] .editor-work-card,
+.app-shell[data-role="writer"] .editor-review-row,
+.app-shell[data-role="writer"] .editor-selection-grid article,
 .app-shell[data-role="writer"] .editor-notification-list article,
 .app-shell[data-role="writer"] .editor-profile-card,
 .app-shell[data-role="writer"] .dashboard-hero,
@@ -76,7 +97,11 @@
 
 .app-shell[data-role="writer"] .workspace-cover,
 .app-shell[data-role="writer"] .book-cover,
-.app-shell[data-role="writer"] .latest-work__cover {
+.app-shell[data-role="writer"] .latest-work__cover,
+.app-shell[data-role="writer"] .book-cover--two,
+.app-shell[data-role="writer"] .book-cover--three,
+.app-shell[data-role="writer"] .workspace-cover--2,
+.app-shell[data-role="writer"] .workspace-cover--3 {
   background: var(--writer-custom-cover-surface) !important;
   color: var(--writer-custom-cover-text) !important;
   border-color: var(--writer-custom-border) !important;
@@ -97,6 +122,7 @@
 .app-shell[data-role="writer"] .new-work-panel textarea,
 .app-shell[data-role="writer"] .new-work-panel select {
   background: var(--writer-custom-control-surface) !important;
+  color: var(--writer-custom-text) !important;
   border-color: var(--writer-custom-border) !important;
 }
 
@@ -107,7 +133,7 @@
   --writer-paper: var(--writer-custom-card-surface) !important;
   --color-background: var(--writer-custom-page-canvas) !important;
   --color-surface: var(--writer-custom-main-surface) !important;
-  --color-surface-raised: var(--writer-custom-card-surface) !important;
+  --color-surface-raised: var(--writer-custom-cover-surface) !important;
   --color-card: var(--writer-custom-card-surface) !important;
   --color-text: var(--writer-custom-text) !important;
   --color-text-secondary: var(--writer-custom-text-muted) !important;
@@ -115,6 +141,7 @@
   --color-primary-hover: var(--writer-custom-primary-hover) !important;
   background: var(--writer-custom-page-canvas) !important;
   color: var(--writer-custom-text) !important;
+  color-scheme: dark;
 }
 
 .app-shell[data-role="writer"] h1,
@@ -137,15 +164,24 @@
 
 .app-shell[data-role="writer"] .sidebar__nav-item .nav-item[data-active] {
   color: var(--writer-custom-active-nav) !important;
-  border-color: var(--writer-custom-border) !important;
+  border-color: color-mix(in srgb, var(--writer-custom-active-nav) 35%, var(--writer-custom-border)) !important;
   background: var(--writer-custom-active-nav-surface) !important;
+  box-shadow: none !important;
 }
 
 .app-shell[data-role="writer"] .sidebar__nav-item .nav-item[data-active] .nav-item__indicator {
   background: var(--writer-custom-active-nav) !important;
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--writer-custom-active-nav) 12%, transparent) !important;
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item small {
+  color: var(--writer-custom-accent) !important;
+  border-color: var(--writer-custom-border) !important;
+  background: color-mix(in srgb, var(--writer-custom-accent) 8%, transparent) !important;
 }
 
 .app-shell[data-role="writer"] .nav-item:not([data-active]):hover,
+.app-shell[data-role="writer"] .nav-item:not([data-active]):focus-visible,
 .app-shell[data-role="writer"] .workspace-tabs button:hover {
   background: var(--writer-custom-hover) !important;
 }
@@ -156,15 +192,20 @@
   color: var(--writer-custom-button-text) !important;
 }
 
-.app-shell[data-role="writer"] .button--primary:hover {
+.app-shell[data-role="writer"] .button--primary:hover:not(:disabled) {
   background: var(--writer-custom-primary-hover) !important;
   border-color: var(--writer-custom-primary-hover) !important;
   color: var(--writer-custom-button-text) !important;
 }
 
+.app-shell[data-role="writer"] .button--outline,
 .app-shell[data-role="writer"] .dashboard-hero__eyebrow,
+.app-shell[data-role="writer"] .section-heading p,
+.app-shell[data-role="writer"] .latest-work__content > p,
 .app-shell[data-role="writer"] .status-badge,
-.app-shell[data-role="writer"] .book-card__genre {
+.app-shell[data-role="writer"] .book-card__genre,
+.app-shell[data-role="writer"] .user-area__avatar,
+.app-shell[data-role="writer"] .protected-account__avatar {
   color: var(--writer-custom-accent) !important;
 }
 
@@ -185,10 +226,10 @@
 
 .writer-theme-editor__intro,
 .writer-theme-editor__layer {
-  border: 1px solid var(--writer-custom-border, #d9d0fa);
+  border: 1px solid var(--writer-custom-border, #2a2f37);
   border-radius: 1rem;
-  background: var(--writer-custom-card-surface, #fffefb);
-  color: var(--writer-custom-text, #292620);
+  background: var(--writer-custom-card-surface, #1a1f27);
+  color: var(--writer-custom-text, #ffffff);
 }
 
 .writer-theme-editor__intro {
@@ -197,7 +238,7 @@
 
 .writer-theme-editor__intro p,
 .writer-theme-editor__layer p {
-  color: var(--writer-custom-text-muted, #746f66);
+  color: var(--writer-custom-text-muted, #9ca3af);
 }
 
 .writer-theme-editor__grid {
@@ -248,11 +289,11 @@
   width: 3rem;
   height: 3rem;
   padding: 0;
-  border: 2px solid var(--writer-custom-border, #d9d0fa);
+  border: 2px solid var(--writer-custom-border, #2a2f37);
   border-radius: 50%;
   overflow: hidden;
   background: transparent;
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--writer-custom-primary, #6847e8) 8%, transparent);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--writer-custom-primary, #d4af37) 10%, transparent);
   cursor: pointer;
 }
 
@@ -268,20 +309,20 @@
 
 .writer-theme-editor__picker-value {
   min-width: 4.8rem;
-  color: var(--writer-custom-text-muted, #746f66);
+  color: var(--writer-custom-text-muted, #9ca3af);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.025em;
 }
 
 .writer-theme-editor__advanced {
-  border-top: 1px solid color-mix(in srgb, var(--writer-custom-border, #d9d0fa) 70%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--writer-custom-border, #2a2f37) 70%, transparent);
   padding-top: 0.55rem;
 }
 
 .writer-theme-editor__advanced summary {
   width: fit-content;
-  color: var(--writer-custom-primary, #6847e8);
+  color: var(--writer-custom-primary, #d4af37);
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
@@ -301,7 +342,7 @@
 }
 
 .writer-theme-editor__field-label {
-  color: var(--writer-custom-text-muted, #746f66);
+  color: var(--writer-custom-text-muted, #9ca3af);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.035em;
@@ -310,10 +351,10 @@
 .writer-theme-editor__custom input[type="text"] {
   width: 100%;
   min-height: 2.4rem;
-  border: 1px solid var(--writer-custom-border, #d9d0fa);
+  border: 1px solid var(--writer-custom-border, #2a2f37);
   border-radius: 0.7rem;
-  background: var(--writer-custom-control-surface, #f8f6ff);
-  color: var(--writer-custom-text, #292620);
+  background: var(--writer-custom-control-surface, #13161b);
+  color: var(--writer-custom-text, #ffffff);
   padding: 0 0.7rem;
   font-size: 0.82rem;
 }
@@ -338,16 +379,16 @@
   gap: 0.75rem;
   align-items: center;
   justify-content: flex-end;
-  border: 1px solid var(--writer-custom-border, #d9d0fa);
+  border: 1px solid var(--writer-custom-border, #2a2f37);
   border-radius: 1rem;
   padding: 0.8rem;
-  background: color-mix(in srgb, var(--writer-custom-card-surface, #fffefb) 92%, transparent);
+  background: color-mix(in srgb, var(--writer-custom-card-surface, #1a1f27) 92%, transparent);
   backdrop-filter: blur(12px);
 }
 
 .writer-theme-editor__actions [role="status"] {
   margin-right: auto;
-  color: var(--writer-custom-text-muted, #746f66);
+  color: var(--writer-custom-text-muted, #9ca3af);
 }
 
 @media (max-width: 960px) {

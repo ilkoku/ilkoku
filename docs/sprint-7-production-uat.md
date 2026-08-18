@@ -39,7 +39,7 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 | Create/edit work | `/eserlerim` | Work CRUD remains writer-owned; hidden publish bypass is unavailable | AUTOMATED_PASS | HUMAN_PASS |
 | Chapter writing | `/yazmaya-devam` | Chapter editing/autosave surface opens for owned work | AUTOMATED_PASS | HUMAN_PASS |
 | Canonical publish | writer publish action | Publication validates chapter content and updates Chapter + Work + audit atomically | AUTOMATED_PASS | HUMAN_PASS |
-| Writer notifications | `/bildirimler` | Open/read/unread/related-target behavior works from writer account | AUTOMATED_PASS | HUMAN_PENDING |
+| Writer notifications | `/bildirimler` | Open/read/unread/related-target behavior works from writer account | AUTOMATED_PASS | HUMAN_PASS |
 | Account settings | `/hesabim` | Sidebar sections, personal data, writing genres, notification preferences and security are usable | AUTOMATED_PASS | HUMAN_PENDING |
 | Publisher area | `/yayinevleri` | No new direct legacy application CTA exists; historical processes remain readable and pending/reviewing rows can still be withdrawn | AUTOMATED_PASS | HUMAN_PENDING |
 
@@ -90,6 +90,7 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 - 2026-08-18 — Writer create/edit `/eserlerim`: the live writer account opened the works surface and completed the create/edit acceptance flow without exposing a direct publish-status bypass.
 - 2026-08-18 — Chapter writing `/yazmaya-devam`: the live writer account opened an owned chapter editing surface and completed the writing/save acceptance flow without data-loss symptoms.
 - 2026-08-18 — Canonical publish: the live writer account published through the normal writer publish flow; the published work and chapter were reachable afterward and content remained intact.
+- 2026-08-18 — Writer notifications `/bildirimler`: the live writer account opened a notification, observed the read/envelope state transition, used the separate related-record navigation and retained the read state after returning.
 
 ## Closure record
 

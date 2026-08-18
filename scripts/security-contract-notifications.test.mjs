@@ -121,36 +121,65 @@ test("shared notification page explicitly allows writer without widening reader 
 test("all role notification pages use the central resolver", () => {
   const reader = source("src/app/bildirimler/page.tsx");
   const editor = source("src/app/editor/bildirimler/page.tsx");
+  const item = source(
+    "src/features/notifications/components/NotificationListItem.tsx",
+  );
   const publisher = source("src/features/publisher-workspace/notification-center.ts");
 
   assertContains(reader, "resolveNotificationTargets", "shared notification page");
-  assertContains(reader, "İlgili kaydı aç", "shared notification page");
+  assertContains(reader, "NotificationListItem", "shared notification page");
   assertContains(editor, "resolveNotificationTargets", "editor notification page");
-  assertContains(editor, "İlgili kaydı aç", "editor notification page");
+  assertContains(editor, "NotificationListItem", "editor notification page");
+  assertContains(item, "İlgili kayda git", "shared notification interaction");
   assertContains(publisher, "resolveNotificationTargets", "publisher notification center");
   assertNotContains(publisher, "workSlugById", "publisher notification center");
 });
 
-test("shared and editor record actions mark notifications read before secure navigation", () => {
-  const shared = source("src/app/bildirimler/page.tsx");
-  const editor = source("src/app/editor/bildirimler/page.tsx");
+test("opening a notification reveals its details and marks it read", () => {
+  const item = source(
+    "src/features/notifications/components/NotificationListItem.tsx",
+  );
+  const actions = source("src/features/notifications/actions.ts");
+
+  assertContains(item, "aria-expanded={expanded}", "notification disclosure control");
+  assertContains(item, 'expanded ? "Kapat" : "Bildirimi aç"', "notification disclosure control");
+  assertContains(item, "if (nextExpanded)", "notification disclosure read transition");
+  assertContains(item, "markReadIfNeeded()", "notification disclosure read transition");
+  assertContains(item, "markNotificationReadAction", "notification disclosure read transition");
+  assertContains(item, "setRead(true)", "notification disclosure optimistic state");
+  assertContains(actions, "export async function markNotificationReadAction", "notification read action");
+  assertContains(actions, "userId: user.id", "notification read ownership boundary");
+  assertContains(actions, "readAt: null", "notification read transition");
+  assertContains(actions, "readAt: new Date()", "notification read transition");
+});
+
+test("related record action remains separate and securely resolved after reading", () => {
+  const item = source(
+    "src/features/notifications/components/NotificationListItem.tsx",
+  );
   const actions = source("src/features/notifications/actions.ts");
   const publisher = source(
     "src/features/publisher-workspace/components/PublisherNotificationCenter.tsx",
   );
 
-  assertContains(shared, "openNotificationTargetAction", "shared notification CTA");
-  assertContains(shared, "action={openNotificationTargetAction}", "shared notification CTA");
-  assertContains(editor, "openNotificationTargetAction", "editor notification CTA");
-  assertContains(editor, "action={openNotificationTargetAction}", "editor notification CTA");
+  assertContains(item, "openNotificationTargetAction", "notification related-record CTA");
+  assertContains(item, "action={openNotificationTargetAction}", "notification related-record CTA");
+  assertContains(item, "İlgili kayda git", "notification related-record CTA");
   assertContains(actions, "resolveNotificationTargets", "notification open action");
-  assertContains(actions, "readAt: new Date()", "notification open action");
   assertContains(actions, "redirect(target)", "notification open action");
   assertContains(actions, "userId: user.id", "notification open action");
   assertContains(publisher, '<a href={href}>İlgili kaydı aç</a>', "publisher notification CTA");
-  assertNotContains(shared, 'from "next/link"', "shared notification CTA");
-  assertNotContains(editor, 'from "next/link"', "editor notification CTA");
-  assertNotContains(publisher, 'from "next/link"', "publisher notification CTA");
+});
+
+test("notification envelope remains a reversible read-state control", () => {
+  const item = source(
+    "src/features/notifications/components/NotificationListItem.tsx",
+  );
+
+  assertContains(item, "toggleNotificationReadAction", "notification envelope control");
+  assertContains(item, "NotificationEnvelopeIcon", "notification envelope control");
+  assertContains(item, 'read ? "Okunmadı olarak işaretle"', "notification envelope label");
+  assertContains(item, "setExpanded(false)", "notification unread reset");
 });
 
 test("shared and editor notification pages expose browser back navigation", () => {

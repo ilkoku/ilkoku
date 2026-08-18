@@ -25,6 +25,46 @@ function revalidateNotificationPaths(returnPath: string) {
   }
 }
 
+export async function markNotificationReadAction(
+  formData: FormData,
+): Promise<void> {
+  const user = await getCurrentUser();
+  const notificationId = text(formData, "notificationId");
+
+  if (!user || !notificationId) {
+    throw new Error("NOTIFICATION_PERMISSION_REQUIRED");
+  }
+
+  const notification = await prisma.notification.findFirst({
+    where: {
+      id: notificationId,
+      userId: user.id,
+    },
+    select: {
+      readAt: true,
+    },
+  });
+
+  if (!notification) {
+    throw new Error("NOTIFICATION_NOT_FOUND");
+  }
+
+  if (!notification.readAt) {
+    await prisma.notification.updateMany({
+      where: {
+        id: notificationId,
+        readAt: null,
+        userId: user.id,
+      },
+      data: {
+        readAt: new Date(),
+      },
+    });
+  }
+
+  revalidateNotificationPaths(text(formData, "returnPath"));
+}
+
 export async function toggleNotificationReadAction(
   formData: FormData,
 ): Promise<void> {

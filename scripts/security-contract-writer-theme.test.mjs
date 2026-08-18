@@ -24,13 +24,25 @@ test("writer Page Colors route is role-scoped and present in writer navigation o
   includes(proxy, '{ approved: false, path: "/sayfa-renkleri", roles: ["writer"] }', "Page Colors proxy role rule");
 });
 
-test("writer theme storage is isolated per user and sanitized", () => {
+test("writer theme storage is isolated per user, versioned and sanitized", () => {
   const theme = source("src/features/writer-theme/theme.ts");
 
-  includes(theme, "ilkoku:writer-theme:${userId}", "writer theme storage");
+  includes(theme, "ilkoku:writer-theme:v2:${userId}", "writer theme storage");
   includes(theme, "/^#[0-9A-F]{6}$/", "writer theme six-digit hex sanitizer");
   includes(theme, "/^#[0-9A-F]{3}$/", "writer theme shorthand hex sanitizer");
   includes(theme, "sanitizeWriterTheme", "writer theme sanitizer");
+});
+
+test("writer defaults use the original dark black and gold İlkOku palette", () => {
+  const theme = source("src/features/writer-theme/theme.ts");
+  const css = source("src/features/writer-theme/writer-theme-customization.css");
+
+  for (const color of ["#0B0D10", "#13161B", "#1A1F27", "#D4AF37", "#E5C75A", "#C9A15A", "#FFFFFF", "#9CA3AF"]) {
+    includes(theme, color, `writer legacy default ${color}`);
+  }
+  includes(css, "--writer-custom-page-canvas: #0b0d10", "writer dark canvas fallback");
+  includes(css, "--writer-custom-primary: #d4af37", "writer gold primary fallback");
+  includes(css, "color-scheme: dark", "writer dark color scheme");
 });
 
 test("Page Colors uses compact circular unlimited pickers without bulky preset palettes", () => {
@@ -86,16 +98,18 @@ test("writer theme exposes 23 independently editable visual layers", () => {
   }
 });
 
-test("expanded writer theme variables are hydrated and wired only to writer shells", () => {
+test("writer theme is the final writer presentation layer and old purple layers are disabled", () => {
   const shell = source("src/components/layout/AppShell.tsx");
   const hydrator = source("src/features/writer-theme/WriterThemeHydrator.tsx");
   const css = source("src/features/writer-theme/writer-theme-customization.css");
 
   includes(shell, 'profile.role === "writer"', "writer theme hydrator");
   includes(shell, "<WriterThemeHydrator", "writer theme hydrator");
-  const canonicalIndex = shell.indexOf('import "@/styles/light-surface-unification.css"');
-  const customIndex = shell.indexOf('import "@/features/writer-theme/writer-theme-customization.css"');
-  assert.ok(canonicalIndex >= 0 && customIndex > canonicalIndex, "custom writer theme CSS must load after canonical palette");
+  includes(shell, 'import "@/features/writer-theme/writer-theme-customization.css"', "writer customization import");
+  assert.ok(!shell.includes("writer-role-theme.css"), "old writer purple role theme must not load");
+  assert.ok(!shell.includes("writer-purple-continuity.css"), "old writer purple continuity must not load");
+  assert.ok(!shell.includes("writer-landing-lavender-background.css"), "old writer lavender background must not load");
+  assert.ok(!shell.includes("light-surface-unification.css"), "old light writer surface override must not load");
 
   for (const variable of [
     "--writer-custom-brand-surface",
@@ -113,4 +127,14 @@ test("expanded writer theme variables are hydrated and wired only to writer shel
 
   includes(css, '.app-shell[data-role="writer"]', "writer-scoped theme CSS");
   includes(css, ".nav-item[data-active]", "writer active navigation color hook");
+});
+
+test("login route uses the original auth palette without purple/light overrides", () => {
+  const page = source("src/app/giris/page.tsx");
+  const layout = source("src/app/giris/layout.tsx");
+
+  assert.ok(!page.includes(" purple>"), "login AuthShell must not enable purple palette");
+  assert.ok(!layout.includes("auth-brand-purple.css"), "login must not import purple brand override");
+  assert.ok(!layout.includes("light-purple-route-fallback.css"), "login must not import light route fallback");
+  assert.ok(!layout.includes("light-surface-unification.css"), "login must not import light surface override");
 });

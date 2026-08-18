@@ -10,10 +10,6 @@ import {
 } from "@/features/publisher-discovery/access";
 import { WriterThemeHydrator } from "@/features/writer-theme/WriterThemeHydrator";
 import styles from "@/features/admin-role-view/AdminRoleView.module.css";
-import "@/features/writer/writer-role-theme.css";
-import "@/features/writer/writer-purple-continuity.css";
-import "@/features/writer/writer-landing-lavender-background.css";
-import "@/styles/light-surface-unification.css";
 import "@/features/writer-theme/writer-theme-customization.css";
 
 type AppShellProps = {

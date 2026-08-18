@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (profile) redirect(await getAuthenticatedDestination(profile));
   const { durum, sonraki } = await searchParams;
   return (
-    <AuthShell eyebrow={authContent.login.eyebrow} title={authContent.login.title} description={authContent.login.description} purple>
+    <AuthShell eyebrow={authContent.login.eyebrow} title={authContent.login.title} description={authContent.login.description}>
       {durum && statusMessages[durum] && <p className="auth-route-status" role="status">{statusMessages[durum]}</p>}
       <LoginForm nextPath={sonraki} />
     </AuthShell>

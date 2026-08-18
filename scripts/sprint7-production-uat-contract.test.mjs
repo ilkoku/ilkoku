@@ -60,8 +60,13 @@ test("Sprint 7 UAT document keeps automated and human acceptance explicitly sepa
   );
   assertContains(
     uat,
-    "Do not mark the sprint closed while any critical row remains `HUMAN_PENDING` or `BLOCKED`.",
-    "Sprint 7 closure rule",
+    "Do not mark **Final Release UAT / release readiness** complete while any critical row remains `HUMAN_PENDING` or `BLOCKED`.",
+    "Sprint 7 final release UAT rule",
+  );
+  assertContains(
+    uat,
+    "Sprint 8 technical development may continue independently.",
+    "Sprint 8 independence from deferred human UAT",
   );
 });
 

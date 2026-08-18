@@ -1,0 +1,10 @@
+/* Sprint 6 — restore the writer dashboard hero's card frame after the legacy dark/gold palette rollback. */
+.app-shell[data-role="writer"] .dashboard-hero {
+  position: relative;
+  padding: clamp(1.5rem, 3vw, 2.4rem);
+  border: 1px solid var(--writer-custom-border, var(--color-border));
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-small);
+  overflow: hidden;
+  background-clip: padding-box;
+}

@@ -1,3 +1,5 @@
+import { parseCmsRoleCardsPayloadStrict } from "@/lib/cms-role-cards";
+
 export type StrictPageBody = { summary: string; body: string };
 export type StrictLegalBody = { description: string; updatedLabel: string; body: string };
 export type StrictFaqPayload = {
@@ -110,6 +112,9 @@ export function isCmsStagedPayloadStrict(contentKey: string, payload: Record<str
     const parts = contentKey.split(":");
     const section = parts.slice(2).join(":");
     return Boolean(parseCmsHomepageSectionStrict(section, serialized));
+  }
+  if (contentKey.startsWith("role-cards:")) {
+    return Boolean(parseCmsRoleCardsPayloadStrict(serialized));
   }
   if (contentKey.startsWith("faq:")) {
     return Boolean(parseCmsFaqPayloadStrict(serialized));

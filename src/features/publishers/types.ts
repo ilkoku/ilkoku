@@ -49,7 +49,6 @@ export interface SubmissionItem {
   work: { id: string; title: string };
 }
 
-export interface SubmissionWork { id: string; status: string; title: string }
 export interface PublisherDashboardData { accepted: number; items: SubmissionItem[]; pending: number; reviewing: number }
 export interface PublisherActionState { message: string; status: "idle" | "error" | "success" }
-export type PublisherFilter = "all" | "available" | "applied";
+export type PublisherFilter = "all" | "applied";

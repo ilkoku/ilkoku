@@ -1,6 +1,6 @@
 import { cache } from "react";
-import { getAuthorSubmissions, getEligibleWorks, getPublishers } from "./repository";
-import type { PublisherDashboardData, PublisherItem, SubmissionItem, SubmissionWork } from "./types";
+import { getAuthorSubmissions, getPublishers } from "./repository";
+import type { PublisherDashboardData, PublisherItem, SubmissionItem } from "./types";
 
 async function hydrateSubmissions(authorId: string, limit?: number): Promise<SubmissionItem[]> {
   const rows = await getAuthorSubmissions(authorId, limit);
@@ -43,11 +43,9 @@ async function hydrateSubmissions(authorId: string, limit?: number): Promise<Sub
 export const getPublishersWorkspace = cache(async (authorId: string): Promise<{
   publishers: PublisherItem[];
   submissions: SubmissionItem[];
-  works: SubmissionWork[];
 }> => {
-  const [publishers, works, submissions] = await Promise.all([
+  const [publishers, submissions] = await Promise.all([
     getPublishers(),
-    getEligibleWorks(authorId),
     hydrateSubmissions(authorId),
   ]);
 
@@ -63,7 +61,6 @@ export const getPublishersWorkspace = cache(async (authorId: string): Promise<{
       websiteUrl: item.websiteUrl,
     })),
     submissions,
-    works,
   };
 });
 

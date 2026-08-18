@@ -265,17 +265,31 @@ test("writer comment export stays writer-only, no-store and snapshot-bound", () 
   assertContains(text, "[=+\\-@]", "writer CSV formula guard");
 });
 
-test("legacy publisher writer mutations have only the canonical write path", () => {
-  const mutations = source("src/features/publishers/mutations.ts");
+test("writer publisher surface retires new legacy creation while preserving historical lifecycle", () => {
+  const actions = source("src/features/publishers/actions.ts");
   const repository = source("src/features/publishers/repository.ts");
+  const facade = source("src/features/publisher-submissions/legacy-security.ts");
 
   assertContains(
-    mutations,
-    "publisher-submissions/legacy-security",
-    "writer publisher mutations",
+    actions,
+    "Yeni doğrudan yayınevi başvuruları kapatıldı",
+    "writer publisher create compatibility action",
   );
-  assertContains(mutations, "createLegacyPublisherSubmission", "writer publisher mutations");
-  assertContains(mutations, "withdrawLegacyPublisherSubmission", "writer publisher mutations");
+  assertNotContains(
+    actions,
+    "createLegacyPublisherSubmission",
+    "writer publisher actions",
+  );
+  assertContains(
+    actions,
+    "withdrawLegacyPublisherSubmission",
+    "writer publisher historical withdrawal",
+  );
+  assertNotContains(
+    facade,
+    "createLegacyPublisherSubmission",
+    "legacy publisher compatibility facade",
+  );
   assertNotContains(repository, "insertSubmission", "publisher read repository");
   assertNotContains(repository, "withdrawAuthorSubmission", "publisher read repository");
 });

@@ -1,7 +1,6 @@
 import "server-only";
 
 export {
-  createLegacyPublisherSubmission,
   getLegacyPublisherFileForDownload,
   getLegacyPublisherFiles,
   withdrawLegacyPublisherSubmission,

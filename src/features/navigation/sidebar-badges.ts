@@ -25,6 +25,48 @@ function addBadge(
   }
 }
 
+async function getUnreadWriterFeedbackBadgeCount(
+  userId: string,
+) {
+  const [
+    normalFeedback,
+    professionalFeedbackGroups,
+  ] = await Promise.all([
+    prisma.editorFeedback.count({
+      where: {
+        archivedAt: null,
+        authorId: userId,
+        isProfessionalReview: false,
+        reportStatus: "completed",
+        status: "unread",
+      },
+    }),
+    prisma.editorFeedback.findMany({
+      where: {
+        archivedAt: null,
+        authorId: userId,
+        isProfessionalReview: true,
+        reportStatus: "completed",
+        status: "unread",
+        work: {
+          is: {
+            editorReviewStatus: "completed",
+          },
+        },
+      },
+      distinct: ["workId"],
+      select: {
+        workId: true,
+      },
+    }),
+  ]);
+
+  return (
+    normalFeedback +
+    professionalFeedbackGroups.length
+  );
+}
+
 export async function getSidebarBadges({
   id: userId,
   role,
@@ -64,13 +106,9 @@ export async function getSidebarBadges({
           },
         },
       }),
-      prisma.editorFeedback.count({
-        where: {
-          archivedAt: null,
-          authorId: userId,
-          status: "unread",
-        },
-      }),
+      getUnreadWriterFeedbackBadgeCount(
+        userId,
+      ),
     ]);
 
     addBadge(

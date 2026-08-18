@@ -3,23 +3,17 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { requireCmsAdmin } from "@/lib/cms-access";
 import {
   FOOTER_DRAFT_KEY,
   FOOTER_LIVE_KEY,
   parseFooterNavigation,
   type FooterNavigationPayload,
 } from "@/lib/cms-footer-navigation";
+import { analyzeFooterNavigation } from "@/lib/cms-footer-validation";
 import { prisma } from "@/lib/prisma";
 
 type FooterRow = { valueJson: string };
-
-async function requireAdmin() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/giris?sonraki=/icerik/menuler");
-  if (user.role !== "admin") redirect("/erisim-reddedildi?kaynak=icerik");
-  return user;
-}
 
 function value(formData: FormData, key: string, max = 300) {
   return String(formData.get(key) ?? "").trim().slice(0, max);
@@ -52,7 +46,7 @@ function footerPayload(formData: FormData): FooterNavigationPayload {
 }
 
 export async function saveFooterNavigationAction(formData: FormData) {
-  const user = await requireAdmin();
+  const { user } = await requireCmsAdmin("/icerik/menuler");
   const valueJson = JSON.stringify(footerPayload(formData));
 
   await prisma.$executeRaw`
@@ -61,7 +55,7 @@ export async function saveFooterNavigationAction(formData: FormData) {
       updatedById, createdAt, updatedAt
     ) VALUES (
       ${randomUUID()}, 'site', ${FOOTER_DRAFT_KEY}, ${valueJson}, 'json', 'draft',
-      ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+      ${user!.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
     )
     ON DUPLICATE KEY UPDATE
       valueJson = VALUES(valueJson),
@@ -77,7 +71,7 @@ export async function saveFooterNavigationAction(formData: FormData) {
 }
 
 export async function publishFooterNavigationAction() {
-  const user = await requireAdmin();
+  const { user } = await requireCmsAdmin("/icerik/menuler");
   const rows = await prisma.$queryRaw<FooterRow[]>`
     SELECT valueJson
     FROM SiteContent
@@ -87,8 +81,14 @@ export async function publishFooterNavigationAction() {
     LIMIT 1
   `;
   const draft = rows[0];
-  if (!draft || !parseFooterNavigation(draft.valueJson)) {
+  const payload = draft ? parseFooterNavigation(draft.valueJson) : null;
+  if (!draft || !payload) {
     redirect("/icerik/menuler?hata=taslak");
+  }
+
+  const diagnostics = await analyzeFooterNavigation(payload);
+  if (diagnostics.blocking.length > 0) {
+    redirect("/icerik/menuler?hata=linkler");
   }
 
   await prisma.$transaction([
@@ -98,7 +98,7 @@ export async function publishFooterNavigationAction() {
         publishedAt, updatedById, createdAt, updatedAt
       ) VALUES (
         ${randomUUID()}, 'site', ${FOOTER_LIVE_KEY}, ${draft.valueJson}, 'json', 'published',
-        CURRENT_TIMESTAMP(3), ${user.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+        CURRENT_TIMESTAMP(3), ${user!.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
       )
       ON DUPLICATE KEY UPDATE
         valueJson = VALUES(valueJson),
@@ -111,7 +111,7 @@ export async function publishFooterNavigationAction() {
     prisma.$executeRaw`
       UPDATE SiteContent
       SET status = 'archived', publishedAt = NULL,
-          updatedById = ${user.id}, updatedAt = CURRENT_TIMESTAMP(3)
+          updatedById = ${user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
       WHERE namespace = 'site'
         AND contentKey = ${FOOTER_DRAFT_KEY}
         AND status = 'draft'
@@ -120,5 +120,6 @@ export async function publishFooterNavigationAction() {
 
   revalidatePath("/");
   revalidatePath("/icerik/menuler");
+  revalidatePath("/icerik/saglik");
   redirect("/icerik/menuler?yayin=1");
 }

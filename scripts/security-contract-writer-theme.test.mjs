@@ -33,35 +33,25 @@ test("writer theme storage is isolated per user and sanitized", () => {
   includes(theme, "sanitizeWriterTheme", "writer theme sanitizer");
 });
 
-test("Page Colors exposes broad presets plus unrestricted picker, HEX/RGB/HSL and reset controls", () => {
+test("Page Colors uses compact circular unlimited pickers without bulky preset palettes", () => {
   const editor = source("src/features/writer-theme/WriterThemeEditor.tsx");
   const theme = source("src/features/writer-theme/theme.ts");
   const css = source("src/features/writer-theme/writer-theme-customization.css");
 
-  includes(editor, "writerThemePaletteGroups.map", "writer theme grouped palettes");
-  for (const group of [
-    "İlkOku ve nötr",
-    "Mor ve lila",
-    "Mavi",
-    "Turkuaz ve petrol",
-    "Yeşil",
-    "Sarı ve turuncu",
-    "Kırmızı ve pembe",
-  ]) {
-    includes(theme, `label: "${group}"`, `writer palette group ${group}`);
-  }
-  assert.ok(
-    (theme.match(/"#[0-9A-F]{6}"/g) ?? []).length >= 75,
-    "writer theme must keep a broad preset/default color inventory",
-  );
-  includes(editor, 'type="color"', "unrestricted custom color picker");
+  includes(editor, 'type="color"', "unrestricted native color picker");
+  includes(editor, "sınırsız renk seçici", "unrestricted picker label");
+  includes(editor, "Hazır renk sınırı yok", "unrestricted color guidance");
+  includes(editor, "Renk koduyla gir", "collapsed advanced color controls");
   includes(editor, "HEX değeri", "HEX field");
   includes(editor, "RGB değeri", "RGB field");
   includes(editor, "HSL değeri", "HSL field");
-  includes(editor, "renk seçimin bunlarla sınırlı değildir", "unrestricted color guidance");
-  includes(editor, "Bu rengi varsayılana döndür", "per-layer reset");
+  includes(editor, "Varsayılana döndür", "per-layer reset");
   includes(editor, "Tümünü varsayılana döndür", "full reset");
-  includes(css, "border-radius: 50%", "round color controls");
+  assert.ok(!editor.includes("writerThemePaletteGroups"), "editor must not render preset palette groups");
+  assert.ok(!theme.includes("writerThemePaletteGroups"), "theme must not carry bulky preset palette groups");
+  includes(css, ".writer-theme-editor__picker", "circular picker CSS");
+  includes(css, "border-radius: 50%", "round color picker");
+  includes(css, "grid-template-columns: repeat(2, minmax(0, 1fr))", "compact desktop two-column layout");
 });
 
 test("writer theme exposes 23 independently editable visual layers", () => {

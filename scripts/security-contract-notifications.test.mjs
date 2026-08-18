@@ -106,7 +106,7 @@ test("shared notification page explicitly allows writer without widening reader 
   assertNotContains(page, "canAccessReaderWorkspace", "shared notification page");
   assertContains(authData, "notificationWorkspaceRoles", "notification role boundary");
   assertContains(authData, '  "writer",', "notification role boundary");
-  assertContains(authData, "readerWorkspaceRoles", "reader role boundary");
+  assertContains(authData, "readerWorkspaceRoles", "notification role boundary");
   assertNotContains(
     authData.slice(
       authData.indexOf("export const readerWorkspaceRoles"),
@@ -131,19 +131,40 @@ test("all role notification pages use the central resolver", () => {
   assertNotContains(publisher, "workSlugById", "publisher notification center");
 });
 
-test("related-record CTAs use native browser navigation on every notification surface", () => {
+test("shared and editor record actions mark notifications read before secure navigation", () => {
   const shared = source("src/app/bildirimler/page.tsx");
   const editor = source("src/app/editor/bildirimler/page.tsx");
+  const actions = source("src/features/notifications/actions.ts");
   const publisher = source(
     "src/features/publisher-workspace/components/PublisherNotificationCenter.tsx",
   );
 
-  assertContains(shared, '<a className="button button--ghost" href={href}>', "shared notification CTA");
-  assertContains(editor, '<a className="button button--ghost" href={href}>', "editor notification CTA");
+  assertContains(shared, "openNotificationTargetAction", "shared notification CTA");
+  assertContains(shared, "action={openNotificationTargetAction}", "shared notification CTA");
+  assertContains(editor, "openNotificationTargetAction", "editor notification CTA");
+  assertContains(editor, "action={openNotificationTargetAction}", "editor notification CTA");
+  assertContains(actions, "resolveNotificationTargets", "notification open action");
+  assertContains(actions, "readAt: new Date()", "notification open action");
+  assertContains(actions, "redirect(target)", "notification open action");
+  assertContains(actions, "userId: user.id", "notification open action");
   assertContains(publisher, '<a href={href}>İlgili kaydı aç</a>', "publisher notification CTA");
   assertNotContains(shared, 'from "next/link"', "shared notification CTA");
   assertNotContains(editor, 'from "next/link"', "editor notification CTA");
   assertNotContains(publisher, 'from "next/link"', "publisher notification CTA");
+});
+
+test("shared and editor notification pages expose browser back navigation", () => {
+  const shared = source("src/app/bildirimler/page.tsx");
+  const editor = source("src/app/editor/bildirimler/page.tsx");
+  const backButton = source(
+    "src/features/notifications/components/NotificationBackButton.tsx",
+  );
+
+  assertContains(shared, "NotificationBackButton", "shared notification back control");
+  assertContains(editor, "NotificationBackButton", "editor notification back control");
+  assertContains(backButton, "window.history.back()", "notification back control");
+  assertContains(backButton, "window.location.assign(fallbackHref)", "notification back fallback");
+  assertContains(backButton, "Geri", "notification back label");
 });
 
 test("notification work and comment href shapes stay backed by real App Router routes", () => {

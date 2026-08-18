@@ -25,30 +25,34 @@ export type WriterThemeKey =
 
 export type WriterTheme = Record<WriterThemeKey, string>;
 
+/*
+ * Canonical writer default: the original İlkOku dark / black + gold palette.
+ * Writers can still override every value from /sayfa-renkleri.
+ */
 export const defaultWriterTheme: WriterTheme = {
-  pageCanvas: "#F8F6FF",
-  sidebar: "#F8F6FF",
-  brandSurface: "#F8F6FF",
-  mainSurface: "#F8F6FF",
-  headerSurface: "#F8F6FF",
-  cardSurface: "#FFFEFB",
-  coverSurface: "#FFFEFB",
-  controlSurface: "#F8F6FF",
-  border: "#D9D0FA",
-  text: "#292620",
-  textMuted: "#746F66",
-  heading: "#292620",
-  navText: "#4D4942",
-  navMuted: "#9B958B",
-  activeNav: "#6847E8",
-  activeNavSurface: "#EDE9FF",
-  hover: "#EDE9FF",
-  primary: "#6847E8",
-  primaryHover: "#4B2DBF",
-  buttonText: "#FFFFFF",
-  accent: "#8065F2",
-  coverText: "#292620",
-  progressTrack: "#ECE7DF",
+  pageCanvas: "#0B0D10",
+  sidebar: "#13161B",
+  brandSurface: "#1A1F27",
+  mainSurface: "#0B0D10",
+  headerSurface: "#0B0D10",
+  cardSurface: "#1A1F27",
+  coverSurface: "#202631",
+  controlSurface: "#13161B",
+  border: "#2A2F37",
+  text: "#FFFFFF",
+  textMuted: "#9CA3AF",
+  heading: "#F5F1E8",
+  navText: "#9CA3AF",
+  navMuted: "#626975",
+  activeNav: "#C9A15A",
+  activeNavSurface: "#211E15",
+  hover: "#1F232A",
+  primary: "#D4AF37",
+  primaryHover: "#E5C75A",
+  buttonText: "#0B0D10",
+  accent: "#C9A15A",
+  coverText: "#F5F1E8",
+  progressTrack: "#202631",
 };
 
 export const writerThemeLayers: Array<{
@@ -82,7 +86,7 @@ export const writerThemeLayers: Array<{
 ];
 
 export function writerThemeStorageKey(userId: string) {
-  return `ilkoku:writer-theme:${userId}`;
+  return `ilkoku:writer-theme:v2:${userId}`;
 }
 
 export function normalizeHex(value: string) {

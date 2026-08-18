@@ -54,6 +54,7 @@ const publisherApplicationStatusLabels = {
 const accountSections = [
   { href: "#genel-bakis", label: "Genel Bakış", helper: "Hesap ve rol özeti" },
   { href: "#kisisel-bilgiler", label: "Kişisel Bilgiler", helper: "Profil ve yazar bilgileri" },
+  { href: "#yazdiginiz-turler", label: "Yazdığınız Türler", helper: "Yazarlık türlerinizi seçin" },
   { href: "#rol-basvurusu", label: "Rol & Başvurular", helper: "Başvuru ve doğrulama durumu" },
   { href: "#bildirim-tercihleri", label: "Bildirim Tercihleri", helper: "E-posta ve bildirim ayarları" },
   { href: "#guvenlik", label: "Güvenlik", helper: "Şifre ve oturum işlemleri" },

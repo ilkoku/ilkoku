@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import "@/features/publishers/publishers-layout-fix.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { PublisherWorkspace } from "@/features/publishers/components/PublisherWorkspace";

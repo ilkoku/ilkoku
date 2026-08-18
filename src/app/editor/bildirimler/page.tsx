@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { AppShell } from "@/components/layout/AppShell";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
-import { toggleNotificationReadAction } from "@/features/notifications/actions";
+import {
+  openNotificationTargetAction,
+  toggleNotificationReadAction,
+} from "@/features/notifications/actions";
+import { NotificationBackButton } from "@/features/notifications/components/NotificationBackButton";
 import { NotificationEnvelopeIcon } from "@/features/notifications/components/NotificationEnvelopeIcon";
 import styles from "@/features/notifications/notification-list.module.css";
 import { resolveNotificationTargets } from "@/features/notifications/targets";
@@ -36,6 +40,12 @@ export default async function EditorNotificationsPage() {
   return (
     <AppShell profile={profile}>
       <div className="editor-workspace">
+        <div className={styles.backRow}>
+          <NotificationBackButton
+            className={`button button--ghost ${styles.backButton}`}
+            fallbackHref="/editor"
+          />
+        </div>
         <EditorPageHeader
           description="İnceleme ve editör önerilerinizle ilgili güncellemeler."
           title="Bildirimler"
@@ -66,11 +76,24 @@ export default async function EditorNotificationsPage() {
                     {formatDate(notification.createdAt)}
                   </time>
                   {href ? (
-                    <div className={styles.relatedAction}>
-                      <a className="button button--ghost" href={href}>
+                    <form
+                      action={openNotificationTargetAction}
+                      className={styles.relatedAction}
+                    >
+                      <input
+                        name="notificationId"
+                        type="hidden"
+                        value={notification.id}
+                      />
+                      <input
+                        name="returnPath"
+                        type="hidden"
+                        value="/editor/bildirimler"
+                      />
+                      <button className="button button--ghost" type="submit">
                         İlgili kaydı aç
-                      </a>
-                    </div>
+                      </button>
+                    </form>
                   ) : null}
                 </div>
                 <form

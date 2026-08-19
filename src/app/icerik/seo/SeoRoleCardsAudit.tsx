@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cmsRoleKeys, cmsRoleMeta, roleCardsFromPayload, type CmsRoleCard, type CmsRoleKey } from "@/lib/cms-role-cards";
 import { getPublishedRoleCardsState, type PublishedRoleCardsState } from "@/lib/cms-role-card-store";
+import { SeoHomepageAudit } from "./SeoHomepageAudit";
 import { SeoTechnicalAudit } from "./SeoTechnicalAudit";
 import styles from "./SeoRoleCardsAudit.module.css";
 
@@ -97,6 +98,7 @@ export async function SeoRoleCardsAudit() {
   return (
     <>
       <SeoTechnicalAudit />
+      <SeoHomepageAudit />
       <section className={styles.audit} aria-labelledby="seo-role-cards-title">
         <div className={styles.header}>
           <div className={styles.headerCopy}>

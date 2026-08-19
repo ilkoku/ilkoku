@@ -30,10 +30,16 @@ type LockedTemplate = {
   active: number | boolean;
   body: string;
   code: string;
+  description: string | null;
   id: string;
-  targetRole: ContractTargetRole;
+  targetRole: string;
   title: string;
   version: number;
+};
+
+type RawTemplate = LockedTemplate & {
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 type LockedContract = {
@@ -58,10 +64,25 @@ function toBoolean(value: number | boolean) {
   return value === true || value === 1;
 }
 
-function normalizeTargetRole(value: string): ContractTargetRole | null {
+function normalizeTargetRole(value: string): ContractTargetRole {
   return validTargetRoles.has(value as ContractTargetRole)
     ? (value as ContractTargetRole)
-    : null;
+    : "any";
+}
+
+function normalizeTemplate(row: RawTemplate): ContractTemplateRecord {
+  return {
+    active: toBoolean(row.active),
+    body: row.body,
+    code: row.code,
+    createdAt: row.createdAt,
+    description: row.description,
+    id: row.id,
+    targetRole: normalizeTargetRole(row.targetRole),
+    title: row.title,
+    updatedAt: row.updatedAt,
+    version: Number(row.version),
+  };
 }
 
 function auditMetadata(value: Record<string, unknown>) {
@@ -116,7 +137,7 @@ async function lockTemplate(
   templateId: string,
 ) {
   const rows = await transaction.$queryRaw<LockedTemplate[]>`
-    SELECT id, code, title, targetRole, body, version, active
+    SELECT id, code, title, description, targetRole, body, version, active
     FROM ContractTemplate
     WHERE id = ${templateId}
     LIMIT 1
@@ -172,37 +193,34 @@ function renderSnapshot(
   );
 }
 
-export async function listContractTemplates(options: { includeInactive?: boolean } = {}) {
-  const rows = await prisma.$queryRaw<Array<ContractTemplateRecord & { active: number | boolean }>>`
-    SELECT id, code, title, description, targetRole, body, version, active, createdAt, updatedAt
-    FROM ContractTemplate
-    ${options.includeInactive ? Prisma.empty : Prisma.sql`WHERE active = 1`}
-    ORDER BY active DESC, targetRole ASC, title ASC
-  `;
+export async function listContractTemplates(
+  options: { includeInactive?: boolean } = {},
+) {
+  const rows = options.includeInactive
+    ? await prisma.$queryRaw<RawTemplate[]>`
+        SELECT id, code, title, description, targetRole, body, version, active, createdAt, updatedAt
+        FROM ContractTemplate
+        ORDER BY active DESC, targetRole ASC, title ASC
+      `
+    : await prisma.$queryRaw<RawTemplate[]>`
+        SELECT id, code, title, description, targetRole, body, version, active, createdAt, updatedAt
+        FROM ContractTemplate
+        WHERE active = 1
+        ORDER BY targetRole ASC, title ASC
+      `;
 
-  return rows.map((row) => ({
-    ...row,
-    active: toBoolean(row.active),
-    targetRole: normalizeTargetRole(String(row.targetRole)) ?? "any",
-  }));
+  return rows.map(normalizeTemplate);
 }
 
 export async function getContractTemplate(templateId: string) {
-  const rows = await prisma.$queryRaw<Array<ContractTemplateRecord & { active: number | boolean }>>`
+  const rows = await prisma.$queryRaw<RawTemplate[]>`
     SELECT id, code, title, description, targetRole, body, version, active, createdAt, updatedAt
     FROM ContractTemplate
     WHERE id = ${templateId}
     LIMIT 1
   `;
-  const row = rows[0];
 
-  return row
-    ? {
-        ...row,
-        active: toBoolean(row.active),
-        targetRole: normalizeTargetRole(String(row.targetRole)) ?? "any",
-      }
-    : null;
+  return rows[0] ? normalizeTemplate(rows[0]) : null;
 }
 
 export async function listContractRecipients() {
@@ -212,10 +230,7 @@ export async function listContractRecipients() {
       isBanned: false,
       status: "active",
     },
-    orderBy: [
-      { role: "asc" },
-      { fullName: "asc" },
-    ],
+    orderBy: [{ role: "asc" }, { fullName: "asc" }],
     select: {
       displayName: true,
       email: true,
@@ -244,142 +259,73 @@ export async function listContractWorks() {
   return works as ContractWorkRecord[];
 }
 
+const contractSelectSql = `
+  SELECT
+    contract.id,
+    contract.templateId,
+    template.code AS templateCode,
+    contract.templateVersion,
+    contract.recipientRole,
+    contract.status,
+    contract.titleSnapshot,
+    contract.bodySnapshot,
+    contract.adminNote,
+    contract.responseNote,
+    contract.relatedWorkId,
+    work.title AS relatedWorkTitle,
+    contract.sentAt,
+    contract.viewedAt,
+    contract.respondedAt,
+    contract.createdAt,
+    contract.updatedAt,
+    recipient.fullName AS recipientFullName,
+    recipient.email AS recipientEmail,
+    sender.email AS sentByEmail
+  FROM UserContract contract
+  INNER JOIN ContractTemplate template ON template.id = contract.templateId
+  INNER JOIN User recipient ON recipient.id = contract.recipientUserId
+  LEFT JOIN Work work ON work.id = contract.relatedWorkId
+  LEFT JOIN User sender ON sender.id = contract.sentById
+`;
+
 export async function listAdminUserContracts(limit = 150) {
-  return prisma.$queryRaw<UserContractListRecord[]>`
-    SELECT
-      contract.id,
-      contract.templateId,
-      template.code AS templateCode,
-      contract.templateVersion,
-      contract.recipientRole,
-      contract.status,
-      contract.titleSnapshot,
-      contract.bodySnapshot,
-      contract.adminNote,
-      contract.responseNote,
-      contract.relatedWorkId,
-      work.title AS relatedWorkTitle,
-      contract.sentAt,
-      contract.viewedAt,
-      contract.respondedAt,
-      contract.createdAt,
-      contract.updatedAt,
-      recipient.fullName AS recipientFullName,
-      recipient.email AS recipientEmail,
-      sender.email AS sentByEmail
-    FROM UserContract contract
-    INNER JOIN ContractTemplate template ON template.id = contract.templateId
-    INNER JOIN User recipient ON recipient.id = contract.recipientUserId
-    LEFT JOIN Work work ON work.id = contract.relatedWorkId
-    LEFT JOIN User sender ON sender.id = contract.sentById
-    ORDER BY contract.updatedAt DESC
-    LIMIT ${limit}
-  `;
+  const safeLimit = Math.max(1, Math.min(500, Math.trunc(limit)));
+  return prisma.$queryRawUnsafe<UserContractListRecord[]>(
+    `${contractSelectSql} ORDER BY contract.updatedAt DESC LIMIT ?`,
+    safeLimit,
+  );
 }
 
 export async function listUserContracts(recipientUserId: string) {
-  return prisma.$queryRaw<UserContractListRecord[]>`
-    SELECT
-      contract.id,
-      contract.templateId,
-      template.code AS templateCode,
-      contract.templateVersion,
-      contract.recipientRole,
-      contract.status,
-      contract.titleSnapshot,
-      contract.bodySnapshot,
-      contract.adminNote,
-      contract.responseNote,
-      contract.relatedWorkId,
-      work.title AS relatedWorkTitle,
-      contract.sentAt,
-      contract.viewedAt,
-      contract.respondedAt,
-      contract.createdAt,
-      contract.updatedAt,
-      recipient.fullName AS recipientFullName,
-      recipient.email AS recipientEmail,
-      sender.email AS sentByEmail
-    FROM UserContract contract
-    INNER JOIN ContractTemplate template ON template.id = contract.templateId
-    INNER JOIN User recipient ON recipient.id = contract.recipientUserId
-    LEFT JOIN Work work ON work.id = contract.relatedWorkId
-    LEFT JOIN User sender ON sender.id = contract.sentById
-    WHERE contract.recipientUserId = ${recipientUserId}
-      AND contract.status <> 'draft'
-    ORDER BY contract.updatedAt DESC
-  `;
+  return prisma.$queryRawUnsafe<UserContractListRecord[]>(
+    `${contractSelectSql}
+     WHERE contract.recipientUserId = ? AND contract.status <> 'draft'
+     ORDER BY contract.updatedAt DESC`,
+    recipientUserId,
+  );
 }
 
 export async function getAdminContract(contractId: string) {
-  const rows = await prisma.$queryRaw<UserContractListRecord[]>`
-    SELECT
-      contract.id,
-      contract.templateId,
-      template.code AS templateCode,
-      contract.templateVersion,
-      contract.recipientRole,
-      contract.status,
-      contract.titleSnapshot,
-      contract.bodySnapshot,
-      contract.adminNote,
-      contract.responseNote,
-      contract.relatedWorkId,
-      work.title AS relatedWorkTitle,
-      contract.sentAt,
-      contract.viewedAt,
-      contract.respondedAt,
-      contract.createdAt,
-      contract.updatedAt,
-      recipient.fullName AS recipientFullName,
-      recipient.email AS recipientEmail,
-      sender.email AS sentByEmail
-    FROM UserContract contract
-    INNER JOIN ContractTemplate template ON template.id = contract.templateId
-    INNER JOIN User recipient ON recipient.id = contract.recipientUserId
-    LEFT JOIN Work work ON work.id = contract.relatedWorkId
-    LEFT JOIN User sender ON sender.id = contract.sentById
-    WHERE contract.id = ${contractId}
-    LIMIT 1
-  `;
-
+  const rows = await prisma.$queryRawUnsafe<UserContractListRecord[]>(
+    `${contractSelectSql} WHERE contract.id = ? LIMIT 1`,
+    contractId,
+  );
   return rows[0] ?? null;
 }
 
-export async function getUserContract(contractId: string, recipientUserId: string) {
-  const rows = await prisma.$queryRaw<UserContractListRecord[]>`
-    SELECT
-      contract.id,
-      contract.templateId,
-      template.code AS templateCode,
-      contract.templateVersion,
-      contract.recipientRole,
-      contract.status,
-      contract.titleSnapshot,
-      contract.bodySnapshot,
-      contract.adminNote,
-      contract.responseNote,
-      contract.relatedWorkId,
-      work.title AS relatedWorkTitle,
-      contract.sentAt,
-      contract.viewedAt,
-      contract.respondedAt,
-      contract.createdAt,
-      contract.updatedAt,
-      recipient.fullName AS recipientFullName,
-      recipient.email AS recipientEmail,
-      sender.email AS sentByEmail
-    FROM UserContract contract
-    INNER JOIN ContractTemplate template ON template.id = contract.templateId
-    INNER JOIN User recipient ON recipient.id = contract.recipientUserId
-    LEFT JOIN Work work ON work.id = contract.relatedWorkId
-    LEFT JOIN User sender ON sender.id = contract.sentById
-    WHERE contract.id = ${contractId}
-      AND contract.recipientUserId = ${recipientUserId}
-      AND contract.status <> 'draft'
-    LIMIT 1
-  `;
-
+export async function getUserContract(
+  contractId: string,
+  recipientUserId: string,
+) {
+  const rows = await prisma.$queryRawUnsafe<UserContractListRecord[]>(
+    `${contractSelectSql}
+     WHERE contract.id = ?
+       AND contract.recipientUserId = ?
+       AND contract.status <> 'draft'
+     LIMIT 1`,
+    contractId,
+    recipientUserId,
+  );
   return rows[0] ?? null;
 }
 
@@ -399,7 +345,9 @@ export async function listContractEvents(contractId: string) {
   `;
 }
 
-export async function listLegacyPublisherContracts(limit = 100): Promise<LegacyPublisherContractRecord[]> {
+export async function listLegacyPublisherContracts(
+  limit = 100,
+): Promise<LegacyPublisherContractRecord[]> {
   const rows = await prisma.publishingContract.findMany({
     orderBy: { updatedAt: "desc" },
     include: {
@@ -411,7 +359,7 @@ export async function listLegacyPublisherContracts(limit = 100): Promise<LegacyP
         },
       },
     },
-    take: limit,
+    take: Math.max(1, Math.min(500, Math.trunc(limit))),
   });
 
   return rows.map((row) => ({
@@ -438,18 +386,16 @@ export async function sendAdminContract(input: {
     const actor = await lockAdmin(transaction, input.actorId);
     if (!actor) return { status: "forbidden" as const };
 
-    const [recipient, template] = await Promise.all([
-      lockRecipient(transaction, input.recipientUserId),
-      lockTemplate(transaction, input.templateId),
-    ]);
-
+    const recipient = await lockRecipient(transaction, input.recipientUserId);
     if (!recipient) return { status: "invalid_recipient" as const };
-    if (!template || !toBoolean(template.active)) return { status: "invalid_template" as const };
 
-    if (
-      template.targetRole !== "any" &&
-      template.targetRole !== recipient.role
-    ) {
+    const template = await lockTemplate(transaction, input.templateId);
+    if (!template || !toBoolean(template.active)) {
+      return { status: "invalid_template" as const };
+    }
+
+    const templateRole = normalizeTargetRole(template.targetRole);
+    if (templateRole !== "any" && templateRole !== recipient.role) {
       return { status: "role_mismatch" as const };
     }
 
@@ -474,10 +420,14 @@ export async function sendAdminContract(input: {
       LIMIT 1
       FOR UPDATE
     `;
-    if (existing[0]) return { status: "duplicate_active" as const, contractId: existing[0].id };
+    if (existing[0]) {
+      return {
+        contractId: existing[0].id,
+        status: "duplicate_active" as const,
+      };
+    }
 
     const id = randomUUID();
-    const eventId = randomUUID();
     const now = new Date();
     const date = new Intl.DateTimeFormat("tr-TR", {
       dateStyle: "long",
@@ -504,7 +454,7 @@ export async function sendAdminContract(input: {
     await transaction.$executeRaw`
       INSERT INTO UserContractEvent (id, contractId, actorId, eventType, metadata, createdAt)
       VALUES (
-        ${eventId}, ${id}, ${actor.id}, 'sent',
+        ${randomUUID()}, ${id}, ${actor.id}, 'sent',
         ${auditMetadata({
           relatedWorkId: input.relatedWorkId,
           recipientRole: recipient.role,
@@ -546,10 +496,16 @@ export async function createContractTemplate(input: {
   return prisma.$transaction(async (transaction) => {
     const actor = await lockAdmin(transaction, input.actorId);
     if (!actor) return { status: "forbidden" as const };
-    if (!validTargetRoles.has(input.targetRole)) return { status: "invalid_role" as const };
+    if (!validTargetRoles.has(input.targetRole)) {
+      return { status: "invalid_role" as const };
+    }
 
     const existing = await transaction.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM ContractTemplate WHERE code = ${input.code} LIMIT 1 FOR UPDATE
+      SELECT id
+      FROM ContractTemplate
+      WHERE code = ${input.code}
+      LIMIT 1
+      FOR UPDATE
     `;
     if (existing[0]) return { status: "duplicate_code" as const };
 
@@ -581,16 +537,20 @@ export async function updateContractTemplate(input: {
   return prisma.$transaction(async (transaction) => {
     const actor = await lockAdmin(transaction, input.actorId);
     if (!actor) return { status: "forbidden" as const };
-    if (!validTargetRoles.has(input.targetRole)) return { status: "invalid_role" as const };
+    if (!validTargetRoles.has(input.targetRole)) {
+      return { status: "invalid_role" as const };
+    }
 
     const template = await lockTemplate(transaction, input.templateId);
     if (!template) return { status: "not_found" as const };
 
     const changed =
       template.title !== input.title ||
+      template.description !== input.description ||
       template.body !== input.body ||
-      template.targetRole !== input.targetRole ||
+      normalizeTargetRole(template.targetRole) !== input.targetRole ||
       toBoolean(template.active) !== input.active;
+    const now = new Date();
 
     await transaction.$executeRaw`
       UPDATE ContractTemplate
@@ -601,7 +561,7 @@ export async function updateContractTemplate(input: {
           active = ${input.active},
           version = version + ${changed ? 1 : 0},
           updatedById = ${actor.id},
-          updatedAt = ${new Date()}
+          updatedAt = ${now}
       WHERE id = ${template.id}
     `;
 
@@ -620,8 +580,11 @@ export async function cancelAdminContract(input: {
 
     const contract = await lockContract(transaction, input.contractId);
     if (!contract) return { status: "not_found" as const };
-    if (!["sent", "viewed"].includes(contract.status)) {
-      return { status: "terminal" as const, contractStatus: contract.status };
+    if (contract.status !== "sent" && contract.status !== "viewed") {
+      return {
+        contractStatus: contract.status,
+        status: "terminal" as const,
+      };
     }
 
     const now = new Date();
@@ -632,7 +595,10 @@ export async function cancelAdminContract(input: {
     `;
     await transaction.$executeRaw`
       INSERT INTO UserContractEvent (id, contractId, actorId, eventType, metadata, createdAt)
-      VALUES (${randomUUID()}, ${contract.id}, ${actor.id}, 'cancelled', ${auditMetadata({ reason: input.reason })}, ${now})
+      VALUES (
+        ${randomUUID()}, ${contract.id}, ${actor.id}, 'cancelled',
+        ${auditMetadata({ reason: input.reason })}, ${now}
+      )
     `;
 
     await transaction.notification.create({
@@ -663,7 +629,10 @@ export async function markUserContractViewed(input: {
       return { status: "not_found" as const };
     }
     if (contract.status !== "sent") {
-      return { status: "unchanged" as const, contractStatus: contract.status };
+      return {
+        contractStatus: contract.status,
+        status: "unchanged" as const,
+      };
     }
 
     const now = new Date();
@@ -695,8 +664,11 @@ export async function respondToUserContract(input: {
     if (!contract || contract.recipientUserId !== recipient.id) {
       return { status: "not_found" as const };
     }
-    if (!["sent", "viewed"].includes(contract.status)) {
-      return { status: "terminal" as const, contractStatus: contract.status };
+    if (contract.status !== "sent" && contract.status !== "viewed") {
+      return {
+        contractStatus: contract.status,
+        status: "terminal" as const,
+      };
     }
 
     const now = new Date();

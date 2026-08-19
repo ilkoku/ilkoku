@@ -47,12 +47,27 @@ test("SEO workbench exposes complete TR operations layers without creating a sec
   assertContains(metadata, "page.seoDescription.trim().length < 70", "short description quality signal");
   assertContains(metadata, "page.seoDescription.trim().length > 170", "long description quality signal");
   assertContains(metadata, "Uzunluk eşikleri kalite rehberidir", "metadata threshold disclaimer");
+  assertContains(metadata, "Structured Data · TR", "structured data operations surface");
+  assertContains(metadata, 'label="WebSite"', "WebSite schema status");
+  assertContains(metadata, 'label="Book"', "Book schema status");
 
   for (const text of [technical, homepage, metadata]) {
     assertNotContains(text, "INSERT INTO", "no SEO write SQL");
     assertNotContains(text, "UPDATE ContentPage", "no metadata mutation");
     assertNotContains(text, "saveSeo", "no second SEO save action");
   }
+});
+
+test("structured data is emitted in server HTML from verified site and work sources", () => {
+  const layout = source("src/app/layout.tsx");
+  const work = source("src/app/kitap/[slug]/page.tsx");
+
+  assertContains(layout, '"@type": "WebSite"', "root WebSite schema");
+  assertContains(layout, 'inLanguage: "tr-TR"', "TR WebSite language");
+  assertContains(layout, 'type="application/ld+json"', "root schema script");
+  assertContains(work, '"@type": "Book"', "public work Book schema");
+  assertContains(work, 'type="application/ld+json"', "work schema script");
+  assertNotContains(layout, "aggregateRating", "no invented site rating");
 });
 
 test("technical and metadata SEO audits fail closed when inventory cannot be read", () => {

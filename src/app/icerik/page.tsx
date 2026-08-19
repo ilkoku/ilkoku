@@ -50,7 +50,7 @@ function pendingAge(hours: number | null) {
   if (hours < 24) return `${hours} saat`;
   return `${Math.floor(hours / 24)} gün`;
 }
-function pageActivityTarget(page: RecentPageRow): Pick<ActivityItem, "href" | "action"> {
+function pageActivityTarget(page: RecentPageRow): Pick<ActivityItem, "href" | "action"> | null {
   if (page.contentKey.startsWith("guide:")) {
     const locale = page.contentKey.startsWith("guide:en:") ? "en" : "tr";
     return { href: `/icerik/rehber/${page.id}?dil=${locale}`, action: "Rehbere dön" };
@@ -61,7 +61,8 @@ function pageActivityTarget(page: RecentPageRow): Pick<ActivityItem, "href" | "a
     const legalSlug = page.contentKey.slice(prefix.length);
     return { href: `/icerik/yasal/${encodeURIComponent(legalSlug)}?dil=${locale}`, action: "Belgeye dön" };
   }
-  return { href: `/icerik/sayfalar/${page.id}`, action: "Kayda dön" };
+  if (page.contentKey.startsWith("page:tr:")) return { href: `/icerik/sayfalar/${page.id}`, action: "Kayda dön" };
+  return null;
 }
 function siteActivityTarget(item: RecentSiteRow): Pick<ActivityItem, "href" | "action"> | null {
   if (item.namespace === "faq") return { href: `/icerik/sss?dil=tr#faq-${encodeURIComponent(item.contentKey)}`, action: "Kayda dön" };
@@ -160,7 +161,10 @@ export default async function ContentDashboardPage() {
   const oldestPendingAge = pendingAge(starter.pendingOldestAgeHours);
 
   const activity: ActivityItem[] = [
-    ...data.recentPages.map((page) => ({ key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt, ...pageActivityTarget(page) })),
+    ...data.recentPages.map((page) => {
+      const target = pageActivityTarget(page);
+      return { key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt, ...(target ?? {}) };
+    }),
     ...data.recentSite.map((item) => {
       const target = siteActivityTarget(item);
       return { key: `site-${item.id}`, label: namespaceLabels[item.namespace] ?? item.namespace, detail: item.contentKey, status: statusLabel(item.status), updatedAt: item.updatedAt, ...(target ?? {}) };

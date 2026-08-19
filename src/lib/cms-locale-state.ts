@@ -16,6 +16,8 @@ export type CmsLocaleState = {
   isDefault: boolean;
 };
 
+const disabledPublicLocales = new Set<CmsLocaleCode>(["en"]);
+
 function parseEnabled(valueJson: string) {
   try {
     const raw = JSON.parse(valueJson) as Record<string, unknown>;
@@ -45,18 +47,22 @@ export async function getCmsLocaleStates(): Promise<CmsLocaleState[]> {
     enabled:
       locale.code === defaultCmsLocale
         ? true
-        : Boolean(stateByCode.get(locale.code)),
+        : disabledPublicLocales.has(locale.code)
+          ? false
+          : Boolean(stateByCode.get(locale.code)),
   }));
 }
 
 export async function isCmsLocaleEnabledStrict(locale: CmsLocaleCode) {
   if (locale === defaultCmsLocale) return true;
+  if (disabledPublicLocales.has(locale)) return false;
   const states = await getCmsLocaleStates();
   return states.some((state) => state.code === locale && state.enabled);
 }
 
 export async function isCmsLocaleEnabled(locale: CmsLocaleCode) {
   if (locale === defaultCmsLocale) return true;
+  if (disabledPublicLocales.has(locale)) return false;
   try {
     return await isCmsLocaleEnabledStrict(locale);
   } catch {

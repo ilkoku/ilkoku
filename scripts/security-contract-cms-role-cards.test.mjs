@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -99,12 +99,12 @@ test("role card payload enforces complete cards and unique ordering", () => {
   assertContains(contract, "positions.size !== cmsRoleKeys.length", "role card complete ordering requirement");
 });
 
-test("role cards are a dedicated CMS module with fail-safe server-rendered public delivery", () => {
+test("role cards are a dedicated CMS module with fail-safe TR server-rendered public delivery", () => {
   const modules = source("src/lib/cms-modules.ts");
   const api = source("src/app/api/site-content/role-cards/route.ts");
   const hydrator = source("src/components/content/PublicCmsHydrator.tsx");
   const turkish = source("src/app/page.tsx");
-  const english = source("src/app/en/page.tsx");
+  const localeState = source("src/lib/cms-locale-state.ts");
   const queue = source("src/app/icerik/yayin-kuyrugu/page.tsx");
 
   assertContains(modules, 'href: "/icerik/rol-kartlari"', "role card CMS navigation");
@@ -118,8 +118,8 @@ test("role cards are a dedicated CMS module with fail-safe server-rendered publi
   assertContains(turkish, "cmsRoleMeta[card.key].fixedHref", "TR locked registration target render");
   assertNotContains(hydrator, 'fetch("/api/site-content/role-cards?dil=tr"', "obsolete TR client role card fetch");
   assertNotContains(hydrator, "function applyRoleCards", "obsolete TR client role card DOM mutation");
-  assertContains(english, 'getPublishedRoleCardsState("en")', "EN published role card read");
-  assertContains(english, 'roleCardsDefaults("en")', "EN safe role card fallback");
+  assert.equal(existsSync(join(ROOT, "src/app/en/page.tsx")), false, "unused EN public homepage must stay removed");
+  assertContains(localeState, 'disabledPublicLocales = new Set<CmsLocaleCode>(["en"])', "EN public locale remains disabled");
   assertContains(queue, 'type: "role-cards"', "role card central publish queue type");
   assertContains(queue, "parseCmsRoleCardsPayloadStrict(row.valueJson)", "role card queue strict validation");
   assertContains(queue, "publishRoleCardsAction", "role card queue canonical publish action");

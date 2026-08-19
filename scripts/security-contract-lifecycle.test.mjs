@@ -24,55 +24,57 @@ function assertNotContains(text, fragment, label) {
   );
 }
 
-test("contract and publication writes re-authorize and lock accepted submission state", () => {
+test("historical publisher contract lifecycle keeps its locked data-integrity state machine", () => {
   const text = source("src/features/publisher-contracts/lifecycle.ts");
 
-  assertContains(text, "prisma.$transaction", "contract lifecycle");
-  assertContains(text, "lockAuthorizedMembership", "contract lifecycle");
-  assertContains(text, "lockAcceptedSubmission", "contract lifecycle");
+  assertContains(text, "prisma.$transaction", "historical contract lifecycle");
+  assertContains(text, "lockAuthorizedMembership", "historical contract lifecycle");
+  assertContains(text, "lockAcceptedSubmission", "historical contract lifecycle");
   assert.ok(
     text.split("FOR UPDATE").length - 1 >= 2,
-    "contract lifecycle must keep membership and submission row locks",
+    "historical contract lifecycle must keep membership and submission row locks",
   );
-  assertContains(text, '"manage_contract"', "contract lifecycle");
+  assertContains(text, '"manage_contract"', "historical contract lifecycle");
   assertContains(text, '"manage_publication_plan"', "publication lifecycle");
 });
 
-test("contract lifecycle prevents destructive rollback and terminal overwrite", () => {
+test("historical contract lifecycle still prevents destructive rollback and terminal overwrite", () => {
   const text = source("src/features/publisher-contracts/lifecycle.ts");
 
-  assertContains(text, "contract_terminal", "contract lifecycle");
-  assertContains(text, "sent_to_draft_forbidden", "contract lifecycle");
-  assertContains(text, 'existing?.status === "accepted"', "contract lifecycle");
-  assertContains(text, 'existing?.status === "rejected"', "contract lifecycle");
+  assertContains(text, "contract_terminal", "historical contract lifecycle");
+  assertContains(text, "sent_to_draft_forbidden", "historical contract lifecycle");
+  assertContains(text, 'existing?.status === "accepted"', "historical contract lifecycle");
+  assertContains(text, 'existing?.status === "rejected"', "historical contract lifecycle");
 });
 
-test("contract versions and publication notifications are meaningful-change only", () => {
+test("historical contract versions and publication notifications remain meaningful-change only", () => {
   const text = source("src/features/publisher-contracts/lifecycle.ts");
 
-  assertContains(text, "changedFields.length === 0", "contract lifecycle");
-  assertContains(text, "version: { increment: 1 }", "contract lifecycle");
-  assertContains(text, "publisher_contract_created", "contract audit");
-  assertContains(text, "publisher_contract_updated", "contract audit");
-  assertContains(text, "publisher_contract_sent", "contract audit");
+  assertContains(text, "changedFields.length === 0", "historical contract lifecycle");
+  assertContains(text, "version: { increment: 1 }", "historical contract lifecycle");
+  assertContains(text, "publisher_contract_created", "historical contract audit");
+  assertContains(text, "publisher_contract_updated", "historical contract audit");
+  assertContains(text, "publisher_contract_sent", "historical contract audit");
   assertContains(text, "publisher_publication_plan_created", "publication audit");
   assertContains(text, "publisher_publication_plan_updated", "publication audit");
 });
 
-test("contract email is version-idempotent, status-aware and points to a live writer workspace", () => {
-  const lifecycle = source("src/features/publisher-contracts/lifecycle.ts");
+test("legacy publisher contract sending is retired and cannot emit new contract email deliveries", () => {
   const actions = source("src/features/publisher-contracts/actions.ts");
-  const emails = source("src/lib/email/publisher-emails.ts");
+  const component = source("src/features/publisher-workspace/components/PublisherContractCenter.tsx");
 
-  assertContains(lifecycle, "publisher-contract:${contract.id}:v${contract.version}", "contract lifecycle idempotency");
-  assertContains(emails, "idempotencyKey: input.idempotencyKey", "contract email");
-  assertContains(actions, 'result.delivery !== "deduplicated"', "contract delivery resolver");
-  assertContains(actions, "prisma.emailDelivery.findUnique", "contract delivery resolver");
-  assertContains(emails, "/yayinevleri?basvuru=", "publisher emails");
-  assertNotContains(emails, "/yazar?yayineviBasvuru=", "publisher emails");
+  assertContains(
+    actions,
+    "Yeni sözleşmeler yalnız İlkOku merkezi Sözleşme Yönetimi üzerinden Admin tarafından hazırlanır ve gönderilir.",
+    "publisher contract write guard",
+  );
+  assertNotContains(actions, "sendPublisherContractEmail", "retired publisher contract email path");
+  assertNotContains(actions, "savePublisherContractLifecycle", "retired publisher contract lifecycle write path");
+  assertNotContains(component, "saveSecurePublisherContractAction", "retired publisher contract form");
+  assertContains(component, "saveSecurePublicationPlanAction", "live publication plan form");
 });
 
-test("stale contract server-action names cannot bypass the canonical lifecycle", () => {
+test("stale contract compatibility action cannot bypass central contract management", () => {
   const text = source("src/features/publisher-workspace/actions.ts");
 
   assertContains(text, "saveSecurePublisherContractAction", "contract compatibility action");
@@ -99,7 +101,7 @@ test("writer publisher workspace is live and hides internal draft contracts and 
   assertContains(navigation, '{ label: "Yayınevleri", href: "/yayinevleri" }', "writer navigation");
 });
 
-test("admin audit explains contract and publication sources", () => {
+test("admin audit explains historical publisher contract and publication sources", () => {
   const text = source("src/app/admin/audit-log/page.tsx");
 
   for (const event of [
@@ -109,7 +111,7 @@ test("admin audit explains contract and publication sources", () => {
     "publisher_publication_plan_created",
     "publisher_publication_plan_updated",
   ]) {
-    assertContains(text, event, "admin contract lifecycle labels");
+    assertContains(text, event, "admin historical contract lifecycle labels");
   }
 });
 

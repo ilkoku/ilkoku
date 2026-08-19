@@ -43,3 +43,14 @@ test("technical SEO audit fails closed when inventory cannot be read", () => {
   assertContains(technical, "yanlış bir temiz sonucu üretmiyor", "fail-closed user message");
   assertContains(technical, 'data-state="danger"', "fail-closed blocker state");
 });
+
+test("legal sitemap output respects published noindex and fails closed on CMS read errors", () => {
+  const sitemap = source("src/app/sitemap.ts");
+
+  assertContains(sitemap, "contentKey LIKE 'legal:%'", "TR legal sitemap inventory");
+  assertContains(sitemap, "contentKey NOT LIKE 'legal:en:%'", "EN legal exclusion");
+  assertContains(sitemap, "const row = legalBySlug.get(path)", "legal CMS state lookup");
+  assertContains(sitemap, "if (row?.noIndex) return []", "legal noindex sitemap exclusion");
+  assertContains(sitemap, "return safeStaticEntries", "sitemap fail-closed fallback");
+  assertNotContains(sitemap, '`${baseUrl}/en`', "no EN sitemap output");
+});

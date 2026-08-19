@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsOperationalIntegrity } from "@/lib/cms-health-integrity";
 import { getCmsLocaleStates } from "@/lib/cms-locale-state";
 import { prisma } from "@/lib/prisma";
 import { HealthMetricCards } from "./HealthMetricCards";
+import { HealthOperationsWorkbench } from "./HealthOperationsWorkbench";
 import "./health-ui.css";
 
 export const dynamic = "force-dynamic";
@@ -33,29 +33,9 @@ function parseScheduleState(valueJson: string) {
   }
 }
 
-function levelLabel(level: HealthLevel) {
-  if (level === "pass") return "PASS";
-  if (level === "warn") return "WARN";
-  if (level === "blocker") return "BLOCKER";
-  return "INFO";
-}
-
-function levelStyle(level: HealthLevel) {
-  if (level === "pass") return { borderColor: "#2f9e63" };
-  if (level === "warn") return { borderColor: "#c9972b" };
-  if (level === "blocker") return { borderColor: "#d15050" };
-  return { borderColor: "#65758b" };
-}
-
 function normalizeHealthLevel(value: string | undefined): HealthLevel | undefined {
   if (value === "pass" || value === "warn" || value === "blocker" || value === "info") return value;
   return undefined;
-}
-
-function actionLabel(level: HealthLevel) {
-  if (level === "blocker" || level === "warn") return "Müdahale et →";
-  if (level === "info") return "Yönet →";
-  return "Görüntüle →";
 }
 
 async function loadHealth() {
@@ -174,7 +154,7 @@ async function loadHealth() {
   };
 }
 
-export default async function CmsHealthPage({ searchParams }: { searchParams: Promise<{ durum?: string }> }) {
+export default async function CmsHealthPage({ searchParams }: { searchParams: Promise<{ durum?: string; kontrol?: string }> }) {
   await requireCmsManager("/icerik/saglik");
   const params = await searchParams;
   const activeLevel = normalizeHealthLevel(params.durum);
@@ -226,8 +206,6 @@ export default async function CmsHealthPage({ searchParams }: { searchParams: Pr
   const blockerCount = checks.filter((check) => check.level === "blocker").length;
   const infoCount = checks.filter((check) => check.level === "info").length;
   const finalPass = blockerCount === 0;
-  const visibleChecks = activeLevel ? checks.filter((check) => check.level === activeLevel) : checks;
-  const groups = ["Yayın", "İçerik", "SEO & Erişim", "Sistem"] as const;
   const metrics = [
     { level: "pass" as const, label: "PASS", value: passCount, note: "sağlıklı kontrol" },
     { level: "warn" as const, label: "Uyarı", value: warnCount, note: "inceleme önerilir" },
@@ -238,21 +216,18 @@ export default async function CmsHealthPage({ searchParams }: { searchParams: Pr
   return (
     <section className="content-dashboard">
       <div className="content-page-heading content-dashboard-heading">
-        <div><span>42. İşlem · Akıllı Müdahale</span><h1>CMS Sistem Sağlığı</h1><p>İçerik, yayın, SEO, dil, zamanlama, yapılandırma ve veri bütünlüğü sözleşmelerini canlı veritabanı durumuna göre çapraz kontrol eder.</p></div>
+        <div><span>CMS Operasyon · Akıllı Müdahale</span><h1>CMS Sistem Sağlığı</h1><p>İçerik, yayın, SEO, dil, zamanlama, yapılandırma ve veri bütünlüğü sözleşmelerini canlı veritabanı durumuna göre çapraz kontrol eder.</p></div>
         <div className={`content-health-badge ${finalPass ? "is-good" : "is-attention"}`}><small>CMS sonucu</small><strong>{finalPass ? "FINAL PASS" : "BLOCKED"}</strong><span>{passCount} PASS · {warnCount} UYARI · {blockerCount} BLOKAJ · {infoCount} BİLGİ</span></div>
       </div>
 
       <HealthMetricCards metrics={metrics} activeLevel={activeLevel} />
 
-      <div id="kontroller" className="content-panel" style={{ marginTop: "1rem" }}><div className="content-dashboard-section-title"><div><span>Müdahale görünümü</span><h2>{activeLevel ? `${levelLabel(activeLevel)} kontrolleri` : "Tüm kontroller"}</h2></div>{activeLevel ? <Link href="/icerik/saglik#kontroller">Tüm kontrolleri göster →</Link> : <small>Kartlardan birine tıklayarak filtrele</small>}</div><p>{activeLevel ? `${visibleChecks.length} kayıt gösteriliyor. WARN/BLOCKER kayıtlarında doğrudan müdahale, INFO/PASS kayıtlarında yönetim veya görüntüleme bağlantısı sunulur.` : "PASS, Uyarı, Blokaj veya Bilgi kartına tıklayarak yalnız o durumdaki kayıtları açabilirsiniz."}</p></div>
+      <div className="content-panel" style={{ marginTop: "1rem" }}>
+        <div className="content-dashboard-section-title"><div><span>Müdahale çalışma masası</span><h2>{activeLevel ? `${activeLevel.toUpperCase()} önceliği` : "Öncelikli sağlık kontrolleri"}</h2></div><small>BLOCKER → WARN → INFO → PASS</small></div>
+        <p>Kontrolü kuyruktan seçin; teşhisi ve etkisini tek yerde görün, düzeltmeyi ilgili canonical CMS modülünde yapın.</p>
+      </div>
 
-      {visibleChecks.length === 0 ? <div className="content-panel" style={{ marginTop: "1rem" }}><div className="content-empty"><strong>Bu durumda kayıt yok.</strong><p>Başka bir sağlık kartı seçebilir veya tüm kontrolleri gösterebilirsiniz.</p></div></div> : null}
-
-      {groups.map((group) => {
-        const groupChecks = visibleChecks.filter((check) => check.group === group);
-        if (groupChecks.length === 0) return null;
-        return <div className="content-panel" key={group} style={{ marginTop: "1rem" }}><div className="content-dashboard-section-title"><div><span>Kontrol grubu</span><h2>{group}</h2></div><small>{groupChecks.length} kontrol</small></div><div className="content-list">{groupChecks.map((check) => <article className="content-list-row" key={`${group}-${check.title}`} style={{ borderLeft: "4px solid", ...levelStyle(check.level) }}><div className="cms-health-check-copy"><small className="cms-health-check-level">{levelLabel(check.level)}</small><strong className="cms-health-check-title">{check.title}</strong><p>{check.detail}</p></div>{check.href ? <Link className="cms-health-check-action" href={check.href}>{actionLabel(check.level)}</Link> : null}</article>)}</div></div>;
-      })}
+      <HealthOperationsWorkbench checks={checks} activeLevel={activeLevel} selectedId={params.kontrol} />
 
       <div className="content-panel" style={{ marginTop: "1rem" }}><strong>Kontrol kapsamı</strong><p>Bu ekran her açılışta güncel CMS verisini yeniden okur. Public route erişilebilirliği ve korumalı CMS rotaları ayrıca Production Smoke tarafından doğrulanır; sağlık ekranı Lighthouse/Core Web Vitals testi değildir.</p></div>
     </section>

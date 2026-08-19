@@ -134,7 +134,7 @@ export function RoleCardsWorkbench({
       <form action={saveRoleCardsAction} className={styles.form}>
         <input type="hidden" name="locale" value={locale} />
         {orderedCards.map((card) => (
-          <div key={`hidden-${card.key}`}>
+          <div key={`hidden-${card.key}`} style={{ display: "none" }} aria-hidden="true">
             <input type="hidden" name={`${card.key}Title`} value={card.title} />
             <input type="hidden" name={`${card.key}Description`} value={card.description} />
             <input type="hidden" name={`${card.key}CtaLabel`} value={card.ctaLabel} />

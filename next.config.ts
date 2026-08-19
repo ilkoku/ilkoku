@@ -3,6 +3,12 @@ import type { NextConfig } from "next";
 const privateRouteHeaders = [
   "/admin/:path*",
   "/sistem-yonetimi/:path*",
+  "/harita",
+  "/harita/:path*",
+  "/sozlesme",
+  "/sozlesme/:path*",
+  "/sozlesmelerim",
+  "/sozlesmelerim/:path*",
   "/icerik",
   "/icerik/:path*",
   "/bildirimler/:path*",

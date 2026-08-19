@@ -120,3 +120,39 @@ test("growth workbenches share operational master-detail language", () => {
     assertContains(page, "ops.sidePane", `${label} operational side pane`);
   }
 });
+
+test("form requests use an authenticated triage workflow and keep PII scoped to the form workbench", () => {
+  const page = source("src/app/icerik/formlar/page.tsx");
+  const route = source("src/app/api/site-contact-manage/route.ts");
+  const mediaReferences = source("src/lib/cms-media-references.ts");
+
+  assertContains(page, 'requireCmsManager("/icerik/formlar")', "form workbench manager boundary");
+  assertContains(page, "Yeni → İnceleniyor → Çözüldü → Arşiv", "form triage workflow language");
+  assertContains(page, 'name="action" value={action}', "form triage action submission");
+  assertContains(page, "PII sınırı", "form PII scope notice");
+  assertContains(route, "getCmsAccess()", "form mutation access boundary");
+  assertContains(route, 'new Set(["review", "resolve", "reopen", "archive"])', "form allowed workflow transitions");
+  assertContains(route, "parseSubmission(row.valueJson)", "form payload validation before mutation");
+  assertContains(route, "state: nextState", "form workflow state persisted in payload");
+  assertContains(route, "namespace = 'form_submission'", "form mutation namespace boundary");
+  assertContains(mediaReferences, "'form_submission'", "form PII excluded from global media reference scan");
+  assertNotContains(route, "console.log", "form PII must not be logged");
+});
+
+test("revision center is a comparison workbench and restore remains on the canonical protected action", () => {
+  const center = source("src/app/icerik/gecmis/page.tsx");
+  const detail = source("src/app/icerik/gecmis/[revisionId]/page.tsx");
+  const actions = source("src/features/cms/revision-actions.ts");
+
+  assertContains(center, 'requireCmsManager("/icerik/gecmis")', "revision center manager boundary");
+  assertContains(center, "const selectedGroup =", "revision content selection");
+  assertContains(center, "const selectedRevision =", "revision version selection");
+  assertContains(center, "diffCmsRevisionSnapshots", "revision workbench diff engine");
+  assertContains(center, "Detaylı Karşılaştırma / Geri Yükleme", "revision canonical detail deep link");
+  assertNotContains(center, "restoreCmsRevisionAction", "revision center must not create a second restore action");
+  assertContains(detail, "restoreCmsRevisionAction", "canonical revision detail restore action retained");
+  assertContains(actions, 'requireCmsPublisher("/icerik/gecmis")', "revision restore publisher boundary");
+  assertContains(actions, 'action: "backup-before-restore"', "revision restore mandatory backup");
+  assertContains(actions, "prisma.$transaction", "revision restore transaction boundary");
+  assertContains(actions, "isCmsLocaleEnabled(locale)", "revision restore locale publish boundary");
+});

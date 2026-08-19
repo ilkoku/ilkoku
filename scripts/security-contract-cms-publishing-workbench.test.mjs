@@ -67,4 +67,4 @@ test("schedule mutation keeps server-side permission, state, duplicate and timez
   assertContains(actions, "encodeURIComponent(rawTarget)", "selected target preserved after scheduling");
   assertContains(scheduler, 'return namespace === "homepage" || namespace === "faq"', "site scheduler scope retained");
   assertContains(scheduler, 'contentKey.startsWith("legal:en:") || contentKey.startsWith("guide:en:")', "EN schedule exclusion retained");
-}
+});

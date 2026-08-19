@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import { getPublishedLegalDocumentState } from "@/lib/cms-legal-public-store";
 import { contactEmail, legalNavigation, legalPages } from "@/lib/legal-public-content";
 import "../legal.css";
@@ -68,16 +67,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const fallback = legalPages[slug];
   if (!fallback) return {};
 
-  const [trState, englishEnabled] = await Promise.all([
-    getPublishedLegalDocumentState(slug, "tr"),
-    isCmsLocaleEnabled("en"),
-  ]);
-  const enState = englishEnabled ? await getPublishedLegalDocumentState(slug, "en") : { state: "missing" as const };
+  const trState = await getPublishedLegalDocumentState(slug, "tr");
   const cms = trState.state === "valid" ? trState.document : null;
   const title = cms?.seoTitle?.trim() || cms?.title || `${fallback.title} | İlkOku`;
   const description = cms?.seoDescription?.trim() || cms?.description || fallback.description;
   const canonical = cms?.canonicalUrl?.trim() || `/yasal/${slug}`;
-  const hasEnglish = enState.state === "valid";
 
   return {
     title,
@@ -86,7 +80,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       canonical,
       languages: {
         "tr-TR": `https://ilkoku.com/yasal/${slug}`,
-        ...(hasEnglish ? { en: `https://ilkoku.com/en/yasal/${slug}` } : {}),
         "x-default": `https://ilkoku.com/yasal/${slug}`,
       },
     },

@@ -45,6 +45,16 @@ test("role card workbench hides technical ordering mechanics from content manage
   assertNotContains(workbench, "[1, 2, 3, 4].map((position)", "legacy manual ordering options");
 });
 
+test("role card workbench side panes stay synchronized across responsive sticky breakpoints", () => {
+  const styles = source("src/components/content/RoleCardsWorkbench.module.css");
+
+  assertContains(styles, ".roleRail,\n.previewPane {\n  position: sticky;", "paired desktop sticky panes");
+  assertContains(styles, "max-height: calc(100vh - 2rem);", "sticky pane viewport bound");
+  assertContains(styles, "@media (max-width: 78rem)", "role card medium breakpoint");
+  assertContains(styles, ".roleRail,\n  .previewPane {\n    position: static;", "paired medium static panes");
+  assertNotContains(styles, ".previewPane {\n    position: static;\n    grid-column: 1 / -1;", "legacy preview-only sticky asymmetry");
+});
+
 test("role card workbench provides focused editing, live preview and safe publish handoff", () => {
   const workbench = source("src/components/content/RoleCardsWorkbench.tsx");
 

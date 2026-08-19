@@ -15,19 +15,6 @@ function assertNotContains(text, fragment, label) {
   assert.equal(text.includes(fragment), false, `${label} must not contain ${JSON.stringify(fragment)}`);
 }
 
-test("English homepage exposes complete canonical and social metadata", () => {
-  const page = source("src/app/en/page.tsx");
-
-  assertContains(page, 'canonical: "https://ilkoku.com/en"', "EN canonical");
-  assertContains(page, '"tr-TR": "https://ilkoku.com/"', "TR alternate");
-  assertContains(page, 'en: "https://ilkoku.com/en"', "EN alternate");
-  assertContains(page, '"x-default": "https://ilkoku.com/"', "x-default alternate");
-  assertContains(page, 'url: "https://ilkoku.com/en"', "EN Open Graph URL");
-  assertContains(page, "images: [{ url: socialImage", "EN Open Graph image");
-  assertContains(page, 'card: "summary_large_image"', "EN Twitter card");
-  assertContains(page, "images: [socialImage]", "EN Twitter image");
-});
-
 test("global public routes have file-based social image fallbacks", () => {
   const openGraph = source("src/app/opengraph-image.tsx");
   const twitter = source("src/app/twitter-image.tsx");
@@ -40,29 +27,33 @@ test("global public routes have file-based social image fallbacks", () => {
   assertContains(twitter, 'from "./opengraph-image"', "Twitter reuses canonical social artwork");
 });
 
-test("sitemap includes published indexable English CMS content only when EN is enabled", () => {
+test("sitemap stays Turkish-only and includes only published indexable CMS content", () => {
   const sitemap = source("src/app/sitemap.ts");
 
-  assertContains(sitemap, 'isCmsLocaleEnabled("en")', "EN public locale switch");
-  assertContains(sitemap, "contentKey LIKE 'legal:en:%'", "EN legal sitemap coverage");
-  assertContains(sitemap, "contentKey LIKE 'guide:en:%'", "EN guide sitemap coverage");
-  assertContains(sitemap, "contentKey LIKE 'page:en:%'", "EN generic page sitemap coverage");
+  assertContains(sitemap, "contentKey LIKE 'guide:%'", "TR guide sitemap coverage");
+  assertContains(sitemap, "contentKey NOT LIKE 'guide:en:%'", "EN guide exclusion");
+  assertContains(sitemap, "contentKey LIKE 'page:tr:%'", "TR generic page sitemap coverage");
   assertContains(sitemap, "status = 'published'", "published-only CMS sitemap boundary");
   assertContains(sitemap, "noIndex = false", "noindex exclusion");
-  assertContains(sitemap, 'page.slug.startsWith("/en/")', "EN path safety boundary");
+  assertNotContains(sitemap, '`${baseUrl}/en`', "no EN static sitemap URL");
+  assertNotContains(sitemap, "legal:en:%", "no EN legal sitemap inventory");
+  assertNotContains(sitemap, "page:en:%", "no EN generic sitemap inventory");
 });
 
-test("SEO center and audit API no longer hide English published page metadata", () => {
+test("SEO center and audit API stay Turkish-only", () => {
   const page = source("src/app/icerik/seo/page.tsx");
   const route = source("src/app/api/cms-seo-audit/route.ts");
+  const roleCards = source("src/app/icerik/seo/SeoRoleCardsAudit.tsx");
 
-  assertContains(page, 'type SeoLocale = "tr" | "en"', "SEO language model");
-  assertContains(page, 'const localeFilter = param(params, "dil")', "SEO language filter");
-  assertContains(page, 'pageLocale(page).toUpperCase()', "SEO visible locale badge");
-  assertContains(page, "TR + EN metadata kapsamı", "SEO bilingual coverage summary");
-  assertContains(page, 'page.contentKey.startsWith("page:en:") ? "EN içerik kapsamını aç"', "EN generic page safe audit action");
-  assertNotContains(page, "contentKey NOT LIKE 'legal:en:%'", "SEO must not exclude EN legal");
-  assertNotContains(page, "contentKey NOT LIKE 'guide:en:%'", "SEO must not exclude EN guides");
-  assertNotContains(route, "contentKey NOT LIKE 'page:en:%'", "audit API must not exclude EN pages");
+  assertContains(page, "TR metadata kapsamı", "SEO TR coverage summary");
+  assertContains(page, "contentKey NOT LIKE 'legal:en:%'", "SEO excludes EN legal");
+  assertContains(page, "contentKey NOT LIKE 'guide:en:%'", "SEO excludes EN guides");
+  assertContains(page, "contentKey NOT LIKE 'page:en:%'", "SEO excludes EN generic pages");
+  assertContains(route, "contentKey NOT LIKE 'legal:en:%'", "audit API excludes EN legal");
+  assertContains(route, "contentKey NOT LIKE 'guide:en:%'", "audit API excludes EN guides");
+  assertContains(route, "contentKey NOT LIKE 'page:en:%'", "audit API excludes EN generic pages");
   assertContains(route, "WHERE status = 'published'", "audit API published-only boundary");
+  assertContains(roleCards, 'getPublishedRoleCardsState("tr")', "role card SEO reads TR state");
+  assertNotContains(roleCards, 'getPublishedRoleCardsState("en")', "role card SEO ignores EN state");
+  assertNotContains(roleCards, "TR / EN", "role card SEO has no language parity work");
 });

@@ -22,6 +22,7 @@ type RecentSiteRow = { id: string; namespace: string; contentKey: string; status
 type ActivityItem = { key: string; label: string; detail: string; status: string; updatedAt: Date };
 type TaskLevel = "blocker" | "warn" | "info";
 type DashboardTask = { href: string; title: string; text: string; action: string; level: TaskLevel };
+type TaskLane = { level: TaskLevel; eyebrow: string; title: string; emptyText: string; tasks: DashboardTask[] };
 
 const namespaceLabels: Record<string, string> = {
   homepage: "Ana Sayfa",
@@ -40,6 +41,7 @@ const namespaceLabels: Record<string, string> = {
 function number(value: bigint | number | null | undefined) { return Number(value ?? 0); }
 function statusLabel(status: string) { if (status === "published") return "Yayında"; if (status === "archived") return "Arşiv"; return "Taslak"; }
 function taskLevelLabel(level: TaskLevel) { if (level === "blocker") return "BLOCKER"; if (level === "warn") return "ÖNCELİK"; return "TAKİP"; }
+function taskImpactLabel(level: TaskLevel) { if (level === "blocker") return "Canlı operasyonu etkileyebilir"; if (level === "warn") return "Bugün ele alınmalı"; return "Canlı yayını durdurmaz"; }
 function formatDate(value: Date) { return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
 function pendingAge(hours: number | null) {
   if (hours === null) return null;
@@ -175,6 +177,12 @@ export default async function ContentDashboardPage() {
   const warningCount = tasks.filter((task) => task.level === "warn").length;
   const healthLabel = blockerCount > 0 ? "Blokaj var" : warningCount > 0 ? "İçerik işi var" : tasks.length > 0 ? "Takip gerekli" : "Hazır";
   const healthClass = blockerCount > 0 ? "is-blocked" : warningCount > 0 ? "is-attention" : tasks.length > 0 ? "is-watch" : "is-good";
+  const focusTask = tasks[0] ?? null;
+  const lanes: TaskLane[] = [
+    { level: "blocker", eyebrow: "Önce", title: "Blokajlar", emptyText: "Canlı operasyonu durduran blokaj yok.", tasks: tasks.filter((task) => task.level === "blocker") },
+    { level: "warn", eyebrow: "Bugün", title: "İçerik işleri", emptyText: "Bugün için zorunlu içerik işi görünmüyor.", tasks: tasks.filter((task) => task.level === "warn") },
+    { level: "info", eyebrow: "Takip", title: "Bekleyen işler", emptyText: "Canlı yayını bozmayan takip işi yok.", tasks: tasks.filter((task) => task.level === "info") },
+  ];
 
   const metrics = [
     { label: "Bütünlük blokajı", value: integritySignals.blockers, note: "Sistem Sağlığı", href: "/icerik/saglik?durum=blocker#kontroller" },
@@ -207,10 +215,26 @@ export default async function ContentDashboardPage() {
   return (
     <section className="content-dashboard">
       <div className="content-page-heading content-dashboard-heading"><div><span>Operasyon Merkezi</span><h1>İçerik Genel Bakış</h1><p>İlkOku.com için bugün ne yapılması gerektiğini, canlı yayın kabulünü ve son değişiklikleri tek ekrandan yönetin.</p></div><div className={`content-health-badge ${healthClass}`}><small>Canlı içerik durumu</small><strong>{healthLabel}</strong><span>{integritySignals.blockers} bütünlük blokajı · {integritySignals.warnings} bütünlük uyarısı · {summary.corePassed}/{summary.coreTotal} temel alan hazır · {starter.pendingTotal} bekleyen temel değişiklik · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span></div></div>
+
+      {focusTask ? (
+        <Link href={focusTask.href} className={`content-focus-card is-${focusTask.level}`} aria-label={`Şimdi: ${focusTask.title}`}>
+          <div className="content-focus-card__copy"><div className="content-focus-card__meta"><span>ŞİMDİ</span><small>{taskLevelLabel(focusTask.level)} · {taskImpactLabel(focusTask.level)}</small></div><strong>{focusTask.title}</strong><p>{focusTask.text}</p></div>
+          <span className="content-focus-card__action">{focusTask.action} →</span>
+        </Link>
+      ) : (
+        <div className="content-focus-card is-clear"><div className="content-focus-card__copy"><div className="content-focus-card__meta"><span>ŞİMDİ</span><small>Operasyon temiz</small></div><strong>Acil veya bekleyen içerik işi görünmüyor.</strong><p>Veri bütünlüğü, temel canlı kabul ve editoryal görev sinyalleri temiz. Yeni içerik üretimine veya planlı işlere geçebilirsiniz.</p></div><Link href="/icerik/sayfalar">İçerikleri aç →</Link></div>
+      )}
+
       <div className="content-dashboard-quick-actions" aria-label="Hızlı işlemler">{quickActions.map((action) => <Link href={action.href} key={`${action.href}-${action.label}`}><strong>{action.label}</strong><small>{action.text}</small></Link>)}</div>
       <div className="content-metric-grid">{metrics.map((metric) => <Link href={metric.href} className="content-metric-card content-metric-card--link" key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.note}</small></Link>)}</div>
       <div className="content-dashboard-columns">
-        <div className="content-panel content-dashboard-panel"><div className="content-dashboard-section-title"><div><span>Bugün</span><h2>Yapılması gerekenler</h2></div><Link href="/icerik/hazirlik">Tüm kabul →</Link></div>{tasks.length === 0 ? <div className="content-dashboard-success"><strong>İçerik operasyonunda açık konu görünmüyor.</strong><p>Temel canlı yayın kabulü, veri bütünlüğü, bekleyen temel değişiklikler ve SEO kontrolleri temiz.</p></div> : <div className="content-task-list">{tasks.map((task, index) => <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}><div className="content-task-item__body"><div className="content-task-item__meta"><span>{taskLevelLabel(task.level)}</span><small>#{index + 1}</small></div><strong>{task.title}</strong><p>{task.text}</p></div><span className="content-task-item__action">{task.action} →</span></Link>)}</div>}</div>
+        <div className="content-panel content-dashboard-panel"><div className="content-dashboard-section-title"><div><span>Operasyon</span><h2>İş şeritleri</h2></div><Link href="/icerik/hazirlik">Tüm kabul →</Link></div>
+          <div className="content-operation-lanes">{lanes.map((lane) => {
+            const visibleTasks = focusTask ? lane.tasks.filter((task) => task !== focusTask) : lane.tasks;
+            const focusInLane = focusTask?.level === lane.level;
+            return <section className={`content-operation-lane is-${lane.level}`} key={lane.level}><div className="content-operation-lane__heading"><div><span>{lane.eyebrow}</span><strong>{lane.title}</strong><small>{taskImpactLabel(lane.level)}</small></div><b>{lane.tasks.length}</b></div>{focusInLane ? <div className="content-operation-lane__focus-note">En önemli görev yukarıdaki “Şimdi” alanında açık.</div> : null}{visibleTasks.length === 0 ? <div className="content-operation-lane__empty">{lane.emptyText}</div> : <div className="content-task-list">{visibleTasks.map((task, index) => <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}><div className="content-task-item__body"><div className="content-task-item__meta"><span>{taskLevelLabel(task.level)}</span><small>#{index + 1}</small></div><strong>{task.title}</strong><p>{task.text}</p></div><span className="content-task-item__action">{task.action} →</span></Link>)}</div>}</section>;
+          })}</div>
+        </div>
         <div className="content-panel content-dashboard-panel"><div className="content-dashboard-section-title"><div><span>Aktivite</span><h2>Son değişiklikler</h2></div><Link href="/icerik/gecmis">Tüm geçmiş →</Link></div>{activity.length === 0 ? <div className="content-empty"><strong>Henüz hareket yok.</strong><p>İçerik değişiklikleri burada görünecek.</p></div> : <div className="content-activity-list">{activity.map((item) => <div className="content-activity-item" key={item.key}><div><strong>{item.label}</strong><small>{item.detail}</small></div><div><span>{item.status}</span><small>{formatDate(item.updatedAt)}</small></div></div>)}</div>}</div>
       </div>
       <div className="content-dashboard-section-title content-dashboard-modules-title"><div><span>Modüller</span><h2>Tüm yönetim alanları</h2></div><small>{areas.length} aktif modül</small></div>

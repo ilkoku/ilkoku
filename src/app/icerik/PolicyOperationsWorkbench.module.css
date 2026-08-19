@@ -1,0 +1,339 @@
+.capabilityGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.capability {
+  padding: 0.8rem;
+  border: 1px solid var(--cms-border);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--cms-surface) 96%, transparent);
+}
+
+.capability span,
+.policyCard > span,
+.effectBox > span {
+  display: block;
+  color: var(--cms-muted);
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.capability strong,
+.capability small {
+  display: block;
+}
+
+.capability strong {
+  margin-top: 0.18rem;
+  color: var(--cms-text);
+  font-size: 0.84rem;
+}
+
+.capability small {
+  margin-top: 0.12rem;
+  color: var(--cms-muted);
+  line-height: 1.4;
+}
+
+.permissionLevel {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.permissionStep {
+  display: grid;
+  grid-template-columns: 1.7rem minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: start;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--cms-border);
+}
+
+.permissionStep:last-child {
+  border-bottom: 0;
+}
+
+.permissionStep > span {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  color: var(--cms-muted);
+  background: rgba(104, 71, 232, 0.06);
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.permissionStep[data-enabled="true"] > span {
+  color: #286640;
+  background: rgba(40, 102, 64, 0.11);
+}
+
+.permissionStep strong,
+.permissionStep small {
+  display: block;
+}
+
+.permissionStep strong {
+  color: var(--cms-text);
+  font-size: 0.8rem;
+}
+
+.permissionStep small {
+  margin-top: 0.12rem;
+  color: var(--cms-muted);
+  line-height: 1.42;
+}
+
+.permissionForm {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.permissionForm label {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  padding: 0.72rem;
+  border: 1px solid var(--cms-border);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--cms-surface) 96%, transparent);
+}
+
+.permissionForm label input[type="checkbox"] {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+}
+
+.permissionForm label strong,
+.permissionForm label small {
+  display: block;
+}
+
+.permissionForm label strong {
+  color: var(--cms-text);
+  font-size: 0.78rem;
+}
+
+.permissionForm label small {
+  margin-top: 0.12rem;
+  color: var(--cms-muted);
+  line-height: 1.4;
+}
+
+.addUser {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.addUser label > span {
+  display: block;
+  margin-bottom: 0.32rem;
+  color: var(--cms-text);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.riskNotice {
+  padding: 0.75rem;
+  border: 1px solid rgba(132, 90, 18, 0.22);
+  border-radius: 0.8rem;
+  color: #845a12;
+  background: rgba(132, 90, 18, 0.055);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.settingsRail {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.75rem;
+}
+
+.settingsLink {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.78rem;
+  border: 1px solid transparent;
+  border-radius: 0.85rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.settingsLink:hover {
+  border-color: var(--cms-border);
+  background: color-mix(in srgb, var(--cms-surface) 92%, #6847e8 8%);
+}
+
+.settingsLink[data-active="true"] {
+  border-color: rgba(104, 71, 232, 0.28);
+  background: rgba(104, 71, 232, 0.07);
+  box-shadow: inset 3px 0 0 rgba(104, 71, 232, 0.75);
+}
+
+.settingsLink strong,
+.settingsLink small {
+  display: block;
+}
+
+.settingsLink strong {
+  color: var(--cms-text);
+  font-size: 0.8rem;
+}
+
+.settingsLink small {
+  color: var(--cms-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.policyCard {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.9rem;
+  border: 1px solid var(--cms-border);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--cms-surface) 96%, transparent);
+}
+
+.policyCard h3 {
+  margin: 0;
+  color: var(--cms-text);
+  font-size: 1rem;
+}
+
+.policyCard p {
+  margin: 0;
+  color: var(--cms-muted);
+  line-height: 1.55;
+}
+
+.policyState {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0.22rem 0.48rem;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 850;
+}
+
+.policyState[data-state="enforced"] {
+  color: #286640;
+  background: rgba(40, 102, 64, 0.09);
+}
+
+.policyState[data-state="config"] {
+  color: #845a12;
+  background: rgba(132, 90, 18, 0.08);
+}
+
+.policyState[data-state="drift"] {
+  color: #a33b3b;
+  background: rgba(163, 59, 59, 0.08);
+}
+
+.settingForm {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.settingForm label > span {
+  display: block;
+  margin-bottom: 0.32rem;
+  color: var(--cms-text);
+  font-size: 0.77rem;
+  font-weight: 800;
+}
+
+.settingForm select,
+.settingForm input[type="text"] {
+  width: 100%;
+}
+
+.effectBox {
+  display: grid;
+  gap: 0.38rem;
+  padding: 0.8rem;
+  border: 1px solid var(--cms-border);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--cms-surface) 96%, transparent);
+}
+
+.effectBox strong {
+  color: var(--cms-text);
+  font-size: 0.82rem;
+}
+
+.effectBox p {
+  margin: 0;
+  color: var(--cms-muted);
+  font-size: 0.73rem;
+  line-height: 1.5;
+}
+
+.runtimeList {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.runtimeItem {
+  display: grid;
+  grid-template-columns: 1.3rem minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: start;
+  padding: 0.62rem 0;
+  border-bottom: 1px solid var(--cms-border);
+}
+
+.runtimeItem:last-child {
+  border-bottom: 0;
+}
+
+.runtimeItem > span {
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.runtimeItem[data-state="yes"] > span {
+  color: #286640;
+  background: rgba(40, 102, 64, 0.1);
+}
+
+.runtimeItem[data-state="no"] > span {
+  color: #845a12;
+  background: rgba(132, 90, 18, 0.09);
+}
+
+.runtimeItem strong,
+.runtimeItem small {
+  display: block;
+}
+
+.runtimeItem strong {
+  color: var(--cms-text);
+  font-size: 0.78rem;
+}
+
+.runtimeItem small {
+  margin-top: 0.12rem;
+  color: var(--cms-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 42rem) {
+  .capabilityGrid {
+    grid-template-columns: 1fr;
+  }
+}

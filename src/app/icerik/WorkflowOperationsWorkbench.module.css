@@ -1,0 +1,324 @@
+.messageBox {
+  padding: 1rem;
+  border: 1px solid var(--cms-border);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--cms-surface) 96%, transparent);
+}
+
+.messageBox > span,
+.contactBlock > span,
+.revisionBlock > span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--cms-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.messageBox p {
+  margin: 0;
+  color: var(--cms-text);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.contactGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.contactBlock,
+.revisionBlock {
+  min-width: 0;
+  padding: 0.78rem;
+  border: 1px solid var(--cms-border);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--cms-surface) 96%, transparent);
+}
+
+.contactBlock strong,
+.contactBlock a,
+.revisionBlock strong,
+.revisionBlock small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contactBlock strong,
+.contactBlock a,
+.revisionBlock strong {
+  color: var(--cms-text);
+}
+
+.contactBlock a {
+  white-space: nowrap;
+}
+
+.workflowSteps {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.workflowStep {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: start;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--cms-border);
+}
+
+.workflowStep:last-child {
+  border-bottom: 0;
+}
+
+.workflowStep > span {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  color: var(--cms-muted);
+  background: rgba(104, 71, 232, 0.06);
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.workflowStep[data-active="true"] > span {
+  color: #fff;
+  background: #6847e8;
+}
+
+.workflowStep[data-done="true"] > span {
+  color: #286640;
+  background: rgba(40, 102, 64, 0.11);
+}
+
+.workflowStep strong,
+.workflowStep small {
+  display: block;
+}
+
+.workflowStep strong {
+  color: var(--cms-text);
+  font-size: 0.78rem;
+}
+
+.workflowStep small {
+  margin-top: 0.12rem;
+  color: var(--cms-muted);
+  line-height: 1.4;
+}
+
+.actionStack {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.actionStack form,
+.actionStack button {
+  width: 100%;
+}
+
+.actionStack button {
+  justify-content: center;
+}
+
+.piiNotice {
+  padding: 0.72rem 0.78rem;
+  border: 1px solid rgba(132, 90, 18, 0.2);
+  border-radius: 0.8rem;
+  color: #845a12;
+  background: rgba(132, 90, 18, 0.055);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.revisionTimeline {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.revisionLink {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.68rem;
+  border: 1px solid transparent;
+  border-radius: 0.82rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.revisionLink:hover {
+  border-color: var(--cms-border);
+  background: color-mix(in srgb, var(--cms-surface) 92%, #6847e8 8%);
+}
+
+.revisionLink[data-active="true"] {
+  border-color: rgba(104, 71, 232, 0.28);
+  background: rgba(104, 71, 232, 0.07);
+}
+
+.versionPill {
+  display: grid;
+  place-items: center;
+  min-height: 2rem;
+  padding: 0.3rem;
+  border: 1px solid var(--cms-border);
+  border-radius: 0.7rem;
+  color: #4b2dbf;
+  background: rgba(104, 71, 232, 0.055);
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.revisionLink strong,
+.revisionLink small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.revisionLink strong {
+  color: var(--cms-text);
+  font-size: 0.78rem;
+}
+
+.revisionLink small {
+  margin-top: 0.1rem;
+  color: var(--cms-muted);
+  font-size: 0.67rem;
+}
+
+.revisionLink em {
+  color: var(--cms-muted);
+  font-size: 0.65rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.diffList {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.diffCard {
+  overflow: hidden;
+  border: 1px solid var(--cms-border);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--cms-surface) 96%, transparent);
+}
+
+.diffCard > strong {
+  display: block;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--cms-border);
+  color: var(--cms-text);
+  font-size: 0.78rem;
+}
+
+.diffColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.diffColumns > div {
+  min-width: 0;
+  padding: 0.72rem;
+}
+
+.diffColumns > div + div {
+  border-left: 1px solid var(--cms-border);
+}
+
+.diffColumns span {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--cms-muted);
+  font-size: 0.65rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.diffColumns pre {
+  max-height: 11rem;
+  margin: 0;
+  overflow: auto;
+  color: var(--cms-text);
+  font-family: inherit;
+  font-size: 0.73rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.currentSnapshot {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.currentSnapshot > div {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--cms-border);
+}
+
+.currentSnapshot > div:last-child {
+  border-bottom: 0;
+}
+
+.currentSnapshot span,
+.currentSnapshot strong,
+.currentSnapshot small {
+  display: block;
+}
+
+.currentSnapshot span {
+  color: var(--cms-muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.currentSnapshot strong {
+  margin-top: 0.15rem;
+  color: var(--cms-text);
+  font-size: 0.8rem;
+}
+
+.currentSnapshot small {
+  margin-top: 0.12rem;
+  color: var(--cms-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 46rem) {
+  .contactGrid,
+  .diffColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .diffColumns > div + div {
+    border-top: 1px solid var(--cms-border);
+    border-left: 0;
+  }
+
+  .revisionLink {
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+  }
+
+  .revisionLink em {
+    grid-column: 2;
+  }
+}

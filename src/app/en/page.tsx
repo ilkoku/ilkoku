@@ -15,11 +15,33 @@ type Section = Record<string, string>;
 
 export const dynamic = "force-dynamic";
 
+const socialImage = "/landing/ilkoku-hero.webp";
+
 export const metadata: Metadata = {
   title: "İlkOku | Write, read, review, discover",
   description: "A digital literature ecosystem connecting writers, readers, editors and publishers.",
-  alternates: { canonical: "https://ilkoku.com/en", languages: { "tr-TR": "https://ilkoku.com/", "en": "https://ilkoku.com/en" } },
-  openGraph: { title: "İlkOku", description: "Write, read, review and get discovered.", type: "website", locale: "en_US" },
+  alternates: {
+    canonical: "https://ilkoku.com/en",
+    languages: {
+      "tr-TR": "https://ilkoku.com/",
+      en: "https://ilkoku.com/en",
+      "x-default": "https://ilkoku.com/",
+    },
+  },
+  openGraph: {
+    title: "İlkOku | Write, read, review, discover",
+    description: "A digital literature ecosystem connecting writers, readers, editors and publishers.",
+    type: "website",
+    locale: "en_US",
+    url: "https://ilkoku.com/en",
+    images: [{ url: socialImage, alt: "İlkOku digital literature platform" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "İlkOku | Write, read, review, discover",
+    description: "A digital literature ecosystem connecting writers, readers, editors and publishers.",
+    images: [socialImage],
+  },
 };
 
 function parse(valueJson: string): Section {

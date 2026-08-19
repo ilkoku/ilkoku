@@ -23,11 +23,8 @@ export async function GET() {
       SELECT id, contentKey, slug, title, status, seoTitle, seoDescription, canonicalUrl, noIndex
       FROM ContentPage
       WHERE status = 'published'
-        AND contentKey NOT LIKE 'legal:en:%'
-        AND contentKey NOT LIKE 'guide:en:%'
-        AND contentKey NOT LIKE 'page:en:%'
       ORDER BY updatedAt DESC
-      LIMIT 250
+      LIMIT 500
     `;
     return NextResponse.json({ pages });
   } catch {

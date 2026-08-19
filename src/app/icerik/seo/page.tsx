@@ -21,10 +21,15 @@ type SeoPage = {
 };
 type SearchParams = Record<string, string | string[] | undefined>;
 type IssueKey = "title" | "description" | "canonical" | "noindex";
+type SeoLocale = "tr" | "en";
 
 function param(params: SearchParams, key: string) {
   const value = params[key];
   return typeof value === "string" ? value : "";
+}
+
+function pageLocale(page: SeoPage): SeoLocale {
+  return page.contentKey.startsWith("legal:en:") || page.contentKey.startsWith("guide:en:") || page.contentKey.startsWith("page:en:") ? "en" : "tr";
 }
 
 function editHref(page: SeoPage) {
@@ -38,8 +43,13 @@ function editHref(page: SeoPage) {
     const locale = page.contentKey.startsWith("guide:en:") ? "en" : "tr";
     return `/icerik/rehber/${page.id}?dil=${locale}`;
   }
-  if (page.contentKey.startsWith("page:")) return `/icerik/sayfalar/${page.id}`;
+  if (page.contentKey.startsWith("page:en:")) return "/icerik/diller";
+  if (page.contentKey.startsWith("page:tr:")) return `/icerik/sayfalar/${page.id}`;
   return "/icerik/sayfalar";
+}
+
+function editActionLabel(page: SeoPage) {
+  return page.contentKey.startsWith("page:en:") ? "EN içerik kapsamını aç" : "SEO Alanlarını Düzenle";
 }
 
 function seoIssues(page: SeoPage): IssueKey[] {
@@ -73,7 +83,7 @@ function formatDate(value: Date) {
 
 function seoHref(params: SearchParams, patch: Record<string, string | undefined>) {
   const query = new URLSearchParams();
-  for (const key of ["q", "sorun", "sec"] as const) {
+  for (const key of ["q", "sorun", "dil", "sec"] as const) {
     const current = param(params, key);
     if (current) query.set(key, current);
   }
@@ -92,11 +102,8 @@ async function loadSeoPages(): Promise<SeoPage[] | null> {
              canonicalUrl, noIndex, updatedAt
       FROM ContentPage
       WHERE status = 'published'
-        AND contentKey NOT LIKE 'legal:en:%'
-        AND contentKey NOT LIKE 'guide:en:%'
-        AND contentKey NOT LIKE 'page:en:%'
       ORDER BY updatedAt DESC
-      LIMIT 500
+      LIMIT 1000
     `;
   } catch {
     return null;
@@ -111,7 +118,7 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
   if (!pages) {
     return (
       <section className="content-editor-page">
-        <div className="content-page-heading"><div><span>Büyüme · TR</span><h1>SEO Merkezi</h1><p>SEO envanteri doğrulanamadığında sistem yanlış bir “sorun yok” sonucu üretmez.</p></div></div>
+        <div className="content-page-heading"><div><span>Büyüme · SEO</span><h1>SEO Merkezi</h1><p>SEO envanteri doğrulanamadığında sistem yanlış bir “sorun yok” sonucu üretmez.</p></div></div>
         <div className="content-panel" role="alert"><strong>SEO denetim verileri okunamadı.</strong><p>Yayındaki sayfalar doğrulanamadığı için teşhis ve düzeltme kuyruğu fail-closed durduruldu.</p><div className="content-form-actions" style={{ flexWrap: "wrap" }}><Link href="/icerik/saglik">Sistem Sağlığı →</Link><Link href="/icerik/seo">Tekrar dene</Link></div></div>
       </section>
     );
@@ -119,10 +126,12 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
 
   const q = param(params, "q").trim().toLocaleLowerCase("tr-TR");
   const issueFilter = param(params, "sorun") || "all";
+  const localeFilter = param(params, "dil") || "all";
   const selectedId = param(params, "sec");
   const filtered = pages.filter((page) => {
     const issues = seoIssues(page);
     if (q && !`${page.title} ${page.slug} ${page.seoTitle || ""} ${page.seoDescription || ""}`.toLocaleLowerCase("tr-TR").includes(q)) return false;
+    if (localeFilter !== "all" && pageLocale(page) !== localeFilter) return false;
     if (issueFilter === "complete" && criticalIssueCount(page) !== 0) return false;
     if (["title", "description", "canonical", "noindex"].includes(issueFilter) && !issues.includes(issueFilter as IssueKey)) return false;
     return true;
@@ -134,17 +143,18 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
   const missingCanonical = pages.filter((page) => !page.canonicalUrl?.trim()).length;
   const cleanCount = pages.filter((page) => criticalIssueCount(page) === 0).length;
   const highPriority = pages.filter((page) => criticalIssueCount(page) >= 2).length;
+  const enCount = pages.filter((page) => pageLocale(page) === "en").length;
 
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
-        <div><span>Büyüme · SEO</span><h1>SEO Merkezi</h1><p>Yayındaki sayfa metadata sorunlarını ve Ana Sayfa on-page SEO sinyallerini tek çalışma masasında yönetin; teşhisten canonical içerik editörüne doğrudan gidin.</p></div>
-        <div className="content-profile"><strong>{cleanCount}/{pages.length} sayfa temiz</strong><small>{highPriority} yüksek öncelikli metadata sayfası</small></div>
+        <div><span>Büyüme · SEO</span><h1>SEO Merkezi</h1><p>Yayındaki TR ve EN sayfa metadata sorunlarını ve Ana Sayfa on-page SEO sinyallerini tek çalışma masasında yönetin; teşhisten canonical içerik editörüne doğrudan gidin.</p></div>
+        <div className="content-profile"><strong>{cleanCount}/{pages.length} sayfa temiz</strong><small>{highPriority} yüksek öncelik · {enCount} EN kayıt</small></div>
       </div>
 
       <div className={ops.workbench}>
         <div className={ops.summaryBar}>
-          <article className={ops.summaryCard}><span>Yayındaki sayfa</span><strong>{pages.length}</strong><small>TR metadata kapsamı</small></article>
+          <article className={ops.summaryCard}><span>Yayındaki sayfa</span><strong>{pages.length}</strong><small>TR + EN metadata kapsamı</small></article>
           <article className={ops.summaryCard}><span>SEO başlığı eksik</span><strong>{missingTitle}</strong><small>düzenleme gerekiyor</small></article>
           <article className={ops.summaryCard}><span>Açıklama eksik</span><strong>{missingDescription}</strong><small>SERP metni eksik</small></article>
           <article className={ops.summaryCard}><span>Canonical eksik</span><strong>{missingCanonical}</strong><small>URL sinyali eksik</small></article>
@@ -158,9 +168,14 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
             <form method="get" className={ops.searchForm}>
               <input type="search" name="q" defaultValue={param(params, "q")} placeholder="Sayfa, URL veya meta ara" />
               {issueFilter !== "all" ? <input type="hidden" name="sorun" value={issueFilter} /> : null}
+              {localeFilter !== "all" ? <input type="hidden" name="dil" value={localeFilter} /> : null}
               <button type="submit">Ara</button>
             </form>
             <div className={ops.filters}>
+              <span className={ops.railLabel}>Dil</span>
+              <div className={ops.filterRow}>
+                {[{ key: "all", label: "TR + EN" }, { key: "tr", label: "TR" }, { key: "en", label: "EN" }].map((filter) => <Link key={filter.key} data-active={localeFilter === filter.key} href={seoHref(params, { dil: filter.key === "all" ? undefined : filter.key, sec: undefined })}>{filter.label}</Link>)}
+              </div>
               <span className={ops.railLabel}>Metadata sorunu</span>
               <div className={ops.filterRow}>
                 {[{ key: "all", label: "Tümü" }, { key: "title", label: "Başlık" }, { key: "description", label: "Açıklama" }, { key: "canonical", label: "Canonical" }, { key: "noindex", label: "Noindex" }, { key: "complete", label: "Temiz" }].map((filter) => <Link key={filter.key} data-active={issueFilter === filter.key} href={seoHref(params, { sorun: filter.key === "all" ? undefined : filter.key, sec: undefined })}>{filter.label}</Link>)}
@@ -172,7 +187,7 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
               return <Link key={page.id} href={seoHref(params, { sec: page.id })} className={ops.itemLink} data-active={selected?.id === page.id}>
                 <div className={ops.itemTop}><strong>{page.title}</strong><span className={growth.priority} data-level={p.level}>{p.label}</span></div>
                 <p>{page.slug}</p>
-                <div className={ops.itemMeta}><span>{issues === 0 ? "Kritik eksik yok" : `${issues} kritik eksik`}</span>{page.noIndex ? <span>noindex</span> : <span>index</span>}</div>
+                <div className={ops.itemMeta}><span>{pageLocale(page).toUpperCase()} · {issues === 0 ? "Kritik eksik yok" : `${issues} kritik eksik`}</span>{page.noIndex ? <span>noindex</span> : <span>index</span>}</div>
               </Link>;
             })}</div>}
           </aside>
@@ -180,7 +195,7 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
           <main className={ops.detail}>
             {!selected ? <div className={ops.empty}><strong>İncelenecek sayfa yok.</strong><p>Filtreleri temizleyin veya yayınlanmış içerik durumunu kontrol edin.</p></div> : <>
               <div className={ops.detailHeader}>
-                <div className={ops.detailTopline}><span className={growth.priority} data-level={priority(selected).level}>{priority(selected).label}</span><span className={ops.badge} data-tone={selected.noIndex ? "initial" : "published"}>{selected.noIndex ? "noindex" : "index"}</span></div>
+                <div className={ops.detailTopline}><span className={growth.priority} data-level={priority(selected).level}>{priority(selected).label}</span><span className={ops.badge} data-tone={selected.noIndex ? "initial" : "published"}>{pageLocale(selected).toUpperCase()} · {selected.noIndex ? "noindex" : "index"}</span></div>
                 <div><span className={ops.eyebrow}>Sayfa SEO teşhisi</span><h2>{selected.title}</h2><p>{selected.slug}</p></div>
                 <div className={ops.detailMetaGrid}>
                   <div className={ops.detailMetaCard}><span className={ops.detailLabel}>SEO sağlığı</span><strong>{healthScore(selected)} / 100</strong><small>3 kritik metadata alanı üzerinden</small></div>
@@ -195,7 +210,7 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
                   <div className={growth.issueLine} data-state={selected.canonicalUrl?.trim() ? "ok" : "missing"}><span>{selected.canonicalUrl?.trim() ? "✓" : "!"}</span><div><strong>Canonical URL</strong><small>{selected.canonicalUrl?.trim() || "Eksik — tercih edilen URL sinyali tanımlı değil"}</small></div><em>{selected.canonicalUrl?.trim() ? "Hazır" : "Eksik"}</em></div>
                   <div className={growth.issueLine} data-state={selected.noIndex ? "warning" : "ok"}><span>{selected.noIndex ? "!" : "✓"}</span><div><strong>İndeks politikası</strong><small>{selected.noIndex ? "Bu sayfa noindex olarak işaretli" : "Sayfa indexlenebilir durumda"}</small></div><em>{selected.noIndex ? "Kontrol et" : "Index"}</em></div>
                 </div>
-                <div className={ops.actionRow}><Link href={editHref(selected)}>SEO Alanlarını Düzenle →</Link><Link href={selected.slug} target="_blank">Public Sayfayı Aç ↗</Link></div>
+                <div className={ops.actionRow}><Link href={editHref(selected)}>{editActionLabel(selected)} →</Link><Link href={selected.slug} target="_blank">Public Sayfayı Aç ↗</Link></div>
               </div>
             </>}
           </main>
@@ -203,7 +218,7 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
           <aside className={ops.sidePane}>
             <div className={ops.sideHeader}><span className={ops.railLabel}>Arama sonucu önizleme</span><strong>Seçili sayfa</strong></div>
             <div className={ops.sideBody}>
-              {selected ? <><div className={growth.healthScore}><div><strong>{healthScore(selected)}</strong><small>SEO puanı</small></div></div><div className={growth.serpPreview}><small>{selected.canonicalUrl?.trim() || `https://ilkoku.com${selected.slug}`}</small><strong>{selected.seoTitle?.trim() || selected.title}</strong><p>{selected.seoDescription?.trim() || "Meta açıklaması henüz tanımlanmadı. İlgili içerik editöründen ekleyin."}</p></div><div className={ops.infoBox}><strong>Düzeltme prensibi</strong><p>SEO verisini burada ikinci bir kopya halinde düzenlemiyoruz. Sayfa metadata’sı ilgili Sayfa / Yasal / Rehber editöründe; Ana Sayfa bileşenleri ise kendi canonical çalışma masasında yönetilir.</p></div></> : <div className={ops.empty}>Bir sayfa seçin.</div>}
+              {selected ? <><div className={growth.healthScore}><div><strong>{healthScore(selected)}</strong><small>SEO puanı</small></div></div><div className={growth.serpPreview}><small>{selected.canonicalUrl?.trim() || `https://ilkoku.com${selected.slug}`}</small><strong>{selected.seoTitle?.trim() || selected.title}</strong><p>{selected.seoDescription?.trim() || "Meta açıklaması henüz tanımlanmadı. İlgili içerik editöründen ekleyin."}</p></div><div className={ops.infoBox}><strong>Düzeltme prensibi</strong><p>SEO verisini burada ikinci bir kopya halinde düzenlemiyoruz. Sayfa metadata’sı ilgili canonical editörde; özel editörü olmayan EN kurumsal kayıtlar audit olarak görünür ve Dil Yönetimi’ne yönlenir.</p></div></> : <div className={ops.empty}>Bir sayfa seçin.</div>}
               <div className={ops.actionRow}><Link href="/icerik/rol-kartlari?dil=tr">Rol Kartları</Link><Link href="/icerik/yonlendirmeler">Yönlendirmeler</Link><Link href="/icerik/diller">Dil Yönetimi</Link><Link href="/icerik/saglik">Sistem Sağlığı</Link></div>
             </div>
           </aside>

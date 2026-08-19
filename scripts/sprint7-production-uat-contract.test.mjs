@@ -74,6 +74,7 @@ test("Sprint 7 UAT locks the canonical high-risk workflow boundaries", () => {
   const publish = source("src/features/works/publish-work-event.ts");
   const publisherActions = source("src/features/publishers/actions.ts");
   const notifications = source("src/features/notifications/actions.ts");
+  const policy = source("src/lib/route-security.ts");
   const proxy = source("src/proxy.ts");
 
   assertContains(publish, "FOR UPDATE", "canonical writer publish UAT boundary");
@@ -89,8 +90,9 @@ test("Sprint 7 UAT locks the canonical high-risk workflow boundaries", () => {
     "historical publisher withdrawal boundary",
   );
   assertContains(notifications, "toggleNotificationReadAction", "notification read-state UAT boundary");
-  assertContains(proxy, 'path: "/yazar", roles: ["writer"]', "writer proxy boundary");
-  assertContains(proxy, 'path: "/editor", roles: ["editor"]', "editor proxy boundary");
+  assertContains(policy, 'path: "/yazar", roles: ["writer"]', "writer role policy boundary");
+  assertContains(policy, 'path: "/editor", roles: ["editor"]', "editor role policy boundary");
+  assertContains(proxy, "getRouteRoleRule(pathname)", "proxy canonical policy consumption");
   assertContains(proxy, "isPublisherRoute", "publisher membership boundary");
   assertContains(proxy, "isAdminRoute && !isAdmin", "admin boundary");
 });

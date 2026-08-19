@@ -86,7 +86,7 @@ export async function createContractTemplateAction(formData: FormData) {
   const body = text(formData, "body", 100000);
   const role = targetRole(text(formData, "targetRole", 32));
   const code = text(formData, "code", 120)
-    .toLocaleUpperCase("tr-TR")
+    .toUpperCase()
     .replace(/[^A-Z0-9_]/gu, "_")
     .replace(/_+/gu, "_")
     .replace(/^_|_$/gu, "");

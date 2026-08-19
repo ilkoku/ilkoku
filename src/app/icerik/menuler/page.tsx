@@ -1,8 +1,6 @@
 import Link from "next/link";
-import {
-  publishFooterNavigationAction,
-  saveFooterNavigationAction,
-} from "@/features/cms/navigation-actions";
+import { FooterNavigationWorkbench } from "@/components/content/FooterNavigationWorkbench";
+import { publishFooterNavigationAction } from "@/features/cms/navigation-actions";
 import { requireCmsAdmin } from "@/lib/cms-access";
 import {
   defaultFooterNavigation,
@@ -23,14 +21,7 @@ type FooterRow = {
 type PageProps = { searchParams: Promise<{ taslak?: string; yayin?: string; hata?: string }> };
 
 function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
-}
-
-function statusLabel(status: "ok" | "fallback" | "duplicate" | "broken") {
-  if (status === "ok") return "Doğrulandı";
-  if (status === "fallback") return "Fallback";
-  if (status === "duplicate") return "Tekrarlı hedef";
-  return "Kırık / geçersiz";
+  return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" }).format(new Date(value));
 }
 
 export default async function Page({ searchParams }: PageProps) {
@@ -85,11 +76,11 @@ export default async function Page({ searchParams }: PageProps) {
   } else if (livePayload && liveRow?.status === "published") {
     payload = livePayload;
     sourceLabel = "Yayındaki footer";
-    sourceDetail = `Form canlı değerlerden hazırlandı · ${formatDate(liveRow.updatedAt)} güncellendi.`;
+    sourceDetail = `Çalışma alanı canlı değerlerden hazırlandı · ${formatDate(liveRow.updatedAt)} güncellendi.`;
   } else if (livePayload && liveRow?.status === "draft") {
     payload = livePayload;
     sourceLabel = "Legacy taslak";
-    sourceDetail = "Eski akıştan kalan footer_navigation taslağı bulundu. Önce Taslak Kaydet ile güvenli çalışma kopyasına taşıyın, sonra yayınlayın.";
+    sourceDetail = "Eski akıştan kalan footer_navigation taslağı bulundu. Önce güvenli çalışma kopyasına kaydedin, sonra yayınlayın.";
   } else if (livePayload) {
     payload = livePayload;
     sourceLabel = "Pasif footer kaydı";
@@ -106,69 +97,28 @@ export default async function Page({ searchParams }: PageProps) {
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
-        <div><span>Site</span><h1>Menüler & Footer</h1><p>Footer başlıklarını, link metinlerini ve hedeflerini canlı sürümü bozmadan çalışma kopyasında yönetin.</p></div>
+        <div><span>Site · Admin</span><h1>Menüler & Footer</h1><p>Footer metinlerini ve hedeflerini bölüm bazlı yönetin; anlık görünümü izleyin ve yalnız server doğrulamasından geçen çalışma taslağını yayınlayın.</p></div>
         <div className="content-profile"><strong>{sourceLabel}</strong><small>{sourceDetail}</small></div>
       </div>
 
-      {params.taslak === "1" ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Çalışma taslağı kaydedildi.</strong><p>Yayındaki footer değişmedi. Aşağıdaki hedef denetimini tamamladıktan sonra ayrıca yayınlayabilirsiniz.</p></div> : null}
-      {params.yayin === "1" ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Footer yayınlandı.</strong><p>Çalışma taslağı canlı footer’a atomik uygulandı ve taslak arşivlendi.</p></div> : null}
+      {params.taslak === "1" ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="status"><strong>Çalışma taslağı kaydedildi ve hedefler yeniden denetlendi.</strong><p>Yayındaki footer değişmedi. Sağlık durumu uygunsa ayrıca yayınlayabilirsiniz.</p></div> : null}
+      {params.yayin === "1" ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="status"><strong>Footer yayınlandı.</strong><p>Doğrulanmış çalışma taslağı canlı footer’a atomik uygulandı ve taslak arşivlendi.</p></div> : null}
       {params.hata === "taslak" ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Yayınlama durduruldu.</strong><p>Geçerli bir güvenli çalışma taslağı bulunamadı.</p></div> : null}
-      {params.hata === "linkler" ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Yayınlama durduruldu.</strong><p>Footer çalışma taslağında kırık, güvenli olmayan veya tekrarlı hedef var. Taslak korunuyor; aşağıdaki hedef denetiminden sorunlu bağlantıları düzeltin.</p></div> : null}
-      {liveRow?.status === "draft" && !draftPayload ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Legacy footer taslağı algılandı.</strong><p>Bu kayıt eski davranış nedeniyle public override’dan düşmüş olabilir. Mevcut değerler kaybolmadan formda gösteriliyor; önce güvenli taslağa kaydedin.</p></div> : null}
+      {params.hata === "linkler" ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Yayınlama durduruldu.</strong><p>Footer taslağında kırık, güvenli olmayan veya tekrarlı hedef var. Taslak korunuyor; çalışma masasındaki ilgili bölümü düzeltin.</p></div> : null}
+      {liveRow?.status === "draft" && !draftPayload ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Legacy footer taslağı algılandı.</strong><p>Mevcut değerler kaybolmadan çalışma alanına taşındı; önce yeni güvenli taslağa kaydedin.</p></div> : null}
       {!linkAnalysis ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Footer hedef denetimi çalıştırılamadı.</strong><p>Public rota/içerik listesi doğrulanamadığı için yayınlama fail-closed olarak kilitlendi. Taslak düzenlemeye devam edebilirsiniz.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
 
-      <div className="content-metric-grid">
+      <div className="content-metric-grid" style={{ marginBottom: "1rem" }}>
         <article className="content-metric-card"><span>Bağlantı</span><strong>{linkAnalysis?.diagnostics.length ?? 9}</strong><small>footer hedefi</small></article>
         <article className="content-metric-card"><span>Doğrulandı</span><strong>{verifiedCount}</strong><small>public hedef bulundu</small></article>
-        <article className="content-metric-card"><span>Fallback</span><strong>{fallbackCount}</strong><small>kod hedefi kullanılacak</small></article>
+        <article className="content-metric-card"><span>Fallback</span><strong>{fallbackCount}</strong><small>güvenli kod hedefi</small></article>
         <article className="content-metric-card"><span>Blokaj</span><strong>{blockers}</strong><small>kırık / duplicate</small></article>
       </div>
 
-      <div className="content-panel" style={{ marginTop: "1rem" }}>
-        <div className="content-section-heading"><div><span>01</span><h2>Çalışma taslağı</h2></div><p>Canlı footer yayın anına kadar değişmez.</p></div>
-        <form action={saveFooterNavigationAction} className="content-form">
-          <div className="content-section-heading"><div><span>A</span><h2>Platform</h2></div></div>
-          <label><span>Sütun başlığı</span><input name="platformTitle" defaultValue={payload.platformTitle} /></label>
-          <div className="content-form-grid">
-            <label><span>1. link metni</span><input name="platform1Label" defaultValue={payload.platform1Label} /></label><label><span>1. link hedefi</span><input name="platform1Href" defaultValue={payload.platform1Href} /></label>
-            <label><span>2. link metni</span><input name="platform2Label" defaultValue={payload.platform2Label} /></label><label><span>2. link hedefi</span><input name="platform2Href" defaultValue={payload.platform2Href} /></label>
-            <label><span>3. link metni</span><input name="platform3Label" defaultValue={payload.platform3Label} /></label><label><span>3. link hedefi</span><input name="platform3Href" defaultValue={payload.platform3Href} /></label>
-          </div>
-          <div className="content-section-heading"><div><span>B</span><h2>Destek</h2></div></div>
-          <label><span>Sütun başlığı</span><input name="supportTitle" defaultValue={payload.supportTitle} /></label>
-          <div className="content-form-grid"><label><span>Link metni</span><input name="supportLabel" defaultValue={payload.supportLabel} /></label><label><span>Link hedefi</span><input name="supportHref" defaultValue={payload.supportHref} placeholder="Boş bırakılırsa mevcut destek fallback’i korunur" /></label></div>
-          <div className="content-section-heading"><div><span>C</span><h2>Yasal bağlantılar</h2></div></div>
-          <label><span>Sütun başlığı</span><input name="legalTitle" defaultValue={payload.legalTitle} /></label>
-          <div className="content-form-grid">
-            <label><span>Kullanım Şartları</span><input name="termsLabel" defaultValue={payload.termsLabel} /></label><label><span>Hedef</span><input name="termsHref" defaultValue={payload.termsHref} placeholder="Boşsa güvenli yasal fallback" /></label>
-            <label><span>Gizlilik</span><input name="privacyLabel" defaultValue={payload.privacyLabel} /></label><label><span>Hedef</span><input name="privacyHref" defaultValue={payload.privacyHref} placeholder="Boşsa güvenli yasal fallback" /></label>
-            <label><span>KVKK</span><input name="kvkkLabel" defaultValue={payload.kvkkLabel} /></label><label><span>Hedef</span><input name="kvkkHref" defaultValue={payload.kvkkHref} placeholder="Boşsa güvenli yasal fallback" /></label>
-            <label><span>Çerez</span><input name="cookieLabel" defaultValue={payload.cookieLabel} /></label><label><span>Hedef</span><input name="cookieHref" defaultValue={payload.cookieHref} placeholder="Boşsa güvenli yasal fallback" /></label>
-            <label><span>Telif</span><input name="copyrightLabel" defaultValue={payload.copyrightLabel} /></label><label><span>Hedef</span><input name="copyrightHref" defaultValue={payload.copyrightHref} placeholder="Boşsa güvenli yasal fallback" /></label>
-          </div>
-          <div className="content-form-actions" style={{ position: "sticky", bottom: "1rem", zIndex: 5 }}><button type="submit">Çalışma Taslağını Kaydet</button></div>
-        </form>
-      </div>
-
-      <div className="content-panel" style={{ marginTop: "1rem" }}>
-        <div className="content-section-heading"><div><span>02</span><h2>Hedef denetimi</h2></div><p>Yayın öncesi public rota, anchor ve duplicate kontrolü</p></div>
-        {!linkAnalysis ? <div className="content-empty"><strong>Hedef denetimi kullanılamıyor.</strong></div> : (
-          <div className="content-list">
-            <div className="content-list-row content-list-row--head"><span>Bağlantı</span><span>Hedef</span><span>Durum</span><span>Detay</span></div>
-            {linkAnalysis.diagnostics.map((item) => (
-              <div className="content-list-row" key={item.key}>
-                <strong>{item.label}</strong>
-                <code>{item.href || item.effectiveHref}</code>
-                <span>{statusLabel(item.status)}</span>
-                <small>{item.detail}</small>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <FooterNavigationWorkbench initial={payload} diagnostics={linkAnalysis?.diagnostics ?? []} hasAnalysis={Boolean(linkAnalysis)} />
 
       <div className="content-publish-box" style={{ marginTop: "1rem" }}>
-        <div><strong>Yayınlama</strong><p>{!hasSafeDraft ? "Önce ayrı bir güvenli çalışma kopyası oluşturun." : blockers > 0 ? `${blockers} hedef blokajı düzeltilmeden canlı footer değiştirilemez.` : !linkAnalysis ? "Hedef denetimi tamamlanamadığı için yayın kilitli." : "Çalışma taslağı doğrulandı. Canlı footer yalnız bu işlemle atomik güncellenir."}</p></div>
+        <div><strong>Canlı yayın</strong><p>{!hasSafeDraft ? "Önce çalışma masasından güvenli bir taslak oluşturun." : blockers > 0 ? `${blockers} hedef blokajı düzeltilmeden canlı footer değiştirilemez.` : !linkAnalysis ? "Hedef denetimi tamamlanamadığı için yayın kilitli." : "Kaydedilmiş taslak server-side rota denetiminden geçti. Canlı footer yalnız bu işlemle değişir."}</p></div>
         {canPublish ? <form action={publishFooterNavigationAction}><button type="submit">Doğrulanmış Footer’ı Yayınla</button></form> : <span className="content-form-help">Yayın koşulları tamamlanmadı</span>}
       </div>
     </section>

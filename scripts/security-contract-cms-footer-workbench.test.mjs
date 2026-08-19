@@ -49,4 +49,4 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
   has(workbench, "Object.entries(value)", "complete canonical form submission");
   has(workbench, "güvenli destek fallback", "support fallback explanation");
   has(workbench, "Boşsa güvenli fallback kullanılır", "link fallback guidance");
-}
+});

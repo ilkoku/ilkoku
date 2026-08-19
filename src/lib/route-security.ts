@@ -1,3 +1,7 @@
+import {
+  notificationWorkspaceRoles,
+  readerWorkspaceRoles,
+} from "@/features/auth/data";
 import type { UserRole } from "@/features/auth/types";
 
 export const legacyAdminPath = "/admin";
@@ -45,16 +49,12 @@ export const protectedPaths = [
 ] as const;
 
 export const routeRoleRules: RouteRoleRule[] = [
-  { approved: false, path: "/favorilerim", roles: ["reader", "editor_pending"] },
-  {
-    approved: false,
-    path: "/bildirimler",
-    roles: ["reader", "writer", "editor_pending", "editor", "publisher"],
-  },
-  { approved: false, path: "/kesfet", roles: ["reader", "editor_pending"] },
-  { approved: false, path: "/okuyucu", roles: ["reader", "editor_pending"] },
-  { approved: false, path: "/okumaya-devam", roles: ["reader", "editor_pending"] },
-  { approved: false, path: "/tamamlanan-eserler", roles: ["reader", "editor_pending"] },
+  { approved: false, path: "/favorilerim", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/bildirimler", roles: [...notificationWorkspaceRoles] },
+  { approved: false, path: "/kesfet", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/okuyucu", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/okumaya-devam", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/tamamlanan-eserler", roles: [...readerWorkspaceRoles] },
   { approved: false, path: "/yazar", roles: ["writer"] },
   { approved: false, path: "/eserlerim", roles: ["writer"] },
   { approved: false, path: "/yazmaya-devam", roles: ["writer"] },

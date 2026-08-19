@@ -7,6 +7,8 @@ import { logoutAction } from "@/features/auth/actions";
 import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { HistoryInspiration } from "@/features/landing/history-inspiration";
+import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
+import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 import "./landing.css";
 import "./landing-v2.css";
 import "./landing-history.css";
@@ -193,10 +195,35 @@ const stats = [
 ] as const;
 
 export default async function HomePage() {
-  const profile = await getCurrentProfile();
+  const [profile, roleCardState] = await Promise.all([
+    getCurrentProfile(),
+    getPublishedRoleCardsState("tr"),
+  ]);
   const navigation = profile ? await getRoleNavigation(profile) : null;
   const pendingRole = navigation?.pendingRequest?.requestedRole
     ?? (profile?.role === "editor_pending" ? "editor" : null);
+  const cmsRoleCards = roleCardState.state === "valid"
+    ? roleCardsFromPayload("tr", roleCardState.payload)
+    : null;
+  const visibleRoles = cmsRoleCards
+    ? cmsRoleCards
+        .filter((card) => card.visible)
+        .map((card) => ({
+          key: card.key,
+          title: card.title,
+          description: card.description,
+          icon: cmsRoleMeta[card.key].icon,
+          cta: card.ctaLabel,
+          className: cmsRoleMeta[card.key].className,
+          highlights: [card.highlight1, card.highlight2],
+          position: card.position,
+          href: cmsRoleMeta[card.key].fixedHref,
+        }))
+    : roles.map((role, index) => ({
+        ...role,
+        position: index + 1,
+        href: cmsRoleMeta[role.key].fixedHref,
+      }));
 
   return (
     <main className="landing-page">
@@ -312,9 +339,9 @@ export default async function HomePage() {
         <div className="landing-container">
           <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">Topluluğa katıl</span><h2>İlkOku’ya nasıl katılmak istiyorsun?</h2><p>Rolünü seç; kayıt akışını sana uygun şekilde başlatalım.</p></div>
           <div className="landing-role-grid landing-role-grid--v2">
-            {roles.map((role, index) => (
-              <Link aria-label={`${role.title} olarak kayıt ol`} className={`landing-role ${role.className}`} href={`/kayit?rol=${role.key}`} key={role.key}>
-                <span className="landing-role__number">0{index + 1}</span>
+            {visibleRoles.map((role) => (
+              <Link aria-label={`${role.title} olarak kayıt ol`} className={`landing-role ${role.className}`} href={role.href} key={role.key}>
+                <span className="landing-role__number">{String(role.position).padStart(2, "0")}</span>
                 <span className="landing-role__label">{role.title} rolü</span>
                 <span className="landing-role__icon" aria-hidden="true"><LandingIcon name={role.icon} /></span>
                 <h3>{role.title}</h3>

@@ -36,9 +36,10 @@ test("footer workbench blocks unsafe, broken and duplicate targets before publis
   assertContains(page, "const canPublish = hasSafeDraft && Boolean(linkAnalysis) && blockers === 0", "footer UI publish readiness");
 });
 
-test("media library exposes real references without leaking form PII", () => {
+test("media library is a focused operations workbench and exposes real references without leaking form PII", () => {
   const references = source("src/lib/cms-media-references.ts");
   const page = source("src/app/icerik/medya/page.tsx");
+  const workbench = source("src/components/content/MediaLibraryWorkbench.tsx");
 
   assertContains(references, "namespace NOT IN ('media', 'media_blob', 'form_submission', 'cms_draft')", "media reference PII exclusion");
   assertContains(references, "ContentPage", "media published page reference scan");
@@ -47,11 +48,20 @@ test("media library exposes real references without leaking form PII", () => {
 
   assertContains(page, "getCmsMediaReferenceMap", "media reference inventory load");
   assertContains(page, "Medya kullanım haritası doğrulanamadı", "media reference fail-closed warning");
-  assertContains(page, "const safeToArchive = referencesAvailable && refs.length === 0", "media UI archive safety boundary");
-  assertContains(page, 'name="q"', "media search control");
-  assertContains(page, 'name="tur"', "media kind filter");
-  assertContains(page, 'name="kullanim"', "media usage filter");
-  assertContains(page, "ref.editHref", "media reference deep link");
+  assertContains(page, "MediaLibraryWorkbench", "media dedicated workbench handoff");
+  assertNotContains(page, "repeat(auto-fit, minmax(280px, 1fr))", "legacy media card grid removed");
+
+  assertContains(workbench, "Medya envanteri", "media inventory rail");
+  assertContains(workbench, "Seçili medya", "media focused detail pane");
+  assertContains(workbench, "Gerçek kullanım", "media reference side pane");
+  assertContains(workbench, 'name="q"', "media search control");
+  assertContains(workbench, 'name="tur"', "media kind filter");
+  assertContains(workbench, 'name="kullanim"', "media usage filter");
+  assertContains(workbench, "reference.editHref", "media reference deep link");
+  assertContains(workbench, 'mode === "new"', "media explicit new-media mode");
+  assertContains(workbench, "+ Yeni Medya", "media new mode control");
+  assertContains(workbench, "canPublish && referencesAvailable && selected.references.length === 0", "media UI archive safety boundary");
+  assertContains(workbench, "archiveMediaAssetAction", "media canonical archive action retained");
 });
 
 test("media archive still re-checks published references server-side", () => {
@@ -60,7 +70,7 @@ test("media archive still re-checks published references server-side", () => {
   assertContains(actions, 'requireCmsPublisher("/icerik/medya")', "media publish permission boundary");
   assertContains(actions, "isMediaReferencedByPublishedContent(asset.url)", "media server-side reference recheck");
   assertContains(actions, 'redirect("/icerik/medya?hata=kullanimda")', "media referenced archive blocker");
-  assertContains(actions, "prisma.$transaction", "media metadata/blob archive transaction");
+  assertContains(actions, "prisma.$transaction", "media metadata/blob archive transaction boundary");
 });
 
 test("SEO center is a server-side issue workbench and keeps canonical editors as the write source", () => {

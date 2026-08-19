@@ -28,6 +28,18 @@ test("English homepage exposes complete canonical and social metadata", () => {
   assertContains(page, "images: [socialImage]", "EN Twitter image");
 });
 
+test("global public routes have file-based social image fallbacks", () => {
+  const openGraph = source("src/app/opengraph-image.tsx");
+  const twitter = source("src/app/twitter-image.tsx");
+
+  assertContains(openGraph, 'import { ImageResponse } from "next/og"', "Open Graph image response");
+  assertContains(openGraph, "width: 1200", "Open Graph width");
+  assertContains(openGraph, "height: 630", "Open Graph height");
+  assertContains(openGraph, 'contentType = "image/png"', "Open Graph content type");
+  assertContains(openGraph, "İlk cümle, ilk okurun, ilk adımın.", "Open Graph brand message");
+  assertContains(twitter, 'from "./opengraph-image"', "Twitter reuses canonical social artwork");
+});
+
 test("sitemap includes published indexable English CMS content only when EN is enabled", () => {
   const sitemap = source("src/app/sitemap.ts");
 

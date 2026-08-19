@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { contentNavigation } from "@/lib/content-navigation";
 
@@ -15,8 +15,15 @@ type ContentShellProps = {
   isAdmin: boolean;
 };
 
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  const tagName = target.tagName.toLowerCase();
+  return tagName === "input" || tagName === "textarea" || tagName === "select" || target.isContentEditable;
+}
+
 export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
   const pathname = usePathname();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const navigation = contentNavigation.filter((item) => isAdmin || !item.adminOnly);
   const currentItem = navigation
     .filter((item) => item.href !== "/icerik" && pathname.startsWith(item.href))
@@ -26,6 +33,33 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
   const groups = groupOrder
     .map((group) => ({ group, items: navigation.filter((item) => item.group === group) }))
     .filter((section) => section.items.length > 0);
+
+  useEffect(() => {
+    if (pathname === "/icerik/arama") {
+      const query = new URLSearchParams(window.location.search).get("q") ?? "";
+      if (searchInputRef.current) searchInputRef.current.value = query.slice(0, 120);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isSearchShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+      if (isSearchShortcut) {
+        if (isEditableTarget(event.target) && event.target !== searchInputRef.current) return;
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+        return;
+      }
+
+      if (event.key === "Escape" && document.activeElement === searchInputRef.current) {
+        searchInputRef.current?.blur();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <div className="content-shell">
@@ -77,13 +111,34 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
 
       <section className="content-main">
         <header className="content-topbar">
-          <div>
+          <div className="content-topbar__context">
             <p>{currentItem?.group ?? "İlkOku"}</p>
             <strong>{currentItem?.label ?? "İçerik Yönetim Merkezi"}</strong>
             <small className="content-topbar__description">
               {currentItem?.description ?? "İlkOku site içerik yönetim merkezi"}
             </small>
           </div>
+
+          <form className="content-global-search" action="/icerik/arama" method="get" role="search">
+            <label htmlFor="cms-global-search">İçerik ara</label>
+            <div className="content-global-search__control">
+              <input
+                ref={searchInputRef}
+                id="cms-global-search"
+                name="q"
+                type="search"
+                minLength={2}
+                maxLength={120}
+                placeholder="Sayfa, SSS, rehber, medya…"
+                autoComplete="off"
+                aria-label="CMS içinde içerik ara"
+                aria-keyshortcuts="Meta+K Control+K"
+              />
+              <kbd aria-hidden="true">⌘K / Ctrl K</kbd>
+              <button type="submit">Ara</button>
+            </div>
+          </form>
+
           <div className="content-profile">
             <strong>{user.fullName}</strong>
             <small>{user.email}</small>

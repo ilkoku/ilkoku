@@ -45,6 +45,15 @@ test("role card workbench hides technical ordering mechanics from content manage
   assertNotContains(workbench, "[1, 2, 3, 4].map((position)", "legacy manual ordering options");
 });
 
+test("role card hidden form payload cannot occupy workbench grid cells", () => {
+  const workbench = source("src/components/content/RoleCardsWorkbench.tsx");
+
+  assertContains(workbench, '<div key={`hidden-${card.key}`} style={{ display: "none" }} aria-hidden="true">', "hidden role-card payload wrapper");
+  assertContains(workbench, 'name={`${card.key}Title`}', "hidden title payload remains submitted");
+  assertContains(workbench, 'name={`${card.key}Position`}', "hidden ordering payload remains submitted");
+  assertNotContains(workbench, '<div key={`hidden-${card.key}`}>', "layout-participating hidden payload wrapper");
+});
+
 test("role card side panes always move with the document while only the save bar may stay sticky", () => {
   const workbench = source("src/components/content/RoleCardsWorkbench.tsx");
   const styles = source("src/components/content/RoleCardsWorkbench.module.css");

@@ -10,8 +10,10 @@ import "./landing-footer-tight.css";
 import "./landing-header-pro.css";
 import "./landing-account-bubble.css";
 
+const baseUrl = "https://ilkoku.com";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ilkoku.com"),
+  metadataBase: new URL(baseUrl),
   title: tr.brand.name,
   description: tr.brand.tagline,
   openGraph: {
@@ -36,10 +38,23 @@ export const metadata: Metadata = {
   },
 };
 
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: tr.brand.name,
+  url: baseUrl,
+  inLanguage: "tr-TR",
+  description: tr.brand.tagline,
+};
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr" data-scroll-behavior="smooth">
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema).replace(/</g, "\\u003c") }}
+        />
         <PublicAnnouncementBanner />
         {children}
         <PublicCmsHydrator />

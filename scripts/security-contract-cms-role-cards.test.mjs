@@ -99,20 +99,25 @@ test("role card payload enforces complete cards and unique ordering", () => {
   assertContains(contract, "positions.size !== cmsRoleKeys.length", "role card complete ordering requirement");
 });
 
-test("role cards are a dedicated CMS module with fail-safe public delivery", () => {
+test("role cards are a dedicated CMS module with fail-safe server-rendered public delivery", () => {
   const modules = source("src/lib/cms-modules.ts");
   const api = source("src/app/api/site-content/role-cards/route.ts");
   const hydrator = source("src/components/content/PublicCmsHydrator.tsx");
+  const turkish = source("src/app/page.tsx");
   const english = source("src/app/en/page.tsx");
   const queue = source("src/app/icerik/yayin-kuyrugu/page.tsx");
 
   assertContains(modules, 'href: "/icerik/rol-kartlari"', "role card CMS navigation");
   assertContains(api, "getPublishedRoleCardsState(locale)", "role card public published-state read");
   assertContains(api, 'status: 503', "role card corrupt/unavailable fail-safe response");
-  assertContains(hydrator, 'fetch("/api/site-content/role-cards?dil=tr"', "TR public role card hydration");
-  assertContains(hydrator, "if (cancelled || !payload?.published", "TR role card fallback boundary");
-  assertContains(hydrator, "element.hidden = !card.visible", "TR role card visibility control");
-  assertContains(hydrator, 'querySelector<HTMLElement>(".landing-role__number")', "TR role card order number synchronization");
+  assertContains(turkish, 'getPublishedRoleCardsState("tr")', "TR server-side published role card read");
+  assertContains(turkish, 'roleCardState.state === "valid"', "TR strict published-state fallback boundary");
+  assertContains(turkish, 'roleCardsFromPayload("tr", roleCardState.payload)', "TR canonical role card payload render");
+  assertContains(turkish, '.filter((card) => card.visible)', "TR role card visibility control");
+  assertContains(turkish, 'String(role.position).padStart(2, "0")', "TR role card order number synchronization");
+  assertContains(turkish, "cmsRoleMeta[card.key].fixedHref", "TR locked registration target render");
+  assertNotContains(hydrator, 'fetch("/api/site-content/role-cards?dil=tr"', "obsolete TR client role card fetch");
+  assertNotContains(hydrator, "function applyRoleCards", "obsolete TR client role card DOM mutation");
   assertContains(english, 'getPublishedRoleCardsState("en")', "EN published role card read");
   assertContains(english, 'roleCardsDefaults("en")', "EN safe role card fallback");
   assertContains(queue, 'type: "role-cards"', "role card central publish queue type");

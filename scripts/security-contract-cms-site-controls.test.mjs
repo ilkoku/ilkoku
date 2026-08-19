@@ -156,3 +156,40 @@ test("revision center is a comparison workbench and restore remains on the canon
   assertContains(actions, "prisma.$transaction", "revision restore transaction boundary");
   assertContains(actions, "isCmsLocaleEnabled(locale)", "revision restore locale publish boundary");
 });
+
+test("CMS access workbench keeps product roles separate and stays admin-only", () => {
+  const page = source("src/app/icerik/erisim/page.tsx");
+  const route = source("src/app/api/cms-access-manage/route.ts");
+
+  assertContains(page, 'requireCmsAdmin("/icerik/erisim")', "CMS access workbench admin boundary");
+  assertContains(page, "u.id AS userId", "CMS access selection uses stable user id");
+  assertContains(page, "Ürün rolünü değiştirmeden", "CMS access product-role separation language");
+  assertContains(page, 'name="canPublish"', "CMS access publish-level control");
+  assertContains(page, "/api/cms-access-manage", "CMS access canonical mutation route");
+  assertContains(route, "access.isAdmin", "CMS access mutation admin boundary");
+  assertContains(route, "isSameOriginRequest(request)", "CMS access same-origin boundary");
+  assertContains(route, 'if (target.role === "admin")', "CMS access admin grant refusal");
+  assertContains(route, "ContentManagerAccess", "CMS access dedicated grant table");
+  assertNotContains(route, "SET role", "CMS access must not update product role");
+  assertNotContains(route, "UPDATE User", "CMS access must not mutate User product role");
+});
+
+test("CMS settings workbench distinguishes enforced publish security from config-only preferences", () => {
+  const page = source("src/app/icerik/ayarlar/page.tsx");
+  const route = source("src/app/api/cms-settings/route.ts");
+  const access = source("src/lib/cms-access.ts");
+  const navigation = source("src/lib/content-navigation.ts");
+
+  assertContains(page, 'requireCmsAdmin("/icerik/ayarlar")', "CMS settings admin boundary");
+  assertContains(page, "Config-only", "CMS settings config-only disclosure");
+  assertContains(page, "runtime’a henüz bağlı değil", "CMS settings runtime disclosure");
+  assertContains(page, "policyDrift", "CMS settings stored-policy drift warning");
+  assertContains(page, "formPreservedFields", "CMS settings targeted update preserves unrelated config");
+  assertNotContains(page, 'name="requirePublishPermission"', "publish permission cannot be disabled from settings UI");
+  assertContains(route, "requirePublishPermission: true", "settings route enforces publish permission policy");
+  assertContains(route, "isSameOriginRequest(request)", "settings route same-origin boundary");
+  assertContains(route, "updatedById", "settings route audit actor persistence");
+  assertContains(access, "requireCmsPublisher", "runtime publish permission enforcement exists");
+  assertContains(access, "if (!access.canPublish)", "runtime publish permission fail-closed boundary");
+  assertContains(navigation, ".filter((item) => item.enabled)", "navigation still uses static enabled filter");
+});

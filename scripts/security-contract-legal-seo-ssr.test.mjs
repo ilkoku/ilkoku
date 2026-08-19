@@ -34,12 +34,12 @@ test("TR legal documents use published CMS content in server HTML and metadata",
   assertNotContains(shellHydrator, "PublicDocumentHydrator", "obsolete legal client hydration mount");
 });
 
-test("TR legal metadata exposes EN alternate only for a valid published EN document", () => {
+test("TR legal metadata stays Turkish-only", () => {
   const page = source("src/app/yasal/[slug]/page.tsx");
 
-  assertContains(page, 'isCmsLocaleEnabled("en")', "EN public language check");
-  assertContains(page, 'getPublishedLegalDocumentState(slug, "en")', "EN legal published state check");
-  assertContains(page, 'const hasEnglish = enState.state === "valid"', "EN hreflang validity boundary");
-  assertContains(page, 'en: `https://ilkoku.com/en/yasal/${slug}`', "EN legal hreflang target");
+  assertContains(page, '"tr-TR": `https://ilkoku.com/yasal/${slug}`', "TR legal hreflang target");
   assertContains(page, '"x-default": `https://ilkoku.com/yasal/${slug}`', "legal x-default target");
+  assertNotContains(page, 'isCmsLocaleEnabled("en")', "no EN public language check");
+  assertNotContains(page, 'getPublishedLegalDocumentState(slug, "en")', "no EN legal state lookup");
+  assertNotContains(page, '/en/yasal/', "no EN legal hreflang target");
 });

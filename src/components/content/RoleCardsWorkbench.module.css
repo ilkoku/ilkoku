@@ -48,10 +48,13 @@
   box-shadow: 0 0.65rem 1.8rem rgba(13, 18, 35, 0.055);
 }
 
-.roleRail {
+.roleRail,
+.previewPane {
   position: sticky;
   top: 1rem;
-  overflow: hidden;
+  align-self: start;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
 }
 
 .railHeading,
@@ -406,12 +409,6 @@
   padding: 0 0.75rem;
 }
 
-.previewPane {
-  position: sticky;
-  top: 1rem;
-  overflow: hidden;
-}
-
 .previewHeading > div {
   display: grid;
   gap: 0.12rem;
@@ -709,8 +706,14 @@
     grid-template-columns: minmax(12rem, 0.72fr) minmax(27rem, 1.45fr);
   }
 
+  .roleRail,
   .previewPane {
     position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .previewPane {
     grid-column: 1 / -1;
   }
 
@@ -726,11 +729,6 @@
 
   .form {
     grid-template-columns: 1fr;
-  }
-
-  .roleRail,
-  .previewPane {
-    position: static;
   }
 
   .roleRail,

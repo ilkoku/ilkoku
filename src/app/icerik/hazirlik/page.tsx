@@ -66,7 +66,7 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
         : "Hakkımızda taslağı hazır. Yayından önce SEO alanlarını kontrol edin."
       : data.corporateArchived > 0
         ? "Hakkımızda kaydı arşivde. Mevcut kaydı açıp taslak olarak kaydedin; yeni kopya oluşturulmayacak."
-        : "Hakkımızda kaydı henüz yok. Sprint 3 başlangıç setinden güvenli taslak oluşturabilirsiniz.";
+        : "Hakkımızda kaydı henüz yok. CMS başlangıç setinden güvenli taslak oluşturabilirsiniz.";
 
   const faqDetail = data.faq >= cmsReadinessTargets.faq
     ? data.faqPendingDrafts > 0
@@ -156,7 +156,7 @@ export default async function ContentReadinessPage({ searchParams }: { searchPar
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
-        <div><span>Sprint 3 · Canlı İçerik</span><h1>Yayın Hazırlığı</h1><p>Taslak oluşumundan canlı yayına kadar temel Sprint 3 içeriklerini tek ekrandan izleyin. Canlı kabul ile operasyon kuyruğu ayrı değerlendirilir.</p></div>
+        <div><span>CMS · Canlı İçerik</span><h1>Yayın Hazırlığı</h1><p>Taslak oluşumundan canlı yayına kadar temel CMS içeriklerini tek ekrandan izleyin. Canlı kabul ile operasyon kuyruğu ayrı değerlendirilir.</p></div>
         <div className="content-profile"><strong>{ready ? "YAYINA HAZIR" : "İÇERİK EKSİĞİ VAR"}</strong><small>{passes} PASS · {warnings} WARN · {blockers} BLOCKER · {infos} INFO</small></div>
       </div>
 
@@ -175,7 +175,7 @@ export default async function ContentReadinessPage({ searchParams }: { searchPar
           </div>
 
           <div className="content-panel" style={{ marginTop: "1rem" }}>
-            <div className="content-section-heading"><div><span>Sprint 3 Akışı</span><h2>Taslak → SEO → Yayın</h2></div><p>Başlangıç setinin oluşturulması, canlı yayın ve sonradan hazırlanan değişiklikler ayrı izlenir.</p></div>
+            <div className="content-section-heading"><div><span>CMS Yayın Akışı</span><h2>Taslak → SEO → Yayın</h2></div><p>Başlangıç setinin oluşturulması, canlı yayın ve sonradan hazırlanan değişiklikler ayrı izlenir.</p></div>
             <div className="content-metric-grid">
               <article className="content-metric-card"><span>Başlangıç seti</span><strong>{starter.createdTotal}/{starter.total}</strong><small>{starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : "aktif kayıt"}</small></article>
               <article className="content-metric-card"><span>Canlı temel içerik</span><strong>{starter.publishedTotal}/{starter.total}</strong><small>yayında</small></article>

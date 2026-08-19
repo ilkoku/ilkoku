@@ -118,7 +118,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sea
 
       <div className={styles.workbench}>
         <div className={styles.summaryBar}>
-          <article className={styles.summaryCard}><span>Aktif erişim</span><strong>{activeCount}</strong><small>CMS'e girebilir</small></article>
+          <article className={styles.summaryCard}><span>Aktif erişim</span><strong>{activeCount}</strong><small>CMS&apos;e girebilir</small></article>
           <article className={styles.summaryCard}><span>Yayın yetkili</span><strong>{publishCount}</strong><small>canlı yayın yapabilir</small></article>
           <article className={styles.summaryCard}><span>Yalnız yönetim</span><strong>{manageOnlyCount}</strong><small>taslak hazırlayabilir</small></article>
           <article className={styles.summaryCard}><span>İptal edilmiş</span><strong>{revokedCount}</strong><small>erişimi kapalı</small></article>

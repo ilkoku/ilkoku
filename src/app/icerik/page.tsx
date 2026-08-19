@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { requireCmsManager } from "@/lib/cms-access";
+import { getCmsDashboardIntegritySignals } from "@/lib/cms-dashboard-integrity";
+import { getCmsOperationalIntegrity } from "@/lib/cms-health-integrity";
 import { cmsModules } from "@/lib/cms-modules";
 import {
   cmsReadinessTargets,
@@ -48,7 +50,7 @@ function pendingAge(hours: number | null) {
 
 async function loadDashboardData() {
   try {
-    const [pageCounts, siteCounts, revisions, readiness, recentPages, recentSite] = await Promise.all([
+    const [pageCounts, siteCounts, revisions, readiness, integrity, recentPages, recentSite] = await Promise.all([
       prisma.$queryRaw<PageCountRow[]>`
         SELECT COUNT(*) AS total,
           COUNT(CASE WHEN status = 'draft' THEN 1 END) AS drafts,
@@ -67,6 +69,7 @@ async function loadDashboardData() {
         WHERE createdAt >= DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 7 DAY)
       `,
       loadCmsReadiness(),
+      getCmsOperationalIntegrity(),
       prisma.$queryRaw<RecentPageRow[]>`
         SELECT id, title, slug, status, updatedAt FROM ContentPage ORDER BY updatedAt DESC LIMIT 6
       `,
@@ -86,6 +89,7 @@ async function loadDashboardData() {
       revisions: number(revisions[0]?.total),
       publishQueue: readiness.queue,
       readiness,
+      integrity,
       recentPages,
       recentSite,
     };
@@ -115,6 +119,7 @@ export default async function ContentDashboardPage() {
 
   const summary = getCmsReadinessSummary(data.readiness);
   const starter = getCmsStarterSummary(data.readiness);
+  const integritySignals = getCmsDashboardIntegritySignals(data.integrity);
   const corporateHref = data.readiness.corporateId ? `/icerik/sayfalar/${data.readiness.corporateId}` : "/icerik/sayfalar";
   const guideHref = data.readiness.guideId ? `/icerik/rehber/${data.readiness.guideId}?dil=tr` : "/icerik/rehber?dil=tr";
   const faqHref = data.readiness.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqFocusKey}` : "/icerik/sss?dil=tr";
@@ -131,6 +136,8 @@ export default async function ContentDashboardPage() {
   ].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 8);
 
   const tasks: DashboardTask[] = [
+    integritySignals.blockers > 0 ? { href: "/icerik/saglik?durum=blocker#kontroller", title: `${integritySignals.blockers} CMS bütünlük blokajı`, text: "Canlı payload, yönlendirme, medya servis, footer veya global ayar sözleşmelerinden en az biri bozuk. İçerik görevlerinden önce Sistem Sağlığı üzerinden müdahale edin.", action: "Blokajları aç", level: "blocker" as const } : null,
+    integritySignals.warnings > 0 ? { href: "/icerik/saglik?durum=warn#kontroller", title: `${integritySignals.warnings} CMS bütünlük uyarısı`, text: "Taslak, medya, revision veya duyuru bütünlüğünde inceleme gerektiren kayıtlar var. Ham veriyi değiştirmeden Sistem Sağlığı üzerinden ilgili kaynağa gidin.", action: "Uyarıları aç", level: "warn" as const } : null,
     data.readiness.legal < cmsReadinessTargets.legal ? { href: "/icerik/yasal?dil=tr", title: `Yasal CMS sahipliği ${data.readiness.legal}/${cmsReadinessTargets.legal}`, text: "Zorunlu beş yasal belgenin tamamı CMS üzerinden yayınlanmadan içerik kabulü tamamlanmaz.", action: "Yasalı tamamla", level: "blocker" as const } : null,
     data.readiness.homepage < cmsReadinessTargets.homepage ? { href: "/icerik/ana-sayfa?dil=tr", title: `Ana Sayfa CMS kapsamı ${data.readiness.homepage}/${cmsReadinessTargets.homepage}`, text: "Hero, roller, Eser Pasaportu, Neden İlkOku ve footer bölümlerinin yayın durumunu tamamlayın.", action: "Ana Sayfayı aç", level: "warn" as const } : null,
     data.readiness.corporate < cmsReadinessTargets.corporate
@@ -170,6 +177,8 @@ export default async function ContentDashboardPage() {
   const healthClass = blockerCount > 0 ? "is-blocked" : warningCount > 0 ? "is-attention" : tasks.length > 0 ? "is-watch" : "is-good";
 
   const metrics = [
+    { label: "Bütünlük blokajı", value: integritySignals.blockers, note: "Sistem Sağlığı", href: "/icerik/saglik?durum=blocker#kontroller" },
+    { label: "Bütünlük uyarısı", value: integritySignals.warnings, note: "Sistem Sağlığı", href: "/icerik/saglik?durum=warn#kontroller" },
     { label: "Yayın hazırlığı", value: `${summary.corePassed}/${summary.coreTotal}`, note: "canlı kabul alanı", href: "/icerik/hazirlik" },
     { label: "Başlangıç seti", value: `${starter.createdTotal}/${starter.total}`, note: starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : `${starter.publishedTotal} canlı`, href: "/icerik/hazirlik" },
     { label: "Bekleyen temel değişiklik", value: starter.pendingTotal, note: oldestPendingAge ? `en eskisi ${oldestPendingAge}` : "canlı yayını bozmuyor", href: "/icerik/hazirlik" },
@@ -197,11 +206,11 @@ export default async function ContentDashboardPage() {
 
   return (
     <section className="content-dashboard">
-      <div className="content-page-heading content-dashboard-heading"><div><span>Operasyon Merkezi</span><h1>İçerik Genel Bakış</h1><p>İlkOku.com için bugün ne yapılması gerektiğini, canlı yayın kabulünü ve son değişiklikleri tek ekrandan yönetin.</p></div><div className={`content-health-badge ${healthClass}`}><small>Canlı içerik durumu</small><strong>{healthLabel}</strong><span>{summary.corePassed}/{summary.coreTotal} temel alan hazır · {starter.createdTotal}/{starter.total} aktif başlangıç kaydı · {starter.pendingTotal} bekleyen temel değişiklik · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span></div></div>
+      <div className="content-page-heading content-dashboard-heading"><div><span>Operasyon Merkezi</span><h1>İçerik Genel Bakış</h1><p>İlkOku.com için bugün ne yapılması gerektiğini, canlı yayın kabulünü ve son değişiklikleri tek ekrandan yönetin.</p></div><div className={`content-health-badge ${healthClass}`}><small>Canlı içerik durumu</small><strong>{healthLabel}</strong><span>{integritySignals.blockers} bütünlük blokajı · {integritySignals.warnings} bütünlük uyarısı · {summary.corePassed}/{summary.coreTotal} temel alan hazır · {starter.pendingTotal} bekleyen temel değişiklik · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span></div></div>
       <div className="content-dashboard-quick-actions" aria-label="Hızlı işlemler">{quickActions.map((action) => <Link href={action.href} key={`${action.href}-${action.label}`}><strong>{action.label}</strong><small>{action.text}</small></Link>)}</div>
       <div className="content-metric-grid">{metrics.map((metric) => <Link href={metric.href} className="content-metric-card content-metric-card--link" key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.note}</small></Link>)}</div>
       <div className="content-dashboard-columns">
-        <div className="content-panel content-dashboard-panel"><div className="content-dashboard-section-title"><div><span>Bugün</span><h2>Yapılması gerekenler</h2></div><Link href="/icerik/hazirlik">Tüm kabul →</Link></div>{tasks.length === 0 ? <div className="content-dashboard-success"><strong>İçerik operasyonunda açık konu görünmüyor.</strong><p>Temel canlı yayın kabulü, bekleyen temel değişiklikler ve SEO kontrolleri temiz.</p></div> : <div className="content-task-list">{tasks.map((task, index) => <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}><div className="content-task-item__body"><div className="content-task-item__meta"><span>{taskLevelLabel(task.level)}</span><small>#{index + 1}</small></div><strong>{task.title}</strong><p>{task.text}</p></div><span className="content-task-item__action">{task.action} →</span></Link>)}</div>}</div>
+        <div className="content-panel content-dashboard-panel"><div className="content-dashboard-section-title"><div><span>Bugün</span><h2>Yapılması gerekenler</h2></div><Link href="/icerik/hazirlik">Tüm kabul →</Link></div>{tasks.length === 0 ? <div className="content-dashboard-success"><strong>İçerik operasyonunda açık konu görünmüyor.</strong><p>Temel canlı yayın kabulü, veri bütünlüğü, bekleyen temel değişiklikler ve SEO kontrolleri temiz.</p></div> : <div className="content-task-list">{tasks.map((task, index) => <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}><div className="content-task-item__body"><div className="content-task-item__meta"><span>{taskLevelLabel(task.level)}</span><small>#{index + 1}</small></div><strong>{task.title}</strong><p>{task.text}</p></div><span className="content-task-item__action">{task.action} →</span></Link>)}</div>}</div>
         <div className="content-panel content-dashboard-panel"><div className="content-dashboard-section-title"><div><span>Aktivite</span><h2>Son değişiklikler</h2></div><Link href="/icerik/gecmis">Tüm geçmiş →</Link></div>{activity.length === 0 ? <div className="content-empty"><strong>Henüz hareket yok.</strong><p>İçerik değişiklikleri burada görünecek.</p></div> : <div className="content-activity-list">{activity.map((item) => <div className="content-activity-item" key={item.key}><div><strong>{item.label}</strong><small>{item.detail}</small></div><div><span>{item.status}</span><small>{formatDate(item.updatedAt)}</small></div></div>)}</div>}</div>
       </div>
       <div className="content-dashboard-section-title content-dashboard-modules-title"><div><span>Modüller</span><h2>Tüm yönetim alanları</h2></div><small>{areas.length} aktif modül</small></div>

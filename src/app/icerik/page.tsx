@@ -43,6 +43,25 @@ function number(value: bigint | number | null | undefined) { return Number(value
 function statusLabel(status: string) { if (status === "published") return "Yayında"; if (status === "archived") return "Arşiv"; return "Taslak"; }
 function taskLevelLabel(level: TaskLevel) { if (level === "blocker") return "BLOCKER"; if (level === "warn") return "ÖNCELİK"; return "TAKİP"; }
 function taskImpactLabel(level: TaskLevel) { if (level === "blocker") return "Canlı operasyonu etkileyebilir"; if (level === "warn") return "Bugün ele alınmalı"; return "Canlı yayını durdurmaz"; }
+function taskReasonLabel(task: DashboardTask) {
+  if (task.href.startsWith("/icerik/saglik")) return "CMS veri bütünlüğü";
+  if (task.href.startsWith("/icerik/yasal")) return "Zorunlu yayın kabulü";
+  if (task.href.startsWith("/icerik/ana-sayfa")) return "Ana Sayfa kabulü";
+  if (task.href.startsWith("/icerik/sayfalar")) return "Kurumsal içerik";
+  if (task.href.startsWith("/icerik/sss")) return "Temel yardım içeriği";
+  if (task.href.startsWith("/icerik/rehber")) return "Temel rehber";
+  if (task.href === "/icerik/yayin-kuyrugu") return "Bekleyen taslaklar";
+  if (task.href === "/icerik/seo") return "Canlı SEO kalitesi";
+  if (task.href === "/icerik/formlar") return "Gelen talepler";
+  if (task.href === "/icerik/hazirlik") return "CMS başlangıç seti";
+  return "İçerik operasyonu";
+}
+function taskLiveImpactLabel(task: DashboardTask) {
+  if (task.level === "blocker") return "Canlı kabulü engeller";
+  if (task.href === "/icerik/seo") return "Canlı görünürlüğü etkiler";
+  if (task.level === "warn") return "Canlı kabul kalitesini etkiler";
+  return "Canlı yayın korunur";
+}
 function formatDate(value: Date) { return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
 function pendingAge(hours: number | null) {
   if (hours === null) return null;
@@ -217,6 +236,25 @@ export default async function ContentDashboardPage() {
     { level: "warn", eyebrow: "Bugün", title: "İçerik işleri", emptyText: "Bugün için zorunlu içerik işi görünmüyor.", tasks: tasks.filter((task) => task.level === "warn") },
     { level: "info", eyebrow: "Takip", title: "Bekleyen işler", emptyText: "Canlı yayını bozmayan takip işi yok.", tasks: tasks.filter((task) => task.level === "info") },
   ];
+  const taskAgeLabel = (task: DashboardTask) => {
+    if (task.level !== "info") return null;
+    if (task.href === corporateHref) return corporateAge;
+    if (task.href.startsWith("/icerik/sss")) return faqAge;
+    if (task.href.startsWith("/icerik/rehber")) return guideAge;
+    if (task.href === "/icerik/yayin-kuyrugu") return oldestPendingAge;
+    return null;
+  };
+  const taskContext = (task: DashboardTask) => {
+    const age = taskAgeLabel(task);
+    return (
+      <div className="content-task-context" aria-label={`${task.title} görev bağlamı`}>
+        <span><b>Neden</b>{taskReasonLabel(task)}</span>
+        <span><b>Canlı etkisi</b>{taskLiveImpactLabel(task)}</span>
+        {age ? <span><b>Bekleme</b>{age}</span> : null}
+        <span><b>Sonraki</b>{task.action}</span>
+      </div>
+    );
+  };
 
   const metrics = [
     { label: "Bütünlük blokajı", value: integritySignals.blockers, note: "Sistem Sağlığı", href: "/icerik/saglik?durum=blocker#kontroller" },
@@ -252,7 +290,7 @@ export default async function ContentDashboardPage() {
 
       {focusTask ? (
         <Link href={focusTask.href} className={`content-focus-card is-${focusTask.level}`} aria-label={`Şimdi: ${focusTask.title}`}>
-          <div className="content-focus-card__copy"><div className="content-focus-card__meta"><span>ŞİMDİ</span><small>{taskLevelLabel(focusTask.level)} · {taskImpactLabel(focusTask.level)}</small></div><strong>{focusTask.title}</strong><p>{focusTask.text}</p></div>
+          <div className="content-focus-card__copy"><div className="content-focus-card__meta"><span>ŞİMDİ</span><small>{taskLevelLabel(focusTask.level)} · {taskImpactLabel(focusTask.level)}</small></div><strong>{focusTask.title}</strong><p>{focusTask.text}</p>{taskContext(focusTask)}</div>
           <span className="content-focus-card__action">{focusTask.action} →</span>
         </Link>
       ) : (
@@ -266,7 +304,7 @@ export default async function ContentDashboardPage() {
           <div className="content-operation-lanes">{lanes.map((lane) => {
             const visibleTasks = focusTask ? lane.tasks.filter((task) => task !== focusTask) : lane.tasks;
             const focusInLane = focusTask?.level === lane.level;
-            return <section className={`content-operation-lane is-${lane.level}`} key={lane.level}><div className="content-operation-lane__heading"><div><span>{lane.eyebrow}</span><strong>{lane.title}</strong><small>{taskImpactLabel(lane.level)}</small></div><b>{lane.tasks.length}</b></div>{focusInLane ? <div className="content-operation-lane__focus-note">En önemli görev yukarıdaki “Şimdi” alanında açık.</div> : null}{visibleTasks.length === 0 ? <div className="content-operation-lane__empty">{lane.emptyText}</div> : <div className="content-task-list">{visibleTasks.map((task, index) => <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}><div className="content-task-item__body"><div className="content-task-item__meta"><span>{taskLevelLabel(task.level)}</span><small>#{index + 1}</small></div><strong>{task.title}</strong><p>{task.text}</p></div><span className="content-task-item__action">{task.action} →</span></Link>)}</div>}</section>;
+            return <section className={`content-operation-lane is-${lane.level}`} key={lane.level}><div className="content-operation-lane__heading"><div><span>{lane.eyebrow}</span><strong>{lane.title}</strong><small>{taskImpactLabel(lane.level)}</small></div><b>{lane.tasks.length}</b></div>{focusInLane ? <div className="content-operation-lane__focus-note">En önemli görev yukarıdaki “Şimdi” alanında açık.</div> : null}{visibleTasks.length === 0 ? <div className="content-operation-lane__empty">{lane.emptyText}</div> : <div className="content-task-list">{visibleTasks.map((task, index) => <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}><div className="content-task-item__body"><div className="content-task-item__meta"><span>{taskLevelLabel(task.level)}</span><small>#{index + 1}</small></div><strong>{task.title}</strong><p>{task.text}</p>{taskContext(task)}</div><span className="content-task-item__action">{task.action} →</span></Link>)}</div>}</section>;
           })}</div>
         </div>
         <div className="content-panel content-dashboard-panel"><div className="content-dashboard-section-title"><div><span>Devam</span><h2>Kaldığın yerden devam et</h2></div><Link href="/icerik/gecmis">Tüm geçmiş →</Link></div>{activity.length === 0 ? <div className="content-empty"><strong>Henüz hareket yok.</strong><p>İçerik değişiklikleri burada görünecek.</p></div> : <div className="content-activity-list">{activity.map((item) => {

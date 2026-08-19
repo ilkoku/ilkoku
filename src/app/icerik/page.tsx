@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 type PageCountRow = { total: bigint; drafts: bigint; published: bigint };
 type SiteCountRow = { announcements: bigint; forms: bigint; schedules: bigint };
 type CountRow = { total: bigint };
-type RecentPageRow = { id: string; title: string; slug: string; status: "draft" | "published" | "archived"; updatedAt: Date };
+type RecentPageRow = { id: string; contentKey: string; title: string; slug: string; status: "draft" | "published" | "archived"; updatedAt: Date };
 type RecentSiteRow = { id: string; namespace: string; contentKey: string; status: "draft" | "published" | "archived"; updatedAt: Date };
 type ActivityItem = { key: string; label: string; detail: string; status: string; updatedAt: Date; href?: string; action?: string };
 type TaskLevel = "blocker" | "warn" | "info";
@@ -49,6 +49,19 @@ function pendingAge(hours: number | null) {
   if (hours < 1) return "1 saatten az";
   if (hours < 24) return `${hours} saat`;
   return `${Math.floor(hours / 24)} gün`;
+}
+function pageActivityTarget(page: RecentPageRow): Pick<ActivityItem, "href" | "action"> {
+  if (page.contentKey.startsWith("guide:")) {
+    const locale = page.contentKey.startsWith("guide:en:") ? "en" : "tr";
+    return { href: `/icerik/rehber/${page.id}?dil=${locale}`, action: "Rehbere dön" };
+  }
+  if (page.contentKey.startsWith("legal:")) {
+    const locale = page.contentKey.startsWith("legal:en:") ? "en" : "tr";
+    const prefix = locale === "en" ? "legal:en:" : "legal:";
+    const legalSlug = page.contentKey.slice(prefix.length);
+    return { href: `/icerik/yasal/${encodeURIComponent(legalSlug)}?dil=${locale}`, action: "Belgeye dön" };
+  }
+  return { href: `/icerik/sayfalar/${page.id}`, action: "Kayda dön" };
 }
 function siteActivityTarget(item: RecentSiteRow): Pick<ActivityItem, "href" | "action"> | null {
   if (item.namespace === "faq") return { href: `/icerik/sss?dil=tr#faq-${encodeURIComponent(item.contentKey)}`, action: "Kayda dön" };
@@ -87,7 +100,7 @@ async function loadDashboardData() {
       loadCmsReadiness(),
       getCmsOperationalIntegrity(),
       prisma.$queryRaw<RecentPageRow[]>`
-        SELECT id, title, slug, status, updatedAt FROM ContentPage ORDER BY updatedAt DESC LIMIT 6
+        SELECT id, contentKey, title, slug, status, updatedAt FROM ContentPage ORDER BY updatedAt DESC LIMIT 6
       `,
       prisma.$queryRaw<RecentSiteRow[]>`
         SELECT id, namespace, contentKey, status, updatedAt FROM SiteContent
@@ -147,7 +160,7 @@ export default async function ContentDashboardPage() {
   const oldestPendingAge = pendingAge(starter.pendingOldestAgeHours);
 
   const activity: ActivityItem[] = [
-    ...data.recentPages.map((page) => ({ key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt, href: `/icerik/sayfalar/${page.id}`, action: "Kayda dön" })),
+    ...data.recentPages.map((page) => ({ key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt, ...pageActivityTarget(page) })),
     ...data.recentSite.map((item) => {
       const target = siteActivityTarget(item);
       return { key: `site-${item.id}`, label: namespaceLabels[item.namespace] ?? item.namespace, detail: item.contentKey, status: statusLabel(item.status), updatedAt: item.updatedAt, ...(target ?? {}) };

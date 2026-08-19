@@ -166,7 +166,7 @@ export async function createCmsScheduleAction(formData: FormData) {
 
   revalidatePath("/icerik");
   revalidatePath("/icerik/zamanlama");
-  redirect("/icerik/zamanlama?kayit=1");
+  redirect(`/icerik/zamanlama?kayit=1&hedef=${encodeURIComponent(rawTarget)}`);
 }
 
 export async function cancelCmsScheduleAction(formData: FormData) {

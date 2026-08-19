@@ -64,6 +64,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       LIMIT 5000
     `;
 
+    const englishCms = englishEnabled ? await prisma.$queryRaw<CmsSitemapRow[]>`
+      SELECT slug, updatedAt
+      FROM ContentPage
+      WHERE status = 'published'
+        AND noIndex = false
+        AND (
+          contentKey LIKE 'legal:en:%'
+          OR contentKey LIKE 'guide:en:%'
+          OR contentKey LIKE 'page:en:%'
+        )
+      ORDER BY updatedAt DESC
+      LIMIT 10000
+    ` : [];
+
     return [
       ...staticEntries,
       ...works
@@ -71,6 +85,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .map((work) => ({ url: `${baseUrl}/kitap/${work.slug}`, lastModified: work.updatedAt, changeFrequency: "weekly" as const, priority: 0.8 })),
       ...guides.map((guide) => ({ url: `${baseUrl}${guide.slug}`, lastModified: guide.updatedAt, changeFrequency: "monthly" as const, priority: 0.6 })),
       ...pages.map((page) => ({ url: `${baseUrl}${page.slug}`, lastModified: page.updatedAt, changeFrequency: "monthly" as const, priority: 0.6 })),
+      ...englishCms
+        .filter((page) => page.slug.startsWith("/en/") && page.slug !== "/en/yardim")
+        .map((page) => ({ url: `${baseUrl}${page.slug}`, lastModified: page.updatedAt, changeFrequency: "monthly" as const, priority: 0.5 })),
     ];
   } catch {
     return staticEntries;

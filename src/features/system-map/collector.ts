@@ -485,7 +485,7 @@ export const getSystemMapSnapshot = cache(async (): Promise<SystemMapSnapshot> =
   }
 
   let detected = sourceRoutes.length > 0 ? sourceRoutes : buildRoutes;
-  let scanMode: SystemMapSnapshot["scanMode"] = sourceRoutes.length > 0
+  const scanMode: SystemMapSnapshot["scanMode"] = sourceRoutes.length > 0
     ? buildRoutes.length > 0
       ? "hybrid"
       : "source"

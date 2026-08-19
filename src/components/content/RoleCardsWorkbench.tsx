@@ -108,6 +108,7 @@ export function RoleCardsWorkbench({
 
   const selectedIndex = orderedCards.findIndex((card) => card.key === selected.key);
   const fixedHref = cmsRoleMeta[selected.key].fixedHref;
+  const flowingPaneStyle = { position: "static" as const, maxHeight: "none", overflow: "visible" };
 
   return (
     <div className={styles.workbench}>
@@ -144,7 +145,7 @@ export function RoleCardsWorkbench({
           </div>
         ))}
 
-        <aside className={styles.roleRail} aria-label="Rol kartları">
+        <aside className={styles.roleRail} style={flowingPaneStyle} aria-label="Rol kartları">
           <div className={styles.railHeading}>
             <span>Kartlar</span>
             <strong>4 sabit rol</strong>
@@ -261,7 +262,7 @@ export function RoleCardsWorkbench({
           </div>
         </section>
 
-        <aside className={styles.previewPane}>
+        <aside className={styles.previewPane} style={flowingPaneStyle}>
           <div className={styles.previewHeading}>
             <div><span>Anlık önizleme</span><strong>Kaydetmeden önce gör</strong></div>
             <span className={styles.previewPosition}>0{selected.position}</span>

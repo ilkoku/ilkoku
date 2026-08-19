@@ -45,14 +45,14 @@ test("role card workbench hides technical ordering mechanics from content manage
   assertNotContains(workbench, "[1, 2, 3, 4].map((position)", "legacy manual ordering options");
 });
 
-test("role card workbench side panes stay synchronized across responsive sticky breakpoints", () => {
+test("role card side panes always move with the document while only the save bar may stay sticky", () => {
+  const workbench = source("src/components/content/RoleCardsWorkbench.tsx");
   const styles = source("src/components/content/RoleCardsWorkbench.module.css");
 
-  assertContains(styles, ".roleRail,\n.previewPane {\n  position: sticky;", "paired desktop sticky panes");
-  assertContains(styles, "max-height: calc(100vh - 2rem);", "sticky pane viewport bound");
-  assertContains(styles, "@media (max-width: 78rem)", "role card medium breakpoint");
-  assertContains(styles, ".roleRail,\n  .previewPane {\n    position: static;", "paired medium static panes");
-  assertNotContains(styles, ".previewPane {\n    position: static;\n    grid-column: 1 / -1;", "legacy preview-only sticky asymmetry");
+  assertContains(workbench, 'const flowingPaneStyle = { position: "static" as const, maxHeight: "none", overflow: "visible" };', "forced normal-flow pane style");
+  assertContains(workbench, '<aside className={styles.roleRail} style={flowingPaneStyle}', "role rail normal-flow override");
+  assertContains(workbench, '<aside className={styles.previewPane} style={flowingPaneStyle}>', "preview pane normal-flow override");
+  assertContains(styles, ".saveBar {\n  position: sticky;", "save bar remains sticky");
 });
 
 test("role card workbench provides focused editing, live preview and safe publish handoff", () => {

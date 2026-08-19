@@ -180,7 +180,7 @@ export async function SeoRoleCardsAudit() {
         <LocaleCard audit={en} />
       </div>
 
-      <div className={styles.note}><strong>SEO sınırı:</strong> Rol Kartları ana sayfanın semantik/on-page içeriğidir. Kartlara ayrı canonical, sitemap URL'si veya bağımsız SERP metadata eklemek duplicate/yanlış URL sinyali yaratacağı için bilinçli olarak yapılmaz.</div>
+      <div className={styles.note}><strong>SEO sınırı:</strong> Rol Kartları ana sayfanın semantik/on-page içeriğidir. Kartlara ayrı canonical, sitemap URL’si veya bağımsız SERP metadata eklemek duplicate/yanlış URL sinyali yaratacağı için bilinçli olarak yapılmaz.</div>
     </section>
   );
 }

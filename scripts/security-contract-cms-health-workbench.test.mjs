@@ -43,3 +43,21 @@ test("CMS health workbench prioritizes diagnosis and delegates fixes to canonica
   assertNotContains(workbench, "saveCms", "health must not create CMS write action");
   assertNotContains(workbench, "publish", "health must not create publish mutation");
 });
+
+test("CMS overview promotes health integrity signals without duplicating the health engine", () => {
+  const dashboard = source("src/app/icerik/page.tsx");
+  const adapter = source("src/lib/cms-dashboard-integrity.ts");
+
+  assertContains(dashboard, "getCmsOperationalIntegrity()", "dashboard reads canonical integrity engine");
+  assertContains(dashboard, "getCmsDashboardIntegritySignals(data.integrity)", "dashboard integrity adapter");
+  assertContains(dashboard, 'href: "/icerik/saglik?durum=blocker#kontroller"', "dashboard blocker deep link");
+  assertContains(dashboard, 'href: "/icerik/saglik?durum=warn#kontroller"', "dashboard warning deep link");
+  assertContains(dashboard, "Bütünlük blokajı", "dashboard integrity blocker metric");
+  assertContains(dashboard, "Bütünlük uyarısı", "dashboard integrity warning metric");
+  assertContains(adapter, "integrity.invalidPublishedHomepage", "dashboard published-homepage blocker signal");
+  assertContains(adapter, "integrity.invalidPublishedFaqs", "dashboard published-faq blocker signal");
+  assertContains(adapter, "integrity.invalidPublishedPages", "dashboard published-page blocker signal");
+  assertContains(adapter, "integrity.brokenDatabaseMedia", "dashboard media-service blocker signal");
+  assertNotContains(adapter, "invalidForms", "dashboard does not promote form PII integrity detail globally");
+  assertNotContains(adapter, "prisma", "dashboard adapter does not create a second integrity query engine");
+});

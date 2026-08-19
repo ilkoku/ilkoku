@@ -1,75 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
-import {
-  notificationWorkspaceRoles,
-  readerWorkspaceRoles,
-} from "@/features/auth/data";
 import type { UserRole } from "@/features/auth/types";
 import { getRequestSession } from "@/lib/auth/request-session";
+import {
+  adminAccessSource,
+  getRouteRoleRule,
+  isAdminOnlyPath,
+  isProtectedPath,
+  matchesPath,
+  publisherInvitationPath,
+  publisherPath,
+} from "@/lib/route-security";
 
 const legacyEditorsPath = "/editörler";
 const publicEditorsPath = "/editorler";
-const legacyAdminPath = "/admin";
-const systemManagementPath = "/sistem-yonetimi";
-const publisherPath = "/yayinevi";
-const publisherInvitationPath = "/yayinevi/davet";
-
-const protectedPaths = [
-  legacyAdminPath,
-  systemManagementPath,
-  "/hesabim",
-  "/editor",
-  "/favorilerim",
-  "/bildirimler",
-  "/kesfet",
-  "/okuyucu",
-  "/okumaya-devam",
-  "/oku",
-  "/tamamlanan-eserler",
-  "/yazar",
-  "/eserlerim",
-  "/yazmaya-devam",
-  "/geri-bildirimler",
-  "/yorumlarim",
-  "/yayinevleri",
-  "/sayfa-renkleri",
-  "/yayinevi",
-  "/rol-secimi",
-];
-
-interface RouteRoleRule {
-  approved: boolean;
-  path: string;
-  roles: UserRole[];
-}
-
-const routeRoleRules: RouteRoleRule[] = [
-  { approved: false, path: "/favorilerim", roles: [...readerWorkspaceRoles] },
-  { approved: false, path: "/bildirimler", roles: [...notificationWorkspaceRoles] },
-  { approved: false, path: "/kesfet", roles: [...readerWorkspaceRoles] },
-  { approved: false, path: "/okuyucu", roles: [...readerWorkspaceRoles] },
-  { approved: false, path: "/okumaya-devam", roles: [...readerWorkspaceRoles] },
-  { approved: false, path: "/tamamlanan-eserler", roles: [...readerWorkspaceRoles] },
-  { approved: false, path: "/yazar", roles: ["writer"] },
-  { approved: false, path: "/eserlerim", roles: ["writer"] },
-  { approved: false, path: "/yazmaya-devam", roles: ["writer"] },
-  { approved: false, path: "/geri-bildirimler", roles: ["writer"] },
-  { approved: false, path: "/yorumlarim", roles: ["writer"] },
-  { approved: false, path: "/yayinevleri", roles: ["writer"] },
-  { approved: false, path: "/sayfa-renkleri", roles: ["writer"] },
-  { approved: true, path: "/editor", roles: ["editor"] },
-];
-
-function matchesPath(pathname: string, path: string) {
-  return pathname === path || pathname.startsWith(`${path}/`);
-}
-
-function isProtected(pathname: string) {
-  return protectedPaths.some((path) => matchesPath(pathname, path));
-}
-
-function getRoleRule(pathname: string) {
-  return routeRoleRules.find(({ path }) => matchesPath(pathname, path));
-}
 
 function applyReadingSecurityHeaders(
   response: NextResponse,
@@ -126,16 +69,14 @@ function createAccessDeniedRedirect(
 
 export async function proxy(request: NextRequest) {
   const pathname = decodeURIComponent(request.nextUrl.pathname);
-  const roleRule = getRoleRule(pathname);
-  const isAdminRoute =
-    matchesPath(pathname, systemManagementPath) ||
-    matchesPath(pathname, legacyAdminPath);
+  const roleRule = getRouteRoleRule(pathname);
+  const isAdminRoute = isAdminOnlyPath(pathname);
   const isPublisherRoute = matchesPath(pathname, publisherPath);
   const isPublisherInvitationRoute = matchesPath(
     pathname,
     publisherInvitationPath,
   );
-  const protectedRoute = isProtected(pathname);
+  const protectedRoute = isProtectedPath(pathname);
 
   const session = protectedRoute
     ? await getRequestSession(
@@ -170,15 +111,15 @@ export async function proxy(request: NextRequest) {
   const isAdmin = currentRole === "admin";
 
   /*
-   * Sistem yönetimi yalnızca admin rolüne açıktır.
-   * Legacy /admin dışarıdan canonical /sistem-yonetimi adresine
-   * yönlendirilir; iki yol da güvenlik katmanında admin olarak ele alınır.
+   * Sistem yönetimi, sistem haritası ve merkezi sözleşme yönetimi
+   * yalnızca gerçek admin rolüne açıktır. UI görünürlüğü güvenlik
+   * sayılmaz; erişim burada request katmanında da fail-closed kapanır.
    */
   if (isAdminRoute && !isAdmin) {
     return createAccessDeniedRedirect(
       request,
       session.response,
-      "system_management",
+      adminAccessSource(pathname),
     );
   }
 

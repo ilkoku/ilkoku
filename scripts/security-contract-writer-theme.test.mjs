@@ -14,14 +14,16 @@ function includes(text, fragment, label) {
 test("writer Page Colors route is role-scoped and present in writer navigation only", () => {
   const page = source("src/app/sayfa-renkleri/page.tsx");
   const navigation = source("src/content/navigation.ts");
+  const policy = source("src/lib/route-security.ts");
   const proxy = source("src/proxy.ts");
 
   includes(page, 'profile.role !== "writer"', "Page Colors route");
   includes(page, 'redirect("/erisim-reddedildi")', "Page Colors route");
   includes(navigation, '{ label: "Sayfa Renkleri", href: "/sayfa-renkleri" }', "writer navigation");
   assert.equal((navigation.match(/href: "\/sayfa-renkleri"/g) ?? []).length, 1);
-  includes(proxy, '"/sayfa-renkleri",', "protected Page Colors path");
-  includes(proxy, '{ approved: false, path: "/sayfa-renkleri", roles: ["writer"] }', "Page Colors proxy role rule");
+  includes(policy, '"/sayfa-renkleri",', "protected Page Colors path");
+  includes(policy, '{ approved: false, path: "/sayfa-renkleri", roles: ["writer"] }', "Page Colors role rule");
+  includes(proxy, "getRouteRoleRule(pathname)", "proxy canonical role policy consumption");
 });
 
 test("writer theme storage is isolated per user, versioned and sanitized", () => {

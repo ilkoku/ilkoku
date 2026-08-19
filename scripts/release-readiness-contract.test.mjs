@@ -31,23 +31,26 @@ function metadataBlocks(text) {
   return blocks;
 }
 
-test("writer notification route uses the same dedicated role boundary in proxy and page", () => {
+test("writer notification route uses the same dedicated role boundary in canonical policy and page", () => {
   const authData = source("src/features/auth/data.ts");
+  const policy = source("src/lib/route-security.ts");
   const proxy = source("src/proxy.ts");
   const page = source("src/app/bildirimler/page.tsx");
 
   assertContains(authData, "notificationWorkspaceRoles", "notification role boundary");
   assertContains(authData, '  "writer",', "notification role boundary");
-  assertContains(proxy, "notificationWorkspaceRoles", "proxy notification boundary");
+  assertContains(policy, "notificationWorkspaceRoles", "canonical notification boundary");
   assertContains(
-    proxy,
+    policy,
     '{ approved: false, path: "/bildirimler", roles: [...notificationWorkspaceRoles] }',
-    "proxy notification boundary",
+    "canonical notification boundary",
   );
+  assertContains(proxy, "getRouteRoleRule(pathname)", "proxy canonical role policy consumption");
   assertContains(page, "canAccessNotificationWorkspace", "notification page boundary");
 });
 
 test("release role matrix keeps every workspace route present and explicitly protected", () => {
+  const policy = source("src/lib/route-security.ts");
   const proxy = source("src/proxy.ts");
   const smoke = source(".github/workflows/production-smoke.yml");
   const routeFiles = [
@@ -75,12 +78,12 @@ test("release role matrix keeps every workspace route present and explicitly pro
     '"/editor"',
     '"/yayinevi"',
   ]) {
-    assertContains(proxy, path, `protected role path ${path}`);
+    assertContains(policy, path, `protected role path ${path}`);
   }
 
-  assertContains(proxy, 'path: "/yazar", roles: ["writer"]', "writer role gate");
-  assertContains(proxy, 'path: "/eserlerim", roles: ["writer"]', "writer role gate");
-  assertContains(proxy, 'path: "/editor", roles: ["editor"]', "editor role gate");
+  assertContains(policy, 'path: "/yazar", roles: ["writer"]', "writer role gate");
+  assertContains(policy, 'path: "/eserlerim", roles: ["writer"]', "writer role gate");
+  assertContains(policy, 'path: "/editor", roles: ["editor"]', "editor role gate");
   assertContains(proxy, "isPublisherRoute", "publisher membership gate");
   assertContains(proxy, "hasActivePublisherMembership", "publisher membership gate");
   assertContains(proxy, "isAdminRoute && !isAdmin", "admin role gate");

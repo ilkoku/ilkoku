@@ -6,14 +6,9 @@ import type {
   PublisherContractActionState,
 } from "@/features/publisher-workspace/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import {
-  sendPublisherContractEmail,
-} from "@/lib/email/publisher-emails";
-import { prisma } from "@/lib/prisma";
 
 import {
   savePublicationPlanLifecycle,
-  savePublisherContractLifecycle,
 } from "./lifecycle";
 
 async function requirePublisherActor() {
@@ -32,217 +27,23 @@ function revalidateContractSurfaces(submissionId: string) {
   revalidatePath("/yayinevleri");
 }
 
-async function resolveContractEmailOutcome(
-  result: Awaited<ReturnType<typeof sendPublisherContractEmail>>,
-) {
-  if (result.delivery === "smtp" || result.delivery === "local") {
-    return "sent" as const;
-  }
-
-  if (result.delivery !== "deduplicated") {
-    return "failed" as const;
-  }
-
-  if (!result.deliveryId) {
-    return "pending" as const;
-  }
-
-  const delivery = await prisma.emailDelivery.findUnique({
-    where: { id: result.deliveryId },
-    select: { status: true },
-  });
-
-  if (delivery?.status === "sent") return "sent" as const;
-  if (delivery?.status === "pending") return "pending" as const;
-  return "failed" as const;
-}
-
 export async function saveSecurePublisherContractAction(
   _state: PublisherContractActionState,
-  formData: FormData,
+  _formData: FormData,
 ): Promise<PublisherContractActionState> {
   const user = await requirePublisherActor();
 
   if (!user) {
     return {
-      message: "Bu işlem için giriş yapmalısınız.",
+      message: "Bu işlem için yayınevi hesabıyla giriş yapmalısınız.",
       status: "error",
-    };
-  }
-
-  const submissionId = String(
-    formData.get("submissionId") ?? "",
-  ).trim();
-  const territory = String(
-    formData.get("territory") ?? "",
-  ).trim();
-  const notes = String(
-    formData.get("notes") ?? "",
-  ).trim() || null;
-  const royaltyPercentage = Number(
-    formData.get("royaltyPercentage"),
-  );
-  const advanceRaw = String(
-    formData.get("advanceAmount") ?? "",
-  ).trim();
-  const advanceAmount = advanceRaw
-    ? Number(advanceRaw)
-    : null;
-  const rightsPeriodMonths = Number(
-    formData.get("rightsPeriodMonths"),
-  );
-  const intent = String(
-    formData.get("intent") ?? "draft",
-  );
-
-  if (
-    !submissionId ||
-    !territory ||
-    territory.length > 180 ||
-    (notes?.length ?? 0) > 10000 ||
-    (intent !== "draft" && intent !== "send")
-  ) {
-    return {
-      message: "Sözleşme bilgileri geçersiz veya eksik.",
-      status: "error",
-    };
-  }
-
-  if (
-    !Number.isFinite(royaltyPercentage) ||
-    royaltyPercentage < 0 ||
-    royaltyPercentage > 100
-  ) {
-    return {
-      message: "Telif oranı 0 ile 100 arasında olmalı.",
-      status: "error",
-    };
-  }
-
-  if (
-    !Number.isInteger(rightsPeriodMonths) ||
-    rightsPeriodMonths < 1 ||
-    rightsPeriodMonths > 240
-  ) {
-    return {
-      message: "Hak süresi 1–240 ay arasında olmalı.",
-      status: "error",
-    };
-  }
-
-  if (
-    advanceAmount !== null &&
-    (
-      !Number.isFinite(advanceAmount) ||
-      advanceAmount < 0
-    )
-  ) {
-    return {
-      message: "Avans tutarı geçersiz.",
-      status: "error",
-    };
-  }
-
-  const result = await savePublisherContractLifecycle({
-    advanceAmount,
-    notes,
-    rightsPeriodMonths,
-    royaltyPercentage,
-    status: intent === "send" ? "sent" : "draft",
-    submissionId,
-    territory,
-    userId: user.id,
-  });
-
-  if (result.status === "forbidden") {
-    return {
-      message: "Sözleşme yönetme yetkiniz bulunmuyor.",
-      status: "error",
-    };
-  }
-
-  if (result.status === "invalid_submission") {
-    return {
-      message:
-        "Sözleşme yalnızca kabul edilmiş ve yayınevinize ait aktif başvuruda yönetilebilir.",
-      status: "error",
-    };
-  }
-
-  if (result.status === "contract_terminal") {
-    return {
-      message:
-        "Bu sözleşme nihai duruma ulaştığı için yayınevi tarafından değiştirilemez.",
-      status: "error",
-    };
-  }
-
-  if (result.status === "sent_to_draft_forbidden") {
-    return {
-      message:
-        "Yazara gönderilmiş sözleşme tekrar taslağa alınamaz. Değişiklik gerekiyorsa yeni sürümü doğrudan yazara gönderin.",
-      status: "error",
-    };
-  }
-
-  let emailOutcome: "sent" | "pending" | "failed" = "sent";
-
-  if (result.emailRequired) {
-    try {
-      const emailResult = await sendPublisherContractEmail({
-        email: result.author.email,
-        fullName: result.author.fullName,
-        idempotencyKey: result.idempotencyKey,
-        submissionId,
-        workTitle: result.work.title,
-      });
-      emailOutcome = await resolveContractEmailOutcome(emailResult);
-    } catch (error) {
-      emailOutcome = "failed";
-      console.error("PUBLISHER_CONTRACT_EMAIL_FAILED", {
-        contractId: result.contract.id,
-        error:
-          error instanceof Error
-            ? error.message
-            : "UNKNOWN_ERROR",
-        submissionId,
-        version: result.contract.version,
-      });
-    }
-  }
-
-  revalidateContractSurfaces(submissionId);
-
-  if (intent === "send") {
-    if (emailOutcome === "pending") {
-      return {
-        message:
-          "Bu sözleşme sürümünün e-posta teslimatı zaten işleniyor. İkinci fiziksel e-posta oluşturulmadı.",
-        status: "success",
-      };
-    }
-
-    if (emailOutcome === "failed") {
-      return {
-        message:
-          "Sözleşme kaydedildi; bu sürüme bağlı e-posta teslimatı başarısız. İkinci fiziksel e-posta oluşturulmadı; E-posta Operasyonları üzerinden retry uygulanabilir.",
-        status: "success",
-      };
-    }
-
-    return {
-      message: result.changed
-        ? `Sözleşme sürüm ${result.contract.version} yazara gönderildi.`
-        : "Bu sözleşme sürümü daha önce gönderildi; aynı sürüm için ikinci fiziksel e-posta oluşturulmadı.",
-      status: "success",
     };
   }
 
   return {
-    message: result.changed
-      ? "Sözleşme taslağı kaydedildi."
-      : "Sözleşme taslağında değişiklik yok.",
-    status: "success",
+    message:
+      "Yeni sözleşmeler yalnız İlkOku merkezi Sözleşme Yönetimi üzerinden Admin tarafından hazırlanır ve gönderilir.",
+    status: "error",
   };
 }
 

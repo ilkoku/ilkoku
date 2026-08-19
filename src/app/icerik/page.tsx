@@ -17,15 +17,16 @@ export const dynamic = "force-dynamic";
 type PageCountRow = { total: bigint; drafts: bigint; published: bigint };
 type SiteCountRow = { announcements: bigint; forms: bigint; schedules: bigint };
 type CountRow = { total: bigint };
-type RecentPageRow = { id: string; title: string; slug: string; status: "draft" | "published" | "archived"; updatedAt: Date };
+type RecentPageRow = { id: string; contentKey: string; title: string; slug: string; status: "draft" | "published" | "archived"; updatedAt: Date };
 type RecentSiteRow = { id: string; namespace: string; contentKey: string; status: "draft" | "published" | "archived"; updatedAt: Date };
-type ActivityItem = { key: string; label: string; detail: string; status: string; updatedAt: Date };
+type ActivityItem = { key: string; label: string; detail: string; status: string; updatedAt: Date; href?: string; action?: string };
 type TaskLevel = "blocker" | "warn" | "info";
 type DashboardTask = { href: string; title: string; text: string; action: string; level: TaskLevel };
 type TaskLane = { level: TaskLevel; eyebrow: string; title: string; emptyText: string; tasks: DashboardTask[] };
 
 const namespaceLabels: Record<string, string> = {
   homepage: "Ana Sayfa",
+  homepage_en: "Ana Sayfa · EN",
   site: "Site",
   media: "Medya",
   faq: "SSS & Yardım",
@@ -48,6 +49,33 @@ function pendingAge(hours: number | null) {
   if (hours < 1) return "1 saatten az";
   if (hours < 24) return `${hours} saat`;
   return `${Math.floor(hours / 24)} gün`;
+}
+function pageActivityTarget(page: RecentPageRow): Pick<ActivityItem, "href" | "action"> | null {
+  if (page.contentKey.startsWith("guide:")) {
+    const locale = page.contentKey.startsWith("guide:en:") ? "en" : "tr";
+    return { href: `/icerik/rehber/${page.id}?dil=${locale}`, action: "Rehbere dön" };
+  }
+  if (page.contentKey.startsWith("legal:")) {
+    const locale = page.contentKey.startsWith("legal:en:") ? "en" : "tr";
+    const prefix = locale === "en" ? "legal:en:" : "legal:";
+    const legalSlug = page.contentKey.slice(prefix.length);
+    return { href: `/icerik/yasal/${encodeURIComponent(legalSlug)}?dil=${locale}`, action: "Belgeye dön" };
+  }
+  if (page.contentKey.startsWith("page:tr:")) return { href: `/icerik/sayfalar/${page.id}`, action: "Kayda dön" };
+  return null;
+}
+function siteActivityTarget(item: RecentSiteRow): Pick<ActivityItem, "href" | "action"> | null {
+  if (item.namespace === "faq") return { href: `/icerik/sss?dil=tr#faq-${encodeURIComponent(item.contentKey)}`, action: "Kayda dön" };
+  if (item.namespace === "faq_en") return { href: `/icerik/sss?dil=en#faq-${encodeURIComponent(item.contentKey)}`, action: "Kayda dön" };
+  if (item.namespace === "homepage") return { href: "/icerik/ana-sayfa?dil=tr", action: "Ana Sayfayı aç" };
+  if (item.namespace === "homepage_en") return { href: "/icerik/ana-sayfa?dil=en", action: "Ana Sayfayı aç" };
+  if (item.namespace === "announcement") return { href: "/icerik/duyurular", action: "Duyuruları aç" };
+  if (item.namespace === "media") return { href: "/icerik/medya", action: "Medyayı aç" };
+  if (item.namespace === "cms_schedule") return { href: "/icerik/zamanlama", action: "Planları aç" };
+  if (item.namespace === "cms_draft") return { href: "/icerik/yayin-kuyrugu", action: "Kuyruğu aç" };
+  if (item.namespace === "settings") return { href: "/icerik/ayarlar", action: "Ayarları aç" };
+  if (item.namespace === "locale") return { href: "/icerik/diller", action: "Dilleri aç" };
+  return null;
 }
 
 async function loadDashboardData() {
@@ -73,7 +101,7 @@ async function loadDashboardData() {
       loadCmsReadiness(),
       getCmsOperationalIntegrity(),
       prisma.$queryRaw<RecentPageRow[]>`
-        SELECT id, title, slug, status, updatedAt FROM ContentPage ORDER BY updatedAt DESC LIMIT 6
+        SELECT id, contentKey, title, slug, status, updatedAt FROM ContentPage ORDER BY updatedAt DESC LIMIT 6
       `,
       prisma.$queryRaw<RecentSiteRow[]>`
         SELECT id, namespace, contentKey, status, updatedAt FROM SiteContent
@@ -133,8 +161,14 @@ export default async function ContentDashboardPage() {
   const oldestPendingAge = pendingAge(starter.pendingOldestAgeHours);
 
   const activity: ActivityItem[] = [
-    ...data.recentPages.map((page) => ({ key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt })),
-    ...data.recentSite.map((item) => ({ key: `site-${item.id}`, label: namespaceLabels[item.namespace] ?? item.namespace, detail: item.contentKey, status: statusLabel(item.status), updatedAt: item.updatedAt })),
+    ...data.recentPages.map((page) => {
+      const target = pageActivityTarget(page);
+      return { key: `page-${page.id}`, label: page.title, detail: page.slug, status: statusLabel(page.status), updatedAt: page.updatedAt, ...(target ?? {}) };
+    }),
+    ...data.recentSite.map((item) => {
+      const target = siteActivityTarget(item);
+      return { key: `site-${item.id}`, label: namespaceLabels[item.namespace] ?? item.namespace, detail: item.contentKey, status: statusLabel(item.status), updatedAt: item.updatedAt, ...(target ?? {}) };
+    }),
   ].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 8);
 
   const tasks: DashboardTask[] = [
@@ -235,7 +269,10 @@ export default async function ContentDashboardPage() {
             return <section className={`content-operation-lane is-${lane.level}`} key={lane.level}><div className="content-operation-lane__heading"><div><span>{lane.eyebrow}</span><strong>{lane.title}</strong><small>{taskImpactLabel(lane.level)}</small></div><b>{lane.tasks.length}</b></div>{focusInLane ? <div className="content-operation-lane__focus-note">En önemli görev yukarıdaki “Şimdi” alanında açık.</div> : null}{visibleTasks.length === 0 ? <div className="content-operation-lane__empty">{lane.emptyText}</div> : <div className="content-task-list">{visibleTasks.map((task, index) => <Link href={task.href} className={`content-task-item is-${task.level}`} key={`${task.href}-${task.title}`}><div className="content-task-item__body"><div className="content-task-item__meta"><span>{taskLevelLabel(task.level)}</span><small>#{index + 1}</small></div><strong>{task.title}</strong><p>{task.text}</p></div><span className="content-task-item__action">{task.action} →</span></Link>)}</div>}</section>;
           })}</div>
         </div>
-        <div className="content-panel content-dashboard-panel"><div className="content-dashboard-section-title"><div><span>Aktivite</span><h2>Son değişiklikler</h2></div><Link href="/icerik/gecmis">Tüm geçmiş →</Link></div>{activity.length === 0 ? <div className="content-empty"><strong>Henüz hareket yok.</strong><p>İçerik değişiklikleri burada görünecek.</p></div> : <div className="content-activity-list">{activity.map((item) => <div className="content-activity-item" key={item.key}><div><strong>{item.label}</strong><small>{item.detail}</small></div><div><span>{item.status}</span><small>{formatDate(item.updatedAt)}</small></div></div>)}</div>}</div>
+        <div className="content-panel content-dashboard-panel"><div className="content-dashboard-section-title"><div><span>Devam</span><h2>Kaldığın yerden devam et</h2></div><Link href="/icerik/gecmis">Tüm geçmiş →</Link></div>{activity.length === 0 ? <div className="content-empty"><strong>Henüz hareket yok.</strong><p>İçerik değişiklikleri burada görünecek.</p></div> : <div className="content-activity-list">{activity.map((item) => {
+          const body = <><div className="content-activity-item__copy"><strong>{item.label}</strong><small>{item.detail}</small></div><div className="content-activity-item__state"><span>{item.status}</span><small>{formatDate(item.updatedAt)}</small></div><span className={`content-activity-item__action${item.href ? "" : " is-muted"}`}>{item.action ? `${item.action} →` : "Yalnız geçmiş kaydı"}</span></>;
+          return item.href ? <Link href={item.href} className="content-activity-item content-activity-item--link" key={item.key}>{body}</Link> : <div className="content-activity-item" key={item.key}>{body}</div>;
+        })}</div>}</div>
       </div>
       <div className="content-dashboard-section-title content-dashboard-modules-title"><div><span>Modüller</span><h2>Tüm yönetim alanları</h2></div><small>{areas.length} aktif modül</small></div>
       <div className="content-grid content-dashboard-module-grid">{areas.map((area) => <article className="content-card" key={area.href}><small>{area.group}</small><h2>{area.label}</h2><p>{area.description}</p><Link href={area.href}>Yönet →</Link></article>)}</div>

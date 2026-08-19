@@ -31,7 +31,7 @@ export async function SeoHomepageAudit() {
     return (
       <section className={styles.audit} role="alert">
         <div className={styles.header}><div className={styles.copy}><span>Ana Sayfa SEO · TR</span><h2>İçerik Bütünlüğü</h2><p>Ana Sayfa published CMS içeriği doğrulanmadan SEO durumu temiz kabul edilmez.</p></div><span className={styles.status} data-state="danger">Blokaj</span></div>
-        <div className={styles.focus}><div><strong>{detail}</strong><p>İlk server HTML güvenli kod fallback'i ile ayakta kalabilir; ancak CMS SEO kabulü için published veri düzeltilmelidir.</p></div><div className={styles.actions}><Link href="/icerik/ana-sayfa">Ana Sayfayı Düzenle →</Link><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div></div>
+        <div className={styles.focus}><div><strong>{detail}</strong><p>İlk server HTML güvenli kod fallback’i ile ayakta kalabilir; ancak CMS SEO kabulü için published veri düzeltilmelidir.</p></div><div className={styles.actions}><Link href="/icerik/ana-sayfa">Ana Sayfayı Düzenle →</Link><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div></div>
       </section>
     );
   }
@@ -55,7 +55,7 @@ export async function SeoHomepageAudit() {
   return (
     <section className={styles.audit} aria-labelledby="seo-homepage-title">
       <div className={styles.header}>
-        <div className={styles.copy}><span>Ana Sayfa SEO · TR</span><h2 id="seo-homepage-title">İçerik Bütünlüğü</h2><p>Hero, rol girişi, Eser Pasaportu, Neden İlkOku ve footer metinlerinin published CMS durumunu kontrol edin. Bu metinler public Ana Sayfa'nın ilk server HTML'inde kullanılır.</p></div>
+        <div className={styles.copy}><span>Ana Sayfa SEO · TR</span><h2 id="seo-homepage-title">İçerik Bütünlüğü</h2><p>Hero, rol girişi, Eser Pasaportu, Neden İlkOku ve footer metinlerinin published CMS durumunu kontrol edin. Bu metinler public Ana Sayfa’nın ilk server HTML’inde kullanılır.</p></div>
         <span className={styles.status} data-state={tone}>{tone === "ok" ? "Temiz" : tone === "warn" ? "Kontrol" : "Blokaj"}</span>
       </div>
 
@@ -69,7 +69,7 @@ export async function SeoHomepageAudit() {
         <Card state={invalidCtas > 0 ? "danger" : "ok"} label="CTA güvenliği" value={invalidCtas > 0 ? `${invalidCtas} hatalı hedef` : "Güvenli"} detail="Hero ve Eser Pasaportu CTA hedefleri yalnız güvenli site içi URL/anchor kabul eder." />
       </div>
 
-      <div className={styles.focus}><div><strong>Şimdi ne yapılmalı?</strong><p>{invalidCtas > 0 ? "Güvenli olmayan CTA hedeflerini düzeltin; public navigasyon sinyalini bozabilir." : fallbackMode ? "Ana Sayfa tamamen kod fallback'i ile çalışıyor. SEO kontrolü için canonical CMS bölümlerini yayınlayın." : missingCount > 0 || missingSections > 0 ? "Eksik CMS alanlarını tamamlayın; public sayfa fallback metinlerle karışık çalışmasın." : "Ana Sayfa published CMS içerik bütünlüğü hazır. Rol Kartları ve teknik SEO kontrollerine geçebilirsiniz."}</p></div><div className={styles.actions}><Link href="/icerik/ana-sayfa">Ana Sayfa çalışma masası →</Link><Link href="/" target="_blank">Public Ana Sayfa ↗</Link></div></div>
+      <div className={styles.focus}><div><strong>Şimdi ne yapılmalı?</strong><p>{invalidCtas > 0 ? "Güvenli olmayan CTA hedeflerini düzeltin; public navigasyon sinyalini bozabilir." : fallbackMode ? "Ana Sayfa tamamen kod fallback’i ile çalışıyor. SEO kontrolü için canonical CMS bölümlerini yayınlayın." : missingCount > 0 || missingSections > 0 ? "Eksik CMS alanlarını tamamlayın; public sayfa fallback metinlerle karışık çalışmasın." : "Ana Sayfa published CMS içerik bütünlüğü hazır. Rol Kartları ve teknik SEO kontrollerine geçebilirsiniz."}</p></div><div className={styles.actions}><Link href="/icerik/ana-sayfa">Ana Sayfa çalışma masası →</Link><Link href="/" target="_blank">Public Ana Sayfa ↗</Link></div></div>
     </section>
   );
 }

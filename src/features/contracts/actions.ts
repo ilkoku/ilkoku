@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { UserRole } from "@/features/auth/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   cancelAdminContract,
@@ -186,17 +185,4 @@ export async function respondToContractAction(formData: FormData) {
   revalidatePath(`/sozlesmelerim/${contractId}`);
   revalidatePath("/sozlesme");
   redirect(`/sozlesmelerim/${contractId}?durum=${encodeURIComponent(result.status)}`);
-}
-
-export function roleLabel(role: UserRole | "any") {
-  const labels: Record<UserRole | "any", string> = {
-    admin: "Admin",
-    any: "Tüm roller",
-    editor: "Editör",
-    editor_pending: "Editör adayı",
-    publisher: "Yayınevi",
-    reader: "Okuyucu",
-    writer: "Yazar",
-  };
-  return labels[role];
 }

@@ -51,9 +51,11 @@ export async function SeoMetadataQualityAudit() {
       SELECT seoTitle, seoDescription, noIndex
       FROM ContentPage
       WHERE status = 'published'
-        AND contentKey NOT LIKE 'legal:en:%'
-        AND contentKey NOT LIKE 'guide:en:%'
-        AND contentKey NOT LIKE 'page:en:%'
+        AND (
+          (contentKey LIKE 'legal:%' AND contentKey NOT LIKE 'legal:en:%')
+          OR (contentKey LIKE 'guide:%' AND contentKey NOT LIKE 'guide:en:%')
+          OR contentKey LIKE 'page:tr:%'
+        )
       ORDER BY updatedAt DESC
       LIMIT 5000
     `;

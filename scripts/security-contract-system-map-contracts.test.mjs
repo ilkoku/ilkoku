@@ -42,19 +42,25 @@ test("system map and central contract routes are private at request, server and 
   contains(contractLayout, "index: false", "contract noindex metadata");
 });
 
-test("system map is generated from live application sources with build fallback and shared security policy", () => {
+test("system map is generated from build-time live sources while runtime keeps shared security policy", () => {
   const collector = source("src/features/system-map/collector.ts");
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
   const page = source("src/app/harita/page.tsx");
   const workbench = source("src/features/system-map/SystemMapWorkbench.tsx");
 
-  contains(collector, 'path.join(ROOT, "src", "app")', "source route scan");
-  contains(collector, "app-paths-manifest.json", "build route fallback");
+  contains(generator, "collectRoutes(files)", "build-time source route scan");
+  contains(generator, "collectReferences(files)", "build-time reference scan");
+  contains(generator, "collectModules(files)", "build-time dependency scan");
+  contains(collector, "systemMapSourceManifest", "generated source manifest");
   contains(collector, 'from "@/lib/route-security"', "shared route security policy");
   contains(collector, "editorNavigationContent", "role menu inventory");
   contains(collector, "adminNavigation", "admin menu inventory");
   contains(collector, "inbound", "inbound link inventory");
   contains(collector, "outbound", "outbound link inventory");
   contains(collector, "orphanCandidate", "orphan route detection");
+  for (const forbidden of ['node:fs', 'node:path', 'process.cwd()', 'readdir(', 'readFile(']) {
+    notContains(collector, forbidden, `production collector must not contain ${forbidden}`);
+  }
   contains(page, "getSystemMapSnapshot", "map live snapshot");
   contains(workbench, "Bu sayfaya nasıl gelinir?", "inbound workbench detail");
   contains(workbench, "Buradan nereye gidilir?", "outbound workbench detail");
@@ -166,6 +172,7 @@ test("required system map and contract workbench files exist", () => {
     "src/app/sozlesme/page.tsx",
     "src/app/sozlesmelerim/page.tsx",
     "src/features/system-map/collector.ts",
+    "src/features/system-map/build-manifest-types.ts",
     "src/features/contracts/repository.ts",
   ]) {
     assert.ok(existsSync(join(ROOT, relativePath)), `${relativePath} must exist`);

@@ -33,6 +33,7 @@ test("system map and central contract routes are private at request, server and 
     contains(robots, route, "robots private route policy");
   }
   contains(policy, 'contractInboxPath = "/sozlesmelerim"', "contract inbox policy");
+  contains(policy, "pathname.startsWith(`${path}/`)", "nested private route inheritance");
   contains(proxy, "isAdminOnlyPath(pathname)", "proxy admin enforcement");
   contains(proxy, "isProtectedPath(pathname)", "proxy protected route enforcement");
   contains(mapLayout, 'user.role !== "admin"', "map server guard");
@@ -42,10 +43,11 @@ test("system map and central contract routes are private at request, server and 
   contains(contractLayout, "index: false", "contract noindex metadata");
 });
 
-test("system map is generated from build-time live sources while runtime keeps shared security policy", () => {
+test("system map is generated from build-time live sources while all specialist pages share the canonical loader", () => {
   const collector = source("src/features/system-map/collector.ts");
   const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
-  const page = source("src/app/harita/page.tsx");
+  const loader = source("src/features/system-map/workspace-data.ts");
+  const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");
   const workbench = source("src/features/system-map/SystemMapWorkbench.tsx");
 
   contains(generator, "collectRoutes(files)", "build-time source route scan");
@@ -58,10 +60,11 @@ test("system map is generated from build-time live sources while runtime keeps s
   contains(collector, "inbound", "inbound link inventory");
   contains(collector, "outbound", "outbound link inventory");
   contains(collector, "orphanCandidate", "orphan route detection");
-  for (const forbidden of ['node:fs', 'node:path', 'process.cwd()', 'readdir(', 'readFile(']) {
+  for (const forbidden of ["node:fs", "node:path", "process.cwd()", "readdir(", "readFile("]) {
     notContains(collector, forbidden, `production collector must not contain ${forbidden}`);
   }
-  contains(page, "getSystemMapSnapshot", "map live snapshot");
+  contains(loader, "getSystemMapSnapshot()", "shared live snapshot");
+  contains(workspace, "getSystemMapWorkspaceData()", "shared workspace data source");
   contains(workbench, "Bu sayfaya nasıl gelinir?", "inbound workbench detail");
   contains(workbench, "Buradan nereye gidilir?", "outbound workbench detail");
 });
@@ -168,9 +171,17 @@ test("publisher contract send path is retired in favor of admin central manageme
 test("required system map and contract workbench files exist", () => {
   for (const relativePath of [
     "src/app/harita/page.tsx",
+    "src/app/harita/denetim/page.tsx",
+    "src/app/harita/rotalar/page.tsx",
     "src/app/harita/control-center.css",
+    "src/app/harita/navigation.css",
+    "src/app/harita/workspace.css",
     "src/app/sozlesme/page.tsx",
     "src/app/sozlesmelerim/page.tsx",
+    "src/features/system-map/SystemMapNavigation.tsx",
+    "src/features/system-map/SystemMapWorkspacePage.tsx",
+    "src/features/system-map/navigation.ts",
+    "src/features/system-map/workspace-data.ts",
     "src/features/system-map/collector.ts",
     "src/features/system-map/build-manifest-types.ts",
     "src/features/contracts/repository.ts",

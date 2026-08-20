@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { SystemMapNavigation } from "@/features/system-map/SystemMapNavigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import "./harita.css";
 import "./control-center.css";
@@ -7,6 +8,7 @@ import "./operations.css";
 import "./runtime-infrastructure.css";
 import "./integrity-control.css";
 import "./navigation.css";
+import "./workspace.css";
 
 export const metadata: Metadata = {
   title: "Sistem Haritası | İlkOku",
@@ -36,5 +38,10 @@ export default async function SystemMapLayout({
     redirect("/erisim-reddedildi?kaynak=system_map");
   }
 
-  return <>{children}</>;
+  return (
+    <div className="system-map-app-shell">
+      <SystemMapNavigation />
+      <div className="system-map-app-content">{children}</div>
+    </div>
+  );
 }

@@ -120,15 +120,15 @@ test("canonical integrity gate uses the same light dashboard surface as the rest
   notContains(styles, "rgba(10, 12, 17, 0.88)", "legacy dark panel background");
 });
 
-test("harita renders the canonical integrity gate before detailed evidence panels", () => {
-  const page = source("src/app/harita/page.tsx");
+test("harita renders integrity as its own specialist page while sharing the canonical report chain", () => {
+  const loader = source("src/features/system-map/workspace-data.ts");
+  const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");
+  const page = source("src/app/harita/denetim/page.tsx");
   const layout = source("src/app/harita/layout.tsx");
 
-  contains(page, "getIntegrityControlReport(snapshot, operations, infrastructure)", "integrity report generation");
-  contains(page, "<IntegrityControlPanel report={integrity} />", "integrity panel render");
-  assert.ok(
-    page.indexOf("<IntegrityControlPanel report={integrity} />") < page.indexOf("<SystemOperationsPanel report={operations} />"),
-    "integrity gate must render before detailed operations evidence",
-  );
+  contains(loader, "getIntegrityControlReport(snapshot, operations, infrastructure)", "integrity report generation");
+  contains(workspace, '<IntegrityControlPanel report={integrity} />', "integrity specialist panel render");
+  contains(page, 'workspace="integrity"', "dedicated integrity route");
+  contains(layout, '<SystemMapNavigation />', "shared specialist navigation shell");
   contains(layout, 'import "./integrity-control.css"', "integrity styles");
 });

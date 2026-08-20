@@ -32,6 +32,7 @@ export interface SystemMapSourceManifestData {
 export interface RuntimeManifestEnvUsage {
   documented: boolean;
   key: string;
+  runtimeManaged: boolean;
   usedBy: string[];
 }
 

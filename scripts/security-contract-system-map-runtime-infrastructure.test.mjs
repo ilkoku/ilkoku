@@ -91,17 +91,23 @@ test("notification and email producer inventory is generated without sending any
   notContains(generator, "notification.create({", "generator must not create notification");
 });
 
-test("Prisma relation graph and migration-only tables are generated before Next build", () => {
+test("Prisma relation graph keeps intentional raw-SQL tables visible but warns only on unexpected drift", () => {
   const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
   const collector = source("src/features/system-map/runtime-infrastructure.ts");
+  const panel = source("src/features/system-map/RuntimeInfrastructurePanel.tsx");
 
   contains(generator, 'const PRISMA_SCHEMA = path.join(ROOT, "prisma", "schema.prisma")', "Prisma schema source");
   contains(generator, 'const MIGRATIONS_ROOT = path.join(ROOT, "prisma", "migrations")', "migration source");
   contains(generator, "parseSchema(schemaText)", "schema relation parser");
   contains(generator, "collectMigrationInventory", "migration table parser");
   contains(generator, "migrationOnlyTables", "migration-only table inventory");
-  contains(collector, "runtimeInfrastructureManifest.schema", "schema manifest use");
-  contains(collector, 'title: "Migration-only tablo yüzeyi"', "migration-only visibility");
+  contains(collector, '"ContractTemplate"', "acknowledged contract template table");
+  contains(collector, '"UserContract"', "acknowledged user contract table");
+  contains(collector, '"UserContractEvent"', "acknowledged contract event table");
+  contains(collector, "unexpectedMigrationOnlyTables", "unexpected schema drift split");
+  contains(collector, 'title: "Beklenmedik migration-only tablo yüzeyi"', "unexpected migration warning");
+  contains(panel, "Bilinçli raw-SQL / migration-only sınırı · ACKNOWLEDGED", "acknowledged migration visibility");
+  contains(panel, "İnceleme gerekli · beklenmedik migration-only tablolar", "unexpected migration visibility");
 });
 
 test("manifest generation is mandatory before lint development and production builds", () => {

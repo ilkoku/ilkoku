@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { IntegrityControlPanel } from "./IntegrityControlPanel";
 import { RuntimeInfrastructurePanel } from "./RuntimeInfrastructurePanel";
+import { SystemMapArchitecturePanel } from "./SystemMapArchitecturePanel";
 import { SystemMapWorkbench } from "./SystemMapWorkbench";
 import { SystemOperationsPanel } from "./SystemOperationsPanel";
 import {
@@ -85,7 +86,7 @@ export async function SystemMapWorkspacePage({ workspace }: { workspace: SystemM
       case "external":
         return <RuntimeInfrastructurePanel report={infrastructure} view="external" />;
       case "architecture":
-        return <div className="system-map-health-only"><SystemMapWorkbench snapshot={snapshot} /></div>;
+        return <SystemMapArchitecturePanel integrity={integrity} operations={operations} snapshot={snapshot} />;
       case "routes":
         return <div className="system-map-route-only"><SystemMapWorkbench snapshot={snapshot} /></div>;
       case "overview":

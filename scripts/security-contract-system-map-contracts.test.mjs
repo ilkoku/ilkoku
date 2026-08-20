@@ -71,17 +71,27 @@ test("system map is generated from build-time live sources while all specialist 
 
 test("system map control center turns inventory into an actionable architecture workbench", () => {
   const workbench = source("src/features/system-map/SystemMapWorkbench.tsx");
+  const architecture = source("src/features/system-map/SystemMapArchitecturePanel.tsx");
+  const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");
   const layout = source("src/app/harita/layout.tsx");
   const styles = source("src/app/harita/control-center.css");
 
-  contains(workbench, "Mimari sağlık ve aksiyon masası", "architecture health workbench");
-  contains(workbench, "function riskSignals", "derived risk signals");
+  contains(workbench, "Mimari sağlık ve aksiyon masası", "route inventory legacy control surface");
+  contains(workbench, "function riskSignals", "derived route signals");
   contains(workbench, '"public_handlers"', "public handler focus");
   contains(workbench, "Aksiyon kuyruğu", "priority action queue");
   contains(workbench, "Erişim dağılımı", "access distribution");
   contains(workbench, "Çalışma alanları", "area coverage");
   contains(workbench, "Filtreleri temizle", "workbench reset action");
   contains(workbench, "Kontrol sinyalleri", "route detail signals");
+  contains(architecture, "KANONİK MİMARİ SAĞLIK", "canonical architecture health surface");
+  contains(architecture, "integrity.summary.blockers", "architecture blocker source");
+  contains(architecture, "integrity.summary.warnings", "architecture warning source");
+  contains(architecture, "operations.apiSurface", "architecture API evidence source");
+  contains(architecture, "Public API", "public API inventory remains visible");
+  contains(architecture, "Tek başına risk değildir", "public API is not automatically critical");
+  notContains(architecture, "Public handler erişimi doğrulanmalı", "canonical architecture must not auto-escalate public handlers");
+  contains(workspace, "<SystemMapArchitecturePanel integrity={integrity} operations={operations} snapshot={snapshot} />", "architecture workspace canonical report wiring");
   contains(layout, 'import "./control-center.css"', "control center styles");
   contains(styles, ".system-map-command-center", "command center styles");
   contains(styles, ".system-map-action-list", "action queue styles");
@@ -178,6 +188,7 @@ test("required system map and contract workbench files exist", () => {
     "src/app/harita/workspace.css",
     "src/app/sozlesme/page.tsx",
     "src/app/sozlesmelerim/page.tsx",
+    "src/features/system-map/SystemMapArchitecturePanel.tsx",
     "src/features/system-map/SystemMapNavigation.tsx",
     "src/features/system-map/SystemMapWorkspacePage.tsx",
     "src/features/system-map/navigation.ts",

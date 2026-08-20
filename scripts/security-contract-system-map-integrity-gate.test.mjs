@@ -32,6 +32,14 @@ test("canonical integrity gate is server-only and combines existing read-only re
   notContains(integrity, "process.env.", "integrity gate must not read dotted ENV values itself");
 });
 
+test("unknown source findings remain visible as warnings instead of becoming false blockers or disappearing", () => {
+  const integrity = source("src/features/system-map/integrity-control.ts");
+
+  contains(integrity, 'function findingStatus(status: "blocker" | "warn" | "unknown")', "finding status normalizer");
+  contains(integrity, 'return status === "blocker" ? "blocker" as const : "warn" as const', "unknown to warn semantics");
+  contains(integrity, "const status = findingStatus(gap.status)", "operation and runtime finding normalization");
+});
+
 test("menu validation checks both route existence and role compatibility", () => {
   const integrity = source("src/features/system-map/integrity-control.ts");
 

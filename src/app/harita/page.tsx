@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { IntegrityControlPanel } from "@/features/system-map/IntegrityControlPanel";
 import { RuntimeInfrastructurePanel } from "@/features/system-map/RuntimeInfrastructurePanel";
 import { SystemMapWorkbench } from "@/features/system-map/SystemMapWorkbench";
 import { SystemOperationsPanel } from "@/features/system-map/SystemOperationsPanel";
 import { getSystemMapSnapshot } from "@/features/system-map/collector";
+import { getIntegrityControlReport } from "@/features/system-map/integrity-control";
 import { getSystemOperationsReport } from "@/features/system-map/operations";
 import { getRuntimeInfrastructureReport } from "@/features/system-map/runtime-infrastructure";
 
@@ -19,6 +21,7 @@ export default async function SystemMapPage() {
     getSystemOperationsReport(snapshot),
     getRuntimeInfrastructureReport(snapshot),
   ]);
+  const integrity = getIntegrityControlReport(snapshot, operations, infrastructure);
 
   return (
     <main className="system-map-page">
@@ -60,6 +63,7 @@ export default async function SystemMapPage() {
         </section>
       ) : null}
 
+      <IntegrityControlPanel report={integrity} />
       <SystemOperationsPanel report={operations} />
       <RuntimeInfrastructurePanel report={infrastructure} />
       <SystemMapWorkbench snapshot={snapshot} />

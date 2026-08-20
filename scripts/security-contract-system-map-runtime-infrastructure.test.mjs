@@ -127,14 +127,20 @@ test("manifest generation is mandatory before lint development and production bu
   contains(gitignore, "/src/features/system-map/runtime-manifest.generated.ts", "generated manifest ignore rule");
 });
 
-test("runtime infrastructure UI is server-rendered and integrated into harita", () => {
-  const page = source("src/app/harita/page.tsx");
+test("runtime infrastructure UI stays server-rendered while specialist pages share the canonical loader", () => {
+  const loader = source("src/features/system-map/workspace-data.ts");
+  const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");
   const panel = source("src/features/system-map/RuntimeInfrastructurePanel.tsx");
+  const envPage = source("src/app/harita/env/page.tsx");
+  const schemaPage = source("src/app/harita/veri/page.tsx");
   const layout = source("src/app/harita/layout.tsx");
 
-  contains(page, "getRuntimeInfrastructureReport(snapshot)", "runtime report generation");
-  contains(page, "RuntimeInfrastructurePanel", "runtime panel render");
-  contains(page, "Promise.all", "parallel read-only map collectors");
+  contains(loader, "getRuntimeInfrastructureReport(snapshot)", "runtime report generation");
+  contains(loader, "Promise.all", "parallel read-only map collectors");
+  contains(workspace, '<RuntimeInfrastructurePanel report={infrastructure} view="env" />', "ENV specialist render");
+  contains(workspace, '<RuntimeInfrastructurePanel report={infrastructure} view="schema" />', "schema specialist render");
+  contains(envPage, 'workspace="env"', "ENV specialist route");
+  contains(schemaPage, 'workspace="schema"', "schema specialist route");
   contains(panel, "Runtime / altyapı kontrol masası", "runtime workbench heading");
   contains(panel, "Redirect / rewrite zinciri", "route rule UI");
   contains(panel, "Prisma modelleri ve migration yüzeyi", "data relation UI");

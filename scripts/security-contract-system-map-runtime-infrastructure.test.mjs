@@ -23,7 +23,8 @@ test("runtime infrastructure collector is server-only, read-only and never expos
   const panel = source("src/features/system-map/RuntimeInfrastructurePanel.tsx");
 
   contains(collector, 'import "server-only"', "runtime infrastructure server boundary");
-  contains(collector, "process.env[key]", "runtime configured boolean observation");
+  contains(collector, 'from "./runtime-manifest.generated"', "build-time manifest input");
+  contains(collector, "process.env[item.key]", "runtime configured boolean observation");
   contains(collector, "configured:", "configured state projection");
   contains(collector, "secretLike", "secret classification");
   notContains(collector, 'from "@/lib/prisma"', "runtime collector must not connect to DB");
@@ -34,49 +35,84 @@ test("runtime infrastructure collector is server-only, read-only and never expos
   contains(panel, "ENV değerleri, parolalar, tokenlar ve bağlantı dizeleri render edilmez", "ENV value privacy notice");
 });
 
-test("ENV contract is derived from source usage and .env.example documentation", () => {
+test("production runtime collector performs no source-tree filesystem traversal", () => {
+  const collector = source("src/features/system-map/runtime-infrastructure.ts");
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
+
+  notContains(collector, "node:fs", "runtime collector fs dependency");
+  notContains(collector, "node:path", "runtime collector path dependency");
+  notContains(collector, "process.cwd()", "runtime collector cwd dependency");
+  notContains(collector, "readdir(", "runtime collector directory traversal");
+  notContains(collector, "readFile(", "runtime collector source read");
+  contains(generator, 'import { mkdir, readdir, readFile, writeFile } from "node:fs/promises"', "build-time filesystem ownership");
+  contains(generator, 'const SRC = path.join(ROOT, "src")', "source scan build boundary");
+  contains(generator, 'const NEXT_CONFIG = path.join(ROOT, "next.config.ts")', "next config build boundary");
+  contains(generator, 'const PRISMA_SCHEMA = path.join(ROOT, "prisma", "schema.prisma")', "Prisma build boundary");
+});
+
+test("ENV contract is generated from source usage and .env.example without copying values", () => {
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
   const collector = source("src/features/system-map/runtime-infrastructure.ts");
 
-  contains(collector, 'path.join(ROOT, ".env.example")', "env example source");
-  contains(collector, "envDotPattern", "dot ENV usage scan");
-  contains(collector, "envBracketPattern", "bracket ENV usage scan");
-  contains(collector, "envDocumentPattern", "documented ENV scan");
+  contains(generator, 'const ENV_EXAMPLE = path.join(ROOT, ".env.example")', "env example source");
+  contains(generator, "envDotPattern", "dot ENV usage scan");
+  contains(generator, "envBracketPattern", "bracket ENV usage scan");
+  contains(generator, "envDocumentPattern", "documented ENV scan");
+  contains(generator, "collectEnvUsage(files, envExample)", "ENV manifest projection");
+  notContains(generator, "process.env[", "generator must not serialize runtime ENV values");
+  notContains(generator, "process.env.", "generator must not serialize dotted ENV values");
   contains(collector, 'title: "Belgelenmemiş ENV anahtarı"', "undocumented ENV warning");
 });
 
-test("redirect and rewrite rules are checked against canonical route inventory", () => {
+test("redirect and rewrite source parsing occurs at build time and runtime only validates targets", () => {
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
   const collector = source("src/features/system-map/runtime-infrastructure.ts");
 
-  contains(collector, 'path.join(ROOT, "next.config.ts")', "next config source");
-  contains(collector, "parseRouteRules", "route rule parser");
-  contains(collector, 'parseRuleObjects(redirectsBlock, "redirect", routes)', "redirect inventory");
-  contains(collector, 'parseRuleObjects(rewritesBlock, "rewrite", routes)', "rewrite inventory");
-  contains(collector, "ruleMatchesRoute", "rule to route cross-check");
+  contains(generator, "collectRouteRules(nextConfig)", "build-time route rule extraction");
+  contains(generator, 'parseRuleObjects(redirectsBlock, "redirect")', "redirect inventory");
+  contains(generator, 'parseRuleObjects(rewritesBlock, "rewrite")', "rewrite inventory");
+  contains(collector, "runtimeInfrastructureManifest.routeRules.map", "manifest route rules");
+  contains(collector, "ruleMatchesRoute", "rule to live route cross-check");
   contains(collector, 'title: "Kural hedefi bulunamadı"', "broken rule blocker");
 });
 
-test("notification and email producer inventory is source-derived without sending anything", () => {
+test("notification and email producer inventory is generated without sending anything", () => {
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
   const collector = source("src/features/system-map/runtime-infrastructure.ts");
   const panel = source("src/features/system-map/RuntimeInfrastructurePanel.tsx");
 
-  contains(collector, "notificationPattern", "notification producer scan");
-  contains(collector, "emailCallPattern", "email producer scan");
-  contains(collector, "templatePattern", "email template scan");
-  contains(collector, "entityTypePattern", "notification relation scan");
+  contains(generator, "notificationPattern", "notification producer scan");
+  contains(generator, "emailCallPattern", "email producer scan");
+  contains(generator, "templatePattern", "email template scan");
+  contains(generator, "entityTypePattern", "notification relation scan");
+  contains(collector, "runtimeInfrastructureManifest.eventProducers", "event producer manifest use");
   contains(panel, "Bildirim ve e-posta üreticileri", "event producer UI");
-  notContains(collector, "sendMail({", "collector must not send mail");
-  notContains(collector, "notification.create({", "collector must not create notification");
+  notContains(generator, "sendMail({", "generator must not send mail");
+  notContains(generator, "notification.create({", "generator must not create notification");
 });
 
-test("Prisma relation graph and migration-only tables are parsed from version-controlled schema", () => {
+test("Prisma relation graph and migration-only tables are generated before Next build", () => {
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
   const collector = source("src/features/system-map/runtime-infrastructure.ts");
 
-  contains(collector, 'path.join(ROOT, "prisma", "schema.prisma")', "Prisma schema source");
-  contains(collector, 'path.join(ROOT, "prisma", "migrations")', "migration source");
-  contains(collector, "parseSchema", "schema relation parser");
-  contains(collector, "migrationInventory", "migration table parser");
-  contains(collector, "migrationOnlyTables", "migration-only table inventory");
+  contains(generator, 'const PRISMA_SCHEMA = path.join(ROOT, "prisma", "schema.prisma")', "Prisma schema source");
+  contains(generator, 'const MIGRATIONS_ROOT = path.join(ROOT, "prisma", "migrations")', "migration source");
+  contains(generator, "parseSchema(schemaText)", "schema relation parser");
+  contains(generator, "collectMigrationInventory", "migration table parser");
+  contains(generator, "migrationOnlyTables", "migration-only table inventory");
+  contains(collector, "runtimeInfrastructureManifest.schema", "schema manifest use");
   contains(collector, 'title: "Migration-only tablo yüzeyi"', "migration-only visibility");
+});
+
+test("manifest generation is mandatory before lint development and production builds", () => {
+  const pkg = JSON.parse(source("package.json"));
+  const gitignore = source(".gitignore");
+
+  assert.equal(pkg.scripts["system-map:generate"], "node scripts/generate-system-map-runtime-manifest.mjs");
+  for (const script of ["dev", "lint", "build", "build:ci"]) {
+    assert.ok(pkg.scripts[script].startsWith("npm run system-map:generate &&"), `${script} must generate the manifest first`);
+  }
+  contains(gitignore, "/src/features/system-map/runtime-manifest.generated.ts", "generated manifest ignore rule");
 });
 
 test("runtime infrastructure UI is server-rendered and integrated into harita", () => {

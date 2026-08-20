@@ -65,20 +65,20 @@ export function RuntimeInfrastructurePanel({ report }: { report: RuntimeInfrastr
       <section className="system-runtime-env" aria-labelledby="runtime-env-title">
         <div className="system-map-section-heading">
           <div><p>ENV SÖZLEŞMESİ</p><h2 id="runtime-env-title">Ortam değişkeni bağımlılıkları</h2></div>
-          <span>{report.summary.documentedEnv}/{report.summary.envKeys} belgeli</span>
+          <span>{report.summary.documentedEnv}/{report.summary.envKeys} sözleşmeli</span>
         </div>
         <div className="system-runtime-security-note">
           Bu masa yalnız anahtar adlarını ve tanımlı/tanımsız durumunu gösterir. ENV değerleri, parolalar, tokenlar ve bağlantı dizeleri render edilmez.
         </div>
         <div className="system-runtime-table-wrap">
           <table>
-            <thead><tr><th>Anahtar</th><th>Runtime</th><th>.env.example</th><th>Tür</th><th>Kullanan dosya</th><th>Durum</th></tr></thead>
+            <thead><tr><th>Anahtar</th><th>Runtime</th><th>Sözleşme</th><th>Tür</th><th>Kullanan dosya</th><th>Durum</th></tr></thead>
             <tbody>
               {report.env.map((item) => (
                 <tr key={item.key}>
                   <td><code>{item.key}</code></td>
                   <td>{item.configured ? "Tanımlı" : "Tanımsız"}</td>
-                  <td>{item.documented ? "Belgeli" : "Eksik"}</td>
+                  <td>{item.runtimeManaged ? "Runtime yönetiyor" : item.documented ? ".env.example" : "Eksik"}</td>
                   <td>{item.public ? "Public" : item.secretLike ? "Gizli / hassas" : "Server"}</td>
                   <td><span className="system-runtime-file-list">{item.usedBy.join(" · ")}</span></td>
                   <td><StatusBadge status={item.status} /></td>

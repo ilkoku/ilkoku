@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { RuntimeInfrastructurePanel } from "@/features/system-map/RuntimeInfrastructurePanel";
 import { SystemMapWorkbench } from "@/features/system-map/SystemMapWorkbench";
 import { SystemOperationsPanel } from "@/features/system-map/SystemOperationsPanel";
 import { getSystemMapSnapshot } from "@/features/system-map/collector";
 import { getSystemOperationsReport } from "@/features/system-map/operations";
+import { getRuntimeInfrastructureReport } from "@/features/system-map/runtime-infrastructure";
 
 function scanLabel(mode: "source" | "build" | "hybrid" | "fallback") {
   if (mode === "hybrid") return "Kaynak + build manifesti";
@@ -13,7 +15,10 @@ function scanLabel(mode: "source" | "build" | "hybrid" | "fallback") {
 
 export default async function SystemMapPage() {
   const snapshot = await getSystemMapSnapshot();
-  const operations = await getSystemOperationsReport(snapshot);
+  const [operations, infrastructure] = await Promise.all([
+    getSystemOperationsReport(snapshot),
+    getRuntimeInfrastructureReport(snapshot),
+  ]);
 
   return (
     <main className="system-map-page">
@@ -22,7 +27,7 @@ export default async function SystemMapPage() {
           <p className="system-map-eyebrow">İLKOKU MİMARİ KONTROL MERKEZİ</p>
           <h1>Sistem / Site Haritası</h1>
           <p className="system-map-lead">
-            İlkOku&apos;nun route, rol, menü, kullanıcı akışı, server action, API ve veri bağımlılıklarını tek çalışma masasından izleyin; eksik puzzle parçalarını BLOCKER / WARN / PASS olarak çapraz kontrol edin.
+            İlkOku&apos;nun route, rol, menü, kullanıcı akışı, server action, API, ENV, yönlendirme, bildirim/e-posta ve veri ilişkilerini tek çalışma masasından izleyin; eksik puzzle parçalarını BLOCKER / WARN / PASS olarak çapraz kontrol edin.
           </p>
         </div>
 
@@ -56,6 +61,7 @@ export default async function SystemMapPage() {
       ) : null}
 
       <SystemOperationsPanel report={operations} />
+      <RuntimeInfrastructurePanel report={infrastructure} />
       <SystemMapWorkbench snapshot={snapshot} />
     </main>
   );

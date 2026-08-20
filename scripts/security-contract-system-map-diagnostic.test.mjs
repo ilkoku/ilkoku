@@ -174,12 +174,12 @@ function apiAccess(route) {
 }
 
 function collectApiFindings(routes, modules) {
-  const byFile = new Map(modules.map((module) => [module.file, module]));
+  const byFile = new Map(modules.map((sourceModule) => [sourceModule.file, sourceModule]));
   const findings = [];
   for (const route of routes.filter((item) => item.kind === "handler" && matchesPath(item.route, "/api"))) {
-    const module = byFile.get(route.sourceFile);
-    const methods = module?.methods ?? [];
-    const guards = module?.guardEvidence ?? [];
+    const sourceModule = byFile.get(route.sourceFile);
+    const methods = sourceModule?.methods ?? [];
+    const guards = sourceModule?.guardEvidence ?? [];
     const access = apiAccess(route.route);
     if (methods.length === 0) {
       findings.push(finding("WARN", "API_METHOD", route.route, route.sourceFile, "HTTP method export'u statik manifestte bulunamadı."));
@@ -202,8 +202,8 @@ function collectOrphanFindings(routes, references) {
 
 function collectActionFindings(modules) {
   return modules
-    .filter((module) => module.actionNames.length > 0 && module.consumers.length === 0)
-    .map((module) => finding("WARN", "UNREFERENCED_ACTION_MODULE", null, module.file, `Consumer bulunamayan exported server action: ${module.actionNames.join(", ")}`));
+    .filter((sourceModule) => sourceModule.actionNames.length > 0 && sourceModule.consumers.length === 0)
+    .map((sourceModule) => finding("WARN", "UNREFERENCED_ACTION_MODULE", null, sourceModule.file, `Consumer bulunamayan exported server action: ${sourceModule.actionNames.join(", ")}`));
 }
 
 function collectInfrastructureFindings(runtime, routes) {

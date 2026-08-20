@@ -15,7 +15,7 @@ if (result.error) {
 let report;
 try {
   report = JSON.parse(result.stdout || "{}");
-} catch (error) {
+} catch {
   console.error("npm audit did not return valid JSON.");
   if (result.stderr) console.error(result.stderr.trim());
   process.exit(1);

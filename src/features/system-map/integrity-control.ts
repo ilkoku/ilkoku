@@ -98,6 +98,10 @@ function ownerHint(source: string, domain: string) {
   return "Sistem mimarisi";
 }
 
+function findingStatus(status: "blocker" | "warn" | "unknown") {
+  return status === "blocker" ? "blocker" as const : "warn" as const;
+}
+
 function impactFor(domain: string, status: "blocker" | "warn"): IntegrityImpact {
   if (status === "blocker") return "release";
   if (["Kullanıcı Akışı", "Menü → Route", "Menü → Rol", "API Güvenliği", "Redirect / Rewrite"].includes(domain)) return "workflow";
@@ -151,17 +155,18 @@ function operationFindings(report: SystemOperationsReport): IntegrityFinding[] {
     const source = gap.scope === "Menü → Route"
       ? menuExpectation(gap.source)?.sourceFile ?? gap.source
       : gap.source;
+    const status = findingStatus(gap.status);
     return {
-      confidence: confidenceFor(gap.scope, gap.status),
+      confidence: confidenceFor(gap.scope, status),
       detail: gap.detail,
       domain: gap.scope,
       evidence: unique([gap.source, gap.target ?? ""].filter(Boolean)),
       fixPoint: fixPointFor(gap.scope, source),
       id: `operations:${gap.id}`,
-      impact: impactFor(gap.scope, gap.status),
+      impact: impactFor(gap.scope, status),
       ownerHint: ownerHint(source, gap.scope),
       remediation: remediationFor(gap.scope),
-      status: gap.status,
+      status,
       target: gap.target,
       title: gap.title,
       verification: verificationFor(gap.scope),
@@ -172,17 +177,18 @@ function operationFindings(report: SystemOperationsReport): IntegrityFinding[] {
 function infrastructureFindings(report: RuntimeInfrastructureReport): IntegrityFinding[] {
   return report.gaps.map((gap) => {
     const fixPoint = fixPointFor(gap.scope, gap.scope);
+    const status = findingStatus(gap.status);
     return {
-      confidence: confidenceFor(gap.scope, gap.status),
+      confidence: confidenceFor(gap.scope, status),
       detail: gap.detail,
       domain: gap.scope,
       evidence: [gap.id],
       fixPoint,
       id: `runtime:${gap.id}`,
-      impact: impactFor(gap.scope, gap.status),
+      impact: impactFor(gap.scope, status),
       ownerHint: ownerHint(fixPoint, gap.scope),
       remediation: remediationFor(gap.scope),
-      status: gap.status,
+      status,
       target: null,
       title: gap.title,
       verification: verificationFor(gap.scope),

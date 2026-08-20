@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import runtimeContracts from "./runtime-contracts.json";
 import { runtimeInfrastructureManifest } from "./runtime-manifest.generated";
 import type { SystemMapRouteRecord, SystemMapSnapshot } from "./types";
 
@@ -11,6 +12,7 @@ export interface InfrastructureEnvKey {
   documented: boolean;
   key: string;
   public: boolean;
+  runtimeManaged: boolean;
   secretLike: boolean;
   status: InfrastructureStatus;
   usedBy: string[];
@@ -94,11 +96,8 @@ export interface RuntimeInfrastructureReport {
 }
 
 const secretNamePattern = /(?:SECRET|PASSWORD|TOKEN|PRIVATE|CREDENTIAL|DATABASE_URL)/u;
-const acknowledgedMigrationOnlyTableNames = new Set([
-  "ContractTemplate",
-  "UserContract",
-  "UserContractEvent",
-]);
+const acknowledgedMigrationOnlyTableNames = new Set(runtimeContracts.acknowledgedMigrationOnlyTables);
+const runtimeManagedEnvKeys = new Set(runtimeContracts.runtimeManagedEnvKeys);
 
 function normalizeRulePath(value: string) {
   return value
@@ -136,13 +135,19 @@ function collectEnvUsage(): InfrastructureEnvKey[] {
   return runtimeInfrastructureManifest.envUsage
     .map((item) => {
       const configured = typeof process.env[item.key] === "string" && Boolean(process.env[item.key]?.trim());
+      const runtimeManaged = runtimeManagedEnvKeys.has(item.key);
       return {
         configured,
         documented: item.documented,
         key: item.key,
         public: item.key.startsWith("NEXT_PUBLIC_"),
+        runtimeManaged,
         secretLike: secretNamePattern.test(item.key),
-        status: !item.documented ? "warn" as const : configured ? "pass" as const : "unknown" as const,
+        status: runtimeManaged
+          ? configured ? "pass" as const : "unknown" as const
+          : !item.documented
+            ? "warn" as const
+            : configured ? "pass" as const : "unknown" as const,
         usedBy: [...item.usedBy],
       };
     })
@@ -209,7 +214,7 @@ function buildGaps(input: {
   schema: InfrastructureSchemaReport;
 }) {
   const gaps: InfrastructureGap[] = [];
-  for (const env of input.env.filter((item) => !item.documented)) {
+  for (const env of input.env.filter((item) => !item.documented && !item.runtimeManaged)) {
     gaps.push({
       detail: `${env.key} kaynak kodda kullanılıyor ancak .env.example içinde belgelenmemiş. Değer gösterilmez; yalnız anahtar sözleşmesi eksik.`,
       id: `env:${env.key}`,
@@ -229,7 +234,7 @@ function buildGaps(input: {
   }
   if (input.schema.unexpectedMigrationOnlyTables.length > 0) {
     gaps.push({
-      detail: `${input.schema.unexpectedMigrationOnlyTables.length} beklenmedik tablo migration ile yönetiliyor ancak Prisma schema model listesinde ve bilinçli raw SQL istisna listesinde yok: ${input.schema.unexpectedMigrationOnlyTables.join(", ")}.`,
+      detail: `${input.schema.unexpectedMigrationOnlyTables.length} beklenmedik tablo migration ile yönetiliyor ancak Prisma schema model listesinde ve bilinçli raw SQL sözleşmesinde yok: ${input.schema.unexpectedMigrationOnlyTables.join(", ")}.`,
       id: "unexpected-migration-only-tables",
       scope: "Veri Şeması",
       status: "warn",
@@ -266,7 +271,7 @@ export const getRuntimeInfrastructureReport = cache(async (snapshot: SystemMapSn
     summary: {
       acknowledgedMigrationOnlyTables: schema.acknowledgedMigrationOnlyTables.length,
       blockers: gaps.filter((gap) => gap.status === "blocker").length,
-      documentedEnv: env.filter((item) => item.documented).length,
+      documentedEnv: env.filter((item) => item.documented || item.runtimeManaged).length,
       emailProducers: producerList.filter((item) => item.email).length,
       envKeys: env.length,
       externalDomains: domainList.length,
@@ -278,7 +283,7 @@ export const getRuntimeInfrastructureReport = cache(async (snapshot: SystemMapSn
       schemaModels: schema.modelCount,
       schemaRelations: schema.relationCount,
       sourceFiles: runtimeInfrastructureManifest.sourceFileCount,
-      undocumentedEnv: env.filter((item) => !item.documented).length,
+      undocumentedEnv: env.filter((item) => !item.documented && !item.runtimeManaged).length,
       unexpectedMigrationOnlyTables: schema.unexpectedMigrationOnlyTables.length,
       warnings: gaps.filter((gap) => gap.status === "warn").length,
     },

@@ -12,7 +12,8 @@ const OUTPUT = path.join(ROOT, "src", "features", "system-map", "runtime-manifes
 
 const sourceExtensionPattern = /\.(?:ts|tsx|js|jsx)$/u;
 const sourceRouteFilePattern = /\/(page|route)\.(?:ts|tsx|js|jsx)$/u;
-const internalLiteralPattern = /(["'`])(\/(?!\/)[^"'`\r\n]{0,240})\1/gu;
+const internalLiteralPattern = /(["'])(\/(?!\/)[^"'`\r\n]{0,240})\1/gu;
+const internalTemplatePattern = /`(\/(?!\/)(?:\\.|[^`]){0,1200})`/gsu;
 const ignoredReferencePattern = /\.(?:css|gif|ico|jpe?g|json|map|pdf|png|svg|webp|woff2?)(?:\?|#|$)/iu;
 const importPattern = /(?:from\s+|import\s*\()\s*["']([^"']+)["']/gu;
 const actionFunctionPattern = /export\s+async\s+function\s+([A-Za-z_$][\w$]*)/gu;
@@ -117,17 +118,26 @@ function normalizeInternalReference(value) {
 
 function collectReferences(files) {
   const references = [];
+  const addReference = (source, rawTarget) => {
+    const target = normalizeInternalReference(rawTarget ?? "");
+    if (!target) return;
+    references.push({
+      origin: source.file,
+      originRoute: routeFromSourceFile(source.file),
+      target,
+    });
+  };
+
   for (const source of files) {
     internalLiteralPattern.lastIndex = 0;
     let match;
     while ((match = internalLiteralPattern.exec(source.text))) {
-      const target = normalizeInternalReference(match[2] ?? "");
-      if (!target) continue;
-      references.push({
-        origin: source.file,
-        originRoute: routeFromSourceFile(source.file),
-        target,
-      });
+      addReference(source, match[2]);
+    }
+
+    internalTemplatePattern.lastIndex = 0;
+    while ((match = internalTemplatePattern.exec(source.text))) {
+      addReference(source, match[1]);
     }
   }
   const seen = new Set();

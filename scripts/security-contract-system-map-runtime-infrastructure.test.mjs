@@ -49,8 +49,8 @@ test("redirect and rewrite rules are checked against canonical route inventory",
 
   contains(collector, 'path.join(ROOT, "next.config.ts")', "next config source");
   contains(collector, "parseRouteRules", "route rule parser");
-  contains(collector, 'kind: "redirect"', "redirect inventory");
-  contains(collector, 'kind: "rewrite"', "rewrite inventory");
+  contains(collector, 'parseRuleObjects(redirectsBlock, "redirect", routes)', "redirect inventory");
+  contains(collector, 'parseRuleObjects(rewritesBlock, "rewrite", routes)', "rewrite inventory");
   contains(collector, "ruleMatchesRoute", "rule to route cross-check");
   contains(collector, 'title: "Kural hedefi bulunamadı"', "broken rule blocker");
 });

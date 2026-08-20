@@ -1,8 +1,7 @@
 import "server-only";
 
-import { readdir, readFile } from "node:fs/promises";
-import path from "node:path";
 import { cache } from "react";
+import { runtimeInfrastructureManifest } from "./runtime-manifest.generated";
 import type { SystemMapRouteRecord, SystemMapSnapshot } from "./types";
 
 export type InfrastructureStatus = "pass" | "warn" | "blocker" | "unknown";
@@ -83,115 +82,14 @@ export interface RuntimeInfrastructureReport {
     runtimeConfiguredEnv: number;
     schemaModels: number;
     schemaRelations: number;
+    sourceFiles: number;
     undocumentedEnv: number;
     warnings: number;
   };
   warnings: string[];
 }
 
-type SourceFile = {
-  file: string;
-  text: string;
-};
-
-const ROOT = process.cwd();
-const SRC = path.join(ROOT, "src");
-const ENV_EXAMPLE = path.join(ROOT, ".env.example");
-const NEXT_CONFIG = path.join(ROOT, "next.config.ts");
-const PRISMA_SCHEMA = path.join(ROOT, "prisma", "schema.prisma");
-const MIGRATIONS_ROOT = path.join(ROOT, "prisma", "migrations");
-const sourceExtensionPattern = /\.(?:ts|tsx|js|jsx)$/u;
-const envDotPattern = /\bprocess\.env\.([A-Z][A-Z0-9_]*)/gu;
-const envBracketPattern = /\bprocess\.env\[["']([A-Z][A-Z0-9_]*)["']\]/gu;
-const envDocumentPattern = /^([A-Z][A-Z0-9_]*)\s*=/gmu;
-const notificationPattern = /\bnotification\.(?:create|createMany)\s*\(/u;
-const emailCallPattern = /\b(?:sendEmail|send[A-Za-z0-9_$]*Email)\s*\(/u;
-const emailImportPattern = /from\s+["']@\/lib\/email\//u;
-const templatePattern = /\btemplate\s*:\s*["']([^"']+)["']/gu;
-const entityTypePattern = /\brelatedEntityType\s*:\s*["']([^"']+)["']/gu;
-const staticUrlPattern = /https?:\/\/([^/\s"'`)}]+)[^\s"'`]*/gu;
 const secretNamePattern = /(?:SECRET|PASSWORD|TOKEN|PRIVATE|CREDENTIAL|DATABASE_URL)/u;
-const internalDomainPattern = /^(?:localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?|(?:www\.)?ilkoku\.com)$/iu;
-const documentationDomainPattern = /^(?:schema\.org|www\.w3\.org)$/iu;
-
-async function walk(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const files: string[] = [];
-  for (const entry of entries) {
-    const absolute = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === "node_modules" || entry.name === ".next") continue;
-      files.push(...(await walk(absolute)));
-      continue;
-    }
-    if (entry.isFile()) files.push(absolute);
-  }
-  return files;
-}
-
-function repoPath(absolute: string) {
-  return path.relative(ROOT, absolute).replaceAll("\\", "/");
-}
-
-function unique(values: string[]) {
-  return [...new Set(values)].sort((left, right) => left.localeCompare(right, "tr"));
-}
-
-async function readSourceFiles(): Promise<SourceFile[]> {
-  const files = (await walk(SRC)).filter((file) => sourceExtensionPattern.test(file));
-  const result: SourceFile[] = [];
-  for (const file of files) {
-    try {
-      result.push({ file: repoPath(file), text: await readFile(file, "utf8") });
-    } catch {
-      // Okunamayan tek dosya kalan taramayı durdurmaz.
-    }
-  }
-  return result;
-}
-
-function matchesToList(text: string, pattern: RegExp) {
-  const values: string[] = [];
-  pattern.lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(text))) {
-    if (match[1]) values.push(match[1]);
-  }
-  return unique(values);
-}
-
-function collectEnvUsage(files: SourceFile[], documented: Set<string>): InfrastructureEnvKey[] {
-  const usage = new Map<string, Set<string>>();
-  for (const source of files) {
-    for (const pattern of [envDotPattern, envBracketPattern]) {
-      pattern.lastIndex = 0;
-      let match: RegExpExecArray | null;
-      while ((match = pattern.exec(source.text))) {
-        const key = match[1];
-        if (!key) continue;
-        const consumers = usage.get(key) ?? new Set<string>();
-        consumers.add(source.file);
-        usage.set(key, consumers);
-      }
-    }
-  }
-
-  return [...usage.entries()]
-    .map(([key, consumers]) => {
-      const isDocumented = documented.has(key);
-      const configured = typeof process.env[key] === "string" && Boolean(process.env[key]?.trim());
-      return {
-        configured,
-        documented: isDocumented,
-        key,
-        public: key.startsWith("NEXT_PUBLIC_"),
-        secretLike: secretNamePattern.test(key),
-        status: !isDocumented ? "warn" as const : configured ? "pass" as const : "unknown" as const,
-        usedBy: unique([...consumers]),
-      };
-    })
-    .sort((left, right) => left.key.localeCompare(right.key));
-}
 
 function normalizeRulePath(value: string) {
   return value
@@ -225,134 +123,69 @@ function ruleMatchesRoute(destination: string, route: SystemMapRouteRecord) {
   return expected.length === actual.length;
 }
 
-function parseRuleObjects(block: string, kind: InfrastructureRouteRule["kind"], routes: SystemMapRouteRecord[]) {
-  const objectPattern = /\{\s*source:\s*["']([^"']+)["']\s*,\s*destination:\s*["']([^"']+)["']\s*,?\s*(?:permanent:\s*(true|false)\s*,?)?\s*\}/gu;
-  const result: InfrastructureRouteRule[] = [];
-  objectPattern.lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = objectPattern.exec(block))) {
-    const source = match[1];
-    const destination = match[2];
-    if (!source || !destination) continue;
-    const target = destination.startsWith("/")
-      ? routes.find((route) => ruleMatchesRoute(destination, route)) ?? null
+function collectEnvUsage(): InfrastructureEnvKey[] {
+  return runtimeInfrastructureManifest.envUsage
+    .map((item) => {
+      const configured = typeof process.env[item.key] === "string" && Boolean(process.env[item.key]?.trim());
+      return {
+        configured,
+        documented: item.documented,
+        key: item.key,
+        public: item.key.startsWith("NEXT_PUBLIC_"),
+        secretLike: secretNamePattern.test(item.key),
+        status: !item.documented ? "warn" as const : configured ? "pass" as const : "unknown" as const,
+        usedBy: [...item.usedBy],
+      };
+    })
+    .sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function collectRouteRules(routes: SystemMapRouteRecord[]): InfrastructureRouteRule[] {
+  return runtimeInfrastructureManifest.routeRules.map((rule) => {
+    const target = rule.destination.startsWith("/")
+      ? routes.find((route) => ruleMatchesRoute(rule.destination, route)) ?? null
       : null;
-    result.push({
-      destination,
-      kind,
-      permanent: kind === "redirect" ? match[3] === "true" : null,
-      source,
-      status: destination.startsWith("/") && !target ? "blocker" : "pass",
+    return {
+      destination: rule.destination,
+      kind: rule.kind,
+      permanent: rule.permanent,
+      source: rule.source,
+      status: rule.destination.startsWith("/") && !target ? "blocker" : "pass",
       targetRoute: target?.route ?? null,
-    });
-  }
-  return result;
+    };
+  });
 }
 
-function parseRouteRules(text: string, routes: SystemMapRouteRecord[]) {
-  const redirectsStart = text.indexOf("async redirects()");
-  const rewritesStart = text.indexOf("async rewrites()");
-  const redirectsBlock = redirectsStart >= 0
-    ? text.slice(redirectsStart, rewritesStart > redirectsStart ? rewritesStart : undefined)
-    : "";
-  const rewritesBlock = rewritesStart >= 0 ? text.slice(rewritesStart) : "";
-  return [
-    ...parseRuleObjects(redirectsBlock, "redirect", routes),
-    ...parseRuleObjects(rewritesBlock, "rewrite", routes),
-  ];
+function eventProducers(): InfrastructureEventProducer[] {
+  return runtimeInfrastructureManifest.eventProducers.map((item) => ({
+    email: item.email,
+    notification: item.notification,
+    relatedEntityTypes: [...item.relatedEntityTypes],
+    sourceFile: item.sourceFile,
+    templates: [...item.templates],
+  }));
 }
 
-function collectEventProducers(files: SourceFile[]): InfrastructureEventProducer[] {
-  return files
-    .filter((source) => {
-      const notification = notificationPattern.test(source.text);
-      const email = emailCallPattern.test(source.text) || emailImportPattern.test(source.text);
-      return notification || email;
-    })
-    .map((source) => ({
-      email: emailCallPattern.test(source.text) || emailImportPattern.test(source.text),
-      notification: notificationPattern.test(source.text),
-      relatedEntityTypes: matchesToList(source.text, entityTypePattern),
-      sourceFile: source.file,
-      templates: matchesToList(source.text, templatePattern),
-    }))
-    .sort((left, right) => left.sourceFile.localeCompare(right.sourceFile));
-}
-
-function parseSchema(text: string) {
-  const modelPattern = /model\s+([A-Za-z0-9_]+)\s*\{([\s\S]*?)\n\}/gu;
-  const blocks: Array<{ body: string; model: string }> = [];
-  let match: RegExpExecArray | null;
-  while ((match = modelPattern.exec(text))) {
-    if (match[1] && match[2]) blocks.push({ body: match[2], model: match[1] });
-  }
-  const modelNames = new Set(blocks.map((block) => block.model));
-  const relations = new Map<string, Set<string>>();
-  for (const model of modelNames) relations.set(model, new Set());
-
-  for (const block of blocks) {
-    for (const rawLine of block.body.split("\n")) {
-      const line = rawLine.trim();
-      if (!line || line.startsWith("//") || line.startsWith("@@")) continue;
-      const tokens = line.split(/\s+/u);
-      if (tokens.length < 2) continue;
-      const type = tokens[1]?.replace(/[?\[\]]/gu, "");
-      if (!type || !modelNames.has(type) || type === block.model) continue;
-      relations.get(block.model)?.add(type);
-      relations.get(type)?.add(block.model);
-    }
-  }
-
-  const models: InfrastructureModelNode[] = [...modelNames]
-    .map((model) => {
-      const linked = unique([...(relations.get(model) ?? [])]);
-      return { degree: linked.length, model, relations: linked };
-    })
-    .sort((left, right) => right.degree - left.degree || left.model.localeCompare(right.model));
-  const relationCount = Math.round(models.reduce((total, model) => total + model.degree, 0) / 2);
-  return { modelNames, models, relationCount };
-}
-
-async function migrationInventory(schemaModels: Set<string>) {
-  const migrations = await readdir(MIGRATIONS_ROOT, { withFileTypes: true });
-  const names = migrations.filter((item) => item.isDirectory()).map((item) => item.name).sort();
-  const tables = new Set<string>();
-  const createTablePattern = /CREATE\s+TABLE\s+`?([A-Za-z0-9_]+)`?/giu;
-  for (const migration of names) {
-    try {
-      const sql = await readFile(path.join(MIGRATIONS_ROOT, migration, "migration.sql"), "utf8");
-      createTablePattern.lastIndex = 0;
-      let match: RegExpExecArray | null;
-      while ((match = createTablePattern.exec(sql))) {
-        if (match[1]) tables.add(match[1]);
-      }
-    } catch {
-      // Eksik migration dosyası envanterin kalanını durdurmaz.
-    }
-  }
+function schemaReport(): InfrastructureSchemaReport {
   return {
-    latestMigration: names.at(-1) ?? null,
-    migrationCount: names.length,
-    migrationOnlyTables: unique([...tables].filter((table) => !schemaModels.has(table))),
+    latestMigration: runtimeInfrastructureManifest.schema.latestMigration,
+    migrationCount: runtimeInfrastructureManifest.schema.migrationCount,
+    migrationOnlyTables: [...runtimeInfrastructureManifest.schema.migrationOnlyTables],
+    modelCount: runtimeInfrastructureManifest.schema.modelCount,
+    models: runtimeInfrastructureManifest.schema.models.map((item) => ({
+      degree: item.degree,
+      model: item.model,
+      relations: [...item.relations],
+    })),
+    relationCount: runtimeInfrastructureManifest.schema.relationCount,
   };
 }
 
-function collectExternalDomains(files: SourceFile[]): InfrastructureExternalDomain[] {
-  const domains = new Map<string, Set<string>>();
-  for (const source of files) {
-    staticUrlPattern.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = staticUrlPattern.exec(source.text))) {
-      const domain = match[1]?.toLowerCase();
-      if (!domain || internalDomainPattern.test(domain) || documentationDomainPattern.test(domain)) continue;
-      const consumers = domains.get(domain) ?? new Set<string>();
-      consumers.add(source.file);
-      domains.set(domain, consumers);
-    }
-  }
-  return [...domains.entries()]
-    .map(([domain, consumers]) => ({ domain, sourceFiles: unique([...consumers]) }))
-    .sort((left, right) => left.domain.localeCompare(right.domain));
+function externalDomains(): InfrastructureExternalDomain[] {
+  return runtimeInfrastructureManifest.externalDomains.map((item) => ({
+    domain: item.domain,
+    sourceFiles: [...item.sourceFiles],
+  }));
 }
 
 function buildGaps(input: {
@@ -393,46 +226,24 @@ function buildGaps(input: {
 
 export const getRuntimeInfrastructureReport = cache(async (snapshot: SystemMapSnapshot): Promise<RuntimeInfrastructureReport> => {
   const warnings: string[] = [];
-  let files: SourceFile[] = [];
-  let envExample = "";
-  let nextConfig = "";
-  let schemaText = "";
-
-  try {
-    files = await readSourceFiles();
-  } catch (error) {
-    warnings.push(`Runtime kaynak taraması kullanılamadı: ${error instanceof Error ? error.message : "bilinmeyen hata"}`);
+  if (runtimeInfrastructureManifest.version !== 1) {
+    warnings.push(`Runtime mimari manifest sürümü desteklenmiyor: ${runtimeInfrastructureManifest.version}`);
   }
-  try { envExample = await readFile(ENV_EXAMPLE, "utf8"); } catch { warnings.push(".env.example okunamadı; ENV dokümantasyon karşılaştırması sınırlı."); }
-  try { nextConfig = await readFile(NEXT_CONFIG, "utf8"); } catch { warnings.push("next.config.ts okunamadı; redirect/rewrite envanteri sınırlı."); }
-  try { schemaText = await readFile(PRISMA_SCHEMA, "utf8"); } catch { warnings.push("prisma/schema.prisma okunamadı; veri ilişki haritası sınırlı."); }
-
-  const documentedEnv = new Set(matchesToList(envExample, envDocumentPattern));
-  const env = collectEnvUsage(files, documentedEnv);
-  const routeRules = parseRouteRules(nextConfig, snapshot.routes);
-  const eventProducers = collectEventProducers(files);
-  const parsedSchema = parseSchema(schemaText);
-  let migrationData = { latestMigration: null as string | null, migrationCount: 0, migrationOnlyTables: [] as string[] };
-  try {
-    migrationData = await migrationInventory(parsedSchema.modelNames);
-  } catch (error) {
-    warnings.push(`Migration envanteri kullanılamadı: ${error instanceof Error ? error.message : "bilinmeyen hata"}`);
+  if (runtimeInfrastructureManifest.sourceFileCount === 0) {
+    warnings.push("Runtime mimari manifestinde kaynak dosya bulunamadı; altyapı envanteri sınırlı.");
   }
-  const schema: InfrastructureSchemaReport = {
-    latestMigration: migrationData.latestMigration,
-    migrationCount: migrationData.migrationCount,
-    migrationOnlyTables: migrationData.migrationOnlyTables,
-    modelCount: parsedSchema.models.length,
-    models: parsedSchema.models,
-    relationCount: parsedSchema.relationCount,
-  };
-  const externalDomains = collectExternalDomains(files);
+
+  const env = collectEnvUsage();
+  const routeRules = collectRouteRules(snapshot.routes);
+  const producerList = eventProducers();
+  const schema = schemaReport();
+  const domainList = externalDomains();
   const gaps = buildGaps({ env, routeRules, schema });
 
   return {
     env,
-    eventProducers,
-    externalDomains,
+    eventProducers: producerList,
+    externalDomains: domainList,
     gaps,
     generatedAt: new Date().toISOString(),
     routeRules,
@@ -440,16 +251,17 @@ export const getRuntimeInfrastructureReport = cache(async (snapshot: SystemMapSn
     summary: {
       blockers: gaps.filter((gap) => gap.status === "blocker").length,
       documentedEnv: env.filter((item) => item.documented).length,
-      emailProducers: eventProducers.filter((item) => item.email).length,
+      emailProducers: producerList.filter((item) => item.email).length,
       envKeys: env.length,
-      externalDomains: externalDomains.length,
+      externalDomains: domainList.length,
       migrationOnlyTables: schema.migrationOnlyTables.length,
-      notificationProducers: eventProducers.filter((item) => item.notification).length,
+      notificationProducers: producerList.filter((item) => item.notification).length,
       routeRules: routeRules.length,
       routeRulesBroken: routeRules.filter((item) => item.status === "blocker").length,
       runtimeConfiguredEnv: env.filter((item) => item.configured).length,
       schemaModels: schema.modelCount,
       schemaRelations: schema.relationCount,
+      sourceFiles: runtimeInfrastructureManifest.sourceFileCount,
       undocumentedEnv: env.filter((item) => !item.documented).length,
       warnings: gaps.filter((gap) => gap.status === "warn").length,
     },

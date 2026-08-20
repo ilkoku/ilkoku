@@ -146,7 +146,7 @@ function remediationFor(domain: string) {
   if (domain === "Server Action Kullanımı") return "Action'ın gerçek consumer'ını bağla veya artık kullanılmıyorsa ölü server action modülünü kaldır.";
   if (domain === "ENV Sözleşmesi") return "Anahtarı .env.example içinde dokümante et ve gerekli çalışma ortamlarında tanımlı olduğundan emin ol.";
   if (domain === "Redirect / Rewrite") return "Yönlendirme hedefini mevcut kanonik route ile eşleştir.";
-  if (domain === "Veri Şeması") return "Migration-only tablonun bilinçli raw SQL sınırı olduğunu belgele; Prisma'ya taşınacaksa modeli ekle.";
+  if (domain === "Veri Şeması") return "Beklenmedik migration-only tablonun bilinçli raw SQL sınırı olup olmadığını doğrula; bilinçliyse açık istisna olarak kaydet, değilse Prisma modelini veya migration yapısını düzelt.";
   return "Kaynak kanıtını incele ve kanonik uygulama sınırında düzelt.";
 }
 
@@ -349,10 +349,10 @@ function controlChecks(input: {
       title: "Route giriş bağlantıları",
     },
     {
-      detail: "Migration-only tablolar görünür ve bilinçli raw SQL sınırı olarak izlenmeli.",
-      evidence: `${infrastructure.summary.migrationOnlyTables} migration-only tablo`,
+      detail: "Bilinçli migration-only tablolar görünür kalmalı; yalnız açıklanamayan yeni tablo şema riski sayılmalı.",
+      evidence: `${infrastructure.summary.acknowledgedMigrationOnlyTables} bilinçli · ${infrastructure.summary.unexpectedMigrationOnlyTables} beklenmedik migration-only tablo`,
       id: "schema-boundary",
-      status: infrastructure.summary.migrationOnlyTables > 0 ? "warn" : "pass",
+      status: infrastructure.summary.unexpectedMigrationOnlyTables > 0 ? "warn" : "pass",
       title: "Veri şeması sınırı",
     },
     {

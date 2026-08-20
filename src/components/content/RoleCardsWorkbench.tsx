@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { publishRoleCardsAction, saveRoleCardsAction } from "@/features/cms/role-card-actions";
 import type { CmsLocaleCode } from "@/lib/cms-locales";
 import {
-  cmsRoleKeys,
   cmsRoleMeta,
   type CmsRoleCard,
   type CmsRoleKey,

@@ -7,7 +7,6 @@ import {
   getPublisherMembership,
   getPublisherInvitations,
   getPublisherMembers,
-  getPublisherNotifications,
   getPublisherSubmissionForMember,
   getPublisherWorkspaceRecords,
 } from "./repository";
@@ -19,7 +18,6 @@ import type {
   PublisherFileData,
   PublisherInvitationData,
   PublisherMemberData,
-  PublisherNotificationData,
   PublisherWorkspaceData,
   PublisherWorkspaceFilters,
 } from "./types";

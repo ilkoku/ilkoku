@@ -34,13 +34,13 @@ export function RuntimeInfrastructurePanel({ report }: { report: RuntimeInfrastr
 
         <div className="system-runtime-summary">
           <article data-tone={report.summary.blockers ? "danger" : "ok"}><strong>{report.summary.blockers}</strong><span>BLOCKER</span><small>Redirect/rewrite veya altyapı sözleşmesi</small></article>
-          <article data-tone={report.summary.warnings ? "warning" : "ok"}><strong>{report.summary.warnings}</strong><span>WARN</span><small>Belge / şema ayrışması</small></article>
+          <article data-tone={report.summary.warnings ? "warning" : "ok"}><strong>{report.summary.warnings}</strong><span>WARN</span><small>Belge / beklenmedik şema ayrışması</small></article>
           <article><strong>{report.summary.runtimeConfiguredEnv}/{report.summary.envKeys}</strong><span>ENV tanımlı</span><small>Değerler hiçbir zaman gösterilmez</small></article>
           <article><strong>{report.summary.routeRules - report.summary.routeRulesBroken}/{report.summary.routeRules}</strong><span>Route kuralı PASS</span><small>Redirect + rewrite</small></article>
           <article><strong>{report.summary.notificationProducers}</strong><span>Bildirim üreticisi</span><small>notification.create/createMany</small></article>
           <article><strong>{report.summary.emailProducers}</strong><span>E-posta üreticisi</span><small>sendEmail / email modülleri</small></article>
           <article><strong>{report.summary.schemaModels}</strong><span>Prisma modeli</span><small>{report.summary.schemaRelations} model ilişkisi</small></article>
-          <article><strong>{report.schema.migrationCount}</strong><span>Migration</span><small>{report.summary.migrationOnlyTables} migration-only tablo</small></article>
+          <article><strong>{report.schema.migrationCount}</strong><span>Migration</span><small>{report.summary.acknowledgedMigrationOnlyTables} bilinçli · {report.summary.unexpectedMigrationOnlyTables} beklenmedik migration-only</small></article>
         </div>
       </section>
 
@@ -134,10 +134,17 @@ export function RuntimeInfrastructurePanel({ report }: { report: RuntimeInfrastr
           <span>Son migration: {report.schema.latestMigration ?? "—"}</span>
         </div>
 
-        {report.schema.migrationOnlyTables.length ? (
+        {report.schema.acknowledgedMigrationOnlyTables.length ? (
           <div className="system-runtime-migration-only">
-            <strong>Migration-only tablolar</strong>
-            <p>{report.schema.migrationOnlyTables.map((table) => <code key={table}>{table}</code>)}</p>
+            <strong>Bilinçli raw-SQL / migration-only sınırı · ACKNOWLEDGED</strong>
+            <p>{report.schema.acknowledgedMigrationOnlyTables.map((table) => <code key={table}>{table}</code>)}</p>
+          </div>
+        ) : null}
+
+        {report.schema.unexpectedMigrationOnlyTables.length ? (
+          <div className="system-runtime-migration-only">
+            <strong>İnceleme gerekli · beklenmedik migration-only tablolar</strong>
+            <p>{report.schema.unexpectedMigrationOnlyTables.map((table) => <code key={table}>{table}</code>)}</p>
           </div>
         ) : null}
 

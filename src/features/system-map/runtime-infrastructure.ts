@@ -40,12 +40,14 @@ export interface InfrastructureModelNode {
 }
 
 export interface InfrastructureSchemaReport {
+  acknowledgedMigrationOnlyTables: string[];
   latestMigration: string | null;
   migrationCount: number;
   migrationOnlyTables: string[];
   modelCount: number;
   models: InfrastructureModelNode[];
   relationCount: number;
+  unexpectedMigrationOnlyTables: string[];
 }
 
 export interface InfrastructureExternalDomain {
@@ -70,6 +72,7 @@ export interface RuntimeInfrastructureReport {
   routeRules: InfrastructureRouteRule[];
   schema: InfrastructureSchemaReport;
   summary: {
+    acknowledgedMigrationOnlyTables: number;
     blockers: number;
     documentedEnv: number;
     emailProducers: number;
@@ -84,12 +87,18 @@ export interface RuntimeInfrastructureReport {
     schemaRelations: number;
     sourceFiles: number;
     undocumentedEnv: number;
+    unexpectedMigrationOnlyTables: number;
     warnings: number;
   };
   warnings: string[];
 }
 
 const secretNamePattern = /(?:SECRET|PASSWORD|TOKEN|PRIVATE|CREDENTIAL|DATABASE_URL)/u;
+const acknowledgedMigrationOnlyTableNames = new Set([
+  "ContractTemplate",
+  "UserContract",
+  "UserContractEvent",
+]);
 
 function normalizeRulePath(value: string) {
   return value
@@ -167,10 +176,15 @@ function eventProducers(): InfrastructureEventProducer[] {
 }
 
 function schemaReport(): InfrastructureSchemaReport {
+  const migrationOnlyTables = [...runtimeInfrastructureManifest.schema.migrationOnlyTables];
+  const acknowledgedMigrationOnlyTables = migrationOnlyTables.filter((table) => acknowledgedMigrationOnlyTableNames.has(table));
+  const unexpectedMigrationOnlyTables = migrationOnlyTables.filter((table) => !acknowledgedMigrationOnlyTableNames.has(table));
+
   return {
+    acknowledgedMigrationOnlyTables,
     latestMigration: runtimeInfrastructureManifest.schema.latestMigration,
     migrationCount: runtimeInfrastructureManifest.schema.migrationCount,
-    migrationOnlyTables: [...runtimeInfrastructureManifest.schema.migrationOnlyTables],
+    migrationOnlyTables,
     modelCount: runtimeInfrastructureManifest.schema.modelCount,
     models: runtimeInfrastructureManifest.schema.models.map((item) => ({
       degree: item.degree,
@@ -178,6 +192,7 @@ function schemaReport(): InfrastructureSchemaReport {
       relations: [...item.relations],
     })),
     relationCount: runtimeInfrastructureManifest.schema.relationCount,
+    unexpectedMigrationOnlyTables,
   };
 }
 
@@ -212,13 +227,13 @@ function buildGaps(input: {
       title: "Kural hedefi bulunamadı",
     });
   }
-  if (input.schema.migrationOnlyTables.length > 0) {
+  if (input.schema.unexpectedMigrationOnlyTables.length > 0) {
     gaps.push({
-      detail: `${input.schema.migrationOnlyTables.length} tablo migration ile yönetiliyor ancak Prisma schema model listesinde yok. Bu bilinçli raw SQL mimarisi olabilir; veri haritasında ayrı izlenir.`,
-      id: "migration-only-tables",
+      detail: `${input.schema.unexpectedMigrationOnlyTables.length} beklenmedik tablo migration ile yönetiliyor ancak Prisma schema model listesinde ve bilinçli raw SQL istisna listesinde yok: ${input.schema.unexpectedMigrationOnlyTables.join(", ")}.`,
+      id: "unexpected-migration-only-tables",
       scope: "Veri Şeması",
       status: "warn",
-      title: "Migration-only tablo yüzeyi",
+      title: "Beklenmedik migration-only tablo yüzeyi",
     });
   }
   return gaps;
@@ -249,6 +264,7 @@ export const getRuntimeInfrastructureReport = cache(async (snapshot: SystemMapSn
     routeRules,
     schema,
     summary: {
+      acknowledgedMigrationOnlyTables: schema.acknowledgedMigrationOnlyTables.length,
       blockers: gaps.filter((gap) => gap.status === "blocker").length,
       documentedEnv: env.filter((item) => item.documented).length,
       emailProducers: producerList.filter((item) => item.email).length,
@@ -263,6 +279,7 @@ export const getRuntimeInfrastructureReport = cache(async (snapshot: SystemMapSn
       schemaRelations: schema.relationCount,
       sourceFiles: runtimeInfrastructureManifest.sourceFileCount,
       undocumentedEnv: env.filter((item) => !item.documented).length,
+      unexpectedMigrationOnlyTables: schema.unexpectedMigrationOnlyTables.length,
       warnings: gaps.filter((gap) => gap.status === "warn").length,
     },
     warnings,

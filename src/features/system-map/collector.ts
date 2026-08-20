@@ -58,7 +58,7 @@ const workflows: SystemMapWorkflow[] = [
     id: "writer",
     title: "Yazar ve eser yayın akışı",
     description: "Yazar çalışma alanından eserin oluşturulması, bölüm yönetimi, yayın ve public eser yüzeyine uzanan akış.",
-    steps: ["/yazar", "/eserlerim", "/eserlerim/[workId]", "yayın işlemi", "/kitap/[slug]"],
+    steps: ["/yazar", "/eserlerim", "/eserlerim/[workId]", "/kitap/[slug]"],
   },
   {
     id: "editor",
@@ -76,13 +76,19 @@ const workflows: SystemMapWorkflow[] = [
     id: "cms",
     title: "İçerik yayın akışı",
     description: "İçerik çalışma masasından taslak/yayın durumuna ve public İlkOku yüzeyine giden CMS zinciri.",
-    steps: ["/icerik", "CMS çalışma masaları", "yayın", "/ + public içerik route'ları"],
+    steps: ["/icerik", "/icerik/ana-sayfa | /icerik/rol-kartlari | /icerik/menuler | /icerik/seo", "/"],
   },
   {
     id: "contracts",
     title: "Merkezi sözleşme akışı",
     description: "Admin şablonundan kullanıcı sözleşme kutusuna ve cevabın tekrar merkeze dönmesine kadar olan kanonik akış.",
-    steps: [contractManagementPath, `${contractManagementPath}/sablonlar`, "rol + kullanıcı seçimi", contractInboxPath, "kabul / ret", contractManagementPath],
+    steps: [
+      contractManagementPath,
+      `${contractManagementPath}/sablonlar/yeni | ${contractManagementPath}/sablonlar/[templateId]`,
+      contractInboxPath,
+      `${contractInboxPath}/[contractId]`,
+      contractManagementPath,
+    ],
   },
   {
     id: "system",
@@ -91,6 +97,24 @@ const workflows: SystemMapWorkflow[] = [
     steps: [systemManagementPath, "/harita", contractManagementPath],
   },
 ];
+
+const publicApiPaths = [
+  "/api/content-faq",
+  "/api/media",
+  "/api/public-announcements",
+  "/api/site-contact",
+  "/api/site-content",
+] as const;
+
+const cmsProtectedApiPaths = [
+  "/api/cms-access-manage",
+  "/api/cms-history",
+  "/api/cms-media-upload",
+  "/api/cms-seo-audit",
+  "/api/cms-settings",
+  "/api/content-notices",
+  "/api/site-contact-manage",
+] as const;
 
 function canonicalShape(value: string) {
   return value
@@ -174,6 +198,15 @@ function accessForRoute(route: string, kind: SystemMapRouteKind): {
   if (kind === "handler" && matchesPath(route, "/api")) {
     if (matchesPath(route, "/api/admin")) {
       return { accessLabel: "Admin API · handler içi yetki kontrolü", accessMode: "admin", approvedRoleRequired: false, roles: ["admin"] };
+    }
+    if (publicApiPaths.some((prefix) => matchesPath(route, prefix))) {
+      return { accessLabel: "Public API · yayınlanmış/public veri veya public form yüzeyi", accessMode: "public", approvedRoleRequired: false, roles: [] };
+    }
+    if (matchesPath(route, "/api/internal")) {
+      return { accessLabel: "Internal API · bearer/secret guard", accessMode: "authenticated", approvedRoleRequired: false, roles: [] };
+    }
+    if (cmsProtectedApiPaths.some((prefix) => matchesPath(route, prefix))) {
+      return { accessLabel: "CMS API · CMS erişimi + handler guard", accessMode: "authenticated", approvedRoleRequired: false, roles: ["admin", "content_manager"] };
     }
     return { accessLabel: "Route handler politikası · handler içinde doğrulanır", accessMode: "authenticated", approvedRoleRequired: false, roles: [] };
   }

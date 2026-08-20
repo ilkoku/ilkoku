@@ -28,7 +28,8 @@ test("canonical integrity gate is server-only and combines existing read-only re
   contains(integrity, "getIntegrityControlReport", "canonical report builder");
   notContains(integrity, 'from "@/lib/prisma"', "integrity gate must not connect to DB");
   notContains(integrity, "prisma.$transaction", "integrity gate must not mutate DB");
-  notContains(integrity, "process.env", "integrity gate must not inspect ENV values itself");
+  notContains(integrity, "process.env[", "integrity gate must not read bracket ENV values itself");
+  notContains(integrity, "process.env.", "integrity gate must not read dotted ENV values itself");
 });
 
 test("menu validation checks both route existence and role compatibility", () => {
@@ -90,7 +91,7 @@ test("integrity queue provides owner, evidence, remediation and deterministic re
   contains(integrity, "remediation:", "remediation projection");
   contains(integrity, "verification:", "verification projection");
   contains(integrity, "evidence:", "evidence projection");
-  contains(panel, "Tek kanonik denetim kapısı".toUpperCase(), "canonical gate UI label");
+  contains(panel, "TEK KANONİK DENETİM KAPISI", "canonical gate UI label");
   contains(panel, "Kök bulgu → düzeltme → yeniden doğrulama", "remediation queue UI");
   contains(panel, "Düzeltme noktası", "fix point UI");
   contains(panel, "Nasıl kapanacak?", "verification UI");

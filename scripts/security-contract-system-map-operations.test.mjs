@@ -39,6 +39,40 @@ test("deep system operations stays server-only and consumes build-time structura
   notContains(operations, "prisma.$transaction", "operations must not mutate database");
 });
 
+test("canonical workflows use real application routes and never invent contract index pages", () => {
+  const collector = source("src/features/system-map/collector.ts");
+
+  contains(collector, '${contractManagementPath}/sablonlar/yeni', "contract template create route");
+  contains(collector, '${contractManagementPath}/sablonlar/[templateId]', "contract template edit route");
+  contains(collector, '${contractInboxPath}/[contractId]', "recipient contract detail route");
+  contains(collector, '"/icerik/ana-sayfa | /icerik/rol-kartlari | /icerik/menuler | /icerik/seo"', "CMS real route workflow");
+  notContains(collector, '`${contractManagementPath}/sablonlar`,', "nonexistent contract template index");
+  notContains(collector, '"yayın işlemi"', "non-route writer workflow label");
+  notContains(collector, '"rol + kullanıcı seçimi"', "non-route contract workflow label");
+  notContains(collector, '"kabul / ret"', "non-route contract workflow label");
+});
+
+test("API evidence classification distinguishes public, CMS-protected and internal-secret surfaces", () => {
+  const collector = source("src/features/system-map/collector.ts");
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
+
+  for (const path of [
+    "/api/content-faq",
+    "/api/media",
+    "/api/public-announcements",
+    "/api/site-contact",
+    "/api/site-content",
+  ]) {
+    contains(collector, `"${path}"`, `${path} public API classification`);
+  }
+  contains(collector, "publicApiPaths", "public API registry");
+  contains(collector, "cmsProtectedApiPaths", "CMS API registry");
+  contains(collector, 'matchesPath(route, "/api/internal")', "internal secret API classification");
+  contains(generator, '["getCmsAccess", "CMS access"]', "CMS access guard evidence");
+  contains(generator, '["isSameOriginRequest", "same-origin check"]', "same-origin guard evidence");
+  contains(generator, '["timingSafeEqual", "timing-safe secret check"]', "timing-safe secret guard evidence");
+});
+
 test("operations report cross-checks menu targets, workflows, route dependencies and API guards", () => {
   const operations = source("src/features/system-map/operations.ts");
 

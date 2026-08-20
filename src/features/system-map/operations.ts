@@ -125,8 +125,6 @@ type MenuReference = {
   menuLabel: string;
 };
 
-const routeStepPattern = /\/[A-Za-z0-9_\-\[\].?=&/]+/gu;
-
 function unique(values: string[]) {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right, "tr"));
 }
@@ -225,13 +223,12 @@ function transitiveDependencies(start: string, modules: Map<string, SourceModule
 }
 
 function extractStepRoutes(step: string) {
-  routeStepPattern.lastIndex = 0;
-  const routes: string[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = routeStepPattern.exec(step))) {
-    if (match[0]) routes.push(match[0]);
-  }
-  return unique(routes);
+  return unique(
+    step
+      .split("|")
+      .map((part) => part.trim().split(/\s/u)[0] ?? "")
+      .filter((candidate) => candidate.startsWith("/")),
+  );
 }
 
 function validateWorkflow(workflow: SystemMapWorkflow, routes: SystemMapRouteRecord[]): SystemOperationWorkflowCheck {

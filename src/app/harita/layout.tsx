@@ -6,6 +6,7 @@ import "./control-center.css";
 import "./operations.css";
 import "./runtime-infrastructure.css";
 import "./integrity-control.css";
+import "./navigation.css";
 
 export const metadata: Metadata = {
   title: "Sistem Haritası | İlkOku",

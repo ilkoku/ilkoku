@@ -15,6 +15,14 @@ function scanLabel(mode: "source" | "build" | "hybrid" | "fallback") {
   return "Sınırlı fallback";
 }
 
+const dashboardSections = [
+  { href: "#denetim-kapisi", label: "Denetim Kapısı", detail: "BLOCKER / WARN / PASS" },
+  { href: "#operasyon-akislari", label: "Operasyon & Akışlar", detail: "Workflow · menü · API · action" },
+  { href: "#runtime-altyapi", label: "Runtime / Altyapı", detail: "ENV · migration · redirect" },
+  { href: "#mimari-saglik", label: "Mimari Sağlık", detail: "Risk · alan · aksiyon kuyruğu" },
+  { href: "#system-routes-title", label: "Route Envanteri", detail: "Tüm route ve bağlantılar" },
+] as const;
+
 export default async function SystemMapPage() {
   const snapshot = await getSystemMapSnapshot();
   const [operations, infrastructure] = await Promise.all([
@@ -24,7 +32,7 @@ export default async function SystemMapPage() {
   const integrity = getIntegrityControlReport(snapshot, operations, infrastructure);
 
   return (
-    <main className="system-map-page">
+    <main className="system-map-page" id="harita-top">
       <header className="system-map-hero">
         <div>
           <p className="system-map-eyebrow">İLKOKU MİMARİ KONTROL MERKEZİ</p>
@@ -56,17 +64,45 @@ export default async function SystemMapPage() {
         </p>
       </section>
 
-      {snapshot.warnings.length > 0 ? (
-        <section className="system-map-warnings" aria-labelledby="system-map-warnings-title">
-          <h2 id="system-map-warnings-title">Tarama uyarıları</h2>
-          <ul>{snapshot.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
-        </section>
-      ) : null}
+      <div className="system-map-dashboard-layout">
+        <aside className="system-map-section-nav" aria-label="Harita ana başlıkları">
+          <div className="system-map-section-nav__inner">
+            <p>HARİTA MENÜSÜ</p>
+            <nav>
+              {dashboardSections.map((section, index) => (
+                <a href={section.href} key={section.href}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <strong>{section.label}</strong>
+                  <small>{section.detail}</small>
+                </a>
+              ))}
+            </nav>
+            <a className="system-map-section-nav__top" href="#harita-top">↑ Sayfanın başına dön</a>
+          </div>
+        </aside>
 
-      <IntegrityControlPanel report={integrity} />
-      <SystemOperationsPanel report={operations} />
-      <RuntimeInfrastructurePanel report={infrastructure} />
-      <SystemMapWorkbench snapshot={snapshot} />
+        <div className="system-map-dashboard-content">
+          {snapshot.warnings.length > 0 ? (
+            <section className="system-map-warnings" aria-labelledby="system-map-warnings-title">
+              <h2 id="system-map-warnings-title">Tarama uyarıları</h2>
+              <ul>{snapshot.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+            </section>
+          ) : null}
+
+          <div className="system-map-anchor-section" id="denetim-kapisi">
+            <IntegrityControlPanel report={integrity} />
+          </div>
+          <div className="system-map-anchor-section" id="operasyon-akislari">
+            <SystemOperationsPanel report={operations} />
+          </div>
+          <div className="system-map-anchor-section" id="runtime-altyapi">
+            <RuntimeInfrastructurePanel report={infrastructure} />
+          </div>
+          <div className="system-map-anchor-section" id="mimari-saglik">
+            <SystemMapWorkbench snapshot={snapshot} />
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

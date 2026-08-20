@@ -41,6 +41,7 @@ test("deep system operations stays server-only and consumes build-time structura
 
 test("canonical workflows use real application routes and never invent contract index pages", () => {
   const collector = source("src/features/system-map/collector.ts");
+  const operations = source("src/features/system-map/operations.ts");
 
   contains(collector, '${contractManagementPath}/sablonlar/yeni', "contract template create route");
   contains(collector, '${contractManagementPath}/sablonlar/[templateId]', "contract template edit route");
@@ -50,6 +51,9 @@ test("canonical workflows use real application routes and never invent contract 
   notContains(collector, '"yayın işlemi"', "non-route writer workflow label");
   notContains(collector, '"rol + kullanıcı seçimi"', "non-route contract workflow label");
   notContains(collector, '"kabul / ret"', "non-route contract workflow label");
+  contains(operations, '.split("|")', "workflow alternative tokenization");
+  contains(operations, 'candidate.startsWith("/")', "workflow route token boundary");
+  notContains(operations, "routeStepPattern", "workflow must not infer routes from arbitrary inline slashes");
 });
 
 test("API evidence classification distinguishes public, CMS-protected and internal-secret surfaces", () => {
@@ -117,6 +121,23 @@ test("harita renders the deep operations report on the server without a second b
   contains(layout, 'import "./operations.css"', "operations styles");
   notContains(panel, '"use client"', "operations panel server render");
   notContains(panel, "fetch(", "operations panel must not create browser fetch source");
+});
+
+test("harita exposes sticky primary navigation for the long dashboard without changing data boundaries", () => {
+  const page = source("src/app/harita/page.tsx");
+  const layout = source("src/app/harita/layout.tsx");
+  const navigation = source("src/app/harita/navigation.css");
+
+  for (const label of ["Denetim Kapısı", "Operasyon & Akışlar", "Runtime / Altyapı", "Mimari Sağlık", "Route Envanteri"]) {
+    contains(page, label, `dashboard section navigation ${label}`);
+  }
+  contains(page, 'href: "#system-routes-title"', "route inventory direct anchor");
+  contains(page, 'aria-label="Harita ana başlıkları"', "dashboard navigation accessibility label");
+  contains(layout, 'import "./navigation.css"', "navigation stylesheet boundary");
+  contains(navigation, ".system-map-section-nav__inner", "sticky navigation surface");
+  contains(navigation, "position: sticky", "sticky desktop/tablet navigation");
+  contains(navigation, "grid-template-columns: 230px minmax(0, 1fr)", "desktop left navigation layout");
+  contains(navigation, "overflow-x: auto", "responsive horizontal navigation fallback");
 });
 
 test("deep operations panel exposes blocker warn pass semantics and fail-closed manifest limitations", () => {

@@ -1,7 +1,5 @@
 import "server-only";
 
-import { readdir, readFile, stat } from "node:fs/promises";
-import path from "node:path";
 import { cache } from "react";
 import {
   editorNavigationContent,
@@ -10,6 +8,7 @@ import {
   readerNavigationContent,
 } from "@/content";
 import { adminNavigation } from "@/lib/admin-navigation";
+import { systemMapSourceManifest } from "./runtime-manifest.generated";
 import type {
   SystemMapAccessMode,
   SystemMapRouteRecord,
@@ -111,13 +110,13 @@ export interface SystemOperationsReport {
 
 type SourceModule = {
   actionNames: string[];
+  consumers: string[];
   dataModels: string[];
   file: string;
   guardEvidence: string[];
   imports: string[];
   methods: string[];
   rawSql: boolean;
-  text: string;
 };
 
 type MenuReference = {
@@ -126,55 +125,10 @@ type MenuReference = {
   menuLabel: string;
 };
 
-const ROOT = process.cwd();
-const SRC = path.join(ROOT, "src");
-const SOURCE_ROOTS = [
-  path.join(SRC, "app"),
-  path.join(SRC, "components"),
-  path.join(SRC, "content"),
-  path.join(SRC, "features"),
-  path.join(SRC, "lib"),
-];
-const sourceExtensionPattern = /\.(?:ts|tsx|js|jsx)$/u;
-const importPattern = /(?:from\s+|import\s*\()\s*["']([^"']+)["']/gu;
-const actionFunctionPattern = /export\s+async\s+function\s+([A-Za-z_$][\w$]*)/gu;
-const actionConstPattern = /export\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*async\b/gu;
-const prismaModelPattern = /\bprisma\.([A-Za-z_$][\w$]*)\s*\./gu;
-const httpMethodPattern = /export\s+(?:async\s+function|const)\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/gu;
 const routeStepPattern = /\/[A-Za-z0-9_\-\[\].?=&/]+/gu;
-const guardMarkers = [
-  ["getCurrentUser", "getCurrentUser"],
-  ["requireAdmin", "requireAdmin"],
-  ["requireApprovedRole", "requireApprovedRole"],
-  ["requirePublisher", "requirePublisher"],
-  ["getPublisherWorkspaceContext", "publisher workspace context"],
-  ["auth(", "auth()"],
-  ["session", "session check"],
-] as const;
-
-async function walk(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const files: string[] = [];
-
-  for (const entry of entries) {
-    const absolute = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === "node_modules" || entry.name === ".next") continue;
-      files.push(...(await walk(absolute)));
-      continue;
-    }
-    if (entry.isFile() && sourceExtensionPattern.test(entry.name)) files.push(absolute);
-  }
-
-  return files;
-}
 
 function unique(values: string[]) {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right, "tr"));
-}
-
-function normalizeRepoPath(absolute: string) {
-  return path.relative(ROOT, absolute).replaceAll("\\", "/");
 }
 
 function sourceFileFromRoute(route: SystemMapRouteRecord) {
@@ -213,7 +167,6 @@ function routeMatches(reference: string, route: string) {
     }
     if (expected !== actual) return false;
   }
-
   return referenceSegments.length === routeSegments.length;
 }
 
@@ -229,7 +182,6 @@ function menuReferences(): MenuReference[] {
       result.push({ href: item.href, itemLabel: item.label, menuLabel });
     }
   };
-
   add("Yazar menüsü", navigationContent.items);
   add("Okuyucu menüsü", readerNavigationContent.items);
   add("Editör menüsü", editorNavigationContent.items);
@@ -238,132 +190,27 @@ function menuReferences(): MenuReference[] {
   return result;
 }
 
-async function fileExists(file: string) {
-  try {
-    return (await stat(file)).isFile();
-  } catch {
-    return false;
-  }
-}
-
-async function resolveImport(origin: string, specifier: string) {
-  if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return null;
-
-  const base = specifier.startsWith("@/")
-    ? path.join(SRC, specifier.slice(2))
-    : path.resolve(path.dirname(origin), specifier);
-  const candidates = [
-    base,
-    `${base}.ts`,
-    `${base}.tsx`,
-    `${base}.js`,
-    `${base}.jsx`,
-    path.join(base, "index.ts"),
-    path.join(base, "index.tsx"),
-    path.join(base, "index.js"),
-    path.join(base, "index.jsx"),
-  ];
-
-  for (const candidate of candidates) {
-    if (await fileExists(candidate)) return normalizeRepoPath(candidate);
-  }
-  return null;
-}
-
-function extractActionNames(text: string) {
-  if (!/^\s*["']use server["'];?/u.test(text)) return [];
-  const names: string[] = [];
-  actionFunctionPattern.lastIndex = 0;
-  actionConstPattern.lastIndex = 0;
-  for (const pattern of [actionFunctionPattern, actionConstPattern]) {
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(text))) {
-      const name = match[1];
-      if (name) names.push(name);
-    }
-  }
-  return unique(names);
-}
-
-function extractModels(text: string) {
-  const models: string[] = [];
-  prismaModelPattern.lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = prismaModelPattern.exec(text))) {
-    if (match[1] && !match[1].startsWith("$")) models.push(match[1]);
-  }
-  return unique(models);
-}
-
-function extractMethods(text: string) {
-  const methods: string[] = [];
-  httpMethodPattern.lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = httpMethodPattern.exec(text))) {
-    if (match[1]) methods.push(match[1]);
-  }
-  return unique(methods);
-}
-
-function extractGuardEvidence(text: string) {
-  return guardMarkers
-    .filter(([needle]) => text.includes(needle))
-    .map(([, label]) => label);
-}
-
-async function scanModules(): Promise<Map<string, SourceModule>> {
-  const files = (
-    await Promise.all(
-      SOURCE_ROOTS.map(async (root) => {
-        try {
-          return await walk(root);
-        } catch {
-          return [];
-        }
-      }),
-    )
-  ).flat();
-  const uniqueFiles = [...new Set(files)];
-  const modules = new Map<string, SourceModule>();
-
-  for (const absolute of uniqueFiles) {
-    let text: string;
-    try {
-      text = await readFile(absolute, "utf8");
-    } catch {
-      continue;
-    }
-
-    const imports: string[] = [];
-    importPattern.lastIndex = 0;
-    let importMatch: RegExpExecArray | null;
-    while ((importMatch = importPattern.exec(text))) {
-      const specifier = importMatch[1];
-      if (!specifier) continue;
-      const resolved = await resolveImport(absolute, specifier);
-      if (resolved) imports.push(resolved);
-    }
-
-    const file = normalizeRepoPath(absolute);
-    modules.set(file, {
-      actionNames: extractActionNames(text),
-      dataModels: extractModels(text),
-      file,
-      guardEvidence: extractGuardEvidence(text),
-      imports: unique(imports),
-      methods: extractMethods(text),
-      rawSql: text.includes("$queryRaw") || text.includes("$executeRaw"),
-      text,
-    });
-  }
-
-  return modules;
+function sourceModules() {
+  return new Map<string, SourceModule>(
+    systemMapSourceManifest.modules.map((sourceModule) => [
+      sourceModule.file,
+      {
+        actionNames: [...sourceModule.actionNames],
+        consumers: [...sourceModule.consumers],
+        dataModels: [...sourceModule.dataModels],
+        file: sourceModule.file,
+        guardEvidence: [...sourceModule.guardEvidence],
+        imports: [...sourceModule.imports],
+        methods: [...sourceModule.methods],
+        rawSql: sourceModule.rawSql,
+      },
+    ]),
+  );
 }
 
 function transitiveDependencies(start: string, modules: Map<string, SourceModule>) {
   const seen = new Set<string>();
   const queue: Array<{ depth: number; file: string }> = [{ depth: 0, file: start }];
-
   while (queue.length > 0 && seen.size < 500) {
     const current = queue.shift();
     if (!current || seen.has(current.file) || current.depth > 8) continue;
@@ -374,17 +221,7 @@ function transitiveDependencies(start: string, modules: Map<string, SourceModule
       if (!seen.has(imported)) queue.push({ depth: current.depth + 1, file: imported });
     }
   }
-
   return seen;
-}
-
-function symbolConsumers(actionName: string, sourceFile: string, modules: Map<string, SourceModule>) {
-  const escaped = actionName.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-  const matcher = new RegExp(`\\b${escaped}\\b`, "u");
-  return [...modules.values()]
-    .filter((sourceModule) => sourceModule.file !== sourceFile && matcher.test(sourceModule.text))
-    .map((sourceModule) => sourceModule.file)
-    .slice(0, 20);
 }
 
 function extractStepRoutes(step: string) {
@@ -392,8 +229,7 @@ function extractStepRoutes(step: string) {
   const routes: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = routeStepPattern.exec(step))) {
-    const candidate = match[0];
-    if (candidate) routes.push(candidate);
+    if (match[0]) routes.push(match[0]);
   }
   return unique(routes);
 }
@@ -401,21 +237,13 @@ function extractStepRoutes(step: string) {
 function validateWorkflow(workflow: SystemMapWorkflow, routes: SystemMapRouteRecord[]): SystemOperationWorkflowCheck {
   const steps = workflow.steps.map((label) => {
     const candidates = extractStepRoutes(label);
-    if (candidates.length === 0) {
-      return { label, matchedRoutes: [], status: "unknown" as const };
-    }
-
+    if (candidates.length === 0) return { label, matchedRoutes: [], status: "unknown" as const };
     const matchedRoutes = unique(
       candidates.flatMap((candidate) => routes.filter((route) => routeMatches(candidate, route.route)).map((route) => route.route)),
     );
     const missing = candidates.filter((candidate) => !findMatchingRoute(candidate, routes));
-    return {
-      label,
-      matchedRoutes,
-      status: missing.length > 0 ? "blocker" as const : "pass" as const,
-    };
+    return { label, matchedRoutes, status: missing.length > 0 ? "blocker" as const : "pass" as const };
   });
-
   const hasBlocker = steps.some((step) => step.status === "blocker");
   const hasUnknown = steps.some((step) => step.status === "unknown");
   return {
@@ -442,23 +270,19 @@ function apiStatus(route: SystemMapRouteRecord, methods: string[], guardEvidence
 
 export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapshot): Promise<SystemOperationsReport> => {
   const warnings: string[] = [];
-  let modules = new Map<string, SourceModule>();
-
-  try {
-    modules = await scanModules();
-  } catch (error) {
-    warnings.push(`Kaynak bağımlılık taraması kullanılamadı: ${error instanceof Error ? error.message : "bilinmeyen hata"}`);
+  if (systemMapSourceManifest.version !== 1) {
+    warnings.push(`Kaynak bağımlılık manifest sürümü desteklenmiyor: ${systemMapSourceManifest.version}`);
+  }
+  const modules = sourceModules();
+  if (modules.size === 0) {
+    warnings.push("Build-time kaynak bağımlılık manifesti boş; action/import/veri zinciri sınırlı.");
   }
 
   const scanMode: SystemOperationsReport["scanMode"] = modules.size > 0 ? "source" : "limited";
   const menus = menuReferences();
   const menuChecks: SystemOperationMenuCheck[] = menus.map((menu) => {
     const matched = findMatchingRoute(menu.href, snapshot.routes);
-    return {
-      ...menu,
-      matchedRoute: matched?.route ?? null,
-      status: matched ? "pass" : "blocker",
-    };
+    return { ...menu, matchedRoute: matched?.route ?? null, status: matched ? "pass" : "blocker" };
   });
 
   const workflowChecks = snapshot.workflows.map((workflow) => validateWorkflow(workflow, snapshot.routes));
@@ -466,7 +290,7 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
     .filter((sourceModule) => sourceModule.actionNames.length > 0)
     .map((sourceModule) => ({
       actions: sourceModule.actionNames,
-      consumers: unique(sourceModule.actionNames.flatMap((action) => symbolConsumers(action, sourceModule.file, modules))),
+      consumers: sourceModule.consumers,
       sourceFile: sourceModule.file,
     }))
     .sort((left, right) => left.sourceFile.localeCompare(right.sourceFile));
@@ -509,7 +333,6 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
           status: "unknown" as const,
         };
       }
-
       const dependencies = transitiveDependencies(sourceFile, modules);
       const dataModels = unique([...dependencies].flatMap((file) => modules.get(file)?.dataModels ?? []));
       const serverActions = unique([...dependencies].flatMap((file) => modules.get(file)?.actionNames ?? []));
@@ -537,7 +360,6 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
       title: "Kırık menü hedefi",
     });
   }
-
   for (const workflow of workflowChecks.filter((item) => item.status === "blocker")) {
     const failed = workflow.steps.filter((step) => step.status === "blocker").map((step) => step.label).join(" · ");
     gaps.push({
@@ -550,7 +372,6 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
       title: "Akışta eksik route",
     });
   }
-
   for (const api of apiSurface) {
     if (api.status === "blocker") {
       gaps.push({
@@ -576,10 +397,9 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
       });
     }
   }
-
   for (const route of snapshot.routes.filter((item) => item.orphanCandidate)) {
     gaps.push({
-      detail: "Bu sayfaya kaynak taramasında veya rol menülerinde giriş bağlantısı bulunamadı.",
+      detail: "Bu sayfaya build-time kaynak taramasında veya rol menülerinde giriş bağlantısı bulunamadı.",
       id: `orphan:${route.route}`,
       scope: "Route Bağlantısı",
       source: route.sourceFile,
@@ -588,10 +408,9 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
       title: "Yetim route adayı",
     });
   }
-
   if (scanMode === "limited") {
     gaps.push({
-      detail: "Kaynak dosyalar okunamadığı için server action, import grafiği ve veri bağımlılıkları doğrulanamadı.",
+      detail: "Build-time kaynak manifesti boş olduğu için server action, import grafiği ve veri bağımlılıkları doğrulanamadı.",
       id: "source-scan-unavailable",
       scope: "Tarama Altyapısı",
       source: "/harita",

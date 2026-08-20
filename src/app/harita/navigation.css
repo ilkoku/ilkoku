@@ -1,174 +1,172 @@
-.system-map-dashboard-layout {
-  width: min(1540px, 100%);
-  margin: 22px auto 0;
+.system-map-app-shell {
+  min-height: 100vh;
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
-  gap: 22px;
-  align-items: start;
+  grid-template-columns: 264px minmax(0, 1fr);
+  background: #f4f1eb;
 }
 
-.system-map-dashboard-content {
+.system-map-app-content {
   min-width: 0;
 }
 
-.system-map-dashboard-content > .system-map-warnings {
-  margin-top: 0;
-}
-
-.system-map-section-nav {
-  min-width: 0;
-}
-
-.system-map-section-nav__inner {
+.system-map-primary-nav {
   position: sticky;
-  top: 18px;
-  padding: 18px;
-  border: 1px solid #d8d0c3;
-  border-radius: 20px;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 22px 14px 18px;
+  border-right: 1px solid #d7cfc3;
   background: #fffdf9;
-  box-shadow: 0 14px 36px rgb(50 42 32 / 6%);
+  box-shadow: 8px 0 28px rgb(50 42 32 / 4%);
+  z-index: 30;
 }
 
-.system-map-section-nav__inner > p {
-  margin: 0 0 12px;
-  color: #7a5b27;
-  font-size: 11px;
-  font-weight: 850;
-  letter-spacing: .13em;
+.system-map-primary-nav__brand {
+  padding: 2px 8px 18px;
+  border-bottom: 1px solid #e8e1d7;
 }
 
-.system-map-section-nav nav {
-  display: grid;
-  gap: 6px;
-}
-
-.system-map-section-nav nav a {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  column-gap: 9px;
-  row-gap: 2px;
-  padding: 11px 10px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  color: #4d473f;
+.system-map-primary-nav__brand a {
+  display: block;
+  color: #28231d;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -.02em;
   text-decoration: none;
-  transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
 }
 
-.system-map-section-nav nav a:hover,
-.system-map-section-nav nav a:focus-visible {
-  border-color: #dfd5c6;
+.system-map-primary-nav__brand span {
+  display: block;
+  margin-top: 4px;
+  color: #8a8175;
+  font-size: 10px;
+}
+
+.system-map-primary-nav nav {
+  display: grid;
+  gap: 17px;
+  padding: 18px 0;
+}
+
+.system-map-primary-nav nav section > p {
+  margin: 0 8px 6px;
+  color: #98794a;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.system-map-primary-nav nav section > div {
+  display: grid;
+  gap: 3px;
+}
+
+.system-map-primary-nav nav a {
+  display: block;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: #48423b;
+  text-decoration: none;
+  transition: background-color .14s ease, border-color .14s ease, transform .14s ease;
+}
+
+.system-map-primary-nav nav a:hover,
+.system-map-primary-nav nav a:focus-visible {
+  border-color: #e1d7c8;
   background: #faf6ee;
   transform: translateX(2px);
   outline: none;
 }
 
-.system-map-section-nav nav a > span {
-  grid-row: 1 / span 2;
-  display: inline-flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 1px;
-  color: #a1885d;
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: .04em;
+.system-map-primary-nav nav a[data-active="true"] {
+  border-color: #d6c39f;
+  background: #fff5df;
+  color: #3f2f18;
 }
 
-.system-map-section-nav nav a strong {
-  color: #28231d;
-  font-size: 13px;
-  line-height: 1.25;
-}
-
-.system-map-section-nav nav a small {
-  overflow: hidden;
-  color: #877f75;
-  font-size: 10px;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-}
-
-.system-map-section-nav__top {
+.system-map-primary-nav nav a strong {
   display: block;
-  margin-top: 14px;
-  padding-top: 13px;
-  border-top: 1px solid #e7e0d6;
-  color: #725b34;
-  font-size: 11px;
-  font-weight: 750;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.system-map-primary-nav nav a small {
+  display: block;
+  margin-top: 3px;
+  color: #8a8177;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.system-map-primary-nav__footer {
+  display: grid;
+  gap: 6px;
+  padding: 14px 8px 0;
+  border-top: 1px solid #e8e1d7;
+}
+
+.system-map-primary-nav__footer a {
+  color: #715a37;
+  font-size: 10px;
+  font-weight: 800;
   text-decoration: none;
 }
 
-.system-map-anchor-section,
-.system-map-anchor-marker,
-#system-routes-title {
-  scroll-margin-top: 22px;
-}
-
-.system-map-anchor-section + .system-map-anchor-section {
-  margin-top: 0;
-}
-
-@media (max-width: 1180px) {
-  .system-map-dashboard-layout {
+@media (max-width: 1120px) {
+  .system-map-app-shell {
     grid-template-columns: 1fr;
   }
 
-  .system-map-section-nav__inner {
+  .system-map-primary-nav {
     position: sticky;
-    top: 8px;
-    z-index: 20;
-    padding: 10px;
-    border-radius: 16px;
+    top: 0;
+    width: 100%;
+    height: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 10px;
+    border-right: 0;
+    border-bottom: 1px solid #d7cfc3;
   }
 
-  .system-map-section-nav__inner > p,
-  .system-map-section-nav__top {
+  .system-map-primary-nav__brand,
+  .system-map-primary-nav__footer,
+  .system-map-primary-nav nav section > p {
     display: none;
   }
 
-  .system-map-section-nav nav {
+  .system-map-primary-nav nav {
     display: flex;
-    gap: 7px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: thin;
+    width: max-content;
+    gap: 8px;
+    padding: 0;
   }
 
-  .system-map-section-nav nav a {
-    flex: 0 0 auto;
-    grid-template-columns: auto;
-    min-width: 150px;
-    padding: 9px 11px;
-    border-color: #e6ded2;
+  .system-map-primary-nav nav section,
+  .system-map-primary-nav nav section > div {
+    display: flex;
+    gap: 6px;
+  }
+
+  .system-map-primary-nav nav a {
+    min-width: 124px;
+    padding: 8px 10px;
+    border-color: #e4ddd3;
     background: #fff;
   }
 
-  .system-map-section-nav nav a > span {
+  .system-map-primary-nav nav a small {
     display: none;
   }
 }
 
-@media (max-width: 720px) {
-  .system-map-dashboard-layout {
-    margin-top: 14px;
-    gap: 14px;
+@media (max-width: 680px) {
+  .system-map-primary-nav nav a {
+    min-width: 112px;
   }
 
-  .system-map-section-nav__inner {
-    margin-inline: -1px;
-  }
-
-  .system-map-section-nav nav a {
-    min-width: 136px;
-  }
-
-  .system-map-section-nav nav a strong {
-    font-size: 12px;
-  }
-
-  .system-map-section-nav nav a small {
-    display: none;
+  .system-map-primary-nav nav a strong {
+    font-size: 11px;
   }
 }

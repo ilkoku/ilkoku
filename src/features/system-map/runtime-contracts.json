@@ -1,0 +1,19 @@
+{
+  "runtimeManagedEnvKeys": [
+    "NODE_ENV"
+  ],
+  "acknowledgedMigrationOnlyTables": [
+    "ContentManagerAccess",
+    "ContentPage",
+    "ContentRevision",
+    "ContractTemplate",
+    "EmailDeliveryDedupe",
+    "EmailDeliveryRetry",
+    "NotificationPreference",
+    "SiteContent",
+    "UserContract",
+    "UserContractEvent",
+    "WeeklyDiscoverySummaryDelivery",
+    "WriterDailySummaryDelivery"
+  ]
+}

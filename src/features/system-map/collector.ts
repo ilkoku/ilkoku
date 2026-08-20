@@ -58,7 +58,7 @@ const workflows: SystemMapWorkflow[] = [
     id: "writer",
     title: "Yazar ve eser yayın akışı",
     description: "Yazar çalışma alanından eserin oluşturulması, bölüm yönetimi, yayın ve public eser yüzeyine uzanan akış.",
-    steps: ["/yazar", "/eserlerim", "/eserlerim/[workId]", "/kitap/[slug]"],
+    steps: ["/yazar", "/eserlerim", "/eserlerim · NewWorkFlow bölüm/yayın çalışma alanı", "/kitap/[slug]"],
   },
   {
     id: "editor",
@@ -217,6 +217,14 @@ function unique(values: string[]) {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right, "tr"));
 }
 
+function equivalentRoutePaths(route: string) {
+  if (route === "/admin") return [route, systemManagementPath];
+  if (route.startsWith("/admin/")) return [route, `${systemManagementPath}${route.slice("/admin".length)}`];
+  if (route === systemManagementPath) return [route, "/admin"];
+  if (route.startsWith(`${systemManagementPath}/`)) return [route, `/admin${route.slice(systemManagementPath.length)}`];
+  return [route];
+}
+
 function addSystemManagementAliases(routes: DetectedRoute[]) {
   const aliases: DetectedRoute[] = [];
   for (const route of routes) {
@@ -281,21 +289,22 @@ export const getSystemMapSnapshot = cache(async (): Promise<SystemMapSnapshot> =
   detected = dedupeRoutes(addSystemManagementAliases(detected));
   const menus = menuReferences();
   const records: SystemMapRouteRecord[] = detected.map((detectedRoute) => {
-    const relatedMenus = menus.filter((menu) => referenceMatchesRoute(menu.href, detectedRoute.route));
+    const routePaths = equivalentRoutePaths(detectedRoute.route);
+    const relatedMenus = menus.filter((menu) => routePaths.some((route) => referenceMatchesRoute(menu.href, route)));
     const inbound = unique(
       references
-        .filter((reference) => referenceMatchesRoute(reference.target, detectedRoute.route))
+        .filter((reference) => routePaths.some((route) => referenceMatchesRoute(reference.target, route)))
         .map((reference) => reference.originRoute ?? reference.origin),
     );
     const outbound = unique(
       references
-        .filter((reference) => reference.originRoute === detectedRoute.route)
+        .filter((reference) => reference.originRoute && routePaths.some((route) => referenceMatchesRoute(reference.originRoute ?? "", route)))
         .map((reference) => reference.target),
     );
     const access = accessForRoute(detectedRoute.route, detectedRoute.kind);
     const orphanCandidate =
       detectedRoute.kind === "page" &&
-      !entryPointRoutes.has(detectedRoute.route) &&
+      !routePaths.some((route) => entryPointRoutes.has(route)) &&
       inbound.length === 0 &&
       relatedMenus.length === 0;
 

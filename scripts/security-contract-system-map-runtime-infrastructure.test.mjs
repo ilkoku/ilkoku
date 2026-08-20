@@ -24,6 +24,7 @@ test("runtime infrastructure collector is server-only, read-only and never expos
 
   contains(collector, 'import "server-only"', "runtime infrastructure server boundary");
   contains(collector, 'from "./runtime-manifest.generated"', "build-time manifest input");
+  contains(collector, 'import runtimeContracts from "./runtime-contracts.json"', "central runtime contract input");
   contains(collector, "process.env[item.key]", "runtime configured boolean observation");
   contains(collector, "configured:", "configured state projection");
   contains(collector, "secretLike", "secret classification");
@@ -53,6 +54,7 @@ test("production runtime collector performs no source-tree filesystem traversal"
 test("ENV contract is generated from source usage and .env.example without copying values", () => {
   const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
   const collector = source("src/features/system-map/runtime-infrastructure.ts");
+  const contracts = JSON.parse(source("src/features/system-map/runtime-contracts.json"));
 
   contains(generator, 'const ENV_EXAMPLE = path.join(ROOT, ".env.example")', "env example source");
   contains(generator, "envDotPattern", "dot ENV usage scan");
@@ -61,6 +63,8 @@ test("ENV contract is generated from source usage and .env.example without copyi
   contains(generator, "collectEnvUsage(files, envExample)", "ENV manifest projection");
   notContains(generator, "process.env[", "generator must not serialize runtime ENV values");
   notContains(generator, "process.env.", "generator must not serialize dotted ENV values");
+  contains(collector, "runtimeManagedEnvKeys", "runtime-managed ENV classification");
+  assert.ok(contracts.runtimeManagedEnvKeys.includes("NODE_ENV"), "NODE_ENV must remain explicitly runtime-managed");
   contains(collector, 'title: "Belgelenmemiş ENV anahtarı"', "undocumented ENV warning");
 });
 
@@ -95,15 +99,17 @@ test("Prisma relation graph keeps intentional raw-SQL tables visible but warns o
   const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
   const collector = source("src/features/system-map/runtime-infrastructure.ts");
   const panel = source("src/features/system-map/RuntimeInfrastructurePanel.tsx");
+  const contracts = JSON.parse(source("src/features/system-map/runtime-contracts.json"));
 
   contains(generator, 'const PRISMA_SCHEMA = path.join(ROOT, "prisma", "schema.prisma")', "Prisma schema source");
   contains(generator, 'const MIGRATIONS_ROOT = path.join(ROOT, "prisma", "migrations")', "migration source");
   contains(generator, "parseSchema(schemaText)", "schema relation parser");
   contains(generator, "collectMigrationInventory", "migration table parser");
   contains(generator, "migrationOnlyTables", "migration-only table inventory");
-  contains(collector, '"ContractTemplate"', "acknowledged contract template table");
-  contains(collector, '"UserContract"', "acknowledged user contract table");
-  contains(collector, '"UserContractEvent"', "acknowledged contract event table");
+  contains(collector, "runtimeContracts.acknowledgedMigrationOnlyTables", "central acknowledged migration contract");
+  for (const table of ["ContractTemplate", "UserContract", "UserContractEvent", "ContentPage", "NotificationPreference", "EmailDeliveryDedupe"]) {
+    assert.ok(contracts.acknowledgedMigrationOnlyTables.includes(table), `${table} must remain acknowledged by the central runtime contract`);
+  }
   contains(collector, "unexpectedMigrationOnlyTables", "unexpected schema drift split");
   contains(collector, 'title: "Beklenmedik migration-only tablo yüzeyi"', "unexpected migration warning");
   contains(panel, "Bilinçli raw-SQL / migration-only sınırı · ACKNOWLEDGED", "acknowledged migration visibility");

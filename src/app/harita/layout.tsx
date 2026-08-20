@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import "./harita.css";
 import "./control-center.css";
+import "./operations.css";
 
 export const metadata: Metadata = {
   title: "Sistem Haritası | İlkOku",

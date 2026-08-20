@@ -20,7 +20,7 @@ const dashboardSections = [
   { href: "#operasyon-akislari", label: "Operasyon & Akışlar", detail: "Workflow · menü · API · action" },
   { href: "#runtime-altyapi", label: "Runtime / Altyapı", detail: "ENV · migration · redirect" },
   { href: "#mimari-saglik", label: "Mimari Sağlık", detail: "Risk · alan · aksiyon kuyruğu" },
-  { href: "#route-envanteri", label: "Route Envanteri", detail: "Tüm route ve bağlantılar" },
+  { href: "#system-routes-title", label: "Route Envanteri", detail: "Tüm route ve bağlantılar" },
 ] as const;
 
 export default async function SystemMapPage() {
@@ -101,7 +101,6 @@ export default async function SystemMapPage() {
           <div className="system-map-anchor-section" id="mimari-saglik">
             <SystemMapWorkbench snapshot={snapshot} />
           </div>
-          <div className="system-map-anchor-marker" id="route-envanteri" aria-hidden="true" />
         </div>
       </div>
     </main>

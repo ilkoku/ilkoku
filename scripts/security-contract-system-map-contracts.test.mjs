@@ -60,6 +60,25 @@ test("system map is generated from live application sources with build fallback 
   contains(workbench, "Buradan nereye gidilir?", "outbound workbench detail");
 });
 
+test("system map control center turns inventory into an actionable architecture workbench", () => {
+  const workbench = source("src/features/system-map/SystemMapWorkbench.tsx");
+  const layout = source("src/app/harita/layout.tsx");
+  const styles = source("src/app/harita/control-center.css");
+
+  contains(workbench, "Mimari sağlık ve aksiyon masası", "architecture health workbench");
+  contains(workbench, "function riskSignals", "derived risk signals");
+  contains(workbench, '"public_handlers"', "public handler focus");
+  contains(workbench, "Aksiyon kuyruğu", "priority action queue");
+  contains(workbench, "Erişim dağılımı", "access distribution");
+  contains(workbench, "Çalışma alanları", "area coverage");
+  contains(workbench, "Filtreleri temizle", "workbench reset action");
+  contains(workbench, "Kontrol sinyalleri", "route detail signals");
+  contains(layout, 'import "./control-center.css"', "control center styles");
+  contains(styles, ".system-map-command-center", "command center styles");
+  contains(styles, ".system-map-action-list", "action queue styles");
+  notContains(workbench, "fetch(", "client workbench must not create a second route-data source");
+});
+
 test("central contract migration stores templates, immutable snapshots and append-only events", () => {
   const migration = source("prisma/migrations/20260820004500_admin_contract_management/migration.sql");
 
@@ -143,6 +162,7 @@ test("publisher contract send path is retired in favor of admin central manageme
 test("required system map and contract workbench files exist", () => {
   for (const relativePath of [
     "src/app/harita/page.tsx",
+    "src/app/harita/control-center.css",
     "src/app/sozlesme/page.tsx",
     "src/app/sozlesmelerim/page.tsx",
     "src/features/system-map/collector.ts",

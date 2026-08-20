@@ -36,6 +36,9 @@ const guardMarkers = [
   ["requireApprovedRole", "requireApprovedRole"],
   ["requirePublisher", "requirePublisher"],
   ["getPublisherWorkspaceContext", "publisher workspace context"],
+  ["getCmsAccess", "CMS access"],
+  ["isSameOriginRequest", "same-origin check"],
+  ["timingSafeEqual", "timing-safe secret check"],
   ["auth(", "auth()"],
   ["session", "session check"],
 ];

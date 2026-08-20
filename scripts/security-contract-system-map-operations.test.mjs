@@ -103,6 +103,9 @@ test("route to action to data chain is derived at build time then traversed thro
   contains(operations, "dataModels", "route data model projection");
   contains(operations, "apiTargets", "route API projection");
   contains(operations, "dependencyCount", "route dependency count");
+  contains(operations, 'status: "pass",', "resolved dependency record is not a risk signal");
+  notContains(operations, 'record.dependencyCount > 0 ? "warn"', "dependency depth must not create WARN");
+  notContains(operations, "routeDependencyStatus", "dependency trace depth must not drive risk status");
 });
 
 test("harita specialist pages share one server-side canonical report chain", () => {

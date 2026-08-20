@@ -79,6 +79,7 @@ test("system map control center turns inventory into an actionable architecture 
   contains(workbench, "Mimari sağlık ve aksiyon masası", "route inventory legacy control surface");
   contains(workbench, "function riskSignals", "derived route signals");
   contains(workbench, '"public_handlers"', "public handler focus");
+  notContains(workbench, "Public handler erişimi doğrulanmalı", "route inventory must not auto-escalate public handlers");
   contains(workbench, "Aksiyon kuyruğu", "priority action queue");
   contains(workbench, "Erişim dağılımı", "access distribution");
   contains(workbench, "Çalışma alanları", "area coverage");

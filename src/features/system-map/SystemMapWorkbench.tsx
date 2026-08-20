@@ -55,10 +55,6 @@ function riskSignals(route: SystemMapRouteRecord): RiskSignal[] {
   const signals: RiskSignal[] = [];
   const entryCount = inboundCount(route);
 
-  if (route.kind === "handler" && route.accessMode === "public") {
-    signals.push({ label: "Public handler erişimi doğrulanmalı", level: "critical" });
-  }
-
   if (route.accessMode === "role" && route.roles.length === 0) {
     signals.push({ label: "Rol politikası boş", level: "critical" });
   }

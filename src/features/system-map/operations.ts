@@ -253,11 +253,6 @@ function validateWorkflow(workflow: SystemMapWorkflow, routes: SystemMapRouteRec
   };
 }
 
-function routeDependencyStatus(record: SystemOperationRouteDependency) {
-  if (record.apiTargets.length > 0 || record.dataModels.length > 0 || record.serverActions.length > 0) return "pass" as const;
-  return record.dependencyCount > 0 ? "warn" as const : "unknown" as const;
-}
-
 function apiStatus(route: SystemMapRouteRecord, methods: string[], guardEvidence: string[]) {
   if (methods.length === 0) return "warn" as const;
   if (route.accessMode === "admin" && guardEvidence.length === 0) return "blocker" as const;
@@ -340,9 +335,9 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
         route: route.route,
         serverActions,
         sourceFile,
-        status: "unknown",
+        status: "pass",
       };
-      return { ...record, status: routeDependencyStatus(record) };
+      return record;
     });
 
   const gaps: SystemOperationGap[] = [];

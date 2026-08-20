@@ -87,6 +87,8 @@ test("integrity gate has explicit independent controls and fail-closed gate sema
   contains(integrity, 'menuRoleMismatches > 0 ? "blocker"', "role mismatch fail-closed");
   contains(integrity, 'operations.summary.workflowBlockers > 0 ? "blocker"', "workflow fail-closed");
   contains(integrity, 'infrastructure.summary.routeRulesBroken > 0 ? "blocker"', "route rule fail-closed");
+  contains(integrity, 'infrastructure.summary.unexpectedMigrationOnlyTables > 0 ? "warn" : "pass"', "unexpected migration-only drift warning");
+  contains(integrity, '`${infrastructure.summary.acknowledgedMigrationOnlyTables} bilinçli · ${infrastructure.summary.unexpectedMigrationOnlyTables} beklenmedik migration-only tablo`', "acknowledged schema evidence");
   contains(integrity, 'blockers > 0 || checks.some((check) => check.status === "blocker")', "overall blocker gate");
 });
 
@@ -105,6 +107,17 @@ test("integrity queue provides owner, evidence, remediation and deterministic re
   contains(panel, "Nasıl kapanacak?", "verification UI");
   notContains(panel, '"use client"', "integrity panel must remain server-rendered");
   notContains(panel, "fetch(", "integrity panel must not create browser data source");
+});
+
+test("canonical integrity gate uses the same light dashboard surface as the rest of harita", () => {
+  const styles = source("src/app/harita/integrity-control.css");
+
+  contains(styles, "background: #fffdf9", "light integrity panel surface");
+  contains(styles, "color: #171513", "dark text on light surface");
+  contains(styles, "background: #f5dfdb", "pastel blocker status");
+  contains(styles, "background: #fff0d7", "pastel warning status");
+  contains(styles, "background: #e8f3ea", "pastel pass status");
+  notContains(styles, "rgba(10, 12, 17, 0.88)", "legacy dark panel background");
 });
 
 test("harita renders the canonical integrity gate before detailed evidence panels", () => {

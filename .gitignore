@@ -42,6 +42,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+/src/features/system-map/runtime-manifest.generated.ts
 
 # Local environment
 hostinger.env

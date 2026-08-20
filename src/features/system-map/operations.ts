@@ -12,7 +12,6 @@ import {
 import { adminNavigation } from "@/lib/admin-navigation";
 import type {
   SystemMapAccessMode,
-  SystemMapRouteKind,
   SystemMapRouteRecord,
   SystemMapSnapshot,
   SystemMapWorkflow,
@@ -138,12 +137,11 @@ const SOURCE_ROOTS = [
 ];
 const sourceExtensionPattern = /\.(?:ts|tsx|js|jsx)$/u;
 const importPattern = /(?:from\s+|import\s*\()\s*["']([^"']+)["']/gu;
-const actionFunctionPattern = /export\s+(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/gu;
-const actionConstPattern = /export\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?/gu;
+const actionFunctionPattern = /export\s+async\s+function\s+([A-Za-z_$][\w$]*)/gu;
+const actionConstPattern = /export\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*async\b/gu;
 const prismaModelPattern = /\bprisma\.([A-Za-z_$][\w$]*)\s*\./gu;
 const httpMethodPattern = /export\s+(?:async\s+function|const)\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/gu;
 const routeStepPattern = /\/[A-Za-z0-9_\-\[\].?=&/]+/gu;
-const actionNamePattern = /(Action|action)$/u;
 const guardMarkers = [
   ["getCurrentUser", "getCurrentUser"],
   ["requireAdmin", "requireAdmin"],
@@ -281,7 +279,7 @@ function extractActionNames(text: string) {
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(text))) {
       const name = match[1];
-      if (name && (actionNamePattern.test(name) || /Action/u.test(name))) names.push(name);
+      if (name) names.push(name);
     }
   }
   return unique(names);
@@ -370,9 +368,9 @@ function transitiveDependencies(start: string, modules: Map<string, SourceModule
     const current = queue.shift();
     if (!current || seen.has(current.file) || current.depth > 8) continue;
     seen.add(current.file);
-    const module = modules.get(current.file);
-    if (!module) continue;
-    for (const imported of module.imports) {
+    const sourceModule = modules.get(current.file);
+    if (!sourceModule) continue;
+    for (const imported of sourceModule.imports) {
       if (!seen.has(imported)) queue.push({ depth: current.depth + 1, file: imported });
     }
   }
@@ -384,8 +382,8 @@ function symbolConsumers(actionName: string, sourceFile: string, modules: Map<st
   const escaped = actionName.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   const matcher = new RegExp(`\\b${escaped}\\b`, "u");
   return [...modules.values()]
-    .filter((module) => module.file !== sourceFile && matcher.test(module.text))
-    .map((module) => module.file)
+    .filter((sourceModule) => sourceModule.file !== sourceFile && matcher.test(sourceModule.text))
+    .map((sourceModule) => sourceModule.file)
     .slice(0, 20);
 }
 
@@ -465,26 +463,26 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
 
   const workflowChecks = snapshot.workflows.map((workflow) => validateWorkflow(workflow, snapshot.routes));
   const actionModules: SystemOperationActionModule[] = [...modules.values()]
-    .filter((module) => module.actionNames.length > 0)
-    .map((module) => ({
-      actions: module.actionNames,
-      consumers: unique(module.actionNames.flatMap((action) => symbolConsumers(action, module.file, modules))),
-      sourceFile: module.file,
+    .filter((sourceModule) => sourceModule.actionNames.length > 0)
+    .map((sourceModule) => ({
+      actions: sourceModule.actionNames,
+      consumers: unique(sourceModule.actionNames.flatMap((action) => symbolConsumers(action, sourceModule.file, modules))),
+      sourceFile: sourceModule.file,
     }))
     .sort((left, right) => left.sourceFile.localeCompare(right.sourceFile));
 
   const dataModules: SystemOperationDataModule[] = [...modules.values()]
-    .filter((module) => module.dataModels.length > 0 || module.rawSql)
-    .map((module) => ({ models: module.dataModels, rawSql: module.rawSql, sourceFile: module.file }))
+    .filter((sourceModule) => sourceModule.dataModels.length > 0 || sourceModule.rawSql)
+    .map((sourceModule) => ({ models: sourceModule.dataModels, rawSql: sourceModule.rawSql, sourceFile: sourceModule.file }))
     .sort((left, right) => left.sourceFile.localeCompare(right.sourceFile));
 
   const apiSurface: SystemOperationApiSurface[] = snapshot.routes
     .filter((route) => route.kind === "handler")
     .map((route) => {
       const sourceFile = sourceFileFromRoute(route);
-      const module = sourceFile ? modules.get(sourceFile) : null;
-      const methods = module?.methods ?? [];
-      const guardEvidence = module?.guardEvidence ?? [];
+      const sourceModule = sourceFile ? modules.get(sourceFile) : null;
+      const methods = sourceModule?.methods ?? [];
+      const guardEvidence = sourceModule?.guardEvidence ?? [];
       return {
         accessLabel: route.accessLabel,
         accessMode: route.accessMode,
@@ -492,7 +490,7 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
         methods,
         route: route.route,
         sourceFile: sourceFile ?? route.sourceFile,
-        status: module ? apiStatus(route, methods, guardEvidence) : "unknown",
+        status: sourceModule ? apiStatus(route, methods, guardEvidence) : "unknown",
       };
     });
 
@@ -621,7 +619,7 @@ export const getSystemOperationsReport = cache(async (snapshot: SystemMapSnapsho
     scanMode,
     summary: {
       actionModules: actionModules.length,
-      actions: actionModules.reduce((total, module) => total + module.actions.length, 0),
+      actions: actionModules.reduce((total, sourceModule) => total + sourceModule.actions.length, 0),
       apiHandlers: apiSurface.length,
       blockers,
       dataModules: dataModules.length,

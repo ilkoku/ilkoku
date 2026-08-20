@@ -6,6 +6,9 @@ import test from "node:test";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MANIFEST = path.join(ROOT, "src", "features", "system-map", "runtime-manifest.generated.ts");
+const RUNTIME_CONTRACTS = path.join(ROOT, "src", "features", "system-map", "runtime-contracts.json");
+const ADMIN_NAVIGATION = path.join(ROOT, "src", "lib", "admin-navigation.ts");
+const SYSTEM_MANAGEMENT_PATH = "/sistem-yonetimi";
 
 const publicApiPrefixes = [
   "/api/content-faq",
@@ -25,12 +28,6 @@ const cmsApiPrefixes = [
   "/api/site-contact-manage",
 ];
 
-const acknowledgedMigrationOnlyTables = new Set([
-  "ContractTemplate",
-  "UserContract",
-  "UserContractEvent",
-]);
-
 const entryPointRoutes = new Set([
   "/",
   "/giris",
@@ -47,7 +44,7 @@ const entryPointRoutes = new Set([
 const workflows = [
   ["Kayıt ve rol yolculuğu", ["/kayit", "/rol-secimi", "/okuyucu | /yazar | /editor | /yayinevi"]],
   ["Okuyucu yolculuğu", ["/okuyucu", "/kesfet", "/kitap/[slug]", "/oku/[slug]/...", "/tamamlanan-eserler"]],
-  ["Yazar ve eser yayın akışı", ["/yazar", "/eserlerim", "/eserlerim/[workId]", "/kitap/[slug]"]],
+  ["Yazar ve eser yayın akışı", ["/yazar", "/eserlerim", "/eserlerim · NewWorkFlow bölüm/yayın çalışma alanı", "/kitap/[slug]"]],
   ["Editör inceleme akışı", ["/editor/talepler", "/editor/incelemeler?asama=birinci", "/editor/incelemeler?asama=ikinci", "/editor/incelemeler?durum=tamamlanan"]],
   ["Yayınevi keşif ve operasyon akışı", ["/yayinevi", "/yayinevi/kesfet/eserler", "/yayinevi/basvurular/[submissionId]", "/yayinevi/editor-talepleri", "/yayinevi/dosyalar"]],
   ["İçerik yayın akışı", ["/icerik", "/icerik/ana-sayfa | /icerik/rol-kartlari | /icerik/menuler | /icerik/seo", "/"]],
@@ -98,6 +95,37 @@ function normalizeRulePath(value) {
     .replace(/\/$/u, "") || "/";
 }
 
+function ruleShape(value) {
+  return normalizeRulePath(value)
+    .replace(/\[\[\.\.\.[^\]]+\]\]/gu, "[*]")
+    .replace(/\[\.\.\.[^\]]+\]/gu, "[*]")
+    .replace(/\[[^\]]+\]/gu, "[]");
+}
+
+function ruleMatchesRoute(destination, route) {
+  const expected = ruleShape(destination).split("/").filter(Boolean);
+  const actual = ruleShape(route).split("/").filter(Boolean);
+  if (expected.length === 0) return actual.length === 0;
+  for (let index = 0; index < expected.length; index += 1) {
+    const part = expected[index];
+    if (part === "[*]") return actual.length >= index;
+    if (part === "[]") {
+      if (!actual[index]) return false;
+      continue;
+    }
+    if (part !== actual[index]) return false;
+  }
+  return expected.length === actual.length;
+}
+
+function equivalentRoutePaths(route) {
+  if (route === "/admin") return [route, SYSTEM_MANAGEMENT_PATH];
+  if (route.startsWith("/admin/")) return [route, `${SYSTEM_MANAGEMENT_PATH}${route.slice("/admin".length)}`];
+  if (route === SYSTEM_MANAGEMENT_PATH) return [route, "/admin"];
+  if (route.startsWith(`${SYSTEM_MANAGEMENT_PATH}/`)) return [route, `/admin${route.slice(SYSTEM_MANAGEMENT_PATH.length)}`];
+  return [route];
+}
+
 function extractJson(text, marker, terminator) {
   const start = text.indexOf(marker);
   assert.notEqual(start, -1, `Manifest marker missing: ${marker}`);
@@ -107,8 +135,12 @@ function extractJson(text, marker, terminator) {
   return JSON.parse(text.slice(contentStart, end));
 }
 
-async function loadManifest() {
-  const text = await readFile(MANIFEST, "utf8");
+async function loadInputs() {
+  const [text, runtimeContractsText, adminNavigationText] = await Promise.all([
+    readFile(MANIFEST, "utf8"),
+    readFile(RUNTIME_CONTRACTS, "utf8"),
+    readFile(ADMIN_NAVIGATION, "utf8"),
+  ]);
   const source = extractJson(
     text,
     "export const systemMapSourceManifest: SystemMapSourceManifestData = ",
@@ -119,7 +151,26 @@ async function loadManifest() {
     "export const runtimeInfrastructureManifest: RuntimeInfrastructureManifestData = ",
     ";\n",
   );
-  return { runtime, source };
+  return {
+    adminMenuTargets: parseAdminMenuTargets(adminNavigationText),
+    runtime,
+    runtimeContracts: JSON.parse(runtimeContractsText),
+    source,
+  };
+}
+
+function parseAdminMenuTargets(text) {
+  const targets = new Set();
+  const systemPathPattern = /href:\s*systemPath\((?:"([^"]*)")?\)/gu;
+  const directHrefPattern = /href:\s*"(\/(?!\/)[^"]+)"/gu;
+  let match;
+  while ((match = systemPathPattern.exec(text))) {
+    targets.add(`${SYSTEM_MANAGEMENT_PATH}${match[1] ?? ""}`);
+  }
+  while ((match = directHrefPattern.exec(text))) {
+    if (match[1]) targets.add(match[1]);
+  }
+  return targets;
 }
 
 function addAliases(routes) {
@@ -127,7 +178,7 @@ function addAliases(routes) {
     .filter((route) => matchesPath(route.route, "/admin"))
     .map((route) => ({
       ...route,
-      route: route.route.replace(/^\/admin/u, "/sistem-yonetimi"),
+      route: route.route.replace(/^\/admin/u, SYSTEM_MANAGEMENT_PATH),
       sourceFile: `${route.sourceFile} · next.config.ts rewrite`,
     }));
   const seen = new Set();
@@ -149,20 +200,26 @@ function collectWorkflowFindings(routes) {
     for (const step of steps) {
       const candidates = step.split("|").map((value) => value.trim()).filter(Boolean);
       for (const candidate of candidates) {
-        if (routes.some((route) => routeMatches(candidate, route.route))) continue;
-        findings.push(finding("BLOCKER", "WORKFLOW_ROUTE", candidate, title, `Kanonik workflow adımı route envanterinde bulunamadı: ${step}`));
+        const routeCandidate = candidate.match(/\/[A-Za-z0-9_\-\[\].?=&/]+/u)?.[0];
+        if (!routeCandidate || routes.some((route) => routeMatches(routeCandidate, route.route))) continue;
+        findings.push(finding("BLOCKER", "WORKFLOW_ROUTE", routeCandidate, title, `Kanonik workflow adımı route envanterinde bulunamadı: ${step}`));
       }
     }
   }
   return findings;
 }
 
-function collectMenuFindings(routes, references) {
+function collectMenuFindings(routes, references, adminMenuTargets) {
   const menuSources = new Set(["src/content/navigation.ts", "src/lib/admin-navigation.ts"]);
-  return references
-    .filter((reference) => menuSources.has(reference.origin))
-    .filter((reference) => !routes.some((route) => routeMatches(reference.target, route.route)))
-    .map((reference) => finding("BLOCKER", "MENU_ROUTE", reference.target, reference.origin, "Menü/navigation kaynak dosyasındaki iç hedef route envanterinde bulunamadı."));
+  const targets = new Set(
+    references
+      .filter((reference) => menuSources.has(reference.origin))
+      .map((reference) => reference.target),
+  );
+  for (const target of adminMenuTargets) targets.add(target);
+  return [...targets]
+    .filter((target) => !routes.some((route) => routeMatches(target, route.route)))
+    .map((target) => finding("BLOCKER", "MENU_ROUTE", target, "navigation registry", "Menü/navigation hedefi route envanterinde bulunamadı."));
 }
 
 function apiAccess(route) {
@@ -185,19 +242,22 @@ function collectApiFindings(routes, modules) {
       findings.push(finding("WARN", "API_METHOD", route.route, route.sourceFile, "HTTP method export'u statik manifestte bulunamadı."));
       continue;
     }
-    if (access === "public") continue;
-    if (guards.length > 0) continue;
+    if (access === "public" || guards.length > 0) continue;
     findings.push(finding(access === "admin" ? "BLOCKER" : "WARN", "API_GUARD", route.route, route.sourceFile, `${access} handler için doğrudan guard kanıtı statik manifestte bulunamadı.`));
   }
   return findings;
 }
 
-function collectOrphanFindings(routes, references) {
+function collectOrphanFindings(routes, references, adminMenuTargets) {
   return routes
     .filter((route) => route.kind === "page")
-    .filter((route) => !entryPointRoutes.has(route.route))
-    .filter((route) => !references.some((reference) => routeMatches(reference.target, route.route)))
-    .map((route) => finding("WARN", "ORPHAN_ROUTE", route.route, route.sourceFile, "Build-time kaynak taramasında bu sayfaya giriş referansı bulunamadı."));
+    .filter((route) => {
+      const equivalent = equivalentRoutePaths(route.route);
+      if (equivalent.some((candidate) => entryPointRoutes.has(candidate))) return false;
+      if ([...adminMenuTargets].some((target) => equivalent.some((candidate) => routeMatches(target, candidate)))) return false;
+      return !references.some((reference) => equivalent.some((candidate) => routeMatches(reference.target, candidate)));
+    })
+    .map((route) => finding("WARN", "ORPHAN_ROUTE", route.route, route.sourceFile, "Build-time kaynak ve menü taramasında bu sayfaya giriş referansı bulunamadı."));
 }
 
 function collectActionFindings(modules) {
@@ -206,20 +266,21 @@ function collectActionFindings(modules) {
     .map((sourceModule) => finding("WARN", "UNREFERENCED_ACTION_MODULE", null, sourceModule.file, `Consumer bulunamayan exported server action: ${sourceModule.actionNames.join(", ")}`));
 }
 
-function collectInfrastructureFindings(runtime, routes) {
+function collectInfrastructureFindings(runtime, routes, runtimeContracts) {
   const findings = [];
-  for (const env of runtime.envUsage.filter((item) => !item.documented)) {
-    findings.push(finding("WARN", "UNDOCUMENTED_ENV", env.key, env.usedBy.join(", "), "Kaynak kodda kullanılan ENV anahtarı .env.example içinde belgelenmemiş."));
+  const runtimeManaged = new Set(runtimeContracts.runtimeManagedEnvKeys);
+  const acknowledgedMigrationOnly = new Set(runtimeContracts.acknowledgedMigrationOnlyTables);
+  for (const env of runtime.envUsage.filter((item) => !item.documented && !runtimeManaged.has(item.key))) {
+    findings.push(finding("WARN", "UNDOCUMENTED_ENV", env.key, env.usedBy.join(", "), "Kaynak kodda kullanılan ENV anahtarı .env.example veya runtime-managed sözleşmesinde yok."));
   }
   for (const rule of runtime.routeRules) {
     if (!rule.destination.startsWith("/")) continue;
-    const normalized = normalizeRulePath(rule.destination);
-    if (routes.some((route) => routeMatches(normalized, route.route))) continue;
+    if (routes.some((route) => ruleMatchesRoute(rule.destination, route.route))) continue;
     findings.push(finding("BLOCKER", "BROKEN_ROUTE_RULE", rule.destination, "next.config.ts", `${rule.kind} hedefi route envanterinde bulunamadı: ${rule.source}`));
   }
-  const unexpected = runtime.schema.migrationOnlyTables.filter((table) => !acknowledgedMigrationOnlyTables.has(table));
+  const unexpected = runtime.schema.migrationOnlyTables.filter((table) => !acknowledgedMigrationOnly.has(table));
   if (unexpected.length > 0) {
-    findings.push(finding("WARN", "UNEXPECTED_MIGRATION_ONLY", unexpected.join(", "), "prisma/migrations", "Migration ile yönetilen tablo Prisma schema veya bilinçli raw-SQL istisna listesinde yok."));
+    findings.push(finding("WARN", "UNEXPECTED_MIGRATION_ONLY", unexpected.join(", "), "prisma/migrations", "Migration ile yönetilen tablo Prisma schema veya merkezi raw-SQL sözleşmesinde yok."));
   }
   if (runtime.version !== 1 || runtime.sourceFileCount === 0) {
     findings.push(finding("WARN", "RUNTIME_SCANNER", null, "runtime manifest", `Runtime manifest self-check başarısız: version=${runtime.version}, sourceFileCount=${runtime.sourceFileCount}`));
@@ -240,18 +301,18 @@ function printReport(findings, source, runtime) {
 }
 
 test("system map diagnostic inventory exposes every statically provable remaining finding", async () => {
-  const { runtime, source } = await loadManifest();
+  const { adminMenuTargets, runtime, runtimeContracts, source } = await loadInputs();
   assert.equal(source.version, 1, "System map source manifest version must remain supported");
   assert.ok(source.sourceFileCount > 0, "System map source manifest must not be empty");
 
   const routes = addAliases(source.routes);
   const findings = [
-    ...collectMenuFindings(routes, source.references),
+    ...collectMenuFindings(routes, source.references, adminMenuTargets),
     ...collectWorkflowFindings(routes),
     ...collectApiFindings(routes, source.modules),
-    ...collectOrphanFindings(routes, source.references),
+    ...collectOrphanFindings(routes, source.references, adminMenuTargets),
     ...collectActionFindings(source.modules),
-    ...collectInfrastructureFindings(runtime, routes),
+    ...collectInfrastructureFindings(runtime, routes, runtimeContracts),
   ];
 
   printReport(findings, source, runtime);

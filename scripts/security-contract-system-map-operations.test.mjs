@@ -18,19 +18,23 @@ function notContains(text, fragment, label) {
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 }
 
-test("deep system operations collector is server-only, read-only and source-derived", () => {
+test("deep system operations stays server-only and consumes build-time structural metadata", () => {
   const operations = source("src/features/system-map/operations.ts");
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
 
   contains(operations, 'import "server-only"', "operations server boundary");
-  contains(operations, "scanModules", "source module scan");
+  contains(operations, 'systemMapSourceManifest', "build-time source manifest");
   contains(operations, "transitiveDependencies", "transitive import graph");
   contains(operations, "current.depth > 8", "bounded dependency depth");
   contains(operations, "seen.size < 500", "bounded dependency graph");
-  contains(operations, 'text.includes("$queryRaw")', "raw SQL observation");
-  contains(operations, "prismaModelPattern", "Prisma model observation");
-  contains(operations, "extractActionNames", "server action inventory");
-  contains(operations, "extractMethods", "HTTP method inventory");
-  contains(operations, "extractGuardEvidence", "handler guard evidence");
+  contains(generator, 'source.text.includes("$queryRaw")', "raw SQL observation at build time");
+  contains(generator, "prismaModelPattern", "Prisma model observation at build time");
+  contains(generator, "extractActionNames", "server action inventory at build time");
+  contains(generator, "extractMethods", "HTTP method inventory at build time");
+  contains(generator, "extractGuardEvidence", "handler guard evidence at build time");
+  for (const forbidden of ['node:fs', 'node:path', 'process.cwd()', 'readdir(', 'readFile(']) {
+    notContains(operations, forbidden, `production operations must not contain ${forbidden}`);
+  }
   notContains(operations, 'from "@/lib/prisma"', "operations must not connect to database");
   notContains(operations, "prisma.$transaction", "operations must not mutate database");
 });
@@ -49,12 +53,14 @@ test("operations report cross-checks menu targets, workflows, route dependencies
   contains(operations, 'scanMode === "limited"', "fail-closed limited scan state");
 });
 
-test("route to action to data chain is derived through bounded imports", () => {
+test("route to action to data chain is derived at build time then traversed through bounded imports", () => {
   const operations = source("src/features/system-map/operations.ts");
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
 
-  contains(operations, "resolveImport", "import resolution");
-  contains(operations, 'specifier.startsWith("@/")', "alias import support");
-  contains(operations, 'specifier.startsWith(".")', "relative import support");
+  contains(generator, "resolveImport", "build-time import resolution");
+  contains(generator, 'specifier.startsWith("@/")', "alias import support");
+  contains(generator, 'specifier.startsWith(".")', "relative import support");
+  contains(generator, "consumers", "server action consumer derivation");
   contains(operations, "serverActions", "route server action projection");
   contains(operations, "dataModels", "route data model projection");
   contains(operations, "apiTargets", "route API projection");
@@ -79,7 +85,7 @@ test("harita renders the deep operations report on the server without a second b
   notContains(panel, "fetch(", "operations panel must not create browser fetch source");
 });
 
-test("deep operations panel exposes blocker warn pass semantics and scan limitations", () => {
+test("deep operations panel exposes blocker warn pass semantics and fail-closed manifest limitations", () => {
   const panel = source("src/features/system-map/SystemOperationsPanel.tsx");
   const operations = source("src/features/system-map/operations.ts");
 
@@ -87,6 +93,6 @@ test("deep operations panel exposes blocker warn pass semantics and scan limitat
     contains(panel, token, "operations status vocabulary");
   }
   contains(panel, "Derin tarama", "scan mode visibility");
-  contains(operations, "Kaynak bağımlılık taraması kullanılamadı", "scan failure visibility");
+  contains(operations, "Build-time kaynak bağımlılık manifesti boş", "manifest failure visibility");
   contains(operations, "Derin kaynak taraması sınırlı", "limited-mode gap");
 });

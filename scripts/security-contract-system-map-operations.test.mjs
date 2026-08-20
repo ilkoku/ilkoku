@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -23,7 +23,7 @@ test("deep system operations stays server-only and consumes build-time structura
   const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
 
   contains(operations, 'import "server-only"', "operations server boundary");
-  contains(operations, 'systemMapSourceManifest', "build-time source manifest");
+  contains(operations, "systemMapSourceManifest", "build-time source manifest");
   contains(operations, "transitiveDependencies", "transitive import graph");
   contains(operations, "current.depth > 8", "bounded dependency depth");
   contains(operations, "seen.size < 500", "bounded dependency graph");
@@ -32,7 +32,7 @@ test("deep system operations stays server-only and consumes build-time structura
   contains(generator, "extractActionNames", "server action inventory at build time");
   contains(generator, "extractMethods", "HTTP method inventory at build time");
   contains(generator, "extractGuardEvidence", "handler guard evidence at build time");
-  for (const forbidden of ['node:fs', 'node:path', 'process.cwd()', 'readdir(', 'readFile(']) {
+  for (const forbidden of ["node:fs", "node:path", "process.cwd()", "readdir(", "readFile("]) {
     notContains(operations, forbidden, `production operations must not contain ${forbidden}`);
   }
   notContains(operations, 'from "@/lib/prisma"', "operations must not connect to database");
@@ -105,39 +105,66 @@ test("route to action to data chain is derived at build time then traversed thro
   contains(operations, "dependencyCount", "route dependency count");
 });
 
-test("harita renders the deep operations report on the server without a second browser data source", () => {
-  const page = source("src/app/harita/page.tsx");
-  const panel = source("src/features/system-map/SystemOperationsPanel.tsx");
-  const layout = source("src/app/harita/layout.tsx");
+test("harita specialist pages share one server-side canonical report chain", () => {
+  const loader = source("src/features/system-map/workspace-data.ts");
+  const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");
+  const operationsPanel = source("src/features/system-map/SystemOperationsPanel.tsx");
+  const runtimePanel = source("src/features/system-map/RuntimeInfrastructurePanel.tsx");
 
-  contains(page, "getSystemMapSnapshot", "canonical map snapshot");
-  contains(page, "getSystemOperationsReport(snapshot)", "operations derived from canonical snapshot");
-  contains(page, "SystemOperationsPanel", "operations panel render");
-  contains(panel, "Eksik puzzle parçası denetimi", "puzzle control center");
-  contains(panel, "Kanonik kullanıcı akışları", "workflow UI");
-  contains(panel, "Rol menüsü hedef doğrulaması", "menu validation UI");
-  contains(panel, "Çalışma bağımlılık zinciri", "dependency UI");
-  contains(panel, "HTTP ve guard kanıtı", "API guard UI");
-  contains(layout, 'import "./operations.css"', "operations styles");
-  notContains(panel, '"use client"', "operations panel server render");
-  notContains(panel, "fetch(", "operations panel must not create browser fetch source");
+  contains(loader, 'import "server-only"', "workspace data server boundary");
+  contains(loader, "getSystemMapSnapshot()", "canonical map snapshot");
+  contains(loader, "getSystemOperationsReport(snapshot)", "operations derived from canonical snapshot");
+  contains(loader, "getRuntimeInfrastructureReport(snapshot)", "runtime derived from canonical snapshot");
+  contains(loader, "getIntegrityControlReport(snapshot, operations, infrastructure)", "integrity derived from same reports");
+  contains(workspace, "getSystemMapWorkspaceData()", "specialist page shared loader");
+  for (const view of ["workflows", "menu", "api", "actions", "dependencies", "data"]) {
+    contains(workspace, `view=\"${view}\"`, `${view} specialist operations view`);
+  }
+  for (const view of ["env", "rules", "events", "schema", "external"]) {
+    contains(workspace, `view=\"${view}\"`, `${view} specialist runtime view`);
+  }
+  notContains(operationsPanel, '"use client"', "operations panel server render");
+  notContains(runtimePanel, '"use client"', "runtime panel server render");
+  notContains(operationsPanel, "fetch(", "operations panel must not create browser fetch source");
+  notContains(runtimePanel, "fetch(", "runtime panel must not create browser fetch source");
 });
 
-test("harita exposes sticky primary navigation for the long dashboard without changing data boundaries", () => {
-  const page = source("src/app/harita/page.tsx");
+test("harita left navigation exposes every specialist workbench as a real route", () => {
+  const navigationContract = source("src/features/system-map/navigation.ts");
+  const navigation = source("src/features/system-map/SystemMapNavigation.tsx");
   const layout = source("src/app/harita/layout.tsx");
-  const navigation = source("src/app/harita/navigation.css");
+  const styles = source("src/app/harita/navigation.css");
 
-  for (const label of ["Denetim Kapısı", "Operasyon & Akışlar", "Runtime / Altyapı", "Mimari Sağlık", "Route Envanteri"]) {
-    contains(page, label, `dashboard section navigation ${label}`);
+  const routes = [
+    "/harita/denetim",
+    "/harita/puzzle",
+    "/harita/akislar",
+    "/harita/menuler",
+    "/harita/api",
+    "/harita/actions",
+    "/harita/bagimliliklar",
+    "/harita/kod-veri",
+    "/harita/altyapi",
+    "/harita/env",
+    "/harita/yonlendirmeler",
+    "/harita/olaylar",
+    "/harita/veri",
+    "/harita/dis-servisler",
+    "/harita/mimari",
+    "/harita/rotalar",
+  ];
+
+  for (const route of routes) {
+    contains(navigationContract, `href: "${route}"`, `${route} navigation route`);
+    const pagePath = `src/app${route}/page.tsx`;
+    assert.ok(existsSync(join(ROOT, pagePath)), `${pagePath} must exist`);
   }
-  contains(page, 'href: "#system-routes-title"', "route inventory direct anchor");
-  contains(page, 'aria-label="Harita ana başlıkları"', "dashboard navigation accessibility label");
-  contains(layout, 'import "./navigation.css"', "navigation stylesheet boundary");
-  contains(navigation, ".system-map-section-nav__inner", "sticky navigation surface");
-  contains(navigation, "position: sticky", "sticky desktop/tablet navigation");
-  contains(navigation, "grid-template-columns: 230px minmax(0, 1fr)", "desktop left navigation layout");
-  contains(navigation, "overflow-x: auto", "responsive horizontal navigation fallback");
+  contains(navigation, 'usePathname()', "active specialist route indicator");
+  contains(navigation, 'aria-label="Harita çalışma masaları"', "navigation accessibility label");
+  contains(layout, "<SystemMapNavigation />", "shared nested navigation shell");
+  contains(styles, "grid-template-columns: 264px minmax(0, 1fr)", "desktop left application shell");
+  contains(styles, "position: sticky", "sticky navigation");
+  contains(styles, "overflow-x: auto", "responsive horizontal navigation fallback");
 });
 
 test("deep operations panel exposes blocker warn pass semantics and fail-closed manifest limitations", () => {

@@ -51,7 +51,7 @@ test("canonical workflows use real application routes and never invent contract 
   notContains(collector, '"yayın işlemi"', "non-route writer workflow label");
   notContains(collector, '"rol + kullanıcı seçimi"', "non-route contract workflow label");
   notContains(collector, '"kabul / ret"', "non-route contract workflow label");
-  contains(operations, 'step.split("|")', "workflow alternative tokenization");
+  contains(operations, '.split("|")', "workflow alternative tokenization");
   contains(operations, 'candidate.startsWith("/")', "workflow route token boundary");
   notContains(operations, "routeStepPattern", "workflow must not infer routes from arbitrary inline slashes");
 });

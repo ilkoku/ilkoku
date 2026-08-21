@@ -15,6 +15,7 @@ const groups = [
     items: [
       { href: "/sozlesme/sablonlar", label: "Şablon Kütüphanesi", note: "Aktif ve pasif tüm metinler" },
       { href: "/sozlesme/inceleme", label: "İnceleme Masası", note: "Hukuki, ürün ve ticari karar kuyruğu" },
+      { href: "/sozlesme/hukuk-inceleme", label: "Hukukçu Paketi", note: "Tam metin ve inceleme notları" },
       { href: "/sozlesme/sablonlar/yeni", label: "Yeni Şablon", note: "Yeni bir metin oluştur" },
     ],
   },

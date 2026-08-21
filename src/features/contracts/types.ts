@@ -42,6 +42,13 @@ export interface ContractWorkRecord {
   title: string;
 }
 
+export interface ContractActiveAssignmentRecord {
+  contractId: string;
+  recipientUserId: string;
+  relatedWorkId: string | null;
+  templateId: string;
+}
+
 export interface UserContractListRecord {
   adminNote: string | null;
   bodySnapshot: string;
@@ -50,6 +57,7 @@ export interface UserContractListRecord {
   recipientEmail: string;
   recipientFullName: string;
   recipientRole: string;
+  recipientUserId: string;
   relatedWorkId: string | null;
   relatedWorkTitle: string | null;
   responseNote: string | null;

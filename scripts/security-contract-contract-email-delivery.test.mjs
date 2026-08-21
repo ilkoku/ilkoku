@@ -51,6 +51,6 @@ test("contract email uses the canonical EmailDelivery and dedupe infrastructure"
   contains(email, "return sendEmail({", "central sender call");
   contains(sender, "claimEmailDeliveryDedupe", "dedupe claim");
   contains(sender, "prisma.emailDelivery.create", "EmailDelivery log creation");
-  contains(sender, 'status:\n          "failed"', "failed delivery persistence");
-  contains(sender, 'status:\n          "sent"', "sent delivery persistence");
+  assert.match(sender, /status:\s*"failed"/, "failed delivery persistence must remain canonical");
+  assert.match(sender, /status:\s*"sent"/, "sent delivery persistence must remain canonical");
 });

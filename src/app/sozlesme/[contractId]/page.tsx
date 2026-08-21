@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cancelContractWithConfirmationAction } from "@/features/contracts/guarded-response-actions";
+import { sendContractReminderAction } from "@/features/contracts/reminder-actions";
 import {
   getAdminContract,
   listContractEvents,
@@ -46,6 +47,9 @@ function eventLabel(eventType: string, metadata: Record<string, unknown> | null)
     accepted: "Kullanıcı kabul etti",
     cancelled: "Admin iptal etti",
     rejected: "Kullanıcı reddetti",
+    reminder_email_failed: "Hatırlatma e-postası teslim edilemedi",
+    reminder_email_sent: "Hatırlatma e-postası teslimata verildi",
+    reminder_requested: "Admin hatırlatma gönderdi",
     sent: "Admin gönderdi",
     viewed: "Kullanıcı görüntüledi",
   };
@@ -54,10 +58,16 @@ function eventLabel(eventType: string, metadata: Record<string, unknown> | null)
 
 function messageForStatus(status: string | undefined) {
   const messages: Record<string, string> = {
+    already_reminded: "Bu sözleşme için bugün zaten bir hatırlatma oluşturuldu. Günlük tekrar koruması ikinci gönderimi engelledi.",
     cancelled: "Aktif sözleşme iptal edildi ve olay geçmişine kaydedildi.",
+    hatirlatma_onayi_gerekli: "Hatırlatma göndermeden önce açık onay kutusunu işaretlemelisiniz.",
     iptal_onayi_gerekli: "İptal işlemi için açık onay kutusunu işaretlemelisiniz.",
+    invalid_recipient: "Sözleşme alıcısı artık hatırlatma için uygun değil.",
     forbidden: "Bu sözleşme üzerinde işlem yetkiniz bulunmuyor.",
     not_found: "Sözleşme bulunamadı.",
+    not_remindable: "Bu sözleşme artık yanıt beklemiyor veya sistem/kayıt sözleşmesi olduğu için hatırlatma gönderilemez.",
+    reminder_partial: "Uygulama içi hatırlatma kaydedildi; e-posta teslimatı başarısız oldu. Teslimat kaydı E-posta Teslimat Merkezi'nden incelenebilir.",
+    reminder_sent: "Hatırlatma kaydedildi ve e-posta teslimat hattına verildi.",
     terminal: "Bu sözleşme artık aktif değil; iptal işlemi uygulanamaz.",
   };
   return status ? messages[status] ?? null : null;
@@ -79,7 +89,9 @@ export default async function AdminContractDetailPage({
 
   const cancellable = contract.status === "sent" || contract.status === "viewed";
   const isRegistrationContract = contract.templateCode === MANDATORY_REGISTRATION_CONTRACT_CODE;
+  const remindable = cancellable && !isRegistrationContract;
   const message = messageForStatus(query.durum);
+  const successStatus = query.durum === "cancelled" || query.durum === "reminder_sent";
 
   return (
     <main className="contract-admin-page contract-editor-page">
@@ -93,7 +105,7 @@ export default async function AdminContractDetailPage({
       </header>
 
       {message ? (
-        <div className="contract-flash" data-status={query.durum === "cancelled" ? "success" : "notice"}>{message}</div>
+        <div className="contract-flash" data-status={successStatus ? "success" : "notice"}>{message}</div>
       ) : null}
 
       <section className="contract-detail-grid">
@@ -129,6 +141,8 @@ export default async function AdminContractDetailPage({
               const source = typeof metadata?.source === "string" ? metadata.source : null;
               const templateCode = typeof metadata?.templateCode === "string" ? metadata.templateCode : null;
               const templateVersion = typeof metadata?.templateVersion === "number" ? metadata.templateVersion : null;
+              const dateKey = typeof metadata?.dateKey === "string" ? metadata.dateKey : null;
+              const delivery = typeof metadata?.delivery === "string" ? metadata.delivery : null;
               return (
                 <li key={event.id}>
                   <span />
@@ -137,6 +151,8 @@ export default async function AdminContractDetailPage({
                     <p>{event.actorName ?? event.actorEmail ?? "Sistem"}</p>
                     {reason ? <p className="contract-timeline__reason">Gerekçe: {reason}</p> : null}
                     {source ? <small>Kaynak: {source}</small> : null}
+                    {dateKey ? <small>Hatırlatma günü: {dateKey}</small> : null}
+                    {delivery ? <small>E-posta teslimatı: {delivery}</small> : null}
                     {templateCode ? <small>Şablon: {templateCode}{templateVersion ? ` · v${templateVersion}` : ""}</small> : null}
                     <small>{formatDate(event.createdAt)}</small>
                   </div>
@@ -144,6 +160,21 @@ export default async function AdminContractDetailPage({
               );
             })}
           </ol>
+
+          {remindable ? (
+            <form action={sendContractReminderAction} className="contract-reminder-form">
+              <input type="hidden" name="contractId" value={contract.id} />
+              <div>
+                <strong>Yanıt hatırlatması</strong>
+                <p>Kullanıcıya uygulama içi bildirim ve güvenli sözleşme bağlantısı içeren e-posta gönderir. Aynı sözleşmeye İstanbul gününde yalnız bir kez uygulanabilir.</p>
+              </div>
+              <label className="contract-reminder-confirm">
+                <input name="reminderConfirmed" required type="checkbox" value="confirmed" />
+                <span>Sözleşmenin hâlâ yanıt beklediğini kontrol ettim ve kullanıcıya hatırlatma göndermek istiyorum.</span>
+              </label>
+              <button type="submit">Hatırlatma gönder</button>
+            </form>
+          ) : null}
 
           {cancellable ? (
             <form action={cancelContractWithConfirmationAction} className="contract-cancel-form">

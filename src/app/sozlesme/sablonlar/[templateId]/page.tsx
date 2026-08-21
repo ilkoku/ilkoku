@@ -12,17 +12,21 @@ export default async function ContractTemplatePage({
   const template = await getContractTemplate(templateId);
   if (!template) notFound();
 
+  const softDraft = template.code.startsWith("SOFT_");
+  const returnHref = softDraft ? "/sozlesme/taslaklar" : "/sozlesme/sablonlar";
+  const returnLabel = softDraft ? "Soft Taslaklara dön" : "Şablon Kütüphanesine dön";
+
   return (
     <main className="contract-admin-page contract-editor-page">
       <header className="contract-subpage-header">
         <div>
-          <p className="contract-eyebrow">ŞABLON KÜTÜPHANESİ</p>
+          <p className="contract-eyebrow">{softDraft ? "SOFT TASLAKLAR" : "ŞABLON KÜTÜPHANESİ"}</p>
           <h1>{template.title}</h1>
           <p>{template.code} · sürüm {template.version}</p>
         </div>
-        <Link href="/sozlesme">← Merkeze dön</Link>
+        <Link href={returnHref}>← {returnLabel}</Link>
       </header>
-      <ContractTemplateForm template={template} />
+      <ContractTemplateForm template={template} returnHref={returnHref} />
     </main>
   );
 }

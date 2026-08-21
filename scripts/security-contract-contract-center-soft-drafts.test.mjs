@@ -57,6 +57,22 @@ test("soft draft workbench is read-first and keeps drafts out of sendable templa
   notContains(migration, "UPDATE `ContractTemplate`", "soft draft migration must not overwrite existing templates");
 });
 
+test("contract template detail preserves the workbench return context", () => {
+  const detailPage = source("src/app/sozlesme/sablonlar/[templateId]/page.tsx");
+  const newPage = source("src/app/sozlesme/sablonlar/yeni/page.tsx");
+  const form = source("src/features/contracts/ContractTemplateForm.tsx");
+
+  contains(detailPage, 'template.code.startsWith("SOFT_")', "soft draft detection");
+  contains(detailPage, 'softDraft ? "/sozlesme/taslaklar" : "/sozlesme/sablonlar"', "contextual return route");
+  contains(detailPage, '"Soft Taslaklara dön"', "soft draft return label");
+  contains(detailPage, '"Şablon Kütüphanesine dön"', "template library return label");
+  contains(detailPage, "returnHref={returnHref}", "form return context propagation");
+  contains(form, 'returnHref = "/sozlesme/sablonlar"', "template form safe library default");
+  contains(form, '<Link href={returnHref}>Vazgeç</Link>', "template form contextual cancel");
+  contains(newPage, 'href="/sozlesme/sablonlar"', "new template returns to library");
+  notContains(detailPage, 'href="/sozlesme">← Merkeze dön</Link>', "detail must not collapse to center");
+});
+
 test("contract soft drafts do not pretend to be final publishing-rights agreements", () => {
   const migration = source("prisma/migrations/20260821113000_contract_soft_draft_library/migration.sql");
   const publisherCenter = source("src/features/publisher-workspace/components/PublisherContractCenter.tsx");

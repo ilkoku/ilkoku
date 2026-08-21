@@ -48,3 +48,14 @@ WHERE `code` IN (
 )
   AND `version` = 1
   AND `active` = true;
+
+-- DB katmanı da fail-closed: yalnız lifecycle=active olan gerçek şablonlar
+-- active=true olabilir; SOFT_ kayıtları hiçbir koşulda gönderilebilir olamaz.
+ALTER TABLE `ContractTemplate`
+  ADD CONSTRAINT `ContractTemplate_lifecycleStatus_chk`
+  CHECK (`lifecycleStatus` IN ('soft','draft','review','approved','active')),
+  ADD CONSTRAINT `ContractTemplate_active_lifecycle_chk`
+  CHECK (
+    `active` = false OR
+    (`lifecycleStatus` = 'active' AND LEFT(`code`, 5) <> 'SOFT_')
+  );

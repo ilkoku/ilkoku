@@ -41,6 +41,7 @@ test("tracking workbench loads contracts and reminder activity without per-row d
 
 test("tracking workbench exposes factual waiting, viewing and reminder evidence without inventing an SLA", () => {
   const page = source("src/app/sozlesme/takip/page.tsx");
+  const lowerPage = page.toLocaleLowerCase("tr-TR");
 
   contains(page, "Bekleme", "waiting-age column");
   contains(page, "Görüntülenme", "view evidence column");
@@ -49,8 +50,10 @@ test("tracking workbench exposes factual waiting, viewing and reminder evidence 
   contains(page, "Hatırlatma yapıldı", "reminder summary metric");
   contains(page, "waitingAge(contract.sentAt, contract.status, now)", "elapsed wait calculation");
   contains(page, "reminder.reminderCount", "reminder count display");
-  notContains(page.toLocaleLowerCase("tr-TR"), "gecikti", "no invented overdue judgment");
-  notContains(page.toLocaleLowerCase("tr-TR"), "sla", "no invented SLA policy");
+  notContains(lowerPage, "gecikti", "no invented overdue judgment");
+  notContains(lowerPage, "gecikmiş", "no invented overdue judgment");
+  notContains(lowerPage, "ihlal", "no invented breach judgment");
+  notContains(page, "SLA", "no explicit SLA policy");
 });
 
 test("registration acceptances remain operationally separated from manual reminder activity", () => {

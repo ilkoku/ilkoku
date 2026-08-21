@@ -7,6 +7,12 @@ import {
   listContractWorks,
   listLegacyPublisherContracts,
 } from "@/features/contracts/repository";
+import {
+  listActiveManualContractAssignments,
+} from "@/features/contracts/manual-dispatch";
+import {
+  MANDATORY_REGISTRATION_CONTRACT_CODE,
+} from "@/features/contracts/registration-agreement";
 import type { UserContractStatus } from "@/features/contracts/types";
 
 const statusLabels: Record<UserContractStatus, string> = {
@@ -31,12 +37,14 @@ function messageForStatus(status: string | undefined) {
   const messages: Record<string, string> = {
     aktif_sozlesme_var: "Aynı kullanıcı, şablon ve eser için zaten aktif bir sözleşme var.",
     duplicate_active: "Aynı aktif sözleşme ikinci kez oluşturulmadı.",
-    eksik_bilgi: "Gönderim için rol, kullanıcı ve sözleşme şablonu seçilmelidir.",
+    eksik_bilgi: "Gönderim için kullanıcı ve sözleşme şablonu seçilmelidir.",
     gonderildi: "Sözleşme kullanıcıya gönderildi ve bildirim oluşturuldu.",
     invalid_recipient: "Seçilen kullanıcı aktif değil veya artık gönderime uygun değil.",
-    invalid_template: "Sözleşme şablonu aktif/onaylı değil veya bulunamadı.",
+    invalid_template: "Şablon aktif/onaylı bir manuel gönderim şablonu değil veya artık kullanılamıyor.",
     invalid_work: "Seçilen eser bulunamadı veya arşivlenmiş.",
+    onay_gerekli: "Gönderimden önce alıcı, şablon, eser bağı ve önizleme kontrolü onaylanmalıdır.",
     role_mismatch: "Şablonun rolü ile seçilen kullanıcının güncel rolü uyuşmuyor.",
+    work_recipient_mismatch: "Yazar için seçilen eser bu kullanıcıya ait değil. Gönderim yapılmadı.",
   };
   return status ? messages[status] ?? status : null;
 }
@@ -47,16 +55,20 @@ export default async function ContractManagementPage({
   searchParams: Promise<{ durum?: string }>;
 }) {
   const params = await searchParams;
-  const [templates, recipients, works, contracts, legacyContracts] = await Promise.all([
+  const [templates, recipients, works, contracts, legacyContracts, activeAssignments] = await Promise.all([
     listContractTemplates({ includeInactive: true }),
     listContractRecipients(),
     listContractWorks(),
     listAdminUserContracts(),
     listLegacyPublisherContracts(),
+    listActiveManualContractAssignments(),
   ]);
 
   const operationalTemplates = templates.filter((template) => !template.code.startsWith("SOFT_"));
-  const activeTemplates = operationalTemplates.filter((template) => template.active);
+  const manualTemplates = operationalTemplates.filter(
+    (template) => template.code !== MANDATORY_REGISTRATION_CONTRACT_CODE,
+  );
+  const activeTemplates = manualTemplates.filter((template) => template.active);
   const waiting = contracts.filter((contract) => contract.status === "sent" || contract.status === "viewed").length;
   const accepted = contracts.filter((contract) => contract.status === "accepted").length;
   const rejected = contracts.filter((contract) => contract.status === "rejected").length;
@@ -83,7 +95,7 @@ export default async function ContractManagementPage({
       {message ? <div className="contract-flash" data-status={params.durum === "gonderildi" ? "success" : "notice"}>{message}</div> : null}
 
       <section className="contract-metrics" aria-label="Sözleşme özeti">
-        <article><strong>{activeTemplates.length}</strong><span>Aktif şablon</span></article>
+        <article><strong>{activeTemplates.length}</strong><span>Manuel gönderim şablonu</span></article>
         <article><strong>{contracts.length}</strong><span>Merkezi sözleşme</span></article>
         <article><strong>{waiting}</strong><span>Yanıt bekliyor</span></article>
         <article><strong>{accepted}</strong><span>Kabul edildi</span></article>
@@ -92,6 +104,7 @@ export default async function ContractManagementPage({
       </section>
 
       <ContractSendWorkbench
+        activeAssignments={activeAssignments}
         recipients={recipients}
         templates={activeTemplates}
         works={works}
@@ -106,21 +119,30 @@ export default async function ContractManagementPage({
           <Link href="/sozlesme/sablonlar">Kütüphaneyi aç →</Link>
         </div>
         <p className="contract-section-copy">
-          Soft Taslaklar ayrı çalışma alanında tutulur. Burada yalnız kütüphaneye alınmış operasyon şablonları görünür; gönderim seçiminde ise yalnız aktif olanlar kullanılabilir.
+          Soft Taslaklar ayrı çalışma alanında tutulur. Burada operasyon ve sistem şablonları görünür; gönderim çalışma masasında yalnız aktif manuel şablonlar kullanılabilir. Kayıtta otomatik kabul edilen temel üyelik sözleşmesi manuel gönderim listesinden özellikle ayrılmıştır.
         </p>
 
         <div className="contract-template-grid">
-          {operationalTemplates.map((template) => (
-            <Link key={template.id} href={`/sozlesme/sablonlar/${template.id}`} className="contract-template-card" data-active={template.active ? "true" : "false"}>
-              <div>
-                <span>{template.targetRole === "any" ? "Tüm roller" : template.targetRole}</span>
-                <span>v{template.version}</span>
-              </div>
-              <h3>{template.title}</h3>
-              <p>{template.description ?? "Açıklama yok"}</p>
-              <small>{template.active ? "Aktif / gönderilebilir" : "Çalışma aşamasında"} · {template.code}</small>
-            </Link>
-          ))}
+          {operationalTemplates.map((template) => {
+            const isRegistrationTemplate = template.code === MANDATORY_REGISTRATION_CONTRACT_CODE;
+            return (
+              <Link key={template.id} href={`/sozlesme/sablonlar/${template.id}`} className="contract-template-card" data-active={template.active ? "true" : "false"}>
+                <div>
+                  <span>{template.targetRole === "any" ? "Tüm roller" : template.targetRole}</span>
+                  <span>v{template.version}</span>
+                </div>
+                <h3>{template.title}</h3>
+                <p>{template.description ?? "Açıklama yok"}</p>
+                <small>
+                  {isRegistrationTemplate
+                    ? "Sistem / kayıt sırasında otomatik kabul"
+                    : template.active
+                      ? "Aktif / manuel gönderilebilir"
+                      : "Çalışma aşamasında"} · {template.code}
+                </small>
+              </Link>
+            );
+          })}
         </div>
         {operationalTemplates.length === 0 ? <div className="contract-empty">Henüz kütüphane şablonu yok. Soft Taslaklar&apos;dan çalışma kopyası oluşturabilirsiniz.</div> : null}
       </section>

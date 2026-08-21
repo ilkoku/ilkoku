@@ -66,8 +66,15 @@ export function RegisterForm({
         {selectedRole === "publisher" ? <PublisherApplicationFields /> : null}
         <label className="auth-checkbox auth-terms">
           <input name="terms" required type="checkbox" value="accepted" />
-          <span>{authContent.register.terms}</span>
+          <span>
+            <Link href="/uyelik-sozlesmesi">İlkOku Platform Kullanım ve Gizlilik Taahhüdü</Link>
+            {"’nü okudum ve kabul ediyorum."}
+          </span>
         </label>
+        <p className="auth-switch">
+          Kişisel verilerin işlenmesine ilişkin bilgilendirme için{" "}
+          <Link href="/yasal/kvkk">KVKK Aydınlatma Metni</Link>’ni inceleyebilirsin.
+        </p>
         <Button className="auth-submit" type="submit" loading={pending}>{authContent.register.submit}</Button>
       </form>
       {state.message && <p className={`auth-status auth-status--${state.status}`} role={state.status === "error" ? "alert" : "status"}>{state.message}</p>}

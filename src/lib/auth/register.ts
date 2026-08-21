@@ -2,6 +2,10 @@ import { sendVerificationEmail } from "@/lib/email/auth-emails";
 import {
   sendEditorInviteAcceptedEmail,
 } from "@/lib/email/editor-emails";
+import {
+  lockActiveRegistrationAgreement,
+  recordRegistrationAgreementAcceptance,
+} from "@/features/contracts/registration-agreement";
 import { allocatePublicId } from "@/lib/public-id";
 import { prisma } from "@/lib/prisma";
 import { createHash, randomBytes } from "node:crypto";
@@ -105,6 +109,12 @@ export async function registerUser(input: {
     );
 
   const user = await prisma.$transaction(async (transaction) => {
+    const registrationAgreement =
+      await lockActiveRegistrationAgreement(transaction);
+    if (!registrationAgreement) {
+      throw new Error("REGISTRATION_AGREEMENT_UNAVAILABLE");
+    }
+
     const userCreatedAt = new Date();
     const publicId = await allocatePublicId(
       transaction,
@@ -126,6 +136,13 @@ export async function registerUser(input: {
             : input.role,
         termsAcceptedAt: input.termsAcceptedAt,
       },
+    });
+
+    await recordRegistrationAgreementAcceptance(transaction, {
+      acceptedAt: input.termsAcceptedAt,
+      agreement: registrationAgreement,
+      recipientRole: createdUser.role,
+      userId: createdUser.id,
     });
 
     await transaction.emailVerificationToken.create({

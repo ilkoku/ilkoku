@@ -17,7 +17,10 @@ type NotificationListItemProps = {
   initialRead: boolean;
   message: string;
   notificationId: string;
-  returnPath: "/bildirimler" | "/editor/bildirimler";
+  returnPath:
+    | "/bildirimler"
+    | "/editor/bildirimler"
+    | "/sozlesme/bildirimler";
   title: string;
 };
 

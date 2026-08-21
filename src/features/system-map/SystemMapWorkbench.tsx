@@ -130,13 +130,9 @@ export function SystemMapWorkbench({ snapshot }: { snapshot: SystemMapSnapshot }
       if (route.menuReferences.length > 0) menuCovered += 1;
     }
 
-    const penalty = critical * 7 + warnings * 2 + Math.min(informational, 10);
-    const healthScore = Math.max(0, Math.min(100, 100 - penalty));
-
     return {
       critical,
       dynamicRoutes,
-      healthScore,
       informational,
       menuCovered,
       publicHandlers,
@@ -231,32 +227,34 @@ export function SystemMapWorkbench({ snapshot }: { snapshot: SystemMapSnapshot }
       <section className="system-map-command-center" aria-labelledby="system-command-center-title">
         <div className="system-map-section-heading">
           <div>
-            <p>KONTROL MERKEZİ</p>
-            <h2 id="system-command-center-title">Mimari sağlık ve aksiyon masası</h2>
+            <p>ROUTE ENVANTERİ</p>
+            <h2 id="system-command-center-title">Route envanteri ve kontrol masası</h2>
           </div>
-          <span>{controlSummary.queue} kontrol sinyali</span>
+          <span>{controlSummary.queue} yerel kontrol sinyali</span>
         </div>
 
         <div className="system-map-command-grid">
           <article className="system-map-health-score" data-level={controlSummary.critical > 0 ? "critical" : controlSummary.warnings > 0 ? "warning" : "ok"}>
-            <span className="system-map-health-score__label">Mimari sağlık</span>
-            <strong>{controlSummary.healthScore}</strong>
-            <span className="system-map-health-score__suffix">/100</span>
+            <span className="system-map-health-score__label">Route kontrol özeti</span>
+            <strong>{controlSummary.queue}</strong>
+            <span className="system-map-health-score__suffix">sinyal</span>
             <p>
               {controlSummary.critical > 0
-                ? `${controlSummary.critical} kritik erişim sinyali önce incelenmeli.`
+                ? `${controlSummary.critical} erişim politikası sinyali route düzeyinde incelenmeli.`
                 : controlSummary.warnings > 0
-                  ? `${controlSummary.warnings} route kontrol kuyruğunda.`
-                  : "Kritik mimari sinyal görünmüyor."}
+                  ? `${controlSummary.warnings} bağlantı/topoloji sinyali route kuyruğunda.`
+                  : controlSummary.informational > 0
+                    ? `${controlSummary.informational} bilgi sinyali var; bunlar BLOCKER/WARN değildir.`
+                    : "Route envanterinde yerel kontrol sinyali yok."}
             </p>
           </article>
 
           <div className="system-map-command-metrics">
             <button type="button" onClick={() => applyFocus("attention")}>
-              <strong>{controlSummary.queue}</strong><span>Aksiyon kuyruğu</span><small>Kritik + uyarı + bilgi</small>
+              <strong>{controlSummary.queue}</strong><span>Aksiyon kuyruğu</span><small>Route/topoloji sinyalleri</small>
             </button>
             <button type="button" onClick={() => applyFocus("public_handlers")}>
-              <strong>{controlSummary.publicHandlers}</strong><span>Public handler</span><small>Erişim yüzeyi</small>
+              <strong>{controlSummary.publicHandlers}</strong><span>Public handler</span><small>Envanter · tek başına risk değil</small>
             </button>
             <button type="button" onClick={() => applyFocus("dynamic")}>
               <strong>{controlSummary.dynamicRoutes}</strong><span>Dinamik route</span><small>Parametreli yüzey</small>
@@ -297,6 +295,7 @@ export function SystemMapWorkbench({ snapshot }: { snapshot: SystemMapSnapshot }
               {item.label}
             </button>
           ))}
+          <Link href="/harita/denetim">Kanonik BLOCKER/WARN → Denetim Kapısı</Link>
         </div>
       </section>
 
@@ -308,6 +307,8 @@ export function SystemMapWorkbench({ snapshot }: { snapshot: SystemMapSnapshot }
           </div>
           <span>En yüksek öncelikli {actionQueue.length} kayıt</span>
         </div>
+
+        <p className="system-runtime-caption">Bu kuyruk route/topoloji incelemesi içindir; release BLOCKER/WARN hükmü Denetim Kapısı tarafından verilir.</p>
 
         {actionQueue.length > 0 ? (
           <div className="system-map-action-list">

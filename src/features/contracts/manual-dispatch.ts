@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import type { UserRole } from "@/features/auth/types";
+import { sendUserContractAssignedEmail } from "@/lib/email/contract-emails";
 import { prisma } from "@/lib/prisma";
 import { MANDATORY_REGISTRATION_CONTRACT_CODE } from "./registration-agreement";
 import type {
@@ -178,7 +179,7 @@ export async function sendManualAdminContract(input: {
   relatedWorkId: string | null;
   templateId: string;
 }) {
-  return prisma.$transaction(async (transaction) => {
+  const result = await prisma.$transaction(async (transaction) => {
     const actor = await lockAdmin(transaction, input.actorId);
     if (!actor) return { status: "forbidden" as const };
 
@@ -279,9 +280,38 @@ export async function sendManualAdminContract(input: {
 
     return {
       contractId: id,
+      contractTitle: template.title,
       recipientEmail: recipient.email,
       recipientName: recipient.displayName || recipient.fullName,
       status: "sent" as const,
     };
   });
+
+  if (result.status !== "sent") return result;
+
+  try {
+    const delivery = await sendUserContractAssignedEmail({
+      contractId: result.contractId,
+      email: result.recipientEmail,
+      fullName: result.recipientName,
+      title: result.contractTitle,
+    });
+
+    return {
+      ...result,
+      emailDelivery: delivery.delivery,
+      emailDeliveryId: delivery.deliveryId ?? null,
+    };
+  } catch (error) {
+    console.error("USER_CONTRACT_EMAIL_DELIVERY_FAILED", {
+      contractId: result.contractId,
+      error: error instanceof Error ? error.message : "UNKNOWN_ERROR",
+    });
+
+    return {
+      ...result,
+      emailDelivery: "failed" as const,
+      emailDeliveryId: null,
+    };
+  }
 }

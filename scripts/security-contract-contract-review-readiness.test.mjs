@@ -53,10 +53,10 @@ test("review workbench separates owner decisions from legal review and keeps the
   contains(layout, 'import "./review-readiness.css"', "review workbench styling");
 });
 
-test("system map includes the contract review workbench and preserves intentional legal and human boundaries", () => {
+test("system map includes review readiness and legal handoff while preserving intentional legal and human boundaries", () => {
   const map = source("src/app/harita/sozlesmeler/page.tsx");
 
-  contains(map, 'routes: ["/sozlesme/inceleme"]', "review workbench route in contract map");
+  contains(map, '"/sozlesme/inceleme", "/sozlesme/hukuk-inceleme"', "review and legal handoff routes in contract map");
   contains(map, "hukuki inceleme, ürün kararı ve ticari model", "review categories in map");
   contains(map, "gerçek hukukçu kontrolü", "legal approval remains external boundary");
   contains(map, "nihai yayın hakları sözleşmesi", "final publishing rights boundary");

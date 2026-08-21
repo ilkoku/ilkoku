@@ -4,7 +4,8 @@ const groups = [
   {
     label: "MERKEZ",
     items: [
-      { href: "/sozlesme", label: "Genel Bakış", note: "Gönderim ve canlı takip" },
+      { href: "/sozlesme", label: "Genel Bakış", note: "Gönderim çalışma masası" },
+      { href: "/sozlesme/takip", label: "Takip Merkezi", note: "Görüntüleme, kabul, ret ve iptal" },
       { href: "/sozlesme/taslaklar", label: "Soft Taslaklar", note: "Ürün akışına göre önerilen metinler" },
     ],
   },

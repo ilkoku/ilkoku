@@ -166,12 +166,15 @@ test("all role menus expose one shared contract inbox while admin uses the centr
 test("user contract inbox is owner-scoped and does not become an electronic-signature claim", () => {
   const listPage = source("src/app/sozlesmelerim/page.tsx");
   const detailPage = source("src/app/sozlesmelerim/[contractId]/page.tsx");
+  const guardedActions = source("src/features/contracts/guarded-response-actions.ts");
 
   contains(listPage, "ignoreAdminRoleView: true", "actual-user contract inbox");
   contains(listPage, "listUserContracts(profile.id)", "owner-scoped contract list");
   contains(detailPage, "getUserContract(contractId, profile.id)", "owner-scoped contract detail");
   contains(detailPage, "markUserContractViewed", "view event");
-  contains(detailPage, "respondToContractAction", "contract response action");
+  contains(detailPage, "respondToContractWithConfirmationAction", "guarded contract response action");
+  contains(guardedActions, "respondToUserContract", "canonical owner-scoped response repository");
+  contains(guardedActions, "recipientUserId: user.id", "response actor ownership binding");
   contains(detailPage, "nitelikli elektronik imza işlemi değildir", "signature accuracy notice");
 });
 

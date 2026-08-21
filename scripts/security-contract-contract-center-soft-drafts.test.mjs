@@ -106,6 +106,23 @@ test("writer platform license soft draft grants only explicit service-purpose ri
   notContains(migration, "`active` = true", "migration must not activate writer legal soft draft");
 });
 
+test("writer editor-review consent mirrors the two-stage product workflow without inventing rights", () => {
+  const migration = source("prisma/migrations/20260821121000_soft_writer_editor_review_v2/migration.sql");
+
+  contains(migration, "BİRİNCİ EDİTÖR ERİŞİMİ", "first editor access boundary");
+  contains(migration, "İKİNCİ EDİTÖR AŞAMASI", "second editor stage");
+  contains(migration, "Yazarın kendisi ve birinci editör", "second editor conflict boundary");
+  contains(migration, "DIŞ EDİTÖR DAVETİ", "external editor path");
+  contains(migration, "DEĞERLENDİRMENİN NİTELİĞİ", "no outcome guarantee");
+  contains(migration, "yayınevi yayın kararı", "no publisher decision claim");
+  contains(migration, "otomatik olarak yayınevleri", "no automatic publisher sharing");
+  contains(migration, "sistemde bulunmayan bir iptal hakkı", "no invented withdrawal feature");
+  contains(migration, "ücret, komisyon veya telif", "no invented paid-service model");
+  contains(migration, "AND `version` = 1", "only untouched v1 editor consent can be matured");
+  contains(migration, "AND `active` = false", "active editor consent must not be overwritten");
+  notContains(migration, "`active` = true", "migration must not activate editor-review soft draft");
+});
+
 test("contract soft drafts do not pretend to be final publishing-rights agreements", () => {
   const migration = source("prisma/migrations/20260821113000_contract_soft_draft_library/migration.sql");
   const publisherCenter = source("src/features/publisher-workspace/components/PublisherContractCenter.tsx");
@@ -126,6 +143,7 @@ test("contract center navigation and soft draft routes exist", () => {
     "prisma/migrations/20260821113000_contract_soft_draft_library/migration.sql",
     "prisma/migrations/20260821114500_soft_general_nda_v2/migration.sql",
     "prisma/migrations/20260821115500_soft_writer_platform_license_v2/migration.sql",
+    "prisma/migrations/20260821121000_soft_writer_editor_review_v2/migration.sql",
   ]) {
     assert.ok(existsSync(join(ROOT, relativePath)), `${relativePath} must exist`);
   }

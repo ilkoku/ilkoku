@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listAdminUserContracts } from "@/features/contracts/repository";
 import { MANDATORY_REGISTRATION_CONTRACT_CODE } from "@/features/contracts/registration-agreement";
+import { listContractReminderActivity } from "@/features/contracts/tracking-activity";
 import type { UserContractStatus } from "@/features/contracts/types";
 
 const statusLabels: Record<UserContractStatus, string> = {
@@ -21,19 +22,36 @@ function formatDate(value: Date | null) {
   }).format(value);
 }
 
+function waitingAge(sentAt: Date | null, status: UserContractStatus, now: Date) {
+  if (!sentAt || (status !== "sent" && status !== "viewed")) return "—";
+  const elapsedMs = Math.max(0, now.getTime() - sentAt.getTime());
+  const hours = Math.floor(elapsedMs / (60 * 60 * 1000));
+  if (hours < 1) return "< 1 saat";
+  if (hours < 24) return `${hours} saat`;
+  return `${Math.floor(hours / 24)} gün`;
+}
+
 export default async function ContractTrackingPage({
   searchParams,
 }: {
   searchParams: Promise<{ akis?: string; q?: string }>;
 }) {
   const params = await searchParams;
-  const contracts = await listAdminUserContracts(500);
+  const [contracts, reminderActivity] = await Promise.all([
+    listAdminUserContracts(500),
+    listContractReminderActivity(500),
+  ]);
+  const reminderByContract = new Map(reminderActivity.map((row) => [row.contractId, row]));
+  const now = new Date();
+
   const registration = contracts.filter((contract) => contract.templateCode === MANDATORY_REGISTRATION_CONTRACT_CODE);
   const manual = contracts.filter((contract) => contract.templateCode !== MANDATORY_REGISTRATION_CONTRACT_CODE);
   const waiting = manual.filter((contract) => contract.status === "sent" || contract.status === "viewed");
   const accepted = manual.filter((contract) => contract.status === "accepted");
   const rejected = manual.filter((contract) => contract.status === "rejected");
   const cancelled = manual.filter((contract) => contract.status === "cancelled");
+  const unopened = waiting.filter((contract) => !contract.viewedAt);
+  const reminded = waiting.filter((contract) => reminderByContract.has(contract.id));
 
   const flow = params.akis ?? "manual";
   const source = flow === "registration"
@@ -58,7 +76,7 @@ export default async function ContractTrackingPage({
         <div>
           <p className="contract-eyebrow">OPERASYON TAKİBİ</p>
           <h1>Sözleşme Takip Merkezi</h1>
-          <p>Manuel gönderimleri, kullanıcı görüntüleme ve kararlarını, iptalleri ve kayıt sırasında oluşan temel sözleşme kabullerini birbirine karıştırmadan izleyin.</p>
+          <p>Manuel gönderimleri, kullanıcı görüntüleme ve kararlarını, hatırlatmaları, iptalleri ve kayıt sırasında oluşan temel sözleşme kabullerini birbirine karıştırmadan izleyin.</p>
         </div>
         <nav><Link href="/sozlesme">← Genel bakış</Link></nav>
       </header>
@@ -66,6 +84,8 @@ export default async function ContractTrackingPage({
       <section className="contract-metrics" aria-label="Takip özeti">
         <article><strong>{manual.length}</strong><span>Manuel operasyon</span></article>
         <article><strong>{waiting.length}</strong><span>Yanıt bekliyor</span></article>
+        <article><strong>{unopened.length}</strong><span>Henüz açılmadı</span></article>
+        <article><strong>{reminded.length}</strong><span>Hatırlatma yapıldı</span></article>
         <article><strong>{accepted.length}</strong><span>Manuel kabul</span></article>
         <article><strong>{rejected.length}</strong><span>Manuel ret</span></article>
         <article><strong>{cancelled.length}</strong><span>İptal</span></article>
@@ -93,16 +113,18 @@ export default async function ContractTrackingPage({
 
         <div className="contract-table-wrap">
           <table>
-            <thead><tr><th>Sözleşme</th><th>Kaynak</th><th>Kullanıcı</th><th>Rol</th><th>Eser</th><th>Durum</th><th>Son işlem</th></tr></thead>
+            <thead><tr><th>Sözleşme</th><th>Kullanıcı</th><th>Eser</th><th>Durum</th><th>Bekleme</th><th>Görüntülenme</th><th>Son hatırlatma</th><th>Son işlem</th></tr></thead>
             <tbody>{filtered.map((contract) => {
-              const isRegistration = contract.templateCode === MANDATORY_REGISTRATION_CONTRACT_CODE;
+              const reminder = reminderByContract.get(contract.id);
+              const pending = contract.status === "sent" || contract.status === "viewed";
               return <tr key={contract.id}>
-                <td><Link href={`/sozlesme/${contract.id}`}><strong>{contract.titleSnapshot}</strong><small>{contract.templateCode} · v{contract.templateVersion}</small></Link></td>
-                <td>{isRegistration ? "Kayıt sistemi" : "Manuel admin"}</td>
-                <td><strong>{contract.recipientFullName}</strong><small>{contract.recipientEmail}</small></td>
-                <td>{contract.recipientRole}</td>
+                <td><Link href={`/sozlesme/${contract.id}`}><strong>{contract.titleSnapshot}</strong><small>{contract.templateCode} · v{contract.templateVersion} · {contract.templateCode === MANDATORY_REGISTRATION_CONTRACT_CODE ? "Kayıt sistemi" : "Manuel admin"}</small></Link></td>
+                <td><strong>{contract.recipientFullName}</strong><small>{contract.recipientEmail} · {contract.recipientRole}</small></td>
                 <td>{contract.relatedWorkTitle ?? "—"}</td>
                 <td><span className="contract-status" data-status={contract.status}>{statusLabels[contract.status]}</span></td>
+                <td>{waitingAge(contract.sentAt, contract.status, now)}</td>
+                <td>{contract.viewedAt ? <><strong>Açıldı</strong><small>{formatDate(contract.viewedAt)}</small></> : pending ? "Henüz açılmadı" : "—"}</td>
+                <td>{reminder ? <><strong>{formatDate(reminder.lastReminderAt)}</strong><small>{reminder.reminderCount} hatırlatma</small></> : "—"}</td>
                 <td>{formatDate(contract.updatedAt)}</td>
               </tr>;
             })}</tbody>

@@ -1,6 +1,12 @@
 import type { UserRole } from "@/features/auth/types";
 
 export type ContractTargetRole = UserRole | "any";
+export type ContractTemplateLifecycleStatus =
+  | "soft"
+  | "draft"
+  | "review"
+  | "approved"
+  | "active";
 export type UserContractStatus =
   | "draft"
   | "sent"
@@ -11,11 +17,16 @@ export type UserContractStatus =
 
 export interface ContractTemplateRecord {
   active: boolean;
+  activatedAt: Date | null;
+  approvedAt: Date | null;
+  approvedById: string | null;
   body: string;
   code: string;
   createdAt: Date;
   description: string | null;
   id: string;
+  lifecycleStatus: ContractTemplateLifecycleStatus;
+  sourceTemplateId: string | null;
   targetRole: ContractTargetRole;
   title: string;
   updatedAt: Date;

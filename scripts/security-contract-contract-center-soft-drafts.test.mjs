@@ -48,7 +48,11 @@ test("soft draft workbench is read-first and keeps drafts out of sendable templa
     "SOFT_PUBLICATION_INTENT_PUBLISHER",
   ];
   for (const code of codes) contains(migration, `'${code}'`, `seeded ${code}`);
-  assert.equal(migration.split("CURRENT_TIMESTAMP(3)\n  );").length - 1, 9, "migration must seed exactly nine soft drafts");
+  assert.equal(
+    migration.split("'c2000000-0000-4000-8000-00000000000").length - 1,
+    9,
+    "migration must seed exactly nine soft drafts",
+  );
   assert.ok(migration.split("    false,").length - 1 >= 9, "all seeded soft drafts must start inactive");
   notContains(migration, "UPDATE `ContractTemplate`", "soft draft migration must not overwrite existing templates");
 });

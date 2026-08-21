@@ -1,6 +1,12 @@
 import type { UserRole } from "@/features/auth/types";
 
 export type ContractTargetRole = UserRole | "any";
+export type ContractTemplateLifecycleStatus =
+  | "soft"
+  | "draft"
+  | "review"
+  | "approved"
+  | "active";
 export type UserContractStatus =
   | "draft"
   | "sent"

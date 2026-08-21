@@ -8,7 +8,9 @@ export default function NewContractTemplatePage() {
         <div>
           <p className="contract-eyebrow">ŞABLON KÜTÜPHANESİ</p>
           <h1>Yeni sözleşme şablonu</h1>
-          <p>Bu metin gönderim anında kullanıcıya özel değişmez bir kopyaya dönüşür.</p>
+          <p>
+            Yeni kayıt Taslak olarak başlar ve gönderime kapalıdır. Metin hazırlandıktan sonra İncelemede → Onaylı → Aktif yaşam döngüsünden geçirilir; gönderim anında kullanıcıya özel değişmez snapshot oluşturulur.
+          </p>
         </div>
         <Link href="/sozlesme/sablonlar">← Şablon Kütüphanesine dön</Link>
       </header>

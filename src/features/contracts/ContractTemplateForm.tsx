@@ -36,12 +36,16 @@ export function ContractTemplateForm({
         {template ? <span>v{template.version}</span> : null}
       </div>
 
+      <div className="contract-template-safety-note">
+        Metin düzenleme ile gönderime açma birbirinden ayrıdır. Yeni şablon Taslak olarak oluşur; onaylı veya aktif bir şablonun içeriği değişirse güvenlik için yeniden İncelemede durumuna döner.
+      </div>
+
       <div className="contract-form-grid">
         {!editing ? (
           <label>
             <span>Şablon kodu</span>
             <input name="code" required maxLength={120} placeholder="WRITER_NEW_AGREEMENT" />
-            <small>Oluşturulduktan sonra sabit kimlik olarak kullanılır.</small>
+            <small>Oluşturulduktan sonra sabit kimlik olarak kullanılır. SOFT_ öneki yalnız Soft Taslaklar için ayrılmıştır.</small>
           </label>
         ) : (
           <label>
@@ -72,18 +76,11 @@ export function ContractTemplateForm({
           <textarea name="body" required maxLength={100000} rows={24} defaultValue={template?.body ?? ""} />
           <small>Kullanılabilir alanlar: {"{{ad_soyad}}"}, {"{{eposta}}"}, {"{{rol}}"}, {"{{tarih}}"}, {"{{eser}}"}</small>
         </label>
-
-        {editing ? (
-          <label className="contract-template-active">
-            <input name="active" type="checkbox" defaultChecked={template?.active} />
-            <span>Şablon aktif; yeni gönderimlerde kullanılabilir.</span>
-          </label>
-        ) : null}
       </div>
 
       <div className="contract-template-actions">
         <Link href={returnHref}>Vazgeç</Link>
-        <button type="submit">{editing ? "Şablonu güncelle" : "Şablonu oluştur"}</button>
+        <button type="submit">{editing ? "Metni kaydet" : "Taslak şablon oluştur"}</button>
       </div>
     </form>
   );

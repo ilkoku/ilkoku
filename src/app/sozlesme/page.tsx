@@ -34,7 +34,7 @@ function messageForStatus(status: string | undefined) {
     eksik_bilgi: "Gönderim için rol, kullanıcı ve sözleşme şablonu seçilmelidir.",
     gonderildi: "Sözleşme kullanıcıya gönderildi ve bildirim oluşturuldu.",
     invalid_recipient: "Seçilen kullanıcı aktif değil veya artık gönderime uygun değil.",
-    invalid_template: "Sözleşme şablonu aktif değil veya bulunamadı.",
+    invalid_template: "Sözleşme şablonu aktif/onaylı değil veya bulunamadı.",
     invalid_work: "Seçilen eser bulunamadı veya arşivlenmiş.",
     role_mismatch: "Şablonun rolü ile seçilen kullanıcının güncel rolü uyuşmuyor.",
   };
@@ -55,7 +55,8 @@ export default async function ContractManagementPage({
     listLegacyPublisherContracts(),
   ]);
 
-  const activeTemplates = templates.filter((template) => template.active);
+  const operationalTemplates = templates.filter((template) => !template.code.startsWith("SOFT_"));
+  const activeTemplates = operationalTemplates.filter((template) => template.active);
   const waiting = contracts.filter((contract) => contract.status === "sent" || contract.status === "viewed").length;
   const accepted = contracts.filter((contract) => contract.status === "accepted").length;
   const rejected = contracts.filter((contract) => contract.status === "rejected").length;
@@ -100,13 +101,16 @@ export default async function ContractManagementPage({
         <div className="contract-card-heading">
           <div>
             <p>ŞABLON KÜTÜPHANESİ</p>
-            <h2>Hazır sözleşme örnekleri</h2>
+            <h2>Operasyon şablonları</h2>
           </div>
-          <Link href="/sozlesme/sablonlar/yeni">+ Yeni şablon</Link>
+          <Link href="/sozlesme/sablonlar">Kütüphaneyi aç →</Link>
         </div>
+        <p className="contract-section-copy">
+          Soft Taslaklar ayrı çalışma alanında tutulur. Burada yalnız kütüphaneye alınmış operasyon şablonları görünür; gönderim seçiminde ise yalnız aktif olanlar kullanılabilir.
+        </p>
 
         <div className="contract-template-grid">
-          {templates.map((template) => (
+          {operationalTemplates.map((template) => (
             <Link key={template.id} href={`/sozlesme/sablonlar/${template.id}`} className="contract-template-card" data-active={template.active ? "true" : "false"}>
               <div>
                 <span>{template.targetRole === "any" ? "Tüm roller" : template.targetRole}</span>
@@ -114,10 +118,11 @@ export default async function ContractManagementPage({
               </div>
               <h3>{template.title}</h3>
               <p>{template.description ?? "Açıklama yok"}</p>
-              <small>{template.active ? "Aktif" : "Pasif"} · {template.code}</small>
+              <small>{template.active ? "Aktif / gönderilebilir" : "Çalışma aşamasında"} · {template.code}</small>
             </Link>
           ))}
         </div>
+        {operationalTemplates.length === 0 ? <div className="contract-empty">Henüz kütüphane şablonu yok. Soft Taslaklar&apos;dan çalışma kopyası oluşturabilirsiniz.</div> : null}
       </section>
 
       <section className="contract-admin-section">

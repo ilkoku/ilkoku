@@ -113,8 +113,64 @@ test("publisher publication intent mirrors canonical contract and publication-pl
   assertGuardedInactiveV1Migration(migration, "SOFT_PUBLICATION_INTENT_PUBLISHER");
 });
 
-test("all remaining soft-draft maturity migrations exist", () => {
-  for (const relativePath of Object.values(migrations)) {
+test("template library uses a fail-closed lifecycle instead of an active checkbox", () => {
+  const migration = source("prisma/migrations/20260821133000_contract_template_lifecycle/migration.sql");
+  const managed = source("src/features/contracts/template-lifecycle.ts");
+  const actions = source("src/features/contracts/actions.ts");
+  const form = source("src/features/contracts/ContractTemplateForm.tsx");
+  const detail = source("src/app/sozlesme/sablonlar/[templateId]/page.tsx");
+  const library = source("src/app/sozlesme/sablonlar/page.tsx");
+
+  contains(migration, "`lifecycleStatus`", "template lifecycle column");
+  contains(migration, "'soft','draft','review','approved','active'", "allowed lifecycle statuses");
+  contains(migration, "ContractTemplate_active_lifecycle_chk", "database active lifecycle guard");
+  contains(migration, "LEFT(`code`, 5) <> 'SOFT_'", "soft drafts cannot be active at DB layer");
+  contains(migration, "WRITER_PLATFORM_STANDARD", "legacy placeholder deactivation");
+  contains(migration, "AND `version` = 1", "legacy placeholder untouched guard");
+
+  contains(managed, "createManagedContractTemplate", "managed template create path");
+  contains(managed, "'draft', NULL, NULL, NULL, NULL", "new template starts draft and unapproved");
+  contains(managed, 'currentLifecycle === "approved" || currentLifecycle === "active"', "edited approved/active template detection");
+  contains(managed, '? "review"', "edited approved/active template returns to review");
+  contains(managed, 'input.transition === "submit_review" && current === "draft"', "draft to review transition");
+  contains(managed, 'input.transition === "approve" && current === "review"', "review to approved transition");
+  contains(managed, 'input.transition === "activate" && current === "approved"', "approved to active transition");
+  contains(managed, 'current === "soft" || template.code.startsWith("SOFT_")', "soft lifecycle transition blocked");
+
+  contains(actions, "createManagedContractTemplate", "create action uses managed lifecycle");
+  contains(actions, "updateManagedContractTemplate", "update action uses managed lifecycle");
+  contains(actions, "transitionContractTemplateLifecycle", "explicit transition action");
+  contains(actions, "convertSoftDraftToManagedTemplate", "soft conversion action");
+  notContains(actions, "createContractTemplate,", "legacy immediate-active create path retired from actions");
+  notContains(actions, "updateContractTemplate,", "legacy active checkbox update path retired from actions");
+
+  contains(form, "Taslak şablon oluştur", "new template draft wording");
+  contains(form, "Metin düzenleme ile gönderime açma birbirinden ayrıdır", "edit/activation separation note");
+  notContains(form, 'name="active"', "active checkbox removed");
+  contains(detail, "ContractTemplateLifecyclePanel", "detail lifecycle workbench");
+  contains(library, "Taslak → İncelemede → Onaylı → Aktif", "library lifecycle explanation");
+  contains(library, 'template.lifecycleStatus !== "soft"', "soft drafts stay outside operational library");
+});
+
+test("soft draft conversion creates a separate inactive library record and preserves source", () => {
+  const managed = source("src/features/contracts/template-lifecycle.ts");
+  const panel = source("src/features/contracts/ContractTemplateLifecyclePanel.tsx");
+
+  contains(managed, "sourceTemplateId = ${source.id}", "conversion dedupe by source");
+  contains(managed, "const code = `LIB_${source.code.slice(5)}`", "separate operational template code");
+  contains(managed, "'draft', ${source.id}, NULL, NULL, NULL", "converted template starts draft");
+  contains(managed, "${source.body}", "conversion copies current soft source body");
+  contains(panel, "Şablon Kütüphanesine çalışma kopyası oluştur", "soft conversion UI action");
+});
+
+test("all remaining soft-draft maturity migrations and template lifecycle migration exist", () => {
+  for (const relativePath of [
+    ...Object.values(migrations),
+    "prisma/migrations/20260821133000_contract_template_lifecycle/migration.sql",
+    "src/features/contracts/template-lifecycle.ts",
+    "src/features/contracts/ContractTemplateLifecyclePanel.tsx",
+    "src/app/sozlesme/template-library.css",
+  ]) {
     assert.ok(existsSync(join(ROOT, relativePath)), `${relativePath} must exist`);
   }
 });

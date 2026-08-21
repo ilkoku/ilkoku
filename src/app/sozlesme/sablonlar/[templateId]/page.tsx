@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContractTemplateForm } from "@/features/contracts/ContractTemplateForm";
+import { ContractTemplateLifecyclePanel } from "@/features/contracts/ContractTemplateLifecyclePanel";
 import { getContractTemplate } from "@/features/contracts/repository";
+import { getContractTemplateWorkbenchRecord } from "@/features/contracts/template-lifecycle";
 
 export default async function ContractTemplatePage({
   params,
@@ -9,10 +11,13 @@ export default async function ContractTemplatePage({
   params: Promise<{ templateId: string }>;
 }) {
   const { templateId } = await params;
-  const template = await getContractTemplate(templateId);
-  if (!template) notFound();
+  const [template, workbenchTemplate] = await Promise.all([
+    getContractTemplate(templateId),
+    getContractTemplateWorkbenchRecord(templateId),
+  ]);
+  if (!template || !workbenchTemplate) notFound();
 
-  const softDraft = template.code.startsWith("SOFT_");
+  const softDraft = workbenchTemplate.lifecycleStatus === "soft";
   const returnHref = softDraft ? "/sozlesme/taslaklar" : "/sozlesme/sablonlar";
   const returnLabel = softDraft ? "Soft Taslaklara dön" : "Şablon Kütüphanesine dön";
 
@@ -26,6 +31,8 @@ export default async function ContractTemplatePage({
         </div>
         <Link href={returnHref}>← {returnLabel}</Link>
       </header>
+
+      <ContractTemplateLifecyclePanel template={workbenchTemplate} />
       <ContractTemplateForm template={template} returnHref={returnHref} />
     </main>
   );

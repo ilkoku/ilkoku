@@ -5,11 +5,15 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   cancelAdminContract,
-  createContractTemplate,
   respondToUserContract,
   sendAdminContract,
-  updateContractTemplate,
 } from "./repository";
+import {
+  convertSoftDraftToManagedTemplate,
+  createManagedContractTemplate,
+  transitionContractTemplateLifecycle,
+  updateManagedContractTemplate,
+} from "./template-lifecycle";
 import type { ContractTargetRole } from "./types";
 
 const validTargetRoles = new Set<ContractTargetRole>([
@@ -41,6 +45,10 @@ function contractCenterResult(code: string, contractId?: string) {
   const params = new URLSearchParams({ durum: code });
   if (contractId) params.set("sozlesme", contractId);
   return `/sozlesme?${params.toString()}`;
+}
+
+function templateResult(templateId: string, status: string) {
+  return `/sozlesme/sablonlar/${templateId}?durum=${encodeURIComponent(status)}`;
 }
 
 export async function sendContractFromAdminAction(formData: FormData) {
@@ -95,7 +103,7 @@ export async function createContractTemplateAction(formData: FormData) {
     redirect("/sozlesme/sablonlar/yeni?durum=eksik_bilgi");
   }
 
-  const result = await createContractTemplate({
+  const result = await createManagedContractTemplate({
     actorId: admin.id,
     body,
     code,
@@ -105,8 +113,9 @@ export async function createContractTemplateAction(formData: FormData) {
   });
 
   revalidatePath("/sozlesme");
+  revalidatePath("/sozlesme/sablonlar");
   if (result.status === "created") {
-    redirect(`/sozlesme/sablonlar/${result.id}?durum=olusturuldu`);
+    redirect(templateResult(result.id, "olusturuldu"));
   }
 
   redirect(`/sozlesme/sablonlar/yeni?durum=${encodeURIComponent(result.status)}`);
@@ -121,14 +130,12 @@ export async function updateContractTemplateAction(formData: FormData) {
   const description = text(formData, "description", 500) || null;
   const body = text(formData, "body", 100000);
   const role = targetRole(text(formData, "targetRole", 32));
-  const active = formData.get("active") === "on";
 
   if (!templateId || !title || !body || !role) {
-    redirect(`/sozlesme/sablonlar/${templateId}?durum=eksik_bilgi`);
+    redirect(templateResult(templateId, "eksik_bilgi"));
   }
 
-  const result = await updateContractTemplate({
-    active,
+  const result = await updateManagedContractTemplate({
     actorId: admin.id,
     body,
     description,
@@ -138,8 +145,56 @@ export async function updateContractTemplateAction(formData: FormData) {
   });
 
   revalidatePath("/sozlesme");
+  revalidatePath("/sozlesme/sablonlar");
+  revalidatePath("/sozlesme/taslaklar");
   revalidatePath(`/sozlesme/sablonlar/${templateId}`);
-  redirect(`/sozlesme/sablonlar/${templateId}?durum=${encodeURIComponent(result.status)}`);
+  redirect(templateResult(templateId, result.status));
+}
+
+export async function transitionContractTemplateAction(formData: FormData) {
+  const admin = await requireAdmin();
+  if (!admin) redirect("/erisim-reddedildi?kaynak=contract_management");
+
+  const templateId = text(formData, "templateId", 36);
+  const transition = text(formData, "transition", 32);
+  if (
+    !templateId ||
+    !["submit_review", "approve", "activate", "deactivate", "return_draft"].includes(transition)
+  ) {
+    redirect(templateResult(templateId, "gecersiz_gecis"));
+  }
+
+  const result = await transitionContractTemplateLifecycle({
+    actorId: admin.id,
+    templateId,
+    transition: transition as "submit_review" | "approve" | "activate" | "deactivate" | "return_draft",
+  });
+
+  revalidatePath("/sozlesme");
+  revalidatePath("/sozlesme/sablonlar");
+  revalidatePath(`/sozlesme/sablonlar/${templateId}`);
+  redirect(templateResult(templateId, result.status));
+}
+
+export async function convertSoftDraftToTemplateAction(formData: FormData) {
+  const admin = await requireAdmin();
+  if (!admin) redirect("/erisim-reddedildi?kaynak=contract_management");
+
+  const sourceTemplateId = text(formData, "sourceTemplateId", 36);
+  if (!sourceTemplateId) redirect("/sozlesme/taslaklar?durum=eksik_bilgi");
+
+  const result = await convertSoftDraftToManagedTemplate({
+    actorId: admin.id,
+    sourceTemplateId,
+  });
+
+  revalidatePath("/sozlesme/sablonlar");
+  revalidatePath("/sozlesme/taslaklar");
+  if (result.status === "converted" || result.status === "already_converted") {
+    redirect(templateResult(result.id, result.status));
+  }
+
+  redirect(templateResult(sourceTemplateId, result.status));
 }
 
 export async function cancelContractFromAdminAction(formData: FormData) {

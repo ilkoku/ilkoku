@@ -2,11 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { ContractViewedMarker } from "@/features/contracts/ContractViewedMarker";
 import { respondToContractWithConfirmationAction } from "@/features/contracts/guarded-response-actions";
-import {
-  getUserContract,
-  markUserContractViewed,
-} from "@/features/contracts/repository";
+import { getUserContract } from "@/features/contracts/repository";
 import type { UserContractStatus } from "@/features/contracts/types";
 
 const statusLabels: Record<UserContractStatus, string> = {
@@ -51,20 +49,18 @@ export default async function UserContractDetailPage({
   if (!profile) redirect("/giris?sonraki=/sozlesmelerim");
 
   const [{ contractId }, query] = await Promise.all([params, searchParams]);
-  const initialContract = await getUserContract(contractId, profile.id);
-  if (!initialContract) notFound();
-
-  if (initialContract.status === "sent") {
-    await markUserContractViewed({ contractId, recipientUserId: profile.id });
-  }
-
   const contract = await getUserContract(contractId, profile.id);
   if (!contract) notFound();
+
   const actionable = contract.status === "sent" || contract.status === "viewed";
   const message = messageForStatus(query.durum);
 
   return (
     <AppShell profile={profile}>
+      <ContractViewedMarker
+        contractId={contract.id}
+        shouldMark={contract.status === "sent"}
+      />
       <div className="dashboard__main user-contract-detail-page">
         <div className="user-contract-detail-nav">
           <Link href="/sozlesmelerim">← Sözleşmelerime dön</Link>

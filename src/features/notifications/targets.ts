@@ -6,11 +6,13 @@ import type {
 } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
+import { resolveContractNotificationHrefs } from "./contract-targets";
 
 export type NotificationTargetScope =
   | "default"
   | "editor"
-  | "publisher";
+  | "publisher"
+  | "admin";
 
 export type NotificationTargetInput = {
   id: string;
@@ -79,6 +81,10 @@ export async function resolveNotificationTargets(input: {
 }) {
   const workIds = uniqueEntityIds(input.notifications, "work");
   const commentIds = uniqueEntityIds(input.notifications, "comment");
+  const userContractIds = uniqueEntityIds(
+    input.notifications,
+    "user_contract",
+  );
   const submissionIds = uniqueEntityIds(
     input.notifications,
     "publisher_submission",
@@ -130,6 +136,12 @@ export async function resolveNotificationTargets(input: {
       },
     });
   }
+
+  const contractHrefById = await resolveContractNotificationHrefs({
+    contractIds: userContractIds,
+    scope: input.scope,
+    userId: input.userId,
+  });
 
   const workSlugById = new Map<string, string>();
   for (const work of works) {
@@ -296,7 +308,9 @@ export async function resolveNotificationTargets(input: {
     const entityType = notification.relatedEntityType;
     let href: string | null = null;
 
-    if (entityType === "comment" && entityId) {
+    if (entityType === "user_contract" && entityId) {
+      href = contractHrefById.get(entityId) ?? null;
+    } else if (entityType === "comment" && entityId) {
       href = commentHrefById.get(entityId) ?? null;
     } else if (entityType === "work" && entityId) {
       if (

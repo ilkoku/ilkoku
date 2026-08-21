@@ -6,6 +6,7 @@ import "./sozlesme.css";
 import "./navigation.css";
 import "./template-library.css";
 import "./assignment-workbench.css";
+import "./tracking.css";
 
 export const metadata: Metadata = {
   title: "Sözleşme Yönetimi | İlkOku",

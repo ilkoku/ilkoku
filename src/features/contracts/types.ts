@@ -57,7 +57,6 @@ export interface UserContractListRecord {
   recipientEmail: string;
   recipientFullName: string;
   recipientRole: string;
-  recipientUserId: string;
   relatedWorkId: string | null;
   relatedWorkTitle: string | null;
   responseNote: string | null;

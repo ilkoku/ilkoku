@@ -53,6 +53,63 @@ WHERE `code` IN (
 )
   AND `version` = 1;
 
+-- Mevcut 9 olgun soft kaynağın her biri için ayrı operasyon Taslağı oluşturulur.
+-- Kaynak soft kayıt değişmez; sourceTemplateId tekil olduğu için işlem idempotenttir.
+INSERT INTO `ContractTemplate` (
+  `id`, `code`, `title`, `description`, `targetRole`, `body`, `version`, `active`,
+  `lifecycleStatus`, `sourceTemplateId`, `approvedById`, `approvedAt`, `activatedAt`,
+  `createdById`, `updatedById`, `createdAt`, `updatedAt`
+)
+SELECT
+  CASE source.`code`
+    WHEN 'SOFT_GENERAL_NDA' THEN 'c3000000-0000-4000-8000-000000000001'
+    WHEN 'SOFT_WRITER_PLATFORM_LICENSE' THEN 'c3000000-0000-4000-8000-000000000002'
+    WHEN 'SOFT_WRITER_EDITOR_REVIEW' THEN 'c3000000-0000-4000-8000-000000000003'
+    WHEN 'SOFT_EDITOR_REVIEW_ETHICS' THEN 'c3000000-0000-4000-8000-000000000004'
+    WHEN 'SOFT_EDITOR_CANDIDATE_NDA' THEN 'c3000000-0000-4000-8000-000000000005'
+    WHEN 'SOFT_PUBLISHER_DISCOVERY_NDA' THEN 'c3000000-0000-4000-8000-000000000006'
+    WHEN 'SOFT_PUBLISHER_TEAM_CONFIDENTIALITY' THEN 'c3000000-0000-4000-8000-000000000007'
+    WHEN 'SOFT_PUBLICATION_INTENT_WRITER' THEN 'c3000000-0000-4000-8000-000000000008'
+    WHEN 'SOFT_PUBLICATION_INTENT_PUBLISHER' THEN 'c3000000-0000-4000-8000-000000000009'
+  END,
+  CONCAT('LIB_', SUBSTRING(source.`code`, 6)),
+  REPLACE(source.`title`, ' Taslağı', ''),
+  CONCAT('Soft Taslaklar kaynağındaki ', source.`code`, ' üzerinden oluşturulan çalışma şablonu. Hukuki ve ticari inceleme tamamlanmadan aktif edilemez.'),
+  source.`targetRole`,
+  source.`body`,
+  1,
+  false,
+  'draft',
+  source.`id`,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  CURRENT_TIMESTAMP(3),
+  CURRENT_TIMESTAMP(3)
+FROM `ContractTemplate` source
+WHERE source.`code` IN (
+  'SOFT_GENERAL_NDA',
+  'SOFT_WRITER_PLATFORM_LICENSE',
+  'SOFT_WRITER_EDITOR_REVIEW',
+  'SOFT_EDITOR_REVIEW_ETHICS',
+  'SOFT_EDITOR_CANDIDATE_NDA',
+  'SOFT_PUBLISHER_DISCOVERY_NDA',
+  'SOFT_PUBLISHER_TEAM_CONFIDENTIALITY',
+  'SOFT_PUBLICATION_INTENT_WRITER',
+  'SOFT_PUBLICATION_INTENT_PUBLISHER'
+)
+  AND source.`lifecycleStatus` = 'soft'
+  AND NOT EXISTS (
+    SELECT 1 FROM `ContractTemplate` existing
+    WHERE existing.`sourceTemplateId` = source.`id`
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM `ContractTemplate` existingCode
+    WHERE existingCode.`code` = CONCAT('LIB_', SUBSTRING(source.`code`, 6))
+  );
+
 -- DB katmanı da fail-closed: yalnız lifecycle=active olan gerçek şablonlar
 -- active=true olabilir; SOFT_ kayıtları hiçbir koşulda gönderilebilir olamaz.
 ALTER TABLE `ContractTemplate`

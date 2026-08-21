@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import "./sozlesme.css";
 import "./navigation.css";
 import "./template-library.css";
+import "./assignment-workbench.css";
 
 export const metadata: Metadata = {
   title: "Sözleşme Yönetimi | İlkOku",

@@ -15,7 +15,13 @@ const roles = [
   ["admin", "Admin"],
 ] as const;
 
-export function ContractTemplateForm({ template = null }: { template?: ContractTemplateRecord | null }) {
+export function ContractTemplateForm({
+  template = null,
+  returnHref = "/sozlesme/sablonlar",
+}: {
+  template?: ContractTemplateRecord | null;
+  returnHref?: string;
+}) {
   const editing = Boolean(template);
 
   return (
@@ -76,7 +82,7 @@ export function ContractTemplateForm({ template = null }: { template?: ContractT
       </div>
 
       <div className="contract-template-actions">
-        <Link href="/sozlesme">Vazgeç</Link>
+        <Link href={returnHref}>Vazgeç</Link>
         <button type="submit">{editing ? "Şablonu güncelle" : "Şablonu oluştur"}</button>
       </div>
     </form>

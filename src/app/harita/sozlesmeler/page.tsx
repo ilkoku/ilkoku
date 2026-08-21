@@ -21,6 +21,12 @@ const completedStages = [
     evidence: "template-lifecycle.ts · lifecycle DB CHECK",
   },
   {
+    title: "Aktivasyon öncesi İnceleme Masası",
+    description: "Dokuz LIB çalışma şablonu hukuki inceleme, ürün kararı ve ticari model olarak ayrı kuyruklarda sınıflanır. Ürün sahibinin kararları teknik geliştirmeyi durdurmaz; yalnız ilgili şablon aktivasyonunu bekletir.",
+    routes: ["/sozlesme/inceleme"],
+    evidence: "review-readiness.ts · LIB_* readiness registry",
+  },
+  {
     title: "Atama ve gönderim",
     description: "Admin rol, kullanıcı, aktif şablon ve gerektiğinde eser seçer; önizleme ve açık gönderim onayı sonrası immutable snapshot oluşturulur. Mükerrer aktif atama engellenir.",
     routes: ["/sozlesme"],
@@ -53,7 +59,7 @@ const completedStages = [
 ] as const;
 
 const remainingItems = [
-  "Gerçek operasyon şablonlarının hukuki inceleme sonrası Onaylı → Aktif geçişi.",
+  "İnceleme Masası'ndaki her operasyon şablonunun gerçek hukukçu kontrolü ve ardından admin Onaylı → Aktif geçişi.",
   "Yazar–Yayınevi nihai yayın hakları sözleşmesi: ticari hak modeli kesinleşmeden bağlayıcı metin üretilmeyecek.",
   "Final Release UAT #263 sözleşme satırları: yalnız gerçek authenticated insan testiyle HUMAN_PASS olabilir.",
 ] as const;
@@ -74,7 +80,7 @@ export default async function ContractSystemMapPage() {
           <p className="system-map-eyebrow">HARİTA · SÖZLEŞME YÖNETİMİ</p>
           <h1>Sözleşme Akışı</h1>
           <p>
-            Kayıt sözleşmesinden şablon yaşam döngüsüne, gönderimden kullanıcı kararına,
+            Kayıt sözleşmesinden şablon yaşam döngüsü ve aktivasyon incelemesine, gönderimden kullanıcı kararına,
             hatırlatma ve bildirim zincirine kadar sözleşme sisteminin kanonik teknik haritası.
           </p>
         </div>

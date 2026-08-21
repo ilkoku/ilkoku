@@ -6,8 +6,8 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   cancelAdminContract,
   respondToUserContract,
-  sendAdminContract,
 } from "./repository";
+import { sendManualAdminContract } from "./manual-dispatch";
 import {
   convertSoftDraftToManagedTemplate,
   createManagedContractTemplate,
@@ -59,12 +59,16 @@ export async function sendContractFromAdminAction(formData: FormData) {
   const recipientUserId = text(formData, "recipientUserId", 36);
   const relatedWorkId = text(formData, "relatedWorkId", 36) || null;
   const adminNote = text(formData, "adminNote", 5000) || null;
+  const dispatchConfirmed = formData.get("dispatchConfirmed") === "confirmed";
 
   if (!templateId || !recipientUserId) {
     redirect(contractCenterResult("eksik_bilgi"));
   }
+  if (!dispatchConfirmed) {
+    redirect(contractCenterResult("onay_gerekli"));
+  }
 
-  const result = await sendAdminContract({
+  const result = await sendManualAdminContract({
     actorId: admin.id,
     adminNote,
     recipientUserId,

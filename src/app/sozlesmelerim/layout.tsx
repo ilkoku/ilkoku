@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import "./sozlesmelerim.css";
+import "./response-guard.css";
 
 export const metadata: Metadata = {
   title: "Sözleşme Yönetimi | İlkOku",

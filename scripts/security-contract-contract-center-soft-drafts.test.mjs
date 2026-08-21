@@ -62,7 +62,8 @@ test("contract template detail preserves the workbench return context", () => {
   const newPage = source("src/app/sozlesme/sablonlar/yeni/page.tsx");
   const form = source("src/features/contracts/ContractTemplateForm.tsx");
 
-  contains(detailPage, 'template.code.startsWith("SOFT_")', "soft draft detection");
+  contains(detailPage, "getContractTemplateWorkbenchRecord", "canonical template lifecycle lookup");
+  contains(detailPage, 'workbenchTemplate.lifecycleStatus === "soft"', "soft draft lifecycle detection");
   contains(detailPage, 'softDraft ? "/sozlesme/taslaklar" : "/sozlesme/sablonlar"', "contextual return route");
   contains(detailPage, '"Soft Taslaklara dön"', "soft draft return label");
   contains(detailPage, '"Şablon Kütüphanesine dön"', "template library return label");

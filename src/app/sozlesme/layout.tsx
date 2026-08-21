@@ -4,6 +4,7 @@ import { ContractManagementNavigation } from "@/features/contracts/ContractManag
 import { getCurrentUser } from "@/lib/auth/current-user";
 import "./sozlesme.css";
 import "./navigation.css";
+import "./template-library.css";
 
 export const metadata: Metadata = {
   title: "Sözleşme Yönetimi | İlkOku",

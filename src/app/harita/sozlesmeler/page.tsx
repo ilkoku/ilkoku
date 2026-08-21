@@ -21,10 +21,10 @@ const completedStages = [
     evidence: "template-lifecycle.ts · lifecycle DB CHECK",
   },
   {
-    title: "Aktivasyon öncesi İnceleme Masası",
-    description: "Dokuz LIB çalışma şablonu hukuki inceleme, ürün kararı ve ticari model olarak ayrı kuyruklarda sınıflanır. Ürün sahibinin kararları teknik geliştirmeyi durdurmaz; yalnız ilgili şablon aktivasyonunu bekletir.",
-    routes: ["/sozlesme/inceleme"],
-    evidence: "review-readiness.ts · LIB_* readiness registry",
+    title: "Aktivasyon öncesi inceleme ve hukukçu paketi",
+    description: "Dokuz LIB çalışma şablonu hukuki inceleme, ürün kararı ve ticari model olarak ayrı kuyruklarda sınıflanır; tam metin ve açık inceleme notları hukukçuya yazdırılabilir/PDF teslim edilebilir salt-okunur pakette toplanır.",
+    routes: ["/sozlesme/inceleme", "/sozlesme/hukuk-inceleme"],
+    evidence: "review-readiness.ts · ContractLegalReviewPrintButton · LIB_* readiness registry",
   },
   {
     title: "Atama ve gönderim",
@@ -59,7 +59,7 @@ const completedStages = [
 ] as const;
 
 const remainingItems = [
-  "İnceleme Masası'ndaki her operasyon şablonunun gerçek hukukçu kontrolü ve ardından admin Onaylı → Aktif geçişi.",
+  "Hukukçu İnceleme Paketi'ndeki her operasyon şablonunun gerçek hukukçu kontrolü ve ardından admin Onaylı → Aktif geçişi.",
   "Yazar–Yayınevi nihai yayın hakları sözleşmesi: ticari hak modeli kesinleşmeden bağlayıcı metin üretilmeyecek.",
   "Final Release UAT #263 sözleşme satırları: yalnız gerçek authenticated insan testiyle HUMAN_PASS olabilir.",
 ] as const;

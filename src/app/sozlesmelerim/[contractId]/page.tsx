@@ -2,11 +2,21 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
-import { respondToContractAction } from "@/features/contracts/actions";
+import { respondToContractWithConfirmationAction } from "@/features/contracts/guarded-response-actions";
 import {
   getUserContract,
   markUserContractViewed,
 } from "@/features/contracts/repository";
+import type { UserContractStatus } from "@/features/contracts/types";
+
+const statusLabels: Record<UserContractStatus, string> = {
+  accepted: "Kabul edildi",
+  cancelled: "İptal edildi",
+  draft: "Taslak",
+  rejected: "Reddedildi",
+  sent: "Yeni",
+  viewed: "Yanıt bekliyor",
+};
 
 function formatDate(value: Date | null) {
   if (!value) return "—";
@@ -17,15 +27,30 @@ function formatDate(value: Date | null) {
   }).format(value);
 }
 
+function messageForStatus(status: string | undefined) {
+  const messages: Record<string, string> = {
+    accepted: "Sözleşme kabulünüz kaydedildi.",
+    rejected: "Sözleşme ret kararınız kaydedildi.",
+    onay_gerekli: "Kabul veya ret kararını göndermeden önce karar onay kutusunu işaretlemelisiniz.",
+    gecersiz_islem: "Sözleşme kararı doğrulanamadı.",
+    forbidden: "Bu sözleşme için işlem yetkiniz bulunmuyor.",
+    not_found: "Sözleşme bulunamadı veya artık hesabınıza ait değil.",
+    terminal: "Bu sözleşme daha önce sonuçlandırılmış; tekrar yanıt verilemez.",
+  };
+  return status ? messages[status] ?? null : null;
+}
+
 export default async function UserContractDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ contractId: string }>;
+  searchParams: Promise<{ durum?: string }>;
 }) {
   const profile = await getCurrentProfile({ ignoreAdminRoleView: true });
   if (!profile) redirect("/giris?sonraki=/sozlesmelerim");
 
-  const { contractId } = await params;
+  const [{ contractId }, query] = await Promise.all([params, searchParams]);
   const initialContract = await getUserContract(contractId, profile.id);
   if (!initialContract) notFound();
 
@@ -36,14 +61,24 @@ export default async function UserContractDetailPage({
   const contract = await getUserContract(contractId, profile.id);
   if (!contract) notFound();
   const actionable = contract.status === "sent" || contract.status === "viewed";
+  const message = messageForStatus(query.durum);
 
   return (
     <AppShell profile={profile}>
       <div className="dashboard__main user-contract-detail-page">
         <div className="user-contract-detail-nav">
           <Link href="/sozlesmelerim">← Sözleşmelerime dön</Link>
-          <span>{contract.status}</span>
+          <span data-status={contract.status}>{statusLabels[contract.status]}</span>
         </div>
+
+        {message ? (
+          <div
+            className="user-contract-flash"
+            data-status={query.durum === "accepted" ? "success" : query.durum === "rejected" ? "notice" : "warning"}
+          >
+            {message}
+          </div>
+        ) : null}
 
         <article className="user-contract-document">
           <header>
@@ -72,14 +107,22 @@ export default async function UserContractDetailPage({
             <div>
               <p>YANIT</p>
               <h2 id="contract-response-title">Sözleşme kararınız</h2>
-              <span>Karar verildikten sonra bu sürüm terminal duruma geçer; yeni işlem için yönetimin yeni bir sözleşme göndermesi gerekir.</span>
+              <span>
+                Karar verildikten sonra bu sürüm terminal duruma geçer; yeni işlem için yönetimin yeni bir sözleşme göndermesi gerekir.
+              </span>
             </div>
 
-            <form action={respondToContractAction}>
+            <form action={respondToContractWithConfirmationAction}>
               <input type="hidden" name="contractId" value={contract.id} />
               <label>
                 <span>Not — isteğe bağlı</span>
                 <textarea name="responseNote" maxLength={3000} rows={4} placeholder="Kararınızla ilgili açıklama..." />
+              </label>
+              <label className="user-contract-response-confirm">
+                <input name="responseConfirmed" required type="checkbox" value="confirmed" />
+                <span>
+                  Sözleşme metnini okudum; seçeceğim kabul veya ret kararının İlkOku içinde kalıcı işlem kaydı oluşturacağını anlıyorum.
+                </span>
               </label>
               <div className="user-contract-response-actions">
                 <button type="submit" name="decision" value="rejected" className="user-contract-reject">Reddet</button>
@@ -90,7 +133,7 @@ export default async function UserContractDetailPage({
           </section>
         ) : (
           <section className="user-contract-final-state">
-            <strong>Sözleşme durumu: {contract.status}</strong>
+            <strong>Sözleşme durumu: {statusLabels[contract.status]}</strong>
             <p>Bu sözleşme artık yanıt beklemiyor.</p>
           </section>
         )}

@@ -98,7 +98,7 @@ test("writer platform license soft draft grants only explicit service-purpose ri
   contains(migration, "TEKNİK SUNUM VE ESER BÜTÜNLÜĞÜ", "technical rendering boundary");
   contains(migration, "DEVREDİLMEYEN VE VERİLMEYEN HAKLAR", "reserved rights boundary");
   contains(migration, "çeviri, sinema veya dizi uyarlaması", "adaptation rights exclusion");
-  contains(migration, "İnternetin teknik coğrafyası", "technical geography is not commercial territory");
+  contains(migration, "İNTERNETİN TEKNİK COĞRAFYASI", "technical geography is not commercial territory");
   contains(migration, "ROYALTY VE TİCARİ YAYIN HAKLARI", "commercial publishing terms exclusion");
   contains(migration, "mali hakların açıkça ve ayrı ayrı gösterildiği ayrıca yazılı", "separate written publishing agreement boundary");
   contains(migration, "AND `version` = 1", "only untouched v1 writer draft can be matured");

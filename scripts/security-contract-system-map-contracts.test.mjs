@@ -129,22 +129,35 @@ test("central contract migration stores templates, immutable snapshots and appen
 
 test("central contract writes re-authorize and lock live database state", () => {
   const repository = source("src/features/contracts/repository.ts");
+  const manualDispatch = source("src/features/contracts/manual-dispatch.ts");
+  const templateLifecycle = source("src/features/contracts/template-lifecycle.ts");
   const actions = source("src/features/contracts/actions.ts");
+  const guardedActions = source("src/features/contracts/guarded-response-actions.ts");
+  const viewActions = source("src/features/contracts/view-actions.ts");
 
-  contains(repository, "prisma.$transaction", "contract repository transaction");
+  contains(manualDispatch, "prisma.$transaction", "manual dispatch transaction");
+  contains(repository, "prisma.$transaction", "response/cancel/view transaction");
+  contains(templateLifecycle, "prisma.$transaction", "template lifecycle transaction");
+  const lockEvidence = [repository, manualDispatch, templateLifecycle]
+    .reduce((count, text) => count + text.split("FOR UPDATE").length - 1, 0);
   assert.ok(
-    repository.split("FOR UPDATE").length - 1 >= 5,
-    "contract writes must lock admin, recipient, template, contract and duplicate state",
+    lockEvidence >= 7,
+    "canonical contract writes must lock live admin, recipient, template, contract and duplicate state",
   );
-  contains(repository, 'actor.role === "admin"', "database-level admin authorization");
+  contains(manualDispatch, 'actor.role === "admin"', "database-level admin authorization");
+  contains(manualDispatch, 'recipient.status === "active"', "database-level recipient eligibility");
+  contains(manualDispatch, 'template.lifecycleStatus !== "active"', "active lifecycle authorization");
+  contains(manualDispatch, 'templateRole !== "any" && templateRole !== recipient.role', "template role validation");
+  contains(manualDispatch, "activeKey", "active duplicate validation");
+  contains(manualDispatch, "bodySnapshot", "immutable sent body");
+  contains(manualDispatch, "UserContractEvent", "manual dispatch audit");
+  contains(manualDispatch, "transaction.notification.create", "manual dispatch notification");
   contains(repository, "contract.recipientUserId !== recipient.id", "recipient ownership authorization");
-  contains(repository, "templateRole !== recipient.role", "template role validation");
-  contains(repository, "activeKey", "active duplicate validation");
-  contains(repository, "bodySnapshot", "immutable sent body");
-  contains(repository, "UserContractEvent", "contract event audit");
-  contains(repository, "notification.create", "contract notifications");
+  contains(repository, "UserContractEvent", "response/cancel/view audit");
+  contains(repository, "notification.create", "response/cancel notifications");
   contains(actions, "requireAdmin()", "admin server action authorization");
-  contains(actions, "recipientUserId: user.id", "recipient action authorization");
+  contains(guardedActions, "recipientUserId: user.id", "terminal response ownership binding");
+  contains(viewActions, "recipientUserId: user.id", "view ownership binding");
 });
 
 test("all role menus expose one shared contract inbox while admin uses the central workbench", () => {
@@ -166,12 +179,20 @@ test("all role menus expose one shared contract inbox while admin uses the centr
 test("user contract inbox is owner-scoped and does not become an electronic-signature claim", () => {
   const listPage = source("src/app/sozlesmelerim/page.tsx");
   const detailPage = source("src/app/sozlesmelerim/[contractId]/page.tsx");
+  const viewedMarker = source("src/features/contracts/ContractViewedMarker.tsx");
+  const viewActions = source("src/features/contracts/view-actions.ts");
+  const repository = source("src/features/contracts/repository.ts");
   const guardedActions = source("src/features/contracts/guarded-response-actions.ts");
 
   contains(listPage, "ignoreAdminRoleView: true", "actual-user contract inbox");
   contains(listPage, "listUserContracts(profile.id)", "owner-scoped contract list");
   contains(detailPage, "getUserContract(contractId, profile.id)", "owner-scoped contract detail");
-  contains(detailPage, "markUserContractViewed", "view event");
+  contains(detailPage, "ContractViewedMarker", "mounted viewed evidence marker");
+  notContains(detailPage, "markUserContractViewed", "server render must not mutate viewed state");
+  contains(viewedMarker, "markContractViewedAction(contractId)", "client mounted view signal");
+  contains(viewActions, "markUserContractViewed", "authenticated viewed transition action");
+  contains(viewActions, "recipientUserId: user.id", "view actor ownership binding");
+  contains(repository, "contract.recipientUserId !== recipient.id", "view repository ownership re-check");
   contains(detailPage, "respondToContractWithConfirmationAction", "guarded contract response action");
   contains(guardedActions, "respondToUserContract", "canonical owner-scoped response repository");
   contains(guardedActions, "recipientUserId: user.id", "response actor ownership binding");
@@ -194,6 +215,7 @@ test("required system map and contract workbench files exist", () => {
     "src/app/harita/page.tsx",
     "src/app/harita/denetim/page.tsx",
     "src/app/harita/rotalar/page.tsx",
+    "src/app/harita/sozlesmeler/page.tsx",
     "src/app/harita/control-center.css",
     "src/app/harita/navigation.css",
     "src/app/harita/workspace.css",
@@ -206,7 +228,11 @@ test("required system map and contract workbench files exist", () => {
     "src/features/system-map/workspace-data.ts",
     "src/features/system-map/collector.ts",
     "src/features/system-map/build-manifest-types.ts",
+    "src/features/contracts/manual-dispatch.ts",
+    "src/features/contracts/template-lifecycle.ts",
     "src/features/contracts/repository.ts",
+    "src/features/contracts/ContractViewedMarker.tsx",
+    "src/features/contracts/view-actions.ts",
   ]) {
     assert.ok(existsSync(join(ROOT, relativePath)), `${relativePath} must exist`);
   }

@@ -26,20 +26,17 @@ type LockedUser = {
   status: string;
 };
 
-type LockedTemplate = {
+type RawTemplate = {
   active: number | boolean;
   body: string;
   code: string;
+  createdAt: Date;
   description: string | null;
   id: string;
   targetRole: string;
   title: string;
-  version: number;
-};
-
-type RawTemplate = LockedTemplate & {
-  createdAt: Date;
   updatedAt: Date;
+  version: number;
 };
 
 type LockedContract = {
@@ -132,21 +129,6 @@ async function lockRecipient(
       : null;
 }
 
-async function lockTemplate(
-  transaction: Prisma.TransactionClient,
-  templateId: string,
-) {
-  const rows = await transaction.$queryRaw<LockedTemplate[]>`
-    SELECT id, code, title, description, targetRole, body, version, active
-    FROM ContractTemplate
-    WHERE id = ${templateId}
-    LIMIT 1
-    FOR UPDATE
-  `;
-
-  return rows[0] ?? null;
-}
-
 async function lockContract(
   transaction: Prisma.TransactionClient,
   contractId: string,
@@ -160,37 +142,6 @@ async function lockContract(
   `;
 
   return rows[0] ?? null;
-}
-
-function renderSnapshot(
-  body: string,
-  input: {
-    date: string;
-    recipient: LockedUser;
-    workTitle: string | null;
-  },
-) {
-  const roleLabels: Record<UserRole, string> = {
-    admin: "Admin",
-    editor: "Editör",
-    editor_pending: "Editör adayı",
-    publisher: "Yayınevi",
-    reader: "Okuyucu",
-    writer: "Yazar",
-  };
-
-  const replacements: Record<string, string> = {
-    "{{ad_soyad}}": input.recipient.displayName || input.recipient.fullName,
-    "{{eposta}}": input.recipient.email,
-    "{{rol}}": roleLabels[input.recipient.role],
-    "{{tarih}}": input.date,
-    "{{eser}}": input.workTitle ?? "—",
-  };
-
-  return Object.entries(replacements).reduce(
-    (text, [token, replacement]) => text.split(token).join(replacement),
-    body,
-  );
 }
 
 export async function listContractTemplates(
@@ -373,200 +324,6 @@ export async function listLegacyPublisherContracts(
     version: row.version,
     workTitle: row.submission.work.title,
   }));
-}
-
-export async function sendAdminContract(input: {
-  actorId: string;
-  adminNote: string | null;
-  recipientUserId: string;
-  relatedWorkId: string | null;
-  templateId: string;
-}) {
-  return prisma.$transaction(async (transaction) => {
-    const actor = await lockAdmin(transaction, input.actorId);
-    if (!actor) return { status: "forbidden" as const };
-
-    const recipient = await lockRecipient(transaction, input.recipientUserId);
-    if (!recipient) return { status: "invalid_recipient" as const };
-
-    const template = await lockTemplate(transaction, input.templateId);
-    if (!template || !toBoolean(template.active)) {
-      return { status: "invalid_template" as const };
-    }
-
-    const templateRole = normalizeTargetRole(template.targetRole);
-    if (templateRole !== "any" && templateRole !== recipient.role) {
-      return { status: "role_mismatch" as const };
-    }
-
-    let workTitle: string | null = null;
-    if (input.relatedWorkId) {
-      const work = await transaction.work.findFirst({
-        where: {
-          archivedAt: null,
-          id: input.relatedWorkId,
-        },
-        select: { title: true },
-      });
-      if (!work) return { status: "invalid_work" as const };
-      workTitle = work.title;
-    }
-
-    const activeKey = `${template.id}:${recipient.id}:${input.relatedWorkId ?? "none"}`;
-    const existing = await transaction.$queryRaw<Array<{ id: string }>>`
-      SELECT id
-      FROM UserContract
-      WHERE activeKey = ${activeKey}
-      LIMIT 1
-      FOR UPDATE
-    `;
-    if (existing[0]) {
-      return {
-        contractId: existing[0].id,
-        status: "duplicate_active" as const,
-      };
-    }
-
-    const id = randomUUID();
-    const now = new Date();
-    const date = new Intl.DateTimeFormat("tr-TR", {
-      dateStyle: "long",
-      timeZone: "Europe/Istanbul",
-    }).format(now);
-    const bodySnapshot = renderSnapshot(template.body, {
-      date,
-      recipient,
-      workTitle,
-    });
-
-    await transaction.$executeRaw`
-      INSERT INTO UserContract (
-        id, templateId, templateVersion, recipientUserId, recipientRole,
-        status, titleSnapshot, bodySnapshot, adminNote, relatedWorkId,
-        sentById, activeKey, sentAt, createdAt, updatedAt
-      ) VALUES (
-        ${id}, ${template.id}, ${template.version}, ${recipient.id}, ${recipient.role},
-        'sent', ${template.title}, ${bodySnapshot}, ${input.adminNote}, ${input.relatedWorkId},
-        ${actor.id}, ${activeKey}, ${now}, ${now}, ${now}
-      )
-    `;
-
-    await transaction.$executeRaw`
-      INSERT INTO UserContractEvent (id, contractId, actorId, eventType, metadata, createdAt)
-      VALUES (
-        ${randomUUID()}, ${id}, ${actor.id}, 'sent',
-        ${auditMetadata({
-          relatedWorkId: input.relatedWorkId,
-          recipientRole: recipient.role,
-          templateCode: template.code,
-          templateVersion: template.version,
-        })},
-        ${now}
-      )
-    `;
-
-    await transaction.notification.create({
-      data: {
-        message: `${template.title} sözleşmeniz inceleme ve yanıtınız için gönderildi.`,
-        relatedEntityId: id,
-        relatedEntityType: "user_contract",
-        title: "Yeni sözleşme",
-        type: "system",
-        userId: recipient.id,
-      },
-    });
-
-    return {
-      contractId: id,
-      recipientEmail: recipient.email,
-      recipientName: recipient.displayName || recipient.fullName,
-      status: "sent" as const,
-    };
-  });
-}
-
-export async function createContractTemplate(input: {
-  actorId: string;
-  body: string;
-  code: string;
-  description: string | null;
-  targetRole: ContractTargetRole;
-  title: string;
-}) {
-  return prisma.$transaction(async (transaction) => {
-    const actor = await lockAdmin(transaction, input.actorId);
-    if (!actor) return { status: "forbidden" as const };
-    if (!validTargetRoles.has(input.targetRole)) {
-      return { status: "invalid_role" as const };
-    }
-
-    const existing = await transaction.$queryRaw<Array<{ id: string }>>`
-      SELECT id
-      FROM ContractTemplate
-      WHERE code = ${input.code}
-      LIMIT 1
-      FOR UPDATE
-    `;
-    if (existing[0]) return { status: "duplicate_code" as const };
-
-    const id = randomUUID();
-    const now = new Date();
-    await transaction.$executeRaw`
-      INSERT INTO ContractTemplate (
-        id, code, title, description, targetRole, body, version, active,
-        createdById, updatedById, createdAt, updatedAt
-      ) VALUES (
-        ${id}, ${input.code}, ${input.title}, ${input.description}, ${input.targetRole}, ${input.body}, 1, 1,
-        ${actor.id}, ${actor.id}, ${now}, ${now}
-      )
-    `;
-
-    return { id, status: "created" as const };
-  });
-}
-
-export async function updateContractTemplate(input: {
-  active: boolean;
-  actorId: string;
-  body: string;
-  description: string | null;
-  targetRole: ContractTargetRole;
-  templateId: string;
-  title: string;
-}) {
-  return prisma.$transaction(async (transaction) => {
-    const actor = await lockAdmin(transaction, input.actorId);
-    if (!actor) return { status: "forbidden" as const };
-    if (!validTargetRoles.has(input.targetRole)) {
-      return { status: "invalid_role" as const };
-    }
-
-    const template = await lockTemplate(transaction, input.templateId);
-    if (!template) return { status: "not_found" as const };
-
-    const changed =
-      template.title !== input.title ||
-      template.description !== input.description ||
-      template.body !== input.body ||
-      normalizeTargetRole(template.targetRole) !== input.targetRole ||
-      toBoolean(template.active) !== input.active;
-    const now = new Date();
-
-    await transaction.$executeRaw`
-      UPDATE ContractTemplate
-      SET title = ${input.title},
-          description = ${input.description},
-          targetRole = ${input.targetRole},
-          body = ${input.body},
-          active = ${input.active},
-          version = version + ${changed ? 1 : 0},
-          updatedById = ${actor.id},
-          updatedAt = ${now}
-      WHERE id = ${template.id}
-    `;
-
-    return { changed, status: "updated" as const };
-  });
 }
 
 export async function cancelAdminContract(input: {

@@ -3,10 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import {
-  cancelAdminContract,
-  respondToUserContract,
-} from "./repository";
 import { sendManualAdminContract } from "./manual-dispatch";
 import {
   convertSoftDraftToManagedTemplate,
@@ -199,49 +195,4 @@ export async function convertSoftDraftToTemplateAction(formData: FormData) {
   }
 
   redirect(templateResult(sourceTemplateId, result.status));
-}
-
-export async function cancelContractFromAdminAction(formData: FormData) {
-  const admin = await requireAdmin();
-  if (!admin) redirect("/erisim-reddedildi?kaynak=contract_management");
-
-  const contractId = text(formData, "contractId", 36);
-  const reason = text(formData, "reason", 1000) || null;
-  if (!contractId) redirect(contractCenterResult("eksik_bilgi"));
-
-  const result = await cancelAdminContract({
-    actorId: admin.id,
-    contractId,
-    reason,
-  });
-
-  revalidatePath("/sozlesme");
-  revalidatePath(`/sozlesme/${contractId}`);
-  revalidatePath("/sozlesmelerim");
-  redirect(`/sozlesme/${contractId}?durum=${encodeURIComponent(result.status)}`);
-}
-
-export async function respondToContractAction(formData: FormData) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/giris?sonraki=/sozlesmelerim");
-
-  const contractId = text(formData, "contractId", 36);
-  const decision = text(formData, "decision", 16);
-  const responseNote = text(formData, "responseNote", 3000) || null;
-
-  if (!contractId || (decision !== "accepted" && decision !== "rejected")) {
-    redirect(`/sozlesmelerim/${contractId}?durum=gecersiz_islem`);
-  }
-
-  const result = await respondToUserContract({
-    contractId,
-    decision,
-    recipientUserId: user.id,
-    responseNote,
-  });
-
-  revalidatePath("/sozlesmelerim");
-  revalidatePath(`/sozlesmelerim/${contractId}`);
-  revalidatePath("/sozlesme");
-  redirect(`/sozlesmelerim/${contractId}?durum=${encodeURIComponent(result.status)}`);
 }

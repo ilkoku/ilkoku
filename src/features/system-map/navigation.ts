@@ -2,6 +2,7 @@ export type SystemMapWorkspaceKey =
   | "overview"
   | "integrity"
   | "gaps"
+  | "contracts"
   | "workflows"
   | "menus"
   | "api"
@@ -41,6 +42,7 @@ export const systemMapNavigationGroups: readonly SystemMapNavigationGroup[] = [
   {
     label: "OPERASYON",
     items: [
+      { key: "contracts", href: "/harita/sozlesmeler", label: "Sözleşme Akışı", description: "Kayıt, şablon, gönderim, yanıt, takip ve bildirim zinciri" },
       { key: "workflows", href: "/harita/akislar", label: "Kanonik Akışlar", description: "Uçtan uca kullanıcı yolculukları" },
       { key: "menus", href: "/harita/menuler", label: "Menü & Rol", description: "Rol menüsü → route doğrulaması" },
       { key: "api", href: "/harita/api", label: "API Güvenliği", description: "HTTP method ve guard kanıtı" },

@@ -23,14 +23,19 @@ SET
   `activatedAt` = NULL
 WHERE `code` LIKE 'SOFT\\_%';
 
+-- Lifecycle öncesinde active=true olmak açık bir hukuki onay kanıtı değildi.
+-- Bu nedenle eski operasyon şablonları güvenli biçimde yeniden incelemeye alınır.
 UPDATE `ContractTemplate`
 SET
-  `lifecycleStatus` = CASE WHEN `active` = true THEN 'active' ELSE 'draft' END,
-  `activatedAt` = CASE WHEN `active` = true THEN `updatedAt` ELSE NULL END
+  `lifecycleStatus` = CASE WHEN `active` = true THEN 'review' ELSE 'draft' END,
+  `active` = false,
+  `approvedById` = NULL,
+  `approvedAt` = NULL,
+  `activatedAt` = NULL
 WHERE `code` NOT LIKE 'SOFT\\_%';
 
--- İlk kurulumdaki örnek placeholder şablonlar hukuki/iş modeli incelemesi olmadan
--- gönderilebilir kalmamalı. Yalnız hiç düzenlenmemiş v1 kayıtlar pasife alınır.
+-- İlk kurulumdaki örnek placeholder şablonlar ayrıca Taslak olarak sınıflanır.
+-- Yalnız hiç düzenlenmemiş v1 kayıtların çalışma durumu geri çekilir.
 UPDATE `ContractTemplate`
 SET
   `active` = false,
@@ -46,8 +51,7 @@ WHERE `code` IN (
   'READER_STANDARD',
   'GENERAL_USER_STANDARD'
 )
-  AND `version` = 1
-  AND `active` = true;
+  AND `version` = 1;
 
 -- DB katmanı da fail-closed: yalnız lifecycle=active olan gerçek şablonlar
 -- active=true olabilir; SOFT_ kayıtları hiçbir koşulda gönderilebilir olamaz.

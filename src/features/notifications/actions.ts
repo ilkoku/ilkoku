@@ -10,6 +10,7 @@ import { resolveNotificationTargets } from "./targets";
 const notificationReturnPaths = new Set([
   "/bildirimler",
   "/editor/bildirimler",
+  "/sozlesme/bildirimler",
 ]);
 
 function text(formData: FormData, key: string) {
@@ -19,6 +20,7 @@ function text(formData: FormData, key: string) {
 function revalidateNotificationPaths(returnPath: string) {
   revalidatePath("/bildirimler");
   revalidatePath("/editor/bildirimler");
+  revalidatePath("/sozlesme/bildirimler");
 
   if (notificationReturnPaths.has(returnPath)) {
     revalidatePath(returnPath);
@@ -134,6 +136,15 @@ export async function openNotificationTargetAction(
     throw new Error("NOTIFICATION_NOT_FOUND");
   }
 
+  const scope =
+    user.role === "admin"
+      ? "admin"
+      : user.role === "editor"
+        ? "editor"
+        : user.role === "publisher"
+          ? "publisher"
+          : "default";
+
   const targets = await resolveNotificationTargets({
     notifications: [
       {
@@ -143,7 +154,7 @@ export async function openNotificationTargetAction(
         type: notification.type,
       },
     ],
-    scope: user.role === "editor" ? "editor" : "default",
+    scope,
     userId: user.id,
   });
   const target = targets.get(notification.id);

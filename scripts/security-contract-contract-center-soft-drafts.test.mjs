@@ -73,6 +73,23 @@ test("contract template detail preserves the workbench return context", () => {
   notContains(detailPage, 'href="/sozlesme">← Merkeze dön</Link>', "detail must not collapse to center");
 });
 
+test("general confidentiality soft draft matures without overwriting activated or edited state", () => {
+  const migration = source("prisma/migrations/20260821114500_soft_general_nda_v2/migration.sql");
+
+  contains(migration, "SOFT TASLAK v2", "general NDA maturity marker");
+  contains(migration, "GİZLİ SAYILMAYACAK BİLGİLER", "confidentiality exclusions");
+  contains(migration, "BİLMESİ GEREKEN PRENSİBİ", "need-to-know limitation");
+  contains(migration, "üçüncü taraf yapay zekâ", "external AI confidentiality boundary");
+  contains(migration, "KVKK aydınlatma metni", "privacy notice separation");
+  contains(migration, "FİKRİ HAKLAR", "copyright boundary");
+  contains(migration, "İADE, SİLME VE SAKLAMA SINIRLARI", "retention and deletion boundary");
+  contains(migration, "5070 sayılı Kanun", "electronic signature accuracy boundary");
+  contains(migration, "`version` = `version` + 1", "template version increment");
+  contains(migration, "AND `version` = 1", "only untouched v1 draft can be matured");
+  contains(migration, "AND `active` = false", "activated draft must never be overwritten by migration");
+  notContains(migration, "`active` = true", "migration must not activate legal soft draft");
+});
+
 test("contract soft drafts do not pretend to be final publishing-rights agreements", () => {
   const migration = source("prisma/migrations/20260821113000_contract_soft_draft_library/migration.sql");
   const publisherCenter = source("src/features/publisher-workspace/components/PublisherContractCenter.tsx");
@@ -91,6 +108,7 @@ test("contract center navigation and soft draft routes exist", () => {
     "src/features/contracts/ContractManagementNavigation.tsx",
     "src/features/contracts/soft-draft-catalog.ts",
     "prisma/migrations/20260821113000_contract_soft_draft_library/migration.sql",
+    "prisma/migrations/20260821114500_soft_general_nda_v2/migration.sql",
   ]) {
     assert.ok(existsSync(join(ROOT, relativePath)), `${relativePath} must exist`);
   }

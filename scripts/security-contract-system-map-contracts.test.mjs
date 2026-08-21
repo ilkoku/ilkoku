@@ -69,17 +69,22 @@ test("system map is generated from build-time live sources while all specialist 
   contains(workbench, "Buradan nereye gidilir?", "outbound workbench detail");
 });
 
-test("system map control center turns inventory into an actionable architecture workbench", () => {
+test("system map route inventory stays an inventory surface while architecture health stays canonical", () => {
   const workbench = source("src/features/system-map/SystemMapWorkbench.tsx");
   const architecture = source("src/features/system-map/SystemMapArchitecturePanel.tsx");
   const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");
   const layout = source("src/app/harita/layout.tsx");
   const styles = source("src/app/harita/control-center.css");
 
-  contains(workbench, "Mimari sağlık ve aksiyon masası", "route inventory legacy control surface");
-  contains(workbench, "function riskSignals", "derived route signals");
+  contains(workbench, "Route envanteri ve kontrol masası", "route inventory focused control surface");
+  contains(workbench, "function riskSignals", "derived route topology signals");
   contains(workbench, '"public_handlers"', "public handler focus");
+  contains(workbench, "Kanonik BLOCKER/WARN", "canonical health handoff");
   notContains(workbench, "Public handler erişimi doğrulanmalı", "route inventory must not auto-escalate public handlers");
+  notContains(workbench, "Mimari sağlık", "route inventory must not claim a second architecture health surface");
+  notContains(workbench, "healthScore", "route inventory must not calculate a second health score");
+  notContains(workbench, "const penalty", "route inventory must not calculate a local health penalty");
+  notContains(workbench, "/100", "route inventory must not render a competing numeric health score");
   contains(workbench, "Aksiyon kuyruğu", "priority action queue");
   contains(workbench, "Erişim dağılımı", "access distribution");
   contains(workbench, "Çalışma alanları", "area coverage");
@@ -92,6 +97,8 @@ test("system map control center turns inventory into an actionable architecture 
   contains(architecture, "Public API", "public API inventory remains visible");
   contains(architecture, "Tek başına risk değildir", "public API is not automatically critical");
   notContains(architecture, "Public handler erişimi doğrulanmalı", "canonical architecture must not auto-escalate public handlers");
+  contains(workspace, "blockers={integrity.summary.blockers}", "workspace blocker source must remain canonical");
+  contains(workspace, "warnings={integrity.summary.warnings}", "workspace warning source must remain canonical");
   contains(workspace, "<SystemMapArchitecturePanel integrity={integrity} operations={operations} snapshot={snapshot} />", "architecture workspace canonical report wiring");
   contains(layout, 'import "./control-center.css"', "control center styles");
   contains(styles, ".system-map-command-center", "command center styles");

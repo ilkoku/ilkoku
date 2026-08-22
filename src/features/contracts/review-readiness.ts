@@ -12,7 +12,10 @@ export type ContractReviewReadiness = {
   summary: string;
   legalReviewItems: readonly string[];
   ownerDecisionItems: readonly string[];
+  pendingOwnerDecisionItems: readonly string[];
 };
+
+export const contractReviewPolicyVersion = 1;
 
 export const contractReviewReadiness: readonly ContractReviewReadiness[] = [
   {
@@ -21,12 +24,13 @@ export const contractReviewReadiness: readonly ContractReviewReadiness[] = [
     reviewState: "legal_review",
     summary: "Genel gizlilik, sınırlı kullanım, yetkisiz kopyalama/paylaşım ve veri güvenliği sınırları operasyon akışıyla uyumlu.",
     legalReviewItems: [
-      "Gizlilik yükümlülüğünün süresi ve sona erme etkisi hukuki incelemede kesinleştirilmeli.",
+      "Gizlilik kategorileri ve sürelerinin sözleşme hukuku bakımından son kontrolü yapılmalı.",
       "İhlal, zorunlu açıklama ve uyuşmazlık hükümleri hukukçu tarafından sonlandırılmalı.",
     ],
     ownerDecisionItems: [
-      "Gizlilik yükümlülüğünün iş ilişkisi bittikten sonra süreli mi, süresiz mi hedeflendiği iş tercihi olarak belirtilmeli.",
+      "Ticari sır, yayımlanmamış eser ve erişim/güvenlik bilgileri sır niteliğini koruduğu sürece süresiz korunur; diğer gizli bilgiler ilişki bitiminden itibaren 5 yıl korunur.",
     ],
+    pendingOwnerDecisionItems: [],
   },
   {
     code: "LIB_WRITER_PLATFORM_LICENSE",
@@ -38,20 +42,22 @@ export const contractReviewReadiness: readonly ContractReviewReadiness[] = [
       "Kaldırma, arşiv, yedek ve saklama etkileri Kullanım Koşulları/KVKK metinleriyle çapraz kontrol edilmeli.",
     ],
     ownerDecisionItems: [],
+    pendingOwnerDecisionItems: [],
   },
   {
     code: "LIB_WRITER_EDITOR_REVIEW",
     targetRole: "writer",
-    reviewState: "product_decision",
+    reviewState: "legal_review",
     summary: "Birinci ve ikinci editörlü inceleme, dış editör daveti ve yayınevi paylaşımından ayrılık mevcut ürün akışıyla uyumlu.",
     legalReviewItems: [
       "Editör incelemesinin hizmet/sonuç garantisi oluşturmadığı dil hukukçu tarafından doğrulanmalı.",
       "Gizlilik ve eser bütünlüğü hükümleri editör tarafındaki metinlerle karşılıklı tutarlılık açısından kontrol edilmeli.",
     ],
     ownerDecisionItems: [
-      "Birinci editörün ikinci editör değerlendirmesini görüp göremeyeceği ürün politikası kesinleştirilmeli.",
-      "Yazarın editör görevi alındıktan veya ilk inceleme tamamlandıktan sonra talebi geri çekebilme sınırı kesinleştirilmeli.",
+      "Birinci editör, bağımsızlık korunması için ikinci editör değerlendirmesi tamamlandıktan sonra ikinci raporu görebilir.",
+      "Yazar editör inceleme talebini ikinci editör incelemesi başlamadan önce geri çekebilir; tamamlanmış inceleme ve audit kayıtları silinmez.",
     ],
+    pendingOwnerDecisionItems: [],
   },
   {
     code: "LIB_EDITOR_REVIEW_ETHICS",
@@ -63,6 +69,7 @@ export const contractReviewReadiness: readonly ContractReviewReadiness[] = [
       "Editör ilişkisinin işçi/vekil/hizmet sağlayıcı statüsü doğurmadığı veya doğurduğu durumlar gerçek iş modeline göre kontrol edilmeli.",
     ],
     ownerDecisionItems: [],
+    pendingOwnerDecisionItems: [],
   },
   {
     code: "LIB_EDITOR_CANDIDATE_NDA",
@@ -74,6 +81,7 @@ export const contractReviewReadiness: readonly ContractReviewReadiness[] = [
       "Adaylık sürecinde kişisel veri ve gizlilik yükümlülükleri KVKK belgeleriyle çapraz kontrol edilmeli.",
     ],
     ownerDecisionItems: [],
+    pendingOwnerDecisionItems: [],
   },
   {
     code: "LIB_PUBLISHER_DISCOVERY_NDA",
@@ -85,6 +93,7 @@ export const contractReviewReadiness: readonly ContractReviewReadiness[] = [
       "Kurumsal kullanıcı ile bağlı ekip üyelerinin sorumluluğu yayınevi ekip metniyle birlikte kontrol edilmeli.",
     ],
     ownerDecisionItems: [],
+    pendingOwnerDecisionItems: [],
   },
   {
     code: "LIB_PUBLISHER_TEAM_CONFIDENTIALITY",
@@ -92,41 +101,44 @@ export const contractReviewReadiness: readonly ContractReviewReadiness[] = [
     reviewState: "legal_review",
     summary: "Kişi bazlı yetki, least-privilege, hesap paylaşmama, offboarding ve korunan sözleşme/yayın planı izinlerini gerçek ekip modeline bağlıyor.",
     legalReviewItems: [
-      "Ekip üyeliği sona erdiğinde yerel kopyaların saklanması/silinmesi yükümlülüğü hukukçu ve veri saklama politikasıyla kesinleştirilmeli.",
+      "Yönetici arşivinde kalan kurumsal kopyanın saklama amacı, erişim yetkisi ve KVKK/veri saklama etkisi hukukçu tarafından kontrol edilmeli.",
       "Şirket ile ekip üyesi arasındaki temsil ve sorumluluk sınırları hukuki olarak kontrol edilmeli.",
     ],
     ownerDecisionItems: [
-      "Ekipten ayrılan kişinin daha önce indirdiği gizli dosyaları silmesi konusunda operasyonel politika kesinleştirilmeli.",
+      "Ekipten ayrılan kişinin kişisel/yerel gizli kopyaları silinir; yayınevi yönetici arşivinde yetki kontrollü kurumsal kopya saklanabilir.",
     ],
+    pendingOwnerDecisionItems: [],
   },
   {
     code: "LIB_PUBLICATION_INTENT_WRITER",
     targetRole: "writer",
-    reviewState: "commercial_decision",
-    summary: "Yazar tarafındaki yayın niyetini bağlayıcı nihai yayın sözleşmesinden ayırıyor; hak devri ve ticari garanti üretmiyor.",
+    reviewState: "legal_review",
+    summary: "Yazar tarafındaki yayın niyetini bağlayıcı nihai yayın sözleşmesinden ayırıyor; hak devri ve ticari garanti üretmiyor. Operasyonel kullanım şimdilik pasif tutuluyor.",
     legalReviewItems: [
-      "Belgenin bağlayıcı olmayan niyet metni niteliği ve hangi maddelerin istisnaen bağlayıcı olabileceği hukukçu tarafından açıklaştırılmalı.",
-      "Nihai yayın sözleşmesine geçiş ve görüşmelerin sona ermesi etkisi hukuki olarak kontrol edilmeli.",
+      "Belgenin bağlayıcı olmayan niyet metni niteliği ve no-shop/münhasırlık maddesinin bağlayıcılığı hukukçu tarafından açıklaştırılmalı.",
+      "60 günlük geçerlilik, 30 günlük no-shop ve nihai yayın sözleşmesine geçiş etkisi hukuki olarak kontrol edilmeli.",
     ],
     ownerDecisionItems: [
-      "İlkOku sürecinde bağlayıcı olmayan yayın niyeti belgesinin gerçekten kullanılıp kullanılmayacağına karar verilmeli.",
-      "Niyet aşamasında münhasırlık/no-shop istenip istenmediği; istenecekse süresi belirlenmeli.",
-      "Niyet belgesinin kendiliğinden sona ereceği bir geçerlilik süresi olup olmayacağı belirlenmeli.",
+      "Yayın niyeti şablonu şimdilik pasif kalır ve ayrıca ürün sahibi aktivasyon kararı olmadan gönderime açılmaz.",
+      "İleride kullanıma alınırsa no-shop/münhasırlık süresi 30 gündür.",
+      "Yayın niyeti belgesinin geçerlilik süresi 60 gündür.",
     ],
+    pendingOwnerDecisionItems: [],
   },
   {
     code: "LIB_PUBLICATION_INTENT_PUBLISHER",
     targetRole: "publisher",
-    reviewState: "commercial_decision",
-    summary: "Yayınevinin yayın ilgisini/niyetini kayıt altına alıyor; keşif erişimi, yayın planı veya niyeti otomatik hak devrine çevirmiyor.",
+    reviewState: "legal_review",
+    summary: "Yayınevinin yayın ilgisini/niyetini kayıt altına alıyor; keşif erişimi, yayın planı veya niyeti otomatik hak devrine çevirmiyor. Operasyonel kullanım şimdilik pasif tutuluyor.",
     legalReviewItems: [
-      "Yayınevi niyet beyanının bağlayıcı olmayan niteliği ve olası bağlayıcı istisnalar hukukçu tarafından kesinleştirilmeli.",
-      "Nihai sözleşmeye kadar duyuru, üretim taahhüdü ve ticari beklenti yaratmama dili kontrol edilmeli.",
+      "Yayınevi niyet beyanının bağlayıcı olmayan niteliği ve no-shop/münhasırlık maddesinin bağlayıcılığı hukukçu tarafından kesinleştirilmeli.",
+      "Yazar belgesiyle aynı 60 günlük geçerlilik ve 30 günlük no-shop politikasının çift taraflı etkisi kontrol edilmeli.",
     ],
     ownerDecisionItems: [
-      "Yayınevinden resmi yayın niyeti belgesi istenip istenmeyeceğine karar verilmeli.",
-      "Yazar ve yayınevi niyet belgelerinin aynı geçerlilik süresi/münhasırlık politikasını kullanıp kullanmayacağı belirlenmeli.",
+      "Yayınevinden resmi yayın niyeti belgesi alınır; şablon şimdilik pasif kalır ve ayrıca ürün sahibi aktivasyon kararı olmadan gönderime açılmaz.",
+      "Yazar ve yayınevi yayın niyeti belgeleri aynı politikayı kullanır: 60 gün geçerlilik ve 30 gün no-shop/münhasırlık.",
     ],
+    pendingOwnerDecisionItems: [],
   },
 ] as const;
 

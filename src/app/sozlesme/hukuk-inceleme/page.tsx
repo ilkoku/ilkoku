@@ -17,7 +17,11 @@ export default async function ContractLegalReviewPackPage() {
     .filter((record) => record.code.startsWith("LIB_"))
     .sort((a, b) => a.code.localeCompare(b.code, "tr"));
 
-  const unresolvedOwnerDecisions = templates.reduce(
+  const pendingOwnerDecisions = templates.reduce(
+    (total, template) => total + (getContractReviewReadiness(template.code)?.pendingOwnerDecisionItems.length ?? 0),
+    0,
+  );
+  const resolvedOwnerDecisions = templates.reduce(
     (total, template) => total + (getContractReviewReadiness(template.code)?.ownerDecisionItems.length ?? 0),
     0,
   );
@@ -29,8 +33,8 @@ export default async function ContractLegalReviewPackPage() {
           <p>HUKUKÇU İNCELEME PAKETİ</p>
           <h1>İlkOku sözleşme şablonları · aktivasyon öncesi inceleme</h1>
           <p>
-            Bu paket mevcut çalışma şablonlarını, sürümlerini, tam metinlerini ve açık inceleme maddelerini tek yerde toplar.
-            Hukuki onay veya elektronik imza iddiası değildir; onay sonrası lifecycle işlemi ayrıca admin tarafından yapılır.
+            Bu paket mevcut çalışma şablonlarını, sürümlerini, tam metinlerini, çözülmüş ürün politikalarını ve açık hukuki inceleme maddelerini tek yerde toplar.
+            Hukuki onay veya elektronik imza iddiası değildir; hukukçu inceleme kanıtı ayrıca aynı şablon sürümüne kaydedilir.
           </p>
         </div>
         <div className="contract-legal-pack-actions">
@@ -42,14 +46,14 @@ export default async function ContractLegalReviewPackPage() {
       <section className="contract-legal-pack-summary" aria-label="Hukuk inceleme paketi özeti">
         <article><strong>{templates.length}</strong><span>Çalışma şablonu</span></article>
         <article><strong>{templates.filter((item) => item.lifecycleStatus === "draft").length}</strong><span>Taslak</span></article>
-        <article><strong>{templates.filter((item) => item.lifecycleStatus === "review").length}</strong><span>İncelemede</span></article>
-        <article><strong>{unresolvedOwnerDecisions}</strong><span>Ürün sahibi karar maddesi</span></article>
+        <article><strong>{resolvedOwnerDecisions}</strong><span>Kaydedilen ürün kararı</span></article>
+        <article><strong>{pendingOwnerDecisions}</strong><span>Açık ürün kararı</span></article>
       </section>
 
       <section className="contract-legal-pack-boundary">
         <strong>İnceleme sınırı</strong>
         <p>
-          Bu sayfa salt-okunur bir teslim paketidir. Şablonları Onaylı veya Aktif duruma taşımaz; metin değişiklikleri de yalnız Şablon Kütüphanesi çalışma masasından yapılır.
+          Bu sayfa salt-okunur bir teslim paketidir. Şablonları Onaylı veya Aktif duruma taşımaz. Metin değişirse sürüm artar ve önceki sürüme ait hukukçu inceleme kanıtı yeni sürümü onaylamak için kullanılamaz.
         </p>
       </section>
 
@@ -79,10 +83,13 @@ export default async function ContractLegalReviewPackPage() {
                   ) : <p>Özel inceleme maddesi tanımlanmadı.</p>}
                 </div>
                 <div>
-                  <h3>Ürün sahibi kararları</h3>
+                  <h3>Kaydedilen ürün politikası</h3>
                   {readiness?.ownerDecisionItems.length ? (
                     <ul>{readiness.ownerDecisionItems.map((item) => <li key={item}>{item}</li>)}</ul>
-                  ) : <p>Bu belge için ayrıca ürün sahibi kararı beklenmiyor.</p>}
+                  ) : <p>Bu belge için ayrıca ürün sahibi kararı gerekmiyor.</p>}
+                  {readiness?.pendingOwnerDecisionItems.length ? (
+                    <><h3>Açık ürün kararı</h3><ul>{readiness.pendingOwnerDecisionItems.map((item) => <li key={item}>{item}</li>)}</ul></>
+                  ) : null}
                 </div>
               </section>
 

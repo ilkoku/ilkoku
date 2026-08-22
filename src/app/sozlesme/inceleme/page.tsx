@@ -21,13 +21,15 @@ export default async function ContractReviewReadinessPage() {
   }));
 
   const mapped = rows.filter((row) => row.readiness !== null);
-  const ownerDecisionCount = mapped.reduce(
+  const resolvedOwnerDecisionCount = mapped.reduce(
     (total, row) => total + (row.readiness?.ownerDecisionItems.length ?? 0),
     0,
   );
+  const pendingOwnerDecisionCount = mapped.reduce(
+    (total, row) => total + (row.readiness?.pendingOwnerDecisionItems.length ?? 0),
+    0,
+  );
   const legalOnlyCount = mapped.filter((row) => row.readiness?.reviewState === "legal_review").length;
-  const productDecisionCount = mapped.filter((row) => row.readiness?.reviewState === "product_decision").length;
-  const commercialDecisionCount = mapped.filter((row) => row.readiness?.reviewState === "commercial_decision").length;
 
   return (
     <main className="contract-review-page">
@@ -36,26 +38,26 @@ export default async function ContractReviewReadinessPage() {
           <p>SÖZLEŞME İNCELEME MASASI</p>
           <h1>Aktivasyon öncesi karar ve inceleme kuyruğu</h1>
           <p>
-            Teknik geliştirme tamamlandı. Bu ekran çalışma şablonlarının neden henüz aktif olmadığını ayırır:
-            hukuki inceleme, ürün kararı veya ticari model. Buradaki hiçbir sınıflandırma şablonu otomatik onaylamaz ya da aktive etmez.
+            Ürün politikası kararları ayrı ve sürüm kontrollü tutulur. Kararın çözülmüş olması hukuki onay anlamına gelmez;
+            çalışma şablonları gerçek hukukçu incelemesi ve ayrıca lifecycle onayı olmadan gönderime açılamaz.
           </p>
         </div>
-        <Link href="/sozlesme/sablonlar">Şablon Kütüphanesi →</Link>
+        <Link href="/sozlesme/hukuk-inceleme">Hukukçu paketini aç →</Link>
       </header>
 
       <section className="contract-review-summary" aria-label="Sözleşme inceleme özeti">
         <article><strong>{mapped.length}/{contractReviewReadiness.length}</strong><span>Sınıflandırılan LIB şablonu</span></article>
-        <article><strong>{legalOnlyCount}</strong><span>Yalnız hukuki inceleme</span></article>
-        <article><strong>{productDecisionCount}</strong><span>Ürün kararı gerekiyor</span></article>
-        <article><strong>{commercialDecisionCount}</strong><span>Ticari model gerekiyor</span></article>
-        <article><strong>{ownerDecisionCount}</strong><span>Ürün sahibi karar maddesi</span></article>
+        <article><strong>{legalOnlyCount}</strong><span>Hukuki inceleme bekleyen</span></article>
+        <article><strong>{resolvedOwnerDecisionCount}</strong><span>Kaydedilen ürün kararı</span></article>
+        <article><strong>{pendingOwnerDecisionCount}</strong><span>Açık ürün kararı</span></article>
+        <article><strong>{mapped.filter((row) => row.record.lifecycleStatus === "active").length}</strong><span>Aktif şablon</span></article>
       </section>
 
       <section className="contract-review-owner-decisions" aria-labelledby="owner-decisions-title">
         <div>
-          <p>AYRI KARAR LİSTESİ</p>
-          <h2 id="owner-decisions-title">Ürün sahibinden karar bekleyen maddeler</h2>
-          <span>Bu maddeler teknik geliştirmeyi durdurmaz; yalnız ilgili şablonun aktivasyonunu bekletir.</span>
+          <p>ÜRÜN POLİTİKASI</p>
+          <h2 id="owner-decisions-title">Ürün sahibi kararları · kaydedildi</h2>
+          <span>Bu kararlar hukuki onay değildir. Şablonlar pasif kalır; gerçek hukukçu incelemesi ayrıca kanıtlanır.</span>
         </div>
         <ol>
           {mapped.flatMap(({ record, readiness }) =>
@@ -68,6 +70,17 @@ export default async function ContractReviewReadinessPage() {
           )}
         </ol>
       </section>
+
+      {pendingOwnerDecisionCount > 0 ? (
+        <section className="contract-review-warning">
+          <strong>Açık ürün sahibi kararı var.</strong>
+          {mapped.flatMap(({ record, readiness }) =>
+            (readiness?.pendingOwnerDecisionItems ?? []).map((item) => (
+              <p key={`${record.code}:pending:${item}`}>{record.title}: {item}</p>
+            )),
+          )}
+        </section>
+      ) : null}
 
       <section className="contract-review-grid" aria-label="Şablon inceleme kuyruğu">
         {rows.map(({ record, readiness }) => (
@@ -92,15 +105,15 @@ export default async function ContractReviewReadinessPage() {
               </section>
 
               <section>
-                <h3>Ürün sahibi kararı</h3>
+                <h3>Kaydedilen ürün politikası</h3>
                 {readiness?.ownerDecisionItems.length ? (
                   <ul>{readiness.ownerDecisionItems.map((item) => <li key={item}>{item}</li>)}</ul>
-                ) : <p>Bu şablon için ayrıca ürün sahibi kararı beklenmiyor.</p>}
+                ) : <p>Bu şablon için ayrıca ürün sahibi kararı gerekmiyor.</p>}
               </section>
             </div>
 
             <footer>
-              <span>Aktivasyon: {record.lifecycleStatus === "active" ? "Aktif" : "Bekliyor"}</span>
+              <span>Aktivasyon: {record.lifecycleStatus === "active" ? "Aktif" : "Pasif / inceleme sınırında"}</span>
               <Link href={`/sozlesme/sablonlar/${record.id}`}>Şablonu aç →</Link>
             </footer>
           </article>

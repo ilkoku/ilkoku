@@ -8,6 +8,7 @@ import "./template-library.css";
 import "./assignment-workbench.css";
 import "./tracking.css";
 import "./review-readiness.css";
+import "./review-evidence.css";
 
 export const metadata: Metadata = {
   title: "Sözleşme Yönetimi | İlkOku",

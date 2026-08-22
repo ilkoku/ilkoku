@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { sendManualAdminContract } from "./manual-dispatch";
+import { recordContractTemplateReviewEvidence } from "./review-evidence";
 import {
   convertSoftDraftToManagedTemplate,
   createManagedContractTemplate,
@@ -147,6 +148,38 @@ export async function updateContractTemplateAction(formData: FormData) {
   revalidatePath("/sozlesme");
   revalidatePath("/sozlesme/sablonlar");
   revalidatePath("/sozlesme/taslaklar");
+  revalidatePath(`/sozlesme/sablonlar/${templateId}`);
+  redirect(templateResult(templateId, result.status));
+}
+
+export async function recordContractTemplateReviewEvidenceAction(formData: FormData) {
+  const admin = await requireAdmin();
+  if (!admin) redirect("/erisim-reddedildi?kaynak=contract_management");
+
+  const templateId = text(formData, "templateId", 36);
+  const reviewerLabel = text(formData, "reviewerLabel", 220);
+  const note = text(formData, "note", 5000);
+  const evidenceType = text(formData, "evidenceType", 40);
+
+  if (
+    !templateId ||
+    !reviewerLabel ||
+    !note ||
+    !["legal_review", "product_owner_decision"].includes(evidenceType)
+  ) {
+    redirect(templateResult(templateId, "inceleme_kaniti_eksik"));
+  }
+
+  const result = await recordContractTemplateReviewEvidence({
+    actorId: admin.id,
+    evidenceType: evidenceType as "legal_review" | "product_owner_decision",
+    note,
+    reviewerLabel,
+    templateId,
+  });
+
+  revalidatePath("/sozlesme/inceleme");
+  revalidatePath("/sozlesme/hukuk-inceleme");
   revalidatePath(`/sozlesme/sablonlar/${templateId}`);
   redirect(templateResult(templateId, result.status));
 }

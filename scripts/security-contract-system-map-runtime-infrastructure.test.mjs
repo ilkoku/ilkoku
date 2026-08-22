@@ -107,7 +107,7 @@ test("Prisma relation graph keeps intentional raw-SQL tables visible but warns o
   contains(generator, "collectMigrationInventory", "migration table parser");
   contains(generator, "migrationOnlyTables", "migration-only table inventory");
   contains(collector, "runtimeContracts.acknowledgedMigrationOnlyTables", "central acknowledged migration contract");
-  for (const table of ["ContractTemplate", "UserContract", "UserContractEvent", "ContentPage", "NotificationPreference", "EmailDeliveryDedupe"]) {
+  for (const table of ["ContractTemplate", "ContractTemplateReviewEvidence", "UserContract", "UserContractEvent", "ContentPage", "NotificationPreference", "EmailDeliveryDedupe"]) {
     assert.ok(contracts.acknowledgedMigrationOnlyTables.includes(table), `${table} must remain acknowledged by the central runtime contract`);
   }
   contains(collector, "unexpectedMigrationOnlyTables", "unexpected schema drift split");

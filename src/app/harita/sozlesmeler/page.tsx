@@ -16,15 +16,21 @@ const completedStages = [
   },
   {
     title: "Şablon Kütüphanesi",
-    description: "Operasyon şablonları Taslak → İncelemede → Onaylı → Aktif yaşam döngüsünden geçer. İçerik değişikliği aktif/onaylı şablonu yeniden incelemeye düşürür.",
+    description: "Operasyon şablonları Taslak → İncelemede → Onaylı → Aktif yaşam döngüsünden geçer. İçerik değişikliği aktif/onaylı şablonu yeniden incelemeye düşürür ve sürümü artırır.",
     routes: ["/sozlesme/sablonlar", "/sozlesme/sablonlar/[templateId]"],
     evidence: "template-lifecycle.ts · lifecycle DB CHECK",
   },
   {
-    title: "Aktivasyon öncesi inceleme ve hukukçu paketi",
-    description: "Dokuz LIB çalışma şablonu hukuki inceleme, ürün kararı ve ticari model olarak ayrı kuyruklarda sınıflanır; tam metin ve açık inceleme notları hukukçuya yazdırılabilir/PDF teslim edilebilir salt-okunur pakette toplanır.",
+    title: "Aktivasyon öncesi inceleme, ürün politikası ve hukukçu paketi",
+    description: "Dokuz LIB çalışma şablonunun ürün politikası kararları sürüm kontrollü kaydedilir; tam metin ve açık hukuki inceleme notları hukukçuya yazdırılabilir/PDF teslim edilebilir salt-okunur pakette toplanır.",
     routes: ["/sozlesme/inceleme", "/sozlesme/hukuk-inceleme"],
     evidence: "review-readiness.ts · ContractLegalReviewPrintButton · LIB_* readiness registry",
+  },
+  {
+    title: "Sürüme bağlı hukukçu inceleme kanıtı",
+    description: "Şablon İncelemede aşamasındayken hukukçu/inceleyen ve sonuç notu mevcut templateVersion'a append-only kanıt olarak kaydedilir. Aynı sürümde legal_review kanıtı yoksa review → approved geçişi transaction içinde reddedilir; metin değişirse eski kanıt yeni sürüme taşınmaz.",
+    routes: ["/sozlesme/sablonlar/[templateId]"],
+    evidence: "ContractTemplateReviewEvidence · review-evidence.ts · review_evidence_required",
   },
   {
     title: "Atama ve gönderim",
@@ -59,7 +65,8 @@ const completedStages = [
 ] as const;
 
 const remainingItems = [
-  "Hukukçu İnceleme Paketi'ndeki her operasyon şablonunun gerçek hukukçu kontrolü ve ardından admin Onaylı → Aktif geçişi.",
+  "Her operasyon şablonunun gerçek hukukçu kontrolü; sonuç aynı templateVersion için kanıt olarak kaydedilmeden Onaylı durumuna geçilemez.",
+  "Yayın niyeti şablonları ürün politikası tanımlı olsa da şimdilik pasif kalır ve ayrıca aktivasyon kararı verilmeden gönderime açılmaz.",
   "Yazar–Yayınevi nihai yayın hakları sözleşmesi: ticari hak modeli kesinleşmeden bağlayıcı metin üretilmeyecek.",
   "Final Release UAT #263 sözleşme satırları: yalnız gerçek authenticated insan testiyle HUMAN_PASS olabilir.",
 ] as const;
@@ -80,7 +87,7 @@ export default async function ContractSystemMapPage() {
           <p className="system-map-eyebrow">HARİTA · SÖZLEŞME YÖNETİMİ</p>
           <h1>Sözleşme Akışı</h1>
           <p>
-            Kayıt sözleşmesinden şablon yaşam döngüsü ve aktivasyon incelemesine, gönderimden kullanıcı kararına,
+            Kayıt sözleşmesinden şablon yaşam döngüsü, ürün politikası ve sürüme bağlı hukukçu kanıtına; gönderimden kullanıcı kararına,
             hatırlatma ve bildirim zincirine kadar sözleşme sisteminin kanonik teknik haritası.
           </p>
         </div>
@@ -137,7 +144,7 @@ export default async function ContractSystemMapPage() {
           </div>
           <div className="system-map-overview-groups">
             <section>
-              <h3>HUKUKİ / ÜRÜN / HUMAN UAT</h3>
+              <h3>HUKUKİ / AKTİVASYON / HUMAN UAT</h3>
               <div>
                 {remainingItems.map((item) => (
                   <article key={item}>

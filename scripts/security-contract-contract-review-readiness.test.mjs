@@ -21,7 +21,7 @@ const expectedCodes = [
   "LIB_PUBLICATION_INTENT_PUBLISHER",
 ];
 
-test("review readiness registry classifies every canonical LIB template without activating anything", () => {
+test("review readiness registry classifies every canonical LIB template and resolves owner decisions without activating anything", () => {
   const registry = source("src/features/contracts/review-readiness.ts");
 
   for (const code of expectedCodes) contains(registry, `code: "${code}"`, `readiness ${code}`);
@@ -30,25 +30,32 @@ test("review readiness registry classifies every canonical LIB template without 
     9,
     "all nine canonical LIB templates must be classified",
   );
-  contains(registry, 'reviewState: "legal_review"', "legal review state");
-  contains(registry, 'reviewState: "product_decision"', "product decision state");
-  contains(registry, 'reviewState: "commercial_decision"', "commercial decision state");
+  contains(registry, "pendingOwnerDecisionItems", "explicit pending decision field");
+  contains(registry, "sır niteliğini koruduğu sürece süresiz", "confidentiality policy");
+  contains(registry, "ikinci editör değerlendirmesi tamamlandıktan sonra", "second-editor visibility policy");
+  contains(registry, "ikinci editör incelemesi başlamadan önce geri çekebilir", "writer withdrawal policy");
+  contains(registry, "yayınevi yönetici arşivinde", "publisher archive policy");
+  contains(registry, "30 gündür", "no-shop policy");
+  contains(registry, "60 gündür", "publication-intent validity policy");
+  contains(registry, "şimdilik pasif kalır", "publication-intent passive policy");
+  notContains(registry, 'reviewState: "product_decision"', "no unresolved product-decision state");
+  notContains(registry, 'reviewState: "commercial_decision"', "no unresolved commercial-decision state");
   notContains(registry, "transitionContractTemplateLifecycle", "readiness registry must stay read-only");
   notContains(registry, "active: true", "readiness registry must not activate templates");
   notContains(registry, "approvedById", "readiness registry must not fabricate legal approval evidence");
 });
 
-test("review workbench separates owner decisions from legal review and keeps them non-blocking for engineering", () => {
+test("review workbench shows recorded owner policy separately from legal evidence and keeps zero open decisions", () => {
   const page = source("src/app/sozlesme/inceleme/page.tsx");
   const navigation = source("src/features/contracts/ContractManagementNavigation.tsx");
   const layout = source("src/app/sozlesme/layout.tsx");
 
-  contains(page, "Ürün sahibinden karar bekleyen maddeler", "separate owner decision queue");
-  contains(page, "teknik geliştirmeyi durdurmaz", "owner decisions are non-blocking for engineering");
+  contains(page, "Ürün sahibi kararları · kaydedildi", "resolved owner decision queue");
+  contains(page, "pendingOwnerDecisionCount", "explicit open decision counter");
+  contains(page, "Kararın çözülmüş olması hukuki onay anlamına gelmez", "product/legal separation");
   contains(page, "listContractTemplateWorkbenchRecords", "live template inventory");
   contains(page, "getContractReviewReadiness", "canonical readiness registry");
   notContains(page, "transitionContractTemplate", "review page must not mutate lifecycle");
-  notContains(page, "activate", "review page must not expose automatic activation action");
   contains(navigation, 'href: "/sozlesme/inceleme"', "review workbench navigation entry");
   contains(layout, 'import "./review-readiness.css"', "review workbench styling");
 });
@@ -57,7 +64,6 @@ test("system map includes review readiness and legal handoff while preserving in
   const map = source("src/app/harita/sozlesmeler/page.tsx");
 
   contains(map, '"/sozlesme/inceleme", "/sozlesme/hukuk-inceleme"', "review and legal handoff routes in contract map");
-  contains(map, "hukuki inceleme, ürün kararı ve ticari model", "review categories in map");
   contains(map, "gerçek hukukçu kontrolü", "legal approval remains external boundary");
   contains(map, "nihai yayın hakları sözleşmesi", "final publishing rights boundary");
   contains(map, "Final Release UAT #263", "human UAT boundary");

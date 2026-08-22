@@ -36,6 +36,9 @@ type LockedAdmin = {
 
 type LockedManagedTemplate = {
   active: number | boolean;
+  activatedAt: Date | null;
+  approvedAt: Date | null;
+  approvedById: string | null;
   body: string;
   code: string;
   description: string | null;
@@ -48,9 +51,6 @@ type LockedManagedTemplate = {
 };
 
 type RawWorkbenchTemplate = LockedManagedTemplate & {
-  activatedAt: Date | null;
-  approvedAt: Date | null;
-  approvedById: string | null;
   createdAt: Date;
   sourceTemplateCode: string | null;
   sourceTemplateTitle: string | null;
@@ -136,7 +136,7 @@ async function lockAdmin(transaction: Prisma.TransactionClient, actorId: string)
 async function lockTemplate(transaction: Prisma.TransactionClient, templateId: string) {
   const rows = await transaction.$queryRaw<LockedManagedTemplate[]>`
     SELECT id, code, title, description, targetRole, body, version, active,
-           lifecycleStatus, sourceTemplateId
+           lifecycleStatus, sourceTemplateId, approvedById, approvedAt, activatedAt
     FROM ContractTemplate
     WHERE id = ${templateId}
     LIMIT 1
@@ -326,16 +326,55 @@ export async function transitionContractTemplateLifecycle(input: {
     if (input.transition === "return_draft" && (current === "review" || current === "approved")) next = "draft";
     if (!next) return { current, status: "invalid_transition" as const };
 
+    if (input.transition === "approve") {
+      const evidence = await transaction.$queryRaw<Array<{ id: string }>>`
+        SELECT id
+        FROM ContractTemplateReviewEvidence
+        WHERE templateId = ${template.id}
+          AND templateVersion = ${template.version}
+          AND evidenceType = 'legal_review'
+        LIMIT 1
+        FOR UPDATE
+      `;
+      if (!evidence[0]) {
+        return {
+          status: "review_evidence_required" as const,
+          templateVersion: Number(template.version),
+        };
+      }
+    }
+
+    if (input.transition === "activate" && (!template.approvedById || !template.approvedAt)) {
+      return { status: "approval_evidence_missing" as const };
+    }
+
     const now = new Date();
-    const approved = next === "approved" || next === "active";
     const active = next === "active";
+    const returningToDraft = next === "draft";
+    const approvingNow = input.transition === "approve";
+    const approvedById = returningToDraft
+      ? null
+      : approvingNow
+        ? actor.id
+        : template.approvedById;
+    const approvedAt = returningToDraft
+      ? null
+      : approvingNow
+        ? now
+        : template.approvedAt;
+    const activatedAt = returningToDraft
+      ? null
+      : input.transition === "activate"
+        ? now
+        : template.activatedAt;
+
     await transaction.$executeRaw`
       UPDATE ContractTemplate
       SET lifecycleStatus = ${next},
           active = ${active},
-          approvedById = ${approved ? actor.id : null},
-          approvedAt = ${approved ? now : null},
-          activatedAt = ${active ? now : null},
+          approvedById = ${approvedById},
+          approvedAt = ${approvedAt},
+          activatedAt = ${activatedAt},
           updatedById = ${actor.id},
           updatedAt = ${now}
       WHERE id = ${template.id}

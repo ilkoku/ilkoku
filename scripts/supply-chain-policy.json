@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "genericAuditGate": {
+    "command": "node scripts/audit-high-dependencies.mjs",
+    "blockedSeverities": ["high", "critical"],
+    "source": "npm audit"
+  },
+  "advisoryRules": [
+    {
+      "package": "brace-expansion",
+      "severity": "high",
+      "advisories": ["CVE-2026-14257", "CVE-2026-69152"],
+      "fixedByMajor": {
+        "1": "1.1.18",
+        "2": "2.1.4",
+        "3": "3.0.6",
+        "5": "5.0.9"
+      },
+      "note": "CVE-2026-14257 bazı tarayıcılarda düz <=5.0.7 aralığıyla raporlanabilir. Hat bazlı backport sürümleri ve takip eden CVE-2026-69152 birlikte değerlendirilir; politika dosyasında tanımlanmayan major sürüm fail-closed kabul edilir."
+    }
+  ],
+  "manifestHygiene": {
+    "buildOnlyRootDependencies": ["prisma", "@tailwindcss/postcss"],
+    "buildOnlyRootPrefixes": ["@types/"],
+    "note": "Build/type araçlarının root dependencies altında tutulması otomatik güvenlik açığı değildir; production install yüzeyini büyütebildiği için inceleme WARN'ı üretir. Hostinger build davranışı doğrulanmadan paketler otomatik taşınmaz."
+  },
+  "scannerDiscrepancies": [
+    {
+      "scanner": "Hostinger",
+      "package": "brace-expansion@1.1.18",
+      "classification": "patched-development-instance",
+      "detail": "Hostinger'ın CVE-2026-14257 için düz <=5.0.7 aralığı kullanan sinyali 1.x backport düzeltmesini yanlış pozitif işaretleyebilir. Repo politikası 1.1.18'i yamalı eşik olarak doğrular ve instance development-only ise bunu ayrıca gösterir."
+    }
+  ]
+}

@@ -76,6 +76,9 @@ jobs:
       - name: Audit high-severity dependencies
         run: node scripts/audit-high-dependencies.mjs
 
+      - name: Audit lockfile supply-chain policy
+        run: npm run audit:supply-chain
+
       - name: Run lint
         run: npm run lint
 

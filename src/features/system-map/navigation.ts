@@ -8,6 +8,7 @@ export type SystemMapWorkspaceKey =
   | "api"
   | "actions"
   | "dependencies"
+  | "supplyChain"
   | "codeData"
   | "infrastructure"
   | "env"
@@ -48,6 +49,7 @@ export const systemMapNavigationGroups: readonly SystemMapNavigationGroup[] = [
       { key: "api", href: "/harita/api", label: "API Güvenliği", description: "HTTP method ve guard kanıtı" },
       { key: "actions", href: "/harita/actions", label: "Server Actions", description: "Action modülleri ve consumer izleri" },
       { key: "dependencies", href: "/harita/bagimliliklar", label: "Bağımlılık Zinciri", description: "Route → import → action → data → API" },
+      { key: "supplyChain", href: "/harita/tedarik-zinciri", label: "Tedarik Zinciri Güvenliği", description: "npm audit + lockfile advisory eşikleri + tarayıcı uyuşmazlık kanıtı" },
       { key: "codeData", href: "/harita/kod-veri", label: "Kod Veri İzleri", description: "Prisma modeli ve raw SQL kullanan modüller" },
     ],
   },

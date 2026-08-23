@@ -36,7 +36,7 @@ test("confidentiality, editor flow, offboarding and publication-intent decisions
   contains(migration, "sır niteliğini koruduğu sürece zaman sınırı olmaksızın", "indefinite secret/unpublished/security confidentiality");
   contains(migration, "ikinci editör kendi bağımsız değerlendirmesini tamamlayana kadar", "independent second-editor visibility boundary");
   contains(migration, "ikinci editör bağımsız incelemeye başlamadan önce", "writer withdrawal boundary");
-  contains(migration, "yetki kontrollü yayınevi yönetici arşivindeki kurumsal kopya", "publisher manager archive retention");
+  contains(migration, "yetki kontrollü yönetici arşivinde bulunan kurumsal kopya", "publisher manager archive retention");
   contains(migration, "otuz (30) gün", "thirty-day no-shop term");
   contains(migration, "altmış (60) gün", "sixty-day intent validity");
   contains(migration, "resmi yayın niyetini sistemde kayıt altına alır", "publisher formal intent record");
@@ -54,6 +54,22 @@ test("policy-aligned templates remain passive draft and invalidate prior approva
   notContains(migration, "`active` = true", "policy alignment must never activate a template");
   notContains(migration, "`lifecycleStatus` = 'approved'", "policy alignment must never approve a template");
   notContains(migration, "`lifecycleStatus` = 'active'", "policy alignment must never activate lifecycle");
+});
+
+test("recovered database validation prevents silent REPLACE no-ops", () => {
+  const validator = source("scripts/validate-contract-policy-text-alignment.mjs");
+  const ci = source(".github/workflows/ci.yml");
+  const pkg = JSON.parse(source("package.json"));
+
+  contains(validator, "LIB_GENERAL_NDA", "validator canonical template inventory");
+  contains(validator, "LIB_PUBLICATION_INTENT_PUBLISHER", "validator publication-intent coverage");
+  contains(validator, "expectedMarkers", "validator body marker checks");
+  contains(validator, "version !== expected.version", "validator version check");
+  contains(validator, "row.lifecycleStatus !== expected.lifecycleStatus", "validator lifecycle check");
+  contains(validator, "active !== expected.active", "validator active-state check");
+  assert.equal(pkg.scripts["contract:policy:validate"], "node scripts/validate-contract-policy-text-alignment.mjs");
+  contains(ci, "Validate contract policy text on recovered database", "post-recovery CI validation step");
+  contains(ci, "npm run contract:policy:validate", "post-recovery validator command");
 });
 
 test("system map records exact text alignment before version-bound legal review", () => {

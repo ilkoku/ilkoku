@@ -5,6 +5,7 @@
   "scripts": {
     "system-map:generate": "npm run audit:supply-chain && node scripts/generate-system-map-runtime-manifest.mjs",
     "audit:supply-chain": "node scripts/audit-lockfile-supply-chain.mjs",
+    "contract:policy:validate": "node scripts/validate-contract-policy-text-alignment.mjs",
     "dev": "npm run system-map:generate && next dev",
     "db:recover:fresh": "node scripts/recover-fresh-database.mjs",
     "release:measure": "node scripts/release-measurement-report.mjs",

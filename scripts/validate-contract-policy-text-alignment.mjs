@@ -29,7 +29,7 @@ const expectedTemplates = {
     version: 1,
     active: false,
     lifecycleStatus: "draft",
-    expectedMarkers: ["hizmet amacıyla sınırlı"],
+    expectedMarkers: ["Bu metin yayınevi sözleşmesi, mali hakların genel devri"],
   },
   LIB_WRITER_EDITOR_REVIEW: {
     version: 2,
@@ -126,7 +126,7 @@ try {
   }
 
   const [softRows] = await connection.query(
-    "SELECT COUNT(*) AS count FROM ContractTemplate WHERE code LIKE 'SOFT\\_%' ESCAPE '\\\\' AND lifecycleStatus <> 'soft'",
+    "SELECT COUNT(*) AS count FROM ContractTemplate WHERE LEFT(code, 5) = 'SOFT_' AND lifecycleStatus <> 'soft'",
   );
   if (Number(softRows[0]?.count ?? 0) !== 0) {
     failures.push("one or more SOFT_* source templates no longer have lifecycleStatus=soft");

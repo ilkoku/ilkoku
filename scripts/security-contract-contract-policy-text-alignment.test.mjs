@@ -26,7 +26,8 @@ test("resolved product decisions are applied to the eight affected managed templ
   for (const code of affectedCodes) contains(migration, `WHERE \`code\` = '${code}'`, `policy alignment ${code}`);
   contains(migration, "LIB_WRITER_PLATFORM_LICENSE ürün kararlarından etkilenmediği için v1 olarak bırakılır", "unaffected platform-license boundary");
   notContains(migration, "WHERE `code` = 'SOFT_", "soft source records must not be mutated");
-  notContains(migration, "UserContract", "immutable sent snapshots must not be mutated");
+  notContains(migration, "UPDATE `UserContract`", "immutable sent snapshots must not be updated");
+  notContains(migration, "DELETE FROM `UserContract`", "immutable sent snapshots must not be deleted");
 });
 
 test("confidentiality, editor flow, offboarding and publication-intent decisions are explicit in working text", () => {

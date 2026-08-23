@@ -76,7 +76,7 @@ export default function SupplyChainSecurityPage() {
         </div>
         <div className="system-ops-details-list">
           {report.monitoredPackages.map((entry) => (
-            <details key={entry.package} open={entry.status === "blocker"}>
+            <details key={entry.package}>
               <summary>
                 <code>{entry.package}</code>
                 <span>{entry.advisories.join(" · ")} · {entry.instances.length} instance · {statusLabel(entry.status)}</span>

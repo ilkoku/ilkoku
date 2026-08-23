@@ -116,15 +116,17 @@ test("Prisma relation graph keeps intentional raw-SQL tables visible but warns o
   contains(panel, "İnceleme gerekli · beklenmedik migration-only tablolar", "unexpected migration visibility");
 });
 
-test("manifest generation is mandatory before lint development and production builds", () => {
+test("manifest and supply-chain generation are mandatory before lint development and production builds", () => {
   const pkg = JSON.parse(source("package.json"));
   const gitignore = source(".gitignore");
 
-  assert.equal(pkg.scripts["system-map:generate"], "node scripts/generate-system-map-runtime-manifest.mjs");
+  assert.equal(pkg.scripts["system-map:generate"], "npm run audit:supply-chain && node scripts/generate-system-map-runtime-manifest.mjs");
+  assert.equal(pkg.scripts["audit:supply-chain"], "node scripts/audit-lockfile-supply-chain.mjs");
   for (const script of ["dev", "lint", "build", "build:ci"]) {
     assert.ok(pkg.scripts[script].startsWith("npm run system-map:generate &&"), `${script} must generate the manifest first`);
   }
   contains(gitignore, "/src/features/system-map/runtime-manifest.generated.ts", "generated manifest ignore rule");
+  contains(gitignore, "/src/features/system-map/supply-chain.generated.ts", "generated supply-chain report ignore rule");
 });
 
 test("runtime infrastructure UI stays server-rendered while specialist pages share the canonical loader", () => {

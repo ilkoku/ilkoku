@@ -1,6 +1,24 @@
 import Link from "next/link";
 import { supplyChainSecurityReport } from "@/features/system-map/supply-chain.generated";
 
+type ManifestWarning = {
+  package: string;
+  status: "warn";
+  detail: string;
+};
+
+type DuplicateVersionPackage = {
+  package: string;
+  versions: readonly string[];
+};
+
+type ScannerDiscrepancy = {
+  scanner: string;
+  package: string;
+  classification: string;
+  detail: string;
+};
+
 const statusLabel = (status: "pass" | "warn" | "blocker") => {
   if (status === "blocker") return "BLOCKER";
   if (status === "warn") return "WARN";
@@ -9,6 +27,9 @@ const statusLabel = (status: "pass" | "warn" | "blocker") => {
 
 export default function SupplyChainSecurityPage() {
   const report = supplyChainSecurityReport;
+  const manifestWarnings = report.rootManifest.warnings as readonly ManifestWarning[];
+  const duplicateVersionPackages = report.duplicateVersionPackages as readonly DuplicateVersionPackage[];
+  const scannerDiscrepancies = report.scannerDiscrepancies as readonly ScannerDiscrepancy[];
   const overall: "pass" | "warn" | "blocker" = report.summary.blockers > 0
     ? "blocker"
     : report.summary.warnings > 0
@@ -116,11 +137,11 @@ export default function SupplyChainSecurityPage() {
       <section className="system-ops-gaps" aria-labelledby="manifest-hygiene-title">
         <div className="system-map-section-heading">
           <div><p>PRODUCTION MANIFEST HİJYENİ</p><h2 id="manifest-hygiene-title">Build araçları runtime yüzeyine karışıyor mu?</h2></div>
-          <span>{report.rootManifest.warnings.length} inceleme</span>
+          <span>{manifestWarnings.length} inceleme</span>
         </div>
-        {report.rootManifest.warnings.length > 0 ? (
+        {manifestWarnings.length > 0 ? (
           <div className="system-ops-gap-list">
-            {report.rootManifest.warnings.map((warning) => (
+            {manifestWarnings.map((warning) => (
               <article data-status="warn" key={warning.package}>
                 <div className="system-ops-gap-heading"><span className="system-ops-status" data-status="warn">WARN</span><span>{warning.package}</span></div>
                 <h3>Build / type aracı root dependencies altında</h3>
@@ -134,13 +155,13 @@ export default function SupplyChainSecurityPage() {
       <section className="system-ops-pane system-ops-pane--standalone" aria-labelledby="duplicate-versions-title">
         <div className="system-map-section-heading">
           <div><p>SÜRÜM ÇOĞALMASI</p><h2 id="duplicate-versions-title">Aynı paketin birden fazla sürümü</h2></div>
-          <span>{report.duplicateVersionPackages.length} paket</span>
+          <span>{duplicateVersionPackages.length} paket</span>
         </div>
         <div className="system-ops-table-wrap system-ops-table-wrap--wide">
           <table>
             <thead><tr><th>Paket</th><th>Kurulu sürümler</th><th>Adet</th></tr></thead>
             <tbody>
-              {report.duplicateVersionPackages.map((item) => (
+              {duplicateVersionPackages.map((item) => (
                 <tr key={item.package}><td><code>{item.package}</code></td><td>{item.versions.map((version) => <code className="system-ops-token" key={version}>{version}</code>)}</td><td>{item.versions.length}</td></tr>
               ))}
             </tbody>
@@ -148,14 +169,14 @@ export default function SupplyChainSecurityPage() {
         </div>
       </section>
 
-      {report.scannerDiscrepancies.length > 0 ? (
+      {scannerDiscrepancies.length > 0 ? (
         <section className="system-ops-gaps" aria-labelledby="scanner-discrepancy-title">
           <div className="system-map-section-heading">
             <div><p>TARAYICI UYUŞMAZLIKLARI</p><h2 id="scanner-discrepancy-title">Dış tarayıcı sinyali ile repo kanıtı</h2></div>
-            <span>{report.scannerDiscrepancies.length} kayıt</span>
+            <span>{scannerDiscrepancies.length} kayıt</span>
           </div>
           <div className="system-ops-gap-list">
-            {report.scannerDiscrepancies.map((item) => (
+            {scannerDiscrepancies.map((item) => (
               <article data-status="warn" key={`${item.scanner}:${item.package}`}>
                 <div className="system-ops-gap-heading"><span className="system-ops-status" data-status="warn">WARN</span><span>{item.scanner} · {item.package}</span></div>
                 <h3>{item.classification}</h3>

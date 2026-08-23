@@ -49,7 +49,7 @@ export default function SupplyChainSecurityPage() {
 
       <section className="system-ops-pane system-ops-pane--standalone" aria-labelledby="supply-chain-instances-title">
         <div className="system-map-section-heading">
-          <div><p>LOCKFILE</p><h2 id="supply-chain-instances-title">brace-expansion instance'ları</h2></div>
+          <div><p>LOCKFILE</p><h2 id="supply-chain-instances-title">brace-expansion instance&apos;ları</h2></div>
           <span>{report.instances.length} kayıt</span>
         </div>
         <div className="system-ops-table-wrap system-ops-table-wrap--wide">

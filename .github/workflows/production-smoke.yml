@@ -240,9 +240,29 @@ jobs:
                 "https://ilkoku.com/yasal/telif-hakki-politikasi" \
               && check_post_merge_body_contains "https://ilkoku.com/sitemap.xml" \
                 "https://ilkoku.com/eserler" \
+                "https://ilkoku.com/eserler/yeni" \
+                "https://ilkoku.com/eserler/guncellenen" \
+                "https://ilkoku.com/yazarlar" \
+                "https://ilkoku.com/turler" \
+                "https://ilkoku.com/rehber/ilk-eseri-yayinlama-rehberi" \
               && check_post_merge_body_contains "https://ilkoku.com/eserler" \
                 "HERKESE AÇIK ESER KÜTÜPHANESİ" \
-                "Herkese açık eserler" \
+                "Yeni yayımlananlar" \
+                "Son güncellenenler" \
+                "Yazarlar" \
+                "Türler" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler/yeni" "200" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler/guncellenen" "200" \
+              && check_post_merge_public_route "https://ilkoku.com/yazarlar" "200" \
+              && check_post_merge_public_route "https://ilkoku.com/turler" "200" \
+              && check_post_merge_body_contains "https://ilkoku.com/rehber" \
+                "İlk Eseri Yayımlama Rehberi" \
+                "Eser Pasaportu Nedir?" \
+              && check_post_merge_body_contains "https://ilkoku.com/rehber/ilk-eseri-yayinlama-rehberi" \
+                "Yayınlamak ile taslağı kaydetmek aynı şey değildir" \
+              && check_post_merge_body_contains "https://ilkoku.com/eserler/rss.xml" \
+                "<rss version=" \
+                "İlkOku — Herkese Açık Eserler" \
               && check_post_merge_public_route "https://ilkoku.com/editorler/merve-kaya" "404" \
               && check_post_merge_public_route "https://ilkoku.com/editorler/baris-erdem" "404" \
               && check_post_merge_public_route "https://ilkoku.com/editorler/derya-unal" "404" \

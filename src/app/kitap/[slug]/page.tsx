@@ -133,6 +133,7 @@ export default async function DynamicBookShowcasePage({
     author: {
       "@type": "Person",
       name: work.authorName,
+      url: `${baseUrl}/yazarlar/${work.authorPublicId}`,
     },
     publisher: {
       "@type": "Organization",
@@ -142,12 +143,40 @@ export default async function DynamicBookShowcasePage({
     isAccessibleForFree: true,
   };
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Eserler",
+        item: `${baseUrl}/eserler`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: work.authorName,
+        item: `${baseUrl}/yazarlar/${work.authorPublicId}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: work.title,
+        item: `${baseUrl}/kitap/${work.slug}`,
+      },
+    ],
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(bookSchema).replace(/</g, "\\u003c"),
+          __html: JSON.stringify([bookSchema, breadcrumbSchema]).replace(
+            /</g,
+            "\\u003c",
+          ),
         }}
       />
       <BookShowcase

@@ -197,6 +197,7 @@ export const getPublicWorkBySlug =
         authorName:
           work.author.displayName ??
           work.author.fullName,
+        authorPublicId: work.author.publicId,
         chapterCount: work.chapters.length,
         isCompleted:
           work.chapters.length > 0 &&

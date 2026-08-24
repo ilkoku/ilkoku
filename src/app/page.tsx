@@ -8,6 +8,7 @@ import { logoutAction } from "@/features/auth/actions";
 import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { HistoryInspiration } from "@/features/landing/history-inspiration";
+import { getPublicWorkLibrary } from "@/features/public-discovery/library";
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import { safeCmsInternalHref } from "@/lib/cms-links";
@@ -219,21 +220,23 @@ const benefits = [
   { icon: "book", title: "Eser Pasaportu", description: "Eserin yazım geçmişi, inceleme durumu ve doğrulama bilgileri tek yerde görüntülenir.", className: "landing-benefit-v2--purple" },
 ] as const;
 
-const stats = [
-  { icon: "account", value: "2.847+", label: "Yazar" },
-  { icon: "create", value: "18.592+", label: "Okuyucu" },
-  { icon: "editor", value: "412+", label: "Editör" },
-  { icon: "publisher", value: "78+", label: "Yayınevi" },
-  { icon: "book", value: "6.215+", label: "Eser" },
-  { icon: "message", value: "34.760+", label: "Yorum" },
+const statIcons = [
+  "account",
+  "create",
+  "editor",
+  "publisher",
+  "book",
+  "message",
 ] as const;
 
 export default async function HomePage() {
-  const [profile, roleCardState, homepageState] = await Promise.all([
-    getCurrentProfile(),
-    getPublishedRoleCardsState("tr"),
-    getPublishedHomepageState("tr"),
-  ]);
+  const [profile, roleCardState, homepageState, publicLibrary] =
+    await Promise.all([
+      getCurrentProfile(),
+      getPublishedRoleCardsState("tr"),
+      getPublishedHomepageState("tr"),
+      getPublicWorkLibrary({ sort: "newest" }, 1),
+    ]);
   const navigation = profile ? await getRoleNavigation(profile) : null;
   const pendingRole = navigation?.pendingRequest?.requestedRole
     ?? (profile?.role === "editor_pending" ? "editor" : null);
@@ -256,11 +259,16 @@ export default async function HomePage() {
   const passportDescription = passport?.description || "Eser Pasaportu; yazım oturumlarını, revizyonları, sürüm geçmişini ve profesyonel inceleme durumunu tek bir kayıt altında birleştirir.";
   const whyEyebrow = why?.eyebrow || "Güven, kayıt ve keşif";
   const whyTitle = why?.title || "Neden İlkOku?";
-  const homepageStats = stats.map((stat, index) => ({
-    ...stat,
-    value: why?.[`stat${index + 1}Value`] || stat.value,
-    label: why?.[`stat${index + 1}Label`] || stat.label,
-  }));
+  const homepageStats = statIcons.flatMap((icon, index) => {
+    const value =
+      why?.[`stat${index + 1}Value`]?.trim();
+    const label =
+      why?.[`stat${index + 1}Label`]?.trim();
+
+    return value && label
+      ? [{ icon, value, label }]
+      : [];
+  });
   const footerSlogan = footer?.slogan || "İlk cümle, ilk okurun, ilk adımın.";
   const footerCopyright = footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`;
   const cmsRoleCards = roleCardState.state === "valid"
@@ -317,8 +325,8 @@ export default async function HomePage() {
         .landing-footer__grid>div:first-child p,.landing-footer__grid>div>a { color:#dedaf4; }
         .landing-footer__grid>div>a:hover { color:#fff; }
         .landing-footer__copyright { border-top-color:rgba(255,255,255,.14); color:#c9c4e5; }
-        @media (max-width:64rem) { .landing-benefits-v2 { grid-template-columns:repeat(3,1fr); } .landing-stats-v2 { grid-template-columns:repeat(3,1fr); } .landing-stat-v2:nth-child(3) { border-right:0; } .landing-stat-v2:nth-child(-n+3) { border-bottom:1px solid rgba(104,71,232,.14); } }
-        @media (max-width:48rem) { .landing-header__inner { grid-template-columns:1fr auto; } .landing-header__kicker { grid-row:2; grid-column:1/-1; width:100%; min-width:0; margin:0 0 .75rem; } .landing-benefits-v2 { grid-template-columns:repeat(2,1fr); } .landing-stats-v2 { grid-template-columns:repeat(2,1fr); } .landing-stat-v2 { border-bottom:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(3) { border-right:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(even) { border-right:0; } .landing-stat-v2:nth-last-child(-n+2) { border-bottom:0; } }
+        @media (max-width:64rem) { .landing-benefits-v2 { grid-template-columns:repeat(3,1fr); } .landing-stats-v2 { grid-template-columns:repeat(3,1fr); } .landing-stat-v2:nth-child(3) { border-right:0; } .landing-stat-v2:nth-child(-n+3) { border-bottom:1px solid rgba(104,71,232,.14); } .landing-discovery__routes { grid-template-columns:repeat(2,1fr); } }
+        @media (max-width:48rem) { .landing-header__inner { grid-template-columns:1fr auto; } .landing-header__kicker { grid-row:2; grid-column:1/-1; width:100%; min-width:0; margin:0 0 .75rem; } .landing-benefits-v2 { grid-template-columns:repeat(2,1fr); } .landing-stats-v2 { grid-template-columns:repeat(2,1fr); } .landing-stat-v2 { border-bottom:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(3) { border-right:1px solid rgba(104,71,232,.14); } .landing-stat-v2:nth-child(even) { border-right:0; } .landing-stat-v2:nth-last-child(-n+2) { border-bottom:0; } .landing-discovery__heading { align-items:start; flex-direction:column; } .landing-discovery__works { grid-template-columns:1fr; } }
         @media (max-width:34rem) { .landing-benefits-v2 { grid-template-columns:1fr; } .landing-benefit-v2 { min-height:auto; } }
       `}</style>
 
@@ -396,6 +404,39 @@ export default async function HomePage() {
 
       <HistoryInspiration />
 
+      <section className="landing-discovery" aria-labelledby="acik-kutuphane-basligi">
+        <div className="landing-container">
+          <div className="landing-discovery__heading">
+            <div>
+              <span className="landing-section-heading__eyebrow">HERKESE AÇIK KÜTÜPHANE</span>
+              <h2 id="acik-kutuphane-basligi">Sisteme girmeden de gerçek yayınları keşfet.</h2>
+            </div>
+            <Link href="/eserler">Tüm eserleri görüntüle →</Link>
+          </div>
+          <nav className="landing-discovery__routes" aria-label="Herkese açık keşif yolları">
+            <Link href="/eserler/yeni"><strong>Yeni yayımlananlar</strong><span>Yayın tarihine göre en yeni eserler</span></Link>
+            <Link href="/eserler/guncellenen"><strong>Son güncellenenler</strong><span>Yakın zamanda değişen eserler</span></Link>
+            <Link href="/yazarlar"><strong>Yazarlar</strong><span>Herkese açık eserleri olan yazarlar</span></Link>
+            <Link href="/turler"><strong>Türler</strong><span>Gerçek yayınlardan oluşan tür dizini</span></Link>
+          </nav>
+          {publicLibrary.works.length > 0 ? (
+            <div className="landing-discovery__works">
+              {publicLibrary.works.slice(0, 3).map((work) => {
+                const authorName = work.author.displayName ?? work.author.fullName;
+                return (
+                  <article key={work.slug}>
+                    <small>{work.genre ?? "Eser"}</small>
+                    <h3>{work.title}</h3>
+                    <p>{authorName}</p>
+                    <Link href={`/kitap/${work.slug}`}>Eseri incele →</Link>
+                  </article>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      </section>
+
       <section className="landing-section landing-section--roles" id="roller">
         <div className="landing-container">
           <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">{roleEyebrow}</span><h2>{roleTitle}</h2><p>{roleDescription}</p></div>
@@ -454,11 +495,11 @@ export default async function HomePage() {
         <div className="landing-container">
           <div className="landing-section-heading"><span className="landing-section-heading__eyebrow">{whyEyebrow}</span><h2>{whyTitle}</h2></div>
           <div className="landing-benefits-v2">{benefits.map((benefit) => (<article className={`landing-benefit-v2 ${benefit.className}`} key={benefit.title}><span className="landing-benefit-v2__icon"><LandingIcon name={benefit.icon} /></span><h3>{benefit.title}</h3><p>{benefit.description}</p></article>))}</div>
-          <div className="landing-stats-v2" aria-label="İlkOku platform istatistikleri">{homepageStats.map((stat) => (<div className="landing-stat-v2" key={`${stat.label}-${stat.icon}`}><span className="landing-stat-v2__icon"><LandingIcon name={stat.icon} /></span><div><strong>{stat.value}</strong><span>{stat.label}</span></div></div>))}</div>
+          {homepageStats.length > 0 ? <div className="landing-stats-v2" aria-label="İlkOku platform istatistikleri">{homepageStats.map((stat) => (<div className="landing-stat-v2" key={`${stat.label}-${stat.icon}`}><span className="landing-stat-v2__icon"><LandingIcon name={stat.icon} /></span><div><strong>{stat.value}</strong><span>{stat.label}</span></div></div>))}</div> : null}
         </div>
       </section>
 
-      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p><FooterSlogan value={footerSlogan} /></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><Link href="/eserler">Eserler</Link><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div><div><h3>Destek</h3><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div></div><p className="landing-footer__copyright"><span className="landing-footer__copyright-text">{footerCopyright}</span></p></footer>
+      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p><FooterSlogan value={footerSlogan} /></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/turler">Türler</Link><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div><div><h3>Destek</h3><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div></div><p className="landing-footer__copyright"><span className="landing-footer__copyright-text">{footerCopyright}</span></p></footer>
     </main>
   );
 }

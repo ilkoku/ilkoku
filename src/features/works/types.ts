@@ -46,6 +46,7 @@ export type WorkWithChapterSummary =
 export type PublicWorkDetail =
   WorkModel & {
     authorName: string;
+    authorPublicId: string;
     chapterCount: number;
     chapters: ChapterModel[];
     isCompleted: boolean;

@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { allocatePublicId } from "@/lib/public-id";
 import { prisma } from "@/lib/prisma";
+import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
 
 export type CreateWorkRecord = {
   authorId: string;
@@ -276,6 +277,7 @@ export const worksRepository = {
             status: "active",
           },
         },
+        language: "tr",
         publishedAt: {
           not: null,
         },
@@ -299,6 +301,7 @@ export const worksRepository = {
             displayName: true,
             fullName: true,
             id: true,
+            publicId: true,
             username: true,
           },
         },
@@ -331,8 +334,12 @@ export const worksRepository = {
           status: "active" as const,
         },
       },
+      language: "tr",
       publishedAt: {
         not: null,
+      },
+      slug: {
+        notIn: [...BLOCKED_PUBLIC_WORK_SLUGS],
       },
       status: "published" as const,
       visibility: "public" as const,

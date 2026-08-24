@@ -176,14 +176,21 @@ export async function getPublicGenres() {
     },
   });
 
-  return rows
-    .map((row) => row.genre?.trim())
-    .filter((genre): genre is string => Boolean(genre))
-    .map((genre) => ({
-      label: genre,
-      slug: publicTaxonomySlug(genre),
-    }))
-    .filter((genre) => Boolean(genre.slug));
+  const genresBySlug = new Map<
+    string,
+    { label: string; slug: string }
+  >();
+
+  for (const row of rows) {
+    const label = row.genre?.trim();
+    const slug = label ? publicTaxonomySlug(label) : "";
+
+    if (label && slug && !genresBySlug.has(slug)) {
+      genresBySlug.set(slug, { label, slug });
+    }
+  }
+
+  return [...genresBySlug.values()];
 }
 
 export async function getPublicGenreBySlug(

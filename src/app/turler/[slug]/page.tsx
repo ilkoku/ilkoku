@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import {
   getPublicGenreBySlug,
   getPublicWorkLibrary,
+  PUBLIC_WORK_PAGE_SIZE,
 } from "@/features/public-discovery/library";
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 import { PublicWorkStream } from "@/features/public-discovery/PublicWorkStream";
@@ -110,7 +111,8 @@ export default async function PublicGenrePage({
         (work, index) => ({
           "@type": "ListItem",
           position:
-            (library.currentPage - 1) * 18 +
+            (library.currentPage - 1) *
+              PUBLIC_WORK_PAGE_SIZE +
             index +
             1,
           name: work.title,

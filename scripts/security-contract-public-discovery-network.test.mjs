@@ -119,6 +119,7 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   const showcase = source(
     "src/features/showcase/components/BookShowcase.tsx",
   );
+  const map = source("src/app/harita/kesif/page.tsx");
 
   for (const route of [
     "/eserler/yeni",
@@ -141,6 +142,8 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   contains(book, '"@type": "BreadcrumbList"', "book breadcrumbs");
   contains(showcase, '/yazarlar/${work.authorPublicId}', "book author link");
   contains(showcase, '/turler/${publicTaxonomySlug(work.genre)}', "book genre link");
+  contains(map, "Public Keşif Ağı", "system map discovery module");
+  contains(map, "Bölüm metni public yapılmadı", "chapter policy map boundary");
 });
 
 test("public discovery does not silently change chapter access policy", () => {

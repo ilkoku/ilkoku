@@ -17,6 +17,8 @@ export function PublicHubShell({
         <Link href="/">İlkOku</Link>
         <div>
           <Link href="/eserler">Eserler</Link>
+          <Link href="/eserler/yeni">Yeni</Link>
+          <Link href="/eserler/guncellenen">Güncellenen</Link>
           <Link href="/yazarlar">Yazarlar</Link>
           <Link href="/turler">Türler</Link>
           <Link href="/rehber">Rehberler</Link>
@@ -30,6 +32,8 @@ export function PublicHubShell({
           <strong>İlkOku</strong>
           <nav aria-label="Alt gezinme">
             <Link href="/eserler">Eserler</Link>
+            <Link href="/yazarlar">Yazarlar</Link>
+            <Link href="/turler">Türler</Link>
             <Link href="/rehber">Rehber</Link>
             <Link href="/yardim">Yardım</Link>
             <Link href="/yasal/gizlilik-politikasi">

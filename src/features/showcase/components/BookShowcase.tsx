@@ -50,7 +50,7 @@ export function BookShowcase({
   comments,
   isFavorite = false,
   readingProgress,
-  returnTo = "/kesfet",
+  returnTo = "/eserler",
   work,
 }: {
   canFavorite?: boolean;

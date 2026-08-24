@@ -244,7 +244,7 @@ export default async function HomePage() {
   const why = homepage.why;
   const footer = homepage.footer;
   const primaryHref = safeCmsInternalHref(hero?.primaryCtaHref) || "/kayit?rol=writer";
-  const secondaryHref = safeCmsInternalHref(hero?.secondaryCtaHref) || "/kesfet";
+  const secondaryHref = safeCmsInternalHref(hero?.secondaryCtaHref) || "/eserler";
   const passportHref = safeCmsInternalHref(passport?.ctaHref) || "#roller";
   const heroTitle = hero?.title || "İlk cümle,\nilk okurun,\nilk adımın.";
   const heroDescription = hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil.";
@@ -458,7 +458,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p><FooterSlogan value={footerSlogan} /></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div><div><h3>Destek</h3><a href="mailto:destek@ilkoku.com">Yardım Merkezi</a></div></div><p className="landing-footer__copyright"><span className="landing-footer__copyright-text">{footerCopyright}</span></p></footer>
+      <footer className="landing-footer" id="iletisim"><div className="landing-container landing-footer__grid"><div><Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" /></Link><p><FooterSlogan value={footerSlogan} /></p></div><div><h3>Platform</h3><a href="#hakkimizda">Hakkımızda</a><Link href="/eserler">Eserler</Link><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div><div><h3>Destek</h3><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div></div><p className="landing-footer__copyright"><span className="landing-footer__copyright-text">{footerCopyright}</span></p></footer>
     </main>
   );
 }

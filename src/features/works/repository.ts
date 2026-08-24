@@ -269,6 +269,13 @@ export const worksRepository = {
   async getPublicWork(slug: string) {
     return prisma.work.findFirst({
       where: {
+        archivedAt: null,
+        author: {
+          is: {
+            deletedAt: null,
+            status: "active",
+          },
+        },
         publishedAt: {
           not: null,
         },
@@ -297,6 +304,7 @@ export const worksRepository = {
         },
         chapters: {
           where: {
+            archivedAt: null,
             publishedAt: {
               not: null,
             },
@@ -317,6 +325,12 @@ export const worksRepository = {
   ) {
     const publicWorkWhere = {
       archivedAt: null,
+      author: {
+        is: {
+          deletedAt: null,
+          status: "active" as const,
+        },
+      },
       publishedAt: {
         not: null,
       },
@@ -395,6 +409,7 @@ export const worksRepository = {
   async getPublicChapter(workId: string, position: number) {
     return prisma.chapter.findFirst({
       where: {
+        archivedAt: null,
         publishedAt: {
           not: null,
         },

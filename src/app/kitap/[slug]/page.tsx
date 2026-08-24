@@ -17,7 +17,7 @@ type BookShowcasePageProps = {
 
 function getSafeReturnPath(value: string | undefined) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/kesfet";
+    return "/eserler";
   }
 
   return value;

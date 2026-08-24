@@ -5,6 +5,7 @@ import Link from "next/link";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import {
   getPublicWorkLibrary,
+  PUBLIC_WORK_PAGE_SIZE,
   publicWorkSorts,
   type PublicWorkLibraryFilters,
   type PublicWorkSort,
@@ -177,7 +178,8 @@ export default async function PublicWorkLibraryPage({
         (work, index) => ({
           "@type": "ListItem",
           position:
-            (library.currentPage - 1) * 18 +
+            (library.currentPage - 1) *
+              PUBLIC_WORK_PAGE_SIZE +
             index +
             1,
           url: `${baseUrl}/kitap/${work.slug}`,
@@ -479,7 +481,7 @@ export default async function PublicWorkLibraryPage({
         <section className="public-library__how">
           <div className="public-library__container">
             <p className="public-library__eyebrow">
-              İLKOKU'DA KEŞİF
+              İLKOKU’DA KEŞİF
             </p>
             <h2>Eserden bölüme açık ve anlaşılır yol</h2>
             <div>

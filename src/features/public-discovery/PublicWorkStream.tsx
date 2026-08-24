@@ -9,6 +9,7 @@ type PublicWorkStreamItem = {
   author: {
     displayName: string | null;
     fullName: string;
+    publicId: string;
   };
   description: string | null;
   genre: string | null;
@@ -79,7 +80,9 @@ export function PublicWorkStream({
               </Link>
             </h2>
             <p className="public-hub-card__author">
-              {authorName}
+              <Link href={`/yazarlar/${work.author.publicId}`}>
+                {authorName}
+              </Link>
             </p>
             <p className="public-hub-card__description">
               {summary(work.description)}

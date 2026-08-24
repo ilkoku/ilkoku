@@ -38,8 +38,10 @@ function summary(value: string | null) {
 }
 
 export function PublicWorkStream({
+  dateMode = "published",
   works,
 }: {
+  dateMode?: "published" | "updated";
   works: readonly PublicWorkStreamItem[];
 }) {
   return (
@@ -49,6 +51,10 @@ export function PublicWorkStream({
           work.author.displayName ??
           work.author.fullName;
         const genre = work.genre?.trim();
+        const displayedDate =
+          dateMode === "updated"
+            ? work.updatedAt
+            : work.publishedAt;
 
         return (
           <article
@@ -90,11 +96,12 @@ export function PublicWorkStream({
 
             <div className="public-hub-card__footer">
               <time
-                dateTime={
-                  work.publishedAt?.toISOString()
-                }
+                dateTime={displayedDate?.toISOString()}
               >
-                {formatDate(work.publishedAt)}
+                {dateMode === "updated"
+                  ? "Güncellendi: "
+                  : "Yayımlandı: "}
+                {formatDate(displayedDate)}
               </time>
               <Link
                 href={`/kitap/${work.slug}?from=/eserler`}

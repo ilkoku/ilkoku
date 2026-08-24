@@ -131,6 +131,7 @@ export async function getPublicWorkLibrary(
         select: {
           displayName: true,
           fullName: true,
+          publicId: true,
         },
       },
       description: true,
@@ -304,6 +305,7 @@ export async function getPublicWorkFeed() {
         select: {
           displayName: true,
           fullName: true,
+          publicId: true,
         },
       },
       description: true,

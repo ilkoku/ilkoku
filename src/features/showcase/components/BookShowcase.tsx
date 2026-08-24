@@ -10,6 +10,7 @@ import { ReaderCommentList } from "@/features/reader/components/ReaderCommentLis
 import { toggleFavoriteAction } from "@/features/reader/favorites";
 import { WorkShareActions } from "@/features/reading/components/WorkShareActions";
 import type { PublicWorkDetail } from "@/features/works/types";
+import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 
 import { BookCover } from "./BookCover";
 
@@ -141,7 +142,7 @@ export function BookShowcase({
 
             <Link
               className="showcase-author-link"
-              href="#yazar"
+              href={`/yazarlar/${work.authorPublicId}`}
             >
               {work.authorName}
             </Link>
@@ -149,7 +150,15 @@ export function BookShowcase({
             <dl className="showcase-metadata">
               <div>
                 <dt>{readingContent.common.category}</dt>
-                <dd>{genreLabel}</dd>
+                <dd>
+                  {work.genre ? (
+                    <Link href={`/turler/${publicTaxonomySlug(work.genre)}`}>
+                      {genreLabel}
+                    </Link>
+                  ) : (
+                    genreLabel
+                  )}
+                </dd>
               </div>
 
               <div>
@@ -430,9 +439,16 @@ export function BookShowcase({
               </div>
 
               <p>
-                Yazarın profil bilgileri yayınlandığında
-                burada görünecek.
+                Yazarın herkese açık yayımlanan eserlerini
+                tek sayfada inceleyin.
               </p>
+
+              <Link
+                className="showcase-text-link"
+                href={`/yazarlar/${work.authorPublicId}`}
+              >
+                Yazarın tüm eserleri <span aria-hidden="true">→</span>
+              </Link>
             </Card>
           </aside>
         </div>

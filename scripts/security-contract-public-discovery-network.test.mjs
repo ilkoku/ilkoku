@@ -150,5 +150,14 @@ test("public discovery does not silently change chapter access policy", () => {
 
   contains(chapter, "index: false", "chapter noindex policy");
   contains(chapter, "follow: false", "chapter nofollow policy");
-  contains(chapter, "requirePageUser", "chapter authentication gate");
+  contains(
+    chapter,
+    "getCurrentSessionContext",
+    "chapter session lookup",
+  );
+  contains(
+    chapter,
+    'redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`)',
+    "chapter authentication redirect",
+  );
 });

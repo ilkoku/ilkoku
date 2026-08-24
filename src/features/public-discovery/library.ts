@@ -3,6 +3,7 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
+import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 
 export const PUBLIC_WORK_PAGE_SIZE = 18;
 export const publicWorkSorts = ["newest", "updated"] as const;
@@ -15,14 +16,8 @@ export type PublicWorkLibraryFilters = {
   sort: PublicWorkSort;
 };
 
-const publicWorkBaseWhere: Prisma.WorkWhereInput = {
+const publicWorkPublicationWhere: Prisma.WorkWhereInput = {
   archivedAt: null,
-  author: {
-    is: {
-      deletedAt: null,
-      status: "active",
-    },
-  },
   language: "tr",
   publishedAt: {
     not: null,
@@ -32,6 +27,16 @@ const publicWorkBaseWhere: Prisma.WorkWhereInput = {
   },
   status: "published",
   visibility: "public",
+};
+
+const publicWorkBaseWhere: Prisma.WorkWhereInput = {
+  ...publicWorkPublicationWhere,
+  author: {
+    is: {
+      deletedAt: null,
+      status: "active",
+    },
+  },
 };
 
 function publicWorkWhere(
@@ -150,4 +155,158 @@ export async function getPublicWorkLibrary(
     totalPages,
     works,
   };
+}
+
+
+export async function getPublicGenres() {
+  const rows = await prisma.work.findMany({
+    distinct: ["genre"],
+    orderBy: {
+      genre: "asc",
+    },
+    select: {
+      genre: true,
+    },
+    take: 100,
+    where: {
+      ...publicWorkBaseWhere,
+      genre: {
+        not: null,
+      },
+    },
+  });
+
+  return rows
+    .map((row) => row.genre?.trim())
+    .filter((genre): genre is string => Boolean(genre))
+    .map((genre) => ({
+      label: genre,
+      slug: publicTaxonomySlug(genre),
+    }))
+    .filter((genre) => Boolean(genre.slug));
+}
+
+export async function getPublicGenreBySlug(
+  slug: string,
+) {
+  const genres = await getPublicGenres();
+
+  return (
+    genres.find((genre) => genre.slug === slug) ??
+    null
+  );
+}
+
+export async function getPublicAuthors() {
+  return prisma.user.findMany({
+    orderBy: [
+      {
+        displayName: "asc",
+      },
+      {
+        fullName: "asc",
+      },
+    ],
+    select: {
+      _count: {
+        select: {
+          works: {
+            where: publicWorkPublicationWhere,
+          },
+        },
+      },
+      displayName: true,
+      fullName: true,
+      publicId: true,
+    },
+    take: 500,
+    where: {
+      deletedAt: null,
+      status: "active",
+      works: {
+        some: publicWorkPublicationWhere,
+      },
+    },
+  });
+}
+
+export async function getPublicAuthorById(
+  publicId: string,
+) {
+  return prisma.user.findFirst({
+    select: {
+      displayName: true,
+      fullName: true,
+      publicId: true,
+      works: {
+        orderBy: [
+          {
+            publishedAt: "desc",
+          },
+          {
+            updatedAt: "desc",
+          },
+        ],
+        select: {
+          _count: {
+            select: {
+              chapters: {
+                where: {
+                  archivedAt: null,
+                  publishedAt: {
+                    not: null,
+                  },
+                  status: "published",
+                },
+              },
+            },
+          },
+          description: true,
+          genre: true,
+          publishedAt: true,
+          slug: true,
+          title: true,
+          updatedAt: true,
+        },
+        where: publicWorkPublicationWhere,
+      },
+    },
+    where: {
+      deletedAt: null,
+      publicId,
+      status: "active",
+      works: {
+        some: publicWorkPublicationWhere,
+      },
+    },
+  });
+}
+
+export async function getPublicWorkFeed() {
+  return prisma.work.findMany({
+    orderBy: [
+      {
+        updatedAt: "desc",
+      },
+      {
+        publishedAt: "desc",
+      },
+    ],
+    select: {
+      author: {
+        select: {
+          displayName: true,
+          fullName: true,
+        },
+      },
+      description: true,
+      genre: true,
+      publishedAt: true,
+      slug: true,
+      title: true,
+      updatedAt: true,
+    },
+    take: 50,
+    where: publicWorkBaseWhere,
+  });
 }

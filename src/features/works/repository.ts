@@ -299,6 +299,7 @@ export const worksRepository = {
             displayName: true,
             fullName: true,
             id: true,
+            publicId: true,
             username: true,
           },
         },

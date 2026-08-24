@@ -27,9 +27,9 @@ const statusLabel = (status: "pass" | "warn" | "blocker") => {
 
 export default function SupplyChainSecurityPage() {
   const report = supplyChainSecurityReport;
-  const manifestWarnings = report.rootManifest.warnings as readonly ManifestWarning[];
-  const duplicateVersionPackages = report.duplicateVersionPackages as readonly DuplicateVersionPackage[];
-  const scannerDiscrepancies = report.scannerDiscrepancies as readonly ScannerDiscrepancy[];
+  const manifestWarnings: readonly ManifestWarning[] = report.rootManifest.warnings;
+  const duplicateVersionPackages: readonly DuplicateVersionPackage[] = report.duplicateVersionPackages;
+  const scannerDiscrepancies: readonly ScannerDiscrepancy[] = report.scannerDiscrepancies;
   const overall: "pass" | "warn" | "blocker" = report.summary.blockers > 0
     ? "blocker"
     : report.summary.warnings > 0

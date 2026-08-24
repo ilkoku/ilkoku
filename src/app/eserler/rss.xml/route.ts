@@ -32,7 +32,7 @@ export async function GET() {
         `      <title>${escapeXml(work.title)}</title>`,
         `      <link>${url}</link>`,
         `      <guid isPermaLink="true">${url}</guid>`,
-        `      <author>${escapeXml(authorName)}</author>`,
+        `      <dc:creator>${escapeXml(authorName)}</dc:creator>`,
         work.genre
           ? `      <category>${escapeXml(work.genre)}</category>`
           : "",
@@ -49,7 +49,7 @@ export async function GET() {
 
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">',
     "  <channel>",
     "    <title>İlkOku — Herkese Açık Eserler</title>",
     `    <link>${baseUrl}/eserler</link>`,

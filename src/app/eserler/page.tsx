@@ -10,6 +10,7 @@ import {
   type PublicWorkLibraryFilters,
   type PublicWorkSort,
 } from "@/features/public-discovery/library";
+import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 
 import "./public-library.css";
 
@@ -132,6 +133,9 @@ export async function generateMetadata({
         "tr-TR": "/eserler",
         "x-default": "/eserler",
       },
+      types: {
+        "application/rss+xml": `${baseUrl}/eserler/rss.xml`,
+      },
     },
     robots: {
       index: !filtered,
@@ -224,8 +228,9 @@ export default async function PublicWorkLibraryPage({
             <Link aria-current="page" href="/eserler">
               Eserler
             </Link>
+            <Link href="/yazarlar">Yazarlar</Link>
+            <Link href="/turler">Türler</Link>
             <Link href="/rehber">Rehber</Link>
-            <Link href="/editorler">Editörler</Link>
           </nav>
 
           <div className="public-library__account">
@@ -263,6 +268,30 @@ export default async function PublicWorkLibraryPage({
             </aside>
           </div>
         </section>
+
+        <nav
+          aria-label="Eser keşif yolları"
+          className="public-library__routes"
+        >
+          <div className="public-library__container">
+            <Link href="/eserler/yeni">
+              <strong>Yeni yayımlananlar</strong>
+              <span>Yayın tarihine göre keşfet →</span>
+            </Link>
+            <Link href="/eserler/guncellenen">
+              <strong>Son güncellenenler</strong>
+              <span>Yakın zamanda değişen eserler →</span>
+            </Link>
+            <Link href="/yazarlar">
+              <strong>Yazarlar</strong>
+              <span>Yazarların herkese açık eserleri →</span>
+            </Link>
+            <Link href="/turler">
+              <strong>Türler</strong>
+              <span>Gerçek yayınların tür dizini →</span>
+            </Link>
+          </div>
+        </nav>
 
         <section
           className="public-library__catalog"
@@ -366,7 +395,17 @@ export default async function PublicWorkLibraryPage({
 
                       <div className="public-library-card__body">
                         <div className="public-library-card__meta">
-                          <span>{genre}</span>
+                          {work.genre ? (
+                            <Link
+                              href={`/turler/${publicTaxonomySlug(
+                                work.genre,
+                              )}`}
+                            >
+                              {genre}
+                            </Link>
+                          ) : (
+                            <span>{genre}</span>
+                          )}
                           <span>
                             {work._count.chapters} bölüm
                           </span>
@@ -387,7 +426,11 @@ export default async function PublicWorkLibraryPage({
                         ) : null}
 
                         <p className="public-library-card__author">
-                          {authorName}
+                          <Link
+                            href={`/yazarlar/${work.author.publicId}`}
+                          >
+                            {authorName}
+                          </Link>
                         </p>
                         <p className="public-library-card__description">
                           {shortDescription(work.description)}
@@ -497,8 +540,8 @@ export default async function PublicWorkLibraryPage({
                 <span>02</span>
                 <h3>Yayımlanan bölümü oku</h3>
                 <p>
-                  Yalnızca yazarın herkese açtığı bölümlere
-                  kalıcı eser bağlantısından ulaş.
+                  Yazarın yayımladığı bölümlere ücretsiz
+                  okuyucu hesabıyla kalıcı eser bağlantısından ulaş.
                 </p>
               </article>
               <article>
@@ -524,6 +567,8 @@ export default async function PublicWorkLibraryPage({
           </p>
           <nav aria-label="Alt gezinme">
             <Link href="/eserler">Eserler</Link>
+            <Link href="/yazarlar">Yazarlar</Link>
+            <Link href="/turler">Türler</Link>
             <Link href="/rehber">Rehber</Link>
             <Link href="/yardim">Yardım</Link>
             <Link href="/yasal/gizlilik-politikasi">

@@ -19,7 +19,7 @@ test("every active CMS module has an explicit operations mode", () => {
   const modules = source("src/lib/cms-modules.ts");
   const activeRows = modules.split("\n").filter((line) => line.includes('enabled: true'));
 
-  assert.equal(activeRows.length, 22, "CMS active module inventory must remain explicit");
+  assert.equal(activeRows.length, 21, "CMS active module inventory must remain explicit");
   for (const row of activeRows) {
     assert.match(row, /mode: "(controlled-write|read-only-audit|admin-control)"/, `missing CMS mode: ${row.trim()}`);
   }

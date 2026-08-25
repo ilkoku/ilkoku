@@ -132,8 +132,8 @@ export default async function PublicAuthorsPage() {
                 Bir yazar ilk herkese açık eserini
                 yayımladığında vitrini otomatik oluşacak.
               </p>
-              <Link href="/rehber/ilk-eseri-yayinlama-rehberi">
-                İlk yayın rehberini oku
+              <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
+                İlkOku’da eser yolculuğunu öğren
               </Link>
             </div>
           )}

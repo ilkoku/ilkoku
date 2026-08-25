@@ -169,7 +169,6 @@ jobs:
               "/icerik/medya"
               "/icerik/sss"
               "/icerik/duyurular"
-              "/icerik/rehber"
               "/icerik/yayin-kuyrugu"
               "/icerik/zamanlama"
               "/icerik/seo"
@@ -188,6 +187,13 @@ jobs:
               check_protected_route "https://ilkoku.com${path}" || return 1
               check_private_index_header "https://ilkoku.com${path}" || return 1
             done
+          }
+
+          check_post_merge_redirect_route() {
+            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+              return 0
+            fi
+            check_redirect_route "$@"
           }
 
           check_redirect_route() {
@@ -232,7 +238,6 @@ jobs:
               && check_body_contains "https://ilkoku.com/sitemap.xml" \
                 "https://ilkoku.com/yardim" \
                 "https://ilkoku.com/editorler" \
-                "https://ilkoku.com/rehber" \
                 "https://ilkoku.com/yasal/kullanim-sartlari" \
                 "https://ilkoku.com/yasal/gizlilik-politikasi" \
                 "https://ilkoku.com/yasal/kvkk" \
@@ -244,7 +249,7 @@ jobs:
                 "https://ilkoku.com/eserler/guncellenen" \
                 "https://ilkoku.com/yazarlar" \
                 "https://ilkoku.com/turler" \
-                "https://ilkoku.com/rehber/ilk-eseri-yayinlama-rehberi" \
+                "https://ilkoku.com/nasil-calisir" \
               && check_post_merge_body_contains "https://ilkoku.com/eserler" \
                 "HERKESE AÇIK ESER KÜTÜPHANESİ" \
                 "Yeni yayımlananlar" \
@@ -255,11 +260,13 @@ jobs:
               && check_post_merge_public_route "https://ilkoku.com/eserler/guncellenen" "200" \
               && check_post_merge_public_route "https://ilkoku.com/yazarlar" "200" \
               && check_post_merge_public_route "https://ilkoku.com/turler" "200" \
-              && check_post_merge_body_contains "https://ilkoku.com/rehber" \
-                "İlk Eseri Yayımlama Rehberi" \
-                "Eser Pasaportu Nedir?" \
-              && check_post_merge_body_contains "https://ilkoku.com/rehber/ilk-eseri-yayinlama-rehberi" \
-                "Yayınlamak ile taslağı kaydetmek aynı şey değildir" \
+              && check_post_merge_public_route "https://ilkoku.com/nasil-calisir" "200" \
+              && check_post_merge_body_contains "https://ilkoku.com/nasil-calisir" \
+                "Eser İlkOku'da nasıl ilerler?" \
+                "Kim neyi görebilir?" \
+                "Eser Pasaportu" \
+              && check_post_merge_redirect_route "https://ilkoku.com/rehber" "/nasil-calisir" \
+              && check_post_merge_redirect_route "https://ilkoku.com/rehber/ilk-eseri-yayinlama-rehberi" "/nasil-calisir" \
               && check_post_merge_body_contains "https://ilkoku.com/eserler/rss.xml" \
                 "<rss version=" \
                 "İlkOku — Herkese Açık Eserler" \
@@ -297,7 +304,7 @@ jobs:
               && check_protected_route "https://ilkoku.com/yayinevi/editor-talepleri" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production public/private route paketi, bildirim yüzeyleri, writer/publisher/editor kritik rotaları, sitemap/robots ve 21 ana CMS rotası doğrulandı."
+              echo "PASS: Production public/private route paketi, bildirim yüzeyleri, writer/publisher/editor kritik rotaları, sitemap/robots ve 20 ana CMS rotası doğrulandı."
               exit 0
             fi
 

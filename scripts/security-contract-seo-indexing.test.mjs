@@ -30,8 +30,9 @@ test("global public routes have file-based social image fallbacks", () => {
 test("sitemap stays Turkish-only and includes only published indexable CMS content", () => {
   const sitemap = source("src/app/sitemap.ts");
 
-  assertContains(sitemap, "contentKey LIKE 'guide:%'", "TR guide sitemap coverage");
-  assertContains(sitemap, "contentKey NOT LIKE 'guide:en:%'", "EN guide exclusion");
+  assertContains(sitemap, "${baseUrl}/nasil-calisir", "static how-it-works sitemap route");
+  assertNotContains(sitemap, "contentKey LIKE 'guide:%'", "retired guide sitemap inventory");
+  assertNotContains(sitemap, "foundationalGuides", "retired foundational guide sitemap source");
   assertContains(sitemap, "contentKey LIKE 'page:tr:%'", "TR generic page sitemap coverage");
   assertContains(sitemap, "status = 'published'", "published-only CMS sitemap boundary");
   assertContains(sitemap, "noIndex = false", "noindex exclusion");

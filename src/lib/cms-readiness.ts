@@ -11,7 +11,7 @@ export const cmsReadinessTargets = {
 
 export const cmsReadinessRequiredContent = {
   corporate: "page:tr:hakkimizda",
-  guide: "guide:ilkoku-nasil-calisir",
+  guide: "page:tr:nasil-calisir",
   faq: [
     "item_starter_ilkoku_nedir",
     "item_starter_yazar_yayin",
@@ -252,17 +252,17 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
         LIMIT 1) AS faqPendingDraftKey,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status = 'published'
-          AND contentKey = 'guide:ilkoku-nasil-calisir'
+          AND contentKey = 'page:tr:nasil-calisir'
           AND noIndex = false) AS guides,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status IN ('draft', 'published')
-          AND contentKey = 'guide:ilkoku-nasil-calisir') AS guidesCreated,
+          AND contentKey = 'page:tr:nasil-calisir') AS guidesCreated,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status = 'archived'
-          AND contentKey = 'guide:ilkoku-nasil-calisir') AS guidesArchived,
+          AND contentKey = 'page:tr:nasil-calisir') AS guidesArchived,
       (SELECT COUNT(*) FROM ContentPage
         WHERE status IN ('draft', 'published')
-          AND contentKey = 'guide:ilkoku-nasil-calisir'
+          AND contentKey = 'page:tr:nasil-calisir'
           AND noIndex = false
           AND COALESCE(TRIM(seoTitle), '') <> ''
           AND COALESCE(TRIM(seoDescription), '') <> ''
@@ -271,20 +271,20 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
         INNER JOIN ContentPage page ON draft.contentKey = CONCAT('page:', page.id)
         WHERE draft.namespace = 'cms_draft'
           AND draft.status = 'draft'
-          AND page.contentKey = 'guide:ilkoku-nasil-calisir'
+          AND page.contentKey = 'page:tr:nasil-calisir'
           AND page.status = 'published') AS guidesPendingDraft,
       (SELECT TIMESTAMPDIFF(HOUR, MIN(draft.updatedAt), CURRENT_TIMESTAMP(3)) FROM SiteContent draft
         INNER JOIN ContentPage page ON draft.contentKey = CONCAT('page:', page.id)
         WHERE draft.namespace = 'cms_draft'
           AND draft.status = 'draft'
-          AND page.contentKey = 'guide:ilkoku-nasil-calisir'
+          AND page.contentKey = 'page:tr:nasil-calisir'
           AND page.status = 'published') AS guidesPendingAgeHours,
       (SELECT id FROM ContentPage
-        WHERE contentKey = 'guide:ilkoku-nasil-calisir'
+        WHERE contentKey = 'page:tr:nasil-calisir'
         ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
         LIMIT 1) AS guideId,
       (SELECT status FROM ContentPage
-        WHERE contentKey = 'guide:ilkoku-nasil-calisir'
+        WHERE contentKey = 'page:tr:nasil-calisir'
         ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
         LIMIT 1) AS guideStatus,
       (SELECT COUNT(*) FROM SiteContent

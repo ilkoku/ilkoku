@@ -230,7 +230,7 @@ export default async function PublicWorkLibraryPage({
             </Link>
             <Link href="/yazarlar">Yazarlar</Link>
             <Link href="/turler">Türler</Link>
-            <Link href="/rehber">Rehber</Link>
+            <Link href="/nasil-calisir">Nasıl Çalışır</Link>
           </nav>
 
           <div className="public-library__account">
@@ -569,7 +569,7 @@ export default async function PublicWorkLibraryPage({
             <Link href="/eserler">Eserler</Link>
             <Link href="/yazarlar">Yazarlar</Link>
             <Link href="/turler">Türler</Link>
-            <Link href="/rehber">Rehber</Link>
+            <Link href="/nasil-calisir">Nasıl Çalışır</Link>
             <Link href="/yardim">Yardım</Link>
             <Link href="/yasal/gizlilik-politikasi">
               Gizlilik

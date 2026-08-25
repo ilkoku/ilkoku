@@ -8,6 +8,11 @@ type PublicEditorialDocumentProps = {
   backHref: string;
   backLabel: string;
   updatedAt?: Date | string | null;
+  relatedLinks?: readonly {
+    description: string;
+    href: string;
+    label: string;
+  }[];
 };
 
 function formatUpdatedAt(value?: Date | string | null) {
@@ -15,6 +20,31 @@ function formatUpdatedAt(value?: Date | string | null) {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return new Intl.DateTimeFormat("tr-TR", { dateStyle: "long" }).format(date);
+}
+
+function headingId(value: string) {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[ç]/g, "c")
+    .replace(/[ğ]/g, "g")
+    .replace(/[ı]/g, "i")
+    .replace(/[ö]/g, "o")
+    .replace(/[ş]/g, "s")
+    .replace(/[ü]/g, "u")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function tableCells(line: string) {
+  return line
+    .replace(/^\||\|$/g, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function isTableSeparator(line: string) {
+  const cells = tableCells(line);
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
 }
 
 function EditorialBody({ body }: { body: string }) {
@@ -27,22 +57,49 @@ function EditorialBody({ body }: { body: string }) {
     <div className="space-y-6 text-[1.02rem] leading-8 text-[#302b42]">
       {blocks.map((block, index) => {
         if (block.startsWith("## ")) {
+          const title = block.slice(3);
           return (
-            <h2 className="pt-5 text-2xl font-semibold tracking-[-0.025em] text-[#17142f] sm:text-3xl" key={`${index}-${block}`}>
-              {block.slice(3)}
+            <h2 className="scroll-mt-8 pt-5 text-2xl font-semibold tracking-[-0.025em] text-[#17142f] sm:text-3xl" id={headingId(title)} key={`${index}-${block}`}>
+              {title}
             </h2>
           );
         }
 
         if (block.startsWith("### ")) {
+          const title = block.slice(4);
           return (
-            <h3 className="pt-3 text-xl font-semibold tracking-[-0.02em] text-[#24203f]" key={`${index}-${block}`}>
-              {block.slice(4)}
+            <h3 className="scroll-mt-8 pt-3 text-xl font-semibold tracking-[-0.02em] text-[#24203f]" id={headingId(title)} key={`${index}-${block}`}>
+              {title}
             </h3>
           );
         }
 
         const lines = block.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        if (lines.length >= 2 && lines[0].includes("|") && isTableSeparator(lines[1])) {
+          const headers = tableCells(lines[0]);
+          const rows = lines.slice(2).map(tableCells);
+          return (
+            <div className="overflow-x-auto rounded-2xl border border-[#6847e8]/12" key={`${index}-table`}>
+              <table className="min-w-full border-collapse text-left text-sm leading-6">
+                <thead className="bg-[#f4f1ff] text-[#241b45]">
+                  <tr>{headers.map((header) => <th className="whitespace-nowrap border-b border-[#6847e8]/12 px-4 py-3 font-extrabold" key={header}>{header}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y divide-[#6847e8]/10 bg-white">
+                  {rows.map((row, rowIndex) => (
+                    <tr key={`${index}-${rowIndex}`}>
+                      {headers.map((header, cellIndex) => (
+                        <td className="min-w-36 px-4 py-3 align-top text-[#4b465a]" key={`${header}-${cellIndex}`}>
+                          {row[cellIndex] ?? ""}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+
         if (lines.length > 0 && lines.every((line) => line.startsWith("- "))) {
           return (
             <ul className="space-y-3 pl-1" key={`${index}-${block.slice(0, 24)}`}>
@@ -78,6 +135,7 @@ export function PublicEditorialDocument({
   backHref,
   backLabel,
   updatedAt,
+  relatedLinks = [],
 }: PublicEditorialDocumentProps) {
   const updatedLabel = formatUpdatedAt(updatedAt);
 
@@ -105,6 +163,22 @@ export function PublicEditorialDocument({
             <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#6847e8]/65 to-transparent" />
             <EditorialBody body={body} />
           </section>
+
+          {relatedLinks.length > 0 ? (
+            <aside className="mt-8 sm:mt-10" aria-labelledby="related-public-links">
+              <h2 className="text-center text-2xl font-semibold tracking-[-0.025em] text-[#17142f]" id="related-public-links">
+                İlkOku içinde devam et
+              </h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {relatedLinks.map((link) => (
+                  <Link className="rounded-2xl border border-[#6847e8]/12 bg-white p-5 no-underline shadow-sm transition hover:-translate-y-0.5 hover:border-[#6847e8]/30 hover:shadow-md" href={link.href} key={link.href}>
+                    <strong className="text-[#4b2dbf]">{link.label} →</strong>
+                    <span className="mt-2 block text-sm leading-6 text-[#655e78]">{link.description}</span>
+                  </Link>
+                ))}
+              </div>
+            </aside>
+          ) : null}
 
           <div className="mt-8 flex justify-center sm:mt-10">
             <Link className="inline-flex items-center rounded-full border border-[#6847e8]/18 bg-white px-5 py-3 text-sm font-semibold text-[#4b2dbf] no-underline shadow-sm transition hover:-translate-y-0.5 hover:border-[#6847e8]/35 hover:shadow-md" href={backHref}>

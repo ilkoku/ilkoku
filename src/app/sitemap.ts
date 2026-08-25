@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { foundationalGuides } from "@/content/public-guides";
+import { howItWorksPageContent } from "@/content/how-it-works";
 import {
   getPublicAuthors,
   getPublicGenres,
@@ -29,18 +29,6 @@ type CmsLegalSitemapRow = CmsSitemapRow & {
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const foundationalEntries: MetadataRoute.Sitemap =
-    foundationalGuides.map((guide) => ({
-      url: `${baseUrl}/rehber/${guide.slug}`,
-      lastModified: new Date(guide.updatedAt),
-      changeFrequency: "monthly" as const,
-      priority: 0.65,
-    }));
-  const foundationalPaths = new Set(
-    foundationalGuides.map(
-      (guide) => `/rehber/${guide.slug}`,
-    ),
-  );
   const safeStaticEntries: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
@@ -83,11 +71,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/rehber`,
-      changeFrequency: "weekly",
-      priority: 0.7,
+      url: `${baseUrl}/nasil-calisir`,
+      lastModified: new Date(howItWorksPageContent.updatedAt),
+      changeFrequency: "monthly",
+      priority: 0.8,
     },
-    ...foundationalEntries,
   ];
 
   try {
@@ -95,7 +83,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       works,
       authors,
       genres,
-      guides,
       pages,
       legalRows,
     ] = await Promise.all([
@@ -126,16 +113,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }),
       getPublicAuthors(),
       getPublicGenres(),
-      prisma.$queryRaw<CmsSitemapRow[]>`
-        SELECT slug, updatedAt
-        FROM ContentPage
-        WHERE contentKey LIKE 'guide:%'
-          AND contentKey NOT LIKE 'guide:en:%'
-          AND status = 'published'
-          AND noIndex = false
-        ORDER BY updatedAt DESC
-        LIMIT 5000
-      `,
       prisma.$queryRaw<CmsSitemapRow[]>`
         SELECT slug, updatedAt
         FROM ContentPage
@@ -206,23 +183,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: "weekly" as const,
           priority: 0.8,
         })),
-      ...guides
-        .filter(
-          (guide) =>
-            !foundationalPaths.has(guide.slug),
-        )
-        .map((guide) => ({
-          url: `${baseUrl}${guide.slug}`,
-          lastModified: guide.updatedAt,
+      ...pages
+        .filter((page) => page.slug !== howItWorksPageContent.canonical)
+        .map((page) => ({
+          url: `${baseUrl}${page.slug}`,
+          lastModified: page.updatedAt,
           changeFrequency: "monthly" as const,
           priority: 0.6,
         })),
-      ...pages.map((page) => ({
-        url: `${baseUrl}${page.slug}`,
-        lastModified: page.updatedAt,
-        changeFrequency: "monthly" as const,
-        priority: 0.6,
-      })),
     ];
   } catch {
     // Keep the stable public discovery network available even if

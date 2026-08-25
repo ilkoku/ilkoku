@@ -10,6 +10,11 @@ export {
   readerNavigationContent,
 } from "./navigation";
 export { notificationContent } from "./notifications";
+export {
+  getPublicTrustPageVisual,
+  publicTrustPageVisuals,
+  type PublicTrustPagePath,
+} from "./public-trust-page-visuals";
 export { publisherContent } from "./publisher";
 export { publishersContent } from "./publishers";
 export { readingContent } from "./reading";

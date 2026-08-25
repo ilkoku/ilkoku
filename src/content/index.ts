@@ -1,4 +1,5 @@
 export { authContent } from "./auth";
+export { communityRulesPageContent } from "./community-rules";
 export { dashboardContent } from "./dashboard";
 export { editorialStandardsPageContent } from "./editorial-standards";
 export { contentAgePolicyPageContent } from "./content-age-policy";

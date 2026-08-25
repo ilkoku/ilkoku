@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { communityRulesPageContent } from "@/content/community-rules";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
@@ -98,6 +99,16 @@ Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile ince
     body: contentAgePolicyPageContent.body,
     seoTitle: contentAgePolicyPageContent.seoTitle,
     seoDescription: contentAgePolicyPageContent.seoDescription,
+    kind: "page",
+  },
+  {
+    contentKey: "page:tr:topluluk-kurallari",
+    slug: communityRulesPageContent.canonical,
+    title: communityRulesPageContent.title,
+    summary: communityRulesPageContent.summary,
+    body: communityRulesPageContent.body,
+    seoTitle: communityRulesPageContent.seoTitle,
+    seoDescription: communityRulesPageContent.seoDescription,
     kind: "page",
   },
 ];
@@ -235,6 +246,7 @@ export async function createStarterContentDraftsAction() {
   revalidatePath("/nasil-calisir");
   revalidatePath("/editoryal-standartlar");
   revalidatePath("/icerik-ve-yas-politikasi");
+  revalidatePath("/topluluk-kurallari");
   revalidatePath("/icerik/sss");
   revalidatePath("/icerik/yayin-kuyrugu");
   revalidatePath("/icerik/gecmis");

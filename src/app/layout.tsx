@@ -10,6 +10,7 @@ import "./landing-role-icons.css";
 import "./landing-footer-shared-base.css";
 import "./landing-footer-pro.css";
 import "./landing-footer-tight.css";
+import "./public-trust-footer-logo-fix.css";
 import "./landing-header-pro.css";
 import "./landing-account-bubble.css";
 

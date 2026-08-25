@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { cache } from "react";
 
-import { PublicEditorialDocument } from "@/components/content/PublicEditorialDocument";
+import { HowItWorksExperience } from "@/components/content/HowItWorksExperience";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
+import "./how-it-works.css";
 
 const baseUrl = "https://ilkoku.com";
+const socialImage = `${baseUrl}/how-it-works/journey.webp`;
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +55,13 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "tr_TR",
       url: page.canonical,
+      images: [{ url: socialImage, alt: "İlkOku eser yolculuğu" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: page.seoTitle,
+      description: page.seoDescription,
+      images: [socialImage],
     },
   };
 }
@@ -69,6 +78,10 @@ export default async function HowItWorksPage() {
       inLanguage: "tr-TR",
       url: absoluteUrl,
       dateModified: page.updatedAt.toISOString(),
+      primaryImageOfPage: {
+        "@type": "ImageObject",
+        url: socialImage,
+      },
       isPartOf: {
         "@type": "WebSite",
         name: "İlkOku",
@@ -103,36 +116,11 @@ export default async function HowItWorksPage() {
           __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
         }}
       />
-      <PublicEditorialDocument
-        eyebrow="İlkOku'da eser yolculuğu"
+      <HowItWorksExperience
         title={page.title}
         summary={page.summary}
         body={page.body}
-        backHref="/"
-        backLabel="Ana sayfa"
         updatedAt={page.updatedAt}
-        relatedLinks={[
-          {
-            href: "/eserler",
-            label: "Eserleri keşfet",
-            description: "İlkOku'da herkese açık olarak yayımlanmış eserleri inceleyin.",
-          },
-          {
-            href: "/yazarlar",
-            label: "Yazarları keşfet",
-            description: "Public yazar vitrinlerinden yayımlanmış eserlere ulaşın.",
-          },
-          {
-            href: "/editorler",
-            label: "Editörleri incele",
-            description: "Doğrulanmış ve public görünürlüğe açık editör profillerini görün.",
-          },
-          {
-            href: "/yardim",
-            label: "Yardım Merkezi",
-            description: "Hesap ve kullanım sorularınız için mevcut destek içeriklerine ulaşın.",
-          },
-        ]}
       />
     </>
   );

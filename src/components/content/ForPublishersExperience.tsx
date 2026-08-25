@@ -66,28 +66,6 @@ function SectionHeading({ eyebrow, title, description }: { eyebrow: string; titl
   return <header className="how-section-heading"><span>{eyebrow}</span><h2>{title}</h2>{description ? <p>{description}</p> : null}</header>;
 }
 
-function PublisherFooter() {
-  return (
-    <footer className="publishers-footer" aria-label="İlkOku site alt bilgisi">
-      <div className="publishers-footer__inner">
-        <div className="publishers-footer__brand">
-          <Link className="publishers-footer__logo" href="/" aria-label="İlkOku ana sayfa">
-            <Image src={logo} alt="İlkOku" sizes="156px" />
-          </Link>
-          <p>İlk cümle, ilk okurun, <strong>ilk adımın.</strong></p>
-        </div>
-        <div className="publishers-footer__column"><h3>Platform</h3><Link href="/#hakkimizda">Hakkımızda</Link><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/turler">Türler</Link><Link href="/#eser-pasaportu">Eser Pasaportu</Link><Link href="/#neden-ilkoku">Neden İlkOku?</Link><Link href="/editorler">Editörler</Link></div>
-        <div className="publishers-footer__column"><h3>Hesap</h3><Link href="/giris">Giriş Yap</Link><Link href="/kayit">Üye Ol</Link><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></div>
-        <div className="publishers-footer__column"><h3>Destek</h3><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div>
-      </div>
-      <div className="publishers-footer__bottom">
-        <span>© 2026 İlkOku. Tüm hakları saklıdır.</span>
-        <nav aria-label="Yasal bağlantılar"><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik Politikası</Link><Link href="/yasal/kvkk">KVKK</Link><Link href="/yasal/cerez-politikasi">Çerez Politikası</Link><Link href="/yasal/telif-hakki-politikasi">Telif Hakkı Politikası</Link></nav>
-      </div>
-    </footer>
-  );
-}
-
 export function ForPublishersExperience({ body, summary, title, updatedAt }: { body: string; summary: string; title: string; updatedAt?: Date | string | null }) {
   const parsed = splitSections(body);
   const sectionMap = new Map(parsed.sections.map((section) => [section.title, section]));
@@ -151,11 +129,21 @@ export function ForPublishersExperience({ body, summary, title, updatedAt }: { b
         {sectionMap.get("İlkOku yayınevi için neyi garanti etmez") ? <article><PublisherIcon name="shield" /><span>Garanti sınırı</span><h3>Keşif ve inceleme, yayın veya ticari başarı garantisi değildir.</h3><EditorialBody body={sectionMap.get("İlkOku yayınevi için neyi garanti etmez")!.body} /></article> : null}
       </div></div></section>
 
-      {extras.length ? <section className="publishers-extra how-container">{extras.map((section) => <article key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
+      {extras.length ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
-      {sectionMap.get("Yayınevi olarak başla") ? <section className="publishers-start-section"><div className="publishers-start how-container"><PublisherIcon name="building" /><div><span>Kurumsal başlangıç</span><h2>Keşif yetkisini ekip sorumluluğuyla birlikte kur.</h2><EditorialBody body={sectionMap.get("Yayınevi olarak başla")!.body} /><div className="publishers-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=publisher">Yayınevi olarak başla <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/editoryal-standartlar">Editoryal Standartlar</Link><Link className="how-button how-button--secondary" href="/telif-bildirimi">Telif Bildirimi</Link></div></div></div></section> : null}
+      {sectionMap.get("Yayınevi olarak başla") ? <section className="publishers-start how-container"><PublisherIcon name="building" /><div><span>Kurumsal başlangıç</span><h2>Keşif yetkisini ekip sorumluluğuyla birlikte kur.</h2><EditorialBody body={sectionMap.get("Yayınevi olarak başla")!.body} /><div className="publishers-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=publisher">Yayınevi hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/giris">Zaten hesabım var</Link></div></div></section> : null}
 
-      <PublisherFooter />
+      <aside className="how-related how-container" aria-label="İlkOku içinde devam et">
+        <SectionHeading eyebrow="İlkOku içinde devam et" title="Yayınevi keşfini platformun açık sınırlarıyla birlikte incele." />
+        <div className="how-related__grid">
+          <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Yazar, okur, editör ve yayınevinin aynı eser etrafındaki rol sınırlarını gör.</span></Link>
+          <Link href="/yazarlar-icin"><strong>Yazarlar İçin</strong><span>Eserin yazar tarafındaki gelişim, hak ve keşif sınırlarını incele.</span></Link>
+          <Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>Profesyonel incelemenin yayınevi kararından nasıl ayrıldığını gör.</span></Link>
+          <Link href="/telif-bildirimi"><strong>Telif Bildirimi</strong><span>İzinsiz kullanım şüphesinde platform bildirim yolunu incele.</span></Link>
+        </div>
+      </aside>
+
+      <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/yazarlar-icin">Yazarlar İçin</Link><Link href="/editorler-icin">Editörler İçin</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/telif-bildirimi">Telif Bildirimi</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link></nav></div></footer>
     </main>
   );
 }

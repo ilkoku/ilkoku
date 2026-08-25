@@ -51,14 +51,21 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
   has(workbench, "Boşsa güvenli fallback kullanılır", "link fallback guidance");
 });
 
-test("homepage footer removes the broken footer logo and exposes only canonical public information routes", () => {
+test("homepage footer keeps its brand and separates platform from trust navigation", () => {
+  const homepage = source("src/app/page.tsx");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
+  const styles = source("src/app/landing-footer-tight.css");
   const contract = source("src/lib/cms-footer-navigation.ts");
   const validation = source("src/lib/cms-footer-validation.ts");
 
-  has(hydrator, 'footer.querySelector<HTMLElement>(".landing-logo--footer")?.remove();', "broken homepage footer logo removal");
-  has(hydrator, "canonicalPlatformLinks", "canonical homepage platform link source");
-  has(hydrator, "rebuildPlatformColumn", "homepage platform column rebuild");
+  has(homepage, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
+  lacks(hydrator, 'footer.querySelector<HTMLElement>(".landing-logo--footer")?.remove();', "footer logo must not be removed by hydration");
+  has(hydrator, "canonicalPlatformLinks", "canonical platform navigation source");
+  has(hydrator, "canonicalTrustLinks", "canonical trust navigation source");
+  has(hydrator, "ensureTrustColumn", "trust column builder");
+  has(hydrator, 'heading.textContent = "Güven & Standartlar"', "trust column heading");
+  has(styles, "repeat(4, minmax(6.75rem, .72fr))", "five-area desktop footer grid");
+  has(styles, "@media (max-width: 27rem)", "single-column narrow mobile footer guard");
 
   for (const href of [
     "/nasil-calisir",

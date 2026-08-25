@@ -5,10 +5,10 @@
 }
 
 .landing-page .landing-footer .landing-footer__grid {
-  width: min(calc(100% - 2.5rem), 70rem) !important;
+  width: min(calc(100% - 2.5rem), 78rem) !important;
   margin-inline: auto !important;
-  grid-template-columns: minmax(13.5rem, 1.15fr) repeat(3, minmax(7.5rem, .72fr)) !important;
-  column-gap: clamp(1rem, 1.8vw, 1.65rem) !important;
+  grid-template-columns: minmax(13rem, 1.15fr) repeat(4, minmax(7rem, .72fr)) !important;
+  column-gap: clamp(.9rem, 1.6vw, 1.4rem) !important;
   row-gap: 1rem !important;
   padding-bottom: clamp(1.1rem, 1.7vw, 1.45rem) !important;
 }
@@ -51,7 +51,7 @@
 }
 
 .landing-page .landing-footer .landing-footer__copyright {
-  width: min(calc(100% - 2.5rem), 70rem) !important;
+  width: min(calc(100% - 2.5rem), 78rem) !important;
   padding: .65rem 0 .78rem !important;
 }
 
@@ -61,9 +61,9 @@
 }
 
 .landing-page .landing-footer .landing-footer__grid {
-  width: min(calc(100% - 2rem), 66rem) !important;
-  grid-template-columns: minmax(14rem, 1.08fr) repeat(3, minmax(7rem, .72fr)) !important;
-  column-gap: clamp(.8rem, 1.35vw, 1.2rem) !important;
+  width: min(calc(100% - 2rem), 76rem) !important;
+  grid-template-columns: minmax(13rem, 1.08fr) repeat(4, minmax(6.75rem, .72fr)) !important;
+  column-gap: clamp(.7rem, 1.15vw, 1rem) !important;
   row-gap: .65rem !important;
   padding-bottom: .7rem !important;
 }
@@ -118,15 +118,23 @@
 }
 
 .landing-page .landing-footer .landing-footer__copyright {
-  width: min(calc(100% - 2rem), 66rem) !important;
+  width: min(calc(100% - 2rem), 76rem) !important;
   padding: .48rem 0 .58rem !important;
 }
 
 @media (max-width: 58rem) {
   .landing-page .landing-footer .landing-footer__grid {
     width: min(calc(100% - 2rem), 46rem) !important;
-    grid-template-columns: minmax(13rem, 1.15fr) repeat(2, minmax(8rem, .8fr)) !important;
-    gap: .85rem 1.1rem !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1rem 1.4rem !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__grid > div:first-child {
+    grid-column: 1 / -1 !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__grid > div:last-child {
+    grid-column: auto !important;
   }
 
   .landing-page .landing-footer .landing-logo--footer img {
@@ -167,5 +175,15 @@
   .landing-page .landing-footer .landing-footer__copyright {
     width: calc(100% - 1.5rem) !important;
     padding: .46rem 0 .54rem !important;
+  }
+}
+
+@media (max-width: 27rem) {
+  .landing-page .landing-footer .landing-footer__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .landing-page .landing-footer .landing-footer__grid > div:first-child {
+    grid-column: auto !important;
   }
 }

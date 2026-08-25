@@ -26,6 +26,8 @@ test("publisher public page stays CMS-owned and truthful about discovery, permis
   const access = source("src/features/publisher-discovery/access.ts");
   const permissions = source("src/features/publisher-workspace/permissions.ts");
   const roleCards = source("src/lib/cms-role-cards.ts");
+  const layout = source("src/app/layout.tsx");
+  const trustLayout = source("src/app/public-trust-layout-fix.css");
 
   contains(content, "bağlayıcı teklif, ön kabul, yayın taahhüdü veya hak devri doğurmaz", "engagement-commercial boundary");
   contains(content, "Pasaport erişimi ile yetkili içerik erişimi sistemde ayrı izinlerdir", "passport-content permission boundary");
@@ -54,6 +56,11 @@ test("publisher public page stays CMS-owned and truthful about discovery, permis
   contains(permissions, '"manage_contract"', "real contract permission");
   contains(permissions, '"manage_publication_plan"', "real publication plan permission");
   contains(roleCards, 'fixedHref: "/kayit?rol=publisher"', "existing publisher onboarding route");
+
+  contains(layout, 'import "./public-trust-layout-fix.css"', "public trust layout closure guard import");
+  contains(trustLayout, ".how-page", "shared public trust page shell selector");
+  contains(trustLayout, "display: flow-root", "final-section margin collapse guard");
+  notContains(trustLayout, "overflow: hidden", "sticky-header-breaking overflow workaround");
 
   notContains(content, "yayın garantisi verir", "fabricated publication guarantee");
   notContains(content, "favoriye almak sözleşmedir", "fabricated favorite-contract claim");

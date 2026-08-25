@@ -4,6 +4,7 @@ import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { tr } from "@/content";
 import "./globals.css";
+import "./public-trust-layout-fix.css";
 import "./landing-theme.css";
 import "./landing-role-icons.css";
 import "./landing-footer-shared-base.css";

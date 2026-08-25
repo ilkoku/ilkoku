@@ -58,7 +58,7 @@ const workflows: SystemMapWorkflow[] = [
     id: "writer",
     title: "Yazar ve eser yayın akışı",
     description: "Yazar çalışma alanından eserin oluşturulması, bölüm yönetimi, yayın ve public eser yüzeyine uzanan akış.",
-    steps: ["/yazar", "/eserlerim", "/eserlerim · NewWorkFlow bölüm/yayın çalışma alanı", "/kitap/[slug]"],
+    steps: ["/yazar", "/eserlerim", "/eserlerim · NewWorkFlow içerik sınıfı/bölüm/yayın çalışma alanı", "/kitap/[slug]", "/icerik-ve-yas-politikasi"],
   },
   {
     id: "editor",
@@ -80,9 +80,9 @@ const workflows: SystemMapWorkflow[] = [
   },
   {
     id: "public-trust",
-    title: "Public güven ve editoryal standartlar ağı",
-    description: "CMS metni, yayın önizlemesi, marka görselleri, Nasıl Çalışır ve Editoryal Standartlar sayfalarından public rol/keşif bağlantılarına uzanan güven ağı.",
-    steps: ["/icerik/sayfalar", "/icerik/onizleme/sayfa/[id]", "/nasil-calisir | /editoryal-standartlar", "/eserler | /yazarlar | /editorler | /yardim | /iletisim"],
+    title: "Public güven, editoryal standartlar ve içerik sınıflandırma ağı",
+    description: "CMS metni, yayın önizlemesi, marka görselleri, Nasıl Çalışır, Editoryal Standartlar ve İçerik ve Yaş Politikası sayfalarından public eser/rol/keşif bağlantılarına uzanan güven ağı.",
+    steps: ["/icerik/sayfalar", "/icerik/onizleme/sayfa/[id]", "/nasil-calisir | /editoryal-standartlar | /icerik-ve-yas-politikasi", "/eserler | /kitap/[slug] | /yazarlar | /editorler | /yardim | /iletisim"],
   },
   {
     id: "contracts",

@@ -1,6 +1,10 @@
 import Link from "next/link";
 
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
+import {
+  workContentRatingDetails,
+  type StoredWorkContentRating,
+} from "@/lib/work-content-classification";
 
 type PublicWorkStreamItem = {
   _count: {
@@ -12,6 +16,7 @@ type PublicWorkStreamItem = {
     publicId: string;
   };
   description: string | null;
+  contentRating: StoredWorkContentRating;
   genre: string | null;
   publishedAt: Date | null;
   slug: string;
@@ -75,6 +80,9 @@ export function PublicWorkStream({
               )}
               <span>
                 {work._count.chapters} bölüm
+              </span>
+              <span>
+                {workContentRatingDetails[work.contentRating].shortLabel}
               </span>
             </div>
 

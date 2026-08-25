@@ -18,6 +18,9 @@ export type PublicWorkLibraryFilters = {
 
 const publicWorkPublicationWhere: Prisma.WorkWhereInput = {
   archivedAt: null,
+  contentRating: {
+    not: "adult_18",
+  },
   language: "tr",
   publishedAt: {
     not: null,
@@ -135,6 +138,7 @@ export async function getPublicWorkLibrary(
         },
       },
       description: true,
+      contentRating: true,
       genre: true,
       publishedAt: true,
       slug: true,
@@ -270,6 +274,7 @@ export async function getPublicAuthorById(
             },
           },
           description: true,
+          contentRating: true,
           genre: true,
           publishedAt: true,
           slug: true,

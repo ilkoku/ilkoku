@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/Card";
 import { workspaceContent } from "@/content";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { submitForEditorAction } from "@/features/editor-review/actions/editor-review.actions";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 import type { WorkWithChapterSummary } from "../types";
 import { WorkArchiveAction } from "./WorkArchiveAction";
@@ -417,6 +418,11 @@ export function WorksWorkspace({
                             work.chapterCount
                           }
                         </dd>
+                      </div>
+
+                      <div>
+                        <dt>İçerik sınıfı</dt>
+                        <dd>{workContentRatingDetails[work.contentRating].shortLabel}</dd>
                       </div>
 
                       <div>

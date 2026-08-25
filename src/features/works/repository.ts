@@ -2,6 +2,9 @@ import { createHash, randomUUID } from "node:crypto";
 import { allocatePublicId } from "@/lib/public-id";
 import { prisma } from "@/lib/prisma";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
+import type {
+  StoredWorkContentRating,
+} from "@/lib/work-content-classification";
 
 export type CreateWorkRecord = {
   authorId: string;
@@ -10,6 +13,9 @@ export type CreateWorkRecord = {
   description?: string | null;
   genre?: string | null;
   language?: string;
+  contentRating: Exclude<StoredWorkContentRating, "unrated">;
+  contentWarnings: string;
+  contentRatingConfirmedAt: Date;
 };
 
 export type UpdateWorkRecord = {
@@ -23,6 +29,9 @@ export type UpdateWorkRecord = {
   visibility?: "private" | "unlisted" | "public";
   publishedAt?: Date | null;
   archivedAt?: Date | null;
+  contentRating?: Exclude<StoredWorkContentRating, "unrated">;
+  contentWarnings?: string;
+  contentRatingConfirmedAt?: Date;
 };
 
 export type CreateChapterRecord = {
@@ -63,6 +72,8 @@ export const worksRepository = {
             description,
             genre: input.genre ?? null,
             language,
+            contentRating: input.contentRating,
+            contentWarnings: input.contentWarnings,
             title,
           }),
         )
@@ -81,6 +92,9 @@ export const worksRepository = {
           description,
           genre: input.genre ?? null,
           language,
+          contentRating: input.contentRating,
+          contentWarnings: input.contentWarnings,
+          contentRatingConfirmedAt: input.contentRatingConfirmedAt,
           publicId,
           slug: input.slug,
           status: "draft",
@@ -119,6 +133,7 @@ export const worksRepository = {
           entityType: "Work",
           metadata: JSON.stringify({
             publicId: work.publicId,
+            contentRating: work.contentRating,
             title: work.title,
           }),
         },
@@ -271,6 +286,9 @@ export const worksRepository = {
     return prisma.work.findFirst({
       where: {
         archivedAt: null,
+        contentRating: {
+          not: "adult_18",
+        },
         author: {
           is: {
             deletedAt: null,
@@ -328,6 +346,9 @@ export const worksRepository = {
   ) {
     const publicWorkWhere = {
       archivedAt: null,
+      contentRating: {
+        not: "adult_18" as const,
+      },
       author: {
         is: {
           deletedAt: null,
@@ -423,6 +444,15 @@ export const worksRepository = {
         position,
         status: "published",
         workId,
+        work: {
+          is: {
+            contentRating: {
+              not: "adult_18",
+            },
+            status: "published",
+            visibility: "public",
+          },
+        },
       },
     });
   },
@@ -505,82 +535,6 @@ export const worksRepository = {
         id: existingChapter.id,
       },
       data: input,
-    });
-  },
-
-  async publishChapter(authorId: string, chapterId: string) {
-    const existingChapter = await prisma.chapter.findFirst({
-      where: {
-        authorId,
-        id: chapterId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!existingChapter) {
-      throw new Error("Yayınlanacak bölüm bulunamadı.");
-    }
-
-    return prisma.chapter.update({
-      where: {
-        id: existingChapter.id,
-      },
-      data: {
-        archivedAt: null,
-        publishedAt: new Date(),
-        status: "published",
-      },
-    });
-  },
-
-  async publishWork(authorId: string, workId: string) {
-    const existingWork = await prisma.work.findFirst({
-      where: {
-        authorId,
-        id: workId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!existingWork) {
-      throw new Error("Yayınlanacak eser bulunamadı.");
-    }
-
-    return prisma.$transaction(async (transaction) => {
-      const publishedAt = new Date();
-
-      const work = await transaction.work.update({
-        where: {
-          id: existingWork.id,
-        },
-        data: {
-          archivedAt: null,
-          publishedAt,
-          status: "published",
-          visibility: "public",
-        },
-      });
-
-      await transaction.auditLog.create({
-        data: {
-          action: "work_published",
-          actorId: authorId,
-          entityId: work.id,
-          entityType: "Work",
-          metadata: JSON.stringify({
-            publicId: work.publicId,
-            publishedAt:
-              publishedAt.toISOString(),
-            title: work.title,
-          }),
-        },
-      });
-
-      return work;
     });
   },
 

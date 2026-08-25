@@ -114,7 +114,7 @@ test("editorial standards stay CMS-owned and independent review access stays fai
   contains(preview, 'page.contentKey === "page:tr:editoryal-standartlar"', "visual CMS preview boundary");
   contains(starterContent, 'contentKey: "page:tr:editoryal-standartlar"', "CMS starter draft");
   contains(sitemap, "${baseUrl}/editoryal-standartlar", "editorial standards sitemap route");
-  contains(collector, '"/nasil-calisir | /editoryal-standartlar"', "public trust system map");
+  contains(collector, '"/nasil-calisir | /editoryal-standartlar | /icerik-ve-yas-politikasi"', "public trust system map");
   contains(howItWorks, 'href="/editoryal-standartlar"', "public inbound editorial standards link");
 
   contains(detailQuery, 'editorReviewStatus: "completed"', "completed work access boundary");
@@ -125,6 +125,64 @@ test("editorial standards stay CMS-owned and independent review access stays fai
   contains(completedReviewPage, "work.assignedEditorId === profile.id", "first editor comparison boundary");
   contains(completedReviewPage, "report.editorId !== profile.id", "independent report selection");
   contains(completedReviewPage, "Bağımsız değerlendirme tamamlandıktan sonra açıldı", "post-completion disclosure label");
+});
+
+test("content and age policy is enforced from work creation to the public reading boundary", () => {
+  const content = source("src/content/content-age-policy.ts");
+  const page = source("src/app/icerik-ve-yas-politikasi/page.tsx");
+  const experience = source("src/components/content/ContentAgePolicyExperience.tsx");
+  const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
+  const starterContent = source("src/features/cms/starter-content-actions.ts");
+  const sitemap = source("src/app/sitemap.ts");
+  const collector = source("src/features/system-map/collector.ts");
+  const schema = source("prisma/schema.prisma");
+  const migration = source("prisma/migrations/20260825150000_work_content_classification/migration.sql");
+  const validators = source("src/features/works/validators.ts");
+  const actions = source("src/features/works/actions.ts");
+  const writerFlow = source("src/features/writer/components/NewWorkFlow.tsx");
+  const publish = source("src/features/works/publish-work-event.ts");
+  const showcase = source("src/features/showcase/components/BookShowcase.tsx");
+  const library = source("src/features/public-discovery/library.ts");
+  const publicStream = source("src/features/public-discovery/PublicWorkStream.tsx");
+
+  contains(content, "eserin tamamındaki en yoğun içeriğe göre", "highest-intensity rule");
+  contains(content, "18+ olarak beyan edilen eser taslakta saklanabilir ancak herkese açık yayımlanamaz", "truthful adult publication boundary");
+  contains(content, "her eseri yayın öncesinde insan eliyle okumaz", "no fabricated pre-publication review");
+  contains(content, "otomatik içerik taraması yapıldığına dair bir taahhüt vermez", "no fabricated automated scanner");
+  contains(content, "Sınıflandırılmadı", "legacy unrated boundary");
+  contains(page, 'getPublishedCmsPublicPageState("icerik-ve-yas-politikasi")', "CMS-owned content-age page");
+  contains(experience, 'getPublicTrustPageVisual("/icerik-ve-yas-politikasi")', "prepared policy visual");
+  contains(preview, 'page.contentKey === "page:tr:icerik-ve-yas-politikasi"', "visual CMS preview boundary");
+  contains(starterContent, 'contentKey: "page:tr:icerik-ve-yas-politikasi"', "CMS starter draft");
+  contains(sitemap, "${baseUrl}/icerik-ve-yas-politikasi", "content-age sitemap route");
+  contains(collector, "/eserlerim · NewWorkFlow içerik sınıfı/bölüm/yayın çalışma alanı", "classification system map workflow");
+
+  contains(schema, "contentRating           WorkContentRating", "work rating field");
+  contains(schema, "contentWarnings         String?", "work warnings field");
+  contains(schema, "contentRatingConfirmedAt DateTime?", "classification confirmation field");
+  contains(schema, "@default(unrated)", "legacy work safe default");
+  contains(migration, "DEFAULT 'unrated'", "migration safe default");
+  contains(validators, "contentClassificationConfirmed: z.literal(true", "required author confirmation");
+  contains(validators, 'value.contentRating !== "all_ages" && value.contentWarnings.length === 0', "warning required above all-ages");
+  contains(actions, 'formData.getAll("contentWarnings")', "multi-value warning parsing");
+  contains(writerFlow, "ClassificationFields", "classification before work creation");
+  contains(writerFlow, 'href="/icerik-ve-yas-politikasi"', "writer policy link");
+
+  const lockIndex = publish.indexOf("FOR UPDATE");
+  const unratedIndex = publish.indexOf('locked[0].contentRating === "unrated"');
+  const adultIndex = publish.indexOf('locked[0].contentRating === "adult_18"');
+  const publicUpdateIndex = publish.indexOf('visibility: "public"');
+  assert.ok(lockIndex >= 0 && lockIndex < unratedIndex, "classification gate must run after canonical row lock");
+  assert.ok(unratedIndex < adultIndex && adultIndex < publicUpdateIndex, "classification gates must run before public mutation");
+
+  contains(showcase, 'aria-labelledby="icerik-sinifi"', "reading-before-rating disclosure");
+  contains(showcase, "parseWorkContentWarnings", "public warning normalization");
+  assert.ok(showcase.indexOf("showcase-content-rating") < showcase.indexOf("showcase-cta"), "rating must be rendered before reading CTA");
+  contains(library, "contentRating: true", "public discovery rating projection");
+  contains(library, 'not: "adult_18"', "adult discovery defense in depth");
+  contains(publicStream, "workContentRatingDetails[work.contentRating].shortLabel", "public discovery rating label");
+  notContains(source("src/features/works/repository.ts"), "async publishWork(", "legacy publication bypass");
+  notContains(source("src/features/works/repository.ts"), "async publishChapter(", "legacy chapter publication bypass");
 });
 
 test("public authors and genres are derived only from the publication boundary", () => {
@@ -221,7 +279,7 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   contains(showcase, '/yazarlar/${work.authorPublicId}', "book author link");
   contains(showcase, '/turler/${publicTaxonomySlug(work.genre)}', "book genre link");
   contains(retiredMap, 'permanentRedirect("/harita")', "retired discovery map redirect");
-  contains(collector, '"/icerik/sayfalar", "/nasil-calisir"', "trust page CMS workflow map");
+  contains(collector, '"/icerik/sayfalar", "/icerik/onizleme/sayfa/[id]"', "trust page CMS workflow map");
   contains(collector, 'id: "public-trust"', "visual trust workflow map");
 });
 

@@ -7,6 +7,7 @@ import {
 } from "@/features/public-discovery/library";
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 const baseUrl = "https://ilkoku.com";
 
@@ -192,6 +193,9 @@ export default async function PublicAuthorPage({
                     )}
                     <span>
                       {work._count.chapters} bölüm
+                    </span>
+                    <span>
+                      {workContentRatingDetails[work.contentRating].shortLabel}
                     </span>
                   </div>
                   <h2>

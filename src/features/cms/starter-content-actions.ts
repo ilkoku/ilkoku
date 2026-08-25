@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
+import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { requireCmsManager } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
@@ -87,6 +88,16 @@ Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile ince
     body: editorialStandardsPageContent.body,
     seoTitle: editorialStandardsPageContent.seoTitle,
     seoDescription: editorialStandardsPageContent.seoDescription,
+    kind: "page",
+  },
+  {
+    contentKey: "page:tr:icerik-ve-yas-politikasi",
+    slug: contentAgePolicyPageContent.canonical,
+    title: contentAgePolicyPageContent.title,
+    summary: contentAgePolicyPageContent.summary,
+    body: contentAgePolicyPageContent.body,
+    seoTitle: contentAgePolicyPageContent.seoTitle,
+    seoDescription: contentAgePolicyPageContent.seoDescription,
     kind: "page",
   },
 ];
@@ -223,6 +234,7 @@ export async function createStarterContentDraftsAction() {
   revalidatePath("/icerik/sayfalar");
   revalidatePath("/nasil-calisir");
   revalidatePath("/editoryal-standartlar");
+  revalidatePath("/icerik-ve-yas-politikasi");
   revalidatePath("/icerik/sss");
   revalidatePath("/icerik/yayin-kuyrugu");
   revalidatePath("/icerik/gecmis");

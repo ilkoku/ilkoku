@@ -51,6 +51,16 @@ function revalidateWorkPaths() {
   revalidatePath("/yazmaya-devam");
 }
 
+function workClassificationFromFormData(formData: FormData) {
+  return {
+    contentClassificationConfirmed:
+      formData.get("contentClassificationConfirmed") === "true" ||
+      formData.get("contentClassificationConfirmed") === "on",
+    contentRating: formData.get("contentRating"),
+    contentWarnings: formData.getAll("contentWarnings"),
+  };
+}
+
 export async function createWorkAction(
   _state: WorkActionState,
   formData: FormData,
@@ -60,6 +70,7 @@ export async function createWorkAction(
     genre: formData.get("genre"),
     summary: formData.get("summary"),
     workType: formData.get("workType"),
+    ...workClassificationFromFormData(formData),
   });
 
   if (!parsed.success) {
@@ -123,11 +134,17 @@ async function updateWorkMetadata(
     genre: formData.get("genre"),
     summary: formData.get("summary"),
     status: "draft",
+    ...workClassificationFromFormData(formData),
   });
 
-  if (parsed.success) {
-    await updateWork(authorId, parsed.data);
+  if (!parsed.success) {
+    throw new Error(
+      parsed.error.issues[0]?.message ??
+        "Eserin içerik ve yaş sınıfı doğrulanamadı.",
+    );
   }
+
+  await updateWork(authorId, parsed.data);
 }
 
 export async function saveChapterDraftAction(
@@ -246,6 +263,7 @@ export async function updateWorkAction(
     language: formData.get("language"),
     coverUrl: formData.get("coverUrl"),
     status: normalizedStatus,
+    ...workClassificationFromFormData(formData),
   });
 
   if (!parsed.success) {

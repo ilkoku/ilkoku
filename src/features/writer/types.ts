@@ -6,4 +6,11 @@ export type WorkDraft = {
   summary: string;
   chapterTitle: string;
   content: string;
+  contentClassificationConfirmed: boolean;
+  contentRating: WorkContentRating | "";
+  contentWarnings: WorkContentWarning[];
 };
+import type {
+  WorkContentRating,
+  WorkContentWarning,
+} from "@/lib/work-content-classification";

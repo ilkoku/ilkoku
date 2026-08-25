@@ -1,0 +1,41 @@
+.age-policy-page .age-policy-hero__visual > img { object-fit: cover; filter: saturate(.9) contrast(.98); transform: scale(1.025); }
+.age-ratings { padding-block: clamp(5rem, 9vw, 8rem); background: linear-gradient(180deg, #f9f7ff, #fff); }
+.age-ratings__cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.age-ratings__cards article { display: grid; min-height: 14rem; align-content: start; gap: .75rem; padding: 1.35rem; border: 1px solid var(--how-border); border-radius: 1.4rem; background: #fff; box-shadow: 0 1rem 3rem rgba(43,29,104,.06); }
+.age-ratings__cards article > strong { display: grid; width: 3.8rem; height: 3.8rem; place-items: center; color: #fff; background: var(--how-primary); border-radius: 1.1rem; font-family: var(--how-display); font-size: 1.3rem; }
+.age-ratings__cards article > span { margin-top: .4rem; color: var(--how-night); font-family: var(--how-display); font-size: 1.25rem; font-weight: 700; }
+.age-ratings__cards article > p { margin: 0; color: var(--how-muted); font-size: .76rem; line-height: 1.65; }
+.age-ratings__cards .age-ratings__adult { color: #fff; border-color: #31295b; background: linear-gradient(145deg,#17143a,#312565); }
+.age-ratings__cards .age-ratings__adult > strong { color: #1a1639; background: #f3c96b; }
+.age-ratings__cards .age-ratings__adult > span { color: #fff; }
+.age-ratings__cards .age-ratings__adult > p { color: #d9d2ea; }
+.age-ratings__detail, .age-warnings__body { margin-top: 1.2rem; padding: clamp(1.25rem,4vw,2.2rem); border: 1px solid var(--how-border); border-radius: 1.4rem; background: #fff; }
+.age-ratings__detail .space-y-6, .age-warnings__body .space-y-6 { color: var(--how-muted); font-size: .82rem; line-height: 1.75; }
+.age-warnings { padding-block: clamp(5rem, 9vw, 8rem); }
+.age-warnings__grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; }
+.age-warnings__grid article { display: grid; grid-template-columns: auto 2rem; align-items: center; gap: .8rem; padding: 1.15rem; border: 1px solid var(--how-border); border-radius: 1.1rem; background: #fff; }
+.age-warnings__grid article > span { color: rgba(75,45,191,.42); font-family: var(--how-display); font-weight: 800; }
+.age-warnings__grid svg { width: 1.45rem; justify-self: end; color: var(--how-primary); }
+.age-warnings__grid strong { grid-column: 1 / -1; color: var(--how-night); font-family: var(--how-display); font-size: 1.05rem; }
+.age-responsibility { padding-block: clamp(5rem,9vw,8rem); background: linear-gradient(180deg,#faf9ff,#f3f0ff); }
+.age-responsibility__grid, .age-boundaries { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.1rem; }
+.age-responsibility article, .age-boundaries article { padding: clamp(1.5rem,4vw,2.5rem); border: 1px solid var(--how-border); border-radius: 1.5rem; background: #fff; box-shadow: 0 1rem 3rem rgba(43,29,104,.06); }
+.age-responsibility svg { width: 2.3rem; color: var(--how-primary); }
+.age-responsibility article > span, .age-boundaries article > span, .age-existing article > span, .age-contact > div > span { display: block; margin-top: .8rem; color: var(--how-primary-strong); font-size: .65rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+.age-responsibility h2, .age-boundaries h2, .age-existing h2, .age-contact h2 { margin: .55rem 0 0; color: var(--how-night); font-family: var(--how-display); font-size: clamp(1.8rem,3.2vw,2.7rem); line-height: 1.08; letter-spacing: -.035em; }
+.age-responsibility .space-y-6, .age-boundaries .space-y-6, .age-existing .space-y-6, .age-contact .space-y-6 { margin-top: 1rem; color: var(--how-muted); font-size: .82rem; line-height: 1.75; }
+.age-boundaries { padding-block: clamp(5rem,9vw,8rem); }
+.age-boundaries .age-boundaries__night { color: #fff; border-color: #31295b; background: radial-gradient(circle at 90% 10%,rgba(156,135,255,.22),transparent 16rem),linear-gradient(145deg,#17143a,#2c245c); }
+.age-boundaries__night h2 { color: #fff; }
+.age-boundaries__night .space-y-6 { color: #d9d2ea; }
+.age-boundaries__night > a { display: inline-flex; margin-top: 1rem; color: #fff; font-size: .75rem; font-weight: 800; }
+.age-existing { display: grid; grid-template-columns: minmax(14rem,.7fr) minmax(0,1.3fr); align-items: center; gap: 2rem; padding-bottom: clamp(5rem,9vw,8rem); }
+.age-existing > div { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .7rem; padding: 1.3rem; border: 1px solid var(--how-border); border-radius: 1.3rem; background: #faf9ff; text-align: center; }
+.age-existing > div strong { padding: .8rem; color: var(--how-primary-strong); background: #fff; border-radius: .9rem; font-size: .78rem; }
+.age-existing > div span { color: #d04343; font-size: 1.5rem; font-weight: 900; }
+.age-contact { display: grid; grid-template-columns: 3.2rem minmax(0,1fr); gap: 1.2rem; margin-bottom: clamp(5rem,9vw,8rem); padding: clamp(1.5rem,4vw,2.5rem); border: 1px solid rgba(104,71,232,.2); border-radius: 1.5rem; background: linear-gradient(145deg,#fff,#f8f6ff); }
+.age-contact > svg { width: 2.4rem; color: var(--how-primary); }
+.age-contact .how-button { margin-top: 1.2rem; }
+@media (max-width:64rem) { .age-ratings__cards { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width:53rem) { .age-responsibility__grid,.age-boundaries,.age-existing { grid-template-columns: 1fr; } .age-warnings__grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width:34rem) { .age-ratings__cards,.age-warnings__grid { grid-template-columns: 1fr; } }

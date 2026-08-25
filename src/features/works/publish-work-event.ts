@@ -14,8 +14,12 @@ export async function publishWorkWithEvent(
   chapterId: string,
 ) {
   return prisma.$transaction(async (transaction) => {
-    const locked = await transaction.$queryRaw<Array<{ id: string }>>`
-      SELECT id
+    const locked = await transaction.$queryRaw<Array<{
+      contentRating: "unrated" | "all_ages" | "teen_13" | "young_adult_16" | "adult_18";
+      contentRatingConfirmedAt: Date | null;
+      id: string;
+    }>>`
+      SELECT id, contentRating, contentRatingConfirmedAt
       FROM Work
       WHERE id = ${workId}
         AND authorId = ${authorId}
@@ -25,6 +29,21 @@ export async function publishWorkWithEvent(
 
     if (!locked[0]) {
       throw new Error("Yayınlanacak eser bulunamadı.");
+    }
+
+    if (
+      locked[0].contentRating === "unrated" ||
+      !locked[0].contentRatingConfirmedAt
+    ) {
+      throw new Error(
+        "Eseri yayınlamadan önce içerik ve yaş sınıfını doğrulamalısın.",
+      );
+    }
+
+    if (locked[0].contentRating === "adult_18") {
+      throw new Error(
+        "18+ eserlerin herkese açık yayını, doğrulanmış yaş erişimi etkinleşene kadar kullanılamaz. Eseri taslak olarak saklayabilirsin.",
+      );
     }
 
     const chapter = await transaction.chapter.findFirst({

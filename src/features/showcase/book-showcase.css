@@ -32,6 +32,15 @@
 .showcase-metadata div { display: grid; gap: var(--space-1); }
 .showcase-metadata dt, .showcase-author-card dt { color: var(--color-text-secondary); font-size: 0.6875rem; }
 .showcase-metadata dd, .showcase-author-card dd { margin: 0; font-size: 0.8125rem; font-weight: 650; }
+.showcase-content-rating { display: grid; gap: var(--space-3); margin: 0 0 var(--space-6); padding: var(--space-5); background: var(--color-primary-muted); border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border)); border-radius: var(--radius-large); }
+.showcase-content-rating[data-unrated="true"] { background: var(--color-surface); border-color: var(--color-border); }
+.showcase-content-rating > div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.showcase-content-rating > div span { color: var(--color-text-secondary); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.showcase-content-rating > div strong { min-width: 2.6rem; padding: .45rem .7rem; color: var(--color-primary); background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius-full); text-align: center; }
+.showcase-content-rating ul { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.showcase-content-rating li { padding: .4rem .65rem; color: var(--color-text); background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius-full); font-size: .7rem; }
+.showcase-content-rating p { margin: 0; color: var(--color-text-secondary); font-size: .75rem; line-height: 1.55; }
+.showcase-content-rating > a { width: fit-content; color: var(--color-primary); font-size: .72rem; font-weight: 750; }
 .showcase-progress { display: grid; gap: var(--space-3); margin-bottom: var(--space-8); }
 .showcase-progress > div { display: flex; justify-content: space-between; gap: var(--space-4); font-size: 0.75rem; }
 .showcase-progress span { color: var(--color-text-secondary); }

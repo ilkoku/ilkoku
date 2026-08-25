@@ -229,6 +229,9 @@ model Work {
   genre                   String?                  @db.VarChar(120)
   language                String                   @default("tr") @db.VarChar(10)
   coverUrl                String?                  @db.VarChar(500)
+  contentRating           WorkContentRating        @default(unrated)
+  contentWarnings         String?                  @db.LongText
+  contentRatingConfirmedAt DateTime?
   status                  WorkStatus               @default(draft)
   visibility              WorkVisibility           @default(private)
   publishedAt             DateTime?
@@ -830,6 +833,14 @@ enum WorkVisibility {
   private
   unlisted
   public
+}
+
+enum WorkContentRating {
+  unrated
+  all_ages
+  teen_13
+  young_adult_16
+  adult_18
 }
 
 enum EditorReviewStatus {

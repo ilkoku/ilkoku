@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
+import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import {
   getPublicAuthors,
@@ -17,6 +18,11 @@ const legalSlugs = [
   "cerez-politikasi",
   "telif-hakki-politikasi",
 ] as const;
+const staticCmsPageSlugs = new Set<string>([
+  howItWorksPageContent.canonical,
+  editorialStandardsPageContent.canonical,
+  contentAgePolicyPageContent.canonical,
+]);
 
 type CmsSitemapRow = {
   slug: string;
@@ -83,6 +89,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.75,
     },
+    {
+      url: `${baseUrl}/icerik-ve-yas-politikasi`,
+      lastModified: new Date(contentAgePolicyPageContent.updatedAt),
+      changeFrequency: "monthly",
+      priority: 0.75,
+    },
   ];
 
   try {
@@ -96,6 +108,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       prisma.work.findMany({
         where: {
           archivedAt: null,
+          contentRating: {
+            not: "adult_18",
+          },
           author: {
             is: {
               deletedAt: null,
@@ -191,7 +206,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.8,
         })),
       ...pages
-        .filter((page) => page.slug !== howItWorksPageContent.canonical)
+        .filter((page) => !staticCmsPageSlugs.has(page.slug))
         .map((page) => ({
           url: `${baseUrl}${page.slug}`,
           lastModified: page.updatedAt,

@@ -107,8 +107,8 @@ export default async function PublicGenresPage() {
                 sayfası otomatik oluşacak ve sitemap’e
                 eklenecek.
               </p>
-              <Link href="/rehber/ilk-eseri-yayinlama-rehberi">
-                İlk yayın rehberini oku
+              <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
+                İlkOku’da eser yolculuğunu öğren
               </Link>
             </div>
           )}

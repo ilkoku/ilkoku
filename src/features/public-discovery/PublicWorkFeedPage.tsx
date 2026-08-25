@@ -117,8 +117,8 @@ export async function PublicWorkFeedPage({
                 yayımlanmış ve herkese açık eserler bu akışa
                 girer.
               </p>
-              <Link href="/rehber/ilk-eseri-yayinlama-rehberi">
-                Eser yayımlama rehberini oku
+              <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
+                Eserin İlkOku’daki yolculuğunu öğren
               </Link>
             </div>
           )}

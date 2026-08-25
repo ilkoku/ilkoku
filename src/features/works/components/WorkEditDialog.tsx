@@ -10,6 +10,13 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { workspaceContent } from "@/content";
+import {
+  parseWorkContentWarnings,
+  workContentRatingDetails,
+  workContentRatings,
+  workContentWarningDetails,
+  workContentWarnings,
+} from "@/lib/work-content-classification";
 
 import { updateWorkAction } from "../actions";
 import {
@@ -45,6 +52,8 @@ export function WorkEditDialog({
     updateWorkAction,
     initialWorkActionState,
   );
+
+  const selectedWarnings = parseWorkContentWarnings(work.contentWarnings);
 
 
   useEffect(() => {
@@ -236,6 +245,52 @@ export function WorkEditDialog({
               Arşivlendi
             </option>
           </Field>
+
+          <fieldset className="workspace-classification">
+            <legend>İçerik ve yaş sınıfı</legend>
+            <p>Eser değiştiğinde sınıfı, eserin en yoğun bölümüne göre yeniden kontrol et.</p>
+            <label>
+              <span>Yaş sınıfı</span>
+              <select
+                name="contentRating"
+                defaultValue={work.contentRating === "unrated" ? "" : work.contentRating}
+                required
+              >
+                <option value="" disabled>Sınıf seç</option>
+                {workContentRatings.map((rating) => (
+                  <option value={rating} key={rating}>
+                    {workContentRatingDetails[rating].label}
+                    {rating === "adult_18" ? " — public yayın kapalı" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="workspace-classification__warnings">
+              {workContentWarnings.map((warning) => (
+                <label key={warning}>
+                  <input
+                    name="contentWarnings"
+                    type="checkbox"
+                    value={warning}
+                    defaultChecked={selectedWarnings.includes(warning)}
+                  />
+                  <span>{workContentWarningDetails[warning].label}</span>
+                </label>
+              ))}
+            </div>
+            <label className="workspace-classification__confirm">
+              <input
+                name="contentClassificationConfirmed"
+                type="checkbox"
+                defaultChecked={
+                  work.contentRating !== "unrated" &&
+                  Boolean(work.contentRatingConfirmedAt)
+                }
+                required
+              />
+              <span>Sınıfı eserin en yoğun içeriğine göre kontrol ettiğimi onaylıyorum.</span>
+            </label>
+          </fieldset>
 
           {state.message && (
             <p

@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
@@ -24,6 +25,14 @@ import {
   initialWorkActionState,
   type WorkWithChapterSummary,
 } from "@/features/works/types";
+import {
+  parseWorkContentWarnings,
+  workContentRatingDetails,
+  workContentRatings,
+  workContentWarningDetails,
+  workContentWarnings,
+  type WorkContentWarning,
+} from "@/lib/work-content-classification";
 
 import type { WorkDraft, WriterStep } from "../types";
 import { WriterBrand } from "./WriterBrand";
@@ -34,6 +43,9 @@ const initialDraft: WorkDraft = {
   summary: "",
   chapterTitle: writerContent.initialChapter,
   content: "",
+  contentClassificationConfirmed: false,
+  contentRating: "",
+  contentWarnings: [],
 };
 
 const dailyWordGoal = 1000;
@@ -138,6 +150,18 @@ function workToDraft(
     content:
       selectedChapter?.content ?? "",
 
+    contentClassificationConfirmed:
+      work.contentRating !== "unrated" &&
+      Boolean(work.contentRatingConfirmedAt),
+
+    contentRating:
+      work.contentRating === "unrated"
+        ? ""
+        : work.contentRating,
+
+    contentWarnings:
+      parseWorkContentWarnings(work.contentWarnings),
+
     genre:
       work.genre ?? "",
 
@@ -147,6 +171,97 @@ function workToDraft(
     title:
       work.title,
   };
+}
+
+function ClassificationHiddenInputs({ draft }: { draft: WorkDraft }) {
+  return (
+    <>
+      <input
+        name="contentRating"
+        type="hidden"
+        value={draft.contentRating}
+      />
+      <input
+        name="contentClassificationConfirmed"
+        type="hidden"
+        value={draft.contentClassificationConfirmed ? "true" : "false"}
+      />
+      {draft.contentWarnings.map((warning) => (
+        <input
+          name="contentWarnings"
+          type="hidden"
+          value={warning}
+          key={warning}
+        />
+      ))}
+    </>
+  );
+}
+
+function ClassificationFields({
+  compact = false,
+  draft,
+  onConfirm,
+  onRating,
+  onWarning,
+}: {
+  compact?: boolean;
+  draft: WorkDraft;
+  onConfirm: (value: boolean) => void;
+  onRating: (value: WorkDraft["contentRating"]) => void;
+  onWarning: (warning: WorkContentWarning, checked: boolean) => void;
+}) {
+  return (
+    <fieldset className={`work-classification${compact ? " work-classification--compact" : ""}`}>
+      <legend>İçerik ve yaş sınıfı</legend>
+      <p>
+        Eserin tamamındaki en yoğun içeriği esas al. Bu bilgi okura yayın öncesinde gösterilir.
+      </p>
+      <label className="work-classification__rating">
+        <span>Yaş sınıfı</span>
+        <select
+          name="contentRating"
+          required
+          value={draft.contentRating}
+          onChange={(event) => onRating(event.target.value as WorkDraft["contentRating"])}
+        >
+          <option value="" disabled>Sınıf seç</option>
+          {workContentRatings.map((rating) => (
+            <option value={rating} key={rating}>
+              {workContentRatingDetails[rating].label}
+              {rating === "adult_18" ? " — public yayın kapalı" : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="work-classification__warnings" aria-label="İçerik uyarıları">
+        {workContentWarnings.map((warning) => (
+          <label key={warning}>
+            <input
+              name="contentWarnings"
+              type="checkbox"
+              value={warning}
+              checked={draft.contentWarnings.includes(warning)}
+              onChange={(event) => onWarning(warning, event.target.checked)}
+            />
+            <span>{workContentWarningDetails[warning].label}</span>
+          </label>
+        ))}
+      </div>
+      <label className="work-classification__confirm">
+        <input
+          name="contentClassificationConfirmed"
+          type="checkbox"
+          checked={draft.contentClassificationConfirmed}
+          onChange={(event) => onConfirm(event.target.checked)}
+          required
+        />
+        <span>
+          Sınıfı eserin en yoğun bölümüne göre seçtiğimi ve eser değişirse güncelleyeceğimi onaylıyorum. <Link href="/icerik-ve-yas-politikasi" target="_blank">Politikayı oku</Link>
+        </span>
+      </label>
+    </fieldset>
+  );
 }
 
 function NewWorkFlowInstance({
@@ -543,6 +658,20 @@ function NewWorkFlowInstance({
     }
   }
 
+  function updateContentWarning(
+    warning: WorkContentWarning,
+    checked: boolean,
+  ) {
+    setDraft((current) => ({
+      ...current,
+      contentWarnings: checked
+        ? [...new Set([...current.contentWarnings, warning])]
+        : current.contentWarnings.filter((item) => item !== warning),
+    }));
+
+    if (step === "editor") setSaveState("kaydedilmedi");
+  }
+
   function selectChapter(
     nextChapter: ChapterSummary,
   ) {
@@ -747,6 +876,15 @@ function NewWorkFlowInstance({
           "content",
           autosaveDraft.content,
         );
+
+        formData.set("contentRating", autosaveDraft.contentRating);
+        formData.set(
+          "contentClassificationConfirmed",
+          autosaveDraft.contentClassificationConfirmed ? "true" : "false",
+        );
+        autosaveDraft.contentWarnings.forEach((warning) => {
+          formData.append("contentWarnings", warning);
+        });
 
         setSaveState(
           "kaydediliyor",
@@ -999,6 +1137,13 @@ function NewWorkFlowInstance({
                             .summaryPlaceholder
                         }
                         rows={4}
+                      />
+
+                      <ClassificationFields
+                        draft={draft}
+                        onConfirm={(value) => updateDraft("contentClassificationConfirmed", value)}
+                        onRating={(value) => updateDraft("contentRating", value)}
+                        onWarning={updateContentWarning}
                       />
 
                       {createState.message && (
@@ -1338,6 +1483,24 @@ function NewWorkFlowInstance({
                           kelime
                         </strong>
                       </div>
+
+                      <details className="writer-classification-panel">
+                        <summary>
+                          İçerik sınıfı
+                          <strong>
+                            {draft.contentRating
+                              ? workContentRatingDetails[draft.contentRating].shortLabel
+                              : "Seçilmedi"}
+                          </strong>
+                        </summary>
+                        <ClassificationFields
+                          compact
+                          draft={draft}
+                          onConfirm={(value) => updateDraft("contentClassificationConfirmed", value)}
+                          onRating={(value) => updateDraft("contentRating", value)}
+                          onWarning={updateContentWarning}
+                        />
+                      </details>
 
                       <nav className="writer-chapters__list">
                         {chapters.map(
@@ -1709,6 +1872,8 @@ function NewWorkFlowInstance({
                           draft.content
                         }
                       />
+
+                      <ClassificationHiddenInputs draft={draft} />
 
                       <Button
                         loading={

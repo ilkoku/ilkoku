@@ -175,7 +175,7 @@ export function EditorialStandardsExperience({ body, summary, title, updatedAt }
 
       <aside className="how-related how-container" aria-label="İlkOku içinde devam et"><SectionHeading eyebrow="İlkOku içinde devam et" title="Standardı gerçek süreçte takip et." /><div className="how-related__grid"><Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Eserin iki aşamalı değerlendirme yolculuğunu incele.</span></Link><Link href="/editorler"><strong>Editörleri incele</strong><span>Herkese açık editör profillerini ve uzmanlıklarını gör.</span></Link><Link href="/yardim"><strong>Yardım Merkezi</strong><span>Editör incelemesi hakkındaki sık sorulara yanıt bul.</span></Link><Link href="/iletisim"><strong>İletişim</strong><span>Somut bir sorun veya ihlal şüphesi için bize ulaş.</span></Link></div></aside>
 
-      <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link></nav></div></footer>
+      <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link></nav></div></footer>
     </main>
   );
 }

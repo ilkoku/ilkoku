@@ -44,7 +44,7 @@ const entryPointRoutes = new Set([
 const workflows = [
   ["Kayıt ve rol yolculuğu", ["/kayit", "/rol-secimi", "/okuyucu | /yazar | /editor | /yayinevi"]],
   ["Okuyucu yolculuğu", ["/okuyucu", "/kesfet", "/kitap/[slug]", "/oku/[slug]/...", "/tamamlanan-eserler"]],
-  ["Yazar ve eser yayın akışı", ["/yazar", "/eserlerim", "/eserlerim · NewWorkFlow bölüm/yayın çalışma alanı", "/kitap/[slug]"]],
+  ["Yazar ve eser yayın akışı", ["/yazar", "/eserlerim", "/eserlerim · NewWorkFlow içerik sınıfı/bölüm/yayın çalışma alanı", "/kitap/[slug]", "/icerik-ve-yas-politikasi"]],
   ["Editör inceleme akışı", ["/editor/talepler", "/editor/incelemeler?asama=birinci", "/editor/incelemeler?asama=ikinci", "/editor/incelemeler?durum=tamamlanan"]],
   ["Yayınevi keşif ve operasyon akışı", ["/yayinevi", "/yayinevi/kesfet/eserler", "/yayinevi/basvurular/[submissionId]", "/yayinevi/editor-talepleri", "/yayinevi/dosyalar"]],
   ["İçerik yayın akışı", ["/icerik", "/icerik/ana-sayfa | /icerik/rol-kartlari | /icerik/menuler | /icerik/seo", "/"]],

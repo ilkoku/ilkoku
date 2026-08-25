@@ -1,6 +1,7 @@
 export { authContent } from "./auth";
 export { dashboardContent } from "./dashboard";
 export { editorialStandardsPageContent } from "./editorial-standards";
+export { contentAgePolicyPageContent } from "./content-age-policy";
 export { editorsContent } from "./editors";
 export { feedbackContent } from "./feedback";
 export {

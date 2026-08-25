@@ -8,6 +8,7 @@ import type {
   CreateWorkInput,
   UpdateWorkInput,
 } from "./validators";
+import { serializeWorkContentWarnings } from "@/lib/work-content-classification";
 
 function hasMeaningfulText(value: string) {
   return value
@@ -77,6 +78,9 @@ export async function createWorkWithFirstChapter(
     description: input.summary || null,
     genre: input.genre || null,
     language: "tr",
+    contentRating: input.contentRating,
+    contentWarnings: serializeWorkContentWarnings(input.contentWarnings),
+    contentRatingConfirmedAt: new Date(),
     slug,
     title: input.title,
   });
@@ -130,6 +134,9 @@ export async function updateWork(
       description: changes.summary,
       genre: changes.genre,
       language: changes.language,
+      contentRating: changes.contentRating,
+      contentWarnings: serializeWorkContentWarnings(changes.contentWarnings),
+      contentRatingConfirmedAt: new Date(),
       status,
       title: changes.title,
       ...(status

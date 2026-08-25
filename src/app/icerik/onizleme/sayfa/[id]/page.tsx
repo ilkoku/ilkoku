@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { HowItWorksExperience } from "@/components/content/HowItWorksExperience";
 import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 
-type PageRow = { id: string; slug: string; title: string; status: "draft" | "published" | "archived"; bodyJson: string; seoTitle: string | null; seoDescription: string | null; noIndex: boolean };
+import "@/app/nasil-calisir/how-it-works.css";
+
+type PageRow = { id: string; contentKey: string; slug: string; title: string; status: "draft" | "published" | "archived"; bodyJson: string; seoTitle: string | null; seoDescription: string | null; noIndex: boolean; updatedAt: Date };
 type Draft = { title?: string; summary?: string; body?: string; seoTitle?: string; seoDescription?: string; noIndex?: boolean };
 
 export const dynamic = "force-dynamic";
@@ -16,7 +19,7 @@ export default async function CmsPagePreview({ params }: { params: Promise<{ id:
   await requireCmsManager(`/icerik/onizleme/sayfa/${id}`);
 
   const rows = await prisma.$queryRaw<PageRow[]>`
-    SELECT id, slug, title, status, bodyJson, seoTitle, seoDescription, noIndex
+    SELECT id, contentKey, slug, title, status, bodyJson, seoTitle, seoDescription, noIndex, updatedAt
     FROM ContentPage
     WHERE id = ${id} AND contentKey LIKE 'page:tr:%'
     LIMIT 1
@@ -37,6 +40,17 @@ export default async function CmsPagePreview({ params }: { params: Promise<{ id:
   const title = draft?.title ?? page.title;
   const summary = draft?.summary ?? stored.summary;
   const body = draft?.body ?? stored.body;
+
+  if (page.contentKey === "page:tr:nasil-calisir") {
+    return (
+      <>
+        <div style={{ position: "relative", zIndex: 60, padding: ".7rem 1rem", color: "#fff", background: "#4b2dbf", textAlign: "center", fontSize: ".75rem", fontWeight: 800 }}>
+          CMS Taslak Önizleme · {draft ? "Bekleyen taslak" : "Kayıtlı sürüm"} · <Link href={`/icerik/sayfalar/${page.id}`} style={{ textDecoration: "underline" }}>Editöre dön</Link>
+        </div>
+        <HowItWorksExperience body={body} summary={summary} title={title} updatedAt={page.updatedAt} />
+      </>
+    );
+  }
 
   return (
     <main style={{ minHeight: "100vh", background: "#f7f5ff", padding: "2rem 1rem", color: "#18162a" }}>

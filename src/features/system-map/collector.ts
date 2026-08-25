@@ -79,6 +79,12 @@ const workflows: SystemMapWorkflow[] = [
     steps: ["/icerik", "/icerik/ana-sayfa | /icerik/rol-kartlari | /icerik/menuler | /icerik/seo", "/icerik/sayfalar", "/nasil-calisir", "/"],
   },
   {
+    id: "public-trust",
+    title: "Nasıl Çalışır güven ve keşif anlatımı",
+    description: "CMS metni, yayın önizlemesi, marka görseli ve public rol/keşif bağlantılarından oluşan Nasıl Çalışır sayfa zinciri.",
+    steps: ["/icerik/sayfalar", "/icerik/onizleme/sayfa/[id]", "/nasil-calisir", "/eserler | /yazarlar | /editorler | /yardim"],
+  },
+  {
     id: "contracts",
     title: "Merkezi sözleşme akışı",
     description: "Admin şablonundan kullanıcı sözleşme kutusuna ve cevabın tekrar merkeze dönmesine kadar olan kanonik akış.",

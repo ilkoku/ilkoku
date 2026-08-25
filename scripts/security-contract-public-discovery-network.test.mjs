@@ -33,6 +33,8 @@ function notContains(text, fragment, label) {
 test("how-it-works trust page stays truthful without CMS rows and retires guides", () => {
   const content = source("src/content/how-it-works.ts");
   const page = source("src/app/nasil-calisir/page.tsx");
+  const experience = source("src/components/content/HowItWorksExperience.tsx");
+  const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const cmsStore = source("src/lib/cms-public-page-store.ts");
   const guideIndex = source("src/app/rehber/page.tsx");
   const guideDetail = source("src/app/rehber/[slug]/page.tsx");
@@ -42,6 +44,10 @@ test("how-it-works trust page stays truthful without CMS rows and retires guides
   contains(content, "Eser Pasaportu; eserin İlkOku'da", "passport evidence boundary");
   contains(content, "Henüz etkin değil", "truthful feature status");
   contains(page, 'getPublishedCmsPublicPageState("nasil-calisir")', "CMS-owned public page");
+  contains(page, "HowItWorksExperience", "branded how-it-works experience");
+  contains(experience, 'src="/how-it-works/journey.webp"', "brand-matched journey visual");
+  contains(experience, "EditorialBody body={part.body}", "CMS journey content in cards");
+  contains(preview, 'page.contentKey === "page:tr:nasil-calisir"', "visual CMS preview boundary");
   contains(page, '"@type": "WebPage"', "WebPage schema");
   contains(cmsStore, "status = 'published'", "published CMS boundary");
   contains(guideIndex, 'permanentRedirect("/nasil-calisir")', "retired guide index redirect");
@@ -143,6 +149,7 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   contains(showcase, '/turler/${publicTaxonomySlug(work.genre)}', "book genre link");
   contains(retiredMap, 'permanentRedirect("/harita")', "retired discovery map redirect");
   contains(collector, '"/icerik/sayfalar", "/nasil-calisir"', "trust page CMS workflow map");
+  contains(collector, 'id: "public-trust"', "visual trust workflow map");
 });
 
 test("public discovery does not silently change chapter access policy", () => {

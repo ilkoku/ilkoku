@@ -57,6 +57,7 @@ export async function CmsPageEditor({ id }: { id?: string }) {
   const draft = stagedState.state === "valid" ? stagedState.record.payload : undefined;
   const hasPendingDraft = stagedState.state === "valid";
   const slugPart = page?.slug.replace(/^\//, "") ?? "";
+  const isHowItWorksPage = page?.contentKey === "page:tr:nasil-calisir";
   const statusLabel = corruptDraft
     ? "Yayında · taslak bütünlüğü bozuk"
     : page?.status === "published" && hasPendingDraft
@@ -124,6 +125,13 @@ export async function CmsPageEditor({ id }: { id?: string }) {
         <div className="content-panel cms-editor-notice is-warning">
           <strong>Bekleyen çalışma taslağı var.</strong>
           <p>Public sayfa son yayınlanmış sürümü göstermeye devam ediyor. Taslağı önizleyip hazır olduğunda yayınlayabilirsiniz.</p>
+        </div>
+      ) : null}
+
+      {isHowItWorksPage && !corruptDraft ? (
+        <div className="content-panel cms-editor-notice is-info">
+          <strong>Görsel sayfa düzeni aktif</strong>
+          <p>Bu kaydın ## bölüm ve ### adım başlıkları, public “Nasıl Çalışır?” sayfasındaki süreç ve rol kartlarını besler. Metin ve SEO bu çalışma masasından yönetilir; marka görseli ile responsive kart düzeni kod sürümünde korunur. Yayınlamadan önce Taslağı Önizle bağlantısıyla gerçek sayfa düzenini kontrol edin.</p>
         </div>
       ) : null}
 

@@ -47,7 +47,7 @@ function isTableSeparator(line: string) {
   return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
 }
 
-function EditorialBody({ body }: { body: string }) {
+export function EditorialBody({ body }: { body: string }) {
   const blocks = body
     .split(/\r?\n\r?\n/)
     .map((block) => block.trim())

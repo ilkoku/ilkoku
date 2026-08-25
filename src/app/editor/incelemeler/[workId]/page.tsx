@@ -35,7 +35,12 @@ export default async function EditorReviewDetailPage({
 
   if (!work) notFound();
 
-  const report = work.editorFeedback[0] ?? null;
+  const ownReport = work.editorFeedback.find(
+    (report) => report.editorId === profile.id,
+  ) ?? null;
+  const independentSecondReport = work.assignedEditorId === profile.id
+    ? work.editorFeedback.find((report) => report.editorId !== profile.id) ?? null
+    : null;
   const authorName = work.author.displayName ?? work.author.fullName;
   const totalWords = work.chapters.reduce(
     (total, chapter) => total + countWords(chapter.content),
@@ -52,24 +57,41 @@ export default async function EditorReviewDetailPage({
 
         <article className="editor-review-report">
           <header>
-            <span>Tamamlanan profesyonel inceleme</span>
-            <h2>{report?.title ?? "İnceleme raporu"}</h2>
-            {report && (
+            <span>Kendi tamamlanan profesyonel incelemeniz</span>
+            <h2>{ownReport?.title ?? "İnceleme raporu"}</h2>
+            {ownReport && (
               <p>
-                {report.category} · {report.priority === "important" ? "Önemli" : "Normal"}
+                {ownReport.category} · {ownReport.priority === "important" ? "Önemli" : "Normal"}
               </p>
             )}
           </header>
 
           <div className="editor-review-report__content">
-            {report?.content ? (
-              report.content
+            {ownReport?.content ? (
+              ownReport.content
                 .split(/\n{2,}/)
                 .map((paragraph) => <p key={paragraph}>{paragraph}</p>)
             ) : (
               <p>Bu incelemeye ait tamamlanmış rapor kaydı bulunamadı.</p>
             )}
           </div>
+
+          {independentSecondReport ? (
+            <section className="editor-review-report__comparison">
+              <header>
+                <span>Bağımsız değerlendirme tamamlandıktan sonra açıldı</span>
+                <h2>İkinci editör raporu · {independentSecondReport.title}</h2>
+                <p>
+                  {independentSecondReport.category} · {independentSecondReport.priority === "important" ? "Önemli" : "Normal"}
+                </p>
+              </header>
+              <div className="editor-review-report__content">
+                {independentSecondReport.content
+                  .split(/\n{2,}/)
+                  .map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              </div>
+            </section>
+          ) : null}
 
           <footer>
             <Link

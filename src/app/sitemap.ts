@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import {
   getPublicAuthors,
@@ -75,6 +76,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(howItWorksPageContent.updatedAt),
       changeFrequency: "monthly",
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/editoryal-standartlar`,
+      lastModified: new Date(editorialStandardsPageContent.updatedAt),
+      changeFrequency: "monthly",
+      priority: 0.75,
     },
   ];
 

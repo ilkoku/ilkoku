@@ -91,6 +91,42 @@ test("public trust visual library is complete and deployment-safe", () => {
   contains(registry, "focalPoint", "responsive crop focal point");
 });
 
+test("editorial standards stay CMS-owned and independent review access stays fail-closed", () => {
+  const content = source("src/content/editorial-standards.ts");
+  const page = source("src/app/editoryal-standartlar/page.tsx");
+  const experience = source("src/components/content/EditorialStandardsExperience.tsx");
+  const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
+  const starterContent = source("src/features/cms/starter-content-actions.ts");
+  const sitemap = source("src/app/sitemap.ts");
+  const collector = source("src/features/system-map/collector.ts");
+  const howItWorks = source("src/components/content/HowItWorksExperience.tsx");
+  const queries = source("src/features/editor-workspace/queries.ts");
+  const completedReviewPage = source("src/app/editor/incelemeler/[workId]/page.tsx");
+  const detailQuery = queries.slice(queries.indexOf("export async function getEditorReviewDetail"));
+
+  contains(content, "Editör görüş bildirir; eserin yaratıcı yönü hakkındaki nihai karar yazarda kalır.", "writer decision boundary");
+  contains(content, "İkinci editöre ise birinci rapor açılmaz.", "one-way comparison boundary");
+  contains(content, "açıkça yetkilendirilmemiş yapay zekâ", "unauthorized third-party AI boundary");
+  contains(page, 'getPublishedCmsPublicPageState("editoryal-standartlar")', "CMS-owned editorial standards page");
+  contains(page, "EditorialStandardsExperience", "branded editorial standards experience");
+  contains(experience, 'getPublicTrustPageVisual("/editoryal-standartlar")', "prepared editorial visual");
+  contains(experience, "criteria.sections.map", "CMS criteria cards");
+  contains(preview, 'page.contentKey === "page:tr:editoryal-standartlar"', "visual CMS preview boundary");
+  contains(starterContent, 'contentKey: "page:tr:editoryal-standartlar"', "CMS starter draft");
+  contains(sitemap, "${baseUrl}/editoryal-standartlar", "editorial standards sitemap route");
+  contains(collector, '"/nasil-calisir | /editoryal-standartlar"', "public trust system map");
+  contains(howItWorks, 'href="/editoryal-standartlar"', "public inbound editorial standards link");
+
+  contains(detailQuery, 'editorReviewStatus: "completed"', "completed work access boundary");
+  contains(detailQuery, "work: {\n                is: {\n                  assignedEditorId: editorId", "first editor data-minimization boundary");
+  contains(detailQuery, 'stage: "second"', "second assignment report boundary");
+  contains(detailQuery, 'status: "completed"', "completed second assignment boundary");
+  notContains(detailQuery, "take: 1", "single-report truncation");
+  contains(completedReviewPage, "work.assignedEditorId === profile.id", "first editor comparison boundary");
+  contains(completedReviewPage, "report.editorId !== profile.id", "independent report selection");
+  contains(completedReviewPage, "Bağımsız değerlendirme tamamlandıktan sonra açıldı", "post-completion disclosure label");
+});
+
 test("public authors and genres are derived only from the publication boundary", () => {
   const library = source(
     "src/features/public-discovery/library.ts",

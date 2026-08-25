@@ -87,3 +87,31 @@ test("homepage footer keeps its brand and separates platform from trust navigati
   lacks(contract, 'platform2Href: "#eser-pasaportu"', "obsolete homepage passport anchor default");
   lacks(contract, 'platform3Href: "#neden-ilkoku"', "obsolete homepage why anchor default");
 });
+
+test("all eight public trust pages load one isolated footer polish layer", () => {
+  const routePages = [
+    "src/app/nasil-calisir/page.tsx",
+    "src/app/editoryal-standartlar/page.tsx",
+    "src/app/icerik-ve-yas-politikasi/page.tsx",
+    "src/app/topluluk-kurallari/page.tsx",
+    "src/app/telif-bildirimi/page.tsx",
+    "src/app/yazarlar-icin/page.tsx",
+    "src/app/editorler-icin/page.tsx",
+    "src/app/yayinevleri-icin/page.tsx",
+  ];
+  const styles = source("src/app/nasil-calisir/public-trust-footer.css");
+  const layout = source("src/app/layout.tsx");
+  const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
+
+  for (const path of routePages) {
+    has(source(path), "public-trust-footer.css", `${path} scoped footer import`);
+  }
+
+  has(styles, ".how-page .how-footer", "trust footer must stay under how-page scope");
+  has(styles, "linear-gradient(112deg, #17152f 0%, #1e1a3e 56%, #332568 100%)", "trust footer dark brand gradient");
+  has(styles, "grid-template-columns: repeat(3, minmax(8.5rem, 1fr))", "trust footer desktop link grid");
+  has(styles, "@media (max-width: 27rem)", "trust footer narrow mobile guard");
+  lacks(styles, ".landing-footer", "trust footer must not override homepage footer classes");
+  lacks(layout, "public-trust-footer.css", "root layout must not import trust footer polish");
+  lacks(hydrator, "how-footer", "homepage CMS hydrator must not mutate trust page footers");
+});

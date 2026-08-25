@@ -19,7 +19,6 @@ test("publisher public page stays CMS-owned and truthful about discovery, permis
   const content = source("src/content/for-publishers.ts");
   const page = source("src/app/yayinevleri-icin/page.tsx");
   const experience = source("src/components/content/ForPublishersExperience.tsx");
-  const styles = source("src/app/yayinevleri-icin/for-publishers.css");
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const starterContent = source("src/features/cms/starter-content-actions.ts");
   const sitemap = source("src/app/sitemap.ts");
@@ -57,18 +56,29 @@ test("publisher public page stays CMS-owned and truthful about discovery, permis
   notContains(content, "pasaport tüm özel içeriği açar", "fabricated passport content access");
 });
 
-test("publisher page footer and closure stay isolated from shared public layout", () => {
-  const experience = source("src/components/content/ForPublishersExperience.tsx");
+test("publisher page follows the proven writer public-page shell without touching shared footer infrastructure", () => {
+  const publisher = source("src/components/content/ForPublishersExperience.tsx");
+  const writer = source("src/components/content/ForWritersExperience.tsx");
   const styles = source("src/app/yayinevleri-icin/for-publishers.css");
   const layout = source("src/app/layout.tsx");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
 
-  contains(experience, "<PublisherFooter />", "page-local footer mount");
-  contains(experience, 'className="publishers-footer"', "page-local footer namespace");
-  notContains(experience, "landing-footer", "homepage footer classes must not leak into publisher page");
-  contains(styles, ".publishers-footer__logo img", "isolated logo sizing rule");
-  contains(styles, "position:static !important", "footer logo normal-flow rule");
-  contains(styles, ".publishers-start-section { padding:", "non-collapsing final section spacing");
+  for (const hook of [
+    'className="how-page',
+    'className="how-header"',
+    'className="how-related how-container"',
+    'className="how-footer"',
+  ]) {
+    contains(writer, hook, `writer reference ${hook}`);
+    contains(publisher, hook, `publisher reuse ${hook}`);
+  }
+
+  contains(publisher, 'className="publishers-start how-container"', "writer-style final CTA container");
+  contains(styles, ".publishers-start { display:grid", "publisher CTA local style");
+  contains(styles, "margin-block:clamp(5rem,9vw,8rem)", "writer-style CTA rhythm");
+  notContains(publisher, "PublisherFooter", "no divergent publisher-only footer component");
+  notContains(publisher, "publishers-footer", "no divergent publisher-only footer namespace");
+  notContains(styles, ".publishers-footer", "no separate footer CSS fork");
   notContains(styles, ".how-page {", "shared trust shell must not be overridden");
   notContains(styles, ".landing-footer", "homepage footer CSS must not be redefined");
   notContains(layout, "ForPublishersExperience", "root layout must not own publisher page");

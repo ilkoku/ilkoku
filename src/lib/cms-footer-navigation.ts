@@ -29,12 +29,12 @@ export type FooterNavigationPayload = Record<(typeof footerNavigationFields)[num
 
 export const defaultFooterNavigation: FooterNavigationPayload = {
   platformTitle: "Platform",
-  platform1Label: "Nasıl Çalışır",
+  platform1Label: "Nasıl Çalışır?",
   platform1Href: "/nasil-calisir",
-  platform2Label: "Eser Pasaportu",
-  platform2Href: "#eser-pasaportu",
-  platform3Label: "Neden İlkOku?",
-  platform3Href: "#neden-ilkoku",
+  platform2Label: "Yazarlar İçin",
+  platform2Href: "/yazarlar-icin",
+  platform3Label: "Editörler İçin",
+  platform3Href: "/editorler-icin",
   supportTitle: "Destek",
   supportLabel: "Yardım Merkezi",
   supportHref: "",

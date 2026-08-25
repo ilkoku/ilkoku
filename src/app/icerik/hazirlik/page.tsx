@@ -48,9 +48,9 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
   const faqPendingHref = data.faqPendingDraftKey
     ? `/icerik/sss?dil=tr#faq-${data.faqPendingDraftKey}`
     : faqHref;
-  const guideHref = data.guideId ? `/icerik/rehber/${data.guideId}?dil=tr` : "/icerik/hazirlik";
+  const guideHref = data.guideId ? `/icerik/sayfalar/${data.guideId}` : "/icerik/hazirlik";
   const guidePreviewHref = data.guideId && data.guideStatus !== "archived"
-    ? `/icerik/onizleme/rehber/${data.guideId}?dil=tr`
+    ? `/icerik/onizleme/sayfa/${data.guideId}`
     : undefined;
   const corporateAge = pendingAge(data.corporatePendingAgeHours);
   const faqAge = pendingAge(data.faqPendingAgeHours);
@@ -80,15 +80,15 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
 
   const guideDetail = data.guides >= cmsReadinessTargets.guides
     ? data.guidesPendingDraft > 0
-      ? `İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir. Canlı yayını değiştirmeyen bir değişiklik taslağı${guideAge ? ` ${guideAge}dır` : ""} bekliyor.`
-      : "İlkOku Nasıl Çalışır rehberi yayında ve indexlenebilir."
+      ? `İlkOku Nasıl Çalışır sayfası yayında ve indexlenebilir. Canlı yayını değiştirmeyen bir değişiklik taslağı${guideAge ? ` ${guideAge}dır` : ""} bekliyor.`
+      : "İlkOku Nasıl Çalışır sayfası yayında ve indexlenebilir."
     : data.guidesCreated >= cmsStarterTargets.guides
       ? data.guidesSeoReady >= cmsStarterTargets.guides
         ? "İlkOku Nasıl Çalışır taslağı ve temel SEO alanları hazır. Önizleme ve yayın bekliyor."
         : "İlkOku Nasıl Çalışır taslağı hazır. Yayından önce SEO alanlarını kontrol edin."
       : data.guidesArchived > 0
-        ? "İlkOku Nasıl Çalışır rehberi arşivde. Mevcut kaydı açıp taslağa geri alın; yeni kopya oluşturulmayacak."
-        : "İlkOku Nasıl Çalışır rehber kaydı henüz yok.";
+        ? "İlkOku Nasıl Çalışır sayfası arşivde. Mevcut kaydı açıp taslağa geri alın; yeni kopya oluşturulmayacak."
+        : "İlkOku Nasıl Çalışır sayfa kaydı henüz yok.";
 
   return [
     { label: "Ana Sayfa", value: `${data.homepage}/${cmsReadinessTargets.homepage}`, level: data.homepage >= cmsReadinessTargets.homepage ? "pass" : "warn", detail: "Hero, rol seçimi, Eser Pasaportu, Neden İlkOku ve footer CMS yayını.", href: "/icerik/ana-sayfa?dil=tr", action: "Kontrol et" },
@@ -121,7 +121,7 @@ function readinessItems(data: CmsReadinessSnapshot, canPublish: boolean): Readin
       href: guideHref,
       action: data.guides >= cmsReadinessTargets.guides ? data.guidesPendingDraft > 0 ? canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele" : "Kaydı aç" : data.guidesCreated >= cmsStarterTargets.guides ? canPublish ? "İncele ve yayınla" : "Taslağı incele" : data.guidesArchived > 0 ? "Arşiv kaydını aç" : "Başlangıç setini aç",
       previewHref: guidePreviewHref,
-      liveHref: data.guides >= cmsReadinessTargets.guides ? "/rehber/ilkoku-nasil-calisir" : undefined,
+      liveHref: data.guides >= cmsReadinessTargets.guides ? "/nasil-calisir" : undefined,
     },
     { label: "Medya", value: String(data.media), level: data.media > 0 ? "pass" : "info", detail: data.media > 0 ? "Aktif medya varlıkları mevcut." : "CMS medya kütüphanesinde aktif kayıt yok.", href: "/icerik/medya", action: "Medya'yı aç" },
     { label: "SEO Eksikleri", value: String(data.seoMissing), level: data.seoMissing === 0 ? "pass" : "warn", detail: data.seoMissing === 0 ? "Yayındaki TR CMS sayfalarında temel SEO eksiği yok." : "Yayındaki TR CMS sayfalarında title, description veya canonical eksiği var.", href: "/icerik/seo", action: data.seoMissing === 0 ? "SEO'yu aç" : "Eksikleri düzelt" },
@@ -147,7 +147,7 @@ export default async function ContentReadinessPage({ searchParams }: { searchPar
   const starterError = params.hata === "baslangic";
 
   const corporateHref = data?.corporateId ? `/icerik/sayfalar/${data.corporateId}` : "/icerik/sayfalar";
-  const guideHref = data?.guideId ? `/icerik/rehber/${data.guideId}?dil=tr` : "/icerik/rehber?dil=tr";
+  const guideHref = data?.guideId ? `/icerik/sayfalar/${data.guideId}` : "/icerik/sayfalar";
   const faqHref = data?.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.faqFocusKey}` : "/icerik/sss?dil=tr";
   const faqArchivedHref = data?.faqArchivedKey ? `/icerik/sss?dil=tr#faq-${data.faqArchivedKey}` : "/icerik/sss?dil=tr";
   const faqPendingHref = data?.faqPendingDraftKey ? `/icerik/sss?dil=tr#faq-${data.faqPendingDraftKey}` : faqHref;
@@ -161,7 +161,7 @@ export default async function ContentReadinessPage({ searchParams }: { searchPar
       </div>
 
       {starterError ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Başlangıç taslakları oluşturulamadı.</strong><p>İşlem güvenli biçimde geri alındı; yarım içerik bırakılmadı. Sistem Sağlığını kontrol edip işlemi yeniden deneyin.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
-      {starterCreated ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="status"><strong>Başlangıç taslakları kontrol edildi.</strong><p>{params.sayfa ?? "0"} sayfa/rehber ve {params.sss ?? "0"} SSS taslağı oluşturuldu. Mevcut kayıtların üzerine yazılmadı ve hiçbir içerik otomatik yayınlanmadı.</p></div> : null}
+      {starterCreated ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="status"><strong>Başlangıç taslakları kontrol edildi.</strong><p>{params.sayfa ?? "0"} sayfa ve {params.sss ?? "0"} SSS taslağı oluşturuldu. Mevcut kayıtların üzerine yazılmadı ve hiçbir içerik otomatik yayınlanmadı.</p></div> : null}
 
       {!data ? (
         <div className="content-panel" role="alert"><strong>İçerik hazırlık verileri okunamadı.</strong><p>Veritabanı sorguları tamamlanamadı. İçerik yayınlamadan önce Sistem Sağlığı ekranını kontrol edin.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div>
@@ -179,7 +179,7 @@ export default async function ContentReadinessPage({ searchParams }: { searchPar
             <div className="content-metric-grid">
               <article className="content-metric-card"><span>Başlangıç seti</span><strong>{starter.createdTotal}/{starter.total}</strong><small>{starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : "aktif kayıt"}</small></article>
               <article className="content-metric-card"><span>Canlı temel içerik</span><strong>{starter.publishedTotal}/{starter.total}</strong><small>yayında</small></article>
-              <article className="content-metric-card"><span>SEO hazır</span><strong>{starter.seoReady}/{starter.seoTotal}</strong><small>Hakkımızda + Rehber</small></article>
+              <article className="content-metric-card"><span>SEO hazır</span><strong>{starter.seoReady}/{starter.seoTotal}</strong><small>Hakkımızda + Nasıl Çalışır</small></article>
               <article className="content-metric-card"><span>Bekleyen temel değişiklik</span><strong>{starter.pendingTotal}</strong><small>{oldestPendingAge ? `en eskisi ${oldestPendingAge}` : "canlı kabulü bozmaz"}</small></article>
               <article className="content-metric-card"><span>Operasyon kuyruğu</span><strong>{data.queue}</strong><small>tüm bekleyen taslaklar</small></article>
             </div>
@@ -192,14 +192,14 @@ export default async function ContentReadinessPage({ searchParams }: { searchPar
               <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
                 {data.corporatePendingDraft > 0 ? <Link href={corporateHref}>{access.canPublish ? `Hakkımızda değişikliğini incele/yayınla${pendingAge(data.corporatePendingAgeHours) ? ` · ${pendingAge(data.corporatePendingAgeHours)}` : ""}` : `Hakkımızda değişikliğini incele${pendingAge(data.corporatePendingAgeHours) ? ` · ${pendingAge(data.corporatePendingAgeHours)}` : ""}`} →</Link> : null}
                 {data.faqPendingDrafts > 0 ? <Link href={faqPendingHref}>{access.canPublish ? `SSS değişikliğini incele/yayınla (${data.faqPendingDrafts})${pendingAge(data.faqPendingAgeHours) ? ` · ${pendingAge(data.faqPendingAgeHours)}` : ""}` : `SSS değişikliğini incele (${data.faqPendingDrafts})${pendingAge(data.faqPendingAgeHours) ? ` · ${pendingAge(data.faqPendingAgeHours)}` : ""}`} →</Link> : null}
-                {data.guidesPendingDraft > 0 ? <Link href={guideHref}>{access.canPublish ? `Rehber değişikliğini incele/yayınla${pendingAge(data.guidesPendingAgeHours) ? ` · ${pendingAge(data.guidesPendingAgeHours)}` : ""}` : `Rehber değişikliğini incele${pendingAge(data.guidesPendingAgeHours) ? ` · ${pendingAge(data.guidesPendingAgeHours)}` : ""}`} →</Link> : null}
+                {data.guidesPendingDraft > 0 ? <Link href={guideHref}>{access.canPublish ? `Nasıl Çalışır değişikliğini incele/yayınla${pendingAge(data.guidesPendingAgeHours) ? ` · ${pendingAge(data.guidesPendingAgeHours)}` : ""}` : `Nasıl Çalışır değişikliğini incele${pendingAge(data.guidesPendingAgeHours) ? ` · ${pendingAge(data.guidesPendingAgeHours)}` : ""}`} →</Link> : null}
               </div>
             </div>
           ) : null}
 
           {starter.archivedTotal > 0 ? <div className="content-panel" style={{ marginTop: "1rem" }} role="alert"><div className="content-section-heading"><div><span>Yaşam Döngüsü</span><h2>{starter.archivedTotal} temel içerik arşivde</h2></div></div><p>Arşivdeki başlangıç kayıtlarının üzerine yeni kopya oluşturulmaz. İlgili kaydı doğrudan açıp taslağa geri alın; böylece içerik anahtarı ve sürüm geçmişi korunur.</p><div className="content-form-actions" style={{ flexWrap: "wrap" }}>{data.corporateArchived > 0 ? <Link href={corporateHref}>Hakkımızda kaydını aç →</Link> : null}{data.guidesArchived > 0 ? <Link href={guideHref}>Rehber kaydını aç →</Link> : null}{data.faqArchived > 0 ? <Link href={faqArchivedHref}>Arşiv SSS kaydına git →</Link> : null}</div></div> : null}
 
-          {!ready && starter.missingTotal > 0 ? <div className="content-panel" style={{ marginTop: "1rem" }}><div className="content-section-heading"><div><span>Başlangıç Seti</span><h2>{starter.missingTotal} gerçekten eksik kayıt var</h2></div></div><p>Yalnız mevcut olmayan kayıtlar için Hakkımızda, İlkOku Nasıl Çalışır rehberi ve dört temel SSS taslağı oluşturulur. Arşivdeki içerik yeni kopya sayılmaz ve üzerine yazılmaz.</p><form action={createStarterContentDraftsAction} className="content-form-actions"><button type="submit">{starter.accountedTotal > 0 ? "Eksik başlangıç taslaklarını tamamla" : "Başlangıç taslaklarını oluştur"}</button></form></div> : null}
+          {!ready && starter.missingTotal > 0 ? <div className="content-panel" style={{ marginTop: "1rem" }}><div className="content-section-heading"><div><span>Başlangıç Seti</span><h2>{starter.missingTotal} gerçekten eksik kayıt var</h2></div></div><p>Yalnız mevcut olmayan kayıtlar için Hakkımızda, İlkOku Nasıl Çalışır sayfası ve dört temel SSS taslağı oluşturulur. Arşivdeki içerik yeni kopya sayılmaz ve üzerine yazılmaz.</p><form action={createStarterContentDraftsAction} className="content-form-actions"><button type="submit">{starter.accountedTotal > 0 ? "Eksik başlangıç taslaklarını tamamla" : "Başlangıç taslaklarını oluştur"}</button></form></div> : null}
 
           {!ready && starter.complete ? <div className="content-panel" style={{ marginTop: "1rem" }}><div className="content-section-heading"><div><span>Sıradaki Adım</span><h2>6/6 başlangıç kaydı hazır</h2></div></div><p>{access.canPublish ? "Doğrudan ilgili kayda gidin; metin ve önizlemeyi kontrol ettikten sonra aynı editör ekranından yayınlayabilirsiniz." : "Doğrudan ilgili kayda gidip metin ve önizlemeyi kontrol edin. Bu hesap taslak hazırlayabilir; canlı yayın için yayın yetkili kullanıcı gerekir."}</p><div className="content-form-actions" style={{ flexWrap: "wrap" }}><Link href={corporateHref}>{access.canPublish ? "Hakkımızda · incele/yayınla" : "Hakkımızda · incele"} →</Link><Link href={guideHref}>{access.canPublish ? "Rehber · incele/yayınla" : "Rehber · incele"} →</Link><Link href={faqHref}>{access.canPublish ? "Temel SSS · incele/yayınla" : "Temel SSS · incele"} →</Link><Link href="/icerik/yayin-kuyrugu">Operasyon Kuyruğu →</Link></div></div> : null}
 

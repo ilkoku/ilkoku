@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { howItWorksPageContent } from "@/content/how-it-works";
 import { requireCmsManager } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
 
@@ -16,7 +17,7 @@ type PageSeed = {
   body: string;
   seoTitle: string;
   seoDescription: string;
-  kind: "page" | "guide";
+  kind: "page";
 };
 
 type FaqSeed = {
@@ -68,58 +69,14 @@ Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile ince
     kind: "page",
   },
   {
-    contentKey: "guide:ilkoku-nasil-calisir",
-    slug: "/rehber/ilkoku-nasil-calisir",
-    title: "İlkOku Nasıl Çalışır?",
-    summary: "İlkOku'da bir eserin yazardan okuyucuya, iki aşamalı editör incelemesinden yayınevi keşfine uzanan temel yolculuğunu adım adım öğrenin.",
-    body: `İlkOku'da yazar, okuyucu, editör ve yayınevi aynı esere farklı bir noktadan katkı sağlar. Aşağıdaki akış, platformun temel çalışma mantığını özetler.
-
-## 1. Yazar eserini oluşturur
-
-Yazar hesabından yeni bir eser kaydı açar, bölümlerini oluşturur ve çalışmasını kendi alanında geliştirir. Yazım sürecindeki içerik ve revizyon hareketleri, platformun sunduğu kayıt yapısı içinde ilerler.
-
-## 2. Eser platformda yayımlanır
-
-Yazar hazır olduğunda eserini okuyuculara açar. Platformda yayımlama, eserin İlkOku içindeki görünürlüğünü başlatır; yayınevi tarafından basılacağı veya ticari olarak yayımlanacağı anlamına gelmez.
-
-Editör incelemesi de otomatik başlamaz. Yazar profesyonel değerlendirme istiyorsa ayrıca editör incelemesi talebi oluşturur.
-
-## 3. Okuyucular eseri keşfeder
-
-Yayındaki eserler, görünürlük kurallarına göre keşif alanlarında okuyucularla buluşur. Okuyucular eserleri inceleyebilir, okumaya devam edebilir ve kendilerine açık geri bildirim araçlarını kullanabilir.
-
-Bu etkileşim, yazarın eserini gerçek okur tepkileriyle geliştirmesine yardımcı olur.
-
-## 4. Birinci editör incelemeyi üstlenir
-
-Editör incelemesi talep edilen eser Genel Editör Havuzu'nda görünür. İlk uygun editör görevi üzerine aldığında görev kilitlenir ve aynı birinci inceleme başka bir editör tarafından eş zamanlı olarak alınamaz.
-
-Birinci editör eseri okur, notlarını oluşturur ve kendi değerlendirmesini tamamlar.
-
-## 5. Eser ikinci editöre geçer
-
-Birinci inceleme tamamlandıktan sonra eser ikinci editör değerlendirmesine yönlendirilir. İkinci editör eseri bağımsız biçimde inceler ve kendi değerlendirmesini oluşturur.
-
-Bu aşamanın amacı, eserin profesyonel değerlendirmesini tek bir editör görüşüne bağlı bırakmamaktır.
-
-## 6. Değerlendirme sonucu yazara ulaşır
-
-İki inceleme tamamlandığında sistem, tamamlanan editoryal değerlendirmelerden yazarın kullanabileceği sonuç akışını oluşturur. Yazar bu sonucu eserini geliştirmek için kullanabilir.
-
-Editör değerlendirmesi bir yayınevi kabulü, basım garantisi veya ticari yayın taahhüdü değildir.
-
-## 7. Eser Pasaportu süreci görünür kılar
-
-Eser Pasaportu; platform üzerinde oluşan yazım ve revizyon geçmişi ile profesyonel inceleme durumunu tek kayıt yapısında göstermeyi amaçlar. Böylece eserin yalnızca son hali değil, İlkOku içindeki gelişim yolculuğu da daha anlaşılır hale gelir.
-
-## 8. Yayınevi keşfi başlar
-
-Yayınevleri kendilerine açık keşif alanlarında görünür eserleri ve yazarları inceleyebilir. İlgilendikleri çalışmalar yayınevinin kendi değerlendirme sürecine girebilir.
-
-İlkOku'daki keşif görünürlüğü tek başına sözleşme, basım veya yayın kararı oluşturmaz. Nihai değerlendirme ve olası ticari süreç ilgili tarafların kendi kararlarıyla ilerler.`,
-    seoTitle: "İlkOku Nasıl Çalışır? | Yazar, Editör ve Yayınevi Rehberi",
-    seoDescription: "İlkOku’da eser yayımlama, okur geri bildirimi, iki editörlü inceleme, Eser Pasaportu ve yayınevi keşfi süreçlerini adım adım öğrenin.",
-    kind: "guide",
+    contentKey: "page:tr:nasil-calisir",
+    slug: howItWorksPageContent.canonical,
+    title: howItWorksPageContent.title,
+    summary: howItWorksPageContent.summary,
+    body: howItWorksPageContent.body,
+    seoTitle: howItWorksPageContent.seoTitle,
+    seoDescription: howItWorksPageContent.seoDescription,
+    kind: "page",
   },
 ];
 
@@ -253,7 +210,7 @@ export async function createStarterContentDraftsAction() {
   revalidatePath("/icerik");
   revalidatePath("/icerik/hazirlik");
   revalidatePath("/icerik/sayfalar");
-  revalidatePath("/icerik/rehber");
+  revalidatePath("/nasil-calisir");
   revalidatePath("/icerik/sss");
   revalidatePath("/icerik/yayin-kuyrugu");
   revalidatePath("/icerik/gecmis");

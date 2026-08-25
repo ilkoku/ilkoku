@@ -37,14 +37,14 @@ test("how-it-works trust page stays truthful without CMS rows and retires guides
   const guideIndex = source("src/app/rehber/page.tsx");
   const guideDetail = source("src/app/rehber/[slug]/page.tsx");
 
-  contains(content, "Eser İlkOku\'da nasıl ilerler?", "work journey");
+  contains(content, "Eser İlkOku'da nasıl ilerler?", "work journey");
   contains(content, "Kim neyi görebilir?", "visibility matrix");
-  contains(content, "Eser Pasaportu; eserin İlkOku\'da", "passport evidence boundary");
+  contains(content, "Eser Pasaportu; eserin İlkOku'da", "passport evidence boundary");
   contains(content, "Henüz etkin değil", "truthful feature status");
-  contains(page, \'getPublishedCmsPublicPageState("nasil-calisir")\', "CMS-owned public page");
-  contains(page, \'"@type": "WebPage"\', "WebPage schema");
-  contains(cmsStore, "status = \'published\'", "published CMS boundary");
-  contains(guideIndex, \'permanentRedirect("/nasil-calisir")\', "retired guide index redirect");
+  contains(page, 'getPublishedCmsPublicPageState("nasil-calisir")', "CMS-owned public page");
+  contains(page, '"@type": "WebPage"', "WebPage schema");
+  contains(cmsStore, "status = 'published'", "published CMS boundary");
+  contains(guideIndex, 'permanentRedirect("/nasil-calisir")', "retired guide index redirect");
   contains(guideDetail, "legacyGuideTargets", "legacy guide detail redirects");
 });
 test("public authors and genres are derived only from the publication boundary", () => {
@@ -128,7 +128,7 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   }
 
   notContains(sitemap, "foundationalGuides", "retired guide sitemap source");
-  notContains(sitemap, "contentKey LIKE \'guide:%\'", "retired CMS guide sitemap inventory");
+  notContains(sitemap, "contentKey LIKE 'guide:%'", "retired CMS guide sitemap inventory");
   contains(sitemap, "getPublicAuthors()", "dynamic author sitemap");
   contains(sitemap, "getPublicGenres()", "dynamic genre sitemap");
   contains(homepage, "getPublicWorkLibrary", "homepage real publication query");
@@ -140,8 +140,8 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   contains(book, '"@type": "BreadcrumbList"', "book breadcrumbs");
   contains(showcase, '/yazarlar/${work.authorPublicId}', "book author link");
   contains(showcase, '/turler/${publicTaxonomySlug(work.genre)}', "book genre link");
-  contains(retiredMap, \'permanentRedirect("/harita")\', "retired discovery map redirect");
-  contains(collector, \'steps: ["/icerik", "/icerik/sayfalar", "/nasil-calisir", "/"]\', "trust page CMS workflow map");
+  contains(retiredMap, 'permanentRedirect("/harita")', "retired discovery map redirect");
+  contains(collector, 'steps: ["/icerik", "/icerik/sayfalar", "/nasil-calisir", "/"]', "trust page CMS workflow map");
 });
 
 test("public discovery does not silently change chapter access policy", () => {

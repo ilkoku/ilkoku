@@ -94,7 +94,7 @@ export function CopyrightNoticeExperience({ body, summary, title, updatedAt }: {
           </div>
           <figure className="how-hero__visual copyright-hero__visual">
             <Image src={visual.src} alt={visual.alt} fill priority sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
-            <figcaption><span><CopyrightIcon name="document" /> Eseri tanımla</span><span><CopyrightIcon name="link" /> URL'yi ekle</span><span><CopyrightIcon name="shield" /> Gereksiz veriyi çıkar</span></figcaption>
+            <figcaption><span><CopyrightIcon name="document" /> Eseri tanımla</span><span><CopyrightIcon name="link" /> URL’yi ekle</span><span><CopyrightIcon name="shield" /> Gereksiz veriyi çıkar</span></figcaption>
           </figure>
         </div>
       </section>

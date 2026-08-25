@@ -1,0 +1,33 @@
+.community-rules-page .community-hero__visual > img { object-fit: cover; filter: saturate(.9) contrast(.98); transform: scale(1.02); }
+.community-principles { padding-block: clamp(5rem,9vw,8rem); }
+.community-principles__grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.1rem; }
+.community-principles article { padding:clamp(1.5rem,4vw,2.4rem); border:1px solid var(--how-border); border-radius:1.5rem; background:#fff; box-shadow:0 1rem 3rem rgba(43,29,104,.06); }
+.community-principles svg { width:2.3rem; color:var(--how-primary); }
+.community-principles article > span,.community-safety article > span,.community-report > div > span,.community-appeal article > span { display:block; margin-top:.8rem; color:var(--how-primary-strong); font-size:.65rem; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
+.community-principles h3,.community-safety h3,.community-integrity h3 { margin:.55rem 0 0; color:var(--how-night); font-family:var(--how-display); font-size:clamp(1.45rem,2.8vw,2.2rem); line-height:1.08; letter-spacing:-.035em; }
+.community-principles .space-y-6,.community-safety .space-y-6,.community-integrity .space-y-6,.community-report .space-y-6,.community-appeal .space-y-6 { margin-top:1rem; color:var(--how-muted); font-size:.82rem; line-height:1.75; }
+.community-safety { padding-block:clamp(5rem,9vw,8rem); background:linear-gradient(180deg,#faf9ff,#f3f0ff); }
+.community-safety__grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.1rem; }
+.community-safety article { padding:clamp(1.5rem,4vw,2.5rem); border:1px solid var(--how-border); border-radius:1.5rem; background:#fff; }
+.community-safety svg { width:2.4rem; color:var(--how-primary); }
+.community-safety .community-safety__night { color:#fff; border-color:#31295b; background:radial-gradient(circle at 90% 10%,rgba(156,135,255,.22),transparent 16rem),linear-gradient(145deg,#17143a,#2c245c); box-shadow:0 1.2rem 3.5rem rgba(35,27,77,.14); }
+.community-safety__night h3 { color:#fff; }
+.community-safety__night .space-y-6 { color:#d9d2ea; }
+.community-safety__night svg,.community-safety__night > span { color:#f3c96b; }
+.community-integrity { padding-block:clamp(5rem,9vw,8rem); }
+.community-integrity__grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.community-integrity article { position:relative; padding:1.45rem; border:1px solid var(--how-border); border-radius:1.25rem; background:linear-gradient(145deg,#fff,#fbfaff); }
+.community-integrity article > span { display:inline-flex; color:rgba(75,45,191,.42); font-family:var(--how-display); font-weight:900; }
+.community-integrity article > svg { width:1.9rem; float:right; color:var(--how-primary); }
+.community-integrity article > h3 { margin-top:1.1rem; }
+.community-integrity article > a { display:inline-flex; margin-top:1rem; color:var(--how-primary-strong); font-size:.75rem; font-weight:850; }
+.community-report { display:grid; grid-template-columns:3.2rem minmax(0,1fr); gap:1.2rem; margin-bottom:clamp(5rem,9vw,8rem); padding:clamp(1.5rem,4vw,2.5rem); border:1px solid rgba(104,71,232,.2); border-radius:1.5rem; background:linear-gradient(145deg,#fff,#f8f6ff); }
+.community-report > svg { width:2.4rem; color:var(--how-primary); }
+.community-report h2,.community-appeal h2 { margin:.55rem 0 0; color:var(--how-night); font-family:var(--how-display); font-size:clamp(1.8rem,3.2vw,2.7rem); line-height:1.08; letter-spacing:-.035em; }
+.community-report .how-button { margin-top:1.2rem; }
+.community-appeal { display:grid; grid-template-columns:minmax(14rem,.7fr) minmax(0,1.3fr); align-items:center; gap:2rem; padding-bottom:clamp(5rem,9vw,8rem); }
+.community-appeal > div { display:grid; place-items:center; gap:.8rem; min-height:11rem; padding:1.3rem; border:1px solid var(--how-border); border-radius:1.3rem; background:#faf9ff; text-align:center; }
+.community-appeal > div svg { width:2.4rem; color:var(--how-primary); }
+.community-appeal > div strong { color:var(--how-primary-strong); font-family:var(--how-display); font-size:1.1rem; }
+@media (max-width:53rem) { .community-principles__grid,.community-safety__grid,.community-integrity__grid,.community-appeal { grid-template-columns:1fr; } }
+@media (max-width:34rem) { .community-report { grid-template-columns:1fr; } }

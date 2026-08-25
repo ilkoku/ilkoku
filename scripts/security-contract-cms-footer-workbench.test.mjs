@@ -50,3 +50,33 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
   has(workbench, "güvenli destek fallback", "support fallback explanation");
   has(workbench, "Boşsa güvenli fallback kullanılır", "link fallback guidance");
 });
+
+test("homepage footer removes the broken footer logo and exposes only canonical public information routes", () => {
+  const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
+  const contract = source("src/lib/cms-footer-navigation.ts");
+  const validation = source("src/lib/cms-footer-validation.ts");
+
+  has(hydrator, 'footer.querySelector<HTMLElement>(".landing-logo--footer")?.remove();', "broken homepage footer logo removal");
+  has(hydrator, "canonicalPlatformLinks", "canonical homepage platform link source");
+  has(hydrator, "rebuildPlatformColumn", "homepage platform column rebuild");
+
+  for (const href of [
+    "/nasil-calisir",
+    "/yazarlar-icin",
+    "/editorler-icin",
+    "/yayinevleri-icin",
+    "/editoryal-standartlar",
+    "/icerik-ve-yas-politikasi",
+    "/topluluk-kurallari",
+    "/telif-bildirimi",
+  ]) {
+    has(hydrator, `href: "${href}"`, `${href} homepage footer link`);
+    has(validation, `"${href}"`, `${href} authoritative footer validation route`);
+  }
+
+  has(contract, 'platform1Href: "/nasil-calisir"', "platform primary default");
+  has(contract, 'platform2Href: "/yazarlar-icin"', "writer public page default");
+  has(contract, 'platform3Href: "/editorler-icin"', "editor public page default");
+  lacks(contract, 'platform2Href: "#eser-pasaportu"', "obsolete homepage passport anchor default");
+  lacks(contract, 'platform3Href: "#neden-ilkoku"', "obsolete homepage why anchor default");
+});

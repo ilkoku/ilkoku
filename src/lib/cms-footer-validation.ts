@@ -23,12 +23,20 @@ const fixedPublicPaths = new Set([
   "/giris",
   "/kayit",
   "/sifremi-unuttum",
+  "/nasil-calisir",
+  "/editoryal-standartlar",
+  "/icerik-ve-yas-politikasi",
+  "/topluluk-kurallari",
+  "/telif-bildirimi",
+  "/yazarlar-icin",
+  "/editorler-icin",
+  "/yayinevleri-icin",
 ]);
 
 const linkSpecs = [
-  ["platform1", "Platform 1", "#hakkimizda"],
-  ["platform2", "Platform 2", "#eser-pasaportu"],
-  ["platform3", "Platform 3", "#neden-ilkoku"],
+  ["platform1", "Nasıl Çalışır?", "/nasil-calisir"],
+  ["platform2", "Yazarlar İçin", "/yazarlar-icin"],
+  ["platform3", "Editörler İçin", "/editorler-icin"],
   ["support", "Destek", "mailto:destek@ilkoku.com"],
   ["terms", "Kullanım Şartları", "/yasal/kullanim-sartlari"],
   ["privacy", "Gizlilik", "/yasal/gizlilik-politikasi"],

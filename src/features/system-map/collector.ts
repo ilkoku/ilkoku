@@ -76,7 +76,7 @@ const workflows: SystemMapWorkflow[] = [
     id: "cms",
     title: "İçerik yayın akışı",
     description: "İçerik çalışma masasından taslak/yayın durumuna, güven ve kurum sayfalarına ve public İlkOku yüzeyine giden CMS zinciri.",
-    steps: ["/icerik", "/icerik/sayfalar", "/nasil-calisir", "/"],
+    steps: ["/icerik", "/icerik/ana-sayfa | /icerik/rol-kartlari | /icerik/menuler | /icerik/seo", "/icerik/sayfalar", "/nasil-calisir", "/"],
   },
   {
     id: "contracts",

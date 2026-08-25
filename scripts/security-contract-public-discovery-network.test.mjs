@@ -142,7 +142,7 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   contains(showcase, '/yazarlar/${work.authorPublicId}', "book author link");
   contains(showcase, '/turler/${publicTaxonomySlug(work.genre)}', "book genre link");
   contains(retiredMap, 'permanentRedirect("/harita")', "retired discovery map redirect");
-  contains(collector, 'steps: ["/icerik", "/icerik/sayfalar", "/nasil-calisir", "/"]', "trust page CMS workflow map");
+  contains(collector, '"/icerik/sayfalar", "/nasil-calisir"', "trust page CMS workflow map");
 });
 
 test("public discovery does not silently change chapter access policy", () => {

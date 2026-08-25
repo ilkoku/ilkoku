@@ -23,7 +23,8 @@ test("community rules stay CMS-owned, truthful and connected to safe public surf
   const starterContent = source("src/features/cms/starter-content-actions.ts");
   const sitemap = source("src/app/sitemap.ts");
 
-  contains(content, "Fikir ayrılığı serbesttir", "disagreement boundary");
+  contains(content, "Bir görüşe, esere veya değerlendirmeye katılmamak mümkündür", "disagreement boundary");
+  contains(content, "kişiyi küçültmek, tehdit etmek veya topluca hedef göstermek kabul edilmez", "personal-attack boundary");
   contains(content, "Bildirim otomatik suçluluk kararı değildir", "report-not-verdict boundary");
   contains(content, "bütün kullanıcı içeriklerini yayınlanmadan önce insan eliyle incelemeyi", "no fabricated pre-moderation");
   contains(content, "otomatik sistemlerin her ihlali tespit edeceğini taahhüt etmez", "no fabricated detection guarantee");

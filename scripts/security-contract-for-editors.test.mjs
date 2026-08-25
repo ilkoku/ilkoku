@@ -31,7 +31,7 @@ test("editor public page stays CMS-owned and truthful about assignment, independ
   contains(content, "birinci editörün raporuna erişmez", "second editor independence");
   contains(content, "yalnız görev amacıyla kullanılabilir", "editor confidentiality boundary");
   contains(content, "Çıkar çatışması bildirmek olumsuz bir sicil değildir", "conflict disclosure boundary");
-  contains(content, "son söz yazarındır", "writer creative decision boundary");
+  contains(content, "Editör kendi görüşünü zorunlu yeniden yazım emri olarak sunamaz", "writer creative decision boundary");
   contains(content, "hukuki görüş veya başarı garantisi değildir", "editor authority boundary");
 
   contains(page, 'getPublishedCmsPublicPageState("editorler-icin")', "CMS-owned editor page");

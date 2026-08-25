@@ -34,6 +34,7 @@ test("how-it-works trust page stays truthful without CMS rows and retires guides
   const content = source("src/content/how-it-works.ts");
   const page = source("src/app/nasil-calisir/page.tsx");
   const experience = source("src/components/content/HowItWorksExperience.tsx");
+  const experienceStyles = source("src/app/nasil-calisir/how-it-works.css");
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const cmsStore = source("src/lib/cms-public-page-store.ts");
   const guideIndex = source("src/app/rehber/page.tsx");
@@ -47,6 +48,8 @@ test("how-it-works trust page stays truthful without CMS rows and retires guides
   contains(page, "HowItWorksExperience", "branded how-it-works experience");
   contains(experience, 'src="/how-it-works/journey.webp"', "brand-matched journey visual");
   contains(experience, "EditorialBody body={part.body}", "CMS journey content in cards");
+  contains(experienceStyles, ".how-step--passport > h3 { grid-column: 2;", "passport title grid boundary");
+  contains(experienceStyles, ".how-footer .how-logo { width: 4.4rem; aspect-ratio: 1; filter: none;", "footer logo color boundary");
   contains(preview, 'page.contentKey === "page:tr:nasil-calisir"', "visual CMS preview boundary");
   contains(page, '"@type": "WebPage"', "WebPage schema");
   contains(cmsStore, "status = 'published'", "published CMS boundary");

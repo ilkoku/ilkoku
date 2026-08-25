@@ -56,7 +56,7 @@ test("publisher public page stays CMS-owned and truthful about discovery, permis
   notContains(content, "pasaport tüm özel içeriği açar", "fabricated passport content access");
 });
 
-test("publisher page follows the proven writer public-page shell without touching shared footer infrastructure", () => {
+test("publisher page follows the proven /yazarlar-icin public-page shell without touching shared footer infrastructure", () => {
   const publisher = source("src/components/content/ForPublishersExperience.tsx");
   const writer = source("src/components/content/ForWritersExperience.tsx");
   const styles = source("src/app/yayinevleri-icin/for-publishers.css");

@@ -19,10 +19,23 @@
       "note": "CVE-2026-14257 bazı tarayıcılarda düz <=5.0.7 aralığıyla raporlanabilir. Hat bazlı backport sürümleri ve takip eden CVE-2026-69152 birlikte değerlendirilir; politika dosyasında tanımlanmayan major sürüm fail-closed kabul edilir."
     }
   ],
+  "deploymentBuildContract": {
+    "platform": "Hostinger Node.js Web Application",
+    "installMode": "production dependencies before build",
+    "buildCommand": "npm run build",
+    "requiredRootDependencies": [
+      "@tailwindcss/postcss",
+      "@types/bcrypt",
+      "@types/nodemailer",
+      "@types/qrcode",
+      "prisma"
+    ],
+    "note": "Hostinger production bağımlılıklarını kurduktan sonra prisma migrate/generate ve Next.js production build çalıştırır. Bu paketler uygulama runtime kodu olmasalar da deploy build sözleşmesinin zorunlu girdileridir; devDependencies altına taşınmaları canlı dağıtımı fail-closed durdurur."
+  },
   "manifestHygiene": {
     "buildOnlyRootDependencies": ["prisma", "@tailwindcss/postcss"],
     "buildOnlyRootPrefixes": ["@types/"],
-    "note": "Build/type araçlarının root dependencies altında tutulması otomatik güvenlik açığı değildir; production install yüzeyini büyütebildiği için inceleme WARN'ı üretir. Hostinger build davranışı doğrulanmadan paketler otomatik taşınmaz."
+    "note": "Build/type araçlarının root dependencies altında tutulması otomatik güvenlik açığı değildir. Yalnız deploymentBuildContract tarafından zorunlu tutulmayan adaylar production install yüzeyini büyüttüğü için inceleme WARN'ı üretir."
   },
   "scannerDiscrepancies": [
     {

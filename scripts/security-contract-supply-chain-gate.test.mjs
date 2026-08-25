@@ -33,7 +33,7 @@ function patchedByRule(version, rule) {
   return Boolean(parsedThreshold && compare(parsed, parsedThreshold) >= 0);
 }
 
-test("declarative supply-chain policy owns generic audit, advisory backports and manifest hygiene", () => {
+test("declarative supply-chain policy owns generic audit, advisory backports, deployment build and manifest hygiene", () => {
   const policy = JSON.parse(source("scripts/supply-chain-policy.json"));
 
   assert.equal(policy.schemaVersion, 1);
@@ -47,8 +47,30 @@ test("declarative supply-chain policy owns generic audit, advisory backports and
   assert.equal(brace.fixedByMajor["2"], "2.1.4");
   assert.equal(brace.fixedByMajor["3"], "3.0.6");
   assert.equal(brace.fixedByMajor["5"], "5.0.9");
+  assert.equal(policy.deploymentBuildContract.platform, "Hostinger Node.js Web Application");
+  assert.equal(policy.deploymentBuildContract.buildCommand, "npm run build");
+  assert.deepEqual(policy.deploymentBuildContract.requiredRootDependencies, [
+    "@tailwindcss/postcss",
+    "@types/bcrypt",
+    "@types/nodemailer",
+    "@types/qrcode",
+    "prisma",
+  ]);
   assert.ok(policy.manifestHygiene.buildOnlyRootDependencies.includes("prisma"), "Prisma CLI must stay visible as a production-manifest hygiene candidate");
   assert.ok(policy.manifestHygiene.buildOnlyRootPrefixes.includes("@types/"), "type packages must stay visible as production-manifest hygiene candidates");
+});
+
+test("every Hostinger deployment-build dependency stays in root production dependencies", () => {
+  const pkg = JSON.parse(source("package.json"));
+  const lock = JSON.parse(source("package-lock.json"));
+  const policy = JSON.parse(source("scripts/supply-chain-policy.json"));
+  const rootLock = lock.packages?.[""] ?? {};
+
+  for (const dependency of policy.deploymentBuildContract.requiredRootDependencies) {
+    assert.ok(pkg.dependencies?.[dependency], `${dependency} must remain in package.json dependencies for Hostinger build`);
+    assert.equal(rootLock.dependencies?.[dependency], pkg.dependencies[dependency], `${dependency} lockfile root metadata must match package.json`);
+    assert.equal(pkg.devDependencies?.[dependency], undefined, `${dependency} must not be dev-only on Hostinger`);
+  }
 });
 
 test("every installed package covered by an explicit advisory rule is on a patched line", () => {
@@ -81,6 +103,8 @@ test("lockfile audit is generic, fail-closed and produces inventory plus hygiene
   contains(audit, "monitoredPackages", "policy-driven package monitoring");
   contains(audit, "evaluateRule", "generic per-major rule evaluation");
   contains(audit, "unrecognized-major", "unknown advisory major fail-closed reason");
+  contains(audit, "buildDeploymentContract", "Hostinger deployment-build contract");
+  contains(audit, "missing-root-dependency", "missing Hostinger build dependency blocker");
   contains(audit, "buildManifestWarnings", "production manifest hygiene scan");
   contains(audit, "collectDuplicateVersions", "duplicate version inventory");
   contains(audit, "genericAuditGate", "npm audit gate projection");
@@ -112,6 +136,7 @@ test("system map exposes generic package inventory, advisory rules and manifest 
   contains(page, "GENEL PAKET ENVANTERİ", "generic lockfile inventory");
   contains(page, "GENEL ADVISORY KAPISI", "registry audit visibility");
   contains(page, "İZLENEN ADVISORY PAKETLERİ", "policy rule visibility");
+  contains(page, "HOSTINGER BUILD SÖZLEŞMESİ", "Hostinger deployment-build visibility");
   contains(page, "PRODUCTION MANIFEST HİJYENİ", "manifest hygiene visibility");
   contains(page, "SÜRÜM ÇOĞALMASI", "duplicate version visibility");
   contains(page, "TARAYICI UYUŞMAZLIKLARI", "external scanner discrepancy visibility");

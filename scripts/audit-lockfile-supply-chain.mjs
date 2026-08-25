@@ -57,12 +57,33 @@ function directParents(packages, dependencyName) {
     .sort((left, right) => left.packagePath.localeCompare(right.packagePath));
 }
 
-function buildManifestWarnings(rootMetadata, hygienePolicy) {
+function buildDeploymentContract(rootMetadata, contractPolicy) {
+  const dependencies = rootMetadata.dependencies ?? {};
+  const requiredDependencies = (contractPolicy.requiredRootDependencies ?? []).map((dependency) => ({
+    package: dependency,
+    requestedRange: dependencies[dependency] ?? null,
+    status: dependencies[dependency] ? "pass" : "blocker",
+  }));
+  const missingDependencies = requiredDependencies.filter((dependency) => dependency.status === "blocker");
+  return {
+    platform: contractPolicy.platform ?? "unknown",
+    installMode: contractPolicy.installMode ?? "unknown",
+    buildCommand: contractPolicy.buildCommand ?? "unknown",
+    note: contractPolicy.note ?? "",
+    status: missingDependencies.length > 0 ? "blocker" : "pass",
+    requiredDependencies,
+    missingDependencies,
+  };
+}
+
+function buildManifestWarnings(rootMetadata, hygienePolicy, deploymentRequiredDependencies) {
   const dependencies = Object.keys(rootMetadata.dependencies ?? {});
   const exact = new Set(hygienePolicy.buildOnlyRootDependencies ?? []);
   const prefixes = hygienePolicy.buildOnlyRootPrefixes ?? [];
+  const deploymentRequired = new Set(deploymentRequiredDependencies ?? []);
   return dependencies
     .filter((dependency) => exact.has(dependency) || prefixes.some((prefix) => dependency.startsWith(prefix)))
+    .filter((dependency) => !deploymentRequired.has(dependency))
     .map((dependency) => ({
       package: dependency,
       status: "warn",
@@ -131,7 +152,7 @@ const monitoredPackages = policy.advisoryRules.map((rule) => {
   };
 });
 
-const blockers = monitoredPackages.flatMap((entry) =>
+const advisoryBlockers = monitoredPackages.flatMap((entry) =>
   entry.instances
     .filter((instance) => instance.status === "blocker")
     .map((instance) => ({
@@ -141,7 +162,23 @@ const blockers = monitoredPackages.flatMap((entry) =>
       ...instance,
     })),
 );
-const manifestWarnings = buildManifestWarnings(rootMetadata, policy.manifestHygiene ?? {});
+const deploymentBuildContract = buildDeploymentContract(rootMetadata, policy.deploymentBuildContract ?? {});
+const deploymentBlockers = deploymentBuildContract.missingDependencies.map((dependency) => ({
+  package: dependency.package,
+  severity: "deployment",
+  advisories: [],
+  status: "blocker",
+  reason: "missing-root-dependency",
+  packagePath: "<root>",
+  version: null,
+  scope: "deployment-build",
+}));
+const blockers = [...advisoryBlockers, ...deploymentBlockers];
+const manifestWarnings = buildManifestWarnings(
+  rootMetadata,
+  policy.manifestHygiene ?? {},
+  policy.deploymentBuildContract?.requiredRootDependencies ?? [],
+);
 const duplicateVersionPackages = collectDuplicateVersions(allInstances);
 const uniquePackages = unique(allInstances.map((instance) => instance.package));
 const runtimeInstances = allInstances.filter((instance) => instance.scope === "runtime");
@@ -168,6 +205,7 @@ const report = {
     hygieneNote: policy.manifestHygiene?.note ?? "",
     warnings: manifestWarnings,
   },
+  deploymentBuildContract,
   monitoredPackages,
   blockers,
   duplicateVersionPackages,
@@ -193,9 +231,12 @@ for (const monitored of monitoredPackages) {
 for (const warning of manifestWarnings) {
   console.warn(`Supply-chain WARN: ${warning.package} · production manifest hygiene review.`);
 }
+for (const dependency of deploymentBuildContract.requiredDependencies) {
+  console.log(`Deployment build ${dependency.status.toUpperCase()}: ${dependency.package} · ${dependency.requestedRange ?? "missing from root dependencies"}`);
+}
 
 if (blockers.length > 0) {
-  console.error(`Supply-chain audit blocked: ${blockers.length} monitored unpatched instance(s) detected.`);
+  console.error(`Supply-chain audit blocked: ${blockers.length} advisory or deployment-contract blocker(s) detected.`);
   process.exit(1);
 }
 

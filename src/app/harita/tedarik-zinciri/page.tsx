@@ -7,6 +7,12 @@ type ManifestWarning = {
   detail: string;
 };
 
+type DeploymentBuildDependency = {
+  package: string;
+  requestedRange: string | null;
+  status: "pass" | "blocker";
+};
+
 type DuplicateVersionPackage = {
   package: string;
   versions: readonly string[];
@@ -27,6 +33,8 @@ const statusLabel = (status: "pass" | "warn" | "blocker") => {
 
 export default function SupplyChainSecurityPage() {
   const report = supplyChainSecurityReport;
+  const deploymentBuildContract = report.deploymentBuildContract;
+  const deploymentBuildDependencies = deploymentBuildContract.requiredDependencies as readonly DeploymentBuildDependency[];
   const manifestWarnings = report.rootManifest.warnings as readonly ManifestWarning[];
   const duplicateVersionPackages = report.duplicateVersionPackages as readonly DuplicateVersionPackage[];
   const scannerDiscrepancies = report.scannerDiscrepancies as readonly ScannerDiscrepancy[];
@@ -43,7 +51,7 @@ export default function SupplyChainSecurityPage() {
           <p className="system-map-eyebrow">HARİTA · TEDARİK ZİNCİRİ</p>
           <h1>Tedarik Zinciri Güvenliği</h1>
           <p>
-            Registry tabanlı npm audit kapısını, internetten bağımsız lockfile envanteri ve sürüm politikalarıyla çaprazlar. Runtime, development, advisory ve manifest hijyeni ayrı kanıt olarak tutulur.
+            Registry tabanlı npm audit kapısını, internetten bağımsız lockfile envanteri, Hostinger build sözleşmesi ve sürüm politikalarıyla çaprazlar. Runtime, deployment-build, development, advisory ve manifest hijyeni ayrı kanıt olarak tutulur.
           </p>
         </div>
         <Link href="/harita/bagimliliklar">Bağımlılık Zinciri →</Link>
@@ -88,6 +96,31 @@ export default function SupplyChainSecurityPage() {
         <p>
           <code>{report.genericAuditGate.command}</code> tüm registry advisory kayıtlarını tarar ve {report.genericAuditGate.blockedSeverities.join(" / ")} seviyesinde CI akışını durdurur. Lockfile politikası bu kontrolün yerine geçmez; onu tamamlar.
         </p>
+      </section>
+
+      <section className="system-ops-pane system-ops-pane--standalone" aria-labelledby="deployment-build-title">
+        <div className="system-map-section-heading">
+          <div><p>HOSTINGER BUILD SÖZLEŞMESİ</p><h2 id="deployment-build-title">Production kurulumundan deploy build’e</h2></div>
+          <span className="system-ops-status" data-status={deploymentBuildContract.status}>{statusLabel(deploymentBuildContract.status)}</span>
+        </div>
+        <p>
+          <strong>{deploymentBuildContract.platform}</strong> · {deploymentBuildContract.installMode} · <code>{deploymentBuildContract.buildCommand}</code>
+        </p>
+        <p>{deploymentBuildContract.note}</p>
+        <div className="system-ops-table-wrap system-ops-table-wrap--wide">
+          <table>
+            <thead><tr><th>Zorunlu paket</th><th>Root sürüm aralığı</th><th>Durum</th></tr></thead>
+            <tbody>
+              {deploymentBuildDependencies.map((dependency) => (
+                <tr key={dependency.package}>
+                  <td><code>{dependency.package}</code></td>
+                  <td>{dependency.requestedRange ? <code>{dependency.requestedRange}</code> : "Root dependencies altında yok"}</td>
+                  <td><span className="system-ops-status" data-status={dependency.status}>{statusLabel(dependency.status)}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="system-ops-pane system-ops-pane--standalone" aria-labelledby="monitored-advisories-title">
@@ -149,7 +182,7 @@ export default function SupplyChainSecurityPage() {
               </article>
             ))}
           </div>
-        ) : <div className="system-ops-all-clear">Root production manifestinde build-only aday bulunmadı.</div>}
+        ) : <div className="system-ops-all-clear">Hostinger build sözleşmesi dışında inceleme gerektiren root build-only aday bulunmadı.</div>}
       </section>
 
       <section className="system-ops-pane system-ops-pane--standalone" aria-labelledby="duplicate-versions-title">

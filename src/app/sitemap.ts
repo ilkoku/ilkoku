@@ -4,7 +4,6 @@ import { communityRulesPageContent } from "@/content/community-rules";
 import { copyrightNoticePageContent } from "@/content/copyright-notice";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { forEditorsPageContent } from "@/content/for-editors";
-import { forPublishersPageContent } from "@/content/for-publishers";
 import { forWritersPageContent } from "@/content/for-writers";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
@@ -31,7 +30,6 @@ const staticCmsPageSlugs = new Set<string>([
   copyrightNoticePageContent.canonical,
   forWritersPageContent.canonical,
   forEditorsPageContent.canonical,
-  forPublishersPageContent.canonical,
 ]);
 
 type CmsSitemapRow = {
@@ -126,12 +124,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${baseUrl}/editorler-icin`,
       lastModified: new Date(forEditorsPageContent.updatedAt),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/yayinevleri-icin`,
-      lastModified: new Date(forPublishersPageContent.updatedAt),
       changeFrequency: "monthly",
       priority: 0.8,
     },

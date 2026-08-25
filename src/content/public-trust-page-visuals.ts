@@ -5,8 +5,7 @@ export type PublicTrustPagePath =
   | "/topluluk-kurallari"
   | "/telif-bildirimi"
   | "/yazarlar-icin"
-  | "/editorler-icin"
-  | "/yayinevleri-icin";
+  | "/editorler-icin";
 
 type PublicTrustPageVisual = {
   src: `/${string}.webp`;
@@ -48,11 +47,6 @@ export const publicTrustPageVisuals = {
   "/editorler-icin": {
     src: "/trust-pages/for-editors.webp",
     alt: "Aynı eseri bağımsız biçimde değerlendiren iki editör",
-    focalPoint: "50% 58%",
-  },
-  "/yayinevleri-icin": {
-    src: "/trust-pages/for-publishers.webp",
-    alt: "Keşfe açık eserleri yetki sınırları içinde değerlendiren yayınevi ekibi",
     focalPoint: "50% 58%",
   },
 } as const satisfies Record<PublicTrustPagePath, PublicTrustPageVisual>;

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { communityRulesPageContent } from "@/content/community-rules";
 import { copyrightNoticePageContent } from "@/content/copyright-notice";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
+import { forWritersPageContent } from "@/content/for-writers";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { requireCmsManager } from "@/lib/cms-access";
@@ -120,6 +121,16 @@ Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile ince
     body: copyrightNoticePageContent.body,
     seoTitle: copyrightNoticePageContent.seoTitle,
     seoDescription: copyrightNoticePageContent.seoDescription,
+    kind: "page",
+  },
+  {
+    contentKey: "page:tr:yazarlar-icin",
+    slug: forWritersPageContent.canonical,
+    title: forWritersPageContent.title,
+    summary: forWritersPageContent.summary,
+    body: forWritersPageContent.body,
+    seoTitle: forWritersPageContent.seoTitle,
+    seoDescription: forWritersPageContent.seoDescription,
     kind: "page",
   },
 ];
@@ -259,6 +270,7 @@ export async function createStarterContentDraftsAction() {
   revalidatePath("/icerik-ve-yas-politikasi");
   revalidatePath("/topluluk-kurallari");
   revalidatePath("/telif-bildirimi");
+  revalidatePath("/yazarlar-icin");
   revalidatePath("/icerik/sss");
   revalidatePath("/icerik/yayin-kuyrugu");
   revalidatePath("/icerik/gecmis");

@@ -6,6 +6,7 @@ import { tr } from "@/content";
 import "./globals.css";
 import "./landing-theme.css";
 import "./landing-role-icons.css";
+import "./landing-footer-shared-base.css";
 import "./landing-footer-pro.css";
 import "./landing-footer-tight.css";
 import "./landing-header-pro.css";

@@ -47,6 +47,7 @@ test("how-it-works trust page stays truthful without CMS rows and retires guides
   contains(guideIndex, 'permanentRedirect("/nasil-calisir")', "retired guide index redirect");
   contains(guideDetail, "legacyGuideTargets", "legacy guide detail redirects");
 });
+
 test("public authors and genres are derived only from the publication boundary", () => {
   const library = source(
     "src/features/public-discovery/library.ts",

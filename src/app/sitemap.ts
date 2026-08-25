@@ -186,9 +186,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...pages
         .filter((page) => page.slug !== howItWorksPageContent.canonical)
         .map((page) => ({
-        url: `${baseUrl}${page.slug}`,
-        lastModified: page.updatedAt,
-        changeFrequency: "monthly" as const,
+          url: `${baseUrl}${page.slug}`,
+          lastModified: page.updatedAt,
+          changeFrequency: "monthly" as const,
           priority: 0.6,
         })),
     ];

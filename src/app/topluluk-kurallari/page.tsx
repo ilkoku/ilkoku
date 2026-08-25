@@ -7,6 +7,7 @@ import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
 
 import "@/app/nasil-calisir/how-it-works.css";
+import "@/app/nasil-calisir/public-trust-footer.css";
 import "./community-rules.css";
 
 const baseUrl = "https://ilkoku.com";

@@ -1,0 +1,168 @@
+/* İlkOku public trust pages — scoped footer polish */
+
+.how-page .how-footer {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(2.2rem, 3.5vw, 3rem) 0 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(239, 235, 255, 0.74);
+  background:
+    radial-gradient(circle at 92% 8%, rgba(126, 92, 236, 0.26), transparent 24rem),
+    radial-gradient(circle at 8% 110%, rgba(99, 71, 206, 0.18), transparent 20rem),
+    linear-gradient(112deg, #17152f 0%, #1e1a3e 56%, #332568 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.how-page .how-footer::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -8rem;
+  right: -5rem;
+  width: 20rem;
+  height: 20rem;
+  border: 1px solid rgba(171, 147, 255, 0.13);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3.2rem rgba(126, 92, 236, 0.04),
+    0 0 0 6.4rem rgba(126, 92, 236, 0.025);
+  pointer-events: none;
+}
+
+.how-page .how-footer > .how-container {
+  width: min(76rem, calc(100% - 3rem));
+  display: grid;
+  grid-template-columns: minmax(8.5rem, 0.78fr) minmax(0, 2.6fr);
+  align-items: start;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+
+.how-page .how-footer .how-logo {
+  width: clamp(7.5rem, 8.5vw, 9rem);
+  aspect-ratio: 1;
+  display: inline-flex;
+  overflow: visible;
+  margin: 0;
+  border-radius: 50%;
+  filter: drop-shadow(0 0.8rem 1.8rem rgba(0, 0, 0, 0.22));
+}
+
+.how-page .how-footer .how-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.how-page .how-footer nav {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(8.5rem, 1fr));
+  gap: 0.35rem clamp(1rem, 2.4vw, 2.2rem);
+  padding-top: 2rem;
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.how-page .how-footer nav::before {
+  content: "İlkOku’da devam et";
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #fff;
+  font-family: var(--how-display);
+  font-size: 0.96rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.how-page .how-footer nav::after {
+  content: "";
+  position: absolute;
+  top: 1.45rem;
+  left: 0;
+  width: 1.6rem;
+  height: 0.12rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a990ff, #6e49e4);
+  box-shadow: 0 0 0.8rem rgba(132, 96, 238, 0.34);
+}
+
+.how-page .how-footer nav a {
+  position: relative;
+  width: fit-content;
+  min-height: 1.7rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0;
+  color: rgba(238, 234, 255, 0.72);
+  line-height: 1.35;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.how-page .how-footer nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0.05rem;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #a990ff, transparent);
+  transition: width 180ms ease;
+}
+
+.how-page .how-footer nav a:hover {
+  color: #fff;
+  transform: translateX(0.16rem);
+}
+
+.how-page .how-footer nav a:hover::after {
+  width: 100%;
+}
+
+@media (max-width: 58rem) {
+  .how-page .how-footer > .how-container {
+    grid-template-columns: minmax(7.5rem, 0.7fr) minmax(0, 2fr);
+    gap: 2rem;
+  }
+
+  .how-page .how-footer nav {
+    grid-template-columns: repeat(2, minmax(8rem, 1fr));
+  }
+}
+
+@media (max-width: 40rem) {
+  .how-page .how-footer {
+    padding-top: 1.8rem;
+  }
+
+  .how-page .how-footer > .how-container {
+    width: calc(100% - 2rem);
+    grid-template-columns: 1fr;
+    gap: 1.35rem;
+  }
+
+  .how-page .how-footer .how-logo {
+    width: 7.4rem;
+  }
+
+  .how-page .how-footer nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.3rem 1rem;
+    padding-top: 1.8rem;
+  }
+}
+
+@media (max-width: 27rem) {
+  .how-page .how-footer nav {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .how-page .how-footer nav a,
+  .how-page .how-footer nav a::after {
+    transition: none;
+  }
+}

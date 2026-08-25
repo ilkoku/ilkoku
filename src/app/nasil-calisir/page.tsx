@@ -5,6 +5,7 @@ import { HowItWorksExperience } from "@/components/content/HowItWorksExperience"
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
 import "./how-it-works.css";
+import "./public-trust-footer.css";
 
 const baseUrl = "https://ilkoku.com";
 const socialImage = `${baseUrl}/how-it-works/journey.webp`;

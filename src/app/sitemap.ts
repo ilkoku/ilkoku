@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import { communityRulesPageContent } from "@/content/community-rules";
 import { copyrightNoticePageContent } from "@/content/copyright-notice";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
+import { forEditorsPageContent } from "@/content/for-editors";
 import { forWritersPageContent } from "@/content/for-writers";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
@@ -28,6 +29,7 @@ const staticCmsPageSlugs = new Set<string>([
   communityRulesPageContent.canonical,
   copyrightNoticePageContent.canonical,
   forWritersPageContent.canonical,
+  forEditorsPageContent.canonical,
 ]);
 
 type CmsSitemapRow = {
@@ -116,6 +118,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${baseUrl}/yazarlar-icin`,
       lastModified: new Date(forWritersPageContent.updatedAt),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/editorler-icin`,
+      lastModified: new Date(forEditorsPageContent.updatedAt),
       changeFrequency: "monthly",
       priority: 0.8,
     },

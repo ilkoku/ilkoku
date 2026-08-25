@@ -54,13 +54,24 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
 test("public trust pages mount one shared footer and keep CMS hydration route-aware", () => {
   const layout = source("src/app/layout.tsx");
   const footer = source("src/components/content/PublicTrustFooter.tsx");
+  const footerCss = source("src/components/content/PublicTrustFooter.module.css");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
   const visuals = source("src/content/public-trust-page-visuals.ts");
 
   has(layout, "<PublicTrustFooter />", "root public trust footer mount");
   has(footer, "publicTrustPageVisuals", "canonical public trust route registry");
   has(footer, "Object.prototype.hasOwnProperty.call(publicTrustPageVisuals, normalized)", "trust-route-only footer boundary");
-  has(footer, 'className="landing-footer public-trust-footer"', "shared landing footer design language");
+  has(footer, 'import styles from "./PublicTrustFooter.module.css"', "scoped footer stylesheet");
+  has(footer, 'className={`landing-footer public-trust-footer ${styles.footer}`}', "shared footer hook plus scoped visual shell");
+  has(footer, 'className={`landing-footer__grid ${styles.grid}`}', "stable footer grid hook");
+  has(footer, 'className={`landing-footer__copyright ${styles.copyright}`}', "stable footer legal-bar hook");
+  has(footer, "landing-footer__copyright-text", "SSR copyright text hook");
+  has(footer, "landing-footer__legal", "SSR legal navigation hook");
+
+  has(footerCss, ".logo img", "bounded logo rendering");
+  has(footerCss, "width: clamp(10.4rem, 10.6vw, 11.4rem)", "bounded desktop logo width");
+  has(footerCss, "grid-template-columns: minmax(14rem, 1.08fr) repeat(3", "desktop footer grid");
+  lacks(footerCss, ".landing-page .landing-footer", "footer must not depend on landing-page ancestor");
 
   for (const route of [
     "/nasil-calisir",

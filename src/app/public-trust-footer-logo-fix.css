@@ -1,0 +1,20 @@
+/* Public trust footer: keep the brand mark in normal flow so it cannot be clipped. */
+.public-trust-footer-shell .landing-footer .landing-logo--footer {
+  position: relative !important;
+  width: clamp(10.4rem, 10.6vw, 11.4rem) !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
+  overflow: visible !important;
+  display: block !important;
+  margin: 0 0 0.4rem !important;
+}
+
+.public-trust-footer-shell .landing-footer .landing-logo--footer img {
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+}

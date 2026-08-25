@@ -51,27 +51,41 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
   has(workbench, "Boşsa güvenli fallback kullanılır", "link fallback guidance");
 });
 
-test("public trust pages mount one shared footer and keep CMS hydration route-aware", () => {
+test("public trust pages reuse the proven homepage footer structure and styling chain", () => {
   const layout = source("src/app/layout.tsx");
+  const homepage = source("src/app/page.tsx");
   const footer = source("src/components/content/PublicTrustFooter.tsx");
-  const footerCss = source("src/components/content/PublicTrustFooter.module.css");
+  const footerBase = source("src/app/landing-footer-shared-base.css");
+  const footerPro = source("src/app/landing-footer-pro.css");
+  const footerTight = source("src/app/landing-footer-tight.css");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
   const visuals = source("src/content/public-trust-page-visuals.ts");
 
+  has(layout, 'import "./landing-footer-shared-base.css"', "shared footer base stylesheet import");
+  has(layout, 'import "./landing-footer-pro.css"', "homepage footer professional layer import");
+  has(layout, 'import "./landing-footer-tight.css"', "homepage footer compact layer import");
   has(layout, "<PublicTrustFooter />", "root public trust footer mount");
+
+  has(homepage, '<footer className="landing-footer" id="iletisim">', "homepage canonical footer hook");
+  has(homepage, 'className="landing-container landing-footer__grid"', "homepage canonical footer grid hook");
+  has(homepage, 'className="landing-logo landing-logo--footer"', "homepage canonical footer logo hook");
+  has(homepage, 'className="landing-footer__copyright"', "homepage canonical footer copyright hook");
+
   has(footer, "publicTrustPageVisuals", "canonical public trust route registry");
   has(footer, "Object.prototype.hasOwnProperty.call(publicTrustPageVisuals, normalized)", "trust-route-only footer boundary");
-  has(footer, 'import styles from "./PublicTrustFooter.module.css"', "scoped footer stylesheet");
-  has(footer, 'className={`landing-footer public-trust-footer ${styles.footer}`}', "shared footer hook plus scoped visual shell");
-  has(footer, 'className={`landing-footer__grid ${styles.grid}`}', "stable footer grid hook");
-  has(footer, 'className={`landing-footer__copyright ${styles.copyright}`}', "stable footer legal-bar hook");
-  has(footer, "landing-footer__copyright-text", "SSR copyright text hook");
-  has(footer, "landing-footer__legal", "SSR legal navigation hook");
+  has(footer, 'className="landing-page public-trust-footer-shell"', "homepage CSS ancestor recreated only around footer");
+  has(footer, '<footer className="landing-footer" id="iletisim">', "homepage footer class reused");
+  has(footer, 'className="landing-container landing-footer__grid"', "homepage footer grid reused");
+  has(footer, 'className="landing-logo landing-logo--footer"', "homepage footer logo reused");
+  has(footer, 'className="landing-footer__copyright"', "homepage copyright hook reused");
+  lacks(footer, "PublicTrustFooter.module.css", "divergent CSS module removed");
+  lacks(footer, "landing-socials", "non-homepage social column removed");
 
-  has(footerCss, ".logo img", "bounded logo rendering");
-  has(footerCss, "width: clamp(10.4rem, 10.6vw, 11.4rem)", "bounded desktop logo width");
-  has(footerCss, "grid-template-columns: minmax(14rem, 1.08fr) repeat(3", "desktop footer grid");
-  lacks(footerCss, ".landing-page .landing-footer", "footer must not depend on landing-page ancestor");
+  has(footerBase, ".public-trust-footer-shell .landing-logo img", "global bounded logo rule");
+  has(footerBase, "width: 100% !important", "forced responsive logo width");
+  has(footerBase, ".public-trust-footer-shell .landing-footer__grid", "shared base footer grid");
+  has(footerPro, ".landing-page .landing-footer", "homepage professional footer selector");
+  has(footerTight, ".landing-page .landing-footer", "homepage compact footer selector");
 
   for (const route of [
     "/nasil-calisir",

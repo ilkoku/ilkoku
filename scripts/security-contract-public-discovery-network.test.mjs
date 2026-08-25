@@ -16,6 +16,10 @@ function source(relativePath) {
   );
 }
 
+function binary(relativePath) {
+  return readFileSync(join(ROOT, relativePath));
+}
+
 function contains(text, fragment, label) {
   assert.ok(
     text.includes(fragment),
@@ -56,6 +60,35 @@ test("how-it-works trust page stays truthful without CMS rows and retires guides
   contains(cmsStore, "status = 'published'", "published CMS boundary");
   contains(guideIndex, 'permanentRedirect("/nasil-calisir")', "retired guide index redirect");
   contains(guideDetail, "legacyGuideTargets", "legacy guide detail redirects");
+});
+
+test("public trust visual library is complete and deployment-safe", () => {
+  const registry = source("src/content/public-trust-page-visuals.ts");
+  const visualPairs = [
+    ["/nasil-calisir", "public/how-it-works/journey.webp"],
+    ["/editoryal-standartlar", "public/trust-pages/editorial-standards.webp"],
+    ["/icerik-ve-yas-politikasi", "public/trust-pages/content-age-policy.webp"],
+    ["/topluluk-kurallari", "public/trust-pages/community-rules.webp"],
+    ["/telif-bildirimi", "public/trust-pages/copyright-notice.webp"],
+    ["/yazarlar-icin", "public/trust-pages/for-writers.webp"],
+    ["/editorler-icin", "public/trust-pages/for-editors.webp"],
+    ["/yayinevleri-icin", "public/trust-pages/for-publishers.webp"],
+  ];
+
+  for (const [route, assetPath] of visualPairs) {
+    const publicPath = assetPath.replace(/^public/, "");
+    const asset = binary(assetPath);
+
+    contains(registry, `\"${route}\"`, `visual route ${route}`);
+    contains(registry, `src: \"${publicPath}\"`, `visual asset ${publicPath}`);
+    assert.equal(asset.subarray(0, 4).toString("ascii"), "RIFF", `${assetPath} RIFF header`);
+    assert.equal(asset.subarray(8, 12).toString("ascii"), "WEBP", `${assetPath} WebP header`);
+    assert.ok(asset.length > 50_000, `${assetPath} must not be an empty placeholder`);
+    assert.ok(asset.length < 250_000, `${assetPath} must stay inside the hero image budget`);
+  }
+
+  contains(registry, "satisfies Record<PublicTrustPagePath, PublicTrustPageVisual>", "exhaustive visual registry");
+  contains(registry, "focalPoint", "responsive crop focal point");
 });
 
 test("public authors and genres are derived only from the publication boundary", () => {

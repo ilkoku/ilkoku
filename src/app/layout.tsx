@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncementBanner";
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
+import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { tr } from "@/content";
 import "./globals.css";
 import "./landing-theme.css";
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
         <PublicAnnouncementBanner />
         {children}
+        <PublicTrustFooter />
         <PublicCmsHydrator />
       </body>
     </html>

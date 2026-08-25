@@ -80,9 +80,9 @@ const workflows: SystemMapWorkflow[] = [
   },
   {
     id: "public-trust",
-    title: "Nasıl Çalışır güven ve keşif anlatımı",
-    description: "CMS metni, yayın önizlemesi, marka görseli ve public rol/keşif bağlantılarından oluşan Nasıl Çalışır sayfa zinciri.",
-    steps: ["/icerik/sayfalar", "/icerik/onizleme/sayfa/[id]", "/nasil-calisir", "/eserler | /yazarlar | /editorler | /yardim"],
+    title: "Public güven ve editoryal standartlar ağı",
+    description: "CMS metni, yayın önizlemesi, marka görselleri, Nasıl Çalışır ve Editoryal Standartlar sayfalarından public rol/keşif bağlantılarına uzanan güven ağı.",
+    steps: ["/icerik/sayfalar", "/icerik/onizleme/sayfa/[id]", "/nasil-calisir | /editoryal-standartlar", "/eserler | /yazarlar | /editorler | /yardim | /iletisim"],
   },
   {
     id: "contracts",

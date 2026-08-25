@@ -1229,6 +1229,27 @@
   white-space: pre-wrap;
 }
 
+.editor-review-report__comparison {
+  display: grid;
+  gap: var(--space-5);
+  padding: clamp(var(--space-5), 3vw, var(--space-7));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  border-radius: var(--radius-large);
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-card));
+}
+
+.editor-review-report__comparison header {
+  padding-bottom: var(--space-4);
+}
+
+.editor-review-report__comparison h2 {
+  font-size: clamp(1.25rem, 2.5vw, 1.8rem);
+}
+
+.editor-review-report__comparison .editor-review-report__content {
+  max-width: none;
+}
+
 .editor-review-report footer {
   display: flex;
   flex-wrap: wrap;

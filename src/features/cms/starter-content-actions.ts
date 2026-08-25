@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { requireCmsManager } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
@@ -76,6 +77,16 @@ Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile ince
     body: howItWorksPageContent.body,
     seoTitle: howItWorksPageContent.seoTitle,
     seoDescription: howItWorksPageContent.seoDescription,
+    kind: "page",
+  },
+  {
+    contentKey: "page:tr:editoryal-standartlar",
+    slug: editorialStandardsPageContent.canonical,
+    title: editorialStandardsPageContent.title,
+    summary: editorialStandardsPageContent.summary,
+    body: editorialStandardsPageContent.body,
+    seoTitle: editorialStandardsPageContent.seoTitle,
+    seoDescription: editorialStandardsPageContent.seoDescription,
     kind: "page",
   },
 ];
@@ -211,6 +222,7 @@ export async function createStarterContentDraftsAction() {
   revalidatePath("/icerik/hazirlik");
   revalidatePath("/icerik/sayfalar");
   revalidatePath("/nasil-calisir");
+  revalidatePath("/editoryal-standartlar");
   revalidatePath("/icerik/sss");
   revalidatePath("/icerik/yayin-kuyrugu");
   revalidatePath("/icerik/gecmis");

@@ -641,14 +641,28 @@ export async function getEditorReviewDetail(
       },
       editorFeedback: {
         where: {
-          editorId,
           isProfessionalReview: true,
           reportStatus: "completed",
+          OR: [
+            { editorId },
+            {
+              work: {
+                is: {
+                  assignedEditorId: editorId,
+                },
+              },
+              assignment: {
+                is: {
+                  stage: "second",
+                  status: "completed",
+                },
+              },
+            },
+          ],
         },
         orderBy: {
           updatedAt: "desc",
         },
-        take: 1,
       },
     },
   });

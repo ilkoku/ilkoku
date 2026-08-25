@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EditorialStandardsExperience } from "@/components/content/EditorialStandardsExperience";
 import { HowItWorksExperience } from "@/components/content/HowItWorksExperience";
 import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
@@ -7,6 +8,7 @@ import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 
 import "@/app/nasil-calisir/how-it-works.css";
+import "@/app/editoryal-standartlar/editorial-standards.css";
 
 type PageRow = { id: string; contentKey: string; slug: string; title: string; status: "draft" | "published" | "archived"; bodyJson: string; seoTitle: string | null; seoDescription: string | null; noIndex: boolean; updatedAt: Date };
 type Draft = { title?: string; summary?: string; body?: string; seoTitle?: string; seoDescription?: string; noIndex?: boolean };
@@ -48,6 +50,17 @@ export default async function CmsPagePreview({ params }: { params: Promise<{ id:
           CMS Taslak Önizleme · {draft ? "Bekleyen taslak" : "Kayıtlı sürüm"} · <Link href={`/icerik/sayfalar/${page.id}`} style={{ textDecoration: "underline" }}>Editöre dön</Link>
         </div>
         <HowItWorksExperience body={body} summary={summary} title={title} updatedAt={page.updatedAt} />
+      </>
+    );
+  }
+
+  if (page.contentKey === "page:tr:editoryal-standartlar") {
+    return (
+      <>
+        <div style={{ position: "relative", zIndex: 60, padding: ".7rem 1rem", color: "#fff", background: "#4b2dbf", textAlign: "center", fontSize: ".75rem", fontWeight: 800 }}>
+          CMS Taslak Önizleme · {draft ? "Bekleyen taslak" : "Kayıtlı sürüm"} · <Link href={`/icerik/sayfalar/${page.id}`} style={{ textDecoration: "underline" }}>Editöre dön</Link>
+        </div>
+        <EditorialStandardsExperience body={body} summary={summary} title={title} updatedAt={page.updatedAt} />
       </>
     );
   }

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { communityRulesPageContent } from "@/content/community-rules";
+import { copyrightNoticePageContent } from "@/content/copyright-notice";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
@@ -109,6 +110,16 @@ Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile ince
     body: communityRulesPageContent.body,
     seoTitle: communityRulesPageContent.seoTitle,
     seoDescription: communityRulesPageContent.seoDescription,
+    kind: "page",
+  },
+  {
+    contentKey: "page:tr:telif-bildirimi",
+    slug: copyrightNoticePageContent.canonical,
+    title: copyrightNoticePageContent.title,
+    summary: copyrightNoticePageContent.summary,
+    body: copyrightNoticePageContent.body,
+    seoTitle: copyrightNoticePageContent.seoTitle,
+    seoDescription: copyrightNoticePageContent.seoDescription,
     kind: "page",
   },
 ];
@@ -247,6 +258,7 @@ export async function createStarterContentDraftsAction() {
   revalidatePath("/editoryal-standartlar");
   revalidatePath("/icerik-ve-yas-politikasi");
   revalidatePath("/topluluk-kurallari");
+  revalidatePath("/telif-bildirimi");
   revalidatePath("/icerik/sss");
   revalidatePath("/icerik/yayin-kuyrugu");
   revalidatePath("/icerik/gecmis");

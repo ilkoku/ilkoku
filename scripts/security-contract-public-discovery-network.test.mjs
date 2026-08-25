@@ -30,28 +30,23 @@ function notContains(text, fragment, label) {
   );
 }
 
-test("foundational guides keep the public editorial hub useful without CMS rows", () => {
-  const guides = source("src/content/public-guides.ts");
-  const index = source("src/app/rehber/page.tsx");
-  const detail = source("src/app/rehber/[slug]/page.tsx");
+test("how-it-works trust page stays truthful without CMS rows and retires guides", () => {
+  const content = source("src/content/how-it-works.ts");
+  const page = source("src/app/nasil-calisir/page.tsx");
+  const cmsStore = source("src/lib/cms-public-page-store.ts");
+  const guideIndex = source("src/app/rehber/page.tsx");
+  const guideDetail = source("src/app/rehber/[slug]/page.tsx");
 
-  for (const slug of [
-    "ilk-eseri-yayinlama-rehberi",
-    "eser-tanitim-metni-nasil-yazilir",
-    "okur-geri-bildirimi-rehberi",
-    "editor-incelemesi-nasil-calisir",
-    "yayinevi-eser-kesfi-rehberi",
-    "eser-pasaportu-nedir",
-  ]) {
-    contains(guides, `slug: "${slug}"`, `guide ${slug}`);
-  }
-
-  contains(index, "foundationalGuides", "guide fallback index");
-  contains(index, "AND noIndex = false", "CMS guide indexability");
-  contains(detail, "getFoundationalGuide", "guide fallback detail");
-  contains(detail, '"@type": "Article"', "guide article schema");
+  contains(content, "Eser İlkOku\'da nasıl ilerler?", "work journey");
+  contains(content, "Kim neyi görebilir?", "visibility matrix");
+  contains(content, "Eser Pasaportu; eserin İlkOku\'da", "passport evidence boundary");
+  contains(content, "Henüz etkin değil", "truthful feature status");
+  contains(page, \'getPublishedCmsPublicPageState("nasil-calisir")\', "CMS-owned public page");
+  contains(page, \'"@type": "WebPage"\', "WebPage schema");
+  contains(cmsStore, "status = \'published\'", "published CMS boundary");
+  contains(guideIndex, \'permanentRedirect("/nasil-calisir")\', "retired guide index redirect");
+  contains(guideDetail, "legacyGuideTargets", "legacy guide detail redirects");
 });
-
 test("public authors and genres are derived only from the publication boundary", () => {
   const library = source(
     "src/features/public-discovery/library.ts",
@@ -119,18 +114,21 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   const showcase = source(
     "src/features/showcase/components/BookShowcase.tsx",
   );
-  const map = source("src/app/harita/kesif/page.tsx");
+  const retiredMap = source("src/app/harita/kesif/page.tsx");
+  const collector = source("src/features/system-map/collector.ts");
 
   for (const route of [
     "/eserler/yeni",
     "/eserler/guncellenen",
     "/yazarlar",
     "/turler",
+    "/nasil-calisir",
   ]) {
     contains(sitemap, `\${baseUrl}${route}`, `sitemap route ${route}`);
   }
 
-  contains(sitemap, "foundationalGuides", "stable guide sitemap entries");
+  notContains(sitemap, "foundationalGuides", "retired guide sitemap source");
+  notContains(sitemap, "contentKey LIKE \'guide:%\'", "retired CMS guide sitemap inventory");
   contains(sitemap, "getPublicAuthors()", "dynamic author sitemap");
   contains(sitemap, "getPublicGenres()", "dynamic genre sitemap");
   contains(homepage, "getPublicWorkLibrary", "homepage real publication query");
@@ -142,8 +140,8 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   contains(book, '"@type": "BreadcrumbList"', "book breadcrumbs");
   contains(showcase, '/yazarlar/${work.authorPublicId}', "book author link");
   contains(showcase, '/turler/${publicTaxonomySlug(work.genre)}', "book genre link");
-  contains(map, "Public Keşif Ağı", "system map discovery module");
-  contains(map, "Bölüm metni public yapılmadı", "chapter policy map boundary");
+  contains(retiredMap, \'permanentRedirect("/harita")\', "retired discovery map redirect");
+  contains(collector, \'steps: ["/icerik", "/icerik/sayfalar", "/nasil-calisir", "/"]\', "trust page CMS workflow map");
 });
 
 test("public discovery does not silently change chapter access policy", () => {

@@ -34,8 +34,8 @@ test("community rules stay CMS-owned, truthful and connected to safe public surf
   contains(page, "CommunityRulesExperience", "branded community experience");
   contains(page, '"@type": "BreadcrumbList"', "community breadcrumb schema");
   contains(experience, 'getPublicTrustPageVisual("/topluluk-kurallari")', "prepared community visual");
-  contains(experience, 'href="/yasal/telif-hakki-politikasi"', "deployment-safe copyright link");
-  notContains(experience, 'href="/telif-bildirimi"', "future copyright route before launch");
+  contains(experience, 'href="/telif-bildirimi"', "launched copyright notice link");
+  notContains(experience, 'href="/yasal/telif-hakki-politikasi">Telif Hakkı Politikası →', "superseded direct policy CTA");
   contains(preview, 'page.contentKey === "page:tr:topluluk-kurallari"', "visual CMS preview boundary");
   contains(starterContent, 'contentKey: "page:tr:topluluk-kurallari"', "CMS starter draft");
   contains(starterContent, 'revalidatePath("/topluluk-kurallari")', "community public revalidation");

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { communityRulesPageContent } from "@/content/community-rules";
+import { copyrightNoticePageContent } from "@/content/copyright-notice";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
@@ -24,6 +25,7 @@ const staticCmsPageSlugs = new Set<string>([
   editorialStandardsPageContent.canonical,
   contentAgePolicyPageContent.canonical,
   communityRulesPageContent.canonical,
+  copyrightNoticePageContent.canonical,
 ]);
 
 type CmsSitemapRow = {
@@ -100,6 +102,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${baseUrl}/topluluk-kurallari`,
       lastModified: new Date(communityRulesPageContent.updatedAt),
+      changeFrequency: "monthly",
+      priority: 0.75,
+    },
+    {
+      url: `${baseUrl}/telif-bildirimi`,
+      lastModified: new Date(copyrightNoticePageContent.updatedAt),
       changeFrequency: "monthly",
       priority: 0.75,
     },

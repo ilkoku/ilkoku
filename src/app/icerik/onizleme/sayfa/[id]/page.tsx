@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { EditorialStandardsExperience } from "@/components/content/EditorialStandardsExperience";
 import { ContentAgePolicyExperience } from "@/components/content/ContentAgePolicyExperience";
 import { CommunityRulesExperience } from "@/components/content/CommunityRulesExperience";
+import { CopyrightNoticeExperience } from "@/components/content/CopyrightNoticeExperience";
 import { HowItWorksExperience } from "@/components/content/HowItWorksExperience";
 import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
@@ -13,6 +14,7 @@ import "@/app/nasil-calisir/how-it-works.css";
 import "@/app/editoryal-standartlar/editorial-standards.css";
 import "@/app/icerik-ve-yas-politikasi/content-age-policy.css";
 import "@/app/topluluk-kurallari/community-rules.css";
+import "@/app/telif-bildirimi/copyright-notice.css";
 
 type PageRow = { id: string; contentKey: string; slug: string; title: string; status: "draft" | "published" | "archived"; bodyJson: string; seoTitle: string | null; seoDescription: string | null; noIndex: boolean; updatedAt: Date };
 type Draft = { title?: string; summary?: string; body?: string; seoTitle?: string; seoDescription?: string; noIndex?: boolean };
@@ -87,6 +89,17 @@ export default async function CmsPagePreview({ params }: { params: Promise<{ id:
           CMS Taslak Önizleme · {draft ? "Bekleyen taslak" : "Kayıtlı sürüm"} · <Link href={`/icerik/sayfalar/${page.id}`} style={{ textDecoration: "underline" }}>Editöre dön</Link>
         </div>
         <CommunityRulesExperience body={body} summary={summary} title={title} updatedAt={page.updatedAt} />
+      </>
+    );
+  }
+
+  if (page.contentKey === "page:tr:telif-bildirimi") {
+    return (
+      <>
+        <div style={{ position: "relative", zIndex: 60, padding: ".7rem 1rem", color: "#fff", background: "#4b2dbf", textAlign: "center", fontSize: ".75rem", fontWeight: 800 }}>
+          CMS Taslak Önizleme · {draft ? "Bekleyen taslak" : "Kayıtlı sürüm"} · <Link href={`/icerik/sayfalar/${page.id}`} style={{ textDecoration: "underline" }}>Editöre dön</Link>
+        </div>
+        <CopyrightNoticeExperience body={body} summary={summary} title={title} updatedAt={page.updatedAt} />
       </>
     );
   }

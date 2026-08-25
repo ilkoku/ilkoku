@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncementBanner";
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
-import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { tr } from "@/content";
 import "./globals.css";
-import "./public-trust-layout-fix.css";
 import "./landing-theme.css";
 import "./landing-role-icons.css";
-import "./landing-footer-shared-base.css";
 import "./landing-footer-pro.css";
 import "./landing-footer-tight.css";
 import "./landing-header-pro.css";
@@ -60,7 +57,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
         <PublicAnnouncementBanner />
         {children}
-        <PublicTrustFooter />
         <PublicCmsHydrator />
       </body>
     </html>

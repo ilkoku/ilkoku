@@ -1,6 +1,0 @@
-/* Public trust page shell closure guard.
-   Keeps the final section margin inside the white page surface instead of
-   collapsing through <main> and exposing the body background before footer. */
-.how-page {
-  display: flow-root;
-}

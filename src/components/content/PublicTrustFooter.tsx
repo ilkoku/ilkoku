@@ -9,6 +9,7 @@ import { publicTrustPageVisuals } from "@/content/public-trust-page-visuals";
 
 function isPublicTrustPath(pathname: string) {
   const normalized = pathname.replace(/\/+$/, "") || "/";
+  if (normalized === "/yayinevleri-icin") return false;
   return Object.prototype.hasOwnProperty.call(publicTrustPageVisuals, normalized);
 }
 

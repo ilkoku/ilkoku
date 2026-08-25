@@ -7,7 +7,6 @@ import { communityRulesPageContent } from "@/content/community-rules";
 import { copyrightNoticePageContent } from "@/content/copyright-notice";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { forEditorsPageContent } from "@/content/for-editors";
-import { forPublishersPageContent } from "@/content/for-publishers";
 import { forWritersPageContent } from "@/content/for-writers";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
@@ -143,16 +142,6 @@ Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile ince
     body: forEditorsPageContent.body,
     seoTitle: forEditorsPageContent.seoTitle,
     seoDescription: forEditorsPageContent.seoDescription,
-    kind: "page",
-  },
-  {
-    contentKey: "page:tr:yayinevleri-icin",
-    slug: forPublishersPageContent.canonical,
-    title: forPublishersPageContent.title,
-    summary: forPublishersPageContent.summary,
-    body: forPublishersPageContent.body,
-    seoTitle: forPublishersPageContent.seoTitle,
-    seoDescription: forPublishersPageContent.seoDescription,
     kind: "page",
   },
 ];
@@ -294,7 +283,6 @@ export async function createStarterContentDraftsAction() {
   revalidatePath("/telif-bildirimi");
   revalidatePath("/yazarlar-icin");
   revalidatePath("/editorler-icin");
-  revalidatePath("/yayinevleri-icin");
   revalidatePath("/icerik/sss");
   revalidatePath("/icerik/yayin-kuyrugu");
   revalidatePath("/icerik/gecmis");

@@ -92,6 +92,12 @@ function SectionHeading({ eyebrow, title, description }: { eyebrow: string; titl
   return <header className="how-section-heading"><span>{eyebrow}</span><h2>{title}</h2>{description ? <p>{description}</p> : null}</header>;
 }
 
+function HowItWorksHeroTitle({ title }: { title: string }) {
+  const match = title.trim().match(/^(İlkOku Nasıl)\s+(Çalışır\??)$/u);
+  if (!match) return <>{title}</>;
+  return <><span>{match[1]}</span><span>{match[2]}</span></>;
+}
+
 function GenericSection({ section, tone }: { section: ContentSection; tone?: "night" | "soft" }) {
   return (
     <section className={`how-editorial-card${tone ? ` how-editorial-card--${tone}` : ""}`} id={headingId(section.title)}>
@@ -129,7 +135,7 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
             <span className="how-eyebrow">İlkOku&apos;da eser yolculuğu</span>
-            <h1>{title}</h1>
+            <h1><HowItWorksHeroTitle title={title} /></h1>
             <p>{summary}</p>
             <div className="how-hero__actions"><Link className="how-button how-button--primary" href="/kayit?rol=writer">Eserini oluşturmaya başla <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/eserler">Yayımlanmış eserleri keşfet</Link></div>
             <div className="how-hero__proof"><span><strong>9</strong> gerçek süreç adımı</span><span><strong>2</strong> bağımsız editör görüşü</span><span><strong>4</strong> ayrı rol sınırı</span></div>

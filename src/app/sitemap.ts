@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { communityRulesPageContent } from "@/content/community-rules";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
@@ -22,6 +23,7 @@ const staticCmsPageSlugs = new Set<string>([
   howItWorksPageContent.canonical,
   editorialStandardsPageContent.canonical,
   contentAgePolicyPageContent.canonical,
+  communityRulesPageContent.canonical,
 ]);
 
 type CmsSitemapRow = {
@@ -92,6 +94,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${baseUrl}/icerik-ve-yas-politikasi`,
       lastModified: new Date(contentAgePolicyPageContent.updatedAt),
+      changeFrequency: "monthly",
+      priority: 0.75,
+    },
+    {
+      url: `${baseUrl}/topluluk-kurallari`,
+      lastModified: new Date(communityRulesPageContent.updatedAt),
       changeFrequency: "monthly",
       priority: 0.75,
     },

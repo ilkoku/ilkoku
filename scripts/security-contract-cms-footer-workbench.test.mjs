@@ -50,3 +50,32 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
   has(workbench, "güvenli destek fallback", "support fallback explanation");
   has(workbench, "Boşsa güvenli fallback kullanılır", "link fallback guidance");
 });
+
+test("public trust pages mount one shared footer and keep CMS hydration route-aware", () => {
+  const layout = source("src/app/layout.tsx");
+  const footer = source("src/components/content/PublicTrustFooter.tsx");
+  const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
+  const visuals = source("src/content/public-trust-page-visuals.ts");
+
+  has(layout, "<PublicTrustFooter />", "root public trust footer mount");
+  has(footer, "publicTrustPageVisuals", "canonical public trust route registry");
+  has(footer, "Object.prototype.hasOwnProperty.call(publicTrustPageVisuals, normalized)", "trust-route-only footer boundary");
+  has(footer, 'className="landing-footer public-trust-footer"', "shared landing footer design language");
+
+  for (const route of [
+    "/nasil-calisir",
+    "/editoryal-standartlar",
+    "/icerik-ve-yas-politikasi",
+    "/topluluk-kurallari",
+    "/telif-bildirimi",
+    "/yazarlar-icin",
+    "/editorler-icin",
+    "/yayinevleri-icin",
+  ]) {
+    has(visuals, `"${route}"`, `${route} public trust route`);
+  }
+
+  has(hydrator, "const pathname = usePathname()", "route-aware footer hydration");
+  has(hydrator, "}, [pathname]);", "client-navigation footer rehydration");
+  lacks(hydrator, 'if (window.location.pathname !== "/") return;', "homepage-only footer gate");
+});

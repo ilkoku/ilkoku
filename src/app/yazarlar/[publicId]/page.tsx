@@ -49,8 +49,12 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
-}: Pick<AuthorPageProps, "params">): Promise<Metadata> {
-  const { publicId } = await params;
+  searchParams,
+}: AuthorPageProps): Promise<Metadata> {
+  const [{ publicId }, query] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const author = await getPublicAuthorById(publicId);
 
   if (!author) {
@@ -73,6 +77,10 @@ export async function generateMetadata({
     description: metaDescription,
     alternates: {
       canonical,
+    },
+    robots: {
+      index: !query.from,
+      follow: true,
     },
     openGraph: {
       type: "profile",

@@ -3,18 +3,18 @@
 }
 
 .how-it-works-route .how-hero__visual figcaption {
-  right: 1rem;
-  bottom: 1rem;
-  left: 1rem;
-  gap: 0.5rem;
+  right: 1.5rem;
+  bottom: 0.85rem;
+  left: 1.5rem;
+  gap: 0.42rem;
 }
 
 .how-it-works-route .how-hero__visual figcaption span {
-  min-height: 2.55rem;
-  gap: 0.42rem;
-  padding: 0.42rem 0.58rem;
+  min-height: 2.05rem;
+  gap: 0.34rem;
+  padding: 0.28rem 0.46rem;
   border: 1px solid rgba(104, 71, 232, 0.14);
-  border-radius: 0.72rem;
+  border-radius: 0.58rem;
   color: rgba(40, 31, 82, 0.64);
   background: rgba(255, 255, 255, 0.14);
   box-shadow:
@@ -24,7 +24,7 @@
   -webkit-backdrop-filter: blur(0.14rem) saturate(104%);
   font-size: 0.54rem;
   font-weight: 700;
-  line-height: 1.22;
+  line-height: 1.18;
   transition:
     color 180ms ease,
     background 180ms ease,
@@ -47,11 +47,11 @@
 }
 
 .how-it-works-route .how-hero__visual figcaption svg {
-  width: 1.35rem;
-  height: 1.35rem;
-  flex: 0 0 1.35rem;
-  padding: 0.28rem;
-  border-radius: 0.44rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 1.05rem;
+  padding: 0.2rem;
+  border-radius: 0.34rem;
   color: rgba(75, 45, 191, 0.72);
   background: rgba(238, 233, 255, 0.18);
   transition: color 180ms ease, background 180ms ease;
@@ -64,22 +64,22 @@
 
 @media (max-width: 42rem) {
   .how-it-works-route .how-hero__visual figcaption {
-    right: 0.75rem;
-    bottom: 0.75rem;
-    left: 0.75rem;
-    gap: 0.38rem;
+    right: 0.65rem;
+    bottom: 0.65rem;
+    left: 0.65rem;
+    gap: 0.32rem;
   }
 
   .how-it-works-route .how-hero__visual figcaption span {
-    min-height: 2.4rem;
-    padding: 0.4rem 0.52rem;
+    min-height: 2.1rem;
+    padding: 0.3rem 0.42rem;
     background: rgba(255, 255, 255, 0.18);
     font-size: 0.53rem;
   }
 
   .how-it-works-route .how-hero__visual figcaption svg {
-    width: 1.28rem;
-    height: 1.28rem;
-    flex-basis: 1.28rem;
+    width: 1rem;
+    height: 1rem;
+    flex-basis: 1rem;
   }
 }

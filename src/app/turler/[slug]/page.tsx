@@ -17,6 +17,7 @@ type GenrePageProps = {
     slug: string;
   }>;
   searchParams: Promise<{
+    from?: string;
     sayfa?: string;
   }>;
 };
@@ -27,6 +28,33 @@ function pageNumber(value: string | undefined) {
   return Number.isFinite(parsed) && parsed > 0
     ? Math.min(parsed, 10_000)
     : 1;
+}
+
+function safeReturnPath(value: string | undefined) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/turler";
+  }
+
+  return value;
+}
+
+function genrePageHref(
+  slug: string,
+  page: number,
+  returnTo: string,
+) {
+  const parameters = new URLSearchParams();
+
+  if (page > 1) {
+    parameters.set("sayfa", String(page));
+  }
+
+  if (returnTo !== "/turler") {
+    parameters.set("from", returnTo);
+  }
+
+  const query = parameters.toString();
+  return query ? `/turler/${slug}?${query}` : `/turler/${slug}`;
 }
 
 export const dynamic = "force-dynamic";
@@ -64,7 +92,7 @@ export async function generateMetadata({
       canonical,
     },
     robots: {
-      index: page === 1,
+      index: page === 1 && !query.from,
       follow: true,
     },
     openGraph: {
@@ -91,12 +119,18 @@ export default async function PublicGenrePage({
     notFound();
   }
 
+  const returnTo = safeReturnPath(query.from);
   const library = await getPublicWorkLibrary(
     {
       genre: genre.label,
       sort: "newest",
     },
     pageNumber(query.sayfa),
+  );
+  const currentPath = genrePageHref(
+    genre.slug,
+    library.currentPage,
+    returnTo,
   );
   const canonical = `${baseUrl}/turler/${genre.slug}`;
   const schema = {
@@ -144,6 +178,9 @@ export default async function PublicGenrePage({
             {genre.label} türünde herkese açık yayımlanan
             eserleri kalıcı kitap bağlantılarıyla keşfedin.
           </p>
+          <p>
+            <Link href={returnTo}>← Geldiğin tür keşfine dön</Link>
+          </p>
         </header>
 
         <section
@@ -158,7 +195,10 @@ export default async function PublicGenrePage({
           </div>
 
           {library.works.length > 0 ? (
-            <PublicWorkStream works={library.works} />
+            <PublicWorkStream
+              returnPath={currentPath}
+              works={library.works}
+            />
           ) : (
             <div className="public-hub__empty">
               <strong>
@@ -168,7 +208,7 @@ export default async function PublicGenrePage({
                 Eser yayından kaldırıldığında boş tür sayfası
                 da sitemap’ten otomatik çıkar.
               </p>
-              <Link href="/turler">
+              <Link href={returnTo}>
                 Diğer türleri görüntüle
               </Link>
             </div>
@@ -181,11 +221,11 @@ export default async function PublicGenrePage({
             >
               {library.currentPage > 1 ? (
                 <Link
-                  href={
-                    library.currentPage === 2
-                      ? `/turler/${genre.slug}`
-                      : `/turler/${genre.slug}?sayfa=${library.currentPage - 1}`
-                  }
+                  href={genrePageHref(
+                    genre.slug,
+                    library.currentPage - 1,
+                    returnTo,
+                  )}
                   rel="prev"
                 >
                   ← Önceki
@@ -199,7 +239,11 @@ export default async function PublicGenrePage({
               {library.currentPage <
               library.totalPages ? (
                 <Link
-                  href={`/turler/${genre.slug}?sayfa=${library.currentPage + 1}`}
+                  href={genrePageHref(
+                    genre.slug,
+                    library.currentPage + 1,
+                    returnTo,
+                  )}
                   rel="next"
                 >
                   Sonraki →

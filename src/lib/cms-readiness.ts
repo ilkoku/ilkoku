@@ -6,12 +6,22 @@ export const cmsReadinessTargets = {
   legal: 5,
   corporate: 1,
   faq: 4,
-  guides: 1,
+  guides: 8,
 } as const;
 
 export const cmsReadinessRequiredContent = {
   corporate: "page:tr:hakkimizda",
   guide: "page:tr:nasil-calisir",
+  guides: [
+    "page:tr:nasil-calisir",
+    "page:tr:editoryal-standartlar",
+    "page:tr:icerik-ve-yas-politikasi",
+    "page:tr:topluluk-kurallari",
+    "page:tr:telif-bildirimi",
+    "page:tr:yazarlar-icin",
+    "page:tr:editorler-icin",
+    "page:tr:yayinevleri-icin",
+  ],
   faq: [
     "item_starter_ilkoku_nedir",
     "item_starter_yazar_yayin",
@@ -23,9 +33,9 @@ export const cmsReadinessRequiredContent = {
 export const cmsStarterTargets = {
   corporate: 1,
   faq: 4,
-  guides: 1,
-  total: 6,
-  seo: 2,
+  guides: 8,
+  total: 13,
+  seo: 9,
 } as const;
 
 export type CmsContentStatus = "draft" | "published" | "archived";
@@ -250,41 +260,113 @@ export async function loadCmsReadiness(): Promise<CmsReadinessSnapshot> {
             ELSE 3
           END
         LIMIT 1) AS faqPendingDraftKey,
-      (SELECT COUNT(*) FROM ContentPage
+      (SELECT COUNT(DISTINCT contentKey) FROM ContentPage
         WHERE status = 'published'
-          AND contentKey = 'page:tr:nasil-calisir'
+          AND contentKey IN (
+            'page:tr:nasil-calisir',
+            'page:tr:editoryal-standartlar',
+            'page:tr:icerik-ve-yas-politikasi',
+            'page:tr:topluluk-kurallari',
+            'page:tr:telif-bildirimi',
+            'page:tr:yazarlar-icin',
+            'page:tr:editorler-icin',
+            'page:tr:yayinevleri-icin'
+          )
           AND noIndex = false) AS guides,
-      (SELECT COUNT(*) FROM ContentPage
+      (SELECT COUNT(DISTINCT contentKey) FROM ContentPage
         WHERE status IN ('draft', 'published')
-          AND contentKey = 'page:tr:nasil-calisir') AS guidesCreated,
-      (SELECT COUNT(*) FROM ContentPage
+          AND contentKey IN (
+            'page:tr:nasil-calisir',
+            'page:tr:editoryal-standartlar',
+            'page:tr:icerik-ve-yas-politikasi',
+            'page:tr:topluluk-kurallari',
+            'page:tr:telif-bildirimi',
+            'page:tr:yazarlar-icin',
+            'page:tr:editorler-icin',
+            'page:tr:yayinevleri-icin'
+          )) AS guidesCreated,
+      (SELECT COUNT(DISTINCT contentKey) FROM ContentPage
         WHERE status = 'archived'
-          AND contentKey = 'page:tr:nasil-calisir') AS guidesArchived,
-      (SELECT COUNT(*) FROM ContentPage
+          AND contentKey IN (
+            'page:tr:nasil-calisir',
+            'page:tr:editoryal-standartlar',
+            'page:tr:icerik-ve-yas-politikasi',
+            'page:tr:topluluk-kurallari',
+            'page:tr:telif-bildirimi',
+            'page:tr:yazarlar-icin',
+            'page:tr:editorler-icin',
+            'page:tr:yayinevleri-icin'
+          )) AS guidesArchived,
+      (SELECT COUNT(DISTINCT contentKey) FROM ContentPage
         WHERE status IN ('draft', 'published')
-          AND contentKey = 'page:tr:nasil-calisir'
+          AND contentKey IN (
+            'page:tr:nasil-calisir',
+            'page:tr:editoryal-standartlar',
+            'page:tr:icerik-ve-yas-politikasi',
+            'page:tr:topluluk-kurallari',
+            'page:tr:telif-bildirimi',
+            'page:tr:yazarlar-icin',
+            'page:tr:editorler-icin',
+            'page:tr:yayinevleri-icin'
+          )
           AND noIndex = false
           AND COALESCE(TRIM(seoTitle), '') <> ''
           AND COALESCE(TRIM(seoDescription), '') <> ''
           AND COALESCE(TRIM(canonicalUrl), '') <> '') AS guidesSeoReady,
-      (SELECT COUNT(*) FROM SiteContent draft
+      (SELECT COUNT(DISTINCT page.id) FROM SiteContent draft
         INNER JOIN ContentPage page ON draft.contentKey = CONCAT('page:', page.id)
         WHERE draft.namespace = 'cms_draft'
           AND draft.status = 'draft'
-          AND page.contentKey = 'page:tr:nasil-calisir'
+          AND page.contentKey IN (
+            'page:tr:nasil-calisir',
+            'page:tr:editoryal-standartlar',
+            'page:tr:icerik-ve-yas-politikasi',
+            'page:tr:topluluk-kurallari',
+            'page:tr:telif-bildirimi',
+            'page:tr:yazarlar-icin',
+            'page:tr:editorler-icin',
+            'page:tr:yayinevleri-icin'
+          )
           AND page.status = 'published') AS guidesPendingDraft,
       (SELECT TIMESTAMPDIFF(HOUR, MIN(draft.updatedAt), CURRENT_TIMESTAMP(3)) FROM SiteContent draft
         INNER JOIN ContentPage page ON draft.contentKey = CONCAT('page:', page.id)
         WHERE draft.namespace = 'cms_draft'
           AND draft.status = 'draft'
-          AND page.contentKey = 'page:tr:nasil-calisir'
+          AND page.contentKey IN (
+            'page:tr:nasil-calisir',
+            'page:tr:editoryal-standartlar',
+            'page:tr:icerik-ve-yas-politikasi',
+            'page:tr:topluluk-kurallari',
+            'page:tr:telif-bildirimi',
+            'page:tr:yazarlar-icin',
+            'page:tr:editorler-icin',
+            'page:tr:yayinevleri-icin'
+          )
           AND page.status = 'published') AS guidesPendingAgeHours,
       (SELECT id FROM ContentPage
-        WHERE contentKey = 'page:tr:nasil-calisir'
+        WHERE contentKey IN (
+          'page:tr:nasil-calisir',
+          'page:tr:editoryal-standartlar',
+          'page:tr:icerik-ve-yas-politikasi',
+          'page:tr:topluluk-kurallari',
+          'page:tr:telif-bildirimi',
+          'page:tr:yazarlar-icin',
+          'page:tr:editorler-icin',
+          'page:tr:yayinevleri-icin'
+        )
         ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
         LIMIT 1) AS guideId,
       (SELECT status FROM ContentPage
-        WHERE contentKey = 'page:tr:nasil-calisir'
+        WHERE contentKey IN (
+          'page:tr:nasil-calisir',
+          'page:tr:editoryal-standartlar',
+          'page:tr:icerik-ve-yas-politikasi',
+          'page:tr:topluluk-kurallari',
+          'page:tr:telif-bildirimi',
+          'page:tr:yazarlar-icin',
+          'page:tr:editorler-icin',
+          'page:tr:yayinevleri-icin'
+        )
         ORDER BY CASE status WHEN 'draft' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END, updatedAt DESC
         LIMIT 1) AS guideStatus,
       (SELECT COUNT(*) FROM SiteContent

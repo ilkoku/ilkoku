@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Field } from "@/components/ui/Field";
 import { editorsContent } from "@/content";
 import { editors } from "../data";
 import { EditorAvatar } from "./EditorAvatar";
@@ -9,44 +8,41 @@ export function EditorDirectory() {
   const hasEditors = editors.length > 0;
 
   return (
-    <div className="editors-page">
+    <div className="editors-page editors-page--public">
       <a className="editors-skip-link" href="#editor-listesi">{editorsContent.directory.skip}</a>
       <EditorsHeader />
 
       <main>
         <section className="editors-hero" aria-labelledby="editorler-basligi">
-          <div>
-            <p className="editors-eyebrow">{editorsContent.directory.eyebrow}</p>
-            <h1 id="editorler-basligi">{editorsContent.directory.title}</h1>
-            <p className="editors-hero__description">{editorsContent.directory.description}</p>
+          <div className="editors-hero__copy">
+            <p className="editors-eyebrow">Editoryal keşif</p>
+            <h1 id="editorler-basligi">Editörleri keşfet</h1>
+            <p className="editors-hero__description">
+              Yeni eserlerin gelişimine profesyonel katkı sunan doğrulanmış editörleri tanı. Onaylı profiller yayınlandıkça uzmanlıkları, çalışma yaklaşımı ve editoryal deneyimleri burada görünür olacak.
+            </p>
+            <div className="editors-hero__actions" aria-label="Editör keşif yolları">
+              <Link className="editors-public-button editors-public-button--primary" href="/editorler-icin">
+                Editörler için nasıl çalışır <span aria-hidden="true">→</span>
+              </Link>
+              <Link className="editors-public-button" href="/editoryal-standartlar">
+                Editoryal standartları incele
+              </Link>
+            </div>
           </div>
           <div className="editors-human-note">
             <span aria-hidden="true">✦</span>
-            <p><strong>{editorsContent.directory.humanTitle}</strong>{editorsContent.directory.humanDescription}</p>
+            <p>
+              <strong>Gerçek editör, doğrulanmış profil</strong>
+              Bu dizinde yalnız kimliği ve uzmanlığı doğrulanmış gerçek editör profilleri yayınlanır. Demo veya kurgu profil gösterilmez.
+            </p>
           </div>
         </section>
-
-        {hasEditors ? (
-          <section className="editors-filters" aria-labelledby="filtreler-basligi">
-            <div className="editors-section-heading editors-section-heading--compact">
-              <p>{editorsContent.directory.filterEyebrow}</p>
-              <h2 id="filtreler-basligi">{editorsContent.directory.filtersTitle}</h2>
-            </div>
-            <form className="editors-filter-grid">
-              {editorsContent.directory.filters.map((filter) => (
-                <Field control="select" label={filter.label} name={filter.label.toLocaleLowerCase("tr").replaceAll(" ", "-")} defaultValue="" key={filter.label}>
-                  {filter.values.map((value, index) => <option value={index === 0 ? "" : value} key={value}>{value}</option>)}
-                </Field>
-              ))}
-            </form>
-          </section>
-        ) : null}
 
         <section className="editor-directory" id="editor-listesi" aria-labelledby="editor-listesi-basligi">
           <div className="editors-section-heading editors-section-heading--row">
             <div>
-              <p>{editorsContent.directory.listEyebrow}</p>
-              <h2 id="editor-listesi-basligi">{editorsContent.directory.listTitle}</h2>
+              <p>Doğrulanmış profesyoneller</p>
+              <h2 id="editor-listesi-basligi">İlkOku editör ağı</h2>
             </div>
             <span>{editors.length} {editorsContent.directory.editorSuffix}</span>
           </div>
@@ -78,9 +74,21 @@ export function EditorDirectory() {
               ))}
             </div>
           ) : (
-            <div className="content-empty" style={{ marginTop: "1.25rem" }}>
-              <strong>Onaylı editör profilleri hazırlanıyor.</strong>
-              <p>Yalnız kimliği ve uzmanlığı doğrulanmış gerçek editörler bu dizinde yayınlanacak. Yeni profiller onaylandıkça burada görünecek.</p>
+            <div className="editors-empty">
+              <div>
+                <span>İlk editörlerden biri ol</span>
+                <h3>Doğrulanmış editör profilleri yayınlandıkça bu alan büyüyecek.</h3>
+                <p>
+                  Şu anda kurgu profil göstermek yerine gerçek editör başvurularını ve doğrulama sürecini bekliyoruz. Bu sırada editör modelini, değerlendirme standardını ve eser yolculuğundaki rolünü inceleyebilirsin.
+                </p>
+              </div>
+              <div className="editors-empty__actions">
+                <Link className="editors-public-button editors-public-button--primary" href="/kayit?rol=editor">
+                  Editör olarak katıl <span aria-hidden="true">→</span>
+                </Link>
+                <Link className="editors-public-button" href="/editorler-icin">Editörler için sayfası</Link>
+                <Link className="editors-public-button" href="/nasil-calisir">Eser yolculuğunu gör</Link>
+              </div>
             </div>
           )}
         </section>

@@ -1,0 +1,58 @@
+.public-back-navigation {
+  border-bottom: 1px solid rgba(78, 60, 151, 0.08);
+  background: rgba(252, 250, 255, 0.94);
+}
+
+.public-back-navigation__inner {
+  width: min(76rem, calc(100% - 3rem));
+  margin-inline: auto;
+  padding-block: 0.7rem;
+}
+
+.public-back-navigation button {
+  min-height: 2.55rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid rgba(104, 71, 232, 0.16);
+  border-radius: 999px;
+  color: #3f2b78;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 0.35rem 1rem rgba(61, 42, 132, 0.045);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 760;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.public-back-navigation button:hover {
+  border-color: rgba(104, 71, 232, 0.3);
+  color: #4b2dbf;
+  background: #fff;
+  transform: translateX(-2px);
+}
+
+.public-back-navigation button:focus-visible {
+  outline: 0.1875rem solid rgba(104, 71, 232, 0.34);
+  outline-offset: 0.125rem;
+}
+
+.public-back-navigation button > span:first-child {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (max-width: 48rem) {
+  .public-back-navigation__inner {
+    width: calc(100% - 1.5rem);
+    padding-block: 0.55rem;
+  }
+
+  .public-back-navigation button {
+    min-height: 2.4rem;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.74rem;
+  }
+}

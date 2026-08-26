@@ -36,6 +36,7 @@ export type LoginSecurityActionState = {
     | "success";
 };
 
+const MAX_NEXT_PATH_LENGTH = 1500;
 const loginRoles: UserRole[] = [
   "reader",
   "writer",
@@ -149,6 +150,7 @@ export async function loginAction(
     "next",
   );
   const safeNextPath =
+    nextPath.length <= MAX_NEXT_PATH_LENGTH &&
     nextPath.startsWith("/") &&
     !nextPath.startsWith("//")
       ? nextPath

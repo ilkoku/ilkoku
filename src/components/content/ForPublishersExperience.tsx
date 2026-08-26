@@ -107,9 +107,9 @@ export function ForPublishersExperience({ body, summary, title, updatedAt }: { b
       <section className="publishers-discovery how-container" id="yayinevi-kesfi">
         <SectionHeading eyebrow="Kurumsal keşif" title="Önce public yüzeyi keşfet; özel erişimi varsayma." description="Yayınevi üyeliği, keşif ve özel içerik erişimi aynı izin değildir." />
         <div className="publishers-discovery__grid">
-          {sectionMap.get("Yayınevi çalışma alanına kurumsal üyelikle gir") ? <article><PublisherIcon name="building" /><span>01 · Üyelik</span><h3>Kurum içindeki her kullanıcı aynı yetkiyle çalışmaz.</h3><EditorialBody body={sectionMap.get("Yayınevi çalışma alanına kurumsal üyelikle gir")!.body} /></article> : null}
-          {sectionMap.get("Public eser ve yazarları keşfet") ? <article><PublisherIcon name="search" /><span>02 · Keşif</span><h3>Public eser ve yazarları filtreleyerek değerlendirme havuzu oluştur.</h3><EditorialBody body={sectionMap.get("Public eser ve yazarları keşfet")!.body} /></article> : null}
-          {sectionMap.get("Beğeni, favori ve takibi kurumsal sinyal olarak kullan") ? <article><PublisherIcon name="heart" /><span>03 · İlgi sinyali</span><h3>Beğeni ve favori teklif değildir.</h3><EditorialBody body={sectionMap.get("Beğeni, favori ve takibi kurumsal sinyal olarak kullan")!.body} /></article> : null}
+          {sectionMap.get("Yayınevi çalışma alanına kurumsal üyelikle gir") ? <article><PublisherIcon name="building" /><h3>Kurum içindeki her kullanıcı aynı yetkiyle çalışmaz.</h3><EditorialBody body={sectionMap.get("Yayınevi çalışma alanına kurumsal üyelikle gir")!.body} /></article> : null}
+          {sectionMap.get("Public eser ve yazarları keşfet") ? <article><PublisherIcon name="search" /><h3>Public eser ve yazarları filtreleyerek değerlendirme havuzu oluştur.</h3><EditorialBody body={sectionMap.get("Public eser ve yazarları keşfet")!.body} /></article> : null}
+          {sectionMap.get("Beğeni, favori ve takibi kurumsal sinyal olarak kullan") ? <article><PublisherIcon name="heart" /><h3>Beğeni ve favori teklif değildir.</h3><EditorialBody body={sectionMap.get("Beğeni, favori ve takibi kurumsal sinyal olarak kullan")!.body} /></article> : null}
         </div>
       </section>
 

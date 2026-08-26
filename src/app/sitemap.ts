@@ -82,18 +82,6 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
   },
 ];
 
-const fallbackPublicPageEntries: MetadataRoute.Sitemap = bundledPublicPages.map((page) => ({
-  url: `${baseUrl}${page.canonical}`,
-  lastModified: new Date(page.updatedAt),
-  changeFrequency: "monthly" as const,
-  priority: page.priority,
-}));
-
-const safeStaticEntries: MetadataRoute.Sitemap = [
-  ...staticDiscoveryEntries,
-  ...fallbackPublicPageEntries,
-];
-
 type CmsSitemapRow = {
   slug: string;
   noIndex: boolean;
@@ -241,8 +229,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         })),
     ];
   } catch {
-    // Keep the stable public discovery network available even if
-    // database-backed CMS indexability cannot be verified.
-    return safeStaticEntries;
+    // CMS indexability cannot be verified when the database is unavailable.
+    // Fail closed for CMS-owned pages and keep only code-owned public routes.
+    return staticDiscoveryEntries;
   }
 }

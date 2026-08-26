@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-const STORAGE_KEY = "ilkoku:public:last-path";
+const CURRENT_PATH_KEY = "ilkoku:public:current-path";
+const PREVIOUS_PATH_KEY = "ilkoku:public:last-path";
 
 const explicitBackRoutes = new Set([
   "/nasil-calisir",
@@ -34,24 +35,19 @@ function fallbackFor(pathname: string) {
 export function PublicBackNavigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const [previousPath, setPreviousPath] = useState<string | null>(null);
-
-  const isVisible = useMemo(
-    () => explicitBackRoutes.has(pathname) || pathname.startsWith("/editorler/"),
-    [pathname],
-  );
+  const isVisible = explicitBackRoutes.has(pathname) || pathname.startsWith("/editorler/");
 
   useEffect(() => {
     const currentPath = currentLocationPath();
 
     try {
-      const storedPath = window.sessionStorage.getItem(STORAGE_KEY);
-      setPreviousPath(
-        isSafeInternalPath(storedPath) && storedPath !== currentPath ? storedPath : null,
-      );
-      window.sessionStorage.setItem(STORAGE_KEY, currentPath);
+      const storedCurrentPath = window.sessionStorage.getItem(CURRENT_PATH_KEY);
+      if (isSafeInternalPath(storedCurrentPath) && storedCurrentPath !== currentPath) {
+        window.sessionStorage.setItem(PREVIOUS_PATH_KEY, storedCurrentPath as string);
+      }
+      window.sessionStorage.setItem(CURRENT_PATH_KEY, currentPath);
     } catch {
-      setPreviousPath(null);
+      // Storage failures must never block public navigation.
     }
 
     const rememberCurrentPathBeforeInternalNavigation = (event: MouseEvent) => {
@@ -62,7 +58,9 @@ export function PublicBackNavigation() {
       try {
         const destination = new URL(anchor.href, window.location.href);
         if (destination.origin !== window.location.origin) return;
-        window.sessionStorage.setItem(STORAGE_KEY, currentLocationPath());
+        const current = currentLocationPath();
+        window.sessionStorage.setItem(PREVIOUS_PATH_KEY, current);
+        window.sessionStorage.setItem(CURRENT_PATH_KEY, current);
       } catch {
         // Storage or malformed-link failures must never block navigation.
       }
@@ -74,17 +72,27 @@ export function PublicBackNavigation() {
 
   if (!isVisible) return null;
 
-  const fallbackHref = fallbackFor(pathname);
-  const destination = previousPath ?? fallbackHref;
+  const goBack = () => {
+    const fallbackHref = fallbackFor(pathname);
+    let destination = fallbackHref;
+
+    try {
+      const storedPath = window.sessionStorage.getItem(PREVIOUS_PATH_KEY);
+      const currentPath = currentLocationPath();
+      if (isSafeInternalPath(storedPath) && storedPath !== currentPath) {
+        destination = storedPath as string;
+      }
+    } catch {
+      destination = fallbackHref;
+    }
+
+    router.push(destination);
+  };
 
   return (
     <div className="public-back-navigation" aria-label="Sayfa dönüş navigasyonu">
       <div className="public-back-navigation__inner">
-        <button
-          type="button"
-          onClick={() => router.push(destination)}
-          aria-label={destination === "/editorler" ? "Editörler sayfasına dön" : "Önceki sayfaya dön"}
-        >
+        <button type="button" onClick={goBack} aria-label="Önceki sayfaya dön">
           <span aria-hidden="true">←</span>
           <span>Geri</span>
         </button>

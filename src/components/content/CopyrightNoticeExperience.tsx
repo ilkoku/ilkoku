@@ -82,72 +82,72 @@ export function CopyrightNoticeExperience({ body, summary, title, updatedAt }: {
       <section className="how-hero copyright-hero">
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
-            <span className="how-eyebrow">Hak iddiası için somut kayıt yolu</span>
+            <span className="how-eyebrow">Eserinin gelişim izi İlkOku&apos;da kayıt altında</span>
             <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions">
-              <Link className="how-button how-button--primary" href="#bildirim-hazirla">Bildirimi hazırla <span aria-hidden="true">→</span></Link>
-              <Link className="how-button how-button--secondary" href="/iletisim">İletişime geç</Link>
+              <Link className="how-button how-button--primary" href="/yazarlar-icin">Eserini geliştirmeye başla <span aria-hidden="true">→</span></Link>
+              <Link className="how-button how-button--secondary" href="#bildirim-hazirla">Telif sürecini incele</Link>
             </div>
-            <div className="how-hero__proof"><span><strong>1</strong> somut URL</span><span><strong>En az</strong> gerekli veri</span><span><strong>0</strong> otomatik hüküm</span></div>
+            <div className="how-hero__proof"><span><strong>Zaman damgalı</strong> gelişim izi</span><span><strong>Somut</strong> eser bağlantısı</span><span><strong>Haklar</strong> yazarda</span></div>
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
           <figure className="how-hero__visual copyright-hero__visual">
             <Image src={visual.src} alt={visual.alt} fill priority sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
-            <figcaption><span><CopyrightIcon name="document" /> Eseri tanımla</span><span><CopyrightIcon name="link" /> URL’yi ekle</span><span><CopyrightIcon name="shield" /> Gereksiz veriyi çıkar</span></figcaption>
+            <figcaption><span><CopyrightIcon name="document" /> Gelişim izini kaydet</span><span><CopyrightIcon name="link" /> Eseri somutlaştır</span><span><CopyrightIcon name="shield" /> Haklarını koru</span></figcaption>
           </figure>
         </div>
       </section>
 
       <nav className="how-quick-nav how-container" aria-label="Sayfa bölümleri">
-        <a href="#bildirim-hazirla"><span>01</span>Hazırlık</a>
+        <a href="#bildirim-hazirla"><span>01</span>Kayıt</a>
         <a href="#inceleme"><span>02</span>İnceleme</a>
         <a href="#denge"><span>03</span>Bağlam</a>
-        <a href="#gonder"><span>04</span>Gönderim</a>
+        <a href="#gonder"><span>04</span>Bildirim</a>
       </nav>
 
-      {parsed.intro ? <section className="how-truth how-container" aria-label="Telif bildiriminin sınırı"><span><CopyrightIcon name="balance" /></span><div><strong>Bildirim, otomatik ihlal veya kaldırma kararı değildir.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
+      {parsed.intro ? <section className="how-truth how-container" aria-label="Eser ve hak kaydı"><span><CopyrightIcon name="document" /></span><div><strong>Eserini paylaşırken gelişim yolculuğunun iz bırakması, olası bir hak iddiasını somutlaştırmana yardımcı olur.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
 
       <section className="copyright-prepare how-container" id="bildirim-hazirla">
-        <SectionHeading eyebrow="Önce doğru iddiayı tanımla" title="Eser, hak ve sorunlu İlkOku kaydı aynı bildirimde buluşmalı." description="Genel şüphe yerine somut içerik, somut bağlantı ve anlaşılır hak ilişkisi incelemeyi mümkün kılar." />
+        <SectionHeading eyebrow="Somut kayıt güçlü başlangıçtır" title="Bir telif sorunu çıkarsa elinde anlaşılır bir kayıt yolu olsun." description="Eser, ilgili İlkOku bağlantısı ve hak ilişkisi aynı çerçevede toplandığında inceleme daha sağlıklı ilerler." />
         <div className="copyright-prepare__grid">
-          {sectionMap.get("Bildirim ne zaman kullanılmalı") ? <article><CopyrightIcon name="search" /><span>Uygun durum</span><h3>Telif sürecini fikir ayrılığı veya eleştiri için kullanma.</h3><EditorialBody body={sectionMap.get("Bildirim ne zaman kullanılmalı")!.body} /></article> : null}
-          {sectionMap.get("Bildirimde gerekli bilgiler") ? <article><CopyrightIcon name="document" /><span>Gerekli bilgiler</span><h3>İncelemeyi başlatacak kadar açık, mahremiyeti bozmayacak kadar sınırlı.</h3><EditorialBody body={sectionMap.get("Bildirimde gerekli bilgiler")!.body} /></article> : null}
-          {sectionMap.get("Eseri ve içeriği tanımlama") ? <article><CopyrightIcon name="link" /><span>Somut bağlantı</span><h3>Özgün eser ile sorunlu İlkOku yüzeyini birbirine bağla.</h3><EditorialBody body={sectionMap.get("Eseri ve içeriği tanımlama")!.body} /></article> : null}
-          {sectionMap.get("Hak sahipliği ve yetki") ? <article><CopyrightIcon name="shield" /><span>Hak ve temsil</span><h3>Kendi hakkını veya gerçekten temsil ettiğin hak sahibini bildir.</h3><EditorialBody body={sectionMap.get("Hak sahipliği ve yetki")!.body} /></article> : null}
+          {sectionMap.get("Bildirim ne zaman kullanılmalı") ? <article><CopyrightIcon name="search" /><span>Doğru kanal</span><h3>Gerçek bir hak sorununu doğru kayıtla bildir.</h3><EditorialBody body={sectionMap.get("Bildirim ne zaman kullanılmalı")!.body} /></article> : null}
+          {sectionMap.get("Bildirimde gerekli bilgiler") ? <article><CopyrightIcon name="document" /><span>Gerekli bilgiler</span><h3>İncelemeyi mümkün kılacak kadar açık ve düzenli bilgi sun.</h3><EditorialBody body={sectionMap.get("Bildirimde gerekli bilgiler")!.body} /></article> : null}
+          {sectionMap.get("Eseri ve içeriği tanımlama") ? <article><CopyrightIcon name="link" /><span>Eser bağlantısı</span><h3>Özgün eser ile ilgili İlkOku kaydını birbirine bağla.</h3><EditorialBody body={sectionMap.get("Eseri ve içeriği tanımlama")!.body} /></article> : null}
+          {sectionMap.get("Hak sahipliği ve yetki") ? <article><CopyrightIcon name="shield" /><span>Hak ve temsil</span><h3>Hak ilişkisini anlaşılır biçimde ortaya koy.</h3><EditorialBody body={sectionMap.get("Hak sahipliği ve yetki")!.body} /></article> : null}
         </div>
       </section>
 
       <section className="copyright-review" id="inceleme">
         <div className="how-container">
-          <SectionHeading eyebrow="Platform içi inceleme" title="Kayıtlar değerlendirilir; sonuç baştan varsayılmaz." description="İlkOku kendi erişim yüzeylerini ve kayıtlarını inceleyebilir, ancak telif mülkiyeti hakkında mahkeme yerine geçen kesin hüküm kurmaz." />
+          <SectionHeading eyebrow="Kayıt temelli değerlendirme" title="İddia, kayıt ve bağlam birlikte değerlendirilir." description="Amaç, İlkOku içindeki ilgili kayıtları ve erişim durumunu somut bilgi üzerinden incelemektir." />
           <div className="copyright-review__grid">
-            {sectionMap.get("İnceleme nasıl ilerler") ? <article className="copyright-review__primary"><CopyrightIcon name="search" /><span>İnceleme</span><h3>Önce kaydı ve iddiayı anlaşılır hâle getir.</h3><EditorialBody body={sectionMap.get("İnceleme nasıl ilerler")!.body} /></article> : null}
-            {sectionMap.get("Erişim ve geçici önlem") ? <article><CopyrightIcon name="shield" /><span>Geçici önlem</span><h3>Görünürlük kararı, hak sahipliği hakkında nihai hüküm değildir.</h3><EditorialBody body={sectionMap.get("Erişim ve geçici önlem")!.body} /></article> : null}
+            {sectionMap.get("İnceleme nasıl ilerler") ? <article className="copyright-review__primary"><CopyrightIcon name="search" /><span>İnceleme</span><h3>Somut kayıtlar değerlendirmeyi hızlandırır ve netleştirir.</h3><EditorialBody body={sectionMap.get("İnceleme nasıl ilerler")!.body} /></article> : null}
+            {sectionMap.get("Erişim ve geçici önlem") ? <article><CopyrightIcon name="shield" /><span>Görünürlük yönetimi</span><h3>Gerekli durumlarda ilgili içeriğin erişimi ayrıca değerlendirilebilir.</h3><EditorialBody body={sectionMap.get("Erişim ve geçici önlem")!.body} /></article> : null}
           </div>
         </div>
       </section>
 
       <section className="copyright-balance how-container" id="denge">
-        <SectionHeading eyebrow="Çelişen iddialarda bağlam" title="Karşı açıklama, ilk bildirimi otomatik silmez; yeni bağlam ekler." description="Lisans, ortak yazarlık, temsil veya kaynak konusunda farklı anlatımlar varsa platformun sınırı açık tutulur." />
+        <SectionHeading eyebrow="Adil değerlendirme için bağlam" title="Karşılıklı kayıtlar değerlendirmeyi güçlendirir." description="Lisans, ortak yazarlık, temsil veya kaynak konusunda farklı bilgiler varsa her yeni kayıt olayın bağlamını daha anlaşılır hâle getirir." />
         <div className="copyright-balance__grid">
-          {sectionMap.get("Karşı açıklama ve bağlam") ? <article><CopyrightIcon name="balance" /><span>Karşı bağlam</span><h3>İki tarafın iddiası da kayıt ve somut bilgiyle değerlendirilir.</h3><EditorialBody body={sectionMap.get("Karşı açıklama ve bağlam")!.body} /></article> : null}
-          {sectionMap.get("Kötüye kullanım ve yanıltıcı bildirim") ? <article><CopyrightIcon name="warning" /><span>Kötüye kullanım</span><h3>Telif bildirimi baskı veya susturma aracı değildir.</h3><EditorialBody body={sectionMap.get("Kötüye kullanım ve yanıltıcı bildirim")!.body} /><Link href="/topluluk-kurallari">Topluluk Kuralları →</Link></article> : null}
-          {sectionMap.get("Mahremiyet ve veri minimizasyonu") ? <article><CopyrightIcon name="privacy" /><span>Mahremiyet</span><h3>İddiayı kanıtla; gereksiz kişisel veriyi gönderme.</h3><EditorialBody body={sectionMap.get("Mahremiyet ve veri minimizasyonu")!.body} /><Link href="/yasal/gizlilik-politikasi">Gizlilik Politikası →</Link></article> : null}
+          {sectionMap.get("Karşı açıklama ve bağlam") ? <article><CopyrightIcon name="balance" /><span>Karşı bağlam</span><h3>Yeni bilgi, değerlendirmeye yeni bir katman ekler.</h3><EditorialBody body={sectionMap.get("Karşı açıklama ve bağlam")!.body} /></article> : null}
+          {sectionMap.get("Kötüye kullanım ve yanıltıcı bildirim") ? <article><CopyrightIcon name="warning" /><span>Doğru kullanım</span><h3>Telif yolu, yaratıcı emeği korumak için vardır.</h3><EditorialBody body={sectionMap.get("Kötüye kullanım ve yanıltıcı bildirim")!.body} /><Link href="/topluluk-kurallari">Topluluk Kuralları →</Link></article> : null}
+          {sectionMap.get("Mahremiyet ve veri minimizasyonu") ? <article><CopyrightIcon name="privacy" /><span>Mahremiyet</span><h3>Hak iddianı somutlaştır; gereksiz kişisel veriyi paylaşma.</h3><EditorialBody body={sectionMap.get("Mahremiyet ve veri minimizasyonu")!.body} /><Link href="/yasal/gizlilik-politikasi">Gizlilik Politikası →</Link></article> : null}
         </div>
       </section>
 
-      {sectionMap.get("Bildirim ve hukuki yollar") ? <section className="copyright-submit how-container" id="gonder"><CopyrightIcon name="document" /><div><span>Somut kayıt · gerekli en az bilgi</span><h2>İlgili İlkOku bağlantısını ekleyerek bildiriminizi iletin.</h2><EditorialBody body={sectionMap.get("Bildirim ve hukuki yollar")!.body} /><div className="copyright-submit__actions"><Link className="how-button how-button--primary" href="/iletisim">İletişim sayfasını aç <span aria-hidden="true">→</span></Link><a className="how-button how-button--secondary" href="mailto:destek@ilkoku.com">destek@ilkoku.com</a></div></div></section> : null}
+      {sectionMap.get("Bildirim ve hukuki yollar") ? <section className="copyright-submit how-container" id="gonder"><CopyrightIcon name="document" /><div><span>Somut eser · somut bağlantı</span><h2>İlgili eser bağlantını ekle; incelemeyi başlat.</h2><EditorialBody body={sectionMap.get("Bildirim ve hukuki yollar")!.body} /><div className="copyright-submit__actions"><Link className="how-button how-button--primary" href="/iletisim">Telif bildirimi gönder <span aria-hidden="true">→</span></Link><a className="how-button how-button--secondary" href="mailto:destek@ilkoku.com">destek@ilkoku.com</a></div></div></section> : null}
 
       {extras.length ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
       <aside className="how-related how-container" aria-label="İlkOku içinde devam et">
-        <SectionHeading eyebrow="İlkOku içinde devam et" title="Telif bildiriminin temas ettiği diğer açık sınırları incele." />
+        <SectionHeading eyebrow="İlkOku içinde devam et" title="Eserini güvenle geliştirmeye devam et." />
         <div className="how-related__grid">
+          <Link href="/yazarlar-icin"><strong>Yazarlar İçin</strong><span>Eserini yazma, geliştirme ve keşfe açma yolculuğunu incele.</span></Link>
+          <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Eser Pasaportu ve gelişim kaydının platformdaki yerini gör.</span></Link>
+          <Link href="/topluluk-kurallari"><strong>Topluluk Kuralları</strong><span>Özgün emeği ve sağlıklı yaratıcı etkileşimi destekleyen ilkeleri incele.</span></Link>
           <Link href="/yasal/telif-hakki-politikasi"><strong>Telif Hakkı Politikası</strong><span>Platformdaki eser ve kullanıcı içeriğine ilişkin genel telif çerçevesini incele.</span></Link>
-          <Link href="/topluluk-kurallari"><strong>Topluluk Kuralları</strong><span>İntihal, yanıltıcı bildirim ve kullanıcı davranışı sınırlarını gör.</span></Link>
-          <Link href="/icerik-ve-yas-politikasi"><strong>İçerik ve Yaş Politikası</strong><span>İçerik sınıflandırmasının telif sürecinden neden ayrı olduğunu öğren.</span></Link>
-          <Link href="/iletisim"><strong>İletişim</strong><span>Somut telif iddianızı gerekli en az bilgiyle iletin.</span></Link>
         </div>
       </aside>
 

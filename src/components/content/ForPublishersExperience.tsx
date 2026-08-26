@@ -86,60 +86,60 @@ export function ForPublishersExperience({ body, summary, title, updatedAt }: { b
       <section className="how-hero publishers-hero">
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
-            <span className="how-eyebrow">Keşiften kurumsal değerlendirmeye</span>
+            <span className="how-eyebrow">Yeni yazarları daha erken keşfet</span>
             <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions"><Link className="how-button how-button--primary" href="/kayit?rol=publisher">Yayınevi olarak başla <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="#yayinevi-kesfi">Keşif akışını gör</Link></div>
-            <div className="how-hero__proof"><span><strong>Public</strong> keşif</span><span><strong>Rol bazlı</strong> yetki</span><span><strong>Ayrı</strong> sözleşme akışı</span></div>
+            <div className="how-hero__proof"><span><strong>Yeni</strong> eserler</span><span><strong>Gerçek</strong> okur sinyalleri</span><span><strong>Gelişim</strong> bağlamı</span></div>
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
           <figure className="how-hero__visual publishers-hero__visual">
             <Image src={visual.src} alt={visual.alt} fill priority sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
-            <figcaption><span><PublisherIcon name="search" /> Keşfet</span><span><PublisherIcon name="share" /> Ekipte değerlendir</span><span><PublisherIcon name="contract" /> Kararı ayrı yönet</span></figcaption>
+            <figcaption><span><PublisherIcon name="search" /> Keşfet</span><span><PublisherIcon name="heart" /> Kısa listeye al</span><span><PublisherIcon name="passport" /> Gelişimini incele</span></figcaption>
           </figure>
         </div>
       </section>
 
       <nav className="how-quick-nav how-container" aria-label="Sayfa bölümleri"><a href="#yayinevi-kesfi"><span>01</span>Keşif</a><a href="#kurumsal-degerlendirme"><span>02</span>Değerlendirme</a><a href="#yetki-sinirlari"><span>03</span>Yetkiler</a><a href="#ticari-surec"><span>04</span>Sözleşme</a></nav>
 
-      {parsed.intro ? <section className="how-truth how-container" aria-label="Yayınevi keşfinin sınırı"><span><PublisherIcon name="building" /></span><div><strong>Keşif ilgi üretir; bağlayıcı yayın kararı veya hak devri üretmez.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
+      {parsed.intro ? <section className="how-truth how-container" aria-label="Yayınevi için İlkOku değeri"><span><PublisherIcon name="building" /></span><div><strong>Başvuru kutusunu beklemeden yeni eser ve yazarları keşif akışında değerlendirin.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
 
       <section className="publishers-discovery how-container" id="yayinevi-kesfi">
-        <SectionHeading eyebrow="Kurumsal keşif" title="Önce public yüzeyi keşfet; özel erişimi varsayma." description="Yayınevi üyeliği, keşif ve özel içerik erişimi aynı izin değildir." />
+        <SectionHeading eyebrow="Kurumsal keşif" title="Yeni yetenekleri başvuru kutunuza düşmeden önce keşfedin." description="Keşfe açık eserler, yazar vitrinleri ve okur sinyalleri yeni adayları daha erken fark etmek için ortak başlangıç noktası oluşturur." />
         <div className="publishers-discovery__grid">
-          {sectionMap.get("Yayınevi çalışma alanına kurumsal üyelikle gir") ? <article><PublisherIcon name="building" /><h3>Kurum içindeki her kullanıcı aynı yetkiyle çalışmaz.</h3><EditorialBody body={sectionMap.get("Yayınevi çalışma alanına kurumsal üyelikle gir")!.body} /></article> : null}
-          {sectionMap.get("Public eser ve yazarları keşfet") ? <article><PublisherIcon name="search" /><h3>Public eser ve yazarları filtreleyerek değerlendirme havuzu oluştur.</h3><EditorialBody body={sectionMap.get("Public eser ve yazarları keşfet")!.body} /></article> : null}
-          {sectionMap.get("Beğeni, favori ve takibi kurumsal sinyal olarak kullan") ? <article><PublisherIcon name="heart" /><h3>Beğeni ve favori teklif değildir.</h3><EditorialBody body={sectionMap.get("Beğeni, favori ve takibi kurumsal sinyal olarak kullan")!.body} /></article> : null}
+          {sectionMap.get("Yayınevi çalışma alanına kurumsal üyelikle gir") ? <article><PublisherIcon name="building" /><h3>Kurumsal keşfi ekip rolünüze göre düzenleyin.</h3><EditorialBody body={sectionMap.get("Yayınevi çalışma alanına kurumsal üyelikle gir")!.body} /></article> : null}
+          {sectionMap.get("Public eser ve yazarları keşfet") ? <article><PublisherIcon name="search" /><h3>Keşfe açık eser ve yazarları filtreleyerek aday havuzunuzu daraltın.</h3><EditorialBody body={sectionMap.get("Public eser ve yazarları keşfet")!.body} /></article> : null}
+          {sectionMap.get("Beğeni, favori ve takibi kurumsal sinyal olarak kullan") ? <article><PublisherIcon name="heart" /><h3>İlgi sinyallerini kurumsal kısa listeye dönüştürün.</h3><EditorialBody body={sectionMap.get("Beğeni, favori ve takibi kurumsal sinyal olarak kullan")!.body} /></article> : null}
         </div>
       </section>
 
-      <section className="publishers-evaluation" id="kurumsal-degerlendirme"><div className="how-container"><SectionHeading eyebrow="Ekip içi değerlendirme" title="İlgiyi ekip içinde taşı; erişimi genelleştirme." description="Paylaşım, pasaport ve editör talebi birbirinden ayrı kurumsal araçlardır." /><div className="publishers-evaluation__grid">
-        {sectionMap.get("Eseri ekip içinde kontrollü biçimde paylaş") ? <article><PublisherIcon name="share" /><span>Paylaşım</span><h3>Kaydı belirli üyeye ve değerlendirme notuyla taşı.</h3><EditorialBody body={sectionMap.get("Eseri ekip içinde kontrollü biçimde paylaş")!.body} /></article> : null}
-        {sectionMap.get("Eser Pasaportu ile özel içeriği birbirinden ayır") ? <article className="publishers-card--night"><PublisherIcon name="passport" /><span>Eser Pasaportu</span><h3>Pasaport erişimi özel tam metin erişimi değildir.</h3><EditorialBody body={sectionMap.get("Eser Pasaportu ile özel içeriği birbirinden ayır")!.body} /></article> : null}
-        {sectionMap.get("Tamamlanmış eser için İlkOku editör incelemesi iste") ? <article><PublisherIcon name="editor" /><span>Profesyonel inceleme</span><h3>Editör görüşünü yayınevi kararından ayrı tut.</h3><EditorialBody body={sectionMap.get("Tamamlanmış eser için İlkOku editör incelemesi iste")!.body} /><Link href="/editoryal-standartlar">Editoryal Standartlar →</Link></article> : null}
+      <section className="publishers-evaluation" id="kurumsal-degerlendirme"><div className="how-container"><SectionHeading eyebrow="Eserin gelişim bağlamı" title="Yalnız son dosyayı değil, eserin yolculuğunu da değerlendirin." description="Eser Pasaportu ve kademeli kurumsal araçlar, keşiften sonraki değerlendirme katmanlarını daha düzenli hâle getirmek için tasarlanır." /><div className="publishers-evaluation__grid">
+        {sectionMap.get("Eseri ekip içinde kontrollü biçimde paylaş") ? <article><PublisherIcon name="share" /><span>Kurumsal paylaşım</span><h3>Etkinleştiğinde değerlendirmeyi ekip içinde izlenebilir biçimde taşıyın.</h3><EditorialBody body={sectionMap.get("Eseri ekip içinde kontrollü biçimde paylaş")!.body} /></article> : null}
+        {sectionMap.get("Eser Pasaportu ile özel içeriği birbirinden ayır") ? <article className="publishers-card--night"><PublisherIcon name="passport" /><span>Eser Pasaportu</span><h3>Eserin İlkOku içindeki oluşum ve gelişim çizgisini ek bağlam olarak görün.</h3><EditorialBody body={sectionMap.get("Eser Pasaportu ile özel içeriği birbirinden ayır")!.body} /></article> : null}
+        {sectionMap.get("Tamamlanmış eser için İlkOku editör incelemesi iste") ? <article><PublisherIcon name="editor" /><span>Profesyonel inceleme</span><h3>Kademeli editör talebi katmanını aktif ürün durumuna göre takip edin.</h3><EditorialBody body={sectionMap.get("Tamamlanmış eser için İlkOku editör incelemesi iste")!.body} /><Link href="/editoryal-standartlar">Editoryal Standartlar →</Link></article> : null}
       </div></div></section>
 
-      <section className="publishers-permissions how-container" id="yetki-sinirlari"><SectionHeading eyebrow="Rol ve izin modeli" title="En geniş erişim varsayılan değildir." description="Keşif yapan, paylaşım yapan, içerik gören ve sözleşme yöneten kullanıcı aynı kişi olmak zorunda değildir." /><div className="publishers-permissions__grid">
-        {sectionMap.get("Ekip üyelerini rol ve yetki sınırlarıyla yönet") ? <article className="publishers-card--night"><PublisherIcon name="team" /><span>Ekip ve yetkiler</span><h3>Her üyeye yalnız görevini gerektiren erişimi ver.</h3><EditorialBody body={sectionMap.get("Ekip üyelerini rol ve yetki sınırlarıyla yönet")!.body} /></article> : null}
-        {sectionMap.get("Gizli ve yetkili içeriği görev amacıyla kullan") ? <article><PublisherIcon name="shield" /><span>Gizlilik</span><h3>Yetkili içerik sınırsız kullanım hakkı değildir.</h3><EditorialBody body={sectionMap.get("Gizli ve yetkili içeriği görev amacıyla kullan")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
+      <section className="publishers-permissions how-container" id="yetki-sinirlari"><SectionHeading eyebrow="Kurumsal güven" title="Doğru ekip üyesine doğru erişim verin." description="Keşif yapan, özel içerik gören ve ileri ticari süreçleri yöneten kullanıcıların aynı yetki düzeyinde olması gerekmez." /><div className="publishers-permissions__grid">
+        {sectionMap.get("Ekip üyelerini rol ve yetki sınırlarıyla yönet") ? <article className="publishers-card--night"><PublisherIcon name="team" /><span>Ekip ve yetkiler</span><h3>Kurumsal değerlendirmeyi görev temelli erişimle düzenleyin.</h3><EditorialBody body={sectionMap.get("Ekip üyelerini rol ve yetki sınırlarıyla yönet")!.body} /></article> : null}
+        {sectionMap.get("Gizli ve yetkili içeriği görev amacıyla kullan") ? <article><PublisherIcon name="shield" /><span>Gizlilik</span><h3>Yazar güvenini koruyan profesyonel değerlendirme zemini oluşturun.</h3><EditorialBody body={sectionMap.get("Gizli ve yetkili içeriği görev amacıyla kullan")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
       </div></section>
 
-      <section className="publishers-contract" id="ticari-surec"><div className="how-container"><SectionHeading eyebrow="Ticari karar sınırı" title="Keşif, değerlendirme ve sözleşmeyi ayrı yaşam döngülerinde tut." description="İlgi sinyalleri ancak tarafların ayrıca verdiği kararlarla ticari sürece dönüşür." /><div className="publishers-contract__grid">
-        {sectionMap.get("Sözleşme ve yayın planını keşiften ayrı tut") ? <article><PublisherIcon name="contract" /><span>Sözleşme</span><h3>Bağlayıcı işlem ayrı yetki ve geçerli belge gerektirir.</h3><EditorialBody body={sectionMap.get("Sözleşme ve yayın planını keşiften ayrı tut")!.body} /></article> : null}
-        {sectionMap.get("İlkOku yayınevi için neyi garanti etmez") ? <article><PublisherIcon name="shield" /><span>Garanti sınırı</span><h3>Keşif ve inceleme, yayın veya ticari başarı garantisi değildir.</h3><EditorialBody body={sectionMap.get("İlkOku yayınevi için neyi garanti etmez")!.body} /></article> : null}
+      <section className="publishers-contract" id="ticari-surec"><div className="how-container"><SectionHeading eyebrow="Keşiften karara" title="Keşfettiğiniz eseri kendi yayın karar sürecinize taşıyın." description="İlkOku aday bulmayı ve değerlendirme bağlamını güçlendirir; yayın ve ticari karar kurumunuzun profesyonel sürecinde şekillenir." /><div className="publishers-contract__grid">
+        {sectionMap.get("Sözleşme ve yayın planını keşiften ayrı tut") ? <article><PublisherIcon name="contract" /><span>Yayın kararı</span><h3>Keşif sonrasında kurumsal editoryal ve ticari sürecinizi işletin.</h3><EditorialBody body={sectionMap.get("Sözleşme ve yayın planını keşiften ayrı tut")!.body} /></article> : null}
+        {sectionMap.get("İlkOku yayınevi için neyi garanti etmez") ? <article><PublisherIcon name="shield" /><span>Gerçekçi beklenti</span><h3>İlkOku seçim alanınızı büyütür; yayın kararını kurumunuz verir.</h3><EditorialBody body={sectionMap.get("İlkOku yayınevi için neyi garanti etmez")!.body} /></article> : null}
       </div></div></section>
 
       {extras.length ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
-      {sectionMap.get("Yayınevi olarak başla") ? <section className="publishers-start how-container"><PublisherIcon name="building" /><div><span>Kurumsal başlangıç</span><h2>Keşif yetkisini ekip sorumluluğuyla birlikte kur.</h2><EditorialBody body={sectionMap.get("Yayınevi olarak başla")!.body} /><div className="publishers-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=publisher">Yayınevi hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/giris">Zaten hesabım var</Link></div></div></section> : null}
+      {sectionMap.get("Yayınevi olarak başla") ? <section className="publishers-start how-container"><PublisherIcon name="building" /><div><span>Kurumsal başlangıç</span><h2>Yeni eserleri daha erken keşfetmeye başlayın.</h2><EditorialBody body={sectionMap.get("Yayınevi olarak başla")!.body} /><div className="publishers-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=publisher">Yayınevi hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/giris">Zaten hesabım var</Link></div></div></section> : null}
 
       <aside className="how-related how-container" aria-label="İlkOku içinde devam et">
-        <SectionHeading eyebrow="İlkOku içinde devam et" title="Yayınevi keşfini platformun açık sınırlarıyla birlikte incele." />
+        <SectionHeading eyebrow="İlkOku içinde devam et" title="Keşif kararınızı eser yolculuğunun diğer sinyalleriyle güçlendirin." />
         <div className="how-related__grid">
-          <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Yazar, okur, editör ve yayınevinin aynı eser etrafındaki rol sınırlarını gör.</span></Link>
-          <Link href="/yazarlar-icin"><strong>Yazarlar İçin</strong><span>Eserin yazar tarafındaki gelişim, hak ve keşif sınırlarını incele.</span></Link>
-          <Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>Profesyonel incelemenin yayınevi kararından nasıl ayrıldığını gör.</span></Link>
-          <Link href="/telif-bildirimi"><strong>Telif Bildirimi</strong><span>İzinsiz kullanım şüphesinde platform bildirim yolunu incele.</span></Link>
+          <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Bir eserin yazardan okura, editöre ve yayınevi keşfine uzanan yolculuğunu görün.</span></Link>
+          <Link href="/yazarlar-icin"><strong>Yazarlar İçin</strong><span>Yazarın eseri nasıl geliştirdiğini ve keşfe açtığını inceleyin.</span></Link>
+          <Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>Profesyonel editör görüşünün esere nasıl ek bağlam kattığını görün.</span></Link>
+          <Link href="/telif-bildirimi"><strong>Telif Bildirimi</strong><span>Eser haklarıyla ilgili platform içi bildirim yolunu inceleyin.</span></Link>
         </div>
       </aside>
 

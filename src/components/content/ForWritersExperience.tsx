@@ -84,19 +84,19 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
       <section className="how-hero writers-hero">
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
-            <span className="how-eyebrow">Fikirden gelişen esere</span>
+            <span className="how-eyebrow">Fikrini görünür bir eser yolculuğuna dönüştür</span>
             <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions">
-              <Link className="how-button how-button--primary" href="/kayit">Yazar olarak başla <span aria-hidden="true">→</span></Link>
-              <Link className="how-button how-button--secondary" href="#yazar-yolculugu">Süreci incele</Link>
+              <Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar olarak başla <span aria-hidden="true">→</span></Link>
+              <Link className="how-button how-button--secondary" href="#yazar-yolculugu">Eser yolculuğunu gör</Link>
             </div>
-            <div className="how-hero__proof"><span><strong>Taslak</strong> ayrı</span><span><strong>2</strong> editör aşaması</span><span><strong>Haklar</strong> yazarda</span></div>
+            <div className="how-hero__proof"><span><strong>Keşif</strong> okurla başlar</span><span><strong>2</strong> bağımsız editör görüşü</span><span><strong>Haklar</strong> yazarda</span></div>
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
           <figure className="how-hero__visual writers-hero__visual">
             <Image src={visual.src} alt={visual.alt} fill priority sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
-            <figcaption><span><WriterIcon name="pen" /> Yaz</span><span><WriterIcon name="editors" /> Değerlendir</span><span><WriterIcon name="passport" /> Gelişimi kaydet</span></figcaption>
+            <figcaption><span><WriterIcon name="pen" /> Yaz</span><span><WriterIcon name="readers" /> Okurla buluş</span><span><WriterIcon name="publisher" /> Keşfedil</span></figcaption>
           </figure>
         </div>
       </section>
@@ -108,56 +108,56 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
         <a href="#haklar"><span>04</span>Haklar</a>
       </nav>
 
-      {parsed.intro ? <section className="how-truth how-container" aria-label="Yazar yolculuğunun sınırı"><span><WriterIcon name="pen" /></span><div><strong>İlkOku eserin yolculuğunu destekler; yaratıcı karar ve hak sahipliği yazarda kalır.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
+      {parsed.intro ? <section className="how-truth how-container" aria-label="Yazar için İlkOku değeri"><span><WriterIcon name="pen" /></span><div><strong>Yaz, keşfe aç, gerçek okurla buluş ve eserini yeni bakışlarla geliştir.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
 
       <section className="writers-workflow how-container" id="yazar-yolculugu">
-        <SectionHeading eyebrow="Yazar çalışma alanı" title="Önce yaz, sonra neyin public olacağına sen karar ver." description="Taslak, içerik sınıfı ve yayın kararı aynı şey değildir; her adım ayrı bir güven sınırı taşır." />
+        <SectionHeading eyebrow="Yazar çalışma alanı" title="Yaz, geliştir, hazır olduğunda keşfe aç." description="Taslağını kendi temponda büyüt; eserin okurla ne zaman buluşacağına sen karar ver." />
         <div className="writers-workflow__grid">
-          {sectionMap.get("Eserini oluştur ve bölüm bölüm geliştir") ? <article><WriterIcon name="pen" /><h3>Bölümler hâlinde çalış; taslağı public yüzeyden ayrı tut.</h3><EditorialBody body={sectionMap.get("Eserini oluştur ve bölüm bölüm geliştir")!.body} /></article> : null}
-          {sectionMap.get("İçerik ve yaş sınıfını doğru seç") ? <article><WriterIcon name="shield" /><h3>Okur eseri açmadan önce neyle karşılaşacağını bilsin.</h3><EditorialBody body={sectionMap.get("İçerik ve yaş sınıfını doğru seç")!.body} /><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş Politikası →</Link></article> : null}
-          {sectionMap.get("Taslak ile yayın kararını ayrı tut") ? <article><WriterIcon name="book" /><h3>Kaydetmek yayınlamak değildir.</h3><EditorialBody body={sectionMap.get("Taslak ile yayın kararını ayrı tut")!.body} /></article> : null}
+          {sectionMap.get("Eserini oluştur ve bölüm bölüm geliştir") ? <article><WriterIcon name="pen" /><h3>Bölüm bölüm geliştir; hazır olmadan görünür olmak zorunda değilsin.</h3><EditorialBody body={sectionMap.get("Eserini oluştur ve bölüm bölüm geliştir")!.body} /></article> : null}
+          {sectionMap.get("İçerik ve yaş sınıfını doğru seç") ? <article><WriterIcon name="shield" /><h3>Eserini doğru okur beklentisiyle buluştur.</h3><EditorialBody body={sectionMap.get("İçerik ve yaş sınıfını doğru seç")!.body} /><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş Politikası →</Link></article> : null}
+          {sectionMap.get("Taslak ile yayın kararını ayrı tut") ? <article><WriterIcon name="book" /><h3>Keşfe ne zaman çıkacağına sen karar ver.</h3><EditorialBody body={sectionMap.get("Taslak ile yayın kararını ayrı tut")!.body} /></article> : null}
         </div>
       </section>
 
       <section className="writers-feedback" id="geri-bildirim">
         <div className="how-container">
-          <SectionHeading eyebrow="İki farklı geri bildirim katmanı" title="Okur deneyimi ile profesyonel editör görüşünü birbirine karıştırma." description="Topluluk sinyalleri eserin karşılığını gösterir; editör incelemesi ise belirlenmiş sürüm üzerinde bağımsız profesyonel değerlendirmedir." />
+          <SectionHeading eyebrow="İki farklı gelişim sinyali" title="Gerçek okur tepkisiyle profesyonel editör görüşünü birlikte kullan." description="Okur eserin nasıl karşılık bulduğunu gösterir; editör ise metnine daha derin ve bağımsız profesyonel bakış kazandırır." />
           <div className="writers-feedback__grid">
-            {sectionMap.get("Okur geri bildirimini gelişim verisi olarak kullan") ? <article><WriterIcon name="readers" /><span>Okur</span><h3>Yorum ve etkileşimi veri olarak gör; hüküm olarak değil.</h3><EditorialBody body={sectionMap.get("Okur geri bildirimini gelişim verisi olarak kullan")!.body} /></article> : null}
-            {sectionMap.get("Profesyonel editör incelemesini ayrıca talep et") ? <article className="writers-feedback__night"><WriterIcon name="editors" /><span>Editör</span><h3>İnceleme ayrı talep edilir ve iki bağımsız aşamada ilerler.</h3><EditorialBody body={sectionMap.get("Profesyonel editör incelemesini ayrıca talep et")!.body} /><Link href="/editoryal-standartlar">Editoryal Standartlar →</Link></article> : null}
+            {sectionMap.get("Okur geri bildirimini gelişim verisi olarak kullan") ? <article><WriterIcon name="readers" /><span>Okur</span><h3>İlk okurlarının hangi noktada bağ kurduğunu gör.</h3><EditorialBody body={sectionMap.get("Okur geri bildirimini gelişim verisi olarak kullan")!.body} /></article> : null}
+            {sectionMap.get("Profesyonel editör incelemesini ayrıca talep et") ? <article className="writers-feedback__night"><WriterIcon name="editors" /><span>Editör</span><h3>Metnine iki bağımsız profesyonel bakış ekle.</h3><EditorialBody body={sectionMap.get("Profesyonel editör incelemesini ayrıca talep et")!.body} /><Link href="/editoryal-standartlar">Editoryal Standartlar →</Link></article> : null}
           </div>
-          {sectionMap.get("Editör raporlarından sonra yaratıcı karar yazarda kalır") ? <div className="writers-decision"><WriterIcon name="pen" /><div><span>Yaratıcı karar</span><h3>Rapor öneridir; son söz yazarındır.</h3><EditorialBody body={sectionMap.get("Editör raporlarından sonra yaratıcı karar yazarda kalır")!.body} /></div></div> : null}
+          {sectionMap.get("Editör raporlarından sonra yaratıcı karar yazarda kalır") ? <div className="writers-decision"><WriterIcon name="pen" /><div><span>Yaratıcı karar</span><h3>İki görüşü değerlendir; yaratıcı karar sende kalsın.</h3><EditorialBody body={sectionMap.get("Editör raporlarından sonra yaratıcı karar yazarda kalır")!.body} /></div></div> : null}
         </div>
       </section>
 
       <section className="writers-passport how-container" id="eser-pasaportu">
-        <SectionHeading eyebrow="Gelişim geçmişi" title="Eser Pasaportu sonucu değil, yolculuğu görünür kılar." description="Zaman damgalı kayıtlar eserin İlkOku içindeki oluşum ve gelişimini destekler; özel metne erişim yetkisini kendiliğinden açmaz." />
+        <SectionHeading eyebrow="Gelişim geçmişi" title="Eserinin yalnız son hâli değil, gelişim yolculuğu da iz bıraksın." description="Eser Pasaportu oluşturma, bölüm, revizyon ve inceleme adımlarını zaman çizgisinde bir araya getirir." />
         <div className="writers-passport__grid">
           {sectionMap.get("Eser Pasaportu gelişim geçmişini kayıt altında tutar") ? <article className="writers-passport__primary"><WriterIcon name="passport" /><span>Eser Pasaportu</span><h3>Oluşturma, bölüm, revizyon ve inceleme izi aynı gelişim çizgisinde.</h3><EditorialBody body={sectionMap.get("Eser Pasaportu gelişim geçmişini kayıt altında tutar")!.body} /></article> : null}
-          {sectionMap.get("Yayınevi keşfi yayın garantisi değildir") ? <article><WriterIcon name="publisher" /><span>Yayınevi keşfi</span><h3>Görünür olmak, sözleşme yapılmış olmak değildir.</h3><EditorialBody body={sectionMap.get("Yayınevi keşfi yayın garantisi değildir")!.body} /></article> : null}
+          {sectionMap.get("Yayınevi keşfi yayın garantisi değildir") ? <article><WriterIcon name="publisher" /><span>Yayınevi keşfi</span><h3>Eserini yeni yazar arayan yayınevlerinin keşif alanına taşı.</h3><EditorialBody body={sectionMap.get("Yayınevi keşfi yayın garantisi değildir")!.body} /></article> : null}
         </div>
       </section>
 
       <section className="writers-rights" id="haklar">
         <div className="how-container">
-          <SectionHeading eyebrow="Hak ve beklenti sınırı" title="Platformda görünür olmak hak devri değildir." description="Eserin hakları, platform işlevleri ve ticari beklentiler birbirinden ayrı tutulur." />
+          <SectionHeading eyebrow="Yaratıcı kontrol ve güven" title="Eserini görünür kılarken haklarını ve yaratıcı kararını koru." description="İlkOku görünürlük ve gelişim fırsatı oluşturur; eser üzerindeki yaratıcı karar ve hak sahipliği sende kalır." />
           <div className="writers-rights__grid">
-            {sectionMap.get("Eser üzerindeki hakların yazarda kalır") ? <article><WriterIcon name="rights" /><span>Haklar</span><h3>Eseri yüklemek veya yayımlamak hakları kendiliğinden devretmez.</h3><EditorialBody body={sectionMap.get("Eser üzerindeki hakların yazarda kalır")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
-            {sectionMap.get("İlkOku yazar için neyi garanti etmez") ? <article><WriterIcon name="shield" /><span>Gerçekçi beklenti</span><h3>Keşif imkânı vardır; basım ve başarı garantisi yoktur.</h3><EditorialBody body={sectionMap.get("İlkOku yazar için neyi garanti etmez")!.body} /></article> : null}
+            {sectionMap.get("Eser üzerindeki hakların yazarda kalır") ? <article><WriterIcon name="rights" /><span>Haklar</span><h3>Hakların sende kalırken eserini yeni okurlara aç.</h3><EditorialBody body={sectionMap.get("Eser üzerindeki hakların yazarda kalır")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
+            {sectionMap.get("İlkOku yazar için neyi garanti etmez") ? <article><WriterIcon name="shield" /><span>Gerçekçi beklenti</span><h3>Fırsat alanını büyüt; sonuçları vaat yerine gerçek keşif üzerinden değerlendir.</h3><EditorialBody body={sectionMap.get("İlkOku yazar için neyi garanti etmez")!.body} /></article> : null}
           </div>
         </div>
       </section>
 
-      {sectionMap.get("Yazar olarak başla") ? <section className="writers-start how-container"><WriterIcon name="book" /><div><span>İlk eserine başla</span><h2>Yazar hesabını oluştur, sonra Eserlerim çalışma alanına geç.</h2><EditorialBody body={sectionMap.get("Yazar olarak başla")!.body} /><div className="writers-start__actions"><Link className="how-button how-button--primary" href="/kayit">Hesap oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/giris">Zaten hesabım var</Link></div></div></section> : null}
+      {sectionMap.get("Yazar olarak başla") ? <section className="writers-start how-container"><WriterIcon name="book" /><div><span>İlk eserine başla</span><h2>İlk eser kaydını oluştur ve yolculuğunu başlat.</h2><EditorialBody body={sectionMap.get("Yazar olarak başla")!.body} /><div className="writers-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/giris">Zaten hesabım var</Link></div></div></section> : null}
 
       {extras.length ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
       <aside className="how-related how-container" aria-label="İlkOku içinde devam et">
-        <SectionHeading eyebrow="İlkOku içinde devam et" title="Yazar yolculuğunun temas ettiği açık sınırları incele." />
+        <SectionHeading eyebrow="İlkOku içinde devam et" title="Yazar yolculuğunu güçlendiren diğer alanları keşfet." />
         <div className="how-related__grid">
-          <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Yazar, okur, editör ve yayınevinin aynı eser etrafındaki rol sınırlarını gör.</span></Link>
-          <Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>İki aşamalı incelemede editörün bağımsızlık ve gizlilik sınırını öğren.</span></Link>
-          <Link href="/icerik-ve-yas-politikasi"><strong>İçerik ve Yaş Politikası</strong><span>Public yayın öncesi sınıflandırma ve uyarı kurallarını incele.</span></Link>
+          <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Fikirden okur ve yayınevi keşfine uzanan eser yolculuğunu gör.</span></Link>
+          <Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>İki bağımsız profesyonel görüşün esere nasıl değer kattığını öğren.</span></Link>
+          <Link href="/icerik-ve-yas-politikasi"><strong>İçerik ve Yaş Politikası</strong><span>Eserini doğru okur beklentisiyle nasıl keşfe açacağını incele.</span></Link>
           <Link href="/telif-bildirimi"><strong>Telif Bildirimi</strong><span>İzinsiz kullanım şüphesinde somut kayıtla nasıl bildirim yapılacağını öğren.</span></Link>
         </div>
       </aside>

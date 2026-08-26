@@ -1,73 +1,71 @@
 export const communityRulesPageContent = {
   title: "Topluluk Kuralları",
-  summary: "İlkOku'da yazar, okur, editör ve yayınevlerinin birbirine nasıl yaklaşması gerektiğini; yorum, geri bildirim, mahremiyet, spam, telif ve bildirim sınırlarını açıkça öğrenin.",
+  summary: "Yeni bir eserin etrafında yazar, okur, editör ve yayınevini buluşturan İlkOku topluluğunda; yapıcı geri bildirimin, saygılı iletişimin ve güvenilir keşif sinyallerinin nasıl korunduğunu görün.",
   seoTitle: "Topluluk Kuralları | İlkOku",
-  seoDescription: "İlkOku Topluluk Kuralları'nı inceleyin: saygılı iletişim, yapıcı geri bildirim, taciz ve nefret yasağı, mahremiyet, spam, telif, hassas içerik ve inceleme süreci.",
+  seoDescription: "İlkOku Topluluk Kuralları'nı inceleyin: yapıcı geri bildirim, saygılı iletişim, mahremiyet, gerçek etkileşim, telif, hassas içerik ve bildirim süreci.",
   canonical: "/topluluk-kurallari",
-  updatedAt: "2026-08-25T00:00:00.000Z",
-  body: `İlkOku, bir eserin etrafında farklı rollerin bir araya geldiği bir çalışma ve keşif ortamıdır. Yazar, okur, editör ve yayınevi aynı içeriğe farklı amaçlarla yaklaşabilir; bu nedenle topluluk güveni yalnız ne söylendiğine değil, nasıl söylendiğine ve hangi sınırlar içinde hareket edildiğine de bağlıdır.
+  updatedAt: "2026-08-26T00:00:00.000Z",
+  body: `İlkOku'nun değeri yalnız eserlerin yayımlanmasından değil, eserlerin etrafında oluşan gerçek etkileşimden gelir. Yazar yeni bir ses arar, okur yeni bir hikâye keşfeder, editör profesyonel bakış sunar, yayınevi yeni yetenekleri fark eder. Bu dört rolün birbirine güvenebilmesi için ortak bir iletişim zemini gerekir.
 
-Bu kurallar, platformdaki yorum, geri bildirim, profil, eser tanıtımı, editoryal iletişim, yayınevi etkileşimi ve diğer kullanıcılar arası görünür davranışlar için ortak başlangıç standardıdır. Hukuki yükümlülüklerin, Kullanım Şartları'nın, İçerik ve Yaş Politikası'nın veya editoryal görev sınırlarının yerine geçmez.
+Topluluk kuralları bu zemini oluşturur. Amaç tartışmayı azaltmak değil; fikir ayrılığını kişisel saldırıya dönüştürmeden, yorum ve etkileşimleri eser keşfine gerçekten değer katan sinyaller hâline getirmektir.
 
 ## Saygılı iletişim
 
-Bir görüşe, esere veya değerlendirmeye katılmamak mümkündür; kişiyi küçültmek, tehdit etmek veya topluca hedef göstermek kabul edilmez. Eleştiri davranışa, metne, argümana veya somut iş sonucuna yönelmelidir.
+Bir eseri sevmemek, bir yoruma katılmamak veya bir editör görüşünü eleştirmek mümkündür. Güçlü bir edebiyat topluluğu farklı görüşlerden beslenir; ancak eleştiri kişiye değil metne, davranışa veya somut iş sonucuna yönelir.
 
-Hakaret, aşağılayıcı kişisel saldırı, ısrarlı rahatsız etme, korkutma, şantaj, tehdit veya bir kullanıcıyı platformdan uzaklaştırmaya yönelik örgütlü baskı topluluk standardıyla bağdaşmaz.
+Hakaret, tehdit, ısrarlı rahatsız etme, şantaj veya kişiyi topluca hedef gösterme; yapıcı tartışmanın parçası değildir. Amaç herkesin aynı fikirde olması değil, farklı fikirlerin güvenli biçimde yan yana durabilmesidir.
 
 ## Yapıcı geri bildirim ve yorum
 
-Okur yorumu ile editör incelemesi aynı şey değildir. Okur kendi okuma deneyimini paylaşır; editör ise kendisine verilen görev ve editoryal standartlar içinde bağımsız değerlendirme yapar. Hiçbir kullanıcı kendi görüşünü "kesin editoryal karar", "resmî İlkOku hükmü" veya "yayınevi kararı" gibi sunmamalıdır.
+Okur yorumu, bir yazarın eserinin ilk gerçek karşılıklarından biridir. Yararlı geri bildirim mümkün olduğunca somut olur: hangi bölümün etkilediği, nerede ritmin düştüğü, hangi karakterin merak uyandırdığı veya okurun neden devam etmek istediği açıkça söylenebilir.
 
-Geri bildirim mümkün olduğunca somut olmalı; eserin tamamını veya uzun bölümlerini gereksiz biçimde yeniden yayımlamamalı ve yazarı kişisel olarak hedef almamalıdır. Aynı mesajı tekrar tekrar göndermek, cevap vermeye zorlamak veya puan/yorum baskısı kurmak yapıcı etkileşim değildir.
+Okur yorumu ile editör incelemesi farklı değerler üretir. Okur deneyimini paylaşır; editör profesyonel değerlendirme yapar. İkisi de yazarın eserine yeni bir bakış sağlar, ancak hiçbiri tek başına kesin hüküm değildir.
 
 ## Taciz, nefret ve hedef gösterme
 
-Bir kişiye veya gruba karşı kimliği, kökeni, inancı, cinsiyeti, engelliliği veya benzeri kişisel özelliği üzerinden aşağılayıcı, insanlıktan çıkarıcı veya şiddeti teşvik eden saldırılar kabul edilmez.
+Bir kişiye veya gruba kimliği, kökeni, inancı, cinsiyeti, engelliliği veya benzeri kişisel özelliği üzerinden aşağılayıcı ya da şiddeti teşvik eden saldırılar kabul edilmez.
 
-Gerçek bir kişiye yönelik ciddi tehdit, doxxing, takip çağrısı, özel bilgi yayma veya toplu taciz örgütleme daha yüksek riskli ihlal olarak ele alınabilir. Edebî eserde bir karakterin veya anlatıcının kullandığı ifadeler ile kullanıcıların birbirine yönelttiği davranış aynı bağlam değildir; ancak açık platform yüzeylerinde kullanıcı güvenliği sınırı korunur.
+Edebî bir metindeki karakter veya anlatıcı dili ile kullanıcıların birbirine yönelttiği gerçek davranış ayrıdır. Açık topluluk alanlarında gerçek kişi güvenliği korunur.
 
 ## Mahremiyet ve kişisel bilgi
 
-Başka bir kullanıcının açıkça paylaşmadığı telefon, adres, özel e-posta, kimlik bilgisi, özel yazışma, sözleşme içeriği, erişim anahtarı veya benzeri kişisel/gizli bilgileri yayımlamayın.
+Başka bir kullanıcının açıkça paylaşmadığı telefon, adres, özel e-posta, kimlik bilgisi, özel yazışma veya sözleşme içeriği yayımlanmamalıdır.
 
-Bir anlaşmazlığı kanıtlamak için dahi gereğinden fazla kişisel veri paylaşılmamalıdır. Bildirim yapılırken mümkün olan en az bilgi kullanılmalı; şifre, oturum bilgisi, özel anahtar veya üçüncü kişilere ait gereksiz veri gönderilmemelidir.
+Bir anlaşmazlıkta dahi yalnız gerekli bilgi paylaşılmalıdır. Bu yaklaşım yazar, okur, editör ve yayınevinin platformda iletişim kurarken kişisel alanını korur.
 
 ## Spam, sahte etkileşim ve manipülasyon
 
-Tekrarlanan reklam, ilgisiz bağlantı, zincir mesaj, aynı içeriğin çok sayıda kullanıcıya gönderilmesi veya platform içi görünürlüğü yapay biçimde artırmaya yönelik davranışlar kabul edilmez.
+Keşif ancak sinyaller gerçek olduğunda anlamlıdır. Sahte hesaplarla beğeni, yorum, takip veya görünürlük üretmek; kullanıcıları karşılıklı oy vermeye zorlamak veya aynı tanıtım mesajını tekrar tekrar göndermek eser keşfinin güvenilirliğini bozar.
 
-Sahte hesaplarla beğeni, yorum, takip veya görünürlük üretmek; kullanıcıları karşılıklı oy/yorum vermeye zorlamak; yanıltıcı kimlik veya temsil iddiasıyla güven oluşturmaya çalışmak topluluk sinyallerini bozar. İlkOku sıralama veya keşif alanlarında kusursuz manipülasyon tespiti yaptığına dair bir taahhüt vermez; somut bulgular kayıtlar üzerinden incelenebilir.
+İlkOku, okur ilgisinin ve topluluk etkileşiminin mümkün olduğunca gerçek davranışı yansıtmasını hedefler. Böylece yazar aldığı sinyali, yayınevi de gördüğü ilgiyi daha anlamlı yorumlayabilir.
 
 ## Eser, telif ve intihal sınırı
 
-Başkasına ait eseri, bölümü, kapak görselini veya önemli yaratıcı unsuru izin olmadan kendi çalışmanız gibi sunmayın. Bir esere yönelik eleştiri veya alıntı ihtiyacı, eserin tamamını yeniden yayımlama hakkı vermez.
+Başkasına ait eser, bölüm, kapak görseli veya önemli yaratıcı unsur izin olmadan kendi çalışması gibi sunulmamalıdır. Eleştiri veya kısa alıntı ihtiyacı, eserin tamamını yeniden yayımlama hakkı vermez.
 
-Telif sahipliği konusunda İlkOku kullanıcı beyanını tek başına kesin hukuki karar olarak kabul etmez. Somut telif iddiaları, ilgili eser bağlantısı ve gerekli en az bilgiyle Telif Bildirimi sürecine yönlendirilir.
+Somut telif iddiaları, ilgili eser bağlantısı ve gerekli bilgilerle Telif Bildirimi sürecine yönlendirilir. Böylece topluluk tartışması ile hak iddiası birbirine karıştırılmaz.
 
 ## Yaş ve hassas içerik sınırı
 
-Topluluk etkileşimleri, eserin yaş sınıfını aşmak veya açık yüzey sınırlarını dolaşmak için kullanılamaz. Yorum, profil metni, bağlantı açıklaması veya mesaj niteliğindeki açık alanlarda yoğun cinsel içerik, grafik şiddet, istismar ayrıntısı ya da başka rahatsız edici materyal yeniden yayımlanmamalıdır.
+Topluluk alanları, eserin yaş sınıfını aşmak için kullanılmaz. Yorum, profil veya açık bağlantı açıklamalarında yoğun cinsel içerik, grafik şiddet veya rahatsız edici ayrıntılar yeniden yayımlanmamalıdır.
 
-Bir eserin 13+, 16+ veya ileride 18+ olarak sınıflandırılması, kullanıcıların açık topluluk alanlarında aynı yoğunluğu paylaşmasına izin vermez. Eser sınıflandırması hakkında ayrıntılar İçerik ve Yaş Politikası'nda yer alır.
+Eser sınıflandırması okura doğru beklenti verir; topluluk alanı ise farklı yaş ve hassasiyet düzeyindeki kullanıcıların birlikte bulunabildiği daha geniş yüzeydir.
 
 ## Rol ve çıkar çatışması sınırı
 
-Editör, yayınevi ve yazar rolleri farklı yetki ve beklentilere sahiptir. Bir editör kendisine verilmeyen erişimi talep etmemeli; bir yayınevi platform görünürlüğünü sözleşme veya kabul garantisi gibi sunmamalı; bir yazar da okur veya editör geri bildirimini zorla değiştirmeye çalışmamalıdır.
+Yazar, okur, editör ve yayınevi farklı rollerle aynı ekosistemde bulunur. Bir editör profesyonel görüş üretir, yayınevi kendi kurumsal değerlendirmesini yapar, yazar yaratıcı kararını korur ve okur kendi deneyimini paylaşır.
 
-Kullanıcılar kendilerini İlkOku adına karar veren kişi, resmî yayınevi temsilcisi veya başka bir kullanıcıymış gibi tanıtmamalıdır. Gerçek rol ve yetki platformdaki erişim kayıtlarıyla belirlenir.
+Rolün açık olması güven üretir. Kullanıcılar kendilerini İlkOku adına karar veren kişi, başka bir kullanıcı veya yetkisi bulunmayan bir kurum temsilcisi gibi sunmamalıdır.
 
 ## Bildirim, inceleme ve yaptırım
 
-Bir topluluk ihlali görürseniz İlkOku İletişim kanalından ilgili profil, eser veya görünür içerik bağlantısını ve sorunu açıklayan gerekli en az bilgiyi iletebilirsiniz. İçeriğin tamamını kopyalamak, gereksiz kişisel veri eklemek veya başka kullanıcıları toplu bildirim yapmaya çağırmak gerekmez.
+Somut bir topluluk sorunu görüldüğünde ilgili profil, eser veya görünür içerik bağlantısı ile gerekli en az bilgi İlkOku İletişim kanalından paylaşılabilir.
 
-Bildirim otomatik suçluluk kararı değildir ve tek başına içeriğin kaldırılacağı anlamına gelmez. İlkOku mevcut kayıtları, görünür içeriği, erişim sınırlarını ve ilgili platform kurallarını inceleyebilir; gerekli olduğunda içeriğin düzeltilmesini isteyebilir, görünürlüğü veya erişimi sınırlayabilir ya da uygulanabilir hesap/kurallar sürecini başlatabilir.
-
-İlkOku bütün kullanıcı içeriklerini yayınlanmadan önce insan eliyle incelemeyi veya otomatik sistemlerin her ihlali tespit edeceğini taahhüt etmez. Bu nedenle somut bildirimler, açık kurallar ve kayıtların korunması topluluk güveninin önemli parçalarıdır.
+Bildirim, güvenli topluluk alanını korumak için kayıtlı bir inceleme başlangıcıdır. Bağlam, tekrar durumu, kullanıcı güvenliğine etkisi ve mevcut kayıtlar birlikte değerlendirilir; gerekli durumda içerik veya erişim hakkında uygun işlem uygulanabilir.
 
 ## İtiraz ve bağlam
 
-Bir içerik veya hesap işleminin bağlamı yanlış anladığını düşünüyorsanız, mevcut İletişim kanalı üzerinden ilgili karar veya kayıtla bağlantılı gerekli en az bilgiyi iletebilirsiniz. Aynı talebi çok sayıda kanaldan tekrarlamak incelemeyi hızlandırmaz.
+Bir içerik veya hesap işleminin bağlamı yanlış anladığını düşünüyorsanız aynı kayıtla bağlantılı açıklama sunabilirsiniz. Bağlam, edebiyat ve topluluk etkileşimlerinde önemlidir; tek bir cümle bütün olayı her zaman açıklamaz.
 
-Topluluk kuralları bağlamı yok sayan otomatik bir ceza tablosu değildir. İhlalin niteliği, tekrar durumu, kullanıcı güvenliğine etkisi, yanlışlık olasılığı ve mevcut kayıtlar birlikte değerlendirilebilir.`,
+Amaç otomatik ceza üretmek değil, gerçek etkileşimi ve güvenilir keşif ortamını koruyan tutarlı bir topluluk standardı oluşturmaktır.`
 } as const;

@@ -1,57 +1,57 @@
 export const editorialStandardsPageContent = {
   title: "Editoryal Standartlar",
-  summary: "İlkOku editörlerinin bir eseri hangi ölçütlerle, nasıl bağımsız ve gerekçeli biçimde değerlendirdiğini; yazarın yaratıcı kararının ve eser gizliliğinin nasıl korunduğunu öğrenin.",
+  summary: "Bir eserin güçlü ve geliştirmeye açık yönlerini iki bağımsız profesyonel bakışla görünür kılan İlkOku editör modelini; ölçütleri, rapor standardını ve yazarın yaratıcı kararını nasıl koruduğunu keşfedin.",
   seoTitle: "Editoryal Standartlar | İlkOku Editör İncelemesi",
-  seoDescription: "İlkOku editör incelemelerinde kullanılan değerlendirme ölçütlerini, iyi rapor standardını, iki editörlü bağımsızlığı, çıkar çatışması ve gizlilik kurallarını inceleyin.",
+  seoDescription: "İlkOku editör incelemelerinde kullanılan değerlendirme ölçütlerini, iki bağımsız görüşü, gerekçeli rapor standardını, gizlilik ve yaratıcı karar ilkelerini inceleyin.",
   canonical: "/editoryal-standartlar",
-  updatedAt: "2026-08-25T00:00:00.000Z",
-  body: `İlkOku'da editoryal değerlendirme; eseri övmek, yazarı yargılamak veya metni editörün kişisel tercihine göre yeniden yazmak değildir. Amaç, eserin güçlü ve geliştirmeye açık yönlerini metinden izlenebilen örneklerle görünür kılmak ve yazara uygulanabilir bir ikinci bakış sunmaktır.
+  updatedAt: "2026-08-26T00:00:00.000Z",
+  body: `İyi bir editör raporu, yazara yalnızca "iyi" ya da "zayıf" demek yerine metnini başka bir gözle yeniden görme imkânı verir. İlkOku'da editoryal değerlendirme; eserin güçlü yönlerini, geliştirmeye açık noktalarını ve okur deneyimine etkilerini metinden izlenebilen örneklerle görünür kılmayı amaçlar.
 
-Bu standartlar bir yayın kabulü, basım kararı, ticari başarı garantisi ya da yazara verilen yeniden yazım emri oluşturmaz. Editör görüş bildirir; eserin yaratıcı yönü hakkındaki nihai karar yazarda kalır.
+Yazarın özgün sesi korunur. Editör çözüm seçenekleri sunar, gerekçesini açıklar ve profesyonel bir ikinci bakış üretir; yaratıcı yön hakkındaki son karar yazarda kalır.
 
 ## İlkOku'da editoryal değerlendirme nedir?
 
-Editör, kendisine yetkili süreç üzerinden açılan belirli eser ve sürümü inceler. Değerlendirme; yapısal sorunları, anlatım tercihlerini, tutarlılığı, dil ve üslubu, karakterleri, tempoyu, tür beklentisini ve hedef okur deneyimini birlikte ele alır.
+Editör, kendisine yetkili süreç üzerinden açılan belirli eser ve sürümü inceler. Yapı, anlatım, tutarlılık, dil ve üslup, karakter, tempo, tür beklentisi ve hedef okur deneyimi birlikte değerlendirilir.
 
-Her eser aynı kalıba sokulmaz. Deneysel bir anlatı, çocuk kitabı, polisiye, şiir veya anı metni kendi amacı ve türü içinde değerlendirilir. Editör önce metnin ne yapmaya çalıştığını anlamalı, ardından bu amaca ne ölçüde ulaştığını gerekçelendirmelidir.
+Her eser kendi amacı içinde okunur. Polisiye ile şiir, çocuk kitabı ile deneysel anlatı aynı kalıba sokulmaz. Editör önce metnin ne yapmaya çalıştığını anlar; sonra bu hedefin okurda nasıl karşılık bulduğunu gerekçelendirir.
 
 ## Değerlendirme ölçütleri
 
 ### 1. Yapı ve kurgu bütünlüğü
 
-Eserin başlangıç, gelişme ve sonuç ilişkisi; bölüm sıralaması, çatışma, dönüm noktaları ve ana anlatı çizgisi incelenir. Öneri, yalnız “kurgu zayıf” demekle kalmaz; sorunun hangi sahne veya bölümde ortaya çıktığını ve okuma deneyimini nasıl etkilediğini açıklar.
+Başlangıç, gelişme, sonuç, çatışma, dönüm noktaları ve bölüm akışı birlikte incelenir. "Kurgu zayıf" gibi genel bir hüküm yerine sorunun nerede ortaya çıktığı ve okuma deneyimini nasıl etkilediği açıklanır.
 
 ### 2. Anlatıcı ve bakış açısı
 
-Anlatıcının konumu, bakış açısının sürekliliği, bilgi sınırları ve zaman kullanımı değerlendirilir. Bilinçli anlatı tercihleri hata gibi sunulmaz; istemsiz geçişler ve okuru gereksiz biçimde yönsüz bırakan kopmalar somutlaştırılır.
+Anlatıcının konumu, bilgi sınırları, zaman kullanımı ve bakış açısının sürekliliği değerlendirilir. Bilinçli tercihler korunur; istemsiz kopmalar somut örneklerle gösterilir.
 
 ### 3. Karakter ve motivasyon
 
-Karakterlerin amaçları, kararları, dönüşümleri ve birbirleriyle ilişkileri metindeki davranışları üzerinden incelenir. Editör karakteri sevip sevmediğini değil, karakterin eser içinde inandırıcı ve tutarlı kurulup kurulmadığını değerlendirir.
+Karakterlerin amaçları, kararları, dönüşümleri ve ilişkileri metindeki davranışları üzerinden ele alınır. Editör karakteri sevip sevmediğini değil, anlatı içinde inandırıcı ve tutarlı kurulup kurulmadığını değerlendirir.
 
 ### 4. Dil, üslup ve anlatım açıklığı
 
-Cümle yapısı, sözcük seçimi, tekrarlar, anlatım bozuklukları, ton ve okunabilirlik ele alınır. Yazarın özgün sesi korunur; editör kendi sesini dayatmaz. Dil önerileri metnin anlamını, ritmini veya hedef okurla iletişimini güçlendirecek gerekçeye dayanır.
+Cümle yapısı, sözcük seçimi, tekrarlar, ton, ritim ve okunabilirlik incelenir. Yazarın özgün sesi korunur; öneriler metnin anlamını ve okurla kurduğu ilişkiyi güçlendirecek gerekçeye dayanır.
 
 ### 5. Tempo ve sahne dengesi
 
-Olay, betimleme, diyalog ve iç anlatım arasındaki denge incelenir. Hızlı ya da yavaş anlatım tek başına kusur değildir; temponun sahnenin amacıyla ve eserin bütünüyle uyumu değerlendirilir.
+Olay, betimleme, diyalog ve iç anlatım arasındaki denge değerlendirilir. Hızlı veya yavaş anlatım tek başına kusur sayılmaz; temponun sahnenin amacıyla uyumu incelenir.
 
 ### 6. Tutarlılık ve metin içi doğruluk
 
-Zaman çizgisi, mekân, karakter özellikleri, olay nedenleri ve daha önce verilen bilgiler arasındaki çelişkiler işaretlenir. Araştırmaya dayalı veya gerçek kişi ve olaylara temas eden metinlerde doğrulanması gereken iddialar ayrıca belirtilir; editör doğrulayamadığı bilgiyi kesin gerçek gibi sunmaz.
+Zaman çizgisi, mekân, karakter özellikleri ve olay nedenleri arasındaki olası çelişkiler işaretlenir. Doğrulanması gereken iddialar kesin hüküm yerine kontrol önerisiyle belirtilir.
 
 ### 7. Tür, yaş grubu ve hedef okur
 
-Eserin beyan ettiği tür ve hedef okurla kurduğu ilişki değerlendirilir. Tür beklentileri yaratıcı özgürlüğü sınırlayan değişmez kurallar gibi kullanılmaz; okurun eserden ne bekleyebileceğini anlamaya yarayan bir bağlam sunar. Yaşa uygunlukla ilgili ayrıntılı sınırlar İçerik ve Yaş Politikası'nda ayrıca düzenlenir.
+Eserin beyan ettiği tür ve hedef okurla kurduğu ilişki değerlendirilir. Tür beklentileri yaratıcı özgürlüğü sınırlayan değişmez kurallar olarak değil, okur deneyimini anlamaya yarayan bağlam olarak kullanılır.
 
 ### 8. Örnek, gerekçe ve uygulanabilirlik
 
-Her önemli değerlendirme mümkün olduğunda bölüm, sahne, paragraf veya kısa metin örneğine bağlanır. Editör yalnız sorunu söylemekle kalmaz; etkisini açıklar ve yazara tek bir zorunlu çözüm dayatmadan uygulanabilir seçenekler sunar.
+Önemli değerlendirmeler mümkün olduğunda bölüm, sahne, paragraf veya kısa metin örneğine bağlanır. Editör gözlemi, etkisini ve yazarın değerlendirebileceği seçenekleri birlikte açıklar.
 
 ## İyi bir editör raporu nasıl görünür?
 
-Güçlü bir rapor dört soruya yanıt verir: Editör ne gözlemledi, bunu metnin neresinde gördü, okur veya eser bütünü üzerindeki etkisi ne ve yazar hangi seçenekleri değerlendirebilir?
+Güçlü bir rapor dört soruya yanıt verir: Ne gözlemlendi, metnin neresinde görüldü, okur veya eser bütünü üzerindeki etkisi ne ve yazar hangi seçenekleri değerlendirebilir?
 
 | Yeterli yaklaşım | Yetersiz yaklaşım | Neden |
 | --- | --- | --- |
@@ -60,43 +60,41 @@ Güçlü bir rapor dört soruya yanıt verir: Editör ne gözlemledi, bunu metni
 | “Bu bilinçli bir üslup tercihi olabilir; ancak aynı bölümde üç kez bakış açısı değişmesi takip güçlüğü yaratıyor.” | “Böyle yazılmaz.” | Yazarın tercihi ile teknik etki ayrılır. |
 | “Bu ayrıntıyı doğrulayamadım; yayımdan önce güvenilir bir kaynaktan kontrol edilmeli.” | “Bu bilgi kesinlikle yanlış.” | Editör kendi bilgi sınırını açıklar. |
 
-Rapor; kişisel saldırı, alay, küçümseme, belirsiz övgü, yayınevi adına konuşma veya başarı vaadi içermez. Yalnız yazım ve noktalama hatalarının listelenmesi de yapısal incelemenin yerine geçmez.
+Raporun değeri otoriter bir tondan değil, izlenebilir gerekçeden gelir. Kişisel saldırı, küçümseme veya belirsiz övgü profesyonel değerlendirme yerine geçmez.
 
 ## Bağımsızlık ve çıkar çatışması
 
-Editör, tarafsız değerlendirmeyi etkileyebilecek kişisel, mesleki veya mali bir ilişkiyi görevi almadan önce ya da öğrendiği anda bildirmelidir. Yakın ilişki, devam eden iş ortaklığı, eser üzerinde daha önce ortak çalışma, yazar veya yayıneviyle doğrudan mali menfaat ve sonucu etkileyebilecek husumet çıkar çatışmasına örnek olabilir.
+Editör, tarafsız değerlendirmeyi etkileyebilecek kişisel, mesleki veya mali ilişkiyi görevden önce ya da öğrendiği anda bildirir. Bu, editör hakkında olumsuz hüküm değil; raporun güvenilirliğini koruyan mesleki bir ilkedir.
 
-Çıkar çatışması bildirmek editör hakkında olumsuz bir hüküm değildir; incelemenin güvenilirliğini koruyan mesleki sorumluluktur. Uygun durumda görev başka bir editöre bırakılır veya erişim sonlandırılır.
+Uygun durumda görev başka bir editöre bırakılabilir. Böylece yazar, değerlendirme sonucunun görünmeyen bir ilişki tarafından şekillendirilmediğini bilir.
 
 ## İki editörlü inceleme nasıl korunur?
 
-Birinci editör raporunu tamamladıktan sonra eser bağımsız ikinci değerlendirmeye geçebilir. İkinci editör aynı kişi olamaz ve kendi raporunu hazırlarken birinci editörün raporuna erişmez. Böylece ikinci görüş ilk görüşün tekrarı hâline gelmez.
+Birinci editör raporunu tamamladıktan sonra eser bağımsız ikinci değerlendirmeye geçebilir. İkinci editör aynı kişi olamaz ve kendi raporunu hazırlarken birinci raporu görmez.
 
-İkinci değerlendirme tamamlanıp eser süreci bütünüyle sonuçlandıktan sonra birinci editör ikinci raporu karşılaştırma amacıyla görebilir. İkinci editöre ise birinci rapor açılmaz. Editörlerin aynı sonuca ulaşması veya ortak bir puan üretmesi gerekmez; farklı ama gerekçeli görüşler yazar için ayrı değer taşır.
+Bu yapı, ikinci görüşün ilk raporu tekrar etmesi yerine esere gerçekten yeni bir bakış eklemesini amaçlar. İki rapor aynı sonuca ulaşmak zorunda değildir; farklı ama gerekçeli görüşler yazar için ayrı değer üretir.
 
 ## Gizlilik ve eser güvenliği
 
-Yayımlanmamış eser metni, özel sürümler, yazarın kamuya açık olmayan bilgileri, editör notları, rapor taslakları ve süreç kayıtları yalnız görev amacıyla kullanılabilir. Görev için zorunlu olmayan indirme, çoğaltma, ekran kaydı, harici depolama veya üçüncü kişilerle paylaşım yapılmamalıdır.
+Yayımlanmamış eser metni, özel sürümler, yazarın kamuya açık olmayan bilgileri, editör notları ve süreç kayıtları yalnız görev amacıyla kullanılır. İnceleme erişimi editöre eser üzerinde yayınlama, çoğaltma veya başka bir kullanım hakkı vermez.
 
-Yayınlanmamış eser ya da kullanıcı verisi, İlkOku tarafından açıkça yetkilendirilmemiş yapay zekâ, çeviri, özetleme, bulut veya benzeri üçüncü taraf servislere yüklenmemelidir. İnceleme erişimi editöre eser üzerinde yayınlama, lisanslama, çoğaltma veya başka bir kullanım hakkı vermez.
+Yayınlanmamış eser veya kullanıcı verisi, İlkOku tarafından açıkça yetkilendirilmemiş üçüncü taraf servislerine taşınmamalıdır. Bu sınır, yazarın profesyonel değerlendirme isterken çalışma alanını güvenle kullanabilmesi için korunur.
 
 ## Yazarın yaratıcı kararı
 
-Editör raporu tavsiye niteliğindedir. Yazar, gerekçeli önerileri değerlendirebilir, bazılarını uygulayabilir, alternatif bir çözüm geliştirebilir veya yaratıcı tercihini koruyabilir. Editör, görüşünü zorunlu talimat ya da kendi üslubunu üstün gören bir hüküm olarak sunamaz.
+Editör raporu yazara seçenek ve profesyonel bakış sunar. Yazar öneriyi uygulayabilir, başka çözüm geliştirebilir veya bilinçli yaratıcı tercihini koruyabilir.
 
-Bir önerinin uygulanmaması tek başına yazarın platformdaki eser hakkını, hesabını veya görünürlüğünü ortadan kaldırmaz. İçerik güvenliği ve hukuk kuralları kapsamındaki ayrı ihlaller bu editoryal tercih sınırından bağımsız değerlendirilir.
+İyi editörlük, yazarın sesini editörün sesiyle değiştirmek değil; yazarın kendi eserini daha net görmesine yardımcı olmaktır.
 
 ## Editoryal görüşün sınırı
 
-İnceleme belirli bir metin sürümüne ve editörün mesleki değerlendirmesine dayanır. Rapor eserin hatasız olduğunu, yayımlanacağını, bir yayınevi tarafından kabul edileceğini, satış başarısı kazanacağını veya üçüncü kişi haklarını ihlal etmediğini garanti etmez.
+Editör raporu belirli bir metin sürümüne dayanan profesyonel görüştür. Yayın, basım, satış, hukuki uygunluk veya yayınevi kabulü gibi bağımsız kararların yerine geçmez.
 
-Editör hukuki uyuşmazlıkta mahkeme, telif tescil makamı veya yayınevinin yetkili karar organı yerine geçmez. Telif iddiası ayrı Telif Bildirimi sürecinde; platform kullanım ihlalleri ise ilgili politika ve destek kanallarında ele alınır.
+Bu sınır değerlendirmeyi değersizleştirmez; tersine raporun ne için kullanılacağını netleştirir: metni geliştirmek ve yazarın daha bilinçli yaratıcı karar vermesine yardımcı olmak.
 
 ## İhlal bildirimi ve kalite incelemesi
 
-Yazar veya süreçte yetkili bir katılımcı; kişisel saldırı, çıkar çatışmasının gizlenmesi, eser içeriğinin yetkisiz paylaşılması, raporun başka eserden kopyalanması veya değerlendirme yetkisinin aşılması şüphesini İlkOku İletişim kanalı üzerinden bildirebilir.
+Yazar veya süreçte yetkili bir katılımcı; kişisel saldırı, çıkar çatışmasının gizlenmesi, eser içeriğinin yetkisiz paylaşılması veya rapor kalitesiyle ilgili somut bir sorun görürse İlkOku İletişim kanalı üzerinden bildirim yapabilir.
 
-Bildirimde eser adı, inceleme aşaması, yaklaşık tarih ve sorunu açıklayan gerekli en az bilgi verilmelidir; yayınlanmamış metnin tamamı yeniden gönderilmemelidir. İlkOku olay kaydını ve erişim sınırlarını inceleyebilir, gerektiğinde raporu kalite kontrolüne alabilir veya ilgili erişimi durdurabilir.
-
-Bildirim yapılması raporu otomatik olarak değiştirmez, silmez ya da yeni değerlendirme hakkı doğurmaz. Somut kayıtlar incelenir; uygulanabilecek ürün işlemi ve taraflara verilebilecek bilgi mevcut yetki, gizlilik ve hukuk sınırlarına göre belirlenir.`,
+Eser adı, inceleme aşaması, yaklaşık tarih ve sorunu anlamaya yetecek bilgi yeterlidir. Amaç editoryal süreci cezalandırıcı hâle getirmek değil, profesyonel standardı ve güveni kayıt üzerinden korumaktır.`
 } as const;

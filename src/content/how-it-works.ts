@@ -1,9 +1,155 @@
 export const howItWorksPageContent = {
   title: "İlkOku Nasıl Çalışır?",
-  summary: "Fikirden okura, editör incelemesinden yayınevi keşfine kadar bir eserin İlkOku içindeki gerçek yolculuğunu, rol sınırlarını ve görünürlük kurallarını öğrenin.",
+  summary: "Bir fikrin keşfe açık bir esere dönüşmesini; okurla buluşmasını, iki bağımsız editör görüşüyle gelişmesini ve yayınevi keşfine kadar uzanan İlkOku yolculuğunu adım adım görün.",
   seoTitle: "İlkOku Nasıl Çalışır? | Yazar, Okur, Editör ve Yayınevi",
-  seoDescription: "İlkOku’da eser oluşturma, yayın, okur geri bildirimi, iki aşamalı editör incelemesi, Eser Pasaportu ve yayınevi keşfi süreçlerini açıkça inceleyin.",
+  seoDescription: "İlkOku'da eser oluşturma, keşfe açılma, okur geri bildirimi, iki aşamalı editör incelemesi, Eser Pasaportu ve yayınevi keşfi süreçlerini inceleyin.",
   canonical: "/nasil-calisir",
-  updatedAt: "2026-08-25T00:00:00.000Z",
-  body: "İlkOku; yazarın eserini oluşturduğu, okurun yayımlanmış eserlerle buluştuğu, editör incelemelerinin yürütüldüğü ve uygun eserlerin yayınevleri tarafından keşfedilebildiği dijital bir edebiyat platformudur.\n\nBu sayfa bir tanıtım vaadi değil, platformun gerçek çalışma sınırlarını açıklar. Her rol aynı esere farklı bir yetkiyle yaklaşır; taslak, yayımlanmış içerik, editör raporu, Eser Pasaportu ve özel iletişim bilgileri aynı görünürlükte değildir.\n\n## İlkOku nedir?\n\nİlkOku, eseri yalnızca son hâliyle sergilemek yerine oluşum ve gelişim yolculuğuyla ele alır. Yazar kendi çalışma alanında eser kaydı açar, bölümlerini geliştirir ve hazır olduğunda yayımlama kararını verir. Yayımlanmış eserler okur keşfine açılabilir; editör incelemesi ise yayın işleminden ayrı bir profesyonel değerlendirme sürecidir.\n\nYayınevi keşfi de otomatik kabul anlamına gelmez. Yayınevi, yalnızca kendisine açık ve keşfe uygun eserleri inceler; ilgilenmesi tek başına basım, sözleşme veya ticari yayın taahhüdü oluşturmaz.\n\n## Eser İlkOku'da nasıl ilerler?\n\n### 1. Yazar eser kaydını oluşturur\n\nYazar yeni eser akışında başlık, tür ve tanıtım bilgilerini girer; ilk bölümünü kendi çalışma alanında hazırlamaya başlar. Bu aşamadaki eser taslaktır. Taslakta bulunması, eserin okurlara veya arama motorlarına açıldığı anlamına gelmez.\n\nYazar, yayımlama kararı verene kadar bölümlerini düzenleyebilir ve eserini geliştirebilir. İlkOku içindeki eser kaydı, çalışmanın hangi yazar hesabında ve hangi tarihte oluşturulduğuna ilişkin başlangıç noktasını oluşturur.\n\n### 2. Yazar yayımlama kararını verir\n\nTaslağı kaydetmek ile eseri yayımlamak farklı işlemlerdir. Yazar yayına hazır olduğunu düşündüğünde kanonik yayın akışını kullanır. Sistem, yayımlanabilir bir bölüm bulunduğunu doğrulamadan eseri herkese açık duruma getirmez.\n\nYayın, eserin İlkOku içindeki public görünürlüğünü başlatır. Bu işlem bir yayıneviyle anlaşma yapıldığı, eserin basılacağı veya ticari başarı kazanacağı anlamına gelmez.\n\n### 3. Eser okurla buluşur\n\nYalnızca yayımlanmış, public görünürlüğe sahip ve arşivlenmemiş eserler herkese açık keşif yüzeylerinde yer alabilir. Okur eser kartını, tanıtımını, yazarın public adını ve kendisine açık bölümleri görebilir.\n\nOkur beğeni, favori, takip ve yorum gibi kendisine açık araçlarla eserle etkileşime girebilir. Geri bildirim kişiye değil metne odaklanmalı; özel bilgi, hakaret, tehdit veya eseri izinsiz çoğaltma amacı taşımamalıdır.\n\n### 4. Yazar editör incelemesi talep edebilir\n\nEseri İlkOku'da yayımlamak editör incelemesini otomatik başlatmaz. Profesyonel değerlendirme isteyen yazar ayrıca editör inceleme talebi oluşturur. Talep, uygun editörlerin erişebildiği çalışma havuzuna girer.\n\nİnceleme başlamadan önce eserin hangi sürümünün değerlendirileceği belirlenir. Böylece editör raporunun hangi metne dayandığı sonradan anlaşılabilir.\n\n### 5. Birinci editör bağımsız değerlendirme yapar\n\nBirinci editör talebi üstlendiğinde görev kilitlenir; aynı birinci inceleme başka bir editör tarafından eş zamanlı olarak alınamaz. Editör eseri okur, somut metin örneklerine dayanan değerlendirmesini hazırlar ve raporunu tamamlar.\n\nEditörün görevi yazarı kişisel olarak değerlendirmek veya eseri kendi üslubuna göre yeniden yazmak değildir. Amaç; yapı, anlatım, tutarlılık, dil, tempo, karakter, tür beklentisi ve hedef okur açısından gerekçeli bir profesyonel görüş sunmaktır.\n\n### 6. İkinci editör bağımsız ikinci değerlendirmeyi tamamlar\n\nBirinci incelemeden sonra eser ikinci editör aşamasına geçer. İkinci editör, kendi değerlendirmesini bağımsız biçimde tamamlar. İlk editör, ikinci editörün raporunu bağımsız değerlendirme bittikten sonra görebilir.\n\nBu ayrım, ikinci görüşün ilk raporu tekrar etmesini önlemeyi ve eserin tek kişinin değerlendirmesine bağlı kalmamasını amaçlar. İki editörün aynı sonuca ulaşması zorunlu değildir; farklı gerekçeler yazar için ayrı bir değerlendirme değeri taşır.\n\n### 7. Yazar sonucu değerlendirir ve eserini geliştirir\n\nİncelemeler tamamlandığında yazar, kendisine açılan raporları görür. Editör önerileri bağlayıcı bir yeniden yazım emri değildir. Nihai yaratıcı karar yazara aittir.\n\nYazar somut ve tekrarlanan sorunları dikkate alabilir, bazı önerileri uygulayabilir veya gerekçesiyle farklı bir tercih yapabilir. Revizyonlar eserin gelişim geçmişinin bir parçasıdır.\n\n### 8. Eser Pasaportu gelişim sürecini görünür kılar\n\nEser Pasaportu; eserin İlkOku'da hangi yazar hesabı tarafından, hangi tarihte oluşturulduğunu ve bölüm, sürüm, revizyon ile inceleme süreçleri boyunca nasıl geliştiğini zaman damgalı kayıtlarla gösterir. Böylece eserin İlkOku'daki oluşum ve gelişim süreci doğrulanabilir hâle gelir; bu kayıtlar, yazarın eser sahipliği iddiasını destekleyen tarihsel ve teknik kanıtlar sunar.\n\nEser Pasaportu'nu görme yetkisi, eserin özel tam metnini görme yetkisi değildir. Pasaport erişimi ile içerik erişimi ayrı değerlendirilir. Okura açık olmayan taslak, sürüm veya teknik kayıt yalnızca yetkili roller tarafından görülebilir.\n\n### 9. Uygun eser yayınevi keşfine açılabilir\n\nYayınevi hesapları, kendilerine açık keşif alanlarında görünür eserleri ve yazarları inceleyebilir. Yayınevinin gördüğü bilgiler rol ve yetki sınırlarına bağlıdır. Yazarın özel iletişim bilgileri veya gizli taslakları otomatik olarak paylaşılmaz.\n\nYayınevinin bir eseri görüntülemesi, favorilemesi veya ekip içinde değerlendirmesi yazara verilmiş bir yayın sözü değildir. Olası ticari süreç, tarafların ayrıca vereceği kararlar ve geçerli belgeler üzerinden ilerler.\n\n## Roller ne yapar?\n\n### Yazarın rolü\n\n- Eserini ve bölümlerini oluşturur.\n- Taslak ile yayımlanmış içerik arasındaki kararı yönetir.\n- Okur geri bildirimlerini değerlendirir.\n- Profesyonel inceleme istiyorsa ayrıca talep oluşturur.\n- Editör raporlarını kullanarak eserini geliştirebilir.\n- Eseri üzerindeki haklarını korur.\n\n### Okurun rolü\n\n- Yalnızca kendisine açık yayımlanmış eserleri keşfeder.\n- Eserle izin verilen etkileşim araçları üzerinden iletişim kurar.\n- Geri bildirimini metne odaklar.\n- Taslaklara, özel sürümlere ve editör çalışma belgelerine erişemez.\n\n### Editörün rolü\n\n- Yalnızca yetkilendirildiği eseri ve sürümü inceler.\n- Çıkar çatışması bulunuyorsa görevi üstlenmez.\n- Raporunu somut örnek ve gerekçelerle oluşturur.\n- Yayınlanmamış metni ve inceleme bilgilerini gizli tutar.\n- Editör görüşünü yayınevi kabulü veya basım garantisi gibi sunmaz.\n\n### Yayınevinin rolü\n\n- Kendisine açık keşif alanlarını kullanır.\n- Eseri kendi editoryal ve ticari ölçütleriyle değerlendirir.\n- Erişebildiği özel bilgileri yalnızca yetkili ekip içinde kullanır.\n- İlgi göstermeyi sözleşme veya yayın garantisi gibi sunmaz.\n- Ekip üyesi ayrıldığında kişisel ve yerel gizli kopyaları saklamaz.\n\n## Kim neyi görebilir?\n\n| Bilgi | Okur | Yetkili editör | Yetkili yayınevi | Yazar |\n| --- | --- | --- | --- | --- |\n| Yayımlanmış eser bilgileri | Evet | Evet | Evet | Evet |\n| Okura açık bölüm | Evet | Evet | Yetkisine göre | Evet |\n| Yayımlanmamış taslak | Hayır | İnceleme yetkisine göre | Hayır | Evet |\n| Eser Pasaportu | Sınırlı public özet | Yetkisine göre | Yetkisine göre | Evet |\n| Editör raporu | Hayır | Süreç ve aşamaya göre | Açık izin varsa | Evet |\n| Özel iletişim bilgileri | Hayır | Hayır | Otomatik olarak hayır | Evet |\n| Sürüm ve teknik işlem geçmişi | Hayır | Yetkisine göre | Özet veya yetkisine göre | Evet |\n\nGörünürlük yalnız arayüzde saklanan bir tercih değildir. Public katalog, okuma, editör ve yayınevi sorguları kendi erişim sınırlarını sunucu tarafında uygular.\n\n## Eserin hakları kimde kalır?\n\nEser üzerindeki fikrî haklar yazarda kalır. İlkOku'ya eser yüklemek veya platformda yayımlamak, hakların kendiliğinden İlkOku'ya ya da bir yayınevine devredildiği anlamına gelmez.\n\nBir hakkın devri, süreli kullanımı, yayımlama yetkisi veya ticari kullanım ancak tarafların açıkça kabul ettiği geçerli bir belgeyle düzenlenebilir. Platform içindeki görünürlük ayarı, tek başına hak devri değildir.\n\n## İlkOku ne yapmaz?\n\n- Ticari başarı, basım veya yayınevi kabulü garantisi vermez.\n- Editör değerlendirmesini yayın sözleşmesi gibi göstermez.\n- Taslakları ve özel sürümleri herkese açmaz.\n- Yazarın özel iletişim bilgilerini yayınevlerine otomatik olarak vermez.\n- Yayınevinin ilgisini bağlayıcı teklif olarak sunmaz.\n- Kopyalama veya ekran görüntüsü riskini yüzde yüz ortadan kaldırdığını iddia etmez.\n- Karmaşık hak sahipliği uyuşmazlıklarında mahkeme yerine geçmez.\n\n## Özelliklerin güncel durumu\n\n| Durum | Kapsam |\n| --- | --- |\n| Kullanımda | Eser oluşturma, taslak ve bölüm yönetimi, kanonik yayın, public eser keşfi, okur etkileşimleri, editör talep ve iki aşamalı inceleme akışları |\n| Kontrollü erişimde | Eser Pasaportu ayrıntıları, yayınevi keşfi, ekip içi değerlendirme, sözleşme gönderim ve yanıt süreçleri |\n| Henüz etkin değil | Yayın Niyeti şablonlarının aktif kullanımı ve ticari hak modeli kesinleşmemiş nihai Yazar–Yayınevi Yayın Hakları Sözleşmesi |\n\nHenüz etkin olmayan bir özellik, sayfada kullanılabilir veya tamamlanmış gibi gösterilmez. Durum değiştiğinde bu sayfa, İçerik Yönetimi kaydı, sitemap ve sistem haritası birlikte güncellenir.\n\n## Nereden başlamalısınız?\n\nYazarsanız önce hesabınızı ve yazar çalışma alanınızı oluşturun; eseriniz üzerinde çalışırken taslak ile yayın kararını birbirinden ayırın.\n\nOkursanız herkese açık eserleri ve yazar vitrinlerini keşfedin; geri bildiriminizi metne ve somut okuma deneyiminize dayandırın.\n\nEditörseniz uzmanlık alanınızı, çıkar çatışması sınırlarınızı ve inceleme sorumluluklarınızı dikkate alın.\n\nYayıneviyseniz keşif alanını bir ön değerlendirme ortamı olarak kullanın; eser ve yazar bilgilerini yalnızca yetkiniz ve amaç sınırınız içinde işleyin.",
+  updatedAt: "2026-08-26T00:00:00.000Z",
+  body: `İlkOku, yeni bir eserin yalnızca bir dosya olarak beklemesi yerine gelişen bir yolculuğa dönüşmesini sağlar. Yazar eserini oluşturur, hazır olduğunda keşfe açar; okur yeni hikâyeleri bulur, editör metne profesyonel ikinci bakış kazandırır ve yayınevleri uygun eserleri daha erken keşfedebilir.
+
+Aynı eser; yazar, okur, editör ve yayınevi için farklı bir değer üretir. İlkOku bu rolleri tek yerde buluştururken taslak, keşif, okuma, editör incelemesi, Eser Pasaportu ve kurumsal değerlendirme adımlarını birbirine karıştırmadan ilerletir.
+
+## İlkOku nedir?
+
+İlkOku, eseri yalnızca son hâliyle sergileyen bir vitrin değil; yazıldığı andan keşfedildiği ana kadar gelişimini destekleyen dijital edebiyat platformudur. Yazar bölüm bölüm çalışabilir, eserini kendi kararıyla keşfe açabilir ve okurdan gelen gerçek etkileşimleri gelişim sinyali olarak görebilir.
+
+Profesyonel değerlendirme isteyen yazar için editör incelemesi ayrı bir katmandır. Eserin oluşum ve revizyon izi Eser Pasaportu ile kayıt altına alınırken, keşfe uygun eserler yayınevi dünyasının radarına girebilir. Böylece yazma, okuma, değerlendirme ve keşif tek bir eser yolculuğunda buluşur.
+
+## Eser İlkOku'da nasıl ilerler?
+
+### 1. Yazar eser kaydını oluşturur
+
+Her yolculuk bir fikirle başlar. Yazar başlık, tür ve tanıtım bilgilerini belirleyerek eser kaydını açar; ilk bölümünü kendi çalışma alanında geliştirmeye başlar.
+
+Bu aşamadaki eser taslaktır. Yazar bölümlerini kaydedebilir, düzenleyebilir ve anlatısını kendi temposunda büyütebilir. Taslak çalışma alanı ile keşfe açık vitrin birbirinden ayrıdır; eser hazır olmadan görünür olmak zorunda değildir.
+
+### 2. Yazar eserini keşfe açar
+
+Yazar eserin okurla buluşmaya hazır olduğuna karar verdiğinde yayın akışını kullanır. Sistem gerekli yayın ve içerik sınıflandırması koşullarını doğruladıktan sonra eser keşfe açık vitrinde yer alabilir.
+
+Keşfe açılmak, eserin kapak, başlık, tür, tanıtım ve yazar bilgileriyle bulunabilir hâle gelmesidir. Bölüm metinlerini okumak ise ücretsiz üyelik veya giriş sonrasında açılan ayrı okuma katmanıdır.
+
+### 3. Eser okurla buluşur
+
+Okur, kayıt olmadan keşfe açık eserleri, yazarları ve türleri inceleyebilir; ilgisini çeken eserin vitrini üzerinden ne okuyacağına karar verebilir. Okumaya geçtiğinde ücretsiz üyelik veya giriş ile yayımlanmış bölümlere ulaşır.
+
+Beğeni, favori, takip ve yorum gibi etkileşimler yazar için eserin okurla nasıl karşılık bulduğunu gösteren gerçek sinyaller üretir. Okur yalnız tüketen kişi değil; yeni bir eserin ilk keşif halkalarından biridir.
+
+### 4. Yazar editör incelemesi talep edebilir
+
+Yazar metnine profesyonel bir ikinci bakış istediğinde ayrıca editör inceleme talebi oluşturabilir. İnceleme, eserin belirli bir sürümü üzerinden ilerler; böylece hangi metnin değerlendirildiği daha sonra da anlaşılabilir.
+
+Talep uygun editörlerin çalışma havuzuna girer ve editoryal süreç, okur etkileşimlerinden bağımsız profesyonel bir değerlendirme katmanı olarak başlar.
+
+### 5. Birinci editör bağımsız değerlendirme yapar
+
+Birinci editör görevi aldığında inceleme kendisine kilitlenir. Editör; yapı, anlatım, tutarlılık, dil, tempo, karakter, tür beklentisi ve hedef okur gibi alanlarda metinden izlenebilen örneklerle gerekçeli görüş oluşturur.
+
+Amaç yazarı başka birine dönüştürmek değil, metnin güçlü ve geliştirmeye açık yönlerini görünür kılmaktır. Böylece yazar yalnız genel bir yorum değil, uygulanabilir profesyonel bir değerlendirme elde eder.
+
+### 6. İkinci editör bağımsız ikinci değerlendirmeyi tamamlar
+
+İlk rapor tamamlandığında eser ikinci editör aşamasına geçer. İkinci editör kendi değerlendirmesini bağımsız biçimde oluşturur; ilk görüş ikinci raporu yönlendirecek şekilde önceden açılmaz.
+
+İki editörün aynı sonuca ulaşması gerekmez. Farklı ama gerekçeli iki bakış, yazarın eserine tek bir kişinin penceresinden değil daha geniş bir açıdan bakmasını sağlar.
+
+### 7. Yazar sonucu değerlendirir ve eserini geliştirir
+
+İncelemeler tamamlandığında yazar raporları kendi yaratıcı hedefiyle birlikte değerlendirir. Tekrarlanan sorunları görebilir, yeni çözüm seçenekleri deneyebilir veya bilinçli bir yaratıcı tercihini koruyabilir.
+
+Editör görüşü eserin direksiyonunu yazardan almaz. Asıl değer, yazarın metnine daha fazla veri ve daha güçlü bir bakışla geri dönebilmesidir.
+
+### 8. Eser Pasaportu gelişim sürecini görünür kılar
+
+Eser Pasaportu; eserin İlkOku'da hangi hesap tarafından ve ne zaman oluşturulduğunu, bölüm, sürüm, revizyon ve inceleme adımlarının nasıl ilerlediğini zaman damgalı kayıtlarla bir araya getirir.
+
+Bu sayede eser yalnız son dosyasıyla değil, gelişim iziyle de değerlendirilebilir. Pasaport erişimi ile özel tam metin erişimi ayrı tutulur; gelişim kaydı görünürlük yetkisini kendiliğinden genişletmez.
+
+### 9. Uygun eser yayınevi keşfine açılabilir
+
+Keşfe açık eserler ve yazar vitrinleri, yayınevlerinin yeni yetenekleri daha erken fark edebileceği bir keşif alanı oluşturur. Yayınevi; tür, eser bilgileri, yazar vitrini ve kendisine açık diğer sinyaller üzerinden değerlendirme yapabilir.
+
+İlkOku'nun burada ürettiği değer, yazarı ve eseri doğru keşif yüzeyine taşımaktır. Olası yayın veya ticari ilişki ise yayınevi ile yazarın daha sonra vereceği bağımsız kararlarla ilerler.
+
+## Roller ne yapar?
+
+### Yazarın rolü
+
+- Eserini ve bölümlerini kendi çalışma alanında oluşturur.
+- Ne zaman keşfe açılacağına karar verir.
+- Okur etkileşimlerini gelişim sinyali olarak kullanır.
+- İsterse profesyonel editör incelemesi talep eder.
+- Editör raporlarını değerlendirerek eserini geliştirebilir.
+- Yaratıcı kararını ve eser üzerindeki haklarını korur.
+
+### Okurun rolü
+
+- Keşfe açık yeni eserleri, yazarları ve türleri bulur.
+- Üyelik veya giriş sonrasında yayımlanmış bölümleri okur.
+- Beğeni, favori, takip ve yorumlarla esere gerçek okur sinyali kazandırır.
+- Yeni bir yazarın ilk okurlarından biri olabilir.
+
+### Editörün rolü
+
+- Uygun inceleme görevlerini çalışma havuzundan alır.
+- Belirli eser ve sürüm üzerinde bağımsız değerlendirme üretir.
+- Görüşünü somut örnek ve gerekçelerle destekler.
+- Yazarın özgün sesini ve yaratıcı kararını koruyan profesyonel ikinci bakış sunar.
+- Görev kapsamındaki gizliliği ve mesleki bağımsızlığı gözetir.
+
+### Yayınevinin rolü
+
+- Keşfe açık eser ve yazarları daha erken tarar.
+- Kendi editoryal ölçütlerine göre ilgi alanını daraltır.
+- Kendisine açık gelişim ve değerlendirme sinyallerini inceleyebilir.
+- Yeni yetenekleri klasik başvuru akışının dışında da fark edebilir.
+- Yayın ve ticari kararını kendi kurumsal süreci içinde verir.
+
+## Kim neyi görebilir?
+
+| Bilgi | Ziyaretçi / Okur | Yetkili editör | Yetkili yayınevi | Yazar |
+| --- | --- | --- | --- | --- |
+| Keşfe açık eser vitrini | Evet | Evet | Evet | Evet |
+| Yayımlanmış bölüm metni | Üyelik / giriş sonrası | Görevine göre | Yetkisine göre | Evet |
+| Yayımlanmamış taslak | Hayır | İnceleme yetkisine göre | Hayır | Evet |
+| Eser Pasaportu | Public özet / yetkiye göre | Yetkisine göre | Yetkisine göre | Evet |
+| Editör raporu | Hayır | Süreç ve aşamaya göre | Açık izin varsa | Evet |
+| Özel iletişim bilgileri | Hayır | Hayır | Otomatik olarak hayır | Evet |
+| Sürüm ve teknik işlem geçmişi | Hayır | Yetkisine göre | Özet veya yetkisine göre | Evet |
+
+Bu ayrım keşfi zorlaştırmak için değil, her rolün doğru bilgiyle doğru anda buluşmasını sağlamak içindir. Keşfe açık vitrin geniştir; çalışma kayıtları ve özel bilgiler ise görev ve yetkiye göre açılır.
+
+## Eserin hakları kimde kalır?
+
+Eser üzerindeki fikrî haklar yazarda kalır. İlkOku'ya eser yüklemek veya platformda keşfe açmak, hakların kendiliğinden İlkOku'ya, editöre ya da bir yayınevine devredildiği anlamına gelmez.
+
+Platformun amacı yazarın eserini görünür kılmak, gelişim yolculuğunu desteklemek ve doğru keşif ortamını oluşturmaktır. Hak devri, lisans veya ticari kullanım gibi konular ancak tarafların ayrıca kabul ettiği geçerli belgelerle düzenlenebilir.
+
+## İlkOku sana ne kazandırır?
+
+- Eserini kendi kararınla kontrollü biçimde keşfe açabileceğin bir vitrin.
+- Yeni hikâyeleri erkenden bulmak isteyen okurlarla gerçek buluşma noktası.
+- Okur etkileşimlerini eserin gelişiminde kullanabileceğin somut sinyaller.
+- İki bağımsız editör görüşüyle metnine farklı açılardan bakma imkânı.
+- Eser Pasaportu ile oluşum ve gelişim yolculuğunu kayıt altında tutan bir iz.
+- Yeni eser ve yazar arayan yayınevlerinin keşif alanına girme fırsatı.
+- Yazma, okuma, değerlendirme ve keşfi birbirine bağlayan tek bir eser yolculuğu.
+
+İlkOku fırsat, görünürlük ve gelişim araçları sunar; bir eserin basılması, satışı veya ticari sonucu ise kullanıcıların ve bağımsız sektör aktörlerinin daha sonraki kararlarına bağlıdır.
+
+## Özelliklerin güncel durumu
+
+| Durum | Kapsam |
+| --- | --- |
+| Kullanımda | Eser oluşturma, taslak ve bölüm yönetimi, yayın, keşfe açık eser/yazar/tür yüzeyleri, üyelikle okuma, okur etkileşimleri ve iki aşamalı editör inceleme akışı |
+| Kontrollü erişimde | Eser Pasaportu ayrıntıları ve rol/yetkiye bağlı kurumsal keşif yüzeyleri |
+| Kademeli geliştirmede | Kurumsal paylaşım, bildirim ve diğer ileri yayınevi çalışma araçları |
+
+Bir özellik etkin değilse kullanılabilir gibi gösterilmez. İlkOku'nun keşif ağı büyürken aktif araçlar gerçek ürün akışıyla birlikte genişletilir.
+
+## Nereden başlamalısınız?
+
+Yazarsanız ilk eser kaydınızı açıp bölüm bölüm geliştirmeye başlayın. Okursanız keşfe açık eserlerden yeni bir hikâye bulun ve okumak için ücretsiz üyeliğinizi oluşturun.
+
+Editörseniz profesyonel değerlendirme akışını ve Editoryal Standartlar'ı inceleyin. Yayıneviyseniz yeni eser ve yazarları keşfetmek için yayınevi alanına katılın. İlkOku'da herkes aynı eserin farklı bir anında değer üretir.`
 } as const;

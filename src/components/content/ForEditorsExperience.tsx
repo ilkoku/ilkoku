@@ -95,19 +95,19 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
       <section className="how-hero editors-hero">
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
-            <span className="how-eyebrow">Bağımsız, gerekçeli, gizli</span>
+            <span className="how-eyebrow">Yeni eserlerin gelişiminde profesyonel iz bırak</span>
             <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions">
               <Link className="how-button how-button--primary" href="/kayit?rol=editor">Editör olarak başla <span aria-hidden="true">→</span></Link>
               <Link className="how-button how-button--secondary" href="#editor-akisi">İnceleme akışını gör</Link>
             </div>
-            <div className="how-hero__proof"><span><strong>1.</strong> editör kilidi</span><span><strong>2.</strong> bağımsız görüş</span><span><strong>Gizlilik</strong> görev sınırı</span></div>
+            <div className="how-hero__proof"><span><strong>Gerçek</strong> eser görevleri</span><span><strong>2</strong> bağımsız görüş</span><span><strong>Kayıtlı</strong> rapor süreci</span></div>
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
           <figure className="how-hero__visual editors-hero__visual">
             <Image src={visual.src} alt={visual.alt} fill priority sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
-            <figcaption><span><EditorIcon name="pool" /> Görevi al</span><span><EditorIcon name="report" /> Gerekçelendir</span><span><EditorIcon name="second" /> Bağımsız ikinci görüş</span></figcaption>
+            <figcaption><span><EditorIcon name="pool" /> Uygun eseri seç</span><span><EditorIcon name="report" /> Gerekçelendir</span><span><EditorIcon name="second" /> Yeni bakış ekle</span></figcaption>
           </figure>
         </div>
       </section>
@@ -119,53 +119,53 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
         <a href="#gizlilik"><span>04</span>Gizlilik</a>
       </nav>
 
-      {parsed.intro ? <section className="how-truth how-container" aria-label="Editör rolünün sınırı"><span><EditorIcon name="report" /></span><div><strong>Editör karar makamı değil; gerekçeli profesyonel ikinci bakıştır.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
+      {parsed.intro ? <section className="how-truth how-container" aria-label="Editörün İlkOku'daki değeri"><span><EditorIcon name="report" /></span><div><strong>Yeni bir esere yalnız yorum değil, izlenebilir profesyonel ikinci bakış kazandır.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
 
       <section className="editors-flow how-container" id="editor-akisi">
-        <SectionHeading eyebrow="Görev yaşam döngüsü" title="Erişim, görev ve sürüm aynı anda sınırlandırılır." description="Public editör profili bütün eserlere erişim değildir; çalışma alanı görev ve aşama üzerinden açılır." />
+        <SectionHeading eyebrow="Profesyonel görev akışı" title="Uygun eseri seç, sürümü sabitle, değerlendirmeye odaklan." description="Görev havuzu yeni eserlerle profesyonel editörü buluşturur; sürüm kaydı raporun hangi metne dayandığını açık tutar." />
         <div className="editors-flow__grid">
-          {sectionMap.get("Editör çalışma alanına yetkili rol ile gir") ? <article><EditorIcon name="shield" /><h3>Public profil ile özel çalışma erişimini birbirinden ayır.</h3><EditorialBody body={sectionMap.get("Editör çalışma alanına yetkili rol ile gir")!.body} /></article> : null}
-          {sectionMap.get("Genel Editör Havuzu'ndan uygun görevi al") ? <article><EditorIcon name="lock" /><h3>İlk alan editörün görevi kilitlenir.</h3><EditorialBody body={sectionMap.get("Genel Editör Havuzu'ndan uygun görevi al")!.body} /></article> : null}
-          {sectionMap.get("İncelediğin sürümü ve kapsamı sabit tut") ? <article><EditorIcon name="record" /><h3>Raporun hangi metne dayandığı görünür kalsın.</h3><EditorialBody body={sectionMap.get("İncelediğin sürümü ve kapsamı sabit tut")!.body} /></article> : null}
+          {sectionMap.get("Editör çalışma alanına yetkili rol ile gir") ? <article><EditorIcon name="shield" /><h3>Profesyonel profilinle editör çalışma alanına katıl.</h3><EditorialBody body={sectionMap.get("Editör çalışma alanına yetkili rol ile gir")!.body} /></article> : null}
+          {sectionMap.get("Genel Editör Havuzu'ndan uygun görevi al") ? <article><EditorIcon name="lock" /><h3>Uzmanlığına uygun yeni eser görevini seç.</h3><EditorialBody body={sectionMap.get("Genel Editör Havuzu'ndan uygun görevi al")!.body} /></article> : null}
+          {sectionMap.get("İncelediğin sürümü ve kapsamı sabit tut") ? <article><EditorIcon name="record" /><h3>Raporunu belirli ve izlenebilir eser sürümüne bağla.</h3><EditorialBody body={sectionMap.get("İncelediğin sürümü ve kapsamı sabit tut")!.body} /></article> : null}
         </div>
       </section>
 
       <section className="editors-report" id="rapor-standardi">
         <div className="how-container">
-          <SectionHeading eyebrow="Profesyonel değerlendirme" title="Sonuç cümlesi değil; gözlem, yer, etki ve seçenek üret." description="Raporun değeri editörün otoritesinden değil, metinden izlenebilen gerekçesinden gelir." />
+          <SectionHeading eyebrow="Profesyonel değerlendirme" title="Gözlemi gerekçeye, gerekçeyi uygulanabilir seçeneğe dönüştür." description="Raporun değeri editörün unvanından değil, metinden izlenebilen profesyonel açıklamasından gelir." />
           <div className="editors-report__grid">
-            {sectionMap.get("Gerekçeli ve uygulanabilir bir rapor hazırla") ? <article className="editors-report__primary"><EditorIcon name="report" /><span>Rapor standardı</span><h3>Yazarı değil metni değerlendir.</h3><EditorialBody body={sectionMap.get("Gerekçeli ve uygulanabilir bir rapor hazırla")!.body} /><Link href="/editoryal-standartlar">Editoryal Standartlar →</Link></article> : null}
-            {sectionMap.get("Yazarın yaratıcı kararına saygı göster") ? <article><EditorIcon name="author" /><span>Yaratıcı karar</span><h3>Öneri tavsiyedir; son söz yazarındır.</h3><EditorialBody body={sectionMap.get("Yazarın yaratıcı kararına saygı göster")!.body} /></article> : null}
+            {sectionMap.get("Gerekçeli ve uygulanabilir bir rapor hazırla") ? <article className="editors-report__primary"><EditorIcon name="report" /><span>Rapor standardı</span><h3>Metnin güçlü ve geliştirmeye açık yönlerini görünür kıl.</h3><EditorialBody body={sectionMap.get("Gerekçeli ve uygulanabilir bir rapor hazırla")!.body} /><Link href="/editoryal-standartlar">Editoryal Standartlar →</Link></article> : null}
+            {sectionMap.get("Yazarın yaratıcı kararına saygı göster") ? <article><EditorIcon name="author" /><span>Yaratıcı karar</span><h3>Seçenek üret; yazarın özgün sesini koru.</h3><EditorialBody body={sectionMap.get("Yazarın yaratıcı kararına saygı göster")!.body} /></article> : null}
           </div>
         </div>
       </section>
 
       <section className="editors-independence how-container" id="bagimsizlik">
-        <SectionHeading eyebrow="İki editörlü yapı" title="İkinci görüş, birinci raporun tekrarı değildir." description="İki ayrı değerlendirme aynı sonuca ulaşmak zorunda değildir; bağımsız gerekçe ayrı değer taşır." />
+        <SectionHeading eyebrow="İki editörlü yapı" title="Aynı esere iki bağımsız profesyonel pencere aç." description="İkinci görüş ilk raporu tekrar etmek için değil, esere gerçekten yeni bir bakış eklemek için oluşturulur." />
         <div className="editors-independence__grid">
-          {sectionMap.get("Birinci editör raporunu tamamla ve ikinci aşamayı başlat") ? <article><EditorIcon name="report" /><span>1. Editör</span><h3>Raporu tamamla; ikinci aşamayı ayrı bir görev olarak başlat.</h3><EditorialBody body={sectionMap.get("Birinci editör raporunu tamamla ve ikinci aşamayı başlat")!.body} /></article> : null}
-          {sectionMap.get("İkinci editör bağımsız değerlendirme yapar") ? <article className="editors-independence__night"><EditorIcon name="second" /><span>2. Editör</span><h3>İlk raporu görmeden kendi görüşünü oluştur.</h3><EditorialBody body={sectionMap.get("İkinci editör bağımsız değerlendirme yapar")!.body} /></article> : null}
+          {sectionMap.get("Birinci editör raporunu tamamla ve ikinci aşamayı başlat") ? <article><EditorIcon name="report" /><span>1. Editör</span><h3>İlk profesyonel değerlendirmeyi tamamla ve kayıt altına al.</h3><EditorialBody body={sectionMap.get("Birinci editör raporunu tamamla ve ikinci aşamayı başlat")!.body} /></article> : null}
+          {sectionMap.get("İkinci editör bağımsız değerlendirme yapar") ? <article className="editors-independence__night"><EditorIcon name="second" /><span>2. Editör</span><h3>İlk rapordan etkilenmeden esere kendi profesyonel bakışını ekle.</h3><EditorialBody body={sectionMap.get("İkinci editör bağımsız değerlendirme yapar")!.body} /></article> : null}
         </div>
       </section>
 
       <section className="editors-guardrails" id="gizlilik">
         <div className="how-container">
-          <SectionHeading eyebrow="Mesleki sınırlar" title="Eser erişimi, görev dışı kullanım hakkı değildir." description="Gizlilik, çıkar çatışması ve yetki sınırı rapor kalitesi kadar temel bir editör sorumluluğudur." />
+          <SectionHeading eyebrow="Profesyonel güven" title="Güçlü editörlük, iyi rapor kadar güvenilir çalışma disiplini de ister." description="Gizlilik, çıkar çatışması ve yetki sınırı yazarın profesyonel incelemeye güvenle başvurabilmesini sağlar." />
           <div className="editors-guardrails__grid">
-            {sectionMap.get("Gizliliği görev boyunca koru") ? <article><EditorIcon name="shield" /><span>Gizlilik</span><h3>Yayınlanmamış metni görev alanının dışına taşıma.</h3><EditorialBody body={sectionMap.get("Gizliliği görev boyunca koru")!.body} /></article> : null}
-            {sectionMap.get("Çıkar çatışmasını gizleme") ? <article><EditorIcon name="conflict" /><span>Bağımsızlık</span><h3>Tarafsızlığı etkileyen ilişkiyi erken bildir.</h3><EditorialBody body={sectionMap.get("Çıkar çatışmasını gizleme")!.body} /></article> : null}
-            {sectionMap.get("Editör görüşünün sınırını açık tut") ? <article><EditorIcon name="lock" /><span>Yetki sınırı</span><h3>Rapor; hukuk, yayınevi veya başarı kararı değildir.</h3><EditorialBody body={sectionMap.get("Editör görüşünün sınırını açık tut")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
+            {sectionMap.get("Gizliliği görev boyunca koru") ? <article><EditorIcon name="shield" /><span>Gizlilik</span><h3>Yazarın çalışma alanını profesyonel güvenle koru.</h3><EditorialBody body={sectionMap.get("Gizliliği görev boyunca koru")!.body} /></article> : null}
+            {sectionMap.get("Çıkar çatışmasını gizleme") ? <article><EditorIcon name="conflict" /><span>Bağımsızlık</span><h3>Şeffaflıkla raporunun güvenilirliğini koru.</h3><EditorialBody body={sectionMap.get("Çıkar çatışmasını gizleme")!.body} /></article> : null}
+            {sectionMap.get("Editör görüşünün sınırını açık tut") ? <article><EditorIcon name="lock" /><span>Profesyonel kapsam</span><h3>Raporun değerini, hangi soruya cevap verdiğini açık tutarak güçlendir.</h3><EditorialBody body={sectionMap.get("Editör görüşünün sınırını açık tut")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
           </div>
         </div>
       </section>
 
-      {sectionMap.get("Tamamlanan incelemelerini kayıt üzerinden takip et") ? <section className="editors-records how-container"><EditorIcon name="record" /><div><span>İnceleme geçmişi</span><h2>Tamamlanan raporlar süreç kaydının parçasıdır.</h2><EditorialBody body={sectionMap.get("Tamamlanan incelemelerini kayıt üzerinden takip et")!.body} /></div></section> : null}
+      {sectionMap.get("Tamamlanan incelemelerini kayıt üzerinden takip et") ? <section className="editors-records how-container"><EditorIcon name="record" /><div><span>Profesyonel çalışma geçmişi</span><h2>Tamamladığın incelemeleri kendi editör çalışma alanında kayıt üzerinden takip et.</h2><EditorialBody body={sectionMap.get("Tamamlanan incelemelerini kayıt üzerinden takip et")!.body} /></div></section> : null}
 
       {extras.length > 0 ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
-      {sectionMap.get("Editör olarak başla") ? <section className="editors-start how-container"><EditorIcon name="pool" /><div><span>Sıra sende</span><h2>Editör olarak başla</h2><EditorialBody body={sectionMap.get("Editör olarak başla")!.body} /><div className="editors-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=editor">Editör hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/editoryal-standartlar">Önce standartları oku</Link></div></div></section> : null}
+      {sectionMap.get("Editör olarak başla") ? <section className="editors-start how-container"><EditorIcon name="pool" /><div><span>Sıra sende</span><h2>Yeni eserlerin gelişiminde profesyonel yerini al.</h2><EditorialBody body={sectionMap.get("Editör olarak başla")!.body} /><div className="editors-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=editor">Editör hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/editoryal-standartlar">Önce standartları oku</Link></div></div></section> : null}
 
-      <aside className="how-related how-container" aria-label="İlkOku içinde devam et"><SectionHeading eyebrow="İlkOku içinde devam et" title="Editör rolünü bağlamıyla incele." /><div className="how-related__grid"><Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>Rapor ölçütleri, bağımsızlık ve kalite sınırlarını incele.</span></Link><Link href="/icerik-ve-yas-politikasi"><strong>İçerik ve Yaş</strong><span>Public yayın ve yaş sınıflandırması sınırlarını gör.</span></Link><Link href="/topluluk-kurallari"><strong>Topluluk Kuralları</strong><span>Yazar, okur ve editör etkileşimlerinin ortak sınırlarını oku.</span></Link><Link href="/editorler"><strong>Editörleri keşfet</strong><span>Herkese açık editör profillerini incele.</span></Link></div></aside>
+      <aside className="how-related how-container" aria-label="İlkOku içinde devam et"><SectionHeading eyebrow="İlkOku içinde devam et" title="Profesyonel editörlüğünü İlkOku ekosistemiyle birlikte keşfet." /><div className="how-related__grid"><Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>Rapor ölçütlerini ve iki bağımsız görüş modelini incele.</span></Link><Link href="/icerik-ve-yas-politikasi"><strong>İçerik ve Yaş</strong><span>Hedef okur ve içerik sınıflandırmasının değerlendirmedeki yerini gör.</span></Link><Link href="/topluluk-kurallari"><strong>Topluluk Kuralları</strong><span>Yazar ve okur geri bildiriminin profesyonel incelemeden nasıl ayrıldığını oku.</span></Link><Link href="/editorler"><strong>Editörleri keşfet</strong><span>Herkese açık editör profillerini ve uzmanlıklarını incele.</span></Link></div></aside>
 
       <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/yazarlar-icin">Yazarlar İçin</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/telif-bildirimi">Telif Bildirimi</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link></nav></div></footer>
     </main>

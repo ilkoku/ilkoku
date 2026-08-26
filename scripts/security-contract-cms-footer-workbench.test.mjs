@@ -88,7 +88,7 @@ test("homepage footer keeps its brand and separates platform from trust navigati
   lacks(contract, 'platform3Href: "#neden-ilkoku"', "obsolete homepage why anchor default");
 });
 
-test("all eight public trust pages render one canonical footer menu", () => {
+test("all eight public trust pages render one homepage-aligned canonical footer", () => {
   const routePages = [
     "src/app/nasil-calisir/page.tsx",
     "src/app/editoryal-standartlar/page.tsx",
@@ -120,14 +120,31 @@ test("all eight public trust pages render one canonical footer menu", () => {
     "/icerik-ve-yas-politikasi",
     "/topluluk-kurallari",
     "/telif-bildirimi",
+    "/yasal/kullanim-sartlari",
+    "/yasal/gizlilik-politikasi",
+    "/yasal/kvkk",
+    "/yasal/cerez-politikasi",
+    "/yasal/telif-hakki-politikasi",
   ]) {
     has(footer, `href: "${href}"`, `${href} canonical public trust footer link`);
   }
 
+  has(footer, "İlk cümle, ilk okurun,", "homepage footer slogan lead");
+  has(footer, "ilk adımın.", "homepage footer slogan emphasis");
+  has(footer, "Güven &amp; Standartlar", "trust column heading");
+  has(footer, "Hesap", "account column heading");
+  has(footer, "Destek", "support column heading");
+  has(footer, "public-trust-footer__legal", "legal bar markup");
+  has(footer, "getCurrentProfile", "session-aware footer account state");
+  has(footer, "getRoleNavigation", "role-aware workspace footer link");
+  lacks(footer, 'href="/rehber"', "redirect-only guide route must stay out of canonical trust footer");
+
   has(styles, ".how-page > .how-footer", "legacy embedded trust footer suppression");
   has(styles, ".public-trust-footer", "canonical trust footer scope");
-  has(styles, "linear-gradient(112deg, #17152f 0%, #1e1a3e 56%, #332568 100%)", "trust footer dark brand gradient");
-  has(styles, "grid-template-columns: repeat(3, minmax(8.5rem, 1fr))", "trust footer desktop link grid");
+  has(styles, "linear-gradient(112deg, #17152f 0%, #1d1a3c 55%, #322367 100%)", "homepage-aligned trust footer dark brand gradient");
+  has(styles, "grid-template-columns: minmax(13rem, 1.08fr) repeat(4, minmax(6.75rem, 0.72fr))", "homepage-aligned five-area desktop footer grid");
+  has(styles, ".public-trust-footer__bottom", "copyright and legal bottom bar");
+  has(styles, ".public-trust-footer__legal", "legal navigation styling");
   has(styles, "@media (max-width: 27rem)", "trust footer narrow mobile guard");
   lacks(styles, ".landing-footer", "trust footer must not override homepage footer classes");
   lacks(layout, "PublicTrustFooter", "root layout must not mount trust footer");

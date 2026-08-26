@@ -1,0 +1,6 @@
+.public-site-frame {
+  min-width: 0;
+  min-height: 100vh;
+  color-scheme: light;
+  background: linear-gradient(180deg, #fbfaff 0%, #ffffff 18rem);
+}

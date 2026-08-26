@@ -11,6 +11,7 @@ import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 import { PublicWorkStream } from "@/features/public-discovery/PublicWorkStream";
 
 const baseUrl = "https://ilkoku.com";
+const MAX_RETURN_PATH_LENGTH = 1500;
 
 type GenrePageProps = {
   params: Promise<{
@@ -31,7 +32,12 @@ function pageNumber(value: string | undefined) {
 }
 
 function safeReturnPath(value: string | undefined) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+  if (
+    !value ||
+    value.length > MAX_RETURN_PATH_LENGTH ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
     return "/turler";
   }
 
@@ -179,7 +185,7 @@ export default async function PublicGenrePage({
             eserleri kalıcı kitap bağlantılarıyla keşfedin.
           </p>
           <p>
-            <Link href={returnTo}>← Geldiğin tür keşfine dön</Link>
+            <Link href={returnTo}>← Geldiğin sayfaya dön</Link>
           </p>
         </header>
 

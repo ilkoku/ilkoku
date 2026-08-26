@@ -7,20 +7,45 @@ import {
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 
 const baseUrl = "https://ilkoku.com";
+const title = "Eser Türleri | İlkOku";
+const description =
+  "İlkOku’da herkese açık yayımlanan Türkçe eserleri edebî türlerine göre keşfedin.";
+
+type PublicGenresPageProps = {
+  searchParams: Promise<{
+    arama?: string;
+  }>;
+};
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Eser Türleri | İlkOku",
-  description:
-    "İlkOku’da herkese açık yayımlanan Türkçe eserleri edebî türlerine göre keşfedin.",
-  alternates: {
-    canonical: "/turler",
-  },
-};
+export async function generateMetadata({
+  searchParams,
+}: PublicGenresPageProps): Promise<Metadata> {
+  const query = await searchParams;
 
-export default async function PublicGenresPage() {
-  const genres = await getPublicGenres();
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: "/turler",
+    },
+    robots: {
+      index: !query.arama,
+      follow: true,
+    },
+  };
+}
+
+export default async function PublicGenresPage({
+  searchParams,
+}: PublicGenresPageProps) {
+  const query = await searchParams;
+  const search = query.arama?.trim().slice(0, 120) || undefined;
+  const genres = await getPublicGenres(search);
+  const returnPath = search
+    ? `/turler?arama=${encodeURIComponent(search)}`
+    : "/turler";
   const schema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -74,21 +99,43 @@ export default async function PublicGenresPage() {
             <span>{genres.length} tür</span>
           </div>
 
+          <form
+            action="/turler"
+            className="public-hub__filters public-hub__filters--single"
+            method="get"
+          >
+            <label>
+              <span>Tür ara</span>
+              <input
+                defaultValue={search}
+                maxLength={120}
+                name="arama"
+                placeholder="Roman, polisiye, fantastik..."
+                type="search"
+              />
+            </label>
+            <button type="submit">Türleri getir</button>
+            {search ? (
+              <Link href="/turler">Aramayı temizle</Link>
+            ) : null}
+          </form>
+
           {genres.length > 0 ? (
             <div className="public-hub__grid">
               {genres.map((genre) => (
                 <Link
                   className="public-hub-card"
-                  href={`/turler/${genre.slug}`}
+                  href={`/turler/${genre.slug}?from=${encodeURIComponent(returnPath)}`}
                   key={genre.slug}
                 >
                   <div className="public-hub-card__meta">
                     <span>Eser türü</span>
+                    <span>{genre.count} eser</span>
                   </div>
                   <h2>{genre.label}</h2>
                   <p className="public-hub-card__description">
                     {genre.label} türünde herkese açık
-                    yayımlanan eserleri inceleyin.
+                    yayımlanan {genre.count} eseri inceleyin.
                   </p>
                   <span className="public-hub-card__footer">
                     <span />
@@ -100,16 +147,22 @@ export default async function PublicGenresPage() {
           ) : (
             <div className="public-hub__empty">
               <strong>
-                Henüz public eser türü oluşmadı.
+                {search
+                  ? "Bu aramada yayımlanmış eser türü bulunamadı."
+                  : "Henüz public eser türü oluşmadı."}
               </strong>
               <p>
-                İlk herkese açık eser yayımlandığında tür
-                sayfası otomatik oluşacak ve sitemap’e
-                eklenecek.
+                {search
+                  ? "Aramayı temizleyerek gerçek yayınlardan oluşan tüm tür dizinine dönebilirsiniz."
+                  : "İlk herkese açık eser yayımlandığında tür sayfası otomatik oluşacak ve sitemap’e eklenecek."}
               </p>
-              <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
-                İlkOku’da eser yolculuğunu öğren
-              </Link>
+              {search ? (
+                <Link href="/turler">Tüm türleri göster</Link>
+              ) : (
+                <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
+                  İlkOku’da eser yolculuğunu öğren
+                </Link>
+              )}
             </div>
           )}
         </section>

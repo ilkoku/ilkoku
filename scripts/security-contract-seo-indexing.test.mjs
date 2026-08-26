@@ -27,18 +27,57 @@ test("global public routes have file-based social image fallbacks", () => {
   assertContains(twitter, 'from "./opengraph-image"', "Twitter reuses canonical social artwork");
 });
 
-test("sitemap stays Turkish-only and includes only published indexable CMS content", () => {
+test("sitemap keeps all public trust routes synchronized with CMS indexability and update time", () => {
   const sitemap = source("src/app/sitemap.ts");
 
-  assertContains(sitemap, "${baseUrl}/nasil-calisir", "static how-it-works sitemap route");
+  for (const route of [
+    "/nasil-calisir",
+    "/editoryal-standartlar",
+    "/icerik-ve-yas-politikasi",
+    "/topluluk-kurallari",
+    "/telif-bildirimi",
+    "/yazarlar-icin",
+    "/editorler-icin",
+    "/yayinevleri-icin",
+  ]) {
+    assertContains(sitemap, route, `${route} sitemap route`);
+  }
+
   assertNotContains(sitemap, "contentKey LIKE 'guide:%'", "retired guide sitemap inventory");
   assertNotContains(sitemap, "foundationalGuides", "retired foundational guide sitemap source");
   assertContains(sitemap, "contentKey LIKE 'page:tr:%'", "TR generic page sitemap coverage");
+  assertContains(sitemap, "SELECT slug, noIndex, updatedAt", "CMS sitemap reads indexability and freshness together");
+  assertContains(sitemap, "if (row?.noIndex)", "static public CMS noindex exclusion");
+  assertContains(sitemap, "lastModified: row?.updatedAt ?? new Date(page.updatedAt)", "CMS update time overrides bundled public freshness");
+  assertContains(sitemap, ".filter((page) => !page.noIndex && !staticCmsPageSlugs.has(page.slug))", "dynamic CMS noindex exclusion");
   assertContains(sitemap, "status = 'published'", "published-only CMS sitemap boundary");
-  assertContains(sitemap, "noIndex = false", "noindex exclusion");
   assertNotContains(sitemap, '`${baseUrl}/en`', "no EN static sitemap URL");
   assertNotContains(sitemap, "legal:en:%", "no EN legal sitemap inventory");
   assertNotContains(sitemap, "page:en:%", "no EN generic sitemap inventory");
+});
+
+test("new public discovery and help surfaces expose canonical social metadata", () => {
+  for (const [path, canonical] of [
+    ["src/app/yardim/page.tsx", "/yardim"],
+    ["src/app/editorler/page.tsx", "/editorler"],
+    ["src/app/yazarlar/page.tsx", "/yazarlar"],
+    ["src/app/turler/page.tsx", "/turler"],
+    ["src/app/eserler/yeni/page.tsx", "/eserler/yeni"],
+    ["src/app/eserler/guncellenen/page.tsx", "/eserler/guncellenen"],
+  ]) {
+    const page = source(path);
+    assertContains(page, `canonical: "${canonical}"`, `${canonical} canonical`);
+    assertContains(page, "openGraph:", `${canonical} Open Graph metadata`);
+    assertContains(page, "twitter:", `${canonical} Twitter metadata`);
+    assertContains(page, 'const socialImage = "/opengraph-image"', `${canonical} social image fallback`);
+  }
+
+  const help = source("src/app/yardim/page.tsx");
+  const editors = source("src/app/editorler/page.tsx");
+  assertContains(help, '"@type": "FAQPage"', "help FAQ structured data");
+  assertContains(help, '"@type": "BreadcrumbList"', "help breadcrumb structured data");
+  assertContains(editors, '"@type": "CollectionPage"', "editor directory structured data");
+  assertContains(editors, '"@type": "BreadcrumbList"', "editor directory breadcrumb structured data");
 });
 
 test("SEO center and audit API stay Turkish-only", () => {

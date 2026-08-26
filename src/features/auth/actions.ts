@@ -29,6 +29,7 @@ export type AuthActionState = {
   status: "idle" | "error" | "success";
 };
 
+const MAX_NEXT_PATH_LENGTH = 1500;
 const loginRoles: UserRole[] = ["reader", "writer", "editor_pending", "editor", "publisher", "admin"];
 const registrationRoles: RegistrationRole[] = ["reader", "writer", "editor", "publisher"];
 const standardRoles: RegistrationRole[] = ["reader", "writer"];
@@ -53,6 +54,14 @@ function getText(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+function safeInternalPath(value: string) {
+  return value.length <= MAX_NEXT_PATH_LENGTH &&
+    value.startsWith("/") &&
+    !value.startsWith("//")
+    ? value
+    : "";
+}
+
 function validPassword(password: string) {
   return password.length >= 8 && /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(password) && /\d/.test(password);
 }
@@ -60,11 +69,7 @@ function validPassword(password: string) {
 export async function loginAction(_state: AuthActionState, formData: FormData): Promise<AuthActionState> {
   const email = getText(formData, "email");
   const password = getText(formData, "password");
-  const nextPath = getText(formData, "next");
-  const safeNextPath =
-    nextPath.startsWith("/") && !nextPath.startsWith("//")
-      ? nextPath
-      : "";
+  const safeNextPath = safeInternalPath(getText(formData, "next"));
 
   if (!email || !password) return error(validationContent.requiredCredentials);
 
@@ -96,6 +101,7 @@ export async function registerAction(_state: AuthActionState, formData: FormData
   const confirmation = getText(formData, "password-confirmation");
   const role = getText(formData, "role") as RegistrationRole;
   const editorInviteToken = getText(formData, "editor-invite-token");
+  const safeNextPath = safeInternalPath(getText(formData, "next"));
   const termsAccepted = formData.get("terms") === "accepted";
 
   if (fullName.length < 2) return error(validationContent.fullNameRequired);
@@ -129,7 +135,7 @@ export async function registerAction(_state: AuthActionState, formData: FormData
     if (result.requestedRole) {
       redirect("/hesabim?sekme=rol-basvurusu");
     }
-    redirect(roleDestinations[role]);
+    redirect(safeNextPath || roleDestinations[role]);
   } catch (registrationError) {
     unstable_rethrow(registrationError);
     if (registrationError instanceof Error && registrationError.message === "EMAIL_EXISTS") {

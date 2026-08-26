@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
 
 const baseUrl = "https://ilkoku.com";
+const MAX_RETURN_PATH_LENGTH = 1500;
 
 type BookShowcasePageProps = {
   params: Promise<{ slug: string }>;
@@ -16,7 +17,12 @@ type BookShowcasePageProps = {
 };
 
 function getSafeReturnPath(value: string | undefined) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+  if (
+    !value ||
+    value.length > MAX_RETURN_PATH_LENGTH ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
     return "/eserler";
   }
 
@@ -40,8 +46,14 @@ function absoluteUrl(value: string | null) {
   }
 }
 
-export async function generateMetadata({ params }: Pick<BookShowcasePageProps, "params">): Promise<Metadata> {
-  const { slug } = await params;
+export async function generateMetadata({
+  params,
+  searchParams,
+}: BookShowcasePageProps): Promise<Metadata> {
+  const [{ slug }, query] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   if (isBlockedPublicWorkSlug(slug)) {
     return {
@@ -69,6 +81,10 @@ export async function generateMetadata({ params }: Pick<BookShowcasePageProps, "
     description,
     alternates: {
       canonical,
+    },
+    robots: {
+      index: !query.from,
+      follow: true,
     },
     openGraph: {
       type: "article",

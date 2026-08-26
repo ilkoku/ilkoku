@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 
 import { CommunityRulesExperience } from "@/components/content/CommunityRulesExperience";
+import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { communityRulesPageContent } from "@/content/community-rules";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
@@ -98,6 +99,7 @@ export default async function CommunityRulesPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
       <CommunityRulesExperience body={page.body} summary={page.summary} title={page.title} updatedAt={page.updatedAt} />
+      <PublicTrustFooter />
     </>
   );
 }

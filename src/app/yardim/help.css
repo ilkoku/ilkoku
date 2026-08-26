@@ -1,5 +1,6 @@
 .help-page {
   min-height: 100vh;
+  padding-bottom: clamp(5rem, 9vw, 8rem);
   color-scheme: light;
   background:
     radial-gradient(circle at 12% 0%, rgba(229, 221, 255, 0.62), transparent 28rem),
@@ -205,7 +206,7 @@
 }
 
 .help-contact {
-  margin-block: 1rem clamp(5rem, 9vw, 8rem);
+  margin-block: 1rem 0;
 }
 
 .help-contact a,

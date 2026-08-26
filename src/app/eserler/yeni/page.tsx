@@ -4,7 +4,7 @@ import { PublicWorkFeedPage } from "@/features/public-discovery/PublicWorkFeedPa
 
 const title = "Yeni Yayımlanan Eserler | İlkOku";
 const description =
-  "İlkOku’da son yayımlanan herkese açık Türkçe eserleri kalıcı kitap bağlantılarıyla keşfedin.";
+  "İlkOku’da son yayımlanan keşfe açık Türkçe eser vitrinlerini kalıcı kitap bağlantılarıyla keşfedin.";
 
 type NewWorksSearchParams = {
   arama?: string;
@@ -50,7 +50,7 @@ export default function NewPublicWorksPage({
     <PublicWorkFeedPage
       basePath="/eserler/yeni"
       description={description}
-      emptyText="Bu ölçütlerde yeni yayımlanmış herkese açık eser bulunamadı."
+      emptyText="Bu ölçütlerde yeni yayımlanmış keşfe açık eser bulunamadı."
       eyebrow="YENİ YAYINLAR"
       heading="Yeni yayımlanan eserler"
       searchParams={searchParams}

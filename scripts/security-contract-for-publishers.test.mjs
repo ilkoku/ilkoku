@@ -32,7 +32,7 @@ test("publisher public page stays CMS-compatible, discovery-led and truthful abo
   contains(content, "Pasaport bilgisi ile özel tam metin erişimi ayrı yetkilerdir", "passport-content permission boundary");
   contains(content, "aktif olmadığı ortamda yayınevi kullanıcılarına kullanılabilir işlem gibi sunulmaz", "planned editor-request truth boundary");
   contains(content, "Kurumsal paylaşım araçları kademeli olarak etkinleştirilen çalışma katmanıdır", "planned sharing truth boundary");
-  contains(content, "yayın ve ticari karar kurumunuzun profesyonel sürecinde şekillenir", "publisher decision boundary");
+  contains(content, "İlkOku keşif alanını büyütür; yayınevinin editoryal ve ticari kararını devralmaz", "publisher decision boundary");
 
   contains(page, 'getPublishedCmsPublicPageState("yayinevleri-icin")', "CMS-owned publisher page");
   contains(page, "ForPublishersExperience", "branded publisher experience");

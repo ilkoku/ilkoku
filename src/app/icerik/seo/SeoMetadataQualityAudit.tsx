@@ -35,14 +35,14 @@ function StructuredDataAudit() {
         <span className={styles.status} data-state="ok">Hazır</span>
       </div>
       <div className={styles.grid}>
-        <Card state="ok" label="WebSite" value="Site kimliği" detail="İlkOku adı, canonical site URL'si, TR dili ve marka açıklaması root server HTML içinde JSON-LD olarak yayınlanır." />
+        <Card state="ok" label="WebSite" value="Site kimliği" detail="İlkOku adı, canonical site URL adresi, TR dili ve marka açıklaması root server HTML içinde JSON-LD olarak yayınlanır." />
         <Card state="ok" label="Book" value="Eser detayları" detail="Public eserlerde başlık, yazar, URL, dil, tür, görsel, yayın/güncelleme tarihi ve publisher sinyalleri Book JSON-LD ile verilir." />
         <Card state="ok" label="CollectionPage" value="Keşif yüzeyleri" detail="Eser, yazar, tür ve editör keşif yüzeyleri gerçek public koleksiyonlarını CollectionPage/ItemList ile tanımlar." />
         <Card state="ok" label="ProfilePage" value="Yazar vitrini" detail="Public yazar detayları Person ana varlığı ve keşfe açık eser örnekleriyle ProfilePage olarak yayınlanır." />
         <Card state="ok" label="FAQPage" value="Yardım Merkezi" detail="Yardım Merkezi yalnız ekranda gerçekten gösterilen soru-cevap kayıtlarını FAQPage yapısal verisine taşır." />
         <Card state="ok" label="BreadcrumbList" value="Gezinme zinciri" detail="Public yardım, editör, eser, yazar ve tür detaylarında canonical gezinme zinciri BreadcrumbList ile desteklenir." />
       </div>
-      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>Schema çıktıları public server HTML içindedir; veri olmayan rich-result alanları doldurulmaz ve query/geri dönüş parametreleri canonical schema URL'sine taşınmaz.</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/eserler" target="_blank">Keşfe açık eserler ↗</Link></div></div>
+      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>Schema çıktıları public server HTML içindedir; veri olmayan rich-result alanları doldurulmaz ve query/geri dönüş parametreleri canonical schema URL&apos;sine taşınmaz.</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/eserler" target="_blank">Keşfe açık eserler ↗</Link></div></div>
     </section>
   );
 }

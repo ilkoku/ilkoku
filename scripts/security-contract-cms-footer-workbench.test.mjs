@@ -133,3 +133,23 @@ test("all eight public trust pages render one canonical footer menu", () => {
   lacks(layout, "PublicTrustFooter", "root layout must not mount trust footer");
   lacks(hydrator, "public-trust-footer", "homepage CMS hydrator must not mutate trust page footer");
 });
+
+test("remaining public trust pages keep a consistent closing and structured-data baseline", () => {
+  const experiences = [
+    "src/components/content/EditorialStandardsExperience.tsx",
+    "src/components/content/ContentAgePolicyExperience.tsx",
+    "src/components/content/CommunityRulesExperience.tsx",
+    "src/components/content/CopyrightNoticeExperience.tsx",
+    "src/components/content/ForEditorsExperience.tsx",
+  ];
+
+  for (const path of experiences) {
+    const experience = source(path);
+    has(experience, "how-related", `${path} related-navigation closing`);
+  }
+
+  const contentAgePage = source("src/app/icerik-ve-yas-politikasi/page.tsx");
+  has(contentAgePage, '"@type": "BreadcrumbList"', "content-age breadcrumb schema");
+  has(contentAgePage, 'name: "Ana Sayfa"', "content-age breadcrumb homepage item");
+  has(contentAgePage, "item: absoluteUrl", "content-age breadcrumb canonical item");
+});

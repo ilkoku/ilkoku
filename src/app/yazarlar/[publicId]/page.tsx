@@ -76,7 +76,7 @@ export async function generateMetadata({
   const name = authorName(author);
   const canonical = `/yazarlar/${author.publicId}`;
   const metaDescription =
-    `${name} tarafından İlkOku’da herkese açık yayımlanan ${author.works.length} Türkçe eseri keşfedin.`;
+    `${name} tarafından İlkOku’da keşfe açık yayımlanan ${author.works.length} Türkçe eseri keşfedin.`;
 
   return {
     title: `${name} — Eserleri | İlkOku`,
@@ -185,10 +185,9 @@ export default async function PublicAuthorPage({
           </p>
           <h1>{name}</h1>
           <p>
-            Bu vitrinde yalnız yazarın herkese açık
-            yayımladığı Türkçe eserler bulunur. Taslaklar,
-            özel çalışmalar ve kişisel hesap bilgileri
-            gösterilmez.
+            Bu vitrinde yalnız yazarın keşfe açtığı Türkçe
+            eserler bulunur. Taslaklar, özel çalışmalar ve
+            kişisel hesap bilgileri gösterilmez.
           </p>
           <p>
             <Link href={returnTo}>← Geldiğin sayfaya dön</Link>
@@ -201,7 +200,7 @@ export default async function PublicAuthorPage({
         >
           <div className="public-hub__section-heading">
             <h2 id="yazar-eserleri">
-              Yayımlanan eserler
+              Keşfe açık eserler
             </h2>
             <span>{author.works.length} eser</span>
           </div>

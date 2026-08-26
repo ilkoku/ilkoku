@@ -81,73 +81,73 @@ export function CommunityRulesExperience({ body, summary, title, updatedAt }: { 
       <section className="how-hero community-hero">
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
-            <span className="how-eyebrow">Aynı eserin etrafında ortak sınır</span>
+            <span className="how-eyebrow">Edebiyat etrafında birlikte büyüyen topluluk</span>
             <h1>{title.split(/\s+/).map((word) => <span key={word}>{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions">
-              <Link className="how-button how-button--primary" href="#saygili-iletisim">Kuralları incele <span aria-hidden="true">→</span></Link>
-              <Link className="how-button how-button--secondary" href="/iletisim">Sorun bildir</Link>
+              <Link className="how-button how-button--primary" href="/eserler">Yeni eserleri keşfet <span aria-hidden="true">→</span></Link>
+              <Link className="how-button how-button--secondary" href="#saygili-iletisim">Topluluk ilkelerini gör</Link>
             </div>
-            <div className="how-hero__proof"><span><strong>4</strong> farklı rol</span><span><strong>1</strong> ortak standart</span><span><strong>0</strong> otomatik hüküm</span></div>
+            <div className="how-hero__proof"><span><strong>4</strong> rol aynı toplulukta</span><span><strong>Yapıcı</strong> geri bildirim</span><span><strong>Gerçek</strong> keşif sinyalleri</span></div>
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
           <figure className="how-hero__visual community-hero__visual">
             <Image src={visual.src} alt={visual.alt} fill priority sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
-            <figcaption><span><CommunityIcon name="people" /> Birbirini dinle</span><span><CommunityIcon name="comment" /> Metne odaklan</span><span><CommunityIcon name="shield" /> Sınırı koru</span></figcaption>
+            <figcaption><span><CommunityIcon name="people" /> Birbirini dinle</span><span><CommunityIcon name="comment" /> Eseri geliştir</span><span><CommunityIcon name="spark" /> Yeni sesleri keşfet</span></figcaption>
           </figure>
         </div>
       </section>
 
       <nav className="how-quick-nav how-container" aria-label="Sayfa bölümleri">
-        <a href="#saygili-iletisim"><span>01</span>İletişim</a>
-        <a href="#guvenlik-siniri"><span>02</span>Güvenlik</a>
-        <a href="#platform-butunlugu"><span>03</span>Bütünlük</a>
-        <a href="#bildirim-inceleme"><span>04</span>Bildirim</a>
+        <a href="#saygili-iletisim"><span>01</span>Geri bildirim</a>
+        <a href="#guvenlik-siniri"><span>02</span>Güven</a>
+        <a href="#platform-butunlugu"><span>03</span>Keşif</a>
+        <a href="#bildirim-inceleme"><span>04</span>Katkı</a>
       </nav>
 
-      {parsed.intro ? <section className="how-truth how-container" aria-label="Topluluk standardının amacı"><span><CommunityIcon name="people" /></span><div><strong>Fikir ayrılığı serbesttir; kişiyi hedef almak ortak çalışma alanını bozar.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
+      {parsed.intro ? <section className="how-truth how-container" aria-label="Topluluk standardının amacı"><span><CommunityIcon name="people" /></span><div><strong>İyi bir topluluk, yeni bir eserin cesaretle paylaşılmasını ve daha iyi geri bildirimle gelişmesini sağlar.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
 
       <section className="community-principles how-container" id="saygili-iletisim">
-        <SectionHeading eyebrow="Birlikte üretmenin zemini" title="Eleştiri kişiye değil, metne ve davranışa yönelir." description="Okur yorumu, editör raporu, yazar cevabı ve yayınevi ilgisi farklı amaçlar taşır; hepsi aynı saygı sınırında buluşur." />
+        <SectionHeading eyebrow="Birlikte üretmenin değeri" title="İyi geri bildirim yeni bir eserin yolunu açabilir." description="Okur yorumu, editör raporu, yazar cevabı ve yayınevi ilgisi farklı bakışlar getirir; amaç eseri ve keşfi büyütmektir." />
         <div className="community-principles__grid">
-          {sectionMap.get("Saygılı iletişim") ? <article><CommunityIcon name="people" /><span>Saygı</span><h3>Fikir ayrılığı kişisel saldırıya dönüşmez.</h3><EditorialBody body={sectionMap.get("Saygılı iletişim")!.body} /></article> : null}
-          {sectionMap.get("Yapıcı geri bildirim ve yorum") ? <article><CommunityIcon name="comment" /><span>Geri bildirim</span><h3>Somut ol, rolünü ve görüşünün sınırını açık tut.</h3><EditorialBody body={sectionMap.get("Yapıcı geri bildirim ve yorum")!.body} /></article> : null}
+          {sectionMap.get("Saygılı iletişim") ? <article><CommunityIcon name="people" /><span>Saygı</span><h3>Fikir ayrılığı, yeni bakış açılarına alan açar.</h3><EditorialBody body={sectionMap.get("Saygılı iletişim")!.body} /></article> : null}
+          {sectionMap.get("Yapıcı geri bildirim ve yorum") ? <article><CommunityIcon name="comment" /><span>Geri bildirim</span><h3>Metne odaklanan somut yorum, yazarın gelişimine gerçek katkı verir.</h3><EditorialBody body={sectionMap.get("Yapıcı geri bildirim ve yorum")!.body} /></article> : null}
         </div>
       </section>
 
       <section className="community-safety" id="guvenlik-siniri">
         <div className="how-container">
-          <SectionHeading eyebrow="Kullanıcı güvenliği" title="Taciz ve mahremiyet ihlali tartışmanın parçası değildir." description="Edebî bağlam ile kullanıcıların birbirine yönelttiği davranış ayrılır; açık platform yüzeylerinde gerçek kişi güvenliği önceliklidir." />
+          <SectionHeading eyebrow="Üretmek için güvenli alan" title="Güvenli topluluk, daha cesur üretim ve keşif demektir." description="Yazar paylaşırken, okur yorum yaparken, editör değerlendirirken ve yayınevi keşfederken ortak güven zemini korunur." />
           <div className="community-safety__grid">
-            {sectionMap.get("Taciz, nefret ve hedef gösterme") ? <article className="community-safety__night"><CommunityIcon name="shield" /><span>Koruma sınırı</span><h3>Taciz, ciddi tehdit, nefret ve hedef gösterme kabul edilmez.</h3><EditorialBody body={sectionMap.get("Taciz, nefret ve hedef gösterme")!.body} /></article> : null}
-            {sectionMap.get("Mahremiyet ve kişisel bilgi") ? <article><CommunityIcon name="privacy" /><span>En az veri</span><h3>Bir anlaşmazlık, başkasının özel bilgisini yayımlama hakkı vermez.</h3><EditorialBody body={sectionMap.get("Mahremiyet ve kişisel bilgi")!.body} /></article> : null}
+            {sectionMap.get("Taciz, nefret ve hedef gösterme") ? <article className="community-safety__night"><CommunityIcon name="shield" /><span>Güven</span><h3>İnsanları değil fikirleri ve metni tartış.</h3><EditorialBody body={sectionMap.get("Taciz, nefret ve hedef gösterme")!.body} /></article> : null}
+            {sectionMap.get("Mahremiyet ve kişisel bilgi") ? <article><CommunityIcon name="privacy" /><span>Mahremiyet</span><h3>Yaratıcı paylaşımın yanında kişisel alan da korunur.</h3><EditorialBody body={sectionMap.get("Mahremiyet ve kişisel bilgi")!.body} /></article> : null}
           </div>
         </div>
       </section>
 
       <section className="community-integrity how-container" id="platform-butunlugu">
-        <SectionHeading eyebrow="Keşif ve güven sinyalleri" title="Görünürlük yapay biçimde üretilmez." description="Topluluk sinyalleri ancak gerçek kullanıcı davranışını yansıttığında eser ve yazar keşfine anlamlı katkı sağlar." />
+        <SectionHeading eyebrow="Keşfin değeri gerçek etkileşimden gelir" title="Gerçek etkileşim, gerçek keşif üretir." description="Okur ilgisi, yorumlar ve diğer topluluk sinyalleri doğal olduğunda yeni eser ve yazarların keşfine anlamlı katkı sağlar." />
         <div className="community-integrity__grid">
-          {sectionMap.get("Spam, sahte etkileşim ve manipülasyon") ? <article><CommunityIcon name="spark" /><h3>Spam ve sahte etkileşim</h3><EditorialBody body={sectionMap.get("Spam, sahte etkileşim ve manipülasyon")!.body} /></article> : null}
-          {sectionMap.get("Eser, telif ve intihal sınırı") ? <article><CommunityIcon name="shield" /><h3>Eser ve telif</h3><EditorialBody body={sectionMap.get("Eser, telif ve intihal sınırı")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
-          {sectionMap.get("Yaş ve hassas içerik sınırı") ? <article><CommunityIcon name="flag" /><h3>Hassas içerik</h3><EditorialBody body={sectionMap.get("Yaş ve hassas içerik sınırı")!.body} /><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş Politikası →</Link></article> : null}
-          {sectionMap.get("Rol ve çıkar çatışması sınırı") ? <article><CommunityIcon name="people" /><h3>Rol ve temsil</h3><EditorialBody body={sectionMap.get("Rol ve çıkar çatışması sınırı")!.body} /></article> : null}
+          {sectionMap.get("Spam, sahte etkileşim ve manipülasyon") ? <article><CommunityIcon name="spark" /><h3>Keşif sinyalleri gerçek kalsın</h3><EditorialBody body={sectionMap.get("Spam, sahte etkileşim ve manipülasyon")!.body} /></article> : null}
+          {sectionMap.get("Eser, telif ve intihal sınırı") ? <article><CommunityIcon name="shield" /><h3>Özgün emeği koru</h3><EditorialBody body={sectionMap.get("Eser, telif ve intihal sınırı")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
+          {sectionMap.get("Yaş ve hassas içerik sınırı") ? <article><CommunityIcon name="flag" /><h3>Okura doğru bağlamı ver</h3><EditorialBody body={sectionMap.get("Yaş ve hassas içerik sınırı")!.body} /><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş Politikası →</Link></article> : null}
+          {sectionMap.get("Rol ve çıkar çatışması sınırı") ? <article><CommunityIcon name="people" /><h3>Rolünü açık tut</h3><EditorialBody body={sectionMap.get("Rol ve çıkar çatışması sınırı")!.body} /></article> : null}
         </div>
       </section>
 
-      {sectionMap.get("Bildirim, inceleme ve yaptırım") ? <section className="community-report how-container" id="bildirim-inceleme"><CommunityIcon name="flag" /><div><span>Somut bağlantı · gerekli en az bilgi</span><h2>Bildirim otomatik hüküm değildir; kayıtlı bir inceleme başlangıcıdır.</h2><EditorialBody body={sectionMap.get("Bildirim, inceleme ve yaptırım")!.body} /><Link className="how-button how-button--primary" href="/iletisim">İlkOku ile iletişime geç <span aria-hidden="true">→</span></Link></div></section> : null}
+      {sectionMap.get("Bildirim, inceleme ve yaptırım") ? <section className="community-report how-container" id="bildirim-inceleme"><CommunityIcon name="flag" /><div><span>Topluluğun kalitesine katkı</span><h2>Bir sorun gördüğünde somut bilgiyle topluluğun kalitesine katkı ver.</h2><EditorialBody body={sectionMap.get("Bildirim, inceleme ve yaptırım")!.body} /><Link className="how-button how-button--primary" href="/iletisim">Bildirim gönder <span aria-hidden="true">→</span></Link></div></section> : null}
 
-      {sectionMap.get("İtiraz ve bağlam") ? <section className="community-appeal how-container"><div><CommunityIcon name="comment" /><strong>Bağlam önemlidir.</strong></div><article><span>İtiraz yolu</span><h2>Aynı olayı çoğaltmak yerine ilgili kayıtla bağlantılı bilgi ver.</h2><EditorialBody body={sectionMap.get("İtiraz ve bağlam")!.body} /></article></section> : null}
+      {sectionMap.get("İtiraz ve bağlam") ? <section className="community-appeal how-container"><div><CommunityIcon name="comment" /><strong>Bağlam adil değerlendirmeyi güçlendirir.</strong></div><article><span>Ek bilgi</span><h2>İlgili kayda yeni bağlam ekleyerek değerlendirmeyi daha sağlıklı hâle getir.</h2><EditorialBody body={sectionMap.get("İtiraz ve bağlam")!.body} /></article></section> : null}
 
       {extras.length ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
       <aside className="how-related how-container" aria-label="İlkOku içinde devam et">
-        <SectionHeading eyebrow="İlkOku içinde devam et" title="Kuralların temas ettiği diğer açık sınırları incele." />
+        <SectionHeading eyebrow="İlkOku içinde devam et" title="Topluluktan keşfe devam et." />
         <div className="how-related__grid">
-          <Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>Editörün bağımsızlık, gizlilik ve değerlendirme sınırını öğren.</span></Link>
-          <Link href="/icerik-ve-yas-politikasi"><strong>İçerik ve Yaş Politikası</strong><span>Eser sınıflandırması ile açık topluluk alanı arasındaki farkı gör.</span></Link>
-          <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Yazar, okur, editör ve yayınevinin platformdaki yerini incele.</span></Link>
-          <Link href="/iletisim"><strong>İletişim</strong><span>Somut topluluk sorununu gerekli en az bilgiyle ilet.</span></Link>
+          <Link href="/eserler"><strong>Keşfe açık eserler</strong><span>Henüz herkesin bilmediği yeni hikâyeleri keşfet.</span></Link>
+          <Link href="/yazarlar"><strong>Yazarları keşfet</strong><span>Yeni yazarların eser yolculuklarını ve yayımlanmış eserlerini gör.</span></Link>
+          <Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>Profesyonel geri bildirimin nasıl değer ürettiğini incele.</span></Link>
+          <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Yazar, okur, editör ve yayınevini aynı eser etrafında buluşturan akışı gör.</span></Link>
         </div>
       </aside>
 

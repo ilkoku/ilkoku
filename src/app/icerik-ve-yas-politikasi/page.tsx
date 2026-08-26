@@ -49,16 +49,26 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ContentAgePolicyPage() {
   const page = await resolvePage();
   const absoluteUrl = new URL(page.canonical, baseUrl).toString();
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: page.title,
-    description: page.seoDescription,
-    inLanguage: "tr-TR",
-    url: absoluteUrl,
-    dateModified: page.updatedAt.toISOString(),
-    primaryImageOfPage: { "@type": "ImageObject", url: socialImage },
-    isPartOf: { "@type": "WebSite", name: "İlkOku", url: baseUrl },
-  };
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: page.title,
+      description: page.seoDescription,
+      inLanguage: "tr-TR",
+      url: absoluteUrl,
+      dateModified: page.updatedAt.toISOString(),
+      primaryImageOfPage: { "@type": "ImageObject", url: socialImage },
+      isPartOf: { "@type": "WebSite", name: "İlkOku", url: baseUrl },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: `${baseUrl}/` },
+        { "@type": "ListItem", position: 2, name: page.title, item: absoluteUrl },
+      ],
+    },
+  ];
   return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} /><ContentAgePolicyExperience title={page.title} summary={page.summary} body={page.body} updatedAt={page.updatedAt} /><PublicTrustFooter /></>;
 }

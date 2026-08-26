@@ -36,8 +36,10 @@ test("canonical public header exposes only working public destinations", () => {
   const header = read(headerPath);
 
   for (const [href, label] of expectedNavigation) {
-    assert.match(header, new RegExp(`href: \\"${href.replaceAll("/", "\\/")}\\"`));
-    assert.match(header, new RegExp(`label: \\"${label}\\"`));
+    assert.ok(
+      header.includes(`{ href: "${href}", label: "${label}" }`),
+      `${label} must point to ${href}`,
+    );
   }
 
   assert.doesNotMatch(header, /href:\s*"\/rehber"/);

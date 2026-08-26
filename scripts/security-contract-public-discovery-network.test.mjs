@@ -34,7 +34,7 @@ function notContains(text, fragment, label) {
   );
 }
 
-test("how-it-works trust page stays truthful without CMS rows and retires guides", () => {
+test("how-it-works trust page stays discovery-led, CMS-compatible and truthful", () => {
   const content = source("src/content/how-it-works.ts");
   const page = source("src/app/nasil-calisir/page.tsx");
   const experience = source("src/components/content/HowItWorksExperience.tsx");
@@ -47,17 +47,21 @@ test("how-it-works trust page stays truthful without CMS rows and retires guides
   contains(content, "Eser İlkOku'da nasıl ilerler?", "work journey");
   contains(content, "Kim neyi görebilir?", "visibility matrix");
   contains(content, "Eser Pasaportu; eserin İlkOku'da", "passport evidence boundary");
-  contains(content, "Henüz etkin değil", "truthful feature status");
+  contains(content, "Kademeli geliştirmede", "truthful feature status");
+  contains(content, "İlkOku sana ne kazandırır?", "positive platform value section");
   contains(page, 'getPublishedCmsPublicPageState("nasil-calisir")', "CMS-owned public page");
   contains(page, "HowItWorksExperience", "branded how-it-works experience");
   contains(experience, 'src="/how-it-works/journey.webp"', "brand-matched journey visual");
   contains(experience, "EditorialBody body={part.body}", "CMS journey content in cards");
+  contains(experience, 'sectionMap.get("İlkOku sana ne kazandırır?")', "positive dark value card");
   contains(experienceStyles, ".how-step--passport > h3 { grid-column: 2;", "passport title grid boundary");
   contains(experienceStyles, ".how-footer .how-logo { width: 4.4rem; aspect-ratio: 1; filter: none;", "footer logo color boundary");
   contains(experienceStyles, ".how-start { padding: clamp(5rem, 9vw, 8rem) 0", "start-to-discovery spacing boundary");
   contains(preview, 'page.contentKey === "page:tr:nasil-calisir"', "visual CMS preview boundary");
   contains(page, '"@type": "WebPage"', "WebPage schema");
   contains(cmsStore, "status = 'published'", "published CMS boundary");
+  contains(cmsStore, '"nasil-calisir": {', "legacy trust-copy bridge");
+  contains(cmsStore, "getBundledCopyForLegacyCms", "future CMS ownership recovery gate");
   contains(guideIndex, 'permanentRedirect("/nasil-calisir")', "retired guide index redirect");
   contains(guideDetail, "legacyGuideTargets", "legacy guide detail redirects");
 });
@@ -91,7 +95,7 @@ test("public trust visual library is complete and deployment-safe", () => {
   contains(registry, "focalPoint", "responsive crop focal point");
 });
 
-test("editorial standards stay CMS-owned and independent review access stays fail-closed", () => {
+test("editorial standards stay CMS-compatible and independent review access stays fail-closed", () => {
   const content = source("src/content/editorial-standards.ts");
   const page = source("src/app/editoryal-standartlar/page.tsx");
   const experience = source("src/components/content/EditorialStandardsExperience.tsx");
@@ -100,19 +104,22 @@ test("editorial standards stay CMS-owned and independent review access stays fai
   const sitemap = source("src/app/sitemap.ts");
   const collector = source("src/features/system-map/collector.ts");
   const howItWorks = source("src/components/content/HowItWorksExperience.tsx");
+  const cmsStore = source("src/lib/cms-public-page-store.ts");
   const queries = source("src/features/editor-workspace/queries.ts");
   const completedReviewPage = source("src/app/editor/incelemeler/[workId]/page.tsx");
   const detailQuery = queries.slice(queries.indexOf("export async function getEditorReviewDetail"));
 
-  contains(content, "Editör görüş bildirir; eserin yaratıcı yönü hakkındaki nihai karar yazarda kalır.", "writer decision boundary");
-  contains(content, "İkinci editöre ise birinci rapor açılmaz.", "one-way comparison boundary");
-  contains(content, "açıkça yetkilendirilmemiş yapay zekâ", "unauthorized third-party AI boundary");
+  contains(content, "yaratıcı yön hakkındaki son karar yazarda kalır", "writer decision boundary");
+  contains(content, "kendi raporunu hazırlarken birinci raporu görmez", "second-editor independence boundary");
+  contains(content, "açıkça yetkilendirilmemiş üçüncü taraf servislerine", "unauthorized third-party service boundary");
+  contains(content, "profesyonel bir ikinci bakış", "editorial value proposition");
   contains(page, 'getPublishedCmsPublicPageState("editoryal-standartlar")', "CMS-owned editorial standards page");
   contains(page, "EditorialStandardsExperience", "branded editorial standards experience");
   contains(experience, 'getPublicTrustPageVisual("/editoryal-standartlar")', "prepared editorial visual");
   contains(experience, "criteria.sections.map", "CMS criteria cards");
   contains(preview, 'page.contentKey === "page:tr:editoryal-standartlar"', "visual CMS preview boundary");
   contains(starterContent, 'contentKey: "page:tr:editoryal-standartlar"', "CMS starter draft");
+  contains(cmsStore, '"editoryal-standartlar": {', "legacy editorial CMS bridge");
   contains(sitemap, "${baseUrl}/editoryal-standartlar", "editorial standards sitemap route");
   contains(collector, '"/nasil-calisir | /editoryal-standartlar | /icerik-ve-yas-politikasi"', "public trust system map");
   contains(howItWorks, 'href="/editoryal-standartlar"', "public inbound editorial standards link");
@@ -135,6 +142,7 @@ test("content and age policy is enforced from work creation to the public readin
   const starterContent = source("src/features/cms/starter-content-actions.ts");
   const sitemap = source("src/app/sitemap.ts");
   const collector = source("src/features/system-map/collector.ts");
+  const cmsStore = source("src/lib/cms-public-page-store.ts");
   const schema = source("prisma/schema.prisma");
   const migration = source("prisma/migrations/20260825150000_work_content_classification/migration.sql");
   const validators = source("src/features/works/validators.ts");
@@ -146,14 +154,16 @@ test("content and age policy is enforced from work creation to the public readin
   const publicStream = source("src/features/public-discovery/PublicWorkStream.tsx");
 
   contains(content, "eserin tamamındaki en yoğun içeriğe göre", "highest-intensity rule");
-  contains(content, "18+ olarak beyan edilen eser taslakta saklanabilir ancak herkese açık yayımlanamaz", "truthful adult publication boundary");
-  contains(content, "her eseri yayın öncesinde insan eliyle okumaz", "no fabricated pre-publication review");
-  contains(content, "otomatik içerik taraması yapıldığına dair bir taahhüt vermez", "no fabricated automated scanner");
+  contains(content, "18+ olarak beyan edilen eser taslakta saklanabilir ancak keşfe açık vitrinde yayımlanamaz", "truthful adult publication boundary");
+  contains(content, "doğru eserle doğru beklentiyle buluşturmaktır", "reader discovery value");
   contains(content, "Sınıflandırılmadı", "legacy unrated boundary");
+  notContains(content, "yayın öncesinde insan eliyle incelenir", "no fabricated pre-publication review");
+  notContains(content, "otomatik içerik taraması yapılır", "no fabricated automated scanner");
   contains(page, 'getPublishedCmsPublicPageState("icerik-ve-yas-politikasi")', "CMS-owned content-age page");
   contains(experience, 'getPublicTrustPageVisual("/icerik-ve-yas-politikasi")', "prepared policy visual");
   contains(preview, 'page.contentKey === "page:tr:icerik-ve-yas-politikasi"', "visual CMS preview boundary");
   contains(starterContent, 'contentKey: "page:tr:icerik-ve-yas-politikasi"', "CMS starter draft");
+  contains(cmsStore, '"icerik-ve-yas-politikasi": {', "legacy content-age CMS bridge");
   contains(sitemap, "${baseUrl}/icerik-ve-yas-politikasi", "content-age sitemap route");
   contains(collector, "/eserlerim · NewWorkFlow içerik sınıfı/bölüm/yayın çalışma alanı", "classification system map workflow");
 

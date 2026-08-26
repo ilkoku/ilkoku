@@ -92,7 +92,7 @@ test("writer inspiration journey is detailed, writer-only and connects history b
   contains(css, ".writers-history__now", "writer history present-day CTA styling");
 });
 
-test("writer history option A keeps large cards, hides numbering and overrides illustrations with real covers", () => {
+test("writer history real covers stay visible, portrait-safe and free of known broken sources", () => {
   const css = source("src/app/yazarlar-icin/for-writers.css");
   const realCovers = source("src/app/yazarlar-icin/real-covers.css");
   const layout = source("src/app/yazarlar-icin/layout.tsx");
@@ -102,21 +102,26 @@ test("writer history option A keeps large cards, hides numbering and overrides i
   contains(layout, 'import "./real-covers.css"', "real writer cover override loaded after page styles");
 
   for (const coverReference of [
-    "Enheduanna%2C%20daughter%20of%20Sargon%20of%20Akkad.jpg",
+    "upload.wikimedia.org/wikipedia/commons/3/3d/Enheduanna%2C_daughter_of_Sargon_of_Akkad.jpg",
     "2004551302v6%3A0001",
-    "Frankenstein_1818_edition_title_page.jpg",
-    "Eyl%C3%BCl%20kapak.png",
-    "G%C3%B6sta_Berlings_saga_1919.djvu",
-    "inquiringreader.org/assets/img/beloved.jpg",
-    "covers.storytel.com/jpg-640/9789180613828",
+    "upload.wikimedia.org/wikipedia/commons/3/35/Frankenstein_1818_edition_title_page.jpg",
+    "upload.wikimedia.org/wikipedia/commons/b/bd/Eyl%C3%BCl_kapak.png",
+    "upload.wikimedia.org/wikipedia/commons/1/11/G%C3%B6sta_Berlings_saga_book_cover_1919.jpg",
+    "covers.openlibrary.org/b/isbn/9780394535975-L.jpg?default=false",
+    "iletisim.com.tr/Images/UserFiles/Images/Spot/120918165335.jpg",
   ]) {
     contains(realCovers, coverReference, `${coverReference} real writer work visual`);
   }
 
   contains(realCovers, "filter:sepia(.08)", "subtle aged cover treatment");
   contains(realCovers, "background-size:contain", "full real cover preserved without artificial cropping");
-  notContains(realCovers, "/writers/history/enheduanna-ilahiler.svg", "generated Enheduanna cover must not drive the live override");
-  notContains(realCovers, "/writers/history/beloved.svg", "generated Beloved cover must not drive the live override");
+  contains(realCovers, "aspect-ratio:2/3", "desktop and mobile real-cover portrait ratio");
+  contains(realCovers, "align-self:center", "cover stays centered inside the editorial card");
+  contains(realCovers, "min-height:0", "legacy stretched cover height is neutralized");
+  contains(realCovers, "background-color:#e8e0d2", "non-broken neutral fallback surface");
+
+  notContains(realCovers, "G%C3%B6sta_Berlings_saga_1919.djvu", "broken Selma DjVu page source removed");
+  notContains(realCovers, "inquiringreader.org/assets/img/beloved.jpg", "unverified Beloved hotlink removed");
+  notContains(realCovers, "covers.storytel.com", "square Storytel Orhan cover source removed");
   contains(css, ".writers-history__card:nth-child(even)::before", "alternating large cover composition");
-  contains(css, "aspect-ratio:2/3", "mobile book cover ratio");
 });

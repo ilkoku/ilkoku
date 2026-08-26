@@ -9,7 +9,7 @@ import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 const baseUrl = "https://ilkoku.com";
 const title = "Eser Türleri | İlkOku";
 const description =
-  "İlkOku’da herkese açık yayımlanan Türkçe eserleri edebî türlerine göre keşfedin.";
+  "İlkOku’da keşfe açık yayımlanan Türkçe eserleri edebî türlerine göre keşfedin.";
 
 type PublicGenresPageProps = {
   searchParams: Promise<{
@@ -85,7 +85,7 @@ export default async function PublicGenresPage({
           <h1>Okuma yolunu türüne göre seç.</h1>
           <p>
             Bu sayfalar yalnız gerçekten yayımlanmış ve
-            herkese açık eserlerden oluşur. Boş kategori veya
+            keşfe açık eserlerden oluşur. Boş kategori veya
             yapay SEO etiketi üretilmez.
           </p>
         </header>
@@ -95,7 +95,7 @@ export default async function PublicGenresPage({
           className="public-hub__section"
         >
           <div className="public-hub__section-heading">
-            <h2 id="tur-listesi">Yayınlanan türler</h2>
+            <h2 id="tur-listesi">Keşfe açık türler</h2>
             <span>{genres.length} tür</span>
           </div>
 
@@ -134,8 +134,8 @@ export default async function PublicGenresPage({
                   </div>
                   <h2>{genre.label}</h2>
                   <p className="public-hub-card__description">
-                    {genre.label} türünde herkese açık
-                    yayımlanan {genre.count} eseri inceleyin.
+                    {genre.label} türünde keşfe açık yayımlanan
+                    {" "}{genre.count} eseri inceleyin.
                   </p>
                   <span className="public-hub-card__footer">
                     <span />
@@ -149,12 +149,12 @@ export default async function PublicGenresPage({
               <strong>
                 {search
                   ? "Bu aramada yayımlanmış eser türü bulunamadı."
-                  : "Henüz public eser türü oluşmadı."}
+                  : "Henüz keşfe açık eser türü oluşmadı."}
               </strong>
               <p>
                 {search
                   ? "Aramayı temizleyerek gerçek yayınlardan oluşan tüm tür dizinine dönebilirsiniz."
-                  : "İlk herkese açık eser yayımlandığında tür sayfası otomatik oluşacak ve sitemap’e eklenecek."}
+                  : "İlk keşfe açık eser yayımlandığında tür sayfası otomatik oluşacak ve sitemap’e eklenecek."}
               </p>
               {search ? (
                 <Link href="/turler">Tüm türleri göster</Link>

@@ -124,9 +124,9 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
       <section className="editors-flow how-container" id="editor-akisi">
         <SectionHeading eyebrow="Görev yaşam döngüsü" title="Erişim, görev ve sürüm aynı anda sınırlandırılır." description="Public editör profili bütün eserlere erişim değildir; çalışma alanı görev ve aşama üzerinden açılır." />
         <div className="editors-flow__grid">
-          {sectionMap.get("Editör çalışma alanına yetkili rol ile gir") ? <article><EditorIcon name="shield" /><span>01 · Yetki</span><h3>Public profil ile özel çalışma erişimini birbirinden ayır.</h3><EditorialBody body={sectionMap.get("Editör çalışma alanına yetkili rol ile gir")!.body} /></article> : null}
-          {sectionMap.get("Genel Editör Havuzu'ndan uygun görevi al") ? <article><EditorIcon name="lock" /><span>02 · Görev</span><h3>İlk alan editörün görevi kilitlenir.</h3><EditorialBody body={sectionMap.get("Genel Editör Havuzu'ndan uygun görevi al")!.body} /></article> : null}
-          {sectionMap.get("İncelediğin sürümü ve kapsamı sabit tut") ? <article><EditorIcon name="record" /><span>03 · Kapsam</span><h3>Raporun hangi metne dayandığı görünür kalsın.</h3><EditorialBody body={sectionMap.get("İncelediğin sürümü ve kapsamı sabit tut")!.body} /></article> : null}
+          {sectionMap.get("Editör çalışma alanına yetkili rol ile gir") ? <article><EditorIcon name="shield" /><h3>Public profil ile özel çalışma erişimini birbirinden ayır.</h3><EditorialBody body={sectionMap.get("Editör çalışma alanına yetkili rol ile gir")!.body} /></article> : null}
+          {sectionMap.get("Genel Editör Havuzu'ndan uygun görevi al") ? <article><EditorIcon name="lock" /><h3>İlk alan editörün görevi kilitlenir.</h3><EditorialBody body={sectionMap.get("Genel Editör Havuzu'ndan uygun görevi al")!.body} /></article> : null}
+          {sectionMap.get("İncelediğin sürümü ve kapsamı sabit tut") ? <article><EditorIcon name="record" /><h3>Raporun hangi metne dayandığı görünür kalsın.</h3><EditorialBody body={sectionMap.get("İncelediğin sürümü ve kapsamı sabit tut")!.body} /></article> : null}
         </div>
       </section>
 

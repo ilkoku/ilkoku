@@ -113,9 +113,9 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
       <section className="writers-workflow how-container" id="yazar-yolculugu">
         <SectionHeading eyebrow="Yazar çalışma alanı" title="Önce yaz, sonra neyin public olacağına sen karar ver." description="Taslak, içerik sınıfı ve yayın kararı aynı şey değildir; her adım ayrı bir güven sınırı taşır." />
         <div className="writers-workflow__grid">
-          {sectionMap.get("Eserini oluştur ve bölüm bölüm geliştir") ? <article><WriterIcon name="pen" /><span>01 · Oluştur</span><h3>Bölümler hâlinde çalış; taslağı public yüzeyden ayrı tut.</h3><EditorialBody body={sectionMap.get("Eserini oluştur ve bölüm bölüm geliştir")!.body} /></article> : null}
-          {sectionMap.get("İçerik ve yaş sınıfını doğru seç") ? <article><WriterIcon name="shield" /><span>02 · Sınıflandır</span><h3>Okur eseri açmadan önce neyle karşılaşacağını bilsin.</h3><EditorialBody body={sectionMap.get("İçerik ve yaş sınıfını doğru seç")!.body} /><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş Politikası →</Link></article> : null}
-          {sectionMap.get("Taslak ile yayın kararını ayrı tut") ? <article><WriterIcon name="book" /><span>03 · Yayınla</span><h3>Kaydetmek yayınlamak değildir.</h3><EditorialBody body={sectionMap.get("Taslak ile yayın kararını ayrı tut")!.body} /></article> : null}
+          {sectionMap.get("Eserini oluştur ve bölüm bölüm geliştir") ? <article><WriterIcon name="pen" /><h3>Bölümler hâlinde çalış; taslağı public yüzeyden ayrı tut.</h3><EditorialBody body={sectionMap.get("Eserini oluştur ve bölüm bölüm geliştir")!.body} /></article> : null}
+          {sectionMap.get("İçerik ve yaş sınıfını doğru seç") ? <article><WriterIcon name="shield" /><h3>Okur eseri açmadan önce neyle karşılaşacağını bilsin.</h3><EditorialBody body={sectionMap.get("İçerik ve yaş sınıfını doğru seç")!.body} /><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş Politikası →</Link></article> : null}
+          {sectionMap.get("Taslak ile yayın kararını ayrı tut") ? <article><WriterIcon name="book" /><h3>Kaydetmek yayınlamak değildir.</h3><EditorialBody body={sectionMap.get("Taslak ile yayın kararını ayrı tut")!.body} /></article> : null}
         </div>
       </section>
 

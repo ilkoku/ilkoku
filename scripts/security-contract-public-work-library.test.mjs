@@ -112,7 +112,7 @@ test("public work library is bounded by the canonical publication boundary", () 
   );
 });
 
-test("public work catalog exposes crawlable book links and honest metadata", () => {
+test("public work catalog exposes crawlable context-preserving book links and honest metadata", () => {
   const page = source("src/app/eserler/page.tsx");
 
   contains(
@@ -137,8 +137,18 @@ test("public work catalog exposes crawlable book links and honest metadata", () 
   );
   contains(
     page,
-    'href={`/kitap/${work.slug}?from=/eserler`}',
-    "crawlable public book link",
+    "currentPath = pageHref(filters, library.currentPage)",
+    "catalog current discovery context",
+  );
+  contains(
+    page,
+    'const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(currentPath)}`',
+    "context-preserving public book link",
+  );
+  contains(
+    page,
+    "href={bookHref}",
+    "crawlable server-rendered book link",
   );
   contains(
     page,
@@ -147,8 +157,13 @@ test("public work catalog exposes crawlable book links and honest metadata", () 
   );
   contains(
     page,
-    "Taslak, özel, arşivlenmiş ve yayımlanmamış",
+    "Taslak, özel ve arşivlenmiş çalışmalar keşfe",
     "publication-boundary explanation",
+  );
+  contains(
+    page,
+    "bölüm metni okumak için oturum gerekir",
+    "member reading boundary explanation",
   );
   notContains(
     page,

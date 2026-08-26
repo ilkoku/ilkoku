@@ -25,14 +25,54 @@ const legalSlugs = [
 ] as const;
 
 const bundledPublicPages = [
-  { canonical: howItWorksPageContent.canonical, updatedAt: howItWorksPageContent.updatedAt, priority: 0.8 },
-  { canonical: editorialStandardsPageContent.canonical, updatedAt: editorialStandardsPageContent.updatedAt, priority: 0.75 },
-  { canonical: contentAgePolicyPageContent.canonical, updatedAt: contentAgePolicyPageContent.updatedAt, priority: 0.75 },
-  { canonical: communityRulesPageContent.canonical, updatedAt: communityRulesPageContent.updatedAt, priority: 0.75 },
-  { canonical: copyrightNoticePageContent.canonical, updatedAt: copyrightNoticePageContent.updatedAt, priority: 0.75 },
-  { canonical: forWritersPageContent.canonical, updatedAt: forWritersPageContent.updatedAt, priority: 0.8 },
-  { canonical: forEditorsPageContent.canonical, updatedAt: forEditorsPageContent.updatedAt, priority: 0.8 },
-  { canonical: forPublishersPageContent.canonical, updatedAt: forPublishersPageContent.updatedAt, priority: 0.8 },
+  {
+    canonical: "/nasil-calisir",
+    url: `${baseUrl}/nasil-calisir`,
+    updatedAt: howItWorksPageContent.updatedAt,
+    priority: 0.8,
+  },
+  {
+    canonical: "/editoryal-standartlar",
+    url: `${baseUrl}/editoryal-standartlar`,
+    updatedAt: editorialStandardsPageContent.updatedAt,
+    priority: 0.75,
+  },
+  {
+    canonical: "/icerik-ve-yas-politikasi",
+    url: `${baseUrl}/icerik-ve-yas-politikasi`,
+    updatedAt: contentAgePolicyPageContent.updatedAt,
+    priority: 0.75,
+  },
+  {
+    canonical: "/topluluk-kurallari",
+    url: `${baseUrl}/topluluk-kurallari`,
+    updatedAt: communityRulesPageContent.updatedAt,
+    priority: 0.75,
+  },
+  {
+    canonical: "/telif-bildirimi",
+    url: `${baseUrl}/telif-bildirimi`,
+    updatedAt: copyrightNoticePageContent.updatedAt,
+    priority: 0.75,
+  },
+  {
+    canonical: "/yazarlar-icin",
+    url: `${baseUrl}/yazarlar-icin`,
+    updatedAt: forWritersPageContent.updatedAt,
+    priority: 0.8,
+  },
+  {
+    canonical: "/editorler-icin",
+    url: `${baseUrl}/editorler-icin`,
+    updatedAt: forEditorsPageContent.updatedAt,
+    priority: 0.8,
+  },
+  {
+    canonical: "/yayinevleri-icin",
+    url: `${baseUrl}/yayinevleri-icin`,
+    updatedAt: forPublishersPageContent.updatedAt,
+    priority: 0.8,
+  },
 ] as const;
 
 const staticCmsPageSlugs = new Set<string>(
@@ -161,7 +201,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
 
       return [{
-        url: `${baseUrl}${page.canonical}`,
+        url: page.url,
         lastModified: row?.updatedAt ?? new Date(page.updatedAt),
         changeFrequency: "monthly" as const,
         priority: page.priority,

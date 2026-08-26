@@ -204,7 +204,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
             </div>
             <div className="writers-history__now-actions">
               <Link className="how-button how-button--primary" href="/kayit?rol=writer">Kendi ilk cümlene başla <span aria-hidden="true">→</span></Link>
-              <a className="how-button how-button--secondary" href="#yazar-yolculugu">İlkOku'daki yazar yolculuğunu gör</a>
+              <a className="how-button how-button--secondary" href="#yazar-yolculugu">İlkOku&apos;daki yazar yolculuğunu gör</a>
             </div>
           </div>
         </div>

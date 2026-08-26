@@ -230,6 +230,18 @@
   display: none !important;
 }
 
+/* Public trust pages: remove decorative 01/02/03/04 labels without touching semantic numbers. */
+.public-site-frame .how-page .how-quick-nav a > span,
+.public-site-frame .how-page .how-step__number,
+.public-site-frame .how-page .standards-criterion__top > span:first-child,
+.public-site-frame .how-page .age-warnings__grid > article > span:first-child,
+.public-site-frame .how-page .community-integrity__grid > article > span:first-child,
+.public-site-frame .how-page .writers-workflow__grid > article > span:first-of-type,
+.public-site-frame .how-page .editors-flow__grid > article > span:first-of-type,
+.public-site-frame .how-page .publishers-discovery__grid > article > span:first-of-type {
+  display: none !important;
+}
+
 @keyframes public-site-menu-in {
   from {
     opacity: 0;

@@ -220,12 +220,15 @@ test("public authors and genres are derived only from the publication boundary",
   contains(authorIndex, "getPublicAuthors(search)", "live author filtering");
   contains(authorIndex, "encodeURIComponent(returnPath)", "author discovery return context");
   contains(authorDetail, "getPublicAuthorById", "author detail boundary");
-  contains(authorDetail, "Geldiğin keşfe dön", "author return path");
+  contains(authorDetail, "Geldiğin sayfaya dön", "author return path");
+  contains(authorDetail, "profileContextPath", "author nested return context");
+  contains(authorDetail, "MAX_RETURN_PATH_LENGTH", "bounded author return context");
   contains(genreIndex, "getPublicGenres(search)", "live genre filtering");
   contains(genreIndex, "genre.count", "genre work counts");
   contains(genreIndex, "encodeURIComponent(returnPath)", "genre discovery return context");
   contains(genreDetail, "getPublicGenreBySlug", "genre detail boundary");
-  contains(genreDetail, "Geldiğin tür keşfine dön", "genre return path");
+  contains(genreDetail, "Geldiğin sayfaya dön", "genre return path");
+  contains(genreDetail, "MAX_RETURN_PATH_LENGTH", "bounded genre return context");
 });
 
 test("discovery feeds and RSS expose links but never chapter content", () => {

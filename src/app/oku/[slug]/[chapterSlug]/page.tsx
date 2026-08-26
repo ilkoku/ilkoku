@@ -53,7 +53,8 @@ export default async function DynamicReadingPage({
   const auth = await getCurrentSessionContext();
 
   if (!auth) {
-    const returnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}`;
+    const reviewModeParameter = query.inceleme === "1" ? "&inceleme=1" : "";
+    const returnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}${reviewModeParameter}`;
     redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`);
   }
 

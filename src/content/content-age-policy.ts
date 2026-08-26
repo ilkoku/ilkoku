@@ -1,30 +1,30 @@
 export const contentAgePolicyPageContent = {
   title: "İçerik ve Yaş Politikası",
-  summary: "İlkOku'da bir eserin yaş sınıfının ve içerik uyarılarının nasıl belirlendiğini, yazarın sorumluluğunu, okurun göreceği işaretleri ve şu anda uygulanmayan 18+ yayın sınırını açıkça öğrenin.",
+  summary: "Her eser doğru okurla buluşsun: İlkOku'nun yaş sınıfları ve içerik uyarıları, okura okumaya başlamadan önce neyle karşılaşacağını gösterirken yazarın eserini doğru kitleye sunmasına yardımcı olur.",
   seoTitle: "İçerik ve Yaş Politikası | İlkOku",
-  seoDescription: "İlkOku eserlerinde Tüm Yaşlar, 13+, 16+ ve 18+ sınıflarını; içerik uyarılarını, yazar beyanını, public yayın sınırlarını ve bildirim sürecini inceleyin.",
+  seoDescription: "İlkOku eserlerinde Tüm Yaşlar, 13+, 16+ ve 18+ sınıflarını; içerik uyarılarını, yazar beyanını ve keşfe açık yayın sınırlarını inceleyin.",
   canonical: "/icerik-ve-yas-politikasi",
-  updatedAt: "2026-08-25T00:00:00.000Z",
-  body: `İlkOku'nun içerik sınıflandırması okura, bir eserde karşılaşabileceği yoğunluk ve hassas temalar hakkında okumaya başlamadan önce anlaşılır bilgi vermek için kullanılır. Yaş sınıfı bir kalite puanı, editör onayı, hukuki uygunluk kararı veya her okur için uygunluk garantisi değildir.
+  updatedAt: "2026-08-26T00:00:00.000Z",
+  body: `İlkOku'da içerik sınıflandırmasının amacı okuru korkutmak değil, doğru eserle doğru beklentiyle buluşturmaktır. Yaş sınıfı ve içerik uyarıları; okurun bir eseri seçerken daha bilinçli karar vermesini, yazarın da eserini hangi yoğunlukta sunduğunu açıkça belirtmesini sağlar.
 
-Yazar, eser kaydı oluşmadan önce yaş sınıfını seçer, gerekiyorsa içerik uyarılarını işaretler ve seçimini eserin tamamındaki en yoğun içeriğe göre yaptığını onaylar. Sınıf ve uyarılar eser geliştikçe güncel tutulmalıdır.
+Bu bilgiler kalite puanı değildir. Bir eserin iyi ya da kötü olduğunu değil, içeriğin genel yoğunluğunu ve hassas temalarını okumadan önce görünür kılar.
 
 ## Dört yaş sınıfı
 
-| Sınıf | Başlangıç ölçütü | Public yayın durumu |
+| Sınıf | Başlangıç ölçütü | Keşfe açık yayın durumu |
 | --- | --- | --- |
-| Tüm yaşlar | Küçük okurlar dahil geniş kitle için belirgin şiddet, ağır dil, cinsel tema, madde kullanımı veya yoğun rahatsız edici içerik barındırmayan eserler | Açık |
+| Tüm yaşlar | Küçük okurlar dahil geniş kitle için belirgin yoğun şiddet, ağır dil, cinsel tema, madde kullanımı veya yoğun rahatsız edici içerik barındırmayan eserler | Açık |
 | 13+ | Hafif ya da sınırlı şiddet, sert dil, korku, romantik veya hassas temalar içerebilen eserler | Açık |
 | 16+ | Daha yoğun şiddet, ağır dil, cinsel tema, kendine zarar, istismar, madde kullanımı veya rahatsız edici sahneler içerebilen eserler | Açık |
-| 18+ | Yalnız yetişkin okura yönelik yoğun temalar içeren eserler | Henüz açık değil |
+| 18+ | Yalnız yetişkin okura yönelik yoğun temalar içeren eserler | Henüz keşfe açık değil |
 
-Sınıflar arasında karar verirken tek bir ortalama alınmaz. Eserin herhangi bir bölümünde daha yüksek sınıf gerektiren içerik bulunuyorsa bütün eser o yüksek sınıfta beyan edilir. Kısa, seyrek veya olay örgüsü açısından gerekli olması bu içeriği sınıflandırma dışında bırakmaz.
+Sınıf, eserin tamamındaki en yoğun içeriğe göre seçilir. Tek bir bölüm daha yüksek sınıf gerektiriyorsa eser de o sınıfta beyan edilir. Böylece okur yalnız ilk bölüme bakılarak oluşturulmuş yanıltıcı bir etiketle karşılaşmaz.
 
-18+ etiketi yasak içeriğe izin vermez. İlkOku'da doğrulanmış yaş erişimi henüz etkin olmadığı için 18+ olarak beyan edilen eser taslakta saklanabilir ancak herkese açık yayımlanamaz.
+Doğrulanmış yetişkin erişimi henüz etkin olmadığı için 18+ olarak beyan edilen eser taslakta saklanabilir ancak keşfe açık vitrinde yayımlanamaz.
 
 ## İçerik uyarıları
 
-Yaş sınıfı genel yoğunluğu, içerik uyarısı ise okurun karşılaşabileceği konuyu açıklar. İlkOku şu uyarı alanlarını kullanır:
+Yaş sınıfı genel yoğunluğu, içerik uyarısı ise okurun karşılaşabileceği temayı daha somut anlatır. İlkOku şu uyarı alanlarını kullanır:
 
 - Şiddet: fiziksel şiddet, yaralanma veya tehdit anlatımı.
 - Ağır dil: yoğun küfür, hakaret veya sert dil.
@@ -33,43 +33,41 @@ Yaş sınıfı genel yoğunluğu, içerik uyarısı ise okurun karşılaşabilec
 - Alkol veya madde: alkol, tütün ya da madde kullanımı.
 - Korku veya rahatsız edici içerik: yoğun korku, dehşet veya sarsıcı sahneler.
 
-13+, 16+ veya 18+ sınıfı seçildiğinde en az bir içerik uyarısı gerekir. Bir uyarının seçilmesi, ayrıntının eserde ne sıklıkta geçtiğini veya her okur üzerindeki etkisini tek başına açıklamaz; okurun bilinçli seçim yapmasına başlangıç bilgisi verir.
+13+, 16+ veya 18+ sınıfında en az bir içerik uyarısı seçilir. Uyarılar eserin sürprizini bozmak için değil, okura kendi hassasiyetine göre seçim yapabileceği başlangıç bilgisi vermek için kullanılır.
 
 ## Yazarın sınıflandırma sorumluluğu
 
-Yazar, başlık ve tür bilgileriyle birlikte sınıflandırmayı eser oluşturma adımında tamamlar. Eserin yeni bölümü, revizyonu, kapağı veya açıklaması sınıfı ya da uyarıları etkiliyorsa beyanı yayınlamadan önce günceller.
+Yazar, eserini oluştururken yaş sınıfını ve gerekli içerik uyarılarını seçer. Yeni bölüm veya revizyon eserin yoğunluğunu değiştiriyorsa sınıflandırma da yayın öncesinde güncellenir.
 
-Yazar sınıfı eserin hedeflediği okura, pazarlama isteğine veya yalnızca ilk bölüme göre düşüremez. Şüphe halinde daha koruyucu olan üst sınıf seçilir. Yanlış veya eksik sınıflandırma fark edildiğinde eser bilgileri düzeltilmeli; somut bir risk varsa İlkOku'ya bildirilmelidir.
-
-İlkOku şu anda her eseri yayın öncesinde insan eliyle okumaz ve otomatik içerik taraması yapıldığına dair bir taahhüt vermez. Yazar beyanı temel kayıt noktasıdır; bu beyan platform kurallarını uygulama ve gerektiğinde inceleme yetkisini ortadan kaldırmaz.
+Doğru sınıflandırma yalnız bir kural değil, doğru okura ulaşmanın parçasıdır. Yazar hedef kitlesini düşünürken eserin gerçek içeriğini olduğundan daha hafif göstermemeli; şüphe halinde daha koruyucu üst sınıfı seçmelidir.
 
 ## Okurun gördüğü bilgi
 
-Yaş sınıfı ve seçili içerik uyarıları, public eser sayfasında “Okumaya Başla” işleminden önce görünür. Böylece okur eseri açmadan önce genel sınıfı ve bildirilen hassas temaları birlikte değerlendirebilir.
+Yaş sınıfı ve seçili içerik uyarıları, keşfe açık eser vitrininde "Okumaya Başla" işleminden önce görünür. Ziyaretçi eseri keşfederken bu bilgileri görebilir; bölüm okumaya geçtiğinde ücretsiz üyelik veya giriş katmanı devreye girer.
 
-Sınıflandırma ebeveyn, veli, eğitimci veya okurun kendi değerlendirmesinin yerine geçmez. Yaş tek başına bütün okurların hassasiyetini açıklamaz; içerik uyarıları da eserdeki her olayın ayrıntılı özeti değildir.
+Böylece okur yalnız kapağa veya kısa tanıtıma bakmak zorunda kalmaz. Eserin genel yoğunluğu hakkında daha bilinçli seçim yapabilir.
 
 ## Başlık, kapak ve açıklama sınırı
 
-Başlık, kapak, kısa açıklama, yazar vitrini ve keşif kartları oturum açmadan da görülebilen açık yüzeylerdir. Bu alanlarda yoğun şiddet, açık cinsellik, nefret ifadesi, istismar görüntüsü veya doğrudan rahatsız edici ayrıntı kullanılamaz; eserin yaş sınıfı bu açık yüzey sınırını değiştirmez.
+Kapak, başlık, kısa açıklama ve keşif kartları üyelik olmadan görülebilen açık yüzeylerdir. Bu nedenle bu alanlar, eserin bölüm içeriğinden daha geniş bir kitleye hitap edecek sunum sınırında kalır.
 
-Bir eserin 16+ ya da ileride 18+ olarak sınıflandırılması, kapağın veya tanıtım metninin aynı yoğunluğu açıkça göstermesine izin vermez. Keşif alanları daha geniş kitle tarafından görülebildiği için içerik bağlamından daha sıkı sunum sınırına tabidir.
+16+ ya da ileride 18+ olarak sınıflandırılmış bir eser, tanıtım yüzeyinde yoğun veya açık rahatsız edici içeriği doğrudan göstermek zorunda değildir. Keşif, merak uyandırmalı; okurun sınırlarını habersiz aşmamalıdır.
 
 ## Yasak içerik ile yaş sınıfı aynı şey değildir
 
-Yaş sınıflandırması, izin verilen bir eserin hangi okur kitlesine ve hangi uyarılarla sunulacağını düzenler. Hukuka aykırı içerik, çocukların cinsel istismarı, rıza dışı mahrem görüntü, ciddi tehdit, kişisel veri ihlali, telif ihlali veya yalnızca açık cinsel uyarım amacı taşıyan içerik bir etiket eklenerek kabul edilebilir hale gelmez.
+Yaş sınıflandırması, izin verilen bir eserin hangi okur kitlesine ve hangi uyarılarla sunulacağını düzenler. Hukuka aykırı veya platform kurallarını ihlal eden içerik yalnızca bir yaş etiketi eklenerek kabul edilebilir hâle gelmez.
 
-Bağlayıcı kullanım sınırları Kullanım Şartları ve ilgili yasal belgelerde; telif iddiaları ise Telif Bildirimi sürecinde ele alınır. Bu politika, bu belgelerin yerine geçmez.
+Bu ayrım, yaş sınıfını bir sansür aracı değil, okur bilgilendirme ve doğru keşif aracı olarak tutar.
 
 ## Mevcut eserler nasıl ele alınır?
 
-Bu alanlar eklenmeden önce oluşturulmuş eserler otomatik olarak “Tüm yaşlar” sayılmaz. Yanlış güven üretmemek için “Sınıflandırılmadı” durumunda kalır. Yazar eseri yeniden düzenlediğinde veya yayınladığında sınıfı ve gerekli uyarıları seçerek beyanı tamamlar.
+Sınıflandırma alanları eklenmeden önce oluşturulmuş eserler otomatik olarak "Tüm yaşlar" sayılmaz. Yazar eseri yeniden düzenlediğinde veya yayınladığında sınıfını ve gerekli uyarıları tamamlar.
 
-Sınıflandırılmamış eski bir eser public görünümdeyse okura bu durum açıkça gösterilir. Bu geçiş kaydı, içeriğin güvenli olduğuna dair varsayım değildir.
+"Sınıflandırılmadı" ifadesi içeriğin güvensiz olduğu anlamına gelmez; yalnızca gerekli beyanın henüz tamamlanmadığını gösterir.
 
 ## Bildirim ve inceleme
 
-Bir eserin sınıfı veya uyarılarıyla içeriği arasında belirgin uyumsuzluk, açık yüzey ihlali ya da yasak içerik şüphesi görürseniz İlkOku İletişim kanalından eser bağlantısını ve sorunu açıklayan gerekli en az bilgiyi iletebilirsiniz. Eser metninin tamamını veya gereksiz kişisel verileri yeniden göndermeyin.
+Bir eserin sınıfı veya uyarılarıyla görünen içeriği arasında belirgin uyumsuzluk fark edilirse İlkOku İletişim kanalından eser bağlantısı ve sorunu anlamaya yetecek kısa bilgi gönderilebilir.
 
-Bildirim yapılması eseri otomatik olarak kaldırmaz, yazar hakkında kesin hüküm oluşturmaz ve bildirim sahibine içerik üzerinde karar yetkisi vermez. İlkOku mevcut kayıtları, görünür alanları ve erişim sınırlarını inceleyebilir; gerekli durumda sınıfın düzeltilmesini isteyebilir, public erişimi sınırlandırabilir veya uygulanabilir platform ve hukuk sürecini başlatabilir.`,
+Bildirim, okurun güvenli keşif deneyimini korumaya yardımcı olan bir başlangıçtır. İlkOku mevcut kayıtları ve görünür yüzeyleri inceleyebilir; gerekli durumda sınıfın düzeltilmesini veya erişimin uygun biçimde sınırlandırılmasını isteyebilir.`
 } as const;

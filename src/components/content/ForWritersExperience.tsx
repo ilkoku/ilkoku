@@ -7,6 +7,66 @@ import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 
 type Section = { body: string; title: string };
 
+type WriterHistoryMilestone = {
+  body: string;
+  first: string;
+  name: string;
+  period: string;
+  takeaway: string;
+};
+
+const writerHistoryMilestones: readonly WriterHistoryMilestone[] = [
+  {
+    period: "MÖ yaklaşık 2300",
+    name: "Enheduanna",
+    first: "Adını tarihe bırakan ilk bilinen yazar.",
+    body: "Ur'da yaşayan şair ve yüksek rahibe Enheduanna, adıyla ilişkilendirilebilen metinleri sayesinde dünya edebiyatının bilinen en eski isimli yazarı kabul ediliyor. Binlerce yıl önce kendi sesini metnin içine koyması, bugün hâlâ kim olduğunu ve ne yazdığını konuşabilmemizi sağlıyor.",
+    takeaway: "Bir yazının ilk gücü, yazarının kendi cümlesine sahip çıkmasıdır.",
+  },
+  {
+    period: "11. yüzyılın başı",
+    name: "Murasaki Shikibu",
+    first: "Romanın sınırlarını değiştiren bir ilk.",
+    body: "Murasaki Shikibu'nun Genji'nin Hikâyesi adlı eseri, dünyanın ilk romanı olarak sıkça kabul ediliyor. Elli dört bölümlük anlatı; karakterlerin duygularını, ilişkilerini ve yıllar içindeki değişimini olağanüstü bir ayrıntıyla izleyerek kurmacanın ne kadar geniş bir dünya kurabileceğini gösterdi.",
+    takeaway: "Yeni bir anlatı biçimi bazen önce tek bir yazarın onu sonuna kadar kurma cesaretidir.",
+  },
+  {
+    period: "1818",
+    name: "Mary Shelley",
+    first: "Bilimkurguya kapı açan genç bir yazar.",
+    body: "Frankenstein yayımlandığında Mary Shelley henüz 20 yaşındaydı. Eser bugün geniş biçimde ilk bilimkurgu romanı kabul ediliyor; bilimin imkânlarını, insanın sorumluluğunu ve yaratmanın bedelini aynı hikâyede buluşturarak sonraki kuşakların yazacağı yepyeni bir alan açtı.",
+    takeaway: "Bazen bir tür, bir yazarın 'böyle bir hikâye neden olmasın?' sorusuyla başlar.",
+  },
+  {
+    period: "1901",
+    name: "Mehmet Rauf",
+    first: "Türk romanında insanın iç dünyasına açılan yeni bir kapı.",
+    body: "Mehmet Rauf'un Eylül'ü, Türk edebiyatının ilk psikolojik romanı kabul edilir. Roman, dış olaylardan çok karakterlerin tereddütlerini, duygusal çatışmalarını ve iç dünyalarını merkeze alarak anlatının yalnızca 'ne oldu?' sorusundan ibaret olmadığını gösterdi.",
+    takeaway: "Yeni olan her zaman konu değildir; bazen insanın içine daha önce bakılmadığı kadar derin bakmaktır.",
+  },
+  {
+    period: "1909",
+    name: "Selma Lagerlöf",
+    first: "Nobel Edebiyat Ödülü'nü alan ilk kadın yazar.",
+    body: "Öğretmenlik yaparken yazmaya başlayan Selma Lagerlöf, 1909'da Nobel Edebiyat Ödülü'nü alan ilk kadın oldu. Kendi coğrafyasının halk anlatılarını, efsanelerini ve güçlü hayal dünyasını edebiyata taşıyarak yerel bir sesin dünyanın ortak okuma hafızasına girebileceğini gösterdi.",
+    takeaway: "Bir hikâyenin doğduğu yer küçük olabilir; ulaşabileceği yer olmak zorunda değildir.",
+  },
+  {
+    period: "1993",
+    name: "Toni Morrison",
+    first: "Nobel Edebiyat Ödülü'nü alan ilk Afrikalı Amerikalı kadın.",
+    body: "Toni Morrison, 1993'te Nobel Edebiyat Ödülü'nü alan ilk Afrikalı Amerikalı kadın oldu. Romanlarında uzun süre edebiyatın kenarında bırakılmış deneyimleri merkeze taşıdı; hafıza, kimlik, baskı ve aidiyet üzerine kurduğu anlatılarla kimin hikâyesinin 'büyük edebiyat' sayılabileceğine dair alanı genişletti.",
+    takeaway: "Sana fazla kişisel veya fazla görünmez gelen bir deneyim, tam da yazılması gereken hikâye olabilir.",
+  },
+  {
+    period: "2006",
+    name: "Orhan Pamuk",
+    first: "Nobel Edebiyat Ödülü'nü alan ilk Türk yazar.",
+    body: "Orhan Pamuk, 2006'da Nobel Edebiyat Ödülü'nü alan ilk Türk yazar oldu. İstanbul'u, hafızayı, kimliği ve Doğu ile Batı arasındaki gerilimi kendi anlatı dünyası içinde evrensel bir edebiyat diline dönüştürdü.",
+    takeaway: "Bir yazarın başladığı şehir, hikâyesinin sınırı olmak zorunda değildir.",
+  },
+] as const;
+
 const knownSections = new Set([
   "Eserini oluştur ve bölüm bölüm geliştir",
   "İçerik ve yaş sınıfını doğru seç",
@@ -89,7 +149,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
             <p>{summary}</p>
             <div className="how-hero__actions">
               <Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar olarak başla <span aria-hidden="true">→</span></Link>
-              <Link className="how-button how-button--secondary" href="#yazar-yolculugu">Eser yolculuğunu gör</Link>
+              <Link className="how-button how-button--secondary" href="#yazar-ilkleri">Yazarların ilklerini gör</Link>
             </div>
             <div className="how-hero__proof"><span><strong>Keşif</strong> okurla başlar</span><span><strong>2</strong> bağımsız editör görüşü</span><span><strong>Haklar</strong> yazarda</span></div>
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
@@ -109,6 +169,46 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
       </nav>
 
       {parsed.intro ? <section className="how-truth how-container" aria-label="Yazar için İlkOku değeri"><span><WriterIcon name="pen" /></span><div><strong>Yaz, keşfe aç, gerçek okurla buluş ve eserini yeni bakışlarla geliştir.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
+
+      <section className="writers-history" id="yazar-ilkleri" aria-labelledby="writer-history-heading">
+        <div className="how-container">
+          <header className="writers-history__heading">
+            <span>HİKÂYENİN YOLCULUĞU · YAZARLARIN İLKLERİ</span>
+            <h2 id="writer-history-heading">Her şey bir “ilk” ile başlar. Yazarlar bunu binlerce yıldır kanıtlıyor.</h2>
+            <p>Bugün klasik, tür veya dönüm noktası dediğimiz eserlerin hiçbiri yazılmadan önce ortada değildi. Bir yazar ilk cümleyi kurdu, kendi sesine güvendi ve edebiyatın sınırı biraz daha genişledi.</p>
+          </header>
+
+          <div className="writers-history__grid">
+            {writerHistoryMilestones.map((milestone, index) => (
+              <article className="writers-history__card" key={milestone.name}>
+                <div className="writers-history__meta">
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <strong>{milestone.period}</strong>
+                </div>
+                <h3>{milestone.name}</h3>
+                <h4>{milestone.first}</h4>
+                <p>{milestone.body}</p>
+                <div className="writers-history__takeaway">
+                  <span>Yazara kalan fikir</span>
+                  <p>{milestone.takeaway}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="writers-history__now">
+            <div>
+              <span>2026 · ŞİMDİ SIRA SENDE</span>
+              <h3>Sıradaki “ilk” henüz yazılmadı.</h3>
+              <p>Belki ilk tamamladığın roman, ilk kez kurduğun bir dünya, ilk kez senin sesinle anlatılan bir karakter ya da yıllardır aklında taşıdığın o hikâye. Edebiyat tarihi geriye dönüp baktığımızda “ilk”leri gösterir; yazarken ise her biri yalnızca cesaret edilmiş bir başlangıçtır.</p>
+            </div>
+            <div className="writers-history__now-actions">
+              <Link className="how-button how-button--primary" href="/kayit?rol=writer">Kendi ilk cümlene başla <span aria-hidden="true">→</span></Link>
+              <a className="how-button how-button--secondary" href="#yazar-yolculugu">İlkOku&apos;daki yazar yolculuğunu gör</a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="writers-workflow how-container" id="yazar-yolculugu">
         <SectionHeading eyebrow="Yazar çalışma alanı" title="Yaz, geliştir, hazır olduğunda keşfe aç." description="Taslağını kendi temponda büyüt; eserin okurla ne zaman buluşacağına sen karar ver." />

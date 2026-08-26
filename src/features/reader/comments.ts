@@ -26,14 +26,14 @@ const visibleCommentWhere = {
 const createChapterCommentSchema = z.object({
   chapterId: z.string().uuid(),
   content: z.string().trim().min(3).max(600),
-  returnPath: z.string().min(1).max(500),
+  returnPath: z.string().min(1).max(5000),
   workId: z.string().uuid(),
 });
 
 const createCommentReplySchema = z.object({
   content: z.string().trim().min(3).max(600),
   parentId: z.string().uuid(),
-  returnPath: z.string().min(1).max(500),
+  returnPath: z.string().min(1).max(5000),
 });
 
 export type ReaderCommentReplyItem = {

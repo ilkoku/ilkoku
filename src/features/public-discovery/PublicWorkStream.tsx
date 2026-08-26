@@ -42,11 +42,17 @@ function summary(value: string | null) {
     : normalized;
 }
 
+function withReturnPath(path: string, returnPath: string) {
+  return `${path}?from=${encodeURIComponent(returnPath)}`;
+}
+
 export function PublicWorkStream({
   dateMode = "published",
+  returnPath = "/eserler",
   works,
 }: {
   dateMode?: "published" | "updated";
+  returnPath?: string;
   works: readonly PublicWorkStreamItem[];
 }) {
   return (
@@ -60,6 +66,20 @@ export function PublicWorkStream({
           dateMode === "updated"
             ? work.updatedAt
             : work.publishedAt;
+        const bookHref = withReturnPath(
+          `/kitap/${work.slug}`,
+          returnPath,
+        );
+        const authorHref = withReturnPath(
+          `/yazarlar/${work.author.publicId}`,
+          returnPath,
+        );
+        const genreHref = genre
+          ? withReturnPath(
+              `/turler/${publicTaxonomySlug(genre)}`,
+              returnPath,
+            )
+          : null;
 
         return (
           <article
@@ -67,14 +87,8 @@ export function PublicWorkStream({
             key={work.slug}
           >
             <div className="public-hub-card__meta">
-              {genre ? (
-                <Link
-                  href={`/turler/${publicTaxonomySlug(
-                    genre,
-                  )}`}
-                >
-                  {genre}
-                </Link>
+              {genre && genreHref ? (
+                <Link href={genreHref}>{genre}</Link>
               ) : (
                 <span>Tür belirtilmedi</span>
               )}
@@ -87,16 +101,10 @@ export function PublicWorkStream({
             </div>
 
             <h2>
-              <Link
-                href={`/kitap/${work.slug}?from=/eserler`}
-              >
-                {work.title}
-              </Link>
+              <Link href={bookHref}>{work.title}</Link>
             </h2>
             <p className="public-hub-card__author">
-              <Link href={`/yazarlar/${work.author.publicId}`}>
-                {authorName}
-              </Link>
+              <Link href={authorHref}>{authorName}</Link>
             </p>
             <p className="public-hub-card__description">
               {summary(work.description)}
@@ -111,9 +119,7 @@ export function PublicWorkStream({
                   : "Yayımlandı: "}
                 {formatDate(displayedDate)}
               </time>
-              <Link
-                href={`/kitap/${work.slug}?from=/eserler`}
-              >
+              <Link href={bookHref}>
                 Eseri incele →
               </Link>
             </div>

@@ -12,6 +12,11 @@ type Faq = {
   position?: number;
 };
 
+const baseUrl = "https://ilkoku.com";
+const title = "Yardım Merkezi | İlkOku";
+const description = "İlkOku'da okur, yazar, editör ve yayınevi olarak doğru adıma ulaşın; süreç, güven, telif ve sık sorulan sorular için yardım yollarını keşfedin.";
+const socialImage = "/opengraph-image";
+
 const audienceLabels: Record<string, string> = {
   all: "Herkes için",
   reader: "Okuyucular için",
@@ -91,15 +96,23 @@ const supportPaths = [
 ] as const;
 
 export const metadata: Metadata = {
-  title: "Yardım Merkezi | İlkOku",
-  description: "İlkOku'da okur, yazar, editör ve yayınevi olarak doğru adıma ulaşın; süreç, güven, telif ve sık sorulan sorular için yardım yollarını keşfedin.",
+  title,
+  description,
   alternates: { canonical: "/yardim" },
+  robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     locale: "tr_TR",
     url: "/yardim",
-    title: "Yardım Merkezi | İlkOku",
-    description: "İlkOku'da yapmak istediğiniz işe göre doğru yardım ve keşif yoluna ulaşın.",
+    title,
+    description,
+    images: [{ url: socialImage, alt: "İlkOku Yardım Merkezi" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: [socialImage],
   },
 };
 
@@ -134,29 +147,44 @@ export default async function HelpPage() {
   }
 
   const categories = Array.from(new Set(items.map((item) => item.category || "Genel")));
-  const faqSchema = items.length > 0
-    ? {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: items.map((item) => ({
-          "@type": "Question",
-          name: item.question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: item.answer,
-          },
-        })),
-      }
-    : null;
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: title,
+      description,
+      inLanguage: "tr-TR",
+      url: `${baseUrl}/yardim`,
+      isPartOf: { "@type": "WebSite", name: "İlkOku", url: baseUrl },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: `${baseUrl}/` },
+        { "@type": "ListItem", position: 2, name: "Yardım Merkezi", item: `${baseUrl}/yardim` },
+      ],
+    },
+    ...(items.length > 0 ? [{
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: items.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.answer,
+        },
+      })),
+    }] : []),
+  ];
 
   return (
     <main className="help-page">
-      {faqSchema ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema).replace(/</g, "\\u003c") }}
-        />
-      ) : null}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+      />
 
       <header className="help-hero help-container">
         <span className="help-eyebrow">İlkOku destek ve yönlendirme merkezi</span>

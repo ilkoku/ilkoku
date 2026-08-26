@@ -313,6 +313,12 @@ test("public discovery keeps the anonymous-to-member reading line closed", () =>
   const chapter = source(
     "src/app/oku/[slug]/[chapterSlug]/page.tsx",
   );
+  const readingExperience = source(
+    "src/features/reading/components/ReadingExperience.tsx",
+  );
+  const favorites = source("src/features/reader/favorites.ts");
+  const comments = source("src/features/reader/comments.ts");
+  const commentEmail = source("src/features/reader/comment-email.actions.ts");
   const loginForm = source(
     "src/features/auth/components/LoginForm.tsx",
   );
@@ -337,15 +343,24 @@ test("public discovery keeps the anonymous-to-member reading line closed", () =>
     "chapter authentication redirect",
   );
 
+  contains(readingExperience, "bookReturnPath", "reading back-link context");
+  contains(readingExperience, "currentChapterPath", "reading action return context");
+  contains(readingExperience, '?from=${encodedReturnTo}', "chapter navigation keeps origin context");
+  contains(readingExperience, "value={currentChapterPath}", "reading mutations keep origin context");
+  contains(favorites, ".max(5000)", "favorite nested return-path budget");
+  contains(comments, "returnPath: z.string().min(1).max(5000)", "comment nested return-path budget");
+  contains(commentEmail, "returnPath: z.string().min(1).max(5000)", "reply nested return-path budget");
+
   contains(loginForm, "registerHref", "login-to-registration continuation");
   contains(loginForm, "/kayit?sonraki=${encodeURIComponent(nextPath)}", "registration target preservation");
-  contains(loginSecurity, "MAX_NEXT_PATH_LENGTH", "bounded login continuation");
+  contains(loginSecurity, "MAX_NEXT_PATH_LENGTH = 5000", "bounded login continuation");
   contains(registerPage, "rol?: string", "registration role query");
   contains(registerPage, "sonraki?: string", "registration continuation query");
   contains(registerPage, "initialRole={registrationRole(rol)}", "writer CTA role preservation");
   contains(registerForm, 'name="next"', "registration continuation hidden field");
   contains(registerForm, "initialRole ?? \"reader\"", "registration role initialization");
   contains(registerForm, "loginHref", "registration-to-login continuation");
+  contains(authActions, "MAX_NEXT_PATH_LENGTH = 5000", "bounded registration continuation");
   contains(authActions, "safeInternalPath", "safe registration continuation helper");
   contains(authActions, 'safeInternalPath(getText(formData, "next"))', "registration continuation validation");
   contains(authActions, "redirect(safeNextPath || roleDestinations[role])", "post-registration continuation");

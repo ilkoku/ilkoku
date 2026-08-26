@@ -1,6 +1,10 @@
-/* İlkOku public trust pages — scoped footer polish */
+/* İlkOku public trust pages — one canonical footer surface */
 
-.how-page .how-footer {
+.how-page > .how-footer {
+  display: none;
+}
+
+.public-trust-footer {
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -12,9 +16,10 @@
     radial-gradient(circle at 8% 110%, rgba(99, 71, 206, 0.18), transparent 20rem),
     linear-gradient(112deg, #17152f 0%, #1e1a3e 56%, #332568 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.how-page .how-footer::before {
+.public-trust-footer::before {
   content: "";
   position: absolute;
   z-index: -1;
@@ -30,15 +35,16 @@
   pointer-events: none;
 }
 
-.how-page .how-footer > .how-container {
+.public-trust-footer__inner {
   width: min(76rem, calc(100% - 3rem));
   display: grid;
   grid-template-columns: minmax(8.5rem, 0.78fr) minmax(0, 2.6fr);
   align-items: start;
   gap: clamp(2rem, 5vw, 5rem);
+  margin-inline: auto;
 }
 
-.how-page .how-footer .how-logo {
+.public-trust-footer__logo {
   width: clamp(7.5rem, 8.5vw, 9rem);
   aspect-ratio: 1;
   display: inline-flex;
@@ -48,13 +54,13 @@
   filter: drop-shadow(0 0.8rem 1.8rem rgba(0, 0, 0, 0.22));
 }
 
-.how-page .how-footer .how-logo img {
+.public-trust-footer__logo img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-.how-page .how-footer nav {
+.public-trust-footer nav {
   position: relative;
   min-width: 0;
   display: grid;
@@ -65,19 +71,19 @@
   font-weight: 720;
 }
 
-.how-page .how-footer nav::before {
+.public-trust-footer nav::before {
   content: "İlkOku’da devam et";
   position: absolute;
   top: 0;
   left: 0;
   color: #fff;
-  font-family: var(--how-display);
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
   font-size: 0.96rem;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
-.how-page .how-footer nav::after {
+.public-trust-footer nav::after {
   content: "";
   position: absolute;
   top: 1.45rem;
@@ -89,7 +95,7 @@
   box-shadow: 0 0 0.8rem rgba(132, 96, 238, 0.34);
 }
 
-.how-page .how-footer nav a {
+.public-trust-footer nav a {
   position: relative;
   width: fit-content;
   min-height: 1.7rem;
@@ -98,10 +104,11 @@
   padding: 0.14rem 0;
   color: rgba(238, 234, 255, 0.72);
   line-height: 1.35;
+  text-decoration: none;
   transition: color 180ms ease, transform 180ms ease;
 }
 
-.how-page .how-footer nav a::after {
+.public-trust-footer nav a::after {
   content: "";
   position: absolute;
   left: 0;
@@ -112,42 +119,48 @@
   transition: width 180ms ease;
 }
 
-.how-page .how-footer nav a:hover {
+.public-trust-footer nav a:hover {
   color: #fff;
   transform: translateX(0.16rem);
 }
 
-.how-page .how-footer nav a:hover::after {
+.public-trust-footer nav a:hover::after {
   width: 100%;
 }
 
+.public-trust-footer :where(a):focus-visible {
+  outline: 3px solid #a990ff;
+  outline-offset: 4px;
+  border-radius: 0.35rem;
+}
+
 @media (max-width: 58rem) {
-  .how-page .how-footer > .how-container {
+  .public-trust-footer__inner {
     grid-template-columns: minmax(7.5rem, 0.7fr) minmax(0, 2fr);
     gap: 2rem;
   }
 
-  .how-page .how-footer nav {
+  .public-trust-footer nav {
     grid-template-columns: repeat(2, minmax(8rem, 1fr));
   }
 }
 
 @media (max-width: 40rem) {
-  .how-page .how-footer {
+  .public-trust-footer {
     padding-top: 1.8rem;
   }
 
-  .how-page .how-footer > .how-container {
+  .public-trust-footer__inner {
     width: calc(100% - 2rem);
     grid-template-columns: 1fr;
     gap: 1.35rem;
   }
 
-  .how-page .how-footer .how-logo {
+  .public-trust-footer__logo {
     width: 7.4rem;
   }
 
-  .how-page .how-footer nav {
+  .public-trust-footer nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.3rem 1rem;
     padding-top: 1.8rem;
@@ -155,14 +168,14 @@
 }
 
 @media (max-width: 27rem) {
-  .how-page .how-footer nav {
+  .public-trust-footer nav {
     grid-template-columns: 1fr;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .how-page .how-footer nav a,
-  .how-page .how-footer nav a::after {
+  .public-trust-footer nav a,
+  .public-trust-footer nav a::after {
     transition: none;
   }
 }

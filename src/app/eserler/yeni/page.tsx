@@ -6,12 +6,18 @@ const title = "Yeni Yayımlanan Eserler | İlkOku";
 const description =
   "İlkOku’da son yayımlanan herkese açık Türkçe eserleri kalıcı kitap bağlantılarıyla keşfedin.";
 
+type NewWorksSearchParams = {
+  arama?: string;
+  sayfa?: string;
+  tur?: string;
+};
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ sayfa?: string }>;
+  searchParams: Promise<NewWorksSearchParams>;
 }): Promise<Metadata> {
   const query = await searchParams;
 
@@ -22,7 +28,7 @@ export async function generateMetadata({
       canonical: "/eserler/yeni",
     },
     robots: {
-      index: !query.sayfa,
+      index: !query.sayfa && !query.arama && !query.tur,
       follow: true,
     },
     openGraph: {
@@ -38,13 +44,13 @@ export async function generateMetadata({
 export default function NewPublicWorksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sayfa?: string }>;
+  searchParams: Promise<NewWorksSearchParams>;
 }) {
   return (
     <PublicWorkFeedPage
       basePath="/eserler/yeni"
       description={description}
-      emptyText="Henüz herkese açık yayımlanmış eser yok."
+      emptyText="Bu ölçütlerde yeni yayımlanmış herkese açık eser bulunamadı."
       eyebrow="YENİ YAYINLAR"
       heading="Yeni yayımlanan eserler"
       searchParams={searchParams}

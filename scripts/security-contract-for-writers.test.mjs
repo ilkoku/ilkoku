@@ -91,3 +91,25 @@ test("writer inspiration journey is detailed, writer-only and connects history b
   contains(css, ".writers-history__grid", "writer history responsive grid");
   contains(css, ".writers-history__now", "writer history present-day CTA styling");
 });
+
+test("writer history option A uses large book visuals and removes visible milestone numbering", () => {
+  const css = source("src/app/yazarlar-icin/for-writers.css");
+
+  contains(css, "grid-template-columns:minmax(17rem,20rem) minmax(0,1fr)", "large editorial history card layout");
+  contains(css, ".writers-history__meta > span { display:none; }", "history milestone numbers hidden from layout and accessibility tree");
+
+  for (const cover of [
+    "/writers/history/enheduanna-ilahiler.svg",
+    "/writers/history/genji.svg",
+    "/writers/history/frankenstein.svg",
+    "/writers/history/eylul.svg",
+    "/writers/history/gosta-berling.svg",
+    "/writers/history/beloved.svg",
+    "/writers/history/benim-adim-kirmizi.svg",
+  ]) {
+    contains(css, cover, `${cover} writer work visual`);
+  }
+
+  contains(css, ".writers-history__card:nth-child(even)::before", "alternating large cover composition");
+  contains(css, "aspect-ratio:2/3", "mobile book cover ratio");
+});

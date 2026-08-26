@@ -12,7 +12,7 @@ const workIdSchema = z.string().uuid();
 
 const returnPathSchema = z
   .string()
-  .max(500)
+  .max(5000)
   .refine(
     (value) =>
       value.startsWith("/") &&

@@ -11,12 +11,14 @@ import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 import { PublicWorkStream } from "@/features/public-discovery/PublicWorkStream";
 
 const baseUrl = "https://ilkoku.com";
+const MAX_RETURN_PATH_LENGTH = 1500;
 
 type GenrePageProps = {
   params: Promise<{
     slug: string;
   }>;
   searchParams: Promise<{
+    from?: string;
     sayfa?: string;
   }>;
 };
@@ -27,6 +29,38 @@ function pageNumber(value: string | undefined) {
   return Number.isFinite(parsed) && parsed > 0
     ? Math.min(parsed, 10_000)
     : 1;
+}
+
+function safeReturnPath(value: string | undefined) {
+  if (
+    !value ||
+    value.length > MAX_RETURN_PATH_LENGTH ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
+    return "/turler";
+  }
+
+  return value;
+}
+
+function genrePageHref(
+  slug: string,
+  page: number,
+  returnTo: string,
+) {
+  const parameters = new URLSearchParams();
+
+  if (page > 1) {
+    parameters.set("sayfa", String(page));
+  }
+
+  if (returnTo !== "/turler") {
+    parameters.set("from", returnTo);
+  }
+
+  const query = parameters.toString();
+  return query ? `/turler/${slug}?${query}` : `/turler/${slug}`;
 }
 
 export const dynamic = "force-dynamic";
@@ -55,7 +89,7 @@ export async function generateMetadata({
   const canonical = `/turler/${genre.slug}`;
   const title = `${genre.label} Eserleri | İlkOku`;
   const description =
-    `İlkOku’da herkese açık yayımlanan ${genre.label} türündeki Türkçe eserleri keşfedin.`;
+    `İlkOku’da keşfe açık yayımlanan ${genre.label} türündeki Türkçe eserleri keşfedin.`;
 
   return {
     title,
@@ -64,7 +98,7 @@ export async function generateMetadata({
       canonical,
     },
     robots: {
-      index: page === 1,
+      index: page === 1 && !query.from,
       follow: true,
     },
     openGraph: {
@@ -91,12 +125,18 @@ export default async function PublicGenrePage({
     notFound();
   }
 
+  const returnTo = safeReturnPath(query.from);
   const library = await getPublicWorkLibrary(
     {
       genre: genre.label,
       sort: "newest",
     },
     pageNumber(query.sayfa),
+  );
+  const currentPath = genrePageHref(
+    genre.slug,
+    library.currentPage,
+    returnTo,
   );
   const canonical = `${baseUrl}/turler/${genre.slug}`;
   const schema = {
@@ -141,8 +181,11 @@ export default async function PublicGenrePage({
           </p>
           <h1>{genre.label} eserleri</h1>
           <p>
-            {genre.label} türünde herkese açık yayımlanan
-            eserleri kalıcı kitap bağlantılarıyla keşfedin.
+            {genre.label} türündeki keşfe açık eserleri
+            kalıcı kitap bağlantılarıyla keşfedin.
+          </p>
+          <p>
+            <Link href={returnTo}>← Geldiğin sayfaya dön</Link>
           </p>
         </header>
 
@@ -158,17 +201,20 @@ export default async function PublicGenrePage({
           </div>
 
           {library.works.length > 0 ? (
-            <PublicWorkStream works={library.works} />
+            <PublicWorkStream
+              returnPath={currentPath}
+              works={library.works}
+            />
           ) : (
             <div className="public-hub__empty">
               <strong>
-                Bu türde public eser bulunamadı.
+                Bu türde keşfe açık eser bulunamadı.
               </strong>
               <p>
                 Eser yayından kaldırıldığında boş tür sayfası
                 da sitemap’ten otomatik çıkar.
               </p>
-              <Link href="/turler">
+              <Link href={returnTo}>
                 Diğer türleri görüntüle
               </Link>
             </div>
@@ -181,11 +227,11 @@ export default async function PublicGenrePage({
             >
               {library.currentPage > 1 ? (
                 <Link
-                  href={
-                    library.currentPage === 2
-                      ? `/turler/${genre.slug}`
-                      : `/turler/${genre.slug}?sayfa=${library.currentPage - 1}`
-                  }
+                  href={genrePageHref(
+                    genre.slug,
+                    library.currentPage - 1,
+                    returnTo,
+                  )}
                   rel="prev"
                 >
                   ← Önceki
@@ -199,7 +245,11 @@ export default async function PublicGenrePage({
               {library.currentPage <
               library.totalPages ? (
                 <Link
-                  href={`/turler/${genre.slug}?sayfa=${library.currentPage + 1}`}
+                  href={genrePageHref(
+                    genre.slug,
+                    library.currentPage + 1,
+                    returnTo,
+                  )}
                   rel="next"
                 >
                   Sonraki →

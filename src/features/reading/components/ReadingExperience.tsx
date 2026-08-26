@@ -126,8 +126,18 @@ export function ReadingExperience({
         ]
       : null;
 
+  const encodedReturnTo = encodeURIComponent(returnTo);
+  const currentBookPath = `/kitap/${chapter.work.slug}`;
+  const bookReturnPath =
+    returnTo === currentBookPath ||
+    returnTo.startsWith(`${currentBookPath}?`)
+      ? returnTo
+      : `${currentBookPath}?from=${encodedReturnTo}`;
+  const currentChapterPath =
+    `/oku/${chapter.work.slug}/bolum-${chapter.position}?from=${encodedReturnTo}`;
+
   function getChapterHref(position: number) {
-    return `/oku/${chapter.work.slug}/bolum-${position}`;
+    return `/oku/${chapter.work.slug}/bolum-${position}?from=${encodedReturnTo}`;
   }
 
   return (
@@ -148,7 +158,7 @@ export function ReadingExperience({
         >
           <Link
             className="reader-back"
-            href={`/kitap/${chapter.work.slug}?from=${encodeURIComponent(returnTo)}`}
+            href={bookReturnPath}
           >
             <span aria-hidden="true">←</span>
 
@@ -230,9 +240,7 @@ export function ReadingExperience({
                     <span aria-hidden="true">→</span>
                   </Link>
 
-                  <Link
-                    href={`/kitap/${chapter.work.slug}?from=${encodeURIComponent(returnTo)}`}
-                  >
+                  <Link href={bookReturnPath}>
                     <span>Eser Sayfasına Dön</span>
                     <span aria-hidden="true">←</span>
                   </Link>
@@ -343,7 +351,7 @@ export function ReadingExperience({
                     <input
                       name="returnPath"
                       type="hidden"
-                      value={`/oku/${chapter.work.slug}/bolum-${chapter.position}`}
+                      value={currentChapterPath}
                     />
 
                     <button
@@ -495,7 +503,7 @@ export function ReadingExperience({
                 <input
                   name="returnPath"
                   type="hidden"
-                  value={`/oku/${chapter.work.slug}/bolum-${chapter.position}`}
+                  value={currentChapterPath}
                 />
 
                 <Field

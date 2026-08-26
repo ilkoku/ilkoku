@@ -17,7 +17,7 @@ import "./public-library.css";
 const baseUrl = "https://ilkoku.com";
 const pageTitle = "Eserleri Keşfet | İlkOku";
 const pageDescription =
-  "İlkOku'da herkese açık yayımlanan Türkçe eserleri tür, yazar ve güncellik bilgileriyle keşfedin.";
+  "İlkOku'da keşfe açık Türkçe eser vitrinlerini tür, yazar ve güncellik bilgileriyle keşfedin.";
 
 type PublicLibraryPageProps = {
   searchParams: Promise<{
@@ -168,10 +168,11 @@ export default async function PublicWorkLibraryPage({
     filters,
     requestedPage,
   );
+  const currentPath = pageHref(filters, library.currentPage);
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "İlkOku herkese açık eserler",
+    name: "İlkOku keşfe açık eserler",
     description: pageDescription,
     url: `${baseUrl}/eserler`,
     inLanguage: "tr-TR",
@@ -245,13 +246,14 @@ export default async function PublicWorkLibraryPage({
           <div className="public-library__container public-library__hero-grid">
             <div>
               <p className="public-library__eyebrow">
-                HERKESE AÇIK ESER KÜTÜPHANESİ
+                KEŞFE AÇIK ESER KÜTÜPHANESİ
               </p>
               <h1>Yeni bir hikâyenin ilk okuru ol.</h1>
               <p>
-                Yazarların herkese açık yayımladığı eserleri
-                doğrudan incele; türüne göre süz ve yayımlanan
-                bölümlere güvenli biçimde ulaş.
+                Yazarların keşfe açtığı eser vitrinlerini
+                kayıt olmadan incele ve türüne göre süz.
+                Bölüm okumaları ücretsiz üyelik veya giriş
+                sonrasında açılır.
               </p>
             </div>
 
@@ -259,11 +261,11 @@ export default async function PublicWorkLibraryPage({
               <strong>Gerçek yayın yüzeyi</strong>
               <span>
                 Yalnızca aktif yazarlara ait, Türkçe,
-                yayımlanmış ve herkese açık eserler listelenir.
+                yayımlanmış ve keşfe açık eserler listelenir.
               </span>
               <span>
-                Taslak, özel, arşivlenmiş ve yayımlanmamış
-                bölüm verileri bu sayfaya taşınmaz.
+                Taslak, özel ve arşivlenmiş çalışmalar keşfe
+                çıkmaz; bölüm metni okumak için oturum gerekir.
               </span>
             </aside>
           </div>
@@ -284,7 +286,7 @@ export default async function PublicWorkLibraryPage({
             </Link>
             <Link href="/yazarlar">
               <strong>Yazarlar</strong>
-              <span>Yazarların herkese açık eserleri →</span>
+              <span>Yazarların keşfe açık eserleri →</span>
             </Link>
             <Link href="/turler">
               <strong>Türler</strong>
@@ -305,7 +307,7 @@ export default async function PublicWorkLibraryPage({
                   KEŞFET
                 </p>
                 <h2 id="eser-listesi-basligi">
-                  Herkese açık eserler
+                  Keşfe açık eserler
                 </h2>
               </div>
               <span>
@@ -375,6 +377,11 @@ export default async function PublicWorkLibraryPage({
                     work.author.displayName ??
                     work.author.fullName;
                   const genre = work.genre ?? "Eser";
+                  const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(currentPath)}`;
+                  const authorHref = `/yazarlar/${work.author.publicId}?from=${encodeURIComponent(currentPath)}`;
+                  const genreHref = work.genre
+                    ? `/turler/${publicTaxonomySlug(work.genre)}?from=${encodeURIComponent(currentPath)}`
+                    : null;
 
                   return (
                     <article
@@ -395,12 +402,8 @@ export default async function PublicWorkLibraryPage({
 
                       <div className="public-library-card__body">
                         <div className="public-library-card__meta">
-                          {work.genre ? (
-                            <Link
-                              href={`/turler/${publicTaxonomySlug(
-                                work.genre,
-                              )}`}
-                            >
+                          {genreHref ? (
+                            <Link href={genreHref}>
                               {genre}
                             </Link>
                           ) : (
@@ -412,9 +415,7 @@ export default async function PublicWorkLibraryPage({
                         </div>
 
                         <h3>
-                          <Link
-                            href={`/kitap/${work.slug}?from=/eserler`}
-                          >
+                          <Link href={bookHref}>
                             {work.title}
                           </Link>
                         </h3>
@@ -426,9 +427,7 @@ export default async function PublicWorkLibraryPage({
                         ) : null}
 
                         <p className="public-library-card__author">
-                          <Link
-                            href={`/yazarlar/${work.author.publicId}`}
-                          >
+                          <Link href={authorHref}>
                             {authorName}
                           </Link>
                         </p>
@@ -447,7 +446,7 @@ export default async function PublicWorkLibraryPage({
                           </time>
                           <Link
                             className="public-library-card__link"
-                            href={`/kitap/${work.slug}?from=/eserler`}
+                            href={bookHref}
                           >
                             Eseri incele
                             <span aria-hidden="true">→</span>
@@ -461,7 +460,7 @@ export default async function PublicWorkLibraryPage({
             ) : (
               <div className="public-library__empty">
                 <strong>
-                  Bu ölçütlerde herkese açık eser bulunamadı.
+                  Bu ölçütlerde keşfe açık eser bulunamadı.
                 </strong>
                 <p>
                   Yeni yayınlar eklendiğinde bu katalog ve
@@ -469,7 +468,7 @@ export default async function PublicWorkLibraryPage({
                 </p>
                 {filters.search || filters.genre ? (
                   <Link href="/eserler">
-                    Tüm herkese açık eserleri göster
+                    Tüm keşfe açık eserleri göster
                   </Link>
                 ) : (
                   <Link href="/kayit?rol=writer">

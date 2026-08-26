@@ -5,21 +5,28 @@ import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { authContent } from "@/content";
+import { PublisherApplicationFields } from "@/features/publisher-applications/components/PublisherApplicationFields";
 import { registerAction } from "../actions";
 import { roleOptions } from "../data";
 import { initialAuthState } from "../state";
 import type { RegistrationRole } from "../types";
-import { PublisherApplicationFields } from "@/features/publisher-applications/components/PublisherApplicationFields";
 
 export function RegisterForm({
   editorInviteToken,
+  initialRole,
+  nextPath = "",
 }: {
   editorInviteToken?: string;
+  initialRole?: RegistrationRole;
+  nextPath?: string;
 }) {
   const [selectedRole, setSelectedRole] = useState<RegistrationRole>(
-    editorInviteToken ? "editor" : "reader",
+    editorInviteToken ? "editor" : initialRole ?? "reader",
   );
   const [state, formAction, pending] = useActionState(registerAction, initialAuthState);
+  const loginHref = nextPath
+    ? `/giris?sonraki=${encodeURIComponent(nextPath)}`
+    : "/giris";
 
   return (
     <div className="auth-form-card">
@@ -32,6 +39,7 @@ export function RegisterForm({
             value={editorInviteToken}
           />
         )}
+        <input name="next" type="hidden" value={nextPath} />
         <Field label={authContent.register.fullName} name="full-name" autoComplete="name" placeholder={authContent.register.fullNamePlaceholder} required />
         <Field control="email" label={authContent.common.email} name="email" autoComplete="email" placeholder={authContent.common.emailPlaceholder} required />
         <Field control="password" label={authContent.common.password} name="password" autoComplete="new-password" placeholder={authContent.register.passwordPlaceholder} minLength={8} required />
@@ -78,7 +86,7 @@ export function RegisterForm({
         <Button className="auth-submit" type="submit" loading={pending}>{authContent.register.submit}</Button>
       </form>
       {state.message && <p className={`auth-status auth-status--${state.status}`} role={state.status === "error" ? "alert" : "status"}>{state.message}</p>}
-      <p className="auth-switch">{authContent.register.hasAccount} <Link href="/giris">{authContent.register.login}</Link></p>
+      <p className="auth-switch">{authContent.register.hasAccount} <Link href={loginHref}>{authContent.register.login}</Link></p>
     </div>
   );
 }

@@ -10,10 +10,14 @@ import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 const baseUrl = "https://ilkoku.com";
+const MAX_RETURN_PATH_LENGTH = 1500;
 
 type AuthorPageProps = {
   params: Promise<{
     publicId: string;
+  }>;
+  searchParams: Promise<{
+    from?: string;
   }>;
 };
 
@@ -34,12 +38,29 @@ function description(value: string | null) {
     : normalized;
 }
 
+function safeReturnPath(value: string | undefined) {
+  if (
+    !value ||
+    value.length > MAX_RETURN_PATH_LENGTH ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
+    return "/yazarlar";
+  }
+
+  return value;
+}
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: AuthorPageProps): Promise<Metadata> {
-  const { publicId } = await params;
+  const [{ publicId }, query] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const author = await getPublicAuthorById(publicId);
 
   if (!author) {
@@ -55,13 +76,17 @@ export async function generateMetadata({
   const name = authorName(author);
   const canonical = `/yazarlar/${author.publicId}`;
   const metaDescription =
-    `${name} tarafından İlkOku’da herkese açık yayımlanan ${author.works.length} Türkçe eseri keşfedin.`;
+    `${name} tarafından İlkOku’da keşfe açık yayımlanan ${author.works.length} Türkçe eseri keşfedin.`;
 
   return {
     title: `${name} — Eserleri | İlkOku`,
     description: metaDescription,
     alternates: {
       canonical,
+    },
+    robots: {
+      index: !query.from,
+      follow: true,
     },
     openGraph: {
       type: "profile",
@@ -75,8 +100,12 @@ export async function generateMetadata({
 
 export default async function PublicAuthorPage({
   params,
+  searchParams,
 }: AuthorPageProps) {
-  const { publicId } = await params;
+  const [{ publicId }, query] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const author = await getPublicAuthorById(publicId);
 
   if (!author) {
@@ -84,8 +113,12 @@ export default async function PublicAuthorPage({
   }
 
   const name = authorName(author);
-  const canonical =
-    `${baseUrl}/yazarlar/${author.publicId}`;
+  const profilePath = `/yazarlar/${author.publicId}`;
+  const returnTo = safeReturnPath(query.from);
+  const profileContextPath = query.from
+    ? `${profilePath}?from=${encodeURIComponent(returnTo)}`
+    : profilePath;
+  const canonical = `${baseUrl}${profilePath}`;
   const schemas = [
     {
       "@context": "https://schema.org",
@@ -152,10 +185,12 @@ export default async function PublicAuthorPage({
           </p>
           <h1>{name}</h1>
           <p>
-            Bu vitrinde yalnız yazarın herkese açık
-            yayımladığı Türkçe eserler bulunur. Taslaklar,
-            özel çalışmalar ve kişisel hesap bilgileri
-            gösterilmez.
+            Bu vitrinde yalnız yazarın keşfe açtığı Türkçe
+            eserler bulunur. Taslaklar, özel çalışmalar ve
+            kişisel hesap bilgileri gösterilmez.
+          </p>
+          <p>
+            <Link href={returnTo}>← Geldiğin sayfaya dön</Link>
           </p>
         </header>
 
@@ -165,7 +200,7 @@ export default async function PublicAuthorPage({
         >
           <div className="public-hub__section-heading">
             <h2 id="yazar-eserleri">
-              Yayımlanan eserler
+              Keşfe açık eserler
             </h2>
             <span>{author.works.length} eser</span>
           </div>
@@ -173,6 +208,7 @@ export default async function PublicAuthorPage({
           <div className="public-hub__grid">
             {author.works.map((work) => {
               const genre = work.genre?.trim();
+              const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(profileContextPath)}`;
 
               return (
                 <article
@@ -184,7 +220,7 @@ export default async function PublicAuthorPage({
                       <Link
                         href={`/turler/${publicTaxonomySlug(
                           genre,
-                        )}`}
+                        )}?from=${encodeURIComponent(profileContextPath)}`}
                       >
                         {genre}
                       </Link>
@@ -199,9 +235,7 @@ export default async function PublicAuthorPage({
                     </span>
                   </div>
                   <h2>
-                    <Link
-                      href={`/kitap/${work.slug}?from=/yazarlar/${author.publicId}`}
-                    >
+                    <Link href={bookHref}>
                       {work.title}
                     </Link>
                   </h2>
@@ -223,9 +257,7 @@ export default async function PublicAuthorPage({
                           ).format(work.publishedAt)
                         : "Tarih belirtilmedi"}
                     </time>
-                    <Link
-                      href={`/kitap/${work.slug}?from=/yazarlar/${author.publicId}`}
-                    >
+                    <Link href={bookHref}>
                       Eseri incele →
                     </Link>
                   </div>

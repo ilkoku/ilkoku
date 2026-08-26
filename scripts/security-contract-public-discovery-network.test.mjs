@@ -213,15 +213,28 @@ test("public authors and genres are derived only from the publication boundary",
     "genresBySlug",
     "normalized genre deduplication",
   );
+  contains(library, "prisma.work.groupBy", "genre work counts from publication rows");
+  contains(library, "getPublicAuthors(search?: string)", "author search boundary");
   notContains(library, "email: true", "private author email");
   notContains(library, "bio: true", "unreviewed author biography");
-  contains(authorIndex, 'href={`/yazarlar/${author.publicId}`}', "author links");
+  contains(authorIndex, "getPublicAuthors(search)", "live author filtering");
+  contains(authorIndex, "Keşfe açık", "author discovery terminology");
+  contains(authorIndex, "encodeURIComponent(returnPath)", "author discovery return context");
   contains(authorDetail, "getPublicAuthorById", "author detail boundary");
-  contains(genreIndex, 'href={`/turler/${genre.slug}`}', "genre links");
+  contains(authorDetail, "Geldiğin sayfaya dön", "author return path");
+  contains(authorDetail, "profileContextPath", "author nested return context");
+  contains(authorDetail, "MAX_RETURN_PATH_LENGTH", "bounded author return context");
+  contains(genreIndex, "getPublicGenres(search)", "live genre filtering");
+  contains(genreIndex, "Keşfe açık", "genre discovery terminology");
+  contains(genreIndex, "genre.count", "genre work counts");
+  contains(genreIndex, "encodeURIComponent(returnPath)", "genre discovery return context");
   contains(genreDetail, "getPublicGenreBySlug", "genre detail boundary");
+  contains(genreDetail, "Geldiğin sayfaya dön", "genre return path");
+  contains(genreDetail, "MAX_RETURN_PATH_LENGTH", "bounded genre return context");
 });
 
 test("discovery feeds and RSS expose links but never chapter content", () => {
+  const libraryPage = source("src/app/eserler/page.tsx");
   const feedPage = source(
     "src/features/public-discovery/PublicWorkFeedPage.tsx",
   );
@@ -233,12 +246,22 @@ test("discovery feeds and RSS expose links but never chapter content", () => {
     "src/features/public-discovery/library.ts",
   );
 
+  contains(libraryPage, "Keşfe açık eserler", "main discovery terminology");
+  contains(libraryPage, "currentPath = pageHref", "main filtered context");
+  contains(libraryPage, "encodeURIComponent(currentPath)", "main card return context");
   contains(feedPage, '"@type": "ItemList"', "feed item list");
   contains(feedPage, "PUBLIC_WORK_PAGE_SIZE", "feed pagination");
-  contains(stream, 'href={`/kitap/${work.slug}?from=/eserler`}', "work links");
-  contains(stream, 'href={`/yazarlar/${work.author.publicId}`}', "author links");
-  contains(stream, 'href={`/turler/${publicTaxonomySlug(', "genre links");
+  contains(feedPage, 'className="public-hub__filters"', "feed live filter surface");
+  contains(feedPage, "Keşfe açık eserler", "feed discovery terminology");
+  contains(feedPage, "{ genre, search, sort }", "feed filters reach publication query");
+  contains(feedPage, "returnPath={currentPath}", "feed keeps filtered return context");
+  contains(stream, "withReturnPath", "context-preserving public links");
+  contains(stream, "encodeURIComponent(returnPath)", "safe nested return parameter");
+  contains(stream, "bookHref", "work links preserve origin");
+  contains(stream, "authorHref", "author links preserve origin");
+  contains(stream, "genreHref", "genre links preserve origin");
   contains(rss, "application/rss+xml; charset=utf-8", "RSS content type");
+  contains(rss, "Keşfe Açık Eserler", "RSS discovery terminology");
   contains(rss, "getPublicWorkFeed", "RSS publication query");
   contains(rss, "<guid isPermaLink", "RSS stable GUID");
   notContains(library, "content: true", "chapter content projection");
@@ -276,28 +299,69 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   notContains(homepage, "18.592+", "fabricated reader count");
   contains(book, "work.authorPublicId", "book author schema URL");
   contains(book, '"@type": "BreadcrumbList"', "book breadcrumbs");
-  contains(showcase, '/yazarlar/${work.authorPublicId}', "book author link");
-  contains(showcase, '/turler/${publicTaxonomySlug(work.genre)}', "book genre link");
+  contains(showcase, "bookContextPath", "book preserves discovery origin");
+  contains(showcase, "encodedBookContextPath", "nested book return context");
+  contains(showcase, '/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}', "book author link preserves context");
+  contains(showcase, '/turler/${publicTaxonomySlug(work.genre)}?from=${encodedBookContextPath}', "book genre link preserves context");
+  contains(showcase, "Yayında · Üyelikle okunabilir", "truthful chapter access label");
   contains(retiredMap, 'permanentRedirect("/harita")', "retired discovery map redirect");
   contains(collector, '"/icerik/sayfalar", "/icerik/onizleme/sayfa/[id]"', "trust page CMS workflow map");
   contains(collector, 'id: "public-trust"', "visual trust workflow map");
 });
 
-test("public discovery does not silently change chapter access policy", () => {
+test("public discovery keeps the anonymous-to-member reading line closed", () => {
   const chapter = source(
     "src/app/oku/[slug]/[chapterSlug]/page.tsx",
   );
+  const readingExperience = source(
+    "src/features/reading/components/ReadingExperience.tsx",
+  );
+  const favorites = source("src/features/reader/favorites.ts");
+  const comments = source("src/features/reader/comments.ts");
+  const commentEmail = source("src/features/reader/comment-email.actions.ts");
+  const loginForm = source(
+    "src/features/auth/components/LoginForm.tsx",
+  );
+  const loginSecurity = source(
+    "src/features/auth/login-security-actions.ts",
+  );
+  const registerPage = source("src/app/kayit/page.tsx");
+  const registerForm = source(
+    "src/features/auth/components/RegisterForm.tsx",
+  );
+  const authActions = source("src/features/auth/actions.ts");
 
   contains(chapter, "index: false", "chapter noindex policy");
   contains(chapter, "follow: false", "chapter nofollow policy");
-  contains(
-    chapter,
-    "getCurrentSessionContext",
-    "chapter session lookup",
-  );
+  contains(chapter, "getCurrentSessionContext", "chapter session lookup");
+  contains(chapter, "MAX_RETURN_PATH_LENGTH", "bounded chapter return context");
+  contains(chapter, "publicReturnTo = getSafeReturnPath(query.from)", "chapter keeps book context");
+  contains(chapter, '?from=${encodeURIComponent(publicReturnTo)}', "login continuation keeps book context");
   contains(
     chapter,
     'redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`)',
     "chapter authentication redirect",
   );
+
+  contains(readingExperience, "bookReturnPath", "reading back-link context");
+  contains(readingExperience, "currentChapterPath", "reading action return context");
+  contains(readingExperience, '?from=${encodedReturnTo}', "chapter navigation keeps origin context");
+  contains(readingExperience, "value={currentChapterPath}", "reading mutations keep origin context");
+  contains(favorites, ".max(5000)", "favorite nested return-path budget");
+  contains(comments, "returnPath: z.string().min(1).max(5000)", "comment nested return-path budget");
+  contains(commentEmail, "returnPath: z.string().min(1).max(5000)", "reply nested return-path budget");
+
+  contains(loginForm, "registerHref", "login-to-registration continuation");
+  contains(loginForm, "/kayit?sonraki=${encodeURIComponent(nextPath)}", "registration target preservation");
+  contains(loginSecurity, "MAX_NEXT_PATH_LENGTH = 5000", "bounded login continuation");
+  contains(registerPage, "rol?: string", "registration role query");
+  contains(registerPage, "sonraki?: string", "registration continuation query");
+  contains(registerPage, "initialRole={registrationRole(rol)}", "writer CTA role preservation");
+  contains(registerForm, 'name="next"', "registration continuation hidden field");
+  contains(registerForm, "initialRole ?? \"reader\"", "registration role initialization");
+  contains(registerForm, "loginHref", "registration-to-login continuation");
+  contains(authActions, "MAX_NEXT_PATH_LENGTH = 5000", "bounded registration continuation");
+  contains(authActions, "safeInternalPath", "safe registration continuation helper");
+  contains(authActions, 'safeInternalPath(getText(formData, "next"))', "registration continuation validation");
+  contains(authActions, "redirect(safeNextPath || roleDestinations[role])", "post-registration continuation");
 });

@@ -22,6 +22,10 @@ function isSafeInternalPath(value: string | null) {
   return Boolean(value && value.startsWith("/") && !value.startsWith("//") && value.length <= 1500);
 }
 
+function currentLocationPath() {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
 function fallbackFor(pathname: string) {
   if (pathname.startsWith("/editorler/")) return "/editorler";
   return "/";
@@ -38,13 +42,34 @@ export function PublicBackNavigation() {
   );
 
   useEffect(() => {
-    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    const storedPath = window.sessionStorage.getItem(STORAGE_KEY);
+    const currentPath = currentLocationPath();
 
-    setPreviousPath(
-      isSafeInternalPath(storedPath) && storedPath !== currentPath ? storedPath : null,
-    );
-    window.sessionStorage.setItem(STORAGE_KEY, currentPath);
+    try {
+      const storedPath = window.sessionStorage.getItem(STORAGE_KEY);
+      setPreviousPath(
+        isSafeInternalPath(storedPath) && storedPath !== currentPath ? storedPath : null,
+      );
+      window.sessionStorage.setItem(STORAGE_KEY, currentPath);
+    } catch {
+      setPreviousPath(null);
+    }
+
+    const rememberCurrentPathBeforeInternalNavigation = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const anchor = target?.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor) return;
+
+      try {
+        const destination = new URL(anchor.href, window.location.href);
+        if (destination.origin !== window.location.origin) return;
+        window.sessionStorage.setItem(STORAGE_KEY, currentLocationPath());
+      } catch {
+        // Storage or malformed-link failures must never block navigation.
+      }
+    };
+
+    document.addEventListener("click", rememberCurrentPathBeforeInternalNavigation, true);
+    return () => document.removeEventListener("click", rememberCurrentPathBeforeInternalNavigation, true);
   }, [pathname]);
 
   if (!isVisible) return null;

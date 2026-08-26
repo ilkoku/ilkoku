@@ -263,3 +263,8 @@
     width: 100%;
   }
 }
+
+/* The dedicated /eserler surface owns public library discovery. */
+.landing-page .landing-discovery {
+  display: none !important;
+}

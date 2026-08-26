@@ -7,13 +7,13 @@ const read = (path) => readFileSync(path, "utf8");
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
 const rootLayoutPath = "src/app/layout.tsx";
-const expectedNavigation = [
-  ["/eserler", "Eserler"],
-  ["/yazarlar", "Yazarlar"],
-  ["/turler", "Türler"],
-  ["/editorler", "Editörler"],
-  ["/nasil-calisir", "Nasıl Çalışır"],
-  ["/yardim", "Yardım"],
+const retiredTopNavigation = [
+  "/eserler",
+  "/yazarlar",
+  "/turler",
+  "/editorler",
+  "/nasil-calisir",
+  "/yardim",
 ];
 
 const publicLayoutPaths = [
@@ -32,28 +32,51 @@ const publicLayoutPaths = [
   "src/app/yayinevleri-icin/layout.tsx",
 ];
 
-test("canonical public header exposes only working public destinations", () => {
+const trustLayoutPaths = [
+  "src/app/nasil-calisir/layout.tsx",
+  "src/app/editoryal-standartlar/layout.tsx",
+  "src/app/icerik-ve-yas-politikasi/layout.tsx",
+  "src/app/topluluk-kurallari/layout.tsx",
+  "src/app/telif-bildirimi/layout.tsx",
+  "src/app/yazarlar-icin/layout.tsx",
+  "src/app/editorler-icin/layout.tsx",
+  "src/app/yayinevleri-icin/layout.tsx",
+];
+
+test("public header matches the homepage model without a top navigation list", () => {
   const header = read(headerPath);
 
-  for (const [href, label] of expectedNavigation) {
-    assert.ok(
-      header.includes(`{ href: "${href}", label: "${label}" }`),
-      `${label} must point to ${href}`,
+  assert.doesNotMatch(header, /publicSiteNavigation|NavigationLinks/);
+  assert.doesNotMatch(header, /public-site-header__nav/);
+  assert.doesNotMatch(header, /public-site-header__mobile/);
+
+  for (const href of retiredTopNavigation) {
+    assert.doesNotMatch(
+      header,
+      new RegExp(`href=["']${href.replaceAll("/", "\\/")}["']`),
+      `${href} must not appear in the top header`,
     );
   }
 
-  assert.doesNotMatch(header, /href:\s*"\/rehber"/);
-  assert.doesNotMatch(header, /href:\s*"\/yayinevleri"/);
+  assert.match(header, /Dijital edebiyat platformu/);
+  assert.match(header, /public-site-header__account/);
   assert.match(header, /href="\/giris"/);
   assert.match(header, /href="\/kayit"/);
   assert.match(header, /href="\/hesabim"/);
   assert.match(header, /navigation\.workspaceHref/);
+  assert.match(header, /logoutAction/);
 });
 
-test("working public route families mount the shared header without touching root layout", () => {
+test("all eight public trust routes mount the same shared homepage-style header", () => {
   const frame = read(framePath);
   assert.match(frame, /<PublicSiteHeader\s*\/>/);
 
+  for (const path of trustLayoutPaths) {
+    assert.match(read(path), /<PublicSiteFrame>/, `${path} must mount PublicSiteFrame`);
+  }
+});
+
+test("existing public route frames remain isolated from root layout and workspaces", () => {
   for (const path of publicLayoutPaths) {
     assert.match(read(path), /<PublicSiteFrame>/, `${path} must mount PublicSiteFrame`);
   }

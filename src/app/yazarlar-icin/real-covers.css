@@ -1,0 +1,59 @@
+/* Yazarların İlkleri — gerçek eser/ilk baskı görselleri.
+ * Tarihsel eserlerde kamu malı / arşiv taramaları; modern eserlerde gerçek yayımlanmış kapak referansları kullanılır.
+ * Görsele yalnız hafif yaşlandırma uygulanır; kapak kompozisyonu yeniden tasarlanmaz.
+ */
+
+.for-writers-page .writers-history__card::before {
+  background-color:#e8e0d2;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:contain;
+  filter:sepia(.08) saturate(.9) contrast(.97) brightness(.99);
+}
+
+/* Enheduanna — özgün bir “kitap kapağı” yok; eserin gerçek tarihsel nesnesi kullanılır. */
+.for-writers-page .writers-history__card:nth-child(1)::before {
+  background-image:url('https://commons.wikimedia.org/wiki/Special:Redirect/file/Enheduanna%2C%20daughter%20of%20Sargon%20of%20Akkad.jpg');
+  background-size:cover;
+}
+
+/* Murasaki Shikibu — Genji Monogatari, 1654 tarihli cilt kapağı, Library of Congress. */
+.for-writers-page .writers-history__card:nth-child(2)::before {
+  background-image:url('https://tile.loc.gov/image-services/iiif/service%3Aasian%3Aasianscd%3A2004551302v6%3A0001/full/pct%3A100/0/default.jpg');
+}
+
+/* Mary Shelley — Frankenstein, 1818 ilk baskı başlık sayfası. */
+.for-writers-page .writers-history__card:nth-child(3)::before {
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Frankenstein_1818_edition_title_page.jpg/960px-Frankenstein_1818_edition_title_page.jpg');
+}
+
+/* Mehmet Rauf — Eylül, 1314/1900 tarihli özgün kapak taraması. */
+.for-writers-page .writers-history__card:nth-child(4)::before {
+  background-image:url('https://commons.wikimedia.org/wiki/Special:Redirect/file/Eyl%C3%BCl%20kapak.png');
+}
+
+/* Selma Lagerlöf — Gösta Berlings Saga, 1919 tarihli gerçek baskı kapağı. */
+.for-writers-page .writers-history__card:nth-child(5)::before {
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/G%C3%B6sta_Berlings_saga_1919.djvu/page1-800px-G%C3%B6sta_Berlings_saga_1919.djvu.jpg');
+}
+
+/* Toni Morrison — Beloved, gerçek yayımlanmış kapak. */
+.for-writers-page .writers-history__card:nth-child(6)::before {
+  background-image:url('https://inquiringreader.org/assets/img/beloved.jpg');
+}
+
+/* Orhan Pamuk — Benim Adım Kırmızı, YKY gerçek kapak görseli. */
+.for-writers-page .writers-history__card:nth-child(7)::before {
+  background-image:url('https://covers.storytel.com/jpg-640/9789180613828.609b2a9f-d29c-4e37-9f86-133198f50581?optimize=high&quality=70');
+}
+
+@media (max-width:53rem) {
+  .for-writers-page .writers-history__card::before,
+  .for-writers-page .writers-history__card:nth-child(even)::before {
+    background-size:contain;
+  }
+
+  .for-writers-page .writers-history__card:nth-child(1)::before {
+    background-size:cover;
+  }
+}

@@ -195,13 +195,22 @@ export async function getPublicGenres(search?: string) {
     const label = row.genre?.trim();
     const slug = label ? publicTaxonomySlug(label) : "";
 
-    if (label && slug && !genresBySlug.has(slug)) {
-      genresBySlug.set(slug, {
-        count: row._count._all,
-        label,
-        slug,
-      });
+    if (!label || !slug) {
+      continue;
     }
+
+    const existing = genresBySlug.get(slug);
+
+    if (existing) {
+      existing.count += row._count._all;
+      continue;
+    }
+
+    genresBySlug.set(slug, {
+      count: row._count._all,
+      label,
+      slug,
+    });
   }
 
   return [...genresBySlug.values()];

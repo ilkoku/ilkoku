@@ -48,6 +48,35 @@ test("CMS operational copy does not expose historical sprint labels", () => {
   assertContains(modules, "CMS canlı içerik hazırlığı ve kabul kontrolü", "current readiness module description");
 });
 
+test("public trust and role pages are one CMS readiness inventory", () => {
+  const readiness = source("src/lib/cms-readiness.ts");
+  const readinessPage = source("src/app/icerik/hazirlik/page.tsx");
+  const pages = source("src/app/icerik/sayfalar/page.tsx");
+  const starters = source("src/features/cms/starter-content-actions.ts");
+
+  assertContains(readiness, "guides: 8", "eight public CMS pages readiness target");
+  assertContains(readiness, "total: 13", "Hakkımızda + eight public pages + four FAQs starter total");
+  assertContains(readiness, "seo: 9", "Hakkımızda + eight public pages SEO target");
+  assertContains(readinessPage, "Public Güven ve Rol Sayfaları", "readiness public page lane");
+  assertContains(readinessPage, "Hakkımızda + 8 public sayfa", "readiness SEO coverage copy");
+  assertContains(pages, "Yeni public sayfaların CMS ve SEO kapsamı", "CMS public page inventory panel");
+
+  for (const key of [
+    "page:tr:nasil-calisir",
+    "page:tr:editoryal-standartlar",
+    "page:tr:icerik-ve-yas-politikasi",
+    "page:tr:topluluk-kurallari",
+    "page:tr:telif-bildirimi",
+    "page:tr:yazarlar-icin",
+    "page:tr:editorler-icin",
+    "page:tr:yayinevleri-icin",
+  ]) {
+    assertContains(readiness, key, `${key} readiness inventory`);
+    assertContains(starters, key, `${key} starter seed`);
+    assertContains(pages, key, `${key} CMS management inventory`);
+  }
+});
+
 test("CMS quality closure keeps fail-closed operational entry points visible", () => {
   const dashboard = source("src/app/icerik/page.tsx");
   const readiness = source("src/app/icerik/hazirlik/page.tsx");

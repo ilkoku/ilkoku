@@ -16,9 +16,9 @@ const footerLinks = [
 
 export function PublicTrustFooter() {
   return (
-    <footer className="how-footer">
-      <div className="how-container">
-        <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa">
+    <footer className="public-trust-footer">
+      <div className="public-trust-footer__inner">
+        <Link className="public-trust-footer__logo" href="/" aria-label="İlkOku ana sayfa">
           <Image src={logo} alt="İlkOku" sizes="150px" />
         </Link>
         <nav aria-label="İlkOku public bilgi sayfaları">

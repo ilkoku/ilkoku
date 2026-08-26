@@ -47,9 +47,9 @@ function taskReasonLabel(task: DashboardTask) {
   if (task.href.startsWith("/icerik/saglik")) return "CMS veri bütünlüğü";
   if (task.href.startsWith("/icerik/yasal")) return "Zorunlu yayın kabulü";
   if (task.href.startsWith("/icerik/ana-sayfa")) return "Ana Sayfa kabulü";
-  if (task.href.startsWith("/icerik/sayfalar")) return "Kurumsal içerik";
+  if (task.href.startsWith("/icerik/sayfalar")) return "Kurumsal / public içerik";
   if (task.href.startsWith("/icerik/sss")) return "Temel yardım içeriği";
-  if (task.href.startsWith("/icerik/rehber")) return "Temel rehber";
+  if (task.href.startsWith("/icerik/rehber")) return "Editoryal rehber";
   if (task.href === "/icerik/yayin-kuyrugu") return "Bekleyen taslaklar";
   if (task.href === "/icerik/seo") return "Canlı SEO kalitesi";
   if (task.href === "/icerik/formlar") return "Gelen talepler";
@@ -170,13 +170,13 @@ export default async function ContentDashboardPage() {
   const starter = getCmsStarterSummary(data.readiness);
   const integritySignals = getCmsDashboardIntegritySignals(data.integrity);
   const corporateHref = data.readiness.corporateId ? `/icerik/sayfalar/${data.readiness.corporateId}` : "/icerik/sayfalar";
-  const guideHref = data.readiness.guideId ? `/icerik/rehber/${data.readiness.guideId}?dil=tr` : "/icerik/rehber?dil=tr";
+  const publicPagesHref = data.readiness.guideId ? `/icerik/sayfalar/${data.readiness.guideId}` : "/icerik/sayfalar";
   const faqHref = data.readiness.faqFocusKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqFocusKey}` : "/icerik/sss?dil=tr";
   const faqArchivedHref = data.readiness.faqArchivedKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqArchivedKey}` : "/icerik/sss?dil=tr";
   const faqPendingHref = data.readiness.faqPendingDraftKey ? `/icerik/sss?dil=tr#faq-${data.readiness.faqPendingDraftKey}` : faqHref;
   const corporateAge = pendingAge(data.readiness.corporatePendingAgeHours);
   const faqAge = pendingAge(data.readiness.faqPendingAgeHours);
-  const guideAge = pendingAge(data.readiness.guidesPendingAgeHours);
+  const publicPagesAge = pendingAge(data.readiness.guidesPendingAgeHours);
   const oldestPendingAge = pendingAge(starter.pendingOldestAgeHours);
 
   const activity: ActivityItem[] = [
@@ -210,15 +210,11 @@ export default async function ContentDashboardPage() {
           : { href: "/icerik/hazirlik", title: `Temel SSS seti ${data.readiness.faqCreated}/${cmsStarterTargets.faq} kayıtlı`, text: "Eksik temel yardım kayıtlarını başlangıç seti üzerinden tamamlayın.", action: "Eksikleri tamamla", level: "warn" as const }
       : null,
     data.readiness.guides < cmsReadinessTargets.guides
-      ? data.readiness.guidesCreated >= cmsStarterTargets.guides
-        ? { href: guideHref, title: "İlkOku Nasıl Çalışır taslağı hazır · yayın bekliyor", text: data.readiness.guidesSeoReady >= cmsStarterTargets.guides ? access.canPublish ? "Rehber taslağı ve temel SEO alanları hazır. Doğrudan kaydı açıp önizleme sonrası yayınlayın." : "Rehber taslağı ve temel SEO alanları hazır. Doğrudan kaydı açıp önizlemeyi kontrol edin." : "Rehber taslağı hazır. Doğrudan kaydı açıp SEO alanlarını tamamlayın.", action: access.canPublish ? "İncele ve yayınla" : "Taslağı incele", level: "warn" as const }
-        : data.readiness.guidesArchived > 0
-          ? { href: guideHref, title: "İlkOku Nasıl Çalışır rehberi arşivde", text: "Yeni rehber kopyası oluşturmak yerine mevcut kaydı doğrudan açıp taslağa geri alın.", action: "Arşiv rehberi aç", level: "warn" as const }
-          : { href: "/icerik/hazirlik", title: "İlkOku Nasıl Çalışır kaydı eksik", text: "CMS başlangıç setinden rehber taslağını oluşturun.", action: "Başlangıç setini aç", level: "warn" as const }
+      ? { href: data.readiness.guidesCreated > 0 || data.readiness.guidesArchived > 0 ? publicPagesHref : "/icerik/hazirlik", title: `Public güven/rol sayfaları · kayıt ${data.readiness.guidesCreated}/${cmsStarterTargets.guides} · canlı ${data.readiness.guides}/${cmsReadinessTargets.guides}`, text: `Sekiz public sayfa tek kabul alanı olarak izleniyor. ${data.readiness.guidesSeoReady}/${cmsStarterTargets.guides} kayıt SEO hazır. Eksik, arşiv veya yayın bekleyen ilk kaydı tamamlayın.`, action: data.readiness.guidesCreated > 0 || data.readiness.guidesArchived > 0 ? "İlk gerekli kaydı aç" : "Başlangıç setini aç", level: "warn" as const }
       : null,
     data.readiness.corporate >= cmsReadinessTargets.corporate && data.readiness.corporatePendingDraft > 0 ? { href: corporateHref, title: `Hakkımızda yayında · değişiklik taslağı var${corporateAge ? ` · ${corporateAge}` : ""}`, text: "Mevcut Hakkımızda canlı ve kabul edilmiş durumda. Bekleyen değişiklik yayınlanana kadar canlı metin değişmez.", action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele", level: "info" as const } : null,
     data.readiness.faq >= cmsReadinessTargets.faq && data.readiness.faqPendingDrafts > 0 ? { href: faqPendingHref, title: `${data.readiness.faqPendingDrafts} temel SSS için değişiklik taslağı var${faqAge ? ` · en eskisi ${faqAge}` : ""}`, text: "Dört temel SSS canlı kalmaya devam ediyor. Panel en eski bekleyen temel SSS değişikliğine doğrudan gider.", action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele", level: "info" as const } : null,
-    data.readiness.guides >= cmsReadinessTargets.guides && data.readiness.guidesPendingDraft > 0 ? { href: guideHref, title: `İlkOku Nasıl Çalışır yayında · değişiklik taslağı var${guideAge ? ` · ${guideAge}` : ""}`, text: "Canlı rehber kabul edilmiş durumda. Bekleyen editoryal değişiklik ayrıca yayınlanana kadar public rehber değişmez.", action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele", level: "info" as const } : null,
+    data.readiness.guides >= cmsReadinessTargets.guides && data.readiness.guidesPendingDraft > 0 ? { href: publicPagesHref, title: `${data.readiness.guidesPendingDraft} public sayfada değişiklik taslağı var${publicPagesAge ? ` · en eskisi ${publicPagesAge}` : ""}`, text: "Sekiz public sayfa canlı kalmaya devam ediyor. İlk bekleyen değişikliği genel sayfa editöründen açın; yayınlanana kadar canlı içerik değişmez.", action: access.canPublish ? "Değişikliği incele/yayınla" : "Değişikliği incele", level: "info" as const } : null,
     data.publishQueue > 0 ? { href: "/icerik/yayin-kuyrugu", title: `${data.publishQueue} içerik operasyon kuyruğunda`, text: starter.pendingTotal > 0 ? `${starter.pendingTotal} kayıt temel CMS içeriğindeki değişikliklerden oluşuyor${oldestPendingAge ? `; en eskisi ${oldestPendingAge}dır bekliyor` : ""}. Kuyruk diğer taslakları da kapsar.` : "Bu taslaklar mevcut canlı kabul sonucunu bozmaz. Önizleyin, planlayın veya yayın yetkisiyle canlıya alın.", action: "Kuyruğu aç", level: "info" as const } : null,
     data.seoIssues > 0 ? { href: "/icerik/seo", title: `${data.seoIssues} yayındaki TR sayfada SEO alanı eksik`, text: "Title, description veya canonical eksiklerini tamamlayın.", action: "SEO'yu düzelt", level: "warn" as const } : null,
     data.forms > 0 ? { href: "/icerik/formlar", title: `${data.forms} açık form talebi var`, text: "Gelen kurumsal talepleri inceleyip sonuçlanan kayıtları arşivleyin.", action: "Talepleri aç", level: "info" as const } : null,
@@ -240,7 +236,7 @@ export default async function ContentDashboardPage() {
     if (task.level !== "info") return null;
     if (task.href === corporateHref) return corporateAge;
     if (task.href.startsWith("/icerik/sss")) return faqAge;
-    if (task.href.startsWith("/icerik/rehber")) return guideAge;
+    if (task.href === publicPagesHref) return publicPagesAge;
     if (task.href === "/icerik/yayin-kuyrugu") return oldestPendingAge;
     return null;
   };
@@ -261,6 +257,7 @@ export default async function ContentDashboardPage() {
     { label: "Bütünlük uyarısı", value: integritySignals.warnings, note: "Sistem Sağlığı", href: "/icerik/saglik?durum=warn#kontroller" },
     { label: "Yayın hazırlığı", value: `${summary.corePassed}/${summary.coreTotal}`, note: "canlı kabul alanı", href: "/icerik/hazirlik" },
     { label: "Başlangıç seti", value: `${starter.createdTotal}/${starter.total}`, note: starter.archivedTotal > 0 ? `${starter.archivedTotal} arşivde` : `${starter.publishedTotal} canlı`, href: "/icerik/hazirlik" },
+    { label: "Public sayfalar", value: `${data.readiness.guides}/${cmsReadinessTargets.guides}`, note: `${data.readiness.guidesSeoReady} SEO hazır`, href: "/icerik/sayfalar" },
     { label: "Bekleyen temel değişiklik", value: starter.pendingTotal, note: oldestPendingAge ? `en eskisi ${oldestPendingAge}` : "canlı yayını bozmuyor", href: "/icerik/hazirlik" },
     { label: "Operasyon kuyruğu", value: data.publishQueue, note: "canlı kabulden bağımsız", href: "/icerik/yayin-kuyrugu" },
     { label: "SEO eksiği", value: data.seoIssues, note: "yayındaki TR sayfa", href: "/icerik/seo" },
@@ -275,12 +272,12 @@ export default async function ContentDashboardPage() {
     { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: starter.pendingTotal > 0 ? `${starter.pendingTotal} temel değişiklik bekliyor${oldestPendingAge ? ` · ${oldestPendingAge}` : ""}` : "CMS canlı kabul durumunu aç" },
     { href: corporateHref, label: "Hakkımızda", text: data.readiness.corporatePendingDraft > 0 ? access.canPublish ? `Bekleyen değişikliği incele / yayınla${corporateAge ? ` · ${corporateAge}` : ""}` : `Bekleyen değişikliği incele${corporateAge ? ` · ${corporateAge}` : ""}` : access.canPublish ? "Kaydı incele / yayınla" : "Kurumsal taslağı incele" },
     { href: data.readiness.faqPendingDrafts > 0 ? faqPendingHref : faqHref, label: "Temel SSS", text: data.readiness.faqPendingDrafts > 0 ? access.canPublish ? `Bekleyen değişikliği incele / yayınla (${data.readiness.faqPendingDrafts})${faqAge ? ` · ${faqAge}` : ""}` : `Bekleyen değişikliği incele (${data.readiness.faqPendingDrafts})${faqAge ? ` · ${faqAge}` : ""}` : access.canPublish ? "İlk açık kaydı incele / yayınla" : "İlk açık yardım kaydını incele" },
-    { href: guideHref, label: "İlkOku Nasıl Çalışır", text: data.readiness.guidesPendingDraft > 0 ? access.canPublish ? `Bekleyen değişikliği incele / yayınla${guideAge ? ` · ${guideAge}` : ""}` : `Bekleyen değişikliği incele${guideAge ? ` · ${guideAge}` : ""}` : access.canPublish ? "Rehberi incele / yayınla" : "Rehber taslağını incele" },
+    { href: publicPagesHref, label: "Public Güven Sayfaları", text: data.readiness.guidesPendingDraft > 0 ? `${data.readiness.guidesPendingDraft} değişiklik bekliyor${publicPagesAge ? ` · ${publicPagesAge}` : ""}` : `${data.readiness.guides}/${cmsReadinessTargets.guides} yayında · ${data.readiness.guidesSeoReady}/${cmsStarterTargets.guides} SEO hazır` },
     { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen tüm taslakları yönet" },
   ] : [
     { href: "/icerik/hazirlik", label: "Yayın Hazırlığı", text: "CMS canlı kabul durumunu aç" },
     { href: "/icerik/sayfalar/yeni", label: "+ Yeni Sayfa", text: "Kurumsal taslak oluştur" },
-    { href: "/icerik/rehber/yeni?dil=tr", label: "+ Yeni Rehber", text: "Editoryal içerik oluştur" },
+    { href: "/icerik/sayfalar", label: "Public Sayfalar", text: "Sekiz public güven ve rol sayfasını yönet" },
     { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", text: "Bekleyen taslakları incele" },
   ];
 

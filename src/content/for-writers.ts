@@ -1,81 +1,77 @@
 export const forWritersPageContent = {
   title: "Yazarlar İçin",
-  summary: "Eserinizi İlkOku'da nasıl oluşturacağınızı, taslak ile yayın arasındaki farkı, okur geri bildirimini, iki aşamalı editör incelemesini, Eser Pasaportu'nu ve yayınevi keşfinin gerçek sınırlarını öğrenin.",
+  summary: "Dosyan bilgisayarında beklemek zorunda değil. Eserini bölüm bölüm geliştir, keşfe aç, gerçek okurlarla buluştur, iki bağımsız editör görüşüyle güçlendir ve yayınevlerinin keşif alanına gir.",
   seoTitle: "Yazarlar İçin | İlkOku",
-  seoDescription: "İlkOku'da yazar yolculuğunu inceleyin: eser ve bölüm oluşturma, içerik sınıflandırması, yayın, okur geri bildirimi, iki aşamalı editör incelemesi, Eser Pasaportu ve yayınevi keşfi.",
+  seoDescription: "İlkOku'da yazar yolculuğunu keşfedin: eser ve bölüm oluşturma, okurla buluşma, iki aşamalı editör incelemesi, Eser Pasaportu ve yayınevi keşfi.",
   canonical: "/yazarlar-icin",
-  updatedAt: "2026-08-25T00:00:00.000Z",
-  body: `İlkOku, yazara yalnızca bitmiş bir eseri sergileyeceği bir vitrin sunmaz. Eseri oluşturma, bölümler hâlinde geliştirme, yayımlama, okur geri bildirimi alma, profesyonel editör incelemesi isteme ve gelişim geçmişini kayıt altında tutma adımlarını aynı çalışma alanında bir araya getirir.
+  updatedAt: "2026-08-26T00:00:00.000Z",
+  body: `İlkOku, yazdığın eseri yalnızca saklayacağın bir çalışma alanı değil; onu adım adım geliştirip doğru zamanda keşfe açabileceğin bir eser yolculuğu sunar. Bölümlerini oluşturur, okurla buluşur, gerçek etkileşimleri görür, istersen profesyonel editör incelemesi alır ve eserin gelişim izini kayıt altında tutarsın.
 
-Bu sayfa bir yayın veya başarı garantisi vermez. İlkOku'da eser yayımlamak bir yayıneviyle sözleşme yapıldığı, basım kararı alındığı veya ticari başarı sağlanacağı anlamına gelmez. Yazar yaratıcı kararını ve eser üzerindeki haklarını korur; platformdaki her görünürlük ve değerlendirme adımı kendi yetki sınırı içinde ilerler.
+En önemli nokta şu: direksiyon sende kalır. Ne zaman yayımlayacağına, hangi geri bildirimi kullanacağına ve eserini nasıl geliştireceğine sen karar verirsin. İlkOku bu kararların etrafına okur, editör ve yayınevi keşfini bağlayan bir ekosistem kurar.
 
 ## Eserini oluştur ve bölüm bölüm geliştir
 
-Yazar hesabında yeni eser kaydı açarken başlık, tür, tanıtım bilgileri ve ilk bölüm için çalışma alanı oluşturulur. Eser ilk aşamada taslaktır; taslak olması okurlara veya arama motorlarına açıldığı anlamına gelmez.
+Yeni eser kaydını başlık, tür ve tanıtım bilgileriyle aç; ilk bölümünü kendi çalışma alanında yazmaya başla. Eser başlangıçta taslaktır ve sen hazır olmadan keşfe çıkmaz.
 
-Bölümler kaydedilebilir, düzenlenebilir ve eser geliştikçe yeni bölümler eklenebilir. Yazma alanı, kaydetme durumu, kelime sayımı ve odak modu gibi araçlarla çalışmayı sürdürmeyi kolaylaştırır; ancak yaratıcı içeriğin nasıl yazılacağına ilişkin kararı sistem vermez.
+Bölümlerini kaydedebilir, düzenleyebilir ve anlatı geliştikçe yeni bölümler ekleyebilirsin. Böylece eser tek seferde yüklenen son dosya olmaktan çıkar; gelişen bir çalışma sürecine dönüşür.
 
 ## İçerik ve yaş sınıfını doğru seç
 
-Yazar, eseri oluştururken içeriğin tamamındaki en yoğun unsura göre yaş sınıfını seçer ve gerekli içerik uyarılarını belirtir. Bu sınıflandırma, okura eseri açmadan önce bilgi vermek ve public yayın sınırını korumak için kullanılır.
+Eserini doğru okurla buluşturmanın ilk adımlarından biri yaş sınıfı ve içerik uyarılarını doğru seçmektir. Okur, okumaya başlamadan önce eserin genel yoğunluğu hakkında bilgi sahibi olur.
 
-Sınıflandırılmamış eser public olarak yayımlanamaz. 18+ olarak beyan edilen eser taslakta saklanabilir ancak mevcut public yayın sınırında herkese açık yayımlanamaz. Eser geliştikçe içerik yoğunluğu değişirse sınıflandırmanın da güncellenmesi gerekir.
+Sınıflandırma eser geliştikçe güncellenebilir. 18+ içerikler mevcut sistemde keşfe açık yayımlanmaz; ancak taslak çalışma alanında saklanabilir.
 
 ## Taslak ile yayın kararını ayrı tut
 
-Taslağı kaydetmek ile eseri yayımlamak farklı işlemlerdir. Yazar hazır olduğunda kanonik yayın akışını kullanır; sistem yayımlanabilir bir bölüm ve geçerli içerik sınıfı bulunmadan eseri public görünürlüğe taşımaz.
+Kaydetmek yayınlamak değildir. Bölümlerini uzun süre taslakta geliştirebilir; eserinin okurla buluşmaya hazır olduğuna sen karar verebilirsin.
 
-Yayın, eserin İlkOku içindeki herkese açık görünürlüğünü başlatır. Yayımlanmış, public ve arşivlenmemiş eserler kendilerine uygun keşif ve okuma yüzeylerinde yer alabilir. Yazar daha sonra yeni bölümler ve revizyonlarla çalışmasını geliştirmeye devam edebilir.
+Yayın koşulları tamamlandığında eser keşfe açık vitrinde yer alır. Ziyaretçiler kapak, başlık, tür, tanıtım ve yazar bilgilerini görebilir; bölüm okumaları ücretsiz üyelik veya giriş sonrasında açılır.
 
 ## Okur geri bildirimini gelişim verisi olarak kullan
 
-Okurlar kendilerine açık yayımlanmış eserlerde beğeni, favori, takip ve yorum gibi araçlarla etkileşim kurabilir. Bu sinyaller yazara okurun esere nasıl yaklaştığı hakkında geri bildirim sağlar; tek başına edebî kalite veya yayınevi kabulü hakkında kesin hüküm oluşturmaz.
+Okurlar keşfettikleri eserlerde beğeni, favori, takip ve yorum gibi etkileşimlerle gerçek okuma sinyalleri üretir. Bu sinyaller hangi eserin merak uyandırdığını, hangi bölümün konuşulduğunu ve okurun nerede bağ kurduğunu görmene yardımcı olabilir.
 
-Yazar, yararlı bulduğu yorumları değerlendirebilir; her yorumu uygulamak zorunda değildir. Topluluk geri bildirimi ile profesyonel editör incelemesi farklı süreçlerdir ve birbirinin yerine geçmez.
+Her yorum bir editör raporu değildir ve her görüşü uygulamak zorunda değilsin. Değeri, eserinin gerçek okurla karşılaşmasından doğan yeni bir bakış sunmasıdır.
 
 ## Profesyonel editör incelemesini ayrıca talep et
 
-Eseri yayımlamak editör incelemesini otomatik başlatmaz. Profesyonel değerlendirme isteyen yazar ayrıca editör inceleme talebi oluşturur. İnceleme başlamadan önce değerlendirilecek eser sürümü belirlenir; böylece raporun hangi metne dayandığı sonradan anlaşılabilir.
+Metnine daha derin ve profesyonel bir ikinci bakış istediğinde editör incelemesi talep edebilirsin. İnceleme belirli eser sürümü üzerinden başlar ve iki bağımsız editör aşamasında ilerler.
 
-Birinci editör görevi üstlendiğinde görev kilitlenir ve bağımsız raporunu tamamlar. Ardından eser ikinci editör aşamasına geçer. İkinci editör de kendi değerlendirmesini bağımsız biçimde tamamlar; ilk rapor ikinci değerlendirmeyi yönlendirecek şekilde önceden açılmaz.
+Birinci editör kendi raporunu tamamlar; ardından ikinci editör ilk görüş tarafından yönlendirilmeden bağımsız değerlendirme yapar. Böylece eser tek bir profesyonel bakışa bağlı kalmaz.
 
 ## Editör raporlarından sonra yaratıcı karar yazarda kalır
 
-İki değerlendirme tamamlandığında yazar kendisine açılan raporları görür. Editörler yapı, anlatım, tutarlılık, dil, tempo, karakter, tür beklentisi ve hedef okur gibi alanlarda gerekçeli profesyonel görüş sunabilir.
+İki rapor sana eserin güçlü ve geliştirmeye açık yönlerine farklı açılardan bakma imkânı verir. Yapı, anlatım, karakter, tempo, dil veya hedef okur konusunda tekrar eden noktaları daha net görebilirsin.
 
-Editör önerileri yeniden yazım emri değildir. Yazar tekrarlanan veya somut sorunları dikkate alabilir, bazı önerileri uygulayabilir ya da gerekçesiyle kendi tercihini koruyabilir. Eserin yaratıcı yönü hakkındaki nihai karar yazarda kalır.
+Editör önerileri emir değildir. Hangi önerinin eserin için doğru olduğuna sen karar verirsin; yaratıcı sesin ve nihai metin tercihin sende kalır.
 
 ## Eser Pasaportu gelişim geçmişini kayıt altında tutar
 
-Eser Pasaportu; eserin İlkOku'da hangi yazar hesabı tarafından, hangi tarihte oluşturulduğunu ve bölüm, sürüm, revizyon ile inceleme süreçleri boyunca nasıl geliştiğini zaman damgalı kayıtlarla görünür kılar.
+Eser Pasaportu, eserin İlkOku'da ne zaman oluşturulduğunu ve bölüm, sürüm, revizyon ile inceleme adımlarının nasıl ilerlediğini zaman damgalı kayıtlarla bir araya getirir.
 
-Bu kayıtlar eserin İlkOku içindeki oluşum ve gelişim geçmişine ilişkin tarihsel ve teknik kanıt sağlar; tek başına mahkeme yerine geçen kesin telif mülkiyeti kararı değildir. Pasaport erişimi ile eserin özel tam metnine erişim de aynı şey değildir; taslak ve özel sürümler yetki sınırları içinde kalır.
+Bu sayede eser yalnız son hâliyle değil, gelişim yolculuğuyla da iz bırakır. Pasaport özel metni herkese açmaz; kayıt ve içerik erişimi ayrı yetkilerle korunur.
 
 ## Yayınevi keşfi yayın garantisi değildir
 
-Uygun ve görünür eserler, yayınevi hesaplarının kendilerine açık keşif alanlarında incelenebilir. Yayınevi eseri görüntüleyebilir, kendi değerlendirme sürecine alabilir veya yetkili ekibi içinde değerlendirebilir; bu ilgi otomatik basım, sözleşme veya ticari teklif oluşturmaz.
+Keşfe açık ve uygun eserler yayınevlerinin yeni yazar ve eser aradığı keşif yüzeylerinde görünür olabilir. Bu, eserinin yalnız okur tarafından değil sektör profesyonelleri tarafından da fark edilmesi için yeni bir kapı açar.
 
-Yazarın özel iletişim bilgileri, gizli taslakları veya yetki dışı çalışma kayıtları yayınevlerine otomatik olarak açılmaz. Olası ticari ilişki, tarafların ayrıca vereceği kararlar ve geçerli belgeler üzerinden ilerler.
+İlkOku'nun rolü eseri doğru keşif ortamına taşımaktır. Yayınevinin ilgilenmesi, sonraki profesyonel görüşme veya ticari kararların başlangıcı olabilir; yayın kararı ve olası anlaşma tarafların ayrıca vereceği kararlardır.
 
 ## Eser üzerindeki hakların yazarda kalır
 
-İlkOku'ya eser yüklemek veya platformda yayımlamak fikrî hakların kendiliğinden İlkOku'ya, editöre ya da yayınevine devredildiği anlamına gelmez. Platform, hizmeti sunmak için gerekli sınırlı kullanım ve görünürlük işlevlerini yürütür; hak devri ayrı ve açık bir hukuki işlem gerektirir.
+Eserini İlkOku'ya yüklemek veya keşfe açmak fikrî haklarını kendiliğinden platforma, editöre ya da yayınevine devretmez. Yaratıcı karar ve eser üzerindeki haklar yazarda kalır.
 
-Bir telif ihlali veya izinsiz kullanım şüphesi doğarsa Telif Bildirimi yolu kullanılabilir. İlkOku karmaşık hak sahipliği uyuşmazlıklarında mahkeme yerine geçmez ve kopyalama ya da ekran görüntüsü riskini yüzde yüz ortadan kaldırdığını iddia etmez.
+Eserinin İlkOku'daki oluşturma ve gelişim izi, yolculuğunun kayıtlı olmasına yardımcı olur. Somut bir izinsiz kullanım şüphesinde Telif Bildirimi yolu kullanılabilir.
 
 ## İlkOku yazar için neyi garanti etmez
 
-- Eserin yayınevi tarafından kabul edileceğini garanti etmez.
-- Basım, satış, gelir, okunma veya ticari başarı garantisi vermez.
-- Editör raporunu yayın sözleşmesi veya yayınevi kararı gibi sunmaz.
-- Her okur yorumunun doğru veya uygulanması gereken bir editoryal görüş olduğunu varsaymaz.
-- Taslak ve özel sürümlerin herkese açık olduğunu kabul etmez.
-- Yayınevi ilgisini bağlayıcı teklif olarak göstermez.
-- Telif sahipliği konusunda mahkeme yerine geçen kesin hüküm vermez.
+İlkOku sana görünürlük, gelişim ve keşif için araçlar sunar; bir sonucun yerine geçmez. Basım, satış veya ticari başarı yayınevi, okur ve piyasa gibi bağımsız unsurların kararlarına bağlıdır.
+
+Bunu bir eksik değil, doğru beklenti olarak düşün: İlkOku'nun değeri "seni kesin yayımlarız" demek değil; eserini daha güçlü, daha görünür ve daha keşfedilebilir bir yolculuğa taşımaktır.
 
 ## Yazar olarak başla
 
-Yeni bir yazar hesabı oluşturduktan ve hesabınızın rol akışını tamamladıktan sonra Eserlerim çalışma alanından ilk eserinizi oluşturabilirsiniz. Eser oluşturma, içerik sınıflandırması, bölüm yazımı ve yayın kararı aynı yazar çalışma akışında ilerler.
+İlk eser kaydını oluşturmak için yazar hesabınla başla. Önce taslağını aç, ilk bölümünü geliştir ve eserinin ne zaman keşfe çıkacağına kendi temponla karar ver.
 
-Mevcut hesabınız varsa giriş yaptıktan sonra Eserlerim alanına geçebilirsiniz. İlk eserinizi public olarak yayımlamadan önce İçerik ve Yaş Politikası'nı, eser haklarıyla ilgili sorularınız varsa Telif Bildirimi ve ilgili yasal metinleri inceleyin.`,
+Hazır olduğunda okurla buluşabilir, profesyonel editör görüşü isteyebilir ve eserinin gelişim yolculuğunu büyütebilirsin. İlkOku'da yeni bir yazar için ilk adım, ilk eseri oluşturmaktır.`
 } as const;

@@ -52,7 +52,7 @@ test("sitemap keeps all public trust routes synchronized with CMS indexability a
   assertContains(sitemap, ".filter((page) => !page.noIndex && !staticCmsPageSlugs.has(page.slug))", "dynamic CMS noindex exclusion");
   assertContains(sitemap, "status = 'published'", "published-only CMS sitemap boundary");
   assertNotContains(sitemap, '`${baseUrl}/en`', "no EN static sitemap URL");
-  assertNotContains(sitemap, "legal:en:%", "no EN legal sitemap inventory");
+  assertContains(sitemap, "contentKey NOT LIKE 'legal:en:%'", "EN legal sitemap exclusion");
   assertNotContains(sitemap, "page:en:%", "no EN generic sitemap inventory");
 });
 

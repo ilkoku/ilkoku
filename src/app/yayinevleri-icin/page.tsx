@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 
 import { ForPublishersExperience } from "@/components/content/ForPublishersExperience";
+import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { forPublishersPageContent } from "@/content/for-publishers";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
@@ -98,6 +99,7 @@ export default async function ForPublishersPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
       <ForPublishersExperience body={page.body} summary={page.summary} title={page.title} updatedAt={page.updatedAt} />
+      <PublicTrustFooter />
     </>
   );
 }

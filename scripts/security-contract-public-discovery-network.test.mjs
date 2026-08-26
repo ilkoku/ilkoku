@@ -213,12 +213,19 @@ test("public authors and genres are derived only from the publication boundary",
     "genresBySlug",
     "normalized genre deduplication",
   );
+  contains(library, "prisma.work.groupBy", "genre work counts from publication rows");
+  contains(library, "getPublicAuthors(search?: string)", "author search boundary");
   notContains(library, "email: true", "private author email");
   notContains(library, "bio: true", "unreviewed author biography");
-  contains(authorIndex, 'href={`/yazarlar/${author.publicId}`}', "author links");
+  contains(authorIndex, "getPublicAuthors(search)", "live author filtering");
+  contains(authorIndex, "encodeURIComponent(returnPath)", "author discovery return context");
   contains(authorDetail, "getPublicAuthorById", "author detail boundary");
-  contains(genreIndex, 'href={`/turler/${genre.slug}`}', "genre links");
+  contains(authorDetail, "Geldiğin keşfe dön", "author return path");
+  contains(genreIndex, "getPublicGenres(search)", "live genre filtering");
+  contains(genreIndex, "genre.count", "genre work counts");
+  contains(genreIndex, "encodeURIComponent(returnPath)", "genre discovery return context");
   contains(genreDetail, "getPublicGenreBySlug", "genre detail boundary");
+  contains(genreDetail, "Geldiğin tür keşfine dön", "genre return path");
 });
 
 test("discovery feeds and RSS expose links but never chapter content", () => {
@@ -235,9 +242,14 @@ test("discovery feeds and RSS expose links but never chapter content", () => {
 
   contains(feedPage, '"@type": "ItemList"', "feed item list");
   contains(feedPage, "PUBLIC_WORK_PAGE_SIZE", "feed pagination");
-  contains(stream, 'href={`/kitap/${work.slug}?from=/eserler`}', "work links");
-  contains(stream, 'href={`/yazarlar/${work.author.publicId}`}', "author links");
-  contains(stream, 'href={`/turler/${publicTaxonomySlug(', "genre links");
+  contains(feedPage, 'className="public-hub__filters"', "feed live filter surface");
+  contains(feedPage, "{ genre, search, sort }", "feed filters reach publication query");
+  contains(feedPage, "returnPath={currentPath}", "feed keeps filtered return context");
+  contains(stream, "withReturnPath", "context-preserving public links");
+  contains(stream, "encodeURIComponent(returnPath)", "safe nested return parameter");
+  contains(stream, "bookHref", "work links preserve origin");
+  contains(stream, "authorHref", "author links preserve origin");
+  contains(stream, "genreHref", "genre links preserve origin");
   contains(rss, "application/rss+xml; charset=utf-8", "RSS content type");
   contains(rss, "getPublicWorkFeed", "RSS publication query");
   contains(rss, "<guid isPermaLink", "RSS stable GUID");

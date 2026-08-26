@@ -7,17 +7,35 @@ import {
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 
 const baseUrl = "https://ilkoku.com";
+const title = "Yazarlar | İlkOku";
+const description =
+  "İlkOku’da herkese açık Türkçe eseri bulunan yazarları ve yayımlanmış eserlerini keşfedin.";
+
+type PublicAuthorsPageProps = {
+  searchParams: Promise<{
+    arama?: string;
+  }>;
+};
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Yazarlar | İlkOku",
-  description:
-    "İlkOku’da herkese açık Türkçe eseri bulunan yazarları ve yayımlanmış eserlerini keşfedin.",
-  alternates: {
-    canonical: "/yazarlar",
-  },
-};
+export async function generateMetadata({
+  searchParams,
+}: PublicAuthorsPageProps): Promise<Metadata> {
+  const query = await searchParams;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: "/yazarlar",
+    },
+    robots: {
+      index: !query.arama,
+      follow: true,
+    },
+  };
+}
 
 function initials(value: string) {
   return value
@@ -29,8 +47,15 @@ function initials(value: string) {
     .toLocaleUpperCase("tr-TR");
 }
 
-export default async function PublicAuthorsPage() {
-  const authors = await getPublicAuthors();
+export default async function PublicAuthorsPage({
+  searchParams,
+}: PublicAuthorsPageProps) {
+  const query = await searchParams;
+  const search = query.arama?.trim().slice(0, 100) || undefined;
+  const authors = await getPublicAuthors(search);
+  const returnPath = search
+    ? `/yazarlar?arama=${encodeURIComponent(search)}`
+    : "/yazarlar";
   const schema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -91,6 +116,27 @@ export default async function PublicAuthorsPage() {
             <span>{authors.length} yazar</span>
           </div>
 
+          <form
+            action="/yazarlar"
+            className="public-hub__filters public-hub__filters--single"
+            method="get"
+          >
+            <label>
+              <span>Yazar ara</span>
+              <input
+                defaultValue={search}
+                maxLength={100}
+                name="arama"
+                placeholder="Yazar adı veya kullanıcı adı"
+                type="search"
+              />
+            </label>
+            <button type="submit">Yazarları getir</button>
+            {search ? (
+              <Link href="/yazarlar">Aramayı temizle</Link>
+            ) : null}
+          </form>
+
           {authors.length > 0 ? (
             <div className="public-hub__grid">
               {authors.map((author) => {
@@ -101,7 +147,7 @@ export default async function PublicAuthorsPage() {
                 return (
                   <Link
                     className="public-hub-card"
-                    href={`/yazarlar/${author.publicId}`}
+                    href={`/yazarlar/${author.publicId}?from=${encodeURIComponent(returnPath)}`}
                     key={author.publicId}
                   >
                     <div className="public-hub-card__meta">
@@ -126,15 +172,22 @@ export default async function PublicAuthorsPage() {
           ) : (
             <div className="public-hub__empty">
               <strong>
-                Henüz public yazar vitrini oluşmadı.
+                {search
+                  ? "Bu aramada yayımlayan yazar bulunamadı."
+                  : "Henüz public yazar vitrini oluşmadı."}
               </strong>
               <p>
-                Bir yazar ilk herkese açık eserini
-                yayımladığında vitrini otomatik oluşacak.
+                {search
+                  ? "Aramayı temizleyerek tüm aktif yazar vitrinlerine dönebilirsiniz."
+                  : "Bir yazar ilk herkese açık eserini yayımladığında vitrini otomatik oluşacak."}
               </p>
-              <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
-                İlkOku’da eser yolculuğunu öğren
-              </Link>
+              {search ? (
+                <Link href="/yazarlar">Tüm yazarları göster</Link>
+              ) : (
+                <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
+                  İlkOku’da eser yolculuğunu öğren
+                </Link>
+              )}
             </div>
           )}
         </section>

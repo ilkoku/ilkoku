@@ -251,7 +251,7 @@ jobs:
                 "https://ilkoku.com/turler" \
                 "https://ilkoku.com/nasil-calisir" \
               && check_post_merge_body_contains "https://ilkoku.com/eserler" \
-                "HERKESE AÇIK ESER KÜTÜPHANESİ" \
+                "KEŞFE AÇIK ESER KÜTÜPHANESİ" \
                 "Yeni yayımlananlar" \
                 "Son güncellenenler" \
                 "Yazarlar" \
@@ -269,7 +269,7 @@ jobs:
               && check_post_merge_redirect_route "https://ilkoku.com/rehber/ilk-eseri-yayinlama-rehberi" "/nasil-calisir" \
               && check_post_merge_body_contains "https://ilkoku.com/eserler/rss.xml" \
                 "<rss version=" \
-                "İlkOku — Herkese Açık Eserler" \
+                "İlkOku — Keşfe Açık Eserler" \
               && check_post_merge_public_route "https://ilkoku.com/editorler/merve-kaya" "404" \
               && check_post_merge_public_route "https://ilkoku.com/editorler/baris-erdem" "404" \
               && check_post_merge_public_route "https://ilkoku.com/editorler/derya-unal" "404" \

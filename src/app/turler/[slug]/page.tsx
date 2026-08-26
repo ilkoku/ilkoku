@@ -89,7 +89,7 @@ export async function generateMetadata({
   const canonical = `/turler/${genre.slug}`;
   const title = `${genre.label} Eserleri | İlkOku`;
   const description =
-    `İlkOku’da herkese açık yayımlanan ${genre.label} türündeki Türkçe eserleri keşfedin.`;
+    `İlkOku’da keşfe açık yayımlanan ${genre.label} türündeki Türkçe eserleri keşfedin.`;
 
   return {
     title,
@@ -181,8 +181,8 @@ export default async function PublicGenrePage({
           </p>
           <h1>{genre.label} eserleri</h1>
           <p>
-            {genre.label} türünde herkese açık yayımlanan
-            eserleri kalıcı kitap bağlantılarıyla keşfedin.
+            {genre.label} türündeki keşfe açık eserleri
+            kalıcı kitap bağlantılarıyla keşfedin.
           </p>
           <p>
             <Link href={returnTo}>← Geldiğin sayfaya dön</Link>
@@ -208,7 +208,7 @@ export default async function PublicGenrePage({
           ) : (
             <div className="public-hub__empty">
               <strong>
-                Bu türde public eser bulunamadı.
+                Bu türde keşfe açık eser bulunamadı.
               </strong>
               <p>
                 Eser yayından kaldırıldığında boş tür sayfası

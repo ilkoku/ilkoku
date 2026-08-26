@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import "./public-hubs.css";
 
 const discoveryLinks = [
-  { href: "/eserler", label: "Tüm eserler" },
+  { href: "/eserler", label: "Keşfe açık eserler" },
   { href: "/eserler/yeni", label: "Yeni yayımlananlar" },
   { href: "/eserler/guncellenen", label: "Son güncellenenler" },
   { href: "/yazarlar", label: "Yazarlar" },

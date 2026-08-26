@@ -50,9 +50,8 @@ export function PublicWorksExampleShowcase() {
             </h2>
           </div>
           <p>
-            Aşağıdaki kartlar yalnızca arayüz örneğidir. Gerçek yazar,
-            gerçek eser veya gerçek yayın verisi değildir; yeni yazarların
-            eserlerinin platformda nasıl sunulacağını görmesi için hazırlanmıştır.
+            Bu kartlar yalnızca arayüz örneğidir; gerçek yazar veya yayın verisi değildir.
+            Eserinin İlkOku’da nasıl sunulacağını göstermek için hazırlanmıştır.
           </p>
         </div>
 

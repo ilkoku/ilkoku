@@ -1,81 +1,77 @@
 export const forPublishersPageContent = {
   title: "Yayınevleri İçin",
-  summary: "İlkOku'da yayınevi keşfinin nasıl çalıştığını; public eser ve yazar keşfinden ekip içi değerlendirmeye, yetkili Eser Pasaportu erişiminden editör talebi ve sözleşme sınırlarına kadar öğrenin.",
+  summary: "Yeni yazar ve eserleri başvuru kutunuza düşmeden önce keşfedin. İlkOku'da keşfe açık eserleri, yazar vitrinlerini ve gerçek okur sinyallerini düzenli bir değerlendirme akışında inceleyin.",
   seoTitle: "Yayınevleri İçin | İlkOku",
-  seoDescription: "İlkOku yayınevi yolculuğunu inceleyin: eser ve yazar keşfi, kurumsal favori ve takip, ekip paylaşımı, yetkili Eser Pasaportu, editör talebi, ekip yetkileri ve sözleşme sınırları.",
+  seoDescription: "İlkOku yayınevi keşfini inceleyin: yeni yazar ve eser keşfi, tür ve eser sinyalleri, kurumsal değerlendirme, Eser Pasaportu ve rol bazlı erişim.",
   canonical: "/yayinevleri-icin",
-  updatedAt: "2026-08-25T00:00:00.000Z",
-  body: `İlkOku'da yayınevi çalışma alanı, görünür eser ve yazarları kurumsal bir keşif sürecinde değerlendirmeyi kolaylaştırır. Amaç, bir eseri görüntülemeyi otomatik yayın kararı veya bağlayıcı teklif gibi göstermek değil; keşif, ekip içi değerlendirme, profesyonel inceleme ve olası ticari adımları birbirinden ayrılmış yetki sınırları içinde yürütmektir.
+  updatedAt: "2026-08-26T00:00:00.000Z",
+  body: `İlkOku, yayınevine yalnız gelen dosyaları değerlendiren pasif bir başvuru kutusu değil; yeni yazar ve eserleri daha erken görebileceği bir keşif katmanı sunar. Keşfe açık eserler, yazar vitrinleri, tür bilgileri ve gerçek okur etkileşimleri yeni yetenekleri taramak için ortak bir başlangıç noktası oluşturur.
 
-Bir eseri keşfetmek, beğenmek, favoriye almak, yazarı takip etmek veya ekip içinde paylaşmak; yazara teklif verildiği, eser haklarının devralındığı, basım kararı alındığı ya da sözleşme kurulduğu anlamına gelmez. Ticari ilişki ancak tarafların ayrıca verdiği kararlar ve geçerli belgeler üzerinden ilerler.
+Bir eseri ilk kez yalnız son PDF'iyle değil, platformdaki gelişim ve keşif bağlamıyla görebilmek editoryal değerlendirmeye yeni bir perspektif kazandırır. İlkOku'nun amacı yayınevinin kararını vermek değil; daha fazla doğru adayı daha düzenli biçimde keşfetmesine yardımcı olmaktır.
 
 ## Yayınevi çalışma alanına kurumsal üyelikle gir
 
-Yayınevi çalışma alanı yalnız geçerli yayınevi üyeliği bulunan hesaplara açılır. Kurum içindeki her kullanıcı aynı yetkiye sahip değildir; sahibi, yönetici, editoryal kullanıcı, sözleşme yetkilisi, değerlendirici veya salt okunur kullanıcı gibi roller farklı erişim sınırları taşır.
+Yayınevi hesabı, kurumsal keşif ve değerlendirme yüzeylerini kişisel okur deneyiminden ayırır. Kurum içindeki kullanıcılar görevlerine göre farklı erişimlerle çalışabilir.
 
-Public bir eser veya yazarın internette görünür olması, yayınevi ekibindeki her üyenin özel içerik, dosya, iletişim bilgisi, Eser Pasaportu veya sözleşme kayıtlarını görebileceği anlamına gelmez. Her yüzey ilgili üyelik ve izin kontrolünden geçer.
+Bu yapı, yeni eserleri tarayan kişi ile daha ileri değerlendirme yapan kullanıcının aynı yetkilere sahip olmak zorunda olmadığı düzenli bir çalışma zemini oluşturur.
 
 ## Public eser ve yazarları keşfet
 
-Keşif yetkisi bulunan yayınevi üyeleri İlkOku'da herkese açık eserleri ve yazar profillerini arayabilir, tür, dil, tamamlanma ve editör inceleme durumu gibi mevcut filtrelerle değerlendirme havuzunu daraltabilir.
+Keşfe açık eserleri ve yazar profillerini tür, güncellik ve mevcut diğer yayın sinyalleri üzerinden tarayarak ilgi alanınızı daraltabilirsiniz. Böylece yeni bir yazarı yalnız size doğrudan başvurduğunda değil, okurla ilk buluşma aşamasında da fark edebilirsiniz.
 
-Keşif ekranı public görünürlükteki bilgileri kurumsal değerlendirme için düzenler. Yayımlanmamış taslaklar, yetki verilmemiş özel sürümler ve public olmayan kullanıcı bilgileri keşif sonucu olarak kendiliğinden açılmaz.
+Keşif yüzeyi yalnız görünür yayın verisini kullanır; yayımlanmamış taslak veya özel kullanıcı bilgisi keşif sonucu olarak kendiliğinden açılmaz.
 
 ## Beğeni, favori ve takibi kurumsal sinyal olarak kullan
 
-Yetkili ekip üyeleri eser veya yazarları beğenebilir, favoriye alabilir ve yazarı takip edebilir. Bu işlemler yayınevinin kendi çalışma alanında ilgi ve takip sinyali oluşturur; yazar açısından bağlayıcı teklif, ön kabul, yayın taahhüdü veya hak devri doğurmaz.
+İlginizi çeken eser veya yazarları favori ve takip sinyalleriyle kendi değerlendirme radarınızda tutabilirsiniz. Bu araçlar, geniş keşif havuzundan daha küçük ve anlamlı bir ilgi listesi oluşturmanıza yardımcı olur.
 
-Takip edilen bir yazarın yeni public eseri gibi uygun olaylar yayınevi ekibine bildirim üretebilir. Bildirim, yalnız yeni değerlendirme fırsatını haber verir; yayınevinin eseri kabul ettiği veya yazarla ticari ilişki kurduğu anlamına gelmez.
+Yazar açısından bu sinyaller ilgi göstergesidir; yayınevi açısından ise sonraki değerlendirmeyi düzenleyen çalışma verisidir. Bağlayıcı ticari adım, daha sonra ayrı karar ve süreçlerle oluşur.
 
 ## Eseri ekip içinde kontrollü biçimde paylaş
 
-Paylaşım yetkisi olan üyeler eser veya yazar kayıtlarını belirli ekip üyeleriyle paylaşabilir ve gerekli değerlendirme notunu ekleyebilir. E-posta paylaşımı da ayrı yetkiye bağlıdır; paylaşım kaydı, kimin hangi içeriği hangi amaçla değerlendirmeye taşıdığını izlenebilir tutmak için kullanılır.
+Kurumsal paylaşım araçları kademeli olarak etkinleştirilen çalışma katmanıdır. Etkin olduğu ortamda keşfedilen eser veya yazar kaydı belirli ekip üyelerine değerlendirme amacıyla taşınabilir; aktif olmadığı ortamda kullanılabilir gibi gösterilmez.
 
-Kendisiyle paylaşım yapılmayan veya ilgili yetkisi bulunmayan ekip üyesi aynı kaydı otomatik olarak göremez. Kurum içi paylaşım, eserin public olmayan tam metnini veya yazarın özel bilgilerini bütün ekibe açan genel bir erişim anahtarı değildir.
+Amaç, bir eserin tek kişinin ekranında kalması yerine kurum içi değerlendirme izine dönüşmesini sağlarken özel erişimi gereksiz biçimde genişletmemektir.
 
 ## Eser Pasaportu ile özel içeriği birbirinden ayır
 
-Yetkili bir yayınevi üyesi Eser Pasaportu'nu görebilse bile bu izin özel veya tam eser içeriğini otomatik olarak açmaz. Pasaport erişimi ile yetkili içerik erişimi sistemde ayrı izinlerdir.
+Yetkili Eser Pasaportu görünümü, eserin İlkOku içindeki oluşum ve gelişim çizgisini anlamaya yardımcı olabilir. Yayınevi açısından bu, yalnız son dosyayı değil eserin platformdaki yolculuğunu değerlendirmeye yarayan ek bağlamdır.
 
-Eser Pasaportu, eserin İlkOku içindeki oluşum ve gelişim geçmişini, uygun kayıtları ve süreç izlerini değerlendirmeye yardımcı olabilir. Bu kayıt tek başına yayınevine eser üzerinde hak vermez ve telif mülkiyetine ilişkin kesin hukuki hüküm oluşturmaz.
+Pasaport bilgisi ile özel tam metin erişimi ayrı yetkilerdir. Gelişim izini görmek, yazarın gizli taslaklarının kendiliğinden açılması anlamına gelmez.
 
 ## Tamamlanmış eser için İlkOku editör incelemesi iste
 
-İlgili yetkiye sahip yayınevi üyesi, uygun ve tamamlanmış bir eser için İlkOku profesyonel editör incelemesi talep edebilir. Bu işlem yayınevi kullanıcısını editör yapmaz; eser İlkOku'nun ayrı editör akışında bağımsız değerlendirmeye girer.
+Yayınevi kaynaklı editör talebi ve merkezi görev akışı kademeli geliştirme kapsamındadır. Etkinleştiğinde uygun tamamlanmış eser için bağımsız İlkOku editör değerlendirmesi ayrı bir profesyonel katman olarak kullanılacaktır.
 
-Editör raporu yayınevinin kendi yayın kurulunun, sözleşme yetkilisinin veya ticari karar mekanizmasının yerine geçmez. Profesyonel inceleme ek bir değerlendirme katmanıdır; kabul, basım, satış veya başarı garantisi değildir.
+Bu özellik aktif olmadığı ortamda yayınevi kullanıcılarına kullanılabilir işlem gibi sunulmaz. Mevcut editör inceleme modeli yazar tarafındaki profesyonel değerlendirme akışı üzerinden çalışır.
 
 ## Ekip üyelerini rol ve yetki sınırlarıyla yönet
 
-Yayınevi sahibi ve yetkili yöneticiler ekip üyelerini, davetleri ve özelleştirilebilir izinleri yönetebilir. Keşif, beğeni, favori, takip, paylaşım, editör talebi, Eser Pasaportu, özel içerik, dosya, ekip yönetimi ve denetim kaydı gibi yetkiler ihtiyaç oldukça ayrıştırılabilir.
+Kurumsal çalışma alanında keşif, değerlendirme, özel içerik ve ileri işlemler aynı erişim düzeyi olmak zorunda değildir. Doğru kullanıcıya doğru yetki verilmesi hem değerlendirme hızını hem de eser güvenini destekler.
 
-En geniş erişim varsayılan kabul edilmez. Ekip üyesi yalnız rolü ve kendisine tanımlanan etkili izinlerin açtığı işlemleri yapabilir. Böylece keşif yapan kullanıcı ile sözleşme yöneten veya yalnız paylaşılan kayıtları görüntüleyen kullanıcı aynı yetki düzeyinde olmak zorunda değildir.
+En geniş erişimin varsayılan olmadığı yaklaşım, yayınevinin kendi ekip yapısına göre daha düzenli çalışma modeli kurmasına yardımcı olur.
 
 ## Sözleşme ve yayın planını keşiften ayrı tut
 
-Bir eser üzerinde ilgi oluşması veya kurum içinde olumlu değerlendirme yapılması otomatik sözleşme oluşturmaz. Sözleşme ve yayın planı işlemleri ayrı yetki ve kayıt yüzeyleri üzerinden yürütülür; ilgili yetkisi olmayan kullanıcı yalnız keşif sinyali üzerinden bağlayıcı ticari işlem yapamaz.
+İlkOku'daki keşif, yayınevinin yeni adayları bulduğu ilk katmandır. Yayın kararı, sözleşme, haklar, basım koşulları ve ticari hükümler ise ayrı profesyonel yaşam döngüleridir.
 
-Sözleşme taslağı, gönderim, kabul veya red gibi kayıtlar keşif ve favori işlemlerinden farklı yaşam döngüleridir. Hak devri, lisans, basım koşulları, ödeme ve diğer ticari hükümler ancak tarafların ayrıca kabul ettiği geçerli belgelerle doğabilir.
+Bu ayrım keşfi zayıflatmaz; tam tersine yayınevinin önce doğru eseri bulmasına, sonra kendi editoryal ve ticari karar mekanizmasını işletmesine imkân verir.
 
 ## Gizli ve yetkili içeriği görev amacıyla kullan
 
-Yayınevi ekibine özel olarak açılan eser içeriği, dosya, paylaşım notu, editör raporu veya diğer çalışma kayıtları yalnız yetkili kurumsal değerlendirme amacıyla kullanılmalıdır. Erişim bulunması, içeriği kurum dışına sınırsız biçimde aktarma veya eser üzerinde çoğaltma ve yayın hakkı vermez.
+Yetkiyle açılan özel içerik, dosya, rapor veya çalışma kaydı yalnız kurumsal değerlendirme amacıyla kullanılmalıdır. Yazarın güvenle profesyonel keşfe katılabilmesi için erişim ile sınırsız kullanım birbirinden ayrılır.
 
-Yetki dışı paylaşım, gereksiz indirme veya kullanıcı verisini amacı dışında işleme platform kuralları ve ilgili hukuki yükümlülüklerden bağımsız değildir. Telif veya izinsiz kullanım şüphesi oluşursa Telif Bildirimi yolu kullanılabilir.
+Bu güven katmanı yayınevi açısından da önemlidir; kurum içinde kimin hangi bilgiye hangi amaçla eriştiğinin net olması değerlendirme sürecini daha profesyonel hâle getirir.
 
 ## İlkOku yayınevi için neyi garanti etmez
 
-- Keşfedilen eserin kuruma uygun veya ticari olarak başarılı olacağını garanti etmez.
-- Beğeni, favori veya takibi bağlayıcı yayın teklifi olarak kabul etmez.
-- Eser Pasaportu erişimini özel tam metin erişimiyle eşitlemez.
-- Editör raporunu yayınevi kabul kararı veya hukuki görüş gibi sunmaz.
-- Public eser görünürlüğünü yazarın özel iletişim bilgilerine erişim izni saymaz.
-- Kurum içi paylaşımı bütün ekip için sınırsız içerik yetkisine dönüştürmez.
-- Keşif veya değerlendirme işlemlerini otomatik sözleşme ya da hak devri olarak yorumlamaz.
+İlkOku keşif alanını büyütür; yayınevinin editoryal ve ticari kararını devralmaz. Bir eserin platformda ilgi görmesi veya profesyonel değerlendirmeden geçmesi, kurumunuz açısından otomatik yayın kararı oluşturmaz.
+
+Asıl değer garantide değil seçim alanındadır: daha fazla yeni yazar görmek, adayları daha erken fark etmek ve kendi yayın çizginize uygun eserleri daha bilinçli değerlendirmek.
 
 ## Yayınevi olarak başla
 
-Yeni bir yayınevi hesabı oluşturup kurumsal üyelik akışını tamamladıktan sonra size tanımlanan yetkilere göre eser ve yazar keşfi, favoriler, takip, paylaşımlar, editör talepleri ve diğer yayınevi çalışma alanlarını kullanabilirsiniz.
+Kurumsal hesabınızı oluşturduktan sonra size açık keşif yüzeylerinden yeni eser ve yazarları incelemeye başlayabilirsiniz. Önce yayın çizginize uygun türleri tarayın, dikkat çeken eserleri açın ve yazar vitriniyle birlikte değerlendirin.
 
-İlk değerlendirmeden önce ekipte kimin hangi yetkiye sahip olması gerektiğini belirleyin. Eser değerlendirmesinde Editoryal Standartlar'ı, eser haklarıyla ilgili şüphelerde Telif Bildirimi'ni ve platformdaki içerik sınırları için ilgili güven politikalarını inceleyin.`,
+İlkOku yayınevine "hangi eseri basmalısınız" demez. Daha değerli bir başlangıç sunar: henüz geniş kitlelerin bilmediği yeni bir sesi daha erken fark etme şansı.`
 } as const;

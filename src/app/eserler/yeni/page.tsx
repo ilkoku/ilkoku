@@ -5,6 +5,7 @@ import { PublicWorkFeedPage } from "@/features/public-discovery/PublicWorkFeedPa
 const title = "Yeni Yayımlanan Eserler | İlkOku";
 const description =
   "İlkOku’da son yayımlanan keşfe açık Türkçe eser vitrinlerini kalıcı kitap bağlantılarıyla keşfedin.";
+const socialImage = "/opengraph-image";
 
 type NewWorksSearchParams = {
   arama?: string;
@@ -37,6 +38,13 @@ export async function generateMetadata({
       url: "/eserler/yeni",
       title,
       description,
+      images: [{ url: socialImage, alt: "İlkOku yeni yayımlanan eserler" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [socialImage],
     },
   };
 }

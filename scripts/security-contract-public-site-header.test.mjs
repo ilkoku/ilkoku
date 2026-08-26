@@ -7,6 +7,7 @@ const read = (path) => readFileSync(path, "utf8");
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
 const backPath = "src/components/layout/PublicBackNavigation.tsx";
+const historyPath = "src/components/layout/PublicNavigationHistory.tsx";
 const rootLayoutPath = "src/app/layout.tsx";
 const retiredTopNavigation = [
   "/eserler",
@@ -88,24 +89,37 @@ test("all eight public trust routes mount the same shared homepage-style header"
   }
 });
 
-test("public trust pages, editor discovery and help expose one context-aware back path", () => {
+test("public back navigation preserves the actual tab-local internal source path", () => {
   const frame = read(framePath);
   const back = read(backPath);
+  const history = read(historyPath);
+  const rootLayout = read(rootLayoutPath);
 
   assert.match(frame, /<PublicBackNavigation\s*\/>/);
-  assert.match(back, /ilkoku:public:last-path/);
-  assert.match(back, /sessionStorage/);
-  assert.match(back, /isSafeInternalPath/);
+  assert.match(rootLayout, /<PublicNavigationHistory\s*\/>/);
+  assert.match(history, /ilkoku:public:navigation-stack/);
+  assert.match(history, /sessionStorage/);
+  assert.match(history, /window\.location\.pathname/);
+  assert.match(history, /window\.location\.search/);
+  assert.match(history, /window\.location\.hash/);
+  assert.match(history, /destination\.origin !== window\.location\.origin/);
+  assert.match(history, /document\.addEventListener\("click"/);
+  assert.match(history, /window\.addEventListener\("popstate"/);
+  assert.match(history, /consumePublicNavigationBackTarget/);
+  assert.doesNotMatch(history, /ilkoku:public:last-path/);
+
+  assert.match(back, /consumePublicNavigationBackTarget\(currentLocationPath\(\)\)/);
   assert.match(back, /pathname\.startsWith\("\/editorler\/"\)/);
   assert.match(back, /return "\/editorler"/);
   assert.match(back, /router\.push\(destination\)/);
+  assert.match(back, /aria-label="Geldiğin sayfaya dön"/);
 
   for (const route of [...trustRoutes, "/editorler", "/yardim"]) {
     assert.ok(back.includes(`"${route}"`), `${route} must expose the shared back control`);
   }
 
   for (const route of ["/eserler", "/yazarlar", "/turler"]) {
-    assert.ok(!back.includes(`"${route}"`), `${route} must keep its existing discovery navigation without a duplicate back bar`);
+    assert.ok(!back.includes(`"${route}"`), `${route} must keep its existing discovery navigation without a duplicate back control`);
   }
 });
 

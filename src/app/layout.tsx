@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncementBanner";
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
+import { PublicNavigationHistory } from "@/components/layout/PublicNavigationHistory";
 import { tr } from "@/content";
 import "./globals.css";
 import "./landing-theme.css";
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema).replace(/</g, "\\u003c") }}
         />
+        <PublicNavigationHistory />
         <PublicAnnouncementBanner />
         {children}
         <PublicCmsHydrator />

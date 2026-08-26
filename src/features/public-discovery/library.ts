@@ -162,28 +162,33 @@ export async function getPublicWorkLibrary(
   };
 }
 
-
-export async function getPublicGenres() {
-  const rows = await prisma.work.findMany({
-    distinct: ["genre"],
+export async function getPublicGenres(search?: string) {
+  const normalizedSearch = search?.trim().slice(0, 120);
+  const rows = await prisma.work.groupBy({
+    _count: {
+      _all: true,
+    },
+    by: ["genre"],
     orderBy: {
       genre: "asc",
-    },
-    select: {
-      genre: true,
     },
     take: 100,
     where: {
       ...publicWorkBaseWhere,
-      genre: {
-        not: null,
-      },
+      genre: normalizedSearch
+        ? {
+            contains: normalizedSearch,
+            not: null,
+          }
+        : {
+            not: null,
+          },
     },
   });
 
   const genresBySlug = new Map<
     string,
-    { label: string; slug: string }
+    { count: number; label: string; slug: string }
   >();
 
   for (const row of rows) {
@@ -191,7 +196,11 @@ export async function getPublicGenres() {
     const slug = label ? publicTaxonomySlug(label) : "";
 
     if (label && slug && !genresBySlug.has(slug)) {
-      genresBySlug.set(slug, { label, slug });
+      genresBySlug.set(slug, {
+        count: row._count._all,
+        label,
+        slug,
+      });
     }
   }
 
@@ -209,7 +218,9 @@ export async function getPublicGenreBySlug(
   );
 }
 
-export async function getPublicAuthors() {
+export async function getPublicAuthors(search?: string) {
+  const normalizedSearch = search?.trim().slice(0, 100);
+
   return prisma.user.findMany({
     orderBy: [
       {
@@ -235,6 +246,15 @@ export async function getPublicAuthors() {
     where: {
       deletedAt: null,
       status: "active",
+      ...(normalizedSearch
+        ? {
+            OR: [
+              { displayName: { contains: normalizedSearch } },
+              { fullName: { contains: normalizedSearch } },
+              { username: { contains: normalizedSearch } },
+            ],
+          }
+        : {}),
       works: {
         some: publicWorkPublicationWhere,
       },

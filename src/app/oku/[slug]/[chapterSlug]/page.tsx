@@ -17,6 +17,8 @@ import { getPublicChapter } from "@/features/works/queries";
 import { getCurrentSessionContext } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
+const MAX_RETURN_PATH_LENGTH = 1500;
+
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -26,8 +28,13 @@ export const metadata: Metadata = {
 };
 
 function getSafeReturnPath(value: string | undefined) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/kesfet";
+  if (
+    !value ||
+    value.length > MAX_RETURN_PATH_LENGTH ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
+    return "/eserler";
   }
 
   return value;
@@ -42,10 +49,11 @@ export default async function DynamicReadingPage({
 }) {
   const { chapterSlug, slug } = await params;
   const query = await searchParams;
+  const publicReturnTo = getSafeReturnPath(query.from);
   const auth = await getCurrentSessionContext();
 
   if (!auth) {
-    const returnPath = `/oku/${slug}/${chapterSlug}`;
+    const returnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}`;
     redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`);
   }
 
@@ -133,7 +141,7 @@ export default async function DynamicReadingPage({
 
   const returnTo = reviewAssignment
     ? getEditorReviewReturnPath(reviewAssignment.stage)
-    : getSafeReturnPath(query.from);
+    : publicReturnTo;
 
   const experience = (
     <ReadingExperience

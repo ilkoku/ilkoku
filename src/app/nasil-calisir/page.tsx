@@ -6,6 +6,7 @@ import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
 import "./how-it-works.css";
+import "./hero-proof-light.css";
 import "./public-trust-footer.css";
 
 const baseUrl = "https://ilkoku.com";
@@ -118,12 +119,14 @@ export default async function HowItWorksPage() {
           __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
         }}
       />
-      <HowItWorksExperience
-        title={page.title}
-        summary={page.summary}
-        body={page.body}
-        updatedAt={page.updatedAt}
-      />
+      <div className="how-it-works-route">
+        <HowItWorksExperience
+          title={page.title}
+          summary={page.summary}
+          body={page.body}
+          updatedAt={page.updatedAt}
+        />
+      </div>
       <PublicTrustFooter />
     </>
   );

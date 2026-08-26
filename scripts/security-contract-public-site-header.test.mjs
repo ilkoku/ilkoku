@@ -6,6 +6,7 @@ const read = (path) => readFileSync(path, "utf8");
 
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
+const frameCssPath = "src/components/layout/public-site-frame.css";
 const backPath = "src/components/layout/PublicBackNavigation.tsx";
 const historyPath = "src/components/layout/PublicNavigationHistory.tsx";
 const rootLayoutPath = "src/app/layout.tsx";
@@ -87,6 +88,18 @@ test("all eight public trust routes mount the same shared homepage-style header"
   for (const path of trustLayoutPaths) {
     assert.match(read(path), /<PublicSiteFrame>/, `${path} must mount PublicSiteFrame`);
   }
+});
+
+test("public frame owns a light fallback surface instead of exposing the dark app body", () => {
+  const frame = read(framePath);
+  const frameCss = read(frameCssPath);
+
+  assert.match(frame, /public-site-frame\.css/);
+  assert.match(frameCss, /\.public-site-frame\s*\{/);
+  assert.match(frameCss, /min-height:\s*100vh/);
+  assert.match(frameCss, /color-scheme:\s*light/);
+  assert.match(frameCss, /background:\s*linear-gradient/);
+  assert.doesNotMatch(frameCss, /var\(--color-background\)/);
 });
 
 test("public back navigation preserves the actual tab-local internal source path", () => {

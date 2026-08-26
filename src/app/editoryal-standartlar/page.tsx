@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 
 import { EditorialStandardsExperience } from "@/components/content/EditorialStandardsExperience";
+import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
@@ -127,6 +128,7 @@ export default async function EditorialStandardsPage() {
         body={page.body}
         updatedAt={page.updatedAt}
       />
+      <PublicTrustFooter />
     </>
   );
 }

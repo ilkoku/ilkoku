@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 
 import { HowItWorksExperience } from "@/components/content/HowItWorksExperience";
+import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
 import "./how-it-works.css";
@@ -123,6 +124,7 @@ export default async function HowItWorksPage() {
         body={page.body}
         updatedAt={page.updatedAt}
       />
+      <PublicTrustFooter />
     </>
   );
 }

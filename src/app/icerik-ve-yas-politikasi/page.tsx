@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 
 import { ContentAgePolicyExperience } from "@/components/content/ContentAgePolicyExperience";
+import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
@@ -59,5 +60,5 @@ export default async function ContentAgePolicyPage() {
     primaryImageOfPage: { "@type": "ImageObject", url: socialImage },
     isPartOf: { "@type": "WebSite", name: "İlkOku", url: baseUrl },
   };
-  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} /><ContentAgePolicyExperience title={page.title} summary={page.summary} body={page.body} updatedAt={page.updatedAt} /></>;
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} /><ContentAgePolicyExperience title={page.title} summary={page.summary} body={page.body} updatedAt={page.updatedAt} /><PublicTrustFooter /></>;
 }

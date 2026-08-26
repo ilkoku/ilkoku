@@ -1,0 +1,7 @@
+.community-rules-page .community-report {
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.community-rules-page .community-appeal {
+  padding-bottom: clamp(2.25rem, 4vw, 3.25rem);
+}

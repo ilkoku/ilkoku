@@ -6,6 +6,7 @@ const read = (path) => readFileSync(path, "utf8");
 
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
+const backPath = "src/components/layout/PublicBackNavigation.tsx";
 const rootLayoutPath = "src/app/layout.tsx";
 const retiredTopNavigation = [
   "/eserler",
@@ -43,6 +44,17 @@ const trustLayoutPaths = [
   "src/app/yayinevleri-icin/layout.tsx",
 ];
 
+const trustRoutes = [
+  "/nasil-calisir",
+  "/editoryal-standartlar",
+  "/icerik-ve-yas-politikasi",
+  "/topluluk-kurallari",
+  "/telif-bildirimi",
+  "/yazarlar-icin",
+  "/editorler-icin",
+  "/yayinevleri-icin",
+];
+
 test("public header matches the homepage model without a top navigation list", () => {
   const header = read(headerPath);
 
@@ -76,12 +88,71 @@ test("all eight public trust routes mount the same shared homepage-style header"
   }
 });
 
+test("public trust pages, editor discovery and help expose one context-aware back path", () => {
+  const frame = read(framePath);
+  const back = read(backPath);
+
+  assert.match(frame, /<PublicBackNavigation\s*\/>/);
+  assert.match(back, /ilkoku:public:last-path/);
+  assert.match(back, /sessionStorage/);
+  assert.match(back, /isSafeInternalPath/);
+  assert.match(back, /pathname\.startsWith\("\/editorler\/"\)/);
+  assert.match(back, /return "\/editorler"/);
+  assert.match(back, /router\.push\(destination\)/);
+
+  for (const route of [...trustRoutes, "/editorler", "/yardim"]) {
+    assert.ok(back.includes(`"${route}"`), `${route} must expose the shared back control`);
+  }
+
+  for (const route of ["/eserler", "/yazarlar", "/turler"]) {
+    assert.ok(!back.includes(`"${route}"`), `${route} must keep its existing discovery navigation without a duplicate back bar`);
+  }
+});
+
 test("existing public route frames remain isolated from root layout and workspaces", () => {
   for (const path of publicLayoutPaths) {
     assert.match(read(path), /<PublicSiteFrame>/, `${path} must mount PublicSiteFrame`);
   }
 
   assert.doesNotMatch(read(rootLayoutPath), /PublicSiteHeader|PublicSiteFrame/);
+});
+
+test("editor directory and help center stay connected to the same public footer and real destinations", () => {
+  const editorLayout = read("src/app/editorler/layout.tsx");
+  const editorDirectory = read("src/features/editors/components/EditorDirectory.tsx");
+  const editorData = read("src/features/editors/data.ts");
+  const helpLayout = read("src/app/yardim/layout.tsx");
+  const helpPage = read("src/app/yardim/page.tsx");
+
+  assert.match(editorLayout, /<PublicTrustFooter\s*\/>/);
+  assert.match(editorLayout, /public-editors\.css/);
+  assert.match(editorDirectory, /href="\/editorler-icin"/);
+  assert.match(editorDirectory, /href="\/editoryal-standartlar"/);
+  assert.match(editorDirectory, /href="\/kayit\?rol=editor"/);
+  assert.match(editorDirectory, /href="\/nasil-calisir"/);
+  assert.doesNotMatch(editorDirectory, /<Field|editors-filter-grid/);
+  assert.match(editorData, /export const editors: readonly HumanEditor\[\] = \[\]/);
+
+  assert.match(helpLayout, /<PublicTrustFooter\s*\/>/);
+  assert.match(helpLayout, /help\.css/);
+  for (const href of [
+    "/eserler",
+    "/yazarlar-icin",
+    "/editorler-icin",
+    "/yayinevleri-icin",
+    "/nasil-calisir",
+    "/editoryal-standartlar",
+    "/icerik-ve-yas-politikasi",
+    "/topluluk-kurallari",
+    "/telif-bildirimi",
+    "/editorler",
+  ]) {
+    assert.ok(helpPage.includes(`href: "${href}"`), `${href} must remain reachable from help`);
+  }
+  assert.match(helpPage, /mailto:destek@ilkoku\.com/);
+  assert.match(helpPage, /namespace = 'faq' AND status = 'published'/);
+  assert.match(helpPage, /"@type": "FAQPage"/);
+  assert.match(helpPage, /Henüz yayınlanmış SSS kaydı yok/);
 });
 
 test("legacy public headers are hidden only inside the explicit public frame", () => {

@@ -10,6 +10,9 @@ import { initialAuthState } from "../state";
 
 export function LoginForm({ nextPath = "" }: { nextPath?: string }) {
   const [state, formAction, pending] = useActionState(loginAction, initialAuthState);
+  const registerHref = nextPath
+    ? `/kayit?sonraki=${encodeURIComponent(nextPath)}`
+    : "/kayit";
 
   return (
     <div className="auth-form-card">
@@ -25,7 +28,7 @@ export function LoginForm({ nextPath = "" }: { nextPath?: string }) {
         <Button className="auth-submit" type="submit" loading={pending}>{authContent.login.submit}</Button>
       </form>
       {state.message && <p className={`auth-status auth-status--${state.status}`} role={state.status === "error" ? "alert" : "status"}>{state.message}</p>}
-      <p className="auth-switch">{authContent.login.noAccount} <Link href="/kayit">{authContent.login.createAccount}</Link></p>
+      <p className="auth-switch">{authContent.login.noAccount} <Link href={registerHref}>{authContent.login.createAccount}</Link></p>
     </div>
   );
 }

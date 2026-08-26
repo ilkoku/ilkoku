@@ -1,9 +1,13 @@
 /* Yazarların İlkleri — gerçek eser/ilk baskı görselleri.
- * Tarihsel eserlerde kamu malı / arşiv taramaları; modern eserlerde gerçek yayımlanmış kapak referansları kullanılır.
+ * Tarihsel eserlerde kamu malı / arşiv taramaları; modern eserlerde gerçek yayımlanmış kapak kaynakları kullanılır.
  * Görsele yalnız hafif yaşlandırma uygulanır; kapak kompozisyonu yeniden tasarlanmaz.
+ * Kapak alanı masaüstü ve mobilde 2:3 oranında tutulur; dış kaynak yüklenemezse kırık görsel ikonu yerine nötr kâğıt zemini kalır.
  */
 
 .for-writers-page .writers-history__card::before {
+  align-self:center;
+  min-height:0;
+  aspect-ratio:2/3;
   background-color:#e8e0d2;
   background-position:center;
   background-repeat:no-repeat;
@@ -11,49 +15,58 @@
   filter:sepia(.08) saturate(.9) contrast(.97) brightness(.99);
 }
 
-/* Enheduanna — özgün bir “kitap kapağı” yok; eserin gerçek tarihsel nesnesi kullanılır. */
+/* Enheduanna — özgün bir “kitap kapağı” yok; gerçek tarihsel Enheduanna nesnesi kullanılır. */
 .for-writers-page .writers-history__card:nth-child(1)::before {
-  background-image:url('https://commons.wikimedia.org/wiki/Special:Redirect/file/Enheduanna%2C%20daughter%20of%20Sargon%20of%20Akkad.jpg');
-  background-size:cover;
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/3/3d/Enheduanna%2C_daughter_of_Sargon_of_Akkad.jpg');
 }
 
-/* Murasaki Shikibu — Genji Monogatari, 1654 tarihli cilt kapağı, Library of Congress. */
+/* Murasaki Shikibu — Genji Monogatari, 1654 tarihli tarihsel cilt, Library of Congress. */
 .for-writers-page .writers-history__card:nth-child(2)::before {
   background-image:url('https://tile.loc.gov/image-services/iiif/service%3Aasian%3Aasianscd%3A2004551302v6%3A0001/full/pct%3A100/0/default.jpg');
 }
 
 /* Mary Shelley — Frankenstein, 1818 ilk baskı başlık sayfası. */
 .for-writers-page .writers-history__card:nth-child(3)::before {
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Frankenstein_1818_edition_title_page.jpg/960px-Frankenstein_1818_edition_title_page.jpg');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/3/35/Frankenstein_1818_edition_title_page.jpg');
 }
 
 /* Mehmet Rauf — Eylül, 1314/1900 tarihli özgün kapak taraması. */
 .for-writers-page .writers-history__card:nth-child(4)::before {
-  background-image:url('https://commons.wikimedia.org/wiki/Special:Redirect/file/Eyl%C3%BCl%20kapak.png');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/b/bd/Eyl%C3%BCl_kapak.png');
 }
 
-/* Selma Lagerlöf — Gösta Berlings Saga, 1919 tarihli gerçek baskı kapağı. */
+/* Selma Lagerlöf — Gösta Berlings Saga, 1919 gerçek baskı kapağı.
+ * Önceki .djvu/page1 URL'si doğrudan görsel asset değildi ve bazı tarayıcılarda boş kalıyordu.
+ */
 .for-writers-page .writers-history__card:nth-child(5)::before {
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/G%C3%B6sta_Berlings_saga_1919.djvu/page1-800px-G%C3%B6sta_Berlings_saga_1919.djvu.jpg');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/1/11/G%C3%B6sta_Berlings_saga_book_cover_1919.jpg');
 }
 
-/* Toni Morrison — Beloved, gerçek yayımlanmış kapak. */
+/* Toni Morrison — Beloved, 1987 Knopf baskısının gerçek kapak kaydı (ISBN 9780394535975). */
 .for-writers-page .writers-history__card:nth-child(6)::before {
-  background-image:url('https://inquiringreader.org/assets/img/beloved.jpg');
+  background-image:url('https://covers.openlibrary.org/b/isbn/9780394535975-L.jpg?default=false');
 }
 
-/* Orhan Pamuk — Benim Adım Kırmızı, YKY gerçek kapak görseli. */
+/* Orhan Pamuk — Benim Adım Kırmızı, İletişim Yayınları'nın gerçek kitap kapağı.
+ * Storytel'deki kare görsel kaldırıldı; gerçek portre kapak oranı korunur.
+ */
 .for-writers-page .writers-history__card:nth-child(7)::before {
-  background-image:url('https://covers.storytel.com/jpg-640/9789180613828.609b2a9f-d29c-4e37-9f86-133198f50581?optimize=high&quality=70');
+  background-image:url('https://iletisim.com.tr/Images/UserFiles/Images/Spot/120918165335.jpg');
+}
+
+@media (max-width:64rem) {
+  .for-writers-page .writers-history__card::before {
+    min-height:0;
+    aspect-ratio:2/3;
+  }
 }
 
 @media (max-width:53rem) {
   .for-writers-page .writers-history__card::before,
   .for-writers-page .writers-history__card:nth-child(even)::before {
+    width:min(100%,20rem);
+    min-height:0;
+    aspect-ratio:2/3;
     background-size:contain;
-  }
-
-  .for-writers-page .writers-history__card:nth-child(1)::before {
-    background-size:cover;
   }
 }

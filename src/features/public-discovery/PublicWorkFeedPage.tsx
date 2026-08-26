@@ -122,7 +122,7 @@ export async function PublicWorkFeedPage({
           <p>{description}</p>
           <p>
             <Link href="/eserler">
-              Tüm eser keşfine dön
+              Keşfe açık eserlere dön
             </Link>
           </p>
         </header>
@@ -132,7 +132,7 @@ export async function PublicWorkFeedPage({
           className="public-hub__section"
         >
           <div className="public-hub__section-heading">
-            <h2 id="eser-akisi">Herkese açık yayınlar</h2>
+            <h2 id="eser-akisi">Keşfe açık eserler</h2>
             <span>{library.totalCount} eser</span>
           </div>
 
@@ -186,8 +186,8 @@ export async function PublicWorkFeedPage({
               <strong>{emptyText}</strong>
               <p>
                 Yalnızca aktif yazarlara ait, Türkçe,
-                yayımlanmış ve herkese açık eserler bu akışa
-                girer.
+                yayımlanmış ve keşfe açık eserler bu akışa
+                girer. Bölüm metnini okumak için oturum gerekir.
               </p>
               {search || genre ? (
                 <Link href={basePath}>

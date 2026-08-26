@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { editorsContent } from "@/content";
 import { EditorDirectory } from "@/features/editors/components/EditorDirectory";
 
+const title = "Editörleri Keşfet | İlkOku";
+const description = "İlkOku'da doğrulanmış editör profillerini, uzmanlıklarını ve editoryal yaklaşımı keşfedin; editör modelini ve değerlendirme standartlarını inceleyin.";
+
 export const metadata: Metadata = {
-  title: editorsContent.metadataTitle,
-  description: editorsContent.metadataDescription,
+  title,
+  description,
   alternates: {
     canonical: "/editorler",
   },
@@ -12,8 +14,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "tr_TR",
     url: "/editorler",
-    title: editorsContent.metadataTitle,
-    description: editorsContent.metadataDescription,
+    title,
+    description,
   },
 };
 export const dynamic = "force-dynamic";

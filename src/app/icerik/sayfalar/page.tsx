@@ -3,12 +3,36 @@ import { prisma } from "@/lib/prisma";
 
 type ContentPageRow = {
   id: string;
+  contentKey: string;
   slug: string;
   title: string;
   status: "draft" | "published" | "archived";
+  seoTitle: string | null;
+  seoDescription: string | null;
+  canonicalUrl: string | null;
   noIndex: boolean;
   updatedAt: Date;
 };
+
+const requiredPublicPages = [
+  { contentKey: "page:tr:nasil-calisir", label: "Nasıl Çalışır", slug: "/nasil-calisir" },
+  { contentKey: "page:tr:editoryal-standartlar", label: "Editoryal Standartlar", slug: "/editoryal-standartlar" },
+  { contentKey: "page:tr:icerik-ve-yas-politikasi", label: "İçerik ve Yaş Politikası", slug: "/icerik-ve-yas-politikasi" },
+  { contentKey: "page:tr:topluluk-kurallari", label: "Topluluk Kuralları", slug: "/topluluk-kurallari" },
+  { contentKey: "page:tr:telif-bildirimi", label: "Telif Bildirimi", slug: "/telif-bildirimi" },
+  { contentKey: "page:tr:yazarlar-icin", label: "Yazarlar İçin", slug: "/yazarlar-icin" },
+  { contentKey: "page:tr:editorler-icin", label: "Editörler İçin", slug: "/editorler-icin" },
+  { contentKey: "page:tr:yayinevleri-icin", label: "Yayınevleri İçin", slug: "/yayinevleri-icin" },
+] as const;
+
+function hasCompleteSeo(page: ContentPageRow) {
+  return Boolean(
+    page.seoTitle?.trim()
+      && page.seoDescription?.trim()
+      && page.canonicalUrl?.trim()
+      && !page.noIndex,
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +42,8 @@ export default async function Page() {
 
   try {
     pages = await prisma.$queryRaw<ContentPageRow[]>`
-      SELECT id, slug, title, status, noIndex, updatedAt
+      SELECT id, contentKey, slug, title, status, seoTitle, seoDescription,
+             canonicalUrl, noIndex, updatedAt
       FROM ContentPage
       WHERE contentKey LIKE 'page:tr:%'
       ORDER BY updatedAt DESC
@@ -31,6 +56,13 @@ export default async function Page() {
   const published = pages.filter((page) => page.status === "published").length;
   const drafts = pages.filter((page) => page.status === "draft").length;
   const archived = pages.filter((page) => page.status === "archived").length;
+  const pageByContentKey = new Map(pages.map((page) => [page.contentKey, page]));
+  const publicCoverage = requiredPublicPages.filter((item) => pageByContentKey.has(item.contentKey)).length;
+  const publicPublished = requiredPublicPages.filter((item) => pageByContentKey.get(item.contentKey)?.status === "published").length;
+  const publicSeoReady = requiredPublicPages.filter((item) => {
+    const page = pageByContentKey.get(item.contentKey);
+    return page?.status === "published" && hasCompleteSeo(page);
+  }).length;
 
   return (
     <section className="content-editor-page">
@@ -38,7 +70,7 @@ export default async function Page() {
         <div>
           <span>İçerik · TR</span>
           <h1>Kurumsal Sayfalar</h1>
-          <p>Hakkımızda ve benzeri bilgilendirme sayfalarını taslak, önizleme, yayın, SEO ve sürüm geçmişiyle yönetin.</p>
+          <p>Hakkımızda ve public bilgilendirme sayfalarını taslak, önizleme, yayın, SEO ve sürüm geçmişiyle yönetin.</p>
         </div>
         <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : "success"} aria-label="Kurumsal sayfa özeti">
           <span className="cms-editor-status-card__label">İçerik özeti</span>
@@ -67,12 +99,50 @@ export default async function Page() {
               <Link href="/icerik/sayfalar/yeni">+ Yeni kurumsal sayfa</Link>
             </div>
             <div className="cms-editor-toolbar__cluster">
+              <Link href="/icerik/seo">SEO Merkezi</Link>
+              <Link href="/sitemap.xml" target="_blank">Sitemap ↗</Link>
               <Link href="/icerik/yayin-kuyrugu">Yayın Kuyruğu</Link>
               <Link href="/icerik/gecmis">Sürüm Geçmişi</Link>
             </div>
           </nav>
 
           <div className="content-panel">
+            <div className="content-section-heading">
+              <div><span>Public sayfa envanteri</span><h2>Yeni public sayfaların CMS ve SEO kapsamı</h2></div>
+              <p>Bu sekiz sayfa tek tek izlenir. Yayındaki bir kaydın SEO başlığı, açıklaması, canonical adresi ve index politikası sitemap kabulüyle aynı çizgide değerlendirilir.</p>
+            </div>
+            <div className="content-metric-grid">
+              <article className="content-metric-card"><span>CMS kaydı</span><strong>{publicCoverage}/8</strong><small>beklenen public sayfa</small></article>
+              <article className="content-metric-card"><span>Yayında</span><strong>{publicPublished}/8</strong><small>public CMS kaydı</small></article>
+              <article className="content-metric-card"><span>SEO hazır</span><strong>{publicSeoReady}/8</strong><small>title · description · canonical · index</small></article>
+            </div>
+            <div className="content-list" style={{ marginTop: "1rem" }}>
+              {requiredPublicPages.map((item) => {
+                const page = pageByContentKey.get(item.contentKey);
+                const seoReady = page ? hasCompleteSeo(page) : false;
+                return (
+                  <div className="content-list-row" key={item.contentKey} style={{ alignItems: "flex-start", gap: "1rem" }}>
+                    <div style={{ minWidth: 120 }}>
+                      <strong>{page ? (page.status === "published" ? "YAYINDA" : page.status === "archived" ? "ARŞİV" : "TASLAK") : "EKSİK"}</strong>
+                      <br />
+                      <small>{page?.status === "published" ? (seoReady ? "SEO HAZIR" : "SEO KONTROL") : "CMS KAYDI"}</small>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <strong>{item.label}</strong>
+                      <p style={{ margin: ".35rem 0 0" }}>{item.slug}</p>
+                    </div>
+                    <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      {page ? <Link href={`/icerik/sayfalar/${page.id}`}>Düzenle →</Link> : <Link href="/icerik/hazirlik">Eksik kaydı tamamla →</Link>}
+                      {page ? <Link href={`/icerik/onizleme/sayfa/${page.id}`}>Önizle ↗</Link> : null}
+                      {page?.status === "published" ? <Link href={item.slug} target="_blank">Canlı ↗</Link> : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="content-panel" style={{ marginTop: "1rem" }}>
             {pages.length === 0 ? (
               <div className="content-empty-state">
                 <strong>Henüz kurumsal CMS sayfası yok.</strong>
@@ -98,7 +168,7 @@ export default async function Page() {
                         <td><strong>{page.title}</strong></td>
                         <td>{page.slug}</td>
                         <td><span className={`cms-status-pill is-${page.status}`}>{page.status === "published" ? "Yayında" : page.status === "archived" ? "Arşiv" : "Taslak"}</span></td>
-                        <td><span className={`cms-status-pill ${page.noIndex ? "is-noindex" : "is-index"}`}>{page.noIndex ? "Noindex" : "Index"}</span></td>
+                        <td><span className={`cms-status-pill ${page.noIndex ? "is-noindex" : "is-index"}`}>{page.noIndex ? "Noindex" : hasCompleteSeo(page) ? "SEO hazır" : "SEO kontrol"}</span></td>
                         <td>{new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(page.updatedAt))}</td>
                         <td>
                           <div className="cms-editor-toolbar__cluster">

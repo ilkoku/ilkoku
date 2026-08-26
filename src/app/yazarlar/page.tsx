@@ -10,6 +10,7 @@ const baseUrl = "https://ilkoku.com";
 const title = "Yazarlar | İlkOku";
 const description =
   "İlkOku’da keşfe açık Türkçe eseri bulunan yazarları ve yayımlanmış eser vitrinlerini keşfedin.";
+const socialImage = "/opengraph-image";
 
 type PublicAuthorsPageProps = {
   searchParams: Promise<{
@@ -33,6 +34,20 @@ export async function generateMetadata({
     robots: {
       index: !query.arama,
       follow: true,
+    },
+    openGraph: {
+      type: "website",
+      locale: "tr_TR",
+      url: "/yazarlar",
+      title,
+      description,
+      images: [{ url: socialImage, alt: "İlkOku yazar keşfi" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [socialImage],
     },
   };
 }

@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - test-branch-chatgpt-2
   pull_request:
     branches:
       - main
@@ -121,9 +122,13 @@ jobs:
             [[ "${robots,,}" == *"nofollow"* ]]
           }
 
+          is_post_merge_main_push() {
+            [[ "${GITHUB_EVENT_NAME:-}" == "push" && "${GITHUB_REF_NAME:-}" == "main" ]]
+          }
+
           check_post_merge_protected_route() {
             local url="$1"
-            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+            if ! is_post_merge_main_push; then
               return 0
             fi
             check_protected_route "$url"
@@ -131,7 +136,7 @@ jobs:
 
           check_post_merge_private_index_header() {
             local url="$1"
-            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+            if ! is_post_merge_main_push; then
               return 0
             fi
             check_private_index_header "$url"
@@ -140,21 +145,21 @@ jobs:
           check_post_merge_public_route() {
             local url="$1"
             local expected="$2"
-            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+            if ! is_post_merge_main_push; then
               return 0
             fi
             check_public_route "$url" "$expected"
           }
 
           check_post_merge_body_contains() {
-            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+            if ! is_post_merge_main_push; then
               return 0
             fi
             check_body_contains "$@"
           }
 
           check_post_merge_cms_surface() {
-            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+            if ! is_post_merge_main_push; then
               return 0
             fi
 
@@ -190,7 +195,7 @@ jobs:
           }
 
           check_post_merge_redirect_route() {
-            if [[ "${GITHUB_EVENT_NAME:-}" != "push" ]]; then
+            if ! is_post_merge_main_push; then
               return 0
             fi
             check_redirect_route "$@"

@@ -84,5 +84,7 @@ test("publisher page follows the proven /yazarlar-icin public-page shell without
   notContains(layout, "ForPublishersExperience", "root layout must not own publisher page");
   notContains(layout, "for-publishers.css", "root layout must not import publisher CSS");
   notContains(layout, "PublicTrustFooter", "shared public footer mount must remain absent");
-  contains(hydrator, 'if (window.location.pathname !== "/") return;', "homepage-only footer hydrator boundary");
+  contains(hydrator, "const pathname = usePathname();", "route-aware homepage footer hydrator boundary");
+  contains(hydrator, 'if (pathname !== "/") return;', "homepage-only footer hydrator boundary");
+  contains(hydrator, "}, [pathname]);", "footer hydrator route-change dependency");
 });

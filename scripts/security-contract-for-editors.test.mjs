@@ -32,7 +32,7 @@ test("editor public page stays CMS-compatible, value-led and truthful about assi
   contains(content, "ilk raporu görmez", "second editor independence");
   contains(content, "yalnız görev amacıyla kullanılır", "editor confidentiality boundary");
   contains(content, "Şeffaflık, profesyonel itibarın ve rapor güvenilirliğinin parçasıdır", "conflict disclosure value");
-  contains(content, "yazarın özgün sesini koru", "writer creative decision value");
+  contains(content, "yazarın sesini editörün sesiyle değiştirmek değil", "writer creative decision value");
   contains(content, "Hukuki hüküm, yayınevi kabulü veya ticari başarı kararı", "editor authority boundary");
   contains(content, "Yeni eserlerin gelişiminde profesyonel iz bırak", "editor acquisition value proposition");
 

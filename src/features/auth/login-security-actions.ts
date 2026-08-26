@@ -36,7 +36,7 @@ export type LoginSecurityActionState = {
     | "success";
 };
 
-const MAX_NEXT_PATH_LENGTH = 1500;
+const MAX_NEXT_PATH_LENGTH = 5000;
 const loginRoles: UserRole[] = [
   "reader",
   "writer",

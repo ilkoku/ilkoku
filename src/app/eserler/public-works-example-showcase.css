@@ -1,0 +1,284 @@
+.public-works-example {
+  padding: clamp(4rem, 7vw, 6rem) 0;
+  border-top: 1px solid rgba(91, 66, 173, 0.1);
+  background:
+    radial-gradient(circle at 88% 18%, rgba(217, 207, 255, 0.48), transparent 20rem),
+    linear-gradient(180deg, #fbf9ff 0%, #f6f2ff 100%);
+}
+
+.public-works-example__container {
+  width: min(74rem, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.public-works-example__intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.95fr);
+  align-items: end;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  margin-bottom: 1.8rem;
+}
+
+.public-works-example__eyebrow {
+  margin: 0 0 0.7rem;
+  color: #6847e8;
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.15em;
+}
+
+.public-works-example__intro h2 {
+  max-width: 13ch;
+  margin: 0;
+  color: #21163a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.1rem, 4.2vw, 3.5rem);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+.public-works-example__intro > p {
+  margin: 0;
+  color: #675f75;
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+.public-works-example__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.public-works-example__card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(7.6rem, 0.72fr) minmax(0, 1.28fr);
+  overflow: hidden;
+  border: 1px solid rgba(91, 66, 173, 0.14);
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1rem 2.5rem rgba(45, 31, 92, 0.055);
+}
+
+.public-works-example__cover {
+  min-height: 18rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  color: #fff;
+  position: relative;
+  isolation: isolate;
+}
+
+.public-works-example__cover::before,
+.public-works-example__cover::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(1px);
+}
+
+.public-works-example__cover::before {
+  width: 7rem;
+  height: 7rem;
+  right: -2.5rem;
+  top: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.public-works-example__cover::after {
+  width: 3.8rem;
+  height: 3.8rem;
+  left: -1.2rem;
+  bottom: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.public-works-example__cover--violet {
+  background: linear-gradient(155deg, #8f77f2 0%, #5c3dc9 52%, #33226e 100%);
+}
+
+.public-works-example__cover--midnight {
+  background: linear-gradient(155deg, #5e5ac8 0%, #37357d 52%, #1f1d4e 100%);
+}
+
+.public-works-example__cover--lilac {
+  background: linear-gradient(155deg, #b29af1 0%, #7560cf 52%, #49358e 100%);
+}
+
+.public-works-example__cover > span {
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.public-works-example__cover > strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.45rem, 2.2vw, 2.05rem);
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.public-works-example__cover > small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.6rem;
+}
+
+.public-works-example__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.public-works-example__badge {
+  width: max-content;
+  max-width: 100%;
+  padding: 0.28rem 0.48rem;
+  border-radius: 999px;
+  background: #f0ebff;
+  color: #5d3bd1;
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.public-works-example__body h3 {
+  margin: 0.8rem 0 0.45rem;
+  color: #291d46;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.18rem;
+}
+
+.public-works-example__body p {
+  margin: 0;
+  color: #6d6577;
+  font-size: 0.78rem;
+  line-height: 1.62;
+}
+
+.public-works-example__body small {
+  margin-top: auto;
+  padding-top: 1rem;
+  color: #8a8295;
+  font-size: 0.64rem;
+  line-height: 1.45;
+}
+
+.public-works-example__cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+  padding: 1.25rem 1.35rem;
+  border: 1px solid rgba(104, 71, 232, 0.16);
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.public-works-example__cta > div:first-child {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.public-works-example__cta strong {
+  color: #2b2047;
+  font-size: 1rem;
+}
+
+.public-works-example__cta span {
+  color: #6c6478;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.public-works-example__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.public-works-example__actions a {
+  min-height: 2.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.72rem;
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.public-works-example__primary {
+  background: linear-gradient(135deg, #6d4bea, #5534cd);
+  color: #fff;
+  box-shadow: 0 0.55rem 1.15rem rgba(75, 45, 191, 0.16);
+}
+
+.public-works-example__secondary {
+  border: 1px solid rgba(91, 66, 173, 0.16);
+  background: #fff;
+  color: #4b2dbf;
+}
+
+@media (max-width: 60rem) {
+  .public-works-example__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-works-example__card {
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+  }
+
+  .public-works-example__cover {
+    min-height: 15rem;
+  }
+}
+
+@media (max-width: 48rem) {
+  .public-works-example__intro {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .public-works-example__intro h2 {
+    max-width: 11ch;
+  }
+
+  .public-works-example__cta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 34rem) {
+  .public-works-example__container {
+    width: min(100% - 1rem, 74rem);
+  }
+
+  .public-works-example__card {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+  }
+
+  .public-works-example__cover {
+    min-height: 14rem;
+    padding: 0.75rem;
+  }
+
+  .public-works-example__cover > strong {
+    font-size: 1.25rem;
+  }
+
+  .public-works-example__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

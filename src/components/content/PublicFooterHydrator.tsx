@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 type FooterContent = Record<string, string>;
 
@@ -182,8 +183,10 @@ function updateColumn(column: HTMLElement | undefined, title: string | undefined
 }
 
 export function PublicFooterHydrator() {
+  const pathname = usePathname();
+
   useEffect(() => {
-    if (window.location.pathname !== "/") return;
+    if (pathname !== "/") return;
     const footer = document.querySelector<HTMLElement>(".landing-footer");
     if (!footer) return;
 
@@ -201,7 +204,7 @@ export function PublicFooterHydrator() {
         updateColumn(findColumn(footer, "Destek"), content.supportTitle, content, "support", 1);
       })
       .catch(() => {});
-  }, []);
+  }, [pathname]);
 
   return null;
 }

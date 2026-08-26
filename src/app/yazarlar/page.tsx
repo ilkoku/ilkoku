@@ -9,7 +9,7 @@ import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 const baseUrl = "https://ilkoku.com";
 const title = "Yazarlar | İlkOku";
 const description =
-  "İlkOku’da herkese açık Türkçe eseri bulunan yazarları ve yayımlanmış eserlerini keşfedin.";
+  "İlkOku’da keşfe açık Türkçe eseri bulunan yazarları ve yayımlanmış eser vitrinlerini keşfedin.";
 
 type PublicAuthorsPageProps = {
   searchParams: Promise<{
@@ -99,7 +99,7 @@ export default async function PublicAuthorsPage({
           </p>
           <h1>Eserden yazara uzanan açık keşif ağı.</h1>
           <p>
-            Bu dizin yalnız en az bir herkese açık Türkçe
+            Bu dizin yalnız en az bir keşfe açık Türkçe
             eseri bulunan aktif yazarları gösterir. Boş hesap,
             özel profil ve taslak eser listelenmez.
           </p>
@@ -158,7 +158,7 @@ export default async function PublicAuthorsPage({
                     </div>
                     <h2>{name}</h2>
                     <p className="public-hub-card__description">
-                      Yazarın herkese açık yayımlanan
+                      Yazarın keşfe açık yayımlanan
                       eserlerini tek vitrinde inceleyin.
                     </p>
                     <span className="public-hub-card__footer">
@@ -174,12 +174,12 @@ export default async function PublicAuthorsPage({
               <strong>
                 {search
                   ? "Bu aramada yayımlayan yazar bulunamadı."
-                  : "Henüz public yazar vitrini oluşmadı."}
+                  : "Henüz keşfe açık yazar vitrini oluşmadı."}
               </strong>
               <p>
                 {search
                   ? "Aramayı temizleyerek tüm aktif yazar vitrinlerine dönebilirsiniz."
-                  : "Bir yazar ilk herkese açık eserini yayımladığında vitrini otomatik oluşacak."}
+                  : "Bir yazar ilk keşfe açık eserini yayımladığında vitrini otomatik oluşacak."}
               </p>
               {search ? (
                 <Link href="/yazarlar">Tüm yazarları göster</Link>

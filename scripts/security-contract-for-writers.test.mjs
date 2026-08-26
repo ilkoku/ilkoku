@@ -57,3 +57,37 @@ test("writer public page stays CMS-compatible, discovery-led and truthful about 
   notContains(content, "telifinizi garanti eder", "fabricated copyright guarantee");
   notContains(content, "yayınevi mutlaka", "fabricated publisher outcome");
 });
+
+test("writer inspiration journey is detailed, writer-only and connects history back to starting a work", () => {
+  const experience = source("src/components/content/ForWritersExperience.tsx");
+  const css = source("src/app/yazarlar-icin/for-writers.css");
+  const historyStart = experience.indexOf("const writerHistoryMilestones");
+  const historyEnd = experience.indexOf("const knownSections");
+
+  assert.ok(historyStart >= 0 && historyEnd > historyStart, "writer history milestone data must stay isolated");
+  const writerHistory = experience.slice(historyStart, historyEnd);
+
+  for (const writer of [
+    "Enheduanna",
+    "Murasaki Shikibu",
+    "Mary Shelley",
+    "Mehmet Rauf",
+    "Selma Lagerlöf",
+    "Toni Morrison",
+    "Orhan Pamuk",
+  ]) {
+    contains(writerHistory, writer, `${writer} inspiration milestone`);
+  }
+
+  notContains(writerHistory, "Yayınevi", "writer-only historical milestones");
+  notContains(writerHistory, "Editör", "writer-only historical milestones");
+  notContains(writerHistory, "Okur", "writer-only historical milestones");
+  contains(experience, 'id="yazar-ilkleri"', "writer history section anchor");
+  contains(experience, "Her şey bir “ilk” ile başlar", "homepage history narrative continuity");
+  contains(experience, "Sıradaki “ilk” henüz yazılmadı", "present-day writer handoff");
+  contains(experience, "Kendi ilk cümlene başla", "history-to-registration CTA");
+  contains(experience, 'href="#yazar-ilkleri"', "hero-to-history CTA");
+  contains(experience, 'href="#yazar-yolculugu"', "history-to-product-flow continuation");
+  contains(css, ".writers-history__grid", "writer history responsive grid");
+  contains(css, ".writers-history__now", "writer history present-day CTA styling");
+});

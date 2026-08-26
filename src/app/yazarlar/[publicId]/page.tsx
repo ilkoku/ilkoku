@@ -10,6 +10,7 @@ import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 const baseUrl = "https://ilkoku.com";
+const MAX_RETURN_PATH_LENGTH = 1500;
 
 type AuthorPageProps = {
   params: Promise<{
@@ -38,7 +39,12 @@ function description(value: string | null) {
 }
 
 function safeReturnPath(value: string | undefined) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+  if (
+    !value ||
+    value.length > MAX_RETURN_PATH_LENGTH ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
     return "/yazarlar";
   }
 
@@ -109,6 +115,9 @@ export default async function PublicAuthorPage({
   const name = authorName(author);
   const profilePath = `/yazarlar/${author.publicId}`;
   const returnTo = safeReturnPath(query.from);
+  const profileContextPath = query.from
+    ? `${profilePath}?from=${encodeURIComponent(returnTo)}`
+    : profilePath;
   const canonical = `${baseUrl}${profilePath}`;
   const schemas = [
     {
@@ -182,7 +191,7 @@ export default async function PublicAuthorPage({
             gösterilmez.
           </p>
           <p>
-            <Link href={returnTo}>← Geldiğin keşfe dön</Link>
+            <Link href={returnTo}>← Geldiğin sayfaya dön</Link>
           </p>
         </header>
 
@@ -200,7 +209,7 @@ export default async function PublicAuthorPage({
           <div className="public-hub__grid">
             {author.works.map((work) => {
               const genre = work.genre?.trim();
-              const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(profilePath)}`;
+              const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(profileContextPath)}`;
 
               return (
                 <article
@@ -212,7 +221,7 @@ export default async function PublicAuthorPage({
                       <Link
                         href={`/turler/${publicTaxonomySlug(
                           genre,
-                        )}?from=${encodeURIComponent(profilePath)}`}
+                        )}?from=${encodeURIComponent(profileContextPath)}`}
                       >
                         {genre}
                       </Link>

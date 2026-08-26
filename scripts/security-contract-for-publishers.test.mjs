@@ -15,32 +15,36 @@ function notContains(text, fragment, label) {
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 }
 
-test("publisher public page stays CMS-owned and truthful about discovery, permissions and commercial boundaries", () => {
+test("publisher public page stays CMS-compatible, discovery-led and truthful about permissions and commercial boundaries", () => {
   const content = source("src/content/for-publishers.ts");
   const page = source("src/app/yayinevleri-icin/page.tsx");
   const experience = source("src/components/content/ForPublishersExperience.tsx");
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const starterContent = source("src/features/cms/starter-content-actions.ts");
+  const cmsStore = source("src/lib/cms-public-page-store.ts");
   const sitemap = source("src/app/sitemap.ts");
   const discovery = source("src/app/yayinevi/kesfet/eserler/page.tsx");
   const access = source("src/features/publisher-discovery/access.ts");
   const permissions = source("src/features/publisher-workspace/permissions.ts");
 
-  contains(content, "bağlayıcı teklif, ön kabul, yayın taahhüdü veya hak devri doğurmaz", "engagement-commercial boundary");
-  contains(content, "Pasaport erişimi ile yetkili içerik erişimi sistemde ayrı izinlerdir", "passport-content permission boundary");
-  contains(content, "Bu işlem yayınevi kullanıcısını editör yapmaz", "publisher-editor role boundary");
-  contains(content, "En geniş erişim varsayılan kabul edilmez", "least privilege boundary");
-  contains(content, "otomatik sözleşme oluşturmaz", "discovery-contract boundary");
+  contains(content, "başvuru kutusu değil; yeni yazar ve eserleri daha erken görebileceği bir keşif katmanı", "publisher discovery value");
+  contains(content, "Bağlayıcı ticari adım, daha sonra ayrı karar ve süreçlerle oluşur", "engagement-commercial boundary");
+  contains(content, "Pasaport bilgisi ile özel tam metin erişimi ayrı yetkilerdir", "passport-content permission boundary");
+  contains(content, "aktif olmadığı ortamda yayınevi kullanıcılarına kullanılabilir işlem gibi sunulmaz", "planned editor-request truth boundary");
+  contains(content, "Kurumsal paylaşım araçları kademeli olarak etkinleştirilen çalışma katmanıdır", "planned sharing truth boundary");
+  contains(content, "yayın ve ticari karar kurumunuzun profesyonel sürecinde şekillenir", "publisher decision boundary");
 
   contains(page, 'getPublishedCmsPublicPageState("yayinevleri-icin")', "CMS-owned publisher page");
   contains(page, "ForPublishersExperience", "branded publisher experience");
   contains(page, '"@type": "BreadcrumbList"', "publisher breadcrumb schema");
   contains(experience, 'getPublicTrustPageVisual("/yayinevleri-icin")', "prepared publisher visual");
   contains(experience, 'href="/kayit?rol=publisher"', "publisher onboarding CTA");
+  contains(experience, "Yeni yetenekleri başvuru kutunuza düşmeden önce keşfedin", "publisher acquisition headline");
   contains(experience, 'href="/telif-bildirimi"', "copyright safety link");
   contains(preview, 'page.contentKey === "page:tr:yayinevleri-icin"', "visual CMS preview boundary");
   contains(starterContent, 'contentKey: "page:tr:yayinevleri-icin"', "CMS starter draft");
   contains(starterContent, 'revalidatePath("/yayinevleri-icin")', "publisher public revalidation");
+  contains(cmsStore, '"yayinevleri-icin": {', "legacy publisher CMS bridge");
   contains(sitemap, "${baseUrl}/yayinevleri-icin", "publisher sitemap route");
 
   contains(discovery, '"discover_works"', "real publisher discovery permission");
@@ -54,6 +58,7 @@ test("publisher public page stays CMS-owned and truthful about discovery, permis
   notContains(content, "yayın garantisi verir", "fabricated publication guarantee");
   notContains(content, "favoriye almak sözleşmedir", "fabricated favorite-contract claim");
   notContains(content, "pasaport tüm özel içeriği açar", "fabricated passport content access");
+  notContains(content, "kurumsal paylaşım şu anda kullanımdadır", "fabricated live sharing claim");
 });
 
 test("publisher page follows the proven /yazarlar-icin public-page shell without touching shared footer infrastructure", () => {

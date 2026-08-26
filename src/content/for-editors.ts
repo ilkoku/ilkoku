@@ -1,83 +1,83 @@
 export const forEditorsPageContent = {
   title: "Editörler İçin",
-  summary: "İlkOku'da profesyonel editör incelemesinin nasıl çalıştığını; Genel Editör Havuzu'ndan görev almadan bağımsız ikinci değerlendirmeye, rapor standardından gizlilik ve çıkar çatışması sınırlarına kadar öğrenin.",
+  summary: "Yeni eserlerin gelişiminde profesyonel iz bırak: uygun inceleme görevlerini al, metinden kanıtlanan gerekçeli raporlar üret, bağımsız ikinci görüş modelinde çalış ve tamamlanan incelemelerini kayıt üzerinden takip et.",
   seoTitle: "Editörler İçin | İlkOku",
-  seoDescription: "İlkOku editör yolculuğunu inceleyin: Genel Editör Havuzu, görev kilidi, birinci ve ikinci editör incelemesi, gerekçeli rapor, gizlilik, bağımsızlık ve çıkar çatışması kuralları.",
+  seoDescription: "İlkOku editör yolculuğunu keşfedin: Genel Editör Havuzu, görev kilidi, gerekçeli rapor, bağımsız ikinci görüş, gizlilik ve tamamlanan inceleme kayıtları.",
   canonical: "/editorler-icin",
-  updatedAt: "2026-08-25T00:00:00.000Z",
-  body: `İlkOku'da editörün görevi bir eseri kendi zevkine göre yeniden yazmak, yazarı kişisel olarak değerlendirmek veya yayınevi adına karar vermek değildir. Editör; kendisine yetkili süreç üzerinden açılan belirli eser ve sürüm üzerinde, metinden izlenebilen örneklerle gerekçeli profesyonel görüş üretir.
+  updatedAt: "2026-08-26T00:00:00.000Z",
+  body: `İlkOku editörü, yeni bir eserin gelişim yolculuğuna profesyonel ikinci bakış kazandırır. Buradaki değer yalnız hata bulmak değil; yazarın metnini daha net görmesini sağlayan, somut örneğe ve gerekçeye dayanan uygulanabilir değerlendirme üretmektir.
 
-Bu sayfa editöre eser üzerinde yayınlama, çoğaltma, lisanslama veya ticari kullanım hakkı verildiği anlamına gelmez. İnceleme erişimi yalnız görev amacıyla kullanılır; rapor da yayınevi kabulü, basım kararı, hukuki görüş veya başarı garantisi değildir.
+Editör olarak uygun görevleri alır, belirli eser sürümü üzerinde çalışır ve raporunu bağımsız biçimde tamamlarsın. Yazarın özgün sesi korunurken sen de profesyonel yaklaşımını gerçek eserler üzerinde uygulayabileceğin kayıtlı bir çalışma akışına sahip olursun.
 
 ## Editör çalışma alanına yetkili rol ile gir
 
-Editör çalışma yüzeyleri yalnız editör rolü ve uygun editör profili bulunan hesaplara açılır. Genel Editör Havuzu, aktif incelemeler ve tamamlanan raporlar public keşif sayfalarından ayrı, oturum ve rol kontrolü uygulanan çalışma alanlarıdır.
+Editör çalışma yüzeyleri editör rolü ve uygun profil bulunan hesaplara açılır. Public editör profilin, uzmanlık alanını görünür kılan ayrı yüzeydir; özel inceleme alanı ise yalnız üstlendiğin görevlerle bağlantılıdır.
 
-Bir editörün public profilinin bulunması, bütün eser taslaklarına veya özel inceleme kayıtlarına erişebildiği anlamına gelmez. Erişim her görev, aşama ve kayıt için ayrıca sınırlandırılır.
+Bu ayrım, editörün profesyonel görünürlüğü ile yazarın çalışma gizliliğini aynı platformda birlikte korur.
 
 ## Genel Editör Havuzu'ndan uygun görevi al
 
-Profesyonel inceleme talebi oluşturulmuş ve henüz birinci editör tarafından alınmamış eserler 1. Editör Havuzu'nda görünebilir. Uygun bir editör görevi aldığında atama güvenli biçimde kilitlenir; aynı birinci inceleme başka bir editör tarafından eş zamanlı olarak üstlenilemez.
+Profesyonel inceleme talebi oluşturulmuş eserler uygun aşamada Genel Editör Havuzu'nda görünür. Uzmanlığına ve zamanına uygun görevi seçebilir, üstlendiğinde incelemeyi kendi çalışma alanına alabilirsin.
 
-Birinci incelemesi tamamlanıp bağımsız ikinci görüş bekleyen eserler ise 2. Editör Havuzu'nda yer alabilir. Editör yalnız kendisine açık havuz ve görevleri görür; görevi almak eser üzerinde görev dışı bir kullanım yetkisi oluşturmaz.
+Birinci editör görevi aldığında atama kilitlenir; böylece aynı inceleme birden fazla kişi tarafından eş zamanlı yürütülmez. İkinci aşama da ayrı ve bağımsız görev olarak ilerler.
 
 ## İncelediğin sürümü ve kapsamı sabit tut
 
-Profesyonel değerlendirme belirli bir eser sürümü ve süreç aşamasına dayanır. Raporun hangi metni değerlendirdiği sonradan anlaşılabilmelidir; inceleme sırasında yazarın başka bir taslağına, yetki dışı sürümüne veya özel çalışma kaydına geçilmez.
+İyi bir raporun hangi metne dayandığı sonradan anlaşılabilmelidir. Bu nedenle inceleme belirli eser sürümü ve süreç aşaması üzerinden yürür.
 
-Editör, kendisine açılan yayımlanmış bölümleri ve görev kapsamında erişebildiği kayıtları kullanır. İnceleme dışında kalan özel bilgiler yalnızca görevin gerektirdiği ölçüde işlenir.
+Sürümün sabit olması editöre odak sağlar, yazara da raporun hangi metne ilişkin olduğunu açık biçimde görme imkânı verir.
 
 ## Gerekçeli ve uygulanabilir bir rapor hazırla
 
-Güçlü editör raporu yalnız “iyi”, “zayıf” veya “değiştirilmeli” gibi sonuç cümlelerinden oluşmaz. Gözlem, metindeki yer, okuma deneyimine etkisi ve yazarın değerlendirebileceği seçenekler birlikte açıklanır.
+Güçlü editör raporu yalnız "iyi", "zayıf" veya "değiştirilmeli" demez. Gözlemi, metindeki yerini, okur deneyimine etkisini ve yazarın değerlendirebileceği seçenekleri birlikte açıklar.
 
-Yapı, anlatıcı, karakter, dil ve üslup, tempo, tutarlılık, tür ve hedef okur gibi başlıklar eserin amacı içinde ele alınır. Editör kendi sesini üstün norm olarak dayatmaz; bilinçli yaratıcı tercihle teknik sorunu birbirinden ayırır.
+Yapı, anlatıcı, karakter, dil ve üslup, tempo, tutarlılık, tür ve hedef okur gibi alanlar eserin amacı içinde ele alınır. Editörün değeri otoriter hükümden değil, metinden izlenebilen profesyonel gerekçeden gelir.
 
 ## Birinci editör raporunu tamamla ve ikinci aşamayı başlat
 
-Birinci editör raporunu tamamladığında eser ikinci editör aşamasına geçebilir. Süreç durumuna göre birinci editör uygun ikinci editörü belirleyebilir veya görev bağımsız ikinci editör havuzuna bırakılabilir.
+Birinci editör raporunu tamamladığında eser bağımsız ikinci görüş aşamasına geçer. İlk rapor tamamlanmış bir profesyonel görüş olarak kayıt altına alınır; ikinci değerlendirme ayrı görev olarak başlar.
 
-Birinci editörün işi ikinci editör adına ortak rapor yazmak değildir. İkinci aşama, ilk değerlendirmenin kopyası değil, ayrı bir profesyonel görüş üretmek üzere tasarlanmıştır.
+Bu model, editörün tek başına nihai hüküm üretmesi yerine eserin iki ayrı profesyonel pencereden değerlendirilmesini sağlar.
 
 ## İkinci editör bağımsız değerlendirme yapar
 
-İkinci editör birinci editörle aynı kişi olamaz. Kendi değerlendirmesini hazırlarken birinci editörün raporuna erişmez; böylece ilk görüş ikinci raporu yönlendirmez.
+İkinci editör birinci editörle aynı kişi olamaz ve kendi raporunu hazırlarken ilk raporu görmez. Böylece ikinci görüş gerçekten yeni bir bakış üretir.
 
-İkinci değerlendirme tamamlandıktan ve süreç sonuçlandıktan sonra birinci editör karşılaştırma amacıyla ikinci raporu görebilir. İkinci editöre ise birinci rapor açılmaz. İki raporun aynı sonuca veya ortak puana ulaşması gerekmez.
+İki rapor aynı sonuca ulaşmak zorunda değildir. Farklı gerekçeler, yazarın eseri üzerinde daha zengin karşılaştırma yapmasına yardımcı olur.
 
 ## Gizliliği görev boyunca koru
 
-Yayımlanmamış eser metni, özel sürümler, yazarın public olmayan bilgileri, editör notları, rapor taslakları ve süreç kayıtları yalnız görev amacıyla kullanılabilir. Görev için zorunlu olmayan indirme, çoğaltma, ekran kaydı, harici depolama veya üçüncü kişilerle paylaşım yapılmamalıdır.
+Yayımlanmamış eser metni, özel sürümler, editör notları ve süreç kayıtları yalnız görev amacıyla kullanılır. Profesyonel editörlük, yazara ait çalışma alanına duyulan güvenle birlikte yürür.
 
-Yayınlanmamış eser ya da kullanıcı verisi, İlkOku tarafından açıkça yetkilendirilmemiş yapay zekâ, çeviri, özetleme, bulut veya benzeri üçüncü taraf servislere yüklenmemelidir. Görev sona erdiğinde erişim sınırı da görev kapsamına göre sonlanır.
+Görev için zorunlu olmayan kopyalama, harici depolama veya üçüncü taraf paylaşımı yapılmamalıdır. Bu sınır editörü kısıtlamak için değil, yazarın profesyonel incelemeye güvenle başvurabilmesi için vardır.
 
 ## Çıkar çatışmasını gizleme
 
-Tarafsız değerlendirmeyi etkileyebilecek kişisel, mesleki veya mali ilişki görevi almadan önce ya da öğrenildiği anda bildirilmelidir. Yakın ilişki, devam eden iş ortaklığı, eser üzerinde önceki ortak çalışma, doğrudan mali menfaat veya sonucu etkileyebilecek husumet çıkar çatışmasına örnek olabilir.
+Tarafsız değerlendirmeyi etkileyebilecek kişisel, mesleki veya mali ilişki varsa görevi almadan önce ya da öğrendiğin anda bildir. Şeffaflık, profesyonel itibarın ve rapor güvenilirliğinin parçasıdır.
 
-Çıkar çatışması bildirmek olumsuz bir sicil değildir. İncelemenin güvenilirliğini koruyan mesleki bir sınırdır; uygun durumda görev başka bir editöre bırakılabilir veya erişim sonlandırılabilir.
+Uygun durumda görev başka bir editöre bırakılır. Böylece hem editör hem yazar açısından sürecin bağımsızlığı korunur.
 
 ## Yazarın yaratıcı kararına saygı göster
 
-Editör raporu tavsiye niteliğindedir. Yazar öneriyi uygulayabilir, başka bir çözüm geliştirebilir veya yaratıcı tercihini koruyabilir. Editör kendi görüşünü zorunlu yeniden yazım emri olarak sunamaz.
+Editör yazarın yerine eser yazmaz; yazara kendi eserini daha net görebileceği profesyonel bir ayna sunar. Öneri, gerekçe ve seçenek üretir.
 
-Bir önerinin uygulanmaması tek başına editörün yazarı cezalandırabileceği, eseri yayından kaldırabileceği veya yayınevi adına olumsuz karar verebileceği anlamına gelmez. İçerik güvenliği ve hukuk kuralları kapsamındaki ayrı ihlaller editoryal görüşten ayrı süreçlerdir.
+Yazar bazı önerileri uygulayabilir, alternatif çözüm geliştirebilir veya yaratıcı tercihini koruyabilir. Bu ilişki, editör ile yazar arasında üstünlük değil profesyonel katkı ilişkisi kurar.
 
 ## Editör görüşünün sınırını açık tut
 
-Rapor; eserin hatasız olduğunu, yayımlanacağını, yayınevi tarafından kabul edileceğini, satış başarısı kazanacağını veya üçüncü kişi haklarını ihlal etmediğini garanti etmez. Editör hukuki uyuşmazlıkta mahkeme, telif tescil makamı veya yayınevinin yetkili karar organı yerine geçmez.
+Rapor metin geliştirme ve profesyonel değerlendirme içindir. Hukuki hüküm, yayınevi kabulü veya ticari başarı kararı gibi bağımsız alanların yerine geçmez.
 
-Telif şüphesi ayrı Telif Bildirimi yolunda, platform kullanım ihlalleri ilgili politika ve destek kanallarında ele alınır. Editörün görevi bu süreçlerin yerine geçmek değil, kendi profesyonel değerlendirme sınırını korumaktır.
+Bu sınır raporun değerini azaltmaz; editörün hangi alanda uzman katkı sunduğunu daha net gösterir.
 
 ## Tamamlanan incelemelerini kayıt üzerinden takip et
 
-Birinci veya ikinci editör olarak sonuçlandırılan profesyonel incelemeler tamamlanan incelemeler alanında rapor kaydıyla izlenebilir. Bu kayıt, editörün hangi görev ve aşamada çalıştığını anlamayı kolaylaştırır; görev dışı eser erişimini genişletmez.
+Birinci veya ikinci editör olarak tamamladığın incelemeler süreç kayıtlarıyla takip edilebilir. Böylece hangi görev ve aşamalarda profesyonel katkı sunduğunu kendi çalışma alanında izleyebilirsin.
 
-Tamamlanmış raporlar kalite ve süreç kayıtlarının parçasıdır. Kişisel saldırı, çıkar çatışmasının gizlenmesi, yetkisiz paylaşım veya raporun başka eserden kopyalanması gibi şüpheler ilgili iletişim ve kalite inceleme kanallarına taşınabilir.
+Tamamlanan raporlar aynı zamanda kalite standardının gelişmesine yardımcı olan editoryal çalışma geçmişini oluşturur.
 
 ## Editör olarak başla
 
-Yeni bir editör hesabı oluşturduktan ve rol/profil akışını tamamladıktan sonra editör çalışma alanındaki Genel Editör Havuzu'nu ve size açık inceleme görevlerini kullanabilirsiniz. Bir görevi almadan önce kapsamı, gizlilik sınırlarını ve olası çıkar çatışmasını değerlendirin.
+Editör hesabını ve profil akışını tamamladıktan sonra sana açık Genel Editör Havuzu'nu ve inceleme görevlerini kullanabilirsin. İlk görevi almadan önce uzmanlığını, zamanını ve olası çıkar çatışmasını değerlendir.
 
-İncelemeye başlamadan önce Editoryal Standartlar'ı okuyun. İçerik sınıflandırmasıyla ilgili bağlam için İçerik ve Yaş Politikası'nı; eser haklarıyla ilgili şüphelerde Telif Bildirimi yolunu kullanın.`,
+İlkOku'da editör olmak yalnız metin düzeltmek değil; yeni eserlerin gelişiminde gerekçeli, bağımsız ve güvenilir profesyonel bir iz bırakmaktır.`
 } as const;

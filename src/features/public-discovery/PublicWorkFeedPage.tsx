@@ -10,12 +10,41 @@ import { PublicWorkStream } from "@/features/public-discovery/PublicWorkStream";
 
 const baseUrl = "https://ilkoku.com";
 
+type FeedSearchParams = {
+  arama?: string;
+  sayfa?: string;
+  tur?: string;
+};
+
 function pageNumber(value: string | undefined) {
   const parsed = Number.parseInt(value ?? "", 10);
 
   return Number.isFinite(parsed) && parsed > 0
     ? Math.min(parsed, 10_000)
     : 1;
+}
+
+function feedHref(
+  basePath: `/eserler/${string}`,
+  filters: { genre?: string; search?: string },
+  page: number,
+) {
+  const parameters = new URLSearchParams();
+
+  if (filters.search) {
+    parameters.set("arama", filters.search);
+  }
+
+  if (filters.genre) {
+    parameters.set("tur", filters.genre);
+  }
+
+  if (page > 1) {
+    parameters.set("sayfa", String(page));
+  }
+
+  const query = parameters.toString();
+  return query ? `${basePath}?${query}` : basePath;
 }
 
 export async function PublicWorkFeedPage({
@@ -32,13 +61,20 @@ export async function PublicWorkFeedPage({
   emptyText: string;
   eyebrow: string;
   heading: string;
-  searchParams: Promise<{ sayfa?: string }>;
+  searchParams: Promise<FeedSearchParams>;
   sort: PublicWorkSort;
 }) {
   const query = await searchParams;
+  const search = query.arama?.trim().slice(0, 100) || undefined;
+  const genre = query.tur?.trim().slice(0, 120) || undefined;
   const library = await getPublicWorkLibrary(
-    { sort },
+    { genre, search, sort },
     pageNumber(query.sayfa),
+  );
+  const currentPath = feedHref(
+    basePath,
+    { genre, search },
+    library.currentPage,
   );
   const schema = {
     "@context": "https://schema.org",
@@ -86,7 +122,7 @@ export async function PublicWorkFeedPage({
           <p>{description}</p>
           <p>
             <Link href="/eserler">
-              Arama ve tür filtrelerine dön
+              Tüm eser keşfine dön
             </Link>
           </p>
         </header>
@@ -100,6 +136,41 @@ export async function PublicWorkFeedPage({
             <span>{library.totalCount} eser</span>
           </div>
 
+          <form
+            action={basePath}
+            className="public-hub__filters"
+            method="get"
+          >
+            <label>
+              <span>Eser veya yazar ara</span>
+              <input
+                defaultValue={search}
+                maxLength={100}
+                name="arama"
+                placeholder="Başlık, tanıtım veya yazar"
+                type="search"
+              />
+            </label>
+
+            <label>
+              <span>Tür</span>
+              <select defaultValue={genre ?? ""} name="tur">
+                <option value="">Tüm türler</option>
+                {library.genres.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button type="submit">Filtrele</button>
+
+            {search || genre ? (
+              <Link href={basePath}>Filtreleri temizle</Link>
+            ) : null}
+          </form>
+
           {library.works.length > 0 ? (
             <PublicWorkStream
               dateMode={
@@ -107,6 +178,7 @@ export async function PublicWorkFeedPage({
                   ? "updated"
                   : "published"
               }
+              returnPath={currentPath}
               works={library.works}
             />
           ) : (
@@ -117,9 +189,15 @@ export async function PublicWorkFeedPage({
                 yayımlanmış ve herkese açık eserler bu akışa
                 girer.
               </p>
-              <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
-                Eserin İlkOku’daki yolculuğunu öğren
-              </Link>
+              {search || genre ? (
+                <Link href={basePath}>
+                  Bu akıştaki tüm eserleri göster
+                </Link>
+              ) : (
+                <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
+                  Eserin İlkOku’daki yolculuğunu öğren
+                </Link>
+              )}
             </div>
           )}
 
@@ -130,11 +208,11 @@ export async function PublicWorkFeedPage({
             >
               {library.currentPage > 1 ? (
                 <Link
-                  href={
-                    library.currentPage === 2
-                      ? basePath
-                      : `${basePath}?sayfa=${library.currentPage - 1}`
-                  }
+                  href={feedHref(
+                    basePath,
+                    { genre, search },
+                    library.currentPage - 1,
+                  )}
                   rel="prev"
                 >
                   ← Önceki
@@ -148,7 +226,11 @@ export async function PublicWorkFeedPage({
               {library.currentPage <
               library.totalPages ? (
                 <Link
-                  href={`${basePath}?sayfa=${library.currentPage + 1}`}
+                  href={feedHref(
+                    basePath,
+                    { genre, search },
+                    library.currentPage + 1,
+                  )}
                   rel="next"
                 >
                   Sonraki →

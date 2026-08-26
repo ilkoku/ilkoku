@@ -81,7 +81,8 @@ export function BookShowcase({
         chapter.position ===
         readingProgress?.chapterPosition,
     ) ?? firstChapter;
-  const encodedReturnTo = encodeURIComponent(returnTo);
+  const bookContextPath = `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`;
+  const encodedBookContextPath = encodeURIComponent(bookContextPath);
   const contentWarnings = parseWorkContentWarnings(work.contentWarnings);
   const rating = workContentRatingDetails[work.contentRating];
 
@@ -149,7 +150,7 @@ export function BookShowcase({
 
             <Link
               className="showcase-author-link"
-              href={`/yazarlar/${work.authorPublicId}`}
+              href={`/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}`}
             >
               {work.authorName}
             </Link>
@@ -159,7 +160,9 @@ export function BookShowcase({
                 <dt>{readingContent.common.category}</dt>
                 <dd>
                   {work.genre ? (
-                    <Link href={`/turler/${publicTaxonomySlug(work.genre)}`}>
+                    <Link
+                      href={`/turler/${publicTaxonomySlug(work.genre)}?from=${encodedBookContextPath}`}
+                    >
                       {genreLabel}
                     </Link>
                   ) : (
@@ -269,7 +272,7 @@ export function BookShowcase({
               {resumeChapter && (
                 <Link
                   className="button button--primary showcase-cta"
-                  href={`/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedReturnTo}`}
+                  href={`/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`}
                 >
                   <span className="button__label">
                     <span aria-hidden="true">📖</span>{" "}
@@ -292,7 +295,7 @@ export function BookShowcase({
                   <input
                     name="returnPath"
                     type="hidden"
-                    value={`/kitap/${work.slug}`}
+                    value={bookContextPath}
                   />
                   <button className="button button--outline" type="submit">
                     {isFavorite
@@ -371,12 +374,12 @@ export function BookShowcase({
                         </div>
 
                         <div className="editor-review-row__report">
-                          <p>Kilitli değil · Okumaya hazır</p>
+                          <p>Yayında · Üyelikle okunabilir</p>
                         </div>
 
                         <Link
                           className="button button--outline"
-                          href={`/oku/${work.slug}/bolum-${chapter.position}?from=${encodedReturnTo}`}
+                          href={`/oku/${work.slug}/bolum-${chapter.position}?from=${encodedBookContextPath}`}
                         >
                           {index === 0 ? "Okumaya Başla" : "Bölümü Oku"}
                         </Link>
@@ -469,13 +472,13 @@ export function BookShowcase({
               </div>
 
               <p>
-                Yazarın herkese açık yayımlanan eserlerini
+                Yazarın keşfe açık yayımlanan eserlerini
                 tek sayfada inceleyin.
               </p>
 
               <Link
                 className="showcase-text-link"
-                href={`/yazarlar/${work.authorPublicId}`}
+                href={`/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}`}
               >
                 Yazarın tüm eserleri <span aria-hidden="true">→</span>
               </Link>
@@ -515,7 +518,7 @@ export function BookShowcase({
                     <p>{related.authorName}</p>
                     <Link
                       className="showcase-text-link"
-                      href={`/kitap/${related.slug}?from=${encodedReturnTo}`}
+                      href={`/kitap/${related.slug}?from=${encodedBookContextPath}`}
                     >
                       Eseri İncele <span aria-hidden="true">→</span>
                     </Link>
@@ -567,7 +570,7 @@ export function BookShowcase({
                     <p>{related.authorName}</p>
                     <Link
                       className="showcase-text-link"
-                      href={`/kitap/${related.slug}?from=${encodedReturnTo}`}
+                      href={`/kitap/${related.slug}?from=${encodedBookContextPath}`}
                     >
                       Eseri İncele <span aria-hidden="true">→</span>
                     </Link>

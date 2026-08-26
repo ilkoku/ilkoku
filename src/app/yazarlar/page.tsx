@@ -111,7 +111,7 @@ export default async function PublicAuthorsPage({
         >
           <div className="public-hub__section-heading">
             <h2 id="yazar-listesi">
-              Yayımlayan yazarlar
+              Keşfe açık yazarlar
             </h2>
             <span>{authors.length} yazar</span>
           </div>

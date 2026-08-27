@@ -11,6 +11,7 @@ import {
 import { analyzeFooterNavigation } from "@/lib/cms-footer-validation";
 import { prisma } from "@/lib/prisma";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
+import { getLiveSeoVerification } from "@/lib/seo-live-verification";
 import styles from "./SeoTechnicalAudit.module.css";
 
 type SeoRow = {
@@ -49,6 +50,7 @@ const codeOwnedStaticRoutes = [
   "/turler",
   "/yardim",
   "/editorler",
+  "/iletisim",
 ] as const;
 
 function normalizedCanonical(value: string) {
@@ -181,8 +183,17 @@ function Card({ state, label, value, detail }: { state: Tone; label: string; val
   return <article className={styles.card} data-state={state}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>;
 }
 
+function evidenceValue(state: Tone) {
+  if (state === "ok") return "Canlı doğrulandı";
+  if (state === "danger") return "Canlı hata";
+  return "Doğrulanamadı";
+}
+
 export async function SeoTechnicalAudit() {
-  const state = await loadTechnicalState();
+  const [state, live] = await Promise.all([
+    loadTechnicalState(),
+    getLiveSeoVerification(),
+  ]);
   if (!state) {
     return (
       <section className={styles.audit} role="alert">
@@ -210,15 +221,17 @@ export async function SeoTechnicalAudit() {
   const totalSitemapCoverage = sitemapEligible + codeOwnedSitemapCount;
   const canonicalBlockers = invalidCanonical + duplicateCanonical;
   const publicDiscoveryBlockers = state.publicDiscovery.state === "unavailable" ? 1 : 0;
-  const blockers = canonicalBlockers + publicDiscoveryBlockers + state.footer.blockers;
-  const warnings = missingCanonical + unsupportedIndexable + state.footer.fallbacks;
+  const liveEvidenceBlockers = Number(live.robots.state === "danger") + Number(live.social.state === "danger");
+  const liveEvidenceWarnings = Number(live.robots.state === "warn") + Number(live.social.state === "warn");
+  const blockers = canonicalBlockers + publicDiscoveryBlockers + state.footer.blockers + liveEvidenceBlockers;
+  const warnings = missingCanonical + unsupportedIndexable + state.footer.fallbacks + liveEvidenceWarnings;
   const overall: Tone = blockers > 0 ? "danger" : warnings > 0 ? "warn" : "ok";
 
   const focus = blockers > 0
-    ? `${blockers} teknik SEO blokajı var. Önce canonical, public sitemap envanteri veya internal-link hatalarını düzeltin.`
+    ? `${blockers} teknik SEO blokajı var. Önce canonical, public sitemap envanteri, canlı robots/social kanıtı veya internal-link hatalarını düzeltin.`
     : warnings > 0
-      ? `${warnings} SEO uyarısı var. İndeksleme öncesi eksik canonical/fallback hedeflerini temizleyin.`
-      : "Teknik SEO sözleşmeleri temiz görünüyor; metadata kuyruğundaki içerik işlerine geçebilirsiniz.";
+      ? `${warnings} SEO uyarısı var. İndeksleme öncesi eksik canonical/fallback veya doğrulanamayan canlı sinyalleri temizleyin.`
+      : "Teknik SEO sözleşmeleri ve canlı robots/social kanıtı doğrulandı; metadata kuyruğundaki içerik işlerine geçebilirsiniz.";
 
   const sitemapDetail = state.publicDiscovery.state === "ok"
     ? `${sitemapEligible} CMS URL · ${state.publicDiscovery.staticRoutes} kod tabanlı statik URL · ${state.publicDiscovery.works} eser · ${state.publicDiscovery.authors} yazar · ${state.publicDiscovery.genres} tür.`
@@ -227,7 +240,7 @@ export async function SeoTechnicalAudit() {
   return (
     <section className={styles.audit} aria-labelledby="seo-technical-title">
       <div className={styles.header}>
-        <div className={styles.copy}><span>Teknik SEO · TR</span><h2 id="seo-technical-title">İndeksleme Sağlığı</h2><p>Sitemap, robots, canonical/noindex, sosyal önizleme ve footer/internal-link sinyallerini tek yerde izleyin. CMS kayıtlarıyla birlikte kod tabanlı public keşif rotaları da bu kapsamda görünür; bu alan ikinci bir SEO düzenleme kaynağı oluşturmaz.</p></div>
+        <div className={styles.copy}><span>Teknik SEO · TR</span><h2 id="seo-technical-title">İndeksleme Sağlığı</h2><p>Sitemap, robots, canonical/noindex, sosyal önizleme ve footer/internal-link sinyallerini tek yerde izleyin. Robots ve sosyal metadata kartları kod varsayımıyla değil, canlı ilkoku.com HTML/robots çıktısıyla doğrulanır.</p></div>
         <span className={styles.status} data-state={overall}>{overall === "ok" ? "Temiz" : overall === "warn" ? "Kontrol" : "Blokaj"}</span>
       </div>
 
@@ -235,13 +248,13 @@ export async function SeoTechnicalAudit() {
         <Card state={noIndexCount > 0 ? "warn" : "ok"} label="İndeks politikası" value={`${indexable.length} CMS index · ${noIndexCount} noindex`} detail="Published TR ContentPage kayıtları; noindex kayıtları sitemap kabulünden ayrılır. Kod tabanlı keşif rotalarının query varyantları sayfa metadata sözleşmesinde noindex kalır." />
         <Card state={canonicalBlockers > 0 ? "danger" : missingCanonical > 0 ? "warn" : "ok"} label="Canonical" value={`${missingCanonical} eksik · ${invalidCanonical} hatalı`} detail={`${duplicateCanonical} duplicate canonical · host yalnız ilkoku.com kabul edilir.`} />
         <Card state={state.publicDiscovery.state === "unavailable" ? "danger" : unsupportedIndexable > 0 ? "warn" : "ok"} label="Sitemap kapsamı" value={state.publicDiscovery.state === "ok" ? `${totalSitemapCoverage} URL` : "Runtime kontrol gerekli"} detail={unsupportedIndexable > 0 ? `${sitemapDetail} Ayrıca ${unsupportedIndexable} indexlenebilir CMS kayıt tanımlı sitemap ailesine girmiyor.` : sitemapDetail} />
-        <Card state="ok" label="Robots" value="Public açık" detail="/admin, /icerik, /sistem-yonetimi, /harita, /sozlesme, /sozlesmelerim, /api ve /auth crawler erişimine kapalı; sitemap.xml ilan ediliyor." />
-        <Card state="ok" label="Social preview" value="1200 × 630" detail="Global Open Graph/Twitter fallback görseli mevcut; public keşif ve dinamik eser/yazar/tür yüzeyleri kendi canonical sosyal metadata sözleşmelerini uygular." />
+        <Card state={live.robots.state} label="Robots" value={evidenceValue(live.robots.state)} detail={live.robots.detail} />
+        <Card state={live.social.state} label="Social preview" value={evidenceValue(live.social.state)} detail={live.social.detail} />
         <Card state={state.footer.blockers > 0 ? "danger" : state.footer.fallbacks > 0 || state.footer.state === "fallback" ? "warn" : "ok"} label="Internal link / Footer" value={`${state.footer.blockers} blokaj · ${state.footer.fallbacks} fallback`} detail={state.footer.state === "corrupt" ? "Published footer payload bozuk." : state.footer.state === "unavailable" ? "Footer hedef analizi çalıştırılamadı." : state.footer.state === "fallback" ? "Published footer yok; güvenli kod fallback hedefleri kullanılıyor." : "Published footer hedefleri public rota sözleşmesine göre doğrulandı."} />
       </div>
 
       <div className={styles.focus}><div><strong>Şimdi ne yapılmalı?</strong><p>{focus}</p></div><div className={styles.actions}><Link href="/sitemap.xml" target="_blank">Sitemap ↗</Link><Link href="/robots.txt" target="_blank">Robots ↗</Link><Link href="/icerik/menuler">Internal linkleri düzelt →</Link><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div></div>
-      <div className={styles.note}><strong>SEO sınırı:</strong> noindex tek başına hata değildir; bilinçli indeks politikasıdır. BLOCKER yalnız hatalı/duplicate canonical, sitemap runtime envanterinin doğrulanamaması veya bozuk/doğrulanamayan internal-link sözleşmesi gibi yanlış canlı sinyal üretebilecek durumlarda yükselir.</div>
+      <div className={styles.note}><strong>SEO sınırı:</strong> noindex tek başına hata değildir; bilinçli indeks politikasıdır. Canlı kanıt okunamazsa yeşil sonuç üretilmez. BLOCKER hatalı/duplicate canonical, eksik canlı robots/social sinyali, sitemap runtime envanterinin doğrulanamaması veya bozuk/doğrulanamayan internal-link sözleşmesi gibi yanlış canlı sinyal üretebilecek durumlarda yükselir.</div>
     </section>
   );
 }

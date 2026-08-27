@@ -1,6 +1,28 @@
-export const metadata = {
-  title: "İletişim | İlkOku",
-  description: "İlkOku ile iletişime geçin.",
+import type { Metadata } from "next";
+
+const title = "İletişim | İlkOku";
+const description = "İlkOku hakkında genel sorularınız, talepleriniz ve platform iletişimi için bize ulaşın.";
+const socialImage = "/opengraph-image";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: { canonical: "/iletisim" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    locale: "tr_TR",
+    url: "/iletisim",
+    title,
+    description,
+    images: [{ url: socialImage, alt: "İlkOku İletişim" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: [socialImage],
+  },
 };
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ durum?: string }> }) {

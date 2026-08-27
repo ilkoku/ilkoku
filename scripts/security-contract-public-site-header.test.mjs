@@ -26,6 +26,7 @@ const publicLayoutPaths = [
   "src/app/editorler/layout.tsx",
   "src/app/yardim/layout.tsx",
   "src/app/iletisim/layout.tsx",
+  "src/app/hakkimizda/layout.tsx",
   "src/app/nasil-calisir/layout.tsx",
   "src/app/editoryal-standartlar/layout.tsx",
   "src/app/icerik-ve-yas-politikasi/layout.tsx",
@@ -128,7 +129,7 @@ test("public back navigation preserves the actual tab-local internal source path
   assert.match(back, /router\.push\(destination\)/);
   assert.match(back, /aria-label="Geldiğin sayfaya dön"/);
 
-  for (const route of [...trustRoutes, "/editorler", "/yardim"]) {
+  for (const route of [...trustRoutes, "/hakkimizda", "/editorler", "/yardim"]) {
     assert.ok(back.includes(`"${route}"`), `${route} must expose the shared back control`);
   }
 

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { aboutPageContent } from "@/content/about";
 import { communityRulesPageContent } from "@/content/community-rules";
 import { copyrightNoticePageContent } from "@/content/copyright-notice";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
@@ -25,6 +26,12 @@ const legalSlugs = [
 ] as const;
 
 const bundledPublicPages = [
+  {
+    canonical: "/hakkimizda",
+    url: `${baseUrl}/hakkimizda`,
+    updatedAt: aboutPageContent.updatedAt,
+    priority: 0.8,
+  },
   {
     canonical: "/nasil-calisir",
     url: `${baseUrl}/nasil-calisir`,

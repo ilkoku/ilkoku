@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { consumePublicNavigationBackTarget } from "@/components/layout/PublicNavigationHistory";
 
 const explicitBackRoutes = new Set([
+  "/hakkimizda",
   "/nasil-calisir",
   "/editoryal-standartlar",
   "/icerik-ve-yas-politikasi",

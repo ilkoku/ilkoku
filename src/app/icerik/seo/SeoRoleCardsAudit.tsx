@@ -98,10 +98,10 @@ export async function SeoRoleCardsAudit() {
 
   return (
     <>
-      <SeoTechnicalAudit />
-      <SeoHomepageAudit />
-      <SeoMetadataQualityAudit />
-      <section className={styles.audit} aria-labelledby="seo-role-cards-title">
+      <div id="teknik-seo"><SeoTechnicalAudit /></div>
+      <div id="ana-sayfa-seo"><SeoHomepageAudit /></div>
+      <div id="metadata-kalitesi"><span id="structured-data" /><SeoMetadataQualityAudit /></div>
+      <section className={styles.audit} id="rol-kartlari-seo" aria-labelledby="seo-role-cards-title">
         <div className={styles.header}>
           <div className={styles.headerCopy}>
             <span>Ana Sayfa SEO · TR</span>

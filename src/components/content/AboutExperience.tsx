@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
@@ -92,17 +93,15 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
 
-          <aside className="about-purpose-card" aria-label="İlkOku neden var">
-            <div className="about-purpose-card__head">
-              <span><AboutIcon name="spark" /></span>
-              <div><small>Neden varız?</small><h2>Eserin yalnız kalmadığı bir yolculuk için.</h2></div>
-            </div>
-            <div className="about-purpose-card__items">
-              <article><strong>01</strong><div><b>Gelişim görünür olsun</b><p>Eseri yalnız son dosyasıyla değil, gelişim bağlamıyla ele alıyoruz.</p></div></article>
-              <article><strong>02</strong><div><b>Geri bildirim doğru yerde olsun</b><p>Okur ve editör katkısını eserin yolculuğundan koparmıyoruz.</p></div></article>
-              <article><strong>03</strong><div><b>Keşif daha anlamlı olsun</b><p>Yayınevine yalnız bir dosya değil, anlaşılır bir eser bağlamı sunmayı hedefliyoruz.</p></div></article>
-            </div>
-          </aside>
+          <div className="about-hero__visual">
+            <Image
+              src="/about/about-collaboration-hero.webp"
+              alt="İlkOku için insan ve yapay zekânın birlikte çalışmasını anlatan, gözlüklü ve kalemli yaratıcı çalışma sahnesi"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 48vw"
+            />
+          </div>
         </div>
       </section>
 

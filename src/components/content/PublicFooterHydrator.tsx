@@ -19,6 +19,7 @@ const legalLinks = [
 ] as const;
 
 const canonicalPlatformLinks: readonly FooterLink[] = [
+  { label: "Hakkımızda", href: "/hakkimizda" },
   { label: "Nasıl Çalışır?", href: "/nasil-calisir" },
   { label: "Yazarlar İçin", href: "/yazarlar-icin" },
   { label: "Editörler İçin", href: "/editorler-icin" },
@@ -30,6 +31,11 @@ const canonicalTrustLinks: readonly FooterLink[] = [
   { label: "İçerik ve Yaş", href: "/icerik-ve-yas-politikasi" },
   { label: "Topluluk Kuralları", href: "/topluluk-kurallari" },
   { label: "Telif Bildirimi", href: "/telif-bildirimi" },
+];
+
+const canonicalSupportLinks: readonly FooterLink[] = [
+  { label: "Yardım Merkezi", href: "/yardim" },
+  { label: "İletişim", href: "/iletisim" },
 ];
 
 const canonicalPlatformHrefs = new Set(canonicalPlatformLinks.map((link) => link.href));
@@ -57,9 +63,7 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
   if (!copyright) return;
 
   for (const column of columns(footer)) {
-    if (column.querySelector("h3")?.textContent?.trim() === "Yasal") {
-      column.remove();
-    }
+    if (column.querySelector("h3")?.textContent?.trim() === "Yasal") column.remove();
   }
 
   let copyrightText = copyright.querySelector<HTMLElement>(".landing-footer__copyright-text");
@@ -112,14 +116,14 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
 
 function resolvedPlatformLinks(content: FooterContent) {
   return canonicalPlatformLinks.map((fallback, index) => {
-    if (index > 2) return fallback;
+    if (index === 0 || index > 3) return fallback;
 
-    const slot = index + 1;
+    const slot = index;
     const rawHref = content[`platform${slot}Href`]?.trim();
     if (!rawHref) return fallback;
 
     const href = internalHref(rawHref, fallback.href);
-    if (!canonicalPlatformHrefs.has(href)) return fallback;
+    if (!canonicalPlatformHrefs.has(href) || href === "/hakkimizda") return fallback;
 
     return {
       href,
@@ -167,19 +171,11 @@ function rebuildTrustColumn(footer: HTMLElement) {
   replaceColumnLinks(column, canonicalTrustLinks);
 }
 
-function updateColumn(column: HTMLElement | undefined, title: string | undefined, content: FooterContent, prefix: string, count: number) {
+function rebuildSupportColumn(column: HTMLElement | undefined, content: FooterContent) {
   if (!column) return;
   const heading = column.querySelector<HTMLElement>("h3");
-  if (heading && title) heading.textContent = title;
-  const anchors = Array.from(column.querySelectorAll<HTMLAnchorElement>("a"));
-  for (let index = 0; index < count; index += 1) {
-    const anchor = anchors[index];
-    if (!anchor) continue;
-    const label = content[`${prefix}${index + 1}Label`] || (prefix === "support" ? content.supportLabel : "");
-    const href = content[`${prefix}${index + 1}Href`] || (prefix === "support" ? content.supportHref : "");
-    if (label) anchor.textContent = label;
-    if (href) anchor.setAttribute("href", internalHref(href, anchor.getAttribute("href") || "/"));
-  }
+  if (heading) heading.textContent = content.supportTitle || "Destek";
+  replaceColumnLinks(column, canonicalSupportLinks);
 }
 
 export function PublicFooterHydrator() {
@@ -193,6 +189,7 @@ export function PublicFooterHydrator() {
     ensureLegalBar(footer, {});
     rebuildPlatformColumn(findColumn(footer, "Platform"), {});
     rebuildTrustColumn(footer);
+    rebuildSupportColumn(findColumn(footer, "Destek"), {});
 
     void fetch("/api/site-content/footer-navigation", { cache: "no-store", credentials: "same-origin" })
       .then((response) => (response.ok ? response.json() : null))
@@ -201,7 +198,7 @@ export function PublicFooterHydrator() {
         ensureLegalBar(footer, content);
         rebuildPlatformColumn(findColumn(footer, "Platform"), content);
         rebuildTrustColumn(footer);
-        updateColumn(findColumn(footer, "Destek"), content.supportTitle, content, "support", 1);
+        rebuildSupportColumn(findColumn(footer, "Destek"), content);
       })
       .catch(() => {});
   }, [pathname]);

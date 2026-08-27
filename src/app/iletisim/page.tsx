@@ -4,6 +4,11 @@ import Link from "next/link";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
+import { authContent } from "@/content";
+import { logoutAction } from "@/features/auth/actions";
+import { getRoleNavigation } from "@/features/auth/destination";
+import { getCurrentProfile } from "@/features/auth/profile";
+import "../landing.css";
 import "./contact.css";
 import "../nasil-calisir/public-trust-footer.css";
 
@@ -35,7 +40,7 @@ export const metadata: Metadata = {
   },
 };
 
-type ContactIconName = "message" | "help" | "copyright" | "shield";
+type ContactIconName = "message" | "help" | "copyright" | "shield" | "account";
 
 function ContactIcon({ name }: { name: ContactIconName }) {
   const paths = {
@@ -43,6 +48,7 @@ function ContactIcon({ name }: { name: ContactIconName }) {
     help: <><circle cx="12" cy="12" r="9" /><path d="M9.8 9a2.4 2.4 0 1 1 3.5 2.15c-.85.45-1.3.95-1.3 1.85M12 17h.01" /></>,
     copyright: <><circle cx="12" cy="12" r="9" /><path d="M15.5 9.5a4 4 0 1 0 0 5" /></>,
     shield: <><path d="M12 3 20 6v6c0 4.8-3.2 7.4-8 9-4.8-1.6-8-4.2-8-9V6l8-3Z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
+    account: <><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></>,
   } as const;
 
   return (
@@ -74,7 +80,10 @@ const quickLinks = [
 ] as const;
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ durum?: string }> }) {
-  const params = await searchParams;
+  const [params, profile] = await Promise.all([searchParams, getCurrentProfile()]);
+  const navigation = profile ? await getRoleNavigation(profile) : null;
+  const pendingRole = navigation?.pendingRequest?.requestedRole
+    ?? (profile?.role === "editor_pending" ? "editor" : null);
   const schema = [
     {
       "@context": "https://schema.org",
@@ -107,18 +116,40 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
       />
 
       <main className="contact-page">
-        <header className="contact-header">
-          <div className="contact-container contact-header__inner">
-            <Link className="contact-logo" href="/" aria-label="İlkOku ana sayfa">
-              <Image src={logo} alt="İlkOku" priority sizes="160px" />
+        <header className="landing-header">
+          <div className="landing-container landing-header__inner">
+            <Link className="landing-logo" href="/" aria-label="İlkOku ana sayfa">
+              <Image src={logo} alt="İlkOku" priority sizes="(max-width: 480px) 136px, (max-width: 768px) 144px, (max-width: 1024px) 172px, 180px" />
             </Link>
-            <nav aria-label="Herkese açık sayfalar">
-              <Link href="/eserler">Eserler</Link>
-              <Link href="/yazarlar">Yazarlar</Link>
-              <Link href="/nasil-calisir">Nasıl Çalışır?</Link>
-              <Link href="/yardim">Yardım</Link>
-            </nav>
-            <Link className="contact-header__account" href="/giris">Giriş yap</Link>
+            <span className="landing-kicker landing-header__kicker">Dijital edebiyat platformu</span>
+            <div className="landing-header__tools">
+              <details className="landing-account">
+                <summary aria-label={profile ? `${profile.fullName} hesap menüsünü aç` : "Hesap menüsünü aç"}>
+                  <ContactIcon name="account" />
+                </summary>
+                <div className="landing-account__menu">
+                  {profile && navigation ? (
+                    <>
+                      <div className="landing-account__identity">
+                        <strong>{profile.fullName}</strong>
+                        <span>Aktif rol: {authContent.roles[profile.role]}</span>
+                        {navigation.hasPendingRequest ? (
+                          <small>{pendingRole ? `${authContent.roles[pendingRole]} başvurunuz inceleniyor` : "Başvurunuz inceleniyor"}</small>
+                        ) : null}
+                      </div>
+                      <Link href="/hesabim">Hesabım</Link>
+                      <Link href={navigation.workspaceHref}>{navigation.hasPendingRequest ? "Mevcut çalışma alanına dön" : "Çalışma Alanım"}</Link>
+                      <form action={logoutAction}><button className="landing-account__logout" type="submit">Çıkış Yap</button></form>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/giris">Giriş Yap</Link>
+                      <Link href="/#roller">Üye Ol</Link>
+                    </>
+                  )}
+                </div>
+              </details>
+            </div>
           </div>
         </header>
 

@@ -94,7 +94,7 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
 
           <div className="about-hero__visual">
             <img
-              src="/about/about-collaboration-hero.webp?v=20260827b"
+              src="/about/about-collaboration-hero.jpg?v=20260827-final"
               alt="İlkOku için insan ve yapay zekânın birlikte çalışmasını anlatan, gözlüklü ve kalemli yaratıcı çalışma sahnesi"
               width="1280"
               height="720"

@@ -16,14 +16,32 @@ function assertNotContains(text, fragment, label) {
 }
 
 test("SEO workbench exposes complete TR operations layers without creating a second write path", () => {
+  const page = source("src/app/icerik/seo/page.tsx");
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
   const homepage = source("src/app/icerik/seo/SeoHomepageAudit.tsx");
   const metadata = source("src/app/icerik/seo/SeoMetadataQualityAudit.tsx");
   const roleCards = source("src/app/icerik/seo/SeoRoleCardsAudit.tsx");
 
+  assertContains(page, "SEO Operasyon Merkezi", "professional SEO workbench title");
+  assertContains(page, "SEO kabul kapısı", "SEO acceptance gate");
+  assertContains(page, "canonicalIsSafe", "page-level canonical host validation");
+  assertContains(page, '"canonical-duplicate"', "duplicate canonical queue signal");
+  assertContains(page, '"title-quality"', "title quality queue signal");
+  assertContains(page, '"description-quality"', "description quality queue signal");
+  assertContains(page, 'if (page.noIndex) return ["noindex"]', "intentional noindex separation");
+  assertContains(page, 'key: "critical", label: "Kritik"', "critical work queue filter");
+  assertContains(page, 'key: "quality", label: "Kalite"', "quality work queue filter");
+  assertContains(page, 'id="metadata-kuyrugu"', "metadata operations queue anchor");
+  assertContains(page, "“Hazır” durumu yalnız gerçek denetimler geçtiğinde verilir", "no fake ready state contract");
+
   assertContains(roleCards, "<SeoTechnicalAudit />", "technical SEO workbench surface");
   assertContains(roleCards, "<SeoHomepageAudit />", "homepage SEO integrity surface");
   assertContains(roleCards, "<SeoMetadataQualityAudit />", "metadata quality surface");
+  assertContains(roleCards, 'id="teknik-seo"', "technical audit navigation anchor");
+  assertContains(roleCards, 'id="ana-sayfa-seo"', "homepage audit navigation anchor");
+  assertContains(roleCards, 'id="metadata-kalitesi"', "metadata audit navigation anchor");
+  assertContains(roleCards, 'id="structured-data"', "structured data navigation anchor");
+  assertContains(roleCards, 'id="rol-kartlari-seo"', "role cards navigation anchor");
 
   assertContains(technical, "status = 'published'", "published-only SEO inventory");
   assertContains(technical, "contentKey NOT LIKE 'legal:en:%'", "TR-only legal inventory");
@@ -51,7 +69,7 @@ test("SEO workbench exposes complete TR operations layers without creating a sec
   assertContains(metadata, 'label="WebSite"', "WebSite schema status");
   assertContains(metadata, 'label="Book"', "Book schema status");
 
-  for (const text of [technical, homepage, metadata]) {
+  for (const text of [page, technical, homepage, metadata]) {
     assertNotContains(text, "INSERT INTO", "no SEO write SQL");
     assertNotContains(text, "UPDATE ContentPage", "no metadata mutation");
     assertNotContains(text, "saveSeo", "no second SEO save action");
@@ -71,9 +89,11 @@ test("structured data is emitted in server HTML from verified site and work sour
 });
 
 test("technical and metadata SEO audits fail closed when inventory cannot be read", () => {
+  const page = source("src/app/icerik/seo/page.tsx");
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
   const metadata = source("src/app/icerik/seo/SeoMetadataQualityAudit.tsx");
 
+  assertContains(page, "kabul kapısı ve düzeltme kuyruğu fail-closed durduruldu", "SEO acceptance fail-closed message");
   assertContains(technical, "return null", "technical inventory read failure state");
   assertContains(technical, "yanlış bir temiz sonucu üretmiyor", "technical fail-closed user message");
   assertContains(technical, 'data-state="danger"', "technical fail-closed blocker state");

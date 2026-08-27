@@ -13,7 +13,7 @@ export const aboutPageContent = {
 
 Bir eseri yazmak ile onu doğru okuyucuya, doğru editöre ve doğru yayınevine ulaştırmak aynı şey değildir. Yazma süreci kişisel olabilir; gelişim ve keşif süreci ise güvenilir bağlara ihtiyaç duyar.
 
-İlkOku'nun amacı yazara “bu eser kesin yayımlanır” demek değildir. Amacımız; eserin üretilebildiği, okuyucuyla buluşabildiği, bağımsız editör görüşleriyle gelişebildiği ve yayınevlerinin kendi değerlendirmeleri için keşfedebildiği düzenli bir zemin kurmaktır.
+İlkOku'nun amacı; yazarı üretim ve gelişim sürecinde desteklemek, eseri okuyucuyla buluşturmak, bağımsız editör görüşleriyle güçlenmesini sağlamak ve yayınevlerinin nitelikli eserleri keşfedebileceği düzenli bir zemin kurmaktır.
 
 Bu nedenle İlkOku'yu yalnızca bir okuma sitesi ya da yalnızca bir yazma aracı olarak görmüyoruz. İlkOku, bir eserin oluşumuyla profesyonel keşif ihtiyacı arasındaki boşluğu doldurmak için tasarlanmış dijital bir edebiyat ekosistemidir.
 
@@ -35,7 +35,7 @@ Editörün görevi eseri kendi zevkine göre yeniden yazmak değil; metni bağı
 
 ### Yayınevi
 
-Yayınevi hesapları, kendilerine açık keşif alanlarında görünür eserleri ve yazarları inceleyebilir. Ama keşif, otomatik kabul değildir. İlkOku yayınevinin editoryal veya ticari kararını vermez; değerlendirme yapabilmesi için eseri, yazarı ve platform içinde oluşan bağlamı daha anlaşılır hale getirir.
+Yayınevi hesapları, kendilerine açık keşif alanlarında görünür eserleri ve yazarları inceleyebilir. İlkOku; eseri, yazarı ve platform içinde oluşan gelişim bağlamını daha anlaşılır hale getirerek yayınevlerinin keşif ve değerlendirme sürecini destekler.
 
 ## Bir eseri yalnızca son hâliyle görmüyoruz
 
@@ -49,15 +49,15 @@ Eser Pasaportu bu yaklaşımın merkezindedir. Amacı bir esere yapay bir başar
 
 Bu ayrım yalnızca hukuki veya teknik bir sınır değildir; sağlıklı bir edebiyat ekosisteminin temelidir. Her rolün ne yapabildiği ve ne yapamadığı açık olduğunda, aynı eser etrafındaki etkileşim daha anlamlı hale gelir.
 
-## İlkOku ne değildir?
+## Yazar gelişir, okur keşfeder
 
-- İlkOku bir yayınevi değildir ve eserler için basım garantisi vermez.
-- Platformda yayımlanmak, bir yayıneviyle yayın veya basım sözleşmesi yapıldığı anlamına gelmez.
-- Editör incelemesi, yayınevi kabulü veya ticari başarı kararı değildir.
-- Bir eserin yayınevi tarafından görülmesi, otomatik teklif ya da sözleşme oluşturmaz.
-- Okur ilgisi veya platform içi görünürlük, eserin geleceği hakkında kesin bir sonuç vaat etmez.
+- Yazar, eserini bölüm bölüm geliştirir ve gerçek okuyucu geri bildirimleriyle yazarlık yolculuğunu güçlendirir.
+- Okuyucu, yeni hikâyeleri erken aşamada keşfeder ve sevdiği eserlerin gelişimine katkı sunar.
+- Bağımsız editör değerlendirmeleri, yazara metnini daha güçlü hale getirebilmesi için profesyonel bir bakış kazandırır.
+- Eser geliştikçe daha görünür hale gelir; okur ilgisi, geri bildirimler ve gelişim süreci aynı bağlamda birikir.
+- Güçlenen eserler ve gelişen yazarlar, yayınevlerinin nitelikli keşif yapabileceği daha anlamlı bir ortamda görünür olur.
 
-İlkOku'nun değeri garanti üretmekte değil; yazarın, okurun, editörün ve yayınevinin daha doğru bağlamda karşılaşabileceği bir süreç kurmaktadır.
+İlkOku'nun amacı, yeni yazarların gelişebildiği ve okurların yeni hikâyeleri ilk keşfedenlerden olabildiği canlı bir edebiyat topluluğu kurmaktır.
 
 ## Nereye gidiyoruz?
 

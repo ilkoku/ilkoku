@@ -25,6 +25,7 @@ const publicLayoutPaths = [
   "src/app/turler/layout.tsx",
   "src/app/editorler/layout.tsx",
   "src/app/yardim/layout.tsx",
+  "src/app/iletisim/layout.tsx",
   "src/app/nasil-calisir/layout.tsx",
   "src/app/editoryal-standartlar/layout.tsx",
   "src/app/icerik-ve-yas-politikasi/layout.tsx",

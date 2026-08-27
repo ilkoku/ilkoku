@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
-import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import "./contact.css";
 import "../nasil-calisir/public-trust-footer.css";
@@ -107,21 +105,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
       />
 
       <main className="contact-page">
-        <header className="contact-header">
-          <div className="contact-container contact-header__inner">
-            <Link className="contact-logo" href="/" aria-label="İlkOku ana sayfa">
-              <Image src={logo} alt="İlkOku" priority sizes="160px" />
-            </Link>
-            <nav aria-label="Herkese açık sayfalar">
-              <Link href="/eserler">Eserler</Link>
-              <Link href="/yazarlar">Yazarlar</Link>
-              <Link href="/nasil-calisir">Nasıl Çalışır?</Link>
-              <Link href="/yardim">Yardım</Link>
-            </nav>
-            <Link className="contact-header__account" href="/giris">Giriş yap</Link>
-          </div>
-        </header>
-
         <section className="contact-hero">
           <div className="contact-container contact-hero__grid">
             <div className="contact-hero__content">

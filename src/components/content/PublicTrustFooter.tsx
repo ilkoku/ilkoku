@@ -7,6 +7,7 @@ import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
 
 const platformLinks = [
+  { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/nasil-calisir", label: "Nasıl Çalışır?" },
   { href: "/yazarlar-icin", label: "Yazarlar İçin" },
   { href: "/editorler-icin", label: "Editörler İçin" },

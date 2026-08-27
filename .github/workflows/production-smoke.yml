@@ -232,6 +232,7 @@ jobs:
               && check_public_route "https://ilkoku.com/giris" "200" \
               && check_public_route "https://ilkoku.com/yardim" "200" \
               && check_public_route "https://ilkoku.com/editorler" "200" \
+              && check_public_route "https://ilkoku.com/iletisim" "200" \
               && check_post_merge_public_route "https://ilkoku.com/eserler" "200" \
               && check_public_route "https://ilkoku.com/yasal/kullanim-sartlari" "200" \
               && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
@@ -243,11 +244,19 @@ jobs:
               && check_body_contains "https://ilkoku.com/sitemap.xml" \
                 "https://ilkoku.com/yardim" \
                 "https://ilkoku.com/editorler" \
+                "https://ilkoku.com/iletisim" \
                 "https://ilkoku.com/yasal/kullanim-sartlari" \
                 "https://ilkoku.com/yasal/gizlilik-politikasi" \
                 "https://ilkoku.com/yasal/kvkk" \
                 "https://ilkoku.com/yasal/cerez-politikasi" \
                 "https://ilkoku.com/yasal/telif-hakki-politikasi" \
+              && check_post_merge_body_contains "https://ilkoku.com/" \
+                "href=\"/iletisim\"" \
+              && check_post_merge_body_contains "https://ilkoku.com/iletisim" \
+                "İletişim" \
+                "Ad Soyad" \
+                "E-posta" \
+                "Mesaj" \
               && check_post_merge_body_contains "https://ilkoku.com/sitemap.xml" \
                 "https://ilkoku.com/eserler" \
                 "https://ilkoku.com/eserler/yeni" \

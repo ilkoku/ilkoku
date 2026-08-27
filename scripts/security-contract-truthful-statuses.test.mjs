@@ -42,7 +42,7 @@ test("SEO workbench never paints robots social or structured data green without 
 
   contains(metadata, "getLiveSeoVerification()", "structured-data live evidence loader");
   contains(metadata, "state={check.state}", "structured-data evidence-driven state");
-  contains(metadata, "kodda bir schema tipi bulunması tek başına", "structured-data no-fake-ready disclaimer");
+  contains(metadata, "Kodda bir schema tipi bulunması tek başına", "structured-data no-fake-ready disclaimer");
   notContains(metadata, 'data-state="ok">Hazır', "no fixed green structured-data header");
 
   contains(verifier, 'fetchLive("/robots.txt")', "live robots fetch");
@@ -59,12 +59,14 @@ test("runtime infrastructure cannot report PASS while any ENV status is unknown"
   contains(panel, "genel PASS verilmez", "unknown ENV operator message");
 });
 
-test("malformed form payloads are visible in the CMS dashboard integrity summary", () => {
+test("malformed form payloads contribute a redacted CMS overview warning without promoting PII detail", () => {
   const dashboard = source("src/lib/cms-dashboard-integrity.ts");
   const integrity = source("src/lib/cms-health-integrity.ts");
 
   contains(integrity, "invalidForms:", "form integrity source signal");
-  contains(dashboard, "+ integrity.invalidForms", "dashboard form warning aggregation");
+  contains(integrity, "overviewSanitizedWarnings: invalidForms", "redacted overview warning projection");
+  contains(dashboard, "+ integrity.overviewSanitizedWarnings", "dashboard redacted warning aggregation");
+  notContains(dashboard, "invalidForms", "dashboard does not promote form-specific integrity detail");
 });
 
 test("homepage CTA green status requires live target and anchor evidence", () => {

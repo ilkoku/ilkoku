@@ -4,7 +4,9 @@ import { safeCmsInternalHref } from "@/lib/cms-links";
 import styles from "./SeoTechnicalAudit.module.css";
 
 type Tone = "ok" | "warn" | "danger";
+type CtaCheck = { href: string; state: Tone; detail: string };
 
+const baseUrl = "https://ilkoku.com";
 const requirements = {
   hero: ["title", "description", "primaryCtaLabel", "primaryCtaHref", "secondaryCtaLabel", "secondaryCtaHref"],
   roles: ["eyebrow", "title", "description"],
@@ -19,6 +21,43 @@ function missingFields(section: Record<string, string> | undefined, fields: read
 
 function Card({ state, label, value, detail }: { state: Tone; label: string; value: string; detail: string }) {
   return <article className={styles.card} data-state={state}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function verifyCtaHref(input: string): Promise<CtaCheck> {
+  const href = safeCmsInternalHref(input);
+  if (!href) {
+    return { href: input, state: "danger", detail: "CTA hedefi güvenli site içi URL/anchor sözleşmesini geçemedi." };
+  }
+
+  const normalized = href.startsWith("#") ? `/${href}` : href;
+  const url = new URL(normalized, baseUrl);
+  const anchor = url.hash.slice(1);
+  url.hash = "";
+
+  try {
+    const response = await fetch(url.toString(), {
+      cache: "no-store",
+      headers: { "user-agent": "IlkOku-SEO-CTA-Evidence/1.0" },
+      signal: AbortSignal.timeout(6_000),
+    });
+    if (!response.ok) {
+      return { href, state: "danger", detail: `${href} canlı hedefi HTTP ${response.status} döndürdü.` };
+    }
+    if (anchor) {
+      const html = await response.text();
+      const pattern = new RegExp(`id=["']${escapeRegExp(anchor)}["']`, "iu");
+      if (!pattern.test(html)) {
+        return { href, state: "danger", detail: `${href} sayfası açılıyor ancak #${anchor} anchor'ı canlı HTML içinde bulunamadı.` };
+      }
+    }
+    return { href, state: "ok", detail: `${href} canlı hedefi doğrulandı.` };
+  } catch {
+    return { href, state: "warn", detail: `${href} canlı hedefi okunamadı; PASS üretilmedi.` };
+  }
 }
 
 export async function SeoHomepageAudit() {
@@ -46,16 +85,33 @@ export async function SeoHomepageAudit() {
   const missingSections = sectionResults.filter((item) => !content[item.key as keyof typeof content]).length;
   const hero = content.hero;
   const passport = content.passport;
-  const invalidCtas = [hero?.primaryCtaHref, hero?.secondaryCtaHref, passport?.ctaHref]
-    .filter((value): value is string => Boolean(value?.trim()))
-    .filter((value) => !safeCmsInternalHref(value)).length;
+  const ctaInputs = [hero?.primaryCtaHref, hero?.secondaryCtaHref, passport?.ctaHref]
+    .filter((value): value is string => Boolean(value?.trim()));
+  const ctaChecks = await Promise.all(ctaInputs.map((value) => verifyCtaHref(value)));
+  const invalidCtas = ctaChecks.filter((check) => check.state === "danger").length;
+  const unverifiableCtas = ctaChecks.filter((check) => check.state === "warn").length;
+  const ctaTone: Tone = invalidCtas > 0
+    ? "danger"
+    : ctaInputs.length === 0 || unverifiableCtas > 0
+      ? "warn"
+      : "ok";
   const fallbackMode = state.state === "missing";
-  const tone: Tone = invalidCtas > 0 ? "danger" : fallbackMode || missingCount > 0 ? "warn" : "ok";
+  const tone: Tone = ctaTone === "danger" ? "danger" : fallbackMode || missingCount > 0 || ctaTone === "warn" ? "warn" : "ok";
+  const ctaValue = ctaTone === "ok"
+    ? `${ctaChecks.length}/${ctaChecks.length} canlı`
+    : ctaTone === "danger"
+      ? `${invalidCtas} hatalı hedef`
+      : ctaInputs.length === 0
+        ? "CTA yok"
+        : `${unverifiableCtas} doğrulanamadı`;
+  const ctaDetail = ctaChecks.length > 0
+    ? ctaChecks.map((check) => check.detail).join(" · ")
+    : "Published CTA hedefi bulunmadı; biçim veya canlı hedef için PASS üretilmedi.";
 
   return (
     <section className={styles.audit} aria-labelledby="seo-homepage-title">
       <div className={styles.header}>
-        <div className={styles.copy}><span>Ana Sayfa SEO · TR</span><h2 id="seo-homepage-title">İçerik Bütünlüğü</h2><p>Hero, rol girişi, Eser Pasaportu, Neden İlkOku ve footer metinlerinin published CMS durumunu kontrol edin. Bu metinler public Ana Sayfa’nın ilk server HTML’inde kullanılır.</p></div>
+        <div className={styles.copy}><span>Ana Sayfa SEO · TR</span><h2 id="seo-homepage-title">İçerik Bütünlüğü</h2><p>Hero, rol girişi, Eser Pasaportu, Neden İlkOku ve footer metinlerinin published CMS durumunu kontrol edin. CTA kartı artık yalnız URL biçimini değil, canlı hedefin HTTP erişimini ve varsa anchor kanıtını da doğrular.</p></div>
         <span className={styles.status} data-state={tone}>{tone === "ok" ? "Temiz" : tone === "warn" ? "Kontrol" : "Blokaj"}</span>
       </div>
 
@@ -66,10 +122,10 @@ export async function SeoHomepageAudit() {
           const sectionExists = Boolean(content[item.key as keyof typeof content]);
           return <Card key={item.key} state={!sectionExists ? "warn" : missing.length > 0 ? "warn" : "ok"} label={labels[item.key]} value={!sectionExists ? "Kod fallback" : missing.length > 0 ? `${missing.length} alan eksik` : "Published hazır"} detail={!sectionExists ? "CMS published bölümü yok; public sayfa güvenli kod içeriğini kullanıyor." : missing.length > 0 ? `Eksik: ${missing.join(", ")}.` : "Kritik metin alanları published CMS kaydında mevcut."} />;
         })}
-        <Card state={invalidCtas > 0 ? "danger" : "ok"} label="CTA güvenliği" value={invalidCtas > 0 ? `${invalidCtas} hatalı hedef` : "Güvenli"} detail="Hero ve Eser Pasaportu CTA hedefleri yalnız güvenli site içi URL/anchor kabul eder." />
+        <Card state={ctaTone} label="CTA hedef doğrulaması" value={ctaValue} detail={ctaDetail} />
       </div>
 
-      <div className={styles.focus}><div><strong>Şimdi ne yapılmalı?</strong><p>{invalidCtas > 0 ? "Güvenli olmayan CTA hedeflerini düzeltin; public navigasyon sinyalini bozabilir." : fallbackMode ? "Ana Sayfa tamamen kod fallback’i ile çalışıyor. SEO kontrolü için canonical CMS bölümlerini yayınlayın." : missingCount > 0 || missingSections > 0 ? "Eksik CMS alanlarını tamamlayın; public sayfa fallback metinlerle karışık çalışmasın." : "Ana Sayfa published CMS içerik bütünlüğü hazır. Rol Kartları ve teknik SEO kontrollerine geçebilirsiniz."}</p></div><div className={styles.actions}><Link href="/icerik/ana-sayfa">Ana Sayfa çalışma masası →</Link><Link href="/" target="_blank">Public Ana Sayfa ↗</Link></div></div>
+      <div className={styles.focus}><div><strong>Şimdi ne yapılmalı?</strong><p>{invalidCtas > 0 ? "Açılmayan, anchor'ı bulunmayan veya güvenli URL sözleşmesini geçemeyen CTA hedeflerini düzeltin." : unverifiableCtas > 0 ? "Canlı olarak okunamayan CTA hedeflerini yeniden doğrulayın; bunlara PASS verilmedi." : fallbackMode ? "Ana Sayfa tamamen kod fallback’i ile çalışıyor. SEO kontrolü için canonical CMS bölümlerini yayınlayın." : missingCount > 0 || missingSections > 0 ? "Eksik CMS alanlarını tamamlayın; public sayfa fallback metinlerle karışık çalışmasın." : "Ana Sayfa published CMS içerik bütünlüğü ve canlı CTA hedefleri doğrulandı. Rol Kartları ve teknik SEO kontrollerine geçebilirsiniz."}</p></div><div className={styles.actions}><Link href="/icerik/ana-sayfa">Ana Sayfa çalışma masası →</Link><Link href="/" target="_blank">Public Ana Sayfa ↗</Link></div></div>
     </section>
   );
 }

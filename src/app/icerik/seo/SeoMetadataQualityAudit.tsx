@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import {
+  getLiveSeoVerification,
+  type SeoSchemaType,
+} from "@/lib/seo-live-verification";
 import styles from "./SeoTechnicalAudit.module.css";
 
 type Row = {
@@ -27,22 +31,38 @@ function Card({ state, label, value, detail }: { state: Tone; label: string; val
   return <article className={styles.card} data-state={state}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>;
 }
 
-function StructuredDataAudit() {
+function evidenceValue(state: Tone) {
+  if (state === "ok") return "Canlı doğrulandı";
+  if (state === "danger") return "Eksik";
+  return "Doğrulanamadı";
+}
+
+async function StructuredDataAudit() {
+  const live = await getLiveSeoVerification();
+  const schemaTypes: SeoSchemaType[] = ["WebSite", "Book", "CollectionPage", "ProfilePage", "FAQPage", "BreadcrumbList"];
+  const checks = schemaTypes.map((type) => ({ type, ...live.structuredData[type] }));
+  const blockers = checks.filter((check) => check.state === "danger").length;
+  const warnings = checks.filter((check) => check.state === "warn").length;
+  const tone: Tone = blockers > 0 ? "danger" : warnings > 0 ? "warn" : "ok";
+
   return (
     <section className={styles.audit} aria-labelledby="seo-structured-title">
       <div className={styles.header}>
-        <div className={styles.copy}><span>Structured Data · TR</span><h2 id="seo-structured-title">Yapısal Veri</h2><p>Arama motorlarına verilen schema.org sinyallerini görün. Yalnız gerçekten mevcut ve doğrulanabilir veri tipleri kullanılır; kod tabanlı public keşif rotaları da bu envantere dahildir.</p></div>
-        <span className={styles.status} data-state="ok">Hazır</span>
+        <div className={styles.copy}><span>Structured Data · TR</span><h2 id="seo-structured-title">Yapısal Veri</h2><p>Arama motorlarına verilen schema.org sinyalleri canlı server HTML üzerinden doğrulanır. Kodda bir schema tipi bulunması tek başına “Hazır” sayılmaz; canlı kanıt okunamazsa yeşil sonuç üretilmez.</p></div>
+        <span className={styles.status} data-state={tone}>{tone === "ok" ? "Canlı doğrulandı" : tone === "warn" ? "Kontrol" : "Eksik"}</span>
       </div>
       <div className={styles.grid}>
-        <Card state="ok" label="WebSite" value="Site kimliği" detail="İlkOku adı, canonical site URL adresi, TR dili ve marka açıklaması root server HTML içinde JSON-LD olarak yayınlanır." />
-        <Card state="ok" label="Book" value="Eser detayları" detail="Public eserlerde başlık, yazar, URL, dil, tür, görsel, yayın/güncelleme tarihi ve publisher sinyalleri Book JSON-LD ile verilir." />
-        <Card state="ok" label="CollectionPage" value="Keşif yüzeyleri" detail="Eser, yazar, tür ve editör keşif yüzeyleri gerçek public koleksiyonlarını CollectionPage/ItemList ile tanımlar." />
-        <Card state="ok" label="ProfilePage" value="Yazar vitrini" detail="Public yazar detayları Person ana varlığı ve keşfe açık eser örnekleriyle ProfilePage olarak yayınlanır." />
-        <Card state="ok" label="FAQPage" value="Yardım Merkezi" detail="Yardım Merkezi yalnız ekranda gerçekten gösterilen soru-cevap kayıtlarını FAQPage yapısal verisine taşır." />
-        <Card state="ok" label="BreadcrumbList" value="Gezinme zinciri" detail="Public yardım, editör, eser, yazar ve tür detaylarında canonical gezinme zinciri BreadcrumbList ile desteklenir." />
+        {checks.map((check) => (
+          <Card
+            key={check.type}
+            state={check.state}
+            label={check.type}
+            value={evidenceValue(check.state)}
+            detail={check.detail}
+          />
+        ))}
       </div>
-      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>Schema çıktıları public server HTML içindedir; veri olmayan rich-result alanları doldurulmaz ve query/geri dönüş parametreleri canonical schema URL&apos;sine taşınmaz.</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/eserler" target="_blank">Keşfe açık eserler ↗</Link></div></div>
+      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>{blockers > 0 ? `${blockers} schema tipi canlı HTML içinde beklenen kanıtı vermiyor.` : warnings > 0 ? `${warnings} schema tipi canlı olarak doğrulanamadı; bunlar PASS sayılmıyor.` : "WebSite, Book, CollectionPage, ProfilePage, FAQPage ve BreadcrumbList için seçili canlı örneklerin tamamı doğrulandı."}</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/eserler" target="_blank">Keşfe açık eserler ↗</Link></div></div>
     </section>
   );
 }
@@ -100,7 +120,7 @@ export async function SeoMetadataQualityAudit() {
           <Card state={missingDescriptions > 0 ? "danger" : "ok"} label="Meta description" value={`${missingDescriptions} eksik`} detail={`${shortDescriptions} kısa · ${longDescriptions} uzun. Kalite rehberi: yaklaşık 70–170 karakter.`} />
           <Card state={duplicateTitles > 0 ? "warn" : "ok"} label="Tekrar title" value={`${duplicateTitles} tekrar`} detail="Indexlenebilir sayfalarda aynı SEO title kullanımı ayrıştırmayı zayıflatabilir." />
           <Card state={duplicateDescriptions > 0 ? "warn" : "ok"} label="Tekrar description" value={`${duplicateDescriptions} tekrar`} detail="Aynı SERP açıklamasının çoklu sayfalarda kullanımı kontrol edilmelidir." />
-          <Card state="ok" label="Kapsam" value={`${indexable.length} indexlenebilir CMS`} detail={`${pages.length - indexable.length} noindex CMS kayıt kalite tekrar analizinden ayrıldı; kod tabanlı public keşif rotaları teknik SEO ve structured-data envanterinde ayrıca izlenir.`} />
+          <Card state="ok" label="Kapsam" value={`${indexable.length} indexlenebilir CMS`} detail={`${pages.length - indexable.length} noindex CMS kayıt kalite tekrar analizinden ayrıldı; kod tabanlı public keşif rotaları teknik SEO ve canlı structured-data envanterinde ayrıca izlenir.`} />
           <Card state={warnings > 0 ? "warn" : "ok"} label="Kalite uyarısı" value={`${warnings}`} detail="Uzunluk ve tekrar sinyalleri editoryal uyarıdır; kritik metadata eksiklerinden ayrı tutulur." />
         </div>
 

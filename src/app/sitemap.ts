@@ -120,6 +120,11 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     changeFrequency: "weekly",
     priority: 0.7,
   },
+  {
+    url: `${baseUrl}/iletisim`,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  },
 ];
 
 type CmsSitemapRow = {

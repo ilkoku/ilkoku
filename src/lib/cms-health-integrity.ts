@@ -40,6 +40,7 @@ export type CmsOperationalIntegrity = {
   orphanMediaBlobs: number;
   invalidRevisions: number;
   invalidForms: number;
+  overviewSanitizedWarnings: number;
   invalidAnnouncements: number;
   invalidFooterLive: number;
   invalidFooterDraft: number;
@@ -121,6 +122,8 @@ export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegr
     return !activeMediaKeys.has(`asset_${id}`);
   }).length;
 
+  const invalidForms = formRows.filter((row) => !isObjectJson(row.valueJson)).length;
+
   return {
     invalidRedirects: redirectRows.filter((row) => !parseCmsRedirectValue(row.valueJson)).length,
     invalidMedia: parsedMedia.filter((item) => !item.asset).length,
@@ -128,7 +131,10 @@ export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegr
     brokenDatabaseMedia,
     orphanMediaBlobs,
     invalidRevisions: revisionRows.filter((row) => !isValidCmsRevisionSnapshotJson(row.snapshotJson)).length,
-    invalidForms: formRows.filter((row) => !isObjectJson(row.valueJson)).length,
+    invalidForms,
+    // The overview receives only an aggregate count. Form payloads and PII remain
+    // confined to the dedicated health/form workbenches.
+    overviewSanitizedWarnings: invalidForms,
     invalidAnnouncements: announcementRows.filter((row) => !isObjectJson(row.valueJson)).length,
     invalidFooterLive: liveFooter && !parseFooterNavigation(liveFooter.valueJson) ? 1 : 0,
     invalidFooterDraft: draftFooter && !parseFooterNavigation(draftFooter.valueJson) ? 1 : 0,

@@ -20,7 +20,7 @@ export function getCmsDashboardIntegritySignals(integrity: CmsOperationalIntegri
     + integrity.invalidMediaBlobs
     + integrity.orphanMediaBlobs
     + integrity.invalidRevisions
-    + integrity.invalidForms
+    + integrity.overviewSanitizedWarnings
     + integrity.invalidAnnouncements
     + integrity.invalidFooterDraft
     + integrity.invalidStagedDrafts;

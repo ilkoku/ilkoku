@@ -125,7 +125,7 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
             </header>
             <div className="about-mission__body">
               <EditorialBody body={sectionMap.get("Neden İlkOku var?")!.body} />
-              <blockquote>“Garanti üretmek değil; doğru insanları, doğru aşamada, doğru bağlamda buluşturmak.”</blockquote>
+              <blockquote>“Yazarı geliştirmek, okuru yeni eserlerle buluşturmak ve güçlü hikâyeleri görünür kılmak.”</blockquote>
             </div>
           </div>
         </section>
@@ -188,11 +188,11 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
         </section>
       ) : null}
 
-      {sectionMap.get("İlkOku ne değildir?") ? (
+      {sectionMap.get("Yazar gelişir, okur keşfeder") ? (
         <section className="about-boundaries">
           <div className="about-container about-boundaries__grid">
-            <header><span className="about-eyebrow">Açık konuşuyoruz</span><h2>İlkOku ne değildir?</h2><p>Büyük vaatler yerine, platformun sınırlarını açıkça anlatıyoruz.</p></header>
-            <div className="about-boundaries__body"><EditorialBody body={sectionMap.get("İlkOku ne değildir?")!.body} /></div>
+            <header><span className="about-eyebrow">Yazarın gelişimi · okurun keşfi</span><h2>Yazar gelişir, okur keşfeder.</h2><p>İlkOku, yeni yazarların güçlenebildiği ve okurların yeni hikâyeleri erkenden keşfedebildiği canlı bir buluşma alanı kurar.</p></header>
+            <div className="about-boundaries__body"><EditorialBody body={sectionMap.get("Yazar gelişir, okur keşfeder")!.body} /></div>
           </div>
         </section>
       ) : null}

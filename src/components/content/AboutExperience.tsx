@@ -95,10 +95,11 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
 
           <div className="about-hero__visual">
             <Image
-              src="/about/about-collaboration-hero.webp"
+              src="/about/about-collaboration-hero.webp?v=20260827"
               alt="İlkOku için insan ve yapay zekânın birlikte çalışmasını anlatan, gözlüklü ve kalemli yaratıcı çalışma sahnesi"
               fill
               priority
+              unoptimized
               sizes="(max-width: 1024px) 100vw, 48vw"
             />
           </div>

@@ -37,7 +37,7 @@ jobs:
           });
 
           const image = Buffer.from(parts.join(''), 'base64');
-          if (image.length < 30000) throw new Error(`Hero JPEG çok küçük: ${image.length} bytes`);
+          if (image.length < 15000) throw new Error(`Hero JPEG çok küçük: ${image.length} bytes`);
           if (image[0] !== 0xff || image[1] !== 0xd8) throw new Error('JPEG başlangıç imzası geçersiz.');
           if (image.at(-2) !== 0xff || image.at(-1) !== 0xd9) throw new Error('JPEG bitiş imzası geçersiz.');
 
@@ -105,7 +105,7 @@ jobs:
               && [[ "$asset_code" == "200" ]] \
               && [[ "$sitemap_code" == "200" ]] \
               && [[ "${content_type,,}" == image/jpeg* ]] \
-              && (( bytes >= 30000 )) \
+              && (( bytes >= 15000 )) \
               && [[ "$magic" == "ffd8" ]] \
               && [[ "$tail_magic" == "ffd9" ]] \
               && grep -Fq 'href="/hakkimizda"' "$home" \

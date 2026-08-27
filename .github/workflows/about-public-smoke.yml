@@ -1,0 +1,88 @@
+name: Hakkimizda public smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify Hakkimizda hero and footer contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify bundled hero and footer source contract
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          asset="public/about/about-collaboration-hero.jpg"
+          test -f "$asset"
+          bytes="$(wc -c < "$asset" | tr -d ' ')"
+          mime="$(file --brief --mime-type "$asset")"
+          echo "$asset -> $mime | ${bytes} bytes"
+          [[ "$mime" == "image/jpeg" ]]
+          (( bytes >= 100000 ))
+
+          grep -Fq 'src="/about/about-collaboration-hero.jpg?v=20260827-final"' src/components/content/AboutExperience.tsx
+          grep -Fq '<Link href="/hakkimizda">Hakkımızda</Link>' src/app/page.tsx
+          grep -Fq '<Link href="/iletisim">İletişim</Link>' src/app/page.tsx
+
+      - name: Verify live Hakkimizda after main deploy
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          USER_AGENT="IlkOku-Hakkimizda-Smoke/1.0"
+          deadline=$((SECONDS + 300))
+
+          while (( SECONDS < deadline )); do
+            home="$(mktemp)"
+            about="$(mktemp)"
+            asset="$(mktemp)"
+            asset_headers="$(mktemp)"
+            sitemap="$(mktemp)"
+
+            home_code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$home" --write-out '%{http_code}' 'https://ilkoku.com/' || true)"
+            about_code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$about" --write-out '%{http_code}' 'https://ilkoku.com/hakkimizda' || true)"
+            asset_code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$asset_headers" --output "$asset" --write-out '%{http_code}' 'https://ilkoku.com/about/about-collaboration-hero.jpg?v=20260827-final' || true)"
+            sitemap_code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$sitemap" --write-out '%{http_code}' 'https://ilkoku.com/sitemap.xml' || true)"
+
+            content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$asset_headers")"
+            bytes="$(wc -c < "$asset" | tr -d ' ')"
+
+            echo "home=$home_code about=$about_code asset=$asset_code type=${content_type:-YOK} bytes=$bytes sitemap=$sitemap_code"
+
+            if [[ "$home_code" == "200" ]] \
+              && [[ "$about_code" == "200" ]] \
+              && [[ "$asset_code" == "200" ]] \
+              && [[ "$sitemap_code" == "200" ]] \
+              && [[ "${content_type,,}" == image/jpeg* ]] \
+              && (( bytes >= 100000 )) \
+              && grep -Fq 'href="/hakkimizda"' "$home" \
+              && grep -Fq 'href="/iletisim"' "$home" \
+              && grep -Fq 'about-collaboration-hero.jpg?v=20260827-final' "$about" \
+              && grep -Fq 'https://ilkoku.com/hakkimizda' "$sitemap"; then
+              rm -f "$home" "$about" "$asset" "$asset_headers" "$sitemap"
+              echo "PASS: Hakkimizda hero JPEG, homepage footer links and sitemap are live."
+              exit 0
+            fi
+
+            rm -f "$home" "$about" "$asset" "$asset_headers" "$sitemap"
+            sleep 10
+          done
+
+          echo "FAIL: Hakkimizda live contract did not become healthy within 5 minutes." >&2
+          exit 1

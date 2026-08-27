@@ -10,6 +10,7 @@ const baseUrl = "https://ilkoku.com";
 const title = "Eser Türleri | İlkOku";
 const description =
   "İlkOku’da keşfe açık yayımlanan Türkçe eserleri edebî türlerine göre keşfedin.";
+const socialImage = "/opengraph-image";
 
 type PublicGenresPageProps = {
   searchParams: Promise<{
@@ -33,6 +34,20 @@ export async function generateMetadata({
     robots: {
       index: !query.arama,
       follow: true,
+    },
+    openGraph: {
+      type: "website",
+      locale: "tr_TR",
+      url: "/turler",
+      title,
+      description,
+      images: [{ url: socialImage, alt: "İlkOku eser türleri" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [socialImage],
     },
   };
 }

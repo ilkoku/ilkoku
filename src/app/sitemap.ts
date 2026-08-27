@@ -23,120 +23,116 @@ const legalSlugs = [
   "cerez-politikasi",
   "telif-hakki-politikasi",
 ] as const;
-const staticCmsPageSlugs = new Set<string>([
-  howItWorksPageContent.canonical,
-  editorialStandardsPageContent.canonical,
-  contentAgePolicyPageContent.canonical,
-  communityRulesPageContent.canonical,
-  copyrightNoticePageContent.canonical,
-  forWritersPageContent.canonical,
-  forEditorsPageContent.canonical,
-  forPublishersPageContent.canonical,
-]);
+
+const bundledPublicPages = [
+  {
+    canonical: "/nasil-calisir",
+    url: `${baseUrl}/nasil-calisir`,
+    updatedAt: howItWorksPageContent.updatedAt,
+    priority: 0.8,
+  },
+  {
+    canonical: "/editoryal-standartlar",
+    url: `${baseUrl}/editoryal-standartlar`,
+    updatedAt: editorialStandardsPageContent.updatedAt,
+    priority: 0.75,
+  },
+  {
+    canonical: "/icerik-ve-yas-politikasi",
+    url: `${baseUrl}/icerik-ve-yas-politikasi`,
+    updatedAt: contentAgePolicyPageContent.updatedAt,
+    priority: 0.75,
+  },
+  {
+    canonical: "/topluluk-kurallari",
+    url: `${baseUrl}/topluluk-kurallari`,
+    updatedAt: communityRulesPageContent.updatedAt,
+    priority: 0.75,
+  },
+  {
+    canonical: "/telif-bildirimi",
+    url: `${baseUrl}/telif-bildirimi`,
+    updatedAt: copyrightNoticePageContent.updatedAt,
+    priority: 0.75,
+  },
+  {
+    canonical: "/yazarlar-icin",
+    url: `${baseUrl}/yazarlar-icin`,
+    updatedAt: forWritersPageContent.updatedAt,
+    priority: 0.8,
+  },
+  {
+    canonical: "/editorler-icin",
+    url: `${baseUrl}/editorler-icin`,
+    updatedAt: forEditorsPageContent.updatedAt,
+    priority: 0.8,
+  },
+  {
+    canonical: "/yayinevleri-icin",
+    url: `${baseUrl}/yayinevleri-icin`,
+    updatedAt: forPublishersPageContent.updatedAt,
+    priority: 0.8,
+  },
+] as const;
+
+const staticCmsPageSlugs = new Set<string>(
+  bundledPublicPages.map((page) => page.canonical),
+);
+
+const staticDiscoveryEntries: MetadataRoute.Sitemap = [
+  {
+    url: `${baseUrl}/`,
+    changeFrequency: "daily",
+    priority: 1,
+  },
+  {
+    url: `${baseUrl}/eserler`,
+    changeFrequency: "daily",
+    priority: 0.9,
+  },
+  {
+    url: `${baseUrl}/eserler/yeni`,
+    changeFrequency: "daily",
+    priority: 0.8,
+  },
+  {
+    url: `${baseUrl}/eserler/guncellenen`,
+    changeFrequency: "daily",
+    priority: 0.8,
+  },
+  {
+    url: `${baseUrl}/yazarlar`,
+    changeFrequency: "daily",
+    priority: 0.75,
+  },
+  {
+    url: `${baseUrl}/turler`,
+    changeFrequency: "daily",
+    priority: 0.75,
+  },
+  {
+    url: `${baseUrl}/yardim`,
+    changeFrequency: "weekly",
+    priority: 0.6,
+  },
+  {
+    url: `${baseUrl}/editorler`,
+    changeFrequency: "weekly",
+    priority: 0.7,
+  },
+];
 
 type CmsSitemapRow = {
   slug: string;
+  noIndex: boolean;
   updatedAt: Date;
 };
 
-type CmsLegalSitemapRow = CmsSitemapRow & {
-  noIndex: boolean;
-};
+type CmsLegalSitemapRow = CmsSitemapRow;
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const safeStaticEntries: MetadataRoute.Sitemap = [
-    {
-      url: `${baseUrl}/`,
-      changeFrequency: "daily",
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/eserler`,
-      changeFrequency: "daily",
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/eserler/yeni`,
-      changeFrequency: "daily",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/eserler/guncellenen`,
-      changeFrequency: "daily",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/yazarlar`,
-      changeFrequency: "daily",
-      priority: 0.75,
-    },
-    {
-      url: `${baseUrl}/turler`,
-      changeFrequency: "daily",
-      priority: 0.75,
-    },
-    {
-      url: `${baseUrl}/yardim`,
-      changeFrequency: "weekly",
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/editorler`,
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/nasil-calisir`,
-      lastModified: new Date(howItWorksPageContent.updatedAt),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/editoryal-standartlar`,
-      lastModified: new Date(editorialStandardsPageContent.updatedAt),
-      changeFrequency: "monthly",
-      priority: 0.75,
-    },
-    {
-      url: `${baseUrl}/icerik-ve-yas-politikasi`,
-      lastModified: new Date(contentAgePolicyPageContent.updatedAt),
-      changeFrequency: "monthly",
-      priority: 0.75,
-    },
-    {
-      url: `${baseUrl}/topluluk-kurallari`,
-      lastModified: new Date(communityRulesPageContent.updatedAt),
-      changeFrequency: "monthly",
-      priority: 0.75,
-    },
-    {
-      url: `${baseUrl}/telif-bildirimi`,
-      lastModified: new Date(copyrightNoticePageContent.updatedAt),
-      changeFrequency: "monthly",
-      priority: 0.75,
-    },
-    {
-      url: `${baseUrl}/yazarlar-icin`,
-      lastModified: new Date(forWritersPageContent.updatedAt),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/editorler-icin`,
-      lastModified: new Date(forEditorsPageContent.updatedAt),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/yayinevleri-icin`,
-      lastModified: new Date(forPublishersPageContent.updatedAt),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-  ];
-
   try {
     const [
       works,
@@ -176,11 +172,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       getPublicAuthors(),
       getPublicGenres(),
       prisma.$queryRaw<CmsSitemapRow[]>`
-        SELECT slug, updatedAt
+        SELECT slug, noIndex, updatedAt
         FROM ContentPage
         WHERE contentKey LIKE 'page:tr:%'
           AND status = 'published'
-          AND noIndex = false
         ORDER BY updatedAt DESC
         LIMIT 5000
       `,
@@ -194,6 +189,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         LIMIT 100
       `,
     ]);
+
+    const pageBySlug = new Map(
+      pages.map((row) => [row.slug, row]),
+    );
+    const publicPageEntries: MetadataRoute.Sitemap = bundledPublicPages.flatMap((page) => {
+      const row = pageBySlug.get(page.canonical);
+
+      if (row?.noIndex) {
+        return [];
+      }
+
+      return [{
+        url: page.url,
+        lastModified: row?.updatedAt ?? new Date(page.updatedAt),
+        changeFrequency: "monthly" as const,
+        priority: page.priority,
+      }];
+    });
 
     const legalBySlug = new Map(
       legalRows.map((row) => [row.slug, row]),
@@ -222,7 +235,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
 
     return [
-      ...safeStaticEntries,
+      ...staticDiscoveryEntries,
+      ...publicPageEntries,
       ...legalEntries,
       ...authors.map((author) => ({
         url: `${baseUrl}/yazarlar/${author.publicId}`,
@@ -246,7 +260,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.8,
         })),
       ...pages
-        .filter((page) => !staticCmsPageSlugs.has(page.slug))
+        .filter((page) => !page.noIndex && !staticCmsPageSlugs.has(page.slug))
         .map((page) => ({
           url: `${baseUrl}${page.slug}`,
           lastModified: page.updatedAt,
@@ -255,8 +269,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         })),
     ];
   } catch {
-    // Keep the stable public discovery network available even if
-    // database-backed CMS indexability cannot be verified.
-    return safeStaticEntries;
+    // CMS indexability cannot be verified when the database is unavailable.
+    // Fail closed for CMS-owned pages and keep only code-owned public routes.
+    return staticDiscoveryEntries;
   }
 }

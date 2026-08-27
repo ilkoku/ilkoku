@@ -75,11 +75,12 @@ export async function generateMetadata({
 
   const name = authorName(author);
   const canonical = `/yazarlar/${author.publicId}`;
+  const title = `${name} — Eserleri | İlkOku`;
   const metaDescription =
     `${name} tarafından İlkOku’da keşfe açık yayımlanan ${author.works.length} Türkçe eseri keşfedin.`;
 
   return {
-    title: `${name} — Eserleri | İlkOku`,
+    title,
     description: metaDescription,
     alternates: {
       canonical,
@@ -92,7 +93,12 @@ export async function generateMetadata({
       type: "profile",
       locale: "tr_TR",
       url: canonical,
-      title: `${name} — Eserleri | İlkOku`,
+      title,
+      description: metaDescription,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
       description: metaDescription,
     },
   };

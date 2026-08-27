@@ -108,6 +108,11 @@ export async function generateMetadata({
       title,
       description,
     },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
@@ -139,35 +144,61 @@ export default async function PublicGenrePage({
     returnTo,
   );
   const canonical = `${baseUrl}/turler/${genre.slug}`;
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    name: `${genre.label} eserleri`,
-    url: canonical,
-    inLanguage: "tr-TR",
-    mainEntity: {
-      "@type": "ItemList",
-      itemListElement: library.works.map(
-        (work, index) => ({
-          "@type": "ListItem",
-          position:
-            (library.currentPage - 1) *
-              PUBLIC_WORK_PAGE_SIZE +
-            index +
-            1,
-          name: work.title,
-          url: `${baseUrl}/kitap/${work.slug}`,
-        }),
-      ),
+  const schemas = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: `${genre.label} eserleri`,
+      url: canonical,
+      inLanguage: "tr-TR",
+      mainEntity: {
+        "@type": "ItemList",
+        itemListElement: library.works.map(
+          (work, index) => ({
+            "@type": "ListItem",
+            position:
+              (library.currentPage - 1) *
+                PUBLIC_WORK_PAGE_SIZE +
+              index +
+              1,
+            name: work.title,
+            url: `${baseUrl}/kitap/${work.slug}`,
+          }),
+        ),
+      },
     },
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Ana Sayfa",
+          item: `${baseUrl}/`,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Türler",
+          item: `${baseUrl}/turler`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: genre.label,
+          item: canonical,
+        },
+      ],
+    },
+  ];
 
   return (
     <PublicHubShell>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(schema).replace(
+          __html: JSON.stringify(schemas).replace(
             /</g,
             "\\u003c",
           ),

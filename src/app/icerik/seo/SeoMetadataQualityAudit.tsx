@@ -31,15 +31,18 @@ function StructuredDataAudit() {
   return (
     <section className={styles.audit} aria-labelledby="seo-structured-title">
       <div className={styles.header}>
-        <div className={styles.copy}><span>Structured Data · TR</span><h2 id="seo-structured-title">Yapısal Veri</h2><p>Arama motorlarına verilen schema.org sinyallerini görün. Yalnız gerçekten mevcut ve doğrulanabilir veri tipleri kullanılır.</p></div>
+        <div className={styles.copy}><span>Structured Data · TR</span><h2 id="seo-structured-title">Yapısal Veri</h2><p>Arama motorlarına verilen schema.org sinyallerini görün. Yalnız gerçekten mevcut ve doğrulanabilir veri tipleri kullanılır; kod tabanlı public keşif rotaları da bu envantere dahildir.</p></div>
         <span className={styles.status} data-state="ok">Hazır</span>
       </div>
       <div className={styles.grid}>
-        <Card state="ok" label="WebSite" value="Site kimliği" detail="İlkOku adı, canonical site URL'si, TR dili ve marka açıklaması root server HTML içinde JSON-LD olarak yayınlanır." />
+        <Card state="ok" label="WebSite" value="Site kimliği" detail="İlkOku adı, canonical site URL adresi, TR dili ve marka açıklaması root server HTML içinde JSON-LD olarak yayınlanır." />
         <Card state="ok" label="Book" value="Eser detayları" detail="Public eserlerde başlık, yazar, URL, dil, tür, görsel, yayın/güncelleme tarihi ve publisher sinyalleri Book JSON-LD ile verilir." />
-        <Card state="ok" label="Schema sınırı" value="Uydurma tip yok" detail="Doğrulanamayan rating, review aggregate veya benzeri alanlar sırf SEO puanı için üretilmez." />
+        <Card state="ok" label="CollectionPage" value="Keşif yüzeyleri" detail="Eser, yazar, tür ve editör keşif yüzeyleri gerçek public koleksiyonlarını CollectionPage/ItemList ile tanımlar." />
+        <Card state="ok" label="ProfilePage" value="Yazar vitrini" detail="Public yazar detayları Person ana varlığı ve keşfe açık eser örnekleriyle ProfilePage olarak yayınlanır." />
+        <Card state="ok" label="FAQPage" value="Yardım Merkezi" detail="Yardım Merkezi yalnız ekranda gerçekten gösterilen soru-cevap kayıtlarını FAQPage yapısal verisine taşır." />
+        <Card state="ok" label="BreadcrumbList" value="Gezinme zinciri" detail="Public yardım, editör, eser, yazar ve tür detaylarında canonical gezinme zinciri BreadcrumbList ile desteklenir." />
       </div>
-      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>Schema çıktıları public server HTML içindedir; veri olmayan rich-result alanları doldurulmaz.</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/kesfet" target="_blank">Eserleri aç ↗</Link></div></div>
+      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>Schema çıktıları public server HTML içindedir; veri olmayan rich-result alanları doldurulmaz ve query/geri dönüş parametreleri canonical schema URL&apos;sine taşınmaz.</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/eserler" target="_blank">Keşfe açık eserler ↗</Link></div></div>
     </section>
   );
 }
@@ -97,11 +100,11 @@ export async function SeoMetadataQualityAudit() {
           <Card state={missingDescriptions > 0 ? "danger" : "ok"} label="Meta description" value={`${missingDescriptions} eksik`} detail={`${shortDescriptions} kısa · ${longDescriptions} uzun. Kalite rehberi: yaklaşık 70–170 karakter.`} />
           <Card state={duplicateTitles > 0 ? "warn" : "ok"} label="Tekrar title" value={`${duplicateTitles} tekrar`} detail="Indexlenebilir sayfalarda aynı SEO title kullanımı ayrıştırmayı zayıflatabilir." />
           <Card state={duplicateDescriptions > 0 ? "warn" : "ok"} label="Tekrar description" value={`${duplicateDescriptions} tekrar`} detail="Aynı SERP açıklamasının çoklu sayfalarda kullanımı kontrol edilmelidir." />
-          <Card state="ok" label="Kapsam" value={`${indexable.length} indexlenebilir`} detail={`${pages.length - indexable.length} noindex kayıt kalite tekrar analizinden ayrıldı.`} />
+          <Card state="ok" label="Kapsam" value={`${indexable.length} indexlenebilir CMS`} detail={`${pages.length - indexable.length} noindex CMS kayıt kalite tekrar analizinden ayrıldı; kod tabanlı public keşif rotaları teknik SEO ve structured-data envanterinde ayrıca izlenir.`} />
           <Card state={warnings > 0 ? "warn" : "ok"} label="Kalite uyarısı" value={`${warnings}`} detail="Uzunluk ve tekrar sinyalleri editoryal uyarıdır; kritik metadata eksiklerinden ayrı tutulur." />
         </div>
 
-        <div className={styles.focus}><div><strong>Metadata düzeltme kuyruğu</strong><p>{blockers > 0 ? `${blockers} kritik metadata alanı eksik. Önce title/description eksiklerini kapatın.` : warnings > 0 ? `${warnings} kalite uyarısı var. Tekrar ve SERP uzunluklarını gözden geçirin.` : "Indexlenebilir TR sayfalarda metadata kalite uyarısı görünmüyor."}</p></div><div className={styles.actions}><Link href="/icerik/seo?sorun=title">Title kuyruğu →</Link><Link href="/icerik/seo?sorun=description">Description kuyruğu →</Link></div></div>
+        <div className={styles.focus}><div><strong>Metadata düzeltme kuyruğu</strong><p>{blockers > 0 ? `${blockers} kritik metadata alanı eksik. Önce title/description eksiklerini kapatın.` : warnings > 0 ? `${warnings} kalite uyarısı var. Tekrar ve SERP uzunluklarını gözden geçirin.` : "Indexlenebilir TR CMS sayfalarında metadata kalite uyarısı görünmüyor."}</p></div><div className={styles.actions}><Link href="/icerik/seo?sorun=title">Title kuyruğu →</Link><Link href="/icerik/seo?sorun=description">Description kuyruğu →</Link></div></div>
       </section>
       <StructuredDataAudit />
     </>

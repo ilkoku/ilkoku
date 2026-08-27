@@ -81,7 +81,7 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
       <section className="about-hero">
         <div className="about-container about-hero__grid">
           <div className="about-hero__content">
-            <span className="about-eyebrow">İlkOku&apos;nun hikâyesi</span>
+            <span className="about-eyebrow">{title} · İlkOku&apos;nun hikâyesi</span>
             <h1>
               Bir eserin yolculuğu <span>ilk cümlede başlar.</span>
             </h1>

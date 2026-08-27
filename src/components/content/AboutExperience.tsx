@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
@@ -94,13 +93,13 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
           </div>
 
           <div className="about-hero__visual">
-            <Image
-              src="/about/about-collaboration-hero.webp?v=20260827"
+            <img
+              src="/about/about-collaboration-hero.webp?v=20260827b"
               alt="İlkOku için insan ve yapay zekânın birlikte çalışmasını anlatan, gözlüklü ve kalemli yaratıcı çalışma sahnesi"
-              fill
-              priority
-              unoptimized
-              sizes="(max-width: 1024px) 100vw, 48vw"
+              width="1280"
+              height="720"
+              loading="eager"
+              fetchPriority="high"
             />
           </div>
         </div>

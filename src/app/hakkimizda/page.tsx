@@ -6,6 +6,7 @@ import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { aboutPageContent } from "@/content/about";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
 import "./about.css";
+import "./about-hero.css";
 import "../nasil-calisir/public-trust-footer.css";
 
 const baseUrl = "https://ilkoku.com";

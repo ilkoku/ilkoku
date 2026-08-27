@@ -31,11 +31,14 @@ export function RuntimeInfrastructurePanel({
   report: RuntimeInfrastructureReport;
   view?: RuntimeInfrastructurePanelView;
 }) {
+  const unknownEnv = report.env.filter((item) => item.status === "unknown").length;
   const overall: InfrastructureStatus = report.summary.blockers > 0
     ? "blocker"
     : report.summary.warnings > 0 || report.warnings.length > 0
       ? "warn"
-      : "pass";
+      : unknownEnv > 0
+        ? "unknown"
+        : "pass";
   const show = (section: Exclude<RuntimeInfrastructurePanelView, "all" | "summary">) => view === "all" || view === section;
   const showSummary = view === "all" || view === "summary";
 
@@ -54,7 +57,7 @@ export function RuntimeInfrastructurePanel({
           <div className="system-runtime-summary">
             <article data-tone={report.summary.blockers ? "danger" : "ok"}><strong>{report.summary.blockers}</strong><span>BLOCKER</span><small>Redirect/rewrite veya altyapı sözleşmesi</small></article>
             <article data-tone={report.summary.warnings ? "warning" : "ok"}><strong>{report.summary.warnings}</strong><span>WARN</span><small>Belge / beklenmedik şema ayrışması</small></article>
-            <article><strong>{report.summary.runtimeConfiguredEnv}/{report.summary.envKeys}</strong><span>ENV tanımlı</span><small>Değerler hiçbir zaman gösterilmez</small></article>
+            <article data-tone={unknownEnv > 0 ? "warning" : "ok"}><strong>{report.summary.runtimeConfiguredEnv}/{report.summary.envKeys}</strong><span>ENV tanımlı</span><small>{unknownEnv > 0 ? `${unknownEnv} anahtar runtime'da doğrulanamadı; genel PASS verilmez` : "Tüm runtime ENV durumları doğrulandı · değerler gösterilmez"}</small></article>
             <article><strong>{report.summary.routeRules - report.summary.routeRulesBroken}/{report.summary.routeRules}</strong><span>Route kuralı PASS</span><small>Redirect + rewrite</small></article>
             <article><strong>{report.summary.notificationProducers}</strong><span>Bildirim üreticisi</span><small>notification.create/createMany</small></article>
             <article><strong>{report.summary.emailProducers}</strong><span>E-posta üreticisi</span><small>sendEmail / email modülleri</small></article>
@@ -91,7 +94,7 @@ export function RuntimeInfrastructurePanel({
             <span>{report.summary.documentedEnv}/{report.summary.envKeys} sözleşmeli</span>
           </div>
           <div className="system-runtime-security-note">
-            Bu masa yalnız anahtar adlarını ve tanımlı/tanımsız durumunu gösterir. ENV değerleri, parolalar, tokenlar ve bağlantı dizeleri render edilmez.
+            Bu masa yalnız anahtar adlarını ve tanımlı/tanımsız durumunu gösterir. ENV değerleri, parolalar, tokenlar ve bağlantı dizeleri render edilmez. BİLİNMİYOR durumundaki herhangi bir anahtar genel Runtime PASS sonucunu engeller.
           </div>
           <div className="system-runtime-table-wrap">
             <table>

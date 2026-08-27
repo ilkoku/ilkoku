@@ -27,23 +27,46 @@ jobs:
         run: |
           set -Eeuo pipefail
 
-          asset="public/about/about-collaboration-hero.jpg"
-          test -f "$asset"
-          bytes="$(wc -c < "$asset" | tr -d ' ')"
-          mime="$(file --brief --mime-type "$asset")"
-          details="$(file "$asset")"
-          magic="$(xxd -p -l 2 "$asset")"
-          tail_magic="$(tail -c 2 "$asset" | xxd -p)"
+          node <<'NODE'
+          const fs = require('fs');
+          const readPart = (index) => {
+            const source = fs.readFileSync(`src/components/content/about-hero-data/part${index}.ts`, 'utf8');
+            const match = source.match(/^export default "([A-Za-z0-9+/=]+)";\s*$/s);
+            if (!match) throw new Error(`Hero part${index} biçimi geçersiz.`);
+            return match[1];
+          };
 
-          echo "$details | ${bytes} bytes"
-          [[ "$mime" == "image/jpeg" ]]
-          [[ "$details" == *"1280x720"* ]]
-          (( bytes >= 50000 ))
-          [[ "$magic" == "ffd8" ]]
-          [[ "$tail_magic" == "ffd9" ]]
+          const image = Buffer.from(readPart(0) + readPart(1), 'base64');
+          if (image.length < 50000) throw new Error(`Hero JPEG çok küçük: ${image.length} bytes`);
+          if (image[0] !== 0xff || image[1] !== 0xd8) throw new Error('JPEG başlangıç imzası geçersiz.');
+          if (image.at(-2) !== 0xff || image.at(-1) !== 0xd9) throw new Error('JPEG bitiş imzası geçersiz.');
+
+          const sofMarkers = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
+          let offset = 2;
+          let width = 0;
+          let height = 0;
+          while (offset + 9 < image.length) {
+            if (image[offset] !== 0xff) { offset += 1; continue; }
+            while (image[offset] === 0xff) offset += 1;
+            const marker = image[offset++];
+            if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+            if (marker === 0xd9 || marker === 0xda) break;
+            if (offset + 1 >= image.length) break;
+            const length = image.readUInt16BE(offset);
+            if (length < 2 || offset + length > image.length) break;
+            if (sofMarkers.has(marker)) {
+              height = image.readUInt16BE(offset + 3);
+              width = image.readUInt16BE(offset + 5);
+              break;
+            }
+            offset += length;
+          }
+          console.log(`Bundled hero -> image/jpeg | ${width}x${height} | ${image.length} bytes`);
+          if (width !== 1280 || height !== 720) throw new Error(`Hero çözünürlüğü beklenen 1280x720 değil: ${width}x${height}`);
+          NODE
 
           grep -Fq 'src="/api/site-assets/about-hero?v=20260827-final"' src/components/content/AboutExperience.tsx
-          grep -Fq '/about/about-collaboration-hero.jpg?v=20260827-final' src/app/api/site-assets/about-hero/route.ts
+          grep -Fq 'Buffer.from(heroPart0 + heroPart1, "base64")' src/app/api/site-assets/about-hero/route.ts
           grep -Fq '<Link href="/hakkimizda">Hakkımızda</Link>' src/app/page.tsx
           grep -Fq '<Link href="/iletisim">İletişim</Link>' src/app/page.tsx
 

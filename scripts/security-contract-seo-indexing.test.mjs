@@ -146,7 +146,7 @@ test("SEO center and audit API stay Turkish-only", () => {
   const route = source("src/app/api/cms-seo-audit/route.ts");
   const roleCards = source("src/app/icerik/seo/SeoRoleCardsAudit.tsx");
 
-  assertContains(page, "TR metadata kapsamı", "SEO TR coverage summary");
+  assertContains(page, "SEO kabul kapısı · TR", "SEO TR acceptance surface");
   assertContains(page, "contentKey NOT LIKE 'legal:en:%'", "SEO excludes EN legal");
   assertContains(page, "contentKey NOT LIKE 'guide:en:%'", "SEO excludes EN guides");
   assertContains(page, "contentKey NOT LIKE 'page:en:%'", "SEO excludes EN generic pages");

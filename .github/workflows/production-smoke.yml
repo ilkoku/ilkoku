@@ -83,6 +83,28 @@ jobs:
             rm -f "$body"
           }
 
+          check_image_asset() {
+            local url="$1"
+            local body
+            local headers
+            local code
+            local content_type
+            local bytes
+
+            body="$(mktemp)"
+            headers="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            mark_edge_block "$code"
+            content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            bytes="$(wc -c < "$body" | tr -d ' ')"
+            printf '%s -> HTTP %s | Content-Type: %s | Bytes: %s\n' "$url" "$code" "${content_type:-YOK}" "$bytes"
+            rm -f "$body" "$headers"
+
+            [[ "$code" == "200" ]]
+            [[ "${content_type,,}" == image/* ]]
+            (( bytes >= 50000 ))
+          }
+
           check_protected_route() {
             local url="$1"
             local headers
@@ -233,6 +255,8 @@ jobs:
               && check_public_route "https://ilkoku.com/yardim" "200" \
               && check_public_route "https://ilkoku.com/editorler" "200" \
               && check_public_route "https://ilkoku.com/iletisim" "200" \
+              && check_public_route "https://ilkoku.com/hakkimizda" "200" \
+              && check_image_asset "https://ilkoku.com/about/about-collaboration-hero.webp?v=3" \
               && check_post_merge_public_route "https://ilkoku.com/eserler" "200" \
               && check_public_route "https://ilkoku.com/yasal/kullanim-sartlari" "200" \
               && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
@@ -245,12 +269,14 @@ jobs:
                 "https://ilkoku.com/yardim" \
                 "https://ilkoku.com/editorler" \
                 "https://ilkoku.com/iletisim" \
+                "https://ilkoku.com/hakkimizda" \
                 "https://ilkoku.com/yasal/kullanim-sartlari" \
                 "https://ilkoku.com/yasal/gizlilik-politikasi" \
                 "https://ilkoku.com/yasal/kvkk" \
                 "https://ilkoku.com/yasal/cerez-politikasi" \
                 "https://ilkoku.com/yasal/telif-hakki-politikasi" \
               && check_post_merge_body_contains "https://ilkoku.com/" \
+                "href=\"/hakkimizda\"" \
                 "href=\"/iletisim\"" \
               && check_post_merge_body_contains "https://ilkoku.com/iletisim" \
                 "İletişim" \
@@ -318,7 +344,7 @@ jobs:
               && check_protected_route "https://ilkoku.com/yayinevi/editor-talepleri" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production public/private route paketi, bildirim yüzeyleri, writer/publisher/editor kritik rotaları, sitemap/robots ve 20 ana CMS rotası doğrulandı."
+              echo "PASS: Production public/private route paketi, Hakkımızda/İletişim footer kontratı, Hakkımızda hero asset'i, sitemap/robots ve 20 ana CMS rotası doğrulandı."
               exit 0
             fi
 

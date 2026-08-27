@@ -1,4 +1,4 @@
-.about-hero__visual{position:relative;min-height:clamp(24rem,36vw,32rem);overflow:hidden;border:1px solid rgba(104,71,232,.15);border-radius:1.7rem;background:#eeeaff;box-shadow:0 1.6rem 4.5rem rgba(45,29,112,.12)}
+.about-hero__visual{position:relative;width:100%;aspect-ratio:16/9;min-height:0;overflow:hidden;border:1px solid rgba(104,71,232,.15);border-radius:1.7rem;background:#eeeaff;box-shadow:0 1.6rem 4.5rem rgba(45,29,112,.12)}
 .about-hero__visual img{object-fit:cover;object-position:center}
-@media(max-width:64rem){.about-hero__visual{min-height:clamp(22rem,56vw,30rem)}}
-@media(max-width:48rem){.about-hero__visual{min-height:clamp(18rem,62vw,24rem);border-radius:1.35rem}}
+@media(max-width:64rem){.about-hero__visual{aspect-ratio:16/9;min-height:0}}
+@media(max-width:48rem){.about-hero__visual{aspect-ratio:16/9;min-height:0;border-radius:1.35rem}}

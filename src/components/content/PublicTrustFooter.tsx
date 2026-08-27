@@ -78,6 +78,7 @@ export async function PublicTrustFooter() {
         <nav className="public-trust-footer__column" aria-label="Destek bağlantıları">
           <h3>Destek</h3>
           <Link href="/yardim">Yardım Merkezi</Link>
+          <Link href="/iletisim">İletişim</Link>
         </nav>
       </div>
 

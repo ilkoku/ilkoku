@@ -72,7 +72,7 @@ export default function HomePage() {
             <a href="#hakkimizda">Hakkımızda</a>
             <a href="#nasil-calisir">Nasıl Çalışır?</a>
             <Link href="/yayinevleri">Yayınevleri</Link>
-            <a href="#iletisim">İletişim</a>
+            <Link href="/iletisim">İletişim</Link>
           </nav>
 
           <div className="landing-header__actions">
@@ -255,6 +255,7 @@ export default function HomePage() {
           </div>
           <div>
             <h3>Destek</h3>
+            <Link href="/iletisim">İletişim</Link>
             <a href="mailto:destek@ilkoku.com">Yardım Merkezi</a>
             <a href="mailto:destek@ilkoku.com">Sıkça Sorulan Sorular</a>
             <Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link>

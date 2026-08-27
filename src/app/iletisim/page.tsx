@@ -115,7 +115,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
       />
 
-      <main className="contact-page">
+      <main className="landing-page contact-page">
         <header className="landing-header">
           <div className="landing-container landing-header__inner">
             <Link className="landing-logo" href="/" aria-label="İlkOku ana sayfa">

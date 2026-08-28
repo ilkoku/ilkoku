@@ -239,3 +239,31 @@
     line-height: 1.65;
   }
 }
+
+
+/* Hero clarity: render the verified asset directly with no visual processing. */
+.landing-page .landing-hero-product {
+  background-color: transparent;
+  background-image: none;
+  animation: none;
+  transform: none;
+}
+
+.landing-page .landing-hero-product::before,
+.landing-page .landing-hero-product::after {
+  content: none;
+  display: none;
+}
+
+.landing-page .landing-hero-product > img {
+  opacity: 1;
+  filter: none;
+  transform: none;
+  object-fit: contain;
+  object-position: center;
+}
+
+.landing-page .landing-hero-product__veil {
+  display: none;
+  background: none;
+}

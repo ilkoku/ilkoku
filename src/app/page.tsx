@@ -380,8 +380,7 @@ export default async function HomePage() {
           </div>
 
           <div className="landing-hero__visual landing-hero-product">
-            <Image src="/landing/ilkoku-hero.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 768px) 100vw, 54vw" />
-            <span className="landing-hero-product__veil" aria-hidden="true" />
+            <Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 768px) 100vw, 54vw" />
           </div>
         </div>
       </section>

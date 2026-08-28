@@ -1,0 +1,102 @@
+/* Hakkımızda — mevcut dört ana rol illüstrasyonunu eski simgelerin yerine kullan. */
+.about-page .about-opening__icon,
+.about-page .about-role-card__icon,
+.about-page .about-passport__icon,
+.about-page .about-trust__icon {
+  position: relative;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.about-page .about-opening__icon > svg,
+.about-page .about-role-card__icon > svg,
+.about-page .about-passport__icon > svg,
+.about-page .about-trust__icon > svg {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.about-page .about-opening__icon::after,
+.about-page .about-role-card__icon::after,
+.about-page .about-passport__icon::after,
+.about-page .about-trust__icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 .45rem .7rem rgba(46, 24, 112, .18));
+  pointer-events: none;
+}
+
+/* İlk cümleden keşfe → Yazar */
+.about-page .about-opening__icon {
+  width: 5rem;
+  height: 5rem;
+}
+.about-page .about-opening__icon::after {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Dört rol → kendi ana illüstrasyonu */
+.about-page .about-role-card__icon {
+  width: 5rem;
+  height: 5rem;
+}
+.about-page .about-role-card:nth-child(1) .about-role-card__icon::after {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.about-page .about-role-card:nth-child(2) .about-role-card__icon::after {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.about-page .about-role-card:nth-child(3) .about-role-card__icon::after {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+.about-page .about-role-card:nth-child(4) .about-role-card__icon::after {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Eser Pasaportu → Yazar */
+.about-page .about-passport__icon {
+  width: 6rem;
+  height: 6rem;
+}
+.about-page .about-passport__icon::after {
+  background-image: url("/icons/roles/writer-embedded.svg");
+  filter: drop-shadow(0 .55rem .8rem rgba(0, 0, 0, .22));
+}
+
+/* Güven & sınırlar → Yayınevi / kurumsal rol */
+.about-page .about-trust__heading {
+  grid-template-columns: 5.2rem 1fr;
+}
+.about-page .about-trust__icon {
+  width: 5.2rem;
+  height: 5.2rem;
+}
+.about-page .about-trust__icon::after {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+@media (max-width: 48rem) {
+  .about-page .about-opening__icon,
+  .about-page .about-role-card__icon {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+
+  .about-page .about-passport__icon,
+  .about-page .about-trust__icon {
+    width: 4.8rem;
+    height: 4.8rem;
+  }
+}
+
+@media (max-width: 34rem) {
+  .about-page .about-trust__heading {
+    grid-template-columns: 1fr;
+  }
+}

@@ -42,10 +42,10 @@ jobs:
             echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK}"
             [[ "$code" == "200" ]]
             [[ "${robots,,}" != *"noindex"* ]]
-            ! grep -Eqi '<meta[^>]+name=["'"']robots["'"'][^>]+content=["'"'][^"'"']*noindex' "$body"
+            ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"
             grep -Eqi '<title>[^<]+' "$body"
-            grep -Eqi '<meta[^>]+name=["'"']description["'"'][^>]+content=["'"'][^"'"']+' "$body"
-            grep -Eqi 'rel=["'"']canonical["'"']' "$body"
+            grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body"
+            grep -Eqi 'rel="canonical"' "$body"
             grep -Fq "$canonical" "$body"
 
             rm -f "$headers" "$body"

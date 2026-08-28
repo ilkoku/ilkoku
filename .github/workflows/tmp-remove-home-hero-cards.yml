@@ -1,0 +1,61 @@
+name: Remove homepage hero cards
+
+on:
+  push:
+    branches:
+      - agent/remove-home-hero-cards
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/remove-home-hero-cards
+          fetch-depth: 0
+      - name: Remove only the three hero overlay cards
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/app/page.tsx')
+          text = path.read_text()
+          blocks = [
+          '''            <div className="landing-product-card landing-product-card--passport">
+              <span className="landing-product-card__eyebrow">Örnek eser kaydı</span>
+              <div className="landing-product-card__title"><LandingIcon name="book" /><strong>Eser Pasaportu</strong></div>
+              <div className="landing-product-card__metrics">
+                <span><strong>41</strong> yazım oturumu</span>
+                <span><strong>19</strong> revizyon</span>
+              </div>
+            </div>
+''',
+          '''            <div className="landing-product-card landing-product-card--review">
+              <span className="landing-product-card__icon"><LandingIcon name="feedback" /></span>
+              <div><small>Profesyonel inceleme</small><strong>Tamamlandı</strong></div>
+            </div>
+''',
+          '''            <div className="landing-product-card landing-product-card--publisher">
+              <span className="landing-product-card__icon"><LandingIcon name="publisher" /></span>
+              <div><small>Yayınevi görünürlüğü</small><strong>Keşfe açık</strong></div>
+            </div>
+'''
+          ]
+          for block in blocks:
+              if block not in text:
+                  raise SystemExit('Expected hero card block not found')
+              text = text.replace(block, '', 1)
+          if 'landing-product-card landing-product-card--' in text:
+              raise SystemExit('Unexpected hero product card remains')
+          path.write_text(text)
+          PY
+          rm .github/workflows/tmp-remove-home-hero-cards.yml
+          git config user.name "ilkoku"
+          git config user.email "ilkoku@ilkoku.com"
+          git add src/app/page.tsx .github/workflows/tmp-remove-home-hero-cards.yml
+          git diff --cached --check
+          git commit -m "Remove homepage hero overlay cards"
+          git push origin HEAD:agent/remove-home-hero-cards

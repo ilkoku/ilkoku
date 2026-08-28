@@ -236,20 +236,20 @@
   visibility: hidden !important;
 }
 
-/* Fayda kartları */
-.landing-page .landing-benefit-v2:nth-child(1) .landing-benefit-v2__icon::after {
-  background-image: url("/icons/roles/writer-fixed.svg") !important;
+/* Fayda kartları — mevcut dört ana rol illüstrasyonu. */
+.landing-page .landing-benefit-v2:nth-child(1) .landing-benefit-v2__icon::after,
+.landing-page .landing-benefit-v2:nth-child(6) .landing-benefit-v2__icon::after {
+  background-image: url("/icons/roles/writer-embedded.svg") !important;
 }
 .landing-page .landing-benefit-v2:nth-child(2) .landing-benefit-v2__icon::after,
-.landing-page .landing-benefit-v2:nth-child(4) .landing-benefit-v2__icon::after,
-.landing-page .landing-benefit-v2:nth-child(6) .landing-benefit-v2__icon::after {
-  background-image: url("/icons/roles/reader-fixed.svg") !important;
+.landing-page .landing-benefit-v2:nth-child(4) .landing-benefit-v2__icon::after {
+  background-image: url("/icons/roles/reader-role-v2.webp") !important;
 }
 .landing-page .landing-benefit-v2:nth-child(3) .landing-benefit-v2__icon::after {
-  background-image: url("/icons/roles/editor.webp") !important;
+  background-image: url("/icons/roles/editor-role-v2.webp") !important;
 }
 .landing-page .landing-benefit-v2:nth-child(5) .landing-benefit-v2__icon::after {
-  background-image: url("/icons/roles/publisher.webp") !important;
+  background-image: url("/icons/roles/publisher-embedded.svg") !important;
 }
 
 /* İstatistik şeridi */

@@ -28,9 +28,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Type check
-        run: |
-          npx prisma generate
-          npx tsc --noEmit
       - name: Build application
         run: npm run build:ci

@@ -156,15 +156,23 @@
 
 /* Hero assetini doğrudan, cache-bust edilmiş seçili 4. binary'den yükle. */
 .landing-page .landing-hero-product {
+  align-self: center;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 3 / 2;
   background-color: #11102f;
   background-image: url("/landing/ilkoku-hero-user-final.webp");
   background-position: center;
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: contain;
 }
 
 .landing-page .landing-hero-product > img {
   opacity: 0;
+}
+
+.landing-page .landing-hero-product__veil {
+  background: none;
 }
 
 /* Mobil hero: kartları kompakt ve hero görselini açık tut. */

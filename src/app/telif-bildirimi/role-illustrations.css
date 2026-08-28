@@ -1,0 +1,108 @@
+/* Telif Bildirimi — 14 eski simgeyi onaylı ana rol illüstrasyonlarıyla değiştir. */
+
+.copyright-notice-page .copyright-hero__visual figcaption svg,
+.copyright-notice-page .how-truth > span > svg,
+.copyright-notice-page .copyright-prepare article > svg,
+.copyright-notice-page .copyright-review article > svg,
+.copyright-notice-page .copyright-balance article > svg,
+.copyright-notice-page .copyright-submit > svg {
+  display: none;
+}
+
+.copyright-notice-page .copyright-hero__visual figcaption span::before,
+.copyright-notice-page .how-truth > span::after,
+.copyright-notice-page .copyright-prepare article::before,
+.copyright-notice-page .copyright-review article::before,
+.copyright-notice-page .copyright-balance article::before,
+.copyright-notice-page .copyright-submit::before {
+  content: "";
+  display: block;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 .35rem .55rem rgba(46, 24, 112, .18));
+  pointer-events: none;
+}
+
+/* Hero: gelişim izi + eser bağlantısı + hak koruması → Yazar */
+.copyright-notice-page .copyright-hero__visual figcaption span::before {
+  width: 1.85rem;
+  height: 1.85rem;
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Giriş → Yazar */
+.copyright-notice-page .how-truth > span {
+  position: relative;
+  overflow: visible;
+  background: transparent;
+}
+.copyright-notice-page .how-truth > span::after {
+  position: absolute;
+  inset: -.25rem;
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Bildirim hazırlama: hak/eser → Yazar, gerekli bilgiler → Editör */
+.copyright-notice-page .copyright-prepare article::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  margin-bottom: .15rem;
+}
+.copyright-notice-page .copyright-prepare article:nth-child(1)::before,
+.copyright-notice-page .copyright-prepare article:nth-child(3)::before,
+.copyright-notice-page .copyright-prepare article:nth-child(4)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.copyright-notice-page .copyright-prepare article:nth-child(2)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* İnceleme: değerlendirme → Editör, erişim/geçici önlem → Yayınevi */
+.copyright-notice-page .copyright-review article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .15rem;
+}
+.copyright-notice-page .copyright-review article:nth-child(1)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+.copyright-notice-page .copyright-review article:nth-child(2)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Hak ve bağlam: karşı açıklama → Editör, kötüye kullanım → Yayınevi, mahremiyet → Yazar */
+.copyright-notice-page .copyright-balance article::before {
+  width: 3.6rem;
+  height: 3.6rem;
+  margin-bottom: .15rem;
+}
+.copyright-notice-page .copyright-balance article:nth-child(1)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+.copyright-notice-page .copyright-balance article:nth-child(2)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+.copyright-notice-page .copyright-balance article:nth-child(3)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Başvuru alanı → Yazar */
+.copyright-notice-page .copyright-submit::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+@media (max-width: 34rem) {
+  .copyright-notice-page .copyright-hero__visual figcaption span::before {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .copyright-notice-page .copyright-submit::before {
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+}

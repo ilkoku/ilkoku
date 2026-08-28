@@ -39,19 +39,41 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": `${baseUrl}/#organization`,
+  name: tr.brand.name,
+  url: baseUrl,
+  logo: {
+    "@type": "ImageObject",
+    url: `${baseUrl}/icons/ilkoku-512.png`,
+    width: 512,
+    height: 512,
+  },
+};
+
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
+  "@id": `${baseUrl}/#website`,
   name: tr.brand.name,
   url: baseUrl,
   inLanguage: "tr-TR",
   description: tr.brand.tagline,
+  publisher: {
+    "@id": `${baseUrl}/#organization`,
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr" data-scroll-behavior="smooth">
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema).replace(/</g, "\\u003c") }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema).replace(/</g, "\\u003c") }}

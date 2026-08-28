@@ -75,34 +75,6 @@ export async function getPublicWorkLibrary(
   filters: PublicWorkLibraryFilters,
   requestedPage: number,
 ) {
-  const where = publicWorkWhere(filters);
-  const [totalCount, genreRows] = await Promise.all([
-    prisma.work.count({ where }),
-    prisma.work.findMany({
-      distinct: ["genre"],
-      orderBy: {
-        genre: "asc",
-      },
-      select: {
-        genre: true,
-      },
-      take: 100,
-      where: {
-        ...publicWorkBaseWhere,
-        genre: {
-          not: null,
-        },
-      },
-    }),
-  ]);
-  const totalPages = Math.max(
-    1,
-    Math.ceil(totalCount / PUBLIC_WORK_PAGE_SIZE),
-  );
-  const currentPage = Math.min(
-    Math.max(1, requestedPage),
-    totalPages,
-  );
   const orderBy: Prisma.WorkOrderByWithRelationInput[] =
     filters.sort === "updated"
       ? [
@@ -113,7 +85,125 @@ export async function getPublicWorkLibrary(
           { publishedAt: "desc" },
           { createdAt: "desc" },
         ];
+  const genreRowsQuery = prisma.work.findMany({
+    distinct: ["genre"],
+    orderBy: {
+      genre: "asc",
+    },
+    select: {
+      genre: true,
+    },
+    take: 100,
+    where: {
+      ...publicWorkBaseWhere,
+      genre: {
+        not: null,
+      },
+    },
+  });
 
+  if (filters.search) {
+    const needle = filters.search
+      .trim()
+      .toLocaleLowerCase("tr-TR");
+    const whereWithoutSearch = publicWorkWhere({
+      ...filters,
+      search: undefined,
+    });
+    const [genreRows, candidates] = await Promise.all([
+      genreRowsQuery,
+      prisma.work.findMany({
+        orderBy,
+        select: {
+          _count: {
+            select: {
+              chapters: {
+                where: {
+                  archivedAt: null,
+                  publishedAt: {
+                    not: null,
+                  },
+                  status: "published",
+                },
+              },
+            },
+          },
+          author: {
+            select: {
+              displayName: true,
+              fullName: true,
+              publicId: true,
+              username: true,
+            },
+          },
+          description: true,
+          contentRating: true,
+          genre: true,
+          publishedAt: true,
+          slug: true,
+          subtitle: true,
+          title: true,
+          updatedAt: true,
+        },
+        take: 5000,
+        where: whereWithoutSearch,
+      }),
+    ]);
+    const containsNeedle = (value: string | null | undefined) =>
+      Boolean(
+        value
+          ?.toLocaleLowerCase("tr-TR")
+          .includes(needle),
+      );
+    const matchingWorks = candidates.filter((work) =>
+      [
+        work.title,
+        work.subtitle,
+        work.description,
+        work.author.displayName,
+        work.author.fullName,
+        work.author.username,
+      ].some(containsNeedle),
+    );
+    const totalCount = matchingWorks.length;
+    const totalPages = Math.max(
+      1,
+      Math.ceil(totalCount / PUBLIC_WORK_PAGE_SIZE),
+    );
+    const currentPage = Math.min(
+      Math.max(1, requestedPage),
+      totalPages,
+    );
+    const start =
+      (currentPage - 1) * PUBLIC_WORK_PAGE_SIZE;
+
+    return {
+      currentPage,
+      genres: genreRows
+        .map((row) => row.genre?.trim())
+        .filter((genre): genre is string => Boolean(genre)),
+      totalCount,
+      totalPages,
+      works: matchingWorks.slice(
+        start,
+        start + PUBLIC_WORK_PAGE_SIZE,
+      ),
+    };
+  }
+
+  const where = publicWorkWhere(filters);
+  const [totalCount, genreRows] = await Promise.all([
+    prisma.work.count({ where }),
+    genreRowsQuery,
+  ]);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalCount / PUBLIC_WORK_PAGE_SIZE),
+  );
+  const currentPage = Math.min(
+    Math.max(1, requestedPage),
+    totalPages,
+  );
   const works = await prisma.work.findMany({
     orderBy,
     select: {
@@ -135,6 +225,7 @@ export async function getPublicWorkLibrary(
           displayName: true,
           fullName: true,
           publicId: true,
+          username: true,
         },
       },
       description: true,
@@ -175,14 +266,9 @@ export async function getPublicGenres(search?: string) {
     take: 100,
     where: {
       ...publicWorkBaseWhere,
-      genre: normalizedSearch
-        ? {
-            contains: normalizedSearch,
-            not: null,
-          }
-        : {
-            not: null,
-          },
+      genre: {
+        not: null,
+      },
     },
   });
 
@@ -213,7 +299,18 @@ export async function getPublicGenres(search?: string) {
     });
   }
 
-  return [...genresBySlug.values()];
+  const genres = [...genresBySlug.values()];
+
+  if (!normalizedSearch) {
+    return genres;
+  }
+
+  const needle = normalizedSearch.toLocaleLowerCase("tr-TR");
+  return genres.filter((genre) =>
+    genre.label
+      .toLocaleLowerCase("tr-TR")
+      .includes(needle),
+  );
 }
 
 export async function getPublicGenreBySlug(
@@ -229,8 +326,7 @@ export async function getPublicGenreBySlug(
 
 export async function getPublicAuthors(search?: string) {
   const normalizedSearch = search?.trim().slice(0, 100);
-
-  return prisma.user.findMany({
+  const authors = await prisma.user.findMany({
     orderBy: [
       {
         displayName: "asc",
@@ -250,25 +346,36 @@ export async function getPublicAuthors(search?: string) {
       displayName: true,
       fullName: true,
       publicId: true,
+      username: true,
     },
     take: 500,
     where: {
       deletedAt: null,
       status: "active",
-      ...(normalizedSearch
-        ? {
-            OR: [
-              { displayName: { contains: normalizedSearch } },
-              { fullName: { contains: normalizedSearch } },
-              { username: { contains: normalizedSearch } },
-            ],
-          }
-        : {}),
       works: {
         some: publicWorkPublicationWhere,
       },
     },
   });
+
+  if (!normalizedSearch) {
+    return authors;
+  }
+
+  const needle = normalizedSearch.toLocaleLowerCase("tr-TR");
+  return authors.filter((author) =>
+    [
+      author.displayName,
+      author.fullName,
+      author.username,
+    ].some((value) =>
+      Boolean(
+        value
+          ?.toLocaleLowerCase("tr-TR")
+          .includes(needle),
+      ),
+    ),
+  );
 }
 
 export async function getPublicAuthorById(

@@ -18,6 +18,7 @@ const baseUrl = "https://ilkoku.com";
 const pageTitle = "Eserleri Keşfet | İlkOku";
 const pageDescription =
   "İlkOku'da keşfe açık Türkçe eser vitrinlerini tür, yazar ve güncellik bilgileriyle keşfedin.";
+const socialImage = "/opengraph-image";
 
 type PublicLibraryPageProps = {
   searchParams: Promise<{
@@ -147,11 +148,13 @@ export async function generateMetadata({
       url: "/eserler",
       title: pageTitle,
       description: pageDescription,
+      images: [{ url: socialImage, alt: "İlkOku eser keşfi" }],
     },
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
       description: pageDescription,
+      images: [socialImage],
     },
   };
 }

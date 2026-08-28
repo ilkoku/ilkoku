@@ -1,0 +1,44 @@
+name: Install uploaded homepage hero
+
+on:
+  push:
+    branches:
+      - agent/home-hero-user-image-final
+    paths:
+      - ".github/workflows/tmp-install-user-hero.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/home-hero-user-image-final
+          fetch-depth: 0
+
+      - name: Install exact uploaded hero
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .hero-parts/part-1 .hero-parts/part-2 .hero-parts/part-3 .hero-parts/part-4 > /tmp/hero.b64
+          base64 --decode /tmp/hero.b64 > public/landing/ilkoku-hero-user-final.webp
+          test "$(git hash-object public/landing/ilkoku-hero-user-final.webp)" = "b21414f47cfac37b100ec2e68262c3cf807f6db9"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/app/landing-v2.css')
+          s = p.read_text()
+          old = 'background-image: url("/landing/ilkoku-hero-fourth.webp");'
+          new = 'background-image: url("/landing/ilkoku-hero-user-final.webp");'
+          if old not in s:
+              raise SystemExit('expected current hero reference not found')
+          p.write_text(s.replace(old, new))
+          PY
+          rm -rf .hero-parts .github/workflows/tmp-install-user-hero.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Use uploaded homepage hero image"
+          git push origin HEAD:agent/home-hero-user-image-final

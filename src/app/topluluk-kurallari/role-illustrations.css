@@ -1,0 +1,122 @@
+/* Topluluk Kuralları — 14 eski simgeyi onaylı dört ana rol illüstrasyonuyla değiştir. */
+
+.community-rules-page .community-hero__visual figcaption svg,
+.community-rules-page .how-truth > span > svg,
+.community-rules-page .community-principles article > svg,
+.community-rules-page .community-safety article > svg,
+.community-rules-page .community-integrity article > svg,
+.community-rules-page .community-report > svg,
+.community-rules-page .community-appeal > div > svg {
+  display: none;
+}
+
+.community-rules-page .community-hero__visual figcaption span::before,
+.community-rules-page .how-truth > span::after,
+.community-rules-page .community-principles article::before,
+.community-rules-page .community-safety article::before,
+.community-rules-page .community-integrity article::before,
+.community-rules-page .community-report::before,
+.community-rules-page .community-appeal > div::before {
+  content: "";
+  display: block;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 .35rem .55rem rgba(46, 24, 112, .18));
+  pointer-events: none;
+}
+
+/* Hero: Birbirini dinle → Okuyucu, Eseri geliştir → Editör, Yeni sesleri keşfet → Yayınevi */
+.community-rules-page .community-hero__visual figcaption span::before {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+.community-rules-page .community-hero__visual figcaption span:nth-child(1)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.community-rules-page .community-hero__visual figcaption span:nth-child(2)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+.community-rules-page .community-hero__visual figcaption span:nth-child(3)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Giriş → Okuyucu */
+.community-rules-page .how-truth > span {
+  position: relative;
+  overflow: visible;
+  background: transparent;
+}
+.community-rules-page .how-truth > span::after {
+  position: absolute;
+  inset: -.25rem;
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+
+/* Temel ilkeler: Saygılı iletişim + yapıcı yorum → Okuyucu */
+.community-rules-page .community-principles article::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  margin-bottom: .15rem;
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+
+/* Güvenlik: topluluk güveni → Yayınevi, mahremiyet → Yazar */
+.community-rules-page .community-safety article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .15rem;
+}
+.community-rules-page .community-safety article:nth-child(1)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+.community-rules-page .community-safety article:nth-child(2)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Platform bütünlüğü */
+.community-rules-page .community-integrity article::before {
+  width: 3.4rem;
+  height: 3.4rem;
+  float: right;
+  margin: 0 0 .45rem .75rem;
+}
+.community-rules-page .community-integrity article:nth-child(1)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.community-rules-page .community-integrity article:nth-child(2)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.community-rules-page .community-integrity article:nth-child(3)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.community-rules-page .community-integrity article:nth-child(4)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Bildirim ve inceleme → Editör */
+.community-rules-page .community-report::before {
+  width: 3.6rem;
+  height: 3.6rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* İtiraz ve bağlam → Editör */
+.community-rules-page .community-appeal > div::before {
+  width: 4rem;
+  height: 4rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+@media (max-width: 34rem) {
+  .community-rules-page .community-hero__visual figcaption span::before {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .community-rules-page .community-report::before {
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+}

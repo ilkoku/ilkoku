@@ -1,0 +1,35 @@
+name: Rebuild homepage hero
+
+on:
+  push:
+    branches:
+      - agent/fix-live-hero-rebuild
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/fix-live-hero-rebuild
+      - name: Rebuild and verify hero WebP
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .hero-fix/p00 .hero-fix/p01 .hero-fix/p02 .hero-fix/p03 .hero-fix/p04 .hero-fix/p05 .hero-fix/p06 .hero-fix/p07 .hero-fix/p08 .hero-fix/p09 > /tmp/hero.b64
+          test "$(wc -c < /tmp/hero.b64 | tr -d ' ')" = "95296"
+          base64 -d /tmp/hero.b64 > public/landing/ilkoku-hero-user-final.webp
+          test "$(wc -c < public/landing/ilkoku-hero-user-final.webp | tr -d ' ')" = "71472"
+          test "$(sha256sum public/landing/ilkoku-hero-user-final.webp | awk '{print $1}')" = "80989c1a5e11a3dde684ad11929580d48d45d957c36a26f6efc23d0b69b17acd"
+          git config user.name "ilkoku"
+          git config user.email "ilkoku@ilkoku.com"
+          git add public/landing/ilkoku-hero-user-final.webp
+          if git diff --cached --quiet; then
+            echo "Hero binary already matches verified source."
+            exit 0
+          fi
+          git commit -m "Rebuild valid homepage hero binary"
+          git push origin HEAD:agent/fix-live-hero-rebuild

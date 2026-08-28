@@ -382,22 +382,6 @@ export default async function HomePage() {
           <div className="landing-hero__visual landing-hero-product">
             <Image src="/landing/ilkoku-hero.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 768px) 100vw, 54vw" />
             <span className="landing-hero-product__veil" aria-hidden="true" />
-            <div className="landing-product-card landing-product-card--passport">
-              <span className="landing-product-card__eyebrow">Örnek eser kaydı</span>
-              <div className="landing-product-card__title"><LandingIcon name="book" /><strong>Eser Pasaportu</strong></div>
-              <div className="landing-product-card__metrics">
-                <span><strong>41</strong> yazım oturumu</span>
-                <span><strong>19</strong> revizyon</span>
-              </div>
-            </div>
-            <div className="landing-product-card landing-product-card--review">
-              <span className="landing-product-card__icon"><LandingIcon name="feedback" /></span>
-              <div><small>Profesyonel inceleme</small><strong>Tamamlandı</strong></div>
-            </div>
-            <div className="landing-product-card landing-product-card--publisher">
-              <span className="landing-product-card__icon"><LandingIcon name="publisher" /></span>
-              <div><small>Yayınevi görünürlüğü</small><strong>Keşfe açık</strong></div>
-            </div>
           </div>
         </div>
       </section>

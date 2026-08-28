@@ -40,31 +40,50 @@ jobs:
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
 
             echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK}"
-            [[ "$code" == "200" ]]
-            [[ "${robots,,}" != *"noindex"* ]]
-            ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"
-            grep -Eqi '<title>[^<]+' "$body"
-            grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body"
-            grep -Eqi 'rel="canonical"' "$body"
-            grep -Fq "$canonical" "$body"
+
+            if [[ "$code" != "200" ]]; then
+              rm -f "$headers" "$body"
+              return 1
+            fi
+            if [[ "${robots,,}" == *"noindex"* ]]; then
+              rm -f "$headers" "$body"
+              return 1
+            fi
+            if grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then
+              rm -f "$headers" "$body"
+              return 1
+            fi
+            grep -Eqi '<title>[^<]+' "$body" || { rm -f "$headers" "$body"; return 1; }
+            grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body" || { rm -f "$headers" "$body"; return 1; }
+            grep -Eqi 'rel="canonical"' "$body" || { rm -f "$headers" "$body"; return 1; }
+            grep -Fq "$canonical" "$body" || { rm -f "$headers" "$body"; return 1; }
 
             rm -f "$headers" "$body"
+            return 0
           }
 
           verify_contract() {
-            local sitemap robots key
+            local sitemap robots key home
             sitemap="$(mktemp)"
             robots="$(mktemp)"
             key="$(mktemp)"
+            home="$(mktemp)"
 
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/sitemap.xml --output "$sitemap"
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/robots.txt --output "$robots"
-            curl --fail --silent --show-error --location --max-time 25 https://ilkoku.com/f4c33493caf6550560462af5a424980e.txt --output "$key"
+            cleanup() {
+              rm -f "$sitemap" "$robots" "$key" "$home"
+            }
 
-            grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots"
-            grep -Fq 'Allow: /' "$robots"
-            ! grep -Eq '^Disallow:[[:space:]]*/[[:space:]]*$' "$robots"
-            grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key"
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/sitemap.xml --output "$sitemap" || { cleanup; return 1; }
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/robots.txt --output "$robots" || { cleanup; return 1; }
+            curl --fail --silent --show-error --location --max-time 25 https://ilkoku.com/f4c33493caf6550560462af5a424980e.txt --output "$key" || { cleanup; return 1; }
+
+            grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { cleanup; return 1; }
+            grep -Fq 'Allow: /' "$robots" || { cleanup; return 1; }
+            if grep -Eq '^Disallow:[[:space:]]*/[[:space:]]*$' "$robots"; then
+              cleanup
+              return 1
+            fi
+            grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key" || { cleanup; return 1; }
 
             local required=(
               'https://ilkoku.com/'
@@ -92,26 +111,28 @@ jobs:
               'https://ilkoku.com/yasal/telif-hakki-politikasi'
             )
 
-            for url in "${required[@]}"; do
-              grep -Fq "<loc>${url}</loc>" "$sitemap"
+            local required_url
+            for required_url in "${required[@]}"; do
+              grep -Fq "<loc>${required_url}</loc>" "$sitemap" || { cleanup; return 1; }
             done
 
-            check_indexable_page '/' 'https://ilkoku.com/'
-            check_indexable_page '/eserler' 'https://ilkoku.com/eserler'
-            check_indexable_page '/yazarlar' 'https://ilkoku.com/yazarlar'
-            check_indexable_page '/turler' 'https://ilkoku.com/turler'
-            check_indexable_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir'
-            check_indexable_page '/hakkimizda' 'https://ilkoku.com/hakkimizda'
-            check_indexable_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin'
-            check_indexable_page '/editorler-icin' 'https://ilkoku.com/editorler-icin'
-            check_indexable_page '/yayinevleri-icin' 'https://ilkoku.com/yayinevleri-icin'
+            check_indexable_page '/' 'https://ilkoku.com/' || { cleanup; return 1; }
+            check_indexable_page '/eserler' 'https://ilkoku.com/eserler' || { cleanup; return 1; }
+            check_indexable_page '/yazarlar' 'https://ilkoku.com/yazarlar' || { cleanup; return 1; }
+            check_indexable_page '/turler' 'https://ilkoku.com/turler' || { cleanup; return 1; }
+            check_indexable_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir' || { cleanup; return 1; }
+            check_indexable_page '/hakkimizda' 'https://ilkoku.com/hakkimizda' || { cleanup; return 1; }
+            check_indexable_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin' || { cleanup; return 1; }
+            check_indexable_page '/editorler-icin' 'https://ilkoku.com/editorler-icin' || { cleanup; return 1; }
+            check_indexable_page '/yayinevleri-icin' 'https://ilkoku.com/yayinevleri-icin' || { cleanup; return 1; }
 
-            local home
-            home="$(mktemp)"
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/ --output "$home"
-            grep -Fq 'application/ld+json' "$home"
-            grep -Fq '"@type":"WebSite"' "$home"
-            rm -f "$home" "$sitemap" "$robots" "$key"
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/ --output "$home" || { cleanup; return 1; }
+            grep -Fq 'application/ld+json' "$home" || { cleanup; return 1; }
+            grep -Fq '"@type":"WebSite"' "$home" || { cleanup; return 1; }
+            grep -Fq '"@type":"Organization"' "$home" || { cleanup; return 1; }
+
+            cleanup
+            return 0
           }
 
           deadline=$((SECONDS + VERIFY_WINDOW_SECONDS))
@@ -120,7 +141,7 @@ jobs:
             attempt=$((attempt + 1))
             echo "SEO contract attempt ${attempt}"
             if verify_contract; then
-              echo "PASS: public İlkOku indexability, canonical, metadata, sitemap, robots and IndexNow key verified."
+              echo "PASS: public İlkOku indexability, canonical, metadata, sitemap, robots, WebSite/Organization structured data and IndexNow key verified."
               exit 0
             fi
             sleep 15

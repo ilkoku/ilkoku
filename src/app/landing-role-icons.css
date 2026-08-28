@@ -41,22 +41,22 @@
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--writer .landing-role__icon::after {
-  background-image: url("/icons/roles/pro-writer.webp") !important;
+  background-image: url("/icons/roles/writer-embedded.svg") !important;
   animation: landing-role-writer 4.8s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--reader .landing-role__icon::after {
-  background-image: url("/icons/roles/pro-reader.webp") !important;
+  background-image: url("/icons/roles/reader-embedded.svg") !important;
   animation: landing-role-reader 4.4s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--editor .landing-role__icon::after {
-  background-image: url("/icons/roles/pro-editor.webp") !important;
+  background-image: url("/icons/roles/editor-embedded.svg") !important;
   animation: landing-role-editor 4.6s ease-in-out infinite;
 }
 
 .landing-page .landing-section--roles .landing-role-grid--v2 .landing-role--publisher .landing-role__icon::after {
-  background-image: url("/icons/roles/pro-publisher.webp") !important;
+  background-image: url("/icons/roles/publisher-embedded.svg") !important;
   animation: landing-role-publisher 5s ease-in-out infinite;
 }
 

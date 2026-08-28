@@ -1,0 +1,130 @@
+name: SEO indexability smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-indexability-main
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify search-engine indexability
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Wait for production and verify SEO contract
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          USER_AGENT="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+          VERIFY_WINDOW_SECONDS=300
+
+          check_indexable_page() {
+            local path="$1"
+            local canonical="$2"
+            local url="https://ilkoku.com${path}"
+            local headers body code robots
+
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+
+            echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK}"
+            [[ "$code" == "200" ]]
+            [[ "${robots,,}" != *"noindex"* ]]
+            ! grep -Eqi '<meta[^>]+name=["'"']robots["'"'][^>]+content=["'"'][^"'"']*noindex' "$body"
+            grep -Eqi '<title>[^<]+' "$body"
+            grep -Eqi '<meta[^>]+name=["'"']description["'"'][^>]+content=["'"'][^"'"']+' "$body"
+            grep -Eqi 'rel=["'"']canonical["'"']' "$body"
+            grep -Fq "$canonical" "$body"
+
+            rm -f "$headers" "$body"
+          }
+
+          verify_contract() {
+            local sitemap robots key
+            sitemap="$(mktemp)"
+            robots="$(mktemp)"
+            key="$(mktemp)"
+
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/sitemap.xml --output "$sitemap"
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/robots.txt --output "$robots"
+            curl --fail --silent --show-error --location --max-time 25 https://ilkoku.com/f4c33493caf6550560462af5a424980e.txt --output "$key"
+
+            grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots"
+            grep -Fq 'Allow: /' "$robots"
+            ! grep -Eq '^Disallow:[[:space:]]*/[[:space:]]*$' "$robots"
+            grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key"
+
+            local required=(
+              'https://ilkoku.com/'
+              'https://ilkoku.com/eserler'
+              'https://ilkoku.com/eserler/yeni'
+              'https://ilkoku.com/eserler/guncellenen'
+              'https://ilkoku.com/yazarlar'
+              'https://ilkoku.com/turler'
+              'https://ilkoku.com/yardim'
+              'https://ilkoku.com/editorler'
+              'https://ilkoku.com/iletisim'
+              'https://ilkoku.com/hakkimizda'
+              'https://ilkoku.com/nasil-calisir'
+              'https://ilkoku.com/editoryal-standartlar'
+              'https://ilkoku.com/icerik-ve-yas-politikasi'
+              'https://ilkoku.com/topluluk-kurallari'
+              'https://ilkoku.com/telif-bildirimi'
+              'https://ilkoku.com/yazarlar-icin'
+              'https://ilkoku.com/editorler-icin'
+              'https://ilkoku.com/yayinevleri-icin'
+              'https://ilkoku.com/yasal/kullanim-sartlari'
+              'https://ilkoku.com/yasal/gizlilik-politikasi'
+              'https://ilkoku.com/yasal/kvkk'
+              'https://ilkoku.com/yasal/cerez-politikasi'
+              'https://ilkoku.com/yasal/telif-hakki-politikasi'
+            )
+
+            for url in "${required[@]}"; do
+              grep -Fq "<loc>${url}</loc>" "$sitemap"
+            done
+
+            check_indexable_page '/' 'https://ilkoku.com/'
+            check_indexable_page '/eserler' 'https://ilkoku.com/eserler'
+            check_indexable_page '/yazarlar' 'https://ilkoku.com/yazarlar'
+            check_indexable_page '/turler' 'https://ilkoku.com/turler'
+            check_indexable_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir'
+            check_indexable_page '/hakkimizda' 'https://ilkoku.com/hakkimizda'
+            check_indexable_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin'
+            check_indexable_page '/editorler-icin' 'https://ilkoku.com/editorler-icin'
+            check_indexable_page '/yayinevleri-icin' 'https://ilkoku.com/yayinevleri-icin'
+
+            local home
+            home="$(mktemp)"
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/ --output "$home"
+            grep -Fq 'application/ld+json' "$home"
+            grep -Fq '"@type":"WebSite"' "$home"
+            rm -f "$home" "$sitemap" "$robots" "$key"
+          }
+
+          deadline=$((SECONDS + VERIFY_WINDOW_SECONDS))
+          attempt=0
+          while (( SECONDS < deadline )); do
+            attempt=$((attempt + 1))
+            echo "SEO contract attempt ${attempt}"
+            if verify_contract; then
+              echo "PASS: public İlkOku indexability, canonical, metadata, sitemap, robots and IndexNow key verified."
+              exit 0
+            fi
+            sleep 15
+          done
+
+          echo "FAIL: production SEO indexability contract did not pass within 5 minutes." >&2
+          exit 1

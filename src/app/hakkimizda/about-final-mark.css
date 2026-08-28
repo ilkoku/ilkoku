@@ -1,0 +1,11 @@
+.about-final span{
+  width:clamp(5.5rem,6vw,6.5rem);
+  height:clamp(5.5rem,6vw,6.5rem);
+  background:#fff url('/about/about-final-parchment-quill.webp') center/88% auto no-repeat;
+}
+
+.about-final span img{
+  width:1px!important;
+  height:1px!important;
+  opacity:0;
+}

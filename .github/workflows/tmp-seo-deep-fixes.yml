@@ -30,3 +30,4 @@ jobs:
           git add -A
           git commit -m "Fix canonical host and public SEO search paths"
           git push origin HEAD:agent/seo-deep-fixes
+          echo "Application SEO patch pushed"

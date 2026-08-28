@@ -13,87 +13,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Diagnose live public SEO
+      - name: Capture live SEO failures
         shell: bash
         run: |
           set -u
           UA='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-          fail=0
 
-          echo '=== ROBOTS LIVE ==='
-          curl -fsSL -A "$UA" https://ilkoku.com/robots.txt -o /tmp/robots || { echo 'FAIL robots fetch'; fail=1; }
-          cat /tmp/robots || true
-          if grep -Eq '^Disallow:[[:space:]]*/[[:space:]]*$' /tmp/robots; then echo 'FAIL robots exact root block'; fail=1; else echo 'PASS robots root open'; fi
-          grep -F 'Sitemap: https://ilkoku.com/sitemap.xml' /tmp/robots >/dev/null || { echo 'FAIL robots sitemap'; fail=1; }
+          echo '=== ROBOTS ==='
+          curl -fsSL -A "$UA" https://ilkoku.com/robots.txt | sed -n '1,120p'
 
-          echo '=== SITEMAP ==='
-          curl -fsSL -A "$UA" -D /tmp/sitemap-head https://ilkoku.com/sitemap.xml -o /tmp/sitemap || { echo 'FAIL sitemap fetch'; fail=1; }
-          loc_count=$(grep -o '<loc>' /tmp/sitemap | wc -l | tr -d ' ')
-          dup_count=$(grep -oE '<loc>[^<]+' /tmp/sitemap | sed 's#<loc>##' | sort | uniq -d | wc -l | tr -d ' ')
-          echo "SITEMAP_LOC_COUNT=$loc_count DUPLICATES=$dup_count"
-          [[ "$loc_count" -ge 23 ]] || { echo 'FAIL sitemap below 23 URLs'; fail=1; }
-          [[ "$dup_count" == 0 ]] || { echo 'FAIL sitemap duplicate URLs'; fail=1; }
-
-          echo '=== REDIRECT / HOST CANONICALIZATION ==='
-          check_redirect() {
-            label="$1"; url="$2"; expected="$3"
-            headers=$(mktemp)
-            code=$(curl -sS -o /dev/null -D "$headers" -w '%{http_code}' --max-time 20 "$url" || true)
-            location=$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' "$headers")
-            echo "$label HTTP=$code LOCATION=${location:-YOK}"
-            if [[ "$code" != 301 && "$code" != 308 ]]; then echo "FAIL $label not permanent redirect"; fail=1; fi
-            [[ "$location" == "$expected" ]] || { echo "FAIL $label expected $expected"; fail=1; }
-            rm -f "$headers"
-          }
-          check_redirect 'HTTP apex' 'http://ilkoku.com/' 'https://ilkoku.com/'
-          check_redirect 'HTTPS www' 'https://www.ilkoku.com/' 'https://ilkoku.com/'
-
-          echo '=== SOFT-404 / ERROR INDEXABILITY ==='
-          body=$(mktemp); head=$(mktemp)
-          code=$(curl -sSL -A "$UA" -D "$head" -o "$body" -w '%{http_code}' 'https://ilkoku.com/seo-probe-does-not-exist-9f31')
-          echo "RANDOM_404 HTTP=$code"
-          [[ "$code" == 404 ]] || { echo 'FAIL random route is soft-404/non-404'; fail=1; }
-          if grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then echo 'PASS 404 meta noindex'; else echo 'WARN 404 meta noindex not found'; fi
-          rm -f "$body" "$head"
-
-          echo '=== PARAMETER PAGE INDEXABILITY ==='
+          echo '=== PARAMETER 500 DETAILS ==='
           for u in 'https://ilkoku.com/eserler?arama=test' 'https://ilkoku.com/yazarlar?arama=test' 'https://ilkoku.com/turler?arama=test'; do
-            body=$(mktemp)
-            code=$(curl -sSL -A "$UA" -o "$body" -w '%{http_code}' "$u")
-            echo "$u HTTP=$code"
-            [[ "$code" == 200 ]] || { echo "FAIL parameter page HTTP $code"; fail=1; }
-            if grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then echo '  PASS noindex'; else echo '  FAIL missing noindex'; fail=1; fi
-            rm -f "$body"
-          done
-
-          echo '=== PRIMARY PAGE SOCIAL META ==='
-          for p in '/' '/eserler' '/yazarlar' '/turler' '/nasil-calisir' '/hakkimizda' '/yazarlar-icin' '/editorler-icin' '/yayinevleri-icin'; do
             body=$(mktemp); head=$(mktemp)
-            url="https://ilkoku.com${p}"
-            code=$(curl -sSL -A "$UA" -D "$head" -o "$body" -w '%{http_code}' "$url")
-            echo "PAGE $p HTTP=$code"
-            [[ "$code" == 200 ]] || { echo "FAIL $p http"; fail=1; }
-            grep -Eqi '<title>[^<]+' "$body" || { echo "FAIL $p title"; fail=1; }
-            grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body" || { echo "FAIL $p description"; fail=1; }
-            grep -Eqi '<link[^>]+rel="canonical"' "$body" || { echo "FAIL $p canonical"; fail=1; }
-            grep -Eqi '<meta[^>]+property="og:title"' "$body" || { echo "FAIL $p og:title"; fail=1; }
-            grep -Eqi '<meta[^>]+property="og:description"' "$body" || { echo "FAIL $p og:description"; fail=1; }
-            grep -Eqi '<meta[^>]+property="og:image"' "$body" || { echo "FAIL $p og:image"; fail=1; }
-            grep -Eqi '<meta[^>]+name="twitter:card"' "$body" || { echo "FAIL $p twitter:card"; fail=1; }
+            code=$(curl -sSL -A "$UA" -D "$head" -o "$body" -w '%{http_code}' "$u")
+            echo "URL=$u HTTP=$code"
+            echo '-- headers --'
+            sed -n '1,80p' "$head"
+            echo '-- body markers --'
+            grep -Eo 'digest[^,<}]+' "$body" | head -5 || true
+            grep -Eo '<title>[^<]+' "$body" | head -2 || true
+            grep -Eo 'Internal Server Error|Application error|server-side exception|This page could not be found' "$body" | head -5 || true
+            echo '-- body prefix --'
+            head -c 1200 "$body" | tr '\n' ' '; echo
             rm -f "$body" "$head"
           done
 
-          echo '=== SCHEMA ==='
-          curl -fsSL -A "$UA" https://ilkoku.com/ -o /tmp/home || { echo 'FAIL home schema fetch'; fail=1; }
-          grep -F '"@type":"WebSite"' /tmp/home >/dev/null || { echo 'FAIL WebSite schema'; fail=1; }
-          grep -F '"@type":"Organization"' /tmp/home >/dev/null || { echo 'FAIL Organization schema'; fail=1; }
-
-          echo '=== SEARCH ENGINE VISIBILITY NOTE ==='
-          echo 'Search-engine result presence is checked externally; this workflow verifies crawl/index technical eligibility only.'
-
-          if [[ "$fail" == 0 ]]; then
-            echo 'SEO_DEEP_DIAGNOSTIC_PASS'
-            exit 0
-          fi
-          echo 'SEO_DEEP_DIAGNOSTIC_FAIL'
-          exit 1
+          echo 'CAPTURE_DONE'

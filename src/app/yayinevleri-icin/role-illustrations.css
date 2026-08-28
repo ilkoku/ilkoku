@@ -1,0 +1,122 @@
+/* Yayınevleri İçin — 15 eski simgeyi onaylı ana rol illüstrasyonlarıyla değiştir. */
+
+.for-publishers-page .publishers-hero__visual figcaption span > svg,
+.for-publishers-page .how-truth > span > svg,
+.for-publishers-page .publishers-discovery article > svg,
+.for-publishers-page .publishers-evaluation article > svg,
+.for-publishers-page .publishers-permissions article > svg,
+.for-publishers-page .publishers-contract article > svg,
+.for-publishers-page .publishers-start > svg {
+  display: none;
+}
+
+.for-publishers-page .publishers-hero__visual figcaption span::before,
+.for-publishers-page .how-truth > span::after,
+.for-publishers-page .publishers-discovery article::before,
+.for-publishers-page .publishers-evaluation article::before,
+.for-publishers-page .publishers-permissions article::before,
+.for-publishers-page .publishers-contract article::before,
+.for-publishers-page .publishers-start::before {
+  content: "";
+  display: block;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 .35rem .55rem rgba(46, 24, 112, .18));
+  pointer-events: none;
+}
+
+/* Hero: kurumsal keşif → Yayınevi; okur sinyali → Okuyucu; eser gelişimi → Yazar */
+.for-publishers-page .publishers-hero__visual figcaption span::before {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+.for-publishers-page .publishers-hero__visual figcaption span:nth-child(1)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+.for-publishers-page .publishers-hero__visual figcaption span:nth-child(2)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.for-publishers-page .publishers-hero__visual figcaption span:nth-child(3)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Giriş → Yayınevi */
+.for-publishers-page .how-truth > span {
+  position: relative;
+  overflow: visible;
+  background: transparent;
+}
+.for-publishers-page .how-truth > span::after {
+  position: absolute;
+  inset: -.25rem;
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Keşif: kurumsal alan → Yayınevi; eser/yazar → Yazar; ilgi sinyalleri → Okuyucu */
+.for-publishers-page .publishers-discovery article::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  margin-bottom: .15rem;
+}
+.for-publishers-page .publishers-discovery article:nth-child(1)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+.for-publishers-page .publishers-discovery article:nth-child(2)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.for-publishers-page .publishers-discovery article:nth-child(3)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+
+/* Kurumsal değerlendirme: ekip paylaşımı → Yayınevi; Eser Pasaportu → Yazar; profesyonel inceleme → Editör */
+.for-publishers-page .publishers-evaluation article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .15rem;
+}
+.for-publishers-page .publishers-evaluation article:nth-child(1)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+.for-publishers-page .publishers-evaluation article:nth-child(2)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.for-publishers-page .publishers-evaluation article:nth-child(3)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Ekip / yetki → Yayınevi */
+.for-publishers-page .publishers-permissions article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .15rem;
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Sözleşme / yayın kararı ve gerçekçi beklenti → Yayınevi */
+.for-publishers-page .publishers-contract article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .15rem;
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Başlangıç → Yayınevi */
+.for-publishers-page .publishers-start::before {
+  width: 3.4rem;
+  height: 3.4rem;
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+@media (max-width: 34rem) {
+  .for-publishers-page .publishers-hero__visual figcaption span::before {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .for-publishers-page .publishers-start::before {
+    width: 3.1rem;
+    height: 3.1rem;
+  }
+}

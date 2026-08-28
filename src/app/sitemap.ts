@@ -134,6 +134,21 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
   },
 ];
 
+const staticFallbackEntries: MetadataRoute.Sitemap = [
+  ...staticDiscoveryEntries,
+  ...bundledPublicPages.map((page) => ({
+    url: page.url,
+    lastModified: new Date(page.updatedAt),
+    changeFrequency: "monthly" as const,
+    priority: page.priority,
+  })),
+  ...legalSlugs.map((slug) => ({
+    url: `${baseUrl}/yasal/${slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.4,
+  })),
+];
+
 type CmsSitemapRow = {
   slug: string;
   noIndex: boolean;
@@ -281,8 +296,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         })),
     ];
   } catch {
-    // CMS indexability cannot be verified when the database is unavailable.
-    // Fail closed for CMS-owned pages and keep only code-owned public routes.
-    return staticDiscoveryEntries;
+    // Search engines must keep seeing the complete code-owned public surface even
+    // when CMS/database lookups are temporarily unavailable. Dynamic author,
+    // genre, work and CMS-owned URLs fail closed, while the 23 core public URLs
+    // remain stable and crawlable.
+    return staticFallbackEntries;
   }
 }

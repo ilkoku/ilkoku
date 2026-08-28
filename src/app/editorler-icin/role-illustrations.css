@@ -1,0 +1,113 @@
+/* Editörler İçin — 16 eski simgeyi onaylı ana rol illüstrasyonlarıyla değiştir. */
+
+.for-editors-page .editors-hero__visual figcaption span > svg,
+.for-editors-page .how-truth > span > svg,
+.for-editors-page .editors-flow article > svg,
+.for-editors-page .editors-report article > svg,
+.for-editors-page .editors-independence article > svg,
+.for-editors-page .editors-guardrails article > svg,
+.for-editors-page .editors-records > svg,
+.for-editors-page .editors-start > svg {
+  display: none;
+}
+
+.for-editors-page .editors-hero__visual figcaption span::before,
+.for-editors-page .how-truth > span::after,
+.for-editors-page .editors-flow article::before,
+.for-editors-page .editors-report article::before,
+.for-editors-page .editors-independence article::before,
+.for-editors-page .editors-guardrails article::before,
+.for-editors-page .editors-records::before,
+.for-editors-page .editors-start::before {
+  content: "";
+  display: block;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 .35rem .55rem rgba(46, 24, 112, .18));
+  pointer-events: none;
+}
+
+/* Hero: görev seçimi + gerekçeli rapor + ikinci bakış → Editör */
+.for-editors-page .editors-hero__visual figcaption span::before {
+  width: 1.85rem;
+  height: 1.85rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Giriş → Editör */
+.for-editors-page .how-truth > span {
+  position: relative;
+  overflow: visible;
+  background: transparent;
+}
+.for-editors-page .how-truth > span::after {
+  position: absolute;
+  inset: -.25rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Görev akışı: yetkili rol + havuz + sürüm kaydı → Editör */
+.for-editors-page .editors-flow article::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  margin-bottom: .15rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Rapor: profesyonel değerlendirme → Editör, yaratıcı karar → Yazar */
+.for-editors-page .editors-report article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .15rem;
+}
+.for-editors-page .editors-report article:nth-child(1)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+.for-editors-page .editors-report article:nth-child(2)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* İki editörlü yapı → Editör */
+.for-editors-page .editors-independence article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .15rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Güven: yazar çalışma alanı → Yazar; bağımsızlık ve kapsam → Editör */
+.for-editors-page .editors-guardrails article::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  margin-bottom: .15rem;
+}
+.for-editors-page .editors-guardrails article:nth-child(1)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.for-editors-page .editors-guardrails article:nth-child(2)::before,
+.for-editors-page .editors-guardrails article:nth-child(3)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Kayıt geçmişi + başlangıç → Editör */
+.for-editors-page .editors-records::before,
+.for-editors-page .editors-start::before {
+  width: 3.4rem;
+  height: 3.4rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+@media (max-width: 34rem) {
+  .for-editors-page .editors-hero__visual figcaption span::before {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .for-editors-page .editors-records::before,
+  .for-editors-page .editors-start::before {
+    width: 3.1rem;
+    height: 3.1rem;
+  }
+}

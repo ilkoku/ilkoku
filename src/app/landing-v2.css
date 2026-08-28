@@ -157,7 +157,7 @@
 /* Hero assetini doğrudan, cache-bust edilmiş seçili 4. binary'den yükle. */
 .landing-page .landing-hero-product {
   background-color: #11102f;
-  background-image: url("/landing/ilkoku-hero-fourth.webp");
+  background-image: url("/landing/ilkoku-hero-user-final.webp");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;

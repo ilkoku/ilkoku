@@ -1,0 +1,113 @@
+/* Ana sayfa — yalnız kalan 8 eski simgeyi onaylı rol illüstrasyonlarıyla değiştirir. */
+
+/* Hero badge: yazardan başlayan ekosistem → Yazar */
+.landing-page .landing-hero__badge > svg {
+  display: none;
+}
+
+.landing-page .landing-hero__badge::before {
+  content: "";
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 auto;
+  background: url("/icons/roles/writer-embedded.svg") center / contain no-repeat;
+  filter: drop-shadow(0 .22rem .34rem rgba(46, 24, 112, .16));
+}
+
+/* Hero proof: süreç kaydı + editör incelemesi → Editör; yayınevi keşfi → Yayınevi */
+.landing-page .landing-hero__proof span > svg {
+  display: none;
+}
+
+.landing-page .landing-hero__proof span::before {
+  content: "";
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 auto;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 .2rem .32rem rgba(46, 24, 112, .14));
+}
+
+.landing-page .landing-hero__proof span:nth-child(1)::before,
+.landing-page .landing-hero__proof span:nth-child(2)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+.landing-page .landing-hero__proof span:nth-child(3)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Hero Eser Pasaportu → Yazar */
+.landing-page .landing-product-card--passport .landing-product-card__title > svg {
+  display: none;
+}
+
+.landing-page .landing-product-card--passport .landing-product-card__title::before {
+  content: "";
+  width: 1.55rem;
+  height: 1.55rem;
+  flex: 0 0 auto;
+  background: url("/icons/roles/writer-embedded.svg") center / contain no-repeat;
+  filter: drop-shadow(0 .2rem .32rem rgba(46, 24, 112, .15));
+}
+
+/* Hero profesyonel inceleme → Editör; yayınevi görünürlüğü → Yayınevi */
+.landing-page .landing-product-card--review .landing-product-card__icon > svg,
+.landing-page .landing-product-card--publisher .landing-product-card__icon > svg {
+  display: none;
+}
+
+.landing-page .landing-product-card--review .landing-product-card__icon::before,
+.landing-page .landing-product-card--publisher .landing-product-card__icon::before {
+  content: "";
+  width: 2rem;
+  height: 2rem;
+  display: block;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 .22rem .36rem rgba(46, 24, 112, .16));
+}
+
+.landing-page .landing-product-card--review .landing-product-card__icon::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+.landing-page .landing-product-card--publisher .landing-product-card__icon::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Ana Eser Pasaportu kartı → Yazar */
+.landing-page .landing-passport-card__header > span > svg {
+  display: none;
+}
+
+.landing-page .landing-passport-card__header > span::before {
+  content: "";
+  width: 2.8rem;
+  height: 2.8rem;
+  display: block;
+  background: url("/icons/roles/writer-embedded.svg") center / contain no-repeat;
+  filter: drop-shadow(0 .3rem .5rem rgba(46, 24, 112, .17));
+}
+
+@media (max-width: 34rem) {
+  .landing-page .landing-hero__badge::before,
+  .landing-page .landing-hero__proof span::before {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+
+  .landing-page .landing-product-card--passport .landing-product-card__title::before {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  .landing-page .landing-product-card--review .landing-product-card__icon::before,
+  .landing-page .landing-product-card--publisher .landing-product-card__icon::before {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}

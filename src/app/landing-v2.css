@@ -1,6 +1,7 @@
 @import "./landing-v2-base.css";
 @import "./landing-role-pro.css";
 @import "./landing-why-pro.css";
+@import "./home-remaining-role-icons.css";
 
 /* Rol kartları: numarasız, parlak beyaz ve logoya uyumlu mor ışık. */
 .landing-page .landing-role__number {

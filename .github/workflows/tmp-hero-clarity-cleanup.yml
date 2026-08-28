@@ -1,0 +1,59 @@
+name: Hero clarity cleanup
+
+on:
+  push:
+    branches:
+      - agent/hero-clarity-cleanup
+    paths:
+      - ".github/workflows/tmp-hero-clarity-cleanup.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hero-clarity-cleanup
+          fetch-depth: 0
+
+      - name: Remove hero clarity blockers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          page = Path('src/app/page.tsx')
+          text = page.read_text()
+          old_src = 'src="/landing/ilkoku-hero.webp"'
+          new_src = 'src="/landing/ilkoku-hero-user-final.webp"'
+          if old_src not in text:
+              raise SystemExit('Hero Image source not found')
+          text = text.replace(old_src, new_src, 1)
+
+          veil = '            <span className="landing-hero-product__veil" aria-hidden="true" />\n'
+          if veil not in text:
+              raise SystemExit('Hero veil element not found')
+          text = text.replace(veil, '', 1)
+          page.write_text(text)
+
+          css = Path('src/app/landing-v2.css')
+          css_text = css.read_text()
+          marker = '/* Hero clarity: render the verified asset directly with no visual processing. */'
+          if marker in css_text:
+              raise SystemExit('Hero clarity override already present')
+
+          css_text += '''\n\n/* Hero clarity: render the verified asset directly with no visual processing. */\n.landing-page .landing-hero-product {\n  background-color: transparent;\n  background-image: none;\n  animation: none;\n  transform: none;\n}\n\n.landing-page .landing-hero-product::before,\n.landing-page .landing-hero-product::after {\n  content: none;\n  display: none;\n}\n\n.landing-page .landing-hero-product > img {\n  opacity: 1;\n  filter: none;\n  transform: none;\n  object-fit: contain;\n  object-position: center;\n}\n\n.landing-page .landing-hero-product__veil {\n  display: none;\n  background: none;\n}\n'''
+          css.write_text(css_text)
+          PY
+
+          rm .github/workflows/tmp-hero-clarity-cleanup.yml
+          git config user.name "ilkoku"
+          git config user.email "ilkoku@ilkoku.com"
+          git add src/app/page.tsx src/app/landing-v2.css .github/workflows/tmp-hero-clarity-cleanup.yml
+          git diff --cached --check
+          git commit -m "Remove homepage hero visual processing"
+          git push origin HEAD:agent/hero-clarity-cleanup

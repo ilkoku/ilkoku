@@ -1,0 +1,142 @@
+/* Editoryal Standartlar — 16 eski simgeyi onaylı dört ana rol illüstrasyonuyla değiştir. */
+
+.standards-page .standards-hero__visual figcaption svg,
+.standards-page .how-truth > span > svg,
+.standards-page .standards-definition aside > svg,
+.standards-page .standards-criterion__top > svg,
+.standards-page .standards-guardrail > span > svg,
+.standards-page .standards-contact > svg {
+  display: none;
+}
+
+.standards-page .standards-hero__visual figcaption span::before,
+.standards-page .how-truth > span::after,
+.standards-page .standards-definition aside::before,
+.standards-page .standards-criterion__top::before,
+.standards-page .standards-guardrail > span::after,
+.standards-page .standards-contact::before {
+  content: "";
+  display: block;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 .35rem .55rem rgba(46, 24, 112, .18));
+  pointer-events: none;
+}
+
+/* Hero: Metni keşfet → Okuyucu, Gerekçelendir → Editör, Yeni bakış ekle → Editör */
+.standards-page .standards-hero__visual figcaption span::before {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+.standards-page .standards-hero__visual figcaption span:nth-child(1)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.standards-page .standards-hero__visual figcaption span:nth-child(2)::before,
+.standards-page .standards-hero__visual figcaption span:nth-child(3)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Giriş → Editör */
+.standards-page .how-truth > span {
+  position: relative;
+  overflow: visible;
+  background: transparent;
+}
+.standards-page .how-truth > span::after {
+  position: absolute;
+  inset: -.25rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Görüş editörden, yaratıcı karar yazardan → Yazar */
+.standards-page .standards-definition aside::before {
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: .25rem;
+  background-image: url("/icons/roles/writer-embedded.svg");
+  filter: drop-shadow(0 .5rem .75rem rgba(0, 0, 0, .24));
+}
+.standards-page .standards-definition aside strong {
+  margin-top: 1rem;
+}
+
+/* Sekiz değerlendirme ölçütü */
+.standards-page .standards-criterion__top::before {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+/* 1 Yapı ve kurgu → Editör */
+.standards-page .standards-criterion:nth-child(1) .standards-criterion__top::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+/* 2 Anlatıcı ve bakış açısı → Yazar */
+.standards-page .standards-criterion:nth-child(2) .standards-criterion__top::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+/* 3 Karakter ve motivasyon → Okuyucu */
+.standards-page .standards-criterion:nth-child(3) .standards-criterion__top::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+/* 4 Dil, üslup ve anlatım açıklığı → Yazar */
+.standards-page .standards-criterion:nth-child(4) .standards-criterion__top::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+/* 5 Tempo ve sahne dengesi → Okuyucu */
+.standards-page .standards-criterion:nth-child(5) .standards-criterion__top::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+/* 6 Tutarlılık ve metin içi doğruluk → Editör */
+.standards-page .standards-criterion:nth-child(6) .standards-criterion__top::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+/* 7 Tür, yaş grubu ve hedef okur → Okuyucu */
+.standards-page .standards-criterion:nth-child(7) .standards-criterion__top::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+/* 8 Örnek, gerekçe ve uygulanabilirlik → Editör */
+.standards-page .standards-criterion:nth-child(8) .standards-criterion__top::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Güven kartları: eser güvenliği → Yayınevi/kurumsal, yaratıcı karar → Yazar */
+.standards-page .standards-guardrail > span {
+  position: relative;
+  overflow: visible;
+  background: transparent;
+}
+.standards-page .standards-guardrail > span::after {
+  position: absolute;
+  inset: -.35rem;
+}
+.standards-page .standards-guardrail:nth-child(1) > span::after {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+.standards-page .standards-guardrail:nth-child(2) > span::after {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Kalite bildirimi → Editör */
+.standards-page .standards-contact::before {
+  width: 3.6rem;
+  height: 3.6rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+@media (max-width: 42rem) {
+  .standards-page .standards-hero__visual figcaption span::before {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .standards-page .standards-definition aside::before {
+    width: 4.6rem;
+    height: 4.6rem;
+  }
+
+  .standards-page .standards-criterion__top::before {
+    width: 3.2rem;
+    height: 3.2rem;
+  }
+}

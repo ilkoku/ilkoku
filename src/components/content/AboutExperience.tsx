@@ -214,7 +214,7 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
 
       <section className="about-final">
         <div className="about-container">
-          <span><AboutIcon name="spark" /></span>
+          <span><Image src="/about/about-final-parchment-quill.webp" alt="" width={44} height={44} aria-hidden="true" /></span>
           <p>Her büyük hikâye bir ilk cümleyle başlar.</p>
           <strong>O ilk cümlenin yolculuğu için İlkOku var.</strong>
         </div>

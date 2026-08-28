@@ -1,0 +1,79 @@
+name: SEO live diagnostic
+
+on:
+  push:
+    branches:
+      - agent/seo-live-diagnostic
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Diagnose live public SEO
+        shell: bash
+        run: |
+          set -u
+          UA='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+          fail=0
+
+          echo '=== robots / sitemap / key ==='
+          curl -fsSL -A "$UA" https://ilkoku.com/robots.txt -o /tmp/robots || { echo 'FAIL robots fetch'; fail=1; }
+          curl -fsSL -A "$UA" https://ilkoku.com/sitemap.xml -o /tmp/sitemap || { echo 'FAIL sitemap fetch'; fail=1; }
+          curl -fsSL https://ilkoku.com/f4c33493caf6550560462af5a424980e.txt -o /tmp/key || { echo 'FAIL key fetch'; fail=1; }
+          grep -F 'Sitemap: https://ilkoku.com/sitemap.xml' /tmp/robots >/dev/null || { echo 'FAIL robots sitemap'; fail=1; }
+          grep -F 'Allow: /' /tmp/robots >/dev/null || { echo 'FAIL robots allow'; fail=1; }
+          grep -Fx 'f4c33493caf6550560462af5a424980e' /tmp/key >/dev/null || { echo 'FAIL IndexNow key'; fail=1; }
+
+          required=(
+            'https://ilkoku.com/' 'https://ilkoku.com/eserler' 'https://ilkoku.com/eserler/yeni'
+            'https://ilkoku.com/eserler/guncellenen' 'https://ilkoku.com/yazarlar' 'https://ilkoku.com/turler'
+            'https://ilkoku.com/yardim' 'https://ilkoku.com/editorler' 'https://ilkoku.com/iletisim'
+            'https://ilkoku.com/hakkimizda' 'https://ilkoku.com/nasil-calisir'
+            'https://ilkoku.com/editoryal-standartlar' 'https://ilkoku.com/icerik-ve-yas-politikasi'
+            'https://ilkoku.com/topluluk-kurallari' 'https://ilkoku.com/telif-bildirimi'
+            'https://ilkoku.com/yazarlar-icin' 'https://ilkoku.com/editorler-icin'
+            'https://ilkoku.com/yayinevleri-icin' 'https://ilkoku.com/yasal/kullanim-sartlari'
+            'https://ilkoku.com/yasal/gizlilik-politikasi' 'https://ilkoku.com/yasal/kvkk'
+            'https://ilkoku.com/yasal/cerez-politikasi' 'https://ilkoku.com/yasal/telif-hakki-politikasi'
+          )
+          for u in "${required[@]}"; do
+            grep -F "<loc>${u}</loc>" /tmp/sitemap >/dev/null || { echo "FAIL sitemap missing: $u"; fail=1; }
+          done
+
+          echo '=== priority pages ==='
+          paths=( '/' '/eserler' '/yazarlar' '/turler' '/nasil-calisir' '/hakkimizda' '/yazarlar-icin' '/editorler-icin' '/yayinevleri-icin' )
+          for p in "${paths[@]}"; do
+            url="https://ilkoku.com${p}"
+            body=$(mktemp); head=$(mktemp)
+            code=$(curl -sSL -A "$UA" -D "$head" -o "$body" -w '%{http_code}' "$url")
+            echo "PAGE $p HTTP=$code"
+            [[ "$code" == 200 ]] || { echo "FAIL $p http"; fail=1; }
+            xr=$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' "$head")
+            echo "  X-Robots=${xr:-YOK}"
+            [[ "${xr,,}" != *noindex* ]] || { echo "FAIL $p x-robots noindex"; fail=1; }
+            grep -Eoi '<title>[^<]+' "$body" | head -1 || { echo "FAIL $p title"; fail=1; }
+            grep -Eoi '<meta[^>]+name="description"[^>]+>' "$body" | head -1 || { echo "FAIL $p description"; fail=1; }
+            canonical=$(grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$body" | head -1 || true)
+            echo "  canonical=${canonical:-YOK}"
+            [[ -n "$canonical" ]] || { echo "FAIL $p canonical missing"; fail=1; }
+            expected="$url"; [[ "$p" == '/' ]] && expected='https://ilkoku.com/'
+            grep -Fq "$expected" "$body" || { echo "FAIL $p expected canonical $expected"; fail=1; }
+            if grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then echo "FAIL $p meta robots noindex"; fail=1; fi
+            rm -f "$body" "$head"
+          done
+
+          echo '=== structured data ==='
+          curl -fsSL -A "$UA" https://ilkoku.com/ -o /tmp/home || { echo 'FAIL home schema fetch'; fail=1; }
+          grep -F '"@type":"WebSite"' /tmp/home >/dev/null || { echo 'FAIL WebSite schema'; fail=1; }
+          grep -F '"@type":"Organization"' /tmp/home >/dev/null || { echo 'FAIL Organization schema'; fail=1; }
+
+          if [[ "$fail" == 0 ]]; then
+            echo 'DIAGNOSTIC_PASS'
+            exit 0
+          fi
+          echo 'DIAGNOSTIC_FAIL'
+          exit 1

@@ -11,6 +11,7 @@ import "@/app/nasil-calisir/how-it-works.css";
 import "@/app/nasil-calisir/public-trust-footer.css";
 import "./for-editors.css";
 import "./for-editors-closing-polish.css";
+import "./role-illustrations.css";
 
 const baseUrl = "https://ilkoku.com";
 const visual = getPublicTrustPageVisual("/editorler-icin");

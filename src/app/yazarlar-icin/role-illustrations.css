@@ -1,0 +1,131 @@
+/* Yazarlar İçin — 15 eski simgeyi onaylı dört ana rol illüstrasyonuyla değiştir. */
+
+.for-writers-page .writers-hero__visual figcaption svg,
+.for-writers-page .how-truth > span > svg,
+.for-writers-page .writers-workflow article > svg,
+.for-writers-page .writers-feedback article > svg,
+.for-writers-page .writers-decision > svg,
+.for-writers-page .writers-passport article > svg,
+.for-writers-page .writers-rights article > svg,
+.for-writers-page .writers-start > svg {
+  display: none;
+}
+
+.for-writers-page .writers-hero__visual figcaption span::before,
+.for-writers-page .how-truth > span::after,
+.for-writers-page .writers-workflow article::before,
+.for-writers-page .writers-feedback article::before,
+.for-writers-page .writers-decision::before,
+.for-writers-page .writers-passport article::before,
+.for-writers-page .writers-rights article::before,
+.for-writers-page .writers-start::before {
+  content: "";
+  display: block;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 .35rem .55rem rgba(46, 24, 112, .18));
+  pointer-events: none;
+}
+
+/* Hero: Yaz → Yazar, Okurla buluş → Okuyucu, Keşfedil → Yayınevi */
+.for-writers-page .writers-hero__visual figcaption span::before {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+.for-writers-page .writers-hero__visual figcaption span:nth-child(1)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.for-writers-page .writers-hero__visual figcaption span:nth-child(2)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.for-writers-page .writers-hero__visual figcaption span:nth-child(3)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Giriş → Yazar */
+.for-writers-page .how-truth > span {
+  position: relative;
+  overflow: visible;
+  background: transparent;
+}
+.for-writers-page .how-truth > span::after {
+  position: absolute;
+  inset: -.25rem;
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Yazma süreci: geliştirme → Yazar, doğru okur beklentisi → Okuyucu, yayın kararı → Yazar */
+.for-writers-page .writers-workflow article::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  margin-bottom: .15rem;
+}
+.for-writers-page .writers-workflow article:nth-child(1)::before,
+.for-writers-page .writers-workflow article:nth-child(3)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.for-writers-page .writers-workflow article:nth-child(2)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+
+/* Geri bildirim: Okuyucu + Editör */
+.for-writers-page .writers-feedback article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .15rem;
+}
+.for-writers-page .writers-feedback article:nth-child(1)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.for-writers-page .writers-feedback article:nth-child(2)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+/* Yaratıcı karar → Yazar */
+.for-writers-page .writers-decision::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Eser Pasaportu → Yazar, Yayınevi keşfi → Yayınevi */
+.for-writers-page .writers-passport article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .15rem;
+}
+.for-writers-page .writers-passport article:nth-child(1)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.for-writers-page .writers-passport article:nth-child(2)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Haklar ve gerçekçi beklenti → Yazar */
+.for-writers-page .writers-rights article::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  margin-bottom: .15rem;
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+/* Başlangıç → Yazar */
+.for-writers-page .writers-start::before {
+  width: 3.8rem;
+  height: 3.8rem;
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+@media (max-width: 34rem) {
+  .for-writers-page .writers-hero__visual figcaption span::before {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .for-writers-page .writers-start::before {
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+}

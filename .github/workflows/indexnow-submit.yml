@@ -1,0 +1,126 @@
+name: IndexNow submit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/app/**"
+      - "src/content/**"
+      - "src/features/public-discovery/**"
+      - "public/**"
+      - ".github/workflows/indexnow-submit.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow-main
+  cancel-in-progress: true
+
+jobs:
+  submit:
+    name: Submit public URLs to IndexNow
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Wait for production and submit sitemap URLs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          KEY="f4c33493caf6550560462af5a424980e"
+          KEY_URL="https://ilkoku.com/${KEY}.txt"
+          SITEMAP_URL="https://ilkoku.com/sitemap.xml"
+          READY=0
+
+          for attempt in $(seq 1 20); do
+            key_body="$(curl --silent --show-error --location --max-time 20 "$KEY_URL" || true)"
+            sitemap_code="$(curl --silent --show-error --location --max-time 20 --output /dev/null --write-out '%{http_code}' "$SITEMAP_URL" || true)"
+
+            if [[ "$key_body" == "$KEY" && "$sitemap_code" == "200" ]]; then
+              READY=1
+              echo "Production IndexNow key and sitemap are ready."
+              break
+            fi
+
+            echo "Production not ready yet (attempt ${attempt}/20)."
+            sleep 15
+          done
+
+          test "$READY" = "1"
+
+          curl --fail --silent --show-error --location --max-time 30 "$SITEMAP_URL" --output /tmp/sitemap.xml
+
+          python3 - <<'PY'
+          import json
+          import xml.etree.ElementTree as ET
+
+          key = "f4c33493caf6550560462af5a424980e"
+          root = ET.parse("/tmp/sitemap.xml").getroot()
+          urls = []
+          seen = set()
+
+          for element in root.iter():
+              if not element.tag.endswith("loc") or not element.text:
+                  continue
+              url = element.text.strip()
+              if not url.startswith("https://ilkoku.com/"):
+                  continue
+              if url in seen:
+                  continue
+              seen.add(url)
+              urls.append(url)
+
+          if not urls:
+              raise SystemExit("Sitemap contained no İlkOku public URLs")
+          if len(urls) > 10_000:
+              raise SystemExit(f"IndexNow batch too large: {len(urls)}")
+
+          payload = {
+              "host": "ilkoku.com",
+              "key": key,
+              "keyLocation": f"https://ilkoku.com/{key}.txt",
+              "urlList": urls,
+          }
+
+          with open("/tmp/indexnow.json", "w", encoding="utf-8") as handle:
+              json.dump(payload, handle, ensure_ascii=False)
+
+          print(f"Prepared {len(urls)} URLs for IndexNow.")
+          PY
+
+          status=""
+          for attempt in 1 2 3; do
+            status="$(curl \
+              --silent \
+              --show-error \
+              --output /tmp/indexnow-response.txt \
+              --write-out '%{http_code}' \
+              --max-time 60 \
+              --request POST \
+              --header 'Content-Type: application/json; charset=utf-8' \
+              --data-binary @/tmp/indexnow.json \
+              https://api.indexnow.org/indexnow || true)"
+
+            echo "IndexNow HTTP ${status} (attempt ${attempt}/3)"
+            cat /tmp/indexnow-response.txt || true
+
+            case "$status" in
+              200|202)
+                echo "PASS: IndexNow accepted the public URL batch."
+                exit 0
+                ;;
+              429)
+                sleep 30
+                ;;
+              *)
+                sleep 10
+                ;;
+            esac
+          done
+
+          echo "FAIL: IndexNow submission was not accepted (last HTTP ${status})." >&2
+          exit 1

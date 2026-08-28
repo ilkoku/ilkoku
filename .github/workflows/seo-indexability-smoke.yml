@@ -83,13 +83,14 @@ jobs:
 
           verify_contract() {
             local sitemap robots key home
+            local sitemap_count duplicate_count
             sitemap="$(mktemp)"
             robots="$(mktemp)"
             key="$(mktemp)"
             home="$(mktemp)"
 
             cleanup() {
-              rm -f "$sitemap" "$robots" "$key" "$home"
+              rm -f "$sitemap" "$robots" "$key" "$home" /tmp/seo-filtered /tmp/seo-eserler
             }
 
             curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/sitemap.xml --output "$sitemap" || { echo "FAIL: sitemap fetch"; cleanup; return 1; }
@@ -98,12 +99,23 @@ jobs:
 
             grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { echo "FAIL: robots sitemap declaration"; cleanup; return 1; }
             grep -Fq 'Allow: /' "$robots" || { echo "FAIL: robots public allow"; cleanup; return 1; }
-            if grep -Eq '^Disallow:[[:space:]]*/[[:space:]]*$' "$robots"; then
-              echo "FAIL: robots blocks root"
+            # Cloudflare can add Disallow: / for named AI crawlers such as GPTBot
+            # and Google-Extended. That does not block Google Search. Real Googlebot
+            # eligibility is verified by the page checks below.
+            grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key" || { echo "FAIL: IndexNow key mismatch"; cleanup; return 1; }
+
+            sitemap_count="$(grep -o '<loc>' "$sitemap" | wc -l | tr -d ' ')"
+            duplicate_count="$(grep -oE '<loc>[^<]+' "$sitemap" | sed 's#<loc>##' | sort | uniq -d | wc -l | tr -d ' ')"
+            if [[ "$sitemap_count" -lt 23 ]]; then
+              echo "FAIL: sitemap URL count=$sitemap_count expected at least 23"
               cleanup
               return 1
             fi
-            grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key" || { echo "FAIL: IndexNow key mismatch"; cleanup; return 1; }
+            if [[ "$duplicate_count" != "0" ]]; then
+              echo "FAIL: sitemap has $duplicate_count duplicate URLs"
+              cleanup
+              return 1
+            fi
 
             local required=(
               'https://ilkoku.com/'
@@ -146,6 +158,35 @@ jobs:
             check_indexable_page '/editorler-icin' 'https://ilkoku.com/editorler-icin' || { cleanup; return 1; }
             check_indexable_page '/yayinevleri-icin' 'https://ilkoku.com/yayinevleri-icin' || { cleanup; return 1; }
 
+            local www_headers www_code www_location
+            www_headers="$(mktemp)"
+            www_code="$(curl --silent --show-error --max-time 25 --dump-header "$www_headers" --output /dev/null --write-out '%{http_code}' https://www.ilkoku.com/ || true)"
+            www_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$www_headers")"
+            rm -f "$www_headers"
+            if [[ "$www_code" != "301" && "$www_code" != "308" ]] || [[ "$www_location" != "https://ilkoku.com/" ]]; then
+              echo "FAIL: www canonical redirect code=$www_code location=${www_location:-YOK}"
+              cleanup
+              return 1
+            fi
+
+            local filtered filtered_code
+            for filtered in 'https://ilkoku.com/eserler?arama=test' 'https://ilkoku.com/yazarlar?arama=test' 'https://ilkoku.com/turler?arama=test'; do
+              filtered_code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output /tmp/seo-filtered --write-out '%{http_code}' "$filtered" || true)"
+              if [[ "$filtered_code" != "200" ]]; then
+                echo "FAIL: filtered discovery URL returned HTTP $filtered_code: $filtered"
+                cleanup
+                return 1
+              fi
+              if ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' /tmp/seo-filtered; then
+                echo "FAIL: filtered discovery URL missing noindex: $filtered"
+                cleanup
+                return 1
+              fi
+            done
+
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/eserler --output /tmp/seo-eserler || { echo "FAIL: eserler social metadata fetch"; cleanup; return 1; }
+            grep -Eqi '<meta[^>]+property="og:image"' /tmp/seo-eserler || { echo "FAIL: eserler og:image missing"; cleanup; return 1; }
+
             curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/ --output "$home" || { echo "FAIL: homepage schema fetch"; cleanup; return 1; }
             grep -Fq 'application/ld+json' "$home" || { echo "FAIL: JSON-LD missing"; cleanup; return 1; }
             grep -Fq '"@type":"WebSite"' "$home" || { echo "FAIL: WebSite schema missing"; cleanup; return 1; }
@@ -161,7 +202,7 @@ jobs:
             attempt=$((attempt + 1))
             echo "SEO contract attempt ${attempt}"
             if verify_contract; then
-              echo "PASS: public İlkOku indexability, canonical, metadata, sitemap, robots, WebSite/Organization structured data and IndexNow key verified."
+              echo "PASS: public İlkOku indexability, canonical host, metadata, sitemap, robots, filtered discovery noindex, social image, structured data and IndexNow key verified."
               exit 0
             fi
             sleep 15

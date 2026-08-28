@@ -13,29 +13,75 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Capture live SEO failures
+      - name: Verify live deep SEO signals
         shell: bash
         run: |
           set -u
           UA='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+          fail=0
 
-          echo '=== ROBOTS ==='
-          curl -fsSL -A "$UA" https://ilkoku.com/robots.txt | sed -n '1,120p'
+          echo '=== SITEMAP ==='
+          curl -fsSL -A "$UA" https://ilkoku.com/sitemap.xml -o /tmp/sitemap || { echo 'FAIL sitemap fetch'; fail=1; }
+          count=$(grep -o '<loc>' /tmp/sitemap | wc -l | tr -d ' ')
+          dup=$(grep -oE '<loc>[^<]+' /tmp/sitemap | sed 's#<loc>##' | sort | uniq -d | wc -l | tr -d ' ')
+          echo "SITEMAP=$count DUP=$dup"
+          [[ "$count" -ge 23 ]] || fail=1
+          [[ "$dup" == 0 ]] || fail=1
 
-          echo '=== PARAMETER 500 DETAILS ==='
+          echo '=== WWW ==='
+          h=$(mktemp)
+          code=$(curl -sS -D "$h" -o /dev/null -w '%{http_code}' https://www.ilkoku.com/ || true)
+          loc=$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' "$h")
+          echo "WWW HTTP=$code LOCATION=${loc:-YOK}"
+          if [[ "$code" != 301 && "$code" != 308 ]]; then fail=1; fi
+          [[ "$loc" == 'https://ilkoku.com/' ]] || fail=1
+          rm -f "$h"
+
+          echo '=== FILTERED SEARCH ==='
           for u in 'https://ilkoku.com/eserler?arama=test' 'https://ilkoku.com/yazarlar?arama=test' 'https://ilkoku.com/turler?arama=test'; do
+            body=$(mktemp)
+            code=$(curl -sSL -A "$UA" -o "$body" -w '%{http_code}' "$u")
+            noindex=NO
+            grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body" && noindex=YES
+            echo "$u HTTP=$code NOINDEX=$noindex"
+            [[ "$code" == 200 ]] || fail=1
+            [[ "$noindex" == YES ]] || fail=1
+            rm -f "$body"
+          done
+
+          echo '=== ESERLER SOCIAL ==='
+          curl -fsSL -A "$UA" https://ilkoku.com/eserler -o /tmp/eserler || { echo 'FAIL eserler fetch'; fail=1; }
+          og=NO; tw=NO
+          grep -Eqi '<meta[^>]+property="og:image"' /tmp/eserler && og=YES
+          grep -Eqi '<meta[^>]+name="twitter:image"' /tmp/eserler && tw=YES
+          echo "OG_IMAGE=$og TWITTER_IMAGE=$tw"
+          [[ "$og" == YES ]] || fail=1
+
+          echo '=== PRIMARY INDEXABILITY ==='
+          for p in / /eserler /yazarlar /turler /nasil-calisir /hakkimizda /yazarlar-icin /editorler-icin /yayinevleri-icin; do
             body=$(mktemp); head=$(mktemp)
-            code=$(curl -sSL -A "$UA" -D "$head" -o "$body" -w '%{http_code}' "$u")
-            echo "URL=$u HTTP=$code"
-            echo '-- headers --'
-            sed -n '1,80p' "$head"
-            echo '-- body markers --'
-            grep -Eo 'digest[^,<}]+' "$body" | head -5 || true
-            grep -Eo '<title>[^<]+' "$body" | head -2 || true
-            grep -Eo 'Internal Server Error|Application error|server-side exception|This page could not be found' "$body" | head -5 || true
-            echo '-- body prefix --'
-            head -c 1200 "$body" | tr '\n' ' '; echo
+            code=$(curl -sSL -A "$UA" -D "$head" -o "$body" -w '%{http_code}' "https://ilkoku.com${p}")
+            canon=$(grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$body" | head -1 || true)
+            noindex=NO
+            grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body" && noindex=YES
+            echo "$p HTTP=$code NOINDEX=$noindex CANON=${canon:-YOK}"
+            [[ "$code" == 200 ]] || fail=1
+            [[ "$noindex" == NO ]] || fail=1
+            [[ -n "$canon" ]] || fail=1
             rm -f "$body" "$head"
           done
 
-          echo 'CAPTURE_DONE'
+          echo '=== SCHEMA ==='
+          curl -fsSL -A "$UA" https://ilkoku.com/ -o /tmp/home || fail=1
+          web=NO; org=NO
+          grep -Fq '"@type":"WebSite"' /tmp/home && web=YES
+          grep -Fq '"@type":"Organization"' /tmp/home && org=YES
+          echo "WEBSITE=$web ORGANIZATION=$org"
+          [[ "$web" == YES && "$org" == YES ]] || fail=1
+
+          if [[ "$fail" == 0 ]]; then
+            echo 'SEO_DEEP_LIVE_PASS'
+            exit 0
+          fi
+          echo 'SEO_DEEP_LIVE_FAIL'
+          exit 1

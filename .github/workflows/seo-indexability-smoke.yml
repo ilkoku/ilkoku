@@ -30,9 +30,10 @@ jobs:
 
           check_indexable_page() {
             local path="$1"
-            local canonical="$2"
+            local expected_canonical="$2"
             local url="https://ilkoku.com${path}"
-            local headers body code robots
+            local headers body code robots canonical_tag canonical_href
+            local expected_normalized actual_normalized
 
             headers="$(mktemp)"
             body="$(mktemp)"
@@ -42,22 +43,40 @@ jobs:
             echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK}"
 
             if [[ "$code" != "200" ]]; then
+              echo "FAIL: $url returned HTTP $code"
               rm -f "$headers" "$body"
               return 1
             fi
             if [[ "${robots,,}" == *"noindex"* ]]; then
+              echo "FAIL: $url returned X-Robots-Tag noindex"
               rm -f "$headers" "$body"
               return 1
             fi
             if grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then
+              echo "FAIL: $url contains meta robots noindex"
               rm -f "$headers" "$body"
               return 1
             fi
-            grep -Eqi '<title>[^<]+' "$body" || { rm -f "$headers" "$body"; return 1; }
-            grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body" || { rm -f "$headers" "$body"; return 1; }
-            grep -Eqi 'rel="canonical"' "$body" || { rm -f "$headers" "$body"; return 1; }
-            grep -Fq "$canonical" "$body" || { rm -f "$headers" "$body"; return 1; }
+            grep -Eqi '<title>[^<]+' "$body" || { echo "FAIL: $url title missing"; rm -f "$headers" "$body"; return 1; }
+            grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body" || { echo "FAIL: $url description missing"; rm -f "$headers" "$body"; return 1; }
 
+            canonical_tag="$(grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$body" | head -1 || true)"
+            canonical_href="$(printf '%s' "$canonical_tag" | sed -n 's/.*href="\([^"]*\)".*/\1/p')"
+            if [[ -z "$canonical_href" ]]; then
+              echo "FAIL: $url canonical missing"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            expected_normalized="${expected_canonical%/}"
+            actual_normalized="${canonical_href%/}"
+            if [[ "$actual_normalized" != "$expected_normalized" ]]; then
+              echo "FAIL: $url canonical mismatch: expected=$expected_canonical actual=$canonical_href"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            echo "PASS: $url canonical=$canonical_href"
             rm -f "$headers" "$body"
             return 0
           }
@@ -73,17 +92,18 @@ jobs:
               rm -f "$sitemap" "$robots" "$key" "$home"
             }
 
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/sitemap.xml --output "$sitemap" || { cleanup; return 1; }
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/robots.txt --output "$robots" || { cleanup; return 1; }
-            curl --fail --silent --show-error --location --max-time 25 https://ilkoku.com/f4c33493caf6550560462af5a424980e.txt --output "$key" || { cleanup; return 1; }
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/sitemap.xml --output "$sitemap" || { echo "FAIL: sitemap fetch"; cleanup; return 1; }
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/robots.txt --output "$robots" || { echo "FAIL: robots fetch"; cleanup; return 1; }
+            curl --fail --silent --show-error --location --max-time 25 https://ilkoku.com/f4c33493caf6550560462af5a424980e.txt --output "$key" || { echo "FAIL: IndexNow key fetch"; cleanup; return 1; }
 
-            grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { cleanup; return 1; }
-            grep -Fq 'Allow: /' "$robots" || { cleanup; return 1; }
+            grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { echo "FAIL: robots sitemap declaration"; cleanup; return 1; }
+            grep -Fq 'Allow: /' "$robots" || { echo "FAIL: robots public allow"; cleanup; return 1; }
             if grep -Eq '^Disallow:[[:space:]]*/[[:space:]]*$' "$robots"; then
+              echo "FAIL: robots blocks root"
               cleanup
               return 1
             fi
-            grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key" || { cleanup; return 1; }
+            grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key" || { echo "FAIL: IndexNow key mismatch"; cleanup; return 1; }
 
             local required=(
               'https://ilkoku.com/'
@@ -113,7 +133,7 @@ jobs:
 
             local required_url
             for required_url in "${required[@]}"; do
-              grep -Fq "<loc>${required_url}</loc>" "$sitemap" || { cleanup; return 1; }
+              grep -Fq "<loc>${required_url}</loc>" "$sitemap" || { echo "FAIL: sitemap missing $required_url"; cleanup; return 1; }
             done
 
             check_indexable_page '/' 'https://ilkoku.com/' || { cleanup; return 1; }
@@ -126,10 +146,10 @@ jobs:
             check_indexable_page '/editorler-icin' 'https://ilkoku.com/editorler-icin' || { cleanup; return 1; }
             check_indexable_page '/yayinevleri-icin' 'https://ilkoku.com/yayinevleri-icin' || { cleanup; return 1; }
 
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/ --output "$home" || { cleanup; return 1; }
-            grep -Fq 'application/ld+json' "$home" || { cleanup; return 1; }
-            grep -Fq '"@type":"WebSite"' "$home" || { cleanup; return 1; }
-            grep -Fq '"@type":"Organization"' "$home" || { cleanup; return 1; }
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/ --output "$home" || { echo "FAIL: homepage schema fetch"; cleanup; return 1; }
+            grep -Fq 'application/ld+json' "$home" || { echo "FAIL: JSON-LD missing"; cleanup; return 1; }
+            grep -Fq '"@type":"WebSite"' "$home" || { echo "FAIL: WebSite schema missing"; cleanup; return 1; }
+            grep -Fq '"@type":"Organization"' "$home" || { echo "FAIL: Organization schema missing"; cleanup; return 1; }
 
             cleanup
             return 0

@@ -1,0 +1,118 @@
+/* Nasıl Çalışır — 18 eski simgeyi mevcut dört ana rol illüstrasyonuyla değiştir. */
+
+.how-page .how-hero__visual figcaption svg,
+.how-page .how-truth > span svg,
+.how-page .how-definition aside > svg,
+.how-page .how-step__icon svg,
+.how-page .how-role__header img {
+  display: none !important;
+}
+
+.how-page .how-hero__visual figcaption span::before,
+.how-page .how-definition aside::before,
+.how-page .how-role__header::before {
+  content: "";
+  display: block;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 .35rem .55rem rgba(46, 24, 112, .2));
+}
+
+/* Hero: Yazar / Editör / Yayınevi */
+.how-page .how-hero__visual figcaption span::before {
+  width: 2rem;
+  height: 2rem;
+}
+.how-page .how-hero__visual figcaption span:nth-child(1)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.how-page .how-hero__visual figcaption span:nth-child(2)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+.how-page .how-hero__visual figcaption span:nth-child(3)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+/* Giriş: fikirden keşfe → Yazar */
+.how-page .how-truth > span {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 0;
+  background: transparent url("/icons/roles/writer-embedded.svg") center/contain no-repeat;
+  filter: drop-shadow(0 .4rem .65rem rgba(46, 24, 112, .18));
+}
+
+/* Platform tanımı: okuma/keşif → Okuyucu */
+.how-page .how-definition aside::before {
+  position: relative;
+  z-index: 1;
+  width: 5rem;
+  height: 5rem;
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+
+/* 9 aşamalı eser yolculuğu */
+.how-page .how-step__icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0;
+  background-color: transparent !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  filter: drop-shadow(0 .35rem .55rem rgba(46, 24, 112, .16));
+}
+.how-page .how-step:nth-child(1) .how-step__icon,
+.how-page .how-step:nth-child(2) .how-step__icon,
+.how-page .how-step:nth-child(8) .how-step__icon {
+  background-image: url("/icons/roles/writer-embedded.svg") !important;
+}
+.how-page .how-step:nth-child(3) .how-step__icon {
+  background-image: url("/icons/roles/reader-role-v2.webp") !important;
+}
+.how-page .how-step:nth-child(4) .how-step__icon,
+.how-page .how-step:nth-child(5) .how-step__icon,
+.how-page .how-step:nth-child(6) .how-step__icon,
+.how-page .how-step:nth-child(7) .how-step__icon {
+  background-image: url("/icons/roles/editor-role-v2.webp") !important;
+}
+.how-page .how-step:nth-child(9) .how-step__icon {
+  background-image: url("/icons/roles/publisher-embedded.svg") !important;
+}
+.how-page .how-step--passport .how-step__top {
+  width: 3.5rem;
+}
+
+/* Dört rol kartı → kendi ana illüstrasyonu */
+.how-page .how-role__header::before {
+  width: 5rem;
+  height: 5rem;
+}
+.how-page .how-role:nth-child(1) .how-role__header::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.how-page .how-role:nth-child(2) .how-role__header::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.how-page .how-role:nth-child(3) .how-role__header::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+.how-page .how-role:nth-child(4) .how-role__header::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+@media (max-width: 42rem) {
+  .how-page .how-truth > span,
+  .how-page .how-definition aside::before,
+  .how-page .how-role__header::before {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+
+  .how-page .how-step__icon {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+}

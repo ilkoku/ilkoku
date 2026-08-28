@@ -1,0 +1,94 @@
+/* İçerik ve Yaş Politikası — 13 eski simgeyi onaylı ana rol illüstrasyonlarıyla değiştir. */
+
+.age-policy-page .age-policy-hero__visual figcaption svg,
+.age-policy-page .how-truth > span > svg,
+.age-policy-page .age-warnings__grid svg,
+.age-policy-page .age-responsibility article > svg,
+.age-policy-page .age-contact > svg {
+  display: none;
+}
+
+.age-policy-page .age-policy-hero__visual figcaption span::before,
+.age-policy-page .how-truth > span::after,
+.age-policy-page .age-warnings__grid article::before,
+.age-policy-page .age-responsibility article::before,
+.age-policy-page .age-contact::before {
+  content: "";
+  display: block;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 .35rem .55rem rgba(46, 24, 112, .18));
+  pointer-events: none;
+}
+
+.age-policy-page .age-policy-hero__visual figcaption span::before {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+.age-policy-page .age-policy-hero__visual figcaption span:nth-child(1)::before,
+.age-policy-page .age-policy-hero__visual figcaption span:nth-child(3)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.age-policy-page .age-policy-hero__visual figcaption span:nth-child(2)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+.age-policy-page .how-truth > span {
+  position: relative;
+  overflow: visible;
+  background: transparent;
+}
+.age-policy-page .how-truth > span::after {
+  position: absolute;
+  inset: -.25rem;
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+
+.age-policy-page .age-warnings__grid article {
+  grid-template-columns: 3.4rem minmax(0, 1fr);
+}
+.age-policy-page .age-warnings__grid article::before {
+  width: 3.2rem;
+  height: 3.2rem;
+  grid-row: 1 / span 2;
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+.age-policy-page .age-warnings__grid strong {
+  grid-column: 2;
+  align-self: center;
+}
+
+.age-policy-page .age-responsibility article::before {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: .2rem;
+}
+.age-policy-page .age-responsibility article:nth-child(1)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+.age-policy-page .age-responsibility article:nth-child(2)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+
+.age-policy-page .age-contact::before {
+  width: 3.6rem;
+  height: 3.6rem;
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+@media (max-width: 42rem) {
+  .age-policy-page .age-policy-hero__visual figcaption span::before {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+  .age-policy-page .age-warnings__grid article::before {
+    width: 3rem;
+    height: 3rem;
+  }
+  .age-policy-page .age-responsibility article::before {
+    width: 3.7rem;
+    height: 3.7rem;
+  }
+}

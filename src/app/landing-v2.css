@@ -154,6 +154,19 @@
   transform: translateY(0) scale(1);
 }
 
+/* Hero assetini Next.js optimizer yerine doğrudan tarayıcıdan yükle. */
+.landing-page .landing-hero-product {
+  background-color: #11102f;
+  background-image: url("/landing/ilkoku-hero.webp");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.landing-page .landing-hero-product > img {
+  opacity: 0;
+}
+
 /* Mobil hero: kartları kompakt ve hero görselini açık tut. */
 @media (max-width: 34rem) {
   .landing-page .landing-hero-product {

@@ -17,11 +17,6 @@ export type AdultGateActionState = {
   status: "idle" | "error" | "success";
 };
 
-export const initialAdultGateActionState: AdultGateActionState = {
-  message: "",
-  status: "idle",
-};
-
 function failure(message: string): AdultGateActionState {
   return { message, status: "error" };
 }

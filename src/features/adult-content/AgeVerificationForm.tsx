@@ -3,9 +3,14 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import {
-  initialAdultGateActionState,
   saveBirthDateAction,
+  type AdultGateActionState,
 } from "./actions";
+
+const initialAdultGateActionState: AdultGateActionState = {
+  message: "",
+  status: "idle",
+};
 
 export function AgeVerificationForm({ returnTo }: { returnTo: string }) {
   const [state, action, pending] = useActionState(

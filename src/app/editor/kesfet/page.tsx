@@ -4,6 +4,11 @@ import { requireEditorProfile } from "@/features/editor-workspace/access";
 import { getCommonEditorDiscovery } from "@/features/editor-workspace/common-discovery-query";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorksTable } from "@/features/editor-workspace/components/EditorWorksTable";
+import {
+  isPublicWorkContentRating,
+  publicWorkContentRatings,
+  workContentRatingDetails,
+} from "@/lib/work-content-classification";
 
 export const metadata: Metadata = {
   title: "Editör Keşfet | İlkOku",
@@ -18,13 +23,18 @@ export default async function EditorDiscoveryPage({
   searchParams: Promise<{
     dil?: string;
     durum?: string;
+    hitap?: string;
     kelime?: string;
     tur?: string;
   }>;
 }) {
   const profile = await requireEditorProfile("/editor/kesfet");
   const parameters = await searchParams;
+  const contentRating = isPublicWorkContentRating(parameters.hitap)
+    ? parameters.hitap
+    : undefined;
   const works = await getCommonEditorDiscovery(profile.id, {
+    contentRating,
     genre: parameters.tur,
     language: parameters.dil,
     reviewStatus: parameters.durum,
@@ -50,6 +60,17 @@ export default async function EditorDiscoveryPage({
               <option value="">Tümü</option>
               <option value="tr">Türkçe</option>
               <option value="en">İngilizce</option>
+            </select>
+          </label>
+          <label>
+            <span>Hitap yaşı</span>
+            <select defaultValue={contentRating ?? ""} name="hitap">
+              <option value="">Tümü</option>
+              {publicWorkContentRatings.map((rating) => (
+                <option key={rating} value={rating}>
+                  {workContentRatingDetails[rating].label}
+                </option>
+              ))}
             </select>
           </label>
           <label>

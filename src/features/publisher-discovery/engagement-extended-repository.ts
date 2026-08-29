@@ -1,6 +1,10 @@
 import "server-only";
 
 import { requirePublisherMembershipPermission } from "@/features/publisher-workspace/repository";
+import {
+  adultContentWorkVisibility,
+  getAdultContentAccess,
+} from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
 import type { PublisherEngagementResult } from "./engagement-repository";
 
@@ -20,10 +24,12 @@ const publicWorkWhere = {
   visibility: "public" as const,
 };
 
-async function findPublicWork(workId: string) {
+async function findPublicWork(workId: string, userId: string) {
+  const adultAccess = await getAdultContentAccess(userId);
   return prisma.work.findFirst({
     where: {
       ...publicWorkWhere,
+      ...adultContentWorkVisibility(adultAccess.canAccessAdultContent),
       author: {
         is: {
           deletedAt: null,
@@ -33,10 +39,7 @@ async function findPublicWork(workId: string) {
       },
       id: workId,
     },
-    select: {
-      id: true,
-      slug: true,
-    },
+    select: { id: true, slug: true },
   });
 }
 
@@ -47,13 +50,9 @@ async function findPublicAuthor(authorId: string) {
       id: authorId,
       role: "writer",
       status: "active",
-      works: {
-        some: publicWorkWhere,
-      },
+      works: { some: publicWorkWhere },
     },
-    select: {
-      id: true,
-    },
+    select: { id: true },
   });
 }
 
@@ -69,7 +68,7 @@ export async function setPublisherWorkFavorite(input: {
 
   if (!membership) return { status: "forbidden" };
 
-  const work = await findPublicWork(input.workId);
+  const work = await findPublicWork(input.workId, input.userId);
   if (!work) return { status: "not_found" };
 
   try {
@@ -178,16 +177,15 @@ export async function setPublisherWorkFavorite(input: {
   }
 }
 
-export async function setPublisherAuthorLike(input: {
-  active: boolean;
-  authorId: string;
-  userId: string;
-}): Promise<PublisherEngagementResult> {
+async function setAuthorEngagement(
+  kind: "like" | "favorite",
+  input: { active: boolean; authorId: string; userId: string },
+): Promise<PublisherEngagementResult> {
+  const permission = kind === "like" ? "like_author" : "favorite_author";
   const membership = await requirePublisherMembershipPermission(
     input.userId,
-    "like_author",
+    permission,
   );
-
   if (!membership) return { status: "forbidden" };
 
   const author = await findPublicAuthor(input.authorId);
@@ -195,40 +193,63 @@ export async function setPublisherAuthorLike(input: {
 
   try {
     return await prisma.$transaction(async (transaction) => {
-      const existing = await transaction.publisherAuthorLike.findUnique({
-        where: {
-          publisherId_authorId: {
-            authorId: author.id,
-            publisherId: membership.publisherId,
-          },
-        },
-        select: { id: true },
-      });
+      const existing =
+        kind === "like"
+          ? await transaction.publisherAuthorLike.findUnique({
+              where: {
+                publisherId_authorId: {
+                  authorId: author.id,
+                  publisherId: membership.publisherId,
+                },
+              },
+              select: { id: true },
+            })
+          : await transaction.publisherAuthorFavorite.findUnique({
+              where: {
+                publisherId_authorId: {
+                  authorId: author.id,
+                  publisherId: membership.publisherId,
+                },
+              },
+              select: { id: true },
+            });
+
+      if (input.active && existing) {
+        return { active: true, changed: false, status: "ok" as const };
+      }
 
       if (input.active) {
-        if (existing) {
-          return {
-            active: true,
-            changed: false,
-            status: "ok" as const,
-          };
-        }
-
-        const created = await transaction.publisherAuthorLike.create({
-          data: {
-            authorId: author.id,
-            createdById: input.userId,
-            publisherId: membership.publisherId,
-          },
-          select: { id: true },
-        });
+        const created =
+          kind === "like"
+            ? await transaction.publisherAuthorLike.create({
+                data: {
+                  authorId: author.id,
+                  createdById: input.userId,
+                  publisherId: membership.publisherId,
+                },
+                select: { id: true },
+              })
+            : await transaction.publisherAuthorFavorite.create({
+                data: {
+                  authorId: author.id,
+                  createdById: input.userId,
+                  publisherId: membership.publisherId,
+                },
+                select: { id: true },
+              });
 
         await transaction.auditLog.create({
           data: {
-            action: "publisher_author_liked",
+            action:
+              kind === "like"
+                ? "publisher_author_liked"
+                : "publisher_author_favorited",
             actorId: input.userId,
             entityId: created.id,
-            entityType: "PublisherAuthorLike",
+            entityType:
+              kind === "like"
+                ? "PublisherAuthorLike"
+                : "PublisherAuthorFavorite",
             metadata: JSON.stringify({
               active: true,
               authorId: author.id,
@@ -237,36 +258,43 @@ export async function setPublisherAuthorLike(input: {
           },
         });
 
-        return {
-          active: true,
-          changed: true,
-          status: "ok" as const,
-        };
+        return { active: true, changed: true, status: "ok" as const };
       }
 
       if (!existing) {
-        return {
-          active: false,
-          changed: false,
-          status: "ok" as const,
-        };
+        return { active: false, changed: false, status: "ok" as const };
       }
 
-      const removed = await transaction.publisherAuthorLike.deleteMany({
-        where: {
-          authorId: author.id,
-          id: existing.id,
-          publisherId: membership.publisherId,
-        },
-      });
+      const removed =
+        kind === "like"
+          ? await transaction.publisherAuthorLike.deleteMany({
+              where: {
+                authorId: author.id,
+                id: existing.id,
+                publisherId: membership.publisherId,
+              },
+            })
+          : await transaction.publisherAuthorFavorite.deleteMany({
+              where: {
+                authorId: author.id,
+                id: existing.id,
+                publisherId: membership.publisherId,
+              },
+            });
 
       if (removed.count === 1) {
         await transaction.auditLog.create({
           data: {
-            action: "publisher_author_liked",
+            action:
+              kind === "like"
+                ? "publisher_author_liked"
+                : "publisher_author_favorited",
             actorId: input.userId,
             entityId: existing.id,
-            entityType: "PublisherAuthorLike",
+            entityType:
+              kind === "like"
+                ? "PublisherAuthorLike"
+                : "PublisherAuthorFavorite",
             metadata: JSON.stringify({
               active: false,
               authorId: author.id,
@@ -284,128 +312,24 @@ export async function setPublisherAuthorLike(input: {
     });
   } catch (error) {
     if (input.active && isUniqueConstraintError(error)) {
-      return {
-        active: true,
-        changed: false,
-        status: "ok",
-      };
+      return { active: true, changed: false, status: "ok" };
     }
     throw error;
   }
+}
+
+export async function setPublisherAuthorLike(input: {
+  active: boolean;
+  authorId: string;
+  userId: string;
+}) {
+  return setAuthorEngagement("like", input);
 }
 
 export async function setPublisherAuthorFavorite(input: {
   active: boolean;
   authorId: string;
   userId: string;
-}): Promise<PublisherEngagementResult> {
-  const membership = await requirePublisherMembershipPermission(
-    input.userId,
-    "favorite_author",
-  );
-
-  if (!membership) return { status: "forbidden" };
-
-  const author = await findPublicAuthor(input.authorId);
-  if (!author) return { status: "not_found" };
-
-  try {
-    return await prisma.$transaction(async (transaction) => {
-      const existing = await transaction.publisherAuthorFavorite.findUnique({
-        where: {
-          publisherId_authorId: {
-            authorId: author.id,
-            publisherId: membership.publisherId,
-          },
-        },
-        select: { id: true },
-      });
-
-      if (input.active) {
-        if (existing) {
-          return {
-            active: true,
-            changed: false,
-            status: "ok" as const,
-          };
-        }
-
-        const created = await transaction.publisherAuthorFavorite.create({
-          data: {
-            authorId: author.id,
-            createdById: input.userId,
-            publisherId: membership.publisherId,
-          },
-          select: { id: true },
-        });
-
-        await transaction.auditLog.create({
-          data: {
-            action: "publisher_author_favorited",
-            actorId: input.userId,
-            entityId: created.id,
-            entityType: "PublisherAuthorFavorite",
-            metadata: JSON.stringify({
-              active: true,
-              authorId: author.id,
-              publisherId: membership.publisherId,
-            }),
-          },
-        });
-
-        return {
-          active: true,
-          changed: true,
-          status: "ok" as const,
-        };
-      }
-
-      if (!existing) {
-        return {
-          active: false,
-          changed: false,
-          status: "ok" as const,
-        };
-      }
-
-      const removed = await transaction.publisherAuthorFavorite.deleteMany({
-        where: {
-          authorId: author.id,
-          id: existing.id,
-          publisherId: membership.publisherId,
-        },
-      });
-
-      if (removed.count === 1) {
-        await transaction.auditLog.create({
-          data: {
-            action: "publisher_author_favorited",
-            actorId: input.userId,
-            entityId: existing.id,
-            entityType: "PublisherAuthorFavorite",
-            metadata: JSON.stringify({
-              active: false,
-              authorId: author.id,
-              publisherId: membership.publisherId,
-            }),
-          },
-        });
-      }
-
-      return {
-        active: false,
-        changed: removed.count === 1,
-        status: "ok" as const,
-      };
-    });
-  } catch (error) {
-    if (input.active && isUniqueConstraintError(error)) {
-      return {
-        active: true,
-        changed: false,
-        status: "ok",
-      };
-    }
-    throw error;
-  }
+}) {
+  return setAuthorEngagement("favorite", input);
 }

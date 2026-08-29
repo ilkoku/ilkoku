@@ -224,18 +224,34 @@ export async function SeoTechnicalAudit() {
   const liveEvidenceBlockers = Number(live.robots.state === "danger") + Number(live.social.state === "danger");
   const liveEvidenceWarnings = Number(live.robots.state === "warn") + Number(live.social.state === "warn");
   const blockers = canonicalBlockers + publicDiscoveryBlockers + state.footer.blockers + liveEvidenceBlockers;
-  const warnings = missingCanonical + unsupportedIndexable + state.footer.fallbacks + liveEvidenceWarnings;
+  // Safe code fallbacks are operational information, not SEO warnings. Only
+  // missing/unsupported metadata and unreadable live evidence count here.
+  const warnings = missingCanonical + unsupportedIndexable + liveEvidenceWarnings;
   const overall: Tone = blockers > 0 ? "danger" : warnings > 0 ? "warn" : "ok";
 
   const focus = blockers > 0
     ? `${blockers} teknik SEO blokajı var. Önce canonical, public sitemap envanteri, canlı robots/social kanıtı veya internal-link hatalarını düzeltin.`
     : warnings > 0
-      ? `${warnings} SEO uyarısı var. İndeksleme öncesi eksik canonical/fallback veya doğrulanamayan canlı sinyalleri temizleyin.`
-      : "Teknik SEO sözleşmeleri ve canlı robots/social kanıtı doğrulandı; metadata kuyruğundaki içerik işlerine geçebilirsiniz.";
+      ? `${warnings} teknik SEO uyarısı var. Eksik canonical veya doğrulanamayan canlı sinyalleri kontrol edin.`
+      : state.footer.state === "fallback"
+        ? "Teknik SEO temiz. Footer güvenli kod fallback hedeflerini kullanıyor; bu durum indeksleme hatası değildir."
+        : "Teknik SEO sözleşmeleri ve canlı robots/social kanıtı doğrulandı; metadata kuyruğundaki içerik işlerine geçebilirsiniz.";
 
   const sitemapDetail = state.publicDiscovery.state === "ok"
     ? `${sitemapEligible} CMS URL · ${state.publicDiscovery.staticRoutes} kod tabanlı statik URL · ${state.publicDiscovery.works} eser · ${state.publicDiscovery.authors} yazar · ${state.publicDiscovery.genres} tür.`
     : `${sitemapEligible} CMS URL ve ${state.publicDiscovery.staticRoutes} kod tabanlı statik URL biliniyor; eser/yazar/tür runtime envanteri okunamadı.`;
+
+  const footerState: Tone = state.footer.blockers > 0 ? "danger" : "ok";
+  const footerValue = state.footer.state === "fallback"
+    ? `${state.footer.fallbacks} güvenli fallback`
+    : `${state.footer.blockers} blokaj · ${state.footer.fallbacks} fallback`;
+  const footerDetail = state.footer.state === "corrupt"
+    ? "Published footer payload bozuk."
+    : state.footer.state === "unavailable"
+      ? "Footer hedef analizi çalıştırılamadı."
+      : state.footer.state === "fallback"
+        ? "Published footer kaydı yok; doğrulanmış kod fallback hedefleri kullanılıyor. SEO blokajı veya uyarısı değildir."
+        : "Published footer hedefleri public rota sözleşmesine göre doğrulandı.";
 
   return (
     <section className={styles.audit} aria-labelledby="seo-technical-title">
@@ -245,16 +261,16 @@ export async function SeoTechnicalAudit() {
       </div>
 
       <div className={styles.grid}>
-        <Card state={noIndexCount > 0 ? "warn" : "ok"} label="İndeks politikası" value={`${indexable.length} CMS index · ${noIndexCount} noindex`} detail="Published TR ContentPage kayıtları; noindex kayıtları sitemap kabulünden ayrılır. Kod tabanlı keşif rotalarının query varyantları sayfa metadata sözleşmesinde noindex kalır." />
+        <Card state="ok" label="İndeks politikası" value={`${indexable.length} CMS index · ${noIndexCount} noindex`} detail="Noindex bilinçli indeks politikasıdır; tek başına hata veya uyarı sayılmaz. Query varyantları sayfa metadata sözleşmesinde noindex kalır." />
         <Card state={canonicalBlockers > 0 ? "danger" : missingCanonical > 0 ? "warn" : "ok"} label="Canonical" value={`${missingCanonical} eksik · ${invalidCanonical} hatalı`} detail={`${duplicateCanonical} duplicate canonical · host yalnız ilkoku.com kabul edilir.`} />
         <Card state={state.publicDiscovery.state === "unavailable" ? "danger" : unsupportedIndexable > 0 ? "warn" : "ok"} label="Sitemap kapsamı" value={state.publicDiscovery.state === "ok" ? `${totalSitemapCoverage} URL` : "Runtime kontrol gerekli"} detail={unsupportedIndexable > 0 ? `${sitemapDetail} Ayrıca ${unsupportedIndexable} indexlenebilir CMS kayıt tanımlı sitemap ailesine girmiyor.` : sitemapDetail} />
         <Card state={live.robots.state} label="Robots" value={evidenceValue(live.robots.state)} detail={live.robots.detail} />
         <Card state={live.social.state} label="Social preview" value={evidenceValue(live.social.state)} detail={live.social.detail} />
-        <Card state={state.footer.blockers > 0 ? "danger" : state.footer.fallbacks > 0 || state.footer.state === "fallback" ? "warn" : "ok"} label="Internal link / Footer" value={`${state.footer.blockers} blokaj · ${state.footer.fallbacks} fallback`} detail={state.footer.state === "corrupt" ? "Published footer payload bozuk." : state.footer.state === "unavailable" ? "Footer hedef analizi çalıştırılamadı." : state.footer.state === "fallback" ? "Published footer yok; güvenli kod fallback hedefleri kullanılıyor." : "Published footer hedefleri public rota sözleşmesine göre doğrulandı."} />
+        <Card state={footerState} label="Internal link / Footer" value={footerValue} detail={footerDetail} />
       </div>
 
-      <div className={styles.focus}><div><strong>Şimdi ne yapılmalı?</strong><p>{focus}</p></div><div className={styles.actions}><Link href="/sitemap.xml" target="_blank">Sitemap ↗</Link><Link href="/robots.txt" target="_blank">Robots ↗</Link><Link href="/icerik/menuler">Internal linkleri düzelt →</Link><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div></div>
-      <div className={styles.note}><strong>SEO sınırı:</strong> noindex tek başına hata değildir; bilinçli indeks politikasıdır. Canlı kanıt okunamazsa yeşil sonuç üretilmez. BLOCKER hatalı/duplicate canonical, eksik canlı robots/social sinyali, sitemap runtime envanterinin doğrulanamaması veya bozuk/doğrulanamayan internal-link sözleşmesi gibi yanlış canlı sinyal üretebilecek durumlarda yükselir.</div>
+      <div className={styles.focus}><div><strong>Şimdi ne yapılmalı?</strong><p>{focus}</p></div><div className={styles.actions}><Link href="/sitemap.xml" target="_blank">Sitemap ↗</Link><Link href="/robots.txt" target="_blank">Robots ↗</Link><Link href="/icerik/menuler">Internal linkleri yönet →</Link><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div></div>
+      <div className={styles.note}><strong>SEO sınırı:</strong> noindex ve doğrulanmış kod fallback kullanımı tek başına hata değildir. Canlı kanıt okunamazsa yeşil sonuç üretilmez. BLOCKER hatalı/duplicate canonical, eksik canlı robots/social sinyali, sitemap runtime envanterinin doğrulanamaması veya bozuk/doğrulanamayan internal-link sözleşmesi gibi yanlış canlı sinyal üretebilecek durumlarda yükselir.</div>
     </section>
   );
 }

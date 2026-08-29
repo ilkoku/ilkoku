@@ -37,32 +37,49 @@ function evidenceValue(state: Tone) {
   return "Doğrulanamadı";
 }
 
+function isOptionalSchemaWithoutSample(type: SeoSchemaType, route: string | null, detail: string) {
+  if (route !== null) return false;
+  if (type === "Book") return detail.includes("keşfe açık eser örneği bulunamadı");
+  if (type === "ProfilePage") return detail.includes("public yazar örneği bulunamadı");
+  if (type === "FAQPage") return detail.includes("Yayınlanmış SSS kaydı yok");
+  return false;
+}
+
 async function StructuredDataAudit() {
   const live = await getLiveSeoVerification();
   const schemaTypes: SeoSchemaType[] = ["WebSite", "Book", "CollectionPage", "ProfilePage", "FAQPage", "BreadcrumbList"];
-  const checks = schemaTypes.map((type) => ({ type, ...live.structuredData[type] }));
-  const blockers = checks.filter((check) => check.state === "danger").length;
-  const warnings = checks.filter((check) => check.state === "warn").length;
+  const checks = schemaTypes.map((type) => {
+    const check = live.structuredData[type];
+    return {
+      type,
+      ...check,
+      optionalWithoutSample: isOptionalSchemaWithoutSample(type, check.route, check.detail),
+    };
+  });
+  const blockers = checks.filter((check) => !check.optionalWithoutSample && check.state === "danger").length;
+  const warnings = checks.filter((check) => !check.optionalWithoutSample && check.state === "warn").length;
+  const waitingForContent = checks.filter((check) => check.optionalWithoutSample).length;
+  const verified = checks.filter((check) => check.state === "ok").length;
   const tone: Tone = blockers > 0 ? "danger" : warnings > 0 ? "warn" : "ok";
 
   return (
     <section className={styles.audit} aria-labelledby="seo-structured-title">
       <div className={styles.header}>
-        <div className={styles.copy}><span>Structured Data · TR</span><h2 id="seo-structured-title">Yapısal Veri</h2><p>Arama motorlarına verilen schema.org sinyalleri canlı server HTML üzerinden doğrulanır. Kodda bir schema tipi bulunması tek başına “Hazır” sayılmaz; canlı kanıt okunamazsa yeşil sonuç üretilmez.</p></div>
-        <span className={styles.status} data-state={tone}>{tone === "ok" ? "Canlı doğrulandı" : tone === "warn" ? "Kontrol" : "Eksik"}</span>
+        <div className={styles.copy}><span>Structured Data · TR</span><h2 id="seo-structured-title">Yapısal Veri</h2><p>Schema.org sinyalleri canlı server HTML üzerinden doğrulanır. Yalnız gerçekten yayınlanmış içerik için beklenen schema kontrol edilir; henüz eser, yazar veya SSS örneği yoksa bu durum SEO hatası sayılmaz.</p></div>
+        <span className={styles.status} data-state={tone}>{tone === "ok" ? "Temiz" : tone === "warn" ? "Kontrol" : "Eksik"}</span>
       </div>
       <div className={styles.grid}>
         {checks.map((check) => (
           <Card
             key={check.type}
-            state={check.state}
+            state={check.optionalWithoutSample ? "ok" : check.state}
             label={check.type}
-            value={evidenceValue(check.state)}
-            detail={check.detail}
+            value={check.optionalWithoutSample ? "Örnek yok" : evidenceValue(check.state)}
+            detail={check.optionalWithoutSample ? `${check.detail} Bu schema şu anda uygulanabilir değil ve SEO uyarısı sayılmıyor.` : check.detail}
           />
         ))}
       </div>
-      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>{blockers > 0 ? `${blockers} schema tipi canlı HTML içinde beklenen kanıtı vermiyor.` : warnings > 0 ? `${warnings} schema tipi canlı olarak doğrulanamadı; bunlar PASS sayılmıyor.` : "WebSite, Book, CollectionPage, ProfilePage, FAQPage ve BreadcrumbList için seçili canlı örneklerin tamamı doğrulandı."}</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/eserler" target="_blank">Keşfe açık eserler ↗</Link></div></div>
+      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>{blockers > 0 ? `${blockers} schema tipi canlı HTML içinde beklenen kanıtı vermiyor.` : warnings > 0 ? `${warnings} uygulanabilir schema tipi canlı olarak doğrulanamadı; yeniden kontrol edin.` : waitingForContent > 0 ? `${verified} schema tipi canlı doğrulandı. ${waitingForContent} schema tipi için henüz uygun public içerik örneği yok; bunlar hata değildir.` : "Beklenen schema tiplerinin seçili canlı örnekleri doğrulandı."}</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/eserler" target="_blank">Keşfe açık eserler ↗</Link></div></div>
     </section>
   );
 }

@@ -11,7 +11,11 @@ import {
   type PublicWorkSort,
 } from "@/features/public-discovery/library";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
-import { workContentRatingDetails } from "@/lib/work-content-classification";
+import {
+  isPublicStoredWorkContentRating,
+  publicStoredWorkContentRatings,
+  workContentRatingDetails,
+} from "@/lib/work-content-classification";
 
 import "./public-library.css";
 
@@ -23,6 +27,7 @@ const pageDescription =
 type PublicLibraryPageProps = {
   searchParams: Promise<{
     arama?: string;
+    hitap?: string;
     sayfa?: string;
     siralama?: string;
     tur?: string;
@@ -41,8 +46,12 @@ function normalizeFilters(
 ): PublicWorkLibraryFilters {
   const search = parameters.arama?.trim().slice(0, 100);
   const genre = parameters.tur?.trim().slice(0, 120);
+  const contentRating = isPublicStoredWorkContentRating(parameters.hitap)
+    ? parameters.hitap
+    : undefined;
 
   return {
+    contentRating,
     genre: genre || undefined,
     search: search || undefined,
     sort: isPublicWorkSort(parameters.siralama)
@@ -73,6 +82,10 @@ function pageHref(
 
   if (filters.genre) {
     parameters.set("tur", filters.genre);
+  }
+
+  if (filters.contentRating) {
+    parameters.set("hitap", filters.contentRating);
   }
 
   if (filters.sort !== "newest") {
@@ -113,6 +126,7 @@ function hasDiscoveryParameters(
 ) {
   return Boolean(
     parameters.arama ||
+      parameters.hitap ||
       parameters.sayfa ||
       parameters.siralama ||
       parameters.tur,
@@ -348,6 +362,21 @@ export default async function PublicWorkLibraryPage({
               </label>
 
               <label>
+                <span>Hitap yaşı</span>
+                <select
+                  defaultValue={filters.contentRating ?? ""}
+                  name="hitap"
+                >
+                  <option value="">Tüm hitap yaşları</option>
+                  {publicStoredWorkContentRatings.map((rating) => (
+                    <option key={rating} value={rating}>
+                      {workContentRatingDetails[rating].shortLabel}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
                 <span>Sıralama</span>
                 <select
                   defaultValue={filters.sort}
@@ -366,6 +395,7 @@ export default async function PublicWorkLibraryPage({
 
               {filters.search ||
               filters.genre ||
+              filters.contentRating ||
               filters.sort !== "newest" ? (
                 <Link href="/eserler">Filtreleri temizle</Link>
               ) : null}
@@ -379,6 +409,7 @@ export default async function PublicWorkLibraryPage({
                     work.author.fullName;
                   const genre = work.genre ?? "Eser";
                   const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(currentPath)}`;
+                  const passportHref = `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(currentPath)}`;
                   const authorHref = `/yazarlar/${work.author.publicId}?from=${encodeURIComponent(currentPath)}`;
                   const genreHref = work.genre
                     ? `/turler/${publicTaxonomySlug(work.genre)}?from=${encodeURIComponent(currentPath)}`
@@ -450,6 +481,13 @@ export default async function PublicWorkLibraryPage({
                           </time>
                           <Link
                             className="public-library-card__link"
+                            href={passportHref}
+                          >
+                            Pasaport
+                            <span aria-hidden="true">→</span>
+                          </Link>
+                          <Link
+                            className="public-library-card__link"
                             href={bookHref}
                           >
                             Eseri incele
@@ -470,7 +508,9 @@ export default async function PublicWorkLibraryPage({
                   Yeni yayınlar eklendiğinde bu katalog ve
                   sitemap otomatik güncellenir.
                 </p>
-                {filters.search || filters.genre ? (
+                {filters.search ||
+                filters.genre ||
+                filters.contentRating ? (
                   <Link href="/eserler">
                     Tüm keşfe açık eserleri göster
                   </Link>

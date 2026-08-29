@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { AppShell } from "@/components/layout/AppShell";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
@@ -5,10 +6,13 @@ import { getCommonEditorDiscovery } from "@/features/editor-workspace/common-dis
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorksTable } from "@/features/editor-workspace/components/EditorWorksTable";
 import {
-  isPublicStoredWorkContentRating,
-  publicStoredWorkContentRatings,
+  isMemberStoredWorkContentRating,
   workContentRatingDetails,
 } from "@/lib/work-content-classification";
+import {
+  getAdultContentAccess,
+  visibleMemberContentRatings,
+} from "@/lib/adult-content-access";
 
 export const metadata: Metadata = {
   title: "Editör Keşfet | İlkOku",
@@ -29,10 +33,18 @@ export default async function EditorDiscoveryPage({
   }>;
 }) {
   const profile = await requireEditorProfile("/editor/kesfet");
+  const adultAccess = await getAdultContentAccess(profile.id);
+  const visibleRatings = visibleMemberContentRatings(
+    adultAccess.canAccessAdultContent,
+  );
   const parameters = await searchParams;
-  const contentRating = isPublicStoredWorkContentRating(parameters.hitap)
+  const requestedRating = isMemberStoredWorkContentRating(parameters.hitap)
     ? parameters.hitap
     : undefined;
+  const contentRating =
+    requestedRating && visibleRatings.includes(requestedRating)
+      ? requestedRating
+      : undefined;
   const works = await getCommonEditorDiscovery(profile.id, {
     contentRating,
     genre: parameters.tur,
@@ -48,6 +60,19 @@ export default async function EditorDiscoveryPage({
           description="Okuyucu ve yayınevleriyle aynı ortak Keşfet havuzundaki yayımlanmış eserleri inceleyin."
           title="Keşfet"
         />
+
+        {adultAccess.isAdult && !adultAccess.canAccessAdultContent ? (
+          <div className="editor-empty">
+            <h2>18+ içerik tercihi kapalı</h2>
+            <p>18+ eserleri aynı ortak Keşfet havuzunda görmek için ikinci açık onayı verin.</p>
+            <Link
+              className="button button--outline"
+              href="/yetiskin-icerik-onayi?sonraki=%2Feditor%2Fkesfet"
+            >
+              18+ içerikleri aç
+            </Link>
+          </div>
+        ) : null}
 
         <form className="editor-filters">
           <label>
@@ -66,7 +91,7 @@ export default async function EditorDiscoveryPage({
             <span>Hitap yaşı</span>
             <select defaultValue={contentRating ?? ""} name="hitap">
               <option value="">Tümü</option>
-              {publicStoredWorkContentRatings.map((rating) => (
+              {visibleRatings.map((rating) => (
                 <option key={rating} value={rating}>
                   {workContentRatingDetails[rating].label}
                 </option>

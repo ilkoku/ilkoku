@@ -5,6 +5,7 @@ import type {
   WorkStatus,
 } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 const PAGE_SIZE = 20;
 
@@ -91,7 +92,7 @@ export default async function AdminWorksPage({ searchParams }: { searchParams: S
   return (
     <div className="admin-directory-page">
       <header className="admin-page-heading">
-        <div><span className="admin-eyebrow">İçerik yönetimi</span><h1>Eserler</h1><p>Eserlerin durumunu, görünürlüğünü ve editör inceleme sürecini salt okunur olarak izleyin.</p></div>
+        <div><span className="admin-eyebrow">İçerik yönetimi</span><h1>Eserler</h1><p>Eserlerin durumunu, görünürlüğünü, hitap yaşını ve editör inceleme sürecini salt okunur olarak izleyin.</p></div>
       </header>
 
       <section className="admin-panel admin-directory-panel">
@@ -106,9 +107,10 @@ export default async function AdminWorksPage({ searchParams }: { searchParams: S
         {works.length ? (
           <div className="admin-table-wrap">
             <table className="admin-data-table">
-              <thead><tr><th>Eser</th><th>Durum</th><th>Görünürlük</th><th>Editör incelemesi</th><th>Tarihler</th><th>Detay</th></tr></thead>
+              <thead><tr><th>Eser</th><th>Hitap Yaşı</th><th>Durum</th><th>Görünürlük</th><th>Editör incelemesi</th><th>Tarihler</th><th>Detay</th></tr></thead>
               <tbody>{works.map((work) => <tr key={work.id}>
                 <td><strong>{work.title}</strong><span>{work.author.displayName || work.author.fullName}</span><small>{work.author.email}</small></td>
+                <td>{workContentRatingDetails[work.contentRating].shortLabel}</td>
                 <td><span className="admin-table-badge" data-status={work.status}>{statusLabels[work.status]}</span></td>
                 <td>{visibilityLabels[work.visibility]}</td>
                 <td>{reviewLabels[work.editorReviewStatus]}</td>

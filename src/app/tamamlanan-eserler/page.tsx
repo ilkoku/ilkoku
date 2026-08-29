@@ -64,6 +64,8 @@ export default async function CompletedWorksPage() {
         completedAt:
           progress.completedAt?.toISOString() ??
           null,
+        contentRating:
+          progress.work.contentRating,
         coverUrl:
           progress.work.coverUrl,
         description:

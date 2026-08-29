@@ -272,6 +272,8 @@ export async function getFavoriteWorks(
         work.chapters.length,
       commentCount:
         work._count.comments,
+      contentRating:
+        work.contentRating,
       coverUrl:
         work.coverUrl,
       description:

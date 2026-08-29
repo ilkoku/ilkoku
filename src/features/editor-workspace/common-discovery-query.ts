@@ -1,4 +1,8 @@
 import { commonDiscoveryWorkWhere } from "@/features/discovery/common-work-scope";
+import {
+  isPublicStoredWorkContentRating,
+  type PublicStoredWorkContentRating,
+} from "@/lib/work-content-classification";
 import { prisma } from "@/lib/prisma";
 import { countWords } from "./eligibility";
 import type {
@@ -7,6 +11,7 @@ import type {
 } from "./types";
 
 export type EditorDiscoveryFilters = {
+  contentRating?: PublicStoredWorkContentRating;
   genre?: string;
   language?: string;
   reviewStatus?: string;
@@ -24,11 +29,17 @@ export async function getCommonEditorDiscovery(
   editorId: string,
   filters: EditorDiscoveryFilters = {},
 ): Promise<EditorWorkTableData[]> {
+  const contentRating =
+    filters.contentRating && isPublicStoredWorkContentRating(filters.contentRating)
+      ? filters.contentRating
+      : undefined;
+
   const works = await prisma.work.findMany({
     where: {
       ...commonDiscoveryWorkWhere,
       ...(filters.genre ? { genre: filters.genre } : {}),
       ...(filters.language ? { language: filters.language } : {}),
+      ...(contentRating ? { contentRating } : {}),
       ...(filters.reviewStatus
         ? {
             editorReviewStatus:
@@ -89,6 +100,7 @@ export async function getCommonEditorDiscovery(
       authorUsername: work.author.username,
       chapterCount: work.chapters.length,
       commentCount: work._count.comments,
+      contentRating: work.contentRating,
       coverUrl: work.coverUrl,
       editorReviewStatus: work.editorReviewStatus,
       favoriteCount: work._count.favorites,

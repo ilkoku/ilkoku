@@ -1,6 +1,7 @@
 import type {
   Prisma,
 } from "@/generated/prisma/client";
+import { commonDiscoveryWorkWhere } from "@/features/discovery/common-work-scope";
 import { prisma } from "@/lib/prisma";
 
 const PAGE_SIZE = 24;
@@ -165,19 +166,7 @@ export async function getPublisherWorkDiscovery(
   filters: PublisherWorkDiscoveryFilters,
 ): Promise<PublisherWorkDiscoveryData> {
   const where: Prisma.WorkWhereInput = {
-    archivedAt: null,
-    publishedAt: {
-      not: null,
-    },
-    status: "published",
-    visibility: "public",
-    author: {
-      is: {
-        deletedAt: null,
-        role: "writer",
-        status: "active",
-      },
-    },
+    ...commonDiscoveryWorkWhere,
     ...(filters.query
       ? {
           OR: [

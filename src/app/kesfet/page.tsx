@@ -5,7 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
-import { commonDiscoveryWorkWhere } from "@/features/discovery/common-work-scope";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { countWords } from "@/features/editor-workspace/eligibility";
 import {
@@ -14,11 +14,14 @@ import {
 } from "@/features/reader/components/ReaderWorksTable";
 import "@/features/reader/reader-discovery.css";
 import {
-  isPublicStoredWorkContentRating,
-  publicStoredWorkContentRatings,
+  isMemberStoredWorkContentRating,
   workContentRatingDetails,
-  type PublicStoredWorkContentRating,
+  type MemberStoredWorkContentRating,
 } from "@/lib/work-content-classification";
+import {
+  getAdultContentAccess,
+  visibleMemberContentRatings,
+} from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -46,7 +49,7 @@ type SortFilter = (typeof sortFilters)[number];
 
 type ReaderExploreFilters = {
   completion?: CompletionFilter;
-  contentRating?: PublicStoredWorkContentRating;
+  contentRating?: MemberStoredWorkContentRating;
   genre?: string;
   language?: string;
   reviewStatus?: ReviewFilter;
@@ -98,13 +101,23 @@ export default async function ReaderExplorePage({
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 
+  const adultAccess = await getAdultContentAccess(profile.id);
+  const visibleRatings = visibleMemberContentRatings(
+    adultAccess.canAccessAdultContent,
+  );
   const parameters = await searchParams;
   const search = parameters.arama?.trim().slice(0, 220);
   const genre = parameters.tur?.trim().slice(0, 120);
   const language = parameters.dil?.trim().slice(0, 10);
-  const contentRating = isPublicStoredWorkContentRating(parameters.hitapYasi)
+  const requestedContentRating = isMemberStoredWorkContentRating(
+    parameters.hitapYasi,
+  )
     ? parameters.hitapYasi
     : undefined;
+  const contentRating =
+    requestedContentRating && visibleRatings.includes(requestedContentRating)
+      ? requestedContentRating
+      : undefined;
   const completion = includesValue(completionFilters, parameters.tamamlanma)
     ? parameters.tamamlanma
     : undefined;
@@ -127,7 +140,7 @@ export default async function ReaderExplorePage({
   };
 
   const where: Prisma.WorkWhereInput = {
-    ...commonDiscoveryWorkWhere,
+    ...commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
     ...(search
       ? {
           OR: [
@@ -323,6 +336,20 @@ export default async function ReaderExplorePage({
           title="Keşfet"
         />
 
+        {adultAccess.isAdult && !adultAccess.canAccessAdultContent ? (
+          <section className="reader-discovery-summary">
+            <span>18+ içerik tercihi</span>
+            <strong>İkinci onay gerekli</strong>
+            <small>18+ eserleri aynı Keşfet havuzunda görmek için açık onay verin.</small>
+            <Link
+              className="button button--outline"
+              href="/yetiskin-icerik-onayi?sonraki=%2Fkesfet"
+            >
+              18+ içerikleri aç
+            </Link>
+          </section>
+        ) : null}
+
         <form className="editor-filters">
           <label>
             <span>Arama</span>
@@ -352,7 +379,7 @@ export default async function ReaderExplorePage({
             <span>Hitap yaşı</span>
             <select defaultValue={contentRating ?? ""} name="hitapYasi">
               <option value="">Tümü</option>
-              {publicStoredWorkContentRatings.map((rating) => (
+              {visibleRatings.map((rating) => (
                 <option key={rating} value={rating}>
                   {workContentRatingDetails[rating].shortLabel}
                 </option>

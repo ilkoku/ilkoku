@@ -452,24 +452,22 @@ export async function provisionDemoWriterLevels(input: {
   const passwordHash = await hashPassword(input.password);
 
   await prisma.$transaction(async (transaction) => {
-    const [editorA, editorB, reader, publisher] = await Promise.all([
-      transaction.user.findUnique({
-        where: { email: supportEmails.editorA },
-        select: { id: true },
-      }),
-      transaction.user.findUnique({
-        where: { email: supportEmails.editorB },
-        select: { id: true },
-      }),
-      transaction.user.findUnique({
-        where: { email: supportEmails.reader },
-        select: { id: true },
-      }),
-      transaction.publisher.findUnique({
-        where: { slug: demoPublisherSlug },
-        select: { id: true },
-      }),
-    ]);
+    const editorA = await transaction.user.findUnique({
+      where: { email: supportEmails.editorA },
+      select: { id: true },
+    });
+    const editorB = await transaction.user.findUnique({
+      where: { email: supportEmails.editorB },
+      select: { id: true },
+    });
+    const reader = await transaction.user.findUnique({
+      where: { email: supportEmails.reader },
+      select: { id: true },
+    });
+    const publisher = await transaction.publisher.findUnique({
+      where: { slug: demoPublisherSlug },
+      select: { id: true },
+    });
 
     if (!editorA || !editorB || !reader || !publisher) {
       throw new Error("DEMO_SHOWCASE_SUPPORT_ACCOUNTS_MISSING");

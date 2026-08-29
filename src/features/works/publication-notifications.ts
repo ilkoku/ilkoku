@@ -1,40 +1,22 @@
-import {
-  sendReaderFavoriteWorkUpdateEmail,
-} from "@/lib/email/reader-emails";
+import { sendReaderFavoriteWorkUpdateEmail } from "@/lib/email/reader-emails";
 import { prisma } from "@/lib/prisma";
 import type { WorkPublicationEvent } from "./publish-work-event";
-import {
-  deliverPublisherFollowedAuthorPublication,
-} from "./publisher-follow-publication";
+import { deliverPublisherFollowedAuthorPublication } from "./publisher-follow-publication";
 
 function publicName(user: {
   displayName: string | null;
   fullName: string;
   username: string | null;
 }) {
-  return (
-    user.displayName ??
-    user.username ??
-    user.fullName
-  );
+  return user.displayName ?? user.username ?? user.fullName;
 }
 
-function logFailure(
-  event: string,
-  workId: string,
-  error: unknown,
-) {
-  console.error(
-    "PUBLICATION_NOTIFICATION_FAILED",
-    {
-      event,
-      workId,
-      error:
-        error instanceof Error
-          ? error.message
-          : "UNKNOWN_ERROR",
-    },
-  );
+function logFailure(event: string, workId: string, error: unknown) {
+  console.error("PUBLICATION_NOTIFICATION_FAILED", {
+    event,
+    workId,
+    error: error instanceof Error ? error.message : "UNKNOWN_ERROR",
+  });
 }
 
 export async function deliverPublicationNotifications(input: {
@@ -58,9 +40,7 @@ export async function deliverPublicationNotifications(input: {
         },
       },
       chapters: {
-        where: {
-          id: input.chapterId,
-        },
+        where: { id: input.chapterId },
         select: {
           createdAt: true,
           position: true,
@@ -68,6 +48,7 @@ export async function deliverPublicationNotifications(input: {
         },
         take: 1,
       },
+      contentRating: true,
       favorites: {
         select: {
           user: {
@@ -90,9 +71,13 @@ export async function deliverPublicationNotifications(input: {
 
   if (!work) return;
 
+  // 18+ work titles and chapter details must never be pushed to a recipient
+  // before that recipient's age + explicit adult-content consent are checked.
+  // Until notification delivery is recipient-gated, adult publications are pull-only.
+  if (work.contentRating === "adult_18") return;
+
   const chapter = work.chapters[0] ?? null;
-  const previousPublicationAt =
-    input.publicationEvent.previousPublicationAt;
+  const previousPublicationAt = input.publicationEvent.previousPublicationAt;
   const isNewChapter = Boolean(
     !input.publicationEvent.isFirstPublication &&
       previousPublicationAt &&
@@ -104,21 +89,17 @@ export async function deliverPublicationNotifications(input: {
     const readers = work.favorites
       .map((favorite) => favorite.user)
       .filter(
-        (reader) =>
-          reader.status === "active" &&
-          reader.deletedAt === null,
+        (reader) => reader.status === "active" && reader.deletedAt === null,
       );
 
     if (readers.length > 0) {
       try {
         await prisma.notification.createMany({
           data: readers.map((reader) => ({
-            message:
-              `${work.title} favori eserinizin ${chapter.title} bölümü yayımlandı.`,
+            message: `${work.title} favori eserinizin ${chapter.title} bölümü yayımlandı.`,
             relatedEntityId: work.id,
             relatedEntityType: "work",
-            title:
-              "Favorinizdeki esere yeni bölüm eklendi",
+            title: "Favorinizdeki esere yeni bölüm eklendi",
             type: "system" as const,
             userId: reader.id,
           })),
@@ -131,48 +112,34 @@ export async function deliverPublicationNotifications(input: {
         );
       }
 
-      const deliveryResults =
-        await Promise.allSettled(
-          readers
-            .filter(
-              (reader) =>
-                reader.emailVerified !== null,
-            )
-            .map((reader) =>
-              sendReaderFavoriteWorkUpdateEmail({
-                chapterPosition:
-                  chapter.position,
-                chapterTitle:
-                  chapter.title,
-                email: reader.email,
-                readerName:
-                  reader.fullName,
-                workSlug: work.slug,
-                workTitle: work.title,
-              }),
-            ),
-        );
-
-      deliveryResults.forEach(
-        (delivery, index) => {
-          if (
-            delivery.status ===
-            "rejected"
-          ) {
-            logFailure(
-              `reader_favorite_email_${index}`,
-              work.id,
-              delivery.reason,
-            );
-          }
-        },
+      const deliveryResults = await Promise.allSettled(
+        readers
+          .filter((reader) => reader.emailVerified !== null)
+          .map((reader) =>
+            sendReaderFavoriteWorkUpdateEmail({
+              chapterPosition: chapter.position,
+              chapterTitle: chapter.title,
+              email: reader.email,
+              readerName: reader.fullName,
+              workSlug: work.slug,
+              workTitle: work.title,
+            }),
+          ),
       );
+
+      deliveryResults.forEach((delivery, index) => {
+        if (delivery.status === "rejected") {
+          logFailure(
+            `reader_favorite_email_${index}`,
+            work.id,
+            delivery.reason,
+          );
+        }
+      });
     }
   }
 
-  if (!input.publicationEvent.isFirstPublication) {
-    return;
-  }
+  if (!input.publicationEvent.isFirstPublication) return;
 
   try {
     await deliverPublisherFollowedAuthorPublication({

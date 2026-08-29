@@ -28,12 +28,23 @@ jobs:
           USER_AGENT="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
           VERIFY_WINDOW_SECONDS=300
 
+          normalize_url() {
+            local value="$1"
+            printf '%s' "${value%/}"
+          }
+
+          canonical_from_body() {
+            local body="$1"
+            local canonical_tag
+            canonical_tag="$(grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$body" | head -1 || true)"
+            printf '%s' "$canonical_tag" | sed -n 's/.*href="\([^"]*\)".*/\1/p'
+          }
+
           check_indexable_page() {
             local path="$1"
             local expected_canonical="$2"
             local url="https://ilkoku.com${path}"
-            local headers body code robots canonical_tag canonical_href
-            local expected_normalized actual_normalized
+            local headers body code robots canonical_href
 
             headers="$(mktemp)"
             body="$(mktemp)"
@@ -57,20 +68,17 @@ jobs:
               rm -f "$headers" "$body"
               return 1
             fi
+
             grep -Eqi '<title>[^<]+' "$body" || { echo "FAIL: $url title missing"; rm -f "$headers" "$body"; return 1; }
             grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body" || { echo "FAIL: $url description missing"; rm -f "$headers" "$body"; return 1; }
 
-            canonical_tag="$(grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$body" | head -1 || true)"
-            canonical_href="$(printf '%s' "$canonical_tag" | sed -n 's/.*href="\([^"]*\)".*/\1/p')"
+            canonical_href="$(canonical_from_body "$body")"
             if [[ -z "$canonical_href" ]]; then
               echo "FAIL: $url canonical missing"
               rm -f "$headers" "$body"
               return 1
             fi
-
-            expected_normalized="${expected_canonical%/}"
-            actual_normalized="${canonical_href%/}"
-            if [[ "$actual_normalized" != "$expected_normalized" ]]; then
+            if [[ "$(normalize_url "$canonical_href")" != "$(normalize_url "$expected_canonical")" ]]; then
               echo "FAIL: $url canonical mismatch: expected=$expected_canonical actual=$canonical_href"
               rm -f "$headers" "$body"
               return 1
@@ -81,16 +89,47 @@ jobs:
             return 0
           }
 
+          check_filtered_page() {
+            local url="$1"
+            local expected_canonical="$2"
+            local body code canonical_href
+
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            if [[ "$code" != "200" ]]; then
+              echo "FAIL: filtered discovery URL returned HTTP $code: $url"
+              rm -f "$body"
+              return 1
+            fi
+            if ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then
+              echo "FAIL: filtered discovery URL missing noindex: $url"
+              rm -f "$body"
+              return 1
+            fi
+
+            canonical_href="$(canonical_from_body "$body")"
+            if [[ "$(normalize_url "$canonical_href")" != "$(normalize_url "$expected_canonical")" ]]; then
+              echo "FAIL: filtered discovery canonical mismatch: url=$url expected=$expected_canonical actual=${canonical_href:-YOK}"
+              rm -f "$body"
+              return 1
+            fi
+
+            echo "PASS: filtered discovery noindex + canonical: $url"
+            rm -f "$body"
+            return 0
+          }
+
           verify_contract() {
-            local sitemap robots key home
+            local sitemap robots key home eserler
             local sitemap_count duplicate_count
             sitemap="$(mktemp)"
             robots="$(mktemp)"
             key="$(mktemp)"
             home="$(mktemp)"
+            eserler="$(mktemp)"
 
             cleanup() {
-              rm -f "$sitemap" "$robots" "$key" "$home" /tmp/seo-filtered /tmp/seo-eserler
+              rm -f "$sitemap" "$robots" "$key" "$home" "$eserler"
             }
 
             curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/sitemap.xml --output "$sitemap" || { echo "FAIL: sitemap fetch"; cleanup; return 1; }
@@ -99,9 +138,8 @@ jobs:
 
             grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { echo "FAIL: robots sitemap declaration"; cleanup; return 1; }
             grep -Fq 'Allow: /' "$robots" || { echo "FAIL: robots public allow"; cleanup; return 1; }
-            # Cloudflare can add Disallow: / for named AI crawlers such as GPTBot
-            # and Google-Extended. That does not block Google Search. Real Googlebot
-            # eligibility is verified by the page checks below.
+            # Cloudflare may add Disallow: / for named AI crawlers. That is not a
+            # Google Search block; real Googlebot eligibility is verified below.
             grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key" || { echo "FAIL: IndexNow key mismatch"; cleanup; return 1; }
 
             sitemap_count="$(grep -o '<loc>' "$sitemap" | wc -l | tr -d ' ')"
@@ -163,29 +201,20 @@ jobs:
             www_code="$(curl --silent --show-error --max-time 25 --dump-header "$www_headers" --output /dev/null --write-out '%{http_code}' https://www.ilkoku.com/ || true)"
             www_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$www_headers")"
             rm -f "$www_headers"
-            if [[ "$www_code" != "301" && "$www_code" != "308" ]] || [[ "$www_location" != "https://ilkoku.com/" ]]; then
+            if [[ "$www_code" != "301" && "$www_code" != "308" ]] || [[ "$(normalize_url "$www_location")" != "https://ilkoku.com" ]]; then
               echo "FAIL: www canonical redirect code=$www_code location=${www_location:-YOK}"
               cleanup
               return 1
             fi
+            echo "PASS: www canonical redirect code=$www_code location=$www_location"
 
-            local filtered filtered_code
-            for filtered in 'https://ilkoku.com/eserler?arama=test' 'https://ilkoku.com/yazarlar?arama=test' 'https://ilkoku.com/turler?arama=test'; do
-              filtered_code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output /tmp/seo-filtered --write-out '%{http_code}' "$filtered" || true)"
-              if [[ "$filtered_code" != "200" ]]; then
-                echo "FAIL: filtered discovery URL returned HTTP $filtered_code: $filtered"
-                cleanup
-                return 1
-              fi
-              if ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' /tmp/seo-filtered; then
-                echo "FAIL: filtered discovery URL missing noindex: $filtered"
-                cleanup
-                return 1
-              fi
-            done
+            check_filtered_page 'https://ilkoku.com/eserler?arama=test' 'https://ilkoku.com/eserler' || { cleanup; return 1; }
+            check_filtered_page 'https://ilkoku.com/yazarlar?arama=test' 'https://ilkoku.com/yazarlar' || { cleanup; return 1; }
+            check_filtered_page 'https://ilkoku.com/turler?arama=test' 'https://ilkoku.com/turler' || { cleanup; return 1; }
 
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/eserler --output /tmp/seo-eserler || { echo "FAIL: eserler social metadata fetch"; cleanup; return 1; }
-            grep -Eqi '<meta[^>]+property="og:image"' /tmp/seo-eserler || { echo "FAIL: eserler og:image missing"; cleanup; return 1; }
+            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/eserler --output "$eserler" || { echo "FAIL: eserler social metadata fetch"; cleanup; return 1; }
+            grep -Eqi '<meta[^>]+property="og:image"' "$eserler" || { echo "FAIL: eserler og:image missing"; cleanup; return 1; }
+            grep -Eqi '<meta[^>]+name="twitter:image"' "$eserler" || { echo "FAIL: eserler twitter:image missing"; cleanup; return 1; }
 
             curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/ --output "$home" || { echo "FAIL: homepage schema fetch"; cleanup; return 1; }
             grep -Fq 'application/ld+json' "$home" || { echo "FAIL: JSON-LD missing"; cleanup; return 1; }
@@ -202,7 +231,7 @@ jobs:
             attempt=$((attempt + 1))
             echo "SEO contract attempt ${attempt}"
             if verify_contract; then
-              echo "PASS: public İlkOku indexability, canonical host, metadata, sitemap, robots, filtered discovery noindex, social image, structured data and IndexNow key verified."
+              echo "PASS: public İlkOku indexability, canonical host, metadata, sitemap, robots, filtered discovery noindex/canonical, social images, structured data and IndexNow key verified."
               exit 0
             fi
             sleep 15

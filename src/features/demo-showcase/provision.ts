@@ -693,7 +693,6 @@ export async function provisionDemoShowcase(input: {
       },
       update: {
         active: true,
-        permissionOverrides: null,
         role: "owner",
       },
       select: { id: true },

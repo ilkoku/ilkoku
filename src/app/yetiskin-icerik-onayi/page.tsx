@@ -54,7 +54,7 @@ export default async function AdultContentConsentPage({
           </div>
           <p>
             Hesap yaşınız 18+ erişim için uygundur. 18+ olarak sınıflandırılmış eserleri
-            Keşfet'te görmek ve okumak için ayrıca açık onay vermeniz gerekir.
+            Keşfet&apos;te görmek ve okumak için ayrıca açık onay vermeniz gerekir.
           </p>
           <p>
             Bu tercih hesabınıza bağlıdır ve Hesabım alanından istediğiniz zaman kapatılabilir.

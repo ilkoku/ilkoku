@@ -16,6 +16,10 @@ import {
   getPublisherFavoriteWorks,
   normalizePublisherFavoriteFilters,
 } from "@/features/publisher-discovery/work-favorites-query";
+import {
+  publicStoredWorkContentRatings,
+  workContentRatingDetails,
+} from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
 
 export const metadata: Metadata = {
@@ -31,6 +35,7 @@ function firstValue(value: string | string[] | undefined) {
 }
 
 function pageHref(input: {
+  contentRating?: string;
   page: number;
   query: string;
   type: "author" | "work";
@@ -38,6 +43,9 @@ function pageHref(input: {
   const params = new URLSearchParams();
   if (input.type === "author") params.set("tip", "yazar");
   if (input.query) params.set("arama", input.query);
+  if (input.type === "work" && input.contentRating) {
+    params.set("hitap", input.contentRating);
+  }
   if (input.page > 1) params.set("sayfa", String(input.page));
   const query = params.toString();
   return query
@@ -95,7 +103,9 @@ export default async function PublisherFavoritesPage({
     type === "work"
       ? workFilters.query
       : authorFilters.query;
+  const contentRating = type === "work" ? workFilters.contentRating : undefined;
   const returnTo = pageHref({
+    contentRating,
     page: data.currentPage,
     query,
     type,
@@ -145,11 +155,24 @@ export default async function PublisherFavoritesPage({
               type="search"
             />
           </label>
+          {type === "work" ? (
+            <label>
+              <span>Hitap yaşı</span>
+              <select defaultValue={contentRating ?? ""} name="hitap">
+                <option value="">Tüm hitap yaşları</option>
+                {publicStoredWorkContentRatings.map((rating) => (
+                  <option key={rating} value={rating}>
+                    {workContentRatingDetails[rating].shortLabel}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <div className="publisher-discovery-filter-actions">
             <button className="button button--primary" type="submit">
               Filtrele
             </button>
-            {query ? (
+            {query || contentRating ? (
               <Link
                 className="button button--ghost"
                 href={type === "author" ? "/yayinevi/favorilerim?tip=yazar" : "/yayinevi/favorilerim"}
@@ -203,7 +226,7 @@ export default async function PublisherFavoritesPage({
             {data.currentPage > 1 ? (
               <Link
                 className="button button--ghost"
-                href={pageHref({ page: data.currentPage - 1, query, type })}
+                href={pageHref({ contentRating, page: data.currentPage - 1, query, type })}
               >
                 Önceki
               </Link>
@@ -212,7 +235,7 @@ export default async function PublisherFavoritesPage({
             {data.currentPage < data.totalPages ? (
               <Link
                 className="button button--ghost"
-                href={pageHref({ page: data.currentPage + 1, query, type })}
+                href={pageHref({ contentRating, page: data.currentPage + 1, query, type })}
               >
                 Sonraki
               </Link>

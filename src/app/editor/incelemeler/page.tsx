@@ -207,35 +207,44 @@ export default async function EditorReviewsPage({
                   </div>
                 )}
 
-                {isCompleted ? (
+                <div className="editor-table-actions">
+                  {isCompleted ? (
+                    <Link
+                      className="button button--outline"
+                      href={`/editor/incelemeler/${work.id}`}
+                    >
+                      Raporu Görüntüle
+                    </Link>
+                  ) : canAssignSecondEditor ? (
+                    <SecondEditorAssignmentDialog
+                      editors={availableSecondEditors}
+                      workAuthorId={work.authorId}
+                      workId={work.id}
+                      workTitle={work.title}
+                    />
+                  ) : canContinueReview && work.chapters[0] ? (
+                    <Link
+                      className="button button--outline"
+                      href={`/oku/${work.slug}/bolum-${work.chapters[0].position}`}
+                    >
+                      İncelemeye Devam Et
+                    </Link>
+                  ) : (
+                    <Link
+                      className="button button--outline"
+                      href={`/kitap/${work.slug}`}
+                    >
+                      Eseri Görüntüle
+                    </Link>
+                  )}
+
                   <Link
                     className="button button--outline"
-                    href={`/editor/incelemeler/${work.id}`}
+                    href={`/editor/eserler/${work.id}/pasaport`}
                   >
-                    Raporu Görüntüle
+                    Eser Pasaportu
                   </Link>
-                ) : canAssignSecondEditor ? (
-                  <SecondEditorAssignmentDialog
-                    editors={availableSecondEditors}
-                    workAuthorId={work.authorId}
-                    workId={work.id}
-                    workTitle={work.title}
-                  />
-                ) : canContinueReview && work.chapters[0] ? (
-                  <Link
-                    className="button button--outline"
-                    href={`/oku/${work.slug}/bolum-${work.chapters[0].position}`}
-                  >
-                    İncelemeye Devam Et
-                  </Link>
-                ) : (
-                  <Link
-                    className="button button--outline"
-                    href={`/kitap/${work.slug}`}
-                  >
-                    Eseri Görüntüle
-                  </Link>
-                )}
+                </div>
               </article>
             );
           })}

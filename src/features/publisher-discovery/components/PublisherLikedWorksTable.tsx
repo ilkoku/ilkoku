@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 import { togglePublisherWorkLikeAction } from "../engagement-actions";
 import type { PublisherLikedWorkRow } from "../favorites-query";
 
@@ -45,6 +46,7 @@ export function PublisherLikedWorksTable({
             <th>Eser</th>
             <th>Yazar</th>
             <th>Tür / Dil</th>
+            <th>Hitap yaşı</th>
             <th>Yayın ve editör</th>
             <th>Metrikler</th>
             <th>Beğeni tarihi</th>
@@ -94,6 +96,10 @@ export function PublisherLikedWorksTable({
                       ? "İngilizce"
                       : work.language.toLocaleUpperCase("tr-TR")}
                 </small>
+              </td>
+
+              <td data-label="Hitap yaşı">
+                <strong>{workContentRatingDetails[work.contentRating].shortLabel}</strong>
               </td>
 
               <td data-label="Yayın ve editör">

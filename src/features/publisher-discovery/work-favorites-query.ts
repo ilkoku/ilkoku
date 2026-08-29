@@ -2,6 +2,7 @@ import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import type { StoredWorkContentRating } from "@/lib/work-content-classification";
 import {
   normalizePublisherFavoriteFilters,
   type PublisherFavoriteFilters,
@@ -17,6 +18,7 @@ export interface PublisherFavoriteWorkRow {
   authorName: string;
   chapterCount: number;
   commentCount: number;
+  contentRating: StoredWorkContentRating;
   editorReviewStatus: string;
   favoriteCount: number;
   favoritedAt: string;
@@ -48,11 +50,7 @@ function publicWriterName(writer: {
   publicId: string;
   username: string | null;
 }) {
-  return (
-    writer.displayName?.trim() ||
-    writer.username?.trim() ||
-    writer.publicId
-  );
+  return writer.displayName?.trim() || writer.username?.trim() || writer.publicId;
 }
 
 function publicWriterAlias(writer: {
@@ -62,9 +60,7 @@ function publicWriterAlias(writer: {
   const username = writer.username?.trim();
 
   if (username) {
-    return username.startsWith("@")
-      ? username
-      : `@${username}`;
+    return username.startsWith("@") ? username : `@${username}`;
   }
 
   return `@${writer.publicId.toLocaleLowerCase("tr-TR")}`;
@@ -72,6 +68,9 @@ function publicWriterAlias(writer: {
 
 const publicWorkWhere = {
   archivedAt: null,
+  contentRating: {
+    not: "adult_18",
+  },
   publishedAt: { not: null },
   status: "published",
   visibility: "public",
@@ -92,6 +91,9 @@ export async function getPublisherFavoriteWorks(
           status: "active",
         },
       },
+      ...(filters.contentRating
+        ? { contentRating: filters.contentRating }
+        : {}),
       ...(filters.query
         ? {
             OR: [
@@ -162,6 +164,7 @@ export async function getPublisherFavoriteWorks(
               position: true,
             },
           },
+          contentRating: true,
           editorReviewStatus: true,
           genre: true,
           id: true,
@@ -176,9 +179,7 @@ export async function getPublisherFavoriteWorks(
   });
 
   const first =
-    totalCount === 0
-      ? 0
-      : (currentPage - 1) * PAGE_SIZE + 1;
+    totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const last = Math.min(currentPage * PAGE_SIZE, totalCount);
 
   return {
@@ -190,6 +191,7 @@ export async function getPublisherFavoriteWorks(
       authorName: publicWriterName(record.work.author),
       chapterCount: record.work.chapters.length,
       commentCount: record.work._count.comments,
+      contentRating: record.work.contentRating,
       editorReviewStatus: record.work.editorReviewStatus,
       favoriteCount: record.work._count.favorites,
       favoritedAt: record.createdAt.toISOString(),
@@ -202,8 +204,7 @@ export async function getPublisherFavoriteWorks(
       id: record.work.id,
       language: record.work.language,
       publishedAt:
-        record.work.publishedAt?.toISOString() ??
-        new Date(0).toISOString(),
+        record.work.publishedAt?.toISOString() ?? new Date(0).toISOString(),
       readerCount: record.work._count.readingProgress,
       slug: record.work.slug,
       subtitle: record.work.subtitle,

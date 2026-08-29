@@ -9,6 +9,7 @@ const socialImage = "/opengraph-image";
 
 type UpdatedWorksSearchParams = {
   arama?: string;
+  hitap?: string;
   sayfa?: string;
   tur?: string;
 };
@@ -29,7 +30,11 @@ export async function generateMetadata({
       canonical: "/eserler/guncellenen",
     },
     robots: {
-      index: !query.sayfa && !query.arama && !query.tur,
+      index:
+        !query.sayfa &&
+        !query.arama &&
+        !query.tur &&
+        !query.hitap,
       follow: true,
     },
     openGraph: {

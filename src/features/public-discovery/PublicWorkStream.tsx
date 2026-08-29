@@ -70,6 +70,10 @@ export function PublicWorkStream({
           `/kitap/${work.slug}`,
           returnPath,
         );
+        const passportHref = withReturnPath(
+          `/kitap/${work.slug}/pasaport`,
+          returnPath,
+        );
         const authorHref = withReturnPath(
           `/yazarlar/${work.author.publicId}`,
           returnPath,
@@ -119,6 +123,9 @@ export function PublicWorkStream({
                   : "Yayımlandı: "}
                 {formatDate(displayedDate)}
               </time>
+              <Link href={passportHref}>
+                Pasaport →
+              </Link>
               <Link href={bookHref}>
                 Eseri incele →
               </Link>

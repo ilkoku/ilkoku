@@ -24,6 +24,7 @@ function mapWork(
       fullName: string;
     };
     chapters: { content: string }[];
+    contentRating: EditorWorkCardData["contentRating"];
     coverUrl: string | null;
     editorFavorites: { id: string }[];
     editorReviewStatus: EditorWorkCardData["editorReviewStatus"];
@@ -38,6 +39,7 @@ function mapWork(
     assignedEditorId: work.assignedEditorId,
     authorName: work.author.displayName ?? work.author.fullName,
     chapterCount: work.chapters.length,
+    contentRating: work.contentRating,
     coverUrl: work.coverUrl,
     editorReviewStatus: work.editorReviewStatus,
     genre: work.genre,
@@ -62,6 +64,7 @@ function mapDiscoveryWork(
       username: string | null;
     };
     chapters: { content: string }[];
+    contentRating: EditorWorkCardData["contentRating"];
     coverUrl: string | null;
     editorFavorites: { id: string }[];
     editorReviewStatus: EditorWorkCardData["editorReviewStatus"];

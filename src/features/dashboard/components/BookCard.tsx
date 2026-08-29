@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Card } from "@/components/ui/Card";
 import { dashboardContent } from "@/content";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
@@ -102,6 +104,13 @@ export function BookCard({
             initialWork={work}
             triggerLabel={dashboardContent.edit}
           />
+
+          <Link
+            className="button button--outline"
+            href={`/eserlerim/${work.id}/pasaport`}
+          >
+            Eser Pasaportu
+          </Link>
 
           <ArchiveWorkButton
             workId={work.id}

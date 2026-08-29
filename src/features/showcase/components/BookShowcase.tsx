@@ -281,6 +281,13 @@ export function BookShowcase({
                 </Link>
               )}
 
+              <Link
+                className="button button--outline"
+                href={`/kitap/${work.slug}/pasaport?from=${encodedBookContextPath}`}
+              >
+                Eser Pasaportu
+              </Link>
+
               <WorkShareActions
                 authorName={work.authorName}
                 genre={work.genre}

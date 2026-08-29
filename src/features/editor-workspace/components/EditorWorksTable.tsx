@@ -88,6 +88,14 @@ function statusInformation(
   };
 }
 
+function editorReturnPath(
+  mode: "discovery" | "requests" | "secondPool",
+) {
+  return mode === "discovery"
+    ? "/editor/kesfet"
+    : "/editor/talepler";
+}
+
 function WorkAction({
   currentEditorId,
   mode,
@@ -177,6 +185,8 @@ export function EditorWorksTable({
   mode?: "discovery" | "requests" | "secondPool";
   works: EditorWorkTableData[];
 }) {
+  const returnPath = editorReturnPath(mode);
+
   return (
     <div className="editor-table-shell">
       <div className="editor-table-scroll">
@@ -186,7 +196,7 @@ export function EditorWorksTable({
               <th>Eser</th>
               <th>Rumuz</th>
               <th>Tür</th>
-              {mode === "discovery" ? <th>Hitap Yaşı</th> : null}
+              <th>Hitap Yaşı</th>
               <th>Bölüm</th>
               <th>Yayın Tarihi</th>
               <th>
@@ -231,13 +241,11 @@ export function EditorWorksTable({
                     {work.genre ?? "Belirtilmedi"}
                   </td>
 
-                  {mode === "discovery" ? (
-                    <td data-label="Hitap Yaşı">
-                      {work.contentRating
-                        ? workContentRatingDetails[work.contentRating].shortLabel
-                        : "Sınıflandırılmadı"}
-                    </td>
-                  ) : null}
+                  <td data-label="Hitap Yaşı">
+                    {work.contentRating
+                      ? workContentRatingDetails[work.contentRating].shortLabel
+                      : "Sınıflandırılmadı"}
+                  </td>
 
                   <td data-label="Bölüm">
                     {formatNumber(work.chapterCount)}
@@ -274,6 +282,12 @@ export function EditorWorksTable({
                         mode={mode}
                         work={work}
                       />
+                      <Link
+                        className="editor-table-action"
+                        href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent(returnPath)}`}
+                      >
+                        Eser Pasaportu
+                      </Link>
                     </div>
                   </td>
                 </tr>

@@ -4,6 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
+import type { PublicStoredWorkContentRating } from "@/lib/work-content-classification";
 
 export const PUBLIC_WORK_PAGE_SIZE = 18;
 export const publicWorkSorts = ["newest", "updated"] as const;
@@ -11,6 +12,7 @@ export const publicWorkSorts = ["newest", "updated"] as const;
 export type PublicWorkSort = (typeof publicWorkSorts)[number];
 
 export type PublicWorkLibraryFilters = {
+  contentRating?: PublicStoredWorkContentRating;
   genre?: string;
   search?: string;
   sort: PublicWorkSort;
@@ -66,6 +68,9 @@ function publicWorkWhere(
             },
           ],
         }
+      : {}),
+    ...(filters.contentRating
+      ? { contentRating: filters.contentRating }
       : {}),
     ...(filters.genre ? { genre: filters.genre } : {}),
   };

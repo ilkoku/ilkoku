@@ -80,6 +80,7 @@ jobs:
         run: npm run audit:supply-chain
 
       - name: Run lint
+        if: ${{ !cancelled() }}
         run: npm run lint
 
       - name: Run security contract tests
@@ -106,6 +107,7 @@ jobs:
         run: npm run release:measure:strict
 
       - name: Build application
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           set +e

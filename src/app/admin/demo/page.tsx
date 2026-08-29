@@ -1,5 +1,6 @@
 import { demoShowcaseAccounts } from "@/features/demo-showcase/provision";
 import { getScopedDemoShowcaseStatus } from "@/features/demo-showcase/status";
+import { demoWriterLevels } from "@/features/demo-showcase/writer-levels";
 import { provisionDemoShowcaseAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +10,8 @@ type SearchParams = Promise<{
 }>;
 
 const statusLabels = [
-  ["accounts", "Demo hesapları", "Okuyucu, yazar, üç editör ve iki yayınevi kullanıcısı"],
+  ["writers", "Demo yazarlar", "10 ayrı yaş/şehir/kademe profili"],
+  ["accounts", "Demo hesapları", "Yazar, okuyucu, editör ve yayınevi kullanıcıları"],
   ["works", "Eser durumları", "Taslak, public, editör aşamaları ve arşiv"],
   ["publicWorks", "Public keşif", "Eser/yazar keşfini dolu gösterecek public eserler"],
   ["comments", "Yorum ağı", "Okuyucu yorumları ve yazar cevapları"],
@@ -70,10 +72,7 @@ export default async function AdminDemoShowcasePage({
 
       {currentNotice ? (
         <section className="admin-panel" style={{ marginBottom: "1rem" }}>
-          <span
-            className="admin-table-badge"
-            data-status={currentNotice.tone}
-          >
+          <span className="admin-table-badge" data-status={currentNotice.tone}>
             {query.durum === "hazir" ? "Hazır" : "Kontrol"}
           </span>
           <p style={{ marginBottom: 0 }}>{currentNotice.text}</p>
@@ -91,9 +90,7 @@ export default async function AdminDemoShowcasePage({
                 <span>{label}</span>
                 <i>{item?.ready ? "✓" : "·"}</i>
               </div>
-              <strong>
-                {item ? `${item.current}/${item.expected}` : "—"}
-              </strong>
+              <strong>{item ? `${item.current}/${item.expected}` : "—"}</strong>
               <p>{detail}</p>
             </article>
           );
@@ -174,8 +171,50 @@ export default async function AdminDemoShowcasePage({
       <section className="admin-panel" style={{ marginTop: "1rem" }}>
         <div className="admin-panel__heading">
           <div>
-            <span>Hesap seti</span>
-            <h2>Kurulacak demo kullanıcıları</h2>
+            <span>10 ayrı kademe</span>
+            <h2>Demo yazarlar</h2>
+          </div>
+        </div>
+
+        <div style={{ overflowX: "auto", marginTop: "1rem" }}>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>Yazar</th>
+                <th>Yaş</th>
+                <th>Şehir</th>
+                <th>Tür</th>
+                <th>Sistem aşaması</th>
+                <th>Giriş e-postası</th>
+              </tr>
+            </thead>
+            <tbody>
+              {demoWriterLevels.map((writer) => (
+                <tr key={writer.email}>
+                  <td>
+                    <span className="admin-table-badge" data-status="active">
+                      {writer.level}
+                    </span>
+                  </td>
+                  <td>{writer.fullName}</td>
+                  <td>{2026 - writer.birthYear}</td>
+                  <td>{writer.city}</td>
+                  <td>{writer.genre}</td>
+                  <td>{writer.stage}</td>
+                  <td>{writer.email}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="admin-panel" style={{ marginTop: "1rem" }}>
+        <div className="admin-panel__heading">
+          <div>
+            <span>Diğer roller</span>
+            <h2>Okuyucu · editör · yayınevi demo hesapları</h2>
           </div>
         </div>
 
@@ -190,30 +229,31 @@ export default async function AdminDemoShowcasePage({
               </tr>
             </thead>
             <tbody>
-              {demoShowcaseAccounts.map((account) => {
-                const scenario = {
-                  reader: "Favori · okuma ilerlemesi · yorum",
-                  writer: "Eserler · Eser Pasaportu · editör akışı",
-                  editorA: "1. editör · yayınevi editör talebi",
-                  editorB: "2. editör · editör önerisi",
-                  externalEditor: "Dış ikinci editör hedef hesabı",
-                  publisherOwner: "Keşif · ekip · paylaşım · başvurular",
-                  publisherMember: "Kısıtlı yetki · paylaşım · yetki talebi",
-                }[account.key];
+              {demoShowcaseAccounts
+                .filter((account) => account.role !== "writer")
+                .map((account) => {
+                  const scenario = {
+                    reader: "Favori · okuma ilerlemesi · yorum",
+                    editorA: "1. editör · yayınevi editör talebi",
+                    editorB: "2. editör · editör önerisi",
+                    externalEditor: "Dış ikinci editör hedef hesabı",
+                    publisherOwner: "Keşif · ekip · paylaşım · başvurular",
+                    publisherMember: "Kısıtlı yetki · paylaşım · yetki talebi",
+                  }[account.key];
 
-                return (
-                  <tr key={account.email}>
-                    <td>
-                      <span className="admin-table-badge" data-status="active">
-                        {account.role}
-                      </span>
-                    </td>
-                    <td>{account.fullName}</td>
-                    <td>{account.email}</td>
-                    <td>{scenario}</td>
-                  </tr>
-                );
-              })}
+                  return (
+                    <tr key={account.email}>
+                      <td>
+                        <span className="admin-table-badge" data-status="active">
+                          {account.role}
+                        </span>
+                      </td>
+                      <td>{account.fullName}</td>
+                      <td>{account.email}</td>
+                      <td>{scenario}</td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -222,7 +262,8 @@ export default async function AdminDemoShowcasePage({
       <section className="admin-panel" style={{ marginTop: "1rem" }}>
         <h2>Bu paket hangi eksikleri kapatır?</h2>
         <ul className="admin-policy-list">
-          <li>9 eser durumu: taslak, arşiv ve 7 public eser.</li>
+          <li>10 ayrı demo yazar; yaş, şehir, tür ve editoryal kademe dağılımı.</li>
+          <li>18 demo eser; 16 public eser, taslak ve arşiv senaryoları.</li>
           <li>Okuyucuda favori, devam eden okuma, tamamlanan eser, yer imi ve riskli/normal okuma kaydı.</li>
           <li>Yazar yorumlarına cevap ve dolu Eser Pasaportu sahiplik/sürüm zinciri.</li>
           <li>1. editör bekleyen/aktif/tamamlanmış; 2. editör bekleyen/aktif/tamamlanmış durumları.</li>

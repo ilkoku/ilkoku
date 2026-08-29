@@ -40,12 +40,6 @@ export async function publishWorkWithEvent(
       );
     }
 
-    if (locked[0].contentRating === "adult_18") {
-      throw new Error(
-        "18+ eserlerin herkese açık yayını, doğrulanmış yaş erişimi etkinleşene kadar kullanılamaz. Eseri taslak olarak saklayabilirsin.",
-      );
-    }
-
     const chapter = await transaction.chapter.findFirst({
       where: {
         authorId,
@@ -111,6 +105,7 @@ export async function publishWorkWithEvent(
         entityType: "Work",
         metadata: JSON.stringify({
           chapterId,
+          contentRating: work.contentRating,
           publicId: work.publicId,
           publishedAt: publishedAt.toISOString(),
           title: work.title,

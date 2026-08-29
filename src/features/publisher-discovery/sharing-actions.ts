@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { prisma } from "@/lib/prisma";
 import {
   createPublisherDiscoveryShare,
   markPublisherSharedItemRead,
@@ -34,15 +35,14 @@ function safeReturnPath(
 ) {
   const raw = String(value ?? "").trim();
 
-  if (!raw.startsWith("/") || raw.startsWith("//")) {
-    return fallbackPath;
-  }
+  if (!raw.startsWith("/") || raw.startsWith("//")) return fallbackPath;
 
   const url = new URL(raw, "http://ilkoku.local");
-
-  if (!allowedReturnPaths.includes(
-    url.pathname as (typeof allowedReturnPaths)[number],
-  )) {
+  if (
+    !allowedReturnPaths.includes(
+      url.pathname as (typeof allowedReturnPaths)[number],
+    )
+  ) {
     return fallbackPath;
   }
 
@@ -93,15 +93,26 @@ export async function createPublisherDiscoveryShareAction(
     redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`);
   }
 
+  if (entityKind === "work") {
+    const work = await prisma.work.findUnique({
+      where: { id: entityId },
+      select: { contentRating: true },
+    });
+    if (work?.contentRating === "adult_18") {
+      return {
+        message:
+          "18+ eser paylaşımı, alıcının yaş ve açık içerik onayı ayrıca doğrulanana kadar kullanılamaz.",
+        status: "error",
+      };
+    }
+  }
+
   const result = await createPublisherDiscoveryShare({
     channel,
     entityId,
     entityKind,
     note,
-    recipientEmail:
-      channel === "email"
-        ? recipientEmail
-        : null,
+    recipientEmail: channel === "email" ? recipientEmail : null,
     recipientMembershipIds,
     userId: user.id,
   });
@@ -117,19 +128,14 @@ export async function createPublisherDiscoveryShareAction(
   }
 
   if (result.status === "membership_not_found") {
-    return {
-      message: "Aktif yayınevi üyeliği bulunamadı.",
-      status: "error",
-    };
+    return { message: "Aktif yayınevi üyeliği bulunamadı.", status: "error" };
   }
-
   if (result.status === "invalid_note") {
     return {
       message: "Paylaşım notu 3–1000 karakter arasında olmalıdır.",
       status: "error",
     };
   }
-
   if (result.status === "invalid_recipients") {
     return {
       message:
@@ -137,21 +143,15 @@ export async function createPublisherDiscoveryShareAction(
       status: "error",
     };
   }
-
   if (result.status === "invalid_email") {
-    return {
-      message: "Geçerli bir alıcı e-posta adresi girin.",
-      status: "error",
-    };
+    return { message: "Geçerli bir alıcı e-posta adresi girin.", status: "error" };
   }
-
   if (result.status === "invalid_entity") {
     return {
       message: "Paylaşılacak public kayıt artık bulunamıyor.",
       status: "error",
     };
   }
-
   if (result.status === "rate_limited") {
     return {
       message:
@@ -159,7 +159,6 @@ export async function createPublisherDiscoveryShareAction(
       status: "error",
     };
   }
-
   if (result.status === "recipient_rate_limited") {
     return {
       message:
@@ -194,19 +193,12 @@ export async function markPublisherSharedItemReadAction(
 ): Promise<void> {
   const shareId = String(formData.get("shareId") ?? "").trim();
 
-  if (!UUID_PATTERN.test(shareId)) {
-    redirect("/yayinevi/paylasilanlar");
-  }
+  if (!UUID_PATTERN.test(shareId)) redirect("/yayinevi/paylasilanlar");
 
   const user = await getCurrentUser();
-  if (!user) {
-    redirect("/giris?sonraki=/yayinevi/paylasilanlar");
-  }
+  if (!user) redirect("/giris?sonraki=/yayinevi/paylasilanlar");
 
-  await markPublisherSharedItemRead({
-    shareId,
-    userId: user.id,
-  });
+  await markPublisherSharedItemRead({ shareId, userId: user.id });
 
   revalidatePath("/yayinevi/paylasilanlar");
   revalidatePath("/yayinevi/bildirimler");

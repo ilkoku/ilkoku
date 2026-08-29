@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { provisionDemoShowcase } from "@/features/demo-showcase/provision";
+import { provisionDemoWriterLevels } from "@/features/demo-showcase/writer-levels";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
 export async function provisionDemoShowcaseAction(formData: FormData) {
@@ -17,6 +18,10 @@ export async function provisionDemoShowcaseAction(formData: FormData) {
 
   try {
     await provisionDemoShowcase({
+      actorId: admin.id,
+      password,
+    });
+    await provisionDemoWriterLevels({
       actorId: admin.id,
       password,
     });

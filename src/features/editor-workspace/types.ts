@@ -15,7 +15,7 @@ export type EditorWorkCardData = {
   assignedEditorId: string | null;
   authorName: string;
   chapterCount: number;
-  contentRating: StoredWorkContentRating;
+  contentRating?: StoredWorkContentRating;
   coverUrl: string | null;
   editorReviewStatus:
     | "not_requested"

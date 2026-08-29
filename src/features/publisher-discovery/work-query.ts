@@ -3,6 +3,10 @@ import type {
 } from "@/generated/prisma/client";
 import { commonDiscoveryWorkWhere } from "@/features/discovery/common-work-scope";
 import { prisma } from "@/lib/prisma";
+import {
+  isPublicWorkContentRating,
+  type StoredWorkContentRating,
+} from "@/lib/work-content-classification";
 
 const PAGE_SIZE = 24;
 
@@ -20,6 +24,7 @@ type ReviewStatus =
 
 export interface PublisherWorkDiscoveryFilters {
   completion: "" | "completed" | "ongoing";
+  contentRating: StoredWorkContentRating | "";
   genre: string;
   language: string;
   page: number;
@@ -34,6 +39,7 @@ export interface PublisherWorkDiscoveryRow {
   chapterCount: number;
   commentCount: number;
   completion: "completed" | "ongoing";
+  contentRating: StoredWorkContentRating;
   coverUrl: string | null;
   editorReviewStatus: ReviewStatus;
   favoriteCount: number;
@@ -88,6 +94,8 @@ export function normalizePublisherWorkDiscoveryFilters(
   );
   const completion =
     firstValue(input.tamamlanma);
+  const contentRating =
+    firstValue(input.hitap);
   const reviewStatus =
     firstValue(input.editor);
   const sort =
@@ -98,6 +106,10 @@ export function normalizePublisherWorkDiscoveryFilters(
       completion === "completed" ||
       completion === "ongoing"
         ? completion
+        : "",
+    contentRating:
+      isPublicWorkContentRating(contentRating)
+        ? contentRating
         : "",
     genre:
       firstValue(input.tur).slice(0, 120),
@@ -167,6 +179,9 @@ export async function getPublisherWorkDiscovery(
 ): Promise<PublisherWorkDiscoveryData> {
   const where: Prisma.WorkWhereInput = {
     ...commonDiscoveryWorkWhere,
+    ...(filters.contentRating
+      ? { contentRating: filters.contentRating }
+      : {}),
     ...(filters.query
       ? {
           OR: [
@@ -331,6 +346,7 @@ export async function getPublisherWorkDiscovery(
           status: true,
         },
       },
+      contentRating: true,
       coverUrl: true,
       editorReviewStatus: true,
       genre: true,
@@ -386,6 +402,8 @@ export async function getPublisherWorkDiscovery(
           !hasPendingChapter
             ? "completed"
             : "ongoing",
+        contentRating:
+          work.contentRating,
         coverUrl:
           work.coverUrl,
         editorReviewStatus:

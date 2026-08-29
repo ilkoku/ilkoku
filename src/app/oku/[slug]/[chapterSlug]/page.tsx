@@ -53,15 +53,15 @@ export default async function DynamicReadingPage({
   const publicReturnTo = getSafeReturnPath(query.from);
   const auth = await getCurrentSessionContext();
   const reviewModeParameter = query.inceleme === "1" ? "&inceleme=1" : "";
-  const directReturnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}${reviewModeParameter}`;
+  const returnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}${reviewModeParameter}`;
 
   if (!auth) {
-    redirect(`/giris?sonraki=${encodeURIComponent(directReturnPath)}`);
+    redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`);
   }
 
   const { sessionId, user } = auth;
   await enforceAdultWorkGate({
-    returnTo: directReturnPath,
+    returnTo: returnPath,
     slug,
     user,
   });

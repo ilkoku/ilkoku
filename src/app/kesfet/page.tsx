@@ -13,6 +13,12 @@ import {
   type ReaderWorkRow,
 } from "@/features/reader/components/ReaderWorksTable";
 import "@/features/reader/reader-discovery.css";
+import {
+  isPublicStoredWorkContentRating,
+  publicStoredWorkContentRatings,
+  workContentRatingDetails,
+  type PublicStoredWorkContentRating,
+} from "@/lib/work-content-classification";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -40,6 +46,7 @@ type SortFilter = (typeof sortFilters)[number];
 
 type ReaderExploreFilters = {
   completion?: CompletionFilter;
+  contentRating?: PublicStoredWorkContentRating;
   genre?: string;
   language?: string;
   reviewStatus?: ReviewFilter;
@@ -60,6 +67,7 @@ function pageHref(filters: ReaderExploreFilters, page: number) {
   if (filters.search) params.set("arama", filters.search);
   if (filters.genre) params.set("tur", filters.genre);
   if (filters.language) params.set("dil", filters.language);
+  if (filters.contentRating) params.set("hitapYasi", filters.contentRating);
   if (filters.completion) params.set("tamamlanma", filters.completion);
   if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
   if (filters.sort !== "newest") params.set("siralama", filters.sort);
@@ -76,6 +84,7 @@ export default async function ReaderExplorePage({
     arama?: string;
     dil?: string;
     editor?: string;
+    hitapYasi?: string;
     sayfa?: string;
     siralama?: string;
     tamamlanma?: string;
@@ -93,6 +102,9 @@ export default async function ReaderExplorePage({
   const search = parameters.arama?.trim().slice(0, 220);
   const genre = parameters.tur?.trim().slice(0, 120);
   const language = parameters.dil?.trim().slice(0, 10);
+  const contentRating = isPublicStoredWorkContentRating(parameters.hitapYasi)
+    ? parameters.hitapYasi
+    : undefined;
   const completion = includesValue(completionFilters, parameters.tamamlanma)
     ? parameters.tamamlanma
     : undefined;
@@ -106,6 +118,7 @@ export default async function ReaderExplorePage({
   const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const filters: ReaderExploreFilters = {
     completion,
+    contentRating,
     genre,
     language,
     reviewStatus,
@@ -136,6 +149,7 @@ export default async function ReaderExplorePage({
       : {}),
     ...(genre ? { genre: { contains: genre } } : {}),
     ...(language ? { language } : {}),
+    ...(contentRating ? { contentRating } : {}),
     ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
     ...(completion === "completed"
       ? {
@@ -259,6 +273,7 @@ export default async function ReaderExplorePage({
       authorUsername: work.author.username,
       chapterCount: work.chapters.length,
       commentCount: work._count.comments,
+      contentRating: work.contentRating,
       coverUrl: work.coverUrl,
       description: work.description,
       editorReviewStatus: work.editorReviewStatus,
@@ -287,7 +302,13 @@ export default async function ReaderExplorePage({
   });
 
   const hasFilters = Boolean(
-    search || genre || language || completion || reviewStatus || sort !== "newest",
+    search ||
+      genre ||
+      language ||
+      contentRating ||
+      completion ||
+      reviewStatus ||
+      sort !== "newest",
   );
   const returnTo = pageHref(filters, currentPage);
   const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
@@ -297,7 +318,7 @@ export default async function ReaderExplorePage({
     <AppShell profile={profile}>
       <div className="editor-workspace">
         <EditorPageHeader
-          description="Yayımlanan eserleri tür, dil ve editör inceleme durumuna göre bulun."
+          description="Yayımlanan eserleri tür, dil, hitap yaşı ve editör inceleme durumuna göre bulun."
           eyebrow="Okuma dünyası"
           title="Keşfet"
         />
@@ -324,6 +345,18 @@ export default async function ReaderExplorePage({
               <option value="">Tümü</option>
               <option value="tr">Türkçe</option>
               <option value="en">İngilizce</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Hitap yaşı</span>
+            <select defaultValue={contentRating ?? ""} name="hitapYasi">
+              <option value="">Tümü</option>
+              {publicStoredWorkContentRatings.map((rating) => (
+                <option key={rating} value={rating}>
+                  {workContentRatingDetails[rating].shortLabel}
+                </option>
+              ))}
             </select>
           </label>
 

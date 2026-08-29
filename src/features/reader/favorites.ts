@@ -7,6 +7,7 @@ import { countWords } from "@/features/editor-workspace/eligibility";
 import type { EditorWorkCardData } from "@/features/editor-workspace/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
+import type { StoredWorkContentRating } from "@/lib/work-content-classification";
 
 const workIdSchema = z.string().uuid();
 
@@ -134,6 +135,7 @@ export type ReaderFavoriteWork =
   EditorWorkCardData & {
     authorUsername: string | null;
     commentCount: number;
+    contentRating: StoredWorkContentRating;
     description: string | null;
     favoriteCount: number;
     lastReadLabel: string | null;

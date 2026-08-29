@@ -5,8 +5,8 @@ import { getCommonEditorDiscovery } from "@/features/editor-workspace/common-dis
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorksTable } from "@/features/editor-workspace/components/EditorWorksTable";
 import {
-  isPublicWorkContentRating,
-  publicWorkContentRatings,
+  isPublicStoredWorkContentRating,
+  publicStoredWorkContentRatings,
   workContentRatingDetails,
 } from "@/lib/work-content-classification";
 
@@ -30,7 +30,7 @@ export default async function EditorDiscoveryPage({
 }) {
   const profile = await requireEditorProfile("/editor/kesfet");
   const parameters = await searchParams;
-  const contentRating = isPublicWorkContentRating(parameters.hitap)
+  const contentRating = isPublicStoredWorkContentRating(parameters.hitap)
     ? parameters.hitap
     : undefined;
   const works = await getCommonEditorDiscovery(profile.id, {
@@ -66,7 +66,7 @@ export default async function EditorDiscoveryPage({
             <span>Hitap yaşı</span>
             <select defaultValue={contentRating ?? ""} name="hitap">
               <option value="">Tümü</option>
-              {publicWorkContentRatings.map((rating) => (
+              {publicStoredWorkContentRatings.map((rating) => (
                 <option key={rating} value={rating}>
                   {workContentRatingDetails[rating].label}
                 </option>

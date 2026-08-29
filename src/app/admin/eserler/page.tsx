@@ -5,7 +5,11 @@ import type {
   WorkStatus,
 } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { workContentRatingDetails } from "@/lib/work-content-classification";
+import {
+  isStoredWorkContentRating,
+  storedWorkContentRatings,
+  workContentRatingDetails,
+} from "@/lib/work-content-classification";
 
 const PAGE_SIZE = 20;
 
@@ -33,6 +37,7 @@ const visibilityLabels = {
 
 type SearchParams = Promise<{
   durum?: string;
+  hitap?: string;
   page?: string;
   q?: string;
   yazar?: string;
@@ -46,11 +51,18 @@ function formatDate(value: Date) {
   return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium" }).format(value);
 }
 
-function pageHref(query: string, status: string, authorId: string, page: number) {
+function pageHref(
+  query: string,
+  status: string,
+  authorId: string,
+  contentRating: string,
+  page: number,
+) {
   const params = new URLSearchParams({ page: String(page) });
   if (query) params.set("q", query);
   if (status) params.set("durum", status);
   if (authorId) params.set("yazar", authorId);
+  if (contentRating) params.set("hitap", contentRating);
   return `/admin/eserler?${params.toString()}`;
 }
 
@@ -59,12 +71,14 @@ export default async function AdminWorksPage({ searchParams }: { searchParams: S
   const query = params.q?.trim() ?? "";
   const authorId = params.yazar?.trim() ?? "";
   const status = isWorkStatus(params.durum) ? params.durum : "";
+  const contentRating = isStoredWorkContentRating(params.hitap) ? params.hitap : "";
   const requestedPage = Number.parseInt(params.page ?? "1", 10);
   const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
   const where: Prisma.WorkWhereInput = {
     ...(authorId ? { authorId } : {}),
     ...(status ? { status } : {}),
+    ...(contentRating ? { contentRating } : {}),
     ...(query ? {
       OR: [
         { title: { contains: query } },
@@ -99,15 +113,16 @@ export default async function AdminWorksPage({ searchParams }: { searchParams: S
         <form className="admin-directory-filters" method="get">
           <label><span>Eser veya yazar ara</span><input defaultValue={query} name="q" placeholder="Eser adı, yazar veya e-posta" type="search" /></label>
           <label><span>Eser durumu</span><select defaultValue={status} name="durum"><option value="">Tüm durumlar</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label><span>Hitap yaşı</span><select defaultValue={contentRating} name="hitap"><option value="">Tüm hitap yaşları</option>{storedWorkContentRatings.map((rating) => <option key={rating} value={rating}>{workContentRatingDetails[rating].shortLabel}</option>)}</select></label>
           {authorId ? <input name="yazar" type="hidden" value={authorId} /> : null}
           <button type="submit">Filtrele</button>
-          {(query || status || authorId) ? <Link href="/admin/eserler">Temizle</Link> : null}
+          {(query || status || authorId || contentRating) ? <Link href="/admin/eserler">Temizle</Link> : null}
         </form>
 
         {works.length ? (
           <div className="admin-table-wrap">
             <table className="admin-data-table">
-              <thead><tr><th>Eser</th><th>Hitap Yaşı</th><th>Durum</th><th>Görünürlük</th><th>Editör incelemesi</th><th>Tarihler</th><th>Detay</th></tr></thead>
+              <thead><tr><th>Eser</th><th>Hitap Yaşı</th><th>Durum</th><th>Görünürlük</th><th>Editör incelemesi</th><th>Tarihler</th><th>İşlemler</th></tr></thead>
               <tbody>{works.map((work) => <tr key={work.id}>
                 <td><strong>{work.title}</strong><span>{work.author.displayName || work.author.fullName}</span><small>{work.author.email}</small></td>
                 <td>{workContentRatingDetails[work.contentRating].shortLabel}</td>
@@ -115,13 +130,13 @@ export default async function AdminWorksPage({ searchParams }: { searchParams: S
                 <td>{visibilityLabels[work.visibility]}</td>
                 <td>{reviewLabels[work.editorReviewStatus]}</td>
                 <td><span>Oluşturma: {formatDate(work.createdAt)}</span><small>Güncelleme: {formatDate(work.updatedAt)}</small></td>
-                <td><Link href={`/admin/eserler/${work.id}`}>Detaya git</Link></td>
+                <td><div><Link href={`/admin/eserler/${work.id}`}>Detaya git</Link><br /><Link href={`/admin/eserler/${work.id}/pasaport`}>Eser Pasaportu</Link></div></td>
               </tr>)}</tbody>
             </table>
           </div>
         ) : <div className="admin-empty-state"><strong>Eser bulunamadı</strong><p>Arama veya filtre ölçütlerini değiştirerek yeniden deneyin.</p></div>}
 
-        <footer className="admin-pagination"><span>{first}–{last} / {filteredCount} eser</span><div>{safePage > 1 ? <Link href={pageHref(query, status, authorId, safePage - 1)}>← Önceki</Link> : <span>← Önceki</span>}<b>{safePage} / {totalPages}</b>{safePage < totalPages ? <Link href={pageHref(query, status, authorId, safePage + 1)}>Sonraki →</Link> : <span>Sonraki →</span>}</div></footer>
+        <footer className="admin-pagination"><span>{first}–{last} / {filteredCount} eser</span><div>{safePage > 1 ? <Link href={pageHref(query, status, authorId, contentRating, safePage - 1)}>← Önceki</Link> : <span>← Önceki</span>}<b>{safePage} / {totalPages}</b>{safePage < totalPages ? <Link href={pageHref(query, status, authorId, contentRating, safePage + 1)}>Sonraki →</Link> : <span>Sonraki →</span>}</div></footer>
       </section>
     </div>
   );

@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { OwnershipPassport } from "@/features/ownership/components/OwnershipPassport";
 import { getPublicOwnershipPassportBySlug } from "@/features/ownership/public-passport";
+import { getAdultContentAccess } from "@/lib/adult-content-access";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
 
 export const metadata: Metadata = {
   title: "Eser Pasaportu | İlkOku",
-  description:
-    "Eserin İlkOku kayıt, sürüm ve içerik bütünlüğü bilgileri.",
+  description: "Eserin İlkOku kayıt, sürüm ve içerik bütünlüğü bilgileri.",
   robots: {
     index: false,
     follow: true,
@@ -39,22 +41,34 @@ export default async function PublicOwnershipPassportPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ from?: string }>;
 }) {
-  const [{ slug }, query] = await Promise.all([
-    params,
-    searchParams,
-  ]);
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
 
-  if (isBlockedPublicWorkSlug(slug)) {
-    notFound();
-  }
-
-  const passport = await getPublicOwnershipPassportBySlug(slug);
-
-  if (!passport) {
-    notFound();
-  }
+  if (isBlockedPublicWorkSlug(slug)) notFound();
 
   const backHref = safeReturnPath(query.from, slug);
+  const user = await getCurrentUser();
+  const directReturnTo = `/kitap/${slug}/pasaport${
+    query.from ? `?from=${encodeURIComponent(backHref)}` : ""
+  }`;
+
+  await enforceAdultWorkGate({
+    returnTo: directReturnTo,
+    slug,
+    user,
+  });
+
+  const canAccessAdultContent =
+    user?.role === "admin"
+      ? true
+      : user
+        ? (await getAdultContentAccess(user.id)).canAccessAdultContent
+        : false;
+  const passport = await getPublicOwnershipPassportBySlug(
+    slug,
+    canAccessAdultContent,
+  );
+
+  if (!passport) notFound();
 
   return (
     <main

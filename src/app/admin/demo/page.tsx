@@ -1,4 +1,5 @@
-import { demoShowcaseAccounts, getDemoShowcaseStatus } from "@/features/demo-showcase/provision";
+import { demoShowcaseAccounts } from "@/features/demo-showcase/provision";
+import { getScopedDemoShowcaseStatus } from "@/features/demo-showcase/status";
 import { provisionDemoShowcaseAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -51,7 +52,7 @@ export default async function AdminDemoShowcasePage({
 }) {
   const query = await searchParams;
   const currentNotice = notice(query.durum);
-  const status = await getDemoShowcaseStatus().catch(() => null);
+  const status = await getScopedDemoShowcaseStatus().catch(() => null);
 
   return (
     <div className="admin-directory-page">

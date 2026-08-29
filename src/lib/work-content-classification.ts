@@ -10,11 +10,21 @@ export const storedWorkContentRatings = [
   ...workContentRatings,
 ] as const;
 
+export const publicStoredWorkContentRatings = [
+  "unrated",
+  "all_ages",
+  "teen_13",
+  "young_adult_16",
+] as const;
+
 export type WorkContentRating =
   (typeof workContentRatings)[number];
 
 export type StoredWorkContentRating =
   (typeof storedWorkContentRatings)[number];
+
+export type PublicStoredWorkContentRating =
+  (typeof publicStoredWorkContentRatings)[number];
 
 export const workContentWarnings = [
   "violence",
@@ -53,6 +63,26 @@ export const workContentRatingDetails: Record<
     shortLabel: "18+",
   },
 };
+
+export function isStoredWorkContentRating(
+  value: string | undefined,
+): value is StoredWorkContentRating {
+  return Boolean(
+    value &&
+      storedWorkContentRatings.includes(value as StoredWorkContentRating),
+  );
+}
+
+export function isPublicStoredWorkContentRating(
+  value: string | undefined,
+): value is PublicStoredWorkContentRating {
+  return Boolean(
+    value &&
+      publicStoredWorkContentRatings.includes(
+        value as PublicStoredWorkContentRating,
+      ),
+  );
+}
 
 export const workContentWarningDetails: Record<
   WorkContentWarning,

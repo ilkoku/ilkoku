@@ -1,0 +1,49 @@
+name: Temporary demo transaction repair
+
+on:
+  push:
+    branches:
+      - agent/demo-transaction-serialization
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Serialize Prisma interactive transaction queries
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path("src/features/demo-showcase/provision.ts"): (
+                  '''    const userEntries = await Promise.all(\n      demoShowcaseAccounts.map(async (account) => [\n        account.key,\n        await ensureDemoUser(transaction, account, passwordHash),\n      ] as const),\n    );''',
+                  '''    const userEntries: Array<readonly [DemoAccountKey, DemoUser]> = [];\n    for (const account of demoShowcaseAccounts) {\n      userEntries.push([\n        account.key,\n        await ensureDemoUser(transaction, account, passwordHash),\n      ]);\n    }''',
+              ),
+              Path("src/features/demo-showcase/writer-levels.ts"): (
+                  '''    const [editorA, editorB, reader, publisher] = await Promise.all([\n      transaction.user.findUnique({\n        where: { email: supportEmails.editorA },\n        select: { id: true },\n      }),\n      transaction.user.findUnique({\n        where: { email: supportEmails.editorB },\n        select: { id: true },\n      }),\n      transaction.user.findUnique({\n        where: { email: supportEmails.reader },\n        select: { id: true },\n      }),\n      transaction.publisher.findUnique({\n        where: { slug: demoPublisherSlug },\n        select: { id: true },\n      }),\n    ]);''',
+                  '''    const editorA = await transaction.user.findUnique({\n      where: { email: supportEmails.editorA },\n      select: { id: true },\n    });\n    const editorB = await transaction.user.findUnique({\n      where: { email: supportEmails.editorB },\n      select: { id: true },\n    });\n    const reader = await transaction.user.findUnique({\n      where: { email: supportEmails.reader },\n      select: { id: true },\n    });\n    const publisher = await transaction.publisher.findUnique({\n      where: { slug: demoPublisherSlug },\n      select: { id: true },\n    });''',
+              ),
+          }
+
+          for path, (old, new) in replacements.items():
+              text = path.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one replacement in {path}, found {count}")
+              path.write_text(text.replace(old, new))
+          PY
+      - name: Remove temporary workflow and commit repair
+        run: |
+          rm .github/workflows/tmp-demo-transaction-serialization.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Serialize demo interactive transaction queries"
+          git push origin HEAD:agent/demo-transaction-serialization

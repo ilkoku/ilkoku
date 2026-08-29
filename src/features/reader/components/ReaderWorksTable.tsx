@@ -91,6 +91,10 @@ function appendReturnPath(href: string, returnTo: string) {
   return `${href}${separator}from=${encodeURIComponent(returnTo)}`;
 }
 
+function passportHref(slug: string, returnTo: string) {
+  return appendReturnPath(`/kitap/${slug}/pasaport`, returnTo);
+}
+
 export function ReaderWorksTable({
   emptyDescription,
   emptyTitle,
@@ -218,6 +222,12 @@ export function ReaderWorksTable({
                         >
                           Detay
                         </button>
+                        <Link
+                          className="workspace-row-action"
+                          href={passportHref(work.slug, returnTo)}
+                        >
+                          Eser Pasaportu
+                        </Link>
                         {work.readingState === "completed" ? (
                           <form action={restartReadingAction}>
                             <input
@@ -462,6 +472,12 @@ export function ReaderWorksTable({
               href={appendReturnPath(`/kitap/${selectedWork.slug}`, returnTo)}
             >
               Eser Sayfası
+            </Link>
+            <Link
+              className="button button--outline"
+              href={passportHref(selectedWork.slug, returnTo)}
+            >
+              Eser Pasaportu
             </Link>
             {selectedWork.readingState ===
             "completed" ? (

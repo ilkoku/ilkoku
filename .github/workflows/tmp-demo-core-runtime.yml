@@ -1,0 +1,94 @@
+name: Temporary demo core runtime validation
+
+on:
+  push:
+    branches:
+      - agent/demo-core-durable-provision
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3306/ilkoku_ci"
+      DB_HOST: "127.0.0.1"
+      DB_PORT: "3306"
+      DB_NAME: "ilkoku_ci"
+      DB_USER: "ci_user"
+      DB_PASSWORD: "ci_password"
+      NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3000"
+      SITE_URL: "http://127.0.0.1:3000"
+      EMAIL_DELIVERY_MODE: "local"
+      ADMIN_ROLE_VIEW_SECRET: "ci-admin-role-view-secret-0000000000000000000000000000000000000000"
+      READING_ACCESS_HASH_SECRET: "ci-reading-access-hash-secret-00000000000000000000000000000000000000"
+      DEMO_CORE_CI_TOKEN: "demo-core-ci-token-2026"
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ilkoku_ci
+          MARIADB_USER: ci_user
+          MARIADB_PASSWORD: ci_password
+          MARIADB_ROOT_PASSWORD: ci_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma db push
+      - run: npx eslint src/features/demo-showcase/core-provision.ts src/features/demo-showcase/status.ts src/app/admin/demo/actions.ts src/app/api/internal/demo-core-ci/route.ts
+      - run: npm run build:ci
+      - name: Start application
+        run: |
+          npm start > /tmp/ilkoku-demo-core.log 2>&1 &
+          echo $! > /tmp/ilkoku-demo-core.pid
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:3000/giris >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/ilkoku-demo-core.log
+          exit 1
+      - name: Provision complete demo runtime
+        run: |
+          set -Eeuo pipefail
+          response="$(mktemp)"
+          code="$(curl --silent --show-error --output "$response" --write-out '%{http_code}' \
+            --request POST \
+            --header "x-demo-core-ci-token: ${DEMO_CORE_CI_TOKEN}" \
+            http://127.0.0.1:3000/api/internal/demo-core-ci)"
+          cat "$response"
+          echo
+          if [[ "$code" != "200" ]]; then
+            echo "Application log:"
+            cat /tmp/ilkoku-demo-core.log
+            exit 1
+          fi
+          node - "$response" <<'NODE'
+          const fs = require('node:fs');
+          const payload = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const core = payload.core ?? {};
+          const status = payload.status ?? {};
+          if (core.accounts < 16 || core.writers < 10 || core.works < 18 || core.publicWorks < 16) {
+            throw new Error(`Core verification failed: ${JSON.stringify(core)}`);
+          }
+          if (status.ready !== true) {
+            throw new Error(`Full demo status not ready: ${JSON.stringify(status)}`);
+          }
+          NODE
+      - name: Show application log on failure
+        if: failure()
+        run: cat /tmp/ilkoku-demo-core.log || true

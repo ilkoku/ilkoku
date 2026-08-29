@@ -20,6 +20,10 @@ import {
   type PublisherWorkDiscoveryFilters,
 } from "@/features/publisher-discovery/work-query";
 import { getActivePublisherEditorRequestWorkIds } from "@/features/publisher-editor-requests/repository";
+import {
+  publicWorkContentRatings,
+  workContentRatingDetails,
+} from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
 import "@/features/publisher-editor-requests/publisher-editor-requests.css";
 
@@ -56,6 +60,7 @@ function pageHref(
   if (filters.query) params.set("arama", filters.query);
   if (filters.genre) params.set("tur", filters.genre);
   if (filters.language) params.set("dil", filters.language);
+  if (filters.contentRating) params.set("hitap", filters.contentRating);
   if (filters.completion) {
     params.set("tamamlanma", filters.completion);
   }
@@ -139,6 +144,7 @@ export default async function PublisherWorkDiscoveryPage({
     filters.query ||
       filters.genre ||
       filters.language ||
+      filters.contentRating ||
       filters.completion ||
       filters.reviewStatus ||
       filters.sort !== "newest",
@@ -195,6 +201,21 @@ export default async function PublisherWorkDiscoveryPage({
               <option value="en">
                 İngilizce
               </option>
+            </select>
+          </label>
+
+          <label>
+            <span>Hitap yaşı</span>
+            <select
+              defaultValue={filters.contentRating}
+              name="hitap"
+            >
+              <option value="">Tümü</option>
+              {publicWorkContentRatings.map((rating) => (
+                <option key={rating} value={rating}>
+                  {workContentRatingDetails[rating].label}
+                </option>
+              ))}
             </select>
           </label>
 

@@ -61,7 +61,11 @@ test("18+ discovery requires both verified age and explicit consent without crea
   const publication = source("src/features/works/publish-work-event.ts");
 
   assertContains(policy, "adultEligibleAt", "adult access policy");
-  assertContains(policy, "isAdult && consented", "adult access policy");
+  assertContains(
+    policy,
+    "canAccessAdultContent: isAdult && Boolean(consentedAt)",
+    "adult access policy",
+  );
   assertContains(policy, 'entityType: AGE_VERIFICATION_ENTITY', "age verification audit");
   assertContains(policy, 'entityType: ADULT_CONSENT_ENTITY', "adult consent audit");
   assertContains(shell, 'redirect(\n        `/yas-dogrulama', "member age gate");

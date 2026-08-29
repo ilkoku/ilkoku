@@ -152,9 +152,12 @@ test("content and age policy is enforced from work creation to the public readin
   const showcase = source("src/features/showcase/components/BookShowcase.tsx");
   const library = source("src/features/public-discovery/library.ts");
   const publicStream = source("src/features/public-discovery/PublicWorkStream.tsx");
+  const adultAccess = source("src/lib/adult-content-access.ts");
+  const memberQueries = source("src/features/works/member-public-queries.ts");
 
   contains(content, "eserin tamamındaki en yoğun içeriğe göre", "highest-intensity rule");
-  contains(content, "18+ olarak beyan edilen eser taslakta saklanabilir ancak keşfe açık vitrinde yayımlanamaz", "truthful adult publication boundary");
+  contains(content, "18+ eserler İlkOku'da yayımlanabilir", "truthful adult publication boundary");
+  contains(content, "iki ayrı koşul birlikte aranır", "two-step adult access policy");
   contains(content, "doğru eserle doğru beklentiyle buluşturmaktır", "reader discovery value");
   contains(content, "Sınıflandırılmadı", "legacy unrated boundary");
   notContains(content, "yayın öncesinde insan eliyle incelenir", "no fabricated pre-publication review");
@@ -180,16 +183,18 @@ test("content and age policy is enforced from work creation to the public readin
 
   const lockIndex = publish.indexOf("FOR UPDATE");
   const unratedIndex = publish.indexOf('locked[0].contentRating === "unrated"');
-  const adultIndex = publish.indexOf('locked[0].contentRating === "adult_18"');
   const publicUpdateIndex = publish.indexOf('visibility: "public"');
   assert.ok(lockIndex >= 0 && lockIndex < unratedIndex, "classification gate must run after canonical row lock");
-  assert.ok(unratedIndex < adultIndex && adultIndex < publicUpdateIndex, "classification gates must run before public mutation");
+  assert.ok(unratedIndex < publicUpdateIndex, "classification confirmation must run before public mutation");
+  notContains(publish, "18+ eserlerin herkese açık yayını", "retired blanket adult publication block");
 
   contains(showcase, 'aria-labelledby="icerik-sinifi"', "reading-before-rating disclosure");
   contains(showcase, "parseWorkContentWarnings", "public warning normalization");
   assert.ok(showcase.indexOf("showcase-content-rating") < showcase.indexOf("showcase-cta"), "rating must be rendered before reading CTA");
   contains(library, "contentRating: true", "public discovery rating projection");
-  contains(library, 'not: "adult_18"', "adult discovery defense in depth");
+  contains(library, 'not: "adult_18"', "anonymous adult discovery defense in depth");
+  contains(adultAccess, "canAccessAdultContent: isAdult && Boolean(consentedAt)", "member adult two-step decision");
+  contains(memberQueries, "getAdultContentAccess", "member public query age and consent boundary");
   contains(publicStream, "workContentRatingDetails[work.contentRating].shortLabel", "public discovery rating label");
   notContains(source("src/features/works/repository.ts"), "async publishWork(", "legacy publication bypass");
   notContains(source("src/features/works/repository.ts"), "async publishChapter(", "legacy chapter publication bypass");
@@ -352,6 +357,7 @@ test("public discovery keeps the anonymous-to-member reading line closed", () =>
     'redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`)',
     "chapter authentication redirect",
   );
+  contains(chapter, "enforceAdultWorkGate", "adult reading gate");
 
   contains(readingExperience, "bookReturnPath", "reading back-link context");
   contains(readingExperience, "currentChapterPath", "reading action return context");

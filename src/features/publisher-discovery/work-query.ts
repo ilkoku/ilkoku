@@ -4,7 +4,8 @@ import type {
 import { commonDiscoveryWorkWhere } from "@/features/discovery/common-work-scope";
 import { prisma } from "@/lib/prisma";
 import {
-  isPublicWorkContentRating,
+  isPublicStoredWorkContentRating,
+  type PublicStoredWorkContentRating,
   type StoredWorkContentRating,
 } from "@/lib/work-content-classification";
 
@@ -24,7 +25,7 @@ type ReviewStatus =
 
 export interface PublisherWorkDiscoveryFilters {
   completion: "" | "completed" | "ongoing";
-  contentRating: StoredWorkContentRating | "";
+  contentRating: PublicStoredWorkContentRating | "";
   genre: string;
   language: string;
   page: number;
@@ -108,7 +109,7 @@ export function normalizePublisherWorkDiscoveryFilters(
         ? completion
         : "",
     contentRating:
-      isPublicWorkContentRating(contentRating)
+      isPublicStoredWorkContentRating(contentRating)
         ? contentRating
         : "",
     genre:

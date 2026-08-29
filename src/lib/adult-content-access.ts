@@ -137,7 +137,7 @@ export async function getAdultContentAccess(
   return {
     adultEligibleAt,
     birthYear: verifiedBirthYear,
-    canAccessAdultContent: isAdult && consented,
+    canAccessAdultContent: isAdult && Boolean(consentedAt),
     consentedAt,
     isAdult,
     needsBirthDate: adultEligibleAt === null,

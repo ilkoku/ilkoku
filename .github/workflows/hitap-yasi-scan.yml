@@ -17,10 +17,10 @@ jobs:
         shell: bash
         run: |
           echo '=== CONTENT RATING REFERENCES ==='
-          rg -n --hidden --glob '!src/generated/**' --glob '!node_modules/**' 'contentRating|workContentRating|İçerik sınıfı|İçerik ve yaş sınıfı|Yaş sınıfı|Hitap yaşı' src prisma || true
+          grep -RInE --exclude-dir=generated --exclude-dir=node_modules 'contentRating|workContentRating|İçerik sınıfı|İçerik ve yaş sınıfı|Yaş sınıfı|Hitap yaşı' src prisma || true
           echo '=== PASSPORT / OWNERSHIP REFERENCES ==='
-          rg -n --hidden --glob '!src/generated/**' 'Pasaport|pasaport|Passport|passport|OwnershipStamp|ownershipStamp|publicId|WorkVersion' src || true
+          grep -RInE --exclude-dir=generated 'Pasaport|pasaport|Passport|passport|OwnershipStamp|ownershipStamp|publicId|WorkVersion' src || true
           echo '=== WORK SEARCH / FILTER SURFACES ==='
-          rg -n --hidden --glob '!src/generated/**' 'Eser veya yazar|Eser adı|eser ara|Eser ara|work.*search|search.*work|name="arama"|name="tur"|Filtrele|filter' src/app src/features | head -n 1200 || true
+          grep -RInE --exclude-dir=generated 'Eser veya yazar|Eser adı|eser ara|Eser ara|work.*search|search.*work|name="arama"|name="tur"|Filtrele|filter' src/app src/features | head -n 1200 || true
           echo '=== READER WORK TABLE CALLERS ==='
-          rg -n --hidden --glob '!src/generated/**' 'ReaderWorksTable|ReaderWorkRow' src || true
+          grep -RInE --exclude-dir=generated 'ReaderWorksTable|ReaderWorkRow' src || true

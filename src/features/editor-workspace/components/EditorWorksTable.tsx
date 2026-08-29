@@ -274,6 +274,14 @@ export function EditorWorksTable({
                         mode={mode}
                         work={work}
                       />
+                      {mode === "discovery" ? (
+                        <Link
+                          className="editor-table-action"
+                          href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent("/editor/kesfet")}`}
+                        >
+                          Eser Pasaportu
+                        </Link>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

@@ -13,14 +13,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Scan work classification and work-facing surfaces
+      - name: Print target contexts
         shell: bash
         run: |
-          echo '=== CONTENT RATING REFERENCES ==='
-          grep -RInE --exclude-dir=generated --exclude-dir=node_modules 'contentRating|workContentRating|İçerik sınıfı|İçerik ve yaş sınıfı|Yaş sınıfı|Hitap yaşı' src prisma || true
-          echo '=== PASSPORT / OWNERSHIP REFERENCES ==='
-          grep -RInE --exclude-dir=generated 'Pasaport|pasaport|Passport|passport|OwnershipStamp|ownershipStamp|publicId|WorkVersion' src || true
-          echo '=== WORK SEARCH / FILTER SURFACES ==='
-          grep -RInE --exclude-dir=generated 'Eser veya yazar|Eser adı|eser ara|Eser ara|work.*search|search.*work|name="arama"|name="tur"|Filtrele|filter' src/app src/features | head -n 1200 || true
-          echo '=== READER WORK TABLE CALLERS ==='
-          grep -RInE --exclude-dir=generated 'ReaderWorksTable|ReaderWorkRow' src || true
+          show() { echo; echo "===== $1 ====="; nl -ba "$1" | sed -n "$2"; }
+          show src/app/kesfet/page.tsx '1,360p'
+          show src/features/public-discovery/library.ts '1,320p'
+          show src/features/public-discovery/PublicWorkFeedPage.tsx '1,320p'
+          show src/app/eserler/page.tsx '1,300p'
+          show src/app/editor/kesfet/page.tsx '1,360p'
+          show src/features/publisher-discovery/work-query.ts '1,420p'
+          show src/features/publisher-discovery/components/PublisherWorksTable.tsx '1,360p'
+          show src/app/yayinevi/kesfet/eserler/page.tsx '1,360p'
+          show src/features/publisher-discovery/work-favorites-query.ts '1,360p'
+          show src/app/yayinevi/begenilerim/page.tsx '1,300p'
+          show src/app/yayinevi/favorilerim/page.tsx '1,300p'
+          show src/features/publisher-discovery/components/PublisherLikedWorksTable.tsx '1,300p'
+          show src/features/publisher-discovery/components/PublisherFavoriteWorksTable.tsx '1,300p'
+          show src/features/works/components/WorksWorkspace.tsx '1,520p'
+          show src/features/works/components/NewWorkFlow.tsx '1,520p'
+          show src/features/works/components/WorkEditDialog.tsx '1,520p'
+          show src/features/ownership/types.ts '1,220p'
+          show src/features/ownership/queries.ts '1,420p'
+          show src/features/ownership/components/OwnershipPassport.tsx '1,460p'
+          show src/app/admin/eserler/page.tsx '1,420p'
+          show src/app/admin/eserler/[workId]/page.tsx '1,420p'
+          show src/app/okuyucu/page.tsx '1,420p'
+          show src/app/tamamlanan-eserler/page.tsx '1,320p'
+          show src/app/favorilerim/page.tsx '1,320p'
+          show src/app/okumaya-devam/page.tsx '1,320p'

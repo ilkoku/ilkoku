@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { AppShell } from "@/components/layout/AppShell";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
+import { getCommonEditorDiscovery } from "@/features/editor-workspace/common-discovery-query";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorksTable } from "@/features/editor-workspace/components/EditorWorksTable";
-import { getEditorDiscovery } from "@/features/editor-workspace/queries";
 
 export const metadata: Metadata = {
   title: "Editör Keşfet | İlkOku",
-  description: "Tamamlanmış ve yayımlanmış eserleri keşfedin.",
+  description: "İlkOku ortak havuzundaki yayımlanmış eserleri keşfedin.",
 };
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export default async function EditorDiscoveryPage({
 }) {
   const profile = await requireEditorProfile("/editor/kesfet");
   const parameters = await searchParams;
-  const works = await getEditorDiscovery(profile.id, {
+  const works = await getCommonEditorDiscovery(profile.id, {
     genre: parameters.tur,
     language: parameters.dil,
     reviewStatus: parameters.durum,
@@ -35,7 +35,7 @@ export default async function EditorDiscoveryPage({
     <AppShell profile={profile}>
       <div className="editor-workspace">
         <EditorPageHeader
-          description="Tamamlanmış ve yayımlanmış eserleri okur deneyiminin içinde keşfedin."
+          description="Okuyucu ve yayınevleriyle aynı ortak Keşfet havuzundaki yayımlanmış eserleri inceleyin."
           title="Keşfet"
         />
 

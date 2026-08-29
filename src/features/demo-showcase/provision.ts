@@ -614,12 +614,13 @@ export async function provisionDemoShowcase(input: {
   const pendingInvitationTokenHash = digest(randomBytes(32).toString("base64url"));
 
   await prisma.$transaction(async (transaction) => {
-    const userEntries = await Promise.all(
-      demoShowcaseAccounts.map(async (account) => [
+    const userEntries: Array<readonly [DemoAccountKey, DemoUser]> = [];
+    for (const account of demoShowcaseAccounts) {
+      userEntries.push([
         account.key,
         await ensureDemoUser(transaction, account, passwordHash),
-      ] as const),
-    );
+      ]);
+    }
     const users = Object.fromEntries(userEntries) as Record<
       DemoAccountKey,
       DemoUser

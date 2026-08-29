@@ -15,7 +15,7 @@ import "@/features/reader/reader-discovery.css";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
-  description: "İlkOku'da yayımlanan eserleri keşfedin.",
+  description: "İlkOku'da kayıtlı ve keşfe açık eserleri keşfedin.",
   title: "Keşfet | İlkOku",
 };
 
@@ -114,18 +114,11 @@ export default async function ReaderExplorePage({
 
   const where: Prisma.WorkWhereInput = {
     archivedAt: null,
-    publishedAt: { not: null },
-    status: "published",
     visibility: "public",
     author: {
       is: {
         deletedAt: null,
         status: "active",
-      },
-    },
-    readingProgress: {
-      none: {
-        userId: profile.id,
       },
     },
     ...(search
@@ -257,8 +250,8 @@ export default async function ReaderExplorePage({
     },
     orderBy:
       sort === "updated"
-        ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
-        : [{ publishedAt: "desc" }, { createdAt: "desc" }],
+        ? [{ updatedAt: "desc" }, { createdAt: "desc" }]
+        : [{ createdAt: "desc" }, { updatedAt: "desc" }],
     skip: (currentPage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
   });
@@ -310,7 +303,7 @@ export default async function ReaderExplorePage({
     <AppShell profile={profile}>
       <div className="editor-workspace">
         <EditorPageHeader
-          description="Yayımlanan eserleri tür, dil ve editör inceleme durumuna göre bulun."
+          description="Kayıtlı ve keşfe açık eserleri tür, dil ve editör inceleme durumuna göre bulun."
           eyebrow="Okuma dünyası"
           title="Keşfet"
         />

@@ -28,6 +28,10 @@ type SchemaEvidenceCheck = EvidenceCheck & {
 
 export type LiveSeoVerification = {
   robots: EvidenceCheck;
+  sitemap: EvidenceCheck & {
+    count: number | null;
+    duplicates: number | null;
+  };
   social: EvidenceCheck & {
     checked: number;
     failed: string[];
@@ -37,6 +41,7 @@ export type LiveSeoVerification = {
 };
 
 const baseUrl = "https://ilkoku.com";
+const minimumCoreSitemapUrls = 23;
 const requiredRobotsDisallow = [
   "/admin",
   "/icerik",
@@ -93,6 +98,10 @@ function hasSocialMetadata(html: string) {
   const twitterCard = /<meta[^>]+name=["']twitter:card["'][^>]*>/iu.test(html);
   const twitterImage = /<meta[^>]+name=["']twitter:image["'][^>]*>/iu.test(html);
   return openGraphImage && twitterCard && twitterImage;
+}
+
+function sitemapLocations(xml: string) {
+  return [...xml.matchAll(/<loc>([^<]+)<\/loc>/giu)].map((match) => match[1].trim());
 }
 
 function schemaTypesFromHtml(html: string) {
@@ -170,8 +179,9 @@ export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerificatio
     .filter((route): route is string => Boolean(route));
   const socialRoutes = [...staticSocialRoutes, ...dynamicSocialRoutes];
 
-  const [robotsResponse, socialResponses] = await Promise.all([
+  const [robotsResponse, sitemapResponse, socialResponses] = await Promise.all([
     fetchLive("/robots.txt"),
+    fetchLive("/sitemap.xml"),
     Promise.all(socialRoutes.map(async (route) => ({ route, response: await fetchLive(route) }))),
   ]);
 
@@ -190,6 +200,44 @@ export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerificatio
           state: "danger",
           detail: `${missingRules.length} zorunlu Disallow kuralı eksik${sitemapDeclared ? "" : " · sitemap ilanı eksik"}.`,
         };
+  }
+
+  let sitemap: LiveSeoVerification["sitemap"];
+  if (!sitemapResponse.ok || !sitemapResponse.text) {
+    sitemap = {
+      state: "warn",
+      count: null,
+      duplicates: null,
+      detail: `Canlı sitemap.xml okunamadı${sitemapResponse.status ? ` (HTTP ${sitemapResponse.status})` : ""}; URL kapsamı doğrulanamadı.`,
+    };
+  } else {
+    const locations = sitemapLocations(sitemapResponse.text);
+    const uniqueLocations = new Set(locations);
+    const duplicateCount = locations.length - uniqueLocations.size;
+    const invalidHostCount = locations.filter((location) => {
+      try {
+        const url = new URL(location);
+        return url.protocol !== "https:" || url.hostname !== "ilkoku.com";
+      } catch {
+        return true;
+      }
+    }).length;
+
+    if (locations.length < minimumCoreSitemapUrls || duplicateCount > 0 || invalidHostCount > 0) {
+      sitemap = {
+        state: "danger",
+        count: locations.length,
+        duplicates: duplicateCount,
+        detail: `${locations.length} canlı URL · ${duplicateCount} tekrar · ${invalidHostCount} geçersiz host/URL. Beklenen çekirdek kapsam en az ${minimumCoreSitemapUrls} URL.`,
+      };
+    } else {
+      sitemap = {
+        state: "ok",
+        count: locations.length,
+        duplicates: 0,
+        detail: `Canlı sitemap.xml doğrulandı: ${locations.length} benzersiz public URL, duplicate yok, canonical host ilkoku.com.`,
+      };
+    }
   }
 
   const unavailableSocial = socialResponses
@@ -264,6 +312,7 @@ export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerificatio
 
   return {
     robots,
+    sitemap,
     social,
     structuredData: {
       WebSite: website,

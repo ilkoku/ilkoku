@@ -73,6 +73,9 @@ export async function acceptAdultContentAction(formData: FormData) {
   }
 
   if (user.role === "admin") redirect(returnTo);
+  if (formData.get("adultConsent") !== "accepted") {
+    redirect(`/yetiskin-icerik-onayi?sonraki=${encodeURIComponent(returnTo)}&hata=onay`);
+  }
 
   const access = await getAdultContentAccess(user.id);
   if (access.needsBirthDate) {

@@ -57,79 +57,71 @@ export async function getScopedDemoShowcaseStatus(): Promise<DemoShowcaseStatus>
   });
   const publisherId = demoPublisher?.id ?? "__demo_publisher_missing__";
 
-  const [
-    accounts,
-    writers,
-    works,
-    publicWorks,
-    comments,
-    readerProgress,
-    editorAssignments,
-    notifications,
-    publisherShares,
-    publisherPermissionRequests,
-    publisherEditorRequests,
-    publisherSubmissions,
-  ] = await Promise.all([
-    prisma.user.count({
-      where: {
-        deletedAt: null,
-        email: { in: accountEmails },
-      },
-    }),
-    prisma.user.count({
-      where: {
-        deletedAt: null,
-        email: { in: writerEmails },
-        role: "writer",
-        status: "active",
-        works: {
-          some: {
-            archivedAt: null,
-            publishedAt: { not: null },
-            status: "published",
-            visibility: "public",
-          },
+  const accounts = await prisma.user.count({
+    where: {
+      deletedAt: null,
+      email: { in: accountEmails },
+    },
+  });
+  const writers = await prisma.user.count({
+    where: {
+      deletedAt: null,
+      email: { in: writerEmails },
+      role: "writer",
+      status: "active",
+      works: {
+        some: {
+          archivedAt: null,
+          publishedAt: { not: null },
+          status: "published",
+          visibility: "public",
         },
       },
-    }),
-    prisma.work.count({
-      where: { slug: { in: allDemoWorkSlugs } },
-    }),
-    prisma.work.count({
-      where: {
-        slug: { in: allDemoWorkSlugs },
-        status: "published",
-        visibility: "public",
-      },
-    }),
-    prisma.comment.count({
-      where: {
-        work: { is: { slug: { in: allDemoWorkSlugs } } },
-      },
-    }),
-    prisma.readingProgress.count({
-      where: {
-        user: { is: { email: "demo-okuyucu@ilkoku.com" } },
-        work: { is: { slug: { in: allDemoWorkSlugs } } },
-      },
-    }),
-    prisma.editorReviewAssignment.count({
-      where: {
-        work: { is: { slug: { in: allDemoWorkSlugs } } },
-      },
-    }),
-    prisma.notification.count({
-      where: {
-        title: { startsWith: DEMO_TITLE_PREFIX },
-        user: { is: { email: { in: accountEmails } } },
-      },
-    }),
-    prisma.publisherDiscoveryShare.count({ where: { publisherId } }),
-    prisma.publisherPermissionRequest.count({ where: { publisherId } }),
-    prisma.publisherEditorRequest.count({ where: { publisherId } }),
-    prisma.publisherSubmission.count({ where: { publisherId } }),
-  ]);
+    },
+  });
+  const works = await prisma.work.count({
+    where: { slug: { in: allDemoWorkSlugs } },
+  });
+  const publicWorks = await prisma.work.count({
+    where: {
+      slug: { in: allDemoWorkSlugs },
+      status: "published",
+      visibility: "public",
+    },
+  });
+  const comments = await prisma.comment.count({
+    where: {
+      work: { is: { slug: { in: allDemoWorkSlugs } } },
+    },
+  });
+  const readerProgress = await prisma.readingProgress.count({
+    where: {
+      user: { is: { email: "demo-okuyucu@ilkoku.com" } },
+      work: { is: { slug: { in: allDemoWorkSlugs } } },
+    },
+  });
+  const editorAssignments = await prisma.editorReviewAssignment.count({
+    where: {
+      work: { is: { slug: { in: allDemoWorkSlugs } } },
+    },
+  });
+  const notifications = await prisma.notification.count({
+    where: {
+      title: { startsWith: DEMO_TITLE_PREFIX },
+      user: { is: { email: { in: accountEmails } } },
+    },
+  });
+  const publisherShares = await prisma.publisherDiscoveryShare.count({
+    where: { publisherId },
+  });
+  const publisherPermissionRequests =
+    await prisma.publisherPermissionRequest.count({ where: { publisherId } });
+  const publisherEditorRequests = await prisma.publisherEditorRequest.count({
+    where: { publisherId },
+  });
+  const publisherSubmissions = await prisma.publisherSubmission.count({
+    where: { publisherId },
+  });
 
   const publisherReady = Boolean(
     demoPublisher?.active && !demoPublisher.archivedAt,

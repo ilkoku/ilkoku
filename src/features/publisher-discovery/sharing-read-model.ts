@@ -1,17 +1,21 @@
 import "server-only";
 
+import { adultContentWorkVisibility, getAdultContentAccess } from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
 import {
   getPublisherSharedItems,
   type PublisherSharedItem,
 } from "./sharing-repository";
 
-const publicWorkWhere = {
-  archivedAt: null,
-  publishedAt: { not: null },
-  status: "published" as const,
-  visibility: "public" as const,
-};
+function publicWorkWhere(canAccessAdultContent: boolean) {
+  return {
+    archivedAt: null,
+    ...adultContentWorkVisibility(canAccessAdultContent),
+    publishedAt: { not: null },
+    status: "published" as const,
+    visibility: "public" as const,
+  };
+}
 
 function publicAuthorName(author: {
   displayName: string | null;
@@ -35,6 +39,10 @@ export async function getPublisherSharedItemsCurrentPublic(
   const data = await getPublisherSharedItems(userId);
   if (!data) return null;
 
+  const canAccessAdultContent = data.adminReadOnly
+    ? true
+    : (await getAdultContentAccess(userId)).canAccessAdultContent;
+  const workScope = publicWorkWhere(canAccessAdultContent);
   const workIds = Array.from(
     new Set(
       data.items
@@ -54,7 +62,7 @@ export async function getPublisherSharedItemsCurrentPublic(
     workIds.length
       ? prisma.work.findMany({
           where: {
-            ...publicWorkWhere,
+            ...workScope,
             id: { in: workIds },
             author: {
               is: {
@@ -64,11 +72,7 @@ export async function getPublisherSharedItemsCurrentPublic(
               },
             },
           },
-          select: {
-            id: true,
-            slug: true,
-            title: true,
-          },
+          select: { id: true, slug: true, title: true },
         })
       : [],
     authorIds.length
@@ -78,7 +82,7 @@ export async function getPublisherSharedItemsCurrentPublic(
             id: { in: authorIds },
             role: "writer",
             status: "active",
-            works: { some: publicWorkWhere },
+            works: { some: publicWorkWhere(false) },
           },
           select: {
             displayName: true,
@@ -90,40 +94,38 @@ export async function getPublisherSharedItemsCurrentPublic(
       : [],
   ]);
 
-  const workById = new Map(
-    works.map((work) => [work.id, work]),
-  );
-  const authorById = new Map(
-    authors.map((author) => [author.id, author]),
-  );
+  const workById = new Map(works.map((work) => [work.id, work]));
+  const authorById = new Map(authors.map((author) => [author.id, author]));
 
   return {
     ...data,
-    items: data.items.map((item) => {
-      const work = item.work
-        ? workById.get(item.work.id) ?? null
-        : null;
-      const author = item.author
-        ? authorById.get(item.author.id) ?? null
-        : null;
+    items: data.items
+      .map((item) => {
+        const work = item.work
+          ? workById.get(item.work.id) ?? null
+          : null;
+        const author = item.author
+          ? authorById.get(item.author.id) ?? null
+          : null;
 
-      return {
-        ...item,
-        author: author
-          ? {
-              id: author.id,
-              name: publicAuthorName(author),
-              publicId: author.publicId,
-            }
-          : null,
-        work: work
-          ? {
-              id: work.id,
-              slug: work.slug,
-              title: work.title,
-            }
-          : null,
-      };
-    }),
+        return {
+          ...item,
+          author: author
+            ? {
+                id: author.id,
+                name: publicAuthorName(author),
+                publicId: author.publicId,
+              }
+            : null,
+          work: work
+            ? {
+                id: work.id,
+                slug: work.slug,
+                title: work.title,
+              }
+            : null,
+        };
+      })
+      .filter((item) => item.work !== null || item.author !== null),
   };
 }

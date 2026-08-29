@@ -215,6 +215,7 @@ export default async function PublicAuthorPage({
             {author.works.map((work) => {
               const genre = work.genre?.trim();
               const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(profileContextPath)}`;
+              const passportHref = `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(profileContextPath)}`;
 
               return (
                 <article
@@ -263,6 +264,9 @@ export default async function PublicAuthorPage({
                           ).format(work.publishedAt)
                         : "Tarih belirtilmedi"}
                     </time>
+                    <Link href={passportHref}>
+                      Pasaport →
+                    </Link>
                     <Link href={bookHref}>
                       Eseri incele →
                     </Link>

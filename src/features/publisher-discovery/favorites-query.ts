@@ -1,17 +1,18 @@
 import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
+import { adultContentWorkVisibility } from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
 import {
-  isPublicStoredWorkContentRating,
-  type PublicStoredWorkContentRating,
+  isMemberStoredWorkContentRating,
+  type MemberStoredWorkContentRating,
   type StoredWorkContentRating,
 } from "@/lib/work-content-classification";
 
 const PAGE_SIZE = 20;
 
 export interface PublisherFavoriteFilters {
-  contentRating?: PublicStoredWorkContentRating;
+  contentRating?: MemberStoredWorkContentRating;
   page: number;
   query: string;
 }
@@ -59,7 +60,7 @@ export function normalizePublisherFavoriteFilters(
   const requestedRating = firstValue(input.hitap);
 
   return {
-    contentRating: isPublicStoredWorkContentRating(requestedRating)
+    contentRating: isMemberStoredWorkContentRating(requestedRating)
       ? requestedRating
       : undefined,
     page:
@@ -83,34 +84,33 @@ function publicWriterAlias(writer: {
   username: string | null;
 }) {
   const username = writer.username?.trim();
-
-  if (username) {
-    return username.startsWith("@") ? username : `@${username}`;
-  }
-
+  if (username) return username.startsWith("@") ? username : `@${username}`;
   return `@${writer.publicId.toLocaleLowerCase("tr-TR")}`;
 }
 
-const publicWorkWhere = {
-  archivedAt: null,
-  contentRating: {
-    not: "adult_18",
-  },
-  publishedAt: {
-    not: null,
-  },
-  status: "published",
-  visibility: "public",
-} satisfies Prisma.WorkWhereInput;
+function publicWorkWhere(canAccessAdultContent: boolean) {
+  return {
+    archivedAt: null,
+    ...adultContentWorkVisibility(canAccessAdultContent),
+    publishedAt: { not: null },
+    status: "published",
+    visibility: "public",
+  } satisfies Prisma.WorkWhereInput;
+}
 
 export async function getPublisherLikedWorks(
   publisherId: string,
   filters: PublisherFavoriteFilters,
+  canAccessAdultContent = false,
 ): Promise<PublisherLikedWorkData> {
+  const contentRating =
+    filters.contentRating === "adult_18" && !canAccessAdultContent
+      ? undefined
+      : filters.contentRating;
   const where: Prisma.PublisherWorkLikeWhereInput = {
     publisherId,
     work: {
-      ...publicWorkWhere,
+      ...publicWorkWhere(canAccessAdultContent),
       author: {
         is: {
           deletedAt: null,
@@ -118,9 +118,7 @@ export async function getPublisherLikedWorks(
           status: "active",
         },
       },
-      ...(filters.contentRating
-        ? { contentRating: filters.contentRating }
-        : {}),
+      ...(contentRating ? { contentRating } : {}),
       ...(filters.query
         ? {
             OR: [
@@ -161,10 +159,7 @@ export async function getPublisherLikedWorks(
           _count: {
             select: {
               comments: {
-                where: {
-                  deletedAt: null,
-                  status: "visible",
-                },
+                where: { deletedAt: null, status: "visible" },
               },
               favorites: true,
               ownershipStamps: true,
@@ -173,11 +168,7 @@ export async function getPublisherLikedWorks(
             },
           },
           author: {
-            select: {
-              displayName: true,
-              publicId: true,
-              username: true,
-            },
+            select: { displayName: true, publicId: true, username: true },
           },
           chapters: {
             where: {
@@ -186,10 +177,7 @@ export async function getPublisherLikedWorks(
               status: "published",
             },
             orderBy: { position: "asc" },
-            select: {
-              id: true,
-              position: true,
-            },
+            select: { id: true, position: true },
           },
           contentRating: true,
           editorReviewStatus: true,
@@ -205,8 +193,7 @@ export async function getPublisherLikedWorks(
     },
   });
 
-  const first =
-    totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const last = Math.min(currentPage * PAGE_SIZE, totalCount);
 
   return {

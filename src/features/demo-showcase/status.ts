@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { demoShowcaseAccounts } from "./provision";
+import { demoWriterLevels } from "./writer-levels";
 
 const DEMO_PUBLISHER_SLUG = "ilkoku-demo-yayinevi";
 const DEMO_TITLE_PREFIX = "Demo ·";
 
-const demoWorkSlugs = [
+const baseDemoWorkSlugs = [
   "demo-kayip-harfler",
   "demo-editore-hazir",
   "demo-ilk-inceleme",
@@ -15,6 +16,19 @@ const demoWorkSlugs = [
   "demo-taslak",
   "demo-arsiv",
 ] as const;
+
+const levelWorkSlugs = demoWriterLevels.flatMap((writer) =>
+  writer.workSlug ? [writer.workSlug] : [],
+);
+
+const allDemoWorkSlugs = [...baseDemoWorkSlugs, ...levelWorkSlugs];
+const writerEmails = demoWriterLevels.map((writer) => writer.email);
+const accountEmails = Array.from(
+  new Set([
+    ...demoShowcaseAccounts.map((account) => account.email),
+    ...writerEmails,
+  ]),
+);
 
 type ReadyCounter = {
   current: number;
@@ -33,10 +47,10 @@ export type DemoShowcaseStatus = {
   readerProgress: ReadyCounter;
   ready: boolean;
   works: ReadyCounter;
+  writers: ReadyCounter;
 };
 
 export async function getScopedDemoShowcaseStatus(): Promise<DemoShowcaseStatus> {
-  const emails = demoShowcaseAccounts.map((account) => account.email);
   const demoPublisher = await prisma.publisher.findUnique({
     where: { slug: DEMO_PUBLISHER_SLUG },
     select: { active: true, archivedAt: true, id: true },
@@ -45,6 +59,7 @@ export async function getScopedDemoShowcaseStatus(): Promise<DemoShowcaseStatus>
 
   const [
     accounts,
+    writers,
     works,
     publicWorks,
     comments,
@@ -59,53 +74,61 @@ export async function getScopedDemoShowcaseStatus(): Promise<DemoShowcaseStatus>
     prisma.user.count({
       where: {
         deletedAt: null,
-        email: { in: emails },
+        email: { in: accountEmails },
+      },
+    }),
+    prisma.user.count({
+      where: {
+        deletedAt: null,
+        email: { in: writerEmails },
+        role: "writer",
+        status: "active",
+        works: {
+          some: {
+            archivedAt: null,
+            publishedAt: { not: null },
+            status: "published",
+            visibility: "public",
+          },
+        },
       },
     }),
     prisma.work.count({
-      where: { slug: { in: [...demoWorkSlugs] } },
+      where: { slug: { in: allDemoWorkSlugs } },
     }),
     prisma.work.count({
       where: {
-        slug: { in: [...demoWorkSlugs] },
+        slug: { in: allDemoWorkSlugs },
         status: "published",
         visibility: "public",
       },
     }),
     prisma.comment.count({
       where: {
-        work: { is: { slug: { in: [...demoWorkSlugs] } } },
+        work: { is: { slug: { in: allDemoWorkSlugs } } },
       },
     }),
     prisma.readingProgress.count({
       where: {
-        user: { is: { email: demoShowcaseAccounts[0].email } },
-        work: { is: { slug: { in: [...demoWorkSlugs] } } },
+        user: { is: { email: "demo-okuyucu@ilkoku.com" } },
+        work: { is: { slug: { in: allDemoWorkSlugs } } },
       },
     }),
     prisma.editorReviewAssignment.count({
       where: {
-        work: { is: { slug: { in: [...demoWorkSlugs] } } },
+        work: { is: { slug: { in: allDemoWorkSlugs } } },
       },
     }),
     prisma.notification.count({
       where: {
         title: { startsWith: DEMO_TITLE_PREFIX },
-        user: { is: { email: { in: emails } } },
+        user: { is: { email: { in: accountEmails } } },
       },
     }),
-    prisma.publisherDiscoveryShare.count({
-      where: { publisherId },
-    }),
-    prisma.publisherPermissionRequest.count({
-      where: { publisherId },
-    }),
-    prisma.publisherEditorRequest.count({
-      where: { publisherId },
-    }),
-    prisma.publisherSubmission.count({
-      where: { publisherId },
-    }),
+    prisma.publisherDiscoveryShare.count({ where: { publisherId } }),
+    prisma.publisherPermissionRequest.count({ where: { publisherId } }),
+    prisma.publisherEditorRequest.count({ where: { publisherId } }),
+    prisma.publisherSubmission.count({ where: { publisherId } }),
   ]);
 
   const publisherReady = Boolean(
@@ -120,18 +143,18 @@ export async function getScopedDemoShowcaseStatus(): Promise<DemoShowcaseStatus>
   const status = {
     accounts: {
       current: accounts,
-      expected: 7,
-      ready: accounts >= 7,
+      expected: 16,
+      ready: accounts >= 16,
     },
     comments: {
       current: comments,
-      expected: 5,
-      ready: comments >= 5,
+      expected: 7,
+      ready: comments >= 7,
     },
     editorAssignments: {
       current: editorAssignments,
-      expected: 10,
-      ready: editorAssignments >= 10,
+      expected: 24,
+      ready: editorAssignments >= 24,
     },
     notifications: {
       current: notifications,
@@ -140,8 +163,8 @@ export async function getScopedDemoShowcaseStatus(): Promise<DemoShowcaseStatus>
     },
     publicWorks: {
       current: publicWorks,
-      expected: 7,
-      ready: publicWorks >= 7,
+      expected: 16,
+      ready: publicWorks >= 16,
     },
     publisher: {
       current: publisherReady ? 1 : 0,
@@ -164,8 +187,13 @@ export async function getScopedDemoShowcaseStatus(): Promise<DemoShowcaseStatus>
     },
     works: {
       current: works,
-      expected: 9,
-      ready: works >= 9,
+      expected: 18,
+      ready: works >= 18,
+    },
+    writers: {
+      current: writers,
+      expected: 10,
+      ready: writers >= 10,
     },
   } satisfies Omit<DemoShowcaseStatus, "ready">;
 

@@ -410,6 +410,7 @@ export async function getOwnershipPassport(
               work.author.fullName
             ),
       authorPublicId: work.author.publicId,
+      contentRating: work.contentRating,
       createdAt: work.createdAt,
       editorReviewStatus:
         work.editorReviewStatus,

@@ -1,3 +1,5 @@
+import type { StoredWorkContentRating } from "@/lib/work-content-classification";
+
 export type OwnershipPassportScope =
   | {
       kind: "admin";
@@ -77,6 +79,7 @@ export type OwnershipPassportData = {
   work: {
     authorName: string;
     authorPublicId: string;
+    contentRating: StoredWorkContentRating;
     createdAt: Date;
     editorReviewStatus: string;
     genre: string | null;

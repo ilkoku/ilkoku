@@ -32,6 +32,7 @@ export default async function ReaderFavoritesPage() {
     authorUsername: work.authorUsername,
     chapterCount: work.chapterCount,
     commentCount: work.commentCount,
+    contentRating: work.contentRating,
     coverUrl: work.coverUrl,
     description: work.description,
     editorReviewStatus:

@@ -1,3 +1,5 @@
+import type { StoredWorkContentRating } from "@/lib/work-content-classification";
+
 export type EditorActionState = {
   inviteUrl?: string;
   message: string;
@@ -13,6 +15,7 @@ export type EditorWorkCardData = {
   assignedEditorId: string | null;
   authorName: string;
   chapterCount: number;
+  contentRating?: StoredWorkContentRating;
   coverUrl: string | null;
   editorReviewStatus:
     | "not_requested"

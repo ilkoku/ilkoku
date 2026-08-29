@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { workContentRatingDetails } from "@/lib/work-content-classification";
+
 import type { OwnershipPassportData } from "../types";
 import styles from "./OwnershipPassport.module.css";
 
@@ -198,6 +200,12 @@ export function OwnershipPassport({
               <dt>Tür</dt>
               <dd>
                 {data.work.genre ?? "Belirtilmedi"}
+              </dd>
+            </div>
+            <div>
+              <dt>Hitap yaşı</dt>
+              <dd>
+                {workContentRatingDetails[data.work.contentRating].label}
               </dd>
             </div>
             <div>

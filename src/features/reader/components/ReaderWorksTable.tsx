@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { restartReadingAction } from "@/features/reading/progress";
+import {
+  workContentRatingDetails,
+  type StoredWorkContentRating,
+} from "@/lib/work-content-classification";
 import "./reader-works-table.css";
 
 export type ReaderWorkRow = {
@@ -11,6 +15,7 @@ export type ReaderWorkRow = {
   chapterCount: number;
   commentCount: number;
   completedAt?: string | null;
+  contentRating: StoredWorkContentRating;
   coverUrl: string | null;
   description?: string | null;
   editorReviewStatus:
@@ -135,6 +140,7 @@ export function ReaderWorksTable({
                 <th>Eser</th>
                 <th>Yazar</th>
                 <th>Tür</th>
+                <th>Hitap yaşı</th>
                 <th>Bölüm</th>
                 <th>İlerleme</th>
                 <th>Okur</th>
@@ -176,6 +182,9 @@ export function ReaderWorksTable({
                     </td>
                     <td data-label="Yazar">{work.authorName}</td>
                     <td data-label="Tür">{work.genre ?? "Belirtilmedi"}</td>
+                    <td data-label="Hitap yaşı">
+                      {workContentRatingDetails[work.contentRating].shortLabel}
+                    </td>
                     <td data-label="Bölüm">{formatNumber(work.chapterCount)}</td>
                     <td data-label="İlerleme">
                       {typeof work.progressPercent === "number" ? (
@@ -303,6 +312,13 @@ export function ReaderWorksTable({
                 <dd>
                   {selectedWork.genre ??
                     "Belirtilmedi"}
+                </dd>
+              </div>
+
+              <div>
+                <dt>Hitap yaşı</dt>
+                <dd>
+                  {workContentRatingDetails[selectedWork.contentRating].label}
                 </dd>
               </div>
 

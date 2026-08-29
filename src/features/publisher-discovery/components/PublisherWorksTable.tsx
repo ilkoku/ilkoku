@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PublisherEditorRequestForm } from "@/features/publisher-editor-requests/components/PublisherEditorRequestForm";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 import { togglePublisherWorkLikeAction } from "../engagement-actions";
 import { togglePublisherWorkFavoriteAction } from "../engagement-extended-actions";
 import type { PublisherWorkDiscoveryRow } from "../work-query";
@@ -71,6 +72,7 @@ export function PublisherWorksTable({
             <th>Eser</th>
             <th>Yazar</th>
             <th>Tür / Dil</th>
+            <th>Hitap Yaşı</th>
             <th>Durum</th>
             <th>Editör</th>
             <th>Metrikler</th>
@@ -110,6 +112,10 @@ export function PublisherWorksTable({
               <td data-label="Tür / Dil">
                 <span>{work.genre || "Tür belirtilmedi"}</span>
                 <small>{languageLabel(work.language)}</small>
+              </td>
+
+              <td data-label="Hitap Yaşı">
+                <span>{workContentRatingDetails[work.contentRating].shortLabel}</span>
               </td>
 
               <td data-label="Durum">

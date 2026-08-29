@@ -42,6 +42,8 @@ export default async function ContinueReadingPage() {
         progress.work.chapters.length,
       commentCount:
         progress.work._count.comments,
+      contentRating:
+        progress.work.contentRating,
       coverUrl:
         progress.work.coverUrl,
       description:

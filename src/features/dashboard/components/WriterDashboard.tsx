@@ -4,6 +4,7 @@ import { DashboardFeedback } from "@/features/feedback/components/DashboardFeedb
 import type { DashboardFeedbackItem } from "@/features/feedback/types";
 import type { WorkWithChapterSummary } from "@/features/works/types";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 import { BookCard } from "./BookCard";
 import { MetricCard } from "./MetricCard";
@@ -153,7 +154,8 @@ export function WriterDashboard({
 
               <div className="latest-work__content">
                 <p>
-                  {latestWork.genre ?? "Tür belirtilmedi"}
+                  {latestWork.genre ?? "Tür belirtilmedi"} ·{" "}
+                  {workContentRatingDetails[latestWork.contentRating].shortLabel}
                 </p>
 
                 <h3>{latestWork.title}</h3>

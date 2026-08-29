@@ -3,6 +3,7 @@ import { dashboardContent } from "@/content";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { ArchiveWorkButton } from "@/features/works/components/ArchiveWorkButton";
 import type { WorkWithChapterSummary } from "@/features/works/types";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 import { ProgressBar } from "./ProgressBar";
 
 type BookCardProps = {
@@ -77,7 +78,8 @@ export function BookCard({
 
       <div className="book-card__content">
         <p className="book-card__genre">
-          {work.genre ?? "Tür belirtilmedi"}
+          {work.genre ?? "Tür belirtilmedi"} ·{" "}
+          {workContentRatingDetails[work.contentRating].shortLabel}
         </p>
 
         <h3>{work.title}</h3>

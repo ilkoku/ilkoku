@@ -186,7 +186,7 @@ export function EditorWorksTable({
               <th>Eser</th>
               <th>Rumuz</th>
               <th>Tür</th>
-              <th>Hitap Yaşı</th>
+              {mode === "discovery" ? <th>Hitap Yaşı</th> : null}
               <th>Bölüm</th>
               <th>Yayın Tarihi</th>
               <th>
@@ -231,9 +231,13 @@ export function EditorWorksTable({
                     {work.genre ?? "Belirtilmedi"}
                   </td>
 
-                  <td data-label="Hitap Yaşı">
-                    {workContentRatingDetails[work.contentRating].shortLabel}
-                  </td>
+                  {mode === "discovery" ? (
+                    <td data-label="Hitap Yaşı">
+                      {work.contentRating
+                        ? workContentRatingDetails[work.contentRating].shortLabel
+                        : "Sınıflandırılmadı"}
+                    </td>
+                  ) : null}
 
                   <td data-label="Bölüm">
                     {formatNumber(work.chapterCount)}

@@ -21,7 +21,7 @@ import {
 } from "@/features/publisher-discovery/work-query";
 import { getActivePublisherEditorRequestWorkIds } from "@/features/publisher-editor-requests/repository";
 import {
-  publicWorkContentRatings,
+  publicStoredWorkContentRatings,
   workContentRatingDetails,
 } from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
@@ -211,7 +211,7 @@ export default async function PublisherWorkDiscoveryPage({
               name="hitap"
             >
               <option value="">Tümü</option>
-              {publicWorkContentRatings.map((rating) => (
+              {publicStoredWorkContentRatings.map((rating) => (
                 <option key={rating} value={rating}>
                   {workContentRatingDetails[rating].label}
                 </option>

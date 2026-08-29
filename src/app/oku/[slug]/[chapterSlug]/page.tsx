@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { readingContent } from "@/content";
+import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { EditorReviewReadingMode } from "@/features/editor-workspace/components/EditorReviewReadingMode";
 import {
   getActiveEditorReviewAssignment,
@@ -13,7 +14,7 @@ import { getFavoriteStatus } from "@/features/reader/favorites";
 import { recordReadingAccessSafely } from "@/features/reading/access";
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
 import { getReadingProgress } from "@/features/reading/progress";
-import { getPublicChapter } from "@/features/works/queries";
+import { getMemberPublicChapter } from "@/features/works/member-public-queries";
 import { getCurrentSessionContext } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
@@ -51,16 +52,21 @@ export default async function DynamicReadingPage({
   const query = await searchParams;
   const publicReturnTo = getSafeReturnPath(query.from);
   const auth = await getCurrentSessionContext();
+  const reviewModeParameter = query.inceleme === "1" ? "&inceleme=1" : "";
+  const directReturnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}${reviewModeParameter}`;
 
   if (!auth) {
-    const reviewModeParameter = query.inceleme === "1" ? "&inceleme=1" : "";
-    const returnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}${reviewModeParameter}`;
-    redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`);
+    redirect(`/giris?sonraki=${encodeURIComponent(directReturnPath)}`);
   }
 
   const { sessionId, user } = auth;
-  const chapter = await getPublicChapter(slug, chapterSlug);
+  await enforceAdultWorkGate({
+    returnTo: directReturnPath,
+    slug,
+    user,
+  });
 
+  const chapter = await getMemberPublicChapter(slug, chapterSlug, user.id);
   if (!chapter) notFound();
 
   const reviewAssignment =

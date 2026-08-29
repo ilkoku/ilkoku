@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { commonDiscoveryWorkWhere } from "@/features/discovery/common-work-scope";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { countWords } from "@/features/editor-workspace/eligibility";
 import {
@@ -113,21 +114,7 @@ export default async function ReaderExplorePage({
   };
 
   const where: Prisma.WorkWhereInput = {
-    archivedAt: null,
-    publishedAt: { not: null },
-    status: "published",
-    visibility: "public",
-    author: {
-      is: {
-        deletedAt: null,
-        status: "active",
-      },
-    },
-    readingProgress: {
-      none: {
-        userId: profile.id,
-      },
-    },
+    ...commonDiscoveryWorkWhere,
     ...(search
       ? {
           OR: [

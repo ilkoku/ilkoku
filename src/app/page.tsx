@@ -14,6 +14,7 @@ import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import { safeCmsInternalHref } from "@/lib/cms-links";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "./landing.css";
 import "./landing-v2.css";
 import "./landing-history.css";
@@ -408,10 +409,15 @@ export default async function HomePage() {
                 const authorName = work.author.displayName ?? work.author.fullName;
                 return (
                   <article key={work.slug}>
-                    <small>{work.genre ?? "Eser"}</small>
+                    <small>
+                      {work.genre ?? "Eser"} · {workContentRatingDetails[work.contentRating].shortLabel}
+                    </small>
                     <h3>{work.title}</h3>
                     <p>{authorName}</p>
                     <Link href={`/kitap/${work.slug}`}>Eseri incele →</Link>
+                    <Link href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent("/")}`}>
+                      Eser Pasaportu →
+                    </Link>
                   </article>
                 );
               })}

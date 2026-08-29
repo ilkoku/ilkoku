@@ -11,6 +11,7 @@ import {
   type PublicWorkSort,
 } from "@/features/public-discovery/library";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 import "./public-library.css";
 
@@ -409,6 +410,9 @@ export default async function PublicWorkLibraryPage({
                           ) : (
                             <span>{genre}</span>
                           )}
+                          <span>
+                            {workContentRatingDetails[work.contentRating].shortLabel}
+                          </span>
                           <span>
                             {work._count.chapters} bölüm
                           </span>

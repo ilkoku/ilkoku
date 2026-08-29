@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 import type { EditorWorkTableData } from "../types";
 import { ReviewClaimDialog } from "./ReviewClaimDialog";
 import { SecondReviewClaimDialog } from "./SecondReviewClaimDialog";
@@ -185,6 +186,7 @@ export function EditorWorksTable({
               <th>Eser</th>
               <th>Rumuz</th>
               <th>Tür</th>
+              <th>Hitap Yaşı</th>
               <th>Bölüm</th>
               <th>Yayın Tarihi</th>
               <th>
@@ -227,6 +229,10 @@ export function EditorWorksTable({
 
                   <td data-label="Tür">
                     {work.genre ?? "Belirtilmedi"}
+                  </td>
+
+                  <td data-label="Hitap Yaşı">
+                    {workContentRatingDetails[work.contentRating].shortLabel}
                   </td>
 
                   <td data-label="Bölüm">

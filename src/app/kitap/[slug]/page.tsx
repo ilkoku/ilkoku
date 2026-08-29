@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { getWorkLatestComments } from "@/features/reader/comments";
 import { getFavoriteStatus } from "@/features/reader/favorites";
 import { getReadingProgress } from "@/features/reading/progress";
 import { BookShowcase } from "@/features/showcase/components/BookShowcase";
+import { getMemberPublicWorkBySlug } from "@/features/works/member-public-queries";
 import { getPublicWorkBySlug } from "@/features/works/queries";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -62,6 +64,7 @@ export async function generateMetadata({
     };
   }
 
+  // Metadata deliberately stays on the anonymous-safe query so 18+ works are not indexed.
   const work = await getPublicWorkBySlug(slug);
 
   if (!work) {
@@ -115,12 +118,19 @@ export default async function DynamicBookShowcasePage({
 
   if (isBlockedPublicWorkSlug(slug)) notFound();
 
-  const work = await getPublicWorkBySlug(slug);
+  const user = await getCurrentUser();
+  const directReturnTo = `/kitap/${slug}${query.from ? `?from=${encodeURIComponent(returnTo)}` : ""}`;
+  await enforceAdultWorkGate({
+    returnTo: directReturnTo,
+    slug,
+    user,
+  });
+
+  const work = await getMemberPublicWorkBySlug(slug, user?.id ?? null);
   if (!work) notFound();
 
   const comments = await getWorkLatestComments(work.id);
 
-  const user = await getCurrentUser();
   const readerUser =
     user && (user.role === "reader" || user.role === "editor")
       ? user
@@ -186,15 +196,17 @@ export default async function DynamicBookShowcasePage({
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify([bookSchema, breadcrumbSchema]).replace(
-            /</g,
-            "\\u003c",
-          ),
-        }}
-      />
+      {work.contentRating !== "adult_18" ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([bookSchema, breadcrumbSchema]).replace(
+              /</g,
+              "\\u003c",
+            ),
+          }}
+        />
+      ) : null}
       <BookShowcase
         canFavorite={Boolean(readerUser)}
         comments={comments}

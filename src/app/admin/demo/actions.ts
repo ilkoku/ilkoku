@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { provisionDemoCore } from "@/features/demo-showcase/core-provision";
 import { provisionDemoShowcase } from "@/features/demo-showcase/provision";
+import { getScopedDemoShowcaseStatus } from "@/features/demo-showcase/status";
 import { provisionDemoWriterLevels } from "@/features/demo-showcase/writer-levels";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
@@ -39,7 +41,10 @@ function safeProvisionErrorCode(error: unknown) {
   return "UNKNOWN";
 }
 
-function redirectProvisionFailure(phase: "temel" | "yazarlar", error: unknown) {
+function redirectProvisionFailure(
+  phase: "cekirdek" | "dogrulama" | "temel" | "yazarlar",
+  error: unknown,
+) {
   console.error(`DEMO_SHOWCASE_PROVISION_FAILED:${phase}`, error);
 
   const code = safeProvisionErrorCode(error);
@@ -62,6 +67,15 @@ export async function provisionDemoShowcaseAction(formData: FormData) {
   const password = String(formData.get("password") ?? "");
 
   try {
+    await provisionDemoCore({
+      actorId: admin.id,
+      password,
+    });
+  } catch (error) {
+    redirectProvisionFailure("cekirdek", error);
+  }
+
+  try {
     await provisionDemoShowcase({
       actorId: admin.id,
       password,
@@ -79,9 +93,23 @@ export async function provisionDemoShowcaseAction(formData: FormData) {
     redirectProvisionFailure("yazarlar", error);
   }
 
+  try {
+    const status = await getScopedDemoShowcaseStatus();
+    if (!status.ready) {
+      throw Object.assign(new Error("DEMO_VERIFY_INCOMPLETE"), {
+        code: "DEMO_VERIFY_INCOMPLETE",
+      });
+    }
+  } catch (error) {
+    redirectProvisionFailure("dogrulama", error);
+  }
+
   revalidatePath("/sistem-yonetimi/demo");
+  revalidatePath("/sistem-yonetimi/eserler");
+  revalidatePath("/sistem-yonetimi/yazarlar");
   revalidatePath("/eserler");
   revalidatePath("/yazarlar");
+  revalidatePath("/kesfet");
   revalidatePath("/yayinevleri");
   revalidatePath("/okuyucu");
   revalidatePath("/yazar");

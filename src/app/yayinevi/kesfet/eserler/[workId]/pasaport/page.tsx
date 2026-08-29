@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
-import {
-  requirePublisherWorkPassportAccess,
-} from "@/features/publisher-discovery/access";
+import { requirePublisherWorkPassportAccess } from "@/features/publisher-discovery/access";
 import "@/features/publisher-discovery/publisher-discovery.css";
 import { OwnershipPassport } from "@/features/ownership/components/OwnershipPassport";
 import { getOwnershipPassport } from "@/features/ownership/queries";
+import { getAdultContentAccess } from "@/lib/adult-content-access";
 
 export const metadata: Metadata = {
   description:
@@ -16,8 +15,7 @@ export const metadata: Metadata = {
     follow: false,
     index: false,
   },
-  title:
-    "Eser Pasaportu | İlkOku Yayınevi",
+  title: "Eser Pasaportu | İlkOku Yayınevi",
 };
 
 export const dynamic = "force-dynamic";
@@ -25,45 +23,42 @@ export const dynamic = "force-dynamic";
 export default async function PublisherDiscoveryPassportPage({
   params,
 }: {
-  params: Promise<{
-    workId: string;
-  }>;
+  params: Promise<{ workId: string }>;
 }) {
   const { workId } = await params;
-  const path =
-    `/yayinevi/kesfet/eserler/${workId}/pasaport`;
-  const access =
-    await requirePublisherWorkPassportAccess(
-      path,
-      workId,
-    );
+  const path = `/yayinevi/kesfet/eserler/${workId}/pasaport`;
+  const access = await requirePublisherWorkPassportAccess(path, workId);
 
-  const passport =
-    await getOwnershipPassport(
-      workId,
-      {
-        kind: "publisher_discovery",
-        publisherId:
-          access.publisherId,
-        userId:
-          access.profile.id,
-      },
-    );
+  const passport = await getOwnershipPassport(workId, {
+    kind: "publisher_discovery",
+    publisherId: access.publisherId,
+    userId: access.profile.id,
+  });
 
-  if (!passport) {
-    notFound();
+  if (!passport) notFound();
+
+  if (
+    passport.work.contentRating === "adult_18" &&
+    !access.profile.adminPublisherView
+  ) {
+    const adultAccess = await getAdultContentAccess(access.profile.id);
+    if (adultAccess.needsBirthDate) {
+      redirect(`/yas-dogrulama?sonraki=${encodeURIComponent(path)}`);
+    }
+    if (!adultAccess.isAdult) {
+      redirect("/erisim-reddedildi?kaynak=18-plus");
+    }
+    if (!adultAccess.canAccessAdultContent) {
+      redirect(`/yetiskin-icerik-onayi?sonraki=${encodeURIComponent(path)}`);
+    }
   }
 
   return (
     <AppShell profile={access.profile}>
       <section className="publisher-passport-access">
         <div>
-          <span>
-            {access.companyName}
-          </span>
-          <strong>
-            Eser Pasaportu erişimi doğrulandı
-          </strong>
+          <span>{access.companyName}</span>
+          <strong>Eser Pasaportu erişimi doğrulandı</strong>
         </div>
 
         <p>

@@ -33,6 +33,24 @@ test("reader discovery keeps search, sorting and pagination inside bounded datab
   assertNotContains(text, "filteredWorks", "reader discovery");
 });
 
+test("reader, editor and publisher discovery use the same public work pool", () => {
+  const reader = source("src/app/kesfet/page.tsx");
+  const editorPage = source("src/app/editor/kesfet/page.tsx");
+  const editorQuery = source("src/features/editor-workspace/common-discovery-query.ts");
+  const publisher = source("src/features/publisher-discovery/work-query.ts");
+  const commonScope = source("src/features/discovery/common-work-scope.ts");
+
+  assertContains(commonScope, "commonDiscoveryWorkWhere", "common discovery scope");
+  assertContains(commonScope, 'status: "published"', "common discovery scope");
+  assertContains(commonScope, 'visibility: "public"', "common discovery scope");
+  assertContains(commonScope, "publishedAt:", "common discovery scope");
+  assertContains(reader, "...commonDiscoveryWorkWhere", "reader discovery");
+  assertContains(editorQuery, "...commonDiscoveryWorkWhere", "editor discovery");
+  assertContains(publisher, "...commonDiscoveryWorkWhere", "publisher discovery");
+  assertContains(editorPage, "getCommonEditorDiscovery", "editor discovery page");
+  assertNotContains(reader, "readingProgress: {\n      none:", "reader discovery");
+});
+
 test("publisher work discovery remains bounded and server-filtered", () => {
   const text = source("src/features/publisher-discovery/work-query.ts");
 

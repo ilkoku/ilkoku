@@ -84,12 +84,15 @@ jobs:
         run: npm run lint
 
       - name: Run security contract tests
+        if: ${{ !cancelled() }}
         run: npm run test:security
 
       - name: Build disposable MariaDB schema
+        if: ${{ !cancelled() }}
         run: npx prisma db push
 
       - name: Run MariaDB security integration contracts
+        if: ${{ !cancelled() }}
         run: npm run test:security:db
 
       - name: Run release measurement report

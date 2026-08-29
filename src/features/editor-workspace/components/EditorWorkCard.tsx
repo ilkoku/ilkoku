@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { toggleFavoriteAction } from "@/features/reader/favorites";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 import { toggleEditorFavoriteAction } from "../actions";
 import type { EditorWorkCardData } from "../types";
 import { RecommendationForm } from "./RecommendationForm";
@@ -29,6 +30,7 @@ export function EditorWorkCard({
     allowClaim &&
     !work.assignedEditorId &&
     work.editorReviewStatus === "requested";
+  const returnPath = isReaderContext ? "/kesfet" : "/editor/favoriler";
 
   return (
     <article className="editor-work-card">
@@ -41,6 +43,11 @@ export function EditorWorkCard({
       <div className="editor-work-card__body">
         <div className="editor-work-card__badges">
           <span>{work.genre ?? "Tür belirtilmedi"}</span>
+          <span>
+            {work.contentRating
+              ? workContentRatingDetails[work.contentRating].shortLabel
+              : "Sınıflandırılmadı"}
+          </span>
           <span>
             {reviewLabel(work.editorReviewStatus)}
           </span>
@@ -65,6 +72,12 @@ export function EditorWorkCard({
         <div className="editor-work-card__actions">
           <Link className="button button--outline" href={`/kitap/${work.slug}`}>
             {isReaderContext ? "Eseri Aç" : "Eseri İncele"}
+          </Link>
+          <Link
+            className="button button--outline"
+            href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent(returnPath)}`}
+          >
+            Eser Pasaportu
           </Link>
           <form
             action={

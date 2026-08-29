@@ -7,11 +7,18 @@ import {
 } from "@/features/public-discovery/library";
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 import { PublicWorkStream } from "@/features/public-discovery/PublicWorkStream";
+import {
+  isPublicStoredWorkContentRating,
+  publicStoredWorkContentRatings,
+  workContentRatingDetails,
+  type PublicStoredWorkContentRating,
+} from "@/lib/work-content-classification";
 
 const baseUrl = "https://ilkoku.com";
 
 type FeedSearchParams = {
   arama?: string;
+  hitap?: string;
   sayfa?: string;
   tur?: string;
 };
@@ -26,7 +33,11 @@ function pageNumber(value: string | undefined) {
 
 function feedHref(
   basePath: `/eserler/${string}`,
-  filters: { genre?: string; search?: string },
+  filters: {
+    contentRating?: PublicStoredWorkContentRating;
+    genre?: string;
+    search?: string;
+  },
   page: number,
 ) {
   const parameters = new URLSearchParams();
@@ -37,6 +48,10 @@ function feedHref(
 
   if (filters.genre) {
     parameters.set("tur", filters.genre);
+  }
+
+  if (filters.contentRating) {
+    parameters.set("hitap", filters.contentRating);
   }
 
   if (page > 1) {
@@ -67,13 +82,17 @@ export async function PublicWorkFeedPage({
   const query = await searchParams;
   const search = query.arama?.trim().slice(0, 100) || undefined;
   const genre = query.tur?.trim().slice(0, 120) || undefined;
+  const contentRating = isPublicStoredWorkContentRating(query.hitap)
+    ? query.hitap
+    : undefined;
+  const filters = { contentRating, genre, search };
   const library = await getPublicWorkLibrary(
-    { genre, search, sort },
+    { ...filters, sort },
     pageNumber(query.sayfa),
   );
   const currentPath = feedHref(
     basePath,
-    { genre, search },
+    filters,
     library.currentPage,
   );
   const schema = {
@@ -164,9 +183,24 @@ export async function PublicWorkFeedPage({
               </select>
             </label>
 
+            <label>
+              <span>Hitap yaşı</span>
+              <select
+                defaultValue={contentRating ?? ""}
+                name="hitap"
+              >
+                <option value="">Tüm hitap yaşları</option>
+                {publicStoredWorkContentRatings.map((rating) => (
+                  <option key={rating} value={rating}>
+                    {workContentRatingDetails[rating].shortLabel}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <button type="submit">Filtrele</button>
 
-            {search || genre ? (
+            {search || genre || contentRating ? (
               <Link href={basePath}>Filtreleri temizle</Link>
             ) : null}
           </form>
@@ -189,7 +223,7 @@ export async function PublicWorkFeedPage({
                 yayımlanmış ve keşfe açık eserler bu akışa
                 girer. Bölüm metnini okumak için oturum gerekir.
               </p>
-              {search || genre ? (
+              {search || genre || contentRating ? (
                 <Link href={basePath}>
                   Bu akıştaki tüm eserleri göster
                 </Link>
@@ -210,7 +244,7 @@ export async function PublicWorkFeedPage({
                 <Link
                   href={feedHref(
                     basePath,
-                    { genre, search },
+                    filters,
                     library.currentPage - 1,
                   )}
                   rel="prev"
@@ -228,7 +262,7 @@ export async function PublicWorkFeedPage({
                 <Link
                   href={feedHref(
                     basePath,
-                    { genre, search },
+                    filters,
                     library.currentPage + 1,
                   )}
                   rel="next"

@@ -91,7 +91,7 @@ export function DiscoveryAuthorCard({
 
       {signals.length > 0 ? (
         <div className="discovery-author-card__signals" aria-label="Yazar keşif işaretleri">
-          {signals.slice(0, 5).map((signal) => (
+          {signals.map((signal) => (
             <span key={signal}>{signal}</span>
           ))}
         </div>

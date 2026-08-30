@@ -9,6 +9,7 @@ import {
   safeAdultGateReturnPath,
 } from "@/lib/adult-content-access";
 import "@/features/profile/profile.css";
+import "@/features/adult-content/age-verification.css";
 
 export const metadata: Metadata = {
   title: "18+ İçerik Onayı | İlkOku",
@@ -42,30 +43,40 @@ export default async function AdultContentConsentPage({
   if (access.canAccessAdultContent) redirect(returnTo);
 
   return (
-    <main className="profile-page">
-      <div className="profile-page__container">
-        <Brand />
-        <section className="profile-card">
-          <div className="profile-card__heading">
-            <div>
-              <p>2. doğrulama</p>
-              <h1>18+ içerik erişimi</h1>
-            </div>
+    <main className="age-verification-page">
+      <div className="age-verification-shell">
+        <div className="age-verification-brand">
+          <Brand />
+        </div>
+
+        <section className="age-verification-card">
+          <header className="age-verification-heading">
+            <p className="age-verification-step">2. doğrulama</p>
+            <h1>18+ içerik erişimi</h1>
+          </header>
+
+          <div className="adult-consent-copy">
+            <p>
+              Hesap yaşınız 18+ erişim için uygundur. 18+ olarak sınıflandırılmış eserleri
+              Keşfet&apos;te görmek ve okumak için ayrıca açık onay vermeniz gerekir.
+            </p>
+            <p>
+              Bu tercih hesabınıza bağlıdır ve Hesabım alanından istediğiniz zaman kapatılabilir.
+            </p>
           </div>
-          <p>
-            Hesap yaşınız 18+ erişim için uygundur. 18+ olarak sınıflandırılmış eserleri
-            Keşfet&apos;te görmek ve okumak için ayrıca açık onay vermeniz gerekir.
-          </p>
-          <p>
-            Bu tercih hesabınıza bağlıdır ve Hesabım alanından istediğiniz zaman kapatılabilir.
-          </p>
-          <form action={acceptAdultContentAction}>
+
+          <form action={acceptAdultContentAction} className="adult-consent-form">
             <input name="returnTo" type="hidden" value={returnTo} />
-            <label>
-              <input name="adultConsent" required type="checkbox" value="accepted" />{" "}
-              18+ içerikleri görmek ve okumak istiyorum.
+
+            <label className="adult-consent-choice">
+              <input name="adultConsent" required type="checkbox" value="accepted" />
+              <span>
+                <strong>18+ içerikleri görmek ve okumak istiyorum.</strong>
+                <small>Bu onayı verdiğinizde 18+ eserler ortak Keşfet havuzunda görünür.</small>
+              </span>
             </label>
-            <div className="profile-form__actions">
+
+            <div className="adult-consent-actions">
               <button className="button button--primary" type="submit">
                 Onayla ve devam et
               </button>

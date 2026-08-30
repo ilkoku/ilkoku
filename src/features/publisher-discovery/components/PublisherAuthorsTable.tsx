@@ -48,14 +48,11 @@ export function PublisherAuthorsTable({
         const profileHref = `/yazarlar/${author.publicId}?from=${encodeURIComponent(returnTo)}`;
         const signals = [
           author.city || "Şehir belirtilmedi",
+          author.country || "Ülke belirtilmedi",
           ...author.genres.slice(0, 2),
-          author.completedWorkCount > 0
-            ? `${author.completedWorkCount} tamamlanan eser`
-            : null,
-          author.reviewedWorkCount > 0
-            ? `${author.reviewedWorkCount} editör incelemesi`
-            : null,
-        ].filter((value): value is string => Boolean(value));
+          `${author.completedWorkCount} tamamlanan eser`,
+          `${author.reviewedWorkCount} editörden geçen eser`,
+        ];
 
         return (
           <DiscoveryAuthorCard

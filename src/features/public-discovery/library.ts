@@ -1,6 +1,10 @@
 import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
+import {
+  availableGenreLabels,
+  normalizeGenreLabel,
+} from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
@@ -47,6 +51,8 @@ const publicWorkBaseWhere: Prisma.WorkWhereInput = {
 function publicWorkWhere(
   filters: PublicWorkLibraryFilters,
 ): Prisma.WorkWhereInput {
+  const genre = normalizeGenreLabel(filters.genre);
+
   return {
     ...publicWorkBaseWhere,
     ...(filters.search
@@ -72,7 +78,7 @@ function publicWorkWhere(
     ...(filters.contentRating
       ? { contentRating: filters.contentRating }
       : {}),
-    ...(filters.genre ? { genre: filters.genre } : {}),
+    ...(genre ? { genre } : {}),
   };
 }
 
@@ -186,9 +192,7 @@ export async function getPublicWorkLibrary(
 
     return {
       currentPage,
-      genres: genreRows
-        .map((row) => row.genre?.trim())
-        .filter((genre): genre is string => Boolean(genre)),
+      genres: availableGenreLabels(genreRows.map((row) => row.genre)),
       totalCount,
       totalPages,
       works: matchingWorks.slice(
@@ -221,9 +225,7 @@ export async function getPublicWorkLibrary(
 
   return {
     currentPage,
-    genres: genreRows
-      .map((row) => row.genre?.trim())
-      .filter((genre): genre is string => Boolean(genre)),
+    genres: availableGenreLabels(genreRows.map((row) => row.genre)),
     totalCount,
     totalPages,
     works,
@@ -255,7 +257,7 @@ export async function getPublicGenres(search?: string) {
   >();
 
   for (const row of rows) {
-    const label = row.genre?.trim();
+    const label = normalizeGenreLabel(row.genre);
     const slug = label ? publicTaxonomySlug(label) : "";
 
     if (!label || !slug) {

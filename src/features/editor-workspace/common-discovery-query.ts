@@ -1,8 +1,9 @@
-import { commonDiscoveryWorkWhere } from "@/features/discovery/common-work-scope";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import {
-  isPublicStoredWorkContentRating,
-  type PublicStoredWorkContentRating,
+  isMemberStoredWorkContentRating,
+  type MemberStoredWorkContentRating,
 } from "@/lib/work-content-classification";
+import { getAdultContentAccess } from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
 import { countWords } from "./eligibility";
 import type {
@@ -11,7 +12,7 @@ import type {
 } from "./types";
 
 export type EditorDiscoveryFilters = {
-  contentRating?: PublicStoredWorkContentRating;
+  contentRating?: MemberStoredWorkContentRating;
   genre?: string;
   language?: string;
   reviewStatus?: string;
@@ -29,14 +30,17 @@ export async function getCommonEditorDiscovery(
   editorId: string,
   filters: EditorDiscoveryFilters = {},
 ): Promise<EditorWorkTableData[]> {
+  const adultAccess = await getAdultContentAccess(editorId);
   const contentRating =
-    filters.contentRating && isPublicStoredWorkContentRating(filters.contentRating)
+    filters.contentRating &&
+    isMemberStoredWorkContentRating(filters.contentRating) &&
+    (filters.contentRating !== "adult_18" || adultAccess.canAccessAdultContent)
       ? filters.contentRating
       : undefined;
 
   const works = await prisma.work.findMany({
     where: {
-      ...commonDiscoveryWorkWhere,
+      ...commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
       ...(filters.genre ? { genre: filters.genre } : {}),
       ...(filters.language ? { language: filters.language } : {}),
       ...(contentRating ? { contentRating } : {}),

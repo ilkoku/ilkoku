@@ -2,25 +2,25 @@ export const contentAgePolicyPageContent = {
   title: "İçerik ve Yaş Politikası",
   summary: "Her eser doğru okurla buluşsun: İlkOku'nun yaş sınıfları ve içerik uyarıları, okura okumaya başlamadan önce neyle karşılaşacağını gösterirken yazarın eserini doğru kitleye sunmasına yardımcı olur.",
   seoTitle: "İçerik ve Yaş Politikası | İlkOku",
-  seoDescription: "İlkOku eserlerinde Tüm Yaşlar, 13+, 16+ ve 18+ sınıflarını; içerik uyarılarını, yazar beyanını ve keşfe açık yayın sınırlarını inceleyin.",
+  seoDescription: "İlkOku eserlerinde Tüm Yaşlar, 13+, 16+ ve 18+ sınıflarını; içerik uyarılarını, yazar beyanını ve yaşa bağlı erişim sınırlarını inceleyin.",
   canonical: "/icerik-ve-yas-politikasi",
-  updatedAt: "2026-08-26T00:00:00.000Z",
+  updatedAt: "2026-08-30T00:00:00.000Z",
   body: `İlkOku'da içerik sınıflandırmasının amacı okuru korkutmak değil, doğru eserle doğru beklentiyle buluşturmaktır. Yaş sınıfı ve içerik uyarıları; okurun bir eseri seçerken daha bilinçli karar vermesini, yazarın da eserini hangi yoğunlukta sunduğunu açıkça belirtmesini sağlar.
 
 Bu bilgiler kalite puanı değildir. Bir eserin iyi ya da kötü olduğunu değil, içeriğin genel yoğunluğunu ve hassas temalarını okumadan önce görünür kılar.
 
 ## Dört yaş sınıfı
 
-| Sınıf | Başlangıç ölçütü | Keşfe açık yayın durumu |
+| Sınıf | Başlangıç ölçütü | Erişim durumu |
 | --- | --- | --- |
-| Tüm yaşlar | Küçük okurlar dahil geniş kitle için belirgin yoğun şiddet, ağır dil, cinsel tema, madde kullanımı veya yoğun rahatsız edici içerik barındırmayan eserler | Açık |
-| 13+ | Hafif ya da sınırlı şiddet, sert dil, korku, romantik veya hassas temalar içerebilen eserler | Açık |
-| 16+ | Daha yoğun şiddet, ağır dil, cinsel tema, kendine zarar, istismar, madde kullanımı veya rahatsız edici sahneler içerebilen eserler | Açık |
-| 18+ | Yalnız yetişkin okura yönelik yoğun temalar içeren eserler | Henüz keşfe açık değil |
+| Tüm yaşlar | Küçük okurlar dahil geniş kitle için belirgin yoğun şiddet, ağır dil, cinsel tema, madde kullanımı veya yoğun rahatsız edici içerik barındırmayan eserler | Keşfe açık |
+| 13+ | Hafif ya da sınırlı şiddet, sert dil, korku, romantik veya hassas temalar içerebilen eserler | Keşfe açık |
+| 16+ | Daha yoğun şiddet, ağır dil, cinsel tema, kendine zarar, istismar, madde kullanımı veya rahatsız edici sahneler içerebilen eserler | Keşfe açık |
+| 18+ | Yalnız yetişkin okura yönelik yoğun temalar içeren eserler | Yalnız yaş doğrulaması yapılmış ve 18+ içerik erişimine ayrıca açık onay vermiş yetişkin üyeler için açık |
 
 Sınıf, eserin tamamındaki en yoğun içeriğe göre seçilir. Tek bir bölüm daha yüksek sınıf gerektiriyorsa eser de o sınıfta beyan edilir. Böylece okur yalnız ilk bölüme bakılarak oluşturulmuş yanıltıcı bir etiketle karşılaşmaz.
 
-Doğrulanmış yetişkin erişimi henüz etkin olmadığı için 18+ olarak beyan edilen eser taslakta saklanabilir ancak keşfe açık vitrinde yayımlanamaz.
+18+ eserler İlkOku'da yayımlanabilir; ancak anonim ziyaretçilere, arama motoru keşif yüzeylerine ve yaş/onay şartlarını karşılamayan hesaplara gösterilmez. 18+ erişimi için iki ayrı koşul birlikte aranır: hesabın doğum bilgisi üzerinden 18 yaşını doldurduğunun doğrulanması ve kullanıcının 18+ içerikleri görmek ve okumak istediğine ayrıca açık onay vermesi. Bu ikinci tercih daha sonra Hesabım alanından kapatılabilir.
 
 ## İçerik uyarıları
 
@@ -43,15 +43,17 @@ Doğru sınıflandırma yalnız bir kural değil, doğru okura ulaşmanın parç
 
 ## Okurun gördüğü bilgi
 
-Yaş sınıfı ve seçili içerik uyarıları, keşfe açık eser vitrininde "Okumaya Başla" işleminden önce görünür. Ziyaretçi eseri keşfederken bu bilgileri görebilir; bölüm okumaya geçtiğinde ücretsiz üyelik veya giriş katmanı devreye girer.
+Tüm yaşlar, 13+ ve 16+ eserlerin yaş sınıfı ve seçili içerik uyarıları açık keşif yüzeylerinde "Okumaya Başla" işleminden önce görünür. Bölüm okumaya geçtiğinde ücretsiz üyelik veya giriş katmanı devreye girer.
+
+18+ eserler ise anonim ziyaretçiye gösterilmez. Yaş doğrulaması yapılmış ve ayrıca 18+ içerik onayı vermiş yetişkin üye için aynı ortak Keşfet havuzunda 18+ etiketiyle görünür; eser sayfası, bölüm okuma ve Eser Pasaportu gibi doğrudan bağlantılar da aynı erişim kontrolünden geçer.
 
 Böylece okur yalnız kapağa veya kısa tanıtıma bakmak zorunda kalmaz. Eserin genel yoğunluğu hakkında daha bilinçli seçim yapabilir.
 
 ## Başlık, kapak ve açıklama sınırı
 
-Kapak, başlık, kısa açıklama ve keşif kartları üyelik olmadan görülebilen açık yüzeylerdir. Bu nedenle bu alanlar, eserin bölüm içeriğinden daha geniş bir kitleye hitap edecek sunum sınırında kalır.
+Tüm yaşlar, 13+ ve 16+ eserlerde kapak, başlık, kısa açıklama ve keşif kartları üyelik olmadan görülebilen açık yüzeylerdir. 18+ eserlerin bu tanıtım yüzeyleri de yalnız iki erişim koşulunu karşılayan yetişkin üyeye açılır.
 
-16+ ya da ileride 18+ olarak sınıflandırılmış bir eser, tanıtım yüzeyinde yoğun veya açık rahatsız edici içeriği doğrudan göstermek zorunda değildir. Keşif, merak uyandırmalı; okurun sınırlarını habersiz aşmamalıdır.
+16+ ve 18+ olarak sınıflandırılmış eserlerin tanıtım yüzeyi, yoğun veya açık rahatsız edici içeriği doğrudan göstermek zorunda değildir. Keşif, merak uyandırmalı; okurun sınırlarını habersiz aşmamalıdır.
 
 ## Yasak içerik ile yaş sınıfı aynı şey değildir
 

@@ -33,22 +33,85 @@ test("reader discovery keeps search, sorting and pagination inside bounded datab
   assertNotContains(text, "filteredWorks", "reader discovery");
 });
 
-test("reader, editor and publisher discovery use the same public work pool", () => {
+test("reader, editor and publisher discovery use the same member-aware public work pool", () => {
   const reader = source("src/app/kesfet/page.tsx");
   const editorPage = source("src/app/editor/kesfet/page.tsx");
   const editorQuery = source("src/features/editor-workspace/common-discovery-query.ts");
   const publisher = source("src/features/publisher-discovery/work-query.ts");
   const commonScope = source("src/features/discovery/common-work-scope.ts");
 
-  assertContains(commonScope, "commonDiscoveryWorkWhere", "common discovery scope");
+  assertContains(commonScope, "commonDiscoveryWorkWhereFor", "common discovery scope");
   assertContains(commonScope, 'status: "published"', "common discovery scope");
   assertContains(commonScope, 'visibility: "public"', "common discovery scope");
   assertContains(commonScope, "publishedAt:", "common discovery scope");
-  assertContains(reader, "...commonDiscoveryWorkWhere", "reader discovery");
-  assertContains(editorQuery, "...commonDiscoveryWorkWhere", "editor discovery");
-  assertContains(publisher, "...commonDiscoveryWorkWhere", "publisher discovery");
+  assertContains(commonScope, "adultContentWorkVisibility", "common discovery scope");
+  assertContains(reader, "...commonDiscoveryWorkWhereFor", "reader discovery");
+  assertContains(editorQuery, "...commonDiscoveryWorkWhereFor", "editor discovery");
+  assertContains(publisher, "...commonDiscoveryWorkWhereFor", "publisher discovery");
   assertContains(editorPage, "getCommonEditorDiscovery", "editor discovery page");
   assertNotContains(reader, "readingProgress: {\n      none:", "reader discovery");
+});
+
+test("18+ discovery requires both verified age and explicit consent without creating a second pool", () => {
+  const policy = source("src/lib/adult-content-access.ts");
+  const shell = source("src/components/layout/AppShell.tsx");
+  const reader = source("src/app/kesfet/page.tsx");
+  const editor = source("src/app/editor/kesfet/page.tsx");
+  const publisher = source("src/app/yayinevi/kesfet/eserler/page.tsx");
+  const publication = source("src/features/works/publish-work-event.ts");
+
+  assertContains(policy, "adultEligibleAt", "adult access policy");
+  assertContains(
+    policy,
+    "canAccessAdultContent: isAdult && Boolean(consentedAt)",
+    "adult access policy",
+  );
+  assertContains(policy, 'entityType: AGE_VERIFICATION_ENTITY', "age verification audit");
+  assertContains(policy, 'entityType: ADULT_CONSENT_ENTITY', "adult consent audit");
+  assertContains(shell, 'redirect(\n        `/yas-dogrulama', "member age gate");
+  assertContains(reader, "visibleMemberContentRatings", "reader adult filter");
+  assertContains(editor, "visibleMemberContentRatings", "editor adult filter");
+  assertContains(publisher, "visibleMemberContentRatings", "publisher adult filter");
+  assertNotContains(
+    publication,
+    'locked[0].contentRating === "adult_18"',
+    "adult publication",
+  );
+});
+
+test("direct adult work, reading and passport routes enforce the same two-step gate", () => {
+  const gate = source("src/features/adult-content/work-gate.ts");
+  const workPage = source("src/app/kitap/[slug]/page.tsx");
+  const readingPage = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
+  const passportPage = source("src/app/kitap/[slug]/pasaport/page.tsx");
+
+  assertContains(gate, 'work.contentRating !== "adult_18"', "adult work gate");
+  assertContains(gate, "access.needsBirthDate", "adult work gate");
+  assertContains(gate, "!access.isAdult", "adult work gate");
+  assertContains(gate, "!access.canAccessAdultContent", "adult work gate");
+  assertContains(workPage, "enforceAdultWorkGate", "work detail gate");
+  assertContains(readingPage, "enforceAdultWorkGate", "reading gate");
+  assertContains(passportPage, "enforceAdultWorkGate", "passport gate");
+});
+
+test("adult content cannot leak through favorites, progress, sharing or publication notifications", () => {
+  const favorites = source("src/features/reader/favorites.ts");
+  const progress = source("src/features/reading/progress.ts");
+  const sharing = source("src/features/publisher-discovery/sharing-actions.ts");
+  const notifications = source("src/features/works/publication-notifications.ts");
+
+  assertContains(favorites, "adultContentWorkVisibility", "reader favorites");
+  assertContains(progress, "adultContentWorkVisibility", "reading progress");
+  assertContains(
+    sharing,
+    'work?.contentRating === "adult_18"',
+    "publisher sharing",
+  );
+  assertContains(
+    notifications,
+    'work.contentRating === "adult_18"',
+    "adult publication notifications",
+  );
 });
 
 test("publisher work discovery remains bounded and server-filtered", () => {

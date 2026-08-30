@@ -3,9 +3,7 @@ import type { Metadata } from "next";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
-import {
-  requirePublisherAnyDiscoveryAccess,
-} from "@/features/publisher-discovery/access";
+import { requirePublisherAnyDiscoveryAccess } from "@/features/publisher-discovery/access";
 import {
   getPublisherSavedAuthors,
   normalizePublisherFollowingFilters,
@@ -17,14 +15,14 @@ import {
   normalizePublisherFavoriteFilters,
 } from "@/features/publisher-discovery/work-favorites-query";
 import {
-  publicStoredWorkContentRatings,
-  workContentRatingDetails,
-} from "@/lib/work-content-classification";
+  getAdultContentAccess,
+  visibleMemberContentRatings,
+} from "@/lib/adult-content-access";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
 
 export const metadata: Metadata = {
-  description:
-    "Yayınevinizin favorilediği public eserleri ve yazarları listeleyin.",
+  description: "Yayınevinizin favorilediği public eserleri ve yazarları listeleyin.",
   title: "Yayınevi Favorilerim | İlkOku",
 };
 
@@ -62,12 +60,16 @@ export default async function PublisherFavoritesPage({
     "/yayinevi/favorilerim",
     ["favorite_work", "favorite_author"],
   );
+  const adultAccess = access.profile.adminPublisherView
+    ? { canAccessAdultContent: true, isAdult: true }
+    : await getAdultContentAccess(access.profile.id);
+  const visibleRatings = visibleMemberContentRatings(
+    adultAccess.canAccessAdultContent,
+  );
   const params = await searchParams;
   const canWork = access.permissions.includes("favorite_work");
   const canAuthor = access.permissions.includes("favorite_author");
-  const requestedType = firstValue(params.tip) === "yazar"
-    ? "author"
-    : "work";
+  const requestedType = firstValue(params.tip) === "yazar" ? "author" : "work";
   const type: "author" | "work" =
     requestedType === "author" && canAuthor
       ? "author"
@@ -75,15 +77,23 @@ export default async function PublisherFavoritesPage({
         ? "work"
         : "author";
   const canMutate = !access.profile.adminPublisherView;
-  const canViewPassport = access.permissions.includes(
-    "view_authorized_passport",
-  );
+  const canViewPassport = access.permissions.includes("view_authorized_passport");
 
   const workFilters = normalizePublisherFavoriteFilters(params);
+  if (
+    workFilters.contentRating === "adult_18" &&
+    !adultAccess.canAccessAdultContent
+  ) {
+    workFilters.contentRating = undefined;
+  }
   const authorFilters = normalizePublisherFollowingFilters(params);
   const workData =
     type === "work"
-      ? await getPublisherFavoriteWorks(access.publisherId, workFilters)
+      ? await getPublisherFavoriteWorks(
+          access.publisherId,
+          workFilters,
+          adultAccess.canAccessAdultContent,
+        )
       : null;
   const authorData =
     type === "author"
@@ -95,14 +105,9 @@ export default async function PublisherFavoritesPage({
       : null;
   const data = workData ?? authorData;
 
-  if (!data) {
-    throw new Error("FAVORI_LISTESI_HAZIRLANAMADI");
-  }
+  if (!data) throw new Error("FAVORI_LISTESI_HAZIRLANAMADI");
 
-  const query =
-    type === "work"
-      ? workFilters.query
-      : authorFilters.query;
+  const query = type === "work" ? workFilters.query : authorFilters.query;
   const contentRating = type === "work" ? workFilters.contentRating : undefined;
   const returnTo = pageHref({
     contentRating,
@@ -160,7 +165,7 @@ export default async function PublisherFavoritesPage({
               <span>Hitap yaşı</span>
               <select defaultValue={contentRating ?? ""} name="hitap">
                 <option value="">Tüm hitap yaşları</option>
-                {publicStoredWorkContentRatings.map((rating) => (
+                {visibleRatings.map((rating) => (
                   <option key={rating} value={rating}>
                     {workContentRatingDetails[rating].shortLabel}
                   </option>

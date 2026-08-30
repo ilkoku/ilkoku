@@ -4,17 +4,22 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
+import {
+  adultContentWorkVisibility,
+  getAdultContentAccess,
+} from "@/lib/adult-content-access";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
-const publicWorkWhere = {
-  archivedAt: null,
-  publishedAt: {
-    not: null,
-  },
-  status: "published" as const,
-  visibility: "public" as const,
-};
+function publicWorkWhere(canAccessAdultContent: boolean) {
+  return {
+    archivedAt: null,
+    ...adultContentWorkVisibility(canAccessAdultContent),
+    publishedAt: { not: null },
+    status: "published" as const,
+    visibility: "public" as const,
+  };
+}
 
 const readingProgressInputSchema = z.object({
   activeSeconds: z.number().int().min(0).max(3600),
@@ -37,9 +42,12 @@ async function requireReader() {
   return user;
 }
 
-export async function recordReadingProgressAction(
-  input: unknown,
-) {
+async function readerAdultAccess(userId: string) {
+  const access = await getAdultContentAccess(userId);
+  return access.canAccessAdultContent;
+}
+
+export async function recordReadingProgressAction(input: unknown) {
   const user = await requireReader();
   const parsed = readingProgressInputSchema.safeParse(input);
 
@@ -58,18 +66,15 @@ export async function recordReadingProgressAction(
     chapterProgressPercent,
     complete,
   } = parsed.data;
+  const canAccessAdultContent = await readerAdultAccess(user.id);
 
   const chapter = await prisma.chapter.findFirst({
     where: {
       archivedAt: null,
       id: chapterId,
-      publishedAt: {
-        not: null,
-      },
+      publishedAt: { not: null },
       status: "published",
-      work: {
-        is: publicWorkWhere,
-      },
+      work: { is: publicWorkWhere(canAccessAdultContent) },
     },
     select: {
       id: true,
@@ -81,18 +86,11 @@ export async function recordReadingProgressAction(
           chapters: {
             where: {
               archivedAt: null,
-              publishedAt: {
-                not: null,
-              },
+              publishedAt: { not: null },
               status: "published",
             },
-            orderBy: {
-              position: "asc",
-            },
-            select: {
-              id: true,
-              position: true,
-            },
+            orderBy: { position: "asc" },
+            select: { id: true, position: true },
           },
         },
       },
@@ -123,8 +121,7 @@ export async function recordReadingProgressAction(
   });
 
   const qualifiesAsStarted =
-    activeSeconds >= 20 &&
-    chapterProgressPercent >= 10;
+    activeSeconds >= 20 && chapterProgressPercent >= 10;
 
   if (!existing && !qualifiesAsStarted) {
     return {
@@ -159,27 +156,14 @@ export async function recordReadingProgressAction(
 
   const isLastChapter =
     chapterIndex === chapter.work.chapters.length - 1;
-
   const completedNow =
-    complete &&
-    isLastChapter &&
-    chapterProgressPercent >= 90;
-
+    complete && isLastChapter && chapterProgressPercent >= 90;
   const calculatedProgress = Math.round(
-    (
-      (
-        chapterIndex +
-        chapterProgressPercent / 100
-      ) /
-      chapter.work.chapters.length
-    ) *
+    ((chapterIndex + chapterProgressPercent / 100) /
+      chapter.work.chapters.length) *
       100,
   );
-
-  const completed =
-    Boolean(existing?.completed) ||
-    completedNow;
-
+  const completed = Boolean(existing?.completed) || completedNow;
   const progressPercent = completed
     ? 100
     : Math.min(
@@ -189,7 +173,6 @@ export async function recordReadingProgressAction(
           Math.max(1, calculatedProgress),
         ),
       );
-
   const now = new Date();
 
   const saved = await prisma.readingProgress.upsert({
@@ -212,17 +195,12 @@ export async function recordReadingProgressAction(
     update: {
       chapterId: chapter.id,
       completed,
-      completedAt: completed
-        ? existing?.completedAt ?? now
-        : null,
+      completedAt: completed ? existing?.completedAt ?? now : null,
       lastPosition: chapterProgressPercent,
       lastReadAt: now,
       progressPercent,
     },
-    select: {
-      completed: true,
-      progressPercent: true,
-    },
+    select: { completed: true, progressPercent: true },
   });
 
   revalidatePath("/kesfet");
@@ -239,32 +217,18 @@ export async function recordReadingProgressAction(
   };
 }
 
-export async function getReadingProgress(
-  userId: string,
-  workId: string,
-) {
+export async function getReadingProgress(userId: string, workId: string) {
   const progress = await prisma.readingProgress.findUnique({
-    where: {
-      userId_workId: {
-        userId,
-        workId,
-      },
-    },
+    where: { userId_workId: { userId, workId } },
     select: {
-      chapter: {
-        select: {
-          position: true,
-        },
-      },
+      chapter: { select: { position: true } },
       completed: true,
       lastPosition: true,
       progressPercent: true,
     },
   });
 
-  if (!progress) {
-    return null;
-  }
+  if (!progress) return null;
 
   return {
     chapterPosition: progress.chapter.position,
@@ -274,10 +238,8 @@ export async function getReadingProgress(
   };
 }
 
-export async function getContinueReading(
-  userId: string,
-  take = 6,
-) {
+export async function getContinueReading(userId: string, take = 6) {
+  const canAccessAdultContent = await readerAdultAccess(userId);
   return prisma.readingProgress.findMany({
     where: {
       completed: false,
@@ -285,36 +247,22 @@ export async function getContinueReading(
       chapter: {
         is: {
           archivedAt: null,
-          publishedAt: {
-            not: null,
-          },
+          publishedAt: { not: null },
           status: "published",
         },
       },
-      work: {
-        is: publicWorkWhere,
-      },
+      work: { is: publicWorkWhere(canAccessAdultContent) },
     },
-    orderBy: {
-      lastReadAt: "desc",
-    },
+    orderBy: { lastReadAt: "desc" },
     select: {
-      chapter: {
-        select: {
-          position: true,
-          title: true,
-        },
-      },
+      chapter: { select: { position: true, title: true } },
       progressPercent: true,
       work: {
         select: {
           _count: {
             select: {
               comments: {
-                where: {
-                  deletedAt: null,
-                  status: "visible",
-                },
+                where: { deletedAt: null, status: "visible" },
               },
               favorites: true,
               readingProgress: true,
@@ -330,9 +278,7 @@ export async function getContinueReading(
           chapters: {
             where: {
               archivedAt: null,
-              publishedAt: {
-                not: null,
-              },
+              publishedAt: { not: null },
               status: "published",
             },
             select: {
@@ -348,12 +294,8 @@ export async function getContinueReading(
           description: true,
           editorReviewStatus: true,
           favorites: {
-            where: {
-              userId,
-            },
-            select: {
-              id: true,
-            },
+            where: { userId },
+            select: { id: true },
             take: 1,
           },
           genre: true,
@@ -370,10 +312,8 @@ export async function getContinueReading(
   });
 }
 
-export async function getCompletedReading(
-  userId: string,
-  take = 100,
-) {
+export async function getCompletedReading(userId: string, take = 100) {
+  const canAccessAdultContent = await readerAdultAccess(userId);
   return prisma.readingProgress.findMany({
     where: {
       completed: true,
@@ -381,26 +321,15 @@ export async function getCompletedReading(
       chapter: {
         is: {
           archivedAt: null,
-          publishedAt: {
-            not: null,
-          },
+          publishedAt: { not: null },
           status: "published",
         },
       },
-      work: {
-        is: publicWorkWhere,
-      },
+      work: { is: publicWorkWhere(canAccessAdultContent) },
     },
-    orderBy: {
-      completedAt: "desc",
-    },
+    orderBy: { completedAt: "desc" },
     select: {
-      chapter: {
-        select: {
-          position: true,
-          title: true,
-        },
-      },
+      chapter: { select: { position: true, title: true } },
       completedAt: true,
       progressPercent: true,
       work: {
@@ -408,10 +337,7 @@ export async function getCompletedReading(
           _count: {
             select: {
               comments: {
-                where: {
-                  deletedAt: null,
-                  status: "visible",
-                },
+                where: { deletedAt: null, status: "visible" },
               },
               favorites: true,
               readingProgress: true,
@@ -427,14 +353,10 @@ export async function getCompletedReading(
           chapters: {
             where: {
               archivedAt: null,
-              publishedAt: {
-                not: null,
-              },
+              publishedAt: { not: null },
               status: "published",
             },
-            orderBy: {
-              position: "asc",
-            },
+            orderBy: { position: "asc" },
             select: {
               content: true,
               id: true,
@@ -448,12 +370,8 @@ export async function getCompletedReading(
           description: true,
           editorReviewStatus: true,
           favorites: {
-            where: {
-              userId,
-            },
-            select: {
-              id: true,
-            },
+            where: { userId },
+            select: { id: true },
             take: 1,
           },
           genre: true,
@@ -470,40 +388,29 @@ export async function getCompletedReading(
   });
 }
 
-export async function restartReadingAction(
-  formData: FormData,
-) {
+export async function restartReadingAction(formData: FormData) {
   const user = await requireReader();
+  const workIdResult = z.string().uuid().safeParse(formData.get("workId"));
 
-  const workIdResult = z
-    .string()
-    .uuid()
-    .safeParse(formData.get("workId"));
+  if (!workIdResult.success) throw new Error("INVALID_WORK_ID");
 
-  if (!workIdResult.success) {
-    throw new Error("INVALID_WORK_ID");
-  }
-
-  const requestedReturnTo =
-    formData.get("returnTo");
-
+  const requestedReturnTo = formData.get("returnTo");
   const returnTo =
     typeof requestedReturnTo === "string" &&
     requestedReturnTo.startsWith("/") &&
     !requestedReturnTo.startsWith("//")
       ? requestedReturnTo
       : "/tamamlanan-eserler";
+  const canAccessAdultContent = await readerAdultAccess(user.id);
 
   const work = await prisma.work.findFirst({
     where: {
-      ...publicWorkWhere,
+      ...publicWorkWhere(canAccessAdultContent),
       id: workIdResult.data,
       chapters: {
         some: {
           archivedAt: null,
-          publishedAt: {
-            not: null,
-          },
+          publishedAt: { not: null },
           status: "published",
         },
       },
@@ -514,39 +421,22 @@ export async function restartReadingAction(
       chapters: {
         where: {
           archivedAt: null,
-          publishedAt: {
-            not: null,
-          },
+          publishedAt: { not: null },
           status: "published",
         },
-        orderBy: {
-          position: "asc",
-        },
+        orderBy: { position: "asc" },
         take: 1,
-        select: {
-          id: true,
-          position: true,
-        },
+        select: { id: true, position: true },
       },
     },
   });
 
-  const firstChapter =
-    work?.chapters[0] ?? null;
-
-  if (!work || !firstChapter) {
-    throw new Error("PUBLIC_WORK_NOT_FOUND");
-  }
+  const firstChapter = work?.chapters[0] ?? null;
+  if (!work || !firstChapter) throw new Error("PUBLIC_WORK_NOT_FOUND");
 
   const now = new Date();
-
   await prisma.readingProgress.upsert({
-    where: {
-      userId_workId: {
-        userId: user.id,
-        workId: work.id,
-      },
-    },
+    where: { userId_workId: { userId: user.id, workId: work.id } },
     create: {
       chapterId: firstChapter.id,
       completed: false,

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
+import { adultContentWorkVisibility } from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
 import type { StoredWorkContentRating } from "@/lib/work-content-classification";
 import {
@@ -58,32 +59,33 @@ function publicWriterAlias(writer: {
   username: string | null;
 }) {
   const username = writer.username?.trim();
-
-  if (username) {
-    return username.startsWith("@") ? username : `@${username}`;
-  }
-
+  if (username) return username.startsWith("@") ? username : `@${username}`;
   return `@${writer.publicId.toLocaleLowerCase("tr-TR")}`;
 }
 
-const publicWorkWhere = {
-  archivedAt: null,
-  contentRating: {
-    not: "adult_18",
-  },
-  publishedAt: { not: null },
-  status: "published",
-  visibility: "public",
-} satisfies Prisma.WorkWhereInput;
+function publicWorkWhere(canAccessAdultContent: boolean) {
+  return {
+    archivedAt: null,
+    ...adultContentWorkVisibility(canAccessAdultContent),
+    publishedAt: { not: null },
+    status: "published",
+    visibility: "public",
+  } satisfies Prisma.WorkWhereInput;
+}
 
 export async function getPublisherFavoriteWorks(
   publisherId: string,
   filters: PublisherFavoriteFilters,
+  canAccessAdultContent = false,
 ): Promise<PublisherFavoriteWorkData> {
+  const contentRating =
+    filters.contentRating === "adult_18" && !canAccessAdultContent
+      ? undefined
+      : filters.contentRating;
   const where: Prisma.PublisherWorkFavoriteWhereInput = {
     publisherId,
     work: {
-      ...publicWorkWhere,
+      ...publicWorkWhere(canAccessAdultContent),
       author: {
         is: {
           deletedAt: null,
@@ -91,9 +93,7 @@ export async function getPublisherFavoriteWorks(
           status: "active",
         },
       },
-      ...(filters.contentRating
-        ? { contentRating: filters.contentRating }
-        : {}),
+      ...(contentRating ? { contentRating } : {}),
       ...(filters.query
         ? {
             OR: [
@@ -134,10 +134,7 @@ export async function getPublisherFavoriteWorks(
           _count: {
             select: {
               comments: {
-                where: {
-                  deletedAt: null,
-                  status: "visible",
-                },
+                where: { deletedAt: null, status: "visible" },
               },
               favorites: true,
               ownershipStamps: true,
@@ -146,11 +143,7 @@ export async function getPublisherFavoriteWorks(
             },
           },
           author: {
-            select: {
-              displayName: true,
-              publicId: true,
-              username: true,
-            },
+            select: { displayName: true, publicId: true, username: true },
           },
           chapters: {
             where: {
@@ -159,10 +152,7 @@ export async function getPublisherFavoriteWorks(
               status: "published",
             },
             orderBy: { position: "asc" },
-            select: {
-              id: true,
-              position: true,
-            },
+            select: { id: true, position: true },
           },
           contentRating: true,
           editorReviewStatus: true,
@@ -178,8 +168,7 @@ export async function getPublisherFavoriteWorks(
     },
   });
 
-  const first =
-    totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const last = Math.min(currentPage * PAGE_SIZE, totalCount);
 
   return {

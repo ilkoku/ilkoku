@@ -1,5 +1,6 @@
 import "server-only";
 
+import { adultContentWorkVisibility } from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
 
@@ -7,10 +8,12 @@ import { getOwnershipPassport } from "./queries";
 
 export async function getPublicOwnershipPassportBySlug(
   slug: string,
+  canAccessAdultContent = false,
 ) {
   const work = await prisma.work.findFirst({
     where: {
       archivedAt: null,
+      ...adultContentWorkVisibility(canAccessAdultContent),
       author: {
         is: {
           deletedAt: null,
@@ -18,39 +21,22 @@ export async function getPublicOwnershipPassportBySlug(
           status: "active",
         },
       },
-      contentRating: {
-        not: "adult_18",
-      },
-      publishedAt: {
-        not: null,
-      },
+      publishedAt: { not: null },
       slug,
       status: "published",
       visibility: "public",
       NOT: {
-        slug: {
-          in: [...BLOCKED_PUBLIC_WORK_SLUGS],
-        },
+        slug: { in: [...BLOCKED_PUBLIC_WORK_SLUGS] },
       },
     },
-    select: {
-      id: true,
-    },
+    select: { id: true },
   });
 
-  if (!work) {
-    return null;
-  }
+  if (!work) return null;
 
-  const passport = await getOwnershipPassport(work.id, {
+  return getOwnershipPassport(work.id, {
     kind: "publisher_discovery",
     publisherId: "public-passport",
     userId: "public-passport",
   });
-
-  if (!passport || passport.work.contentRating === "adult_18") {
-    return null;
-  }
-
-  return passport;
 }

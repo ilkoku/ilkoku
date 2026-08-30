@@ -6,6 +6,7 @@ import { AdminRoleViewControl } from "@/components/account/AdminRoleViewControl"
 import { UserArea } from "@/components/layout/UserArea";
 import { Brand } from "@/components/ui/Brand";
 import { getCurrentAdminRoleView } from "@/features/admin-role-view/cookie";
+import { revokeAdultContentAction } from "@/features/adult-content/actions";
 import { logoutAction } from "@/features/auth/actions";
 import { roleDestinations } from "@/features/auth/data";
 import { getRoleNavigation } from "@/features/auth/destination";
@@ -16,6 +17,7 @@ import { NotificationPreferencesForm } from "@/features/profile/components/Notif
 import { PasswordForm } from "@/features/profile/components/PasswordForm";
 import { ProfileForm } from "@/features/profile/components/ProfileForm";
 import { getProfilePageData } from "@/features/profile/queries";
+import { getAdultContentAccess } from "@/lib/adult-content-access";
 import { getNotificationPreferences } from "@/lib/notification-preferences";
 import "@/features/profile/profile.css";
 import "@/features/profile/notification-preferences.css";
@@ -56,6 +58,7 @@ const accountSections = [
   { href: "#kisisel-bilgiler", label: "Kişisel Bilgiler", helper: "Profil ve yazar bilgileri" },
   { href: "#yazdiginiz-turler", label: "Yazdığınız Türler", helper: "Yazarlık türlerinizi seçin" },
   { href: "#rol-basvurusu", label: "Rol & Başvurular", helper: "Başvuru ve doğrulama durumu" },
+  { href: "#yetiskin-icerik", label: "18+ İçerik Erişimi", helper: "Yaş ve içerik tercihi" },
   { href: "#bildirim-tercihleri", label: "Bildirim Tercihleri", helper: "E-posta ve bildirim ayarları" },
   { href: "#guvenlik", label: "Güvenlik", helper: "Şifre ve oturum işlemleri" },
 ] as const;
@@ -72,9 +75,12 @@ export default async function AccountPage({
   const profile = await getCurrentProfile({ ignoreAdminRoleView: true });
   if (!profile) redirect("/giris?sonraki=/hesabim");
 
-  const [data, notificationPreferences] = await Promise.all([
+  const [data, notificationPreferences, adultAccess] = await Promise.all([
     getProfilePageData(profile.id),
     getNotificationPreferences(profile.id),
+    profile.role === "admin"
+      ? Promise.resolve(null)
+      : getAdultContentAccess(profile.id),
   ]);
   if (!data) redirect("/giris?sonraki=/hesabim");
 
@@ -230,28 +236,20 @@ export default async function AccountPage({
                     <div>
                       <dt>Admin notu</dt>
                       <dd>
-                        {data.latestRoleRequest.reviewNote
-                          || "Henüz değerlendirme notu yok."}
+                        {data.latestRoleRequest.reviewNote || "Henüz değerlendirme notu yok."}
                       </dd>
                     </div>
                     {data.latestRoleRequest.requestedRole === "publisher" ? (
                       <>
                         <div>
                           <dt>Başvurulan yayınevi</dt>
-                          <dd>
-                            {publisherApplication?.publisherName
-                              || "Kurumsal bilgi eksik"}
-                          </dd>
+                          <dd>{publisherApplication?.publisherName || "Kurumsal bilgi eksik"}</dd>
                         </div>
                         <div>
                           <dt>Kurumsal doğrulama</dt>
-                          <dd
-                            data-status={publisherApplication?.verificationStatus || "draft"}
-                          >
+                          <dd data-status={publisherApplication?.verificationStatus || "draft"}>
                             {publisherApplication
-                              ? publisherApplicationStatusLabels[
-                                publisherApplication.verificationStatus
-                              ]
+                              ? publisherApplicationStatusLabels[publisherApplication.verificationStatus]
                               : "Bilgilerinizi tamamlayın"}
                           </dd>
                         </div>
@@ -290,6 +288,69 @@ export default async function AccountPage({
                 <p className="account-role-request__empty">
                   Henüz bir rol başvurunuz bulunmuyor.
                 </p>
+              )}
+            </section>
+
+            <section className="profile-card" id="yetiskin-icerik">
+              <div className="profile-card__heading">
+                <div>
+                  <p>İçerik erişimi</p>
+                  <h2>18+ içerik erişimi</h2>
+                </div>
+              </div>
+
+              {profile.role === "admin" ? (
+                <p>
+                  Yönetici hesabı içerik denetimi için yaş filtresinden bağımsızdır.
+                </p>
+              ) : adultAccess?.needsBirthDate ? (
+                <>
+                  <p>
+                    İçerik yaş sınıflarını doğru uygulayabilmek için yaş bilginizi bir kez doğrulayın.
+                    Tam doğum tarihiniz public profilinizde gösterilmez.
+                  </p>
+                  <Link
+                    className="button button--primary"
+                    href="/yas-dogrulama?sonraki=%2Fhesabim%23yetiskin-icerik"
+                  >
+                    Yaş bilgimi doğrula
+                  </Link>
+                </>
+              ) : !adultAccess?.isAdult ? (
+                <>
+                  <p>Yaş bilgisi doğrulandı.</p>
+                  <p>
+                    Bu hesap 18+ içerik erişimine uygun değildir. 18+ eserler Keşfet ve okuma alanlarında gösterilmez.
+                  </p>
+                </>
+              ) : adultAccess.canAccessAdultContent ? (
+                <>
+                  <p>
+                    Yaş bilgisi doğrulandı. 18+ içerik tercihiniz açık; 18+ eserler ortak Keşfet havuzunda gösterilir.
+                  </p>
+                  <form action={revokeAdultContentAction}>
+                    <input
+                      name="returnTo"
+                      type="hidden"
+                      value="/hesabim#yetiskin-icerik"
+                    />
+                    <button className="button button--outline" type="submit">
+                      18+ içerikleri kapat
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <p>
+                    Yaş bilgisi doğrulandı ve hesabınız 18+ erişime uygundur. 18+ eserleri görmek için ikinci açık onay gereklidir.
+                  </p>
+                  <Link
+                    className="button button--primary"
+                    href="/yetiskin-icerik-onayi?sonraki=%2Fhesabim%23yetiskin-icerik"
+                  >
+                    18+ içerikleri aç
+                  </Link>
+                </>
               )}
             </section>
 

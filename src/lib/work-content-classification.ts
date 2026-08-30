@@ -17,6 +17,11 @@ export const publicStoredWorkContentRatings = [
   "young_adult_16",
 ] as const;
 
+export const memberStoredWorkContentRatings = [
+  ...publicStoredWorkContentRatings,
+  "adult_18",
+] as const;
+
 export type WorkContentRating =
   (typeof workContentRatings)[number];
 
@@ -25,6 +30,9 @@ export type StoredWorkContentRating =
 
 export type PublicStoredWorkContentRating =
   (typeof publicStoredWorkContentRatings)[number];
+
+export type MemberStoredWorkContentRating =
+  (typeof memberStoredWorkContentRatings)[number];
 
 export const workContentWarnings = [
   "violence",
@@ -80,6 +88,17 @@ export function isPublicStoredWorkContentRating(
     value &&
       publicStoredWorkContentRatings.includes(
         value as PublicStoredWorkContentRating,
+      ),
+  );
+}
+
+export function isMemberStoredWorkContentRating(
+  value: string | undefined,
+): value is MemberStoredWorkContentRating {
+  return Boolean(
+    value &&
+      memberStoredWorkContentRatings.includes(
+        value as MemberStoredWorkContentRating,
       ),
   );
 }

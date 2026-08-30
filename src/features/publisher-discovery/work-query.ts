@@ -1,11 +1,9 @@
-import type {
-  Prisma,
-} from "@/generated/prisma/client";
-import { commonDiscoveryWorkWhere } from "@/features/discovery/common-work-scope";
+import type { Prisma } from "@/generated/prisma/client";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import { prisma } from "@/lib/prisma";
 import {
-  isPublicStoredWorkContentRating,
-  type PublicStoredWorkContentRating,
+  isMemberStoredWorkContentRating,
+  type MemberStoredWorkContentRating,
   type StoredWorkContentRating,
 } from "@/lib/work-content-classification";
 
@@ -20,12 +18,11 @@ const reviewStatuses = [
   "completed",
 ] as const;
 
-type ReviewStatus =
-  (typeof reviewStatuses)[number];
+type ReviewStatus = (typeof reviewStatuses)[number];
 
 export interface PublisherWorkDiscoveryFilters {
   completion: "" | "completed" | "ongoing";
-  contentRating: PublicStoredWorkContentRating | "";
+  contentRating: MemberStoredWorkContentRating | "";
   genre: string;
   language: string;
   page: number;
@@ -65,72 +62,37 @@ export interface PublisherWorkDiscoveryData {
   totalPages: number;
 }
 
-function firstValue(
-  value: string | string[] | undefined,
-) {
-  return (
-    Array.isArray(value)
-      ? value[0]
-      : value
-  )?.trim() ?? "";
+function firstValue(value: string | string[] | undefined) {
+  return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
 }
 
-function isReviewStatus(
-  value: string,
-): value is ReviewStatus {
-  return reviewStatuses.includes(
-    value as ReviewStatus,
-  );
+function isReviewStatus(value: string): value is ReviewStatus {
+  return reviewStatuses.includes(value as ReviewStatus);
 }
 
 export function normalizePublisherWorkDiscoveryFilters(
-  input: Record<
-    string,
-    string | string[] | undefined
-  >,
+  input: Record<string, string | string[] | undefined>,
 ): PublisherWorkDiscoveryFilters {
-  const rawPage = Number.parseInt(
-    firstValue(input.sayfa),
-    10,
-  );
-  const completion =
-    firstValue(input.tamamlanma);
-  const contentRating =
-    firstValue(input.hitap);
-  const reviewStatus =
-    firstValue(input.editor);
-  const sort =
-    firstValue(input.siralama);
+  const rawPage = Number.parseInt(firstValue(input.sayfa), 10);
+  const completion = firstValue(input.tamamlanma);
+  const contentRating = firstValue(input.hitap);
+  const reviewStatus = firstValue(input.editor);
+  const sort = firstValue(input.siralama);
 
   return {
     completion:
-      completion === "completed" ||
-      completion === "ongoing"
+      completion === "completed" || completion === "ongoing"
         ? completion
         : "",
-    contentRating:
-      isPublicStoredWorkContentRating(contentRating)
-        ? contentRating
-        : "",
-    genre:
-      firstValue(input.tur).slice(0, 120),
-    language:
-      firstValue(input.dil).slice(0, 10),
-    page:
-      Number.isFinite(rawPage) &&
-      rawPage > 0
-        ? rawPage
-        : 1,
-    query:
-      firstValue(input.arama).slice(0, 220),
-    reviewStatus:
-      isReviewStatus(reviewStatus)
-        ? reviewStatus
-        : "",
-    sort:
-      sort === "updated"
-        ? "updated"
-        : "newest",
+    contentRating: isMemberStoredWorkContentRating(contentRating)
+      ? contentRating
+      : "",
+    genre: firstValue(input.tur).slice(0, 120),
+    language: firstValue(input.dil).slice(0, 10),
+    page: Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1,
+    query: firstValue(input.arama).slice(0, 220),
+    reviewStatus: isReviewStatus(reviewStatus) ? reviewStatus : "",
+    sort: sort === "updated" ? "updated" : "newest",
   };
 }
 
@@ -149,69 +111,45 @@ function publicWriterAlias(writer: {
   displayName: string | null;
   username: string | null;
 }) {
-  if (writer.username?.trim()) {
-    return `@${writer.username.trim()}`;
-  }
+  if (writer.username?.trim()) return `@${writer.username.trim()}`;
 
-  const slug = (
-    writer.displayName?.trim() ||
-    "ilkoku-yazari"
-  )
+  const slug = (writer.displayName?.trim() || "ilkoku-yazari")
     .toLocaleLowerCase("tr-TR")
     .replace(/\s+/gu, "-")
-    .replace(
-      /[^a-z0-9çğıöşü_-]/giu,
-      "",
-    );
+    .replace(/[^a-z0-9çğıöşü_-]/giu, "");
 
   return `@${slug || "ilkoku-yazari"}`;
 }
 
 const publishedChapterWhere = {
   archivedAt: null,
-  publishedAt: {
-    not: null,
-  },
+  publishedAt: { not: null },
   status: "published",
 } satisfies Prisma.ChapterWhereInput;
 
 export async function getPublisherWorkDiscovery(
   filters: PublisherWorkDiscoveryFilters,
+  canAccessAdultContent = false,
 ): Promise<PublisherWorkDiscoveryData> {
+  const contentRating =
+    filters.contentRating === "adult_18" && !canAccessAdultContent
+      ? ""
+      : filters.contentRating;
+
   const where: Prisma.WorkWhereInput = {
-    ...commonDiscoveryWorkWhere,
-    ...(filters.contentRating
-      ? { contentRating: filters.contentRating }
-      : {}),
+    ...commonDiscoveryWorkWhereFor(canAccessAdultContent),
+    ...(contentRating ? { contentRating } : {}),
     ...(filters.query
       ? {
           OR: [
-            {
-              title: {
-                contains: filters.query,
-              },
-            },
-            {
-              subtitle: {
-                contains: filters.query,
-              },
-            },
+            { title: { contains: filters.query } },
+            { subtitle: { contains: filters.query } },
             {
               author: {
                 is: {
                   OR: [
-                    {
-                      displayName: {
-                        contains:
-                          filters.query,
-                      },
-                    },
-                    {
-                      username: {
-                        contains:
-                          filters.query,
-                      },
-                    },
+                    { displayName: { contains: filters.query } },
+                    { username: { contains: filters.query } },
                   ],
                 },
               },
@@ -219,23 +157,10 @@ export async function getPublisherWorkDiscovery(
           ],
         }
       : {}),
-    ...(filters.genre
-      ? {
-          genre: {
-            contains: filters.genre,
-          },
-        }
-      : {}),
-    ...(filters.language
-      ? {
-          language: filters.language,
-        }
-      : {}),
+    ...(filters.genre ? { genre: { contains: filters.genre } } : {}),
+    ...(filters.language ? { language: filters.language } : {}),
     ...(filters.reviewStatus
-      ? {
-          editorReviewStatus:
-            filters.reviewStatus,
-        }
+      ? { editorReviewStatus: filters.reviewStatus }
       : {}),
     ...(filters.completion === "completed"
       ? {
@@ -243,14 +168,8 @@ export async function getPublisherWorkDiscovery(
             none: {
               archivedAt: null,
               OR: [
-                {
-                  publishedAt: null,
-                },
-                {
-                  status: {
-                    not: "published",
-                  },
-                },
+                { publishedAt: null },
+                { status: { not: "published" } },
               ],
             },
             some: publishedChapterWhere,
@@ -262,14 +181,8 @@ export async function getPublisherWorkDiscovery(
               some: {
                 archivedAt: null,
                 OR: [
-                  {
-                    publishedAt: null,
-                  },
-                  {
-                    status: {
-                      not: "published",
-                    },
-                  },
+                  { publishedAt: null },
+                  { status: { not: "published" } },
                 ],
               },
             },
@@ -277,50 +190,23 @@ export async function getPublisherWorkDiscovery(
         : {}),
   };
 
-  const totalCount =
-    await prisma.work.count({ where });
-  const totalPages = Math.max(
-    1,
-    Math.ceil(totalCount / PAGE_SIZE),
-  );
-  const currentPage = Math.min(
-    filters.page,
-    totalPages,
-  );
+  const totalCount = await prisma.work.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(filters.page, totalPages);
 
   const works = await prisma.work.findMany({
     where,
     orderBy:
       filters.sort === "updated"
-        ? [
-            {
-              updatedAt: "desc",
-            },
-            {
-              publishedAt: "desc",
-            },
-          ]
-        : [
-            {
-              publishedAt: "desc",
-            },
-            {
-              createdAt: "desc",
-            },
-          ],
-    skip:
-      (currentPage - 1) *
-      PAGE_SIZE,
-    take:
-      PAGE_SIZE,
+        ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
+        : [{ publishedAt: "desc" }, { createdAt: "desc" }],
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
     select: {
       _count: {
         select: {
           comments: {
-            where: {
-              deletedAt: null,
-              status: "visible",
-            },
+            where: { deletedAt: null, status: "visible" },
           },
           favorites: true,
           ownershipStamps: true,
@@ -329,23 +215,12 @@ export async function getPublisherWorkDiscovery(
         },
       },
       author: {
-        select: {
-          displayName: true,
-          username: true,
-        },
+        select: { displayName: true, username: true },
       },
       chapters: {
-        where: {
-          archivedAt: null,
-        },
-        orderBy: {
-          position: "asc",
-        },
-        select: {
-          id: true,
-          publishedAt: true,
-          status: true,
-        },
+        where: { archivedAt: null },
+        orderBy: { position: "asc" },
+        select: { id: true, publishedAt: true, status: true },
       },
       contentRating: true,
       coverUrl: true,
@@ -360,79 +235,48 @@ export async function getPublisherWorkDiscovery(
     },
   });
 
-  const first =
-    totalCount === 0
-      ? 0
-      : (currentPage - 1) *
-          PAGE_SIZE +
-        1;
-  const last = Math.min(
-    currentPage * PAGE_SIZE,
-    totalCount,
-  );
+  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const last = Math.min(currentPage * PAGE_SIZE, totalCount);
 
   return {
     currentPage,
     first,
     last,
     rows: works.map((work) => {
-      const publishedChapterCount =
-        work.chapters.filter(
-          (chapter) =>
-            chapter.status === "published" &&
-            chapter.publishedAt !== null,
-        ).length;
-      const hasPendingChapter =
-        work.chapters.some(
-          (chapter) =>
-            chapter.status !== "published" ||
-            chapter.publishedAt === null,
-        );
+      const publishedChapterCount = work.chapters.filter(
+        (chapter) =>
+          chapter.status === "published" && chapter.publishedAt !== null,
+      ).length;
+      const hasPendingChapter = work.chapters.some(
+        (chapter) =>
+          chapter.status !== "published" || chapter.publishedAt === null,
+      );
 
       return {
-        authorAlias:
-          publicWriterAlias(work.author),
-        authorName:
-          publicWriterName(work.author),
-        chapterCount:
-          publishedChapterCount,
-        commentCount:
-          work._count.comments,
+        authorAlias: publicWriterAlias(work.author),
+        authorName: publicWriterName(work.author),
+        chapterCount: publishedChapterCount,
+        commentCount: work._count.comments,
         completion:
-          publishedChapterCount > 0 &&
-          !hasPendingChapter
+          publishedChapterCount > 0 && !hasPendingChapter
             ? "completed"
             : "ongoing",
-        contentRating:
-          work.contentRating,
-        coverUrl:
-          work.coverUrl,
-        editorReviewStatus:
-          work.editorReviewStatus,
-        favoriteCount:
-          work._count.favorites,
-        genre:
-          work.genre,
+        contentRating: work.contentRating,
+        coverUrl: work.coverUrl,
+        editorReviewStatus: work.editorReviewStatus,
+        favoriteCount: work._count.favorites,
+        genre: work.genre,
         hasPassportRecord:
-          work._count.ownershipStamps > 0 ||
-          work._count.versions > 0,
-        id:
-          work.id,
-        language:
-          work.language,
+          work._count.ownershipStamps > 0 || work._count.versions > 0,
+        id: work.id,
+        language: work.language,
         publishedAt:
-          work.publishedAt?.toISOString() ??
-          new Date(0).toISOString(),
-        readerCount:
-          work._count.readingProgress,
-        slug:
-          work.slug,
-        subtitle:
-          work.subtitle,
-        title:
-          work.title,
-        versionCount:
-          work._count.versions,
+          work.publishedAt?.toISOString() ?? new Date(0).toISOString(),
+        readerCount: work._count.readingProgress,
+        slug: work.slug,
+        subtitle: work.subtitle,
+        title: work.title,
+        versionCount: work._count.versions,
       };
     }),
     totalCount,

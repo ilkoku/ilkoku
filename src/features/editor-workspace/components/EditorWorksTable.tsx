@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+import { DiscoveryRoleWorksTable } from "@/components/discovery/DiscoveryRoleWorksTable";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import type { EditorWorkTableData } from "../types";
 import { ReviewClaimDialog } from "./ReviewClaimDialog";
@@ -187,6 +189,46 @@ export function EditorWorksTable({
 }) {
   const returnPath = editorReturnPath(mode);
 
+  if (mode === "discovery") {
+    return (
+      <DiscoveryRoleWorksTable
+        rows={works.map((work) => {
+          const status = statusInformation(work, currentEditorId);
+
+          return {
+            actions: (
+              <>
+                <WorkAction currentEditorId={currentEditorId} mode={mode} work={work} />
+                <Link
+                  className="editor-table-action"
+                  href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent(returnPath)}`}
+                >
+                  Pasaport
+                </Link>
+              </>
+            ),
+            authorAlias: authorAlias(work),
+            authorName: work.authorName,
+            chapterCount: work.chapterCount,
+            commentCount: work.commentCount,
+            contentRatingLabel: work.contentRating
+              ? workContentRatingDetails[work.contentRating].shortLabel
+              : "Sınıflandırılmadı",
+            favoriteCount: work.favoriteCount,
+            genre: work.genre,
+            href: `/kitap/${work.slug}?from=${encodeURIComponent(returnPath)}`,
+            id: work.id,
+            meta: `Yayın ${formatDate(work.publishedAt)}`,
+            readerCount: work.readerCount,
+            statusLabel: status.label,
+            statusMeta: work.editorReviewStatus === "completed" ? "Editör süreci tamamlandı" : "Ortak Eser Havuzu",
+            title: work.title,
+          };
+        })}
+      />
+    );
+  }
+
   return (
     <div className="editor-table-shell">
       <div className="editor-table-scroll">
@@ -215,10 +257,7 @@ export function EditorWorksTable({
 
           <tbody>
             {works.map((work) => {
-              const status = statusInformation(
-                work,
-                currentEditorId,
-              );
+              const status = statusInformation(work, currentEditorId);
 
               return (
                 <tr key={work.id}>
@@ -268,9 +307,7 @@ export function EditorWorksTable({
                   </td>
 
                   <td data-label="Durum">
-                    <span
-                      className={`editor-table-status ${status.className}`}
-                    >
+                    <span className={`editor-table-status ${status.className}`}>
                       {status.label}
                     </span>
                   </td>

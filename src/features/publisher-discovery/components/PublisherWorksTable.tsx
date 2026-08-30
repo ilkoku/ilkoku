@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DiscoveryRoleWorksTable } from "@/components/discovery/DiscoveryRoleWorksTable";
 import { PublisherEditorRequestForm } from "@/features/publisher-editor-requests/components/PublisherEditorRequestForm";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import { togglePublisherWorkLikeAction } from "../engagement-actions";
@@ -20,6 +21,8 @@ const reviewLabels = {
 function languageLabel(value: string) {
   if (value === "tr") return "Türkçe";
   if (value === "en") return "İngilizce";
+  if (value === "de") return "Almanca";
+  if (value === "fr") return "Fransızca";
   return value.toLocaleUpperCase("tr-TR");
 }
 
@@ -27,10 +30,6 @@ function dateLabel(value: string) {
   return new Intl.DateTimeFormat("tr-TR", {
     dateStyle: "medium",
   }).format(new Date(value));
-}
-
-function formatNumber(value: number) {
-  return value.toLocaleString("tr-TR");
 }
 
 export function PublisherWorksTable({
@@ -65,207 +64,113 @@ export function PublisherWorksTable({
   const activeEditorRequests = new Set(activeEditorRequestWorkIds);
 
   return (
-    <div className="publisher-discovery-table-wrap">
-      <table className="publisher-discovery-table">
-        <thead>
-          <tr>
-            <th>Eser</th>
-            <th>Yazar</th>
-            <th>Tür / Dil</th>
-            <th>Hitap Yaşı</th>
-            <th>Durum</th>
-            <th>Editör</th>
-            <th>Metrikler</th>
-            <th>Pasaport</th>
-            <th>İşlemler</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {rows.map((work) => (
-            <tr key={work.id}>
-              <td data-label="Eser">
-                <div className="publisher-discovery-table__work">
-                  <span
-                    aria-hidden="true"
-                    className="publisher-discovery-table__cover"
-                  >
-                    {work.title
-                      .trim()
-                      .charAt(0)
-                      .toLocaleUpperCase("tr-TR") || "E"}
-                  </span>
-
-                  <div>
-                    <strong>{work.title}</strong>
-                    {work.subtitle ? <small>{work.subtitle}</small> : null}
-                    <small>{dateLabel(work.publishedAt)}</small>
-                  </div>
-                </div>
-              </td>
-
-              <td data-label="Yazar">
-                <strong>{work.authorName}</strong>
-                <small>{work.authorAlias}</small>
-              </td>
-
-              <td data-label="Tür / Dil">
-                <span>{work.genre || "Tür belirtilmedi"}</span>
-                <small>{languageLabel(work.language)}</small>
-              </td>
-
-              <td data-label="Hitap Yaşı">
-                <span>{workContentRatingDetails[work.contentRating].shortLabel}</span>
-              </td>
-
-              <td data-label="Durum">
-                <span
-                  className="publisher-discovery-status"
-                  data-status={work.completion}
-                >
-                  {work.completion === "completed"
-                    ? "Tamamlandı"
-                    : "Devam ediyor"}
-                </span>
-                <small>{work.chapterCount} yayımlanmış bölüm</small>
-              </td>
-
-              <td data-label="Editör">
-                <span>{reviewLabels[work.editorReviewStatus]}</span>
-              </td>
-
-              <td data-label="Metrikler">
-                <div className="publisher-discovery-table__metrics">
-                  <span>{formatNumber(work.readerCount)} okur</span>
-                  <span>{formatNumber(work.favoriteCount)} favori</span>
-                  <span>{formatNumber(work.commentCount)} yorum</span>
-                </div>
-              </td>
-
-              <td data-label="Pasaport">
-                <span
-                  className="publisher-discovery-status"
-                  data-status={
-                    work.hasPassportRecord ? "available" : "pending"
+    <DiscoveryRoleWorksTable
+      rows={rows.map((work) => ({
+        actions: (
+          <>
+            {canLike ? (
+              <form action={togglePublisherWorkLikeAction}>
+                <input name="workId" type="hidden" value={work.id} />
+                <input
+                  name="active"
+                  type="hidden"
+                  value={liked.has(work.id) ? "false" : "true"}
+                />
+                <input name="returnPath" type="hidden" value={returnTo} />
+                <button
+                  className={
+                    liked.has(work.id)
+                      ? "button button--primary"
+                      : "button button--outline"
                   }
+                  type="submit"
                 >
-                  {work.hasPassportRecord ? "Kayıtlı" : "Kanıt bekliyor"}
-                </span>
-                <small>{work.versionCount} sürüm</small>
-              </td>
+                  {liked.has(work.id) ? "Beğenildi" : "Beğen"}
+                </button>
+              </form>
+            ) : null}
 
-              <td data-label="İşlemler">
-                <div className="publisher-discovery-table__actions">
-                  {canLike ? (
-                    <form
-                      action={togglePublisherWorkLikeAction}
-                      className="publisher-discovery-engagement-form"
-                    >
-                      <input name="workId" type="hidden" value={work.id} />
-                      <input
-                        name="active"
-                        type="hidden"
-                        value={liked.has(work.id) ? "false" : "true"}
-                      />
-                      <input
-                        name="returnPath"
-                        type="hidden"
-                        value={returnTo}
-                      />
-                      <button
-                        className={
-                          liked.has(work.id)
-                            ? "button button--primary"
-                            : "button button--outline"
-                        }
-                        type="submit"
-                      >
-                        {liked.has(work.id)
-                          ? "Beğenmekten vazgeç"
-                          : "Eseri beğen"}
-                      </button>
-                    </form>
-                  ) : null}
+            {canFavorite ? (
+              <form action={togglePublisherWorkFavoriteAction}>
+                <input name="workId" type="hidden" value={work.id} />
+                <input
+                  name="active"
+                  type="hidden"
+                  value={favorited.has(work.id) ? "false" : "true"}
+                />
+                <input name="returnPath" type="hidden" value={returnTo} />
+                <button
+                  className={
+                    favorited.has(work.id)
+                      ? "button button--primary"
+                      : "button button--outline"
+                  }
+                  type="submit"
+                >
+                  {favorited.has(work.id) ? "Favoride" : "Favorile"}
+                </button>
+              </form>
+            ) : null}
 
-                  {canFavorite ? (
-                    <form
-                      action={togglePublisherWorkFavoriteAction}
-                      className="publisher-discovery-engagement-form"
-                    >
-                      <input name="workId" type="hidden" value={work.id} />
-                      <input
-                        name="active"
-                        type="hidden"
-                        value={favorited.has(work.id) ? "false" : "true"}
-                      />
-                      <input
-                        name="returnPath"
-                        type="hidden"
-                        value={returnTo}
-                      />
-                      <button
-                        className={
-                          favorited.has(work.id)
-                            ? "button button--primary"
-                            : "button button--outline"
-                        }
-                        type="submit"
-                      >
-                        {favorited.has(work.id)
-                          ? "Favoriden çıkar"
-                          : "Favoriye ekle"}
-                      </button>
-                    </form>
-                  ) : null}
+            <Link
+              className="button button--outline"
+              href={`/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`}
+            >
+              Eseri Aç
+            </Link>
 
-                  <Link
-                    className="button button--outline"
-                    href={`/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`}
-                  >
-                    Eser sayfası
-                  </Link>
+            {canViewPassport ? (
+              <Link
+                className="button button--primary"
+                href={`/yayinevi/kesfet/eserler/${work.id}/pasaport`}
+              >
+                Pasaport
+              </Link>
+            ) : null}
 
-                  {canViewPassport ? (
-                    <Link
-                      className="button button--primary"
-                      href={`/yayinevi/kesfet/eserler/${work.id}/pasaport`}
-                    >
-                      Eser Pasaportu
-                    </Link>
-                  ) : null}
+            {canRequestEditorReview ? (
+              <PublisherEditorRequestForm
+                active={activeEditorRequests.has(work.id)}
+                eligible={work.completion === "completed"}
+                workId={work.id}
+              />
+            ) : null}
 
-                  {canRequestEditorReview ? (
-                    <PublisherEditorRequestForm
-                      active={activeEditorRequests.has(work.id)}
-                      eligible={work.completion === "completed"}
-                      workId={work.id}
-                    />
-                  ) : null}
+            <PublisherDiscoveryShareForm
+              canShareEmail={canShareEmail}
+              canShareInternal={canShareInternal}
+              entityId={work.id}
+              entityKind="work"
+              members={shareMembers}
+              returnPath={returnTo}
+            />
 
-                  <PublisherDiscoveryShareForm
-                    canShareEmail={canShareEmail}
-                    canShareInternal={canShareInternal}
-                    entityId={work.id}
-                    entityKind="work"
-                    members={shareMembers}
-                    returnPath={returnTo}
-                  />
-
-                  {!canLike &&
-                  !canFavorite &&
-                  !canRequestEditorReview &&
-                  !canShareEmail &&
-                  !canShareInternal ? (
-                    <span className="publisher-discovery-table__permission">
-                      Etkileşim yetkisi gerekli
-                    </span>
-                  ) : null}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+            {!canLike &&
+            !canFavorite &&
+            !canRequestEditorReview &&
+            !canShareEmail &&
+            !canShareInternal ? (
+              <span className="publisher-discovery-table__permission">
+                Etkileşim yetkisi gerekli
+              </span>
+            ) : null}
+          </>
+        ),
+        authorAlias: work.authorAlias,
+        authorName: work.authorName,
+        chapterCount: work.chapterCount,
+        commentCount: work.commentCount,
+        contentRatingLabel: workContentRatingDetails[work.contentRating].shortLabel,
+        favoriteCount: work.favoriteCount,
+        genre: work.genre,
+        href: `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`,
+        id: work.id,
+        meta: `${work.subtitle ? `${work.subtitle} · ` : ""}${languageLabel(work.language)} · ${dateLabel(work.publishedAt)}`,
+        readerCount: work.readerCount,
+        statusLabel: reviewLabels[work.editorReviewStatus],
+        statusMeta: `${work.completion === "completed" ? "Tamamlandı" : "Devam ediyor"} · ${work.hasPassportRecord ? "Pasaport kayıtlı" : "Pasaport bekliyor"} · ${work.versionCount} sürüm`,
+        title: work.title,
+      }))}
+    />
   );
 }

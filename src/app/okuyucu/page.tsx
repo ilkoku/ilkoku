@@ -10,10 +10,7 @@ import { ProgressBar } from "@/features/dashboard/components/ProgressBar";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import { EditorReviewBadge } from "@/features/editor-workspace/components/EditorReviewBadge";
 import { getContinueReadingForMember } from "@/features/reading/continue-reading";
-import {
-  getCompletedReading,
-  restartReadingAction,
-} from "@/features/reading/progress";
+import { getCompletedReading } from "@/features/reading/progress";
 import { getAdultContentAccess } from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
 import { workContentRatingDetails } from "@/lib/work-content-classification";

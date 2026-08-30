@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { normalizeGenreLabel } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
 import {
   isMemberStoredWorkContentRating,
@@ -78,6 +79,7 @@ export function normalizePublisherWorkDiscoveryFilters(
   const contentRating = firstValue(input.hitap);
   const reviewStatus = firstValue(input.editor);
   const sort = firstValue(input.siralama);
+  const genre = normalizeGenreLabel(firstValue(input.tur));
 
   return {
     completion:
@@ -87,7 +89,7 @@ export function normalizePublisherWorkDiscoveryFilters(
     contentRating: isMemberStoredWorkContentRating(contentRating)
       ? contentRating
       : "",
-    genre: firstValue(input.tur).slice(0, 120),
+    genre: genre ?? "",
     language: firstValue(input.dil).slice(0, 10),
     page: Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1,
     query: firstValue(input.arama).slice(0, 220),
@@ -157,7 +159,7 @@ export async function getPublisherWorkDiscovery(
           ],
         }
       : {}),
-    ...(filters.genre ? { genre: { contains: filters.genre } } : {}),
+    ...(filters.genre ? { genre: filters.genre } : {}),
     ...(filters.language ? { language: filters.language } : {}),
     ...(filters.reviewStatus
       ? { editorReviewStatus: filters.reviewStatus }

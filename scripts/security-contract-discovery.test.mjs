@@ -52,6 +52,20 @@ test("reader, editor and publisher discovery use the same member-aware public wo
   assertNotContains(reader, "readingProgress: {\n      none:", "reader discovery");
 });
 
+test("reader home follows the shared member-aware pool and exposes age plus passport", () => {
+  const readerHome = source("src/app/okuyucu/page.tsx");
+
+  assertContains(readerHome, "getAdultContentAccess(profile.id)", "reader home adult access");
+  assertContains(readerHome, "commonDiscoveryWorkWhereFor(", "reader home discovery scope");
+  assertContains(readerHome, "contentRating: true", "reader home audience age data");
+  assertContains(
+    readerHome,
+    "workContentRatingDetails[work.contentRating].shortLabel",
+    "reader home audience age display",
+  );
+  assertContains(readerHome, "Eser Pasaportu", "reader home passport access");
+});
+
 test("18+ discovery requires both verified age and explicit consent without creating a second pool", () => {
   const policy = source("src/lib/adult-content-access.ts");
   const shell = source("src/components/layout/AppShell.tsx");

@@ -38,28 +38,51 @@ test("public author surfaces expose reader author favorite action", async () => 
   assert.match(author, /Yazarı Favorile/);
 });
 
-test("favorite-author publication creates reader notification without leaking adult works", async () => {
+test("reader author favorites use the Prisma model rather than unmanaged SQL", async () => {
+  const source = await read("src/features/reader/author-favorites.ts");
+
+  assert.match(source, /prisma\.readerAuthorFavorite\.findUnique/);
+  assert.match(source, /prisma\.readerAuthorFavorite\.create/);
+  assert.match(source, /prisma\.readerAuthorFavorite\.delete/);
+  assert.doesNotMatch(source, /\$executeRaw/);
+});
+
+test("favorite-author publication is adult-gated, clickable and idempotent", async () => {
   const source = await read("src/features/works/publication-notifications.ts");
   const adultGate = source.indexOf('work.contentRating === "adult_18"');
-  const readerFavoriteQuery = source.indexOf("ReaderAuthorFavorite");
+  const readerFavoriteDelivery = source.lastIndexOf(
+    "createReaderFavoriteAuthorPublicationNotifications({",
+  );
 
   assert.ok(adultGate >= 0, "adult publication gate must exist");
   assert.ok(
-    readerFavoriteQuery > adultGate,
-    "reader author notification lookup must happen after the adult-content gate",
+    readerFavoriteDelivery > adultGate,
+    "reader author notification delivery must run only after the adult-content gate",
   );
+  assert.match(source, /prisma\.readerAuthorFavorite\.findMany/);
+  assert.match(source, /SELECT id\s+FROM Work[\s\S]*FOR UPDATE/);
+  assert.match(source, /transaction\.notification\.findMany/);
   assert.match(source, /Favori yazarınız yeni eser yayımladı/);
   assert.match(source, /relatedEntityType: "work"/);
 });
 
-test("reader author favorite table is migration-backed and recovery-verified", async () => {
-  const [migration, manifest] = await Promise.all([
+test("reader author favorite table is migration-backed, schema-modeled and recovery-verified", async () => {
+  const [migration, manifest, schema] = await Promise.all([
     read(
       "prisma/migrations/20260830120500_reader_author_favorites/migration.sql",
     ),
     read("prisma/recovery/baseline-manifest.json"),
+    read("prisma/schema.prisma"),
   ]);
+
   assert.match(migration, /CREATE TABLE `ReaderAuthorFavorite`/);
-  assert.match(migration, /UNIQUE INDEX `ReaderAuthorFavorite_userId_authorId_key`/);
+  assert.match(
+    migration,
+    /UNIQUE INDEX `ReaderAuthorFavorite_userId_authorId_key`/,
+  );
+  assert.match(schema, /model ReaderAuthorFavorite/);
+  assert.match(schema, /@@unique\(\[userId, authorId\]\)/);
+  assert.match(schema, /ReaderAuthorFavoriteReader/);
+  assert.match(schema, /ReaderAuthorFavoriteAuthor/);
   assert.match(manifest, /"ReaderAuthorFavorite"/);
 });

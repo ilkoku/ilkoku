@@ -51,24 +51,34 @@ const sortOptions = [
 type SearchParams = Record<string, string | string[] | undefined>;
 
 function mapReaderWork(work: Awaited<ReturnType<typeof fetchWorks>>[number]): ReaderWorkRow {
-  const firstChapter = work.chapters[0] ?? null;
+  const publishedChapters = work.chapters.filter(
+    (chapter) => chapter.status === "published" && chapter.publishedAt !== null,
+  );
+  const firstChapter = publishedChapters[0] ?? null;
   const progress = work.readingProgress[0] ?? null;
+  const hasPendingChapter = work.chapters.some(
+    (chapter) => chapter.status !== "published" || chapter.publishedAt === null,
+  );
 
   return {
     authorName: work.author.displayName ?? work.author.fullName,
     authorUsername: work.author.username,
-    chapterCount: work.chapters.length,
+    chapterCount: publishedChapters.length,
     commentCount: work._count.comments,
     completedAt: progress?.completedAt?.toISOString() ?? null,
+    completionStatus:
+      publishedChapters.length > 0 && !hasPendingChapter ? "completed" : "ongoing",
     contentRating: work.contentRating,
     coverUrl: work.coverUrl,
     description: work.description,
     editorReviewStatus: work.editorReviewStatus,
     favoriteCount: work._count.favorites,
     genre: work.genre,
+    hasPassport: work._count.ownershipStamps > 0 || work._count.versions > 0,
     id: work.id,
     isFavorite: work.favorites.length > 0,
     language: work.language,
+    lastReadAt: progress?.lastReadAt?.toISOString() ?? null,
     lastReadLabel: progress?.chapter.title ?? null,
     progressPercent: progress?.progressPercent ?? null,
     publishedAt: work.publishedAt?.toISOString() ?? null,
@@ -85,11 +95,12 @@ function mapReaderWork(work: Awaited<ReturnType<typeof fetchWorks>>[number]): Re
       : "unread",
     slug: work.slug,
     title: work.title,
-    totalWords: work.chapters.reduce(
+    totalWords: publishedChapters.reduce(
       (total, chapter) => total + countWords(chapter.content),
       0,
     ),
     updatedAt: work.updatedAt.toISOString(),
+    versionCount: work._count.versions,
   };
 }
 
@@ -111,7 +122,9 @@ function fetchWorks(
             },
           },
           favorites: true,
+          ownershipStamps: true,
           readingProgress: true,
+          versions: true,
         },
       },
       author: {
@@ -124,13 +137,13 @@ function fetchWorks(
       chapters: {
         where: {
           archivedAt: null,
-          publishedAt: { not: null },
-          status: "published",
         },
         orderBy: { position: "asc" },
         select: {
           content: true,
           position: true,
+          publishedAt: true,
+          status: true,
           title: true,
         },
       },
@@ -159,6 +172,7 @@ function fetchWorks(
           },
           completed: true,
           completedAt: true,
+          lastReadAt: true,
           progressPercent: true,
         },
         take: 1,
@@ -217,6 +231,7 @@ export default async function ReaderExplorePage({
       : {}),
     ...(filters.genre ? { genre: filters.genre } : {}),
     ...(filters.contentRating ? { contentRating: filters.contentRating } : {}),
+    ...(filters.language ? { language: filters.language } : {}),
     ...(filters.reviewStatus
       ? { editorReviewStatus: filters.reviewStatus }
       : {}),
@@ -225,7 +240,8 @@ export default async function ReaderExplorePage({
     filters.sort === "updated"
       ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
       : [{ publishedAt: "desc" }, { createdAt: "desc" }];
-  const usesAdvancedFilters = hasDiscoveryAdvancedFilters(filters.advanced);
+  const usesPostFilters =
+    Boolean(filters.wordCount) || hasDiscoveryAdvancedFilters(filters.advanced);
   const favoriteCount = await prisma.favorite.count({ where: { userId: profile.id } });
 
   let rows: ReaderWorkRow[];
@@ -233,9 +249,11 @@ export default async function ReaderExplorePage({
   let currentPage: number;
   let totalPages: number;
 
-  if (usesAdvancedFilters) {
+  if (usesPostFilters) {
     const allWorks = await fetchWorks(where, profile.id, orderBy);
-    const allRows = allWorks.map(mapReaderWork).filter((work) => readerWorkMatches(work, filters));
+    const allRows = allWorks
+      .map(mapReaderWork)
+      .filter((work) => readerWorkMatches(work, filters));
     totalCount = allRows.length;
     totalPages = Math.max(1, Math.ceil(totalCount / READER_LIST_PAGE_SIZE));
     currentPage = Math.min(filters.page, totalPages);

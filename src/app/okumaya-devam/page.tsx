@@ -14,7 +14,7 @@ import {
   ReaderFilterDesk,
   ReaderPagination,
   ReaderResultSummary,
-  parseReaderStandardFilters,
+  parseManagedReaderStandardFilters,
   readerListHref,
   readerReviewLabel,
   readerWorkMatches,
@@ -27,6 +27,7 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { discoveryAdvancedFilterChips } from "@/lib/discovery-advanced-filters";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 export const metadata: Metadata = {
@@ -50,14 +51,7 @@ function countWords(content: string) {
 export default async function ContinueReadingPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    arama?: string;
-    editor?: string;
-    hitapYasi?: string;
-    sayfa?: string;
-    siralama?: string;
-    tur?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await getCurrentProfile();
 
@@ -70,8 +64,10 @@ export default async function ContinueReadingPage({
   const ratingOptions = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
   );
-  const filters = parseReaderStandardFilters(
-    await searchParams,
+  const params = await searchParams;
+  const { enabledFilterIds, filters } = await parseManagedReaderStandardFilters(
+    "reader-continue-reading",
+    params,
     ratingOptions,
     sortOptions,
     "recent",
@@ -190,6 +186,11 @@ export default async function ContinueReadingPage({
         }
       : null,
   ].filter((item): item is ReaderActiveFilter => item !== null);
+  const advancedFilterCount = discoveryAdvancedFilterChips(
+    filters.advanced,
+    enabledFilterIds,
+  ).length;
+  const hasFilters = activeFilters.length + advancedFilterCount > 0;
   const returnTo = pageHref(currentPage);
 
   return (
@@ -203,6 +204,7 @@ export default async function ContinueReadingPage({
 
         <ReaderFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={filters.advanced}
           clearHref="/okumaya-devam"
           contentRating={filters.contentRating}
           genre={filters.genre}
@@ -214,6 +216,7 @@ export default async function ContinueReadingPage({
           searchPlaceholder="Eser, yazar veya rumuz ara"
           sort={filters.sort}
           sortOptions={sortOptions}
+          standardFilters={normalizedFilters}
         />
 
         <ReaderResultSummary
@@ -225,12 +228,12 @@ export default async function ContinueReadingPage({
 
         <ReaderWorksTable
           emptyDescription={
-            activeFilters.length > 0
+            hasFilters
               ? "Filtreleri değiştirerek devam eden okumalarınız içinde yeniden deneyin."
               : "Bir eseri açtığınızda son kaldığınız bölüm burada görünecek."
           }
           emptyTitle={
-            activeFilters.length > 0
+            hasFilters
               ? "Eşleşen eser bulunamadı"
               : "Henüz devam eden bir okumanız yok"
           }

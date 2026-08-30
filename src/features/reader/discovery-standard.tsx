@@ -1,6 +1,8 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 
+import {
+  DiscoveryResultSummary,
+} from "@/components/discovery/DiscoveryListChrome";
 import "@/components/discovery/discovery-filter-desk.css";
 import type { ReaderWorkRow } from "@/features/reader/components/ReaderWorksTable";
 import { normalizeGenreLabel } from "@/lib/genre-system";
@@ -9,6 +11,8 @@ import {
   workContentRatingDetails,
   type StoredWorkContentRating,
 } from "@/lib/work-content-classification";
+
+export { DiscoveryPagination as ReaderPagination } from "@/components/discovery/DiscoveryListChrome";
 
 export const READER_LIST_PAGE_SIZE = 24;
 
@@ -82,7 +86,8 @@ export function parseReaderStandardFilters(
   const search = params.arama?.trim().slice(0, 220) || undefined;
   const genre = normalizeGenreLabel(params.tur);
   const contentRating =
-    params.hitapYasi && ratingOptions.includes(params.hitapYasi as StoredWorkContentRating)
+    params.hitapYasi &&
+    ratingOptions.includes(params.hitapYasi as StoredWorkContentRating)
       ? (params.hitapYasi as StoredWorkContentRating)
       : undefined;
   const reviewStatus = includesReaderFilter(readerReviewFilters, params.editor)
@@ -151,73 +156,6 @@ export function readerWorkMatches(
   }
 
   return true;
-}
-
-export function readerActiveFilters(
-  basePath: string,
-  filters: ReaderStandardFilters,
-  defaultSort: string,
-  fixedParams: Record<string, string> = {},
-): ReaderActiveFilter[] {
-  const items = [
-    filters.search
-      ? {
-          href: readerListHref(
-            basePath,
-            { ...filters, page: 1, search: undefined },
-            1,
-            fixedParams,
-          ),
-          label: `Arama: ${filters.search}`,
-        }
-      : null,
-    filters.genre
-      ? {
-          href: readerListHref(
-            basePath,
-            { ...filters, genre: undefined, page: 1 },
-            1,
-            fixedParams,
-          ),
-          label: `Tür: ${filters.genre}`,
-        }
-      : null,
-    filters.contentRating
-      ? {
-          href: readerListHref(
-            basePath,
-            { ...filters, contentRating: undefined, page: 1 },
-            1,
-            fixedParams,
-          ),
-          label: `Hitap: ${workContentRatingDetails[filters.contentRating].shortLabel}`,
-        }
-      : null,
-    filters.reviewStatus
-      ? {
-          href: readerListHref(
-            basePath,
-            { ...filters, page: 1, reviewStatus: undefined },
-            1,
-            fixedParams,
-          ),
-          label: readerReviewLabel(filters.reviewStatus),
-        }
-      : null,
-    filters.sort !== defaultSort
-      ? {
-          href: readerListHref(
-            basePath,
-            { ...filters, page: 1, sort: defaultSort },
-            1,
-            fixedParams,
-          ),
-          label: `Sıralama: ${filters.sort}`,
-        }
-      : null,
-  ].filter((item): item is ReaderActiveFilter => item !== null);
-
-  return items;
 }
 
 export function ReaderFilterDesk({
@@ -366,101 +304,13 @@ export function ReaderResultSummary({
   visibleCount: number;
   noun: string;
 }) {
-  const first = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const last = totalCount === 0 ? 0 : first + visibleCount - 1;
-
   return (
-    <section aria-live="polite" className="role-filter-result">
-      <span>Masadaki sonuç</span>
-      <strong>
-        {totalCount} {noun}
-      </strong>
-      {totalCount > 0 ? <small>{first}–{last} arası gösteriliyor.</small> : null}
-    </section>
-  );
-}
-
-function paginationWindow(currentPage: number, totalPages: number) {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, index) => index + 1);
-  }
-
-  const pages = new Set<number>([
-    1,
-    totalPages,
-    currentPage,
-    currentPage - 1,
-    currentPage + 1,
-  ]);
-
-  return [...pages]
-    .filter((page) => page >= 1 && page <= totalPages)
-    .sort((left, right) => left - right);
-}
-
-export function ReaderPagination({
-  ariaLabel,
-  currentPage,
-  hrefForPage,
-  totalPages,
-}: {
-  ariaLabel: string;
-  currentPage: number;
-  hrefForPage: (page: number) => string;
-  totalPages: number;
-}) {
-  if (totalPages <= 1) return null;
-
-  const pages = paginationWindow(currentPage, totalPages);
-  const nodes: ReactNode[] = [];
-  let previousPage = 0;
-
-  for (const page of pages) {
-    if (previousPage && page - previousPage > 1) {
-      nodes.push(
-        <span aria-hidden="true" className="role-filter-pagination__ellipsis" key={`gap-${page}`}>
-          …
-        </span>,
-      );
-    }
-
-    nodes.push(
-      <Link
-        aria-current={page === currentPage ? "page" : undefined}
-        className="role-filter-pagination__page"
-        href={hrefForPage(page)}
-        key={page}
-      >
-        {page}
-      </Link>,
-    );
-    previousPage = page;
-  }
-
-  return (
-    <footer aria-label={ariaLabel} className="role-filter-pagination">
-      <span>
-        Sayfa {currentPage} / {totalPages}
-      </span>
-      <nav aria-label="Sayfalar">
-        {currentPage > 1 ? (
-          <Link className="button button--ghost" href={hrefForPage(currentPage - 1)}>
-            Önceki
-          </Link>
-        ) : (
-          <span aria-disabled="true">Önceki</span>
-        )}
-
-        <div className="role-filter-pagination__pages">{nodes}</div>
-
-        {currentPage < totalPages ? (
-          <Link className="button button--ghost" href={hrefForPage(currentPage + 1)}>
-            Sonraki
-          </Link>
-        ) : (
-          <span aria-disabled="true">Sonraki</span>
-        )}
-      </nav>
-    </footer>
+    <DiscoveryResultSummary
+      currentPage={currentPage}
+      noun={noun}
+      pageSize={pageSize}
+      totalCount={totalCount}
+      visibleCount={visibleCount}
+    />
   );
 }

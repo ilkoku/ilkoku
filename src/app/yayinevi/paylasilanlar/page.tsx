@@ -16,6 +16,7 @@ import {
   normalizePublisherSharedListFilters,
   type PublisherSharedListFilters,
 } from "@/features/publisher-discovery/sharing-list-query";
+import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import "@/features/publisher-discovery/publisher-discovery.css";
 import "@/features/publisher-discovery/publisher-sharing.css";
@@ -48,7 +49,13 @@ export default async function PublisherSharedItemsPage({
     "/yayinevi/paylasilanlar",
     "view_shared_items",
   );
+  const enabledFilterIds = new Set(
+    await getDiscoverySurfaceFilterIds("publisher-shared-items"),
+  );
   const filters = normalizePublisherSharedListFilters(await searchParams);
+  if (!enabledFilterIds.has("search")) filters.query = "";
+  if (!enabledFilterIds.has("entityKind")) filters.kind = "all";
+  if (!enabledFilterIds.has("unreadOnly")) filters.unreadOnly = false;
   if (access.profile.adminPublisherView) filters.unreadOnly = false;
   const data = await getPublisherSharedItemsPage(access.profile.id, filters);
 
@@ -99,56 +106,66 @@ export default async function PublisherSharedItemsPage({
             {hasFilters ? <Link href="/yayinevi/paylasilanlar">Tüm filtreleri temizle</Link> : null}
           </header>
 
-          <form className="role-filter-desk__form" method="get">
-            <label className="role-filter-field--search">
-              <span>Arama</span>
-              <input
-                defaultValue={filters.query}
-                name="arama"
-                placeholder="Eser, yazar, paylaşan kişi veya not"
-                type="search"
-              />
-            </label>
-
-            <label>
-              <span>Kayıt türü</span>
-              <select
-                defaultValue={
-                  filters.kind === "work"
-                    ? "eser"
-                    : filters.kind === "author"
-                      ? "yazar"
-                      : ""
-                }
-                name="tip"
-              >
-                <option value="">Tümü</option>
-                <option value="eser">Eser</option>
-                <option value="yazar">Yazar</option>
-              </select>
-            </label>
-
-            {!data.adminReadOnly ? (
-              <label>
-                <span>Okunma durumu</span>
-                <select defaultValue={filters.unreadOnly ? "okunmamis" : ""} name="okunma">
-                  <option value="">Tümü</option>
-                  <option value="okunmamis">Yalnız okunmamışlar</option>
-                </select>
-              </label>
-            ) : null}
-
-            <div className="role-filter-desk__actions">
-              <button className="button button--primary" type="submit">
-                Masayı Güncelle
-              </button>
-              {hasFilters ? (
-                <Link className="button button--ghost" href="/yayinevi/paylasilanlar">
-                  Temizle
-                </Link>
+          {enabledFilterIds.size > 0 ? (
+            <form className="role-filter-desk__form" method="get">
+              {enabledFilterIds.has("search") ? (
+                <label className="role-filter-field--search">
+                  <span>Arama</span>
+                  <input
+                    defaultValue={filters.query}
+                    name="arama"
+                    placeholder="Eser, yazar, paylaşan kişi veya not"
+                    type="search"
+                  />
+                </label>
               ) : null}
-            </div>
-          </form>
+
+              {enabledFilterIds.has("entityKind") ? (
+                <label>
+                  <span>Kayıt türü</span>
+                  <select
+                    defaultValue={
+                      filters.kind === "work"
+                        ? "eser"
+                        : filters.kind === "author"
+                          ? "yazar"
+                          : ""
+                    }
+                    name="tip"
+                  >
+                    <option value="">Tümü</option>
+                    <option value="eser">Eser</option>
+                    <option value="yazar">Yazar</option>
+                  </select>
+                </label>
+              ) : null}
+
+              {!data.adminReadOnly && enabledFilterIds.has("unreadOnly") ? (
+                <label>
+                  <span>Okunma durumu</span>
+                  <select defaultValue={filters.unreadOnly ? "okunmamis" : ""} name="okunma">
+                    <option value="">Tümü</option>
+                    <option value="okunmamis">Yalnız okunmamışlar</option>
+                  </select>
+                </label>
+              ) : null}
+
+              <div className="role-filter-desk__actions">
+                <button className="button button--primary" type="submit">
+                  Masayı Güncelle
+                </button>
+                {hasFilters ? (
+                  <Link className="button button--ghost" href="/yayinevi/paylasilanlar">
+                    Temizle
+                  </Link>
+                ) : null}
+              </div>
+            </form>
+          ) : (
+            <p className="role-filter-desk__hint">
+              Bu yüzeyde Filtre Masası alanları İçerik Yönetimi&apos;nden kapatıldı.
+            </p>
+          )}
 
           {hasFilters ? (
             <div aria-label="Aktif filtreler" className="role-filter-desk__active">
@@ -159,13 +176,13 @@ export default async function PublisherSharedItemsPage({
                 </Link>
               ))}
             </div>
-          ) : (
+          ) : enabledFilterIds.size > 0 ? (
             <p className="role-filter-desk__hint">
               {data.adminReadOnly
                 ? "Admin görünümünde yayınevinin ekip paylaşımları salt okunur gösterilir."
                 : "Tüm ekip paylaşımlarınızı görüyorsunuz."}
             </p>
-          )}
+          ) : null}
         </section>
 
         <DiscoveryResultSummary

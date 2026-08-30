@@ -32,6 +32,7 @@ test("reader author discovery is work-backed and uses the shared filter desk", a
   const discovery = await read("src/app/yazar-kesfet/page.tsx");
 
   assert.match(discovery, /readerAuthorDiscoveryWorkWhere/);
+  assert.match(discovery, /discoveryAuthorWhereFromWorkPool/);
   assert.match(discovery, /Yazar Keşfet/);
   assert.match(discovery, /ReaderFilterDesk/);
   assert.match(discovery, /Yazar, rumuz veya eser ara/);
@@ -45,6 +46,7 @@ test("reader author discovery is work-backed and uses the shared filter desk", a
 
 test("reader list pages share one filter, result, pagination and work-row standard", async () => {
   const [
+    listStandard,
     standard,
     table,
     discover,
@@ -53,6 +55,7 @@ test("reader list pages share one filter, result, pagination and work-row standa
     completed,
     authorDiscover,
   ] = await Promise.all([
+    read("src/lib/discovery-list-standard.ts"),
     read("src/features/reader/discovery-standard.tsx"),
     read("src/features/reader/components/ReaderWorksTable.tsx"),
     read("src/app/kesfet/page.tsx"),
@@ -62,10 +65,11 @@ test("reader list pages share one filter, result, pagination and work-row standa
     read("src/app/yazar-kesfet/page.tsx"),
   ]);
 
-  assert.match(standard, /READER_LIST_PAGE_SIZE = 24/);
+  assert.match(listStandard, /DISCOVERY_PAGE_SIZE = 24/);
+  assert.match(standard, /READER_LIST_PAGE_SIZE = DISCOVERY_PAGE_SIZE/);
   assert.match(standard, /function ReaderFilterDesk/);
   assert.match(standard, /function ReaderResultSummary/);
-  assert.match(standard, /function ReaderPagination/);
+  assert.match(standard, /DiscoveryPagination as ReaderPagination/);
   assert.match(table, /workspace-table workspace-table--discovery/);
   assert.doesNotMatch(table, /compactDiscovery/);
 
@@ -109,6 +113,7 @@ test("reader author favorites share the safe author discovery work boundary", as
   ]);
 
   assert.match(source, /readerAuthorDiscoveryWorkWhere/);
+  assert.match(source, /discoveryAuthorWhereFromWorkPool/);
   assert.match(source, /prisma\.readerAuthorFavorite\.findUnique/);
   assert.match(source, /prisma\.readerAuthorFavorite\.create/);
   assert.match(source, /prisma\.readerAuthorFavorite\.delete/);

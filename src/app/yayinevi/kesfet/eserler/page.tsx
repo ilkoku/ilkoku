@@ -6,9 +6,9 @@ import {
   DiscoveryPagination,
   DiscoveryResultSummary,
 } from "@/components/discovery/DiscoveryListChrome";
+import { DiscoveryWorkspaceHero } from "@/components/discovery/DiscoveryWorkspaceHero";
 import "@/components/discovery/discovery-filter-desk.css";
 import { AppShell } from "@/components/layout/AppShell";
-import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { requirePublisherDiscoveryAccess } from "@/features/publisher-discovery/access";
 import { PublisherWorksTable } from "@/features/publisher-discovery/components/PublisherWorksTable";
 import {
@@ -133,14 +133,11 @@ export default async function PublisherWorkDiscoveryPage({
   ]);
   const canMutate = !access.profile.adminPublisherView;
   const canLike = canMutate && access.permissions.includes("like_work");
-  const canFavorite =
-    canMutate && access.permissions.includes("favorite_work");
+  const canFavorite = canMutate && access.permissions.includes("favorite_work");
   const canRequestEditorReview =
     canMutate && access.permissions.includes("request_editor_review");
-  const canShareInternal =
-    canMutate && access.permissions.includes("share_internal");
-  const canShareEmail =
-    canMutate && access.permissions.includes("share_email");
+  const canShareInternal = canMutate && access.permissions.includes("share_internal");
+  const canShareEmail = canMutate && access.permissions.includes("share_email");
   const activeFilters = [
     filters.query
       ? {
@@ -163,7 +160,10 @@ export default async function PublisherWorkDiscoveryPage({
     filters.language
       ? {
           href: pageHref({ ...filters, language: "" }, 1),
-          label: filters.language === "tr" ? "Dil: Türkçe" : `Dil: ${filters.language.toLocaleUpperCase("tr-TR")}`,
+          label:
+            filters.language === "tr"
+              ? "Dil: Türkçe"
+              : `Dil: ${filters.language.toLocaleUpperCase("tr-TR")}`,
         }
       : null,
     filters.reviewStatus
@@ -200,17 +200,26 @@ export default async function PublisherWorkDiscoveryPage({
   }));
   const visibleActiveFilters = [...activeFilters, ...advancedFilters];
   const hasFilters = visibleActiveFilters.length > 0;
-  const canViewPassport = access.permissions.includes(
-    "view_authorized_passport",
-  );
+  const canViewPassport = access.permissions.includes("view_authorized_passport");
   const returnTo = pageHref(filters, data.currentPage);
 
   return (
     <AppShell profile={access.profile}>
       <div className="publisher-discovery">
-        <EditorPageHeader
-          description="Okuyucu ve editörlerle aynı ortak Keşfet havuzundaki eserleri inceleyin; yetkinize göre beğenin, favorileyin, paylaşın ve Eser Pasaportu'nu açın."
-          eyebrow={access.companyName}
+        <DiscoveryWorkspaceHero
+          description="Okur ve editörlerle aynı Eser Havuzu’ndaki yayımlanmış eserleri inceleyin; okur etkileşimini, editör durumunu ve yayınevi işlemlerini tek satır standardında yönetin."
+          eyebrow={`${access.companyName} · Eser Havuzu · Keşif`}
+          links={[
+            { current: true, href: "/yayinevi/kesfet/eserler", label: "Eserler" },
+            { href: "/yayinevi/kesfet/yazarlar", label: "Yazarlar" },
+            { href: "/yayinevi/begenilerim", label: "Beğendiklerim" },
+            { href: "/yayinevi/favorilerim", label: "Favoriler" },
+          ]}
+          stats={[
+            { label: "Eşleşen eser", value: data.totalCount },
+            { label: "Aktif filtre", value: visibleActiveFilters.length },
+            { label: "Bu sayfada", value: data.rows.length },
+          ]}
           title="Eser Keşfet"
         />
 
@@ -263,9 +272,7 @@ export default async function PublisherWorkDiscoveryPage({
                   <select defaultValue={filters.genre} name="tur">
                     <option value="">Tüm türler</option>
                     {GENRE_LABELS.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
+                      <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
                 </label>
@@ -304,9 +311,7 @@ export default async function PublisherWorkDiscoveryPage({
                   <select defaultValue={filters.reviewStatus} name="editor">
                     <option value="">Tümü</option>
                     {Object.entries(reviewLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
+                      <option key={value} value={value}>{label}</option>
                     ))}
                   </select>
                 </label>

@@ -3,12 +3,18 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
-import { availableGenreLabels } from "@/lib/genre-system";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
+import { availableGenreLabels, normalizeGenreLabel } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
-
-const PAGE_SIZE = 24;
+import {
+  isMemberStoredWorkContentRating,
+  type MemberStoredWorkContentRating,
+} from "@/lib/work-content-classification";
 
 export interface PublisherFollowingFilters {
+  city: string;
+  contentRating?: MemberStoredWorkContentRating;
+  genre: string;
   page: number;
   query: string;
 }
@@ -57,8 +63,15 @@ export function normalizePublisherFollowingFilters(
   input: Record<string, string | string[] | undefined>,
 ): PublisherFollowingFilters {
   const requestedPage = Number.parseInt(firstValue(input.sayfa), 10);
+  const requestedRating = firstValue(input.hitap);
+  const genre = normalizeGenreLabel(firstValue(input.tur));
 
   return {
+    city: firstValue(input.sehir).slice(0, 120),
+    contentRating: isMemberStoredWorkContentRating(requestedRating)
+      ? requestedRating
+      : undefined,
+    genre: genre ?? "",
     page:
       Number.isFinite(requestedPage) && requestedPage > 0
         ? requestedPage
@@ -91,10 +104,22 @@ function publicWriterAlias(writer: {
 export async function getPublisherFollowingAuthors(
   publisherId: string,
   filters: PublisherFollowingFilters,
+  canAccessAdultContent = false,
 ): Promise<PublisherFollowingAuthorData> {
-  const publicWorkWhere = commonDiscoveryWorkWhereFor(false);
+  const contentRating =
+    filters.contentRating === "adult_18" && !canAccessAdultContent
+      ? undefined
+      : filters.contentRating;
+  const matchedWorkWhere: Prisma.WorkWhereInput = {
+    ...commonDiscoveryWorkWhereFor(canAccessAdultContent),
+    ...(filters.genre ? { genre: filters.genre } : {}),
+    ...(contentRating ? { contentRating } : {}),
+  };
   const authorWhere: Prisma.UserWhereInput = {
-    ...commonDiscoveryAuthorWhereFor(false),
+    ...commonDiscoveryAuthorWhereFor(canAccessAdultContent, {
+      ...(filters.genre ? { genre: filters.genre } : {}),
+      ...(contentRating ? { contentRating } : {}),
+    }),
     ...(filters.query
       ? {
           OR: [
@@ -104,12 +129,21 @@ export async function getPublisherFollowingAuthors(
             {
               works: {
                 some: {
-                  ...publicWorkWhere,
+                  ...matchedWorkWhere,
                   title: { contains: filters.query },
                 },
               },
             },
           ],
+        }
+      : {}),
+    ...(filters.city
+      ? {
+          profile: {
+            is: {
+              city: { contains: filters.city },
+            },
+          },
         }
       : {}),
   };
@@ -119,14 +153,14 @@ export async function getPublisherFollowingAuthors(
   };
 
   const totalCount = await prisma.publisherAuthorFollow.count({ where });
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
   const currentPage = Math.min(filters.page, totalPages);
 
   const follows = await prisma.publisherAuthorFollow.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+    take: DISCOVERY_PAGE_SIZE,
     select: {
       author: {
         select: {
@@ -153,7 +187,7 @@ export async function getPublisherFollowingAuthors(
       ? []
       : await prisma.work.findMany({
           where: {
-            ...publicWorkWhere,
+            ...matchedWorkWhere,
             authorId: { in: authorIds },
           },
           orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
@@ -199,8 +233,11 @@ export async function getPublisherFollowingAuthors(
     worksByAuthor.set(work.authorId, current);
   }
 
-  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const last = Math.min(currentPage * PAGE_SIZE, totalCount);
+  const first =
+    totalCount === 0
+      ? 0
+      : (currentPage - 1) * DISCOVERY_PAGE_SIZE + 1;
+  const last = Math.min(currentPage * DISCOVERY_PAGE_SIZE, totalCount);
 
   return {
     currentPage,

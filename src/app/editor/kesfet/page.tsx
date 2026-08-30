@@ -289,6 +289,11 @@ export default async function EditorDiscoveryPage({
           )}
         </section>
 
+        <section className="role-filter-result" aria-live="polite">
+          <span>Masadaki sonuç</span>
+          <strong>{works.length} eser</strong>
+        </section>
+
         {works.length === 0 ? (
           <div className="editor-empty">
             <h2>Eşleşen eser bulunamadı</h2>

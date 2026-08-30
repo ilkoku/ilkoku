@@ -1,9 +1,13 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-
-import { AppShell } from "@/components/layout/AppShell";
 import type { Prisma } from "@/generated/prisma/client";
+
+import {
+  DiscoveryAuthorCard,
+  DiscoveryAuthorGrid,
+} from "@/components/discovery/DiscoveryAuthorCard";
+import { DiscoveryWorkspaceHero } from "@/components/discovery/DiscoveryWorkspaceHero";
+import { AppShell } from "@/components/layout/AppShell";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { getDiscoveryAuthorMetrics } from "@/features/discovery/author-filter-metrics";
@@ -33,7 +37,6 @@ import {
   publicStoredWorkContentRatings,
   workContentRatingDetails,
 } from "@/lib/work-content-classification";
-import "./reader-author-discovery.css";
 
 export const metadata: Metadata = {
   description: "İlkOku yazarlarını keşfe açık eserlerine göre süzerek keşfedin.",
@@ -53,20 +56,6 @@ function authorName(author: {
   fullName: string;
 }) {
   return author.displayName ?? author.fullName;
-}
-
-function initials(value: string) {
-  const parts = value.trim().split(/\s+/u).filter(Boolean);
-  return (
-    parts
-      .slice(0, 2)
-      .map((part) => part[0]?.toLocaleUpperCase("tr-TR") ?? "")
-      .join("") || "Y"
-  );
-}
-
-function formatNumber(value: number) {
-  return value.toLocaleString("tr-TR");
 }
 
 export default async function ReaderAuthorDiscoveryPage({
@@ -284,37 +273,22 @@ export default async function ReaderAuthorDiscoveryPage({
   return (
     <AppShell profile={profile}>
       <div className="editor-workspace reader-discovery-workdesk">
-        <section className="reader-discovery-desk reader-author-discovery-desk">
-          <div className="reader-discovery-desk__intro">
-            <p className="reader-discovery-desk__eyebrow">Yazar Havuzu · Keşif</p>
-            <h1>Yazar Keşfet</h1>
-            <p className="reader-discovery-desk__lead">
-              Keşfe açık eseri bulunan yazarları bulun; tür, hitap yaşı ve editör durumuna göre
-              daraltın, kısa profillerini karşılaştırın ve ilginizi çekenleri favorilerinize alın.
-            </p>
-            <nav aria-label="Keşif çalışma alanı" className="reader-discovery-desk__quick-links">
-              <Link href="/kesfet">Eserler</Link>
-              <span aria-current="page">Yazarlar</span>
-              <Link href="/favorilerim?tip=yazar">Favori Yazarlarım</Link>
-              <Link href="/okumaya-devam">Okumaya Devam</Link>
-            </nav>
-          </div>
-
-          <div className="reader-discovery-desk__stats" aria-label="Yazar keşif özeti">
-            <div>
-              <strong>{totalCount}</strong>
-              <span>Eşleşen yazar</span>
-            </div>
-            <div>
-              <strong>{activeFilters.length + optionalActiveCount}</strong>
-              <span>Aktif filtre</span>
-            </div>
-            <div>
-              <strong>{favoriteAuthorCount}</strong>
-              <span>Favori yazar</span>
-            </div>
-          </div>
-        </section>
+        <DiscoveryWorkspaceHero
+          description="Keşfe açık eseri bulunan yazarları bulun; üretimlerini ve okur etkileşimini aynı kart standardında karşılaştırıp ilginizi çekenleri favorilerinize alın."
+          eyebrow="Okur · Yazar Havuzu · Keşif"
+          links={[
+            { href: "/kesfet", label: "Eserler" },
+            { current: true, href: "/yazar-kesfet", label: "Yazarlar" },
+            { href: "/favorilerim?tip=yazar", label: "Favori Yazarlarım" },
+            { href: "/okumaya-devam", label: "Okumaya Devam" },
+          ]}
+          stats={[
+            { label: "Eşleşen yazar", value: totalCount },
+            { label: "Aktif filtre", value: activeFilters.length + optionalActiveCount },
+            { label: "Favori yazar", value: favoriteAuthorCount },
+          ]}
+          title="Yazar Keşfet"
+        />
 
         <ReaderFilterDesk
           activeFilters={activeFilters}
@@ -341,7 +315,7 @@ export default async function ReaderAuthorDiscoveryPage({
         />
 
         {pageAuthors.length > 0 ? (
-          <section aria-label="Keşfedilen yazarlar" className="reader-author-discovery-grid">
+          <DiscoveryAuthorGrid>
             {pageAuthors.map((author) => {
               const name = authorName(author);
               const latest = author.works[0] ?? null;
@@ -355,111 +329,71 @@ export default async function ReaderAuthorDiscoveryPage({
                     .filter((genre): genre is string => Boolean(genre)),
                 ),
               ).slice(0, 3);
+              const signals = [
+                ...genres,
+                latest
+                  ? workContentRatingDetails[latest.contentRating].shortLabel
+                  : null,
+                latest
+                  ? readerReviewLabel(
+                      latest.editorReviewStatus as ReaderReviewFilter,
+                    )
+                  : null,
+              ].filter((value): value is string => Boolean(value));
 
               return (
-                <article className="reader-author-discovery-card" key={author.publicId}>
-                  <header className="reader-author-discovery-card__header">
-                    <span className="reader-author-discovery-card__avatar" aria-hidden="true">
-                      {initials(name)}
-                    </span>
-                    <div className="reader-author-discovery-card__identity">
-                      <h2>
-                        <Link href={profileHref}>{name}</Link>
-                      </h2>
-                      <p>
-                        {author.username
-                          ? `@${author.username.replace(/^@/u, "")}`
-                          : "İlkOku yazarı"}
-                      </p>
-                    </div>
-                    <span className="reader-author-discovery-card__match">
-                      {author._count.works} eşleşen
-                    </span>
-                  </header>
-
-                  {author.bio ? (
-                    <p className="reader-author-discovery-card__bio">{author.bio}</p>
-                  ) : (
-                    <p className="reader-author-discovery-card__bio reader-author-discovery-card__bio--muted">
-                      Yazar henüz kısa bir tanıtım eklemedi.
-                    </p>
-                  )}
-
-                  <div
-                    aria-label={`${name} yazar özeti`}
-                    className="reader-author-discovery-card__metrics"
-                  >
-                    <span>
-                      <strong>{formatNumber(metric?.publicWorkCount ?? 0)}</strong>
-                      <small>Eser</small>
-                    </span>
-                    <span>
-                      <strong>{formatNumber(metric?.readerCount ?? 0)}</strong>
-                      <small>Okur</small>
-                    </span>
-                    <span>
-                      <strong>{formatNumber(metric?.favoriteCount ?? 0)}</strong>
-                      <small>Beğeni</small>
-                    </span>
-                    <span>
-                      <strong>{formatNumber(metric?.commentCount ?? 0)}</strong>
-                      <small>Yorum</small>
-                    </span>
-                  </div>
-
-                  <div className="reader-author-discovery-card__signals" aria-label="Yazar keşif işaretleri">
-                    {genres.map((genre) => (
-                      <span key={genre}>{genre}</span>
-                    ))}
-                    {latest ? (
-                      <span>{workContentRatingDetails[latest.contentRating].shortLabel}</span>
-                    ) : null}
-                    {latest ? (
-                      <span>
-                        {readerReviewLabel(
-                          latest.editorReviewStatus as ReaderReviewFilter,
-                        )}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {latest ? (
-                    <Link className="reader-author-discovery-card__latest" href={`/kitap/${latest.slug}`}>
-                      <span className="reader-author-discovery-card__latest-copy">
-                        <small>Son eşleşen eser</small>
-                        <strong>{latest.title}</strong>
-                      </span>
-                      <span className="reader-author-discovery-card__latest-arrow" aria-hidden="true">
-                        →
-                      </span>
-                    </Link>
-                  ) : null}
-
-                  <div className="reader-author-discovery-card__actions">
-                    <Link className="button button--outline" href={profileHref}>
-                      Yazar vitrini
-                    </Link>
-                    {author.id === profile.id ? (
-                      <span className="reader-author-discovery-card__self">Bu sizsiniz</span>
+                <DiscoveryAuthorCard
+                  actions={
+                    author.id === profile.id ? (
+                      <span>Bu sizsiniz</span>
                     ) : (
                       <form action={toggleReaderAuthorFavoriteAction}>
                         <input name="authorPublicId" type="hidden" value={author.publicId} />
                         <input name="returnPath" type="hidden" value={returnTo} />
                         <button
                           aria-pressed={isFavorite}
-                          className={`reader-author-discovery-card__favorite${isFavorite ? " is-active" : ""}`}
+                          className={
+                            isFavorite
+                              ? "button button--primary"
+                              : "button button--ghost"
+                          }
                           type="submit"
                         >
-                          <span aria-hidden="true">{isFavorite ? "♥" : "♡"}</span>
                           {isFavorite ? "Favoride" : "Favorile"}
                         </button>
                       </form>
-                    )}
-                  </div>
-                </article>
+                    )
+                  }
+                  alias={
+                    author.username
+                      ? `@${author.username.replace(/^@/u, "")}`
+                      : "İlkOku yazarı"
+                  }
+                  bio={author.bio}
+                  key={author.publicId}
+                  latestWork={
+                    latest
+                      ? {
+                          href: `/kitap/${latest.slug}?from=${encodeURIComponent(returnTo)}`,
+                          meta: latest.genre || "Tür belirtilmedi",
+                          title: latest.title,
+                        }
+                      : null
+                  }
+                  matchedWorkCount={author._count.works}
+                  metrics={[
+                    { label: "Eser", value: metric?.publicWorkCount ?? 0 },
+                    { label: "Okur", value: metric?.readerCount ?? 0 },
+                    { label: "Beğeni", value: metric?.favoriteCount ?? 0 },
+                    { label: "Yorum", value: metric?.commentCount ?? 0 },
+                  ]}
+                  name={name}
+                  profileHref={profileHref}
+                  signals={signals}
+                />
               );
             })}
-          </section>
+          </DiscoveryAuthorGrid>
         ) : (
           <div className="workspace-list-empty">
             <h2>Eşleşen yazar bulunamadı</h2>

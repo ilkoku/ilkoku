@@ -46,3 +46,28 @@ test("login session issuance serializes on live user state", () => {
     "login.ts must not create sessions outside the locked state boundary",
   );
 });
+
+test("logout cannot surface cleanup or audit failures as an application error", () => {
+  const actions = source("src/features/auth/actions.ts");
+  const logoutStart = actions.indexOf("export async function logoutAction");
+  assert.ok(logoutStart >= 0, "logout action must remain available");
+
+  const logout = actions.slice(logoutStart);
+  const sessionDelete = logout.indexOf("prisma.session.deleteMany");
+  const auditWrite = logout.indexOf("prisma.auditLog.create");
+  const cookieClear = logout.indexOf("await clearSessionCookie()");
+  const redirectHome = logout.indexOf('redirect("/")');
+
+  assert.ok(sessionDelete >= 0, "logout must revoke the server session");
+  assert.ok(auditWrite > sessionDelete, "logout audit must happen only after session revocation");
+  assert.ok(cookieClear > sessionDelete, "logout must clear the browser session after revoke attempt");
+  assert.ok(redirectHome > cookieClear, "logout must always finish by returning to the public home page");
+  assertContains(logout, 'console.error("LOGOUT_SESSION_REVOKE_FAILED"', "logout revoke failure isolation");
+  assertContains(logout, 'console.error("LOGOUT_AUDIT_FAILED"', "logout audit failure isolation");
+  assertContains(logout, 'console.error("LOGOUT_SESSION_COOKIE_CLEAR_FAILED"', "logout session-cookie failure isolation");
+  assertContains(logout, 'console.error("LOGOUT_ADMIN_COOKIE_CLEAR_FAILED"', "logout admin-cookie failure isolation");
+  assert.ok(
+    !logout.includes("prisma.$transaction"),
+    "logout must not couple session revocation to best-effort audit logging",
+  );
+});

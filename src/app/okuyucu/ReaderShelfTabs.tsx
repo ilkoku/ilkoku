@@ -47,13 +47,25 @@ function saveHidden(storageKey: string, ids: string[]) {
 
 function WorkCard({
   index,
+  onHide,
   work,
 }: {
   index: number;
+  onHide: (id: string) => void;
   work: ReaderShelfWork;
 }) {
   return (
-    <Card className="book-card" variant="hover">
+    <Card className="book-card reader-workdesk__work-card" variant="hover">
+      <button
+        aria-label={`${work.title} eserini ana sayfadan gizle`}
+        className="reader-workdesk__hide-work"
+        onClick={() => onHide(work.id)}
+        title="Bu eseri ana sayfadan kaldır"
+        type="button"
+      >
+        ×
+      </button>
+
       <div
         aria-hidden="true"
         className={`book-cover book-cover--${
@@ -134,15 +146,39 @@ function WorkCard({
 }
 
 export function ReaderShelfTabs({
+  continueEmptyDescription,
+  continueEmptyTitle,
+  continueWorks,
   sections,
   storageKey,
 }: {
+  continueEmptyDescription: string;
+  continueEmptyTitle: string;
+  continueWorks: ReaderShelfWork[];
   sections: ReaderShelfSection[];
   storageKey: string;
 }) {
+  const allWorks = useMemo(() => {
+    const unique = new Map<string, ReaderShelfWork>();
+
+    for (const work of continueWorks) {
+      unique.set(work.id, work);
+    }
+
+    for (const section of sections) {
+      for (const work of section.works) {
+        if (!unique.has(work.id)) {
+          unique.set(work.id, work);
+        }
+      }
+    }
+
+    return Array.from(unique.values());
+  }, [continueWorks, sections]);
+
   const validIds = useMemo(
-    () => new Set(sections.map((section) => section.id)),
-    [sections],
+    () => new Set(allWorks.map((work) => work.id)),
+    [allWorks],
   );
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [activeId, setActiveId] = useState(sections[0]?.id ?? "");
@@ -160,17 +196,9 @@ export function ReaderShelfTabs({
               typeof value === "string" && validIds.has(value),
           )
         : [];
-      const firstVisible = sections.find(
-        (section) => !normalized.includes(section.id),
-      );
 
       frameId = window.requestAnimationFrame(() => {
         setHiddenIds(normalized);
-        setActiveId((current) =>
-          current && !normalized.includes(current)
-            ? current
-            : firstVisible?.id ?? "",
-        );
       });
     } catch {
       window.localStorage.removeItem(storageKey);
@@ -181,170 +209,206 @@ export function ReaderShelfTabs({
         window.cancelAnimationFrame(frameId);
       }
     };
-  }, [sections, storageKey, validIds]);
+  }, [storageKey, validIds]);
 
-  const visibleSections = sections.filter(
-    (section) => !hiddenIds.includes(section.id),
-  );
-  const hiddenSections = sections.filter((section) =>
-    hiddenIds.includes(section.id),
+  const hiddenWorks = allWorks.filter((work) => hiddenIds.includes(work.id));
+  const visibleContinueWorks = continueWorks.filter(
+    (work) => !hiddenIds.includes(work.id),
   );
   const activeSection =
-    visibleSections.find((section) => section.id === activeId) ??
-    visibleSections[0] ??
-    null;
+    sections.find((section) => section.id === activeId) ?? sections[0] ?? null;
+  const activeWorks =
+    activeSection?.works.filter((work) => !hiddenIds.includes(work.id)) ?? [];
 
-  function hideSection(id: string) {
+  function hideWork(id: string) {
     const nextHidden = Array.from(new Set([...hiddenIds, id]));
     setHiddenIds(nextHidden);
     saveHidden(storageKey, nextHidden);
-
-    const nextVisible = sections.find(
-      (section) => !nextHidden.includes(section.id),
-    );
-    setActiveId(nextVisible?.id ?? "");
   }
 
-  function restoreSection(id: string) {
+  function restoreWork(id: string) {
     const nextHidden = hiddenIds.filter((hiddenId) => hiddenId !== id);
     setHiddenIds(nextHidden);
     saveHidden(storageKey, nextHidden);
-    setActiveId(id);
   }
 
   function restoreAll() {
     setHiddenIds([]);
     saveHidden(storageKey, []);
-    setActiveId(sections[0]?.id ?? "");
   }
 
   return (
-    <div className="reader-workdesk__shelf-system">
-      <div className="reader-workdesk__shelf-toolbar">
-        <nav
-          aria-label="Okuyucu raf bölümleri"
-          className="reader-workdesk__shelf-tabs"
-        >
-          {visibleSections.map((section) => (
-            <button
-              aria-current={
-                activeSection?.id === section.id ? "page" : undefined
-              }
-              className={
-                activeSection?.id === section.id
-                  ? "reader-workdesk__shelf-tab is-active"
-                  : "reader-workdesk__shelf-tab"
-              }
-              key={section.id}
-              onClick={() => setActiveId(section.id)}
-              type="button"
-            >
-              {section.label}
-              <span>{section.works.length}</span>
-            </button>
-          ))}
-        </nav>
+    <>
+      <section
+        aria-labelledby="okumaya-devam-baslik"
+        className="dashboard-section reader-workdesk__continue"
+      >
+        <div className="section-heading">
+          <div>
+            <p>Masanın üstünde</p>
+            <h2 id="okumaya-devam-baslik">Okumaya Devam Et</h2>
+          </div>
+          <div>
+            <span>{visibleContinueWorks.length} eser</span>
+            <Link className="button button--ghost" href="/okumaya-devam">
+              Tümünü Gör
+            </Link>
+          </div>
+        </div>
 
-        <details className="reader-workdesk__hidden-drawer">
-          <summary>
-            Gizlenenler
-            {hiddenSections.length > 0 && (
-              <span>{hiddenSections.length}</span>
-            )}
-          </summary>
+        {visibleContinueWorks.length > 0 ? (
+          <div className="books-grid">
+            {visibleContinueWorks.map((work, index) => (
+              <WorkCard
+                index={index}
+                key={work.id}
+                onHide={hideWork}
+                work={work}
+              />
+            ))}
+          </div>
+        ) : continueWorks.length > 0 ? (
+          <Card className="workspace-empty">
+            <h3>Masandaki eserleri temizledin</h3>
+            <p>
+              Gizlediğin eserleri aşağıdaki Gizlenen Eserler menüsünden geri
+              getirebilirsin.
+            </p>
+          </Card>
+        ) : (
+          <Card className="workspace-empty">
+            <h3>{continueEmptyTitle}</h3>
+            <p>{continueEmptyDescription}</p>
+            <Link className="button button--outline" href="/kesfet">
+              Masana bir eser seç
+            </Link>
+          </Card>
+        )}
+      </section>
 
-          <div className="reader-workdesk__hidden-menu">
-            {hiddenSections.length > 0 ? (
-              <>
-                {hiddenSections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => restoreSection(section.id)}
-                    type="button"
-                  >
-                    <span>{section.label}</span>
-                    <strong>Geri getir</strong>
-                  </button>
-                ))}
+      <div className="reader-workdesk__shelf-system">
+        <div className="reader-workdesk__shelf-toolbar">
+          <nav
+            aria-label="Okuyucu raf bölümleri"
+            className="reader-workdesk__shelf-tabs"
+          >
+            {sections.map((section) => {
+              const visibleCount = section.works.filter(
+                (work) => !hiddenIds.includes(work.id),
+              ).length;
+
+              return (
                 <button
-                  className="reader-workdesk__restore-all"
-                  onClick={restoreAll}
+                  aria-current={
+                    activeSection?.id === section.id ? "page" : undefined
+                  }
+                  className={
+                    activeSection?.id === section.id
+                      ? "reader-workdesk__shelf-tab is-active"
+                      : "reader-workdesk__shelf-tab"
+                  }
+                  key={section.id}
+                  onClick={() => setActiveId(section.id)}
                   type="button"
                 >
-                  Tümünü geri getir
+                  {section.label}
+                  <span>{visibleCount}</span>
                 </button>
-              </>
-            ) : (
-              <p>Gizlenmiş bölüm yok.</p>
-            )}
-          </div>
-        </details>
-      </div>
+              );
+            })}
+          </nav>
 
-      {activeSection ? (
-        <section
-          aria-labelledby={`${activeSection.id}-baslik`}
-          className="dashboard-section reader-workdesk__shelf reader-workdesk__active-shelf"
-        >
-          <div className="section-heading reader-workdesk__shelf-heading">
-            <div>
-              <p>{activeSection.eyebrow}</p>
-              <h2 id={`${activeSection.id}-baslik`}>
-                {activeSection.title}
-              </h2>
-            </div>
+          <details className="reader-workdesk__hidden-drawer">
+            <summary>
+              Gizlenen Eserler
+              {hiddenWorks.length > 0 && <span>{hiddenWorks.length}</span>}
+            </summary>
 
-            <div className="reader-workdesk__shelf-actions">
-              <span>{activeSection.works.length} eser</span>
-              {activeSection.href && (
-                <Link
-                  className="button button--ghost"
-                  href={activeSection.href}
-                >
-                  Tümünü Gör
-                </Link>
+            <div className="reader-workdesk__hidden-menu">
+              {hiddenWorks.length > 0 ? (
+                <>
+                  {hiddenWorks.map((work) => (
+                    <button
+                      key={work.id}
+                      onClick={() => restoreWork(work.id)}
+                      type="button"
+                    >
+                      <span className="reader-workdesk__hidden-work-label">
+                        <b>{work.title}</b>
+                        <small>{work.authorName}</small>
+                      </span>
+                      <strong>Geri getir</strong>
+                    </button>
+                  ))}
+                  <button
+                    className="reader-workdesk__restore-all"
+                    onClick={restoreAll}
+                    type="button"
+                  >
+                    Tümünü geri getir
+                  </button>
+                </>
+              ) : (
+                <p>Gizlenmiş eser yok.</p>
               )}
-              <button
-                aria-label={`${activeSection.label} bölümünü gizle`}
-                className="reader-workdesk__hide-section"
-                onClick={() => hideSection(activeSection.id)}
-                title="Bu bölümü çalışma masasından kaldır"
-                type="button"
-              >
-                ×
-              </button>
             </div>
-          </div>
+          </details>
+        </div>
 
-          {activeSection.works.length > 0 ? (
-            <div className="books-grid">
-              {activeSection.works.map((work, index) => (
-                <WorkCard index={index} key={work.id} work={work} />
-              ))}
-            </div>
-          ) : (
-            <Card className="workspace-empty">
-              <h3>{activeSection.emptyTitle}</h3>
-              <p>{activeSection.emptyDescription}</p>
-            </Card>
-          )}
-        </section>
-      ) : (
-        <Card className="workspace-empty reader-workdesk__all-hidden">
-          <h3>Rafların şu an boş</h3>
-          <p>
-            Tüm vitrin bölümlerini gizledin. İstersen Gizlenenler menüsünden
-            tek tek, istersen hepsini birden geri getirebilirsin.
-          </p>
-          <button
-            className="button button--outline"
-            onClick={restoreAll}
-            type="button"
+        {activeSection && (
+          <section
+            aria-labelledby={`${activeSection.id}-baslik`}
+            className="dashboard-section reader-workdesk__shelf reader-workdesk__active-shelf"
           >
-            Tüm rafları geri getir
-          </button>
-        </Card>
-      )}
-    </div>
+            <div className="section-heading reader-workdesk__shelf-heading">
+              <div>
+                <p>{activeSection.eyebrow}</p>
+                <h2 id={`${activeSection.id}-baslik`}>
+                  {activeSection.title}
+                </h2>
+              </div>
+
+              <div className="reader-workdesk__shelf-actions">
+                <span>{activeWorks.length} eser</span>
+                {activeSection.href && (
+                  <Link
+                    className="button button--ghost"
+                    href={activeSection.href}
+                  >
+                    Tümünü Gör
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {activeWorks.length > 0 ? (
+              <div className="books-grid">
+                {activeWorks.map((work, index) => (
+                  <WorkCard
+                    index={index}
+                    key={work.id}
+                    onHide={hideWork}
+                    work={work}
+                  />
+                ))}
+              </div>
+            ) : activeSection.works.length > 0 ? (
+              <Card className="workspace-empty">
+                <h3>Bu raftaki eserleri temizledin</h3>
+                <p>
+                  Gizlediğin eserleri Gizlenen Eserler menüsünden geri
+                  getirebilirsin.
+                </p>
+              </Card>
+            ) : (
+              <Card className="workspace-empty">
+                <h3>{activeSection.emptyTitle}</h3>
+                <p>{activeSection.emptyDescription}</p>
+              </Card>
+            )}
+          </section>
+        )}
+      </div>
+    </>
   );
 }

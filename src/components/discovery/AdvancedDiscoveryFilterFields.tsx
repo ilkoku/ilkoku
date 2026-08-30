@@ -5,7 +5,7 @@ function enabled(
   filters: ReadonlySet<DiscoveryFilterId> | readonly DiscoveryFilterId[],
   id: DiscoveryFilterId,
 ) {
-  return filters instanceof Set ? filters.has(id) : filters.includes(id);
+  return new Set<DiscoveryFilterId>(filters).has(id);
 }
 
 function RangeField({

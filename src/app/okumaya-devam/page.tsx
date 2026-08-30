@@ -14,7 +14,7 @@ import {
   ReaderFilterDesk,
   ReaderPagination,
   ReaderResultSummary,
-  parseReaderStandardFilters,
+  parseManagedReaderStandardFilters,
   readerListHref,
   readerReviewLabel,
   readerWorkMatches,
@@ -27,6 +27,7 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { discoveryAdvancedFilterChips } from "@/lib/discovery-advanced-filters";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 export const metadata: Metadata = {
@@ -50,14 +51,7 @@ function countWords(content: string) {
 export default async function ContinueReadingPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    arama?: string;
-    editor?: string;
-    hitapYasi?: string;
-    sayfa?: string;
-    siralama?: string;
-    tur?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await getCurrentProfile();
 
@@ -70,46 +64,64 @@ export default async function ContinueReadingPage({
   const ratingOptions = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
   );
-  const filters = parseReaderStandardFilters(
-    await searchParams,
+  const params = await searchParams;
+  const { enabledFilterIds, filters } = await parseManagedReaderStandardFilters(
+    "reader-continue-reading",
+    params,
     ratingOptions,
     sortOptions,
     "recent",
   );
   const progressRecords = await getContinueReadingForMember(profile.id, null);
 
-  const mappedRows = progressRecords.map((progress) => ({
-    lastReadAt: progress.lastReadAt,
-    row: {
-      authorName:
-        progress.work.author.displayName ?? progress.work.author.fullName,
-      authorUsername: progress.work.author.username,
-      chapterCount: progress.work.chapters.length,
-      commentCount: progress.work._count.comments,
-      contentRating: progress.work.contentRating,
-      coverUrl: progress.work.coverUrl,
-      description: progress.work.description,
-      editorReviewStatus: progress.work.editorReviewStatus,
-      favoriteCount: progress.work._count.favorites,
-      genre: progress.work.genre,
-      id: progress.work.id,
-      isFavorite: progress.work.favorites.length > 0,
-      language: progress.work.language,
-      lastReadLabel: progress.chapter.title,
-      progressPercent: progress.progressPercent,
-      publishedAt: progress.work.publishedAt?.toISOString() ?? null,
-      readerCount: progress.work._count.readingProgress,
-      readingHref: `/oku/${progress.work.slug}/bolum-${progress.chapter.position}`,
-      readingState: "in_progress" as const,
-      slug: progress.work.slug,
-      title: progress.work.title,
-      totalWords: progress.work.chapters.reduce(
-        (total, chapter) => total + countWords(chapter.content),
-        0,
-      ),
-      updatedAt: progress.work.updatedAt.toISOString(),
-    } satisfies ReaderWorkRow,
-  }));
+  const mappedRows = progressRecords.map((progress) => {
+    const publishedChapters = progress.work.chapters.filter(
+      (chapter) => chapter.status === "published" && chapter.publishedAt !== null,
+    );
+    const hasPendingChapter = progress.work.chapters.some(
+      (chapter) => chapter.status !== "published" || chapter.publishedAt === null,
+    );
+
+    return {
+      lastReadAt: progress.lastReadAt,
+      row: {
+        authorName:
+          progress.work.author.displayName ?? progress.work.author.fullName,
+        authorUsername: progress.work.author.username,
+        chapterCount: publishedChapters.length,
+        commentCount: progress.work._count.comments,
+        completionStatus:
+          publishedChapters.length > 0 && !hasPendingChapter ? "completed" : "ongoing",
+        contentRating: progress.work.contentRating,
+        coverUrl: progress.work.coverUrl,
+        description: progress.work.description,
+        editorReviewStatus: progress.work.editorReviewStatus,
+        favoriteCount: progress.work._count.favorites,
+        genre: progress.work.genre,
+        hasPassport:
+          progress.work._count.ownershipStamps > 0 ||
+          progress.work._count.versions > 0,
+        id: progress.work.id,
+        isFavorite: progress.work.favorites.length > 0,
+        language: progress.work.language,
+        lastReadAt: progress.lastReadAt.toISOString(),
+        lastReadLabel: progress.chapter.title,
+        progressPercent: progress.progressPercent,
+        publishedAt: progress.work.publishedAt?.toISOString() ?? null,
+        readerCount: progress.work._count.readingProgress,
+        readingHref: `/oku/${progress.work.slug}/bolum-${progress.chapter.position}`,
+        readingState: "in_progress" as const,
+        slug: progress.work.slug,
+        title: progress.work.title,
+        totalWords: publishedChapters.reduce(
+          (total, chapter) => total + countWords(chapter.content),
+          0,
+        ),
+        updatedAt: progress.work.updatedAt.toISOString(),
+        versionCount: progress.work._count.versions,
+      } satisfies ReaderWorkRow,
+    };
+  });
 
   const collator = new Intl.Collator("tr-TR", { sensitivity: "base" });
   const filteredRows = mappedRows
@@ -190,6 +202,11 @@ export default async function ContinueReadingPage({
         }
       : null,
   ].filter((item): item is ReaderActiveFilter => item !== null);
+  const advancedFilterCount = discoveryAdvancedFilterChips(
+    filters.advanced,
+    enabledFilterIds,
+  ).length;
+  const hasFilters = activeFilters.length + advancedFilterCount > 0;
   const returnTo = pageHref(currentPage);
 
   return (
@@ -203,6 +220,7 @@ export default async function ContinueReadingPage({
 
         <ReaderFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={filters.advanced}
           clearHref="/okumaya-devam"
           contentRating={filters.contentRating}
           genre={filters.genre}
@@ -214,6 +232,7 @@ export default async function ContinueReadingPage({
           searchPlaceholder="Eser, yazar veya rumuz ara"
           sort={filters.sort}
           sortOptions={sortOptions}
+          standardFilters={normalizedFilters}
         />
 
         <ReaderResultSummary
@@ -225,12 +244,12 @@ export default async function ContinueReadingPage({
 
         <ReaderWorksTable
           emptyDescription={
-            activeFilters.length > 0
+            hasFilters
               ? "Filtreleri değiştirerek devam eden okumalarınız içinde yeniden deneyin."
               : "Bir eseri açtığınızda son kaldığınız bölüm burada görünecek."
           }
           emptyTitle={
-            activeFilters.length > 0
+            hasFilters
               ? "Eşleşen eser bulunamadı"
               : "Henüz devam eden bir okumanız yok"
           }

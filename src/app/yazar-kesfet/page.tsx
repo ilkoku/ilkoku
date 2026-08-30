@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { getDiscoveryAuthorMetrics } from "@/features/discovery/author-filter-metrics";
 import { discoveryAuthorWhereFromWorkPool } from "@/features/discovery/common-author-scope";
 import { readerAuthorDiscoveryWorkWhere } from "@/features/reader/author-discovery-scope";
 import { toggleReaderAuthorFavoriteAction } from "@/features/reader/author-favorites";
@@ -14,7 +15,7 @@ import {
   ReaderFilterDesk,
   ReaderPagination,
   ReaderResultSummary,
-  parseReaderStandardFilters,
+  parseManagedReaderStandardFilters,
   readerListHref,
   readerReviewLabel,
   type ReaderActiveFilter,
@@ -22,6 +23,11 @@ import {
   type ReaderSortOption,
 } from "@/features/reader/discovery-standard";
 import "@/features/reader/reader-discovery.css";
+import {
+  discoveryAdvancedFilterChips,
+  hasDiscoveryAdvancedFilters,
+  matchesDiscoveryAdvancedAuthorFilters,
+} from "@/lib/discovery-advanced-filters";
 import { prisma } from "@/lib/prisma";
 import {
   publicStoredWorkContentRatings,
@@ -62,14 +68,7 @@ function initials(value: string) {
 export default async function ReaderAuthorDiscoveryPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    arama?: string;
-    editor?: string;
-    hitapYasi?: string;
-    sayfa?: string;
-    siralama?: string;
-    tur?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await getCurrentProfile();
 
@@ -78,15 +77,25 @@ export default async function ReaderAuthorDiscoveryPage({
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 
-  const filters = parseReaderStandardFilters(
-    await searchParams,
+  const params = await searchParams;
+  const { enabledFilterIds, filters } = await parseManagedReaderStandardFilters(
+    "reader-author-discovery",
+    params,
     publicStoredWorkContentRatings,
     sortOptions,
     "recent",
   );
 
-  const workWhere: Prisma.WorkWhereInput = {
+  const metricWorkWhere: Prisma.WorkWhereInput = {
     ...readerAuthorDiscoveryWorkWhere,
+    ...(filters.genre ? { genre: filters.genre } : {}),
+    ...(filters.contentRating ? { contentRating: filters.contentRating } : {}),
+    ...(filters.reviewStatus
+      ? { editorReviewStatus: filters.reviewStatus }
+      : {}),
+  };
+  const workWhere: Prisma.WorkWhereInput = {
+    ...metricWorkWhere,
     ...(filters.search
       ? {
           OR: [
@@ -106,16 +115,23 @@ export default async function ReaderAuthorDiscoveryPage({
           ],
         }
       : {}),
-    ...(filters.genre ? { genre: filters.genre } : {}),
-    ...(filters.contentRating ? { contentRating: filters.contentRating } : {}),
-    ...(filters.reviewStatus
-      ? { editorReviewStatus: filters.reviewStatus }
+  };
+  const authorWhere: Prisma.UserWhereInput = {
+    ...discoveryAuthorWhereFromWorkPool(workWhere),
+    ...(filters.city
+      ? {
+          profile: {
+            is: {
+              city: { contains: filters.city },
+            },
+          },
+        }
       : {}),
   };
 
   const [authors, favoriteAuthorCount] = await Promise.all([
     prisma.user.findMany({
-      where: discoveryAuthorWhereFromWorkPool(workWhere),
+      where: authorWhere,
       select: {
         _count: {
           select: {
@@ -146,8 +162,24 @@ export default async function ReaderAuthorDiscoveryPage({
     prisma.readerAuthorFavorite.count({ where: { userId: profile.id } }),
   ]);
 
+  const metrics = hasDiscoveryAdvancedFilters(filters.advanced)
+    ? await getDiscoveryAuthorMetrics(
+        authors.map((author) => author.id),
+        metricWorkWhere,
+      )
+    : null;
+  const filteredAuthors = metrics
+    ? authors.filter((author) => {
+        const metric = metrics.get(author.id);
+        return Boolean(
+          metric &&
+            matchesDiscoveryAdvancedAuthorFilters(metric, filters.advanced),
+        );
+      })
+    : authors;
+
   const collator = new Intl.Collator("tr-TR", { sensitivity: "base" });
-  const sortedAuthors = [...authors].sort((left, right) => {
+  const sortedAuthors = [...filteredAuthors].sort((left, right) => {
     if (filters.sort === "most_works") {
       const countDifference = right._count.works - left._count.works;
       if (countDifference !== 0) return countDifference;
@@ -236,6 +268,9 @@ export default async function ReaderAuthorDiscoveryPage({
         }
       : null,
   ].filter((item): item is ReaderActiveFilter => item !== null);
+  const optionalActiveCount =
+    (filters.city ? 1 : 0) +
+    discoveryAdvancedFilterChips(filters.advanced, enabledFilterIds).length;
   const returnTo = pageHref(currentPage);
 
   return (
@@ -263,7 +298,7 @@ export default async function ReaderAuthorDiscoveryPage({
               <span>Eşleşen yazar</span>
             </div>
             <div>
-              <strong>{activeFilters.length}</strong>
+              <strong>{activeFilters.length + optionalActiveCount}</strong>
               <span>Aktif filtre</span>
             </div>
             <div>
@@ -275,6 +310,7 @@ export default async function ReaderAuthorDiscoveryPage({
 
         <ReaderFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={filters.advanced}
           clearHref="/yazar-kesfet"
           contentRating={filters.contentRating}
           genre={filters.genre}
@@ -286,6 +322,7 @@ export default async function ReaderAuthorDiscoveryPage({
           searchPlaceholder="Yazar, rumuz veya eser ara"
           sort={filters.sort}
           sortOptions={sortOptions}
+          standardFilters={normalizedFilters}
         />
 
         <ReaderResultSummary

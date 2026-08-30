@@ -18,6 +18,7 @@ export type ReaderWorkRow = {
   chapterCount: number;
   commentCount: number;
   completedAt?: string | null;
+  completionStatus?: "completed" | "ongoing";
   contentRating: StoredWorkContentRating;
   coverUrl: string | null;
   description?: string | null;
@@ -30,9 +31,11 @@ export type ReaderWorkRow = {
     | "completed";
   favoriteCount: number;
   genre: string | null;
+  hasPassport?: boolean;
   id: string;
   isFavorite?: boolean;
   language?: string | null;
+  lastReadAt?: string | null;
   lastReadLabel?: string | null;
   progressPercent?: number | null;
   publishedAt?: string | null;
@@ -43,6 +46,7 @@ export type ReaderWorkRow = {
   title: string;
   totalWords?: number;
   updatedAt?: string | null;
+  versionCount?: number;
 };
 
 function formatNumber(value: number) {
@@ -496,8 +500,8 @@ export function ReaderWorksTable({
               >
                 {selectedWork.readingHref
                   ? typeof selectedWork.progressPercent === "number"
-                    ? "Okumaya Devam Et"
-                    : "Okumaya Başla"
+                    ? "Devam Et"
+                    : "Oku"
                   : "Eseri Aç"}
               </Link>
             )}

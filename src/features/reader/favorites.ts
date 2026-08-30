@@ -112,9 +112,13 @@ export async function getFavoriteStatus(userId: string, workId: string) {
 export type ReaderFavoriteWork = EditorWorkCardData & {
   authorUsername: string | null;
   commentCount: number;
+  completedAt: Date | null;
+  completionStatus: "completed" | "ongoing";
   contentRating: StoredWorkContentRating;
   description: string | null;
   favoriteCount: number;
+  hasPassport: boolean;
+  lastReadAt: Date | null;
   lastReadLabel: string | null;
   progressPercent: number | null;
   publishedAt: Date | null;
@@ -122,6 +126,7 @@ export type ReaderFavoriteWork = EditorWorkCardData & {
   readingHref: string | null;
   readingState: "unread" | "in_progress" | "completed";
   updatedAt: Date;
+  versionCount: number;
 };
 
 export async function getFavoriteWorks(
@@ -150,7 +155,9 @@ export async function getFavoriteWorks(
                 where: { deletedAt: null, status: "visible" },
               },
               favorites: true,
+              ownershipStamps: true,
               readingProgress: true,
+              versions: true,
             },
           },
           author: {
@@ -163,11 +170,15 @@ export async function getFavoriteWorks(
           chapters: {
             where: {
               archivedAt: null,
-              publishedAt: { not: null },
-              status: "published",
             },
             orderBy: { position: "asc" },
-            select: { content: true, id: true, position: true },
+            select: {
+              content: true,
+              id: true,
+              position: true,
+              publishedAt: true,
+              status: true,
+            },
           },
           readingProgress: {
             where: {
@@ -186,6 +197,8 @@ export async function getFavoriteWorks(
                 select: { position: true, title: true },
               },
               completed: true,
+              completedAt: true,
+              lastReadAt: true,
               progressPercent: true,
             },
             take: 1,
@@ -198,7 +211,13 @@ export async function getFavoriteWorks(
 
   return favorites.map(({ work }) => {
     const progress = work.readingProgress[0] ?? null;
-    const firstChapter = work.chapters[0] ?? null;
+    const publishedChapters = work.chapters.filter(
+      (chapter) => chapter.status === "published" && chapter.publishedAt !== null,
+    );
+    const firstChapter = publishedChapters[0] ?? null;
+    const hasPendingChapter = work.chapters.some(
+      (chapter) => chapter.status !== "published" || chapter.publishedAt === null,
+    );
     const readingState = progress?.completed
       ? "completed"
       : progress
@@ -213,17 +232,23 @@ export async function getFavoriteWorks(
       assignedEditorId: work.assignedEditorId,
       authorName: work.author.displayName ?? work.author.fullName,
       authorUsername: work.author.username,
-      chapterCount: work.chapters.length,
+      chapterCount: publishedChapters.length,
       commentCount: work._count.comments,
+      completedAt: progress?.completedAt ?? null,
+      completionStatus:
+        publishedChapters.length > 0 && !hasPendingChapter ? "completed" : "ongoing",
       contentRating: work.contentRating,
       coverUrl: work.coverUrl,
       description: work.description,
       editorReviewStatus: work.editorReviewStatus,
       favoriteCount: work._count.favorites,
       genre: work.genre,
+      hasPassport:
+        work._count.ownershipStamps > 0 || work._count.versions > 0,
       id: work.id,
       isFavorite: true,
       language: work.language,
+      lastReadAt: progress?.lastReadAt ?? null,
       lastReadLabel: progress?.chapter.title ?? null,
       progressPercent: progress?.progressPercent ?? null,
       publishedAt: work.publishedAt,
@@ -235,11 +260,12 @@ export async function getFavoriteWorks(
       readingState,
       slug: work.slug,
       title: work.title,
-      totalWords: work.chapters.reduce(
+      totalWords: publishedChapters.reduce(
         (total, chapter) => total + countWords(chapter.content),
         0,
       ),
       updatedAt: work.updatedAt,
+      versionCount: work._count.versions,
     };
   });
 }

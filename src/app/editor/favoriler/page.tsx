@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { AdvancedDiscoveryFilterFields } from "@/components/discovery/AdvancedDiscoveryFilterFields";
 import {
   DiscoveryPagination,
   DiscoveryResultSummary,
@@ -12,6 +13,7 @@ import {
   getEditorFavoriteCollection,
   type EditorCollectionFilters,
   type EditorCollectionReviewStatus,
+  type EditorCollectionWordCount,
 } from "@/features/editor-workspace/collection-query";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorkCard } from "@/features/editor-workspace/components/EditorWorkCard";
@@ -19,7 +21,16 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { sanitizeDiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filter-management";
+import {
+  appendDiscoveryAdvancedFilterParams,
+  clearDiscoveryAdvancedFilter,
+  discoveryAdvancedFilterChips,
+  parseDiscoveryAdvancedFilters,
+  type DiscoveryAdvancedFilters,
+} from "@/lib/discovery-advanced-filters";
 import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
+import type { DiscoveryFilterId } from "@/lib/discovery-filter-registry";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { GENRE_LABELS } from "@/lib/genres";
@@ -42,11 +53,18 @@ const reviewStatuses = [
   "second_in_progress",
   "completed",
 ] as const satisfies readonly EditorCollectionReviewStatus[];
+const wordCountStatuses = ["short", "medium", "long"] as const satisfies readonly EditorCollectionWordCount[];
 
-function includesReviewStatus(value: string | undefined): value is EditorCollectionReviewStatus {
-  return Boolean(
-    value && reviewStatuses.includes(value as EditorCollectionReviewStatus),
-  );
+function firstValue(value: string | string[] | undefined) {
+  return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
+}
+
+function includesReviewStatus(value: string): value is EditorCollectionReviewStatus {
+  return reviewStatuses.includes(value as EditorCollectionReviewStatus);
+}
+
+function includesWordCount(value: string): value is EditorCollectionWordCount {
+  return wordCountStatuses.includes(value as EditorCollectionWordCount);
 }
 
 function reviewLabel(value: EditorCollectionReviewStatus) {
@@ -58,12 +76,23 @@ function reviewLabel(value: EditorCollectionReviewStatus) {
   return "Henüz incelenmedi";
 }
 
-function pageHref(filters: Omit<EditorCollectionFilters, "page">, page = 1) {
+function wordCountLabel(value: EditorCollectionWordCount) {
+  if (value === "short") return "30.000 altı";
+  if (value === "medium") return "30.000 – 80.000";
+  return "80.000 üzeri";
+}
+
+type HrefFilters = Omit<EditorCollectionFilters, "page">;
+
+function pageHref(filters: HrefFilters, page = 1) {
   const params = new URLSearchParams();
   if (filters.search) params.set("arama", filters.search);
   if (filters.genre) params.set("tur", filters.genre);
   if (filters.contentRating) params.set("hitap", filters.contentRating);
   if (filters.reviewStatus) params.set("durum", filters.reviewStatus);
+  if (filters.language) params.set("dil", filters.language);
+  if (filters.wordCount) params.set("kelime", filters.wordCount);
+  appendDiscoveryAdvancedFilterParams(params, filters.advanced);
   if (page > 1) params.set("sayfa", String(page));
   const query = params.toString();
   return query ? `/editor/favoriler?${query}` : "/editor/favoriler";
@@ -72,16 +101,10 @@ function pageHref(filters: Omit<EditorCollectionFilters, "page">, page = 1) {
 export default async function EditorFavoritesPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    arama?: string;
-    durum?: string;
-    hitap?: string;
-    sayfa?: string;
-    tur?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await requireEditorProfile("/editor/favoriler");
-  const enabledFilterIds = new Set(
+  const enabledFilterIds = new Set<DiscoveryFilterId>(
     await getDiscoverySurfaceFilterIds("editor-favorites"),
   );
   const adultAccess = await getAdultContentAccess(profile.id);
@@ -90,44 +113,64 @@ export default async function EditorFavoritesPage({
   );
   const params = await searchParams;
   const search = enabledFilterIds.has("search")
-    ? params.arama?.trim().slice(0, 220) || undefined
+    ? firstValue(params.arama).slice(0, 220) || undefined
     : undefined;
   const genre = enabledFilterIds.has("genre")
-    ? normalizeGenreLabel(params.tur)
+    ? normalizeGenreLabel(firstValue(params.tur))
     : undefined;
+  const ratingValue = firstValue(params.hitap);
   const requestedRating =
-    enabledFilterIds.has("contentRating") && isMemberStoredWorkContentRating(params.hitap)
-      ? params.hitap
+    enabledFilterIds.has("contentRating") && isMemberStoredWorkContentRating(ratingValue)
+      ? ratingValue
       : undefined;
   const contentRating: MemberStoredWorkContentRating | undefined =
     requestedRating && visibleRatings.includes(requestedRating)
       ? requestedRating
       : undefined;
+  const reviewValue = firstValue(params.durum);
   const reviewStatus =
-    enabledFilterIds.has("reviewStatus") && includesReviewStatus(params.durum)
-      ? params.durum
+    enabledFilterIds.has("reviewStatus") && includesReviewStatus(reviewValue)
+      ? reviewValue
       : undefined;
-  const rawPage = Number.parseInt(params.sayfa ?? "", 10);
+  const language = enabledFilterIds.has("language")
+    ? firstValue(params.dil).slice(0, 10) || undefined
+    : undefined;
+  const wordValue = firstValue(params.kelime);
+  const wordCount =
+    enabledFilterIds.has("wordCount") && includesWordCount(wordValue)
+      ? wordValue
+      : undefined;
+  const advanced: DiscoveryAdvancedFilters = sanitizeDiscoveryAdvancedFilters(
+    parseDiscoveryAdvancedFilters(params),
+    enabledFilterIds,
+  );
+  const rawPage = Number.parseInt(firstValue(params.sayfa), 10);
   const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const filters: EditorCollectionFilters = {
+    advanced,
     contentRating,
     genre,
+    language,
     page: requestedPage,
     reviewStatus,
     search,
+    wordCount,
   };
-  const hrefFilters = {
+  const hrefFilters: HrefFilters = {
+    advanced,
     contentRating,
     genre,
+    language,
     reviewStatus,
     search,
+    wordCount,
   };
   const data = await getEditorFavoriteCollection(
     profile.id,
     filters,
     adultAccess.canAccessAdultContent,
   );
-  const activeFilters = [
+  const baseActiveFilters = [
     search
       ? {
           href: pageHref({ ...hrefFilters, search: undefined }),
@@ -152,7 +195,27 @@ export default async function EditorFavoritesPage({
           label: `Editör: ${reviewLabel(reviewStatus)}`,
         }
       : null,
+    language
+      ? {
+          href: pageHref({ ...hrefFilters, language: undefined }),
+          label: `Dil: ${language.toLocaleUpperCase("tr-TR")}`,
+        }
+      : null,
+    wordCount
+      ? {
+          href: pageHref({ ...hrefFilters, wordCount: undefined }),
+          label: `Kelime: ${wordCountLabel(wordCount)}`,
+        }
+      : null,
   ].filter((item): item is { href: string; label: string } => item !== null);
+  const advancedActiveFilters = discoveryAdvancedFilterChips(
+    advanced,
+    enabledFilterIds,
+  ).map((item) => ({
+    href: pageHref({ ...hrefFilters, advanced: clearDiscoveryAdvancedFilter(advanced, item.id) }),
+    label: item.label,
+  }));
+  const activeFilters = [...baseActiveFilters, ...advancedActiveFilters];
   const hasFilters = activeFilters.length > 0;
 
   return (
@@ -223,6 +286,30 @@ export default async function EditorFavoritesPage({
                   </select>
                 </label>
               ) : null}
+
+              {enabledFilterIds.has("language") ? (
+                <label>
+                  <span>Dil</span>
+                  <input defaultValue={language} name="dil" placeholder="Örn. tr" />
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("wordCount") ? (
+                <label>
+                  <span>Kelime sayısı</span>
+                  <select defaultValue={wordCount ?? ""} name="kelime">
+                    <option value="">Tümü</option>
+                    {wordCountStatuses.map((value) => (
+                      <option key={value} value={value}>{wordCountLabel(value)}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <AdvancedDiscoveryFilterFields
+                enabledFilterIds={enabledFilterIds}
+                filters={advanced}
+              />
 
               <div className="role-filter-desk__actions">
                 <button className="button button--primary" type="submit">

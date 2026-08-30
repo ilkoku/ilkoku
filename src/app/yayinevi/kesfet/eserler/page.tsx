@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { AdvancedDiscoveryFilterFields } from "@/components/discovery/AdvancedDiscoveryFilterFields";
 import {
   DiscoveryPagination,
   DiscoveryResultSummary,
@@ -19,6 +20,7 @@ import {
   getPublisherWorkDiscovery,
   normalizePublisherWorkDiscoveryFilters,
   PUBLISHER_WORK_PAGE_SIZE,
+  publisherWordCountLabel,
   type PublisherWorkDiscoveryFilters,
 } from "@/features/publisher-discovery/work-query";
 import { getActivePublisherEditorRequestWorkIds } from "@/features/publisher-editor-requests/repository";
@@ -26,7 +28,14 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { sanitizeDiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filter-management";
+import {
+  appendDiscoveryAdvancedFilterParams,
+  clearDiscoveryAdvancedFilter,
+  discoveryAdvancedFilterChips,
+} from "@/lib/discovery-advanced-filters";
 import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
+import type { DiscoveryFilterId } from "@/lib/discovery-filter-registry";
 import { GENRE_LABELS } from "@/lib/genres";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
@@ -57,6 +66,8 @@ function pageHref(filters: PublisherWorkDiscoveryFilters, page: number) {
   if (filters.contentRating) params.set("hitap", filters.contentRating);
   if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
   if (filters.sort !== "newest") params.set("siralama", filters.sort);
+  if (filters.wordCount) params.set("kelime", filters.wordCount);
+  appendDiscoveryAdvancedFilterParams(params, filters.advanced);
   if (page > 1) params.set("sayfa", String(page));
 
   const query = params.toString();
@@ -74,7 +85,7 @@ export default async function PublisherWorkDiscoveryPage({
     "/yayinevi/kesfet/eserler",
     "discover_works",
   );
-  const enabledFilterIds = new Set(
+  const enabledFilterIds = new Set<DiscoveryFilterId>(
     await getDiscoverySurfaceFilterIds("publisher-work-discovery"),
   );
   const adultAccess = access.profile.adminPublisherView
@@ -93,6 +104,11 @@ export default async function PublisherWorkDiscoveryPage({
   if (!enabledFilterIds.has("contentRating")) filters.contentRating = "";
   if (!enabledFilterIds.has("reviewStatus")) filters.reviewStatus = "";
   if (!enabledFilterIds.has("sort")) filters.sort = "newest";
+  if (!enabledFilterIds.has("wordCount")) filters.wordCount = undefined;
+  filters.advanced = sanitizeDiscoveryAdvancedFilters(
+    filters.advanced,
+    enabledFilterIds,
+  );
   if (
     filters.contentRating === "adult_18" &&
     !adultAccess.canAccessAdultContent
@@ -147,7 +163,7 @@ export default async function PublisherWorkDiscoveryPage({
     filters.language
       ? {
           href: pageHref({ ...filters, language: "" }, 1),
-          label: filters.language === "tr" ? "Dil: Türkçe" : "Dil: İngilizce",
+          label: filters.language === "tr" ? "Dil: Türkçe" : `Dil: ${filters.language.toLocaleUpperCase("tr-TR")}`,
         }
       : null,
     filters.reviewStatus
@@ -159,11 +175,31 @@ export default async function PublisherWorkDiscoveryPage({
     filters.sort !== "newest"
       ? {
           href: pageHref({ ...filters, sort: "newest" }, 1),
-          label: "Son güncellenen",
+          label: "Sıralama: Son güncellenen",
+        }
+      : null,
+    filters.wordCount
+      ? {
+          href: pageHref({ ...filters, wordCount: undefined }, 1),
+          label: `Kelime: ${publisherWordCountLabel(filters.wordCount)}`,
         }
       : null,
   ].filter((item): item is { href: string; label: string } => item !== null);
-  const hasFilters = activeFilters.length > 0;
+  const advancedFilters = discoveryAdvancedFilterChips(
+    filters.advanced,
+    enabledFilterIds,
+  ).map((item) => ({
+    href: pageHref(
+      {
+        ...filters,
+        advanced: clearDiscoveryAdvancedFilter(filters.advanced, item.id),
+      },
+      1,
+    ),
+    label: item.label,
+  }));
+  const visibleActiveFilters = [...activeFilters, ...advancedFilters];
+  const hasFilters = visibleActiveFilters.length > 0;
   const canViewPassport = access.permissions.includes(
     "view_authorized_passport",
   );
@@ -256,6 +292,8 @@ export default async function PublisherWorkDiscoveryPage({
                     <option value="">Tüm diller</option>
                     <option value="tr">Türkçe</option>
                     <option value="en">İngilizce</option>
+                    <option value="de">Almanca</option>
+                    <option value="fr">Fransızca</option>
                   </select>
                 </label>
               ) : null}
@@ -284,6 +322,23 @@ export default async function PublisherWorkDiscoveryPage({
                 </label>
               ) : null}
 
+              {enabledFilterIds.has("wordCount") ? (
+                <label>
+                  <span>Kelime sayısı</span>
+                  <select defaultValue={filters.wordCount ?? ""} name="kelime">
+                    <option value="">Tümü</option>
+                    <option value="short">30.000 altı</option>
+                    <option value="medium">30.000 – 80.000</option>
+                    <option value="long">80.000 üzeri</option>
+                  </select>
+                </label>
+              ) : null}
+
+              <AdvancedDiscoveryFilterFields
+                enabledFilterIds={enabledFilterIds}
+                filters={filters.advanced}
+              />
+
               <div className="role-filter-desk__actions">
                 <button className="button button--primary" type="submit">
                   Masayı Güncelle
@@ -301,10 +356,10 @@ export default async function PublisherWorkDiscoveryPage({
             </p>
           )}
 
-          {activeFilters.length > 0 ? (
+          {visibleActiveFilters.length > 0 ? (
             <div className="role-filter-desk__active" aria-label="Aktif filtreler">
               <span>Aktif</span>
-              {activeFilters.map((item) => (
+              {visibleActiveFilters.map((item) => (
                 <Link href={item.href} key={`${item.label}-${item.href}`}>
                   {item.label}
                   <b aria-hidden="true">×</b>

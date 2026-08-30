@@ -17,6 +17,7 @@ export type EditorDiscoveryFilters = {
   genre?: string;
   language?: string;
   reviewStatus?: string;
+  search?: string;
   wordCount?: string;
 };
 
@@ -52,6 +53,25 @@ export async function getCommonEditorDiscovery(
               filters.reviewStatus as EditorWorkCardData["editorReviewStatus"],
           }
         : {}),
+      ...(filters.search
+        ? {
+            OR: [
+              { title: { contains: filters.search } },
+              { subtitle: { contains: filters.search } },
+              {
+                author: {
+                  is: {
+                    OR: [
+                      { displayName: { contains: filters.search } },
+                      { fullName: { contains: filters.search } },
+                      { username: { contains: filters.search } },
+                    ],
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
     },
     include: {
       _count: {
@@ -63,7 +83,9 @@ export async function getCommonEditorDiscovery(
             },
           },
           favorites: true,
+          ownershipStamps: true,
           readingProgress: true,
+          versions: true,
         },
       },
       author: {
@@ -76,13 +98,11 @@ export async function getCommonEditorDiscovery(
       chapters: {
         where: {
           archivedAt: null,
-          publishedAt: {
-            not: null,
-          },
-          status: "published",
         },
         select: {
           content: true,
+          publishedAt: true,
+          status: true,
         },
       },
       editorFavorites: {
@@ -100,28 +120,47 @@ export async function getCommonEditorDiscovery(
   });
 
   return works
-    .map((work): EditorWorkTableData => ({
-      assignedEditorId: work.assignedEditorId,
-      authorName: work.author.displayName ?? work.author.fullName,
-      authorUsername: work.author.username,
-      chapterCount: work.chapters.length,
-      commentCount: work._count.comments,
-      contentRating: work.contentRating,
-      coverUrl: work.coverUrl,
-      editorReviewStatus: work.editorReviewStatus,
-      favoriteCount: work._count.favorites,
-      genre: work.genre,
-      id: work.id,
-      isFavorite: work.editorFavorites.length > 0,
-      language: work.language,
-      publishedAt: work.publishedAt,
-      readerCount: work._count.readingProgress,
-      slug: work.slug,
-      title: work.title,
-      totalWords: work.chapters.reduce(
-        (total, chapter) => total + countWords(chapter.content),
-        0,
-      ),
-    }))
+    .map((work): EditorWorkTableData => {
+      const publishedChapters = work.chapters.filter(
+        (chapter) =>
+          chapter.status === "published" && chapter.publishedAt !== null,
+      );
+      const hasPendingChapter = work.chapters.some(
+        (chapter) =>
+          chapter.status !== "published" || chapter.publishedAt === null,
+      );
+
+      return {
+        assignedEditorId: work.assignedEditorId,
+        authorName: work.author.displayName ?? work.author.fullName,
+        authorUsername: work.author.username,
+        chapterCount: publishedChapters.length,
+        commentCount: work._count.comments,
+        completionStatus:
+          publishedChapters.length > 0 && !hasPendingChapter
+            ? "completed"
+            : "ongoing",
+        contentRating: work.contentRating,
+        coverUrl: work.coverUrl,
+        editorReviewStatus: work.editorReviewStatus,
+        favoriteCount: work._count.favorites,
+        genre: work.genre,
+        hasPassport:
+          work._count.ownershipStamps > 0 || work._count.versions > 0,
+        id: work.id,
+        isFavorite: work.editorFavorites.length > 0,
+        language: work.language,
+        publishedAt: work.publishedAt,
+        readerCount: work._count.readingProgress,
+        slug: work.slug,
+        title: work.title,
+        totalWords: publishedChapters.reduce(
+          (total, chapter) => total + countWords(chapter.content),
+          0,
+        ),
+        updatedAt: work.updatedAt,
+        versionCount: work._count.versions,
+      };
+    })
     .filter((work) => matchesWordCount(work.totalWords, filters.wordCount));
 }

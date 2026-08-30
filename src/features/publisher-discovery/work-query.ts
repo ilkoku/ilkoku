@@ -1,5 +1,12 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { countWords } from "@/features/editor-workspace/eligibility";
+import {
+  hasDiscoveryAdvancedFilters,
+  matchesDiscoveryAdvancedWorkFilters,
+  parseDiscoveryAdvancedFilters,
+  type DiscoveryAdvancedFilters,
+} from "@/lib/discovery-advanced-filters";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
 import {
@@ -18,10 +25,13 @@ const reviewStatuses = [
   "second_in_progress",
   "completed",
 ] as const;
+const wordCountFilters = ["short", "medium", "long"] as const;
 
 type ReviewStatus = (typeof reviewStatuses)[number];
+export type PublisherWordCountFilter = (typeof wordCountFilters)[number];
 
 export interface PublisherWorkDiscoveryFilters {
+  advanced: DiscoveryAdvancedFilters;
   contentRating: MemberStoredWorkContentRating | "";
   genre: string;
   language: string;
@@ -29,6 +39,7 @@ export interface PublisherWorkDiscoveryFilters {
   query: string;
   reviewStatus: ReviewStatus | "";
   sort: "newest" | "updated";
+  wordCount?: PublisherWordCountFilter;
 }
 
 export interface PublisherWorkDiscoveryRow {
@@ -50,6 +61,8 @@ export interface PublisherWorkDiscoveryRow {
   slug: string;
   subtitle: string | null;
   title: string;
+  totalWords: number;
+  updatedAt: string;
   versionCount: number;
 }
 
@@ -70,6 +83,16 @@ function isReviewStatus(value: string): value is ReviewStatus {
   return reviewStatuses.includes(value as ReviewStatus);
 }
 
+function isWordCountFilter(value: string): value is PublisherWordCountFilter {
+  return wordCountFilters.includes(value as PublisherWordCountFilter);
+}
+
+export function publisherWordCountLabel(value: PublisherWordCountFilter) {
+  if (value === "short") return "30.000 altı";
+  if (value === "medium") return "30.000 – 80.000";
+  return "80.000 üzeri";
+}
+
 export function normalizePublisherWorkDiscoveryFilters(
   input: Record<string, string | string[] | undefined>,
 ): PublisherWorkDiscoveryFilters {
@@ -78,8 +101,10 @@ export function normalizePublisherWorkDiscoveryFilters(
   const reviewStatus = firstValue(input.editor);
   const sort = firstValue(input.siralama);
   const genre = normalizeGenreLabel(firstValue(input.tur));
+  const wordCount = firstValue(input.kelime);
 
   return {
+    advanced: parseDiscoveryAdvancedFilters(input),
     contentRating: isMemberStoredWorkContentRating(contentRating)
       ? contentRating
       : "",
@@ -89,6 +114,7 @@ export function normalizePublisherWorkDiscoveryFilters(
     query: firstValue(input.arama).slice(0, 220),
     reviewStatus: isReviewStatus(reviewStatus) ? reviewStatus : "",
     sort: sort === "updated" ? "updated" : "newest",
+    wordCount: isWordCountFilter(wordCount) ? wordCount : undefined,
   };
 }
 
@@ -115,6 +141,115 @@ function publicWriterAlias(writer: {
     .replace(/[^a-z0-9çğıöşü_-]/giu, "");
 
   return `@${slug || "ilkoku-yazari"}`;
+}
+
+function matchesWordCount(total: number, filter?: PublisherWordCountFilter) {
+  if (filter === "short") return total < 30_000;
+  if (filter === "medium") return total >= 30_000 && total <= 80_000;
+  if (filter === "long") return total > 80_000;
+  return true;
+}
+
+const workSelect = {
+  _count: {
+    select: {
+      comments: {
+        where: { deletedAt: null, status: "visible" as const },
+      },
+      favorites: true,
+      ownershipStamps: true,
+      readingProgress: true,
+      versions: true,
+    },
+  },
+  author: {
+    select: { displayName: true, username: true },
+  },
+  chapters: {
+    where: { archivedAt: null },
+    orderBy: { position: "asc" as const },
+    select: { content: true, id: true, publishedAt: true, status: true },
+  },
+  contentRating: true,
+  coverUrl: true,
+  editorReviewStatus: true,
+  genre: true,
+  id: true,
+  language: true,
+  publishedAt: true,
+  slug: true,
+  subtitle: true,
+  title: true,
+  updatedAt: true,
+} satisfies Prisma.WorkSelect;
+
+type SelectedWork = Prisma.WorkGetPayload<{ select: typeof workSelect }>;
+
+function mapWork(work: SelectedWork): PublisherWorkDiscoveryRow {
+  const publishedChapterCount = work.chapters.filter(
+    (chapter) =>
+      chapter.status === "published" && chapter.publishedAt !== null,
+  ).length;
+  const hasPendingChapter = work.chapters.some(
+    (chapter) =>
+      chapter.status !== "published" || chapter.publishedAt === null,
+  );
+
+  return {
+    authorAlias: publicWriterAlias(work.author),
+    authorName: publicWriterName(work.author),
+    chapterCount: publishedChapterCount,
+    commentCount: work._count.comments,
+    completion:
+      publishedChapterCount > 0 && !hasPendingChapter ? "completed" : "ongoing",
+    contentRating: work.contentRating,
+    coverUrl: work.coverUrl,
+    editorReviewStatus: work.editorReviewStatus,
+    favoriteCount: work._count.favorites,
+    genre: work.genre,
+    hasPassportRecord:
+      work._count.ownershipStamps > 0 || work._count.versions > 0,
+    id: work.id,
+    language: work.language,
+    publishedAt:
+      work.publishedAt?.toISOString() ?? new Date(0).toISOString(),
+    readerCount: work._count.readingProgress,
+    slug: work.slug,
+    subtitle: work.subtitle,
+    title: work.title,
+    totalWords: work.chapters
+      .filter(
+        (chapter) =>
+          chapter.status === "published" && chapter.publishedAt !== null,
+      )
+      .reduce((total, chapter) => total + countWords(chapter.content), 0),
+    updatedAt: work.updatedAt.toISOString(),
+    versionCount: work._count.versions,
+  };
+}
+
+function matchesAdvancedWork(
+  row: PublisherWorkDiscoveryRow,
+  filters: PublisherWorkDiscoveryFilters,
+) {
+  if (!matchesWordCount(row.totalWords, filters.wordCount)) return false;
+
+  return matchesDiscoveryAdvancedWorkFilters(
+    {
+      authorName: row.authorName,
+      authorUsername: row.authorAlias,
+      chapterCount: row.chapterCount,
+      commentCount: row.commentCount,
+      completionStatus: row.completion,
+      favoriteCount: row.favoriteCount,
+      hasPassport: row.hasPassportRecord,
+      publishedAt: row.publishedAt,
+      readerCount: row.readerCount,
+      updatedAt: row.updatedAt,
+      versionCount: row.versionCount,
+    },
+    filters.advanced,
+  );
 }
 
 export async function getPublisherWorkDiscovery(
@@ -153,54 +288,45 @@ export async function getPublisherWorkDiscovery(
       ? { editorReviewStatus: filters.reviewStatus }
       : {}),
   };
+  const orderBy: Prisma.WorkOrderByWithRelationInput[] =
+    filters.sort === "updated"
+      ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
+      : [{ publishedAt: "desc" }, { createdAt: "desc" }];
+  const usesPostFilter =
+    Boolean(filters.wordCount) || hasDiscoveryAdvancedFilters(filters.advanced);
 
-  const totalCount = await prisma.work.count({ where });
-  const totalPages = Math.max(
-    1,
-    Math.ceil(totalCount / PUBLISHER_WORK_PAGE_SIZE),
-  );
-  const currentPage = Math.min(filters.page, totalPages);
+  let rows: PublisherWorkDiscoveryRow[];
+  let totalCount: number;
+  let currentPage: number;
+  let totalPages: number;
 
-  const works = await prisma.work.findMany({
-    where,
-    orderBy:
-      filters.sort === "updated"
-        ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
-        : [{ publishedAt: "desc" }, { createdAt: "desc" }],
-    skip: (currentPage - 1) * PUBLISHER_WORK_PAGE_SIZE,
-    take: PUBLISHER_WORK_PAGE_SIZE,
-    select: {
-      _count: {
-        select: {
-          comments: {
-            where: { deletedAt: null, status: "visible" },
-          },
-          favorites: true,
-          ownershipStamps: true,
-          readingProgress: true,
-          versions: true,
-        },
-      },
-      author: {
-        select: { displayName: true, username: true },
-      },
-      chapters: {
-        where: { archivedAt: null },
-        orderBy: { position: "asc" },
-        select: { id: true, publishedAt: true, status: true },
-      },
-      contentRating: true,
-      coverUrl: true,
-      editorReviewStatus: true,
-      genre: true,
-      id: true,
-      language: true,
-      publishedAt: true,
-      slug: true,
-      subtitle: true,
-      title: true,
-    },
-  });
+  if (usesPostFilter) {
+    const works = await prisma.work.findMany({
+      where,
+      orderBy,
+      select: workSelect,
+    });
+    const allRows = works.map(mapWork).filter((row) => matchesAdvancedWork(row, filters));
+    totalCount = allRows.length;
+    totalPages = Math.max(1, Math.ceil(totalCount / PUBLISHER_WORK_PAGE_SIZE));
+    currentPage = Math.min(filters.page, totalPages);
+    rows = allRows.slice(
+      (currentPage - 1) * PUBLISHER_WORK_PAGE_SIZE,
+      currentPage * PUBLISHER_WORK_PAGE_SIZE,
+    );
+  } else {
+    totalCount = await prisma.work.count({ where });
+    totalPages = Math.max(1, Math.ceil(totalCount / PUBLISHER_WORK_PAGE_SIZE));
+    currentPage = Math.min(filters.page, totalPages);
+    const works = await prisma.work.findMany({
+      where,
+      orderBy,
+      skip: (currentPage - 1) * PUBLISHER_WORK_PAGE_SIZE,
+      take: PUBLISHER_WORK_PAGE_SIZE,
+      select: workSelect,
+    });
+    rows = works.map(mapWork);
+  }
 
   const first =
     totalCount === 0
@@ -212,43 +338,7 @@ export async function getPublisherWorkDiscovery(
     currentPage,
     first,
     last,
-    rows: works.map((work) => {
-      const publishedChapterCount = work.chapters.filter(
-        (chapter) =>
-          chapter.status === "published" && chapter.publishedAt !== null,
-      ).length;
-      const hasPendingChapter = work.chapters.some(
-        (chapter) =>
-          chapter.status !== "published" || chapter.publishedAt === null,
-      );
-
-      return {
-        authorAlias: publicWriterAlias(work.author),
-        authorName: publicWriterName(work.author),
-        chapterCount: publishedChapterCount,
-        commentCount: work._count.comments,
-        completion:
-          publishedChapterCount > 0 && !hasPendingChapter
-            ? "completed"
-            : "ongoing",
-        contentRating: work.contentRating,
-        coverUrl: work.coverUrl,
-        editorReviewStatus: work.editorReviewStatus,
-        favoriteCount: work._count.favorites,
-        genre: work.genre,
-        hasPassportRecord:
-          work._count.ownershipStamps > 0 || work._count.versions > 0,
-        id: work.id,
-        language: work.language,
-        publishedAt:
-          work.publishedAt?.toISOString() ?? new Date(0).toISOString(),
-        readerCount: work._count.readingProgress,
-        slug: work.slug,
-        subtitle: work.subtitle,
-        title: work.title,
-        versionCount: work._count.versions,
-      };
-    }),
+    rows,
     totalCount,
     totalPages,
   };

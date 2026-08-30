@@ -12,7 +12,9 @@ function continueWorkSelect(userId: string) {
           where: { deletedAt: null, status: "visible" as const },
         },
         favorites: true,
+        ownershipStamps: true,
         readingProgress: true,
+        versions: true,
       },
     },
     author: {
@@ -25,8 +27,6 @@ function continueWorkSelect(userId: string) {
     chapters: {
       where: {
         archivedAt: null,
-        publishedAt: { not: null },
-        status: "published" as const,
       },
       orderBy: { position: "asc" as const },
       select: {

@@ -6,7 +6,9 @@ import { AppShell } from "@/components/layout/AppShell";
 import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { getDiscoveryAuthorMetrics } from "@/features/discovery/author-filter-metrics";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
+import { readerAuthorDiscoveryWorkWhere } from "@/features/reader/author-discovery-scope";
 import {
   getReaderFavoriteAuthors,
   toggleReaderAuthorFavoriteAction,
@@ -20,7 +22,7 @@ import {
   ReaderFilterDesk,
   ReaderPagination,
   ReaderResultSummary,
-  parseReaderStandardFilters,
+  parseManagedReaderStandardFilters,
   readerListHref,
   readerReviewLabel,
   readerWorkMatches,
@@ -33,6 +35,11 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import {
+  discoveryAdvancedFilterChips,
+  hasDiscoveryAdvancedFilters,
+  matchesDiscoveryAdvancedAuthorFilters,
+} from "@/lib/discovery-advanced-filters";
 import {
   publicStoredWorkContentRatings,
   workContentRatingDetails,
@@ -62,15 +69,7 @@ const authorSortOptions = [
 export default async function ReaderFavoritesPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    arama?: string;
-    editor?: string;
-    hitapYasi?: string;
-    sayfa?: string;
-    siralama?: string;
-    tip?: string;
-    tur?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await getCurrentProfile();
 
@@ -80,7 +79,8 @@ export default async function ReaderFavoritesPage({
   }
 
   const params = await searchParams;
-  const type: FavoriteType = params.tip === "yazar" ? "author" : "work";
+  const rawType = Array.isArray(params.tip) ? params.tip[0] : params.tip;
+  const type: FavoriteType = rawType === "yazar" ? "author" : "work";
   const adultAccess = await getAdultContentAccess(profile.id);
   const workRatingOptions = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
@@ -92,7 +92,9 @@ export default async function ReaderFavoritesPage({
   const fixedParams: Record<string, string> =
     type === "author" ? { tip: "yazar" } : {};
   const clearHref = type === "author" ? "/favorilerim?tip=yazar" : "/favorilerim";
-  const filters = parseReaderStandardFilters(
+  const surfaceId = type === "author" ? "reader-favorite-authors" : "reader-favorite-works";
+  const { enabledFilterIds, filters } = await parseManagedReaderStandardFilters(
+    surfaceId,
     params,
     ratingOptions,
     sortOptions,
@@ -105,15 +107,19 @@ export default async function ReaderFavoritesPage({
     authorUsername: work.authorUsername,
     chapterCount: work.chapterCount,
     commentCount: work.commentCount,
+    completedAt: work.completedAt?.toISOString() ?? null,
+    completionStatus: work.completionStatus,
     contentRating: work.contentRating,
     coverUrl: work.coverUrl,
     description: work.description,
     editorReviewStatus: work.editorReviewStatus,
     favoriteCount: work.favoriteCount,
     genre: work.genre,
+    hasPassport: work.hasPassport,
     id: work.id,
     isFavorite: work.isFavorite,
     language: work.language,
+    lastReadAt: work.lastReadAt?.toISOString() ?? null,
     lastReadLabel: work.lastReadLabel,
     progressPercent: work.progressPercent,
     publishedAt: work.publishedAt?.toISOString() ?? null,
@@ -124,6 +130,7 @@ export default async function ReaderFavoritesPage({
     title: work.title,
     totalWords: work.totalWords,
     updatedAt: work.updatedAt.toISOString(),
+    versionCount: work.versionCount,
   }));
   const filteredWorkRows = allWorkRows
     .filter((work) => readerWorkMatches(work, filters))
@@ -137,6 +144,14 @@ export default async function ReaderFavoritesPage({
       );
     });
 
+  const authorMetricWorkFilters: Prisma.WorkWhereInput = {
+    ...readerAuthorDiscoveryWorkWhere,
+    ...(filters.genre ? { genre: filters.genre } : {}),
+    ...(filters.contentRating ? { contentRating: filters.contentRating } : {}),
+    ...(filters.reviewStatus
+      ? { editorReviewStatus: filters.reviewStatus }
+      : {}),
+  };
   const authorWorkFilters: Prisma.WorkWhereInput = {
     ...(filters.search
       ? {
@@ -167,8 +182,31 @@ export default async function ReaderFavoritesPage({
     type === "author"
       ? await getReaderFavoriteAuthors(profile.id, authorWorkFilters)
       : [];
+  const cityFilteredAuthors = filters.city
+    ? authorResults.filter((author) =>
+        (author.profile?.city ?? "")
+          .toLocaleLowerCase("tr-TR")
+          .includes(filters.city!.toLocaleLowerCase("tr-TR")),
+      )
+    : authorResults;
+  const authorMetrics =
+    type === "author" && hasDiscoveryAdvancedFilters(filters.advanced)
+      ? await getDiscoveryAuthorMetrics(
+          cityFilteredAuthors.map((author) => author.id),
+          authorMetricWorkFilters,
+        )
+      : null;
+  const advancedFilteredAuthors = authorMetrics
+    ? cityFilteredAuthors.filter((author) => {
+        const metric = authorMetrics.get(author.id);
+        return Boolean(
+          metric &&
+            matchesDiscoveryAdvancedAuthorFilters(metric, filters.advanced),
+        );
+      })
+    : cityFilteredAuthors;
   const collator = new Intl.Collator("tr-TR", { sensitivity: "base" });
-  const sortedAuthors = [...authorResults].sort((left, right) => {
+  const sortedAuthors = [...advancedFilteredAuthors].sort((left, right) => {
     if (filters.sort === "most_works") {
       const difference = right._count.works - left._count.works;
       if (difference !== 0) return difference;
@@ -264,7 +302,16 @@ export default async function ReaderFavoritesPage({
         }
       : null,
   ].filter((item): item is ReaderActiveFilter => item !== null);
-  const hasFilters = activeFilters.length > 0;
+  const advancedFilterCount = discoveryAdvancedFilterChips(
+    filters.advanced,
+    enabledFilterIds,
+  ).length;
+  const optionalBaseFilterCount =
+    (filters.city ? 1 : 0) +
+    (filters.language ? 1 : 0) +
+    (filters.wordCount ? 1 : 0);
+  const hasFilters =
+    activeFilters.length + optionalBaseFilterCount + advancedFilterCount > 0;
   const returnTo = pageHref(currentPage);
 
   return (
@@ -297,6 +344,7 @@ export default async function ReaderFavoritesPage({
 
         <ReaderFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={filters.advanced}
           clearHref={clearHref}
           contentRating={filters.contentRating}
           genre={filters.genre}
@@ -321,6 +369,7 @@ export default async function ReaderFavoritesPage({
           }
           sort={filters.sort}
           sortOptions={sortOptions}
+          standardFilters={normalizedFilters}
         />
 
         <ReaderResultSummary

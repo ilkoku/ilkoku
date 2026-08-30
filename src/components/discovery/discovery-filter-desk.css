@@ -88,6 +88,20 @@
   grid-column: span 2;
 }
 
+.role-filter-range-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.role-filter-desk__form label > .role-filter-range-inputs {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 .role-filter-desk__actions,
 .role-filter-desk__active {
   display: flex;
@@ -269,6 +283,10 @@
   .role-filter-desk__form .role-filter-field--search,
   .role-filter-desk__actions {
     grid-column: auto;
+  }
+
+  .role-filter-range-inputs {
+    grid-template-columns: 1fr;
   }
 
   .role-filter-desk__actions,

@@ -23,15 +23,40 @@ export type DiscoveryFilterConfiguration = {
   surfaces: ManagedDiscoverySurface[];
 };
 
+const unsupportedFiltersBySurface: Partial<
+  Record<string, readonly DiscoveryFilterId[]>
+> = {
+  "publisher-author-discovery": ["reviewStatus", "sort"],
+  "publisher-favorite-authors": ["reviewStatus", "sort"],
+  "publisher-following-authors": ["reviewStatus", "sort"],
+  "publisher-liked-authors": ["reviewStatus", "sort"],
+};
+
+function supportedSurface(surface: DiscoverySurface): DiscoverySurface {
+  const unsupported = new Set(
+    unsupportedFiltersBySurface[surface.id] ?? [],
+  );
+
+  if (unsupported.size === 0) return surface;
+
+  return {
+    ...surface,
+    availableFilters: surface.availableFilters.filter(
+      (filterId) => !unsupported.has(filterId),
+    ),
+  };
+}
+
 function getSurface(surfaceId: string) {
-  return discoverySurfaces.find((surface) => surface.id === surfaceId) ?? null;
+  const surface = discoverySurfaces.find((item) => item.id === surfaceId) ?? null;
+  return surface ? supportedSurface(surface) : null;
 }
 
 function isSupportedFilter(
   surface: DiscoverySurface,
   filterId: string,
 ): filterId is DiscoveryFilterId {
-  return surface.filters.includes(filterId as DiscoveryFilterId);
+  return surface.availableFilters.includes(filterId as DiscoveryFilterId);
 }
 
 async function readOverrides(): Promise<{
@@ -55,8 +80,9 @@ function effectiveFiltersFor(
   surface: DiscoverySurface,
   rows: readonly DiscoveryFilterOverrideRow[],
 ) {
+  const defaultSet = new Set<DiscoveryFilterId>(surface.filters);
   const states = new Map<DiscoveryFilterId, boolean>(
-    surface.filters.map((filterId) => [filterId, true]),
+    surface.availableFilters.map((filterId) => [filterId, defaultSet.has(filterId)]),
   );
 
   for (const row of rows) {
@@ -66,7 +92,7 @@ function effectiveFiltersFor(
     states.set(row.filterId, Boolean(row.enabled));
   }
 
-  return surface.filters.filter((filterId) => states.get(filterId) !== false);
+  return surface.availableFilters.filter((filterId) => states.get(filterId) === true);
 }
 
 export async function getDiscoveryFilterConfiguration(): Promise<DiscoveryFilterConfiguration> {
@@ -74,14 +100,17 @@ export async function getDiscoveryFilterConfiguration(): Promise<DiscoveryFilter
 
   return {
     storageReady,
-    surfaces: discoverySurfaces.map((surface) => {
+    surfaces: discoverySurfaces.map((registeredSurface) => {
+      const surface = supportedSurface(registeredSurface);
       const activeFilters = effectiveFiltersFor(surface, rows);
       const activeSet = new Set(activeFilters);
 
       return {
         ...surface,
         activeFilters,
-        removedFilters: surface.filters.filter((filterId) => !activeSet.has(filterId)),
+        removedFilters: surface.availableFilters.filter(
+          (filterId) => !activeSet.has(filterId),
+        ),
       };
     }),
   };

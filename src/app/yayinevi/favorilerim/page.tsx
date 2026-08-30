@@ -18,6 +18,7 @@ import {
 } from "@/features/publisher-discovery/components/PublisherCollectionFilterDesk";
 import { PublisherFavoriteWorksTable } from "@/features/publisher-discovery/components/PublisherFavoriteWorksTable";
 import { PublisherSavedAuthorsTable } from "@/features/publisher-discovery/components/PublisherSavedAuthorsTable";
+import { publisherCollectionWordCountLabel } from "@/features/publisher-discovery/favorites-query";
 import {
   getPublisherFavoriteWorks,
   normalizePublisherFavoriteFilters,
@@ -26,6 +27,15 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { sanitizeDiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filter-management";
+import {
+  appendDiscoveryAdvancedFilterParams,
+  clearDiscoveryAdvancedFilter,
+  discoveryAdvancedFilterChips,
+  type DiscoveryAdvancedFilters,
+} from "@/lib/discovery-advanced-filters";
+import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
+import type { DiscoveryFilterId } from "@/lib/discovery-filter-registry";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
@@ -40,13 +50,16 @@ export const dynamic = "force-dynamic";
 type CollectionType = "author" | "work";
 
 type CollectionHrefInput = {
+  advanced: DiscoveryAdvancedFilters;
   city?: string;
   contentRating?: string;
   genre?: string;
+  language?: string;
   page: number;
   query?: string;
   reviewStatus?: string;
   type: CollectionType;
+  wordCount?: string;
 };
 
 function firstValue(value: string | string[] | undefined) {
@@ -59,10 +72,11 @@ function pageHref(input: CollectionHrefInput) {
   if (input.query) params.set("arama", input.query);
   if (input.genre) params.set("tur", input.genre);
   if (input.contentRating) params.set("hitap", input.contentRating);
-  if (input.type === "work" && input.reviewStatus) {
-    params.set("editor", input.reviewStatus);
-  }
+  if (input.type === "work" && input.reviewStatus) params.set("editor", input.reviewStatus);
+  if (input.type === "work" && input.language) params.set("dil", input.language);
+  if (input.type === "work" && input.wordCount) params.set("kelime", input.wordCount);
   if (input.type === "author" && input.city) params.set("sehir", input.city);
+  appendDiscoveryAdvancedFilterParams(params, input.advanced);
   if (input.page > 1) params.set("sayfa", String(input.page));
   const query = params.toString();
   return query ? `/yayinevi/favorilerim?${query}` : "/yayinevi/favorilerim";
@@ -80,9 +94,7 @@ export default async function PublisherFavoritesPage({
   const adultAccess = access.profile.adminPublisherView
     ? { canAccessAdultContent: true, isAdult: true }
     : await getAdultContentAccess(access.profile.id);
-  const visibleRatings = visibleMemberContentRatings(
-    adultAccess.canAccessAdultContent,
-  );
+  const visibleRatings = visibleMemberContentRatings(adultAccess.canAccessAdultContent);
   const params = await searchParams;
   const canWork = access.permissions.includes("favorite_work");
   const canAuthor = access.permissions.includes("favorite_author");
@@ -93,21 +105,38 @@ export default async function PublisherFavoritesPage({
       : canWork
         ? "work"
         : "author";
+  const surfaceId = type === "work" ? "publisher-favorite-works" : "publisher-favorite-authors";
+  const enabledFilterIds = new Set<DiscoveryFilterId>(
+    await getDiscoverySurfaceFilterIds(surfaceId),
+  );
   const canMutate = !access.profile.adminPublisherView;
   const canViewPassport = access.permissions.includes("view_authorized_passport");
 
   const workFilters = normalizePublisherFavoriteFilters(params);
-  if (
-    workFilters.contentRating === "adult_18" &&
-    !adultAccess.canAccessAdultContent
-  ) {
+  if (!enabledFilterIds.has("search")) workFilters.query = "";
+  if (!enabledFilterIds.has("genre")) workFilters.genre = "";
+  if (!enabledFilterIds.has("contentRating")) workFilters.contentRating = undefined;
+  if (!enabledFilterIds.has("reviewStatus")) workFilters.reviewStatus = undefined;
+  if (!enabledFilterIds.has("language")) workFilters.language = "";
+  if (!enabledFilterIds.has("wordCount")) workFilters.wordCount = undefined;
+  workFilters.advanced = sanitizeDiscoveryAdvancedFilters(
+    workFilters.advanced,
+    enabledFilterIds,
+  );
+  if (workFilters.contentRating === "adult_18" && !adultAccess.canAccessAdultContent) {
     workFilters.contentRating = undefined;
   }
+
   const authorFilters = normalizePublisherFollowingFilters(params);
-  if (
-    authorFilters.contentRating === "adult_18" &&
-    !adultAccess.canAccessAdultContent
-  ) {
+  if (!enabledFilterIds.has("search")) authorFilters.query = "";
+  if (!enabledFilterIds.has("genre")) authorFilters.genre = "";
+  if (!enabledFilterIds.has("contentRating")) authorFilters.contentRating = undefined;
+  if (!enabledFilterIds.has("city")) authorFilters.city = "";
+  authorFilters.advanced = sanitizeDiscoveryAdvancedFilters(
+    authorFilters.advanced,
+    enabledFilterIds,
+  );
+  if (authorFilters.contentRating === "adult_18" && !adultAccess.canAccessAdultContent) {
     authorFilters.contentRating = undefined;
   }
 
@@ -129,20 +158,23 @@ export default async function PublisherFavoritesPage({
         )
       : null;
   const data = workData ?? authorData;
-
   if (!data) throw new Error("FAVORI_LISTESI_HAZIRLANAMADI");
 
   const hrefInput: CollectionHrefInput =
     type === "work"
       ? {
+          advanced: workFilters.advanced,
           contentRating: workFilters.contentRating,
           genre: workFilters.genre,
+          language: workFilters.language,
           page: data.currentPage,
           query: workFilters.query,
           reviewStatus: workFilters.reviewStatus,
           type,
+          wordCount: workFilters.wordCount,
         }
       : {
+          advanced: authorFilters.advanced,
           city: authorFilters.city,
           contentRating: authorFilters.contentRating,
           genre: authorFilters.genre,
@@ -151,7 +183,7 @@ export default async function PublisherFavoritesPage({
           type,
         };
   const returnTo = pageHref(hrefInput);
-  const activeFilters = [
+  const baseActiveFilters = [
     hrefInput.query
       ? {
           href: pageHref({ ...hrefInput, page: 1, query: undefined }),
@@ -176,6 +208,18 @@ export default async function PublisherFavoritesPage({
           label: `Editör: ${publisherCollectionReviewLabel(workFilters.reviewStatus)}`,
         }
       : null,
+    type === "work" && workFilters.language
+      ? {
+          href: pageHref({ ...hrefInput, language: undefined, page: 1 }),
+          label: `Dil: ${workFilters.language === "tr" ? "Türkçe" : workFilters.language === "en" ? "İngilizce" : workFilters.language.toLocaleUpperCase("tr-TR")}`,
+        }
+      : null,
+    type === "work" && workFilters.wordCount
+      ? {
+          href: pageHref({ ...hrefInput, page: 1, wordCount: undefined }),
+          label: `Kelime: ${publisherCollectionWordCountLabel(workFilters.wordCount)}`,
+        }
+      : null,
     type === "author" && authorFilters.city
       ? {
           href: pageHref({ ...hrefInput, city: undefined, page: 1 }),
@@ -183,8 +227,19 @@ export default async function PublisherFavoritesPage({
         }
       : null,
   ].filter((item): item is { href: string; label: string } => item !== null);
-  const clearHref =
-    type === "author" ? "/yayinevi/favorilerim?tip=yazar" : "/yayinevi/favorilerim";
+  const advancedActiveFilters = discoveryAdvancedFilterChips(
+    hrefInput.advanced,
+    enabledFilterIds,
+  ).map((item) => ({
+    href: pageHref({
+      ...hrefInput,
+      advanced: clearDiscoveryAdvancedFilter(hrefInput.advanced, item.id),
+      page: 1,
+    }),
+    label: item.label,
+  }));
+  const activeFilters = [...baseActiveFilters, ...advancedActiveFilters];
+  const clearHref = type === "author" ? "/yayinevi/favorilerim?tip=yazar" : "/yayinevi/favorilerim";
 
   return (
     <AppShell profile={access.profile}>
@@ -197,18 +252,12 @@ export default async function PublisherFavoritesPage({
 
         <nav className="publisher-discovery-filter-actions" aria-label="Favori türü">
           {canWork ? (
-            <Link
-              className={type === "work" ? "button button--primary" : "button button--ghost"}
-              href="/yayinevi/favorilerim"
-            >
+            <Link className={type === "work" ? "button button--primary" : "button button--ghost"} href="/yayinevi/favorilerim">
               Eserler
             </Link>
           ) : null}
           {canAuthor ? (
-            <Link
-              className={type === "author" ? "button button--primary" : "button button--ghost"}
-              href="/yayinevi/favorilerim?tip=yazar"
-            >
+            <Link className={type === "author" ? "button button--primary" : "button button--ghost"} href="/yayinevi/favorilerim?tip=yazar">
               Yazarlar
             </Link>
           ) : null}
@@ -216,6 +265,7 @@ export default async function PublisherFavoritesPage({
 
         <PublisherCollectionFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={hrefInput.advanced}
           city={type === "author" ? authorFilters.city : undefined}
           clearHref={clearHref}
           contentRating={hrefInput.contentRating}
@@ -224,9 +274,11 @@ export default async function PublisherFavoritesPage({
           hiddenFields={type === "author" ? [{ name: "tip", value: "yazar" }] : []}
           hint={type === "work" ? "Tüm favori eserleri görüyorsunuz." : "Tüm favori yazarları görüyorsunuz."}
           kind={type}
+          language={type === "work" ? workFilters.language : undefined}
           query={hrefInput.query}
           ratingOptions={visibleRatings}
           reviewStatus={type === "work" ? workFilters.reviewStatus : undefined}
+          wordCount={type === "work" ? workFilters.wordCount : undefined}
         />
 
         <DiscoveryResultSummary
@@ -241,10 +293,7 @@ export default async function PublisherFavoritesPage({
           <section className="publisher-discovery-empty">
             <h2>Eşleşen favori bulunmuyor</h2>
             <p>Filtreleri değiştirin veya Keşfet ekranından yeni bir kayıt favorileyin.</p>
-            <Link
-              className="button button--primary"
-              href={type === "work" ? "/yayinevi/kesfet/eserler" : "/yayinevi/kesfet/yazarlar"}
-            >
+            <Link className="button button--primary" href={type === "work" ? "/yayinevi/kesfet/eserler" : "/yayinevi/kesfet/yazarlar"}>
               Keşfe git
             </Link>
           </section>

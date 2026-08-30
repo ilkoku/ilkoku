@@ -243,3 +243,35 @@ test("editor and publisher saved collections remain pool-backed and use shared c
     assertContains(text, "Filtre masası", `${label} filter desk`);
   }
 });
+
+test("CMS filtering center audits pool-backed surfaces without mutating discovery security", () => {
+  const modules = source("src/lib/cms-modules.ts");
+  const registry = source("src/lib/discovery-filter-registry.ts");
+  const center = source("src/app/icerik/filtreleme-merkezi/page.tsx");
+
+  assertContains(modules, 'href: "/icerik/filtreleme-merkezi"', "filter center CMS module");
+  assertContains(modules, 'label: "Filtreleme Merkezi"', "filter center CMS label");
+  assertContains(modules, 'mode: "read-only-audit"', "filter center CMS mode");
+
+  assertContains(registry, "DISCOVERY_PAGE_SIZE", "filter registry page standard");
+  assertContains(registry, "discoverySurfaces", "filter registry surfaces");
+  assertContains(registry, 'route: "/kesfet"', "reader work surface");
+  assertContains(registry, 'route: "/yazar-kesfet"', "reader author surface");
+  assertContains(registry, 'route: "/okumaya-devam"', "reader continue surface");
+  assertContains(registry, 'route: "/tamamlanan-eserler"', "reader completed surface");
+  assertContains(registry, 'route: "/editor/kesfet"', "editor work surface");
+  assertContains(registry, 'route: "/editor/yazarlar"', "editor author surface");
+  assertContains(registry, 'route: "/yayinevi/kesfet/eserler"', "publisher work surface");
+  assertContains(registry, 'route: "/yayinevi/kesfet/yazarlar"', "publisher author surface");
+  assertContains(registry, "discoverySecurityLocks", "filter security locks");
+
+  assertContains(center, 'requireCmsManager("/icerik/filtreleme-merkezi")', "filter center access");
+  assertContains(center, "commonDiscoveryWorkWhereFor", "filter center work pool metric");
+  assertContains(center, "commonDiscoveryAuthorWhereFor", "filter center author pool metric");
+  assertContains(center, "Filtreleme Merkezi", "filter center title");
+  assertContains(center, "Filtre Masası", "filter center filter language");
+  assertContains(center, "Masadaki sonuç", "filter center result language");
+  assertNotContains(center, "prisma.work.update", "filter center work mutation");
+  assertNotContains(center, "prisma.user.update", "filter center user mutation");
+  assertNotContains(center, '"use server"', "filter center server action");
+});

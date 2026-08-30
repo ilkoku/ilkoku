@@ -11,6 +11,10 @@ import { readerAuthorDiscoveryWorkWhere } from "@/features/reader/author-discove
 import { toggleReaderAuthorFavoriteAction } from "@/features/reader/author-favorites";
 import "@/features/reader/reader-discovery.css";
 import {
+  availableGenreLabels,
+  normalizeGenreLabel,
+} from "@/lib/genre-system";
+import {
   isPublicStoredWorkContentRating,
   publicStoredWorkContentRatings,
   workContentRatingDetails,
@@ -124,7 +128,7 @@ export default async function ReaderAuthorDiscoveryPage({
 
   const parameters = await searchParams;
   const search = parameters.arama?.trim().slice(0, 220);
-  const genre = parameters.tur?.trim().slice(0, 120);
+  const genre = normalizeGenreLabel(parameters.tur);
   const contentRating = isPublicStoredWorkContentRating(parameters.hitapYasi)
     ? parameters.hitapYasi
     : undefined;
@@ -276,9 +280,7 @@ export default async function ReaderAuthorDiscoveryPage({
       })
     : [];
   const favoriteAuthorIds = new Set(favoriteRows.map((favorite) => favorite.authorId));
-  const genres = genreRecords
-    .map((record) => record.genre)
-    .filter((value): value is string => Boolean(value));
+  const genres = availableGenreLabels(genreRecords.map((record) => record.genre));
   const hasFilters = Boolean(
     search ||
       genre ||

@@ -20,6 +20,7 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { GENRE_LABELS } from "@/lib/genres";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
 import "@/features/publisher-editor-requests/publisher-editor-requests.css";
@@ -163,11 +164,14 @@ export default async function PublisherWorkDiscoveryPage({
 
           <label>
             <span>Tür</span>
-            <input
-              defaultValue={filters.genre}
-              name="tur"
-              placeholder="Örn. Roman"
-            />
+            <select defaultValue={filters.genre} name="tur">
+              <option value="">Tümü</option>
+              {GENRE_LABELS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label>

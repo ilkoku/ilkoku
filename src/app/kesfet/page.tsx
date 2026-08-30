@@ -14,15 +14,17 @@ import {
 } from "@/features/reader/components/ReaderWorksTable";
 import "@/features/reader/reader-discovery.css";
 import {
+  getAdultContentAccess,
+  visibleMemberContentRatings,
+} from "@/lib/adult-content-access";
+import { normalizeGenreLabel } from "@/lib/genre-system";
+import { GENRE_LABELS } from "@/lib/genres";
+import { prisma } from "@/lib/prisma";
+import {
   isMemberStoredWorkContentRating,
   workContentRatingDetails,
   type MemberStoredWorkContentRating,
 } from "@/lib/work-content-classification";
-import {
-  getAdultContentAccess,
-  visibleMemberContentRatings,
-} from "@/lib/adult-content-access";
-import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   description: "İlkOku'da yayımlanan eserleri keşfedin.",
@@ -107,7 +109,7 @@ export default async function ReaderExplorePage({
   );
   const parameters = await searchParams;
   const search = parameters.arama?.trim().slice(0, 220);
-  const genre = parameters.tur?.trim().slice(0, 120);
+  const genre = normalizeGenreLabel(parameters.tur);
   const language = parameters.dil?.trim().slice(0, 10);
   const requestedContentRating = isMemberStoredWorkContentRating(
     parameters.hitapYasi,
@@ -160,7 +162,7 @@ export default async function ReaderExplorePage({
           ],
         }
       : {}),
-    ...(genre ? { genre: { contains: genre } } : {}),
+    ...(genre ? { genre } : {}),
     ...(language ? { language } : {}),
     ...(contentRating ? { contentRating } : {}),
     ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
@@ -363,7 +365,14 @@ export default async function ReaderExplorePage({
 
           <label>
             <span>Tür</span>
-            <input defaultValue={genre} name="tur" placeholder="Örn. Roman" />
+            <select defaultValue={genre ?? ""} name="tur">
+              <option value="">Tümü</option>
+              {GENRE_LABELS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label>

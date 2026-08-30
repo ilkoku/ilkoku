@@ -20,7 +20,7 @@ import {
   ReaderFilterDesk,
   ReaderPagination,
   ReaderResultSummary,
-  parseReaderStandardFilters,
+  parseManagedReaderStandardFilters,
   readerListHref,
   readerReviewLabel,
   readerWorkMatches,
@@ -33,6 +33,7 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { discoveryAdvancedFilterChips } from "@/lib/discovery-advanced-filters";
 import {
   publicStoredWorkContentRatings,
   workContentRatingDetails,
@@ -62,15 +63,7 @@ const authorSortOptions = [
 export default async function ReaderFavoritesPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    arama?: string;
-    editor?: string;
-    hitapYasi?: string;
-    sayfa?: string;
-    siralama?: string;
-    tip?: string;
-    tur?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await getCurrentProfile();
 
@@ -80,7 +73,8 @@ export default async function ReaderFavoritesPage({
   }
 
   const params = await searchParams;
-  const type: FavoriteType = params.tip === "yazar" ? "author" : "work";
+  const rawType = Array.isArray(params.tip) ? params.tip[0] : params.tip;
+  const type: FavoriteType = rawType === "yazar" ? "author" : "work";
   const adultAccess = await getAdultContentAccess(profile.id);
   const workRatingOptions = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
@@ -92,7 +86,9 @@ export default async function ReaderFavoritesPage({
   const fixedParams: Record<string, string> =
     type === "author" ? { tip: "yazar" } : {};
   const clearHref = type === "author" ? "/favorilerim?tip=yazar" : "/favorilerim";
-  const filters = parseReaderStandardFilters(
+  const surfaceId = type === "author" ? "reader-favorite-authors" : "reader-favorite-works";
+  const { enabledFilterIds, filters } = await parseManagedReaderStandardFilters(
+    surfaceId,
     params,
     ratingOptions,
     sortOptions,
@@ -264,7 +260,11 @@ export default async function ReaderFavoritesPage({
         }
       : null,
   ].filter((item): item is ReaderActiveFilter => item !== null);
-  const hasFilters = activeFilters.length > 0;
+  const advancedFilterCount = discoveryAdvancedFilterChips(
+    filters.advanced,
+    enabledFilterIds,
+  ).length;
+  const hasFilters = activeFilters.length + advancedFilterCount > 0;
   const returnTo = pageHref(currentPage);
 
   return (
@@ -297,6 +297,7 @@ export default async function ReaderFavoritesPage({
 
         <ReaderFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={filters.advanced}
           clearHref={clearHref}
           contentRating={filters.contentRating}
           genre={filters.genre}
@@ -321,6 +322,7 @@ export default async function ReaderFavoritesPage({
           }
           sort={filters.sort}
           sortOptions={sortOptions}
+          standardFilters={normalizedFilters}
         />
 
         <ReaderResultSummary

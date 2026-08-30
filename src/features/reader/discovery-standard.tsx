@@ -1,11 +1,22 @@
 import Link from "next/link";
 
+import { AdvancedDiscoveryFilterFields } from "@/components/discovery/AdvancedDiscoveryFilterFields";
 import {
   DiscoveryResultSummary,
 } from "@/components/discovery/DiscoveryListChrome";
 import "@/components/discovery/discovery-filter-desk.css";
 import type { ReaderWorkRow } from "@/features/reader/components/ReaderWorksTable";
+import { sanitizeDiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filter-management";
+import {
+  appendDiscoveryAdvancedFilterParams,
+  clearDiscoveryAdvancedFilter,
+  discoveryAdvancedFilterChips,
+  matchesDiscoveryAdvancedWorkFilters,
+  parseDiscoveryAdvancedFilters,
+  type DiscoveryAdvancedFilters,
+} from "@/lib/discovery-advanced-filters";
 import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
+import type { DiscoveryFilterId } from "@/lib/discovery-filter-registry";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { GENRE_LABELS } from "@/lib/genres";
@@ -40,6 +51,7 @@ export type ReaderSortOption = {
 };
 
 export type ReaderStandardFilters = {
+  advanced: DiscoveryAdvancedFilters;
   contentRating?: StoredWorkContentRating;
   genre?: string;
   page: number;
@@ -73,35 +85,35 @@ export function readerReviewLabel(status: ReaderReviewFilter) {
 }
 
 export function parseReaderStandardFilters(
-  params: {
-    arama?: string;
-    editor?: string;
-    hitapYasi?: string;
-    sayfa?: string;
-    siralama?: string;
-    tur?: string;
-  },
+  params: Record<string, string | string[] | undefined>,
   ratingOptions: readonly StoredWorkContentRating[],
   sortOptions: readonly ReaderSortOption[],
   defaultSort: string,
 ): ReaderStandardFilters {
-  const search = params.arama?.trim().slice(0, 220) || undefined;
-  const genre = normalizeGenreLabel(params.tur);
+  const searchValue = Array.isArray(params.arama) ? params.arama[0] : params.arama;
+  const editorValue = Array.isArray(params.editor) ? params.editor[0] : params.editor;
+  const ratingValue = Array.isArray(params.hitapYasi) ? params.hitapYasi[0] : params.hitapYasi;
+  const sortValue = Array.isArray(params.siralama) ? params.siralama[0] : params.siralama;
+  const genreValue = Array.isArray(params.tur) ? params.tur[0] : params.tur;
+  const pageValue = Array.isArray(params.sayfa) ? params.sayfa[0] : params.sayfa;
+  const search = searchValue?.trim().slice(0, 220) || undefined;
+  const genre = normalizeGenreLabel(genreValue);
   const contentRating =
-    params.hitapYasi &&
-    ratingOptions.includes(params.hitapYasi as StoredWorkContentRating)
-      ? (params.hitapYasi as StoredWorkContentRating)
+    ratingValue &&
+    ratingOptions.includes(ratingValue as StoredWorkContentRating)
+      ? (ratingValue as StoredWorkContentRating)
       : undefined;
-  const reviewStatus = includesReaderFilter(readerReviewFilters, params.editor)
-    ? params.editor
+  const reviewStatus = includesReaderFilter(readerReviewFilters, editorValue)
+    ? editorValue
     : undefined;
-  const sort = sortOptions.some((option) => option.value === params.siralama)
-    ? (params.siralama as string)
+  const sort = sortOptions.some((option) => option.value === sortValue)
+    ? (sortValue as string)
     : defaultSort;
-  const rawPage = Number.parseInt(params.sayfa ?? "", 10);
+  const rawPage = Number.parseInt(pageValue ?? "", 10);
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
 
   return {
+    advanced: parseDiscoveryAdvancedFilters(params),
     contentRating,
     genre,
     page,
@@ -109,6 +121,36 @@ export function parseReaderStandardFilters(
     search,
     sort,
   };
+}
+
+export async function parseManagedReaderStandardFilters(
+  surfaceId: string,
+  params: Record<string, string | string[] | undefined>,
+  ratingOptions: readonly StoredWorkContentRating[],
+  sortOptions: readonly ReaderSortOption[],
+  defaultSort: string,
+) {
+  const enabledFilterIds = new Set<DiscoveryFilterId>(
+    await getDiscoverySurfaceFilterIds(surfaceId),
+  );
+  const filters = parseReaderStandardFilters(
+    params,
+    ratingOptions,
+    sortOptions,
+    defaultSort,
+  );
+
+  if (!enabledFilterIds.has("search")) filters.search = undefined;
+  if (!enabledFilterIds.has("genre")) filters.genre = undefined;
+  if (!enabledFilterIds.has("contentRating")) filters.contentRating = undefined;
+  if (!enabledFilterIds.has("reviewStatus")) filters.reviewStatus = undefined;
+  if (!enabledFilterIds.has("sort")) filters.sort = defaultSort;
+  filters.advanced = sanitizeDiscoveryAdvancedFilters(
+    filters.advanced,
+    enabledFilterIds,
+  );
+
+  return { enabledFilterIds, filters };
 }
 
 export function readerListHref(
@@ -124,6 +166,7 @@ export function readerListHref(
   if (filters.contentRating) params.set("hitapYasi", filters.contentRating);
   if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
   if (filters.sort) params.set("siralama", filters.sort);
+  appendDiscoveryAdvancedFilterParams(params, filters.advanced);
   if (page > 1) params.set("sayfa", String(page));
 
   const query = params.toString();
@@ -134,7 +177,7 @@ export function readerWorkMatches(
   work: ReaderWorkRow,
   filters: Pick<
     ReaderStandardFilters,
-    "contentRating" | "genre" | "reviewStatus" | "search"
+    "advanced" | "contentRating" | "genre" | "reviewStatus" | "search"
   >,
 ) {
   if (filters.search) {
@@ -157,7 +200,22 @@ export function readerWorkMatches(
     return false;
   }
 
-  return true;
+  return matchesDiscoveryAdvancedWorkFilters(
+    {
+      authorName: work.authorName,
+      authorUsername: work.authorUsername,
+      chapterCount: work.chapterCount,
+      commentCount: work.commentCount,
+      favoriteCount: work.favoriteCount,
+      isFavorite: work.isFavorite,
+      progressPercent: work.progressPercent,
+      publishedAt: work.publishedAt,
+      readerCount: work.readerCount,
+      readingState: work.readingState,
+      updatedAt: work.updatedAt,
+    },
+    filters.advanced,
+  );
 }
 
 function inferReaderSurfaceId(
@@ -177,6 +235,7 @@ function inferReaderSurfaceId(
 
 export async function ReaderFilterDesk({
   activeFilters,
+  advancedFilters,
   clearHref,
   contentRating,
   genre,
@@ -189,9 +248,11 @@ export async function ReaderFilterDesk({
   searchPlaceholder,
   sort,
   sortOptions,
+  standardFilters,
   surfaceId,
 }: {
   activeFilters: ReaderActiveFilter[];
+  advancedFilters: DiscoveryAdvancedFilters;
   clearHref: string;
   contentRating?: string;
   genre?: string;
@@ -204,11 +265,34 @@ export async function ReaderFilterDesk({
   searchPlaceholder: string;
   sort: string;
   sortOptions: readonly ReaderSortOption[];
+  standardFilters: ReaderStandardFilters;
   surfaceId?: string;
 }) {
-  const hasFilters = activeFilters.length > 0;
   const resolvedSurfaceId = surfaceId ?? inferReaderSurfaceId(clearHref, hiddenFields);
-  const enabledFilterIds = new Set(await getDiscoverySurfaceFilterIds(resolvedSurfaceId));
+  const enabledFilterIds = new Set<DiscoveryFilterId>(
+    await getDiscoverySurfaceFilterIds(resolvedSurfaceId),
+  );
+  const basePath = clearHref.split("?")[0] ?? clearHref;
+  const fixedParams = Object.fromEntries(
+    hiddenFields.map((field) => [field.name, field.value]),
+  );
+  const advancedActiveFilters = discoveryAdvancedFilterChips(
+    advancedFilters,
+    enabledFilterIds,
+  ).map((item) => ({
+    href: readerListHref(
+      basePath,
+      {
+        ...standardFilters,
+        advanced: clearDiscoveryAdvancedFilter(advancedFilters, item.id),
+      },
+      1,
+      fixedParams,
+    ),
+    label: item.label,
+  }));
+  const visibleActiveFilters = [...activeFilters, ...advancedActiveFilters];
+  const hasFilters = visibleActiveFilters.length > 0;
   const hasManagedFields = enabledFilterIds.size > 0;
 
   return (
@@ -295,6 +379,11 @@ export async function ReaderFilterDesk({
             </label>
           ) : null}
 
+          <AdvancedDiscoveryFilterFields
+            enabledFilterIds={enabledFilterIds}
+            filters={advancedFilters}
+          />
+
           <div className="role-filter-desk__actions">
             <button className="button button--primary" type="submit">
               Masayı Güncelle
@@ -315,7 +404,7 @@ export async function ReaderFilterDesk({
       {hasFilters ? (
         <div aria-label="Aktif filtreler" className="role-filter-desk__active">
           <span>Aktif</span>
-          {activeFilters.map((item) => (
+          {visibleActiveFilters.map((item) => (
             <Link href={item.href} key={`${item.label}-${item.href}`}>
               {item.label}
               <b aria-hidden="true">×</b>

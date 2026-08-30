@@ -1,6 +1,5 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -23,11 +22,6 @@ const readerVisibleAuthorWorkWhere = {
   publishedAt: { not: null },
   status: "published" as const,
   visibility: "public" as const,
-};
-
-type FavoriteAuthorRecord = {
-  authorId: string;
-  createdAt: Date;
 };
 
 async function requireReader() {
@@ -84,25 +78,27 @@ export async function toggleReaderAuthorFavoriteAction(
   if (!author) throw new Error("AUTHOR_NOT_AVAILABLE");
   if (author.id === reader.id) throw new Error("SELF_FAVORITE_NOT_ALLOWED");
 
-  const existing = await prisma.$queryRaw<Array<{ id: string }>>`
-    SELECT id
-    FROM ReaderAuthorFavorite
-    WHERE userId = ${reader.id}
-      AND authorId = ${author.id}
-    LIMIT 1
-  `;
+  const existing = await prisma.readerAuthorFavorite.findUnique({
+    where: {
+      userId_authorId: {
+        userId: reader.id,
+        authorId: author.id,
+      },
+    },
+    select: { id: true },
+  });
 
-  if (existing.length > 0) {
-    await prisma.$executeRaw`
-      DELETE FROM ReaderAuthorFavorite
-      WHERE userId = ${reader.id}
-        AND authorId = ${author.id}
-    `;
+  if (existing) {
+    await prisma.readerAuthorFavorite.delete({
+      where: { id: existing.id },
+    });
   } else {
-    await prisma.$executeRaw`
-      INSERT INTO ReaderAuthorFavorite (id, userId, authorId, createdAt)
-      VALUES (${randomUUID()}, ${reader.id}, ${author.id}, NOW(3))
-    `;
+    await prisma.readerAuthorFavorite.create({
+      data: {
+        authorId: author.id,
+        userId: reader.id,
+      },
+    });
   }
 
   revalidatePath("/favorilerim");
@@ -122,85 +118,85 @@ export async function getReaderAuthorFavoriteStatus(
   const author = await findVisibleAuthor(authorPublicId);
   if (!author) return false;
 
-  const rows = await prisma.$queryRaw<Array<{ id: string }>>`
-    SELECT id
-    FROM ReaderAuthorFavorite
-    WHERE userId = ${userId}
-      AND authorId = ${author.id}
-    LIMIT 1
-  `;
+  const favorite = await prisma.readerAuthorFavorite.findUnique({
+    where: {
+      userId_authorId: {
+        userId,
+        authorId: author.id,
+      },
+    },
+    select: { id: true },
+  });
 
-  return rows.length > 0;
+  return Boolean(favorite);
 }
 
 export async function getReaderAuthorFavoritePublicIds(userId: string) {
-  const rows = await prisma.$queryRaw<Array<{ publicId: string }>>`
-    SELECT author.publicId
-    FROM ReaderAuthorFavorite favorite
-    INNER JOIN User author ON author.id = favorite.authorId
-    WHERE favorite.userId = ${userId}
-      AND author.status = 'active'
-      AND author.deletedAt IS NULL
-  `;
-
-  return new Set(rows.map((row) => row.publicId));
-}
-
-export async function getReaderFavoriteAuthors(userId: string) {
-  const favoriteRows = await prisma.$queryRaw<FavoriteAuthorRecord[]>`
-    SELECT favorite.authorId, favorite.createdAt
-    FROM ReaderAuthorFavorite favorite
-    INNER JOIN User author ON author.id = favorite.authorId
-    WHERE favorite.userId = ${userId}
-      AND author.status = 'active'
-      AND author.deletedAt IS NULL
-    ORDER BY favorite.createdAt DESC
-  `;
-
-  if (favoriteRows.length === 0) return [];
-
-  const order = new Map(
-    favoriteRows.map((favorite, index) => [favorite.authorId, index]),
-  );
-  const authors = await prisma.user.findMany({
+  const favorites = await prisma.readerAuthorFavorite.findMany({
     where: {
-      id: { in: favoriteRows.map((favorite) => favorite.authorId) },
-      deletedAt: null,
-      status: "active",
-      works: { some: readerVisibleAuthorWorkWhere },
+      userId,
+      author: {
+        is: {
+          deletedAt: null,
+          status: "active",
+          works: { some: readerVisibleAuthorWorkWhere },
+        },
+      },
     },
     select: {
-      bio: true,
-      displayName: true,
-      fullName: true,
-      publicId: true,
-      username: true,
-      works: {
-        where: readerVisibleAuthorWorkWhere,
-        orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
-        select: {
-          contentRating: true,
-          genre: true,
-          publishedAt: true,
-          slug: true,
-          title: true,
-        },
-        take: 3,
+      author: {
+        select: { publicId: true },
       },
-      _count: {
-        select: {
-          works: { where: readerVisibleAuthorWorkWhere },
-        },
-      },
-      id: true,
     },
   });
 
-  return authors
-    .sort(
-      (left, right) =>
-        (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-        (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
-    )
-    .map(({ id: _id, ...author }) => author);
+  return new Set(
+    favorites.map((favorite) => favorite.author.publicId),
+  );
+}
+
+export async function getReaderFavoriteAuthors(userId: string) {
+  const favorites = await prisma.readerAuthorFavorite.findMany({
+    where: {
+      userId,
+      author: {
+        is: {
+          deletedAt: null,
+          status: "active",
+          works: { some: readerVisibleAuthorWorkWhere },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      author: {
+        select: {
+          _count: {
+            select: {
+              works: { where: readerVisibleAuthorWorkWhere },
+            },
+          },
+          bio: true,
+          displayName: true,
+          fullName: true,
+          publicId: true,
+          username: true,
+          works: {
+            where: readerVisibleAuthorWorkWhere,
+            orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+            select: {
+              contentRating: true,
+              genre: true,
+              publishedAt: true,
+              slug: true,
+              title: true,
+            },
+            take: 3,
+          },
+        },
+      },
+    },
+  });
+
+  return favorites.map((favorite) => favorite.author);
 }

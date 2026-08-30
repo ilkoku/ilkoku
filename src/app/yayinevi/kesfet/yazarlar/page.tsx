@@ -242,14 +242,9 @@ export default async function PublisherAuthorDiscoveryPage({
           )}
         </section>
 
-        <section className="publisher-discovery-summary">
-          <div>
-            <span>Keşif sonucu</span>
-            <strong>{data.totalCount} yazar</strong>
-          </div>
-          <p>
-            Beğeni, favori ve takip kayıtları aynı yayınevi adına tekilleştirilir; ekip paylaşımı yalnızca seçilen yetkili üyelerde görünür.
-          </p>
+        <section className="role-filter-result" aria-live="polite">
+          <span>Masadaki sonuç</span>
+          <strong>{data.totalCount} yazar</strong>
         </section>
 
         {data.rows.length === 0 ? (

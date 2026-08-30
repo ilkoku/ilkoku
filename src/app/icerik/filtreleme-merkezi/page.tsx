@@ -3,6 +3,7 @@ import Link from "next/link";
 import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import { requireCmsManager } from "@/lib/cms-access";
+import { getDiscoveryFilterConfiguration } from "@/lib/discovery-filter-config";
 import {
   discoveryFilterLabels,
   discoveryPoolLabels,
@@ -14,6 +15,10 @@ import {
   type DiscoveryRole,
 } from "@/lib/discovery-filter-registry";
 import { prisma } from "@/lib/prisma";
+import {
+  addDiscoveryFilterAction,
+  removeDiscoveryFilterAction,
+} from "./actions";
 import styles from "./FilteringCenter.module.css";
 
 export const dynamic = "force-dynamic";
@@ -68,10 +73,12 @@ export default async function FilteringCenterPage({
 }: {
   searchParams: Promise<{ rol?: string }>;
 }) {
-  await requireCmsManager("/icerik/filtreleme-merkezi");
+  const access = await requireCmsManager("/icerik/filtreleme-merkezi");
   const params = await searchParams;
   const activeRole = normalizeRole(params.rol);
   const diagnostics = discoveryRegistryDiagnostics();
+  const filterConfiguration = await getDiscoveryFilterConfiguration();
+  const canConfigure = access.isAdmin && filterConfiguration.storageReady;
 
   let metrics: Awaited<ReturnType<typeof loadPoolMetrics>> | null = null;
   let loadError = false;
@@ -82,8 +89,8 @@ export default async function FilteringCenterPage({
   }
 
   const visibleSurfaces = activeRole
-    ? discoverySurfaces.filter((surface) => surface.role === activeRole)
-    : discoverySurfaces;
+    ? filterConfiguration.surfaces.filter((surface) => surface.role === activeRole)
+    : filterConfiguration.surfaces;
   const relationshipSurfaces = visibleSurfaces.filter(
     (surface) => surface.relationship !== "none",
   );
@@ -92,10 +99,12 @@ export default async function FilteringCenterPage({
     count: discoverySurfaces.filter((surface) => surface.role === role).length,
   }));
   const uniqueFilterIds = Array.from(
-    new Set(visibleSurfaces.flatMap((surface) => surface.filters)),
+    new Set(visibleSurfaces.flatMap((surface) => surface.activeFilters)),
   );
   const registryHealthy =
-    diagnostics.duplicateIds.length === 0 && diagnostics.wrongPageSize.length === 0;
+    diagnostics.duplicateIds.length === 0 &&
+    diagnostics.wrongPageSize.length === 0 &&
+    filterConfiguration.storageReady;
 
   return (
     <section className={styles.workbench}>
@@ -106,7 +115,7 @@ export default async function FilteringCenterPage({
           <p>
             Eser Havuzu ve Yazar Havuzu&apos;nun Okur, Editör ve Yayınevi
             ekranlarında hangi Filtre Masası ile çağrıldığını tek yerden denetleyin.
-            Bu merkez yeni havuz üretmez ve güvenlik sınırlarını değiştirmez.
+            Yetkili yönetici filtreleri + ile ekleyebilir, × ile yüzeyden çıkarabilir.
           </p>
         </div>
         <div className={`${styles.healthBadge} ${registryHealthy ? styles.pass : styles.warn}`}>
@@ -130,6 +139,16 @@ export default async function FilteringCenterPage({
         <b aria-hidden="true">→</b>
         <span>Sayfalama</span>
       </section>
+
+      {!filterConfiguration.storageReady ? (
+        <div className="content-panel" role="alert">
+          <strong>Filtre yönetim deposu henüz hazır değil.</strong>
+          <p>
+            Ürün yüzeyleri güvenli biçimde kod varsayılanlarıyla çalışmaya devam ediyor.
+            + / × yönetimi veritabanı migration&apos;ı uygulanana kadar kapalı tutulur.
+          </p>
+        </div>
+      ) : null}
 
       {loadError || !metrics ? (
         <div className="content-panel" role="alert">
@@ -168,7 +187,7 @@ export default async function FilteringCenterPage({
             <small>BAĞLI YÜZEY</small>
             <strong>{diagnostics.surfaceCount}</strong>
             <span>{diagnostics.routeCount} benzersiz sayfa yolu</span>
-            <p>{uniqueFilterIds.length} filtre türü bu görünümde kullanılıyor.</p>
+            <p>{uniqueFilterIds.length} aktif filtre türü bu görünümde kullanılıyor.</p>
           </article>
         </section>
       )}
@@ -192,6 +211,20 @@ export default async function FilteringCenterPage({
             </Link>
           ))}
         </nav>
+      </section>
+
+      <section className={styles.permissionStrip} data-enabled={canConfigure ? "true" : "false"}>
+        <div>
+          <span>Filtre yönetim yetkisi</span>
+          <strong>{canConfigure ? "Açık" : access.isAdmin ? "Depo bekleniyor" : "Salt okunur"}</strong>
+        </div>
+        <p>
+          {canConfigure
+            ? "× mevcut filtreyi bu yüzeyden çıkarır. + Ekle, daha önce çıkarılmış desteklenen filtreyi geri açar."
+            : access.isAdmin
+              ? "Migration tamamlandığında ekle/çıkar kontrolleri otomatik açılır."
+              : "Filtre haritasını görebilirsiniz; ekle/çıkar işlemi yalnız yönetici yetkisiyle yapılır."}
+        </p>
       </section>
 
       <section className="content-panel">
@@ -226,16 +259,57 @@ export default async function FilteringCenterPage({
                     <span className={styles.poolChip}>{discoveryPoolLabels[surface.pool]}</span>
                   </td>
                   <td>
-                    <div className={styles.filterChips}>
-                      {surface.filters.map((filter) => (
-                        <span key={filter}>{discoveryFilterLabels[filter]}</span>
-                      ))}
+                    <div className={styles.filterManager}>
+                      <div className={styles.filterChips}>
+                        {surface.activeFilters.map((filter) => (
+                          <span className={styles.managedFilterChip} key={filter}>
+                            {discoveryFilterLabels[filter]}
+                            {canConfigure ? (
+                              <form action={removeDiscoveryFilterAction}>
+                                <input name="surfaceId" type="hidden" value={surface.id} />
+                                <input name="filterId" type="hidden" value={filter} />
+                                <button
+                                  aria-label={`${surface.label}: ${discoveryFilterLabels[filter]} filtresini çıkar`}
+                                  title="Filtreyi çıkar"
+                                  type="submit"
+                                >
+                                  ×
+                                </button>
+                              </form>
+                            ) : null}
+                          </span>
+                        ))}
+                        {surface.activeFilters.length === 0 ? (
+                          <span className={styles.emptyFilterChip}>Filtre alanı yok</span>
+                        ) : null}
+                      </div>
+
+                      {canConfigure ? (
+                        surface.removedFilters.length > 0 ? (
+                          <details className={styles.addFilterMenu}>
+                            <summary>+ Ekle</summary>
+                            <div>
+                              {surface.removedFilters.map((filter) => (
+                                <form action={addDiscoveryFilterAction} key={filter}>
+                                  <input name="surfaceId" type="hidden" value={surface.id} />
+                                  <input name="filterId" type="hidden" value={filter} />
+                                  <button type="submit">+ {discoveryFilterLabels[filter]}</button>
+                                </form>
+                              ))}
+                            </div>
+                          </details>
+                        ) : (
+                          <span className={styles.allFiltersActive}>Tüm desteklenen filtreler açık</span>
+                        )
+                      ) : null}
                     </div>
                   </td>
                   <td>{discoveryRelationshipLabels[surface.relationship]}</td>
                   <td>
                     <strong>{surface.pageSize}/sayfa</strong>
-                    <small>Masadaki sonuç + numaralı sayfalama</small>
+                    <small>
+                      {surface.activeFilters.length}/{surface.filters.length} filtre açık · Masadaki sonuç + numaralı sayfalama
+                    </small>
                   </td>
                 </tr>
               ))}
@@ -309,13 +383,17 @@ export default async function FilteringCenterPage({
                 : "Tüm kayıtlı yüzeyler 24/sayfa standardında"}
             </span>
           </article>
+          <article data-state={filterConfiguration.storageReady ? "pass" : "warn"}>
+            <strong>Filtre yönetim deposu</strong>
+            <span>
+              {filterConfiguration.storageReady
+                ? "Kalıcı ekle/çıkar ayar deposu hazır"
+                : "Kod varsayılanları aktif; migration bekleniyor"}
+            </span>
+          </article>
           <article data-state="pass">
             <strong>Kaynak modeli</strong>
             <span>2 ana havuz: Eser Havuzu + Yazar Havuzu</span>
-          </article>
-          <article data-state="pass">
-            <strong>Sonuç dili</strong>
-            <span>Filtre Masası + Masadaki sonuç + numaralı sayfalama</span>
           </article>
         </div>
       </section>

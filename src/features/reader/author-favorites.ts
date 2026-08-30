@@ -6,6 +6,7 @@ import { z } from "zod";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
+import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
 
 const authorPublicIdSchema = z.string().trim().min(3).max(24);
 const returnPathSchema = z
@@ -19,7 +20,9 @@ const returnPathSchema = z
 const readerVisibleAuthorWorkWhere = {
   archivedAt: null,
   contentRating: { not: "adult_18" as const },
+  language: "tr",
   publishedAt: { not: null },
+  slug: { notIn: [...BLOCKED_PUBLIC_WORK_SLUGS] },
   status: "published" as const,
   visibility: "public" as const,
 };

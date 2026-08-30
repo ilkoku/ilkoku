@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import "@/components/discovery/discovery-filter-desk.css";
+import type { ReaderWorkRow } from "@/features/reader/components/ReaderWorksTable";
+import { normalizeGenreLabel } from "@/lib/genre-system";
 import { GENRE_LABELS } from "@/lib/genres";
 import {
   workContentRatingDetails,
@@ -31,6 +33,15 @@ export type ReaderSortOption = {
   value: string;
 };
 
+export type ReaderStandardFilters = {
+  contentRating?: StoredWorkContentRating;
+  genre?: string;
+  page: number;
+  reviewStatus?: ReaderReviewFilter;
+  search?: string;
+  sort: string;
+};
+
 export function includesReaderFilter<T extends string>(
   values: readonly T[],
   value: string | undefined,
@@ -53,6 +64,160 @@ export function readerReviewLabel(status: ReaderReviewFilter) {
     case "completed":
       return "İncelendi";
   }
+}
+
+export function parseReaderStandardFilters(
+  params: {
+    arama?: string;
+    editor?: string;
+    hitapYasi?: string;
+    sayfa?: string;
+    siralama?: string;
+    tur?: string;
+  },
+  ratingOptions: readonly StoredWorkContentRating[],
+  sortOptions: readonly ReaderSortOption[],
+  defaultSort: string,
+): ReaderStandardFilters {
+  const search = params.arama?.trim().slice(0, 220) || undefined;
+  const genre = normalizeGenreLabel(params.tur);
+  const contentRating =
+    params.hitapYasi && ratingOptions.includes(params.hitapYasi as StoredWorkContentRating)
+      ? (params.hitapYasi as StoredWorkContentRating)
+      : undefined;
+  const reviewStatus = includesReaderFilter(readerReviewFilters, params.editor)
+    ? params.editor
+    : undefined;
+  const sort = sortOptions.some((option) => option.value === params.siralama)
+    ? (params.siralama as string)
+    : defaultSort;
+  const rawPage = Number.parseInt(params.sayfa ?? "", 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+
+  return {
+    contentRating,
+    genre,
+    page,
+    reviewStatus,
+    search,
+    sort,
+  };
+}
+
+export function readerListHref(
+  basePath: string,
+  filters: ReaderStandardFilters,
+  page: number,
+  fixedParams: Record<string, string> = {},
+) {
+  const params = new URLSearchParams(fixedParams);
+
+  if (filters.search) params.set("arama", filters.search);
+  if (filters.genre) params.set("tur", filters.genre);
+  if (filters.contentRating) params.set("hitapYasi", filters.contentRating);
+  if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
+  if (filters.sort) params.set("siralama", filters.sort);
+  if (page > 1) params.set("sayfa", String(page));
+
+  const query = params.toString();
+  return query ? `${basePath}?${query}` : basePath;
+}
+
+export function readerWorkMatches(
+  work: ReaderWorkRow,
+  filters: Pick<
+    ReaderStandardFilters,
+    "contentRating" | "genre" | "reviewStatus" | "search"
+  >,
+) {
+  if (filters.search) {
+    const needle = filters.search.toLocaleLowerCase("tr-TR");
+    const values = [work.title, work.authorName, work.authorUsername];
+    if (
+      !values.some((value) =>
+        value?.toLocaleLowerCase("tr-TR").includes(needle),
+      )
+    ) {
+      return false;
+    }
+  }
+
+  if (filters.genre && work.genre !== filters.genre) return false;
+  if (filters.contentRating && work.contentRating !== filters.contentRating) {
+    return false;
+  }
+  if (filters.reviewStatus && work.editorReviewStatus !== filters.reviewStatus) {
+    return false;
+  }
+
+  return true;
+}
+
+export function readerActiveFilters(
+  basePath: string,
+  filters: ReaderStandardFilters,
+  defaultSort: string,
+  fixedParams: Record<string, string> = {},
+): ReaderActiveFilter[] {
+  const items = [
+    filters.search
+      ? {
+          href: readerListHref(
+            basePath,
+            { ...filters, page: 1, search: undefined },
+            1,
+            fixedParams,
+          ),
+          label: `Arama: ${filters.search}`,
+        }
+      : null,
+    filters.genre
+      ? {
+          href: readerListHref(
+            basePath,
+            { ...filters, genre: undefined, page: 1 },
+            1,
+            fixedParams,
+          ),
+          label: `Tür: ${filters.genre}`,
+        }
+      : null,
+    filters.contentRating
+      ? {
+          href: readerListHref(
+            basePath,
+            { ...filters, contentRating: undefined, page: 1 },
+            1,
+            fixedParams,
+          ),
+          label: `Hitap: ${workContentRatingDetails[filters.contentRating].shortLabel}`,
+        }
+      : null,
+    filters.reviewStatus
+      ? {
+          href: readerListHref(
+            basePath,
+            { ...filters, page: 1, reviewStatus: undefined },
+            1,
+            fixedParams,
+          ),
+          label: readerReviewLabel(filters.reviewStatus),
+        }
+      : null,
+    filters.sort !== defaultSort
+      ? {
+          href: readerListHref(
+            basePath,
+            { ...filters, page: 1, sort: defaultSort },
+            1,
+            fixedParams,
+          ),
+          label: `Sıralama: ${filters.sort}`,
+        }
+      : null,
+  ].filter((item): item is ReaderActiveFilter => item !== null);
+
+  return items;
 }
 
 export function ReaderFilterDesk({

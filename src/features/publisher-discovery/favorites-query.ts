@@ -2,6 +2,8 @@ import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
+import { normalizeGenreLabel } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
 import {
   isMemberStoredWorkContentRating,
@@ -9,12 +11,23 @@ import {
   type StoredWorkContentRating,
 } from "@/lib/work-content-classification";
 
-const PAGE_SIZE = 24;
+const reviewStatuses = [
+  "not_requested",
+  "requested",
+  "in_progress",
+  "awaiting_second_editor",
+  "second_in_progress",
+  "completed",
+] as const;
+
+export type PublisherCollectionReviewStatus = (typeof reviewStatuses)[number];
 
 export interface PublisherFavoriteFilters {
   contentRating?: MemberStoredWorkContentRating;
+  genre: string;
   page: number;
   query: string;
+  reviewStatus?: PublisherCollectionReviewStatus;
 }
 
 export interface PublisherLikedWorkRow {
@@ -53,21 +66,29 @@ function firstValue(value: string | string[] | undefined) {
   return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
 }
 
+function isReviewStatus(value: string): value is PublisherCollectionReviewStatus {
+  return reviewStatuses.includes(value as PublisherCollectionReviewStatus);
+}
+
 export function normalizePublisherFavoriteFilters(
   input: Record<string, string | string[] | undefined>,
 ): PublisherFavoriteFilters {
   const requestedPage = Number.parseInt(firstValue(input.sayfa), 10);
   const requestedRating = firstValue(input.hitap);
+  const requestedReview = firstValue(input.editor);
+  const genre = normalizeGenreLabel(firstValue(input.tur));
 
   return {
     contentRating: isMemberStoredWorkContentRating(requestedRating)
       ? requestedRating
       : undefined,
+    genre: genre ?? "",
     page:
       Number.isFinite(requestedPage) && requestedPage > 0
         ? requestedPage
         : 1,
     query: firstValue(input.arama).slice(0, 220),
+    reviewStatus: isReviewStatus(requestedReview) ? requestedReview : undefined,
   };
 }
 
@@ -102,12 +123,15 @@ export async function getPublisherLikedWorks(
     work: {
       ...commonDiscoveryWorkWhereFor(canAccessAdultContent),
       ...(contentRating ? { contentRating } : {}),
+      ...(filters.genre ? { genre: filters.genre } : {}),
+      ...(filters.reviewStatus
+        ? { editorReviewStatus: filters.reviewStatus }
+        : {}),
       ...(filters.query
         ? {
             OR: [
               { title: { contains: filters.query } },
               { subtitle: { contains: filters.query } },
-              { genre: { contains: filters.query } },
               {
                 author: {
                   is: {
@@ -126,14 +150,14 @@ export async function getPublisherLikedWorks(
   };
 
   const totalCount = await prisma.publisherWorkLike.count({ where });
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
   const currentPage = Math.min(filters.page, totalPages);
 
   const records = await prisma.publisherWorkLike.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+    take: DISCOVERY_PAGE_SIZE,
     select: {
       createdAt: true,
       id: true,
@@ -176,8 +200,11 @@ export async function getPublisherLikedWorks(
     },
   });
 
-  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const last = Math.min(currentPage * PAGE_SIZE, totalCount);
+  const first =
+    totalCount === 0
+      ? 0
+      : (currentPage - 1) * DISCOVERY_PAGE_SIZE + 1;
+  const last = Math.min(currentPage * DISCOVERY_PAGE_SIZE, totalCount);
 
   return {
     currentPage,

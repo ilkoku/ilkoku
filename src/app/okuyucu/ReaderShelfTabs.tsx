@@ -148,6 +148,8 @@ export function ReaderShelfTabs({
   const [activeId, setActiveId] = useState(sections[0]?.id ?? "");
 
   useEffect(() => {
+    let frameId = 0;
+
     try {
       const saved = JSON.parse(
         window.localStorage.getItem(storageKey) ?? "[]",
@@ -158,19 +160,27 @@ export function ReaderShelfTabs({
               typeof value === "string" && validIds.has(value),
           )
         : [];
-
-      setHiddenIds(normalized);
       const firstVisible = sections.find(
         (section) => !normalized.includes(section.id),
       );
-      setActiveId((current) =>
-        current && !normalized.includes(current)
-          ? current
-          : firstVisible?.id ?? "",
-      );
+
+      frameId = window.requestAnimationFrame(() => {
+        setHiddenIds(normalized);
+        setActiveId((current) =>
+          current && !normalized.includes(current)
+            ? current
+            : firstVisible?.id ?? "",
+        );
+      });
     } catch {
       window.localStorage.removeItem(storageKey);
     }
+
+    return () => {
+      if (frameId !== 0) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
   }, [sections, storageKey, validIds]);
 
   const visibleSections = sections.filter(

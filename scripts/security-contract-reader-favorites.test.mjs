@@ -28,20 +28,67 @@ test("reader favorites center separates works and authors and links to author di
   assert.match(favoritesPage, /href="\/yazar-kesfet"/);
 });
 
-test("reader author discovery is work-backed and filterable", async () => {
+test("reader author discovery is work-backed and uses the shared filter desk", async () => {
   const discovery = await read("src/app/yazar-kesfet/page.tsx");
 
   assert.match(discovery, /readerAuthorDiscoveryWorkWhere/);
   assert.match(discovery, /Yazar Keşfet/);
-  assert.match(discovery, /Yazar veya eser ara/);
-  assert.match(discovery, /name="tur"/);
-  assert.match(discovery, /name="hitapYasi"/);
-  assert.match(discovery, /name="tamamlanma"/);
-  assert.match(discovery, /name="editor"/);
+  assert.match(discovery, /ReaderFilterDesk/);
+  assert.match(discovery, /Yazar, rumuz veya eser ara/);
   assert.match(discovery, /toggleReaderAuthorFavoriteAction/);
   assert.match(discovery, /Yazarı Favorile/);
   assert.match(discovery, /Yazar vitrini/);
   assert.match(discovery, /eşleşen eser/);
+  assert.doesNotMatch(discovery, /name="tamamlanma"/);
+  assert.doesNotMatch(discovery, /name="favori"/);
+});
+
+test("reader list pages share one filter, result, pagination and work-row standard", async () => {
+  const [
+    standard,
+    table,
+    discover,
+    favorites,
+    continueReading,
+    completed,
+    authorDiscover,
+  ] = await Promise.all([
+    read("src/features/reader/discovery-standard.tsx"),
+    read("src/features/reader/components/ReaderWorksTable.tsx"),
+    read("src/app/kesfet/page.tsx"),
+    read("src/app/favorilerim/page.tsx"),
+    read("src/app/okumaya-devam/page.tsx"),
+    read("src/app/tamamlanan-eserler/page.tsx"),
+    read("src/app/yazar-kesfet/page.tsx"),
+  ]);
+
+  assert.match(standard, /READER_LIST_PAGE_SIZE = 24/);
+  assert.match(standard, /function ReaderFilterDesk/);
+  assert.match(standard, /function ReaderResultSummary/);
+  assert.match(standard, /function ReaderPagination/);
+  assert.match(table, /workspace-table workspace-table--discovery/);
+  assert.doesNotMatch(table, /compactDiscovery/);
+
+  for (const source of [
+    discover,
+    favorites,
+    continueReading,
+    completed,
+    authorDiscover,
+  ]) {
+    assert.match(source, /ReaderFilterDesk/);
+    assert.match(source, /ReaderResultSummary/);
+    assert.match(source, /ReaderPagination/);
+  }
+
+  for (const source of [discover, continueReading, completed]) {
+    assert.match(source, /ReaderWorksTable/);
+  }
+
+  assert.doesNotMatch(discover, /reader-discovery-presets/);
+  assert.doesNotMatch(discover, /name="dil"/);
+  assert.doesNotMatch(discover, /name="okuma"/);
+  assert.doesNotMatch(discover, /name="favori"/);
 });
 
 test("public author surfaces expose reader author favorite action", async () => {

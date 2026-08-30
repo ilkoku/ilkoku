@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { siteContact } from "@/lib/site-contact";
 
 type FooterContent = Record<string, string>;
 
@@ -178,11 +179,114 @@ function rebuildSupportColumn(column: HTMLElement | undefined, content: FooterCo
   replaceColumnLinks(column, canonicalSupportLinks);
 }
 
+function externalLink(href: string, label: string) {
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  anchor.setAttribute("aria-label", `${label} hesabımızı aç`);
+  anchor.title = label;
+  return anchor;
+}
+
+function ensureFooterContactBlock(column: HTMLElement | undefined) {
+  if (!column) return;
+
+  let block = column.querySelector<HTMLElement>(".site-contact-footer");
+  if (!block) {
+    block = document.createElement("div");
+    block.className = "site-contact-footer";
+  }
+  block.replaceChildren();
+
+  const email = document.createElement("a");
+  email.className = "site-contact-footer__email";
+  email.href = `mailto:${siteContact.generalEmail}`;
+  email.textContent = siteContact.generalEmail;
+  email.setAttribute("aria-label", `Genel iletişim: ${siteContact.generalEmail}`);
+  block.append(email);
+
+  const socials = document.createElement("div");
+  socials.className = "site-social-links";
+  socials.setAttribute("aria-label", "İlkOku sosyal medya hesapları");
+
+  for (const social of siteContact.socialLinks) {
+    const anchor = externalLink(social.href, social.label);
+    anchor.textContent = social.shortLabel;
+    socials.append(anchor);
+  }
+  block.append(socials);
+
+  column.append(block);
+}
+
+function findPublicTrustSupportColumn() {
+  return Array.from(document.querySelectorAll<HTMLElement>(".public-trust-footer__column"))
+    .find((column) => column.querySelector("h3")?.textContent?.trim() === "Destek");
+}
+
+function ensureContactPageBlock() {
+  const intro = document.querySelector<HTMLElement>(".contact-page .contact-section__intro");
+  if (!intro || intro.querySelector(".contact-direct-card")) return;
+
+  const block = document.createElement("aside");
+  block.className = "contact-direct-card";
+  block.setAttribute("aria-label", "Doğrudan iletişim ve sosyal medya");
+
+  const heading = document.createElement("div");
+  heading.className = "contact-direct-card__heading";
+  const eyebrow = document.createElement("small");
+  eyebrow.textContent = "Doğrudan ulaşın";
+  const title = document.createElement("strong");
+  title.textContent = "İlkOku ile bağlantıda kalın.";
+  heading.append(eyebrow, title);
+  block.append(heading);
+
+  const channels = document.createElement("div");
+  channels.className = "contact-direct-card__channels";
+
+  for (const [label, address] of [
+    ["Genel iletişim", siteContact.generalEmail],
+    ["Destek", siteContact.supportEmail],
+  ] as const) {
+    const row = document.createElement("div");
+    row.className = "contact-direct-card__channel";
+    const name = document.createElement("span");
+    name.textContent = label;
+    const anchor = document.createElement("a");
+    anchor.href = `mailto:${address}`;
+    anchor.textContent = address;
+    row.append(name, anchor);
+    channels.append(row);
+  }
+  block.append(channels);
+
+  const socials = document.createElement("div");
+  socials.className = "contact-direct-card__socials";
+  socials.setAttribute("aria-label", "Bizi takip edin");
+  for (const social of siteContact.socialLinks) {
+    const anchor = externalLink(social.href, social.label);
+    anchor.textContent = social.label;
+    const handle = document.createElement("span");
+    handle.textContent = social.handle;
+    anchor.append(handle);
+    socials.append(anchor);
+  }
+  block.append(socials);
+
+  intro.append(block);
+}
+
 export function PublicFooterHydrator() {
   const pathname = usePathname();
 
   useEffect(() => {
+    const trustSupport = findPublicTrustSupportColumn();
+    ensureFooterContactBlock(trustSupport);
+
+    if (pathname === "/iletisim") ensureContactPageBlock();
     if (pathname !== "/") return;
+
     const footer = document.querySelector<HTMLElement>(".landing-footer");
     if (!footer) return;
 
@@ -190,6 +294,7 @@ export function PublicFooterHydrator() {
     rebuildPlatformColumn(findColumn(footer, "Platform"), {});
     rebuildTrustColumn(footer);
     rebuildSupportColumn(findColumn(footer, "Destek"), {});
+    ensureFooterContactBlock(findColumn(footer, "Destek"));
 
     void fetch("/api/site-content/footer-navigation", { cache: "no-store", credentials: "same-origin" })
       .then((response) => (response.ok ? response.json() : null))
@@ -199,6 +304,7 @@ export function PublicFooterHydrator() {
         rebuildPlatformColumn(findColumn(footer, "Platform"), content);
         rebuildTrustColumn(footer);
         rebuildSupportColumn(findColumn(footer, "Destek"), content);
+        ensureFooterContactBlock(findColumn(footer, "Destek"));
       })
       .catch(() => {});
   }, [pathname]);

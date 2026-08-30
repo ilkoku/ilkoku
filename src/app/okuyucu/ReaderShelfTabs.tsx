@@ -15,6 +15,7 @@ export type ReaderShelfWork = {
     | "not_requested"
     | "requested"
     | "in_progress"
+    | "awaiting_second_editor"
     | "second_in_progress"
     | "completed";
   genre: string | null;

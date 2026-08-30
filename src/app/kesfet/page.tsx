@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { DiscoveryWorkspaceHero } from "@/components/discovery/DiscoveryWorkspaceHero";
 import { AppShell } from "@/components/layout/AppShell";
 import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
@@ -336,37 +337,22 @@ export default async function ReaderExplorePage({
   return (
     <AppShell profile={profile}>
       <div className="editor-workspace reader-discovery-workdesk">
-        <section className="reader-discovery-desk">
-          <div className="reader-discovery-desk__intro">
-            <p className="reader-discovery-desk__eyebrow">Keşif masası</p>
-            <h1>Eserleri masaya yatır</h1>
-            <p className="reader-discovery-desk__lead">
-              Ortak Keşfet havuzunu arayın, filtreleyin; bir eseri detay panelinde inceleyip
-              favoriye alın veya doğrudan okumaya geçin.
-            </p>
-            <nav aria-label="Keşif çalışma alanı" className="reader-discovery-desk__quick-links">
-              <span aria-current="page">Eserler</span>
-              <Link href="/yazar-kesfet">Yazarlar</Link>
-              <Link href="/favorilerim">Favorilerim</Link>
-              <Link href="/okumaya-devam">Okumaya Devam</Link>
-            </nav>
-          </div>
-
-          <div className="reader-discovery-desk__stats" aria-label="Keşif özeti">
-            <div>
-              <strong>{totalCount}</strong>
-              <span>Eşleşen eser</span>
-            </div>
-            <div>
-              <strong>{activeFilters.length + advancedFilterCount}</strong>
-              <span>Aktif filtre</span>
-            </div>
-            <div>
-              <strong>{favoriteCount}</strong>
-              <span>Favori eser</span>
-            </div>
-          </div>
-        </section>
+        <DiscoveryWorkspaceHero
+          description="Ortak Eser Havuzu’nu arayın ve filtreleyin; eserin okur etkileşimini inceleyip favoriye alın veya doğrudan okumaya geçin."
+          eyebrow="Okur · Eser Havuzu · Keşif"
+          links={[
+            { current: true, href: "/kesfet", label: "Eserler" },
+            { href: "/yazar-kesfet", label: "Yazarlar" },
+            { href: "/favorilerim", label: "Favorilerim" },
+            { href: "/okumaya-devam", label: "Okumaya Devam" },
+          ]}
+          stats={[
+            { label: "Eşleşen eser", value: totalCount },
+            { label: "Aktif filtre", value: activeFilters.length + advancedFilterCount },
+            { label: "Favori eser", value: favoriteCount },
+          ]}
+          title="Eser Keşfet"
+        />
 
         {adultAccess.isAdult && !adultAccess.canAccessAdultContent ? (
           <section className="reader-discovery-notice">

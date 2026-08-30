@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { AdvancedDiscoveryFilterFields } from "@/components/discovery/AdvancedDiscoveryFilterFields";
 import {
   DiscoveryPagination,
   DiscoveryResultSummary,
@@ -26,7 +27,14 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { sanitizeDiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filter-management";
+import {
+  appendDiscoveryAdvancedFilterParams,
+  clearDiscoveryAdvancedFilter,
+  discoveryAdvancedFilterChips,
+} from "@/lib/discovery-advanced-filters";
 import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
+import type { DiscoveryFilterId } from "@/lib/discovery-filter-registry";
 import { GENRE_LABELS } from "@/lib/genres";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
@@ -48,6 +56,7 @@ function pageHref(
   if (filters.genre) params.set("tur", filters.genre);
   if (filters.contentRating) params.set("hitap", filters.contentRating);
   if (filters.city) params.set("sehir", filters.city);
+  appendDiscoveryAdvancedFilterParams(params, filters.advanced);
   if (page > 1) params.set("sayfa", String(page));
 
   const query = params.toString();
@@ -65,7 +74,7 @@ export default async function PublisherAuthorDiscoveryPage({
     "/yayinevi/kesfet/yazarlar",
     "discover_authors",
   );
-  const enabledFilterIds = new Set(
+  const enabledFilterIds = new Set<DiscoveryFilterId>(
     await getDiscoverySurfaceFilterIds("publisher-author-discovery"),
   );
   const adultAccess = access.profile.adminPublisherView
@@ -82,6 +91,10 @@ export default async function PublisherAuthorDiscoveryPage({
   if (!enabledFilterIds.has("genre")) filters.genre = "";
   if (!enabledFilterIds.has("contentRating")) filters.contentRating = "";
   if (!enabledFilterIds.has("city")) filters.city = "";
+  filters.advanced = sanitizeDiscoveryAdvancedFilters(
+    filters.advanced,
+    enabledFilterIds,
+  );
   if (
     filters.contentRating === "adult_18" &&
     !adultAccess.canAccessAdultContent
@@ -141,7 +154,21 @@ export default async function PublisherAuthorDiscoveryPage({
         }
       : null,
   ].filter((item): item is { href: string; label: string } => item !== null);
-  const hasFilters = activeFilters.length > 0;
+  const advancedFilters = discoveryAdvancedFilterChips(
+    filters.advanced,
+    enabledFilterIds,
+  ).map((item) => ({
+    href: pageHref(
+      {
+        ...filters,
+        advanced: clearDiscoveryAdvancedFilter(filters.advanced, item.id),
+      },
+      1,
+    ),
+    label: item.label,
+  }));
+  const visibleActiveFilters = [...activeFilters, ...advancedFilters];
+  const hasFilters = visibleActiveFilters.length > 0;
   const returnTo = pageHref(filters, data.currentPage);
 
   return (
@@ -235,6 +262,11 @@ export default async function PublisherAuthorDiscoveryPage({
                 </label>
               ) : null}
 
+              <AdvancedDiscoveryFilterFields
+                enabledFilterIds={enabledFilterIds}
+                filters={filters.advanced}
+              />
+
               <div className="role-filter-desk__actions">
                 <button className="button button--primary" type="submit">
                   Masayı Güncelle
@@ -252,10 +284,10 @@ export default async function PublisherAuthorDiscoveryPage({
             </p>
           )}
 
-          {activeFilters.length > 0 ? (
+          {visibleActiveFilters.length > 0 ? (
             <div className="role-filter-desk__active" aria-label="Aktif filtreler">
               <span>Aktif</span>
-              {activeFilters.map((item) => (
+              {visibleActiveFilters.map((item) => (
                 <Link href={item.href} key={`${item.label}-${item.href}`}>
                   {item.label}
                   <b aria-hidden="true">×</b>

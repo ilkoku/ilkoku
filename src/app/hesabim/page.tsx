@@ -53,15 +53,23 @@ const publisherApplicationStatusLabels = {
   submitted: "İncelemeye gönderildi",
 } as const;
 
-const accountSections = [
-  { href: "#genel-bakis", label: "Genel Bakış", helper: "Hesap ve rol özeti" },
-  { href: "#kisisel-bilgiler", label: "Kişisel Bilgiler", helper: "Profil ve yazar bilgileri" },
-  { href: "#yazdiginiz-turler", label: "Yazdığınız Türler", helper: "Yazarlık türlerinizi seçin" },
-  { href: "#rol-basvurusu", label: "Rol & Başvurular", helper: "Başvuru ve doğrulama durumu" },
-  { href: "#yetiskin-icerik", label: "18+ İçerik Erişimi", helper: "Yaş ve içerik tercihi" },
-  { href: "#bildirim-tercihleri", label: "Bildirim Tercihleri", helper: "E-posta ve bildirim ayarları" },
-  { href: "#guvenlik", label: "Güvenlik", helper: "Şifre ve oturum işlemleri" },
-] as const;
+function getAccountSections(role: keyof typeof roleLabels) {
+  const genreSection = role === "reader"
+    ? { href: "#okudugunuz-turler", label: "Okuduğunuz Türler", helper: "Okuma türlerinizi seçin" }
+    : role === "writer"
+      ? { href: "#yazdiginiz-turler", label: "Yazdığınız Türler", helper: "Eserlerinizden otomatik oluşur" }
+      : null;
+
+  return [
+    { href: "#genel-bakis", label: "Genel Bakış", helper: "Hesap ve rol özeti" },
+    { href: "#kisisel-bilgiler", label: "Kişisel Bilgiler", helper: "Profil ve yazar bilgileri" },
+    ...(genreSection ? [genreSection] : []),
+    { href: "#rol-basvurusu", label: "Rol & Başvurular", helper: "Başvuru ve doğrulama durumu" },
+    { href: "#yetiskin-icerik", label: "18+ İçerik Erişimi", helper: "Yaş ve içerik tercihi" },
+    { href: "#bildirim-tercihleri", label: "Bildirim Tercihleri", helper: "E-posta ve bildirim ayarları" },
+    { href: "#guvenlik", label: "Güvenlik", helper: "Şifre ve oturum işlemleri" },
+  ];
+}
 
 const formatDate = (value: Date | null) => value
   ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeStyle: "short" }).format(value)
@@ -90,6 +98,7 @@ export default async function AccountPage({
   const { sekme } = await searchParams;
   const initial = (data.username || profile.fullName).charAt(0).toLocaleUpperCase("tr");
   const navigation = await getRoleNavigation(profile);
+  const accountSections = getAccountSections(data.role);
   const approvedRoleHref = data.latestRoleRequest?.status === "approved"
     ? roleDestinations[data.latestRoleRequest.requestedRole]
     : null;

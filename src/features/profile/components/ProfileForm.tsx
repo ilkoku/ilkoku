@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { updateProfileAction } from "../actions";
+import { writingGenreGroups } from "../data";
 import { resendVerificationEmailAction } from "../email-verification-actions";
 import { initialProfileState } from "../state";
 
@@ -15,6 +16,7 @@ type ProfileFormProps = {
     emailVerified: boolean;
     firstName: string;
     lastName: string;
+    role: "admin" | "editor" | "editor_pending" | "publisher" | "reader" | "writer";
     username: string;
     website: string;
     writingGenres: string[];
@@ -27,6 +29,33 @@ export function ProfileForm({ data }: ProfileFormProps) {
     resendVerificationEmailAction,
     initialProfileState,
   );
+  const [query, setQuery] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(data.writingGenres);
+
+  const normalizedQuery = query.trim().toLocaleLowerCase("tr-TR");
+  const visibleGroups = useMemo(
+    () =>
+      writingGenreGroups
+        .map((group) => ({
+          ...group,
+          options: group.options.filter((genre) =>
+            genre.toLocaleLowerCase("tr-TR").includes(normalizedQuery),
+          ),
+        }))
+        .filter((group) => group.options.length > 0),
+    [normalizedQuery],
+  );
+
+  function toggleGenre(genre: string) {
+    setSelectedGenres((current) =>
+      current.includes(genre)
+        ? current.filter((item) => item !== genre)
+        : [...current, genre],
+    );
+  }
+
+  const isReader = data.role === "reader";
+  const isWriter = data.role === "writer";
 
   return (
     <>
@@ -93,36 +122,102 @@ export function ProfileForm({ data }: ProfileFormProps) {
           />
         </section>
 
-        <section
-          className="profile-form__section"
-          id="yazdiginiz-turler"
-          style={{ scrollMarginTop: "6.25rem" }}
-        >
-          <div className="profile-section-title profile-section-title--genres">
-            <div>
-              <span>02</span>
+        {(isReader || isWriter) && (
+          <section
+            className="profile-form__section"
+            id={isReader ? "okudugunuz-turler" : "yazdiginiz-turler"}
+            style={{ scrollMarginTop: "6.25rem" }}
+          >
+            <div className="profile-section-title profile-section-title--genres">
               <div>
-                <h3>Yazdığınız türler</h3>
-                <p>
-                  Bu alan, keşfe açık yayımlanmış eserlerinizde seçtiğiniz türlerden otomatik oluşur.
-                </p>
+                <span>02</span>
+                <div>
+                  <h3>{isReader ? "Okuduğunuz türler" : "Yazdığınız türler"}</h3>
+                  <p>
+                    {isReader
+                      ? "Okuduğunuz veya ilgi duyduğunuz türleri seçin."
+                      : "Bu alan, keşfe açık yayımlanmış eserlerinizde seçtiğiniz türlerden otomatik oluşur."}
+                  </p>
+                </div>
               </div>
+              <strong>
+                {isReader
+                  ? `${selectedGenres.length} tür seçildi`
+                  : `${data.writingGenres.length} tür`}
+              </strong>
             </div>
-            <strong>{data.writingGenres.length} tür</strong>
-          </div>
 
-          {data.writingGenres.length > 0 ? (
-            <div className="genre-selected" aria-label="Eserlerinizden türetilen türler">
-              {data.writingGenres.map((genre) => (
-                <span key={genre}>{genre}</span>
-              ))}
-            </div>
-          ) : (
-            <div className="genre-empty">
-              Henüz keşfe açık yayımlanmış bir eseriniz olmadığı için tür listeniz oluşmadı.
-            </div>
-          )}
-        </section>
+            {isReader ? (
+              <div className="genre-picker">
+                <label className="genre-search">
+                  <span aria-hidden="true">⌕</span>
+                  <input
+                    aria-label="Tür ara"
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Tür ara: roman, bilim kurgu, şiir..."
+                    type="search"
+                    value={query}
+                  />
+                </label>
+
+                {selectedGenres.length > 0 && (
+                  <div className="genre-selected" aria-label="Seçilen türler">
+                    {selectedGenres.map((genre) => (
+                      <button key={genre} onClick={() => toggleGenre(genre)} type="button">
+                        {genre}<span aria-hidden="true">×</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="genre-groups">
+                  {visibleGroups.map((group, index) => (
+                    <details className="genre-group" key={group.id} open={normalizedQuery.length > 0 || index === 0}>
+                      <summary>
+                        <span>{group.label}</span>
+                        <small>{group.options.filter((genre) => selectedGenres.includes(genre)).length}/{group.options.length} seçili</small>
+                      </summary>
+                      <div className="profile-genres__grid">
+                        {group.options.map((genre) => {
+                          const checked = selectedGenres.includes(genre);
+                          return (
+                            <label className="profile-genre" key={genre}>
+                              <input
+                                checked={checked}
+                                name="writingGenres"
+                                onChange={() => toggleGenre(genre)}
+                                type="checkbox"
+                                value={genre}
+                              />
+                              <span>
+                                <i aria-hidden="true">{checked ? "✓" : "+"}</i>
+                                {genre}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  ))}
+
+                  {visibleGroups.length === 0 && (
+                    <div className="genre-empty">Aramanızla eşleşen bir tür bulunamadı.</div>
+                  )}
+                </div>
+              </div>
+            ) : data.writingGenres.length > 0 ? (
+              <div className="genre-selected" aria-label="Eserlerinizden türetilen türler">
+                {data.writingGenres.map((genre) => (
+                  <span key={genre}>{genre}</span>
+                ))}
+              </div>
+            ) : (
+              <div className="genre-empty">
+                Henüz keşfe açık yayımlanmış bir eseriniz olmadığı için tür listeniz oluşmadı.
+              </div>
+            )}
+          </section>
+        )}
 
         {state.message && (
           <p className={`profile-status profile-status--${state.status}`} role="status">

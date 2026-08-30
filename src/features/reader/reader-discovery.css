@@ -346,6 +346,14 @@
   opacity: 0.55;
 }
 
+/* Okuyucu tarafında tek görünür filtre sistemi Filtre Masasıdır. */
+.reader-discovery-presets,
+.reader-discovery-filters label:has([name="dil"]),
+.reader-discovery-filters label:has([name="okuma"]),
+.reader-discovery-filters label:has([name="favori"]) {
+  display: none;
+}
+
 @media (max-width: 80rem) {
   .reader-discovery-desk {
     grid-template-columns: 1fr;

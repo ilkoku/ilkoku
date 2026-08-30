@@ -1,21 +1,8 @@
 import "server-only";
 
-import type { Prisma } from "@/generated/prisma/client";
-import {
-  adultContentWorkVisibility,
-  getAdultContentAccess,
-} from "@/lib/adult-content-access";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { getAdultContentAccess } from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
-
-function publicWorkWhere(canAccessAdultContent: boolean): Prisma.WorkWhereInput {
-  return {
-    archivedAt: null,
-    ...adultContentWorkVisibility(canAccessAdultContent),
-    publishedAt: { not: null },
-    status: "published",
-    visibility: "public",
-  };
-}
 
 function continueWorkSelect(userId: string) {
   return {
@@ -84,6 +71,9 @@ export async function getContinueReadingForMember(
   const canAccessAdultContent = (
     await getAdultContentAccess(userId)
   ).canAccessAdultContent;
+  const workWhere = commonDiscoveryWorkWhereFor(
+    canAccessAdultContent,
+  );
   const workSelect = continueWorkSelect(userId);
 
   const progressRecords = await prisma.readingProgress.findMany({
@@ -97,7 +87,7 @@ export async function getContinueReadingForMember(
           status: "published",
         },
       },
-      work: { is: publicWorkWhere(canAccessAdultContent) },
+      work: { is: workWhere },
     },
     orderBy: { lastReadAt: "desc" },
     select: {
@@ -131,7 +121,7 @@ export async function getContinueReadingForMember(
         },
         work: {
           is: {
-            ...publicWorkWhere(canAccessAdultContent),
+            ...workWhere,
             readingProgress: {
               none: { userId },
             },

@@ -139,7 +139,6 @@ export async function getPublisherWorkDiscovery(
                 is: {
                   OR: [
                     { displayName: { contains: filters.query } },
-                    { fullName: { contains: filters.query } },
                     { username: { contains: filters.query } },
                   ],
                 },
@@ -164,73 +163,92 @@ export async function getPublisherWorkDiscovery(
 
   const works = await prisma.work.findMany({
     where,
-    include: {
-      _count: {
-        select: {
-          comments: {
-            where: { deletedAt: null, status: "visible" },
-          },
-          favorites: true,
-          readingProgress: true,
-          versions: true,
-        },
-      },
-      author: {
-        select: {
-          displayName: true,
-          username: true,
-        },
-      },
-      chapters: {
-        where: {
-          archivedAt: null,
-          publishedAt: { not: null },
-          status: "published",
-        },
-        select: { id: true },
-      },
-      passportRecord: {
-        select: { id: true },
-      },
-    },
     orderBy:
       filters.sort === "updated"
         ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
         : [{ publishedAt: "desc" }, { createdAt: "desc" }],
     skip: (currentPage - 1) * PUBLISHER_WORK_PAGE_SIZE,
     take: PUBLISHER_WORK_PAGE_SIZE,
+    select: {
+      _count: {
+        select: {
+          comments: {
+            where: { deletedAt: null, status: "visible" },
+          },
+          favorites: true,
+          ownershipStamps: true,
+          readingProgress: true,
+          versions: true,
+        },
+      },
+      author: {
+        select: { displayName: true, username: true },
+      },
+      chapters: {
+        where: { archivedAt: null },
+        orderBy: { position: "asc" },
+        select: { id: true, publishedAt: true, status: true },
+      },
+      contentRating: true,
+      coverUrl: true,
+      editorReviewStatus: true,
+      genre: true,
+      id: true,
+      language: true,
+      publishedAt: true,
+      slug: true,
+      subtitle: true,
+      title: true,
+    },
   });
 
-  const rows = works.map((work): PublisherWorkDiscoveryRow => ({
-    authorAlias: publicWriterAlias(work.author),
-    authorName: publicWriterName(work.author),
-    chapterCount: work.chapters.length,
-    commentCount: work._count.comments,
-    completion: work.status === "published" ? "completed" : "ongoing",
-    contentRating: work.contentRating,
-    coverUrl: work.coverUrl,
-    editorReviewStatus: work.editorReviewStatus,
-    favoriteCount: work._count.favorites,
-    genre: work.genre,
-    hasPassportRecord: Boolean(work.passportRecord),
-    id: work.id,
-    language: work.language,
-    publishedAt: work.publishedAt?.toISOString() ?? work.createdAt.toISOString(),
-    readerCount: work._count.readingProgress,
-    slug: work.slug,
-    subtitle: work.subtitle,
-    title: work.title,
-    versionCount: work._count.versions,
-  }));
-
-  const first = totalCount === 0 ? 0 : (currentPage - 1) * PUBLISHER_WORK_PAGE_SIZE + 1;
-  const last = totalCount === 0 ? 0 : first + rows.length - 1;
+  const first =
+    totalCount === 0
+      ? 0
+      : (currentPage - 1) * PUBLISHER_WORK_PAGE_SIZE + 1;
+  const last = Math.min(currentPage * PUBLISHER_WORK_PAGE_SIZE, totalCount);
 
   return {
     currentPage,
     first,
     last,
-    rows,
+    rows: works.map((work) => {
+      const publishedChapterCount = work.chapters.filter(
+        (chapter) =>
+          chapter.status === "published" && chapter.publishedAt !== null,
+      ).length;
+      const hasPendingChapter = work.chapters.some(
+        (chapter) =>
+          chapter.status !== "published" || chapter.publishedAt === null,
+      );
+
+      return {
+        authorAlias: publicWriterAlias(work.author),
+        authorName: publicWriterName(work.author),
+        chapterCount: publishedChapterCount,
+        commentCount: work._count.comments,
+        completion:
+          publishedChapterCount > 0 && !hasPendingChapter
+            ? "completed"
+            : "ongoing",
+        contentRating: work.contentRating,
+        coverUrl: work.coverUrl,
+        editorReviewStatus: work.editorReviewStatus,
+        favoriteCount: work._count.favorites,
+        genre: work.genre,
+        hasPassportRecord:
+          work._count.ownershipStamps > 0 || work._count.versions > 0,
+        id: work.id,
+        language: work.language,
+        publishedAt:
+          work.publishedAt?.toISOString() ?? new Date(0).toISOString(),
+        readerCount: work._count.readingProgress,
+        slug: work.slug,
+        subtitle: work.subtitle,
+        title: work.title,
+        versionCount: work._count.versions,
+      };
+    }),
     totalCount,
     totalPages,
   };

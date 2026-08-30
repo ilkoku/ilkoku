@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { canAccessReaderWorkspace } from "@/features/auth/data";
+import { discoveryAuthorWhereFromWorkPool } from "@/features/discovery/common-author-scope";
 import type { Prisma } from "@/generated/prisma/client";
 import { readerAuthorDiscoveryWorkWhere } from "@/features/reader/author-discovery-scope";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -35,10 +36,8 @@ async function requireReader() {
 async function findVisibleAuthor(publicId: string) {
   return prisma.user.findFirst({
     where: {
-      deletedAt: null,
+      ...discoveryAuthorWhereFromWorkPool(readerAuthorDiscoveryWorkWhere),
       publicId,
-      status: "active",
-      works: { some: readerAuthorDiscoveryWorkWhere },
     },
     select: {
       displayName: true,
@@ -131,11 +130,7 @@ export async function getReaderAuthorFavoritePublicIds(userId: string) {
     where: {
       userId,
       author: {
-        is: {
-          deletedAt: null,
-          status: "active",
-          works: { some: readerAuthorDiscoveryWorkWhere },
-        },
+        is: discoveryAuthorWhereFromWorkPool(readerAuthorDiscoveryWorkWhere),
       },
     },
     select: {
@@ -162,11 +157,7 @@ export async function getReaderFavoriteAuthors(
     where: {
       userId,
       author: {
-        is: {
-          deletedAt: null,
-          status: "active",
-          works: { some: workWhere },
-        },
+        is: discoveryAuthorWhereFromWorkPool(workWhere),
       },
     },
     orderBy: { createdAt: "desc" },

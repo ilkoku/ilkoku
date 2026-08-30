@@ -9,7 +9,6 @@ import {
 import { hashPassword } from "@/lib/auth/password";
 import { sendPasswordChangedEmail } from "@/lib/email/auth-emails";
 import { prisma } from "@/lib/prisma";
-import { writingGenreOptions } from "./data";
 import { changeProfilePassword } from "./password-change-state";
 import type { ProfileActionState } from "./state";
 
@@ -52,10 +51,6 @@ export async function updateProfileAction(
   const bio = getText(formData, "bio");
   const website = getText(formData, "website");
   const avatarUrl = getText(formData, "avatarUrl");
-  const writingGenres = formData
-    .getAll("writingGenres")
-    .map(String)
-    .filter((genre) => writingGenreOptions.includes(genre as (typeof writingGenreOptions)[number]));
 
   if (firstName.length < 2) return failure("Ad alanı en az 2 karakter olmalıdır.");
   if (lastName.length < 2) return failure("Soyad alanı en az 2 karakter olmalıdır.");
@@ -90,12 +85,10 @@ export async function updateProfileAction(
         create: {
           userId: user.id,
           website: website || null,
-          writingGenres: JSON.stringify(writingGenres),
           completionPercentage: 100,
         },
         update: {
           website: website || null,
-          writingGenres: JSON.stringify(writingGenres),
           completionPercentage: 100,
         },
       });
@@ -114,7 +107,6 @@ export async function updateProfileAction(
               "fullName",
               "username",
               "website",
-              "writingGenres",
             ],
           }),
         },

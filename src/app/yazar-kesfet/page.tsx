@@ -276,13 +276,13 @@ export default async function ReaderAuthorDiscoveryPage({
   return (
     <AppShell profile={profile}>
       <div className="editor-workspace reader-discovery-workdesk">
-        <section className="reader-discovery-desk">
+        <section className="reader-discovery-desk reader-author-discovery-desk">
           <div className="reader-discovery-desk__intro">
-            <p className="reader-discovery-desk__eyebrow">Keşif masası</p>
-            <h1>Yazarları masaya yatır</h1>
+            <p className="reader-discovery-desk__eyebrow">Yazar Havuzu · Keşif</p>
+            <h1>Yazar Keşfet</h1>
             <p className="reader-discovery-desk__lead">
-              Yazarları yalnız keşfe açık eserlerinden türeterek karşılaştırın; tür, hitap yaşı
-              ve editör durumuyla daraltıp favorilerinizi aynı masada yönetin.
+              Keşfe açık eseri bulunan yazarları bulun; tür, hitap yaşı ve editör durumuna göre
+              daraltın, kısa profillerini karşılaştırın ve ilginizi çekenleri favorilerinize alın.
             </p>
             <nav aria-label="Keşif çalışma alanı" className="reader-discovery-desk__quick-links">
               <Link href="/kesfet">Eserler</Link>
@@ -314,12 +314,12 @@ export default async function ReaderAuthorDiscoveryPage({
           clearHref="/yazar-kesfet"
           contentRating={filters.contentRating}
           genre={filters.genre}
-          heading="Aradığınız yazarı daraltın"
-          hint="Filtre seçmeden keşfe açık bütün uygun yazarları görüyorsunuz."
+          heading="Yazarları filtrele"
+          hint="Keşfe açık eseri bulunan bütün uygun yazarlar Yazar Havuzu'ndan geliyor."
           ratingOptions={publicStoredWorkContentRatings}
           reviewStatus={filters.reviewStatus}
           search={filters.search}
-          searchPlaceholder="Yazar, rumuz veya eser ara"
+          searchPlaceholder="Yazar adı, rumuz veya eser ara"
           sort={filters.sort}
           sortOptions={sortOptions}
           standardFilters={normalizedFilters}
@@ -339,22 +339,34 @@ export default async function ReaderAuthorDiscoveryPage({
               const latest = author.works[0] ?? null;
               const isFavorite = favoriteAuthorIds.has(author.id);
               const profileHref = `/yazarlar/${author.publicId}?from=${encodeURIComponent(returnTo)}`;
+              const genres = Array.from(
+                new Set(
+                  author.works
+                    .map((work) => work.genre)
+                    .filter((genre): genre is string => Boolean(genre)),
+                ),
+              ).slice(0, 3);
 
               return (
                 <article className="reader-author-discovery-card" key={author.publicId}>
-                  <div className="reader-author-discovery-card__topline">
-                    <span className="reader-author-discovery-card__avatar">{initials(name)}</span>
-                    <span>{author._count.works} eşleşen eser</span>
-                  </div>
-
-                  <div className="reader-author-discovery-card__identity">
-                    <h2>{name}</h2>
-                    <p>
-                      {author.username
-                        ? `@${author.username.replace(/^@/u, "")}`
-                        : "İlkOku yazarı"}
-                    </p>
-                  </div>
+                  <header className="reader-author-discovery-card__header">
+                    <span className="reader-author-discovery-card__avatar" aria-hidden="true">
+                      {initials(name)}
+                    </span>
+                    <div className="reader-author-discovery-card__identity">
+                      <h2>
+                        <Link href={profileHref}>{name}</Link>
+                      </h2>
+                      <p>
+                        {author.username
+                          ? `@${author.username.replace(/^@/u, "")}`
+                          : "İlkOku yazarı"}
+                      </p>
+                    </div>
+                    <span className="reader-author-discovery-card__match">
+                      {author._count.works} {author._count.works === 1 ? "eser" : "eser"}
+                    </span>
+                  </header>
 
                   {author.bio ? (
                     <p className="reader-author-discovery-card__bio">{author.bio}</p>
@@ -364,30 +376,32 @@ export default async function ReaderAuthorDiscoveryPage({
                     </p>
                   )}
 
-                  {latest ? (
-                    <div className="reader-author-discovery-card__latest">
-                      <span>Son eşleşen eser</span>
-                      <strong>{latest.title}</strong>
-                      <div className="reader-author-discovery-card__chips">
-                        {latest.genre ? <span>{latest.genre}</span> : null}
-                        <span>{workContentRatingDetails[latest.contentRating].shortLabel}</span>
-                        <span>
-                          {readerReviewLabel(
-                            latest.editorReviewStatus as ReaderReviewFilter,
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  ) : null}
+                  <div className="reader-author-discovery-card__signals" aria-label="Yazar keşif işaretleri">
+                    {genres.map((genre) => (
+                      <span key={genre}>{genre}</span>
+                    ))}
+                    {latest ? (
+                      <span>{workContentRatingDetails[latest.contentRating].shortLabel}</span>
+                    ) : null}
+                    {latest ? (
+                      <span>
+                        {readerReviewLabel(
+                          latest.editorReviewStatus as ReaderReviewFilter,
+                        )}
+                      </span>
+                    ) : null}
+                  </div>
 
-                  {author.works.length > 1 ? (
-                    <div className="reader-author-discovery-card__works">
-                      {author.works.slice(1).map((work) => (
-                        <Link href={`/kitap/${work.slug}`} key={work.slug}>
-                          {work.title}
-                        </Link>
-                      ))}
-                    </div>
+                  {latest ? (
+                    <Link className="reader-author-discovery-card__latest" href={`/kitap/${latest.slug}`}>
+                      <span className="reader-author-discovery-card__latest-copy">
+                        <small>Son eşleşen eser</small>
+                        <strong>{latest.title}</strong>
+                      </span>
+                      <span className="reader-author-discovery-card__latest-arrow" aria-hidden="true">
+                        →
+                      </span>
+                    </Link>
                   ) : null}
 
                   <div className="reader-author-discovery-card__actions">
@@ -400,8 +414,13 @@ export default async function ReaderAuthorDiscoveryPage({
                       <form action={toggleReaderAuthorFavoriteAction}>
                         <input name="authorPublicId" type="hidden" value={author.publicId} />
                         <input name="returnPath" type="hidden" value={returnTo} />
-                        <button className="button button--ghost" type="submit">
-                          {isFavorite ? "Favoriden Çıkar" : "Yazarı Favorile"}
+                        <button
+                          aria-pressed={isFavorite}
+                          className={`reader-author-discovery-card__favorite${isFavorite ? " is-active" : ""}`}
+                          type="submit"
+                        >
+                          <span aria-hidden="true">{isFavorite ? "♥" : "♡"}</span>
+                          {isFavorite ? "Favoride" : "Favorile"}
                         </button>
                       </form>
                     )}

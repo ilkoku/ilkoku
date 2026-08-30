@@ -113,12 +113,7 @@ export async function getReaderAuthorFavoriteStatus(
   if (!author) return false;
 
   const favorite = await prisma.readerAuthorFavorite.findUnique({
-    where: {
-      userId_authorId: {
-        userId,
-        authorId: author.id,
-      },
-    },
+    where: { userId_authorId: { userId, authorId: author.id } },
     select: { id: true },
   });
 
@@ -172,6 +167,13 @@ export async function getReaderFavoriteAuthors(
           bio: true,
           displayName: true,
           fullName: true,
+          id: true,
+          profile: {
+            select: {
+              city: true,
+              country: true,
+            },
+          },
           publicId: true,
           username: true,
           works: {

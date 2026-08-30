@@ -17,9 +17,10 @@ import {
   ReaderFilterDesk,
   ReaderPagination,
   ReaderResultSummary,
-  parseReaderStandardFilters,
+  parseManagedReaderStandardFilters,
   readerListHref,
   readerReviewLabel,
+  readerWorkMatches,
   type ReaderActiveFilter,
   type ReaderSortOption,
 } from "@/features/reader/discovery-standard";
@@ -28,6 +29,10 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import {
+  discoveryAdvancedFilterChips,
+  hasDiscoveryAdvancedFilters,
+} from "@/lib/discovery-advanced-filters";
 import { prisma } from "@/lib/prisma";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
@@ -43,72 +48,58 @@ const sortOptions = [
   { label: "Son güncellenen", value: "updated" },
 ] as const satisfies readonly ReaderSortOption[];
 
-export default async function ReaderExplorePage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    arama?: string;
-    editor?: string;
-    hitapYasi?: string;
-    sayfa?: string;
-    siralama?: string;
-    tur?: string;
-  }>;
-}) {
-  const profile = await getCurrentProfile();
+type SearchParams = Record<string, string | string[] | undefined>;
 
-  if (!profile) redirect("/giris?sonraki=/kesfet");
-  if (!canAccessReaderWorkspace(profile.role)) {
-    redirect("/erisim-reddedildi?kaynak=reader");
-  }
+function mapReaderWork(work: Awaited<ReturnType<typeof fetchWorks>>[number]): ReaderWorkRow {
+  const firstChapter = work.chapters[0] ?? null;
+  const progress = work.readingProgress[0] ?? null;
 
-  const adultAccess = await getAdultContentAccess(profile.id);
-  const ratingOptions = visibleMemberContentRatings(
-    adultAccess.canAccessAdultContent,
-  );
-  const filters = parseReaderStandardFilters(
-    await searchParams,
-    ratingOptions,
-    sortOptions,
-    "newest",
-  );
-
-  const where: Prisma.WorkWhereInput = {
-    ...commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
-    ...(filters.search
-      ? {
-          OR: [
-            { title: { contains: filters.search } },
-            { subtitle: { contains: filters.search } },
-            {
-              author: {
-                is: {
-                  OR: [
-                    { displayName: { contains: filters.search } },
-                    { fullName: { contains: filters.search } },
-                    { username: { contains: filters.search } },
-                  ],
-                },
-              },
-            },
-          ],
-        }
-      : {}),
-    ...(filters.genre ? { genre: filters.genre } : {}),
-    ...(filters.contentRating ? { contentRating: filters.contentRating } : {}),
-    ...(filters.reviewStatus
-      ? { editorReviewStatus: filters.reviewStatus }
-      : {}),
+  return {
+    authorName: work.author.displayName ?? work.author.fullName,
+    authorUsername: work.author.username,
+    chapterCount: work.chapters.length,
+    commentCount: work._count.comments,
+    completedAt: progress?.completedAt?.toISOString() ?? null,
+    contentRating: work.contentRating,
+    coverUrl: work.coverUrl,
+    description: work.description,
+    editorReviewStatus: work.editorReviewStatus,
+    favoriteCount: work._count.favorites,
+    genre: work.genre,
+    id: work.id,
+    isFavorite: work.favorites.length > 0,
+    language: work.language,
+    lastReadLabel: progress?.chapter.title ?? null,
+    progressPercent: progress?.progressPercent ?? null,
+    publishedAt: work.publishedAt?.toISOString() ?? null,
+    readerCount: work._count.readingProgress,
+    readingHref: progress
+      ? `/oku/${work.slug}/bolum-${progress.chapter.position}`
+      : firstChapter
+        ? `/oku/${work.slug}/bolum-${firstChapter.position}`
+        : null,
+    readingState: progress
+      ? progress.completed
+        ? "completed"
+        : "in_progress"
+      : "unread",
+    slug: work.slug,
+    title: work.title,
+    totalWords: work.chapters.reduce(
+      (total, chapter) => total + countWords(chapter.content),
+      0,
+    ),
+    updatedAt: work.updatedAt.toISOString(),
   };
+}
 
-  const [totalCount, favoriteCount] = await Promise.all([
-    prisma.work.count({ where }),
-    prisma.favorite.count({ where: { userId: profile.id } }),
-  ]);
-  const totalPages = Math.max(1, Math.ceil(totalCount / READER_LIST_PAGE_SIZE));
-  const currentPage = Math.min(filters.page, totalPages);
-
-  const works = await prisma.work.findMany({
+function fetchWorks(
+  where: Prisma.WorkWhereInput,
+  userId: string,
+  orderBy: Prisma.WorkOrderByWithRelationInput[],
+  pagination?: { skip: number; take: number },
+) {
+  return prisma.work.findMany({
     where,
     include: {
       _count: {
@@ -144,12 +135,12 @@ export default async function ReaderExplorePage({
         },
       },
       favorites: {
-        where: { userId: profile.id },
+        where: { userId },
         select: { id: true },
       },
       readingProgress: {
         where: {
-          userId: profile.id,
+          userId,
           chapter: {
             is: {
               archivedAt: null,
@@ -173,56 +164,95 @@ export default async function ReaderExplorePage({
         take: 1,
       },
     },
-    orderBy:
-      filters.sort === "updated"
-        ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
-        : [{ publishedAt: "desc" }, { createdAt: "desc" }],
-    skip: (currentPage - 1) * READER_LIST_PAGE_SIZE,
-    take: READER_LIST_PAGE_SIZE,
+    orderBy,
+    ...(pagination ?? {}),
   });
+}
 
-  const rows: ReaderWorkRow[] = works.map((work) => {
-    const firstChapter = work.chapters[0] ?? null;
-    const progress = work.readingProgress[0] ?? null;
+export default async function ReaderExplorePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const profile = await getCurrentProfile();
 
-    return {
-      authorName: work.author.displayName ?? work.author.fullName,
-      authorUsername: work.author.username,
-      chapterCount: work.chapters.length,
-      commentCount: work._count.comments,
-      completedAt: progress?.completedAt?.toISOString() ?? null,
-      contentRating: work.contentRating,
-      coverUrl: work.coverUrl,
-      description: work.description,
-      editorReviewStatus: work.editorReviewStatus,
-      favoriteCount: work._count.favorites,
-      genre: work.genre,
-      id: work.id,
-      isFavorite: work.favorites.length > 0,
-      language: work.language,
-      lastReadLabel: progress?.chapter.title ?? null,
-      progressPercent: progress?.progressPercent ?? null,
-      publishedAt: work.publishedAt?.toISOString() ?? null,
-      readerCount: work._count.readingProgress,
-      readingHref: progress
-        ? `/oku/${work.slug}/bolum-${progress.chapter.position}`
-        : firstChapter
-          ? `/oku/${work.slug}/bolum-${firstChapter.position}`
-          : null,
-      readingState: progress
-        ? progress.completed
-          ? "completed"
-          : "in_progress"
-        : "unread",
-      slug: work.slug,
-      title: work.title,
-      totalWords: work.chapters.reduce(
-        (total, chapter) => total + countWords(chapter.content),
-        0,
-      ),
-      updatedAt: work.updatedAt.toISOString(),
-    };
-  });
+  if (!profile) redirect("/giris?sonraki=/kesfet");
+  if (!canAccessReaderWorkspace(profile.role)) {
+    redirect("/erisim-reddedildi?kaynak=reader");
+  }
+
+  const adultAccess = await getAdultContentAccess(profile.id);
+  const ratingOptions = visibleMemberContentRatings(
+    adultAccess.canAccessAdultContent,
+  );
+  const params = await searchParams;
+  const { enabledFilterIds, filters } = await parseManagedReaderStandardFilters(
+    "reader-work-discovery",
+    params,
+    ratingOptions,
+    sortOptions,
+    "newest",
+  );
+
+  const where: Prisma.WorkWhereInput = {
+    ...commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
+    ...(filters.search
+      ? {
+          OR: [
+            { title: { contains: filters.search } },
+            { subtitle: { contains: filters.search } },
+            {
+              author: {
+                is: {
+                  OR: [
+                    { displayName: { contains: filters.search } },
+                    { fullName: { contains: filters.search } },
+                    { username: { contains: filters.search } },
+                  ],
+                },
+              },
+            },
+          ],
+        }
+      : {}),
+    ...(filters.genre ? { genre: filters.genre } : {}),
+    ...(filters.contentRating ? { contentRating: filters.contentRating } : {}),
+    ...(filters.reviewStatus
+      ? { editorReviewStatus: filters.reviewStatus }
+      : {}),
+  };
+  const orderBy: Prisma.WorkOrderByWithRelationInput[] =
+    filters.sort === "updated"
+      ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
+      : [{ publishedAt: "desc" }, { createdAt: "desc" }];
+  const usesAdvancedFilters = hasDiscoveryAdvancedFilters(filters.advanced);
+  const favoriteCount = await prisma.favorite.count({ where: { userId: profile.id } });
+
+  let rows: ReaderWorkRow[];
+  let totalCount: number;
+  let currentPage: number;
+  let totalPages: number;
+
+  if (usesAdvancedFilters) {
+    const allWorks = await fetchWorks(where, profile.id, orderBy);
+    const allRows = allWorks.map(mapReaderWork).filter((work) => readerWorkMatches(work, filters));
+    totalCount = allRows.length;
+    totalPages = Math.max(1, Math.ceil(totalCount / READER_LIST_PAGE_SIZE));
+    currentPage = Math.min(filters.page, totalPages);
+    rows = allRows.slice(
+      (currentPage - 1) * READER_LIST_PAGE_SIZE,
+      currentPage * READER_LIST_PAGE_SIZE,
+    );
+  } else {
+    totalCount = await prisma.work.count({ where });
+    totalPages = Math.max(1, Math.ceil(totalCount / READER_LIST_PAGE_SIZE));
+    currentPage = Math.min(filters.page, totalPages);
+    const pageWorks = await fetchWorks(where, profile.id, orderBy, {
+      skip: (currentPage - 1) * READER_LIST_PAGE_SIZE,
+      take: READER_LIST_PAGE_SIZE,
+    });
+    rows = pageWorks.map(mapReaderWork);
+  }
 
   const normalizedFilters = { ...filters, page: currentPage };
   const pageHref = (page: number) =>
@@ -279,6 +309,10 @@ export default async function ReaderExplorePage({
         }
       : null,
   ].filter((item): item is ReaderActiveFilter => item !== null);
+  const advancedFilterCount = discoveryAdvancedFilterChips(
+    filters.advanced,
+    enabledFilterIds,
+  ).length;
   const returnTo = pageHref(currentPage);
 
   return (
@@ -306,7 +340,7 @@ export default async function ReaderExplorePage({
               <span>Eşleşen eser</span>
             </div>
             <div>
-              <strong>{activeFilters.length}</strong>
+              <strong>{activeFilters.length + advancedFilterCount}</strong>
               <span>Aktif filtre</span>
             </div>
             <div>
@@ -332,6 +366,7 @@ export default async function ReaderExplorePage({
 
         <ReaderFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={filters.advanced}
           clearHref="/kesfet"
           contentRating={filters.contentRating}
           genre={filters.genre}
@@ -343,6 +378,7 @@ export default async function ReaderExplorePage({
           searchPlaceholder="Eser, yazar veya rumuz ara"
           sort={filters.sort}
           sortOptions={sortOptions}
+          standardFilters={normalizedFilters}
         />
 
         <ReaderResultSummary

@@ -97,7 +97,10 @@ function favoriteHref(type: FavoriteType, filters: FavoriteFilters) {
   return query ? `/favorilerim?${query}` : "/favorilerim";
 }
 
-function matchesSearch(search: string | undefined, values: Array<string | null | undefined>) {
+function matchesSearch(
+  search: string | undefined,
+  values: Array<string | null | undefined>,
+) {
   if (!search) return true;
   const needle = search.toLocaleLowerCase("tr-TR");
   return values.some((value) =>
@@ -135,9 +138,7 @@ export default async function ReaderFavoritesPage({
   const workRatingOptions = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
   );
-  const authorRatingOptions = publicStoredWorkContentRatings.filter(
-    (rating) => rating !== "adult_18",
-  );
+  const authorRatingOptions = publicStoredWorkContentRatings;
   const workContentRating =
     type === "work" &&
     isMemberStoredWorkContentRating(params.hitapYasi) &&
@@ -145,9 +146,7 @@ export default async function ReaderFavoritesPage({
       ? params.hitapYasi
       : undefined;
   const authorContentRating =
-    type === "author" &&
-    isPublicStoredWorkContentRating(params.hitapYasi) &&
-    params.hitapYasi !== "adult_18"
+    type === "author" && isPublicStoredWorkContentRating(params.hitapYasi)
       ? params.hitapYasi
       : undefined;
   const contentRating = workContentRating ?? authorContentRating;
@@ -312,20 +311,27 @@ export default async function ReaderFavoritesPage({
 
         <nav aria-label="Favori türü" className="reader-favorites-tabs">
           <Link
-            className={type === "work" ? "button button--primary" : "button button--ghost"}
+            className={
+              type === "work" ? "button button--primary" : "button button--ghost"
+            }
             href="/favorilerim"
           >
             Eserler
           </Link>
           <Link
-            className={type === "author" ? "button button--primary" : "button button--ghost"}
+            className={
+              type === "author" ? "button button--primary" : "button button--ghost"
+            }
             href="/favorilerim?tip=yazar"
           >
             Yazarlar
           </Link>
         </nav>
 
-        <section className="reader-discovery-console" aria-label="Favoriler filtre masası">
+        <section
+          aria-label="Favoriler filtre masası"
+          className="reader-discovery-console"
+        >
           <header className="reader-discovery-console__header">
             <div>
               <span>Filtre masası</span>
@@ -335,17 +341,31 @@ export default async function ReaderFavoritesPage({
                   : "Favori eserlerinizi daraltın"}
               </strong>
             </div>
-            {hasFilters ? <Link href={type === "author" ? "/favorilerim?tip=yazar" : "/favorilerim"}>Tüm filtreleri temizle</Link> : null}
+            {hasFilters ? (
+              <Link
+                href={
+                  type === "author" ? "/favorilerim?tip=yazar" : "/favorilerim"
+                }
+              >
+                Tüm filtreleri temizle
+              </Link>
+            ) : null}
           </header>
 
           <form className="editor-filters reader-discovery-filters">
-            {type === "author" ? <input name="tip" type="hidden" value="yazar" /> : null}
+            {type === "author" ? (
+              <input name="tip" type="hidden" value="yazar" />
+            ) : null}
             <label className="reader-discovery-filter--search">
               <span>Arama</span>
               <input
                 defaultValue={search}
                 name="arama"
-                placeholder={type === "author" ? "Yazar, rumuz veya eser ara" : "Eser, yazar veya rumuz ara"}
+                placeholder={
+                  type === "author"
+                    ? "Yazar, rumuz veya eser ara"
+                    : "Eser, yazar veya rumuz ara"
+                }
                 type="search"
               />
             </label>
@@ -381,7 +401,9 @@ export default async function ReaderFavoritesPage({
                 <option value="not_requested">Henüz incelenmedi</option>
                 <option value="requested">İnceleme talep edildi</option>
                 <option value="in_progress">İlk editörde</option>
-                <option value="awaiting_second_editor">İkinci editör bekleniyor</option>
+                <option value="awaiting_second_editor">
+                  İkinci editör bekleniyor
+                </option>
                 <option value="second_in_progress">İkinci editörde</option>
                 <option value="completed">İncelendi</option>
               </select>
@@ -410,7 +432,11 @@ export default async function ReaderFavoritesPage({
               {hasFilters ? (
                 <Link
                   className="button button--ghost"
-                  href={type === "author" ? "/favorilerim?tip=yazar" : "/favorilerim"}
+                  href={
+                    type === "author"
+                      ? "/favorilerim?tip=yazar"
+                      : "/favorilerim"
+                  }
                 >
                   Temizle
                 </Link>
@@ -419,7 +445,10 @@ export default async function ReaderFavoritesPage({
           </form>
 
           {activeFilters.length > 0 ? (
-            <div className="reader-discovery-active-filters" aria-label="Aktif filtreler">
+            <div
+              aria-label="Aktif filtreler"
+              className="reader-discovery-active-filters"
+            >
               <span>Aktif</span>
               {activeFilters.map((item) => (
                 <Link href={item.href} key={`${item.label}-${item.href}`}>
@@ -437,9 +466,11 @@ export default async function ReaderFavoritesPage({
           )}
         </section>
 
-        <section className="reader-discovery-summary" aria-live="polite">
+        <section aria-live="polite" className="reader-discovery-summary">
           <span>Masadaki sonuç</span>
-          <strong>{resultCount} {type === "author" ? "yazar" : "eser"}</strong>
+          <strong>
+            {resultCount} {type === "author" ? "yazar" : "eser"}
+          </strong>
         </section>
 
         {type === "work" ? (
@@ -449,12 +480,16 @@ export default async function ReaderFavoritesPage({
                 ? "Filtreleri değiştirerek favori eserleriniz içinde yeniden deneyin."
                 : "Keşfet veya eser sayfasından eserleri favorilerinize ekleyerek okuma listenizi oluşturabilirsiniz."
             }
-            emptyTitle={hasFilters ? "Eşleşen favori eser bulunamadı" : "Henüz favori eserin yok"}
+            emptyTitle={
+              hasFilters
+                ? "Eşleşen favori eser bulunamadı"
+                : "Henüz favori eserin yok"
+            }
             returnTo={returnTo}
             rows={rows}
           />
         ) : authors.length > 0 ? (
-          <section className="reader-favorite-authors" aria-label="Favori yazarlar">
+          <section aria-label="Favori yazarlar" className="reader-favorite-authors">
             {authors.map((author) => {
               const name = author.displayName ?? author.fullName;
               const latest = author.works[0] ?? null;
@@ -464,7 +499,9 @@ export default async function ReaderFavoritesPage({
                   <div className="reader-favorite-author__identity">
                     <h3>{name}</h3>
                     <p>
-                      {author.username ? `@${author.username.replace(/^@/u, "")}` : "İlkOku yazarı"}
+                      {author.username
+                        ? `@${author.username.replace(/^@/u, "")}`
+                        : "İlkOku yazarı"}
                       {` · ${author._count.works} eşleşen eser`}
                     </p>
                     {latest ? (
@@ -504,7 +541,11 @@ export default async function ReaderFavoritesPage({
           </section>
         ) : (
           <div className="workspace-list-empty">
-            <h2>{hasFilters ? "Eşleşen favori yazar bulunamadı" : "Henüz favori yazarın yok"}</h2>
+            <h2>
+              {hasFilters
+                ? "Eşleşen favori yazar bulunamadı"
+                : "Henüz favori yazarın yok"}
+            </h2>
             <p>
               {hasFilters
                 ? "Filtreleri değiştirerek favori yazarlarınız içinde yeniden deneyin."

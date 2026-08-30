@@ -3,6 +3,11 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import {
+  hasDiscoveryAdvancedFilters,
+  matchesDiscoveryAdvancedAuthorFilters,
+  type DiscoveryAdvancedFilters,
+} from "@/lib/discovery-advanced-filters";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { availableGenreLabels } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
@@ -30,6 +35,8 @@ export interface PublisherSavedAuthorRow {
   bio: string | null;
   city: string | null;
   commentCount: number;
+  completedWorkCount: number;
+  country: string | null;
   favoriteCount: number;
   genres: string[];
   id: string;
@@ -80,6 +87,7 @@ const authorSelect = {
   profile: {
     select: {
       city: true,
+      country: true,
     },
   },
   publicId: true,
@@ -93,6 +101,7 @@ type SavedRecord = {
     id: string;
     profile: {
       city: string | null;
+      country: string | null;
     } | null;
     publicId: string;
     username: string | null;
@@ -100,6 +109,155 @@ type SavedRecord = {
   createdAt: Date;
   id: string;
 };
+
+const authorWorkSelect = {
+  _count: {
+    select: {
+      comments: {
+        where: {
+          deletedAt: null,
+          status: "visible" as const,
+        },
+      },
+      favorites: true,
+      readingProgress: true,
+    },
+  },
+  authorId: true,
+  chapters: {
+    where: { archivedAt: null },
+    orderBy: { position: "asc" as const },
+    select: {
+      id: true,
+      position: true,
+      publishedAt: true,
+      status: true,
+    },
+  },
+  editorReviewStatus: true,
+  genre: true,
+  id: true,
+  slug: true,
+  title: true,
+} satisfies Prisma.WorkSelect;
+
+type AuthorWork = Prisma.WorkGetPayload<{ select: typeof authorWorkSelect }>;
+
+function mapSavedRows(
+  records: SavedRecord[],
+  works: AuthorWork[],
+): PublisherSavedAuthorRow[] {
+  const worksByAuthor = new Map<string, AuthorWork[]>();
+  for (const work of works) {
+    const current = worksByAuthor.get(work.authorId) ?? [];
+    current.push(work);
+    worksByAuthor.set(work.authorId, current);
+  }
+
+  return records.map((record) => {
+    const authorWorks = worksByAuthor.get(record.author.id) ?? [];
+    const completedWorkCount = authorWorks.filter((work) => {
+      const publishedChapters = work.chapters.filter(
+        (chapter) =>
+          chapter.status === "published" && chapter.publishedAt !== null,
+      );
+      const hasPendingChapter = work.chapters.some(
+        (chapter) =>
+          chapter.status !== "published" || chapter.publishedAt === null,
+      );
+      return publishedChapters.length > 0 && !hasPendingChapter;
+    }).length;
+
+    return {
+      alias: publicWriterAlias(record.author),
+      bio: record.author.bio,
+      city: record.author.profile?.city ?? null,
+      commentCount: authorWorks.reduce(
+        (total, work) => total + work._count.comments,
+        0,
+      ),
+      completedWorkCount,
+      country: record.author.profile?.country ?? null,
+      favoriteCount: authorWorks.reduce(
+        (total, work) => total + work._count.favorites,
+        0,
+      ),
+      genres: availableGenreLabels(authorWorks.map((work) => work.genre)),
+      id: record.author.id,
+      latestWorks: authorWorks.slice(0, 3).map((work) => {
+        const publishedChapters = work.chapters.filter(
+          (chapter) =>
+            chapter.status === "published" && chapter.publishedAt !== null,
+        );
+        return {
+          chapterCount: publishedChapters.length,
+          firstChapterPosition: publishedChapters[0]?.position ?? null,
+          genre: work.genre,
+          id: work.id,
+          slug: work.slug,
+          title: work.title,
+        };
+      }),
+      name: publicWriterName(record.author),
+      publicId: record.author.publicId,
+      publicWorkCount: authorWorks.length,
+      readerCount: authorWorks.reduce(
+        (total, work) => total + work._count.readingProgress,
+        0,
+      ),
+      recordId: record.id,
+      reviewedWorkCount: authorWorks.filter(
+        (work) => work.editorReviewStatus === "completed",
+      ).length,
+      savedAt: record.createdAt.toISOString(),
+    };
+  });
+}
+
+function matchesAdvancedAuthor(
+  row: PublisherSavedAuthorRow,
+  filters: DiscoveryAdvancedFilters,
+) {
+  return matchesDiscoveryAdvancedAuthorFilters(
+    {
+      commentCount: row.commentCount,
+      completedWorkCount: row.completedWorkCount,
+      country: row.country,
+      favoriteCount: row.favoriteCount,
+      publicWorkCount: row.publicWorkCount,
+      readerCount: row.readerCount,
+      reviewedWorkCount: row.reviewedWorkCount,
+    },
+    filters,
+  );
+}
+
+async function getRecords(
+  publisherId: string,
+  authorWhere: Prisma.UserWhereInput,
+  mode: PublisherAuthorSavedMode,
+  pagination?: { skip: number; take: number },
+): Promise<SavedRecord[]> {
+  const common = {
+    orderBy: { createdAt: "desc" as const },
+    ...(pagination ?? {}),
+    select: {
+      author: { select: authorSelect },
+      createdAt: true,
+      id: true,
+    },
+  };
+
+  return mode === "like"
+    ? prisma.publisherAuthorLike.findMany({
+        where: { author: authorWhere, publisherId },
+        ...common,
+      })
+    : prisma.publisherAuthorFavorite.findMany({
+        where: { author: authorWhere, publisherId },
+        ...common,
+      });
+}
 
 export async function getPublisherSavedAuthors(
   publisherId: string,
@@ -148,104 +306,63 @@ export async function getPublisherSavedAuthors(
         }
       : {}),
   };
+  const usesAdvancedFilters = hasDiscoveryAdvancedFilters(filters.advanced);
 
-  const totalCount =
-    mode === "like"
-      ? await prisma.publisherAuthorLike.count({
+  let rows: PublisherSavedAuthorRow[];
+  let totalCount: number;
+  let totalPages: number;
+  let currentPage: number;
+
+  if (usesAdvancedFilters) {
+    const allRecords = await getRecords(publisherId, authorWhere, mode);
+    const authorIds = allRecords.map((record) => record.author.id);
+    const works = authorIds.length
+      ? await prisma.work.findMany({
           where: {
-            author: authorWhere,
-            publisherId,
+            ...matchedWorkWhere,
+            authorId: { in: authorIds },
           },
+          orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+          select: authorWorkSelect,
         })
-      : await prisma.publisherAuthorFavorite.count({
+      : [];
+    const allRows = mapSavedRows(allRecords, works).filter((row) =>
+      matchesAdvancedAuthor(row, filters.advanced),
+    );
+    totalCount = allRows.length;
+    totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
+    currentPage = Math.min(filters.page, totalPages);
+    rows = allRows.slice(
+      (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+      currentPage * DISCOVERY_PAGE_SIZE,
+    );
+  } else {
+    totalCount =
+      mode === "like"
+        ? await prisma.publisherAuthorLike.count({
+            where: { author: authorWhere, publisherId },
+          })
+        : await prisma.publisherAuthorFavorite.count({
+            where: { author: authorWhere, publisherId },
+          });
+    totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
+    currentPage = Math.min(filters.page, totalPages);
+    const records = await getRecords(publisherId, authorWhere, mode, {
+      skip: (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+      take: DISCOVERY_PAGE_SIZE,
+    });
+    const authorIds = records.map((record) => record.author.id);
+    const works = authorIds.length
+      ? await prisma.work.findMany({
           where: {
-            author: authorWhere,
-            publisherId,
+            ...matchedWorkWhere,
+            authorId: { in: authorIds },
           },
-        });
-  const totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
-  const currentPage = Math.min(filters.page, totalPages);
-  const pagination = {
-    orderBy: { createdAt: "desc" as const },
-    skip: (currentPage - 1) * DISCOVERY_PAGE_SIZE,
-    take: DISCOVERY_PAGE_SIZE,
-  };
-
-  const records: SavedRecord[] =
-    mode === "like"
-      ? await prisma.publisherAuthorLike.findMany({
-          where: {
-            author: authorWhere,
-            publisherId,
-          },
-          ...pagination,
-          select: {
-            author: { select: authorSelect },
-            createdAt: true,
-            id: true,
-          },
+          orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+          select: authorWorkSelect,
         })
-      : await prisma.publisherAuthorFavorite.findMany({
-          where: {
-            author: authorWhere,
-            publisherId,
-          },
-          ...pagination,
-          select: {
-            author: { select: authorSelect },
-            createdAt: true,
-            id: true,
-          },
-        });
-
-  const authorIds = records.map((record) => record.author.id);
-  const works = authorIds.length
-    ? await prisma.work.findMany({
-        where: {
-          ...matchedWorkWhere,
-          authorId: { in: authorIds },
-        },
-        orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
-        select: {
-          _count: {
-            select: {
-              comments: {
-                where: {
-                  deletedAt: null,
-                  status: "visible",
-                },
-              },
-              favorites: true,
-              readingProgress: true,
-            },
-          },
-          authorId: true,
-          chapters: {
-            where: {
-              archivedAt: null,
-              publishedAt: { not: null },
-              status: "published",
-            },
-            orderBy: { position: "asc" },
-            select: {
-              id: true,
-              position: true,
-            },
-          },
-          editorReviewStatus: true,
-          genre: true,
-          id: true,
-          slug: true,
-          title: true,
-        },
-      })
-    : [];
-
-  const worksByAuthor = new Map<string, typeof works>();
-  for (const work of works) {
-    const current = worksByAuthor.get(work.authorId) ?? [];
-    current.push(work);
-    worksByAuthor.set(work.authorId, current);
+      : [];
+    rows = mapSavedRows(records, works);
   }
 
   const first =
@@ -258,45 +375,7 @@ export async function getPublisherSavedAuthors(
     currentPage,
     first,
     last,
-    rows: records.map((record) => {
-      const authorWorks = worksByAuthor.get(record.author.id) ?? [];
-
-      return {
-        alias: publicWriterAlias(record.author),
-        bio: record.author.bio,
-        city: record.author.profile?.city ?? null,
-        commentCount: authorWorks.reduce(
-          (total, work) => total + work._count.comments,
-          0,
-        ),
-        favoriteCount: authorWorks.reduce(
-          (total, work) => total + work._count.favorites,
-          0,
-        ),
-        genres: availableGenreLabels(authorWorks.map((work) => work.genre)),
-        id: record.author.id,
-        latestWorks: authorWorks.slice(0, 3).map((work) => ({
-          chapterCount: work.chapters.length,
-          firstChapterPosition: work.chapters[0]?.position ?? null,
-          genre: work.genre,
-          id: work.id,
-          slug: work.slug,
-          title: work.title,
-        })),
-        name: publicWriterName(record.author),
-        publicId: record.author.publicId,
-        publicWorkCount: authorWorks.length,
-        readerCount: authorWorks.reduce(
-          (total, work) => total + work._count.readingProgress,
-          0,
-        ),
-        recordId: record.id,
-        reviewedWorkCount: authorWorks.filter(
-          (work) => work.editorReviewStatus === "completed",
-        ).length,
-        savedAt: record.createdAt.toISOString(),
-      };
-    }),
+    rows,
     totalCount,
     totalPages,
   };

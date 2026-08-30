@@ -5,6 +5,8 @@ import { requireEditorProfile } from "@/features/editor-workspace/access";
 import { getCommonEditorDiscovery } from "@/features/editor-workspace/common-discovery-query";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorksTable } from "@/features/editor-workspace/components/EditorWorksTable";
+import { GENRE_LABELS } from "@/lib/genres";
+import { normalizeGenreLabel } from "@/lib/genre-system";
 import {
   isMemberStoredWorkContentRating,
   workContentRatingDetails,
@@ -38,6 +40,7 @@ export default async function EditorDiscoveryPage({
     adultAccess.canAccessAdultContent,
   );
   const parameters = await searchParams;
+  const genre = normalizeGenreLabel(parameters.tur);
   const requestedRating = isMemberStoredWorkContentRating(parameters.hitap)
     ? parameters.hitap
     : undefined;
@@ -47,7 +50,7 @@ export default async function EditorDiscoveryPage({
       : undefined;
   const works = await getCommonEditorDiscovery(profile.id, {
     contentRating,
-    genre: parameters.tur,
+    genre,
     language: parameters.dil,
     reviewStatus: parameters.durum,
     wordCount: parameters.kelime,
@@ -77,7 +80,14 @@ export default async function EditorDiscoveryPage({
         <form className="editor-filters">
           <label>
             <span>Tür</span>
-            <input defaultValue={parameters.tur} name="tur" placeholder="Örn. Roman" />
+            <select defaultValue={genre ?? ""} name="tur">
+              <option value="">Tümü</option>
+              {GENRE_LABELS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             <span>Dil</span>

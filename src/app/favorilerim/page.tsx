@@ -89,7 +89,8 @@ export default async function ReaderFavoritesPage({
     type === "author" ? publicStoredWorkContentRatings : workRatingOptions;
   const sortOptions = type === "author" ? authorSortOptions : workSortOptions;
   const defaultSort = type === "author" ? "recent" : "newest";
-  const fixedParams = type === "author" ? { tip: "yazar" } : {};
+  const fixedParams: Record<string, string> =
+    type === "author" ? { tip: "yazar" } : {};
   const clearHref = type === "author" ? "/favorilerim?tip=yazar" : "/favorilerim";
   const filters = parseReaderStandardFilters(
     params,

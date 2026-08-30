@@ -19,7 +19,7 @@ export function AgeVerificationForm({ returnTo }: { returnTo: string }) {
   );
 
   return (
-    <form action={action} className="profile-form">
+    <form action={action} className="age-verification-form">
       <input name="returnTo" type="hidden" value={returnTo} />
       <label className="field">
         <span className="field__label">Doğum tarihi</span>
@@ -31,7 +31,7 @@ export function AgeVerificationForm({ returnTo }: { returnTo: string }) {
           type="date"
         />
         <small>
-          Yaş uygunluğunuzu hesaplamak için kullanılır. Doğum tarihiniz public profilinizde gösterilmez.
+          Yalnızca yaş uygunluğunuzu hesaplamak için kullanılır; public profilinizde gösterilmez.
         </small>
       </label>
 

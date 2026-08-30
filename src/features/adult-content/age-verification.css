@@ -1,0 +1,178 @@
+.age-verification-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: start center;
+  padding: clamp(1.5rem, 5vw, 4rem) 1rem;
+  background:
+    radial-gradient(circle at 50% 0, color-mix(in srgb, var(--color-primary) 9%, transparent), transparent 28rem),
+    var(--color-background);
+}
+
+.age-verification-shell {
+  width: min(100%, 46rem);
+  display: grid;
+  gap: 1.1rem;
+}
+
+.age-verification-brand {
+  display: flex;
+  justify-content: center;
+}
+
+.age-verification-brand .brand {
+  width: auto;
+  min-height: 0;
+  padding: .35rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.age-verification-brand .brand__logo--desktop {
+  width: 7.5rem;
+  max-width: 7.5rem;
+  height: 7.5rem;
+}
+
+.age-verification-card {
+  padding: clamp(1.35rem, 3.5vw, 2rem);
+  border: 1px solid var(--color-border);
+  border-radius: 1.35rem;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-card) 97%, #111827),
+    var(--color-card)
+  );
+  box-shadow: var(--shadow-small);
+}
+
+.age-verification-heading {
+  display: grid;
+  gap: .55rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.age-verification-step {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.age-verification-heading h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.12;
+  letter-spacing: -.025em;
+}
+
+.age-verification-intro {
+  max-width: 39rem;
+  margin: 1.15rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: .92rem;
+  line-height: 1.65;
+}
+
+.age-verification-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.35rem;
+}
+
+.age-verification-form .field {
+  display: grid;
+  gap: .5rem;
+}
+
+.age-verification-form .field__label {
+  font-size: .82rem;
+  font-weight: 750;
+}
+
+.age-verification-form .field input[type="date"] {
+  width: 100%;
+  min-height: 3.1rem;
+  padding: .7rem .85rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: .8rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.age-verification-form .field input[type="date"]:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.age-verification-form .field small {
+  color: var(--color-text-secondary);
+  font-size: .75rem;
+  line-height: 1.5;
+}
+
+.age-verification-form .button {
+  width: 100%;
+  min-height: 3rem;
+  margin-top: .15rem;
+}
+
+.age-verification-back {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 1rem;
+  color: var(--color-text-secondary);
+  font-size: .82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.age-verification-back:hover {
+  color: var(--color-text);
+}
+
+.age-verification-back:focus-visible {
+  outline: none;
+  border-radius: .35rem;
+  box-shadow: var(--shadow-focus);
+}
+
+@media (max-width: 47.99rem) {
+  .age-verification-page {
+    padding: 1rem .75rem 1.5rem;
+  }
+
+  .age-verification-shell {
+    gap: .8rem;
+  }
+
+  .age-verification-brand .brand {
+    min-height: 0 !important;
+    padding: .25rem !important;
+  }
+
+  .age-verification-brand .brand__logo--desktop {
+    display: block;
+    width: 5.75rem !important;
+    max-width: 5.75rem !important;
+    height: 5.75rem !important;
+  }
+
+  .age-verification-brand .brand__logo--mobile {
+    display: none;
+  }
+
+  .age-verification-card {
+    padding: 1.15rem;
+    border-radius: 1.1rem;
+  }
+
+  .age-verification-intro {
+    font-size: .86rem;
+  }
+}

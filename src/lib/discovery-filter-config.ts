@@ -23,8 +23,33 @@ export type DiscoveryFilterConfiguration = {
   surfaces: ManagedDiscoverySurface[];
 };
 
+const unsupportedFiltersBySurface: Partial<
+  Record<string, readonly DiscoveryFilterId[]>
+> = {
+  "publisher-author-discovery": ["reviewStatus", "sort"],
+  "publisher-favorite-authors": ["reviewStatus", "sort"],
+  "publisher-following-authors": ["reviewStatus", "sort"],
+  "publisher-liked-authors": ["reviewStatus", "sort"],
+};
+
+function supportedSurface(surface: DiscoverySurface): DiscoverySurface {
+  const unsupported = new Set(
+    unsupportedFiltersBySurface[surface.id] ?? [],
+  );
+
+  if (unsupported.size === 0) return surface;
+
+  return {
+    ...surface,
+    availableFilters: surface.availableFilters.filter(
+      (filterId) => !unsupported.has(filterId),
+    ),
+  };
+}
+
 function getSurface(surfaceId: string) {
-  return discoverySurfaces.find((surface) => surface.id === surfaceId) ?? null;
+  const surface = discoverySurfaces.find((item) => item.id === surfaceId) ?? null;
+  return surface ? supportedSurface(surface) : null;
 }
 
 function isSupportedFilter(
@@ -75,7 +100,8 @@ export async function getDiscoveryFilterConfiguration(): Promise<DiscoveryFilter
 
   return {
     storageReady,
-    surfaces: discoverySurfaces.map((surface) => {
+    surfaces: discoverySurfaces.map((registeredSurface) => {
+      const surface = supportedSurface(registeredSurface);
       const activeFilters = effectiveFiltersFor(surface, rows);
       const activeSet = new Set(activeFilters);
 

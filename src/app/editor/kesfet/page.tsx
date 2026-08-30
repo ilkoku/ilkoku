@@ -1,22 +1,24 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+
+import {
+  DiscoveryPagination,
+  DiscoveryResultSummary,
+} from "@/components/discovery/DiscoveryListChrome";
 import "@/components/discovery/discovery-filter-desk.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
 import { getCommonEditorDiscovery } from "@/features/editor-workspace/common-discovery-query";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorksTable } from "@/features/editor-workspace/components/EditorWorksTable";
-import { GENRE_LABELS } from "@/lib/genres";
+import { getAdultContentAccess, visibleMemberContentRatings } from "@/lib/adult-content-access";
 import { normalizeGenreLabel } from "@/lib/genre-system";
+import { GENRE_LABELS } from "@/lib/genres";
 import {
   isMemberStoredWorkContentRating,
   workContentRatingDetails,
   type MemberStoredWorkContentRating,
 } from "@/lib/work-content-classification";
-import {
-  getAdultContentAccess,
-  visibleMemberContentRatings,
-} from "@/lib/adult-content-access";
 
 export const metadata: Metadata = {
   title: "Editör Keşfet | İlkOku",
@@ -25,6 +27,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 24;
 const languageFilters = ["tr", "en"] as const;
 const reviewFilters = [
   "not_requested",
@@ -78,7 +81,7 @@ function wordCountLabel(value: WordCountFilter) {
   return "80.000 üzeri";
 }
 
-function filterHref(filters: EditorExploreFilters) {
+function filterHref(filters: EditorExploreFilters, page = 1) {
   const params = new URLSearchParams();
 
   if (filters.genre) params.set("tur", filters.genre);
@@ -86,6 +89,7 @@ function filterHref(filters: EditorExploreFilters) {
   if (filters.contentRating) params.set("hitap", filters.contentRating);
   if (filters.wordCount) params.set("kelime", filters.wordCount);
   if (filters.reviewStatus) params.set("durum", filters.reviewStatus);
+  if (page > 1) params.set("sayfa", String(page));
 
   const query = params.toString();
   return query ? `/editor/kesfet?${query}` : "/editor/kesfet";
@@ -99,6 +103,7 @@ export default async function EditorDiscoveryPage({
     durum?: string;
     hitap?: string;
     kelime?: string;
+    sayfa?: string;
     tur?: string;
   }>;
 }) {
@@ -125,6 +130,8 @@ export default async function EditorDiscoveryPage({
     requestedRating && visibleRatings.includes(requestedRating)
       ? requestedRating
       : undefined;
+  const rawPage = Number.parseInt(parameters.sayfa ?? "", 10);
+  const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const filters: EditorExploreFilters = {
     contentRating,
     genre,
@@ -172,6 +179,13 @@ export default async function EditorDiscoveryPage({
     reviewStatus,
     wordCount,
   });
+  const totalCount = works.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const pageWorks = works.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   return (
     <AppShell profile={profile}>
@@ -289,19 +303,29 @@ export default async function EditorDiscoveryPage({
           )}
         </section>
 
-        <section className="role-filter-result" aria-live="polite">
-          <span>Masadaki sonuç</span>
-          <strong>{works.length} eser</strong>
-        </section>
+        <DiscoveryResultSummary
+          currentPage={currentPage}
+          noun="eser"
+          pageSize={PAGE_SIZE}
+          totalCount={totalCount}
+          visibleCount={pageWorks.length}
+        />
 
-        {works.length === 0 ? (
+        {pageWorks.length === 0 ? (
           <div className="editor-empty">
             <h2>Eşleşen eser bulunamadı</h2>
             <p>Filtreleri değiştirerek yeniden deneyin.</p>
           </div>
         ) : (
-          <EditorWorksTable currentEditorId={profile.id} works={works} />
+          <EditorWorksTable currentEditorId={profile.id} works={pageWorks} />
         )}
+
+        <DiscoveryPagination
+          ariaLabel="Editör keşif sayfalama"
+          currentPage={currentPage}
+          hrefForPage={(page) => filterHref(filters, page)}
+          totalPages={totalPages}
+        />
       </div>
     </AppShell>
   );

@@ -37,9 +37,7 @@ const reviewFilters = [
   "completed",
 ] as const;
 const sortFilters = ["recent", "most_works", "az"] as const;
-const readerAuthorContentRatings = publicStoredWorkContentRatings.filter(
-  (rating) => rating !== "adult_18",
-);
+const readerAuthorContentRatings = publicStoredWorkContentRatings;
 
 type ReviewFilter = (typeof reviewFilters)[number];
 type SortFilter = (typeof sortFilters)[number];
@@ -130,11 +128,9 @@ export default async function ReaderAuthorDiscoveryPage({
   const parameters = await searchParams;
   const search = parameters.arama?.trim().slice(0, 220);
   const genre = normalizeGenreLabel(parameters.tur);
-  const contentRating =
-    isPublicStoredWorkContentRating(parameters.hitapYasi) &&
-    parameters.hitapYasi !== "adult_18"
-      ? parameters.hitapYasi
-      : undefined;
+  const contentRating = isPublicStoredWorkContentRating(parameters.hitapYasi)
+    ? parameters.hitapYasi
+    : undefined;
   const reviewStatus = includesValue(reviewFilters, parameters.editor)
     ? parameters.editor
     : undefined;

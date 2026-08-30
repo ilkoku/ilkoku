@@ -165,10 +165,10 @@ export function PublisherWorksTable({
         genre: work.genre,
         href: `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`,
         id: work.id,
-        meta: `${languageLabel(work.language)} · ${dateLabel(work.publishedAt)}`,
+        meta: `${work.subtitle ? `${work.subtitle} · ` : ""}${languageLabel(work.language)} · ${dateLabel(work.publishedAt)}`,
         readerCount: work.readerCount,
         statusLabel: reviewLabels[work.editorReviewStatus],
-        statusMeta: `${work.completion === "completed" ? "Tamamlandı" : "Devam ediyor"} · ${work.hasPassportRecord ? "Pasaport kayıtlı" : "Pasaport bekliyor"}`,
+        statusMeta: `${work.completion === "completed" ? "Tamamlandı" : "Devam ediyor"} · ${work.hasPassportRecord ? "Pasaport kayıtlı" : "Pasaport bekliyor"} · ${work.versionCount} sürüm`,
         title: work.title,
       }))}
     />

@@ -1,5 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import {
   availableGenreLabels,
   normalizeGenreLabel,
@@ -10,7 +12,7 @@ import {
   type MemberStoredWorkContentRating,
 } from "@/lib/work-content-classification";
 
-export const PUBLISHER_AUTHOR_PAGE_SIZE = 24;
+export const PUBLISHER_AUTHOR_PAGE_SIZE = DISCOVERY_PAGE_SIZE;
 
 export interface PublisherAuthorDiscoveryFilters {
   city: string;
@@ -142,14 +144,6 @@ export async function getPublisherAuthorDiscovery(
     });
   }
 
-  if (filters.genre || contentRating) {
-    conditions.push({
-      works: {
-        some: matchedWorkWhere,
-      },
-    });
-  }
-
   if (filters.city) {
     conditions.push({
       profile: {
@@ -161,12 +155,10 @@ export async function getPublisherAuthorDiscovery(
   }
 
   const where: Prisma.UserWhereInput = {
-    deletedAt: null,
-    role: "writer",
-    status: "active",
-    works: {
-      some: matchedWorkWhere,
-    },
+    ...commonDiscoveryAuthorWhereFor(canAccessAdultContent, {
+      ...(filters.genre ? { genre: filters.genre } : {}),
+      ...(contentRating ? { contentRating } : {}),
+    }),
     ...(conditions.length > 0 ? { AND: conditions } : {}),
   };
 

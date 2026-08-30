@@ -34,6 +34,12 @@
   outline: none;
 }
 
+.reader-workdesk__continue:has(.workspace-empty)
+  .section-heading
+  .button--ghost {
+  display: none;
+}
+
 .reader-workdesk__hidden-work-label {
   display: grid;
   min-width: 0;

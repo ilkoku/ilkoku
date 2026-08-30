@@ -151,7 +151,7 @@ export default async function ReaderFavoritesPage({
             <p>
               Bir yazarı favorilediğinde burada görünür; yeni bir eser yayımladığında Bildirimler alanında haber alırsın.
             </p>
-            <Link className="button button--outline" href="/yazarlar">
+            <Link className="button button--outline" href="/yazar-kesfet">
               Yazarları keşfet
             </Link>
           </div>

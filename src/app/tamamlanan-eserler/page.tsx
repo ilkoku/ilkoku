@@ -75,7 +75,13 @@ export default async function CompletedWorksPage({
   const records = await getCompletedReadingForMember(profile.id);
 
   const mappedRows = records.map((progress) => {
-    const firstChapter = progress.work.chapters[0] ?? null;
+    const publishedChapters = progress.work.chapters.filter(
+      (chapter) => chapter.status === "published" && chapter.publishedAt !== null,
+    );
+    const firstChapter = publishedChapters[0] ?? null;
+    const hasPendingChapter = progress.work.chapters.some(
+      (chapter) => chapter.status !== "published" || chapter.publishedAt === null,
+    );
 
     return {
       completedAt: progress.completedAt,
@@ -83,18 +89,24 @@ export default async function CompletedWorksPage({
         authorName:
           progress.work.author.displayName ?? progress.work.author.fullName,
         authorUsername: progress.work.author.username,
-        chapterCount: progress.work.chapters.length,
+        chapterCount: publishedChapters.length,
         commentCount: progress.work._count.comments,
         completedAt: progress.completedAt?.toISOString() ?? null,
+        completionStatus:
+          publishedChapters.length > 0 && !hasPendingChapter ? "completed" : "ongoing",
         contentRating: progress.work.contentRating,
         coverUrl: progress.work.coverUrl,
         description: progress.work.description,
         editorReviewStatus: progress.work.editorReviewStatus,
         favoriteCount: progress.work._count.favorites,
         genre: progress.work.genre,
+        hasPassport:
+          progress.work._count.ownershipStamps > 0 ||
+          progress.work._count.versions > 0,
         id: progress.work.id,
         isFavorite: progress.work.favorites.length > 0,
         language: progress.work.language,
+        lastReadAt: progress.lastReadAt.toISOString(),
         lastReadLabel: progress.chapter.title,
         progressPercent: 100,
         publishedAt: progress.work.publishedAt?.toISOString() ?? null,
@@ -105,11 +117,12 @@ export default async function CompletedWorksPage({
         readingState: "completed" as const,
         slug: progress.work.slug,
         title: progress.work.title,
-        totalWords: progress.work.chapters.reduce(
+        totalWords: publishedChapters.reduce(
           (total, chapter) => total + countWords(chapter.content),
           0,
         ),
         updatedAt: progress.work.updatedAt.toISOString(),
+        versionCount: progress.work._count.versions,
       } satisfies ReaderWorkRow,
     };
   });

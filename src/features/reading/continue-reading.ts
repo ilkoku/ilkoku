@@ -62,12 +62,15 @@ function continueWorkSelect(userId: string) {
  * Anlamlı yüzdelik ilerleme ReadingProgress üzerinden gelir. Bir okur bölümü
  * açmış fakat 20 sn / %10 tracker eşiğini tamamlamadan ayrılmışsa ReadingAccess
  * güvenli geri dönüş kaynağıdır ve eser %0 ile masaya alınır.
+ *
+ * `take=null` tam çalışma masasını döndürür; dashboard gibi özet yüzeyler
+ * varsayılan sınırlı sonucu kullanmaya devam eder.
  */
 export async function getContinueReadingForMember(
   userId: string,
-  take = 6,
+  take: number | null = 6,
 ) {
-  const boundedTake = Math.min(100, Math.max(1, take));
+  const boundedTake = take === null ? null : Math.max(1, take);
   const canAccessAdultContent = (
     await getAdultContentAccess(userId)
   ).canAccessAdultContent;
@@ -96,19 +99,21 @@ export async function getContinueReadingForMember(
       progressPercent: true,
       work: { select: workSelect },
     },
-    take: boundedTake,
+    ...(boundedTake === null ? {} : { take: boundedTake }),
   });
 
   const rows = progressRecords.map((progress) => ({
     row: {
       chapter: progress.chapter,
+      lastReadAt: progress.lastReadAt,
       progressPercent: progress.progressPercent,
       work: progress.work,
     },
     seenAt: progress.lastReadAt,
   }));
 
-  if (rows.length < boundedTake) {
+  if (boundedTake === null || rows.length < boundedTake) {
+    const missingCount = boundedTake === null ? null : boundedTake - rows.length;
     const accessCandidates = await prisma.readingAccess.findMany({
       where: {
         userId,
@@ -134,7 +139,9 @@ export async function getContinueReadingForMember(
         lastSeenAt: true,
         work: { select: workSelect },
       },
-      take: Math.max(12, (boundedTake - rows.length) * 4),
+      ...(missingCount === null
+        ? {}
+        : { take: Math.max(12, missingCount * 4) }),
     });
 
     const seenWorkIds = new Set(rows.map(({ row }) => row.work.id));
@@ -146,18 +153,22 @@ export async function getContinueReadingForMember(
       rows.push({
         row: {
           chapter: access.chapter,
+          lastReadAt: access.lastSeenAt,
           progressPercent: 0,
           work: access.work,
         },
         seenAt: access.lastSeenAt,
       });
 
-      if (rows.length >= boundedTake) break;
+      if (boundedTake !== null && rows.length >= boundedTake) break;
     }
   }
 
-  return rows
-    .sort((left, right) => right.seenAt.getTime() - left.seenAt.getTime())
-    .slice(0, boundedTake)
-    .map(({ row }) => row);
+  const sortedRows = rows.sort(
+    (left, right) => right.seenAt.getTime() - left.seenAt.getTime(),
+  );
+  const selectedRows =
+    boundedTake === null ? sortedRows : sortedRows.slice(0, boundedTake);
+
+  return selectedRows.map(({ row }) => row);
 }

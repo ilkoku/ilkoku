@@ -3,6 +3,7 @@ import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncemen
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { PublicNavigationHistory } from "@/components/layout/PublicNavigationHistory";
 import { tr } from "@/content";
+import { siteContact, siteSocialUrls } from "@/lib/site-contact";
 import "./globals.css";
 import "./landing-theme.css";
 import "./landing-role-icons.css";
@@ -10,6 +11,7 @@ import "./landing-footer-pro.css";
 import "./landing-footer-tight.css";
 import "./landing-header-pro.css";
 import "./landing-account-bubble.css";
+import "./site-contact-links.css";
 
 const baseUrl = "https://ilkoku.com";
 
@@ -45,12 +47,28 @@ const organizationSchema = {
   "@id": `${baseUrl}/#organization`,
   name: tr.brand.name,
   url: baseUrl,
+  email: siteContact.generalEmail,
+  sameAs: siteSocialUrls,
   logo: {
     "@type": "ImageObject",
     url: `${baseUrl}/icons/ilkoku-512.png`,
     width: 512,
     height: 512,
   },
+  contactPoint: [
+    {
+      "@type": "ContactPoint",
+      contactType: "general inquiries",
+      email: siteContact.generalEmail,
+      availableLanguage: ["Turkish"],
+    },
+    {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: siteContact.supportEmail,
+      availableLanguage: ["Turkish"],
+    },
+  ],
 };
 
 const websiteSchema = {

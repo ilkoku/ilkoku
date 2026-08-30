@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
 import { AppShell } from "@/components/layout/AppShell";
 import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
@@ -11,19 +12,24 @@ import {
   ReaderWorksTable,
   type ReaderWorkRow,
 } from "@/features/reader/components/ReaderWorksTable";
+import {
+  READER_LIST_PAGE_SIZE,
+  ReaderFilterDesk,
+  ReaderPagination,
+  ReaderResultSummary,
+  parseReaderStandardFilters,
+  readerListHref,
+  readerReviewLabel,
+  type ReaderActiveFilter,
+  type ReaderSortOption,
+} from "@/features/reader/discovery-standard";
 import "@/features/reader/reader-discovery.css";
 import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
-import { normalizeGenreLabel } from "@/lib/genre-system";
-import { GENRE_LABELS } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
-import {
-  isMemberStoredWorkContentRating,
-  workContentRatingDetails,
-  type MemberStoredWorkContentRating,
-} from "@/lib/work-content-classification";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 export const metadata: Metadata = {
   description: "İlkOku'da yayımlanan eserleri keşfedin.",
@@ -32,96 +38,18 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 24;
-const readingFilters = ["unread", "in_progress", "completed"] as const;
-const reviewFilters = [
-  "not_requested",
-  "requested",
-  "in_progress",
-  "awaiting_second_editor",
-  "second_in_progress",
-  "completed",
-] as const;
-const sortFilters = ["newest", "updated"] as const;
-
-type ReadingFilter = (typeof readingFilters)[number];
-type ReviewFilter = (typeof reviewFilters)[number];
-type SortFilter = (typeof sortFilters)[number];
-
-type ReaderExploreFilters = {
-  contentRating?: MemberStoredWorkContentRating;
-  favoritesOnly: boolean;
-  genre?: string;
-  language?: string;
-  readingState?: ReadingFilter;
-  reviewStatus?: ReviewFilter;
-  search?: string;
-  sort: SortFilter;
-};
-
-function includesValue<T extends string>(
-  values: readonly T[],
-  value: string | undefined,
-): value is T {
-  return Boolean(value && values.includes(value as T));
-}
-
-function languageLabel(value: string) {
-  if (value === "tr") return "Türkçe";
-  if (value === "en") return "İngilizce";
-  return value.toLocaleUpperCase("tr-TR");
-}
-
-function readingLabel(value: ReadingFilter) {
-  if (value === "unread") return "Henüz okumadıklarım";
-  if (value === "in_progress") return "Okumaya devam";
-  return "Tamamladıklarım";
-}
-
-function reviewLabel(value: ReviewFilter) {
-  switch (value) {
-    case "not_requested":
-      return "Henüz incelenmedi";
-    case "requested":
-      return "İnceleme talep edildi";
-    case "in_progress":
-      return "İlk editörde";
-    case "awaiting_second_editor":
-      return "İkinci editör bekleniyor";
-    case "second_in_progress":
-      return "İkinci editörde";
-    case "completed":
-      return "Editör incelemesi tamamlandı";
-  }
-}
-
-function pageHref(filters: ReaderExploreFilters, page: number) {
-  const params = new URLSearchParams();
-
-  if (filters.search) params.set("arama", filters.search);
-  if (filters.genre) params.set("tur", filters.genre);
-  if (filters.language) params.set("dil", filters.language);
-  if (filters.contentRating) params.set("hitapYasi", filters.contentRating);
-  if (filters.readingState) params.set("okuma", filters.readingState);
-  if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
-  if (filters.favoritesOnly) params.set("favori", "1");
-  if (filters.sort !== "newest") params.set("siralama", filters.sort);
-  if (page > 1) params.set("sayfa", String(page));
-
-  const query = params.toString();
-  return query ? `/kesfet?${query}` : "/kesfet";
-}
+const sortOptions = [
+  { label: "En yeni yayımlanan", value: "newest" },
+  { label: "Son güncellenen", value: "updated" },
+] as const satisfies readonly ReaderSortOption[];
 
 export default async function ReaderExplorePage({
   searchParams,
 }: {
   searchParams: Promise<{
     arama?: string;
-    dil?: string;
     editor?: string;
-    favori?: string;
     hitapYasi?: string;
-    okuma?: string;
     sayfa?: string;
     siralama?: string;
     tur?: string;
@@ -135,59 +63,30 @@ export default async function ReaderExplorePage({
   }
 
   const adultAccess = await getAdultContentAccess(profile.id);
-  const visibleRatings = visibleMemberContentRatings(
+  const ratingOptions = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
   );
-  const parameters = await searchParams;
-  const search = parameters.arama?.trim().slice(0, 220);
-  const genre = normalizeGenreLabel(parameters.tur);
-  const language = parameters.dil?.trim().slice(0, 10);
-  const requestedContentRating = isMemberStoredWorkContentRating(
-    parameters.hitapYasi,
-  )
-    ? parameters.hitapYasi
-    : undefined;
-  const contentRating =
-    requestedContentRating && visibleRatings.includes(requestedContentRating)
-      ? requestedContentRating
-      : undefined;
-  const readingState = includesValue(readingFilters, parameters.okuma)
-    ? parameters.okuma
-    : undefined;
-  const reviewStatus = includesValue(reviewFilters, parameters.editor)
-    ? parameters.editor
-    : undefined;
-  const favoritesOnly = parameters.favori === "1";
-  const sort = includesValue(sortFilters, parameters.siralama)
-    ? parameters.siralama
-    : "newest";
-  const rawPage = Number.parseInt(parameters.sayfa ?? "", 10);
-  const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
-  const filters: ReaderExploreFilters = {
-    contentRating,
-    favoritesOnly,
-    genre,
-    language,
-    readingState,
-    reviewStatus,
-    search,
-    sort,
-  };
+  const filters = parseReaderStandardFilters(
+    await searchParams,
+    ratingOptions,
+    sortOptions,
+    "newest",
+  );
 
   const where: Prisma.WorkWhereInput = {
     ...commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
-    ...(search
+    ...(filters.search
       ? {
           OR: [
-            { title: { contains: search } },
-            { subtitle: { contains: search } },
+            { title: { contains: filters.search } },
+            { subtitle: { contains: filters.search } },
             {
               author: {
                 is: {
                   OR: [
-                    { displayName: { contains: search } },
-                    { fullName: { contains: search } },
-                    { username: { contains: search } },
+                    { displayName: { contains: filters.search } },
+                    { fullName: { contains: filters.search } },
+                    { username: { contains: filters.search } },
                   ],
                 },
               },
@@ -195,36 +94,19 @@ export default async function ReaderExplorePage({
           ],
         }
       : {}),
-    ...(genre ? { genre } : {}),
-    ...(language ? { language } : {}),
-    ...(contentRating ? { contentRating } : {}),
-    ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
-    ...(favoritesOnly
-      ? { favorites: { some: { userId: profile.id } } }
+    ...(filters.genre ? { genre: filters.genre } : {}),
+    ...(filters.contentRating ? { contentRating: filters.contentRating } : {}),
+    ...(filters.reviewStatus
+      ? { editorReviewStatus: filters.reviewStatus }
       : {}),
-    ...(readingState === "unread"
-      ? { readingProgress: { none: { userId: profile.id } } }
-      : readingState === "in_progress"
-        ? {
-            readingProgress: {
-              some: { completed: false, userId: profile.id },
-            },
-          }
-        : readingState === "completed"
-          ? {
-              readingProgress: {
-                some: { completed: true, userId: profile.id },
-              },
-            }
-          : {}),
   };
 
   const [totalCount, favoriteCount] = await Promise.all([
     prisma.work.count({ where }),
     prisma.favorite.count({ where: { userId: profile.id } }),
   ]);
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const currentPage = Math.min(requestedPage, totalPages);
+  const totalPages = Math.max(1, Math.ceil(totalCount / READER_LIST_PAGE_SIZE));
+  const currentPage = Math.min(filters.page, totalPages);
 
   const works = await prisma.work.findMany({
     where,
@@ -251,14 +133,10 @@ export default async function ReaderExplorePage({
       chapters: {
         where: {
           archivedAt: null,
-          publishedAt: {
-            not: null,
-          },
+          publishedAt: { not: null },
           status: "published",
         },
-        orderBy: {
-          position: "asc",
-        },
+        orderBy: { position: "asc" },
         select: {
           content: true,
           position: true,
@@ -266,12 +144,8 @@ export default async function ReaderExplorePage({
         },
       },
       favorites: {
-        where: {
-          userId: profile.id,
-        },
-        select: {
-          id: true,
-        },
+        where: { userId: profile.id },
+        select: { id: true },
       },
       readingProgress: {
         where: {
@@ -279,16 +153,12 @@ export default async function ReaderExplorePage({
           chapter: {
             is: {
               archivedAt: null,
-              publishedAt: {
-                not: null,
-              },
+              publishedAt: { not: null },
               status: "published",
             },
           },
         },
-        orderBy: {
-          lastReadAt: "desc",
-        },
+        orderBy: { lastReadAt: "desc" },
         select: {
           chapter: {
             select: {
@@ -304,11 +174,11 @@ export default async function ReaderExplorePage({
       },
     },
     orderBy:
-      sort === "updated"
+      filters.sort === "updated"
         ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
         : [{ publishedAt: "desc" }, { createdAt: "desc" }],
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * READER_LIST_PAGE_SIZE,
+    take: READER_LIST_PAGE_SIZE,
   });
 
   const rows: ReaderWorkRow[] = works.map((work) => {
@@ -354,60 +224,62 @@ export default async function ReaderExplorePage({
     };
   });
 
-  const activeFilters = [
-    search
+  const normalizedFilters = { ...filters, page: currentPage };
+  const pageHref = (page: number) =>
+    readerListHref("/kesfet", normalizedFilters, page);
+  const activeFilters: ReaderActiveFilter[] = [
+    filters.search
       ? {
-          href: pageHref({ ...filters, search: undefined }, 1),
-          label: `Arama: ${search}`,
+          href: readerListHref(
+            "/kesfet",
+            { ...normalizedFilters, search: undefined },
+            1,
+          ),
+          label: `Arama: ${filters.search}`,
         }
       : null,
-    genre
+    filters.genre
       ? {
-          href: pageHref({ ...filters, genre: undefined }, 1),
-          label: `Tür: ${genre}`,
+          href: readerListHref(
+            "/kesfet",
+            { ...normalizedFilters, genre: undefined },
+            1,
+          ),
+          label: `Tür: ${filters.genre}`,
         }
       : null,
-    language
+    filters.contentRating
       ? {
-          href: pageHref({ ...filters, language: undefined }, 1),
-          label: `Dil: ${languageLabel(language)}`,
+          href: readerListHref(
+            "/kesfet",
+            { ...normalizedFilters, contentRating: undefined },
+            1,
+          ),
+          label: `Hitap: ${workContentRatingDetails[filters.contentRating].shortLabel}`,
         }
       : null,
-    contentRating
+    filters.reviewStatus
       ? {
-          href: pageHref({ ...filters, contentRating: undefined }, 1),
-          label: `Hitap: ${workContentRatingDetails[contentRating].shortLabel}`,
+          href: readerListHref(
+            "/kesfet",
+            { ...normalizedFilters, reviewStatus: undefined },
+            1,
+          ),
+          label: readerReviewLabel(filters.reviewStatus),
         }
       : null,
-    readingState
+    filters.sort !== "newest"
       ? {
-          href: pageHref({ ...filters, readingState: undefined }, 1),
-          label: readingLabel(readingState),
+          href: readerListHref(
+            "/kesfet",
+            { ...normalizedFilters, sort: "newest" },
+            1,
+          ),
+          label: "Sıralama: Son güncellenen",
         }
       : null,
-    reviewStatus
-      ? {
-          href: pageHref({ ...filters, reviewStatus: undefined }, 1),
-          label: reviewLabel(reviewStatus),
-        }
-      : null,
-    favoritesOnly
-      ? {
-          href: pageHref({ ...filters, favoritesOnly: false }, 1),
-          label: "Yalnız favorilerim",
-        }
-      : null,
-    sort !== "newest"
-      ? {
-          href: pageHref({ ...filters, sort: "newest" }, 1),
-          label: "Son güncellenen",
-        }
-      : null,
-  ].filter((item): item is { href: string; label: string } => item !== null);
-  const hasFilters = activeFilters.length > 0;
-  const returnTo = pageHref(filters, currentPage);
-  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const last = totalCount === 0 ? 0 : first + rows.length - 1;
+  ].filter((item): item is ReaderActiveFilter => item !== null);
+  const returnTo = pageHref(currentPage);
 
   return (
     <AppShell profile={profile}>
@@ -445,7 +317,7 @@ export default async function ReaderExplorePage({
         </section>
 
         {adultAccess.isAdult && !adultAccess.canAccessAdultContent ? (
-          <section className="reader-discovery-summary reader-discovery-summary--notice">
+          <section className="reader-discovery-notice">
             <span>18+ içerik tercihi</span>
             <strong>İkinci onay gerekli</strong>
             <small>18+ eserleri aynı Keşfet havuzunda görmek için açık onay verin.</small>
@@ -458,143 +330,27 @@ export default async function ReaderExplorePage({
           </section>
         ) : null}
 
-        <section className="reader-discovery-console" aria-label="Keşif filtre masası">
-          <header className="reader-discovery-console__header">
-            <div>
-              <span>Filtre masası</span>
-              <strong>Aradığınız eseri daraltın</strong>
-            </div>
-            {hasFilters ? <Link href="/kesfet">Tüm filtreleri temizle</Link> : null}
-          </header>
+        <ReaderFilterDesk
+          activeFilters={activeFilters}
+          clearHref="/kesfet"
+          contentRating={filters.contentRating}
+          genre={filters.genre}
+          heading="Aradığınız eseri daraltın"
+          hint="Filtre seçmeden tüm keşif havuzunu görüyorsunuz."
+          ratingOptions={ratingOptions}
+          reviewStatus={filters.reviewStatus}
+          search={filters.search}
+          searchPlaceholder="Eser, yazar veya rumuz ara"
+          sort={filters.sort}
+          sortOptions={sortOptions}
+        />
 
-          <nav aria-label="Hızlı keşif filtreleri" className="reader-discovery-presets">
-            <Link href="/kesfet?okuma=unread">Henüz okumadıklarım</Link>
-            <Link href="/kesfet?okuma=in_progress">Okumaya devam</Link>
-            <Link href="/kesfet?favori=1">Favorilerim</Link>
-            <Link href="/kesfet?editor=completed">Editör incelemesi tamamlananlar</Link>
-          </nav>
-
-          <form className="editor-filters reader-discovery-filters">
-            <label className="reader-discovery-filter--search">
-              <span>Arama</span>
-              <input
-                defaultValue={search}
-                name="arama"
-                placeholder="Eser, yazar veya rumuz ara"
-                type="search"
-              />
-            </label>
-
-            <label>
-              <span>Tür</span>
-              <select defaultValue={genre ?? ""} name="tur">
-                <option value="">Tüm türler</option>
-                {GENRE_LABELS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Dil</span>
-              <select defaultValue={language ?? ""} name="dil">
-                <option value="">Tüm diller</option>
-                <option value="tr">Türkçe</option>
-                <option value="en">İngilizce</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Hitap yaşı</span>
-              <select defaultValue={contentRating ?? ""} name="hitapYasi">
-                <option value="">Tümü</option>
-                {visibleRatings.map((rating) => (
-                  <option key={rating} value={rating}>
-                    {workContentRatingDetails[rating].shortLabel}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Okuma durumum</span>
-              <select defaultValue={readingState ?? ""} name="okuma">
-                <option value="">Tümü</option>
-                <option value="unread">Henüz okumadıklarım</option>
-                <option value="in_progress">Okumaya devam</option>
-                <option value="completed">Tamamladıklarım</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Editör durumu</span>
-              <select defaultValue={reviewStatus ?? ""} name="editor">
-                <option value="">Tümü</option>
-                <option value="not_requested">Henüz incelenmedi</option>
-                <option value="requested">İnceleme talep edildi</option>
-                <option value="in_progress">İlk editörde</option>
-                <option value="awaiting_second_editor">İkinci editör bekleniyor</option>
-                <option value="second_in_progress">İkinci editörde</option>
-                <option value="completed">İncelendi</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Favori durumu</span>
-              <select defaultValue={favoritesOnly ? "1" : ""} name="favori">
-                <option value="">Tümü</option>
-                <option value="1">Yalnız favorilerim</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Sıralama</span>
-              <select defaultValue={sort} name="siralama">
-                <option value="newest">En yeni yayımlanan</option>
-                <option value="updated">Son güncellenen</option>
-              </select>
-            </label>
-
-            <div className="reader-discovery-filter-actions">
-              <button className="button button--primary" type="submit">
-                Masayı Güncelle
-              </button>
-              {hasFilters ? (
-                <Link className="button button--ghost" href="/kesfet">
-                  Temizle
-                </Link>
-              ) : null}
-            </div>
-          </form>
-
-          {activeFilters.length > 0 ? (
-            <div className="reader-discovery-active-filters" aria-label="Aktif filtreler">
-              <span>Aktif</span>
-              {activeFilters.map((item) => (
-                <Link href={item.href} key={`${item.label}-${item.href}`}>
-                  {item.label}
-                  <b aria-hidden="true">×</b>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="reader-discovery-console__hint">
-              Filtre seçmeden tüm keşif havuzunu görüyorsunuz.
-            </p>
-          )}
-        </section>
-
-        <section className="reader-discovery-summary" aria-live="polite">
-          <span>Masadaki sonuç</span>
-          <strong>{totalCount} eser</strong>
-          <small>
-            {totalCount === 0
-              ? "Filtreleri değiştirerek yeniden deneyin."
-              : `${first}–${last} arası gösteriliyor. Eser adına dokunarak detay çekmecesini açabilirsiniz.`}
-          </small>
-        </section>
+        <ReaderResultSummary
+          currentPage={currentPage}
+          noun="eser"
+          totalCount={totalCount}
+          visibleCount={rows.length}
+        />
 
         <ReaderWorksTable
           emptyDescription="Arama ifadenizi veya filtreleri değiştirerek yeniden deneyin."
@@ -603,29 +359,12 @@ export default async function ReaderExplorePage({
           rows={rows}
         />
 
-        {totalCount > 0 ? (
-          <footer aria-label="Keşif sayfalama" className="reader-discovery-pagination">
-            <span>
-              Sayfa {currentPage} / {totalPages}
-            </span>
-            <div>
-              {currentPage > 1 ? (
-                <Link className="button button--ghost" href={pageHref(filters, currentPage - 1)}>
-                  Önceki
-                </Link>
-              ) : (
-                <span aria-disabled="true">Önceki</span>
-              )}
-              {currentPage < totalPages ? (
-                <Link className="button button--ghost" href={pageHref(filters, currentPage + 1)}>
-                  Sonraki
-                </Link>
-              ) : (
-                <span aria-disabled="true">Sonraki</span>
-              )}
-            </div>
-          </footer>
-        ) : null}
+        <ReaderPagination
+          ariaLabel="Keşif sayfalama"
+          currentPage={currentPage}
+          hrefForPage={pageHref}
+          totalPages={totalPages}
+        />
       </div>
     </AppShell>
   );

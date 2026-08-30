@@ -6,7 +6,7 @@
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.75fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.95fr);
   gap: 1.5rem;
   align-items: stretch;
   padding: 1.65rem;
@@ -89,13 +89,14 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
+  align-self: center;
 }
 
 .reader-workdesk__summary-card {
   display: flex;
-  min-height: 108px;
+  min-height: 112px;
   flex-direction: column;
   justify-content: space-between;
   padding: 1rem;
@@ -156,10 +157,6 @@
 @media (max-width: 1050px) {
   .reader-workdesk__hero {
     grid-template-columns: 1fr;
-  }
-
-  .reader-workdesk__summary {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .reader-workdesk__summary-card {

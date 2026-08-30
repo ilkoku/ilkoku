@@ -7,13 +7,16 @@ import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/features/dashboard/components/ProgressBar";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import { EditorReviewBadge } from "@/features/editor-workspace/components/EditorReviewBadge";
 import {
   getCompletedReading,
   getContinueReading,
   restartReadingAction,
 } from "@/features/reading/progress";
+import { getAdultContentAccess } from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 export const metadata: Metadata = {
   title: "Okuyucu Ana Sayfa | İlkOku",
@@ -73,20 +76,17 @@ export default async function ReaderHomePage() {
     );
   }
 
+  const adultAccess = await getAdultContentAccess(profile.id);
+
   const [
     publishedRecords,
     readingProgressRecords,
     completedReadingRecords,
   ] = await Promise.all([
     prisma.work.findMany({
-      where: {
-        archivedAt: null,
-        publishedAt: {
-          not: null,
-        },
-        status: "published",
-        visibility: "public",
-      },
+      where: commonDiscoveryWorkWhereFor(
+        adultAccess.canAccessAdultContent,
+      ),
       orderBy: {
         createdAt: "desc",
       },
@@ -113,6 +113,7 @@ export default async function ReaderHomePage() {
             position: true,
           },
         },
+        contentRating: true,
         editorReviewStatus: true,
         genre: true,
         id: true,
@@ -140,6 +141,8 @@ export default async function ReaderHomePage() {
       id: string;
       position: number;
     }>;
+    contentRating:
+      (typeof publishedRecords)[number]["contentRating"];
     editorReviewStatus:
       (typeof publishedRecords)[number]["editorReviewStatus"];
     genre: string | null;
@@ -196,6 +199,8 @@ export default async function ReaderHomePage() {
                 chapter.position,
             }),
           ),
+        contentRating:
+          progress.work.contentRating,
         editorReviewStatus:
           progress.work
             .editorReviewStatus,
@@ -231,6 +236,8 @@ export default async function ReaderHomePage() {
                 chapter.position,
             }),
           ),
+        contentRating:
+          progress.work.contentRating,
         editorReviewStatus:
           progress.work
             .editorReviewStatus,
@@ -467,6 +474,10 @@ export default async function ReaderHomePage() {
                           />
 
                           <span>
+                            Hitap yaşı: {workContentRatingDetails[work.contentRating].shortLabel}
+                          </span>
+
+                          <span>
                             {
                               work.chapters
                                 .length
@@ -487,6 +498,13 @@ export default async function ReaderHomePage() {
                         )}
 
                         <div className="book-card__actions">
+                          <Link
+                            className="button button--ghost"
+                            href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent("/okuyucu")}`}
+                          >
+                            Eser Pasaportu
+                          </Link>
+
                           {work.readingState ===
                           "completed" ? (
                             <form

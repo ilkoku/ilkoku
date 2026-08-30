@@ -1,0 +1,207 @@
+.discovery-role-work-table-shell {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 1rem;
+  background: rgba(22, 27, 35, 0.8);
+  box-shadow: var(--shadow-small);
+}
+
+.discovery-role-work-table-scroll {
+  overflow-x: auto;
+}
+
+.discovery-role-work-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+}
+
+.discovery-role-work-table th,
+.discovery-role-work-table td {
+  padding: 0.82rem 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  vertical-align: middle;
+  text-align: left;
+}
+
+.discovery-role-work-table th {
+  color: rgba(216, 220, 229, 0.48);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.discovery-role-work-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.discovery-role-work-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.discovery-role-work-table__work {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.discovery-role-work-table__cover {
+  display: grid;
+  width: 2.6rem;
+  height: 3.4rem;
+  place-items: center;
+  border: 1px solid rgba(142, 94, 232, 0.22);
+  border-radius: 0.5rem;
+  background: linear-gradient(145deg, rgba(112, 65, 202, 0.28), rgba(20, 24, 32, 0.82));
+  color: rgba(238, 232, 255, 0.82);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.discovery-role-work-table__work > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.12rem;
+}
+
+.discovery-role-work-table__work a {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 0.86rem;
+  font-weight: 760;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discovery-role-work-table__work a:hover {
+  color: #f0c94f;
+}
+
+.discovery-role-work-table__work span,
+.discovery-role-work-table__work small {
+  overflow: hidden;
+  color: rgba(216, 220, 229, 0.5);
+  font-size: 0.65rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discovery-role-work-table__taxonomy,
+.discovery-role-work-table__status {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.discovery-role-work-table__taxonomy strong,
+.discovery-role-work-table__status strong {
+  color: rgba(241, 243, 247, 0.9);
+  font-size: 0.74rem;
+}
+
+.discovery-role-work-table__taxonomy span,
+.discovery-role-work-table__status span {
+  color: rgba(216, 220, 229, 0.5);
+  font-size: 0.64rem;
+}
+
+.discovery-role-work-table__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.32rem;
+  margin: 0;
+}
+
+.discovery-role-work-table__metrics div {
+  display: grid;
+  gap: 0.08rem;
+  min-width: 3.1rem;
+  padding: 0.38rem 0.42rem;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 0.5rem;
+  background: rgba(8, 11, 15, 0.18);
+}
+
+.discovery-role-work-table__metrics dt {
+  color: rgba(216, 220, 229, 0.42);
+  font-size: 0.54rem;
+  font-weight: 700;
+}
+
+.discovery-role-work-table__metrics dd {
+  margin: 0;
+  color: rgba(242, 244, 247, 0.9);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.discovery-role-work-table__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.discovery-role-work-table__actions form {
+  margin: 0;
+}
+
+.discovery-role-work-table__actions .button,
+.discovery-role-work-table__actions .editor-table-action {
+  min-height: 2.05rem;
+  padding: 0.42rem 0.58rem;
+  font-size: 0.67rem;
+}
+
+@media (max-width: 47.99rem) {
+  .discovery-role-work-table {
+    min-width: 0;
+  }
+
+  .discovery-role-work-table thead {
+    display: none;
+  }
+
+  .discovery-role-work-table,
+  .discovery-role-work-table tbody,
+  .discovery-role-work-table tr,
+  .discovery-role-work-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .discovery-role-work-table tr {
+    padding: 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .discovery-role-work-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .discovery-role-work-table td {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, 0.36fr) minmax(0, 1fr);
+    gap: 0.7rem;
+    align-items: center;
+    padding: 0.45rem 0;
+    border: 0;
+  }
+
+  .discovery-role-work-table td::before {
+    color: rgba(216, 220, 229, 0.42);
+    content: attr(data-label);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .discovery-role-work-table__actions {
+    justify-content: flex-start;
+  }
+}

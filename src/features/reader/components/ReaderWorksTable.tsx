@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+
 import { toggleFavoriteAction } from "@/features/reader/favorites";
 import { restartReadingAction } from "@/features/reading/progress";
 import {
@@ -37,10 +38,7 @@ export type ReaderWorkRow = {
   publishedAt?: string | null;
   readerCount: number;
   readingHref?: string | null;
-  readingState?:
-    | "unread"
-    | "in_progress"
-    | "completed";
+  readingState?: "unread" | "in_progress" | "completed";
   slug: string;
   title: string;
   totalWords?: number;
@@ -112,12 +110,10 @@ function passportHref(slug: string, returnTo: string) {
 }
 
 function FavoriteToggle({
-  compact = false,
   iconOnly = false,
   returnTo,
   work,
 }: {
-  compact?: boolean;
   iconOnly?: boolean;
   returnTo: string;
   work: ReaderWorkRow;
@@ -133,9 +129,7 @@ function FavoriteToggle({
         className={
           iconOnly
             ? "workspace-row-action workspace-row-action--icon"
-            : compact
-              ? "workspace-row-action"
-              : "button button--outline"
+            : "button button--outline"
         }
         type="submit"
       >
@@ -161,11 +155,6 @@ export function ReaderWorksTable({
     () => rows.find((row) => row.id === selectedId) ?? null,
     [rows, selectedId],
   );
-  const compactDiscovery =
-    returnTo === "/kesfet" ||
-    returnTo.startsWith("/kesfet?") ||
-    returnTo === "/favorilerim" ||
-    returnTo.startsWith("/favorilerim?");
 
   useEffect(() => {
     function closeOnEscape(event: KeyboardEvent) {
@@ -192,198 +181,59 @@ export function ReaderWorksTable({
     >
       <div className="workspace-table-shell">
         <div className="workspace-table-scroll">
-          <table
-            className={`workspace-table${compactDiscovery ? " workspace-table--discovery" : ""}`}
-          >
+          <table className="workspace-table workspace-table--discovery">
             <thead>
-              {compactDiscovery ? (
-                <tr>
-                  <th>Eser</th>
-                  <th>Tür / Yaş</th>
-                  <th>İlerleme</th>
-                  <th>Bilgi</th>
-                  <th>İşlem</th>
-                </tr>
-              ) : (
-                <tr>
-                  <th>Kapak</th>
-                  <th>Eser</th>
-                  <th>Yazar</th>
-                  <th>Tür</th>
-                  <th>Hitap yaşı</th>
-                  <th>Bölüm</th>
-                  <th>İlerleme</th>
-                  <th>Okur</th>
-                  <th>Beğeni</th>
-                  <th>Yorum</th>
-                  <th>Editör</th>
-                  <th>İşlem</th>
-                </tr>
-              )}
+              <tr>
+                <th>Eser</th>
+                <th>Tür / Yaş</th>
+                <th>İlerleme</th>
+                <th>Bilgi</th>
+                <th>İşlem</th>
+              </tr>
             </thead>
             <tbody>
               {rows.map((work) => {
                 const isSelected = selectedId === work.id;
 
-                if (compactDiscovery) {
-                  return (
-                    <tr data-selected={isSelected ? "true" : undefined} key={work.id}>
-                      <td data-label="Eser">
-                        <div className="workspace-work-cell">
-                          <button
-                            aria-label={`${work.title} detaylarını göster`}
-                            className="workspace-cover-button"
-                            onClick={() => setSelectedId(work.id)}
-                            type="button"
-                          >
-                            {work.coverUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img alt="" src={work.coverUrl} />
-                            ) : (
-                              <span aria-hidden="true">İO</span>
-                            )}
-                          </button>
-                          <div className="workspace-work-cell__body">
-                            <button
-                              className="workspace-title-button"
-                              onClick={() => setSelectedId(work.id)}
-                              type="button"
-                            >
-                              {work.title}
-                            </button>
-                            <div className="workspace-work-cell__meta">
-                              <span>{work.authorName}</span>
-                              <span aria-hidden="true">·</span>
-                              <span>{formatNumber(work.chapterCount)} bölüm</span>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td data-label="Tür / Yaş">
-                        <div className="workspace-taxonomy-cell">
-                          <strong>{work.genre ?? "Belirtilmedi"}</strong>
-                          <span>{workContentRatingDetails[work.contentRating].shortLabel}</span>
-                        </div>
-                      </td>
-                      <td data-label="İlerleme">
-                        {typeof work.progressPercent === "number" ? (
-                          <div className="workspace-progress-cell">
-                            <span>{work.progressPercent}%</span>
-                            <i aria-hidden="true">
-                              <b style={{ width: `${work.progressPercent}%` }} />
-                            </i>
-                          </div>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td data-label="Bilgi">
-                        <div
-                          aria-label={`Okur ${formatNumber(work.readerCount)}, beğeni ${formatNumber(work.favoriteCount)}, yorum ${formatNumber(work.commentCount)}, editör ${shortReviewLabel(work.editorReviewStatus)}`}
-                          className="workspace-row-insights"
-                          tabIndex={0}
-                        >
-                          <span aria-hidden="true" className="workspace-row-insights__trigger">
-                            i
-                          </span>
-                          <div className="workspace-row-insights__bubble" role="tooltip">
-                            <strong>Hızlı bilgi</strong>
-                            <dl>
-                              <div>
-                                <dt>Okur</dt>
-                                <dd>{formatNumber(work.readerCount)}</dd>
-                              </div>
-                              <div>
-                                <dt>Beğeni</dt>
-                                <dd>{formatNumber(work.favoriteCount)}</dd>
-                              </div>
-                              <div>
-                                <dt>Yorum</dt>
-                                <dd>{formatNumber(work.commentCount)}</dd>
-                              </div>
-                              <div>
-                                <dt>Editör</dt>
-                                <dd>{shortReviewLabel(work.editorReviewStatus)}</dd>
-                              </div>
-                            </dl>
-                          </div>
-                        </div>
-                      </td>
-                      <td data-label="İşlem">
-                        <div className="workspace-row-actions workspace-row-actions--discovery">
-                          <button
-                            aria-expanded={isSelected}
-                            className="workspace-row-action"
-                            onClick={() => setSelectedId(work.id)}
-                            type="button"
-                          >
-                            Detay
-                          </button>
-                          <FavoriteToggle iconOnly returnTo={returnTo} work={work} />
-                          {work.readingState === "completed" ? (
-                            <form action={restartReadingAction}>
-                              <input name="workId" type="hidden" value={work.id} />
-                              <input name="returnTo" type="hidden" value={returnTo} />
-                              <button
-                                className="workspace-row-action workspace-row-action--primary"
-                                type="submit"
-                              >
-                                Yeniden Oku
-                              </button>
-                            </form>
-                          ) : (
-                            <Link
-                              className="workspace-row-action workspace-row-action--primary"
-                              href={appendReturnPath(
-                                work.readingHref ?? `/kitap/${work.slug}`,
-                                returnTo,
-                              )}
-                            >
-                              {work.readingHref
-                                ? typeof work.progressPercent === "number"
-                                  ? "Devam Et"
-                                  : "Oku"
-                                : "Aç"}
-                            </Link>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                }
-
                 return (
                   <tr data-selected={isSelected ? "true" : undefined} key={work.id}>
-                    <td data-label="Kapak">
-                      <button
-                        aria-label={`${work.title} detaylarını göster`}
-                        className="workspace-cover-button"
-                        onClick={() => setSelectedId(work.id)}
-                        type="button"
-                      >
-                        {work.coverUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img alt="" src={work.coverUrl} />
-                        ) : (
-                          <span aria-hidden="true">İO</span>
-                        )}
-                      </button>
-                    </td>
                     <td data-label="Eser">
-                      <button
-                        className="workspace-title-button"
-                        onClick={() => setSelectedId(work.id)}
-                        type="button"
-                      >
-                        {work.title}
-                      </button>
+                      <div className="workspace-work-cell">
+                        <button
+                          aria-label={`${work.title} detaylarını göster`}
+                          className="workspace-cover-button"
+                          onClick={() => setSelectedId(work.id)}
+                          type="button"
+                        >
+                          {work.coverUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img alt="" src={work.coverUrl} />
+                          ) : (
+                            <span aria-hidden="true">İO</span>
+                          )}
+                        </button>
+                        <div className="workspace-work-cell__body">
+                          <button
+                            className="workspace-title-button"
+                            onClick={() => setSelectedId(work.id)}
+                            type="button"
+                          >
+                            {work.title}
+                          </button>
+                          <div className="workspace-work-cell__meta">
+                            <span>{work.authorName}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{formatNumber(work.chapterCount)} bölüm</span>
+                          </div>
+                        </div>
+                      </div>
                     </td>
-                    <td data-label="Yazar">{work.authorName}</td>
-                    <td data-label="Tür">{work.genre ?? "Belirtilmedi"}</td>
-                    <td data-label="Hitap yaşı">
-                      {workContentRatingDetails[work.contentRating].shortLabel}
+                    <td data-label="Tür / Yaş">
+                      <div className="workspace-taxonomy-cell">
+                        <strong>{work.genre ?? "Belirtilmedi"}</strong>
+                        <span>{workContentRatingDetails[work.contentRating].shortLabel}</span>
+                      </div>
                     </td>
-                    <td data-label="Bölüm">{formatNumber(work.chapterCount)}</td>
                     <td data-label="İlerleme">
                       {typeof work.progressPercent === "number" ? (
                         <div className="workspace-progress-cell">
@@ -396,18 +246,40 @@ export function ReaderWorksTable({
                         "—"
                       )}
                     </td>
-                    <td data-label="Okur">{formatNumber(work.readerCount)}</td>
-                    <td data-label="Beğeni">{formatNumber(work.favoriteCount)}</td>
-                    <td data-label="Yorum">{formatNumber(work.commentCount)}</td>
-                    <td data-label="Editör">
-                      <span
-                        className={`workspace-review-status workspace-review-status--${work.editorReviewStatus}`}
+                    <td data-label="Bilgi">
+                      <div
+                        aria-label={`Okur ${formatNumber(work.readerCount)}, beğeni ${formatNumber(work.favoriteCount)}, yorum ${formatNumber(work.commentCount)}, editör ${shortReviewLabel(work.editorReviewStatus)}`}
+                        className="workspace-row-insights"
+                        tabIndex={0}
                       >
-                        {reviewLabel(work.editorReviewStatus)}
-                      </span>
+                        <span aria-hidden="true" className="workspace-row-insights__trigger">
+                          i
+                        </span>
+                        <div className="workspace-row-insights__bubble" role="tooltip">
+                          <strong>Hızlı bilgi</strong>
+                          <dl>
+                            <div>
+                              <dt>Okur</dt>
+                              <dd>{formatNumber(work.readerCount)}</dd>
+                            </div>
+                            <div>
+                              <dt>Beğeni</dt>
+                              <dd>{formatNumber(work.favoriteCount)}</dd>
+                            </div>
+                            <div>
+                              <dt>Yorum</dt>
+                              <dd>{formatNumber(work.commentCount)}</dd>
+                            </div>
+                            <div>
+                              <dt>Editör</dt>
+                              <dd>{shortReviewLabel(work.editorReviewStatus)}</dd>
+                            </div>
+                          </dl>
+                        </div>
+                      </div>
                     </td>
                     <td data-label="İşlem">
-                      <div className="workspace-row-actions">
+                      <div className="workspace-row-actions workspace-row-actions--discovery">
                         <button
                           aria-expanded={isSelected}
                           className="workspace-row-action"
@@ -416,13 +288,7 @@ export function ReaderWorksTable({
                         >
                           Detay
                         </button>
-                        <Link
-                          className="workspace-row-action"
-                          href={passportHref(work.slug, returnTo)}
-                        >
-                          Eser Pasaportu
-                        </Link>
-                        <FavoriteToggle compact returnTo={returnTo} work={work} />
+                        <FavoriteToggle iconOnly returnTo={returnTo} work={work} />
                         {work.readingState === "completed" ? (
                           <form action={restartReadingAction}>
                             <input name="workId" type="hidden" value={work.id} />

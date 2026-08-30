@@ -3,12 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
-import { Card } from "@/components/ui/Card";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
-import { ProgressBar } from "@/features/dashboard/components/ProgressBar";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
-import { EditorReviewBadge } from "@/features/editor-workspace/components/EditorReviewBadge";
 import { getContinueReadingForMember } from "@/features/reading/continue-reading";
 import { getCompletedReading } from "@/features/reading/progress";
 import { getAdultContentAccess } from "@/lib/adult-content-access";
@@ -265,7 +262,7 @@ export default async function ReaderHomePage() {
             <h1>Hoş geldin, {firstName}</h1>
             <p className="reader-workdesk__lead">
               Kaldığın eserler masanın üstünde; diğer içerikler raflarda.
-              İhtiyacın olmayan rafları gizleyip çalışma alanını sade
+              İhtiyacın olmayan eserleri gizleyip çalışma alanını sade
               tutabilirsin.
             </p>
             <nav
@@ -295,116 +292,12 @@ export default async function ReaderHomePage() {
           </div>
         </header>
 
-        <section
-          aria-labelledby="okumaya-devam-baslik"
-          className="dashboard-section reader-workdesk__continue"
-        >
-          <div className="section-heading">
-            <div>
-              <p>Masanın üstünde</p>
-              <h2 id="okumaya-devam-baslik">Okumaya Devam Et</h2>
-            </div>
-            <div>
-              <span>{continueReadingWorks.length} eser</span>
-              <Link
-                className="button button--ghost"
-                href="/okumaya-devam"
-              >
-                Tümünü Gör
-              </Link>
-            </div>
-          </div>
-
-          {continueReadingWorks.length > 0 ? (
-            <div className="books-grid">
-              {continueReadingWorks.map((work, index) => (
-                <Card
-                  className="book-card"
-                  key={work.id}
-                  variant="hover"
-                >
-                  <div
-                    aria-hidden="true"
-                    className={`book-cover book-cover--${
-                      (["one", "two", "three"] as const)[
-                        index % 3
-                      ]
-                    }`}
-                  >
-                    <span className="book-cover__ornament">✦</span>
-                    <strong>{work.title}</strong>
-                    <small>İlkOku</small>
-                  </div>
-
-                  <div className="book-card__content">
-                    <p className="book-card__genre">
-                      {work.genre ?? "Tür belirtilmedi"} ·{" "}
-                      {work.author.displayName ?? work.author.fullName}
-                    </p>
-                    <h3>{work.title}</h3>
-
-                    <div className="reader-workdesk__card-meta">
-                      <EditorReviewBadge
-                        status={work.editorReviewStatus}
-                      />
-                      <div className="reader-workdesk__meta-chips">
-                        <span className="reader-workdesk__meta-chip reader-workdesk__meta-chip--age">
-                          Hitap{" "}
-                          {
-                            workContentRatingDetails[
-                              work.contentRating
-                            ].shortLabel
-                          }
-                        </span>
-                        <span className="reader-workdesk__meta-chip">
-                          {work.chapters.length} bölüm
-                        </span>
-                      </div>
-                    </div>
-
-                    {work.readingProgress && (
-                      <ProgressBar
-                        label={`${work.title} okuma ilerlemesi`}
-                        value={work.readingProgress.progressPercent}
-                      />
-                    )}
-
-                    <div className="book-card__actions">
-                      <Link
-                        className="button button--ghost"
-                        href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent(
-                          "/okuyucu",
-                        )}`}
-                      >
-                        Eser Pasaportu
-                      </Link>
-                      <Link
-                        className="button button--outline"
-                        href={`/oku/${work.slug}/bolum-${
-                          work.readingProgress?.chapterPosition ?? 1
-                        }?from=${encodeURIComponent("/okuyucu")}`}
-                      >
-                        Okumaya Devam Et
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="workspace-empty">
-              <h3>{emptyMessages.continueReading.title}</h3>
-              <p>{emptyMessages.continueReading.description}</p>
-              <Link className="button button--outline" href="/kesfet">
-                Masana bir eser seç
-              </Link>
-            </Card>
-          )}
-        </section>
-
         <ReaderShelfTabs
+          continueEmptyDescription={emptyMessages.continueReading.description}
+          continueEmptyTitle={emptyMessages.continueReading.title}
+          continueWorks={continueReadingWorks.map(shelfWork)}
           sections={shelfSections}
-          storageKey={`ilkoku:reader-shelves:v1:${profile.id}`}
+          storageKey={`ilkoku:reader-hidden-works:v2:${profile.id}`}
         />
       </div>
     </AppShell>

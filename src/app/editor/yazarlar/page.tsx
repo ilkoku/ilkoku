@@ -2,12 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import type { Prisma } from "@/generated/prisma/client";
 
+import { AdvancedDiscoveryFilterFields } from "@/components/discovery/AdvancedDiscoveryFilterFields";
 import {
   DiscoveryPagination,
   DiscoveryResultSummary,
 } from "@/components/discovery/DiscoveryListChrome";
 import "@/components/discovery/discovery-filter-desk.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { getDiscoveryAuthorMetrics } from "@/features/discovery/author-filter-metrics";
 import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
@@ -16,7 +18,18 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { sanitizeDiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filter-management";
+import {
+  appendDiscoveryAdvancedFilterParams,
+  clearDiscoveryAdvancedFilter,
+  discoveryAdvancedFilterChips,
+  hasDiscoveryAdvancedFilters,
+  matchesDiscoveryAdvancedAuthorFilters,
+  parseDiscoveryAdvancedFilters,
+  type DiscoveryAdvancedFilters,
+} from "@/lib/discovery-advanced-filters";
 import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
+import type { DiscoveryFilterId } from "@/lib/discovery-filter-registry";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { availableGenreLabels, normalizeGenreLabel } from "@/lib/genre-system";
 import { GENRE_LABELS } from "@/lib/genres";
@@ -34,20 +47,51 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{
-  arama?: string;
-  hitap?: string;
-  sayfa?: string;
-  sehir?: string;
-  tur?: string;
-}>;
+const reviewFilters = [
+  "not_requested",
+  "requested",
+  "in_progress",
+  "awaiting_second_editor",
+  "second_in_progress",
+  "completed",
+] as const;
+const sortFilters = ["recent", "most_works", "az"] as const;
+
+type ReviewFilter = (typeof reviewFilters)[number];
+type SortFilter = (typeof sortFilters)[number];
 
 type EditorAuthorFilters = {
+  advanced: DiscoveryAdvancedFilters;
   city?: string;
   contentRating?: MemberStoredWorkContentRating;
   genre?: string;
+  reviewStatus?: ReviewFilter;
   search?: string;
+  sort: SortFilter;
 };
+
+function firstValue(value: string | string[] | undefined) {
+  return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
+}
+
+function includesValue<T extends string>(values: readonly T[], value: string): value is T {
+  return values.includes(value as T);
+}
+
+function reviewLabel(value: ReviewFilter) {
+  if (value === "completed") return "İncelendi";
+  if (value === "second_in_progress") return "İkinci editörde";
+  if (value === "awaiting_second_editor") return "İkinci editör bekleniyor";
+  if (value === "in_progress") return "İlk editörde";
+  if (value === "requested") return "İnceleme talep edildi";
+  return "Henüz incelenmedi";
+}
+
+function sortLabel(value: SortFilter) {
+  if (value === "most_works") return "En çok eşleşen eser";
+  if (value === "az") return "A–Z";
+  return "Son eser yayımlayan";
+}
 
 function pageHref(filters: EditorAuthorFilters, page = 1) {
   const params = new URLSearchParams();
@@ -55,6 +99,9 @@ function pageHref(filters: EditorAuthorFilters, page = 1) {
   if (filters.genre) params.set("tur", filters.genre);
   if (filters.contentRating) params.set("hitap", filters.contentRating);
   if (filters.city) params.set("sehir", filters.city);
+  if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
+  if (filters.sort !== "recent") params.set("siralama", filters.sort);
+  appendDiscoveryAdvancedFilterParams(params, filters.advanced);
   if (page > 1) params.set("sayfa", String(page));
   const query = params.toString();
   return query ? `/editor/yazarlar?${query}` : "/editor/yazarlar";
@@ -98,10 +145,10 @@ function initials(value: string) {
 export default async function EditorWriterDiscoveryPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await requireEditorProfile("/editor/yazarlar");
-  const enabledFilterIds = new Set(
+  const enabledFilterIds = new Set<DiscoveryFilterId>(
     await getDiscoverySurfaceFilterIds("editor-author-discovery"),
   );
   const adultAccess = await getAdultContentAccess(profile.id);
@@ -110,39 +157,59 @@ export default async function EditorWriterDiscoveryPage({
   );
   const params = await searchParams;
   const search = enabledFilterIds.has("search")
-    ? params.arama?.trim().slice(0, 220) || undefined
+    ? firstValue(params.arama).slice(0, 220) || undefined
     : undefined;
   const genre = enabledFilterIds.has("genre")
-    ? normalizeGenreLabel(params.tur)
+    ? normalizeGenreLabel(firstValue(params.tur))
     : undefined;
   const city = enabledFilterIds.has("city")
-    ? params.sehir?.trim().slice(0, 120) || undefined
+    ? firstValue(params.sehir).slice(0, 120) || undefined
     : undefined;
+  const ratingValue = firstValue(params.hitap);
   const requestedRating =
-    enabledFilterIds.has("contentRating") && isMemberStoredWorkContentRating(params.hitap)
-      ? params.hitap
+    enabledFilterIds.has("contentRating") && isMemberStoredWorkContentRating(ratingValue)
+      ? ratingValue
       : undefined;
   const contentRating =
     requestedRating && visibleRatings.includes(requestedRating)
       ? requestedRating
       : undefined;
-  const rawPage = Number.parseInt(params.sayfa ?? "", 10);
+  const reviewValue = firstValue(params.editor);
+  const reviewStatus =
+    enabledFilterIds.has("reviewStatus") && includesValue(reviewFilters, reviewValue)
+      ? reviewValue
+      : undefined;
+  const sortValue = firstValue(params.siralama);
+  const sort: SortFilter =
+    enabledFilterIds.has("sort") && includesValue(sortFilters, sortValue)
+      ? sortValue
+      : "recent";
+  const advanced = sanitizeDiscoveryAdvancedFilters(
+    parseDiscoveryAdvancedFilters(params),
+    enabledFilterIds,
+  );
+  const rawPage = Number.parseInt(firstValue(params.sayfa), 10);
   const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const filters: EditorAuthorFilters = {
+    advanced,
     city,
     contentRating,
     genre,
+    reviewStatus,
     search,
+    sort,
   };
   const matchedWorkWhere: Prisma.WorkWhereInput = {
     ...commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
     ...(genre ? { genre } : {}),
     ...(contentRating ? { contentRating } : {}),
+    ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
   };
   const where: Prisma.UserWhereInput = {
     ...commonDiscoveryAuthorWhereFor(adultAccess.canAccessAdultContent, {
       ...(genre ? { genre } : {}),
       ...(contentRating ? { contentRating } : {}),
+      ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
     }),
     ...(search
       ? {
@@ -171,57 +238,106 @@ export default async function EditorWriterDiscoveryPage({
         }
       : {}),
   };
-
-  const totalCount = await prisma.user.count({ where });
-  const totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
-  const currentPage = Math.min(requestedPage, totalPages);
-  const writers = await prisma.user.findMany({
-    where,
-    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-    skip: (currentPage - 1) * DISCOVERY_PAGE_SIZE,
-    take: DISCOVERY_PAGE_SIZE,
-    select: {
-      bio: true,
-      displayName: true,
-      id: true,
-      profile: {
-        select: {
-          city: true,
-        },
-      },
-      publicId: true,
-      username: true,
-      works: {
-        where: matchedWorkWhere,
-        orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
-        take: 4,
-        select: {
-          _count: {
-            select: {
-              chapters: true,
-              comments: true,
-              favorites: true,
-              readingProgress: true,
-            },
-          },
-          genre: true,
-          id: true,
-          publishedAt: true,
-          slug: true,
-          title: true,
-        },
-      },
-      _count: {
-        select: {
-          works: {
-            where: matchedWorkWhere,
-          },
-          feedbackReceived: true,
-        },
+  const writerSelect = {
+    bio: true,
+    displayName: true,
+    id: true,
+    profile: {
+      select: {
+        city: true,
       },
     },
-  });
-  const activeFilters = [
+    publicId: true,
+    username: true,
+    works: {
+      where: matchedWorkWhere,
+      orderBy: [{ publishedAt: "desc" as const }, { updatedAt: "desc" as const }],
+      take: 4,
+      select: {
+        _count: {
+          select: {
+            chapters: true,
+            comments: true,
+            favorites: true,
+            readingProgress: true,
+          },
+        },
+        genre: true,
+        id: true,
+        publishedAt: true,
+        slug: true,
+        title: true,
+      },
+    },
+    _count: {
+      select: {
+        works: {
+          where: matchedWorkWhere,
+        },
+        feedbackReceived: true,
+      },
+    },
+  } satisfies Prisma.UserSelect;
+  const needsPostFilter =
+    sort !== "recent" || hasDiscoveryAdvancedFilters(advanced);
+
+  let writers: Prisma.UserGetPayload<{ select: typeof writerSelect }>[];
+  let totalCount: number;
+  let totalPages: number;
+  let currentPage: number;
+
+  if (needsPostFilter) {
+    const allWriters = await prisma.user.findMany({
+      where,
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      select: writerSelect,
+    });
+    const metrics = hasDiscoveryAdvancedFilters(advanced)
+      ? await getDiscoveryAuthorMetrics(
+          allWriters.map((writer) => writer.id),
+          matchedWorkWhere,
+        )
+      : null;
+    const filteredWriters = metrics
+      ? allWriters.filter((writer) => {
+          const metric = metrics.get(writer.id);
+          return Boolean(metric && matchesDiscoveryAdvancedAuthorFilters(metric, advanced));
+        })
+      : allWriters;
+    const collator = new Intl.Collator("tr-TR", { sensitivity: "base" });
+    filteredWriters.sort((left, right) => {
+      if (sort === "most_works") {
+        const difference = right._count.works - left._count.works;
+        if (difference !== 0) return difference;
+      }
+      if (sort === "az") {
+        return collator.compare(publicWriterName(left), publicWriterName(right));
+      }
+      const leftTime = left.works[0]?.publishedAt?.getTime() ?? 0;
+      const rightTime = right.works[0]?.publishedAt?.getTime() ?? 0;
+      return rightTime - leftTime;
+    });
+    totalCount = filteredWriters.length;
+    totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
+    currentPage = Math.min(requestedPage, totalPages);
+    writers = filteredWriters.slice(
+      (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+      currentPage * DISCOVERY_PAGE_SIZE,
+    );
+  } else {
+    totalCount = await prisma.user.count({ where });
+    totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
+    currentPage = Math.min(requestedPage, totalPages);
+    writers = await prisma.user.findMany({
+      where,
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      skip: (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+      take: DISCOVERY_PAGE_SIZE,
+      select: writerSelect,
+    });
+  }
+
+  const baseActiveFilters = [
     search
       ? {
           href: pageHref({ ...filters, search: undefined }),
@@ -246,7 +362,30 @@ export default async function EditorWriterDiscoveryPage({
           label: `Şehir: ${city}`,
         }
       : null,
+    reviewStatus
+      ? {
+          href: pageHref({ ...filters, reviewStatus: undefined }),
+          label: `Editör: ${reviewLabel(reviewStatus)}`,
+        }
+      : null,
+    sort !== "recent"
+      ? {
+          href: pageHref({ ...filters, sort: "recent" }),
+          label: `Sıralama: ${sortLabel(sort)}`,
+        }
+      : null,
   ].filter((item): item is { href: string; label: string } => item !== null);
+  const advancedActiveFilters = discoveryAdvancedFilterChips(
+    advanced,
+    enabledFilterIds,
+  ).map((item) => ({
+    href: pageHref(
+      { ...filters, advanced: clearDiscoveryAdvancedFilter(advanced, item.id) },
+      1,
+    ),
+    label: item.label,
+  }));
+  const activeFilters = [...baseActiveFilters, ...advancedActiveFilters];
   const hasFilters = activeFilters.length > 0;
 
   return (
@@ -314,6 +453,34 @@ export default async function EditorWriterDiscoveryPage({
                   <input defaultValue={city} name="sehir" placeholder="Örn. İstanbul" />
                 </label>
               ) : null}
+
+              {enabledFilterIds.has("reviewStatus") ? (
+                <label>
+                  <span>Editör durumu</span>
+                  <select defaultValue={reviewStatus ?? ""} name="editor">
+                    <option value="">Tümü</option>
+                    {reviewFilters.map((value) => (
+                      <option key={value} value={value}>{reviewLabel(value)}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("sort") ? (
+                <label>
+                  <span>Sıralama</span>
+                  <select defaultValue={sort} name="siralama">
+                    {sortFilters.map((value) => (
+                      <option key={value} value={value}>{sortLabel(value)}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <AdvancedDiscoveryFilterFields
+                enabledFilterIds={enabledFilterIds}
+                filters={advanced}
+              />
 
               <div className="role-filter-desk__actions">
                 <button className="button button--primary" type="submit">

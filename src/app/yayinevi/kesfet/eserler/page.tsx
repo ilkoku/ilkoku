@@ -1,6 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import {
+  DiscoveryPagination,
+  DiscoveryResultSummary,
+} from "@/components/discovery/DiscoveryListChrome";
 import "@/components/discovery/discovery-filter-desk.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
@@ -14,6 +18,7 @@ import { getPublisherShareRecipientOptions } from "@/features/publisher-discover
 import {
   getPublisherWorkDiscovery,
   normalizePublisherWorkDiscoveryFilters,
+  PUBLISHER_WORK_PAGE_SIZE,
   type PublisherWorkDiscoveryFilters,
 } from "@/features/publisher-discovery/work-query";
 import { getActivePublisherEditorRequestWorkIds } from "@/features/publisher-editor-requests/repository";
@@ -285,10 +290,13 @@ export default async function PublisherWorkDiscoveryPage({
           )}
         </section>
 
-        <section className="role-filter-result" aria-live="polite">
-          <span>Masadaki sonuç</span>
-          <strong>{data.totalCount} eser</strong>
-        </section>
+        <DiscoveryResultSummary
+          currentPage={data.currentPage}
+          noun="eser"
+          pageSize={PUBLISHER_WORK_PAGE_SIZE}
+          totalCount={data.totalCount}
+          visibleCount={data.rows.length}
+        />
 
         {data.rows.length === 0 ? (
           <section className="publisher-discovery-empty">
@@ -312,38 +320,12 @@ export default async function PublisherWorkDiscoveryPage({
           />
         )}
 
-        <footer
-          aria-label="Eser sayfalama"
-          className="publisher-discovery-pagination"
-        >
-          <span>
-            {data.totalCount} eserden {data.first}–{data.last} arası gösteriliyor.
-          </span>
-
-          <div>
-            {data.currentPage > 1 ? (
-              <Link
-                className="button button--ghost"
-                href={pageHref(filters, data.currentPage - 1)}
-              >
-                Önceki
-              </Link>
-            ) : null}
-
-            <strong>
-              {data.currentPage} / {data.totalPages}
-            </strong>
-
-            {data.currentPage < data.totalPages ? (
-              <Link
-                className="button button--ghost"
-                href={pageHref(filters, data.currentPage + 1)}
-              >
-                Sonraki
-              </Link>
-            ) : null}
-          </div>
-        </footer>
+        <DiscoveryPagination
+          ariaLabel="Eser sayfalama"
+          currentPage={data.currentPage}
+          hrefForPage={(page) => pageHref(filters, page)}
+          totalPages={data.totalPages}
+        />
       </div>
     </AppShell>
   );

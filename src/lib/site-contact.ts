@@ -5,21 +5,18 @@ export const siteContact = {
     {
       id: "x",
       label: "X",
-      shortLabel: "X",
       href: "https://x.com/ilkokucom",
       handle: "@ilkokucom",
     },
     {
       id: "instagram",
       label: "Instagram",
-      shortLabel: "IG",
       href: "https://www.instagram.com/ilkokucom/",
       handle: "@ilkokucom",
     },
     {
       id: "linkedin",
       label: "LinkedIn",
-      shortLabel: "in",
       href: "https://www.linkedin.com/in/ilkoku-com-58021a428/",
       handle: "İlkOku.com",
     },

@@ -40,6 +40,7 @@ const canonicalSupportLinks: readonly FooterLink[] = [
 ];
 
 const canonicalPlatformHrefs = new Set(canonicalPlatformLinks.map((link) => link.href));
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 function internalHref(value: string | undefined, fallback: string) {
   if (!value) return fallback;
@@ -189,6 +190,59 @@ function externalLink(href: string, label: string) {
   return anchor;
 }
 
+function svgElement<K extends keyof SVGElementTagNameMap>(name: K) {
+  return document.createElementNS(SVG_NS, name);
+}
+
+function socialBrandIcon(id: string) {
+  const svg = svgElement("svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.classList.add("site-social-icon", `site-social-icon--${id}`);
+
+  if (id === "x") {
+    const path = svgElement("path");
+    path.setAttribute("fill", "currentColor");
+    path.setAttribute("d", "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z");
+    svg.append(path);
+    return svg;
+  }
+
+  if (id === "instagram") {
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.9");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+
+    const frame = svgElement("rect");
+    frame.setAttribute("x", "3");
+    frame.setAttribute("y", "3");
+    frame.setAttribute("width", "18");
+    frame.setAttribute("height", "18");
+    frame.setAttribute("rx", "5");
+    const lens = svgElement("circle");
+    lens.setAttribute("cx", "12");
+    lens.setAttribute("cy", "12");
+    lens.setAttribute("r", "4.15");
+    const dot = svgElement("circle");
+    dot.setAttribute("cx", "17.35");
+    dot.setAttribute("cy", "6.65");
+    dot.setAttribute("r", "1");
+    dot.setAttribute("fill", "currentColor");
+    dot.setAttribute("stroke", "none");
+    svg.append(frame, lens, dot);
+    return svg;
+  }
+
+  const path = svgElement("path");
+  path.setAttribute("fill", "currentColor");
+  path.setAttribute("d", "M6.94 8.5H3.56V19h3.38V8.5ZM5.25 3a1.95 1.95 0 1 0 0 3.9 1.95 1.95 0 0 0 0-3.9ZM20.44 13.08c0-3.16-1.69-4.63-3.94-4.63-1.82 0-2.63 1-3.09 1.7V8.5h-3.38V19h3.38v-5.2c0-1.37.26-2.7 1.96-2.7 1.68 0 1.7 1.57 1.7 2.79V19h3.37v-5.92Z");
+  svg.append(path);
+  return svg;
+}
+
 function ensureFooterContactBlock(column: HTMLElement | undefined) {
   if (!column) return;
 
@@ -212,7 +266,7 @@ function ensureFooterContactBlock(column: HTMLElement | undefined) {
 
   for (const social of siteContact.socialLinks) {
     const anchor = externalLink(social.href, social.label);
-    anchor.textContent = social.shortLabel;
+    anchor.append(socialBrandIcon(social.id));
     socials.append(anchor);
   }
   block.append(socials);
@@ -266,10 +320,16 @@ function ensureContactPageBlock() {
   socials.setAttribute("aria-label", "Bizi takip edin");
   for (const social of siteContact.socialLinks) {
     const anchor = externalLink(social.href, social.label);
-    anchor.textContent = social.label;
-    const handle = document.createElement("span");
+    anchor.append(socialBrandIcon(social.id));
+
+    const copy = document.createElement("span");
+    copy.className = "contact-direct-card__social-copy";
+    const name = document.createElement("strong");
+    name.textContent = social.label;
+    const handle = document.createElement("small");
     handle.textContent = social.handle;
-    anchor.append(handle);
+    copy.append(name, handle);
+    anchor.append(copy);
     socials.append(anchor);
   }
   block.append(socials);

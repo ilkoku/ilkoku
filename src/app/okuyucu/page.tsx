@@ -12,6 +12,7 @@ import { getAdultContentAccess } from "@/lib/adult-content-access";
 import { prisma } from "@/lib/prisma";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import { ReaderShelfTabs } from "./ReaderShelfTabs";
+import "./reader-workdesk-cleanup.css";
 import "./reader-workdesk.css";
 
 export const metadata: Metadata = {

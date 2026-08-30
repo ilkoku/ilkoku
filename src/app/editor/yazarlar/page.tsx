@@ -4,16 +4,20 @@ import type { Prisma } from "@/generated/prisma/client";
 
 import { AdvancedDiscoveryFilterFields } from "@/components/discovery/AdvancedDiscoveryFilterFields";
 import {
+  DiscoveryAuthorCard,
+  DiscoveryAuthorGrid,
+} from "@/components/discovery/DiscoveryAuthorCard";
+import {
   DiscoveryPagination,
   DiscoveryResultSummary,
 } from "@/components/discovery/DiscoveryListChrome";
+import { DiscoveryWorkspaceHero } from "@/components/discovery/DiscoveryWorkspaceHero";
 import "@/components/discovery/discovery-filter-desk.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { getDiscoveryAuthorMetrics } from "@/features/discovery/author-filter-metrics";
 import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
-import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import {
   getAdultContentAccess,
   visibleMemberContentRatings,
@@ -131,17 +135,6 @@ function publicWriterAlias(writer: {
   return `@${slug || "ilkoku-yazari"}`;
 }
 
-function initials(value: string) {
-  return (
-    value
-      .trim()
-      .split(/\s+/u)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toLocaleUpperCase("tr-TR"))
-      .join("") || "İY"
-  );
-}
-
 export default async function EditorWriterDiscoveryPage({
   searchParams,
 }: {
@@ -152,9 +145,7 @@ export default async function EditorWriterDiscoveryPage({
     await getDiscoverySurfaceFilterIds("editor-author-discovery"),
   );
   const adultAccess = await getAdultContentAccess(profile.id);
-  const visibleRatings = visibleMemberContentRatings(
-    adultAccess.canAccessAdultContent,
-  );
+  const visibleRatings = visibleMemberContentRatings(adultAccess.canAccessAdultContent);
   const params = await searchParams;
   const search = enabledFilterIds.has("search")
     ? firstValue(params.arama).slice(0, 220) || undefined
@@ -199,8 +190,10 @@ export default async function EditorWriterDiscoveryPage({
     search,
     sort,
   };
+
+  const baseWorkWhere = commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent);
   const matchedWorkWhere: Prisma.WorkWhereInput = {
-    ...commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
+    ...baseWorkWhere,
     ...(genre ? { genre } : {}),
     ...(contentRating ? { contentRating } : {}),
     ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
@@ -238,6 +231,7 @@ export default async function EditorWriterDiscoveryPage({
         }
       : {}),
   };
+
   const writerSelect = {
     bio: true,
     displayName: true,
@@ -271,16 +265,13 @@ export default async function EditorWriterDiscoveryPage({
     },
     _count: {
       select: {
-        works: {
-          where: matchedWorkWhere,
-        },
+        works: { where: matchedWorkWhere },
         feedbackReceived: true,
       },
     },
   } satisfies Prisma.UserSelect;
-  const needsPostFilter =
-    sort !== "recent" || hasDiscoveryAdvancedFilters(advanced);
 
+  const needsPostFilter = sort !== "recent" || hasDiscoveryAdvancedFilters(advanced);
   let writers: Prisma.UserGetPayload<{ select: typeof writerSelect }>[];
   let totalCount: number;
   let totalPages: number;
@@ -292,18 +283,19 @@ export default async function EditorWriterDiscoveryPage({
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       select: writerSelect,
     });
-    const metrics = hasDiscoveryAdvancedFilters(advanced)
+    const filterMetrics = hasDiscoveryAdvancedFilters(advanced)
       ? await getDiscoveryAuthorMetrics(
           allWriters.map((writer) => writer.id),
           matchedWorkWhere,
         )
       : null;
-    const filteredWriters = metrics
+    const filteredWriters = filterMetrics
       ? allWriters.filter((writer) => {
-          const metric = metrics.get(writer.id);
+          const metric = filterMetrics.get(writer.id);
           return Boolean(metric && matchesDiscoveryAdvancedAuthorFilters(metric, advanced));
         })
       : allWriters;
+
     const collator = new Intl.Collator("tr-TR", { sensitivity: "base" });
     filteredWriters.sort((left, right) => {
       if (sort === "most_works") {
@@ -317,6 +309,7 @@ export default async function EditorWriterDiscoveryPage({
       const rightTime = right.works[0]?.publishedAt?.getTime() ?? 0;
       return rightTime - leftTime;
     });
+
     totalCount = filteredWriters.length;
     totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
     currentPage = Math.min(requestedPage, totalPages);
@@ -337,18 +330,16 @@ export default async function EditorWriterDiscoveryPage({
     });
   }
 
+  const cardMetrics = await getDiscoveryAuthorMetrics(
+    writers.map((writer) => writer.id),
+    baseWorkWhere,
+  );
   const baseActiveFilters = [
     search
-      ? {
-          href: pageHref({ ...filters, search: undefined }),
-          label: `Arama: ${search}`,
-        }
+      ? { href: pageHref({ ...filters, search: undefined }), label: `Arama: ${search}` }
       : null,
     genre
-      ? {
-          href: pageHref({ ...filters, genre: undefined }),
-          label: `Tür: ${genre}`,
-        }
+      ? { href: pageHref({ ...filters, genre: undefined }), label: `Tür: ${genre}` }
       : null,
     contentRating
       ? {
@@ -357,10 +348,7 @@ export default async function EditorWriterDiscoveryPage({
         }
       : null,
     city
-      ? {
-          href: pageHref({ ...filters, city: undefined }),
-          label: `Şehir: ${city}`,
-        }
+      ? { href: pageHref({ ...filters, city: undefined }), label: `Şehir: ${city}` }
       : null,
     reviewStatus
       ? {
@@ -375,24 +363,36 @@ export default async function EditorWriterDiscoveryPage({
         }
       : null,
   ].filter((item): item is { href: string; label: string } => item !== null);
-  const advancedActiveFilters = discoveryAdvancedFilterChips(
-    advanced,
-    enabledFilterIds,
-  ).map((item) => ({
-    href: pageHref(
-      { ...filters, advanced: clearDiscoveryAdvancedFilter(advanced, item.id) },
-      1,
-    ),
-    label: item.label,
-  }));
+  const advancedActiveFilters = discoveryAdvancedFilterChips(advanced, enabledFilterIds).map(
+    (item) => ({
+      href: pageHref(
+        { ...filters, advanced: clearDiscoveryAdvancedFilter(advanced, item.id) },
+        1,
+      ),
+      label: item.label,
+    }),
+  );
   const activeFilters = [...baseActiveFilters, ...advancedActiveFilters];
   const hasFilters = activeFilters.length > 0;
+  const returnTo = pageHref(filters, currentPage);
 
   return (
     <AppShell profile={profile}>
-      <div className="editor-workspace editor-writers-page">
-        <EditorPageHeader
-          description="Ortak Yazar Havuzu’nda en az bir public eseri bulunan aktif yazarları inceleyin."
+      <div className="editor-workspace">
+        <DiscoveryWorkspaceHero
+          description="Ortak Yazar Havuzu’nda keşfe açık eseri bulunan yazarları inceleyin; üretimlerini ve okur etkileşimini aynı kart standardında karşılaştırın."
+          eyebrow="Editör · Yazar Havuzu · Keşif"
+          links={[
+            { href: "/editor/kesfet", label: "Eserler" },
+            { current: true, href: "/editor/yazarlar", label: "Yazarlar" },
+            { href: "/editor/favoriler", label: "Favoriler" },
+            { href: "/editor/seckiler", label: "Seçkiler" },
+          ]}
+          stats={[
+            { label: "Eşleşen yazar", value: totalCount },
+            { label: "Aktif filtre", value: activeFilters.length },
+            { label: "Bu sayfada", value: writers.length },
+          ]}
           title="Yazar Keşfet"
         />
 
@@ -425,9 +425,7 @@ export default async function EditorWriterDiscoveryPage({
                   <select defaultValue={genre ?? ""} name="tur">
                     <option value="">Tüm türler</option>
                     {GENRE_LABELS.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
+                      <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
                 </label>
@@ -530,64 +528,49 @@ export default async function EditorWriterDiscoveryPage({
             <p>Arama veya filtreleri değiştirerek yeniden deneyin.</p>
           </div>
         ) : (
-          <section className="editor-writer-grid" aria-label="Yazarlar">
+          <DiscoveryAuthorGrid>
             {writers.map((writer) => {
               const name = publicWriterName(writer);
-              const genres = availableGenreLabels(
-                writer.works.map((work) => work.genre),
-              ).slice(0, 4);
+              const metric = cardMetrics.get(writer.id);
+              const genres = availableGenreLabels(writer.works.map((work) => work.genre)).slice(0, 2);
+              const latest = writer.works[0] ?? null;
+              const profileHref = `/yazarlar/${writer.publicId}?from=${encodeURIComponent(returnTo)}`;
+              const signals = [
+                writer.profile?.city || "Şehir belirtilmedi",
+                ...genres,
+                writer._count.feedbackReceived > 0
+                  ? `${writer._count.feedbackReceived} editör görüşü`
+                  : null,
+              ].filter((value): value is string => Boolean(value));
 
               return (
-                <article className="editor-writer-card" key={writer.id}>
-                  <header className="editor-writer-card__header">
-                    <div className="editor-writer-avatar" aria-hidden="true">
-                      {initials(name)}
-                    </div>
-                    <div>
-                      <span>{publicWriterAlias(writer)}</span>
-                      <h2>{name}</h2>
-                      <p>{writer.profile?.city || "Şehir belirtilmedi"}</p>
-                    </div>
-                  </header>
-
-                  <p className="editor-writer-card__bio">
-                    {writer.bio?.trim() || "Bu yazar henüz kısa bir biyografi eklemedi."}
-                  </p>
-
-                  {genres.length > 0 ? (
-                    <div className="editor-writer-card__genres" aria-label="Yazı türleri">
-                      {genres.map((item) => <span key={item}>{item}</span>)}
-                    </div>
-                  ) : null}
-
-                  <dl className="editor-writer-card__stats">
-                    <div><dt>Eşleşen eser</dt><dd>{writer._count.works}</dd></div>
-                    <div><dt>Editör görüşü</dt><dd>{writer._count.feedbackReceived}</dd></div>
-                  </dl>
-
-                  <div className="editor-writer-card__works">
-                    <div className="editor-writer-card__works-heading">
-                      <span>Eşleşen public eserler</span>
-                      <small>Son {writer.works.length} eser</small>
-                    </div>
-                    <ul>
-                      {writer.works.map((work) => (
-                        <li key={work.id}>
-                          <Link href={`/kitap/${work.slug}`}>
-                            <strong>{work.title}</strong>
-                            <span>{work.genre || "Tür belirtilmedi"}</span>
-                            <small>
-                              {work._count.chapters} bölüm · {work._count.readingProgress} okur · {work._count.favorites} beğeni · {work._count.comments} yorum
-                            </small>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </article>
+                <DiscoveryAuthorCard
+                  alias={publicWriterAlias(writer)}
+                  bio={writer.bio}
+                  key={writer.id}
+                  latestWork={
+                    latest
+                      ? {
+                          href: `/kitap/${latest.slug}?from=${encodeURIComponent(returnTo)}`,
+                          meta: `${latest.genre || "Tür belirtilmedi"} · ${latest._count.chapters} bölüm`,
+                          title: latest.title,
+                        }
+                      : null
+                  }
+                  matchedWorkCount={writer._count.works}
+                  metrics={[
+                    { label: "Eser", value: metric?.publicWorkCount ?? 0 },
+                    { label: "Okur", value: metric?.readerCount ?? 0 },
+                    { label: "Beğeni", value: metric?.favoriteCount ?? 0 },
+                    { label: "Yorum", value: metric?.commentCount ?? 0 },
+                  ]}
+                  name={name}
+                  profileHref={profileHref}
+                  signals={signals}
+                />
               );
             })}
-          </section>
+          </DiscoveryAuthorGrid>
         )}
 
         <DiscoveryPagination

@@ -29,6 +29,7 @@ export const readerNavigationContent = {
   items: [
     { label: "Ana Sayfa", href: "/okuyucu" },
     { label: "Keşfet", href: "/kesfet" },
+    { label: "Yazar Keşfet", href: "/yazar-kesfet" },
     { label: "Favorilerim", href: "/favorilerim" },
     { label: "Okumaya Devam Et", href: "/okumaya-devam" },
     { label: "Tamamlanan Eserler", href: "/tamamlanan-eserler" },

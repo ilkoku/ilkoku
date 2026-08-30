@@ -19,12 +19,29 @@ test("reader work favorites are actionable on current reader surfaces", async ()
   assert.match(showcase, /toggleFavoriteAction/);
 });
 
-test("reader favorites center separates works and authors", async () => {
+test("reader favorites center separates works and authors and links to author discovery", async () => {
   const favoritesPage = await read("src/app/favorilerim/page.tsx");
   assert.match(favoritesPage, /getReaderFavoriteAuthors/);
   assert.match(favoritesPage, />\s*Eserler\s*</);
   assert.match(favoritesPage, />\s*Yazarlar\s*</);
   assert.match(favoritesPage, /tip=yazar/);
+  assert.match(favoritesPage, /href="\/yazar-kesfet"/);
+});
+
+test("reader author discovery is work-backed and filterable", async () => {
+  const discovery = await read("src/app/yazar-kesfet/page.tsx");
+
+  assert.match(discovery, /readerAuthorDiscoveryWorkWhere/);
+  assert.match(discovery, /Yazar Keşfet/);
+  assert.match(discovery, /Yazar veya eser ara/);
+  assert.match(discovery, /name="tur"/);
+  assert.match(discovery, /name="hitapYasi"/);
+  assert.match(discovery, /name="tamamlanma"/);
+  assert.match(discovery, /name="editor"/);
+  assert.match(discovery, /toggleReaderAuthorFavoriteAction/);
+  assert.match(discovery, /Yazarı Favorile/);
+  assert.match(discovery, /Yazar vitrini/);
+  assert.match(discovery, /eşleşen eser/);
 });
 
 test("public author surfaces expose reader author favorite action", async () => {
@@ -38,15 +55,19 @@ test("public author surfaces expose reader author favorite action", async () => 
   assert.match(author, /Yazarı Favorile/);
 });
 
-test("reader author favorites use Prisma and the public author visibility boundary", async () => {
-  const source = await read("src/features/reader/author-favorites.ts");
+test("reader author favorites share the safe author discovery work boundary", async () => {
+  const [source, scope] = await Promise.all([
+    read("src/features/reader/author-favorites.ts"),
+    read("src/features/reader/author-discovery-scope.ts"),
+  ]);
 
+  assert.match(source, /readerAuthorDiscoveryWorkWhere/);
   assert.match(source, /prisma\.readerAuthorFavorite\.findUnique/);
   assert.match(source, /prisma\.readerAuthorFavorite\.create/);
   assert.match(source, /prisma\.readerAuthorFavorite\.delete/);
-  assert.match(source, /language: "tr"/);
-  assert.match(source, /BLOCKED_PUBLIC_WORK_SLUGS/);
-  assert.match(source, /contentRating: \{ not: "adult_18"/);
+  assert.match(scope, /language: "tr"/);
+  assert.match(scope, /BLOCKED_PUBLIC_WORK_SLUGS/);
+  assert.match(scope, /contentRating: \{ not: "adult_18"/);
   assert.doesNotMatch(source, /\$executeRaw/);
 });
 

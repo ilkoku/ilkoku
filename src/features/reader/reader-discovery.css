@@ -1,8 +1,21 @@
+.reader-discovery-mode-tabs,
 .reader-discovery-filter-actions {
   display: flex;
-  align-items: end;
+  align-items: center;
   flex-wrap: wrap;
   gap: 0.6rem;
+}
+
+.reader-discovery-mode-tabs {
+  margin: 0 0 1rem;
+}
+
+.reader-discovery-mode-tabs [aria-current="page"] {
+  pointer-events: none;
+}
+
+.reader-discovery-filter-actions {
+  align-items: end;
 }
 
 .reader-discovery-summary {
@@ -70,12 +83,14 @@
 }
 
 @media (max-width: 47.99rem) {
+  .reader-discovery-mode-tabs,
   .reader-discovery-filter-actions,
   .reader-discovery-pagination,
   .reader-discovery-pagination > div {
     width: 100%;
   }
 
+  .reader-discovery-mode-tabs > *,
   .reader-discovery-pagination > div > * {
     flex: 1 1 0;
     justify-content: center;

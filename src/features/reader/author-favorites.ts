@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { canAccessReaderWorkspace } from "@/features/auth/data";
+import { readerAuthorDiscoveryWorkWhere } from "@/features/reader/author-discovery-scope";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
-import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
 
 const authorPublicIdSchema = z.string().trim().min(3).max(24);
 const returnPathSchema = z
@@ -16,16 +16,6 @@ const returnPathSchema = z
     (value) => value.startsWith("/") && !value.startsWith("//"),
     "INVALID_RETURN_PATH",
   );
-
-const readerVisibleAuthorWorkWhere = {
-  archivedAt: null,
-  contentRating: { not: "adult_18" as const },
-  language: "tr",
-  publishedAt: { not: null },
-  slug: { notIn: [...BLOCKED_PUBLIC_WORK_SLUGS] },
-  status: "published" as const,
-  visibility: "public" as const,
-};
 
 async function requireReader() {
   const user = await getCurrentUser();
@@ -47,7 +37,7 @@ async function findVisibleAuthor(publicId: string) {
       deletedAt: null,
       publicId,
       status: "active",
-      works: { some: readerVisibleAuthorWorkWhere },
+      works: { some: readerAuthorDiscoveryWorkWhere },
     },
     select: {
       displayName: true,
@@ -105,6 +95,7 @@ export async function toggleReaderAuthorFavoriteAction(
   }
 
   revalidatePath("/favorilerim");
+  revalidatePath("/yazar-kesfet");
   revalidatePath("/yazarlar");
   revalidatePath(`/yazarlar/${author.publicId}`);
   revalidatePath("/okuyucu");
@@ -142,7 +133,7 @@ export async function getReaderAuthorFavoritePublicIds(userId: string) {
         is: {
           deletedAt: null,
           status: "active",
-          works: { some: readerVisibleAuthorWorkWhere },
+          works: { some: readerAuthorDiscoveryWorkWhere },
         },
       },
     },
@@ -166,7 +157,7 @@ export async function getReaderFavoriteAuthors(userId: string) {
         is: {
           deletedAt: null,
           status: "active",
-          works: { some: readerVisibleAuthorWorkWhere },
+          works: { some: readerAuthorDiscoveryWorkWhere },
         },
       },
     },
@@ -176,7 +167,7 @@ export async function getReaderFavoriteAuthors(userId: string) {
         select: {
           _count: {
             select: {
-              works: { where: readerVisibleAuthorWorkWhere },
+              works: { where: readerAuthorDiscoveryWorkWhere },
             },
           },
           bio: true,
@@ -185,7 +176,7 @@ export async function getReaderFavoriteAuthors(userId: string) {
           publicId: true,
           username: true,
           works: {
-            where: readerVisibleAuthorWorkWhere,
+            where: readerAuthorDiscoveryWorkWhere,
             orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
             select: {
               contentRating: true,

@@ -160,6 +160,21 @@ export function readerWorkMatches(
   return true;
 }
 
+function inferReaderSurfaceId(
+  clearHref: string,
+  hiddenFields: Array<{ name: string; value: string }>,
+) {
+  if (clearHref.startsWith("/yazar-kesfet")) return "reader-author-discovery";
+  if (clearHref.startsWith("/okumaya-devam")) return "reader-continue-reading";
+  if (clearHref.startsWith("/tamamlanan-eserler")) return "reader-completed-works";
+  if (clearHref.startsWith("/favorilerim")) {
+    return hiddenFields.some((field) => field.name === "tip" && field.value === "yazar")
+      ? "reader-favorite-authors"
+      : "reader-favorite-works";
+  }
+  return "reader-work-discovery";
+}
+
 export async function ReaderFilterDesk({
   activeFilters,
   clearHref,
@@ -189,10 +204,11 @@ export async function ReaderFilterDesk({
   searchPlaceholder: string;
   sort: string;
   sortOptions: readonly ReaderSortOption[];
-  surfaceId: string;
+  surfaceId?: string;
 }) {
   const hasFilters = activeFilters.length > 0;
-  const enabledFilterIds = new Set(await getDiscoverySurfaceFilterIds(surfaceId));
+  const resolvedSurfaceId = surfaceId ?? inferReaderSurfaceId(clearHref, hiddenFields);
+  const enabledFilterIds = new Set(await getDiscoverySurfaceFilterIds(resolvedSurfaceId));
   const hasManagedFields = enabledFilterIds.size > 0;
 
   return (

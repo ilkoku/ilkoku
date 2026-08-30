@@ -1,5 +1,5 @@
+import { availableGenreLabels } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
-import { parseWritingGenres } from "./data";
 
 export async function getProfilePageData(userId: string) {
   const user = await prisma.user.findUnique({
@@ -16,7 +16,18 @@ export async function getProfilePageData(userId: string) {
       profile: {
         select: {
           website: true,
-          writingGenres: true,
+        },
+      },
+      works: {
+        where: {
+          archivedAt: null,
+          genre: { not: null },
+          publishedAt: { not: null },
+          status: "published",
+          visibility: "public",
+        },
+        select: {
+          genre: true,
         },
       },
       roleRequests: {
@@ -54,6 +65,6 @@ export async function getProfilePageData(userId: string) {
     role: user.role,
     username: user.username ?? "",
     website: user.profile?.website ?? "",
-    writingGenres: parseWritingGenres(user.profile?.writingGenres),
+    writingGenres: availableGenreLabels(user.works.map((work) => work.genre)),
   };
 }

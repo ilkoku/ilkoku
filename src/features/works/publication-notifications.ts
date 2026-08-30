@@ -19,6 +19,75 @@ function logFailure(event: string, workId: string, error: unknown) {
   });
 }
 
+async function createReaderFavoriteAuthorPublicationNotifications(input: {
+  authorId: string;
+  authorName: string;
+  workId: string;
+  workTitle: string;
+}) {
+  const favorites = await prisma.readerAuthorFavorite.findMany({
+    where: {
+      authorId: input.authorId,
+      userId: { not: input.authorId },
+      user: {
+        is: {
+          deletedAt: null,
+          status: "active",
+        },
+      },
+    },
+    select: { userId: true },
+  });
+
+  const recipientIds = Array.from(
+    new Set(favorites.map((favorite) => favorite.userId)),
+  );
+
+  if (recipientIds.length === 0) return;
+
+  await prisma.$transaction(async (transaction) => {
+    const locked = await transaction.$queryRaw<Array<{ id: string }>>`
+      SELECT id
+      FROM Work
+      WHERE id = ${input.workId}
+      LIMIT 1
+      FOR UPDATE
+    `;
+
+    if (!locked[0]) return;
+
+    const existing = await transaction.notification.findMany({
+      where: {
+        relatedEntityId: input.workId,
+        relatedEntityType: "work",
+        title: "Favori yazarınız yeni eser yayımladı",
+        type: "system",
+        userId: { in: recipientIds },
+      },
+      select: { userId: true },
+    });
+    const existingRecipientIds = new Set(
+      existing.map((notification) => notification.userId),
+    );
+    const missingRecipientIds = recipientIds.filter(
+      (userId) => !existingRecipientIds.has(userId),
+    );
+
+    if (missingRecipientIds.length === 0) return;
+
+    await transaction.notification.createMany({
+      data: missingRecipientIds.map((userId) => ({
+        message: `${input.authorName}, ${input.workTitle} adlı yeni eserini yayımladı.`,
+        relatedEntityId: input.workId,
+        relatedEntityType: "work",
+        title: "Favori yazarınız yeni eser yayımladı",
+        type: "system" as const,
+        userId,
+      })),
+    });
+  });
+}
+
 export async function deliverPublicationNotifications(input: {
   authorId: string;
   chapterId: string;
@@ -142,28 +211,12 @@ export async function deliverPublicationNotifications(input: {
   if (!input.publicationEvent.isFirstPublication) return;
 
   try {
-    const favoriteReaders = await prisma.$queryRaw<Array<{ userId: string }>>`
-      SELECT favorite.userId
-      FROM ReaderAuthorFavorite favorite
-      INNER JOIN User reader ON reader.id = favorite.userId
-      WHERE favorite.authorId = ${work.author.id}
-        AND favorite.userId <> ${work.author.id}
-        AND reader.status = 'active'
-        AND reader.deletedAt IS NULL
-    `;
-
-    if (favoriteReaders.length > 0) {
-      await prisma.notification.createMany({
-        data: favoriteReaders.map((reader) => ({
-          message: `${publicName(work.author)}, ${work.title} adlı yeni eserini yayımladı.`,
-          relatedEntityId: work.id,
-          relatedEntityType: "work",
-          title: "Favori yazarınız yeni eser yayımladı",
-          type: "system" as const,
-          userId: reader.userId,
-        })),
-      });
-    }
+    await createReaderFavoriteAuthorPublicationNotifications({
+      authorId: work.author.id,
+      authorName: publicName(work.author),
+      workId: work.id,
+      workTitle: work.title,
+    });
   } catch (readerAuthorError) {
     logFailure(
       "reader_favorite_author_published",

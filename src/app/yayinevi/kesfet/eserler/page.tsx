@@ -26,6 +26,7 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
 import { GENRE_LABELS } from "@/lib/genres";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
@@ -73,6 +74,9 @@ export default async function PublisherWorkDiscoveryPage({
     "/yayinevi/kesfet/eserler",
     "discover_works",
   );
+  const enabledFilterIds = new Set(
+    await getDiscoverySurfaceFilterIds("publisher-work-discovery"),
+  );
   const adultAccess = access.profile.adminPublisherView
     ? {
         canAccessAdultContent: true,
@@ -83,6 +87,12 @@ export default async function PublisherWorkDiscoveryPage({
     adultAccess.canAccessAdultContent,
   );
   const filters = normalizePublisherWorkDiscoveryFilters(await searchParams);
+  if (!enabledFilterIds.has("search")) filters.query = "";
+  if (!enabledFilterIds.has("genre")) filters.genre = "";
+  if (!enabledFilterIds.has("language")) filters.language = "";
+  if (!enabledFilterIds.has("contentRating")) filters.contentRating = "";
+  if (!enabledFilterIds.has("reviewStatus")) filters.reviewStatus = "";
+  if (!enabledFilterIds.has("sort")) filters.sort = "newest";
   if (
     filters.contentRating === "adult_18" &&
     !adultAccess.canAccessAdultContent
@@ -197,81 +207,99 @@ export default async function PublisherWorkDiscoveryPage({
             ) : null}
           </header>
 
-          <form className="role-filter-desk__form" method="get">
-            <label className="role-filter-field--search">
-              <span>Arama</span>
-              <input
-                defaultValue={filters.query}
-                name="arama"
-                placeholder="Eser adı veya yazar"
-                type="search"
-              />
-            </label>
-
-            <label>
-              <span>Tür</span>
-              <select defaultValue={filters.genre} name="tur">
-                <option value="">Tüm türler</option>
-                {GENRE_LABELS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Hitap yaşı</span>
-              <select defaultValue={filters.contentRating} name="hitap">
-                <option value="">Tüm yaşlar</option>
-                {visibleRatings.map((rating) => (
-                  <option key={rating} value={rating}>
-                    {workContentRatingDetails[rating].label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Dil</span>
-              <select defaultValue={filters.language} name="dil">
-                <option value="">Tüm diller</option>
-                <option value="tr">Türkçe</option>
-                <option value="en">İngilizce</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Editör incelemesi</span>
-              <select defaultValue={filters.reviewStatus} name="editor">
-                <option value="">Tümü</option>
-                {Object.entries(reviewLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Sıralama</span>
-              <select defaultValue={filters.sort} name="siralama">
-                <option value="newest">En yeni yayımlanan</option>
-                <option value="updated">Son güncellenen</option>
-              </select>
-            </label>
-
-            <div className="role-filter-desk__actions">
-              <button className="button button--primary" type="submit">
-                Masayı Güncelle
-              </button>
-              {hasFilters ? (
-                <Link className="button button--ghost" href="/yayinevi/kesfet/eserler">
-                  Temizle
-                </Link>
+          {enabledFilterIds.size > 0 ? (
+            <form className="role-filter-desk__form" method="get">
+              {enabledFilterIds.has("search") ? (
+                <label className="role-filter-field--search">
+                  <span>Arama</span>
+                  <input
+                    defaultValue={filters.query}
+                    name="arama"
+                    placeholder="Eser adı veya yazar"
+                    type="search"
+                  />
+                </label>
               ) : null}
-            </div>
-          </form>
+
+              {enabledFilterIds.has("genre") ? (
+                <label>
+                  <span>Tür</span>
+                  <select defaultValue={filters.genre} name="tur">
+                    <option value="">Tüm türler</option>
+                    {GENRE_LABELS.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("contentRating") ? (
+                <label>
+                  <span>Hitap yaşı</span>
+                  <select defaultValue={filters.contentRating} name="hitap">
+                    <option value="">Tüm yaşlar</option>
+                    {visibleRatings.map((rating) => (
+                      <option key={rating} value={rating}>
+                        {workContentRatingDetails[rating].label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("language") ? (
+                <label>
+                  <span>Dil</span>
+                  <select defaultValue={filters.language} name="dil">
+                    <option value="">Tüm diller</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="en">İngilizce</option>
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("reviewStatus") ? (
+                <label>
+                  <span>Editör incelemesi</span>
+                  <select defaultValue={filters.reviewStatus} name="editor">
+                    <option value="">Tümü</option>
+                    {Object.entries(reviewLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("sort") ? (
+                <label>
+                  <span>Sıralama</span>
+                  <select defaultValue={filters.sort} name="siralama">
+                    <option value="newest">En yeni yayımlanan</option>
+                    <option value="updated">Son güncellenen</option>
+                  </select>
+                </label>
+              ) : null}
+
+              <div className="role-filter-desk__actions">
+                <button className="button button--primary" type="submit">
+                  Masayı Güncelle
+                </button>
+                {hasFilters ? (
+                  <Link className="button button--ghost" href="/yayinevi/kesfet/eserler">
+                    Temizle
+                  </Link>
+                ) : null}
+              </div>
+            </form>
+          ) : (
+            <p className="role-filter-desk__hint">
+              Bu yüzeyde Filtre Masası alanları İçerik Yönetimi&apos;nden kapatıldı.
+            </p>
+          )}
 
           {activeFilters.length > 0 ? (
             <div className="role-filter-desk__active" aria-label="Aktif filtreler">
@@ -283,11 +311,11 @@ export default async function PublisherWorkDiscoveryPage({
                 </Link>
               ))}
             </div>
-          ) : (
+          ) : enabledFilterIds.size > 0 ? (
             <p className="role-filter-desk__hint">
               Filtre seçmeden yayınevine açık ortak eser havuzunu görüyorsunuz.
             </p>
-          )}
+          ) : null}
         </section>
 
         <DiscoveryResultSummary

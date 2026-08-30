@@ -153,6 +153,15 @@
   font-weight: 700;
 }
 
+/* AUTHOR FILTER DESK CLEANUP
+ * Favorited authors remain a quick preset; hitap yaşı belongs to work discovery,
+ * so both are removed from the primary author-filter row.
+ */
+.reader-discovery-workdesk .reader-discovery-filters label:has(select[name="hitapYasi"]),
+.reader-discovery-workdesk .reader-discovery-filters label:has(select[name="favori"]) {
+  display: none;
+}
+
 @media (max-width: 64rem) {
   .reader-author-discovery-grid {
     grid-template-columns: 1fr;

@@ -476,3 +476,13 @@
 .workspace-review-status--not_requested {
   color: rgba(255, 255, 255, 0.5);
 }
+
+/* DISCOVERY FILTER DESK CLEANUP
+ * Reading state and favorites stay available as quick presets above the form.
+ * Language is intentionally removed from the reader-facing primary filter row.
+ */
+.reader-discovery-workdesk .reader-discovery-filters label:has(select[name="dil"]),
+.reader-discovery-workdesk .reader-discovery-filters label:has(select[name="okuma"]),
+.reader-discovery-workdesk .reader-discovery-filters label:has(select[name="favori"]) {
+  display: none;
+}

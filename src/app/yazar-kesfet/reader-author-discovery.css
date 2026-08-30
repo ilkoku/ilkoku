@@ -139,6 +139,45 @@
   opacity: 0.72;
 }
 
+.reader-author-discovery-card__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 0.78rem;
+  background: rgba(8, 11, 15, 0.22);
+}
+
+.reader-author-discovery-card__metrics > span {
+  display: grid;
+  min-width: 0;
+  gap: 0.16rem;
+  padding: 0.58rem 0.48rem;
+  text-align: center;
+}
+
+.reader-author-discovery-card__metrics > span + span {
+  border-left: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.reader-author-discovery-card__metrics strong {
+  overflow: hidden;
+  color: #f1f3f7;
+  font-size: 0.88rem;
+  font-weight: 820;
+  line-height: 1;
+  text-overflow: ellipsis;
+}
+
+.reader-author-discovery-card__metrics small {
+  color: rgba(213, 218, 228, 0.48);
+  font-size: 0.58rem;
+  font-weight: 760;
+  letter-spacing: 0.035em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
 .reader-author-discovery-card__signals {
   display: flex;
   min-height: 1.8rem;
@@ -305,6 +344,21 @@
   .reader-author-discovery-card__actions .button,
   .reader-author-discovery-card__favorite {
     width: 100%;
+  }
+}
+
+@media (max-width: 30rem) {
+  .reader-author-discovery-card__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reader-author-discovery-card__metrics > span:nth-child(3) {
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.055);
+  }
+
+  .reader-author-discovery-card__metrics > span:nth-child(4) {
+    border-top: 1px solid rgba(255, 255, 255, 0.055);
   }
 }
 

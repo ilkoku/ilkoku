@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { discoveryAuthorWhereFromWorkPool } from "@/features/discovery/common-author-scope";
 import { readerAuthorDiscoveryWorkWhere } from "@/features/reader/author-discovery-scope";
 import { toggleReaderAuthorFavoriteAction } from "@/features/reader/author-favorites";
 import {
@@ -114,11 +115,7 @@ export default async function ReaderAuthorDiscoveryPage({
 
   const [authors, favoriteAuthorCount] = await Promise.all([
     prisma.user.findMany({
-      where: {
-        deletedAt: null,
-        status: "active",
-        works: { some: workWhere },
-      },
+      where: discoveryAuthorWhereFromWorkPool(workWhere),
       select: {
         _count: {
           select: {

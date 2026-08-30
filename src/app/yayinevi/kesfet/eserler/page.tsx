@@ -285,14 +285,9 @@ export default async function PublisherWorkDiscoveryPage({
           )}
         </section>
 
-        <section className="publisher-discovery-summary">
-          <div>
-            <span>Keşif sonucu</span>
-            <strong>{data.totalCount} eser</strong>
-          </div>
-          <p>
-            Beğeni, favori, paylaşım ve editör talebi işlemleri yayınevi adına kaydedilir ve üyeye atanmış yetkilere göre açılır.
-          </p>
+        <section className="role-filter-result" aria-live="polite">
+          <span>Masadaki sonuç</span>
+          <strong>{data.totalCount} eser</strong>
         </section>
 
         {data.rows.length === 0 ? (

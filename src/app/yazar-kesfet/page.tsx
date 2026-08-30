@@ -14,7 +14,7 @@ import {
   ReaderFilterDesk,
   ReaderPagination,
   ReaderResultSummary,
-  parseReaderStandardFilters,
+  parseManagedReaderStandardFilters,
   readerListHref,
   readerReviewLabel,
   type ReaderActiveFilter,
@@ -62,14 +62,7 @@ function initials(value: string) {
 export default async function ReaderAuthorDiscoveryPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    arama?: string;
-    editor?: string;
-    hitapYasi?: string;
-    sayfa?: string;
-    siralama?: string;
-    tur?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await getCurrentProfile();
 
@@ -78,8 +71,10 @@ export default async function ReaderAuthorDiscoveryPage({
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 
-  const filters = parseReaderStandardFilters(
-    await searchParams,
+  const params = await searchParams;
+  const { filters } = await parseManagedReaderStandardFilters(
+    "reader-author-discovery",
+    params,
     publicStoredWorkContentRatings,
     sortOptions,
     "recent",
@@ -275,6 +270,7 @@ export default async function ReaderAuthorDiscoveryPage({
 
         <ReaderFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={filters.advanced}
           clearHref="/yazar-kesfet"
           contentRating={filters.contentRating}
           genre={filters.genre}
@@ -286,6 +282,7 @@ export default async function ReaderAuthorDiscoveryPage({
           searchPlaceholder="Yazar, rumuz veya eser ara"
           sort={filters.sort}
           sortOptions={sortOptions}
+          standardFilters={normalizedFilters}
         />
 
         <ReaderResultSummary

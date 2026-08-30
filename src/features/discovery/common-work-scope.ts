@@ -2,11 +2,12 @@ import type { Prisma } from "@/generated/prisma/client";
 import { adultContentWorkVisibility } from "@/lib/adult-content-access";
 
 /**
- * Ortak Keşfet havuzu.
+ * Ortak Eser Havuzu.
  *
- * Okuyucu, editör ve yayınevi aynı yayımlanmış/public eser kümesini görür.
- * Rol bazlı farklar yalnızca bu eserler üzerinde yapılabilen işlemlerdir.
- * 18+ eserler de aynı havuzdadır; görünürlük yalnız hesap yaşı + açık onayla açılır.
+ * Okuyucu, editör ve yayınevi aynı yayımlanmış/public eser kümesini çağırır.
+ * Rol bazlı farklar yalnızca bu havuzun üstündeki filtreler ve yapılabilen
+ * işlemlerdir. 18+ eserler de aynı havuzdadır; görünürlük hesap yaşı + açık
+ * onayla açılır.
  */
 export function commonDiscoveryWorkWhereFor(
   canAccessAdultContent = false,
@@ -22,6 +23,7 @@ export function commonDiscoveryWorkWhereFor(
     author: {
       is: {
         deletedAt: null,
+        role: "writer",
         status: "active",
       },
     },

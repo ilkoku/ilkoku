@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
-import { adultContentWorkVisibility } from "@/lib/adult-content-access";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import { prisma } from "@/lib/prisma";
 import type { StoredWorkContentRating } from "@/lib/work-content-classification";
 import {
@@ -12,7 +12,7 @@ import {
 export { normalizePublisherFavoriteFilters };
 export type { PublisherFavoriteFilters };
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 24;
 
 export interface PublisherFavoriteWorkRow {
   authorAlias: string;
@@ -63,16 +63,6 @@ function publicWriterAlias(writer: {
   return `@${writer.publicId.toLocaleLowerCase("tr-TR")}`;
 }
 
-function publicWorkWhere(canAccessAdultContent: boolean) {
-  return {
-    archivedAt: null,
-    ...adultContentWorkVisibility(canAccessAdultContent),
-    publishedAt: { not: null },
-    status: "published",
-    visibility: "public",
-  } satisfies Prisma.WorkWhereInput;
-}
-
 export async function getPublisherFavoriteWorks(
   publisherId: string,
   filters: PublisherFavoriteFilters,
@@ -85,14 +75,7 @@ export async function getPublisherFavoriteWorks(
   const where: Prisma.PublisherWorkFavoriteWhereInput = {
     publisherId,
     work: {
-      ...publicWorkWhere(canAccessAdultContent),
-      author: {
-        is: {
-          deletedAt: null,
-          role: "writer",
-          status: "active",
-        },
-      },
+      ...commonDiscoveryWorkWhereFor(canAccessAdultContent),
       ...(contentRating ? { contentRating } : {}),
       ...(filters.query
         ? {

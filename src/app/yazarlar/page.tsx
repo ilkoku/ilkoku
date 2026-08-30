@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { canAccessReaderWorkspace } from "@/features/auth/data";
 import {
-  getPublicAuthors,
-} from "@/features/public-discovery/library";
+  getReaderAuthorFavoritePublicIds,
+  toggleReaderAuthorFavoriteAction,
+} from "@/features/reader/author-favorites";
+import { getPublicAuthors } from "@/features/public-discovery/library";
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import "./reader-author-favorites.css";
 
 const baseUrl = "https://ilkoku.com";
 const title = "Yazarlar | İlkOku";
@@ -28,13 +33,8 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: {
-      canonical: "/yazarlar",
-    },
-    robots: {
-      index: !query.arama,
-      follow: true,
-    },
+    alternates: { canonical: "/yazarlar" },
+    robots: { index: !query.arama, follow: true },
     openGraph: {
       type: "website",
       locale: "tr_TR",
@@ -67,7 +67,17 @@ export default async function PublicAuthorsPage({
 }: PublicAuthorsPageProps) {
   const query = await searchParams;
   const search = query.arama?.trim().slice(0, 100) || undefined;
-  const authors = await getPublicAuthors(search);
+  const [authors, user] = await Promise.all([
+    getPublicAuthors(search),
+    getCurrentUser(),
+  ]);
+  const readerUser =
+    user && canAccessReaderWorkspace(user.role) && user.status === "active"
+      ? user
+      : null;
+  const favoriteAuthorIds = readerUser
+    ? await getReaderAuthorFavoritePublicIds(readerUser.id)
+    : new Set<string>();
   const returnPath = search
     ? `/yazarlar?arama=${encodeURIComponent(search)}`
     : "/yazarlar";
@@ -79,19 +89,15 @@ export default async function PublicAuthorsPage({
     inLanguage: "tr-TR",
     mainEntity: {
       "@type": "ItemList",
-      itemListElement: authors.map(
-        (author, index) => {
-          const name =
-            author.displayName ?? author.fullName;
-
-          return {
-            "@type": "ListItem",
-            position: index + 1,
-            name,
-            url: `${baseUrl}/yazarlar/${author.publicId}`,
-          };
-        },
-      ),
+      itemListElement: authors.map((author, index) => {
+        const name = author.displayName ?? author.fullName;
+        return {
+          "@type": "ListItem",
+          position: index + 1,
+          name,
+          url: `${baseUrl}/yazarlar/${author.publicId}`,
+        };
+      }),
     },
   };
 
@@ -100,34 +106,23 @@ export default async function PublicAuthorsPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(schema).replace(
-            /</g,
-            "\\u003c",
-          ),
+          __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
         }}
       />
 
       <main className="public-hub__container">
         <header className="public-hub__hero">
-          <p className="public-hub__eyebrow">
-            YAZAR VİTRİNLERİ
-          </p>
+          <p className="public-hub__eyebrow">YAZAR VİTRİNLERİ</p>
           <h1>Eserden yazara uzanan açık keşif ağı.</h1>
           <p>
-            Bu dizin yalnız en az bir keşfe açık Türkçe
-            eseri bulunan aktif yazarları gösterir. Boş hesap,
-            özel profil ve taslak eser listelenmez.
+            Bu dizin yalnız en az bir keşfe açık Türkçe eseri bulunan aktif
+            yazarları gösterir. Boş hesap, özel profil ve taslak eser listelenmez.
           </p>
         </header>
 
-        <section
-          aria-labelledby="yazar-listesi"
-          className="public-hub__section"
-        >
+        <section aria-labelledby="yazar-listesi" className="public-hub__section">
           <div className="public-hub__section-heading">
-            <h2 id="yazar-listesi">
-              Keşfe açık yazarlar
-            </h2>
+            <h2 id="yazar-listesi">Keşfe açık yazarlar</h2>
             <span>{authors.length} yazar</span>
           </div>
 
@@ -147,40 +142,55 @@ export default async function PublicAuthorsPage({
               />
             </label>
             <button type="submit">Yazarları getir</button>
-            {search ? (
-              <Link href="/yazarlar">Aramayı temizle</Link>
-            ) : null}
+            {search ? <Link href="/yazarlar">Aramayı temizle</Link> : null}
           </form>
 
           {authors.length > 0 ? (
             <div className="public-hub__grid">
               {authors.map((author) => {
-                const name =
-                  author.displayName ??
-                  author.fullName;
+                const name = author.displayName ?? author.fullName;
+                const isFavorite = favoriteAuthorIds.has(author.publicId);
+                const href = `/yazarlar/${author.publicId}?from=${encodeURIComponent(returnPath)}`;
 
                 return (
-                  <Link
-                    className="public-hub-card"
-                    href={`/yazarlar/${author.publicId}?from=${encodeURIComponent(returnPath)}`}
-                    key={author.publicId}
-                  >
+                  <article className="public-hub-card" key={author.publicId}>
                     <div className="public-hub-card__meta">
                       <span>{initials(name)}</span>
-                      <span>
-                        {author._count.works} eser
-                      </span>
+                      <span>{author._count.works} eser</span>
                     </div>
-                    <h2>{name}</h2>
+                    <h2>
+                      <Link href={href}>{name}</Link>
+                    </h2>
                     <p className="public-hub-card__description">
-                      Yazarın keşfe açık yayımlanan
-                      eserlerini tek vitrinde inceleyin.
+                      Yazarın keşfe açık yayımlanan eserlerini tek vitrinde
+                      inceleyin.
                     </p>
-                    <span className="public-hub-card__footer">
-                      <span />
-                      <strong>Yazar vitrini →</strong>
-                    </span>
-                  </Link>
+                    <div className="reader-author-card__actions">
+                      <Link href={href}>Yazar vitrini →</Link>
+                      {readerUser ? (
+                        <form action={toggleReaderAuthorFavoriteAction}>
+                          <input
+                            name="authorPublicId"
+                            type="hidden"
+                            value={author.publicId}
+                          />
+                          <input
+                            name="returnPath"
+                            type="hidden"
+                            value={returnPath}
+                          />
+                          <button
+                            className="reader-author-card__favorite"
+                            type="submit"
+                          >
+                            {isFavorite
+                              ? "Favoriden Çıkar"
+                              : "Yazarı Favorile"}
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
+                  </article>
                 );
               })}
             </div>

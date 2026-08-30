@@ -2,29 +2,27 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import {
-  getPublicAuthorById,
-} from "@/features/public-discovery/library";
+import { canAccessReaderWorkspace } from "@/features/auth/data";
+import { getPublicAuthorById } from "@/features/public-discovery/library";
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
+import {
+  getReaderAuthorFavoriteStatus,
+  toggleReaderAuthorFavoriteAction,
+} from "@/features/reader/author-favorites";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
+import "../reader-author-favorites.css";
 
 const baseUrl = "https://ilkoku.com";
 const MAX_RETURN_PATH_LENGTH = 1500;
 
 type AuthorPageProps = {
-  params: Promise<{
-    publicId: string;
-  }>;
-  searchParams: Promise<{
-    from?: string;
-  }>;
+  params: Promise<{ publicId: string }>;
+  searchParams: Promise<{ from?: string }>;
 };
 
-function authorName(author: {
-  displayName: string | null;
-  fullName: string;
-}) {
+function authorName(author: { displayName: string | null; fullName: string }) {
   return author.displayName ?? author.fullName;
 }
 
@@ -32,7 +30,6 @@ function description(value: string | null) {
   const normalized =
     value?.replace(/\s+/gu, " ").trim() ||
     "Yazar bu eser için henüz bir tanıtım metni eklemedi.";
-
   return normalized.length > 190
     ? `${normalized.slice(0, 187).trimEnd()}...`
     : normalized;
@@ -47,7 +44,6 @@ function safeReturnPath(value: string | undefined) {
   ) {
     return "/yazarlar";
   }
-
   return value;
 }
 
@@ -57,38 +53,26 @@ export async function generateMetadata({
   params,
   searchParams,
 }: AuthorPageProps): Promise<Metadata> {
-  const [{ publicId }, query] = await Promise.all([
-    params,
-    searchParams,
-  ]);
+  const [{ publicId }, query] = await Promise.all([params, searchParams]);
   const author = await getPublicAuthorById(publicId);
 
   if (!author) {
     return {
       title: "Yazar bulunamadı | İlkOku",
-      robots: {
-        index: false,
-        follow: false,
-      },
+      robots: { index: false, follow: false },
     };
   }
 
   const name = authorName(author);
   const canonical = `/yazarlar/${author.publicId}`;
   const title = `${name} — Eserleri | İlkOku`;
-  const metaDescription =
-    `${name} tarafından İlkOku’da keşfe açık yayımlanan ${author.works.length} Türkçe eseri keşfedin.`;
+  const metaDescription = `${name} tarafından İlkOku’da keşfe açık yayımlanan ${author.works.length} Türkçe eseri keşfedin.`;
 
   return {
     title,
     description: metaDescription,
-    alternates: {
-      canonical,
-    },
-    robots: {
-      index: !query.from,
-      follow: true,
-    },
+    alternates: { canonical },
+    robots: { index: !query.from, follow: true },
     openGraph: {
       type: "profile",
       locale: "tr_TR",
@@ -108,16 +92,21 @@ export default async function PublicAuthorPage({
   params,
   searchParams,
 }: AuthorPageProps) {
-  const [{ publicId }, query] = await Promise.all([
+  const [{ publicId }, query, user] = await Promise.all([
     params,
     searchParams,
+    getCurrentUser(),
   ]);
   const author = await getPublicAuthorById(publicId);
+  if (!author) notFound();
 
-  if (!author) {
-    notFound();
-  }
-
+  const readerUser =
+    user && canAccessReaderWorkspace(user.role) && user.status === "active"
+      ? user
+      : null;
+  const isFavorite = readerUser
+    ? await getReaderAuthorFavoriteStatus(readerUser.id, author.publicId)
+    : false;
   const name = authorName(author);
   const profilePath = `/yazarlar/${author.publicId}`;
   const returnTo = safeReturnPath(query.from);
@@ -141,8 +130,7 @@ export default async function PublicAuthorPage({
           name: work.title,
           url: `${baseUrl}/kitap/${work.slug}`,
           genre: work.genre ?? undefined,
-          datePublished:
-            work.publishedAt?.toISOString(),
+          datePublished: work.publishedAt?.toISOString(),
         })),
       },
     },
@@ -150,24 +138,9 @@ export default async function PublicAuthorPage({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "Ana Sayfa",
-          item: `${baseUrl}/`,
-        },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: "Yazarlar",
-          item: `${baseUrl}/yazarlar`,
-        },
-        {
-          "@type": "ListItem",
-          position: 3,
-          name,
-          item: canonical,
-        },
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: `${baseUrl}/` },
+        { "@type": "ListItem", position: 2, name: "Yazarlar", item: `${baseUrl}/yazarlar` },
+        { "@type": "ListItem", position: 3, name, item: canonical },
       ],
     },
   ];
@@ -177,37 +150,35 @@ export default async function PublicAuthorPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(schemas).replace(
-            /</g,
-            "\\u003c",
-          ),
+          __html: JSON.stringify(schemas).replace(/</g, "\\u003c"),
         }}
       />
 
       <main className="public-hub__container">
         <header className="public-hub__hero">
-          <p className="public-hub__eyebrow">
-            YAZAR VİTRİNİ
-          </p>
+          <p className="public-hub__eyebrow">YAZAR VİTRİNİ</p>
           <h1>{name}</h1>
           <p>
-            Bu vitrinde yalnız yazarın keşfe açtığı Türkçe
-            eserler bulunur. Taslaklar, özel çalışmalar ve
-            kişisel hesap bilgileri gösterilmez.
+            Bu vitrinde yalnız yazarın keşfe açtığı Türkçe eserler bulunur.
+            Taslaklar, özel çalışmalar ve kişisel hesap bilgileri gösterilmez.
           </p>
+          {readerUser ? (
+            <form action={toggleReaderAuthorFavoriteAction}>
+              <input name="authorPublicId" type="hidden" value={author.publicId} />
+              <input name="returnPath" type="hidden" value={profileContextPath} />
+              <button className="reader-author-card__favorite" type="submit">
+                {isFavorite ? "Yazarı Favoriden Çıkar" : "Yazarı Favorile"}
+              </button>
+            </form>
+          ) : null}
           <p>
             <Link href={returnTo}>← Geldiğin sayfaya dön</Link>
           </p>
         </header>
 
-        <section
-          aria-labelledby="yazar-eserleri"
-          className="public-hub__section"
-        >
+        <section aria-labelledby="yazar-eserleri" className="public-hub__section">
           <div className="public-hub__section-heading">
-            <h2 id="yazar-eserleri">
-              Keşfe açık eserler
-            </h2>
+            <h2 id="yazar-eserleri">Keşfe açık eserler</h2>
             <span>{author.works.length} eser</span>
           </div>
 
@@ -218,58 +189,38 @@ export default async function PublicAuthorPage({
               const passportHref = `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(profileContextPath)}`;
 
               return (
-                <article
-                  className="public-hub-card"
-                  key={work.slug}
-                >
+                <article className="public-hub-card" key={work.slug}>
                   <div className="public-hub-card__meta">
                     {genre ? (
                       <Link
-                        href={`/turler/${publicTaxonomySlug(
-                          genre,
-                        )}?from=${encodeURIComponent(profileContextPath)}`}
+                        href={`/turler/${publicTaxonomySlug(genre)}?from=${encodeURIComponent(profileContextPath)}`}
                       >
                         {genre}
                       </Link>
                     ) : (
                       <span>Tür belirtilmedi</span>
                     )}
-                    <span>
-                      {work._count.chapters} bölüm
-                    </span>
+                    <span>{work._count.chapters} bölüm</span>
                     <span>
                       {workContentRatingDetails[work.contentRating].shortLabel}
                     </span>
                   </div>
                   <h2>
-                    <Link href={bookHref}>
-                      {work.title}
-                    </Link>
+                    <Link href={bookHref}>{work.title}</Link>
                   </h2>
                   <p className="public-hub-card__description">
                     {description(work.description)}
                   </p>
                   <div className="public-hub-card__footer">
-                    <time
-                      dateTime={
-                        work.publishedAt?.toISOString()
-                      }
-                    >
+                    <time dateTime={work.publishedAt?.toISOString()}>
                       {work.publishedAt
-                        ? new Intl.DateTimeFormat(
-                            "tr-TR",
-                            {
-                              dateStyle: "medium",
-                            },
-                          ).format(work.publishedAt)
+                        ? new Intl.DateTimeFormat("tr-TR", {
+                            dateStyle: "medium",
+                          }).format(work.publishedAt)
                         : "Tarih belirtilmedi"}
                     </time>
-                    <Link href={passportHref}>
-                      Pasaport →
-                    </Link>
-                    <Link href={bookHref}>
-                      Eseri incele →
-                    </Link>
+                    <Link href={passportHref}>Pasaport →</Link>
+                    <Link href={bookHref}>Eseri incele →</Link>
                   </div>
                 </article>
               );

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/features/dashboard/components/ProgressBar";
 import { EditorReviewBadge } from "@/features/editor-workspace/components/EditorReviewBadge";
+import { toggleFavoriteAction } from "@/features/reader/favorites";
 import { restartReadingAction } from "@/features/reading/progress";
 
 export type ReaderShelfWork = {
@@ -20,6 +21,7 @@ export type ReaderShelfWork = {
     | "completed";
   genre: string | null;
   id: string;
+  isFavorite: boolean;
   ratingLabel: string;
   readingProgress: {
     chapterPosition: number;
@@ -81,7 +83,6 @@ function WorkCard({
         <p className="book-card__genre">
           {work.genre ?? "Tür belirtilmedi"} · {work.authorName}
         </p>
-
         <h3>{work.title}</h3>
 
         <div className="reader-workdesk__card-meta">
@@ -112,6 +113,14 @@ function WorkCard({
           >
             Eser Pasaportu
           </Link>
+
+          <form action={toggleFavoriteAction}>
+            <input name="workId" type="hidden" value={work.id} />
+            <input name="returnPath" type="hidden" value="/okuyucu" />
+            <button className="button button--ghost" type="submit">
+              {work.isFavorite ? "Favoriden Çıkar" : "Favoriye Ekle"}
+            </button>
+          </form>
 
           {work.readingState === "completed" ? (
             <form action={restartReadingAction}>
@@ -160,19 +169,12 @@ export function ReaderShelfTabs({
 }) {
   const allWorks = useMemo(() => {
     const unique = new Map<string, ReaderShelfWork>();
-
-    for (const work of continueWorks) {
-      unique.set(work.id, work);
-    }
-
+    for (const work of continueWorks) unique.set(work.id, work);
     for (const section of sections) {
       for (const work of section.works) {
-        if (!unique.has(work.id)) {
-          unique.set(work.id, work);
-        }
+        if (!unique.has(work.id)) unique.set(work.id, work);
       }
     }
-
     return Array.from(unique.values());
   }, [continueWorks, sections]);
 
@@ -185,29 +187,20 @@ export function ReaderShelfTabs({
 
   useEffect(() => {
     let frameId = 0;
-
     try {
-      const saved = JSON.parse(
-        window.localStorage.getItem(storageKey) ?? "[]",
-      );
+      const saved = JSON.parse(window.localStorage.getItem(storageKey) ?? "[]");
       const normalized = Array.isArray(saved)
         ? saved.filter(
             (value): value is string =>
               typeof value === "string" && validIds.has(value),
           )
         : [];
-
-      frameId = window.requestAnimationFrame(() => {
-        setHiddenIds(normalized);
-      });
+      frameId = window.requestAnimationFrame(() => setHiddenIds(normalized));
     } catch {
       window.localStorage.removeItem(storageKey);
     }
-
     return () => {
-      if (frameId !== 0) {
-        window.cancelAnimationFrame(frameId);
-      }
+      if (frameId !== 0) window.cancelAnimationFrame(frameId);
     };
   }, [storageKey, validIds]);
 
@@ -250,9 +243,11 @@ export function ReaderShelfTabs({
           </div>
           <div>
             <span>{visibleContinueWorks.length} eser</span>
-            <Link className="button button--ghost" href="/okumaya-devam">
-              Tümünü Gör
-            </Link>
+            {visibleContinueWorks.length > 0 ? (
+              <Link className="button button--ghost" href="/okumaya-devam">
+                Tümünü Gör
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -296,7 +291,6 @@ export function ReaderShelfTabs({
               const visibleCount = section.works.filter(
                 (work) => !hiddenIds.includes(work.id),
               ).length;
-
               return (
                 <button
                   aria-current={
@@ -372,14 +366,10 @@ export function ReaderShelfTabs({
                   {activeSection.title}
                 </h2>
               </div>
-
               <div className="reader-workdesk__shelf-actions">
                 <span>{activeWorks.length} eser</span>
                 {activeSection.href && (
-                  <Link
-                    className="button button--ghost"
-                    href={activeSection.href}
-                  >
+                  <Link className="button button--ghost" href={activeSection.href}>
                     Tümünü Gör
                   </Link>
                 )}

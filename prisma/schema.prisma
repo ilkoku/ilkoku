@@ -38,6 +38,8 @@ model User {
   editorInvitesAccepted        EditorInvite[]               @relation("EditorInviteAcceptedBy")
   editorInvitesSent            EditorInvite[]               @relation("EditorInviteSender")
   favorites                    Favorite[]
+  readerAuthorFavoritesCreated ReaderAuthorFavorite[]       @relation("ReaderAuthorFavoriteReader")
+  readerAuthorFavoritesReceived ReaderAuthorFavorite[]      @relation("ReaderAuthorFavoriteAuthor")
   recommendationsReceived      EditorRecommendation[]       @relation("EditorRecommendationRecipient")
   recommendationsSent          EditorRecommendation[]       @relation("EditorRecommendationSender")
   notifications                Notification[]
@@ -312,6 +314,19 @@ model Favorite {
   @@unique([userId, workId])
   @@index([userId, createdAt])
   @@index([workId])
+}
+
+model ReaderAuthorFavorite {
+  id        String   @id @default(uuid()) @db.Char(36)
+  userId    String   @db.Char(36)
+  authorId  String   @db.Char(36)
+  createdAt DateTime @default(now())
+  user      User     @relation("ReaderAuthorFavoriteReader", fields: [userId], references: [id], onDelete: Cascade)
+  author    User     @relation("ReaderAuthorFavoriteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, authorId])
+  @@index([userId, createdAt])
+  @@index([authorId, createdAt])
 }
 
 model ReadingProgress {

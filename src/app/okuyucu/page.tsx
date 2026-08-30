@@ -58,57 +58,51 @@ export default async function ReaderHomePage() {
 
   const adultAccess = await getAdultContentAccess(profile.id);
 
-  const [
-    publishedRecords,
-    readingProgressRecords,
-    completedReadingRecords,
-  ] = await Promise.all([
-    prisma.work.findMany({
-      where: commonDiscoveryWorkWhereFor(
-        adultAccess.canAccessAdultContent,
-      ),
-      orderBy: { createdAt: "desc" },
-      select: {
-        author: {
-          select: {
-            displayName: true,
-            fullName: true,
+  const [publishedRecords, readingProgressRecords, completedReadingRecords] =
+    await Promise.all([
+      prisma.work.findMany({
+        where: commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
+        orderBy: { createdAt: "desc" },
+        select: {
+          author: {
+            select: { displayName: true, fullName: true },
           },
-        },
-        chapters: {
-          where: {
-            archivedAt: null,
-            publishedAt: { not: null },
-            status: "published",
+          chapters: {
+            where: {
+              archivedAt: null,
+              publishedAt: { not: null },
+              status: "published",
+            },
+            orderBy: { position: "asc" },
+            select: { id: true, position: true },
           },
-          orderBy: { position: "asc" },
-          select: { id: true, position: true },
+          contentRating: true,
+          editorReviewStatus: true,
+          favorites: {
+            where: { userId: profile.id },
+            select: { id: true },
+            take: 1,
+          },
+          genre: true,
+          id: true,
+          slug: true,
+          title: true,
         },
-        contentRating: true,
-        editorReviewStatus: true,
-        genre: true,
-        id: true,
-        slug: true,
-        title: true,
-      },
-      take: 24,
-    }),
-    getContinueReadingForMember(profile.id, 6),
-    getCompletedReading(profile.id, 6),
-  ]);
+        take: 24,
+      }),
+      getContinueReadingForMember(profile.id, 6),
+      getCompletedReading(profile.id, 6),
+    ]);
 
   type HomeWork = {
-    author: {
-      displayName: string | null;
-      fullName: string;
-    };
+    author: { displayName: string | null; fullName: string };
     chapters: Array<{ id: string; position: number }>;
-    contentRating:
-      (typeof publishedRecords)[number]["contentRating"];
+    contentRating: (typeof publishedRecords)[number]["contentRating"];
     editorReviewStatus:
       (typeof publishedRecords)[number]["editorReviewStatus"];
     genre: string | null;
     id: string;
+    isFavorite: boolean;
     readingProgress: {
       chapterPosition: number;
       progressPercent: number;
@@ -128,11 +122,11 @@ export default async function ReaderHomePage() {
   const publishedWorks: HomeWork[] = publishedRecords
     .filter(
       (work) =>
-        !progressWorkIds.has(work.id) &&
-        !completedWorkIds.has(work.id),
+        !progressWorkIds.has(work.id) && !completedWorkIds.has(work.id),
     )
     .map((work) => ({
       ...work,
+      isFavorite: work.favorites.length > 0,
       readingProgress: null,
       readingState: "unread",
     }));
@@ -148,6 +142,7 @@ export default async function ReaderHomePage() {
       editorReviewStatus: progress.work.editorReviewStatus,
       genre: progress.work.genre,
       id: progress.work.id,
+      isFavorite: progress.work.favorites.length > 0,
       readingProgress: {
         chapterPosition: progress.chapter.position,
         progressPercent: progress.progressPercent,
@@ -169,10 +164,10 @@ export default async function ReaderHomePage() {
       editorReviewStatus: progress.work.editorReviewStatus,
       genre: progress.work.genre,
       id: progress.work.id,
+      isFavorite: progress.work.favorites.length > 0,
       readingProgress: {
         chapterPosition:
-          progress.work.chapters[0]?.position ??
-          progress.chapter.position,
+          progress.work.chapters[0]?.position ?? progress.chapter.position,
         progressPercent: 100,
       },
       readingState: "completed",
@@ -201,8 +196,8 @@ export default async function ReaderHomePage() {
       editorReviewStatus: work.editorReviewStatus,
       genre: work.genre,
       id: work.id,
-      ratingLabel:
-        workContentRatingDetails[work.contentRating].shortLabel,
+      isFavorite: work.isFavorite,
+      ratingLabel: workContentRatingDetails[work.contentRating].shortLabel,
       readingProgress: work.readingProgress,
       readingState: work.readingState,
       slug: work.slug,
@@ -251,8 +246,7 @@ export default async function ReaderHomePage() {
     },
   ];
 
-  const firstName =
-    profile.fullName.trim().split(/\s+/u)[0] || "Okur";
+  const firstName = profile.fullName.trim().split(/\s+/u)[0] || "Okur";
 
   return (
     <AppShell profile={profile}>

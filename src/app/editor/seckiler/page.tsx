@@ -14,6 +14,7 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { GENRE_LABELS } from "@/lib/genres";
@@ -55,16 +56,24 @@ export default async function EditorSelectionsPage({
   }>;
 }) {
   const profile = await requireEditorProfile("/editor/seckiler");
+  const enabledFilterIds = new Set(
+    await getDiscoverySurfaceFilterIds("editor-selections"),
+  );
   const adultAccess = await getAdultContentAccess(profile.id);
   const visibleRatings = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
   );
   const params = await searchParams;
-  const search = params.arama?.trim().slice(0, 220) || undefined;
-  const genre = normalizeGenreLabel(params.tur);
-  const requestedRating = isMemberStoredWorkContentRating(params.hitap)
-    ? params.hitap
+  const search = enabledFilterIds.has("search")
+    ? params.arama?.trim().slice(0, 220) || undefined
     : undefined;
+  const genre = enabledFilterIds.has("genre")
+    ? normalizeGenreLabel(params.tur)
+    : undefined;
+  const requestedRating =
+    enabledFilterIds.has("contentRating") && isMemberStoredWorkContentRating(params.hitap)
+      ? params.hitap
+      : undefined;
   const contentRating: MemberStoredWorkContentRating | undefined =
     requestedRating && visibleRatings.includes(requestedRating)
       ? requestedRating
@@ -125,50 +134,62 @@ export default async function EditorSelectionsPage({
             {hasFilters ? <Link href="/editor/seckiler">Tüm filtreleri temizle</Link> : null}
           </header>
 
-          <form className="role-filter-desk__form" method="get">
-            <label className="role-filter-field--search">
-              <span>Arama</span>
-              <input
-                defaultValue={search}
-                name="arama"
-                placeholder="Eser veya yazar ara"
-                type="search"
-              />
-            </label>
-
-            <label>
-              <span>Tür</span>
-              <select defaultValue={genre ?? ""} name="tur">
-                <option value="">Tüm türler</option>
-                {GENRE_LABELS.map((item) => (
-                  <option key={item} value={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Hitap yaşı</span>
-              <select defaultValue={contentRating ?? ""} name="hitap">
-                <option value="">Tüm yaşlar</option>
-                {visibleRatings.map((rating) => (
-                  <option key={rating} value={rating}>
-                    {workContentRatingDetails[rating].label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="role-filter-desk__actions">
-              <button className="button button--primary" type="submit">
-                Masayı Güncelle
-              </button>
-              {hasFilters ? (
-                <Link className="button button--ghost" href="/editor/seckiler">
-                  Temizle
-                </Link>
+          {enabledFilterIds.size > 0 ? (
+            <form className="role-filter-desk__form" method="get">
+              {enabledFilterIds.has("search") ? (
+                <label className="role-filter-field--search">
+                  <span>Arama</span>
+                  <input
+                    defaultValue={search}
+                    name="arama"
+                    placeholder="Eser veya yazar ara"
+                    type="search"
+                  />
+                </label>
               ) : null}
-            </div>
-          </form>
+
+              {enabledFilterIds.has("genre") ? (
+                <label>
+                  <span>Tür</span>
+                  <select defaultValue={genre ?? ""} name="tur">
+                    <option value="">Tüm türler</option>
+                    {GENRE_LABELS.map((item) => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("contentRating") ? (
+                <label>
+                  <span>Hitap yaşı</span>
+                  <select defaultValue={contentRating ?? ""} name="hitap">
+                    <option value="">Tüm yaşlar</option>
+                    {visibleRatings.map((rating) => (
+                      <option key={rating} value={rating}>
+                        {workContentRatingDetails[rating].label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <div className="role-filter-desk__actions">
+                <button className="button button--primary" type="submit">
+                  Masayı Güncelle
+                </button>
+                {hasFilters ? (
+                  <Link className="button button--ghost" href="/editor/seckiler">
+                    Temizle
+                  </Link>
+                ) : null}
+              </div>
+            </form>
+          ) : (
+            <p className="role-filter-desk__hint">
+              Bu yüzeyde Filtre Masası alanları İçerik Yönetimi&apos;nden kapatıldı.
+            </p>
+          )}
 
           {hasFilters ? (
             <div aria-label="Aktif filtreler" className="role-filter-desk__active">
@@ -179,11 +200,11 @@ export default async function EditorSelectionsPage({
                 </Link>
               ))}
             </div>
-          ) : (
+          ) : enabledFilterIds.size > 0 ? (
             <p className="role-filter-desk__hint">
               Filtre seçmeden tamamladığınız tüm public incelemeleri görüyorsunuz.
             </p>
-          )}
+          ) : null}
         </section>
 
         <DiscoveryResultSummary

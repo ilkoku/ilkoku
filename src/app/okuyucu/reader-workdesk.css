@@ -1,0 +1,193 @@
+.reader-workdesk {
+  gap: 2rem;
+}
+
+.reader-workdesk__hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.75fr);
+  gap: 1.5rem;
+  align-items: stretch;
+  padding: 1.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(224, 181, 47, 0.08), transparent 42%),
+    rgba(27, 33, 42, 0.9);
+}
+
+.reader-workdesk__hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -70px -90px auto;
+  width: 230px;
+  height: 230px;
+  border: 1px solid rgba(224, 181, 47, 0.08);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.reader-workdesk__intro {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.reader-workdesk__eyebrow {
+  margin: 0 0 0.55rem;
+  color: #dfb52f;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.reader-workdesk__hero h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  line-height: 1;
+}
+
+.reader-workdesk__lead {
+  max-width: 760px;
+  margin: 0.85rem 0 0;
+  color: rgba(232, 235, 241, 0.68);
+  line-height: 1.65;
+}
+
+.reader-workdesk__quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.2rem;
+}
+
+.reader-workdesk__quick-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(9, 12, 16, 0.28);
+  color: rgba(245, 246, 249, 0.86);
+  text-decoration: none;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.reader-workdesk__quick-links a:hover {
+  border-color: rgba(224, 181, 47, 0.46);
+  background: rgba(224, 181, 47, 0.08);
+  color: #fff;
+}
+
+.reader-workdesk__summary {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.reader-workdesk__summary-card {
+  display: flex;
+  min-height: 108px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  background: rgba(9, 12, 16, 0.38);
+}
+
+.reader-workdesk__summary-card strong {
+  color: #f7f7f5;
+  font-size: 1.85rem;
+  line-height: 1;
+}
+
+.reader-workdesk__summary-card span {
+  color: rgba(232, 235, 241, 0.6);
+  font-size: 0.82rem;
+}
+
+.reader-workdesk__continue {
+  padding: 1.35rem;
+  border: 1px solid rgba(224, 181, 47, 0.16);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(224, 181, 47, 0.045), transparent 64%),
+    rgba(19, 24, 31, 0.58);
+}
+
+.reader-workdesk__continue .section-heading {
+  margin-bottom: 1rem;
+}
+
+.reader-workdesk__continue .books-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reader-workdesk__continue .book-card {
+  background: rgba(28, 34, 43, 0.96);
+}
+
+.reader-workdesk__continue .workspace-empty {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-style: dashed;
+  background: rgba(9, 12, 16, 0.22);
+}
+
+.reader-workdesk__shelf {
+  padding-top: 0.15rem;
+}
+
+.reader-workdesk .book-card__status-row > span {
+  white-space: nowrap;
+}
+
+@media (max-width: 1050px) {
+  .reader-workdesk__hero {
+    grid-template-columns: 1fr;
+  }
+
+  .reader-workdesk__summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .reader-workdesk__summary-card {
+    min-height: 88px;
+  }
+}
+
+@media (max-width: 760px) {
+  .reader-workdesk__hero {
+    padding: 1.2rem;
+    border-radius: 18px;
+  }
+
+  .reader-workdesk__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .reader-workdesk__summary-card {
+    min-height: auto;
+    gap: 0.55rem;
+  }
+
+  .reader-workdesk__continue {
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .reader-workdesk__continue .books-grid {
+    grid-template-columns: 1fr;
+  }
+}

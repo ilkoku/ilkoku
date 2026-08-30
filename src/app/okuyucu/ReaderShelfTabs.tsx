@@ -318,7 +318,12 @@ export function ReaderShelfTabs({
             })}
           </nav>
 
-          <details className="reader-workdesk__hidden-drawer">
+          <details
+            className="reader-workdesk__hidden-drawer"
+            onMouseLeave={(event) => {
+              event.currentTarget.open = false;
+            }}
+          >
             <summary>
               Gizlenen Eserler
               {hiddenWorks.length > 0 && <span>{hiddenWorks.length}</span>}

@@ -161,7 +161,11 @@ export function ReaderWorksTable({
     () => rows.find((row) => row.id === selectedId) ?? null,
     [rows, selectedId],
   );
-  const compactDiscovery = returnTo === "/kesfet" || returnTo.startsWith("/kesfet?");
+  const compactDiscovery =
+    returnTo === "/kesfet" ||
+    returnTo.startsWith("/kesfet?") ||
+    returnTo === "/favorilerim" ||
+    returnTo.startsWith("/favorilerim?");
 
   useEffect(() => {
     function closeOnEscape(event: KeyboardEvent) {

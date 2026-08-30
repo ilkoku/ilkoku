@@ -9,6 +9,7 @@ import {
   safeAdultGateReturnPath,
 } from "@/lib/adult-content-access";
 import "@/features/profile/profile.css";
+import "@/features/adult-content/age-verification.css";
 
 export const metadata: Metadata = {
   title: "Yaş Doğrulama | İlkOku",
@@ -36,24 +37,28 @@ export default async function AgeVerificationPage({
   if (!access.needsBirthDate) redirect(returnTo);
 
   return (
-    <main className="profile-page">
-      <div className="profile-page__container">
-        <Brand />
-        <section className="profile-card">
-          <div className="profile-card__heading">
-            <div>
-              <p>1. doğrulama</p>
-              <h1>Yaş bilginizi doğrulayın</h1>
-            </div>
-          </div>
-          <p>
-            İlkOku içerik yaş sınıflarını doğru uygulayabilmek için doğum tarihinizi bir kez ister.
-            Bu bilgi public profilinizde gösterilmez. 18+ içerik erişimi ayrıca ikinci bir açık onay gerektirir.
+    <main className="age-verification-page">
+      <div className="age-verification-shell">
+        <div className="age-verification-brand">
+          <Brand />
+        </div>
+
+        <section className="age-verification-card">
+          <header className="age-verification-heading">
+            <p className="age-verification-step">1. doğrulama</p>
+            <h1>Yaş bilginizi doğrulayın</h1>
+          </header>
+
+          <p className="age-verification-intro">
+            İlkOku, içerik yaş sınıflarını doğru uygulayabilmek için doğum tarihinizi bir kez ister.
+            Bu bilgi public profilinizde gösterilmez. 18+ içerik erişimi için ayrıca ikinci bir açık onay gerekir.
           </p>
+
           <AgeVerificationForm returnTo={returnTo} />
-          <p>
-            <Link href="/">Ana sayfaya dön</Link>
-          </p>
+
+          <Link className="age-verification-back" href="/">
+            ← Ana sayfaya dön
+          </Link>
         </section>
       </div>
     </main>

@@ -18,6 +18,14 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { sanitizeDiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filter-management";
+import {
+  appendDiscoveryAdvancedFilterParams,
+  clearDiscoveryAdvancedFilter,
+  discoveryAdvancedFilterChips,
+} from "@/lib/discovery-advanced-filters";
+import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
+import type { DiscoveryFilterId } from "@/lib/discovery-filter-registry";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
@@ -35,6 +43,7 @@ function pageHref(filters: PublisherFollowingFilters, page: number) {
   if (filters.genre) params.set("tur", filters.genre);
   if (filters.contentRating) params.set("hitap", filters.contentRating);
   if (filters.city) params.set("sehir", filters.city);
+  appendDiscoveryAdvancedFilterParams(params, filters.advanced);
   if (page > 1) params.set("sayfa", String(page));
   const query = params.toString();
   return query
@@ -51,6 +60,9 @@ export default async function PublisherFollowingPage({
     "/yayinevi/takip-ettiklerim",
     "follow_author",
   );
+  const enabledFilterIds = new Set<DiscoveryFilterId>(
+    await getDiscoverySurfaceFilterIds("publisher-following-authors"),
+  );
   const adultAccess = access.profile.adminPublisherView
     ? { canAccessAdultContent: true, isAdult: true }
     : await getAdultContentAccess(access.profile.id);
@@ -58,6 +70,14 @@ export default async function PublisherFollowingPage({
     adultAccess.canAccessAdultContent,
   );
   const filters = normalizePublisherFollowingFilters(await searchParams);
+  if (!enabledFilterIds.has("search")) filters.query = "";
+  if (!enabledFilterIds.has("genre")) filters.genre = "";
+  if (!enabledFilterIds.has("contentRating")) filters.contentRating = undefined;
+  if (!enabledFilterIds.has("city")) filters.city = "";
+  filters.advanced = sanitizeDiscoveryAdvancedFilters(
+    filters.advanced,
+    enabledFilterIds,
+  );
   if (
     filters.contentRating === "adult_18" &&
     !adultAccess.canAccessAdultContent
@@ -70,33 +90,52 @@ export default async function PublisherFollowingPage({
     adultAccess.canAccessAdultContent,
   );
   const canMutate = !access.profile.adminPublisherView;
-  const returnTo = pageHref(filters, data.currentPage);
-  const activeFilters = [
+  const normalizedFilters = { ...filters, page: data.currentPage };
+  const returnTo = pageHref(normalizedFilters, data.currentPage);
+  const baseActiveFilters = [
     filters.query
       ? {
-          href: pageHref({ ...filters, page: 1, query: "" }, 1),
+          href: pageHref({ ...normalizedFilters, page: 1, query: "" }, 1),
           label: `Arama: ${filters.query}`,
         }
       : null,
     filters.genre
       ? {
-          href: pageHref({ ...filters, genre: "", page: 1 }, 1),
+          href: pageHref({ ...normalizedFilters, genre: "", page: 1 }, 1),
           label: `Tür: ${filters.genre}`,
         }
       : null,
     filters.contentRating
       ? {
-          href: pageHref({ ...filters, contentRating: undefined, page: 1 }, 1),
+          href: pageHref(
+            { ...normalizedFilters, contentRating: undefined, page: 1 },
+            1,
+          ),
           label: `Yaş: ${workContentRatingDetails[filters.contentRating].shortLabel}`,
         }
       : null,
     filters.city
       ? {
-          href: pageHref({ ...filters, city: "", page: 1 }, 1),
+          href: pageHref({ ...normalizedFilters, city: "", page: 1 }, 1),
           label: `Şehir: ${filters.city}`,
         }
       : null,
   ].filter((item): item is { href: string; label: string } => item !== null);
+  const advancedActiveFilters = discoveryAdvancedFilterChips(
+    filters.advanced,
+    enabledFilterIds,
+  ).map((item) => ({
+    href: pageHref(
+      {
+        ...normalizedFilters,
+        advanced: clearDiscoveryAdvancedFilter(filters.advanced, item.id),
+        page: 1,
+      },
+      1,
+    ),
+    label: item.label,
+  }));
+  const activeFilters = [...baseActiveFilters, ...advancedActiveFilters];
 
   return (
     <AppShell profile={access.profile}>
@@ -109,6 +148,7 @@ export default async function PublisherFollowingPage({
 
         <PublisherCollectionFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={filters.advanced}
           city={filters.city}
           clearHref="/yayinevi/takip-ettiklerim"
           contentRating={filters.contentRating}
@@ -144,7 +184,7 @@ export default async function PublisherFollowingPage({
         <DiscoveryPagination
           ariaLabel="Yayınevi takip sayfalama"
           currentPage={data.currentPage}
-          hrefForPage={(page) => pageHref(filters, page)}
+          hrefForPage={(page) => pageHref(normalizedFilters, page)}
           totalPages={data.totalPages}
         />
       </div>

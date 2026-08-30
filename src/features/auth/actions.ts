@@ -402,45 +402,58 @@ export async function updateRoleAction(_state: AuthActionState, formData: FormDa
 
 export async function logoutAction() {
   const token = await getSessionCookie();
+  let userId: string | null = null;
+
+  if (token) {
+    const tokenHash = hashSessionToken(token);
+
+    try {
+      const session = await prisma.session.findUnique({
+        where: {
+          tokenHash,
+        },
+        select: {
+          userId: true,
+        },
+      });
+
+      userId = session?.userId ?? null;
+
+      await prisma.session.deleteMany({
+        where: {
+          tokenHash,
+        },
+      });
+    } catch (sessionError) {
+      console.error("LOGOUT_SESSION_REVOKE_FAILED", sessionError);
+    }
+
+    if (userId) {
+      try {
+        await prisma.auditLog.create({
+          data: {
+            action: "logout",
+            actorId: userId,
+            entityId: userId,
+            entityType: "User",
+          },
+        });
+      } catch (auditError) {
+        console.error("LOGOUT_AUDIT_FAILED", auditError);
+      }
+    }
+  }
 
   try {
-    if (token) {
-      const tokenHash = hashSessionToken(token);
-
-      await prisma.$transaction(
-        async (transaction) => {
-          const session =
-            await transaction.session.findUnique({
-              where: {
-                tokenHash,
-              },
-              select: {
-                userId: true,
-              },
-            });
-
-          await transaction.session.deleteMany({
-            where: {
-              tokenHash,
-            },
-          });
-
-          if (session) {
-            await transaction.auditLog.create({
-              data: {
-                action: "logout",
-                actorId: session.userId,
-                entityId: session.userId,
-                entityType: "User",
-              },
-            });
-          }
-        },
-      );
-    }
-  } finally {
     await clearSessionCookie();
+  } catch (cookieError) {
+    console.error("LOGOUT_SESSION_COOKIE_CLEAR_FAILED", cookieError);
+  }
+
+  try {
     await clearAdminRoleViewCookie();
+  } catch (cookieError) {
+    console.error("LOGOUT_ADMIN_COOKIE_CLEAR_FAILED", cookieError);
   }
 
   redirect("/");

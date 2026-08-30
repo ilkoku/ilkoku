@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { AdvancedDiscoveryFilterFields } from "@/components/discovery/AdvancedDiscoveryFilterFields";
 import "@/components/discovery/discovery-filter-desk.css";
+import type { DiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filters";
 import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
 import { GENRE_LABELS } from "@/lib/genres";
 import {
@@ -38,6 +40,22 @@ export function publisherCollectionReviewLabel(
   return "Henüz incelenmedi";
 }
 
+export const publisherCollectionWordCountFilters = [
+  "short",
+  "medium",
+  "long",
+] as const;
+export type PublisherCollectionWordCountFilter =
+  (typeof publisherCollectionWordCountFilters)[number];
+
+export function publisherCollectionWordCountLabel(
+  value: PublisherCollectionWordCountFilter,
+) {
+  if (value === "short") return "30.000 altı";
+  if (value === "medium") return "30.000 – 80.000";
+  return "80.000 üzeri";
+}
+
 function inferPublisherSurfaceId(clearHref: string, kind: PublisherCollectionKind) {
   if (clearHref.startsWith("/yayinevi/takip-ettiklerim")) {
     return "publisher-following-authors";
@@ -54,6 +72,7 @@ function inferPublisherSurfaceId(clearHref: string, kind: PublisherCollectionKin
 
 export async function PublisherCollectionFilterDesk({
   activeFilters,
+  advancedFilters,
   city,
   clearHref,
   contentRating,
@@ -62,11 +81,14 @@ export async function PublisherCollectionFilterDesk({
   hiddenFields = [],
   hint,
   kind,
+  language,
   query,
   ratingOptions,
   reviewStatus,
+  wordCount,
 }: {
   activeFilters: PublisherCollectionActiveFilter[];
+  advancedFilters: DiscoveryAdvancedFilters;
   city?: string;
   clearHref: string;
   contentRating?: string;
@@ -75,9 +97,11 @@ export async function PublisherCollectionFilterDesk({
   hiddenFields?: Array<{ name: string; value: string }>;
   hint: string;
   kind: PublisherCollectionKind;
+  language?: string;
   query?: string;
   ratingOptions: readonly StoredWorkContentRating[];
   reviewStatus?: PublisherCollectionReviewStatus;
+  wordCount?: PublisherCollectionWordCountFilter;
 }) {
   const hasFilters = activeFilters.length > 0;
   const enabledFilterIds = new Set(
@@ -159,12 +183,44 @@ export async function PublisherCollectionFilterDesk({
             </label>
           ) : null}
 
+          {kind === "work" && enabledFilterIds.has("language") ? (
+            <label>
+              <span>Dil</span>
+              <select defaultValue={language ?? ""} name="dil">
+                <option value="">Tüm diller</option>
+                <option value="tr">Türkçe</option>
+                <option value="en">İngilizce</option>
+                <option value="de">Almanca</option>
+                <option value="fr">Fransızca</option>
+              </select>
+            </label>
+          ) : null}
+
+          {kind === "work" && enabledFilterIds.has("wordCount") ? (
+            <label>
+              <span>Kelime sayısı</span>
+              <select defaultValue={wordCount ?? ""} name="kelime">
+                <option value="">Tümü</option>
+                {publisherCollectionWordCountFilters.map((value) => (
+                  <option key={value} value={value}>
+                    {publisherCollectionWordCountLabel(value)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
           {kind === "author" && enabledFilterIds.has("city") ? (
             <label>
               <span>Şehir</span>
               <input defaultValue={city} name="sehir" placeholder="Örn. İstanbul" />
             </label>
           ) : null}
+
+          <AdvancedDiscoveryFilterFields
+            enabledFilterIds={enabledFilterIds}
+            filters={advancedFilters}
+          />
 
           <div className="role-filter-desk__actions">
             <button className="button button--primary" type="submit">

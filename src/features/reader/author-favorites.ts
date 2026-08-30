@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { canAccessReaderWorkspace } from "@/features/auth/data";
+import type { Prisma } from "@/generated/prisma/client";
 import { readerAuthorDiscoveryWorkWhere } from "@/features/reader/author-discovery-scope";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
@@ -149,7 +150,14 @@ export async function getReaderAuthorFavoritePublicIds(userId: string) {
   );
 }
 
-export async function getReaderFavoriteAuthors(userId: string) {
+export async function getReaderFavoriteAuthors(
+  userId: string,
+  workFilters: Prisma.WorkWhereInput = {},
+) {
+  const workWhere: Prisma.WorkWhereInput = {
+    ...readerAuthorDiscoveryWorkWhere,
+    ...workFilters,
+  };
   const favorites = await prisma.readerAuthorFavorite.findMany({
     where: {
       userId,
@@ -157,7 +165,7 @@ export async function getReaderFavoriteAuthors(userId: string) {
         is: {
           deletedAt: null,
           status: "active",
-          works: { some: readerAuthorDiscoveryWorkWhere },
+          works: { some: workWhere },
         },
       },
     },
@@ -167,7 +175,7 @@ export async function getReaderFavoriteAuthors(userId: string) {
         select: {
           _count: {
             select: {
-              works: { where: readerAuthorDiscoveryWorkWhere },
+              works: { where: workWhere },
             },
           },
           bio: true,
@@ -176,10 +184,11 @@ export async function getReaderFavoriteAuthors(userId: string) {
           publicId: true,
           username: true,
           works: {
-            where: readerAuthorDiscoveryWorkWhere,
+            where: workWhere,
             orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
             select: {
               contentRating: true,
+              editorReviewStatus: true,
               genre: true,
               publishedAt: true,
               slug: true,

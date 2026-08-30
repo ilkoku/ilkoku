@@ -8,16 +8,24 @@ import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { readerAuthorDiscoveryWorkWhere } from "@/features/reader/author-discovery-scope";
 import { toggleReaderAuthorFavoriteAction } from "@/features/reader/author-favorites";
-import "@/features/reader/reader-discovery.css";
-import { normalizeGenreLabel } from "@/lib/genre-system";
-import { GENRE_LABELS } from "@/lib/genres";
 import {
-  isPublicStoredWorkContentRating,
+  READER_LIST_PAGE_SIZE,
+  ReaderFilterDesk,
+  ReaderPagination,
+  ReaderResultSummary,
+  parseReaderStandardFilters,
+  readerListHref,
+  readerReviewLabel,
+  type ReaderActiveFilter,
+  type ReaderReviewFilter,
+  type ReaderSortOption,
+} from "@/features/reader/discovery-standard";
+import "@/features/reader/reader-discovery.css";
+import { prisma } from "@/lib/prisma";
+import {
   publicStoredWorkContentRatings,
   workContentRatingDetails,
-  type PublicStoredWorkContentRating,
 } from "@/lib/work-content-classification";
-import { prisma } from "@/lib/prisma";
 import "./reader-author-discovery.css";
 
 export const metadata: Metadata = {
@@ -27,53 +35,11 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 18;
-const reviewFilters = [
-  "not_requested",
-  "requested",
-  "in_progress",
-  "awaiting_second_editor",
-  "second_in_progress",
-  "completed",
-] as const;
-const sortFilters = ["recent", "most_works", "az"] as const;
-const readerAuthorContentRatings = publicStoredWorkContentRatings;
-
-type ReviewFilter = (typeof reviewFilters)[number];
-type SortFilter = (typeof sortFilters)[number];
-
-type AuthorExploreFilters = {
-  contentRating?: PublicStoredWorkContentRating;
-  favoritesOnly: boolean;
-  genre?: string;
-  reviewStatus?: ReviewFilter;
-  search?: string;
-  sort: SortFilter;
-};
-
-function includesValue<T extends string>(
-  values: readonly T[],
-  value: string | undefined,
-): value is T {
-  return Boolean(value && values.includes(value as T));
-}
-
-function reviewLabel(status: ReviewFilter) {
-  switch (status) {
-    case "not_requested":
-      return "Henüz incelenmedi";
-    case "requested":
-      return "İnceleme talep edildi";
-    case "in_progress":
-      return "İlk editörde";
-    case "awaiting_second_editor":
-      return "İkinci editör bekleniyor";
-    case "second_in_progress":
-      return "İkinci editörde";
-    case "completed":
-      return "İncelendi";
-  }
-}
+const sortOptions = [
+  { label: "Son eser yayımlayan", value: "recent" },
+  { label: "En çok eşleşen eser", value: "most_works" },
+  { label: "A–Z", value: "az" },
+] as const satisfies readonly ReaderSortOption[];
 
 function authorName(author: {
   displayName: string | null;
@@ -84,25 +50,12 @@ function authorName(author: {
 
 function initials(value: string) {
   const parts = value.trim().split(/\s+/u).filter(Boolean);
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0]?.toLocaleUpperCase("tr-TR") ?? "")
-    .join("") || "Y";
-}
-
-function pageHref(filters: AuthorExploreFilters, page: number) {
-  const params = new URLSearchParams();
-
-  if (filters.search) params.set("arama", filters.search);
-  if (filters.genre) params.set("tur", filters.genre);
-  if (filters.contentRating) params.set("hitapYasi", filters.contentRating);
-  if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
-  if (filters.favoritesOnly) params.set("favori", "1");
-  if (filters.sort !== "recent") params.set("siralama", filters.sort);
-  if (page > 1) params.set("sayfa", String(page));
-
-  const query = params.toString();
-  return query ? `/yazar-kesfet?${query}` : "/yazar-kesfet";
+  return (
+    parts
+      .slice(0, 2)
+      .map((part) => part[0]?.toLocaleUpperCase("tr-TR") ?? "")
+      .join("") || "Y"
+  );
 }
 
 export default async function ReaderAuthorDiscoveryPage({
@@ -111,7 +64,6 @@ export default async function ReaderAuthorDiscoveryPage({
   searchParams: Promise<{
     arama?: string;
     editor?: string;
-    favori?: string;
     hitapYasi?: string;
     sayfa?: string;
     siralama?: string;
@@ -125,44 +77,27 @@ export default async function ReaderAuthorDiscoveryPage({
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 
-  const parameters = await searchParams;
-  const search = parameters.arama?.trim().slice(0, 220);
-  const genre = normalizeGenreLabel(parameters.tur);
-  const contentRating = isPublicStoredWorkContentRating(parameters.hitapYasi)
-    ? parameters.hitapYasi
-    : undefined;
-  const reviewStatus = includesValue(reviewFilters, parameters.editor)
-    ? parameters.editor
-    : undefined;
-  const favoritesOnly = parameters.favori === "1";
-  const sort = includesValue(sortFilters, parameters.siralama)
-    ? parameters.siralama
-    : "recent";
-  const rawPage = Number.parseInt(parameters.sayfa ?? "", 10);
-  const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
-  const filters: AuthorExploreFilters = {
-    contentRating,
-    favoritesOnly,
-    genre,
-    reviewStatus,
-    search,
-    sort,
-  };
+  const filters = parseReaderStandardFilters(
+    await searchParams,
+    publicStoredWorkContentRatings,
+    sortOptions,
+    "recent",
+  );
 
   const workWhere: Prisma.WorkWhereInput = {
     ...readerAuthorDiscoveryWorkWhere,
-    ...(search
+    ...(filters.search
       ? {
           OR: [
-            { title: { contains: search } },
-            { subtitle: { contains: search } },
+            { title: { contains: filters.search } },
+            { subtitle: { contains: filters.search } },
             {
               author: {
                 is: {
                   OR: [
-                    { displayName: { contains: search } },
-                    { fullName: { contains: search } },
-                    { username: { contains: search } },
+                    { displayName: { contains: filters.search } },
+                    { fullName: { contains: filters.search } },
+                    { username: { contains: filters.search } },
                   ],
                 },
               },
@@ -170,9 +105,11 @@ export default async function ReaderAuthorDiscoveryPage({
           ],
         }
       : {}),
-    ...(genre ? { genre } : {}),
-    ...(contentRating ? { contentRating } : {}),
-    ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
+    ...(filters.genre ? { genre: filters.genre } : {}),
+    ...(filters.contentRating ? { contentRating: filters.contentRating } : {}),
+    ...(filters.reviewStatus
+      ? { editorReviewStatus: filters.reviewStatus }
+      : {}),
   };
 
   const [authors, favoriteAuthorCount] = await Promise.all([
@@ -181,13 +118,6 @@ export default async function ReaderAuthorDiscoveryPage({
         deletedAt: null,
         status: "active",
         works: { some: workWhere },
-        ...(favoritesOnly
-          ? {
-              readerAuthorFavoritesReceived: {
-                some: { userId: profile.id },
-              },
-            }
-          : {}),
       },
       select: {
         _count: {
@@ -221,12 +151,12 @@ export default async function ReaderAuthorDiscoveryPage({
 
   const collator = new Intl.Collator("tr-TR", { sensitivity: "base" });
   const sortedAuthors = [...authors].sort((left, right) => {
-    if (sort === "most_works") {
+    if (filters.sort === "most_works") {
       const countDifference = right._count.works - left._count.works;
       if (countDifference !== 0) return countDifference;
     }
 
-    if (sort === "recent") {
+    if (filters.sort === "recent") {
       const leftTime = left.works[0]?.publishedAt?.getTime() ?? 0;
       const rightTime = right.works[0]?.publishedAt?.getTime() ?? 0;
       if (rightTime !== leftTime) return rightTime - leftTime;
@@ -236,11 +166,11 @@ export default async function ReaderAuthorDiscoveryPage({
   });
 
   const totalCount = sortedAuthors.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const currentPage = Math.min(requestedPage, totalPages);
+  const totalPages = Math.max(1, Math.ceil(totalCount / READER_LIST_PAGE_SIZE));
+  const currentPage = Math.min(filters.page, totalPages);
   const pageAuthors = sortedAuthors.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
+    (currentPage - 1) * READER_LIST_PAGE_SIZE,
+    currentPage * READER_LIST_PAGE_SIZE,
   );
   const favoriteRows = pageAuthors.length
     ? await prisma.readerAuthorFavorite.findMany({
@@ -254,53 +184,62 @@ export default async function ReaderAuthorDiscoveryPage({
   const favoriteAuthorIds = new Set(
     favoriteRows.map((favorite) => favorite.authorId),
   );
-  const activeFilters = [
-    search
+  const normalizedFilters = { ...filters, page: currentPage };
+  const pageHref = (page: number) =>
+    readerListHref("/yazar-kesfet", normalizedFilters, page);
+  const activeFilters: ReaderActiveFilter[] = [
+    filters.search
       ? {
-          href: pageHref({ ...filters, search: undefined }, 1),
-          label: `Arama: ${search}`,
+          href: readerListHref(
+            "/yazar-kesfet",
+            { ...normalizedFilters, search: undefined },
+            1,
+          ),
+          label: `Arama: ${filters.search}`,
         }
       : null,
-    genre
+    filters.genre
       ? {
-          href: pageHref({ ...filters, genre: undefined }, 1),
-          label: `Tür: ${genre}`,
+          href: readerListHref(
+            "/yazar-kesfet",
+            { ...normalizedFilters, genre: undefined },
+            1,
+          ),
+          label: `Tür: ${filters.genre}`,
         }
       : null,
-    contentRating
+    filters.contentRating
       ? {
-          href: pageHref({ ...filters, contentRating: undefined }, 1),
-          label: `Hitap: ${workContentRatingDetails[contentRating].shortLabel}`,
+          href: readerListHref(
+            "/yazar-kesfet",
+            { ...normalizedFilters, contentRating: undefined },
+            1,
+          ),
+          label: `Hitap: ${workContentRatingDetails[filters.contentRating].shortLabel}`,
         }
       : null,
-    reviewStatus
+    filters.reviewStatus
       ? {
-          href: pageHref({ ...filters, reviewStatus: undefined }, 1),
-          label: reviewLabel(reviewStatus),
+          href: readerListHref(
+            "/yazar-kesfet",
+            { ...normalizedFilters, reviewStatus: undefined },
+            1,
+          ),
+          label: readerReviewLabel(filters.reviewStatus),
         }
       : null,
-    favoritesOnly
+    filters.sort !== "recent"
       ? {
-          href: pageHref({ ...filters, favoritesOnly: false }, 1),
-          label: "Yalnız favori yazarlarım",
+          href: readerListHref(
+            "/yazar-kesfet",
+            { ...normalizedFilters, sort: "recent" },
+            1,
+          ),
+          label: `Sıralama: ${sortOptions.find((option) => option.value === filters.sort)?.label ?? filters.sort}`,
         }
       : null,
-    sort === "most_works"
-      ? {
-          href: pageHref({ ...filters, sort: "recent" }, 1),
-          label: "En çok eşleşen eser",
-        }
-      : sort === "az"
-        ? {
-            href: pageHref({ ...filters, sort: "recent" }, 1),
-            label: "A–Z sıralama",
-          }
-        : null,
-  ].filter((item): item is { href: string; label: string } => item !== null);
-  const hasFilters = activeFilters.length > 0;
-  const returnTo = pageHref(filters, currentPage);
-  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const last = totalCount === 0 ? 0 : first + pageAuthors.length - 1;
+  ].filter((item): item is ReaderActiveFilter => item !== null);
+  const returnTo = pageHref(currentPage);
 
   return (
     <AppShell profile={profile}>
@@ -316,7 +255,7 @@ export default async function ReaderAuthorDiscoveryPage({
             <nav aria-label="Keşif çalışma alanı" className="reader-discovery-desk__quick-links">
               <Link href="/kesfet">Eserler</Link>
               <span aria-current="page">Yazarlar</span>
-              <Link href="/favorilerim?sekme=yazarlar">Favori Yazarlarım</Link>
+              <Link href="/favorilerim?tip=yazar">Favori Yazarlarım</Link>
               <Link href="/okumaya-devam">Okumaya Devam</Link>
             </nav>
           </div>
@@ -337,125 +276,27 @@ export default async function ReaderAuthorDiscoveryPage({
           </div>
         </section>
 
-        <section className="reader-discovery-console" aria-label="Yazar filtre masası">
-          <header className="reader-discovery-console__header">
-            <div>
-              <span>Filtre masası</span>
-              <strong>Aradığınız yazarı daraltın</strong>
-            </div>
-            {hasFilters ? <Link href="/yazar-kesfet">Tüm filtreleri temizle</Link> : null}
-          </header>
+        <ReaderFilterDesk
+          activeFilters={activeFilters}
+          clearHref="/yazar-kesfet"
+          contentRating={filters.contentRating}
+          genre={filters.genre}
+          heading="Aradığınız yazarı daraltın"
+          hint="Filtre seçmeden keşfe açık bütün uygun yazarları görüyorsunuz."
+          ratingOptions={publicStoredWorkContentRatings}
+          reviewStatus={filters.reviewStatus}
+          search={filters.search}
+          searchPlaceholder="Yazar, rumuz veya eser ara"
+          sort={filters.sort}
+          sortOptions={sortOptions}
+        />
 
-          <nav aria-label="Hızlı yazar filtreleri" className="reader-discovery-presets">
-            <Link href="/yazar-kesfet?favori=1">Favori yazarlarım</Link>
-            <Link href="/yazar-kesfet?editor=completed">İncelenmiş eseri olanlar</Link>
-            <Link href="/yazar-kesfet?siralama=most_works">En çok eşleşen eser</Link>
-            <Link href="/yazar-kesfet?siralama=az">A–Z</Link>
-          </nav>
-
-          <form className="editor-filters reader-discovery-filters">
-            <label className="reader-discovery-filter--search">
-              <span>Arama</span>
-              <input
-                defaultValue={search}
-                name="arama"
-                placeholder="Yazar, rumuz veya eser ara"
-                type="search"
-              />
-            </label>
-
-            <label>
-              <span>Tür</span>
-              <select defaultValue={genre ?? ""} name="tur">
-                <option value="">Tüm türler</option>
-                {GENRE_LABELS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Hitap yaşı</span>
-              <select defaultValue={contentRating ?? ""} name="hitapYasi">
-                <option value="">Tümü</option>
-                {readerAuthorContentRatings.map((rating) => (
-                  <option key={rating} value={rating}>
-                    {workContentRatingDetails[rating].shortLabel}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Editör durumu</span>
-              <select defaultValue={reviewStatus ?? ""} name="editor">
-                <option value="">Tümü</option>
-                <option value="not_requested">Henüz incelenmedi</option>
-                <option value="requested">İnceleme talep edildi</option>
-                <option value="in_progress">İlk editörde</option>
-                <option value="awaiting_second_editor">İkinci editör bekleniyor</option>
-                <option value="second_in_progress">İkinci editörde</option>
-                <option value="completed">İncelendi</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Favori durumu</span>
-              <select defaultValue={favoritesOnly ? "1" : ""} name="favori">
-                <option value="">Tüm yazarlar</option>
-                <option value="1">Yalnız favori yazarlarım</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Sıralama</span>
-              <select defaultValue={sort} name="siralama">
-                <option value="recent">Son eser yayımlayan</option>
-                <option value="most_works">En çok eşleşen eser</option>
-                <option value="az">A–Z</option>
-              </select>
-            </label>
-
-            <div className="reader-discovery-filter-actions">
-              <button className="button button--primary" type="submit">
-                Masayı Güncelle
-              </button>
-              {hasFilters ? (
-                <Link className="button button--ghost" href="/yazar-kesfet">
-                  Temizle
-                </Link>
-              ) : null}
-            </div>
-          </form>
-
-          {activeFilters.length > 0 ? (
-            <div className="reader-discovery-active-filters" aria-label="Aktif filtreler">
-              <span>Aktif</span>
-              {activeFilters.map((item) => (
-                <Link href={item.href} key={`${item.label}-${item.href}`}>
-                  {item.label}
-                  <b aria-hidden="true">×</b>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="reader-discovery-console__hint">
-              Filtre seçmeden keşfe açık bütün uygun yazarları görüyorsunuz.
-            </p>
-          )}
-        </section>
-
-        <section aria-live="polite" className="reader-discovery-summary">
-          <span>Masadaki sonuç</span>
-          <strong>{totalCount} yazar</strong>
-          <small>
-            {totalCount === 0
-              ? "Filtreleri değiştirerek yeniden deneyin."
-              : `${first}–${last} arası gösteriliyor. Yazarlar yalnız filtreye uyan keşfe açık eserlerinden türetilir.`}
-          </small>
-        </section>
+        <ReaderResultSummary
+          currentPage={currentPage}
+          noun="yazar"
+          totalCount={totalCount}
+          visibleCount={pageAuthors.length}
+        />
 
         {pageAuthors.length > 0 ? (
           <section aria-label="Keşfedilen yazarlar" className="reader-author-discovery-grid">
@@ -496,7 +337,11 @@ export default async function ReaderAuthorDiscoveryPage({
                       <div className="reader-author-discovery-card__chips">
                         {latest.genre ? <span>{latest.genre}</span> : null}
                         <span>{workContentRatingDetails[latest.contentRating].shortLabel}</span>
-                        <span>{reviewLabel(latest.editorReviewStatus as ReviewFilter)}</span>
+                        <span>
+                          {readerReviewLabel(
+                            latest.editorReviewStatus as ReaderReviewFilter,
+                          )}
+                        </span>
                       </div>
                     </div>
                   ) : null}
@@ -534,33 +379,16 @@ export default async function ReaderAuthorDiscoveryPage({
         ) : (
           <div className="workspace-list-empty">
             <h2>Eşleşen yazar bulunamadı</h2>
-            <p>Tür, hitap yaşı, editör veya favori filtresini değiştirerek yeniden deneyin.</p>
+            <p>Arama veya filtreleri değiştirerek yeniden deneyin.</p>
           </div>
         )}
 
-        {totalCount > 0 ? (
-          <footer aria-label="Yazar keşif sayfalama" className="reader-discovery-pagination">
-            <span>
-              Sayfa {currentPage} / {totalPages}
-            </span>
-            <div>
-              {currentPage > 1 ? (
-                <Link className="button button--ghost" href={pageHref(filters, currentPage - 1)}>
-                  Önceki
-                </Link>
-              ) : (
-                <span aria-disabled="true">Önceki</span>
-              )}
-              {currentPage < totalPages ? (
-                <Link className="button button--ghost" href={pageHref(filters, currentPage + 1)}>
-                  Sonraki
-                </Link>
-              ) : (
-                <span aria-disabled="true">Sonraki</span>
-              )}
-            </div>
-          </footer>
-        ) : null}
+        <ReaderPagination
+          ariaLabel="Yazar keşif sayfalama"
+          currentPage={currentPage}
+          hrefForPage={pageHref}
+          totalPages={totalPages}
+        />
       </div>
     </AppShell>
   );

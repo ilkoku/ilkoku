@@ -37,8 +37,10 @@ export const readerReviewFilters = [
   "second_in_progress",
   "completed",
 ] as const;
+export const readerWordCountFilters = ["short", "medium", "long"] as const;
 
 export type ReaderReviewFilter = (typeof readerReviewFilters)[number];
+export type ReaderWordCountFilter = (typeof readerWordCountFilters)[number];
 
 export type ReaderActiveFilter = {
   href: string;
@@ -54,10 +56,12 @@ export type ReaderStandardFilters = {
   advanced: DiscoveryAdvancedFilters;
   contentRating?: StoredWorkContentRating;
   genre?: string;
+  language?: string;
   page: number;
   reviewStatus?: ReaderReviewFilter;
   search?: string;
   sort: string;
+  wordCount?: ReaderWordCountFilter;
 };
 
 export function includesReaderFilter<T extends string>(
@@ -84,18 +88,34 @@ export function readerReviewLabel(status: ReaderReviewFilter) {
   }
 }
 
+export function readerWordCountLabel(value: ReaderWordCountFilter) {
+  if (value === "short") return "30.000 altı";
+  if (value === "medium") return "30.000 – 80.000";
+  return "80.000 üzeri";
+}
+
+function firstParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+) {
+  const value = params[key];
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export function parseReaderStandardFilters(
   params: Record<string, string | string[] | undefined>,
   ratingOptions: readonly StoredWorkContentRating[],
   sortOptions: readonly ReaderSortOption[],
   defaultSort: string,
 ): ReaderStandardFilters {
-  const searchValue = Array.isArray(params.arama) ? params.arama[0] : params.arama;
-  const editorValue = Array.isArray(params.editor) ? params.editor[0] : params.editor;
-  const ratingValue = Array.isArray(params.hitapYasi) ? params.hitapYasi[0] : params.hitapYasi;
-  const sortValue = Array.isArray(params.siralama) ? params.siralama[0] : params.siralama;
-  const genreValue = Array.isArray(params.tur) ? params.tur[0] : params.tur;
-  const pageValue = Array.isArray(params.sayfa) ? params.sayfa[0] : params.sayfa;
+  const searchValue = firstParam(params, "arama");
+  const editorValue = firstParam(params, "editor");
+  const ratingValue = firstParam(params, "hitapYasi");
+  const sortValue = firstParam(params, "siralama");
+  const genreValue = firstParam(params, "tur");
+  const pageValue = firstParam(params, "sayfa");
+  const languageValue = firstParam(params, "dil")?.trim().slice(0, 10);
+  const wordCountValue = firstParam(params, "kelime");
   const search = searchValue?.trim().slice(0, 220) || undefined;
   const genre = normalizeGenreLabel(genreValue);
   const contentRating =
@@ -109,6 +129,9 @@ export function parseReaderStandardFilters(
   const sort = sortOptions.some((option) => option.value === sortValue)
     ? (sortValue as string)
     : defaultSort;
+  const wordCount = includesReaderFilter(readerWordCountFilters, wordCountValue)
+    ? wordCountValue
+    : undefined;
   const rawPage = Number.parseInt(pageValue ?? "", 10);
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
 
@@ -116,10 +139,12 @@ export function parseReaderStandardFilters(
     advanced: parseDiscoveryAdvancedFilters(params),
     contentRating,
     genre,
+    language: languageValue || undefined,
     page,
     reviewStatus,
     search,
     sort,
+    wordCount,
   };
 }
 
@@ -145,6 +170,8 @@ export async function parseManagedReaderStandardFilters(
   if (!enabledFilterIds.has("contentRating")) filters.contentRating = undefined;
   if (!enabledFilterIds.has("reviewStatus")) filters.reviewStatus = undefined;
   if (!enabledFilterIds.has("sort")) filters.sort = defaultSort;
+  if (!enabledFilterIds.has("language")) filters.language = undefined;
+  if (!enabledFilterIds.has("wordCount")) filters.wordCount = undefined;
   filters.advanced = sanitizeDiscoveryAdvancedFilters(
     filters.advanced,
     enabledFilterIds,
@@ -166,6 +193,8 @@ export function readerListHref(
   if (filters.contentRating) params.set("hitapYasi", filters.contentRating);
   if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
   if (filters.sort) params.set("siralama", filters.sort);
+  if (filters.language) params.set("dil", filters.language);
+  if (filters.wordCount) params.set("kelime", filters.wordCount);
   appendDiscoveryAdvancedFilterParams(params, filters.advanced);
   if (page > 1) params.set("sayfa", String(page));
 
@@ -177,7 +206,13 @@ export function readerWorkMatches(
   work: ReaderWorkRow,
   filters: Pick<
     ReaderStandardFilters,
-    "advanced" | "contentRating" | "genre" | "reviewStatus" | "search"
+    | "advanced"
+    | "contentRating"
+    | "genre"
+    | "language"
+    | "reviewStatus"
+    | "search"
+    | "wordCount"
   >,
 ) {
   if (filters.search) {
@@ -199,6 +234,18 @@ export function readerWorkMatches(
   if (filters.reviewStatus && work.editorReviewStatus !== filters.reviewStatus) {
     return false;
   }
+  if (filters.language && work.language !== filters.language) return false;
+  if (filters.wordCount) {
+    const words = work.totalWords ?? 0;
+    if (filters.wordCount === "short" && words >= 30_000) return false;
+    if (
+      filters.wordCount === "medium" &&
+      (words < 30_000 || words > 80_000)
+    ) {
+      return false;
+    }
+    if (filters.wordCount === "long" && words <= 80_000) return false;
+  }
 
   return matchesDiscoveryAdvancedWorkFilters(
     {
@@ -208,6 +255,7 @@ export function readerWorkMatches(
       commentCount: work.commentCount,
       favoriteCount: work.favoriteCount,
       isFavorite: work.isFavorite,
+      lastReadAt: work.lastReadAt,
       progressPercent: work.progressPercent,
       publishedAt: work.publishedAt,
       readerCount: work.readerCount,
@@ -291,7 +339,35 @@ export async function ReaderFilterDesk({
     ),
     label: item.label,
   }));
-  const visibleActiveFilters = [...activeFilters, ...advancedActiveFilters];
+  const managedExtraActiveFilters: ReaderActiveFilter[] = [
+    standardFilters.language && enabledFilterIds.has("language")
+      ? {
+          href: readerListHref(
+            basePath,
+            { ...standardFilters, language: undefined },
+            1,
+            fixedParams,
+          ),
+          label: `Dil: ${standardFilters.language === "tr" ? "Türkçe" : standardFilters.language === "en" ? "İngilizce" : standardFilters.language.toLocaleUpperCase("tr-TR")}`,
+        }
+      : null,
+    standardFilters.wordCount && enabledFilterIds.has("wordCount")
+      ? {
+          href: readerListHref(
+            basePath,
+            { ...standardFilters, wordCount: undefined },
+            1,
+            fixedParams,
+          ),
+          label: `Kelime: ${readerWordCountLabel(standardFilters.wordCount)}`,
+        }
+      : null,
+  ].filter((item): item is ReaderActiveFilter => item !== null);
+  const visibleActiveFilters = [
+    ...activeFilters,
+    ...managedExtraActiveFilters,
+    ...advancedActiveFilters,
+  ];
   const hasFilters = visibleActiveFilters.length > 0;
   const hasManagedFields = enabledFilterIds.size > 0;
 
@@ -373,6 +449,33 @@ export async function ReaderFilterDesk({
                 {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          {enabledFilterIds.has("language") ? (
+            <label>
+              <span>Dil</span>
+              <select defaultValue={standardFilters.language ?? ""} name="dil">
+                <option value="">Tüm diller</option>
+                <option value="tr">Türkçe</option>
+                <option value="en">İngilizce</option>
+                <option value="de">Almanca</option>
+                <option value="fr">Fransızca</option>
+              </select>
+            </label>
+          ) : null}
+
+          {enabledFilterIds.has("wordCount") ? (
+            <label>
+              <span>Kelime sayısı</span>
+              <select defaultValue={standardFilters.wordCount ?? ""} name="kelime">
+                <option value="">Tümü</option>
+                {readerWordCountFilters.map((value) => (
+                  <option key={value} value={value}>
+                    {readerWordCountLabel(value)}
                   </option>
                 ))}
               </select>

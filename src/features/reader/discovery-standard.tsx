@@ -5,6 +5,7 @@ import {
 } from "@/components/discovery/DiscoveryListChrome";
 import "@/components/discovery/discovery-filter-desk.css";
 import type { ReaderWorkRow } from "@/features/reader/components/ReaderWorksTable";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { GENRE_LABELS } from "@/lib/genres";
 import {
@@ -14,7 +15,7 @@ import {
 
 export { DiscoveryPagination as ReaderPagination } from "@/components/discovery/DiscoveryListChrome";
 
-export const READER_LIST_PAGE_SIZE = 24;
+export const READER_LIST_PAGE_SIZE = DISCOVERY_PAGE_SIZE;
 
 export const readerReviewFilters = [
   "not_requested",

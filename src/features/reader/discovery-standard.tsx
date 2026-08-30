@@ -54,6 +54,7 @@ export type ReaderSortOption = {
 
 export type ReaderStandardFilters = {
   advanced: DiscoveryAdvancedFilters;
+  city?: string;
   contentRating?: StoredWorkContentRating;
   genre?: string;
   language?: string;
@@ -114,6 +115,7 @@ export function parseReaderStandardFilters(
   const sortValue = firstParam(params, "siralama");
   const genreValue = firstParam(params, "tur");
   const pageValue = firstParam(params, "sayfa");
+  const cityValue = firstParam(params, "sehir")?.trim().slice(0, 120);
   const languageValue = firstParam(params, "dil")?.trim().slice(0, 10);
   const wordCountValue = firstParam(params, "kelime");
   const search = searchValue?.trim().slice(0, 220) || undefined;
@@ -137,6 +139,7 @@ export function parseReaderStandardFilters(
 
   return {
     advanced: parseDiscoveryAdvancedFilters(params),
+    city: cityValue || undefined,
     contentRating,
     genre,
     language: languageValue || undefined,
@@ -170,6 +173,7 @@ export async function parseManagedReaderStandardFilters(
   if (!enabledFilterIds.has("contentRating")) filters.contentRating = undefined;
   if (!enabledFilterIds.has("reviewStatus")) filters.reviewStatus = undefined;
   if (!enabledFilterIds.has("sort")) filters.sort = defaultSort;
+  if (!enabledFilterIds.has("city")) filters.city = undefined;
   if (!enabledFilterIds.has("language")) filters.language = undefined;
   if (!enabledFilterIds.has("wordCount")) filters.wordCount = undefined;
   filters.advanced = sanitizeDiscoveryAdvancedFilters(
@@ -193,6 +197,7 @@ export function readerListHref(
   if (filters.contentRating) params.set("hitapYasi", filters.contentRating);
   if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
   if (filters.sort) params.set("siralama", filters.sort);
+  if (filters.city) params.set("sehir", filters.city);
   if (filters.language) params.set("dil", filters.language);
   if (filters.wordCount) params.set("kelime", filters.wordCount);
   appendDiscoveryAdvancedFilterParams(params, filters.advanced);
@@ -253,7 +258,9 @@ export function readerWorkMatches(
       authorUsername: work.authorUsername,
       chapterCount: work.chapterCount,
       commentCount: work.commentCount,
+      completionStatus: work.completionStatus,
       favoriteCount: work.favoriteCount,
+      hasPassport: work.hasPassport,
       isFavorite: work.isFavorite,
       lastReadAt: work.lastReadAt,
       progressPercent: work.progressPercent,
@@ -261,6 +268,7 @@ export function readerWorkMatches(
       readerCount: work.readerCount,
       readingState: work.readingState,
       updatedAt: work.updatedAt,
+      versionCount: work.versionCount,
     },
     filters.advanced,
   );
@@ -340,6 +348,17 @@ export async function ReaderFilterDesk({
     label: item.label,
   }));
   const managedExtraActiveFilters: ReaderActiveFilter[] = [
+    standardFilters.city && enabledFilterIds.has("city")
+      ? {
+          href: readerListHref(
+            basePath,
+            { ...standardFilters, city: undefined },
+            1,
+            fixedParams,
+          ),
+          label: `Şehir: ${standardFilters.city}`,
+        }
+      : null,
     standardFilters.language && enabledFilterIds.has("language")
       ? {
           href: readerListHref(
@@ -452,6 +471,17 @@ export async function ReaderFilterDesk({
                   </option>
                 ))}
               </select>
+            </label>
+          ) : null}
+
+          {enabledFilterIds.has("city") ? (
+            <label>
+              <span>Şehir</span>
+              <input
+                defaultValue={standardFilters.city}
+                name="sehir"
+                placeholder="Örn. İstanbul"
+              />
             </label>
           ) : null}
 

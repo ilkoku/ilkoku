@@ -22,7 +22,6 @@ const reviewStatuses = [
 type ReviewStatus = (typeof reviewStatuses)[number];
 
 export interface PublisherWorkDiscoveryFilters {
-  completion: "" | "completed" | "ongoing";
   contentRating: MemberStoredWorkContentRating | "";
   genre: string;
   language: string;
@@ -75,17 +74,12 @@ export function normalizePublisherWorkDiscoveryFilters(
   input: Record<string, string | string[] | undefined>,
 ): PublisherWorkDiscoveryFilters {
   const rawPage = Number.parseInt(firstValue(input.sayfa), 10);
-  const completion = firstValue(input.tamamlanma);
   const contentRating = firstValue(input.hitap);
   const reviewStatus = firstValue(input.editor);
   const sort = firstValue(input.siralama);
   const genre = normalizeGenreLabel(firstValue(input.tur));
 
   return {
-    completion:
-      completion === "completed" || completion === "ongoing"
-        ? completion
-        : "",
     contentRating: isMemberStoredWorkContentRating(contentRating)
       ? contentRating
       : "",
@@ -123,12 +117,6 @@ function publicWriterAlias(writer: {
   return `@${slug || "ilkoku-yazari"}`;
 }
 
-const publishedChapterWhere = {
-  archivedAt: null,
-  publishedAt: { not: null },
-  status: "published",
-} satisfies Prisma.ChapterWhereInput;
-
 export async function getPublisherWorkDiscovery(
   filters: PublisherWorkDiscoveryFilters,
   canAccessAdultContent = false,
@@ -164,32 +152,6 @@ export async function getPublisherWorkDiscovery(
     ...(filters.reviewStatus
       ? { editorReviewStatus: filters.reviewStatus }
       : {}),
-    ...(filters.completion === "completed"
-      ? {
-          chapters: {
-            none: {
-              archivedAt: null,
-              OR: [
-                { publishedAt: null },
-                { status: { not: "published" } },
-              ],
-            },
-            some: publishedChapterWhere,
-          },
-        }
-      : filters.completion === "ongoing"
-        ? {
-            chapters: {
-              some: {
-                archivedAt: null,
-                OR: [
-                  { publishedAt: null },
-                  { status: { not: "published" } },
-                ],
-              },
-            },
-          }
-        : {}),
   };
 
   const totalCount = await prisma.work.count({ where });

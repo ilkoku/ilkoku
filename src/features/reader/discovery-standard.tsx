@@ -5,6 +5,7 @@ import {
 } from "@/components/discovery/DiscoveryListChrome";
 import "@/components/discovery/discovery-filter-desk.css";
 import type { ReaderWorkRow } from "@/features/reader/components/ReaderWorksTable";
+import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { GENRE_LABELS } from "@/lib/genres";
@@ -159,7 +160,7 @@ export function readerWorkMatches(
   return true;
 }
 
-export function ReaderFilterDesk({
+export async function ReaderFilterDesk({
   activeFilters,
   clearHref,
   contentRating,
@@ -173,6 +174,7 @@ export function ReaderFilterDesk({
   searchPlaceholder,
   sort,
   sortOptions,
+  surfaceId,
 }: {
   activeFilters: ReaderActiveFilter[];
   clearHref: string;
@@ -187,8 +189,11 @@ export function ReaderFilterDesk({
   searchPlaceholder: string;
   sort: string;
   sortOptions: readonly ReaderSortOption[];
+  surfaceId: string;
 }) {
   const hasFilters = activeFilters.length > 0;
+  const enabledFilterIds = new Set(await getDiscoverySurfaceFilterIds(surfaceId));
+  const hasManagedFields = enabledFilterIds.size > 0;
 
   return (
     <section aria-label="Filtre masası" className="role-filter-desk">
@@ -200,80 +205,96 @@ export function ReaderFilterDesk({
         {hasFilters ? <Link href={clearHref}>Tüm filtreleri temizle</Link> : null}
       </header>
 
-      <form className="role-filter-desk__form" method="get">
-        {hiddenFields.map((field) => (
-          <input key={field.name} name={field.name} type="hidden" value={field.value} />
-        ))}
+      {hasManagedFields ? (
+        <form className="role-filter-desk__form" method="get">
+          {hiddenFields.map((field) => (
+            <input key={field.name} name={field.name} type="hidden" value={field.value} />
+          ))}
 
-        <label className="role-filter-field--search">
-          <span>Arama</span>
-          <input
-            defaultValue={search}
-            name="arama"
-            placeholder={searchPlaceholder}
-            type="search"
-          />
-        </label>
-
-        <label>
-          <span>Tür</span>
-          <select defaultValue={genre ?? ""} name="tur">
-            <option value="">Tüm türler</option>
-            {GENRE_LABELS.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Hitap yaşı</span>
-          <select defaultValue={contentRating ?? ""} name="hitapYasi">
-            <option value="">Tümü</option>
-            {ratingOptions.map((rating) => (
-              <option key={rating} value={rating}>
-                {workContentRatingDetails[rating].shortLabel}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Editör durumu</span>
-          <select defaultValue={reviewStatus ?? ""} name="editor">
-            <option value="">Tümü</option>
-            <option value="not_requested">Henüz incelenmedi</option>
-            <option value="requested">İnceleme talep edildi</option>
-            <option value="in_progress">İlk editörde</option>
-            <option value="awaiting_second_editor">İkinci editör bekleniyor</option>
-            <option value="second_in_progress">İkinci editörde</option>
-            <option value="completed">İncelendi</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Sıralama</span>
-          <select defaultValue={sort} name="siralama">
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="role-filter-desk__actions">
-          <button className="button button--primary" type="submit">
-            Masayı Güncelle
-          </button>
-          {hasFilters ? (
-            <Link className="button button--ghost" href={clearHref}>
-              Temizle
-            </Link>
+          {enabledFilterIds.has("search") ? (
+            <label className="role-filter-field--search">
+              <span>Arama</span>
+              <input
+                defaultValue={search}
+                name="arama"
+                placeholder={searchPlaceholder}
+                type="search"
+              />
+            </label>
           ) : null}
-        </div>
-      </form>
+
+          {enabledFilterIds.has("genre") ? (
+            <label>
+              <span>Tür</span>
+              <select defaultValue={genre ?? ""} name="tur">
+                <option value="">Tüm türler</option>
+                {GENRE_LABELS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          {enabledFilterIds.has("contentRating") ? (
+            <label>
+              <span>Hitap yaşı</span>
+              <select defaultValue={contentRating ?? ""} name="hitapYasi">
+                <option value="">Tümü</option>
+                {ratingOptions.map((rating) => (
+                  <option key={rating} value={rating}>
+                    {workContentRatingDetails[rating].shortLabel}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          {enabledFilterIds.has("reviewStatus") ? (
+            <label>
+              <span>Editör durumu</span>
+              <select defaultValue={reviewStatus ?? ""} name="editor">
+                <option value="">Tümü</option>
+                <option value="not_requested">Henüz incelenmedi</option>
+                <option value="requested">İnceleme talep edildi</option>
+                <option value="in_progress">İlk editörde</option>
+                <option value="awaiting_second_editor">İkinci editör bekleniyor</option>
+                <option value="second_in_progress">İkinci editörde</option>
+                <option value="completed">İncelendi</option>
+              </select>
+            </label>
+          ) : null}
+
+          {enabledFilterIds.has("sort") ? (
+            <label>
+              <span>Sıralama</span>
+              <select defaultValue={sort} name="siralama">
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          <div className="role-filter-desk__actions">
+            <button className="button button--primary" type="submit">
+              Masayı Güncelle
+            </button>
+            {hasFilters ? (
+              <Link className="button button--ghost" href={clearHref}>
+                Temizle
+              </Link>
+            ) : null}
+          </div>
+        </form>
+      ) : (
+        <p className="role-filter-desk__hint">
+          Bu yüzeyde Filtre Masası alanları İçerik Yönetimi&apos;nden kapatıldı.
+        </p>
+      )}
 
       {hasFilters ? (
         <div aria-label="Aktif filtreler" className="role-filter-desk__active">
@@ -285,9 +306,9 @@ export function ReaderFilterDesk({
             </Link>
           ))}
         </div>
-      ) : (
+      ) : hasManagedFields ? (
         <p className="role-filter-desk__hint">{hint}</p>
-      )}
+      ) : null}
     </section>
   );
 }

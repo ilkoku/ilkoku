@@ -10,7 +10,7 @@ import {
   type MemberStoredWorkContentRating,
 } from "@/lib/work-content-classification";
 
-const PAGE_SIZE = 12;
+export const PUBLISHER_AUTHOR_PAGE_SIZE = 24;
 
 export interface PublisherAuthorDiscoveryFilters {
   city: string;
@@ -171,14 +171,17 @@ export async function getPublisherAuthorDiscovery(
   };
 
   const totalCount = await prisma.user.count({ where });
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalCount / PUBLISHER_AUTHOR_PAGE_SIZE),
+  );
   const currentPage = Math.min(filters.page, totalPages);
 
   const authors = await prisma.user.findMany({
     where,
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * PUBLISHER_AUTHOR_PAGE_SIZE,
+    take: PUBLISHER_AUTHOR_PAGE_SIZE,
     select: {
       bio: true,
       displayName: true,
@@ -249,8 +252,10 @@ export async function getPublisherAuthorDiscovery(
   }
 
   const first =
-    totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const last = Math.min(currentPage * PAGE_SIZE, totalCount);
+    totalCount === 0
+      ? 0
+      : (currentPage - 1) * PUBLISHER_AUTHOR_PAGE_SIZE + 1;
+  const last = Math.min(currentPage * PUBLISHER_AUTHOR_PAGE_SIZE, totalCount);
 
   return {
     currentPage,

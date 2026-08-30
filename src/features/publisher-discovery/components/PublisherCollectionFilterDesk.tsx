@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import "@/components/discovery/discovery-filter-desk.css";
+import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
 import { GENRE_LABELS } from "@/lib/genres";
 import {
   workContentRatingDetails,
@@ -37,7 +38,21 @@ export function publisherCollectionReviewLabel(
   return "Henüz incelenmedi";
 }
 
-export function PublisherCollectionFilterDesk({
+function inferPublisherSurfaceId(clearHref: string, kind: PublisherCollectionKind) {
+  if (clearHref.startsWith("/yayinevi/takip-ettiklerim")) {
+    return "publisher-following-authors";
+  }
+  if (clearHref.startsWith("/yayinevi/favorilerim")) {
+    return kind === "author"
+      ? "publisher-favorite-authors"
+      : "publisher-favorite-works";
+  }
+  return kind === "author"
+    ? "publisher-liked-authors"
+    : "publisher-liked-works";
+}
+
+export async function PublisherCollectionFilterDesk({
   activeFilters,
   city,
   clearHref,
@@ -65,6 +80,10 @@ export function PublisherCollectionFilterDesk({
   reviewStatus?: PublisherCollectionReviewStatus;
 }) {
   const hasFilters = activeFilters.length > 0;
+  const enabledFilterIds = new Set(
+    await getDiscoverySurfaceFilterIds(inferPublisherSurfaceId(clearHref, kind)),
+  );
+  const hasManagedFields = enabledFilterIds.size > 0;
 
   return (
     <section aria-label="Filtre masası" className="role-filter-desk">
@@ -76,79 +95,93 @@ export function PublisherCollectionFilterDesk({
         {hasFilters ? <Link href={clearHref}>Tüm filtreleri temizle</Link> : null}
       </header>
 
-      <form className="role-filter-desk__form" method="get">
-        {hiddenFields.map((field) => (
-          <input key={field.name} name={field.name} type="hidden" value={field.value} />
-        ))}
+      {hasManagedFields ? (
+        <form className="role-filter-desk__form" method="get">
+          {hiddenFields.map((field) => (
+            <input key={field.name} name={field.name} type="hidden" value={field.value} />
+          ))}
 
-        <label className="role-filter-field--search">
-          <span>Arama</span>
-          <input
-            defaultValue={query}
-            name="arama"
-            placeholder={
-              kind === "work"
-                ? "Eser, yazar veya rumuz ara"
-                : "Yazar, public kimlik veya eser ara"
-            }
-            type="search"
-          />
-        </label>
-
-        <label>
-          <span>Tür</span>
-          <select defaultValue={genre ?? ""} name="tur">
-            <option value="">Tüm türler</option>
-            {GENRE_LABELS.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Hitap yaşı</span>
-          <select defaultValue={contentRating ?? ""} name="hitap">
-            <option value="">Tüm yaşlar</option>
-            {ratingOptions.map((rating) => (
-              <option key={rating} value={rating}>
-                {workContentRatingDetails[rating].label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {kind === "work" ? (
-          <label>
-            <span>Editör durumu</span>
-            <select defaultValue={reviewStatus ?? ""} name="editor">
-              <option value="">Tümü</option>
-              {publisherCollectionReviewStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {publisherCollectionReviewLabel(status)}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <label>
-            <span>Şehir</span>
-            <input defaultValue={city} name="sehir" placeholder="Örn. İstanbul" />
-          </label>
-        )}
-
-        <div className="role-filter-desk__actions">
-          <button className="button button--primary" type="submit">
-            Masayı Güncelle
-          </button>
-          {hasFilters ? (
-            <Link className="button button--ghost" href={clearHref}>
-              Temizle
-            </Link>
+          {enabledFilterIds.has("search") ? (
+            <label className="role-filter-field--search">
+              <span>Arama</span>
+              <input
+                defaultValue={query}
+                name="arama"
+                placeholder={
+                  kind === "work"
+                    ? "Eser, yazar veya rumuz ara"
+                    : "Yazar, public kimlik veya eser ara"
+                }
+                type="search"
+              />
+            </label>
           ) : null}
-        </div>
-      </form>
+
+          {enabledFilterIds.has("genre") ? (
+            <label>
+              <span>Tür</span>
+              <select defaultValue={genre ?? ""} name="tur">
+                <option value="">Tüm türler</option>
+                {GENRE_LABELS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          {enabledFilterIds.has("contentRating") ? (
+            <label>
+              <span>Hitap yaşı</span>
+              <select defaultValue={contentRating ?? ""} name="hitap">
+                <option value="">Tüm yaşlar</option>
+                {ratingOptions.map((rating) => (
+                  <option key={rating} value={rating}>
+                    {workContentRatingDetails[rating].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          {kind === "work" && enabledFilterIds.has("reviewStatus") ? (
+            <label>
+              <span>Editör durumu</span>
+              <select defaultValue={reviewStatus ?? ""} name="editor">
+                <option value="">Tümü</option>
+                {publisherCollectionReviewStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {publisherCollectionReviewLabel(status)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          {kind === "author" && enabledFilterIds.has("city") ? (
+            <label>
+              <span>Şehir</span>
+              <input defaultValue={city} name="sehir" placeholder="Örn. İstanbul" />
+            </label>
+          ) : null}
+
+          <div className="role-filter-desk__actions">
+            <button className="button button--primary" type="submit">
+              Masayı Güncelle
+            </button>
+            {hasFilters ? (
+              <Link className="button button--ghost" href={clearHref}>
+                Temizle
+              </Link>
+            ) : null}
+          </div>
+        </form>
+      ) : (
+        <p className="role-filter-desk__hint">
+          Bu yüzeyde Filtre Masası alanları İçerik Yönetimi&apos;nden kapatıldı.
+        </p>
+      )}
 
       {hasFilters ? (
         <div aria-label="Aktif filtreler" className="role-filter-desk__active">
@@ -160,9 +193,9 @@ export function PublisherCollectionFilterDesk({
             </Link>
           ))}
         </div>
-      ) : (
+      ) : hasManagedFields ? (
         <p className="role-filter-desk__hint">{hint}</p>
-      )}
+      ) : null}
     </section>
   );
 }

@@ -12,6 +12,7 @@ import { getCommonEditorDiscovery } from "@/features/editor-workspace/common-dis
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorksTable } from "@/features/editor-workspace/components/EditorWorksTable";
 import { getAdultContentAccess, visibleMemberContentRatings } from "@/lib/adult-content-access";
+import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { GENRE_LABELS } from "@/lib/genres";
 import {
@@ -108,24 +109,33 @@ export default async function EditorDiscoveryPage({
   }>;
 }) {
   const profile = await requireEditorProfile("/editor/kesfet");
+  const enabledFilterIds = new Set(
+    await getDiscoverySurfaceFilterIds("editor-work-discovery"),
+  );
   const adultAccess = await getAdultContentAccess(profile.id);
   const visibleRatings = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
   );
   const parameters = await searchParams;
-  const genre = normalizeGenreLabel(parameters.tur);
-  const language = includesValue(languageFilters, parameters.dil)
-    ? parameters.dil
+  const genre = enabledFilterIds.has("genre")
+    ? normalizeGenreLabel(parameters.tur)
     : undefined;
-  const wordCount = includesValue(wordCountFilters, parameters.kelime)
-    ? parameters.kelime
-    : undefined;
-  const reviewStatus = includesValue(reviewFilters, parameters.durum)
-    ? parameters.durum
-    : undefined;
-  const requestedRating = isMemberStoredWorkContentRating(parameters.hitap)
-    ? parameters.hitap
-    : undefined;
+  const language =
+    enabledFilterIds.has("language") && includesValue(languageFilters, parameters.dil)
+      ? parameters.dil
+      : undefined;
+  const wordCount =
+    enabledFilterIds.has("wordCount") && includesValue(wordCountFilters, parameters.kelime)
+      ? parameters.kelime
+      : undefined;
+  const reviewStatus =
+    enabledFilterIds.has("reviewStatus") && includesValue(reviewFilters, parameters.durum)
+      ? parameters.durum
+      : undefined;
+  const requestedRating =
+    enabledFilterIds.has("contentRating") && isMemberStoredWorkContentRating(parameters.hitap)
+      ? parameters.hitap
+      : undefined;
   const contentRating =
     requestedRating && visibleRatings.includes(requestedRating)
       ? requestedRating
@@ -217,74 +227,90 @@ export default async function EditorDiscoveryPage({
             {hasFilters ? <Link href="/editor/kesfet">Tüm filtreleri temizle</Link> : null}
           </header>
 
-          <form className="role-filter-desk__form">
-            <label>
-              <span>Tür</span>
-              <select defaultValue={genre ?? ""} name="tur">
-                <option value="">Tüm türler</option>
-                {GENRE_LABELS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Hitap yaşı</span>
-              <select defaultValue={contentRating ?? ""} name="hitap">
-                <option value="">Tüm yaşlar</option>
-                {visibleRatings.map((rating) => (
-                  <option key={rating} value={rating}>
-                    {workContentRatingDetails[rating].label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Dil</span>
-              <select defaultValue={language ?? ""} name="dil">
-                <option value="">Tüm diller</option>
-                <option value="tr">Türkçe</option>
-                <option value="en">İngilizce</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Kelime sayısı</span>
-              <select defaultValue={wordCount ?? ""} name="kelime">
-                <option value="">Tümü</option>
-                <option value="short">30.000 altı</option>
-                <option value="medium">30.000 – 80.000</option>
-                <option value="long">80.000 üzeri</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Editör incelemesi</span>
-              <select defaultValue={reviewStatus ?? ""} name="durum">
-                <option value="">Tümü</option>
-                <option value="not_requested">Henüz incelenmedi</option>
-                <option value="requested">Yazar görüşe açık</option>
-                <option value="in_progress">İlk editörde</option>
-                <option value="awaiting_second_editor">İkinci editör bekliyor</option>
-                <option value="second_in_progress">İkinci editörde</option>
-                <option value="completed">Tamamlandı</option>
-              </select>
-            </label>
-
-            <div className="role-filter-desk__actions">
-              <button className="button button--primary" type="submit">
-                Masayı Güncelle
-              </button>
-              {hasFilters ? (
-                <Link className="button button--ghost" href="/editor/kesfet">
-                  Temizle
-                </Link>
+          {enabledFilterIds.size > 0 ? (
+            <form className="role-filter-desk__form">
+              {enabledFilterIds.has("genre") ? (
+                <label>
+                  <span>Tür</span>
+                  <select defaultValue={genre ?? ""} name="tur">
+                    <option value="">Tüm türler</option>
+                    {GENRE_LABELS.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               ) : null}
-            </div>
-          </form>
+
+              {enabledFilterIds.has("contentRating") ? (
+                <label>
+                  <span>Hitap yaşı</span>
+                  <select defaultValue={contentRating ?? ""} name="hitap">
+                    <option value="">Tüm yaşlar</option>
+                    {visibleRatings.map((rating) => (
+                      <option key={rating} value={rating}>
+                        {workContentRatingDetails[rating].label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("language") ? (
+                <label>
+                  <span>Dil</span>
+                  <select defaultValue={language ?? ""} name="dil">
+                    <option value="">Tüm diller</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="en">İngilizce</option>
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("wordCount") ? (
+                <label>
+                  <span>Kelime sayısı</span>
+                  <select defaultValue={wordCount ?? ""} name="kelime">
+                    <option value="">Tümü</option>
+                    <option value="short">30.000 altı</option>
+                    <option value="medium">30.000 – 80.000</option>
+                    <option value="long">80.000 üzeri</option>
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("reviewStatus") ? (
+                <label>
+                  <span>Editör incelemesi</span>
+                  <select defaultValue={reviewStatus ?? ""} name="durum">
+                    <option value="">Tümü</option>
+                    <option value="not_requested">Henüz incelenmedi</option>
+                    <option value="requested">Yazar görüşe açık</option>
+                    <option value="in_progress">İlk editörde</option>
+                    <option value="awaiting_second_editor">İkinci editör bekliyor</option>
+                    <option value="second_in_progress">İkinci editörde</option>
+                    <option value="completed">Tamamlandı</option>
+                  </select>
+                </label>
+              ) : null}
+
+              <div className="role-filter-desk__actions">
+                <button className="button button--primary" type="submit">
+                  Masayı Güncelle
+                </button>
+                {hasFilters ? (
+                  <Link className="button button--ghost" href="/editor/kesfet">
+                    Temizle
+                  </Link>
+                ) : null}
+              </div>
+            </form>
+          ) : (
+            <p className="role-filter-desk__hint">
+              Bu yüzeyde Filtre Masası alanları İçerik Yönetimi&apos;nden kapatıldı.
+            </p>
+          )}
 
           {activeFilters.length > 0 ? (
             <div className="role-filter-desk__active" aria-label="Aktif filtreler">
@@ -296,11 +322,11 @@ export default async function EditorDiscoveryPage({
                 </Link>
               ))}
             </div>
-          ) : (
+          ) : enabledFilterIds.size > 0 ? (
             <p className="role-filter-desk__hint">
               Filtre seçmeden editöre açık ortak eser havuzunu görüyorsunuz.
             </p>
-          )}
+          ) : null}
         </section>
 
         <DiscoveryResultSummary

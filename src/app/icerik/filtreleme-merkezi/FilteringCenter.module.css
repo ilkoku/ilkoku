@@ -5,58 +5,75 @@
 
 .healthBadge {
   min-width: 12rem;
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid var(--cms-border, #e8e5f0);
   border-radius: 1rem;
   padding: 0.9rem 1rem;
   display: grid;
   gap: 0.2rem;
   align-content: center;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--cms-surface, #ffffff);
+  box-shadow: 0 14px 34px rgba(35, 26, 77, 0.08);
 }
 
 .healthBadge small,
 .healthBadge span {
-  color: var(--content-muted, #94a3b8);
+  color: var(--cms-muted, #716d80);
 }
 
 .healthBadge strong {
+  color: var(--cms-text, #171521);
   font-size: 1.05rem;
 }
 
 .pass {
-  box-shadow: inset 3px 0 0 rgba(34, 197, 94, 0.72);
+  border-color: rgba(22, 132, 103, 0.28);
+  box-shadow:
+    inset 4px 0 0 var(--cms-success, #168467),
+    0 14px 34px rgba(35, 26, 77, 0.08);
+}
+
+.pass span {
+  color: var(--cms-success, #168467);
+  font-weight: 750;
 }
 
 .warn {
-  box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.8);
+  border-color: rgba(179, 106, 18, 0.28);
+  box-shadow:
+    inset 4px 0 0 var(--cms-warning, #b36a12),
+    0 14px 34px rgba(35, 26, 77, 0.08);
 }
 
 .standardStrip {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.55rem;
   flex-wrap: wrap;
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--cms-border, #e8e5f0);
   border-radius: 1rem;
-  background: rgba(15, 23, 42, 0.52);
+  background: var(--cms-surface, #ffffff);
+  box-shadow: 0 12px 30px rgba(35, 26, 77, 0.055);
 }
 
 .standardStrip strong {
-  margin-right: 0.3rem;
+  margin-right: 0.35rem;
+  color: var(--cms-text, #171521);
 }
 
 .standardStrip span {
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(104, 71, 232, 0.15);
   border-radius: 999px;
-  padding: 0.35rem 0.65rem;
-  background: rgba(30, 41, 59, 0.68);
+  padding: 0.35rem 0.68rem;
+  background: var(--cms-purple-soft, #eee9ff);
+  color: var(--cms-purple-strong, #5634d7);
   font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .standardStrip b {
-  color: var(--content-muted, #94a3b8);
-  font-weight: 500;
+  color: #aaa4b7;
+  font-weight: 600;
 }
 
 .metrics {
@@ -66,33 +83,55 @@
 }
 
 .metrics article {
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--cms-border, #e8e5f0);
   border-radius: 1rem;
   padding: 1rem;
-  background: rgba(15, 23, 42, 0.55);
+  background: var(--cms-surface, #ffffff);
+  box-shadow: 0 12px 30px rgba(35, 26, 77, 0.055);
   display: grid;
   gap: 0.35rem;
   min-width: 0;
 }
 
+.metrics article::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: rgba(104, 71, 232, 0.55);
+}
+
+.metrics article:nth-child(3)::before {
+  background: rgba(179, 106, 18, 0.68);
+}
+
+.metrics article:nth-child(4)::before {
+  background: rgba(22, 132, 103, 0.58);
+}
+
 .metrics small {
-  color: var(--content-muted, #94a3b8);
+  color: var(--cms-muted, #716d80);
   font-size: 0.72rem;
+  font-weight: 750;
   letter-spacing: 0.08em;
 }
 
 .metrics strong {
+  color: var(--cms-text, #171521);
   font-size: clamp(1.65rem, 3vw, 2.35rem);
   line-height: 1;
 }
 
 .metrics span {
-  font-weight: 650;
+  color: var(--cms-text, #171521);
+  font-weight: 700;
 }
 
 .metrics p {
   margin: 0.2rem 0 0;
-  color: var(--content-muted, #94a3b8);
+  color: var(--cms-muted, #716d80);
   font-size: 0.82rem;
   line-height: 1.45;
 }
@@ -102,10 +141,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--cms-border, #e8e5f0);
   border-radius: 1rem;
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--cms-surface, #ffffff);
+  box-shadow: 0 12px 30px rgba(35, 26, 77, 0.05);
 }
 
 .roleToolbar > div {
@@ -114,8 +154,9 @@
 }
 
 .roleToolbar > div > span {
-  color: var(--content-muted, #94a3b8);
+  color: var(--cms-purple, #6847e8);
   font-size: 0.76rem;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -128,17 +169,21 @@
 }
 
 .roleToolbar a {
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid var(--cms-border, #e8e5f0);
   border-radius: 999px;
   padding: 0.42rem 0.7rem;
+  color: var(--cms-muted, #716d80);
+  background: var(--cms-surface-soft, #faf9ff);
   font-size: 0.82rem;
+  font-weight: 650;
   text-decoration: none;
 }
 
 .roleToolbar a:hover,
 .roleToolbar a.active {
-  border-color: rgba(201, 162, 39, 0.62);
-  background: rgba(201, 162, 39, 0.1);
+  color: var(--cms-purple-strong, #5634d7);
+  border-color: rgba(104, 71, 232, 0.28);
+  background: var(--cms-purple-soft, #eee9ff);
 }
 
 .sectionHeading {
@@ -156,7 +201,7 @@
 
 .sectionHeading span,
 .sectionHeading small {
-  color: var(--content-muted, #94a3b8);
+  color: var(--cms-muted, #716d80);
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -164,6 +209,7 @@
 
 .sectionHeading h2 {
   margin: 0;
+  color: var(--cms-text, #171521);
   font-size: 1.12rem;
 }
 
@@ -182,15 +228,19 @@
   padding: 0.85rem 0.7rem;
   text-align: left;
   vertical-align: top;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  border-bottom: 1px solid var(--cms-border, #e8e5f0);
 }
 
 .table th {
-  color: var(--content-muted, #94a3b8);
+  color: #9a93aa;
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-weight: 650;
+  font-weight: 700;
+}
+
+.table tbody tr:hover td {
+  background: var(--cms-surface-soft, #faf9ff);
 }
 
 .table td:first-child {
@@ -226,14 +276,14 @@
 
 .table td code {
   margin-top: 0.2rem;
-  color: rgba(226, 232, 240, 0.78);
+  color: var(--cms-muted, #716d80);
   font-size: 0.76rem;
   overflow-wrap: anywhere;
 }
 
 .table td small {
   margin-top: 0.35rem;
-  color: var(--content-muted, #94a3b8);
+  color: var(--cms-muted, #716d80);
   line-height: 1.4;
 }
 
@@ -241,10 +291,12 @@
   display: inline-flex;
   border-radius: 999px;
   padding: 0.3rem 0.55rem;
-  border: 1px solid rgba(201, 162, 39, 0.38);
-  background: rgba(201, 162, 39, 0.08);
+  border: 1px solid rgba(179, 106, 18, 0.24);
+  background: #fff8ed;
+  color: #7f4b0b;
   white-space: nowrap;
   font-size: 0.8rem;
+  font-weight: 650;
 }
 
 .filterChips {
@@ -255,11 +307,12 @@
 
 .filterChips span {
   display: inline-flex;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(104, 71, 232, 0.14);
   border-radius: 999px;
   padding: 0.25rem 0.48rem;
+  color: var(--cms-purple-strong, #5634d7);
   font-size: 0.76rem;
-  background: rgba(30, 41, 59, 0.58);
+  background: var(--cms-purple-soft, #eee9ff);
 }
 
 .twoColumns {
@@ -279,7 +332,7 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid var(--cms-border, #e8e5f0);
 }
 
 .relationshipList article:last-child {
@@ -296,20 +349,22 @@
 }
 
 .relationshipList code {
-  color: var(--content-muted, #94a3b8);
+  color: var(--cms-muted, #716d80);
   font-size: 0.72rem;
   overflow-wrap: anywhere;
 }
 
 .relationshipList article > span {
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid var(--cms-border, #e8e5f0);
   border-radius: 0.65rem;
   padding: 0.32rem 0.5rem;
+  color: var(--cms-muted, #716d80);
+  background: var(--cms-surface-soft, #faf9ff);
   font-size: 0.76rem;
 }
 
 .relationshipList b {
-  color: rgba(201, 162, 39, 0.9);
+  color: var(--cms-purple, #6847e8);
 }
 
 .lockList {
@@ -321,7 +376,7 @@
 
 .lockList li {
   padding-left: 0.25rem;
-  color: rgba(226, 232, 240, 0.9);
+  color: var(--cms-text, #171521);
   line-height: 1.5;
 }
 
@@ -332,24 +387,26 @@
 }
 
 .diagnostics article {
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid var(--cms-border, #e8e5f0);
   border-radius: 0.85rem;
   padding: 0.8rem;
   display: grid;
   gap: 0.25rem;
-  background: rgba(15, 23, 42, 0.42);
+  background: var(--cms-surface, #ffffff);
 }
 
 .diagnostics article[data-state="pass"] {
-  box-shadow: inset 3px 0 0 rgba(34, 197, 94, 0.65);
+  border-color: rgba(22, 132, 103, 0.22);
+  box-shadow: inset 3px 0 0 rgba(22, 132, 103, 0.72);
 }
 
 .diagnostics article[data-state="warn"] {
-  box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.78);
+  border-color: rgba(179, 106, 18, 0.22);
+  box-shadow: inset 3px 0 0 rgba(179, 106, 18, 0.78);
 }
 
 .diagnostics span {
-  color: var(--content-muted, #94a3b8);
+  color: var(--cms-muted, #716d80);
   font-size: 0.8rem;
   line-height: 1.4;
 }

@@ -68,7 +68,8 @@ test("continue reading falls back to bounded member-safe reading access without 
   const fallback = source("src/features/reading/continue-reading.ts");
   const continuePage = source("src/app/okumaya-devam/page.tsx");
 
-  assertContains(fallback, "adultContentWorkVisibility", "continue reading adult visibility");
+  assertContains(fallback, "commonDiscoveryWorkWhereFor", "continue reading shared scope");
+  assertContains(fallback, "getAdultContentAccess", "continue reading adult access");
   assertContains(fallback, "prisma.readingAccess.findMany", "reading access fallback");
   assertContains(fallback, "readingProgress:", "reading access progress exclusion");
   assertContains(fallback, "none: { userId }", "completed and tracked work exclusion");

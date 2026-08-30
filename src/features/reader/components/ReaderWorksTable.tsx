@@ -9,6 +9,7 @@ import {
   type StoredWorkContentRating,
 } from "@/lib/work-content-classification";
 import "./reader-works-table.css";
+import "./reader-discovery-table.css";
 
 export type ReaderWorkRow = {
   authorName: string;

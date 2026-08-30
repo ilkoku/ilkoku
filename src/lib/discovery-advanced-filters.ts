@@ -419,8 +419,7 @@ export function clearDiscoveryAdvancedFilter(
   id: DiscoveryFilterId,
 ): DiscoveryAdvancedFilters {
   const next = { ...filters };
-  const keys = ADVANCED_PARAM_KEYS[id];
-  if (!keys) return next;
+  if (!(id in ADVANCED_PARAM_KEYS)) return next;
 
   switch (id) {
     case "author": next.author = undefined; break;

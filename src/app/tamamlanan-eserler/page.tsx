@@ -14,7 +14,7 @@ import {
   ReaderFilterDesk,
   ReaderPagination,
   ReaderResultSummary,
-  parseReaderStandardFilters,
+  parseManagedReaderStandardFilters,
   readerListHref,
   readerReviewLabel,
   readerWorkMatches,
@@ -27,6 +27,7 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { discoveryAdvancedFilterChips } from "@/lib/discovery-advanced-filters";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 export const metadata: Metadata = {
@@ -50,14 +51,7 @@ function countWords(content: string) {
 export default async function CompletedWorksPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    arama?: string;
-    editor?: string;
-    hitapYasi?: string;
-    sayfa?: string;
-    siralama?: string;
-    tur?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await getCurrentProfile();
 
@@ -70,8 +64,10 @@ export default async function CompletedWorksPage({
   const ratingOptions = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
   );
-  const filters = parseReaderStandardFilters(
-    await searchParams,
+  const params = await searchParams;
+  const { enabledFilterIds, filters } = await parseManagedReaderStandardFilters(
+    "reader-completed-works",
+    params,
     ratingOptions,
     sortOptions,
     "completed",
@@ -201,6 +197,11 @@ export default async function CompletedWorksPage({
         }
       : null,
   ].filter((item): item is ReaderActiveFilter => item !== null);
+  const advancedFilterCount = discoveryAdvancedFilterChips(
+    filters.advanced,
+    enabledFilterIds,
+  ).length;
+  const hasFilters = activeFilters.length + advancedFilterCount > 0;
   const returnTo = pageHref(currentPage);
 
   return (
@@ -214,6 +215,7 @@ export default async function CompletedWorksPage({
 
         <ReaderFilterDesk
           activeFilters={activeFilters}
+          advancedFilters={filters.advanced}
           clearHref="/tamamlanan-eserler"
           contentRating={filters.contentRating}
           genre={filters.genre}
@@ -225,6 +227,7 @@ export default async function CompletedWorksPage({
           searchPlaceholder="Eser, yazar veya rumuz ara"
           sort={filters.sort}
           sortOptions={sortOptions}
+          standardFilters={normalizedFilters}
         />
 
         <ReaderResultSummary
@@ -236,12 +239,12 @@ export default async function CompletedWorksPage({
 
         <ReaderWorksTable
           emptyDescription={
-            activeFilters.length > 0
+            hasFilters
               ? "Filtreleri değiştirerek tamamlanan eserleriniz içinde yeniden deneyin."
               : "Bir eserin son bölümünü tamamladığınızda eser burada görünecek."
           }
           emptyTitle={
-            activeFilters.length > 0
+            hasFilters
               ? "Eşleşen eser bulunamadı"
               : "Henüz tamamladığınız bir eser yok"
           }

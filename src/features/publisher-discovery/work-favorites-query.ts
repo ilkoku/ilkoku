@@ -1,7 +1,8 @@
 import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
-import { adultContentWorkVisibility } from "@/lib/adult-content-access";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import { prisma } from "@/lib/prisma";
 import type { StoredWorkContentRating } from "@/lib/work-content-classification";
 import {
@@ -11,8 +12,6 @@ import {
 
 export { normalizePublisherFavoriteFilters };
 export type { PublisherFavoriteFilters };
-
-const PAGE_SIZE = 20;
 
 export interface PublisherFavoriteWorkRow {
   authorAlias: string;
@@ -63,16 +62,6 @@ function publicWriterAlias(writer: {
   return `@${writer.publicId.toLocaleLowerCase("tr-TR")}`;
 }
 
-function publicWorkWhere(canAccessAdultContent: boolean) {
-  return {
-    archivedAt: null,
-    ...adultContentWorkVisibility(canAccessAdultContent),
-    publishedAt: { not: null },
-    status: "published",
-    visibility: "public",
-  } satisfies Prisma.WorkWhereInput;
-}
-
 export async function getPublisherFavoriteWorks(
   publisherId: string,
   filters: PublisherFavoriteFilters,
@@ -85,21 +74,17 @@ export async function getPublisherFavoriteWorks(
   const where: Prisma.PublisherWorkFavoriteWhereInput = {
     publisherId,
     work: {
-      ...publicWorkWhere(canAccessAdultContent),
-      author: {
-        is: {
-          deletedAt: null,
-          role: "writer",
-          status: "active",
-        },
-      },
+      ...commonDiscoveryWorkWhereFor(canAccessAdultContent),
       ...(contentRating ? { contentRating } : {}),
+      ...(filters.genre ? { genre: filters.genre } : {}),
+      ...(filters.reviewStatus
+        ? { editorReviewStatus: filters.reviewStatus }
+        : {}),
       ...(filters.query
         ? {
             OR: [
               { title: { contains: filters.query } },
               { subtitle: { contains: filters.query } },
-              { genre: { contains: filters.query } },
               {
                 author: {
                   is: {
@@ -118,14 +103,14 @@ export async function getPublisherFavoriteWorks(
   };
 
   const totalCount = await prisma.publisherWorkFavorite.count({ where });
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
   const currentPage = Math.min(filters.page, totalPages);
 
   const records = await prisma.publisherWorkFavorite.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+    take: DISCOVERY_PAGE_SIZE,
     select: {
       createdAt: true,
       id: true,
@@ -168,8 +153,11 @@ export async function getPublisherFavoriteWorks(
     },
   });
 
-  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const last = Math.min(currentPage * PAGE_SIZE, totalCount);
+  const first =
+    totalCount === 0
+      ? 0
+      : (currentPage - 1) * DISCOVERY_PAGE_SIZE + 1;
+  const last = Math.min(currentPage * DISCOVERY_PAGE_SIZE, totalCount);
 
   return {
     currentPage,

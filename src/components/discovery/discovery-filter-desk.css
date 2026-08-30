@@ -175,6 +175,72 @@
   font-size: 1.05rem;
 }
 
+.role-filter-result > small {
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+}
+
+.role-filter-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  background: var(--color-card);
+}
+
+.role-filter-pagination > span {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.role-filter-pagination > nav,
+.role-filter-pagination__pages {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.role-filter-pagination [aria-disabled="true"],
+.role-filter-pagination__page,
+.role-filter-pagination__ellipsis {
+  display: inline-flex;
+  min-width: 2.35rem;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.52rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.72rem;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.role-filter-pagination [aria-disabled="true"] {
+  opacity: 0.45;
+}
+
+.role-filter-pagination__page:hover,
+.role-filter-pagination__page[aria-current="page"] {
+  border-color: rgba(224, 181, 47, 0.45);
+  background: rgba(224, 181, 47, 0.09);
+  color: #efcc57;
+}
+
+.role-filter-pagination__ellipsis {
+  min-width: auto;
+  border-color: transparent;
+  background: transparent;
+}
+
 @media (max-width: 80rem) {
   .role-filter-desk__form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -205,12 +271,23 @@
     grid-column: auto;
   }
 
-  .role-filter-desk__actions {
+  .role-filter-desk__actions,
+  .role-filter-pagination,
+  .role-filter-pagination > nav {
     width: 100%;
   }
 
   .role-filter-desk__actions > * {
     flex: 1 1 0;
+    justify-content: center;
+  }
+
+  .role-filter-pagination > nav {
+    justify-content: space-between;
+  }
+
+  .role-filter-pagination__pages {
+    flex: 1 1 auto;
     justify-content: center;
   }
 }

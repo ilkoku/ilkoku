@@ -1,6 +1,10 @@
 import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
+import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
+import { availableGenreLabels } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
 import {
   normalizePublisherFollowingFilters,
@@ -9,8 +13,6 @@ import {
 
 export { normalizePublisherFollowingFilters };
 export type { PublisherFollowingFilters };
-
-const PAGE_SIZE = 12;
 
 export type PublisherAuthorSavedMode = "favorite" | "like";
 
@@ -55,11 +57,7 @@ function publicWriterName(writer: {
   publicId: string;
   username: string | null;
 }) {
-  return (
-    writer.displayName?.trim() ||
-    writer.username?.trim() ||
-    writer.publicId
-  );
+  return writer.displayName?.trim() || writer.username?.trim() || writer.publicId;
 }
 
 function publicWriterAlias(writer: {
@@ -69,45 +67,11 @@ function publicWriterAlias(writer: {
   const username = writer.username?.trim();
 
   if (username) {
-    return username.startsWith("@")
-      ? username
-      : `@${username}`;
+    return username.startsWith("@") ? username : `@${username}`;
   }
 
   return `@${writer.publicId.toLocaleLowerCase("tr-TR")}`;
 }
-
-function parseGenres(value: string | null) {
-  if (!value) return [];
-
-  let values: string[] = [];
-
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (Array.isArray(parsed)) {
-      values = parsed.filter(
-        (item): item is string => typeof item === "string",
-      );
-    }
-  } catch {
-    values = value.split(",");
-  }
-
-  return Array.from(
-    new Set(
-      values
-        .map((item) => item.trim())
-        .filter(Boolean),
-    ),
-  ).slice(0, 6);
-}
-
-const publicWorkWhere = {
-  archivedAt: null,
-  publishedAt: { not: null },
-  status: "published",
-  visibility: "public",
-} satisfies Prisma.WorkWhereInput;
 
 const authorSelect = {
   bio: true,
@@ -116,7 +80,6 @@ const authorSelect = {
   profile: {
     select: {
       city: true,
-      writingGenres: true,
     },
   },
   publicId: true,
@@ -130,7 +93,6 @@ type SavedRecord = {
     id: string;
     profile: {
       city: string | null;
-      writingGenres: string | null;
     } | null;
     publicId: string;
     username: string | null;
@@ -143,12 +105,22 @@ export async function getPublisherSavedAuthors(
   publisherId: string,
   filters: PublisherFollowingFilters,
   mode: PublisherAuthorSavedMode,
+  canAccessAdultContent = false,
 ): Promise<PublisherSavedAuthorData> {
+  const contentRating =
+    filters.contentRating === "adult_18" && !canAccessAdultContent
+      ? undefined
+      : filters.contentRating;
+  const matchedWorkWhere: Prisma.WorkWhereInput = {
+    ...commonDiscoveryWorkWhereFor(canAccessAdultContent),
+    ...(filters.genre ? { genre: filters.genre } : {}),
+    ...(contentRating ? { contentRating } : {}),
+  };
   const authorWhere: Prisma.UserWhereInput = {
-    deletedAt: null,
-    role: "writer",
-    status: "active",
-    works: { some: publicWorkWhere },
+    ...commonDiscoveryAuthorWhereFor(canAccessAdultContent, {
+      ...(filters.genre ? { genre: filters.genre } : {}),
+      ...(contentRating ? { contentRating } : {}),
+    }),
     ...(filters.query
       ? {
           OR: [
@@ -158,12 +130,21 @@ export async function getPublisherSavedAuthors(
             {
               works: {
                 some: {
-                  ...publicWorkWhere,
+                  ...matchedWorkWhere,
                   title: { contains: filters.query },
                 },
               },
             },
           ],
+        }
+      : {}),
+    ...(filters.city
+      ? {
+          profile: {
+            is: {
+              city: { contains: filters.city },
+            },
+          },
         }
       : {}),
   };
@@ -182,12 +163,12 @@ export async function getPublisherSavedAuthors(
             publisherId,
           },
         });
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
   const currentPage = Math.min(filters.page, totalPages);
   const pagination = {
     orderBy: { createdAt: "desc" as const },
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+    take: DISCOVERY_PAGE_SIZE,
   };
 
   const records: SavedRecord[] =
@@ -221,13 +202,10 @@ export async function getPublisherSavedAuthors(
   const works = authorIds.length
     ? await prisma.work.findMany({
         where: {
-          ...publicWorkWhere,
+          ...matchedWorkWhere,
           authorId: { in: authorIds },
         },
-        orderBy: [
-          { publishedAt: "desc" },
-          { updatedAt: "desc" },
-        ],
+        orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
         select: {
           _count: {
             select: {
@@ -273,8 +251,8 @@ export async function getPublisherSavedAuthors(
   const first =
     totalCount === 0
       ? 0
-      : (currentPage - 1) * PAGE_SIZE + 1;
-  const last = Math.min(currentPage * PAGE_SIZE, totalCount);
+      : (currentPage - 1) * DISCOVERY_PAGE_SIZE + 1;
+  const last = Math.min(currentPage * DISCOVERY_PAGE_SIZE, totalCount);
 
   return {
     currentPage,
@@ -295,14 +273,11 @@ export async function getPublisherSavedAuthors(
           (total, work) => total + work._count.favorites,
           0,
         ),
-        genres: parseGenres(
-          record.author.profile?.writingGenres ?? null,
-        ),
+        genres: availableGenreLabels(authorWorks.map((work) => work.genre)),
         id: record.author.id,
         latestWorks: authorWorks.slice(0, 3).map((work) => ({
           chapterCount: work.chapters.length,
-          firstChapterPosition:
-            work.chapters[0]?.position ?? null,
+          firstChapterPosition: work.chapters[0]?.position ?? null,
           genre: work.genre,
           id: work.id,
           slug: work.slug,

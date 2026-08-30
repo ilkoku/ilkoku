@@ -8,7 +8,7 @@ import {
   type StoredWorkContentRating,
 } from "@/lib/work-content-classification";
 
-const PAGE_SIZE = 24;
+export const PUBLISHER_WORK_PAGE_SIZE = 24;
 
 const reviewStatuses = [
   "not_requested",
@@ -155,7 +155,10 @@ export async function getPublisherWorkDiscovery(
   };
 
   const totalCount = await prisma.work.count({ where });
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalCount / PUBLISHER_WORK_PAGE_SIZE),
+  );
   const currentPage = Math.min(filters.page, totalPages);
 
   const works = await prisma.work.findMany({
@@ -164,8 +167,8 @@ export async function getPublisherWorkDiscovery(
       filters.sort === "updated"
         ? [{ updatedAt: "desc" }, { publishedAt: "desc" }]
         : [{ publishedAt: "desc" }, { createdAt: "desc" }],
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * PUBLISHER_WORK_PAGE_SIZE,
+    take: PUBLISHER_WORK_PAGE_SIZE,
     select: {
       _count: {
         select: {
@@ -199,8 +202,11 @@ export async function getPublisherWorkDiscovery(
     },
   });
 
-  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const last = Math.min(currentPage * PAGE_SIZE, totalCount);
+  const first =
+    totalCount === 0
+      ? 0
+      : (currentPage - 1) * PUBLISHER_WORK_PAGE_SIZE + 1;
+  const last = Math.min(currentPage * PUBLISHER_WORK_PAGE_SIZE, totalCount);
 
   return {
     currentPage,

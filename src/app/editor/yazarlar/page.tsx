@@ -1,10 +1,30 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { Prisma } from "@/generated/prisma/client";
+
+import {
+  DiscoveryPagination,
+  DiscoveryResultSummary,
+} from "@/components/discovery/DiscoveryListChrome";
+import "@/components/discovery/discovery-filter-desk.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
+import {
+  getAdultContentAccess,
+  visibleMemberContentRatings,
+} from "@/lib/adult-content-access";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
+import { availableGenreLabels, normalizeGenreLabel } from "@/lib/genre-system";
+import { GENRE_LABELS } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
+import {
+  isMemberStoredWorkContentRating,
+  workContentRatingDetails,
+  type MemberStoredWorkContentRating,
+} from "@/lib/work-content-classification";
 
 export const metadata: Metadata = {
   title: "Yazar Keşfet | İlkOku",
@@ -13,22 +33,30 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 12;
-
 type SearchParams = Promise<{
-  q?: string;
-  tur?: string;
+  arama?: string;
+  hitap?: string;
+  sayfa?: string;
   sehir?: string;
-  page?: string;
+  tur?: string;
 }>;
 
-function pageHref(q: string, genre: string, city: string, page: number) {
+type EditorAuthorFilters = {
+  city?: string;
+  contentRating?: MemberStoredWorkContentRating;
+  genre?: string;
+  search?: string;
+};
+
+function pageHref(filters: EditorAuthorFilters, page = 1) {
   const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (genre) params.set("tur", genre);
-  if (city) params.set("sehir", city);
-  params.set("page", String(page));
-  return `/editor/yazarlar?${params.toString()}`;
+  if (filters.search) params.set("arama", filters.search);
+  if (filters.genre) params.set("tur", filters.genre);
+  if (filters.contentRating) params.set("hitap", filters.contentRating);
+  if (filters.city) params.set("sehir", filters.city);
+  if (page > 1) params.set("sayfa", String(page));
+  const query = params.toString();
+  return query ? `/editor/yazarlar?${query}` : "/editor/yazarlar";
 }
 
 function publicWriterName(writer: {
@@ -56,31 +84,14 @@ function publicWriterAlias(writer: {
 }
 
 function initials(value: string) {
-  return value
-    .trim()
-    .split(/\s+/u)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toLocaleUpperCase("tr-TR"))
-    .join("") || "İY";
-}
-
-function parseGenres(value: string | null) {
-  if (!value) return [];
-
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (Array.isArray(parsed)) {
-      return parsed.filter((item): item is string => typeof item === "string").slice(0, 4);
-    }
-  } catch {
-    // Eski kayıtlardaki virgülle ayrılmış türleri destekle.
-  }
-
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, 4);
+  return (
+    value
+      .trim()
+      .split(/\s+/u)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toLocaleUpperCase("tr-TR"))
+      .join("") || "İY"
+  );
 }
 
 export default async function EditorWriterDiscoveryPage({
@@ -89,92 +100,91 @@ export default async function EditorWriterDiscoveryPage({
   searchParams: SearchParams;
 }) {
   const profile = await requireEditorProfile("/editor/yazarlar");
+  const adultAccess = await getAdultContentAccess(profile.id);
+  const visibleRatings = visibleMemberContentRatings(
+    adultAccess.canAccessAdultContent,
+  );
   const params = await searchParams;
-  const q = params.q?.trim() ?? "";
-  const genre = params.tur?.trim() ?? "";
-  const city = params.sehir?.trim() ?? "";
-  const requestedPage = Number.parseInt(params.page ?? "1", 10);
-  const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-
-  const publicWorkWhere: Prisma.WorkWhereInput = {
-    archivedAt: null,
-    status: "published",
-    visibility: "public",
+  const search = params.arama?.trim().slice(0, 220) || undefined;
+  const genre = normalizeGenreLabel(params.tur);
+  const city = params.sehir?.trim().slice(0, 120) || undefined;
+  const requestedRating = isMemberStoredWorkContentRating(params.hitap)
+    ? params.hitap
+    : undefined;
+  const contentRating =
+    requestedRating && visibleRatings.includes(requestedRating)
+      ? requestedRating
+      : undefined;
+  const rawPage = Number.parseInt(params.sayfa ?? "", 10);
+  const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const filters: EditorAuthorFilters = {
+    city,
+    contentRating,
+    genre,
+    search,
   };
-
-  const filters: Prisma.UserWhereInput[] = [];
-
-  if (q) {
-    filters.push({
-      OR: [
-        { displayName: { contains: q } },
-        { username: { contains: q } },
-        { bio: { contains: q } },
-        { works: { some: { ...publicWorkWhere, title: { contains: q } } } },
-      ],
-    });
-  }
-
-  if (genre) {
-    filters.push({
-      OR: [
-        { profile: { is: { writingGenres: { contains: genre } } } },
-        { works: { some: { ...publicWorkWhere, genre: { contains: genre } } } },
-      ],
-    });
-  }
-
-  if (city) {
-    filters.push({
-      profile: {
-        is: {
-          city: { contains: city },
-        },
-      },
-    });
-  }
-
+  const matchedWorkWhere: Prisma.WorkWhereInput = {
+    ...commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
+    ...(genre ? { genre } : {}),
+    ...(contentRating ? { contentRating } : {}),
+  };
   const where: Prisma.UserWhereInput = {
-    deletedAt: null,
-    role: "writer",
-    status: "active",
-    works: {
-      some: publicWorkWhere,
-    },
-    ...(filters.length > 0 ? { AND: filters } : {}),
+    ...commonDiscoveryAuthorWhereFor(adultAccess.canAccessAdultContent, {
+      ...(genre ? { genre } : {}),
+      ...(contentRating ? { contentRating } : {}),
+    }),
+    ...(search
+      ? {
+          OR: [
+            { displayName: { contains: search } },
+            { username: { contains: search } },
+            { bio: { contains: search } },
+            {
+              works: {
+                some: {
+                  ...matchedWorkWhere,
+                  title: { contains: search },
+                },
+              },
+            },
+          ],
+        }
+      : {}),
+    ...(city
+      ? {
+          profile: {
+            is: {
+              city: { contains: city },
+            },
+          },
+        }
+      : {}),
   };
 
-  const filteredCount = await prisma.user.count({ where });
-  const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
-  const safePage = Math.min(currentPage, totalPages);
-
+  const totalCount = await prisma.user.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalCount / DISCOVERY_PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
   const writers = await prisma.user.findMany({
     where,
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-    skip: (safePage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+    take: DISCOVERY_PAGE_SIZE,
     select: {
-      id: true,
-      displayName: true,
-      username: true,
-      avatarUrl: true,
       bio: true,
+      displayName: true,
+      id: true,
       profile: {
         select: {
           city: true,
-          writingGenres: true,
         },
       },
+      publicId: true,
+      username: true,
       works: {
-        where: publicWorkWhere,
+        where: matchedWorkWhere,
         orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
         take: 4,
         select: {
-          id: true,
-          title: true,
-          slug: true,
-          genre: true,
-          publishedAt: true,
           _count: {
             select: {
               chapters: true,
@@ -183,48 +193,144 @@ export default async function EditorWriterDiscoveryPage({
               readingProgress: true,
             },
           },
+          genre: true,
+          id: true,
+          publishedAt: true,
+          slug: true,
+          title: true,
         },
       },
       _count: {
         select: {
           works: {
-            where: publicWorkWhere,
+            where: matchedWorkWhere,
           },
           feedbackReceived: true,
         },
       },
     },
   });
-
-  const first = filteredCount === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-  const last = Math.min(safePage * PAGE_SIZE, filteredCount);
+  const activeFilters = [
+    search
+      ? {
+          href: pageHref({ ...filters, search: undefined }),
+          label: `Arama: ${search}`,
+        }
+      : null,
+    genre
+      ? {
+          href: pageHref({ ...filters, genre: undefined }),
+          label: `Tür: ${genre}`,
+        }
+      : null,
+    contentRating
+      ? {
+          href: pageHref({ ...filters, contentRating: undefined }),
+          label: `Yaş: ${workContentRatingDetails[contentRating].shortLabel}`,
+        }
+      : null,
+    city
+      ? {
+          href: pageHref({ ...filters, city: undefined }),
+          label: `Şehir: ${city}`,
+        }
+      : null,
+  ].filter((item): item is { href: string; label: string } => item !== null);
+  const hasFilters = activeFilters.length > 0;
 
   return (
     <AppShell profile={profile}>
       <div className="editor-workspace editor-writers-page">
         <EditorPageHeader
-          description="Yalnızca yayımlanmış eseri bulunan yazarların herkese açık profil bilgilerini ve eserlerini inceleyin."
+          description="Ortak Yazar Havuzu’nda en az bir public eseri bulunan aktif yazarları inceleyin."
           title="Yazar Keşfet"
         />
 
-        <form className="editor-writer-filters" method="get">
-          <label>
-            <span>Yazar veya eser ara</span>
-            <input defaultValue={q} name="q" placeholder="Rumuz, biyografi veya eser adı" type="search" />
-          </label>
-          <label>
-            <span>Tür</span>
-            <input defaultValue={genre} name="tur" placeholder="Örn. Roman" />
-          </label>
-          <label>
-            <span>Şehir</span>
-            <input defaultValue={city} name="sehir" placeholder="Örn. İstanbul" />
-          </label>
-          <button className="button button--primary" type="submit">Filtrele</button>
-          {(q || genre || city) && (
-            <Link className="button button--ghost" href="/editor/yazarlar">Temizle</Link>
+        <section aria-label="Editör yazar filtre masası" className="role-filter-desk">
+          <header className="role-filter-desk__header">
+            <div>
+              <span>Filtre masası</span>
+              <strong>Editör için uygun yazarları daraltın</strong>
+            </div>
+            {hasFilters ? <Link href="/editor/yazarlar">Tüm filtreleri temizle</Link> : null}
+          </header>
+
+          <form className="role-filter-desk__form" method="get">
+            <label className="role-filter-field--search">
+              <span>Arama</span>
+              <input
+                defaultValue={search}
+                name="arama"
+                placeholder="Yazar, rumuz, biyografi veya eser"
+                type="search"
+              />
+            </label>
+
+            <label>
+              <span>Tür</span>
+              <select defaultValue={genre ?? ""} name="tur">
+                <option value="">Tüm türler</option>
+                {GENRE_LABELS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Hitap yaşı</span>
+              <select defaultValue={contentRating ?? ""} name="hitap">
+                <option value="">Tüm yaşlar</option>
+                {visibleRatings.map((rating) => (
+                  <option key={rating} value={rating}>
+                    {workContentRatingDetails[rating].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Şehir</span>
+              <input defaultValue={city} name="sehir" placeholder="Örn. İstanbul" />
+            </label>
+
+            <div className="role-filter-desk__actions">
+              <button className="button button--primary" type="submit">
+                Masayı Güncelle
+              </button>
+              {hasFilters ? (
+                <Link className="button button--ghost" href="/editor/yazarlar">
+                  Temizle
+                </Link>
+              ) : null}
+            </div>
+          </form>
+
+          {hasFilters ? (
+            <div aria-label="Aktif filtreler" className="role-filter-desk__active">
+              <span>Aktif</span>
+              {activeFilters.map((item) => (
+                <Link href={item.href} key={`${item.label}-${item.href}`}>
+                  {item.label}
+                  <b aria-hidden="true">×</b>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="role-filter-desk__hint">
+              Filtre seçmeden editöre açık ortak Yazar Havuzu’nu görüyorsunuz.
+            </p>
           )}
-        </form>
+        </section>
+
+        <DiscoveryResultSummary
+          currentPage={currentPage}
+          noun="yazar"
+          pageSize={DISCOVERY_PAGE_SIZE}
+          totalCount={totalCount}
+          visibleCount={writers.length}
+        />
 
         {writers.length === 0 ? (
           <div className="editor-empty">
@@ -235,7 +341,9 @@ export default async function EditorWriterDiscoveryPage({
           <section className="editor-writer-grid" aria-label="Yazarlar">
             {writers.map((writer) => {
               const name = publicWriterName(writer);
-              const genres = parseGenres(writer.profile?.writingGenres ?? null);
+              const genres = availableGenreLabels(
+                writer.works.map((work) => work.genre),
+              ).slice(0, 4);
 
               return (
                 <article className="editor-writer-card" key={writer.id}>
@@ -254,20 +362,20 @@ export default async function EditorWriterDiscoveryPage({
                     {writer.bio?.trim() || "Bu yazar henüz kısa bir biyografi eklemedi."}
                   </p>
 
-                  {genres.length > 0 && (
+                  {genres.length > 0 ? (
                     <div className="editor-writer-card__genres" aria-label="Yazı türleri">
                       {genres.map((item) => <span key={item}>{item}</span>)}
                     </div>
-                  )}
+                  ) : null}
 
                   <dl className="editor-writer-card__stats">
-                    <div><dt>Yayımlanmış eser</dt><dd>{writer._count.works}</dd></div>
+                    <div><dt>Eşleşen eser</dt><dd>{writer._count.works}</dd></div>
                     <div><dt>Editör görüşü</dt><dd>{writer._count.feedbackReceived}</dd></div>
                   </dl>
 
                   <div className="editor-writer-card__works">
                     <div className="editor-writer-card__works-heading">
-                      <span>Yayımlanmış eserler</span>
+                      <span>Eşleşen public eserler</span>
                       <small>Son {writer.works.length} eser</small>
                     </div>
                     <ul>
@@ -290,18 +398,12 @@ export default async function EditorWriterDiscoveryPage({
           </section>
         )}
 
-        <footer className="editor-writer-pagination" aria-label="Sayfalama">
-          <span>{filteredCount} yazardan {first}–{last} arası gösteriliyor.</span>
-          <div>
-            {safePage > 1 && (
-              <Link className="button button--ghost" href={pageHref(q, genre, city, safePage - 1)}>Önceki</Link>
-            )}
-            <strong>{safePage} / {totalPages}</strong>
-            {safePage < totalPages && (
-              <Link className="button button--ghost" href={pageHref(q, genre, city, safePage + 1)}>Sonraki</Link>
-            )}
-          </div>
-        </footer>
+        <DiscoveryPagination
+          ariaLabel="Editör yazar keşif sayfalama"
+          currentPage={currentPage}
+          hrefForPage={(page) => pageHref(filters, page)}
+          totalPages={totalPages}
+        />
       </div>
     </AppShell>
   );

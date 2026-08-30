@@ -1,5 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discovery-list-standard";
 import {
   availableGenreLabels,
   normalizeGenreLabel,
@@ -10,7 +12,7 @@ import {
   type MemberStoredWorkContentRating,
 } from "@/lib/work-content-classification";
 
-const PAGE_SIZE = 12;
+export const PUBLISHER_AUTHOR_PAGE_SIZE = DISCOVERY_PAGE_SIZE;
 
 export interface PublisherAuthorDiscoveryFilters {
   city: string;
@@ -142,14 +144,6 @@ export async function getPublisherAuthorDiscovery(
     });
   }
 
-  if (filters.genre || contentRating) {
-    conditions.push({
-      works: {
-        some: matchedWorkWhere,
-      },
-    });
-  }
-
   if (filters.city) {
     conditions.push({
       profile: {
@@ -161,24 +155,25 @@ export async function getPublisherAuthorDiscovery(
   }
 
   const where: Prisma.UserWhereInput = {
-    deletedAt: null,
-    role: "writer",
-    status: "active",
-    works: {
-      some: matchedWorkWhere,
-    },
+    ...commonDiscoveryAuthorWhereFor(canAccessAdultContent, {
+      ...(filters.genre ? { genre: filters.genre } : {}),
+      ...(contentRating ? { contentRating } : {}),
+    }),
     ...(conditions.length > 0 ? { AND: conditions } : {}),
   };
 
   const totalCount = await prisma.user.count({ where });
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalCount / PUBLISHER_AUTHOR_PAGE_SIZE),
+  );
   const currentPage = Math.min(filters.page, totalPages);
 
   const authors = await prisma.user.findMany({
     where,
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * PUBLISHER_AUTHOR_PAGE_SIZE,
+    take: PUBLISHER_AUTHOR_PAGE_SIZE,
     select: {
       bio: true,
       displayName: true,
@@ -249,8 +244,10 @@ export async function getPublisherAuthorDiscovery(
   }
 
   const first =
-    totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const last = Math.min(currentPage * PAGE_SIZE, totalCount);
+    totalCount === 0
+      ? 0
+      : (currentPage - 1) * PUBLISHER_AUTHOR_PAGE_SIZE + 1;
+  const last = Math.min(currentPage * PUBLISHER_AUTHOR_PAGE_SIZE, totalCount);
 
   return {
     currentPage,

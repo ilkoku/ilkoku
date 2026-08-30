@@ -31,7 +31,7 @@ function isSupportedFilter(
   surface: DiscoverySurface,
   filterId: string,
 ): filterId is DiscoveryFilterId {
-  return surface.filters.includes(filterId as DiscoveryFilterId);
+  return surface.availableFilters.includes(filterId as DiscoveryFilterId);
 }
 
 async function readOverrides(): Promise<{
@@ -55,8 +55,9 @@ function effectiveFiltersFor(
   surface: DiscoverySurface,
   rows: readonly DiscoveryFilterOverrideRow[],
 ) {
+  const defaultSet = new Set<DiscoveryFilterId>(surface.filters);
   const states = new Map<DiscoveryFilterId, boolean>(
-    surface.filters.map((filterId) => [filterId, true]),
+    surface.availableFilters.map((filterId) => [filterId, defaultSet.has(filterId)]),
   );
 
   for (const row of rows) {
@@ -66,7 +67,7 @@ function effectiveFiltersFor(
     states.set(row.filterId, Boolean(row.enabled));
   }
 
-  return surface.filters.filter((filterId) => states.get(filterId) !== false);
+  return surface.availableFilters.filter((filterId) => states.get(filterId) === true);
 }
 
 export async function getDiscoveryFilterConfiguration(): Promise<DiscoveryFilterConfiguration> {
@@ -81,7 +82,9 @@ export async function getDiscoveryFilterConfiguration(): Promise<DiscoveryFilter
       return {
         ...surface,
         activeFilters,
-        removedFilters: surface.filters.filter((filterId) => !activeSet.has(filterId)),
+        removedFilters: surface.availableFilters.filter(
+          (filterId) => !activeSet.has(filterId),
+        ),
       };
     }),
   };

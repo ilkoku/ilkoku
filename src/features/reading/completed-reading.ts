@@ -28,6 +28,7 @@ export async function getCompletedReadingForMember(userId: string) {
     select: {
       chapter: { select: { position: true, title: true } },
       completedAt: true,
+      lastReadAt: true,
       progressPercent: true,
       work: {
         select: {
@@ -37,7 +38,9 @@ export async function getCompletedReadingForMember(userId: string) {
                 where: { deletedAt: null, status: "visible" },
               },
               favorites: true,
+              ownershipStamps: true,
               readingProgress: true,
+              versions: true,
             },
           },
           author: {
@@ -50,8 +53,6 @@ export async function getCompletedReadingForMember(userId: string) {
           chapters: {
             where: {
               archivedAt: null,
-              publishedAt: { not: null },
-              status: "published",
             },
             orderBy: { position: "asc" },
             select: {

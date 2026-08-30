@@ -20,17 +20,26 @@ function assertNotContains(text, fragment, label) {
 
 test("reader discovery keeps search, sorting and pagination inside bounded database queries", () => {
   const text = source("src/app/kesfet/page.tsx");
+  const standard = source("src/features/reader/discovery-standard.tsx");
 
-  assertContains(text, "const PAGE_SIZE = 24", "reader discovery");
+  assertContains(standard, "READER_LIST_PAGE_SIZE = 24", "reader discovery standard");
   assertContains(text, "await prisma.work.count({ where })", "reader discovery");
-  assertContains(text, "{ title: { contains: search } }", "reader discovery");
-  assertContains(text, 'sort === "updated"', "reader discovery");
-  assertContains(text, "skip: (currentPage - 1) * PAGE_SIZE", "reader discovery");
-  assertContains(text, "take: PAGE_SIZE", "reader discovery");
-  assertContains(text, "pageHref(filters", "reader discovery");
+  assertContains(text, "{ title: { contains: filters.search } }", "reader discovery");
+  assertContains(text, 'filters.sort === "updated"', "reader discovery");
+  assertContains(
+    text,
+    "skip: (currentPage - 1) * READER_LIST_PAGE_SIZE",
+    "reader discovery",
+  );
+  assertContains(text, "take: READER_LIST_PAGE_SIZE", "reader discovery");
+  assertContains(text, "ReaderPagination", "reader discovery");
   assertContains(text, 'sayfa?: string;', "reader discovery");
   assertNotContains(text, "take: search ? undefined", "reader discovery");
   assertNotContains(text, "filteredWorks", "reader discovery");
+  assertNotContains(text, "reader-discovery-presets", "reader discovery");
+  assertNotContains(text, 'name="dil"', "reader discovery");
+  assertNotContains(text, 'name="okuma"', "reader discovery");
+  assertNotContains(text, 'name="favori"', "reader discovery");
 });
 
 test("reader, editor and publisher discovery use the same member-aware public work pool", () => {
@@ -50,6 +59,29 @@ test("reader, editor and publisher discovery use the same member-aware public wo
   assertContains(publisher, "...commonDiscoveryWorkWhereFor", "publisher discovery");
   assertContains(editorPage, "getCommonEditorDiscovery", "editor discovery page");
   assertNotContains(reader, "readingProgress: {\n      none:", "reader discovery");
+});
+
+test("filter-desk discovery pages share one result and numbered pagination chrome", () => {
+  const chrome = source("src/components/discovery/DiscoveryListChrome.tsx");
+  const editor = source("src/app/editor/kesfet/page.tsx");
+  const publisherWorks = source("src/app/yayinevi/kesfet/eserler/page.tsx");
+  const publisherAuthors = source("src/app/yayinevi/kesfet/yazarlar/page.tsx");
+  const readerStandard = source("src/features/reader/discovery-standard.tsx");
+  const publisherAuthorQuery = source("src/features/publisher-discovery/author-query.ts");
+
+  assertContains(chrome, "DiscoveryResultSummary", "discovery chrome");
+  assertContains(chrome, "DiscoveryPagination", "discovery chrome");
+  assertContains(chrome, "role-filter-result", "discovery chrome");
+  assertContains(chrome, "role-filter-pagination__page", "discovery chrome");
+  assertContains(readerStandard, "DiscoveryResultSummary", "reader standard");
+  assertContains(readerStandard, "DiscoveryPagination as ReaderPagination", "reader standard");
+  assertContains(editor, "DiscoveryResultSummary", "editor discovery");
+  assertContains(editor, "DiscoveryPagination", "editor discovery");
+  assertContains(publisherWorks, "DiscoveryResultSummary", "publisher work discovery");
+  assertContains(publisherWorks, "DiscoveryPagination", "publisher work discovery");
+  assertContains(publisherAuthors, "DiscoveryResultSummary", "publisher author discovery");
+  assertContains(publisherAuthors, "DiscoveryPagination", "publisher author discovery");
+  assertContains(publisherAuthorQuery, "PUBLISHER_AUTHOR_PAGE_SIZE = 24", "publisher author page size");
 });
 
 test("reader home follows the shared member-aware pool and exposes age, passport and work-level cleanup", () => {
@@ -73,7 +105,7 @@ test("reader home follows the shared member-aware pool and exposes age, passport
   assertContains(readerHome, "getContinueReadingForMember", "reader home continue source");
 });
 
-test("continue reading falls back to bounded member-safe reading access without reviving completed works", () => {
+test("continue reading supports the complete workdesk while dashboard callers remain bounded", () => {
   const fallback = source("src/features/reading/continue-reading.ts");
   const continuePage = source("src/app/okumaya-devam/page.tsx");
 
@@ -83,8 +115,14 @@ test("continue reading falls back to bounded member-safe reading access without 
   assertContains(fallback, "readingProgress:", "reading access progress exclusion");
   assertContains(fallback, "none: { userId }", "completed and tracked work exclusion");
   assertContains(fallback, "progressPercent: 0", "access-only start state");
-  assertContains(fallback, "Math.min(100, Math.max(1, take))", "bounded continue query");
-  assertContains(continuePage, "getContinueReadingForMember", "continue reading page fallback");
+  assertContains(fallback, "take: number | null = 6", "dashboard default bound");
+  assertContains(fallback, "boundedTake === null", "complete workdesk mode");
+  assertContains(
+    continuePage,
+    "getContinueReadingForMember(profile.id, null)",
+    "continue reading complete workdesk",
+  );
+  assertContains(continuePage, "ReaderPagination", "continue reading pagination");
 });
 
 test("18+ discovery requires both verified age and explicit consent without creating a second pool", () => {
@@ -152,9 +190,9 @@ test("adult content cannot leak through favorites, progress, sharing or publicat
 test("publisher work discovery remains bounded and server-filtered", () => {
   const text = source("src/features/publisher-discovery/work-query.ts");
 
-  assertContains(text, "const PAGE_SIZE = 24", "publisher discovery");
+  assertContains(text, "PUBLISHER_WORK_PAGE_SIZE = 24", "publisher discovery");
   assertContains(text, "await prisma.work.count({ where })", "publisher discovery");
   assertContains(text, "skip:", "publisher discovery");
-  assertContains(text, "PAGE_SIZE", "publisher discovery");
+  assertContains(text, "PUBLISHER_WORK_PAGE_SIZE", "publisher discovery");
   assertContains(text, "contains: filters.query", "publisher discovery");
 });

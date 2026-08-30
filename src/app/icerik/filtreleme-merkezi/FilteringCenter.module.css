@@ -430,6 +430,11 @@
   top: calc(100% + 0.35rem);
   left: 0;
   min-width: 12rem;
+  max-width: min(20rem, calc(100vw - 2rem));
+  max-height: min(28rem, calc(100vh - 9rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   display: grid;
   gap: 0.3rem;
   border: 1px solid var(--cms-border, #e8e5f0);

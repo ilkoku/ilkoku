@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { AdvancedDiscoveryFilterFields } from "@/components/discovery/AdvancedDiscoveryFilterFields";
 import {
   DiscoveryPagination,
   DiscoveryResultSummary,
@@ -12,7 +13,17 @@ import { getCommonEditorDiscovery } from "@/features/editor-workspace/common-dis
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorksTable } from "@/features/editor-workspace/components/EditorWorksTable";
 import { getAdultContentAccess, visibleMemberContentRatings } from "@/lib/adult-content-access";
+import { sanitizeDiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filter-management";
+import {
+  appendDiscoveryAdvancedFilterParams,
+  clearDiscoveryAdvancedFilter,
+  discoveryAdvancedFilterChips,
+  matchesDiscoveryAdvancedWorkFilters,
+  parseDiscoveryAdvancedFilters,
+  type DiscoveryAdvancedFilters,
+} from "@/lib/discovery-advanced-filters";
 import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
+import type { DiscoveryFilterId } from "@/lib/discovery-filter-registry";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { GENRE_LABELS } from "@/lib/genres";
 import {
@@ -29,7 +40,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 24;
-const languageFilters = ["tr", "en"] as const;
+const languageFilters = ["tr", "en", "de", "fr"] as const;
 const reviewFilters = [
   "not_requested",
   "requested",
@@ -45,12 +56,18 @@ type ReviewFilter = (typeof reviewFilters)[number];
 type WordCountFilter = (typeof wordCountFilters)[number];
 
 type EditorExploreFilters = {
+  advanced: DiscoveryAdvancedFilters;
   contentRating?: MemberStoredWorkContentRating;
   genre?: string;
   language?: LanguageFilter;
   reviewStatus?: ReviewFilter;
+  search?: string;
   wordCount?: WordCountFilter;
 };
+
+function firstValue(value: string | string[] | undefined) {
+  return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
+}
 
 function includesValue<T extends string>(
   values: readonly T[],
@@ -85,11 +102,13 @@ function wordCountLabel(value: WordCountFilter) {
 function filterHref(filters: EditorExploreFilters, page = 1) {
   const params = new URLSearchParams();
 
+  if (filters.search) params.set("arama", filters.search);
   if (filters.genre) params.set("tur", filters.genre);
   if (filters.language) params.set("dil", filters.language);
   if (filters.contentRating) params.set("hitap", filters.contentRating);
   if (filters.wordCount) params.set("kelime", filters.wordCount);
   if (filters.reviewStatus) params.set("durum", filters.reviewStatus);
+  appendDiscoveryAdvancedFilterParams(params, filters.advanced);
   if (page > 1) params.set("sayfa", String(page));
 
   const query = params.toString();
@@ -99,17 +118,10 @@ function filterHref(filters: EditorExploreFilters, page = 1) {
 export default async function EditorDiscoveryPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    dil?: string;
-    durum?: string;
-    hitap?: string;
-    kelime?: string;
-    sayfa?: string;
-    tur?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await requireEditorProfile("/editor/kesfet");
-  const enabledFilterIds = new Set(
+  const enabledFilterIds = new Set<DiscoveryFilterId>(
     await getDiscoverySurfaceFilterIds("editor-work-discovery"),
   );
   const adultAccess = await getAdultContentAccess(profile.id);
@@ -117,39 +129,58 @@ export default async function EditorDiscoveryPage({
     adultAccess.canAccessAdultContent,
   );
   const parameters = await searchParams;
-  const genre = enabledFilterIds.has("genre")
-    ? normalizeGenreLabel(parameters.tur)
+  const search = enabledFilterIds.has("search")
+    ? firstValue(parameters.arama).slice(0, 220) || undefined
     : undefined;
+  const genre = enabledFilterIds.has("genre")
+    ? normalizeGenreLabel(firstValue(parameters.tur))
+    : undefined;
+  const languageValue = firstValue(parameters.dil);
   const language =
-    enabledFilterIds.has("language") && includesValue(languageFilters, parameters.dil)
-      ? parameters.dil
+    enabledFilterIds.has("language") && includesValue(languageFilters, languageValue)
+      ? languageValue
       : undefined;
+  const wordCountValue = firstValue(parameters.kelime);
   const wordCount =
-    enabledFilterIds.has("wordCount") && includesValue(wordCountFilters, parameters.kelime)
-      ? parameters.kelime
+    enabledFilterIds.has("wordCount") && includesValue(wordCountFilters, wordCountValue)
+      ? wordCountValue
       : undefined;
+  const reviewValue = firstValue(parameters.durum);
   const reviewStatus =
-    enabledFilterIds.has("reviewStatus") && includesValue(reviewFilters, parameters.durum)
-      ? parameters.durum
+    enabledFilterIds.has("reviewStatus") && includesValue(reviewFilters, reviewValue)
+      ? reviewValue
       : undefined;
+  const ratingValue = firstValue(parameters.hitap);
   const requestedRating =
-    enabledFilterIds.has("contentRating") && isMemberStoredWorkContentRating(parameters.hitap)
-      ? parameters.hitap
+    enabledFilterIds.has("contentRating") && isMemberStoredWorkContentRating(ratingValue)
+      ? ratingValue
       : undefined;
   const contentRating =
     requestedRating && visibleRatings.includes(requestedRating)
       ? requestedRating
       : undefined;
-  const rawPage = Number.parseInt(parameters.sayfa ?? "", 10);
+  const advanced = sanitizeDiscoveryAdvancedFilters(
+    parseDiscoveryAdvancedFilters(parameters),
+    enabledFilterIds,
+  );
+  const rawPage = Number.parseInt(firstValue(parameters.sayfa), 10);
   const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const filters: EditorExploreFilters = {
+    advanced,
     contentRating,
     genre,
     language,
     reviewStatus,
+    search,
     wordCount,
   };
-  const activeFilters = [
+  const baseActiveFilters = [
+    search
+      ? {
+          href: filterHref({ ...filters, search: undefined }),
+          label: `Arama: ${search}`,
+        }
+      : null,
     genre
       ? {
           href: filterHref({ ...filters, genre: undefined }),
@@ -165,7 +196,7 @@ export default async function EditorDiscoveryPage({
     language
       ? {
           href: filterHref({ ...filters, language: undefined }),
-          label: language === "tr" ? "Dil: Türkçe" : "Dil: İngilizce",
+          label: `Dil: ${language === "tr" ? "Türkçe" : language === "en" ? "İngilizce" : language === "de" ? "Almanca" : "Fransızca"}`,
         }
       : null,
     wordCount
@@ -181,14 +212,45 @@ export default async function EditorDiscoveryPage({
         }
       : null,
   ].filter((item): item is { href: string; label: string } => item !== null);
+  const advancedActiveFilters = discoveryAdvancedFilterChips(
+    advanced,
+    enabledFilterIds,
+  ).map((item) => ({
+    href: filterHref(
+      { ...filters, advanced: clearDiscoveryAdvancedFilter(advanced, item.id) },
+      1,
+    ),
+    label: item.label,
+  }));
+  const activeFilters = [...baseActiveFilters, ...advancedActiveFilters];
   const hasFilters = activeFilters.length > 0;
-  const works = await getCommonEditorDiscovery(profile.id, {
-    contentRating,
-    genre,
-    language,
-    reviewStatus,
-    wordCount,
-  });
+  const works = (
+    await getCommonEditorDiscovery(profile.id, {
+      contentRating,
+      genre,
+      language,
+      reviewStatus,
+      search,
+      wordCount,
+    })
+  ).filter((work) =>
+    matchesDiscoveryAdvancedWorkFilters(
+      {
+        authorName: work.authorName,
+        authorUsername: work.authorUsername,
+        chapterCount: work.chapterCount,
+        commentCount: work.commentCount,
+        completionStatus: work.completionStatus,
+        favoriteCount: work.favoriteCount,
+        hasPassport: work.hasPassport,
+        publishedAt: work.publishedAt,
+        readerCount: work.readerCount,
+        updatedAt: work.updatedAt,
+        versionCount: work.versionCount,
+      },
+      advanced,
+    ),
+  );
   const totalCount = works.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, totalPages);
@@ -229,6 +291,18 @@ export default async function EditorDiscoveryPage({
 
           {enabledFilterIds.size > 0 ? (
             <form className="role-filter-desk__form">
+              {enabledFilterIds.has("search") ? (
+                <label className="role-filter-field--search">
+                  <span>Arama</span>
+                  <input
+                    defaultValue={search}
+                    name="arama"
+                    placeholder="Eser, yazar veya rumuz ara"
+                    type="search"
+                  />
+                </label>
+              ) : null}
+
               {enabledFilterIds.has("genre") ? (
                 <label>
                   <span>Tür</span>
@@ -264,6 +338,8 @@ export default async function EditorDiscoveryPage({
                     <option value="">Tüm diller</option>
                     <option value="tr">Türkçe</option>
                     <option value="en">İngilizce</option>
+                    <option value="de">Almanca</option>
+                    <option value="fr">Fransızca</option>
                   </select>
                 </label>
               ) : null}
@@ -294,6 +370,11 @@ export default async function EditorDiscoveryPage({
                   </select>
                 </label>
               ) : null}
+
+              <AdvancedDiscoveryFilterFields
+                enabledFilterIds={enabledFilterIds}
+                filters={advanced}
+              />
 
               <div className="role-filter-desk__actions">
                 <button className="button button--primary" type="submit">

@@ -6,9 +6,9 @@ import {
   DiscoveryPagination,
   DiscoveryResultSummary,
 } from "@/components/discovery/DiscoveryListChrome";
+import { DiscoveryWorkspaceHero } from "@/components/discovery/DiscoveryWorkspaceHero";
 import "@/components/discovery/discovery-filter-desk.css";
 import { AppShell } from "@/components/layout/AppShell";
-import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { requirePublisherDiscoveryAccess } from "@/features/publisher-discovery/access";
 import {
   getPublisherAuthorDiscovery,
@@ -118,16 +118,11 @@ export default async function PublisherAuthorDiscoveryPage({
     getPublisherShareRecipientOptions(access.profile.id),
   ]);
   const canMutate = !access.profile.adminPublisherView;
-  const canLike =
-    canMutate && access.permissions.includes("like_author");
-  const canFavorite =
-    canMutate && access.permissions.includes("favorite_author");
-  const canFollow =
-    canMutate && access.permissions.includes("follow_author");
-  const canShareInternal =
-    canMutate && access.permissions.includes("share_internal");
-  const canShareEmail =
-    canMutate && access.permissions.includes("share_email");
+  const canLike = canMutate && access.permissions.includes("like_author");
+  const canFavorite = canMutate && access.permissions.includes("favorite_author");
+  const canFollow = canMutate && access.permissions.includes("follow_author");
+  const canShareInternal = canMutate && access.permissions.includes("share_internal");
+  const canShareEmail = canMutate && access.permissions.includes("share_email");
   const activeFilters = [
     filters.query
       ? {
@@ -174,9 +169,20 @@ export default async function PublisherAuthorDiscoveryPage({
   return (
     <AppShell profile={access.profile}>
       <div className="publisher-discovery">
-        <EditorPageHeader
-          description="Public eseri bulunan yazarları inceleyin; yetkinize göre beğenin, favorileyin, takip edin veya zorunlu notla paylaşın."
-          eyebrow={access.companyName}
+        <DiscoveryWorkspaceHero
+          description="Ortak Yazar Havuzu’ndaki yazarları üretimleri ve okur etkileşimiyle karşılaştırın; yetkinize göre beğenin, favorileyin, takip edin veya paylaşın."
+          eyebrow={`${access.companyName} · Yazar Havuzu · Keşif`}
+          links={[
+            { href: "/yayinevi/kesfet/eserler", label: "Eserler" },
+            { current: true, href: "/yayinevi/kesfet/yazarlar", label: "Yazarlar" },
+            { href: "/yayinevi/favorilerim", label: "Favoriler" },
+            { href: "/yayinevi/takip-ettiklerim", label: "Takip Ettiklerim" },
+          ]}
+          stats={[
+            { label: "Eşleşen yazar", value: data.totalCount },
+            { label: "Aktif filtre", value: visibleActiveFilters.length },
+            { label: "Bu sayfada", value: data.rows.length },
+          ]}
           title="Yazar Keşfet"
         />
 
@@ -229,9 +235,7 @@ export default async function PublisherAuthorDiscoveryPage({
                   <select defaultValue={filters.genre} name="tur">
                     <option value="">Tüm türler</option>
                     {GENRE_LABELS.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
+                      <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
                 </label>

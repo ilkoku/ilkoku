@@ -36,7 +36,11 @@ export type EditorWorkCardData = {
 export type EditorWorkTableData = EditorWorkCardData & {
   authorUsername: string | null;
   commentCount: number;
+  completionStatus: "completed" | "ongoing";
   favoriteCount: number;
+  hasPassport: boolean;
   publishedAt: Date | null;
   readerCount: number;
+  updatedAt: Date;
+  versionCount: number;
 };

@@ -26,6 +26,7 @@ import {
   getAdultContentAccess,
   visibleMemberContentRatings,
 } from "@/lib/adult-content-access";
+import { getDiscoverySurfaceFilterIds } from "@/lib/discovery-filter-config";
 import { GENRE_LABELS } from "@/lib/genres";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "@/features/publisher-discovery/publisher-discovery.css";
@@ -64,6 +65,9 @@ export default async function PublisherAuthorDiscoveryPage({
     "/yayinevi/kesfet/yazarlar",
     "discover_authors",
   );
+  const enabledFilterIds = new Set(
+    await getDiscoverySurfaceFilterIds("publisher-author-discovery"),
+  );
   const adultAccess = access.profile.adminPublisherView
     ? {
         canAccessAdultContent: true,
@@ -74,6 +78,10 @@ export default async function PublisherAuthorDiscoveryPage({
     adultAccess.canAccessAdultContent,
   );
   const filters = normalizePublisherAuthorDiscoveryFilters(await searchParams);
+  if (!enabledFilterIds.has("search")) filters.query = "";
+  if (!enabledFilterIds.has("genre")) filters.genre = "";
+  if (!enabledFilterIds.has("contentRating")) filters.contentRating = "";
+  if (!enabledFilterIds.has("city")) filters.city = "";
   if (
     filters.contentRating === "adult_18" &&
     !adultAccess.canAccessAdultContent
@@ -174,61 +182,75 @@ export default async function PublisherAuthorDiscoveryPage({
             ) : null}
           </header>
 
-          <form className="role-filter-desk__form" method="get">
-            <label className="role-filter-field--search">
-              <span>Arama</span>
-              <input
-                defaultValue={filters.query}
-                name="arama"
-                placeholder="Rumuz, public kimlik veya eser"
-                type="search"
-              />
-            </label>
-
-            <label>
-              <span>Tür</span>
-              <select defaultValue={filters.genre} name="tur">
-                <option value="">Tüm türler</option>
-                {GENRE_LABELS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Hitap yaşı</span>
-              <select defaultValue={filters.contentRating} name="hitap">
-                <option value="">Tüm yaşlar</option>
-                {visibleRatings.map((rating) => (
-                  <option key={rating} value={rating}>
-                    {workContentRatingDetails[rating].label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Şehir</span>
-              <input
-                defaultValue={filters.city}
-                name="sehir"
-                placeholder="Örn. İstanbul"
-              />
-            </label>
-
-            <div className="role-filter-desk__actions">
-              <button className="button button--primary" type="submit">
-                Masayı Güncelle
-              </button>
-              {hasFilters ? (
-                <Link className="button button--ghost" href="/yayinevi/kesfet/yazarlar">
-                  Temizle
-                </Link>
+          {enabledFilterIds.size > 0 ? (
+            <form className="role-filter-desk__form" method="get">
+              {enabledFilterIds.has("search") ? (
+                <label className="role-filter-field--search">
+                  <span>Arama</span>
+                  <input
+                    defaultValue={filters.query}
+                    name="arama"
+                    placeholder="Rumuz, public kimlik veya eser"
+                    type="search"
+                  />
+                </label>
               ) : null}
-            </div>
-          </form>
+
+              {enabledFilterIds.has("genre") ? (
+                <label>
+                  <span>Tür</span>
+                  <select defaultValue={filters.genre} name="tur">
+                    <option value="">Tüm türler</option>
+                    {GENRE_LABELS.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("contentRating") ? (
+                <label>
+                  <span>Hitap yaşı</span>
+                  <select defaultValue={filters.contentRating} name="hitap">
+                    <option value="">Tüm yaşlar</option>
+                    {visibleRatings.map((rating) => (
+                      <option key={rating} value={rating}>
+                        {workContentRatingDetails[rating].label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {enabledFilterIds.has("city") ? (
+                <label>
+                  <span>Şehir</span>
+                  <input
+                    defaultValue={filters.city}
+                    name="sehir"
+                    placeholder="Örn. İstanbul"
+                  />
+                </label>
+              ) : null}
+
+              <div className="role-filter-desk__actions">
+                <button className="button button--primary" type="submit">
+                  Masayı Güncelle
+                </button>
+                {hasFilters ? (
+                  <Link className="button button--ghost" href="/yayinevi/kesfet/yazarlar">
+                    Temizle
+                  </Link>
+                ) : null}
+              </div>
+            </form>
+          ) : (
+            <p className="role-filter-desk__hint">
+              Bu yüzeyde Filtre Masası alanları İçerik Yönetimi&apos;nden kapatıldı.
+            </p>
+          )}
 
           {activeFilters.length > 0 ? (
             <div className="role-filter-desk__active" aria-label="Aktif filtreler">
@@ -240,11 +262,11 @@ export default async function PublisherAuthorDiscoveryPage({
                 </Link>
               ))}
             </div>
-          ) : (
+          ) : enabledFilterIds.size > 0 ? (
             <p className="role-filter-desk__hint">
               Filtre seçmeden yayınevine açık yazar havuzunu görüyorsunuz.
             </p>
-          )}
+          ) : null}
         </section>
 
         <DiscoveryResultSummary

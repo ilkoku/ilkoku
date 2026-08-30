@@ -1,19 +1,26 @@
 .reader-author-discovery-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem;
 }
 
 .reader-author-discovery-card {
   display: flex;
-  flex-direction: column;
   min-width: 0;
   min-height: 100%;
+  flex-direction: column;
   padding: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
-  background: var(--color-card);
+  background: rgba(22, 27, 35, 0.76);
   box-shadow: var(--shadow-small);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.reader-author-discovery-card:hover {
+  border-color: rgba(224, 181, 47, 0.22);
+  background: rgba(26, 31, 40, 0.9);
+  transform: translateY(-1px);
 }
 
 .reader-author-discovery-card__topline,
@@ -28,6 +35,8 @@
 
 .reader-author-discovery-card__topline {
   justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--color-text-secondary);
   font-size: 0.72rem;
   font-weight: 800;
@@ -35,26 +44,28 @@
 
 .reader-author-discovery-card__avatar {
   display: inline-grid;
+  width: 2.65rem;
+  height: 2.65rem;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
   border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
   border-radius: 50%;
-  color: var(--color-accent);
   background: color-mix(in srgb, var(--color-accent) 9%, transparent);
+  color: var(--color-accent);
   font-size: 0.78rem;
   font-weight: 900;
   letter-spacing: 0.04em;
 }
 
 .reader-author-discovery-card__identity {
-  margin-top: 0.9rem;
+  margin-top: 0.85rem;
 }
 
 .reader-author-discovery-card__identity h2 {
   margin: 0;
   color: var(--color-text);
-  font-size: 1.08rem;
+  font-family: var(--font-playfair), serif;
+  font-size: 1.28rem;
+  font-weight: 500;
 }
 
 .reader-author-discovery-card__identity p {
@@ -66,7 +77,7 @@
 .reader-author-discovery-card__bio {
   display: -webkit-box;
   min-height: 3.3rem;
-  margin: 0.8rem 0;
+  margin: 0.75rem 0;
   overflow: hidden;
   color: var(--color-text-secondary);
   font-size: 0.8rem;
@@ -81,11 +92,11 @@
 
 .reader-author-discovery-card__latest {
   display: grid;
-  gap: 0.35rem;
-  padding: 0.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: 0.78rem;
-  background: color-mix(in srgb, var(--color-card) 86%, black);
+  gap: 0.4rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.8rem;
+  background: rgba(9, 12, 16, 0.28);
 }
 
 .reader-author-discovery-card__latest > span {
@@ -98,12 +109,12 @@
 
 .reader-author-discovery-card__latest > strong {
   color: var(--color-text);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
 }
 
 .reader-author-discovery-card__chips span {
   padding: 0.3rem 0.45rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   color: var(--color-text-secondary);
   font-size: 0.66rem;
@@ -122,6 +133,10 @@
   text-underline-offset: 0.18rem;
 }
 
+.reader-author-discovery-card__works a:hover {
+  color: #dfb52f;
+}
+
 .reader-author-discovery-card__actions {
   justify-content: space-between;
   margin-top: auto;
@@ -138,17 +153,13 @@
   font-weight: 700;
 }
 
-@media (max-width: 74rem) {
+@media (max-width: 64rem) {
   .reader-author-discovery-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 47.99rem) {
-  .reader-author-discovery-grid {
-    grid-template-columns: 1fr;
-  }
-
   .reader-author-discovery-card__actions > *,
   .reader-author-discovery-card__actions form,
   .reader-author-discovery-card__actions button {

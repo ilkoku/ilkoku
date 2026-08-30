@@ -6,7 +6,6 @@ import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
-import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { countWords } from "@/features/editor-workspace/eligibility";
 import {
   ReaderWorksTable,
@@ -34,7 +33,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 24;
-const completionFilters = ["completed", "ongoing"] as const;
+const readingFilters = ["unread", "in_progress", "completed"] as const;
 const reviewFilters = [
   "not_requested",
   "requested",
@@ -45,15 +44,16 @@ const reviewFilters = [
 ] as const;
 const sortFilters = ["newest", "updated"] as const;
 
-type CompletionFilter = (typeof completionFilters)[number];
+type ReadingFilter = (typeof readingFilters)[number];
 type ReviewFilter = (typeof reviewFilters)[number];
 type SortFilter = (typeof sortFilters)[number];
 
 type ReaderExploreFilters = {
-  completion?: CompletionFilter;
   contentRating?: MemberStoredWorkContentRating;
+  favoritesOnly: boolean;
   genre?: string;
   language?: string;
+  readingState?: ReadingFilter;
   reviewStatus?: ReviewFilter;
   search?: string;
   sort: SortFilter;
@@ -66,6 +66,35 @@ function includesValue<T extends string>(
   return Boolean(value && values.includes(value as T));
 }
 
+function languageLabel(value: string) {
+  if (value === "tr") return "Türkçe";
+  if (value === "en") return "İngilizce";
+  return value.toLocaleUpperCase("tr-TR");
+}
+
+function readingLabel(value: ReadingFilter) {
+  if (value === "unread") return "Henüz okumadıklarım";
+  if (value === "in_progress") return "Okumaya devam";
+  return "Tamamladıklarım";
+}
+
+function reviewLabel(value: ReviewFilter) {
+  switch (value) {
+    case "not_requested":
+      return "Henüz incelenmedi";
+    case "requested":
+      return "İnceleme talep edildi";
+    case "in_progress":
+      return "İlk editörde";
+    case "awaiting_second_editor":
+      return "İkinci editör bekleniyor";
+    case "second_in_progress":
+      return "İkinci editörde";
+    case "completed":
+      return "Editör incelemesi tamamlandı";
+  }
+}
+
 function pageHref(filters: ReaderExploreFilters, page: number) {
   const params = new URLSearchParams();
 
@@ -73,8 +102,9 @@ function pageHref(filters: ReaderExploreFilters, page: number) {
   if (filters.genre) params.set("tur", filters.genre);
   if (filters.language) params.set("dil", filters.language);
   if (filters.contentRating) params.set("hitapYasi", filters.contentRating);
-  if (filters.completion) params.set("tamamlanma", filters.completion);
+  if (filters.readingState) params.set("okuma", filters.readingState);
   if (filters.reviewStatus) params.set("editor", filters.reviewStatus);
+  if (filters.favoritesOnly) params.set("favori", "1");
   if (filters.sort !== "newest") params.set("siralama", filters.sort);
   if (page > 1) params.set("sayfa", String(page));
 
@@ -89,10 +119,11 @@ export default async function ReaderExplorePage({
     arama?: string;
     dil?: string;
     editor?: string;
+    favori?: string;
     hitapYasi?: string;
+    okuma?: string;
     sayfa?: string;
     siralama?: string;
-    tamamlanma?: string;
     tur?: string;
   }>;
 }) {
@@ -120,22 +151,24 @@ export default async function ReaderExplorePage({
     requestedContentRating && visibleRatings.includes(requestedContentRating)
       ? requestedContentRating
       : undefined;
-  const completion = includesValue(completionFilters, parameters.tamamlanma)
-    ? parameters.tamamlanma
+  const readingState = includesValue(readingFilters, parameters.okuma)
+    ? parameters.okuma
     : undefined;
   const reviewStatus = includesValue(reviewFilters, parameters.editor)
     ? parameters.editor
     : undefined;
+  const favoritesOnly = parameters.favori === "1";
   const sort = includesValue(sortFilters, parameters.siralama)
     ? parameters.siralama
     : "newest";
   const rawPage = Number.parseInt(parameters.sayfa ?? "", 10);
   const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const filters: ReaderExploreFilters = {
-    completion,
     contentRating,
+    favoritesOnly,
     genre,
     language,
+    readingState,
     reviewStatus,
     search,
     sort,
@@ -166,33 +199,30 @@ export default async function ReaderExplorePage({
     ...(language ? { language } : {}),
     ...(contentRating ? { contentRating } : {}),
     ...(reviewStatus ? { editorReviewStatus: reviewStatus } : {}),
-    ...(completion === "completed"
-      ? {
-          chapters: {
-            none: {
-              archivedAt: null,
-              OR: [{ publishedAt: null }, { status: { not: "published" } }],
-            },
-            some: {
-              archivedAt: null,
-              publishedAt: { not: null },
-              status: "published",
-            },
-          },
-        }
-      : completion === "ongoing"
+    ...(favoritesOnly
+      ? { favorites: { some: { userId: profile.id } } }
+      : {}),
+    ...(readingState === "unread"
+      ? { readingProgress: { none: { userId: profile.id } } }
+      : readingState === "in_progress"
         ? {
-            chapters: {
-              some: {
-                archivedAt: null,
-                OR: [{ publishedAt: null }, { status: { not: "published" } }],
-              },
+            readingProgress: {
+              some: { completed: false, userId: profile.id },
             },
           }
-        : {}),
+        : readingState === "completed"
+          ? {
+              readingProgress: {
+                some: { completed: true, userId: profile.id },
+              },
+            }
+          : {}),
   };
 
-  const totalCount = await prisma.work.count({ where });
+  const [totalCount, favoriteCount] = await Promise.all([
+    prisma.work.count({ where }),
+    prisma.favorite.count({ where: { userId: profile.id } }),
+  ]);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, totalPages);
 
@@ -266,6 +296,8 @@ export default async function ReaderExplorePage({
               title: true,
             },
           },
+          completed: true,
+          completedAt: true,
           progressPercent: true,
         },
         take: 1,
@@ -288,6 +320,7 @@ export default async function ReaderExplorePage({
       authorUsername: work.author.username,
       chapterCount: work.chapters.length,
       commentCount: work._count.comments,
+      completedAt: progress?.completedAt?.toISOString() ?? null,
       contentRating: work.contentRating,
       coverUrl: work.coverUrl,
       description: work.description,
@@ -306,6 +339,11 @@ export default async function ReaderExplorePage({
         : firstChapter
           ? `/oku/${work.slug}/bolum-${firstChapter.position}`
           : null,
+      readingState: progress
+        ? progress.completed
+          ? "completed"
+          : "in_progress"
+        : "unread",
       slug: work.slug,
       title: work.title,
       totalWords: work.chapters.reduce(
@@ -316,30 +354,98 @@ export default async function ReaderExplorePage({
     };
   });
 
-  const hasFilters = Boolean(
-    search ||
-      genre ||
-      language ||
-      contentRating ||
-      completion ||
-      reviewStatus ||
-      sort !== "newest",
-  );
+  const activeFilters = [
+    search
+      ? {
+          href: pageHref({ ...filters, search: undefined }, 1),
+          label: `Arama: ${search}`,
+        }
+      : null,
+    genre
+      ? {
+          href: pageHref({ ...filters, genre: undefined }, 1),
+          label: `Tür: ${genre}`,
+        }
+      : null,
+    language
+      ? {
+          href: pageHref({ ...filters, language: undefined }, 1),
+          label: `Dil: ${languageLabel(language)}`,
+        }
+      : null,
+    contentRating
+      ? {
+          href: pageHref({ ...filters, contentRating: undefined }, 1),
+          label: `Hitap: ${workContentRatingDetails[contentRating].shortLabel}`,
+        }
+      : null,
+    readingState
+      ? {
+          href: pageHref({ ...filters, readingState: undefined }, 1),
+          label: readingLabel(readingState),
+        }
+      : null,
+    reviewStatus
+      ? {
+          href: pageHref({ ...filters, reviewStatus: undefined }, 1),
+          label: reviewLabel(reviewStatus),
+        }
+      : null,
+    favoritesOnly
+      ? {
+          href: pageHref({ ...filters, favoritesOnly: false }, 1),
+          label: "Yalnız favorilerim",
+        }
+      : null,
+    sort !== "newest"
+      ? {
+          href: pageHref({ ...filters, sort: "newest" }, 1),
+          label: "Son güncellenen",
+        }
+      : null,
+  ].filter((item): item is { href: string; label: string } => item !== null);
+  const hasFilters = activeFilters.length > 0;
   const returnTo = pageHref(filters, currentPage);
   const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const last = totalCount === 0 ? 0 : first + rows.length - 1;
 
   return (
     <AppShell profile={profile}>
-      <div className="editor-workspace">
-        <EditorPageHeader
-          description="Yayımlanan eserleri tür, dil, hitap yaşı ve editör inceleme durumuna göre bulun."
-          eyebrow="Okuma dünyası"
-          title="Keşfet"
-        />
+      <div className="editor-workspace reader-discovery-workdesk">
+        <section className="reader-discovery-desk">
+          <div className="reader-discovery-desk__intro">
+            <p className="reader-discovery-desk__eyebrow">Keşif masası</p>
+            <h1>Eserleri masaya yatır</h1>
+            <p className="reader-discovery-desk__lead">
+              Ortak Keşfet havuzunu arayın, filtreleyin; bir eseri detay panelinde inceleyip
+              favoriye alın veya doğrudan okumaya geçin.
+            </p>
+            <nav aria-label="Keşif çalışma alanı" className="reader-discovery-desk__quick-links">
+              <span aria-current="page">Eserler</span>
+              <Link href="/yazar-kesfet">Yazarlar</Link>
+              <Link href="/favorilerim">Favorilerim</Link>
+              <Link href="/okumaya-devam">Okumaya Devam</Link>
+            </nav>
+          </div>
+
+          <div className="reader-discovery-desk__stats" aria-label="Keşif özeti">
+            <div>
+              <strong>{totalCount}</strong>
+              <span>Eşleşen eser</span>
+            </div>
+            <div>
+              <strong>{activeFilters.length}</strong>
+              <span>Aktif filtre</span>
+            </div>
+            <div>
+              <strong>{favoriteCount}</strong>
+              <span>Favori eser</span>
+            </div>
+          </div>
+        </section>
 
         {adultAccess.isAdult && !adultAccess.canAccessAdultContent ? (
-          <section className="reader-discovery-summary">
+          <section className="reader-discovery-summary reader-discovery-summary--notice">
             <span>18+ içerik tercihi</span>
             <strong>İkinci onay gerekli</strong>
             <small>18+ eserleri aynı Keşfet havuzunda görmek için açık onay verin.</small>
@@ -352,99 +458,141 @@ export default async function ReaderExplorePage({
           </section>
         ) : null}
 
-        <form className="editor-filters">
-          <label>
-            <span>Arama</span>
-            <input
-              defaultValue={search}
-              name="arama"
-              placeholder="Eser veya yazar ara"
-              type="search"
-            />
-          </label>
+        <section className="reader-discovery-console" aria-label="Keşif filtre masası">
+          <header className="reader-discovery-console__header">
+            <div>
+              <span>Filtre masası</span>
+              <strong>Aradığınız eseri daraltın</strong>
+            </div>
+            {hasFilters ? <Link href="/kesfet">Tüm filtreleri temizle</Link> : null}
+          </header>
 
-          <label>
-            <span>Tür</span>
-            <select defaultValue={genre ?? ""} name="tur">
-              <option value="">Tümü</option>
-              {GENRE_LABELS.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
+          <nav aria-label="Hızlı keşif filtreleri" className="reader-discovery-presets">
+            <Link href="/kesfet?okuma=unread">Henüz okumadıklarım</Link>
+            <Link href="/kesfet?okuma=in_progress">Okumaya devam</Link>
+            <Link href="/kesfet?favori=1">Favorilerim</Link>
+            <Link href="/kesfet?editor=completed">Editör incelemesi tamamlananlar</Link>
+          </nav>
+
+          <form className="editor-filters reader-discovery-filters">
+            <label className="reader-discovery-filter--search">
+              <span>Arama</span>
+              <input
+                defaultValue={search}
+                name="arama"
+                placeholder="Eser, yazar veya rumuz ara"
+                type="search"
+              />
+            </label>
+
+            <label>
+              <span>Tür</span>
+              <select defaultValue={genre ?? ""} name="tur">
+                <option value="">Tüm türler</option>
+                {GENRE_LABELS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Dil</span>
+              <select defaultValue={language ?? ""} name="dil">
+                <option value="">Tüm diller</option>
+                <option value="tr">Türkçe</option>
+                <option value="en">İngilizce</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Hitap yaşı</span>
+              <select defaultValue={contentRating ?? ""} name="hitapYasi">
+                <option value="">Tümü</option>
+                {visibleRatings.map((rating) => (
+                  <option key={rating} value={rating}>
+                    {workContentRatingDetails[rating].shortLabel}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Okuma durumum</span>
+              <select defaultValue={readingState ?? ""} name="okuma">
+                <option value="">Tümü</option>
+                <option value="unread">Henüz okumadıklarım</option>
+                <option value="in_progress">Okumaya devam</option>
+                <option value="completed">Tamamladıklarım</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Editör durumu</span>
+              <select defaultValue={reviewStatus ?? ""} name="editor">
+                <option value="">Tümü</option>
+                <option value="not_requested">Henüz incelenmedi</option>
+                <option value="requested">İnceleme talep edildi</option>
+                <option value="in_progress">İlk editörde</option>
+                <option value="awaiting_second_editor">İkinci editör bekleniyor</option>
+                <option value="second_in_progress">İkinci editörde</option>
+                <option value="completed">İncelendi</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Favori durumu</span>
+              <select defaultValue={favoritesOnly ? "1" : ""} name="favori">
+                <option value="">Tümü</option>
+                <option value="1">Yalnız favorilerim</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Sıralama</span>
+              <select defaultValue={sort} name="siralama">
+                <option value="newest">En yeni yayımlanan</option>
+                <option value="updated">Son güncellenen</option>
+              </select>
+            </label>
+
+            <div className="reader-discovery-filter-actions">
+              <button className="button button--primary" type="submit">
+                Masayı Güncelle
+              </button>
+              {hasFilters ? (
+                <Link className="button button--ghost" href="/kesfet">
+                  Temizle
+                </Link>
+              ) : null}
+            </div>
+          </form>
+
+          {activeFilters.length > 0 ? (
+            <div className="reader-discovery-active-filters" aria-label="Aktif filtreler">
+              <span>Aktif</span>
+              {activeFilters.map((item) => (
+                <Link href={item.href} key={`${item.label}-${item.href}`}>
+                  {item.label}
+                  <b aria-hidden="true">×</b>
+                </Link>
               ))}
-            </select>
-          </label>
-
-          <label>
-            <span>Dil</span>
-            <select defaultValue={language ?? ""} name="dil">
-              <option value="">Tümü</option>
-              <option value="tr">Türkçe</option>
-              <option value="en">İngilizce</option>
-            </select>
-          </label>
-
-          <label>
-            <span>Hitap yaşı</span>
-            <select defaultValue={contentRating ?? ""} name="hitapYasi">
-              <option value="">Tümü</option>
-              {visibleRatings.map((rating) => (
-                <option key={rating} value={rating}>
-                  {workContentRatingDetails[rating].shortLabel}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>Tamamlanma durumu</span>
-            <select defaultValue={completion ?? ""} name="tamamlanma">
-              <option value="">Tümü</option>
-              <option value="completed">Tamamlandı</option>
-              <option value="ongoing">Devam ediyor</option>
-            </select>
-          </label>
-
-          <label>
-            <span>Editör durumu</span>
-            <select defaultValue={reviewStatus ?? ""} name="editor">
-              <option value="">Tümü</option>
-              <option value="not_requested">Henüz incelenmedi</option>
-              <option value="requested">İnceleme talep edildi</option>
-              <option value="in_progress">İlk editörde</option>
-              <option value="awaiting_second_editor">İkinci editör bekleniyor</option>
-              <option value="second_in_progress">İkinci editörde</option>
-              <option value="completed">İncelendi</option>
-            </select>
-          </label>
-
-          <label>
-            <span>Sıralama</span>
-            <select defaultValue={sort} name="siralama">
-              <option value="newest">En Yeni</option>
-              <option value="updated">Son Güncellenen</option>
-            </select>
-          </label>
-
-          <div className="reader-discovery-filter-actions">
-            <button className="button button--primary" type="submit">
-              Sonuçları Göster
-            </button>
-            {hasFilters ? (
-              <Link className="button button--ghost" href="/kesfet">
-                Temizle
-              </Link>
-            ) : null}
-          </div>
-        </form>
+            </div>
+          ) : (
+            <p className="reader-discovery-console__hint">
+              Filtre seçmeden tüm keşif havuzunu görüyorsunuz.
+            </p>
+          )}
+        </section>
 
         <section className="reader-discovery-summary" aria-live="polite">
-          <span>Keşif sonucu</span>
+          <span>Masadaki sonuç</span>
           <strong>{totalCount} eser</strong>
           <small>
             {totalCount === 0
               ? "Filtreleri değiştirerek yeniden deneyin."
-              : `${first}–${last} arası gösteriliyor.`}
+              : `${first}–${last} arası gösteriliyor. Eser adına dokunarak detay çekmecesini açabilirsiniz.`}
           </small>
         </section>
 

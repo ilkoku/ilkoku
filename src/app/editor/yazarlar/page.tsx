@@ -242,7 +242,7 @@ export default async function EditorWriterDiscoveryPage({
     <AppShell profile={profile}>
       <div className="editor-workspace editor-writers-page">
         <EditorPageHeader
-          description="Ortak Yazar Havuzu'nda en az bir public eseri bulunan aktif yazarları inceleyin."
+          description="Ortak Yazar Havuzu’nda en az bir public eseri bulunan aktif yazarları inceleyin."
           title="Yazar Keşfet"
         />
 
@@ -319,7 +319,7 @@ export default async function EditorWriterDiscoveryPage({
             </div>
           ) : (
             <p className="role-filter-desk__hint">
-              Filtre seçmeden editöre açık ortak Yazar Havuzu'nu görüyorsunuz.
+              Filtre seçmeden editöre açık ortak Yazar Havuzu’nu görüyorsunuz.
             </p>
           )}
         </section>

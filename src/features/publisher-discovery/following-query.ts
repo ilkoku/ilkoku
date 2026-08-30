@@ -1,11 +1,12 @@
 import "server-only";
 
-import type {
-  Prisma,
-} from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
+import { commonDiscoveryAuthorWhereFor } from "@/features/discovery/common-author-scope";
+import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { availableGenreLabels } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 24;
 
 export interface PublisherFollowingFilters {
   page: number;
@@ -48,35 +49,21 @@ export interface PublisherFollowingAuthorData {
   totalPages: number;
 }
 
-function firstValue(
-  value: string | string[] | undefined,
-) {
-  return (
-    Array.isArray(value)
-      ? value[0]
-      : value
-  )?.trim() ?? "";
+function firstValue(value: string | string[] | undefined) {
+  return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
 }
 
 export function normalizePublisherFollowingFilters(
-  input: Record<
-    string,
-    string | string[] | undefined
-  >,
+  input: Record<string, string | string[] | undefined>,
 ): PublisherFollowingFilters {
-  const requestedPage = Number.parseInt(
-    firstValue(input.sayfa),
-    10,
-  );
+  const requestedPage = Number.parseInt(firstValue(input.sayfa), 10);
 
   return {
     page:
-      Number.isFinite(requestedPage) &&
-      requestedPage > 0
+      Number.isFinite(requestedPage) && requestedPage > 0
         ? requestedPage
         : 1,
-    query:
-      firstValue(input.arama).slice(0, 220),
+    query: firstValue(input.arama).slice(0, 220),
   };
 }
 
@@ -85,181 +72,91 @@ function publicWriterName(writer: {
   publicId: string;
   username: string | null;
 }) {
-  return (
-    writer.displayName?.trim() ||
-    writer.username?.trim() ||
-    writer.publicId
-  );
+  return writer.displayName?.trim() || writer.username?.trim() || writer.publicId;
 }
 
 function publicWriterAlias(writer: {
   publicId: string;
   username: string | null;
 }) {
-  const username =
-    writer.username?.trim();
+  const username = writer.username?.trim();
 
   if (username) {
-    return username.startsWith("@")
-      ? username
-      : `@${username}`;
+    return username.startsWith("@") ? username : `@${username}`;
   }
 
   return `@${writer.publicId.toLocaleLowerCase("tr-TR")}`;
 }
 
-function parseGenres(value: string | null) {
-  if (!value) return [];
-
-  let values: string[] = [];
-
-  try {
-    const parsed = JSON.parse(value) as unknown;
-
-    if (Array.isArray(parsed)) {
-      values = parsed.filter(
-        (item): item is string =>
-          typeof item === "string",
-      );
-    }
-  } catch {
-    values = value.split(",");
-  }
-
-  return Array.from(
-    new Set(
-      values
-        .map((item) => item.trim())
-        .filter(Boolean),
-    ),
-  ).slice(0, 6);
-}
-
-const publicWorkWhere = {
-  archivedAt: null,
-  publishedAt: {
-    not: null,
-  },
-  status: "published",
-  visibility: "public",
-} satisfies Prisma.WorkWhereInput;
-
 export async function getPublisherFollowingAuthors(
   publisherId: string,
   filters: PublisherFollowingFilters,
 ): Promise<PublisherFollowingAuthorData> {
-  const where: Prisma.PublisherAuthorFollowWhereInput = {
-    publisherId,
-    author: {
-      deletedAt: null,
-      role: "writer",
-      status: "active",
-      works: {
-        some: publicWorkWhere,
-      },
-      ...(filters.query
-        ? {
-            OR: [
-              {
-                displayName: {
-                  contains: filters.query,
+  const publicWorkWhere = commonDiscoveryWorkWhereFor(false);
+  const authorWhere: Prisma.UserWhereInput = {
+    ...commonDiscoveryAuthorWhereFor(false),
+    ...(filters.query
+      ? {
+          OR: [
+            { displayName: { contains: filters.query } },
+            { username: { contains: filters.query } },
+            { publicId: { contains: filters.query } },
+            {
+              works: {
+                some: {
+                  ...publicWorkWhere,
+                  title: { contains: filters.query },
                 },
-              },
-              {
-                username: {
-                  contains: filters.query,
-                },
-              },
-              {
-                publicId: {
-                  contains: filters.query,
-                },
-              },
-              {
-                works: {
-                  some: {
-                    ...publicWorkWhere,
-                    title: {
-                      contains:
-                        filters.query,
-                    },
-                  },
-                },
-              },
-            ],
-          }
-        : {}),
-    },
-  };
-
-  const totalCount =
-    await prisma.publisherAuthorFollow.count({
-      where,
-    });
-  const totalPages = Math.max(
-    1,
-    Math.ceil(totalCount / PAGE_SIZE),
-  );
-  const currentPage = Math.min(
-    filters.page,
-    totalPages,
-  );
-
-  const follows =
-    await prisma.publisherAuthorFollow.findMany({
-      where,
-      orderBy: {
-        createdAt: "desc",
-      },
-      skip:
-        (currentPage - 1) *
-        PAGE_SIZE,
-      take:
-        PAGE_SIZE,
-      select: {
-        author: {
-          select: {
-            bio: true,
-            displayName: true,
-            id: true,
-            profile: {
-              select: {
-                city: true,
-                writingGenres: true,
               },
             },
-            publicId: true,
-            username: true,
+          ],
+        }
+      : {}),
+  };
+  const where: Prisma.PublisherAuthorFollowWhereInput = {
+    publisherId,
+    author: authorWhere,
+  };
+
+  const totalCount = await prisma.publisherAuthorFollow.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(filters.page, totalPages);
+
+  const follows = await prisma.publisherAuthorFollow.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+    select: {
+      author: {
+        select: {
+          bio: true,
+          displayName: true,
+          id: true,
+          profile: {
+            select: {
+              city: true,
+            },
           },
+          publicId: true,
+          username: true,
         },
-        createdAt: true,
-        id: true,
       },
-    });
+      createdAt: true,
+      id: true,
+    },
+  });
 
-  const authorIds =
-    follows.map(
-      (record) => record.author.id,
-    );
-
+  const authorIds = follows.map((record) => record.author.id);
   const works =
     authorIds.length === 0
       ? []
       : await prisma.work.findMany({
           where: {
             ...publicWorkWhere,
-            authorId: {
-              in: authorIds,
-            },
+            authorId: { in: authorIds },
           },
-          orderBy: [
-            {
-              publishedAt: "desc",
-            },
-            {
-              updatedAt: "desc",
-            },
-          ],
+          orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
           select: {
             _count: {
               select: {
@@ -277,14 +174,10 @@ export async function getPublisherFollowingAuthors(
             chapters: {
               where: {
                 archivedAt: null,
-                publishedAt: {
-                  not: null,
-                },
+                publishedAt: { not: null },
                 status: "published",
               },
-              orderBy: {
-                position: "asc",
-              },
+              orderBy: { position: "asc" },
               select: {
                 id: true,
                 position: true,
@@ -298,118 +191,58 @@ export async function getPublisherFollowingAuthors(
           },
         });
 
-  const worksByAuthor =
-    new Map<
-      string,
-      typeof works
-    >();
+  const worksByAuthor = new Map<string, typeof works>();
 
   for (const work of works) {
-    const current =
-      worksByAuthor.get(work.authorId) ?? [];
-
+    const current = worksByAuthor.get(work.authorId) ?? [];
     current.push(work);
-    worksByAuthor.set(
-      work.authorId,
-      current,
-    );
+    worksByAuthor.set(work.authorId, current);
   }
 
-  const first =
-    totalCount === 0
-      ? 0
-      : (currentPage - 1) *
-          PAGE_SIZE +
-        1;
-  const last = Math.min(
-    currentPage * PAGE_SIZE,
-    totalCount,
-  );
+  const first = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const last = Math.min(currentPage * PAGE_SIZE, totalCount);
 
   return {
     currentPage,
     first,
     last,
     rows: follows.map((record) => {
-      const authorWorks =
-        worksByAuthor.get(
-          record.author.id,
-        ) ?? [];
+      const authorWorks = worksByAuthor.get(record.author.id) ?? [];
 
       return {
-        alias:
-          publicWriterAlias(
-            record.author,
-          ),
-        bio:
-          record.author.bio,
-        city:
-          record.author.profile?.city ??
-          null,
-        commentCount:
-          authorWorks.reduce(
-            (total, work) =>
-              total +
-              work._count.comments,
-            0,
-          ),
-        favoriteCount:
-          authorWorks.reduce(
-            (total, work) =>
-              total +
-              work._count.favorites,
-            0,
-          ),
-        followedAt:
-          record.createdAt.toISOString(),
-        followId:
-          record.id,
-        genres:
-          parseGenres(
-            record.author.profile
-              ?.writingGenres ?? null,
-          ),
-        id:
-          record.author.id,
-        latestWorks:
-          authorWorks
-            .slice(0, 3)
-            .map((work) => ({
-              chapterCount:
-                work.chapters.length,
-              firstChapterPosition:
-                work.chapters[0]
-                  ?.position ?? null,
-              genre:
-                work.genre,
-              id:
-                work.id,
-              slug:
-                work.slug,
-              title:
-                work.title,
-            })),
-        name:
-          publicWriterName(
-            record.author,
-          ),
-        publicId:
-          record.author.publicId,
-        publicWorkCount:
-          authorWorks.length,
-        readerCount:
-          authorWorks.reduce(
-            (total, work) =>
-              total +
-              work._count.readingProgress,
-            0,
-          ),
-        reviewedWorkCount:
-          authorWorks.filter(
-            (work) =>
-              work.editorReviewStatus ===
-              "completed",
-          ).length,
+        alias: publicWriterAlias(record.author),
+        bio: record.author.bio,
+        city: record.author.profile?.city ?? null,
+        commentCount: authorWorks.reduce(
+          (total, work) => total + work._count.comments,
+          0,
+        ),
+        favoriteCount: authorWorks.reduce(
+          (total, work) => total + work._count.favorites,
+          0,
+        ),
+        followedAt: record.createdAt.toISOString(),
+        followId: record.id,
+        genres: availableGenreLabels(authorWorks.map((work) => work.genre)),
+        id: record.author.id,
+        latestWorks: authorWorks.slice(0, 3).map((work) => ({
+          chapterCount: work.chapters.length,
+          firstChapterPosition: work.chapters[0]?.position ?? null,
+          genre: work.genre,
+          id: work.id,
+          slug: work.slug,
+          title: work.title,
+        })),
+        name: publicWriterName(record.author),
+        publicId: record.author.publicId,
+        publicWorkCount: authorWorks.length,
+        readerCount: authorWorks.reduce(
+          (total, work) => total + work._count.readingProgress,
+          0,
+        ),
+        reviewedWorkCount: authorWorks.filter(
+          (work) => work.editorReviewStatus === "completed",
+        ).length,
       };
     }),
     totalCount,

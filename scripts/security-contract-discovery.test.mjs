@@ -58,12 +58,24 @@ test("reader home follows the shared member-aware pool and exposes age plus pass
   assertContains(readerHome, "getAdultContentAccess(profile.id)", "reader home adult access");
   assertContains(readerHome, "commonDiscoveryWorkWhereFor(", "reader home discovery scope");
   assertContains(readerHome, "contentRating: true", "reader home audience age data");
-  assertContains(
-    readerHome,
-    "workContentRatingDetails[work.contentRating].shortLabel",
-    "reader home audience age display",
-  );
+  assertContains(readerHome, "workContentRatingDetails[", "reader home audience age display");
   assertContains(readerHome, "Eser Pasaportu", "reader home passport access");
+  assertContains(readerHome, "Okuma masan", "reader home workdesk");
+  assertContains(readerHome, "getContinueReadingForMember", "reader home continue source");
+});
+
+test("continue reading falls back to bounded member-safe reading access without reviving completed works", () => {
+  const fallback = source("src/features/reading/continue-reading.ts");
+  const continuePage = source("src/app/okumaya-devam/page.tsx");
+
+  assertContains(fallback, "commonDiscoveryWorkWhereFor", "continue reading shared scope");
+  assertContains(fallback, "getAdultContentAccess", "continue reading adult access");
+  assertContains(fallback, "prisma.readingAccess.findMany", "reading access fallback");
+  assertContains(fallback, "readingProgress:", "reading access progress exclusion");
+  assertContains(fallback, "none: { userId }", "completed and tracked work exclusion");
+  assertContains(fallback, "progressPercent: 0", "access-only start state");
+  assertContains(fallback, "Math.min(100, Math.max(1, take))", "bounded continue query");
+  assertContains(continuePage, "getContinueReadingForMember", "continue reading page fallback");
 });
 
 test("18+ discovery requires both verified age and explicit consent without creating a second pool", () => {

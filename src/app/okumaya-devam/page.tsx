@@ -5,7 +5,7 @@ import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { ReaderWorksTable, type ReaderWorkRow } from "@/features/reader/components/ReaderWorksTable";
-import { getContinueReading } from "@/features/reading/progress";
+import { getContinueReadingForMember } from "@/features/reading/continue-reading";
 
 export const metadata: Metadata = {
   description: "Başladığınız eserlere kaldığınız yerden devam edin.",
@@ -30,7 +30,10 @@ export default async function ContinueReadingPage() {
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 
-  const progressRecords = await getContinueReading(profile.id, 100);
+  const progressRecords = await getContinueReadingForMember(
+    profile.id,
+    100,
+  );
   const rows: ReaderWorkRow[] =
     progressRecords.map((progress) => ({
       authorName:
@@ -95,7 +98,7 @@ export default async function ContinueReadingPage() {
           title="Okumaya Devam Et"
         />
         <ReaderWorksTable
-          emptyDescription="Bir eseri okumaya başladığınızda kaldığınız bölüm burada görünecek."
+          emptyDescription="Bir eseri açtığınızda son kaldığınız bölüm burada görünecek."
           emptyTitle="Henüz devam eden bir okumanız yok"
           returnTo="/okumaya-devam"
           rows={rows}

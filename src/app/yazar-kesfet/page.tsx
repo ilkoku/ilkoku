@@ -65,6 +65,10 @@ function initials(value: string) {
   );
 }
 
+function formatNumber(value: number) {
+  return value.toLocaleString("tr-TR");
+}
+
 export default async function ReaderAuthorDiscoveryPage({
   searchParams,
 }: {
@@ -200,6 +204,10 @@ export default async function ReaderAuthorDiscoveryPage({
   const pageAuthors = sortedAuthors.slice(
     (currentPage - 1) * READER_LIST_PAGE_SIZE,
     currentPage * READER_LIST_PAGE_SIZE,
+  );
+  const cardMetrics = await getDiscoveryAuthorMetrics(
+    pageAuthors.map((author) => author.id),
+    readerAuthorDiscoveryWorkWhere,
   );
   const favoriteRows = pageAuthors.length
     ? await prisma.readerAuthorFavorite.findMany({
@@ -337,6 +345,7 @@ export default async function ReaderAuthorDiscoveryPage({
             {pageAuthors.map((author) => {
               const name = authorName(author);
               const latest = author.works[0] ?? null;
+              const metric = cardMetrics.get(author.id);
               const isFavorite = favoriteAuthorIds.has(author.id);
               const profileHref = `/yazarlar/${author.publicId}?from=${encodeURIComponent(returnTo)}`;
               const genres = Array.from(
@@ -364,7 +373,7 @@ export default async function ReaderAuthorDiscoveryPage({
                       </p>
                     </div>
                     <span className="reader-author-discovery-card__match">
-                      {author._count.works} {author._count.works === 1 ? "eser" : "eser"}
+                      {author._count.works} eşleşen
                     </span>
                   </header>
 
@@ -375,6 +384,28 @@ export default async function ReaderAuthorDiscoveryPage({
                       Yazar henüz kısa bir tanıtım eklemedi.
                     </p>
                   )}
+
+                  <div
+                    aria-label={`${name} yazar özeti`}
+                    className="reader-author-discovery-card__metrics"
+                  >
+                    <span>
+                      <strong>{formatNumber(metric?.publicWorkCount ?? 0)}</strong>
+                      <small>Eser</small>
+                    </span>
+                    <span>
+                      <strong>{formatNumber(metric?.readerCount ?? 0)}</strong>
+                      <small>Okur</small>
+                    </span>
+                    <span>
+                      <strong>{formatNumber(metric?.favoriteCount ?? 0)}</strong>
+                      <small>Beğeni</small>
+                    </span>
+                    <span>
+                      <strong>{formatNumber(metric?.commentCount ?? 0)}</strong>
+                      <small>Yorum</small>
+                    </span>
+                  </div>
 
                   <div className="reader-author-discovery-card__signals" aria-label="Yazar keşif işaretleri">
                     {genres.map((genre) => (

@@ -1,0 +1,71 @@
+.reader-workdesk__work-card {
+  position: relative;
+}
+
+.reader-workdesk__work-card .book-card__content {
+  padding-right: 3.15rem;
+}
+
+.reader-workdesk__hide-work {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 3;
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  background: rgba(9, 12, 16, 0.72);
+  color: rgba(246, 247, 250, 0.72);
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.reader-workdesk__hide-work:hover,
+.reader-workdesk__hide-work:focus-visible {
+  border-color: rgba(224, 181, 47, 0.46);
+  background: rgba(224, 181, 47, 0.12);
+  color: #f1ce58;
+  outline: none;
+}
+
+.reader-workdesk__hidden-work-label {
+  display: grid;
+  min-width: 0;
+  gap: 0.18rem;
+}
+
+.reader-workdesk__hidden-work-label b {
+  overflow: hidden;
+  color: rgba(246, 247, 250, 0.88);
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-workdesk__hidden-work-label small {
+  overflow: hidden;
+  color: rgba(239, 241, 246, 0.5);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .reader-workdesk__work-card .book-card__content {
+    padding-right: 2.8rem;
+  }
+
+  .reader-workdesk__hide-work {
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 30px;
+    height: 30px;
+  }
+}

@@ -52,7 +52,7 @@ test("reader, editor and publisher discovery use the same member-aware public wo
   assertNotContains(reader, "readingProgress: {\n      none:", "reader discovery");
 });
 
-test("reader home follows the shared member-aware pool and exposes age plus passport", () => {
+test("reader home follows the shared member-aware pool and exposes age, passport and work-level cleanup", () => {
   const readerHome = source("src/app/okuyucu/page.tsx");
   const shelfTabs = source("src/app/okuyucu/ReaderShelfTabs.tsx");
 
@@ -60,11 +60,15 @@ test("reader home follows the shared member-aware pool and exposes age plus pass
   assertContains(readerHome, "commonDiscoveryWorkWhereFor(", "reader home discovery scope");
   assertContains(readerHome, "contentRating: true", "reader home audience age data");
   assertContains(readerHome, "workContentRatingDetails[", "reader home audience age display");
-  assertContains(readerHome, "Eser Pasaportu", "reader home continue passport access");
   assertContains(shelfTabs, "Eser Pasaportu", "reader shelf passport access");
   assertContains(shelfTabs, "Hitap {work.ratingLabel}", "reader shelf age chip");
-  assertContains(shelfTabs, "Gizlenenler", "reader hidden shelf drawer");
-  assertContains(shelfTabs, "window.localStorage", "reader hidden shelf persistence");
+  assertContains(shelfTabs, "Gizlenen Eserler", "reader hidden work drawer");
+  assertContains(shelfTabs, "eserini ana sayfadan gizle", "reader work cleanup control");
+  assertContains(shelfTabs, "function hideWork(id: string)", "reader work cleanup action");
+  assertContains(shelfTabs, "const hiddenWorks = allWorks.filter", "reader hidden work list");
+  assertContains(shelfTabs, "window.localStorage", "reader hidden work persistence");
+  assertContains(readerHome, "reader-hidden-works:v2", "reader work cleanup storage key");
+  assertNotContains(shelfTabs, "function hideSection", "reader section cleanup removal");
   assertContains(readerHome, "Okuma masan", "reader home workdesk");
   assertContains(readerHome, "getContinueReadingForMember", "reader home continue source");
 });

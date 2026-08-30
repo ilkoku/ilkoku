@@ -6,11 +6,11 @@ import {
   DiscoveryPagination,
   DiscoveryResultSummary,
 } from "@/components/discovery/DiscoveryListChrome";
+import { DiscoveryWorkspaceHero } from "@/components/discovery/DiscoveryWorkspaceHero";
 import "@/components/discovery/discovery-filter-desk.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { requireEditorProfile } from "@/features/editor-workspace/access";
 import { getCommonEditorDiscovery } from "@/features/editor-workspace/common-discovery-query";
-import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { EditorWorksTable } from "@/features/editor-workspace/components/EditorWorksTable";
 import { getAdultContentAccess, visibleMemberContentRatings } from "@/lib/adult-content-access";
 import { sanitizeDiscoveryAdvancedFilters } from "@/lib/discovery-advanced-filter-management";
@@ -125,9 +125,7 @@ export default async function EditorDiscoveryPage({
     await getDiscoverySurfaceFilterIds("editor-work-discovery"),
   );
   const adultAccess = await getAdultContentAccess(profile.id);
-  const visibleRatings = visibleMemberContentRatings(
-    adultAccess.canAccessAdultContent,
-  );
+  const visibleRatings = visibleMemberContentRatings(adultAccess.canAccessAdultContent);
   const parameters = await searchParams;
   const search = enabledFilterIds.has("search")
     ? firstValue(parameters.arama).slice(0, 220) || undefined
@@ -174,18 +172,13 @@ export default async function EditorDiscoveryPage({
     search,
     wordCount,
   };
+
   const baseActiveFilters = [
     search
-      ? {
-          href: filterHref({ ...filters, search: undefined }),
-          label: `Arama: ${search}`,
-        }
+      ? { href: filterHref({ ...filters, search: undefined }), label: `Arama: ${search}` }
       : null,
     genre
-      ? {
-          href: filterHref({ ...filters, genre: undefined }),
-          label: `Tür: ${genre}`,
-        }
+      ? { href: filterHref({ ...filters, genre: undefined }), label: `Tür: ${genre}` }
       : null,
     contentRating
       ? {
@@ -212,18 +205,18 @@ export default async function EditorDiscoveryPage({
         }
       : null,
   ].filter((item): item is { href: string; label: string } => item !== null);
-  const advancedActiveFilters = discoveryAdvancedFilterChips(
-    advanced,
-    enabledFilterIds,
-  ).map((item) => ({
-    href: filterHref(
-      { ...filters, advanced: clearDiscoveryAdvancedFilter(advanced, item.id) },
-      1,
-    ),
-    label: item.label,
-  }));
+  const advancedActiveFilters = discoveryAdvancedFilterChips(advanced, enabledFilterIds).map(
+    (item) => ({
+      href: filterHref(
+        { ...filters, advanced: clearDiscoveryAdvancedFilter(advanced, item.id) },
+        1,
+      ),
+      label: item.label,
+    }),
+  );
   const activeFilters = [...baseActiveFilters, ...advancedActiveFilters];
   const hasFilters = activeFilters.length > 0;
+
   const works = (
     await getCommonEditorDiscovery(profile.id, {
       contentRating,
@@ -262,9 +255,21 @@ export default async function EditorDiscoveryPage({
   return (
     <AppShell profile={profile}>
       <div className="editor-workspace">
-        <EditorPageHeader
-          description="Okuyucu ve yayınevleriyle aynı ortak Keşfet havuzundaki yayımlanmış eserleri inceleyin."
-          title="Keşfet"
+        <DiscoveryWorkspaceHero
+          description="Okur ve yayıneviyle aynı Eser Havuzu’ndaki yayımlanmış eserleri inceleyin; editör durumunu ve okur etkileşimini tek satır standardında karşılaştırın."
+          eyebrow="Editör · Eser Havuzu · Keşif"
+          links={[
+            { current: true, href: "/editor/kesfet", label: "Eserler" },
+            { href: "/editor/yazarlar", label: "Yazarlar" },
+            { href: "/editor/favoriler", label: "Favoriler" },
+            { href: "/editor/seckiler", label: "Seçkiler" },
+          ]}
+          stats={[
+            { label: "Eşleşen eser", value: totalCount },
+            { label: "Aktif filtre", value: activeFilters.length },
+            { label: "Bu sayfada", value: pageWorks.length },
+          ]}
+          title="Eser Keşfet"
         />
 
         {adultAccess.isAdult && !adultAccess.canAccessAdultContent ? (
@@ -309,9 +314,7 @@ export default async function EditorDiscoveryPage({
                   <select defaultValue={genre ?? ""} name="tur">
                     <option value="">Tüm türler</option>
                     {GENRE_LABELS.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
+                      <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
                 </label>

@@ -38,12 +38,15 @@ test("public author surfaces expose reader author favorite action", async () => 
   assert.match(author, /Yazarı Favorile/);
 });
 
-test("reader author favorites use the Prisma model rather than unmanaged SQL", async () => {
+test("reader author favorites use Prisma and the public author visibility boundary", async () => {
   const source = await read("src/features/reader/author-favorites.ts");
 
   assert.match(source, /prisma\.readerAuthorFavorite\.findUnique/);
   assert.match(source, /prisma\.readerAuthorFavorite\.create/);
   assert.match(source, /prisma\.readerAuthorFavorite\.delete/);
+  assert.match(source, /language: "tr"/);
+  assert.match(source, /BLOCKED_PUBLIC_WORK_SLUGS/);
+  assert.match(source, /contentRating: \{ not: "adult_18"/);
   assert.doesNotMatch(source, /\$executeRaw/);
 });
 

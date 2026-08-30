@@ -142,6 +142,37 @@ export async function deliverPublicationNotifications(input: {
   if (!input.publicationEvent.isFirstPublication) return;
 
   try {
+    const favoriteReaders = await prisma.$queryRaw<Array<{ userId: string }>>`
+      SELECT favorite.userId
+      FROM ReaderAuthorFavorite favorite
+      INNER JOIN User reader ON reader.id = favorite.userId
+      WHERE favorite.authorId = ${work.author.id}
+        AND favorite.userId <> ${work.author.id}
+        AND reader.status = 'active'
+        AND reader.deletedAt IS NULL
+    `;
+
+    if (favoriteReaders.length > 0) {
+      await prisma.notification.createMany({
+        data: favoriteReaders.map((reader) => ({
+          message: `${publicName(work.author)}, ${work.title} adlı yeni eserini yayımladı.`,
+          relatedEntityId: work.id,
+          relatedEntityType: "work",
+          title: "Favori yazarınız yeni eser yayımladı",
+          type: "system" as const,
+          userId: reader.userId,
+        })),
+      });
+    }
+  } catch (readerAuthorError) {
+    logFailure(
+      "reader_favorite_author_published",
+      work.id,
+      readerAuthorError,
+    );
+  }
+
+  try {
     await deliverPublisherFollowedAuthorPublication({
       authorId: work.author.id,
       authorName: publicName(work.author),

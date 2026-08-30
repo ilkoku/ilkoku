@@ -4,6 +4,7 @@ import {
   type MemberStoredWorkContentRating,
 } from "@/lib/work-content-classification";
 import { getAdultContentAccess } from "@/lib/adult-content-access";
+import { normalizeGenreLabel } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
 import { countWords } from "./eligibility";
 import type {
@@ -37,11 +38,12 @@ export async function getCommonEditorDiscovery(
     (filters.contentRating !== "adult_18" || adultAccess.canAccessAdultContent)
       ? filters.contentRating
       : undefined;
+  const genre = normalizeGenreLabel(filters.genre);
 
   const works = await prisma.work.findMany({
     where: {
       ...commonDiscoveryWorkWhereFor(adultAccess.canAccessAdultContent),
-      ...(filters.genre ? { genre: filters.genre } : {}),
+      ...(genre ? { genre } : {}),
       ...(filters.language ? { language: filters.language } : {}),
       ...(contentRating ? { contentRating } : {}),
       ...(filters.reviewStatus

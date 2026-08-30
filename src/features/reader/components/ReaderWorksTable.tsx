@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { toggleFavoriteAction } from "@/features/reader/favorites";
 import { restartReadingAction } from "@/features/reading/progress";
 import {
   workContentRatingDetails,
@@ -65,9 +66,7 @@ function languageLabel(value: string) {
 }
 
 function usernameLabel(value: string) {
-  return value.startsWith("@")
-    ? value
-    : `@${value}`;
+  return value.startsWith("@") ? value : `@${value}`;
 }
 
 function reviewLabel(status: ReaderWorkRow["editorReviewStatus"]) {
@@ -93,6 +92,29 @@ function appendReturnPath(href: string, returnTo: string) {
 
 function passportHref(slug: string, returnTo: string) {
   return appendReturnPath(`/kitap/${slug}/pasaport`, returnTo);
+}
+
+function FavoriteToggle({
+  compact = false,
+  returnTo,
+  work,
+}: {
+  compact?: boolean;
+  returnTo: string;
+  work: ReaderWorkRow;
+}) {
+  return (
+    <form action={toggleFavoriteAction}>
+      <input name="workId" type="hidden" value={work.id} />
+      <input name="returnPath" type="hidden" value={returnTo} />
+      <button
+        className={compact ? "workspace-row-action" : "button button--outline"}
+        type="submit"
+      >
+        {work.isFavorite ? "Favoriden Çıkar" : "Favoriye Ekle"}
+      </button>
+    </form>
+  );
 }
 
 export function ReaderWorksTable({
@@ -228,18 +250,11 @@ export function ReaderWorksTable({
                         >
                           Eser Pasaportu
                         </Link>
+                        <FavoriteToggle compact returnTo={returnTo} work={work} />
                         {work.readingState === "completed" ? (
                           <form action={restartReadingAction}>
-                            <input
-                              name="workId"
-                              type="hidden"
-                              value={work.id}
-                            />
-                            <input
-                              name="returnTo"
-                              type="hidden"
-                              value={returnTo}
-                            />
+                            <input name="workId" type="hidden" value={work.id} />
+                            <input name="returnTo" type="hidden" value={returnTo} />
                             <button
                               className="workspace-row-action workspace-row-action--primary"
                               type="submit"
@@ -251,14 +266,12 @@ export function ReaderWorksTable({
                           <Link
                             className="workspace-row-action workspace-row-action--primary"
                             href={appendReturnPath(
-                              work.readingHref ??
-                                `/kitap/${work.slug}`,
+                              work.readingHref ?? `/kitap/${work.slug}`,
                               returnTo,
                             )}
                           >
                             {work.readingHref
-                              ? typeof work.progressPercent ===
-                                "number"
+                              ? typeof work.progressPercent === "number"
                                 ? "Devam Et"
                                 : "Oku"
                               : "Aç"}
@@ -309,147 +322,94 @@ export function ReaderWorksTable({
               {selectedWork.authorUsername && (
                 <div>
                   <dt>Yazar profili</dt>
-                  <dd>
-                    {usernameLabel(
-                      selectedWork.authorUsername,
-                    )}
-                  </dd>
+                  <dd>{usernameLabel(selectedWork.authorUsername)}</dd>
                 </div>
               )}
 
               <div>
                 <dt>Tür</dt>
-                <dd>
-                  {selectedWork.genre ??
-                    "Belirtilmedi"}
-                </dd>
+                <dd>{selectedWork.genre ?? "Belirtilmedi"}</dd>
               </div>
 
               <div>
                 <dt>Hitap yaşı</dt>
-                <dd>
-                  {workContentRatingDetails[selectedWork.contentRating].label}
-                </dd>
+                <dd>{workContentRatingDetails[selectedWork.contentRating].label}</dd>
               </div>
 
               {selectedWork.language && (
                 <div>
                   <dt>Dil</dt>
-                  <dd>
-                    {languageLabel(
-                      selectedWork.language,
-                    )}
-                  </dd>
+                  <dd>{languageLabel(selectedWork.language)}</dd>
                 </div>
               )}
 
               <div>
                 <dt>Bölüm</dt>
-                <dd>
-                  {formatNumber(
-                    selectedWork.chapterCount,
-                  )}
-                </dd>
+                <dd>{formatNumber(selectedWork.chapterCount)}</dd>
               </div>
 
-              {typeof selectedWork.totalWords ===
-                "number" && (
+              {typeof selectedWork.totalWords === "number" && (
                 <div>
                   <dt>Toplam kelime</dt>
-                  <dd>
-                    {formatNumber(
-                      selectedWork.totalWords,
-                    )}
-                  </dd>
+                  <dd>{formatNumber(selectedWork.totalWords)}</dd>
                 </div>
               )}
 
               <div>
                 <dt>Okur</dt>
-                <dd>
-                  {formatNumber(
-                    selectedWork.readerCount,
-                  )}
-                </dd>
+                <dd>{formatNumber(selectedWork.readerCount)}</dd>
               </div>
 
               <div>
                 <dt>Beğeni</dt>
-                <dd>
-                  {formatNumber(
-                    selectedWork.favoriteCount,
-                  )}
-                </dd>
+                <dd>{formatNumber(selectedWork.favoriteCount)}</dd>
               </div>
 
               <div>
                 <dt>Yorum</dt>
-                <dd>
-                  {formatNumber(
-                    selectedWork.commentCount,
-                  )}
-                </dd>
+                <dd>{formatNumber(selectedWork.commentCount)}</dd>
               </div>
 
               <div>
                 <dt>Editör durumu</dt>
-                <dd>
-                  {reviewLabel(
-                    selectedWork.editorReviewStatus,
-                  )}
-                </dd>
+                <dd>{reviewLabel(selectedWork.editorReviewStatus)}</dd>
               </div>
 
               {selectedWork.publishedAt && (
                 <div>
                   <dt>Yayımlanma</dt>
-                  <dd>
-                    {formatDate(
-                      selectedWork.publishedAt,
-                    )}
-                  </dd>
+                  <dd>{formatDate(selectedWork.publishedAt)}</dd>
                 </div>
               )}
 
               {selectedWork.updatedAt && (
                 <div>
                   <dt>Son güncelleme</dt>
-                  <dd>
-                    {formatDate(
-                      selectedWork.updatedAt,
-                    )}
-                  </dd>
+                  <dd>{formatDate(selectedWork.updatedAt)}</dd>
                 </div>
               )}
 
               {selectedWork.completedAt && (
                 <div>
                   <dt>Okuma tamamlandı</dt>
-                  <dd>
-                    {formatDate(
-                      selectedWork.completedAt,
-                    )}
-                  </dd>
+                  <dd>{formatDate(selectedWork.completedAt)}</dd>
                 </div>
               )}
 
               {selectedWork.lastReadLabel && (
                 <div>
                   <dt>Son okunan bölüm</dt>
-                  <dd>
-                    {selectedWork.lastReadLabel}
-                  </dd>
+                  <dd>{selectedWork.lastReadLabel}</dd>
                 </div>
               )}
 
-              {typeof selectedWork.isFavorite ===
-                "boolean" && (
+              {typeof selectedWork.isFavorite === "boolean" && (
                 <div>
-                  <dt>Okuma listem</dt>
+                  <dt>Favori durumu</dt>
                   <dd>
                     {selectedWork.isFavorite
-                      ? "Beğenilerimde"
-                      : "Beğenilerimde değil"}
+                      ? "Favorilerimde"
+                      : "Favorilerimde değil"}
                   </dd>
                 </div>
               )}
@@ -479,23 +439,12 @@ export function ReaderWorksTable({
             >
               Eser Pasaportu
             </Link>
-            {selectedWork.readingState ===
-            "completed" ? (
+            <FavoriteToggle returnTo={returnTo} work={selectedWork} />
+            {selectedWork.readingState === "completed" ? (
               <form action={restartReadingAction}>
-                <input
-                  name="workId"
-                  type="hidden"
-                  value={selectedWork.id}
-                />
-                <input
-                  name="returnTo"
-                  type="hidden"
-                  value={returnTo}
-                />
-                <button
-                  className="button button--primary"
-                  type="submit"
-                >
+                <input name="workId" type="hidden" value={selectedWork.id} />
+                <input name="returnTo" type="hidden" value={returnTo} />
+                <button className="button button--primary" type="submit">
                   Yeniden Oku
                 </button>
               </form>
@@ -503,14 +452,12 @@ export function ReaderWorksTable({
               <Link
                 className="button button--primary"
                 href={appendReturnPath(
-                  selectedWork.readingHref ??
-                    `/kitap/${selectedWork.slug}`,
+                  selectedWork.readingHref ?? `/kitap/${selectedWork.slug}`,
                   returnTo,
                 )}
               >
                 {selectedWork.readingHref
-                  ? typeof selectedWork.progressPercent ===
-                    "number"
+                  ? typeof selectedWork.progressPercent === "number"
                     ? "Okumaya Devam Et"
                     : "Okumaya Başla"
                   : "Eseri Aç"}

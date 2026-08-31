@@ -13,6 +13,7 @@ import { getChapterComments } from "@/features/reader/comments";
 import { getFavoriteStatus } from "@/features/reader/favorites";
 import { recordReadingAccessSafely } from "@/features/reading/access";
 import { FocusedReadingExperience } from "@/features/reading/components/FocusedReadingExperience";
+import { HighlightDiagnostics } from "@/features/reading/components/HighlightDiagnostics";
 import { PersonalReadingToolsProvider } from "@/features/reading/components/PersonalReadingToolsProvider";
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
 import { getPersonalAnnotations } from "@/features/reading/personal-annotation-queries";
@@ -166,6 +167,7 @@ export default async function DynamicReadingPage({
         initialAnnotations={personalAnnotations}
         userKey={user.publicId}
       >
+        <HighlightDiagnostics />
         <FocusedReadingExperience
           canComment={Boolean(readerUser)}
           canTrackReading={Boolean(readerUser)}

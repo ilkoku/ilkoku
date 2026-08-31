@@ -74,8 +74,8 @@ const toolInstructions: Record<
   string
 > = {
   pen: "Eski çizim kayıtları uyumluluk için korunur.",
-  highlight: "Metni seçerek vurgula. Bitirmek için Seç'e bas veya Esc kullan.",
-  underline: "Metni seçerek altını çiz. Bitirmek için Seç'e bas veya Esc kullan.",
+  highlight: "Metni seç. Vurgu uygulanınca araç otomatik kapanır.",
+  underline: "Metni seç. Alt çizgi uygulanınca araç otomatik kapanır.",
   pin: "İşaretlemek istediğin paragrafa bir kez tıkla veya dokun.",
   reading_position: "Kaldığın paragrafa bir kez tıkla veya dokun.",
   note: "Not bağlamak istediğin metni seç; yazıp Ctrl/Cmd+Enter ile kaydet.",
@@ -109,7 +109,7 @@ function annotationPreview(annotation: PersonalAnnotationRecord) {
 
 function toolStatus(tool: PersonalReadingActiveTool) {
   if (!tool) {
-    return "Seçim modu · sayfayı normal kullanabilirsin. İşaretlerin yalnızca sana görünür.";
+    return "Normal okuma · işaretlerin yalnızca sana görünür.";
   }
 
   const label = toolCards.find((card) => card.tool === tool)?.label ?? "Araç";
@@ -143,7 +143,7 @@ export function PersonalReadingToolsProvider({
     useState<PersonalTextAnchor | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [status, setStatus] = useState(
-    "Seçim modu · sayfayı normal kullanabilirsin. İşaretlerin yalnızca sana görünür.",
+    "Normal okuma · işaretlerin yalnızca sana görünür.",
   );
   const [position, setPosition] = useState({ x: 18, y: 150 });
   const dragRef = useRef<{
@@ -154,7 +154,7 @@ export function PersonalReadingToolsProvider({
 
   const storageKey = `ilkoku:reading-tools:${userKey}:position:v1`;
 
-  const returnToSelectMode = useCallback((message = "Seçim modu.") => {
+  const returnToSelectMode = useCallback((message = "Normal okuma.") => {
     setActiveTool(null);
     setPendingNote(null);
     setNoteDraft("");
@@ -209,7 +209,7 @@ export function PersonalReadingToolsProvider({
       if (event.key !== "Escape") return;
       if (!activeTool && !pendingNote) return;
       event.preventDefault();
-      returnToSelectMode("Seçim modu · araç kapatıldı.");
+      returnToSelectMode("Normal okuma · araç kapatıldı.");
     }
 
     window.addEventListener("keydown", handleEscape);
@@ -276,16 +276,25 @@ export function PersonalReadingToolsProvider({
       if (activeTool === "note") {
         setPendingNote(anchor);
         setNoteDraft("");
-        setStatus("Yorumunu yaz · Ctrl/Cmd+Enter ile kaydet, Esc ile vazgeç.");
+        setStatus("Notunu yaz · Ctrl/Cmd+Enter ile kaydet, Esc ile vazgeç.");
         return;
       }
 
-      await createAnnotation({
+      const tool = activeTool;
+      const saved = await createAnnotation({
         ...anchor,
-        type: activeTool,
+        type: tool,
       });
+
+      if (saved) {
+        returnToSelectMode(
+          tool === "highlight"
+            ? "Vurgu eklendi · normal okumaya dönüldü."
+            : "Alt çizgi eklendi · normal okumaya dönüldü.",
+        );
+      }
     },
-    [activeTool, createAnnotation],
+    [activeTool, createAnnotation, returnToSelectMode],
   );
 
   const applyParagraphAnchor = useCallback(
@@ -306,8 +315,8 @@ export function PersonalReadingToolsProvider({
       if (saved) {
         returnToSelectMode(
           tool === "reading_position"
-            ? "Kaldığın yer kaydedildi · Seçim modu."
-            : "İğne eklendi · Seçim modu.",
+            ? "Kaldığın yer kaydedildi · normal okumaya dönüldü."
+            : "İğne eklendi · normal okumaya dönüldü.",
         );
       }
     },
@@ -411,7 +420,7 @@ export function PersonalReadingToolsProvider({
     setNoteDraft("");
     setOpenNoteId(saved.id);
     setActiveTool(null);
-    setStatus("Not kaydedildi · Seçim modu.");
+    setStatus("Not kaydedildi · normal okumaya dönüldü.");
   }
 
   function handleNoteComposerKeyDown(
@@ -419,7 +428,7 @@ export function PersonalReadingToolsProvider({
   ) {
     if (event.key === "Escape") {
       event.preventDefault();
-      returnToSelectMode("Not iptal edildi · Seçim modu.");
+      returnToSelectMode("Not iptal edildi · normal okumaya dönüldü.");
       return;
     }
 
@@ -471,7 +480,7 @@ export function PersonalReadingToolsProvider({
     setStatus(
       nextTool
         ? toolStatus(nextTool)
-        : "Seçim modu · araç kapatıldı.",
+        : "Normal okuma · araç kapatıldı.",
     );
   }
 
@@ -608,20 +617,6 @@ export function PersonalReadingToolsProvider({
         {!isMinimized ? (
           <>
             <div className={styles.toolGrid}>
-              <button
-                aria-pressed={activeTool === null}
-                className={styles.toolCard}
-                data-active={activeTool === null ? "true" : "false"}
-                onClick={() =>
-                  returnToSelectMode("Seçim modu · sayfayı normal kullanabilirsin.")
-                }
-                title="Araç modundan çık ve normal okumaya dön. Esc de aynı işi yapar."
-                type="button"
-              >
-                <span aria-hidden="true">↖</span>
-                <small>Seç</small>
-              </button>
-
               {toolCards.map((card) => (
                 <button
                   aria-pressed={activeTool === card.tool}
@@ -674,7 +669,7 @@ export function PersonalReadingToolsProvider({
                   </button>
                   <button
                     onClick={() =>
-                      returnToSelectMode("Not iptal edildi · Seçim modu.")
+                      returnToSelectMode("Not iptal edildi · normal okumaya dönüldü.")
                     }
                     title="Esc"
                     type="button"

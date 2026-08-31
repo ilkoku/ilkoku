@@ -256,7 +256,6 @@ export function ProtectedChapterContent({
         tools.setStatus(
           "İşaretlemek için tek paragraf içinde bir metin seç.",
         );
-        selection.removeAllRanges();
         return;
       }
 
@@ -282,8 +281,7 @@ export function ProtectedChapterContent({
         endOffset <= startOffset ||
         !selectedText
       ) {
-        tools.setStatus("Metin seçimi okunamadı. Tekrar deneyebilirsin.");
-        selection.removeAllRanges();
+        tools.setStatus("Metin seçimi okunamadı. Seçim ekranda bırakıldı.");
         return;
       }
 
@@ -296,9 +294,12 @@ export function ProtectedChapterContent({
         paragraphIndex,
         selectedText,
         startOffset,
+      }).then((saved) => {
+        if (saved) {
+          window.getSelection()?.removeAllRanges();
+        }
       }).finally(() => {
         selectionCommitRef.current = null;
-        window.getSelection()?.removeAllRanges();
       });
     });
   }

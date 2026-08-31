@@ -278,7 +278,7 @@ export function ProtectedChapterContent({
   }
 
   function handleParagraphClick(
-    event: ReactPointerEvent<HTMLDivElement>,
+    event: SyntheticEvent<HTMLDivElement>,
     paragraphIndex: number,
   ) {
     if (

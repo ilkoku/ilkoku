@@ -39,6 +39,19 @@ type TextSelectionReadResult =
   | { status: "invalid" }
   | { status: "valid"; snapshot: TextSelectionSnapshot };
 
+type TextSelectionPointerStart = {
+  pointerId: number;
+  range: Range;
+};
+
+type CaretDocument = Document & {
+  caretPositionFromPoint?: (
+    x: number,
+    y: number,
+  ) => { offset: number; offsetNode: Node } | null;
+  caretRangeFromPoint?: (x: number, y: number) => Range | null;
+};
+
 type ProtectedInteractionKind =
   | "contextmenu"
   | "copy"
@@ -114,13 +127,12 @@ function getTextOffset(
   return probe.toString().length;
 }
 
-function readTextSelection(paragraphs: string[]): TextSelectionReadResult {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) {
-    return { status: "none" };
-  }
+function readTextRange(
+  range: Range,
+  paragraphs: string[],
+): TextSelectionReadResult {
+  if (range.collapsed) return { status: "none" };
 
-  const range = selection.getRangeAt(0);
   const startParagraph = getParagraphFromNode(range.startContainer);
   const endParagraph = getParagraphFromNode(range.endContainer);
 
@@ -165,6 +177,49 @@ function readTextSelection(paragraphs: string[]): TextSelectionReadResult {
       range: range.cloneRange(),
     },
   };
+}
+
+function readTextSelection(paragraphs: string[]): TextSelectionReadResult {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) {
+    return { status: "none" };
+  }
+
+  return readTextRange(selection.getRangeAt(0), paragraphs);
+}
+
+function getCaretRangeFromPoint(clientX: number, clientY: number) {
+  const caretDocument = document as CaretDocument;
+  const caretPosition = caretDocument.caretPositionFromPoint?.(
+    clientX,
+    clientY,
+  );
+
+  if (caretPosition) {
+    const range = document.createRange();
+    range.setStart(caretPosition.offsetNode, caretPosition.offset);
+    range.collapse(true);
+    return range;
+  }
+
+  return caretDocument.caretRangeFromPoint?.(clientX, clientY)?.cloneRange() ?? null;
+}
+
+function readPointerTextSelection(
+  startRange: Range,
+  endRange: Range,
+  paragraphs: string[],
+): TextSelectionReadResult {
+  const range = document.createRange();
+  const startComesFirst =
+    startRange.compareBoundaryPoints(Range.START_TO_START, endRange) <= 0;
+  const first = startComesFirst ? startRange : endRange;
+  const last = startComesFirst ? endRange : startRange;
+
+  range.setStart(first.startContainer, first.startOffset);
+  range.setEnd(last.startContainer, last.startOffset);
+
+  return readTextRange(range, paragraphs);
 }
 
 function restoreTextSelection(range: Range) {
@@ -286,6 +341,7 @@ export function ProtectedChapterContent({
   const draftStrokeRef = useRef<DraftStroke | null>(null);
   const selectionCommitRef = useRef<string | null>(null);
   const selectionSnapshotRef = useRef<TextSelectionSnapshot | null>(null);
+  const selectionPointerRef = useRef<TextSelectionPointerStart | null>(null);
   const tools = usePersonalReadingTools();
   const annotations = tools?.annotations ?? [];
   const activeTool = tools?.activeTool ?? null;
@@ -299,6 +355,7 @@ export function ProtectedChapterContent({
   useEffect(() => {
     if (!textSelectionMode) {
       selectionSnapshotRef.current = null;
+      selectionPointerRef.current = null;
       return;
     }
 
@@ -335,32 +392,31 @@ export function ProtectedChapterContent({
     setDraftStroke(next);
   }
 
-  function resetSelectionSnapshot() {
-    if (textSelectionMode) selectionSnapshotRef.current = null;
+  function beginTextSelection(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!textSelectionMode || event.button !== 0) return;
+
+    selectionSnapshotRef.current = null;
+    const range = getCaretRangeFromPoint(event.clientX, event.clientY);
+    selectionPointerRef.current = range
+      ? { pointerId: event.pointerId, range }
+      : null;
   }
 
-  function handleSelectionEnd() {
+  function handleSelectionEnd(pointerSnapshot: TextSelectionSnapshot | null) {
     if (!tools || !textSelectionMode) return;
 
     window.requestAnimationFrame(() => {
       const liveSelection = readTextSelection(paragraphs);
-
-      if (liveSelection.status === "invalid") {
-        selectionSnapshotRef.current = null;
-        tools.setStatus(
-          "İşaretlemek için tek paragraf içinde bir metin seç.",
-        );
-        return;
-      }
-
       const snapshot =
         liveSelection.status === "valid"
           ? liveSelection.snapshot
-          : selectionSnapshotRef.current;
+          : selectionSnapshotRef.current ?? pointerSnapshot;
 
       if (!snapshot) {
         tools.setStatus(
-          "Metin seçimi güvenli araç izninde yakalanamadı. Tekrar deneyebilirsin.",
+          liveSelection.status === "invalid"
+            ? "İşaretlemek için tek paragraf içinde bir metin seç."
+            : "Metin seçimi yakalanamadı. Aynı paragrafta tekrar deneyebilirsin.",
         );
         return;
       }
@@ -368,7 +424,6 @@ export function ProtectedChapterContent({
       const {
         endOffset,
         paragraphIndex,
-        selectedText,
         startOffset,
       } = snapshot.anchor;
       const signature = `${activeTool}:${paragraphIndex}:${startOffset}:${endOffset}`;
@@ -383,13 +438,30 @@ export function ProtectedChapterContent({
         }
 
         restoreTextSelection(snapshot.range);
-        tools.setStatus(
-          `İşaret kaydedilemedi; “${selectedText.slice(0, 48)}” seçimi korunuyor.`,
-        );
       }).finally(() => {
         selectionCommitRef.current = null;
       });
     });
+  }
+
+  function finishTextSelection(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!textSelectionMode) return;
+
+    const pointerStart = selectionPointerRef.current;
+    selectionPointerRef.current = null;
+    const endRange = getCaretRangeFromPoint(event.clientX, event.clientY);
+    const pointerSelection =
+      pointerStart &&
+      pointerStart.pointerId === event.pointerId &&
+      endRange
+        ? readPointerTextSelection(pointerStart.range, endRange, paragraphs)
+        : { status: "none" as const };
+    const pointerSnapshot =
+      pointerSelection.status === "valid"
+        ? pointerSelection.snapshot
+        : null;
+
+    handleSelectionEnd(pointerSnapshot);
   }
 
   function handleParagraphClick(
@@ -600,10 +672,8 @@ export function ProtectedChapterContent({
         data-personal-reading-tools-selectable={
           textSelectionMode ? "true" : "false"
         }
-        onMouseDown={resetSelectionSnapshot}
-        onMouseUp={handleSelectionEnd}
-        onTouchEnd={handleSelectionEnd}
-        onTouchStart={resetSelectionSnapshot}
+        onPointerDown={beginTextSelection}
+        onPointerUp={finishTextSelection}
       >
         {paragraphs.map((paragraph, index) => {
           const paragraphAnnotations = annotations.filter(

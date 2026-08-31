@@ -49,14 +49,19 @@ export default async function DynamicReadingPage({
   searchParams,
 }: {
   params: Promise<{ chapterSlug: string; slug: string }>;
-  searchParams: Promise<{ from?: string; inceleme?: string }>;
+  searchParams: Promise<{
+    from?: string;
+    inceleme?: string;
+    sayfa?: string;
+  }>;
 }) {
   const { chapterSlug, slug } = await params;
   const query = await searchParams;
   const publicReturnTo = getSafeReturnPath(query.from);
   const auth = await getCurrentSessionContext();
   const reviewModeParameter = query.inceleme === "1" ? "&inceleme=1" : "";
-  const returnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}${reviewModeParameter}`;
+  const pageEdgeParameter = query.sayfa === "son" ? "&sayfa=son" : "";
+  const returnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}${reviewModeParameter}${pageEdgeParameter}`;
 
   if (!auth) {
     redirect(`/giris?sonraki=${encodeURIComponent(returnPath)}`);
@@ -171,6 +176,7 @@ export default async function DynamicReadingPage({
           protectionIdentity={user.publicId}
           readingProgress={readingProgress?.progressPercent ?? null}
           returnTo={returnTo}
+          startAtLastPage={query.sayfa === "son"}
         />
       </PersonalReadingToolsProvider>
     );

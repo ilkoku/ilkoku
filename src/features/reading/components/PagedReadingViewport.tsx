@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -25,19 +26,27 @@ export function PagedReadingViewport({
   estimatedBookEndPage,
   estimatedBookStartPage,
   estimatedBookTotalPages,
+  nextChapterHref,
+  previousChapterHref,
+  startAtLastPage = false,
   watermarkIdentity,
 }: {
   children: ReactNode;
   estimatedBookEndPage: number;
   estimatedBookStartPage: number;
   estimatedBookTotalPages: number;
+  nextChapterHref?: string | null;
+  previousChapterHref?: string | null;
+  startAtLastPage?: boolean;
   watermarkIdentity: string;
 }) {
+  const router = useRouter();
   const [mode, setMode] = useState<ReadingDisplayMode>("scroll");
   const [pageCount, setPageCount] = useState(1);
   const [pageIndex, setPageIndex] = useState(0);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const scrollTimerRef = useRef<number | null>(null);
+  const placeAtLastPageRef = useRef(startAtLastPage);
 
   const measurePages = useCallback(() => {
     const viewport = viewportRef.current;
@@ -49,6 +58,18 @@ export function PagedReadingViewport({
       Math.round(viewport.scrollWidth / width),
     );
     setPageCount(measured);
+
+    if (placeAtLastPageRef.current) {
+      const lastIndex = measured - 1;
+      placeAtLastPageRef.current = false;
+      setPageIndex(lastIndex);
+      viewport.scrollTo({
+        left: lastIndex * width,
+        top: 0,
+      });
+      return;
+    }
+
     setPageIndex((current) => Math.min(current, measured - 1));
   }, [mode]);
 
@@ -103,7 +124,7 @@ export function PagedReadingViewport({
     }
 
     let frame = window.requestAnimationFrame(() => {
-      setPageIndex(0);
+      if (!placeAtLastPageRef.current) setPageIndex(0);
       measurePages();
     });
     const observer = new ResizeObserver(() => {
@@ -168,6 +189,22 @@ export function PagedReadingViewport({
     }, 120);
   }
 
+  function goPrevious() {
+    if (pageIndex > 0) {
+      scrollToPage(pageIndex - 1);
+      return;
+    }
+    if (previousChapterHref) router.push(previousChapterHref);
+  }
+
+  function goNext() {
+    if (pageIndex < pageCount - 1) {
+      scrollToPage(pageIndex + 1);
+      return;
+    }
+    if (nextChapterHref) router.push(nextChapterHref);
+  }
+
   const estimatedChapterPageCount = Math.max(
     1,
     estimatedBookEndPage - estimatedBookStartPage + 1,
@@ -183,6 +220,8 @@ export function PagedReadingViewport({
     estimatedBookEndPage,
     estimatedBookStartPage + estimatedBookPageOffset,
   );
+  const atFirstBookPage = pageIndex === 0 && !previousChapterHref;
+  const atLastBookPage = pageIndex >= pageCount - 1 && !nextChapterHref;
 
   return (
     <div className={styles.shell} data-mode={mode}>
@@ -207,8 +246,8 @@ export function PagedReadingViewport({
         className={styles.pageControls}
       >
         <button
-          disabled={pageIndex === 0}
-          onClick={() => scrollToPage(pageIndex - 1)}
+          disabled={atFirstBookPage}
+          onClick={goPrevious}
           type="button"
         >
           <span aria-hidden="true">←</span>
@@ -218,7 +257,7 @@ export function PagedReadingViewport({
         <div aria-live="polite" className={styles.pageStatus}>
           <small>Sayfalı Okuma</small>
           <strong>
-            Sayfa {pageIndex + 1} / {pageCount}
+            Bölüm sayfası {pageIndex + 1} / {pageCount}
           </strong>
           <span>
             Tahmini kitap sayfası {estimatedCurrentBookPage} / {estimatedBookTotalPages}
@@ -226,8 +265,8 @@ export function PagedReadingViewport({
         </div>
 
         <button
-          disabled={pageIndex >= pageCount - 1}
-          onClick={() => scrollToPage(pageIndex + 1)}
+          disabled={atLastBookPage}
+          onClick={goNext}
           type="button"
         >
           Sonraki Sayfa

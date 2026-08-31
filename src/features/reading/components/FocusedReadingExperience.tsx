@@ -30,6 +30,7 @@ export function FocusedReadingExperience({
   protectionIdentity,
   readingProgress,
   returnTo = "/kesfet",
+  startAtLastPage = false,
 }: {
   canComment?: boolean;
   canTrackReading?: boolean;
@@ -38,6 +39,7 @@ export function FocusedReadingExperience({
   protectionIdentity: string;
   readingProgress?: number | null;
   returnTo?: string;
+  startAtLastPage?: boolean;
 }) {
   const readingTime = estimateReadingMinutes(chapter.content);
 
@@ -89,8 +91,9 @@ export function FocusedReadingExperience({
   const currentChapterPath =
     `/oku/${chapter.work.slug}/bolum-${chapter.position}?from=${encodedReturnTo}`;
 
-  function getChapterHref(position: number) {
-    return `/oku/${chapter.work.slug}/bolum-${position}?from=${encodedReturnTo}`;
+  function getChapterHref(position: number, edge?: "last") {
+    const edgeParameter = edge === "last" ? "&sayfa=son" : "";
+    return `/oku/${chapter.work.slug}/bolum-${position}?from=${encodedReturnTo}${edgeParameter}`;
   }
 
   return (
@@ -125,6 +128,8 @@ export function FocusedReadingExperience({
           </div>
 
           <div className="reader-actions">
+            <ReadingModeToggle compact />
+
             <details className="reader-menu">
               <summary>
                 <span>Okuma Menüsü</span>
@@ -225,6 +230,15 @@ export function FocusedReadingExperience({
               estimatedBookEndPage={estimatedPages.endPage}
               estimatedBookStartPage={estimatedPages.startPage}
               estimatedBookTotalPages={estimatedPages.totalPages}
+              nextChapterHref={
+                nextChapter ? getChapterHref(nextChapter.position) : null
+              }
+              previousChapterHref={
+                previousChapter
+                  ? getChapterHref(previousChapter.position, "last")
+                  : null
+              }
+              startAtLastPage={startAtLastPage}
               watermarkIdentity={protectionIdentity}
             >
               <ProtectedChapterContent

@@ -79,10 +79,13 @@
   touch-action: none;
 }
 
+/*
+ * Silgi bütün kitap yüzeyini kapatan bir tıklama kalkanı değildir.
+ * Yalnızca kalem stroke'ları pointer hedefi olur; böylece alttaki vurgu,
+ * alt çizgi ve not işaretleri kendi silme davranışlarını almaya devam eder.
+ */
 .pageToolLayer[data-eraser="true"] {
-  cursor: not-allowed;
-  pointer-events: auto;
-  touch-action: none;
+  pointer-events: none;
 }
 
 .pageDrawingSvg {
@@ -92,10 +95,6 @@
   height: 100%;
   overflow: hidden;
   pointer-events: none;
-}
-
-.pageToolLayer[data-eraser="true"] .pageDrawingSvg {
-  pointer-events: auto;
 }
 
 .pageDrawingPath,
@@ -112,7 +111,7 @@
 }
 
 .pageDrawingPath[data-erasable="true"] {
-  cursor: not-allowed;
+  cursor: crosshair;
   pointer-events: stroke;
 }
 

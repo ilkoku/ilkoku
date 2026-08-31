@@ -191,9 +191,12 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 16px;
-  background: rgba(20, 25, 32, 0.82);
+  background: rgba(20, 25, 32, 0.94);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 
 .reader-workdesk__shelf-tabs {
@@ -213,26 +216,32 @@
   gap: 0.5rem;
   min-height: 42px;
   padding: 0.68rem 0.85rem;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 11px;
-  background: transparent;
-  color: rgba(238, 241, 246, 0.65);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(238, 241, 246, 0.78);
   font: inherit;
   font-size: 0.84rem;
+  font-weight: 650;
   white-space: nowrap;
   cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
 .reader-workdesk__shelf-tab:hover,
 .reader-workdesk__hidden-drawer > summary:hover {
-  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.065);
   color: #fff;
 }
 
 .reader-workdesk__shelf-tab.is-active {
-  border-color: rgba(224, 181, 47, 0.25);
-  background: rgba(224, 181, 47, 0.1);
-  color: #f2cf58;
+  border-color: rgba(224, 181, 47, 0.48);
+  background: rgba(224, 181, 47, 0.16);
+  color: #f6d665;
+  box-shadow:
+    0 8px 22px rgba(224, 181, 47, 0.08),
+    inset 0 1px 0 rgba(255, 231, 139, 0.08);
 }
 
 .reader-workdesk__shelf-tab > span,
@@ -242,9 +251,14 @@
   height: 22px;
   place-items: center;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.11);
+  color: rgba(255, 255, 255, 0.86);
   font-size: 0.7rem;
+}
+
+.reader-workdesk__shelf-tab.is-active > span {
+  background: rgba(224, 181, 47, 0.2);
+  color: #ffe79a;
 }
 
 .reader-workdesk__hidden-drawer {
@@ -254,8 +268,8 @@
 
 .reader-workdesk__hidden-drawer > summary {
   list-style: none;
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(9, 12, 16, 0.25);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(9, 12, 16, 0.42);
 }
 
 .reader-workdesk__hidden-drawer > summary::-webkit-details-marker {

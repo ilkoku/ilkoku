@@ -1,0 +1,410 @@
+.palette {
+  position: fixed;
+  z-index: 90;
+  width: 17.5rem;
+  max-height: min(42rem, calc(100vh - 1rem));
+  overflow: auto;
+  border: 1px solid rgba(215, 180, 63, 0.34);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-background) 97%, transparent);
+  box-shadow:
+    0 22px 54px rgba(0, 0, 0, 0.44),
+    0 0 0 1px rgba(255, 255, 255, 0.035) inset;
+  backdrop-filter: blur(20px) saturate(115%);
+}
+
+.palette[data-minimized="true"] {
+  width: 12.5rem;
+  overflow: hidden;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 3.35rem;
+  padding: 0.45rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.palette[data-minimized="true"] .header {
+  border-bottom: 0;
+}
+
+.dragHandle,
+.minimize,
+.titleButton,
+.toolCard,
+.annotationJump,
+.annotationDelete,
+.noteComposer button,
+.listHeading button {
+  font: inherit;
+}
+
+.dragHandle {
+  display: grid;
+  width: 2rem;
+  height: 2.4rem;
+  place-items: center;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: rgba(238, 241, 246, 0.44);
+  cursor: grab;
+  touch-action: none;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:hover {
+  background: rgba(255, 255, 255, 0.045);
+  color: #d7b43f;
+}
+
+.titleButton {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.titleButton > span:first-child {
+  color: #d7b43f;
+  font-size: 1.2rem;
+}
+
+.titleButton > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 0.08rem;
+}
+
+.titleButton strong {
+  color: rgba(248, 248, 246, 0.96);
+  font-size: 0.82rem;
+  font-weight: 760;
+  letter-spacing: 0.02em;
+}
+
+.titleButton small {
+  overflow: hidden;
+  color: rgba(238, 241, 246, 0.48);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.minimize {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0.6rem;
+  background: transparent;
+  color: rgba(238, 241, 246, 0.68);
+  cursor: pointer;
+}
+
+.minimize:hover {
+  border-color: rgba(215, 180, 63, 0.3);
+  color: #d7b43f;
+}
+
+.toolGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  padding: 0.6rem;
+}
+
+.toolCard {
+  display: grid;
+  min-height: 4rem;
+  place-items: center;
+  gap: 0.18rem;
+  padding: 0.55rem 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.75rem;
+  background: transparent;
+  color: rgba(238, 241, 246, 0.72);
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.toolCard > span {
+  color: rgba(248, 248, 246, 0.84);
+  font-size: 1.18rem;
+  line-height: 1;
+}
+
+.toolCard small {
+  font-size: 0.64rem;
+  font-weight: 720;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.toolCard:hover:not(:disabled),
+.toolCard[data-active="true"] {
+  border-color: rgba(215, 180, 63, 0.48);
+  box-shadow:
+    0 7px 18px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(215, 180, 63, 0.05) inset;
+  color: #f7f5ef;
+  transform: translateY(-1px);
+}
+
+.toolCard[data-active="true"] > span,
+.toolCard[data-active="true"] small {
+  color: #d7b43f;
+}
+
+.toolCard:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.noteComposer,
+.annotationList {
+  margin: 0 0.6rem 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.8rem;
+  background: var(--color-background);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+}
+
+.noteComposer {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.noteComposer strong,
+.listHeading strong {
+  color: #d7b43f;
+  font-size: 0.72rem;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.noteComposer p {
+  margin: 0;
+  color: rgba(238, 241, 246, 0.62);
+  font-family: var(--font-playfair), serif;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.noteComposer textarea {
+  width: 100%;
+  min-height: 6.5rem;
+  resize: vertical;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 0.7rem;
+  outline: none;
+  background: transparent;
+  color: rgba(248, 248, 246, 0.94);
+  padding: 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.noteComposer textarea:focus {
+  border-color: rgba(215, 180, 63, 0.52);
+  box-shadow: 0 0 0 2px rgba(215, 180, 63, 0.08);
+}
+
+.noteComposer > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.noteComposer button,
+.listHeading button {
+  min-height: 2rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.55rem;
+  background: transparent;
+  color: rgba(238, 241, 246, 0.72);
+  font-size: 0.67rem;
+  cursor: pointer;
+}
+
+.noteComposer button:first-child {
+  border-color: rgba(215, 180, 63, 0.4);
+  color: #d7b43f;
+}
+
+.noteComposer button:disabled,
+.listHeading button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.annotationList {
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.listHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.listHeading > div {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.listHeading small {
+  color: rgba(238, 241, 246, 0.46);
+  font-size: 0.62rem;
+}
+
+.listHeading button {
+  color: rgba(238, 241, 246, 0.58);
+}
+
+.annotationList ol {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.annotationList li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0.65rem;
+}
+
+.annotationJump {
+  display: grid;
+  min-width: 0;
+  gap: 0.12rem;
+  padding: 0.55rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: rgba(238, 241, 246, 0.66);
+  text-align: left;
+  cursor: pointer;
+}
+
+.annotationJump strong {
+  color: rgba(248, 248, 246, 0.88);
+  font-size: 0.67rem;
+}
+
+.annotationJump span {
+  overflow: hidden;
+  font-size: 0.65rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.annotationJump:hover {
+  background: rgba(215, 180, 63, 0.025);
+}
+
+.annotationDelete {
+  width: 2.1rem;
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: rgba(238, 241, 246, 0.44);
+  cursor: pointer;
+}
+
+.annotationDelete:hover:not(:disabled) {
+  color: #d7b43f;
+}
+
+.empty,
+.status {
+  margin: 0;
+  color: rgba(238, 241, 246, 0.5);
+  font-size: 0.67rem;
+  line-height: 1.45;
+}
+
+.status {
+  margin: 0 0.6rem 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+@media (max-width: 48rem) {
+  .palette,
+  .palette[data-minimized="true"] {
+    top: auto !important;
+    right: 0.65rem !important;
+    bottom: 0.65rem !important;
+    left: 0.65rem !important;
+    width: auto;
+    max-height: min(31rem, calc(100vh - 1.3rem));
+  }
+
+  .dragHandle {
+    display: none;
+  }
+
+  .header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .toolGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .toolCard {
+    min-height: 3.65rem;
+    padding-inline: 0.2rem;
+  }
+
+  .toolCard small {
+    font-size: 0.58rem;
+  }
+
+  .annotationList {
+    max-height: 13rem;
+  }
+}
+
+@media (max-width: 30rem) {
+  .toolGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media print {
+  .palette {
+    display: none !important;
+  }
+}

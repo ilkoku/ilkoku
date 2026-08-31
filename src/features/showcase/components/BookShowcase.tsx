@@ -9,6 +9,11 @@ import type { ReaderCommentFeed } from "@/features/reader/comments";
 import { ReaderCommentList } from "@/features/reader/components/ReaderCommentList";
 import { toggleFavoriteAction } from "@/features/reader/favorites";
 import { WorkShareActions } from "@/features/reading/components/WorkShareActions";
+import {
+  countReadingWords,
+  estimateReadingMinutes,
+  getEstimatedBookPageRanges,
+} from "@/features/reading/metrics";
 import type { PublicWorkDetail } from "@/features/works/types";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import {
@@ -37,12 +42,6 @@ function initials(value: string) {
     .join("")
     .slice(0, 2)
     .toLocaleUpperCase("tr");
-}
-
-function countWords(content: string) {
-  const normalized = content.trim();
-
-  return normalized ? normalized.split(/\s+/u).length : 0;
 }
 
 function getLanguageLabel(language: string) {
@@ -85,6 +84,14 @@ export function BookShowcase({
   const encodedBookContextPath = encodeURIComponent(bookContextPath);
   const contentWarnings = parseWorkContentWarnings(work.contentWarnings);
   const rating = workContentRatingDetails[work.contentRating];
+  const totalWords = work.chapters.reduce(
+    (sum, chapter) => sum + countReadingWords(chapter.content),
+    0,
+  );
+  const {
+    ranges: estimatedPageRanges,
+    totalPages: estimatedTotalPages,
+  } = getEstimatedBookPageRanges(work.chapters);
 
   return (
     <div className="showcase-page">
@@ -186,6 +193,16 @@ export function BookShowcase({
               <div>
                 <dt>{readingContent.common.totalChapters}</dt>
                 <dd>{work.chapterCount}</dd>
+              </div>
+
+              <div>
+                <dt>Toplam kelime</dt>
+                <dd>{totalWords.toLocaleString("tr-TR")}</dd>
+              </div>
+
+              <div>
+                <dt>Yaklaşık kitap sayfası</dt>
+                <dd>≈ {estimatedTotalPages}</dd>
               </div>
 
               <div>
@@ -364,10 +381,15 @@ export function BookShowcase({
               {work.chapters.length > 0 ? (
                 <div className="editor-review-list">
                   {work.chapters.map((chapter, index) => {
-                    const readingMinutes = Math.max(
-                      1,
-                      Math.ceil(countWords(chapter.content) / 200),
+                    const readingMinutes = estimateReadingMinutes(
+                      chapter.content,
                     );
+                    const pageRange = estimatedPageRanges.get(chapter.id);
+                    const pageLabel = pageRange
+                      ? pageRange.startPage === pageRange.endPage
+                        ? `tahmini kitap s. ${pageRange.startPage}`
+                        : `tahmini kitap s. ${pageRange.startPage}–${pageRange.endPage}`
+                      : "tahmini sayfa hesaplanamadı";
 
                     return (
                       <article
@@ -377,7 +399,9 @@ export function BookShowcase({
                         <div>
                           <span>{chapter.position}. Bölüm</span>
                           <h2>{chapter.title}</h2>
-                          <p>{readingMinutes} dakika okuma</p>
+                          <p>
+                            {readingMinutes} dakika okuma · {pageLabel}
+                          </p>
                         </div>
 
                         <div className="editor-review-row__report">

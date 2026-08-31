@@ -31,14 +31,20 @@
   padding-right: 2.6rem;
 }
 
-.selectionMode .content,
-.selectionMode .content * {
+.content[data-personal-reading-tools-selectable="true"],
+.content[data-personal-reading-tools-selectable="true"] * {
   -webkit-user-select: text !important;
   user-select: text !important;
 }
 
-.selectionMode .content p {
+.content[data-personal-reading-tools-selectable="true"] p {
   cursor: text;
+}
+
+.protectedChapter [data-personal-reading-tools-native="true"] {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text !important;
+  user-select: text !important;
 }
 
 .drawingMode .paragraphWrap {

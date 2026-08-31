@@ -205,6 +205,15 @@ export function ReaderShelfTabs({
   }, [storageKey, validIds]);
 
   const hiddenWorks = allWorks.filter((work) => hiddenIds.includes(work.id));
+  const workById = useMemo(
+    () => new Map(allWorks.map((work) => [work.id, work])),
+    [allWorks],
+  );
+  const recentHiddenWorks = hiddenIds
+    .slice(-3)
+    .reverse()
+    .map((id) => workById.get(id))
+    .filter((work): work is ReaderShelfWork => Boolean(work));
   const visibleContinueWorks = continueWorks.filter(
     (work) => !hiddenIds.includes(work.id),
   );
@@ -223,11 +232,6 @@ export function ReaderShelfTabs({
     const nextHidden = hiddenIds.filter((hiddenId) => hiddenId !== id);
     setHiddenIds(nextHidden);
     saveHidden(storageKey, nextHidden);
-  }
-
-  function restoreAll() {
-    setHiddenIds([]);
-    saveHidden(storageKey, []);
   }
 
   return (
@@ -326,7 +330,7 @@ export function ReaderShelfTabs({
             <div className="reader-workdesk__hidden-menu">
               {hiddenWorks.length > 0 ? (
                 <>
-                  {hiddenWorks.map((work) => (
+                  {recentHiddenWorks.map((work) => (
                     <button
                       key={work.id}
                       onClick={() => restoreWork(work.id)}
@@ -341,10 +345,10 @@ export function ReaderShelfTabs({
                   ))}
                   <button
                     className="reader-workdesk__restore-all"
-                    onClick={restoreAll}
+                    onClick={() => window.location.assign("/kesfet")}
                     type="button"
                   >
-                    Tümünü geri getir
+                    Keşfet’e Git
                   </button>
                 </>
               ) : (

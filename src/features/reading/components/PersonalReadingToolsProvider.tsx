@@ -40,7 +40,7 @@ type PersonalReadingToolsContextValue = {
   activeTool: PersonalReadingActiveTool;
   annotations: PersonalAnnotationRecord[];
   applyParagraphAnchor: (paragraphIndex: number) => Promise<void>;
-  applyTextAnchor: (anchor: PersonalTextAnchor) => Promise<void>;
+  applyTextAnchor: (anchor: PersonalTextAnchor) => Promise<boolean>;
   deleteAnnotation: (annotationId: string) => Promise<boolean>;
   isBusy: boolean;
   openNoteId: string | null;
@@ -246,7 +246,11 @@ export function PersonalReadingToolsProvider({
         });
 
         if (result.status !== "saved" || !result.annotation) {
-          setStatus("İşaret kaydedilemedi. Tekrar deneyebilirsin.");
+          setStatus(
+            result.status === "invalid"
+              ? "İşaret konumu doğrulanamadı; seçim ekranda bırakıldı."
+              : "Bu eser için işaret kaydı şu anda kullanılamıyor.",
+          );
           return null;
         }
 
@@ -270,14 +274,14 @@ export function PersonalReadingToolsProvider({
         activeTool !== "underline" &&
         activeTool !== "note"
       ) {
-        return;
+        return false;
       }
 
       if (activeTool === "note") {
         setPendingNote(anchor);
         setNoteDraft("");
         setStatus("Notunu yaz · Ctrl/Cmd+Enter ile kaydet, Esc ile vazgeç.");
-        return;
+        return true;
       }
 
       const tool = activeTool;
@@ -286,13 +290,14 @@ export function PersonalReadingToolsProvider({
         type: tool,
       });
 
-      if (saved) {
-        returnToSelectMode(
-          tool === "highlight"
-            ? "Vurgu eklendi · normal okumaya dönüldü."
-            : "Alt çizgi eklendi · normal okumaya dönüldü.",
-        );
-      }
+      if (!saved) return false;
+
+      returnToSelectMode(
+        tool === "highlight"
+          ? "Vurgu eklendi · normal okumaya dönüldü."
+          : "Alt çizgi eklendi · normal okumaya dönüldü.",
+      );
+      return true;
     },
     [activeTool, createAnnotation, returnToSelectMode],
   );

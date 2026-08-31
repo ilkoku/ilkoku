@@ -1,0 +1,325 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% -18%, rgba(201, 161, 90, 0.07), transparent 34rem),
+    var(--color-background);
+}
+
+.topbar {
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+  background: color-mix(in srgb, var(--color-background) 92%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.topbarInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  width: min(100%, 72rem);
+  min-height: 4.25rem;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0 auto;
+  padding: 0.55rem clamp(var(--space-4), 4vw, var(--space-8));
+}
+
+.back {
+  color: rgba(238, 241, 246, 0.72);
+}
+
+.context {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.48rem;
+  color: rgba(238, 241, 246, 0.56);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.context strong {
+  max-width: 21rem;
+  overflow: hidden;
+  color: rgba(248, 248, 246, 0.9);
+  font-family: var(--font-playfair), serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.topbarInner :global(.reader-actions) {
+  min-width: 0;
+}
+
+.layout {
+  width: min(100%, 55rem);
+  margin: 0 auto;
+  padding: clamp(2.75rem, 7vw, 5.5rem) clamp(1.25rem, 5vw, 3rem) 5rem;
+}
+
+.article {
+  min-width: 0;
+}
+
+.chapterHeader {
+  max-width: 45rem;
+  margin: 0 auto;
+  padding-bottom: clamp(2rem, 5vw, 3rem);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.chapterMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: #d7b43f;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chapterHeader h1 {
+  margin: 0.85rem 0 0;
+  color: #f7f5ef;
+  font-family: var(--font-playfair), serif;
+  font-size: clamp(2.55rem, 6vw, 4.65rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+.chapterHeader :global(.reading-progress-tracker) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(9rem, 13rem);
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.35rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.045);
+}
+
+.chapterHeader :global(.reading-progress-tracker > div) {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.chapterHeader :global(.reading-progress-tracker span) {
+  overflow: hidden;
+  color: rgba(238, 241, 246, 0.52);
+  font-size: 0.69rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapterHeader :global(.reading-progress-tracker strong) {
+  color: rgba(248, 248, 246, 0.82);
+  font-size: 0.74rem;
+}
+
+.chapterHeader :global(.reading-progress-tracker progress) {
+  width: 100%;
+  height: 0.28rem;
+  overflow: hidden;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chapterHeader :global(.reading-progress-tracker progress::-webkit-progress-bar) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chapterHeader :global(.reading-progress-tracker progress::-webkit-progress-value) {
+  background: #d7b43f;
+}
+
+.chapterHeader :global(.reading-progress-tracker progress::-moz-progress-bar) {
+  background: #d7b43f;
+}
+
+.chapterBody {
+  scroll-margin-top: 6rem;
+  padding: clamp(3rem, 8vw, 5.75rem) 0 clamp(2.75rem, 7vw, 5rem);
+}
+
+.chapterBody :global(.chapter__body) {
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.chapterBody :global(.chapter__body p) {
+  margin-bottom: clamp(1.55rem, 4vw, 2rem);
+  font-size: clamp(1.14rem, 1.6vw, 1.28rem);
+  line-height: 1.98;
+}
+
+.navigation {
+  max-width: 49rem;
+  margin: 0 auto;
+}
+
+.comments {
+  max-width: 49rem;
+  margin: 2.25rem auto 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.comments > summary {
+  display: flex;
+  min-height: 5.1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  list-style: none;
+  cursor: pointer;
+}
+
+.comments > summary::-webkit-details-marker {
+  display: none;
+}
+
+.comments > summary > span:first-child {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.comments > summary small {
+  color: #d7b43f;
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.comments > summary strong {
+  color: rgba(248, 248, 246, 0.9);
+  font-family: var(--font-playfair), serif;
+  font-size: 1.32rem;
+  font-weight: 500;
+}
+
+.commentCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: rgba(238, 241, 246, 0.5);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.commentCount > span {
+  color: #d7b43f;
+  font-size: 1rem;
+  transition: transform 160ms ease;
+}
+
+.comments[open] .commentCount > span {
+  transform: rotate(180deg);
+}
+
+.commentsBody {
+  display: grid;
+  gap: 1.5rem;
+  padding: 0.5rem 0 2rem;
+}
+
+.commentsBody :global(.comment-form) {
+  box-shadow: none;
+}
+
+@media (max-width: 48rem) {
+  .topbarInner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    min-height: 4rem;
+    gap: 0.65rem;
+    padding-inline: 1rem;
+  }
+
+  .context {
+    gap: 0.35rem;
+    justify-self: center;
+    font-size: 0.67rem;
+  }
+
+  .context strong {
+    max-width: 11rem;
+    font-size: 0.8rem;
+  }
+
+  .context > span:nth-of-type(3),
+  .context > span:nth-of-type(4) {
+    display: none;
+  }
+
+  .back span:last-child {
+    display: none;
+  }
+
+  .layout {
+    padding-top: 2.25rem;
+  }
+
+  .chapterHeader :global(.reading-progress-tracker) {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .chapterBody {
+    padding-top: 3rem;
+  }
+}
+
+@media (max-width: 36rem) {
+  .context strong {
+    max-width: 8.5rem;
+  }
+
+  .topbarInner :global(.reader-menu summary > span:first-child) {
+    display: none;
+  }
+
+  .topbarInner :global(.reader-menu summary) {
+    min-width: 2.65rem;
+    justify-content: center;
+    padding-inline: 0.65rem;
+  }
+
+  .layout {
+    padding-inline: 1rem;
+  }
+
+  .chapterHeader h1 {
+    font-size: clamp(2.25rem, 12vw, 3.4rem);
+  }
+
+  .chapterBody :global(.chapter__body p) {
+    font-size: 1.08rem;
+    line-height: 1.88;
+  }
+
+  .navigation {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .navigation :global(.chapter-navigation__current) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .comments > summary {
+    min-height: 4.6rem;
+  }
+
+  .comments > summary strong {
+    font-size: 1.15rem;
+  }
+}

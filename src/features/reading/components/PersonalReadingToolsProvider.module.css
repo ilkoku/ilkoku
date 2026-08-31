@@ -179,7 +179,12 @@
 }
 
 .toolCard[data-active="true"] {
-  background: rgba(215, 180, 63, 0.1);
+  border-color: rgba(215, 180, 63, 0.9);
+  background: rgba(215, 180, 63, 0.12);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(215, 180, 63, 0.18) inset,
+    0 0 20px rgba(215, 180, 63, 0.1);
 }
 
 .toolCard[data-active="true"] > span,
@@ -363,15 +368,18 @@
 .empty,
 .status {
   margin: 0;
-  color: rgba(238, 241, 246, 0.6);
+  color: rgba(238, 241, 246, 0.68);
   font-size: 0.67rem;
   line-height: 1.45;
 }
 
 .status {
   margin: 0 0.6rem 0.65rem;
-  padding-top: 0.55rem;
-  border-top: 1px solid rgba(215, 180, 63, 0.14);
+  padding: 0.65rem 0.7rem;
+  border: 1px solid rgba(215, 180, 63, 0.26);
+  border-radius: 0.68rem;
+  background: rgba(215, 180, 63, 0.045);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
 }
 
 @media (max-width: 48rem) {

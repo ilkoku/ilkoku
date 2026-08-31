@@ -208,6 +208,7 @@ export function ProtectedChapterContent({
   const [noticeVisible, setNoticeVisible] = useState(false);
   const [draftStroke, setDraftStroke] = useState<DraftStroke | null>(null);
   const draftStrokeRef = useRef<DraftStroke | null>(null);
+  const selectionCommitRef = useRef<string | null>(null);
   const tools = usePersonalReadingTools();
   const annotations = tools?.annotations ?? [];
   const activeTool = tools?.activeTool ?? null;
@@ -253,7 +254,7 @@ export function ProtectedChapterContent({
 
       if (!startParagraph || !endParagraph || startParagraph !== endParagraph) {
         tools.setStatus(
-          "İşaretlemek için şimdilik tek paragraf içinde bir metin seç.",
+          "İşaretlemek için tek paragraf içinde bir metin seç.",
         );
         selection.removeAllRanges();
         return;
@@ -272,12 +273,8 @@ export function ProtectedChapterContent({
         range.endContainer,
         range.endOffset,
       );
-      const selectedText = startParagraph.textContent?.slice(
-        startOffset,
-        endOffset,
-      ) ?? "";
-
-      selection.removeAllRanges();
+      const sourceParagraph = paragraphs[paragraphIndex];
+      const selectedText = sourceParagraph?.slice(startOffset, endOffset) ?? "";
 
       if (
         !Number.isInteger(paragraphIndex) ||
@@ -286,14 +283,22 @@ export function ProtectedChapterContent({
         !selectedText
       ) {
         tools.setStatus("Metin seçimi okunamadı. Tekrar deneyebilirsin.");
+        selection.removeAllRanges();
         return;
       }
+
+      const signature = `${activeTool}:${paragraphIndex}:${startOffset}:${endOffset}`;
+      if (selectionCommitRef.current === signature) return;
+      selectionCommitRef.current = signature;
 
       void tools.applyTextAnchor({
         endOffset,
         paragraphIndex,
         selectedText,
         startOffset,
+      }).finally(() => {
+        selectionCommitRef.current = null;
+        window.getSelection()?.removeAllRanges();
       });
     });
   }
@@ -503,7 +508,8 @@ export function ProtectedChapterContent({
         data-personal-reading-tools-selectable={
           textSelectionMode ? "true" : "false"
         }
-        onPointerUp={handleSelectionEnd}
+        onMouseUp={handleSelectionEnd}
+        onTouchEnd={handleSelectionEnd}
       >
         {paragraphs.map((paragraph, index) => {
           const paragraphAnnotations = annotations.filter(

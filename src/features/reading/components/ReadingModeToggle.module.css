@@ -1,0 +1,62 @@
+.modeControl {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0 0.75rem 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(215, 180, 63, 0.22);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.heading {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.heading strong {
+  color: #d7b43f;
+  font-size: 0.68rem;
+  font-weight: 780;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.heading small {
+  color: rgba(238, 241, 246, 0.55);
+  font-size: 0.64rem;
+  line-height: 1.4;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.options button {
+  min-height: 2.4rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 0.65rem;
+  background: transparent;
+  color: rgba(238, 241, 246, 0.72);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.options button:hover {
+  border-color: rgba(215, 180, 63, 0.42);
+  color: #f7f5ef;
+}
+
+.options button[aria-pressed="true"] {
+  border-color: rgba(215, 180, 63, 0.62);
+  background: rgba(215, 180, 63, 0.08);
+  color: #d7b43f;
+}

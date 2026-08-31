@@ -13,7 +13,6 @@ import {
 import { ReaderCommentList } from "@/features/reader/components/ReaderCommentList";
 import {
   estimateReadingMinutes,
-  formatEstimatedBookPageRange,
   getEstimatedBookPageRange,
 } from "@/features/reading/metrics";
 import type { PublicChapterDetail } from "@/features/works/types";
@@ -54,9 +53,14 @@ export function FocusedReadingExperience({
     )
     .sort((left, right) => left.position - right.position);
 
-  const estimatedPageLabel = formatEstimatedBookPageRange(
-    getEstimatedBookPageRange(publishedChapters, chapter.id),
+  const estimatedPages = getEstimatedBookPageRange(
+    publishedChapters,
+    chapter.id,
   );
+  const estimatedPageRange =
+    estimatedPages.startPage === estimatedPages.endPage
+      ? `${estimatedPages.startPage}`
+      : `${estimatedPages.startPage}–${estimatedPages.endPage}`;
 
   const activeChapterIndex = publishedChapters.findIndex(
     (item) => item.id === chapter.id,
@@ -194,7 +198,9 @@ export function FocusedReadingExperience({
               <span aria-hidden="true">·</span>
               <span>{readingTime} dk okuma</span>
               <span aria-hidden="true">·</span>
-              <span>{estimatedPageLabel}</span>
+              <span>
+                Tahmini kitap sayfası {estimatedPageRange} / {estimatedPages.totalPages}
+              </span>
             </p>
 
             <h1 id="bolum-basligi">{chapter.title}</h1>
@@ -241,11 +247,13 @@ export function FocusedReadingExperience({
             )}
 
             <div className="chapter-navigation__current">
-              <small>Şu anda okunuyor</small>
+              <small>Bölüm</small>
               <strong>
                 {chapter.position} / {publishedChapters.length}
               </strong>
-              <small>{estimatedPageLabel}</small>
+              <small>
+                Kitap sayfası ≈ {estimatedPageRange} / {estimatedPages.totalPages}
+              </small>
             </div>
 
             {nextChapter ? (

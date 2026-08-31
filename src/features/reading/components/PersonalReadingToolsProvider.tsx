@@ -69,6 +69,19 @@ const toolCards: Array<{
   { icon: "⌫", label: "Silgi", tool: "eraser" },
 ];
 
+const toolInstructions: Record<
+  Exclude<PersonalReadingActiveTool, null>,
+  string
+> = {
+  pen: "Metnin üzerinde basılı tutup sürükleyerek çiz.",
+  highlight: "Metin içinde vurgulamak istediğin kısmı seç.",
+  underline: "Metin içinde altını çizmek istediğin kısmı seç.",
+  pin: "İşaretlemek istediğin paragrafa tıkla veya dokun.",
+  reading_position: "Kaldığın paragrafın üzerine tıkla veya dokun.",
+  note: "Not bağlamak istediğin metni seç.",
+  eraser: "Silmek istediğin kişisel işaretin üzerine tıkla veya dokun.",
+};
+
 const annotationLabels: Record<
   PersonalAnnotationRecord["type"],
   string
@@ -92,6 +105,15 @@ function annotationPreview(annotation: PersonalAnnotationRecord) {
     return `${annotation.paragraphIndex + 1}. paragraf`;
   }
   return "Kişisel işaret";
+}
+
+function toolStatus(tool: PersonalReadingActiveTool) {
+  if (!tool) {
+    return "Araç seç. İşaretlerin yalnızca sana görünür.";
+  }
+
+  const label = toolCards.find((card) => card.tool === tool)?.label ?? "Araç";
+  return `${label} aktif · ${toolInstructions[tool]}`;
 }
 
 export function usePersonalReadingTools() {
@@ -256,10 +278,15 @@ export function PersonalReadingToolsProvider({
         return;
       }
 
-      await createAnnotation({
+      const tool = activeTool;
+      const saved = await createAnnotation({
         paragraphIndex,
-        type: activeTool,
+        type: tool,
       });
+
+      if (saved && tool === "reading_position") {
+        setActiveTool(null);
+      }
     },
     [activeTool, createAnnotation],
   );
@@ -393,28 +420,7 @@ export function PersonalReadingToolsProvider({
     setActiveTool(nextTool);
     setPendingNote(null);
     setNoteDraft("");
-
-    if (!nextTool) {
-      setStatus("Araç kapatıldı.");
-      return;
-    }
-
-    if (
-      nextTool === "highlight" ||
-      nextTool === "underline" ||
-      nextTool === "note"
-    ) {
-      setStatus("Metnin içinde işaretlemek istediğin kısmı seç.");
-    } else if (
-      nextTool === "pin" ||
-      nextTool === "reading_position"
-    ) {
-      setStatus("İşaretlemek istediğin paragrafa dokun veya tıkla.");
-    } else if (nextTool === "pen") {
-      setStatus("Metnin üzerinde kalemle çizmek için basılı tutup sürükle.");
-    } else {
-      setStatus("Silmek istediğin kişisel işarete dokun veya tıkla.");
-    }
+    setStatus(nextTool ? toolStatus(nextTool) : "Araç kapatıldı.");
   }
 
   function showAnnotation(annotation: PersonalAnnotationRecord) {
@@ -496,6 +502,8 @@ export function PersonalReadingToolsProvider({
     ],
   );
 
+  const statusMessage = status || toolStatus(activeTool);
+
   return (
     <PersonalReadingToolsContext.Provider value={contextValue}>
       {children}
@@ -556,6 +564,7 @@ export function PersonalReadingToolsProvider({
                   disabled={isBusy}
                   key={card.tool}
                   onClick={() => selectTool(card.tool)}
+                  title={toolInstructions[card.tool]}
                   type="button"
                 >
                   <span aria-hidden="true">{card.icon}</span>
@@ -664,11 +673,9 @@ export function PersonalReadingToolsProvider({
               </div>
             ) : null}
 
-            {status ? (
-              <p aria-live="polite" className={styles.status} role="status">
-                {status}
-              </p>
-            ) : null}
+            <p aria-live="polite" className={styles.status} role="status">
+              {statusMessage}
+            </p>
           </>
         ) : null}
       </aside>

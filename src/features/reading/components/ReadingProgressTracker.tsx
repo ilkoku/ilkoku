@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { READING_PAGE_PROGRESS_EVENT } from "../reading-display-mode";
 import { recordReadingProgressAction } from "../progress";
 
 type SaveState =
@@ -25,6 +26,13 @@ function calculateChapterProgress() {
 
   if (!chapter) {
     return 0;
+  }
+
+  if (chapter.dataset.readingMode === "paged") {
+    const pagedProgress = Number(chapter.dataset.pageProgress);
+    if (Number.isFinite(pagedProgress)) {
+      return clampProgress(pagedProgress);
+    }
   }
 
   const rectangle = chapter.getBoundingClientRect();
@@ -163,6 +171,10 @@ export function ReadingProgressTracker({
       "resize",
       requestProgressCalculation,
     );
+    window.addEventListener(
+      READING_PAGE_PROGRESS_EVENT,
+      requestProgressCalculation,
+    );
 
     const timer = window.setInterval(() => {
       const isActive =
@@ -232,6 +244,10 @@ export function ReadingProgressTracker({
       );
       window.removeEventListener(
         "resize",
+        requestProgressCalculation,
+      );
+      window.removeEventListener(
+        READING_PAGE_PROGRESS_EVENT,
         requestProgressCalculation,
       );
     };

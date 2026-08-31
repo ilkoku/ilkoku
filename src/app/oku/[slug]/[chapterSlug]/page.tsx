@@ -12,6 +12,7 @@ import {
 import { getChapterComments } from "@/features/reader/comments";
 import { getFavoriteStatus } from "@/features/reader/favorites";
 import { recordReadingAccessSafely } from "@/features/reading/access";
+import { FocusedReadingExperience } from "@/features/reading/components/FocusedReadingExperience";
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
 import { getReadingProgress } from "@/features/reading/progress";
 import { getMemberPublicChapter } from "@/features/works/member-public-queries";
@@ -150,6 +151,20 @@ export default async function DynamicReadingPage({
     ? getEditorReviewReturnPath(reviewAssignment.stage)
     : publicReturnTo;
 
+  if (!isReviewReading) {
+    return (
+      <FocusedReadingExperience
+        canComment={Boolean(readerUser)}
+        canTrackReading={Boolean(readerUser)}
+        chapter={chapter}
+        comments={comments}
+        protectionIdentity={user.publicId}
+        readingProgress={readingProgress?.progressPercent ?? null}
+        returnTo={returnTo}
+      />
+    );
+  }
+
   const experience = (
     <ReadingExperience
       canComment={Boolean(readerUser)}
@@ -172,10 +187,6 @@ export default async function DynamicReadingPage({
       returnTo={returnTo}
     />
   );
-
-  if (!isReviewReading) {
-    return experience;
-  }
 
   return (
     <EditorReviewReadingMode

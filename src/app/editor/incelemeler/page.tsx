@@ -225,7 +225,7 @@ export default async function EditorReviewsPage({
                   ) : canContinueReview && work.chapters[0] ? (
                     <Link
                       className="button button--outline"
-                      href={`/oku/${work.slug}/bolum-${work.chapters[0].position}`}
+                      href={`/oku/${work.slug}/bolum-${work.chapters[0].position}?inceleme=1&from=${encodeURIComponent(currentPath)}`}
                     >
                       İncelemeye Devam Et
                     </Link>

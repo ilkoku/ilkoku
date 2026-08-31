@@ -10,34 +10,10 @@ import {
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
-
-export const personalAnnotationTypes = [
-  "highlight",
-  "underline",
-  "pin",
-  "reading_position",
-  "note",
-  "drawing",
-] as const;
-
-export type PersonalAnnotationType =
-  (typeof personalAnnotationTypes)[number];
-
-export type PersonalAnnotationRecord = {
-  anchorVersion: number;
-  chapterId: string;
-  createdAt: string;
-  endOffset: number | null;
-  id: string;
-  note: string | null;
-  paragraphIndex: number | null;
-  pathData: string | null;
-  selectedText: string | null;
-  startOffset: number | null;
-  type: PersonalAnnotationType;
-  updatedAt: string;
-  workId: string;
-};
+import {
+  PERSONAL_ANNOTATION_TYPES,
+  type PersonalAnnotationRecord,
+} from "./personal-annotation-types";
 
 type PersonalAnnotationRow = Omit<
   PersonalAnnotationRecord,
@@ -60,7 +36,7 @@ const createAnnotationSchema = z.object({
   points: z.array(pointSchema).min(2).max(512).nullable().optional(),
   selectedText: z.string().max(8_000).nullable().optional(),
   startOffset: z.number().int().min(0).max(2_000_000).nullable().optional(),
-  type: z.enum(personalAnnotationTypes),
+  type: z.enum(PERSONAL_ANNOTATION_TYPES),
 });
 
 const updateNoteSchema = z.object({

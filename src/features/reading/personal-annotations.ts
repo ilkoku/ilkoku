@@ -127,18 +127,15 @@ async function getAccessibleChapter(
 function validateTextAnchor({
   endOffset,
   paragraph,
-  selectedText,
   startOffset,
 }: {
   endOffset: number | null | undefined;
   paragraph: string;
-  selectedText: string | null | undefined;
   startOffset: number | null | undefined;
 }) {
   if (
     typeof startOffset !== "number" ||
     typeof endOffset !== "number" ||
-    !selectedText ||
     startOffset < 0 ||
     endOffset <= startOffset ||
     endOffset > paragraph.length
@@ -146,8 +143,8 @@ function validateTextAnchor({
     return null;
   }
 
-  const expected = paragraph.slice(startOffset, endOffset);
-  if (expected !== selectedText) return null;
+  const selectedText = paragraph.slice(startOffset, endOffset);
+  if (!selectedText) return null;
 
   return {
     endOffset,
@@ -187,7 +184,6 @@ export async function createPersonalAnnotationAction(
     note,
     paragraphIndex,
     points,
-    selectedText,
     startOffset,
     type,
   } = parsed.data;
@@ -201,7 +197,6 @@ export async function createPersonalAnnotationAction(
     ? validateTextAnchor({
         endOffset,
         paragraph,
-        selectedText,
         startOffset,
       })
     : null;

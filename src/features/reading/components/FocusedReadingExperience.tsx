@@ -11,17 +11,15 @@ import {
   type ReaderCommentFeed,
 } from "@/features/reader/comments";
 import { ReaderCommentList } from "@/features/reader/components/ReaderCommentList";
+import {
+  estimateReadingMinutes,
+  formatEstimatedBookPageRange,
+  getEstimatedBookPageRange,
+} from "@/features/reading/metrics";
 import type { PublicChapterDetail } from "@/features/works/types";
 import { ProtectedChapterContent } from "./ProtectedChapterContent";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import styles from "./FocusedReadingExperience.module.css";
-
-function countWords(content: string) {
-  return content
-    .trim()
-    .split(/\s+/u)
-    .filter(Boolean).length;
-}
 
 export function FocusedReadingExperience({
   canComment = false,
@@ -40,8 +38,7 @@ export function FocusedReadingExperience({
   readingProgress?: number | null;
   returnTo?: string;
 }) {
-  const wordCount = countWords(chapter.content);
-  const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+  const readingTime = estimateReadingMinutes(chapter.content);
 
   const paragraphs = chapter.content
     .split(/\n{2,}/u)
@@ -56,6 +53,10 @@ export function FocusedReadingExperience({
         item.archivedAt === null,
     )
     .sort((left, right) => left.position - right.position);
+
+  const estimatedPageLabel = formatEstimatedBookPageRange(
+    getEstimatedBookPageRange(publishedChapters, chapter.id),
+  );
 
   const activeChapterIndex = publishedChapters.findIndex(
     (item) => item.id === chapter.id,
@@ -192,6 +193,8 @@ export function FocusedReadingExperience({
               <span>{chapter.position}. Bölüm</span>
               <span aria-hidden="true">·</span>
               <span>{readingTime} dk okuma</span>
+              <span aria-hidden="true">·</span>
+              <span>{estimatedPageLabel}</span>
             </p>
 
             <h1 id="bolum-basligi">{chapter.title}</h1>
@@ -242,6 +245,7 @@ export function FocusedReadingExperience({
               <strong>
                 {chapter.position} / {publishedChapters.length}
               </strong>
+              <small>{estimatedPageLabel}</small>
             </div>
 
             {nextChapter ? (

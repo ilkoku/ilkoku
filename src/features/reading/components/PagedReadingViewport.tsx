@@ -6,12 +6,85 @@ import {
   useEffect,
   useRef,
   useState,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type UIEvent,
 } from "react";
 
+import type { PersonalDrawingPoint } from "../personal-annotation-types";
 import { READING_PAGE_PROGRESS_EVENT } from "../reading-display-mode";
+import { usePersonalReadingTools } from "./PersonalReadingToolsProvider";
 import styles from "./PagedReadingViewport.module.css";
+
+type DraftPageStroke = {
+  pointerId: number;
+  points: PersonalDrawingPoint[];
+};
+
+type ViewportMetrics = {
+  clientHeight: number;
+  scrollHeight: number;
+  scrollTop: number;
+};
+
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function parseDrawingPoints(pathData: string | null) {
+  if (!pathData) return [];
+
+  try {
+    const parsed = JSON.parse(pathData) as unknown;
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter(
+        (point): point is PersonalDrawingPoint =>
+          typeof point === "object" &&
+          point !== null &&
+          typeof (point as PersonalDrawingPoint).x === "number" &&
+          typeof (point as PersonalDrawingPoint).y === "number",
+      )
+      .map((point) => ({
+        x: clamp01(point.x),
+        y: clamp01(point.y),
+      }))
+      .slice(0, 512);
+  } catch {
+    return [];
+  }
+}
+
+function normalizedBookPoint(
+  viewport: HTMLDivElement,
+  clientX: number,
+  clientY: number,
+): PersonalDrawingPoint {
+  const rectangle = viewport.getBoundingClientRect();
+  const localY = clientY - rectangle.top;
+
+  return {
+    x: clamp01((clientX - rectangle.left) / Math.max(1, rectangle.width)),
+    y: clamp01(
+      (viewport.scrollTop + localY) / Math.max(1, viewport.scrollHeight),
+    ),
+  };
+}
+
+function projectedPointsAttribute(
+  points: PersonalDrawingPoint[],
+  metrics: ViewportMetrics,
+) {
+  return points
+    .map((point) => {
+      const localY =
+        (point.y * metrics.scrollHeight - metrics.scrollTop) /
+        Math.max(1, metrics.clientHeight);
+      return `${point.x * 1000},${localY * 1000}`;
+    })
+    .join(" ");
+}
 
 export function PagedReadingViewport({
   children,
@@ -31,11 +104,33 @@ export function PagedReadingViewport({
   startAtLastPage?: boolean;
 }) {
   const router = useRouter();
+  const tools = usePersonalReadingTools();
   const [pageCount, setPageCount] = useState(1);
   const [pageIndex, setPageIndex] = useState(0);
+  const [viewportMetrics, setViewportMetrics] = useState<ViewportMetrics>({
+    clientHeight: 1,
+    scrollHeight: 1,
+    scrollTop: 0,
+  });
+  const [draftStroke, setDraftStroke] = useState<DraftPageStroke | null>(null);
+  const draftStrokeRef = useRef<DraftPageStroke | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const placeAtLastPageRef = useRef(startAtLastPage);
+  const drawingMode = tools?.activeTool === "pen";
+  const eraserMode = tools?.activeTool === "eraser";
+  const pageDrawings = (tools?.annotations ?? []).filter(
+    (annotation) =>
+      annotation.type === "drawing" && annotation.paragraphIndex === 0,
+  );
+
+  const syncViewportMetrics = useCallback((viewport: HTMLDivElement) => {
+    setViewportMetrics({
+      clientHeight: Math.max(1, viewport.clientHeight),
+      scrollHeight: Math.max(1, viewport.scrollHeight),
+      scrollTop: viewport.scrollTop,
+    });
+  }, []);
 
   const updateProgressDataset = useCallback((viewport: HTMLDivElement) => {
     const chapter = document.getElementById("bolum-metni");
@@ -68,6 +163,7 @@ export function PagedReadingViewport({
         top: Math.max(0, viewport.scrollHeight - height),
         left: 0,
       });
+      syncViewportMetrics(viewport);
       updateProgressDataset(viewport);
       return;
     }
@@ -77,8 +173,9 @@ export function PagedReadingViewport({
       measured - 1,
     );
     setPageIndex(currentIndex);
+    syncViewportMetrics(viewport);
     updateProgressDataset(viewport);
-  }, [updateProgressDataset]);
+  }, [syncViewportMetrics, updateProgressDataset]);
 
   const scrollToPage = useCallback(
     (nextIndex: number) => {
@@ -136,6 +233,12 @@ export function PagedReadingViewport({
     };
   }, []);
 
+  useEffect(() => {
+    if (drawingMode) return;
+    draftStrokeRef.current = null;
+    setDraftStroke(null);
+  }, [drawingMode]);
+
   function handleScroll(event: UIEvent<HTMLDivElement>) {
     const viewport = event.currentTarget;
     const height = Math.max(1, viewport.clientHeight);
@@ -144,7 +247,83 @@ export function PagedReadingViewport({
       Math.max(0, pageCount - 1),
     );
     setPageIndex(nextIndex);
+    syncViewportMetrics(viewport);
     updateProgressDataset(viewport);
+  }
+
+  function beginPageDrawing(event: ReactPointerEvent<HTMLDivElement>) {
+    const viewport = viewportRef.current;
+    if (!tools || !drawingMode || !viewport || event.button !== 0) return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const next = {
+      pointerId: event.pointerId,
+      points: [normalizedBookPoint(viewport, event.clientX, event.clientY)],
+    };
+    draftStrokeRef.current = next;
+    setDraftStroke(next);
+  }
+
+  function continuePageDrawing(event: ReactPointerEvent<HTMLDivElement>) {
+    const viewport = viewportRef.current;
+    const current = draftStrokeRef.current;
+    if (
+      !drawingMode ||
+      !viewport ||
+      !current ||
+      current.pointerId !== event.pointerId ||
+      current.points.length >= 512
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    const point = normalizedBookPoint(viewport, event.clientX, event.clientY);
+    const previous = current.points[current.points.length - 1];
+    const distance = Math.hypot(
+      (point.x - previous.x) * viewport.clientWidth,
+      (point.y - previous.y) * viewport.scrollHeight,
+    );
+    if (distance < 2) return;
+
+    const next = {
+      ...current,
+      points: [...current.points, point],
+    };
+    draftStrokeRef.current = next;
+    setDraftStroke(next);
+  }
+
+  function finishPageDrawing(event: ReactPointerEvent<HTMLDivElement>) {
+    const viewport = viewportRef.current;
+    const current = draftStrokeRef.current;
+    if (
+      !tools ||
+      !drawingMode ||
+      !viewport ||
+      !current ||
+      current.pointerId !== event.pointerId
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    const point = normalizedBookPoint(viewport, event.clientX, event.clientY);
+    const points = [...current.points, point].slice(0, 512);
+    draftStrokeRef.current = null;
+    setDraftStroke(null);
+
+    if (points.length >= 2) {
+      void tools.saveDrawing(0, points);
+    }
+  }
+
+  function cancelPageDrawing(event: ReactPointerEvent<HTMLDivElement>) {
+    const current = draftStrokeRef.current;
+    if (current?.pointerId !== event.pointerId) return;
+    draftStrokeRef.current = null;
+    setDraftStroke(null);
   }
 
   function goPrevious() {
@@ -192,6 +371,58 @@ export function PagedReadingViewport({
         <div className={styles.frame} ref={frameRef}>
           {children}
         </div>
+      </div>
+
+      <div
+        aria-label={drawingMode ? "Kalem çizim alanı" : "Kişisel çizim katmanı"}
+        className={styles.pageToolLayer}
+        data-eraser={eraserMode ? "true" : "false"}
+        data-pen={drawingMode ? "true" : "false"}
+        onPointerCancel={cancelPageDrawing}
+        onPointerDown={beginPageDrawing}
+        onPointerMove={continuePageDrawing}
+        onPointerUp={finishPageDrawing}
+      >
+        <svg
+          aria-hidden="true"
+          className={styles.pageDrawingSvg}
+          preserveAspectRatio="none"
+          viewBox="0 0 1000 1000"
+        >
+          {pageDrawings.map((annotation) => {
+            const points = parseDrawingPoints(annotation.pathData);
+            if (points.length < 2) return null;
+
+            return (
+              <polyline
+                className={styles.pageDrawingPath}
+                data-erasable={eraserMode ? "true" : "false"}
+                fill="none"
+                key={annotation.id}
+                onClick={(event) => {
+                  if (!tools || !eraserMode) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  void tools.deleteAnnotation(annotation.id);
+                }}
+                points={projectedPointsAttribute(points, viewportMetrics)}
+                vectorEffect="non-scaling-stroke"
+              />
+            );
+          })}
+
+          {draftStroke ? (
+            <polyline
+              className={styles.pageDraftDrawingPath}
+              fill="none"
+              points={projectedPointsAttribute(
+                draftStroke.points,
+                viewportMetrics,
+              )}
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : null}
+        </svg>
       </div>
 
       <nav aria-label="Sayfa geçişleri" className={styles.pageControls}>

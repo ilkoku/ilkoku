@@ -61,7 +61,6 @@ const toolCards: Array<{
   label: string;
   tool: Exclude<PersonalReadingActiveTool, null>;
 }> = [
-  { icon: "✎", label: "Kalem", tool: "pen" },
   { icon: "▰", label: "Vurgula", tool: "highlight" },
   { icon: "U", label: "Altını Çiz", tool: "underline" },
   { icon: "⌖", label: "İğne", tool: "pin" },
@@ -74,13 +73,13 @@ const toolInstructions: Record<
   Exclude<PersonalReadingActiveTool, null>,
   string
 > = {
-  pen: "Sayfada basılı tutup sürükle. Bitirmek için Seç'e bas veya Esc kullan.",
+  pen: "Eski çizim kayıtları uyumluluk için korunur.",
   highlight: "Metni seçerek vurgula. Bitirmek için Seç'e bas veya Esc kullan.",
   underline: "Metni seçerek altını çiz. Bitirmek için Seç'e bas veya Esc kullan.",
   pin: "İşaretlemek istediğin paragrafa bir kez tıkla veya dokun.",
   reading_position: "Kaldığın paragrafa bir kez tıkla veya dokun.",
   note: "Not bağlamak istediğin metni seç; yazıp Ctrl/Cmd+Enter ile kaydet.",
-  eraser: "Kalem çizgisinin üzerinden sürükle; diğer kişisel işaretlere tıkla.",
+  eraser: "Kişisel işaretlere tıkla; varsa eski çizgilerin üzerinden sürükle.",
 };
 
 const annotationLabels: Record<

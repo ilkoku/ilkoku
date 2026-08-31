@@ -205,10 +205,8 @@ export function PagedReadingViewport({
         </button>
 
         <div aria-live="polite" className={styles.pageStatus}>
-          <small>Bölüm</small>
-          <strong>
-            Sayfa {pageIndex + 1} / {pageCount}
-          </strong>
+          <small>Sayfa</small>
+          <strong>{pageIndex + 1} / {pageCount}</strong>
           <span>
             Tahmini kitap sayfası {estimatedCurrentBookPage} / {estimatedBookTotalPages}
           </span>

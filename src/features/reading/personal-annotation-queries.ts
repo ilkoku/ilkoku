@@ -21,6 +21,14 @@ function toIso(value: Date | string) {
     : new Date(value).toISOString();
 }
 
+function normalizeUnsignedInteger(value: unknown) {
+  if (value === null || value === undefined) return null;
+  const normalized = Number(value);
+  return Number.isSafeInteger(normalized) && normalized >= 0
+    ? normalized
+    : null;
+}
+
 export async function getPersonalAnnotations(
   userId: string,
   chapterId: string,
@@ -55,6 +63,10 @@ export async function getPersonalAnnotations(
 
   return rows.map((row) => ({
     ...row,
+    anchorVersion: normalizeUnsignedInteger(row.anchorVersion) ?? 1,
+    paragraphIndex: normalizeUnsignedInteger(row.paragraphIndex),
+    startOffset: normalizeUnsignedInteger(row.startOffset),
+    endOffset: normalizeUnsignedInteger(row.endOffset),
     createdAt: toIso(row.createdAt),
     updatedAt: toIso(row.updatedAt),
   }));

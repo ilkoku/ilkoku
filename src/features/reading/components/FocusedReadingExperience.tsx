@@ -16,7 +16,9 @@ import {
   getEstimatedBookPageRange,
 } from "@/features/reading/metrics";
 import type { PublicChapterDetail } from "@/features/works/types";
+import { PagedReadingViewport } from "./PagedReadingViewport";
 import { ProtectedChapterContent } from "./ProtectedChapterContent";
+import { ReadingModeToggle } from "./ReadingModeToggle";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import styles from "./FocusedReadingExperience.module.css";
 
@@ -141,9 +143,11 @@ export function FocusedReadingExperience({
                 <div className="reader-menu__heading">
                   <strong>Okuma Alanı</strong>
                   <small>
-                    Okuma listelerinize ve hesabınıza geçin.
+                    Okuma biçimini seç veya hesabındaki alanlara geç.
                   </small>
                 </div>
+
+                <ReadingModeToggle />
 
                 <nav aria-label="Okuyucu hızlı menüsü">
                   <Link href="/okuyucu">
@@ -217,11 +221,18 @@ export function FocusedReadingExperience({
             id="bolum-metni"
             aria-label={`${chapter.position}. bölüm metni`}
           >
-            <ProtectedChapterContent
-              chapterId={chapter.id}
-              identity={protectionIdentity}
-              paragraphs={paragraphs}
-            />
+            <PagedReadingViewport
+              estimatedBookEndPage={estimatedPages.endPage}
+              estimatedBookStartPage={estimatedPages.startPage}
+              estimatedBookTotalPages={estimatedPages.totalPages}
+              watermarkIdentity={protectionIdentity}
+            >
+              <ProtectedChapterContent
+                chapterId={chapter.id}
+                identity={protectionIdentity}
+                paragraphs={paragraphs}
+              />
+            </PagedReadingViewport>
           </section>
 
           <nav

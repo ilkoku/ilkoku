@@ -27,6 +27,12 @@ type DraftStroke = {
   points: PersonalDrawingPoint[];
 };
 
+type ProtectedInteractionKind =
+  | "contextmenu"
+  | "copy"
+  | "cut"
+  | "dragstart";
+
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
 }
@@ -96,6 +102,12 @@ function getTextOffset(
   return probe.toString().length;
 }
 
+function allowsPersonalToolNativeInteraction(target: EventTarget | null) {
+  return target instanceof Element && Boolean(
+    target.closest("[data-personal-reading-tools-native='true']"),
+  );
+}
+
 function NoteBubble({
   annotation,
   isBusy,
@@ -139,13 +151,14 @@ function NoteBubble({
       {editing ? (
         <textarea
           autoFocus
+          data-personal-reading-tools-native="true"
           maxLength={1200}
           onChange={(event) => setDraft(event.target.value)}
           rows={5}
           value={draft}
         />
       ) : (
-        <p>{annotation.note}</p>
+        <p data-personal-reading-tools-native="true">{annotation.note}</p>
       )}
 
       <footer>
@@ -207,7 +220,15 @@ export function ProtectedChapterContent({
 
   function blockInteraction(
     event: SyntheticEvent<HTMLDivElement>,
+    kind: ProtectedInteractionKind,
   ) {
+    if (
+      kind !== "dragstart" &&
+      allowsPersonalToolNativeInteraction(event.target)
+    ) {
+      return;
+    }
+
     event.preventDefault();
     setNoticeVisible(true);
   }
@@ -462,11 +483,12 @@ export function ProtectedChapterContent({
       ]
         .filter(Boolean)
         .join(" ")}
+      data-personal-reading-tools-permission={activeTool ?? "none"}
       draggable={false}
-      onContextMenu={blockInteraction}
-      onCopy={blockInteraction}
-      onCut={blockInteraction}
-      onDragStart={blockInteraction}
+      onContextMenu={(event) => blockInteraction(event, "contextmenu")}
+      onCopy={(event) => blockInteraction(event, "copy")}
+      onCut={(event) => blockInteraction(event, "cut")}
+      onDragStart={(event) => blockInteraction(event, "dragstart")}
     >
       <div aria-hidden="true" className={styles.watermarkLayer}>
         {watermarkCopies.map((copy) => (
@@ -478,6 +500,9 @@ export function ProtectedChapterContent({
 
       <div
         className={`chapter__body ${styles.content}`}
+        data-personal-reading-tools-selectable={
+          textSelectionMode ? "true" : "false"
+        }
         onPointerUp={handleSelectionEnd}
       >
         {paragraphs.map((paragraph, index) => {

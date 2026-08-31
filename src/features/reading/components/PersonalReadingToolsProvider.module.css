@@ -4,12 +4,16 @@
   width: 17.5rem;
   max-height: min(42rem, calc(100vh - 1rem));
   overflow: auto;
-  border: 1px solid rgba(215, 180, 63, 0.34);
+  border: 1px solid rgba(215, 180, 63, 0.62);
   border-radius: 1rem;
+  outline: 1px solid rgba(0, 0, 0, 0.58);
+  outline-offset: 2px;
   background: color-mix(in srgb, var(--color-background) 97%, transparent);
   box-shadow:
-    0 22px 54px rgba(0, 0, 0, 0.44),
-    0 0 0 1px rgba(255, 255, 255, 0.035) inset;
+    0 30px 76px rgba(0, 0, 0, 0.68),
+    0 0 28px rgba(215, 180, 63, 0.07),
+    0 0 0 1px rgba(215, 180, 63, 0.1) inset,
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
   backdrop-filter: blur(20px) saturate(115%);
 }
 
@@ -25,7 +29,7 @@
   gap: 0.4rem;
   min-height: 3.35rem;
   padding: 0.45rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  border-bottom: 1px solid rgba(215, 180, 63, 0.2);
 }
 
 .palette[data-minimized="true"] .header {
@@ -51,7 +55,7 @@
   border: 0;
   border-radius: 0.55rem;
   background: transparent;
-  color: rgba(238, 241, 246, 0.44);
+  color: rgba(238, 241, 246, 0.58);
   cursor: grab;
   touch-action: none;
 }
@@ -61,7 +65,7 @@
 }
 
 .dragHandle:hover {
-  background: rgba(255, 255, 255, 0.045);
+  background: rgba(255, 255, 255, 0.055);
   color: #d7b43f;
 }
 
@@ -90,15 +94,15 @@
 }
 
 .titleButton strong {
-  color: rgba(248, 248, 246, 0.96);
-  font-size: 0.82rem;
-  font-weight: 760;
+  color: rgba(248, 248, 246, 0.99);
+  font-size: 0.84rem;
+  font-weight: 780;
   letter-spacing: 0.02em;
 }
 
 .titleButton small {
   overflow: hidden;
-  color: rgba(238, 241, 246, 0.48);
+  color: rgba(238, 241, 246, 0.62);
   font-size: 0.62rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -109,15 +113,15 @@
   width: 2rem;
   height: 2rem;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 0.6rem;
   background: transparent;
-  color: rgba(238, 241, 246, 0.68);
+  color: rgba(238, 241, 246, 0.78);
   cursor: pointer;
 }
 
 .minimize:hover {
-  border-color: rgba(215, 180, 63, 0.3);
+  border-color: rgba(215, 180, 63, 0.48);
   color: #d7b43f;
 }
 
@@ -134,10 +138,11 @@
   place-items: center;
   gap: 0.18rem;
   padding: 0.55rem 0.4rem;
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.75rem;
   background: transparent;
-  color: rgba(238, 241, 246, 0.72);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22) inset;
+  color: rgba(238, 241, 246, 0.82);
   cursor: pointer;
   transition:
     border-color 150ms ease,
@@ -147,24 +152,24 @@
 }
 
 .toolCard > span {
-  color: rgba(248, 248, 246, 0.84);
+  color: rgba(248, 248, 246, 0.92);
   font-size: 1.18rem;
   line-height: 1;
 }
 
 .toolCard small {
   font-size: 0.64rem;
-  font-weight: 720;
+  font-weight: 740;
   line-height: 1.15;
   text-align: center;
 }
 
 .toolCard:hover:not(:disabled),
 .toolCard[data-active="true"] {
-  border-color: rgba(215, 180, 63, 0.48);
+  border-color: rgba(215, 180, 63, 0.68);
   box-shadow:
-    0 7px 18px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(215, 180, 63, 0.05) inset;
+    0 9px 22px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(215, 180, 63, 0.1) inset;
   color: #f7f5ef;
   transform: translateY(-1px);
 }
@@ -183,10 +188,10 @@
 .annotationList {
   margin: 0 0.6rem 0.6rem;
   padding: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 0.8rem;
   background: var(--color-background);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
 }
 
 .noteComposer {
@@ -205,7 +210,7 @@
 
 .noteComposer p {
   margin: 0;
-  color: rgba(238, 241, 246, 0.62);
+  color: rgba(238, 241, 246, 0.68);
   font-family: var(--font-playfair), serif;
   font-size: 0.78rem;
   line-height: 1.45;
@@ -215,7 +220,7 @@
   width: 100%;
   min-height: 6.5rem;
   resize: vertical;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 0.7rem;
   outline: none;
   background: transparent;
@@ -227,8 +232,8 @@
 }
 
 .noteComposer textarea:focus {
-  border-color: rgba(215, 180, 63, 0.52);
-  box-shadow: 0 0 0 2px rgba(215, 180, 63, 0.08);
+  border-color: rgba(215, 180, 63, 0.62);
+  box-shadow: 0 0 0 2px rgba(215, 180, 63, 0.1);
 }
 
 .noteComposer > div {
@@ -241,16 +246,16 @@
 .listHeading button {
   min-height: 2rem;
   padding: 0.35rem 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 0.55rem;
   background: transparent;
-  color: rgba(238, 241, 246, 0.72);
+  color: rgba(238, 241, 246, 0.76);
   font-size: 0.67rem;
   cursor: pointer;
 }
 
 .noteComposer button:first-child {
-  border-color: rgba(215, 180, 63, 0.4);
+  border-color: rgba(215, 180, 63, 0.52);
   color: #d7b43f;
 }
 
@@ -279,12 +284,12 @@
 }
 
 .listHeading small {
-  color: rgba(238, 241, 246, 0.46);
+  color: rgba(238, 241, 246, 0.56);
   font-size: 0.62rem;
 }
 
 .listHeading button {
-  color: rgba(238, 241, 246, 0.58);
+  color: rgba(238, 241, 246, 0.66);
 }
 
 .annotationList ol {
@@ -300,7 +305,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 0.65rem;
 }
 
@@ -311,13 +316,13 @@
   padding: 0.55rem 0.6rem;
   border: 0;
   background: transparent;
-  color: rgba(238, 241, 246, 0.66);
+  color: rgba(238, 241, 246, 0.72);
   text-align: left;
   cursor: pointer;
 }
 
 .annotationJump strong {
-  color: rgba(248, 248, 246, 0.88);
+  color: rgba(248, 248, 246, 0.92);
   font-size: 0.67rem;
 }
 
@@ -330,15 +335,15 @@
 }
 
 .annotationJump:hover {
-  background: rgba(215, 180, 63, 0.025);
+  background: rgba(215, 180, 63, 0.035);
 }
 
 .annotationDelete {
   width: 2.1rem;
   border: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
   background: transparent;
-  color: rgba(238, 241, 246, 0.44);
+  color: rgba(238, 241, 246, 0.54);
   cursor: pointer;
 }
 
@@ -349,7 +354,7 @@
 .empty,
 .status {
   margin: 0;
-  color: rgba(238, 241, 246, 0.5);
+  color: rgba(238, 241, 246, 0.58);
   font-size: 0.67rem;
   line-height: 1.45;
 }
@@ -357,7 +362,7 @@
 .status {
   margin: 0 0.6rem 0.65rem;
   padding-top: 0.55rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid rgba(255, 255, 255, 0.11);
 }
 
 @media (max-width: 48rem) {

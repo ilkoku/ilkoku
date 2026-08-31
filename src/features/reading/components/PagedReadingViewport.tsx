@@ -115,9 +115,9 @@ export function PagedReadingViewport({
     scrollTop: 0,
   });
   const [draftStroke, setDraftStroke] = useState<DraftPageStroke | null>(null);
-  const annotationsRef = useRef(annotations);
   const draftStrokeRef = useRef<DraftPageStroke | null>(null);
   const drawingTokenRef = useRef(0);
+  const deletingDrawingIdsRef = useRef(new Set<string>());
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const placeAtLastPageRef = useRef(startAtLastPage);
@@ -127,10 +127,6 @@ export function PagedReadingViewport({
     (annotation) =>
       annotation.type === "drawing" && annotation.paragraphIndex === 0,
   );
-
-  useEffect(() => {
-    annotationsRef.current = annotations;
-  }, [annotations]);
 
   const syncViewportMetrics = useCallback((viewport: HTMLDivElement) => {
     setViewportMetrics({
@@ -318,37 +314,25 @@ export function PagedReadingViewport({
     draftStrokeRef.current = finishedStroke;
     setDraftStroke(finishedStroke);
 
-    if (points.length < 2) return;
+    if (points.length < 2) {
+      draftStrokeRef.current = null;
+      setDraftStroke(null);
+      return;
+    }
 
-    const existingIds = new Set(
-      annotationsRef.current
-        .filter((annotation) => annotation.type === "drawing")
-        .map((annotation) => annotation.id),
-    );
     const token = current.token;
+    void tools.saveDrawing(0, points).then((saved) => {
+      const currentDraft = draftStrokeRef.current;
+      if (!currentDraft || currentDraft.token !== token) return;
 
-    void tools.saveDrawing(0, points).then(() => {
-      window.requestAnimationFrame(() => {
-        const currentDraft = draftStrokeRef.current;
-        if (!currentDraft || currentDraft.token !== token) return;
+      draftStrokeRef.current = null;
+      setDraftStroke(null);
 
-        const saved = annotationsRef.current.some(
-          (annotation) =>
-            annotation.type === "drawing" &&
-            annotation.paragraphIndex === 0 &&
-            !existingIds.has(annotation.id),
+      if (!saved) {
+        tools.setStatus(
+          "Kalem çizgisi kaydedilemedi; çizgi geri alındı. Tekrar deneyebilirsin.",
         );
-
-        if (!saved) {
-          tools.setStatus(
-            "Kalem çizgisi kaydedilemedi. Çizgi ekranda tutuldu; tekrar deneyebilirsin.",
-          );
-          return;
-        }
-
-        draftStrokeRef.current = null;
-        setDraftStroke(null);
-      });
+      }
     });
   }
 
@@ -357,6 +341,22 @@ export function PagedReadingViewport({
     if (current?.pointerId !== event.pointerId) return;
     draftStrokeRef.current = null;
     setDraftStroke(null);
+  }
+
+  function erasePageDrawing(
+    annotationId: string,
+    event: ReactPointerEvent<SVGPolylineElement>,
+  ) {
+    if (!tools || !eraserMode || deletingDrawingIdsRef.current.has(annotationId)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    deletingDrawingIdsRef.current.add(annotationId);
+    void tools.deleteAnnotation(annotationId).finally(() => {
+      deletingDrawingIdsRef.current.delete(annotationId);
+    });
   }
 
   function goPrevious() {
@@ -429,14 +429,16 @@ export function PagedReadingViewport({
             return (
               <polyline
                 className={styles.pageDrawingPath}
+                data-annotation-id={annotation.id}
                 data-erasable={eraserMode ? "true" : "false"}
                 fill="none"
                 key={annotation.id}
-                onClick={(event) => {
-                  if (!tools || !eraserMode) return;
-                  event.preventDefault();
-                  event.stopPropagation();
-                  void tools.deleteAnnotation(annotation.id);
+                onPointerDown={(event) =>
+                  erasePageDrawing(annotation.id, event)
+                }
+                onPointerEnter={(event) => {
+                  if ((event.buttons & 1) !== 1) return;
+                  erasePageDrawing(annotation.id, event);
                 }}
                 points={projectedPointsAttribute(points, viewportMetrics)}
                 vectorEffect="non-scaling-stroke"

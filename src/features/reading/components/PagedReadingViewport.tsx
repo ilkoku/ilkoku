@@ -10,16 +10,8 @@ import {
   type UIEvent,
 } from "react";
 
-import {
-  isReadingDisplayMode,
-  READING_DISPLAY_MODE_EVENT,
-  READING_DISPLAY_MODE_STORAGE_KEY,
-  READING_PAGE_PROGRESS_EVENT,
-  type ReadingDisplayMode,
-} from "../reading-display-mode";
+import { READING_PAGE_PROGRESS_EVENT } from "../reading-display-mode";
 import styles from "./PagedReadingViewport.module.css";
-
-const watermarkCopies = Array.from({ length: 12 }, (_, index) => index);
 
 export function PagedReadingViewport({
   children,
@@ -29,7 +21,6 @@ export function PagedReadingViewport({
   nextChapterHref,
   previousChapterHref,
   startAtLastPage = false,
-  watermarkIdentity,
 }: {
   children: ReactNode;
   estimatedBookEndPage: number;
@@ -38,25 +29,35 @@ export function PagedReadingViewport({
   nextChapterHref?: string | null;
   previousChapterHref?: string | null;
   startAtLastPage?: boolean;
-  watermarkIdentity: string;
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<ReadingDisplayMode>("scroll");
   const [pageCount, setPageCount] = useState(1);
   const [pageIndex, setPageIndex] = useState(0);
   const viewportRef = useRef<HTMLDivElement | null>(null);
-  const scrollTimerRef = useRef<number | null>(null);
+  const frameRef = useRef<HTMLDivElement | null>(null);
   const placeAtLastPageRef = useRef(startAtLastPage);
+
+  const updateProgressDataset = useCallback((viewport: HTMLDivElement) => {
+    const chapter = document.getElementById("bolum-metni");
+    if (!chapter) return;
+
+    const scrollable = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+    const progress =
+      scrollable <= 0
+        ? 100
+        : Math.round((viewport.scrollTop / scrollable) * 100);
+
+    chapter.dataset.readingMode = "paged";
+    chapter.dataset.pageProgress = String(Math.min(100, Math.max(0, progress)));
+    window.dispatchEvent(new Event(READING_PAGE_PROGRESS_EVENT));
+  }, []);
 
   const measurePages = useCallback(() => {
     const viewport = viewportRef.current;
-    if (!viewport || mode !== "paged") return;
+    if (!viewport) return;
 
-    const width = Math.max(1, viewport.clientWidth);
-    const measured = Math.max(
-      1,
-      Math.round(viewport.scrollWidth / width),
-    );
+    const height = Math.max(1, viewport.clientHeight);
+    const measured = Math.max(1, Math.ceil(viewport.scrollHeight / height));
     setPageCount(measured);
 
     if (placeAtLastPageRef.current) {
@@ -64,74 +65,57 @@ export function PagedReadingViewport({
       placeAtLastPageRef.current = false;
       setPageIndex(lastIndex);
       viewport.scrollTo({
-        left: lastIndex * width,
-        top: 0,
+        top: Math.max(0, viewport.scrollHeight - height),
+        left: 0,
       });
+      updateProgressDataset(viewport);
       return;
     }
 
-    setPageIndex((current) => Math.min(current, measured - 1));
-  }, [mode]);
-
-  const scrollToPage = useCallback((nextIndex: number) => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    const clamped = Math.min(
-      Math.max(0, nextIndex),
-      Math.max(0, pageCount - 1),
+    const currentIndex = Math.min(
+      Math.max(0, Math.floor(viewport.scrollTop / height)),
+      measured - 1,
     );
-    setPageIndex(clamped);
-    viewport.scrollTo({
-      behavior: "smooth",
-      left: clamped * viewport.clientWidth,
-      top: 0,
-    });
-  }, [pageCount]);
+    setPageIndex(currentIndex);
+    updateProgressDataset(viewport);
+  }, [updateProgressDataset]);
 
-  useEffect(() => {
-    const saved = window.localStorage.getItem(
-      READING_DISPLAY_MODE_STORAGE_KEY,
-    );
-    const initialFrame = isReadingDisplayMode(saved)
-      ? window.requestAnimationFrame(() => setMode(saved))
-      : 0;
+  const scrollToPage = useCallback(
+    (nextIndex: number) => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
 
-    function handleMode(event: Event) {
-      const nextMode = (event as CustomEvent<unknown>).detail;
-      if (isReadingDisplayMode(nextMode)) setMode(nextMode);
-    }
+      const clamped = Math.min(
+        Math.max(0, nextIndex),
+        Math.max(0, pageCount - 1),
+      );
+      const top = Math.min(
+        clamped * viewport.clientHeight,
+        Math.max(0, viewport.scrollHeight - viewport.clientHeight),
+      );
 
-    window.addEventListener(READING_DISPLAY_MODE_EVENT, handleMode);
-    return () => {
-      if (initialFrame) window.cancelAnimationFrame(initialFrame);
-      window.removeEventListener(READING_DISPLAY_MODE_EVENT, handleMode);
-    };
-  }, []);
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    viewport.scrollTo({ left: 0, top: 0 });
-
-    if (mode !== "paged") {
-      const resetFrame = window.requestAnimationFrame(() => {
-        setPageIndex(0);
-        setPageCount(1);
+      setPageIndex(clamped);
+      viewport.scrollTo({
+        behavior: "smooth",
+        left: 0,
+        top,
       });
-      return () => window.cancelAnimationFrame(resetFrame);
-    }
+    },
+    [pageCount],
+  );
 
-    let frame = window.requestAnimationFrame(() => {
-      if (!placeAtLastPageRef.current) setPageIndex(0);
-      measurePages();
-    });
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const frameElement = frameRef.current;
+    if (!viewport) return;
+
+    let frame = window.requestAnimationFrame(measurePages);
     const observer = new ResizeObserver(() => {
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(measurePages);
     });
     observer.observe(viewport);
+    if (frameElement) observer.observe(frameElement);
 
     if (document.fonts?.ready) {
       void document.fonts.ready.then(measurePages);
@@ -141,52 +125,26 @@ export function PagedReadingViewport({
       window.cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [measurePages, mode]);
+  }, [measurePages]);
 
   useEffect(() => {
     const chapter = document.getElementById("bolum-metni");
-    if (!chapter) return;
-
-    if (mode === "paged") {
-      chapter.dataset.readingMode = "paged";
-      chapter.dataset.pageProgress = String(
-        Math.round(((pageIndex + 1) / Math.max(1, pageCount)) * 100),
-      );
-    } else {
+    return () => {
+      if (!chapter) return;
       delete chapter.dataset.readingMode;
       delete chapter.dataset.pageProgress;
-    }
-
-    window.dispatchEvent(new Event(READING_PAGE_PROGRESS_EVENT));
-  }, [mode, pageCount, pageIndex]);
-
-  useEffect(() => () => {
-    if (scrollTimerRef.current !== null) {
-      window.clearTimeout(scrollTimerRef.current);
-    }
+    };
   }, []);
 
   function handleScroll(event: UIEvent<HTMLDivElement>) {
-    if (mode !== "paged") return;
-
     const viewport = event.currentTarget;
-    const width = Math.max(1, viewport.clientWidth);
+    const height = Math.max(1, viewport.clientHeight);
     const nextIndex = Math.min(
-      Math.max(0, Math.round(viewport.scrollLeft / width)),
+      Math.max(0, Math.floor(viewport.scrollTop / height)),
       Math.max(0, pageCount - 1),
     );
     setPageIndex(nextIndex);
-
-    if (scrollTimerRef.current !== null) {
-      window.clearTimeout(scrollTimerRef.current);
-    }
-    scrollTimerRef.current = window.setTimeout(() => {
-      viewport.scrollTo({
-        behavior: "smooth",
-        left: nextIndex * width,
-        top: 0,
-      });
-    }, 120);
+    updateProgressDataset(viewport);
   }
 
   function goPrevious() {
@@ -224,27 +182,19 @@ export function PagedReadingViewport({
   const atLastBookPage = pageIndex >= pageCount - 1 && !nextChapterHref;
 
   return (
-    <div className={styles.shell} data-mode={mode}>
+    <div className={styles.shell}>
       <div
-        aria-label={mode === "paged" ? "Sayfalı okuma alanı" : undefined}
+        aria-label="Okuma alanı"
         className={styles.viewport}
         onScroll={handleScroll}
         ref={viewportRef}
       >
-        <div aria-hidden="true" className={styles.watermark}>
-          {watermarkCopies.map((copy) => (
-            <span key={copy}>
-              {watermarkIdentity} · İlkOku güvenli okuma
-            </span>
-          ))}
+        <div className={styles.frame} ref={frameRef}>
+          {children}
         </div>
-        <div className={styles.frame}>{children}</div>
       </div>
 
-      <nav
-        aria-label="Sayfa geçişleri"
-        className={styles.pageControls}
-      >
+      <nav aria-label="Sayfa geçişleri" className={styles.pageControls}>
         <button
           disabled={atFirstBookPage}
           onClick={goPrevious}
@@ -255,9 +205,9 @@ export function PagedReadingViewport({
         </button>
 
         <div aria-live="polite" className={styles.pageStatus}>
-          <small>Sayfalı Okuma</small>
+          <small>Bölüm</small>
           <strong>
-            Bölüm sayfası {pageIndex + 1} / {pageCount}
+            Sayfa {pageIndex + 1} / {pageCount}
           </strong>
           <span>
             Tahmini kitap sayfası {estimatedCurrentBookPage} / {estimatedBookTotalPages}

@@ -5,108 +5,73 @@
 .viewport {
   position: relative;
   width: 100%;
+  height: clamp(27rem, 58vh, 36rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(215, 180, 63, 0.38) rgba(255, 255, 255, 0.06);
+  scroll-behavior: smooth;
+}
+
+.viewport::-webkit-scrollbar {
+  width: 0.42rem;
+}
+
+.viewport::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+}
+
+.viewport::-webkit-scrollbar-thumb {
+  background: rgba(215, 180, 63, 0.38);
+  border-radius: 999px;
 }
 
 .frame {
   width: 100%;
+  min-height: 100%;
+  padding-right: 0.65rem;
 }
 
-.shell[data-mode="paged"] .viewport {
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  scroll-behavior: smooth;
+.frame > * {
+  width: 100%;
 }
 
-.shell[data-mode="paged"] .viewport::-webkit-scrollbar {
-  display: none;
-}
-
-.shell[data-mode="paged"] .frame > * {
+.frame :global(.chapter__body) {
   width: 100%;
   max-width: none !important;
-}
-
-.shell[data-mode="paged"] .frame > * > [aria-hidden="true"]:first-child {
-  display: none;
-}
-
-.shell[data-mode="paged"] .frame :global(.chapter__body) {
-  width: 100%;
-  max-width: none !important;
-  height: clamp(27rem, 58vh, 36rem);
   margin: 0 !important;
-  column-count: 1;
-  column-fill: auto;
-  column-gap: 0;
-  overflow: visible;
-}
-
-.shell[data-mode="paged"] .frame :global(.chapter__body > *) {
-  break-inside: avoid-column;
-}
-
-.watermark {
-  position: sticky;
-  top: 0;
-  left: 0;
-  z-index: 3;
-  display: none;
-  width: 100%;
-  height: 0;
-  pointer-events: none;
-}
-
-.shell[data-mode="paged"] .watermark {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 7rem;
-  align-items: center;
-  overflow: visible;
-  transform: translateY(2rem);
-}
-
-.watermark span {
-  color: rgba(109, 40, 217, 0.16);
-  font-size: 0.62rem;
-  font-weight: 750;
-  letter-spacing: 0.05em;
-  line-height: 1.4;
-  text-align: center;
-  text-transform: uppercase;
-  transform: rotate(-24deg);
-  white-space: nowrap;
 }
 
 .pageControls {
-  display: none;
-}
-
-.shell[data-mode="paged"] .pageControls {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 0.65rem;
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .pageControls button {
   display: inline-flex;
-  min-height: 2.75rem;
+  min-height: 2.85rem;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 0.7rem;
+  padding: 0.55rem 0.82rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.72rem;
   background: transparent;
-  color: rgba(238, 241, 246, 0.78);
+  color: rgba(238, 241, 246, 0.8);
   font: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.73rem;
+  font-weight: 720;
   cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    color 150ms ease;
 }
 
 .pageControls button:first-child {
@@ -118,18 +83,19 @@
 }
 
 .pageControls button:hover:not(:disabled) {
-  border-color: rgba(215, 180, 63, 0.48);
+  border-color: rgba(215, 180, 63, 0.52);
+  background: rgba(215, 180, 63, 0.035);
   color: #d7b43f;
 }
 
 .pageControls button:disabled {
   cursor: default;
-  opacity: 0.3;
+  opacity: 0.28;
 }
 
 .pageStatus {
   display: grid;
-  min-width: 10.5rem;
+  min-width: 11rem;
   gap: 0.18rem;
   text-align: center;
 }
@@ -138,28 +104,27 @@
   color: rgba(238, 241, 246, 0.5);
   font-size: 0.6rem;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .pageStatus strong {
   color: #d7b43f;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
 }
 
 .pageStatus span {
-  color: rgba(238, 241, 246, 0.58);
-  font-size: 0.63rem;
+  color: rgba(238, 241, 246, 0.6);
+  font-size: 0.64rem;
 }
 
 @media (max-width: 48rem) {
-  .shell[data-mode="paged"] .frame :global(.chapter__body) {
+  .viewport {
     height: clamp(25rem, 60vh, 32rem);
   }
 
-  .shell[data-mode="paged"] .watermark {
-    grid-template-columns: minmax(0, 1fr);
-    grid-auto-rows: 6rem;
+  .frame {
+    padding-right: 0.35rem;
   }
 
   .pageControls {

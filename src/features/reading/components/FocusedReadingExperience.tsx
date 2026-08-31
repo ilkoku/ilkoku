@@ -18,7 +18,6 @@ import {
 import type { PublicChapterDetail } from "@/features/works/types";
 import { PagedReadingViewport } from "./PagedReadingViewport";
 import { ProtectedChapterContent } from "./ProtectedChapterContent";
-import { ReadingModeToggle } from "./ReadingModeToggle";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import styles from "./FocusedReadingExperience.module.css";
 
@@ -128,8 +127,6 @@ export function FocusedReadingExperience({
           </div>
 
           <div className="reader-actions">
-            <ReadingModeToggle compact />
-
             <details className="reader-menu">
               <summary>
                 <span>Okuma Menüsü</span>
@@ -147,12 +144,8 @@ export function FocusedReadingExperience({
               >
                 <div className="reader-menu__heading">
                   <strong>Okuma Alanı</strong>
-                  <small>
-                    Okuma biçimini seç veya hesabındaki alanlara geç.
-                  </small>
+                  <small>Hesabındaki okuma alanlarına geç.</small>
                 </div>
-
-                <ReadingModeToggle />
 
                 <nav aria-label="Okuyucu hızlı menüsü">
                   <Link href="/okuyucu">
@@ -239,7 +232,6 @@ export function FocusedReadingExperience({
                   : null
               }
               startAtLastPage={startAtLastPage}
-              watermarkIdentity={protectionIdentity}
             >
               <ProtectedChapterContent
                 chapterId={chapter.id}

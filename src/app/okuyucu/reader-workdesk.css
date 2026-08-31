@@ -266,6 +266,15 @@
   flex: 0 0 auto;
 }
 
+.reader-workdesk__hidden-drawer[open]::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: min(340px, 82vw);
+  height: 0.55rem;
+}
+
 .reader-workdesk__hidden-drawer > summary {
   list-style: none;
   border-color: rgba(255, 255, 255, 0.14);

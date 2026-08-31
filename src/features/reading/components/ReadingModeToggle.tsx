@@ -17,7 +17,13 @@ export function ReadingModeToggle() {
     const saved = window.localStorage.getItem(
       READING_DISPLAY_MODE_STORAGE_KEY,
     );
-    if (isReadingDisplayMode(saved)) setMode(saved);
+    const frame = isReadingDisplayMode(saved)
+      ? window.requestAnimationFrame(() => setMode(saved))
+      : 0;
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   function chooseMode(nextMode: ReadingDisplayMode) {

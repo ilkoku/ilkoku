@@ -10,7 +10,11 @@ import {
 } from "../reading-display-mode";
 import styles from "./ReadingModeToggle.module.css";
 
-export function ReadingModeToggle() {
+export function ReadingModeToggle({
+  compact = false,
+}: {
+  compact?: boolean;
+}) {
   const [mode, setMode] = useState<ReadingDisplayMode>("scroll");
 
   useEffect(() => {
@@ -21,8 +25,15 @@ export function ReadingModeToggle() {
       ? window.requestAnimationFrame(() => setMode(saved))
       : 0;
 
+    function handleMode(event: Event) {
+      const nextMode = (event as CustomEvent<unknown>).detail;
+      if (isReadingDisplayMode(nextMode)) setMode(nextMode);
+    }
+
+    window.addEventListener(READING_DISPLAY_MODE_EVENT, handleMode);
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener(READING_DISPLAY_MODE_EVENT, handleMode);
     };
   }, []);
 
@@ -42,14 +53,16 @@ export function ReadingModeToggle() {
   return (
     <section
       aria-label="Okuma biçimi"
-      className={styles.modeControl}
+      className={`${styles.modeControl} ${compact ? styles.compact : ""}`}
     >
-      <div className={styles.heading}>
-        <strong>Okuma Biçimi</strong>
-        <small>
-          Kaydırarak oku veya kitabı sayfa sayfa ilerlet.
-        </small>
-      </div>
+      {compact ? null : (
+        <div className={styles.heading}>
+          <strong>Okuma Biçimi</strong>
+          <small>
+            Kaydırarak oku veya kitabı sayfa sayfa ilerlet.
+          </small>
+        </div>
+      )}
 
       <div className={styles.options} role="group" aria-label="Okuma biçimi seçimi">
         <button

@@ -37,7 +37,7 @@ export function PagedReadingViewport({
   const [pageCount, setPageCount] = useState(1);
   const [pageIndex, setPageIndex] = useState(0);
   const viewportRef = useRef<HTMLDivElement | null>(null);
-  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollTimerRef = useRef<number | null>(null);
 
   const measurePages = useCallback(() => {
     const viewport = viewportRef.current;
@@ -72,7 +72,9 @@ export function PagedReadingViewport({
     const saved = window.localStorage.getItem(
       READING_DISPLAY_MODE_STORAGE_KEY,
     );
-    if (isReadingDisplayMode(saved)) setMode(saved);
+    const initialFrame = isReadingDisplayMode(saved)
+      ? window.requestAnimationFrame(() => setMode(saved))
+      : 0;
 
     function handleMode(event: Event) {
       const nextMode = (event as CustomEvent<unknown>).detail;
@@ -81,6 +83,7 @@ export function PagedReadingViewport({
 
     window.addEventListener(READING_DISPLAY_MODE_EVENT, handleMode);
     return () => {
+      if (initialFrame) window.cancelAnimationFrame(initialFrame);
       window.removeEventListener(READING_DISPLAY_MODE_EVENT, handleMode);
     };
   }, []);
@@ -90,14 +93,19 @@ export function PagedReadingViewport({
     if (!viewport) return;
 
     viewport.scrollTo({ left: 0, top: 0 });
-    setPageIndex(0);
 
     if (mode !== "paged") {
-      setPageCount(1);
-      return;
+      const resetFrame = window.requestAnimationFrame(() => {
+        setPageIndex(0);
+        setPageCount(1);
+      });
+      return () => window.cancelAnimationFrame(resetFrame);
     }
 
-    let frame = window.requestAnimationFrame(measurePages);
+    let frame = window.requestAnimationFrame(() => {
+      setPageIndex(0);
+      measurePages();
+    });
     const observer = new ResizeObserver(() => {
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(measurePages);
@@ -132,7 +140,7 @@ export function PagedReadingViewport({
   }, [mode, pageCount, pageIndex]);
 
   useEffect(() => () => {
-    if (scrollTimerRef.current) {
+    if (scrollTimerRef.current !== null) {
       window.clearTimeout(scrollTimerRef.current);
     }
   }, []);
@@ -148,7 +156,7 @@ export function PagedReadingViewport({
     );
     setPageIndex(nextIndex);
 
-    if (scrollTimerRef.current) {
+    if (scrollTimerRef.current !== null) {
       window.clearTimeout(scrollTimerRef.current);
     }
     scrollTimerRef.current = window.setTimeout(() => {

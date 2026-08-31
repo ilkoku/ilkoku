@@ -233,12 +233,6 @@ export function PagedReadingViewport({
     };
   }, []);
 
-  useEffect(() => {
-    if (drawingMode) return;
-    draftStrokeRef.current = null;
-    setDraftStroke(null);
-  }, [drawingMode]);
-
   function handleScroll(event: UIEvent<HTMLDivElement>) {
     const viewport = event.currentTarget;
     const height = Math.max(1, viewport.clientHeight);

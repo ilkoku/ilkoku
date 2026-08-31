@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
@@ -40,13 +41,13 @@ type PersonalReadingToolsContextValue = {
   annotations: PersonalAnnotationRecord[];
   applyParagraphAnchor: (paragraphIndex: number) => Promise<void>;
   applyTextAnchor: (anchor: PersonalTextAnchor) => Promise<void>;
-  deleteAnnotation: (annotationId: string) => Promise<void>;
+  deleteAnnotation: (annotationId: string) => Promise<boolean>;
   isBusy: boolean;
   openNoteId: string | null;
   saveDrawing: (
     paragraphIndex: number,
     points: PersonalDrawingPoint[],
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   setOpenNoteId: (annotationId: string | null) => void;
   setStatus: (message: string) => void;
   updateNote: (annotationId: string, note: string) => Promise<boolean>;
@@ -73,13 +74,13 @@ const toolInstructions: Record<
   Exclude<PersonalReadingActiveTool, null>,
   string
 > = {
-  pen: "Metnin üzerinde basılı tutup sürükleyerek çiz.",
-  highlight: "Metin içinde vurgulamak istediğin kısmı seç.",
-  underline: "Metin içinde altını çizmek istediğin kısmı seç.",
-  pin: "İşaretlemek istediğin paragrafa tıkla veya dokun.",
-  reading_position: "Kaldığın paragrafın üzerine tıkla veya dokun.",
-  note: "Not bağlamak istediğin metni seç.",
-  eraser: "Silmek istediğin kişisel işaretin üzerine tıkla veya dokun.",
+  pen: "Sayfada basılı tutup sürükle. Bitirmek için Seç'e bas veya Esc kullan.",
+  highlight: "Metni seçerek vurgula. Bitirmek için Seç'e bas veya Esc kullan.",
+  underline: "Metni seçerek altını çiz. Bitirmek için Seç'e bas veya Esc kullan.",
+  pin: "İşaretlemek istediğin paragrafa bir kez tıkla veya dokun.",
+  reading_position: "Kaldığın paragrafa bir kez tıkla veya dokun.",
+  note: "Not bağlamak istediğin metni seç; yazıp Ctrl/Cmd+Enter ile kaydet.",
+  eraser: "Kalem çizgisinin üzerinden sürükle; diğer kişisel işaretlere tıkla.",
 };
 
 const annotationLabels: Record<
@@ -109,7 +110,7 @@ function annotationPreview(annotation: PersonalAnnotationRecord) {
 
 function toolStatus(tool: PersonalReadingActiveTool) {
   if (!tool) {
-    return "Araç seç. İşaretlerin yalnızca sana görünür.";
+    return "Seçim modu · sayfayı normal kullanabilirsin. İşaretlerin yalnızca sana görünür.";
   }
 
   const label = toolCards.find((card) => card.tool === tool)?.label ?? "Araç";
@@ -143,7 +144,7 @@ export function PersonalReadingToolsProvider({
     useState<PersonalTextAnchor | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [status, setStatus] = useState(
-    "Araç seç. İşaretlerin yalnızca sana görünür.",
+    "Seçim modu · sayfayı normal kullanabilirsin. İşaretlerin yalnızca sana görünür.",
   );
   const [position, setPosition] = useState({ x: 18, y: 150 });
   const dragRef = useRef<{
@@ -153,6 +154,13 @@ export function PersonalReadingToolsProvider({
   } | null>(null);
 
   const storageKey = `ilkoku:reading-tools:${userKey}:position:v1`;
+
+  const returnToSelectMode = useCallback((message = "Seçim modu.") => {
+    setActiveTool(null);
+    setPendingNote(null);
+    setNoteDraft("");
+    setStatus(message);
+  }, []);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 48rem)");
@@ -196,6 +204,18 @@ export function PersonalReadingToolsProvider({
     }, 4500);
     return () => window.clearTimeout(timer);
   }, [status]);
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      if (!activeTool && !pendingNote) return;
+      event.preventDefault();
+      returnToSelectMode("Seçim modu · araç kapatıldı.");
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [activeTool, pendingNote, returnToSelectMode]);
 
   const addSavedAnnotation = useCallback(
     (annotation: PersonalAnnotationRecord) => {
@@ -257,7 +277,7 @@ export function PersonalReadingToolsProvider({
       if (activeTool === "note") {
         setPendingNote(anchor);
         setNoteDraft("");
-        setStatus("Seçili metne eklemek istediğin notu yaz.");
+        setStatus("Yorumunu yaz · Ctrl/Cmd+Enter ile kaydet, Esc ile vazgeç.");
         return;
       }
 
@@ -284,11 +304,15 @@ export function PersonalReadingToolsProvider({
         type: tool,
       });
 
-      if (saved && tool === "reading_position") {
-        setActiveTool(null);
+      if (saved) {
+        returnToSelectMode(
+          tool === "reading_position"
+            ? "Kaldığın yer kaydedildi · Seçim modu."
+            : "İğne eklendi · Seçim modu.",
+        );
       }
     },
-    [activeTool, createAnnotation],
+    [activeTool, createAnnotation, returnToSelectMode],
   );
 
   const saveDrawing = useCallback(
@@ -296,26 +320,27 @@ export function PersonalReadingToolsProvider({
       paragraphIndex: number,
       points: PersonalDrawingPoint[],
     ) => {
-      if (activeTool !== "pen" || points.length < 2) return;
-      await createAnnotation({
+      if (activeTool !== "pen" || points.length < 2) return false;
+      const saved = await createAnnotation({
         paragraphIndex,
         points,
         type: "drawing",
       });
+      return Boolean(saved);
     },
     [activeTool, createAnnotation],
   );
 
   const deleteAnnotation = useCallback(
     async (annotationId: string) => {
-      if (isBusy) return;
+      if (isBusy) return false;
       setIsBusy(true);
 
       try {
         const result = await deletePersonalAnnotationAction(annotationId);
         if (result.status !== "deleted") {
           setStatus("İşaret silinemedi.");
-          return;
+          return false;
         }
 
         setAnnotations((current) =>
@@ -323,8 +348,10 @@ export function PersonalReadingToolsProvider({
         );
         if (openNoteId === annotationId) setOpenNoteId(null);
         setStatus("İşaret silindi.");
+        return true;
       } catch {
         setStatus("İşaret silinemedi.");
+        return false;
       } finally {
         setIsBusy(false);
       }
@@ -384,6 +411,28 @@ export function PersonalReadingToolsProvider({
     setPendingNote(null);
     setNoteDraft("");
     setOpenNoteId(saved.id);
+    setActiveTool(null);
+    setStatus("Not kaydedildi · Seçim modu.");
+  }
+
+  function handleNoteComposerKeyDown(
+    event: ReactKeyboardEvent<HTMLTextAreaElement>,
+  ) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      returnToSelectMode("Not iptal edildi · Seçim modu.");
+      return;
+    }
+
+    if (
+      event.key === "Enter" &&
+      (event.ctrlKey || event.metaKey) &&
+      noteDraft.trim() &&
+      !isBusy
+    ) {
+      event.preventDefault();
+      void savePendingNote();
+    }
   }
 
   async function clearAllAnnotations() {
@@ -420,7 +469,11 @@ export function PersonalReadingToolsProvider({
     setActiveTool(nextTool);
     setPendingNote(null);
     setNoteDraft("");
-    setStatus(nextTool ? toolStatus(nextTool) : "Araç kapatıldı.");
+    setStatus(
+      nextTool
+        ? toolStatus(nextTool)
+        : "Seçim modu · araç kapatıldı.",
+    );
   }
 
   function showAnnotation(annotation: PersonalAnnotationRecord) {
@@ -556,6 +609,20 @@ export function PersonalReadingToolsProvider({
         {!isMinimized ? (
           <>
             <div className={styles.toolGrid}>
+              <button
+                aria-pressed={activeTool === null}
+                className={styles.toolCard}
+                data-active={activeTool === null ? "true" : "false"}
+                onClick={() =>
+                  returnToSelectMode("Seçim modu · sayfayı normal kullanabilirsin.")
+                }
+                title="Araç modundan çık ve normal okumaya dön. Esc de aynı işi yapar."
+                type="button"
+              >
+                <span aria-hidden="true">↖</span>
+                <small>Seç</small>
+              </button>
+
               {toolCards.map((card) => (
                 <button
                   aria-pressed={activeTool === card.tool}
@@ -592,6 +659,7 @@ export function PersonalReadingToolsProvider({
                   autoFocus
                   maxLength={1200}
                   onChange={(event) => setNoteDraft(event.target.value)}
+                  onKeyDown={handleNoteComposerKeyDown}
                   placeholder="Bu kısım hakkında kişisel notunu yaz…"
                   rows={4}
                   value={noteDraft}
@@ -600,15 +668,16 @@ export function PersonalReadingToolsProvider({
                   <button
                     disabled={!noteDraft.trim() || isBusy}
                     onClick={() => void savePendingNote()}
+                    title="Ctrl/Cmd+Enter"
                     type="button"
                   >
                     Kaydet
                   </button>
                   <button
-                    onClick={() => {
-                      setPendingNote(null);
-                      setNoteDraft("");
-                    }}
+                    onClick={() =>
+                      returnToSelectMode("Not iptal edildi · Seçim modu.")
+                    }
+                    title="Esc"
                     type="button"
                   >
                     Vazgeç

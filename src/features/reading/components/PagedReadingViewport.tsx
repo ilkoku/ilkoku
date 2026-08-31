@@ -19,6 +19,7 @@ import styles from "./PagedReadingViewport.module.css";
 type DraftPageStroke = {
   pointerId: number;
   points: PersonalDrawingPoint[];
+  token: number;
 };
 
 type ViewportMetrics = {
@@ -105,6 +106,7 @@ export function PagedReadingViewport({
 }) {
   const router = useRouter();
   const tools = usePersonalReadingTools();
+  const annotations = tools?.annotations ?? [];
   const [pageCount, setPageCount] = useState(1);
   const [pageIndex, setPageIndex] = useState(0);
   const [viewportMetrics, setViewportMetrics] = useState<ViewportMetrics>({
@@ -113,16 +115,22 @@ export function PagedReadingViewport({
     scrollTop: 0,
   });
   const [draftStroke, setDraftStroke] = useState<DraftPageStroke | null>(null);
+  const annotationsRef = useRef(annotations);
   const draftStrokeRef = useRef<DraftPageStroke | null>(null);
+  const drawingTokenRef = useRef(0);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const placeAtLastPageRef = useRef(startAtLastPage);
   const drawingMode = tools?.activeTool === "pen";
   const eraserMode = tools?.activeTool === "eraser";
-  const pageDrawings = (tools?.annotations ?? []).filter(
+  const pageDrawings = annotations.filter(
     (annotation) =>
       annotation.type === "drawing" && annotation.paragraphIndex === 0,
   );
+
+  useEffect(() => {
+    annotationsRef.current = annotations;
+  }, [annotations]);
 
   const syncViewportMetrics = useCallback((viewport: HTMLDivElement) => {
     setViewportMetrics({
@@ -254,6 +262,7 @@ export function PagedReadingViewport({
     const next = {
       pointerId: event.pointerId,
       points: [normalizedBookPoint(viewport, event.clientX, event.clientY)],
+      token: ++drawingTokenRef.current,
     };
     draftStrokeRef.current = next;
     setDraftStroke(next);
@@ -305,12 +314,42 @@ export function PagedReadingViewport({
     event.preventDefault();
     const point = normalizedBookPoint(viewport, event.clientX, event.clientY);
     const points = [...current.points, point].slice(0, 512);
-    draftStrokeRef.current = null;
-    setDraftStroke(null);
+    const finishedStroke = { ...current, points };
+    draftStrokeRef.current = finishedStroke;
+    setDraftStroke(finishedStroke);
 
-    if (points.length >= 2) {
-      void tools.saveDrawing(0, points);
-    }
+    if (points.length < 2) return;
+
+    const existingIds = new Set(
+      annotationsRef.current
+        .filter((annotation) => annotation.type === "drawing")
+        .map((annotation) => annotation.id),
+    );
+    const token = current.token;
+
+    void tools.saveDrawing(0, points).then(() => {
+      window.requestAnimationFrame(() => {
+        const currentDraft = draftStrokeRef.current;
+        if (!currentDraft || currentDraft.token !== token) return;
+
+        const saved = annotationsRef.current.some(
+          (annotation) =>
+            annotation.type === "drawing" &&
+            annotation.paragraphIndex === 0 &&
+            !existingIds.has(annotation.id),
+        );
+
+        if (!saved) {
+          tools.setStatus(
+            "Kalem çizgisi kaydedilemedi. Çizgi ekranda tutuldu; tekrar deneyebilirsin.",
+          );
+          return;
+        }
+
+        draftStrokeRef.current = null;
+        setDraftStroke(null);
+      });
+    });
   }
 
   function cancelPageDrawing(event: ReactPointerEvent<HTMLDivElement>) {

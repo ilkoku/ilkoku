@@ -83,13 +83,16 @@ export function FocusedReadingExperience({
 
   const encodedReturnTo = encodeURIComponent(returnTo);
   const currentBookPath = `/kitap/${chapter.work.slug}`;
-  const bookReturnPath =
+  const returnIsBookPage =
     returnTo === currentBookPath ||
-    returnTo.startsWith(`${currentBookPath}?`)
-      ? returnTo
-      : `${currentBookPath}?from=${encodedReturnTo}`;
+    returnTo.startsWith(`${currentBookPath}?`);
+  const bookReturnPath = returnIsBookPage
+    ? returnTo
+    : `${currentBookPath}?from=${encodedReturnTo}`;
   const currentChapterPath =
     `/oku/${chapter.work.slug}/bolum-${chapter.position}?from=${encodedReturnTo}`;
+  const passportPath =
+    `/kitap/${chapter.work.slug}/pasaport?from=${encodeURIComponent(currentChapterPath)}`;
 
   function getChapterHref(position: number, edge?: "last") {
     const edgeParameter = edge === "last" ? "&sayfa=son" : "";
@@ -141,44 +144,31 @@ export function FocusedReadingExperience({
                 className="reader-menu__popover"
               >
                 <div className="reader-menu__heading">
-                  <strong>Okuma Alanı</strong>
-                  <small>Hesabındaki okuma alanlarına geç.</small>
+                  <strong>Okuma Menüsü</strong>
+                  <small>Eser ve geldiğin çalışma alanı arasında geç.</small>
                 </div>
 
-                <nav aria-label="Okuyucu hızlı menüsü">
-                  <Link href="/okuyucu">
-                    <span>Okuyucu Ana Sayfası</span>
-                    <span aria-hidden="true">→</span>
-                  </Link>
-
-                  <Link href="/kesfet">
-                    <span>Keşfet</span>
-                    <span aria-hidden="true">→</span>
-                  </Link>
-
-                  <Link href="/okumaya-devam">
-                    <span>Okumaya Devam Et</span>
-                    <span aria-hidden="true">→</span>
-                  </Link>
-
-                  <Link href="/tamamlanan-eserler">
-                    <span>Tamamlanan Eserler</span>
-                    <span aria-hidden="true">→</span>
-                  </Link>
-
-                  <Link href="/favorilerim">
-                    <span>Favorilerim</span>
-                    <span aria-hidden="true">→</span>
-                  </Link>
-
-                  <Link href="/bildirimler">
-                    <span>Bildirimler</span>
-                    <span aria-hidden="true">→</span>
-                  </Link>
+                <nav aria-label="Ortak okuma menüsü">
+                  {!returnIsBookPage && (
+                    <Link href={returnTo}>
+                      <span>Geldiğin Yere Dön</span>
+                      <span aria-hidden="true">←</span>
+                    </Link>
+                  )}
 
                   <Link href={bookReturnPath}>
-                    <span>Eser Sayfasına Dön</span>
-                    <span aria-hidden="true">←</span>
+                    <span>Eser Sayfası</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+
+                  <Link href={passportPath}>
+                    <span>Eser Pasaportu</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+
+                  <Link href="/">
+                    <span>İlkOku Ana Sayfa</span>
+                    <span aria-hidden="true">→</span>
                   </Link>
                 </nav>
               </div>

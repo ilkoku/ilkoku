@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -10,6 +11,7 @@ import {
 import type {
   PersonalAnnotationRecord,
   PersonalDrawingPoint,
+  PersonalTextAnchor,
 } from "../personal-annotation-types";
 import {
   usePersonalReadingTools,
@@ -26,6 +28,16 @@ type DraftStroke = {
   pointerId: number;
   points: PersonalDrawingPoint[];
 };
+
+type TextSelectionSnapshot = {
+  anchor: PersonalTextAnchor;
+  range: Range;
+};
+
+type TextSelectionReadResult =
+  | { status: "none" }
+  | { status: "invalid" }
+  | { status: "valid"; snapshot: TextSelectionSnapshot };
 
 type ProtectedInteractionKind =
   | "contextmenu"
@@ -100,6 +112,70 @@ function getTextOffset(
   probe.selectNodeContents(paragraph);
   probe.setEnd(node, offset);
   return probe.toString().length;
+}
+
+function readTextSelection(paragraphs: string[]): TextSelectionReadResult {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) {
+    return { status: "none" };
+  }
+
+  const range = selection.getRangeAt(0);
+  const startParagraph = getParagraphFromNode(range.startContainer);
+  const endParagraph = getParagraphFromNode(range.endContainer);
+
+  if (!startParagraph || !endParagraph || startParagraph !== endParagraph) {
+    return { status: "invalid" };
+  }
+
+  const paragraphIndex = Number(
+    startParagraph.dataset.annotationTextParagraph,
+  );
+  const startOffset = getTextOffset(
+    startParagraph,
+    range.startContainer,
+    range.startOffset,
+  );
+  const endOffset = getTextOffset(
+    startParagraph,
+    range.endContainer,
+    range.endOffset,
+  );
+  const sourceParagraph = paragraphs[paragraphIndex];
+  const selectedText = sourceParagraph?.slice(startOffset, endOffset) ?? "";
+
+  if (
+    !Number.isInteger(paragraphIndex) ||
+    paragraphIndex < 0 ||
+    endOffset <= startOffset ||
+    !selectedText
+  ) {
+    return { status: "invalid" };
+  }
+
+  return {
+    status: "valid",
+    snapshot: {
+      anchor: {
+        endOffset,
+        paragraphIndex,
+        selectedText,
+        startOffset,
+      },
+      range: range.cloneRange(),
+    },
+  };
+}
+
+function restoreTextSelection(range: Range) {
+  if (!range.startContainer.isConnected || !range.endContainer.isConnected) {
+    return;
+  }
+
+  const selection = window.getSelection();
+  if (!selection) return;
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
 
 function allowsPersonalToolNativeInteraction(target: EventTarget | null) {
@@ -209,6 +285,7 @@ export function ProtectedChapterContent({
   const [draftStroke, setDraftStroke] = useState<DraftStroke | null>(null);
   const draftStrokeRef = useRef<DraftStroke | null>(null);
   const selectionCommitRef = useRef<string | null>(null);
+  const selectionSnapshotRef = useRef<TextSelectionSnapshot | null>(null);
   const tools = usePersonalReadingTools();
   const annotations = tools?.annotations ?? [];
   const activeTool = tools?.activeTool ?? null;
@@ -218,6 +295,25 @@ export function ProtectedChapterContent({
     activeTool === "note";
   const drawingMode = activeTool === "pen";
   const eraserMode = activeTool === "eraser";
+
+  useEffect(() => {
+    if (!textSelectionMode) {
+      selectionSnapshotRef.current = null;
+      return;
+    }
+
+    function captureSelection() {
+      const result = readTextSelection(paragraphs);
+      if (result.status === "valid") {
+        selectionSnapshotRef.current = result.snapshot;
+      } else if (result.status === "invalid") {
+        selectionSnapshotRef.current = null;
+      }
+    }
+
+    document.addEventListener("selectionchange", captureSelection);
+    return () => document.removeEventListener("selectionchange", captureSelection);
+  }, [paragraphs, textSelectionMode]);
 
   function blockInteraction(
     event: SyntheticEvent<HTMLDivElement>,
@@ -239,65 +335,57 @@ export function ProtectedChapterContent({
     setDraftStroke(next);
   }
 
+  function resetSelectionSnapshot() {
+    if (textSelectionMode) selectionSnapshotRef.current = null;
+  }
+
   function handleSelectionEnd() {
     if (!tools || !textSelectionMode) return;
 
     window.requestAnimationFrame(() => {
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) {
-        return;
-      }
+      const liveSelection = readTextSelection(paragraphs);
 
-      const range = selection.getRangeAt(0);
-      const startParagraph = getParagraphFromNode(range.startContainer);
-      const endParagraph = getParagraphFromNode(range.endContainer);
-
-      if (!startParagraph || !endParagraph || startParagraph !== endParagraph) {
+      if (liveSelection.status === "invalid") {
+        selectionSnapshotRef.current = null;
         tools.setStatus(
           "İşaretlemek için tek paragraf içinde bir metin seç.",
         );
         return;
       }
 
-      const paragraphIndex = Number(
-        startParagraph.dataset.annotationTextParagraph,
-      );
-      const startOffset = getTextOffset(
-        startParagraph,
-        range.startContainer,
-        range.startOffset,
-      );
-      const endOffset = getTextOffset(
-        startParagraph,
-        range.endContainer,
-        range.endOffset,
-      );
-      const sourceParagraph = paragraphs[paragraphIndex];
-      const selectedText = sourceParagraph?.slice(startOffset, endOffset) ?? "";
+      const snapshot =
+        liveSelection.status === "valid"
+          ? liveSelection.snapshot
+          : selectionSnapshotRef.current;
 
-      if (
-        !Number.isInteger(paragraphIndex) ||
-        paragraphIndex < 0 ||
-        endOffset <= startOffset ||
-        !selectedText
-      ) {
-        tools.setStatus("Metin seçimi okunamadı. Seçim ekranda bırakıldı.");
+      if (!snapshot) {
+        tools.setStatus(
+          "Metin seçimi güvenli araç izninde yakalanamadı. Tekrar deneyebilirsin.",
+        );
         return;
       }
 
-      const signature = `${activeTool}:${paragraphIndex}:${startOffset}:${endOffset}`;
-      if (selectionCommitRef.current === signature) return;
-      selectionCommitRef.current = signature;
-
-      void tools.applyTextAnchor({
+      const {
         endOffset,
         paragraphIndex,
         selectedText,
         startOffset,
-      }).then((saved) => {
+      } = snapshot.anchor;
+      const signature = `${activeTool}:${paragraphIndex}:${startOffset}:${endOffset}`;
+      if (selectionCommitRef.current === signature) return;
+      selectionCommitRef.current = signature;
+
+      void tools.applyTextAnchor(snapshot.anchor).then((saved) => {
         if (saved) {
+          selectionSnapshotRef.current = null;
           window.getSelection()?.removeAllRanges();
+          return;
         }
+
+        restoreTextSelection(snapshot.range);
+        tools.setStatus(
+          `İşaret kaydedilemedi; “${selectedText.slice(0, 48)}” seçimi korunuyor.`,
+        );
       }).finally(() => {
         selectionCommitRef.current = null;
       });
@@ -490,7 +578,10 @@ export function ProtectedChapterContent({
         .filter(Boolean)
         .join(" ")}
       data-personal-reading-tools-permission={activeTool ?? "none"}
-      draggable={false}
+      data-protected-selection-permit={
+        textSelectionMode ? "annotation" : "none"
+      }
+      draggable={textSelectionMode ? undefined : false}
       onContextMenu={(event) => blockInteraction(event, "contextmenu")}
       onCopy={(event) => blockInteraction(event, "copy")}
       onCut={(event) => blockInteraction(event, "cut")}
@@ -509,8 +600,10 @@ export function ProtectedChapterContent({
         data-personal-reading-tools-selectable={
           textSelectionMode ? "true" : "false"
         }
+        onMouseDown={resetSelectionSnapshot}
         onMouseUp={handleSelectionEnd}
         onTouchEnd={handleSelectionEnd}
+        onTouchStart={resetSelectionSnapshot}
       >
         {paragraphs.map((paragraph, index) => {
           const paragraphAnnotations = annotations.filter(

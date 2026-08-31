@@ -241,7 +241,7 @@ export function FocusedReadingExperience({
             )}
 
             <div className="chapter-navigation__current">
-              <small>Şu anda okunuyor</small>
+              <small>Bölüm</small>
               <strong>
                 {chapter.position} / {publishedChapters.length}
               </strong>

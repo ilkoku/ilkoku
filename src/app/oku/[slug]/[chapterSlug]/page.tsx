@@ -15,7 +15,7 @@ import { recordReadingAccessSafely } from "@/features/reading/access";
 import { FocusedReadingExperience } from "@/features/reading/components/FocusedReadingExperience";
 import { PersonalReadingToolsProvider } from "@/features/reading/components/PersonalReadingToolsProvider";
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
-import { getPersonalAnnotations } from "@/features/reading/personal-annotations";
+import { getPersonalAnnotations } from "@/features/reading/personal-annotation-queries";
 import { getReadingProgress } from "@/features/reading/progress";
 import { getMemberPublicChapter } from "@/features/works/member-public-queries";
 import { getCurrentSessionContext } from "@/lib/auth/current-user";

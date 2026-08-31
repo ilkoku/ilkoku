@@ -13,7 +13,9 @@ import { getChapterComments } from "@/features/reader/comments";
 import { getFavoriteStatus } from "@/features/reader/favorites";
 import { recordReadingAccessSafely } from "@/features/reading/access";
 import { FocusedReadingExperience } from "@/features/reading/components/FocusedReadingExperience";
+import { PersonalReadingToolsProvider } from "@/features/reading/components/PersonalReadingToolsProvider";
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
+import { getPersonalAnnotations } from "@/features/reading/personal-annotation-queries";
 import { getReadingProgress } from "@/features/reading/progress";
 import { getMemberPublicChapter } from "@/features/works/member-public-queries";
 import { getCurrentSessionContext } from "@/lib/auth/current-user";
@@ -96,9 +98,12 @@ export default async function DynamicReadingPage({
     workId: chapter.work.id,
   });
 
-  const comments = isReviewReading
-    ? { items: [], total: 0 }
-    : await getChapterComments(chapter.id);
+  const [comments, personalAnnotations] = await Promise.all([
+    isReviewReading
+      ? Promise.resolve({ items: [], total: 0 })
+      : getChapterComments(chapter.id),
+    getPersonalAnnotations(user.id, chapter.id),
+  ]);
 
   const readerUser =
     user.role === "reader" || user.role === "editor"
@@ -153,15 +158,21 @@ export default async function DynamicReadingPage({
 
   if (!isReviewReading) {
     return (
-      <FocusedReadingExperience
-        canComment={Boolean(readerUser)}
-        canTrackReading={Boolean(readerUser)}
-        chapter={chapter}
-        comments={comments}
-        protectionIdentity={user.publicId}
-        readingProgress={readingProgress?.progressPercent ?? null}
-        returnTo={returnTo}
-      />
+      <PersonalReadingToolsProvider
+        chapterId={chapter.id}
+        initialAnnotations={personalAnnotations}
+        userKey={user.publicId}
+      >
+        <FocusedReadingExperience
+          canComment={Boolean(readerUser)}
+          canTrackReading={Boolean(readerUser)}
+          chapter={chapter}
+          comments={comments}
+          protectionIdentity={user.publicId}
+          readingProgress={readingProgress?.progressPercent ?? null}
+          returnTo={returnTo}
+        />
+      </PersonalReadingToolsProvider>
     );
   }
 
@@ -189,11 +200,17 @@ export default async function DynamicReadingPage({
   );
 
   return (
-    <EditorReviewReadingMode
-      stage={reviewAssignment?.stage ?? "first"}
-      variant="chapter"
+    <PersonalReadingToolsProvider
+      chapterId={chapter.id}
+      initialAnnotations={personalAnnotations}
+      userKey={user.publicId}
     >
-      {experience}
-    </EditorReviewReadingMode>
+      <EditorReviewReadingMode
+        stage={reviewAssignment?.stage ?? "first"}
+        variant="chapter"
+      >
+        {experience}
+      </EditorReviewReadingMode>
+    </PersonalReadingToolsProvider>
   );
 }

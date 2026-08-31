@@ -1,0 +1,178 @@
+.shell {
+  width: 100%;
+}
+
+.viewport {
+  position: relative;
+  width: 100%;
+}
+
+.frame {
+  width: 100%;
+}
+
+.shell[data-mode="paged"] .viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+.shell[data-mode="paged"] .viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.shell[data-mode="paged"] .frame > * {
+  width: 100%;
+  max-width: none !important;
+}
+
+.shell[data-mode="paged"] .frame > * > [aria-hidden="true"]:first-child {
+  display: none;
+}
+
+.shell[data-mode="paged"] .frame :global(.chapter__body) {
+  width: 100%;
+  max-width: none !important;
+  height: clamp(27rem, 58vh, 36rem);
+  margin: 0 !important;
+  column-count: 1;
+  column-fill: auto;
+  column-gap: 0;
+  overflow: visible;
+}
+
+.shell[data-mode="paged"] .frame :global(.chapter__body > *) {
+  break-inside: avoid-column;
+}
+
+.watermark {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: none;
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+}
+
+.shell[data-mode="paged"] .watermark {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 7rem;
+  align-items: center;
+  overflow: visible;
+  transform: translateY(2rem);
+}
+
+.watermark span {
+  color: rgba(109, 40, 217, 0.16);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(-24deg);
+  white-space: nowrap;
+}
+
+.pageControls {
+  display: none;
+}
+
+.shell[data-mode="paged"] .pageControls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pageControls button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.7rem;
+  background: transparent;
+  color: rgba(238, 241, 246, 0.78);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pageControls button:first-child {
+  justify-self: start;
+}
+
+.pageControls button:last-child {
+  justify-self: end;
+}
+
+.pageControls button:hover:not(:disabled) {
+  border-color: rgba(215, 180, 63, 0.48);
+  color: #d7b43f;
+}
+
+.pageControls button:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.pageStatus {
+  display: grid;
+  min-width: 10.5rem;
+  gap: 0.18rem;
+  text-align: center;
+}
+
+.pageStatus small {
+  color: rgba(238, 241, 246, 0.5);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.pageStatus strong {
+  color: #d7b43f;
+  font-size: 0.82rem;
+}
+
+.pageStatus span {
+  color: rgba(238, 241, 246, 0.58);
+  font-size: 0.63rem;
+}
+
+@media (max-width: 48rem) {
+  .shell[data-mode="paged"] .frame :global(.chapter__body) {
+    height: clamp(25rem, 60vh, 32rem);
+  }
+
+  .shell[data-mode="paged"] .watermark {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: 6rem;
+  }
+
+  .pageControls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pageStatus {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .pageControls button {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -15,6 +15,16 @@
   user-select: none;
 }
 
+/*
+ * Eser metni varsayılan olarak seçilemez. Metin tabanlı kişisel araçlar
+ * etkin olduğunda güvenlik kökü açık bir annotation-selection iznine geçer;
+ * copy/cut/contextmenu/drag/print blokları JS tarafında çalışmaya devam eder.
+ */
+.selectionMode {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
 .content {
   position: relative;
 }

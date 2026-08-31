@@ -156,41 +156,6 @@ function validateTextAnchor({
   };
 }
 
-export async function getPersonalAnnotations(
-  userId: string,
-  chapterId: string,
-): Promise<PersonalAnnotationRecord[]> {
-  const validUserId = annotationIdSchema.safeParse(userId);
-  const validChapterId = chapterIdSchema.safeParse(chapterId);
-
-  if (!validUserId.success || !validChapterId.success) {
-    return [];
-  }
-
-  const rows = await prisma.$queryRaw<PersonalAnnotationRow[]>`
-    SELECT
-      id,
-      workId,
-      chapterId,
-      type,
-      paragraphIndex,
-      startOffset,
-      endOffset,
-      selectedText,
-      note,
-      pathData,
-      anchorVersion,
-      createdAt,
-      updatedAt
-    FROM PersonalAnnotation
-    WHERE userId = ${validUserId.data}
-      AND chapterId = ${validChapterId.data}
-    ORDER BY createdAt ASC, id ASC
-  `;
-
-  return rows.map(mapAnnotationRow);
-}
-
 export async function createPersonalAnnotationAction(
   input: unknown,
 ) {

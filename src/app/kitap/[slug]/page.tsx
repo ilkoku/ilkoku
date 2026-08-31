@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { getWorkLatestComments } from "@/features/reader/comments";
 import { getFavoriteStatus } from "@/features/reader/favorites";
+import { getEstimatedBookPageRanges } from "@/features/reading/metrics";
 import { getReadingProgress } from "@/features/reading/progress";
 import { BookShowcase } from "@/features/showcase/components/BookShowcase";
 import { getMemberPublicWorkBySlug } from "@/features/works/member-public-queries";
@@ -145,6 +146,9 @@ export default async function DynamicBookShowcasePage({
     : false;
 
   const cover = absoluteUrl(work.coverUrl);
+  const estimatedBookPages = getEstimatedBookPageRanges(
+    work.chapters,
+  ).totalPages;
   const bookSchema = {
     "@context": "https://schema.org",
     "@type": "Book",
@@ -154,6 +158,7 @@ export default async function DynamicBookShowcasePage({
     inLanguage: work.language || "tr",
     genre: work.genre || undefined,
     image: cover || undefined,
+    numberOfPages: estimatedBookPages,
     datePublished: work.publishedAt?.toISOString(),
     dateModified: work.updatedAt.toISOString(),
     author: {

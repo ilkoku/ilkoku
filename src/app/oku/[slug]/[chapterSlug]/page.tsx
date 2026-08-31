@@ -77,21 +77,18 @@ export default async function DynamicReadingPage({
   const chapter = await getMemberPublicChapter(slug, chapterSlug, user.id);
   if (!chapter) notFound();
 
-  const reviewAssignment =
-    user.role === "editor"
-      ? await getActiveEditorReviewAssignment({
-          editorId: user.id,
-          workId: chapter.work.id,
-        })
-      : null;
-
   const isEditorReadingContext =
-    user.role === "editor" &&
-    (query.inceleme === "1" ||
-      query.from?.startsWith("/editor/") === true);
+    user.role === "editor" && query.inceleme === "1";
+
+  const reviewAssignment = isEditorReadingContext
+    ? await getActiveEditorReviewAssignment({
+        editorId: user.id,
+        workId: chapter.work.id,
+      })
+    : null;
 
   const isReviewReading =
-    Boolean(reviewAssignment) || isEditorReadingContext;
+    isEditorReadingContext && Boolean(reviewAssignment);
 
   const requestHeaders = await headers();
 
@@ -157,9 +154,10 @@ export default async function DynamicReadingPage({
         })
       : null;
 
-  const returnTo = reviewAssignment
-    ? getEditorReviewReturnPath(reviewAssignment.stage)
-    : publicReturnTo;
+  const returnTo =
+    isReviewReading && reviewAssignment
+      ? getEditorReviewReturnPath(reviewAssignment.stage)
+      : publicReturnTo;
 
   if (!isReviewReading) {
     return (

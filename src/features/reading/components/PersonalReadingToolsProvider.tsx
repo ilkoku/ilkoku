@@ -154,10 +154,14 @@ export function PersonalReadingToolsProvider({
         return;
       }
 
-      setPosition({
-        x: clamp(parsed.x, 8, Math.max(8, window.innerWidth - 310)),
-        y: clamp(parsed.y, 8, Math.max(8, window.innerHeight - 120)),
+      const frame = window.requestAnimationFrame(() => {
+        setPosition({
+          x: clamp(parsed.x as number, 8, Math.max(8, window.innerWidth - 310)),
+          y: clamp(parsed.y as number, 8, Math.max(8, window.innerHeight - 120)),
+        });
       });
+
+      return () => window.cancelAnimationFrame(frame);
     } catch {
       // Yerel konum kaydı bozuksa varsayılan konum kullanılır.
     }

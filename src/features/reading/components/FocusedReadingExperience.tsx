@@ -16,6 +16,7 @@ import {
   getEstimatedBookPageRange,
 } from "@/features/reading/metrics";
 import type { PublicChapterDetail } from "@/features/works/types";
+import { ChapterSelector } from "./ChapterSelector";
 import { PagedReadingViewport } from "./PagedReadingViewport";
 import { ProtectedChapterContent } from "./ProtectedChapterContent";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
@@ -114,17 +115,14 @@ export function FocusedReadingExperience({
             <span>Eser Sayfası</span>
           </Link>
 
-          <div className={styles.context}>
-            <strong>{chapter.work.title}</strong>
-            <span aria-hidden="true">·</span>
-            <span>{chapter.position}. Bölüm</span>
-            {typeof readingProgress === "number" ? (
-              <>
-                <span aria-hidden="true">·</span>
-                <span>%{readingProgress} okundu</span>
-              </>
-            ) : null}
-          </div>
+          <ChapterSelector
+            activePosition={chapter.position}
+            chapters={publishedChapters}
+            encodedReturnTo={encodedReturnTo}
+            readingProgress={readingProgress}
+            workSlug={chapter.work.slug}
+            workTitle={chapter.work.title}
+          />
 
           <div className="reader-actions">
             <details className="reader-menu">
@@ -240,57 +238,6 @@ export function FocusedReadingExperience({
               />
             </PagedReadingViewport>
           </section>
-
-          <nav
-            aria-label="Bölüm geçişleri"
-            className={`chapter-navigation ${styles.navigation}`}
-          >
-            {previousChapter ? (
-              <Link
-                className="chapter-navigation__button chapter-navigation__button--previous"
-                href={getChapterHref(previousChapter.position)}
-              >
-                <span aria-hidden="true">←</span>
-                <span>
-                  <small>Önceki Bölüm</small>
-                  <strong>{previousChapter.title}</strong>
-                </span>
-              </Link>
-            ) : (
-              <span
-                aria-hidden="true"
-                className="chapter-navigation__spacer"
-              />
-            )}
-
-            <div className="chapter-navigation__current">
-              <small>Bölüm</small>
-              <strong>
-                {chapter.position} / {publishedChapters.length}
-              </strong>
-              <small>
-                Kitap sayfası ≈ {estimatedPageRange} / {estimatedPages.totalPages}
-              </small>
-            </div>
-
-            {nextChapter ? (
-              <Link
-                className="chapter-navigation__button chapter-navigation__button--next"
-                href={getChapterHref(nextChapter.position)}
-              >
-                <span>
-                  <small>Sonraki Bölüm</small>
-                  <strong>{nextChapter.title}</strong>
-                </span>
-                <span aria-hidden="true">→</span>
-              </Link>
-            ) : (
-              <span
-                aria-hidden="true"
-                className="chapter-navigation__spacer"
-              />
-            )}
-          </nav>
 
           <details className={styles.comments}>
             <summary>

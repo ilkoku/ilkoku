@@ -77,5 +77,5 @@ export function formatEstimatedBookPageRange({
       ? `${startPage}`
       : `${startPage}–${endPage}`;
 
-  return `≈ kitap s. ${currentRange} / ${totalPages}`;
+  return `Tahmini kitap sayfası: ${currentRange} / ${totalPages}`;
 }

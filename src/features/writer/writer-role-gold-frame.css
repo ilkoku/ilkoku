@@ -1,0 +1,403 @@
+/*
+ * Writer workspace gold-frame continuity.
+ *
+ * Visual-only layer. It is scoped to the real writer role (plus the writer
+ * account page fallback) and strengthens borders/edge hierarchy without
+ * changing layout, routing, data, permissions or interaction behavior.
+ */
+
+.app-shell[data-role="writer"],
+body:has(.account-sidebar__footer a[href="/yazar"]) .account-shell {
+  --writer-gold-frame: #d7b43f;
+  --writer-gold-frame-line: rgba(215, 180, 63, 0.44);
+  --writer-gold-frame-soft: rgba(215, 180, 63, 0.30);
+  --writer-gold-frame-faint: rgba(215, 180, 63, 0.16);
+  --writer-gold-frame-ring: rgba(215, 180, 63, 0.06);
+  --writer-gold-frame-wash: rgba(215, 180, 63, 0.035);
+}
+
+/* Shell continuity: sidebar, top header and selected navigation. */
+.app-shell[data-role="writer"] .main-area,
+.app-shell[data-role="writer"] .main-area__content {
+  background:
+    radial-gradient(circle at 52% 0%, var(--writer-gold-frame-wash), transparent 34rem),
+    var(--writer-custom-main-surface, var(--color-background)) !important;
+}
+
+.app-shell[data-role="writer"] .sidebar {
+  border-right-color: var(--writer-gold-frame-soft) !important;
+  box-shadow:
+    inset -1px 0 rgba(215, 180, 63, 0.05),
+    14px 0 36px rgba(0, 0, 0, 0.14) !important;
+}
+
+.app-shell[data-role="writer"] .dashboard-header {
+  border-bottom-color: var(--writer-gold-frame-line) !important;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.16),
+    inset 0 -1px rgba(215, 180, 63, 0.06) !important;
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item {
+  border-color: transparent !important;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease !important;
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item:hover,
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item:focus-visible {
+  border-color: var(--writer-gold-frame-faint) !important;
+  background: color-mix(in srgb, var(--writer-gold-frame) 4%, var(--writer-custom-hover, transparent)) !important;
+}
+
+.app-shell[data-role="writer"] .sidebar__nav-item .nav-item[data-active] {
+  border-color: var(--writer-gold-frame-line) !important;
+  background:
+    linear-gradient(90deg, rgba(215, 180, 63, 0.12), rgba(215, 180, 63, 0.025)),
+    var(--writer-custom-active-nav-surface, transparent) !important;
+  box-shadow:
+    inset 3px 0 var(--writer-gold-frame),
+    0 0 0 1px var(--writer-gold-frame-ring) !important;
+}
+
+/* Main page headers across writer home, shared discovery and writer utilities. */
+.app-shell[data-role="writer"] :is(
+  .dashboard-hero,
+  .works-workspace__hero,
+  .editor-page-header,
+  .feedback-hero,
+  .publisher-workspace__hero,
+  .discovery-workspace-hero,
+  .user-contracts-hero
+) {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--writer-gold-frame-line) !important;
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.18),
+    0 0 0 1px var(--writer-gold-frame-ring),
+    inset 0 1px rgba(255, 255, 255, 0.02) !important;
+}
+
+.app-shell[data-role="writer"] :is(
+  .dashboard-hero,
+  .works-workspace__hero,
+  .editor-page-header,
+  .feedback-hero,
+  .publisher-workspace__hero,
+  .discovery-workspace-hero,
+  .user-contracts-hero
+)::before {
+  position: absolute;
+  top: -1px;
+  right: 1.5rem;
+  left: 1.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(215, 180, 63, 0.78), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+/* Writer home. */
+.app-shell[data-role="writer"] :is(
+  .daily-goal,
+  .latest-work,
+  .dashboard-empty,
+  .metrics .card,
+  .dashboard-section .book-card,
+  .dashboard__aside .card,
+  .dashboard-feedback,
+  .dashboard-feedback__item
+) {
+  border-color: var(--writer-gold-frame-soft) !important;
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(215, 180, 63, 0.035) !important;
+}
+
+.app-shell[data-role="writer"] .latest-work:hover,
+.app-shell[data-role="writer"] .dashboard-section .book-card:hover {
+  border-color: rgba(215, 180, 63, 0.58) !important;
+}
+
+/* Eserlerim workspace. */
+.app-shell[data-role="writer"] :is(
+  .workspace-stats .card,
+  .workspace-toolbar,
+  .workspace-work-card,
+  .workspace-empty,
+  .workspace-editor-review,
+  .workspace-dialog__panel
+) {
+  border-color: var(--writer-gold-frame-soft) !important;
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.13),
+    0 0 0 1px rgba(215, 180, 63, 0.035) !important;
+}
+
+.app-shell[data-role="writer"] :is(
+  .workspace-tabs button,
+  .workspace-search input,
+  .workspace-sort select,
+  .workspace-editor-review,
+  .workspace-dialog__panel input,
+  .workspace-dialog__panel select,
+  .workspace-dialog__panel textarea
+) {
+  border-color: rgba(215, 180, 63, 0.24) !important;
+}
+
+.app-shell[data-role="writer"] .workspace-tabs button[aria-selected="true"] {
+  border-color: rgba(215, 180, 63, 0.58) !important;
+  box-shadow: 0 0 0 1px rgba(215, 180, 63, 0.05) !important;
+}
+
+.app-shell[data-role="writer"] :is(
+  .workspace-search input,
+  .workspace-sort select,
+  .workspace-dialog__panel input,
+  .workspace-dialog__panel select,
+  .workspace-dialog__panel textarea
+):focus {
+  border-color: rgba(215, 180, 63, 0.62) !important;
+}
+
+/* Yazmaya Devam Et, including list and selected-work management surface. */
+.app-shell[data-role="writer"] :is(
+  .editor-table-shell,
+  .editor-empty,
+  .continue-writing,
+  .chapter-management-panel,
+  .chapter-management-card,
+  .create-chapter-form
+) {
+  border-color: rgba(215, 180, 63, 0.34) !important;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.13),
+    0 0 0 1px rgba(215, 180, 63, 0.035) !important;
+}
+
+.app-shell[data-role="writer"] .editor-works-table :is(th, td) {
+  border-color: rgba(215, 180, 63, 0.13) !important;
+}
+
+.app-shell[data-role="writer"] :is(
+  .editor-table-action,
+  .chapter-management-panel button,
+  .chapter-management-panel a
+) {
+  border-color: rgba(215, 180, 63, 0.24) !important;
+}
+
+.app-shell[data-role="writer"] :is(
+  .editor-table-action:hover,
+  .chapter-management-panel button:hover,
+  .chapter-management-panel a:hover
+) {
+  border-color: rgba(215, 180, 63, 0.56) !important;
+}
+
+/* Shared Keşfet when entered with a writer account. */
+.app-shell[data-role="writer"] :is(
+  .role-filter-desk,
+  .role-filter-result,
+  .role-filter-pagination,
+  .reader-discovery-notice,
+  .workspace-list-empty,
+  .workspace-table-shell,
+  .workspace-detail-panel,
+  .reader-favorite-author,
+  .discovery-author-card
+) {
+  border-color: rgba(215, 180, 63, 0.34) !important;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.13),
+    0 0 0 1px rgba(215, 180, 63, 0.035) !important;
+}
+
+.app-shell[data-role="writer"] .role-filter-desk__form :is(input, select) {
+  border-color: rgba(215, 180, 63, 0.24) !important;
+}
+
+.app-shell[data-role="writer"] .role-filter-desk__form :is(input, select):focus {
+  border-color: rgba(215, 180, 63, 0.62) !important;
+}
+
+.app-shell[data-role="writer"] .workspace-table :is(th, td) {
+  border-color: rgba(215, 180, 63, 0.13) !important;
+}
+
+/* Geri Bildirimler. */
+.app-shell[data-role="writer"] :is(
+  .feedback-controls,
+  .feedback-stats .card,
+  .feedback-card,
+  .feedback-empty,
+  .professional-review-group-card,
+  .feedback-detail-dialog__panel,
+  .professional-review-group-dialog__panel
+) {
+  border-color: rgba(215, 180, 63, 0.32) !important;
+  box-shadow:
+    0 15px 36px rgba(0, 0, 0, 0.13),
+    0 0 0 1px rgba(215, 180, 63, 0.03) !important;
+}
+
+.app-shell[data-role="writer"] .feedback-tabs button,
+.app-shell[data-role="writer"] .feedback-filters select {
+  border-color: rgba(215, 180, 63, 0.22) !important;
+}
+
+.app-shell[data-role="writer"] .feedback-tabs button[aria-selected="true"] {
+  border-color: rgba(215, 180, 63, 0.58) !important;
+}
+
+/* Yorumlarım gets one global root hook in the page component. */
+.app-shell[data-role="writer"] .writer-comments-workspace > :is(section, article),
+.app-shell[data-role="writer"] .writer-comments-workspace section[aria-label="Yorum özeti"] > article,
+.app-shell[data-role="writer"] .writer-comments-workspace article {
+  border-color: rgba(215, 180, 63, 0.30) !important;
+}
+
+.app-shell[data-role="writer"] .writer-comments-workspace > section,
+.app-shell[data-role="writer"] .writer-comments-workspace section[aria-label="Yorum özeti"] > article {
+  box-shadow:
+    0 15px 36px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(215, 180, 63, 0.03) !important;
+}
+
+/* Yayınevleri and shared publisher-process cards exposed to writers. */
+.app-shell[data-role="writer"] :is(
+  .publisher-workspace .card,
+  .publisher-card,
+  .publisher-list-card,
+  .publisher-submission-card,
+  .publisher-process-card,
+  .publisher-detail,
+  .publisher-dialog__panel
+) {
+  border-color: rgba(215, 180, 63, 0.31) !important;
+  box-shadow:
+    0 15px 36px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(215, 180, 63, 0.03) !important;
+}
+
+/* Writer contracts and notifications. */
+.app-shell[data-role="writer"] :is(
+  .user-contracts-section,
+  .user-contract-card,
+  .user-contract-empty
+) {
+  border-color: rgba(215, 180, 63, 0.31) !important;
+}
+
+.app-shell[data-role="writer"] .user-contracts-section {
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(215, 180, 63, 0.03) !important;
+}
+
+.app-shell[data-role="writer"] article[data-read] {
+  border-color: rgba(215, 180, 63, 0.30) !important;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.13),
+    0 0 0 1px rgba(215, 180, 63, 0.03) !important;
+}
+
+.app-shell[data-role="writer"] article[data-read="false"] {
+  border-color: rgba(215, 180, 63, 0.54) !important;
+  box-shadow:
+    inset 3px 0 var(--writer-gold-frame),
+    0 14px 34px rgba(0, 0, 0, 0.13),
+    0 0 0 1px rgba(215, 180, 63, 0.045) !important;
+}
+
+.app-shell[data-role="writer"] article[data-expanded="true"] {
+  border-color: rgba(215, 180, 63, 0.62) !important;
+}
+
+/* Sayfa Renkleri keeps its customization behavior; only its frame hierarchy is strengthened. */
+.app-shell[data-role="writer"] :is(
+  .writer-theme-editor__intro,
+  .writer-theme-editor__layer,
+  .writer-theme-editor__actions
+) {
+  border-color: rgba(215, 180, 63, 0.34) !important;
+  box-shadow:
+    0 15px 36px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(215, 180, 63, 0.03) !important;
+}
+
+.app-shell[data-role="writer"] :is(
+  .writer-theme-editor__picker,
+  .writer-theme-editor__custom input[type="text"]
+) {
+  border-color: rgba(215, 180, 63, 0.30) !important;
+}
+
+/* Writer profile redirects to /hesabim, which uses its own shell. */
+body:has(.account-sidebar__footer a[href="/yazar"]) .account-shell {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(215, 180, 63, 0.035), transparent 34rem),
+    var(--color-background);
+}
+
+body:has(.account-sidebar__footer a[href="/yazar"]) .account-shell__header {
+  border-bottom-color: var(--writer-gold-frame-line) !important;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.14),
+    inset 0 -1px rgba(215, 180, 63, 0.05) !important;
+}
+
+body:has(.account-sidebar__footer a[href="/yazar"]) :is(
+  .account-sidebar,
+  .profile-page__header,
+  .profile-card,
+  .account-overview__item,
+  .account-sidebar__profile
+) {
+  border-color: rgba(215, 180, 63, 0.34) !important;
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.11),
+    0 0 0 1px rgba(215, 180, 63, 0.03) !important;
+}
+
+body:has(.account-sidebar__footer a[href="/yazar"]) .profile-page__header {
+  position: relative;
+  overflow: hidden;
+}
+
+body:has(.account-sidebar__footer a[href="/yazar"]) .profile-page__header::before {
+  position: absolute;
+  top: -1px;
+  right: 1.5rem;
+  left: 1.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(215, 180, 63, 0.76), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+body:has(.account-sidebar__footer a[href="/yazar"]) .account-sidebar__nav a,
+body:has(.account-sidebar__footer a[href="/yazar"]) .account-sidebar__footer :is(a, button) {
+  border-color: rgba(215, 180, 63, 0.16) !important;
+}
+
+body:has(.account-sidebar__footer a[href="/yazar"]) .account-sidebar__nav a:hover,
+body:has(.account-sidebar__footer a[href="/yazar"]) .account-sidebar__nav a:focus-visible,
+body:has(.account-sidebar__footer a[href="/yazar"]) .account-sidebar__footer :is(a, button):hover,
+body:has(.account-sidebar__footer a[href="/yazar"]) .account-sidebar__footer :is(a, button):focus-visible {
+  border-color: rgba(215, 180, 63, 0.48) !important;
+  background: rgba(215, 180, 63, 0.035) !important;
+}
+
+body:has(.account-sidebar__footer a[href="/yazar"]) .profile-card :is(input, select, textarea) {
+  border-color: rgba(215, 180, 63, 0.22) !important;
+}
+
+body:has(.account-sidebar__footer a[href="/yazar"]) .profile-card :is(input, select, textarea):focus {
+  border-color: rgba(215, 180, 63, 0.62) !important;
+}

@@ -300,3 +300,126 @@
 .landing-page .landing-discovery {
   display: none !important;
 }
+
+/* Desktop 2026 card: preserve the live copy and approved role assets while
+   matching the accepted parchment-card reference as closely as possible. */
+@media (min-width: 641px) {
+  .landing-history__now-wipe {
+    display: none;
+  }
+
+  .landing-history__now::before {
+    position: absolute;
+    top: 63.45%;
+    left: 5.95%;
+    width: 89.15%;
+    height: 35.2%;
+    box-sizing: border-box;
+    border: 0.1cqw solid rgba(157, 124, 84, 0.38);
+    border-radius: 0.75cqw;
+    content: "";
+    background:
+      radial-gradient(circle at 88.4% 14%, transparent 0 6.2cqw, rgba(252, 250, 246, 0.965) 6.8cqw),
+      radial-gradient(circle at 14% 19%, rgba(106, 73, 159, 0.035) 0 0.09cqw, transparent 0.11cqw),
+      rgba(252, 250, 246, 0.965);
+    background-size: auto, 2.6cqw 2.4cqw, auto;
+    box-shadow:
+      0 0.9cqw 1.5cqw rgba(53, 38, 79, 0.13),
+      inset 0 0 0 0.18cqw rgba(255, 255, 255, 0.64);
+    pointer-events: none;
+  }
+
+  .landing-history__now-intro {
+    top: 66.15%;
+    left: 10.7%;
+    width: 47%;
+  }
+
+  .landing-history__now-year {
+    margin-bottom: 0.55cqw;
+    font-size: 1.02cqw;
+    letter-spacing: 0.045em;
+  }
+
+  .landing-history__now-intro h3 {
+    width: 44cqw;
+    font-size: 2.95cqw;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+  }
+
+  .landing-history__now-journey {
+    top: 75.65%;
+    left: 10.7%;
+    width: 80.25%;
+  }
+
+  .landing-history__now-journey li {
+    min-height: 8.9cqw;
+    gap: 0.28cqw;
+    padding: 0 1.35cqw;
+    border-right-color: rgba(77, 49, 180, 0.16);
+    font-size: 0.98cqw;
+    font-weight: 680;
+    line-height: 1.23;
+  }
+
+  .landing-history__now-journey li::before {
+    width: 8.15cqw;
+    height: 8.15cqw;
+    margin: -0.4cqw auto 0.08cqw;
+    filter: drop-shadow(0 0.45cqw 0.6cqw rgba(67, 37, 135, 0.14));
+  }
+
+  .landing-history__now-journey li span {
+    max-width: 14cqw;
+  }
+
+  .landing-history__now-question {
+    top: 88.15%;
+    left: 10.7%;
+    width: 80.25%;
+    padding-top: 1.15cqw;
+    border-top-color: rgba(130, 91, 51, 0.34);
+    font-size: 1.45cqw;
+  }
+
+  .landing-history__now-question::before {
+    position: absolute;
+    top: -0.47cqw;
+    left: 50%;
+    padding: 0 0.45cqw;
+    color: rgba(111, 73, 161, 0.58);
+    content: "◆";
+    background: rgba(252, 250, 246, 0.98);
+    font-family: Georgia, serif;
+    font-size: 0.62cqw;
+    line-height: 1;
+    transform: translateX(-50%);
+  }
+
+  .landing-history__now-signature {
+    top: 92.15%;
+    left: 10.7%;
+    width: 80.25%;
+  }
+
+  .landing-history__now-signature p {
+    margin-bottom: 0.16cqw;
+    font-size: 0.93cqw;
+  }
+
+  .landing-history__now-signature strong {
+    font-size: 3.45cqw;
+  }
+
+  .landing-history__now-signature::after {
+    display: block;
+    width: 31cqw;
+    height: 0.07cqw;
+    min-height: 1px;
+    margin: 0.2cqw auto 0;
+    content: "";
+    background: linear-gradient(90deg, transparent, rgba(144, 104, 63, 0.28) 18%, rgba(144, 104, 63, 0.35) 50%, rgba(144, 104, 63, 0.28) 82%, transparent);
+  }
+}

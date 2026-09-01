@@ -14,22 +14,23 @@
   .history-now-card-v2 {
     position: absolute;
     z-index: 5;
-    top: 63.9%;
-    left: 40.55%;
+    top: 63.2%;
+    left: 40.25%;
     display: block;
-    width: 51.05%;
-    height: 34.05%;
+    width: 51.55%;
+    height: 35.15%;
     box-sizing: border-box;
     overflow: hidden;
-    padding: 1.05cqw 2.15cqw 0.72cqw;
-    border: 0.09cqw solid rgba(155, 122, 83, 0.4);
-    border-radius: 0.56cqw;
+    padding: 1.08cqw 2.2cqw 0.9cqw;
+    border: 0.09cqw solid rgba(155, 122, 83, 0.42);
+    border-radius: 0.62cqw;
     background:
-      radial-gradient(circle at 13% 18%, rgba(91, 57, 137, 0.035) 0 0.08cqw, transparent 0.1cqw),
-      linear-gradient(180deg, rgba(255, 254, 250, 0.995), rgba(250, 248, 243, 0.995));
-    background-size: 2.45cqw 2.25cqw, auto;
+      radial-gradient(circle at 14% 17%, rgba(96, 62, 139, 0.04) 0 0.07cqw, transparent 0.1cqw),
+      radial-gradient(circle at 72% 56%, rgba(133, 96, 64, 0.025) 0 0.06cqw, transparent 0.09cqw),
+      linear-gradient(180deg, rgba(255, 254, 250, 0.998), rgba(250, 248, 243, 0.998));
+    background-size: 2.45cqw 2.25cqw, 3.1cqw 2.8cqw, auto;
     box-shadow:
-      0 0.65cqw 1.25cqw rgba(54, 38, 77, 0.16),
+      0 0.72cqw 1.35cqw rgba(54, 38, 77, 0.16),
       inset 0 0 0 0.16cqw rgba(255, 255, 255, 0.72);
     color: #17121e;
     font-family: var(--landing-font-sans);
@@ -37,35 +38,62 @@
 
   .history-now-card-v2::before {
     position: absolute;
-    inset: 0.32cqw;
-    border: 0.055cqw solid rgba(157, 124, 84, 0.24);
-    border-radius: 0.42cqw;
+    inset: 0.34cqw;
+    border: 0.055cqw solid rgba(157, 124, 84, 0.25);
+    border-radius: 0.46cqw;
     content: "";
     pointer-events: none;
   }
 
   .history-now-card-v2__seal {
     position: absolute;
-    z-index: 2;
-    top: 0.72cqw;
-    right: 1.18cqw;
-    width: 5.15cqw;
-    height: 5.15cqw;
-    object-fit: contain;
-    filter: drop-shadow(0 0.28cqw 0.36cqw rgba(43, 22, 80, 0.22));
+    z-index: 3;
+    top: 0.7cqw;
+    right: 1.1cqw;
+    display: grid;
+    width: 5.25cqw;
+    height: 5.25cqw;
+    place-items: center;
+    border: 0.13cqw solid rgba(38, 14, 72, 0.38);
+    border-radius: 48% 52% 46% 54% / 51% 46% 54% 49%;
+    background:
+      radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.22), transparent 23%),
+      radial-gradient(circle at 52% 48%, #6f3bb4 0 48%, #4c258a 70%, #2f155b 100%);
+    box-shadow:
+      0 0.34cqw 0.5cqw rgba(45, 21, 82, 0.28),
+      inset 0 0 0 0.15cqw rgba(255, 255, 255, 0.08),
+      inset 0 -0.22cqw 0.45cqw rgba(24, 7, 48, 0.22);
+    transform: rotate(-6deg);
+  }
+
+  .history-now-card-v2__seal::before {
+    position: absolute;
+    inset: 0.56cqw;
+    border: 0.08cqw solid rgba(239, 221, 255, 0.38);
+    border-radius: 50%;
+    content: "";
+    box-shadow: inset 0 0 0 0.09cqw rgba(33, 12, 64, 0.18);
+  }
+
+  .history-now-card-v2__seal > span {
+    width: 2.1cqw;
+    height: 2.1cqw;
+    background: rgba(242, 226, 255, 0.9);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M3 5.5C5.5 4.3 8 4.4 11 6v12c-3-1.5-5.5-1.5-8-.3V5.5Zm18 0c-2.5-1.2-5-1.1-8 .5v12c3-1.5 5.5-1.5 8-.3V5.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+    opacity: 0.9;
   }
 
   .history-now-card-v2__header {
     position: relative;
     z-index: 1;
-    width: 72%;
-    min-height: 5.05cqw;
+    width: 74%;
+    min-height: 5.15cqw;
   }
 
   .history-now-card-v2__header p {
-    margin: 0 0 0.36cqw;
+    margin: 0 0 0.38cqw;
     color: #4930b1;
-    font-size: 0.78cqw;
+    font-size: 0.8cqw;
     font-weight: 800;
     letter-spacing: 0.045em;
   }
@@ -74,7 +102,7 @@
     margin: 0;
     color: #4c2ba5;
     font-family: var(--landing-font-display);
-    font-size: 2.02cqw;
+    font-size: 2.08cqw;
     font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 0.99;
@@ -92,16 +120,26 @@
   }
 
   .history-now-card-v2__journey li {
+    position: relative;
     display: flex;
     min-width: 0;
-    min-height: 6.25cqw;
+    min-height: 7.15cqw;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    gap: 0.16cqw;
-    padding: 0 0.82cqw;
-    border-right: 0.055cqw solid rgba(77, 49, 180, 0.17);
+    gap: 0.18cqw;
+    padding: 0 0.76cqw;
     text-align: center;
+  }
+
+  .history-now-card-v2__journey li:not(:last-child)::after {
+    position: absolute;
+    top: 0.55cqw;
+    right: 0;
+    width: 1px;
+    height: 5.35cqw;
+    content: "";
+    background: linear-gradient(180deg, transparent, rgba(77, 49, 180, 0.2) 14%, rgba(77, 49, 180, 0.2) 86%, transparent);
   }
 
   .history-now-card-v2__journey li:first-child {
@@ -110,24 +148,23 @@
 
   .history-now-card-v2__journey li:last-child {
     padding-right: 0.35cqw;
-    border-right: 0;
   }
 
   .history-now-card-v2__journey img {
     display: block;
-    width: 4.15cqw;
-    height: 4.15cqw;
-    flex: 0 0 4.15cqw;
+    width: 5cqw;
+    height: 5cqw;
+    flex: 0 0 5cqw;
     object-fit: contain;
-    filter: drop-shadow(0 0.28cqw 0.36cqw rgba(67, 37, 135, 0.15));
+    filter: drop-shadow(0 0.3cqw 0.4cqw rgba(67, 37, 135, 0.15));
   }
 
   .history-now-card-v2__journey span {
     display: block;
     width: 100%;
-    max-width: 9.65cqw;
+    max-width: 9.8cqw;
     margin: 0 auto;
-    font-size: 0.7cqw;
+    font-size: 0.72cqw;
     font-weight: 680;
     line-height: 1.24;
   }
@@ -135,11 +172,11 @@
   .history-now-card-v2__closing {
     position: absolute;
     z-index: 1;
-    right: 2.15cqw;
-    bottom: 0.62cqw;
-    left: 2.15cqw;
-    padding-top: 0.55cqw;
-    border-top: 0.055cqw solid rgba(130, 91, 51, 0.31);
+    right: 2.2cqw;
+    bottom: 0.72cqw;
+    left: 2.2cqw;
+    padding-top: 0.66cqw;
+    border-top: 0.055cqw solid rgba(130, 91, 51, 0.3);
     text-align: center;
   }
 
@@ -161,25 +198,26 @@
     margin: 0;
     color: #42288f;
     font-family: var(--landing-font-display);
-    font-size: 1.04cqw;
+    font-size: 1.08cqw;
     font-weight: 700;
     line-height: 1.12;
   }
 
   .history-now-card-v2__tagline {
-    margin: 0.18cqw 0 0.02cqw;
+    margin: 0.24cqw 0 0.08cqw;
     font-family: var(--landing-font-display);
-    font-size: 0.68cqw;
-    line-height: 1.1;
+    font-size: 0.72cqw;
+    line-height: 1.15;
   }
 
   .history-now-card-v2__closing strong {
     display: block;
+    margin-top: 0.03cqw;
     color: #4e2db1;
     font-family: var(--landing-font-display);
-    font-size: 2.35cqw;
+    font-size: 2.22cqw;
     font-weight: 700;
     letter-spacing: -0.045em;
-    line-height: 0.86;
+    line-height: 0.95;
   }
 }

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import "@/app/landing-history-now-card-v2.css";
 
 const journeyItems = [
   {

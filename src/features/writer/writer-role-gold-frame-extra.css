@@ -1,0 +1,76 @@
+/* Writer-only page families whose components use their own class systems. */
+
+/* Yayınevleri */
+.app-shell[data-role="writer"] .publishers-hero {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--writer-gold-frame-line) !important;
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.18),
+    0 0 0 1px var(--writer-gold-frame-ring) !important;
+}
+
+.app-shell[data-role="writer"] .publishers-hero::before {
+  position: absolute;
+  top: -1px;
+  right: 1.5rem;
+  left: 1.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(215, 180, 63, 0.78), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.app-shell[data-role="writer"] :is(
+  .publishers-workspace > .card,
+  .publishers-stats .card,
+  .publishers-controls,
+  .publisher-card,
+  .publisher-empty,
+  .submissions-section,
+  .submission-card
+) {
+  border-color: rgba(215, 180, 63, 0.32) !important;
+  box-shadow:
+    0 15px 36px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(215, 180, 63, 0.03) !important;
+}
+
+.app-shell[data-role="writer"] .publishers-controls input,
+.app-shell[data-role="writer"] .publishers-filter button,
+.app-shell[data-role="writer"] .submission-tabs button {
+  border-color: rgba(215, 180, 63, 0.23) !important;
+}
+
+.app-shell[data-role="writer"] .publishers-controls input:focus,
+.app-shell[data-role="writer"] .publishers-filter button[aria-pressed="true"],
+.app-shell[data-role="writer"] .submission-tabs button[aria-selected="true"] {
+  border-color: rgba(215, 180, 63, 0.6) !important;
+}
+
+.app-shell[data-role="writer"] .publisher-card:hover {
+  border-color: rgba(215, 180, 63, 0.58) !important;
+}
+
+/* Shared table/list utility panels that appear in writer routes. */
+.app-shell[data-role="writer"] :is(
+  .editor-filters,
+  .editor-work-card,
+  .editor-review-row,
+  .editor-selection-grid article,
+  .editor-notification-list article,
+  .editor-profile-card
+) {
+  border-color: rgba(215, 180, 63, 0.3) !important;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(215, 180, 63, 0.03) !important;
+}
+
+.app-shell[data-role="writer"] .editor-filters :is(input, select) {
+  border-color: rgba(215, 180, 63, 0.22) !important;
+}
+
+.app-shell[data-role="writer"] .editor-filters :is(input, select):focus {
+  border-color: rgba(215, 180, 63, 0.6) !important;
+}

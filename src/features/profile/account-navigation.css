@@ -1,4 +1,5 @@
 @import "../reader/reader-role-gold-frame.css";
+@import "../writer/writer-role-gold-frame.css";
 
 .account-shell__header {
   min-height: 4.75rem;

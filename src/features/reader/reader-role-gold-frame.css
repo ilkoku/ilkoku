@@ -8,7 +8,8 @@
  */
 
 .app-shell[data-role="reader"],
-.account-shell[data-role="reader"] {
+.account-shell[data-role="reader"],
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-shell {
   --reader-gold: #d7b43f;
   --reader-gold-line: rgba(215, 180, 63, 0.42);
   --reader-gold-soft: rgba(215, 180, 63, 0.28);
@@ -280,13 +281,15 @@
 }
 
 /* Profile menu redirects to /hesabim, which has its own shell. */
-.account-shell[data-role="reader"] {
+.account-shell[data-role="reader"],
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-shell {
   background:
     radial-gradient(circle at 50% 0%, rgba(215, 180, 63, 0.035), transparent 34rem),
     var(--color-background);
 }
 
-.account-shell[data-role="reader"] .account-shell__header {
+.account-shell[data-role="reader"] .account-shell__header,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-shell__header {
   border-bottom-color: var(--reader-gold-line);
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.14),
@@ -298,6 +301,12 @@
   .profile-page__header,
   .profile-card,
   .account-overview__item
+),
+body:has(.account-sidebar__footer a[href="/okuyucu"]) :is(
+  .account-sidebar,
+  .profile-page__header,
+  .profile-card,
+  .account-overview__item
 ) {
   border-color: rgba(215, 180, 63, 0.34);
   box-shadow:
@@ -305,12 +314,14 @@
     0 0 0 1px rgba(215, 180, 63, 0.03);
 }
 
-.account-shell[data-role="reader"] .profile-page__header {
+.account-shell[data-role="reader"] .profile-page__header,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .profile-page__header {
   position: relative;
   overflow: hidden;
 }
 
-.account-shell[data-role="reader"] .profile-page__header::before {
+.account-shell[data-role="reader"] .profile-page__header::before,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .profile-page__header::before {
   position: absolute;
   top: -1px;
   right: 1.5rem;
@@ -321,21 +332,26 @@
   pointer-events: none;
 }
 
-.account-shell[data-role="reader"] .account-sidebar__nav a {
+.account-shell[data-role="reader"] .account-sidebar__nav a,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-sidebar__nav a {
   border-color: rgba(215, 180, 63, 0.14);
 }
 
 .account-shell[data-role="reader"] .account-sidebar__nav a:hover,
-.account-shell[data-role="reader"] .account-sidebar__nav a:focus-visible {
+.account-shell[data-role="reader"] .account-sidebar__nav a:focus-visible,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-sidebar__nav a:hover,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-sidebar__nav a:focus-visible {
   border-color: rgba(215, 180, 63, 0.46);
   background: rgba(215, 180, 63, 0.035);
 }
 
-.account-shell[data-role="reader"] .profile-card :is(input, select, textarea) {
+.account-shell[data-role="reader"] .profile-card :is(input, select, textarea),
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .profile-card :is(input, select, textarea) {
   border-color: rgba(215, 180, 63, 0.2);
 }
 
-.account-shell[data-role="reader"] .profile-card :is(input, select, textarea):focus {
+.account-shell[data-role="reader"] .profile-card :is(input, select, textarea):focus,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .profile-card :is(input, select, textarea):focus {
   border-color: rgba(215, 180, 63, 0.58);
 }
 

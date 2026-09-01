@@ -43,6 +43,99 @@
   color: #dfb52f;
 }
 
+.role-filter-desk--collapsible {
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.role-filter-desk__summary {
+  margin: -0.2rem;
+  padding: 0.2rem;
+  border-radius: 0.85rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background-color 160ms ease;
+}
+
+.role-filter-desk__summary::-webkit-details-marker {
+  display: none;
+}
+
+.role-filter-desk__summary::marker {
+  content: "";
+}
+
+.role-filter-desk__summary:hover {
+  background: rgba(224, 181, 47, 0.04);
+}
+
+.role-filter-desk__summary:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.role-filter-desk__summary small {
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.role-filter-desk__header .role-filter-desk__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--color-text-secondary);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.role-filter-desk__header .role-filter-desk__toggle > span {
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.role-filter-desk__toggle b {
+  display: inline-grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  place-items: center;
+  border: 1px solid rgba(224, 181, 47, 0.22);
+  border-radius: 0.65rem;
+  background: rgba(224, 181, 47, 0.045);
+  color: #dfb52f;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.role-filter-desk--collapsible[open] .role-filter-desk__toggle b {
+  border-color: rgba(224, 181, 47, 0.42);
+  background: rgba(224, 181, 47, 0.08);
+  transform: rotate(180deg);
+}
+
+.role-filter-desk__clear-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.role-filter-desk__clear-row > a {
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.role-filter-desk__clear-row > a:hover {
+  color: #dfb52f;
+}
+
 .role-filter-desk__form {
   display: grid;
   grid-template-columns: minmax(15rem, 1.5fr) repeat(3, minmax(9.5rem, 1fr));
@@ -274,6 +367,24 @@
   .role-filter-desk__header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .role-filter-desk__summary {
+    width: 100%;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .role-filter-desk__summary > div {
+    min-width: 0;
+  }
+
+  .role-filter-desk__toggle {
+    margin-left: auto;
+  }
+
+  .role-filter-desk__header .role-filter-desk__toggle > span {
+    font-size: 0.66rem;
   }
 
   .role-filter-desk__form {

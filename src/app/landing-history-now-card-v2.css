@@ -10,6 +10,40 @@
     display: none !important;
   }
 
+  /* The master artwork still contains the old 2026 card copy and seal.
+     Keep the legacy wipe masks visible and extend them across the full
+     replacement area so only the V2 content remains visible. */
+  .landing-history__stage .landing-history__now-wipe {
+    display: block !important;
+  }
+
+  .landing-history__stage .landing-history__now-wipe--intro {
+    top: 63.8%;
+    left: 39.85%;
+    width: 52.45%;
+    height: 12.9%;
+    border-radius: 0.75cqw;
+    box-shadow: 0 0 0.7cqw 0.5cqw rgba(250, 249, 252, 0.99);
+  }
+
+  .landing-history__stage .landing-history__now-wipe--journey {
+    top: 74.5%;
+    left: 39.85%;
+    width: 52.45%;
+    height: 13.2%;
+    border-radius: 0.55cqw;
+    box-shadow: 0 0 0.65cqw 0.45cqw rgba(250, 249, 252, 0.99);
+  }
+
+  .landing-history__stage .landing-history__now-wipe--closing {
+    top: 85.2%;
+    left: 39.85%;
+    width: 52.45%;
+    height: 13.1%;
+    border-radius: 0.55cqw;
+    box-shadow: 0 0 0.65cqw 0.45cqw rgba(250, 249, 252, 0.99);
+  }
+
   .history-now-card-v2 {
     position: absolute;
     z-index: 5;

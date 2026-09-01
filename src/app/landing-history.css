@@ -147,6 +147,8 @@
   position: absolute;
   z-index: 2;
   inset: 0;
+  --landing-now-content-left: 41.65%;
+  --landing-now-content-width: 47.5%;
   color: #17121e;
   font-family: var(--landing-font-sans);
 }
@@ -154,8 +156,8 @@
 .landing-history__now-intro {
   position: absolute;
   top: 65.55%;
-  left: 41.65%;
-  width: 38%;
+  left: var(--landing-now-content-left);
+  width: var(--landing-now-content-width);
 }
 
 .landing-history__now-year {
@@ -167,6 +169,7 @@
 }
 
 .landing-history__now-intro h3 {
+  max-width: 38%;
   margin: 0;
   color: #4c2ba5;
   font-family: var(--landing-font-display);
@@ -178,9 +181,9 @@
 
 .landing-history__now-journey {
   position: absolute;
-  top: 76.45%;
-  left: 41.65%;
-  width: 41.5%;
+  top: 76.35%;
+  left: var(--landing-now-content-left);
+  width: var(--landing-now-content-width);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 0;
@@ -189,18 +192,18 @@
 }
 
 .landing-history__now-journey li {
-  display: flex;
+  display: grid;
   min-height: 6.55cqw;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.28cqw;
+  grid-template-rows: 3.9cqw auto;
+  align-items: start;
+  justify-items: center;
+  gap: 0.18cqw;
   margin: 0;
-  padding: 0 1.05cqw;
-  border-right: 0.07cqw solid rgba(77, 49, 180, 0.18);
+  padding: 0 1.1cqw;
+  border-right: 0.07cqw solid rgba(77, 49, 180, 0.16);
   font-size: 0.73cqw;
   font-weight: 650;
-  line-height: 1.3;
+  line-height: 1.28;
   text-align: center;
 }
 
@@ -210,10 +213,11 @@
 
 .landing-history__now-journey li::before {
   display: block;
-  width: 3.3cqw;
-  height: 3.3cqw;
-  flex: 0 0 auto;
-  margin: -0.1cqw auto 0.05cqw;
+  width: 3.85cqw;
+  height: 3.85cqw;
+  align-self: start;
+  justify-self: center;
+  margin: -0.12cqw auto 0;
   content: "";
   background-position: center;
   background-repeat: no-repeat;
@@ -239,9 +243,12 @@
 }
 
 .landing-history__now-journey li span {
-  display: block;
+  display: flex;
   width: 100%;
-  max-width: 8.25cqw;
+  min-height: 2.7cqw;
+  max-width: 9.65cqw;
+  align-items: flex-start;
+  justify-content: center;
   margin: 0 auto;
 }
 
@@ -252,8 +259,8 @@
 .landing-history__now-question {
   position: absolute;
   top: 86.25%;
-  left: 41.65%;
-  width: 41.5%;
+  left: var(--landing-now-content-left);
+  width: var(--landing-now-content-width);
   margin: 0;
   padding: 0.9cqw 0 0;
   border-top: 0.07cqw solid rgba(130, 91, 51, 0.32);
@@ -268,8 +275,8 @@
 .landing-history__now-signature {
   position: absolute;
   top: 90.55%;
-  left: 41.65%;
-  width: 41.5%;
+  left: var(--landing-now-content-left);
+  width: var(--landing-now-content-width);
   text-align: center;
 }
 

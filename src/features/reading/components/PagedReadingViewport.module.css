@@ -73,7 +73,8 @@
   pointer-events: none;
 }
 
-.pageToolLayer[data-pen="true"] {
+.pageToolLayer[data-pen="true"],
+.pageToolLayer[data-point="true"] {
   cursor: crosshair;
   pointer-events: auto;
   touch-action: none;
@@ -81,8 +82,8 @@
 
 /*
  * Silgi bütün kitap yüzeyini kapatan bir tıklama kalkanı değildir.
- * Yalnızca kalem stroke'ları pointer hedefi olur; böylece alttaki vurgu,
- * alt çizgi ve not işaretleri kendi silme davranışlarını almaya devam eder.
+ * Yalnızca kişisel işaretler pointer hedefi olur; böylece alttaki metin
+ * kendi güvenli okuma davranışını korur.
  */
 .pageToolLayer[data-eraser="true"] {
   pointer-events: none;
@@ -118,6 +119,46 @@
 .pageDraftDrawingPath {
   opacity: 0.72;
   pointer-events: none;
+}
+
+.pagePointMarker {
+  position: absolute;
+  z-index: 8;
+  display: grid;
+  width: 2.05rem;
+  height: 2.05rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(215, 180, 63, 0.72);
+  border-radius: 999px;
+  outline: 0;
+  background: color-mix(in srgb, var(--color-background) 92%, #171717 8%);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(215, 180, 63, 0.08) inset;
+  color: #d7b43f;
+  font: 780 0.82rem/1 sans-serif;
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+}
+
+.pagePointMarker[data-kind="reading_position"] {
+  border-width: 2px;
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.42),
+    0 0 0 3px rgba(215, 180, 63, 0.1);
+}
+
+.pagePointMarker:hover,
+.pagePointMarker:focus-visible {
+  border-color: #d7b43f;
+  background: rgba(215, 180, 63, 0.12);
+}
+
+.pageToolLayer[data-eraser="true"] .pagePointMarker {
+  cursor: not-allowed;
+  pointer-events: auto;
 }
 
 .pageControls {
@@ -201,6 +242,11 @@
 
   .frame {
     padding: 1.35rem 1.15rem;
+  }
+
+  .pagePointMarker {
+    width: 1.85rem;
+    height: 1.85rem;
   }
 
   .pageControls {

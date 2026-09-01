@@ -151,7 +151,7 @@ export function FocusedReadingExperience({
                 <nav aria-label="Ortak okuma menüsü">
                   {!returnIsBookPage && (
                     <Link href={returnTo}>
-                      <span>Geldiğin Yere Dön</span>
+                      <span>Geri Dön</span>
                       <span aria-hidden="true">←</span>
                     </Link>
                   )}

@@ -391,14 +391,30 @@ export async function ReaderFilterDesk({
   const hasManagedFields = enabledFilterIds.size > 0;
 
   return (
-    <section aria-label="Filtre masası" className="role-filter-desk">
-      <header className="role-filter-desk__header">
+    <details
+      aria-label="Filtre masası"
+      className="role-filter-desk role-filter-desk--collapsible"
+      open={hasFilters}
+    >
+      <summary className="role-filter-desk__header role-filter-desk__summary">
         <div>
           <span>Filtre masası</span>
           <strong>{heading}</strong>
+          {hasFilters ? (
+            <small>{visibleActiveFilters.length} aktif filtre</small>
+          ) : null}
         </div>
-        {hasFilters ? <Link href={clearHref}>Tüm filtreleri temizle</Link> : null}
-      </header>
+        <span className="role-filter-desk__toggle">
+          <span>Aç / kapat</span>
+          <b aria-hidden="true">⌄</b>
+        </span>
+      </summary>
+
+      {hasFilters ? (
+        <div className="role-filter-desk__clear-row">
+          <Link href={clearHref}>Tüm filtreleri temizle</Link>
+        </div>
+      ) : null}
 
       {hasManagedFields ? (
         <form className="role-filter-desk__form" method="get">
@@ -547,7 +563,7 @@ export async function ReaderFilterDesk({
       ) : hasManagedFields ? (
         <p className="role-filter-desk__hint">{hint}</p>
       ) : null}
-    </section>
+    </details>
   );
 }
 

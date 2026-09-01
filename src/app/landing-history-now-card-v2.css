@@ -1,0 +1,185 @@
+/* Isolated desktop replacement for the 2026 history card.
+   The legacy card and landing-history.css remain untouched. */
+
+.history-now-card-v2 {
+  display: none;
+}
+
+@media (min-width: 641px) {
+  .landing-history__now,
+  .landing-history__now-wipe {
+    display: none !important;
+  }
+
+  .history-now-card-v2 {
+    position: absolute;
+    z-index: 5;
+    top: 63.9%;
+    left: 40.55%;
+    display: block;
+    width: 51.05%;
+    height: 34.05%;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: 1.05cqw 2.15cqw 0.72cqw;
+    border: 0.09cqw solid rgba(155, 122, 83, 0.4);
+    border-radius: 0.56cqw;
+    background:
+      radial-gradient(circle at 13% 18%, rgba(91, 57, 137, 0.035) 0 0.08cqw, transparent 0.1cqw),
+      linear-gradient(180deg, rgba(255, 254, 250, 0.995), rgba(250, 248, 243, 0.995));
+    background-size: 2.45cqw 2.25cqw, auto;
+    box-shadow:
+      0 0.65cqw 1.25cqw rgba(54, 38, 77, 0.16),
+      inset 0 0 0 0.16cqw rgba(255, 255, 255, 0.72);
+    color: #17121e;
+    font-family: var(--landing-font-sans);
+  }
+
+  .history-now-card-v2::before {
+    position: absolute;
+    inset: 0.32cqw;
+    border: 0.055cqw solid rgba(157, 124, 84, 0.24);
+    border-radius: 0.42cqw;
+    content: "";
+    pointer-events: none;
+  }
+
+  .history-now-card-v2__seal {
+    position: absolute;
+    z-index: 2;
+    top: 0.72cqw;
+    right: 1.18cqw;
+    width: 5.15cqw;
+    height: 5.15cqw;
+    object-fit: contain;
+    filter: drop-shadow(0 0.28cqw 0.36cqw rgba(43, 22, 80, 0.22));
+  }
+
+  .history-now-card-v2__header {
+    position: relative;
+    z-index: 1;
+    width: 72%;
+    min-height: 5.05cqw;
+  }
+
+  .history-now-card-v2__header p {
+    margin: 0 0 0.36cqw;
+    color: #4930b1;
+    font-size: 0.78cqw;
+    font-weight: 800;
+    letter-spacing: 0.045em;
+  }
+
+  .history-now-card-v2__header h3 {
+    margin: 0;
+    color: #4c2ba5;
+    font-family: var(--landing-font-display);
+    font-size: 2.02cqw;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 0.99;
+  }
+
+  .history-now-card-v2__journey {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    margin: 0.12cqw 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .history-now-card-v2__journey li {
+    display: flex;
+    min-width: 0;
+    min-height: 6.25cqw;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.16cqw;
+    padding: 0 0.82cqw;
+    border-right: 0.055cqw solid rgba(77, 49, 180, 0.17);
+    text-align: center;
+  }
+
+  .history-now-card-v2__journey li:first-child {
+    padding-left: 0.35cqw;
+  }
+
+  .history-now-card-v2__journey li:last-child {
+    padding-right: 0.35cqw;
+    border-right: 0;
+  }
+
+  .history-now-card-v2__journey img {
+    display: block;
+    width: 4.15cqw;
+    height: 4.15cqw;
+    flex: 0 0 4.15cqw;
+    object-fit: contain;
+    filter: drop-shadow(0 0.28cqw 0.36cqw rgba(67, 37, 135, 0.15));
+  }
+
+  .history-now-card-v2__journey span {
+    display: block;
+    width: 100%;
+    max-width: 9.65cqw;
+    margin: 0 auto;
+    font-size: 0.7cqw;
+    font-weight: 680;
+    line-height: 1.24;
+  }
+
+  .history-now-card-v2__closing {
+    position: absolute;
+    z-index: 1;
+    right: 2.15cqw;
+    bottom: 0.62cqw;
+    left: 2.15cqw;
+    padding-top: 0.55cqw;
+    border-top: 0.055cqw solid rgba(130, 91, 51, 0.31);
+    text-align: center;
+  }
+
+  .history-now-card-v2__closing::before {
+    position: absolute;
+    top: -0.36cqw;
+    left: 50%;
+    padding: 0 0.36cqw;
+    color: rgba(103, 68, 154, 0.57);
+    content: "◆";
+    background: #fbfaf6;
+    font-family: Georgia, serif;
+    font-size: 0.48cqw;
+    line-height: 1;
+    transform: translateX(-50%);
+  }
+
+  .history-now-card-v2__question {
+    margin: 0;
+    color: #42288f;
+    font-family: var(--landing-font-display);
+    font-size: 1.04cqw;
+    font-weight: 700;
+    line-height: 1.12;
+  }
+
+  .history-now-card-v2__tagline {
+    margin: 0.18cqw 0 0.02cqw;
+    font-family: var(--landing-font-display);
+    font-size: 0.68cqw;
+    line-height: 1.1;
+  }
+
+  .history-now-card-v2__closing strong {
+    display: block;
+    color: #4e2db1;
+    font-family: var(--landing-font-display);
+    font-size: 2.35cqw;
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 0.86;
+  }
+}

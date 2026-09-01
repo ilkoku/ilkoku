@@ -23,10 +23,6 @@ const journeyItems = [
 export function HistoryNowCardV2() {
   return (
     <section className="history-now-card-v2" aria-label="2026, şimdi sıra sende">
-      <span className="history-now-card-v2__seal" aria-hidden="true">
-        <span />
-      </span>
-
       <header className="history-now-card-v2__header">
         <p>2026 – ŞİMDİ SIRA SENDE.</p>
         <h3>

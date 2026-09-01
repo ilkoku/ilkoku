@@ -68,6 +68,9 @@ test("reader list pages share one filter, result, pagination and work-row standa
   assert.match(listStandard, /DISCOVERY_PAGE_SIZE = 24/);
   assert.match(standard, /READER_LIST_PAGE_SIZE = DISCOVERY_PAGE_SIZE/);
   assert.match(standard, /function ReaderFilterDesk/);
+  assert.match(standard, /role-filter-desk--collapsible/);
+  assert.match(standard, /open=\{hasFilters\}/);
+  assert.match(standard, /role-filter-desk__summary/);
   assert.match(standard, /function ReaderResultSummary/);
   assert.match(standard, /DiscoveryPagination as ReaderPagination/);
   assert.match(table, /workspace-table workspace-table--discovery/);

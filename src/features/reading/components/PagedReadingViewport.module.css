@@ -62,6 +62,7 @@
 }
 
 .pageToolLayer {
+  --eraser-cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2230%22%20height%3D%2230%22%20viewBox%3D%220%200%2030%2030%22%3E%3Cpath%20d%3D%22M5%2020.5%2017.2%208.3a3%203%200%200%201%204.2%200l2.3%202.3a3%203%200%200%201%200%204.2L13%2025.5H8.5A3.5%203.5%200%200%201%205%2022v-1.5Z%22%20fill%3D%22%23d7b43f%22%20stroke%3D%22%23111%22%20stroke-width%3D%221.6%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22m8.5%2017%205.5%205.5%22%20fill%3D%22none%22%20stroke%3D%22%23111%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M13%2025.5h11.5%22%20fill%3D%22none%22%20stroke%3D%22%23d7b43f%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E") 5 25, pointer;
   position: absolute;
   top: 0;
   left: 0;
@@ -112,7 +113,7 @@
 }
 
 .pageDrawingPath[data-erasable="true"] {
-  cursor: crosshair;
+  cursor: var(--eraser-cursor);
   pointer-events: stroke;
 }
 
@@ -157,7 +158,7 @@
 }
 
 .pageToolLayer[data-eraser="true"] .pagePointMarker {
-  cursor: not-allowed;
+  cursor: var(--eraser-cursor);
   pointer-events: auto;
 }
 

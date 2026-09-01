@@ -14,6 +14,7 @@ import {
   PERSONAL_ANNOTATION_TYPES,
   type PersonalAnnotationRecord,
 } from "./personal-annotation-types";
+import { serializePersonalPagePointAnchor } from "./personal-page-point-anchor";
 
 type PersonalAnnotationRow = Omit<
   PersonalAnnotationRecord,
@@ -28,11 +29,16 @@ const pointSchema = z.object({
   y: z.number().finite().min(0).max(1),
 });
 
+const pagePointSchema = pointSchema.extend({
+  pageIndex: z.number().int().min(0).max(50_000),
+});
+
 const createAnnotationSchema = z.object({
   chapterId: z.string().uuid(),
   endOffset: z.number().int().min(0).max(2_000_000).nullable().optional(),
   note: z.string().trim().min(1).max(1_200).nullable().optional(),
-  paragraphIndex: z.number().int().min(0).max(50_000),
+  pagePoint: pagePointSchema.nullable().optional(),
+  paragraphIndex: z.number().int().min(0).max(50_000).nullable().optional(),
   points: z.array(pointSchema).min(2).max(512).nullable().optional(),
   selectedText: z.string().max(8_000).nullable().optional(),
   startOffset: z.number().int().min(0).max(2_000_000).nullable().optional(),
@@ -185,33 +191,39 @@ export async function createPersonalAnnotationAction(
   }
 
   const paragraphs = splitParagraphs(chapter.content);
-  const paragraph = paragraphs[parsed.data.paragraphIndex];
-
-  if (paragraph === undefined) {
-    return { annotation: null, status: "invalid" as const };
-  }
-
   const {
     endOffset,
     note,
+    pagePoint,
     paragraphIndex,
     points,
     startOffset,
     type,
   } = parsed.data;
+  const paragraph =
+    typeof paragraphIndex === "number"
+      ? paragraphs[paragraphIndex]
+      : undefined;
 
   const textType =
     type === "highlight" ||
     type === "underline" ||
     type === "note";
+  const pointType =
+    type === "pin" || type === "reading_position";
 
-  const textAnchor = textType
-    ? validateTextAnchor({
-        endOffset,
-        paragraph,
-        startOffset,
-      })
-    : null;
+  if (textType && paragraph === undefined) {
+    return { annotation: null, status: "invalid" as const };
+  }
+
+  const textAnchor =
+    textType && paragraph !== undefined
+      ? validateTextAnchor({
+          endOffset,
+          paragraph,
+          startOffset,
+        })
+      : null;
 
   if (textType && !textAnchor) {
     return { annotation: null, status: "invalid" as const };
@@ -221,7 +233,14 @@ export async function createPersonalAnnotationAction(
     return { annotation: null, status: "invalid" as const };
   }
 
-  if (type === "drawing" && !points) {
+  if (
+    type === "drawing" &&
+    (!points || paragraph === undefined)
+  ) {
+    return { annotation: null, status: "invalid" as const };
+  }
+
+  if (pointType && !pagePoint && paragraph === undefined) {
     return { annotation: null, status: "invalid" as const };
   }
 
@@ -229,7 +248,13 @@ export async function createPersonalAnnotationAction(
   const normalizedPathData =
     type === "drawing" && points
       ? JSON.stringify(points)
-      : null;
+      : pointType && pagePoint
+        ? serializePersonalPagePointAnchor(pagePoint)
+        : null;
+  const normalizedParagraphIndex =
+    pointType && pagePoint
+      ? null
+      : paragraphIndex ?? null;
   const normalizedStartOffset = textAnchor?.startOffset ?? null;
   const normalizedEndOffset = textAnchor?.endOffset ?? null;
   const normalizedSelectedText = textAnchor?.selectedText ?? null;
@@ -257,7 +282,7 @@ export async function createPersonalAnnotationAction(
       ${chapter.workId},
       ${chapter.id},
       ${type},
-      ${paragraphIndex},
+      ${normalizedParagraphIndex},
       ${normalizedStartOffset},
       ${normalizedEndOffset},
       ${normalizedSelectedText},

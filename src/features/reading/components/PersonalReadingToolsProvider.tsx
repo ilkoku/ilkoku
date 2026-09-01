@@ -24,6 +24,11 @@ import type {
   PersonalDrawingPoint,
   PersonalTextAnchor,
 } from "../personal-annotation-types";
+import {
+  PERSONAL_PAGE_POINT_NAVIGATE_EVENT,
+  parsePersonalPagePointAnchor,
+  type PersonalPagePointAnchor,
+} from "../personal-page-point-anchor";
 import styles from "./PersonalReadingToolsProvider.module.css";
 
 export type PersonalReadingActiveTool =
@@ -39,6 +44,7 @@ export type PersonalReadingActiveTool =
 type PersonalReadingToolsContextValue = {
   activeTool: PersonalReadingActiveTool;
   annotations: PersonalAnnotationRecord[];
+  applyPagePointAnchor: (anchor: PersonalPagePointAnchor) => Promise<boolean>;
   applyParagraphAnchor: (paragraphIndex: number) => Promise<void>;
   applyTextAnchor: (anchor: PersonalTextAnchor) => Promise<boolean>;
   deleteAnnotation: (annotationId: string) => Promise<boolean>;
@@ -76,9 +82,9 @@ const toolInstructions: Record<
   pen: "Eski çizim kayıtları uyumluluk için korunur.",
   highlight: "Metni seç. Vurgu uygulanınca araç otomatik kapanır.",
   underline: "Metni seç. Alt çizgi uygulanınca araç otomatik kapanır.",
-  pin: "İşaretlemek istediğin paragrafa bir kez tıkla veya dokun.",
-  reading_position: "Kaldığın paragrafa bir kez tıkla veya dokun.",
-  note: "Not bağlamak istediğin metni seç; yazıp Ctrl/Cmd+Enter ile kaydet.",
+  pin: "Kitap sayfasında istediğin noktaya bir kez tıkla veya dokun.",
+  reading_position: "Kaldığın noktaya bir kez tıkla veya dokun; eski konumun yenilenir.",
+  note: "Not bağlamak istediğin metni seç; kaydedince küçük not işareti görünür.",
   eraser: "Kişisel işaretlere tıkla; varsa eski çizgilerin üzerinden sürükle.",
 };
 
@@ -101,6 +107,12 @@ function clamp(value: number, min: number, max: number) {
 function annotationPreview(annotation: PersonalAnnotationRecord) {
   if (annotation.note) return annotation.note;
   if (annotation.selectedText) return annotation.selectedText;
+
+  const pagePoint = parsePersonalPagePointAnchor(annotation.pathData);
+  if (pagePoint) {
+    return `${pagePoint.pageIndex + 1}. sayfa · serbest işaret`;
+  }
+
   if (typeof annotation.paragraphIndex === "number") {
     return `${annotation.paragraphIndex + 1}. paragraf`;
   }
@@ -302,6 +314,33 @@ export function PersonalReadingToolsProvider({
     [activeTool, createAnnotation, returnToSelectMode],
   );
 
+  const applyPagePointAnchor = useCallback(
+    async (anchor: PersonalPagePointAnchor) => {
+      if (
+        activeTool !== "pin" &&
+        activeTool !== "reading_position"
+      ) {
+        return false;
+      }
+
+      const tool = activeTool;
+      const saved = await createAnnotation({
+        pagePoint: anchor,
+        type: tool,
+      });
+
+      if (!saved) return false;
+
+      returnToSelectMode(
+        tool === "reading_position"
+          ? "Kaldığın yer kaydedildi · normal okumaya dönüldü."
+          : "İğne eklendi · normal okumaya dönüldü.",
+      );
+      return true;
+    },
+    [activeTool, createAnnotation, returnToSelectMode],
+  );
+
   const applyParagraphAnchor = useCallback(
     async (paragraphIndex: number) => {
       if (
@@ -490,6 +529,19 @@ export function PersonalReadingToolsProvider({
   }
 
   function showAnnotation(annotation: PersonalAnnotationRecord) {
+    const pagePoint = parsePersonalPagePointAnchor(annotation.pathData);
+    if (pagePoint) {
+      window.dispatchEvent(
+        new CustomEvent(PERSONAL_PAGE_POINT_NAVIGATE_EVENT, {
+          detail: {
+            annotationId: annotation.id,
+            pageIndex: pagePoint.pageIndex,
+          },
+        }),
+      );
+      return;
+    }
+
     if (typeof annotation.paragraphIndex !== "number") return;
     const target = document.querySelector<HTMLElement>(
       `[data-annotation-paragraph="${annotation.paragraphIndex}"]`,
@@ -545,6 +597,7 @@ export function PersonalReadingToolsProvider({
     () => ({
       activeTool,
       annotations,
+      applyPagePointAnchor,
       applyParagraphAnchor,
       applyTextAnchor,
       deleteAnnotation,
@@ -558,6 +611,7 @@ export function PersonalReadingToolsProvider({
     [
       activeTool,
       annotations,
+      applyPagePointAnchor,
       applyParagraphAnchor,
       applyTextAnchor,
       deleteAnnotation,

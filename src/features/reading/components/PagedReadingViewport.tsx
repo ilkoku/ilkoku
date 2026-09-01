@@ -12,6 +12,10 @@ import {
 } from "react";
 
 import type { PersonalDrawingPoint } from "../personal-annotation-types";
+import {
+  PERSONAL_PAGE_POINT_NAVIGATE_EVENT,
+  parsePersonalPagePointAnchor,
+} from "../personal-page-point-anchor";
 import { READING_PAGE_PROGRESS_EVENT } from "../reading-display-mode";
 import { usePersonalReadingTools } from "./PersonalReadingToolsProvider";
 import styles from "./PagedReadingViewport.module.css";
@@ -123,9 +127,26 @@ export function PagedReadingViewport({
   const placeAtLastPageRef = useRef(startAtLastPage);
   const drawingMode = tools?.activeTool === "pen";
   const eraserMode = tools?.activeTool === "eraser";
+  const pointMode =
+    tools?.activeTool === "pin" ||
+    tools?.activeTool === "reading_position";
   const pageDrawings = annotations.filter(
     (annotation) =>
       annotation.type === "drawing" && annotation.paragraphIndex === 0,
+  );
+  const pagePoints = annotations.flatMap((annotation) => {
+    if (
+      annotation.type !== "pin" &&
+      annotation.type !== "reading_position"
+    ) {
+      return [];
+    }
+
+    const anchor = parsePersonalPagePointAnchor(annotation.pathData);
+    return anchor ? [{ anchor, annotation }] : [];
+  });
+  const visiblePagePoints = pagePoints.filter(
+    (entry) => entry.anchor.pageIndex === pageIndex,
   );
 
   const syncViewportMetrics = useCallback((viewport: HTMLDivElement) => {
@@ -237,6 +258,37 @@ export function PagedReadingViewport({
     };
   }, []);
 
+  useEffect(() => {
+    function navigateToPoint(event: Event) {
+      const detail = (event as CustomEvent<{
+        annotationId?: string;
+        pageIndex?: number;
+      }>).detail;
+      if (!Number.isInteger(detail?.pageIndex)) return;
+
+      scrollToPage(detail.pageIndex as number);
+      if (!detail.annotationId) return;
+
+      window.setTimeout(() => {
+        document
+          .querySelector<HTMLButtonElement>(
+            `[data-page-point-annotation="${detail.annotationId}"]`,
+          )
+          ?.focus();
+      }, 380);
+    }
+
+    window.addEventListener(
+      PERSONAL_PAGE_POINT_NAVIGATE_EVENT,
+      navigateToPoint,
+    );
+    return () =>
+      window.removeEventListener(
+        PERSONAL_PAGE_POINT_NAVIGATE_EVENT,
+        navigateToPoint,
+      );
+  }, [scrollToPage]);
+
   function handleScroll(event: UIEvent<HTMLDivElement>) {
     const viewport = event.currentTarget;
     const height = Math.max(1, viewport.clientHeight);
@@ -247,6 +299,24 @@ export function PagedReadingViewport({
     setPageIndex(nextIndex);
     syncViewportMetrics(viewport);
     updateProgressDataset(viewport);
+  }
+
+  function placePagePoint(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!tools || !pointMode || event.button !== 0) return;
+    const target = event.target as Element;
+    if (target.closest("[data-page-point-annotation]")) return;
+
+    event.preventDefault();
+    const rectangle = event.currentTarget.getBoundingClientRect();
+    void tools.applyPagePointAnchor({
+      pageIndex,
+      x: clamp01(
+        (event.clientX - rectangle.left) / Math.max(1, rectangle.width),
+      ),
+      y: clamp01(
+        (event.clientY - rectangle.top) / Math.max(1, rectangle.height),
+      ),
+    });
   }
 
   function beginPageDrawing(event: ReactPointerEvent<HTMLDivElement>) {
@@ -407,12 +477,25 @@ export function PagedReadingViewport({
       </div>
 
       <div
-        aria-label={drawingMode ? "Kalem çizim alanı" : "Kişisel çizim katmanı"}
+        aria-label={
+          pointMode
+            ? "Serbest kişisel işaret alanı"
+            : drawingMode
+              ? "Kalem çizim alanı"
+              : "Kişisel işaret katmanı"
+        }
         className={styles.pageToolLayer}
         data-eraser={eraserMode ? "true" : "false"}
         data-pen={drawingMode ? "true" : "false"}
+        data-point={pointMode ? "true" : "false"}
         onPointerCancel={cancelPageDrawing}
-        onPointerDown={beginPageDrawing}
+        onPointerDown={(event) => {
+          if (pointMode) {
+            placePagePoint(event);
+            return;
+          }
+          beginPageDrawing(event);
+        }}
         onPointerMove={continuePageDrawing}
         onPointerUp={finishPageDrawing}
       >
@@ -458,6 +541,39 @@ export function PagedReadingViewport({
             />
           ) : null}
         </svg>
+
+        {visiblePagePoints.map(({ anchor, annotation }) => {
+          const readingPosition = annotation.type === "reading_position";
+          const label = readingPosition ? "Kaldığım yer" : "Kişisel iğne";
+
+          return (
+            <button
+              aria-label={label}
+              className={styles.pagePointMarker}
+              data-kind={annotation.type}
+              data-page-point-annotation={annotation.id}
+              key={annotation.id}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (!tools) return;
+                if (eraserMode) {
+                  void tools.deleteAnnotation(annotation.id);
+                  return;
+                }
+                tools.setStatus(label);
+              }}
+              onPointerDown={(event) => event.stopPropagation()}
+              style={{
+                left: `${anchor.x * 100}%`,
+                top: `${anchor.y * 100}%`,
+              }}
+              type="button"
+            >
+              {readingPosition ? "⌑" : "⌖"}
+            </button>
+          );
+        })}
       </div>
 
       <nav aria-label="Sayfa geçişleri" className={styles.pageControls}>

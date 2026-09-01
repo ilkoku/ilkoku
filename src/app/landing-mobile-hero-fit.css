@@ -1,0 +1,21 @@
+/* Mobile-only landing hero fit correction.
+ * Removes the fixed-height whitespace around the approved 3:2 hero artwork.
+ */
+@media (max-width: 34rem) {
+  .landing-page .landing-hero__grid {
+    gap: 1.5rem;
+    padding-bottom: 2.75rem;
+  }
+
+  .landing-page .landing-hero-product {
+    min-height: 0;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    border-radius: 1.8rem 1.8rem 1.8rem 3.6rem;
+  }
+
+  .landing-page .landing-hero-product > img {
+    object-fit: contain;
+    object-position: center;
+  }
+}

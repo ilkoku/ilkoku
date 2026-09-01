@@ -1,15 +1,23 @@
 .page {
+  --reader-gold: #d7b43f;
+  --reader-gold-line: rgba(215, 180, 63, 0.44);
+  --reader-gold-soft: rgba(215, 180, 63, 0.28);
+  --reader-gold-faint: rgba(215, 180, 63, 0.1);
   min-height: 100vh;
-  background: var(--color-background);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(215, 180, 63, 0.035), transparent 34rem),
+    var(--color-background);
 }
 
 .topbar {
   position: sticky;
   top: 0;
   z-index: 50;
-  border-bottom: 1px solid rgba(215, 180, 63, 0.26);
+  border-bottom: 1px solid var(--reader-gold-line);
   background: color-mix(in srgb, var(--color-background) 97%, transparent);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.3),
+    inset 0 -1px rgba(215, 180, 63, 0.08);
   backdrop-filter: blur(20px) saturate(115%);
 }
 
@@ -31,19 +39,22 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0.55rem 0.78rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--reader-gold-soft);
   border-radius: 0.72rem;
-  background: transparent;
+  background: rgba(215, 180, 63, 0.012);
+  box-shadow: inset 0 0 0 1px rgba(215, 180, 63, 0.025);
   color: rgba(238, 241, 246, 0.82);
   transition:
     border-color 160ms ease,
     background 160ms ease,
-    color 160ms ease;
+    color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .back:hover {
-  border-color: rgba(215, 180, 63, 0.38);
-  background: rgba(215, 180, 63, 0.035);
+  border-color: rgba(215, 180, 63, 0.58);
+  background: rgba(215, 180, 63, 0.045);
+  box-shadow: 0 0 0 1px rgba(215, 180, 63, 0.06);
   color: #f7f5ef;
 }
 
@@ -55,9 +66,10 @@
   justify-content: center;
   gap: 0.48rem;
   padding: 0.45rem 0.82rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--reader-gold-soft);
   border-radius: 999px;
-  background: transparent;
+  background: rgba(215, 180, 63, 0.012);
+  box-shadow: inset 0 0 0 1px rgba(215, 180, 63, 0.025);
   color: rgba(238, 241, 246, 0.62);
   font-size: 0.75rem;
   white-space: nowrap;
@@ -78,20 +90,24 @@
 }
 
 .topbarInner :global(.reader-menu summary) {
-  border-color: rgba(215, 180, 63, 0.32);
-  background: transparent;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+  border-color: var(--reader-gold-line);
+  background: rgba(215, 180, 63, 0.012);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(215, 180, 63, 0.03);
 }
 
 .topbarInner :global(.reader-menu summary:hover) {
-  border-color: rgba(215, 180, 63, 0.48);
-  background: rgba(215, 180, 63, 0.035);
+  border-color: rgba(215, 180, 63, 0.64);
+  background: rgba(215, 180, 63, 0.045);
 }
 
 .topbarInner :global(.reader-menu__popover) {
-  border-color: rgba(215, 180, 63, 0.26);
+  border-color: var(--reader-gold-line);
   background: var(--color-background);
-  box-shadow: 0 26px 58px rgba(0, 0, 0, 0.48);
+  box-shadow:
+    0 26px 58px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(215, 180, 63, 0.05);
 }
 
 .layout {
@@ -110,12 +126,13 @@
   max-width: 52rem;
   margin: 0 auto;
   padding: clamp(2rem, 5vw, 3.1rem) clamp(1.5rem, 5vw, 3.1rem) clamp(2rem, 5vw, 3rem);
-  border: 1px solid rgba(255, 255, 255, 0.19);
-  border-bottom-color: rgba(255, 255, 255, 0.13);
+  border: 1px solid var(--reader-gold-line);
+  border-bottom-color: var(--reader-gold-soft);
   border-radius: 1.55rem 1.55rem 0 0;
   background: var(--color-background);
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(215, 180, 63, 0.055),
     inset 0 1px rgba(255, 255, 255, 0.025);
 }
 
@@ -125,7 +142,7 @@
   right: clamp(1.5rem, 5vw, 3.1rem);
   left: clamp(1.5rem, 5vw, 3.1rem);
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(215, 180, 63, 0.52), transparent);
+  background: linear-gradient(90deg, transparent, rgba(215, 180, 63, 0.82), transparent);
   content: "";
 }
 
@@ -135,7 +152,7 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-  color: #d7b43f;
+  color: var(--reader-gold);
   font-size: 0.72rem;
   font-weight: 750;
   letter-spacing: 0.08em;
@@ -159,7 +176,7 @@
   gap: 1rem;
   margin-top: 1.35rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(215, 180, 63, 0.2);
 }
 
 .chapterHeader :global(.reading-progress-tracker > div) {
@@ -198,11 +215,11 @@
 }
 
 .chapterHeader :global(.reading-progress-tracker progress::-webkit-progress-value) {
-  background: #d7b43f;
+  background: var(--reader-gold);
 }
 
 .chapterHeader :global(.reading-progress-tracker progress::-moz-progress-bar) {
-  background: #d7b43f;
+  background: var(--reader-gold);
 }
 
 .chapterBody {
@@ -211,11 +228,13 @@
   scroll-margin-top: 6rem;
   margin: 0 auto clamp(2rem, 5vw, 3.25rem);
   padding: clamp(3rem, 8vw, 5.25rem) clamp(1.5rem, 5vw, 3.1rem) clamp(2.75rem, 7vw, 4rem);
-  border: 1px solid rgba(255, 255, 255, 0.19);
+  border: 1px solid rgba(215, 180, 63, 0.38);
   border-top: 0;
   border-radius: 0 0 1.55rem 1.55rem;
   background: var(--color-background);
-  box-shadow: 0 30px 66px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 30px 66px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(215, 180, 63, 0.045);
 }
 
 .chapterBody :global(.chapter__body) {
@@ -238,16 +257,18 @@
   gap: 0.75rem;
   margin: 0 auto;
   padding: 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(215, 180, 63, 0.36);
   border-radius: 1.25rem;
   background: var(--color-background);
-  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.24);
+  box-shadow:
+    0 20px 46px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(215, 180, 63, 0.04);
 }
 
 .navigation :global(.chapter-navigation__button),
 .navigation :global(.chapter-navigation__current) {
   min-height: 4.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(215, 180, 63, 0.24);
   border-radius: 0.9rem;
   background: transparent;
 }
@@ -266,8 +287,8 @@
 }
 
 .navigation :global(.chapter-navigation__button:hover) {
-  border-color: rgba(215, 180, 63, 0.4);
-  background: rgba(215, 180, 63, 0.03);
+  border-color: rgba(215, 180, 63, 0.58);
+  background: rgba(215, 180, 63, 0.04);
   color: #f7f5ef;
   transform: translateY(-1px);
 }
@@ -304,7 +325,7 @@
 }
 
 .navigation :global(.chapter-navigation__button > span[aria-hidden="true"]) {
-  color: #d7b43f;
+  color: var(--reader-gold);
   font-size: 1rem;
 }
 
@@ -318,7 +339,7 @@
 }
 
 .navigation :global(.chapter-navigation__current strong) {
-  color: #d7b43f;
+  color: var(--reader-gold);
   font-size: 0.82rem;
   font-weight: 750;
 }
@@ -328,10 +349,12 @@
   max-width: 52rem;
   overflow: hidden;
   margin: 1rem auto 0;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(215, 180, 63, 0.34);
   border-radius: 1.25rem;
   background: var(--color-background);
-  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 20px 46px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(215, 180, 63, 0.04);
 }
 
 .comments > summary {
@@ -350,11 +373,11 @@
 }
 
 .comments > summary:hover {
-  background: rgba(215, 180, 63, 0.025);
+  background: rgba(215, 180, 63, 0.035);
 }
 
 .comments[open] > summary {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(215, 180, 63, 0.24);
   background: transparent;
 }
 
@@ -368,7 +391,7 @@
 }
 
 .comments > summary small {
-  color: #d7b43f;
+  color: var(--reader-gold);
   font-size: 0.66rem;
   font-weight: 750;
   letter-spacing: 0.11em;
@@ -388,16 +411,16 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0.35rem 0.65rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(215, 180, 63, 0.24);
   border-radius: 999px;
-  background: transparent;
+  background: rgba(215, 180, 63, 0.012);
   color: rgba(238, 241, 246, 0.52);
   font-size: 0.75rem;
   white-space: nowrap;
 }
 
 .commentCount > span {
-  color: #d7b43f;
+  color: var(--reader-gold);
   font-size: 1rem;
   transition: transform 160ms ease;
 }
@@ -414,7 +437,7 @@
 }
 
 .commentsBody :global(.comment-form) {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(215, 180, 63, 0.2);
   background: transparent;
   box-shadow: none;
 }
@@ -501,8 +524,8 @@
 
 @media (max-width: 36rem) {
   .context {
-    border-color: transparent;
-    background: transparent;
+    border-color: rgba(215, 180, 63, 0.18);
+    background: rgba(215, 180, 63, 0.008);
     padding-inline: 0.2rem;
   }
 

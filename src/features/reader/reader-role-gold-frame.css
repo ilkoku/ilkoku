@@ -1,0 +1,367 @@
+/*
+ * Reader workspace continuity.
+ *
+ * Keep the visual language scoped to the real reader role so shared
+ * writer/editor/publisher surfaces do not inherit these accents.
+ * This layer strengthens borders and edge hierarchy only; it does not
+ * change layout, interaction, routing, or reader data behavior.
+ */
+
+.app-shell[data-role="reader"],
+.account-shell[data-role="reader"],
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-shell {
+  --reader-gold: #d7b43f;
+  --reader-gold-line: rgba(215, 180, 63, 0.42);
+  --reader-gold-soft: rgba(215, 180, 63, 0.28);
+  --reader-gold-faint: rgba(215, 180, 63, 0.14);
+  --reader-gold-wash: rgba(215, 180, 63, 0.035);
+  --reader-gold-ring: rgba(215, 180, 63, 0.055);
+}
+
+/* App shell: one restrained gold edge around the reader workspace. */
+.app-shell[data-role="reader"] .main-area,
+.app-shell[data-role="reader"] .main-area__content {
+  background:
+    radial-gradient(circle at 52% 0%, rgba(215, 180, 63, 0.035), transparent 34rem),
+    var(--color-background);
+}
+
+.app-shell[data-role="reader"] .sidebar {
+  border-right-color: var(--reader-gold-soft);
+  box-shadow:
+    inset -1px 0 rgba(215, 180, 63, 0.045),
+    14px 0 36px rgba(0, 0, 0, 0.12);
+}
+
+.app-shell[data-role="reader"] .dashboard-header {
+  border-bottom-color: var(--reader-gold-line);
+  background: color-mix(in srgb, var(--color-background) 96%, transparent);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.16),
+    inset 0 -1px rgba(215, 180, 63, 0.055);
+}
+
+.app-shell[data-role="reader"] .sidebar__nav-item .nav-item {
+  border-color: transparent;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.app-shell[data-role="reader"] .sidebar__nav-item .nav-item:hover {
+  border-color: var(--reader-gold-faint);
+  background: rgba(215, 180, 63, 0.03);
+}
+
+.app-shell[data-role="reader"] .sidebar__nav-item .nav-item[data-active] {
+  border-color: var(--reader-gold-line);
+  background:
+    linear-gradient(90deg, rgba(215, 180, 63, 0.11), rgba(215, 180, 63, 0.025));
+  box-shadow:
+    inset 3px 0 var(--reader-gold),
+    0 0 0 1px var(--reader-gold-ring);
+}
+
+/* Primary reader page headers. */
+.app-shell[data-role="reader"] :is(
+  .reader-workdesk__hero,
+  .discovery-workspace-hero,
+  .editor-page-header,
+  .user-contracts-hero
+) {
+  border-color: var(--reader-gold-line);
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.18),
+    0 0 0 1px var(--reader-gold-ring),
+    inset 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.app-shell[data-role="reader"] :is(
+  .reader-workdesk__hero,
+  .discovery-workspace-hero
+)::after {
+  border-color: rgba(215, 180, 63, 0.18);
+}
+
+.app-shell[data-role="reader"] .editor-page-header {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.35rem, 2.8vw, 1.85rem);
+  border: 1px solid var(--reader-gold-line);
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(135deg, rgba(215, 180, 63, 0.055), transparent 48%),
+    color-mix(in srgb, var(--color-card) 92%, transparent);
+}
+
+.app-shell[data-role="reader"] .editor-page-header::before {
+  position: absolute;
+  top: -1px;
+  right: 1.5rem;
+  left: 1.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(215, 180, 63, 0.78), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+/* Reader home: hero controls, summary blocks and shelves. */
+.app-shell[data-role="reader"] .reader-workdesk__quick-links a,
+.app-shell[data-role="reader"] .reader-workdesk__summary-card,
+.app-shell[data-role="reader"] .reader-workdesk__shelf-toolbar,
+.app-shell[data-role="reader"] .reader-workdesk__shelf,
+.app-shell[data-role="reader"] .reader-workdesk__hidden-menu,
+.app-shell[data-role="reader"] .reader-workdesk__meta-chip,
+.app-shell[data-role="reader"] .reader-workdesk__hide-section {
+  border-color: var(--reader-gold-soft);
+}
+
+.app-shell[data-role="reader"] .reader-workdesk__summary-card,
+.app-shell[data-role="reader"] .reader-workdesk__shelf {
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(215, 180, 63, 0.035);
+}
+
+.app-shell[data-role="reader"] .reader-workdesk__shelf-toolbar {
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.17),
+    inset 0 1px rgba(215, 180, 63, 0.04);
+}
+
+.app-shell[data-role="reader"] .reader-workdesk__quick-links a:hover,
+.app-shell[data-role="reader"] .reader-workdesk__hide-section:hover {
+  border-color: rgba(215, 180, 63, 0.58);
+}
+
+.app-shell[data-role="reader"] .reader-workdesk__shelf-tab,
+.app-shell[data-role="reader"] .reader-workdesk__hidden-drawer > summary {
+  border-color: rgba(215, 180, 63, 0.2);
+}
+
+.app-shell[data-role="reader"] .reader-workdesk__shelf-tab:hover,
+.app-shell[data-role="reader"] .reader-workdesk__hidden-drawer > summary:hover {
+  border-color: rgba(215, 180, 63, 0.42);
+}
+
+.app-shell[data-role="reader"] .reader-workdesk__shelf-tab.is-active {
+  border-color: rgba(215, 180, 63, 0.62);
+  box-shadow:
+    0 8px 22px rgba(215, 180, 63, 0.07),
+    0 0 0 1px rgba(215, 180, 63, 0.055);
+}
+
+.app-shell[data-role="reader"] .reader-workdesk :is(.book-card, .workspace-empty) {
+  border-color: rgba(215, 180, 63, 0.22);
+}
+
+/* Discovery / favorites / continue-reading / completed lists. */
+.app-shell[data-role="reader"] .discovery-workspace-hero__links :is(a, span) {
+  border-color: rgba(215, 180, 63, 0.22);
+}
+
+.app-shell[data-role="reader"] .discovery-workspace-hero__links :is(a:hover, [aria-current="page"]) {
+  border-color: rgba(215, 180, 63, 0.58);
+}
+
+.app-shell[data-role="reader"] .discovery-workspace-hero__stats > div {
+  border-color: var(--reader-gold-soft);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(215, 180, 63, 0.025);
+}
+
+.app-shell[data-role="reader"] :is(
+  .role-filter-desk,
+  .role-filter-result,
+  .role-filter-pagination,
+  .reader-discovery-notice,
+  .workspace-list-empty,
+  .workspace-table-shell,
+  .workspace-detail-panel,
+  .reader-favorite-author,
+  .discovery-author-card
+) {
+  border-color: rgba(215, 180, 63, 0.34);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.13),
+    0 0 0 1px rgba(215, 180, 63, 0.035);
+}
+
+.app-shell[data-role="reader"] .role-filter-desk__form :is(input, select) {
+  border-color: rgba(215, 180, 63, 0.22);
+  background: rgba(9, 12, 16, 0.32);
+}
+
+.app-shell[data-role="reader"] .role-filter-desk__form :is(input, select):focus {
+  border-color: rgba(215, 180, 63, 0.62);
+}
+
+.app-shell[data-role="reader"] .role-filter-desk__active a,
+.app-shell[data-role="reader"] .role-filter-pagination :is(
+  [aria-disabled="true"],
+  .role-filter-pagination__page
+) {
+  border-color: rgba(215, 180, 63, 0.24);
+}
+
+.app-shell[data-role="reader"] .role-filter-pagination__page:hover,
+.app-shell[data-role="reader"] .role-filter-pagination__page[aria-current="page"] {
+  border-color: rgba(215, 180, 63, 0.58);
+}
+
+.app-shell[data-role="reader"] .workspace-table :is(th, td) {
+  border-color: rgba(215, 180, 63, 0.13);
+}
+
+.app-shell[data-role="reader"] .workspace-table tbody tr[data-selected="true"] {
+  box-shadow: inset 3px 0 var(--reader-gold);
+}
+
+.app-shell[data-role="reader"] :is(
+  .workspace-row-action,
+  .workspace-detail-panel__close,
+  .reader-favorites-tabs .button
+) {
+  border-color: rgba(215, 180, 63, 0.24);
+}
+
+.app-shell[data-role="reader"] :is(
+  .workspace-row-action:hover,
+  .workspace-detail-panel__close:hover,
+  .reader-favorites-tabs .button:hover
+) {
+  border-color: rgba(215, 180, 63, 0.56);
+}
+
+/* Notifications: CSS-module class names stay private, semantic state hooks stay stable. */
+.app-shell[data-role="reader"] article[data-read] {
+  border-color: rgba(215, 180, 63, 0.3);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.13),
+    0 0 0 1px rgba(215, 180, 63, 0.03);
+}
+
+.app-shell[data-role="reader"] article[data-read="false"] {
+  border-color: rgba(215, 180, 63, 0.52);
+  box-shadow:
+    inset 3px 0 var(--reader-gold),
+    0 14px 34px rgba(0, 0, 0, 0.13),
+    0 0 0 1px rgba(215, 180, 63, 0.045);
+}
+
+.app-shell[data-role="reader"] article[data-expanded="true"] {
+  border-color: rgba(215, 180, 63, 0.6);
+}
+
+.app-shell[data-role="reader"] .editor-empty {
+  border-color: rgba(215, 180, 63, 0.26);
+}
+
+/* Contracts remain shared functionality; only reader presentation is accented. */
+.app-shell[data-role="reader"] :is(
+  .user-contracts-section,
+  .user-contract-card,
+  .user-contract-empty
+) {
+  border-color: rgba(215, 180, 63, 0.3);
+}
+
+.app-shell[data-role="reader"] .user-contracts-section {
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(215, 180, 63, 0.03);
+}
+
+.app-shell[data-role="reader"] .user-contract-card:hover {
+  border-color: rgba(215, 180, 63, 0.58);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+}
+
+/* Profile menu redirects to /hesabim, which has its own shell. */
+.account-shell[data-role="reader"],
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-shell {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(215, 180, 63, 0.035), transparent 34rem),
+    var(--color-background);
+}
+
+.account-shell[data-role="reader"] .account-shell__header,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-shell__header {
+  border-bottom-color: var(--reader-gold-line);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.14),
+    inset 0 -1px rgba(215, 180, 63, 0.05);
+}
+
+.account-shell[data-role="reader"] :is(
+  .account-sidebar,
+  .profile-page__header,
+  .profile-card,
+  .account-overview__item
+),
+body:has(.account-sidebar__footer a[href="/okuyucu"]) :is(
+  .account-sidebar,
+  .profile-page__header,
+  .profile-card,
+  .account-overview__item
+) {
+  border-color: rgba(215, 180, 63, 0.34);
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.11),
+    0 0 0 1px rgba(215, 180, 63, 0.03);
+}
+
+.account-shell[data-role="reader"] .profile-page__header,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .profile-page__header {
+  position: relative;
+  overflow: hidden;
+}
+
+.account-shell[data-role="reader"] .profile-page__header::before,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .profile-page__header::before {
+  position: absolute;
+  top: -1px;
+  right: 1.5rem;
+  left: 1.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(215, 180, 63, 0.74), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.account-shell[data-role="reader"] .account-sidebar__nav a,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-sidebar__nav a {
+  border-color: rgba(215, 180, 63, 0.14);
+}
+
+.account-shell[data-role="reader"] .account-sidebar__nav a:hover,
+.account-shell[data-role="reader"] .account-sidebar__nav a:focus-visible,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-sidebar__nav a:hover,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .account-sidebar__nav a:focus-visible {
+  border-color: rgba(215, 180, 63, 0.46);
+  background: rgba(215, 180, 63, 0.035);
+}
+
+.account-shell[data-role="reader"] .profile-card :is(input, select, textarea),
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .profile-card :is(input, select, textarea) {
+  border-color: rgba(215, 180, 63, 0.2);
+}
+
+.account-shell[data-role="reader"] .profile-card :is(input, select, textarea):focus,
+body:has(.account-sidebar__footer a[href="/okuyucu"]) .profile-card :is(input, select, textarea):focus {
+  border-color: rgba(215, 180, 63, 0.58);
+}
+
+@media (max-width: 47.99rem) {
+  .app-shell[data-role="reader"] .editor-page-header {
+    padding: 1.1rem;
+    border-radius: 1rem;
+  }
+
+  .app-shell[data-role="reader"] .sidebar {
+    border-right-color: var(--reader-gold-line);
+  }
+}

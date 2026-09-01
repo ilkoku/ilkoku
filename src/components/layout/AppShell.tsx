@@ -15,6 +15,7 @@ import { getAdultContentAccess } from "@/lib/adult-content-access";
 import styles from "@/features/admin-role-view/AdminRoleView.module.css";
 import "@/features/writer-theme/writer-theme-customization.css";
 import "@/features/writer/writer-dashboard-hero-border.css";
+import "@/features/reader/reader-role-gold-frame.css";
 
 type AppShellProps = {
   children: ReactNode;

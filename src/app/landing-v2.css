@@ -178,7 +178,7 @@
 /* Mobil hero: kartları kompakt ve hero görselini açık tut. */
 @media (max-width: 34rem) {
   .landing-page .landing-hero-product {
-    min-height: 31rem;
+    min-height: 0;
   }
 
   .landing-page .landing-product-card--review,
@@ -239,7 +239,6 @@
     line-height: 1.65;
   }
 }
-
 
 /* Hero clarity: render the verified asset directly with no visual processing. */
 .landing-page .landing-hero-product {

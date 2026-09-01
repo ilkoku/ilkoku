@@ -47,7 +47,7 @@ export default async function WriterCommentsPage() {
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.workspace}>
+      <div className={`${styles.workspace} writer-comments-workspace`}>
         <EditorPageHeader
           description="Yayımlanmış eserlerinize gelen okur yorumlarını takip edin. Yanıt yetkisi yalnızca eserin yazarına aittir."
           eyebrow="Yazar alanı"

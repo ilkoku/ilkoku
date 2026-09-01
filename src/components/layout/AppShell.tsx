@@ -16,6 +16,8 @@ import styles from "@/features/admin-role-view/AdminRoleView.module.css";
 import "@/features/writer-theme/writer-theme-customization.css";
 import "@/features/writer/writer-dashboard-hero-border.css";
 import "@/features/reader/reader-role-gold-frame.css";
+import "@/features/writer/writer-role-gold-frame.css";
+import "@/features/writer/writer-role-gold-frame-extra.css";
 
 type AppShellProps = {
   children: ReactNode;

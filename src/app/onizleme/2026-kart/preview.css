@@ -1,0 +1,75 @@
+.history-card-preview {
+  min-height: 100vh;
+  padding: 1.5rem 0 4rem;
+  background:
+    radial-gradient(circle at top, rgba(99, 71, 169, 0.08), transparent 34rem),
+    #f6f3fb;
+  color: #17121e;
+}
+
+.history-card-preview__header {
+  width: min(1672px, calc(100% - 2rem));
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid rgba(77, 49, 180, 0.14);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 0.75rem 2rem rgba(43, 30, 70, 0.07);
+}
+
+.history-card-preview__header p {
+  margin: 0 0 0.2rem;
+  color: #4d31b4;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.history-card-preview__header h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  line-height: 1.05;
+}
+
+.history-card-preview__header span {
+  color: rgba(23, 18, 30, 0.62);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.history-card-preview__canvas {
+  overflow-x: auto;
+  padding: 0.25rem 0;
+}
+
+.history-card-preview__stage {
+  box-shadow: 0 1.2rem 3rem rgba(43, 30, 70, 0.14);
+}
+
+.history-card-preview__note {
+  width: min(1672px, calc(100% - 2rem));
+  margin: 1rem auto 0;
+  color: rgba(23, 18, 30, 0.68);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .history-card-preview {
+    padding-top: 0.8rem;
+  }
+
+  .history-card-preview__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .history-card-preview__header span {
+    white-space: normal;
+  }
+}

@@ -3,7 +3,7 @@ import "server-only";
 import { cmsLocaleNamespace, type CmsLocaleCode } from "@/lib/cms-locales";
 import { prisma } from "@/lib/prisma";
 
-export const cmsHomepageSectionKeys = ["hero", "roles", "passport", "why", "footer"] as const;
+export const cmsHomepageSectionKeys = ["hero", "roles", "passport", "why", "history", "footer"] as const;
 export type CmsHomepageSectionKey = (typeof cmsHomepageSectionKeys)[number];
 export type CmsHomepageSection = Record<string, string>;
 export type CmsHomepageContent = Partial<Record<CmsHomepageSectionKey, CmsHomepageSection>>;

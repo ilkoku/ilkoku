@@ -84,7 +84,7 @@ export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegr
     prisma.$queryRaw<JsonRow[]>`
       SELECT contentKey, valueJson, status FROM SiteContent
       WHERE namespace = 'homepage' AND status = 'published'
-        AND contentKey IN ('hero', 'roles', 'passport', 'why', 'footer')
+        AND contentKey IN ('hero', 'roles', 'passport', 'why', 'history', 'footer')
     `,
     prisma.$queryRaw<JsonRow[]>`SELECT contentKey, valueJson, status FROM SiteContent WHERE namespace = 'faq' AND status = 'published'`,
     prisma.$queryRaw<PagePayloadRow[]>`
@@ -132,8 +132,6 @@ export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegr
     orphanMediaBlobs,
     invalidRevisions: revisionRows.filter((row) => !isValidCmsRevisionSnapshotJson(row.snapshotJson)).length,
     invalidForms,
-    // The overview receives only an aggregate count. Form payloads and PII remain
-    // confined to the dedicated health/form workbenches.
     overviewSanitizedWarnings: invalidForms,
     invalidAnnouncements: announcementRows.filter((row) => !isObjectJson(row.valueJson)).length,
     invalidFooterLive: liveFooter && !parseFooterNavigation(liveFooter.valueJson) ? 1 : 0,

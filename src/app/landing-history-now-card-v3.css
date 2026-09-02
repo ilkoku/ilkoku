@@ -1,80 +1,110 @@
 /* Desktop-only layered reconstruction of the 2026 card.
+   Outer geometry is locked to the last known-good V2 live card.
    Layer 1: parchment + frame
    Layer 2: typography
    Layer 3: role illustrations
-   Layer 4: real İlkOku seal */
+   Layer 4: new purple İlkOku wax seal */
 
 .history-now-card-v3 {
   display: none;
 }
 
 @media (min-width: 641px) {
-  /* Keep the existing mobile card untouched, but remove every legacy desktop
-     overlay. V3 supplies its own complete parchment surface, so the embedded
-     artwork and the old wipe masks are both covered by layer 1. */
+  /* Mobile stays untouched. The baked-in legacy desktop card is covered by the
+     same wipe geometry that was used by the last known-good V2 implementation. */
   .landing-history__now,
-  .landing-history__now-wipe,
   .history-now-card-v2 {
     display: none !important;
   }
 
+  .landing-history__stage .landing-history__now-wipe {
+    display: block !important;
+  }
+
+  .landing-history__stage .landing-history__now-wipe--intro {
+    top: 63.8%;
+    left: 39.85%;
+    width: 52.45%;
+    height: 12.9%;
+    border-radius: 0.75cqw;
+    box-shadow: 0 0 0.7cqw 0.5cqw rgba(250, 249, 252, 0.99);
+  }
+
+  .landing-history__stage .landing-history__now-wipe--journey {
+    top: 74.5%;
+    left: 39.85%;
+    width: 52.45%;
+    height: 13.2%;
+    border-radius: 0.55cqw;
+    box-shadow: 0 0 0.65cqw 0.45cqw rgba(250, 249, 252, 0.99);
+  }
+
+  .landing-history__stage .landing-history__now-wipe--closing {
+    top: 85.2%;
+    left: 39.85%;
+    width: 52.45%;
+    height: 13.1%;
+    border-radius: 0.55cqw;
+    box-shadow: 0 0 0.65cqw 0.45cqw rgba(250, 249, 252, 0.99);
+  }
+
+  /* Exact outer geometry from the old live card. */
   .history-now-card-v3 {
     position: absolute;
     z-index: 8;
-    top: 61.8%;
-    left: 11.45%;
+    top: 64.35%;
+    left: 40.45%;
     display: block;
-    width: 83.1%;
-    height: 37.4%;
+    width: 51.25%;
+    height: 33.4%;
     color: #17121e;
     font-family: var(--landing-font-sans);
     pointer-events: none;
   }
 
-  /* LAYER 1 — parchment surface + visible frame */
+  /* LAYER 1 — parchment surface + frame */
   .history-now-card-v3__surface {
     position: absolute;
     z-index: 1;
     inset: 0;
     overflow: hidden;
     box-sizing: border-box;
-    border: 0.12cqw solid rgba(151, 116, 72, 0.58);
-    border-radius: 0.72cqw;
+    border: 0.085cqw solid rgba(151, 116, 72, 0.5);
+    border-radius: 0.56cqw;
     background:
-      radial-gradient(circle at 12% 16%, rgba(117, 79, 154, 0.035) 0 0.08cqw, transparent 0.1cqw),
-      radial-gradient(circle at 84% 72%, rgba(169, 128, 78, 0.035) 0 0.07cqw, transparent 0.1cqw),
-      linear-gradient(180deg, rgba(255, 253, 249, 0.995), rgba(250, 247, 242, 0.995));
+      radial-gradient(circle at 12% 16%, rgba(117, 79, 154, 0.032) 0 0.07cqw, transparent 0.09cqw),
+      radial-gradient(circle at 84% 72%, rgba(169, 128, 78, 0.032) 0 0.06cqw, transparent 0.09cqw),
+      linear-gradient(180deg, rgba(255, 253, 249, 0.992), rgba(250, 247, 242, 0.992));
     background-size: 2.7cqw 2.4cqw, 3.1cqw 2.8cqw, auto;
     box-shadow:
-      0 0.75cqw 1.35cqw rgba(49, 34, 71, 0.15),
-      inset 0 0 0 0.16cqw rgba(255, 255, 255, 0.72),
-      inset 0 0 1.5cqw rgba(113, 80, 42, 0.06);
+      0 0.5cqw 0.85cqw rgba(49, 34, 71, 0.14),
+      inset 0 0 0 0.1cqw rgba(255, 255, 255, 0.7),
+      inset 0 0 0.9cqw rgba(113, 80, 42, 0.05);
   }
 
   .history-now-card-v3__surface::before {
     position: absolute;
-    inset: 0.5cqw;
-    border: 0.06cqw solid rgba(164, 129, 86, 0.48);
-    border-radius: 0.48cqw;
+    inset: 0.42cqw;
+    border: 0.05cqw solid rgba(164, 129, 86, 0.42);
+    border-radius: 0.38cqw;
     content: "";
-    box-shadow: inset 0 0 0 0.07cqw rgba(255, 255, 255, 0.62);
+    box-shadow: inset 0 0 0 0.055cqw rgba(255, 255, 255, 0.58);
   }
 
   .history-now-card-v3__surface::after {
     position: absolute;
-    inset: 0.78cqw;
-    border-radius: 0.34cqw;
+    inset: 0.67cqw;
+    border-radius: 0.28cqw;
     content: "";
     background:
-      linear-gradient(135deg, rgba(156, 118, 73, 0.18), transparent 1.25cqw) top left / 2.2cqw 2.2cqw no-repeat,
-      linear-gradient(225deg, rgba(156, 118, 73, 0.18), transparent 1.25cqw) top right / 2.2cqw 2.2cqw no-repeat,
-      linear-gradient(45deg, rgba(156, 118, 73, 0.18), transparent 1.25cqw) bottom left / 2.2cqw 2.2cqw no-repeat,
-      linear-gradient(315deg, rgba(156, 118, 73, 0.18), transparent 1.25cqw) bottom right / 2.2cqw 2.2cqw no-repeat;
-    opacity: 0.74;
+      linear-gradient(135deg, rgba(156, 118, 73, 0.14), transparent 1cqw) top left / 1.8cqw 1.8cqw no-repeat,
+      linear-gradient(225deg, rgba(156, 118, 73, 0.14), transparent 1cqw) top right / 1.8cqw 1.8cqw no-repeat,
+      linear-gradient(45deg, rgba(156, 118, 73, 0.14), transparent 1cqw) bottom left / 1.8cqw 1.8cqw no-repeat,
+      linear-gradient(315deg, rgba(156, 118, 73, 0.14), transparent 1cqw) bottom right / 1.8cqw 1.8cqw no-repeat;
+    opacity: 0.68;
   }
 
-  /* LAYER 2 — all copy. Each vertical band is isolated so it cannot collide
-     with the illustration or closing layers. */
+  /* LAYER 2 — typography. Sizes return to the previous V2 scale. */
   .history-now-card-v3__text-layer {
     position: absolute;
     z-index: 2;
@@ -83,15 +113,15 @@
 
   .history-now-card-v3__header {
     position: absolute;
-    top: 7.5%;
-    left: 4.55%;
-    width: 56%;
+    top: 5.5%;
+    left: 5.5%;
+    width: 70%;
   }
 
   .history-now-card-v3__header p {
-    margin: 0 0 0.26cqw;
+    margin: 0 0 0.3cqw;
     color: #4930b1;
-    font-size: 0.9cqw;
+    font-size: 0.8cqw;
     font-weight: 800;
     letter-spacing: 0.045em;
   }
@@ -100,17 +130,17 @@
     margin: 0;
     color: #4c2ba5;
     font-family: var(--landing-font-display);
-    font-size: 2.55cqw;
+    font-size: 2.08cqw;
     font-weight: 700;
-    letter-spacing: -0.038em;
-    line-height: 0.98;
+    letter-spacing: -0.03em;
+    line-height: 0.99;
   }
 
   .history-now-card-v3__copy-grid {
     position: absolute;
     top: 62.5%;
-    right: 4.5%;
-    left: 4.5%;
+    right: 3.6%;
+    left: 3.6%;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     margin: 0;
@@ -121,43 +151,43 @@
   .history-now-card-v3__copy-grid li {
     position: relative;
     min-width: 0;
-    padding: 0 1.05cqw;
-    font-size: 0.82cqw;
-    font-weight: 700;
-    line-height: 1.22;
+    padding: 0 0.7cqw;
+    font-size: 0.72cqw;
+    font-weight: 680;
+    line-height: 1.24;
     text-align: center;
   }
 
   .history-now-card-v3__copy-grid li:not(:last-child)::after {
     position: absolute;
-    top: -5.05cqw;
+    top: -4.55cqw;
     right: 0;
     width: 1px;
-    height: 8.1cqw;
+    height: 6.8cqw;
     content: "";
-    background: linear-gradient(180deg, transparent, rgba(77, 49, 180, 0.16) 15%, rgba(77, 49, 180, 0.16) 84%, transparent);
+    background: linear-gradient(180deg, transparent, rgba(77, 49, 180, 0.16) 18%, rgba(77, 49, 180, 0.16) 82%, transparent);
   }
 
   .history-now-card-v3__closing {
     position: absolute;
-    top: 79.5%;
-    right: 4.55%;
-    left: 4.55%;
-    padding-top: 0.48cqw;
-    border-top: 0.06cqw solid rgba(130, 91, 51, 0.32);
+    right: 4.7%;
+    bottom: 2.7%;
+    left: 4.7%;
+    padding-top: 0.5cqw;
+    border-top: 0.055cqw solid rgba(130, 91, 51, 0.28);
     text-align: center;
   }
 
   .history-now-card-v3__closing::before {
     position: absolute;
-    top: -0.37cqw;
+    top: -0.35cqw;
     left: 50%;
-    padding: 0 0.38cqw;
-    color: rgba(103, 68, 154, 0.54);
+    padding: 0 0.35cqw;
+    color: rgba(103, 68, 154, 0.52);
     content: "◆";
-    background: #fbf8f3;
+    background: rgba(250, 249, 252, 0.98);
     font-family: Georgia, serif;
-    font-size: 0.48cqw;
+    font-size: 0.46cqw;
     line-height: 1;
     transform: translateX(-50%);
   }
@@ -166,16 +196,16 @@
     margin: 0;
     color: #42288f;
     font-family: var(--landing-font-display);
-    font-size: 1.05cqw;
+    font-size: 1.08cqw;
     font-weight: 700;
-    line-height: 1.06;
+    line-height: 1.12;
   }
 
   .history-now-card-v3__tagline {
-    margin: 0.14cqw 0 0.01cqw;
+    margin: 0.18cqw 0 0.04cqw;
     font-family: var(--landing-font-display);
-    font-size: 0.62cqw;
-    line-height: 1.05;
+    font-size: 0.71cqw;
+    line-height: 1.14;
   }
 
   .history-now-card-v3__closing strong {
@@ -183,19 +213,19 @@
     margin-top: 0;
     color: #4e2db1;
     font-family: var(--landing-font-display);
-    font-size: 2.05cqw;
+    font-size: 2.22cqw;
     font-weight: 700;
     letter-spacing: -0.045em;
-    line-height: 0.92;
+    line-height: 0.95;
   }
 
-  /* LAYER 3 — role illustrations. This band begins only after the headline. */
+  /* LAYER 3 — role illustrations */
   .history-now-card-v3__icon-layer {
     position: absolute;
     z-index: 3;
-    top: 37.5%;
-    right: 4.5%;
-    left: 4.5%;
+    top: 34%;
+    right: 3.6%;
+    left: 3.6%;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -209,21 +239,21 @@
 
   .history-now-card-v3__icon-cell img {
     display: block;
-    width: 5.4cqw;
-    height: 5.4cqw;
+    width: 5.35cqw;
+    height: 5.35cqw;
     object-fit: contain;
-    filter: drop-shadow(0 0.3cqw 0.42cqw rgba(67, 37, 135, 0.14));
+    filter: drop-shadow(0 0.28cqw 0.36cqw rgba(67, 37, 135, 0.13));
   }
 
-  /* LAYER 4 — repository-native purple İlkOku wax seal. */
+  /* LAYER 4 — new seal; no dependency on the broken legacy raster asset. */
   .history-now-card-v3__seal-layer {
     position: absolute;
     z-index: 4;
     top: 5.5%;
     right: 4.2%;
     display: block;
-    width: 8.15cqw;
-    height: 8.15cqw;
+    width: 6.2cqw;
+    height: 6.2cqw;
   }
 
   .history-now-card-v3__seal-layer img {
@@ -231,6 +261,5 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 0.42cqw 0.42cqw rgba(45, 20, 91, 0.2));
   }
 }

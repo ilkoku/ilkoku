@@ -47,6 +47,15 @@
 }
 
 .history-card-preview__stage {
+  display: grid;
+  width: min(1672px, 100%);
+  aspect-ratio: 1672 / 941;
+  place-items: center;
+  margin-inline: auto;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(111, 73, 174, 0.09), transparent 33%),
+    linear-gradient(145deg, #f8f6fc 0%, #f2eef8 52%, #f9f7fc 100%);
   box-shadow: 0 1.2rem 3rem rgba(43, 30, 70, 0.14);
 }
 
@@ -71,5 +80,9 @@
 
   .history-card-preview__header span {
     white-space: normal;
+  }
+
+  .history-card-preview__stage {
+    min-width: 45rem;
   }
 }

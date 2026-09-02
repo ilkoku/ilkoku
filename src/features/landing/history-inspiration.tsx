@@ -4,8 +4,8 @@ import {
   historyValue,
   safeHistoryAsset,
   safeHistoryColor,
-  type HistoryContent,
 } from "@/features/landing/history-content";
+import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 
 const historyCards = [1, 2, 3, 4] as const;
 const nowSteps = [1, 2, 3, 4] as const;
@@ -21,7 +21,9 @@ function stepKey(index: NowStepIndex, suffix: "Image" | "Text") {
   return `nowStep${index}${suffix}` as const;
 }
 
-export function HistoryInspiration({ content }: { content?: HistoryContent }) {
+export async function HistoryInspiration() {
+  const homepageState = await getPublishedHomepageState("tr");
+  const content = homepageState.state === "valid" ? homepageState.content.history : undefined;
   const nowVisible = historyFlag(content, "nowVisible");
   const sealVisible = historyFlag(content, "nowSealVisible");
   const nowBackground = content?.nowBackground?.trim().startsWith("/") ? content.nowBackground.trim() : "";

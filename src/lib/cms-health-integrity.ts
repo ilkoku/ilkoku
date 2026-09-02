@@ -132,6 +132,8 @@ export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegr
     orphanMediaBlobs,
     invalidRevisions: revisionRows.filter((row) => !isValidCmsRevisionSnapshotJson(row.snapshotJson)).length,
     invalidForms,
+    // The overview receives only an aggregate count. Form payloads and PII remain
+    // confined to the dedicated health/form workbenches.
     overviewSanitizedWarnings: invalidForms,
     invalidAnnouncements: announcementRows.filter((row) => !isObjectJson(row.valueJson)).length,
     invalidFooterLive: liveFooter && !parseFooterNavigation(liveFooter.valueJson) ? 1 : 0,

@@ -62,9 +62,13 @@ function layeredBackground(primary: string, fallback: string): CSSProperties {
     ? [`url("${fallback}")`]
     : [`url("${preferred}")`, `url("${fallback}")`];
 
-  return {
-    backgroundImage: images.join(", "),
-  };
+  return { backgroundImage: images.join(", ") };
+}
+
+function optionalBackground(value: string): CSSProperties | undefined {
+  const src = value.trim();
+  if (!src.startsWith("/") && !src.startsWith("https://")) return undefined;
+  return { backgroundImage: `url("${src}")` };
 }
 
 export default async function HistoryYeni2Page({
@@ -77,74 +81,18 @@ export default async function HistoryYeni2Page({
   const v = await loadHistory(locale);
 
   const eras: EraCard[] = [
-    {
-      period: v.card1Period,
-      title: v.card1Title,
-      lead: v.card1Lead,
-      body: v.card1Body,
-      image: v.card1Image,
-      fallback: historyDefaults.card1Image,
-    },
-    {
-      period: v.card2Period,
-      title: v.card2Title,
-      lead: v.card2Lead,
-      body: v.card2Body,
-      image: v.card2Image,
-      fallback: historyDefaults.card2Image,
-    },
-    {
-      period: v.card3Period,
-      title: v.card3Title,
-      lead: v.card3Lead,
-      body: v.card3Body,
-      image: v.card3Image,
-      fallback: historyDefaults.card3Image,
-    },
-    {
-      period: v.card4Period,
-      title: v.card4Title,
-      lead: v.card4Lead,
-      body: v.card4Body,
-      image: v.card4Image,
-      fallback: historyDefaults.card4Image,
-    },
+    { period: v.card1Period, title: v.card1Title, lead: v.card1Lead, body: v.card1Body, image: v.card1Image, fallback: historyDefaults.card1Image },
+    { period: v.card2Period, title: v.card2Title, lead: v.card2Lead, body: v.card2Body, image: v.card2Image, fallback: historyDefaults.card2Image },
+    { period: v.card3Period, title: v.card3Title, lead: v.card3Lead, body: v.card3Body, image: v.card3Image, fallback: historyDefaults.card3Image },
+    { period: v.card4Period, title: v.card4Title, lead: v.card4Lead, body: v.card4Body, image: v.card4Image, fallback: historyDefaults.card4Image },
   ];
 
   const steps: JourneyStep[] = [
-    {
-      part: 8,
-      label: "01",
-      image: v.step1Image,
-      fallback: "/icons/roles/reader-role-v2.webp",
-      text: v.step1Text,
-    },
-    {
-      part: 9,
-      label: "02",
-      image: v.step2Image,
-      fallback: "/icons/roles/editor-role-v2.webp",
-      text: v.step2Text,
-    },
-    {
-      part: 10,
-      label: "03",
-      image: v.step3Image,
-      fallback: "/icons/roles/publisher-embedded.svg",
-      text: v.step3Text,
-    },
-    {
-      part: 11,
-      label: "04",
-      image: v.step4Image,
-      fallback: "/icons/roles/writer-embedded.svg",
-      text: v.step4Text,
-    },
+    { part: 8, label: "01", image: v.step1Image, fallback: "/icons/roles/reader-role-v2.webp", text: v.step1Text },
+    { part: 9, label: "02", image: v.step2Image, fallback: "/icons/roles/editor-role-v2.webp", text: v.step2Text },
+    { part: 10, label: "03", image: v.step3Image, fallback: "/icons/roles/publisher-embedded.svg", text: v.step3Text },
+    { part: 11, label: "04", image: v.step4Image, fallback: "/icons/roles/writer-embedded.svg", text: v.step4Text },
   ];
-
-  const futureStyle = v.cardBackgroundImage
-    ? layeredBackground(v.cardBackgroundImage, "")
-    : undefined;
 
   return (
     <main className="history-v2-preview" style={{ backgroundColor: v.backgroundColor }}>
@@ -161,11 +109,7 @@ export default async function HistoryYeni2Page({
         <div className="history-v2__eras" data-history-part="3">
           {eras.map((era, index) => (
             <article className="history-v2__era" key={`${era.period}-${era.title}`}>
-              <div
-                className="history-v2__era-media"
-                style={layeredBackground(era.image, era.fallback)}
-                aria-hidden="true"
-              >
+              <div className="history-v2__era-media" style={layeredBackground(era.image, era.fallback)} aria-hidden="true">
                 <span className="history-v2__era-year">{era.period.split("–")[0].trim()}</span>
                 <span className="history-v2__era-index">0{index + 1}</span>
               </div>
@@ -193,7 +137,7 @@ export default async function HistoryYeni2Page({
           <section
             className="history-v2__future"
             data-history-part="5"
-            style={futureStyle}
+            style={optionalBackground(v.cardBackgroundImage)}
             aria-label="2026 şimdi sıra sende"
           >
             <header className="history-v2__future-head">
@@ -220,11 +164,7 @@ export default async function HistoryYeni2Page({
               {steps.map((step) => (
                 <article className="history-v2__step" data-history-part={step.part} key={step.part}>
                   <span className="history-v2__step-label">{step.label}</span>
-                  <div
-                    className="history-v2__step-art"
-                    style={layeredBackground(step.image, step.fallback)}
-                    aria-hidden="true"
-                  />
+                  <div className="history-v2__step-art" style={layeredBackground(step.image, step.fallback)} aria-hidden="true" />
                   <p>{step.text}</p>
                 </article>
               ))}

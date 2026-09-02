@@ -1,4 +1,5 @@
-import type { CSSProperties, Metadata } from "next";
+import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 
 import { cmsLocaleNamespace, normalizeCmsLocale } from "@/lib/cms-locales";
 import { historyDefaults, mergeHistoryContent, safeHistoryImageSrc } from "@/lib/history-content";

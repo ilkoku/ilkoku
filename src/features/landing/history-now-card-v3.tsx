@@ -58,10 +58,10 @@ export function HistoryNowCardV3() {
 
       <div className="history-now-card-v3__seal-layer" aria-hidden="true">
         <Image
-          src="/landing/history/layers/ilkoku-seal 2.png"
+          src="/landing/history/layers/ilkoku-seal-v3.svg"
           alt=""
-          width={260}
-          height={260}
+          width={240}
+          height={240}
           unoptimized
         />
       </div>

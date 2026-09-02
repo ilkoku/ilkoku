@@ -1,0 +1,292 @@
+.history-2026-preview {
+  --history-purple: #4b2ca8;
+  --history-purple-dark: #3d228d;
+  --history-ink: #18131d;
+  --history-frame: rgba(164, 126, 81, 0.62);
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow-x: auto;
+  padding: clamp(1rem, 2.6vw, 2.5rem);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(112, 78, 164, 0.10), transparent 42rem),
+    linear-gradient(180deg, #f4f0f8 0%, #eee8f4 100%);
+}
+
+.history-2026-card {
+  position: relative;
+  width: min(94vw, 1714px);
+  aspect-ratio: 1714 / 708;
+  container-type: inline-size;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--history-ink);
+  background:
+    radial-gradient(circle at 10% 18%, rgba(133, 95, 62, 0.025) 0 0.08cqw, transparent 0.11cqw),
+    radial-gradient(circle at 68% 72%, rgba(97, 70, 124, 0.025) 0 0.07cqw, transparent 0.11cqw),
+    linear-gradient(180deg, #fffdf9 0%, #fbf7f1 100%);
+  background-size: 5.4cqw 4.8cqw, 6cqw 5.3cqw, auto;
+  border-radius: 0.22cqw;
+  box-shadow:
+    0 1.45cqw 3.3cqw rgba(39, 25, 59, 0.18),
+    inset 0 0 1.7cqw rgba(110, 76, 45, 0.04);
+}
+
+.history-2026-card::before,
+.history-2026-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.history-2026-card::before {
+  inset: 0.42cqw;
+  border: max(1px, 0.075cqw) solid var(--history-frame);
+  border-radius: 0.18cqw;
+}
+
+.history-2026-card::after {
+  inset: 0.82cqw;
+  border: max(1px, 0.04cqw) solid rgba(181, 148, 105, 0.35);
+  border-radius: 0.12cqw;
+}
+
+.history-2026-card__frame,
+.history-2026-card__headline,
+.history-2026-card__seal,
+.history-2026-card__steps,
+.history-2026-card__rule,
+.history-2026-card__closing {
+  position: absolute;
+}
+
+.history-2026-card__frame {
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.history-2026-card__corner {
+  position: absolute;
+  width: 2.2cqw;
+  height: 2.2cqw;
+  opacity: 0.62;
+}
+
+.history-2026-card__corner::before,
+.history-2026-card__corner::after {
+  content: "";
+  position: absolute;
+  background: rgba(164, 126, 81, 0.68);
+}
+
+.history-2026-card__corner::before { width: 1.65cqw; height: max(1px, 0.055cqw); }
+.history-2026-card__corner::after { width: max(1px, 0.055cqw); height: 1.65cqw; }
+.history-2026-card__corner--tl { top: 0.78cqw; left: 0.78cqw; }
+.history-2026-card__corner--tr { top: 0.78cqw; right: 0.78cqw; transform: scaleX(-1); }
+.history-2026-card__corner--bl { bottom: 0.78cqw; left: 0.78cqw; transform: scaleY(-1); }
+.history-2026-card__corner--br { right: 0.78cqw; bottom: 0.78cqw; transform: scale(-1); }
+.history-2026-card__corner::before { top: 0; left: 0; }
+.history-2026-card__corner::after { top: 0; left: 0; }
+
+/* PART 6 + 7 — fixed geometry, editable copy later through CMS. */
+.history-2026-card__headline {
+  z-index: 4;
+  top: 6.8%;
+  left: 5.15%;
+  width: 49.5%;
+}
+
+.history-2026-card__eyebrow {
+  margin: 0 0 1.15cqw;
+  color: var(--history-purple);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.38cqw;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  line-height: 1;
+}
+
+.history-2026-card__headline h1 {
+  margin: 0;
+  color: var(--history-purple);
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 4.38cqw;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 0.94;
+}
+
+/* PART 15 — independent seal asset. */
+.history-2026-card__seal {
+  z-index: 7;
+  top: 5.2%;
+  right: 4.1%;
+  width: 13.5cqw;
+  height: 12.8cqw;
+  display: grid;
+  place-items: center;
+  transform: rotate(1.4deg);
+}
+
+.history-2026-card__seal img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0.48cqw 0.58cqw rgba(38, 15, 66, 0.25));
+}
+
+/* PART 8–11 — four independent image+copy puzzle pieces. */
+.history-2026-card__steps {
+  z-index: 5;
+  top: 34.1%;
+  left: 5.05%;
+  width: 79.7%;
+  height: 34.6%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.history-2026-card__step {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  justify-items: center;
+  padding: 0 1.15cqw 1.25cqw;
+  text-align: center;
+}
+
+.history-2026-card__step + .history-2026-card__step::before {
+  content: "";
+  position: absolute;
+  top: 0.2cqw;
+  bottom: 0.55cqw;
+  left: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent 0%, rgba(77, 50, 172, 0.20) 9%, rgba(77, 50, 172, 0.20) 91%, transparent 100%);
+}
+
+.history-2026-card__art {
+  width: 100%;
+  min-height: 0;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+}
+
+.history-2026-card__art img {
+  display: block;
+  width: 15.5cqw;
+  height: 10.2cqw;
+  object-fit: contain;
+}
+
+.history-2026-card__step--editor .history-2026-card__art img { width: 15.1cqw; height: 10.45cqw; }
+.history-2026-card__step--publisher .history-2026-card__art img { width: 14.9cqw; height: 10.25cqw; }
+.history-2026-card__step--journey .history-2026-card__art img { width: 15.6cqw; height: 10.7cqw; }
+
+.history-2026-card__step p {
+  margin: 0.68cqw 0 0;
+  color: #111015;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.28cqw;
+  font-weight: 760;
+  letter-spacing: -0.018em;
+  line-height: 1.22;
+}
+
+/* Divider spans the same width seen in the full History composition (reference 2). */
+.history-2026-card__rule {
+  z-index: 5;
+  left: 5.15%;
+  right: 5.55%;
+  top: 72.7%;
+  height: 1.25cqw;
+}
+
+.history-2026-card__rule-line {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(158, 117, 76, 0.42);
+}
+
+.history-2026-card__rule-diamond {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 0 0.48cqw;
+  color: rgba(115, 73, 145, 0.58);
+  background: #fbf8f2;
+  font-family: Georgia, serif;
+  font-size: 0.72cqw;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+}
+
+/* PART 12–14 — independent editable text nodes, geometry fixed here. */
+.history-2026-card__closing {
+  z-index: 6;
+  left: 23%;
+  right: 22%;
+  bottom: 2.1%;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.history-2026-card__question {
+  margin: 0;
+  color: var(--history-purple-dark);
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 1.95cqw;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  line-height: 1;
+}
+
+.history-2026-card__tagline {
+  margin: 0.45cqw 0 0;
+  color: #1d171e;
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 1.18cqw;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.history-2026-card__brand {
+  display: block;
+  margin-top: -0.12cqw;
+  color: var(--history-purple);
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 4.92cqw;
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  line-height: 0.96;
+}
+
+.history-2026-card__flourish {
+  display: block;
+  margin-top: -0.2cqw;
+  color: rgba(171, 127, 75, 0.58);
+  font-family: Georgia, serif;
+  font-size: 0.7cqw;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .history-2026-preview {
+    justify-items: start;
+  }
+
+  .history-2026-card {
+    width: 1040px;
+    flex: 0 0 auto;
+  }
+}

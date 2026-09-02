@@ -178,7 +178,7 @@
 
 .landing-history__now-journey {
   position: absolute;
-  top: 76.75%;
+  top: 76.45%;
   left: 41.65%;
   width: 41.5%;
   display: grid;
@@ -190,41 +190,73 @@
 
 .landing-history__now-journey li {
   display: flex;
-  min-height: 6.4cqw;
+  min-height: 6.55cqw;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.65cqw;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.28cqw;
   margin: 0;
-  padding: 0 1.25cqw;
-  border-right: 0.08cqw solid rgba(77, 49, 180, 0.23);
-  font-size: 0.76cqw;
+  padding: 0 1.05cqw;
+  border-right: 0.07cqw solid rgba(77, 49, 180, 0.18);
+  font-size: 0.73cqw;
   font-weight: 650;
-  line-height: 1.32;
-}
-
-.landing-history__now-journey li:first-child {
-  padding-left: 0;
+  line-height: 1.3;
+  text-align: center;
 }
 
 .landing-history__now-journey li:last-child {
-  padding-right: 0;
   border-right: 0;
 }
 
+.landing-history__now-journey li::before {
+  display: block;
+  width: 3.3cqw;
+  height: 3.3cqw;
+  flex: 0 0 auto;
+  margin: -0.1cqw auto 0.05cqw;
+  content: "";
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 0.3cqw 0.42cqw rgba(67, 37, 135, 0.16));
+  pointer-events: none;
+}
+
+.landing-history__now-journey li:nth-child(1)::before {
+  background-image: url("/icons/roles/reader-role-v2.webp");
+}
+
+.landing-history__now-journey li:nth-child(2)::before {
+  background-image: url("/icons/roles/editor-role-v2.webp");
+}
+
+.landing-history__now-journey li:nth-child(3)::before {
+  background-image: url("/icons/roles/publisher-embedded.svg");
+}
+
+.landing-history__now-journey li:nth-child(4)::before {
+  background-image: url("/icons/roles/writer-embedded.svg");
+}
+
+.landing-history__now-journey li span {
+  display: block;
+  width: 100%;
+  max-width: 8.25cqw;
+  margin: 0 auto;
+}
+
 .landing-history__now-journey svg {
-  width: 2.05cqw;
-  height: 2.05cqw;
-  color: #4d31b4;
+  display: none;
 }
 
 .landing-history__now-question {
   position: absolute;
   top: 86.25%;
-  left: 41.45%;
-  width: 48%;
+  left: 41.65%;
+  width: 41.5%;
   margin: 0;
   padding: 0.9cqw 0 0;
-  border-top: 0.08cqw solid rgba(130, 91, 51, 0.35);
+  border-top: 0.07cqw solid rgba(130, 91, 51, 0.32);
   color: #42288f;
   font-family: var(--landing-font-display);
   font-size: 1.08cqw;
@@ -236,8 +268,8 @@
 .landing-history__now-signature {
   position: absolute;
   top: 90.55%;
-  left: 57.5%;
-  width: 17.5%;
+  left: 41.65%;
+  width: 41.5%;
   text-align: center;
 }
 

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Mor İlkOku balmumu mührü">
+  <defs>
+    <radialGradient id="wax" cx="38%" cy="30%" r="74%">
+      <stop offset="0" stop-color="#7a4bd3"/>
+      <stop offset="0.34" stop-color="#5c2aa8"/>
+      <stop offset="0.72" stop-color="#3b176f"/>
+      <stop offset="1" stop-color="#241044"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c8a8f2" stop-opacity="0.9"/>
+      <stop offset="0.48" stop-color="#7c50c6" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#160827" stop-opacity="0.9"/>
+    </linearGradient>
+    <radialGradient id="inner" cx="42%" cy="34%" r="68%">
+      <stop offset="0" stop-color="#6f3dc0" stop-opacity="0.62"/>
+      <stop offset="1" stop-color="#30125a" stop-opacity="0.76"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#1b082e" flood-opacity="0.32"/>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.1"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <path fill="url(#wax)" d="M149 19c12-7 27 2 39 1 13-1 25-12 38-7 13 5 18 20 29 27 11 7 27 6 35 17 8 11 3 26 7 39 4 13 17 23 17 37 0 14-13 24-17 37-4 13 1 28-7 39-8 11-24 10-35 17-11 7-16 22-29 27-13 5-25-6-38-7-12-1-27 8-39 1-12-7-14-24-24-33-10-9-26-12-31-25-5-13 5-26 4-40-1-14-13-25-11-39 2-14 17-21 23-33 6-12 4-28 14-37 10-9 26-6 38-12 12-6 19-20 33-21 14-1 24 13 36 18Z"/>
+
+    <path d="M87 104c10-37 41-61 79-61 45 0 82 35 82 80 0 47-37 84-83 84-38 0-70-25-80-60" fill="none" stroke="url(#rim)" stroke-width="8" stroke-linecap="round" opacity="0.78"/>
+    <circle cx="166" cy="125" r="62" fill="url(#inner)" stroke="#ad8bdd" stroke-opacity="0.38" stroke-width="3"/>
+    <circle cx="166" cy="125" r="49" fill="none" stroke="#cfb8ec" stroke-opacity="0.22" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round"/>
+
+    <g fill="none" stroke="#d0b4f1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M119 99c18-7 32-5 44 4v58c-12-9-26-11-44-5V99Z" stroke-width="7"/>
+      <path d="M213 99c-18-7-32-5-44 4v58c12-9 26-11 44-5V99Z" stroke-width="7"/>
+      <path d="M166 105v57" stroke-width="4.5"/>
+      <path d="M132 116c9-2 17-1 24 2M132 129c9-2 17-1 24 2M200 116c-9-2-17-1-24 2M200 129c-9-2-17-1-24 2" stroke-width="3.3" opacity="0.78"/>
+    </g>
+
+    <g fill="#d5bcf3" opacity="0.58">
+      <circle cx="166" cy="57" r="3"/>
+      <circle cx="233" cy="125" r="3"/>
+      <circle cx="166" cy="193" r="3"/>
+      <circle cx="99" cy="125" r="3"/>
+    </g>
+
+    <ellipse cx="131" cy="69" rx="34" ry="12" fill="#fff" opacity="0.12" filter="url(#soft)" transform="rotate(-18 131 69)"/>
+
+    <path fill="#4b1c87" d="M246 223c13-5 27 3 30 16 3 13-6 27-19 29-13 2-26-7-27-20-1-11 6-21 16-25Z"/>
+    <path fill="#6d3db8" d="M278 260c8-3 17 2 19 10 2 9-4 18-13 19-9 1-17-5-18-14-1-7 4-13 12-15Z"/>
+    <circle cx="288" cy="225" r="8" fill="#54238f"/>
+    <path d="M242 230c7-4 16-2 21 5" fill="none" stroke="#b992e6" stroke-opacity="0.5" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

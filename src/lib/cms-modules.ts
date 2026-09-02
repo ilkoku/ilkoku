@@ -14,6 +14,7 @@ export const cmsModules: CmsModule[] = [
   { href: "/icerik", label: "Genel Bakış", description: "İçerik yönetimi özeti ve operasyon öncelikleri", group: "Site", enabled: true, mode: "read-only-audit" },
   { href: "/icerik/arama", label: "İçerik Ara", description: "CMS içeriklerinde hızlı arama ve doğrudan erişim", group: "Site", enabled: true, mode: "read-only-audit" },
   { href: "/icerik/ana-sayfa", label: "Ana Sayfa", description: "Hero, bölümler, CTA ve footer", group: "Site", enabled: true, mode: "controlled-write" },
+  { href: "/icerik/ana-sayfa/history", label: "Ana Sayfa · History", description: "History başlıkları, tarih kartları, görseller ve 2026 puzzle alanı", group: "Site", enabled: true, mode: "controlled-write" },
   { href: "/icerik/rol-kartlari", label: "Rol Kartları", description: "Yazar, Okuyucu, Editör ve Yayınevi kartları", group: "Site", enabled: true, mode: "controlled-write" },
   { href: "/icerik/sayfalar", label: "Güven & Kurum Sayfaları", description: "Nasıl Çalışır ve diğer kamuya açık güven/kurum sayfaları", group: "Site", enabled: true, mode: "controlled-write" },
   { href: "/icerik/menuler", label: "Menüler & Footer", description: "Navigasyon, linkler ve footer alanları", group: "Site", enabled: true, mode: "admin-control", adminOnly: true },

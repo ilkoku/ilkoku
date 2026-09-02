@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 760">
+  <defs><linearGradient id="pap" x1="0" x2="1"><stop stop-color="#b36a22"/><stop offset=".5" stop-color="#d69a44"/><stop offset="1" stop-color="#9b571d"/></linearGradient><filter id="s"><feDropShadow dx="6" dy="10" stdDeviation="8" flood-color="#4e2d16" flood-opacity=".35"/></filter></defs>
+  <rect width="420" height="760" fill="#f4e7ce"/>
+  <g filter="url(#s)" transform="rotate(-1 210 380)">
+    <g fill="url(#pap)" stroke="#75401b" stroke-width="3">
+      <path d="M38 45h326l18 34-18 34H38L20 79z"/><path d="M45 111h312l22 33-22 33H45l-21-33z"/><path d="M33 178h334l15 33-15 33H33l-14-33z"/><path d="M44 245h313l22 33-22 33H44l-20-33z"/><path d="M30 312h340l14 33-14 33H30l-15-33z"/><path d="M42 379h317l20 33-20 33H42l-18-33z"/><path d="M35 446h329l18 33-18 33H35l-16-33z"/><path d="M48 513h306l25 33-25 33H48l-24-33z"/><path d="M33 580h334l15 33-15 33H33l-14-33z"/><path d="M45 647h312l22 33-22 33H45l-21-33z"/>
+    </g>
+    <g fill="none" stroke="#422817" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".9">
+      <path d="M70 76l18-12 16 20 20-22 18 18 22-14 17 19 25-24 18 19 20-12 23 19 20-22 20 17 29-16"/>
+      <path d="M64 143l24-18 19 25 21-18 24 17 23-22 20 25 28-24 18 18 23-18 20 22 24-21 25 23"/>
+      <path d="M60 210l18-19 21 24 23-18 24 20 22-24 27 21 21-17 24 21 22-24 24 20 31-23"/>
+      <path d="M68 277l20-22 19 20 27-18 18 22 24-21 24 20 25-18 22 20 23-19 19 21 31-22"/>
+      <path d="M58 344l26-20 22 22 20-21 25 19 25-22 20 23 28-22 22 20 20-17 27 20 25-22"/>
+      <path d="M66 411l21-20 22 23 25-20 22 21 24-22 26 22 21-19 24 20 25-21 23 22 28-20"/>
+      <path d="M61 478l24-22 20 24 23-19 25 20 21-23 28 22 22-18 25 20 20-22 25 23 31-23"/>
+      <path d="M72 545l20-21 24 22 22-20 26 19 21-21 27 22 24-21 22 20 24-17 22 18 27-18"/>
+      <path d="M59 612l25-20 22 23 22-21 26 22 23-22 25 21 25-18 23 20 22-20 26 22 30-19"/>
+      <path d="M68 679l22-21 20 22 25-20 21 20 25-22 25 23 23-21 26 21 23-20 24 21 27-18"/>
+    </g>
+  </g>
+</svg>

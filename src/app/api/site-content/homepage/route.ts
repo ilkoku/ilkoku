@@ -24,7 +24,7 @@ export async function GET(request: Request) {
         AND status = 'published'
     `;
 
-    const allowed = new Set(["hero", "roles", "passport", "why", "footer"]);
+    const allowed = new Set(["hero", "roles", "passport", "why", "history", "footer"]);
     const content: Record<string, Record<string, string>> = {};
 
     for (const row of rows) {

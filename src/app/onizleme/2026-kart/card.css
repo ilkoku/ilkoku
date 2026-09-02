@@ -1,0 +1,236 @@
+.history-2026-preview-card {
+  position: relative;
+  width: min(92%, 1540px);
+  aspect-ratio: 2.48 / 1;
+  container-type: inline-size;
+  color: #17121e;
+  font-family: var(--landing-font-sans, Inter, Arial, sans-serif);
+  isolation: isolate;
+}
+
+/* LAYER 1 — clean parchment and frame. No master artwork, wipe or legacy card. */
+.history-2026-preview-card__surface {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  border: max(1px, 0.075cqw) solid rgba(145, 110, 67, 0.58);
+  border-radius: 0.42cqw;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(116, 78, 150, 0.035) 0 0.12cqw, transparent 0.17cqw),
+    radial-gradient(circle at 82% 76%, rgba(164, 126, 80, 0.035) 0 0.11cqw, transparent 0.16cqw),
+    linear-gradient(180deg, #fffefa 0%, #fbf8f2 100%);
+  background-size: 5.2cqw 4.5cqw, 5.7cqw 5cqw, auto;
+  box-shadow:
+    0 1.35cqw 3cqw rgba(47, 31, 70, 0.16),
+    inset 0 0 0 0.16cqw rgba(255, 255, 255, 0.86),
+    inset 0 0 1.6cqw rgba(103, 74, 41, 0.055);
+}
+
+.history-2026-preview-card__surface::before {
+  position: absolute;
+  inset: 0.76cqw 0.86cqw;
+  border: max(1px, 0.055cqw) solid rgba(165, 132, 89, 0.46);
+  border-radius: 0.28cqw;
+  content: "";
+  box-shadow: inset 0 0 0 0.08cqw rgba(255, 255, 255, 0.75);
+}
+
+.history-2026-preview-card__surface::after {
+  position: absolute;
+  inset: 1.16cqw 1.28cqw;
+  border-radius: 0.2cqw;
+  content: "";
+  background:
+    linear-gradient(135deg, rgba(143, 106, 61, 0.2), transparent 1.7cqw) top left / 3.2cqw 3.2cqw no-repeat,
+    linear-gradient(225deg, rgba(143, 106, 61, 0.2), transparent 1.7cqw) top right / 3.2cqw 3.2cqw no-repeat,
+    linear-gradient(45deg, rgba(143, 106, 61, 0.2), transparent 1.7cqw) bottom left / 3.2cqw 3.2cqw no-repeat,
+    linear-gradient(315deg, rgba(143, 106, 61, 0.2), transparent 1.7cqw) bottom right / 3.2cqw 3.2cqw no-repeat;
+  opacity: 0.62;
+}
+
+/* LAYER 2 — all text is live HTML. */
+.history-2026-preview-card__text-layer {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+}
+
+.history-2026-preview-card__header {
+  position: absolute;
+  top: 7.3%;
+  left: 5.1%;
+  width: 65%;
+}
+
+.history-2026-preview-card__header p {
+  margin: 0 0 0.52cqw;
+  color: #4930b1;
+  font-size: 1.38cqw;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+}
+
+.history-2026-preview-card__header h1 {
+  margin: 0;
+  color: #4c2ba5;
+  font-family: var(--landing-font-display, Georgia, serif);
+  font-size: 3.84cqw;
+  font-weight: 700;
+  letter-spacing: -0.032em;
+  line-height: 0.99;
+}
+
+.history-2026-preview-card__copy-grid {
+  position: absolute;
+  top: 58.4%;
+  right: 4.8%;
+  left: 4.8%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-2026-preview-card__copy-grid li {
+  position: relative;
+  min-width: 0;
+  min-height: 5.5cqw;
+  padding: 0.55cqw 2.1cqw 0;
+  font-size: 1.24cqw;
+  font-weight: 720;
+  line-height: 1.27;
+  text-align: center;
+}
+
+.history-2026-preview-card__copy-grid li:not(:last-child)::after {
+  position: absolute;
+  top: -8.3cqw;
+  right: 0;
+  width: 1px;
+  height: 12.2cqw;
+  content: "";
+  background: linear-gradient(180deg, transparent, rgba(77, 49, 180, 0.18) 16%, rgba(77, 49, 180, 0.18) 84%, transparent);
+}
+
+.history-2026-preview-card__closing {
+  position: absolute;
+  right: 4.8%;
+  bottom: 3.8%;
+  left: 4.8%;
+  padding-top: 1.12cqw;
+  border-top: max(1px, 0.065cqw) solid rgba(130, 91, 51, 0.32);
+  text-align: center;
+}
+
+.history-2026-preview-card__closing::before {
+  position: absolute;
+  top: -0.62cqw;
+  left: 50%;
+  padding: 0 0.55cqw;
+  color: rgba(102, 66, 151, 0.56);
+  content: "◆";
+  background: #fbf9f4;
+  font-family: Georgia, serif;
+  font-size: 0.78cqw;
+  line-height: 1;
+  transform: translateX(-50%);
+}
+
+.history-2026-preview-card__question {
+  margin: 0;
+  color: #42288f;
+  font-family: var(--landing-font-display, Georgia, serif);
+  font-size: 1.88cqw;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.history-2026-preview-card__tagline {
+  margin: 0.25cqw 0 0;
+  font-family: var(--landing-font-display, Georgia, serif);
+  font-size: 1.08cqw;
+  line-height: 1.14;
+}
+
+.history-2026-preview-card__closing strong {
+  display: block;
+  margin-top: -0.05cqw;
+  color: #4e2db1;
+  font-family: var(--landing-font-display, Georgia, serif);
+  font-size: 4.2cqw;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 0.94;
+}
+
+.history-2026-preview-card__flourish {
+  display: block;
+  width: 32%;
+  height: 0.72cqw;
+  margin: 0.05cqw auto 0;
+  opacity: 0.42;
+  background:
+    linear-gradient(90deg, transparent 0 3%, rgba(126, 92, 55, 0.6) 20% 46%, transparent 46% 54%, rgba(126, 92, 55, 0.6) 54% 80%, transparent 97% 100%) center 50% / 100% 1px no-repeat,
+    radial-gradient(ellipse at 46% 50%, transparent 0 28%, rgba(126, 92, 55, 0.6) 30% 36%, transparent 38%) left center / 50% 100% no-repeat,
+    radial-gradient(ellipse at 54% 50%, transparent 0 28%, rgba(126, 92, 55, 0.6) 30% 36%, transparent 38%) right center / 50% 100% no-repeat;
+}
+
+/* LAYER 3 — four independent İlkOku illustrations. */
+.history-2026-preview-card__illustration-layer {
+  position: absolute;
+  z-index: 3;
+  top: 31.5%;
+  right: 4.8%;
+  left: 4.8%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.history-2026-preview-card__illustration-cell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.8cqw;
+}
+
+.history-2026-preview-card__illustration-cell img {
+  display: block;
+  width: 10.3cqw;
+  height: 9.3cqw;
+  object-fit: contain;
+  filter: drop-shadow(0 0.38cqw 0.46cqw rgba(66, 37, 132, 0.13));
+}
+
+.history-2026-preview-card__illustration-cell:nth-child(3) img,
+.history-2026-preview-card__illustration-cell:nth-child(4) img {
+  width: 9.9cqw;
+  height: 9.1cqw;
+}
+
+/* LAYER 4 — separate transparent illustrated wax seal. */
+.history-2026-preview-card__seal-layer {
+  position: absolute;
+  z-index: 4;
+  top: 5.2%;
+  right: 4.2%;
+  width: 12.1cqw;
+  height: 12.1cqw;
+  transform: rotate(2deg);
+}
+
+.history-2026-preview-card__seal-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0.65cqw 0.7cqw rgba(38, 13, 66, 0.28));
+}
+
+@media (max-width: 1100px) {
+  .history-2026-preview-card {
+    width: 94%;
+  }
+}

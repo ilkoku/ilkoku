@@ -1,0 +1,65 @@
+.history-2026-preview-page {
+  min-height: 100vh;
+  padding: 2rem 0 4rem;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(112, 79, 166, 0.12), transparent 28rem),
+    linear-gradient(180deg, #f5f2fa 0%, #efebf6 55%, #f8f6fb 100%);
+}
+
+.history-2026-preview-page__header {
+  width: min(94vw, 1540px);
+  margin: 0 auto 1.25rem;
+  color: #211b2b;
+  font-family: var(--landing-font-sans, Inter, Arial, sans-serif);
+}
+
+.history-2026-preview-page__header p {
+  margin: 0 0 0.3rem;
+  color: #5a3ab8;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.history-2026-preview-page__header h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  line-height: 1.1;
+}
+
+.history-2026-preview-page__header span {
+  display: block;
+  margin-top: 0.35rem;
+  color: #655d70;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.history-2026-preview-page__canvas {
+  display: grid;
+  width: min(100%, 1672px);
+  min-height: min(76vh, 860px);
+  place-items: center;
+  margin: 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 16% 74%, rgba(155, 117, 86, 0.12), transparent 16rem),
+    radial-gradient(circle at 86% 18%, rgba(111, 73, 174, 0.1), transparent 20rem),
+    linear-gradient(145deg, #f7f4fb 0%, #eee9f5 52%, #f8f6fb 100%);
+  box-shadow: 0 1.2rem 3rem rgba(43, 30, 70, 0.14);
+}
+
+@media (max-width: 760px) {
+  .history-2026-preview-page {
+    overflow-x: auto;
+  }
+
+  .history-2026-preview-page__header {
+    min-width: 62rem;
+    padding-inline: 2rem;
+  }
+
+  .history-2026-preview-page__canvas {
+    min-width: 62rem;
+  }
+}

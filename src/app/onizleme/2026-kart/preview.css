@@ -1,298 +1,292 @@
-.history-preview {
+.history-2026-preview {
+  --history-purple: #4b2ca8;
+  --history-purple-dark: #3d228d;
+  --history-ink: #18131d;
+  --history-frame: rgba(164, 126, 81, 0.62);
   min-height: 100vh;
   display: grid;
   place-items: center;
   overflow-x: auto;
-  padding: clamp(1rem, 3vw, 3rem);
+  padding: clamp(1rem, 2.6vw, 2.5rem);
   background:
-    radial-gradient(circle at 50% 48%, rgba(97, 61, 163, 0.10), transparent 42rem),
-    linear-gradient(180deg, #f6f3fb 0%, #efebf6 100%);
+    radial-gradient(circle at 50% 40%, rgba(112, 78, 164, 0.10), transparent 42rem),
+    linear-gradient(180deg, #f4f0f8 0%, #eee8f4 100%);
 }
 
-.history-card {
-  --purple: #4a2aa4;
-  --purple-dark: #3f248f;
+.history-2026-card {
   position: relative;
-  width: min(94vw, 1800px);
-  aspect-ratio: 2.50 / 1;
+  width: min(94vw, 1714px);
+  aspect-ratio: 1714 / 708;
   container-type: inline-size;
   isolation: isolate;
   overflow: hidden;
-  color: #17141b;
-  border: max(1px, 0.06cqw) solid rgba(161, 124, 79, 0.58);
-  border-radius: 0.4cqw;
+  color: var(--history-ink);
   background:
-    radial-gradient(circle at 10% 12%, rgba(143, 95, 165, 0.035) 0 0.09cqw, transparent 0.12cqw),
-    radial-gradient(circle at 82% 74%, rgba(168, 120, 67, 0.03) 0 0.08cqw, transparent 0.11cqw),
-    linear-gradient(180deg, #fffefa 0%, #fbf8f2 100%);
-  background-size: 4.8cqw 4.6cqw, 5.4cqw 5cqw, auto;
+    radial-gradient(circle at 10% 18%, rgba(133, 95, 62, 0.025) 0 0.08cqw, transparent 0.11cqw),
+    radial-gradient(circle at 68% 72%, rgba(97, 70, 124, 0.025) 0 0.07cqw, transparent 0.11cqw),
+    linear-gradient(180deg, #fffdf9 0%, #fbf7f1 100%);
+  background-size: 5.4cqw 4.8cqw, 6cqw 5.3cqw, auto;
+  border-radius: 0.22cqw;
   box-shadow:
-    0 1.2cqw 2.7cqw rgba(48, 31, 74, 0.16),
-    inset 0 0 1.5cqw rgba(117, 81, 47, 0.05);
-  font-family: var(--landing-font-sans, Inter, Arial, sans-serif);
+    0 1.45cqw 3.3cqw rgba(39, 25, 59, 0.18),
+    inset 0 0 1.7cqw rgba(110, 76, 45, 0.04);
 }
 
-.history-card::before,
-.history-card::after {
+.history-2026-card::before,
+.history-2026-card::after {
   content: "";
   position: absolute;
   pointer-events: none;
   z-index: 1;
 }
 
-.history-card::before {
-  inset: 0.72cqw;
-  border: max(1px, 0.06cqw) solid rgba(169, 134, 92, 0.50);
-  border-radius: 0.28cqw;
-}
-
-.history-card::after {
-  inset: 1.08cqw;
-  border: max(1px, 0.035cqw) solid rgba(184, 153, 112, 0.34);
+.history-2026-card::before {
+  inset: 0.42cqw;
+  border: max(1px, 0.075cqw) solid var(--history-frame);
   border-radius: 0.18cqw;
 }
 
-.history-card__corner {
+.history-2026-card::after {
+  inset: 0.82cqw;
+  border: max(1px, 0.04cqw) solid rgba(181, 148, 105, 0.35);
+  border-radius: 0.12cqw;
+}
+
+.history-2026-card__frame,
+.history-2026-card__headline,
+.history-2026-card__seal,
+.history-2026-card__steps,
+.history-2026-card__rule,
+.history-2026-card__closing {
   position: absolute;
+}
+
+.history-2026-card__frame {
   z-index: 2;
-  width: 2.25cqw;
-  height: 2.25cqw;
+  inset: 0;
+  pointer-events: none;
+}
+
+.history-2026-card__corner {
+  position: absolute;
+  width: 2.2cqw;
+  height: 2.2cqw;
   opacity: 0.62;
 }
 
-.history-card__corner::before,
-.history-card__corner::after {
+.history-2026-card__corner::before,
+.history-2026-card__corner::after {
   content: "";
   position: absolute;
-  border-color: rgba(152, 113, 70, 0.62);
-  border-style: solid;
+  background: rgba(164, 126, 81, 0.68);
 }
 
-.history-card__corner::before {
-  inset: 0;
-  border-width: max(1px, 0.06cqw) 0 0 max(1px, 0.06cqw);
-  border-radius: 0.7cqw 0 0 0;
-}
+.history-2026-card__corner::before { width: 1.65cqw; height: max(1px, 0.055cqw); }
+.history-2026-card__corner::after { width: max(1px, 0.055cqw); height: 1.65cqw; }
+.history-2026-card__corner--tl { top: 0.78cqw; left: 0.78cqw; }
+.history-2026-card__corner--tr { top: 0.78cqw; right: 0.78cqw; transform: scaleX(-1); }
+.history-2026-card__corner--bl { bottom: 0.78cqw; left: 0.78cqw; transform: scaleY(-1); }
+.history-2026-card__corner--br { right: 0.78cqw; bottom: 0.78cqw; transform: scale(-1); }
+.history-2026-card__corner::before { top: 0; left: 0; }
+.history-2026-card__corner::after { top: 0; left: 0; }
 
-.history-card__corner::after {
-  inset: 0.42cqw;
-  border-width: max(1px, 0.035cqw) 0 0 max(1px, 0.035cqw);
-  border-radius: 0.45cqw 0 0 0;
-}
-
-.history-card__corner--tl {
-  top: 0.72cqw;
-  left: 0.72cqw;
-}
-
-.history-card__corner--tr {
-  top: 0.72cqw;
-  right: 0.72cqw;
-  transform: rotate(90deg);
-}
-
-.history-card__corner--br {
-  right: 0.72cqw;
-  bottom: 0.72cqw;
-  transform: rotate(180deg);
-}
-
-.history-card__corner--bl {
-  bottom: 0.72cqw;
-  left: 0.72cqw;
-  transform: rotate(270deg);
-}
-
-.history-card__headline {
-  position: absolute;
+/* PART 6 + 7 — fixed geometry, editable copy later through CMS. */
+.history-2026-card__headline {
   z-index: 4;
-  top: 6.4%;
+  top: 6.8%;
   left: 5.15%;
-  width: 68%;
+  width: 49.5%;
 }
 
-.history-card__headline p {
-  margin: 0 0 0.5cqw;
-  color: #4930af;
+.history-2026-card__eyebrow {
+  margin: 0 0 1.15cqw;
+  color: var(--history-purple);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 1.38cqw;
   font-weight: 800;
-  letter-spacing: 0.045em;
+  letter-spacing: 0.075em;
+  line-height: 1;
 }
 
-.history-card__headline h1 {
+.history-2026-card__headline h1 {
   margin: 0;
-  color: var(--purple);
-  font-family: var(--landing-font-display, Georgia, "Times New Roman", serif);
-  font-size: 3.9cqw;
+  color: var(--history-purple);
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 4.38cqw;
   font-weight: 700;
-  letter-spacing: -0.033em;
-  line-height: 0.96;
+  letter-spacing: -0.035em;
+  line-height: 0.94;
 }
 
-.history-card__seal {
-  position: absolute;
-  z-index: 5;
-  top: 5.1%;
-  right: 4.05%;
-  width: 13.8cqw;
-  height: 12.5cqw;
-  background: url("/landing/history/preview/seal.svg") center / contain no-repeat;
-  filter: drop-shadow(0 0.42cqw 0.48cqw rgba(42, 20, 76, 0.20));
+/* PART 15 — independent seal asset. */
+.history-2026-card__seal {
+  z-index: 7;
+  top: 5.2%;
+  right: 4.1%;
+  width: 13.5cqw;
+  height: 12.8cqw;
+  display: grid;
+  place-items: center;
   transform: rotate(1.4deg);
 }
 
-.history-card__journey {
-  position: absolute;
-  z-index: 4;
-  top: 34%;
-  right: 5.15%;
-  left: 5.15%;
-  height: 31%;
+.history-2026-card__seal img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0.48cqw 0.58cqw rgba(38, 15, 66, 0.25));
+}
+
+/* PART 8–11 — four independent image+copy puzzle pieces. */
+.history-2026-card__steps {
+  z-index: 5;
+  top: 34.1%;
+  left: 5.05%;
+  width: 79.7%;
+  height: 34.6%;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.history-card__journey-item {
+.history-2026-card__step {
   position: relative;
   min-width: 0;
   display: grid;
-  grid-template-rows: 14.5cqw auto;
+  grid-template-rows: 1fr auto;
+  align-items: end;
   justify-items: center;
-  align-items: start;
-  padding: 0 1.6cqw;
-  margin: 0;
-}
-
-.history-card__journey-item + .history-card__journey-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.2cqw;
-  width: 1px;
-  height: 17.4cqw;
-  background: rgba(87, 62, 161, 0.20);
-}
-
-.history-card__art {
-  display: block;
-  width: 16.5cqw;
-  height: 11.2cqw;
-  align-self: end;
-  background-position: center bottom;
-  background-repeat: no-repeat;
-  background-size: contain;
-  filter: drop-shadow(0 0.25cqw 0.34cqw rgba(64, 35, 126, 0.08));
-}
-
-.history-card__art--reader {
-  background-image: url("/landing/history/preview/reader.svg");
-}
-
-.history-card__art--editor {
-  background-image: url("/landing/history/preview/editor.svg");
-}
-
-.history-card__art--publisher {
-  background-image: url("/landing/history/preview/publisher.svg");
-}
-
-.history-card__art--journey {
-  background-image: url("/landing/history/preview/journey.svg");
-}
-
-.history-card__journey-item p {
-  margin: 0.65cqw 0 0;
-  font-size: 1.24cqw;
-  font-weight: 760;
-  line-height: 1.16;
+  padding: 0 1.15cqw 1.25cqw;
   text-align: center;
 }
 
-.history-card__rule {
+.history-2026-card__step + .history-2026-card__step::before {
+  content: "";
   position: absolute;
-  z-index: 4;
-  right: 5.15%;
-  bottom: 26.8%;
-  left: 5.15%;
-  height: 1px;
-  background: rgba(147, 108, 66, 0.34);
+  top: 0.2cqw;
+  bottom: 0.55cqw;
+  left: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent 0%, rgba(77, 50, 172, 0.20) 9%, rgba(77, 50, 172, 0.20) 91%, transparent 100%);
 }
 
-.history-card__rule span {
+.history-2026-card__art {
+  width: 100%;
+  min-height: 0;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+}
+
+.history-2026-card__art img {
+  display: block;
+  width: 15.5cqw;
+  height: 10.2cqw;
+  object-fit: contain;
+}
+
+.history-2026-card__step--editor .history-2026-card__art img { width: 15.1cqw; height: 10.45cqw; }
+.history-2026-card__step--publisher .history-2026-card__art img { width: 14.9cqw; height: 10.25cqw; }
+.history-2026-card__step--journey .history-2026-card__art img { width: 15.6cqw; height: 10.7cqw; }
+
+.history-2026-card__step p {
+  margin: 0.68cqw 0 0;
+  color: #111015;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.28cqw;
+  font-weight: 760;
+  letter-spacing: -0.018em;
+  line-height: 1.22;
+}
+
+/* Divider spans the same width seen in the full History composition (reference 2). */
+.history-2026-card__rule {
+  z-index: 5;
+  left: 5.15%;
+  right: 5.55%;
+  top: 72.7%;
+  height: 1.25cqw;
+}
+
+.history-2026-card__rule-line {
   position: absolute;
-  left: 50%;
   top: 50%;
-  width: 1.05cqw;
-  height: 1.05cqw;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(158, 117, 76, 0.42);
+}
+
+.history-2026-card__rule-diamond {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 0 0.48cqw;
+  color: rgba(115, 73, 145, 0.58);
   background: #fbf8f2;
+  font-family: Georgia, serif;
+  font-size: 0.72cqw;
+  line-height: 1;
   transform: translate(-50%, -50%);
 }
 
-.history-card__rule span::before {
-  content: "◆";
-  position: absolute;
-  inset: 0;
-  color: rgba(104, 73, 156, 0.56);
-  font-size: 0.72cqw;
-  line-height: 1.05cqw;
+/* PART 12–14 — independent editable text nodes, geometry fixed here. */
+.history-2026-card__closing {
+  z-index: 6;
+  left: 23%;
+  right: 22%;
+  bottom: 2.1%;
+  display: grid;
+  justify-items: center;
   text-align: center;
 }
 
-.history-card__closing {
-  position: absolute;
-  z-index: 4;
-  right: 7%;
-  bottom: 3.7%;
-  left: 7%;
-  text-align: center;
-}
-
-.history-card__question {
+.history-2026-card__question {
   margin: 0;
-  color: var(--purple-dark);
-  font-family: var(--landing-font-display, Georgia, "Times New Roman", serif);
-  font-size: 1.98cqw;
+  color: var(--history-purple-dark);
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 1.95cqw;
   font-weight: 700;
-  line-height: 1.03;
+  letter-spacing: -0.012em;
+  line-height: 1;
 }
 
-.history-card__tagline {
-  margin: 0.18cqw 0 0;
-  color: #201b24;
-  font-family: var(--landing-font-display, Georgia, "Times New Roman", serif);
-  font-size: 1.13cqw;
-  line-height: 1.08;
+.history-2026-card__tagline {
+  margin: 0.45cqw 0 0;
+  color: #1d171e;
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 1.18cqw;
+  font-weight: 500;
+  line-height: 1;
 }
 
-.history-card__closing strong {
+.history-2026-card__brand {
   display: block;
-  margin-top: -0.02cqw;
-  color: #4d2caf;
-  font-family: var(--landing-font-display, Georgia, "Times New Roman", serif);
-  font-size: 4.25cqw;
+  margin-top: -0.12cqw;
+  color: var(--history-purple);
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 4.92cqw;
   font-weight: 700;
-  letter-spacing: -0.052em;
-  line-height: 0.91;
+  letter-spacing: -0.055em;
+  line-height: 0.96;
 }
 
-.history-card__flourish {
+.history-2026-card__flourish {
   display: block;
-  margin-top: 0.08cqw;
-  color: rgba(149, 111, 68, 0.50);
-  font-family: Georgia, "Times New Roman", serif;
+  margin-top: -0.2cqw;
+  color: rgba(171, 127, 75, 0.58);
+  font-family: Georgia, serif;
   font-size: 0.7cqw;
-  letter-spacing: 0.03em;
+  line-height: 1;
   white-space: nowrap;
 }
 
-@media (max-width: 900px) {
-  .history-preview {
-    justify-content: start;
-    padding: 1rem;
+@media (max-width: 980px) {
+  .history-2026-preview {
+    justify-items: start;
   }
 
-  .history-card {
-    width: 78rem;
-    min-width: 78rem;
+  .history-2026-card {
+    width: 1040px;
+    flex: 0 0 auto;
   }
 }

@@ -26,7 +26,7 @@ export async function HistoryInspiration() {
   const content = homepageState.state === "valid" ? homepageState.content.history : undefined;
   const nowVisible = historyFlag(content, "nowVisible");
   const sealVisible = historyFlag(content, "nowSealVisible");
-  const nowBackground = content?.nowBackground?.trim().startsWith("/") ? content.nowBackground.trim() : "";
+  const nowBackground = safeHistoryAsset(content, "nowBackground");
 
   return (
     <section

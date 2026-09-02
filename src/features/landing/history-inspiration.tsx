@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { HistoryNowCardV3 } from "@/features/landing/history-now-card-v3";
 
 type JourneyIconName = "book" | "edit" | "publisher" | "spark";
 
@@ -99,8 +98,6 @@ export function HistoryInspiration() {
             <strong>İlkOku.</strong>
           </div>
         </div>
-
-        <HistoryNowCardV3 />
       </figure>
     </section>
   );

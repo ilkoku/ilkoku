@@ -178,7 +178,7 @@
 
 .landing-history__now-journey {
   position: absolute;
-  top: 76.45%;
+  top: 76.75%;
   left: 41.65%;
   width: 41.5%;
   display: grid;
@@ -190,73 +190,41 @@
 
 .landing-history__now-journey li {
   display: flex;
-  min-height: 6.55cqw;
+  min-height: 6.4cqw;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.28cqw;
+  align-items: flex-start;
+  gap: 0.65cqw;
   margin: 0;
-  padding: 0 1.05cqw;
-  border-right: 0.07cqw solid rgba(77, 49, 180, 0.18);
-  font-size: 0.73cqw;
+  padding: 0 1.25cqw;
+  border-right: 0.08cqw solid rgba(77, 49, 180, 0.23);
+  font-size: 0.76cqw;
   font-weight: 650;
-  line-height: 1.3;
-  text-align: center;
+  line-height: 1.32;
+}
+
+.landing-history__now-journey li:first-child {
+  padding-left: 0;
 }
 
 .landing-history__now-journey li:last-child {
+  padding-right: 0;
   border-right: 0;
 }
 
-.landing-history__now-journey li::before {
-  display: block;
-  width: 3.3cqw;
-  height: 3.3cqw;
-  flex: 0 0 auto;
-  margin: -0.1cqw auto 0.05cqw;
-  content: "";
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-  filter: drop-shadow(0 0.3cqw 0.42cqw rgba(67, 37, 135, 0.16));
-  pointer-events: none;
-}
-
-.landing-history__now-journey li:nth-child(1)::before {
-  background-image: url("/icons/roles/reader-role-v2.webp");
-}
-
-.landing-history__now-journey li:nth-child(2)::before {
-  background-image: url("/icons/roles/editor-role-v2.webp");
-}
-
-.landing-history__now-journey li:nth-child(3)::before {
-  background-image: url("/icons/roles/publisher-embedded.svg");
-}
-
-.landing-history__now-journey li:nth-child(4)::before {
-  background-image: url("/icons/roles/writer-embedded.svg");
-}
-
-.landing-history__now-journey li span {
-  display: block;
-  width: 100%;
-  max-width: 8.25cqw;
-  margin: 0 auto;
-}
-
 .landing-history__now-journey svg {
-  display: none;
+  width: 2.05cqw;
+  height: 2.05cqw;
+  color: #4d31b4;
 }
 
 .landing-history__now-question {
   position: absolute;
   top: 86.25%;
-  left: 41.65%;
-  width: 41.5%;
+  left: 41.45%;
+  width: 48%;
   margin: 0;
   padding: 0.9cqw 0 0;
-  border-top: 0.07cqw solid rgba(130, 91, 51, 0.32);
+  border-top: 0.08cqw solid rgba(130, 91, 51, 0.35);
   color: #42288f;
   font-family: var(--landing-font-display);
   font-size: 1.08cqw;
@@ -268,8 +236,8 @@
 .landing-history__now-signature {
   position: absolute;
   top: 90.55%;
-  left: 41.65%;
-  width: 41.5%;
+  left: 57.5%;
+  width: 17.5%;
   text-align: center;
 }
 
@@ -299,127 +267,4 @@
 /* The dedicated /eserler surface owns public library discovery. */
 .landing-page .landing-discovery {
   display: none !important;
-}
-
-/* Desktop 2026 card: preserve the live copy and approved role assets while
-   matching the accepted parchment-card reference as closely as possible. */
-@media (min-width: 641px) {
-  .landing-history__now-wipe {
-    display: none;
-  }
-
-  .landing-history__now::before {
-    position: absolute;
-    top: 63.45%;
-    left: 5.95%;
-    width: 89.15%;
-    height: 35.2%;
-    box-sizing: border-box;
-    border: 0.1cqw solid rgba(157, 124, 84, 0.38);
-    border-radius: 0.75cqw;
-    content: "";
-    background:
-      radial-gradient(circle at 88.4% 14%, transparent 0 6.2cqw, rgba(252, 250, 246, 0.965) 6.8cqw),
-      radial-gradient(circle at 14% 19%, rgba(106, 73, 159, 0.035) 0 0.09cqw, transparent 0.11cqw),
-      rgba(252, 250, 246, 0.965);
-    background-size: auto, 2.6cqw 2.4cqw, auto;
-    box-shadow:
-      0 0.9cqw 1.5cqw rgba(53, 38, 79, 0.13),
-      inset 0 0 0 0.18cqw rgba(255, 255, 255, 0.64);
-    pointer-events: none;
-  }
-
-  .landing-history__now-intro {
-    top: 66.15%;
-    left: 10.7%;
-    width: 47%;
-  }
-
-  .landing-history__now-year {
-    margin-bottom: 0.55cqw;
-    font-size: 1.02cqw;
-    letter-spacing: 0.045em;
-  }
-
-  .landing-history__now-intro h3 {
-    width: 44cqw;
-    font-size: 2.95cqw;
-    letter-spacing: -0.035em;
-    line-height: 1.02;
-  }
-
-  .landing-history__now-journey {
-    top: 75.65%;
-    left: 10.7%;
-    width: 80.25%;
-  }
-
-  .landing-history__now-journey li {
-    min-height: 8.9cqw;
-    gap: 0.28cqw;
-    padding: 0 1.35cqw;
-    border-right-color: rgba(77, 49, 180, 0.16);
-    font-size: 0.98cqw;
-    font-weight: 680;
-    line-height: 1.23;
-  }
-
-  .landing-history__now-journey li::before {
-    width: 8.15cqw;
-    height: 8.15cqw;
-    margin: -0.4cqw auto 0.08cqw;
-    filter: drop-shadow(0 0.45cqw 0.6cqw rgba(67, 37, 135, 0.14));
-  }
-
-  .landing-history__now-journey li span {
-    max-width: 14cqw;
-  }
-
-  .landing-history__now-question {
-    top: 88.15%;
-    left: 10.7%;
-    width: 80.25%;
-    padding-top: 1.15cqw;
-    border-top-color: rgba(130, 91, 51, 0.34);
-    font-size: 1.45cqw;
-  }
-
-  .landing-history__now-question::before {
-    position: absolute;
-    top: -0.47cqw;
-    left: 50%;
-    padding: 0 0.45cqw;
-    color: rgba(111, 73, 161, 0.58);
-    content: "◆";
-    background: rgba(252, 250, 246, 0.98);
-    font-family: Georgia, serif;
-    font-size: 0.62cqw;
-    line-height: 1;
-    transform: translateX(-50%);
-  }
-
-  .landing-history__now-signature {
-    top: 92.15%;
-    left: 10.7%;
-    width: 80.25%;
-  }
-
-  .landing-history__now-signature p {
-    margin-bottom: 0.16cqw;
-    font-size: 0.93cqw;
-  }
-
-  .landing-history__now-signature strong {
-    font-size: 3.45cqw;
-  }
-
-  .landing-history__now-signature::after {
-    display: block;
-    width: 31cqw;
-    height: 0.07cqw;
-    min-height: 1px;
-    margin: 0.2cqw auto 0;
-    content: "";
-    background: linear-gradient(90deg, transparent, rgba(144, 104, 63, 0.28) 18%, rgba(144, 104, 63, 0.35) 50%, rgba(144, 104, 63, 0.28) 82%, transparent);
-  }
 }

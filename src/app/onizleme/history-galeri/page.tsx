@@ -123,6 +123,10 @@ export default async function HistoryGalleryPreviewPage({
     },
   ];
 
+  const futureStyle = v.cardBackgroundImage
+    ? { backgroundImage: `url(${safeHistoryImageSrc(v.cardBackgroundImage, "")})` }
+    : undefined;
+
   return (
     <main className="history-gallery-preview" style={{ backgroundColor: v.backgroundColor }}>
       <section className="history-gallery" data-history-part="1" aria-label="History galeri canlı önizleme">
@@ -162,11 +166,15 @@ export default async function HistoryGalleryPreviewPage({
               src={safeHistoryImageSrc(v.leftDecorImage, historyDefaults.leftDecorImage)}
               alt={v.leftDecorAlt}
             />
-            <figcaption>Geçmişte kalan her iz, yeni bir cümlenin zeminidir.</figcaption>
           </figure>
 
           {v.cardVisible !== "0" ? (
-            <section className="history-gallery__future" data-history-part="5" aria-label="2026 şimdi sıra sende">
+            <section
+              className="history-gallery__future"
+              data-history-part="5"
+              style={futureStyle}
+              aria-label="2026 şimdi sıra sende"
+            >
               <div className="history-gallery__future-head">
                 <div>
                   <p data-history-part="6">{v.cardEyebrow}</p>

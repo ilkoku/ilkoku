@@ -73,7 +73,14 @@ export function safeHistoryColor(content: HistoryContent): string {
   return value && /^#[0-9a-f]{6}$/i.test(value) ? value : historyDefaults.backgroundColor;
 }
 
+function isSafeHistoryAssetPath(value: string) {
+  return value.startsWith("/")
+    && !value.startsWith("//")
+    && !value.includes("..")
+    && !/[\\\s"'();]/u.test(value);
+}
+
 export function safeHistoryAsset(content: HistoryContent, key: HistoryFieldKey): string {
   const value = historyValue(content, key);
-  return value.startsWith("/") ? value : historyDefaults[key];
+  return isSafeHistoryAssetPath(value) ? value : historyDefaults[key];
 }

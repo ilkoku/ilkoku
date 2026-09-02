@@ -1,292 +1,72 @@
-.history-2026-preview {
-  --history-purple: #4b2ca8;
-  --history-purple-dark: #3d228d;
-  --history-ink: #18131d;
-  --history-frame: rgba(164, 126, 81, 0.62);
+.history-preview-page {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
   overflow-x: auto;
-  padding: clamp(1rem, 2.6vw, 2.5rem);
-  background:
-    radial-gradient(circle at 50% 40%, rgba(112, 78, 164, 0.10), transparent 42rem),
-    linear-gradient(180deg, #f4f0f8 0%, #eee8f4 100%);
+  padding: 8.5rem 0 4rem;
+  background: #f5f2fa;
 }
 
-.history-2026-card {
-  position: relative;
-  width: min(94vw, 1714px);
-  aspect-ratio: 1714 / 708;
-  container-type: inline-size;
-  isolation: isolate;
-  overflow: hidden;
-  color: var(--history-ink);
-  background:
-    radial-gradient(circle at 10% 18%, rgba(133, 95, 62, 0.025) 0 0.08cqw, transparent 0.11cqw),
-    radial-gradient(circle at 68% 72%, rgba(97, 70, 124, 0.025) 0 0.07cqw, transparent 0.11cqw),
-    linear-gradient(180deg, #fffdf9 0%, #fbf7f1 100%);
-  background-size: 5.4cqw 4.8cqw, 6cqw 5.3cqw, auto;
-  border-radius: 0.22cqw;
-  box-shadow:
-    0 1.45cqw 3.3cqw rgba(39, 25, 59, 0.18),
-    inset 0 0 1.7cqw rgba(110, 76, 45, 0.04);
-}
-
-.history-2026-card::before,
-.history-2026-card::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.history-2026-card::before {
-  inset: 0.42cqw;
-  border: max(1px, 0.075cqw) solid var(--history-frame);
-  border-radius: 0.18cqw;
-}
-
-.history-2026-card::after {
-  inset: 0.82cqw;
-  border: max(1px, 0.04cqw) solid rgba(181, 148, 105, 0.35);
-  border-radius: 0.12cqw;
-}
-
-.history-2026-card__frame,
-.history-2026-card__headline,
-.history-2026-card__seal,
-.history-2026-card__steps,
-.history-2026-card__rule,
-.history-2026-card__closing {
-  position: absolute;
-}
-
-.history-2026-card__frame {
-  z-index: 2;
-  inset: 0;
-  pointer-events: none;
-}
-
-.history-2026-card__corner {
-  position: absolute;
-  width: 2.2cqw;
-  height: 2.2cqw;
-  opacity: 0.62;
-}
-
-.history-2026-card__corner::before,
-.history-2026-card__corner::after {
-  content: "";
-  position: absolute;
-  background: rgba(164, 126, 81, 0.68);
-}
-
-.history-2026-card__corner::before { width: 1.65cqw; height: max(1px, 0.055cqw); }
-.history-2026-card__corner::after { width: max(1px, 0.055cqw); height: 1.65cqw; }
-.history-2026-card__corner--tl { top: 0.78cqw; left: 0.78cqw; }
-.history-2026-card__corner--tr { top: 0.78cqw; right: 0.78cqw; transform: scaleX(-1); }
-.history-2026-card__corner--bl { bottom: 0.78cqw; left: 0.78cqw; transform: scaleY(-1); }
-.history-2026-card__corner--br { right: 0.78cqw; bottom: 0.78cqw; transform: scale(-1); }
-.history-2026-card__corner::before { top: 0; left: 0; }
-.history-2026-card__corner::after { top: 0; left: 0; }
-
-/* PART 6 + 7 — fixed geometry, editable copy later through CMS. */
-.history-2026-card__headline {
-  z-index: 4;
-  top: 6.8%;
-  left: 5.15%;
-  width: 49.5%;
-}
-
-.history-2026-card__eyebrow {
-  margin: 0 0 1.15cqw;
-  color: var(--history-purple);
+.history-puzzle {
+  --purple: #4b2bad;
+  --purple-dark: #3d248f;
+  width: min(94vw, 1672px);
+  min-width: 1080px;
+  margin: 0 auto;
+  color: #17131a;
+  background: #f5f2fa;
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 1.38cqw;
-  font-weight: 800;
-  letter-spacing: 0.075em;
-  line-height: 1;
 }
 
-.history-2026-card__headline h1 {
-  margin: 0;
-  color: var(--history-purple);
-  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
-  font-size: 4.38cqw;
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 0.94;
-}
+.history-intro { text-align: center; padding: 0 4% 2.35rem; }
+.history-intro__eyebrow { display:flex; align-items:center; justify-content:center; gap:.75rem; margin:0 0 .55rem; color:var(--purple); font-size:.82rem; font-weight:800; letter-spacing:.045em; }
+.history-intro__eyebrow span { width:2rem; height:1px; background:var(--purple); position:relative; }
+.history-intro__eyebrow span::after { content:"◇"; position:absolute; top:50%; color:var(--purple); font-size:.68rem; transform:translateY(-51%); }
+.history-intro__eyebrow span:first-child::after { right:-.2rem; }
+.history-intro__eyebrow span:last-child::after { left:-.2rem; }
+.history-intro h1 { margin:0 0 .85rem; font-family:var(--font-playfair),"Playfair Display",Georgia,serif; font-size:clamp(3.1rem,5.1vw,5.6rem); font-weight:700; letter-spacing:-.045em; line-height:.95; }
+.history-intro h1 em { position:relative; color:var(--purple); font-style:normal; }
+.history-intro h1 em::after { content:""; position:absolute; right:4%; bottom:-.16em; left:4%; height:.07em; border-radius:999px; background:var(--purple); }
+.history-intro > p:not(.history-intro__eyebrow) { margin:.18rem 0 0; font-size:clamp(.9rem,1.05vw,1.08rem); line-height:1.45; }
 
-/* PART 15 — independent seal asset. */
-.history-2026-card__seal {
-  z-index: 7;
-  top: 5.2%;
-  right: 4.1%;
-  width: 13.5cqw;
-  height: 12.8cqw;
-  display: grid;
-  place-items: center;
-  transform: rotate(1.4deg);
-}
+.history-cards { display:grid; grid-template-columns:1.08fr .94fr 1.09fr 1.08fr; gap:clamp(.65rem,1vw,1rem); padding:0 2.1%; }
+.history-era-card { position:relative; display:grid; min-height:322px; overflow:hidden; border:1px solid rgba(177,137,83,.34); border-radius:13px; background:radial-gradient(circle at 20% 25%,rgba(174,128,67,.08),transparent 28%),radial-gradient(circle at 80% 72%,rgba(139,96,51,.055),transparent 24%),linear-gradient(180deg,#f8edd5 0%,#f4e7cc 100%); box-shadow:0 .65rem 1.25rem rgba(42,29,63,.14); }
+.history-era-card--enheduanna,.history-era-card--zenodotos { grid-template-columns:52% 48%; }
+.history-era-card--cambridge { grid-template-columns:52% 48%; }
+.history-era-card--train { grid-template-columns:53% 47%; }
+.history-era-card__visual { position:relative; min-width:0; height:100%; }
+.history-era-card__visual img { object-fit:cover; }
+.history-era-card__copy { display:flex; min-width:0; flex-direction:column; justify-content:center; padding:1.25rem 1rem 1.05rem; }
+.history-era-card__period { margin:0 0 .52rem; color:#4d31af; font-size:.72rem; font-weight:800; line-height:1.25; letter-spacing:.015em; }
+.history-era-card h2 { margin:0; font-family:var(--font-playfair),"Playfair Display",Georgia,serif; font-size:clamp(1.35rem,1.55vw,1.72rem); font-weight:700; line-height:1.02; letter-spacing:-.025em; }
+.history-era-card__ornament { margin:.65rem 0 .85rem; color:#b88b3a; font-size:.58rem; letter-spacing:.1em; }
+.history-era-card__lead { margin:0; font-size:.86rem; font-weight:760; line-height:1.38; }
+.history-era-card__body { margin:1.05rem 0 0; color:#716b64; font-size:.82rem; line-height:1.42; }
 
-.history-2026-card__seal img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 0.48cqw 0.58cqw rgba(38, 15, 66, 0.25));
-}
+.history-lower { display:grid; grid-template-columns:39.5% 60.5%; gap:0; align-items:end; margin-top:1.9rem; }
+.history-left-decor { position:relative; height:100%; min-height:365px; margin:0; overflow:hidden; }
+.history-left-decor img { object-fit:cover; object-position:center center; }
 
-/* PART 8–11 — four independent image+copy puzzle pieces. */
-.history-2026-card__steps {
-  z-index: 5;
-  top: 34.1%;
-  left: 5.05%;
-  width: 79.7%;
-  height: 34.6%;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
+.history-2026-card { position:relative; width:100%; aspect-ratio:2.42/1; container-type:inline-size; overflow:hidden; color:#141118; background:radial-gradient(circle at 12% 22%,rgba(164,126,81,.028),transparent 30%),radial-gradient(circle at 70% 68%,rgba(97,70,124,.024),transparent 28%),linear-gradient(180deg,#fffdf9 0%,#fbf7f1 100%); box-shadow:0 1.15cqw 2.4cqw rgba(45,29,69,.16); }
+.history-2026-card::before,.history-2026-card::after { content:""; position:absolute; pointer-events:none; z-index:1; border-radius:.28cqw; }
+.history-2026-card::before { inset:.55cqw; border:max(1px,.075cqw) solid rgba(157,119,76,.68); }
+.history-2026-card::after { inset:.88cqw; border:max(1px,.04cqw) solid rgba(181,148,105,.36); }
+.history-2026-card__frame { position:absolute; inset:0; z-index:2; pointer-events:none; }
+.history-2026-card__eyebrow { position:absolute; z-index:5; top:6.6%; left:5.2%; margin:0; color:var(--purple); font-size:1.45cqw; font-weight:800; letter-spacing:.055em; }
+.history-2026-card h2 { position:absolute; z-index:5; top:12.8%; left:5.2%; margin:0; color:var(--purple); font-family:var(--font-playfair),"Playfair Display",Georgia,serif; font-size:4.2cqw; font-weight:700; line-height:.96; letter-spacing:-.04em; }
+.history-2026-card__seal { position:absolute; z-index:7; top:5.1%; right:4.2%; width:13.2cqw; height:12.7cqw; transform:rotate(1deg); }
+.history-2026-card__seal img { object-fit:contain; filter:drop-shadow(0 .42cqw .5cqw rgba(40,16,67,.24)); }
+.history-2026-card__steps { position:absolute; z-index:5; top:35.2%; left:5.4%; width:79.5%; height:33%; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
+.history-2026-card__step { position:relative; display:grid; grid-template-rows:1fr auto; min-width:0; align-items:end; justify-items:center; padding:0 1cqw 1.05cqw; text-align:center; }
+.history-2026-card__step + .history-2026-card__step::before { content:""; position:absolute; top:.2cqw; bottom:.5cqw; left:0; width:1px; background:rgba(75,43,173,.19); }
+.history-2026-card__step-art { position:relative; width:15.2cqw; height:10.2cqw; }
+.history-2026-card__step-art img { object-fit:contain; }
+.history-2026-card__step p { margin:.55cqw 0 0; font-size:1.22cqw; font-weight:760; line-height:1.2; }
+.history-2026-card__rule { position:absolute; z-index:5; top:72.4%; right:5.2%; left:5.2%; height:1px; background:rgba(157,118,77,.45); }
+.history-2026-card__rule span { position:absolute; top:50%; left:50%; width:1.1cqw; height:1.1cqw; background:#fcf9f3; transform:translate(-50%,-50%); }
+.history-2026-card__rule span::after { content:"◆"; display:block; color:rgba(111,73,145,.55); font-size:.72cqw; line-height:1.1cqw; text-align:center; }
+.history-2026-card__question { position:absolute; z-index:5; top:76.6%; right:20%; left:20%; margin:0; color:var(--purple-dark); font-family:var(--font-playfair),"Playfair Display",Georgia,serif; font-size:2.05cqw; font-weight:700; line-height:1; text-align:center; }
+.history-2026-card__tagline { position:absolute; z-index:5; top:82.1%; right:20%; left:20%; margin:0; font-family:var(--font-playfair),"Playfair Display",Georgia,serif; font-size:1.23cqw; line-height:1; text-align:center; }
+.history-2026-card__brand { position:absolute; z-index:5; top:84.1%; right:20%; left:20%; color:var(--purple); font-family:var(--font-playfair),"Playfair Display",Georgia,serif; font-size:5.05cqw; font-weight:700; line-height:.94; letter-spacing:-.055em; text-align:center; }
 
-.history-2026-card__step {
-  position: relative;
-  min-width: 0;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  align-items: end;
-  justify-items: center;
-  padding: 0 1.15cqw 1.25cqw;
-  text-align: center;
-}
-
-.history-2026-card__step + .history-2026-card__step::before {
-  content: "";
-  position: absolute;
-  top: 0.2cqw;
-  bottom: 0.55cqw;
-  left: 0;
-  width: 1px;
-  background: linear-gradient(180deg, transparent 0%, rgba(77, 50, 172, 0.20) 9%, rgba(77, 50, 172, 0.20) 91%, transparent 100%);
-}
-
-.history-2026-card__art {
-  width: 100%;
-  min-height: 0;
-  display: grid;
-  align-items: end;
-  justify-items: center;
-}
-
-.history-2026-card__art img {
-  display: block;
-  width: 15.5cqw;
-  height: 10.2cqw;
-  object-fit: contain;
-}
-
-.history-2026-card__step--editor .history-2026-card__art img { width: 15.1cqw; height: 10.45cqw; }
-.history-2026-card__step--publisher .history-2026-card__art img { width: 14.9cqw; height: 10.25cqw; }
-.history-2026-card__step--journey .history-2026-card__art img { width: 15.6cqw; height: 10.7cqw; }
-
-.history-2026-card__step p {
-  margin: 0.68cqw 0 0;
-  color: #111015;
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 1.28cqw;
-  font-weight: 760;
-  letter-spacing: -0.018em;
-  line-height: 1.22;
-}
-
-/* Divider spans the same width seen in the full History composition (reference 2). */
-.history-2026-card__rule {
-  z-index: 5;
-  left: 5.15%;
-  right: 5.55%;
-  top: 72.7%;
-  height: 1.25cqw;
-}
-
-.history-2026-card__rule-line {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  left: 0;
-  height: 1px;
-  background: rgba(158, 117, 76, 0.42);
-}
-
-.history-2026-card__rule-diamond {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  padding: 0 0.48cqw;
-  color: rgba(115, 73, 145, 0.58);
-  background: #fbf8f2;
-  font-family: Georgia, serif;
-  font-size: 0.72cqw;
-  line-height: 1;
-  transform: translate(-50%, -50%);
-}
-
-/* PART 12–14 — independent editable text nodes, geometry fixed here. */
-.history-2026-card__closing {
-  z-index: 6;
-  left: 23%;
-  right: 22%;
-  bottom: 2.1%;
-  display: grid;
-  justify-items: center;
-  text-align: center;
-}
-
-.history-2026-card__question {
-  margin: 0;
-  color: var(--history-purple-dark);
-  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
-  font-size: 1.95cqw;
-  font-weight: 700;
-  letter-spacing: -0.012em;
-  line-height: 1;
-}
-
-.history-2026-card__tagline {
-  margin: 0.45cqw 0 0;
-  color: #1d171e;
-  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
-  font-size: 1.18cqw;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.history-2026-card__brand {
-  display: block;
-  margin-top: -0.12cqw;
-  color: var(--history-purple);
-  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
-  font-size: 4.92cqw;
-  font-weight: 700;
-  letter-spacing: -0.055em;
-  line-height: 0.96;
-}
-
-.history-2026-card__flourish {
-  display: block;
-  margin-top: -0.2cqw;
-  color: rgba(171, 127, 75, 0.58);
-  font-family: Georgia, serif;
-  font-size: 0.7cqw;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-@media (max-width: 980px) {
-  .history-2026-preview {
-    justify-items: start;
-  }
-
-  .history-2026-card {
-    width: 1040px;
-    flex: 0 0 auto;
-  }
+@media (max-width: 1180px) {
+  .history-puzzle { width:1080px; margin-left:1rem; margin-right:1rem; }
 }

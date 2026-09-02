@@ -4,119 +4,119 @@ import Image from "next/image";
 import "./preview.css";
 
 export const metadata: Metadata = {
-  title: "2026 Kart Önizleme | İlkOku",
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-    googleBot: {
-      index: false,
-      follow: false,
-      noimageindex: true,
-    },
-  },
+  title: "History 15 Parça Önizleme | İlkOku",
+  robots: { index: false, follow: false, nocache: true },
 };
 
-const steps = [
+const historyCards = [
   {
-    part: 8,
-    key: "reader",
-    image: "/landing/history/preview/reader.svg",
-    alt: "Açık kitap ve büyüteç illüstrasyonu",
-    lines: ["Bir okur onu ilk kez", "keşfedebilir."],
+    key: "enheduanna",
+    period: "MÖ 23. YÜZYIL – YAZI",
+    title: "Enheduanna",
+    lead: "Bir yazar, adını eserinin yanında bıraktı.",
+    body: "Binlerce yıl geçti. Adı hâlâ okunuyor.",
+    image: "/landing/history/puzzle-v2/enheduanna.webp",
+    alt: "Enheduanna tarih kartı görseli",
+    imageSide: "left",
   },
   {
-    part: 9,
-    key: "editor",
-    image: "/landing/history/preview/editor.svg",
-    alt: "Mürekkep, tüy kalem ve açık kitap illüstrasyonu",
-    lines: ["Bir editör onu", "geliştirebilir."],
+    key: "zenodotos",
+    period: "MÖ 3. YÜZYIL – ÇALIŞTIR",
+    title: "Zenodotos",
+    lead: "Birisi yazılmış bir metne yeniden baktı.",
+    body: "Çünkü bazen bir eser, ikinci bir bakışla daha da güçlenir.",
+    image: "/landing/history/puzzle-v2/zenodotos.webp",
+    alt: "Zenodotos tarih kartı görseli",
+    imageSide: "left",
   },
   {
-    part: 10,
-    key: "publisher",
-    image: "/landing/history/preview/publisher.svg",
-    alt: "Mühürlü mektup illüstrasyonu",
-    lines: ["Bir yayınevi ona", "inanabilir."],
+    key: "cambridge",
+    period: "1534 – İNAN",
+    title: "Cambridge University Press",
+    lead: "Bir eserin dünyaya ulaşması için birilerinin ona inanması gerekiyordu.",
+    body: "Yazarın sözü, dünyanın yankısı oldu.",
+    image: "/landing/history/puzzle-v2/cambridge.webp",
+    alt: "Cambridge University Press tarih kartı görseli",
+    imageSide: "right",
   },
   {
-    part: 11,
-    key: "journey",
-    image: "/landing/history/preview/journey.svg",
-    alt: "Uzağa uzanan yol ve dağ illüstrasyonu",
-    lines: ["Ve bir gün o hikâye", "başladığından çok daha", "uzağa gidebilir."],
+    key: "train",
+    period: "1895 – HAYATA GEÇİR.",
+    title: "Hikâye perdeye çıktı.",
+    lead: "Hikâyeler artık yalnızca okunmuyordu, izlenmeye de başlandı.",
+    body: "Bir eser, yaşadığı yerde kalmak zorunda değildi.",
+    image: "/landing/history/puzzle-v2/train.webp",
+    alt: "1895 tren ve erken sinema tarih kartı görseli",
+    imageSide: "right",
   },
 ] as const;
 
-export default function History2026PreviewPage() {
-  return (
-    <main className="history-2026-preview">
-      <section
-        className="history-2026-card"
-        data-history-puzzle="5-15"
-        data-part="5"
-        aria-label="2026 şimdi sıra sende kart önizlemesi"
-      >
-        <div className="history-2026-card__frame" aria-hidden="true">
-          <span className="history-2026-card__corner history-2026-card__corner--tl" />
-          <span className="history-2026-card__corner history-2026-card__corner--tr" />
-          <span className="history-2026-card__corner history-2026-card__corner--bl" />
-          <span className="history-2026-card__corner history-2026-card__corner--br" />
-        </div>
+const steps = [
+  { part: 8, key: "reader", image: "/landing/history/puzzle-v2/2026-reader.svg", alt: "Açık kitap ve büyüteç", text: <>Bir okur onu ilk kez<br />keşfedebilir.</> },
+  { part: 9, key: "editor", image: "/landing/history/puzzle-v2/2026-editor.svg", alt: "Mürekkep, tüy kalem ve açık kitap", text: <>Bir editör onu<br />geliştirebilir.</> },
+  { part: 10, key: "publisher", image: "/landing/history/puzzle-v2/2026-publisher.svg", alt: "Mühürlü mektup", text: <>Bir yayınevi ona<br />inanabilir.</> },
+  { part: 11, key: "journey", image: "/landing/history/puzzle-v2/2026-journey.svg", alt: "Uzağa uzanan yol", text: <>Ve bir gün o hikâye<br />başladığından çok daha<br />uzağa gidebilir.</> },
+] as const;
 
-        <header className="history-2026-card__headline">
-          <p className="history-2026-card__eyebrow" data-part="6">2026 – ŞİMDİ SIRA SENDE.</p>
-          <h1 data-part="7">
-            Bugünün ilk cümlesi,
-            <br />
-            yarının kitabı olabilir.
-          </h1>
+export default function HistoryPuzzlePreviewPage() {
+  return (
+    <main className="history-preview-page">
+      <section className="history-puzzle" data-history-part="1" aria-label="History 15 parçalı önizleme">
+        <header className="history-intro" data-history-part="2">
+          <p className="history-intro__eyebrow"><span />HİKÂYENİN YOLCULUĞU<span /></p>
+          <h1>Her şey bir <em>“ilk”</em> ile başlar.</h1>
+          <p>Binlerce yıldır birileri ilk cümleyi yazıyor. Birileri ona yeniden bakıyor.</p>
+          <p>Birileri ona inanıyor. Ve bazı hikâyeler başladıkları yerden çok daha uzağa gidiyor.</p>
         </header>
 
-        <div className="history-2026-card__seal" data-part="15" aria-label="İlkOku mührü">
-          <Image
-            src="/landing/history/preview/seal.svg"
-            alt="İlkOku mor mühür"
-            width={260}
-            height={230}
-            priority
-            unoptimized
-          />
-        </div>
-
-        <div className="history-2026-card__steps">
-          {steps.map((step) => (
-            <article
-              className={`history-2026-card__step history-2026-card__step--${step.key}`}
-              data-part={step.part}
-              key={step.key}
-            >
-              <div className="history-2026-card__art">
-                <Image src={step.image} alt={step.alt} width={310} height={183} priority unoptimized />
+        <div className="history-cards" data-history-part="3">
+          {historyCards.map((card) => (
+            <article className={`history-era-card history-era-card--${card.key}`} key={card.key}>
+              {card.imageSide === "left" ? (
+                <div className="history-era-card__visual"><Image src={card.image} alt={card.alt} fill sizes="22vw" priority /></div>
+              ) : null}
+              <div className="history-era-card__copy">
+                <p className="history-era-card__period">{card.period}</p>
+                <h2>{card.title}</h2>
+                <span className="history-era-card__ornament" aria-hidden="true">— ✦ —</span>
+                <p className="history-era-card__lead">{card.lead}</p>
+                <p className="history-era-card__body">{card.body}</p>
               </div>
-              <p>
-                {step.lines.map((line, index) => (
-                  <span key={line}>
-                    {line}
-                    {index < step.lines.length - 1 ? <br /> : null}
-                  </span>
-                ))}
-              </p>
+              {card.imageSide === "right" ? (
+                <div className="history-era-card__visual"><Image src={card.image} alt={card.alt} fill sizes="22vw" priority /></div>
+              ) : null}
             </article>
           ))}
         </div>
 
-        <div className="history-2026-card__rule" aria-hidden="true">
-          <span className="history-2026-card__rule-line" />
-          <span className="history-2026-card__rule-diamond">◆</span>
-        </div>
+        <div className="history-lower">
+          <figure className="history-left-decor" data-history-part="4">
+            <Image src="/landing/history/puzzle-v2/left-decor.webp" alt="Kitap, mürekkep, kalem, kâğıt ve lavanta" fill sizes="40vw" priority />
+          </figure>
 
-        <footer className="history-2026-card__closing">
-          <p className="history-2026-card__question" data-part="12">Seninki neden sıradaki hikâye olmasın?</p>
-          <p className="history-2026-card__tagline" data-part="13">Her şey bir “ilk” ile başlar.</p>
-          <strong className="history-2026-card__brand" data-part="14">İlkOku.</strong>
-          <span className="history-2026-card__flourish" aria-hidden="true">⌁ ───────── ◇ ───────── ⌁</span>
-        </footer>
+          <section className="history-2026-card" data-history-part="5" aria-label="2026 şimdi sıra sende">
+            <div className="history-2026-card__frame" aria-hidden="true" />
+            <p className="history-2026-card__eyebrow" data-history-part="6">2026 – ŞİMDİ SIRA SENDE.</p>
+            <h2 data-history-part="7">Bugünün ilk cümlesi,<br />yarının kitabı olabilir.</h2>
+
+            <div className="history-2026-card__steps">
+              {steps.map((step) => (
+                <article className="history-2026-card__step" data-history-part={step.part} key={step.key}>
+                  <div className="history-2026-card__step-art"><Image src={step.image} alt={step.alt} fill sizes="14vw" priority unoptimized /></div>
+                  <p>{step.text}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="history-2026-card__rule" aria-hidden="true"><span /></div>
+            <p className="history-2026-card__question" data-history-part="12">Seninki neden sıradaki hikâye olmasın?</p>
+            <p className="history-2026-card__tagline" data-history-part="13">Her şey bir “ilk” ile başlar.</p>
+            <strong className="history-2026-card__brand" data-history-part="14">İlkOku.</strong>
+            <div className="history-2026-card__seal" data-history-part="15">
+              <Image src="/landing/history/puzzle-v2/2026-seal.svg" alt="İlkOku mor mühür" fill sizes="12vw" priority unoptimized />
+            </div>
+          </section>
+        </div>
       </section>
     </main>
   );

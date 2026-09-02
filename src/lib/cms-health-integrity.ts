@@ -84,7 +84,7 @@ export async function getCmsOperationalIntegrity(): Promise<CmsOperationalIntegr
     prisma.$queryRaw<JsonRow[]>`
       SELECT contentKey, valueJson, status FROM SiteContent
       WHERE namespace = 'homepage' AND status = 'published'
-        AND contentKey IN ('hero', 'roles', 'passport', 'why', 'history', 'footer')
+        AND contentKey IN ('hero', 'roles', 'passport', 'why', 'footer')
     `,
     prisma.$queryRaw<JsonRow[]>`SELECT contentKey, valueJson, status FROM SiteContent WHERE namespace = 'faq' AND status = 'published'`,
     prisma.$queryRaw<PagePayloadRow[]>`

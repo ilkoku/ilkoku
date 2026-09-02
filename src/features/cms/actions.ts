@@ -194,41 +194,6 @@ export async function publishHomepageWhyAction(formData: FormData) {
   await publishHomepageSection(user!.id, localeFromForm(formData), "why");
 }
 
-const historyFields = [
-  ["backgroundColor", 20],
-  ["headerEyebrow", 120],
-  ["headerTitleBefore", 160],
-  ["headerTitleEmphasis", 80],
-  ["headerTitleAfter", 160],
-  ["headerDescriptionLine1", 500],
-  ["headerDescriptionLine2", 500],
-  ["card1Era", 120], ["card1Title", 160], ["card1Body", 500], ["card1Note", 500], ["card1Image", 500], ["card1ImageAlt", 220],
-  ["card2Era", 120], ["card2Title", 160], ["card2Body", 500], ["card2Note", 500], ["card2Image", 500], ["card2ImageAlt", 220],
-  ["card3Era", 120], ["card3Title", 160], ["card3Body", 500], ["card3Note", 500], ["card3Image", 500], ["card3ImageAlt", 220],
-  ["card4Era", 120], ["card4Title", 160], ["card4Body", 500], ["card4Note", 500], ["card4Image", 500], ["card4ImageAlt", 220],
-  ["leftVisual", 500], ["leftVisualAlt", 220],
-  ["nowVisible", 10], ["nowBackground", 500],
-  ["nowEyebrow", 140], ["nowTitleLine1", 220], ["nowTitleLine2", 220],
-  ["nowStep1Image", 500], ["nowStep1Text", 400],
-  ["nowStep2Image", 500], ["nowStep2Text", 400],
-  ["nowStep3Image", 500], ["nowStep3Text", 400],
-  ["nowStep4Image", 500], ["nowStep4Text", 400],
-  ["nowQuestion", 260], ["nowTagline", 220], ["nowBrand", 100],
-  ["nowSealImage", 500], ["nowSealAlt", 220], ["nowSealVisible", 10],
-] as const;
-
-export async function saveHomepageHistoryAction(formData: FormData) {
-  const { user } = await requireCmsManager("/icerik/ana-sayfa");
-  const locale = localeFromForm(formData);
-  const value = Object.fromEntries(historyFields.map(([name, maxLength]) => [name, field(formData, name, maxLength)]));
-  await saveHomepageSection(user!.id, locale, "history", value);
-}
-
-export async function publishHomepageHistoryAction(formData: FormData) {
-  const { user } = await requireCmsPublisher("/icerik/ana-sayfa");
-  await publishHomepageSection(user!.id, localeFromForm(formData), "history");
-}
-
 export async function saveHomepageFooterAction(formData: FormData) {
   const { user } = await requireCmsManager("/icerik/ana-sayfa");
   const locale = localeFromForm(formData);

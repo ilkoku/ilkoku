@@ -1,144 +1,104 @@
 import Image from "next/image";
-import {
-  historyFlag,
-  historyValue,
-  safeHistoryAsset,
-  safeHistoryColor,
-} from "@/features/landing/history-content";
-import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 
-const historyCards = [1, 2, 3, 4] as const;
-const nowSteps = [1, 2, 3, 4] as const;
+type JourneyIconName = "book" | "edit" | "publisher" | "spark";
 
-type HistoryCardIndex = (typeof historyCards)[number];
-type NowStepIndex = (typeof nowSteps)[number];
-
-function cardKey(index: HistoryCardIndex, suffix: "Era" | "Title" | "Body" | "Note" | "Image" | "ImageAlt") {
-  return `card${index}${suffix}` as const;
-}
-
-function stepKey(index: NowStepIndex, suffix: "Image" | "Text") {
-  return `nowStep${index}${suffix}` as const;
-}
-
-export async function HistoryInspiration() {
-  const homepageState = await getPublishedHomepageState("tr");
-  const content = homepageState.state === "valid" ? homepageState.content.history : undefined;
-  const nowVisible = historyFlag(content, "nowVisible");
-  const sealVisible = historyFlag(content, "nowSealVisible");
-  const nowBackground = safeHistoryAsset(content, "nowBackground");
+function JourneyIcon({ name }: { name: JourneyIconName }) {
+  const paths: Record<JourneyIconName, React.ReactNode> = {
+    book: (
+      <>
+        <path d="M3.5 5.5A3.5 3.5 0 0 1 7 2h4v17H7a3.5 3.5 0 0 0-3.5 3V5.5Z" />
+        <path d="M20.5 5.5A3.5 3.5 0 0 0 17 2h-4v17h4a3.5 3.5 0 0 1 3.5 3V5.5Z" />
+      </>
+    ),
+    edit: (
+      <>
+        <path d="m4 20 4-.8L19 8.2a2.1 2.1 0 0 0-3-3L5 16.2 4 20Z" />
+        <path d="m14.5 6.7 2.8 2.8" />
+      </>
+    ),
+    publisher: (
+      <>
+        <circle cx="9" cy="8" r="3" />
+        <circle cx="17" cy="9" r="2.5" />
+        <path d="M3.5 20a5.5 5.5 0 0 1 11 0M13 15.2A4.8 4.8 0 0 1 21 19" />
+      </>
+    ),
+    spark: (
+      <>
+        <path d="m21 3-8.5 18-2.2-7.3L3 11.5 21 3Z" />
+        <path d="m10.3 13.7 4.8-4.8" />
+      </>
+    ),
+  };
 
   return (
-    <section
-      className="landing-history"
-      id="hikayenin-yolculugu"
-      aria-labelledby="history-heading"
-      style={{ backgroundColor: safeHistoryColor(content) }}
-    >
-      <div className="landing-history__stage">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {paths[name]}
+    </svg>
+  );
+}
+
+const journeyLines = [
+  { icon: "book", text: "Bir okur onu ilk kez keşfedebilir." },
+  { icon: "edit", text: "Bir editör onu geliştirebilir." },
+  { icon: "publisher", text: "Bir yayınevi ona inanabilir." },
+  { icon: "spark", text: "Ve bir gün o hikâye başladığından çok daha uzağa gidebilir." },
+] as const;
+
+export function HistoryInspiration() {
+  return (
+    <section className="landing-history" id="hikayenin-yolculugu" aria-labelledby="history-heading">
+      <figure className="landing-history__stage">
+        <Image
+          className="landing-history__base"
+          src="/landing/history/history-journey-master.png"
+          alt="Enheduanna'dan günümüze yazının ve yayıncılığın yolculuğunu anlatan tarih kolajı"
+          width={1672}
+          height={941}
+          sizes="(max-width: 1672px) 100vw, 1672px"
+          unoptimized
+        />
+
+        <div className="landing-history__header-mask" aria-hidden="true" />
         <header className="landing-history__header">
-          <p className="landing-history__eyebrow">{historyValue(content, "headerEyebrow")}</p>
+          <p className="landing-history__eyebrow">HİKÂYENİN YOLCULUĞU</p>
           <h2 id="history-heading">
-            {historyValue(content, "headerTitleBefore")} {" "}
-            <span>{historyValue(content, "headerTitleEmphasis")}</span>{" "}
-            {historyValue(content, "headerTitleAfter")}
+            Her şey bir <span>“ilk”</span> ile başlar.
           </h2>
           <p className="landing-history__description">
-            {historyValue(content, "headerDescriptionLine1")}
+            Binlerce yıldır birileri ilk cümleyi yazıyor. Birileri ona yeniden bakıyor.
             <br />
-            {historyValue(content, "headerDescriptionLine2")}
+            Birileri ona inanıyor. Ve bazı hikâyeler başladıkları yerden çok daha uzağa gidiyor.
           </p>
         </header>
 
-        <div className="landing-history__cards" aria-label="Hikâyenin tarihsel yolculuğu">
-          {historyCards.map((index) => {
-            const imageKey = cardKey(index, "Image");
-            return (
-              <article className={`landing-history-card landing-history-card--${index}`} key={index}>
-                <div className="landing-history-card__copy">
-                  <p className="landing-history-card__era">{historyValue(content, cardKey(index, "Era"))}</p>
-                  <h3>{historyValue(content, cardKey(index, "Title"))}</h3>
-                  <span className="landing-history-card__ornament" aria-hidden="true">✦</span>
-                  <p className="landing-history-card__body">{historyValue(content, cardKey(index, "Body"))}</p>
-                  <p className="landing-history-card__note">{historyValue(content, cardKey(index, "Note"))}</p>
-                </div>
-                <div className="landing-history-card__art">
-                  <Image
-                    src={safeHistoryAsset(content, imageKey)}
-                    alt={historyValue(content, cardKey(index, "ImageAlt"))}
-                    width={420}
-                    height={520}
-                    sizes="(max-width: 760px) 72vw, 24vw"
-                    unoptimized
-                  />
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        <div className="landing-history__now-wipe landing-history__now-wipe--intro" aria-hidden="true" />
+        <div className="landing-history__now-wipe landing-history__now-wipe--journey" aria-hidden="true" />
+        <div className="landing-history__now-wipe landing-history__now-wipe--closing" aria-hidden="true" />
 
-        <div className="landing-history__finale">
-          <div className="landing-history__left-visual">
-            <Image
-              src={safeHistoryAsset(content, "leftVisual")}
-              alt={historyValue(content, "leftVisualAlt")}
-              width={815}
-              height={444}
-              sizes="(max-width: 760px) 100vw, 49vw"
-              unoptimized
-            />
+        <div className="landing-history__now" aria-label="2026, şimdi sıra sende">
+          <div className="landing-history__now-intro">
+            <p className="landing-history__now-year">2026 – ŞİMDİ SIRA SENDE.</p>
+            <h3>Bugünün ilk cümlesi,<br />yarının kitabı olabilir.</h3>
           </div>
 
-          {nowVisible ? (
-            <section
-              className="landing-history-now"
-              aria-label="2026, şimdi sıra sende"
-              style={nowBackground ? { backgroundImage: `url(${nowBackground})` } : undefined}
-            >
-              <header className="landing-history-now__intro">
-                <p>{historyValue(content, "nowEyebrow")}</p>
-                <h3>
-                  {historyValue(content, "nowTitleLine1")}
-                  <br />
-                  {historyValue(content, "nowTitleLine2")}
-                </h3>
-              </header>
+          <ul className="landing-history__now-journey">
+            {journeyLines.map((item) => (
+              <li key={item.icon}>
+                <JourneyIcon name={item.icon} />
+                <span>{item.text}</span>
+              </li>
+            ))}
+          </ul>
 
-              <div className="landing-history-now__steps">
-                {nowSteps.map((index) => (
-                  <div className="landing-history-now__step" key={index}>
-                    <Image
-                      src={safeHistoryAsset(content, stepKey(index, "Image"))}
-                      alt=""
-                      width={190}
-                      height={150}
-                      unoptimized
-                    />
-                    <p>{historyValue(content, stepKey(index, "Text"))}</p>
-                  </div>
-                ))}
-              </div>
+          <p className="landing-history__now-question">Seninki neden sıradaki hikâye olmasın?</p>
 
-              <div className="landing-history-now__closing">
-                <p className="landing-history-now__question">{historyValue(content, "nowQuestion")}</p>
-                <p className="landing-history-now__tagline">{historyValue(content, "nowTagline")}</p>
-                <strong>{historyValue(content, "nowBrand")}</strong>
-              </div>
-
-              {sealVisible ? (
-                <Image
-                  className="landing-history-now__seal"
-                  src={safeHistoryAsset(content, "nowSealImage")}
-                  alt={historyValue(content, "nowSealAlt")}
-                  width={240}
-                  height={240}
-                  unoptimized
-                />
-              ) : null}
-            </section>
-          ) : null}
+          <div className="landing-history__now-signature">
+            <p>Her şey bir “ilk” ile başlar.</p>
+            <strong>İlkOku.</strong>
+          </div>
         </div>
-      </div>
+      </figure>
     </section>
   );
 }

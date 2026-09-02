@@ -1,91 +1,158 @@
-.history-2026-preview-card {
+.history-2026-stack {
   position: relative;
   width: min(92%, 1540px);
-  aspect-ratio: 2.48 / 1;
+  aspect-ratio: 1540 / 630;
   container-type: inline-size;
-  color: #17121e;
-  font-family: var(--landing-font-sans, Inter, Arial, sans-serif);
   isolation: isolate;
+  color: #18131f;
+  font-family: var(--landing-font-sans, Inter, Arial, sans-serif);
 }
 
-/* LAYER 1 — clean parchment and frame. No master artwork, wipe or legacy card. */
-.history-2026-preview-card__surface {
+.history-2026-layer {
   position: absolute;
+  pointer-events: none;
+}
+
+/* 01 — PAPER: only the sheet, texture and physical shadow. */
+.history-2026-layer--paper {
   z-index: 1;
   inset: 0;
-  overflow: hidden;
-  border: max(1px, 0.075cqw) solid rgba(145, 110, 67, 0.58);
   border-radius: 0.42cqw;
   background:
-    radial-gradient(circle at 14% 18%, rgba(116, 78, 150, 0.035) 0 0.12cqw, transparent 0.17cqw),
-    radial-gradient(circle at 82% 76%, rgba(164, 126, 80, 0.035) 0 0.11cqw, transparent 0.16cqw),
+    radial-gradient(circle at 14% 18%, rgba(118, 82, 151, 0.024) 0 0.08cqw, transparent 0.12cqw),
+    radial-gradient(circle at 80% 72%, rgba(156, 119, 72, 0.026) 0 0.07cqw, transparent 0.11cqw),
     linear-gradient(180deg, #fffefa 0%, #fbf8f2 100%);
-  background-size: 5.2cqw 4.5cqw, 5.7cqw 5cqw, auto;
+  background-size: 5.2cqw 4.7cqw, 5.7cqw 5.1cqw, auto;
   box-shadow:
-    0 1.35cqw 3cqw rgba(47, 31, 70, 0.16),
-    inset 0 0 0 0.16cqw rgba(255, 255, 255, 0.86),
-    inset 0 0 1.6cqw rgba(103, 74, 41, 0.055);
+    0 1.15cqw 2.5cqw rgba(45, 30, 68, 0.15),
+    inset 0 0 1.5cqw rgba(112, 82, 47, 0.045);
 }
 
-.history-2026-preview-card__surface::before {
-  position: absolute;
-  inset: 0.76cqw 0.86cqw;
-  border: max(1px, 0.055cqw) solid rgba(165, 132, 89, 0.46);
-  border-radius: 0.28cqw;
-  content: "";
-  box-shadow: inset 0 0 0 0.08cqw rgba(255, 255, 255, 0.75);
-}
-
-.history-2026-preview-card__surface::after {
-  position: absolute;
-  inset: 1.16cqw 1.28cqw;
-  border-radius: 0.2cqw;
-  content: "";
-  background:
-    linear-gradient(135deg, rgba(143, 106, 61, 0.2), transparent 1.7cqw) top left / 3.2cqw 3.2cqw no-repeat,
-    linear-gradient(225deg, rgba(143, 106, 61, 0.2), transparent 1.7cqw) top right / 3.2cqw 3.2cqw no-repeat,
-    linear-gradient(45deg, rgba(143, 106, 61, 0.2), transparent 1.7cqw) bottom left / 3.2cqw 3.2cqw no-repeat,
-    linear-gradient(315deg, rgba(143, 106, 61, 0.2), transparent 1.7cqw) bottom right / 3.2cqw 3.2cqw no-repeat;
-  opacity: 0.62;
-}
-
-/* LAYER 2 — all text is live HTML. */
-.history-2026-preview-card__text-layer {
-  position: absolute;
+/* 02 — FRAME: borders and corners only. No paper, no copy, no hiding. */
+.history-2026-layer--frame {
   z-index: 2;
   inset: 0;
 }
 
-.history-2026-preview-card__header {
+.history-2026-frame__outer,
+.history-2026-frame__inner,
+.history-2026-frame__corner {
   position: absolute;
-  top: 7.3%;
-  left: 5.1%;
-  width: 65%;
+  display: block;
 }
 
-.history-2026-preview-card__header p {
+.history-2026-frame__outer {
+  inset: 0.72cqw;
+  border: max(1px, 0.075cqw) solid rgba(150, 113, 70, 0.58);
+  border-radius: 0.28cqw;
+}
+
+.history-2026-frame__inner {
+  inset: 1.12cqw;
+  border: max(1px, 0.045cqw) solid rgba(170, 138, 96, 0.38);
+  border-radius: 0.18cqw;
+}
+
+.history-2026-frame__corner {
+  width: 2.2cqw;
+  height: 2.2cqw;
+  border-color: rgba(153, 113, 67, 0.42);
+}
+
+.history-2026-frame__corner--tl {
+  top: 0.86cqw;
+  left: 0.86cqw;
+  border-top: max(1px, 0.08cqw) solid;
+  border-left: max(1px, 0.08cqw) solid;
+  border-radius: 0.7cqw 0 0 0;
+}
+
+.history-2026-frame__corner--tr {
+  top: 0.86cqw;
+  right: 0.86cqw;
+  border-top: max(1px, 0.08cqw) solid;
+  border-right: max(1px, 0.08cqw) solid;
+  border-radius: 0 0.7cqw 0 0;
+}
+
+.history-2026-frame__corner--bl {
+  bottom: 0.86cqw;
+  left: 0.86cqw;
+  border-bottom: max(1px, 0.08cqw) solid;
+  border-left: max(1px, 0.08cqw) solid;
+  border-radius: 0 0 0 0.7cqw;
+}
+
+.history-2026-frame__corner--br {
+  right: 0.86cqw;
+  bottom: 0.86cqw;
+  border-right: max(1px, 0.08cqw) solid;
+  border-bottom: max(1px, 0.08cqw) solid;
+  border-radius: 0 0 0.7cqw;
+}
+
+/* 03 — HEADLINE: only year + title. */
+.history-2026-layer--headline {
+  z-index: 3;
+  top: 7.1%;
+  left: 5.2%;
+  width: 66%;
+}
+
+.history-2026-layer--headline p {
   margin: 0 0 0.52cqw;
   color: #4930b1;
-  font-size: 1.38cqw;
+  font-size: 1.4cqw;
   font-weight: 800;
   letter-spacing: 0.045em;
 }
 
-.history-2026-preview-card__header h1 {
+.history-2026-layer--headline h1 {
   margin: 0;
   color: #4c2ba5;
   font-family: var(--landing-font-display, Georgia, serif);
-  font-size: 3.84cqw;
+  font-size: 3.9cqw;
   font-weight: 700;
   letter-spacing: -0.032em;
-  line-height: 0.99;
+  line-height: 0.98;
 }
 
-.history-2026-preview-card__copy-grid {
-  position: absolute;
-  top: 58.4%;
-  right: 4.8%;
-  left: 4.8%;
+/* 04 — ILLUSTRATIONS: images only. */
+.history-2026-layer--illustrations {
+  z-index: 4;
+  top: 33%;
+  right: 5.1%;
+  left: 5.1%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.history-2026-illustration {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+}
+
+.history-2026-illustration img {
+  display: block;
+  width: 10.1cqw;
+  height: 8.6cqw;
+  object-fit: contain;
+  filter: drop-shadow(0 0.3cqw 0.42cqw rgba(66, 37, 132, 0.12));
+}
+
+.history-2026-illustration:nth-child(3) img,
+.history-2026-illustration:nth-child(4) img {
+  width: 9.5cqw;
+  height: 8.35cqw;
+}
+
+/* 05 — CAPTIONS: copy only. */
+.history-2026-layer--captions {
+  z-index: 5;
+  top: 56.2%;
+  right: 5.1%;
+  left: 5.1%;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 0;
@@ -93,44 +160,60 @@
   list-style: none;
 }
 
-.history-2026-preview-card__copy-grid li {
-  position: relative;
+.history-2026-layer--captions li {
   min-width: 0;
-  min-height: 5.5cqw;
-  padding: 0.55cqw 2.1cqw 0;
-  font-size: 1.24cqw;
+  padding: 0 2cqw;
+  font-size: 1.22cqw;
   font-weight: 720;
   line-height: 1.27;
   text-align: center;
 }
 
-.history-2026-preview-card__copy-grid li:not(:last-child)::after {
+/* 06 — DIVIDERS: vertical guides + horizontal rule + diamond only. */
+.history-2026-layer--dividers {
+  z-index: 6;
+  inset: 0;
+}
+
+.history-2026-divider,
+.history-2026-rule,
+.history-2026-diamond {
   position: absolute;
-  top: -8.3cqw;
-  right: 0;
+  display: block;
+}
+
+.history-2026-divider {
+  top: 32.7%;
   width: 1px;
-  height: 12.2cqw;
-  content: "";
-  background: linear-gradient(180deg, transparent, rgba(77, 49, 180, 0.18) 16%, rgba(77, 49, 180, 0.18) 84%, transparent);
+  height: 31.5%;
+  background: linear-gradient(180deg, transparent, rgba(77, 49, 180, 0.18) 14%, rgba(77, 49, 180, 0.18) 86%, transparent);
 }
 
-.history-2026-preview-card__closing {
-  position: absolute;
-  right: 4.8%;
-  bottom: 3.8%;
-  left: 4.8%;
-  padding-top: 1.12cqw;
-  border-top: max(1px, 0.065cqw) solid rgba(130, 91, 51, 0.32);
-  text-align: center;
+.history-2026-divider--1 {
+  left: 27.55%;
 }
 
-.history-2026-preview-card__closing::before {
-  position: absolute;
-  top: -0.62cqw;
+.history-2026-divider--2 {
+  left: 50%;
+}
+
+.history-2026-divider--3 {
+  left: 72.45%;
+}
+
+.history-2026-rule {
+  right: 5.1%;
+  bottom: 30.3%;
+  left: 5.1%;
+  height: 1px;
+  background: rgba(130, 91, 51, 0.32);
+}
+
+.history-2026-diamond {
+  bottom: 29.15%;
   left: 50%;
   padding: 0 0.55cqw;
   color: rgba(102, 66, 151, 0.56);
-  content: "◆";
   background: #fbf9f4;
   font-family: Georgia, serif;
   font-size: 0.78cqw;
@@ -138,99 +221,72 @@
   transform: translateX(-50%);
 }
 
-.history-2026-preview-card__question {
+/* 07 — CLOSING: question, tagline, brand and flourish only. */
+.history-2026-layer--closing {
+  z-index: 7;
+  right: 7%;
+  bottom: 3.2%;
+  left: 7%;
+  text-align: center;
+}
+
+.history-2026-closing__question {
   margin: 0;
   color: #42288f;
   font-family: var(--landing-font-display, Georgia, serif);
-  font-size: 1.88cqw;
+  font-size: 1.9cqw;
   font-weight: 700;
   line-height: 1.1;
 }
 
-.history-2026-preview-card__tagline {
-  margin: 0.25cqw 0 0;
+.history-2026-closing__tagline {
+  margin: 0.24cqw 0 0;
   font-family: var(--landing-font-display, Georgia, serif);
   font-size: 1.08cqw;
-  line-height: 1.14;
+  line-height: 1.12;
 }
 
-.history-2026-preview-card__closing strong {
+.history-2026-layer--closing strong {
   display: block;
-  margin-top: -0.05cqw;
+  margin-top: -0.04cqw;
   color: #4e2db1;
   font-family: var(--landing-font-display, Georgia, serif);
-  font-size: 4.2cqw;
+  font-size: 4.15cqw;
   font-weight: 700;
   letter-spacing: -0.05em;
-  line-height: 0.94;
+  line-height: 0.93;
 }
 
-.history-2026-preview-card__flourish {
+.history-2026-closing__flourish {
   display: block;
-  width: 32%;
-  height: 0.72cqw;
-  margin: 0.05cqw auto 0;
-  opacity: 0.42;
-  background:
-    linear-gradient(90deg, transparent 0 3%, rgba(126, 92, 55, 0.6) 20% 46%, transparent 46% 54%, rgba(126, 92, 55, 0.6) 54% 80%, transparent 97% 100%) center 50% / 100% 1px no-repeat,
-    radial-gradient(ellipse at 46% 50%, transparent 0 28%, rgba(126, 92, 55, 0.6) 30% 36%, transparent 38%) left center / 50% 100% no-repeat,
-    radial-gradient(ellipse at 54% 50%, transparent 0 28%, rgba(126, 92, 55, 0.6) 30% 36%, transparent 38%) right center / 50% 100% no-repeat;
+  margin-top: 0.08cqw;
+  color: rgba(126, 92, 55, 0.46);
+  font-family: Georgia, serif;
+  font-size: 0.72cqw;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
-/* LAYER 3 — four independent İlkOku illustrations. */
-.history-2026-preview-card__illustration-layer {
-  position: absolute;
-  z-index: 3;
-  top: 31.5%;
-  right: 4.8%;
-  left: 4.8%;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.history-2026-preview-card__illustration-cell {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: center;
-  padding: 0 1.8cqw;
-}
-
-.history-2026-preview-card__illustration-cell img {
-  display: block;
-  width: 10.3cqw;
-  height: 9.3cqw;
-  object-fit: contain;
-  filter: drop-shadow(0 0.38cqw 0.46cqw rgba(66, 37, 132, 0.13));
-}
-
-.history-2026-preview-card__illustration-cell:nth-child(3) img,
-.history-2026-preview-card__illustration-cell:nth-child(4) img {
-  width: 9.9cqw;
-  height: 9.1cqw;
-}
-
-/* LAYER 4 — separate transparent illustrated wax seal. */
-.history-2026-preview-card__seal-layer {
-  position: absolute;
-  z-index: 4;
-  top: 5.2%;
-  right: 4.2%;
-  width: 12.1cqw;
-  height: 12.1cqw;
+/* 08 — SEAL: one independent transparent asset. */
+.history-2026-layer--seal {
+  z-index: 8;
+  top: 5.5%;
+  right: 4.3%;
+  width: 11.8cqw;
+  height: 11.8cqw;
   transform: rotate(2deg);
 }
 
-.history-2026-preview-card__seal-layer img {
+.history-2026-layer--seal img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 0.65cqw 0.7cqw rgba(38, 13, 66, 0.28));
+  filter: drop-shadow(0 0.55cqw 0.62cqw rgba(38, 13, 66, 0.25));
 }
 
 @media (max-width: 1100px) {
-  .history-2026-preview-card {
+  .history-2026-stack {
     width: 94%;
   }
 }

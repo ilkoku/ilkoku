@@ -82,9 +82,11 @@ export function parseCmsHomepageSectionStrict(contentKey: string, valueJson: str
         ? ["title", "description"]
         : contentKey === "why"
           ? ["title"]
-          : contentKey === "footer"
-            ? ["slogan"]
-            : null;
+          : contentKey === "history"
+            ? ["headerEyebrow", "headerTitleBefore", "headerTitleEmphasis", "headerTitleAfter", "nowEyebrow", "nowTitleLine1", "nowTitleLine2"]
+            : contentKey === "footer"
+              ? ["slogan"]
+              : null;
 
   if (!required || required.some((key) => !nonEmpty(value[key]))) return null;
   return Object.fromEntries(

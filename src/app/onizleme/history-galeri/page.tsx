@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 
 import { cmsLocaleNamespace, normalizeCmsLocale } from "@/lib/cms-locales";
@@ -24,6 +25,14 @@ type EraCard = {
   alt: string;
 };
 
+type Step = {
+  part: number;
+  index: string;
+  image: string;
+  alt: string;
+  text: string;
+};
+
 async function loadHistory(locale: "tr" | "en") {
   try {
     const namespace = cmsLocaleNamespace("homepage", locale);
@@ -48,6 +57,17 @@ function titleWithAccent(title: string) {
   return <>{before}<em>{token}</em>{after}</>;
 }
 
+function mediaStyle(src: string, fallback: string): CSSProperties {
+  const safe = safeHistoryImageSrc(src, fallback).replaceAll('"', "%22");
+  return {
+    backgroundImage: `linear-gradient(180deg, rgba(40, 25, 67, 0.02), rgba(40, 25, 67, 0.18)), url("${safe}")`,
+  };
+}
+
+function periodMark(period: string) {
+  return period.split(" – ")[0] || period;
+}
+
 export default async function HistoryGalleryPreviewPage({
   searchParams,
 }: {
@@ -63,7 +83,7 @@ export default async function HistoryGalleryPreviewPage({
       title: v.card1Title,
       lead: v.card1Lead,
       body: v.card1Body,
-      image: safeHistoryImageSrc(v.card1Image, historyDefaults.card1Image),
+      image: v.card1Image,
       alt: v.card1Alt,
     },
     {
@@ -71,7 +91,7 @@ export default async function HistoryGalleryPreviewPage({
       title: v.card2Title,
       lead: v.card2Lead,
       body: v.card2Body,
-      image: safeHistoryImageSrc(v.card2Image, historyDefaults.card2Image),
+      image: v.card2Image,
       alt: v.card2Alt,
     },
     {
@@ -79,7 +99,7 @@ export default async function HistoryGalleryPreviewPage({
       title: v.card3Title,
       lead: v.card3Lead,
       body: v.card3Body,
-      image: safeHistoryImageSrc(v.card3Image, historyDefaults.card3Image),
+      image: v.card3Image,
       alt: v.card3Alt,
     },
     {
@@ -87,85 +107,93 @@ export default async function HistoryGalleryPreviewPage({
       title: v.card4Title,
       lead: v.card4Lead,
       body: v.card4Body,
-      image: safeHistoryImageSrc(v.card4Image, historyDefaults.card4Image),
+      image: v.card4Image,
       alt: v.card4Alt,
     },
   ];
 
-  const steps = [
+  const steps: Step[] = [
     {
       part: 8,
       index: "01",
-      image: safeHistoryImageSrc(v.step1Image, historyDefaults.step1Image),
+      image: v.step1Image,
       alt: v.step1Alt,
       text: v.step1Text,
     },
     {
       part: 9,
       index: "02",
-      image: safeHistoryImageSrc(v.step2Image, historyDefaults.step2Image),
+      image: v.step2Image,
       alt: v.step2Alt,
       text: v.step2Text,
     },
     {
       part: 10,
       index: "03",
-      image: safeHistoryImageSrc(v.step3Image, historyDefaults.step3Image),
+      image: v.step3Image,
       alt: v.step3Alt,
       text: v.step3Text,
     },
     {
       part: 11,
       index: "04",
-      image: safeHistoryImageSrc(v.step4Image, historyDefaults.step4Image),
+      image: v.step4Image,
       alt: v.step4Alt,
       text: v.step4Text,
     },
   ];
 
   const futureStyle = v.cardBackgroundImage
-    ? { backgroundImage: `url(${safeHistoryImageSrc(v.cardBackgroundImage, "")})` }
+    ? mediaStyle(v.cardBackgroundImage, "")
     : undefined;
 
   return (
     <main className="history-gallery-preview" style={{ backgroundColor: v.backgroundColor }}>
       <section className="history-gallery" data-history-part="1" aria-label="History galeri canlı önizleme">
         <header className="history-gallery__intro" data-history-part="2">
+          <p className="history-gallery__eyebrow">{v.introEyebrow}</p>
+          <h1>{titleWithAccent(v.introTitle)}</h1>
           <div className="history-gallery__intro-copy">
-            <p className="history-gallery__eyebrow">{v.introEyebrow}</p>
-            <h1>{titleWithAccent(v.introTitle)}</h1>
-          </div>
-          <div className="history-gallery__intro-note">
-            <span aria-hidden="true">01 — 04</span>
             <p>{v.introDescription1}</p>
             <p>{v.introDescription2}</p>
           </div>
         </header>
 
         <div className="history-gallery__rail" data-history-part="3">
-          {eras.map((era, index) => (
-            <article className="history-gallery__era" key={`${era.period}-${era.title}`}>
-              <figure className="history-gallery__era-media">
-                <img src={era.image} alt={era.alt} />
-                <span>{String(index + 1).padStart(2, "0")}</span>
-              </figure>
-              <div className="history-gallery__era-copy">
-                <p className="history-gallery__period">{era.period}</p>
-                <h2>{era.title}</h2>
-                <div className="history-gallery__divider" aria-hidden="true"><span /></div>
-                <p className="history-gallery__lead">{era.lead}</p>
-                <p className="history-gallery__body">{era.body}</p>
-              </div>
-            </article>
-          ))}
+          {eras.map((era, index) => {
+            const fallback = historyDefaults[`card${index + 1}Image`];
+            return (
+              <article className="history-gallery__era" key={`${era.period}-${era.title}`}>
+                <figure
+                  className="history-gallery__era-media"
+                  style={mediaStyle(era.image, fallback)}
+                  role="img"
+                  aria-label={era.alt}
+                >
+                  <span className="history-gallery__era-mark" aria-hidden="true">{periodMark(era.period)}</span>
+                  <span className="history-gallery__era-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                </figure>
+                <div className="history-gallery__era-copy">
+                  <p className="history-gallery__period">{era.period}</p>
+                  <h2>{era.title}</h2>
+                  <p className="history-gallery__lead">{era.lead}</p>
+                  <p className="history-gallery__body">{era.body}</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
 
         <div className="history-gallery__bridge">
-          <figure className="history-gallery__decor" data-history-part="4">
-            <img
-              src={safeHistoryImageSrc(v.leftDecorImage, historyDefaults.leftDecorImage)}
-              alt={v.leftDecorAlt}
-            />
+          <figure
+            className="history-gallery__decor"
+            data-history-part="4"
+            style={mediaStyle(v.leftDecorImage, historyDefaults.leftDecorImage)}
+            role="img"
+            aria-label={v.leftDecorAlt}
+          >
+            <span className="history-gallery__decor-line history-gallery__decor-line--one" aria-hidden="true" />
+            <span className="history-gallery__decor-line history-gallery__decor-line--two" aria-hidden="true" />
           </figure>
 
           {v.cardVisible !== "0" ? (
@@ -177,30 +205,40 @@ export default async function HistoryGalleryPreviewPage({
             >
               <div className="history-gallery__future-head">
                 <div>
-                  <p data-history-part="6">{v.cardEyebrow}</p>
+                  <p className="history-gallery__future-eyebrow" data-history-part="6">{v.cardEyebrow}</p>
                   <h2 data-history-part="7">
                     <span>{v.cardTitleLine1}</span>
                     <span>{v.cardTitleLine2}</span>
                   </h2>
                 </div>
                 {v.sealVisible !== "0" ? (
-                  <figure className="history-gallery__seal" data-history-part="15">
-                    <img
-                      src={safeHistoryImageSrc(v.sealImage, historyDefaults.sealImage)}
-                      alt={v.sealAlt}
-                    />
-                  </figure>
+                  <figure
+                    className="history-gallery__seal"
+                    data-history-part="15"
+                    style={mediaStyle(v.sealImage, historyDefaults.sealImage)}
+                    role="img"
+                    aria-label={v.sealAlt}
+                  />
                 ) : null}
               </div>
 
               <div className="history-gallery__steps">
-                {steps.map((step) => (
-                  <article className="history-gallery__step" data-history-part={step.part} key={step.part}>
-                    <span className="history-gallery__step-index">{step.index}</span>
-                    <figure><img src={step.image} alt={step.alt} /></figure>
-                    <p>{step.text}</p>
-                  </article>
-                ))}
+                {steps.map((step, index) => {
+                  const fallback = historyDefaults[`step${index + 1}Image`];
+                  return (
+                    <article className="history-gallery__step" data-history-part={step.part} key={step.part}>
+                      <span className="history-gallery__step-index" aria-hidden="true">{step.index}</span>
+                      <figure
+                        style={mediaStyle(step.image, fallback)}
+                        role="img"
+                        aria-label={step.alt}
+                      >
+                        <span aria-hidden="true">{step.index}</span>
+                      </figure>
+                      <p>{step.text}</p>
+                    </article>
+                  );
+                })}
               </div>
 
               <footer className="history-gallery__future-footer">

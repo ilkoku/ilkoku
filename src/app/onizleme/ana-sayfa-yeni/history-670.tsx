@@ -24,6 +24,29 @@ const historyIllustrations = [
   },
 ] as const;
 
+const history2026Roles = [
+  {
+    className: "nx-now__role--writer",
+    src: "/icons/roles/writer-embedded.svg",
+    alt: "İlkOku yazar illüstrasyonu",
+  },
+  {
+    className: "nx-now__role--reader",
+    src: "/icons/roles/reader-role-v2.webp",
+    alt: "İlkOku okuyucu illüstrasyonu",
+  },
+  {
+    className: "nx-now__role--editor",
+    src: "/icons/roles/editor-role-v2.webp",
+    alt: "İlkOku editör illüstrasyonu",
+  },
+  {
+    className: "nx-now__role--publisher",
+    src: "/icons/roles/publisher-embedded.svg",
+    alt: "İlkOku yayınevi illüstrasyonu",
+  },
+] as const;
+
 function migrateLegacyHistoryContent(content: Record<string, string>) {
   const next = { ...content };
   if (next.card1Period === "MÖ 23. YÜZYIL – YAZI") next.card1Period = "MÖ 23. YÜZYIL – YAZ";
@@ -67,11 +90,28 @@ export default async function History670() {
     alt: historyIllustrations[index - 1].alt,
   }));
 
-  const historySteps = [1, 2, 3, 4].map((index) => ({
-    image: safeHistoryImageSrc(history[`step${index}Image`], historyDefaults[`step${index}Image`]),
-    alt: history[`step${index}Alt`],
-    text: history[`step${index}Text`],
-  }));
+  const historySteps = [
+    {
+      image: "/icons/roles/reader-role-v2.webp",
+      alt: "İlkOku okuyucu illüstrasyonu",
+      text: history.step1Text,
+    },
+    {
+      image: "/icons/roles/editor-role-v2.webp",
+      alt: "İlkOku editör illüstrasyonu",
+      text: history.step2Text,
+    },
+    {
+      image: "/icons/roles/publisher-embedded.svg",
+      alt: "İlkOku yayınevi illüstrasyonu",
+      text: history.step3Text,
+    },
+    {
+      image: "/landing/history/reference-15/journey.svg",
+      alt: "İlkOku eser yolculuğu illüstrasyonu",
+      text: history.step4Text,
+    },
+  ] as const;
 
   return (
     <section className="nx-history" id="hikayenin-yolculugu" style={{ backgroundColor: history.backgroundColor || historyDefaults.backgroundColor }}>
@@ -102,8 +142,17 @@ export default async function History670() {
 
         {history.cardVisible !== "0" ? (
           <section className="nx-now" aria-label="2026 şimdi sıra sende">
-            <div className="nx-now__visual">
-              <img src={safeHistoryImageSrc(history.leftDecorImage, historyDefaults.leftDecorImage)} alt={history.leftDecorAlt} />
+            <div className="nx-now__visual" aria-label="İlkOku'da bir eserin 2026 yolculuğu">
+              <div className="nx-now__illustration" aria-hidden="true">
+                <span className="nx-now__orbit nx-now__orbit--outer" />
+                <span className="nx-now__orbit nx-now__orbit--inner" />
+                <img className="nx-now__journey" src="/landing/history/reference-15/journey.svg" alt="" />
+                {history2026Roles.map((role) => (
+                  <span className={`nx-now__role ${role.className}`} key={role.className}>
+                    <img src={role.src} alt="" />
+                  </span>
+                ))}
+              </div>
             </div>
             <div className="nx-now__story">
               <div className="nx-now__headline">

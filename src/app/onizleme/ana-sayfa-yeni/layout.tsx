@@ -6,6 +6,7 @@ import "./roles-light.css";
 import "./passport-dark.css";
 import "./passport-dark-priority.css";
 import "./why-uniform.css";
+import "./header-encyclopedia.css";
 
 export default function HomepagePreviewLayout({ children }: { children: ReactNode }) {
   return children;

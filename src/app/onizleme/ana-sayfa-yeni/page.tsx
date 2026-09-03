@@ -14,6 +14,7 @@ import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 
 import History670 from "./history-670";
+import LiveHomepageFooter from "./live-footer";
 import "./preview.css";
 
 export const metadata: Metadata = {
@@ -179,9 +180,12 @@ export default async function HomepageRedesignWorkspacePage() {
         <div className="nx-shell"><header className="nx-section-heading"><p className="nx-eyebrow nx-eyebrow--violet">{why?.eyebrow || "Güven, kayıt ve keşif"}</p><h2>{why?.title || "Neden İlkOku?"}</h2></header><div className="nx-benefit-grid">{benefits.map((benefit, index) => <article className={`nx-benefit nx-benefit--${index + 1}`} key={benefit.title}><span className="nx-benefit__icon" aria-hidden="true" /><h3>{benefit.title}</h3><p>{benefit.description}</p></article>)}</div>{stats.length > 0 ? <div className="nx-stats" aria-label="İlkOku platform istatistikleri">{stats.map((stat, index) => <div className={`nx-stat nx-stat--${index + 1}`} key={`${stat.label}-${stat.icon}`}><span className="nx-stat__icon" aria-hidden="true" /><strong>{stat.value}</strong><small>{stat.label}</small></div>)}</div> : null}</div>
       </section>
 
-      <footer className="nx-footer" id="iletisim">
-        <div className="nx-shell nx-footer__grid"><div className="nx-footer__brand"><Link href="/" className="nx-footer__logo"><Image src={logo} alt="İlkOku" sizes="160px" /></Link><p>{footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}</p></div><div><h3>Platform</h3><Link href="/hakkimizda">Hakkımızda</Link><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/turler">Türler</Link><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div><div><h3>Destek</h3><Link href="/iletisim">İletişim</Link><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div></div><div className="nx-shell nx-footer__bottom">{footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}</div>
-      </footer>
+      <LiveHomepageFooter
+        signedIn={Boolean(profile && navigation)}
+        workspaceHref={navigation?.workspaceHref}
+        slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
+        copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
+      />
     </main>
   );
 }

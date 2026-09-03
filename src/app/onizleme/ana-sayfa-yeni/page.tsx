@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,13 +8,12 @@ import { authContent } from "@/content";
 import { logoutAction } from "@/features/auth/actions";
 import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { getPublicWorkLibrary } from "@/features/public-discovery/library";
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
-import { cmsLocaleNamespace } from "@/lib/cms-locales";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
-import { historyDefaults, mergeHistoryContent, safeHistoryImageSrc } from "@/lib/history-content";
-import { prisma } from "@/lib/prisma";
+import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 import "./preview.css";
 
@@ -32,51 +30,64 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 type IconName =
-  | "account"
-  | "book"
-  | "editor"
-  | "feedback"
-  | "message"
-  | "publisher"
+  | "writer"
   | "reader"
+  | "editor"
+  | "publisher"
+  | "account"
+  | "create"
+  | "book"
+  | "message"
+  | "feedback"
   | "shield"
-  | "writer";
+  | "trend"
+  | "bolt";
 
-type HistoryRow = { valueJson: string };
+type JourneyIconName = "book" | "edit" | "publisher" | "spark";
+
+function LandingIcon({ name }: { name: IconName }) {
+  const common = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    strokeWidth: 1.8,
+  };
+
+  const paths: Record<IconName, ReactNode> = {
+    writer: <><path d="M4 20h4l10.4-10.4a2.2 2.2 0 0 0-3.1-3.1L4.9 16.9 4 20Z" /><path d="m13.8 8 3.1 3.1" /></>,
+    reader: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z" /><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z" /></>,
+    editor: <><path d="M4 20h4l10.2-10.2a2.1 2.1 0 1 0-3-3L5 17l-1 3Z" /><path d="M13.8 8.2l3 3" /><path d="M4 4h7" /></>,
+    publisher: <><path d="M3 21h18" /><path d="M5 21V9l7-5 7 5v12" /><path d="M9 21v-6h6v6" /></>,
+    account: <><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></>,
+    create: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0" /><path d="M18 8v6M15 11h6" /></>,
+    book: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z" /><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z" /></>,
+    message: <><path d="M21 15a4 4 0 0 1-4 4H9l-5 3v-7a4 4 0 0 1-1-2.6V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" /><path d="M8 9h8M8 13h5" /></>,
+    feedback: <><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
+    shield: <><path d="M12 3 20 6v6c0 4.8-3.2 7.4-8 9-4.8-1.6-8-4.2-8-9V6l8-3Z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
+    trend: <><path d="M4 19V9M10 19V5M16 19v-7M3 19h18" /><path d="m5 12 5-4 4 2 6-6" /><path d="M16 4h4v4" /></>,
+    bolt: <path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z" />,
+  };
+
+  return <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" {...common}>{paths[name]}</svg>;
+}
+
+function JourneyIcon({ name }: { name: JourneyIconName }) {
+  const paths: Record<JourneyIconName, ReactNode> = {
+    book: <><path d="M3.5 5.5A3.5 3.5 0 0 1 7 2h4v17H7a3.5 3.5 0 0 0-3.5 3V5.5Z" /><path d="M20.5 5.5A3.5 3.5 0 0 0 17 2h-4v17h4a3.5 3.5 0 0 1 3.5 3V5.5Z" /></>,
+    edit: <><path d="m4 20 4-.8L19 8.2a2.1 2.1 0 0 0-3-3L5 16.2 4 20Z" /><path d="m14.5 6.7 2.8 2.8" /></>,
+    publisher: <><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0M13 15.2A4.8 4.8 0 0 1 21 19" /></>,
+    spark: <><path d="m21 3-8.5 18-2.2-7.3L3 11.5 21 3Z" /><path d="m10.3 13.7 4.8-4.8" /></>,
+  };
+
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+}
 
 const defaultRoles = [
-  {
-    key: "writer",
-    title: "Yazar",
-    description: "Eserini bölüm bölüm oluştur, okur geri bildirimiyle geliştir ve profesyonel incelemeye taşı.",
-    cta: "Yazar Ol",
-    highlights: ["Bölüm bazlı yayın", "Eser Pasaportu"],
-    position: 1,
-  },
-  {
-    key: "reader",
-    title: "Okuyucu",
-    description: "Yeni eserler keşfet, okumaya devam et, favorilerini oluştur ve yazara görüşünü ilet.",
-    cta: "Okuyucu Ol",
-    highlights: ["Yeni eser keşfi", "Bölüm yorumları"],
-    position: 2,
-  },
-  {
-    key: "editor",
-    title: "Editör",
-    description: "Eserleri bağımsız biçimde incele, profesyonel rapor hazırla ve yazara yol göster.",
-    cta: "Editör Başvurusu",
-    highlights: ["Bağımsız inceleme", "Profesyonel rapor"],
-    position: 3,
-  },
-  {
-    key: "publisher",
-    title: "Yayınevi",
-    description: "Görünür eserleri ve yazarları keşfet, ilgilendiğin çalışmaları takip alanında topla.",
-    cta: "Yayınevi Başvurusu",
-    highlights: ["Eser ve yazar keşfi", "Kurumsal takip"],
-    position: 4,
-  },
+  { key: "writer", title: "Yazar", description: "Eserini bölüm bölüm oluştur, okur geri bildirimiyle geliştir ve profesyonel incelemeye taşı.", cta: "Yazar Ol", highlights: ["Bölüm bazlı yayın", "Eser Pasaportu"], position: 1 },
+  { key: "reader", title: "Okuyucu", description: "Yeni eserler keşfet, okumaya devam et, favorilerini oluştur ve yazara görüşünü ilet.", cta: "Okuyucu Ol", highlights: ["Yeni eser keşfi", "Bölüm yorumları"], position: 2 },
+  { key: "editor", title: "Editör", description: "Eserleri bağımsız biçimde incele, profesyonel rapor hazırla ve yazara yol göster.", cta: "Editör Başvurusu", highlights: ["Bağımsız inceleme", "Profesyonel rapor"], position: 3 },
+  { key: "publisher", title: "Yayınevi", description: "Görünür eserleri ve yazarları keşfet, ilgilendiğin çalışmaları takip alanında topla.", cta: "Yayınevi Başvurusu", highlights: ["Eser ve yazar keşfi", "Kurumsal takip"], position: 4 },
 ] as const;
 
 const benefits = [
@@ -88,52 +99,21 @@ const benefits = [
   { icon: "book", title: "Eser Pasaportu", description: "Eserin yazım geçmişi, inceleme durumu ve doğrulama bilgileri tek yerde görüntülenir." },
 ] as const satisfies readonly { icon: IconName; title: string; description: string }[];
 
-const statIcons: IconName[] = ["account", "writer", "editor", "publisher", "book", "message"];
+const statIcons: IconName[] = ["account", "create", "editor", "publisher", "book", "message"];
 
-function Icon({ name }: { name: IconName }) {
-  const paths: Record<IconName, ReactNode> = {
-    account: <><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></>,
-    writer: <><path d="M4 20h4l10.4-10.4a2.2 2.2 0 0 0-3.1-3.1L4.9 16.9 4 20Z" /><path d="m13.8 8 3.1 3.1" /></>,
-    reader: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z" /><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z" /></>,
-    editor: <><path d="M4 20h4l10.2-10.2a2.1 2.1 0 1 0-3-3L5 17l-1 3Z" /><path d="M13.8 8.2l3 3" /><path d="M4 4h7" /></>,
-    publisher: <><path d="M3 21h18" /><path d="M5 21V9l7-5 7 5v12" /><path d="M9 21v-6h6v6" /></>,
-    book: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z" /><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z" /></>,
-    message: <><path d="M21 15a4 4 0 0 1-4 4H9l-5 3v-7a4 4 0 0 1-1-2.6V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" /><path d="M8 9h8M8 13h5" /></>,
-    feedback: <><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
-    shield: <><path d="M12 3 20 6v6c0 4.8-3.2 7.4-8 9-4.8-1.6-8-4.2-8-9V6l8-3Z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
-  };
-
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      {paths[name]}
-    </svg>
-  );
-}
-
-async function getHistory() {
-  try {
-    const namespace = cmsLocaleNamespace("homepage", "tr");
-    const rows = await prisma.$queryRaw<HistoryRow[]>`
-      SELECT valueJson FROM SiteContent
-      WHERE namespace = ${namespace}
-        AND contentKey = 'history'
-        AND status = 'published'
-      LIMIT 1
-    `;
-    if (!rows[0]?.valueJson) return { ...historyDefaults };
-    const raw = JSON.parse(rows[0].valueJson) as Record<string, unknown>;
-    return mergeHistoryContent(raw);
-  } catch {
-    return { ...historyDefaults };
-  }
-}
+const journeyLines = [
+  { icon: "book", text: "Bir okur onu ilk kez keşfedebilir." },
+  { icon: "edit", text: "Bir editör onu geliştirebilir." },
+  { icon: "publisher", text: "Bir yayınevi ona inanabilir." },
+  { icon: "spark", text: "Ve bir gün o hikâye başladığından çok daha uzağa gidebilir." },
+] as const;
 
 export default async function HomepageRedesignWorkspacePage() {
-  const [profile, roleCardState, homepageState, history] = await Promise.all([
+  const [profile, roleCardState, homepageState, publicLibrary] = await Promise.all([
     getCurrentProfile(),
     getPublishedRoleCardsState("tr"),
     getPublishedHomepageState("tr"),
-    getHistory(),
+    getPublicWorkLibrary({ sort: "newest" }, 1),
   ]);
 
   const navigation = profile ? await getRoleNavigation(profile) : null;
@@ -157,12 +137,13 @@ export default async function HomepageRedesignWorkspacePage() {
         key: card.key,
         title: card.title,
         description: card.description,
+        icon: cmsRoleMeta[card.key].icon,
         cta: card.ctaLabel,
         highlights: [card.highlight1, card.highlight2],
         position: card.position,
         href: cmsRoleMeta[card.key].fixedHref,
       }))
-    : defaultRoles.map((role) => ({ ...role, href: cmsRoleMeta[role.key].fixedHref }));
+    : defaultRoles.map((role) => ({ ...role, icon: role.key as IconName, href: cmsRoleMeta[role.key].fixedHref }));
 
   const stats = statIcons.flatMap((icon, index) => {
     const value = why?.[`stat${index + 1}Value`]?.trim();
@@ -170,46 +151,19 @@ export default async function HomepageRedesignWorkspacePage() {
     return value && label ? [{ icon, value, label }] : [];
   });
 
-  const historyCards = [1, 2, 3, 4].map((index) => ({
-    period: history[`card${index}Period`],
-    title: history[`card${index}Title`],
-    lead: history[`card${index}Lead`],
-    body: history[`card${index}Body`],
-    image: safeHistoryImageSrc(history[`card${index}Image`], historyDefaults[`card${index}Image`]),
-    alt: history[`card${index}Alt`],
-  }));
-
-  const historySteps = [1, 2, 3, 4].map((index) => ({
-    image: safeHistoryImageSrc(history[`step${index}Image`], historyDefaults[`step${index}Image`]),
-    alt: history[`step${index}Alt`],
-    text: history[`step${index}Text`],
-  }));
-
   return (
     <main className="nx-home">
       <header className="nx-header">
         <div className="nx-shell nx-header__inner">
-          <Link href="/onizleme/ana-sayfa-yeni" className="nx-logo" aria-label="İlkOku yeni ana sayfa önizlemesi">
-            <Image src={logo} alt="İlkOku" priority sizes="180px" />
-          </Link>
+          <Link href="/onizleme/ana-sayfa-yeni" className="nx-logo" aria-label="İlkOku yeni ana sayfa önizlemesi"><Image src={logo} alt="İlkOku" priority sizes="180px" /></Link>
           <span className="nx-header__label">Dijital edebiyat platformu</span>
           <details className="nx-account">
-            <summary aria-label="Hesap menüsü"><Icon name="account" /></summary>
+            <summary aria-label="Hesap menüsü"><LandingIcon name="account" /></summary>
             <div className="nx-account__menu">
-              {profile && navigation ? (
-                <>
-                  <div className="nx-account__identity">
-                    <strong>{profile.fullName}</strong>
-                    <span>Aktif rol: {authContent.roles[profile.role]}</span>
-                    {navigation.hasPendingRequest ? <small>{pendingRole ? `${authContent.roles[pendingRole]} başvurunuz inceleniyor` : "Başvurunuz inceleniyor"}</small> : null}
-                  </div>
-                  <Link href="/hesabim">Hesabım</Link>
-                  <Link href={navigation.workspaceHref}>Çalışma Alanım</Link>
-                  <form action={logoutAction}><button type="submit">Çıkış Yap</button></form>
-                </>
-              ) : (
-                <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a></>
-              )}
+              {profile && navigation ? <>
+                <div className="nx-account__identity"><strong>{profile.fullName}</strong><span>Aktif rol: {authContent.roles[profile.role]}</span>{navigation.hasPendingRequest ? <small>{pendingRole ? `${authContent.roles[pendingRole]} başvurunuz inceleniyor` : "Başvurunuz inceleniyor"}</small> : null}</div>
+                <Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>{navigation.hasPendingRequest ? "Mevcut çalışma alanına dön" : "Çalışma Alanım"}</Link><form action={logoutAction}><button type="submit">Çıkış Yap</button></form>
+              </> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a></>}
             </div>
           </details>
         </div>
@@ -218,189 +172,81 @@ export default async function HomepageRedesignWorkspacePage() {
       <section className="nx-hero" id="hakkimizda">
         <div className="nx-shell nx-hero__layout">
           <div className="nx-hero__copy">
-            <p className="nx-eyebrow">Yazardan yayınevine tek bir edebiyat ekosistemi</p>
-            <h1>
-              {heroLines.length > 0
-                ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>)
-                : <span>{heroTitle}</span>}
-            </h1>
+            <p className="nx-eyebrow"><LandingIcon name="book" /> Yazardan yayınevine tek bir edebiyat ekosistemi</p>
+            <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>) : <span>{heroTitle}</span>}</h1>
             <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
             <div className="nx-hero__actions">
-              <Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">↗</span></Link>
+              <Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link>
               <Link href={secondaryHref} className="nx-action nx-action--line">{hero?.secondaryCtaLabel || "Eserleri Keşfet"}</Link>
             </div>
           </div>
-
           <div className="nx-hero__art" aria-label="İlkOku ana görseli">
             <Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 900px) 100vw, 48vw" />
             <div className="nx-hero__art-frame" aria-hidden="true" />
           </div>
         </div>
         <div className="nx-shell nx-hero__proof" aria-label="İlkOku temel özellikleri">
-          <span><Icon name="shield" /> Sürüm geçmişi</span>
-          <span><Icon name="editor" /> Editör incelemesi</span>
-          <span><Icon name="publisher" /> Yayınevi keşfi</span>
+          <span><LandingIcon name="shield" /> Sürüm geçmişi</span><span><LandingIcon name="editor" /> Editör incelemesi</span><span><LandingIcon name="publisher" /> Yayınevi keşfi</span>
         </div>
       </section>
 
-      <section className="nx-history" id="hikayenin-yolculugu" style={{ backgroundColor: history.backgroundColor || historyDefaults.backgroundColor }}>
+      <section className="nx-history" id="hikayenin-yolculugu" aria-labelledby="nx-history-title">
         <div className="nx-shell">
           <header className="nx-history__intro">
-            <div>
-              <p className="nx-eyebrow nx-eyebrow--violet">{history.introEyebrow}</p>
-              <h2>{history.introTitle}</h2>
-            </div>
-            <p>{history.introDescription1}<br />{history.introDescription2}</p>
+            <div><p className="nx-eyebrow nx-eyebrow--violet">HİKÂYENİN YOLCULUĞU</p><h2 id="nx-history-title">Her şey bir <em>“ilk”</em> ile başlar.</h2></div>
+            <p>Binlerce yıldır birileri ilk cümleyi yazıyor. Birileri ona yeniden bakıyor.<br />Birileri ona inanıyor. Ve bazı hikâyeler başladıkları yerden çok daha uzağa gidiyor.</p>
           </header>
 
-          <div className="nx-history__eras">
-            {historyCards.map((card, index) => (
-              <article className="nx-era" key={`${card.period}-${card.title}`}>
-                <div className="nx-era__image">
-                  <img src={card.image} alt={card.alt} />
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                </div>
-                <div className="nx-era__content">
-                  <small>{card.period}</small>
-                  <h3>{card.title}</h3>
-                  <p><strong>{card.lead}</strong></p>
-                  <p>{card.body}</p>
-                </div>
-              </article>
-            ))}
-          </div>
+          <figure className="nx-history__master">
+            <Image src="/landing/history/history-journey-master.png" alt="Enheduanna'dan günümüze yazının ve yayıncılığın yolculuğunu anlatan tarih kolajı" fill unoptimized sizes="(max-width: 1520px) 100vw, 1520px" />
+          </figure>
 
-          {history.cardVisible !== "0" ? (
-            <section className="nx-now" aria-label="2026 şimdi sıra sende">
-              <div className="nx-now__visual">
-                <img src={safeHistoryImageSrc(history.leftDecorImage, historyDefaults.leftDecorImage)} alt={history.leftDecorAlt} />
-              </div>
-              <div className="nx-now__story">
-                <div className="nx-now__headline">
-                  <p>{history.cardEyebrow}</p>
-                  <h3>{history.cardTitleLine1}<br />{history.cardTitleLine2}</h3>
-                </div>
-                <div className="nx-now__steps">
-                  {historySteps.map((step, index) => (
-                    <div className="nx-now__step" key={`${index}-${step.text}`}>
-                      <span>{String(index + 1).padStart(2, "0")}</span>
-                      <img src={step.image} alt={step.alt} />
-                      <p>{step.text}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="nx-now__closing">
-                  <div>
-                    <p>{history.closingQuestion}</p>
-                    <strong>{history.bottomSlogan}</strong>
-                    <b>{history.brandText}</b>
-                  </div>
-                  {history.sealVisible !== "0" ? <img src={safeHistoryImageSrc(history.sealImage, historyDefaults.sealImage)} alt={history.sealAlt} /> : null}
-                </div>
-              </div>
-            </section>
-          ) : null}
+          <section className="nx-history__present" aria-label="2026 şimdi sıra sende">
+            <div className="nx-history__present-copy"><p>2026 – ŞİMDİ SIRA SENDE.</p><h3>Bugünün ilk cümlesi,<br />yarının kitabı olabilir.</h3></div>
+            <ul className="nx-history__journey">
+              {journeyLines.map((item) => <li key={item.icon}><JourneyIcon name={item.icon} /><span>{item.text}</span></li>)}
+            </ul>
+            <div className="nx-history__closing"><p>Seninki neden sıradaki hikâye olmasın?</p><div><span>Her şey bir “ilk” ile başlar.</span><strong>İlkOku.</strong></div></div>
+          </section>
+        </div>
+      </section>
+
+      <section className="nx-discovery" aria-labelledby="nx-discovery-title">
+        <div className="nx-shell">
+          <header className="nx-discovery__head"><div><p className="nx-eyebrow nx-eyebrow--violet">HERKESE AÇIK KÜTÜPHANE</p><h2 id="nx-discovery-title">Sisteme girmeden de gerçek yayınları keşfet.</h2></div><Link href="/eserler">Tüm eserleri görüntüle →</Link></header>
+          <nav className="nx-discovery__routes" aria-label="Herkese açık keşif yolları">
+            <Link href="/eserler/yeni"><strong>Yeni yayımlananlar</strong><span>Yayın tarihine göre en yeni eserler</span></Link>
+            <Link href="/eserler/guncellenen"><strong>Son güncellenenler</strong><span>Yakın zamanda değişen eserler</span></Link>
+            <Link href="/yazarlar"><strong>Yazarlar</strong><span>Herkese açık eserleri olan yazarlar</span></Link>
+            <Link href="/turler"><strong>Türler</strong><span>Gerçek yayınlardan oluşan tür dizini</span></Link>
+          </nav>
+          {publicLibrary.works.length > 0 ? <div className="nx-discovery__works">{publicLibrary.works.slice(0, 3).map((work) => {
+            const authorName = work.author.displayName ?? work.author.fullName;
+            return <article key={work.slug}><small>{work.genre ?? "Eser"} · {workContentRatingDetails[work.contentRating].shortLabel}</small><h3>{work.title}</h3><p>{authorName}</p><div><Link href={`/kitap/${work.slug}`}>Eseri incele →</Link><Link href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent("/")}`}>Eser Pasaportu →</Link></div></article>;
+          })}</div> : null}
         </div>
       </section>
 
       <section className="nx-roles" id="roller">
         <div className="nx-shell">
-          <header className="nx-section-heading nx-section-heading--inverse">
-            <p className="nx-eyebrow">{roleSection?.eyebrow || "Topluluğa katıl"}</p>
-            <h2>{roleSection?.title || "İlkOku’ya nasıl katılmak istiyorsun?"}</h2>
-            <p>{roleSection?.description || "Rolünü seç; kayıt akışını sana uygun şekilde başlatalım."}</p>
-          </header>
-          <div className="nx-role-grid">
-            {visibleRoles.map((role) => (
-              <Link href={role.href} className={`nx-role nx-role--${role.key}`} key={role.key} aria-label={`${role.title} olarak kayıt ol`}>
-                <div className="nx-role__top">
-                  <span className="nx-role__number">{String(role.position).padStart(2, "0")}</span>
-                  <span className="nx-role__icon"><Icon name={role.key as IconName} /></span>
-                </div>
-                <h3>{role.title}</h3>
-                <p>{role.description}</p>
-                <div className="nx-role__highlights">{role.highlights.map((highlight) => <small key={highlight}>{highlight}</small>)}</div>
-                <strong>{role.cta}<span aria-hidden="true">→</span></strong>
-              </Link>
-            ))}
-          </div>
+          <header className="nx-section-heading nx-section-heading--inverse"><p className="nx-eyebrow">{roleSection?.eyebrow || "Topluluğa katıl"}</p><h2>{roleSection?.title || "İlkOku’ya nasıl katılmak istiyorsun?"}</h2><p>{roleSection?.description || "Rolünü seç; kayıt akışını sana uygun şekilde başlatalım."}</p></header>
+          <div className="nx-role-grid">{visibleRoles.map((role) => <Link href={role.href} className={`nx-role nx-role--${role.key}`} key={role.key} aria-label={`${role.title} olarak kayıt ol`}><div className="nx-role__top"><span className="nx-role__number">{String(role.position).padStart(2, "0")}</span><span className="nx-role__icon"><LandingIcon name={role.icon as IconName} /></span></div><h3>{role.title}</h3><p>{role.description}</p><div className="nx-role__highlights">{role.highlights.map((highlight) => <small key={highlight}>{highlight}</small>)}</div><strong>{role.cta}<span aria-hidden="true">→</span></strong></Link>)}</div>
         </div>
       </section>
 
       <section className="nx-passport" id="eser-pasaportu">
         <div className="nx-shell nx-passport__layout">
-          <div className="nx-passport__copy">
-            <p className="nx-eyebrow nx-eyebrow--violet">{passport?.eyebrow || "Eserin dijital izi"}</p>
-            <h2>{passport?.title || "Bir eserin yalnızca sonucunu değil, oluşum sürecini de görün."}</h2>
-            <p>{passport?.description || "Eser Pasaportu; yazım oturumlarını, revizyonları, sürüm geçmişini ve profesyonel inceleme durumunu tek bir kayıt altında birleştirir."}</p>
-            <ul>
-              <li><span>01</span>Platform üzerinde oluşan yazım ve revizyon geçmişi</li>
-              <li><span>02</span>Bölüm ve sürüm hareketlerinin düzenli kaydı</li>
-              <li><span>03</span>Profesyonel editör inceleme durumu</li>
-              <li><span>04</span>Yayınevi keşif ve takip görünürlüğü</li>
-            </ul>
-            <Link href={passportHref} className="nx-action nx-action--dark">{passport?.ctaLabel || "Rolünü Seç"}<span aria-hidden="true">↗</span></Link>
-          </div>
-
-          <div className="nx-passport__stage" aria-label="Örnek Eser Pasaportu görünümü">
-            <div className="nx-passport-card">
-              <div className="nx-passport-card__head"><div><small>Örnek görünüm</small><strong>Eser Pasaportu</strong></div><span><Icon name="shield" /></span></div>
-              <div className="nx-passport-card__status"><span>Süreç kaydı</span><strong>Aktif</strong></div>
-              <div className="nx-passport-card__numbers">
-                <div><strong>41</strong><span>Yazım oturumu</span></div>
-                <div><strong>19</strong><span>Revizyon</span></div>
-                <div><strong>7</strong><span>Sürüm</span></div>
-              </div>
-              <div className="nx-passport-card__timeline">
-                <span><i /><b>Platform üzerinde yazıldı</b><small>Kayıtlı süreç</small></span>
-                <span><i /><b>Profesyonel inceleme</b><small>Tamamlandı</small></span>
-                <span><i /><b>Yayınevi görünürlüğü</b><small>Keşfe açık</small></span>
-              </div>
-            </div>
-          </div>
+          <div className="nx-passport__copy"><p className="nx-eyebrow nx-eyebrow--violet">{passport?.eyebrow || "Eserin dijital izi"}</p><h2>{passport?.title || "Bir eserin yalnızca sonucunu değil, oluşum sürecini de görün."}</h2><p>{passport?.description || "Eser Pasaportu; yazım oturumlarını, revizyonları, sürüm geçmişini ve profesyonel inceleme durumunu tek bir kayıt altında birleştirir."}</p><ul><li><span>✓</span>Platform üzerinde oluşan yazım ve revizyon geçmişi</li><li><span>✓</span>Bölüm ve sürüm hareketlerinin düzenli kaydı</li><li><span>✓</span>Profesyonel editör inceleme durumu</li><li><span>✓</span>Yayınevi keşif ve takip görünürlüğü</li></ul><Link href={passportHref} className="nx-action nx-action--dark">{passport?.ctaLabel || "Rolünü Seç"}<span aria-hidden="true">→</span></Link></div>
+          <div className="nx-passport__stage" aria-label="Örnek Eser Pasaportu görünümü"><div className="nx-passport-card"><div className="nx-passport-card__head"><div><small>Örnek görünüm</small><strong>Eser Pasaportu</strong></div><span><LandingIcon name="shield" /></span></div><div className="nx-passport-card__status"><span>Süreç kaydı</span><strong>Aktif</strong></div><div className="nx-passport-card__numbers"><div><strong>41</strong><span>Yazım oturumu</span></div><div><strong>19</strong><span>Revizyon</span></div><div><strong>7</strong><span>Sürüm</span></div></div><div className="nx-passport-card__timeline"><span><i /><b>Platform üzerinde yazıldı</b><small>Kayıtlı süreç</small></span><span><i /><b>Profesyonel inceleme</b><small>Tamamlandı</small></span><span><i /><b>Yayınevi görünürlüğü</b><small>Keşfe açık</small></span></div></div></div>
         </div>
       </section>
 
       <section className="nx-why" id="neden-ilkoku">
-        <div className="nx-shell">
-          <header className="nx-section-heading">
-            <p className="nx-eyebrow nx-eyebrow--violet">{why?.eyebrow || "Güven, kayıt ve keşif"}</p>
-            <h2>{why?.title || "Neden İlkOku?"}</h2>
-          </header>
-          <div className="nx-benefit-grid">
-            {benefits.map((benefit, index) => (
-              <article className={`nx-benefit nx-benefit--${index + 1}`} key={benefit.title}>
-                <span className="nx-benefit__icon"><Icon name={benefit.icon} /></span>
-                <h3>{benefit.title}</h3>
-                <p>{benefit.description}</p>
-              </article>
-            ))}
-          </div>
-          {stats.length > 0 ? (
-            <div className="nx-stats" aria-label="İlkOku platform istatistikleri">
-              {stats.map((stat) => (
-                <div key={`${stat.label}-${stat.icon}`}>
-                  <span><Icon name={stat.icon} /></span>
-                  <strong>{stat.value}</strong>
-                  <small>{stat.label}</small>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        <div className="nx-shell"><header className="nx-section-heading"><p className="nx-eyebrow nx-eyebrow--violet">{why?.eyebrow || "Güven, kayıt ve keşif"}</p><h2>{why?.title || "Neden İlkOku?"}</h2></header><div className="nx-benefit-grid">{benefits.map((benefit, index) => <article className={`nx-benefit nx-benefit--${index + 1}`} key={benefit.title}><span className="nx-benefit__icon"><LandingIcon name={benefit.icon} /></span><h3>{benefit.title}</h3><p>{benefit.description}</p></article>)}</div>{stats.length > 0 ? <div className="nx-stats" aria-label="İlkOku platform istatistikleri">{stats.map((stat) => <div key={`${stat.label}-${stat.icon}`}><span><LandingIcon name={stat.icon} /></span><strong>{stat.value}</strong><small>{stat.label}</small></div>)}</div> : null}</div>
       </section>
 
       <footer className="nx-footer" id="iletisim">
-        <div className="nx-shell nx-footer__grid">
-          <div className="nx-footer__brand">
-            <Link href="/" className="nx-footer__logo"><Image src={logo} alt="İlkOku" sizes="160px" /></Link>
-            <p>{footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}</p>
-          </div>
-          <div><h3>Platform</h3><Link href="/hakkimizda">Hakkımızda</Link><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/turler">Türler</Link><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div>
-          <div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div>
-          <div><h3>Destek</h3><Link href="/iletisim">İletişim</Link><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div>
-        </div>
-        <div className="nx-shell nx-footer__bottom">{footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}</div>
+        <div className="nx-shell nx-footer__grid"><div className="nx-footer__brand"><Link href="/" className="nx-footer__logo"><Image src={logo} alt="İlkOku" sizes="160px" /></Link><p>{footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}</p></div><div><h3>Platform</h3><Link href="/hakkimizda">Hakkımızda</Link><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/turler">Türler</Link><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div><div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div><div><h3>Destek</h3><Link href="/iletisim">İletişim</Link><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div></div><div className="nx-shell nx-footer__bottom">{footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}</div>
       </footer>
     </main>
   );

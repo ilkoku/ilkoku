@@ -85,11 +85,10 @@ export default async function History670() {
         </header>
 
         <div className="nx-history__eras">
-          {historyCards.map((card, index) => (
+          {historyCards.map((card) => (
             <article className="nx-era" key={`${card.period}-${card.title}`}>
               <div className="nx-era__image">
                 <img src={card.image} alt={card.alt} />
-                <span>{String(index + 1).padStart(2, "0")}</span>
               </div>
               <div className="nx-era__content">
                 <small>{card.period}</small>

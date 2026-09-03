@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { cmsLocaleNamespace } from "@/lib/cms-locales";
-import { historyDefaults, mergeHistoryContent, safeHistoryImageSrc } from "@/lib/history-content";
+import { historyDefaults, mergeHistoryContent } from "@/lib/history-content";
 import { prisma } from "@/lib/prisma";
 
 type HistoryRow = { valueJson: string };
@@ -21,25 +21,6 @@ const historyIllustrations = [
   {
     src: "/onizleme/ana-sayfa-yeni/history-art/cinema",
     alt: "Erken dönem sinemayı, film şeridini ve hareketli görüntünün doğuşunu betimleyen illüstrasyon",
-  },
-] as const;
-
-const history2026Roles = [
-  {
-    className: "nx-now__role--writer",
-    src: "/icons/roles/writer-embedded.svg",
-  },
-  {
-    className: "nx-now__role--reader",
-    src: "/icons/roles/reader-role-v2.webp",
-  },
-  {
-    className: "nx-now__role--editor",
-    src: "/icons/roles/editor-role-v2.webp",
-  },
-  {
-    className: "nx-now__role--publisher",
-    src: "/icons/roles/publisher-embedded.svg",
   },
 ] as const;
 
@@ -117,18 +98,12 @@ export default async function History670() {
 
         {history.cardVisible !== "0" ? (
           <section className="nx-now" aria-label="2026 şimdi sıra sende">
-            <div className="nx-now__visual" aria-label="İlkOku'da bir eserin 2026 yolculuğu">
-              <div className="nx-now__illustration" aria-hidden="true">
-                <svg className="nx-now__thread" viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
-                  <path d="M4 83 C18 77 25 62 36 57 C48 51 47 35 60 31 C73 27 80 36 96 15" />
-                </svg>
-                <div className="nx-now__source">
-                  <img src={safeHistoryImageSrc(history.leftDecorImage, historyDefaults.leftDecorImage)} alt="" />
-                </div>
-                {history2026Roles.map((role) => (
-                  <img className={`nx-now__role ${role.className}`} src={role.src} alt="" key={role.className} />
-                ))}
-              </div>
+            <div className="nx-now__visual">
+              <img
+                className="nx-now__scene"
+                src="/onizleme/ana-sayfa-yeni/history-art/2026"
+                alt="2026 İlkOku’da bir eserin yazardan okura, editöre ve yayınevine uzanan yolculuğunu betimleyen illüstrasyon"
+              />
             </div>
             <div className="nx-now__story">
               <div className="nx-now__headline">
@@ -138,7 +113,6 @@ export default async function History670() {
               <div className="nx-now__steps">
                 {historySteps.map((step, index) => (
                   <div className="nx-now__step" key={`${index}-${step}`}>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
                     <p>{step}</p>
                   </div>
                 ))}
@@ -149,7 +123,6 @@ export default async function History670() {
                   <strong>{history.bottomSlogan}</strong>
                   <b>{history.brandText}</b>
                 </div>
-                {history.sealVisible !== "0" ? <img src={safeHistoryImageSrc(history.sealImage, historyDefaults.sealImage)} alt={history.sealAlt} /> : null}
               </div>
             </div>
           </section>

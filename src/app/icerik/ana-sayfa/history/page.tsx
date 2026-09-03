@@ -181,7 +181,7 @@ export default async function HistoryContentPage({ searchParams }: { searchParam
       </form>
 
       <div className="content-publish-box" style={{ marginTop: "1rem" }}>
-        <div><strong>History yayınlama</strong><p>Bu işlem yalnız History CMS kaydını günceller; public ana sayfa renderer'ı yeni tasarım onaylanana kadar değiştirilmez.</p></div>
+        <div><strong>History yayınlama</strong><p>Bu işlem yalnız History CMS kaydını günceller; public ana sayfa renderer yapısı yeni tasarım onaylanana kadar değiştirilmez.</p></div>
         {access.canPublish && state.enabled && state.hasDraft ? (
           <form action={publishHomepageHistoryAction}><input type="hidden" name="locale" value={locale} /><button type="submit">History Taslağını Yayınla</button></form>
         ) : null}

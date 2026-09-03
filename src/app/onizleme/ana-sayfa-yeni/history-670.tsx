@@ -5,22 +5,22 @@ import { prisma } from "@/lib/prisma";
 
 type HistoryRow = { valueJson: string };
 
-const realHistoryPhotos = [
+const historyIllustrations = [
   {
-    src: "/landing/history/enheduanna-user.webp",
-    alt: "Enheduanna kartı için yüklenen çivi yazılı tablet ve parşömen görseli",
+    src: "/onizleme/ana-sayfa-yeni/history-art/enheduanna",
+    alt: "Enheduanna, çivi yazılı kil tabletler ve Mezopotamya yazı kültürünü betimleyen illüstrasyon",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Papyrus_Oxyrhynchus_1389_-_Bridwell_Papyrus_5_-_Homer%2C_Iliad_-_recto.jpg",
-    alt: "Homeros'un İlyada metnini taşıyan gerçek antik Oxyrhynchus papirüsünün fotoğrafı",
+    src: "/onizleme/ana-sayfa-yeni/history-art/zenodotos",
+    alt: "Zenodotos'un antik metinleri karşılaştırıp düzenlemesini betimleyen papirüs illüstrasyonu",
   },
   {
-    src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/View_of_the_Pitt_Building_from_Trumpington_Street_-_geograph.org.uk_-_7017859.jpg?width=1600",
-    alt: "Cambridge University Press Pitt Building binasının Trumpington Street'ten gerçek fotoğrafı",
+    src: "/onizleme/ana-sayfa-yeni/history-art/cambridge",
+    alt: "Cambridge University Press, eski kitaplar ve matbaa kültürünü betimleyen illüstrasyon",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Lumi%C3%A8re_brothers.jpg",
-    alt: "Auguste ve Louis Lumière kardeşlerin yaklaşık 1895 tarihli gerçek arşiv fotoğrafı",
+    src: "/onizleme/ana-sayfa-yeni/history-art/cinema",
+    alt: "Erken dönem sinemayı, film şeridini ve hareketli görüntünün doğuşunu betimleyen illüstrasyon",
   },
 ] as const;
 
@@ -63,8 +63,8 @@ export default async function History670() {
     title: history[`card${index}Title`],
     lead: history[`card${index}Lead`],
     body: history[`card${index}Body`],
-    image: realHistoryPhotos[index - 1].src,
-    alt: realHistoryPhotos[index - 1].alt,
+    image: historyIllustrations[index - 1].src,
+    alt: historyIllustrations[index - 1].alt,
   }));
 
   const historySteps = [1, 2, 3, 4].map((index) => ({

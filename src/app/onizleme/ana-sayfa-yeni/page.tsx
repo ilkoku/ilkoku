@@ -1,4 +1,23 @@
+/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import type { ReactNode } from "react";
+
+import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
+import { authContent } from "@/content";
+import { logoutAction } from "@/features/auth/actions";
+import { getRoleNavigation } from "@/features/auth/destination";
+import { getCurrentProfile } from "@/features/auth/profile";
+import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
+import { safeCmsInternalHref } from "@/lib/cms-links";
+import { cmsLocaleNamespace } from "@/lib/cms-locales";
+import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
+import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
+import { historyDefaults, mergeHistoryContent, safeHistoryImageSrc } from "@/lib/history-content";
+import { prisma } from "@/lib/prisma";
+
+import "./preview.css";
 
 export const metadata: Metadata = {
   title: "Ana Sayfa Yeniden Tasarım Çalışması | İlkOku",
@@ -10,42 +29,337 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomepageRedesignWorkspacePage() {
+export const dynamic = "force-dynamic";
+
+type IconName =
+  | "account"
+  | "book"
+  | "editor"
+  | "feedback"
+  | "message"
+  | "publisher"
+  | "reader"
+  | "shield"
+  | "trend"
+  | "writer";
+
+type HistoryRow = { valueJson: string };
+
+const defaultRoles = [
+  {
+    key: "writer",
+    title: "Yazar",
+    description: "Eserini bölüm bölüm oluştur, okur geri bildirimiyle geliştir ve profesyonel incelemeye taşı.",
+    cta: "Yazar Ol",
+    highlights: ["Bölüm bazlı yayın", "Eser Pasaportu"],
+    position: 1,
+  },
+  {
+    key: "reader",
+    title: "Okuyucu",
+    description: "Yeni eserler keşfet, okumaya devam et, favorilerini oluştur ve yazara görüşünü ilet.",
+    cta: "Okuyucu Ol",
+    highlights: ["Yeni eser keşfi", "Bölüm yorumları"],
+    position: 2,
+  },
+  {
+    key: "editor",
+    title: "Editör",
+    description: "Eserleri bağımsız biçimde incele, profesyonel rapor hazırla ve yazara yol göster.",
+    cta: "Editör Başvurusu",
+    highlights: ["Bağımsız inceleme", "Profesyonel rapor"],
+    position: 3,
+  },
+  {
+    key: "publisher",
+    title: "Yayınevi",
+    description: "Görünür eserleri ve yazarları keşfet, ilgilendiğin çalışmaları takip alanında topla.",
+    cta: "Yayınevi Başvurusu",
+    highlights: ["Eser ve yazar keşfi", "Kurumsal takip"],
+    position: 4,
+  },
+] as const;
+
+const benefits = [
+  { icon: "shield", title: "Kayıtlı Eser Süreci", description: "Yazım oturumları, revizyonlar ve sürüm geçmişi eser süreci boyunca kayıt altında tutulur." },
+  { icon: "feedback", title: "Yetkili Erişim", description: "Eserler, platformdaki rol ve erişim kuralları kapsamında ilgili kullanıcılara gösterilir." },
+  { icon: "editor", title: "Profesyonel Editör İncelemesi", description: "Yazarlar eserleri için profesyonel editör değerlendirmesi talep edebilir." },
+  { icon: "message", title: "Okur Geri Bildirimi", description: "Bölüm yorumları ve okur görüşleri, yazarın çalışma alanında düzenli biçimde toplanır." },
+  { icon: "publisher", title: "Yayınevi Keşfi", description: "Yayınevi hesapları, görünür eserleri ve yazarları platform içinde keşfedebilir." },
+  { icon: "book", title: "Eser Pasaportu", description: "Eserin yazım geçmişi, inceleme durumu ve doğrulama bilgileri tek yerde görüntülenir." },
+] as const satisfies readonly { icon: IconName; title: string; description: string }[];
+
+const statIcons: IconName[] = ["account", "writer", "editor", "publisher", "book", "message"];
+
+function Icon({ name }: { name: IconName }) {
+  const paths: Record<IconName, ReactNode> = {
+    account: <><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></>,
+    writer: <><path d="M4 20h4l10.4-10.4a2.2 2.2 0 0 0-3.1-3.1L4.9 16.9 4 20Z" /><path d="m13.8 8 3.1 3.1" /></>,
+    reader: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z" /><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z" /></>,
+    editor: <><path d="M4 20h4l10.2-10.2a2.1 2.1 0 1 0-3-3L5 17l-1 3Z" /><path d="M13.8 8.2l3 3" /><path d="M4 4h7" /></>,
+    publisher: <><path d="M3 21h18" /><path d="M5 21V9l7-5 7 5v12" /><path d="M9 21v-6h6v6" /></>,
+    book: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z" /><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z" /></>,
+    message: <><path d="M21 15a4 4 0 0 1-4 4H9l-5 3v-7a4 4 0 0 1-1-2.6V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" /><path d="M8 9h8M8 13h5" /></>,
+    feedback: <><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
+    shield: <><path d="M12 3 20 6v6c0 4.8-3.2 7.4-8 9-4.8-1.6-8-4.2-8-9V6l8-3Z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
+    trend: <><path d="M4 19V9M10 19V5M16 19v-7M3 19h18" /><path d="m5 12 5-4 4 2 6-6" /></>,
+  };
+
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: "2rem",
-        background: "#f7f5fb",
-        color: "#241f38",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}
-    >
-      <section
-        style={{
-          width: "min(760px, 100%)",
-          padding: "clamp(2rem, 6vw, 4rem)",
-          border: "1px solid rgba(83, 59, 150, 0.14)",
-          borderRadius: "24px",
-          background: "#fff",
-          boxShadow: "0 24px 70px rgba(45, 31, 103, 0.08)",
-        }}
-      >
-        <p style={{ margin: "0 0 .75rem", color: "#6847e8", fontSize: ".78rem", fontWeight: 800, letterSpacing: ".14em" }}>
-          İLKOKU · YENİ ANA SAYFA
-        </p>
-        <h1 style={{ margin: "0 0 1rem", fontSize: "clamp(2rem, 5vw, 3.5rem)", lineHeight: 1.06 }}>
-          Yeniden tasarım çalışma alanı
-        </h1>
-        <p style={{ margin: 0, maxWidth: "58ch", color: "#655f75", fontSize: "1rem", lineHeight: 1.75 }}>
-          Teknik harita ve içerik mimarisi doğrulanıyor. Görsel tasarım henüz başlamadı. Bu çalışma alanı public ana sayfadan tamamen bağımsızdır.
-        </p>
-        <div style={{ marginTop: "2rem", paddingTop: "1.25rem", borderTop: "1px solid rgba(83, 59, 150, 0.12)", color: "#494359", fontSize: ".9rem" }}>
-          Durum: <strong>Rapor / mimari aşaması</strong>
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      {paths[name]}
+    </svg>
+  );
+}
+
+async function getHistory() {
+  try {
+    const namespace = cmsLocaleNamespace("homepage", "tr");
+    const rows = await prisma.$queryRaw<HistoryRow[]>`
+      SELECT valueJson FROM SiteContent
+      WHERE namespace = ${namespace}
+        AND contentKey = 'history'
+        AND status = 'published'
+      LIMIT 1
+    `;
+    if (!rows[0]?.valueJson) return { ...historyDefaults };
+    const raw = JSON.parse(rows[0].valueJson) as Record<string, unknown>;
+    return mergeHistoryContent(raw);
+  } catch {
+    return { ...historyDefaults };
+  }
+}
+
+export default async function HomepageRedesignWorkspacePage() {
+  const [profile, roleCardState, homepageState, history] = await Promise.all([
+    getCurrentProfile(),
+    getPublishedRoleCardsState("tr"),
+    getPublishedHomepageState("tr"),
+    getHistory(),
+  ]);
+  const navigation = profile ? await getRoleNavigation(profile) : null;
+  const pendingRole = navigation?.pendingRequest?.requestedRole ?? (profile?.role === "editor_pending" ? "editor" : null);
+  const homepage = homepageState.state === "valid" ? homepageState.content : {};
+  const hero = homepage.hero;
+  const roleSection = homepage.roles;
+  const passport = homepage.passport;
+  const why = homepage.why;
+  const footer = homepage.footer;
+
+  const heroTitle = hero?.title || "İlk cümle,\nilk okurun,\nilk adımın.";
+  const heroLines = heroTitle.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const primaryHref = safeCmsInternalHref(hero?.primaryCtaHref) || "/kayit?rol=writer";
+  const secondaryHref = safeCmsInternalHref(hero?.secondaryCtaHref) || "/eserler";
+  const passportHref = safeCmsInternalHref(passport?.ctaHref) || "#roller";
+
+  const cmsRoleCards = roleCardState.state === "valid" ? roleCardsFromPayload("tr", roleCardState.payload) : null;
+  const visibleRoles = cmsRoleCards
+    ? cmsRoleCards.filter((card) => card.visible).map((card) => ({
+        key: card.key,
+        title: card.title,
+        description: card.description,
+        cta: card.ctaLabel,
+        highlights: [card.highlight1, card.highlight2],
+        position: card.position,
+        href: cmsRoleMeta[card.key].fixedHref,
+      }))
+    : defaultRoles.map((role) => ({ ...role, href: cmsRoleMeta[role.key].fixedHref }));
+
+  const stats = statIcons.flatMap((icon, index) => {
+    const value = why?.[`stat${index + 1}Value`]?.trim();
+    const label = why?.[`stat${index + 1}Label`]?.trim();
+    return value && label ? [{ icon, value, label }] : [];
+  });
+
+  const historyCards = [1, 2, 3, 4].map((index) => ({
+    period: history[`card${index}Period`],
+    title: history[`card${index}Title`],
+    lead: history[`card${index}Lead`],
+    body: history[`card${index}Body`],
+    image: safeHistoryImageSrc(history[`card${index}Image`], historyDefaults[`card${index}Image`]),
+    alt: history[`card${index}Alt`],
+  }));
+
+  const historySteps = [1, 2, 3, 4].map((index) => ({
+    image: safeHistoryImageSrc(history[`step${index}Image`], historyDefaults[`step${index}Image`]),
+    alt: history[`step${index}Alt`],
+    text: history[`step${index}Text`],
+  }));
+
+  return (
+    <main className="hpv3">
+      <header className="hpv3-header">
+        <div className="hpv3-shell hpv3-header__inner">
+          <Link href="/onizleme/ana-sayfa-yeni" className="hpv3-logo" aria-label="İlkOku yeni ana sayfa önizlemesi">
+            <Image src={logo} alt="İlkOku" priority sizes="180px" />
+          </Link>
+          <span className="hpv3-platform-label">Dijital edebiyat platformu</span>
+          <nav className="hpv3-header__nav" aria-label="Ana sayfa bölümleri">
+            <a href="#roller">Roller</a>
+            <a href="#eser-pasaportu">Eser Pasaportu</a>
+            <a href="#neden-ilkoku">Neden İlkOku?</a>
+          </nav>
+          <details className="hpv3-account">
+            <summary aria-label="Hesap menüsü"><Icon name="account" /></summary>
+            <div className="hpv3-account__menu">
+              {profile && navigation ? (
+                <>
+                  <div><strong>{profile.fullName}</strong><span>Aktif rol: {authContent.roles[profile.role]}</span>{navigation.hasPendingRequest ? <small>{pendingRole ? `${authContent.roles[pendingRole]} başvurunuz inceleniyor` : "Başvurunuz inceleniyor"}</small> : null}</div>
+                  <Link href="/hesabim">Hesabım</Link>
+                  <Link href={navigation.workspaceHref}>Çalışma Alanım</Link>
+                  <form action={logoutAction}><button type="submit">Çıkış Yap</button></form>
+                </>
+              ) : (
+                <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a></>
+              )}
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <section className="hpv3-hero" id="hakkimizda">
+        <div className="hpv3-shell hpv3-hero__grid">
+          <div className="hpv3-hero__content">
+            <p className="hpv3-kicker"><span /> Yazardan yayınevine tek bir edebiyat ekosistemi</p>
+            <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>) : heroTitle}</h1>
+            <p className="hpv3-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
+            <div className="hpv3-actions">
+              <Link href={primaryHref} className="hpv3-button hpv3-button--primary">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span>→</span></Link>
+              <Link href={secondaryHref} className="hpv3-button hpv3-button--ghost">{hero?.secondaryCtaLabel || "Eserleri Keşfet"}</Link>
+            </div>
+            <div className="hpv3-proof" aria-label="İlkOku temel özellikleri">
+              <span><Icon name="shield" />Sürüm geçmişi</span>
+              <span><Icon name="editor" />Editör incelemesi</span>
+              <span><Icon name="publisher" />Yayınevi keşfi</span>
+            </div>
+          </div>
+          <div className="hpv3-hero__visual">
+            <div className="hpv3-hero__image"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 900px) 100vw, 48vw" /></div>
+            <div className="hpv3-hero__folio" aria-hidden="true"><span>İLKOKU</span><strong>01</strong></div>
+          </div>
         </div>
       </section>
+
+      <section className="hpv3-history" id="hikayenin-yolculugu" style={{ backgroundColor: history.backgroundColor }}>
+        <div className="hpv3-shell">
+          <header className="hpv3-section-head hpv3-section-head--center">
+            <p className="hpv3-kicker"><span />{history.introEyebrow}<span /></p>
+            <h2>{history.introTitle}</h2>
+            <p>{history.introDescription1}<br />{history.introDescription2}</p>
+          </header>
+
+          <div className="hpv3-history__rail" aria-label="Hikâyenin tarihsel yolculuğu">
+            {historyCards.map((card, index) => (
+              <article className="hpv3-era" key={`${card.period}-${index}`}>
+                <div className="hpv3-era__image"><img src={card.image} alt={card.alt} /></div>
+                <div className="hpv3-era__number">0{index + 1}</div>
+                <div className="hpv3-era__body">
+                  <small>{card.period}</small>
+                  <h3>{card.title}</h3>
+                  <p><strong>{card.lead}</strong></p>
+                  <p>{card.body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {history.cardVisible !== "0" ? (
+            <article className="hpv3-now" style={history.cardBackgroundImage ? { backgroundImage: `linear-gradient(120deg, rgba(28,20,67,.94), rgba(76,44,163,.92)), url(${safeHistoryImageSrc(history.cardBackgroundImage, historyDefaults.leftDecorImage)})` } : undefined}>
+              <img className="hpv3-now__decor" src={safeHistoryImageSrc(history.leftDecorImage, historyDefaults.leftDecorImage)} alt={history.leftDecorAlt} />
+              <div className="hpv3-now__shade" aria-hidden="true" />
+              <div className="hpv3-now__content">
+                <header className="hpv3-now__header">
+                  <div><p>{history.cardEyebrow}</p><h3>{history.cardTitleLine1}<br />{history.cardTitleLine2}</h3></div>
+                  {history.sealVisible !== "0" ? <img className="hpv3-now__seal" src={safeHistoryImageSrc(history.sealImage, historyDefaults.sealImage)} alt={history.sealAlt} /> : null}
+                </header>
+                <div className="hpv3-now__steps">
+                  {historySteps.map((step, index) => (
+                    <div className="hpv3-now__step" key={`${step.text}-${index}`}>
+                      <span className="hpv3-now__step-no">0{index + 1}</span>
+                      <img src={step.image} alt={step.alt} />
+                      <p>{step.text}</p>
+                    </div>
+                  ))}
+                </div>
+                <footer className="hpv3-now__footer">
+                  <strong>{history.closingQuestion}</strong>
+                  <div><span>{history.bottomSlogan}</span><b>{history.brandText}</b></div>
+                </footer>
+              </div>
+            </article>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="hpv3-roles" id="roller">
+        <div className="hpv3-shell">
+          <header className="hpv3-section-head">
+            <p className="hpv3-kicker"><span />{roleSection?.eyebrow || "Topluluğa katıl"}</p>
+            <h2>{roleSection?.title || "İlkOku’ya nasıl katılmak istiyorsun?"}</h2>
+            <p>{roleSection?.description || "Rolünü seç; kayıt akışını sana uygun şekilde başlatalım."}</p>
+          </header>
+          <div className="hpv3-role-grid">
+            {visibleRoles.map((role) => (
+              <Link href={role.href} className="hpv3-role" key={role.key}>
+                <div className="hpv3-role__top"><span>0{role.position}</span><i><Icon name={role.key as IconName} /></i></div>
+                <small>{role.title} rolü</small>
+                <h3>{role.title}</h3>
+                <p>{role.description}</p>
+                <div className="hpv3-role__tags">{role.highlights.map((highlight) => <span key={highlight}>{highlight}</span>)}</div>
+                <strong>{role.cta}<span>→</span></strong>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="hpv3-passport" id="eser-pasaportu">
+        <div className="hpv3-shell hpv3-passport__grid">
+          <div className="hpv3-passport__copy">
+            <p className="hpv3-kicker"><span />{passport?.eyebrow || "Eserin dijital izi"}</p>
+            <h2>{passport?.title || "Bir eserin yalnızca sonucunu değil, oluşum sürecini de görün."}</h2>
+            <p>{passport?.description || "Eser Pasaportu; yazım oturumlarını, revizyonları, sürüm geçmişini ve profesyonel inceleme durumunu tek bir kayıt altında birleştirir."}</p>
+            <ul>
+              <li>Platform üzerinde oluşan yazım ve revizyon geçmişi</li>
+              <li>Bölüm ve sürüm hareketlerinin düzenli kaydı</li>
+              <li>Profesyonel editör inceleme durumu</li>
+              <li>Yayınevi keşif ve takip görünürlüğü</li>
+            </ul>
+            <Link href={passportHref} className="hpv3-button hpv3-button--light">{passport?.ctaLabel || "Rolünü Seç"}<span>→</span></Link>
+          </div>
+          <div className="hpv3-passport__card">
+            <div className="hpv3-passport__card-head"><div><small>Örnek görünüm</small><strong>Eser Pasaportu</strong></div><span><Icon name="shield" /></span></div>
+            <div className="hpv3-passport__status"><span>Süreç kaydı</span><strong>Aktif</strong></div>
+            <div className="hpv3-passport__numbers"><div><strong>41</strong><span>Yazım oturumu</span></div><div><strong>19</strong><span>Revizyon</span></div><div><strong>7</strong><span>Sürüm</span></div></div>
+            <div className="hpv3-passport__timeline"><span><i /><b>Platform üzerinde yazıldı</b><small>Kayıtlı süreç</small></span><span><i /><b>Profesyonel inceleme</b><small>Tamamlandı</small></span><span><i /><b>Yayınevi görünürlüğü</b><small>Keşfe açık</small></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="hpv3-why" id="neden-ilkoku">
+        <div className="hpv3-shell">
+          <header className="hpv3-section-head hpv3-section-head--center">
+            <p className="hpv3-kicker"><span />{why?.eyebrow || "Güven, kayıt ve keşif"}<span /></p>
+            <h2>{why?.title || "Neden İlkOku?"}</h2>
+          </header>
+          <div className="hpv3-benefits">
+            {benefits.map((benefit, index) => (
+              <article className="hpv3-benefit" key={benefit.title}><div className="hpv3-benefit__top"><span>0{index + 1}</span><i><Icon name={benefit.icon} /></i></div><h3>{benefit.title}</h3><p>{benefit.description}</p></article>
+            ))}
+          </div>
+          {stats.length > 0 ? <div className="hpv3-stats" aria-label="İlkOku platform istatistikleri">{stats.map((stat) => <div key={`${stat.label}-${stat.value}`}><i><Icon name={stat.icon} /></i><strong>{stat.value}</strong><span>{stat.label}</span></div>)}</div> : null}
+        </div>
+      </section>
+
+      <footer className="hpv3-footer" id="iletisim">
+        <div className="hpv3-shell hpv3-footer__grid">
+          <div className="hpv3-footer__brand"><Image src={logo} alt="İlkOku" sizes="160px" /><p>{footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}</p></div>
+          <div><h3>Platform</h3><Link href="/hakkimizda">Hakkımızda</Link><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/turler">Türler</Link><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div>
+          <div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div>
+          <div><h3>Destek</h3><Link href="/iletisim">İletişim</Link><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div>
+        </div>
+        <div className="hpv3-shell hpv3-footer__bottom"><span>{footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}</span></div>
+      </footer>
     </main>
   );
 }

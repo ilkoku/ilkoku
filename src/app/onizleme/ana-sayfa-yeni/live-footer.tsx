@@ -89,7 +89,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, slogan, co
           </div>
         </div>
 
-        <p className="landing-footer__copyright">
+        <div className="landing-footer__copyright">
           <span className="landing-footer__copyright-text">{copyright}</span>
           <nav className="landing-footer__legal" aria-label="Yasal bağlantılar">
             <Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link>
@@ -98,7 +98,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, slogan, co
             <Link href="/yasal/cerez-politikasi">Çerez Politikası</Link>
             <Link href="/yasal/telif-hakki-politikasi">Telif Hakkı Politikası</Link>
           </nav>
-        </p>
+        </div>
       </footer>
     </div>
   );

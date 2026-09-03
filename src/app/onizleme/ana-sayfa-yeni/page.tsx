@@ -16,6 +16,7 @@ import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 import { historyDefaults, mergeHistoryContent, safeHistoryImageSrc } from "@/lib/history-content";
 import { prisma } from "@/lib/prisma";
+import { siteContact } from "@/lib/site-contact";
 
 import "./preview.css";
 
@@ -43,6 +44,38 @@ type IconName =
   | "writer";
 
 type HistoryRow = { valueJson: string };
+
+function migrateLegacyHistoryContent(content: Record<string, string>) {
+  const next = { ...content };
+  if (next.card1Period === "MÖ 23. YÜZYIL – YAZI") next.card1Period = "MÖ 23. YÜZYIL – YAZ";
+  if (next.card2Period === "MÖ 3. YÜZYIL – ÇALIŞTIR") next.card2Period = "MÖ 3. YÜZYIL – DÜZENLE";
+  if (next.card3Period === "1534 – İNAN") next.card3Period = "1534 – YAYINLA";
+  if (next.card4Period === "1895 – HAYATA GEÇİR.") next.card4Period = "1896 – PERDEYE TAŞI";
+  if (next.card1Image === "/landing/history/reference-15/enheduanna.webp") next.card1Image = historyDefaults.card1Image;
+  if (next.card2Image === "/landing/history/reference-15/zenodotos.webp") next.card2Image = historyDefaults.card2Image;
+  if (next.card3Image === "/landing/history/reference-15/cambridge.webp") next.card3Image = historyDefaults.card3Image;
+  if (next.card4Image === "/landing/history/reference-15/train.webp") next.card4Image = historyDefaults.card4Image;
+  return next;
+}
+
+const footerPlatformLinks = [
+  ["Hakkımızda", "/hakkimizda"], ["Nasıl Çalışır?", "/nasil-calisir"], ["Yazarlar İçin", "/yazarlar-icin"],
+  ["Editörler İçin", "/editorler-icin"], ["Yayınevleri İçin", "/yayinevleri-icin"],
+] as const;
+const footerTrustLinks = [
+  ["Editoryal Standartlar", "/editoryal-standartlar"], ["İçerik ve Yaş", "/icerik-ve-yas-politikasi"],
+  ["Topluluk Kuralları", "/topluluk-kurallari"], ["Telif Bildirimi", "/telif-bildirimi"],
+] as const;
+const footerLegalLinks = [
+  ["Kullanım Şartları", "/yasal/kullanim-sartlari"], ["Gizlilik Politikası", "/yasal/gizlilik-politikasi"],
+  ["KVKK", "/yasal/kvkk"], ["Çerez Politikası", "/yasal/cerez-politikasi"], ["Telif Hakkı Politikası", "/yasal/telif-hakki-politikasi"],
+] as const;
+
+function SocialIcon({ id }: { id: (typeof siteContact.socialLinks)[number]["id"] }) {
+  if (id === "x") return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4l14 16M19 4 5 20" /></svg>;
+  if (id === "instagram") return <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none" /></svg>;
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="9" width="4" height="11" /><path d="M6 6.5v.1M11 20V9h4v2c1-1.5 5-2 5 3v6M15 14v6" /></svg>;
+}
 
 const defaultRoles = [
   {
@@ -122,7 +155,7 @@ async function getHistory() {
     `;
     if (!rows[0]?.valueJson) return { ...historyDefaults };
     const raw = JSON.parse(rows[0].valueJson) as Record<string, unknown>;
-    return mergeHistoryContent(raw);
+    return migrateLegacyHistoryContent(mergeHistoryContent(raw));
   } catch {
     return { ...historyDefaults };
   }
@@ -396,11 +429,12 @@ export default async function HomepageRedesignWorkspacePage() {
             <Link href="/" className="nx-footer__logo"><Image src={logo} alt="İlkOku" sizes="160px" /></Link>
             <p>{footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}</p>
           </div>
-          <div><h3>Platform</h3><Link href="/hakkimizda">Hakkımızda</Link><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/turler">Türler</Link><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div>
+          <nav aria-label="Platform bağlantıları"><h3>Platform</h3>{footerPlatformLinks.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}</nav>
+          <nav aria-label="Güven ve standartlar bağlantıları"><h3>Güven &amp; Standartlar</h3>{footerTrustLinks.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}</nav>
           <div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div>
-          <div><h3>Destek</h3><Link href="/iletisim">İletişim</Link><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div>
+          <div className="nx-footer__support"><h3>Destek</h3><Link href="/yardim">Yardım Merkezi</Link><Link href="/iletisim">İletişim</Link><a href={`mailto:${siteContact.generalEmail}`}>{siteContact.generalEmail}</a><div className="nx-footer__socials" aria-label="İlkOku sosyal medya hesapları">{siteContact.socialLinks.map((social) => <a href={social.href} aria-label={`${social.label} hesabımızı aç`} title={social.label} target="_blank" rel="noreferrer" key={social.id}><SocialIcon id={social.id} /></a>)}</div></div>
         </div>
-        <div className="nx-shell nx-footer__bottom">{footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}</div>
+        <div className="nx-shell nx-footer__bottom"><span>{footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}</span><nav aria-label="Yasal bağlantılar">{footerLegalLinks.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}</nav></div>
       </footer>
     </main>
   );

@@ -438,16 +438,23 @@
   background: #120d28;
   color: #fff;
 }
-.nx-footer__grid { display: grid; grid-template-columns: 1.55fr repeat(3,1fr); gap: 50px; }
+.nx-footer__grid { display: grid; grid-template-columns: 1.45fr repeat(4,1fr); gap: clamp(28px, 3.5vw, 54px); }
 .nx-footer__brand { max-width: 340px; }
 .nx-footer__logo { width: 150px; display: inline-flex; filter: brightness(0) invert(1); }
 .nx-footer__brand p { margin: 24px 0 0; color: rgba(255,255,255,.58); font-family: Georgia, serif; font-size: 1.08rem; line-height: 1.55; }
-.nx-footer__grid > div:not(.nx-footer__brand) { display: flex; flex-direction: column; gap: 11px; }
+.nx-footer__grid > div:not(.nx-footer__brand), .nx-footer__grid > nav { display: flex; flex-direction: column; gap: 11px; }
 .nx-footer h3 { margin: 0 0 10px; color: #bfaeff; font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; }
 .nx-footer__grid a, .nx-footer__grid button { color: rgba(255,255,255,.64); font-size: .76rem; }
 .nx-footer__grid button { padding: 0; border: 0; background: transparent; cursor: pointer; text-align: left; }
 .nx-footer__grid a:hover, .nx-footer__grid button:hover { color: #fff; }
-.nx-footer__bottom { margin-top: 56px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.38); font-size: .68rem; }
+.nx-footer__socials { display: flex; gap: 8px; margin-top: 8px; }
+.nx-footer__socials a { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; }
+.nx-footer__socials a:hover { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.08); }
+.nx-footer__socials svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.nx-footer__bottom { margin-top: 56px; padding-top: 24px; display: flex; align-items: center; justify-content: space-between; gap: 28px; border-top: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.38); font-size: .68rem; }
+.nx-footer__bottom nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px 22px; }
+.nx-footer__bottom a { color: rgba(255,255,255,.48); }
+.nx-footer__bottom a:hover { color: #fff; }
 
 @media (max-width: 1180px) {
   .nx-hero__layout { grid-template-columns: 1fr 1fr; }
@@ -490,6 +497,7 @@
   .nx-benefit-grid { grid-template-columns: 1fr 1fr; grid-auto-rows: auto; }
   .nx-benefit--1, .nx-benefit--2, .nx-benefit--3, .nx-benefit--4, .nx-benefit--5, .nx-benefit--6 { grid-column: auto; grid-row: auto; min-height: 260px; }
   .nx-footer__grid { grid-template-columns: 1fr 1fr; }
+  .nx-footer__brand { grid-column: 1 / -1; }
 }
 
 @media (max-width: 640px) {
@@ -514,4 +522,7 @@
   .nx-stats > div:nth-child(3), .nx-stats > div:nth-child(5) { border-left: 0; }
   .nx-stats > div:nth-child(3), .nx-stats > div:nth-child(4), .nx-stats > div:nth-child(5), .nx-stats > div:nth-child(6) { border-top: 1px solid var(--line); }
   .nx-footer__grid { grid-template-columns: 1fr; }
+  .nx-footer__brand { grid-column: auto; }
+  .nx-footer__bottom { align-items: flex-start; flex-direction: column; }
+  .nx-footer__bottom nav { justify-content: flex-start; }
 }

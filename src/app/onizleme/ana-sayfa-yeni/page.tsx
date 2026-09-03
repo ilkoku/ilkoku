@@ -8,6 +8,7 @@ import { authContent } from "@/content";
 import { logoutAction } from "@/features/auth/actions";
 import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { HistoryInspiration } from "@/features/landing/history-inspiration";
 import { getPublicWorkLibrary } from "@/features/public-discovery/library";
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
@@ -15,6 +16,7 @@ import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
+import "../../landing-history.css";
 import "./preview.css";
 
 export const metadata: Metadata = {
@@ -43,8 +45,6 @@ type IconName =
   | "trend"
   | "bolt";
 
-type JourneyIconName = "book" | "edit" | "publisher" | "spark";
-
 function LandingIcon({ name }: { name: IconName }) {
   const common = {
     fill: "none",
@@ -72,17 +72,6 @@ function LandingIcon({ name }: { name: IconName }) {
   return <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" {...common}>{paths[name]}</svg>;
 }
 
-function JourneyIcon({ name }: { name: JourneyIconName }) {
-  const paths: Record<JourneyIconName, ReactNode> = {
-    book: <><path d="M3.5 5.5A3.5 3.5 0 0 1 7 2h4v17H7a3.5 3.5 0 0 0-3.5 3V5.5Z" /><path d="M20.5 5.5A3.5 3.5 0 0 0 17 2h-4v17h4a3.5 3.5 0 0 1 3.5 3V5.5Z" /></>,
-    edit: <><path d="m4 20 4-.8L19 8.2a2.1 2.1 0 0 0-3-3L5 16.2 4 20Z" /><path d="m14.5 6.7 2.8 2.8" /></>,
-    publisher: <><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0M13 15.2A4.8 4.8 0 0 1 21 19" /></>,
-    spark: <><path d="m21 3-8.5 18-2.2-7.3L3 11.5 21 3Z" /><path d="m10.3 13.7 4.8-4.8" /></>,
-  };
-
-  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
-}
-
 const defaultRoles = [
   { key: "writer", title: "Yazar", description: "Eserini bölüm bölüm oluştur, okur geri bildirimiyle geliştir ve profesyonel incelemeye taşı.", cta: "Yazar Ol", highlights: ["Bölüm bazlı yayın", "Eser Pasaportu"], position: 1 },
   { key: "reader", title: "Okuyucu", description: "Yeni eserler keşfet, okumaya devam et, favorilerini oluştur ve yazara görüşünü ilet.", cta: "Okuyucu Ol", highlights: ["Yeni eser keşfi", "Bölüm yorumları"], position: 2 },
@@ -100,13 +89,6 @@ const benefits = [
 ] as const;
 
 const statIcons: IconName[] = ["account", "create", "editor", "publisher", "book", "message"];
-
-const journeyLines = [
-  { icon: "book", text: "Bir okur onu ilk kez keşfedebilir." },
-  { icon: "edit", text: "Bir editör onu geliştirebilir." },
-  { icon: "publisher", text: "Bir yayınevi ona inanabilir." },
-  { icon: "spark", text: "Ve bir gün o hikâye başladığından çok daha uzağa gidebilir." },
-] as const;
 
 export default async function HomepageRedesignWorkspacePage() {
   const [profile, roleCardState, homepageState, publicLibrary] = await Promise.all([
@@ -181,17 +163,7 @@ export default async function HomepageRedesignWorkspacePage() {
         <div className="nx-shell nx-hero__proof" aria-label="İlkOku temel özellikleri"><span><LandingIcon name="shield" /> Sürüm geçmişi</span><span><LandingIcon name="editor" /> Editör incelemesi</span><span><LandingIcon name="publisher" /> Yayınevi keşfi</span></div>
       </section>
 
-      <section className="nx-history" id="hikayenin-yolculugu" aria-labelledby="nx-history-title">
-        <div className="nx-shell">
-          <header className="nx-history__intro"><div><p className="nx-eyebrow nx-eyebrow--violet">HİKÂYENİN YOLCULUĞU</p><h2 id="nx-history-title">Her şey bir <em>“ilk”</em> ile başlar.</h2></div><p>Binlerce yıldır birileri ilk cümleyi yazıyor. Birileri ona yeniden bakıyor.<br />Birileri ona inanıyor. Ve bazı hikâyeler başladıkları yerden çok daha uzağa gidiyor.</p></header>
-          <figure className="nx-history__master"><Image src="/landing/history/history-journey-master.png" alt="Enheduanna'dan günümüze yazının ve yayıncılığın yolculuğunu anlatan tarih kolajı" fill unoptimized sizes="(max-width: 1520px) 100vw, 1520px" /></figure>
-          <section className="nx-history__present" aria-label="2026 şimdi sıra sende">
-            <div className="nx-history__present-copy"><p>2026 – ŞİMDİ SIRA SENDE.</p><h3>Bugünün ilk cümlesi,<br />yarının kitabı olabilir.</h3></div>
-            <ul className="nx-history__journey">{journeyLines.map((item) => <li key={item.icon}><JourneyIcon name={item.icon} /><span>{item.text}</span></li>)}</ul>
-            <div className="nx-history__closing"><p>Seninki neden sıradaki hikâye olmasın?</p><div><span>Her şey bir “ilk” ile başlar.</span><strong>İlkOku.</strong></div></div>
-          </section>
-        </div>
-      </section>
+      <HistoryInspiration />
 
       <section className="nx-discovery" aria-labelledby="nx-discovery-title">
         <div className="nx-shell">

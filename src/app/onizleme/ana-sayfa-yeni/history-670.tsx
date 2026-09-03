@@ -3,12 +3,19 @@ import { cmsLocaleNamespace } from "@/lib/cms-locales";
 import { historyDefaults, mergeHistoryContent, safeHistoryImageSrc } from "@/lib/history-content";
 import { prisma } from "@/lib/prisma";
 
+import { enheduannaImagePart1 } from "./enheduanna-image-part1";
+import { enheduannaImagePart2 } from "./enheduanna-image-part2";
+import { enheduannaImagePart3 } from "./enheduanna-image-part3";
+import { enheduannaImagePart4 } from "./enheduanna-image-part4";
+
 type HistoryRow = { valueJson: string };
+
+const uploadedEnheduannaImage = `data:image/jpeg;base64,${enheduannaImagePart1}${enheduannaImagePart2}${enheduannaImagePart3}${enheduannaImagePart4}`;
 
 const realHistoryPhotos = [
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/9/91/Disk_of_Enheduanna_%282%29.jpg",
-    alt: "Penn Museum koleksiyonundaki gerçek Enheduanna diskinin yakın plan fotoğrafı",
+    src: uploadedEnheduannaImage,
+    alt: "Enheduanna kartı için yüklenen çivi yazılı tablet ve parşömen görseli",
   },
   {
     src: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Papyrus_Oxyrhynchus_1389_-_Bridwell_Papyrus_5_-_Homer%2C_Iliad_-_recto.jpg",

@@ -2,54 +2,74 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  padding: clamp(36px, 3.8vw, 54px) 0;
   color: #fff;
   background:
-    radial-gradient(circle at 82% 18%, rgba(128, 101, 242, .42), transparent 22rem),
-    radial-gradient(circle at 8% 100%, rgba(104, 71, 232, .28), transparent 28rem),
+    radial-gradient(circle at 82% 18%, rgba(128, 101, 242, .34), transparent 22rem),
+    radial-gradient(circle at 8% 100%, rgba(104, 71, 232, .22), transparent 28rem),
     linear-gradient(135deg, #11102f 0%, #242052 52%, #4b2dbf 100%);
 }
 
 .nx-home .nx-passport::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  opacity: .22;
-  background-image:
-    linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
-  background-size: 4rem 4rem;
-  mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  display: none;
+}
+
+.nx-home .nx-passport .nx-passport__layout {
+  gap: clamp(36px, 5vw, 72px);
 }
 
 .nx-home .nx-passport .nx-passport__copy .nx-eyebrow,
 .nx-home .nx-passport .nx-passport__copy .nx-eyebrow--violet {
+  margin-bottom: 14px;
   color: #cfc5ff;
 }
 
 .nx-home .nx-passport .nx-passport__copy h2 {
+  max-width: 13ch;
   color: #fff;
+  font-size: clamp(2.65rem, 4vw, 4.2rem);
+  line-height: .98;
 }
 
 .nx-home .nx-passport .nx-passport__copy > p:not(.nx-eyebrow) {
+  margin-top: 18px;
   color: #dedaf4;
+  font-size: .94rem;
+  line-height: 1.65;
 }
 
 .nx-home .nx-passport .nx-passport__copy ul {
+  gap: 7px;
+  margin: 20px 0 22px;
   border: 0;
 }
 
 .nx-home .nx-passport .nx-passport__copy li {
+  min-height: 0;
   border: 0;
   color: #f2efff;
+  font-size: .79rem;
+  line-height: 1.4;
 }
 
 .nx-home .nx-passport .nx-passport__copy li span {
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
   color: #4b2dbf;
   background: #fff;
 }
 
+.nx-home .nx-passport .nx-action--dark {
+  min-height: 46px;
+  padding-inline: 20px;
+  color: #211641 !important;
+  background: #fff;
+}
+
 .nx-home .nx-passport .nx-passport__stage {
+  min-height: 460px;
+  padding: 8px 12px;
   background: transparent;
 }
 
@@ -57,7 +77,67 @@
   display: none;
 }
 
-.nx-home .nx-passport .nx-action--dark {
-  color: #211641 !important;
-  background: #fff;
+.nx-home .nx-passport .nx-passport-card {
+  width: min(500px, 90%);
+  padding: 22px;
+  border-radius: 26px;
+}
+
+.nx-home .nx-passport .nx-passport-card__head > span {
+  width: 46px;
+  height: 46px;
+}
+
+.nx-home .nx-passport .nx-passport-card__status {
+  margin-top: 14px;
+  padding: 10px 12px;
+}
+
+.nx-home .nx-passport .nx-passport-card__numbers {
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.nx-home .nx-passport .nx-passport-card__numbers > div {
+  padding: 11px 10px;
+}
+
+.nx-home .nx-passport .nx-passport-card__numbers strong {
+  font-size: 1.7rem;
+}
+
+.nx-home .nx-passport .nx-passport-card__timeline {
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.nx-home .nx-passport .nx-passport-card__timeline > span {
+  min-height: 44px;
+  padding: 9px 12px;
+}
+
+@media (max-width: 900px) {
+  .nx-home .nx-passport {
+    padding: 48px 0;
+  }
+
+  .nx-home .nx-passport .nx-passport__stage {
+    min-height: 420px;
+  }
+}
+
+@media (max-width: 620px) {
+  .nx-home .nx-passport {
+    padding: 38px 0;
+  }
+
+  .nx-home .nx-passport .nx-passport__stage {
+    min-height: 0;
+    padding-top: 6px;
+  }
+
+  .nx-home .nx-passport .nx-passport-card {
+    width: 100%;
+    padding: 18px;
+  }
 }

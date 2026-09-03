@@ -80,7 +80,7 @@ export default async function HistoryContentPage({ searchParams }: { searchParam
         <Link href="/icerik/ana-sayfa/history?dil=tr">Türkçe</Link>
         <Link href="/icerik/ana-sayfa/history?dil=en">English</Link>
         <Link href="/icerik/medya">Medya Kütüphanesi</Link>
-        <Link href="/onizleme/history-15" target="_blank">Canlı History Önizleme ↗</Link>
+        <Link href="/onizleme/ana-sayfa-yeni" target="_blank">Yeni Ana Sayfa Çalışması ↗</Link>
       </div>
 
       <div className="content-panel" style={{ marginBottom: "1rem" }}>
@@ -181,7 +181,7 @@ export default async function HistoryContentPage({ searchParams }: { searchParam
       </form>
 
       <div className="content-publish-box" style={{ marginTop: "1rem" }}>
-        <div><strong>History yayınlama</strong><p>Bu işlem yalnız History CMS kaydını ve ayrı canlı önizleme linkini günceller. Ana sayfa bileşenine bağlanmamıştır.</p></div>
+        <div><strong>History yayınlama</strong><p>Bu işlem yalnız History CMS kaydını günceller; public ana sayfa renderer yapısı yeni tasarım onaylanana kadar değiştirilmez.</p></div>
         {access.canPublish && state.enabled && state.hasDraft ? (
           <form action={publishHomepageHistoryAction}><input type="hidden" name="locale" value={locale} /><button type="submit">History Taslağını Yayınla</button></form>
         ) : null}

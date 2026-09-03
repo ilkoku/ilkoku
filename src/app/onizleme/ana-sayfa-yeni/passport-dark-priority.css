@@ -1,0 +1,63 @@
+.nx-home .nx-passport {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(128, 101, 242, .42), transparent 22rem),
+    radial-gradient(circle at 8% 100%, rgba(104, 71, 232, .28), transparent 28rem),
+    linear-gradient(135deg, #11102f 0%, #242052 52%, #4b2dbf 100%);
+}
+
+.nx-home .nx-passport::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  opacity: .22;
+  background-image:
+    linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+}
+
+.nx-home .nx-passport .nx-passport__copy .nx-eyebrow,
+.nx-home .nx-passport .nx-passport__copy .nx-eyebrow--violet {
+  color: #cfc5ff;
+}
+
+.nx-home .nx-passport .nx-passport__copy h2 {
+  color: #fff;
+}
+
+.nx-home .nx-passport .nx-passport__copy > p:not(.nx-eyebrow) {
+  color: #dedaf4;
+}
+
+.nx-home .nx-passport .nx-passport__copy ul {
+  border: 0;
+}
+
+.nx-home .nx-passport .nx-passport__copy li {
+  border: 0;
+  color: #f2efff;
+}
+
+.nx-home .nx-passport .nx-passport__copy li span {
+  color: #4b2dbf;
+  background: #fff;
+}
+
+.nx-home .nx-passport .nx-passport__stage {
+  background: transparent;
+}
+
+.nx-home .nx-passport .nx-passport__stage::before {
+  display: none;
+}
+
+.nx-home .nx-passport .nx-action--dark {
+  color: #211641 !important;
+  background: #fff;
+}

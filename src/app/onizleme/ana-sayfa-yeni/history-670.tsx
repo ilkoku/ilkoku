@@ -3,18 +3,11 @@ import { cmsLocaleNamespace } from "@/lib/cms-locales";
 import { historyDefaults, mergeHistoryContent, safeHistoryImageSrc } from "@/lib/history-content";
 import { prisma } from "@/lib/prisma";
 
-import { enheduannaImagePart1 } from "./enheduanna-image-part1";
-import { enheduannaImagePart2 } from "./enheduanna-image-part2";
-import { enheduannaImagePart3 } from "./enheduanna-image-part3";
-import { enheduannaImagePart4 } from "./enheduanna-image-part4";
-
 type HistoryRow = { valueJson: string };
-
-const uploadedEnheduannaImage = `data:image/jpeg;base64,${enheduannaImagePart1}${enheduannaImagePart2}${enheduannaImagePart3}${enheduannaImagePart4}`;
 
 const realHistoryPhotos = [
   {
-    src: uploadedEnheduannaImage,
+    src: "/landing/history/enheduanna-user.webp",
     alt: "Enheduanna kartı için yüklenen çivi yazılı tablet ve parşömen görseli",
   },
   {

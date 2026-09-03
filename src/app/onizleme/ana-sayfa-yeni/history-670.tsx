@@ -5,6 +5,25 @@ import { prisma } from "@/lib/prisma";
 
 type HistoryRow = { valueJson: string };
 
+const realHistoryPhotos = [
+  {
+    src: "https://upload.wikimedia.org/wikipedia/commons/9/91/Disk_of_Enheduanna_%282%29.jpg",
+    alt: "Penn Museum koleksiyonundaki gerçek Enheduanna diskinin yakın plan fotoğrafı",
+  },
+  {
+    src: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Papyrus_Oxyrhynchus_1389_-_Bridwell_Papyrus_5_-_Homer%2C_Iliad_-_recto.jpg",
+    alt: "Homeros'un İlyada metnini taşıyan gerçek antik Oxyrhynchus papirüsünün fotoğrafı",
+  },
+  {
+    src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/View_of_the_Pitt_Building_from_Trumpington_Street_-_geograph.org.uk_-_7017859.jpg?width=1600",
+    alt: "Cambridge University Press Pitt Building binasının Trumpington Street'ten gerçek fotoğrafı",
+  },
+  {
+    src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Lumi%C3%A8re_brothers.jpg",
+    alt: "Auguste ve Louis Lumière kardeşlerin yaklaşık 1895 tarihli gerçek arşiv fotoğrafı",
+  },
+] as const;
+
 function migrateLegacyHistoryContent(content: Record<string, string>) {
   const next = { ...content };
   if (next.card1Period === "MÖ 23. YÜZYIL – YAZI") next.card1Period = "MÖ 23. YÜZYIL – YAZ";
@@ -44,8 +63,8 @@ export default async function History670() {
     title: history[`card${index}Title`],
     lead: history[`card${index}Lead`],
     body: history[`card${index}Body`],
-    image: safeHistoryImageSrc(history[`card${index}Image`], historyDefaults[`card${index}Image`]),
-    alt: history[`card${index}Alt`],
+    image: realHistoryPhotos[index - 1].src,
+    alt: realHistoryPhotos[index - 1].alt,
   }));
 
   const historySteps = [1, 2, 3, 4].map((index) => ({

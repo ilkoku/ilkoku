@@ -1,0 +1,314 @@
+.nx-passport {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(78px, 7vw, 112px) 0;
+  color: #fff;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(128, 101, 242, .42), transparent 22rem),
+    radial-gradient(circle at 8% 100%, rgba(104, 71, 232, .28), transparent 28rem),
+    linear-gradient(135deg, #11102f 0%, #242052 52%, #4b2dbf 100%);
+}
+
+.nx-passport::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  opacity: .22;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .06) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+}
+
+.nx-passport__layout {
+  grid-template-columns: minmax(0, .92fr) minmax(26rem, 1.08fr);
+  gap: clamp(52px, 7vw, 112px);
+  align-items: center;
+}
+
+.nx-passport__copy .nx-eyebrow,
+.nx-passport__copy .nx-eyebrow--violet {
+  color: #cfc5ff;
+}
+
+.nx-passport__copy h2 {
+  max-width: 14ch;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.9rem, 4.8vw, 4.8rem);
+  line-height: 1.02;
+  letter-spacing: -.05em;
+  text-wrap: balance;
+}
+
+.nx-passport__copy > p:not(.nx-eyebrow) {
+  max-width: 36rem;
+  margin-top: 24px;
+  color: #dedaf4;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.nx-passport__copy ul {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0 32px;
+  padding: 0;
+  border: 0;
+  list-style: none;
+}
+
+.nx-passport__copy li {
+  min-height: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  border: 0;
+  color: #f2efff;
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.nx-passport__copy li span {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 22px;
+  margin-top: 1px;
+  border-radius: 50%;
+  color: #4b2dbf;
+  background: #fff;
+  font-size: .7rem;
+  font-weight: 900;
+}
+
+.nx-passport .nx-action--dark {
+  min-height: 54px;
+  padding-inline: 24px;
+  border: 1px solid rgba(255, 255, 255, .7);
+  color: #211641 !important;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(7, 5, 35, .22);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.nx-passport .nx-action--dark:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(7, 5, 35, .3);
+}
+
+.nx-passport__stage {
+  min-height: 560px;
+  padding: clamp(20px, 3vw, 42px);
+  background: transparent;
+}
+
+.nx-passport__stage::before {
+  display: none;
+}
+
+.nx-passport-card {
+  width: min(560px, 92%);
+  padding: clamp(22px, 2.4vw, 32px);
+  border: 1px solid rgba(255, 255, 255, .34);
+  border-radius: 32px;
+  color: #1d1b38;
+  background: rgba(255, 255, 255, .95);
+  box-shadow: 0 40px 96px rgba(7, 5, 35, .34);
+  backdrop-filter: blur(18px);
+  transform: rotate(1.4deg);
+  transition: transform .28s ease, box-shadow .28s ease;
+}
+
+.nx-passport-card:hover {
+  transform: rotate(.35deg) translateY(-3px);
+  box-shadow: 0 48px 110px rgba(7, 5, 35, .4);
+}
+
+.nx-passport-card__head {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.nx-passport-card__head small {
+  color: #69667e;
+  font-size: .65rem;
+  font-weight: 780;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.nx-passport-card__head strong {
+  margin-top: 5px;
+  color: #1d1b38;
+  font-size: 1.72rem;
+}
+
+.nx-passport-card__head > span {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  color: #6847e8;
+  background: #ede9ff;
+}
+
+.nx-passport-card__head > span::before {
+  width: 3rem;
+  height: 3rem;
+}
+
+.nx-passport-card__status {
+  margin-top: 22px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  color: #4b2dbf;
+  background: #f8f6ff;
+  font-size: .78rem;
+}
+
+.nx-passport-card__status strong {
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #fff;
+  background: #6847e8;
+  font-size: .65rem;
+  font-weight: 800;
+}
+
+.nx-passport-card__numbers {
+  gap: 10px;
+  margin-top: 13px;
+  border: 0;
+}
+
+.nx-passport-card__numbers > div {
+  padding: 16px 12px;
+  border: 1px solid rgba(104, 71, 232, .12);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.nx-passport-card__numbers > div + div {
+  border-left: 1px solid rgba(104, 71, 232, .12);
+}
+
+.nx-passport-card__numbers strong {
+  color: #4b2dbf;
+  font-size: 2rem;
+}
+
+.nx-passport-card__numbers span {
+  margin-top: 3px;
+  color: #69667e;
+  font-size: .63rem;
+}
+
+.nx-passport-card__timeline {
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.nx-passport-card__timeline > span {
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  align-items: center;
+  column-gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8f6ff;
+}
+
+.nx-passport-card__timeline i {
+  width: 11px;
+  height: 11px;
+  margin: 0;
+  border: 3px solid #ede9ff;
+  background: #6847e8;
+}
+
+.nx-passport-card__timeline b {
+  color: #1d1b38;
+  font-size: .72rem;
+}
+
+.nx-passport-card__timeline small {
+  grid-column: auto;
+  margin: 0;
+  color: #69667e;
+  font-size: .62rem;
+}
+
+@media (max-width: 1180px) {
+  .nx-passport__layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+  }
+
+  .nx-passport-card {
+    width: min(520px, 96%);
+  }
+}
+
+@media (max-width: 900px) {
+  .nx-passport__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .nx-passport__copy h2 {
+    max-width: 16ch;
+  }
+
+  .nx-passport__stage {
+    min-height: 500px;
+    padding-inline: 0;
+  }
+
+  .nx-passport-card {
+    width: min(620px, 94%);
+  }
+}
+
+@media (max-width: 620px) {
+  .nx-passport {
+    padding-block: 72px;
+  }
+
+  .nx-passport__stage {
+    min-height: 0;
+    padding: 18px 0 8px;
+  }
+
+  .nx-passport-card {
+    width: 100%;
+    border-radius: 24px;
+    transform: none;
+  }
+
+  .nx-passport-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .nx-passport-card__numbers {
+    grid-template-columns: 1fr;
+  }
+
+  .nx-passport-card__timeline > span {
+    grid-template-columns: 14px 1fr;
+  }
+
+  .nx-passport-card__timeline small {
+    grid-column: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-passport-card,
+  .nx-passport .nx-action--dark {
+    transition: none;
+  }
+}

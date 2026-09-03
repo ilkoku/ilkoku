@@ -28,11 +28,16 @@
 .nx-history__eras {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  gap: 14px;
+  align-items: stretch;
 }
-.nx-era { min-width: 0; }
-.nx-era + .nx-era { border-left: 1px solid var(--line); }
+.nx-era {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.34);
+  box-shadow: 0 12px 32px rgba(34,22,68,.035);
+}
 .nx-era__image { position: relative; height: 260px; overflow: hidden; background: #ded7ca; }
 .nx-era__image img {
   width: 100%;
@@ -50,7 +55,7 @@
 }
 .nx-era__content {
   min-height: 330px;
-  padding: 28px 26px 34px;
+  padding: 32px 28px 36px;
   font-family: "Courier New", Courier, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .nx-era__content small {
@@ -61,7 +66,7 @@
   letter-spacing: .1em;
 }
 .nx-era__content h3 {
-  margin: 16px 0 22px;
+  margin: 18px 0 22px;
   font-family: inherit;
   font-size: clamp(1.45rem, 1.8vw, 2.15rem);
   font-weight: 700;
@@ -69,11 +74,11 @@
   line-height: 1.08;
 }
 .nx-era__content p {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   color: #69636f;
   font-family: inherit;
   font-size: .8rem;
-  line-height: 1.75;
+  line-height: 1.78;
   letter-spacing: .01em;
 }
 .nx-era__content strong { color: #302b36; font-family: inherit; font-weight: 700; }
@@ -163,8 +168,6 @@
 
 @media (max-width: 1180px) {
   .nx-history__eras { grid-template-columns: repeat(2,1fr); }
-  .nx-era:nth-child(3) { border-left: 0; }
-  .nx-era:nth-child(n+3) { border-top: 1px solid var(--line); }
   .nx-now {
     min-height: 540px;
     grid-template-columns: minmax(360px, .82fr) minmax(0, 1.18fr);
@@ -187,8 +190,8 @@
 }
 
 @media (max-width: 640px) {
-  .nx-history__eras { grid-template-columns: 1fr; }
-  .nx-era + .nx-era { border-left: 0; border-top: 1px solid var(--line); }
+  .nx-history__eras { grid-template-columns: 1fr; gap: 12px; }
+  .nx-era__content { min-height: 0; padding: 28px 24px 32px; }
   .nx-now__visual,
   .nx-now__scene { min-height: 360px; }
   .nx-now__story { padding: 30px 20px 34px; }

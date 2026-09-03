@@ -1,0 +1,263 @@
+/* İlkOku homepage preview — encyclopedia-cover header */
+
+.nx-header {
+  position: relative !important;
+  overflow: visible !important;
+  border-bottom: 1px solid rgba(228, 207, 151, 0.2) !important;
+  background:
+    radial-gradient(circle at 18% 50%, rgba(107, 78, 178, 0.12), transparent 26%),
+    linear-gradient(180deg, #1b1435 0%, #15102d 100%) !important;
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 -7px 18px rgba(0, 0, 0, 0.12) !important;
+}
+
+.nx-header::before,
+.nx-header::after {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.nx-header::before {
+  top: 8px;
+  border-top: 1px solid rgba(226, 205, 148, 0.11);
+}
+
+.nx-header::after {
+  bottom: 8px;
+  border-top: 1px solid rgba(226, 205, 148, 0.11);
+}
+
+.nx-header__inner {
+  position: relative !important;
+  z-index: 1 !important;
+  min-height: 104px !important;
+  grid-template-columns: 170px minmax(280px, 1fr) 170px !important;
+  gap: clamp(20px, 3vw, 42px) !important;
+  padding-block: 14px !important;
+}
+
+/* Publisher-mark feeling: the real İlkOku logo sits on a small cover cartouche. */
+.nx-logo {
+  width: 132px !important;
+  height: 72px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  justify-self: start !important;
+  padding: 7px 13px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(225, 204, 147, 0.48) !important;
+  border-radius: 3px !important;
+  background:
+    linear-gradient(180deg, rgba(252, 248, 235, 0.98), rgba(229, 218, 190, 0.96)) !important;
+  box-shadow:
+    inset 0 0 0 3px rgba(70, 48, 118, 0.055),
+    inset 0 0 0 4px rgba(255, 255, 255, 0.42),
+    0 10px 24px rgba(5, 2, 18, 0.18) !important;
+  filter: none !important;
+}
+
+.nx-logo img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 106px !important;
+  max-height: 60px !important;
+  object-fit: contain !important;
+  filter: none !important;
+}
+
+/* The platform name reads like a title plate set into an old encyclopedia cover. */
+.nx-header__label {
+  position: relative !important;
+  width: min(100%, 460px) !important;
+  min-height: 56px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  justify-self: center !important;
+  margin: 0 !important;
+  padding: 13px 30px !important;
+  border: 1px solid rgba(226, 204, 147, 0.44) !important;
+  border-radius: 2px !important;
+  color: #efe3c2 !important;
+  background:
+    linear-gradient(180deg, rgba(50, 37, 87, 0.72), rgba(30, 22, 55, 0.78)) !important;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, 0.025),
+    inset 0 0 0 4px rgba(226, 204, 147, 0.12),
+    inset 0 12px 25px rgba(255, 255, 255, 0.018),
+    0 11px 26px rgba(4, 2, 15, 0.16) !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: clamp(0.74rem, 0.9vw, 0.88rem) !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.2em !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45) !important;
+  white-space: nowrap !important;
+}
+
+.nx-header__label::before,
+.nx-header__label::after {
+  position: absolute;
+  top: 50%;
+  width: 17px;
+  height: 1px;
+  content: "";
+  background: rgba(232, 212, 158, 0.48);
+}
+
+.nx-header__label::before { left: 9px; }
+.nx-header__label::after { right: 9px; }
+
+/* Account entry becomes a proper, readable CTA instead of a weak icon-only control. */
+.nx-account {
+  justify-self: end !important;
+}
+
+.nx-account summary {
+  width: auto !important;
+  min-width: 132px !important;
+  height: 48px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  padding: 0 17px !important;
+  border: 1px solid rgba(229, 210, 159, 0.5) !important;
+  border-radius: 3px !important;
+  color: #21173e !important;
+  background:
+    linear-gradient(180deg, #fbf6e8 0%, #e6d8b8 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 0 0 3px rgba(91, 67, 136, 0.05),
+    0 8px 22px rgba(5, 2, 17, 0.18) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.04em !important;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease !important;
+}
+
+.nx-account summary::after {
+  content: "Giriş Yap";
+  white-space: nowrap;
+}
+
+.nx-account:has(.nx-account__identity) summary::after {
+  content: "Hesabım";
+}
+
+.nx-account summary:hover,
+.nx-account[open] summary {
+  transform: translateY(-1px) !important;
+  border-color: rgba(240, 222, 171, 0.74) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 0 0 3px rgba(91, 67, 136, 0.06),
+    0 11px 26px rgba(5, 2, 17, 0.24) !important;
+}
+
+.nx-account summary svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 auto !important;
+  stroke-width: 1.8 !important;
+}
+
+.nx-account__menu {
+  top: 58px !important;
+  border: 1px solid rgba(54, 38, 94, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+@media (max-width: 900px) {
+  .nx-header__inner {
+    grid-template-columns: 118px minmax(180px, 1fr) 126px !important;
+    gap: 16px !important;
+    min-height: 92px !important;
+  }
+
+  .nx-logo {
+    width: 108px !important;
+    height: 64px !important;
+    padding: 6px 10px !important;
+  }
+
+  .nx-logo img {
+    max-width: 88px !important;
+    max-height: 52px !important;
+  }
+
+  .nx-header__label {
+    display: inline-flex !important;
+    min-height: 48px !important;
+    padding: 11px 22px !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  .nx-account summary {
+    min-width: 118px !important;
+    height: 46px !important;
+    padding-inline: 14px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .nx-home { --shell: min(100% - 24px, 760px); }
+
+  .nx-header__inner {
+    grid-template-columns: 84px minmax(0, 1fr) 46px !important;
+    gap: 10px !important;
+    min-height: 80px !important;
+    padding-block: 10px !important;
+  }
+
+  .nx-logo {
+    width: 80px !important;
+    height: 52px !important;
+    padding: 5px 8px !important;
+  }
+
+  .nx-logo img {
+    max-width: 66px !important;
+    max-height: 42px !important;
+  }
+
+  .nx-header__label {
+    min-height: 44px !important;
+    padding: 9px 14px !important;
+    font-size: 0.55rem !important;
+    letter-spacing: 0.12em !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+
+  .nx-header__label::before,
+  .nx-header__label::after {
+    display: none !important;
+  }
+
+  .nx-account summary {
+    min-width: 46px !important;
+    width: 46px !important;
+    height: 46px !important;
+    padding: 0 !important;
+  }
+
+  .nx-account summary::after {
+    display: none !important;
+  }
+
+  .nx-account__menu {
+    right: 0 !important;
+    width: min(270px, calc(100vw - 24px)) !important;
+  }
+}

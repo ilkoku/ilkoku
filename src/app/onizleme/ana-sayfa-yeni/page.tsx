@@ -8,12 +8,10 @@ import { authContent } from "@/content";
 import { logoutAction } from "@/features/auth/actions";
 import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
-import { getPublicWorkLibrary } from "@/features/public-discovery/library";
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
-import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 import History670 from "./history-670";
 import "./preview.css";
@@ -90,11 +88,10 @@ const benefits = [
 const statIcons: IconName[] = ["account", "create", "editor", "publisher", "book", "message"];
 
 export default async function HomepageRedesignWorkspacePage() {
-  const [profile, roleCardState, homepageState, publicLibrary] = await Promise.all([
+  const [profile, roleCardState, homepageState] = await Promise.all([
     getCurrentProfile(),
     getPublishedRoleCardsState("tr"),
     getPublishedHomepageState("tr"),
-    getPublicWorkLibrary({ sort: "newest" }, 1),
   ]);
 
   const navigation = profile ? await getRoleNavigation(profile) : null;
@@ -163,14 +160,6 @@ export default async function HomepageRedesignWorkspacePage() {
       </section>
 
       <History670 />
-
-      <section className="nx-discovery" aria-labelledby="nx-discovery-title">
-        <div className="nx-shell">
-          <header className="nx-discovery__head"><div><p className="nx-eyebrow nx-eyebrow--violet">HERKESE AÇIK KÜTÜPHANE</p><h2 id="nx-discovery-title">Sisteme girmeden de gerçek yayınları keşfet.</h2></div><Link href="/eserler">Tüm eserleri görüntüle →</Link></header>
-          <nav className="nx-discovery__routes" aria-label="Herkese açık keşif yolları"><Link href="/eserler/yeni"><strong>Yeni yayımlananlar</strong><span>Yayın tarihine göre en yeni eserler</span></Link><Link href="/eserler/guncellenen"><strong>Son güncellenenler</strong><span>Yakın zamanda değişen eserler</span></Link><Link href="/yazarlar"><strong>Yazarlar</strong><span>Herkese açık eserleri olan yazarlar</span></Link><Link href="/turler"><strong>Türler</strong><span>Gerçek yayınlardan oluşan tür dizini</span></Link></nav>
-          {publicLibrary.works.length > 0 ? <div className="nx-discovery__works">{publicLibrary.works.slice(0, 3).map((work) => { const authorName = work.author.displayName ?? work.author.fullName; return <article key={work.slug}><small>{work.genre ?? "Eser"} · {workContentRatingDetails[work.contentRating].shortLabel}</small><h3>{work.title}</h3><p>{authorName}</p><div><Link href={`/kitap/${work.slug}`}>Eseri incele →</Link><Link href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent("/")}`}>Eser Pasaportu →</Link></div></article>; })}</div> : null}
-        </div>
-      </section>
 
       <section className="nx-roles" id="roller">
         <div className="nx-shell">

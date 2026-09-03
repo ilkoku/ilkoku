@@ -40,7 +40,6 @@ type IconName =
   | "publisher"
   | "reader"
   | "shield"
-  | "trend"
   | "writer";
 
 type HistoryRow = { valueJson: string };
@@ -102,7 +101,6 @@ function Icon({ name }: { name: IconName }) {
     message: <><path d="M21 15a4 4 0 0 1-4 4H9l-5 3v-7a4 4 0 0 1-1-2.6V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" /><path d="M8 9h8M8 13h5" /></>,
     feedback: <><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
     shield: <><path d="M12 3 20 6v6c0 4.8-3.2 7.4-8 9-4.8-1.6-8-4.2-8-9V6l8-3Z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
-    trend: <><path d="M4 19V9M10 19V5M16 19v-7M3 19h18" /><path d="m5 12 5-4 4 2 6-6" /></>,
   };
 
   return (
@@ -137,6 +135,7 @@ export default async function HomepageRedesignWorkspacePage() {
     getPublishedHomepageState("tr"),
     getHistory(),
   ]);
+
   const navigation = profile ? await getRoleNavigation(profile) : null;
   const pendingRole = navigation?.pendingRequest?.requestedRole ?? (profile?.role === "editor_pending" ? "editor" : null);
   const homepage = homepageState.state === "valid" ? homepageState.content : {};
@@ -187,24 +186,23 @@ export default async function HomepageRedesignWorkspacePage() {
   }));
 
   return (
-    <main className="hpv3">
-      <header className="hpv3-header">
-        <div className="hpv3-shell hpv3-header__inner">
-          <Link href="/onizleme/ana-sayfa-yeni" className="hpv3-logo" aria-label="İlkOku yeni ana sayfa önizlemesi">
+    <main className="nx-home">
+      <header className="nx-header">
+        <div className="nx-shell nx-header__inner">
+          <Link href="/onizleme/ana-sayfa-yeni" className="nx-logo" aria-label="İlkOku yeni ana sayfa önizlemesi">
             <Image src={logo} alt="İlkOku" priority sizes="180px" />
           </Link>
-          <span className="hpv3-platform-label">Dijital edebiyat platformu</span>
-          <nav className="hpv3-header__nav" aria-label="Ana sayfa bölümleri">
-            <a href="#roller">Roller</a>
-            <a href="#eser-pasaportu">Eser Pasaportu</a>
-            <a href="#neden-ilkoku">Neden İlkOku?</a>
-          </nav>
-          <details className="hpv3-account">
+          <span className="nx-header__label">Dijital edebiyat platformu</span>
+          <details className="nx-account">
             <summary aria-label="Hesap menüsü"><Icon name="account" /></summary>
-            <div className="hpv3-account__menu">
+            <div className="nx-account__menu">
               {profile && navigation ? (
                 <>
-                  <div><strong>{profile.fullName}</strong><span>Aktif rol: {authContent.roles[profile.role]}</span>{navigation.hasPendingRequest ? <small>{pendingRole ? `${authContent.roles[pendingRole]} başvurunuz inceleniyor` : "Başvurunuz inceleniyor"}</small> : null}</div>
+                  <div className="nx-account__identity">
+                    <strong>{profile.fullName}</strong>
+                    <span>Aktif rol: {authContent.roles[profile.role]}</span>
+                    {navigation.hasPendingRequest ? <small>{pendingRole ? `${authContent.roles[pendingRole]} başvurunuz inceleniyor` : "Başvurunuz inceleniyor"}</small> : null}
+                  </div>
                   <Link href="/hesabim">Hesabım</Link>
                   <Link href={navigation.workspaceHref}>Çalışma Alanım</Link>
                   <form action={logoutAction}><button type="submit">Çıkış Yap</button></form>
@@ -217,43 +215,52 @@ export default async function HomepageRedesignWorkspacePage() {
         </div>
       </header>
 
-      <section className="hpv3-hero" id="hakkimizda">
-        <div className="hpv3-shell hpv3-hero__grid">
-          <div className="hpv3-hero__content">
-            <p className="hpv3-kicker"><span /> Yazardan yayınevine tek bir edebiyat ekosistemi</p>
-            <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>) : heroTitle}</h1>
-            <p className="hpv3-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
-            <div className="hpv3-actions">
-              <Link href={primaryHref} className="hpv3-button hpv3-button--primary">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span>→</span></Link>
-              <Link href={secondaryHref} className="hpv3-button hpv3-button--ghost">{hero?.secondaryCtaLabel || "Eserleri Keşfet"}</Link>
-            </div>
-            <div className="hpv3-proof" aria-label="İlkOku temel özellikleri">
-              <span><Icon name="shield" />Sürüm geçmişi</span>
-              <span><Icon name="editor" />Editör incelemesi</span>
-              <span><Icon name="publisher" />Yayınevi keşfi</span>
+      <section className="nx-hero" id="hakkimizda">
+        <div className="nx-shell nx-hero__layout">
+          <div className="nx-hero__copy">
+            <p className="nx-eyebrow">Yazardan yayınevine tek bir edebiyat ekosistemi</p>
+            <h1>
+              {heroLines.length > 0
+                ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>)
+                : <span>{heroTitle}</span>}
+            </h1>
+            <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
+            <div className="nx-hero__actions">
+              <Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">↗</span></Link>
+              <Link href={secondaryHref} className="nx-action nx-action--line">{hero?.secondaryCtaLabel || "Eserleri Keşfet"}</Link>
             </div>
           </div>
-          <div className="hpv3-hero__visual">
-            <div className="hpv3-hero__image"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 900px) 100vw, 48vw" /></div>
-            <div className="hpv3-hero__folio" aria-hidden="true"><span>İLKOKU</span><strong>01</strong></div>
+
+          <div className="nx-hero__art" aria-label="İlkOku ana görseli">
+            <Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 900px) 100vw, 48vw" />
+            <div className="nx-hero__art-frame" aria-hidden="true" />
           </div>
+        </div>
+        <div className="nx-shell nx-hero__proof" aria-label="İlkOku temel özellikleri">
+          <span><Icon name="shield" /> Sürüm geçmişi</span>
+          <span><Icon name="editor" /> Editör incelemesi</span>
+          <span><Icon name="publisher" /> Yayınevi keşfi</span>
         </div>
       </section>
 
-      <section className="hpv3-history" id="hikayenin-yolculugu" style={{ backgroundColor: history.backgroundColor }}>
-        <div className="hpv3-shell">
-          <header className="hpv3-section-head hpv3-section-head--center">
-            <p className="hpv3-kicker"><span />{history.introEyebrow}<span /></p>
-            <h2>{history.introTitle}</h2>
+      <section className="nx-history" id="hikayenin-yolculugu" style={{ backgroundColor: history.backgroundColor || historyDefaults.backgroundColor }}>
+        <div className="nx-shell">
+          <header className="nx-history__intro">
+            <div>
+              <p className="nx-eyebrow nx-eyebrow--violet">{history.introEyebrow}</p>
+              <h2>{history.introTitle}</h2>
+            </div>
             <p>{history.introDescription1}<br />{history.introDescription2}</p>
           </header>
 
-          <div className="hpv3-history__rail" aria-label="Hikâyenin tarihsel yolculuğu">
+          <div className="nx-history__eras">
             {historyCards.map((card, index) => (
-              <article className="hpv3-era" key={`${card.period}-${index}`}>
-                <div className="hpv3-era__image"><img src={card.image} alt={card.alt} /></div>
-                <div className="hpv3-era__number">0{index + 1}</div>
-                <div className="hpv3-era__body">
+              <article className="nx-era" key={`${card.period}-${card.title}`}>
+                <div className="nx-era__image">
+                  <img src={card.image} alt={card.alt} />
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                </div>
+                <div className="nx-era__content">
                   <small>{card.period}</small>
                   <h3>{card.title}</h3>
                   <p><strong>{card.lead}</strong></p>
@@ -264,101 +271,136 @@ export default async function HomepageRedesignWorkspacePage() {
           </div>
 
           {history.cardVisible !== "0" ? (
-            <article className="hpv3-now" style={history.cardBackgroundImage ? { backgroundImage: `linear-gradient(120deg, rgba(28,20,67,.94), rgba(76,44,163,.92)), url(${safeHistoryImageSrc(history.cardBackgroundImage, historyDefaults.leftDecorImage)})` } : undefined}>
-              <img className="hpv3-now__decor" src={safeHistoryImageSrc(history.leftDecorImage, historyDefaults.leftDecorImage)} alt={history.leftDecorAlt} />
-              <div className="hpv3-now__shade" aria-hidden="true" />
-              <div className="hpv3-now__content">
-                <header className="hpv3-now__header">
-                  <div><p>{history.cardEyebrow}</p><h3>{history.cardTitleLine1}<br />{history.cardTitleLine2}</h3></div>
-                  {history.sealVisible !== "0" ? <img className="hpv3-now__seal" src={safeHistoryImageSrc(history.sealImage, historyDefaults.sealImage)} alt={history.sealAlt} /> : null}
-                </header>
-                <div className="hpv3-now__steps">
+            <section className="nx-now" aria-label="2026 şimdi sıra sende">
+              <div className="nx-now__visual">
+                <img src={safeHistoryImageSrc(history.leftDecorImage, historyDefaults.leftDecorImage)} alt={history.leftDecorAlt} />
+              </div>
+              <div className="nx-now__story">
+                <div className="nx-now__headline">
+                  <p>{history.cardEyebrow}</p>
+                  <h3>{history.cardTitleLine1}<br />{history.cardTitleLine2}</h3>
+                </div>
+                <div className="nx-now__steps">
                   {historySteps.map((step, index) => (
-                    <div className="hpv3-now__step" key={`${step.text}-${index}`}>
-                      <span className="hpv3-now__step-no">0{index + 1}</span>
+                    <div className="nx-now__step" key={`${index}-${step.text}`}>
+                      <span>{String(index + 1).padStart(2, "0")}</span>
                       <img src={step.image} alt={step.alt} />
                       <p>{step.text}</p>
                     </div>
                   ))}
                 </div>
-                <footer className="hpv3-now__footer">
-                  <strong>{history.closingQuestion}</strong>
-                  <div><span>{history.bottomSlogan}</span><b>{history.brandText}</b></div>
-                </footer>
+                <div className="nx-now__closing">
+                  <div>
+                    <p>{history.closingQuestion}</p>
+                    <strong>{history.bottomSlogan}</strong>
+                    <b>{history.brandText}</b>
+                  </div>
+                  {history.sealVisible !== "0" ? <img src={safeHistoryImageSrc(history.sealImage, historyDefaults.sealImage)} alt={history.sealAlt} /> : null}
+                </div>
               </div>
-            </article>
+            </section>
           ) : null}
         </div>
       </section>
 
-      <section className="hpv3-roles" id="roller">
-        <div className="hpv3-shell">
-          <header className="hpv3-section-head">
-            <p className="hpv3-kicker"><span />{roleSection?.eyebrow || "Topluluğa katıl"}</p>
+      <section className="nx-roles" id="roller">
+        <div className="nx-shell">
+          <header className="nx-section-heading nx-section-heading--inverse">
+            <p className="nx-eyebrow">{roleSection?.eyebrow || "Topluluğa katıl"}</p>
             <h2>{roleSection?.title || "İlkOku’ya nasıl katılmak istiyorsun?"}</h2>
             <p>{roleSection?.description || "Rolünü seç; kayıt akışını sana uygun şekilde başlatalım."}</p>
           </header>
-          <div className="hpv3-role-grid">
+          <div className="nx-role-grid">
             {visibleRoles.map((role) => (
-              <Link href={role.href} className="hpv3-role" key={role.key}>
-                <div className="hpv3-role__top"><span>0{role.position}</span><i><Icon name={role.key as IconName} /></i></div>
-                <small>{role.title} rolü</small>
+              <Link href={role.href} className={`nx-role nx-role--${role.key}`} key={role.key} aria-label={`${role.title} olarak kayıt ol`}>
+                <div className="nx-role__top">
+                  <span className="nx-role__number">{String(role.position).padStart(2, "0")}</span>
+                  <span className="nx-role__icon"><Icon name={role.key as IconName} /></span>
+                </div>
                 <h3>{role.title}</h3>
                 <p>{role.description}</p>
-                <div className="hpv3-role__tags">{role.highlights.map((highlight) => <span key={highlight}>{highlight}</span>)}</div>
-                <strong>{role.cta}<span>→</span></strong>
+                <div className="nx-role__highlights">{role.highlights.map((highlight) => <small key={highlight}>{highlight}</small>)}</div>
+                <strong>{role.cta}<span aria-hidden="true">→</span></strong>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="hpv3-passport" id="eser-pasaportu">
-        <div className="hpv3-shell hpv3-passport__grid">
-          <div className="hpv3-passport__copy">
-            <p className="hpv3-kicker"><span />{passport?.eyebrow || "Eserin dijital izi"}</p>
+      <section className="nx-passport" id="eser-pasaportu">
+        <div className="nx-shell nx-passport__layout">
+          <div className="nx-passport__copy">
+            <p className="nx-eyebrow nx-eyebrow--violet">{passport?.eyebrow || "Eserin dijital izi"}</p>
             <h2>{passport?.title || "Bir eserin yalnızca sonucunu değil, oluşum sürecini de görün."}</h2>
             <p>{passport?.description || "Eser Pasaportu; yazım oturumlarını, revizyonları, sürüm geçmişini ve profesyonel inceleme durumunu tek bir kayıt altında birleştirir."}</p>
             <ul>
-              <li>Platform üzerinde oluşan yazım ve revizyon geçmişi</li>
-              <li>Bölüm ve sürüm hareketlerinin düzenli kaydı</li>
-              <li>Profesyonel editör inceleme durumu</li>
-              <li>Yayınevi keşif ve takip görünürlüğü</li>
+              <li><span>01</span>Platform üzerinde oluşan yazım ve revizyon geçmişi</li>
+              <li><span>02</span>Bölüm ve sürüm hareketlerinin düzenli kaydı</li>
+              <li><span>03</span>Profesyonel editör inceleme durumu</li>
+              <li><span>04</span>Yayınevi keşif ve takip görünürlüğü</li>
             </ul>
-            <Link href={passportHref} className="hpv3-button hpv3-button--light">{passport?.ctaLabel || "Rolünü Seç"}<span>→</span></Link>
+            <Link href={passportHref} className="nx-action nx-action--dark">{passport?.ctaLabel || "Rolünü Seç"}<span aria-hidden="true">↗</span></Link>
           </div>
-          <div className="hpv3-passport__card">
-            <div className="hpv3-passport__card-head"><div><small>Örnek görünüm</small><strong>Eser Pasaportu</strong></div><span><Icon name="shield" /></span></div>
-            <div className="hpv3-passport__status"><span>Süreç kaydı</span><strong>Aktif</strong></div>
-            <div className="hpv3-passport__numbers"><div><strong>41</strong><span>Yazım oturumu</span></div><div><strong>19</strong><span>Revizyon</span></div><div><strong>7</strong><span>Sürüm</span></div></div>
-            <div className="hpv3-passport__timeline"><span><i /><b>Platform üzerinde yazıldı</b><small>Kayıtlı süreç</small></span><span><i /><b>Profesyonel inceleme</b><small>Tamamlandı</small></span><span><i /><b>Yayınevi görünürlüğü</b><small>Keşfe açık</small></span></div>
+
+          <div className="nx-passport__stage" aria-label="Örnek Eser Pasaportu görünümü">
+            <div className="nx-passport-card">
+              <div className="nx-passport-card__head"><div><small>Örnek görünüm</small><strong>Eser Pasaportu</strong></div><span><Icon name="shield" /></span></div>
+              <div className="nx-passport-card__status"><span>Süreç kaydı</span><strong>Aktif</strong></div>
+              <div className="nx-passport-card__numbers">
+                <div><strong>41</strong><span>Yazım oturumu</span></div>
+                <div><strong>19</strong><span>Revizyon</span></div>
+                <div><strong>7</strong><span>Sürüm</span></div>
+              </div>
+              <div className="nx-passport-card__timeline">
+                <span><i /><b>Platform üzerinde yazıldı</b><small>Kayıtlı süreç</small></span>
+                <span><i /><b>Profesyonel inceleme</b><small>Tamamlandı</small></span>
+                <span><i /><b>Yayınevi görünürlüğü</b><small>Keşfe açık</small></span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="hpv3-why" id="neden-ilkoku">
-        <div className="hpv3-shell">
-          <header className="hpv3-section-head hpv3-section-head--center">
-            <p className="hpv3-kicker"><span />{why?.eyebrow || "Güven, kayıt ve keşif"}<span /></p>
+      <section className="nx-why" id="neden-ilkoku">
+        <div className="nx-shell">
+          <header className="nx-section-heading">
+            <p className="nx-eyebrow nx-eyebrow--violet">{why?.eyebrow || "Güven, kayıt ve keşif"}</p>
             <h2>{why?.title || "Neden İlkOku?"}</h2>
           </header>
-          <div className="hpv3-benefits">
+          <div className="nx-benefit-grid">
             {benefits.map((benefit, index) => (
-              <article className="hpv3-benefit" key={benefit.title}><div className="hpv3-benefit__top"><span>0{index + 1}</span><i><Icon name={benefit.icon} /></i></div><h3>{benefit.title}</h3><p>{benefit.description}</p></article>
+              <article className={`nx-benefit nx-benefit--${index + 1}`} key={benefit.title}>
+                <span className="nx-benefit__icon"><Icon name={benefit.icon} /></span>
+                <h3>{benefit.title}</h3>
+                <p>{benefit.description}</p>
+              </article>
             ))}
           </div>
-          {stats.length > 0 ? <div className="hpv3-stats" aria-label="İlkOku platform istatistikleri">{stats.map((stat) => <div key={`${stat.label}-${stat.value}`}><i><Icon name={stat.icon} /></i><strong>{stat.value}</strong><span>{stat.label}</span></div>)}</div> : null}
+          {stats.length > 0 ? (
+            <div className="nx-stats" aria-label="İlkOku platform istatistikleri">
+              {stats.map((stat) => (
+                <div key={`${stat.label}-${stat.icon}`}>
+                  <span><Icon name={stat.icon} /></span>
+                  <strong>{stat.value}</strong>
+                  <small>{stat.label}</small>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 
-      <footer className="hpv3-footer" id="iletisim">
-        <div className="hpv3-shell hpv3-footer__grid">
-          <div className="hpv3-footer__brand"><Image src={logo} alt="İlkOku" sizes="160px" /><p>{footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}</p></div>
+      <footer className="nx-footer" id="iletisim">
+        <div className="nx-shell nx-footer__grid">
+          <div className="nx-footer__brand">
+            <Link href="/" className="nx-footer__logo"><Image src={logo} alt="İlkOku" sizes="160px" /></Link>
+            <p>{footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}</p>
+          </div>
           <div><h3>Platform</h3><Link href="/hakkimizda">Hakkımızda</Link><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/turler">Türler</Link><a href="#eser-pasaportu">Eser Pasaportu</a><a href="#neden-ilkoku">Neden İlkOku?</a><Link href="/editorler">Editörler</Link></div>
           <div><h3>Hesap</h3>{profile && navigation ? <><Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>Çalışma Alanım</Link><form action={logoutAction}><button type="submit">Çıkış Yap</button></form></> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a><Link href="/sifremi-unuttum">Şifremi Unuttum</Link></>}</div>
           <div><h3>Destek</h3><Link href="/iletisim">İletişim</Link><Link href="/yardim">Yardım Merkezi</Link><Link href="/rehber">Yazarlık Rehberi</Link></div>
         </div>
-        <div className="hpv3-shell hpv3-footer__bottom"><span>{footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}</span></div>
+        <div className="nx-shell nx-footer__bottom">{footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}</div>
       </footer>
     </main>
   );

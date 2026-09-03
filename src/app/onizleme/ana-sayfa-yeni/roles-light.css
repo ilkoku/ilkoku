@@ -1,0 +1,154 @@
+.nx-home .nx-roles {
+  background: #f6f2ea;
+  color: var(--ink);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.nx-home .nx-roles .nx-section-heading--inverse .nx-eyebrow {
+  color: var(--violet);
+}
+
+.nx-home .nx-roles .nx-section-heading--inverse h2 {
+  color: var(--violet-deep);
+}
+
+.nx-home .nx-roles .nx-section-heading--inverse > p:last-child {
+  color: #5f5967;
+  font-weight: 500;
+}
+
+.nx-home .nx-roles .nx-role-grid {
+  gap: 14px;
+  border: 0;
+}
+
+.nx-home .nx-roles .nx-role {
+  min-height: 510px;
+  padding: 30px 30px 32px;
+  overflow: hidden;
+  border: 1px solid rgba(38, 25, 80, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  box-shadow: 0 18px 48px rgba(38, 25, 80, 0.07);
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+}
+
+.nx-home .nx-roles .nx-role + .nx-role {
+  border-left: 1px solid rgba(38, 25, 80, 0.12);
+}
+
+.nx-home .nx-roles .nx-role:hover {
+  transform: translateY(-4px);
+  border-color: rgba(110, 77, 245, 0.24);
+  background: #fff;
+  box-shadow: 0 24px 64px rgba(38, 25, 80, 0.12);
+}
+
+.nx-home .nx-roles .nx-role__number {
+  display: none;
+}
+
+.nx-home .nx-roles .nx-role__top {
+  min-height: 118px;
+  justify-content: flex-end;
+}
+
+.nx-home .nx-roles .nx-role__icon {
+  width: 7.4rem;
+  height: 7.4rem;
+  filter: drop-shadow(0 .6rem 1rem rgba(46, 24, 112, .17));
+}
+
+.nx-home .nx-roles .nx-role:hover .nx-role__icon {
+  filter: drop-shadow(0 .75rem 1.15rem rgba(68, 38, 156, .24)) saturate(1.06);
+}
+
+.nx-home .nx-roles .nx-role h3 {
+  margin: 34px 0 14px;
+  color: #211541;
+  font-size: clamp(2.25rem, 2.8vw, 3.45rem);
+  line-height: .96;
+}
+
+.nx-home .nx-roles .nx-role > p {
+  color: #514b59;
+  font-size: .9rem;
+  font-weight: 500;
+  line-height: 1.78;
+}
+
+.nx-home .nx-roles .nx-role__highlights {
+  gap: 8px;
+  margin-top: 25px;
+}
+
+.nx-home .nx-roles .nx-role__highlights small {
+  padding: 8px 10px;
+  border: 1px solid rgba(110, 77, 245, .22);
+  border-radius: 999px;
+  background: #faf7ff;
+  color: #5a3ba3;
+  font-size: .64rem;
+  font-weight: 750;
+  letter-spacing: .01em;
+}
+
+.nx-home .nx-roles .nx-role > strong {
+  min-height: 68px;
+  margin: auto -30px -32px;
+  padding: 0 20px 0 30px;
+  border-top: 1px solid rgba(38, 25, 80, 0.1);
+  background: linear-gradient(90deg, rgba(110, 77, 245, .075), rgba(110, 77, 245, .025));
+  color: #29175c;
+  font-size: .84rem;
+  font-weight: 850;
+  letter-spacing: .01em;
+}
+
+.nx-home .nx-roles .nx-role > strong span {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--violet-deep);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  box-shadow: 0 8px 18px rgba(38, 24, 88, .18);
+  transition: transform .2s ease, background .2s ease;
+}
+
+.nx-home .nx-roles .nx-role:hover > strong span {
+  transform: translateX(3px);
+  background: var(--violet);
+}
+
+@media (max-width: 1180px) {
+  .nx-home .nx-roles .nx-role:nth-child(3),
+  .nx-home .nx-roles .nx-role:nth-child(4) {
+    border-top: 1px solid rgba(38, 25, 80, 0.12);
+  }
+}
+
+@media (max-width: 620px) {
+  .nx-home .nx-roles .nx-role + .nx-role {
+    border-top: 1px solid rgba(38, 25, 80, 0.12);
+  }
+
+  .nx-home .nx-roles .nx-role {
+    min-height: 455px;
+  }
+
+  .nx-home .nx-roles .nx-role__top {
+    min-height: 98px;
+  }
+
+  .nx-home .nx-roles .nx-role__icon {
+    width: 6.4rem;
+    height: 6.4rem;
+  }
+}

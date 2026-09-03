@@ -43,6 +43,8 @@
 .nx-eyebrow { margin: 0 0 22px; display: flex; align-items: center; gap: 10px; color: #cdbfff; font-size: .7rem; font-weight: 850; letter-spacing: .16em; text-transform: uppercase; }
 .nx-eyebrow svg { width: 17px; height: 17px; flex: 0 0 auto; }
 .nx-eyebrow--violet { color: var(--violet); }
+.nx-hero .nx-eyebrow > svg { display: none; }
+.nx-hero .nx-eyebrow::before { content: ""; width: 1.45rem; height: 1.45rem; flex: 0 0 auto; background: url("/icons/roles/writer-embedded.svg") center / contain no-repeat; filter: drop-shadow(0 .22rem .34rem rgba(46,24,112,.16)); }
 .nx-hero h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(4.7rem, 7.8vw, 8.6rem); font-weight: 500; letter-spacing: -.065em; line-height: .82; }
 .nx-hero h1 span { display: block; }
 .nx-hero h1 span:nth-child(2) { margin-left: .4em; color: #d7cafe; }
@@ -60,7 +62,10 @@
 .nx-hero__proof { min-height: 74px; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,.1); border-bottom: 1px solid rgba(255,255,255,.1); }
 .nx-hero__proof span { min-height: 74px; display: flex; align-items: center; justify-content: center; gap: 11px; color: rgba(255,255,255,.72); font-size: .74rem; font-weight: 750; letter-spacing: .03em; }
 .nx-hero__proof span + span { border-left: 1px solid rgba(255,255,255,.1); }
-.nx-hero__proof svg { width: 19px; height: 19px; color: #cdbfff; }
+.nx-hero__proof svg { display: none; }
+.nx-hero__proof span::before { content: ""; width: 1.45rem; height: 1.45rem; flex: 0 0 auto; background-position: center; background-repeat: no-repeat; background-size: contain; filter: drop-shadow(0 .2rem .32rem rgba(46,24,112,.14)); }
+.nx-hero__proof span:nth-child(1)::before, .nx-hero__proof span:nth-child(2)::before { background-image: url("/icons/roles/editor-role-v2.webp"); }
+.nx-hero__proof span:nth-child(3)::before { background-image: url("/icons/roles/publisher-embedded.svg"); }
 
 .nx-history { padding: clamp(90px, 9vw, 144px) 0 clamp(100px, 10vw, 160px); background: var(--paper); }
 .nx-history__intro { display: grid; grid-template-columns: 1.02fr .98fr; gap: clamp(48px, 7vw, 110px); align-items: end; margin-bottom: 52px; }
@@ -144,7 +149,8 @@
 .nx-passport-card__head small { color: #8c8595; font-size: .62rem; text-transform: uppercase; letter-spacing: .12em; }
 .nx-passport-card__head strong { font-family: Georgia, serif; font-size: 1.8rem; font-weight: 500; }
 .nx-passport-card__head > span { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: #eee9ff; color: var(--violet); }
-.nx-passport-card__head svg { width: 22px; height: 22px; }
+.nx-passport-card__head > span > svg { display: none; }
+.nx-passport-card__head > span::before { content: ""; width: 2.8rem; height: 2.8rem; display: block; background: url("/icons/roles/writer-embedded.svg") center / contain no-repeat; filter: drop-shadow(0 .3rem .5rem rgba(46,24,112,.17)); }
 .nx-passport-card__status { display: flex; justify-content: space-between; padding: 20px 0; color: #696270; font-size: .72rem; }
 .nx-passport-card__status strong { color: #267a56; }
 .nx-passport-card__numbers { display: grid; grid-template-columns: repeat(3,1fr); border-block: 1px solid var(--line); }
@@ -243,6 +249,7 @@
   .nx-hero h1 { font-size: clamp(3.6rem, 18vw, 5.4rem); }
   .nx-hero h1 span:nth-child(2), .nx-hero h1 span:nth-child(3) { margin-left: 0; }
   .nx-hero__art { min-height: 420px; }
+  .nx-hero .nx-eyebrow::before, .nx-hero__proof span::before { width: 1.3rem; height: 1.3rem; }
   .nx-history__master { aspect-ratio: 1 / 1.05; }
   .nx-history__present-copy { padding: 32px 24px; }
   .nx-history__journey li { padding: 24px; }

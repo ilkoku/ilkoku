@@ -109,7 +109,8 @@ test("future CMS public pages inherit one canonical frame, footer and SEO contra
   assert.match(fallback, /status = 'published'/);
   assert.doesNotMatch(fallback, /<PublicSiteHeader/);
 
-  assert.match(metadata, /alternates:\s*\{ canonical: canonicalUrl \}/);
+  assert.match(metadata, /alternates:\s*\{[\s\S]*canonical:\s*canonicalUrl/);
+  assert.match(metadata, /languageAlternates/);
   assert.match(metadata, /robots:/);
   assert.match(metadata, /openGraph:/);
   assert.match(metadata, /twitter:/);

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
+
 import { PublicEditorialDocument } from "@/components/content/PublicEditorialDocument";
+import { PublicPageTemplate } from "@/components/layout/PublicPageTemplate";
 import { parseCmsPageBody } from "@/lib/cms-pages";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import { normalizeCmsRedirectPath, parseCmsRedirectValue } from "@/lib/cms-redirects";
 import { prisma } from "@/lib/prisma";
 
@@ -48,18 +51,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const page = await loadPublicPage(source);
   if (!page) return {};
   const body = parseCmsPageBody(page.bodyJson);
-  return {
+
+  return createPublicPageMetadata({
     title: page.seoTitle || page.title,
-    description: page.seoDescription || body.summary || undefined,
-    alternates: { canonical: page.canonicalUrl || page.slug },
-    robots: page.noIndex ? { index: false, follow: true } : { index: true, follow: true },
-    openGraph: {
-      title: page.seoTitle || page.title,
-      description: page.seoDescription || body.summary || undefined,
-      type: "website",
-      locale: "tr_TR",
-    },
-  };
+    description: page.seoDescription || body.summary,
+    canonical: page.canonicalUrl || page.slug,
+    noIndex: page.noIndex,
+  });
 }
 
 export default async function CmsPageOrRedirectFallback({ params }: PageProps) {
@@ -70,15 +68,17 @@ export default async function CmsPageOrRedirectFallback({ params }: PageProps) {
   if (page) {
     const content = parseCmsPageBody(page.bodyJson);
     return (
-      <PublicEditorialDocument
-        eyebrow="İlkOku"
-        title={page.title}
-        summary={content.summary}
-        body={content.body}
-        backHref="/"
-        backLabel="Ana sayfa"
-        updatedAt={page.updatedAt}
-      />
+      <PublicPageTemplate>
+        <PublicEditorialDocument
+          eyebrow="İlkOku"
+          title={page.title}
+          summary={content.summary}
+          body={content.body}
+          backHref="/"
+          backLabel="Ana sayfa"
+          updatedAt={page.updatedAt}
+        />
+      </PublicPageTemplate>
     );
   }
 

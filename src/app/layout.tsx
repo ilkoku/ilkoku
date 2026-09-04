@@ -18,6 +18,7 @@ import "./landing-footer-tight.css";
 import "./landing-header-pro.css";
 import "./landing-account-bubble.css";
 import "./site-contact-links.css";
+import "./public-discovery-paused.css";
 
 const baseUrl = "https://ilkoku.com";
 

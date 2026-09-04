@@ -1,0 +1,7 @@
+/* Public discovery entry points are intentionally paused.
+   Keep route code intact so the sections can be re-enabled later. */
+a[href="/eserler"],
+a[href="/yazarlar"],
+a[href="/turler"] {
+  display: none !important;
+}

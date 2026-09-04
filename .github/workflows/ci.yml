@@ -97,6 +97,15 @@ jobs:
             exit "$status"
           fi
 
+      - name: Upload security contract diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-contract-diagnostics
+          path: /tmp/ilkoku-security-contract.log
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Build disposable MariaDB schema
         if: ${{ !cancelled() }}
         run: npx prisma db push

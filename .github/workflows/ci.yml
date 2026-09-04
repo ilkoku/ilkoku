@@ -77,6 +77,7 @@ jobs:
         run: node scripts/audit-high-dependencies.mjs
 
       - name: Audit lockfile supply-chain policy
+        if: ${{ !cancelled() }}
         run: npm run audit:supply-chain
 
       - name: Run lint
@@ -84,24 +85,48 @@ jobs:
         run: npm run lint
 
       - name: Run security contract tests
-        run: npm run test:security
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set +e
+          npm run test:security 2>&1 | tee /tmp/ilkoku-security-contract.log
+          status=${PIPESTATUS[0]}
+          if [[ "$status" -ne 0 ]]; then
+            diagnostic="$(tail -n 120 /tmp/ilkoku-security-contract.log | sed 's/%/%25/g; s/\r/%0D/g' | awk 'BEGIN{ORS="%0A"}{print}')"
+            echo "::error title=Security contract diagnostic::$diagnostic"
+            exit "$status"
+          fi
+
+      - name: Upload security contract diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-contract-diagnostics
+          path: /tmp/ilkoku-security-contract.log
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Build disposable MariaDB schema
+        if: ${{ !cancelled() }}
         run: npx prisma db push
 
       - name: Run MariaDB security integration contracts
+        if: ${{ !cancelled() }}
         run: npm run test:security:db
 
       - name: Run release measurement report
+        if: ${{ !cancelled() }}
         run: npm run release:measure:strict
 
       - name: Recover brand-new MariaDB from version-controlled baseline
+        if: ${{ !cancelled() }}
         env:
           DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
           RECOVERY_CONFIRM_EMPTY_DATABASE: "YES"
         run: npm run db:recover:fresh
 
       - name: Validate release measurement on recovered database
+        if: ${{ !cancelled() }}
         env:
           DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
         run: npm run release:measure:strict

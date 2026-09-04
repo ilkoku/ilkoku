@@ -35,7 +35,7 @@ test("reader discovery keeps search, sorting and pagination inside bounded datab
   );
   assertContains(text, "take: READER_LIST_PAGE_SIZE", "reader discovery");
   assertContains(text, "ReaderPagination", "reader discovery");
-  assertContains(text, 'sayfa?: string;', "reader discovery");
+  assertContains(text, "type SearchParams = Record<string, string | string[] | undefined>;", "reader discovery search-param boundary");
   assertNotContains(text, "take: search ? undefined", "reader discovery");
   assertNotContains(text, "filteredWorks", "reader discovery");
   assertNotContains(text, "reader-discovery-presets", "reader discovery");
@@ -240,7 +240,7 @@ test("editor and publisher saved collections remain pool-backed and use shared c
   ]) {
     assertContains(text, "DiscoveryResultSummary", `${label} result`);
     assertContains(text, "DiscoveryPagination", `${label} pagination`);
-    assertContains(text, "Filtre masası", `${label} filter desk`);
+    assert.match(text, /role-filter-desk|PublisherCollectionFilterDesk/, `${label} shared filter desk`);
   }
 });
 

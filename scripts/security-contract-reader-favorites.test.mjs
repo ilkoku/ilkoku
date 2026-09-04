@@ -35,11 +35,11 @@ test("reader author discovery is work-backed and uses the shared filter desk", a
   assert.match(discovery, /discoveryAuthorWhereFromWorkPool/);
   assert.match(discovery, /Yazar Keşfet/);
   assert.match(discovery, /ReaderFilterDesk/);
-  assert.match(discovery, /Yazar, rumuz veya eser ara/);
+  assert.match(discovery, /Yazar adı, rumuz veya eser ara/);
   assert.match(discovery, /toggleReaderAuthorFavoriteAction/);
-  assert.match(discovery, /Yazarı Favorile/);
-  assert.match(discovery, /Yazar vitrini/);
-  assert.match(discovery, /eşleşen eser/);
+  assert.match(discovery, /isFavorite \? "Favoride" : "Favorile"/);
+  assert.match(discovery, /DiscoveryAuthorCard/);
+  assert.match(discovery, /matchedWorkCount=\{author\._count\.works\}/);
   assert.doesNotMatch(discovery, /name="tamamlanma"/);
   assert.doesNotMatch(discovery, /name="favori"/);
 });

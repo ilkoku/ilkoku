@@ -60,7 +60,8 @@ test("homepage footer keeps its brand and separates platform from trust navigati
   const contract = source("src/lib/cms-footer-navigation.ts");
   const validation = source("src/lib/cms-footer-validation.ts");
 
-  has(homepage, "HomepageRedesignWorkspacePage", "promoted homepage composition");
+  has(homepage, "HomepageExperience", "promoted homepage composition");
+  has(homepage, "<HomepageExperience />", "promoted homepage render");
   has(liveFooter, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
   has(liveFooter, "publicPlatformLinks", "homepage footer canonical platform source");
   has(liveFooter, "publicTrustLinks", "homepage footer canonical trust source");
@@ -174,7 +175,13 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
   has(styles, "@media (max-width: 27rem)", "trust footer narrow mobile guard");
   lacks(styles, ".landing-footer", "trust footer must not override homepage footer classes");
   lacks(layout, "PublicTrustFooter", "root layout must not mount trust footer");
-  lacks(hydrator, "public-trust-footer", "homepage CMS hydrator must not mutate trust page footer");
+  has(hydrator, "findPublicTrustSupportColumn", "trust footer contact enrichment boundary");
+  has(hydrator, "ensureFooterContactBlock(trustSupport)", "trust footer contact enrichment");
+  has(hydrator, 'if (pathname !== "/") return;', "homepage-only navigation hydration guard");
+  assert.ok(
+    hydrator.indexOf('if (pathname !== "/") return;') < hydrator.indexOf('document.querySelector<HTMLElement>(".landing-footer")'),
+    "homepage landing-footer navigation mutation must remain behind the root-path guard",
+  );
 });
 
 test("remaining public trust pages keep a consistent closing and structured-data baseline", () => {

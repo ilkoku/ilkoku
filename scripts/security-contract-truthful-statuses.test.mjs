@@ -19,6 +19,7 @@ test("contact is a complete indexable public SEO surface and sitemap member", ()
   const page = source("src/app/iletisim/page.tsx");
   const sitemap = source("src/app/sitemap.ts");
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
+  const publicSeoRoutes = source("src/lib/public-seo-routes.ts");
 
   contains(page, 'canonical: "/iletisim"', "contact self canonical");
   contains(page, "robots: { index: true, follow: true }", "contact index policy");
@@ -26,13 +27,15 @@ test("contact is a complete indexable public SEO surface and sitemap member", ()
   contains(page, "twitter:", "contact Twitter metadata");
   contains(page, 'const socialImage = "/opengraph-image"', "contact social image fallback");
   contains(sitemap, 'url: `${baseUrl}/iletisim`', "contact sitemap entry");
-  contains(technical, '"/iletisim"', "technical SEO code-owned contact inventory");
+  contains(technical, "publicCodeOwnedIndexRoutes", "technical SEO consumes canonical code-owned route inventory");
+  contains(publicSeoRoutes, '"/iletisim"', "canonical code-owned contact inventory");
 });
 
 test("SEO workbench never paints robots social or structured data green without live evidence", () => {
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
   const metadata = source("src/app/icerik/seo/SeoMetadataQualityAudit.tsx");
   const verifier = source("src/lib/seo-live-verification.ts");
+  const publicSeoRoutes = source("src/lib/public-seo-routes.ts");
 
   contains(technical, "getLiveSeoVerification()", "technical live evidence loader");
   contains(technical, "state={live.robots.state}", "robots evidence-driven state");
@@ -41,12 +44,15 @@ test("SEO workbench never paints robots social or structured data green without 
   notContains(technical, '<Card state="ok" label="Social preview"', "no fixed green social card");
 
   contains(metadata, "getLiveSeoVerification()", "structured-data live evidence loader");
-  contains(metadata, "state={check.state}", "structured-data evidence-driven state");
-  contains(metadata, "Kodda bir schema tipi bulunması tek başına", "structured-data no-fake-ready disclaimer");
+  contains(metadata, "const check = live.structuredData[type]", "structured-data live evidence source");
+  contains(metadata, 'state={check.optionalWithoutSample ? "ok" : check.state}', "structured-data evidence-driven state");
+  contains(metadata, "isOptionalSchemaWithoutSample", "structured-data explicit non-applicable sample handling");
+  contains(metadata, "if (route !== null) return false", "structured-data live-route evidence cannot be bypassed as optional");
   notContains(metadata, 'data-state="ok">Hazır', "no fixed green structured-data header");
 
   contains(verifier, 'fetchLive("/robots.txt")', "live robots fetch");
-  contains(verifier, '"/iletisim"', "live social contact coverage");
+  contains(verifier, "...publicDefaultCoreSeoRoutes", "live social uses canonical core route catalog");
+  contains(publicSeoRoutes, '"/iletisim"', "canonical social contact coverage");
   contains(verifier, '"WebSite" | "Book" | "CollectionPage" | "ProfilePage" | "FAQPage" | "BreadcrumbList"', "schema evidence vocabulary");
   contains(verifier, "PASS üretilmedi", "fail-closed unavailable evidence wording");
 });

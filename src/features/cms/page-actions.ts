@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
 import { deleteCmsDraft, getCmsDraftState, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
+import { evaluateCmsPagePublishQuality } from "@/lib/cms-page-quality";
 import { cmsPageContentKey, cmsPagePublicPath, normalizeCmsPageSlug } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 
@@ -49,9 +50,9 @@ function refreshCmsPage(id?: string, slug?: string) {
 }
 
 export async function saveCmsPageAction(formData: FormData) {
-  const mode = String(formData.get("mode") ?? "draft");
+  const requestedMode = String(formData.get("mode") ?? "draft");
   let access = await requireCmsManager("/icerik/sayfalar");
-  if (mode === "publish") access = await requireCmsPublisher("/icerik/sayfalar");
+  if (requestedMode === "publish") access = await requireCmsPublisher("/icerik/sayfalar");
   const user = access.user!;
 
   const requestedId = String(formData.get("id") ?? "").trim();
@@ -86,6 +87,17 @@ export async function saveCmsPageAction(formData: FormData) {
 
   const fullSlug = existing?.slug ?? cmsPagePublicPath(slugPart);
   const contentKey = existing?.contentKey ?? cmsPageContentKey(slugPart);
+  const publishQuality = evaluateCmsPagePublishQuality({
+    slug: fullSlug,
+    title,
+    summary,
+    body,
+    seoTitle,
+    seoDescription,
+    noIndex,
+  });
+  const publishBlocked = requestedMode === "publish" && !publishQuality.ok;
+  const mode = publishBlocked ? "draft" : requestedMode;
   const snapshot = {
     kind: "page",
     locale: "tr",
@@ -102,7 +114,7 @@ export async function saveCmsPageAction(formData: FormData) {
     await saveCmsDraft(user.id, pageDraftKey(existing.id), snapshot);
     await addRevision(existing.id, user.id, snapshot);
     refreshCmsPage(existing.id, existing.slug);
-    redirect(`/icerik/sayfalar/${existing.id}?taslak=1`);
+    redirect(`/icerik/sayfalar/${existing.id}${publishBlocked ? "?hata=kalite" : "?taslak=1"}`);
   }
 
   const status = mode === "publish" ? "published" : "draft";
@@ -130,7 +142,7 @@ export async function saveCmsPageAction(formData: FormData) {
     `;
     await addRevision(id, user.id, snapshot);
     refreshCmsPage(id, status === "published" ? fullSlug : undefined);
-    redirect(`/icerik/sayfalar/${id}?kayit=1`);
+    redirect(`/icerik/sayfalar/${id}${publishBlocked ? "?hata=kalite" : "?kayit=1"}`);
   }
 
   await prisma.$executeRaw`
@@ -150,7 +162,7 @@ export async function saveCmsPageAction(formData: FormData) {
   await addRevision(existing.id, user.id, snapshot);
   if (mode === "publish") await deleteCmsDraft(pageDraftKey(existing.id));
   refreshCmsPage(existing.id, existing.slug);
-  redirect(`/icerik/sayfalar/${existing.id}?kayit=1`);
+  redirect(`/icerik/sayfalar/${existing.id}${publishBlocked ? "?hata=kalite" : "?kayit=1"}`);
 }
 
 export async function archiveCmsPageAction(formData: FormData) {

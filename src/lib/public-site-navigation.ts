@@ -3,16 +3,22 @@ export type PublicSiteLink = {
   label: string;
 };
 
+export const publicDiscoveryNavigationEnabled = false;
+
+export const publicDiscoveryLinks = [
+  { href: "/eserler", label: "Eserler" },
+  { href: "/yazarlar", label: "Yazarlar" },
+  { href: "/turler", label: "Türler" },
+] as const satisfies readonly PublicSiteLink[];
+
 export const publicPlatformLinks = [
   { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/nasil-calisir", label: "Nasıl Çalışır?" },
   { href: "/yazarlar-icin", label: "Yazarlar İçin" },
   { href: "/editorler-icin", label: "Editörler İçin" },
   { href: "/yayinevleri-icin", label: "Yayınevleri İçin" },
-  { href: "/eserler", label: "Eserler" },
-  { href: "/yazarlar", label: "Yazarlar" },
-  { href: "/turler", label: "Türler" },
-] as const satisfies readonly PublicSiteLink[];
+  ...(publicDiscoveryNavigationEnabled ? publicDiscoveryLinks : []),
+] satisfies readonly PublicSiteLink[];
 
 export const publicTrustLinks = [
   { href: "/editoryal-standartlar", label: "Editoryal Standartlar" },

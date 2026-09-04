@@ -12,6 +12,7 @@ import {
   publicCodeOwnedIndexRoutes,
   publicDefaultCoreSeoRoutes,
 } from "@/lib/public-seo-routes";
+import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 
 export type SeoEvidenceState = "ok" | "warn" | "danger";
 export type SeoSchemaType = "WebSite" | "Book" | "CollectionPage" | "ProfilePage" | "FAQPage" | "BreadcrumbList";
@@ -188,8 +189,8 @@ async function representativeRoutes() {
         select: { slug: true },
         take: 100,
       }),
-      getPublicAuthors(),
-      getPublicGenres(),
+      publicDiscoveryEnabled ? getPublicAuthors() : Promise.resolve([]),
+      publicDiscoveryEnabled ? getPublicGenres() : Promise.resolve([]),
       prisma.$queryRaw<Array<{ total: bigint }>>`
         SELECT COUNT(*) AS total
         FROM SiteContent
@@ -211,6 +212,10 @@ async function representativeRoutes() {
 
 function missingRepresentative(detail: string): SchemaEvidenceCheck {
   return { state: "warn", route: null, detail };
+}
+
+function inactiveSchema(detail: string): SchemaEvidenceCheck {
+  return { state: "ok", route: null, detail };
 }
 
 export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerification> => {
@@ -350,8 +355,12 @@ export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerificatio
   const [website, book, collectionPage, profilePage, breadcrumb] = await Promise.all([
     verifySchema("WebSite", "/", "Ana Sayfa route'u belirlenemedi."),
     verifySchema("Book", representatives.work, "Canlı doğrulama için keşfe açık eser örneği bulunamadı."),
-    verifySchema("CollectionPage", "/eserler", "Eser koleksiyonu route'u belirlenemedi."),
-    verifySchema("ProfilePage", representatives.author, "Canlı doğrulama için public yazar örneği bulunamadı."),
+    publicDiscoveryEnabled
+      ? verifySchema("CollectionPage", "/eserler", "Eser koleksiyonu route'u belirlenemedi.")
+      : Promise.resolve(inactiveSchema("Public Eserler/Yazarlar/Türler keşif bölümleri geçici olarak pasif; CollectionPage doğrulaması uygulanabilir değil.")),
+    publicDiscoveryEnabled
+      ? verifySchema("ProfilePage", representatives.author, "Canlı doğrulama için public yazar örneği bulunamadı.")
+      : Promise.resolve(inactiveSchema("Public Eserler/Yazarlar/Türler keşif bölümleri geçici olarak pasif; ProfilePage doğrulaması uygulanabilir değil.")),
     verifySchema("BreadcrumbList", "/yardim", "Yardım route'u belirlenemedi."),
   ]);
 

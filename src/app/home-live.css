@@ -1,0 +1,9 @@
+/* Live homepage composition: the promoted preview body keeps its proven section styles,
+   while the canonical shared PublicSiteHeader owns the only visible site header. */
+.homepage-live {
+  min-width: 0;
+}
+
+.homepage-live > .nx-home > .nx-header {
+  display: none !important;
+}

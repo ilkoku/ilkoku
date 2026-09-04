@@ -81,7 +81,7 @@ test("SEO center is a server-side issue workbench and keeps canonical editors as
   assertContains(page, "const selected = filtered.find", "SEO master-detail selection");
   assertContains(page, "criticalIssueCount", "SEO issue prioritization");
   assertContains(page, "href={editHref(selected)}", "SEO deep link to canonical editor");
-  assertContains(page, "ikinci bir kopya", "SEO single-source guidance");
+  assertNotContains(page, "prisma.contentPage.update", "SEO must not write ContentPage directly");
   assertNotContains(page, "saveSeo", "SEO must not create a second write action");
   assertNotContains(page, 'fetch("/api/cms-seo-audit"', "SEO no longer depends on client audit fetch");
 });

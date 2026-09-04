@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 
-import HomepageRedesignWorkspacePage from "./onizleme/ana-sayfa-yeni/page";
+import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience";
 
 import "./landing.css";
 import "./onizleme/ana-sayfa-yeni/history-pr670.css";
@@ -58,7 +58,7 @@ export default function HomePage() {
   return (
     <div className="homepage-live">
       <PublicSiteHeader />
-      <HomepageRedesignWorkspacePage />
+      <HomepageExperience />
     </div>
   );
 }

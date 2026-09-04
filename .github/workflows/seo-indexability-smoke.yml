@@ -221,6 +221,12 @@ jobs:
             grep -Fq '"@type":"WebSite"' "$home" || { echo "FAIL: WebSite schema missing"; cleanup; return 1; }
             grep -Fq '"@type":"Organization"' "$home" || { echo "FAIL: Organization schema missing"; cleanup; return 1; }
 
+            local discovery_path
+            for discovery_path in '/eserler' '/yazarlar' '/turler' '/nasil-calisir'; do
+              grep -Fq "href=\"${discovery_path}\"" "$home" || { echo "FAIL: homepage missing crawlable discovery link $discovery_path"; cleanup; return 1; }
+            done
+            echo "PASS: homepage exposes core crawlable discovery links"
+
             cleanup
             return 0
           }
@@ -231,7 +237,7 @@ jobs:
             attempt=$((attempt + 1))
             echo "SEO contract attempt ${attempt}"
             if verify_contract; then
-              echo "PASS: public İlkOku indexability, canonical host, metadata, sitemap, robots, filtered discovery noindex/canonical, social images, structured data and IndexNow key verified."
+              echo "PASS: public İlkOku indexability, canonical host, metadata, sitemap, robots, filtered discovery noindex/canonical, crawlable homepage discovery links, social images, structured data and IndexNow key verified."
               exit 0
             fi
             sleep 15

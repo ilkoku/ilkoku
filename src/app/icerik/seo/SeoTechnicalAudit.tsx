@@ -11,6 +11,7 @@ import {
 import { analyzeFooterNavigation } from "@/lib/cms-footer-validation";
 import { prisma } from "@/lib/prisma";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
+import { publicCodeOwnedIndexRoutes } from "@/lib/public-seo-routes";
 import { getLiveSeoVerification } from "@/lib/seo-live-verification";
 import styles from "./SeoTechnicalAudit.module.css";
 
@@ -40,18 +41,6 @@ type TechnicalState = {
     fallbacks: number;
   };
 };
-
-const codeOwnedStaticRoutes = [
-  "/",
-  "/eserler",
-  "/eserler/yeni",
-  "/eserler/guncellenen",
-  "/yazarlar",
-  "/turler",
-  "/yardim",
-  "/editorler",
-  "/iletisim",
-] as const;
 
 function normalizedCanonical(value: string) {
   const trimmed = value.trim();
@@ -101,7 +90,7 @@ async function loadTechnicalState(): Promise<TechnicalState | null> {
 
   let publicDiscovery: PublicDiscoveryState = {
     state: "unavailable",
-    staticRoutes: codeOwnedStaticRoutes.length,
+    staticRoutes: publicCodeOwnedIndexRoutes.length,
     works: 0,
     authors: 0,
     genres: 0,
@@ -139,7 +128,7 @@ async function loadTechnicalState(): Promise<TechnicalState | null> {
 
     publicDiscovery = {
       state: "ok",
-      staticRoutes: codeOwnedStaticRoutes.length,
+      staticRoutes: publicCodeOwnedIndexRoutes.length,
       works: works.filter((work) => !isBlockedPublicWorkSlug(work.slug)).length,
       authors: authors.length,
       genres: genres.length,

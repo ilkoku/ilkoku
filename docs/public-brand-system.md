@@ -14,9 +14,25 @@ The public experience should feel:
 - warm, calm and premium rather than loud or decorative;
 - connected to writing, reading, editing, publishing and the recorded journey of a work.
 
-Canonical brand thought: **“İlk cümle, ilk okurun, ilk adımın.”**
+Canonical editorial brand thought: **“İlk cümle, ilk okurun, ilk adımın.”**
 
 The homepage promise is the reference point: a writer can begin with a first sentence, develop a work with readers and editors, and become discoverable to publishers inside one coherent literary ecosystem.
+
+## Brand naming and SEO/social identity
+
+The brand has several related lines with different jobs. Do not collapse them into one interchangeable slogan.
+
+- **Brand name:** `İlkOku`
+- **Positioning:** `Dijital Edebiyat Platformu`
+- **Editorial slogan:** `İlk cümle, ilk okurun, ilk adımın.`
+- **Short social line:** `İlk cümle, ilk adım`
+- **Canonical homepage / social title:** `İlkOku | Dijital Edebiyat Platformu – İlk cümle, ilk adım`
+
+The code source of truth is `src/lib/public-brand.ts`. The live homepage `<title>`, homepage Open Graph title, Twitter/X title, global public metadata fallback and social artwork identity must derive from those canonical values rather than retyping them in multiple route files.
+
+The homepage title above is **not** the title template for every inner page. Normal inner pages should use a unique, descriptive title such as `Sayfa Başlığı | İlkOku`, while inheriting the canonical İlkOku social image fallback unless a truthful page-specific image exists.
+
+The editorial slogan remains visible in editorial/footer contexts even though the shorter line is used inside the homepage/social title. This distinction is intentional.
 
 ## 2. The visual metaphor
 

@@ -13,7 +13,7 @@ import { siteContact } from "@/lib/site-contact";
 
 type FooterContent = Record<string, string>;
 
-const canonicalPlatformHrefs = new Set(publicPlatformLinks.map((link) => link.href));
+const canonicalPlatformHrefs = new Set<string>(publicPlatformLinks.map((link) => link.href));
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 function internalHref(value: string | undefined, fallback: string) {

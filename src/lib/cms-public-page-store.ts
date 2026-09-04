@@ -38,7 +38,7 @@ export type PublishedCmsPublicPageState =
   | { state: "corrupt"; updatedAt: Date }
   | { state: "unavailable" };
 
-type BundledPublicTrustCopy = {
+export type BundledPublicTrustCopy = {
   body: string;
   canonical: string;
   seoDescription: string;
@@ -112,7 +112,7 @@ const legacyTrustCopyBySlug: Partial<Record<string, LegacyTrustCopyBridge>> = {
   },
 };
 
-function getBundledCopyForLegacyCms(
+export function getBundledCopyForLegacyCms(
   slugPart: string,
   cmsBody: string,
 ): BundledPublicTrustCopy | null {

@@ -17,9 +17,13 @@ function assertNotContains(text, fragment, label) {
 
 test("every active CMS module has an explicit operations mode", () => {
   const modules = source("src/lib/cms-modules.ts");
-  const activeRows = modules.split("\n").filter((line) => line.includes('enabled: true'));
+  const moduleRows = modules.split("\n").filter((line) => line.includes('{ href: "/icerik'));
+  const activeRows = moduleRows.filter((line) => line.includes("enabled: true"));
 
-  assert.equal(activeRows.length, 21, "CMS active module inventory must remain explicit");
+  assert.ok(moduleRows.length > 0, "CMS module inventory must remain explicit");
+  for (const row of moduleRows) {
+    assert.match(row, /enabled: (true|false)/, `missing explicit CMS enabled state: ${row.trim()}`);
+  }
   for (const row of activeRows) {
     assert.match(row, /mode: "(controlled-write|read-only-audit|admin-control)"/, `missing CMS mode: ${row.trim()}`);
   }

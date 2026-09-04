@@ -80,7 +80,7 @@ test("SEO center is a server-side issue workbench and keeps canonical editors as
   assertContains(page, "loadSeoPages()", "SEO server-side inventory read");
   assertContains(page, "const selected = filtered.find", "SEO master-detail selection");
   assertContains(page, "criticalIssueCount", "SEO issue prioritization");
-  assertContains(page, "SEO Alanlarını Düzenle", "SEO deep link to canonical editor");
+  assertContains(page, "href={editHref(selected)}", "SEO deep link to canonical editor");
   assertContains(page, "ikinci bir kopya", "SEO single-source guidance");
   assertNotContains(page, "saveSeo", "SEO must not create a second write action");
   assertNotContains(page, 'fetch("/api/cms-seo-audit"', "SEO no longer depends on client audit fetch");
@@ -124,9 +124,14 @@ test("growth workbenches share operational master-detail language", () => {
   for (const [label, page] of [["SEO", seo], ["redirect", redirects], ["locale", locales]]) {
     assertContains(page, "PublishingOperationsWorkbench.module.css", `${label} shared workbench layout`);
     assertContains(page, "GrowthOperationsWorkbench.module.css", `${label} growth-specific workbench styling`);
-    assertContains(page, "ops.layout", `${label} master-detail layout`);
+    assertContains(page, "ops.workbench", `${label} shared workbench shell`);
     assertContains(page, "ops.rail", `${label} selection rail`);
     assertContains(page, "ops.detail", `${label} selected detail pane`);
+  }
+
+  assertContains(seo, "styles.queueLayout", "SEO queue-specific master-detail layout");
+  for (const [label, page] of [["redirect", redirects], ["locale", locales]]) {
+    assertContains(page, "ops.layout", `${label} master-detail layout`);
     assertContains(page, "ops.sidePane", `${label} operational side pane`);
   }
 });

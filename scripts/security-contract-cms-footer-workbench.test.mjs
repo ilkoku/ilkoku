@@ -53,13 +53,19 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
 
 test("homepage footer keeps its brand and separates platform from trust navigation", () => {
   const homepage = source("src/app/page.tsx");
+  const liveFooter = source("src/app/onizleme/ana-sayfa-yeni/live-footer.tsx");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
   const navigation = source("src/lib/public-site-navigation.ts");
   const styles = source("src/app/landing-footer-tight.css");
   const contract = source("src/lib/cms-footer-navigation.ts");
   const validation = source("src/lib/cms-footer-validation.ts");
 
-  has(homepage, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
+  has(homepage, "HomepageRedesignWorkspacePage", "promoted homepage composition");
+  has(liveFooter, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
+  has(liveFooter, "publicPlatformLinks", "homepage footer canonical platform source");
+  has(liveFooter, "publicTrustLinks", "homepage footer canonical trust source");
+  has(liveFooter, "publicSupportLinks", "homepage footer canonical support source");
+  has(liveFooter, "publicLegalLinks", "homepage footer canonical legal source");
   lacks(hydrator, 'footer.querySelector<HTMLElement>(".landing-logo--footer")?.remove();', "footer logo must not be removed by hydration");
   has(hydrator, "publicPlatformLinks", "canonical platform navigation source");
   has(hydrator, "publicTrustLinks", "canonical trust navigation source");

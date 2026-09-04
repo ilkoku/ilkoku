@@ -86,8 +86,9 @@ export async function PublicWorkFeedPage({
     ? query.hitap
     : undefined;
   const filters = { contentRating, genre, search };
+  const libraryFilters = { genre, search, sort };
   const library = await getPublicWorkLibrary(
-    { ...filters, sort },
+    { ...libraryFilters, contentRating },
     pageNumber(query.sayfa),
   );
   const currentPath = feedHref(

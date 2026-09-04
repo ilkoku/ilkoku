@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublishedLegalDocumentState } from "@/lib/cms-legal-public-store";
 import { contactEmail, legalNavigation, legalPages } from "@/lib/legal-public-content";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import "../legal.css";
 
 type PageProps = {
@@ -73,25 +74,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description = cms?.seoDescription?.trim() || cms?.description || fallback.description;
   const canonical = cms?.canonicalUrl?.trim() || `/yasal/${slug}`;
 
-  return {
+  return createPublicPageMetadata({
     title,
     description,
-    alternates: {
-      canonical,
-      languages: {
-        "tr-TR": `https://ilkoku.com/yasal/${slug}`,
-        "x-default": `https://ilkoku.com/yasal/${slug}`,
-      },
+    canonical,
+    noIndex: Boolean(cms?.noIndex),
+    languages: {
+      "tr-TR": `/yasal/${slug}`,
+      "x-default": `/yasal/${slug}`,
     },
-    robots: cms?.noIndex ? { index: false, follow: true } : { index: true, follow: true },
-    openGraph: {
-      title,
-      description,
-      type: "website",
-      locale: "tr_TR",
-      url: canonical,
-    },
-  };
+  });
 }
 
 export default async function LegalPageRoute({ params }: PageProps) {

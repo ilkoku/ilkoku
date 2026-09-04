@@ -102,7 +102,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: security-contract-diagnostics
-          path: /tmp/ilkoku-security-contract.log
+          path: |
+            /tmp/ilkoku-security-contract.log
+            scripts/security-contract-cms-footer-workbench.test.mjs
+            scripts/security-contract-cms-quality-closure.test.mjs
+            scripts/security-contract-cms-site-controls.test.mjs
+            scripts/security-contract-discovery.test.mjs
+            scripts/security-contract-public-discovery-network.test.mjs
+            scripts/security-contract-public-site-header.test.mjs
+            scripts/security-contract-reader-favorites.test.mjs
+            scripts/security-contract-seo-indexing.test.mjs
+            scripts/security-contract-truthful-statuses.test.mjs
           if-no-files-found: error
           retention-days: 1
 

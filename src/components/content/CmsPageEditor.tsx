@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { archiveCmsPageAction, saveCmsPageAction } from "@/features/cms/page-actions";
 import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
+import { evaluateCmsPagePublishQuality } from "@/lib/cms-page-quality";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 import { isCorePublicCmsPage } from "@/lib/public-cms-page-catalog";
@@ -29,7 +30,12 @@ type PageDraft = {
   noIndex?: boolean;
 };
 
-export async function CmsPageEditor({ id }: { id?: string }) {
+type CmsPageEditorProps = {
+  id?: string;
+  publishQualityBlocked?: boolean;
+};
+
+export async function CmsPageEditor({ id, publishQualityBlocked = false }: CmsPageEditorProps) {
   const access = await requireCmsManager(id ? `/icerik/sayfalar/${id}` : "/icerik/sayfalar/yeni");
   let page: PageRow | null = null;
   let revisionCount = 0;
@@ -60,6 +66,23 @@ export async function CmsPageEditor({ id }: { id?: string }) {
   const slugPart = page?.slug.replace(/^\//, "") ?? "";
   const isHowItWorksPage = page?.contentKey === "page:tr:nasil-calisir";
   const usesStandardPublicTemplate = !page || !isCorePublicCmsPage(page.contentKey);
+  const currentTitle = draft?.title ?? page?.title ?? "";
+  const currentSummary = draft?.summary ?? stored.summary;
+  const currentBody = draft?.body ?? stored.body;
+  const currentSeoTitle = draft?.seoTitle ?? page?.seoTitle ?? "";
+  const currentSeoDescription = draft?.seoDescription ?? page?.seoDescription ?? "";
+  const currentNoIndex = draft?.noIndex ?? Boolean(page?.noIndex);
+  const publishQuality = page && !corruptDraft
+    ? evaluateCmsPagePublishQuality({
+        slug: page.slug,
+        title: currentTitle,
+        summary: currentSummary,
+        body: currentBody,
+        seoTitle: currentSeoTitle,
+        seoDescription: currentSeoDescription,
+        noIndex: currentNoIndex,
+      })
+    : null;
   const statusLabel = corruptDraft
     ? "Yayında · taslak bütünlüğü bozuk"
     : page?.status === "published" && hasPendingDraft
@@ -81,7 +104,7 @@ export async function CmsPageEditor({ id }: { id?: string }) {
       <div className="content-page-heading">
         <div>
           <span>Kurumsal Sayfa · TR</span>
-          <h1>{page ? (draft?.title ?? page.title) : "Yeni kurumsal sayfa"}</h1>
+          <h1>{page ? currentTitle : "Yeni kurumsal sayfa"}</h1>
           <p>Kurumsal ve bilgilendirme sayfalarını kod değişikliği olmadan yönetin. Yayındaki sürüm, yeni taslak açıkça yayınlanana kadar korunur.</p>
         </div>
         <aside className="cms-editor-status-card" data-tone={statusTone} aria-label="İçerik durumu">
@@ -116,6 +139,13 @@ export async function CmsPageEditor({ id }: { id?: string }) {
         </div>
       ) : null}
 
+      {publishQualityBlocked && !corruptDraft ? (
+        <div className="content-panel cms-editor-notice is-danger" role="alert">
+          <strong>Yayın kalite kapısı geçilemedi.</strong>
+          <p>Canlı sürüm değiştirilmedi; gönderdiğiniz çalışma taslak olarak korundu. Aşağıdaki eksikleri tamamlayıp yeniden yayınlayın.</p>
+        </div>
+      ) : null}
+
       {!access.canPublish && !corruptDraft ? (
         <div className="content-panel cms-editor-notice is-info">
           <strong>Taslak yönetim yetkisi</strong>
@@ -127,6 +157,27 @@ export async function CmsPageEditor({ id }: { id?: string }) {
         <div className="content-panel cms-editor-notice is-warning">
           <strong>Bekleyen çalışma taslağı var.</strong>
           <p>Public sayfa son yayınlanmış sürümü göstermeye devam ediyor. Taslağı önizleyip hazır olduğunda yayınlayabilirsiniz.</p>
+        </div>
+      ) : null}
+
+      {!corruptDraft ? (
+        <div className={`content-panel cms-editor-notice ${publishQuality && !publishQuality.ok ? "is-warning" : "is-info"}`}>
+          <strong>Yayın kalite kapısı{publishQuality ? (publishQuality.ok ? " · Hazır" : ` · ${publishQuality.issues.length} eksik`) : " aktif"}</strong>
+          {publishQuality ? (
+            publishQuality.ok ? (
+              <p>Başlık, özet, içerik, canonical ve arama görünümü yayın standardını karşılıyor. OG/Twitter sosyal görseli ile ortak İlkOku header/footer kimliği sistem tarafından otomatik uygulanır.</p>
+            ) : (
+              <>
+                <p>Bu çalışma taslak olarak saklanabilir; ancak aşağıdaki maddeler tamamlanmadan yayına alınamaz.</p>
+                <ul>
+                  {publishQuality.issues.map((item) => <li key={item.code}>{item.message}</li>)}
+                </ul>
+                <p className="content-form-help">Mevcut ölçüm: {publishQuality.metrics.bodyWords} kelime · {publishQuality.metrics.bodyCharacters} metin karakteri · {publishQuality.metrics.effectiveSeoTitleCharacters} karakter arama başlığı · {publishQuality.metrics.effectiveSeoDescriptionCharacters} karakter arama açıklaması.</p>
+              </>
+            )
+          ) : (
+            <p>Yeni sayfayı önce taslak olarak da kaydedebilirsiniz. Yayın sırasında başlık, özet, içerik, canonical ve indexlenebilir sayfalarda arama metadata kalitesi sunucu tarafında doğrulanır.</p>
+          )}
         </div>
       ) : null}
 
@@ -152,15 +203,17 @@ export async function CmsPageEditor({ id }: { id?: string }) {
             <div className="cms-editor-section-label"><span>İçerik</span><small>Public sayfanın metin alanları</small></div>
             <label><span>URL kısa adı</span><input name="slug" required maxLength={120} defaultValue={slugPart} readOnly={Boolean(page)} placeholder="hakkimizda" /></label>
             <p className="content-form-help">Yalnız a-z, 0-9 ve tire. İlk kayıttan sonra URL sabitlenir. Yönetim alanları ile /eserler, /yazarlar, /turler gibi kodla sahip olunan public rotalar otomatik olarak rezerve edilir ve kullanılamaz.</p>
-            <label><span>Başlık</span><input name="title" required maxLength={220} defaultValue={draft?.title ?? page?.title ?? ""} /></label>
-            <label><span>Kısa özet</span><textarea name="summary" rows={4} maxLength={500} defaultValue={draft?.summary ?? stored.summary} /></label>
-            <label><span>Sayfa metni</span><textarea name="body" required rows={24} defaultValue={draft?.body ?? stored.body} placeholder={"İlk paragraf.\n\nİkinci paragraf.\n\n## Ara başlık\n\nAçıklama metni."} /></label>
+            <label><span>Başlık</span><input name="title" required maxLength={220} defaultValue={currentTitle} /></label>
+            <label><span>Kısa özet</span><textarea name="summary" rows={4} maxLength={500} defaultValue={currentSummary} /></label>
+            <p className="content-form-help">Yayın standardı için özet en az 40 karakterle sayfanın amacını anlatmalı.</p>
+            <label><span>Sayfa metni</span><textarea name="body" required rows={24} defaultValue={currentBody} placeholder={"İlk paragraf.\n\nİkinci paragraf.\n\n## Ara başlık\n\nAçıklama metni."} /></label>
+            <p className="content-form-help">Yayın standardı en az 45 anlamlı kelime ve 250 karakter içerik ister; taslak kaydı için bu eşik zorunlu değildir.</p>
 
             <div className="cms-editor-section-label"><span>Arama görünümü</span><small>SEO ve indeksleme</small></div>
-            <p className="content-form-help">Canonical adres URL kısa adından otomatik üretilir. Sosyal paylaşım görseli İlkOku’nun ortak OG/Twitter fallback’inden gelir; bu alanda sayfaya özgü SEO başlığı, açıklaması ve index kararını yönetin.</p>
-            <label><span>SEO başlığı</span><input name="seoTitle" maxLength={220} defaultValue={draft?.seoTitle ?? page?.seoTitle ?? ""} /></label>
-            <label><span>SEO açıklaması</span><textarea name="seoDescription" rows={3} maxLength={500} defaultValue={draft?.seoDescription ?? page?.seoDescription ?? ""} /></label>
-            <label style={{ display: "flex", alignItems: "center", gap: ".7rem" }}><input name="noIndex" type="checkbox" defaultChecked={draft?.noIndex ?? Boolean(page?.noIndex)} style={{ width: "auto" }} /><span>Arama motorlarında gösterme (noindex)</span></label>
+            <p className="content-form-help">Canonical adres URL kısa adından otomatik üretilir. Sosyal paylaşım görseli İlkOku’nun ortak OG/Twitter fallback’inden gelir. Indexlenebilir sayfalarda etkili arama başlığı 8-70, açıklama 70-180 karakter olmalıdır; alanlar boşsa sayfa başlığı ve kısa özet fallback olarak kullanılır.</p>
+            <label><span>SEO başlığı</span><input name="seoTitle" maxLength={220} defaultValue={currentSeoTitle} /></label>
+            <label><span>SEO açıklaması</span><textarea name="seoDescription" rows={3} maxLength={500} defaultValue={currentSeoDescription} /></label>
+            <label style={{ display: "flex", alignItems: "center", gap: ".7rem" }}><input name="noIndex" type="checkbox" defaultChecked={currentNoIndex} style={{ width: "auto" }} /><span>Arama motorlarında gösterme (noindex)</span></label>
 
             <div className="cms-editor-savebar">
               <Link href="/icerik/sayfalar">← Listeye dön</Link>

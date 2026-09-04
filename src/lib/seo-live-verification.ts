@@ -7,6 +7,11 @@ import {
 } from "@/features/public-discovery/library";
 import { prisma } from "@/lib/prisma";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
+import {
+  publicCmsManagedCoreRoutes,
+  publicCodeOwnedIndexRoutes,
+  publicDefaultCoreSeoRoutes,
+} from "@/lib/public-seo-routes";
 
 export type SeoEvidenceState = "ok" | "warn" | "danger";
 export type SeoSchemaType = "WebSite" | "Book" | "CollectionPage" | "ProfilePage" | "FAQPage" | "BreadcrumbList";
@@ -26,6 +31,16 @@ type SchemaEvidenceCheck = EvidenceCheck & {
   route: string | null;
 };
 
+type CoreSitemapExpectation = {
+  state: "ok" | "unavailable";
+  routes: string[];
+};
+
+type CoreIndexabilityRow = {
+  slug: string;
+  noIndex: boolean;
+};
+
 export type LiveSeoVerification = {
   robots: EvidenceCheck;
   sitemap: EvidenceCheck & {
@@ -41,7 +56,6 @@ export type LiveSeoVerification = {
 };
 
 const baseUrl = "https://ilkoku.com";
-const minimumCoreSitemapUrls = 23;
 const requiredRobotsDisallow = [
   "/admin",
   "/icerik",
@@ -51,26 +65,6 @@ const requiredRobotsDisallow = [
   "/sozlesmelerim",
   "/api",
   "/auth",
-] as const;
-
-const staticSocialRoutes = [
-  "/",
-  "/eserler",
-  "/eserler/yeni",
-  "/eserler/guncellenen",
-  "/yazarlar",
-  "/turler",
-  "/yardim",
-  "/editorler",
-  "/iletisim",
-  "/nasil-calisir",
-  "/editoryal-standartlar",
-  "/icerik-ve-yas-politikasi",
-  "/topluluk-kurallari",
-  "/telif-bildirimi",
-  "/yazarlar-icin",
-  "/editorler-icin",
-  "/yayinevleri-icin",
 ] as const;
 
 async function fetchLive(path: string): Promise<LiveResponse> {
@@ -102,6 +96,52 @@ function hasSocialMetadata(html: string) {
 
 function sitemapLocations(xml: string) {
   return [...xml.matchAll(/<loc>([^<]+)<\/loc>/giu)].map((match) => match[1].trim());
+}
+
+function normalizedSitemapLocation(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.hostname !== "ilkoku.com") return null;
+    const pathname = url.pathname === "/" ? "/" : url.pathname.replace(/\/+$/, "");
+    return `${url.origin}${pathname}`;
+  } catch {
+    return null;
+  }
+}
+
+function absoluteCoreRoute(route: string) {
+  return `${baseUrl}${route === "/" ? "/" : route.replace(/\/+$/, "")}`;
+}
+
+async function coreSitemapExpectation(): Promise<CoreSitemapExpectation> {
+  try {
+    const rows = await prisma.$queryRaw<CoreIndexabilityRow[]>`
+      SELECT slug, noIndex
+      FROM ContentPage
+      WHERE status = 'published'
+        AND (
+          contentKey LIKE 'page:tr:%'
+          OR (contentKey LIKE 'legal:%' AND contentKey NOT LIKE 'legal:en:%')
+        )
+      LIMIT 5000
+    `;
+    const bySlug = new Map(rows.map((row) => [row.slug.startsWith("/") ? row.slug : `/${row.slug}`, row]));
+    const cmsRoutes = publicCmsManagedCoreRoutes.filter((route) => !bySlug.get(route)?.noIndex);
+    return {
+      state: "ok",
+      routes: Array.from(new Set<string>([
+        ...publicCodeOwnedIndexRoutes,
+        ...cmsRoutes,
+      ])),
+    };
+  } catch {
+    // Fail closed: code-owned routes are always expected, but CMS noindex
+    // decisions cannot be guessed when the published inventory is unreadable.
+    return {
+      state: "unavailable",
+      routes: [...publicCodeOwnedIndexRoutes],
+    };
+  }
 }
 
 function schemaTypesFromHtml(html: string) {
@@ -174,10 +214,16 @@ function missingRepresentative(detail: string): SchemaEvidenceCheck {
 }
 
 export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerification> => {
-  const representatives = await representativeRoutes();
+  const [representatives, sitemapExpectation] = await Promise.all([
+    representativeRoutes(),
+    coreSitemapExpectation(),
+  ]);
   const dynamicSocialRoutes = [representatives.work, representatives.author, representatives.genre]
     .filter((route): route is string => Boolean(route));
-  const socialRoutes = [...staticSocialRoutes, ...dynamicSocialRoutes];
+  const socialRoutes = Array.from(new Set<string>([
+    ...publicDefaultCoreSeoRoutes,
+    ...dynamicSocialRoutes,
+  ]));
 
   const [robotsResponse, sitemapResponse, socialResponses] = await Promise.all([
     fetchLive("/robots.txt"),
@@ -212,30 +258,35 @@ export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerificatio
     };
   } else {
     const locations = sitemapLocations(sitemapResponse.text);
-    const uniqueLocations = new Set(locations);
-    const duplicateCount = locations.length - uniqueLocations.size;
-    const invalidHostCount = locations.filter((location) => {
-      try {
-        const url = new URL(location);
-        return url.protocol !== "https:" || url.hostname !== "ilkoku.com";
-      } catch {
-        return true;
-      }
-    }).length;
+    const normalizedLocations = locations.map(normalizedSitemapLocation);
+    const validLocations = normalizedLocations.filter((location): location is string => Boolean(location));
+    const uniqueLocations = new Set(validLocations);
+    const duplicateCount = validLocations.length - uniqueLocations.size;
+    const invalidHostCount = normalizedLocations.length - validLocations.length;
+    const missingCoreRoutes = sitemapExpectation.routes.filter(
+      (route) => !uniqueLocations.has(absoluteCoreRoute(route)),
+    );
 
-    if (locations.length < minimumCoreSitemapUrls || duplicateCount > 0 || invalidHostCount > 0) {
+    if (duplicateCount > 0 || invalidHostCount > 0 || missingCoreRoutes.length > 0) {
       sitemap = {
         state: "danger",
         count: locations.length,
         duplicates: duplicateCount,
-        detail: `${locations.length} canlı URL · ${duplicateCount} tekrar · ${invalidHostCount} geçersiz host/URL. Beklenen çekirdek kapsam en az ${minimumCoreSitemapUrls} URL.`,
+        detail: `${locations.length} canlı URL · ${duplicateCount} tekrar · ${invalidHostCount} geçersiz host/URL · ${missingCoreRoutes.length} zorunlu çekirdek rota eksik${missingCoreRoutes.length ? ` (${missingCoreRoutes.join(", ")})` : ""}.`,
+      };
+    } else if (sitemapExpectation.state === "unavailable") {
+      sitemap = {
+        state: "warn",
+        count: locations.length,
+        duplicates: 0,
+        detail: `Canlı sitemap.xml içindeki ${sitemapExpectation.routes.length} kod tabanlı zorunlu rota doğrulandı; published CMS noindex envanteri okunamadığı için tam çekirdek kapsam için PASS üretilmedi.`,
       };
     } else {
       sitemap = {
         state: "ok",
         count: locations.length,
         duplicates: 0,
-        detail: `Canlı sitemap.xml doğrulandı: ${locations.length} benzersiz public URL, duplicate yok, canonical host ilkoku.com.`,
+        detail: `Canlı sitemap.xml doğrulandı: ${locations.length} benzersiz public URL ve ${sitemapExpectation.routes.length} beklenen çekirdek rota eksiksiz; duplicate veya geçersiz canonical host yok.`,
       };
     }
   }

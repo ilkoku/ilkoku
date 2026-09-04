@@ -9,6 +9,7 @@ type PublicPageMetadataInput = {
   canonical: string;
   noIndex?: boolean;
   image?: string | null;
+  languages?: Record<string, string> | null;
 };
 
 function absolutePublicUrl(value: string) {
@@ -23,15 +24,24 @@ export function createPublicPageMetadata({
   canonical,
   noIndex = false,
   image,
+  languages,
 }: PublicPageMetadataInput): Metadata {
   const canonicalUrl = absolutePublicUrl(canonical);
   const socialImage = image ? absolutePublicUrl(image) : defaultSocialImage;
   const safeDescription = description || undefined;
+  const languageAlternates = languages
+    ? Object.fromEntries(
+        Object.entries(languages).map(([locale, href]) => [locale, absolutePublicUrl(href)]),
+      )
+    : undefined;
 
   return {
     title,
     description: safeDescription,
-    alternates: { canonical: canonicalUrl },
+    alternates: {
+      canonical: canonicalUrl,
+      ...(languageAlternates ? { languages: languageAlternates } : {}),
+    },
     robots: noIndex
       ? { index: false, follow: true }
       : { index: true, follow: true },

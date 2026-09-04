@@ -86,6 +86,20 @@ test("new public discovery and help surfaces expose canonical social metadata", 
   assertContains(editors, '"@type": "BreadcrumbList"', "editor directory breadcrumb structured data");
 });
 
+test("legal pages inherit canonical OG Twitter and language-alternate metadata", () => {
+  const legal = source("src/app/yasal/[slug]/page.tsx");
+  const helper = source("src/lib/public-page-metadata.ts");
+
+  assertContains(legal, 'createPublicPageMetadata({', "legal shared public metadata helper");
+  assertContains(legal, '"tr-TR": `/yasal/${slug}`', "legal TR alternate");
+  assertContains(legal, '"x-default": `/yasal/${slug}`', "legal x-default alternate");
+  assertContains(helper, "languages?: Record<string, string> | null", "public metadata language alternate contract");
+  assertContains(helper, "images: [{ url: socialImage }]", "public Open Graph image fallback");
+  assertContains(helper, "twitter:", "public Twitter metadata");
+  assertContains(helper, 'card: "summary_large_image"', "public Twitter large image card");
+  assertContains(helper, "images: [socialImage]", "public Twitter image fallback");
+});
+
 test("dynamic public work author and genre routes keep canonical query noindex and structured-data contracts", () => {
   const book = source("src/app/kitap/[slug]/page.tsx");
   const author = source("src/app/yazarlar/[publicId]/page.tsx");
@@ -110,9 +124,12 @@ test("dynamic public work author and genre routes keep canonical query noindex a
   assertContains(genre, '"@type": "BreadcrumbList"', "genre breadcrumb schema");
 });
 
-test("SEO center includes code-owned public discovery and truthful structured-data inventory", () => {
+test("SEO center uses one core route catalog and verifies exact live coverage", () => {
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
   const metadata = source("src/app/icerik/seo/SeoMetadataQualityAudit.tsx");
+  const routes = source("src/lib/public-seo-routes.ts");
+  const navigation = source("src/lib/public-site-navigation.ts");
+  const live = source("src/lib/seo-live-verification.ts");
 
   for (const route of [
     '"/eserler"',
@@ -122,17 +139,29 @@ test("SEO center includes code-owned public discovery and truthful structured-da
     '"/turler"',
     '"/yardim"',
     '"/editorler"',
+    '"/iletisim"',
   ]) {
-    assertContains(technical, route, `technical SEO static public route ${route}`);
+    assertContains(routes, route, `canonical code-owned SEO route ${route}`);
   }
 
+  assertContains(routes, "publicPlatformLinks", "platform routes feed SEO catalog");
+  assertContains(routes, "publicTrustLinks", "trust routes feed SEO catalog");
+  assertContains(routes, "publicLegalLinks", "legal routes feed SEO catalog");
+  assertContains(navigation, 'href: "/hakkimizda"', "about route in canonical public navigation");
+  assertContains(navigation, 'href: "/yasal/kullanim-sartlari"', "legal routes in canonical public navigation");
+  assertContains(technical, "publicCodeOwnedIndexRoutes", "technical SEO consumes canonical code-owned routes");
   assertContains(technical, "getPublicAuthors()", "technical SEO public author inventory");
   assertContains(technical, "getPublicGenres()", "technical SEO public genre inventory");
   assertContains(technical, 'not: "adult_18"', "technical SEO adult work exclusion");
   assertContains(technical, 'visibility: "public"', "technical SEO discovery visibility boundary");
   assertContains(technical, "isBlockedPublicWorkSlug", "technical SEO blocked work slug exclusion");
-  assertContains(technical, "kod tabanlı statik URL", "technical SEO code-owned sitemap breakdown");
-  assertContains(technical, "sitemap runtime envanterinin doğrulanamaması", "technical SEO fail-closed runtime inventory");
+
+  assertContains(live, "publicDefaultCoreSeoRoutes", "live social audit consumes complete core route catalog");
+  assertContains(live, "coreSitemapExpectation", "live sitemap uses CMS-aware expected routes");
+  assertContains(live, "missingCoreRoutes", "live sitemap verifies required route presence");
+  assertContains(live, "zorunlu çekirdek rota eksik", "live sitemap reports missing required routes");
+  assertContains(live, "published CMS noindex envanteri okunamadığı için", "live sitemap fails closed when CMS indexability is unreadable");
+  assertNotContains(live, "minimumCoreSitemapUrls", "live sitemap must not pass on a magic URL count alone");
 
   for (const schemaType of ["CollectionPage", "ProfilePage", "FAQPage", "BreadcrumbList"]) {
     assertContains(metadata, schemaType, `structured-data inventory ${schemaType}`);

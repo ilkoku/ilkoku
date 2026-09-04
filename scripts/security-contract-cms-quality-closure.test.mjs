@@ -115,6 +115,33 @@ test("new CMS pages inherit the standard public template and cannot shadow code-
   }
 });
 
+test("CMS publication quality gate blocks weak public pages without discarding the draft", () => {
+  const quality = source("src/lib/cms-page-quality.ts");
+  const actions = source("src/features/cms/page-actions.ts");
+  const editor = source("src/components/content/CmsPageEditor.tsx");
+  const editorRoute = source("src/app/icerik/sayfalar/[id]/page.tsx");
+
+  assertContains(quality, "MIN_SUMMARY_CHARACTERS = 40", "meaningful public summary threshold");
+  assertContains(quality, "MIN_BODY_CHARACTERS = 250", "minimum public body character threshold");
+  assertContains(quality, "MIN_BODY_WORDS = 45", "minimum public body word threshold");
+  assertContains(quality, "MIN_SEO_DESCRIPTION_CHARACTERS = 70", "indexable description minimum");
+  assertContains(quality, "MAX_SEO_DESCRIPTION_CHARACTERS = 180", "indexable description maximum");
+  assertContains(quality, "if (!input.noIndex", "noindex pages do not inherit the search-description blocker");
+  assertContains(quality, '/^\\/[a-z0-9]+(?:-[a-z0-9]+)*$/', "canonical path validation");
+
+  assertContains(actions, "evaluateCmsPagePublishQuality", "server action consumes publication quality gate");
+  assertContains(actions, 'const publishBlocked = requestedMode === "publish" && !publishQuality.ok;', "publish is blocked server-side");
+  assertContains(actions, 'const mode = publishBlocked ? "draft" : requestedMode;', "blocked publication degrades safely to draft");
+  assertContains(actions, 'publishBlocked ? "?hata=kalite" : "?taslak=1"', "published live page keeps a staged draft on quality failure");
+  assertContains(actions, 'publishBlocked ? "?hata=kalite" : "?kayit=1"', "new or draft page preserves quality-failed work");
+
+  assertContains(editor, "Yayın kalite kapısı geçilemedi.", "editor explains blocked publication");
+  assertContains(editor, "Canlı sürüm değiştirilmedi; gönderdiğiniz çalışma taslak olarak korundu.", "editor promises fail-safe draft preservation");
+  assertContains(editor, "Yayın kalite kapısı", "editor exposes readiness before publication");
+  assertContains(editor, "OG/Twitter sosyal görseli", "system-provided social metadata remains explicit");
+  assertContains(editorRoute, 'publishQualityBlocked={error === "kalite"}', "quality failure query reaches the editor");
+});
+
 test("CMS quality closure keeps fail-closed operational entry points visible", () => {
   const dashboard = source("src/app/icerik/page.tsx");
   const readiness = source("src/app/icerik/hazirlik/page.tsx");

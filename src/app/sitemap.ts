@@ -15,6 +15,7 @@ import {
 } from "@/features/public-discovery/library";
 import { prisma } from "@/lib/prisma";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
+import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 
 const baseUrl = "https://ilkoku.com";
 const legalSlugs = [
@@ -86,12 +87,7 @@ const staticCmsPageSlugs = new Set<string>(
   bundledPublicPages.map((page) => page.canonical),
 );
 
-const staticDiscoveryEntries: MetadataRoute.Sitemap = [
-  {
-    url: `${baseUrl}/`,
-    changeFrequency: "daily",
-    priority: 1,
-  },
+const publicDiscoveryStaticEntries: MetadataRoute.Sitemap = [
   {
     url: `${baseUrl}/eserler`,
     changeFrequency: "daily",
@@ -117,6 +113,15 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     changeFrequency: "daily",
     priority: 0.75,
   },
+];
+
+const staticDiscoveryEntries: MetadataRoute.Sitemap = [
+  {
+    url: `${baseUrl}/`,
+    changeFrequency: "daily",
+    priority: 1,
+  },
+  ...(publicDiscoveryEnabled ? publicDiscoveryStaticEntries : []),
   {
     url: `${baseUrl}/yardim`,
     changeFrequency: "weekly",
@@ -196,8 +201,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
         take: 50_000,
       }),
-      getPublicAuthors(),
-      getPublicGenres(),
+      publicDiscoveryEnabled ? getPublicAuthors() : Promise.resolve([]),
+      publicDiscoveryEnabled ? getPublicGenres() : Promise.resolve([]),
       prisma.$queryRaw<CmsSitemapRow[]>`
         SELECT slug, noIndex, updatedAt
         FROM ContentPage
@@ -296,10 +301,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         })),
     ];
   } catch {
-    // Search engines must keep seeing the complete code-owned public surface even
-    // when CMS/database lookups are temporarily unavailable. Dynamic author,
-    // genre, work and CMS-owned URLs fail closed, while the 23 core public URLs
-    // remain stable and crawlable.
+    // Search engines must keep seeing the currently enabled code-owned public
+    // surface even when CMS/database lookups are temporarily unavailable.
+    // Dynamic author, genre, work and CMS-owned URLs fail closed.
     return staticFallbackEntries;
   }
 }

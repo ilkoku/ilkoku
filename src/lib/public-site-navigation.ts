@@ -3,7 +3,8 @@ export type PublicSiteLink = {
   label: string;
 };
 
-export const publicDiscoveryNavigationEnabled = false;
+export const publicDiscoveryEnabled = false;
+export const publicDiscoveryNavigationEnabled = publicDiscoveryEnabled;
 
 export const publicDiscoveryLinks = [
   { href: "/eserler", label: "Eserler" },

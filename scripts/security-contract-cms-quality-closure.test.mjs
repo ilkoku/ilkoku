@@ -48,18 +48,35 @@ test("CMS operational copy does not expose historical sprint labels", () => {
   assertContains(modules, "CMS canlı içerik hazırlığı ve kabul kontrolü", "current readiness module description");
 });
 
-test("public trust and role pages are one CMS readiness inventory", () => {
+test("Hakkımızda and the eight trust-role pages share one canonical CMS catalog", () => {
   const readiness = source("src/lib/cms-readiness.ts");
   const readinessPage = source("src/app/icerik/hazirlik/page.tsx");
   const pages = source("src/app/icerik/sayfalar/page.tsx");
+  const catalog = source("src/lib/public-cms-page-catalog.ts");
   const starters = source("src/features/cms/starter-content-actions.ts");
 
-  assertContains(readiness, "guides: 8", "eight public CMS pages readiness target");
+  assertContains(readiness, "guides: 8", "eight trust-role CMS pages readiness target");
   assertContains(readiness, "total: 13", "Hakkımızda + eight public pages + four FAQs starter total");
   assertContains(readiness, "seo: 9", "Hakkımızda + eight public pages SEO target");
   assertContains(readinessPage, "Public Güven ve Rol Sayfaları", "readiness public page lane");
   assertContains(readinessPage, "Hakkımızda + 8 public sayfa", "readiness SEO coverage copy");
-  assertContains(pages, "Yeni public sayfaların CMS ve SEO kapsamı", "CMS public page inventory panel");
+  assertContains(pages, "publicCmsPageCatalog", "CMS page manager consumes canonical catalog");
+  assertContains(pages, "Hakkımızda dahil dokuz çekirdek public CMS sayfası", "CMS nine-page inventory copy");
+  assertContains(pages, "expectedCorePages = publicCmsPageCatalog.length", "CMS inventory count follows catalog");
+
+  for (const key of [
+    "page:tr:hakkimizda",
+    "page:tr:nasil-calisir",
+    "page:tr:editoryal-standartlar",
+    "page:tr:icerik-ve-yas-politikasi",
+    "page:tr:topluluk-kurallari",
+    "page:tr:telif-bildirimi",
+    "page:tr:yazarlar-icin",
+    "page:tr:editorler-icin",
+    "page:tr:yayinevleri-icin",
+  ]) {
+    assertContains(catalog, key, `${key} canonical CMS page catalog`);
+  }
 
   for (const key of [
     "page:tr:nasil-calisir",
@@ -73,7 +90,28 @@ test("public trust and role pages are one CMS readiness inventory", () => {
   ]) {
     assertContains(readiness, key, `${key} readiness inventory`);
     assertContains(starters, key, `${key} starter seed`);
-    assertContains(pages, key, `${key} CMS management inventory`);
+  }
+});
+
+test("new CMS pages inherit the standard public template and cannot shadow code-owned public routes", () => {
+  const editor = source("src/components/content/CmsPageEditor.tsx");
+  const cmsPages = source("src/lib/cms-pages.ts");
+  const seoRoutes = source("src/lib/public-seo-routes.ts");
+
+  assertContains(editor, "isCorePublicCmsPage", "editor distinguishes core visual experiences from generic template pages");
+  assertContains(editor, "İlkOku standart public sayfa şablonu aktif", "standard public template guidance");
+  assertContains(editor, "ortak İlkOku header/footer yapısı", "shared public identity guidance");
+  assertContains(editor, "slug tabanlı canonical", "automatic canonical guidance");
+  assertContains(editor, "OG/Twitter sosyal görsel fallback", "automatic social metadata guidance");
+  assertContains(editor, "/eserler, /yazarlar, /turler", "reserved public route guidance");
+
+  assertContains(cmsPages, "publicCodeOwnedIndexRoutes", "CMS slug safety consumes code-owned public route inventory");
+  assertContains(cmsPages, "codeOwnedPublicRoots", "CMS derives reserved roots from canonical public SEO catalog");
+  assertContains(cmsPages, '"onizleme"', "preview namespace remains reserved");
+  assertContains(cmsPages, '"opengraph-image"', "Open Graph metadata route remains reserved");
+  assertContains(cmsPages, '"twitter-image"', "Twitter metadata route remains reserved");
+  for (const route of ['"/eserler"', '"/yazarlar"', '"/turler"']) {
+    assertContains(seoRoutes, route, `${route} code-owned SEO route`);
   }
 });
 

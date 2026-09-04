@@ -142,6 +142,22 @@ test("CMS publication quality gate blocks weak public pages without discarding t
   assertContains(editorRoute, 'publishQualityBlocked={error === "kalite"}', "quality failure query reaches the editor");
 });
 
+test("CMS page inventory audits existing content quality without auto-unpublishing live pages", () => {
+  const pages = source("src/app/icerik/sayfalar/page.tsx");
+
+  assertContains(pages, "evaluateCmsPagePublishQuality", "existing page audit reuses publication quality engine");
+  assertContains(pages, "parseCmsPageBody", "existing page audit reads summary and body from stored CMS payload");
+  assertContains(pages, "status, bodyJson, seoTitle", "CMS inventory query includes body payload for quality audit");
+  assertContains(pages, "canonicalMatchesSlug", "legacy canonical drift is audited");
+  assertContains(pages, "Canonical adresi sayfanın gerçek public URL'siyle aynı olmalı.", "canonical mismatch explanation");
+  assertContains(pages, "CMS kayıt kalitesi denetimi", "audit is explicitly scoped to persistent CMS records");
+  assertContains(pages, "Bu tarama mevcut canlı sayfaları otomatik olarak yayından kaldırmaz.", "audit never silently unpublishes existing content");
+  assertContains(pages, "geçici bundled köprü", "legacy bridge distinction remains visible");
+  assertContains(pages, "Kalite hazır", "core quality readiness metric");
+  assertContains(pages, "KALİTE EKSİĞİ", "per-page quality debt visibility");
+  assertContains(pages, "publicQualityDebt", "published core quality debt summary");
+});
+
 test("CMS quality closure keeps fail-closed operational entry points visible", () => {
   const dashboard = source("src/app/icerik/page.tsx");
   const readiness = source("src/app/icerik/hazirlik/page.tsx");

@@ -1,7 +1,14 @@
+import { publicCodeOwnedIndexRoutes } from "@/lib/public-seo-routes";
+
 export type CmsPageBody = {
   summary: string;
   body: string;
 };
+
+const codeOwnedPublicRoots = publicCodeOwnedIndexRoutes.flatMap((route) => {
+  const root = route.split("/").filter(Boolean)[0];
+  return root ? [root] : [];
+});
 
 const reservedRoots = new Set([
   "api",
@@ -17,7 +24,6 @@ const reservedRoots = new Set([
   "okuyucu",
   "yazar",
   "editor",
-  "editorler",
   "yayinevi",
   "yayinevleri",
   "kitap",
@@ -27,9 +33,11 @@ const reservedRoots = new Set([
   "yorumlarim",
   "yasal",
   "rehber",
-  "yardim",
-  "iletisim",
   "en",
+  "onizleme",
+  "opengraph-image",
+  "twitter-image",
+  ...codeOwnedPublicRoots,
 ]);
 
 export function normalizeCmsPageSlug(value: FormDataEntryValue | string | null) {

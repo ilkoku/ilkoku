@@ -5,6 +5,7 @@ import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
+import { isCorePublicCmsPage } from "@/lib/public-cms-page-catalog";
 
 type PageRow = {
   id: string;
@@ -58,6 +59,7 @@ export async function CmsPageEditor({ id }: { id?: string }) {
   const hasPendingDraft = stagedState.state === "valid";
   const slugPart = page?.slug.replace(/^\//, "") ?? "";
   const isHowItWorksPage = page?.contentKey === "page:tr:nasil-calisir";
+  const usesStandardPublicTemplate = !page || !isCorePublicCmsPage(page.contentKey);
   const statusLabel = corruptDraft
     ? "Yayında · taslak bütünlüğü bozuk"
     : page?.status === "published" && hasPendingDraft
@@ -128,6 +130,13 @@ export async function CmsPageEditor({ id }: { id?: string }) {
         </div>
       ) : null}
 
+      {usesStandardPublicTemplate && !corruptDraft ? (
+        <div className="content-panel cms-editor-notice is-info">
+          <strong>İlkOku standart public sayfa şablonu aktif</strong>
+          <p>Bu sayfa yayınlandığında ortak İlkOku header/footer yapısı, sıcak editoryal sayfa yüzeyi, slug tabanlı canonical, OG/Twitter sosyal görsel fallback’i ve sitemap/noindex sözleşmesi otomatik uygulanır. Burada yalnız içerik ve arama görünümünü yönetin; site kimliğini sayfa içinde yeniden tasarlamayın.</p>
+        </div>
+      ) : null}
+
       {isHowItWorksPage && !corruptDraft ? (
         <div className="content-panel cms-editor-notice is-info">
           <strong>Görsel sayfa düzeni aktif</strong>
@@ -142,12 +151,13 @@ export async function CmsPageEditor({ id }: { id?: string }) {
 
             <div className="cms-editor-section-label"><span>İçerik</span><small>Public sayfanın metin alanları</small></div>
             <label><span>URL kısa adı</span><input name="slug" required maxLength={120} defaultValue={slugPart} readOnly={Boolean(page)} placeholder="hakkimizda" /></label>
-            <p className="content-form-help">Yalnız a-z, 0-9 ve tire. İlk kayıttan sonra URL sabitlenir. Ürün ve yönetim rotaları kullanılamaz.</p>
+            <p className="content-form-help">Yalnız a-z, 0-9 ve tire. İlk kayıttan sonra URL sabitlenir. Yönetim alanları ile /eserler, /yazarlar, /turler gibi kodla sahip olunan public rotalar otomatik olarak rezerve edilir ve kullanılamaz.</p>
             <label><span>Başlık</span><input name="title" required maxLength={220} defaultValue={draft?.title ?? page?.title ?? ""} /></label>
             <label><span>Kısa özet</span><textarea name="summary" rows={4} maxLength={500} defaultValue={draft?.summary ?? stored.summary} /></label>
             <label><span>Sayfa metni</span><textarea name="body" required rows={24} defaultValue={draft?.body ?? stored.body} placeholder={"İlk paragraf.\n\nİkinci paragraf.\n\n## Ara başlık\n\nAçıklama metni."} /></label>
 
             <div className="cms-editor-section-label"><span>Arama görünümü</span><small>SEO ve indeksleme</small></div>
+            <p className="content-form-help">Canonical adres URL kısa adından otomatik üretilir. Sosyal paylaşım görseli İlkOku’nun ortak OG/Twitter fallback’inden gelir; bu alanda sayfaya özgü SEO başlığı, açıklaması ve index kararını yönetin.</p>
             <label><span>SEO başlığı</span><input name="seoTitle" maxLength={220} defaultValue={draft?.seoTitle ?? page?.seoTitle ?? ""} /></label>
             <label><span>SEO açıklaması</span><textarea name="seoDescription" rows={3} maxLength={500} defaultValue={draft?.seoDescription ?? page?.seoDescription ?? ""} /></label>
             <label style={{ display: "flex", alignItems: "center", gap: ".7rem" }}><input name="noIndex" type="checkbox" defaultChecked={draft?.noIndex ?? Boolean(page?.noIndex)} style={{ width: "auto" }} /><span>Arama motorlarında gösterme (noindex)</span></label>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { publicCmsPageCatalog } from "@/lib/public-cms-page-catalog";
 
 type ContentPageRow = {
   id: string;
@@ -13,17 +14,6 @@ type ContentPageRow = {
   noIndex: boolean;
   updatedAt: Date;
 };
-
-const requiredPublicPages = [
-  { contentKey: "page:tr:nasil-calisir", label: "Nasıl Çalışır", slug: "/nasil-calisir" },
-  { contentKey: "page:tr:editoryal-standartlar", label: "Editoryal Standartlar", slug: "/editoryal-standartlar" },
-  { contentKey: "page:tr:icerik-ve-yas-politikasi", label: "İçerik ve Yaş Politikası", slug: "/icerik-ve-yas-politikasi" },
-  { contentKey: "page:tr:topluluk-kurallari", label: "Topluluk Kuralları", slug: "/topluluk-kurallari" },
-  { contentKey: "page:tr:telif-bildirimi", label: "Telif Bildirimi", slug: "/telif-bildirimi" },
-  { contentKey: "page:tr:yazarlar-icin", label: "Yazarlar İçin", slug: "/yazarlar-icin" },
-  { contentKey: "page:tr:editorler-icin", label: "Editörler İçin", slug: "/editorler-icin" },
-  { contentKey: "page:tr:yayinevleri-icin", label: "Yayınevleri İçin", slug: "/yayinevleri-icin" },
-] as const;
 
 function hasCompleteSeo(page: ContentPageRow) {
   return Boolean(
@@ -57,9 +47,10 @@ export default async function Page() {
   const drafts = pages.filter((page) => page.status === "draft").length;
   const archived = pages.filter((page) => page.status === "archived").length;
   const pageByContentKey = new Map(pages.map((page) => [page.contentKey, page]));
-  const publicCoverage = requiredPublicPages.filter((item) => pageByContentKey.has(item.contentKey)).length;
-  const publicPublished = requiredPublicPages.filter((item) => pageByContentKey.get(item.contentKey)?.status === "published").length;
-  const publicSeoReady = requiredPublicPages.filter((item) => {
+  const expectedCorePages = publicCmsPageCatalog.length;
+  const publicCoverage = publicCmsPageCatalog.filter((item) => pageByContentKey.has(item.contentKey)).length;
+  const publicPublished = publicCmsPageCatalog.filter((item) => pageByContentKey.get(item.contentKey)?.status === "published").length;
+  const publicSeoReady = publicCmsPageCatalog.filter((item) => {
     const page = pageByContentKey.get(item.contentKey);
     return page?.status === "published" && hasCompleteSeo(page);
   }).length;
@@ -108,16 +99,16 @@ export default async function Page() {
 
           <div className="content-panel">
             <div className="content-section-heading">
-              <div><span>Public sayfa envanteri</span><h2>Yeni public sayfaların CMS ve SEO kapsamı</h2></div>
-              <p>Bu sekiz sayfa tek tek izlenir. Yayındaki bir kaydın SEO başlığı, açıklaması, canonical adresi ve index politikası sitemap kabulüyle aynı çizgide değerlendirilir.</p>
+              <div><span>Public sayfa envanteri</span><h2>Çekirdek public sayfaların CMS ve SEO kapsamı</h2></div>
+              <p>Hakkımızda dahil dokuz çekirdek public CMS sayfası tek tek izlenir. Yayındaki bir kaydın SEO başlığı, açıklaması, canonical adresi ve index politikası sitemap kabulüyle aynı çizgide değerlendirilir.</p>
             </div>
             <div className="content-metric-grid">
-              <article className="content-metric-card"><span>CMS kaydı</span><strong>{publicCoverage}/8</strong><small>beklenen public sayfa</small></article>
-              <article className="content-metric-card"><span>Yayında</span><strong>{publicPublished}/8</strong><small>public CMS kaydı</small></article>
-              <article className="content-metric-card"><span>SEO hazır</span><strong>{publicSeoReady}/8</strong><small>title · description · canonical · index</small></article>
+              <article className="content-metric-card"><span>CMS kaydı</span><strong>{publicCoverage}/{expectedCorePages}</strong><small>beklenen public sayfa</small></article>
+              <article className="content-metric-card"><span>Yayında</span><strong>{publicPublished}/{expectedCorePages}</strong><small>public CMS kaydı</small></article>
+              <article className="content-metric-card"><span>SEO hazır</span><strong>{publicSeoReady}/{expectedCorePages}</strong><small>title · description · canonical · index</small></article>
             </div>
             <div className="content-list" style={{ marginTop: "1rem" }}>
-              {requiredPublicPages.map((item) => {
+              {publicCmsPageCatalog.map((item) => {
                 const page = pageByContentKey.get(item.contentKey);
                 const seoReady = page ? hasCompleteSeo(page) : false;
                 return (

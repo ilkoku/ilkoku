@@ -35,6 +35,7 @@ test("SEO workbench never paints robots social or structured data green without 
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
   const metadata = source("src/app/icerik/seo/SeoMetadataQualityAudit.tsx");
   const verifier = source("src/lib/seo-live-verification.ts");
+  const publicSeoRoutes = source("src/lib/public-seo-routes.ts");
 
   contains(technical, "getLiveSeoVerification()", "technical live evidence loader");
   contains(technical, "state={live.robots.state}", "robots evidence-driven state");
@@ -50,7 +51,8 @@ test("SEO workbench never paints robots social or structured data green without 
   notContains(metadata, 'data-state="ok">Hazır', "no fixed green structured-data header");
 
   contains(verifier, 'fetchLive("/robots.txt")', "live robots fetch");
-  contains(verifier, '"/iletisim"', "live social contact coverage");
+  contains(verifier, "...publicDefaultCoreSeoRoutes", "live social uses canonical core route catalog");
+  contains(publicSeoRoutes, '"/iletisim"', "canonical social contact coverage");
   contains(verifier, '"WebSite" | "Book" | "CollectionPage" | "ProfilePage" | "FAQPage" | "BreadcrumbList"', "schema evidence vocabulary");
   contains(verifier, "PASS üretilmedi", "fail-closed unavailable evidence wording");
 });

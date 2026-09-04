@@ -1,0 +1,4 @@
+/* The canonical PublicSiteHeader owns the global brand surface on legal pages. */
+.public-site-frame .legal-header {
+  display: none !important;
+}

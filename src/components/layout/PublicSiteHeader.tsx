@@ -8,6 +8,7 @@ import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
 
 import "./public-site-header.css";
+import "./public-site-header-terminal.css";
 import "./public-back-navigation.css";
 import "./public-trust-hero-proof.css";
 
@@ -48,7 +49,7 @@ export async function PublicSiteHeader() {
             src={logo}
             alt="İlkOku"
             priority
-            sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 110px"
+            sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
           />
         </Link>
 

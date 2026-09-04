@@ -25,6 +25,7 @@ const privateRouteHeaders = [
   "/kesfet/:path*",
   "/okumaya-devam/:path*",
   "/okuyucu/:path*",
+  "/onizleme/ana-sayfa-eski",
   "/rol-secimi/:path*",
   "/sifre-yenile/:path*",
   "/tamamlanan-eserler/:path*",
@@ -59,6 +60,11 @@ const nextConfig: NextConfig = {
         ],
         destination: "https://ilkoku.com/:path*",
         permanent: true,
+      },
+      {
+        source: "/onizleme/ana-sayfa-yeni",
+        destination: "/",
+        permanent: false,
       },
       {
         source: "/admin",

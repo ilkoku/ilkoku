@@ -2,8 +2,13 @@ import type { Metadata } from "next";
 
 import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
+import {
+  publicBrandDescription,
+  publicBrandSocialImage,
+  publicBrandTitle,
+} from "@/lib/public-brand";
 
-import HomepageRedesignWorkspacePage from "./onizleme/ana-sayfa-yeni/page";
+import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience";
 
 import "./landing.css";
 import "./onizleme/ana-sayfa-yeni/history-pr670.css";
@@ -16,9 +21,9 @@ import "./onizleme/ana-sayfa-yeni/header-terminal-spine.css";
 import "./onizleme/ana-sayfa-yeni/header-login-terminal.css";
 import "./home-live.css";
 
-const homeTitle = "İlkOku | İlk cümle, ilk okurun, ilk adımın.";
-const homeDescription = "Yazarları, okuyucuları, editörleri ve yayınevlerini aynı platformda buluşturan dijital edebiyat ekosistemi.";
-const homeSocialImage = "/landing/ilkoku-hero.webp";
+const homeTitle = publicBrandTitle;
+const homeDescription = publicBrandDescription;
+const homeSocialImage = publicBrandSocialImage;
 
 export async function generateMetadata(): Promise<Metadata> {
   const englishEnabled = await isCmsLocaleEnabled("en");
@@ -41,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "tr_TR",
       url: "https://ilkoku.com/",
-      images: [{ url: homeSocialImage, alt: "İlkOku dijital edebiyat platformu" }],
+      images: [{ url: homeSocialImage, alt: publicBrandTitle }],
     },
     twitter: {
       card: "summary_large_image",
@@ -58,7 +63,7 @@ export default function HomePage() {
   return (
     <div className="homepage-live">
       <PublicSiteHeader />
-      <HomepageRedesignWorkspacePage />
+      <HomepageExperience />
     </div>
   );
 }

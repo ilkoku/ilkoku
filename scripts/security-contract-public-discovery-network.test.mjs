@@ -286,6 +286,8 @@ test("discovery feeds and RSS expose links but never chapter content", () => {
 test("sitemap, homepage and book pages form a truthful public graph", () => {
   const sitemap = source("src/app/sitemap.ts");
   const homepage = source("src/app/page.tsx");
+  const homepageExperience = source("src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx");
+  const publicNavigation = source("src/lib/public-site-navigation.ts");
   const book = source("src/app/kitap/[slug]/page.tsx");
   const showcase = source(
     "src/features/showcase/components/BookShowcase.tsx",
@@ -307,11 +309,14 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   notContains(sitemap, "contentKey LIKE 'guide:%'", "retired CMS guide sitemap inventory");
   contains(sitemap, "getPublicAuthors()", "dynamic author sitemap");
   contains(sitemap, "getPublicGenres()", "dynamic genre sitemap");
-  contains(homepage, "getPublicWorkLibrary", "homepage real publication query");
-  contains(homepage, 'href="/yazarlar"', "homepage author route");
-  contains(homepage, 'href="/turler"', "homepage genre route");
-  notContains(homepage, "2.847+", "fabricated writer count");
-  notContains(homepage, "18.592+", "fabricated reader count");
+  contains(homepage, 'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"', "homepage neutral experience boundary");
+  notContains(homepage, 'from "./onizleme/ana-sayfa-yeni/page"', "homepage must not import the preview route module");
+  contains(homepageExperience, '|| "/eserler"', "homepage public discovery fallback");
+  contains(publicNavigation, 'href: "/eserler"', "homepage work catalog route");
+  contains(publicNavigation, 'href: "/yazarlar"', "homepage author route");
+  contains(publicNavigation, 'href: "/turler"', "homepage genre route");
+  notContains(homepageExperience, "2.847+", "fabricated writer count");
+  notContains(homepageExperience, "18.592+", "fabricated reader count");
   contains(book, "work.authorPublicId", "book author schema URL");
   contains(book, '"@type": "BreadcrumbList"', "book breadcrumbs");
   contains(showcase, "bookContextPath", "book preserves discovery origin");

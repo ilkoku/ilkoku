@@ -2,7 +2,13 @@ import type { Metadata } from "next";
 import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncementBanner";
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { PublicNavigationHistory } from "@/components/layout/PublicNavigationHistory";
-import { tr } from "@/content";
+import {
+  publicBrandDescription,
+  publicBrandName,
+  publicBrandPositioning,
+  publicBrandSocialImage,
+  publicBrandTitle,
+} from "@/lib/public-brand";
 import { siteContact, siteSocialUrls } from "@/lib/site-contact";
 import "./globals.css";
 import "./landing-theme.css";
@@ -17,19 +23,21 @@ const baseUrl = "https://ilkoku.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: tr.brand.name,
-  description: tr.brand.tagline,
+  title: publicBrandTitle,
+  description: publicBrandDescription,
   openGraph: {
     type: "website",
     locale: "tr_TR",
-    siteName: tr.brand.name,
-    title: tr.brand.name,
-    description: tr.brand.tagline,
+    siteName: publicBrandName,
+    title: publicBrandTitle,
+    description: publicBrandDescription,
+    images: [{ url: publicBrandSocialImage, alt: publicBrandTitle }],
   },
   twitter: {
     card: "summary_large_image",
-    title: tr.brand.name,
-    description: tr.brand.tagline,
+    title: publicBrandTitle,
+    description: publicBrandDescription,
+    images: [publicBrandSocialImage],
   },
   icons: {
     icon: [
@@ -45,7 +53,8 @@ const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "@id": `${baseUrl}/#organization`,
-  name: tr.brand.name,
+  name: publicBrandName,
+  alternateName: publicBrandPositioning,
   url: baseUrl,
   email: siteContact.generalEmail,
   sameAs: siteSocialUrls,
@@ -75,10 +84,11 @@ const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "@id": `${baseUrl}/#website`,
-  name: tr.brand.name,
+  name: publicBrandName,
+  alternateName: publicBrandPositioning,
   url: baseUrl,
   inLanguage: "tr-TR",
-  description: tr.brand.tagline,
+  description: publicBrandDescription,
   publisher: {
     "@id": `${baseUrl}/#organization`,
   },

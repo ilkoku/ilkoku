@@ -15,15 +15,34 @@ function assertNotContains(text, fragment, label) {
   assert.equal(text.includes(fragment), false, `${label} must not contain ${JSON.stringify(fragment)}`);
 }
 
-test("global public routes have file-based social image fallbacks", () => {
+test("global public routes share one canonical SEO and social brand identity", () => {
+  const brand = source("src/lib/public-brand.ts");
+  const homepage = source("src/app/page.tsx");
+  const layout = source("src/app/layout.tsx");
   const openGraph = source("src/app/opengraph-image.tsx");
   const twitter = source("src/app/twitter-image.tsx");
+  const exactTitle = "İlkOku | Dijital Edebiyat Platformu – İlk cümle, ilk adım";
+
+  assertContains(brand, `publicBrandTitle = "${exactTitle}"`, "canonical homepage/social title");
+  assertContains(brand, 'publicBrandPositioning = "Dijital Edebiyat Platformu"', "brand positioning");
+  assertContains(brand, 'publicBrandShortSlogan = "İlk cümle, ilk adım"', "short social slogan");
+  assertContains(brand, 'publicBrandEditorialSlogan = "İlk cümle, ilk okurun, ilk adımın."', "editorial slogan remains distinct");
+
+  assertContains(homepage, "const homeTitle = publicBrandTitle", "homepage title consumes canonical brand title");
+  assertContains(homepage, "const homeSocialImage = publicBrandSocialImage", "homepage social artwork consumes canonical brand image");
+  assertContains(homepage, "title: homeTitle", "homepage Open Graph/Twitter title source");
+  assertContains(layout, "title: publicBrandTitle", "global metadata default title");
+  assertContains(layout, "title: publicBrandTitle", "global Open Graph/Twitter title source");
+  assertContains(layout, "images: [{ url: publicBrandSocialImage", "global Open Graph image");
+  assertContains(layout, "images: [publicBrandSocialImage]", "global Twitter image");
 
   assertContains(openGraph, 'import { ImageResponse } from "next/og"', "Open Graph image response");
   assertContains(openGraph, "width: 1200", "Open Graph width");
   assertContains(openGraph, "height: 630", "Open Graph height");
   assertContains(openGraph, 'contentType = "image/png"', "Open Graph content type");
-  assertContains(openGraph, "İlk cümle, ilk okurun, ilk adımın.", "Open Graph brand message");
+  assertContains(openGraph, "publicBrandPositioning", "Open Graph positioning");
+  assertContains(openGraph, "publicBrandShortSlogan", "Open Graph short slogan");
+  assertContains(openGraph, "publicBrandDescription", "Open Graph description");
   assertContains(twitter, 'from "./opengraph-image"', "Twitter reuses canonical social artwork");
 });
 

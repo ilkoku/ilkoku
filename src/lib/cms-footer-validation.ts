@@ -18,6 +18,9 @@ const landingAnchors = new Set(["#hakkimizda", "#eser-pasaportu", "#neden-ilkoku
 const fixedPublicPaths = new Set([
   "/",
   "/kesfet",
+  "/eserler",
+  "/yazarlar",
+  "/turler",
   "/editorler",
   "/yardim",
   "/iletisim",

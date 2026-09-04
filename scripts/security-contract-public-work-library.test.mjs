@@ -201,6 +201,13 @@ test("public work detail and related reads reject inactive author surfaces", () 
 
 test("landing, sitemap and production smoke form one public discovery graph", () => {
   const homepage = source("src/app/page.tsx");
+  const homepageExperience = source(
+    "src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx",
+  );
+  const homepagePreview = source(
+    "src/app/onizleme/ana-sayfa-yeni/page.tsx",
+  );
+  const publicNavigation = source("src/lib/public-site-navigation.ts");
   const sitemap = source("src/app/sitemap.ts");
   const smoke = source(
     ".github/workflows/production-smoke.yml",
@@ -215,14 +222,36 @@ test("landing, sitemap and production smoke form one public discovery graph", ()
 
   contains(
     homepage,
-    '|| "/eserler"',
-    "homepage discovery fallback",
+    'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"',
+    "live homepage neutral experience import",
+  );
+  notContains(
+    homepage,
+    'from "./onizleme/ana-sayfa-yeni/page"',
+    "live homepage preview route coupling",
   );
   contains(
     homepage,
-    '<Link href="/eserler">Eserler</Link>',
-    "homepage footer discovery link",
+    "robots: { index: true, follow: true }",
+    "live homepage explicit indexability",
   );
+  contains(
+    homepagePreview,
+    "index: false",
+    "preview route noindex",
+  );
+  contains(
+    homepageExperience,
+    '|| "/eserler"',
+    "homepage discovery fallback",
+  );
+  for (const route of ["/eserler", "/yazarlar", "/turler", "/nasil-calisir"]) {
+    contains(
+      publicNavigation,
+      `href: "${route}"`,
+      `canonical public discovery link ${route}`,
+    );
+  }
   contains(
     sitemap,
     'url: `${baseUrl}/eserler`',

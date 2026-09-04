@@ -103,13 +103,15 @@ test("role cards are a dedicated CMS module with fail-safe TR server-rendered pu
   const modules = source("src/lib/cms-modules.ts");
   const api = source("src/app/api/site-content/role-cards/route.ts");
   const hydrator = source("src/components/content/PublicCmsHydrator.tsx");
-  const turkish = source("src/app/page.tsx");
+  const turkish = source("src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx");
+  const homepage = source("src/app/page.tsx");
   const localeState = source("src/lib/cms-locale-state.ts");
   const queue = source("src/app/icerik/yayin-kuyrugu/page.tsx");
 
   assertContains(modules, 'href: "/icerik/rol-kartlari"', "role card CMS navigation");
   assertContains(api, "getPublishedRoleCardsState(locale)", "role card public published-state read");
   assertContains(api, 'status: 503', "role card corrupt/unavailable fail-safe response");
+  assertContains(homepage, 'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"', "TR live homepage experience boundary");
   assertContains(turkish, 'getPublishedRoleCardsState("tr")', "TR server-side published role card read");
   assertContains(turkish, 'roleCardState.state === "valid"', "TR strict published-state fallback boundary");
   assertContains(turkish, 'roleCardsFromPayload("tr", roleCardState.payload)', "TR canonical role card payload render");

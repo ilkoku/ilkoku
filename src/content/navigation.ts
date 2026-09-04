@@ -1,6 +1,8 @@
+import { publicBrandEditorialSlogan, publicBrandName } from "@/lib/public-brand";
+
 export const commonContent = {
-  brandName: "İlkOku",
-  tagline: "Her hikâye burada başlar.",
+  brandName: publicBrandName,
+  tagline: publicBrandEditorialSlogan,
   homeLabel: "İlkOku ana sayfasına dön",
   logoAlt: "İlkOku — kitap ve tüy amblemi",
   back: "Geri",

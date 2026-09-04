@@ -89,47 +89,30 @@ jobs:
             return 0
           }
 
-          check_filtered_page() {
-            local url="$1"
-            local expected_canonical="$2"
-            local body code canonical_href
+          check_paused_page() {
+            local path="$1"
+            local url="https://ilkoku.com${path}"
+            local code
 
-            body="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
-            if [[ "$code" != "200" ]]; then
-              echo "FAIL: filtered discovery URL returned HTTP $code: $url"
-              rm -f "$body"
+            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            echo "$url -> HTTP $code (paused)"
+            if [[ "$code" != "404" ]]; then
+              echo "FAIL: paused discovery URL must return 404: $url returned HTTP $code"
               return 1
             fi
-            if ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then
-              echo "FAIL: filtered discovery URL missing noindex: $url"
-              rm -f "$body"
-              return 1
-            fi
-
-            canonical_href="$(canonical_from_body "$body")"
-            if [[ "$(normalize_url "$canonical_href")" != "$(normalize_url "$expected_canonical")" ]]; then
-              echo "FAIL: filtered discovery canonical mismatch: url=$url expected=$expected_canonical actual=${canonical_href:-YOK}"
-              rm -f "$body"
-              return 1
-            fi
-
-            echo "PASS: filtered discovery noindex + canonical: $url"
-            rm -f "$body"
             return 0
           }
 
           verify_contract() {
-            local sitemap robots key home eserler
+            local sitemap robots key home
             local sitemap_count duplicate_count
             sitemap="$(mktemp)"
             robots="$(mktemp)"
             key="$(mktemp)"
             home="$(mktemp)"
-            eserler="$(mktemp)"
 
             cleanup() {
-              rm -f "$sitemap" "$robots" "$key" "$home" "$eserler"
+              rm -f "$sitemap" "$robots" "$key" "$home"
             }
 
             curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/sitemap.xml --output "$sitemap" || { echo "FAIL: sitemap fetch"; cleanup; return 1; }
@@ -138,30 +121,10 @@ jobs:
 
             grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { echo "FAIL: robots sitemap declaration"; cleanup; return 1; }
             grep -Fq 'Allow: /' "$robots" || { echo "FAIL: robots public allow"; cleanup; return 1; }
-            # Cloudflare may add Disallow: / for named AI crawlers. That is not a
-            # Google Search block; real Googlebot eligibility is verified below.
             grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key" || { echo "FAIL: IndexNow key mismatch"; cleanup; return 1; }
-
-            sitemap_count="$(grep -o '<loc>' "$sitemap" | wc -l | tr -d ' ')"
-            duplicate_count="$(grep -oE '<loc>[^<]+' "$sitemap" | sed 's#<loc>##' | sort | uniq -d | wc -l | tr -d ' ')"
-            if [[ "$sitemap_count" -lt 23 ]]; then
-              echo "FAIL: sitemap URL count=$sitemap_count expected at least 23"
-              cleanup
-              return 1
-            fi
-            if [[ "$duplicate_count" != "0" ]]; then
-              echo "FAIL: sitemap has $duplicate_count duplicate URLs"
-              cleanup
-              return 1
-            fi
 
             local required=(
               'https://ilkoku.com/'
-              'https://ilkoku.com/eserler'
-              'https://ilkoku.com/eserler/yeni'
-              'https://ilkoku.com/eserler/guncellenen'
-              'https://ilkoku.com/yazarlar'
-              'https://ilkoku.com/turler'
               'https://ilkoku.com/yardim'
               'https://ilkoku.com/editorler'
               'https://ilkoku.com/iletisim'
@@ -181,20 +144,60 @@ jobs:
               'https://ilkoku.com/yasal/telif-hakki-politikasi'
             )
 
+            sitemap_count="$(grep -o '<loc>' "$sitemap" | wc -l | tr -d ' ')"
+            duplicate_count="$(grep -oE '<loc>[^<]+' "$sitemap" | sed 's#<loc>##' | sort | uniq -d | wc -l | tr -d ' ')"
+            if (( sitemap_count < ${#required[@]} )); then
+              echo "FAIL: sitemap URL count=$sitemap_count expected at least ${#required[@]} enabled core URLs"
+              cleanup
+              return 1
+            fi
+            if [[ "$duplicate_count" != "0" ]]; then
+              echo "FAIL: sitemap has $duplicate_count duplicate URLs"
+              cleanup
+              return 1
+            fi
+
             local required_url
             for required_url in "${required[@]}"; do
               grep -Fq "<loc>${required_url}</loc>" "$sitemap" || { echo "FAIL: sitemap missing $required_url"; cleanup; return 1; }
             done
 
+            local paused_exact=(
+              'https://ilkoku.com/eserler'
+              'https://ilkoku.com/eserler/yeni'
+              'https://ilkoku.com/eserler/guncellenen'
+              'https://ilkoku.com/yazarlar'
+              'https://ilkoku.com/turler'
+            )
+            local paused_url
+            for paused_url in "${paused_exact[@]}"; do
+              if grep -Fq "<loc>${paused_url}</loc>" "$sitemap"; then
+                echo "FAIL: paused discovery URL remains in sitemap: $paused_url"
+                cleanup
+                return 1
+              fi
+            done
+            for paused_url in 'https://ilkoku.com/eserler/' 'https://ilkoku.com/yazarlar/' 'https://ilkoku.com/turler/'; do
+              if grep -Fq "<loc>${paused_url}" "$sitemap"; then
+                echo "FAIL: paused discovery descendant remains in sitemap: $paused_url"
+                cleanup
+                return 1
+              fi
+            done
+
             check_indexable_page '/' 'https://ilkoku.com/' || { cleanup; return 1; }
-            check_indexable_page '/eserler' 'https://ilkoku.com/eserler' || { cleanup; return 1; }
-            check_indexable_page '/yazarlar' 'https://ilkoku.com/yazarlar' || { cleanup; return 1; }
-            check_indexable_page '/turler' 'https://ilkoku.com/turler' || { cleanup; return 1; }
             check_indexable_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir' || { cleanup; return 1; }
             check_indexable_page '/hakkimizda' 'https://ilkoku.com/hakkimizda' || { cleanup; return 1; }
             check_indexable_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin' || { cleanup; return 1; }
             check_indexable_page '/editorler-icin' 'https://ilkoku.com/editorler-icin' || { cleanup; return 1; }
             check_indexable_page '/yayinevleri-icin' 'https://ilkoku.com/yayinevleri-icin' || { cleanup; return 1; }
+
+            check_paused_page '/eserler' || { cleanup; return 1; }
+            check_paused_page '/eserler/yeni' || { cleanup; return 1; }
+            check_paused_page '/eserler/guncellenen' || { cleanup; return 1; }
+            check_paused_page '/eserler/rss.xml' || { cleanup; return 1; }
+            check_paused_page '/yazarlar' || { cleanup; return 1; }
+            check_paused_page '/turler' || { cleanup; return 1; }
 
             local www_headers www_code www_location
             www_headers="$(mktemp)"
@@ -208,24 +211,21 @@ jobs:
             fi
             echo "PASS: www canonical redirect code=$www_code location=$www_location"
 
-            check_filtered_page 'https://ilkoku.com/eserler?arama=test' 'https://ilkoku.com/eserler' || { cleanup; return 1; }
-            check_filtered_page 'https://ilkoku.com/yazarlar?arama=test' 'https://ilkoku.com/yazarlar' || { cleanup; return 1; }
-            check_filtered_page 'https://ilkoku.com/turler?arama=test' 'https://ilkoku.com/turler' || { cleanup; return 1; }
-
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/eserler --output "$eserler" || { echo "FAIL: eserler social metadata fetch"; cleanup; return 1; }
-            grep -Eqi '<meta[^>]+property="og:image"' "$eserler" || { echo "FAIL: eserler og:image missing"; cleanup; return 1; }
-            grep -Eqi '<meta[^>]+name="twitter:image"' "$eserler" || { echo "FAIL: eserler twitter:image missing"; cleanup; return 1; }
-
             curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/ --output "$home" || { echo "FAIL: homepage schema fetch"; cleanup; return 1; }
             grep -Fq 'application/ld+json' "$home" || { echo "FAIL: JSON-LD missing"; cleanup; return 1; }
             grep -Fq '"@type":"WebSite"' "$home" || { echo "FAIL: WebSite schema missing"; cleanup; return 1; }
             grep -Fq '"@type":"Organization"' "$home" || { echo "FAIL: Organization schema missing"; cleanup; return 1; }
+            grep -Fq 'href="/nasil-calisir"' "$home" || { echo "FAIL: homepage missing crawlable /nasil-calisir link"; cleanup; return 1; }
 
-            local discovery_path
-            for discovery_path in '/eserler' '/yazarlar' '/turler' '/nasil-calisir'; do
-              grep -Fq "href=\"${discovery_path}\"" "$home" || { echo "FAIL: homepage missing crawlable discovery link $discovery_path"; cleanup; return 1; }
+            local paused_path
+            for paused_path in '/eserler' '/yazarlar' '/turler'; do
+              if grep -Fq "href=\"${paused_path}\"" "$home"; then
+                echo "FAIL: homepage still exposes paused discovery link $paused_path"
+                cleanup
+                return 1
+              fi
             done
-            echo "PASS: homepage exposes core crawlable discovery links"
+            echo "PASS: paused public discovery is absent from homepage and sitemap while enabled public SEO routes remain crawlable"
 
             cleanup
             return 0
@@ -237,7 +237,7 @@ jobs:
             attempt=$((attempt + 1))
             echo "SEO contract attempt ${attempt}"
             if verify_contract; then
-              echo "PASS: public İlkOku indexability, canonical host, metadata, sitemap, robots, filtered discovery noindex/canonical, crawlable homepage discovery links, social images, structured data and IndexNow key verified."
+              echo "PASS: public İlkOku indexability, canonical host, metadata, sitemap, robots, paused discovery 404 contract, structured data and IndexNow key verified."
               exit 0
             fi
             sleep 15

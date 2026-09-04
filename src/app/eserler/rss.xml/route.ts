@@ -1,4 +1,5 @@
 import { getPublicWorkFeed } from "@/features/public-discovery/library";
+import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 
 const baseUrl = "https://ilkoku.com";
 
@@ -14,6 +15,15 @@ function escapeXml(value: string) {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!publicDiscoveryEnabled) {
+    return new Response(null, {
+      status: 404,
+      headers: {
+        "X-Robots-Tag": "noindex",
+      },
+    });
+  }
+
   const works = await getPublicWorkFeed();
   const latestUpdate =
     works[0]?.updatedAt ?? new Date("2026-08-24T00:00:00.000Z");

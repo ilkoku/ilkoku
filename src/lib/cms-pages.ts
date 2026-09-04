@@ -1,11 +1,17 @@
-import { publicCodeOwnedIndexRoutes } from "@/lib/public-seo-routes";
+import {
+  publicCodeOwnedIndexRoutes,
+  publicPausedDiscoveryReservedRoutes,
+} from "@/lib/public-seo-routes";
 
 export type CmsPageBody = {
   summary: string;
   body: string;
 };
 
-const codeOwnedPublicRoots = publicCodeOwnedIndexRoutes.flatMap((route) => {
+const codeOwnedPublicRoots = [
+  ...publicCodeOwnedIndexRoutes,
+  ...publicPausedDiscoveryReservedRoutes,
+].flatMap((route) => {
   const root = route.split("/").filter(Boolean)[0];
   return root ? [root] : [];
 });

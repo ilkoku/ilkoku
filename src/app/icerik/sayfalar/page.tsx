@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { evaluateCmsPagePublishQuality } from "@/lib/cms-page-quality";
+import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 import { publicCmsPageCatalog } from "@/lib/public-cms-page-catalog";
 
@@ -8,6 +10,7 @@ type ContentPageRow = {
   slug: string;
   title: string;
   status: "draft" | "published" | "archived";
+  bodyJson: string;
   seoTitle: string | null;
   seoDescription: string | null;
   canonicalUrl: string | null;
@@ -24,6 +27,30 @@ function hasCompleteSeo(page: ContentPageRow) {
   );
 }
 
+function publicationQuality(page: ContentPageRow) {
+  const content = parseCmsPageBody(page.bodyJson);
+  const canonical = page.canonicalUrl?.trim() ?? "";
+  const quality = evaluateCmsPagePublishQuality({
+    slug: canonical,
+    title: page.title,
+    summary: content.summary,
+    body: content.body,
+    seoTitle: page.seoTitle,
+    seoDescription: page.seoDescription,
+    noIndex: page.noIndex,
+  });
+  const canonicalMatchesSlug = canonical === page.slug;
+  const issues = quality.issues.map((item) => item.message);
+  if (canonical && !canonicalMatchesSlug) {
+    issues.push("Canonical adresi sayfanın gerçek public URL'siyle aynı olmalı.");
+  }
+  return {
+    ok: quality.ok && canonicalMatchesSlug,
+    issues,
+    metrics: quality.metrics,
+  };
+}
+
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
@@ -32,7 +59,7 @@ export default async function Page() {
 
   try {
     pages = await prisma.$queryRaw<ContentPageRow[]>`
-      SELECT id, contentKey, slug, title, status, seoTitle, seoDescription,
+      SELECT id, contentKey, slug, title, status, bodyJson, seoTitle, seoDescription,
              canonicalUrl, noIndex, updatedAt
       FROM ContentPage
       WHERE contentKey LIKE 'page:tr:%'
@@ -54,6 +81,11 @@ export default async function Page() {
     const page = pageByContentKey.get(item.contentKey);
     return page?.status === "published" && hasCompleteSeo(page);
   }).length;
+  const publicQualityReady = publicCmsPageCatalog.filter((item) => {
+    const page = pageByContentKey.get(item.contentKey);
+    return page?.status === "published" && publicationQuality(page).ok;
+  }).length;
+  const publicQualityDebt = Math.max(0, publicPublished - publicQualityReady);
 
   return (
     <section className="content-editor-page">
@@ -61,14 +93,14 @@ export default async function Page() {
         <div>
           <span>İçerik · TR</span>
           <h1>Kurumsal Sayfalar</h1>
-          <p>Hakkımızda ve public bilgilendirme sayfalarını taslak, önizleme, yayın, SEO ve sürüm geçmişiyle yönetin.</p>
+          <p>Hakkımızda ve public bilgilendirme sayfalarını taslak, önizleme, yayın, SEO, kalite ve sürüm geçmişiyle yönetin.</p>
         </div>
-        <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : "success"} aria-label="Kurumsal sayfa özeti">
+        <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : publicQualityDebt > 0 ? "warning" : "success"} aria-label="Kurumsal sayfa özeti">
           <span className="cms-editor-status-card__label">İçerik özeti</span>
           {dataError ? (
             <><strong>Veri okunamadı</strong><div className="cms-editor-status-card__meta"><span className="cms-editor-chip is-danger">Sayaçlar durduruldu</span></div></>
           ) : (
-            <><strong>{published} sayfa yayında</strong><div className="cms-editor-status-card__meta"><span className="cms-editor-chip is-warning">{drafts} taslak</span><span className="cms-editor-chip">{archived} arşiv</span></div></>
+            <><strong>{published} sayfa yayında</strong><div className="cms-editor-status-card__meta"><span className="cms-editor-chip is-warning">{drafts} taslak</span><span className="cms-editor-chip">{archived} arşiv</span>{publicQualityDebt > 0 ? <span className="cms-editor-chip is-warning">{publicQualityDebt} çekirdek kalite borcu</span> : null}</div></>
           )}
         </aside>
       </div>
@@ -97,30 +129,44 @@ export default async function Page() {
             </div>
           </nav>
 
+          <div className="content-panel cms-editor-notice is-info">
+            <strong>CMS kayıt kalitesi denetimi</strong>
+            <p>Bu tarama mevcut canlı sayfaları otomatik olarak yayından kaldırmaz. Bir sonraki CMS yayını aynı kalite kapısından geçer; bu ekran ise bugün veritabanında duran kalıcı kaydın hangi maddelerde iyileştirilmesi gerektiğini gösterir.</p>
+            <p>Sekiz güven/rol sayfasında eski CMS metnini geçici bundled köprü örtebilir. Bu nedenle buradaki “kalite borcu” ifadesi doğrudan canlı ziyaretçi çıktısının bozuk olduğu anlamına gelmez; köprünün ileride güvenle kaldırılabilmesi için kalıcı CMS kaydındaki borcu görünür kılar.</p>
+          </div>
+
           <div className="content-panel">
             <div className="content-section-heading">
-              <div><span>Public sayfa envanteri</span><h2>Çekirdek public sayfaların CMS ve SEO kapsamı</h2></div>
-              <p>Hakkımızda dahil dokuz çekirdek public CMS sayfası tek tek izlenir. Yayındaki bir kaydın SEO başlığı, açıklaması, canonical adresi ve index politikası sitemap kabulüyle aynı çizgide değerlendirilir.</p>
+              <div><span>Public sayfa envanteri</span><h2>Çekirdek public sayfaların CMS, SEO ve yayın kalitesi</h2></div>
+              <p>Hakkımızda dahil dokuz çekirdek public CMS sayfası tek tek izlenir. SEO görünürlüğü ile metin/yayın kalitesi ayrı değerlendirilir; canonical adresin gerçek public URL ile eşleşmesi de kayıt kalitesinin parçasıdır.</p>
             </div>
             <div className="content-metric-grid">
               <article className="content-metric-card"><span>CMS kaydı</span><strong>{publicCoverage}/{expectedCorePages}</strong><small>beklenen public sayfa</small></article>
               <article className="content-metric-card"><span>Yayında</span><strong>{publicPublished}/{expectedCorePages}</strong><small>public CMS kaydı</small></article>
               <article className="content-metric-card"><span>SEO hazır</span><strong>{publicSeoReady}/{expectedCorePages}</strong><small>title · description · canonical · index</small></article>
+              <article className="content-metric-card"><span>Kalite hazır</span><strong>{publicQualityReady}/{expectedCorePages}</strong><small>CMS kayıt kalitesi</small></article>
             </div>
             <div className="content-list" style={{ marginTop: "1rem" }}>
               {publicCmsPageCatalog.map((item) => {
                 const page = pageByContentKey.get(item.contentKey);
                 const seoReady = page ? hasCompleteSeo(page) : false;
+                const quality = page ? publicationQuality(page) : null;
                 return (
                   <div className="content-list-row" key={item.contentKey} style={{ alignItems: "flex-start", gap: "1rem" }}>
-                    <div style={{ minWidth: 120 }}>
+                    <div style={{ minWidth: 150 }}>
                       <strong>{page ? (page.status === "published" ? "YAYINDA" : page.status === "archived" ? "ARŞİV" : "TASLAK") : "EKSİK"}</strong>
                       <br />
                       <small>{page?.status === "published" ? (seoReady ? "SEO HAZIR" : "SEO KONTROL") : "CMS KAYDI"}</small>
+                      {quality ? <><br /><small>{quality.ok ? "KALİTE HAZIR" : `${quality.issues.length} KALİTE EKSİĞİ`}</small></> : null}
                     </div>
                     <div style={{ flex: 1 }}>
                       <strong>{item.label}</strong>
                       <p style={{ margin: ".35rem 0 0" }}>{item.slug}</p>
+                      {quality && !quality.ok ? (
+                        <ul style={{ margin: ".55rem 0 0", paddingLeft: "1.15rem" }}>
+                          {quality.issues.map((message, index) => <li key={`${item.contentKey}-${index}`}>{message}</li>)}
+                        </ul>
+                      ) : null}
                     </div>
                     <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
                       {page ? <Link href={`/icerik/sayfalar/${page.id}`}>Düzenle →</Link> : <Link href="/icerik/hazirlik">Eksik kaydı tamamla →</Link>}
@@ -149,27 +195,32 @@ export default async function Page() {
                       <th>URL</th>
                       <th>Durum</th>
                       <th>SEO</th>
+                      <th>Kalite</th>
                       <th>Son güncelleme</th>
                       <th>İşlem</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pages.map((page) => (
-                      <tr key={page.id}>
-                        <td><strong>{page.title}</strong></td>
-                        <td>{page.slug}</td>
-                        <td><span className={`cms-status-pill is-${page.status}`}>{page.status === "published" ? "Yayında" : page.status === "archived" ? "Arşiv" : "Taslak"}</span></td>
-                        <td><span className={`cms-status-pill ${page.noIndex ? "is-noindex" : "is-index"}`}>{page.noIndex ? "Noindex" : hasCompleteSeo(page) ? "SEO hazır" : "SEO kontrol"}</span></td>
-                        <td>{new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(page.updatedAt))}</td>
-                        <td>
-                          <div className="cms-editor-toolbar__cluster">
-                            <Link href={`/icerik/sayfalar/${page.id}`}>Düzenle →</Link>
-                            <Link href={`/icerik/onizleme/sayfa/${page.id}`}>Önizle ↗</Link>
-                            {page.status === "published" ? <Link href={page.slug} target="_blank">Canlı ↗</Link> : null}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {pages.map((page) => {
+                      const quality = publicationQuality(page);
+                      return (
+                        <tr key={page.id}>
+                          <td><strong>{page.title}</strong></td>
+                          <td>{page.slug}</td>
+                          <td><span className={`cms-status-pill is-${page.status}`}>{page.status === "published" ? "Yayında" : page.status === "archived" ? "Arşiv" : "Taslak"}</span></td>
+                          <td><span className={`cms-status-pill ${page.noIndex ? "is-noindex" : "is-index"}`}>{page.noIndex ? "Noindex" : hasCompleteSeo(page) ? "SEO hazır" : "SEO kontrol"}</span></td>
+                          <td><span className={`cms-status-pill ${quality.ok ? "is-index" : "is-noindex"}`}>{quality.ok ? "Hazır" : `${quality.issues.length} eksik`}</span></td>
+                          <td>{new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(page.updatedAt))}</td>
+                          <td>
+                            <div className="cms-editor-toolbar__cluster">
+                              <Link href={`/icerik/sayfalar/${page.id}`}>Düzenle →</Link>
+                              <Link href={`/icerik/onizleme/sayfa/${page.id}`}>Önizle ↗</Link>
+                              {page.status === "published" ? <Link href={page.slug} target="_blank">Canlı ↗</Link> : null}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

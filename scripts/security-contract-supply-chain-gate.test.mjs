@@ -161,6 +161,6 @@ test("system map exposes generic package inventory, advisory rules and manifest 
   contains(page, "İZLENEN ADVISORY PAKETLERİ", "policy rule visibility");
   contains(page, "HOSTINGER BUILD SÖZLEŞMESİ", "Hostinger deployment-build visibility");
   contains(page, "PRODUCTION MANIFEST HİJYENİ", "manifest hygiene visibility");
-  contains(page, "SÜRÜM ÇOĞALMASI", "duplicate version inventory");
+  contains(page, "SÜRÜM ÇOĞALMASI", "duplicate version visibility");
   contains(page, "TARAYICI UYUŞMAZLIKLARI", "external scanner discrepancy visibility");
 });

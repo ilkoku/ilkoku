@@ -7,6 +7,9 @@ const read = (path) => readFileSync(path, "utf8");
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
 const frameCssPath = "src/components/layout/public-site-frame.css";
+const publicPageTemplatePath = "src/components/layout/PublicPageTemplate.tsx";
+const cmsFallbackPath = "src/app/[...path]/page.tsx";
+const metadataHelperPath = "src/lib/public-page-metadata.ts";
 const backPath = "src/components/layout/PublicBackNavigation.tsx";
 const historyPath = "src/components/layout/PublicNavigationHistory.tsx";
 const rootLayoutPath = "src/app/layout.tsx";
@@ -90,6 +93,28 @@ test("all eight public trust routes mount the same shared homepage-style header"
   for (const path of trustLayoutPaths) {
     assert.match(read(path), /<PublicSiteFrame>/, `${path} must mount PublicSiteFrame`);
   }
+});
+
+test("future CMS public pages inherit one canonical frame, footer and SEO contract", () => {
+  const template = read(publicPageTemplatePath);
+  const fallback = read(cmsFallbackPath);
+  const metadata = read(metadataHelperPath);
+
+  assert.match(template, /<PublicSiteFrame>/);
+  assert.match(template, /<PublicTrustFooter\s*\/>/);
+  assert.match(template, /public-trust-footer\.css/);
+
+  assert.match(fallback, /<PublicPageTemplate>/);
+  assert.match(fallback, /createPublicPageMetadata/);
+  assert.match(fallback, /status = 'published'/);
+  assert.doesNotMatch(fallback, /<PublicSiteHeader/);
+
+  assert.match(metadata, /alternates:\s*\{ canonical: canonicalUrl \}/);
+  assert.match(metadata, /robots:/);
+  assert.match(metadata, /openGraph:/);
+  assert.match(metadata, /twitter:/);
+  assert.match(metadata, /summary_large_image/);
+  assert.match(metadata, /siteName: "İlkOku"/);
 });
 
 test("public frame owns a light fallback surface instead of exposing the dark app body", () => {

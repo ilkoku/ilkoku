@@ -126,6 +126,29 @@ test("CI and system-map generation both execute the generic supply-chain gate", 
   contains(gitignore, "/src/features/system-map/supply-chain.generated.ts", "generated report ignore rule");
 });
 
+test("CI keeps independent quality gates visible after a dependency audit failure", () => {
+  const ci = source(".github/workflows/ci.yml");
+  const independentSteps = [
+    "Audit lockfile supply-chain policy",
+    "Run lint",
+    "Run security contract tests",
+    "Build disposable MariaDB schema",
+    "Run MariaDB security integration contracts",
+    "Run release measurement report",
+    "Recover brand-new MariaDB from version-controlled baseline",
+    "Validate release measurement on recovered database",
+    "Build application",
+  ];
+
+  for (const stepName of independentSteps) {
+    contains(
+      ci,
+      "- name: " + stepName + "\n        if: ${{ !cancelled() }}",
+      stepName + " must continue unless the workflow is cancelled",
+    );
+  }
+});
+
 test("system map exposes generic package inventory, advisory rules and manifest hygiene", () => {
   const navigation = source("src/features/system-map/navigation.ts");
   const page = source("src/app/harita/tedarik-zinciri/page.tsx");
@@ -138,6 +161,6 @@ test("system map exposes generic package inventory, advisory rules and manifest 
   contains(page, "İZLENEN ADVISORY PAKETLERİ", "policy rule visibility");
   contains(page, "HOSTINGER BUILD SÖZLEŞMESİ", "Hostinger deployment-build visibility");
   contains(page, "PRODUCTION MANIFEST HİJYENİ", "manifest hygiene visibility");
-  contains(page, "SÜRÜM ÇOĞALMASI", "duplicate version visibility");
+  contains(page, "SÜRÜM ÇOĞALMASI", "duplicate version inventory");
   contains(page, "TARAYICI UYUŞMAZLIKLARI", "external scanner discrepancy visibility");
 });

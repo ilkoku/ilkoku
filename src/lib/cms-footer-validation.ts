@@ -20,6 +20,8 @@ const fixedPublicPaths = new Set([
   "/kesfet",
   "/editorler",
   "/yardim",
+  "/iletisim",
+  "/hakkimizda",
   "/giris",
   "/kayit",
   "/sifremi-unuttum",

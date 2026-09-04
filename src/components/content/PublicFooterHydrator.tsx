@@ -2,44 +2,18 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import {
+  publicLegalLinks,
+  publicPlatformLinks,
+  publicSupportLinks,
+  publicTrustLinks,
+  type PublicSiteLink,
+} from "@/lib/public-site-navigation";
 import { siteContact } from "@/lib/site-contact";
 
 type FooterContent = Record<string, string>;
 
-type FooterLink = {
-  label: string;
-  href: string;
-};
-
-const legalLinks = [
-  ["Kullanım Şartları", "/yasal/kullanim-sartlari"],
-  ["Gizlilik Politikası", "/yasal/gizlilik-politikasi"],
-  ["KVKK", "/yasal/kvkk"],
-  ["Çerez Politikası", "/yasal/cerez-politikasi"],
-  ["Telif Hakkı Politikası", "/yasal/telif-hakki-politikasi"],
-] as const;
-
-const canonicalPlatformLinks: readonly FooterLink[] = [
-  { label: "Hakkımızda", href: "/hakkimizda" },
-  { label: "Nasıl Çalışır?", href: "/nasil-calisir" },
-  { label: "Yazarlar İçin", href: "/yazarlar-icin" },
-  { label: "Editörler İçin", href: "/editorler-icin" },
-  { label: "Yayınevleri İçin", href: "/yayinevleri-icin" },
-];
-
-const canonicalTrustLinks: readonly FooterLink[] = [
-  { label: "Editoryal Standartlar", href: "/editoryal-standartlar" },
-  { label: "İçerik ve Yaş", href: "/icerik-ve-yas-politikasi" },
-  { label: "Topluluk Kuralları", href: "/topluluk-kurallari" },
-  { label: "Telif Bildirimi", href: "/telif-bildirimi" },
-];
-
-const canonicalSupportLinks: readonly FooterLink[] = [
-  { label: "Yardım Merkezi", href: "/yardim" },
-  { label: "İletişim", href: "/iletisim" },
-];
-
-const canonicalPlatformHrefs = new Set(canonicalPlatformLinks.map((link) => link.href));
+const canonicalPlatformHrefs = new Set<string>(publicPlatformLinks.map((link) => link.href));
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 function internalHref(value: string | undefined, fallback: string) {
@@ -102,11 +76,11 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
   legal.replaceChildren();
 
   const keys = ["terms", "privacy", "kvkk", "cookie", "copyright"] as const;
-  legalLinks.forEach(([defaultLabel, defaultHref], index) => {
+  publicLegalLinks.forEach((fallback, index) => {
     const key = keys[index];
     const anchor = document.createElement("a");
-    anchor.textContent = content[`${key}Label`] || defaultLabel;
-    anchor.setAttribute("href", internalHref(content[`${key}Href`], defaultHref));
+    anchor.textContent = content[`${key}Label`] || fallback.label;
+    anchor.setAttribute("href", internalHref(content[`${key}Href`], fallback.href));
     anchor.style.setProperty("display", "inline-flex", "important");
     anchor.style.setProperty("margin", "0", "important");
     anchor.style.setProperty("padding", ".12rem 0", "important");
@@ -117,7 +91,7 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
 }
 
 function resolvedPlatformLinks(content: FooterContent) {
-  return canonicalPlatformLinks.map((fallback, index) => {
+  return publicPlatformLinks.map((fallback, index) => {
     if (index === 0 || index > 3) return fallback;
 
     const slot = index;
@@ -134,7 +108,7 @@ function resolvedPlatformLinks(content: FooterContent) {
   });
 }
 
-function replaceColumnLinks(column: HTMLElement, links: readonly FooterLink[]) {
+function replaceColumnLinks(column: HTMLElement, links: readonly PublicSiteLink[]) {
   for (const anchor of Array.from(column.querySelectorAll("a"))) anchor.remove();
   for (const link of links) {
     const anchor = document.createElement("a");
@@ -170,14 +144,14 @@ function ensureTrustColumn(footer: HTMLElement) {
 function rebuildTrustColumn(footer: HTMLElement) {
   const column = ensureTrustColumn(footer);
   if (!column) return;
-  replaceColumnLinks(column, canonicalTrustLinks);
+  replaceColumnLinks(column, publicTrustLinks);
 }
 
 function rebuildSupportColumn(column: HTMLElement | undefined, content: FooterContent) {
   if (!column) return;
   const heading = column.querySelector<HTMLElement>("h3");
   if (heading) heading.textContent = content.supportTitle || "Destek";
-  replaceColumnLinks(column, canonicalSupportLinks);
+  replaceColumnLinks(column, publicSupportLinks);
 }
 
 function externalLink(href: string, label: string) {

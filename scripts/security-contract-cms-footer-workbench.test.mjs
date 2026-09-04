@@ -53,21 +53,31 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
 
 test("homepage footer keeps its brand and separates platform from trust navigation", () => {
   const homepage = source("src/app/page.tsx");
+  const liveFooter = source("src/app/onizleme/ana-sayfa-yeni/live-footer.tsx");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
+  const navigation = source("src/lib/public-site-navigation.ts");
   const styles = source("src/app/landing-footer-tight.css");
   const contract = source("src/lib/cms-footer-navigation.ts");
   const validation = source("src/lib/cms-footer-validation.ts");
 
-  has(homepage, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
+  has(homepage, "HomepageRedesignWorkspacePage", "promoted homepage composition");
+  has(liveFooter, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
+  has(liveFooter, "publicPlatformLinks", "homepage footer canonical platform source");
+  has(liveFooter, "publicTrustLinks", "homepage footer canonical trust source");
+  has(liveFooter, "publicSupportLinks", "homepage footer canonical support source");
+  has(liveFooter, "publicLegalLinks", "homepage footer canonical legal source");
   lacks(hydrator, 'footer.querySelector<HTMLElement>(".landing-logo--footer")?.remove();', "footer logo must not be removed by hydration");
-  has(hydrator, "canonicalPlatformLinks", "canonical platform navigation source");
-  has(hydrator, "canonicalTrustLinks", "canonical trust navigation source");
+  has(hydrator, "publicPlatformLinks", "canonical platform navigation source");
+  has(hydrator, "publicTrustLinks", "canonical trust navigation source");
+  has(hydrator, "publicSupportLinks", "canonical support navigation source");
+  has(hydrator, "publicLegalLinks", "canonical legal navigation source");
   has(hydrator, "ensureTrustColumn", "trust column builder");
   has(hydrator, 'heading.textContent = "Güven & Standartlar"', "trust column heading");
   has(styles, "repeat(4, minmax(6.75rem, .72fr))", "five-area desktop footer grid");
   has(styles, "@media (max-width: 27rem)", "single-column narrow mobile footer guard");
 
   for (const href of [
+    "/hakkimizda",
     "/nasil-calisir",
     "/yazarlar-icin",
     "/editorler-icin",
@@ -76,8 +86,15 @@ test("homepage footer keeps its brand and separates platform from trust navigati
     "/icerik-ve-yas-politikasi",
     "/topluluk-kurallari",
     "/telif-bildirimi",
+    "/yardim",
+    "/iletisim",
+    "/yasal/kullanim-sartlari",
+    "/yasal/gizlilik-politikasi",
+    "/yasal/kvkk",
+    "/yasal/cerez-politikasi",
+    "/yasal/telif-hakki-politikasi",
   ]) {
-    has(hydrator, `href: "${href}"`, `${href} homepage footer link`);
+    has(navigation, `href: "${href}"`, `${href} canonical public navigation manifest link`);
     has(validation, `"${href}"`, `${href} authoritative footer validation route`);
   }
 
@@ -100,6 +117,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     "src/app/yayinevleri-icin/page.tsx",
   ];
   const footer = source("src/components/content/PublicTrustFooter.tsx");
+  const navigation = source("src/lib/public-site-navigation.ts");
   const styles = source("src/app/nasil-calisir/public-trust-footer.css");
   const layout = source("src/app/layout.tsx");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
@@ -111,7 +129,13 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     has(page, "<PublicTrustFooter />", `${path} canonical footer render`);
   }
 
+  has(footer, "publicPlatformLinks", "trust footer canonical platform source");
+  has(footer, "publicTrustLinks", "trust footer canonical trust source");
+  has(footer, "publicSupportLinks", "trust footer canonical support source");
+  has(footer, "publicLegalLinks", "trust footer canonical legal source");
+
   for (const href of [
+    "/hakkimizda",
     "/nasil-calisir",
     "/yazarlar-icin",
     "/editorler-icin",
@@ -120,13 +144,15 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     "/icerik-ve-yas-politikasi",
     "/topluluk-kurallari",
     "/telif-bildirimi",
+    "/yardim",
+    "/iletisim",
     "/yasal/kullanim-sartlari",
     "/yasal/gizlilik-politikasi",
     "/yasal/kvkk",
     "/yasal/cerez-politikasi",
     "/yasal/telif-hakki-politikasi",
   ]) {
-    has(footer, `href: "${href}"`, `${href} canonical public trust footer link`);
+    has(navigation, `href: "${href}"`, `${href} canonical public navigation manifest link`);
   }
 
   has(footer, "İlk cümle, ilk okurun,", "homepage footer slogan lead");

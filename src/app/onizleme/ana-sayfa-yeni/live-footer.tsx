@@ -3,6 +3,12 @@ import Link from "next/link";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { logoutAction } from "@/features/auth/actions";
+import {
+  publicLegalLinks,
+  publicPlatformLinks,
+  publicSupportLinks,
+  publicTrustLinks,
+} from "@/lib/public-site-navigation";
 import { siteContact } from "@/lib/site-contact";
 
 import "./live-footer.css";
@@ -48,19 +54,12 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, slogan, co
 
           <div>
             <h3>Platform</h3>
-            <Link href="/hakkimizda">Hakkımızda</Link>
-            <Link href="/nasil-calisir">Nasıl Çalışır?</Link>
-            <Link href="/yazarlar-icin">Yazarlar İçin</Link>
-            <Link href="/editorler-icin">Editörler İçin</Link>
-            <Link href="/yayinevleri-icin">Yayınevleri İçin</Link>
+            {publicPlatformLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
           </div>
 
           <div className="landing-footer__trust">
             <h3>Güven &amp; Standartlar</h3>
-            <Link href="/editoryal-standartlar">Editoryal Standartlar</Link>
-            <Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş</Link>
-            <Link href="/topluluk-kurallari">Topluluk Kuralları</Link>
-            <Link href="/telif-bildirimi">Telif Bildirimi</Link>
+            {publicTrustLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
           </div>
 
           <div>
@@ -78,8 +77,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, slogan, co
 
           <div>
             <h3>Destek</h3>
-            <Link href="/yardim">Yardım Merkezi</Link>
-            <Link href="/iletisim">İletişim</Link>
+            {publicSupportLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
             <div className="site-contact-footer">
               <a className="site-contact-footer__email" href={`mailto:${siteContact.generalEmail}`}>{siteContact.generalEmail}</a>
               <div className="site-social-links" aria-label="İlkOku sosyal medya hesapları">
@@ -92,11 +90,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, slogan, co
         <div className="landing-footer__copyright">
           <span className="landing-footer__copyright-text">{copyright}</span>
           <nav className="landing-footer__legal" aria-label="Yasal bağlantılar">
-            <Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link>
-            <Link href="/yasal/gizlilik-politikasi">Gizlilik Politikası</Link>
-            <Link href="/yasal/kvkk">KVKK</Link>
-            <Link href="/yasal/cerez-politikasi">Çerez Politikası</Link>
-            <Link href="/yasal/telif-hakki-politikasi">Telif Hakkı Politikası</Link>
+            {publicLegalLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
           </nav>
         </div>
       </footer>

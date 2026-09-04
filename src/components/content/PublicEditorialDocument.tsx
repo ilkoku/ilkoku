@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import "./public-editorial-document.css";
+
 type PublicEditorialDocumentProps = {
   eyebrow: string;
   title: string;
@@ -140,15 +142,15 @@ export function PublicEditorialDocument({
   const updatedLabel = formatUpdatedAt(updatedAt);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-[#faf9ff] to-[#f4f1ff] px-4 py-6 text-[#171426] sm:px-6 sm:py-10 lg:py-14">
+    <main className="public-editorial-document min-h-screen bg-gradient-to-b from-white via-[#faf9ff] to-[#f4f1ff] px-4 py-6 text-[#171426] sm:px-6 sm:py-10 lg:py-14">
       <div className="mx-auto w-full max-w-5xl">
-        <nav aria-label="Sayfa yolu" className="mb-10 flex flex-wrap items-center justify-between gap-4 text-sm sm:mb-14">
+        <nav aria-label="Sayfa yolu" className="public-editorial-document__path mb-10 flex flex-wrap items-center justify-between gap-4 text-sm sm:mb-14">
           <Link className="font-extrabold tracking-[-0.02em] text-[#5b35dd] no-underline" href="/">İlkOku</Link>
           <Link className="font-semibold text-[#5d566f] no-underline transition hover:text-[#4b2dbf]" href={backHref}>← {backLabel}</Link>
         </nav>
 
         <article>
-          <header className="mx-auto mb-8 max-w-4xl text-center sm:mb-10">
+          <header className="public-editorial-document__hero mx-auto mb-8 max-w-4xl text-center sm:mb-10">
             <span className="inline-flex items-center rounded-full border border-[#6847e8]/15 bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#5b35dd] shadow-sm">
               {eyebrow}
             </span>
@@ -159,13 +161,13 @@ export function PublicEditorialDocument({
             {updatedLabel ? <p className="mt-5 text-xs font-medium text-[#8a8499]">Son güncelleme: {updatedLabel}</p> : null}
           </header>
 
-          <section className="relative overflow-hidden rounded-[1.75rem] border border-[#6847e8]/12 bg-white/90 p-6 shadow-[0_1.5rem_4rem_rgba(48,32,112,0.08)] sm:p-10 lg:p-14">
+          <section className="public-editorial-document__paper relative overflow-hidden rounded-[1.75rem] border border-[#6847e8]/12 bg-white/90 p-6 shadow-[0_1.5rem_4rem_rgba(48,32,112,0.08)] sm:p-10 lg:p-14">
             <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#6847e8]/65 to-transparent" />
             <EditorialBody body={body} />
           </section>
 
           {relatedLinks.length > 0 ? (
-            <aside className="mt-8 sm:mt-10" aria-labelledby="related-public-links">
+            <aside className="public-editorial-document__related mt-8 sm:mt-10" aria-labelledby="related-public-links">
               <h2 className="text-center text-2xl font-semibold tracking-[-0.025em] text-[#17142f]" id="related-public-links">
                 İlkOku içinde devam et
               </h2>
@@ -181,7 +183,7 @@ export function PublicEditorialDocument({
           ) : null}
 
           <div className="mt-8 flex justify-center sm:mt-10">
-            <Link className="inline-flex items-center rounded-full border border-[#6847e8]/18 bg-white px-5 py-3 text-sm font-semibold text-[#4b2dbf] no-underline shadow-sm transition hover:-translate-y-0.5 hover:border-[#6847e8]/35 hover:shadow-md" href={backHref}>
+            <Link className="public-editorial-document__return inline-flex items-center rounded-full border border-[#6847e8]/18 bg-white px-5 py-3 text-sm font-semibold text-[#4b2dbf] no-underline shadow-sm transition hover:-translate-y-0.5 hover:border-[#6847e8]/35 hover:shadow-md" href={backHref}>
               ← {backLabel}
             </Link>
           </div>

@@ -21,6 +21,19 @@ const expectedCodes = [
   "LIB_PUBLICATION_INTENT_PUBLISHER",
 ];
 
+const policyAlignmentMigrationPath =
+  "prisma/migrations/20260905053500_contract_product_policy_text_alignment/migration.sql";
+const policyAlignedCodes = [
+  "LIB_GENERAL_NDA",
+  "LIB_WRITER_EDITOR_REVIEW",
+  "LIB_EDITOR_REVIEW_ETHICS",
+  "LIB_EDITOR_CANDIDATE_NDA",
+  "LIB_PUBLISHER_DISCOVERY_NDA",
+  "LIB_PUBLISHER_TEAM_CONFIDENTIALITY",
+  "LIB_PUBLICATION_INTENT_WRITER",
+  "LIB_PUBLICATION_INTENT_PUBLISHER",
+];
+
 test("review readiness registry classifies every canonical LIB template and resolves owner decisions without activating anything", () => {
   const registry = source("src/features/contracts/review-readiness.ts");
 
@@ -67,4 +80,60 @@ test("system map includes review readiness and legal handoff while preserving in
   contains(map, "gerçek hukukçu kontrolü", "legal approval remains external boundary");
   contains(map, "nihai yayın hakları sözleşmesi", "final publishing rights boundary");
   contains(map, "Final Release UAT #263", "human UAT boundary");
+});
+
+test("resolved owner decisions are applied to the eight affected managed template texts only", () => {
+  const migration = source(policyAlignmentMigrationPath);
+
+  for (const code of policyAlignedCodes) {
+    contains(migration, `WHERE \`code\` = '${code}'`, `policy alignment ${code}`);
+  }
+  contains(
+    migration,
+    "LIB_WRITER_PLATFORM_LICENSE ürün kararlarından etkilenmediği için v1 olarak bırakılır",
+    "unaffected platform-license boundary",
+  );
+  notContains(migration, "WHERE `code` = 'SOFT_", "soft source records must not be mutated");
+  notContains(migration, "UPDATE `UserContract`", "immutable sent snapshots must not be updated");
+  notContains(migration, "DELETE FROM `UserContract`", "immutable sent snapshots must not be deleted");
+
+  contains(migration, "beş (5) yıl", "five-year ordinary confidentiality term");
+  contains(migration, "sır niteliğini koruduğu sürece zaman sınırı olmaksızın", "indefinite protected-information term");
+  contains(migration, "ikinci editör kendi bağımsız değerlendirmesini tamamlayana kadar", "independent second-editor visibility boundary");
+  contains(migration, "ikinci editör bağımsız incelemeye başlamadan önce", "writer withdrawal boundary");
+  contains(migration, "yetki kontrollü yönetici arşivinde bulunan kurumsal kopya", "publisher manager archive retention");
+  contains(migration, "otuz (30) gün", "thirty-day no-shop term");
+  contains(migration, "altmış (60) gün", "sixty-day intent validity");
+  contains(migration, "resmi yayın niyetini sistemde kayıt altına alır", "publisher formal intent record");
+  contains(migration, "aynı süre politikasını kullanır", "writer/publisher matching intent policy");
+
+  assert.equal((migration.match(/`version` = 2/g) ?? []).length, policyAlignedCodes.length);
+  assert.equal((migration.match(/`active` = false/g) ?? []).length, policyAlignedCodes.length);
+  assert.equal((migration.match(/`lifecycleStatus` = 'draft'/g) ?? []).length, policyAlignedCodes.length);
+  assert.equal((migration.match(/`approvedById` = NULL/g) ?? []).length, policyAlignedCodes.length);
+  assert.equal((migration.match(/`approvedAt` = NULL/g) ?? []).length, policyAlignedCodes.length);
+  assert.equal((migration.match(/`activatedAt` = NULL/g) ?? []).length, policyAlignedCodes.length);
+  notContains(migration, "`active` = true", "policy alignment must never activate a template");
+  notContains(migration, "`lifecycleStatus` = 'approved'", "policy alignment must never approve a template");
+  notContains(migration, "`lifecycleStatus` = 'active'", "policy alignment must never activate lifecycle");
+});
+
+test("fresh recovery validates exact policy-aligned template state before build", () => {
+  const validator = source("scripts/validate-contract-policy-text-alignment.mjs");
+  const ci = source(".github/workflows/ci.yml");
+  const map = source("src/app/harita/sozlesmeler/page.tsx");
+
+  contains(validator, "LIB_GENERAL_NDA", "validator canonical template inventory");
+  contains(validator, "LIB_PUBLICATION_INTENT_PUBLISHER", "validator publication-intent coverage");
+  contains(validator, "expectedMarkers", "validator body marker checks");
+  contains(validator, "Number(row.version) !== expected.version", "validator version check");
+  contains(validator, "row.lifecycleStatus !== expected.lifecycleStatus", "validator lifecycle check");
+  contains(validator, "active !== expected.active", "validator active-state check");
+  contains(ci, "Validate contract policy text on recovered database", "post-recovery CI validation step");
+  contains(ci, "node scripts/validate-contract-policy-text-alignment.mjs", "post-recovery validator command");
+
+  contains(map, "Ürün kararlarının çalışma metinlerine yansıtılması", "contract map policy alignment stage");
+  contains(map, "20260905053500_contract_product_policy_text_alignment", "migration evidence in map");
+  contains(map, "8 etkilenen LIB şablonu", "affected-template count in map");
+  contains(map, "aynı templateVersion", "legal review exact-version boundary retained");
 });

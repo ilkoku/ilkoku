@@ -131,6 +131,12 @@ jobs:
           DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
         run: npm run release:measure:strict
 
+      - name: Validate contract policy text on recovered database
+        if: ${{ !cancelled() }}
+        env:
+          DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
+        run: node scripts/validate-contract-policy-text-alignment.mjs
+
       - name: Build application
         if: ${{ !cancelled() }}
         shell: bash

@@ -27,8 +27,14 @@ const completedStages = [
     evidence: "review-readiness.ts · ContractLegalReviewPrintButton · LIB_* readiness registry",
   },
   {
+    title: "Ürün kararlarının çalışma metinlerine yansıtılması",
+    description: "Çözülmüş ürün kararları 8 etkilenen LIB şablonunun gerçek çalışma metnine uygulanır: gizlilik süresi, editör görünürlüğü/geri çekme sınırı, yayınevi offboarding arşivi ve yayın niyetindeki 30 günlük no-shop + 60 günlük geçerlilik. Kaynak SOFT kayıtlar ve gönderilmiş snapshotlar değişmez; şablonlar v2 draft/passive kalır.",
+    routes: ["/sozlesme/sablonlar", "/sozlesme/hukuk-inceleme"],
+    evidence: "20260905053500_contract_product_policy_text_alignment · 8 etkilenen LIB şablonu · v2 · active=false",
+  },
+  {
     title: "Sürüme bağlı hukukçu inceleme kanıtı",
-    description: "Şablon İncelemede aşamasındayken hukukçu/inceleyen ve sonuç notu mevcut templateVersion'a append-only kanıt olarak kaydedilir. Aynı sürümde legal_review kanıtı yoksa review → approved geçişi transaction içinde reddedilir; metin değişirse eski kanıt yeni sürüme taşınmaz.",
+    description: "Şablon İncelemede aşamasındayken hukukçu/inceleyen ve sonuç notu mevcut templateVersion'a append-only kanıt olarak kaydedilir. Aynı templateVersion için legal_review kanıtı yoksa review → approved geçişi transaction içinde reddedilir; metin değişirse eski kanıt yeni sürüme taşınmaz.",
     routes: ["/sozlesme/sablonlar/[templateId]"],
     evidence: "ContractTemplateReviewEvidence · review-evidence.ts · review_evidence_required",
   },
@@ -66,7 +72,7 @@ const completedStages = [
 
 const remainingItems = [
   "Her operasyon şablonunun gerçek hukukçu kontrolü; sonuç aynı templateVersion için kanıt olarak kaydedilmeden Onaylı durumuna geçilemez.",
-  "Yayın niyeti şablonları ürün politikası tanımlı olsa da şimdilik pasif kalır ve ayrıca aktivasyon kararı verilmeden gönderime açılmaz.",
+  "Yayın niyeti şablonları ürün politikası çalışma metnine yansıtılmış olsa da şimdilik pasif kalır ve ayrıca aktivasyon kararı verilmeden gönderime açılmaz.",
   "Yazar–Yayınevi nihai yayın hakları sözleşmesi: ticari hak modeli kesinleşmeden bağlayıcı metin üretilmeyecek.",
   "Final Release UAT #263 sözleşme satırları: yalnız gerçek authenticated insan testiyle HUMAN_PASS olabilir.",
 ] as const;

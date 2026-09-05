@@ -294,11 +294,11 @@ jobs:
               && check_post_merge_body_contains "https://ilkoku.com/sitemap.xml" \
                 "https://ilkoku.com/nasil-calisir" \
               && check_post_merge_body_excludes "https://ilkoku.com/sitemap.xml" \
-                "https://ilkoku.com/eserler" \
-                "https://ilkoku.com/eserler/yeni" \
-                "https://ilkoku.com/eserler/guncellenen" \
-                "https://ilkoku.com/yazarlar" \
-                "https://ilkoku.com/turler" \
+                "<loc>https://ilkoku.com/eserler</loc>" \
+                "<loc>https://ilkoku.com/eserler/yeni</loc>" \
+                "<loc>https://ilkoku.com/eserler/guncellenen</loc>" \
+                "<loc>https://ilkoku.com/yazarlar</loc>" \
+                "<loc>https://ilkoku.com/turler</loc>" \
               && check_post_merge_public_route "https://ilkoku.com/eserler/yeni" "404" \
               && check_post_merge_public_route "https://ilkoku.com/eserler/guncellenen" "404" \
               && check_post_merge_public_route "https://ilkoku.com/yazarlar" "404" \

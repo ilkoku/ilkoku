@@ -1,0 +1,41 @@
+name: Lockfile refresh
+
+on:
+  pull_request:
+    paths:
+      - package.json
+      - package-lock.json
+      - .github/workflows/lockfile-refresh.yml
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    name: Regenerate npm lockfile
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Regenerate package-lock
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Verify high-severity audit
+        run: node scripts/audit-high-dependencies.mjs
+
+      - name: Upload refreshed lockfile
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: refreshed-package-lock
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 1

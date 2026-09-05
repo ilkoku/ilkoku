@@ -83,6 +83,33 @@ jobs:
             rm -f "$body"
           }
 
+          check_body_excludes() {
+            local url="$1"
+            shift
+            local body
+            local code
+            local forbidden
+
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            mark_edge_block "$code"
+            printf '%s -> HTTP %s\n' "$url" "$code"
+            if [[ "$code" != "200" ]]; then
+              rm -f "$body"
+              return 1
+            fi
+
+            for forbidden in "$@"; do
+              if grep -Fq "$forbidden" "$body"; then
+                printf 'Beklenmeyen içerik: %s -> %s\n' "$url" "$forbidden" >&2
+                rm -f "$body"
+                return 1
+              fi
+            done
+
+            rm -f "$body"
+          }
+
           check_protected_route() {
             local url="$1"
             local headers
@@ -156,6 +183,13 @@ jobs:
               return 0
             fi
             check_body_contains "$@"
+          }
+
+          check_post_merge_body_excludes() {
+            if ! is_post_merge_main_push; then
+              return 0
+            fi
+            check_body_excludes "$@"
           }
 
           check_post_merge_cms_surface() {
@@ -233,7 +267,7 @@ jobs:
               && check_public_route "https://ilkoku.com/yardim" "200" \
               && check_public_route "https://ilkoku.com/editorler" "200" \
               && check_public_route "https://ilkoku.com/iletisim" "200" \
-              && check_post_merge_public_route "https://ilkoku.com/eserler" "200" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler" "404" \
               && check_public_route "https://ilkoku.com/yasal/kullanim-sartlari" "200" \
               && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
               && check_public_route "https://ilkoku.com/yasal/kvkk" "200" \
@@ -258,22 +292,18 @@ jobs:
                 "E-posta" \
                 "Mesaj" \
               && check_post_merge_body_contains "https://ilkoku.com/sitemap.xml" \
+                "https://ilkoku.com/nasil-calisir" \
+              && check_post_merge_body_excludes "https://ilkoku.com/sitemap.xml" \
                 "https://ilkoku.com/eserler" \
                 "https://ilkoku.com/eserler/yeni" \
                 "https://ilkoku.com/eserler/guncellenen" \
                 "https://ilkoku.com/yazarlar" \
                 "https://ilkoku.com/turler" \
-                "https://ilkoku.com/nasil-calisir" \
-              && check_post_merge_body_contains "https://ilkoku.com/eserler" \
-                "KEŞFE AÇIK ESER KÜTÜPHANESİ" \
-                "Yeni yayımlananlar" \
-                "Son güncellenenler" \
-                "Yazarlar" \
-                "Türler" \
-              && check_post_merge_public_route "https://ilkoku.com/eserler/yeni" "200" \
-              && check_post_merge_public_route "https://ilkoku.com/eserler/guncellenen" "200" \
-              && check_post_merge_public_route "https://ilkoku.com/yazarlar" "200" \
-              && check_post_merge_public_route "https://ilkoku.com/turler" "200" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler/yeni" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler/guncellenen" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/yazarlar" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/turler" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler/rss.xml" "404" \
               && check_post_merge_public_route "https://ilkoku.com/nasil-calisir" "200" \
               && check_post_merge_body_contains "https://ilkoku.com/nasil-calisir" \
                 "Eser İlkOku'da nasıl ilerler?" \
@@ -281,9 +311,6 @@ jobs:
                 "Eser Pasaportu" \
               && check_post_merge_redirect_route "https://ilkoku.com/rehber" "/nasil-calisir" \
               && check_post_merge_redirect_route "https://ilkoku.com/rehber/ilk-eseri-yayinlama-rehberi" "/nasil-calisir" \
-              && check_post_merge_body_contains "https://ilkoku.com/eserler/rss.xml" \
-                "<rss version=" \
-                "İlkOku — Keşfe Açık Eserler" \
               && check_post_merge_public_route "https://ilkoku.com/editorler/merve-kaya" "404" \
               && check_post_merge_public_route "https://ilkoku.com/editorler/baris-erdem" "404" \
               && check_post_merge_public_route "https://ilkoku.com/editorler/derya-unal" "404" \
@@ -318,7 +345,7 @@ jobs:
               && check_protected_route "https://ilkoku.com/yayinevi/editor-talepleri" \
               && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
               && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production public/private route paketi, bildirim yüzeyleri, writer/publisher/editor kritik rotaları, sitemap/robots ve 20 ana CMS rotası doğrulandı."
+              echo "PASS: Production public/private route paketi, pasif public keşif yüzeyleri, bildirim yüzeyleri, writer/publisher/editor kritik rotaları, sitemap/robots ve 20 ana CMS rotası doğrulandı."
               exit 0
             fi
 

@@ -199,7 +199,7 @@ test("public work detail and related reads reject inactive author surfaces", () 
   );
 });
 
-test("landing, sitemap and production smoke form one public discovery graph", () => {
+test("landing, sitemap and production smoke preserve paused public discovery inventory without exposing it", () => {
   const homepage = source("src/app/page.tsx");
   const homepageExperience = source(
     "src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx",
@@ -245,17 +245,27 @@ test("landing, sitemap and production smoke form one public discovery graph", ()
     '|| "/eserler"',
     "homepage discovery fallback",
   );
+  contains(
+    publicNavigation,
+    "export const publicDiscoveryNavigationEnabled = false",
+    "public discovery navigation pause flag",
+  );
   for (const route of ["/eserler", "/yazarlar", "/turler", "/nasil-calisir"]) {
     contains(
       publicNavigation,
       `href: "${route}"`,
-      `canonical public discovery link ${route}`,
+      `reserved public discovery link ${route}`,
     );
   }
   contains(
     sitemap,
     'url: `${baseUrl}/eserler`',
-    "catalog sitemap entry",
+    "catalog sitemap inventory entry",
+  );
+  contains(
+    sitemap,
+    "...(publicDiscoveryEnabled ? publicDiscoveryStaticEntries : [])",
+    "paused discovery sitemap gate",
   );
   contains(
     sitemap,
@@ -277,25 +287,43 @@ test("landing, sitemap and production smoke form one public discovery graph", ()
     "const now = new Date()",
     "request-time static lastModified",
   );
+  for (const route of [
+    "https://ilkoku.com/eserler",
+    "https://ilkoku.com/eserler/yeni",
+    "https://ilkoku.com/eserler/guncellenen",
+    "https://ilkoku.com/yazarlar",
+    "https://ilkoku.com/turler",
+  ]) {
+    contains(
+      smoke,
+      `check_post_merge_public_route "${route}" "404"`,
+      `paused production route check ${route}`,
+    );
+  }
   contains(
     smoke,
-    'check_post_merge_public_route "https://ilkoku.com/eserler" "200"',
-    "catalog production route check",
+    'check_post_merge_public_route "https://ilkoku.com/eserler/rss.xml" "404"',
+    "paused catalog RSS route check",
   );
   contains(
     smoke,
-    '"https://ilkoku.com/eserler"',
-    "catalog sitemap production check",
+    'check_post_merge_body_excludes "https://ilkoku.com/sitemap.xml"',
+    "paused discovery sitemap exclusion check",
+  );
+  notContains(
+    smoke,
+    'check_post_merge_public_route "https://ilkoku.com/eserler" "200"',
+    "retired catalog production 200 expectation",
   );
   contains(
     bookPage,
     'return "/eserler"',
-    "public book fallback",
+    "public book fallback inventory",
   );
   contains(
     showcase,
     'returnTo = "/eserler"',
-    "public showcase fallback",
+    "public showcase fallback inventory",
   );
   notContains(
     nextConfig,

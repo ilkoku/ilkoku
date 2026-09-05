@@ -247,8 +247,13 @@ test("landing, sitemap and production smoke preserve paused public discovery inv
   );
   contains(
     publicNavigation,
-    "export const publicDiscoveryNavigationEnabled = false",
-    "public discovery navigation pause flag",
+    "export const publicDiscoveryEnabled = false",
+    "shared public discovery pause flag",
+  );
+  contains(
+    publicNavigation,
+    "export const publicDiscoveryNavigationEnabled = publicDiscoveryEnabled",
+    "navigation consumes shared public discovery flag",
   );
   for (const route of ["/eserler", "/yazarlar", "/turler", "/nasil-calisir"]) {
     contains(

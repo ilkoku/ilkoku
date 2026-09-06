@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { saveCmsPageAction } from "@/features/cms/page-actions";
 import { cmsPageTemplates, getCmsPageTemplate, type CmsPageTemplateKey } from "@/lib/cms-page-templates";
@@ -144,7 +145,7 @@ export function CmsPageTemplateBuilder() {
       </div>
 
       <div className="cms-editor-savebar">
-        <a href="/icerik/sayfalar">← Sayfa listesi</a>
+        <Link href="/icerik/sayfalar">← Sayfa listesi</Link>
         <div className="cms-editor-savebar__actions">
           <button type="submit">Şablondan taslak oluştur</button>
         </div>

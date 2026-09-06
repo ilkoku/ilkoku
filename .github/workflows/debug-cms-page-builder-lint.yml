@@ -1,0 +1,37 @@
+name: Temporary CMS lint diagnostics
+
+on:
+  push:
+    branches:
+      - feature/cms-site-identity-page-templates
+
+permissions:
+  contents: read
+
+jobs:
+  lint-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Capture lint diagnostics
+        shell: bash
+        run: |
+          set +e
+          npm run lint 2>&1 | tee lint-diagnostics.log
+          echo "${PIPESTATUS[0]}" > lint-exit-code.txt
+          exit 0
+      - name: Upload lint diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: cms-page-builder-lint-diagnostics
+          path: |
+            lint-diagnostics.log
+            lint-exit-code.txt
+          if-no-files-found: error
+          retention-days: 1

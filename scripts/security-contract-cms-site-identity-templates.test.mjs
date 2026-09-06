@@ -30,21 +30,38 @@ test("site identity is admin-only, fail-safe and restricted to published CMS med
   notContains(actions, "https://", "site identity must not accept arbitrary remote logo source");
 });
 
-test("page template builder only creates drafts through the canonical CMS page action", () => {
+test("visual page builder reuses canonical CMS authority and validates structured blocks", () => {
   const page = source("src/app/icerik/sayfalar/sablonlar/page.tsx");
-  const builder = source("src/components/content/CmsPageTemplateBuilder.tsx");
+  const builder = source("src/components/content/CmsVisualPageBuilder.tsx");
+  const blocks = source("src/lib/cms-page-blocks.ts");
+  const actions = source("src/features/cms/page-actions.ts");
+  const publicRoute = source("src/app/[...path]/page.tsx");
+  const visualRoute = source("src/app/icerik/sayfalar/[id]/tasarla/page.tsx");
   const templates = source("src/lib/cms-page-templates.ts");
   const modules = source("src/lib/cms-modules.ts");
 
-  contains(page, 'requireCmsManager("/icerik/sayfalar/sablonlar")', "page template manager boundary");
+  contains(page, 'requireCmsManager("/icerik/sayfalar/sablonlar")', "visual builder manager boundary");
+  contains(visualRoute, 'requireCmsManager(`/icerik/sayfalar/${id}/tasarla`)', "existing visual page manager boundary");
   contains(builder, "action={saveCmsPageAction}", "canonical page save action reuse");
-  contains(builder, 'name="mode" value="draft"', "template creation draft-only mode");
-  notContains(builder, 'name="mode" value="publish"', "template builder must not expose publish mode");
-  notContains(builder, "requireCmsPublisher", "template builder must not invent publisher authority");
+  contains(builder, 'name="blocksJson"', "structured block payload");
+  contains(builder, 'name="mode"', "canonical save mode control");
+  contains(builder, "canPublish ?", "client publish button is capability-gated");
+  contains(actions, 'requestedMode === "publish"', "server publish mode detection");
+  contains(actions, 'requireCmsPublisher("/icerik/sayfalar")', "server publisher authority");
+  contains(actions, "parseCmsPageBlocksJson", "server structured block parsing");
+  contains(actions, "requirePublishedBlockMedia", "server block media revalidation");
+  contains(actions, "cmsPageBlocksToPlainText", "quality-gate text derivation from blocks");
+  contains(blocks, "normalizeCmsPageBlocks", "block allow-list normalizer");
+  contains(blocks, 'url.startsWith("/api/media/")', "block media local CMS restriction");
+  notContains(blocks, "dangerouslySetInnerHTML", "visual blocks must not inject arbitrary HTML");
+  contains(publicRoute, "<PublicCmsPageBlocks", "public visual block renderer");
   contains(templates, 'key: "kurumsal"', "corporate template");
   contains(templates, 'key: "surec"', "process template");
   contains(templates, 'key: "rol"', "role template");
   contains(templates, 'key: "bilgi"', "information template");
+  for (const type of ["hero", "text", "image", "split", "cards", "cta", "steps", "stats", "quote", "faq", "gallery", "table", "divider"]) {
+    contains(blocks, `| \"${type}\"`, `${type} block contract`);
+  }
   contains(modules, 'href: "/icerik/site-kimligi"', "site identity CMS navigation");
-  contains(modules, 'href: "/icerik/sayfalar/sablonlar"', "page templates CMS navigation");
+  contains(modules, 'href: "/icerik/sayfalar/sablonlar"', "visual page builder CMS navigation");
 });

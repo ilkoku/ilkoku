@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
+import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { PublicEditorialDocument } from "@/components/content/PublicEditorialDocument";
 import { PublicPageTemplate } from "@/components/layout/PublicPageTemplate";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import { normalizeCmsRedirectPath, parseCmsRedirectValue } from "@/lib/cms-redirects";
 import { prisma } from "@/lib/prisma";
+import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 type RedirectRow = { valueJson: string };
 type PublicPageRow = {
@@ -66,18 +68,25 @@ export default async function CmsPageOrRedirectFallback({ params }: PageProps) {
   const page = await loadPublicPage(source);
 
   if (page) {
-    const content = parseCmsPageBody(page.bodyJson);
+    const [content, identity] = await Promise.all([
+      Promise.resolve(parseCmsPageBody(page.bodyJson)),
+      getPublicSiteIdentity(),
+    ]);
     return (
       <PublicPageTemplate>
-        <PublicEditorialDocument
-          eyebrow="İlkOku"
-          title={page.title}
-          summary={content.summary}
-          body={content.body}
-          backHref="/"
-          backLabel="Ana sayfa"
-          updatedAt={page.updatedAt}
-        />
+        {content.blocks.length > 0 ? (
+          <PublicCmsPageBlocks blocks={content.blocks} eyebrow={identity.defaultEyebrow} pageTitle={page.title} summary={content.summary} />
+        ) : (
+          <PublicEditorialDocument
+            eyebrow={identity.defaultEyebrow}
+            title={page.title}
+            summary={content.summary}
+            body={content.body}
+            backHref="/"
+            backLabel="Ana sayfa"
+            updatedAt={page.updatedAt}
+          />
+        )}
       </PublicPageTemplate>
     );
   }

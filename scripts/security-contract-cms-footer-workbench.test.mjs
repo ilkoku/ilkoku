@@ -118,6 +118,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     "src/app/yayinevleri-icin/page.tsx",
   ];
   const footer = source("src/components/content/PublicTrustFooter.tsx");
+  const identity = source("src/lib/site-identity.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
   const styles = source("src/app/nasil-calisir/public-trust-footer.css");
   const layout = source("src/app/layout.tsx");
@@ -156,8 +157,11 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     has(navigation, `href: "${href}"`, `${href} canonical public navigation manifest link`);
   }
 
-  has(footer, "İlk cümle, ilk okurun,", "homepage footer slogan lead");
-  has(footer, "ilk adımın.", "homepage footer slogan emphasis");
+  has(footer, "getPublicSiteIdentity()", "trust footer centralized site identity source");
+  has(footer, "identity.footerTaglineLead", "trust footer managed slogan lead");
+  has(footer, "identity.footerTaglineEmphasis", "trust footer managed slogan emphasis");
+  has(identity, 'footerTaglineLead: "İlk cümle, ilk okurun,"', "default footer slogan lead");
+  has(identity, 'footerTaglineEmphasis: "ilk adımın."', "default footer slogan emphasis");
   has(footer, "Güven &amp; Standartlar", "trust column heading");
   has(footer, "Hesap", "account column heading");
   has(footer, "Destek", "support column heading");

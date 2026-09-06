@@ -4,6 +4,12 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
+import {
+  cmsPageBlockImageUrls,
+  cmsPageBlocksToPlainText,
+  parseCmsPageBlocksJson,
+  type CmsPageBlock,
+} from "@/lib/cms-page-blocks";
 import { deleteCmsDraft, getCmsDraftState, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
 import { evaluateCmsPagePublishQuality } from "@/lib/cms-page-quality";
 import { cmsPageContentKey, cmsPagePublicPath, normalizeCmsPageSlug } from "@/lib/cms-pages";
@@ -15,6 +21,8 @@ type ExistingPage = {
   slug: string;
   status: "draft" | "published" | "archived";
 };
+
+type MediaRow = { valueJson: string };
 
 async function addRevision(pageId: string, userId: string, snapshot: Record<string, unknown>) {
   const rows = await prisma.$queryRaw<Array<{ version: number | bigint }>>`
@@ -35,6 +43,28 @@ async function requireHealthyPageDraft(pageId: string) {
   return state;
 }
 
+async function requirePublishedBlockMedia(blocks: readonly CmsPageBlock[]) {
+  const requested = cmsPageBlockImageUrls(blocks);
+  if (requested.length === 0) return;
+  const rows = await prisma.$queryRaw<MediaRow[]>`
+    SELECT valueJson
+    FROM SiteContent
+    WHERE namespace = 'media' AND status = 'published'
+    ORDER BY updatedAt DESC
+    LIMIT 600
+  `;
+  const allowed = new Set<string>();
+  for (const row of rows) {
+    try {
+      const value = JSON.parse(row.valueJson) as Record<string, unknown>;
+      if (value.kind === "image" && typeof value.url === "string" && value.url.startsWith("/api/media/")) allowed.add(value.url);
+    } catch {
+      // Invalid media records are ignored instead of widening the allow-list.
+    }
+  }
+  if (requested.some((url) => !allowed.has(url))) throw new Error("Sayfa bloğunda yayınlanmamış medya kullanılamaz.");
+}
+
 function refreshCmsPage(id?: string, slug?: string) {
   revalidatePath("/icerik");
   revalidatePath("/icerik/sayfalar");
@@ -43,10 +73,15 @@ function refreshCmsPage(id?: string, slug?: string) {
   revalidatePath("/icerik/gecmis");
   if (id) {
     revalidatePath(`/icerik/sayfalar/${id}`);
+    revalidatePath(`/icerik/sayfalar/${id}/tasarla`);
     revalidatePath(`/icerik/onizleme/sayfa/${id}`);
   }
   if (slug) revalidatePath(slug);
   revalidatePath("/sitemap.xml");
+}
+
+function savedPageTarget(id: string, visual: boolean, suffix: string) {
+  return visual ? `/icerik/sayfalar/${id}/tasarla${suffix}` : `/icerik/sayfalar/${id}${suffix}`;
 }
 
 export async function saveCmsPageAction(formData: FormData) {
@@ -77,9 +112,21 @@ export async function saveCmsPageAction(formData: FormData) {
     redirect("/icerik/sayfalar?hata=slug");
   }
 
+  const blocksRaw = String(formData.get("blocksJson") ?? "").trim();
+  let blocks: CmsPageBlock[] = [];
+  if (blocksRaw) {
+    try {
+      blocks = parseCmsPageBlocksJson(blocksRaw);
+      await requirePublishedBlockMedia(blocks);
+    } catch {
+      redirect(existing ? `/icerik/sayfalar/${existing.id}/tasarla?hata=blok` : "/icerik/sayfalar/sablonlar?hata=blok");
+    }
+  }
+
   const title = String(formData.get("title") ?? "").trim().slice(0, 220);
   const summary = String(formData.get("summary") ?? "").trim().slice(0, 500);
-  const body = String(formData.get("body") ?? "").trim();
+  const submittedBody = String(formData.get("body") ?? "").trim();
+  const body = blocks.length > 0 ? cmsPageBlocksToPlainText(blocks) : submittedBody;
   const seoTitle = String(formData.get("seoTitle") ?? "").trim().slice(0, 220);
   const seoDescription = String(formData.get("seoDescription") ?? "").trim().slice(0, 500);
   const noIndex = formData.get("noIndex") === "on";
@@ -98,12 +145,14 @@ export async function saveCmsPageAction(formData: FormData) {
   });
   const publishBlocked = requestedMode === "publish" && !publishQuality.ok;
   const mode = publishBlocked ? "draft" : requestedMode;
+  const visual = blocks.length > 0;
   const snapshot = {
     kind: "page",
     locale: "tr",
     title,
     summary,
     body,
+    ...(visual ? { blocks } : {}),
     seoTitle,
     seoDescription,
     noIndex,
@@ -114,11 +163,11 @@ export async function saveCmsPageAction(formData: FormData) {
     await saveCmsDraft(user.id, pageDraftKey(existing.id), snapshot);
     await addRevision(existing.id, user.id, snapshot);
     refreshCmsPage(existing.id, existing.slug);
-    redirect(`/icerik/sayfalar/${existing.id}${publishBlocked ? "?hata=kalite" : "?taslak=1"}`);
+    redirect(savedPageTarget(existing.id, visual, publishBlocked ? "?hata=kalite" : "?taslak=1"));
   }
 
   const status = mode === "publish" ? "published" : "draft";
-  const bodyJson = JSON.stringify({ summary, body });
+  const bodyJson = JSON.stringify({ summary, body, ...(visual ? { blocks } : {}) });
 
   if (!existing) {
     const duplicate = await prisma.$queryRaw<Array<{ total: number | bigint }>>`
@@ -142,7 +191,7 @@ export async function saveCmsPageAction(formData: FormData) {
     `;
     await addRevision(id, user.id, snapshot);
     refreshCmsPage(id, status === "published" ? fullSlug : undefined);
-    redirect(`/icerik/sayfalar/${id}${publishBlocked ? "?hata=kalite" : "?kayit=1"}`);
+    redirect(savedPageTarget(id, visual, publishBlocked ? "?hata=kalite" : "?kayit=1"));
   }
 
   await prisma.$executeRaw`
@@ -162,7 +211,7 @@ export async function saveCmsPageAction(formData: FormData) {
   await addRevision(existing.id, user.id, snapshot);
   if (mode === "publish") await deleteCmsDraft(pageDraftKey(existing.id));
   refreshCmsPage(existing.id, existing.slug);
-  redirect(`/icerik/sayfalar/${existing.id}${publishBlocked ? "?hata=kalite" : "?kayit=1"}`);
+  redirect(savedPageTarget(existing.id, visual, publishBlocked ? "?hata=kalite" : "?kayit=1"));
 }
 
 export async function archiveCmsPageAction(formData: FormData) {

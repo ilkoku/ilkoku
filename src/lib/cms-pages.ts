@@ -1,3 +1,4 @@
+import { normalizeCmsPageBlocks, type CmsPageBlock } from "@/lib/cms-page-blocks";
 import {
   publicCodeOwnedIndexRoutes,
   publicPausedDiscoveryReservedRoutes,
@@ -6,6 +7,7 @@ import {
 export type CmsPageBody = {
   summary: string;
   body: string;
+  blocks: CmsPageBlock[];
 };
 
 const codeOwnedPublicRoots = [
@@ -71,11 +73,20 @@ export function isCmsGenericPageContentKey(contentKey: string) {
 export function parseCmsPageBody(valueJson: string): CmsPageBody {
   try {
     const value = JSON.parse(valueJson) as Record<string, unknown>;
+    let blocks: CmsPageBlock[] = [];
+    if (Array.isArray(value.blocks)) {
+      try {
+        blocks = normalizeCmsPageBlocks(value.blocks);
+      } catch {
+        blocks = [];
+      }
+    }
     return {
       summary: typeof value.summary === "string" ? value.summary : "",
       body: typeof value.body === "string" ? value.body : "",
+      blocks,
     };
   } catch {
-    return { summary: "", body: "" };
+    return { summary: "", body: "", blocks: [] };
   }
 }

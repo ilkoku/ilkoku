@@ -162,8 +162,16 @@ export function CmsVisualPageBuilder({
   }
 
   function addBlock(type: CmsPageBlockType) {
-    const blockId = `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    setBlocks((current) => [...current, createEmptyCmsPageBlock(type, blockId)]);
+    setBlocks((current) => {
+      const usedIds = new Set(current.map((block) => block.id));
+      let sequence = current.length + 1;
+      let blockId = `${type}-editor-${sequence}`;
+      while (usedIds.has(blockId)) {
+        sequence += 1;
+        blockId = `${type}-editor-${sequence}`;
+      }
+      return [...current, createEmptyCmsPageBlock(type, blockId)];
+    });
   }
 
   function removeBlock(blockId: string) {
@@ -175,7 +183,14 @@ export function CmsVisualPageBuilder({
       const index = current.findIndex((block) => block.id === blockId);
       if (index < 0) return current;
       const duplicate = cloneBlocks([current[index]])[0];
-      duplicate.id = `${duplicate.type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const usedIds = new Set(current.map((block) => block.id));
+      let sequence = current.length + 1;
+      let duplicateId = `${duplicate.type}-editor-${sequence}`;
+      while (usedIds.has(duplicateId)) {
+        sequence += 1;
+        duplicateId = `${duplicate.type}-editor-${sequence}`;
+      }
+      duplicate.id = duplicateId;
       return [
         ...current.slice(0, index + 1),
         duplicate,

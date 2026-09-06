@@ -7,6 +7,7 @@ import { parseCmsPageBody } from "@/lib/cms-pages";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import { normalizeCmsRedirectPath, parseCmsRedirectValue } from "@/lib/cms-redirects";
 import { prisma } from "@/lib/prisma";
+import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 type RedirectRow = { valueJson: string };
 type PublicPageRow = {
@@ -66,11 +67,14 @@ export default async function CmsPageOrRedirectFallback({ params }: PageProps) {
   const page = await loadPublicPage(source);
 
   if (page) {
-    const content = parseCmsPageBody(page.bodyJson);
+    const [content, identity] = await Promise.all([
+      Promise.resolve(parseCmsPageBody(page.bodyJson)),
+      getPublicSiteIdentity(),
+    ]);
     return (
       <PublicPageTemplate>
         <PublicEditorialDocument
-          eyebrow="İlkOku"
+          eyebrow={identity.defaultEyebrow}
           title={page.title}
           summary={content.summary}
           body={content.body}

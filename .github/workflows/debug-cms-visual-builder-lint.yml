@@ -33,5 +33,6 @@ jobs:
           path: |
             lint-diagnostics.log
             lint-exit-code.txt
+            src/components/content/CmsVisualPageBuilder.tsx
           if-no-files-found: error
           retention-days: 1

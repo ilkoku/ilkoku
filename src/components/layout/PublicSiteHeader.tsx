@@ -6,6 +6,7 @@ import { authContent } from "@/content";
 import { logoutAction } from "@/features/auth/actions";
 import { getRoleNavigation } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 import "./public-site-header.css";
 import "./public-site-header-terminal.css";
@@ -31,7 +32,7 @@ function AccountIcon() {
 }
 
 export async function PublicSiteHeader() {
-  const profile = await getCurrentProfile();
+  const [profile, identity] = await Promise.all([getCurrentProfile(), getPublicSiteIdentity()]);
   const navigation = profile ? await getRoleNavigation(profile) : null;
   const pendingRole =
     navigation?.pendingRequest?.requestedRole ??
@@ -45,16 +46,27 @@ export async function PublicSiteHeader() {
           href="/"
           aria-label="İlkOku ana sayfa"
         >
-          <Image
-            src={logo}
-            alt="İlkOku"
-            priority
-            sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
-          />
+          {identity.logoUrl ? (
+            <Image
+              src={identity.logoUrl}
+              alt={identity.logoAlt}
+              priority
+              width={308}
+              height={76}
+              sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
+            />
+          ) : (
+            <Image
+              src={logo}
+              alt={identity.logoAlt}
+              priority
+              sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
+            />
+          )}
         </Link>
 
         <span className="public-site-header__kicker">
-          Dijital edebiyat platformu
+          {identity.headerKicker}
         </span>
 
         <div className="public-site-header__tools">

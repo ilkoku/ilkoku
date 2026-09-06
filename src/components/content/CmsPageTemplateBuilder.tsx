@@ -120,7 +120,7 @@ export function CmsPageTemplateBuilder() {
         <span>Sayfa metni</span>
         <textarea name="body" onChange={(event) => setBody(event.target.value)} required rows={22} value={body} />
       </label>
-      <p className="content-form-help">## ara başlık, ### alt başlık, madde listesi, numaralı liste ve tablo yapısı ortak İlkOku public sayfa renderer'ı tarafından desteklenir.</p>
+      <p className="content-form-help">## ara başlık, ### alt başlık, madde listesi, numaralı liste ve tablo yapısı ortak İlkOku public sayfa renderer&apos;ı tarafından desteklenir.</p>
 
       <div className="cms-editor-section-label">
         <span>4 · Arama görünümü</span>
@@ -141,7 +141,7 @@ export function CmsPageTemplateBuilder() {
 
       <div className="content-panel cms-editor-notice is-info" style={{ marginTop: "1rem" }}>
         <strong>Şablon yalnız taslak oluşturur.</strong>
-        <p>Bu ekranda doğrudan yayın butonu yoktur. Oluşturduğunuz kayıt normal Sayfa Editörü'ne gider; önizleme, kalite kontrolü ve yayın yetkisi mevcut güvenli akıştan devam eder.</p>
+        <p>Bu ekranda doğrudan yayın butonu yoktur. Oluşturduğunuz kayıt normal Sayfa Editörü&apos;ne gider; önizleme, kalite kontrolü ve yayın yetkisi mevcut güvenli akıştan devam eder.</p>
       </div>
 
       <div className="cms-editor-savebar">

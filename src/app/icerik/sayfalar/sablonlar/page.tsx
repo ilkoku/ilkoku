@@ -13,7 +13,7 @@ export default async function CmsPageTemplatesPage() {
         <div>
           <span>Site · Sayfa Şablonları</span>
           <h1>Şablondan yeni sayfa oluştur</h1>
-          <p>İlkOku'nun ortak public kimliğini bozmadan hazır içerik iskeletlerinden yeni kurumsal sayfa başlatın. Kod değişikliği gerekmez.</p>
+          <p>İlkOku&apos;nun ortak public kimliğini bozmadan hazır içerik iskeletlerinden yeni kurumsal sayfa başlatın. Kod değişikliği gerekmez.</p>
         </div>
         <aside className="cms-editor-status-card" data-tone="success" aria-label="Şablon sistemi durumu">
           <span className="cms-editor-status-card__label">Şablon sistemi</span>
@@ -39,7 +39,7 @@ export default async function CmsPageTemplatesPage() {
 
       <div className="content-panel cms-editor-notice is-info">
         <strong>Bu bir serbest tasarım aracı değildir.</strong>
-        <p>Renk, font, header ve footer geometrisi şablon tarafından korunur. Siz sayfanın türünü, URL'sini, başlığını ve içeriğini seçersiniz. Böylece yeni sayfalar mevcut İlkOku sitesinin parçası gibi görünmeye devam eder.</p>
+        <p>Renk, font, header ve footer geometrisi şablon tarafından korunur. Siz sayfanın türünü, URL&apos;sini, başlığını ve içeriğini seçersiniz. Böylece yeni sayfalar mevcut İlkOku sitesinin parçası gibi görünmeye devam eder.</p>
       </div>
 
       <div className="content-panel" style={{ marginTop: "1rem" }}>

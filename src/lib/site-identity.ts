@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 
 export type SiteIdentity = {
@@ -80,7 +81,7 @@ export async function loadSiteIdentityForCms(): Promise<SiteIdentityLoadState> {
   }
 }
 
-export async function getPublicSiteIdentity(): Promise<SiteIdentity> {
+export const getPublicSiteIdentity = cache(async (): Promise<SiteIdentity> => {
   try {
     const valueJson = await readIdentityRow();
     if (!valueJson) return defaultSiteIdentity;
@@ -88,4 +89,4 @@ export async function getPublicSiteIdentity(): Promise<SiteIdentity> {
   } catch {
     return defaultSiteIdentity;
   }
-}
+});

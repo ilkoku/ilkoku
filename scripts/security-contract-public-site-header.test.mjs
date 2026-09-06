@@ -5,6 +5,7 @@ import test from "node:test";
 const read = (path) => readFileSync(path, "utf8");
 
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
+const identityPath = "src/lib/site-identity.ts";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
 const frameCssPath = "src/components/layout/public-site-frame.css";
 const publicPageTemplatePath = "src/components/layout/PublicPageTemplate.tsx";
@@ -64,6 +65,7 @@ const trustRoutes = [
 
 test("public header matches the homepage model without a top navigation list", () => {
   const header = read(headerPath);
+  const identity = read(identityPath);
 
   assert.doesNotMatch(header, /publicSiteNavigation|NavigationLinks/);
   assert.doesNotMatch(header, /public-site-header__nav/);
@@ -77,7 +79,9 @@ test("public header matches the homepage model without a top navigation list", (
     );
   }
 
-  assert.match(header, /Dijital edebiyat platformu/);
+  assert.match(header, /getPublicSiteIdentity\(\)/);
+  assert.match(header, /identity\.headerKicker/);
+  assert.match(identity, /headerKicker:\s*"Dijital edebiyat platformu"/);
   assert.match(header, /public-site-header__account/);
   assert.match(header, /href="\/giris"/);
   assert.match(header, /href="\/kayit"/);

@@ -11,9 +11,10 @@ import {
   publicSupportLinks,
   publicTrustLinks,
 } from "@/lib/public-site-navigation";
+import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 export async function PublicTrustFooter() {
-  const profile = await getCurrentProfile();
+  const [profile, identity] = await Promise.all([getCurrentProfile(), getPublicSiteIdentity()]);
   const navigation = profile ? await getRoleNavigation(profile) : null;
 
   return (
@@ -21,9 +22,13 @@ export async function PublicTrustFooter() {
       <div className="public-trust-footer__grid">
         <div className="public-trust-footer__brand">
           <Link className="public-trust-footer__logo" href="/" aria-label="İlkOku ana sayfa">
-            <Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 150px, 176px" />
+            {identity.logoUrl ? (
+              <Image src={identity.logoUrl} alt={identity.logoAlt} width={352} height={87} sizes="(max-width: 480px) 150px, 176px" />
+            ) : (
+              <Image src={logo} alt={identity.logoAlt} sizes="(max-width: 480px) 150px, 176px" />
+            )}
           </Link>
-          <p>İlk cümle, ilk okurun, <strong>ilk adımın.</strong></p>
+          <p>{identity.footerTaglineLead} <strong>{identity.footerTaglineEmphasis}</strong></p>
         </div>
 
         <nav className="public-trust-footer__column" aria-label="Platform bağlantıları">

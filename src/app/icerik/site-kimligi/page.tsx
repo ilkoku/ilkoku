@@ -111,7 +111,7 @@ export default async function SiteIdentityPage({ searchParams }: { searchParams:
           <p className="content-form-help">Yeni logo yüklemek için önce Medya alanına gidin. Yalnız yayınlanmış CMS image kayıtları burada seçilebilir.</p>
           <label><span>Logo alt metni</span><input name="logoAlt" maxLength={120} defaultValue={identity.logoAlt} required /></label>
 
-          <div className="cms-editor-section-label"><span>Header kimliği</span><small>Public header'ın logo yanındaki kısa platform tanımı</small></div>
+          <div className="cms-editor-section-label"><span>Header kimliği</span><small>Public header&apos;ın logo yanındaki kısa platform tanımı</small></div>
           <label><span>Header kicker</span><input name="headerKicker" maxLength={100} defaultValue={identity.headerKicker} required /></label>
 
           <div className="cms-editor-section-label"><span>Yeni sayfa kimliği</span><small>CMS ile oluşturulan standart public sayfalardaki üst etiket</small></div>

@@ -52,7 +52,7 @@ test("visual page builder reuses canonical CMS authority and validates structure
   contains(actions, "requirePublishedBlockMedia", "server block media revalidation");
   contains(actions, "cmsPageBlocksToPlainText", "quality-gate text derivation from blocks");
   contains(blocks, "normalizeCmsPageBlocks", "block allow-list normalizer");
-  contains(blocks, 'url.startsWith("/api/media/")', "block media local CMS restriction");
+  contains(blocks, "^\\/api\\/media\\/", "block media local CMS restriction");
   notContains(blocks, "dangerouslySetInnerHTML", "visual blocks must not inject arbitrary HTML");
   contains(publicRoute, "<PublicCmsPageBlocks", "public visual block renderer");
   contains(templates, 'key: "kurumsal"', "corporate template");

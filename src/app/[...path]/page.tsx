@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
+import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { PublicEditorialDocument } from "@/components/content/PublicEditorialDocument";
 import { PublicPageTemplate } from "@/components/layout/PublicPageTemplate";
 import { parseCmsPageBody } from "@/lib/cms-pages";
@@ -73,15 +74,19 @@ export default async function CmsPageOrRedirectFallback({ params }: PageProps) {
     ]);
     return (
       <PublicPageTemplate>
-        <PublicEditorialDocument
-          eyebrow={identity.defaultEyebrow}
-          title={page.title}
-          summary={content.summary}
-          body={content.body}
-          backHref="/"
-          backLabel="Ana sayfa"
-          updatedAt={page.updatedAt}
-        />
+        {content.blocks.length > 0 ? (
+          <PublicCmsPageBlocks blocks={content.blocks} eyebrow={identity.defaultEyebrow} pageTitle={page.title} summary={content.summary} />
+        ) : (
+          <PublicEditorialDocument
+            eyebrow={identity.defaultEyebrow}
+            title={page.title}
+            summary={content.summary}
+            body={content.body}
+            backHref="/"
+            backLabel="Ana sayfa"
+            updatedAt={page.updatedAt}
+          />
+        )}
       </PublicPageTemplate>
     );
   }

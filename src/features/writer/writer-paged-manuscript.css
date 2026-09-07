@@ -1,0 +1,231 @@
+/* Real paged manuscript layer. Text is measured against each physical page body. */
+
+.writer-screen {
+  --writer-page-aspect-width: 148;
+  --writer-page-aspect-height: 210;
+  --writer-page-gap: 2rem;
+  --writer-page-padding-inline: clamp(2.6rem, 5vw, 4.35rem);
+  --writer-page-padding-top: clamp(2.7rem, 5vw, 4.2rem);
+  --writer-page-padding-bottom: clamp(2.85rem, 5vw, 4.25rem);
+}
+
+/* The original React form controls remain the canonical save fields.
+   The paged layer mirrors them visually and keeps their values synchronized. */
+.writer-screen .writer-canvas[data-writer-paged="true"] > .writer-work-title,
+.writer-screen .writer-canvas[data-writer-paged="true"] > .writer-title,
+.writer-screen .writer-canvas[data-writer-paged="true"] > .writer-subtitle,
+.writer-screen .writer-canvas[data-writer-paged="true"] > .writer-textarea {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+}
+
+.writer-screen .writer-canvas[data-writer-paged="true"] {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.writer-paged-manuscript {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--writer-page-gap);
+  width: 100%;
+  min-width: 0;
+  padding: 0.9rem 0 3.5rem;
+}
+
+.writer-manuscript-page {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(100%, var(--writer-manuscript-width));
+  aspect-ratio: var(--writer-page-aspect-width) / var(--writer-page-aspect-height);
+  overflow: hidden;
+  border: 1px solid var(--writer-paper-border);
+  border-radius: 0.22rem;
+  background: var(--writer-paper);
+  box-shadow: 0 1.3rem 3.25rem rgba(64, 56, 45, 0.13);
+}
+
+.writer-manuscript-page__inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding:
+    var(--writer-page-padding-top)
+    var(--writer-page-padding-inline)
+    var(--writer-page-padding-bottom);
+}
+
+.writer-manuscript-page__header {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.writer-screen .writer-manuscript-page .writer-work-title,
+.writer-screen .writer-manuscript-page .writer-title {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.writer-screen .writer-manuscript-page .writer-work-title {
+  margin: 0 0 0.72rem;
+  font-size: 0.7rem !important;
+}
+
+.writer-screen .writer-manuscript-page .writer-title {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.45rem) !important;
+  line-height: 1.12;
+}
+
+.writer-screen .writer-manuscript-page .writer-subtitle {
+  margin: 0.55rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.writer-screen .writer-manuscript-page .writer-page-textarea.writer-textarea {
+  flex: 1 1 0;
+  width: 100%;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0;
+  padding: 1rem 0 0 !important;
+  overflow: hidden !important;
+  resize: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  font-family: var(--writer-manuscript-font-family) !important;
+  font-size: var(--writer-manuscript-font-size) !important;
+  font-weight: 400;
+  line-height: var(--writer-manuscript-line-height) !important;
+  letter-spacing: 0.012em;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.writer-manuscript-page__number {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  color: var(--writer-paper-faint);
+  font-family: var(--writer-typewriter);
+  font-size: 0.64rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.writer-page-probes {
+  position: fixed;
+  top: 0;
+  left: -200vw;
+  width: min(100%, var(--writer-manuscript-width));
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.writer-page-probes .writer-manuscript-page {
+  width: var(--writer-manuscript-width);
+  max-width: calc(100vw - 2rem);
+  box-shadow: none;
+}
+
+.writer-screen .writer-page-textarea--probe.writer-textarea {
+  pointer-events: none;
+}
+
+/* The editor workspace scrolls through distinct sheets instead of allowing one textarea to spill. */
+.writer-screen .writer-editor-layout {
+  align-items: start;
+}
+
+@media (min-width: 82.01rem) {
+  .writer-screen .writer-editor-layout {
+    height: 100%;
+    overflow-y: auto !important;
+  }
+
+  .writer-screen .writer-canvas[data-writer-paged="true"] {
+    overflow: visible !important;
+  }
+}
+
+/* Focus mode is manuscript-only: no outer paper card, only real pages. */
+.writer-screen.writer-screen--focus .writer-editor-layout {
+  align-items: start;
+  overflow-y: auto !important;
+}
+
+.writer-screen.writer-screen--focus .writer-canvas[data-writer-paged="true"] {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
+.writer-screen.writer-screen--focus .writer-paged-manuscript {
+  padding-top: 0.65rem;
+}
+
+.writer-screen.writer-screen--focus .writer-manuscript-page {
+  width: min(100%, var(--writer-manuscript-width));
+}
+
+@media (max-width: 47.99rem) {
+  .writer-screen {
+    --writer-page-gap: 1rem;
+    --writer-page-padding-inline: clamp(1.15rem, 7vw, 2rem);
+    --writer-page-padding-top: clamp(1.5rem, 7vw, 2.3rem);
+    --writer-page-padding-bottom: clamp(2rem, 8vw, 2.7rem);
+  }
+
+  .writer-paged-manuscript {
+    padding: 0.4rem 0 2rem;
+  }
+
+  .writer-manuscript-page {
+    width: 100%;
+    border-radius: 0.15rem;
+    box-shadow: 0 0.75rem 1.8rem rgba(64, 56, 45, 0.1);
+  }
+
+  .writer-screen .writer-manuscript-page .writer-title {
+    font-size: clamp(1.55rem, 8vw, 2.05rem) !important;
+  }
+
+  .writer-screen .writer-manuscript-page .writer-page-textarea.writer-textarea {
+    font-size: var(--writer-manuscript-font-size) !important;
+    line-height: var(--writer-manuscript-line-height) !important;
+  }
+
+  .writer-manuscript-page__number {
+    bottom: 0.65rem;
+  }
+}

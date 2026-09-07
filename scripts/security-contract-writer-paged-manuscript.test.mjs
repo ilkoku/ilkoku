@@ -37,11 +37,13 @@ test("paged manuscript mirrors canonical writer form controls without changing t
   const enhancer = source(
     "src/features/writer/components/WriterPagedManuscriptEnhancer.tsx",
   );
+  const css = source("src/features/writer/writer-paged-manuscript.css");
 
   includes(enhancer, ':scope > .writer-textarea', "canonical chapter textarea lookup");
   includes(enhancer, "setNativeValue", "canonical form synchronization");
   includes(enhancer, 'new Event("input", { bubbles: true })', "React input synchronization");
-  includes(enhancer, 'canvas.dataset.writerPaged = "true"', "paged surface activation");
+  includes(enhancer, "createPortal", "paged surface portal");
+  includes(css, ":has(> .writer-paged-manuscript)", "paged surface activation without DOM mutation");
 });
 
 test("writer routes load the paged manuscript layer after density and editing tools", () => {

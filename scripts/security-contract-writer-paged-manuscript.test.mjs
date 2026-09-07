@@ -47,7 +47,7 @@ test("paged manuscript mirrors canonical writer form controls without changing t
   includes(css, ":has(> .writer-paged-manuscript)", "paged surface activation without DOM mutation");
 });
 
-test("writer routes load physical pages with vertical or paired page movement", () => {
+test("writer routes load physical pages with scroll or page-turn movement", () => {
   for (const path of [
     "src/app/yazar/layout.tsx",
     "src/app/eserlerim/layout.tsx",
@@ -59,13 +59,21 @@ test("writer routes load physical pages with vertical or paired page movement", 
     includes(layout, "writer-paged-manuscript.css", `${path} paged CSS`);
   }
 
+  const editor = source(
+    "src/features/writer/components/PagedManuscriptEditor.tsx",
+  );
   const css = source("src/features/writer/writer-paged-manuscript.css");
+
   includes(css, "aspect-ratio", "book page ratio");
   includes(css, "overflow: hidden !important", "page overflow containment");
   includes(css, "--writer-manuscript-width", "writer page width preference integration");
   includes(css, "zoom: var(--writer-page-zoom, 1)", "visual page zoom");
-  includes(css, 'data-writer-page-flow="sideBySide"', "paired page flow hook");
-  includes(css, "grid-template-columns: repeat(2, var(--writer-manuscript-width))", "two-page pairing");
+  includes(css, 'data-writer-page-flow="pageTurn"', "page-turn flow hook");
+  includes(css, '.writer-manuscript-page[data-active="false"]', "single active page visibility");
+  includes(editor, "writer-page-turn-controls", "page-turn navigation controls");
+  includes(editor, "Önceki sayfa", "previous page navigation");
+  includes(editor, "Sonraki sayfa", "next page navigation");
+  includes(editor, "activePageIndex", "active page state");
   includes(css, ".writer-page-probes", "unzoomed measurement probes");
   includes(css, ".writer-screen.writer-screen--focus", "focus-mode paged manuscript contract");
 });

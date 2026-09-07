@@ -25,8 +25,8 @@ export const writerContent = {
   },
   editor: {
     editorLabel: (title: string) => `${title} yazma editörü`,
-    streakLabel: "Yazma serisi 8 gün",
-    streak: "🔥 8 gün",
+    streakLabel: "Yazar aktif gün sayısı",
+    streak: "🔥 Aktif gün",
     saveDraft: "Taslak Kaydet",
     preview: "Yayın Önizleme",
     publish: "Yayınla",

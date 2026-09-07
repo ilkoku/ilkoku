@@ -4,13 +4,16 @@ import { DashboardFeedback } from "@/features/feedback/components/DashboardFeedb
 import type { DashboardFeedbackItem } from "@/features/feedback/types";
 import type { WorkWithChapterSummary } from "@/features/works/types";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
+import type { WriterEngagementView } from "@/lib/writer-engagement";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 import { BookCard } from "./BookCard";
 import { MetricCard } from "./MetricCard";
 import { ProgressBar } from "./ProgressBar";
+import { WriterActiveDayTracker } from "./WriterActiveDayTracker";
 
 interface WriterDashboardProps {
+  engagement: WriterEngagementView;
   feedback: {
     items: DashboardFeedbackItem[];
     unreadCount: number;
@@ -26,6 +29,7 @@ function formatDate(value: string | Date) {
 }
 
 export function WriterDashboard({
+  engagement,
   feedback,
   works,
 }: WriterDashboardProps) {
@@ -89,6 +93,8 @@ export function WriterDashboard({
 
   return (
     <div className="dashboard">
+      <WriterActiveDayTracker />
+
       <div className="dashboard__main">
         <header className="dashboard-hero">
           <div className="dashboard-hero__heading">
@@ -264,7 +270,7 @@ export function WriterDashboard({
           <p>{dashboardContent.motivationTitle}</p>
 
           <blockquote>
-            “{dashboardContent.motivation}”
+            “{engagement.motivation}”
           </blockquote>
 
           <span aria-hidden="true">✦</span>
@@ -275,11 +281,11 @@ export function WriterDashboard({
 
           <strong>
             <span aria-hidden="true">🔥</span>{" "}
-            {dashboardContent.streak}
+            {engagement.activeDayCount} Gün
           </strong>
 
           <span>
-            {dashboardContent.streakMessage}
+            {engagement.activeDayMessage}
           </span>
         </Card>
       </aside>

@@ -6,6 +6,7 @@ import { WriterDashboard } from "@/features/dashboard/components/WriterDashboard
 import { getCurrentProfile } from "@/features/auth/profile";
 import { getAuthorWorks } from "@/features/works/queries";
 import { getDashboardFeedback } from "@/features/feedback/queries/feedback.queries";
+import { getWriterEngagementPreview } from "@/lib/writer-engagement";
 
 export const metadata: Metadata = {
   title: dashboardContent.metadataTitle,
@@ -25,14 +26,16 @@ export default async function WriterPage() {
     redirect("/erisim-reddedildi");
   }
 
-  const [works, feedback] = await Promise.all([
+  const [works, feedback, engagement] = await Promise.all([
     getAuthorWorks(profile.id),
     getDashboardFeedback(profile.id),
+    getWriterEngagementPreview(profile.id),
   ]);
 
   return (
     <AppShell profile={profile}>
       <WriterDashboard
+        engagement={engagement}
         feedback={feedback}
         works={works}
       />

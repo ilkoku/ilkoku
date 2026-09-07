@@ -45,10 +45,10 @@ type SpecialDraft = {
   content: string;
 };
 
+const UNAVAILABLE = "writer-book-structure-unavailable";
+
 function getWriterTarget(): WriterTarget | null {
-  if (typeof document === "undefined") {
-    return null;
-  }
+  if (typeof document === "undefined") return null;
 
   const screen = document.querySelector<HTMLElement>(".writer-screen");
   const header = screen?.querySelector<HTMLElement>(".writer-chapters__header");
@@ -79,9 +79,8 @@ function getWriterTarget(): WriterTarget | null {
   const originalChapterButtons = Array.from(
     list.querySelectorAll<HTMLButtonElement>(":scope > .writer-chapter-item"),
   );
-  const originalHeaderButtons = Array.from(
-    header.querySelectorAll<HTMLButtonElement>(":scope > button"),
-  );
+  const originalAddButton =
+    header.querySelector<HTMLButtonElement>(":scope > button");
   const toolbarButtons = Array.from(
     toolbarActions.querySelectorAll<HTMLButtonElement>(":scope > button"),
   );
@@ -94,47 +93,39 @@ function getWriterTarget(): WriterTarget | null {
     toolbarActions,
     workIdInput,
     workTitleInput,
-    originalAddButton: originalHeaderButtons[0] ?? null,
+    originalAddButton,
     originalPublishButton: toolbarButtons.at(-1) ?? null,
     originalChapterButtons,
   };
 }
 
-function getWriterTargetSnapshot() {
+function getWriterSnapshot() {
   const target = getWriterTarget();
 
-  if (!target) {
-    return "writer-book-structure-unavailable";
-  }
+  if (!target) return UNAVAILABLE;
 
   const activeChapterIndex = target.originalChapterButtons.findIndex(
     (button) => button.dataset.active === "true",
   );
-  const saveState = target.screen.querySelector<HTMLElement>(
-    ".writer-save-status",
-  )?.dataset.state;
 
   return [
     target.workIdInput.value,
     target.originalChapterButtons.length,
     activeChapterIndex,
-    saveState ?? "",
   ].join("|");
 }
 
 function getServerSnapshot() {
-  return "writer-book-structure-unavailable";
+  return UNAVAILABLE;
 }
 
-function subscribeWriterTarget(onStoreChange: () => void) {
-  if (typeof document === "undefined") {
-    return () => undefined;
-  }
+function subscribeWriterDom(onStoreChange: () => void) {
+  if (typeof document === "undefined") return () => undefined;
 
   const observer = new MutationObserver(onStoreChange);
   observer.observe(document.body, {
     attributes: true,
-    attributeFilter: ["data-active", "data-state"],
+    attributeFilter: ["data-active"],
     childList: true,
     subtree: true,
   });
@@ -155,21 +146,17 @@ function moveItem(
   draggedId: string,
   targetId: string,
 ) {
-  const fromIndex = items.findIndex((item) => item.id === draggedId);
-  const targetIndex = items.findIndex((item) => item.id === targetId);
+  const from = items.findIndex((item) => item.id === draggedId);
+  const to = items.findIndex((item) => item.id === targetId);
 
-  if (fromIndex < 0 || targetIndex < 0 || fromIndex === targetIndex) {
-    return items;
-  }
+  if (from < 0 || to < 0 || from === to) return items;
 
   const next = [...items];
-  const [dragged] = next.splice(fromIndex, 1);
+  const [dragged] = next.splice(from, 1);
 
-  if (!dragged) {
-    return items;
-  }
+  if (!dragged) return items;
 
-  next.splice(targetIndex, 0, dragged);
+  next.splice(to, 0, dragged);
 
   return next.map((item, index) => ({
     ...item,
@@ -177,20 +164,30 @@ function moveItem(
   }));
 }
 
+function chapterItemsByChapterPosition(items: BookStructureItem[]) {
+  return items
+    .filter((item) => item.chapterId !== null)
+    .sort(
+      (left, right) =>
+        (left.chapterPosition ?? Number.MAX_SAFE_INTEGER) -
+        (right.chapterPosition ?? Number.MAX_SAFE_INTEGER),
+    );
+}
+
 export function WriterBookStructureEnhancer() {
   const snapshot = useSyncExternalStore(
-    subscribeWriterTarget,
-    getWriterTargetSnapshot,
+    subscribeWriterDom,
+    getWriterSnapshot,
     getServerSnapshot,
   );
   const target = getWriterTarget();
   const workId = target?.workIdInput.value ?? "";
   const [items, setItems] = useState<BookStructureItem[]>([]);
+  const [loadedWorkId, setLoadedWorkId] = useState("");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [specialDraft, setSpecialDraft] = useState<SpecialDraft | null>(null);
   const [savedSpecialFingerprint, setSavedSpecialFingerprint] = useState("");
   const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isSavingSpecial, setIsSavingSpecial] = useState(false);
   const [isStructureBusy, setIsStructureBusy] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -203,7 +200,7 @@ export function WriterBookStructureEnhancer() {
     [items, selectedItemId],
   );
   const selectedSpecialItem =
-    selectedItem && selectedItem.chapterId === null ? selectedItem : null;
+    selectedItem?.chapterId === null ? selectedItem : null;
   const specialDirty = Boolean(
     selectedSpecialItem &&
       specialDraft &&
@@ -211,19 +208,14 @@ export function WriterBookStructureEnhancer() {
   );
 
   useEffect(() => {
-    if (!target || !workId || snapshot === "writer-book-structure-unavailable") {
-      return;
-    }
+    const currentTarget = getWriterTarget();
+
+    if (!currentTarget || !workId || snapshot === UNAVAILABLE) return;
 
     let cancelled = false;
-    setIsLoading(true);
 
     void loadBookStructureAction(workId).then((result) => {
-      if (cancelled) {
-        return;
-      }
-
-      setIsLoading(false);
+      if (cancelled) return;
 
       if (result.status !== "success" || !result.items) {
         setMessage(result.message);
@@ -231,121 +223,46 @@ export function WriterBookStructureEnhancer() {
       }
 
       const nextItems = sortItems(result.items);
-      setItems(nextItems);
-      setMessage("");
-
-      const activeChapterIndex = target.originalChapterButtons.findIndex(
+      const chapterItems = chapterItemsByChapterPosition(nextItems);
+      const activeIndex = currentTarget.originalChapterButtons.findIndex(
         (button) => button.dataset.active === "true",
       );
-      const chapterItems = nextItems
-        .filter((item) => item.chapterId !== null)
-        .sort(
-          (left, right) =>
-            (left.chapterPosition ?? Number.MAX_SAFE_INTEGER) -
-            (right.chapterPosition ?? Number.MAX_SAFE_INTEGER),
-        );
       const activeItem =
-        chapterItems[activeChapterIndex] ?? chapterItems[0] ?? nextItems[0] ?? null;
+        chapterItems[activeIndex] ?? chapterItems[0] ?? nextItems[0] ?? null;
+
+      setItems(nextItems);
+      setLoadedWorkId(workId);
+      setMessage("");
 
       if (activeItem) {
-        setSelectedItemId(activeItem.id);
+        setSelectedItemId((current) => {
+          const currentItem = nextItems.find((item) => item.id === current);
+
+          return currentItem?.chapterId === null ? current : activeItem.id;
+        });
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [snapshot, target, workId]);
+  }, [snapshot, workId]);
 
   useEffect(() => {
     const currentTarget = getWriterTarget();
 
-    if (!currentTarget || !items.length) {
-      return;
-    }
+    if (!currentTarget || !items.length) return;
 
-    const chapterItems = items
-      .filter((item) => item.chapterId !== null)
-      .sort(
-        (left, right) =>
-          (left.chapterPosition ?? Number.MAX_SAFE_INTEGER) -
-          (right.chapterPosition ?? Number.MAX_SAFE_INTEGER),
-      );
+    const chapterItems = chapterItemsByChapterPosition(items);
     const map = new Map<string, HTMLButtonElement>();
 
     chapterItems.forEach((item, index) => {
       const button = currentTarget.originalChapterButtons[index];
-
-      if (button) {
-        map.set(item.id, button);
-      }
+      if (button) map.set(item.id, button);
     });
 
     chapterButtonMapRef.current = map;
   }, [items, snapshot]);
-
-  useEffect(() => {
-    const currentTarget = getWriterTarget();
-    const publishButton = currentTarget?.originalPublishButton;
-
-    if (!currentTarget || !publishButton || !workId) {
-      return;
-    }
-
-    const handlePublish = (event: MouseEvent) => {
-      if (publishBypassRef.current) {
-        publishBypassRef.current = false;
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-
-      void (async () => {
-        setIsStructureBusy(true);
-        const result = await prepareBookForPublicationAction(workId);
-        setIsStructureBusy(false);
-
-        if (result.status !== "success" || !result.items) {
-          setMessage(result.message);
-          window.alert(result.message);
-          return;
-        }
-
-        const nextItems = sortItems(result.items);
-        setItems(nextItems);
-        setMessage(result.message);
-
-        if (
-          selectedSpecialItem?.kind === "toc" &&
-          selectedSpecialItem.id === result.tocItemId &&
-          typeof result.tocContent === "string"
-        ) {
-          const nextDraft = {
-            title: "İçindekiler",
-            content: result.tocContent,
-          };
-          setSpecialDraft(nextDraft);
-          setSavedSpecialFingerprint(fingerprint(nextDraft));
-        }
-
-        if (publishButton.disabled) {
-          setMessage(
-            "Yayınlamak için önce metin içeren bir ana bölüm seçmelisin.",
-          );
-          return;
-        }
-
-        publishBypassRef.current = true;
-        publishButton.click();
-      })();
-    };
-
-    publishButton.addEventListener("click", handlePublish, true);
-
-    return () => publishButton.removeEventListener("click", handlePublish, true);
-  }, [snapshot, selectedSpecialItem, workId]);
 
   useEffect(() => {
     if (!selectedSpecialItem || !specialDraft || !specialDirty || !workId) {
@@ -367,7 +284,9 @@ export function WriterBookStructureEnhancer() {
         }
 
         setItems((current) =>
-          current.map((item) => (item.id === result.item?.id ? result.item : item)),
+          current.map((item) =>
+            item.id === result.item?.id ? result.item : item,
+          ),
         );
         setSavedSpecialFingerprint(fingerprint(draftToSave));
         setMessage("Otomatik kaydedildi.");
@@ -377,14 +296,67 @@ export function WriterBookStructureEnhancer() {
     return () => window.clearTimeout(timeout);
   }, [selectedSpecialItem, specialDirty, specialDraft, workId]);
 
-  if (!target || snapshot === "writer-book-structure-unavailable") {
-    return null;
-  }
+  useEffect(() => {
+    const currentTarget = getWriterTarget();
+    const publishButton = currentTarget?.originalPublishButton;
+
+    if (!publishButton || !workId) return;
+
+    const handlePublish = (event: MouseEvent) => {
+      if (publishBypassRef.current) {
+        publishBypassRef.current = false;
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      void (async () => {
+        setIsStructureBusy(true);
+        const result = await prepareBookForPublicationAction(workId);
+        setIsStructureBusy(false);
+
+        if (result.status !== "success" || !result.items) {
+          setMessage(result.message);
+          window.alert(result.message);
+          return;
+        }
+
+        setItems(sortItems(result.items));
+        setMessage(result.message);
+
+        if (
+          selectedSpecialItem?.kind === "toc" &&
+          selectedSpecialItem.id === result.tocItemId &&
+          typeof result.tocContent === "string"
+        ) {
+          const nextDraft = {
+            title: "İçindekiler",
+            content: result.tocContent,
+          };
+          setSpecialDraft(nextDraft);
+          setSavedSpecialFingerprint(fingerprint(nextDraft));
+        }
+
+        if (publishButton.disabled) {
+          setMessage("Yayınlamak için metin içeren bir ana bölüm seçmelisin.");
+          return;
+        }
+
+        publishBypassRef.current = true;
+        publishButton.click();
+      })();
+    };
+
+    publishButton.addEventListener("click", handlePublish, true);
+
+    return () => publishButton.removeEventListener("click", handlePublish, true);
+  }, [selectedSpecialItem, snapshot, workId]);
+
+  if (!target || snapshot === UNAVAILABLE) return null;
 
   async function saveSelectedSpecial() {
-    if (!selectedSpecialItem || !specialDraft || !workId) {
-      return true;
-    }
+    if (!selectedSpecialItem || !specialDraft || !workId) return true;
 
     setIsSavingSpecial(true);
     const result = await saveBookSectionAction({
@@ -401,7 +373,9 @@ export function WriterBookStructureEnhancer() {
     }
 
     setItems((current) =>
-      current.map((item) => (item.id === result.item?.id ? result.item : item)),
+      current.map((item) =>
+        item.id === result.item?.id ? result.item : item,
+      ),
     );
     setSavedSpecialFingerprint(fingerprint(specialDraft));
     setMessage(result.message);
@@ -409,17 +383,11 @@ export function WriterBookStructureEnhancer() {
   }
 
   async function prepareBeforeStructureChange() {
-    if (!specialDirty) {
-      return true;
-    }
-
-    return saveSelectedSpecial();
+    return specialDirty ? saveSelectedSpecial() : true;
   }
 
-  async function handleAddSpecial(kind: SpecialBookSectionKind) {
-    if (!(await prepareBeforeStructureChange())) {
-      return;
-    }
+  async function addSpecial(kind: SpecialBookSectionKind) {
+    if (!(await prepareBeforeStructureChange())) return;
 
     setIsStructureBusy(true);
     const result = await createBookSectionAction(workId, kind);
@@ -431,22 +399,20 @@ export function WriterBookStructureEnhancer() {
       return;
     }
 
-    const nextItems = sortItems([...items, result.item]);
-    setItems(nextItems);
-    setSelectedItemId(result.item.id);
     const nextDraft = {
       title: result.item.title,
       content: result.item.content,
     };
+
+    setItems((current) => sortItems([...current, result.item as BookStructureItem]));
+    setSelectedItemId(result.item.id);
     setSpecialDraft(nextDraft);
     setSavedSpecialFingerprint(fingerprint(nextDraft));
     setMessage(result.message);
   }
 
-  async function handleAddChapter() {
-    if (!(await prepareBeforeStructureChange())) {
-      return;
-    }
+  async function addChapter() {
+    if (!(await prepareBeforeStructureChange())) return;
 
     addMenuRef.current?.removeAttribute("open");
 
@@ -458,19 +424,14 @@ export function WriterBookStructureEnhancer() {
     target.originalAddButton.click();
   }
 
-  function handleSelectItem(item: BookStructureItem) {
-    if (item.id === selectedItemId) {
-      return;
-    }
+  function selectItem(item: BookStructureItem) {
+    if (item.id === selectedItemId) return;
 
     if (specialDirty) {
       const shouldSwitch = window.confirm(
         "Bu kitap sayfasında kaydedilmemiş değişiklikler var. Sayfayı değiştirmek istediğine emin misin?",
       );
-
-      if (!shouldSwitch) {
-        return;
-      }
+      if (!shouldSwitch) return;
     }
 
     if (item.chapterId) {
@@ -482,29 +443,24 @@ export function WriterBookStructureEnhancer() {
       }
 
       originalButton.click();
-
-      window.requestAnimationFrame(() => {
-        if (originalButton.dataset.active === "true") {
-          setSelectedItemId(item.id);
-          setSpecialDraft(null);
-          setSavedSpecialFingerprint("");
-          setMessage("");
-        }
-      });
+      setSelectedItemId(item.id);
+      setSpecialDraft(null);
+      setSavedSpecialFingerprint("");
+      setMessage("");
       return;
     }
 
-    setSelectedItemId(item.id);
     const nextDraft = {
       title: item.title,
       content: item.content,
     };
+    setSelectedItemId(item.id);
     setSpecialDraft(nextDraft);
     setSavedSpecialFingerprint(fingerprint(nextDraft));
     setMessage("");
   }
 
-  async function handleDrop(targetId: string) {
+  async function dropOn(targetId: string) {
     if (!draggedId || draggedId === targetId) {
       setDraggedId(null);
       return;
@@ -515,21 +471,20 @@ export function WriterBookStructureEnhancer() {
       return;
     }
 
-    const previousItems = items;
-    const nextItems = moveItem(items, draggedId, targetId);
-    setItems(nextItems);
+    const previous = items;
+    const next = moveItem(items, draggedId, targetId);
+    setItems(next);
     setDraggedId(null);
     setIsStructureBusy(true);
 
     const result = await reorderBookStructureAction({
       workId,
-      orderedItemIds: nextItems.map((item) => item.id),
+      orderedItemIds: next.map((item) => item.id),
     });
-
     setIsStructureBusy(false);
 
     if (result.status !== "success" || !result.items) {
-      setItems(previousItems);
+      setItems(previous);
       setMessage(result.message);
       return;
     }
@@ -538,16 +493,13 @@ export function WriterBookStructureEnhancer() {
     setMessage(result.message);
   }
 
-  async function handleSpecialPublish() {
-    if (!(await saveSelectedSpecial())) {
-      return;
-    }
+  async function publishFromSpecialPage() {
+    if (!(await saveSelectedSpecial())) return;
 
-    const currentTarget = getWriterTarget();
-    const publishButton = currentTarget?.originalPublishButton;
+    const publishButton = getWriterTarget()?.originalPublishButton;
 
     if (!publishButton || publishButton.disabled) {
-      setMessage("Yayınlamak için önce metin içeren bir ana bölüm oluşturmalısın.");
+      setMessage("Yayınlamak için metin içeren bir ana bölüm oluşturmalısın.");
       return;
     }
 
@@ -557,6 +509,7 @@ export function WriterBookStructureEnhancer() {
   const specialDetails = selectedSpecialItem
     ? bookSectionDetails[selectedSpecialItem.kind]
     : null;
+  const isInitialLoading = loadedWorkId !== workId;
 
   return (
     <>
@@ -577,8 +530,8 @@ export function WriterBookStructureEnhancer() {
             <div className="writer-book-structure__add-menu">
               <button
                 type="button"
-                onClick={() => void handleAddChapter()}
-                disabled={isStructureBusy || isLoading}
+                onClick={() => void addChapter()}
+                disabled={isStructureBusy || isInitialLoading}
               >
                 <strong>Bölüm</strong>
                 <small>Yeni ana metin bölümü</small>
@@ -590,8 +543,8 @@ export function WriterBookStructureEnhancer() {
                 <button
                   type="button"
                   key={kind}
-                  onClick={() => void handleAddSpecial(kind)}
-                  disabled={isStructureBusy || isLoading}
+                  onClick={() => void addSpecial(kind)}
+                  disabled={isStructureBusy || isInitialLoading}
                 >
                   <strong>{bookSectionDetails[kind].label}</strong>
                   <small>{bookSectionDetails[kind].description}</small>
@@ -605,22 +558,22 @@ export function WriterBookStructureEnhancer() {
 
       {createPortal(
         <div className="writer-book-structure__list" aria-label="Kitap sırası">
-          {isLoading && !items.length ? (
+          {isInitialLoading && !items.length ? (
             <p className="writer-book-structure__empty">Kitap yapısı yükleniyor…</p>
           ) : (
             items.map((item) => {
-              const isActive = item.id === selectedItemId;
+              const active = item.id === selectedItemId;
               const details = bookSectionDetails[item.kind];
 
               return (
                 <button
                   type="button"
                   className="writer-book-structure__item"
-                  data-active={isActive}
+                  data-active={active}
                   data-dragging={item.id === draggedId}
                   draggable={!isStructureBusy}
                   key={item.id}
-                  onClick={() => handleSelectItem(item)}
+                  onClick={() => selectItem(item)}
                   onDragStart={(event: DragEvent<HTMLButtonElement>) => {
                     setDraggedId(item.id);
                     event.dataTransfer.effectAllowed = "move";
@@ -632,23 +585,24 @@ export function WriterBookStructureEnhancer() {
                   }}
                   onDrop={(event) => {
                     event.preventDefault();
-                    void handleDrop(item.id);
+                    void dropOn(item.id);
                   }}
                   onDragEnd={() => setDraggedId(null)}
-                  aria-current={isActive ? "page" : undefined}
+                  aria-current={active ? "page" : undefined}
                   title="Sürükleyip kitap sırasını değiştirebilirsin"
                 >
-                  <span className="writer-book-structure__drag" aria-hidden="true">
-                    ⋮⋮
-                  </span>
+                  <span className="writer-book-structure__drag" aria-hidden="true">⋮⋮</span>
                   <span className="writer-book-structure__position">{item.position}</span>
                   <span className="writer-book-structure__content">
-                    <small>{details.label}{item.isAutomatic ? " · otomatik" : ""}</small>
+                    <small>
+                      {details.label}
+                      {item.isAutomatic ? " · otomatik" : ""}
+                    </small>
                     <strong>{item.title}</strong>
                     <em>{item.wordCount.toLocaleString("tr-TR")} kelime</em>
                   </span>
                   <span className="writer-book-structure__chevron" aria-hidden="true">
-                    {isActive ? "●" : "›"}
+                    {active ? "●" : "›"}
                   </span>
                 </button>
               );
@@ -666,7 +620,11 @@ export function WriterBookStructureEnhancer() {
 
       {selectedSpecialItem && specialDraft && specialDetails &&
         createPortal(
-          <div className="writer-special-page-editor" data-kind={selectedSpecialItem.kind}>
+          <div
+            className="writer-special-page-editor"
+            data-kind={selectedSpecialItem.kind}
+            data-automatic={selectedSpecialItem.isAutomatic}
+          >
             <PagedManuscriptEditor
               workTitle={target.workTitleInput.value}
               chapterTitle={specialDraft.title}
@@ -677,16 +635,18 @@ export function WriterBookStructureEnhancer() {
               bodyLabel={`${specialDetails.label} metni`}
               bodyPlaceholder={specialDetails.bodyPlaceholder}
               onWorkTitleChange={() => undefined}
-              onChapterTitleChange={(value) =>
+              onChapterTitleChange={(value) => {
+                if (selectedSpecialItem.isAutomatic) return;
                 setSpecialDraft((current) =>
                   current ? { ...current, title: value } : current,
-                )
-              }
-              onContentChange={(value) =>
+                );
+              }}
+              onContentChange={(value) => {
+                if (selectedSpecialItem.isAutomatic) return;
                 setSpecialDraft((current) =>
                   current ? { ...current, content: value } : current,
-                )
-              }
+                );
+              }}
             />
           </div>,
           target.canvas,
@@ -700,20 +660,24 @@ export function WriterBookStructureEnhancer() {
                 ? "Kaydediliyor…"
                 : specialDirty
                   ? "Kaydedilmedi"
-                  : "Kaydedildi"}
+                  : selectedSpecialItem.isAutomatic
+                    ? "Yayında otomatik güncellenir"
+                    : "Kaydedildi"}
             </span>
-            <Button
-              type="button"
-              variant="outline"
-              loading={isSavingSpecial}
-              onClick={() => void saveSelectedSpecial()}
-            >
-              Sayfayı Kaydet
-            </Button>
+            {!selectedSpecialItem.isAutomatic && (
+              <Button
+                type="button"
+                variant="outline"
+                loading={isSavingSpecial}
+                onClick={() => void saveSelectedSpecial()}
+              >
+                Sayfayı Kaydet
+              </Button>
+            )}
             <Button
               type="button"
               loading={isStructureBusy}
-              onClick={() => void handleSpecialPublish()}
+              onClick={() => void publishFromSpecialPage()}
             >
               Yayınla
             </Button>

@@ -22,6 +22,13 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(tools, "Satır aralığını artır", "line spacing increase control");
   includes(tools, '<option value="book">Kitap</option>', "book manuscript width preset");
   includes(tools, '<option value="serif">Kitap</option>', "book serif preset");
+  includes(tools, '<option value="vertical">Dikey</option>', "vertical page flow preset");
+  includes(tools, '<option value="sideBySide">Yan yana</option>', "side-by-side page flow preset");
+  includes(tools, "Yakınlaştırma oranı", "word-like zoom output");
+  includes(tools, "zoom: clamp(preferences.zoom - 10, 50, 160)", "zoom-out step");
+  includes(tools, "zoom: clamp(preferences.zoom + 10, 50, 160)", "zoom-in step");
+  includes(tools, "screen.dataset.writerPageFlow", "page flow data hook");
+  includes(tools, '"--writer-page-zoom"', "page zoom style hook");
   includes(tools, "spellcheck", "spellcheck control");
   includes(tools, "ilkoku.writer.preferences.v1", "local writer preference storage");
 
@@ -29,6 +36,7 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(css, "--writer-manuscript-line-height", "line height CSS variable");
   includes(css, "--writer-manuscript-font-family", "font family CSS variable");
   includes(css, "--writer-manuscript-width", "manuscript width CSS variable");
+  includes(css, "--writer-page-zoom", "page zoom CSS variable");
   includes(css, ".writer-screen.writer-screen--focus .writer-canvas", "focus manuscript width hook");
   includes(css, ".writer-editing-tools", "compact toolbar styling");
 });

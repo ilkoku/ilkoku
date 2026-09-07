@@ -44,13 +44,33 @@
 
 .writer-paged-manuscript {
   position: relative;
+  width: 100%;
+  min-width: 0;
+  padding: 0.9rem 0 3.5rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-inline: contain;
+}
+
+.writer-manuscript-pages {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--writer-page-gap);
   width: 100%;
   min-width: 0;
-  padding: 0.9rem 0 3.5rem;
+  zoom: var(--writer-page-zoom, 1);
+}
+
+/* Word-like alternate page movement: keep page geometry unchanged and place pages in pairs. */
+.writer-screen[data-writer-page-flow="sideBySide"] .writer-manuscript-pages {
+  display: grid;
+  grid-template-columns: repeat(2, var(--writer-manuscript-width));
+  align-items: start;
+  justify-content: center;
+  width: max-content;
+  min-width: 100%;
+  padding-inline: 1rem;
 }
 
 .writer-manuscript-page {
@@ -63,6 +83,10 @@
   border-radius: 0.22rem;
   background: var(--writer-paper);
   box-shadow: 0 1.3rem 3.25rem rgba(64, 56, 45, 0.13);
+}
+
+.writer-screen[data-writer-page-flow="sideBySide"] .writer-manuscript-page {
+  width: var(--writer-manuscript-width);
 }
 
 .writer-manuscript-page__inner {
@@ -142,6 +166,7 @@
   pointer-events: none;
 }
 
+/* Probes stay outside the zoomed visible-page wrapper so zoom never changes pagination. */
 .writer-page-probes {
   position: fixed;
   top: 0;
@@ -198,6 +223,11 @@
   width: min(100%, var(--writer-manuscript-width));
 }
 
+.writer-screen.writer-screen--focus[data-writer-page-flow="sideBySide"]
+  .writer-manuscript-page {
+  width: var(--writer-manuscript-width);
+}
+
 @media (max-width: 47.99rem) {
   .writer-screen {
     --writer-page-gap: 1rem;
@@ -214,6 +244,16 @@
     width: 100%;
     border-radius: 0.15rem;
     box-shadow: 0 0.75rem 1.8rem rgba(64, 56, 45, 0.1);
+  }
+
+  .writer-screen[data-writer-page-flow="sideBySide"] .writer-manuscript-pages {
+    padding-inline: 0.5rem;
+  }
+
+  .writer-screen[data-writer-page-flow="sideBySide"] .writer-manuscript-page,
+  .writer-screen.writer-screen--focus[data-writer-page-flow="sideBySide"]
+    .writer-manuscript-page {
+    width: var(--writer-manuscript-width);
   }
 
   .writer-screen .writer-manuscript-page .writer-title {

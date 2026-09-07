@@ -5,12 +5,15 @@ import { createPortal } from "react-dom";
 
 type WriterFont = "typewriter" | "serif" | "sans";
 type WriterWidth = "book" | "comfortable" | "wide";
+type WriterPageFlow = "vertical" | "sideBySide";
 
 type WriterPreferences = {
   fontSize: number;
   lineHeight: number;
   font: WriterFont;
   width: WriterWidth;
+  pageFlow: WriterPageFlow;
+  zoom: number;
   spellcheck: boolean;
 };
 
@@ -21,6 +24,8 @@ const defaultPreferences: WriterPreferences = {
   lineHeight: 1.9,
   font: "typewriter",
   width: "book",
+  pageFlow: "vertical",
+  zoom: 100,
   spellcheck: true,
 };
 
@@ -68,6 +73,14 @@ function loadPreferences(): WriterPreferences {
         parsed.width && parsed.width in manuscriptWidths
           ? parsed.width
           : defaultPreferences.width,
+      pageFlow:
+        parsed.pageFlow === "sideBySide" || parsed.pageFlow === "vertical"
+          ? parsed.pageFlow
+          : defaultPreferences.pageFlow,
+      zoom:
+        typeof parsed.zoom === "number"
+          ? clamp(Math.round(parsed.zoom / 10) * 10, 50, 160)
+          : defaultPreferences.zoom,
       spellcheck:
         typeof parsed.spellcheck === "boolean"
           ? parsed.spellcheck
@@ -153,11 +166,20 @@ export function WriterEditingTools() {
       "--writer-manuscript-width",
       manuscriptWidths[preferences.width],
     );
+    screen.style.setProperty(
+      "--writer-page-zoom",
+      String(preferences.zoom / 100),
+    );
+    screen.dataset.writerPageFlow = preferences.pageFlow;
 
     textarea.spellcheck = preferences.spellcheck;
     textarea.setAttribute(
       "spellcheck",
       String(preferences.spellcheck),
+    );
+
+    window.dispatchEvent(
+      new CustomEvent("ilkoku:writer-preferences-changed"),
     );
   }, [preferences, target]);
 
@@ -312,6 +334,58 @@ export function WriterEditingTools() {
           <option value="wide">Geniş</option>
         </select>
       </label>
+
+      <label className="writer-editing-tools__select">
+        <span>Akış</span>
+        <select
+          value={preferences.pageFlow}
+          onChange={(event) =>
+            updatePreferences({
+              pageFlow: event.target.value as WriterPageFlow,
+            })
+          }
+          aria-label="Sayfa akışı"
+        >
+          <option value="vertical">Dikey</option>
+          <option value="sideBySide">Yan yana</option>
+        </select>
+      </label>
+
+      <div
+        className="writer-editing-tools__group writer-editing-tools__zoom"
+        aria-label="Yakınlaştır"
+      >
+        <span>Yakınlaştır</span>
+        <button
+          type="button"
+          onClick={() =>
+            updatePreferences({
+              zoom: clamp(preferences.zoom - 10, 50, 160),
+            })
+          }
+          disabled={preferences.zoom <= 50}
+          title="Uzaklaştır"
+          aria-label="Uzaklaştır"
+        >
+          −
+        </button>
+        <output aria-label="Yakınlaştırma oranı">
+          {preferences.zoom}%
+        </output>
+        <button
+          type="button"
+          onClick={() =>
+            updatePreferences({
+              zoom: clamp(preferences.zoom + 10, 50, 160),
+            })
+          }
+          disabled={preferences.zoom >= 160}
+          title="Yakınlaştır"
+          aria-label="Yakınlaştır"
+        >
+          +
+        </button>
+      </div>
 
       <button
         className="writer-editing-tools__toggle"

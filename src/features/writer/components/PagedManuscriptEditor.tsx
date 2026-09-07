@@ -449,59 +449,64 @@ export function PagedManuscriptEditor({
 
   return (
     <div className="writer-paged-manuscript" ref={containerRef}>
-      {pages.map((page, pageIndex) => (
-        <section
-          className="writer-manuscript-page"
-          data-page={pageIndex + 1}
-          key={`${pageIndex}-${page.start}`}
-          aria-label={`Sayfa ${pageIndex + 1}`}
-        >
-          <div className="writer-manuscript-page__inner">
-            {pageIndex === 0 && (
-              <header className="writer-manuscript-page__header">
-                <input
-                  className="writer-work-title"
-                  aria-label={workTitleLabel}
-                  value={workTitle}
-                  onChange={(event) =>
-                    onWorkTitleChange(event.target.value)
-                  }
-                />
+      <div className="writer-manuscript-pages">
+        {pages.map((page, pageIndex) => (
+          <section
+            className="writer-manuscript-page"
+            data-page={pageIndex + 1}
+            key={`${pageIndex}-${page.start}`}
+            aria-label={`Sayfa ${pageIndex + 1}`}
+          >
+            <div className="writer-manuscript-page__inner">
+              {pageIndex === 0 && (
+                <header className="writer-manuscript-page__header">
+                  <input
+                    className="writer-work-title"
+                    aria-label={workTitleLabel}
+                    value={workTitle}
+                    onChange={(event) =>
+                      onWorkTitleChange(event.target.value)
+                    }
+                  />
 
-                <input
-                  className="writer-title"
-                  aria-label={chapterTitleLabel}
-                  value={chapterTitle}
-                  onChange={(event) =>
-                    onChapterTitleChange(event.target.value)
-                  }
-                  autoFocus
-                />
+                  <input
+                    className="writer-title"
+                    aria-label={chapterTitleLabel}
+                    value={chapterTitle}
+                    onChange={(event) =>
+                      onChapterTitleChange(event.target.value)
+                    }
+                    autoFocus
+                  />
 
-                <p className="writer-subtitle">{subtitle}</p>
-              </header>
-            )}
+                  <p className="writer-subtitle">{subtitle}</p>
+                </header>
+              )}
 
-            <textarea
-              className="writer-textarea writer-page-textarea"
-              aria-label={`${bodyLabel} — Sayfa ${pageIndex + 1}`}
-              value={page.text}
-              onChange={(event) => handlePageChange(page, event)}
-              onKeyDown={(event) =>
-                handlePageKeyDown(page, pageIndex, event)
-              }
-              placeholder={pageIndex === 0 ? bodyPlaceholder : undefined}
-              ref={(node) => {
-                pageRefs.current[pageIndex] = node;
-              }}
-            />
-          </div>
+              <textarea
+                className="writer-textarea writer-page-textarea"
+                aria-label={`${bodyLabel} — Sayfa ${pageIndex + 1}`}
+                value={page.text}
+                onChange={(event) => handlePageChange(page, event)}
+                onKeyDown={(event) =>
+                  handlePageKeyDown(page, pageIndex, event)
+                }
+                placeholder={pageIndex === 0 ? bodyPlaceholder : undefined}
+                ref={(node) => {
+                  pageRefs.current[pageIndex] = node;
+                }}
+              />
+            </div>
 
-          <span className="writer-manuscript-page__number" aria-hidden="true">
-            {pageIndex + 1}
-          </span>
-        </section>
-      ))}
+            <span
+              className="writer-manuscript-page__number"
+              aria-hidden="true"
+            >
+              {pageIndex + 1}
+            </span>
+          </section>
+        ))}
+      </div>
 
       <div className="writer-page-probes" aria-hidden="true">
         <section className="writer-manuscript-page writer-manuscript-page--probe">

@@ -5,6 +5,7 @@
   --writer-manuscript-line-height: 1.9;
   --writer-manuscript-font-family: var(--writer-typewriter);
   --writer-manuscript-width: 48rem;
+  --writer-page-zoom: 1;
 }
 
 .writer-screen .writer-context-bar {
@@ -108,6 +109,10 @@
   text-align: center;
 }
 
+.writer-editing-tools__zoom output {
+  min-width: 2.8rem;
+}
+
 .writer-editing-tools__select {
   display: inline-flex;
   flex: 0 0 auto;
@@ -198,7 +203,8 @@
     width: 100%;
   }
 
-  .writer-editing-tools__select span {
+  .writer-editing-tools__select span,
+  .writer-editing-tools__zoom > span {
     display: none;
   }
 

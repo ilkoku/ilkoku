@@ -68,7 +68,12 @@ test("writer sidebar behaves like a reorderable slide pane", () => {
   includes(enhancer, "onDragStart", "drag start behavior");
   includes(enhancer, "onDrop", "drop behavior");
   includes(enhancer, "reorderBookStructureAction", "persistent reorder action");
-  includes(enhancer, "target.originalAddButton.click()", "canonical chapter add behavior");
+  includes(
+    enhancer,
+    "const originalAddButton = getWriterTarget()?.originalAddButton;",
+    "live canonical chapter add target",
+  );
+  includes(enhancer, "originalAddButton.click()", "canonical chapter add behavior");
   includes(enhancer, "originalButton.click()", "canonical chapter selection behavior");
   includes(enhancer, "PagedManuscriptEditor", "special-page physical pagination");
   includes(enhancer, "prepareBookForPublicationAction", "publish-time contents generation");

@@ -110,6 +110,11 @@ test("writer motivation series is user-day idempotent, CMS-managed and consisten
   contains(density, "minmax(11.5rem, 13.5rem)", "compact writer side rails");
   contains(density, "width: 4.4rem", "compact writer editor brand");
   contains(density, 'grid-template-areas: "label bar remaining"', "single-row daily goal density");
+  contains(density, ".writer-screen.writer-screen--focus .writer-chapters", "focus mode chapter rail removal");
+  contains(density, ".writer-screen.writer-screen--focus .writer-editor-layout > .writer-footer", "focus mode statistics rail removal");
+  contains(density, ".writer-screen.writer-screen--focus .writer-goal", "focus mode daily goal removal");
+  contains(density, "grid-template-columns: minmax(0, 1fr) !important;", "focus mode single manuscript column");
+  contains(density, "width: min(100%, 58rem) !important;", "focus mode centered manuscript width");
   contains(writerLayout, 'writer-editor-density.css', "writer route density layer");
   contains(continueWritingLayout, 'writer-editor-density.css', "continue-writing density layer");
   contains(config, "WRITER_MOTIVATION_MINIMUM = 30", "30-day baseline contract");

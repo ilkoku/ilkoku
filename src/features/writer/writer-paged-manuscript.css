@@ -11,10 +11,10 @@
 
 /* The original React form controls remain the canonical save fields.
    The paged layer mirrors them visually and keeps their values synchronized. */
-.writer-screen .writer-canvas[data-writer-paged="true"] > .writer-work-title,
-.writer-screen .writer-canvas[data-writer-paged="true"] > .writer-title,
-.writer-screen .writer-canvas[data-writer-paged="true"] > .writer-subtitle,
-.writer-screen .writer-canvas[data-writer-paged="true"] > .writer-textarea {
+.writer-screen .writer-canvas:has(> .writer-paged-manuscript) > .writer-work-title,
+.writer-screen .writer-canvas:has(> .writer-paged-manuscript) > .writer-title,
+.writer-screen .writer-canvas:has(> .writer-paged-manuscript) > .writer-subtitle,
+.writer-screen .writer-canvas:has(> .writer-paged-manuscript) > .writer-textarea {
   position: absolute !important;
   width: 1px !important;
   height: 1px !important;
@@ -27,7 +27,7 @@
   white-space: nowrap !important;
 }
 
-.writer-screen .writer-canvas[data-writer-paged="true"] {
+.writer-screen .writer-canvas:has(> .writer-paged-manuscript) {
   width: 100% !important;
   max-width: none !important;
   min-width: 0;
@@ -172,7 +172,7 @@
     overflow-y: auto !important;
   }
 
-  .writer-screen .writer-canvas[data-writer-paged="true"] {
+  .writer-screen .writer-canvas:has(> .writer-paged-manuscript) {
     overflow: visible !important;
   }
 }
@@ -183,7 +183,7 @@
   overflow-y: auto !important;
 }
 
-.writer-screen.writer-screen--focus .writer-canvas[data-writer-paged="true"] {
+.writer-screen.writer-screen--focus .writer-canvas:has(> .writer-paged-manuscript) {
   width: 100% !important;
   max-width: none !important;
   min-height: 0 !important;

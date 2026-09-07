@@ -235,10 +235,15 @@ export function WriterBookStructureEnhancer() {
       setMessage("");
 
       if (activeItem) {
-        setSelectedItemId((current) => {
-          const currentItem = nextItems.find((item) => item.id === current);
+        setSelectedItemId((current: string | null) => {
+          const keepCurrentSpecial =
+            current !== null &&
+            nextItems.some(
+              (item: BookStructureItem) =>
+                item.id === current && item.chapterId === null,
+            );
 
-          return currentItem?.chapterId === null ? current : activeItem.id;
+          return keepCurrentSpecial ? current : activeItem.id;
         });
       }
     });

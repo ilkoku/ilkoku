@@ -66,7 +66,7 @@ test("visual page builder reuses canonical CMS authority and validates structure
   contains(modules, 'href: "/icerik/sayfalar/sablonlar"', "visual page builder CMS navigation");
 });
 
-test("writer motivation series is user-day idempotent, CMS-managed and mounted only on the real writer dashboard", () => {
+test("writer motivation series is user-day idempotent, CMS-managed and consistent across real writer surfaces", () => {
   const migration = source("prisma/migrations/20260907130000_writer_active_days/migration.sql");
   const engagement = source("src/lib/writer-engagement.ts");
   const config = source("src/lib/writer-motivation-config.ts");
@@ -74,7 +74,12 @@ test("writer motivation series is user-day idempotent, CMS-managed and mounted o
   const tracker = source("src/features/dashboard/components/WriterActiveDayTracker.tsx");
   const dashboard = source("src/features/dashboard/components/WriterDashboard.tsx");
   const dashboardContent = source("src/content/dashboard.ts");
+  const writerContent = source("src/content/writer.ts");
   const writerPage = source("src/app/yazar/page.tsx");
+  const continueWritingPage = source("src/app/yazmaya-devam/page.tsx");
+  const density = source("src/features/writer/writer-editor-density.css");
+  const writerLayout = source("src/app/yazar/layout.tsx");
+  const continueWritingLayout = source("src/app/yazmaya-devam/layout.tsx");
   const cmsPage = source("src/app/icerik/motivasyon/page.tsx");
   const cmsAction = source("src/features/cms/writer-motivation-actions.ts");
   const cmsEditor = source("src/components/content/CmsWriterMotivationEditor.tsx");
@@ -88,12 +93,25 @@ test("writer motivation series is user-day idempotent, CMS-managed and mounted o
   contains(engagement, "ON DUPLICATE KEY UPDATE userId = VALUES(userId)", "idempotent active-day write");
   contains(action, 'user.role !== "writer"', "writer-only active-day mutation");
   contains(tracker, "recordWriterActiveDayAction()", "client-mounted real-visit tracking");
+  contains(tracker, 'document.querySelectorAll<HTMLElement>(".writer-streak")', "editor active-day surface sync");
+  contains(tracker, "new MutationObserver", "portal-safe editor active-day sync");
   contains(writerPage, "getWriterEngagementPreview(profile.id)", "writer dashboard engagement loader");
-  contains(dashboard, "<WriterActiveDayTracker />", "real dashboard mount tracker");
+  contains(dashboard, "<WriterActiveDayTracker", "real dashboard mount tracker");
+  contains(dashboard, "activeDayCount={engagement.activeDayCount}", "dashboard active-day tracker value");
   contains(dashboard, "engagement.motivation", "dynamic motivation rendering");
   contains(dashboard, "engagement.activeDayCount", "dynamic active-day rendering");
-  notContains(dashboardContent, 'streak: "8 Gün"', "static fake streak removal");
-  notContains(dashboardContent, 'motivation: "Küçük bir bölüm de ilerlemedir."', "static motivation removal");
+  contains(continueWritingPage, "getWriterEngagementPreview(profile.id)", "continue-writing engagement loader");
+  contains(continueWritingPage, "<WriterActiveDayTracker", "continue-writing real-visit tracker");
+  contains(continueWritingPage, "activeDayCount={engagement.activeDayCount}", "continue-writing active-day value");
+  notContains(dashboardContent, 'streak: "8 Gün"', "static fake dashboard streak removal");
+  notContains(dashboardContent, 'motivation: "Küçük bir bölüm de ilerlemedir."', "static dashboard motivation removal");
+  notContains(writerContent, 'streak: "🔥 8 gün"', "static fake editor streak removal");
+  notContains(writerContent, 'streakLabel: "Yazma serisi 8 gün"', "static fake editor streak label removal");
+  contains(density, "minmax(11.5rem, 13.5rem)", "compact writer side rails");
+  contains(density, "width: 4.4rem", "compact writer editor brand");
+  contains(density, 'grid-template-areas: "label bar remaining"', "single-row daily goal density");
+  contains(writerLayout, 'writer-editor-density.css', "writer route density layer");
+  contains(continueWritingLayout, 'writer-editor-density.css', "continue-writing density layer");
   contains(config, "WRITER_MOTIVATION_MINIMUM = 30", "30-day baseline contract");
   contains(config, "WRITER_MOTIVATION_MAXIMUM = 365", "CMS extension ceiling");
   contains(cmsPage, 'requireCmsManager("/icerik/motivasyon")', "motivation CMS read boundary");

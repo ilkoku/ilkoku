@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 type WriterFont = "typewriter" | "serif" | "sans";
@@ -78,49 +78,50 @@ function loadPreferences(): WriterPreferences {
   }
 }
 
+function getToolbarTarget() {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return document.querySelector<HTMLElement>(".writer-context-bar");
+}
+
+function getServerToolbarTarget() {
+  return null;
+}
+
+function subscribeToolbarTarget(onStoreChange: () => void) {
+  if (typeof document === "undefined") {
+    return () => undefined;
+  }
+
+  const observer = new MutationObserver(onStoreChange);
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  return () => observer.disconnect();
+}
+
 export function WriterEditingTools() {
-  const [target, setTarget] = useState<HTMLElement | null>(null);
-  const [preferences, setPreferences] =
-    useState<WriterPreferences>(defaultPreferences);
-  const [isReady, setIsReady] = useState(false);
+  const target = useSyncExternalStore(
+    subscribeToolbarTarget,
+    getToolbarTarget,
+    getServerToolbarTarget,
+  );
+  const [preferences, setPreferences] = useState<WriterPreferences>(() =>
+    typeof window === "undefined"
+      ? defaultPreferences
+      : loadPreferences(),
+  );
 
   useEffect(() => {
-    setPreferences(loadPreferences());
-    setIsReady(true);
-  }, []);
-
-  useEffect(() => {
-    const syncTarget = () => {
-      const nextTarget = document.querySelector<HTMLElement>(
-        ".writer-context-bar",
-      );
-
-      setTarget((current) =>
-        current === nextTarget ? current : nextTarget,
-      );
-    };
-
-    syncTarget();
-
-    const observer = new MutationObserver(syncTarget);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!isReady) {
-      return;
-    }
-
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify(preferences),
     );
-  }, [isReady, preferences]);
+  }, [preferences]);
 
   useEffect(() => {
     if (!target) {

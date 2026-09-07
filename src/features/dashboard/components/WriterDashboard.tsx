@@ -93,7 +93,7 @@ export function WriterDashboard({
 
   return (
     <div className="dashboard">
-      <WriterActiveDayTracker />
+      <WriterActiveDayTracker activeDayCount={engagement.activeDayCount} />
 
       <div className="dashboard__main">
         <header className="dashboard-hero">

@@ -62,15 +62,71 @@
   zoom: var(--writer-page-zoom, 1);
 }
 
-/* Word-like alternate page movement: keep page geometry unchanged and place pages in pairs. */
-.writer-screen[data-writer-page-flow="sideBySide"] .writer-manuscript-pages {
+/* Page-turn mode keeps one physical sheet on screen and changes it with navigation controls. */
+.writer-screen[data-writer-page-flow="pageTurn"]
+  .writer-manuscript-page[data-active="false"] {
+  display: none;
+}
+
+.writer-screen[data-writer-page-flow="pageTurn"] .writer-manuscript-pages {
+  min-height: min-content;
+}
+
+.writer-page-turn-controls {
+  display: none;
+}
+
+.writer-screen[data-writer-page-flow="pageTurn"] .writer-page-turn-controls {
   display: grid;
-  grid-template-columns: repeat(2, var(--writer-manuscript-width));
-  align-items: start;
+  grid-template-columns: 2.5rem auto 2.5rem;
+  align-items: center;
   justify-content: center;
-  width: max-content;
-  min-width: 100%;
-  padding-inline: 1rem;
+  gap: 0.7rem;
+  width: fit-content;
+  margin: 0.9rem auto 0;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--writer-paper-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--writer-paper) 94%, transparent);
+  box-shadow: 0 0.45rem 1.2rem rgba(64, 56, 45, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.writer-page-turn-controls button {
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: var(--writer-paper-ink);
+  background: var(--writer-paper-ui);
+  font-size: 1.45rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.writer-page-turn-controls button:hover:not(:disabled) {
+  color: var(--writer-paper-accent);
+  background: var(--writer-paper-accent-muted);
+}
+
+.writer-page-turn-controls button:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.writer-page-turn-controls button:focus-visible {
+  outline: 2px solid rgba(167, 122, 35, 0.52);
+  outline-offset: 2px;
+}
+
+.writer-page-turn-controls span {
+  min-width: 4.4rem;
+  color: var(--writer-paper-muted);
+  font-family: var(--writer-typewriter);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 .writer-manuscript-page {
@@ -83,10 +139,6 @@
   border-radius: 0.22rem;
   background: var(--writer-paper);
   box-shadow: 0 1.3rem 3.25rem rgba(64, 56, 45, 0.13);
-}
-
-.writer-screen[data-writer-page-flow="sideBySide"] .writer-manuscript-page {
-  width: var(--writer-manuscript-width);
 }
 
 .writer-manuscript-page__inner {
@@ -223,11 +275,6 @@
   width: min(100%, var(--writer-manuscript-width));
 }
 
-.writer-screen.writer-screen--focus[data-writer-page-flow="sideBySide"]
-  .writer-manuscript-page {
-  width: var(--writer-manuscript-width);
-}
-
 @media (max-width: 47.99rem) {
   .writer-screen {
     --writer-page-gap: 1rem;
@@ -246,16 +293,6 @@
     box-shadow: 0 0.75rem 1.8rem rgba(64, 56, 45, 0.1);
   }
 
-  .writer-screen[data-writer-page-flow="sideBySide"] .writer-manuscript-pages {
-    padding-inline: 0.5rem;
-  }
-
-  .writer-screen[data-writer-page-flow="sideBySide"] .writer-manuscript-page,
-  .writer-screen.writer-screen--focus[data-writer-page-flow="sideBySide"]
-    .writer-manuscript-page {
-    width: var(--writer-manuscript-width);
-  }
-
   .writer-screen .writer-manuscript-page .writer-title {
     font-size: clamp(1.55rem, 8vw, 2.05rem) !important;
   }
@@ -263,6 +300,10 @@
   .writer-screen .writer-manuscript-page .writer-page-textarea.writer-textarea {
     font-size: var(--writer-manuscript-font-size) !important;
     line-height: var(--writer-manuscript-line-height) !important;
+  }
+
+  .writer-page-turn-controls {
+    margin-top: 0.65rem !important;
   }
 
   .writer-manuscript-page__number {

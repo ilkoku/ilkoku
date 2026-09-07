@@ -12,8 +12,9 @@
   align-items: center;
 }
 
-.writer-screen .writer-goal {
-  order: 0;
+/* Daily goal stays as the canonical React source but is presented in Writing Statistics. */
+.writer-screen .writer-context-bar > .writer-goal {
+  display: none !important;
 }
 
 .writer-editing-tools {
@@ -130,7 +131,7 @@
 
 .writer-editing-tools__select select {
   min-height: 1.55rem;
-  max-width: 5.7rem;
+  max-width: 6.8rem;
   padding: 0 1.3rem 0 0.34rem;
   color: var(--writer-paper-ink);
   border: 0;
@@ -162,6 +163,41 @@
   line-height: var(--writer-manuscript-line-height) !important;
 }
 
+.writer-screen .writer-footer__goal {
+  align-items: stretch !important;
+  flex-direction: column !important;
+}
+
+.writer-screen .writer-footer__goal strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.writer-screen .writer-footer__goal progress {
+  width: 100%;
+  height: 0.42rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--writer-paper-ui);
+}
+
+.writer-screen .writer-footer__goal progress::-webkit-progress-bar {
+  background: var(--writer-paper-ui);
+  border-radius: 999px;
+}
+
+.writer-screen .writer-footer__goal progress::-webkit-progress-value,
+.writer-screen .writer-footer__goal progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #4b2dbf, #8065f2);
+  border-radius: 999px;
+}
+
+.writer-screen .writer-footer__goal small {
+  color: var(--writer-paper-muted);
+  font-size: 0.61rem;
+  line-height: 1.35;
+}
+
 .writer-screen.writer-screen--focus .writer-canvas {
   width: min(100%, var(--writer-manuscript-width)) !important;
   max-width: var(--writer-manuscript-width) !important;
@@ -178,6 +214,12 @@
 
 .writer-screen.writer-screen--focus .focus-mode-toggle {
   flex: 0 0 auto;
+}
+
+@media (min-width: 48rem) and (max-width: 82rem) {
+  .writer-screen .writer-editor-layout > .writer-footer {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
 }
 
 @media (max-width: 64rem) {

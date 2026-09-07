@@ -71,3 +71,29 @@ test("logout cannot surface cleanup or audit failures as an application error", 
     "logout must not couple session revocation to best-effort audit logging",
   );
 });
+
+test("authenticated login navigation fails safely when auxiliary role-view or routing lookups fail", () => {
+  const profile = source("src/features/auth/profile.ts");
+  const destination = source("src/features/auth/destination.ts");
+
+  assertContains(
+    profile,
+    'console.error("ADMIN_ROLE_VIEW_READ_FAILED"',
+    "admin role-view read failure isolation",
+  );
+  assertContains(
+    profile,
+    ").catch((error) => {",
+    "admin role-view safe fallback",
+  );
+  assertContains(
+    destination,
+    'console.error("AUTH_DESTINATION_LOOKUP_FAILED"',
+    "authenticated destination lookup failure isolation",
+  );
+  assertContains(
+    destination,
+    "return roleDestinations[user.role];",
+    "authenticated destination static role fallback",
+  );
+});

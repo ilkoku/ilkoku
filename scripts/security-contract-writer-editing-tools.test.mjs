@@ -22,9 +22,12 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(tools, "Satır aralığını artır", "line spacing increase control");
   includes(tools, '<option value="book">Kitap</option>', "book manuscript width preset");
   includes(tools, '<option value="serif">Kitap</option>', "book serif preset");
-  includes(tools, '<option value="vertical">Kaydır</option>', "scroll page view preset");
-  includes(tools, '<option value="pageTurn">Sayfa Çevir</option>', "page-turn view preset");
-  includes(tools, 'parsed.pageFlow === "sideBySide"', "legacy paired-view preference migration");
+  includes(tools, 'pageFlow: "pageTurn"', "book view default");
+  includes(tools, '<option value="pageTurn">Kitap</option>', "book page-turn view preset");
+  includes(tools, '<option value="vertical">Kağıt</option>', "paper scrolling view preset");
+  includes(tools, 'LEGACY_STORAGE_KEY = "ilkoku.writer.preferences.v1"', "legacy writer preference storage");
+  includes(tools, 'STORAGE_KEY = "ilkoku.writer.preferences.v2"', "current writer preference storage");
+  includes(tools, "legacyRaw", "legacy writer view migration");
   includes(tools, "Yakınlaştırma oranı", "word-like zoom output");
   includes(tools, "zoom: clamp(preferences.zoom - 10, 50, 160)", "zoom-out step");
   includes(tools, "zoom: clamp(preferences.zoom + 10, 50, 160)", "zoom-in step");
@@ -33,7 +36,6 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(tools, "WriterGoalStatistics", "daily goal statistics portal");
   includes(tools, "Günlük kelime hedefi", "daily goal statistics label");
   includes(tools, "spellcheck", "spellcheck control");
-  includes(tools, "ilkoku.writer.preferences.v1", "local writer preference storage");
 
   includes(css, "--writer-manuscript-font-size", "font size CSS variable");
   includes(css, "--writer-manuscript-line-height", "line height CSS variable");

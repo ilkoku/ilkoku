@@ -420,13 +420,14 @@ export function WriterBookStructureEnhancer() {
     if (!(await prepareBeforeStructureChange())) return;
 
     addMenuRef.current?.removeAttribute("open");
+    const originalAddButton = getWriterTarget()?.originalAddButton;
 
-    if (!target.originalAddButton) {
+    if (!originalAddButton) {
       setMessage("Yeni bölüm düğmesi bulunamadı.");
       return;
     }
 
-    target.originalAddButton.click();
+    originalAddButton.click();
   }
 
   function selectItem(item: BookStructureItem) {

@@ -3,12 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { WriterActiveDayTracker } from "@/features/dashboard/components/WriterActiveDayTracker";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { ChapterManagementPanel } from "@/features/works/components/ChapterManagementPanel";
 import { CreateChapterForm } from "@/features/works/components/CreateChapterForm";
 import "@/features/works/components/chapter-management.css";
 import { getAuthorWorks, getContinueWritingWork } from "@/features/works/queries";
+import { getWriterEngagementPreview } from "@/lib/writer-engagement";
 
 export const metadata: Metadata = {
   title: "Yazmaya Devam Et | İlkOku",
@@ -44,11 +46,14 @@ export default async function ContinueWritingPage({ searchParams }: ContinueWrit
   const parameters = await searchParams;
 
   if (parameters.eser) {
-    const selectedWork = await getContinueWritingWork(
-      profile.id,
-      parameters.eser,
-      parameters.bolum,
-    );
+    const [selectedWork, engagement] = await Promise.all([
+      getContinueWritingWork(
+        profile.id,
+        parameters.eser,
+        parameters.bolum,
+      ),
+      getWriterEngagementPreview(profile.id),
+    ]);
 
     if (!selectedWork || selectedWork.id !== parameters.eser) {
       redirect("/yazmaya-devam");
@@ -56,6 +61,7 @@ export default async function ContinueWritingPage({ searchParams }: ContinueWrit
 
     return (
       <AppShell profile={profile}>
+        <WriterActiveDayTracker activeDayCount={engagement.activeDayCount} />
         <section className="continue-writing">
           <Link className="button button--ghost" href="/yazmaya-devam">
             ← Eser Listesine Dön

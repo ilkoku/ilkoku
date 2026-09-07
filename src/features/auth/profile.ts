@@ -52,6 +52,9 @@ export async function getCurrentProfile(
       ? await readAdminRoleView({
           sessionId: context.sessionId,
           userRole: actualRole,
+        }).catch((error) => {
+          console.error("ADMIN_ROLE_VIEW_READ_FAILED", error);
+          return null;
         })
       : null;
 

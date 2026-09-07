@@ -1,0 +1,110 @@
+/*
+ * Writer sidebar regression fixes.
+ * Loaded after the book-structure layer so nested controls are not accidentally
+ * styled as the legacy direct header controls and compact classification stays
+ * inside the sidebar at every zoom/viewport width.
+ */
+
+.writer-screen .writer-book-structure__add-menu {
+  color: var(--writer-paper-ink);
+  visibility: visible;
+  opacity: 1;
+}
+
+.writer-screen .writer-book-structure__add-menu > span {
+  color: var(--writer-paper-faint);
+  visibility: visible;
+  opacity: 1;
+}
+
+.writer-screen .writer-book-structure__add-menu > button {
+  display: grid;
+  width: 100%;
+  height: auto;
+  min-height: 3rem;
+  place-items: initial;
+  align-content: center;
+  justify-items: stretch;
+  gap: 0.12rem;
+  padding: 0.55rem 0.65rem;
+  overflow: visible;
+  color: var(--writer-paper-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 0.55rem;
+  text-align: left;
+  white-space: normal;
+}
+
+.writer-screen .writer-book-structure__add-menu > button strong,
+.writer-screen .writer-book-structure__add-menu > button small {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  visibility: visible;
+  opacity: 1;
+}
+
+.writer-screen .writer-book-structure__add-menu > button strong {
+  color: var(--writer-paper-ink);
+}
+
+.writer-screen .writer-book-structure__add-menu > button small {
+  color: var(--writer-paper-muted);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.writer-screen .writer-book-structure__add-menu > button:hover:not(:disabled) {
+  background: var(--writer-paper-accent-muted);
+}
+
+.writer-screen .writer-chapters .writer-classification-panel {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.writer-screen .writer-chapters .writer-classification-panel > summary {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.writer-screen .writer-chapters .writer-classification-panel > summary strong {
+  flex: none;
+}
+
+.writer-screen .writer-chapters .work-classification--compact {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.writer-screen .writer-chapters .work-classification--compact > p,
+.writer-screen .writer-chapters .work-classification__rating,
+.writer-screen .writer-chapters .work-classification__warnings,
+.writer-screen .writer-chapters .work-classification__warnings label,
+.writer-screen .writer-chapters .work-classification__confirm,
+.writer-screen .writer-chapters .work-classification__confirm > span {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.writer-screen .writer-chapters .work-classification__rating select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.writer-screen .writer-chapters .work-classification--compact > p,
+.writer-screen .writer-chapters .work-classification__warnings label > span,
+.writer-screen .writer-chapters .work-classification__confirm > span {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}

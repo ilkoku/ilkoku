@@ -223,3 +223,87 @@
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
+
+/* Focus mode is intentionally stricter than normal editor density.
+   Auxiliary rails disappear and the manuscript becomes the only workspace. */
+.writer-screen.writer-screen--focus .writer-toolbar__document {
+  display: none !important;
+}
+
+.writer-screen.writer-screen--focus .writer-goal {
+  display: none !important;
+}
+
+.writer-screen.writer-screen--focus .writer-context-bar {
+  min-height: 2.7rem;
+  justify-content: flex-end !important;
+  padding-block: 0.3rem;
+}
+
+.writer-screen.writer-screen--focus .writer-editor-layout {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
+  width: 100%;
+  min-height: 0;
+}
+
+.writer-screen.writer-screen--focus .writer-chapters,
+.writer-screen.writer-screen--focus .writer-editor-layout > .writer-footer {
+  display: none !important;
+}
+
+.writer-screen.writer-screen--focus .writer-canvas {
+  width: min(100%, 58rem) !important;
+  max-width: 58rem;
+  margin-inline: auto !important;
+}
+
+@media (min-width: 48rem) {
+  .writer-screen.writer-screen--focus .writer-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    min-height: 3.55rem;
+    padding: 0.35rem clamp(0.8rem, 2vw, 1.4rem);
+  }
+
+  .writer-screen.writer-screen--focus .writer-toolbar__actions {
+    grid-column: 2 !important;
+    justify-self: end;
+  }
+
+  .writer-screen.writer-screen--focus .writer-toolbar__actions .button {
+    min-height: 2.2rem;
+    padding-inline: 0.72rem;
+    font-size: 0.7rem;
+  }
+
+  .writer-screen.writer-screen--focus .writer-editor-layout {
+    height: 100%;
+    padding: 0.55rem clamp(1rem, 4vw, 3rem) 0.75rem;
+    overflow-y: auto;
+  }
+
+  .writer-screen.writer-screen--focus .writer-canvas {
+    height: auto !important;
+    min-height: calc(100vh - 7.6rem) !important;
+    padding: clamp(2.1rem, 4vw, 3.8rem) clamp(2.2rem, 5vw, 4.8rem) !important;
+    overflow: visible;
+  }
+
+  .writer-screen.writer-screen--focus .writer-textarea {
+    min-height: calc(100vh - 15rem) !important;
+    font-size: clamp(1.02rem, 1.15vw, 1.12rem) !important;
+    line-height: 1.9 !important;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .writer-screen.writer-screen--focus .writer-editor-layout {
+    display: block !important;
+    padding: 0.5rem !important;
+  }
+
+  .writer-screen.writer-screen--focus .writer-canvas {
+    width: 100% !important;
+    min-height: calc(100vh - 8rem) !important;
+  }
+}

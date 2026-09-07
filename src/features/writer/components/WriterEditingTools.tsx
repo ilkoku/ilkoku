@@ -17,6 +17,13 @@ type WriterPreferences = {
   spellcheck: boolean;
 };
 
+type StoredWriterPreferences = Omit<
+  Partial<WriterPreferences>,
+  "pageFlow"
+> & {
+  pageFlow?: WriterPageFlow | "sideBySide";
+};
+
 type GoalSnapshot = {
   label: string;
   current: string;
@@ -64,9 +71,7 @@ function loadPreferences(): WriterPreferences {
       return defaultPreferences;
     }
 
-    const parsed = JSON.parse(raw) as Partial<WriterPreferences> & {
-      pageFlow?: WriterPageFlow | "sideBySide";
-    };
+    const parsed = JSON.parse(raw) as StoredWriterPreferences;
 
     return {
       fontSize:

@@ -37,5 +37,10 @@ export async function getRoleNavigation(user: { id: string; role: UserRole }) {
 }
 
 export async function getAuthenticatedDestination(user: { id: string; role: UserRole }) {
-  return (await getRoleNavigation(user)).destination;
+  try {
+    return (await getRoleNavigation(user)).destination;
+  } catch (error) {
+    console.error("AUTH_DESTINATION_LOOKUP_FAILED", error);
+    return roleDestinations[user.role];
+  }
 }

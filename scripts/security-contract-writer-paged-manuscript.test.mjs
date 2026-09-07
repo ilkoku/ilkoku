@@ -24,6 +24,7 @@ test("writer manuscript pagination is based on physical overflow, not a fixed wo
   includes(editor, "paginateContent", "pagination engine");
   includes(editor, "preferNaturalBreak", "natural page boundary handling");
   includes(editor, "writer-manuscript-page__number", "visible page numbering");
+  includes(editor, "writer-manuscript-pages", "visible page wrapper");
   includes(editor, "Backspace", "cross-page backspace behavior");
   includes(editor, "ArrowRight", "cross-page caret behavior");
   assert.equal(
@@ -46,7 +47,7 @@ test("paged manuscript mirrors canonical writer form controls without changing t
   includes(css, ":has(> .writer-paged-manuscript)", "paged surface activation without DOM mutation");
 });
 
-test("writer routes load the paged manuscript layer after density and editing tools", () => {
+test("writer routes load physical pages with vertical or paired page movement", () => {
   for (const path of [
     "src/app/yazar/layout.tsx",
     "src/app/eserlerim/layout.tsx",
@@ -62,5 +63,9 @@ test("writer routes load the paged manuscript layer after density and editing to
   includes(css, "aspect-ratio", "book page ratio");
   includes(css, "overflow: hidden !important", "page overflow containment");
   includes(css, "--writer-manuscript-width", "writer page width preference integration");
+  includes(css, "zoom: var(--writer-page-zoom, 1)", "visual page zoom");
+  includes(css, 'data-writer-page-flow="sideBySide"', "paired page flow hook");
+  includes(css, "grid-template-columns: repeat(2, var(--writer-manuscript-width))", "two-page pairing");
+  includes(css, ".writer-page-probes", "unzoomed measurement probes");
   includes(css, ".writer-screen.writer-screen--focus", "focus-mode paged manuscript contract");
 });

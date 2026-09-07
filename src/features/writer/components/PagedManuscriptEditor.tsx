@@ -234,14 +234,11 @@ export function PagedManuscriptEditor({
   const continuationProbeRef = useRef<HTMLTextAreaElement | null>(null);
   const pageRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
   const pendingSelectionRef = useRef<PendingSelection | null>(null);
-  const latestContentRef = useRef(content);
   const scheduledFrameRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [pages, setPages] = useState<PageSegment[]>([
     { start: 0, end: content.length, text: content },
   ]);
-
-  latestContentRef.current = content;
 
   const calculatePages = useCallback((value: string) => {
     return paginateContent(
@@ -262,19 +259,22 @@ export function PagedManuscriptEditor({
     [calculatePages],
   );
 
-  const scheduleRepagination = useCallback(() => {
-    if (scheduledFrameRef.current !== null) {
-      window.cancelAnimationFrame(scheduledFrameRef.current);
-    }
+  const scheduleRepagination = useCallback(
+    (value: string) => {
+      if (scheduledFrameRef.current !== null) {
+        window.cancelAnimationFrame(scheduledFrameRef.current);
+      }
 
-    scheduledFrameRef.current = window.requestAnimationFrame(() => {
-      scheduledFrameRef.current = null;
-      commitPages(latestContentRef.current);
-    });
-  }, [commitPages]);
+      scheduledFrameRef.current = window.requestAnimationFrame(() => {
+        scheduledFrameRef.current = null;
+        commitPages(value);
+      });
+    },
+    [commitPages],
+  );
 
   useEffect(() => {
-    scheduleRepagination();
+    scheduleRepagination(content);
 
     return () => {
       if (scheduledFrameRef.current !== null) {
@@ -292,7 +292,7 @@ export function PagedManuscriptEditor({
       return;
     }
 
-    const handleLayoutChange = () => scheduleRepagination();
+    const handleLayoutChange = () => scheduleRepagination(content);
     const mutationObserver = new MutationObserver(handleLayoutChange);
     const resizeObserver = new ResizeObserver(handleLayoutChange);
 
@@ -316,7 +316,7 @@ export function PagedManuscriptEditor({
         handleLayoutChange,
       );
     };
-  }, [scheduleRepagination]);
+  }, [content, scheduleRepagination]);
 
   useEffect(() => {
     const pendingSelection = pendingSelectionRef.current;
@@ -362,7 +362,6 @@ export function PagedManuscriptEditor({
 
   function applyContent(nextContent: string, absoluteOffset: number) {
     pendingSelectionRef.current = { absoluteOffset };
-    latestContentRef.current = nextContent;
     commitPages(nextContent);
     onContentChange(nextContent);
   }
@@ -450,8 +449,6 @@ export function PagedManuscriptEditor({
 
   return (
     <div className="writer-paged-manuscript" ref={containerRef}>
-      <input name="content" type="hidden" value={content} />
-
       {pages.map((page, pageIndex) => (
         <section
           className="writer-manuscript-page"
@@ -464,7 +461,6 @@ export function PagedManuscriptEditor({
               <header className="writer-manuscript-page__header">
                 <input
                   className="writer-work-title"
-                  name="workTitle"
                   aria-label={workTitleLabel}
                   value={workTitle}
                   onChange={(event) =>
@@ -474,7 +470,6 @@ export function PagedManuscriptEditor({
 
                 <input
                   className="writer-title"
-                  name="chapterTitle"
                   aria-label={chapterTitleLabel}
                   value={chapterTitle}
                   onChange={(event) =>

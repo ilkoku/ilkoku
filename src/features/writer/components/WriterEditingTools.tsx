@@ -33,7 +33,8 @@ type GoalSnapshot = {
   remaining: string;
 };
 
-const STORAGE_KEY = "ilkoku.writer.preferences.v1";
+const STORAGE_KEY = "ilkoku.writer.preferences.v2";
+const LEGACY_STORAGE_KEY = "ilkoku.writer.preferences.v1";
 const EMPTY_GOAL_SNAPSHOT = "";
 
 const defaultPreferences: WriterPreferences = {
@@ -41,7 +42,7 @@ const defaultPreferences: WriterPreferences = {
   lineHeight: 1.9,
   font: "typewriter",
   width: "book",
-  pageFlow: "vertical",
+  pageFlow: "pageTurn",
   zoom: 100,
   spellcheck: true,
 };
@@ -65,13 +66,22 @@ function clamp(value: number, min: number, max: number) {
 
 function loadPreferences(): WriterPreferences {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const currentRaw = window.localStorage.getItem(STORAGE_KEY);
+    const legacyRaw = currentRaw
+      ? null
+      : window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    const raw = currentRaw ?? legacyRaw;
 
     if (!raw) {
       return defaultPreferences;
     }
 
     const parsed = JSON.parse(raw) as StoredWriterPreferences;
+    const migratedPageFlow = legacyRaw
+      ? defaultPreferences.pageFlow
+      : parsed.pageFlow === "pageTurn" || parsed.pageFlow === "sideBySide"
+        ? "pageTurn"
+        : "vertical";
 
     return {
       fontSize:
@@ -90,10 +100,7 @@ function loadPreferences(): WriterPreferences {
         parsed.width && parsed.width in manuscriptWidths
           ? parsed.width
           : defaultPreferences.width,
-      pageFlow:
-        parsed.pageFlow === "pageTurn" || parsed.pageFlow === "sideBySide"
-          ? "pageTurn"
-          : "vertical",
+      pageFlow: migratedPageFlow,
       zoom:
         typeof parsed.zoom === "number"
           ? clamp(Math.round(parsed.zoom / 10) * 10, 50, 160)
@@ -432,8 +439,8 @@ export function WriterEditingTools() {
               }
               aria-label="Sayfa görünümü"
             >
-              <option value="vertical">Kaydır</option>
-              <option value="pageTurn">Sayfa Çevir</option>
+              <option value="pageTurn">Kitap</option>
+              <option value="vertical">Kağıt</option>
             </select>
           </label>
 

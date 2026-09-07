@@ -1,3 +1,4 @@
+import { WriterBookStructureEnhancer } from "@/features/writer/components/WriterBookStructureEnhancer";
 import { WriterEditingTools } from "@/features/writer/components/WriterEditingTools";
 import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
 import "@/features/writer/writer-paper-experience.css";
@@ -6,6 +7,7 @@ import "@/styles/light-purple-route-fallback.css";
 import "@/features/writer/writer-editor-density.css";
 import "@/features/writer/writer-editing-tools.css";
 import "@/features/writer/writer-paged-manuscript.css";
+import "@/features/writer/writer-book-structure.css";
 
 export default function WriterWorksLayout({
   children,
@@ -17,6 +19,7 @@ export default function WriterWorksLayout({
       {children}
       <WriterEditingTools />
       <WriterPagedManuscriptEnhancer />
+      <WriterBookStructureEnhancer />
     </>
   );
 }

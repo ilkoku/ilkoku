@@ -1,0 +1,312 @@
+/* PowerPoint-like logical book structure panel. */
+
+.writer-screen .writer-chapters__header:has(> .writer-book-structure__header) > :not(.writer-book-structure__header) {
+  display: none !important;
+}
+
+.writer-screen .writer-chapters__list:has(> .writer-book-structure__list) > .writer-chapter-item {
+  display: none !important;
+}
+
+.writer-book-structure__header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.writer-book-structure__header > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.writer-book-structure__header > div > span {
+  color: var(--writer-paper-ink);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.writer-book-structure__header > div > strong {
+  color: var(--writer-paper-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.writer-book-structure__add {
+  position: relative;
+  flex: none;
+}
+
+.writer-book-structure__add > summary {
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  cursor: pointer;
+  list-style: none;
+  place-items: center;
+  border: 1px solid var(--writer-paper-border);
+  border-radius: 0.55rem;
+  background: var(--writer-paper);
+  color: var(--writer-paper-ink);
+  font-size: 1.05rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.writer-book-structure__add > summary::-webkit-details-marker {
+  display: none;
+}
+
+.writer-book-structure__add[open] > summary,
+.writer-book-structure__add > summary:hover {
+  border-color: var(--writer-paper-border-strong);
+  background: var(--writer-paper-accent-muted);
+}
+
+.writer-book-structure__add-menu {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  display: grid;
+  width: min(20rem, 78vw);
+  max-height: min(31rem, 70vh);
+  gap: 0.25rem;
+  overflow-y: auto;
+  padding: 0.55rem;
+  border: 1px solid var(--writer-paper-border);
+  border-radius: 0.8rem;
+  background: var(--writer-paper);
+  box-shadow: 0 1rem 2.8rem rgba(37, 35, 31, 0.14);
+}
+
+.writer-book-structure__add-menu > span {
+  padding: 0.55rem 0.55rem 0.2rem;
+  color: var(--writer-paper-faint);
+  font-size: 0.64rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.writer-book-structure__add-menu > button {
+  display: grid;
+  gap: 0.12rem;
+  width: 100%;
+  cursor: pointer;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--writer-paper-ink);
+  text-align: left;
+}
+
+.writer-book-structure__add-menu > button:hover:not(:disabled) {
+  background: var(--writer-paper-accent-muted);
+}
+
+.writer-book-structure__add-menu > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.writer-book-structure__add-menu strong {
+  font-size: 0.76rem;
+}
+
+.writer-book-structure__add-menu small {
+  color: var(--writer-paper-muted);
+  font-size: 0.65rem;
+  line-height: 1.35;
+}
+
+.writer-book-structure__list {
+  display: grid;
+  gap: 0.28rem;
+  width: 100%;
+}
+
+.writer-book-structure__item {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.42rem;
+  width: 100%;
+  min-width: 0;
+  cursor: pointer;
+  padding: 0.48rem 0.42rem;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--writer-paper-ink);
+  text-align: left;
+  transition: border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+}
+
+.writer-book-structure__item:hover {
+  border-color: var(--writer-paper-border);
+  background: var(--writer-paper-ui);
+}
+
+.writer-book-structure__item[data-active="true"] {
+  border-color: var(--writer-paper-border-strong);
+  background: var(--writer-paper-accent-muted);
+}
+
+.writer-book-structure__item[data-dragging="true"] {
+  opacity: 0.42;
+}
+
+.writer-book-structure__drag {
+  cursor: grab;
+  color: var(--writer-paper-faint);
+  font-size: 0.78rem;
+  letter-spacing: -0.28em;
+}
+
+.writer-book-structure__item:active .writer-book-structure__drag {
+  cursor: grabbing;
+}
+
+.writer-book-structure__position {
+  display: grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
+  border: 1px solid var(--writer-paper-border);
+  border-radius: 0.45rem;
+  color: var(--writer-paper-muted);
+  font-family: var(--writer-typewriter);
+  font-size: 0.66rem;
+}
+
+.writer-book-structure__content {
+  display: grid;
+  min-width: 0;
+  gap: 0.05rem;
+}
+
+.writer-book-structure__content small,
+.writer-book-structure__content em {
+  overflow: hidden;
+  color: var(--writer-paper-muted);
+  font-size: 0.59rem;
+  font-style: normal;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.writer-book-structure__content strong {
+  overflow: hidden;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.writer-book-structure__chevron {
+  color: var(--writer-paper-faint);
+  font-size: 0.68rem;
+}
+
+.writer-book-structure__item[data-active="true"] .writer-book-structure__chevron {
+  color: var(--writer-paper-accent);
+}
+
+.writer-book-structure__empty,
+.writer-book-structure__message {
+  margin: 0;
+  padding: 0.55rem;
+  color: var(--writer-paper-muted);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.writer-book-structure__message {
+  border-top: 1px solid var(--writer-paper-border);
+}
+
+/* The original chapter controls stay mounted as the canonical React/form controls. */
+.writer-screen .writer-chapters__list:has(> .writer-book-structure__list) > .writer-book-structure__list {
+  display: grid;
+}
+
+/* A selected special book page takes over the canvas without changing chapter form state. */
+.writer-screen .writer-canvas:has(> .writer-special-page-editor) > .writer-paged-manuscript {
+  display: none !important;
+}
+
+.writer-special-page-editor {
+  width: 100%;
+  min-width: 0;
+}
+
+.writer-special-page-editor > .writer-paged-manuscript {
+  width: 100%;
+}
+
+.writer-special-page-editor .writer-work-title {
+  pointer-events: none;
+  opacity: 0.52;
+}
+
+.writer-special-page-editor[data-automatic="true"] .writer-title,
+.writer-special-page-editor[data-automatic="true"] .writer-page-textarea {
+  cursor: default;
+}
+
+.writer-screen:has(.writer-special-page-editor) .writer-toolbar__actions > button:not(:first-child) {
+  display: none !important;
+}
+
+.writer-screen:has(.writer-special-page-editor) .writer-chapters__updated {
+  display: none !important;
+}
+
+.writer-book-structure__toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.writer-book-structure__toolbar-actions > span {
+  color: var(--writer-paper-muted);
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+
+.writer-book-structure__toolbar-actions > span[data-state="unsaved"] {
+  color: var(--writer-paper-accent);
+}
+
+.writer-screen.writer-screen--focus .writer-chapters:has(.writer-book-structure__list) {
+  display: none !important;
+}
+
+@media (max-width: 47.99rem) {
+  .writer-book-structure__add-menu {
+    position: fixed;
+    top: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+    max-height: 60vh;
+  }
+
+  .writer-book-structure__item {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+  }
+
+  .writer-book-structure__toolbar-actions {
+    width: 100%;
+  }
+}

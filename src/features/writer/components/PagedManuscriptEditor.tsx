@@ -239,6 +239,7 @@ export function PagedManuscriptEditor({
   const [pages, setPages] = useState<PageSegment[]>([
     { start: 0, end: content.length, text: content },
   ]);
+  const [activePageIndex, setActivePageIndex] = useState(0);
 
   const calculatePages = useCallback((value: string) => {
     return paginateContent(
@@ -343,9 +344,8 @@ export function PagedManuscriptEditor({
     }
 
     const page = pages[targetPageIndex];
-    const textarea = pageRefs.current[targetPageIndex];
 
-    if (!page || !textarea) {
+    if (!page) {
       return;
     }
 
@@ -355,8 +355,18 @@ export function PagedManuscriptEditor({
     );
 
     window.requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(localOffset, localOffset);
+      setActivePageIndex(targetPageIndex);
+
+      window.requestAnimationFrame(() => {
+        const textarea = pageRefs.current[targetPageIndex];
+
+        if (!textarea) {
+          return;
+        }
+
+        textarea.focus();
+        textarea.setSelectionRange(localOffset, localOffset);
+      });
     });
   }, [content.length, pages]);
 
@@ -380,7 +390,6 @@ export function PagedManuscriptEditor({
 
   function handlePageKeyDown(
     page: PageSegment,
-    pageIndex: number,
     event: KeyboardEvent<HTMLTextAreaElement>,
   ) {
     const textarea = event.currentTarget;
@@ -429,7 +438,6 @@ export function PagedManuscriptEditor({
       pendingSelectionRef.current = {
         absoluteOffset: previousOffset,
       };
-      pageRefs.current[Math.max(0, pageIndex - 1)]?.focus();
       commitPages(content);
       return;
     }
@@ -442,9 +450,22 @@ export function PagedManuscriptEditor({
       event.preventDefault();
       const nextOffset = nextCodePointEnd(content, page.end);
       pendingSelectionRef.current = { absoluteOffset: nextOffset };
-      pageRefs.current[Math.min(pages.length - 1, pageIndex + 1)]?.focus();
       commitPages(content);
     }
+  }
+
+  const visibleActivePageIndex = Math.min(
+    activePageIndex,
+    Math.max(0, pages.length - 1),
+  );
+
+  function turnPage(direction: -1 | 1) {
+    setActivePageIndex((current) =>
+      Math.min(
+        Math.max(current + direction, 0),
+        Math.max(0, pages.length - 1),
+      ),
+    );
   }
 
   return (
@@ -454,6 +475,9 @@ export function PagedManuscriptEditor({
           <section
             className="writer-manuscript-page"
             data-page={pageIndex + 1}
+            data-active={
+              pageIndex === visibleActivePageIndex ? "true" : "false"
+            }
             key={`${pageIndex}-${page.start}`}
             aria-label={`Sayfa ${pageIndex + 1}`}
           >
@@ -488,9 +512,7 @@ export function PagedManuscriptEditor({
                 aria-label={`${bodyLabel} — Sayfa ${pageIndex + 1}`}
                 value={page.text}
                 onChange={(event) => handlePageChange(page, event)}
-                onKeyDown={(event) =>
-                  handlePageKeyDown(page, pageIndex, event)
-                }
+                onKeyDown={(event) => handlePageKeyDown(page, event)}
                 placeholder={pageIndex === 0 ? bodyPlaceholder : undefined}
                 ref={(node) => {
                   pageRefs.current[pageIndex] = node;
@@ -507,6 +529,30 @@ export function PagedManuscriptEditor({
           </section>
         ))}
       </div>
+
+      <nav className="writer-page-turn-controls" aria-label="Sayfa çevirme">
+        <button
+          type="button"
+          onClick={() => turnPage(-1)}
+          disabled={visibleActivePageIndex === 0}
+          aria-label="Önceki sayfa"
+          title="Önceki sayfa"
+        >
+          ‹
+        </button>
+        <span aria-live="polite">
+          {visibleActivePageIndex + 1} / {pages.length}
+        </span>
+        <button
+          type="button"
+          onClick={() => turnPage(1)}
+          disabled={visibleActivePageIndex >= pages.length - 1}
+          aria-label="Sonraki sayfa"
+          title="Sonraki sayfa"
+        >
+          ›
+        </button>
+      </nav>
 
       <div className="writer-page-probes" aria-hidden="true">
         <section className="writer-manuscript-page writer-manuscript-page--probe">

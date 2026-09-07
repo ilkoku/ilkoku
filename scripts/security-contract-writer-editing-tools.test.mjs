@@ -22,13 +22,16 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(tools, "Satır aralığını artır", "line spacing increase control");
   includes(tools, '<option value="book">Kitap</option>', "book manuscript width preset");
   includes(tools, '<option value="serif">Kitap</option>', "book serif preset");
-  includes(tools, '<option value="vertical">Dikey</option>', "vertical page flow preset");
-  includes(tools, '<option value="sideBySide">Yan yana</option>', "side-by-side page flow preset");
+  includes(tools, '<option value="vertical">Kaydır</option>', "scroll page view preset");
+  includes(tools, '<option value="pageTurn">Sayfa Çevir</option>', "page-turn view preset");
+  includes(tools, 'parsed.pageFlow === "sideBySide"', "legacy paired-view preference migration");
   includes(tools, "Yakınlaştırma oranı", "word-like zoom output");
   includes(tools, "zoom: clamp(preferences.zoom - 10, 50, 160)", "zoom-out step");
   includes(tools, "zoom: clamp(preferences.zoom + 10, 50, 160)", "zoom-in step");
   includes(tools, "screen.dataset.writerPageFlow", "page flow data hook");
   includes(tools, '"--writer-page-zoom"', "page zoom style hook");
+  includes(tools, "WriterGoalStatistics", "daily goal statistics portal");
+  includes(tools, "Günlük kelime hedefi", "daily goal statistics label");
   includes(tools, "spellcheck", "spellcheck control");
   includes(tools, "ilkoku.writer.preferences.v1", "local writer preference storage");
 
@@ -37,6 +40,8 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(css, "--writer-manuscript-font-family", "font family CSS variable");
   includes(css, "--writer-manuscript-width", "manuscript width CSS variable");
   includes(css, "--writer-page-zoom", "page zoom CSS variable");
+  includes(css, ".writer-context-bar > .writer-goal", "top daily goal removal");
+  includes(css, ".writer-footer__goal", "daily goal statistics styling");
   includes(css, ".writer-screen.writer-screen--focus .writer-canvas", "focus manuscript width hook");
   includes(css, ".writer-editing-tools", "compact toolbar styling");
 });

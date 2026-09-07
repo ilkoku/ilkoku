@@ -491,7 +491,7 @@ export function WriterEditingTools() {
             }
             title="Tarayıcının yazım denetimini aç veya kapat"
           >
-            Yazım {preferences.spellcheck ? "Açık" : "Kapalı"}
+            Yazım Denetimi · {preferences.spellcheck ? "Açık" : "Kapalı"}
           </button>
 
           <button

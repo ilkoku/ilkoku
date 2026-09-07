@@ -1,0 +1,204 @@
+/* Compact manuscript controls shared by writer routes. */
+
+.writer-screen {
+  --writer-manuscript-font-size: 17px;
+  --writer-manuscript-line-height: 1.9;
+  --writer-manuscript-font-family: var(--writer-typewriter);
+  --writer-manuscript-width: 48rem;
+}
+
+.writer-screen .writer-context-bar {
+  align-items: center;
+}
+
+.writer-editing-tools {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.45rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+.writer-editing-tools::-webkit-scrollbar {
+  display: none;
+}
+
+.writer-editing-tools__label {
+  flex: 0 0 auto;
+  color: var(--writer-paper-muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.writer-editing-tools__group {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0.16rem;
+  border: 1px solid var(--writer-paper-border);
+  border-radius: 0.62rem;
+  background: var(--writer-paper);
+}
+
+.writer-editing-tools__group > span {
+  padding-inline: 0.35rem 0.15rem;
+  color: var(--writer-paper-muted);
+  font-size: 0.67rem;
+  font-weight: 700;
+}
+
+.writer-editing-tools__group button,
+.writer-editing-tools__toggle,
+.writer-editing-tools__reset {
+  min-width: 1.95rem;
+  min-height: 1.7rem;
+  padding: 0.2rem 0.42rem;
+  color: var(--writer-paper-ink);
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  font-size: 0.69rem;
+  font-weight: 750;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.writer-editing-tools__group button:hover,
+.writer-editing-tools__toggle:hover,
+.writer-editing-tools__reset:hover {
+  color: var(--writer-paper-accent);
+  background: var(--writer-paper-accent-muted);
+}
+
+.writer-editing-tools__group button:focus-visible,
+.writer-editing-tools__toggle:focus-visible,
+.writer-editing-tools__reset:focus-visible,
+.writer-editing-tools__select select:focus-visible {
+  outline: 2px solid rgba(167, 122, 35, 0.52);
+  outline-offset: 1px;
+}
+
+.writer-editing-tools__group button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.writer-editing-tools__group output {
+  min-width: 1.85rem;
+  color: var(--writer-paper-muted);
+  font-family: var(--writer-typewriter);
+  font-size: 0.64rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.writer-editing-tools__select {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.25rem 0.18rem 0.52rem;
+  color: var(--writer-paper-muted);
+  border: 1px solid var(--writer-paper-border);
+  border-radius: 0.62rem;
+  background: var(--writer-paper);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.writer-editing-tools__select select {
+  min-height: 1.55rem;
+  max-width: 5.7rem;
+  padding: 0 1.3rem 0 0.34rem;
+  color: var(--writer-paper-ink);
+  border: 0;
+  border-radius: 0.38rem;
+  background: var(--writer-paper-ui);
+  font: inherit;
+  cursor: pointer;
+}
+
+.writer-editing-tools__toggle,
+.writer-editing-tools__reset {
+  flex: 0 0 auto;
+  min-height: 2rem;
+  padding-inline: 0.58rem;
+  border: 1px solid var(--writer-paper-border);
+  background: var(--writer-paper);
+}
+
+.writer-editing-tools__toggle[aria-pressed="true"] {
+  color: var(--writer-paper-accent);
+  background: var(--writer-paper-accent-muted);
+  border-color: rgba(167, 122, 35, 0.42);
+}
+
+/* Preferences affect manuscript reading/writing comfort only; saved text remains plain text. */
+.writer-screen .writer-textarea {
+  font-family: var(--writer-manuscript-font-family) !important;
+  font-size: var(--writer-manuscript-font-size) !important;
+  line-height: var(--writer-manuscript-line-height) !important;
+}
+
+.writer-screen.writer-screen--focus .writer-canvas {
+  width: min(100%, var(--writer-manuscript-width)) !important;
+  max-width: var(--writer-manuscript-width) !important;
+}
+
+.writer-screen.writer-screen--focus .writer-context-bar {
+  justify-content: space-between !important;
+  gap: 0.6rem;
+}
+
+.writer-screen.writer-screen--focus .writer-editing-tools {
+  flex: 1 1 auto;
+}
+
+.writer-screen.writer-screen--focus .focus-mode-toggle {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 64rem) {
+  .writer-editing-tools__label {
+    display: none;
+  }
+
+  .writer-editing-tools {
+    gap: 0.35rem;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .writer-screen .writer-context-bar,
+  .writer-screen.writer-screen--focus .writer-context-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.4rem;
+    padding-inline: 0.45rem;
+  }
+
+  .writer-editing-tools {
+    width: 100%;
+  }
+
+  .writer-editing-tools__select span {
+    display: none;
+  }
+
+  .writer-editing-tools__select {
+    padding-left: 0.25rem;
+  }
+
+  .writer-editing-tools__toggle,
+  .writer-editing-tools__reset {
+    padding-inline: 0.45rem;
+  }
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { writerContent } from "@/content";
@@ -30,9 +30,8 @@ function getEditorTarget(): EditorTarget | null {
   const body = canvas?.querySelector<HTMLTextAreaElement>(
     ":scope > .writer-textarea",
   );
-  const subtitle = canvas?.querySelector<HTMLElement>(
-    ":scope > .writer-subtitle",
-  );
+  const subtitle =
+    canvas?.querySelector<HTMLElement>(":scope > .writer-subtitle") ?? null;
 
   if (!canvas || !workTitle || !chapterTitle || !body) {
     return null;
@@ -128,19 +127,6 @@ export function WriterPagedManuscriptEnhancer() {
     getServerSnapshot,
   );
   const target = getEditorTarget();
-  const canvas = target?.canvas ?? null;
-
-  useEffect(() => {
-    if (!canvas) {
-      return;
-    }
-
-    canvas.dataset.writerPaged = "true";
-
-    return () => {
-      delete canvas.dataset.writerPaged;
-    };
-  }, [canvas]);
 
   if (!target || snapshot === "writer-editor-unavailable") {
     return null;

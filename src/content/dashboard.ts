@@ -39,9 +39,6 @@ export const dashboardContent = {
   },
   dailySummary: "Günlük özet",
   motivationTitle: "Bugünün Motivasyonu",
-  motivation: "Küçük bir bölüm de ilerlemedir.",
   streakTitle: "Yazma Serisi",
-  streak: "8 Gün",
-  streakMessage: "Ritmini koruyorsun.",
   feedbackListLabel: "Son geri bildirimler",
 } as const;

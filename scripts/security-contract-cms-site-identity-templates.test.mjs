@@ -25,7 +25,7 @@ test("site identity is admin-only, fail-safe and restricted to published CMS med
   contains(identity, "parseSiteIdentityStrict", "site identity strict parser");
   contains(identity, "return defaultSiteIdentity", "public identity safe fallback");
   contains(header, "getPublicSiteIdentity()", "public header identity consumer");
-  contains(footer, "getPublicSiteIdentity()", "public footer identity consumer");
+  contains(footer, "getPublicSiteIdentity()", "trust footer centralized site identity source");
   notContains(actions, "http://", "site identity must not accept arbitrary remote logo source");
   notContains(actions, "https://", "site identity must not accept arbitrary remote logo source");
 });
@@ -64,4 +64,41 @@ test("visual page builder reuses canonical CMS authority and validates structure
   }
   contains(modules, 'href: "/icerik/site-kimligi"', "site identity CMS navigation");
   contains(modules, 'href: "/icerik/sayfalar/sablonlar"', "visual page builder CMS navigation");
+});
+
+test("writer motivation series is user-day idempotent, CMS-managed and mounted only on the real writer dashboard", () => {
+  const migration = source("prisma/migrations/20260907130000_writer_active_days/migration.sql");
+  const engagement = source("src/lib/writer-engagement.ts");
+  const config = source("src/lib/writer-motivation-config.ts");
+  const action = source("src/features/writer-engagement/actions.ts");
+  const tracker = source("src/features/dashboard/components/WriterActiveDayTracker.tsx");
+  const dashboard = source("src/features/dashboard/components/WriterDashboard.tsx");
+  const dashboardContent = source("src/content/dashboard.ts");
+  const writerPage = source("src/app/yazar/page.tsx");
+  const cmsPage = source("src/app/icerik/motivasyon/page.tsx");
+  const cmsAction = source("src/features/cms/writer-motivation-actions.ts");
+  const cmsEditor = source("src/components/content/CmsWriterMotivationEditor.tsx");
+  const modules = source("src/lib/cms-modules.ts");
+
+  contains(migration, "UNIQUE INDEX `WriterActiveDay_userId_dayKey_key`", "same-user same-day uniqueness");
+  contains(migration, "FOREIGN KEY (`userId`) REFERENCES `User` (`id`)", "writer active-day user boundary");
+  contains(engagement, 'timeZone: "Europe/Istanbul"', "Istanbul day boundary");
+  contains(engagement, "summary.todayRecorded", "same-day preview detection");
+  contains(engagement, "summary.activeDayCount + 1", "next distinct active-day projection");
+  contains(engagement, "ON DUPLICATE KEY UPDATE userId = VALUES(userId)", "idempotent active-day write");
+  contains(action, 'user.role !== "writer"', "writer-only active-day mutation");
+  contains(tracker, "recordWriterActiveDayAction()", "client-mounted real-visit tracking");
+  contains(writerPage, "getWriterEngagementPreview(profile.id)", "writer dashboard engagement loader");
+  contains(dashboard, "<WriterActiveDayTracker />", "real dashboard mount tracker");
+  contains(dashboard, "engagement.motivation", "dynamic motivation rendering");
+  contains(dashboard, "engagement.activeDayCount", "dynamic active-day rendering");
+  notContains(dashboardContent, 'streak: "8 Gün"', "static fake streak removal");
+  notContains(dashboardContent, 'motivation: "Küçük bir bölüm de ilerlemedir."', "static motivation removal");
+  contains(config, "WRITER_MOTIVATION_MINIMUM = 30", "30-day baseline contract");
+  contains(config, "WRITER_MOTIVATION_MAXIMUM = 365", "CMS extension ceiling");
+  contains(cmsPage, 'requireCmsManager("/icerik/motivasyon")', "motivation CMS read boundary");
+  contains(cmsAction, 'requireCmsPublisher("/icerik/motivasyon")', "motivation CMS publish boundary");
+  contains(cmsAction, 'formData.getAll("motivation")', "ordered motivation payload");
+  contains(cmsEditor, "+ Yeni motivasyon ekle", "CMS motivation extension control");
+  contains(modules, 'href: "/icerik/motivasyon"', "motivation CMS navigation");
 });

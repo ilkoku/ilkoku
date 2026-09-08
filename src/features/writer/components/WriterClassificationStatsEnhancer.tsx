@@ -130,10 +130,11 @@ export function WriterClassificationStatsEnhancer() {
 
   if (!target || snapshot === UNAVAILABLE) return null;
 
+  const activeTarget = target;
   const state = JSON.parse(snapshot) as ClassificationSnapshot;
 
   function updateWarning(warning: WorkContentWarning, checked: boolean) {
-    const original = target.originalPanel.querySelector<HTMLInputElement>(
+    const original = activeTarget.originalPanel.querySelector<HTMLInputElement>(
       `input[name="contentWarnings"][value="${warning}"]`,
     );
     if (original) setNativeCheckboxValue(original, checked);
@@ -157,7 +158,9 @@ export function WriterClassificationStatsEnhancer() {
           <select
             aria-label="İçerik yaş sınıfı"
             value={state.rating}
-            onChange={(event) => setNativeSelectValue(target.rating, event.target.value)}
+            onChange={(event) =>
+              setNativeSelectValue(activeTarget.rating, event.target.value)
+            }
           >
             <option value="" disabled>Sınıf seç</option>
             {workContentRatings.map((rating) => (
@@ -187,7 +190,7 @@ export function WriterClassificationStatsEnhancer() {
             type="checkbox"
             checked={state.confirmed}
             onChange={(event) =>
-              setNativeCheckboxValue(target.confirmation, event.target.checked)
+              setNativeCheckboxValue(activeTarget.confirmation, event.target.checked)
             }
           />
           <span>
@@ -200,6 +203,6 @@ export function WriterClassificationStatsEnhancer() {
         </label>
       </fieldset>
     </details>,
-    target.footer,
+    activeTarget.footer,
   );
 }

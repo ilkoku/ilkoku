@@ -46,6 +46,24 @@ jobs:
 
           pace() { sleep "$REQUEST_DELAY_SECONDS"; }
 
+          header_value() {
+            local headers="$1"
+            local name="$2"
+            grep -i "^${name}:" "$headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true
+          }
+
+          print_edge_headers() {
+            local headers="$1"
+            local server cf_ray cf_cache hcdn hcdn_cache retry_after
+            server="$(header_value "$headers" "server")"
+            cf_ray="$(header_value "$headers" "cf-ray")"
+            cf_cache="$(header_value "$headers" "cf-cache-status")"
+            hcdn="$(header_value "$headers" "hcdn-request-id")"
+            hcdn_cache="$(header_value "$headers" "x-hcdn-cache-status")"
+            retry_after="$(header_value "$headers" "retry-after")"
+            echo "EDGE server=${server:-YOK} | cf-ray=${cf_ray:-YOK} | cf-cache-status=${cf_cache:-YOK} | hcdn-request-id=${hcdn:-YOK} | x-hcdn-cache-status=${hcdn_cache:-YOK} | retry-after=${retry_after:-YOK}"
+          }
+
           fail_on_edge_block() {
             local code="$1"
             local url="$2"
@@ -58,10 +76,16 @@ jobs:
           check_status() {
             local url="$1"
             local expected="$2"
-            local code
-            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            local headers code
+            headers="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
             echo "$url -> HTTP $code"
-            fail_on_edge_block "$code" "$url"
+            print_edge_headers "$headers"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              rm -f "$headers"
+              fail_on_edge_block "$code" "$url"
+            fi
+            rm -f "$headers"
             [[ "$code" == "$expected" ]]
             pace
           }
@@ -73,11 +97,17 @@ jobs:
           check_body() {
             local url="$1"
             shift
-            local body code marker
+            local headers body code marker
+            headers="$(mktemp)"
             body="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             echo "$url -> HTTP $code"
-            fail_on_edge_block "$code" "$url"
+            print_edge_headers "$headers"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              rm -f "$headers" "$body"
+              fail_on_edge_block "$code" "$url"
+            fi
+            rm -f "$headers"
             [[ "$code" == "200" ]] || { rm -f "$body"; return 1; }
             for marker in "$@"; do
               grep -Fq "$marker" "$body" || { echo "Eksik içerik: $url -> $marker" >&2; rm -f "$body"; return 1; }
@@ -89,11 +119,17 @@ jobs:
           check_post_merge_body_excludes() {
             local url="$1"
             shift
-            local body code forbidden
+            local headers body code forbidden
+            headers="$(mktemp)"
             body="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             echo "$url -> HTTP $code"
-            fail_on_edge_block "$code" "$url"
+            print_edge_headers "$headers"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              rm -f "$headers" "$body"
+              fail_on_edge_block "$code" "$url"
+            fi
+            rm -f "$headers"
             [[ "$code" == "200" ]] || { rm -f "$body"; return 1; }
             for forbidden in "$@"; do
               if grep -Fq "$forbidden" "$body"; then
@@ -112,11 +148,16 @@ jobs:
             local headers code location robots
             headers="$(mktemp)"
             code="$(curl --silent --show-error --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
-            fail_on_edge_block "$code" "$url"
+            echo "$url -> HTTP $code"
+            print_edge_headers "$headers"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              rm -f "$headers"
+              fail_on_edge_block "$code" "$url"
+            fi
             location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
             rm -f "$headers"
-            echo "$url -> HTTP $code | Location: ${location:-YOK} | X-Robots-Tag: ${robots:-YOK}"
+            echo "Location: ${location:-YOK} | X-Robots-Tag: ${robots:-YOK}"
             [[ "$code" == "301" || "$code" == "302" || "$code" == "307" || "$code" == "308" ]]
             [[ "$location" == *"$expected_location"* ]]
             [[ "${robots,,}" == *"noindex"* ]]

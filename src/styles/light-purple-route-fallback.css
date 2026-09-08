@@ -1,8 +1,17 @@
-/* Route-scoped fallback: keep login and writer routes on the original dark İlkOku canvas. */
+/*
+ * Route-scoped first-paint fallback.
+ * Login keeps the legacy dark canvas, while the manuscript workspace must
+ * match its light paper shell during a hard refresh so the browser never
+ * flashes a black frame between document paints.
+ */
 html:has(.login-brand-scope),
-body:has(.login-brand-scope),
-html:has(.app-shell[data-role="writer"]),
-body:has(.app-shell[data-role="writer"]) {
+body:has(.login-brand-scope) {
   background: #0b0d10 !important;
   color-scheme: dark;
+}
+
+html:has(.app-shell[data-role="writer"]),
+body:has(.app-shell[data-role="writer"]) {
+  background: #efede7 !important;
+  color-scheme: light;
 }

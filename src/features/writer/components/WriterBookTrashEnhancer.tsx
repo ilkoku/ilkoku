@@ -17,6 +17,7 @@ import type { BookTrashItem } from "@/features/works/book-trash";
 
 type TrashTarget = {
   screen: HTMLElement;
+  sidebar: HTMLElement;
   listHost: HTMLElement;
   enhancedList: HTMLElement;
   workIdInput: HTMLInputElement;
@@ -28,15 +29,16 @@ function getTarget(): TrashTarget | null {
   if (typeof document === "undefined") return null;
 
   const screen = document.querySelector<HTMLElement>(".writer-screen");
-  const listHost = screen?.querySelector<HTMLElement>(".writer-chapters__list");
+  const sidebar = screen?.querySelector<HTMLElement>(".writer-chapters");
+  const listHost = sidebar?.querySelector<HTMLElement>(".writer-chapters__list");
   const enhancedList = listHost?.querySelector<HTMLElement>(
     ":scope > .writer-book-structure__list",
   );
   const workIdInput = screen?.querySelector<HTMLInputElement>('input[name="workId"]');
 
-  if (!screen || !listHost || !enhancedList || !workIdInput) return null;
+  if (!screen || !sidebar || !listHost || !enhancedList || !workIdInput) return null;
 
-  return { screen, listHost, enhancedList, workIdInput };
+  return { screen, sidebar, listHost, enhancedList, workIdInput };
 }
 
 function getSnapshot() {
@@ -273,6 +275,6 @@ export function WriterBookTrashEnhancer() {
 
       {message ? <p className="writer-book-trash__message" role="status">{message}</p> : null}
     </aside>,
-    target.listHost,
+    target.sidebar,
   );
 }

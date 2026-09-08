@@ -1,5 +1,6 @@
 import { WriterBookStructureRefreshBoundary } from "@/features/writer/components/WriterBookStructureRefreshBoundary";
 import { WriterBookTrashEnhancer } from "@/features/writer/components/WriterBookTrashEnhancer";
+import { WriterClassificationStatsEnhancer } from "@/features/writer/components/WriterClassificationStatsEnhancer";
 import { WriterEditingTools } from "@/features/writer/components/WriterEditingTools";
 import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
 import "@/features/writer/writer-paper-experience.css";
@@ -11,6 +12,7 @@ import "@/features/writer/writer-paged-manuscript.css";
 import "@/features/writer/writer-book-structure.css";
 import "@/features/writer/writer-sidebar-regressions.css";
 import "@/features/writer/writer-book-trash.css";
+import "@/features/writer/writer-classification-stats.css";
 
 export default function WriterDashboardLayout({
   children,
@@ -24,6 +26,7 @@ export default function WriterDashboardLayout({
       <WriterPagedManuscriptEnhancer />
       <WriterBookStructureRefreshBoundary />
       <WriterBookTrashEnhancer />
+      <WriterClassificationStatsEnhancer />
     </>
   );
 }

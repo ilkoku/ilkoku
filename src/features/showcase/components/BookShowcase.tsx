@@ -15,7 +15,7 @@ import {
   getEstimatedBookPageRanges,
 } from "@/features/reading/metrics";
 import type { PublicWorkDetail } from "@/features/works/types";
-import { publicTaxonomySlug } from "@/lib/public-taxonomy";
+import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 import {
   parseWorkContentWarnings,
   workContentRatingDetails,
@@ -55,7 +55,7 @@ export function BookShowcase({
   comments,
   isFavorite = false,
   readingProgress,
-  returnTo = "/eserler",
+  returnTo = "/",
   work,
 }: {
   canFavorite?: boolean;
@@ -155,27 +155,21 @@ export function BookShowcase({
               {work.title}
             </h1>
 
-            <Link
-              className="showcase-author-link"
-              href={`/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}`}
-            >
-              {work.authorName}
-            </Link>
+            {publicDiscoveryEnabled ? (
+              <Link
+                className="showcase-author-link"
+                href={`/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}`}
+              >
+                {work.authorName}
+              </Link>
+            ) : (
+              <span className="showcase-author-link">{work.authorName}</span>
+            )}
 
             <dl className="showcase-metadata">
               <div>
                 <dt>{readingContent.common.category}</dt>
-                <dd>
-                  {work.genre ? (
-                    <Link
-                      href={`/turler/${publicTaxonomySlug(work.genre)}?from=${encodedBookContextPath}`}
-                    >
-                      {genreLabel}
-                    </Link>
-                  ) : (
-                    genreLabel
-                  )}
-                </dd>
+                <dd>{genreLabel}</dd>
               </div>
 
               <div>
@@ -502,17 +496,26 @@ export function BookShowcase({
                 </div>
               </div>
 
-              <p>
-                Yazarın keşfe açık yayımlanan eserlerini
-                tek sayfada inceleyin.
-              </p>
+              {publicDiscoveryEnabled ? (
+                <>
+                  <p>
+                    Yazarın keşfe açık yayımlanan eserlerini
+                    tek sayfada inceleyin.
+                  </p>
 
-              <Link
-                className="showcase-text-link"
-                href={`/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}`}
-              >
-                Yazarın tüm eserleri <span aria-hidden="true">→</span>
-              </Link>
+                  <Link
+                    className="showcase-text-link"
+                    href={`/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}`}
+                  >
+                    Yazarın tüm eserleri <span aria-hidden="true">→</span>
+                  </Link>
+                </>
+              ) : (
+                <p>
+                  Bu yazarın yayımlanmış diğer eserleri varsa aşağıdaki
+                  “Aynı Yazarın Diğer Eserleri” bölümünde gösterilir.
+                </p>
+              )}
             </Card>
           </aside>
         </div>

@@ -126,7 +126,6 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
       <header className="how-header">
         <div className="how-container how-header__inner">
           <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="160px" /></Link>
-          <nav aria-label="Herkese açık sayfalar"><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/editorler">Editörler</Link><Link href="/yardim">Yardım</Link></nav>
           <Link className="how-header__account" href="/giris">Giriş yap</Link>
         </div>
       </header>
@@ -137,7 +136,7 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
             <span className="how-eyebrow">İlkOku&apos;da eser yolculuğu</span>
             <h1><HowItWorksHeroTitle title={title} /></h1>
             <p>{summary}</p>
-            <div className="how-hero__actions"><Link className="how-button how-button--primary" href="/kayit?rol=writer">Eserini oluşturmaya başla <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/eserler">Keşfe açık eserleri keşfet</Link></div>
+            <div className="how-hero__actions"><Link className="how-button how-button--primary" href="/kayit?rol=writer">Eserini oluşturmaya başla <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/kayit?rol=reader">Okur olarak katıl</Link></div>
             <div className="how-hero__proof"><span><strong>9</strong> eser yolculuğu adımı</span><span><strong>2</strong> bağımsız editör görüşü</span><span><strong>4</strong> rol tek ekosistemde</span></div>
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
@@ -172,11 +171,11 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
 
       {extras.length > 0 ? <section className="how-extras how-container">{extras.map((section) => <GenericSection section={section} key={section.title} />)}</section> : null}
 
-      {sectionMap.get("Nereden başlamalısınız?") ? <section className="how-start" id="nereden-baslamalisiniz"><div className="how-container how-start__grid"><div><span className="how-eyebrow">Sıra sende</span><h2>Nereden başlamalısınız?</h2><EditorialBody body={sectionMap.get("Nereden başlamalısınız?")!.body} /></div><aside><strong>İlk eserinin yolculuğunu başlat.</strong><p>Taslağını oluştur; hazır olduğunda keşfe aç ve gerçek okurla buluş.</p><Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar olarak katıl <span aria-hidden="true">→</span></Link><Link href="/eserler">Önce eserleri keşfet</Link></aside></div></section> : null}
+      {sectionMap.get("Nereden başlamalısınız?") ? <section className="how-start" id="nereden-baslamalisiniz"><div className="how-container how-start__grid"><div><span className="how-eyebrow">Sıra sende</span><h2>Nereden başlamalısınız?</h2><EditorialBody body={sectionMap.get("Nereden başlamalısınız?")!.body} /></div><aside><strong>İlk eserinin yolculuğunu başlat.</strong><p>Taslağını oluştur; hazır olduğunda keşfe aç ve gerçek okurla buluş.</p><Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar olarak katıl <span aria-hidden="true">→</span></Link><Link href="/kayit?rol=reader">Okur olarak katıl</Link></aside></div></section> : null}
 
-      <aside className="how-related how-container" aria-label="İlkOku içinde devam et"><SectionHeading eyebrow="İlkOku içinde devam et" title="Platformu kendi yolundan keşfet." /><div className="how-related__grid"><Link href="/eserler"><strong>Eserleri keşfet</strong><span>Keşfe açık yeni eserleri ve hikâyeleri incele.</span></Link><Link href="/yazarlar"><strong>Yazarları keşfet</strong><span>Yeni yazarları ve yayımlanmış eser vitrinlerini gör.</span></Link><Link href="/editorler"><strong>Editörleri incele</strong><span>Herkese açık editör profillerini ve uzmanlıklarını gör.</span></Link><Link href="/yardim"><strong>Yardım Merkezi</strong><span>Hesap, roller ve platform kullanımı hakkında yanıt bul.</span></Link></div></aside>
+      <aside className="how-related how-container" aria-label="İlkOku içinde devam et"><SectionHeading eyebrow="İlkOku içinde devam et" title="Platformu kendi yolundan keşfet." /><div className="how-related__grid"><Link href="/kayit?rol=reader"><strong>Okur olarak katıl</strong><span>Yeni eserleri okumaya hazır olduğunda üyelikle devam et.</span></Link><Link href="/yazarlar-icin"><strong>Yazarlar İçin</strong><span>Eserini nasıl geliştirip yayımlayacağını incele.</span></Link><Link href="/editorler"><strong>Editörleri incele</strong><span>Herkese açık editör profillerini ve uzmanlıklarını gör.</span></Link><Link href="/yardim"><strong>Yardım Merkezi</strong><span>Hesap, roller ve platform kullanımı hakkında yanıt bul.</span></Link></div></aside>
 
-      <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş</Link><Link href="/eserler">Eserler</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link></nav></div></footer>
+      <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link></nav></div></footer>
     </main>
   );
 }

@@ -46,6 +46,18 @@ test("global public routes share one canonical SEO and social brand identity", (
   assertContains(twitter, 'from "./opengraph-image"', "Twitter reuses canonical social artwork");
 });
 
+test("robots isolates private content management without blocking the public content policy route", () => {
+  const robots = source("src/app/robots.ts");
+  const liveSmoke = source(".github/workflows/seo-indexability-smoke.yml");
+
+  assertNotContains(robots, '          "/icerik",', "broad private content robots prefix");
+  assertContains(robots, '          "/icerik$",', "exact private content root robots rule");
+  assertContains(robots, '          "/icerik/",', "private content descendant robots rule");
+  assertContains(liveSmoke, "Disallow: /icerik$", "live exact private content robots guard");
+  assertContains(liveSmoke, "Disallow: /icerik/", "live private content descendant robots guard");
+  assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");
+});
+
 test("sitemap keeps all public trust routes synchronized with CMS indexability and update time", () => {
   const sitemap = source("src/app/sitemap.ts");
 

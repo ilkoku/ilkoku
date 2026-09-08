@@ -121,6 +121,13 @@ jobs:
 
             grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { echo "FAIL: robots sitemap declaration"; cleanup; return 1; }
             grep -Fq 'Allow: /' "$robots" || { echo "FAIL: robots public allow"; cleanup; return 1; }
+            grep -Fxq 'Disallow: /icerik$' "$robots" || { echo "FAIL: exact private /icerik robots rule missing"; cleanup; return 1; }
+            grep -Fxq 'Disallow: /icerik/' "$robots" || { echo "FAIL: private /icerik descendants robots rule missing"; cleanup; return 1; }
+            if grep -Fxq 'Disallow: /icerik' "$robots"; then
+              echo "FAIL: broad /icerik robots prefix blocks public content policy"
+              cleanup
+              return 1
+            fi
             grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key" || { echo "FAIL: IndexNow key mismatch"; cleanup; return 1; }
 
             local required=(
@@ -188,6 +195,7 @@ jobs:
             check_indexable_page '/' 'https://ilkoku.com/' || { cleanup; return 1; }
             check_indexable_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir' || { cleanup; return 1; }
             check_indexable_page '/hakkimizda' 'https://ilkoku.com/hakkimizda' || { cleanup; return 1; }
+            check_indexable_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi' || { cleanup; return 1; }
             check_indexable_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin' || { cleanup; return 1; }
             check_indexable_page '/editorler-icin' 'https://ilkoku.com/editorler-icin' || { cleanup; return 1; }
             check_indexable_page '/yayinevleri-icin' 'https://ilkoku.com/yayinevleri-icin' || { cleanup; return 1; }

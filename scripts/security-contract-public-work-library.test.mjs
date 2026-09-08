@@ -199,6 +199,43 @@ test("public work detail and related reads reject inactive author surfaces", () 
   );
 });
 
+test("demo showcase works stay usable but are excluded from search indexing", () => {
+  const safety = source("src/lib/public-content-safety.ts");
+  const sitemap = source("src/app/sitemap.ts");
+  const nextConfig = source("next.config.ts");
+
+  contains(
+    safety,
+    'SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES = [\n  "demo-",',
+    "demo work search exclusion namespace",
+  );
+  contains(
+    safety,
+    "isSearchIndexExcludedPublicWorkSlug",
+    "shared public work search exclusion helper",
+  );
+  contains(
+    sitemap,
+    "!isSearchIndexExcludedPublicWorkSlug(work.slug)",
+    "demo and blocked sitemap work filter",
+  );
+  contains(
+    nextConfig,
+    '"/kitap/demo-:path*"',
+    "demo work noindex route family",
+  );
+  contains(
+    nextConfig,
+    'value: "noindex, nofollow, noarchive"',
+    "demo work robots exclusion header",
+  );
+  notContains(
+    nextConfig,
+    '"/kitap/:path*"',
+    "real published works stay outside blanket noindex",
+  );
+});
+
 test("landing, sitemap and production smoke preserve paused public discovery inventory without exposing it", () => {
   const homepage = source("src/app/page.tsx");
   const homepageExperience = source(
@@ -279,8 +316,8 @@ test("landing, sitemap and production smoke preserve paused public discovery inv
   );
   contains(
     sitemap,
-    "isBlockedPublicWorkSlug(work.slug)",
-    "blocked sitemap work filter",
+    "isSearchIndexExcludedPublicWorkSlug(work.slug)",
+    "search-excluded sitemap work filter",
   );
   contains(
     sitemap,

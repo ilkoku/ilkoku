@@ -44,20 +44,27 @@ jobs:
             local expected_canonical="$2"
             local expected_marker="$3"
             local url="https://ilkoku.com${path}"
-            local headers body code robots canonical_href body_bytes h1_count title_count
+            local headers body code robots canonical_href body_bytes h1_count title_count content_type
 
             headers="$(mktemp)"
             body="$(mktemp)"
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); value=$0} END{print value}' "$headers")"
             body_bytes="$(wc -c < "$body" | tr -d ' ')"
-            h1_count="$(grep -Eoi '<h1([[:space:]][^>]*)?>' "$body" | wc -l | tr -d ' ')"
-            title_count="$(grep -Eoi '<title([[:space:]][^>]*)?>' "$body" | wc -l | tr -d ' ')"
+            h1_count="$( { grep -Eoi '<h1([[:space:]][^>]*)?>' "$body" || true; } | wc -l | tr -d ' ')"
+            title_count="$( { grep -Eoi '<title([[:space:]][^>]*)?>' "$body" || true; } | wc -l | tr -d ' ')"
 
-            echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK} | bytes=$body_bytes | title=$title_count | h1=$h1_count"
+            echo "$url -> HTTP $code | Content-Type: ${content_type:-YOK} | X-Robots-Tag: ${robots:-YOK} | bytes=$body_bytes | title=$title_count | h1=$h1_count"
 
             if [[ "$code" != "200" ]]; then
               echo "FAIL: $url returned HTTP $code"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            if [[ "${content_type,,}" != text/html* ]]; then
+              echo "FAIL: $url returned unexpected Content-Type: ${content_type:-YOK}"
               rm -f "$headers" "$body"
               return 1
             fi
@@ -144,4 +151,4 @@ jobs:
             check_page "$path" "$canonical" "$marker"
           done
 
-          echo "PASS: 18/18 public sitemap URLs return 200, stay indexable, expose the expected self-canonical, and include non-empty title/H1/content in Googlebot HTML."
+          echo "PASS: 18/18 public sitemap URLs return 200 HTML, stay indexable, expose the expected self-canonical, and include non-empty title/H1/content in Googlebot HTML."

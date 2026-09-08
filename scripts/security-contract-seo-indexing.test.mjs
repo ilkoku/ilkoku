@@ -21,10 +21,10 @@ test("global public routes share one canonical SEO and social brand identity", (
   const layout = source("src/app/layout.tsx");
   const openGraph = source("src/app/opengraph-image.tsx");
   const twitter = source("src/app/twitter-image.tsx");
-  const exactTitle = "İlkOku | Dijital Edebiyat Platformu – İlk cümle, ilk adım";
+  const exactTitle = "İlkOku | Dijital Yazar Platformu – İlk cümle, ilk adım";
 
   assertContains(brand, `publicBrandTitle = "${exactTitle}"`, "canonical homepage/social title");
-  assertContains(brand, 'publicBrandPositioning = "Dijital Edebiyat Platformu"', "brand positioning");
+  assertContains(brand, 'publicBrandPositioning = "Dijital Yazar Platformu"', "brand positioning");
   assertContains(brand, 'publicBrandShortSlogan = "İlk cümle, ilk adım"', "short social slogan");
   assertContains(brand, 'publicBrandEditorialSlogan = "İlk cümle, ilk okurun, ilk adımın."', "editorial slogan remains distinct");
 

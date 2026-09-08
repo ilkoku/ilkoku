@@ -11,7 +11,7 @@ Aynı eser; yazar, okur, editör ve yayınevi için farklı bir değer üretir. 
 
 ## İlkOku nedir?
 
-İlkOku, eseri yalnızca son hâliyle sergileyen bir vitrin değil; yazıldığı andan keşfedildiği ana kadar gelişimini destekleyen dijital edebiyat platformudur. Yazar bölüm bölüm çalışabilir, eserini kendi kararıyla keşfe açabilir ve okurdan gelen gerçek etkileşimleri gelişim sinyali olarak görebilir.
+İlkOku, eseri yalnızca son hâliyle sergileyen bir vitrin değil; yazıldığı andan keşfedildiği ana kadar gelişimini destekleyen dijital yazar platformudur. Yazar bölüm bölüm çalışabilir, eserini kendi kararıyla keşfe açabilir ve okurdan gelen gerçek etkileşimleri gelişim sinyali olarak görebilir.
 
 Profesyonel değerlendirme isteyen yazar için editör incelemesi ayrı bir katmandır. Eserin oluşum ve revizyon izi Eser Pasaportu ile kayıt altına alınırken, keşfe uygun eserler yayınevi dünyasının radarına girebilir. Böylece yazma, okuma, değerlendirme ve keşif tek bir eser yolculuğunda buluşur.
 
@@ -145,7 +145,7 @@ Platformun amacı yazarın eserini görünür kılmak, gelişim yolculuğunu des
 | Kontrollü erişimde | Eser Pasaportu ayrıntıları ve rol/yetkiye bağlı kurumsal keşif yüzeyleri |
 | Kademeli geliştirmede | Kurumsal paylaşım, bildirim ve diğer ileri yayınevi çalışma araçları |
 
-Bir özellik etkin değilse kullanılabilir gibi gösterilmez. İlkOku'nun keşif ağı büyürken aktif araçlar gerçek ürün akışıyla birlikte genişletilir.
+Bir özellik etkin değilse kullanılabilir gibi gösterilmez. İlkOku'nun keşif ağı büyürken aktif araçlar gerçek ürün akışıyle birlikte genişletilir.
 
 ## Nereden başlamalısınız?
 

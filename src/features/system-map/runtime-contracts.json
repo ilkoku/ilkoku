@@ -3,18 +3,27 @@
     "NODE_ENV"
   ],
   "acknowledgedMigrationOnlyTables": [
+    "BookStructureItem",
+    "BookTrashItem",
     "ContentManagerAccess",
     "ContentPage",
     "ContentRevision",
     "ContractTemplate",
     "ContractTemplateReviewEvidence",
+    "DiscoveryFilterOverride",
     "EmailDeliveryDedupe",
     "EmailDeliveryRetry",
     "NotificationPreference",
+    "PersonalAnnotation",
     "SiteContent",
     "UserContract",
     "UserContractEvent",
     "WeeklyDiscoverySummaryDelivery",
+    "WriterActiveDay",
     "WriterDailySummaryDelivery"
+  ],
+  "acknowledgedUnlinkedRoutes": [
+    "/harita/kesif",
+    "/onizleme/ana-sayfa-eski"
   ]
 }

@@ -49,9 +49,16 @@ const pausedPublicDiscoveryRouteHeaders = [
   "/turler/:path*",
 ];
 
+// Demo showcase works are production test fixtures. They stay directly
+// accessible for product verification but must never become search targets.
+const demoWorkRouteHeaders = [
+  "/kitap/demo-:path*",
+];
+
 const searchExcludedRouteHeaders = [
   ...privateRouteHeaders,
   ...pausedPublicDiscoveryRouteHeaders,
+  ...demoWorkRouteHeaders,
 ];
 
 const nextConfig: NextConfig = {

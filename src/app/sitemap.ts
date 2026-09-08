@@ -14,7 +14,7 @@ import {
   getPublicGenres,
 } from "@/features/public-discovery/library";
 import { prisma } from "@/lib/prisma";
-import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
+import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 
 const baseUrl = "https://ilkoku.com";
@@ -283,7 +283,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...works
         .filter(
           (work) =>
-            !isBlockedPublicWorkSlug(work.slug),
+            !isSearchIndexExcludedPublicWorkSlug(work.slug),
         )
         .map((work) => ({
           url: `${baseUrl}/kitap/${work.slug}`,

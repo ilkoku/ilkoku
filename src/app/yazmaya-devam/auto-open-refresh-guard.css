@@ -1,0 +1,7 @@
+/* Prevent the management screen behind the auto-open editor from flashing on hard refresh. */
+body:has(.continue-writing--auto-open):not(.writer-auto-open-hydrated)
+  .app-shell[data-role="writer"],
+body.writer-flow-open:has(.continue-writing--auto-open)
+  .app-shell[data-role="writer"] {
+  visibility: hidden;
+}

@@ -74,7 +74,6 @@ export function CopyrightNoticeExperience({ body, summary, title, updatedAt }: {
       <header className="how-header">
         <div className="how-container how-header__inner">
           <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="160px" /></Link>
-          <nav aria-label="Herkese açık sayfalar"><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/editorler">Editörler</Link><Link href="/yardim">Yardım</Link></nav>
           <Link className="how-header__account" href="/giris">Giriş yap</Link>
         </div>
       </header>

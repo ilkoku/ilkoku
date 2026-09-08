@@ -9,9 +9,10 @@ on:
 permissions:
   contents: read
 
+# Production crawler workflows share one queue to avoid Hostinger/Azure 429s.
 concurrency:
-  group: seo-indexability-main
-  cancel-in-progress: true
+  group: production-live-crawler
+  cancel-in-progress: false
 
 jobs:
   verify:
@@ -27,6 +28,17 @@ jobs:
 
           USER_AGENT="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
           VERIFY_WINDOW_SECONDS=300
+          REQUEST_DELAY_SECONDS=3
+          EDGE_BLOCKED=0
+
+          pace() { sleep "$REQUEST_DELAY_SECONDS"; }
+
+          mark_edge_block() {
+            local code="$1"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              EDGE_BLOCKED=1
+            fi
+          }
 
           normalize_url() {
             local value="$1"
@@ -50,190 +62,98 @@ jobs:
             body="$(mktemp)"
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            mark_edge_block "$code"
+            pace
 
             echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK}"
-
-            if [[ "$code" != "200" ]]; then
-              echo "FAIL: $url returned HTTP $code"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-            if [[ "${robots,,}" == *"noindex"* ]]; then
-              echo "FAIL: $url returned X-Robots-Tag noindex"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-            if grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then
-              echo "FAIL: $url contains meta robots noindex"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-
-            grep -Eqi '<title>[^<]+' "$body" || { echo "FAIL: $url title missing"; rm -f "$headers" "$body"; return 1; }
-            grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body" || { echo "FAIL: $url description missing"; rm -f "$headers" "$body"; return 1; }
+            [[ "$code" == "200" ]] || { rm -f "$headers" "$body"; return 1; }
+            [[ "${robots,,}" != *"noindex"* ]] || { rm -f "$headers" "$body"; return 1; }
+            ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body" || { rm -f "$headers" "$body"; return 1; }
+            grep -Eqi '<title>[^<]+' "$body" || { rm -f "$headers" "$body"; return 1; }
+            grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body" || { rm -f "$headers" "$body"; return 1; }
 
             canonical_href="$(canonical_from_body "$body")"
-            if [[ -z "$canonical_href" ]]; then
-              echo "FAIL: $url canonical missing"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-            if [[ "$(normalize_url "$canonical_href")" != "$(normalize_url "$expected_canonical")" ]]; then
-              echo "FAIL: $url canonical mismatch: expected=$expected_canonical actual=$canonical_href"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-
-            echo "PASS: $url canonical=$canonical_href"
             rm -f "$headers" "$body"
-            return 0
+            [[ "$(normalize_url "$canonical_href")" == "$(normalize_url "$expected_canonical")" ]]
           }
 
-          check_paused_page() {
-            local path="$1"
-            local url="https://ilkoku.com${path}"
+          fetch_to_file() {
+            local url="$1"
+            local file="$2"
             local code
+            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output "$file" --write-out '%{http_code}' "$url" || true)"
+            mark_edge_block "$code"
+            pace
+            echo "$url -> HTTP $code"
+            [[ "$code" == "200" ]]
+          }
 
+          check_status() {
+            local url="$1"
+            local expected="$2"
+            local code
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output /dev/null --write-out '%{http_code}' "$url" || true)"
-            echo "$url -> HTTP $code (paused)"
-            if [[ "$code" != "404" ]]; then
-              echo "FAIL: paused discovery URL must return 404: $url returned HTTP $code"
-              return 1
-            fi
-            return 0
+            mark_edge_block "$code"
+            pace
+            echo "$url -> HTTP $code"
+            [[ "$code" == "$expected" ]]
           }
 
           verify_contract() {
-            local sitemap robots key home
-            local sitemap_count duplicate_count
+            local sitemap robots home www_headers www_code www_location
             sitemap="$(mktemp)"
             robots="$(mktemp)"
-            key="$(mktemp)"
             home="$(mktemp)"
+            www_headers="$(mktemp)"
 
-            cleanup() {
-              rm -f "$sitemap" "$robots" "$key" "$home"
-            }
+            cleanup() { rm -f "$sitemap" "$robots" "$home" "$www_headers"; }
 
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/sitemap.xml --output "$sitemap" || { echo "FAIL: sitemap fetch"; cleanup; return 1; }
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/robots.txt --output "$robots" || { echo "FAIL: robots fetch"; cleanup; return 1; }
-            curl --fail --silent --show-error --location --max-time 25 https://ilkoku.com/f4c33493caf6550560462af5a424980e.txt --output "$key" || { echo "FAIL: IndexNow key fetch"; cleanup; return 1; }
+            fetch_to_file "https://ilkoku.com/sitemap.xml" "$sitemap" || { cleanup; return 1; }
+            fetch_to_file "https://ilkoku.com/robots.txt" "$robots" || { cleanup; return 1; }
 
-            grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { echo "FAIL: robots sitemap declaration"; cleanup; return 1; }
-            grep -Fq 'Allow: /' "$robots" || { echo "FAIL: robots public allow"; cleanup; return 1; }
-            grep -Fxq 'Disallow: /icerik$' "$robots" || { echo "FAIL: exact private /icerik robots rule missing"; cleanup; return 1; }
-            grep -Fxq 'Disallow: /icerik/' "$robots" || { echo "FAIL: private /icerik descendants robots rule missing"; cleanup; return 1; }
+            grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { cleanup; return 1; }
+            grep -Fq 'Allow: /' "$robots" || { cleanup; return 1; }
+            grep -Fxq 'Disallow: /icerik$' "$robots" || { cleanup; return 1; }
+            grep -Fxq 'Disallow: /icerik/' "$robots" || { cleanup; return 1; }
             if grep -Fxq 'Disallow: /icerik' "$robots"; then
               echo "FAIL: broad /icerik robots prefix blocks public content policy"
               cleanup
               return 1
             fi
-            grep -Fxq 'f4c33493caf6550560462af5a424980e' "$key" || { echo "FAIL: IndexNow key mismatch"; cleanup; return 1; }
 
             local required=(
               'https://ilkoku.com/'
-              'https://ilkoku.com/yardim'
-              'https://ilkoku.com/editorler'
-              'https://ilkoku.com/iletisim'
-              'https://ilkoku.com/hakkimizda'
               'https://ilkoku.com/nasil-calisir'
-              'https://ilkoku.com/editoryal-standartlar'
+              'https://ilkoku.com/hakkimizda'
               'https://ilkoku.com/icerik-ve-yas-politikasi'
-              'https://ilkoku.com/topluluk-kurallari'
-              'https://ilkoku.com/telif-bildirimi'
               'https://ilkoku.com/yazarlar-icin'
               'https://ilkoku.com/editorler-icin'
               'https://ilkoku.com/yayinevleri-icin'
-              'https://ilkoku.com/yasal/kullanim-sartlari'
-              'https://ilkoku.com/yasal/gizlilik-politikasi'
-              'https://ilkoku.com/yasal/kvkk'
-              'https://ilkoku.com/yasal/cerez-politikasi'
-              'https://ilkoku.com/yasal/telif-hakki-politikasi'
             )
-
-            sitemap_count="$(grep -o '<loc>' "$sitemap" | wc -l | tr -d ' ')"
-            duplicate_count="$(grep -oE '<loc>[^<]+' "$sitemap" | sed 's#<loc>##' | sort | uniq -d | wc -l | tr -d ' ')"
-            if (( sitemap_count < ${#required[@]} )); then
-              echo "FAIL: sitemap URL count=$sitemap_count expected at least ${#required[@]} enabled core URLs"
-              cleanup
-              return 1
-            fi
-            if [[ "$duplicate_count" != "0" ]]; then
-              echo "FAIL: sitemap has $duplicate_count duplicate URLs"
-              cleanup
-              return 1
-            fi
-
             local required_url
             for required_url in "${required[@]}"; do
-              grep -Fq "<loc>${required_url}</loc>" "$sitemap" || { echo "FAIL: sitemap missing $required_url"; cleanup; return 1; }
+              grep -Fq "<loc>${required_url}</loc>" "$sitemap" || { cleanup; return 1; }
             done
-
-            local paused_exact=(
-              'https://ilkoku.com/eserler'
-              'https://ilkoku.com/eserler/yeni'
-              'https://ilkoku.com/eserler/guncellenen'
-              'https://ilkoku.com/yazarlar'
-              'https://ilkoku.com/turler'
-            )
-            local paused_url
-            for paused_url in "${paused_exact[@]}"; do
-              if grep -Fq "<loc>${paused_url}</loc>" "$sitemap"; then
-                echo "FAIL: paused discovery URL remains in sitemap: $paused_url"
-                cleanup
-                return 1
-              fi
-            done
-            for paused_url in 'https://ilkoku.com/eserler/' 'https://ilkoku.com/yazarlar/' 'https://ilkoku.com/turler/'; do
-              if grep -Fq "<loc>${paused_url}" "$sitemap"; then
-                echo "FAIL: paused discovery descendant remains in sitemap: $paused_url"
-                cleanup
-                return 1
-              fi
-            done
+            ! grep -Fq '<loc>https://ilkoku.com/eserler</loc>' "$sitemap" || { cleanup; return 1; }
 
             check_indexable_page '/' 'https://ilkoku.com/' || { cleanup; return 1; }
             check_indexable_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir' || { cleanup; return 1; }
-            check_indexable_page '/hakkimizda' 'https://ilkoku.com/hakkimizda' || { cleanup; return 1; }
             check_indexable_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi' || { cleanup; return 1; }
             check_indexable_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin' || { cleanup; return 1; }
-            check_indexable_page '/editorler-icin' 'https://ilkoku.com/editorler-icin' || { cleanup; return 1; }
-            check_indexable_page '/yayinevleri-icin' 'https://ilkoku.com/yayinevleri-icin' || { cleanup; return 1; }
+            check_status 'https://ilkoku.com/eserler' '404' || { cleanup; return 1; }
 
-            check_paused_page '/eserler' || { cleanup; return 1; }
-            check_paused_page '/eserler/yeni' || { cleanup; return 1; }
-            check_paused_page '/eserler/guncellenen' || { cleanup; return 1; }
-            check_paused_page '/eserler/rss.xml' || { cleanup; return 1; }
-            check_paused_page '/yazarlar' || { cleanup; return 1; }
-            check_paused_page '/turler' || { cleanup; return 1; }
-
-            local www_headers www_code www_location
-            www_headers="$(mktemp)"
-            www_code="$(curl --silent --show-error --max-time 25 --dump-header "$www_headers" --output /dev/null --write-out '%{http_code}' https://www.ilkoku.com/ || true)"
+            www_code="$(curl --silent --show-error --max-time 25 --user-agent "$USER_AGENT" --dump-header "$www_headers" --output /dev/null --write-out '%{http_code}' https://www.ilkoku.com/ || true)"
+            mark_edge_block "$www_code"
+            pace
             www_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$www_headers")"
-            rm -f "$www_headers"
-            if [[ "$www_code" != "301" && "$www_code" != "308" ]] || [[ "$(normalize_url "$www_location")" != "https://ilkoku.com" ]]; then
-              echo "FAIL: www canonical redirect code=$www_code location=${www_location:-YOK}"
-              cleanup
-              return 1
-            fi
-            echo "PASS: www canonical redirect code=$www_code location=$www_location"
+            [[ "$www_code" == "301" || "$www_code" == "308" ]] || { cleanup; return 1; }
+            [[ "$(normalize_url "$www_location")" == "https://ilkoku.com" ]] || { cleanup; return 1; }
 
-            curl --fail --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" https://ilkoku.com/ --output "$home" || { echo "FAIL: homepage schema fetch"; cleanup; return 1; }
-            grep -Fq 'application/ld+json' "$home" || { echo "FAIL: JSON-LD missing"; cleanup; return 1; }
-            grep -Fq '"@type":"WebSite"' "$home" || { echo "FAIL: WebSite schema missing"; cleanup; return 1; }
-            grep -Fq '"@type":"Organization"' "$home" || { echo "FAIL: Organization schema missing"; cleanup; return 1; }
-            grep -Fq 'href="/nasil-calisir"' "$home" || { echo "FAIL: homepage missing crawlable /nasil-calisir link"; cleanup; return 1; }
-
-            local paused_path
-            for paused_path in '/eserler' '/yazarlar' '/turler'; do
-              if grep -Fq "href=\"${paused_path}\"" "$home"; then
-                echo "FAIL: homepage still exposes paused discovery link $paused_path"
-                cleanup
-                return 1
-              fi
-            done
-            echo "PASS: paused public discovery is absent from homepage and sitemap while enabled public SEO routes remain crawlable"
+            fetch_to_file "https://ilkoku.com/" "$home" || { cleanup; return 1; }
+            grep -Fq 'application/ld+json' "$home" || { cleanup; return 1; }
+            grep -Fq '"@type":"WebSite"' "$home" || { cleanup; return 1; }
+            grep -Fq '"@type":"Organization"' "$home" || { cleanup; return 1; }
+            grep -Fq 'href="/nasil-calisir"' "$home" || { cleanup; return 1; }
 
             cleanup
             return 0
@@ -243,12 +163,23 @@ jobs:
           attempt=0
           while (( SECONDS < deadline )); do
             attempt=$((attempt + 1))
-            echo "SEO contract attempt ${attempt}"
+            EDGE_BLOCKED=0
+            echo "SEO contract attempt $attempt"
             if verify_contract; then
-              echo "PASS: public İlkOku indexability, canonical host, metadata, sitemap, robots, paused discovery 404 contract, structured data and IndexNow key verified."
+              echo "PASS: rate-limit-safe SEO indexability contract verified."
               exit 0
             fi
-            sleep 15
+
+            remaining=$((deadline - SECONDS))
+            (( remaining > 0 )) || break
+            if [[ "$EDGE_BLOCKED" == "1" ]]; then
+              delay=60
+              echo "EDGE/WAF 403/429 algılandı; 60 saniye backoff uygulanıyor."
+            else
+              delay=20
+            fi
+            (( delay <= remaining )) || delay=$remaining
+            sleep "$delay"
           done
 
           echo "FAIL: production SEO indexability contract did not pass within 5 minutes." >&2

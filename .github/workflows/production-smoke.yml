@@ -71,6 +71,15 @@ jobs:
             [[ "$code" == "$expected" ]]
           }
 
+          check_post_merge_public_route() {
+            local url="$1"
+            local expected="$2"
+            if [[ "${GITHUB_EVENT_NAME:-}" != "push" || "${GITHUB_REF_NAME:-}" != "main" ]]; then
+              return 0
+            fi
+            check_public_route "$url" "$expected"
+          }
+
           check_body_contains() {
             local url="$1"
             shift
@@ -145,11 +154,13 @@ jobs:
               && check_public_route "https://ilkoku.com/yazarlar-icin" "200" \
               && check_public_route "https://ilkoku.com/yasal/kvkk" "200" \
               && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
-              && check_public_route "https://ilkoku.com/eserler" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler" "404" \
               && check_redirect "https://ilkoku.com/rehber" "/nasil-calisir" \
               && check_redirect "https://ilkoku.com/hesabim" "/giris" \
               && check_private_header "https://ilkoku.com/hesabim" \
-              && check_private_header "https://ilkoku.com/icerik"
+              && check_private_header "https://ilkoku.com/icerik" \
+              && check_redirect "https://ilkoku.com/bildirimler" "/giris" \
+              && check_redirect "https://ilkoku.com/yayinevleri" "/giris"
           }
 
           deadline=$((SECONDS + VERIFY_WINDOW_SECONDS))

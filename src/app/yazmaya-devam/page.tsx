@@ -6,9 +6,11 @@ import { getCurrentProfile } from "@/features/auth/profile";
 import { WriterActiveDayTracker } from "@/features/dashboard/components/WriterActiveDayTracker";
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
+import { WriterAutoOpenRefreshGuard } from "@/features/writer/components/WriterAutoOpenRefreshGuard";
 import { ChapterManagementPanel } from "@/features/works/components/ChapterManagementPanel";
 import { CreateChapterForm } from "@/features/works/components/CreateChapterForm";
 import "@/features/works/components/chapter-management.css";
+import "./auto-open-refresh-guard.css";
 import { getAuthorWorks, getContinueWritingWork } from "@/features/works/queries";
 import { getWriterEngagementPreview } from "@/lib/writer-engagement";
 
@@ -59,10 +61,17 @@ export default async function ContinueWritingPage({ searchParams }: ContinueWrit
       redirect("/yazmaya-devam");
     }
 
+    const autoOpenEditor = Boolean(selectedWork.latestChapter);
+
     return (
       <AppShell profile={profile}>
         <WriterActiveDayTracker activeDayCount={engagement.activeDayCount} />
-        <section className="continue-writing">
+        {autoOpenEditor ? <WriterAutoOpenRefreshGuard /> : null}
+        <section
+          className={`continue-writing${
+            autoOpenEditor ? " continue-writing--auto-open" : ""
+          }`}
+        >
           <Link className="button button--ghost" href="/yazmaya-devam">
             ← Eser Listesine Dön
           </Link>

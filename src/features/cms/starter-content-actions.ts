@@ -42,7 +42,7 @@ const pageSeeds: PageSeed[] = [
     slug: "/hakkimizda",
     title: "Hakkımızda",
     summary: "İlkOku, bir eserin ilk taslağından okur geri bildirimine, editör incelemesinden yayınevi keşfine uzanan yolculuğu tek dijital ortamda buluşturur.",
-    body: `İlkOku, yazarların eserlerini geliştirebildiği, okuyucularla buluşturabildiği, profesyonel editör incelemesine taşıyabildiği ve yayınevleri tarafından keşfedilebildiği dijital bir edebiyat platformudur.
+    body: `İlkOku, yazarların eserlerini geliştirebildiği, okuyucularla buluşturabildiği, profesyonel editör incelemesine taşıyabildiği ve yayınevleri tarafından keşfedilebildiği dijital bir yazar platformudur.
 
 Amacımız yalnızca bir eserin son halini göstermek değil; eserin oluşum ve gelişim yolculuğunu daha düzenli, görünür ve izlenebilir hale getirmektir.
 
@@ -70,8 +70,8 @@ Yayınevi hesapları kendilerine açık keşif alanlarında görünür eserleri 
 
 Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile inceleme durumunu tek yerde görünür kılmak için tasarlanmıştır. Amaç, eserin yalnızca sonucunu değil, İlkOku içindeki gelişim sürecini de anlaşılır bir kayıt yapısıyla sunmaktır.
 
-İlkOku; yazar, okuyucu, editör ve yayınevini aynı eserin etrafında buluşturan, her rolün sınırlarını koruyan ve eser yolculuğunu daha şeffaf hale getiren bir dijital edebiyat ekosistemi kurmayı hedefler.`,
-    seoTitle: "Hakkımızda | İlkOku Dijital Edebiyat Platformu",
+İlkOku; yazar, okuyucu, editör ve yayınevini aynı eserin etrafında buluşturan, her rolün sınırlarını koruyan ve eser yolculuğunu daha şeffaf hale getiren bir dijital yazar ekosistemi kurmayı hedefler.`,
+    seoTitle: "Hakkımızda | İlkOku Dijital Yazar Platformu",
     seoDescription: "İlkOku’nun yazarları, okuyucuları, editörleri ve yayınevlerini eser geliştirme, değerlendirme ve keşif sürecinde nasıl buluşturduğunu öğrenin.",
     kind: "page",
   },
@@ -161,7 +161,7 @@ const faqSeeds: FaqSeed[] = [
   {
     contentKey: "item_starter_ilkoku_nedir",
     question: "İlkOku nedir?",
-    answer: "İlkOku; yazarların eserlerini oluşturup platformda yayımlayabildiği, okuyucuların eserleri keşfedip geri bildirim verebildiği, profesyonel editör incelemelerinin yürütülebildiği ve yayınevlerinin kendilerine açık alanlarda eser ve yazarları keşfedebildiği dijital bir edebiyat platformudur. İlkOku'nun amacı, bir eserin gelişim yolculuğunu daha düzenli, görünür ve izlenebilir hale getirmektir.",
+    answer: "İlkOku; yazarların eserlerini oluşturup platformda yayımlayabildiği, okuyucuların eserleri keşfedip geri bildirim verebildiği, profesyonel editör incelemelerinin yürütülebildiği ve yayınevlerinin kendilerine açık alanlarda eser ve yazarları keşfedebildiği dijital bir yazar platformudur. İlkOku'nun amacı, bir eserin gelişim yolculuğunu daha düzenli, görünür ve izlenebilir hale getirmektir.",
     category: "Genel",
     audience: "all",
     position: 10,

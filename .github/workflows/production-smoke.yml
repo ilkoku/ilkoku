@@ -99,6 +99,36 @@ jobs:
             rm -f "$body"
           }
 
+          check_body_excludes() {
+            local url="$1"
+            shift
+            local body code forbidden
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            mark_edge_block "$code"
+            pace
+            printf '%s -> HTTP %s\n' "$url" "$code"
+            if [[ "$code" != "200" ]]; then
+              rm -f "$body"
+              return 1
+            fi
+            for forbidden in "$@"; do
+              if grep -Fq "$forbidden" "$body"; then
+                echo "Beklenmeyen içerik: $url -> $forbidden" >&2
+                rm -f "$body"
+                return 1
+              fi
+            done
+            rm -f "$body"
+          }
+
+          check_post_merge_body_excludes() {
+            if [[ "${GITHUB_EVENT_NAME:-}" != "push" || "${GITHUB_REF_NAME:-}" != "main" ]]; then
+              return 0
+            fi
+            check_body_excludes "$@"
+          }
+
           check_redirect() {
             local url="$1"
             local expected_location="$2"
@@ -155,12 +185,31 @@ jobs:
               && check_public_route "https://ilkoku.com/yasal/kvkk" "200" \
               && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
               && check_post_merge_public_route "https://ilkoku.com/eserler" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler/yeni" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler/guncellenen" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/yazarlar" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/turler" "404" \
+              && check_post_merge_public_route "https://ilkoku.com/eserler/rss.xml" "404" \
+              && check_post_merge_body_excludes "https://ilkoku.com/sitemap.xml" \
+                "<loc>https://ilkoku.com/eserler</loc>" \
+                "<loc>https://ilkoku.com/eserler/yeni</loc>" \
+                "<loc>https://ilkoku.com/eserler/guncellenen</loc>" \
+                "<loc>https://ilkoku.com/yazarlar</loc>" \
+                "<loc>https://ilkoku.com/turler</loc>" \
               && check_redirect "https://ilkoku.com/rehber" "/nasil-calisir" \
               && check_redirect "https://ilkoku.com/hesabim" "/giris" \
               && check_private_header "https://ilkoku.com/hesabim" \
               && check_private_header "https://ilkoku.com/icerik" \
               && check_redirect "https://ilkoku.com/bildirimler" "/giris" \
-              && check_redirect "https://ilkoku.com/yayinevleri" "/giris"
+              && check_redirect "https://ilkoku.com/yayinevleri" "/giris" \
+              && check_redirect "https://ilkoku.com/yorumlarim" "/giris" \
+              && check_redirect "https://ilkoku.com/yorumlarim/rapor" "/giris" \
+              && check_redirect "https://ilkoku.com/editor/bildirimler" "/giris" \
+              && check_redirect "https://ilkoku.com/editor/yayinevi-talepleri" "/giris" \
+              && check_redirect "https://ilkoku.com/yayinevi/bildirimler" "/giris" \
+              && check_redirect "https://ilkoku.com/yayinevi/editor-talepleri" "/giris" \
+              && check_redirect "https://ilkoku.com/yayinevi/kesfet/eserler" "/giris" \
+              && check_redirect "https://ilkoku.com/yazmaya-devam" "/giris"
           }
 
           deadline=$((SECONDS + VERIFY_WINDOW_SECONDS))

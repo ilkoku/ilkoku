@@ -42,15 +42,19 @@ jobs:
           check_page() {
             local path="$1"
             local expected_canonical="$2"
+            local expected_marker="$3"
             local url="https://ilkoku.com${path}"
-            local headers body code robots canonical_href
+            local headers body code robots canonical_href body_bytes h1_count title_count
 
             headers="$(mktemp)"
             body="$(mktemp)"
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            body_bytes="$(wc -c < "$body" | tr -d ' ')"
+            h1_count="$(grep -Eoi '<h1([[:space:]][^>]*)?>' "$body" | wc -l | tr -d ' ')"
+            title_count="$(grep -Eoi '<title([[:space:]][^>]*)?>' "$body" | wc -l | tr -d ' ')"
 
-            echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK}"
+            echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK} | bytes=$body_bytes | title=$title_count | h1=$h1_count"
 
             if [[ "$code" != "200" ]]; then
               echo "FAIL: $url returned HTTP $code"
@@ -70,6 +74,30 @@ jobs:
               return 1
             fi
 
+            if (( body_bytes < 5000 )); then
+              echo "FAIL: $url returned unexpectedly small HTML ($body_bytes bytes)"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            if (( title_count < 1 )); then
+              echo "FAIL: $url is missing a title element for Googlebot"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            if (( h1_count < 1 )); then
+              echo "FAIL: $url is missing an H1 in Googlebot HTML"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            if ! grep -Fqi -- "$expected_marker" "$body"; then
+              echo "FAIL: $url Googlebot HTML is missing expected visible content marker: $expected_marker"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
             canonical_href="$(canonical_from_body "$body")"
             if [[ -z "$canonical_href" ]]; then
               echo "FAIL: $url canonical missing"
@@ -83,35 +111,37 @@ jobs:
               return 1
             fi
 
-            echo "PASS: $url canonical=$canonical_href"
+            echo "PASS: $url canonical=$canonical_href | marker=$expected_marker"
             rm -f "$headers" "$body"
           }
 
           pages=(
-            '/|https://ilkoku.com/'
-            '/yardim|https://ilkoku.com/yardim'
-            '/editorler|https://ilkoku.com/editorler'
-            '/iletisim|https://ilkoku.com/iletisim'
-            '/hakkimizda|https://ilkoku.com/hakkimizda'
-            '/nasil-calisir|https://ilkoku.com/nasil-calisir'
-            '/editoryal-standartlar|https://ilkoku.com/editoryal-standartlar'
-            '/icerik-ve-yas-politikasi|https://ilkoku.com/icerik-ve-yas-politikasi'
-            '/topluluk-kurallari|https://ilkoku.com/topluluk-kurallari'
-            '/telif-bildirimi|https://ilkoku.com/telif-bildirimi'
-            '/yazarlar-icin|https://ilkoku.com/yazarlar-icin'
-            '/editorler-icin|https://ilkoku.com/editorler-icin'
-            '/yayinevleri-icin|https://ilkoku.com/yayinevleri-icin'
-            '/yasal/kullanim-sartlari|https://ilkoku.com/yasal/kullanim-sartlari'
-            '/yasal/gizlilik-politikasi|https://ilkoku.com/yasal/gizlilik-politikasi'
-            '/yasal/kvkk|https://ilkoku.com/yasal/kvkk'
-            '/yasal/cerez-politikasi|https://ilkoku.com/yasal/cerez-politikasi'
-            '/yasal/telif-hakki-politikasi|https://ilkoku.com/yasal/telif-hakki-politikasi'
+            '/|https://ilkoku.com/|İlk cümle'
+            '/yardim|https://ilkoku.com/yardim|Yardım'
+            '/editorler|https://ilkoku.com/editorler|Editör'
+            '/iletisim|https://ilkoku.com/iletisim|İletişim'
+            '/hakkimizda|https://ilkoku.com/hakkimizda|Hakkımızda'
+            '/nasil-calisir|https://ilkoku.com/nasil-calisir|Nasıl Çalışır'
+            '/editoryal-standartlar|https://ilkoku.com/editoryal-standartlar|Editoryal Standartlar'
+            '/icerik-ve-yas-politikasi|https://ilkoku.com/icerik-ve-yas-politikasi|İçerik ve Yaş Politikası'
+            '/topluluk-kurallari|https://ilkoku.com/topluluk-kurallari|Topluluk Kuralları'
+            '/telif-bildirimi|https://ilkoku.com/telif-bildirimi|Telif Bildirimi'
+            '/yazarlar-icin|https://ilkoku.com/yazarlar-icin|Yazarlar İçin'
+            '/editorler-icin|https://ilkoku.com/editorler-icin|Editörler İçin'
+            '/yayinevleri-icin|https://ilkoku.com/yayinevleri-icin|Yayınevleri İçin'
+            '/yasal/kullanim-sartlari|https://ilkoku.com/yasal/kullanim-sartlari|Kullanım Şartları'
+            '/yasal/gizlilik-politikasi|https://ilkoku.com/yasal/gizlilik-politikasi|Gizlilik Politikası'
+            '/yasal/kvkk|https://ilkoku.com/yasal/kvkk|KVKK'
+            '/yasal/cerez-politikasi|https://ilkoku.com/yasal/cerez-politikasi|Çerez Politikası'
+            '/yasal/telif-hakki-politikasi|https://ilkoku.com/yasal/telif-hakki-politikasi|Telif Hakkı Politikası'
           )
 
           for entry in "${pages[@]}"; do
             path="${entry%%|*}"
-            canonical="${entry#*|}"
-            check_page "$path" "$canonical"
+            remainder="${entry#*|}"
+            canonical="${remainder%%|*}"
+            marker="${remainder#*|}"
+            check_page "$path" "$canonical" "$marker"
           done
 
-          echo "PASS: 18/18 public sitemap URLs return 200, stay indexable, and expose the expected self-canonical when fetched as Googlebot."
+          echo "PASS: 18/18 public sitemap URLs return 200, stay indexable, expose the expected self-canonical, and include non-empty title/H1/content in Googlebot HTML."

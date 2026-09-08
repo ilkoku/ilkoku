@@ -1,45 +1,58 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-const hydratedClass = "writer-auto-open-hydrated";
 const flowOpenClass = "writer-flow-open";
 
-export function WriterAutoOpenRefreshGuard() {
+export function WriterAutoOpenRefreshGuard({
+  returnHref = "/yazmaya-devam",
+}: {
+  returnHref?: string;
+}) {
+  const router = useRouter();
+
   useEffect(() => {
     const body = document.body;
-    let observer: MutationObserver | null = null;
+    let sawEditorOpen = body.classList.contains(flowOpenClass);
+    let redirecting = false;
 
-    const fallbackTimer = window.setTimeout(() => {
-      body.classList.add(hydratedClass);
-      observer?.disconnect();
-    }, 1500);
+    const returnToList = () => {
+      if (redirecting) return;
+      redirecting = true;
+      router.replace(returnHref);
+    };
 
-    const markHydratedWhenEditorOpens = () => {
-      if (!body.classList.contains(flowOpenClass)) {
+    const reconcileEditorState = () => {
+      if (body.classList.contains(flowOpenClass)) {
+        sawEditorOpen = true;
         return;
       }
 
-      body.classList.add(hydratedClass);
-      observer?.disconnect();
-      window.clearTimeout(fallbackTimer);
+      if (sawEditorOpen) {
+        returnToList();
+      }
     };
 
-    observer = new MutationObserver(markHydratedWhenEditorOpens);
-
+    const observer = new MutationObserver(reconcileEditorState);
     observer.observe(body, {
       attributeFilter: ["class"],
       attributes: true,
     });
 
-    markHydratedWhenEditorOpens();
+    const fallbackTimer = window.setTimeout(() => {
+      if (!sawEditorOpen && !body.classList.contains(flowOpenClass)) {
+        returnToList();
+      }
+    }, 1500);
+
+    reconcileEditorState();
 
     return () => {
-      observer?.disconnect();
+      observer.disconnect();
       window.clearTimeout(fallbackTimer);
-      body.classList.remove(hydratedClass);
     };
-  }, []);
+  }, [returnHref, router]);
 
   return null;
 }

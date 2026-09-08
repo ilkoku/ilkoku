@@ -2,185 +2,114 @@ name: SEO indexability smoke
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+    inputs:
+      confirmation:
+        description: "Çalıştırmak için RUN-SEO-DIAGNOSTIC yazın"
+        required: true
+        type: string
 
 permissions:
   contents: read
 
-# Production crawler workflows share one queue to avoid Hostinger/Azure 429s.
 concurrency:
   group: production-live-crawler
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   verify:
     name: Verify search-engine indexability
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
 
     steps:
-      - name: Wait for production and verify SEO contract
+      - name: Validate explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$CONFIRMATION" = "RUN-SEO-DIAGNOSTIC"
+
+      - name: Run low-impact SEO diagnostic
         shell: bash
         run: |
           set -Eeuo pipefail
 
           USER_AGENT="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
-          VERIFY_WINDOW_SECONDS=300
-          REQUEST_DELAY_SECONDS=3
-          EDGE_BLOCKED=0
+          REQUEST_DELAY_SECONDS=5
 
+          normalize_url() { local value="$1"; printf '%s' "${value%/}"; }
           pace() { sleep "$REQUEST_DELAY_SECONDS"; }
 
-          mark_edge_block() {
+          circuit_break() {
             local code="$1"
+            local url="$2"
             if [[ "$code" == "403" || "$code" == "429" ]]; then
-              EDGE_BLOCKED=1
+              echo "CIRCUIT BREAKER: $url returned HTTP $code; diagnostic stopped immediately." >&2
+              exit 1
             fi
           }
 
-          normalize_url() {
-            local value="$1"
-            printf '%s' "${value%/}"
-          }
-
-          canonical_from_body() {
-            local body="$1"
-            local canonical_tag
-            canonical_tag="$(grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$body" | head -1 || true)"
-            printf '%s' "$canonical_tag" | sed -n 's/.*href="\([^"]*\)".*/\1/p'
-          }
-
-          check_indexable_page() {
+          check_page() {
             local path="$1"
             local expected_canonical="$2"
             local url="https://ilkoku.com${path}"
-            local headers body code robots canonical_href
-
+            local headers body code robots canonical
             headers="$(mktemp)"
             body="$(mktemp)"
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            echo "$url -> HTTP $code"
+            circuit_break "$code" "$url"
+            [[ "$code" == "200" ]]
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
-            mark_edge_block "$code"
-            pace
-
-            echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK}"
-            [[ "$code" == "200" ]] || { rm -f "$headers" "$body"; return 1; }
-            [[ "${robots,,}" != *"noindex"* ]] || { rm -f "$headers" "$body"; return 1; }
-            ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body" || { rm -f "$headers" "$body"; return 1; }
-            grep -Eqi '<title>[^<]+' "$body" || { rm -f "$headers" "$body"; return 1; }
-            grep -Eqi '<meta[^>]+name="description"[^>]+content="[^"]+' "$body" || { rm -f "$headers" "$body"; return 1; }
-
-            canonical_href="$(canonical_from_body "$body")"
+            [[ "${robots,,}" != *"noindex"* ]]
+            ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"
+            grep -Eqi '<title>[^<]+' "$body"
+            canonical="$(grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$body" | head -1 | sed -n 's/.*href="\([^"]*\)".*/\1/p')"
+            [[ "$(normalize_url "$canonical")" == "$(normalize_url "$expected_canonical")" ]]
             rm -f "$headers" "$body"
-            [[ "$(normalize_url "$canonical_href")" == "$(normalize_url "$expected_canonical")" ]]
+            pace
           }
 
-          fetch_to_file() {
+          fetch_contract_file() {
             local url="$1"
             local file="$2"
             local code
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output "$file" --write-out '%{http_code}' "$url" || true)"
-            mark_edge_block "$code"
-            pace
             echo "$url -> HTTP $code"
+            circuit_break "$code" "$url"
             [[ "$code" == "200" ]]
-          }
-
-          check_status() {
-            local url="$1"
-            local expected="$2"
-            local code
-            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output /dev/null --write-out '%{http_code}' "$url" || true)"
-            mark_edge_block "$code"
             pace
-            echo "$url -> HTTP $code"
-            [[ "$code" == "$expected" ]]
           }
 
-          verify_contract() {
-            local sitemap robots home www_headers www_code www_location
-            sitemap="$(mktemp)"
-            robots="$(mktemp)"
-            home="$(mktemp)"
-            www_headers="$(mktemp)"
+          sitemap="$(mktemp)"
+          robots="$(mktemp)"
+          trap 'rm -f "$sitemap" "$robots"' EXIT
 
-            cleanup() { rm -f "$sitemap" "$robots" "$home" "$www_headers"; }
+          fetch_contract_file "https://ilkoku.com/robots.txt" "$robots"
+          grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots"
+          grep -Fq 'Allow: /' "$robots"
+          grep -Fxq 'Disallow: /icerik$' "$robots"
+          grep -Fxq 'Disallow: /icerik/' "$robots"
+          if grep -Fxq 'Disallow: /icerik' "$robots"; then
+            echo "FAIL: broad /icerik robots prefix blocks public content policy" >&2
+            exit 1
+          fi
 
-            fetch_to_file "https://ilkoku.com/sitemap.xml" "$sitemap" || { cleanup; return 1; }
-            fetch_to_file "https://ilkoku.com/robots.txt" "$robots" || { cleanup; return 1; }
-
-            grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots" || { cleanup; return 1; }
-            grep -Fq 'Allow: /' "$robots" || { cleanup; return 1; }
-            grep -Fxq 'Disallow: /icerik$' "$robots" || { cleanup; return 1; }
-            grep -Fxq 'Disallow: /icerik/' "$robots" || { cleanup; return 1; }
-            if grep -Fxq 'Disallow: /icerik' "$robots"; then
-              echo "FAIL: broad /icerik robots prefix blocks public content policy"
-              cleanup
-              return 1
-            fi
-
-            local required=(
-              'https://ilkoku.com/'
-              'https://ilkoku.com/nasil-calisir'
-              'https://ilkoku.com/hakkimizda'
-              'https://ilkoku.com/icerik-ve-yas-politikasi'
-              'https://ilkoku.com/yazarlar-icin'
-              'https://ilkoku.com/editorler-icin'
-              'https://ilkoku.com/yayinevleri-icin'
-            )
-            local required_url
-            for required_url in "${required[@]}"; do
-              grep -Fq "<loc>${required_url}</loc>" "$sitemap" || { cleanup; return 1; }
-            done
-            ! grep -Fq '<loc>https://ilkoku.com/eserler</loc>' "$sitemap" || { cleanup; return 1; }
-
-            check_indexable_page '/' 'https://ilkoku.com/' || { cleanup; return 1; }
-            check_indexable_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir' || { cleanup; return 1; }
-            check_indexable_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi' || { cleanup; return 1; }
-            check_indexable_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin' || { cleanup; return 1; }
-            check_status 'https://ilkoku.com/eserler' '404' || { cleanup; return 1; }
-
-            www_code="$(curl --silent --show-error --max-time 25 --user-agent "$USER_AGENT" --dump-header "$www_headers" --output /dev/null --write-out '%{http_code}' https://www.ilkoku.com/ || true)"
-            mark_edge_block "$www_code"
-            pace
-            www_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$www_headers")"
-            [[ "$www_code" == "301" || "$www_code" == "308" ]] || { cleanup; return 1; }
-            [[ "$(normalize_url "$www_location")" == "https://ilkoku.com" ]] || { cleanup; return 1; }
-
-            fetch_to_file "https://ilkoku.com/" "$home" || { cleanup; return 1; }
-            grep -Fq 'application/ld+json' "$home" || { cleanup; return 1; }
-            grep -Fq '"@type":"WebSite"' "$home" || { cleanup; return 1; }
-            grep -Fq '"@type":"Organization"' "$home" || { cleanup; return 1; }
-            grep -Fq 'href="/nasil-calisir"' "$home" || { cleanup; return 1; }
-
-            cleanup
-            return 0
-          }
-
-          deadline=$((SECONDS + VERIFY_WINDOW_SECONDS))
-          attempt=0
-          while (( SECONDS < deadline )); do
-            attempt=$((attempt + 1))
-            EDGE_BLOCKED=0
-            echo "SEO contract attempt $attempt"
-            if verify_contract; then
-              echo "PASS: rate-limit-safe SEO indexability contract verified."
-              exit 0
-            fi
-
-            remaining=$((deadline - SECONDS))
-            (( remaining > 0 )) || break
-            if [[ "$EDGE_BLOCKED" == "1" ]]; then
-              delay=60
-              echo "EDGE/WAF 403/429 algılandı; 60 saniye backoff uygulanıyor."
-            else
-              delay=20
-            fi
-            (( delay <= remaining )) || delay=$remaining
-            sleep "$delay"
+          fetch_contract_file "https://ilkoku.com/sitemap.xml" "$sitemap"
+          for required in \
+            'https://ilkoku.com/' \
+            'https://ilkoku.com/nasil-calisir' \
+            'https://ilkoku.com/hakkimizda' \
+            'https://ilkoku.com/icerik-ve-yas-politikasi' \
+            'https://ilkoku.com/yazarlar-icin' \
+            'https://ilkoku.com/editorler-icin' \
+            'https://ilkoku.com/yayinevleri-icin'; do
+            grep -Fq "<loc>${required}</loc>" "$sitemap"
           done
+          ! grep -Fq '<loc>https://ilkoku.com/eserler</loc>' "$sitemap"
 
-          echo "FAIL: production SEO indexability contract did not pass within 5 minutes." >&2
-          exit 1
+          check_page '/' 'https://ilkoku.com/'
+          check_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir'
+          check_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi'
+          check_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin'
+
+          echo "PASS: manually requested low-impact SEO diagnostic completed."

@@ -4,7 +4,7 @@ This document is the canonical visual and emotional contract for the public İlk
 
 ## 1. Core identity
 
-İlkOku is a **digital literature platform with the emotional weight of a book object**.
+İlkOku is a **digital writer platform with the emotional weight of a book object**.
 
 The public experience should feel:
 
@@ -16,17 +16,17 @@ The public experience should feel:
 
 Canonical editorial brand thought: **“İlk cümle, ilk okurun, ilk adımın.”**
 
-The homepage promise is the reference point: a writer can begin with a first sentence, develop a work with readers and editors, and become discoverable to publishers inside one coherent literary ecosystem.
+The homepage promise is the reference point: a writer can begin with a first sentence, develop a work with readers and editors, and become discoverable to publishers inside one coherent writing and publishing ecosystem.
 
 ## Brand naming and SEO/social identity
 
 The brand has several related lines with different jobs. Do not collapse them into one interchangeable slogan.
 
 - **Brand name:** `İlkOku`
-- **Positioning:** `Dijital Edebiyat Platformu`
+- **Positioning:** `Dijital Yazar Platformu`
 - **Editorial slogan:** `İlk cümle, ilk okurun, ilk adımın.`
 - **Short social line:** `İlk cümle, ilk adım`
-- **Canonical homepage / social title:** `İlkOku | Dijital Edebiyat Platformu – İlk cümle, ilk adım`
+- **Canonical homepage / social title:** `İlkOku | Dijital Yazar Platformu – İlk cümle, ilk adım`
 
 The code source of truth is `src/lib/public-brand.ts`. The live homepage `<title>`, homepage Open Graph title, Twitter/X title, global public metadata fallback and social artwork identity must derive from those canonical values rather than retyping them in multiple route files.
 
@@ -52,7 +52,7 @@ Every canonical public page uses the shared `PublicSiteFrame -> PublicSiteHeader
 The header has three roles:
 
 1. **Left — İlkOku logo:** the real logo, unboxed, with only restrained depth/glow.
-2. **Center — digital book spine:** the recessed terminal-spine reading `> DİJİTAL EDEBİYAT PLATFORMU_`.
+2. **Center — digital book spine:** the recessed terminal-spine reading `> DİJİTAL YAZAR PLATFORMU_`.
 3. **Right — account mini-terminal:** `> GİRİŞ YAP_` or `> HESABIM_`, visually part of the same terminal family.
 
 Do not add a second global navigation bar above or below this header. Page-level back navigation, breadcrumbs and reading tools may exist when they serve local context, but they are not replacements for the global brand header.

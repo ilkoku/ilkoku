@@ -78,28 +78,25 @@ test("writer routes load physical pages with scroll or page-turn movement", () =
   includes(css, ".writer-screen.writer-screen--focus", "focus-mode paged manuscript contract");
 });
 
-test("auto-open continue-writing refresh never paints the management scaffold before the editor", () => {
+test("auto-open continue-writing route never exposes a transition management screen", () => {
   const page = source("src/app/yazmaya-devam/page.tsx");
   const guard = source(
     "src/features/writer/components/WriterAutoOpenRefreshGuard.tsx",
   );
   const css = source("src/app/yazmaya-devam/auto-open-refresh-guard.css");
 
-  includes(page, "WriterAutoOpenRefreshGuard", "auto-open refresh guard mount");
+  includes(page, "WriterAutoOpenRefreshGuard", "auto-open route guard mount");
   includes(page, "continue-writing--auto-open", "auto-open route marker");
   includes(page, "autoOpen", "auto-open editor contract");
+  assert.equal(page.includes("eserine dönülüyor"), false, "transition heading must be removed");
+  assert.equal(page.includes("ChapterManagementPanel"), false, "transition management panel must be removed");
   includes(guard, 'flowOpenClass = "writer-flow-open"', "editor-open body marker");
-  includes(guard, 'hydratedClass = "writer-auto-open-hydrated"', "hydration completion marker");
-  includes(guard, "MutationObserver", "editor-open observation");
+  includes(guard, "router.replace(returnHref)", "editor exit returns directly to work list");
+  includes(guard, "MutationObserver", "editor close observation");
   includes(
     css,
-    "body:has(.continue-writing--auto-open):not(.writer-auto-open-hydrated)",
-    "pre-hydration scaffold suppression",
+    "body:has(.continue-writing--auto-open)",
+    "auto-open launcher shell suppression",
   );
-  includes(
-    css,
-    "body.writer-flow-open:has(.continue-writing--auto-open)",
-    "open-editor scaffold suppression",
-  );
-  includes(css, "visibility: hidden", "scaffold visibility suppression");
+  includes(css, "visibility: hidden", "launcher shell visibility suppression");
 });

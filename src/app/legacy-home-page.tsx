@@ -20,7 +20,7 @@ import "./landing-v2.css";
 import "./landing-history.css";
 
 const homeTitle = "İlkOku | İlk cümle, ilk okurun, ilk adımın.";
-const homeDescription = "Yazarları, okuyucuları, editörleri ve yayınevlerini aynı platformda buluşturan dijital edebiyat ekosistemi.";
+const homeDescription = "Yazarları, okuyucuları, editörleri ve yayınevlerini aynı platformda buluşturan dijital yazar ekosistemi.";
 const homeSocialImage = "/landing/ilkoku-hero.webp";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "tr_TR",
       url: "https://ilkoku.com/",
-      images: [{ url: homeSocialImage, alt: "İlkOku dijital edebiyat platformu" }],
+      images: [{ url: homeSocialImage, alt: "İlkOku dijital yazar platformu" }],
     },
     twitter: {
       card: "summary_large_image",
@@ -342,7 +342,7 @@ export default async function HomePage() {
           <Link className="landing-logo" href="/" aria-label="İlkOku ana sayfa">
             <Image src={logo} alt="İlkOku" priority sizes="(max-width: 480px) 136px, (max-width: 768px) 144px, (max-width: 1024px) 172px, 180px" />
           </Link>
-          <span className="landing-kicker landing-header__kicker">Dijital edebiyat platformu</span>
+          <span className="landing-kicker landing-header__kicker">Dijital yazar platformu</span>
           <div className="landing-header__tools">
             <details className="landing-account">
               <summary aria-label={profile ? `${profile.fullName} hesap menüsünü aç` : "Hesap menüsünü aç"}><LandingIcon name="account" /></summary>
@@ -366,7 +366,7 @@ export default async function HomePage() {
       <section className="landing-hero" id="hakkimizda">
         <div className="landing-container landing-hero__grid">
           <div className="landing-hero__content">
-            <span className="landing-hero__badge"><LandingIcon name="book" /> Yazardan yayınevine tek bir edebiyat ekosistemi</span>
+            <span className="landing-hero__badge"><LandingIcon name="book" /> Yazardan yayınevine tek bir yazar ekosistemi</span>
             <h1><HeroTitle title={heroTitle} /></h1>
             <p>{heroDescription}</p>
             <div className="landing-hero__actions">

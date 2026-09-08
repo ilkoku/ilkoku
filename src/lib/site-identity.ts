@@ -16,7 +16,7 @@ export type SiteIdentityLoadState =
   | { state: "read-error" };
 
 export const defaultSiteIdentity: SiteIdentity = {
-  headerKicker: "Dijital edebiyat platformu",
+  headerKicker: "Dijital yazar platformu",
   defaultEyebrow: "İlkOku",
   footerTaglineLead: "İlk cümle, ilk okurun,",
   footerTaglineEmphasis: "ilk adımın.",
@@ -32,21 +32,27 @@ function bounded(value: unknown, maxLength: number) {
     : null;
 }
 
+function normalizeLegacyHeaderKicker(value: string) {
+  return value.toLocaleLowerCase("tr-TR") === "dijital edebiyat platformu"
+    ? defaultSiteIdentity.headerKicker
+    : value;
+}
+
 export function parseSiteIdentityStrict(valueJson: string): SiteIdentity | null {
   try {
     const value = JSON.parse(valueJson) as Record<string, unknown>;
-    const headerKicker = bounded(value.headerKicker, 100);
+    const rawHeaderKicker = bounded(value.headerKicker, 100);
     const defaultEyebrow = bounded(value.defaultEyebrow, 60);
     const footerTaglineLead = bounded(value.footerTaglineLead, 120);
     const footerTaglineEmphasis = bounded(value.footerTaglineEmphasis, 80);
     const logoAlt = bounded(value.logoAlt, 120);
     const logoUrl = typeof value.logoUrl === "string" ? value.logoUrl.trim() : "";
 
-    if (!headerKicker || !defaultEyebrow || !footerTaglineLead || !footerTaglineEmphasis || !logoAlt) return null;
+    if (!rawHeaderKicker || !defaultEyebrow || !footerTaglineLead || !footerTaglineEmphasis || !logoAlt) return null;
     if (logoUrl && !cmsMediaLogoPattern.test(logoUrl)) return null;
 
     return {
-      headerKicker,
+      headerKicker: normalizeLegacyHeaderKicker(rawHeaderKicker),
       defaultEyebrow,
       footerTaglineLead,
       footerTaglineEmphasis,

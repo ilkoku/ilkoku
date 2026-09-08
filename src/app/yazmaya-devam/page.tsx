@@ -7,9 +7,7 @@ import { WriterActiveDayTracker } from "@/features/dashboard/components/WriterAc
 import { EditorPageHeader } from "@/features/editor-workspace/components/EditorPageHeader";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { WriterAutoOpenRefreshGuard } from "@/features/writer/components/WriterAutoOpenRefreshGuard";
-import { ChapterManagementPanel } from "@/features/works/components/ChapterManagementPanel";
 import { CreateChapterForm } from "@/features/works/components/CreateChapterForm";
-import "@/features/works/components/chapter-management.css";
 import "./auto-open-refresh-guard.css";
 import { getAuthorWorks, getContinueWritingWork } from "@/features/works/queries";
 import { getWriterEngagementPreview } from "@/lib/writer-engagement";
@@ -61,40 +59,38 @@ export default async function ContinueWritingPage({ searchParams }: ContinueWrit
       redirect("/yazmaya-devam");
     }
 
-    const autoOpenEditor = Boolean(selectedWork.latestChapter);
+    if (!selectedWork.latestChapter) {
+      return (
+        <AppShell profile={profile}>
+          <WriterActiveDayTracker activeDayCount={engagement.activeDayCount} />
+          <div className="editor-workspace">
+            <Link className="button button--ghost" href="/yazmaya-devam">
+              ← Eser Listesine Dön
+            </Link>
+            <EditorPageHeader
+              description="Yazmaya başlamak için eserinin ilk bölümünü oluştur."
+              eyebrow="Yazma alanı"
+              title={`${selectedWork.title} için ilk bölümü oluştur`}
+            />
+            <CreateChapterForm workId={selectedWork.id} />
+          </div>
+        </AppShell>
+      );
+    }
 
     return (
       <AppShell profile={profile}>
         <WriterActiveDayTracker activeDayCount={engagement.activeDayCount} />
-        {autoOpenEditor ? <WriterAutoOpenRefreshGuard /> : null}
+        <WriterAutoOpenRefreshGuard returnHref="/yazmaya-devam" />
         <section
-          className={`continue-writing${
-            autoOpenEditor ? " continue-writing--auto-open" : ""
-          }`}
+          className="continue-writing continue-writing--auto-open"
+          aria-label={`${selectedWork.title} yazı editörü`}
         >
-          <Link className="button button--ghost" href="/yazmaya-devam">
-            ← Eser Listesine Dön
-          </Link>
-          <p>Yazma Alanı</p>
-          <h1>{selectedWork.title} eserine dönülüyor…</h1>
-
-          {!selectedWork.latestChapter ? (
-            <CreateChapterForm workId={selectedWork.id} />
-          ) : (
-            <NewWorkFlow
-              autoOpen
-              initialWork={selectedWork}
-              triggerLabel="Editörü Aç"
-            />
-          )}
-
-          {selectedWork.chapters.length > 0 ? (
-            <ChapterManagementPanel
-              authorId={profile.id}
-              chapters={selectedWork.chapters}
-              workId={selectedWork.id}
-            />
-          ) : null}
+          <NewWorkFlow
+            autoOpen
+            initialWork={selectedWork}
+            triggerLabel="Editörü Aç"
+          />
         </section>
       </AppShell>
     );

@@ -14,7 +14,7 @@ Before creating a new public page, use these sources instead of inventing anothe
 - normal public metadata helper: `src/lib/public-page-metadata.ts`;
 - normal public shell: `src/components/layout/PublicPageTemplate.tsx`.
 
-The homepage has its own canonical SEO/social title: `İlkOku | Dijital Edebiyat Platformu – İlk cümle, ilk adım`. **Do not copy that homepage title onto every inner page.** Inner pages need a unique descriptive title, normally `Sayfa Başlığı | İlkOku`.
+The homepage has its own canonical SEO/social title: `İlkOku | Dijital Yazar Platformu – İlk cümle, ilk adım`. **Do not copy that homepage title onto every inner page.** Inner pages need a unique descriptive title, normally `Sayfa Başlığı | İlkOku`.
 
 ## Preferred shell
 

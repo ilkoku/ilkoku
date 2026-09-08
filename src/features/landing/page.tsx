@@ -7,7 +7,7 @@ import "./landing.css";
 export const metadata: Metadata = {
   title: "İlkOku | İlk cümle, ilk okurun, ilk adımın.",
   description:
-    "Yazarları, okuyucuları, editörleri ve yayınevlerini aynı platformda buluşturan dijital edebiyat ekosistemi.",
+    "Yazarları, okuyucuları, editörleri ve yayınevlerini aynı platformda buluşturan dijital yazar ekosistemi.",
 };
 
 const roles = [
@@ -89,7 +89,7 @@ export default function HomePage() {
       <section className="landing-hero" id="hakkimizda">
         <div className="landing-container landing-hero__grid">
           <div className="landing-hero__content">
-            <span className="landing-kicker">Dijital edebiyat platformu</span>
+            <span className="landing-kicker">Dijital yazar platformu</span>
             <h1>
               İlk cümle,
               <br />
@@ -99,7 +99,7 @@ export default function HomePage() {
             </h1>
             <p>
               Yazarları, editörleri, okuyucuları ve yayınevlerini aynı platformda
-              buluşturan dijital edebiyat ekosistemi.
+              buluşturan dijital yazar ekosistemi.
             </p>
             <div className="landing-hero__actions">
               <Link className="landing-button landing-button--primary landing-button--large" href="/kayit?rol=writer">

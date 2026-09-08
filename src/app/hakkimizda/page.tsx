@@ -75,7 +75,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "tr_TR",
       url: page.canonical,
-      images: [{ url: socialImage, alt: "İlkOku dijital edebiyat ekosistemi" }],
+      images: [{ url: socialImage, alt: "İlkOku dijital yazar platformu" }],
     },
     twitter: {
       card: "summary_large_image",

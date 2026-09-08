@@ -3,7 +3,7 @@ export const aboutPageContent = {
   title: "Hakkımızda",
   summary:
     "İlkOku, bir eserin ilk cümlesinden okur geri bildirimine, bağımsız editör değerlendirmesinden yayınevi keşfine uzanan gelişim yolculuğunu aynı dijital ekosistemde buluşturur.",
-  seoTitle: "Hakkımızda | İlkOku Dijital Edebiyat Ekosistemi",
+  seoTitle: "Hakkımızda | İlkOku Dijital Yazar Platformu",
   seoDescription:
     "İlkOku’nun neden var olduğunu; yazar, okuyucu, editör ve yayınevini bir eserin gelişim ve keşif yolculuğunda nasıl buluşturduğunu keşfedin.",
   updatedAt: "2026-08-27T00:00:00.000Z",
@@ -15,7 +15,7 @@ Bir eseri yazmak ile onu doğru okuyucuya, doğru editöre ve doğru yayınevine
 
 İlkOku'nun amacı; yazarı üretim ve gelişim sürecinde desteklemek, eseri okuyucuyla buluşturmak, bağımsız editör görüşleriyle güçlenmesini sağlamak ve yayınevlerinin nitelikli eserleri keşfedebileceği düzenli bir zemin kurmaktır.
 
-Bu nedenle İlkOku'yu yalnızca bir okuma sitesi ya da yalnızca bir yazma aracı olarak görmüyoruz. İlkOku, bir eserin oluşumuyla profesyonel keşif ihtiyacı arasındaki boşluğu doldurmak için tasarlanmış dijital bir edebiyat ekosistemidir.
+Bu nedenle İlkOku'yu yalnızca bir okuma sitesi ya da yalnızca bir yazma aracı olarak görmüyoruz. İlkOku, bir eserin oluşumuyla profesyonel keşif ihtiyacı arasındaki boşluğu doldurmak için tasarlanmış dijital bir yazar platformudur.
 
 ## Dört rol, tek eser yolculuğu
 
@@ -47,7 +47,7 @@ Eser Pasaportu bu yaklaşımın merkezindedir. Amacı bir esere yapay bir başar
 
 İlkOku'da güveni, büyük vaatlerden önce sınırların netliğiyle kuruyoruz. Yazar eserinin yaratıcı kontrolünü korur. Okur geri bildirim verir ama editörün yerine geçmez. Editör bağımsız değerlendirme yapar ama yayınevi adına yayın kararı vermez. Yayınevi keşfeder ve kendi sürecinde karar verir.
 
-Bu ayrım yalnızca hukuki veya teknik bir sınır değildir; sağlıklı bir edebiyat ekosisteminin temelidir. Her rolün ne yapabildiği ve ne yapamadığı açık olduğunda, aynı eser etrafındaki etkileşim daha anlamlı hale gelir.
+Bu ayrım yalnızca hukuki veya teknik bir sınır değildir; sağlıklı bir yazar-okur ekosisteminin temelidir. Her rolün ne yapabildiği ve ne yapamadığı açık olduğunda, aynı eser etrafındaki etkileşim daha anlamlı hale gelir.
 
 ## Yazar gelişir, okur keşfeder
 
@@ -57,7 +57,7 @@ Bu ayrım yalnızca hukuki veya teknik bir sınır değildir; sağlıklı bir ed
 - Eser geliştikçe daha görünür hale gelir; okur ilgisi, geri bildirimler ve gelişim süreci aynı bağlamda birikir.
 - Güçlenen eserler ve gelişen yazarlar, yayınevlerinin nitelikli keşif yapabileceği daha anlamlı bir ortamda görünür olur.
 
-İlkOku'nun amacı, yeni yazarların gelişebildiği ve okurların yeni hikâyeleri ilk keşfedenlerden olabildiği canlı bir edebiyat topluluğu kurmaktır.
+İlkOku'nun amacı, yeni yazarların gelişebildiği ve okurların yeni hikâyeleri ilk keşfedenlerden olabildiği canlı bir yazar-okur topluluğu kurmaktır.
 
 ## Nereye gidiyoruz?
 

@@ -18,10 +18,14 @@ permissions:
 # must never burst against the site in parallel.
 concurrency:
   group: production-live-crawler
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   smoke:
+    # PR validation must not hit the live site. The main-push run is the only
+    # automatic production probe; workflow_dispatch remains available for an
+    # explicitly requested manual check.
+    if: github.event_name != 'pull_request'
     name: Verify live İlkOku routes
     runs-on: ubuntu-latest
     timeout-minutes: 10

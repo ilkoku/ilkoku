@@ -4,6 +4,12 @@
 
 **Canlı site:** [https://ilkoku.com/](https://ilkoku.com/)
 
+## Resmî kanallar
+
+- X: [@ilkokucom](https://x.com/ilkokucom)
+- Instagram: [@ilkokucom](https://www.instagram.com/ilkokucom/)
+- E-posta: [ilkoku@ilkoku.com](mailto:ilkoku@ilkoku.com)
+
 ## Public surfaces
 
 - [Nasıl Çalışır?](https://ilkoku.com/nasil-calisir)

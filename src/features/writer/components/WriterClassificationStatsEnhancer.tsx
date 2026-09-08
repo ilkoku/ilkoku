@@ -119,13 +119,14 @@ function ratingLabel(value: string) {
 export function WriterClassificationStatsEnhancer() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const target = getTarget();
+  const screen = target?.screen ?? null;
 
   useEffect(() => {
-    if (!target) return;
+    if (!screen) return;
 
-    target.screen.classList.add("writer-classification-in-stats");
-    return () => target.screen.classList.remove("writer-classification-in-stats");
-  }, [target?.screen]);
+    screen.classList.add("writer-classification-in-stats");
+    return () => screen.classList.remove("writer-classification-in-stats");
+  }, [screen]);
 
   if (!target || snapshot === UNAVAILABLE) return null;
 

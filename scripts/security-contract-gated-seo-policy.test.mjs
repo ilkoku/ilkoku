@@ -54,3 +54,26 @@ test("route inventory documents the gated-product search boundary", () => {
   assert.match(inventory, /not indexable/u);
   assert.match(inventory, /Do not add unfinished, authenticated-only or product-paused routes to sitemap\/search/u);
 });
+
+test("indexable public experiences never render links into paused discovery families", () => {
+  const publicExperiencePaths = [
+    "src/components/content/AboutExperience.tsx",
+    "src/components/content/HowItWorksExperience.tsx",
+    "src/components/content/ContentAgePolicyExperience.tsx",
+    "src/components/content/CommunityRulesExperience.tsx",
+    "src/components/content/ForEditorsExperience.tsx",
+    "src/components/content/ForWritersExperience.tsx",
+    "src/components/content/ForPublishersExperience.tsx",
+    "src/components/content/CopyrightNoticeExperience.tsx",
+    "src/components/content/EditorialStandardsExperience.tsx",
+  ];
+  const pausedHrefPattern = /href=["']\/(?:eserler|yazarlar|turler)(?:\/[^"']*)?["']/u;
+
+  for (const relativePath of publicExperiencePaths) {
+    assert.doesNotMatch(
+      source(relativePath),
+      pausedHrefPattern,
+      `${relativePath} must not render a paused discovery link into public HTML`,
+    );
+  }
+});

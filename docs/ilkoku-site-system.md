@@ -11,10 +11,10 @@ The purpose is simple: **one site, one identity, one content/SEO model, one page
 Canonical identity values are defined in `src/lib/public-brand.ts` and explained in `docs/public-brand-system.md`.
 
 - Brand: `İlkOku`
-- Positioning: `Dijital Edebiyat Platformu`
+- Positioning: `Dijital Yazar Platformu`
 - Editorial slogan: `İlk cümle, ilk okurun, ilk adımın.`
-- Homepage/social title: `İlkOku | Dijital Edebiyat Platformu – İlk cümle, ilk adım`
-- Header signature: logo + `> DİJİTAL EDEBİYAT PLATFORMU_` + `> GİRİŞ YAP_` / `> HESABIM_`
+- Homepage/social title: `İlkOku | Dijital Yazar Platformu – İlk cümle, ilk adım`
+- Header signature: logo + `> DİJİTAL YAZAR PLATFORMU_` + `> GİRİŞ YAP_` / `> HESABIM_`
 
 Do not create a second public visual language for a new page.
 

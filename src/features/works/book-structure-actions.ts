@@ -5,7 +5,9 @@ import { z } from "zod";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
 
+import { buildBookSectionTemplate } from "./book-section-templates";
 import {
+  bookSectionDetails,
   isSpecialBookSectionKind,
   type BookStructureItem,
   type SpecialBookSectionKind,
@@ -17,6 +19,10 @@ import {
   reorderBookStructure,
   saveSpecialBookSection,
 } from "./book-structure-repository";
+import {
+  getBookTemplateContext,
+  hasTrashedBookSectionKind,
+} from "./book-trash-repository";
 
 type StructureActionResult = {
   status: "success" | "error";
@@ -113,18 +119,41 @@ export async function createBookSectionAction(
     return error("Kitap sayfası eklemek için yazar hesabınla giriş yapmalısın.");
   }
 
+  const kind = kindValue as SpecialBookSectionKind;
+
   try {
-    const item = await createSpecialBookSection(
+    if (await hasTrashedBookSectionKind(writer.id, parsedWorkId.data, kind)) {
+      return error(
+        `${bookSectionDetails[kind].label} çöp kutusunda. Yeni bir tane eklemek yerine geri yükleyebilir veya çöp kutusunu boşaltabilirsin.`,
+      );
+    }
+
+    let item = await createSpecialBookSection(
       writer.id,
       parsedWorkId.data,
-      kindValue as SpecialBookSectionKind,
+      kind,
     );
+
+    if (kind !== "toc") {
+      const context = await getBookTemplateContext(writer.id, parsedWorkId.data);
+      const template = buildBookSectionTemplate(kind, context);
+
+      if (template) {
+        item = await saveSpecialBookSection(
+          writer.id,
+          parsedWorkId.data,
+          item.id,
+          item.title,
+          template,
+        );
+      }
+    }
 
     revalidateWriterPaths();
 
     return {
       status: "success",
-      message: `${item.title} eklendi.`,
+      message: `${item.title} hazır şablonla eklendi.`,
       item,
     };
   } catch (caughtError) {

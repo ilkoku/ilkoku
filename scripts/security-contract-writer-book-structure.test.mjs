@@ -85,6 +85,51 @@ test("writer sidebar behaves like a reorderable slide pane", () => {
   includes(css, ".writer-canvas:has(> .writer-special-page-editor)", "special editor canvas takeover");
 });
 
+test("writer book structure has recoverable trash and permanent empty action", () => {
+  const migration = source(
+    "prisma/migrations/20260908091500_writer_book_trash/migration.sql",
+  );
+  const repository = source("src/features/works/book-trash-repository.ts");
+  const actions = source("src/features/works/book-trash-actions.ts");
+  const enhancer = source(
+    "src/features/writer/components/WriterBookTrashEnhancer.tsx",
+  );
+  const css = source("src/features/writer/writer-book-trash.css");
+
+  includes(migration, "CREATE TABLE `BookTrashItem`", "persistent trash table");
+  includes(migration, "`structureItemId` CHAR(36) NOT NULL", "restore identity");
+  includes(migration, "`originalPosition` INTEGER NOT NULL", "restore position memory");
+  includes(repository, "moveBookStructureItemToTrash", "soft delete repository action");
+  includes(repository, 'status: "archived"', "chapter trash archive state");
+  includes(repository, "restoreBookTrashItem", "trash restore repository action");
+  includes(repository, "emptyBookTrash", "permanent trash empty repository action");
+  includes(repository, "Eserde en az bir ana bölüm kalmalıdır.", "last chapter safety guard");
+  includes(actions, 'user?.role === "writer"', "trash writer authorization");
+  includes(actions, "trashBookStructureItemAction", "trash server action");
+  includes(actions, "restoreBookTrashItemAction", "restore server action");
+  includes(actions, "emptyBookTrashAction", "empty trash server action");
+  includes(enhancer, "Seçili öğeyi sil", "selected item delete affordance");
+  includes(enhancer, "Çöp Kutusu", "trash drawer");
+  includes(enhancer, "Geri Yükle", "restore affordance");
+  includes(enhancer, "Çöp Kutusunu Boşalt", "permanent empty affordance");
+  includes(enhancer, "Bu işlem geri alınamaz", "destructive confirmation");
+  includes(css, ".writer-book-trash__drawer", "trash drawer styling");
+});
+
+test("special book pages are seeded from editable ready templates", () => {
+  const templates = source("src/features/works/book-section-templates.ts");
+  const actions = source("src/features/works/book-structure-actions.ts");
+
+  includes(templates, "buildBookSectionTemplate", "template builder");
+  includes(templates, "ISBN: [Yayınevi tarafından eklenecek]", "copyright template placeholder");
+  includes(templates, "Bu kitabı yazma nedenim", "preface guided template");
+  includes(templates, "Kısa yazar biyografisi", "author biography template");
+  includes(actions, "getBookTemplateContext", "work and author template context");
+  includes(actions, "hasTrashedBookSectionKind", "trashed duplicate guard");
+  includes(actions, "buildBookSectionTemplate", "template application");
+  includes(actions, 'kind !== "toc"', "automatic contents exclusion from editable templates");
+});
+
 test("writer book structure enhancement is mounted on every writing route", () => {
   for (const path of [
     "src/app/yazar/layout.tsx",
@@ -95,5 +140,7 @@ test("writer book structure enhancement is mounted on every writing route", () =
 
     includes(layout, "WriterBookStructureEnhancer", `${path} enhancer mount`);
     includes(layout, "writer-book-structure.css", `${path} structure CSS`);
+    includes(layout, "WriterBookTrashEnhancer", `${path} trash enhancer mount`);
+    includes(layout, "writer-book-trash.css", `${path} trash CSS`);
   }
 });

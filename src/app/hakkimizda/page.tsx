@@ -105,9 +105,16 @@ export default async function AboutPage() {
       },
       mainEntity: {
         "@type": "Organization",
+        "@id": `${baseUrl}/#organization`,
         name: "İlkOku",
         url: baseUrl,
         description: page.summary,
+        logo: {
+          "@type": "ImageObject",
+          url: `${baseUrl}/icons/ilkoku-512.png`,
+          width: 512,
+          height: 512,
+        },
       },
     },
     {

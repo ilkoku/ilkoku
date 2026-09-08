@@ -1,0 +1,95 @@
+name: Demo SEO production guard
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "next.config.ts"
+      - "src/app/sitemap.ts"
+      - "src/lib/public-content-safety.ts"
+      - "src/features/demo-showcase/**"
+      - ".github/workflows/demo-seo-production-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-seo-production-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify demo works stay out of search
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+
+    steps:
+      - name: Wait for production and verify demo SEO boundary
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          USER_AGENT="IlkOku-Demo-SEO-Guard/1.0"
+          VERIFY_WINDOW_SECONDS=300
+          DEMO_URL="https://ilkoku.com/kitap/demo-kayip-harfler"
+          SITEMAP_URL="https://ilkoku.com/sitemap.xml"
+          deadline=$((SECONDS + VERIFY_WINDOW_SECONDS))
+          attempt=0
+
+          while (( SECONDS < deadline )); do
+            attempt=$((attempt + 1))
+            echo "Deneme $attempt"
+
+            sitemap_body="$(mktemp)"
+            demo_headers="$(mktemp)"
+
+            sitemap_code="$(curl --silent --show-error --location --max-time 20 \
+              --user-agent "$USER_AGENT" \
+              --output "$sitemap_body" \
+              --write-out '%{http_code}' \
+              "$SITEMAP_URL" || true)"
+
+            demo_code="$(curl --silent --show-error --max-time 20 \
+              --user-agent "$USER_AGENT" \
+              --dump-header "$demo_headers" \
+              --output /dev/null \
+              --write-out '%{http_code}' \
+              "$DEMO_URL" || true)"
+
+            robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$demo_headers")"
+
+            sitemap_has_demo=0
+            if grep -Fq '<loc>https://ilkoku.com/kitap/demo-' "$sitemap_body"; then
+              sitemap_has_demo=1
+            fi
+
+            printf 'Sitemap -> HTTP %s | demo URL içeriyor: %s\n' "$sitemap_code" "$sitemap_has_demo"
+            printf '%s -> HTTP %s | X-Robots-Tag: %s\n' "$DEMO_URL" "$demo_code" "${robots:-YOK}"
+
+            rm -f "$sitemap_body" "$demo_headers"
+
+            if [[ "$sitemap_code" == "200" \
+              && "$sitemap_has_demo" == "0" \
+              && "$demo_code" == "200" \
+              && "${robots,,}" == *"noindex"* \
+              && "${robots,,}" == *"nofollow"* ]]; then
+              echo "PASS: Demo eserler sitemap dışında ve canlı demo sayfası noindex/nofollow."
+              exit 0
+            fi
+
+            remaining=$((deadline - SECONDS))
+            if (( remaining <= 0 )); then
+              break
+            fi
+
+            delay=10
+            if (( delay > remaining )); then
+              delay=$remaining
+            fi
+            sleep "$delay"
+          done
+
+          echo "FAIL: Demo SEO production sınırı 5 dakikalık doğrulama penceresinde sağlanmadı." >&2
+          exit 1

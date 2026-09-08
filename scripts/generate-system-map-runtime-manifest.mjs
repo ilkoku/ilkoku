@@ -19,7 +19,7 @@ const importPattern = /(?:from\s+|import\s*\()\s*["']([^"']+)["']/gu;
 const actionFunctionPattern = /export\s+async\s+function\s+([A-Za-z_$][\w$]*)/gu;
 const actionConstPattern = /export\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*async\b/gu;
 const prismaModelPattern = /\bprisma\.([A-Za-z_$][\w$]*)\s*\./gu;
-const httpMethodPattern = /export\s+(?:async\s+function|const)\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/gu;
+const httpMethodPattern = /export\s+(?:(?:async\s+)?function|const)\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/gu;
 const envDotPattern = /\bprocess\.env\.([A-Z][A-Z0-9_]*)/gu;
 const envBracketPattern = /\bprocess\.env\[["']([A-Z][A-Z0-9_]*)["']\]/gu;
 const envDocumentPattern = /^([A-Z][A-Z0-9_]*)\s*=/gmu;

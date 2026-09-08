@@ -14,6 +14,7 @@ const publicApiPrefixes = [
   "/api/content-faq",
   "/api/media",
   "/api/public-announcements",
+  "/api/site-assets/about-hero",
   "/api/site-contact",
   "/api/site-content",
 ];
@@ -248,12 +249,13 @@ function collectApiFindings(routes, modules) {
   return findings;
 }
 
-function collectOrphanFindings(routes, references, adminMenuTargets) {
+function collectOrphanFindings(routes, references, adminMenuTargets, runtimeContracts) {
+  const acknowledgedUnlinkedRoutes = new Set(runtimeContracts.acknowledgedUnlinkedRoutes ?? []);
   return routes
     .filter((route) => route.kind === "page")
     .filter((route) => {
       const equivalent = equivalentRoutePaths(route.route);
-      if (equivalent.some((candidate) => entryPointRoutes.has(candidate))) return false;
+      if (equivalent.some((candidate) => entryPointRoutes.has(candidate) || acknowledgedUnlinkedRoutes.has(candidate))) return false;
       if ([...adminMenuTargets].some((target) => equivalent.some((candidate) => routeMatches(target, candidate)))) return false;
       return !references.some((reference) => equivalent.some((candidate) => routeMatches(reference.target, candidate)));
     })
@@ -310,7 +312,7 @@ test("system map diagnostic inventory exposes every statically provable remainin
     ...collectMenuFindings(routes, source.references, adminMenuTargets),
     ...collectWorkflowFindings(routes),
     ...collectApiFindings(routes, source.modules),
-    ...collectOrphanFindings(routes, source.references, adminMenuTargets),
+    ...collectOrphanFindings(routes, source.references, adminMenuTargets, runtimeContracts),
     ...collectActionFindings(source.modules),
     ...collectInfrastructureFindings(runtime, routes, runtimeContracts),
   ];
@@ -318,4 +320,13 @@ test("system map diagnostic inventory exposes every statically provable remainin
   printReport(findings, source, runtime);
   const blockers = findings.filter((item) => item.status === "BLOCKER");
   assert.deepEqual(blockers, [], `System map diagnostic found ${blockers.length} blocker(s)`);
+
+  const aboutHeroMethodWarning = findings.find((item) => item.category === "API_METHOD" && item.target === "/api/site-assets/about-hero");
+  assert.equal(aboutHeroMethodWarning, undefined, "synchronous GET handlers must be recognized by the build manifest");
+  for (const route of runtimeContracts.acknowledgedUnlinkedRoutes ?? []) {
+    assert.ok(!findings.some((item) => item.category === "ORPHAN_ROUTE" && item.target === route), `${route} must remain an acknowledged intentionally-unlinked route`);
+  }
+  for (const table of ["BookStructureItem", "BookTrashItem", "DiscoveryFilterOverride", "PersonalAnnotation", "WriterActiveDay"]) {
+    assert.ok(runtimeContracts.acknowledgedMigrationOnlyTables.includes(table), `${table} must remain acknowledged by the central raw-SQL contract`);
+  }
 });

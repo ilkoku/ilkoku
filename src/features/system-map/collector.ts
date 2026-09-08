@@ -19,6 +19,7 @@ import {
   publisherPath,
   systemManagementPath,
 } from "@/lib/route-security";
+import runtimeContracts from "./runtime-contracts.json";
 import { systemMapSourceManifest } from "./runtime-manifest.generated";
 import type {
   SystemMapAccessMode,
@@ -108,6 +109,7 @@ const publicApiPaths = [
   "/api/content-faq",
   "/api/media",
   "/api/public-announcements",
+  "/api/site-assets/about-hero",
   "/api/site-contact",
   "/api/site-content",
 ] as const;
@@ -266,6 +268,8 @@ const entryPointRoutes = new Set([
   contractManagementPath,
 ]);
 
+const acknowledgedUnlinkedRoutes = new Set(runtimeContracts.acknowledgedUnlinkedRoutes);
+
 export const getSystemMapSnapshot = cache(async (): Promise<SystemMapSnapshot> => {
   const warnings: string[] = [];
   if (systemMapSourceManifest.version !== 1) {
@@ -310,7 +314,7 @@ export const getSystemMapSnapshot = cache(async (): Promise<SystemMapSnapshot> =
     const access = accessForRoute(detectedRoute.route, detectedRoute.kind);
     const orphanCandidate =
       detectedRoute.kind === "page" &&
-      !routePaths.some((route) => entryPointRoutes.has(route)) &&
+      !routePaths.some((route) => entryPointRoutes.has(route) || acknowledgedUnlinkedRoutes.has(route)) &&
       inbound.length === 0 &&
       relatedMenus.length === 0;
 

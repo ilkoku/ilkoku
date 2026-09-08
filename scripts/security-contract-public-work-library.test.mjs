@@ -221,7 +221,7 @@ test("demo showcase works stay usable but are excluded from search indexing", ()
   );
   contains(
     nextConfig,
-    '"/kitap/demo-:path*"',
+    '"/kitap/(demo-.*)"',
     "demo work noindex route family",
   );
   contains(

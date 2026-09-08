@@ -81,7 +81,9 @@ test("public header matches the homepage model without a top navigation list", (
 
   assert.match(header, /getPublicSiteIdentity\(\)/);
   assert.match(header, /identity\.headerKicker/);
-  assert.match(identity, /headerKicker:\s*"Dijital edebiyat platformu"/);
+  assert.match(identity, /headerKicker:\s*"Dijital yazar platformu"/);
+  assert.match(identity, /normalizeLegacyHeaderKicker/);
+  assert.match(identity, /dijital edebiyat platformu/);
   assert.match(header, /public-site-header__account/);
   assert.match(header, /href="\/giris"/);
   assert.match(header, /href="\/kayit"/);

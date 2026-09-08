@@ -21,6 +21,7 @@ import "./site-contact-links.css";
 import "./public-discovery-paused.css";
 
 const baseUrl = "https://ilkoku.com";
+const officialEntityUrls = [...siteSocialUrls, "https://github.com/ilkoku"];
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -58,7 +59,7 @@ const organizationSchema = {
   alternateName: publicBrandPositioning,
   url: baseUrl,
   email: siteContact.generalEmail,
-  sameAs: siteSocialUrls,
+  sameAs: officialEntityUrls,
   logo: {
     "@type": "ImageObject",
     url: `${baseUrl}/icons/ilkoku-512.png`,

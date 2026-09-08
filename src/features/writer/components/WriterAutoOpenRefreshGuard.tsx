@@ -8,8 +8,12 @@ const flowOpenClass = "writer-flow-open";
 export function WriterAutoOpenRefreshGuard() {
   useEffect(() => {
     const body = document.body;
+    let observer: MutationObserver | null = null;
 
-    let fallbackTimer: number | undefined;
+    const fallbackTimer = window.setTimeout(() => {
+      body.classList.add(hydratedClass);
+      observer?.disconnect();
+    }, 1500);
 
     const markHydratedWhenEditorOpens = () => {
       if (!body.classList.contains(flowOpenClass)) {
@@ -17,14 +21,11 @@ export function WriterAutoOpenRefreshGuard() {
       }
 
       body.classList.add(hydratedClass);
-      observer.disconnect();
-
-      if (fallbackTimer) {
-        window.clearTimeout(fallbackTimer);
-      }
+      observer?.disconnect();
+      window.clearTimeout(fallbackTimer);
     };
 
-    const observer = new MutationObserver(markHydratedWhenEditorOpens);
+    observer = new MutationObserver(markHydratedWhenEditorOpens);
 
     observer.observe(body, {
       attributeFilter: ["class"],
@@ -33,16 +34,9 @@ export function WriterAutoOpenRefreshGuard() {
 
     markHydratedWhenEditorOpens();
 
-    fallbackTimer = window.setTimeout(() => {
-      body.classList.add(hydratedClass);
-      observer.disconnect();
-    }, 1500);
-
     return () => {
-      observer.disconnect();
-      if (fallbackTimer) {
-        window.clearTimeout(fallbackTimer);
-      }
+      observer?.disconnect();
+      window.clearTimeout(fallbackTimer);
       body.classList.remove(hydratedClass);
     };
   }, []);

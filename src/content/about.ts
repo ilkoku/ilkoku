@@ -2,20 +2,20 @@ export const aboutPageContent = {
   canonical: "/hakkimizda",
   title: "Hakkımızda",
   summary:
-    "İlkOku, bir eserin ilk cümlesinden okur geri bildirimine, bağımsız editör değerlendirmesinden yayınevi keşfine uzanan gelişim yolculuğunu aynı dijital ekosistemde buluşturur.",
+    "İlkOku, bir eserin ilk cümlesinden okur geri bildirimine, bağımsız editör değerlendirmesinden yayınevi değerlendirmesine uzanan gelişim yolculuğunu aynı dijital ekosistemde buluşturur.",
   seoTitle: "Hakkımızda | İlkOku Dijital Yazar Platformu",
   seoDescription:
-    "İlkOku’nun neden var olduğunu; yazar, okuyucu, editör ve yayınevini bir eserin gelişim ve keşif yolculuğunda nasıl buluşturduğunu keşfedin.",
-  updatedAt: "2026-08-27T00:00:00.000Z",
-  body: `Bir eser çoğu zaman tek bir kişinin zihninde başlar. Ama güçlenmesi; okunmaya, geri bildirime, bağımsız değerlendirmeye ve doğru zamanda doğru insanlar tarafından keşfedilmeye ihtiyaç duyar. İlkOku, tam olarak bu yolculuk için kuruldu.
+    "İlkOku’nun neden var olduğunu; yazar, okuyucu, editör ve yayınevini bir eserin yazım, yayın, gelişim ve profesyonel değerlendirme yolculuğunda nasıl buluşturduğunu öğrenin.",
+  updatedAt: "2026-09-08T00:00:00.000Z",
+  body: `Bir eser çoğu zaman tek bir kişinin zihninde başlar. Ama güçlenmesi; okunmaya, geri bildirime, bağımsız değerlendirmeye ve doğru zamanda doğru insanlar tarafından fark edilmeye ihtiyaç duyar. İlkOku, tam olarak bu yolculuk için kuruldu.
 
 ## Neden İlkOku var?
 
-Bir eseri yazmak ile onu doğru okuyucuya, doğru editöre ve doğru yayınevine ulaştırmak aynı şey değildir. Yazma süreci kişisel olabilir; gelişim ve keşif süreci ise güvenilir bağlara ihtiyaç duyar.
+Bir eseri yazmak ile onu doğru okuyucuya, doğru editöre ve doğru yayınevine ulaştırmak aynı şey değildir. Yazma süreci kişisel olabilir; gelişim ve profesyonel değerlendirme süreci ise güvenilir bağlara ihtiyaç duyar.
 
-İlkOku'nun amacı; yazarı üretim ve gelişim sürecinde desteklemek, eseri okuyucuyla buluşturmak, bağımsız editör görüşleriyle güçlenmesini sağlamak ve yayınevlerinin nitelikli eserleri keşfedebileceği düzenli bir zemin kurmaktır.
+İlkOku'nun amacı; yazarı üretim ve gelişim sürecinde desteklemek, yayımlanmış eseri okuyucuyla buluşturmak, bağımsız editör görüşleriyle güçlenmesini sağlamak ve yayınevlerinin uygun eserleri değerlendirebileceği düzenli bir zemin kurmaktır.
 
-Bu nedenle İlkOku'yu yalnızca bir okuma sitesi ya da yalnızca bir yazma aracı olarak görmüyoruz. İlkOku, bir eserin oluşumuyla profesyonel keşif ihtiyacı arasındaki boşluğu doldurmak için tasarlanmış dijital bir yazar platformudur.
+Bu nedenle İlkOku'yu yalnızca bir okuma sitesi ya da yalnızca bir yazma aracı olarak görmüyoruz. İlkOku, bir eserin oluşumuyla profesyonel yayın dünyası arasındaki boşluğu azaltmak için tasarlanmış dijital bir yazar platformudur.
 
 ## Dört rol, tek eser yolculuğu
 
@@ -27,7 +27,7 @@ Yazar eserin sahibi ve yolculuğun başlangıç noktasıdır. Eserini oluşturur
 
 ### Okuyucu
 
-Okuyucu yalnızca son ürünü tüketen kişi değildir. Keşfe açık eserlerle erken aşamada karşılaşabilir, okumaya devam edebilir ve kendisine açık etkileşim araçlarıyla yazara geri bildirim verebilir. Böylece eser, gerçek okur deneyimiyle temas eder.
+Okuyucu yalnızca son ürünü tüketen kişi değildir. Kendisine açık yayımlanmış eserlerle karşılaşabilir, okumaya devam edebilir ve etkileşim araçlarıyla yazara geri bildirim verebilir. Böylece eser, gerçek okur deneyimiyle temas eder.
 
 ### Editör
 
@@ -35,7 +35,7 @@ Editörün görevi eseri kendi zevkine göre yeniden yazmak değil; metni bağı
 
 ### Yayınevi
 
-Yayınevi hesapları, kendilerine açık keşif alanlarında görünür eserleri ve yazarları inceleyebilir. İlkOku; eseri, yazarı ve platform içinde oluşan gelişim bağlamını daha anlaşılır hale getirerek yayınevlerinin keşif ve değerlendirme sürecini destekler.
+Yayınevi hesapları, kendilerine açık kurumsal değerlendirme alanlarında uygun eser ve yazar sinyallerini inceleyebilir. İlkOku; eseri, yazarı ve platform içinde oluşan gelişim bağlamını daha anlaşılır hale getirerek yayınevlerinin değerlendirme sürecini destekler.
 
 ## Bir eseri yalnızca son hâliyle görmüyoruz
 
@@ -45,23 +45,23 @@ Eser Pasaportu bu yaklaşımın merkezindedir. Amacı bir esere yapay bir başar
 
 ## Güvenin temeli: herkesin rolü belli
 
-İlkOku'da güveni, büyük vaatlerden önce sınırların netliğiyle kuruyoruz. Yazar eserinin yaratıcı kontrolünü korur. Okur geri bildirim verir ama editörün yerine geçmez. Editör bağımsız değerlendirme yapar ama yayınevi adına yayın kararı vermez. Yayınevi keşfeder ve kendi sürecinde karar verir.
+İlkOku'da güveni, büyük vaatlerden önce sınırların netliğiyle kuruyoruz. Yazar eserinin yaratıcı kontrolünü korur. Okur geri bildirim verir ama editörün yerine geçmez. Editör bağımsız değerlendirme yapar ama yayınevi adına yayın kararı vermez. Yayınevi değerlendirir ve kendi sürecinde karar verir.
 
 Bu ayrım yalnızca hukuki veya teknik bir sınır değildir; sağlıklı bir yazar-okur ekosisteminin temelidir. Her rolün ne yapabildiği ve ne yapamadığı açık olduğunda, aynı eser etrafındaki etkileşim daha anlamlı hale gelir.
 
 ## Yazar gelişir, okur keşfeder
 
 - Yazar, eserini bölüm bölüm geliştirir ve gerçek okuyucu geri bildirimleriyle yazarlık yolculuğunu güçlendirir.
-- Okuyucu, yeni hikâyeleri erken aşamada keşfeder ve sevdiği eserlerin gelişimine katkı sunar.
+- Okuyucu, kendisine sunulan yeni hikâyeleri erkenden fark eder ve sevdiği eserlerin gelişimine katkı sunar.
 - Bağımsız editör değerlendirmeleri, yazara metnini daha güçlü hale getirebilmesi için profesyonel bir bakış kazandırır.
-- Eser geliştikçe daha görünür hale gelir; okur ilgisi, geri bildirimler ve gelişim süreci aynı bağlamda birikir.
-- Güçlenen eserler ve gelişen yazarlar, yayınevlerinin nitelikli keşif yapabileceği daha anlamlı bir ortamda görünür olur.
+- Eser geliştikçe okur ilgisi, geri bildirimler ve gelişim süreci aynı bağlamda birikir.
+- Uygun eserler ve gelişen yazarlar, yetkili yayınevi hesaplarının daha nitelikli değerlendirme yapabileceği bir ortamda görünür olabilir.
 
-İlkOku'nun amacı, yeni yazarların gelişebildiği ve okurların yeni hikâyeleri ilk keşfedenlerden olabildiği canlı bir yazar-okur topluluğu kurmaktır.
+İlkOku'nun amacı, yeni yazarların gelişebildiği ve okurların yeni hikâyelerle buluşabildiği canlı bir yazar-okur topluluğu kurmaktır.
 
 ## Nereye gidiyoruz?
 
-Hedefimiz, yeni bir eserin ilk cümlesi ile profesyonel yayın dünyası arasındaki mesafeyi daha anlaşılır hale getirmek. Yazarı yalnız bırakmayan, okurun katkısını görünür kılan, editörün bağımsızlığını koruyan ve yayınevinin keşif sürecini daha nitelikli bağlamla destekleyen bir yapı kuruyoruz.
+Hedefimiz, yeni bir eserin ilk cümlesi ile profesyonel yayın dünyası arasındaki mesafeyi daha anlaşılır hale getirmek. Yazarı yalnız bırakmayan, okurun katkısını görünür kılan, editörün bağımsızlığını koruyan ve yayınevinin değerlendirme sürecini daha nitelikli bağlamla destekleyen bir yapı kuruyoruz.
 
 İlkOku'nun merkezinde teknoloji değil, eser vardır. Teknoloji; eserin yolculuğunu kaydetmek, doğru kişileri doğru aşamada buluşturmak ve bu yolculuğu daha şeffaf hale getirmek için kullandığımız araçtır.
 

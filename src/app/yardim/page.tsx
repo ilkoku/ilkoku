@@ -28,10 +28,10 @@ const audienceLabels: Record<string, string> = {
 const rolePaths = [
   {
     eyebrow: "Okur",
-    title: "Yeni eserler keşfetmek istiyorum",
-    description: "Keşfe açık eserleri, yazarları ve türleri incele; okumaya geçtiğinde üyelik akışından devam et.",
-    href: "/eserler",
-    action: "Eserleri keşfet",
+    title: "Okuyucu olarak İlkOku'ya katılmak istiyorum",
+    description: "Okuyucu hesabını oluştur; platformdaki erişim ve keşif akışlarına hesabın üzerinden devam et.",
+    href: "/kayit?rol=reader",
+    action: "Okuyucu olarak katıl",
   },
   {
     eyebrow: "Yazar",
@@ -190,7 +190,7 @@ export default async function HelpPage() {
         <span className="help-eyebrow">İlkOku destek ve yönlendirme merkezi</span>
         <h1>Ne yapmak istiyorsun?</h1>
         <p>
-          Yardımı boş bir SSS listesinde aratmak yerine amacını seç. Seni eser keşfine, yazar yolculuğuna, editör modeline, yayınevi keşfine veya ihtiyaç duyduğun güven sayfasına doğrudan bağlayalım.
+          Yardımı boş bir SSS listesinde aratmak yerine amacını seç. Seni okuyucu katılımına, yazar yolculuğuna, editör modeline, yayınevi keşfine veya ihtiyaç duyduğun güven sayfasına doğrudan bağlayalım.
         </p>
       </header>
 

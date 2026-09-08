@@ -1,3 +1,8 @@
+import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
+
+const alwaysBlockedPrefixes = ["/admin", "/icerik", "/api", "/_next", "/sistem-yonetimi"];
+const pausedDiscoveryPrefixes = ["/eserler", "/yazarlar", "/turler"];
+
 export function safeCmsInternalHref(input: string | null | undefined) {
   const value = String(input ?? "").trim();
   if (!value || /[\r\n]/.test(value)) return "";
@@ -18,7 +23,10 @@ export function safeCmsInternalHref(input: string | null | undefined) {
   if (url.origin !== "https://ilkoku.local") return "";
 
   const pathname = url.pathname.toLowerCase();
-  const blockedPrefixes = ["/admin", "/icerik", "/api", "/_next", "/sistem-yonetimi"];
+  const blockedPrefixes = [
+    ...alwaysBlockedPrefixes,
+    ...(publicDiscoveryEnabled ? [] : pausedDiscoveryPrefixes),
+  ];
   if (blockedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return "";
 
   return `${url.pathname}${url.search}${url.hash}`.slice(0, 300);

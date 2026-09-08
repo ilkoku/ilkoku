@@ -36,9 +36,27 @@ const privateRouteHeaders = [
   "/yorumlarim/:path*",
 ];
 
+// Public discovery is intentionally paused. Keep these families explicitly
+// non-indexable even if a future routing regression accidentally returns 200.
+// Published public work detail pages under /kitap/:slug remain separate and
+// indexable when their publication/privacy rules allow it.
+const pausedPublicDiscoveryRouteHeaders = [
+  "/eserler",
+  "/eserler/:path*",
+  "/yazarlar",
+  "/yazarlar/:path*",
+  "/turler",
+  "/turler/:path*",
+];
+
+const searchExcludedRouteHeaders = [
+  ...privateRouteHeaders,
+  ...pausedPublicDiscoveryRouteHeaders,
+];
+
 const nextConfig: NextConfig = {
   async headers() {
-    return privateRouteHeaders.map((source) => ({
+    return searchExcludedRouteHeaders.map((source) => ({
       source,
       headers: [
         {

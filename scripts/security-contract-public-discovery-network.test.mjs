@@ -302,27 +302,30 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
     "/turler",
     "/nasil-calisir",
   ]) {
-    contains(sitemap, `\${baseUrl}${route}`, `sitemap route ${route}`);
+    contains(sitemap, `\${baseUrl}${route}`, `reserved sitemap route ${route}`);
   }
 
   notContains(sitemap, "foundationalGuides", "retired guide sitemap source");
   notContains(sitemap, "contentKey LIKE 'guide:%'", "retired CMS guide sitemap inventory");
-  contains(sitemap, "getPublicAuthors()", "dynamic author sitemap");
-  contains(sitemap, "getPublicGenres()", "dynamic genre sitemap");
+  contains(sitemap, "publicDiscoveryEnabled ? getPublicAuthors() : Promise.resolve([])", "paused author sitemap gate");
+  contains(sitemap, "publicDiscoveryEnabled ? getPublicGenres() : Promise.resolve([])", "paused genre sitemap gate");
   contains(homepage, 'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"', "homepage neutral experience boundary");
   notContains(homepage, 'from "./onizleme/ana-sayfa-yeni/page"', "homepage must not import the preview route module");
-  contains(homepageExperience, '|| "/eserler"', "homepage public discovery fallback");
-  contains(publicNavigation, 'href: "/eserler"', "homepage work catalog route");
-  contains(publicNavigation, 'href: "/yazarlar"', "homepage author route");
-  contains(publicNavigation, 'href: "/turler"', "homepage genre route");
+  contains(homepageExperience, '|| "/nasil-calisir"', "homepage live public fallback");
+  notContains(homepageExperience, '|| "/eserler"', "homepage paused discovery fallback");
+  contains(publicNavigation, "export const publicDiscoveryEnabled = false", "shared discovery pause");
+  contains(publicNavigation, 'href: "/eserler"', "reserved work catalog route");
+  contains(publicNavigation, 'href: "/yazarlar"', "reserved author route");
+  contains(publicNavigation, 'href: "/turler"', "reserved genre route");
   notContains(homepageExperience, "2.847+", "fabricated writer count");
   notContains(homepageExperience, "18.592+", "fabricated reader count");
-  contains(book, "work.authorPublicId", "book author schema URL");
+  contains(book, "publicDiscoveryEnabled", "book schema discovery gate");
+  contains(book, "work.authorPublicId", "book author schema source");
   contains(book, '"@type": "BreadcrumbList"', "book breadcrumbs");
-  contains(showcase, "bookContextPath", "book preserves discovery origin");
+  contains(book, 'name: "Ana Sayfa"', "book fallback breadcrumb");
+  contains(showcase, "bookContextPath", "book preserves reading origin");
   contains(showcase, "encodedBookContextPath", "nested book return context");
-  contains(showcase, '/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}', "book author link preserves context");
-  contains(showcase, '/turler/${publicTaxonomySlug(work.genre)}?from=${encodedBookContextPath}', "book genre link preserves context");
+  contains(showcase, "publicDiscoveryEnabled ? (", "book author links are discovery-gated");
   contains(showcase, "Yayında · Üyelikle okunabilir", "truthful chapter access label");
   contains(retiredMap, 'permanentRedirect("/harita")', "retired discovery map redirect");
   contains(collector, '"/icerik/sayfalar", "/icerik/onizleme/sayfa/[id]"', "trust page CMS workflow map");

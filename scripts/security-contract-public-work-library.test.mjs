@@ -242,8 +242,13 @@ test("landing, sitemap and production smoke preserve paused public discovery inv
   );
   contains(
     homepageExperience,
+    '|| "/nasil-calisir"',
+    "homepage safe public fallback",
+  );
+  notContains(
+    homepageExperience,
     '|| "/eserler"',
-    "homepage discovery fallback",
+    "paused discovery homepage fallback",
   );
   contains(
     publicNavigation,
@@ -322,17 +327,30 @@ test("landing, sitemap and production smoke preserve paused public discovery inv
   );
   contains(
     bookPage,
-    'return "/eserler"',
-    "public book fallback inventory",
+    'return publicDiscoveryEnabled ? "/eserler" : "/"',
+    "public book safe fallback inventory",
   );
   contains(
     showcase,
-    'returnTo = "/eserler"',
-    "public showcase fallback inventory",
+    'returnTo = "/"',
+    "public showcase safe fallback inventory",
   );
+  contains(
+    showcase,
+    "publicDiscoveryEnabled ? (",
+    "paused author link rendering gate",
+  );
+  for (const route of [
+    '"/eserler/:path*"',
+    '"/yazarlar/:path*"',
+    '"/turler/:path*"',
+    '"/yayinevleri/:path*"',
+  ]) {
+    contains(nextConfig, route, `paused discovery noindex ${route}`);
+  }
   notContains(
     nextConfig,
-    '"/eserler/:path*"',
-    "catalog private noindex header",
+    '"/kitap/:path*"',
+    "published public work stays outside blanket noindex",
   );
 });

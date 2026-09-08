@@ -197,7 +197,7 @@ test("editor directory and help center stay connected to the same public footer 
   assert.match(helpLayout, /<PublicTrustFooter\s*\/>/);
   assert.match(helpLayout, /help\.css/);
   for (const href of [
-    "/eserler",
+    "/kayit?rol=reader",
     "/yazarlar-icin",
     "/editorler-icin",
     "/yayinevleri-icin",
@@ -210,6 +210,7 @@ test("editor directory and help center stay connected to the same public footer 
   ]) {
     assert.ok(helpPage.includes(`href: "${href}"`), `${href} must remain reachable from help`);
   }
+  assert.ok(!helpPage.includes('href: "/eserler"'), "/eserler must not be linked from help while discovery is paused");
   assert.match(helpPage, /mailto:destek@ilkoku\.com/);
   assert.match(helpPage, /namespace = 'faq' AND status = 'published'/);
   assert.match(helpPage, /"@type": "FAQPage"/);

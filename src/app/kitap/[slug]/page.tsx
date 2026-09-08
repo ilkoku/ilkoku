@@ -10,6 +10,7 @@ import { getMemberPublicWorkBySlug } from "@/features/works/member-public-querie
 import { getPublicWorkBySlug } from "@/features/works/queries";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
+import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 
 const baseUrl = "https://ilkoku.com";
 const MAX_RETURN_PATH_LENGTH = 1500;
@@ -26,7 +27,7 @@ function getSafeReturnPath(value: string | undefined) {
     !value.startsWith("/") ||
     value.startsWith("//")
   ) {
-    return "/eserler";
+    return publicDiscoveryEnabled ? "/eserler" : "/";
   }
 
   return value;
@@ -164,7 +165,9 @@ export default async function DynamicBookShowcasePage({
     author: {
       "@type": "Person",
       name: work.authorName,
-      url: `${baseUrl}/yazarlar/${work.authorPublicId}`,
+      ...(publicDiscoveryEnabled
+        ? { url: `${baseUrl}/yazarlar/${work.authorPublicId}` }
+        : {}),
     },
     publisher: {
       "@type": "Organization",
@@ -177,26 +180,41 @@ export default async function DynamicBookShowcasePage({
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Eserler",
-        item: `${baseUrl}/eserler`,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: work.authorName,
-        item: `${baseUrl}/yazarlar/${work.authorPublicId}`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: work.title,
-        item: `${baseUrl}/kitap/${work.slug}`,
-      },
-    ],
+    itemListElement: publicDiscoveryEnabled
+      ? [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Eserler",
+            item: `${baseUrl}/eserler`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: work.authorName,
+            item: `${baseUrl}/yazarlar/${work.authorPublicId}`,
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: work.title,
+            item: `${baseUrl}/kitap/${work.slug}`,
+          },
+        ]
+      : [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Ana Sayfa",
+            item: `${baseUrl}/`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: work.title,
+            item: `${baseUrl}/kitap/${work.slug}`,
+          },
+        ],
   };
 
   return (

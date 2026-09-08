@@ -15,7 +15,7 @@ function notContains(text, fragment, label) {
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 }
 
-test("writer public page stays CMS-compatible, discovery-led and truthful about publication, review and rights", () => {
+test("writer public page stays CMS-compatible, publication-led and truthful about publication, review and rights", () => {
   const content = source("src/content/for-writers.ts");
   const page = source("src/app/yazarlar-icin/page.tsx");
   const experience = source("src/components/content/ForWritersExperience.tsx");
@@ -27,12 +27,14 @@ test("writer public page stays CMS-compatible, discovery-led and truthful about 
   const howItWorks = source("src/content/how-it-works.ts");
 
   contains(content, "Kaydetmek yayınlamak değildir", "draft-publication boundary");
-  contains(content, "18+ içerikler mevcut sistemde keşfe açık yayımlanmaz", "adult draft boundary");
+  contains(content, "18+ eserler de yayımlanabilir", "adult publication truth");
+  contains(content, "anonim ziyaretçilere ve arama motoru keşif yüzeylerine gösterilmez", "adult anonymous-search boundary");
+  contains(content, "yaş doğrulaması yapılmış ve 18+ içerik için ayrıca açık onay vermiş yetişkin üyelerle sınırlandırılır", "adult consent boundary");
   contains(content, "editör incelemesi talep edebilirsin", "separate review request path");
   contains(content, "yaratıcı sesin ve nihai metin tercihin sende kalır", "writer creative decision boundary");
   contains(content, "yayın kararı ve olası anlaşma tarafların ayrıca vereceği kararlardır", "publisher interest boundary");
   contains(content, "fikrî haklarını kendiliğinden platforma, editöre ya da yayınevine devretmez", "rights boundary");
-  contains(content, "Dosyan bilgisayarında beklemek zorunda değil", "writer acquisition value proposition");
+  contains(content, "Eserini bölüm bölüm geliştir, hazır olduğunda yayımla", "writer acquisition value proposition");
 
   contains(page, 'getPublishedCmsPublicPageState("yazarlar-icin")', "CMS-owned writer page");
   contains(page, "ForWritersExperience", "branded writer experience");

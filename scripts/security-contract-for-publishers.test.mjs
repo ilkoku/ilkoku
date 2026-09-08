@@ -15,7 +15,7 @@ function notContains(text, fragment, label) {
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 }
 
-test("publisher public page stays CMS-compatible, discovery-led and truthful about permissions and commercial boundaries", () => {
+test("publisher public page stays CMS-compatible, evaluation-led and truthful about permissions and commercial boundaries", () => {
   const content = source("src/content/for-publishers.ts");
   const page = source("src/app/yayinevleri-icin/page.tsx");
   const experience = source("src/components/content/ForPublishersExperience.tsx");
@@ -27,12 +27,12 @@ test("publisher public page stays CMS-compatible, discovery-led and truthful abo
   const access = source("src/features/publisher-discovery/access.ts");
   const permissions = source("src/features/publisher-workspace/permissions.ts");
 
-  contains(content, "başvuru kutusu değil; yeni yazar ve eserleri daha erken görebileceği bir keşif katmanı", "publisher discovery value");
+  contains(content, "pasif bir başvuru kutusundan daha geniş bir çalışma zemini sunar", "publisher evaluation value");
   contains(content, "Bağlayıcı ticari adım, daha sonra ayrı karar ve süreçlerle oluşur", "engagement-commercial boundary");
   contains(content, "Pasaport bilgisi ile özel tam metin erişimi ayrı yetkilerdir", "passport-content permission boundary");
   contains(content, "aktif olmadığı ortamda yayınevi kullanıcılarına kullanılabilir işlem gibi sunulmaz", "planned editor-request truth boundary");
   contains(content, "Kurumsal paylaşım araçları kademeli olarak etkinleştirilen çalışma katmanıdır", "planned sharing truth boundary");
-  contains(content, "İlkOku keşif alanını büyütür; yayınevinin editoryal ve ticari kararını devralmaz", "publisher decision boundary");
+  contains(content, "İlkOku değerlendirme alanını genişletir; yayınevinin editoryal ve ticari kararını devralmaz", "publisher decision boundary");
 
   contains(page, 'getPublishedCmsPublicPageState("yayinevleri-icin")', "CMS-owned publisher page");
   contains(page, "ForPublishersExperience", "branded publisher experience");

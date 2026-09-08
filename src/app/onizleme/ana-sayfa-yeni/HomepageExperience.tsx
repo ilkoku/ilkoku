@@ -94,7 +94,9 @@ export default async function HomepageExperience() {
   const heroTitle = hero?.title || "İlk cümle,\nilk okurun,\nilk adımın.";
   const heroLines = heroTitle.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const primaryHref = safeCmsInternalHref(hero?.primaryCtaHref) || "/kayit?rol=writer";
-  const secondaryHref = safeCmsInternalHref(hero?.secondaryCtaHref) || "/eserler";
+  const cmsSecondaryHref = safeCmsInternalHref(hero?.secondaryCtaHref);
+  const secondaryHref = cmsSecondaryHref || "/nasil-calisir";
+  const secondaryLabel = cmsSecondaryHref ? (hero?.secondaryCtaLabel || "Detayları Gör") : "Nasıl Çalışır?";
   const passportHref = safeCmsInternalHref(passport?.ctaHref) || "#roller";
 
   const cmsRoleCards = roleCardState.state === "valid" ? roleCardsFromPayload("tr", roleCardState.payload) : null;
@@ -140,7 +142,7 @@ export default async function HomepageExperience() {
             <p className="nx-eyebrow"><LandingIcon name="book" /> Yazardan yayınevine tek bir yazar ekosistemi</p>
             <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>) : <span>{heroTitle}</span>}</h1>
             <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
-            <div className="nx-hero__actions"><Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link href={secondaryHref} className="nx-action nx-action--line">{hero?.secondaryCtaLabel || "Eserleri Keşfet"}</Link></div>
+            <div className="nx-hero__actions"><Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
           </div>
           <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
         </div>

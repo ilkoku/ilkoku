@@ -2,11 +2,11 @@ import Link from "next/link";
 import { IntegrityControlPanel } from "./IntegrityControlPanel";
 import { RuntimeInfrastructurePanel } from "./RuntimeInfrastructurePanel";
 import { SystemMapArchitecturePanel } from "./SystemMapArchitecturePanel";
+import { SystemMapOverviewNavigator } from "./SystemMapOverviewNavigator";
 import { SystemMapWorkbench } from "./SystemMapWorkbench";
 import { SystemOperationsPanel } from "./SystemOperationsPanel";
 import {
   getSystemMapNavigationItem,
-  systemMapNavigationGroups,
   type SystemMapWorkspaceKey,
 } from "./navigation";
 import { getSystemMapWorkspaceData } from "./workspace-data";
@@ -37,10 +37,26 @@ function WorkspaceStatus({
 }) {
   return (
     <section className="system-map-workspace-status" aria-label="Harita genel sağlık durumu">
-      <div data-tone={blockers > 0 ? "danger" : "ok"}><strong>{blockers}</strong><span>BLOCKER</span></div>
-      <div data-tone={warnings > 0 ? "warning" : "ok"}><strong>{warnings}</strong><span>WARN</span></div>
-      <div><strong>{controlsPass}/{controlsTotal}</strong><span>Kontrol PASS</span></div>
-      <div><strong>{workflowPass}/{workflowTotal}</strong><span>Workflow PASS</span></div>
+      <Link
+        aria-label={`Denetim Kapısı: ${blockers} BLOCKER`}
+        data-tone={blockers > 0 ? "danger" : "ok"}
+        href="/harita/denetim"
+      >
+        <strong>{blockers}</strong><span>BLOCKER</span>
+      </Link>
+      <Link
+        aria-label={`Denetim Kapısı: ${warnings} WARN`}
+        data-tone={warnings > 0 ? "warning" : "ok"}
+        href="/harita/denetim"
+      >
+        <strong>{warnings}</strong><span>WARN</span>
+      </Link>
+      <Link aria-label={`Denetim Kapısı: ${controlsPass}/${controlsTotal} kontrol PASS`} href="/harita/denetim">
+        <strong>{controlsPass}/{controlsTotal}</strong><span>Kontrol PASS</span>
+      </Link>
+      <Link aria-label={`Kanonik Akışlar: ${workflowPass}/${workflowTotal} workflow PASS`} href="/harita/akislar">
+        <strong>{workflowPass}/{workflowTotal}</strong><span>Workflow PASS</span>
+      </Link>
       <p>Son tarama: {new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "medium", timeZone: "Europe/Istanbul" }).format(new Date(generatedAt))}</p>
     </section>
   );
@@ -91,33 +107,7 @@ export async function SystemMapWorkspacePage({ workspace }: { workspace: SystemM
         return <div className="system-map-route-only"><SystemMapWorkbench snapshot={snapshot} /></div>;
       case "overview":
       default:
-        return (
-          <section className="system-map-overview-workbenches" aria-labelledby="system-map-workbenches-title">
-            <div className="system-map-section-heading">
-              <div>
-                <p>ÇALIŞMA MASALARI</p>
-                <h2 id="system-map-workbenches-title">Aradığın parçaya doğrudan git</h2>
-              </div>
-              <span>{systemMapNavigationGroups.flatMap((group) => group.items).length - 1} uzman yüzey</span>
-            </div>
-            <div className="system-map-overview-groups">
-              {systemMapNavigationGroups.map((group) => (
-                <section key={group.label}>
-                  <h3>{group.label}</h3>
-                  <div>
-                    {group.items.filter((item) => item.key !== "overview").map((item) => (
-                      <Link href={item.href} key={item.href}>
-                        <strong>{item.label}</strong>
-                        <span>{item.description}</span>
-                        <small>Çalışma masasını aç →</small>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-          </section>
-        );
+        return <SystemMapOverviewNavigator />;
     }
   })();
 

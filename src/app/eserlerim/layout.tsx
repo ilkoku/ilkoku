@@ -1,4 +1,4 @@
-import { WriterBookStructureEnhancer } from "@/features/writer/components/WriterBookStructureEnhancer";
+import { WriterBookStructureRefreshBoundary } from "@/features/writer/components/WriterBookStructureRefreshBoundary";
 import { WriterBookTrashEnhancer } from "@/features/writer/components/WriterBookTrashEnhancer";
 import { WriterEditingTools } from "@/features/writer/components/WriterEditingTools";
 import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
@@ -22,7 +22,7 @@ export default function WriterWorksLayout({
       {children}
       <WriterEditingTools />
       <WriterPagedManuscriptEnhancer />
-      <WriterBookStructureEnhancer />
+      <WriterBookStructureRefreshBoundary />
       <WriterBookTrashEnhancer />
     </>
   );

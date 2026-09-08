@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
+import { WRITER_BOOK_STRUCTURE_CHANGED_EVENT } from "@/features/writer/writer-book-structure-events";
 import { loadBookStructureAction } from "@/features/works/book-structure-actions";
 import { bookSectionDetails, type BookStructureItem } from "@/features/works/book-structure";
 import {
@@ -84,6 +86,7 @@ function activeIndexFromSnapshot(snapshot: string) {
 }
 
 export function WriterBookTrashEnhancer() {
+  const router = useRouter();
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const target = getTarget();
   const workId = target?.workIdInput.value ?? "";
@@ -127,6 +130,16 @@ export function WriterBookTrashEnhancer() {
 
   if (!target || snapshot === UNAVAILABLE) return null;
 
+  function refreshStructureWithoutPageReload(
+    nextTrash: BookTrashItem[] | undefined,
+    nextMessage: string,
+  ) {
+    if (nextTrash) setTrash(nextTrash);
+    setMessage(nextMessage);
+    window.dispatchEvent(new Event(WRITER_BOOK_STRUCTURE_CHANGED_EVENT));
+    router.refresh();
+  }
+
   async function moveSelectedToTrash() {
     if (!selectedItem || !workId || busy) return;
 
@@ -153,7 +166,7 @@ export function WriterBookTrashEnhancer() {
       return;
     }
 
-    window.location.reload();
+    refreshStructureWithoutPageReload(result.trash, result.message);
   }
 
   async function restore(item: BookTrashItem) {
@@ -171,7 +184,7 @@ export function WriterBookTrashEnhancer() {
       return;
     }
 
-    window.location.reload();
+    refreshStructureWithoutPageReload(result.trash, result.message);
   }
 
   async function emptyTrash() {

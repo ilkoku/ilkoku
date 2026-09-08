@@ -94,6 +94,10 @@ test("writer book structure has recoverable trash and permanent empty action", (
   const enhancer = source(
     "src/features/writer/components/WriterBookTrashEnhancer.tsx",
   );
+  const boundary = source(
+    "src/features/writer/components/WriterBookStructureRefreshBoundary.tsx",
+  );
+  const events = source("src/features/writer/writer-book-structure-events.ts");
   const css = source("src/features/writer/writer-book-trash.css");
 
   includes(migration, "CREATE TABLE `BookTrashItem`", "persistent trash table");
@@ -113,6 +117,15 @@ test("writer book structure has recoverable trash and permanent empty action", (
   includes(enhancer, "Geri Yükle", "restore affordance");
   includes(enhancer, "Çöp Kutusunu Boşalt", "permanent empty affordance");
   includes(enhancer, "Bu işlem geri alınamaz", "destructive confirmation");
+  includes(enhancer, "router.refresh()", "soft route refresh after trash mutation");
+  includes(enhancer, "WRITER_BOOK_STRUCTURE_CHANGED_EVENT", "structure refresh event dispatch");
+  assert.ok(
+    !enhancer.includes("window.location.reload"),
+    "trash mutations must not hard-reload the writer page",
+  );
+  includes(boundary, "key={revision}", "structure enhancer remount boundary");
+  includes(boundary, "WRITER_BOOK_STRUCTURE_CHANGED_EVENT", "structure refresh event listener");
+  includes(events, "ilkoku:writer-book-structure-changed", "stable structure refresh event name");
   includes(css, ".writer-book-trash__drawer", "trash drawer styling");
 });
 
@@ -138,7 +151,7 @@ test("writer book structure enhancement is mounted on every writing route", () =
   ]) {
     const layout = source(path);
 
-    includes(layout, "WriterBookStructureEnhancer", `${path} enhancer mount`);
+    includes(layout, "WriterBookStructureRefreshBoundary", `${path} structure boundary mount`);
     includes(layout, "writer-book-structure.css", `${path} structure CSS`);
     includes(layout, "WriterBookTrashEnhancer", `${path} trash enhancer mount`);
     includes(layout, "writer-book-trash.css", `${path} trash CSS`);

@@ -170,6 +170,23 @@ test("harita left navigation exposes every specialist workbench as a real route"
   contains(styles, "overflow-x: auto", "responsive horizontal navigation fallback");
 });
 
+test("harita overview supports search, pressable category filters and health drill-down", () => {
+  const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");
+  const navigator = source("src/features/system-map/SystemMapOverviewNavigator.tsx");
+  const styles = source("src/app/harita/workspace.css");
+
+  contains(workspace, "<SystemMapOverviewNavigator />", "filterable overview navigator");
+  contains(workspace, 'href="/harita/denetim"', "health summary denetim drill-down");
+  contains(workspace, 'href="/harita/akislar"', "workflow summary drill-down");
+  contains(navigator, '"use client"', "interactive overview client boundary");
+  contains(navigator, 'type="search"', "overview text search");
+  contains(navigator, "aria-pressed", "pressable category filter state");
+  contains(navigator, "systemMapNavigationGroups", "canonical navigation source");
+  contains(navigator, "Filtreleri temizle", "filter reset control");
+  contains(styles, ".system-map-overview-filterbar", "overview filter layout");
+  contains(styles, 'button[data-active="true"]', "active filter visual state");
+});
+
 test("deep operations panel exposes blocker warn pass semantics and fail-closed manifest limitations", () => {
   const panel = source("src/features/system-map/SystemOperationsPanel.tsx");
   const operations = source("src/features/system-map/operations.ts");

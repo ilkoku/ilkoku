@@ -73,7 +73,6 @@ export function CommunityRulesExperience({ body, summary, title, updatedAt }: { 
       <header className="how-header">
         <div className="how-container how-header__inner">
           <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="160px" /></Link>
-          <nav aria-label="Herkese açık sayfalar"><Link href="/eserler">Eserler</Link><Link href="/yazarlar">Yazarlar</Link><Link href="/editorler">Editörler</Link><Link href="/yardim">Yardım</Link></nav>
           <Link className="how-header__account" href="/giris">Giriş yap</Link>
         </div>
       </header>
@@ -85,7 +84,7 @@ export function CommunityRulesExperience({ body, summary, title, updatedAt }: { 
             <h1>{title.split(/\s+/).map((word) => <span key={word}>{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions">
-              <Link className="how-button how-button--primary" href="/eserler">Yeni eserleri keşfet <span aria-hidden="true">→</span></Link>
+              <Link className="how-button how-button--primary" href="/kayit?rol=reader">Okur olarak katıl <span aria-hidden="true">→</span></Link>
               <Link className="how-button how-button--secondary" href="#saygili-iletisim">Topluluk ilkelerini gör</Link>
             </div>
             <div className="how-hero__proof"><span><strong>4</strong> rol aynı toplulukta</span><span><strong>Yapıcı</strong> geri bildirim</span><span><strong>Gerçek</strong> keşif sinyalleri</span></div>
@@ -144,8 +143,8 @@ export function CommunityRulesExperience({ body, summary, title, updatedAt }: { 
       <aside className="how-related how-container" aria-label="İlkOku içinde devam et">
         <SectionHeading eyebrow="İlkOku içinde devam et" title="Topluluktan keşfe devam et." />
         <div className="how-related__grid">
-          <Link href="/eserler"><strong>Keşfe açık eserler</strong><span>Henüz herkesin bilmediği yeni hikâyeleri keşfet.</span></Link>
-          <Link href="/yazarlar"><strong>Yazarları keşfet</strong><span>Yeni yazarların eser yolculuklarını ve yayımlanmış eserlerini gör.</span></Link>
+          <Link href="/kayit?rol=reader"><strong>Okur olarak katıl</strong><span>Yeni hikâyeleri okumaya hazır olduğunda üyelikle devam et.</span></Link>
+          <Link href="/yazarlar-icin"><strong>Yazarlar İçin</strong><span>Eser yolculuğunu ve yazar araçlarını incele.</span></Link>
           <Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>Profesyonel geri bildirimin nasıl değer ürettiğini incele.</span></Link>
           <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Yazar, okur, editör ve yayınevini aynı eser etrafında buluşturan akışı gör.</span></Link>
         </div>

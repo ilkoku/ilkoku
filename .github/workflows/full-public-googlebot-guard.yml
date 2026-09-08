@@ -1,0 +1,117 @@
+name: Full public Googlebot guard
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: full-public-googlebot-main
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify all public URLs as Googlebot
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Verify 18 public sitemap URLs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          USER_AGENT="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+
+          normalize_url() {
+            local value="$1"
+            printf '%s' "${value%/}"
+          }
+
+          canonical_from_body() {
+            local body="$1"
+            local canonical_tag
+            canonical_tag="$(grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$body" | head -1 || true)"
+            printf '%s' "$canonical_tag" | sed -n 's/.*href="\([^"]*\)".*/\1/p'
+          }
+
+          check_page() {
+            local path="$1"
+            local expected_canonical="$2"
+            local url="https://ilkoku.com${path}"
+            local headers body code robots canonical_href
+
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+
+            echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK}"
+
+            if [[ "$code" != "200" ]]; then
+              echo "FAIL: $url returned HTTP $code"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            if [[ "${robots,,}" == *"noindex"* ]]; then
+              echo "FAIL: $url returned X-Robots-Tag noindex"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            if grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then
+              echo "FAIL: $url contains meta robots noindex"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            canonical_href="$(canonical_from_body "$body")"
+            if [[ -z "$canonical_href" ]]; then
+              echo "FAIL: $url canonical missing"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            if [[ "$(normalize_url "$canonical_href")" != "$(normalize_url "$expected_canonical")" ]]; then
+              echo "FAIL: $url canonical mismatch: expected=$expected_canonical actual=$canonical_href"
+              rm -f "$headers" "$body"
+              return 1
+            fi
+
+            echo "PASS: $url canonical=$canonical_href"
+            rm -f "$headers" "$body"
+          }
+
+          pages=(
+            '/|https://ilkoku.com/'
+            '/yardim|https://ilkoku.com/yardim'
+            '/editorler|https://ilkoku.com/editorler'
+            '/iletisim|https://ilkoku.com/iletisim'
+            '/hakkimizda|https://ilkoku.com/hakkimizda'
+            '/nasil-calisir|https://ilkoku.com/nasil-calisir'
+            '/editoryal-standartlar|https://ilkoku.com/editoryal-standartlar'
+            '/icerik-ve-yas-politikasi|https://ilkoku.com/icerik-ve-yas-politikasi'
+            '/topluluk-kurallari|https://ilkoku.com/topluluk-kurallari'
+            '/telif-bildirimi|https://ilkoku.com/telif-bildirimi'
+            '/yazarlar-icin|https://ilkoku.com/yazarlar-icin'
+            '/editorler-icin|https://ilkoku.com/editorler-icin'
+            '/yayinevleri-icin|https://ilkoku.com/yayinevleri-icin'
+            '/yasal/kullanim-sartlari|https://ilkoku.com/yasal/kullanim-sartlari'
+            '/yasal/gizlilik-politikasi|https://ilkoku.com/yasal/gizlilik-politikasi'
+            '/yasal/kvkk|https://ilkoku.com/yasal/kvkk'
+            '/yasal/cerez-politikasi|https://ilkoku.com/yasal/cerez-politikasi'
+            '/yasal/telif-hakki-politikasi|https://ilkoku.com/yasal/telif-hakki-politikasi'
+          )
+
+          for entry in "${pages[@]}"; do
+            path="${entry%%|*}"
+            canonical="${entry#*|}"
+            check_page "$path" "$canonical"
+          done
+
+          echo "PASS: 18/18 public sitemap URLs return 200, stay indexable, and expose the expected self-canonical when fetched as Googlebot."

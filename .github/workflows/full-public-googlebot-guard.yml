@@ -2,33 +2,39 @@ name: Full public Googlebot guard
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+    inputs:
+      confirmation:
+        description: "Çalıştırmak için RUN-18-URL-GOOGLEBOT-DIAGNOSTIC yazın"
+        required: true
+        type: string
 
 permissions:
   contents: read
 
-# Serialize every workflow that crawls production. Hostinger applies
-# infrastructure-level rate limits to automated traffic from cloud networks.
 concurrency:
   group: production-live-crawler
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   verify:
     name: Verify all public URLs as Googlebot
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
 
     steps:
-      - name: Verify 18 public sitemap URLs
+      - name: Validate explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$CONFIRMATION" = "RUN-18-URL-GOOGLEBOT-DIAGNOSTIC"
+
+      - name: Verify 18 public sitemap URLs slowly
         shell: bash
         run: |
           set -Eeuo pipefail
 
           USER_AGENT="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
-          REQUEST_DELAY_SECONDS=3
+          REQUEST_DELAY_SECONDS=10
 
           normalize_url() {
             local value="$1"
@@ -60,10 +66,10 @@ jobs:
 
             echo "$url -> HTTP $code | Content-Type: ${content_type:-YOK} | X-Robots-Tag: ${robots:-YOK} | bytes=$body_bytes | title=$title_count | h1=$h1_count"
 
-            if [[ "$code" == "429" ]]; then
-              echo "FAIL: $url is rate-limited by the production edge (HTTP 429)"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              echo "CIRCUIT BREAKER: $url returned HTTP $code. Remaining URLs will not be requested." >&2
               rm -f "$headers" "$body"
-              return 1
+              exit 1
             fi
             [[ "$code" == "200" ]] || { echo "FAIL: $url returned HTTP $code"; rm -f "$headers" "$body"; return 1; }
             [[ "${content_type,,}" == text/html* ]] || { echo "FAIL: $url returned unexpected Content-Type"; rm -f "$headers" "$body"; return 1; }
@@ -112,4 +118,4 @@ jobs:
             check_page "$path" "$canonical" "$marker"
           done
 
-          echo "PASS: 18/18 public sitemap URLs return crawlable HTML to Googlebot without burst traffic."
+          echo "PASS: explicitly requested 18/18 Googlebot diagnostic completed without edge throttling."

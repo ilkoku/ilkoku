@@ -115,7 +115,11 @@ jobs:
             grep -Fq 'Allow: /' "$robots" || { cleanup; return 1; }
             grep -Fxq 'Disallow: /icerik$' "$robots" || { cleanup; return 1; }
             grep -Fxq 'Disallow: /icerik/' "$robots" || { cleanup; return 1; }
-            ! grep -Fxq 'Disallow: /icerik' "$robots" || { cleanup; return 1; }
+            if grep -Fxq 'Disallow: /icerik' "$robots"; then
+              echo "FAIL: broad /icerik robots prefix blocks public content policy"
+              cleanup
+              return 1
+            fi
 
             local required=(
               'https://ilkoku.com/'

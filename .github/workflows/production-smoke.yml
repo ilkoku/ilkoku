@@ -66,6 +66,10 @@ jobs:
             pace
           }
 
+          check_post_merge_public_route() {
+            check_status "$1" "$2"
+          }
+
           check_body() {
             local url="$1"
             shift
@@ -77,6 +81,26 @@ jobs:
             [[ "$code" == "200" ]] || { rm -f "$body"; return 1; }
             for marker in "$@"; do
               grep -Fq "$marker" "$body" || { echo "Eksik içerik: $url -> $marker" >&2; rm -f "$body"; return 1; }
+            done
+            rm -f "$body"
+            pace
+          }
+
+          check_post_merge_body_excludes() {
+            local url="$1"
+            shift
+            local body code forbidden
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            echo "$url -> HTTP $code"
+            fail_on_edge_block "$code" "$url"
+            [[ "$code" == "200" ]] || { rm -f "$body"; return 1; }
+            for forbidden in "$@"; do
+              if grep -Fq "$forbidden" "$body"; then
+                echo "Beklenmeyen içerik: $url -> $forbidden" >&2
+                rm -f "$body"
+                return 1
+              fi
             done
             rm -f "$body"
             pace
@@ -118,6 +142,22 @@ jobs:
           fi
 
           echo "Manual deep mode selected; continuing slowly and stopping immediately on 403/429."
+
+          # Paused-discovery checks remain available, but only in explicitly
+          # requested deep mode so every merge does not spend the edge budget.
+          check_post_merge_public_route "https://ilkoku.com/eserler" "404"
+          check_post_merge_public_route "https://ilkoku.com/eserler/yeni" "404"
+          check_post_merge_public_route "https://ilkoku.com/eserler/guncellenen" "404"
+          check_post_merge_public_route "https://ilkoku.com/yazarlar" "404"
+          check_post_merge_public_route "https://ilkoku.com/turler" "404"
+          check_post_merge_public_route "https://ilkoku.com/eserler/rss.xml" "404"
+          check_post_merge_body_excludes "https://ilkoku.com/sitemap.xml" \
+            "<loc>https://ilkoku.com/eserler</loc>" \
+            "<loc>https://ilkoku.com/eserler/yeni</loc>" \
+            "<loc>https://ilkoku.com/eserler/guncellenen</loc>" \
+            "<loc>https://ilkoku.com/yazarlar</loc>" \
+            "<loc>https://ilkoku.com/turler</loc>"
+
           critical_redirects=(
             "https://ilkoku.com/yayinevleri"
             "https://ilkoku.com/bildirimler"

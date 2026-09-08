@@ -9,9 +9,11 @@ on:
 permissions:
   contents: read
 
+# Serialize every workflow that crawls production. Hostinger applies
+# infrastructure-level rate limits to automated traffic from cloud networks.
 concurrency:
-  group: full-public-googlebot-main
-  cancel-in-progress: true
+  group: production-live-crawler
+  cancel-in-progress: false
 
 jobs:
   verify:
@@ -26,6 +28,7 @@ jobs:
           set -Eeuo pipefail
 
           USER_AGENT="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+          REQUEST_DELAY_SECONDS=3
 
           normalize_url() {
             local value="$1"
@@ -44,75 +47,40 @@ jobs:
             local expected_canonical="$2"
             local expected_marker="$3"
             local url="https://ilkoku.com${path}"
-            local headers body code robots canonical_href body_bytes h1_count title_count
+            local headers body code robots canonical_href body_bytes h1_count title_count content_type
 
             headers="$(mktemp)"
             body="$(mktemp)"
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); value=$0} END{print value}' "$headers")"
             body_bytes="$(wc -c < "$body" | tr -d ' ')"
-            h1_count="$(grep -Eoi '<h1([[:space:]][^>]*)?>' "$body" | wc -l | tr -d ' ')"
-            title_count="$(grep -Eoi '<title([[:space:]][^>]*)?>' "$body" | wc -l | tr -d ' ')"
+            h1_count="$( { grep -Eoi '<h1([[:space:]][^>]*)?>' "$body" || true; } | wc -l | tr -d ' ')"
+            title_count="$( { grep -Eoi '<title([[:space:]][^>]*)?>' "$body" || true; } | wc -l | tr -d ' ')"
 
-            echo "$url -> HTTP $code | X-Robots-Tag: ${robots:-YOK} | bytes=$body_bytes | title=$title_count | h1=$h1_count"
+            echo "$url -> HTTP $code | Content-Type: ${content_type:-YOK} | X-Robots-Tag: ${robots:-YOK} | bytes=$body_bytes | title=$title_count | h1=$h1_count"
 
-            if [[ "$code" != "200" ]]; then
-              echo "FAIL: $url returned HTTP $code"
+            if [[ "$code" == "429" ]]; then
+              echo "FAIL: $url is rate-limited by the production edge (HTTP 429)"
               rm -f "$headers" "$body"
               return 1
             fi
-
-            if [[ "${robots,,}" == *"noindex"* ]]; then
-              echo "FAIL: $url returned X-Robots-Tag noindex"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-
-            if grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body"; then
-              echo "FAIL: $url contains meta robots noindex"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-
-            if (( body_bytes < 5000 )); then
-              echo "FAIL: $url returned unexpectedly small HTML ($body_bytes bytes)"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-
-            if (( title_count < 1 )); then
-              echo "FAIL: $url is missing a title element for Googlebot"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-
-            if (( h1_count < 1 )); then
-              echo "FAIL: $url is missing an H1 in Googlebot HTML"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-
-            if ! grep -Fqi -- "$expected_marker" "$body"; then
-              echo "FAIL: $url Googlebot HTML is missing expected visible content marker: $expected_marker"
-              rm -f "$headers" "$body"
-              return 1
-            fi
+            [[ "$code" == "200" ]] || { echo "FAIL: $url returned HTTP $code"; rm -f "$headers" "$body"; return 1; }
+            [[ "${content_type,,}" == text/html* ]] || { echo "FAIL: $url returned unexpected Content-Type"; rm -f "$headers" "$body"; return 1; }
+            [[ "${robots,,}" != *"noindex"* ]] || { echo "FAIL: $url returned X-Robots-Tag noindex"; rm -f "$headers" "$body"; return 1; }
+            ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body" || { echo "FAIL: $url contains meta robots noindex"; rm -f "$headers" "$body"; return 1; }
+            (( body_bytes >= 5000 )) || { echo "FAIL: $url returned unexpectedly small HTML ($body_bytes bytes)"; rm -f "$headers" "$body"; return 1; }
+            (( title_count >= 1 )) || { echo "FAIL: $url title missing"; rm -f "$headers" "$body"; return 1; }
+            (( h1_count >= 1 )) || { echo "FAIL: $url H1 missing"; rm -f "$headers" "$body"; return 1; }
+            grep -Fqi -- "$expected_marker" "$body" || { echo "FAIL: $url visible content marker missing: $expected_marker"; rm -f "$headers" "$body"; return 1; }
 
             canonical_href="$(canonical_from_body "$body")"
-            if [[ -z "$canonical_href" ]]; then
-              echo "FAIL: $url canonical missing"
-              rm -f "$headers" "$body"
-              return 1
-            fi
-
-            if [[ "$(normalize_url "$canonical_href")" != "$(normalize_url "$expected_canonical")" ]]; then
-              echo "FAIL: $url canonical mismatch: expected=$expected_canonical actual=$canonical_href"
-              rm -f "$headers" "$body"
-              return 1
-            fi
+            [[ -n "$canonical_href" ]] || { echo "FAIL: $url canonical missing"; rm -f "$headers" "$body"; return 1; }
+            [[ "$(normalize_url "$canonical_href")" == "$(normalize_url "$expected_canonical")" ]] || { echo "FAIL: $url canonical mismatch: $canonical_href"; rm -f "$headers" "$body"; return 1; }
 
             echo "PASS: $url canonical=$canonical_href | marker=$expected_marker"
             rm -f "$headers" "$body"
+            sleep "$REQUEST_DELAY_SECONDS"
           }
 
           pages=(
@@ -144,4 +112,4 @@ jobs:
             check_page "$path" "$canonical" "$marker"
           done
 
-          echo "PASS: 18/18 public sitemap URLs return 200, stay indexable, expose the expected self-canonical, and include non-empty title/H1/content in Googlebot HTML."
+          echo "PASS: 18/18 public sitemap URLs return crawlable HTML to Googlebot without burst traffic."

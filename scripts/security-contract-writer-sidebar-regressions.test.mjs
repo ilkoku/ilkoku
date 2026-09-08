@@ -18,6 +18,13 @@ test("writer sidebar keeps book add menu readable and classification contained",
   includes(css, "height: auto", "legacy fixed button height override");
   includes(css, "min-height: 3rem", "readable add-menu rows");
   includes(css, "visibility: visible", "add-menu content visibility");
+  includes(css, ".writer-screen .writer-chapters__header:has(> .writer-book-structure__header)", "book menu header containing block");
+  includes(css, "position: relative", "header anchors the desktop book menu");
+  includes(css, ".writer-screen .writer-book-structure__add {", "book add positioning override");
+  includes(css, "position: static", "add control no longer clips wide menu from its tiny box");
+  includes(css, "left: 0", "book menu stays inside left sidebar edge");
+  includes(css, "right: 0", "book menu stays inside right sidebar edge");
+  includes(css, "width: auto", "book menu follows full sidebar header width");
   includes(css, ".writer-screen .writer-chapters .writer-classification-panel", "classification panel containment");
   includes(css, "overflow-x: hidden", "classification horizontal overflow guard");
   includes(css, ".writer-screen .writer-chapters .work-classification__rating select", "classification select containment");

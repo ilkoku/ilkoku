@@ -59,6 +59,32 @@
   background: var(--writer-paper-accent-muted);
 }
 
+/*
+ * On desktop the old menu was positioned against the tiny + control. Its 20rem
+ * width then extended beyond the sidebar and was clipped by .writer-chapters.
+ * Anchor the flyout to the full header instead, so both its labels and
+ * descriptions remain inside the PowerPoint-like sidebar.
+ */
+@media (min-width: 48rem) {
+  .writer-screen .writer-chapters__header:has(> .writer-book-structure__header) {
+    position: relative;
+    overflow: visible;
+  }
+
+  .writer-screen .writer-book-structure__add {
+    position: static;
+  }
+
+  .writer-screen .writer-book-structure__add-menu {
+    top: calc(100% + 0.45rem);
+    right: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    box-sizing: border-box;
+  }
+}
+
 .writer-screen .writer-chapters .writer-classification-panel {
   width: auto;
   min-width: 0;

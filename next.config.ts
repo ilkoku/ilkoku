@@ -49,9 +49,17 @@ const pausedPublicDiscoveryRouteHeaders = [
   "/turler/:path*",
 ];
 
+// Demo showcase works are production test fixtures. They stay directly
+// accessible for product verification but must never become search targets.
+// Next custom-route sources accept regular expressions wrapped in parentheses.
+const demoWorkRouteHeaders = [
+  "/kitap/(demo-.*)",
+];
+
 const searchExcludedRouteHeaders = [
   ...privateRouteHeaders,
   ...pausedPublicDiscoveryRouteHeaders,
+  ...demoWorkRouteHeaders,
 ];
 
 const nextConfig: NextConfig = {

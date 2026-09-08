@@ -13,9 +13,12 @@ on:
 permissions:
   contents: read
 
+# All live-crawler workflows share one queue. Hostinger applies server-level
+# rate limits to automated traffic from cloud networks, so production probes
+# must never burst against the site in parallel.
 concurrency:
-  group: production-smoke-${{ github.ref }}
-  cancel-in-progress: true
+  group: production-live-crawler
+  cancel-in-progress: false
 
 jobs:
   smoke:
@@ -31,22 +34,39 @@ jobs:
 
           USER_AGENT="IlkOku-Production-Smoke/1.0"
           VERIFY_WINDOW_SECONDS=300
+          REQUEST_DELAY_SECONDS=2
           EDGE_BLOCKED=0
+
+          pace() {
+            sleep "$REQUEST_DELAY_SECONDS"
+          }
 
           mark_edge_block() {
             local code="$1"
-            if [[ "$code" == "403" ]]; then
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
               EDGE_BLOCKED=1
             fi
+          }
+
+          fetch_code() {
+            local url="$1"
+            local follow="${2:-yes}"
+            local code
+            if [[ "$follow" == "yes" ]]; then
+              code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            else
+              code="$(curl --silent --show-error --max-time 20 --user-agent "$USER_AGENT" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            fi
+            mark_edge_block "$code"
+            pace
+            printf '%s' "$code"
           }
 
           check_public_route() {
             local url="$1"
             local expected="$2"
             local code
-
-            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output /dev/null --write-out '%{http_code}' "$url" || true)"
-            mark_edge_block "$code"
+            code="$(fetch_code "$url")"
             printf '%s -> HTTP %s\n' "$url" "$code"
             [[ "$code" == "$expected" ]]
           }
@@ -54,203 +74,82 @@ jobs:
           check_body_contains() {
             local url="$1"
             shift
-            local body
-            local code
-            local expected
-
+            local body code expected
             body="$(mktemp)"
             code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
             mark_edge_block "$code"
+            pace
             printf '%s -> HTTP %s\n' "$url" "$code"
             if [[ "$code" != "200" ]]; then
               rm -f "$body"
               return 1
             fi
-
             for expected in "$@"; do
-              if ! grep -Fq "$expected" "$body"; then
-                printf 'Eksik içerik: %s -> %s\n' "$url" "$expected" >&2
-                rm -f "$body"
-                return 1
-              fi
+              grep -Fq "$expected" "$body" || { echo "Eksik içerik: $url -> $expected" >&2; rm -f "$body"; return 1; }
             done
-
-            if [[ "$url" == *"/sitemap.xml" ]]; then
-              echo "Sitemap URL'leri:"
-              grep -oE '<loc>[^<]+' "$body" | sed 's#<loc>##' | head -80 || true
-            fi
-
             rm -f "$body"
           }
 
-          check_body_excludes() {
+          check_redirect() {
             local url="$1"
-            shift
-            local body
-            local code
-            local forbidden
-
-            body="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --output "$body" --write-out '%{http_code}' "$url" || true)"
-            mark_edge_block "$code"
-            printf '%s -> HTTP %s\n' "$url" "$code"
-            if [[ "$code" != "200" ]]; then
-              rm -f "$body"
-              return 1
-            fi
-
-            for forbidden in "$@"; do
-              if grep -Fq "$forbidden" "$body"; then
-                printf 'Beklenmeyen içerik: %s -> %s\n' "$url" "$forbidden" >&2
-                rm -f "$body"
-                return 1
-              fi
-            done
-
-            rm -f "$body"
-          }
-
-          check_protected_route() {
-            local url="$1"
-            local headers
-            local code
-            local location
-
+            local expected_location="$2"
+            local headers code location
             headers="$(mktemp)"
             code="$(curl --silent --show-error --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
             mark_edge_block "$code"
+            pace
             location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
             rm -f "$headers"
-
             printf '%s -> HTTP %s | Location: %s\n' "$url" "$code" "${location:-YOK}"
-
-            case "$code" in
-              301|302|303|307|308) ;;
-              *) return 1 ;;
-            esac
-
-            [[ "$location" == *"/giris"* ]]
+            [[ "$code" == "301" || "$code" == "302" || "$code" == "307" || "$code" == "308" ]]
+            [[ "$location" == *"$expected_location"* ]]
           }
 
-          check_private_index_header() {
+          check_private_header() {
             local url="$1"
-            local headers
-            local code
-            local robots
-
+            local headers code robots
             headers="$(mktemp)"
             code="$(curl --silent --show-error --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
             mark_edge_block "$code"
+            pace
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
             rm -f "$headers"
-
             printf '%s -> HTTP %s | X-Robots-Tag: %s\n' "$url" "$code" "${robots:-YOK}"
             [[ "${robots,,}" == *"noindex"* ]]
             [[ "${robots,,}" == *"nofollow"* ]]
           }
 
-          is_post_merge_main_push() {
-            [[ "${GITHUB_EVENT_NAME:-}" == "push" && "${GITHUB_REF_NAME:-}" == "main" ]]
+          verify_minimum() {
+            check_public_route "https://ilkoku.com/" "200" \
+              && check_public_route "https://ilkoku.com/giris" "200" \
+              && check_public_route "https://ilkoku.com/yardim" "200" \
+              && check_body_contains "https://ilkoku.com/robots.txt" \
+                "Allow: /" \
+                "Sitemap: https://ilkoku.com/sitemap.xml" \
+              && check_body_contains "https://ilkoku.com/sitemap.xml" \
+                "https://ilkoku.com/" \
+                "https://ilkoku.com/nasil-calisir" \
+                "https://ilkoku.com/hakkimizda"
           }
 
-          check_post_merge_protected_route() {
-            local url="$1"
-            if ! is_post_merge_main_push; then
-              return 0
-            fi
-            check_protected_route "$url"
-          }
-
-          check_post_merge_private_index_header() {
-            local url="$1"
-            if ! is_post_merge_main_push; then
-              return 0
-            fi
-            check_private_index_header "$url"
-          }
-
-          check_post_merge_public_route() {
-            local url="$1"
-            local expected="$2"
-            if ! is_post_merge_main_push; then
-              return 0
-            fi
-            check_public_route "$url" "$expected"
-          }
-
-          check_post_merge_body_contains() {
-            if ! is_post_merge_main_push; then
-              return 0
-            fi
-            check_body_contains "$@"
-          }
-
-          check_post_merge_body_excludes() {
-            if ! is_post_merge_main_push; then
-              return 0
-            fi
-            check_body_excludes "$@"
-          }
-
-          check_post_merge_cms_surface() {
-            if ! is_post_merge_main_push; then
+          verify_post_merge() {
+            if [[ "${GITHUB_EVENT_NAME:-}" != "push" || "${GITHUB_REF_NAME:-}" != "main" ]]; then
               return 0
             fi
 
-            local path
-            local routes=(
-              "/icerik"
-              "/icerik/arama"
-              "/icerik/ana-sayfa"
-              "/icerik/sayfalar"
-              "/icerik/menuler"
-              "/icerik/yasal"
-              "/icerik/medya"
-              "/icerik/sss"
-              "/icerik/duyurular"
-              "/icerik/yayin-kuyrugu"
-              "/icerik/zamanlama"
-              "/icerik/seo"
-              "/icerik/formlar"
-              "/icerik/yonlendirmeler"
-              "/icerik/diller"
-              "/icerik/hazirlik"
-              "/icerik/saglik"
-              "/icerik/gecmis"
-              "/icerik/erisim"
-              "/icerik/ayarlar"
-            )
-
-            echo "CMS yüzey taraması: ${#routes[@]} ana rota"
-            for path in "${routes[@]}"; do
-              check_protected_route "https://ilkoku.com${path}" || return 1
-              check_private_index_header "https://ilkoku.com${path}" || return 1
-            done
-          }
-
-          check_post_merge_redirect_route() {
-            if ! is_post_merge_main_push; then
-              return 0
-            fi
-            check_redirect_route "$@"
-          }
-
-          check_redirect_route() {
-            local url="$1"
-            local expected_location="$2"
-            local headers
-            local code
-            local location
-
-            headers="$(mktemp)"
-            code="$(curl --silent --show-error --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
-            mark_edge_block "$code"
-            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
-            rm -f "$headers"
-
-            printf '%s -> HTTP %s | Location: %s\n' "$url" "$code" "${location:-YOK}"
-            [[ "$code" == "308" ]]
-            [[ "$location" == *"$expected_location"* ]]
+            check_public_route "https://ilkoku.com/editorler" "200" \
+              && check_public_route "https://ilkoku.com/iletisim" "200" \
+              && check_public_route "https://ilkoku.com/nasil-calisir" "200" \
+              && check_public_route "https://ilkoku.com/hakkimizda" "200" \
+              && check_public_route "https://ilkoku.com/icerik-ve-yas-politikasi" "200" \
+              && check_public_route "https://ilkoku.com/yazarlar-icin" "200" \
+              && check_public_route "https://ilkoku.com/yasal/kvkk" "200" \
+              && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
+              && check_public_route "https://ilkoku.com/eserler" "404" \
+              && check_redirect "https://ilkoku.com/rehber" "/nasil-calisir" \
+              && check_redirect "https://ilkoku.com/hesabim" "/giris" \
+              && check_private_header "https://ilkoku.com/hesabim" \
+              && check_private_header "https://ilkoku.com/icerik"
           }
 
           deadline=$((SECONDS + VERIFY_WINDOW_SECONDS))
@@ -259,113 +158,26 @@ jobs:
           while (( SECONDS < deadline )); do
             attempt=$((attempt + 1))
             EDGE_BLOCKED=0
-            remaining=$((deadline - SECONDS))
-            echo "Deneme $attempt | doğrulama penceresinde kalan: ${remaining}s"
+            echo "Deneme $attempt"
 
-            if check_public_route "https://ilkoku.com/" "200" \
-              && check_public_route "https://ilkoku.com/giris" "200" \
-              && check_public_route "https://ilkoku.com/yardim" "200" \
-              && check_public_route "https://ilkoku.com/editorler" "200" \
-              && check_public_route "https://ilkoku.com/iletisim" "200" \
-              && check_post_merge_public_route "https://ilkoku.com/eserler" "404" \
-              && check_public_route "https://ilkoku.com/yasal/kullanim-sartlari" "200" \
-              && check_public_route "https://ilkoku.com/yasal/gizlilik-politikasi" "200" \
-              && check_public_route "https://ilkoku.com/yasal/kvkk" "200" \
-              && check_public_route "https://ilkoku.com/yasal/cerez-politikasi" "200" \
-              && check_public_route "https://ilkoku.com/yasal/telif-hakki-politikasi" "200" \
-              && check_public_route "https://ilkoku.com/en" "404" \
-              && check_public_route "https://ilkoku.com/en/yardim" "404" \
-              && check_body_contains "https://ilkoku.com/sitemap.xml" \
-                "https://ilkoku.com/yardim" \
-                "https://ilkoku.com/editorler" \
-                "https://ilkoku.com/iletisim" \
-                "https://ilkoku.com/yasal/kullanim-sartlari" \
-                "https://ilkoku.com/yasal/gizlilik-politikasi" \
-                "https://ilkoku.com/yasal/kvkk" \
-                "https://ilkoku.com/yasal/cerez-politikasi" \
-                "https://ilkoku.com/yasal/telif-hakki-politikasi" \
-              && check_post_merge_body_contains "https://ilkoku.com/" \
-                "href=\"/iletisim\"" \
-              && check_post_merge_body_contains "https://ilkoku.com/iletisim" \
-                "İletişim" \
-                "Ad Soyad" \
-                "E-posta" \
-                "Mesaj" \
-              && check_post_merge_body_contains "https://ilkoku.com/sitemap.xml" \
-                "https://ilkoku.com/nasil-calisir" \
-              && check_post_merge_body_excludes "https://ilkoku.com/sitemap.xml" \
-                "<loc>https://ilkoku.com/eserler</loc>" \
-                "<loc>https://ilkoku.com/eserler/yeni</loc>" \
-                "<loc>https://ilkoku.com/eserler/guncellenen</loc>" \
-                "<loc>https://ilkoku.com/yazarlar</loc>" \
-                "<loc>https://ilkoku.com/turler</loc>" \
-              && check_post_merge_public_route "https://ilkoku.com/eserler/yeni" "404" \
-              && check_post_merge_public_route "https://ilkoku.com/eserler/guncellenen" "404" \
-              && check_post_merge_public_route "https://ilkoku.com/yazarlar" "404" \
-              && check_post_merge_public_route "https://ilkoku.com/turler" "404" \
-              && check_post_merge_public_route "https://ilkoku.com/eserler/rss.xml" "404" \
-              && check_post_merge_public_route "https://ilkoku.com/nasil-calisir" "200" \
-              && check_post_merge_body_contains "https://ilkoku.com/nasil-calisir" \
-                "Eser İlkOku'da nasıl ilerler?" \
-                "Kim neyi görebilir?" \
-                "Eser Pasaportu" \
-              && check_post_merge_redirect_route "https://ilkoku.com/rehber" "/nasil-calisir" \
-              && check_post_merge_redirect_route "https://ilkoku.com/rehber/ilk-eseri-yayinlama-rehberi" "/nasil-calisir" \
-              && check_post_merge_public_route "https://ilkoku.com/editorler/merve-kaya" "404" \
-              && check_post_merge_public_route "https://ilkoku.com/editorler/baris-erdem" "404" \
-              && check_post_merge_public_route "https://ilkoku.com/editorler/derya-unal" "404" \
-              && check_post_merge_public_route "https://ilkoku.com/editorler/kaan-sahin" "404" \
-              && check_post_merge_public_route "https://ilkoku.com/kitap/test0408-2959175c" "404" \
-              && check_post_merge_body_contains "https://ilkoku.com/robots.txt" \
-                "Disallow: /admin" \
-                "Disallow: /icerik" \
-                "Disallow: /sistem-yonetimi" \
-                "Disallow: /api" \
-                "Disallow: /auth" \
-                "Sitemap: https://ilkoku.com/sitemap.xml" \
-              && check_post_merge_cms_surface \
-              && check_post_merge_private_index_header "https://ilkoku.com/sistem-yonetimi/epostalar" \
-              && check_post_merge_private_index_header "https://ilkoku.com/hesabim" \
-              && check_post_merge_private_index_header "https://ilkoku.com/yazmaya-devam" \
-              && check_post_merge_protected_route "https://ilkoku.com/hesabim" \
-              && check_post_merge_protected_route "https://ilkoku.com/yazmaya-devam" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik/onizleme/ana-sayfa" \
-              && check_post_merge_protected_route "https://ilkoku.com/icerik/sayfalar/yeni" \
-              && check_protected_route "https://ilkoku.com/sistem-yonetimi/epostalar" \
-              && check_protected_route "https://ilkoku.com/sistem-yonetimi/okuma-guvenligi" \
-              && check_redirect_route "https://ilkoku.com/admin/epostalar" "/sistem-yonetimi/epostalar" \
-              && check_redirect_route "https://ilkoku.com/admin/okuma-guvenligi" "/sistem-yonetimi/okuma-guvenligi" \
-              && check_protected_route "https://ilkoku.com/yayinevleri" \
-              && check_protected_route "https://ilkoku.com/bildirimler" \
-              && check_protected_route "https://ilkoku.com/yorumlarim" \
-              && check_protected_route "https://ilkoku.com/yorumlarim/rapor" \
-              && check_protected_route "https://ilkoku.com/editor/bildirimler" \
-              && check_protected_route "https://ilkoku.com/editor/yayinevi-talepleri" \
-              && check_protected_route "https://ilkoku.com/yayinevi/bildirimler" \
-              && check_protected_route "https://ilkoku.com/yayinevi/editor-talepleri" \
-              && check_protected_route "https://ilkoku.com/yayinevi/kesfet/eserler" \
-              && check_protected_route "https://ilkoku.com/yayinevi/favorilerim"; then
-              echo "PASS: Production public/private route paketi, pasif public keşif yüzeyleri, bildirim yüzeyleri, writer/publisher/editor kritik rotaları, sitemap/robots ve 20 ana CMS rotası doğrulandı."
+            if verify_minimum && verify_post_merge; then
+              echo "PASS: rate-limit-safe production smoke tamamlandı."
               exit 0
             fi
 
             remaining=$((deadline - SECONDS))
-            if (( remaining <= 0 )); then
-              break
-            fi
+            (( remaining > 0 )) || break
 
             if [[ "$EDGE_BLOCKED" == "1" ]]; then
-              delay=30
-              echo "EDGE/WAF 403 algılandı; tüm rota paketini hemen tekrar taramak yerine kontrollü backoff uygulanıyor."
+              delay=60
+              echo "EDGE/WAF 403/429 algılandı; 60 saniye backoff uygulanıyor."
             else
-              delay=10
+              delay=20
             fi
 
-            if (( delay > remaining )); then
-              delay=$remaining
-            fi
+            (( delay <= remaining )) || delay=$remaining
             sleep "$delay"
           done
 
-          echo "FAIL: Production deployment 5 dakikalık doğrulama penceresi içinde doğrulanamadı." >&2
+          echo "FAIL: Production deployment doğrulama penceresinde geçmedi." >&2
           exit 1

@@ -1,6 +1,12 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import { prisma } from "@/lib/prisma";
+import {
+  encodePublicationVersionDescription,
+  type PublicationLayoutSnapshot,
+} from "./publication-layout";
 
 export type WorkPublicationEvent = {
   isFirstPublication: boolean;
@@ -12,6 +18,7 @@ export async function publishWorkWithEvent(
   authorId: string,
   workId: string,
   chapterId: string,
+  publicationLayout: PublicationLayoutSnapshot,
 ) {
   return prisma.$transaction(async (transaction) => {
     const locked = await transaction.$queryRaw<Array<{
@@ -47,12 +54,21 @@ export async function publishWorkWithEvent(
         workId,
       },
       select: {
+        content: true,
         id: true,
+        title: true,
+        workId: true,
       },
     });
 
     if (!chapter) {
       throw new Error("Yayınlanacak bölüm bulunamadı.");
+    }
+
+    if (publicationLayout.contentLength !== chapter.content.length) {
+      throw new Error(
+        "Yayın sayfa düzeni mevcut bölüm metniyle eşleşmiyor. Sayfalar yeniden oluştuktan sonra tekrar yayınla.",
+      );
     }
 
     const previousPublications = await transaction.auditLog.findMany({
@@ -73,6 +89,32 @@ export async function publishWorkWithEvent(
     const previousPublicationAt =
       previousPublications[0]?.createdAt ?? null;
     const publishedAt = new Date();
+
+    const latestVersion = await transaction.workVersion.findFirst({
+      where: {
+        workId,
+      },
+      orderBy: {
+        versionNumber: "desc",
+      },
+      select: {
+        versionNumber: true,
+      },
+    });
+
+    const publicationVersion = await transaction.workVersion.create({
+      data: {
+        chapterId: chapter.id,
+        content: chapter.content,
+        contentHash: createHash("sha256")
+          .update(chapter.content)
+          .digest("hex"),
+        description: encodePublicationVersionDescription(publicationLayout),
+        title: chapter.title,
+        versionNumber: (latestVersion?.versionNumber ?? 0) + 1,
+        workId,
+      },
+    });
 
     await transaction.chapter.update({
       where: {
@@ -106,7 +148,9 @@ export async function publishWorkWithEvent(
         metadata: JSON.stringify({
           chapterId,
           contentRating: work.contentRating,
+          pageCount: publicationLayout.pageEnds.length,
           publicId: work.publicId,
+          publicationVersion: publicationVersion.versionNumber,
           publishedAt: publishedAt.toISOString(),
           title: work.title,
         }),
@@ -120,6 +164,7 @@ export async function publishWorkWithEvent(
         previousPublicationAt,
         publishedAt,
       } satisfies WorkPublicationEvent,
+      publicationVersion,
       work,
     };
   });

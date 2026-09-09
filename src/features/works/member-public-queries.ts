@@ -5,6 +5,10 @@ import type {
   PublicWorkDetail,
   PublicWorkSummary,
 } from "./types";
+import {
+  getLatestPublicationSnapshot,
+  getLatestPublicationSnapshots,
+} from "./publication-snapshots";
 import { prisma } from "@/lib/prisma";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
 import {
@@ -99,6 +103,20 @@ export async function getMemberPublicWorkBySlug(
 
   if (!work) return null;
 
+  const snapshots = await getLatestPublicationSnapshots(
+    work.chapters.map((chapter) => chapter.id),
+  );
+  const publishedChapters = work.chapters.map((chapter) => {
+    const snapshot = snapshots.get(chapter.id);
+    return snapshot
+      ? {
+          ...chapter,
+          content: snapshot.content,
+          title: snapshot.title,
+        }
+      : chapter;
+  });
+
   const relatedSelect = {
     _count: {
       select: {
@@ -164,12 +182,13 @@ export async function getMemberPublicWorkBySlug(
 
   return {
     ...work,
+    chapters: publishedChapters,
     authorName: work.author.displayName ?? work.author.fullName,
     authorPublicId: work.author.publicId,
-    chapterCount: work.chapters.length,
+    chapterCount: publishedChapters.length,
     isCompleted:
-      work.chapters.length > 0 &&
-      work._count.chapters === work.chapters.length,
+      publishedChapters.length > 0 &&
+      work._count.chapters === publishedChapters.length,
     sameAuthorWorks: sameAuthor.map(mapRelated),
     similarWorks: similar.map(mapRelated),
   };
@@ -198,5 +217,14 @@ export async function getMemberPublicChapter(
   });
   if (!chapter) return null;
 
-  return { ...chapter, work };
+  const publication = await getLatestPublicationSnapshot(chapter.id);
+
+  return {
+    ...chapter,
+    content: publication?.content ?? chapter.content,
+    publicationLayout: publication?.layout ?? null,
+    publicationVersion: publication?.versionNumber ?? null,
+    title: publication?.title ?? chapter.title,
+    work,
+  };
 }

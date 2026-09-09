@@ -94,6 +94,12 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   const specialReader = source(
     "src/features/reading/components/PublishedBookSpecialPageExperience.tsx",
   );
+  const selector = source(
+    "src/features/reading/components/PublishedBookSelector.tsx",
+  );
+  const continuityTools = source(
+    "src/features/reading/components/PublishedBookToolsContinuity.tsx",
+  );
   const specialRoute = source("src/app/oku/[slug]/sayfa/[itemId]/page.tsx");
   const renderer = source(
     "src/features/reading/components/PublishedManuscriptViewport.tsx",
@@ -110,10 +116,16 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(chapterReader, "previousBookItem", "previous authored book item");
   includes(chapterReader, "nextBookItem", "next authored book item");
   includes(chapterReader, "subtitle={activeBookItem?.subtitle}", "chapter Writer subtitle parity");
+  includes(chapterReader, "PublishedBookSelector", "chapter uses unified full-book Reader selector");
   includes(specialReader, "PublishedManuscriptViewport", "same physical Reader renderer for special pages");
   includes(specialReader, "previousItem", "special-page previous book item");
   includes(specialReader, "nextItem", "special-page next book item");
   includes(specialReader, "subtitle={item.subtitle}", "special-page Writer subtitle parity");
+  includes(specialReader, "PublishedBookSelector", "special page uses the same full-book Reader selector");
+  includes(specialReader, "PublishedBookToolsContinuity", "special page keeps the Reader tool shell visible");
+  includes(selector, "publishedBookItemHref", "selector routes every published book item through canonical Reader URLs");
+  includes(selector, "items.map", "selector exposes the complete author book order");
+  includes(continuityTools, "Kişisel okuma araçları", "special pages keep the personal tools shell position");
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
   includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
   includes(renderer, "const activePage = pages[pageIndex]", "only one active publication page rendered");

@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import {
   BOOK_PUBLICATION_LAYOUT_INPUT_NAME,
 } from "@/features/works/book-publication";
-import { prepareBookForPublicationAction } from "@/features/works/book-structure-actions";
+import { prepareFullBookPublicationAction } from "@/features/works/prepare-full-book-publication-action";
 import { measureBookPublicationLayouts } from "../book-publication-measurement";
 
 function isWriterForm(target: EventTarget | null): target is HTMLFormElement {
@@ -64,15 +64,23 @@ export function WriterFullBookPublicationEnhancer() {
         form.querySelector<HTMLInputElement>('input[name="workTitle"]')?.value ??
         form.querySelector<HTMLInputElement>(".writer-work-title")?.value ??
         "";
+      const chapterId =
+        form.querySelector<HTMLInputElement>('input[name="chapterId"]')?.value ?? "";
+      const chapterTitle =
+        form.querySelector<HTMLInputElement>('input[name="chapterTitle"]')?.value ?? "";
 
-      if (!workId || !workTitle) {
+      if (!workId || !workTitle || !chapterId || !chapterTitle.trim()) {
         return {
           ok: false as const,
-          message: "Tam kitap yayını için eser bilgileri hazırlanamadı.",
+          message: "Tam kitap yayını için eser ve bölüm bilgileri hazırlanamadı.",
         };
       }
 
-      const prepared = await prepareBookForPublicationAction(workId);
+      const prepared = await prepareFullBookPublicationAction({
+        workId,
+        chapterId,
+        chapterTitle,
+      });
       if (prepared.status !== "success" || !prepared.items) {
         return {
           ok: false as const,
@@ -89,7 +97,7 @@ export function WriterFullBookPublicationEnhancer() {
         return {
           ok: false as const,
           message:
-            "Kitabın ek sayfalarının fiziksel sayfa düzeni hazırlanamadı. Sayfalar yüklendikten sonra yeniden yayınla.",
+            "Kitabın tüm fiziksel sayfa düzeni hazırlanamadı. Sayfalar yüklendikten sonra yeniden yayınla.",
         };
       }
 

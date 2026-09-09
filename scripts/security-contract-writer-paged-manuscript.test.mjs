@@ -118,6 +118,16 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   includes(submitGuard, "publicationLayoutMatchesContent", "last valid layout must match current author text");
   includes(submitGuard, "formDataEvent.formData.delete(PUBLICATION_LAYOUT_INPUT_NAME)", "invalid layout is removed instead of replacing a valid snapshot with empty data");
   includes(submitGuard, "pageEnds", "submit-time exact page boundaries");
+  includes(
+    submitGuard,
+    'classList.contains("writer-save-button")',
+    "direct publish intent is distinguished from draft save without relying on a DOM formaction attribute",
+  );
+  assert.equal(
+    submitGuard.includes('hasAttribute("formaction")'),
+    false,
+    "React Server Action publish detection must not depend on a normal DOM formaction attribute",
+  );
 
   includes(layout, 'PUBLICATION_LAYOUT_INPUT_NAME = "publicationLayout"', "layout form contract");
   includes(layout, "contentLength", "layout-content integrity binding");

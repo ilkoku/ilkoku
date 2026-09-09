@@ -111,6 +111,10 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   includes(submitGuard, ".writer-manuscript-pages .writer-page-textarea", "submit-time exact writer page capture");
   includes(submitGuard, 'document.addEventListener("submit", prepareBeforeReactSubmit, true)', "capture before React server action submission");
   includes(submitGuard, 'document.addEventListener("formdata", bindLayoutToFormData, true)', "bind exact layout to serialized form data");
+  includes(submitGuard, ".publish-preview form", "preview publish form snapshot coverage");
+  includes(submitGuard, "lastPublicationLayout", "preview keeps the last exact author layout");
+  includes(submitGuard, "rememberBeforeEditorTransition", "capture author layout before preview unmounts editor");
+  includes(submitGuard, "window.alert", "preview publication cannot fail silently when layout is missing");
   includes(submitGuard, "pageEnds", "submit-time exact page boundaries");
 
   includes(layout, 'PUBLICATION_LAYOUT_INPUT_NAME = "publicationLayout"', "layout form contract");

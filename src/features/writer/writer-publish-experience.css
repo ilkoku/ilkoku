@@ -1,0 +1,26 @@
+.preview-article:has(> .writer-publication-preview) {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+
+.preview-article:has(> .writer-publication-preview) > p,
+.preview-article:has(> .writer-publication-preview) > h1,
+.preview-article:has(> .writer-publication-preview) > span,
+.preview-article:has(> .writer-publication-preview) > .preview-article__body {
+  display: none;
+}
+
+.writer-publication-preview {
+  width: min(100%, 76rem);
+  margin: 0 auto;
+}
+
+.publish-success__content:has(> .writer-post-publish-action) > .button:not(.writer-post-publish-action) {
+  display: none;
+}
+
+.writer-post-publish-action {
+  margin-top: 0;
+}

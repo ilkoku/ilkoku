@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { authContent } from "@/content";
-import { logoutAction } from "@/features/auth/actions";
 import { getWorkspaceDestination } from "@/features/auth/data";
 import type { AuthProfile } from "@/features/auth/profile";
 
@@ -60,7 +59,7 @@ export function UserArea({
             Çalışma Alanım
             {workspaceIsCurrent ? <small>Buradasınız</small> : null}
           </Link>
-          <form action={logoutAction}>
+          <form action="/cikis" method="post">
             <button className="user-area__logout" type="submit" role="menuitem">
               {authContent.common.logout}
             </button>

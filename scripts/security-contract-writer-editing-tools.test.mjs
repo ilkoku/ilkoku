@@ -60,3 +60,26 @@ test("writer editing tools are mounted on every writer editing route", () => {
     includes(layout, "writer-editing-tools.css", `${path} writer tools CSS`);
   }
 });
+
+test("reader manuscript keeps canonical writer paper typography and measured pages", () => {
+  const reader = source("src/features/reading/components/FocusedReadingExperience.tsx");
+  const indicator = source("src/features/reading/components/ReadingPageIndicator.tsx");
+  const parity = source("src/features/reading/components/ReaderPublicationParity.module.css");
+
+  includes(reader, "ReadingPageIndicator", "measured reader page indicator");
+  includes(reader, "parityStyles.publicationParity", "reader manuscript parity scope");
+  assert.ok(
+    !reader.includes("Tahmini kitap sayfası"),
+    "reader header must not expose word-count page estimates",
+  );
+
+  includes(indicator, "viewport.scrollHeight / height", "real reader page measurement");
+  includes(indicator, "viewport.scrollTop / height", "current reader page measurement");
+  includes(indicator, "Kitap sayfası", "reader page status label");
+
+  includes(parity, '"Courier New"', "canonical typewriter family");
+  includes(parity, "--reader-manuscript-font-size: 17px", "canonical 17px manuscript size");
+  includes(parity, "--reader-manuscript-line-height: 1.9", "canonical manuscript line spacing");
+  includes(parity, "white-space: pre-wrap", "hard line-break preservation");
+  includes(parity, 'aria-label="Sayfa geçişleri"', "legacy estimated page status suppression scope");
+});

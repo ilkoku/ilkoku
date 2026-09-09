@@ -8,6 +8,10 @@ import {
 const trimmedText = (minimum: number, maximum: number, message: string) =>
   z.string().trim().min(minimum, message).max(maximum, message);
 
+export function normalizeTextareaLineEndings(value: string) {
+  return value.replace(/\r\n?/gu, "\n");
+}
+
 export const workTypeSchema = z.enum(["novel", "story", "poetry", "essay", "memoir", "other"]);
 
 export const workContentRatingSchema = z.enum(workContentRatings, {
@@ -62,7 +66,10 @@ export const updateWorkSchema = z.object({
 
 export const chapterDraftSchema = z.object({
   chapterId: z.string().uuid("Geçerli bir bölüm seçilmelidir."),
-  content: z.string().max(500_000, "Bölüm metni çok uzun."),
+  content: z
+    .string()
+    .max(500_000, "Bölüm metni çok uzun.")
+    .transform(normalizeTextareaLineEndings),
   title: trimmedText(1, 200, "Bölüm başlığı 1–200 karakter olmalıdır."),
   workId: z.string().uuid("Geçerli bir eser seçilmelidir."),
 });

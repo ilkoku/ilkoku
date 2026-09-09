@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { estimateReadingMinutes } from "@/features/reading/metrics";
 import {
   publishedBookItemHref,
   type PublishedBookItem,
@@ -7,6 +8,8 @@ import {
 } from "@/features/works/book-publication";
 import { bookSectionDetails } from "@/features/works/book-structure";
 import type { PublicWorkDetail } from "@/features/works/types";
+import { PublishedBookSelector } from "./PublishedBookSelector";
+import { PublishedBookToolsContinuity } from "./PublishedBookToolsContinuity";
 import { PublishedManuscriptViewport } from "./PublishedManuscriptViewport";
 import styles from "./FocusedReadingExperience.module.css";
 
@@ -45,6 +48,7 @@ export function PublishedBookSpecialPageExperience({
   const currentPath = `${publishedBookItemHref(work.slug, item)}?from=${encodedReturnTo}`;
   const passportPath =
     `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(currentPath)}`;
+  const readingTime = estimateReadingMinutes(item.content);
 
   function itemHref(target: PublishedBookItem, edge?: "last") {
     const edgeParameter = edge === "last" ? "&sayfa=son" : "";
@@ -68,7 +72,13 @@ export function PublishedBookSpecialPageExperience({
             <span>Eser Sayfası</span>
           </Link>
 
-          <strong>{work.title}</strong>
+          <PublishedBookSelector
+            activeStructureItemId={item.structureItemId}
+            encodedReturnTo={encodedReturnTo}
+            items={publicationBook.items}
+            workSlug={work.slug}
+            workTitle={work.title}
+          />
 
           <div className="reader-actions">
             <details className="reader-menu">
@@ -115,15 +125,19 @@ export function PublishedBookSpecialPageExperience({
         </nav>
       </header>
 
+      <PublishedBookToolsContinuity />
+
       <main className={styles.layout}>
-        <article className={styles.article} aria-labelledby="kitap-sayfasi-basligi">
+        <article className={styles.article} aria-labelledby="bolum-basligi">
           <header className={styles.chapterHeader}>
             <p className={styles.chapterMeta}>
               <span>{details.label}</span>
               <span aria-hidden="true">·</span>
+              <span>{readingTime} dk okuma</span>
+              <span aria-hidden="true">·</span>
               <span>Yazar yayını · {item.layout.pageEnds.length} sayfa</span>
             </p>
-            <h1 id="kitap-sayfasi-basligi">{item.title}</h1>
+            <h1 id="bolum-basligi">{item.title}</h1>
           </header>
 
           <section

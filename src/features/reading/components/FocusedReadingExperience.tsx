@@ -23,6 +23,7 @@ import type { PublicChapterDetail } from "@/features/works/types";
 import { ChapterSelector } from "./ChapterSelector";
 import { PagedReadingViewport } from "./PagedReadingViewport";
 import { ProtectedChapterContent } from "./ProtectedChapterContent";
+import { PublishedBookSelector } from "./PublishedBookSelector";
 import { PublishedManuscriptViewport } from "./PublishedManuscriptViewport";
 import { ReadingPageIndicator } from "./ReadingPageIndicator";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
@@ -158,14 +159,25 @@ export function FocusedReadingExperience({
             <span>Eser Sayfası</span>
           </Link>
 
-          <ChapterSelector
-            activePosition={chapter.position}
-            chapters={publishedChapters}
-            encodedReturnTo={encodedReturnTo}
-            readingProgress={readingProgress}
-            workSlug={chapter.work.slug}
-            workTitle={chapter.work.title}
-          />
+          {publishedBook && activeBookItem ? (
+            <PublishedBookSelector
+              activeStructureItemId={activeBookItem.structureItemId}
+              encodedReturnTo={encodedReturnTo}
+              items={publishedBook.items}
+              readingProgress={readingProgress}
+              workSlug={chapter.work.slug}
+              workTitle={chapter.work.title}
+            />
+          ) : (
+            <ChapterSelector
+              activePosition={chapter.position}
+              chapters={publishedChapters}
+              encodedReturnTo={encodedReturnTo}
+              readingProgress={readingProgress}
+              workSlug={chapter.work.slug}
+              workTitle={chapter.work.title}
+            />
+          )}
 
           <div className="reader-actions">
             <details className="reader-menu">

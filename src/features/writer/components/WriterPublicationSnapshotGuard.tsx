@@ -152,6 +152,14 @@ function isPreviewPublishForm(
   );
 }
 
+function isEditorPublishSubmit(event: SubmitEvent) {
+  return (
+    isWriterForm(event.target) &&
+    event.submitter instanceof HTMLButtonElement &&
+    event.submitter.hasAttribute("formaction")
+  );
+}
+
 function existingPublicationLayout(form: HTMLFormElement) {
   return (
     form.querySelector<HTMLInputElement>(
@@ -235,6 +243,7 @@ function setPublicationLayoutInput(form: HTMLFormElement, layout: string) {
 export function WriterPublicationSnapshotGuard() {
   useEffect(() => {
     let lastPublicationLayout = "";
+    let suppressBeforeUnloadUntil = 0;
 
     function rememberCurrentWriterLayout() {
       const target = getEditorTarget();
@@ -251,7 +260,18 @@ export function WriterPublicationSnapshotGuard() {
       rememberCurrentWriterLayout();
     }
 
+    function allowPublishNavigation() {
+      suppressBeforeUnloadUntil = Date.now() + 10_000;
+    }
+
+    function suppressUnsavedWarningDuringPublish(event: BeforeUnloadEvent) {
+      if (Date.now() >= suppressBeforeUnloadUntil) return;
+      event.stopImmediatePropagation();
+    }
+
     function prepareBeforeReactSubmit(event: SubmitEvent) {
+      const editorPublish = isEditorPublishSubmit(event);
+
       if (isWriterForm(event.target)) {
         const layout = captureForWriterForm(
           event.target,
@@ -262,6 +282,8 @@ export function WriterPublicationSnapshotGuard() {
           lastPublicationLayout = layout;
           setPublicationLayoutInput(event.target, layout);
         }
+
+        if (editorPublish) allowPublishNavigation();
         return;
       }
 
@@ -282,6 +304,7 @@ export function WriterPublicationSnapshotGuard() {
 
       lastPublicationLayout = layout;
       setPublicationLayoutInput(event.target, layout);
+      allowPublishNavigation();
     }
 
     function bindLayoutToFormData(event: Event) {
@@ -322,11 +345,21 @@ export function WriterPublicationSnapshotGuard() {
     document.addEventListener("click", rememberBeforeEditorTransition, true);
     document.addEventListener("submit", prepareBeforeReactSubmit, true);
     document.addEventListener("formdata", bindLayoutToFormData, true);
+    window.addEventListener(
+      "beforeunload",
+      suppressUnsavedWarningDuringPublish,
+      true,
+    );
 
     return () => {
       document.removeEventListener("click", rememberBeforeEditorTransition, true);
       document.removeEventListener("submit", prepareBeforeReactSubmit, true);
       document.removeEventListener("formdata", bindLayoutToFormData, true);
+      window.removeEventListener(
+        "beforeunload",
+        suppressUnsavedWarningDuringPublish,
+        true,
+      );
     };
   }, []);
 

@@ -7,6 +7,7 @@ import {
   encodePublicationVersionDescription,
   type PublicationLayoutSnapshot,
 } from "./publication-layout";
+import type { ChapterDraftInput } from "./validators";
 
 export type WorkPublicationEvent = {
   isFirstPublication: boolean;
@@ -16,8 +17,7 @@ export type WorkPublicationEvent = {
 
 export async function publishWorkWithEvent(
   authorId: string,
-  workId: string,
-  chapterId: string,
+  input: ChapterDraftInput,
   publicationLayout: PublicationLayoutSnapshot,
 ) {
   return prisma.$transaction(async (transaction) => {
@@ -28,7 +28,7 @@ export async function publishWorkWithEvent(
     }>>`
       SELECT id, contentRating, contentRatingConfirmedAt
       FROM Work
-      WHERE id = ${workId}
+      WHERE id = ${input.workId}
         AND authorId = ${authorId}
       LIMIT 1
       FOR UPDATE
@@ -50,14 +50,11 @@ export async function publishWorkWithEvent(
     const chapter = await transaction.chapter.findFirst({
       where: {
         authorId,
-        id: chapterId,
-        workId,
+        id: input.chapterId,
+        workId: input.workId,
       },
       select: {
-        content: true,
         id: true,
-        title: true,
-        workId: true,
       },
     });
 
@@ -65,7 +62,7 @@ export async function publishWorkWithEvent(
       throw new Error("Yayınlanacak bölüm bulunamadı.");
     }
 
-    if (publicationLayout.contentLength !== chapter.content.length) {
+    if (publicationLayout.contentLength !== input.content.length) {
       throw new Error(
         "Yayın sayfa düzeni mevcut bölüm metniyle eşleşmiyor. Sayfalar yeniden oluştuktan sonra tekrar yayınla.",
       );
@@ -74,7 +71,7 @@ export async function publishWorkWithEvent(
     const previousPublications = await transaction.auditLog.findMany({
       where: {
         action: "work_published",
-        entityId: workId,
+        entityId: input.workId,
         entityType: "Work",
       },
       orderBy: {
@@ -92,7 +89,7 @@ export async function publishWorkWithEvent(
 
     const latestVersion = await transaction.workVersion.findFirst({
       where: {
-        workId,
+        workId: input.workId,
       },
       orderBy: {
         versionNumber: "desc",
@@ -105,14 +102,14 @@ export async function publishWorkWithEvent(
     const publicationVersion = await transaction.workVersion.create({
       data: {
         chapterId: chapter.id,
-        content: chapter.content,
+        content: input.content,
         contentHash: createHash("sha256")
-          .update(chapter.content)
+          .update(input.content)
           .digest("hex"),
         description: encodePublicationVersionDescription(publicationLayout),
-        title: chapter.title,
+        title: input.title,
         versionNumber: (latestVersion?.versionNumber ?? 0) + 1,
-        workId,
+        workId: input.workId,
       },
     });
 
@@ -122,14 +119,16 @@ export async function publishWorkWithEvent(
       },
       data: {
         archivedAt: null,
+        content: input.content,
         publishedAt,
         status: "published",
+        title: input.title,
       },
     });
 
     const work = await transaction.work.update({
       where: {
-        id: workId,
+        id: input.workId,
       },
       data: {
         archivedAt: null,
@@ -146,7 +145,7 @@ export async function publishWorkWithEvent(
         entityId: work.id,
         entityType: "Work",
         metadata: JSON.stringify({
-          chapterId,
+          chapterId: input.chapterId,
           contentRating: work.contentRating,
           pageCount: publicationLayout.pageEnds.length,
           publicId: work.publicId,

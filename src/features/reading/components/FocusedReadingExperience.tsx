@@ -22,6 +22,7 @@ import { ProtectedChapterContent } from "./ProtectedChapterContent";
 import { ReadingPageIndicator } from "./ReadingPageIndicator";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import styles from "./FocusedReadingExperience.module.css";
+import parityStyles from "./ReaderPublicationParity.module.css";
 
 export function FocusedReadingExperience({
   canComment = false,
@@ -198,7 +199,7 @@ export function FocusedReadingExperience({
           </header>
 
           <section
-            className={styles.chapterBody}
+            className={`${styles.chapterBody} ${parityStyles.publicationParity}`}
             id="bolum-metni"
             aria-label={`${chapter.position}. bölüm metni`}
           >

@@ -4,6 +4,7 @@ import { WriterClassificationStatsEnhancer } from "@/features/writer/components/
 import { WriterEditingTools } from "@/features/writer/components/WriterEditingTools";
 import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
 import { WriterPublicationSnapshotGuard } from "@/features/writer/components/WriterPublicationSnapshotGuard";
+import { WriterPublishFeedbackBridge } from "@/features/writer/components/WriterPublishFeedbackBridge";
 import "@/features/writer/writer-paper-experience.css";
 import "@/features/writer/writer-brand-purple.css";
 import "@/styles/light-purple-route-fallback.css";
@@ -25,6 +26,7 @@ export default function ContinueWritingLayout({
       {children}
       <WriterEditingTools />
       <WriterPagedManuscriptEnhancer />
+      <WriterPublishFeedbackBridge />
       <WriterPublicationSnapshotGuard />
       <WriterBookStructureRefreshBoundary />
       <WriterBookTrashEnhancer />

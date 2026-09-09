@@ -86,7 +86,20 @@ test("shared account menu logout is independent from build-specific Server Actio
   assertContains(route, "prisma.auditLog.create", "logout POST audit write");
   assertContains(route, "await clearSessionCookie()", "logout POST session-cookie cleanup");
   assertContains(route, "await clearAdminRoleViewCookie()", "logout POST admin-view cleanup");
-  assertContains(route, "NextResponse.redirect(new URL(\"/\", request.url), 303)", "logout POST redirect");
+  assertContains(route, "NextResponse.redirect(getLogoutRedirectUrl(request), 303)", "logout POST redirect");
+});
+
+test("production logout never leaks an internal Hostinger origin", () => {
+  const route = source("src/app/cikis/route.ts");
+
+  assertContains(route, 'if (process.env.NODE_ENV === "production")', "production logout origin guard");
+  assertContains(route, 'return new URL("https://ilkoku.com/");', "canonical production logout target");
+  assertContains(route, 'return new URL("/", request.url);', "development logout target");
+  assert.ok(
+    route.indexOf('return new URL("https://ilkoku.com/");') <
+      route.indexOf('return new URL("/", request.url);'),
+    "canonical production redirect must be selected before request-origin fallback",
+  );
 });
 
 test("self-hosted builds expose a deployment id for version-skew protection", () => {

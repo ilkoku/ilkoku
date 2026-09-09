@@ -2,6 +2,7 @@ import { worksRepository } from "./repository";
 import {
   deliverPublicationNotifications,
 } from "./publication-notifications";
+import type { PublicationLayoutSnapshot } from "./publication-layout";
 import { publishWorkWithEvent } from "./publish-work-event";
 import type {
   ChapterDraftInput,
@@ -167,35 +168,31 @@ export async function saveChapterDraft(
     );
   }
 
-  const chapter =
-    await worksRepository.updateChapter(
-      authorId,
-      input.chapterId,
-      {
-        archivedAt: null,
-        content: input.content,
-        publishedAt: null,
-        status: "draft",
-        title: input.title,
-      },
-    );
+  const keepsLivePublication =
+    ownedChapter.status === "published" &&
+    ownedChapter.publishedAt !== null;
 
-  await worksRepository.updateWork(
+  return worksRepository.updateChapter(
     authorId,
-    input.workId,
+    input.chapterId,
     {
       archivedAt: null,
-      status: "draft",
-      visibility: "private",
+      content: input.content,
+      publishedAt: keepsLivePublication
+        ? ownedChapter.publishedAt
+        : null,
+      status: keepsLivePublication
+        ? "published"
+        : "draft",
+      title: input.title,
     },
   );
-
-  return chapter;
 }
 
 export async function publishWork(
   authorId: string,
   input: ChapterDraftInput,
+  publicationLayout: PublicationLayoutSnapshot,
 ) {
   if (!hasMeaningfulText(input.content)) {
     throw new Error(
@@ -212,6 +209,7 @@ export async function publishWork(
     authorId,
     input.workId,
     input.chapterId,
+    publicationLayout,
   );
 
   try {

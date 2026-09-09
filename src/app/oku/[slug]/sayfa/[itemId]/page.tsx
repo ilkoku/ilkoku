@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { PublishedBookSpecialPageExperience } from "@/features/reading/components/PublishedBookSpecialPageExperience";
+import { getPersonalBookAnnotations } from "@/features/reading/personal-book-annotation-queries";
 import { getMemberPublicWorkBySlug } from "@/features/works/member-public-queries";
 import { getCurrentSessionContext } from "@/lib/auth/current-user";
 
@@ -65,12 +66,20 @@ export default async function PublishedSpecialBookPage({
 
   if (!item || item.type !== "special") notFound();
 
+  const personalAnnotations = await getPersonalBookAnnotations(
+    user.id,
+    work.id,
+    item.structureItemId,
+  );
+
   return (
     <PublishedBookSpecialPageExperience
+      initialAnnotations={personalAnnotations}
       item={item}
       protectionIdentity={user.publicId}
       returnTo={returnTo}
       startAtLastPage={query.sayfa === "son"}
+      userKey={user.publicId}
       work={work}
     />
   );

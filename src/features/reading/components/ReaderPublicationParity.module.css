@@ -1,0 +1,27 @@
+.publicationParity {
+  --reader-manuscript-font-family: "Courier New", Courier, ui-monospace,
+    "SFMono-Regular", Menlo, Consolas, monospace;
+  --reader-manuscript-font-size: 17px;
+  --reader-manuscript-line-height: 1.9;
+}
+
+.publicationParity :global(.chapter__body p),
+.publicationParity :global(p[data-annotation-text-paragraph]) {
+  margin-bottom: 1.9em;
+  font-family: var(--reader-manuscript-font-family) !important;
+  font-size: var(--reader-manuscript-font-size) !important;
+  line-height: var(--reader-manuscript-line-height) !important;
+  letter-spacing: 0.012em;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/*
+ * PagedReadingViewport zaten gerçek scrollHeight/clientHeight oranından
+ * fiziksel sayfa sayısını ölçer. Kelime/280 hesabından gelen eski ikinci
+ * satırı gizleyerek kullanıcıya iki farklı sayfa gerçeği göstermeyiz.
+ */
+.publicationParity
+  :global([aria-label="Sayfa geçişleri"] [aria-live="polite"] > span) {
+  display: none;
+}

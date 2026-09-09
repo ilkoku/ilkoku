@@ -28,12 +28,14 @@ export function getAuthorFeedbackRows(
           }
         : {}),
     },
-    include: {
+    select: {
+      archivedAt: true,
       assignment: {
         select: {
           stage: true,
         },
       },
+      category: true,
       chapter: {
         select: {
           id: true,
@@ -41,11 +43,20 @@ export function getAuthorFeedbackRows(
           title: true,
         },
       },
+      content: true,
+      createdAt: true,
       editor: {
         select: {
           fullName: true,
         },
       },
+      editorId: true,
+      id: true,
+      isProfessionalReview: true,
+      priority: true,
+      readAt: true,
+      status: true,
+      title: true,
       work: {
         select: {
           id: true,

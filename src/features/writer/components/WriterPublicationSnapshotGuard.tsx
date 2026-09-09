@@ -152,18 +152,69 @@ function isPreviewPublishForm(
   );
 }
 
-function captureForWriterForm(form: HTMLFormElement) {
-  const target = getEditorTarget();
-  if (!target || !form.contains(target.canvas)) return "";
-  return captureCurrentPublicationLayout(target);
-}
-
 function existingPublicationLayout(form: HTMLFormElement) {
   return (
     form.querySelector<HTMLInputElement>(
       `input[name="${PUBLICATION_LAYOUT_INPUT_NAME}"]`,
     )?.value ?? ""
   );
+}
+
+function publicationLayoutMatchesContent(layout: string, content: string) {
+  if (!layout) return false;
+
+  try {
+    const parsed = JSON.parse(layout) as Partial<PublicationLayoutSnapshot>;
+    const lastPageEnd = Array.isArray(parsed.pageEnds)
+      ? parsed.pageEnds.at(-1)
+      : undefined;
+
+    return (
+      parsed.version === PUBLICATION_LAYOUT_VERSION &&
+      parsed.contentLength === content.length &&
+      lastPageEnd === content.length
+    );
+  } catch {
+    return false;
+  }
+}
+
+function captureForWriterForm(
+  form: HTMLFormElement,
+  lastPublicationLayout: string,
+) {
+  const target = getEditorTarget();
+  if (!target || !form.contains(target.canvas)) return "";
+
+  const captured = captureCurrentPublicationLayout(target);
+  if (captured) return captured;
+
+  const existing = existingPublicationLayout(form);
+  if (publicationLayoutMatchesContent(existing, target.body.value)) {
+    return existing;
+  }
+
+  return publicationLayoutMatchesContent(
+    lastPublicationLayout,
+    target.body.value,
+  )
+    ? lastPublicationLayout
+    : "";
+}
+
+function previewPublicationLayout(
+  form: HTMLFormElement,
+  lastPublicationLayout: string,
+) {
+  const content =
+    form.querySelector<HTMLInputElement>('input[name="content"]')?.value ?? "";
+  const existing = existingPublicationLayout(form);
+
+  if (publicationLayoutMatchesContent(lastPublicationLayout, content)) {
+    return lastPublicationLayout;
+  }
+
+  return publicationLayoutMatchesContent(existing, content) ? existing : "";
 }
 
 function setPublicationLayoutInput(form: HTMLFormElement, layout: string) {
@@ -202,16 +253,24 @@ export function WriterPublicationSnapshotGuard() {
 
     function prepareBeforeReactSubmit(event: SubmitEvent) {
       if (isWriterForm(event.target)) {
-        const layout = captureForWriterForm(event.target);
-        if (layout) lastPublicationLayout = layout;
-        setPublicationLayoutInput(event.target, layout);
+        const layout = captureForWriterForm(
+          event.target,
+          lastPublicationLayout,
+        );
+
+        if (layout) {
+          lastPublicationLayout = layout;
+          setPublicationLayoutInput(event.target, layout);
+        }
         return;
       }
 
       if (!isPreviewPublishForm(event.target)) return;
 
-      const layout =
-        lastPublicationLayout || existingPublicationLayout(event.target);
+      const layout = previewPublicationLayout(
+        event.target,
+        lastPublicationLayout,
+      );
 
       if (!layout) {
         event.preventDefault();
@@ -221,6 +280,7 @@ export function WriterPublicationSnapshotGuard() {
         return;
       }
 
+      lastPublicationLayout = layout;
       setPublicationLayoutInput(event.target, layout);
     }
 
@@ -228,19 +288,35 @@ export function WriterPublicationSnapshotGuard() {
       const formDataEvent = event as FormDataEvent;
 
       if (isWriterForm(event.target)) {
-        const layout = captureForWriterForm(event.target);
-        if (layout) lastPublicationLayout = layout;
-        formDataEvent.formData.set(PUBLICATION_LAYOUT_INPUT_NAME, layout);
-        setPublicationLayoutInput(event.target, layout);
+        const layout = captureForWriterForm(
+          event.target,
+          lastPublicationLayout,
+        );
+
+        if (layout) {
+          lastPublicationLayout = layout;
+          formDataEvent.formData.set(PUBLICATION_LAYOUT_INPUT_NAME, layout);
+          setPublicationLayoutInput(event.target, layout);
+        } else {
+          formDataEvent.formData.delete(PUBLICATION_LAYOUT_INPUT_NAME);
+        }
         return;
       }
 
       if (!isPreviewPublishForm(event.target)) return;
 
-      const layout =
-        lastPublicationLayout || existingPublicationLayout(event.target);
-      formDataEvent.formData.set(PUBLICATION_LAYOUT_INPUT_NAME, layout);
-      setPublicationLayoutInput(event.target, layout);
+      const layout = previewPublicationLayout(
+        event.target,
+        lastPublicationLayout,
+      );
+
+      if (layout) {
+        lastPublicationLayout = layout;
+        formDataEvent.formData.set(PUBLICATION_LAYOUT_INPUT_NAME, layout);
+        setPublicationLayoutInput(event.target, layout);
+      } else {
+        formDataEvent.formData.delete(PUBLICATION_LAYOUT_INPUT_NAME);
+      }
     }
 
     document.addEventListener("click", rememberBeforeEditorTransition, true);

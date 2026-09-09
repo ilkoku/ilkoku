@@ -11,14 +11,14 @@ import {
 export const BOOK_PUBLICATION_LAYOUT_INPUT_NAME = "bookPublicationLayouts";
 export const BOOK_PUBLICATION_VERSION = 1 as const;
 
-export type SubmittedBookPageLayout = {
+export type SubmittedBookItemLayout = {
   id: string;
   layout: unknown;
 };
 
 export type BookPublicationLayoutSubmission = {
   version: typeof BOOK_PUBLICATION_VERSION;
-  specialPages: SubmittedBookPageLayout[];
+  items: SubmittedBookItemLayout[];
 };
 
 export type PublishedBookChapterItem = {
@@ -84,29 +84,29 @@ export function parseBookPublicationLayoutSubmission(raw: unknown) {
   if (!value || typeof value !== "object") return null;
   const record = value as Record<string, unknown>;
   if (record.version !== BOOK_PUBLICATION_VERSION) return null;
-  if (!Array.isArray(record.specialPages) || record.specialPages.length > 32) {
+  if (!Array.isArray(record.items) || record.items.length < 1 || record.items.length > 256) {
     return null;
   }
 
-  const specialPages: SubmittedBookPageLayout[] = [];
+  const items: SubmittedBookItemLayout[] = [];
   const ids = new Set<string>();
 
-  for (const candidate of record.specialPages) {
+  for (const candidate of record.items) {
     if (!candidate || typeof candidate !== "object") return null;
-    const page = candidate as Record<string, unknown>;
-    const id = nonEmptyString(page.id, 128);
+    const item = candidate as Record<string, unknown>;
+    const id = nonEmptyString(item.id, 128);
 
-    if (!id || ids.has(id) || !page.layout || typeof page.layout !== "object") {
+    if (!id || ids.has(id) || !item.layout || typeof item.layout !== "object") {
       return null;
     }
 
     ids.add(id);
-    specialPages.push({ id, layout: page.layout });
+    items.push({ id, layout: item.layout });
   }
 
   return {
     version: BOOK_PUBLICATION_VERSION,
-    specialPages,
+    items,
   } satisfies BookPublicationLayoutSubmission;
 }
 
@@ -184,11 +184,19 @@ export function parsePublishedBookSnapshot(value: unknown): PublishedBookSnapsho
 
   const items: PublishedBookItem[] = [];
   const ids = new Set<string>();
+  const positions = new Set<number>();
 
   for (const value of snapshot.items) {
     const item = parsePublishedItem(value);
-    if (!item || ids.has(item.structureItemId)) return null;
+    if (
+      !item ||
+      ids.has(item.structureItemId) ||
+      positions.has(item.position)
+    ) {
+      return null;
+    }
     ids.add(item.structureItemId);
+    positions.add(item.position);
     items.push(item);
   }
 

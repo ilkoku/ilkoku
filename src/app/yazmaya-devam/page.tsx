@@ -9,6 +9,7 @@ import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { WriterAutoOpenRefreshGuard } from "@/features/writer/components/WriterAutoOpenRefreshGuard";
 import { CreateChapterForm } from "@/features/works/components/CreateChapterForm";
 import "./auto-open-refresh-guard.css";
+import "./continue-writing-list.css";
 import { getAuthorWorks, getContinueWritingWork } from "@/features/works/queries";
 import { getWriterEngagementPreview } from "@/lib/writer-engagement";
 
@@ -102,7 +103,7 @@ export default async function ContinueWritingPage({ searchParams }: ContinueWrit
 
   return (
     <AppShell profile={profile}>
-      <div className="editor-workspace">
+      <div className="editor-workspace continue-writing-list-workspace">
         <EditorPageHeader
           description="Aktif eserlerini, son düzenlenen bölümü ve çalışma durumunu görüntüle."
           eyebrow="Yazma alanı"

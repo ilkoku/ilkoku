@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { feedbackContent } from "@/content";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { FeedbackWorkspace } from "@/features/feedback/components/FeedbackWorkspace";
@@ -23,7 +22,10 @@ type FeedbackPageProps = {
 export default async function FeedbackPage({
   searchParams,
 }: FeedbackPageProps) {
-  const profile = await getCurrentProfile();
+  const [profile, parameters] = await Promise.all([
+    getCurrentProfile(),
+    searchParams,
+  ]);
 
   if (!profile) {
     redirect("/giris?sonraki=/geri-bildirimler");
@@ -33,7 +35,6 @@ export default async function FeedbackPage({
     redirect("/erisim-reddedildi");
   }
 
-  const parameters = await searchParams;
   const requestedWorkId =
     typeof parameters.eser === "string"
       ? parameters.eser
@@ -52,11 +53,9 @@ export default async function FeedbackPage({
       : null;
 
   return (
-    <AppShell profile={profile}>
-      <FeedbackWorkspace
-        initialItems={feedback}
-        initialWorkId={initialWorkId}
-      />
-    </AppShell>
+    <FeedbackWorkspace
+      initialItems={feedback}
+      initialWorkId={initialWorkId}
+    />
   );
 }

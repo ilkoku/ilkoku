@@ -141,7 +141,7 @@ export async function updateWork(
         ? "draft"
         : undefined;
   const status = keepsLivePublication
-    ? undefined
+    ? "published"
     : requestedStatus;
 
   return worksRepository.updateWork(
@@ -164,7 +164,6 @@ export async function updateWork(
         ? {
             archivedAt: null,
             publishedAt: existingWork.publishedAt,
-            status: "published",
             visibility: "public",
           }
         : status

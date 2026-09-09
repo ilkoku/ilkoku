@@ -72,6 +72,32 @@ test("logout cannot surface cleanup or audit failures as an application error", 
   );
 });
 
+test("shared account menu logout is independent from build-specific Server Action ids", () => {
+  const userArea = source("src/components/layout/UserArea.tsx");
+  const route = source("src/app/cikis/route.ts");
+
+  assertContains(userArea, '<form action="/cikis" method="post">', "stable logout POST form");
+  assert.ok(
+    !userArea.includes("logoutAction"),
+    "shared account menu must not submit logout through a build-specific Server Action id",
+  );
+  assertContains(route, "export async function POST(request: Request)", "logout POST route");
+  assertContains(route, "prisma.session.deleteMany", "logout POST session revocation");
+  assertContains(route, "prisma.auditLog.create", "logout POST audit write");
+  assertContains(route, "await clearSessionCookie()", "logout POST session-cookie cleanup");
+  assertContains(route, "await clearAdminRoleViewCookie()", "logout POST admin-view cleanup");
+  assertContains(route, "NextResponse.redirect(new URL(\"/\", request.url), 303)", "logout POST redirect");
+});
+
+test("self-hosted builds expose a deployment id for version-skew protection", () => {
+  const config = source("next.config.ts");
+
+  assertContains(config, "NEXT_DEPLOYMENT_ID", "explicit deployment id override");
+  assertContains(config, "DEPLOYMENT_VERSION", "generic deployment version override");
+  assertContains(config, 'execFileSync("git", ["rev-parse", "HEAD"]', "git commit deployment fallback");
+  assertContains(config, "...(deploymentId ? { deploymentId } : {})", "Next.js deployment id configuration");
+});
+
 test("authenticated login navigation fails safely when auxiliary role-view or routing lookups fail", () => {
   const profile = source("src/features/auth/profile.ts");
   const destination = source("src/features/auth/destination.ts");

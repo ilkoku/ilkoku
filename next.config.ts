@@ -1,4 +1,28 @@
+import { execFileSync } from "node:child_process";
 import type { NextConfig } from "next";
+
+function resolveDeploymentId() {
+  const configured =
+    process.env.NEXT_DEPLOYMENT_ID?.trim() ||
+    process.env.DEPLOYMENT_VERSION?.trim();
+
+  if (configured) return configured;
+
+  try {
+    const gitSha = execFileSync("git", ["rev-parse", "HEAD"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+
+    return /^[0-9a-f]{40}$/iu.test(gitSha)
+      ? gitSha
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const deploymentId = resolveDeploymentId();
 
 const privateRouteHeaders = [
   "/admin/:path*",
@@ -63,6 +87,7 @@ const searchExcludedRouteHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  ...(deploymentId ? { deploymentId } : {}),
   async headers() {
     return searchExcludedRouteHeaders.map((source) => ({
       source,

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
+import { writerContent } from "@/content";
 import { PublishedManuscriptViewport } from "@/features/reading/components/PublishedManuscriptViewport";
 import {
   PUBLICATION_LAYOUT_INPUT_NAME,
@@ -168,6 +169,7 @@ export function WriterPublishExperienceEnhancer() {
         content={parsed.content}
         identity="Yayın önizleme"
         layout={publicationLayout}
+        subtitle={writerContent.editor.subtitle}
         workTitle={parsed.workTitle}
       />
     </div>,

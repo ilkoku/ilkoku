@@ -4,6 +4,14 @@ import { clearSessionCookie, getSessionCookie } from "@/lib/auth/cookies";
 import { hashSessionToken } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
+function getLogoutRedirectUrl(request: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return new URL("https://ilkoku.com/");
+  }
+
+  return new URL("/", request.url);
+}
+
 export async function POST(request: Request) {
   const token = await getSessionCookie();
   let userId: string | null = null;
@@ -60,5 +68,5 @@ export async function POST(request: Request) {
     console.error("LOGOUT_ADMIN_COOKIE_CLEAR_FAILED", cookieError);
   }
 
-  return NextResponse.redirect(new URL("/", request.url), 303);
+  return NextResponse.redirect(getLogoutRedirectUrl(request), 303);
 }

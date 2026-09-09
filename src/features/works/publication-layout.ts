@@ -85,12 +85,17 @@ export function parsePublicationLayout(
   const pageEnds = snapshot.pageEnds.map((value) =>
     typeof value === "number" && Number.isInteger(value) ? value : -1,
   );
-  let previous = 0;
-  for (const end of pageEnds) {
-    if (end <= previous || end > content.length) return null;
-    previous = end;
+
+  if (content.length === 0) {
+    if (pageEnds.length !== 1 || pageEnds[0] !== 0) return null;
+  } else {
+    let previous = 0;
+    for (const end of pageEnds) {
+      if (end <= previous || end > content.length) return null;
+      previous = end;
+    }
+    if (pageEnds.at(-1) !== content.length) return null;
   }
-  if (pageEnds.at(-1) !== content.length) return null;
 
   if (!snapshot.page || typeof snapshot.page !== "object") return null;
   const page = snapshot.page as Record<string, unknown>;

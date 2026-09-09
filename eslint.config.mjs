@@ -15,6 +15,17 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    files: [
+      "src/app/onizleme/ana-sayfa-yeni/history-art/2026/data/*.ts",
+      "src/components/content/about-hero-data/*.ts",
+    ],
+    rules: {
+      // These modules are generated binary data chunks; naming their default
+      // string exports adds no signal and would rewrite large static payloads.
+      "import/no-anonymous-default-export": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

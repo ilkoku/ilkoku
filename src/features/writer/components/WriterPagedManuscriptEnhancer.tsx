@@ -22,6 +22,9 @@ type EditorTarget = {
   subtitle: HTMLElement | null;
 };
 
+const WRITER_PREFERENCES_CHANGED_EVENT =
+  "ilkoku:writer-preferences-changed";
+
 function getEditorTarget(): EditorTarget | null {
   if (typeof document === "undefined") {
     return null;
@@ -60,11 +63,25 @@ function getEditorSnapshot() {
     return "writer-editor-unavailable";
   }
 
+  const screen = target.canvas.closest<HTMLElement>(".writer-screen");
+  const fontSelect = document.querySelector<HTMLSelectElement>(
+    'select[aria-label="Yazı tipi"]',
+  );
+  const widthSelect = document.querySelector<HTMLSelectElement>(
+    'select[aria-label="Yazı alanı genişliği"]',
+  );
+
   return [
     target.workTitle.value,
     target.chapterTitle.value,
     target.body.value,
     target.subtitle?.textContent ?? "",
+    fontSelect?.value ?? "",
+    widthSelect?.value ?? "",
+    screen?.style.getPropertyValue("--writer-manuscript-font-size") ?? "",
+    screen?.style.getPropertyValue("--writer-manuscript-line-height") ?? "",
+    screen?.style.getPropertyValue("--writer-manuscript-font-family") ?? "",
+    screen?.style.getPropertyValue("--writer-manuscript-width") ?? "",
   ].join("\u0000");
 }
 
@@ -99,12 +116,14 @@ function subscribeEditorDom(onStoreChange: () => void) {
   document.addEventListener("input", scheduleChange, true);
   document.addEventListener("change", scheduleChange, true);
   document.addEventListener("click", scheduleChange, true);
+  window.addEventListener(WRITER_PREFERENCES_CHANGED_EVENT, scheduleChange);
 
   return () => {
     observer.disconnect();
     document.removeEventListener("input", scheduleChange, true);
     document.removeEventListener("change", scheduleChange, true);
     document.removeEventListener("click", scheduleChange, true);
+    window.removeEventListener(WRITER_PREFERENCES_CHANGED_EVENT, scheduleChange);
 
     if (scheduledFrame !== null) {
       window.cancelAnimationFrame(scheduledFrame);
@@ -239,8 +258,6 @@ function capturePublicationLayout(target: EditorTarget) {
 }
 
 function syncPublicationLayoutInputs(layout: string) {
-  if (!layout) return;
-
   const forms = new Set<HTMLFormElement>();
   const writerForm = document.querySelector<HTMLFormElement>("form.writer-screen");
   if (writerForm) forms.add(writerForm);
@@ -272,17 +289,20 @@ export function WriterPagedManuscriptEnhancer() {
   const [publicationLayout, setPublicationLayout] = useState("");
 
   useEffect(() => {
-    if (!target || snapshot === "writer-editor-unavailable") return;
+    if (snapshot === "writer-editor-unavailable") return;
 
+    setPublicationLayout("");
     let frame = window.requestAnimationFrame(() => {
       frame = window.requestAnimationFrame(() => {
-        const nextLayout = capturePublicationLayout(target);
-        if (nextLayout) setPublicationLayout(nextLayout);
+        const activeTarget = getEditorTarget();
+        if (!activeTarget) return;
+        const nextLayout = capturePublicationLayout(activeTarget);
+        setPublicationLayout(nextLayout);
       });
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [snapshot, target]);
+  }, [snapshot]);
 
   useEffect(() => {
     syncPublicationLayoutInputs(publicationLayout);

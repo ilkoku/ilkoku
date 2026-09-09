@@ -56,6 +56,7 @@ test("writer routes load physical pages with scroll or page-turn movement", () =
     const layout = source(path);
 
     includes(layout, "WriterPagedManuscriptEnhancer", `${path} paged enhancer`);
+    includes(layout, "WriterPublicationSnapshotGuard", `${path} submit-time publication snapshot guard`);
     includes(layout, "writer-paged-manuscript.css", `${path} paged CSS`);
   }
 
@@ -82,6 +83,9 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   const enhancer = source(
     "src/features/writer/components/WriterPagedManuscriptEnhancer.tsx",
   );
+  const submitGuard = source(
+    "src/features/writer/components/WriterPublicationSnapshotGuard.tsx",
+  );
   const layout = source("src/features/works/publication-layout.ts");
   const actions = source("src/features/works/actions.ts");
   const mutations = source("src/features/works/mutations.ts");
@@ -103,6 +107,12 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   includes(enhancer, "publicationLayout", "publish form layout field");
   includes(enhancer, "WRITER_PREFERENCES_CHANGED_EVENT", "layout preference recapture");
 
+  includes(submitGuard, "captureCurrentPublicationLayout", "submit-time layout capture");
+  includes(submitGuard, ".writer-manuscript-pages .writer-page-textarea", "submit-time exact writer page capture");
+  includes(submitGuard, 'document.addEventListener("submit", prepareBeforeReactSubmit, true)', "capture before React server action submission");
+  includes(submitGuard, 'document.addEventListener("formdata", bindLayoutToFormData, true)', "bind exact layout to serialized form data");
+  includes(submitGuard, "pageEnds", "submit-time exact page boundaries");
+
   includes(layout, 'PUBLICATION_LAYOUT_INPUT_NAME = "publicationLayout"', "layout form contract");
   includes(layout, "contentLength", "layout-content integrity binding");
   includes(layout, "splitPublishedPages", "saved page split helper");
@@ -115,9 +125,20 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   includes(publication, "pageCount", "publication page count audit evidence");
 
   includes(snapshots, "PUBLICATION_VERSION_DESCRIPTION_PREFIX", "publication-only snapshot lookup");
+  assert.equal(
+    snapshots.includes("take: 12"),
+    false,
+    "published snapshot lookup must never disappear behind a recent-draft window",
+  );
   includes(queries, "getLatestPublicationSnapshot", "Reader publication snapshot query");
   includes(reading, "PublishedManuscriptViewport", "fixed publication renderer selection");
   includes(renderer, "splitPublishedPages", "Reader uses author page boundaries");
+  includes(renderer, "const activePage = pages[pageIndex]", "Reader renders one active author page at a time");
+  assert.equal(
+    renderer.includes("pages.map("),
+    false,
+    "Reader must not stack multiple author pages in the DOM",
+  );
   includes(renderer, "transform: `scale(${scale})`", "device scaling without reflow");
   includes(renderer, "Yazarın yayın sayfası", "author-owned page status");
   includes(rendererCss, "overflow: hidden", "fixed published page containment");

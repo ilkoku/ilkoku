@@ -132,9 +132,43 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(continuityTools, 'title: "Kaldığın noktaya', "special page reading-position icon keeps the canonical tool selector contract");
   includes(continuityTools, 'title: "Not bağlamak', "special page note icon keeps the canonical tool selector contract");
   includes(continuityTools, 'title: "Kişisel işaretlere', "special page eraser icon keeps the canonical tool selector contract");
-  includes(continuityTools, 'aria-expanded={label === "İşaretlerim" ? false : undefined}', "special page annotations-list icon keeps the canonical tool selector contract");
+  includes(continuityTools, "aria-expanded={isListOpen}", "special page annotations-list icon uses canonical selector contract");
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
   includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
   includes(renderer, "const activePage = pages[pageIndex]", "only one active publication page rendered");
   includes(renderer, "{subtitle ? <p>{subtitle}</p> : null}", "published header renders Writer subtitle");
+});
+
+test("published special pages persist private marks against immutable publication items", () => {
+  const migration = source(
+    "prisma/migrations/20260910002500_personal_book_annotations/migration.sql",
+  );
+  const actions = source("src/features/reading/personal-book-annotations.ts");
+  const annotationQueries = source(
+    "src/features/reading/personal-book-annotation-queries.ts",
+  );
+  const route = source("src/app/oku/[slug]/sayfa/[itemId]/page.tsx");
+  const tools = source(
+    "src/features/reading/components/PublishedBookToolsContinuity.tsx",
+  );
+  const renderer = source(
+    "src/features/reading/components/PublishedManuscriptViewport.tsx",
+  );
+  const runtimeContracts = source("src/features/system-map/runtime-contracts.json");
+
+  includes(migration, "CREATE TABLE `PersonalBookAnnotation`", "dedicated publication-item annotation table");
+  includes(migration, "`publicationItemId` CHAR(36) NOT NULL", "immutable publication item identity");
+  excludes(migration, "BookStructureItem_publicationItemId_fkey", "draft structure must not cascade-delete live marks");
+  includes(actions, "getLatestPublishedBookSnapshot", "annotation validation reads immutable publication truth");
+  includes(actions, "candidate.structureItemId === publicationItemId", "annotation target must exist in current publication snapshot");
+  includes(actions, "content: item.content", "text anchors validate against published content");
+  includes(actions, "DELETE FROM PersonalBookAnnotation", "eraser and reading-position replacement persistence");
+  includes(annotationQueries, "publicationItemId", "special route restores personal marks per published item");
+  includes(route, "getPersonalBookAnnotations", "special Reader route hydrates private marks");
+  includes(tools, "createPersonalBookAnnotationAction", "special tools persist real marks");
+  includes(tools, "clearPersonalBookAnnotationsAction", "special tools clear only current publication item marks");
+  includes(renderer, "handleTextSelectionEnd", "published text supports exact-offset selection");
+  includes(renderer, "handlePagePoint", "published pages support pin and reading-position anchors");
+  includes(renderer, "annotationHighlight", "published renderer paints private highlights without reflow");
+  includes(runtimeContracts, '"PersonalBookAnnotation"', "migration-only annotation table is acknowledged");
 });

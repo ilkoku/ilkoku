@@ -233,15 +233,6 @@ export async function createSpecialBookSection(
       )
     `;
 
-    await transaction.work.update({
-      where: { id: workId },
-      data: {
-        publishedAt: null,
-        status: "draft",
-        visibility: "private",
-      },
-    });
-
     return id;
   });
 
@@ -300,15 +291,6 @@ export async function saveSpecialBookSection(
         AND workId = ${workId}
         AND authorId = ${authorId}
     `;
-
-    await transaction.work.update({
-      where: { id: workId },
-      data: {
-        publishedAt: null,
-        status: "draft",
-        visibility: "private",
-      },
-    });
   });
 
   const items = await readBookStructure(authorId, workId);
@@ -380,15 +362,6 @@ export async function reorderBookStructure(
           AND authorId = ${authorId}
       `;
     }
-
-    await transaction.work.update({
-      where: { id: workId },
-      data: {
-        publishedAt: null,
-        status: "draft",
-        visibility: "private",
-      },
-    });
   });
 
   return readBookStructure(authorId, workId);

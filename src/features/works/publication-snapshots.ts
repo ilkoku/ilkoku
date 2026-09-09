@@ -24,6 +24,10 @@ type VersionRow = {
 
 function decodeVersion(version: VersionRow): PublishedChapterSnapshot | null {
   if (!version.content || !version.title) return null;
+  if (!version.description?.startsWith(PUBLICATION_VERSION_DESCRIPTION_PREFIX)) {
+    return null;
+  }
+
   const layout = decodePublicationVersionDescription(
     version.description,
     version.content,
@@ -38,30 +42,42 @@ function decodeVersion(version: VersionRow): PublishedChapterSnapshot | null {
   };
 }
 
-export async function getLatestPublicationSnapshot(chapterId: string) {
-  const versions = await prisma.workVersion.findMany({
-    where: {
-      chapterId,
-      description: {
-        startsWith: PUBLICATION_VERSION_DESCRIPTION_PREFIX,
-      },
-    },
-    orderBy: {
-      versionNumber: "desc",
-    },
-    select: {
-      chapterId: true,
-      content: true,
-      description: true,
-      title: true,
-      versionNumber: true,
-    },
-    take: 4,
+function reportSnapshotReadFailure(scope: "single" | "batch", error: unknown) {
+  console.error("PUBLICATION_SNAPSHOT_READ_FAILED", {
+    errorName: error instanceof Error ? error.name : "UNKNOWN_ERROR",
+    scope,
   });
+}
 
-  for (const version of versions) {
-    const decoded = decodeVersion(version);
-    if (decoded) return decoded;
+export async function getLatestPublicationSnapshot(chapterId: string) {
+  try {
+    // Do not push the reserved publication marker into a database string-prefix
+    // predicate. Production may use a different MariaDB/Prisma adapter path than
+    // CI. Fetch the latest chapter versions and validate the reserved marker in
+    // application code so a publication lookup can never take Reader down.
+    const versions = await prisma.workVersion.findMany({
+      where: {
+        chapterId,
+      },
+      orderBy: {
+        versionNumber: "desc",
+      },
+      select: {
+        chapterId: true,
+        content: true,
+        description: true,
+        title: true,
+        versionNumber: true,
+      },
+      take: 12,
+    });
+
+    for (const version of versions) {
+      const decoded = decodeVersion(version);
+      if (decoded) return decoded;
+    }
+  } catch (error) {
+    reportSnapshotReadFailure("single", error);
   }
 
   return null;
@@ -71,32 +87,33 @@ export async function getLatestPublicationSnapshots(chapterIds: string[]) {
   const snapshots = new Map<string, PublishedChapterSnapshot>();
   if (chapterIds.length === 0) return snapshots;
 
-  const versions = await prisma.workVersion.findMany({
-    where: {
-      chapterId: {
-        in: chapterIds,
+  try {
+    const versions = await prisma.workVersion.findMany({
+      where: {
+        chapterId: {
+          in: chapterIds,
+        },
       },
-      description: {
-        startsWith: PUBLICATION_VERSION_DESCRIPTION_PREFIX,
+      orderBy: {
+        versionNumber: "desc",
       },
-    },
-    orderBy: {
-      versionNumber: "desc",
-    },
-    select: {
-      chapterId: true,
-      content: true,
-      description: true,
-      title: true,
-      versionNumber: true,
-    },
-  });
+      select: {
+        chapterId: true,
+        content: true,
+        description: true,
+        title: true,
+        versionNumber: true,
+      },
+    });
 
-  for (const version of versions) {
-    const chapterId = version.chapterId;
-    if (!chapterId || snapshots.has(chapterId)) continue;
-    const decoded = decodeVersion(version);
-    if (decoded) snapshots.set(chapterId, decoded);
+    for (const version of versions) {
+      const chapterId = version.chapterId;
+      if (!chapterId || snapshots.has(chapterId)) continue;
+      const decoded = decodeVersion(version);
+      if (decoded) snapshots.set(chapterId, decoded);
+    }
+  } catch (error) {
+    reportSnapshotReadFailure("batch", error);
   }
 
   return snapshots;

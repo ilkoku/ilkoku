@@ -23,6 +23,11 @@ type StructureRow = {
   updatedAt: Date;
 };
 
+type PublicationChapterOverride = {
+  chapterId: string;
+  title: string;
+};
+
 function countWords(value: string) {
   const normalized = value.trim();
 
@@ -464,6 +469,7 @@ async function ensureAutomaticTableOfContents(authorId: string, workId: string) 
 export async function prepareBookForPublication(
   authorId: string,
   workId: string,
+  chapterOverride?: PublicationChapterOverride,
 ) {
   const tocItemId = await ensureAutomaticTableOfContents(authorId, workId);
   const items = await readBookStructure(authorId, workId);
@@ -474,7 +480,11 @@ export async function prepareBookForPublication(
         item.id !== tocItemId &&
         includedKinds.includes(item.kind),
     )
-    .map((item) => item.title.trim())
+    .map((item) =>
+      item.chapterId === chapterOverride?.chapterId
+        ? chapterOverride.title.trim()
+        : item.title.trim(),
+    )
     .filter(Boolean);
   const content = tocLines.length
     ? tocLines.join("\n\n")
@@ -491,8 +501,17 @@ export async function prepareBookForPublication(
       AND authorId = ${authorId}
   `;
 
+  const preparedItems = await readBookStructure(authorId, workId);
+
   return {
-    items: await readBookStructure(authorId, workId),
+    items: preparedItems.map((item) =>
+      item.chapterId === chapterOverride?.chapterId
+        ? {
+            ...item,
+            title: chapterOverride.title,
+          }
+        : item,
+    ),
     tocContent: content,
     tocItemId,
   };

@@ -14,6 +14,7 @@ import {
   estimateReadingMinutes,
   getEstimatedBookPageRanges,
 } from "@/features/reading/metrics";
+import { publishedBookItemHref } from "@/features/works/book-publication";
 import type { PublicWorkDetail } from "@/features/works/types";
 import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 import {
@@ -82,16 +83,31 @@ export function BookShowcase({
     ) ?? firstChapter;
   const bookContextPath = `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`;
   const encodedBookContextPath = encodeURIComponent(bookContextPath);
+  const firstPublishedBookItem = work.publicationBook?.items[0] ?? null;
+  const startHref = readingProgress && resumeChapter
+    ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
+    : firstPublishedBookItem
+      ? `${publishedBookItemHref(work.slug, firstPublishedBookItem)}?from=${encodedBookContextPath}`
+      : resumeChapter
+        ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
+        : null;
   const contentWarnings = parseWorkContentWarnings(work.contentWarnings);
   const rating = workContentRatingDetails[work.contentRating];
-  const totalWords = work.chapters.reduce(
-    (sum, chapter) => sum + countReadingWords(chapter.content),
-    0,
-  );
+  const totalWords = work.publicationBook
+    ? work.publicationBook.items.reduce(
+        (sum, item) => sum + countReadingWords(item.content),
+        0,
+      )
+    : work.chapters.reduce(
+        (sum, chapter) => sum + countReadingWords(chapter.content),
+        0,
+      );
   const {
     ranges: estimatedPageRanges,
     totalPages: estimatedTotalPages,
   } = getEstimatedBookPageRanges(work.chapters);
+  const displayedTotalPages =
+    work.publicationBook?.totalPages ?? estimatedTotalPages;
 
   return (
     <div className="showcase-page">
@@ -195,8 +211,8 @@ export function BookShowcase({
               </div>
 
               <div>
-                <dt>Yaklaşık kitap sayfası</dt>
-                <dd>≈ {estimatedTotalPages}</dd>
+                <dt>{work.publicationBook ? "Yayın kitap sayfası" : "Yaklaşık kitap sayfası"}</dt>
+                <dd>{work.publicationBook ? displayedTotalPages : `≈ ${displayedTotalPages}`}</dd>
               </div>
 
               <div>
@@ -280,10 +296,10 @@ export function BookShowcase({
             )}
 
             <div className="book-card__actions">
-              {resumeChapter && (
+              {startHref && (
                 <Link
                   className="button button--primary showcase-cta"
-                  href={`/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`}
+                  href={startHref}
                 >
                   <span className="button__label">
                     <span aria-hidden="true">📖</span>{" "}
@@ -384,6 +400,10 @@ export function BookShowcase({
                         ? `tahmini kitap s. ${pageRange.startPage}`
                         : `tahmini kitap s. ${pageRange.startPage}–${pageRange.endPage}`
                       : "tahmini sayfa hesaplanamadı";
+                    const chapterHref =
+                      index === 0 && !readingProgress && startHref
+                        ? startHref
+                        : `/oku/${work.slug}/bolum-${chapter.position}?from=${encodedBookContextPath}`;
 
                     return (
                       <article
@@ -404,7 +424,7 @@ export function BookShowcase({
 
                         <Link
                           className="button button--outline"
-                          href={`/oku/${work.slug}/bolum-${chapter.position}?from=${encodedBookContextPath}`}
+                          href={chapterHref}
                         >
                           {index === 0 ? "Okumaya Başla" : "Bölümü Oku"}
                         </Link>

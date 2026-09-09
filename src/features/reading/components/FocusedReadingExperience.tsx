@@ -19,6 +19,7 @@ import type { PublicChapterDetail } from "@/features/works/types";
 import { ChapterSelector } from "./ChapterSelector";
 import { PagedReadingViewport } from "./PagedReadingViewport";
 import { ProtectedChapterContent } from "./ProtectedChapterContent";
+import { ReadingPageIndicator } from "./ReadingPageIndicator";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import styles from "./FocusedReadingExperience.module.css";
 
@@ -61,10 +62,6 @@ export function FocusedReadingExperience({
     publishedChapters,
     chapter.id,
   );
-  const estimatedPageRange =
-    estimatedPages.startPage === estimatedPages.endPage
-      ? `${estimatedPages.startPage}`
-      : `${estimatedPages.startPage}–${estimatedPages.endPage}`;
 
   const activeChapterIndex = publishedChapters.findIndex(
     (item) => item.id === chapter.id,
@@ -188,9 +185,7 @@ export function FocusedReadingExperience({
               <span aria-hidden="true">·</span>
               <span>{readingTime} dk okuma</span>
               <span aria-hidden="true">·</span>
-              <span>
-                Tahmini kitap sayfası {estimatedPageRange} / {estimatedPages.totalPages}
-              </span>
+              <ReadingPageIndicator />
             </p>
 
             <h1 id="bolum-basligi">{chapter.title}</h1>

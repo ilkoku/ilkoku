@@ -69,22 +69,17 @@ export function PublishedManuscriptViewport({
     const stage = stageRef.current;
     if (!stage) return;
 
-    measureScale();
+    const frame = window.requestAnimationFrame(measureScale);
     const observer = new ResizeObserver(measureScale);
     observer.observe(stage);
     window.addEventListener("resize", measureScale);
 
     return () => {
+      window.cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener("resize", measureScale);
     };
   }, [measureScale]);
-
-  useEffect(() => {
-    setPageIndex((current) =>
-      Math.min(Math.max(current, 0), Math.max(0, pages.length - 1)),
-    );
-  }, [pages.length]);
 
   useEffect(() => {
     const chapter = document.getElementById("bolum-metni");

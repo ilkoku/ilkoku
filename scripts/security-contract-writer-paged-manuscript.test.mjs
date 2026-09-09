@@ -115,6 +115,8 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   includes(submitGuard, "lastPublicationLayout", "preview keeps the last exact author layout");
   includes(submitGuard, "rememberBeforeEditorTransition", "capture author layout before preview unmounts editor");
   includes(submitGuard, "window.alert", "preview publication cannot fail silently when layout is missing");
+  includes(submitGuard, "publicationLayoutMatchesContent", "last valid layout must match current author text");
+  includes(submitGuard, "formDataEvent.formData.delete(PUBLICATION_LAYOUT_INPUT_NAME)", "invalid layout is removed instead of replacing a valid snapshot with empty data");
   includes(submitGuard, "pageEnds", "submit-time exact page boundaries");
 
   includes(layout, 'PUBLICATION_LAYOUT_INPUT_NAME = "publicationLayout"', "layout form contract");
@@ -125,7 +127,15 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   includes(actions, "publicationLayout", "validated publish layout");
   includes(actions, 'revalidatePath(`/eserlerim/${workId}/pasaport`)', "ownership passport refresh after work mutations");
   includes(mutations, "keepsLivePublication", "draft does not unpublish live chapter");
+  assert.equal(
+    mutations.includes("await saveChapterDraft(authorId, input);"),
+    false,
+    "publish must not perform a separate draft write before the publication transaction",
+  );
   includes(publication, "transaction.workVersion.create", "atomic publication version snapshot");
+  includes(publication, "content: input.content", "current author text is saved inside publication transaction");
+  includes(publication, "title: input.title", "current author chapter title is saved inside publication transaction");
+  includes(publication, "transaction.chapter.update", "chapter save is part of publication transaction");
   includes(publication, "encodePublicationVersionDescription", "signed publication layout metadata");
   includes(publication, "pageCount", "publication page count audit evidence");
 

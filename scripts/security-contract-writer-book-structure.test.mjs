@@ -49,10 +49,31 @@ test("writer book structure has persistent logical pages and automatic contents"
   includes(repository, "ensureAutomaticTableOfContents", "automatic contents creation");
   includes(repository, 'kind === "toc"', "contents kind handling");
   includes(repository, 'tocLines.join("\\n\\n")', "ordered contents generation");
+  assert.equal(
+    repository.includes('publishedAt: null'),
+    false,
+    "adding, editing or reordering book pages must not withdraw a live publication",
+  );
+  assert.equal(
+    repository.includes('visibility: "private"'),
+    false,
+    "book structure edits must not make a live work private",
+  );
 
   includes(actions, 'user.role !== "writer"', "writer authentication boundary");
   includes(actions, "reorderSchema", "reorder validation");
   includes(actions, "prepareBookForPublicationAction", "publish-time contents action");
+});
+
+test("historically published works are repaired back to the live lifecycle", () => {
+  const migration = source(
+    "prisma/migrations/20260909215500_restore_published_work_lifecycle/migration.sql",
+  );
+
+  includes(migration, "work_published", "real publication audit evidence");
+  includes(migration, "work.`status` = 'published'", "published status repair");
+  includes(migration, "work.`visibility` = 'public'", "public visibility repair");
+  includes(migration, "work.`archivedAt` IS NULL", "archive remains explicit removal boundary");
 });
 
 test("writer sidebar behaves like a reorderable slide pane", () => {
@@ -110,7 +131,7 @@ test("writer book structure has recoverable trash and permanent empty action", (
   includes(repository, "Eserde en az bir ana bölüm kalmalıdır.", "last chapter safety guard");
   includes(actions, 'user?.role === "writer"', "trash writer authorization");
   includes(actions, "trashBookStructureItemAction", "trash server action");
-  includes(actions, "restoreBookTrashItemAction", "restore server action");
+  includes(actions, "restoreBookTrashItemAction", "trash restore server action");
   includes(actions, "emptyBookTrashAction", "empty trash server action");
   includes(enhancer, "Seçili öğeyi sil", "selected item delete affordance");
   includes(enhancer, "Çöp Kutusu", "trash drawer");

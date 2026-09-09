@@ -126,6 +126,13 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(selector, "publishedBookItemHref", "selector routes every published book item through canonical Reader URLs");
   includes(selector, "items.map", "selector exposes the complete author book order");
   includes(continuityTools, "Kişisel okuma araçları", "special pages keep the personal tools shell position");
+  includes(continuityTools, 'title: "Metni seç. Vurgu', "special page highlight icon keeps the canonical tool selector contract");
+  includes(continuityTools, 'title: "Metni seç. Alt çizgi', "special page underline icon keeps the canonical tool selector contract");
+  includes(continuityTools, 'title: "Kitap sayfasında', "special page pin icon keeps the canonical tool selector contract");
+  includes(continuityTools, 'title: "Kaldığın noktaya', "special page reading-position icon keeps the canonical tool selector contract");
+  includes(continuityTools, 'title: "Not bağlamak', "special page note icon keeps the canonical tool selector contract");
+  includes(continuityTools, 'title: "Kişisel işaretlere', "special page eraser icon keeps the canonical tool selector contract");
+  includes(continuityTools, 'aria-expanded={label === "İşaretlerim" ? false : undefined}', "special page annotations-list icon keeps the canonical tool selector contract");
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
   includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
   includes(renderer, "const activePage = pages[pageIndex]", "only one active publication page rendered");

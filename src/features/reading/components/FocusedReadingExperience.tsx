@@ -15,6 +15,7 @@ import {
   estimateReadingMinutes,
   getEstimatedBookPageRange,
 } from "@/features/reading/metrics";
+import { publishedBookItemHref } from "@/features/works/book-publication";
 import type { PublicChapterDetail } from "@/features/works/types";
 import { ChapterSelector } from "./ChapterSelector";
 import { PagedReadingViewport } from "./PagedReadingViewport";
@@ -81,6 +82,22 @@ export function FocusedReadingExperience({
       ? publishedChapters[activeChapterIndex + 1]
       : null;
 
+  const publishedBook = chapter.work.publicationBook;
+  const activeBookItemIndex =
+    publishedBook?.items.findIndex(
+      (item) => item.type === "chapter" && item.chapterId === chapter.id,
+    ) ?? -1;
+  const previousBookItem =
+    publishedBook && activeBookItemIndex > 0
+      ? publishedBook.items[activeBookItemIndex - 1]
+      : null;
+  const nextBookItem =
+    publishedBook &&
+    activeBookItemIndex >= 0 &&
+    activeBookItemIndex < publishedBook.items.length - 1
+      ? publishedBook.items[activeBookItemIndex + 1]
+      : null;
+
   const encodedReturnTo = encodeURIComponent(returnTo);
   const currentBookPath = `/kitap/${chapter.work.slug}`;
   const returnIsBookPage =
@@ -99,12 +116,24 @@ export function FocusedReadingExperience({
     return `/oku/${chapter.work.slug}/bolum-${position}?from=${encodedReturnTo}${edgeParameter}`;
   }
 
-  const previousChapterHref = previousChapter
-    ? getChapterHref(previousChapter.position, "last")
-    : null;
-  const nextChapterHref = nextChapter
-    ? getChapterHref(nextChapter.position)
-    : null;
+  function getBookItemHref(
+    item: NonNullable<typeof publishedBook>["items"][number],
+    edge?: "last",
+  ) {
+    const edgeParameter = edge === "last" ? "&sayfa=son" : "";
+    return `${publishedBookItemHref(chapter.work.slug, item)}?from=${encodedReturnTo}${edgeParameter}`;
+  }
+
+  const previousChapterHref = previousBookItem
+    ? getBookItemHref(previousBookItem, "last")
+    : previousChapter
+      ? getChapterHref(previousChapter.position, "last")
+      : null;
+  const nextChapterHref = nextBookItem
+    ? getBookItemHref(nextBookItem)
+    : nextChapter
+      ? getChapterHref(nextChapter.position)
+      : null;
 
   return (
     <div className={`reading-page ${styles.page}`}>

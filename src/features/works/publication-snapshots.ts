@@ -51,10 +51,11 @@ function reportSnapshotReadFailure(scope: "single" | "batch", error: unknown) {
 
 export async function getLatestPublicationSnapshot(chapterId: string) {
   try {
-    // Do not push the reserved publication marker into a database string-prefix
-    // predicate. Production may use a different MariaDB/Prisma adapter path than
-    // CI. Fetch the latest chapter versions and validate the reserved marker in
-    // application code so a publication lookup can never take Reader down.
+    // The published snapshot is the Reader source of truth and must remain
+    // discoverable regardless of how many later draft versions the author saves.
+    // Keep the reserved marker validation in application code for MariaDB adapter
+    // compatibility, but never impose a recent-version window that can hide the
+    // last real publication.
     const versions = await prisma.workVersion.findMany({
       where: {
         chapterId,
@@ -69,7 +70,6 @@ export async function getLatestPublicationSnapshot(chapterId: string) {
         title: true,
         versionNumber: true,
       },
-      take: 12,
     });
 
     for (const version of versions) {

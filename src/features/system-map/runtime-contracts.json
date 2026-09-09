@@ -15,6 +15,7 @@
     "EmailDeliveryRetry",
     "NotificationPreference",
     "PersonalAnnotation",
+    "PersonalBookAnnotation",
     "SiteContent",
     "UserContract",
     "UserContractEvent",

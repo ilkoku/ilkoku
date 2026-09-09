@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import type { PersonalBookAnnotationRecord } from "@/features/reading/personal-book-annotation-types";
 import { estimateReadingMinutes } from "@/features/reading/metrics";
 import {
   publishedBookItemHref,
@@ -14,16 +15,20 @@ import { PublishedManuscriptViewport } from "./PublishedManuscriptViewport";
 import styles from "./FocusedReadingExperience.module.css";
 
 export function PublishedBookSpecialPageExperience({
+  initialAnnotations,
   item,
   protectionIdentity,
   returnTo = "/kesfet",
   startAtLastPage = false,
+  userKey,
   work,
 }: {
+  initialAnnotations: PersonalBookAnnotationRecord[];
   item: PublishedBookSpecialItem;
   protectionIdentity: string;
   returnTo?: string;
   startAtLastPage?: boolean;
+  userKey: string;
   work: PublicWorkDetail;
 }) {
   const publicationBook = work.publicationBook;
@@ -125,8 +130,6 @@ export function PublishedBookSpecialPageExperience({
         </nav>
       </header>
 
-      <PublishedBookToolsContinuity />
-
       <main className={styles.layout}>
         <article className={styles.article} aria-labelledby="bolum-basligi">
           <header className={styles.chapterHeader}>
@@ -145,17 +148,24 @@ export function PublishedBookSpecialPageExperience({
             id="bolum-metni"
             aria-label={`${details.label} metni`}
           >
-            <PublishedManuscriptViewport
-              chapterTitle={item.title}
-              content={item.content}
-              identity={protectionIdentity}
-              layout={item.layout}
-              nextChapterHref={nextHref}
-              previousChapterHref={previousHref}
-              startAtLastPage={startAtLastPage}
-              subtitle={item.subtitle}
-              workTitle={publicationBook.workTitle}
-            />
+            <PublishedBookToolsContinuity
+              initialAnnotations={initialAnnotations}
+              publicationItemId={item.structureItemId}
+              userKey={userKey}
+              workId={work.id}
+            >
+              <PublishedManuscriptViewport
+                chapterTitle={item.title}
+                content={item.content}
+                identity={protectionIdentity}
+                layout={item.layout}
+                nextChapterHref={nextHref}
+                previousChapterHref={previousHref}
+                startAtLastPage={startAtLastPage}
+                subtitle={item.subtitle}
+                workTitle={publicationBook.workTitle}
+              />
+            </PublishedBookToolsContinuity>
           </section>
         </article>
       </main>

@@ -81,6 +81,64 @@
   white-space: pre-wrap;
 }
 
+.page[data-text-selection="true"] .pageText {
+  cursor: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.annotationText {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.annotationHighlight {
+  background: rgba(255, 224, 92, 0.42);
+  box-shadow: 0 0 0 1px rgba(194, 151, 24, 0.08) inset;
+}
+
+.annotationUnderline {
+  text-decoration-line: underline;
+  text-decoration-color: rgba(166, 111, 18, 0.9);
+  text-decoration-thickness: 1.4px;
+  text-underline-offset: 2px;
+}
+
+.annotationNote {
+  border-bottom: 1px dotted rgba(104, 71, 232, 0.68);
+}
+
+.page[data-personal-book-tool="eraser"] .annotationText {
+  cursor: crosshair;
+}
+
+.pointAnnotation {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(104, 71, 232, 0.42);
+  border-radius: 999px;
+  background: rgba(255, 254, 251, 0.94);
+  box-shadow: 0 5px 14px rgba(36, 27, 20, 0.18);
+  color: rgba(104, 71, 232, 0.9);
+  font: 700 15px/1 sans-serif;
+  transform: translate(-50%, -50%);
+}
+
+.pointAnnotation[data-reading-position="true"] {
+  border-color: rgba(194, 151, 24, 0.62);
+  color: rgba(166, 111, 18, 0.96);
+}
+
+.page[data-personal-book-tool="eraser"] .pointAnnotation {
+  cursor: crosshair;
+}
+
 .watermarkLayer {
   position: absolute;
   inset: 0;

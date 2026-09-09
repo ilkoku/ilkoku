@@ -26,6 +26,29 @@ test("content classification lives in writer statistics without duplicating form
   includes(css, "grid-column: 1 / -1", "responsive full-width statistics card");
 });
 
+test("writer direct save and publish preserve existing classification when editor form omits it", () => {
+  const actions = source("src/features/works/actions.ts");
+  const mutations = source("src/features/works/mutations.ts");
+  const validators = source("src/features/works/validators.ts");
+
+  includes(actions, "function hasWorkClassification(formData: FormData)", "classification presence guard");
+  includes(actions, "writerMetadataSchema.safeParse", "writer metadata-only validation");
+  includes(actions, "await updateWriterMetadata(authorId, parsed.data)", "classification-preserving metadata path");
+  includes(mutations, "export async function updateWriterMetadata", "writer metadata mutation");
+  includes(mutations, "description: input.summary", "writer summary update");
+  includes(mutations, "genre: input.genre", "writer genre update");
+  includes(mutations, "title: input.title", "writer title update");
+  assert.equal(
+    mutations.slice(
+      mutations.indexOf("export async function updateWriterMetadata"),
+      mutations.indexOf("export async function saveChapterDraft"),
+    ).includes("contentRating:"),
+    false,
+    "writer metadata-only mutation must not overwrite content rating",
+  );
+  includes(validators, "export const writerMetadataSchema", "writer metadata schema");
+});
+
 test("writer trash is portaled to the sidebar itself so it stays after book items", () => {
   const trash = source(
     "src/features/writer/components/WriterBookTrashEnhancer.tsx",

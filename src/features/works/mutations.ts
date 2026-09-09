@@ -117,13 +117,32 @@ export async function updateWork(
   input: UpdateWorkInput,
 ) {
   const { id, ...changes } = input;
+  const existingWork = await worksRepository.getAuthorWorkById(
+    authorId,
+    id,
+  );
 
-  const status =
+  if (!existingWork) {
+    throw new Error(
+      "Eser bulunamadı veya bu eseri düzenleme yetkin yok.",
+    );
+  }
+
+  const keepsLivePublication =
+    existingWork.archivedAt === null &&
+    existingWork.status === "published" &&
+    existingWork.visibility === "public" &&
+    existingWork.publishedAt !== null;
+
+  const requestedStatus =
     changes.status === "in_progress"
       ? "in_review"
       : changes.status === "draft"
         ? "draft"
         : undefined;
+  const status = keepsLivePublication
+    ? "published"
+    : requestedStatus;
 
   return worksRepository.updateWork(
     authorId,
@@ -141,13 +160,19 @@ export async function updateWork(
       contentRatingConfirmedAt: new Date(),
       status,
       title: changes.title,
-      ...(status
+      ...(keepsLivePublication
         ? {
             archivedAt: null,
-            publishedAt: null,
-            visibility: "private",
+            publishedAt: existingWork.publishedAt,
+            visibility: "public",
           }
-        : {}),
+        : status
+          ? {
+              archivedAt: null,
+              publishedAt: null,
+              visibility: "private",
+            }
+          : {}),
     },
   );
 }

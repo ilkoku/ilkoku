@@ -185,10 +185,13 @@ export function PublishedBookToolsContinuity({
       if (!saved) return;
       const parsed = JSON.parse(saved) as { x?: unknown; y?: unknown };
       if (typeof parsed.x !== "number" || typeof parsed.y !== "number") return;
-      setPosition({
-        x: clamp(parsed.x, 8, Math.max(8, window.innerWidth - 310)),
-        y: clamp(parsed.y, 8, Math.max(8, window.innerHeight - 120)),
+      const frame = window.requestAnimationFrame(() => {
+        setPosition({
+          x: clamp(parsed.x as number, 8, Math.max(8, window.innerWidth - 310)),
+          y: clamp(parsed.y as number, 8, Math.max(8, window.innerHeight - 120)),
+        });
       });
+      return () => window.cancelAnimationFrame(frame);
     } catch {
       // Yerel araç konumu bozuksa varsayılan konum kullanılır.
     }
@@ -398,11 +401,16 @@ export function PublishedBookToolsContinuity({
 
   function showAnnotation(annotation: PersonalBookAnnotationRecord) {
     const point = parsePersonalPagePointAnchor(annotation.pathData);
-    const nonce = Date.now();
     if (point) {
-      setNavigateRequest({ nonce, pageIndex: point.pageIndex });
+      setNavigateRequest((current) => ({
+        nonce: (current?.nonce ?? 0) + 1,
+        pageIndex: point.pageIndex,
+      }));
     } else if (typeof annotation.startOffset === "number") {
-      setNavigateRequest({ nonce, startOffset: annotation.startOffset });
+      setNavigateRequest((current) => ({
+        nonce: (current?.nonce ?? 0) + 1,
+        startOffset: annotation.startOffset as number,
+      }));
     }
     if (annotation.type === "note") setOpenNoteId(annotation.id);
   }

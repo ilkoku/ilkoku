@@ -136,7 +136,7 @@ export function WriterPublishExperienceEnhancer() {
 
     return createPortal(
       <Link
-        className="button writer-post-publish-action"
+        className="button button--primary writer-post-publish-action"
         href="/eserlerim"
       >
         Eserlerime Dön

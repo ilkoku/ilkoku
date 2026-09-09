@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { authContent } from "@/content";
 import { readAdminRoleView } from "@/features/admin-role-view/cookie";
 import type {
@@ -31,53 +33,61 @@ const validRoles: UserRole[] = [
   "admin",
 ];
 
-export async function getCurrentProfile(
+const getCurrentProfileCached = cache(
+  async (
+    ignoreAdminRoleView: boolean,
+  ): Promise<AuthProfile | null> => {
+    const context = await getCurrentSessionContext();
+
+    if (!context) {
+      return null;
+    }
+
+    const user = context.user;
+
+    if (!user || !validRoles.includes(user.role as UserRole)) {
+      return null;
+    }
+
+    const actualRole = user.role as UserRole;
+    const roleView =
+      actualRole === "admin" && !ignoreAdminRoleView
+        ? await readAdminRoleView({
+            sessionId: context.sessionId,
+            userRole: actualRole,
+          }).catch((error) => {
+            console.error("ADMIN_ROLE_VIEW_READ_FAILED", error);
+            return null;
+          })
+        : null;
+
+    const adminPublisherView =
+      roleView?.role === "publisher" &&
+      roleView.publisherId &&
+      roleView.publisherRole
+        ? {
+            publisherId: roleView.publisherId,
+            role: roleView.publisherRole,
+          }
+        : null;
+
+    return {
+      actualRole,
+      adminPublisherView,
+      adminRoleView: roleView?.role ?? null,
+      avatarUrl: user.avatarUrl,
+      fullName:
+        user.fullName ||
+        user.email.split("@")[0] ||
+        authContent.common.fallbackUserName,
+      id: user.id,
+      role: roleView?.role ?? actualRole,
+    };
+  },
+);
+
+export function getCurrentProfile(
   options: { ignoreAdminRoleView?: boolean } = {},
 ): Promise<AuthProfile | null> {
-  const context = await getCurrentSessionContext();
-
-  if (!context) {
-    return null;
-  }
-
-  const user = context.user;
-
-  if (!user || !validRoles.includes(user.role as UserRole)) {
-    return null;
-  }
-
-  const actualRole = user.role as UserRole;
-  const roleView =
-    actualRole === "admin" && !options.ignoreAdminRoleView
-      ? await readAdminRoleView({
-          sessionId: context.sessionId,
-          userRole: actualRole,
-        }).catch((error) => {
-          console.error("ADMIN_ROLE_VIEW_READ_FAILED", error);
-          return null;
-        })
-      : null;
-
-  const adminPublisherView =
-    roleView?.role === "publisher" &&
-    roleView.publisherId &&
-    roleView.publisherRole
-      ? {
-          publisherId: roleView.publisherId,
-          role: roleView.publisherRole,
-        }
-      : null;
-
-  return {
-    actualRole,
-    adminPublisherView,
-    adminRoleView: roleView?.role ?? null,
-    avatarUrl: user.avatarUrl,
-    fullName:
-      user.fullName ||
-      user.email.split("@")[0] ||
-      authContent.common.fallbackUserName,
-    id: user.id,
-    role: roleView?.role ?? actualRole,
-  };
+  return getCurrentProfileCached(Boolean(options.ignoreAdminRoleView));
 }

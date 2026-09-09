@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { writerContent } from "@/content";
@@ -286,18 +286,21 @@ export function WriterPagedManuscriptEnhancer() {
     getServerSnapshot,
   );
   const target = getEditorTarget();
-  const [publicationLayout, setPublicationLayout] = useState("");
+  const publicationLayoutRef = useRef("");
 
   useEffect(() => {
     if (snapshot === "writer-editor-unavailable") return;
 
-    setPublicationLayout("");
+    publicationLayoutRef.current = "";
+    syncPublicationLayoutInputs("");
+
     let frame = window.requestAnimationFrame(() => {
       frame = window.requestAnimationFrame(() => {
         const activeTarget = getEditorTarget();
         if (!activeTarget) return;
         const nextLayout = capturePublicationLayout(activeTarget);
-        setPublicationLayout(nextLayout);
+        publicationLayoutRef.current = nextLayout;
+        syncPublicationLayoutInputs(nextLayout);
       });
     });
 
@@ -305,16 +308,15 @@ export function WriterPagedManuscriptEnhancer() {
   }, [snapshot]);
 
   useEffect(() => {
-    syncPublicationLayoutInputs(publicationLayout);
     const observer = new MutationObserver(() => {
-      syncPublicationLayoutInputs(publicationLayout);
+      syncPublicationLayoutInputs(publicationLayoutRef.current);
     });
     observer.observe(document.body, {
       childList: true,
       subtree: true,
     });
     return () => observer.disconnect();
-  }, [publicationLayout]);
+  }, []);
 
   if (!target || snapshot === "writer-editor-unavailable") {
     return null;

@@ -177,20 +177,29 @@ export function PublishedManuscriptViewport({
     const request = tools?.navigateRequest;
     if (!request) return;
 
-    if (typeof request.pageIndex === "number") {
-      setPageIndex(Math.min(Math.max(0, request.pageIndex), Math.max(0, pages.length - 1)));
-      return;
-    }
+    const frame = window.requestAnimationFrame(() => {
+      if (typeof request.pageIndex === "number") {
+        setPageIndex(
+          Math.min(
+            Math.max(0, request.pageIndex),
+            Math.max(0, pages.length - 1),
+          ),
+        );
+        return;
+      }
 
-    if (typeof request.startOffset === "number") {
-      const targetIndex = pages.findIndex(
-        (page, index) =>
-          request.startOffset! >= page.start &&
-          (request.startOffset! < page.end ||
-            (index === pages.length - 1 && request.startOffset === page.end)),
-      );
-      if (targetIndex >= 0) setPageIndex(targetIndex);
-    }
+      if (typeof request.startOffset === "number") {
+        const targetIndex = pages.findIndex(
+          (page, index) =>
+            request.startOffset! >= page.start &&
+            (request.startOffset! < page.end ||
+              (index === pages.length - 1 && request.startOffset === page.end)),
+        );
+        if (targetIndex >= 0) setPageIndex(targetIndex);
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [pages, tools?.navigateRequest]);
 
   function blockInteraction(event: SyntheticEvent) {

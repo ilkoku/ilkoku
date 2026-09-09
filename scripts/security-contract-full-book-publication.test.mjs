@@ -25,6 +25,7 @@ function excludes(text, fragment, label) {
 test("canonical publish creates one immutable full-book publication truth", () => {
   const contract = source("src/features/works/book-publication.ts");
   const action = source("src/features/works/actions.ts");
+  const service = source("src/features/works/full-book-publication.ts");
   const publication = source("src/features/works/publish-full-book-event.ts");
 
   includes(contract, "PublishedBookSnapshot", "immutable full-book snapshot type");
@@ -34,6 +35,9 @@ test("canonical publish creates one immutable full-book publication truth", () =
   includes(action, "prepareBookForPublication", "server-side structure preparation");
   includes(action, "publishFullBook(", "canonical full-book publication service");
   excludes(action, "await publishWork(", "legacy chapter-only publication bypass");
+  includes(service, "prepareBookForPublication(authorId, input.workId", "final TOC preparation from publish payload");
+  includes(service, "chapterId: input.chapterId", "current unsaved chapter identity in TOC");
+  includes(service, "title: input.title", "current unsaved chapter title in TOC");
 
   includes(publication, "prisma.$transaction", "single atomic publication transaction");
   includes(publication, "FROM BookStructureItem", "complete Writer book structure read");
@@ -55,6 +59,9 @@ test("Writer measures every book item and preserves intentional blank pages", ()
   const enhancer = source(
     "src/features/writer/components/WriterFullBookPublicationEnhancer.tsx",
   );
+  const prepareAction = source(
+    "src/features/works/prepare-full-book-publication-action.ts",
+  );
 
   includes(measurement, "for (const item of [...items]", "ordered whole-book measurement");
   includes(measurement, "currentChapterId", "current unsaved chapter identity");
@@ -69,8 +76,12 @@ test("Writer measures every book item and preserves intentional blank pages", ()
   includes(layout, "if (content.length === 0)", "intentional blank publication page validation");
   includes(layout, "pageEnds[0] !== 0", "blank page represented as one physical page");
   includes(enhancer, "BOOK_PUBLICATION_LAYOUT_INPUT_NAME", "full-book layout form binding");
-  includes(enhancer, "prepareBookForPublicationAction", "Writer structure preparation before publish");
+  includes(enhancer, "prepareFullBookPublicationAction", "Writer current-state full-book preparation");
+  includes(enhancer, "chapterTitle", "Writer unsaved chapter title forwarded before measurement");
   includes(enhancer, "measureBookPublicationLayouts", "Writer physical book measurement");
+  includes(prepareAction, "prepareBookForPublication", "server TOC preparation bridge");
+  includes(prepareAction, "chapterId: parsed.data.chapterId", "validated current chapter TOC override");
+  includes(prepareAction, "title: parsed.data.chapterTitle", "validated current chapter title TOC override");
 });
 
 test("Reader consumes full-book snapshot and navigates special pages plus chapters in author order", () => {

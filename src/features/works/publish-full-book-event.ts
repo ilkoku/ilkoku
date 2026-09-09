@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 
+import { writerContent } from "@/content";
 import { prisma } from "@/lib/prisma";
 import {
   BOOK_PUBLICATION_VERSION,
@@ -10,10 +11,7 @@ import {
   type PublishedBookItem,
   type PublishedBookSnapshot,
 } from "./book-publication";
-import {
-  bookSectionDetails,
-  isSpecialBookSectionKind,
-} from "./book-structure";
+import { isSpecialBookSectionKind } from "./book-structure";
 import {
   encodePublicationVersionDescription,
   parsePublicationLayout,
@@ -168,7 +166,7 @@ export async function publishFullBookWithEvent(
           chapterId: row.chapterId,
           chapterPosition: row.chapterPosition,
           title,
-          subtitle: bookSectionDetails.chapter.description,
+          subtitle: writerContent.editor.subtitle,
           content,
           layout,
         });
@@ -232,9 +230,7 @@ export async function publishFullBookWithEvent(
     });
 
     let nextVersionNumber = (latestVersion?.versionNumber ?? 0) + 1;
-    let activePublicationVersion: Awaited<
-      ReturnType<typeof transaction.workVersion.create>
-    > | null = null;
+    let activePublicationVersion: { versionNumber: number } | null = null;
 
     for (const item of publishedItems) {
       if (item.type !== "chapter") continue;
@@ -255,7 +251,9 @@ export async function publishFullBookWithEvent(
       nextVersionNumber += 1;
 
       if (item.chapterId === input.chapterId) {
-        activePublicationVersion = publicationVersion;
+        activePublicationVersion = {
+          versionNumber: publicationVersion.versionNumber,
+        };
       }
 
       await transaction.chapter.update({

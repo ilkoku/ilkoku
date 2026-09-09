@@ -200,15 +200,12 @@ export async function publishWork(
     );
   }
 
-  await saveChapterDraft(authorId, input);
-
   const {
     publicationEvent,
     work: publishedWork,
   } = await publishWorkWithEvent(
     authorId,
-    input.workId,
-    input.chapterId,
+    input,
     publicationLayout,
   );
 

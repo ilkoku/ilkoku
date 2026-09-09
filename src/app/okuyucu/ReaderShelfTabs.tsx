@@ -107,7 +107,7 @@ function WorkCard({
 
         <div className="book-card__actions">
           <Link
-            className="button button--ghost"
+            className="button button--outline"
             href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent(
               "/okuyucu",
             )}`}
@@ -118,7 +118,7 @@ function WorkCard({
           <form action={toggleFavoriteAction}>
             <input name="workId" type="hidden" value={work.id} />
             <input name="returnPath" type="hidden" value="/okuyucu" />
-            <button className="button button--ghost" type="submit">
+            <button className="button button--outline" type="submit">
               {work.isFavorite ? "Favoriden Çıkar" : "Favoriye Ekle"}
             </button>
           </form>

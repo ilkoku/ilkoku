@@ -2,6 +2,7 @@ import { WriterBookStructureRefreshBoundary } from "@/features/writer/components
 import { WriterBookTrashEnhancer } from "@/features/writer/components/WriterBookTrashEnhancer";
 import { WriterClassificationStatsEnhancer } from "@/features/writer/components/WriterClassificationStatsEnhancer";
 import { WriterEditingTools } from "@/features/writer/components/WriterEditingTools";
+import { WriterFullBookPublicationEnhancer } from "@/features/writer/components/WriterFullBookPublicationEnhancer";
 import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
 import { WriterPublicationSnapshotGuard } from "@/features/writer/components/WriterPublicationSnapshotGuard";
 import { WriterPublishExperienceEnhancer } from "@/features/writer/components/WriterPublishExperienceEnhancer";
@@ -29,6 +30,7 @@ export default function WriterDashboardLayout({
       <WriterPagedManuscriptEnhancer />
       <WriterPublishExperienceEnhancer />
       <WriterPublicationSnapshotGuard />
+      <WriterFullBookPublicationEnhancer />
       <WriterBookStructureRefreshBoundary />
       <WriterBookTrashEnhancer />
       <WriterClassificationStatsEnhancer />

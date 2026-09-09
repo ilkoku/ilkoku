@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { ChapterModel } from "@/generated/prisma/models/Chapter";
 import type { WorkModel } from "@/generated/prisma/models/Work";
+import type { PublishedBookSnapshot } from "./book-publication";
 import type { PublicationLayoutSnapshot } from "./publication-layout";
 
 export type Work = WorkModel;
@@ -51,6 +52,7 @@ export type PublicWorkDetail =
     chapterCount: number;
     chapters: ChapterModel[];
     isCompleted: boolean;
+    publicationBook: PublishedBookSnapshot | null;
     sameAuthorWorks: PublicWorkSummary[];
     similarWorks: PublicWorkSummary[];
   };

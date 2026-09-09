@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { parsePublishedBookFromAuditMetadata } from "./book-publication";
 import {
   decodePublicationVersionDescription,
   PUBLICATION_VERSION_DESCRIPTION_PREFIX,
@@ -42,11 +43,38 @@ function decodeVersion(version: VersionRow): PublishedChapterSnapshot | null {
   };
 }
 
-function reportSnapshotReadFailure(scope: "single" | "batch", error: unknown) {
+function reportSnapshotReadFailure(scope: "single" | "batch" | "book", error: unknown) {
   console.error("PUBLICATION_SNAPSHOT_READ_FAILED", {
     errorName: error instanceof Error ? error.name : "UNKNOWN_ERROR",
     scope,
   });
+}
+
+export async function getLatestPublishedBookSnapshot(workId: string) {
+  try {
+    const publications = await prisma.auditLog.findMany({
+      where: {
+        action: "work_published",
+        entityId: workId,
+        entityType: "Work",
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        metadata: true,
+      },
+    });
+
+    for (const publication of publications) {
+      const snapshot = parsePublishedBookFromAuditMetadata(publication.metadata);
+      if (snapshot) return snapshot;
+    }
+  } catch (error) {
+    reportSnapshotReadFailure("book", error);
+  }
+
+  return null;
 }
 
 export async function getLatestPublicationSnapshot(chapterId: string) {

@@ -88,6 +88,7 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   );
   const layout = source("src/features/works/publication-layout.ts");
   const actions = source("src/features/works/actions.ts");
+  const validators = source("src/features/works/validators.ts");
   const mutations = source("src/features/works/mutations.ts");
   const publication = source("src/features/works/publish-work-event.ts");
   const snapshots = source("src/features/works/publication-snapshots.ts");
@@ -132,6 +133,12 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   includes(layout, 'PUBLICATION_LAYOUT_INPUT_NAME = "publicationLayout"', "layout form contract");
   includes(layout, "contentLength", "layout-content integrity binding");
   includes(layout, "splitPublishedPages", "saved page split helper");
+  includes(validators, "normalizeTextareaLineEndings", "textarea line-ending canonicalization helper");
+  includes(
+    validators,
+    ".transform(normalizeTextareaLineEndings)",
+    "chapter content is canonicalized before publication layout validation",
+  );
 
   includes(actions, "parsePublicationLayout", "server layout validation");
   includes(actions, "publicationLayout", "validated publish layout");

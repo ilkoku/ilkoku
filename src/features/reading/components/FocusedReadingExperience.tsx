@@ -15,7 +15,10 @@ import {
   estimateReadingMinutes,
   getEstimatedBookPageRange,
 } from "@/features/reading/metrics";
-import { publishedBookItemHref } from "@/features/works/book-publication";
+import {
+  publishedBookItemHref,
+  type PublishedBookItem,
+} from "@/features/works/book-publication";
 import type { PublicChapterDetail } from "@/features/works/types";
 import { ChapterSelector } from "./ChapterSelector";
 import { PagedReadingViewport } from "./PagedReadingViewport";
@@ -87,6 +90,10 @@ export function FocusedReadingExperience({
     publishedBook?.items.findIndex(
       (item) => item.type === "chapter" && item.chapterId === chapter.id,
     ) ?? -1;
+  const activeBookItem =
+    publishedBook && activeBookItemIndex >= 0
+      ? publishedBook.items[activeBookItemIndex]
+      : null;
   const previousBookItem =
     publishedBook && activeBookItemIndex > 0
       ? publishedBook.items[activeBookItemIndex - 1]
@@ -116,10 +123,7 @@ export function FocusedReadingExperience({
     return `/oku/${chapter.work.slug}/bolum-${position}?from=${encodedReturnTo}${edgeParameter}`;
   }
 
-  function getBookItemHref(
-    item: NonNullable<typeof publishedBook>["items"][number],
-    edge?: "last",
-  ) {
+  function getBookItemHref(item: PublishedBookItem, edge?: "last") {
     const edgeParameter = edge === "last" ? "&sayfa=son" : "";
     return `${publishedBookItemHref(chapter.work.slug, item)}?from=${encodedReturnTo}${edgeParameter}`;
   }
@@ -260,6 +264,7 @@ export function FocusedReadingExperience({
                 nextChapterHref={nextChapterHref}
                 previousChapterHref={previousChapterHref}
                 startAtLastPage={startAtLastPage}
+                subtitle={activeBookItem?.subtitle}
                 workTitle={chapter.work.title}
               />
             ) : (

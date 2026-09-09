@@ -240,10 +240,17 @@ function setPublicationLayoutInput(form: HTMLFormElement, layout: string) {
   input.value = layout;
 }
 
+function nextAnimationFrame() {
+  return new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => resolve());
+  });
+}
+
 export function WriterPublicationSnapshotGuard() {
   useEffect(() => {
     let lastPublicationLayout = "";
     let suppressBeforeUnloadUntil = 0;
+    let publishRetryToken = 0;
 
     function rememberCurrentWriterLayout() {
       const target = getEditorTarget();
@@ -269,6 +276,34 @@ export function WriterPublicationSnapshotGuard() {
       event.stopImmediatePropagation();
     }
 
+    async function retryEditorPublish(
+      form: HTMLFormElement,
+      submitter: HTMLButtonElement,
+    ) {
+      const token = ++publishRetryToken;
+
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        await nextAnimationFrame();
+
+        if (token !== publishRetryToken || !document.contains(form)) {
+          return;
+        }
+
+        const layout = captureForWriterForm(form, lastPublicationLayout);
+        if (!layout) continue;
+
+        lastPublicationLayout = layout;
+        setPublicationLayoutInput(form, layout);
+        allowPublishNavigation();
+        form.requestSubmit(submitter);
+        return;
+      }
+
+      window.alert(
+        "Yayın sayfa düzeni hazırlanamadı. Metin ve sayfalar ekranda görünür durumdayken yeniden Yayınla.",
+      );
+    }
+
     function prepareBeforeReactSubmit(event: SubmitEvent) {
       const editorPublish = isEditorPublishSubmit(event);
 
@@ -283,7 +318,16 @@ export function WriterPublicationSnapshotGuard() {
           setPublicationLayoutInput(event.target, layout);
         }
 
-        if (editorPublish) allowPublishNavigation();
+        if (editorPublish) {
+          if (!layout && event.submitter instanceof HTMLButtonElement) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            void retryEditorPublish(event.target, event.submitter);
+            return;
+          }
+
+          allowPublishNavigation();
+        }
         return;
       }
 
@@ -352,6 +396,7 @@ export function WriterPublicationSnapshotGuard() {
     );
 
     return () => {
+      publishRetryToken += 1;
       document.removeEventListener("click", rememberBeforeEditorTransition, true);
       document.removeEventListener("submit", prepareBeforeReactSubmit, true);
       document.removeEventListener("formdata", bindLayoutToFormData, true);

@@ -35,6 +35,11 @@ test("successful publish offers a direct return to Eserlerim", () => {
 
   includes(enhancer, 'href="/eserlerim"', "Eserlerim destination");
   includes(enhancer, "Eserlerime Dön", "post-publish action label");
+  includes(
+    enhancer,
+    'className="button button--primary writer-post-publish-action"',
+    "post-publish action keeps the primary button treatment",
+  );
   includes(css, ".writer-post-publish-action", "post-publish action replacement styling");
 });
 

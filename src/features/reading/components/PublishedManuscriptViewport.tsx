@@ -36,6 +36,7 @@ export function PublishedManuscriptViewport({
   nextChapterHref,
   previousChapterHref,
   startAtLastPage = false,
+  subtitle,
   workTitle,
 }: {
   chapterTitle: string;
@@ -45,6 +46,7 @@ export function PublishedManuscriptViewport({
   nextChapterHref?: string | null;
   previousChapterHref?: string | null;
   startAtLastPage?: boolean;
+  subtitle?: string | null;
   workTitle: string;
 }) {
   const router = useRouter();
@@ -186,6 +188,7 @@ export function PublishedManuscriptViewport({
               >
                 <span>{workTitle}</span>
                 <strong>{chapterTitle}</strong>
+                {subtitle ? <p>{subtitle}</p> : null}
               </header>
             ) : null}
 

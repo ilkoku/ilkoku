@@ -3,6 +3,7 @@ import { cache } from "react";
 import {
   getLatestPublicationSnapshot,
   getLatestPublicationSnapshots,
+  getLatestPublishedBookSnapshot,
 } from "./publication-snapshots";
 import { worksRepository } from "./repository";
 import type {
@@ -173,18 +174,33 @@ export const getPublicWorkBySlug =
         return null;
       }
 
-      const [relatedWorks, snapshots] = await Promise.all([
+      const [relatedWorks, publicationBook, snapshots] = await Promise.all([
         worksRepository.getRelatedPublicWorks(
           work.authorId,
           work.id,
           work.genre,
         ),
+        getLatestPublishedBookSnapshot(work.id),
         getLatestPublicationSnapshots(
           work.chapters.map((chapter) => chapter.id),
         ),
       ]);
+      const bookChapterSnapshots = new Map(
+        (publicationBook?.items ?? [])
+          .filter((item) => item.type === "chapter")
+          .map((item) => [item.chapterId, item] as const),
+      );
 
       const publishedChapters = work.chapters.map((chapter) => {
+        const bookChapter = bookChapterSnapshots.get(chapter.id);
+        if (bookChapter) {
+          return {
+            ...chapter,
+            content: bookChapter.content,
+            title: bookChapter.title,
+          };
+        }
+
         const snapshot = snapshots.get(chapter.id);
         return snapshot
           ? {
@@ -222,6 +238,7 @@ export const getPublicWorkBySlug =
         isCompleted:
           publishedChapters.length > 0 &&
           work._count.chapters === publishedChapters.length,
+        publicationBook,
         sameAuthorWorks:
           relatedWorks.sameAuthor.map(mapRelatedWork),
         similarWorks:
@@ -265,13 +282,16 @@ export const getPublicChapter = cache(
     }
 
     const publication = await getLatestPublicationSnapshot(chapter.id);
+    const bookChapter = work.publicationBook?.items.find(
+      (item) => item.type === "chapter" && item.chapterId === chapter.id,
+    );
 
     return {
       ...chapter,
-      content: publication?.content ?? chapter.content,
-      publicationLayout: publication?.layout ?? null,
+      content: bookChapter?.content ?? publication?.content ?? chapter.content,
+      publicationLayout: bookChapter?.layout ?? publication?.layout ?? null,
       publicationVersion: publication?.versionNumber ?? null,
-      title: publication?.title ?? chapter.title,
+      title: bookChapter?.title ?? publication?.title ?? chapter.title,
       work,
     };
   },

@@ -5,10 +5,15 @@ import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
+  BOOK_PUBLICATION_LAYOUT_INPUT_NAME,
+  parseBookPublicationLayoutSubmission,
+} from "./book-publication";
+import { prepareBookForPublication } from "./book-structure-repository";
+import { publishFullBook } from "./full-book-publication";
+import {
   archiveWork,
   createNextChapter,
   createWorkWithFirstChapter,
-  publishWork,
   restoreWork,
   saveChapterDraft,
   updateWork,
@@ -254,6 +259,16 @@ export async function publishWorkAction(
     );
   }
 
+  const bookLayouts = parseBookPublicationLayoutSubmission(
+    formData.get(BOOK_PUBLICATION_LAYOUT_INPUT_NAME),
+  );
+
+  if (!bookLayouts) {
+    return error(
+      "Tam kitap yayın düzeni doğrulanamadı. Kitap yapısının yüklenmesini bekledikten sonra yeniden yayınla.",
+    );
+  }
+
   const auth = await authenticatedAuthor();
 
   if (!auth) {
@@ -268,18 +283,29 @@ export async function publishWorkAction(
       formData,
       parsed.data.workId,
     );
-    await publishWork(
+    await prepareBookForPublication(
+      auth.authorId,
+      parsed.data.workId,
+    );
+    const published = await publishFullBook(
       auth.authorId,
       parsed.data,
       publicationLayout,
+      bookLayouts,
     );
     revalidateWorkPaths(parsed.data.workId);
+    revalidatePath("/kesfet");
+    revalidatePath("/eserler");
+    revalidatePath("/okuyucu");
+    revalidatePath(`/kitap/${published.work.slug}`);
 
     return {
       chapterId: parsed.data.chapterId,
-      message: "Eser yazarın sayfa düzeniyle yayınlandı.",
+      message:
+        "Eser; kitap yapısı, ek sayfaları ve bölümleriyle yazarın fiziksel sayfa düzeninde yayınlandı.",
       status: "success",
       workId: parsed.data.workId,
+      workSlug: published.work.slug,
     };
   } catch (caughtError) {
     console.error("PUBLISH_WORK_ERROR:", caughtError);

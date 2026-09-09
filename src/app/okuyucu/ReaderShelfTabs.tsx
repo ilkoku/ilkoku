@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { Card } from "@/components/ui/Card";
@@ -167,6 +168,7 @@ export function ReaderShelfTabs({
   sections: ReaderShelfSection[];
   storageKey: string;
 }) {
+  const router = useRouter();
   const allWorks = useMemo(() => {
     const unique = new Map<string, ReaderShelfWork>();
     for (const work of continueWorks) unique.set(work.id, work);
@@ -345,7 +347,7 @@ export function ReaderShelfTabs({
                   ))}
                   <button
                     className="reader-workdesk__restore-all"
-                    onClick={() => window.location.assign("/kesfet")}
+                    onClick={() => router.push("/kesfet")}
                     type="button"
                   >
                     Keşfet’e Git

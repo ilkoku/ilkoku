@@ -183,21 +183,21 @@ function makeProbePage(
   return { page, textarea };
 }
 
-async function measureSpecialPage(
+async function measureItem(
   screen: HTMLElement,
   workTitle: string,
   item: BookStructureItem,
+  content: string,
+  title: string,
+  subtitle: string,
 ): Promise<PublicationLayoutSnapshot | null> {
-  if (item.chapterId !== null) return null;
-
-  const subtitle = bookSectionDetails[item.kind].description;
   const probes = document.createElement("div");
   probes.className = "writer-page-probes";
   probes.setAttribute("aria-hidden", "true");
   probes.dataset.bookPublicationMeasure = item.id;
 
-  const first = makeProbePage(workTitle, item.title, subtitle, true);
-  const continuation = makeProbePage(workTitle, item.title, subtitle, false);
+  const first = makeProbePage(workTitle, title, subtitle, true);
+  const continuation = makeProbePage(workTitle, title, subtitle, false);
   probes.append(first.page, continuation.page);
   screen.append(probes);
 
@@ -221,7 +221,7 @@ async function measureSpecialPage(
     }
 
     const pageEnds = pageEndsForContent(
-      item.content,
+      content,
       first.textarea,
       continuation.textarea,
     );
@@ -237,7 +237,7 @@ async function measureSpecialPage(
 
     return {
       version: PUBLICATION_LAYOUT_VERSION,
-      contentLength: item.content.length,
+      contentLength: content.length,
       pageEnds,
       page: {
         height: firstRect.height,
@@ -265,17 +265,40 @@ export async function measureBookPublicationLayouts(
   workTitle: string,
   items: BookStructureItem[],
 ): Promise<BookPublicationLayoutSubmission | null> {
-  const specialPages: BookPublicationLayoutSubmission["specialPages"] = [];
+  const layouts: BookPublicationLayoutSubmission["items"] = [];
+  const currentChapterId =
+    screen.querySelector<HTMLInputElement>('input[name="chapterId"]')?.value ?? "";
+  const currentContent =
+    screen.querySelector<HTMLTextAreaElement>('textarea[name="content"]')?.value ?? "";
+  const currentTitle =
+    screen.querySelector<HTMLInputElement>('input[name="chapterTitle"]')?.value ?? "";
+  const mainSubtitle =
+    screen.querySelector<HTMLElement>(".writer-canvas > .writer-subtitle")
+      ?.textContent?.trim() || bookSectionDetails.chapter.description;
 
   for (const item of [...items].sort((left, right) => left.position - right.position)) {
-    if (item.chapterId !== null) continue;
-    const layout = await measureSpecialPage(screen, workTitle, item);
+    const isCurrentChapter =
+      item.chapterId !== null && item.chapterId === currentChapterId;
+    const content = isCurrentChapter ? currentContent : item.content;
+    const title = isCurrentChapter ? currentTitle : item.title;
+    const subtitle = item.chapterId
+      ? mainSubtitle
+      : bookSectionDetails[item.kind].description;
+    const layout = await measureItem(
+      screen,
+      workTitle,
+      item,
+      content,
+      title,
+      subtitle,
+    );
+
     if (!layout) return null;
-    specialPages.push({ id: item.id, layout });
+    layouts.push({ id: item.id, layout });
   }
 
   return {
     version: BOOK_PUBLICATION_VERSION,
-    specialPages,
+    items: layouts,
   };
 }

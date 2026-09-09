@@ -44,6 +44,7 @@ test("canonical publish creates one immutable full-book publication truth", () =
   includes(publication, "bookPublication,", "full-book snapshot stored in audit metadata");
   includes(publication, 'action: "work_published"', "canonical publication event");
   includes(publication, 'visibility: "public"', "published work public lifecycle");
+  includes(publication, "writerContent.editor.subtitle", "Writer chapter header metadata");
 });
 
 test("Writer measures every book item and preserves intentional blank pages", () => {
@@ -75,6 +76,7 @@ test("Writer measures every book item and preserves intentional blank pages", ()
 test("Reader consumes full-book snapshot and navigates special pages plus chapters in author order", () => {
   const snapshots = source("src/features/works/publication-snapshots.ts");
   const queries = source("src/features/works/member-public-queries.ts");
+  const showcase = source("src/features/showcase/components/BookShowcase.tsx");
   const chapterReader = source(
     "src/features/reading/components/FocusedReadingExperience.tsx",
   );
@@ -90,13 +92,19 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(snapshots, "parsePublishedBookFromAuditMetadata", "audit-backed publication truth");
   includes(queries, "publicationBook", "public work full-book binding");
   includes(queries, "bookChapter?.layout", "chapter physical layout from book snapshot");
+  includes(showcase, "firstPublishedBookItem", "book starts at first authored publication item");
+  includes(showcase, "publishedBookItemHref", "front matter can be first Reader destination");
+  includes(showcase, "publicationBook?.totalPages", "exact physical published page count");
   includes(chapterReader, "publishedBookItemHref", "chapter-to-book-item navigation");
   includes(chapterReader, "previousBookItem", "previous authored book item");
   includes(chapterReader, "nextBookItem", "next authored book item");
+  includes(chapterReader, "subtitle={activeBookItem?.subtitle}", "chapter Writer subtitle parity");
   includes(specialReader, "PublishedManuscriptViewport", "same physical Reader renderer for special pages");
   includes(specialReader, "previousItem", "special-page previous book item");
   includes(specialReader, "nextItem", "special-page next book item");
+  includes(specialReader, "subtitle={item.subtitle}", "special-page Writer subtitle parity");
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
   includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
   includes(renderer, "const activePage = pages[pageIndex]", "only one active publication page rendered");
+  includes(renderer, "{subtitle ? <p>{subtitle}</p> : null}", "published header renders Writer subtitle");
 });

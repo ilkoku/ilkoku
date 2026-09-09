@@ -14,6 +14,10 @@ import {
   updateWork,
 } from "./mutations";
 import {
+  parsePublicationLayout,
+  PUBLICATION_LAYOUT_INPUT_NAME,
+} from "./publication-layout";
+import {
   initialWorkActionState,
   type WorkActionState,
 } from "./types";
@@ -133,7 +137,6 @@ async function updateWorkMetadata(
     title: formData.get("workTitle"),
     genre: formData.get("genre"),
     summary: formData.get("summary"),
-    status: "draft",
     ...workClassificationFromFormData(formData),
   });
 
@@ -207,6 +210,17 @@ export async function publishWorkAction(
     );
   }
 
+  const publicationLayout = parsePublicationLayout(
+    formData.get(PUBLICATION_LAYOUT_INPUT_NAME),
+    parsed.data.content,
+  );
+
+  if (!publicationLayout) {
+    return error(
+      "Yazarın kitap sayfa düzeni doğrulanamadı. Editör ekranına dönüp sayfaların yüklenmesini bekledikten sonra yeniden yayınla.",
+    );
+  }
+
   const auth = await authenticatedAuthor();
 
   if (!auth) {
@@ -221,12 +235,16 @@ export async function publishWorkAction(
       formData,
       parsed.data.workId,
     );
-    await publishWork(auth.authorId, parsed.data);
+    await publishWork(
+      auth.authorId,
+      parsed.data,
+      publicationLayout,
+    );
     revalidateWorkPaths();
 
     return {
       chapterId: parsed.data.chapterId,
-      message: "Eser yayınlandı.",
+      message: "Eser yazarın sayfa düzeniyle yayınlandı.",
       status: "success",
       workId: parsed.data.workId,
     };
@@ -365,7 +383,7 @@ export async function restoreWorkAction(
 
   if (!auth) {
     return error(
-      "Eseri geri almak için yazar hesabınla giriş yapmalısın.",
+      "Eseri geri almak için yeniden giriş yapmalısın.",
     );
   }
 

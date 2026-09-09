@@ -78,6 +78,57 @@ test("writer routes load physical pages with scroll or page-turn movement", () =
   includes(css, ".writer-screen.writer-screen--focus", "focus-mode paged manuscript contract");
 });
 
+test("author master becomes an immutable publication snapshot for Reader", () => {
+  const enhancer = source(
+    "src/features/writer/components/WriterPagedManuscriptEnhancer.tsx",
+  );
+  const layout = source("src/features/works/publication-layout.ts");
+  const actions = source("src/features/works/actions.ts");
+  const mutations = source("src/features/works/mutations.ts");
+  const publication = source("src/features/works/publish-work-event.ts");
+  const snapshots = source("src/features/works/publication-snapshots.ts");
+  const queries = source("src/features/works/queries.ts");
+  const reading = source(
+    "src/features/reading/components/FocusedReadingExperience.tsx",
+  );
+  const renderer = source(
+    "src/features/reading/components/PublishedManuscriptViewport.tsx",
+  );
+  const rendererCss = source(
+    "src/features/reading/components/PublishedManuscriptViewport.module.css",
+  );
+
+  includes(enhancer, ".writer-manuscript-pages .writer-page-textarea", "actual writer page capture");
+  includes(enhancer, "pageEnds", "exact writer page boundaries");
+  includes(enhancer, "publicationLayout", "publish form layout field");
+  includes(enhancer, "WRITER_PREFERENCES_CHANGED_EVENT", "layout preference recapture");
+
+  includes(layout, 'PUBLICATION_LAYOUT_INPUT_NAME = "publicationLayout"', "layout form contract");
+  includes(layout, "contentLength", "layout-content integrity binding");
+  includes(layout, "splitPublishedPages", "saved page split helper");
+
+  includes(actions, "parsePublicationLayout", "server layout validation");
+  includes(actions, "publicationLayout", "validated publish layout");
+  includes(mutations, "keepsLivePublication", "draft does not unpublish live chapter");
+  includes(publication, "transaction.workVersion.create", "atomic publication version snapshot");
+  includes(publication, "encodePublicationVersionDescription", "signed publication layout metadata");
+  includes(publication, "pageCount", "publication page count audit evidence");
+
+  includes(snapshots, "PUBLICATION_VERSION_DESCRIPTION_PREFIX", "publication-only snapshot lookup");
+  includes(queries, "getLatestPublicationSnapshot", "Reader publication snapshot query");
+  includes(reading, "PublishedManuscriptViewport", "fixed publication renderer selection");
+  includes(renderer, "splitPublishedPages", "Reader uses author page boundaries");
+  includes(renderer, "transform: `scale(${scale})`", "device scaling without reflow");
+  includes(renderer, "Yazarın yayın sayfası", "author-owned page status");
+  includes(rendererCss, "overflow: hidden", "fixed published page containment");
+  includes(rendererCss, "white-space: pre-wrap", "author line-break preservation");
+  assert.equal(
+    rendererCss.includes("overflow-y: auto"),
+    false,
+    "published author pages must never become an internal vertical scroller",
+  );
+});
+
 test("auto-open continue-writing route never exposes a transition management screen", () => {
   const page = source("src/app/yazmaya-devam/page.tsx");
   const guard = source(

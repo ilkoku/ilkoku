@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { ChapterModel } from "@/generated/prisma/models/Chapter";
 import type { WorkModel } from "@/generated/prisma/models/Work";
+import type { PublicationLayoutSnapshot } from "./publication-layout";
 
 export type Work = WorkModel;
 
@@ -64,6 +65,8 @@ export type PublicWorkSummary = Pick<
 
 export type PublicChapterDetail =
   ChapterModel & {
+    publicationLayout: PublicationLayoutSnapshot | null;
+    publicationVersion: number | null;
     work: PublicWorkDetail;
   };
 

@@ -1,9 +1,16 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { writerContent } from "@/content";
+import {
+  PUBLICATION_LAYOUT_INPUT_NAME,
+  PUBLICATION_LAYOUT_VERSION,
+  type PublicationBox,
+  type PublicationFont,
+  type PublicationLayoutSnapshot,
+} from "@/features/works/publication-layout";
 
 import { PagedManuscriptEditor } from "./PagedManuscriptEditor";
 
@@ -14,6 +21,9 @@ type EditorTarget = {
   body: HTMLTextAreaElement;
   subtitle: HTMLElement | null;
 };
+
+const WRITER_PREFERENCES_CHANGED_EVENT =
+  "ilkoku:writer-preferences-changed";
 
 function getEditorTarget(): EditorTarget | null {
   if (typeof document === "undefined") {
@@ -53,11 +63,25 @@ function getEditorSnapshot() {
     return "writer-editor-unavailable";
   }
 
+  const screen = target.canvas.closest<HTMLElement>(".writer-screen");
+  const fontSelect = document.querySelector<HTMLSelectElement>(
+    'select[aria-label="Yazı tipi"]',
+  );
+  const widthSelect = document.querySelector<HTMLSelectElement>(
+    'select[aria-label="Yazı alanı genişliği"]',
+  );
+
   return [
     target.workTitle.value,
     target.chapterTitle.value,
     target.body.value,
     target.subtitle?.textContent ?? "",
+    fontSelect?.value ?? "",
+    widthSelect?.value ?? "",
+    screen?.style.getPropertyValue("--writer-manuscript-font-size") ?? "",
+    screen?.style.getPropertyValue("--writer-manuscript-line-height") ?? "",
+    screen?.style.getPropertyValue("--writer-manuscript-font-family") ?? "",
+    screen?.style.getPropertyValue("--writer-manuscript-width") ?? "",
   ].join("\u0000");
 }
 
@@ -92,12 +116,14 @@ function subscribeEditorDom(onStoreChange: () => void) {
   document.addEventListener("input", scheduleChange, true);
   document.addEventListener("change", scheduleChange, true);
   document.addEventListener("click", scheduleChange, true);
+  window.addEventListener(WRITER_PREFERENCES_CHANGED_EVENT, scheduleChange);
 
   return () => {
     observer.disconnect();
     document.removeEventListener("input", scheduleChange, true);
     document.removeEventListener("change", scheduleChange, true);
     document.removeEventListener("click", scheduleChange, true);
+    window.removeEventListener(WRITER_PREFERENCES_CHANGED_EVENT, scheduleChange);
 
     if (scheduledFrame !== null) {
       window.cancelAnimationFrame(scheduledFrame);
@@ -120,6 +146,139 @@ function setNativeValue(
   element.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
+function finiteCssNumber(value: string, fallback = 0) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function relativeBox(
+  element: HTMLElement,
+  page: HTMLElement,
+): PublicationBox {
+  const pageRect = page.getBoundingClientRect();
+  const rect = element.getBoundingClientRect();
+
+  return {
+    height: rect.height,
+    left: rect.left - pageRect.left,
+    top: rect.top - pageRect.top,
+    width: rect.width,
+  };
+}
+
+function writerFont(): PublicationFont {
+  const value = document.querySelector<HTMLSelectElement>(
+    'select[aria-label="Yazı tipi"]',
+  )?.value;
+
+  return value === "serif" || value === "sans" || value === "typewriter"
+    ? value
+    : "typewriter";
+}
+
+function capturePublicationLayout(target: EditorTarget) {
+  const pageTextareas = Array.from(
+    target.canvas.querySelectorAll<HTMLTextAreaElement>(
+      ".writer-manuscript-pages .writer-page-textarea",
+    ),
+  );
+  const probes = Array.from(
+    target.canvas.querySelectorAll<HTMLTextAreaElement>(
+      ".writer-page-probes .writer-page-textarea--probe",
+    ),
+  );
+  const firstProbe = probes[0];
+  const continuationProbe = probes[1];
+  const firstPage = firstProbe?.closest<HTMLElement>(".writer-manuscript-page");
+  const continuationPage = continuationProbe?.closest<HTMLElement>(
+    ".writer-manuscript-page",
+  );
+
+  if (
+    !target.body.value ||
+    pageTextareas.length === 0 ||
+    !firstProbe ||
+    !continuationProbe ||
+    !firstPage ||
+    !continuationPage
+  ) {
+    return "";
+  }
+
+  const joined = pageTextareas.map((textarea) => textarea.value).join("");
+  if (joined !== target.body.value) return "";
+
+  let end = 0;
+  const pageEnds = pageTextareas.map((textarea) => {
+    end += textarea.value.length;
+    return end;
+  });
+  if (pageEnds.at(-1) !== target.body.value.length) return "";
+
+  const pageRect = firstPage.getBoundingClientRect();
+  const continuationPageRect = continuationPage.getBoundingClientRect();
+  if (
+    pageRect.width <= 0 ||
+    pageRect.height <= 0 ||
+    continuationPageRect.width <= 0 ||
+    continuationPageRect.height <= 0
+  ) {
+    return "";
+  }
+
+  const textStyle = window.getComputedStyle(firstProbe);
+  const fontSize = finiteCssNumber(textStyle.fontSize);
+  const lineHeight = finiteCssNumber(textStyle.lineHeight);
+  const letterSpacing =
+    textStyle.letterSpacing === "normal"
+      ? 0
+      : finiteCssNumber(textStyle.letterSpacing);
+
+  if (fontSize <= 0 || lineHeight <= 0) return "";
+
+  const layout: PublicationLayoutSnapshot = {
+    version: PUBLICATION_LAYOUT_VERSION,
+    contentLength: target.body.value.length,
+    pageEnds,
+    page: {
+      height: pageRect.height,
+      width: pageRect.width,
+      firstBody: relativeBox(firstProbe, firstPage),
+      continuationBody: relativeBox(continuationProbe, continuationPage),
+    },
+    typography: {
+      font: writerFont(),
+      fontSize,
+      letterSpacing,
+      lineHeight,
+    },
+  };
+
+  return JSON.stringify(layout);
+}
+
+function syncPublicationLayoutInputs(layout: string) {
+  const forms = new Set<HTMLFormElement>();
+  const writerForm = document.querySelector<HTMLFormElement>("form.writer-screen");
+  if (writerForm) forms.add(writerForm);
+  document
+    .querySelectorAll<HTMLFormElement>(".publish-preview form")
+    .forEach((form) => forms.add(form));
+
+  for (const form of forms) {
+    let input = form.querySelector<HTMLInputElement>(
+      `input[name="${PUBLICATION_LAYOUT_INPUT_NAME}"]`,
+    );
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = PUBLICATION_LAYOUT_INPUT_NAME;
+      form.append(input);
+    }
+    input.value = layout;
+  }
+}
+
 export function WriterPagedManuscriptEnhancer() {
   const snapshot = useSyncExternalStore(
     subscribeEditorDom,
@@ -127,6 +286,37 @@ export function WriterPagedManuscriptEnhancer() {
     getServerSnapshot,
   );
   const target = getEditorTarget();
+  const publicationLayoutRef = useRef("");
+
+  useEffect(() => {
+    if (snapshot === "writer-editor-unavailable") return;
+
+    publicationLayoutRef.current = "";
+    syncPublicationLayoutInputs("");
+
+    let frame = window.requestAnimationFrame(() => {
+      frame = window.requestAnimationFrame(() => {
+        const activeTarget = getEditorTarget();
+        if (!activeTarget) return;
+        const nextLayout = capturePublicationLayout(activeTarget);
+        publicationLayoutRef.current = nextLayout;
+        syncPublicationLayoutInputs(nextLayout);
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [snapshot]);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      syncPublicationLayoutInputs(publicationLayoutRef.current);
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+    return () => observer.disconnect();
+  }, []);
 
   if (!target || snapshot === "writer-editor-unavailable") {
     return null;

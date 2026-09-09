@@ -156,7 +156,7 @@ function isEditorPublishSubmit(event: SubmitEvent) {
   return (
     isWriterForm(event.target) &&
     event.submitter instanceof HTMLButtonElement &&
-    event.submitter.hasAttribute("formaction")
+    !event.submitter.classList.contains("writer-save-button")
   );
 }
 

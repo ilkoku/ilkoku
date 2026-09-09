@@ -144,10 +144,26 @@ function isWriterForm(target: EventTarget | null): target is HTMLFormElement {
   );
 }
 
-function captureForForm(form: HTMLFormElement) {
+function isPreviewPublishForm(
+  target: EventTarget | null,
+): target is HTMLFormElement {
+  return (
+    target instanceof HTMLFormElement && target.matches(".publish-preview form")
+  );
+}
+
+function captureForWriterForm(form: HTMLFormElement) {
   const target = getEditorTarget();
   if (!target || !form.contains(target.canvas)) return "";
   return captureCurrentPublicationLayout(target);
+}
+
+function existingPublicationLayout(form: HTMLFormElement) {
+  return (
+    form.querySelector<HTMLInputElement>(
+      `input[name="${PUBLICATION_LAYOUT_INPUT_NAME}"]`,
+    )?.value ?? ""
+  );
 }
 
 function setPublicationLayoutInput(form: HTMLFormElement, layout: string) {
@@ -167,26 +183,72 @@ function setPublicationLayoutInput(form: HTMLFormElement, layout: string) {
 
 export function WriterPublicationSnapshotGuard() {
   useEffect(() => {
-    function prepareBeforeReactSubmit(event: SubmitEvent) {
-      if (!isWriterForm(event.target)) return;
+    let lastPublicationLayout = "";
 
-      const layout = captureForForm(event.target);
+    function rememberCurrentWriterLayout() {
+      const target = getEditorTarget();
+      if (!target) return;
+
+      const layout = captureCurrentPublicationLayout(target);
+      if (layout) lastPublicationLayout = layout;
+    }
+
+    function rememberBeforeEditorTransition(event: MouseEvent) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (!target.closest("form.writer-screen")) return;
+      rememberCurrentWriterLayout();
+    }
+
+    function prepareBeforeReactSubmit(event: SubmitEvent) {
+      if (isWriterForm(event.target)) {
+        const layout = captureForWriterForm(event.target);
+        if (layout) lastPublicationLayout = layout;
+        setPublicationLayoutInput(event.target, layout);
+        return;
+      }
+
+      if (!isPreviewPublishForm(event.target)) return;
+
+      const layout =
+        lastPublicationLayout || existingPublicationLayout(event.target);
+
+      if (!layout) {
+        event.preventDefault();
+        window.alert(
+          "Yayın sayfa düzeni henüz hazır değil. Önizlemeden editöre dönüp sayfaların görünmesini bekledikten sonra yeniden Yayınla.",
+        );
+        return;
+      }
+
       setPublicationLayoutInput(event.target, layout);
     }
 
     function bindLayoutToFormData(event: Event) {
-      if (!isWriterForm(event.target)) return;
-
       const formDataEvent = event as FormDataEvent;
-      const layout = captureForForm(event.target);
+
+      if (isWriterForm(event.target)) {
+        const layout = captureForWriterForm(event.target);
+        if (layout) lastPublicationLayout = layout;
+        formDataEvent.formData.set(PUBLICATION_LAYOUT_INPUT_NAME, layout);
+        setPublicationLayoutInput(event.target, layout);
+        return;
+      }
+
+      if (!isPreviewPublishForm(event.target)) return;
+
+      const layout =
+        lastPublicationLayout || existingPublicationLayout(event.target);
       formDataEvent.formData.set(PUBLICATION_LAYOUT_INPUT_NAME, layout);
       setPublicationLayoutInput(event.target, layout);
     }
 
+    document.addEventListener("click", rememberBeforeEditorTransition, true);
     document.addEventListener("submit", prepareBeforeReactSubmit, true);
     document.addEventListener("formdata", bindLayoutToFormData, true);
 
     return () => {
+      document.removeEventListener("click", rememberBeforeEditorTransition, true);
       document.removeEventListener("submit", prepareBeforeReactSubmit, true);
       document.removeEventListener("formdata", bindLayoutToFormData, true);
     };

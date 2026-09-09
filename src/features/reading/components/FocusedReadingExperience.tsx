@@ -19,6 +19,7 @@ import type { PublicChapterDetail } from "@/features/works/types";
 import { ChapterSelector } from "./ChapterSelector";
 import { PagedReadingViewport } from "./PagedReadingViewport";
 import { ProtectedChapterContent } from "./ProtectedChapterContent";
+import { PublishedManuscriptViewport } from "./PublishedManuscriptViewport";
 import { ReadingPageIndicator } from "./ReadingPageIndicator";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import styles from "./FocusedReadingExperience.module.css";
@@ -44,6 +45,7 @@ export function FocusedReadingExperience({
   startAtLastPage?: boolean;
 }) {
   const readingTime = estimateReadingMinutes(chapter.content);
+  const hasAuthorPublication = chapter.publicationLayout !== null;
 
   const paragraphs = chapter.content
     .split(/\n{2,}/u)
@@ -96,6 +98,13 @@ export function FocusedReadingExperience({
     const edgeParameter = edge === "last" ? "&sayfa=son" : "";
     return `/oku/${chapter.work.slug}/bolum-${position}?from=${encodedReturnTo}${edgeParameter}`;
   }
+
+  const previousChapterHref = previousChapter
+    ? getChapterHref(previousChapter.position, "last")
+    : null;
+  const nextChapterHref = nextChapter
+    ? getChapterHref(nextChapter.position)
+    : null;
 
   return (
     <div className={`reading-page ${styles.page}`}>
@@ -186,7 +195,13 @@ export function FocusedReadingExperience({
               <span aria-hidden="true">·</span>
               <span>{readingTime} dk okuma</span>
               <span aria-hidden="true">·</span>
-              <ReadingPageIndicator />
+              {chapter.publicationLayout ? (
+                <span>
+                  Yazar yayını · {chapter.publicationLayout.pageEnds.length} sayfa
+                </span>
+              ) : (
+                <ReadingPageIndicator />
+              )}
             </p>
 
             <h1 id="bolum-basligi">{chapter.title}</h1>
@@ -199,30 +214,41 @@ export function FocusedReadingExperience({
           </header>
 
           <section
-            className={`${styles.chapterBody} ${parityStyles.publicationParity}`}
+            className={
+              hasAuthorPublication
+                ? styles.chapterBody
+                : `${styles.chapterBody} ${parityStyles.publicationParity}`
+            }
             id="bolum-metni"
             aria-label={`${chapter.position}. bölüm metni`}
           >
-            <PagedReadingViewport
-              estimatedBookEndPage={estimatedPages.endPage}
-              estimatedBookStartPage={estimatedPages.startPage}
-              estimatedBookTotalPages={estimatedPages.totalPages}
-              nextChapterHref={
-                nextChapter ? getChapterHref(nextChapter.position) : null
-              }
-              previousChapterHref={
-                previousChapter
-                  ? getChapterHref(previousChapter.position, "last")
-                  : null
-              }
-              startAtLastPage={startAtLastPage}
-            >
-              <ProtectedChapterContent
-                chapterId={chapter.id}
+            {chapter.publicationLayout ? (
+              <PublishedManuscriptViewport
+                chapterTitle={chapter.title}
+                content={chapter.content}
                 identity={protectionIdentity}
-                paragraphs={paragraphs}
+                layout={chapter.publicationLayout}
+                nextChapterHref={nextChapterHref}
+                previousChapterHref={previousChapterHref}
+                startAtLastPage={startAtLastPage}
+                workTitle={chapter.work.title}
               />
-            </PagedReadingViewport>
+            ) : (
+              <PagedReadingViewport
+                estimatedBookEndPage={estimatedPages.endPage}
+                estimatedBookStartPage={estimatedPages.startPage}
+                estimatedBookTotalPages={estimatedPages.totalPages}
+                nextChapterHref={nextChapterHref}
+                previousChapterHref={previousChapterHref}
+                startAtLastPage={startAtLastPage}
+              >
+                <ProtectedChapterContent
+                  chapterId={chapter.id}
+                  identity={protectionIdentity}
+                  paragraphs={paragraphs}
+                />
+              </PagedReadingViewport>
+            )}
           </section>
 
           <details className={styles.comments}>

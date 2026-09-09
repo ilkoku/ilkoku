@@ -114,7 +114,12 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   includes(submitGuard, ".publish-preview form", "preview publish form snapshot coverage");
   includes(submitGuard, "lastPublicationLayout", "preview keeps the last exact author layout");
   includes(submitGuard, "rememberBeforeEditorTransition", "capture author layout before preview unmounts editor");
-  includes(submitGuard, "window.alert", "preview publication cannot fail silently when layout is missing");
+  includes(submitGuard, "parsePublicationLayout", "client validates layout against exact content before publish");
+  includes(submitGuard, "contentFingerprint", "persisted layout is bound to exact chapter content fingerprint");
+  includes(submitGuard, "window.sessionStorage.setItem", "valid author layout survives editor-preview timing changes");
+  includes(submitGuard, "readPersistedLayout", "preview can recover the last valid author layout");
+  includes(submitGuard, "resolvePublicationLayout", "publish uses only a validated layout candidate");
+  includes(submitGuard, "Yayın yapılmadı", "invalid preview publication is explicitly blocked instead of silently failing");
   includes(submitGuard, "pageEnds", "submit-time exact page boundaries");
 
   includes(layout, 'PUBLICATION_LAYOUT_INPUT_NAME = "publicationLayout"', "layout form contract");
@@ -126,6 +131,7 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
   includes(actions, 'revalidatePath(`/eserlerim/${workId}/pasaport`)', "ownership passport refresh after work mutations");
   includes(mutations, "keepsLivePublication", "draft does not unpublish live chapter");
   includes(publication, "transaction.workVersion.create", "atomic publication version snapshot");
+  includes(publication, "transaction.auditLog.create", "publication audit event is in the same DB transaction");
   includes(publication, "encodePublicationVersionDescription", "signed publication layout metadata");
   includes(publication, "pageCount", "publication page count audit evidence");
 

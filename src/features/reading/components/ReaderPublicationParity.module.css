@@ -7,9 +7,7 @@
 
 .publicationParity :global(.chapter__body p),
 .publicationParity :global(p[data-annotation-text-paragraph]) {
-  margin-bottom: calc(
-    var(--reader-manuscript-font-size) * var(--reader-manuscript-line-height)
-  );
+  margin-bottom: 1.9em;
   font-family: var(--reader-manuscript-font-family) !important;
   font-size: var(--reader-manuscript-font-size) !important;
   line-height: var(--reader-manuscript-line-height) !important;

@@ -49,10 +49,14 @@ async function authenticatedAuthor() {
   };
 }
 
-function revalidateWorkPaths() {
+function revalidateWorkPaths(workId?: string) {
   revalidatePath("/yazar");
   revalidatePath("/eserlerim");
   revalidatePath("/yazmaya-devam");
+
+  if (workId) {
+    revalidatePath(`/eserlerim/${workId}/pasaport`);
+  }
 }
 
 function workClassificationFromFormData(formData: FormData) {
@@ -98,7 +102,7 @@ export async function createWorkAction(
       parsed.data,
     );
 
-    revalidateWorkPaths();
+    revalidateWorkPaths(created.work.id);
 
     return {
       chapterId: created.chapter.id,
@@ -178,7 +182,7 @@ export async function saveChapterDraftAction(
       parsed.data.workId,
     );
     await saveChapterDraft(auth.authorId, parsed.data);
-    revalidateWorkPaths();
+    revalidateWorkPaths(parsed.data.workId);
 
     return {
       chapterId: parsed.data.chapterId,
@@ -240,7 +244,7 @@ export async function publishWorkAction(
       parsed.data,
       publicationLayout,
     );
-    revalidateWorkPaths();
+    revalidateWorkPaths(parsed.data.workId);
 
     return {
       chapterId: parsed.data.chapterId,
@@ -301,7 +305,7 @@ export async function updateWorkAction(
 
   try {
     const updated = await updateWork(auth.authorId, parsed.data);
-    revalidateWorkPaths();
+    revalidateWorkPaths(updated.id);
 
     return {
       message: "Eser bilgileri güncellendi.",
@@ -345,7 +349,7 @@ export async function archiveWorkAction(
 
   try {
     await archiveWork(auth.authorId, parsed.data.workId);
-    revalidateWorkPaths();
+    revalidateWorkPaths(parsed.data.workId);
 
     return {
       message:
@@ -389,7 +393,7 @@ export async function restoreWorkAction(
 
   try {
     await restoreWork(auth.authorId, parsed.data.workId);
-    revalidateWorkPaths();
+    revalidateWorkPaths(parsed.data.workId);
 
     return {
       message: "Eser arşivden çıkarıldı ve yeniden kullanıma açıldı.",
@@ -427,7 +431,7 @@ export async function createNextChapterAction(formData: FormData) {
     parsed.data.workId,
   );
 
-  revalidateWorkPaths();
+  revalidateWorkPaths(parsed.data.workId);
 
   redirect(
     `/yazmaya-devam?eser=${encodeURIComponent(parsed.data.workId)}&bolum=${encodeURIComponent(chapter.id)}`,

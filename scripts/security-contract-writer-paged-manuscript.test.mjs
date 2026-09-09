@@ -123,6 +123,7 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
 
   includes(actions, "parsePublicationLayout", "server layout validation");
   includes(actions, "publicationLayout", "validated publish layout");
+  includes(actions, 'revalidatePath(`/eserlerim/${workId}/pasaport`)', "ownership passport refresh after work mutations");
   includes(mutations, "keepsLivePublication", "draft does not unpublish live chapter");
   includes(publication, "transaction.workVersion.create", "atomic publication version snapshot");
   includes(publication, "encodePublicationVersionDescription", "signed publication layout metadata");

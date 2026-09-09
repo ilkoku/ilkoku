@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import {
   publishedBookItemHref,
+  type PublishedBookItem,
   type PublishedBookSpecialItem,
 } from "@/features/works/book-publication";
 import { bookSectionDetails } from "@/features/works/book-structure";
@@ -45,10 +46,7 @@ export function PublishedBookSpecialPageExperience({
   const passportPath =
     `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(currentPath)}`;
 
-  function itemHref(
-    target: NonNullable<typeof publicationBook>["items"][number],
-    edge?: "last",
-  ) {
+  function itemHref(target: PublishedBookItem, edge?: "last") {
     const edgeParameter = edge === "last" ? "&sayfa=son" : "";
     return `${publishedBookItemHref(work.slug, target)}?from=${encodedReturnTo}${edgeParameter}`;
   }
@@ -141,6 +139,7 @@ export function PublishedBookSpecialPageExperience({
               nextChapterHref={nextHref}
               previousChapterHref={previousHref}
               startAtLastPage={startAtLastPage}
+              subtitle={item.subtitle}
               workTitle={publicationBook.workTitle}
             />
           </section>

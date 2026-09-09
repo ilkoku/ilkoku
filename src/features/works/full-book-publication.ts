@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { BookPublicationLayoutSubmission } from "./book-publication";
+import { prepareBookForPublication } from "./book-structure-repository";
 import { deliverPublicationNotifications } from "./publication-notifications";
 import type { PublicationLayoutSnapshot } from "./publication-layout";
 import { publishFullBookWithEvent } from "./publish-full-book-event";
@@ -26,6 +27,13 @@ export async function publishFullBook(
       "Boş bir bölüm yayımlanamaz. Bölüm metnini yazdıktan sonra tekrar dene.",
     );
   }
+
+  // Yayınla = current Writer state. In particular, İçindekiler must be
+  // regenerated from the unsaved chapter title carried by this exact publish.
+  await prepareBookForPublication(authorId, input.workId, {
+    chapterId: input.chapterId,
+    title: input.title,
+  });
 
   const {
     bookPublication,

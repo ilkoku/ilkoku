@@ -12,6 +12,7 @@ import {
   restoreWork,
   saveChapterDraft,
   updateWork,
+  updateWriterMetadata,
 } from "./mutations";
 import {
   parsePublicationLayout,
@@ -26,6 +27,7 @@ import {
   createWorkSchema,
   updateWorkSchema,
   workIdSchema,
+  writerMetadataSchema,
 } from "./validators";
 
 function error(message: string): WorkActionState {
@@ -67,6 +69,14 @@ function workClassificationFromFormData(formData: FormData) {
     contentRating: formData.get("contentRating"),
     contentWarnings: formData.getAll("contentWarnings"),
   };
+}
+
+function hasWorkClassification(formData: FormData) {
+  return (
+    formData.has("contentClassificationConfirmed") ||
+    formData.has("contentRating") ||
+    formData.has("contentWarnings")
+  );
 }
 
 export async function createWorkAction(
@@ -136,22 +146,41 @@ async function updateWorkMetadata(
   formData: FormData,
   workId: string,
 ) {
-  const parsed = updateWorkSchema.safeParse({
+  if (hasWorkClassification(formData)) {
+    const parsed = updateWorkSchema.safeParse({
+      id: workId,
+      title: formData.get("workTitle"),
+      genre: formData.get("genre"),
+      summary: formData.get("summary"),
+      ...workClassificationFromFormData(formData),
+    });
+
+    if (!parsed.success) {
+      throw new Error(
+        parsed.error.issues[0]?.message ??
+          "Eserin içerik ve yaş sınıfı doğrulanamadı.",
+      );
+    }
+
+    await updateWork(authorId, parsed.data);
+    return;
+  }
+
+  const parsed = writerMetadataSchema.safeParse({
     id: workId,
     title: formData.get("workTitle"),
     genre: formData.get("genre"),
     summary: formData.get("summary"),
-    ...workClassificationFromFormData(formData),
   });
 
   if (!parsed.success) {
     throw new Error(
       parsed.error.issues[0]?.message ??
-        "Eserin içerik ve yaş sınıfı doğrulanamadı.",
+        "Eser bilgileri doğrulanamadı.",
     );
   }
 
-  await updateWork(authorId, parsed.data);
+  await updateWriterMetadata(authorId, parsed.data);
 }
 
 export async function saveChapterDraftAction(

@@ -8,6 +8,7 @@ import type {
   ChapterDraftInput,
   CreateWorkInput,
   UpdateWorkInput,
+  WriterMetadataInput,
 } from "./validators";
 import { serializeWorkContentWarnings } from "@/lib/work-content-classification";
 
@@ -147,6 +148,33 @@ export async function updateWork(
             visibility: "private",
           }
         : {}),
+    },
+  );
+}
+
+export async function updateWriterMetadata(
+  authorId: string,
+  input: WriterMetadataInput,
+) {
+  const work =
+    await worksRepository.getAuthorWorkById(
+      authorId,
+      input.id,
+    );
+
+  if (!work) {
+    throw new Error(
+      "Eser bulunamadı veya bu eseri düzenleme yetkin yok.",
+    );
+  }
+
+  return worksRepository.updateWork(
+    authorId,
+    input.id,
+    {
+      description: input.summary,
+      genre: input.genre,
+      title: input.title,
     },
   );
 }

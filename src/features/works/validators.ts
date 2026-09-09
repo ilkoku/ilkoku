@@ -42,6 +42,13 @@ export const createWorkSchema = z.object({
   workType: workTypeSchema.default("novel"),
 }).and(workClassificationSchema);
 
+export const writerMetadataSchema = z.object({
+  genre: trimmedText(1, 100, "Tür alanı 1–100 karakter olmalıdır.").optional(),
+  id: z.string().uuid("Geçerli bir eser seçilmelidir."),
+  summary: z.string().trim().max(5000, "Özet en fazla 5000 karakter olabilir.").optional(),
+  title: trimmedText(1, 200, "Başlık alanı 1–200 karakter olmalıdır.").optional(),
+});
+
 export const updateWorkSchema = z.object({
   genre: trimmedText(1, 100, "Tür alanı 1–100 karakter olmalıdır.").optional(),
   summary: z.string().trim().max(5000, "Özet en fazla 5000 karakter olabilir.").optional(),
@@ -66,4 +73,5 @@ export const workIdSchema = z.object({
 
 export type CreateWorkInput = z.infer<typeof createWorkSchema>;
 export type UpdateWorkInput = z.infer<typeof updateWorkSchema>;
+export type WriterMetadataInput = z.infer<typeof writerMetadataSchema>;
 export type ChapterDraftInput = z.infer<typeof chapterDraftSchema>;

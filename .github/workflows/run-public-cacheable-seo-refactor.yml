@@ -1,0 +1,28 @@
+name: Run public cache refactor
+
+on:
+  push:
+    branches:
+      - fix/public-cacheable-seo-shell
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply refactor
+        run: python3 scripts/apply-public-cacheable-seo.py
+      - name: Focused tests
+        run: node --test scripts/security-contract-public-site-header.test.mjs scripts/security-contract-cms-footer-workbench.test.mjs scripts/security-contract-public-cacheable-seo.test.mjs
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/app src/components scripts package.json
+          git commit -m "fix: make public SEO shell cacheable"
+          git push origin HEAD:fix/public-cacheable-seo-shell

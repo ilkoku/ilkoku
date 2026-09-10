@@ -6,6 +6,8 @@ import { PublicPageTemplate } from "@/components/layout/PublicPageTemplate";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getCmsPageTemplate } from "@/lib/cms-page-templates";
 
+import "./roman-guide.css";
+
 const template = getCmsPageTemplate("ornek-roman");
 
 const visualAfter: Record<string, CmsPageBlock> = {
@@ -104,12 +106,14 @@ export default function RomanYazarlikRehberiPage() {
   return (
     <PublicPageTemplate>
       <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="roman">
-        <PublicCmsPageBlocks
-          blocks={romanBlocks}
-          eyebrow="Yazarlar İçin · Kurgu"
-          pageTitle="Roman Nasıl Yazılır?"
-          summary="İlk roman fikrinden karaktere, olay örgüsünden sayfa düzenine ve ilk taslağa kadar adım adım ilerleyen görsel yazarlık rehberi."
-        />
+        <div className="roman-writing-guide">
+          <PublicCmsPageBlocks
+            blocks={romanBlocks}
+            eyebrow="Yazarlar İçin · Kurgu"
+            pageTitle="Roman Nasıl Yazılır?"
+            summary="İlk roman fikrinden karaktere, olay örgüsünden sayfa düzenine ve ilk taslağa kadar adım adım ilerleyen görsel yazarlık rehberi."
+          />
+        </div>
       </WritingGuideShell>
     </PublicPageTemplate>
   );

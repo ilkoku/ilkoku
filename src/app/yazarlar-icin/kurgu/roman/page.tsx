@@ -9,11 +9,21 @@ import "./roman-guide.css";
 
 const template = getCmsPageTemplate("ornek-roman");
 
+const romanVisuals = {
+  hero: "/writing-guides/kurgu/roman/kurgu-roman-01-hero.svg",
+  ideaFlow: "/writing-guides/kurgu/roman/kurgu-roman-02-fikir-akisi.svg",
+  structure: "/writing-guides/kurgu/roman/kurgu-roman-03-yapi-diyagrami.svg",
+  anatomy: "/writing-guides/kurgu/roman/kurgu-roman-04-eser-anatomisi.svg",
+  pageSetup: "/writing-guides/kurgu/roman/kurgu-roman-05-sayfa-ayari.svg",
+  project: "/writing-guides/kurgu/roman/kurgu-roman-06-ornek-proje.svg",
+  finalCta: "/writing-guides/kurgu/roman/kurgu-roman-07-final-cta.svg",
+} as const;
+
 const visualAfter: Record<string, CmsPageBlock> = {
   "ornek-roman-ilham": {
     id: "roman-gorsel-fikir-akisi",
     type: "image",
-    imageUrl: "/writing-guides/kurgu/roman/kurgu-roman-02-fikir-akisi.webp",
+    imageUrl: romanVisuals.ideaFlow,
     alt: "Bir roman fikrinin gözlem, merak, soru, karakter ve çatışmadan doğuşunu anlatan görsel",
     caption: "Bir fikir, tek bir ayrıntıyı meraka dönüştürerek büyümeye başlayabilir.",
     layout: "wide",
@@ -21,7 +31,7 @@ const visualAfter: Record<string, CmsPageBlock> = {
   "ornek-roman-olay-orgusu": {
     id: "roman-gorsel-yapi",
     type: "image",
-    imageUrl: "/writing-guides/kurgu/roman/kurgu-roman-03-yapi-diyagrami.webp",
+    imageUrl: romanVisuals.structure,
     alt: "Romanın başlangıçtan sonuca uzanan yapısını gösteren anlatı diyagramı",
     caption: "Bu akış katı bir formül değil; ilk taslağı kaybetmeden ilerletmek için bir haritadır.",
     layout: "wide",
@@ -29,7 +39,7 @@ const visualAfter: Record<string, CmsPageBlock> = {
   "ornek-roman-anatomi": {
     id: "roman-gorsel-anatomi",
     type: "image",
-    imageUrl: "/writing-guides/kurgu/roman/kurgu-roman-04-eser-anatomisi.webp",
+    imageUrl: romanVisuals.anatomy,
     alt: "Karakter, mekân, olay örgüsü, tema, anlatıcı ve üslup bileşenlerini anlatan roman anatomisi görseli",
     caption: "Romanın parçaları tek tek değil, birbirini taşıyan bir bütün olarak çalışır.",
     layout: "wide",
@@ -37,7 +47,7 @@ const visualAfter: Record<string, CmsPageBlock> = {
   "ornek-roman-sayfa": {
     id: "roman-gorsel-sayfa-ayari",
     type: "image",
-    imageUrl: "/writing-guides/kurgu/roman/kurgu-roman-05-sayfa-ayari.webp",
+    imageUrl: romanVisuals.pageSetup,
     alt: "Roman taslağı için örnek sayfa düzeni ve yazım ayarlarını gösteren görsel",
     caption: "Taslak ayarları çalışma rahatlığı içindir; yayın görünümünde yazarın ve eserin tercihi korunur.",
     layout: "wide",
@@ -45,7 +55,7 @@ const visualAfter: Record<string, CmsPageBlock> = {
   "ornek-roman-ilk-sahne": {
     id: "roman-gorsel-ornek-proje",
     type: "image",
-    imageUrl: "/writing-guides/kurgu/roman/kurgu-roman-06-ornek-proje.webp",
+    imageUrl: romanVisuals.project,
     alt: "Bir roman fikrinin araştırma, karakter, taslak, yazım, revizyon ve yayına dönüşümünü gösteren örnek proje",
     caption: "Örnek proje, bir fikrin yalnız ilhamla değil; araştırma, taslak ve revizyonla romana dönüştüğünü gösterir.",
     layout: "wide",
@@ -53,7 +63,7 @@ const visualAfter: Record<string, CmsPageBlock> = {
   "ornek-roman-sss": {
     id: "roman-gorsel-final",
     type: "image",
-    imageUrl: "/writing-guides/kurgu/roman/kurgu-roman-07-final-cta.webp",
+    imageUrl: romanVisuals.finalCta,
     alt: "Roman yazmaya başlama çağrısını ve İlkOku yazarlık ortamını anlatan kapanış görseli",
     caption: "İlk romanın bugün tek bir cümleyle başlayabilir.",
     layout: "wide",
@@ -68,7 +78,7 @@ const romanBlocks = template.blocks.flatMap<CmsPageBlock>((block) => {
       ...block,
       eyebrow: "Yazarlar İçin · Kurgu",
       text: "Hayal et. Planla. Yaz. Tamamla. İlk roman fikrinden karaktere, olay örgüsünden ilk taslağa kadar adım adım ilerle.",
-      imageUrl: "/writing-guides/kurgu/roman/kurgu-roman-01-hero.webp",
+      imageUrl: romanVisuals.hero,
       primaryLabel: "Roman Yazmaya Başla",
       primaryHref: "/yazar",
       secondaryLabel: "",

@@ -88,8 +88,7 @@ test("public header matches the homepage model without a top navigation list", (
   assert.match(header, /href="\/giris"/);
   assert.match(header, /href="\/kayit"/);
   assert.match(header, /href="\/hesabim"/);
-  assert.match(header, /navigation\.workspaceHref/);
-  assert.match(header, /logoutAction/);
+  assert.doesNotMatch(header, /getCurrentProfile|navigation\.workspaceHref|logoutAction/);
 });
 
 test("all eight public trust routes mount the same shared homepage-style header", () => {

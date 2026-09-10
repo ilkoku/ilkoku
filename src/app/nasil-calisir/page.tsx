@@ -13,7 +13,7 @@ import "./public-trust-footer.css";
 const baseUrl = "https://ilkoku.com";
 const socialImage = `${baseUrl}/how-it-works/journey.webp`;
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const resolvePage = cache(async () => {
   const state = await getPublishedCmsPublicPageState("nasil-calisir");

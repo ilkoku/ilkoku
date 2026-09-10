@@ -22,7 +22,7 @@ const requiredHeadings = [
   "## Nereye gidiyoruz?",
 ] as const;
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 function hasAboutExperienceStructure(body: string) {
   return requiredHeadings.every((heading) => body.includes(heading));

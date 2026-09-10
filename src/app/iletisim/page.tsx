@@ -10,7 +10,7 @@ const description = "İlkOku hakkında genel sorularınız, talepleriniz ve plat
 const socialImage = "/opengraph-image";
 const baseUrl = "https://ilkoku.com";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title,

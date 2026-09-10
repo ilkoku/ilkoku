@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
-import { PublicPageTemplate } from "@/components/layout/PublicPageTemplate";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getCmsPageTemplate } from "@/lib/cms-page-templates";
 
@@ -104,17 +103,15 @@ export const metadata: Metadata = {
 
 export default function RomanYazarlikRehberiPage() {
   return (
-    <PublicPageTemplate>
-      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="roman">
-        <div className="roman-writing-guide">
-          <PublicCmsPageBlocks
-            blocks={romanBlocks}
-            eyebrow="Yazarlar İçin · Kurgu"
-            pageTitle="Roman Nasıl Yazılır?"
-            summary="İlk roman fikrinden karaktere, olay örgüsünden sayfa düzenine ve ilk taslağa kadar adım adım ilerleyen görsel yazarlık rehberi."
-          />
-        </div>
-      </WritingGuideShell>
-    </PublicPageTemplate>
+    <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="roman">
+      <div className="roman-writing-guide">
+        <PublicCmsPageBlocks
+          blocks={romanBlocks}
+          eyebrow="Yazarlar İçin · Kurgu"
+          pageTitle="Roman Nasıl Yazılır?"
+          summary="İlk roman fikrinden karaktere, olay örgüsünden sayfa düzenine ve ilk taslağa kadar adım adım ilerleyen görsel yazarlık rehberi."
+        />
+      </div>
+    </WritingGuideShell>
   );
 }

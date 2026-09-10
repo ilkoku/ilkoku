@@ -1,0 +1,11 @@
+.roman-writing-guide article > span:first-child {
+  display: none;
+}
+
+.roman-writing-guide article.grid > div:first-child {
+  display: none;
+}
+
+.roman-writing-guide article.grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}

@@ -84,6 +84,96 @@ Bu sayı, 498–581 tamamen farklı görsel dosyasının sıfırdan üretilmesi 
 
 Ana ilke: **Önce yüzlerce rastgele görsel üretmek değil, önce tekrar kullanılabilir ve tutarlı bir görsel sistem kurmak.**
 
+## Tür başına görsel paket standardı
+
+Her eser türü için üretime başlamadan önce görsel paket isimleri ve görevleri tanımlanacaktır. Ana standart **6 görsel**, ihtiyaç halinde **7. görsel** ile genişletilecektir.
+
+Çekirdek 6'lı paket:
+
+1. **Hero** — türün kimliğini ve atmosferini anlatan ana görsel.
+2. **Fikir akışı** — fikirden esere / taslağa giden süreci anlatan öğretici görsel.
+3. **Tür yapısı** — o türe özgü anlatı, kurgu, yapı veya çalışma diyagramı.
+4. **Eser anatomisi** — kitabın, metnin, senaryonun, akademik yapının veya ilgili formatın parçalarını gösteren görsel.
+5. **Sayfa / yazım ayarı** — gerçek çalışma sayfası, format veya düzen örneği.
+6. **Örnek proje / önce-sonra** — bir örneğin gelişimini veya zayıf/geliştirilmiş metin farkını gösteren öğretici görsel.
+
+Opsiyonel 7. görsel:
+
+7. **Ustalardan öğren / final CTA** — türün ihtiyacına göre önemli yazar/üretici bölümü veya yazmaya başlama çağrısı için kullanılacaktır.
+
+Bu paket bir içerik kopyalama şablonu değildir. Görselin görevi ortak olabilir; içeriği ve kompozisyonu türün doğasına göre değişecektir.
+
+## Görsel klasör ve dosya isimlendirme standardı
+
+Görseller üretime geçmeden önce adlandırılacak ve ait oldukları kategori/tür altında tutulacaktır. Dosya adlarında mümkün olduğunca ASCII uyumlu, küçük harfli, tire ile ayrılmış ve anlamlı adlar kullanılacaktır.
+
+Önerilen klasör mantığı:
+
+```text
+/writing-guides/{kategori}/{tur}/
+```
+
+Örnek:
+
+```text
+/writing-guides/kurgu/roman/
+/writing-guides/kurgu/oyku/
+/writing-guides/kurgu/novella/
+```
+
+Önerilen dosya adı mantığı:
+
+```text
+{kategori}-{tur}-{sira}-{gorev}.webp
+```
+
+Roman örneği:
+
+```text
+kurgu-roman-01-hero.webp
+kurgu-roman-02-fikir-akisi.webp
+kurgu-roman-03-yapi-diyagrami.webp
+kurgu-roman-04-eser-anatomisi.webp
+kurgu-roman-05-sayfa-ayari.webp
+kurgu-roman-06-ornek-proje.webp
+kurgu-roman-07-final-cta.webp
+```
+
+Öykü örneği aynı mantığı izler:
+
+```text
+kurgu-oyku-01-hero.webp
+kurgu-oyku-02-fikir-akisi.webp
+kurgu-oyku-03-yapi-diyagrami.webp
+...
+```
+
+Sıra numarası dosya yönetimi içindir; canlı sayfada görünür **01 / 02 / 03 bölüm numarası** oluşturmaz.
+
+## Depolama ve hafıza bütçesi kuralı
+
+Projenin toplam kullanılabilir depolama alanı **50 GB** olduğu için görsel üretimi kontrollü yapılacaktır.
+
+- Production'da mümkün olduğunca optimize edilmiş **WebP / AVIF** kullanılacaktır.
+- Ham PNG/JPEG üretimleri, yalnızca gerçekten arşivlenmesi gereken master dosya ise tutulacaktır; gereksiz deneme çıktıları production veya repo içinde biriktirilmeyecektir.
+- Aynı görselin fiziksel kopyaları çoğaltılmayacak; ortak görseller tek kaynaktan çağrılacaktır.
+- Her yeni görsel, kullanım yeri belli olmadan kalıcı kütüphaneye eklenmeyecektir.
+- Görsel varyant sayısı kontrol altında tutulacak; kaliteyi artırmayan tekrarlar temizlenecektir.
+- 50 GB alanın küçük bir bölümü bu proje için kullanılmalı; depolama bütçesi görsel sayısını değil, verimli asset yönetimini zorlamalıdır.
+
+## Görsel üretim çalışma sırası
+
+Görsel üretimi tek seferde yüzlerce dosya oluşturarak yapılmayacaktır.
+
+Çalışma sırası:
+
+1. Önce **83 tür için görsel envanteri** hazırlanır: tür adı, gerekli 6/7 görsel, görsel görevi ve ortak/türe özel durumu.
+2. **Roman** ilk tam pilot görsel seti olarak tamamlanır.
+3. Roman seti sayfada görsel dil, öğreticilik, mobil görünüm ve dosya ağırlığı açısından kontrol edilir.
+4. **Öykü** ikinci referans set olarak hazırlanır.
+5. Roman + Öykü sistemi kilitlendikten sonra kalan türler aynı asset yönetim disipliniyle gruplar halinde üretilir.
+6. Görsel dosyası ancak adı, görevi, kullanılacağı tür/sayfa ve production formatı belli olduktan sonra kalıcılaştırılır.
+
 ## Örnek proje kuralı
 
 Uygun türlerde sayfa boyunca tek bir örnek fikir geliştirilecektir:
@@ -151,6 +241,9 @@ Bu belge proje kararıdır ve **LOCKED** kabul edilir. Aşağıdaki kararlar ses
 - sayfa başına ana hedefin 6–7 öğretici görsel olması,
 - görsellerin öğretici işleve sahip olması,
 - görsel üretimin önce ortak sistem, sonra türe özel varyant mantığıyla ilerlemesi,
+- tür başına 6 görsellik çekirdek paket ve ihtiyaç halinde 7. görsel standardı,
+- görsellerin kategori/tür/görev mantığıyla isimlendirilmesi,
+- production assetlerinin WebP/AVIF ve depolama disipliniyle yönetilmesi,
 - Roman ve Öykü'nün ilk referanslar olması.
 
 Bu maddelerden biri değişecekse ayrı bir karar kaydı veya açık ürün onayı gerekir.

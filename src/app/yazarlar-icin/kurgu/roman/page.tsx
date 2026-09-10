@@ -110,6 +110,7 @@ export default function RomanYazarlikRehberiPage() {
           eyebrow="Yazarlar İçin · Kurgu"
           pageTitle="Roman Nasıl Yazılır?"
           summary="İlk roman fikrinden karaktere, olay örgüsünden sayfa düzenine ve ilk taslağa kadar adım adım ilerleyen görsel yazarlık rehberi."
+          unoptimizedImages
         />
       </div>
     </WritingGuideShell>

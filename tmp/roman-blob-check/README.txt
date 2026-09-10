@@ -1,0 +1,1 @@
+Roman writing guide staging. Temporary binary check files are removed before merge.

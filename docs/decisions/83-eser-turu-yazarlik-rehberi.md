@@ -50,7 +50,7 @@ Ana formül: **1 İlkOku şablon sistemi + 83 özgün eğitim mimarisi.**
 
 ## Görsel eğitim sistemi
 
-Her eser türü sayfasında yaklaşık **7–9 öğretici görsel modül** hedeflenecektir. Bu sayı katı bir zorunluluk değil, güçlü bir editoryal referanstır; türün ihtiyacına göre artırılabilir veya azaltılabilir.
+Her eser türü sayfasında yaklaşık **6–7 öğretici görsel modül** hedeflenecektir. Bu sayı katı bir zorunluluk değil, ana editoryal hedeftir; türün gerçekten ihtiyaç duyduğu durumda istisna verilebilir.
 
 Görseller dekorasyon amacıyla değil, konuyu öğretmek amacıyla kullanılacaktır. Türün ihtiyacına göre şu modüllerden yararlanılabilir:
 
@@ -65,6 +65,24 @@ Görseller dekorasyon amacıyla değil, konuyu öğretmek amacıyla kullanılaca
 - Final CTA / yazmaya başlama görseli.
 
 Mümkün olduğunda özgün İlkOku görselleri, özel diyagramlar ve telif açısından güvenli kaynaklar tercih edilecektir. Modern kitap kapakları yalnız dekoratif amaçla izinsiz kullanılmayacaktır.
+
+## Görsel üretim planı
+
+83 tür için sayfa başına 6–7 görsel kullanıldığında toplam görsel yerleşimi:
+
+- **83 × 6 = 498 görsel yerleşimi**
+- **83 × 7 = 581 görsel yerleşimi**
+
+Bu sayı, 498–581 tamamen farklı görsel dosyasının sıfırdan üretilmesi gerektiği anlamına gelmez. Amaç, ortak bir İlkOku Yazarlık Okulu görsel sistemini kurup bunu türlere kontrollü şekilde uyarlamaktır.
+
+Üretim yaklaşımı:
+
+- Önce yaklaşık **20–30 çekirdek görsel sistem / kompozisyon** hazırlanacaktır. Örnekler: yazı masası hero, karakter panosu, olay örgüsü şeması, kitap anatomisi, sayfa ayarı, düzenleme masası, dünya kurma masası, araştırma masası, çocuk kitabı storyboard'u, senaryo sahne kartları, çizgi anlatı panel planı, tez/akademik yapı diyagramı.
+- Sonra her tür için bu sistemlerden uygun olanlar seçilecek; yaklaşık **2–4 görsel alan türün kendi kimliğine göre özel olarak uyarlanacaktır**. Bu uyarlamalar her zaman sıfırdan tamamen yeni bir temel kompozisyon üretmek anlamına gelmez.
+- İlk üretim fazında hedef, yaklaşık **80–140 benzersiz ana görsel / varyantlık kontrollü bir kütüphane** oluşturmaktır. İhtiyaç çıktıkça bu kütüphane tür bazında genişletilecektir.
+- Dolayısıyla nihai sayfalarda **498–581 görsel yerleşimi** bulunabilir; fakat bunlar ortak sistem, varyant ve türe özgü görsellerin dengeli kombinasyonuyla üretilecektir.
+
+Ana ilke: **Önce yüzlerce rastgele görsel üretmek değil, önce tekrar kullanılabilir ve tutarlı bir görsel sistem kurmak.**
 
 ## Örnek proje kuralı
 
@@ -130,7 +148,9 @@ Bu belge proje kararıdır ve **LOCKED** kabul edilir. Aşağıdaki kararlar ses
 - görünür 01/02/03 bölüm numaralarının kullanılmaması,
 - mevcut İlkOku şablon sisteminin kullanılması,
 - her türün kendi içerik mimarisinin olması,
+- sayfa başına ana hedefin 6–7 öğretici görsel olması,
 - görsellerin öğretici işleve sahip olması,
+- görsel üretimin önce ortak sistem, sonra türe özel varyant mantığıyla ilerlemesi,
 - Roman ve Öykü'nün ilk referanslar olması.
 
 Bu maddelerden biri değişecekse ayrı bir karar kaydı veya açık ürün onayı gerekir.

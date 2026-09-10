@@ -1,0 +1,1 @@
+Roman guide image assets are validated at build time via static imports.

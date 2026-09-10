@@ -22,7 +22,15 @@ function SectionHeading({ heading, intro }: { heading?: string; intro?: string }
   );
 }
 
-export function PublicCmsPageBlocks({ blocks, pageTitle, summary, eyebrow }: { blocks: readonly CmsPageBlock[]; pageTitle: string; summary?: string; eyebrow: string }) {
+type PublicCmsPageBlocksProps = {
+  blocks: readonly CmsPageBlock[];
+  pageTitle: string;
+  summary?: string;
+  eyebrow: string;
+  unoptimizedImages?: boolean;
+};
+
+export function PublicCmsPageBlocks({ blocks, pageTitle, summary, eyebrow, unoptimizedImages = false }: PublicCmsPageBlocksProps) {
   const hasHero = blocks.some((block) => block.type === "hero");
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-[#fbfaff] to-[#f4f1ff] text-[#171426]">
@@ -49,7 +57,7 @@ export function PublicCmsPageBlocks({ blocks, pageTitle, summary, eyebrow }: { b
                       {block.text || summary ? <p className="mt-6 max-w-2xl text-base leading-8 text-[#655e78] sm:text-lg">{block.text || summary}</p> : null}
                       {(block.primaryLabel || block.secondaryLabel) ? <div className="mt-7 flex flex-wrap gap-3"><ActionLink href={block.primaryHref} label={block.primaryLabel} /><ActionLink href={block.secondaryHref} label={block.secondaryLabel} secondary /></div> : null}
                     </div>
-                    {block.imageUrl ? <div className="relative min-h-72 overflow-hidden rounded-[1.6rem] bg-[#f1edff]"><Image alt={block.imageAlt} className="object-cover" fill sizes="(max-width: 1024px) 100vw, 45vw" src={block.imageUrl} /></div> : null}
+                    {block.imageUrl ? <div className="relative min-h-72 overflow-hidden rounded-[1.6rem] bg-[#f1edff]"><Image alt={block.imageAlt} className="object-cover" fill sizes="(max-width: 1024px) 100vw, 45vw" src={block.imageUrl} unoptimized={unoptimizedImages} /></div> : null}
                   </div>
                 </section>
               );
@@ -66,7 +74,7 @@ export function PublicCmsPageBlocks({ blocks, pageTitle, summary, eyebrow }: { b
               return block.imageUrl ? (
                 <section className="px-4 py-7 sm:px-6 sm:py-10" key={block.id}>
                   <figure className={`mx-auto ${block.layout === "wide" ? "max-w-7xl" : "max-w-5xl"}`}>
-                    <div className="relative aspect-[16/9] overflow-hidden rounded-[1.75rem] border border-[#6847e8]/10 bg-[#eee9ff] shadow-[0_18px_55px_rgba(48,32,112,.08)]"><Image alt={block.alt} className="object-cover" fill sizes="100vw" src={block.imageUrl} /></div>
+                    <div className="relative aspect-[16/9] overflow-hidden rounded-[1.75rem] border border-[#6847e8]/10 bg-[#eee9ff] shadow-[0_18px_55px_rgba(48,32,112,.08)]"><Image alt={block.alt} className="object-cover" fill sizes="100vw" src={block.imageUrl} unoptimized={unoptimizedImages} /></div>
                     {block.caption ? <figcaption className="mt-3 text-center text-sm leading-6 text-[#7a7388]">{block.caption}</figcaption> : null}
                   </figure>
                 </section>
@@ -76,7 +84,7 @@ export function PublicCmsPageBlocks({ blocks, pageTitle, summary, eyebrow }: { b
                 <section className="px-4 py-8 sm:px-6 sm:py-12" key={block.id}>
                   <div className="mx-auto grid max-w-6xl items-center gap-8 rounded-[2rem] border border-[#6847e8]/10 bg-white p-6 shadow-[0_18px_55px_rgba(48,32,112,.06)] sm:p-10 lg:grid-cols-2">
                     <div className={block.imageSide === "left" ? "lg:order-2" : ""}><h2 className="text-3xl font-semibold tracking-[-.04em] text-[#17142f] sm:text-4xl">{block.heading}</h2><div className="mt-5"><EditorialBody body={block.body} /></div></div>
-                    <div className={`relative min-h-72 overflow-hidden rounded-[1.5rem] bg-[#f0ecff] ${block.imageSide === "left" ? "lg:order-1" : ""}`}>{block.imageUrl ? <Image alt={block.imageAlt} className="object-cover" fill sizes="(max-width: 1024px) 100vw, 50vw" src={block.imageUrl} /> : <div className="flex min-h-72 items-center justify-center text-sm font-semibold text-[#8b84a0]">Görsel alanı</div>}</div>
+                    <div className={`relative min-h-72 overflow-hidden rounded-[1.5rem] bg-[#f0ecff] ${block.imageSide === "left" ? "lg:order-1" : ""}`}>{block.imageUrl ? <Image alt={block.imageAlt} className="object-cover" fill sizes="(max-width: 1024px) 100vw, 50vw" src={block.imageUrl} unoptimized={unoptimizedImages} /> : <div className="flex min-h-72 items-center justify-center text-sm font-semibold text-[#8b84a0]">Görsel alanı</div>}</div>
                   </div>
                 </section>
               );
@@ -105,7 +113,7 @@ export function PublicCmsPageBlocks({ blocks, pageTitle, summary, eyebrow }: { b
             case "faq":
               return <section className="px-4 py-9 sm:px-6 sm:py-14" key={block.id}><div className="mx-auto max-w-4xl"><SectionHeading heading={block.heading} /><div className="space-y-3">{block.items.map((item, index) => <details className="group rounded-[1.25rem] border border-[#6847e8]/10 bg-white p-5 shadow-sm" key={`${block.id}-${index}`}><summary className="cursor-pointer list-none font-bold text-[#282044]">{item.question}</summary><p className="mt-4 leading-7 text-[#686176]">{item.answer}</p></details>)}</div></div></section>;
             case "gallery":
-              return <section className="px-4 py-9 sm:px-6 sm:py-14" key={block.id}><div className="mx-auto max-w-6xl"><SectionHeading heading={block.heading} /><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{block.items.filter((item) => item.imageUrl).map((item, index) => <figure key={`${block.id}-${index}`}><div className="relative aspect-[4/3] overflow-hidden rounded-[1.4rem] bg-[#eee9ff]"><Image alt={item.alt} className="object-cover" fill sizes="(max-width: 640px) 100vw, 33vw" src={item.imageUrl} /></div>{item.caption ? <figcaption className="mt-2 text-sm text-[#777083]">{item.caption}</figcaption> : null}</figure>)}</div></div></section>;
+              return <section className="px-4 py-9 sm:px-6 sm:py-14" key={block.id}><div className="mx-auto max-w-6xl"><SectionHeading heading={block.heading} /><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{block.items.filter((item) => item.imageUrl).map((item, index) => <figure key={`${block.id}-${index}`}><div className="relative aspect-[4/3] overflow-hidden rounded-[1.4rem] bg-[#eee9ff]"><Image alt={item.alt} className="object-cover" fill sizes="(max-width: 640px) 100vw, 33vw" src={item.imageUrl} unoptimized={unoptimizedImages} /></div>{item.caption ? <figcaption className="mt-2 text-sm text-[#777083]">{item.caption}</figcaption> : null}</figure>)}</div></div></section>;
             case "table":
               return <section className="px-4 py-9 sm:px-6 sm:py-14" key={block.id}><div className="mx-auto max-w-5xl"><SectionHeading heading={block.heading} /><div className="overflow-x-auto rounded-[1.4rem] border border-[#6847e8]/10 bg-white shadow-sm"><table className="min-w-full border-collapse text-left text-sm"><thead className="bg-[#f3efff] text-[#241b45]"><tr>{block.columns.map((column, index) => <th className="border-b border-[#6847e8]/10 px-4 py-3 font-extrabold" key={`${block.id}-h-${index}`}>{column}</th>)}</tr></thead><tbody>{block.rows.map((row, rowIndex) => <tr className="border-b border-[#6847e8]/8 last:border-0" key={`${block.id}-r-${rowIndex}`}>{block.columns.map((_, cellIndex) => <td className="min-w-36 px-4 py-3 align-top leading-6 text-[#5f596d]" key={`${block.id}-${rowIndex}-${cellIndex}`}>{row[cellIndex] ?? ""}</td>)}</tr>)}</tbody></table></div></div></section>;
             case "divider": {

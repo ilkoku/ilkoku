@@ -3,10 +3,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
-import { authContent } from "@/content";
-import { logoutAction } from "@/features/auth/actions";
-import { getRoleNavigation } from "@/features/auth/destination";
-import { getCurrentProfile } from "@/features/auth/profile";
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
@@ -76,14 +72,10 @@ const benefits = [
 const statIcons: IconName[] = ["account", "create", "editor", "publisher", "book", "message"];
 
 export default async function HomepageExperience() {
-  const [profile, roleCardState, homepageState] = await Promise.all([
-    getCurrentProfile(),
+  const [roleCardState, homepageState] = await Promise.all([
     getPublishedRoleCardsState("tr"),
     getPublishedHomepageState("tr"),
   ]);
-
-  const navigation = profile ? await getRoleNavigation(profile) : null;
-  const pendingRole = navigation?.pendingRequest?.requestedRole ?? (profile?.role === "editor_pending" ? "editor" : null);
   const homepage = homepageState.state === "valid" ? homepageState.content : {};
   const hero = homepage.hero;
   const roleSection = homepage.roles;
@@ -127,10 +119,7 @@ export default async function HomepageExperience() {
           <details className="nx-account">
             <summary aria-label="Hesap menüsü"><LandingIcon name="account" /></summary>
             <div className="nx-account__menu">
-              {profile && navigation ? <>
-                <div className="nx-account__identity"><strong>{profile.fullName}</strong><span>Aktif rol: {authContent.roles[profile.role]}</span>{navigation.hasPendingRequest ? <small>{pendingRole ? `${authContent.roles[pendingRole]} başvurunuz inceleniyor` : "Başvurunuz inceleniyor"}</small> : null}</div>
-                <Link href="/hesabim">Hesabım</Link><Link href={navigation.workspaceHref}>{navigation.hasPendingRequest ? "Mevcut çalışma alanına dön" : "Çalışma Alanım"}</Link><form action={logoutAction}><button type="submit">Çıkış Yap</button></form>
-              </> : <><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a></>}
+              <Link href="/hesabim">Hesabım</Link><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a>
             </div>
           </details>
         </div>
@@ -170,8 +159,7 @@ export default async function HomepageExperience() {
       </section>
 
       <LiveHomepageFooter
-        signedIn={Boolean(profile && navigation)}
-        workspaceHref={navigation?.workspaceHref}
+        signedIn={false}
         slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
         copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
       />

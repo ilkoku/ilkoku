@@ -16,7 +16,7 @@ const baseUrl = "https://ilkoku.com";
 const visual = getPublicTrustPageVisual("/editoryal-standartlar");
 const socialImage = `${baseUrl}${visual.src}`;
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const resolvePage = cache(async () => {
   const state = await getPublishedCmsPublicPageState("editoryal-standartlar");

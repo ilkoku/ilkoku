@@ -2,9 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
-import { logoutAction } from "@/features/auth/actions";
-import { getRoleNavigation } from "@/features/auth/destination";
-import { getCurrentProfile } from "@/features/auth/profile";
 import {
   publicLegalLinks,
   publicPlatformLinks,
@@ -14,8 +11,7 @@ import {
 import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 export async function PublicTrustFooter() {
-  const [profile, identity] = await Promise.all([getCurrentProfile(), getPublicSiteIdentity()]);
-  const navigation = profile ? await getRoleNavigation(profile) : null;
+  const identity = await getPublicSiteIdentity();
 
   return (
     <footer className="public-trust-footer">
@@ -47,21 +43,10 @@ export async function PublicTrustFooter() {
 
         <div className="public-trust-footer__column">
           <h3>Hesap</h3>
-          {profile && navigation ? (
-            <>
-              <Link href="/hesabim">Hesabım</Link>
-              <Link href={navigation.workspaceHref}>Çalışma Alanım</Link>
-              <form action={logoutAction}>
-                <button className="public-trust-footer__logout" type="submit">Çıkış Yap</button>
-              </form>
-            </>
-          ) : (
-            <>
-              <Link href="/giris">Giriş Yap</Link>
-              <Link href="/kayit">Üye Ol</Link>
-              <Link href="/sifremi-unuttum">Şifremi Unuttum</Link>
-            </>
-          )}
+          <Link href="/hesabim">Hesabım</Link>
+          <Link href="/giris">Giriş Yap</Link>
+          <Link href="/kayit">Üye Ol</Link>
+          <Link href="/sifremi-unuttum">Şifremi Unuttum</Link>
         </div>
 
         <nav className="public-trust-footer__column" aria-label="Destek bağlantıları">

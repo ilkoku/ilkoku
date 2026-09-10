@@ -166,8 +166,8 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
   has(footer, "Hesap", "account column heading");
   has(footer, "Destek", "support column heading");
   has(footer, "public-trust-footer__legal", "legal bar markup");
-  has(footer, "getCurrentProfile", "session-aware footer account state");
-  has(footer, "getRoleNavigation", "role-aware workspace footer link");
+  lacks(footer, "getCurrentProfile", "public footer must not read session server-side");
+  lacks(footer, "getRoleNavigation", "public footer must not resolve workspace server-side");
   lacks(footer, 'href="/rehber"', "redirect-only guide route must stay out of canonical trust footer");
 
   has(styles, ".how-page > .how-footer", "legacy embedded trust footer suppression");

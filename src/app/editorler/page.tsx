@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     images: [socialImage],
   },
 };
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default function EditorsPage() {
   const schema = [

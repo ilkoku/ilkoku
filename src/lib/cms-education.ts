@@ -16,7 +16,7 @@ export const EDUCATION_VISUAL_SLOTS = [
     recommendedHeight: 900,
     aspectRatio: "16:9",
     fit: "contain",
-    automation: "Oranı korur; crop yapmaz; küçük görseli büyütmez.",
+    automation: "Oranı korur; crop yapmaz; kaynak çözünürlüğün altına düşürmez ve düşük çözünürlüklü kaynağı kabul etmez.",
   },
   {
     key: "ideaFlow",
@@ -27,7 +27,7 @@ export const EDUCATION_VISUAL_SLOTS = [
     recommendedHeight: 1080,
     aspectRatio: "4:3",
     fit: "contain",
-    automation: "Metin ve diyagramı tam gösterir; crop yapmaz.",
+    automation: "Metin ve diyagramı tam gösterir; crop yapmaz; kaynak çözünürlüğü korunur.",
   },
   {
     key: "structure",
@@ -38,7 +38,7 @@ export const EDUCATION_VISUAL_SLOTS = [
     recommendedHeight: 1000,
     aspectRatio: "3:2",
     fit: "contain",
-    automation: "Diyagramın tamamını oranını bozmadan gösterir.",
+    automation: "Diyagramın tamamını oranını ve kaynak çözünürlüğünü bozmadan gösterir.",
   },
   {
     key: "anatomy",
@@ -49,7 +49,7 @@ export const EDUCATION_VISUAL_SLOTS = [
     recommendedHeight: 1000,
     aspectRatio: "3:2",
     fit: "contain",
-    automation: "Etiket ve küçük metinleri kesmeden tam gösterir.",
+    automation: "Etiket ve küçük metinleri kesmeden, kaynak kaliteyi değiştirmeden gösterir.",
   },
   {
     key: "pageSetup",
@@ -60,7 +60,7 @@ export const EDUCATION_VISUAL_SLOTS = [
     recommendedHeight: 1000,
     aspectRatio: "3:2",
     fit: "contain",
-    automation: "Sayfa örneğini crop yapmadan doğal oranında gösterir.",
+    automation: "Sayfa örneğini crop yapmadan ve kaynak çözünürlüğü değiştirmeden gösterir.",
   },
   {
     key: "project",
@@ -71,7 +71,7 @@ export const EDUCATION_VISUAL_SLOTS = [
     recommendedHeight: 1000,
     aspectRatio: "3:2",
     fit: "contain",
-    automation: "Akış panosunu tam gösterir; zorla kutuya yaymaz.",
+    automation: "Akış panosunu tam gösterir; düşük çözünürlüklü kaynağı büyütmez.",
   },
   {
     key: "finalCta",
@@ -82,7 +82,7 @@ export const EDUCATION_VISUAL_SLOTS = [
     recommendedHeight: 1000,
     aspectRatio: "3:2",
     fit: "contain",
-    automation: "CTA ve arayüz detaylarını kesmeden tam gösterir.",
+    automation: "CTA ve arayüz detaylarını kesmeden, kaynak kaliteyi koruyarak gösterir.",
   },
 ] as const;
 
@@ -94,6 +94,8 @@ export type EducationVisual = {
   altText: string;
   filename?: string;
   mediaId?: string;
+  sourceWidth?: number;
+  sourceHeight?: number;
   recommendedWidth: number;
   recommendedHeight: number;
   aspectRatio: string;
@@ -151,6 +153,10 @@ export function educationGuideDefault(genre: Genre): EducationGuideRecord {
   };
 }
 
+function safePositiveInteger(value: unknown) {
+  return typeof value === "number" && Number.isInteger(value) && value > 0 && value <= 20000 ? value : undefined;
+}
+
 function safeVisual(
   value: unknown,
   slot: (typeof EDUCATION_VISUAL_SLOTS)[number],
@@ -165,6 +171,8 @@ function safeVisual(
     altText: typeof item.altText === "string" ? item.altText.slice(0, 300) : "",
     filename: typeof item.filename === "string" ? item.filename.slice(0, 180) : undefined,
     mediaId: typeof item.mediaId === "string" ? item.mediaId.slice(0, 80) : undefined,
+    sourceWidth: safePositiveInteger(item.sourceWidth),
+    sourceHeight: safePositiveInteger(item.sourceHeight),
     recommendedWidth: slot.recommendedWidth,
     recommendedHeight: slot.recommendedHeight,
     aspectRatio: slot.aspectRatio,

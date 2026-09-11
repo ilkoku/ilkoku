@@ -7,6 +7,7 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   roman: "/yazarlar-icin/kurgu/roman",
   oyku: "/yazarlar-icin/kurgu/oyku",
   novella: "/yazarlar-icin/kurgu/novella",
+  fantastik: "/yazarlar-icin/kurgu/fantastik",
 };
 
 type WritingGuideShellProps = {

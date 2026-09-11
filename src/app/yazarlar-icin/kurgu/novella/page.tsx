@@ -228,6 +228,7 @@ function buildNovellaBlocks(
       id: "novella-final-kontrol",
       type: "steps",
       heading: "Taslağı bitirmeden önce son kontrol",
+      intro: "Kapatmadan önce ana dönüşümü, ritmi ve gereksiz yan katmanları son kez doğrula.",
       items: [
         { title: "Tek cümlede anlat", text: "Novellanın ana dönüşümünü tek cümlede hâlâ anlatabiliyor musun?" },
         { title: "Yan hatları sorgula", text: "Ana çatışmadan bağımsız kalan her yan hikâyeyi çıkar, birleştir veya yeniden bağla." },

@@ -1,0 +1,11 @@
+/*
+ * CMS information architecture:
+ * Primary navigation lives in the sidebar. The dashboard is an operational
+ * surface (health, tasks, activity), so the duplicated all-modules directory
+ * is intentionally hidden to prevent the same 20+ destinations appearing
+ * twice on the same screen.
+ */
+.content-dashboard > .content-dashboard-modules-title,
+.content-dashboard > .content-dashboard-module-grid {
+  display: none;
+}

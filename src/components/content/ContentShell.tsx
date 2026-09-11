@@ -7,7 +7,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { contentNavigation } from "@/lib/content-navigation";
 
-const groupOrder = ["Site", "İçerik", "Büyüme", "Sistem"] as const;
+const groupOrder = ["Başlangıç", "Sayfalar", "Medya & Eğitim", "Yayın & Görünürlük", "Yönetim"] as const;
 
 type ContentShellProps = {
   children: ReactNode;
@@ -24,14 +24,15 @@ function isEditableTarget(target: EventTarget | null) {
 export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
   const pathname = usePathname();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const navigation = contentNavigation.filter((item) => isAdmin || !item.adminOnly);
-  const currentItem = navigation
+  const availableNavigation = contentNavigation.filter((item) => isAdmin || !item.adminOnly);
+  const primaryNavigation = availableNavigation.filter((item) => item.showInNavigation);
+  const currentItem = availableNavigation
     .filter((item) => item.href !== "/icerik" && pathname.startsWith(item.href))
     .sort((a, b) => b.href.length - a.href.length)[0]
-    ?? navigation.find((item) => item.href === "/icerik");
+    ?? availableNavigation.find((item) => item.href === "/icerik");
 
   const groups = groupOrder
-    .map((group) => ({ group, items: navigation.filter((item) => item.group === group) }))
+    .map((group) => ({ group, items: primaryNavigation.filter((item) => item.group === group) }))
     .filter((section) => section.items.length > 0);
 
   useEffect(() => {
@@ -76,7 +77,10 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
         <nav aria-label="İçerik yönetimi menüsü">
           {groups.map((section) => (
             <section className="content-nav-group" aria-labelledby={`cms-nav-${section.group}`} key={section.group}>
-              <span className="content-nav-group__title" id={`cms-nav-${section.group}`}>{section.group}</span>
+              <div className="content-nav-group__heading">
+                <span className="content-nav-group__title" id={`cms-nav-${section.group}`}>{section.group}</span>
+                <small>{section.items.length}</small>
+              </div>
               <div className="content-nav-group__links">
                 {section.items.map((item) => {
                   const active = item.href === "/icerik"
@@ -89,9 +93,9 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
                       href={item.href}
                       className={active ? "is-active" : ""}
                       aria-current={active ? "page" : undefined}
+                      title={item.description}
                     >
                       <strong>{item.label}</strong>
-                      <small>{item.description}</small>
                     </Link>
                   );
                 })}
@@ -129,7 +133,7 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
                 type="search"
                 minLength={2}
                 maxLength={120}
-                placeholder="Sayfa, SSS, rehber, medya…"
+                placeholder="Sayfa, medya, eğitim, SSS…"
                 autoComplete="off"
                 aria-label="CMS içinde içerik ara"
                 aria-keyshortcuts="Meta+K Control+K"

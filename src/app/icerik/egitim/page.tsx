@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { EDUCATION_VISUAL_SLOTS, listEducationGuideRecords } from "@/lib/cms-education";
-import { GENRE_CATEGORIES, getGenresByCategory } from "@/lib/genres";
+import { GENRE_CATEGORIES, GENRES, getGenresByCategory } from "@/lib/genres";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +23,13 @@ export default async function EducationDashboardPage() {
         <div>
           <span>İçerik · Eğitim</span>
           <h1>Eğitim Sayfaları</h1>
-          <p>7 ana kategori ve 83 eser türünün yazarlık eğitim sayfalarını tek yerden yönet. Metinleri düzenle, 7 ana görseli bilgisayarından manuel yükle ve her türün hazırlık durumunu izle.</p>
+          <p>7 ana kategori ve eser türlerinin yazarlık eğitim sayfalarını tek yerden yönet. Metinleri düzenle, 7 ana görseli bilgisayarından manuel yükle ve her türün hazırlık durumunu izle.</p>
         </div>
         <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : complete > 0 ? "success" : "warning"}>
           <span className="cms-editor-status-card__label">Eğitim envanteri</span>
-          {dataError ? <strong>Veri okunamadı</strong> : <strong>{records.length || 83} tür</strong>}
+          {dataError ? <strong>Veri okunamadı</strong> : <strong>{GENRES.length} tür</strong>}
           <div className="cms-editor-status-card__meta">
-            <span className="cms-editor-chip">7 kategori</span>
+            <span className="cms-editor-chip">{GENRE_CATEGORIES.length} kategori</span>
             <span className="cms-editor-chip is-warning">{configured} görsel başlanmış</span>
             <span className="cms-editor-chip">{complete} görsel seti tam</span>
           </div>

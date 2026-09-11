@@ -22,6 +22,7 @@ export const cmsModules: CmsModule[] = [
   { href: "/icerik/menuler", label: "Menüler & Footer", description: "Navigasyon, linkler ve footer alanları", group: "Site", enabled: true, mode: "admin-control", adminOnly: true },
   { href: "/icerik/yasal", label: "Yasal Sayfalar", description: "KVKK, gizlilik, çerez ve telif metinleri", group: "Site", enabled: true, mode: "controlled-write" },
   { href: "/icerik/medya", label: "Medya", description: "Görseller, dosyalar, kullanım yerleri ve alt metinler", group: "İçerik", enabled: true, mode: "controlled-write" },
+  { href: "/icerik/egitim", label: "Eğitim", description: "7 ana kategori ve 83 eser türünün eğitim sayfaları ve 7 görsel slotu", group: "İçerik", enabled: true, mode: "controlled-write" },
   { href: "/icerik/motivasyon", label: "Yazar Motivasyonları", description: "Kullanıcı bazlı aktif gün serisi ve yazar paneli motivasyon yazıları", group: "İçerik", enabled: true, mode: "controlled-write" },
   { href: "/icerik/sss", label: "SSS & Yardım", description: "Rol bazlı yardım ve sık sorulan sorular", group: "İçerik", enabled: true, mode: "controlled-write" },
   { href: "/icerik/duyurular", label: "Duyurular", description: "Platform ve bakım duyuruları", group: "İçerik", enabled: true, mode: "controlled-write" },

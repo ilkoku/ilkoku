@@ -225,6 +225,18 @@ function buildNovellaBlocks(
       "Kıyıdaki Ev örneği, tek ana çatışmanın bölüm bölüm nasıl derinleştirilebileceğini gösterir.",
     ),
     {
+      id: "novella-ornek-sahne",
+      type: "text",
+      heading: "Örnek: orta kırılmayı sahnede nasıl gösterirsin?",
+      body: "## Yalnız bilgi veren sürüm\n\nLeyla babasının kardeşine gelen mektupları sakladığını öğrendi. Buna çok şaşırdı ve ailesi hakkında düşündüğü birçok şeyin yanlış olabileceğini fark etti.\n\n## Sahneye dönüşen sürüm\n\nLeyla üçüncü zarfın üzerindeki tarihi iki kez okudu. O tarihte kardeşi çoktan evden gitmişti. Mektubun köşesinde babasının her resmi evraka attığı küçük mavi işaret vardı. Cem kapının yanında hiçbir şey söylemeden bekledi. Leyla zarfı masaya bırakmadı; avucunda tuttu. \"Bunları o mu sakladı?\" dedi.\n\nİkinci sürüm gerçeği açıklamakla kalmaz; **kanıtı, tepkiyi ve ilişkinin değiştiği anı aynı sahnede görünür kılar.**",
+    },
+    {
+      id: "novella-taslak-sozu",
+      type: "quote",
+      quote: "Novellada alan sınırlıdır; ama karakterin dönüşümü küçük olmak zorunda değildir.",
+      attribution: "İlkOku · Yazarlık rehberi",
+    },
+    {
       id: "novella-final-kontrol",
       type: "steps",
       heading: "Taslağı bitirmeden önce son kontrol",
@@ -237,12 +249,49 @@ function buildNovellaBlocks(
         { title: "Yüksek sesle oku", text: "Ritmin düştüğü, açıklamanın uzadığı ve gereksiz tekrarın başladığı yerleri işaretle." },
       ],
     },
+    {
+      id: "novella-ustalar",
+      type: "cards",
+      heading: "Ustalardan öğren — novella nasıl farklı biçimlerde kurulabilir?",
+      intro: "Amaç biçim kopyalamak değil; orta uzunluktaki anlatının yoğunluk, zaman ve karakter dönüşümünü nasıl farklı yollarla taşıyabildiğini görmek.",
+      items: [
+        { title: "Stefan Zweig", text: "Psikolojik baskıyı dar zaman aralığında büyütme, karakteri tek bir saplantı veya karar etrafında sıkıştırma biçimi incelenebilir.", label: "", href: "" },
+        { title: "John Steinbeck", text: "Sınırlı karakter kadrosu ve belirgin mekân üzerinden ilişki, umut ve kaçınılmaz sonuçları yoğunlaştırma biçimine bakılabilir.", label: "", href: "" },
+        { title: "Ernest Hemingway", text: "Sade yüzey anlatısının altında direnç, kayıp ve anlam katmanlarını taşıyan tekrar, ritim ve seçilmiş ayrıntılar incelenebilir.", label: "", href: "" },
+        { title: "Franz Kafka", text: "Tek güçlü kurmaca durumunun giderek büyüyen sonuçlarını, sınırlı ekseni dağıtmadan nasıl sürdürdüğü incelenebilir.", label: "", href: "" },
+        { title: "Henry James", text: "Bakış açısı, belirsizlik ve psikolojik yorumun dar bir olay örgüsü içinde nasıl derinlik ürettiğine bakılabilir.", label: "", href: "" },
+        { title: "Thomas Mann", text: "Atmosfer, tekrar eden motifler ve düşünsel gerilimin tek ana dönüşümü nasıl genişlettiği incelenebilir.", label: "", href: "" },
+      ],
+    },
+    {
+      id: "novella-sss",
+      type: "faq",
+      heading: "Novella yazarken sık sorulanlar",
+      items: [
+        { question: "Novella kaç kelime olmalı?", answer: "Tek ve evrensel bir kelime sınırı yoktur. Yayınevi, yarışma veya platform kendi aralığını belirleyebilir. Yazarken sayıyı şişirmek yerine ana dönüşümün gerektirdiği hacmi tamamla; gönderim aşamasında ilgili teknik sınırı ayrıca kontrol et." },
+        { question: "Novella ile uzun öykü arasındaki fark nedir?", answer: "Kesin bir uluslararası sınır çizgisi yoktur. Pratikte novella, tek ana ekseni korurken karakter dönüşümüne, sahne zincirine ve sonuçlara öyküden daha fazla gelişim alanı verir." },
+        { question: "Novellada yan hikâye olabilir mi?", answer: "Olabilir; fakat ana çatışmadan bağımsız ikinci bir eser gibi büyümemeli. Yan katman ana karakterin seçimini, ilişkiyi veya temayı derinleştirmiyorsa çıkarılmayı hak eder." },
+        { question: "Kaç ana karakter kullanmalıyım?", answer: "Birden fazla merkez mümkün olsa da orta uzunlukta her yeni ana bakış önemli alan ister. Çoğu projede tek baskın dönüşüm hattı ve sınırlı destek karakteri odağı korumayı kolaylaştırır." },
+        { question: "Bölüm kullanmak zorunda mıyım?", answer: "Hayır. Bölüm, sahne veya kesit yapısı anlatının ihtiyacına bağlıdır. Bölüm kullanıyorsan her bölümün yeni baskı, bilgi, seçim veya sonuç üretmesini bekle." },
+        { question: "Final tamamen kapalı olmak zorunda mı?", answer: "Hayır. Olayın bütün ayrıntıları kapanmayabilir; fakat ana dönüşümün neye vardığı hissedilmelidir. Açıklanmayan ayrıntı ile tamamlanmamış ana hareket aynı şey değildir." },
+      ],
+    },
     ...visualBlock(
       "novella-gorsel-final",
       visuals.finalCta,
       alts.finalCta,
       "Novellanın gücü uzunluğunda değil; tek bir dönüşümü eksiksiz ve yoğun biçimde taşımasındadır.",
     ),
+    {
+      id: "novella-cta",
+      type: "cta",
+      heading: "Ana dönüşümü kurdun. Şimdi novellanı tamamla.",
+      text: "Hacmi büyütmeye çalışma. Sahne zincirini tamamla, gereksiz yan hatları temizle ve karakterin başlangıçtan finale nasıl değiştiğini görünür bırak.",
+      primaryLabel: "İlkOku Yazar Alanına Git",
+      primaryHref: "/yazar",
+      secondaryLabel: "",
+      secondaryHref: "",
+    },
   ];
 }
 
@@ -281,7 +330,10 @@ export default async function NovellaYazarlikRehberiPage() {
   };
 
   const title = guide?.title || "Novella Nasıl Yazılır?";
-  const summary = guide?.summary || "Öykünün yoğunluğunu, romanın gelişim alanıyla birleştir. Tek ana dönüşümü sahne sahne büyüt, dağıtmadan tamamla.";
+  const genericSummary = "Novella için adım adım yazarlık ve üretim rehberi.";
+  const summary = guide?.summary && guide.summary !== genericSummary
+    ? guide.summary
+    : "Öykünün yoğunluğunu, romanın gelişim alanıyla birleştir. Tek ana dönüşümü sahne sahne büyüt, dağıtmadan tamamla.";
   const blocks = buildNovellaBlocks(visuals, alts, title, summary);
 
   return (

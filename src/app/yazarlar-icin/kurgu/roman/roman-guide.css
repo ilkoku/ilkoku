@@ -35,3 +35,21 @@
   max-height: none !important;
   object-fit: contain !important;
 }
+
+/* Roman hero: mevcut tasarım dilini koru, yalnız metin/görsel oranını dengele. */
+@media (min-width: 64rem) {
+  .roman-writing-guide main > div > section:first-child > div {
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr) !important;
+    gap: 2.25rem !important;
+  }
+
+  .roman-writing-guide main > div > section:first-child > div > div:first-child > h1 {
+    max-width: 9ch;
+    font-size: clamp(2.6rem, 4.4vw, 4.15rem) !important;
+    line-height: 1 !important;
+  }
+
+  .roman-writing-guide main > div > section:first-child > div > div:has(> img) {
+    aspect-ratio: 16 / 9 !important;
+  }
+}

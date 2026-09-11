@@ -8,10 +8,12 @@ import {
   type MediaWorkbenchAsset,
   type MediaWorkbenchInvalid,
 } from "@/components/content/MediaLibraryWorkbench";
+import { SiteStaticMediaInventory } from "@/components/content/SiteStaticMediaInventory";
 import { requireCmsManager } from "@/lib/cms-access";
 import { EDUCATION_VISUAL_SLOTS } from "@/lib/cms-education";
 import { parseCmsMediaAssetMetadata } from "@/lib/cms-media";
 import { getCmsMediaReferenceMap } from "@/lib/cms-media-references";
+import { getCmsStaticMediaInventory } from "@/lib/cms-static-media";
 import { GENRES } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
 import styles from "./MediaPage.module.css";
@@ -57,6 +59,9 @@ export default async function MediaPage({ searchParams }: PageProps) {
     slot: queryString(query.egitimSlot).slice(0, 40),
   };
 
+  const staticMediaSections = await getCmsStaticMediaInventory();
+  const staticMediaCount = staticMediaSections.reduce((sum, section) => sum + section.assets.length, 0);
+
   let rows: MediaRow[] | null = null;
   try {
     rows = await prisma.$queryRaw<MediaRow[]>`
@@ -74,11 +79,13 @@ export default async function MediaPage({ searchParams }: PageProps) {
     return (
       <section className="content-editor-page">
         <div className="content-page-heading">
-          <div><span>İçerik</span><h1>Medya Kütüphanesi</h1><p>Medya envanteri doğrulanamadığında yükleme veya arşivleme kararı verilmez.</p></div>
+          <div><span>Medya & Eğitim</span><h1>Medya Merkezi</h1><p>Site dosyaları sayfalara göre görünür; CMS yükleme envanteri okunamadığında yanlış sıfır gösterilmez.</p></div>
+          <div className="content-profile"><strong>{staticMediaCount} statik medya</strong><small>{staticMediaSections.length} sayfa / bölüm</small></div>
         </div>
+        <SiteStaticMediaInventory sections={staticMediaSections} />
         <div className="content-panel" role="alert">
-          <strong>Medya kayıtları okunamadı.</strong>
-          <p>Bu durum medya kaydı olmadığı anlamına gelmez. Envanter görülmeden yeni kayıt veya arşivleme işlemleri durduruldu.</p>
+          <strong>CMS yükleme kayıtları okunamadı.</strong>
+          <p>Statik site medyası yukarıda gösterilmeye devam ediyor. Veritabanı envanteri görülmeden yeni kayıt veya arşivleme işlemleri durduruldu.</p>
           <div className="content-form-actions" style={{ flexWrap: "wrap" }}><Link href="/icerik/saglik">Sistem Sağlığı →</Link><Link href="/icerik/medya">Tekrar dene</Link></div>
         </div>
       </section>
@@ -130,13 +137,13 @@ export default async function MediaPage({ searchParams }: PageProps) {
     <section className="content-editor-page">
       <div className="content-page-heading">
         <div>
-          <span>İçerik</span>
-          <h1>Medya Kütüphanesi</h1>
-          <p>Görselleri koleksiyonuna yerleştir, önizle, kullanım yerlerini izle ve güvenli biçimde yönet.</p>
+          <span>Medya & Eğitim</span>
+          <h1>Medya Merkezi</h1>
+          <p>Sitedeki gerçek statik dosyaları ve CMS yüklemelerini tek merkezde; sayfa, kullanım yeri ve eğitim koleksiyonuna göre yönet.</p>
         </div>
         <div className="content-profile">
-          <strong>{assets.length} aktif medya</strong>
-          <small>{educationAssets.length} eğitim medyası · {invalid.length} bozuk metadata · {access.canPublish ? "Yönet + güvenli arşiv" : "Yönetim yetkisi"}</small>
+          <strong>{staticMediaCount + assets.length} görünür medya</strong>
+          <small>{staticMediaCount} statik · {assets.length} CMS yüklemesi · {educationAssets.length} eğitim yüklemesi</small>
         </div>
       </div>
 
@@ -144,12 +151,15 @@ export default async function MediaPage({ searchParams }: PageProps) {
       {uploaded ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Dosya yüklendi.</strong> Yeni medya envantere eklendi.</div> : null}
       {errorKey && uploadErrors[errorKey] ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>İşlem tamamlanamadı:</strong> {uploadErrors[errorKey]}</div> : null}
       {invalid.length > 0 ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>{invalid.length} aktif medya metadata kaydı bozuk.</strong><p>Bu kayıtlar normal arşiv akışına sokulmaz. URL bilinmeden canlı referans kontrolü güvenilir değildir.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
-      {!referencesAvailable ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Medya kullanım haritası doğrulanamadı.</strong><p>Kullanımda değil sonucu üretilmedi. Referans görünürlüğü geri gelene kadar tüm arşivleme aksiyonları fail-closed olarak kilitlendi.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
+      {!referencesAvailable ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>CMS medya kullanım haritası doğrulanamadı.</strong><p>CMS yüklemeleri için “kullanımda değil” sonucu üretilmedi. Referans görünürlüğü geri gelene kadar arşivleme fail-closed olarak kilitlendi.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
 
       <nav className={styles.viewNav} aria-label="Medya görünümleri">
-        <a href="#egitim-medya"><span>Eğitim Görselleri</span><strong>{educationAssets.length}</strong></a>
-        <a href="#tum-medya"><span>Tüm Medya</span><strong>{assets.length}</strong></a>
+        <a href="#site-medya"><span>Site Sayfaları</span><strong>{staticMediaCount}</strong></a>
+        <a href="#egitim-medya"><span>Eğitim Yüklemeleri</span><strong>{educationAssets.length}</strong></a>
+        <a href="#cms-medya"><span>CMS Yüklemeleri</span><strong>{assets.length}</strong></a>
       </nav>
+
+      <SiteStaticMediaInventory sections={staticMediaSections} />
 
       <EducationMediaCollection
         assets={educationAssets}
@@ -158,12 +168,12 @@ export default async function MediaPage({ searchParams }: PageProps) {
         filters={educationFilters}
       />
 
-      <section id="tum-medya" className={styles.generalSection}>
+      <section id="cms-medya" className={styles.generalSection}>
         <div className={styles.sectionHeading}>
           <div>
-            <span>Genel envanter</span>
-            <h2>Tüm Medya</h2>
-            <p>Arama, önizleme, gerçek kullanım takibi ve güvenli arşivleme çalışma masası.</p>
+            <span>CMS yüklemeleri</span>
+            <h2>Yüklenen Medya</h2>
+            <p>PC’den yüklenen dosyalar için arama, önizleme, gerçek kullanım takibi ve güvenli arşivleme.</p>
           </div>
           <div className={styles.sectionCount}><strong>{assets.length}</strong><span>aktif kayıt</span></div>
         </div>

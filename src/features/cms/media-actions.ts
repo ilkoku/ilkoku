@@ -111,4 +111,5 @@ export async function archiveMediaAssetAction(formData: FormData) {
 
   revalidatePath("/icerik");
   revalidatePath("/icerik/medya");
+  redirect("/icerik/medya?silindi=1#cms-medya");
 }

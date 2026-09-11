@@ -84,6 +84,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run lint
 
+      - name: Run Education Bombe release gate
+        if: ${{ !cancelled() }}
+        run: node scripts/writing-guide-release-gate.mjs
+
       - name: Run security contract tests
         if: ${{ !cancelled() }}
         shell: bash

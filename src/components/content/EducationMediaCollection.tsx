@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { archiveMediaAssetAction } from "@/features/cms/media-actions";
 import styles from "./EducationMediaCollection.module.css";
 
 export type EducationMediaCollectionAsset = {
@@ -14,6 +15,9 @@ export type EducationMediaCollectionAsset = {
   slotNumber: string;
   folder: string;
   updatedAt: string;
+  referenceCount: number;
+  canDelete: boolean;
+  deleteReason: string;
 };
 
 type GenreOption = { slug: string; label: string; category: string };
@@ -190,12 +194,19 @@ export function EducationMediaCollection({ assets, genres, slots, filters }: Pro
                   <div className={styles.meta}>
                     <span>{formatBytes(asset.sizeBytes)}</span>
                     <span>{formatDate(asset.updatedAt)}</span>
+                    <span>{asset.referenceCount > 0 ? `${asset.referenceCount} kullanım` : "Boşta"}</span>
                   </div>
                   <small className={styles.filename}>{asset.filename || asset.url}</small>
                   <div className={styles.cardActions}>
                     {asset.genreSlug ? <Link href={`/icerik/egitim/${asset.genreSlug}`}>Türü yönet</Link> : null}
                     <Link href={asset.url} target="_blank">Dosyayı aç ↗</Link>
+                    <form action={archiveMediaAssetAction}>
+                      <input type="hidden" name="contentKey" value={asset.contentKey} />
+                      <input type="hidden" name="returnTo" value="education" />
+                      <button type="submit" className={styles.deleteButton} disabled={!asset.canDelete} title={asset.deleteReason || "Bu medya çöp kutusuna taşınır."}>Sil</button>
+                    </form>
                   </div>
+                  {!asset.canDelete && asset.deleteReason ? <small className={styles.deleteHint}>{asset.deleteReason}</small> : null}
                 </div>
               </article>
             );

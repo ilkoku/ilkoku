@@ -107,13 +107,19 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
         </div>
         <div className={styles.slotHeader} aria-hidden="true">
           <span>No</span>
-          <span>Slot / kalite kuralı</span>
+          <span>Slot</span>
           <span>Mevcut görsel</span>
           <span>Yükle / değiştir</span>
         </div>
 
         {EDUCATION_VISUAL_SLOTS.map((slot) => {
           const visual = guide.visuals[slot.key];
+          const sourceLabel = visual
+            ? visual.sourceWidth && visual.sourceHeight
+              ? `${visual.sourceWidth}×${visual.sourceHeight} px`
+              : "Eski kayıt · ölçü yok"
+            : "Henüz görsel yok";
+
           return (
             <article className={styles.slotRow} key={slot.key}>
               <div className={styles.slotNo}>{slot.number}</div>
@@ -121,11 +127,9 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
                 <strong>{slot.label}</strong>
                 <p>{slot.description}</p>
                 <div className={styles.slotSpecs}>
-                  <span>Min. {slot.recommendedWidth}×{slot.recommendedHeight} px</span>
                   <span>{slot.aspectRatio}</span>
                   <span>Orijinal korunur</span>
                 </div>
-                <small className={styles.automationNote}>Kalite: {slot.automation}</small>
               </div>
 
               {visual ? (
@@ -143,8 +147,6 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
                     <strong>Yüklü · orijinal kalite</strong>
                     <small>{visual.filename || visual.url}</small>
                     <small>{visual.altText || "Alt metin yok"}</small>
-                    <small>{visual.sourceWidth && visual.sourceHeight ? `Kaynak ${visual.sourceWidth}×${visual.sourceHeight} px` : "Kaynak çözünürlüğü eski kayıtta yok"}</small>
-                    <small>Hedef min. {visual.recommendedWidth}×{visual.recommendedHeight} · {visual.aspectRatio}</small>
                   </div>
                 </div>
               ) : (
@@ -169,6 +171,12 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
                     <button className={styles.removeButton} type="submit">Kaldır</button>
                   </form>
                 ) : null}
+              </div>
+
+              <div className={styles.slotMeta}>
+                <span><strong>Kalite</strong>{slot.automation}</span>
+                <span><strong>Kaynak</strong>{sourceLabel}</span>
+                <span><strong>Hedef</strong>Min. {slot.recommendedWidth}×{slot.recommendedHeight} px · {slot.aspectRatio}</span>
               </div>
             </article>
           );

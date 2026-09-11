@@ -178,9 +178,12 @@
 }
 
 .removeButton {
+  min-height: 28px;
+  padding: 0 9px;
   border: 1px solid #e2dbe9;
   background: #fff;
   color: #746b7e;
+  font-size: 9px;
 }
 
 .visualPanel {
@@ -232,8 +235,8 @@
 .slotHeader,
 .slotRow {
   display: grid;
-  grid-template-columns: 54px minmax(210px, .9fr) minmax(265px, 1.05fr) minmax(390px, 1.5fr);
-  gap: 10px;
+  grid-template-columns: 48px minmax(190px, .82fr) minmax(250px, 1fr) minmax(420px, 1.55fr);
+  gap: 10px 12px;
   align-items: center;
 }
 
@@ -249,8 +252,9 @@
 }
 
 .slotRow {
-  min-height: 116px;
-  padding: 9px 12px;
+  align-items: start;
+  min-height: 0;
+  padding: 11px 12px 9px;
   border-bottom: 1px solid #eee9f2;
 }
 
@@ -259,11 +263,14 @@
 }
 
 .slotNo {
-  align-self: start;
   padding-top: 2px;
   color: #3a3442;
   font-size: 12px;
   font-weight: 900;
+}
+
+.slotInfo {
+  padding-top: 1px;
 }
 
 .slotInfo strong {
@@ -295,14 +302,6 @@
   font-weight: 800;
 }
 
-.automationNote {
-  display: block;
-  margin-top: 5px;
-  color: #8b8295;
-  font-size: 9px;
-  line-height: 1.35;
-}
-
 .preview {
   display: flex;
   align-items: center;
@@ -329,6 +328,7 @@
 
 .previewText {
   min-width: 0;
+  padding-top: 1px;
 }
 
 .previewText strong,
@@ -350,13 +350,14 @@
 }
 
 .emptyPreview {
+  padding-top: 23px;
   color: #aaa3b2;
   font-size: 10px;
 }
 
 .uploadForm {
   display: grid;
-  grid-template-columns: minmax(210px, 1.2fr) minmax(145px, .9fr) auto;
+  grid-template-columns: minmax(210px, 1.2fr) minmax(160px, .88fr) 82px;
   gap: 6px;
   align-items: end;
   width: 100%;
@@ -471,10 +472,42 @@
 }
 
 .slotActions {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 5px;
   min-width: 0;
+}
+
+.slotActions > form + form {
+  justify-self: end;
+}
+
+.slotMeta {
+  grid-column: 2 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(145px, .55fr) minmax(220px, .8fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  margin-top: -1px;
+  padding: 7px 9px;
+  border-top: 1px solid #eee9f2;
+  border-radius: 7px;
+  background: #fbfafc;
+  color: #82798d;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.slotMeta span {
+  display: flex;
+  gap: 5px;
+  min-width: 0;
+}
+
+.slotMeta strong {
+  flex: 0 0 auto;
+  color: #5c5367;
+  font-size: 9px;
 }
 
 .notice {
@@ -505,8 +538,14 @@
   }
 
   .preview,
-  .slotActions {
+  .slotActions,
+  .slotMeta {
     grid-column: 2;
+  }
+
+  .slotMeta {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
   .metaForm {
@@ -526,6 +565,13 @@
 
   .slotActions {
     align-items: stretch;
-    flex-direction: column;
+  }
+
+  .slotActions > form + form {
+    justify-self: stretch;
+  }
+
+  .slotActions > form + form .removeButton {
+    width: 100%;
   }
 }

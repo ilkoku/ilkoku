@@ -5,6 +5,7 @@ import {
   type EducationWorkbenchCategory,
   type EducationWorkbenchItem,
 } from "@/components/content/EducationWorkbench";
+import styles from "@/components/content/EducationWorkbench.module.css";
 import {
   educationCategoryPath,
   educationPublicPath,
@@ -66,22 +67,18 @@ export default async function EducationCategoryPage({ params }: PageProps) {
   const activeGenres = getGenresByCategory(activeCategory);
 
   return (
-    <section className="content-editor-page">
-      <div className="content-page-heading">
-        <div>
-          <span>İçerik · Eğitim · Kategori</span>
+    <section className={`content-editor-page ${styles.pageShell}`}>
+      <header className={styles.pageHeader}>
+        <div className={styles.pageHeaderCopy}>
+          <span className={styles.eyebrow}>Eğitim · Kategori</span>
           <h1>{activeCategory}</h1>
-          <p>{activeGenres.length} tür bu kategori altında otomatik yönetilir. Tür kataloğuna aynı kategoriyle yeni kayıt eklendiğinde burada ayrıca işlem yapmadan görünür.</p>
+          <p>{activeGenres.length} tür. Yeni tür aynı kategoriyle kataloğa eklendiğinde bu listeye otomatik gelir.</p>
         </div>
-        <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : "success"}>
-          <span className="cms-editor-status-card__label">Kategori kapsamı</span>
-          {dataError ? <strong>Veri okunamadı</strong> : <strong>{activeGenres.length} tür</strong>}
-          <div className="cms-editor-status-card__meta">
-            <span className="cms-editor-chip">Otomatik katalog</span>
-            <span className="cms-editor-chip">7 görsel slotu / tür</span>
-          </div>
-        </aside>
-      </div>
+        <div className={styles.headerMeta}>
+          <strong>{dataError ? "—" : activeGenres.length}</strong>
+          <span>tür · 7 görsel slotu</span>
+        </div>
+      </header>
 
       {dataError ? (
         <div className="content-panel cms-editor-notice is-danger" role="alert">

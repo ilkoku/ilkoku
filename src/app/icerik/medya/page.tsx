@@ -1,12 +1,18 @@
 import Link from "next/link";
 import {
+  EducationMediaCollection,
+  type EducationMediaCollectionAsset,
+} from "@/components/content/EducationMediaCollection";
+import {
   MediaLibraryWorkbench,
   type MediaWorkbenchAsset,
   type MediaWorkbenchInvalid,
 } from "@/components/content/MediaLibraryWorkbench";
 import { requireCmsManager } from "@/lib/cms-access";
+import { EDUCATION_VISUAL_SLOTS } from "@/lib/cms-education";
 import { parseCmsMediaAssetMetadata } from "@/lib/cms-media";
 import { getCmsMediaReferenceMap } from "@/lib/cms-media-references";
+import { GENRES } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
 
 type MediaRow = {
@@ -31,6 +37,7 @@ const uploadErrors: Record<string, string> = {
   tip: "Bu dosya türü desteklenmiyor veya dosya imzası geçersiz.",
   okuma: "Dosya okunamadı.",
   kayit: "Dosya kaydedilemedi. Lütfen tekrar deneyin.",
+  sinif: "Eğitim görseli için geçerli eser türü ve görsel slotu seçilmelidir.",
   kullanimda: "Bu medya yayındaki CMS içeriğinde kullanılıyor. Önce gerçek kullanım yerlerinden kaldırın veya başka bir medya ile değiştirin.",
   metadata: "Medya metadata kaydı bozuk veya geçerli URL içermiyor. Canlı referans güvenilir biçimde kontrol edilemediği için arşivleme durduruldu.",
 };
@@ -43,6 +50,11 @@ export default async function MediaPage({ searchParams }: PageProps) {
   const initialSearch = queryString(query.q).slice(0, 120);
   const initialKind = queryString(query.tur);
   const initialUsage = queryString(query.kullanim);
+  const educationFilters = {
+    category: queryString(query.egitimKategori).slice(0, 120),
+    genreSlug: queryString(query.egitimTur).slice(0, 100),
+    slot: queryString(query.egitimSlot).slice(0, 40),
+  };
 
   let rows: MediaRow[] | null = null;
   try {
@@ -97,17 +109,33 @@ export default async function MediaPage({ searchParams }: PageProps) {
     references: referenceMap?.get(asset.url) ?? [],
   }));
 
+  const educationAssets: EducationMediaCollectionAsset[] = valid
+    .filter(({ asset }) => asset.collection === "education")
+    .map(({ row, asset }) => ({
+      contentKey: row.contentKey,
+      title: asset.title ?? "",
+      url: asset.url,
+      filename: asset.filename ?? "",
+      sizeBytes: Number(asset.sizeBytes ?? 0),
+      category: asset.category ?? "",
+      genreSlug: asset.genreSlug ?? "",
+      slot: asset.slot ?? "",
+      slotNumber: asset.slotNumber ?? "",
+      folder: asset.folder ?? "",
+      updatedAt: row.updatedAt.toISOString(),
+    }));
+
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
         <div>
           <span>İçerik</span>
           <h1>Medya Kütüphanesi</h1>
-          <p>Dosyayı seç, önizle, gerçek kullanım yerlerini gör ve yalnız güvenli olduğunda arşivle.</p>
+          <p>Dosyayı seç, koleksiyonuna yerleştir, gerçek kullanım yerlerini gör ve yalnız güvenli olduğunda arşivle.</p>
         </div>
         <div className="content-profile">
           <strong>{assets.length} aktif medya</strong>
-          <small>{invalid.length} bozuk metadata · {access.canPublish ? "Yönet + güvenli arşiv" : "Yönetim yetkisi"}</small>
+          <small>{educationAssets.length} eğitim medyası · {invalid.length} bozuk metadata · {access.canPublish ? "Yönet + güvenli arşiv" : "Yönetim yetkisi"}</small>
         </div>
       </div>
 
@@ -116,6 +144,13 @@ export default async function MediaPage({ searchParams }: PageProps) {
       {errorKey && uploadErrors[errorKey] ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>İşlem tamamlanamadı:</strong> {uploadErrors[errorKey]}</div> : null}
       {invalid.length > 0 ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>{invalid.length} aktif medya metadata kaydı bozuk.</strong><p>Bu kayıtlar normal arşiv akışına sokulmaz. URL bilinmeden canlı referans kontrolü güvenilir değildir.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
       {!referencesAvailable ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Medya kullanım haritası doğrulanamadı.</strong><p>Kullanımda değil sonucu üretilmedi. Referans görünürlüğü geri gelene kadar tüm arşivleme aksiyonları fail-closed olarak kilitlendi.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
+
+      <EducationMediaCollection
+        assets={educationAssets}
+        genres={GENRES.map((genre) => ({ slug: genre.slug, label: genre.label, category: genre.category }))}
+        slots={EDUCATION_VISUAL_SLOTS.map((slot) => ({ key: slot.key, number: slot.number, label: slot.label }))}
+        filters={educationFilters}
+      />
 
       <MediaLibraryWorkbench
         assets={assets}

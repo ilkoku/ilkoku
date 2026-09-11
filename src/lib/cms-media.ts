@@ -25,6 +25,12 @@ export type CmsMediaAssetMetadata = {
   sizeBytes?: number;
   storage?: string;
   uploadedBy?: string;
+  collection?: string;
+  folder?: string;
+  category?: string;
+  genreSlug?: string;
+  slot?: string;
+  slotNumber?: string;
 };
 
 const MIME_KIND: Record<string, CmsMediaKind> = {

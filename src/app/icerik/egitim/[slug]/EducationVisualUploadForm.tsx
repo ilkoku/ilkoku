@@ -1,8 +1,11 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import { useRef, useState } from "react";
 
 import styles from "./EducationGuideEditor.module.css";
+
+const MAX_UPLOAD_BYTES = 3 * 1024 * 1024;
 
 type Props = {
   genreSlug: string;
@@ -66,6 +69,11 @@ export default function EducationVisualUploadForm({
     }
 
     setFilename(file.name);
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError("Dosya 3 MB sınırını aşıyor.");
+      return;
+    }
+
     setChecking(true);
     try {
       const size = await readImageSize(file);
@@ -90,7 +98,11 @@ export default function EducationVisualUploadForm({
     const form = event.currentTarget;
     const file = inputRef.current?.files?.[0];
     if (!file || !check) {
-      setError("Önce bir görsel seçin.");
+      setError("Önce kalite kontrolünden geçen bir görsel seçin.");
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError("Dosya 3 MB sınırını aşıyor.");
       return;
     }
     if (!check.valid) {
@@ -165,14 +177,14 @@ export default function EducationVisualUploadForm({
           <span className={styles.fileName} title={filename}>{filename}</span>
         </span>
         <span className={`${styles.resolutionStatus} ${qualityOk ? styles.resolutionOk : check ? styles.resolutionBad : ""}`}>
-          {checking ? "Çözünürlük okunuyor…" : check ? `Kaynak ${check.width}×${check.height} px · ${qualityOk ? "uygun" : "kontrol gerekli"}` : `Min. ${recommendedWidth}×${recommendedHeight} px`}
+          {checking ? "Çözünürlük okunuyor…" : check ? `Kaynak ${check.width}×${check.height} px · ${qualityOk ? "uygun" : "kontrol gerekli"}` : `Min. ${recommendedWidth}×${recommendedHeight} px · orijinal dosya korunur`}
         </span>
       </label>
       <label className={styles.field}>
         <span>Alt metin</span>
         <input name="altText" maxLength={300} defaultValue={defaultAltText} placeholder={`${slotLabel} görseli`} disabled={uploading} />
       </label>
-      <button className={styles.uploadButton} type="submit" disabled={uploading || checking || Boolean(check && !qualityOk)}>
+      <button className={styles.uploadButton} type="submit" disabled={uploading || checking || !qualityOk}>
         {uploading ? `Yükleniyor ${progress ?? 0}%` : hasVisual ? "Değiştir" : "Yükle"}
       </button>
       {(uploading || progress !== null) ? (

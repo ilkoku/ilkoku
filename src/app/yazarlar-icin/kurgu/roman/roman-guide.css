@@ -9,3 +9,23 @@
 .roman-writing-guide article.grid {
   grid-template-columns: minmax(0, 1fr) !important;
 }
+
+/* Roman görselleri kaynak piksel boyutunda gösterilir; büyütme, kırpma ve zoom yok. */
+.roman-writing-guide div:has(> img) {
+  min-height: 0 !important;
+  aspect-ratio: auto !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.roman-writing-guide div:has(> img) > img {
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  object-fit: contain !important;
+}

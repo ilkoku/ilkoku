@@ -86,6 +86,22 @@ const romanBlocks = template.blocks.flatMap<CmsPageBlock>((block) => {
     };
   }
 
+  if (block.id === "ornek-roman-cekirdek" && block.type === "split") {
+    current = {
+      ...block,
+      imageUrl: romanVisuals.ideaFlow,
+      imageAlt: "Ham fikrin karakter, amaç ve engel üzerinden tek cümlelik roman fikrine dönüşümünü gösteren görsel",
+    };
+  }
+
+  if (block.id === "ornek-roman-karakter" && block.type === "split") {
+    current = {
+      ...block,
+      imageUrl: romanVisuals.anatomy,
+      imageAlt: "Karakterin istek, korku, zayıflık, sır ve dönüşümünü romanın bütünü içinde gösteren görsel",
+    };
+  }
+
   if (block.id === "ornek-roman-taslak" && block.type === "quote") {
     current = { ...block, attribution: "İlkOku · Yazarlık rehberi" };
   }

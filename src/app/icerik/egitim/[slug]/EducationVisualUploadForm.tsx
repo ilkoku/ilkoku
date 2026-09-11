@@ -176,9 +176,11 @@ export default function EducationVisualUploadForm({
           <span className={styles.fileButton}>Dosya Seç</span>
           <span className={styles.fileName} title={filename}>{filename}</span>
         </span>
-        <span className={`${styles.resolutionStatus} ${qualityOk ? styles.resolutionOk : check ? styles.resolutionBad : ""}`}>
-          {checking ? "Çözünürlük okunuyor…" : check ? `Kaynak ${check.width}×${check.height} px · ${qualityOk ? "uygun" : "kontrol gerekli"}` : `Min. ${recommendedWidth}×${recommendedHeight} px · orijinal dosya korunur`}
-        </span>
+        {(checking || check) ? (
+          <span className={`${styles.resolutionStatus} ${qualityOk ? styles.resolutionOk : check ? styles.resolutionBad : ""}`}>
+            {checking ? "Çözünürlük okunuyor…" : check ? `Kaynak ${check.width}×${check.height} px · ${qualityOk ? "uygun" : "kontrol gerekli"}` : null}
+          </span>
+        ) : null}
       </label>
       <label className={styles.field}>
         <span>Alt metin</span>

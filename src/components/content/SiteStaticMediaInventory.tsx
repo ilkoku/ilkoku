@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import type { CmsStaticMediaSection } from "@/lib/cms-static-media";
+import type { CmsStaticMediaSection } from "@/lib/cms-static-media-types";
 import styles from "./SiteStaticMediaInventory.module.css";
 
 type Props = {

@@ -42,7 +42,7 @@ const uploadErrors: Record<string, string> = {
   kayit: "Dosya kaydedilemedi. Lütfen tekrar deneyin.",
   sinif: "Eğitim görseli için geçerli eser türü ve görsel slotu seçilmelidir.",
   kullanimda: "Bu medya yayındaki CMS içeriğinde kullanılıyor. Önce gerçek kullanım yerlerinden kaldırın veya başka bir medya ile değiştirin.",
-  metadata: "Medya metadata kaydı bozuk veya geçerli URL içermiyor. Canlı referans güvenilir biçimde kontrol edilemediği için arşivleme durduruldu.",
+  metadata: "Medya metadata kaydı bozuk veya geçerli URL içermiyor. Canlı referans güvenilir biçimde kontrol edilemediği için silme durduruldu.",
 };
 
 export default async function MediaPage({ searchParams }: PageProps) {
@@ -50,6 +50,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
   const query = (await searchParams) ?? {};
   const errorKey = queryString(query.hata);
   const uploaded = queryString(query.yuklendi) === "1";
+  const deleted = queryString(query.silindi) === "1";
   const initialSearch = queryString(query.q).slice(0, 120);
   const initialKind = queryString(query.tur);
   const initialUsage = queryString(query.kullanim);
@@ -85,7 +86,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
         <SiteStaticMediaInventory sections={staticMediaSections} />
         <div className="content-panel" role="alert">
           <strong>CMS yükleme kayıtları okunamadı.</strong>
-          <p>Statik site medyası yukarıda gösterilmeye devam ediyor. Veritabanı envanteri görülmeden yeni kayıt veya arşivleme işlemleri durduruldu.</p>
+          <p>Statik site medyası yukarıda gösterilmeye devam ediyor. Veritabanı envanteri görülmeden yeni kayıt veya silme işlemleri durduruldu.</p>
           <div className="content-form-actions" style={{ flexWrap: "wrap" }}><Link href="/icerik/saglik">Sistem Sağlığı →</Link><Link href="/icerik/medya">Tekrar dene</Link></div>
         </div>
       </section>
@@ -99,23 +100,35 @@ export default async function MediaPage({ searchParams }: PageProps) {
   const valid = prepared.flatMap(({ row, asset }) => asset ? [{ row, asset }] : []);
   const referenceMap = await getCmsMediaReferenceMap(valid.map((item) => item.asset.url)).catch(() => null);
   const referencesAvailable = Boolean(referenceMap);
+  const genreLabelBySlug = new Map<string, string>(GENRES.map((genre) => [genre.slug, genre.label]));
 
-  const assets: MediaWorkbenchAsset[] = valid.map(({ row, asset }) => ({
-    contentKey: row.contentKey,
-    updatedAt: row.updatedAt.toISOString(),
-    title: asset.title ?? "",
-    url: asset.url,
-    altText: asset.altText ?? "",
-    kind: asset.kind ?? "other",
-    usage: asset.usage ?? "",
-    notes: asset.notes ?? "",
-    filename: asset.filename ?? "",
-    mimeType: asset.mimeType ?? "",
-    sizeBytes: Number(asset.sizeBytes ?? 0),
-    storage: asset.storage ?? "",
-    uploadedBy: asset.uploadedBy ?? "",
-    references: referenceMap?.get(asset.url) ?? [],
-  }));
+  const assets: MediaWorkbenchAsset[] = valid.map(({ row, asset }) => {
+    const slotSpec = EDUCATION_VISUAL_SLOTS.find((slot) => slot.key === asset.slot);
+    const genreLabel = asset.genreSlug ? genreLabelBySlug.get(asset.genreSlug) : undefined;
+    return {
+      contentKey: row.contentKey,
+      updatedAt: row.updatedAt.toISOString(),
+      title: asset.title ?? "",
+      url: asset.url,
+      altText: asset.altText ?? "",
+      kind: asset.kind ?? "other",
+      usage: asset.usage ?? "",
+      notes: asset.notes ?? "",
+      filename: asset.filename ?? "",
+      mimeType: asset.mimeType ?? "",
+      sizeBytes: Number(asset.sizeBytes ?? 0),
+      storage: asset.storage ?? "",
+      uploadedBy: asset.uploadedBy ?? "",
+      references: referenceMap?.get(asset.url) ?? [],
+      targetLabel: slotSpec
+        ? `Eğitim / ${asset.category ?? "Kategori"} / ${genreLabel ?? asset.genreSlug ?? "Tür"} / ${slotSpec.number} ${slotSpec.label}`
+        : asset.usage || undefined,
+      targetWidth: slotSpec?.recommendedWidth,
+      targetHeight: slotSpec?.recommendedHeight,
+      targetAspectRatio: slotSpec?.aspectRatio,
+      fit: slotSpec?.fit,
+    };
+  });
 
   const educationAssets: EducationMediaCollectionAsset[] = valid
     .filter(({ asset }) => asset.collection === "education")
@@ -139,7 +152,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
         <div>
           <span>Medya & Eğitim</span>
           <h1>Medya Merkezi</h1>
-          <p>Sitedeki gerçek statik dosyaları ve CMS yüklemelerini tek merkezde; sayfa, kullanım yeri ve eğitim koleksiyonuna göre yönet.</p>
+          <p>Sitedeki gerçek statik dosyaları ve CMS yüklemelerini; kullanım yeri, kaynak ölçüsü, hedef alan ölçüsü ve güvenli silme durumuyla birlikte yönet.</p>
         </div>
         <div className="content-profile">
           <strong>{staticMediaCount + assets.length} görünür medya</strong>
@@ -147,11 +160,12 @@ export default async function MediaPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {!access.canPublish ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Medya arşivleme yayın yetkisi gerektirir.</strong><p>Dosya yükleme ve envanter yönetimi açık. Aktif medya URL&apos;sini kapatmak public içerikleri etkileyebileceği için arşivleme yalnız yayın yetkili kullanıcıya açıktır.</p></div> : null}
+      {!access.canPublish ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Medya silme yayın yetkisi gerektirir.</strong><p>Dosya yükleme ve envanter yönetimi açık. Aktif medya URL&apos;sini kapatmak public içerikleri etkileyebileceği için silme yalnız yayın yetkili kullanıcıya açıktır.</p></div> : null}
       {uploaded ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Dosya yüklendi.</strong> Yeni medya envantere eklendi.</div> : null}
+      {deleted ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Medya çöp kutusuna taşındı.</strong> Aktif listeden çıkarıldı ve varsa blob erişimi kapatıldı.</div> : null}
       {errorKey && uploadErrors[errorKey] ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>İşlem tamamlanamadı:</strong> {uploadErrors[errorKey]}</div> : null}
-      {invalid.length > 0 ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>{invalid.length} aktif medya metadata kaydı bozuk.</strong><p>Bu kayıtlar normal arşiv akışına sokulmaz. URL bilinmeden canlı referans kontrolü güvenilir değildir.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
-      {!referencesAvailable ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Medya kullanım haritası doğrulanamadı.</strong><p>CMS yüklemeleri için “kullanımda değil” sonucu üretilmedi. Referans görünürlüğü geri gelene kadar arşivleme fail-closed olarak kilitlendi.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
+      {invalid.length > 0 ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>{invalid.length} aktif medya metadata kaydı bozuk.</strong><p>Bu kayıtlar normal silme akışına sokulmaz. URL bilinmeden canlı referans kontrolü güvenilir değildir.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
+      {!referencesAvailable ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Medya kullanım haritası doğrulanamadı.</strong><p>CMS yüklemeleri için “kullanımda değil” sonucu üretilmedi. Referans görünürlüğü geri gelene kadar silme fail-closed olarak kilitlendi.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
 
       <nav className={styles.viewNav} aria-label="Medya görünümleri">
         <a href="#site-medya"><span>Site Sayfaları</span><strong>{staticMediaCount}</strong></a>
@@ -173,7 +187,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
           <div>
             <span>CMS yüklemeleri</span>
             <h2>Yüklenen Medya</h2>
-            <p>PC’den yüklenen dosyalar için arama, önizleme, gerçek kullanım takibi ve güvenli arşivleme.</p>
+            <p>PC’den yüklenen dosyalar için önizleme, gerçek kullanım, kaynak/hedef ölçü ve güvenli silme çalışma masası.</p>
           </div>
           <div className={styles.sectionCount}><strong>{assets.length}</strong><span>aktif kayıt</span></div>
         </div>

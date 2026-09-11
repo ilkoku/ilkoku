@@ -11,6 +11,7 @@ import "./surface-finalization.css";
 import "./resume-work.css";
 import "./shell-search.css";
 import "./cms-ia.css";
+import "./media-professional.css";
 
 export const metadata: Metadata = {
   title: "İlkOku İçerik Yönetimi",

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import styles from "./EducationWorkbench.module.css";
+
 export type EducationWorkbenchItem = {
   slug: string;
   label: string;
@@ -38,19 +40,13 @@ function statusFor(count: number): Exclude<StatusFilter, "all"> {
 }
 
 function statusLabel(count: number) {
-  if (count >= 7) return "GÖRSEL TAM";
-  if (count > 0) return "DEVAM EDİYOR";
-  return "BAŞLANMADI";
-}
-
-function statusTone(count: number) {
-  if (count >= 7) return "is-index";
-  if (count > 0) return "is-draft";
-  return "is-noindex";
+  if (count >= 7) return "HAZIR";
+  if (count > 0) return "DEVAM";
+  return "BEKLİYOR";
 }
 
 function formatUpdatedAt(value: string | null) {
-  if (!value) return "Henüz kayıt yok";
+  if (!value) return "—";
   return new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 }
 
@@ -92,115 +88,95 @@ export function EducationWorkbench({ items, categories, lockedCategory }: Props)
   }
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <div className="content-metric-grid">
-        <article className="content-metric-card"><span>Toplam tür</span><strong>{metrics.total}</strong><small>{lockedCategory ? `${lockedCategory} kategorisi` : "Eğitim envanteri"}</small></article>
-        <article className="content-metric-card"><span>Tamamlanan</span><strong>{metrics.complete}</strong><small>7/7 görsel hazır</small></article>
-        <article className="content-metric-card"><span>Devam eden</span><strong>{metrics.inProgress}</strong><small>1–6 görsel yüklenmiş</small></article>
-        <article className="content-metric-card"><span>Başlanmamış</span><strong>{metrics.notStarted}</strong><small>0/7 görsel</small></article>
+    <div className={styles.workbench}>
+      <div className={styles.metrics} aria-label="Eğitim durumu özeti">
+        <article className={styles.metric}><strong>{metrics.total}</strong><span>Toplam tür</span><small>{lockedCategory ?? "Eğitim envanteri"}</small></article>
+        <article className={styles.metric}><strong>{metrics.complete}</strong><span>Tamamlanan</span><small>7/7 görsel</small></article>
+        <article className={styles.metric}><strong>{metrics.inProgress}</strong><span>Devam eden</span><small>1–6/7 görsel</small></article>
+        <article className={styles.metric}><strong>{metrics.notStarted}</strong><span>Başlanmamış</span><small>0/7 görsel</small></article>
       </div>
 
-      <section className="content-panel">
-        <div className="content-section-heading">
-          <div><span>Çalışma masası</span><h2>Filtre Masası</h2></div>
-          <p>{filtered.length} sonuç gösteriliyor.</p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: lockedCategory ? "minmax(240px,2fr) minmax(190px,1fr) auto" : "minmax(240px,2fr) minmax(190px,1fr) minmax(190px,1fr) auto", gap: ".75rem", alignItems: "end" }}>
-          <label>
-            <span>Tür ara</span>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value.slice(0, 120))}
-              placeholder="Roman, şiir, senaryo…"
-              style={{ width: "100%", marginTop: ".35rem" }}
-            />
-          </label>
-          {!lockedCategory ? (
-            <label>
-              <span>Kategori</span>
-              <select value={category} onChange={(event) => setCategory(event.target.value)} style={{ width: "100%", marginTop: ".35rem" }}>
-                <option value="all">Tüm kategoriler</option>
-                {categories.map((item) => <option key={item.path} value={item.label}>{item.label}</option>)}
-              </select>
-            </label>
-          ) : null}
-          <label>
-            <span>Hazırlık durumu</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} style={{ width: "100%", marginTop: ".35rem" }}>
-              <option value="all">Tüm durumlar</option>
-              <option value="not-started">Başlanmamış · 0/7</option>
-              <option value="in-progress">Devam ediyor · 1–6/7</option>
-              <option value="complete">Tamamlandı · 7/7</option>
+      <section className={`${styles.toolbar} ${lockedCategory ? styles.toolbarLocked : ""}`} aria-label="Eğitim filtreleri">
+        <label className={styles.field}>
+          <span>Tür ara · {filtered.length} sonuç</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value.slice(0, 120))}
+            placeholder="Roman, şiir, senaryo…"
+          />
+        </label>
+        {!lockedCategory ? (
+          <label className={styles.field}>
+            <span>Kategori</span>
+            <select value={category} onChange={(event) => setCategory(event.target.value)}>
+              <option value="all">Tüm kategoriler</option>
+              {categories.map((item) => <option key={item.path} value={item.label}>{item.label}</option>)}
             </select>
           </label>
-          <button type="button" onClick={resetFilters}>Filtreleri temizle</button>
-        </div>
+        ) : null}
+        <label className={styles.field}>
+          <span>Hazırlık</span>
+          <select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)}>
+            <option value="all">Tüm durumlar</option>
+            <option value="not-started">Başlanmamış · 0/7</option>
+            <option value="in-progress">Devam · 1–6/7</option>
+            <option value="complete">Tamamlandı · 7/7</option>
+          </select>
+        </label>
+        <button className={styles.resetButton} type="button" onClick={resetFilters}>Temizle</button>
       </section>
 
       {!lockedCategory ? (
-        <section className="content-panel">
-          <div className="content-section-heading">
-            <div><span>7 ana kategori</span><h2>Kategori Masası</h2></div>
-            <p>Bir kategoriye girince yalnız o kategoriye ait türler açılır.</p>
-          </div>
-          <div className="content-metric-grid">
-            {categories.map((item) => (
-              <Link
-                key={item.path}
-                href={`/icerik/egitim/kategori/${item.path}`}
-                className="content-metric-card"
-                style={{ textDecoration: "none", color: "inherit" }}
-              >
-                <span>{item.label}</span>
-                <strong>{item.total}</strong>
-                <small>{item.complete} tam · {item.inProgress} devam · {item.notStarted} başlanmamış</small>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <nav className={styles.categoryStrip} aria-label="Eğitim kategorileri">
+          {categories.map((item) => (
+            <Link key={item.path} href={`/icerik/egitim/kategori/${item.path}`} className={styles.categoryCard}>
+              <strong>{item.label}</strong>
+              <span>{item.total} tür</span>
+              <small>{item.complete} hazır · {item.inProgress} devam</small>
+            </Link>
+          ))}
+        </nav>
       ) : (
-        <nav className="cms-editor-toolbar" aria-label="Kategori gezinmesi">
-          <div className="cms-editor-toolbar__cluster">
-            <Link href="/icerik/egitim">← Tüm Eğitim</Link>
-            {currentCategory ? <strong>{currentCategory.label} · {currentCategory.total} tür</strong> : null}
-          </div>
+        <nav className={styles.categoryBar} aria-label="Kategori gezinmesi">
+          <Link className={styles.compactLink} href="/icerik/egitim">← Tüm Eğitim</Link>
+          {currentCategory ? <strong>{currentCategory.label} · {currentCategory.total} tür</strong> : null}
         </nav>
       )}
 
-      <section className="content-panel">
-        <div className="content-section-heading">
-          <div><span>{lockedCategory ? "Kategori türleri" : "Filtrelenmiş sonuç"}</span><h2>{lockedCategory ?? "Tür Çalışma Listesi"}</h2></div>
-          <p>Yeni bir tür ana tür kataloğuna eklendiğinde bu listeye otomatik dahil olur.</p>
+      <section className={styles.table} aria-label={lockedCategory ? `${lockedCategory} türleri` : "Eğitim türleri"}>
+        <div className={styles.tableHeader} aria-hidden="true">
+          <span>Durum</span>
+          <span>Tür</span>
+          <span>Kategori</span>
+          <span>Son işlem</span>
+          <span style={{ textAlign: "right" }}>Aksiyon</span>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="content-empty-state">
-            <strong>Bu filtrelerle eşleşen tür yok.</strong>
-            <p>Arama veya hazırlık durumunu değiştir.</p>
-            <button type="button" onClick={resetFilters}>Filtreleri temizle</button>
+          <div className={styles.empty}>
+            Bu filtrelerle eşleşen tür yok. <button className={styles.resetButton} type="button" onClick={resetFilters}>Filtreleri temizle</button>
           </div>
-        ) : (
-          <div className="content-list">
-            {filtered.map((item) => (
-              <div className="content-list-row" key={item.slug} style={{ alignItems: "center", gap: "1rem" }}>
-                <div style={{ minWidth: 105 }}>
-                  <strong>{item.visualCount}/7</strong><br />
-                  <span className={`cms-status-pill ${statusTone(item.visualCount)}`}>{statusLabel(item.visualCount)}</span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <strong>{item.label}</strong>
-                  <p style={{ margin: ".25rem 0 0" }}>{item.category} · {item.publicHref}</p>
-                  <small>Son kayıt: {formatUpdatedAt(item.updatedAt)}</small>
-                </div>
-                <div className="cms-editor-toolbar__cluster" style={{ justifyContent: "flex-end" }}>
-                  {!lockedCategory ? <Link href={`/icerik/egitim/kategori/${item.categoryPath}`}>Kategori</Link> : null}
-                  <Link href={item.editHref}>Yönet →</Link>
-                  <Link href={item.publicHref} target="_blank">Canlı ↗</Link>
-                </div>
+        ) : filtered.map((item) => {
+          const rowStatus = statusFor(item.visualCount);
+          return (
+            <div className={styles.row} key={item.slug}>
+              <div className={styles.statusCell}>
+                <span className={styles.statusCount}>{item.visualCount}/7</span>
+                <span className={styles.statusPill} data-status={rowStatus}>{statusLabel(item.visualCount)}</span>
               </div>
-            ))}
-          </div>
-        )}
+              <div className={styles.typeCell}>
+                <strong>{item.label}</strong>
+                <small>{item.publicHref}</small>
+              </div>
+              <div className={styles.categoryCell}>{item.category}</div>
+              <div className={styles.dateCell}>{formatUpdatedAt(item.updatedAt)}</div>
+              <div className={styles.actions}>
+                <Link className={styles.primaryAction} href={item.editHref}>Yönet</Link>
+                <Link className={styles.secondaryAction} href={item.publicHref} target="_blank">Canlı ↗</Link>
+              </div>
+            </div>
+          );
+        })}
       </section>
     </div>
   );

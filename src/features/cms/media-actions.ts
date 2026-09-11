@@ -18,6 +18,10 @@ function safeMediaUrl(input: string) {
   return input.replace(/[\r\n]/g, "").slice(0, 500);
 }
 
+async function isMediaReferencedByPublishedContent(mediaUrl: string) {
+  return isCmsMediaReferencedByPublishedContent(mediaUrl);
+}
+
 async function getActiveMediaAsset(contentKey: string) {
   const assetRows = await prisma.$queryRaw<Array<{ valueJson: string }>>`
     SELECT valueJson
@@ -77,8 +81,9 @@ export async function archiveMediaAssetAction(formData: FormData) {
 
   const target = await getActiveMediaAsset(contentKey);
   if (!target) return;
+  const { asset, assetId } = target;
 
-  if (await isCmsMediaReferencedByPublishedContent(target.asset.url)) {
+  if (await isMediaReferencedByPublishedContent(asset.url)) {
     redirect("/icerik/medya?hata=kullanimda");
   }
 
@@ -91,7 +96,7 @@ export async function archiveMediaAssetAction(formData: FormData) {
     prisma.$executeRaw`
       UPDATE SiteContent
       SET status = 'archived', updatedById = ${user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
-      WHERE namespace = 'media_blob' AND contentKey = ${`blob_${target.assetId}`}
+      WHERE namespace = 'media_blob' AND contentKey = ${`blob_${assetId}`}
     `,
   ]);
 
@@ -120,11 +125,12 @@ export async function archiveEducationMediaAssetsAction(formData: FormData) {
       redirect("/icerik/medya?hata=metadata#egitim-medya");
     }
 
-    if (await isCmsMediaReferencedByPublishedContent(target.asset.url)) {
+    const { asset, assetId } = target;
+    if (await isMediaReferencedByPublishedContent(asset.url)) {
       redirect("/icerik/medya?hata=kullanimda#egitim-medya");
     }
 
-    targets.push({ contentKey, assetId: target.assetId });
+    targets.push({ contentKey, assetId });
   }
 
   const operations = targets.flatMap(({ contentKey, assetId }) => [

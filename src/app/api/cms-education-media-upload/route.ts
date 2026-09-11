@@ -19,13 +19,13 @@ import {
 } from "@/lib/cms-media";
 import { getGenreBySlug } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
-import { isSameOriginRequest } from "@/lib/same-origin";
+import { isSameOriginRequest, sameOriginRequestUrl } from "@/lib/same-origin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 function back(request: Request, genreSlug: string, query: string) {
-  return NextResponse.redirect(new URL(`/icerik/egitim/${genreSlug}?${query}`, request.url), 303);
+  return NextResponse.redirect(sameOriginRequestUrl(request, `/icerik/egitim/${genreSlug}?${query}`), 303);
 }
 
 function text(formData: FormData, key: string, max: number) {
@@ -43,14 +43,14 @@ export async function POST(request: Request) {
   try {
     formData = await request.formData();
   } catch {
-    return NextResponse.redirect(new URL("/icerik/egitim?hata=form", request.url), 303);
+    return NextResponse.redirect(sameOriginRequestUrl(request, "/icerik/egitim?hata=form"), 303);
   }
 
   const genreSlug = text(formData, "genreSlug", 100);
   const slot = text(formData, "slot", 40);
   const genre = getGenreBySlug(genreSlug);
   if (!genre || !isEducationVisualSlotKey(slot)) {
-    return NextResponse.redirect(new URL("/icerik/egitim?hata=hedef", request.url), 303);
+    return NextResponse.redirect(sameOriginRequestUrl(request, "/icerik/egitim?hata=hedef"), 303);
   }
 
   const entry = formData.get("file");

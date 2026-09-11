@@ -304,17 +304,17 @@
 
 .preview {
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  gap: 4px 9px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
   align-items: start;
+  width: 150px;
+  max-width: 100%;
   min-width: 0;
 }
 
 .previewImage {
-  grid-column: 1;
-  grid-row: 1;
-  width: 104px;
+  width: 150px;
+  max-width: 100%;
   height: auto;
   overflow: hidden;
   border: 1px solid #e0d9e7;
@@ -330,7 +330,11 @@
 }
 
 .previewText {
-  display: contents;
+  display: grid;
+  gap: 2px;
+  width: 150px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .previewText strong,
@@ -343,27 +347,14 @@
 }
 
 .previewText strong {
-  grid-column: 1;
-  grid-row: 2;
-  padding-top: 1px;
   font-size: 9px;
   line-height: 1.25;
 }
 
 .previewText small {
-  grid-column: 2;
   color: #9991a2;
   font-size: 9px;
-}
-
-.previewText small:nth-of-type(1) {
-  grid-row: 1;
-  padding-top: 2px;
-}
-
-.previewText small:nth-of-type(2) {
-  grid-row: 2;
-  padding-top: 1px;
+  line-height: 1.25;
 }
 
 .emptyPreview {

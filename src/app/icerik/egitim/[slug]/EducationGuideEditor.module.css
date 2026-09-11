@@ -303,16 +303,19 @@
 }
 
 .preview {
-  display: flex;
-  align-items: center;
-  gap: 9px;
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 4px 9px;
+  align-items: start;
   min-width: 0;
 }
 
 .previewImage {
+  grid-column: 1;
+  grid-row: 1;
   width: 104px;
   height: auto;
-  flex: 0 0 104px;
   overflow: hidden;
   border: 1px solid #e0d9e7;
   border-radius: 7px;
@@ -327,26 +330,40 @@
 }
 
 .previewText {
-  min-width: 0;
-  padding-top: 1px;
+  display: contents;
 }
 
 .previewText strong,
 .previewText small {
   display: block;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .previewText strong {
-  font-size: 10px;
+  grid-column: 1;
+  grid-row: 2;
+  padding-top: 1px;
+  font-size: 9px;
+  line-height: 1.25;
 }
 
 .previewText small {
-  margin-top: 3px;
+  grid-column: 2;
   color: #9991a2;
   font-size: 9px;
+}
+
+.previewText small:nth-of-type(1) {
+  grid-row: 1;
+  padding-top: 2px;
+}
+
+.previewText small:nth-of-type(2) {
+  grid-row: 2;
+  padding-top: 1px;
 }
 
 .emptyPreview {
@@ -357,10 +374,25 @@
 
 .uploadForm {
   display: grid;
-  grid-template-columns: minmax(210px, 1.2fr) minmax(160px, .88fr) 82px;
+  grid-template-columns: minmax(0, 1fr) 82px;
   gap: 6px;
   align-items: end;
   width: 100%;
+}
+
+.uploadForm > label:first-of-type {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.uploadForm > label:nth-of-type(2) {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.uploadForm > .uploadButton {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .filePicker {
@@ -556,6 +588,13 @@
 @media (max-width: 720px) {
   .uploadForm {
     grid-template-columns: 1fr;
+  }
+
+  .uploadForm > label:first-of-type,
+  .uploadForm > label:nth-of-type(2),
+  .uploadForm > .uploadButton {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .uploadProgress,

@@ -132,19 +132,32 @@ export default async function MediaPage({ searchParams }: PageProps) {
 
   const educationAssets: EducationMediaCollectionAsset[] = valid
     .filter(({ asset }) => asset.collection === "education")
-    .map(({ row, asset }) => ({
-      contentKey: row.contentKey,
-      title: asset.title ?? "",
-      url: asset.url,
-      filename: asset.filename ?? "",
-      sizeBytes: Number(asset.sizeBytes ?? 0),
-      category: asset.category ?? "",
-      genreSlug: asset.genreSlug ?? "",
-      slot: asset.slot ?? "",
-      slotNumber: asset.slotNumber ?? "",
-      folder: asset.folder ?? "",
-      updatedAt: row.updatedAt.toISOString(),
-    }));
+    .map(({ row, asset }) => {
+      const references = referenceMap?.get(asset.url) ?? [];
+      const deleteReason = !access.canPublish
+        ? "Silme için yayın yetkisi gerekiyor."
+        : !referencesAvailable
+          ? "Kullanım haritası doğrulanamadı."
+          : references.length > 0
+            ? `Bu medya ${references.length} canlı yerde kullanılıyor.`
+            : "";
+      return {
+        contentKey: row.contentKey,
+        title: asset.title ?? "",
+        url: asset.url,
+        filename: asset.filename ?? "",
+        sizeBytes: Number(asset.sizeBytes ?? 0),
+        category: asset.category ?? "",
+        genreSlug: asset.genreSlug ?? "",
+        slot: asset.slot ?? "",
+        slotNumber: asset.slotNumber ?? "",
+        folder: asset.folder ?? "",
+        updatedAt: row.updatedAt.toISOString(),
+        referenceCount: references.length,
+        canDelete: Boolean(access.canPublish && referencesAvailable && references.length === 0),
+        deleteReason,
+      };
+    });
 
   return (
     <section className="content-editor-page">

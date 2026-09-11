@@ -82,8 +82,8 @@ function buildRomanBlocks(romanVisuals: RomanVisuals, romanAlts: RomanAlts, titl
         text: summary,
         imageUrl: romanVisuals.hero,
         imageAlt: romanAlts.hero,
-        primaryLabel: "Roman Yazmaya Başla",
-        primaryHref: "/yazar",
+        primaryLabel: "",
+        primaryHref: "",
         secondaryLabel: "",
         secondaryHref: "",
       };

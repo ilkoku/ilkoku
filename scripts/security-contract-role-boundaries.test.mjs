@@ -112,12 +112,19 @@ test("CMS access fails closed and access grants stay admin-only", () => {
 
 test("CMS media writes require authenticated manager access and same-origin", () => {
   const media = source("src/app/api/cms-media-upload/route.ts");
+  const educationMedia = source("src/app/api/cms-education-media-upload/route.ts");
+  const sameOrigin = source("src/lib/same-origin.ts");
 
   assertContains(media, "isSameOriginRequest(request)", "CMS media upload");
   assertContains(media, "!access.user", "CMS media upload");
   assertContains(media, "!access.canManage", "CMS media upload");
   assertContains(media, "MAX_CMS_MEDIA_BYTES", "CMS media upload");
   assertContains(media, "detectAllowedMediaMime", "CMS media upload");
+  assertContains(media, "sameOriginRequestUrl", "CMS media upload redirect");
+  assertContains(educationMedia, "sameOriginRequestUrl", "CMS education media upload redirect");
+  assertContains(sameOrigin, "allowedOrigins(request).has(suppliedBrowserOrigin)", "CMS redirect origin validation");
+  assert.ok(!media.includes("request.url), 303"), "CMS media redirects must not use the internal request host");
+  assert.ok(!educationMedia.includes("request.url), 303"), "CMS education media redirects must not use the internal request host");
 });
 
 test("published CMS content cannot be archived through manager-only authority", () => {

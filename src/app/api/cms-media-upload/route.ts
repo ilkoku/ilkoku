@@ -2,11 +2,16 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getCmsAccess } from "@/lib/cms-access";
 import {
+  EDUCATION_VISUAL_SLOTS,
+  educationMediaFolder,
+} from "@/lib/cms-education";
+import {
   detectAllowedMediaMime,
   MAX_CMS_MEDIA_BYTES,
   mediaKindForMime,
   sanitizeMediaFilename,
 } from "@/lib/cms-media";
+import { getGenreBySlug } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
 import { isSameOriginRequest } from "@/lib/same-origin";
 
@@ -52,14 +57,28 @@ export async function POST(request: Request) {
   const kind = mediaKindForMime(detectedMime);
   if (!kind) return back(request, "hata=tip");
 
+  const collection = text(formData, "collection", 40);
+  const genreSlug = text(formData, "genreSlug", 100);
+  const slotKey = text(formData, "slot", 40);
+  const educationGenre = collection === "education" ? getGenreBySlug(genreSlug) : null;
+  const educationSlot = collection === "education" ? EDUCATION_VISUAL_SLOTS.find((slot) => slot.key === slotKey) : null;
+
+  if (collection === "education" && (!educationGenre || !educationSlot)) return back(request, "hata=sinif");
+  if (collection === "education" && kind !== "image") return back(request, "hata=tip");
+
   const id = randomUUID();
   const filename = sanitizeMediaFilename(entry.name);
-  const title = text(formData, "title", 180) || filename;
-  const altText = text(formData, "altText", 300);
-  const usage = text(formData, "usage", 180);
+  const defaultEducationTitle = educationGenre && educationSlot ? `${educationGenre.label} · ${educationSlot.number} ${educationSlot.label}` : "";
+  const title = text(formData, "title", 180) || defaultEducationTitle || filename;
+  const altText = text(formData, "altText", 300) || defaultEducationTitle;
+  const defaultEducationUsage = educationGenre && educationSlot
+    ? `Eğitim / ${educationGenre.category} / ${educationGenre.label} / ${educationSlot.number} ${educationSlot.label}`
+    : "";
+  const usage = text(formData, "usage", 180) || defaultEducationUsage;
   const notes = text(formData, "notes", 800);
   const url = `/api/media/${id}`;
   const base64 = Buffer.from(bytes).toString("base64");
+  const folder = educationGenre ? educationMediaFolder(educationGenre) : "";
 
   const assetPayload = JSON.stringify({
     id,
@@ -74,6 +93,14 @@ export async function POST(request: Request) {
     sizeBytes: entry.size,
     storage: "database",
     uploadedBy: access.user.displayName || access.user.fullName,
+    ...(collection === "education" && educationGenre && educationSlot ? {
+      collection: "education",
+      folder,
+      category: educationGenre.category,
+      genreSlug: educationGenre.slug,
+      slot: educationSlot.key,
+      slotNumber: educationSlot.number,
+    } : {}),
   });
 
   const blobPayload = JSON.stringify({

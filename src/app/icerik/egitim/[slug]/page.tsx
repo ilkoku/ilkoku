@@ -15,6 +15,7 @@ import {
 } from "@/lib/cms-education";
 import { getGenreBySlug } from "@/lib/genres";
 
+import EducationVisualUploadForm from "./EducationVisualUploadForm";
 import styles from "./EducationGuideEditor.module.css";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +71,7 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
       </nav>
 
       {saved ? <div className={styles.notice}><strong>Sayfa bilgileri kaydedildi.</strong></div> : null}
-      {uploaded ? <div className={styles.notice}><strong>{uploaded} görsel slotu yüklendi ve otomatik yerleşim kuralına bağlandı.</strong></div> : null}
+      {uploaded ? <div className={styles.notice}><strong>{uploaded} görsel slotu yüklendi.</strong> Orijinal dosya korunur; yeniden boyutlandırma, sıkıştırma veya format dönüşümü yapılmaz.</div> : null}
       {removed ? <div className={styles.notice}><strong>{removed} görsel bağlantısı kaldırıldı.</strong> Dosya Medya Kütüphanesi’nde kalır.</div> : null}
       {error ? <div className={styles.notice}><strong>İşlem tamamlanamadı: {error}</strong></div> : null}
 
@@ -97,7 +98,7 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
         <div className={styles.visualPanelHeader}>
           <div>
             <h2>7 görsel slotu</h2>
-            <p>PNG, JPEG, WebP, GIF, AVIF · dosya başına 3 MB</p>
+            <p>PNG, JPEG, WebP, GIF, AVIF · dosya başına 3 MB · çözünürlük ve oran yüklemeden önce kontrol edilir</p>
           </div>
           <div className={styles.depot}>
             <span>Canlı depo: <code>{mediaFolder}</code></span>
@@ -106,7 +107,7 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
         </div>
         <div className={styles.slotHeader} aria-hidden="true">
           <span>No</span>
-          <span>Slot / ölçü</span>
+          <span>Slot / kalite kuralı</span>
           <span>Mevcut görsel</span>
           <span>Yükle / değiştir</span>
         </div>
@@ -120,29 +121,30 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
                 <strong>{slot.label}</strong>
                 <p>{slot.description}</p>
                 <div className={styles.slotSpecs}>
-                  <span>Önerilen {slot.recommendedWidth}×{slot.recommendedHeight}</span>
+                  <span>Min. {slot.recommendedWidth}×{slot.recommendedHeight} px</span>
                   <span>{slot.aspectRatio}</span>
-                  <span>{slot.fit}</span>
+                  <span>Orijinal korunur</span>
                 </div>
-                <small className={styles.automationNote}>Otomasyon: {slot.automation}</small>
+                <small className={styles.automationNote}>Kalite: {slot.automation}</small>
               </div>
 
               {visual ? (
                 <div className={styles.preview}>
-                  <div className={styles.previewImage}>
+                  <div className={styles.previewImage} style={{ aspectRatio: `${slot.recommendedWidth} / ${slot.recommendedHeight}` }}>
                     <Image
                       src={visual.url}
                       alt={visual.altText || `${genre.label} ${slot.label}`}
-                      width={184}
-                      height={128}
+                      width={slot.recommendedWidth}
+                      height={slot.recommendedHeight}
                       unoptimized
                     />
                   </div>
                   <div className={styles.previewText}>
-                    <strong>Yüklü · otomatik ayarlı</strong>
+                    <strong>Yüklü · orijinal kalite</strong>
                     <small>{visual.filename || visual.url}</small>
                     <small>{visual.altText || "Alt metin yok"}</small>
-                    <small>{visual.recommendedWidth}×{visual.recommendedHeight} · {visual.aspectRatio} · {visual.fit}</small>
+                    <small>{visual.sourceWidth && visual.sourceHeight ? `Kaynak ${visual.sourceWidth}×${visual.sourceHeight} px` : "Kaynak çözünürlüğü eski kayıtta yok"}</small>
+                    <small>Hedef min. {visual.recommendedWidth}×{visual.recommendedHeight} · {visual.aspectRatio}</small>
                   </div>
                 </div>
               ) : (
@@ -150,19 +152,15 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
               )}
 
               <div className={styles.slotActions}>
-                <form action="/api/cms-education-media-upload" method="post" encType="multipart/form-data" className={styles.uploadForm}>
-                  <input type="hidden" name="genreSlug" value={genre.slug} />
-                  <input type="hidden" name="slot" value={slot.key} />
-                  <label className={styles.field}>
-                    <span>Dosya</span>
-                    <input name="file" type="file" required accept="image/png,image/jpeg,image/webp,image/gif,image/avif" />
-                  </label>
-                  <label className={styles.field}>
-                    <span>Alt metin</span>
-                    <input name="altText" maxLength={300} defaultValue={visual?.altText ?? ""} placeholder={`${genre.label} ${slot.label}`} />
-                  </label>
-                  <button className={styles.uploadButton} type="submit">{visual ? "Değiştir" : "Yükle"}</button>
-                </form>
+                <EducationVisualUploadForm
+                  genreSlug={genre.slug}
+                  slotKey={slot.key}
+                  slotLabel={`${genre.label} · ${slot.label}`}
+                  recommendedWidth={slot.recommendedWidth}
+                  recommendedHeight={slot.recommendedHeight}
+                  defaultAltText={visual?.altText ?? ""}
+                  hasVisual={Boolean(visual)}
+                />
 
                 {visual ? (
                   <form action={removeEducationGuideVisualAction}>

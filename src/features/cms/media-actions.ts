@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
 import { parseCmsMediaAssetMetadata } from "@/lib/cms-media";
+import { isCmsMediaReferencedByPublishedContent } from "@/lib/cms-media-references";
 import { prisma } from "@/lib/prisma";
 
 function value(formData: FormData, key: string, max = 500) {
@@ -17,24 +18,23 @@ function safeMediaUrl(input: string) {
   return input.replace(/[\r\n]/g, "").slice(0, 500);
 }
 
-async function isMediaReferencedByPublishedContent(mediaUrl: string) {
-  const [siteRows, pageRows] = await Promise.all([
-    prisma.$queryRaw<Array<{ total: bigint | number }>>`
-      SELECT COUNT(*) AS total
-      FROM SiteContent
-      WHERE status = 'published'
-        AND namespace NOT IN ('media', 'media_blob')
-        AND LOCATE(${mediaUrl}, valueJson) > 0
-    `,
-    prisma.$queryRaw<Array<{ total: bigint | number }>>`
-      SELECT COUNT(*) AS total
-      FROM ContentPage
-      WHERE status = 'published'
-        AND LOCATE(${mediaUrl}, bodyJson) > 0
-    `,
-  ]);
+async function getActiveMediaAsset(contentKey: string) {
+  const assetRows = await prisma.$queryRaw<Array<{ valueJson: string }>>`
+    SELECT valueJson
+    FROM SiteContent
+    WHERE namespace = 'media'
+      AND contentKey = ${contentKey}
+      AND status <> 'archived'
+    LIMIT 1
+  `;
 
-  return Number(siteRows[0]?.total ?? 0) + Number(pageRows[0]?.total ?? 0) > 0;
+  const asset = assetRows[0] ? parseCmsMediaAssetMetadata(assetRows[0].valueJson) : null;
+  return asset ? { asset, assetId: contentKey.slice("asset_".length) } : null;
+}
+
+function revalidateMediaPaths() {
+  revalidatePath("/icerik");
+  revalidatePath("/icerik/medya");
 }
 
 export async function createMediaAssetAction(formData: FormData) {
@@ -66,8 +66,7 @@ export async function createMediaAssetAction(formData: FormData) {
     )
   `;
 
-  revalidatePath("/icerik");
-  revalidatePath("/icerik/medya");
+  revalidateMediaPaths();
 }
 
 export async function archiveMediaAssetAction(formData: FormData) {
@@ -76,28 +75,59 @@ export async function archiveMediaAssetAction(formData: FormData) {
   const returnTo = value(formData, "returnTo", 30);
   if (!contentKey.startsWith("asset_")) return;
 
-  const assetRows = await prisma.$queryRaw<Array<{ valueJson: string }>>`
-    SELECT valueJson
-    FROM SiteContent
-    WHERE namespace = 'media'
-      AND contentKey = ${contentKey}
-      AND status <> 'archived'
-    LIMIT 1
-  `;
-  if (!assetRows[0]) return;
+  const target = await getActiveMediaAsset(contentKey);
+  if (!target) return;
 
-  const asset = parseCmsMediaAssetMetadata(assetRows[0].valueJson);
-  if (!asset) {
-    redirect("/icerik/medya?hata=metadata");
-  }
-
-  if (await isMediaReferencedByPublishedContent(asset.url)) {
+  if (await isCmsMediaReferencedByPublishedContent(target.asset.url)) {
     redirect("/icerik/medya?hata=kullanimda");
   }
 
-  const assetId = contentKey.slice("asset_".length);
-
   await prisma.$transaction([
+    prisma.$executeRaw`
+      UPDATE SiteContent
+      SET status = 'archived', updatedById = ${user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = 'media' AND contentKey = ${contentKey}
+    `,
+    prisma.$executeRaw`
+      UPDATE SiteContent
+      SET status = 'archived', updatedById = ${user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = 'media_blob' AND contentKey = ${`blob_${target.assetId}`}
+    `,
+  ]);
+
+  revalidateMediaPaths();
+  const anchor = returnTo === "education" ? "#egitim-medya" : "#cms-medya";
+  redirect(`/icerik/medya?silindi=1${anchor}`);
+}
+
+export async function archiveEducationMediaAssetsAction(formData: FormData) {
+  const { user } = await requireCmsPublisher("/icerik/medya");
+  const contentKeys = [...new Set(
+    formData.getAll("contentKey")
+      .map((entry) => String(entry).trim().slice(0, 200))
+      .filter((entry) => entry.startsWith("asset_")),
+  )].slice(0, 100);
+
+  if (contentKeys.length === 0) {
+    redirect("/icerik/medya#egitim-medya");
+  }
+
+  const targets: Array<{ contentKey: string; assetId: string }> = [];
+
+  for (const contentKey of contentKeys) {
+    const target = await getActiveMediaAsset(contentKey);
+    if (!target || target.asset.collection !== "education") {
+      redirect("/icerik/medya?hata=metadata#egitim-medya");
+    }
+
+    if (await isCmsMediaReferencedByPublishedContent(target.asset.url)) {
+      redirect("/icerik/medya?hata=kullanimda#egitim-medya");
+    }
+
+    targets.push({ contentKey, assetId: target.assetId });
+  }
+
+  const operations = targets.flatMap(({ contentKey, assetId }) => [
     prisma.$executeRaw`
       UPDATE SiteContent
       SET status = 'archived', updatedById = ${user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
@@ -110,8 +140,8 @@ export async function archiveMediaAssetAction(formData: FormData) {
     `,
   ]);
 
-  revalidatePath("/icerik");
-  revalidatePath("/icerik/medya");
-  const anchor = returnTo === "education" ? "#egitim-medya" : "#cms-medya";
-  redirect(`/icerik/medya?silindi=1${anchor}`);
+  await prisma.$transaction(operations);
+
+  revalidateMediaPaths();
+  redirect("/icerik/medya?silindi=1#egitim-medya");
 }

@@ -10,13 +10,13 @@ import "./roman-guide.css";
 const template = getCmsPageTemplate("ornek-roman");
 
 const romanVisuals = {
-  hero: "/writing-guides/kurgu/roman/kurgu-roman-01-hero.svg",
-  ideaFlow: "/writing-guides/kurgu/roman/kurgu-roman-02-fikir-akisi.svg",
-  structure: "/writing-guides/kurgu/roman/kurgu-roman-03-yapi-diyagrami.svg",
-  anatomy: "/writing-guides/kurgu/roman/kurgu-roman-04-eser-anatomisi.svg",
-  pageSetup: "/writing-guides/kurgu/roman/kurgu-roman-05-sayfa-ayari.svg",
-  project: "/writing-guides/kurgu/roman/kurgu-roman-06-ornek-proje.svg",
-  finalCta: "/writing-guides/kurgu/roman/kurgu-roman-07-final-cta.svg",
+  hero: "/writing-guides/kurgu/roman/kurgu-roman-01-hero.avif",
+  ideaFlow: "/writing-guides/kurgu/roman/kurgu-roman-02-fikir-akisi.avif",
+  structure: "/writing-guides/kurgu/roman/kurgu-roman-03-yapi-diyagrami.avif",
+  anatomy: "/writing-guides/kurgu/roman/kurgu-roman-04-eser-anatomisi.avif",
+  pageSetup: "/writing-guides/kurgu/roman/kurgu-roman-05-sayfa-ayari.avif",
+  project: "/writing-guides/kurgu/roman/kurgu-roman-06-ornek-proje.avif",
+  finalCta: "/writing-guides/kurgu/roman/kurgu-roman-07-final-cta.avif",
 } as const;
 
 const visualAfter: Record<string, CmsPageBlock> = {

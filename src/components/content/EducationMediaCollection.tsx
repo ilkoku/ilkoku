@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import styles from "./EducationMediaCollection.module.css";
 
 export type EducationMediaCollectionAsset = {
   contentKey: string;
@@ -46,23 +48,31 @@ export function EducationMediaCollection({ assets, genres, slots, filters }: Pro
     if (filters.slot && asset.slot !== filters.slot) return false;
     return true;
   });
+  const usedGenres = new Set(assets.map((asset) => asset.genreSlug).filter(Boolean)).size;
+  const usedSlots = new Set(assets.map((asset) => asset.slot).filter(Boolean)).size;
+  const hasFilters = Boolean(filters.category || filters.genreSlug || filters.slot);
 
   return (
-    <div className="content-panel" style={{ marginBottom: "1rem" }}>
-      <div className="content-section-heading">
-        <div>
-          <span>Eğitim koleksiyonu</span>
-          <h2>Eğitim Görsel Merkezi</h2>
+    <section id="egitim-medya" className={styles.collection}>
+      <header className={styles.header}>
+        <div className={styles.identity}>
+          <div className={styles.mark}>EDU</div>
+          <div>
+            <span className={styles.eyebrow}>Eğitim koleksiyonu</span>
+            <h2>Eğitim Görsel Merkezi</h2>
+            <p>Kategori → eser türü → görsel slotu düzeninde tek merkezden yönet.</p>
+          </div>
         </div>
-        <p>{filtered.length} / {assets.length} eğitim medyası</p>
-      </div>
+        <div className={styles.stats} aria-label="Eğitim medya özeti">
+          <article><strong>{assets.length}</strong><span>Toplam</span></article>
+          <article><strong>{usedGenres}</strong><span>Tür</span></article>
+          <article><strong>{usedSlots}/7</strong><span>Slot</span></article>
+          <article><strong>{filtered.length}</strong><span>Görünen</span></article>
+        </div>
+      </header>
 
-      <p style={{ marginTop: 0 }}>
-        Eğitim görsellerini <strong>Kategori → Eser Türü → Slot</strong> düzeninde yönet. Bu ekrandan yüklenen dosyalar merkezi Medya Kütüphanesi&apos;ne kaydolur.
-      </p>
-
-      <form method="get" action="/icerik/medya" className="content-form" style={{ marginBottom: "1rem" }}>
-        <div className="content-form-grid">
+      <div className={styles.toolbar}>
+        <form method="get" action="/icerik/medya" className={styles.filterForm}>
           <label>
             <span>Kategori</span>
             <select name="egitimKategori" defaultValue={filters.category}>
@@ -90,77 +100,108 @@ export function EducationMediaCollection({ assets, genres, slots, filters }: Pro
               {slots.map((slot) => <option key={slot.key} value={slot.key}>{slot.number} · {slot.label}</option>)}
             </select>
           </label>
-        </div>
-        <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
-          <button type="submit">Filtrele</button>
-          <Link href="/icerik/medya">Filtreleri temizle</Link>
-        </div>
-      </form>
-
-      <details open={assets.length === 0} style={{ marginBottom: "1rem" }}>
-        <summary style={{ cursor: "pointer", fontWeight: 700 }}>+ Eğitim görseli yükle</summary>
-        <form action="/api/cms-media-upload" method="post" encType="multipart/form-data" className="content-form" style={{ marginTop: ".8rem" }}>
-          <input type="hidden" name="collection" value="education" />
-          <label>
-            <span>Dosya</span>
-            <input name="file" type="file" required accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/x-icon,image/vnd.microsoft.icon" />
-            <small>En fazla 3 MB · Eğitim koleksiyonunda yalnız görsel dosyaları kabul edilir.</small>
-          </label>
-          <div className="content-form-grid">
-            <label>
-              <span>Eser türü</span>
-              <select name="genreSlug" required defaultValue="">
-                <option value="" disabled>Tür seç</option>
-                {categories.map((category) => (
-                  <optgroup key={category} label={category}>
-                    {genres.filter((genre) => genre.category === category).map((genre) => (
-                      <option key={genre.slug} value={genre.slug}>{genre.label}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>Slot</span>
-              <select name="slot" required defaultValue="">
-                <option value="" disabled>Slot seç</option>
-                {slots.map((slot) => <option key={slot.key} value={slot.key}>{slot.number} · {slot.label}</option>)}
-              </select>
-            </label>
+          <div className={styles.filterActions}>
+            <button type="submit">Filtrele</button>
+            {hasFilters ? <Link href="/icerik/medya#egitim-medya">Temizle</Link> : null}
           </div>
-          <div className="content-form-grid">
-            <label><span>Medya başlığı</span><input name="title" maxLength={180} placeholder="Boş bırakılırsa tür + slot kullanılır" /></label>
-            <label><span>Alt metin</span><input name="altText" maxLength={300} placeholder="Boş bırakılırsa tür + slot kullanılır" /></label>
-          </div>
-          <label><span>Not</span><textarea name="notes" maxLength={800} placeholder="Kaynak veya üretim notu" /></label>
-          <div className="content-form-actions"><button type="submit">Eğitim Görselini Yükle</button></div>
         </form>
-      </details>
+
+        <details className={styles.uploadPanel} open={assets.length === 0}>
+          <summary>
+            <span className={styles.plus}>+</span>
+            <span><strong>Eğitim görseli yükle</strong><small>PC’den merkezi koleksiyona ekle</small></span>
+          </summary>
+          <form action="/api/cms-media-upload" method="post" encType="multipart/form-data" className={styles.uploadForm}>
+            <input type="hidden" name="collection" value="education" />
+            <label className={styles.fileField}>
+              <span>Dosya</span>
+              <input name="file" type="file" required accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/x-icon,image/vnd.microsoft.icon" />
+              <small>PNG, JPEG, WebP, GIF, AVIF veya ICO · en fazla 3 MB</small>
+            </label>
+            <div className={styles.twoCol}>
+              <label>
+                <span>Eser türü</span>
+                <select name="genreSlug" required defaultValue="">
+                  <option value="" disabled>Tür seç</option>
+                  {categories.map((category) => (
+                    <optgroup key={category} label={category}>
+                      {genres.filter((genre) => genre.category === category).map((genre) => (
+                        <option key={genre.slug} value={genre.slug}>{genre.label}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Slot</span>
+                <select name="slot" required defaultValue="">
+                  <option value="" disabled>Slot seç</option>
+                  {slots.map((slot) => <option key={slot.key} value={slot.key}>{slot.number} · {slot.label}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className={styles.twoCol}>
+              <label><span>Medya başlığı</span><input name="title" maxLength={180} placeholder="Otomatik oluşturulabilir" /></label>
+              <label><span>Alt metin</span><input name="altText" maxLength={300} placeholder="Otomatik oluşturulabilir" /></label>
+            </div>
+            <label><span>Not</span><textarea name="notes" maxLength={800} placeholder="Kaynak veya üretim notu" /></label>
+            <div className={styles.uploadActions}><button type="submit">Görseli yükle</button></div>
+          </form>
+        </details>
+      </div>
+
+      <div className={styles.resultBar}>
+        <div>
+          <strong>{hasFilters ? "Filtrelenmiş eğitim medyası" : "Son eğitim görselleri"}</strong>
+          <span>{filtered.length} kayıt</span>
+        </div>
+        <small>Görselin türü ve slotu yükleme sırasında kaydedilir.</small>
+      </div>
 
       {filtered.length === 0 ? (
-        <div className="content-panel" style={{ margin: 0 }}><strong>Bu filtrede eğitim medyası yok.</strong><p>Yeni görsel yükleyebilir veya filtreleri temizleyebilirsin.</p></div>
+        <div className={styles.empty}>
+          <div>0</div>
+          <strong>Bu görünümde eğitim görseli yok.</strong>
+          <p>Filtreleri temizleyebilir veya yukarıdaki yükleme alanından yeni görsel ekleyebilirsin.</p>
+        </div>
       ) : (
-        <div style={{ display: "grid", gap: ".55rem" }}>
+        <div className={styles.grid}>
           {filtered.map((asset) => {
             const genre = genreLabel.get(asset.genreSlug) || asset.genreSlug || "Tür belirtilmedi";
             const slot = slotLabel.get(asset.slot) || asset.slot || "Slot belirtilmedi";
-            const path = ["Eğitim", asset.category, genre, slot].filter(Boolean).join(" / ");
             return (
-              <article key={asset.contentKey} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: ".8rem", alignItems: "center", padding: ".75rem", border: "1px solid var(--content-border, #dfe3ea)", borderRadius: ".75rem" }}>
-                <div style={{ minWidth: 0 }}>
-                  <strong style={{ display: "block" }}>{asset.title || asset.filename || "İsimsiz medya"}</strong>
-                  <small style={{ display: "block", marginTop: ".2rem" }}>{path}</small>
-                  <small style={{ display: "block", marginTop: ".2rem" }}>{asset.filename || asset.url} · {formatBytes(asset.sizeBytes)} · {formatDate(asset.updatedAt)}</small>
-                </div>
-                <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                  {asset.genreSlug ? <Link href={`/icerik/egitim/${asset.genreSlug}`}>Türü yönet</Link> : null}
-                  <Link href={asset.url} target="_blank">Dosyayı aç ↗</Link>
+              <article key={asset.contentKey} className={styles.card}>
+                <Link href={asset.url} target="_blank" className={styles.preview} aria-label={`${asset.title || asset.filename} görselini aç`}>
+                  <Image
+                    src={asset.url}
+                    alt={asset.title || asset.filename || "Eğitim görseli"}
+                    width={360}
+                    height={240}
+                    unoptimized
+                  />
+                  <span className={styles.slotBadge}>{slot}</span>
+                </Link>
+                <div className={styles.cardBody}>
+                  <div className={styles.path}>
+                    <span>{asset.category || "Kategori yok"}</span>
+                    <span>{genre}</span>
+                  </div>
+                  <strong className={styles.title}>{asset.title || asset.filename || "İsimsiz medya"}</strong>
+                  <div className={styles.meta}>
+                    <span>{formatBytes(asset.sizeBytes)}</span>
+                    <span>{formatDate(asset.updatedAt)}</span>
+                  </div>
+                  <small className={styles.filename}>{asset.filename || asset.url}</small>
+                  <div className={styles.cardActions}>
+                    {asset.genreSlug ? <Link href={`/icerik/egitim/${asset.genreSlug}`}>Türü yönet</Link> : null}
+                    <Link href={asset.url} target="_blank">Dosyayı aç ↗</Link>
+                  </div>
                 </div>
               </article>
             );
           })}
         </div>
       )}
-    </div>
+    </section>
   );
 }

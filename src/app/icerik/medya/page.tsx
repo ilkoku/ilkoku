@@ -14,6 +14,7 @@ import { parseCmsMediaAssetMetadata } from "@/lib/cms-media";
 import { getCmsMediaReferenceMap } from "@/lib/cms-media-references";
 import { GENRES } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
+import styles from "./MediaPage.module.css";
 
 type MediaRow = {
   contentKey: string;
@@ -131,7 +132,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
         <div>
           <span>İçerik</span>
           <h1>Medya Kütüphanesi</h1>
-          <p>Dosyayı seç, koleksiyonuna yerleştir, gerçek kullanım yerlerini gör ve yalnız güvenli olduğunda arşivle.</p>
+          <p>Görselleri koleksiyonuna yerleştir, önizle, kullanım yerlerini izle ve güvenli biçimde yönet.</p>
         </div>
         <div className="content-profile">
           <strong>{assets.length} aktif medya</strong>
@@ -145,6 +146,11 @@ export default async function MediaPage({ searchParams }: PageProps) {
       {invalid.length > 0 ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>{invalid.length} aktif medya metadata kaydı bozuk.</strong><p>Bu kayıtlar normal arşiv akışına sokulmaz. URL bilinmeden canlı referans kontrolü güvenilir değildir.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
       {!referencesAvailable ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Medya kullanım haritası doğrulanamadı.</strong><p>Kullanımda değil sonucu üretilmedi. Referans görünürlüğü geri gelene kadar tüm arşivleme aksiyonları fail-closed olarak kilitlendi.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
 
+      <nav className={styles.viewNav} aria-label="Medya görünümleri">
+        <a href="#egitim-medya"><span>Eğitim Görselleri</span><strong>{educationAssets.length}</strong></a>
+        <a href="#tum-medya"><span>Tüm Medya</span><strong>{assets.length}</strong></a>
+      </nav>
+
       <EducationMediaCollection
         assets={educationAssets}
         genres={GENRES.map((genre) => ({ slug: genre.slug, label: genre.label, category: genre.category }))}
@@ -152,15 +158,25 @@ export default async function MediaPage({ searchParams }: PageProps) {
         filters={educationFilters}
       />
 
-      <MediaLibraryWorkbench
-        assets={assets}
-        invalid={invalid}
-        referencesAvailable={referencesAvailable}
-        canPublish={access.canPublish}
-        initialSearch={initialSearch}
-        initialKind={initialKind}
-        initialUsage={initialUsage}
-      />
+      <section id="tum-medya" className={styles.generalSection}>
+        <div className={styles.sectionHeading}>
+          <div>
+            <span>Genel envanter</span>
+            <h2>Tüm Medya</h2>
+            <p>Arama, önizleme, gerçek kullanım takibi ve güvenli arşivleme çalışma masası.</p>
+          </div>
+          <div className={styles.sectionCount}><strong>{assets.length}</strong><span>aktif kayıt</span></div>
+        </div>
+        <MediaLibraryWorkbench
+          assets={assets}
+          invalid={invalid}
+          referencesAvailable={referencesAvailable}
+          canPublish={access.canPublish}
+          initialSearch={initialSearch}
+          initialKind={initialKind}
+          initialUsage={initialUsage}
+        />
+      </section>
     </section>
   );
 }

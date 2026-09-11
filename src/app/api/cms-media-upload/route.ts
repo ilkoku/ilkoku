@@ -13,13 +13,13 @@ import {
 } from "@/lib/cms-media";
 import { getGenreBySlug } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
-import { isSameOriginRequest } from "@/lib/same-origin";
+import { isSameOriginRequest, sameOriginRequestUrl } from "@/lib/same-origin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 function back(request: Request, query: string) {
-  return NextResponse.redirect(new URL(`/icerik/medya?${query}`, request.url), 303);
+  return NextResponse.redirect(sameOriginRequestUrl(request, `/icerik/medya?${query}`), 303);
 }
 
 function text(formData: FormData, key: string, max: number) {

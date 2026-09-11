@@ -4,7 +4,15 @@ import { notFound } from "next/navigation";
 
 import { removeEducationGuideVisualAction, saveEducationGuideMetaAction } from "@/features/cms/education-actions";
 import { requireCmsManager } from "@/lib/cms-access";
-import { EDUCATION_VISUAL_SLOTS, educationCategoryPath, educationGuideDefault, educationPublicPath, getEducationGuideRecord } from "@/lib/cms-education";
+import {
+  EDUCATION_VISUAL_SLOTS,
+  educationCategoryPath,
+  educationGithubMediaFolder,
+  educationGuideDefault,
+  educationMediaFolder,
+  educationPublicPath,
+  getEducationGuideRecord,
+} from "@/lib/cms-education";
 import { getGenreBySlug } from "@/lib/genres";
 
 import styles from "./EducationGuideEditor.module.css";
@@ -32,6 +40,8 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
   const saved = queryValue(query.kaydedildi);
   const error = queryValue(query.hata);
   const publicPath = educationPublicPath(genre);
+  const mediaFolder = educationMediaFolder(genre);
+  const githubMediaFolder = educationGithubMediaFolder(genre);
   const visualCount = Object.keys(guide.visuals).length;
 
   return (
@@ -60,7 +70,7 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
       </nav>
 
       {saved ? <div className={styles.notice}><strong>Sayfa bilgileri kaydedildi.</strong></div> : null}
-      {uploaded ? <div className={styles.notice}><strong>{uploaded} görsel slotu yüklendi ve bağlandı.</strong></div> : null}
+      {uploaded ? <div className={styles.notice}><strong>{uploaded} görsel slotu yüklendi ve otomatik yerleşim kuralına bağlandı.</strong></div> : null}
       {removed ? <div className={styles.notice}><strong>{removed} görsel bağlantısı kaldırıldı.</strong> Dosya Medya Kütüphanesi’nde kalır.</div> : null}
       {error ? <div className={styles.notice}><strong>İşlem tamamlanamadı: {error}</strong></div> : null}
 
@@ -85,12 +95,18 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
 
       <section className={styles.visualPanel}>
         <div className={styles.visualPanelHeader}>
-          <h2>7 görsel slotu</h2>
-          <p>PNG, JPEG, WebP, GIF, AVIF · dosya başına 3 MB</p>
+          <div>
+            <h2>7 görsel slotu</h2>
+            <p>PNG, JPEG, WebP, GIF, AVIF · dosya başına 3 MB</p>
+          </div>
+          <div className={styles.depot}>
+            <span>Canlı depo: <code>{mediaFolder}</code></span>
+            <span>GitHub kaynak: <code>{githubMediaFolder}</code></span>
+          </div>
         </div>
         <div className={styles.slotHeader} aria-hidden="true">
           <span>No</span>
-          <span>Slot</span>
+          <span>Slot / ölçü</span>
           <span>Mevcut görsel</span>
           <span>Yükle / değiştir</span>
         </div>
@@ -103,6 +119,12 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
               <div className={styles.slotInfo}>
                 <strong>{slot.label}</strong>
                 <p>{slot.description}</p>
+                <div className={styles.slotSpecs}>
+                  <span>Önerilen {slot.recommendedWidth}×{slot.recommendedHeight}</span>
+                  <span>{slot.aspectRatio}</span>
+                  <span>{slot.fit}</span>
+                </div>
+                <small className={styles.automationNote}>Otomasyon: {slot.automation}</small>
               </div>
 
               {visual ? (
@@ -117,9 +139,10 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
                     />
                   </div>
                   <div className={styles.previewText}>
-                    <strong>Yüklü</strong>
+                    <strong>Yüklü · otomatik ayarlı</strong>
                     <small>{visual.filename || visual.url}</small>
                     <small>{visual.altText || "Alt metin yok"}</small>
+                    <small>{visual.recommendedWidth}×{visual.recommendedHeight} · {visual.aspectRatio} · {visual.fit}</small>
                   </div>
                 </div>
               ) : (

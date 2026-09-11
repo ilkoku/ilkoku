@@ -4,24 +4,101 @@ import { GENRES, getGenreBySlug, type Genre, type GenreCategory } from "@/lib/ge
 import { prisma } from "@/lib/prisma";
 
 export const EDUCATION_GUIDE_NAMESPACE = "education_guide";
+export const EDUCATION_GITHUB_MEDIA_ROOT = "public/media/education";
 
 export const EDUCATION_VISUAL_SLOTS = [
-  { key: "hero", number: "01", label: "Hero", description: "Sayfanın üst ana görseli" },
-  { key: "ideaFlow", number: "02", label: "Fikir Akışı", description: "Fikir / süreç / başlangıç anlatımı" },
-  { key: "structure", number: "03", label: "Yapı Diyagramı", description: "Yapı, akış veya olay örgüsü diyagramı" },
-  { key: "anatomy", number: "04", label: "Eser Anatomisi", description: "Bileşenler, karakter veya anatomi panosu" },
-  { key: "pageSetup", number: "05", label: "Sayfa ve Yazım Ayarı", description: "Sayfa, biçim veya yazım ayarı anlatımı" },
-  { key: "project", number: "06", label: "Örnek Proje", description: "Baştan sona örnek proje / çalışma akışı" },
-  { key: "finalCta", number: "07", label: "Final CTA", description: "Sayfa sonu çağrı / kapanış görseli" },
+  {
+    key: "hero",
+    number: "01",
+    label: "Hero",
+    description: "Sayfanın üst ana görseli",
+    recommendedWidth: 1600,
+    recommendedHeight: 900,
+    aspectRatio: "16:9",
+    fit: "contain",
+    automation: "Oranı korur; crop yapmaz; küçük görseli büyütmez.",
+  },
+  {
+    key: "ideaFlow",
+    number: "02",
+    label: "Fikir Akışı",
+    description: "Fikir / süreç / başlangıç anlatımı",
+    recommendedWidth: 1440,
+    recommendedHeight: 1080,
+    aspectRatio: "4:3",
+    fit: "contain",
+    automation: "Metin ve diyagramı tam gösterir; crop yapmaz.",
+  },
+  {
+    key: "structure",
+    number: "03",
+    label: "Yapı Diyagramı",
+    description: "Yapı, akış veya olay örgüsü diyagramı",
+    recommendedWidth: 1500,
+    recommendedHeight: 1000,
+    aspectRatio: "3:2",
+    fit: "contain",
+    automation: "Diyagramın tamamını oranını bozmadan gösterir.",
+  },
+  {
+    key: "anatomy",
+    number: "04",
+    label: "Eser Anatomisi",
+    description: "Bileşenler, karakter veya anatomi panosu",
+    recommendedWidth: 1500,
+    recommendedHeight: 1000,
+    aspectRatio: "3:2",
+    fit: "contain",
+    automation: "Etiket ve küçük metinleri kesmeden tam gösterir.",
+  },
+  {
+    key: "pageSetup",
+    number: "05",
+    label: "Sayfa ve Yazım Ayarı",
+    description: "Sayfa, biçim veya yazım ayarı anlatımı",
+    recommendedWidth: 1500,
+    recommendedHeight: 1000,
+    aspectRatio: "3:2",
+    fit: "contain",
+    automation: "Sayfa örneğini crop yapmadan doğal oranında gösterir.",
+  },
+  {
+    key: "project",
+    number: "06",
+    label: "Örnek Proje",
+    description: "Baştan sona örnek proje / çalışma akışı",
+    recommendedWidth: 1500,
+    recommendedHeight: 1000,
+    aspectRatio: "3:2",
+    fit: "contain",
+    automation: "Akış panosunu tam gösterir; zorla kutuya yaymaz.",
+  },
+  {
+    key: "finalCta",
+    number: "07",
+    label: "Final CTA",
+    description: "Sayfa sonu çağrı / kapanış görseli",
+    recommendedWidth: 1500,
+    recommendedHeight: 1000,
+    aspectRatio: "3:2",
+    fit: "contain",
+    automation: "CTA ve arayüz detaylarını kesmeden tam gösterir.",
+  },
 ] as const;
 
 export type EducationVisualSlotKey = (typeof EDUCATION_VISUAL_SLOTS)[number]["key"];
+export type EducationVisualFit = (typeof EDUCATION_VISUAL_SLOTS)[number]["fit"];
 
 export type EducationVisual = {
   url: string;
   altText: string;
   filename?: string;
   mediaId?: string;
+  recommendedWidth: number;
+  recommendedHeight: number;
+  aspectRatio: string;
+  fit: EducationVisualFit;
+  folder: string;
 };
 
 export type EducationGuideRecord = {
@@ -56,6 +133,14 @@ export function educationPublicPath(genre: Genre) {
   return `/yazarlar-icin/${educationCategoryPath(genre.category)}/${genre.slug}`;
 }
 
+export function educationMediaFolder(genre: Genre) {
+  return `education/${educationCategoryPath(genre.category)}/${genre.slug}`;
+}
+
+export function educationGithubMediaFolder(genre: Genre) {
+  return `${EDUCATION_GITHUB_MEDIA_ROOT}/${educationCategoryPath(genre.category)}/${genre.slug}`;
+}
+
 export function educationGuideDefault(genre: Genre): EducationGuideRecord {
   return {
     genreSlug: genre.slug,
@@ -66,7 +151,11 @@ export function educationGuideDefault(genre: Genre): EducationGuideRecord {
   };
 }
 
-function safeVisual(value: unknown): EducationVisual | null {
+function safeVisual(
+  value: unknown,
+  slot: (typeof EDUCATION_VISUAL_SLOTS)[number],
+  genre: Genre,
+): EducationVisual | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const item = value as Record<string, unknown>;
   const url = typeof item.url === "string" ? item.url.trim() : "";
@@ -76,6 +165,11 @@ function safeVisual(value: unknown): EducationVisual | null {
     altText: typeof item.altText === "string" ? item.altText.slice(0, 300) : "",
     filename: typeof item.filename === "string" ? item.filename.slice(0, 180) : undefined,
     mediaId: typeof item.mediaId === "string" ? item.mediaId.slice(0, 80) : undefined,
+    recommendedWidth: slot.recommendedWidth,
+    recommendedHeight: slot.recommendedHeight,
+    aspectRatio: slot.aspectRatio,
+    fit: slot.fit,
+    folder: educationMediaFolder(genre),
   };
 }
 
@@ -90,7 +184,7 @@ export function parseEducationGuide(valueJson: string, genre: Genre): EducationG
       : {};
     const visuals: EducationGuideRecord["visuals"] = {};
     for (const slot of EDUCATION_VISUAL_SLOTS) {
-      const visual = safeVisual(visualsRaw[slot.key]);
+      const visual = safeVisual(visualsRaw[slot.key], slot, genre);
       if (visual) visuals[slot.key] = visual;
     }
     return {

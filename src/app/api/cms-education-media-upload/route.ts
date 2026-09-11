@@ -4,7 +4,9 @@ import { getCmsAccess } from "@/lib/cms-access";
 import {
   EDUCATION_GUIDE_NAMESPACE,
   EDUCATION_VISUAL_SLOTS,
+  educationGithubMediaFolder,
   educationGuideDefault,
+  educationMediaFolder,
   educationPublicPath,
   getEducationGuideRecord,
   isEducationVisualSlotKey,
@@ -71,12 +73,24 @@ export async function POST(request: Request) {
   const altText = text(formData, "altText", 300) || `${genre.label} · ${slotInfo.label}`;
   const url = `/api/media/${id}`;
   const base64 = Buffer.from(bytes).toString("base64");
+  const folder = educationMediaFolder(genre);
+  const githubSourceFolder = educationGithubMediaFolder(genre);
   const current = await getEducationGuideRecord(genre.slug) ?? educationGuideDefault(genre);
   const guidePayload = JSON.stringify({
     ...current,
     visuals: {
       ...current.visuals,
-      [slot]: { url, altText, filename, mediaId: id },
+      [slot]: {
+        url,
+        altText,
+        filename,
+        mediaId: id,
+        recommendedWidth: slotInfo.recommendedWidth,
+        recommendedHeight: slotInfo.recommendedHeight,
+        aspectRatio: slotInfo.aspectRatio,
+        fit: slotInfo.fit,
+        folder,
+      },
     },
   });
 
@@ -86,8 +100,20 @@ export async function POST(request: Request) {
     url,
     altText,
     kind: "image",
+    collection: "education",
+    folder,
+    githubSourceFolder,
+    genreSlug: genre.slug,
+    category: genre.category,
+    slot: slotInfo.key,
+    slotNumber: slotInfo.number,
+    recommendedWidth: slotInfo.recommendedWidth,
+    recommendedHeight: slotInfo.recommendedHeight,
+    aspectRatio: slotInfo.aspectRatio,
+    fit: slotInfo.fit,
+    automation: slotInfo.automation,
     usage: `Eğitim / ${genre.category} / ${genre.label} / ${slotInfo.number} ${slotInfo.label}`,
-    notes: `Eğitim modülünden ${genre.slug} sayfasının ${slot} slotuna yüklendi.`,
+    notes: `Merkezi Eğitim deposuna bağlandı. Otomatik yerleşim: ${slotInfo.recommendedWidth}x${slotInfo.recommendedHeight} · ${slotInfo.aspectRatio} · ${slotInfo.fit}; crop yok, kaynak dosya değiştirilmez.`,
     filename,
     mimeType: detectedMime,
     sizeBytes: entry.size,
@@ -139,5 +165,6 @@ export async function POST(request: Request) {
 
   const response = back(request, genre.slug, `yuklendi=${slot}`);
   response.headers.set("x-education-public-path", educationPublicPath(genre));
+  response.headers.set("x-education-media-folder", folder);
   return response;
 }

@@ -73,6 +73,7 @@ export async function createMediaAssetAction(formData: FormData) {
 export async function archiveMediaAssetAction(formData: FormData) {
   const { user } = await requireCmsPublisher("/icerik/medya");
   const contentKey = value(formData, "contentKey", 200);
+  const returnTo = value(formData, "returnTo", 30);
   if (!contentKey.startsWith("asset_")) return;
 
   const assetRows = await prisma.$queryRaw<Array<{ valueJson: string }>>`
@@ -111,5 +112,6 @@ export async function archiveMediaAssetAction(formData: FormData) {
 
   revalidatePath("/icerik");
   revalidatePath("/icerik/medya");
-  redirect("/icerik/medya?silindi=1#cms-medya");
+  const anchor = returnTo === "education" ? "#egitim-medya" : "#cms-medya";
+  redirect(`/icerik/medya?silindi=1${anchor}`);
 }

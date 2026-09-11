@@ -6,6 +6,7 @@ import { GENRE_CATEGORIES, getGenresByCategory } from "@/lib/genres";
 const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   roman: "/yazarlar-icin/kurgu/roman",
   oyku: "/yazarlar-icin/kurgu/oyku",
+  novella: "/yazarlar-icin/kurgu/novella",
 };
 
 type WritingGuideShellProps = {

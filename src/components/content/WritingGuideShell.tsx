@@ -1,6 +1,12 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { GENRE_CATEGORIES, getGenresByCategory } from "@/lib/genres";
+
+const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
+  roman: "/yazarlar-icin/kurgu/roman",
+  oyku: "/yazarlar-icin/kurgu/oyku",
+};
 
 type WritingGuideShellProps = {
   children: ReactNode;
@@ -39,14 +45,26 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
             <div className="flex gap-2 overflow-x-auto lg:block lg:space-y-1 lg:overflow-visible">
               {genres.map((genre) => {
                 const active = genre.slug === activeGenreSlug;
+                const href = LIVE_WRITING_GUIDE_HREFS[genre.slug];
+                const className = active
+                  ? "shrink-0 rounded-xl bg-[#5b35dd] px-3 py-2.5 text-sm font-extrabold text-white lg:block"
+                  : "shrink-0 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#5f5869] lg:block";
+
+                if (href) {
+                  return (
+                    <Link
+                      aria-current={active ? "page" : undefined}
+                      className={className}
+                      href={href}
+                      key={genre.slug}
+                    >
+                      {genre.label}
+                    </Link>
+                  );
+                }
+
                 return (
-                  <div
-                    aria-current={active ? "page" : undefined}
-                    className={active
-                      ? "shrink-0 rounded-xl bg-[#5b35dd] px-3 py-2.5 text-sm font-extrabold text-white lg:block"
-                      : "shrink-0 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#5f5869] lg:block"}
-                    key={genre.slug}
-                  >
+                  <div className={className} key={genre.slug}>
                     {genre.label}
                   </div>
                 );

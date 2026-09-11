@@ -59,6 +59,28 @@ function pageReferenceMeta(row: PageReferenceRow): Omit<CmsMediaReference, "sour
   return { label: row.title, detail: `Kurumsal sayfa · ${row.slug}`, editHref: `/icerik/sayfalar/${row.id}` };
 }
 
+export async function isCmsMediaReferencedByPublishedContent(mediaUrl: string) {
+  if (!mediaUrl.startsWith("/") || mediaUrl.startsWith("//")) return false;
+
+  const [siteRows, pageRows] = await Promise.all([
+    prisma.$queryRaw<Array<{ total: bigint | number }>>`
+      SELECT COUNT(*) AS total
+      FROM SiteContent
+      WHERE status = 'published'
+        AND namespace NOT IN ('media', 'media_blob', 'form_submission', 'cms_draft')
+        AND LOCATE(${mediaUrl}, valueJson) > 0
+    `,
+    prisma.$queryRaw<Array<{ total: bigint | number }>>`
+      SELECT COUNT(*) AS total
+      FROM ContentPage
+      WHERE status = 'published'
+        AND LOCATE(${mediaUrl}, bodyJson) > 0
+    `,
+  ]);
+
+  return Number(siteRows[0]?.total ?? 0) + Number(pageRows[0]?.total ?? 0) > 0;
+}
+
 export async function getCmsMediaReferenceMap(mediaUrls: string[]) {
   const urls = [...new Set(mediaUrls.filter((url) => url.startsWith("/") && !url.startsWith("//")))];
   const result = new Map<string, CmsMediaReference[]>(urls.map((url) => [url, []]));

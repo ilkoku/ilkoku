@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { archiveMediaAssetAction } from "@/features/cms/media-actions";
+import {
+  archiveEducationMediaAssetsAction,
+  archiveMediaAssetAction,
+} from "@/features/cms/media-actions";
 import styles from "./EducationMediaCollection.module.css";
 
 export type EducationMediaCollectionAsset = {
@@ -54,6 +57,7 @@ export function EducationMediaCollection({ assets, genres, slots, filters }: Pro
   });
   const usedGenres = new Set(assets.map((asset) => asset.genreSlug).filter(Boolean)).size;
   const usedSlots = new Set(assets.map((asset) => asset.slot).filter(Boolean)).size;
+  const deletableCount = filtered.filter((asset) => asset.canDelete).length;
   const hasFilters = Boolean(filters.category || filters.genreSlug || filters.slot);
 
   return (
@@ -159,7 +163,10 @@ export function EducationMediaCollection({ assets, genres, slots, filters }: Pro
           <strong>{hasFilters ? "Filtrelenmiş eğitim medyası" : "Son eğitim görselleri"}</strong>
           <span>{filtered.length} kayıt</span>
         </div>
-        <small>Görselin türü ve slotu yükleme sırasında kaydedilir.</small>
+        <form id="education-bulk-delete" action={archiveEducationMediaAssetsAction} className={styles.filterActions}>
+          <small>{deletableCount > 0 ? `${deletableCount} boşta · silmek istediklerini kartlardan seç` : "Bu görünümde silinebilir medya yok"}</small>
+          <button type="submit" disabled={deletableCount === 0}>Seçilenleri sil</button>
+        </form>
       </div>
 
       {filtered.length === 0 ? (
@@ -198,6 +205,16 @@ export function EducationMediaCollection({ assets, genres, slots, filters }: Pro
                   </div>
                   <small className={styles.filename}>{asset.filename || asset.url}</small>
                   <div className={styles.cardActions}>
+                    <label className={styles.meta} title={asset.canDelete ? "Toplu silme için seç" : asset.deleteReason}>
+                      <input
+                        type="checkbox"
+                        name="contentKey"
+                        value={asset.contentKey}
+                        form="education-bulk-delete"
+                        disabled={!asset.canDelete}
+                      />
+                      <span>Seç</span>
+                    </label>
                     {asset.genreSlug ? <Link href={`/icerik/egitim/${asset.genreSlug}`}>Türü yönet</Link> : null}
                     <Link href={asset.url} target="_blank">Dosyayı aç ↗</Link>
                     <form action={archiveMediaAssetAction}>

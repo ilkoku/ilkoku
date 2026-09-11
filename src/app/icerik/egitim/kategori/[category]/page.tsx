@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import {
   EducationWorkbench,
@@ -10,11 +10,23 @@ import {
   educationPublicPath,
   listEducationGuideRecords,
 } from "@/lib/cms-education";
-import { GENRE_CATEGORIES, GENRES, getGenresByCategory } from "@/lib/genres";
+import { GENRE_CATEGORIES, getGenresByCategory, type GenreCategory } from "@/lib/genres";
+
+type PageProps = {
+  params: Promise<{ category: string }>;
+};
 
 export const dynamic = "force-dynamic";
 
-export default async function EducationDashboardPage() {
+function categoryFromPath(path: string): GenreCategory | null {
+  return GENRE_CATEGORIES.find((category) => educationCategoryPath(category) === path) ?? null;
+}
+
+export default async function EducationCategoryPage({ params }: PageProps) {
+  const { category: categoryPath } = await params;
+  const activeCategory = categoryFromPath(categoryPath);
+  if (!activeCategory) notFound();
+
   let records: Awaited<ReturnType<typeof listEducationGuideRecords>> = [];
   let dataError = false;
 
@@ -51,42 +63,33 @@ export default async function EducationDashboardPage() {
     };
   });
 
+  const activeGenres = getGenresByCategory(activeCategory);
+
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
         <div>
-          <span>İçerik · Eğitim</span>
-          <h1>Eğitim Çalışma Masası</h1>
-          <p>Kategori, tür ve görsel hazırlık durumunu tek ekrandan filtrele. Kategori sayfalarına gir, ilgili türleri yönet ve 7 ana görseli bilgisayarından manuel yükle.</p>
+          <span>İçerik · Eğitim · Kategori</span>
+          <h1>{activeCategory}</h1>
+          <p>{activeGenres.length} tür bu kategori altında otomatik yönetilir. Tür kataloğuna aynı kategoriyle yeni kayıt eklendiğinde burada ayrıca işlem yapmadan görünür.</p>
         </div>
         <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : "success"}>
-          <span className="cms-editor-status-card__label">Canlı katalog</span>
-          {dataError ? <strong>Veri okunamadı</strong> : <strong>{GENRES.length} tür</strong>}
+          <span className="cms-editor-status-card__label">Kategori kapsamı</span>
+          {dataError ? <strong>Veri okunamadı</strong> : <strong>{activeGenres.length} tür</strong>}
           <div className="cms-editor-status-card__meta">
-            <span className="cms-editor-chip">{GENRE_CATEGORIES.length} kategori</span>
-            <span className="cms-editor-chip">Tür kataloğuna bağlı</span>
+            <span className="cms-editor-chip">Otomatik katalog</span>
+            <span className="cms-editor-chip">7 görsel slotu / tür</span>
           </div>
         </aside>
       </div>
 
-      <nav className="cms-editor-toolbar" aria-label="Eğitim hızlı işlemleri">
-        <div className="cms-editor-toolbar__cluster">
-          <Link href="/icerik/medya">Medya Kütüphanesi</Link>
-          <Link href="/icerik/sayfalar/sablonlar">Sayfa Şablonları</Link>
-        </div>
-      </nav>
-
       {dataError ? (
         <div className="content-panel cms-editor-notice is-danger" role="alert">
           <strong>Eğitim kayıtları okunamadı.</strong>
-          <p>Yanlış hazırlık durumu göstermemek için çalışma masası güvenli biçimde durduruldu. Veritabanı bağlantısını kontrol edip tekrar deneyin.</p>
-          <div className="content-form-actions">
-            <Link href="/icerik/saglik">Sistem Sağlığı →</Link>
-            <Link href="/icerik/egitim">Tekrar dene ↻</Link>
-          </div>
+          <p>Yanlış hazırlık durumu göstermemek için kategori çalışma masası güvenli biçimde durduruldu.</p>
         </div>
       ) : (
-        <EducationWorkbench items={items} categories={categories} />
+        <EducationWorkbench items={items} categories={categories} lockedCategory={activeCategory} />
       )}
     </section>
   );

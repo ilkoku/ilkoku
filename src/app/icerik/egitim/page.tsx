@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { EDUCATION_VISUAL_SLOTS, listEducationGuideRecords } from "@/lib/cms-education";
+
+import {
+  EducationWorkbench,
+  type EducationWorkbenchCategory,
+  type EducationWorkbenchItem,
+} from "@/components/content/EducationWorkbench";
+import {
+  educationCategoryPath,
+  educationPublicPath,
+  listEducationGuideRecords,
+} from "@/lib/cms-education";
 import { GENRE_CATEGORIES, GENRES, getGenresByCategory } from "@/lib/genres";
 
 export const dynamic = "force-dynamic";
@@ -7,31 +17,54 @@ export const dynamic = "force-dynamic";
 export default async function EducationDashboardPage() {
   let records: Awaited<ReturnType<typeof listEducationGuideRecords>> = [];
   let dataError = false;
+
   try {
     records = await listEducationGuideRecords();
   } catch {
     dataError = true;
   }
 
-  const bySlug = new Map(records.map((item) => [item.genre.slug, item]));
-  const configured = records.filter((item) => Object.keys(item.guide.visuals).length > 0).length;
-  const complete = records.filter((item) => Object.keys(item.guide.visuals).length === EDUCATION_VISUAL_SLOTS.length).length;
+  const items: EducationWorkbenchItem[] = records.map(({ genre, guide, updatedAt }) => ({
+    slug: genre.slug,
+    label: genre.label,
+    category: genre.category,
+    categoryPath: educationCategoryPath(genre.category),
+    visualCount: Object.keys(guide.visuals).length,
+    updatedAt: updatedAt?.toISOString() ?? null,
+    editHref: `/icerik/egitim/${genre.slug}`,
+    publicHref: educationPublicPath(genre),
+  }));
+
+  const bySlug = new Map(items.map((item) => [item.slug, item]));
+  const categories: EducationWorkbenchCategory[] = GENRE_CATEGORIES.map((category) => {
+    const genres = getGenresByCategory(category);
+    const counts = genres.map((genre) => bySlug.get(genre.slug)?.visualCount ?? 0);
+    const complete = counts.filter((count) => count >= 7).length;
+    const inProgress = counts.filter((count) => count > 0 && count < 7).length;
+    return {
+      label: category,
+      path: educationCategoryPath(category),
+      total: genres.length,
+      complete,
+      inProgress,
+      notStarted: Math.max(0, genres.length - complete - inProgress),
+    };
+  });
 
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
         <div>
           <span>İçerik · Eğitim</span>
-          <h1>Eğitim Sayfaları</h1>
-          <p>7 ana kategori ve eser türlerinin yazarlık eğitim sayfalarını tek yerden yönet. Metinleri düzenle, 7 ana görseli bilgisayarından manuel yükle ve her türün hazırlık durumunu izle.</p>
+          <h1>Eğitim Çalışma Masası</h1>
+          <p>Kategori, tür ve görsel hazırlık durumunu tek ekrandan filtrele. Kategori sayfalarına gir, ilgili türleri yönet ve 7 ana görseli bilgisayarından manuel yükle.</p>
         </div>
-        <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : complete > 0 ? "success" : "warning"}>
-          <span className="cms-editor-status-card__label">Eğitim envanteri</span>
+        <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : "success"}>
+          <span className="cms-editor-status-card__label">Canlı katalog</span>
           {dataError ? <strong>Veri okunamadı</strong> : <strong>{GENRES.length} tür</strong>}
           <div className="cms-editor-status-card__meta">
             <span className="cms-editor-chip">{GENRE_CATEGORIES.length} kategori</span>
-            <span className="cms-editor-chip is-warning">{configured} görsel başlanmış</span>
-            <span className="cms-editor-chip">{complete} görsel seti tam</span>
+            <span className="cms-editor-chip">Tür kataloğuna bağlı</span>
           </div>
         </aside>
       </div>
@@ -46,43 +79,14 @@ export default async function EducationDashboardPage() {
       {dataError ? (
         <div className="content-panel cms-editor-notice is-danger" role="alert">
           <strong>Eğitim kayıtları okunamadı.</strong>
-          <p>Yanlış “0 kayıt” göstermemek için liste güvenli biçimde durduruldu. Veritabanı bağlantısını kontrol edip tekrar deneyin.</p>
-          <Link href="/icerik/saglik">Sistem Sağlığı →</Link>
+          <p>Yanlış hazırlık durumu göstermemek için çalışma masası güvenli biçimde durduruldu. Veritabanı bağlantısını kontrol edip tekrar deneyin.</p>
+          <div className="content-form-actions">
+            <Link href="/icerik/saglik">Sistem Sağlığı →</Link>
+            <Link href="/icerik/egitim">Tekrar dene ↻</Link>
+          </div>
         </div>
       ) : (
-        <div style={{ display: "grid", gap: "1rem" }}>
-          {GENRE_CATEGORIES.map((category) => {
-            const genres = getGenresByCategory(category);
-            const categoryComplete = genres.filter((genre) => Object.keys(bySlug.get(genre.slug)?.guide.visuals ?? {}).length === EDUCATION_VISUAL_SLOTS.length).length;
-            return (
-              <section className="content-panel" key={category}>
-                <div className="content-section-heading">
-                  <div><span>Ana kategori</span><h2>{category}</h2></div>
-                  <p>{genres.length} tür · {categoryComplete}/{genres.length} görsel seti tamam</p>
-                </div>
-                <div className="content-list">
-                  {genres.map((genre) => {
-                    const entry = bySlug.get(genre.slug);
-                    const visualCount = Object.keys(entry?.guide.visuals ?? {}).length;
-                    return (
-                      <div className="content-list-row" key={genre.slug} style={{ gap: "1rem", alignItems: "center" }}>
-                        <div style={{ minWidth: 90 }}>
-                          <strong>{visualCount}/7</strong><br />
-                          <small>{visualCount === 7 ? "GÖRSEL TAM" : visualCount > 0 ? "DEVAM EDİYOR" : "HAZIRLANACAK"}</small>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <strong>{genre.label}</strong>
-                          <p style={{ margin: ".25rem 0 0" }}>/yazarlar-icin/…/{genre.slug}</p>
-                        </div>
-                        <Link href={`/icerik/egitim/${genre.slug}`}>Yönet →</Link>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        <EducationWorkbench items={items} categories={categories} />
       )}
     </section>
   );

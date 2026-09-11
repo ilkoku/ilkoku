@@ -30,8 +30,8 @@ const defaultAlt = {
   finalCta: "Roman yazmaya başlama çağrısını ve İlkOku yazarlık ortamını anlatan kapanış görseli",
 } as const;
 
-type RomanVisuals = typeof defaultRomanVisuals;
-type RomanAlts = typeof defaultAlt;
+type RomanVisuals = { [K in keyof typeof defaultRomanVisuals]: string };
+type RomanAlts = { [K in keyof typeof defaultAlt]: string };
 
 function buildRomanBlocks(romanVisuals: RomanVisuals, romanAlts: RomanAlts, title: string, summary: string) {
   const visualAfter: Record<string, CmsPageBlock> = {

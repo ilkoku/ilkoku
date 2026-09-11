@@ -100,7 +100,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
   const valid = prepared.flatMap(({ row, asset }) => asset ? [{ row, asset }] : []);
   const referenceMap = await getCmsMediaReferenceMap(valid.map((item) => item.asset.url)).catch(() => null);
   const referencesAvailable = Boolean(referenceMap);
-  const genreLabelBySlug = new Map(GENRES.map((genre) => [genre.slug, genre.label]));
+  const genreLabelBySlug = new Map<string, string>(GENRES.map((genre) => [genre.slug, genre.label]));
 
   const assets: MediaWorkbenchAsset[] = valid.map(({ row, asset }) => {
     const slotSpec = EDUCATION_VISUAL_SLOTS.find((slot) => slot.key === asset.slot);

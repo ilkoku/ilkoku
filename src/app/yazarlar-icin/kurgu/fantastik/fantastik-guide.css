@@ -1,0 +1,54 @@
+.fantastik-writing-guide article > span:first-child {
+  display: none;
+}
+
+.fantastik-writing-guide article.grid > div:first-child {
+  display: none;
+}
+
+.fantastik-writing-guide article.grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+/*
+ * Fantastik görselleri Medya Yönetimi üzerinden gelir.
+ * Kaynak dosya yeniden boyutlandırılmaz, sıkıştırılmaz, kırpılmaz veya zorla büyütülmez.
+ * Yerleşimde kaynak oranı korunur ve görselin tamamı gösterilir.
+ */
+.fantastik-writing-guide div:has(> img) {
+  width: 100% !important;
+  min-height: 0 !important;
+  aspect-ratio: auto !important;
+  display: block !important;
+  overflow: hidden;
+  background: transparent;
+}
+
+.fantastik-writing-guide div:has(> img) > img {
+  position: static !important;
+  inset: auto !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  object-fit: contain !important;
+}
+
+/* Roman, Öykü ve Novella'da onaylanan hero dengesi ortak görsel sistem olarak korunur. */
+@media (min-width: 64rem) {
+  .fantastik-writing-guide main > div > section:first-child > div {
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr) !important;
+    gap: 2.25rem !important;
+  }
+
+  .fantastik-writing-guide main > div > section:first-child > div > div:first-child > h1 {
+    max-width: 9ch;
+    font-size: clamp(2.6rem, 4.4vw, 4.15rem) !important;
+    line-height: 1 !important;
+  }
+
+  .fantastik-writing-guide main > div > section:first-child > div > div:has(> img) {
+    aspect-ratio: 16 / 9 !important;
+  }
+}

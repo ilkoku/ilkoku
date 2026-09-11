@@ -451,6 +451,41 @@
   background: rgba(104, 71, 232, 0.045);
 }
 
+.cardActions form {
+  margin: 0;
+}
+
+.deleteButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.85rem;
+  padding: 0 0.52rem;
+  border: 1px solid rgba(152, 52, 65, 0.32);
+  border-radius: 0.55rem;
+  color: #8f2f3e;
+  background: rgba(152, 52, 65, 0.06);
+  font-size: 0.58rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.deleteButton:hover:not(:disabled) {
+  border-color: rgba(152, 52, 65, 0.5);
+  background: rgba(152, 52, 65, 0.11);
+}
+
+.deleteButton:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.deleteHint {
+  color: #8f2f3e;
+  font-size: 0.55rem;
+  line-height: 1.35;
+}
+
 .empty {
   display: grid;
   justify-items: center;

@@ -10,6 +10,8 @@ import "./roman-guide.css";
 
 const template = getCmsPageTemplate("ornek-roman");
 
+export const dynamic = "force-dynamic";
+
 const defaultRomanVisuals = {
   hero: "/writing-guides/kurgu/roman/kurgu-roman-01-hero.avif",
   ideaFlow: "/writing-guides/kurgu/roman/kurgu-roman-02-fikir-akisi.avif",

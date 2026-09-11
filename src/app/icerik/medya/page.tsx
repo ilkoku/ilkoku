@@ -151,7 +151,7 @@ export default async function MediaPage({ searchParams }: PageProps) {
       {uploaded ? <div className="content-panel" style={{ marginBottom: "1rem" }}><strong>Dosya yüklendi.</strong> Yeni medya envantere eklendi.</div> : null}
       {errorKey && uploadErrors[errorKey] ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>İşlem tamamlanamadı:</strong> {uploadErrors[errorKey]}</div> : null}
       {invalid.length > 0 ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>{invalid.length} aktif medya metadata kaydı bozuk.</strong><p>Bu kayıtlar normal arşiv akışına sokulmaz. URL bilinmeden canlı referans kontrolü güvenilir değildir.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
-      {!referencesAvailable ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>CMS medya kullanım haritası doğrulanamadı.</strong><p>CMS yüklemeleri için “kullanımda değil” sonucu üretilmedi. Referans görünürlüğü geri gelene kadar arşivleme fail-closed olarak kilitlendi.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
+      {!referencesAvailable ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Medya kullanım haritası doğrulanamadı.</strong><p>CMS yüklemeleri için “kullanımda değil” sonucu üretilmedi. Referans görünürlüğü geri gelene kadar arşivleme fail-closed olarak kilitlendi.</p><Link href="/icerik/saglik">Sistem Sağlığı →</Link></div> : null}
 
       <nav className={styles.viewNav} aria-label="Medya görünümleri">
         <a href="#site-medya"><span>Site Sayfaları</span><strong>{staticMediaCount}</strong></a>

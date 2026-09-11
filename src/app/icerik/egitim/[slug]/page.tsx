@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { removeEducationGuideVisualAction, saveEducationGuideMetaAction } from "@/features/cms/education-actions";
 import { requireCmsManager } from "@/lib/cms-access";
-import { EDUCATION_VISUAL_SLOTS, educationGuideDefault, educationPublicPath, getEducationGuideRecord } from "@/lib/cms-education";
+import { EDUCATION_VISUAL_SLOTS, educationCategoryPath, educationGuideDefault, educationPublicPath, getEducationGuideRecord } from "@/lib/cms-education";
 import { getGenreBySlug } from "@/lib/genres";
 
 import styles from "./EducationGuideEditor.module.css";
@@ -51,7 +51,7 @@ export default async function EducationGuideEditorPage({ params, searchParams }:
       <nav className={styles.toolbar} aria-label="Eğitim sayfası hızlı işlemleri">
         <div className={styles.toolbarGroup}>
           <Link href="/icerik/egitim">← Eğitim</Link>
-          <Link href={`/icerik/egitim/kategori/${genre.category.toLocaleLowerCase("tr-TR").replaceAll(" ", "-").replaceAll("ç", "c").replaceAll("ğ", "g").replaceAll("ı", "i").replaceAll("ö", "o").replaceAll("ş", "s").replaceAll("ü", "u")}`}>{genre.category}</Link>
+          <Link href={`/icerik/egitim/kategori/${educationCategoryPath(genre.category)}`}>{genre.category}</Link>
           <Link href="/icerik/medya">Medya</Link>
         </div>
         <div className={styles.toolbarGroup}>

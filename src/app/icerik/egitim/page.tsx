@@ -5,6 +5,7 @@ import {
   type EducationWorkbenchCategory,
   type EducationWorkbenchItem,
 } from "@/components/content/EducationWorkbench";
+import styles from "@/components/content/EducationWorkbench.module.css";
 import {
   educationCategoryPath,
   educationPublicPath,
@@ -52,34 +53,28 @@ export default async function EducationDashboardPage() {
   });
 
   return (
-    <section className="content-editor-page">
-      <div className="content-page-heading">
-        <div>
-          <span>İçerik · Eğitim</span>
+    <section className={`content-editor-page ${styles.pageShell}`}>
+      <header className={styles.pageHeader}>
+        <div className={styles.pageHeaderCopy}>
+          <span className={styles.eyebrow}>İçerik · Eğitim</span>
           <h1>Eğitim Çalışma Masası</h1>
-          <p>Kategori, tür ve görsel hazırlık durumunu tek ekrandan filtrele. Kategori sayfalarına gir, ilgili türleri yönet ve 7 ana görseli bilgisayarından manuel yükle.</p>
+          <p>Türleri ara, kategori ve hazırlık durumuna göre filtrele; ilgili eğitim sayfasını tek satırdan yönet.</p>
         </div>
-        <aside className="cms-editor-status-card" data-tone={dataError ? "danger" : "success"}>
-          <span className="cms-editor-status-card__label">Canlı katalog</span>
-          {dataError ? <strong>Veri okunamadı</strong> : <strong>{GENRES.length} tür</strong>}
-          <div className="cms-editor-status-card__meta">
-            <span className="cms-editor-chip">{GENRE_CATEGORIES.length} kategori</span>
-            <span className="cms-editor-chip">Tür kataloğuna bağlı</span>
-          </div>
-        </aside>
-      </div>
+        <div className={styles.headerMeta}>
+          <strong>{dataError ? "—" : GENRES.length}</strong>
+          <span>tür · {GENRE_CATEGORIES.length} kategori</span>
+        </div>
+      </header>
 
-      <nav className="cms-editor-toolbar" aria-label="Eğitim hızlı işlemleri">
-        <div className="cms-editor-toolbar__cluster">
-          <Link href="/icerik/medya">Medya Kütüphanesi</Link>
-          <Link href="/icerik/sayfalar/sablonlar">Sayfa Şablonları</Link>
-        </div>
+      <nav className={styles.quickNav} aria-label="Eğitim hızlı işlemleri">
+        <Link href="/icerik/medya">Medya</Link>
+        <Link href="/icerik/sayfalar/sablonlar">Şablonlar</Link>
       </nav>
 
       {dataError ? (
         <div className="content-panel cms-editor-notice is-danger" role="alert">
           <strong>Eğitim kayıtları okunamadı.</strong>
-          <p>Yanlış hazırlık durumu göstermemek için çalışma masası güvenli biçimde durduruldu. Veritabanı bağlantısını kontrol edip tekrar deneyin.</p>
+          <p>Yanlış hazırlık durumu göstermemek için çalışma masası güvenli biçimde durduruldu.</p>
           <div className="content-form-actions">
             <Link href="/icerik/saglik">Sistem Sağlığı →</Link>
             <Link href="/icerik/egitim">Tekrar dene ↻</Link>

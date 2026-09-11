@@ -3,36 +3,9 @@ import "server-only";
 import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { EDUCATION_VISUAL_SLOTS } from "@/lib/cms-education";
+import type { CmsStaticMediaAsset, CmsStaticMediaSection } from "@/lib/cms-static-media-types";
 
 const MEDIA_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif", ".svg", ".ico", ".pdf"]);
-
-export type CmsStaticMediaAsset = {
-  key: string;
-  url: string;
-  relativePath: string;
-  filename: string;
-  extension: string;
-  sizeBytes: number;
-  sectionKey: string;
-  sectionLabel: string;
-  publicHref: string | null;
-  cmsHref: string | null;
-  kind: "image" | "document";
-  placementLabel: string;
-  targetSpec: string;
-  targetWidth?: number;
-  targetHeight?: number;
-  targetAspectRatio?: string;
-  fit: "cover" | "contain" | "responsive" | "intrinsic";
-};
-
-export type CmsStaticMediaSection = {
-  key: string;
-  label: string;
-  publicHref: string | null;
-  cmsHref: string | null;
-  assets: CmsStaticMediaAsset[];
-};
 
 type Classification = Pick<CmsStaticMediaAsset,
   "sectionKey" | "sectionLabel" | "publicHref" | "cmsHref" | "placementLabel" | "targetSpec" | "targetWidth" | "targetHeight" | "targetAspectRatio" | "fit"

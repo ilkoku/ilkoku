@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getCmsAccess } from "@/lib/cms-access";
 import {
@@ -77,15 +77,14 @@ export async function POST(request: Request) {
   const slotInfo = EDUCATION_VISUAL_SLOTS.find((item) => item.key === slot)!;
   const sourceWidth = positiveInteger(formData, "sourceWidth");
   const sourceHeight = positiveInteger(formData, "sourceHeight");
-  if (sourceWidth && sourceHeight) {
-    if (sourceWidth < slotInfo.recommendedWidth || sourceHeight < slotInfo.recommendedHeight) {
-      return back(request, genre.slug, "hata=cozunurluk");
-    }
-    const targetRatio = slotInfo.recommendedWidth / slotInfo.recommendedHeight;
-    const sourceRatio = sourceWidth / sourceHeight;
-    if (Math.abs(sourceRatio - targetRatio) / targetRatio > 0.015) {
-      return back(request, genre.slug, "hata=oran");
-    }
+  if (!sourceWidth || !sourceHeight) return back(request, genre.slug, "hata=olcu");
+  if (sourceWidth < slotInfo.recommendedWidth || sourceHeight < slotInfo.recommendedHeight) {
+    return back(request, genre.slug, "hata=cozunurluk");
+  }
+  const targetRatio = slotInfo.recommendedWidth / slotInfo.recommendedHeight;
+  const sourceRatio = sourceWidth / sourceHeight;
+  if (Math.abs(sourceRatio - targetRatio) / targetRatio > 0.015) {
+    return back(request, genre.slug, "hata=oran");
   }
 
   const id = randomUUID();
@@ -93,6 +92,7 @@ export async function POST(request: Request) {
   const altText = text(formData, "altText", 300) || `${genre.label} · ${slotInfo.label}`;
   const url = `/api/media/${id}`;
   const base64 = Buffer.from(bytes).toString("base64");
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
   const folder = educationMediaFolder(genre);
   const githubSourceFolder = educationGithubMediaFolder(genre);
   const current = await getEducationGuideRecord(genre.slug) ?? educationGuideDefault(genre);
@@ -135,6 +135,7 @@ export async function POST(request: Request) {
     recommendedHeight: slotInfo.recommendedHeight,
     aspectRatio: slotInfo.aspectRatio,
     fit: slotInfo.fit,
+    sha256,
     automation: slotInfo.automation,
     usage: `Eğitim / ${genre.category} / ${genre.label} / ${slotInfo.number} ${slotInfo.label}`,
     notes: `Orijinal dosya byte düzeyinde saklanır; resize, crop, sıkıştırma ve format dönüşümü yapılmaz. Hedef: ${slotInfo.recommendedWidth}x${slotInfo.recommendedHeight} · ${slotInfo.aspectRatio}.`,
@@ -145,7 +146,7 @@ export async function POST(request: Request) {
     uploadedBy: access.user.displayName || access.user.fullName,
   });
 
-  const blobPayload = JSON.stringify({ id, filename, mimeType: detectedMime, sizeBytes: entry.size, base64 });
+  const blobPayload = JSON.stringify({ id, filename, mimeType: detectedMime, sizeBytes: entry.size, sha256, base64 });
 
   try {
     await prisma.$transaction([

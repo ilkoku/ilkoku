@@ -10,20 +10,26 @@
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
-/* Roman görselleri kaynak piksel boyutunda gösterilir; büyütme, kırpma ve zoom yok. */
+/*
+ * Roman görselleri dosya olarak yeniden boyutlandırılmaz, sıkıştırılmaz veya dönüştürülmez.
+ * Yerleşimde kaynak oranı korunur; crop yoktur. Eğitim CMS kalite kapısı hedef çözünürlüğün
+ * altındaki dosyaları kabul etmediği için içerik alanına tam genişlikte oturtma bulanık upscale
+ * üretmeden çalışır.
+ */
 .roman-writing-guide div:has(> img) {
+  width: 100% !important;
   min-height: 0 !important;
   aspect-ratio: auto !important;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
+  display: block !important;
+  overflow: hidden;
+  background: transparent;
 }
 
 .roman-writing-guide div:has(> img) > img {
   position: static !important;
   inset: auto !important;
-  width: auto !important;
+  display: block !important;
+  width: 100% !important;
   height: auto !important;
   max-width: 100% !important;
   max-height: none !important;

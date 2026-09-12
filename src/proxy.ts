@@ -192,8 +192,37 @@ export async function proxy(request: NextRequest) {
   );
 }
 
+/*
+ * Keep the auth/security proxy off the Green public surface. Match only routes
+ * that actually need request-time access control, plus the legacy editor URL
+ * that still requires its canonical redirect. These literals are intentionally
+ * static because Next.js analyzes proxy matchers at build time.
+ */
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icons/|assets/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/admin/:path*",
+    "/sistem-yonetimi/:path*",
+    "/harita/:path*",
+    "/sozlesme/:path*",
+    "/sozlesmelerim/:path*",
+    "/hesabim/:path*",
+    "/editor/:path*",
+    "/favorilerim/:path*",
+    "/bildirimler/:path*",
+    "/kesfet/:path*",
+    "/okuyucu/:path*",
+    "/okumaya-devam/:path*",
+    "/oku/:path*",
+    "/tamamlanan-eserler/:path*",
+    "/yazar/:path*",
+    "/eserlerim/:path*",
+    "/yazmaya-devam/:path*",
+    "/geri-bildirimler/:path*",
+    "/yorumlarim/:path*",
+    "/yayinevleri/:path*",
+    "/sayfa-renkleri/:path*",
+    "/yayinevi/:path*",
+    "/rol-secimi/:path*",
+    "/editörler/:path*",
   ],
 };

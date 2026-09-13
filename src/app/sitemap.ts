@@ -13,9 +13,11 @@ import {
   getPublicAuthors,
   getPublicGenres,
 } from "@/features/public-discovery/library";
+import { GENRES } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
+import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 const baseUrl = "https://ilkoku.com";
 const legalSlugs = [
@@ -83,9 +85,36 @@ const bundledPublicPages = [
   },
 ] as const;
 
-const staticCmsPageSlugs = new Set<string>(
-  bundledPublicPages.map((page) => page.canonical),
+const writingCategoryHrefByCategory = new Map(
+  WRITING_CATEGORY_HUBS.map((hub) => [hub.category, hub.href] as const),
 );
+
+const writingGenreHrefs = GENRES.map((genre) => {
+  const categoryHref = writingCategoryHrefByCategory.get(genre.category);
+  if (!categoryHref) {
+    throw new Error(`Missing writing category hub for ${genre.category}`);
+  }
+  return `${categoryHref}/${genre.slug}`;
+});
+
+const writingEducationEntries: MetadataRoute.Sitemap = [
+  ...WRITING_CATEGORY_HUBS.map((hub) => ({
+    url: `${baseUrl}${hub.href}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  })),
+  ...writingGenreHrefs.map((href) => ({
+    url: `${baseUrl}${href}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  })),
+];
+
+const staticCmsPageSlugs = new Set<string>([
+  ...bundledPublicPages.map((page) => page.canonical),
+  ...WRITING_CATEGORY_HUBS.map((hub) => hub.href),
+  ...writingGenreHrefs,
+]);
 
 const publicDiscoveryStaticEntries: MetadataRoute.Sitemap = [
   {
@@ -121,6 +150,7 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     changeFrequency: "daily",
     priority: 1,
   },
+  ...writingEducationEntries,
   ...(publicDiscoveryEnabled ? publicDiscoveryStaticEntries : []),
   {
     url: `${baseUrl}/yardim`,

@@ -11,7 +11,7 @@ function assertContains(text, fragment, label) {
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
 }
 
-test("reader education keeps eight categories and six optional CMS visual slots", () => {
+test("reader education keeps eight categories, six optional visual slots and sitemap coverage", () => {
   const inventory = source("src/lib/reader-education.ts");
   const publicRoute = source("src/app/okurlar-icin/[slug]/page.tsx");
   const renderer = source("src/components/content/ReaderEducationPage.tsx");
@@ -20,6 +20,7 @@ test("reader education keeps eight categories and six optional CMS visual slots"
   const dashboard = source("src/app/icerik/egitim/page.tsx");
   const editor = source("src/app/icerik/egitim/okur/[slug]/page.tsx");
   const upload = source("src/app/api/cms-reader-education-media-upload/route.ts");
+  const sitemap = source("src/app/sitemap.ts");
 
   const categorySlugs = [...inventory.matchAll(/\n    slug: "([^"]+)",\n    number: "0[1-8]",/g)].map((match) => match[1]);
   assert.equal(categorySlugs.length, 8, "reader education inventory must stay at 8 main categories");
@@ -33,6 +34,11 @@ test("reader education keeps eight categories and six optional CMS visual slots"
   assertContains(publicRoute, "robots: { index: true, follow: true }", "reader education index/follow");
   assertContains(publicRoute, "readerEducationPublicPath(category)", "reader education self canonical source");
   assertContains(publicRoute, "notFound()", "invalid reader education slug 404");
+
+  assertContains(sitemap, 'import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education"', "reader sitemap inventory source");
+  assertContains(sitemap, "const readerEducationHrefs = READER_EDUCATION_CATEGORIES.map", "reader sitemap href generation");
+  assertContains(sitemap, "...readerEducationEntries", "reader education static sitemap inclusion");
+  assertContains(sitemap, "...readerEducationHrefs", "reader education CMS duplicate guard");
 
   assertContains(howItWorks, 'import { ReaderEducationGateway } from "@/components/content/ReaderEducationGateway"', "how it works reader gateway import");
   assertContains(howItWorks, "<ReaderEducationGateway />", "how it works reader gateway placement");

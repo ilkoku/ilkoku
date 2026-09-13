@@ -1,65 +1,51 @@
-import Link from "next/link";
-
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
-import { WRITING_CATEGORY_HUBS, type WritingCategoryHub } from "@/lib/writing-category-hubs";
+import type { WritingCategoryHub } from "@/lib/writing-category-hubs";
 
 export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub }) {
   return (
     <WritingGuideShell activeCategory={hub.category} activeGenreSlug="">
-      <article className="mx-auto max-w-4xl py-4 sm:py-8">
-        <nav className="mb-6" aria-label="Yazarlık eğitimi ana kategorileri">
-          <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">7 ana eğitim kategorisi</p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {WRITING_CATEGORY_HUBS.map((category) => {
-              const isActive = category.slug === hub.slug;
-
-              return (
-                <Link
-                  key={category.slug}
-                  href={category.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={`flex min-h-14 items-center justify-between rounded-2xl border px-4 py-3 text-sm font-extrabold transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6b52c7] focus-visible:ring-offset-2 ${
-                    isActive
-                      ? "border-[#6b52c7] bg-[#6b52c7] text-white"
-                      : "border-[#2a2338]/10 bg-[#17122f] text-white hover:bg-[#241a49]"
-                  }`}
-                >
-                  <span>{category.title}</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-
-        <header className="rounded-[2rem] border border-[#2a2338]/10 bg-[#fffdf8] px-6 py-8 shadow-sm sm:px-9 sm:py-10">
+      <article className="mx-auto max-w-5xl pb-4 sm:pb-8">
+        <header className="overflow-hidden rounded-[2.35rem] border border-black/[0.06] bg-white px-7 py-10 shadow-[0_18px_60px_rgba(34,23,70,0.08)] sm:px-10 sm:py-14 lg:px-12">
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6b52c7]">Yazarlık Eğitimi · Ana Kategori</span>
-          <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.035em] text-[#211746] sm:text-5xl">{hub.title}</h1>
-          <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-[#30284d]">{hub.lead}</p>
+          <h1 className="mt-4 max-w-3xl font-serif text-5xl font-semibold tracking-[-0.045em] text-[#211746] sm:text-6xl">{hub.title}</h1>
+          <p className="mt-5 max-w-2xl text-xl font-semibold leading-9 tracking-[-0.015em] text-[#30284d]">{hub.lead}</p>
         </header>
 
-        <section className="px-1 py-8 sm:px-3 sm:py-10" aria-labelledby={`${hub.slug}-nedir`}>
-          <h2 id={`${hub.slug}-nedir`} className="font-serif text-3xl font-semibold tracking-[-0.025em] text-[#211746]">
-            {hub.title} nedir?
-          </h2>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-[#5f5869]">{hub.definition}</p>
-        </section>
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <section
+            className="rounded-[2rem] border border-black/[0.06] bg-white px-7 py-8 shadow-[0_14px_44px_rgba(34,23,70,0.06)] sm:px-9 sm:py-10"
+            aria-labelledby={`${hub.slug}-nedir`}
+          >
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#8a78c8]">Kısa tanım</span>
+            <h2 id={`${hub.slug}-nedir`} className="mt-3 font-serif text-3xl font-semibold tracking-[-0.03em] text-[#211746] sm:text-4xl">
+              {hub.title} nedir?
+            </h2>
+            <p className="mt-5 text-base leading-8 text-[#625b6d]">{hub.definition}</p>
+          </section>
 
-        <section className="rounded-[1.6rem] bg-[#17122f] px-6 py-7 text-white sm:px-8 sm:py-8" aria-labelledby={`${hub.slug}-fark`}>
-          <h2 id={`${hub.slug}-fark`} className="font-serif text-2xl font-semibold tracking-[-0.02em]">
-            Her tür aynı şekilde yazılmaz.
-          </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-[#ddd7ef]">{hub.difference}</p>
-        </section>
+          <section
+            className="rounded-[2rem] bg-[#17122f] px-7 py-8 text-white shadow-[0_18px_54px_rgba(23,18,47,0.2)] sm:px-9 sm:py-10"
+            aria-labelledby={`${hub.slug}-fark`}
+          >
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#b7a8ff]">Tür mantığı</span>
+            <h2 id={`${hub.slug}-fark`} className="mt-3 font-serif text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+              Her tür aynı şekilde yazılmaz.
+            </h2>
+            <p className="mt-5 text-base leading-8 text-[#ddd7ef]">{hub.difference}</p>
+          </section>
+        </div>
 
-        <section className="px-1 py-8 sm:px-3 sm:py-10" aria-labelledby={`${hub.slug}-egitim`}>
-          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">Eğitime geç</span>
-          <h2 id={`${hub.slug}-egitim`} className="mt-2 font-serif text-3xl font-semibold tracking-[-0.025em] text-[#211746]">
+        <section
+          className="mt-6 rounded-[2.2rem] border border-[#6b52c7]/10 bg-[#efebff] px-7 py-9 shadow-[0_14px_44px_rgba(91,53,221,0.08)] sm:px-10 sm:py-11"
+          aria-labelledby={`${hub.slug}-egitim`}
+        >
+          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#5b35dd]">Eğitime geç</span>
+          <h2 id={`${hub.slug}-egitim`} className="mt-3 max-w-2xl font-serif text-3xl font-semibold tracking-[-0.03em] text-[#211746] sm:text-4xl">
             Yazmak istediğin türü seç.
           </h2>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-[#5f5869]">{hub.invitation}</p>
-          <p className="mt-5 inline-flex rounded-full border border-[#6b52c7]/20 bg-[#f2efff] px-4 py-2 text-sm font-extrabold text-[#4b2dbf]">
-            Tür eğitimleri menüde seni bekliyor →
+          <p className="mt-5 max-w-3xl text-base leading-8 text-[#5f5869]">{hub.invitation}</p>
+          <p className="mt-6 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-extrabold text-[#4b2dbf] shadow-sm">
+            Tür eğitimleri soldaki menüde →
           </p>
         </section>
       </article>

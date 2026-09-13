@@ -30,6 +30,19 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   mitoloji: "/yazarlar-icin/kurgu/mitoloji",
   paranormal: "/yazarlar-icin/kurgu/paranormal",
   "post-apokaliptik": "/yazarlar-icin/kurgu/post-apokaliptik",
+  siir: "/yazarlar-icin/edebiyat/siir",
+  deneme: "/yazarlar-icin/edebiyat/deneme",
+  ani: "/yazarlar-icin/edebiyat/ani",
+  gunluk: "/yazarlar-icin/edebiyat/gunluk",
+  mektup: "/yazarlar-icin/edebiyat/mektup",
+  biyografi: "/yazarlar-icin/edebiyat/biyografi",
+  otobiyografi: "/yazarlar-icin/edebiyat/otobiyografi",
+  "gezi-yazisi": "/yazarlar-icin/edebiyat/gezi-yazisi",
+  elestiri: "/yazarlar-icin/edebiyat/elestiri",
+  inceleme: "/yazarlar-icin/edebiyat/inceleme",
+  "edebi-kurmaca": "/yazarlar-icin/edebiyat/edebi-kurmaca",
+  soylesi: "/yazarlar-icin/edebiyat/soylesi",
+  portre: "/yazarlar-icin/edebiyat/portre",
 };
 
 type WritingGuideShellProps = {

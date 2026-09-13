@@ -53,7 +53,7 @@ export default async function ReaderEducationGuideEditorPage({ params, searchPar
     <section className={`content-editor-page ${styles.page}`}>
       <header className={styles.header}>
         <div>
-          <span className={styles.eyebrow}>Okur Eğitimi · {category.number} / 08</span>
+          <span className={styles.eyebrow}>Okur Eğitimi · Okurluk Okulu</span>
           <h1>{category.title}</h1>
           <p>{publicPath}</p>
         </div>
@@ -65,7 +65,7 @@ export default async function ReaderEducationGuideEditorPage({ params, searchPar
 
       <nav className={styles.toolbar} aria-label="Okur eğitimi hızlı işlemleri">
         <div className={styles.toolbarGroup}>
-          <Link href="/icerik/egitim#okur-egitimleri">← Okur Eğitimleri</Link>
+          <Link href="/icerik/okur-egitim">← Okur Eğitim Merkezi</Link>
           <Link href="/icerik/medya">Medya</Link>
         </div>
         <div className={styles.toolbarGroup}>

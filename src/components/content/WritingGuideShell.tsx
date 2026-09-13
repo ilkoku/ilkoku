@@ -43,6 +43,13 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   "edebi-kurmaca": "/yazarlar-icin/edebiyat/edebi-kurmaca",
   soylesi: "/yazarlar-icin/edebiyat/soylesi",
   portre: "/yazarlar-icin/edebiyat/portre",
+  "film-senaryosu": "/yazarlar-icin/senaryo-ve-sahne/film-senaryosu",
+  "dizi-senaryosu": "/yazarlar-icin/senaryo-ve-sahne/dizi-senaryosu",
+  "kisa-film-senaryosu": "/yazarlar-icin/senaryo-ve-sahne/kisa-film-senaryosu",
+  tiyatro: "/yazarlar-icin/senaryo-ve-sahne/tiyatro",
+  "radyo-tiyatrosu": "/yazarlar-icin/senaryo-ve-sahne/radyo-tiyatrosu",
+  "podcast-senaryosu": "/yazarlar-icin/senaryo-ve-sahne/podcast-senaryosu",
+  "belgesel-senaryosu": "/yazarlar-icin/senaryo-ve-sahne/belgesel-senaryosu",
 };
 
 type WritingGuideShellProps = {

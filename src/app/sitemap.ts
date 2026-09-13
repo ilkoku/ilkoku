@@ -17,6 +17,7 @@ import { GENRES } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
+import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 const baseUrl = "https://ilkoku.com";
@@ -110,10 +111,19 @@ const writingEducationEntries: MetadataRoute.Sitemap = [
   })),
 ];
 
+const readerEducationHrefs = READER_EDUCATION_CATEGORIES.map((category) => readerEducationPublicPath(category));
+
+const readerEducationEntries: MetadataRoute.Sitemap = readerEducationHrefs.map((href) => ({
+  url: `${baseUrl}${href}`,
+  changeFrequency: "monthly" as const,
+  priority: 0.7,
+}));
+
 const staticCmsPageSlugs = new Set<string>([
   ...bundledPublicPages.map((page) => page.canonical),
   ...WRITING_CATEGORY_HUBS.map((hub) => hub.href),
   ...writingGenreHrefs,
+  ...readerEducationHrefs,
 ]);
 
 const publicDiscoveryStaticEntries: MetadataRoute.Sitemap = [
@@ -151,6 +161,7 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     priority: 1,
   },
   ...writingEducationEntries,
+  ...readerEducationEntries,
   ...(publicDiscoveryEnabled ? publicDiscoveryStaticEntries : []),
   {
     url: `${baseUrl}/yardim`,

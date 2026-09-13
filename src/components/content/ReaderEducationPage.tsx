@@ -64,10 +64,9 @@ export function ReaderEducationPage({ category, guide }: { category: ReaderEduca
           <h2 id={`${category.slug}-kazanim`} className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Okuma davranışını görünür ve geliştirilebilir hâle getir.</h2>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[#625b6d]">{category.promise}</p>
           <div className="mt-7 grid gap-4 sm:grid-cols-2">
-            {category.benefits.map((item, index) => (
+            {category.benefits.map((item) => (
               <div className="rounded-[1.6rem] border border-[#2a2338]/[0.07] bg-[#fffdf8] p-6" key={item.title}>
-                <span className="text-xs font-black tabular-nums text-[#8a78c8]">{String(index + 1).padStart(2, "0")}</span>
-                <h3 className="mt-3 text-lg font-extrabold tracking-[-0.02em]">{item.title}</h3>
+                <h3 className="text-lg font-extrabold tracking-[-0.02em]">{item.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-[#665f70]">{item.text}</p>
               </div>
             ))}
@@ -123,10 +122,9 @@ export function ReaderEducationPage({ category, guide }: { category: ReaderEduca
           <h2 id={`${category.slug}-uygulama`} className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">{category.practice.heading}</h2>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[#625b6d]">{category.practice.text}</p>
           <ol className="mt-7 grid gap-4 sm:grid-cols-2">
-            {category.practice.steps.map((step, index) => (
-              <li className="flex gap-4 rounded-[1.4rem] bg-[#f7f4ee] p-5 text-sm font-semibold leading-7 text-[#423a52]" key={step}>
-                <span className="font-black tabular-nums text-[#6b52c7]">{String(index + 1).padStart(2, "0")}</span>
-                <span>{step}</span>
+            {category.practice.steps.map((step) => (
+              <li className="rounded-[1.4rem] bg-[#f7f4ee] p-5 text-sm font-semibold leading-7 text-[#423a52]" key={step}>
+                {step}
               </li>
             ))}
           </ol>

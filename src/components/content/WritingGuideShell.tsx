@@ -56,6 +56,16 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   bildiri: "/yazarlar-icin/akademik/bildiri",
   "vaka-analizi": "/yazarlar-icin/akademik/vaka-analizi",
   "akademik-inceleme": "/yazarlar-icin/akademik/akademik-inceleme",
+  tarih: "/yazarlar-icin/bilgilendirici/tarih",
+  felsefe: "/yazarlar-icin/bilgilendirici/felsefe",
+  psikoloji: "/yazarlar-icin/bilgilendirici/psikoloji",
+  sosyoloji: "/yazarlar-icin/bilgilendirici/sosyoloji",
+  "kisisel-gelisim": "/yazarlar-icin/bilgilendirici/kisisel-gelisim",
+  "is-dunyasi": "/yazarlar-icin/bilgilendirici/is-dunyasi",
+  girisimcilik: "/yazarlar-icin/bilgilendirici/girisimcilik",
+  finans: "/yazarlar-icin/bilgilendirici/finans",
+  ekonomi: "/yazarlar-icin/bilgilendirici/ekonomi",
+  teknoloji: "/yazarlar-icin/bilgilendirici/teknoloji",
 };
 
 type WritingGuideShellProps = {

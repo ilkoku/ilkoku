@@ -5,5 +5,5 @@ import "../../batched-education-guide.css";
 
 export const dynamic = "force-dynamic";
 const definition = getEducationGuideDefinition("makale");
-export const metadata: Metadata = { title: `${definition.title} | İlkOku`, description: definition.description, robots: { index: false, follow: false } };
-export default async function MakalePage() { return <BatchedEducationGuidePage definition={definition} />; }
+export const metadata: Metadata = { title: `${definition.title} | İlkOku`, description: definition.description, alternates: { canonical: "https://ilkoku.com/yazarlar-icin/akademik/makale" }, robots: { index: true, follow: true } };
+export default async function EducationGenrePage() { return <BatchedEducationGuidePage definition={definition} />; }

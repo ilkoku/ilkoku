@@ -78,6 +78,9 @@ test("reader education keeps eight categories, six optional visual slots and sit
   assertContains(workbench, "{item.visualCount}/{visualTarget}", "shared workbench renders configurable slot target");
   assertContains(cmsModules, '{ href: "/icerik/okur-egitim", label: "Okur Eğitim Merkezi"', "reader center CMS navigation item");
 
+  assertContains(editor, '<span className={styles.eyebrow}>Okur Eğitimi · Okurluk Okulu</span>', "reader editor removes 01-08 category numbering");
+  assert.equal(editor.includes("category.number"), false, "reader editor must not render category numbering");
+  assertContains(editor, '<Link href="/icerik/okur-egitim">← Okur Eğitim Merkezi</Link>', "reader editor returns to reader center");
   assertContains(editor, "6 gelecekteki görsel slotu", "reader CMS six-slot editor");
   assertContains(editor, "Canlı sayfada bu slot boşluk oluşturmaz.", "reader empty visual no-gap contract");
   assertContains(upload, "isSameOriginRequest(request)", "reader upload same-origin guard");

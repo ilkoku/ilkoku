@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Çizgi Anlatı Yazarlığı Eğitimleri | İlkOku",
   description: "Çizgi roman, grafik roman, manga, webtoon ve karikatür türlerinin farklı anlatı mantıklarını keşfet.",
   alternates: { canonical: "https://ilkoku.com/yazarlar-icin/cizgi-anlati" },
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
 };
 
 export default function CizgiAnlatiCategoryPage() {

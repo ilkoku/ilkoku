@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Kurgu Yazarlığı ve Eğitimleri | İlkOku",
   description: "Kurgu nedir, kurgu türleri neden farklı yazılır ve hangi tür eğitiminden başlamalısın? İlkOku Yazarlık Okulu Kurgu giriş sayfası.",
   alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu" },
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
 };
 
 export default function KurguCategoryPage() {

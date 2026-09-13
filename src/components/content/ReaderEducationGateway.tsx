@@ -18,8 +18,7 @@ export function ReaderEducationGateway() {
             href={readerEducationPublicPath(category)}
             key={category.slug}
           >
-            <span className="text-xs font-black tracking-[0.14em] text-[#b7a8ff]">{category.number}</span>
-            <strong className="mt-5 font-serif text-2xl font-semibold leading-tight tracking-[-0.025em] text-white">{category.title}</strong>
+            <strong className="font-serif text-2xl font-semibold leading-tight tracking-[-0.025em] text-white">{category.title}</strong>
             <p className="mt-3 text-sm leading-7 text-[#d8d2e8]">{category.shortDescription}</p>
             <em className="mt-auto pt-5 text-xs font-extrabold not-italic text-[#c7baff]">Eğitime başla <span className="inline-block transition group-hover:translate-x-1" aria-hidden="true">→</span></em>
           </Link>

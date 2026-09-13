@@ -142,8 +142,8 @@ test("seven writing category hubs stay deep, category-specific and avoid duplica
     'category: "Çizgi Anlatı"',
   ]) contains(hubs, category, `${category} category hub`);
 
-  for (const field of ["promise:", "foundations:", "choiceSignals:", "learningPath:", "outcomes:"]) {
-    assert.equal(hubs.split(field).length - 1, 7, `${field} must exist once per category hub`);
+  for (const field of ["\n    promise:", "\n    foundations:", "\n    choiceSignals:", "\n    learningPath:", "\n    outcomes:"]) {
+    assert.equal(hubs.split(field).length - 1, 7, `${field.trim()} must exist once per category hub`);
   }
 
   contains(landing, "getGenresByCategory", "real canonical category genre count");

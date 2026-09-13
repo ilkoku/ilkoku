@@ -37,7 +37,7 @@ if (!liveMapMatch) {
   fail(["WritingGuideShell içindeki LIVE_WRITING_GUIDE_HREFS haritası bulunamadı."]);
 }
 
-const liveGuides = [...liveMapMatch[1].matchAll(/^\s*([a-z0-9-]+):\s*"([^"]+)",?\s*$/gm)]
+const liveGuides = [...liveMapMatch[1].matchAll(/^\s*"?([a-z0-9-]+)"?:\s*"([^"]+)",?\s*$/gm)]
   .map((match) => ({ slug: match[1], href: match[2] }))
   .filter(({ href }) => href.startsWith("/yazarlar-icin/"));
 
@@ -106,7 +106,8 @@ for (const { slug, href } of liveGuides) {
     if (!keyPattern.test(page)) errors.push(`${slug}: 7 görsel slotundan '${key}' sayfaya bağlanmamış.`);
   }
 
-  if (!shell.includes(`${slug}: "${href}"`)) {
+  const hasShellRoute = shell.includes(`${slug}: "${href}"`) || shell.includes(`"${slug}": "${href}"`);
+  if (!hasShellRoute) {
     errors.push(`${slug}: WritingGuideShell canlı route eşlemesi bozuk.`);
   }
 }

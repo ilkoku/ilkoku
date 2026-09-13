@@ -93,7 +93,7 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   karikatur: "/yazarlar-icin/cizgi-anlati/karikatur",
 };
 
-const ORIGINAL_FOOTER_GENRE_CATEGORIES: ReadonlySet<GenreCategory> = new Set(["Kurgu", "Edebiyat", "Senaryo ve Sahne", "Akademik", "Bilgilendirici", "Çocuk ve Gençlik"]);
+const ORIGINAL_FOOTER_GENRE_CATEGORIES: ReadonlySet<GenreCategory> = new Set(["Kurgu", "Edebiyat", "Senaryo ve Sahne", "Akademik", "Bilgilendirici", "Çocuk ve Gençlik", "Çizgi Anlatı"]);
 
 type WritingGuideShellProps = {
   children: ReactNode;

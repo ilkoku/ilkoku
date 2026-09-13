@@ -16,6 +16,9 @@ const literatureDepthPath = path.join(root, "src/lib/literature-guide-depth.ts")
 const stageDefinitionsPath = path.join(root, "src/lib/stage-guide-batch.ts");
 const stageDepthPath = path.join(root, "src/lib/stage-guide-depth.ts");
 const academicDefinitionsPath = path.join(root, "src/lib/academic-guide-batch.ts");
+const informationalDefinitionsPath = path.join(root, "src/lib/informational-guide-batch.ts");
+const informationalDepthPath = path.join(root, "src/lib/informational-guide-depth.ts");
+const informationalDynamicPagePath = path.join(root, "src/app/yazarlar-icin/bilgilendirici/[slug]/page.tsx");
 
 function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -43,7 +46,9 @@ const literatureDepthSource = fs.existsSync(literatureDepthPath) ? read(literatu
 const stageDefinitionsSource = fs.existsSync(stageDefinitionsPath) ? read(stageDefinitionsPath) : "";
 const stageDepthSource = fs.existsSync(stageDepthPath) ? read(stageDepthPath) : "";
 const academicDefinitionsSource = fs.existsSync(academicDefinitionsPath) ? read(academicDefinitionsPath) : "";
-const allEducationDefinitionsSource = `${educationDefinitionsSource}\n${stageDefinitionsSource}\n${academicDefinitionsSource}`;
+const informationalDefinitionsSource = fs.existsSync(informationalDefinitionsPath) ? read(informationalDefinitionsPath) : "";
+const informationalDepthSource = fs.existsSync(informationalDepthPath) ? read(informationalDepthPath) : "";
+const allEducationDefinitionsSource = `${educationDefinitionsSource}\n${stageDefinitionsSource}\n${academicDefinitionsSource}\n${informationalDefinitionsSource}`;
 
 const allGenres = [...genresSource.matchAll(/\{\s*slug:\s*"([^"]+)",\s*label:\s*"([^"]+)",\s*category:\s*"([^"]+)"\s*\}/g)]
   .map((match) => ({ slug: match[1], label: match[2], category: match[3] }));
@@ -93,6 +98,32 @@ const romanParityMarkers = [
   "uygulama-ciktisi",
 ];
 
+const informationalDepthMinimum = {
+  tarih: 5,
+  felsefe: 4,
+  psikoloji: 6,
+  sosyoloji: 5,
+  "kisisel-gelisim": 5,
+  "is-dunyasi": 4,
+  girisimcilik: 5,
+  finans: 6,
+  ekonomi: 5,
+  teknoloji: 5,
+  "yapay-zeka": 6,
+  programlama: 5,
+  hukuk: 6,
+  egitim: 5,
+  siyaset: 6,
+  iletisim: 4,
+  sanat: 4,
+  mimarlik: 5,
+  saglik: 6,
+  spor: 5,
+  "yemek-ve-gastronomi": 5,
+  seyahat: 5,
+  "din-ve-inanc": 6,
+};
+
 function academicDefinitionSlice(slug) {
   const marker = `slug: "${slug}"`;
   const start = academicDefinitionsSource.indexOf(marker);
@@ -118,23 +149,34 @@ function depthSlice(source, slug) {
 }
 
 for (const { slug, href } of liveGuides) {
-  const pagePath = path.join(root, "src/app", href.replace(/^\//, ""), "page.tsx");
+  const genre = genreBySlug.get(slug);
+  let pagePath = path.join(root, "src/app", href.replace(/^\//, ""), "page.tsx");
+  let isInformationalDynamic = false;
+  if (!fs.existsSync(pagePath) && genre?.category === "Bilgilendirici" && fs.existsSync(informationalDynamicPagePath)) {
+    pagePath = informationalDynamicPagePath;
+    isInformationalDynamic = true;
+  }
   if (!fs.existsSync(pagePath)) {
     errors.push(`${slug}: sol menü canlı linki var ama route dosyası yok (${href}).`);
     continue;
   }
 
   const page = read(pagePath);
-  const genre = genreBySlug.get(slug);
   const isFictionBatched = page.includes("BatchedFictionGuidePage") && page.includes(`getFictionGuideDefinition("${slug}")`);
-  const isEducationBatched = page.includes("BatchedEducationGuidePage") && page.includes(`getEducationGuideDefinition("${slug}")`);
+  const isEducationBatched = page.includes("BatchedEducationGuidePage") && (
+    page.includes(`getEducationGuideDefinition("${slug}")`) ||
+    (isInformationalDynamic && page.includes("getEducationGuideDefinition(slug)"))
+  );
   const isBatched = isFictionBatched || isEducationBatched;
 
   if (isFictionBatched && !fictionDefinitionsSource.includes(`slug: "${slug}"`)) {
     errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı fiction-guide-batch.ts içinde yok.`);
   }
   if (isEducationBatched && !allEducationDefinitionsSource.includes(`slug: "${slug}"`)) {
-    errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı education/stage/academic batch kaynaklarında yok.`);
+    errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı education/stage/academic/informational kaynaklarında yok.`);
+  }
+  if (isInformationalDynamic && !page.includes("isInformationalGuideSlug")) {
+    errors.push(`${slug}: Bilgilendirici dinamik route geçersiz slugları fail-closed doğrulamıyor.`);
   }
 
   if (isFictionBatched) {
@@ -228,12 +270,31 @@ for (const { slug, href } of liveGuides) {
     }
   }
 
+  if (genre?.category === "Bilgilendirici") {
+    const depthSource = depthSlice(informationalDepthSource, slug);
+    const requiredDepth = informationalDepthMinimum[slug] ?? 4;
+    if (!informationalDefinitionsSource.includes(`slug: "${slug}"`)) {
+      errors.push(`${slug}: Bilgilendirici türe özgü temel eğitim profili informational-guide-batch.ts içinde bulunamadı.`);
+    }
+    if (!depthSource) {
+      errors.push(`${slug}: Bilgilendirici için konu/risk özgü derinleştirme informational-guide-depth.ts içinde bulunamadı.`);
+    } else {
+      const depthSectionCount = [...depthSource.matchAll(/\bid:\s*"/g)].length;
+      if (depthSectionCount < requiredDepth) {
+        errors.push(`${slug}: Bilgilendirici türünde en az ${requiredDepth} konu/risk özgü derinleştirme bölümü bekleniyor; mevcut ${depthSectionCount}.`);
+      }
+    }
+    if (!informationalDefinitionsSource.includes("getInformationalGuideExtraSections") || !educationRendererSource.includes("extraEducationBlocks")) {
+      errors.push(`${slug}: Bilgilendirici derinleştirme bölümleri tanımdan ortak renderer'a bağlanmıyor.`);
+    }
+  }
+
   const effectiveSource = page.includes('getCmsPageTemplate("ornek-roman")')
     ? `${page}\n${templateSource}`
     : isFictionBatched
       ? `${page}\n${fictionRendererSource}\n${fictionDefinitionsSource}\n${fictionDepthSource}\n${pedagogyParitySource}`
       : isEducationBatched
-        ? `${page}\n${educationRendererSource}\n${allEducationDefinitionsSource}\n${literatureDepthSource}\n${stageDepthSource}`
+        ? `${page}\n${educationRendererSource}\n${allEducationDefinitionsSource}\n${literatureDepthSource}\n${stageDepthSource}\n${informationalDepthSource}`
         : page;
 
   const rendererSource = isFictionBatched ? fictionRendererSource : isEducationBatched ? educationRendererSource : "";
@@ -273,7 +334,7 @@ const nextGenre = allGenres[liveGuides.length] ?? null;
 
 console.log(`[EĞİTİM BOMBE GATE] PASS — ${liveGuides.length}/${allGenres.length} teknik canlı tür doğrulandı: ${liveGuides.map((item) => item.slug).join(", ")}`);
 console.log("[EĞİTİM BOMBE PEDAGOJİ] Batch sayfalarda Roman-parity modülleri doğrulandı: fikir kaynakları + tür farkı + tam yazım rotası + yazım düzeni + ilk taslak + yayına hazırlık + uygulama çıktısı.");
-console.log("[EĞİTİM BOMBE DERİNLİK] Kurgu batch sayfalarında Roman-parity üstü en az 4 tür özgü eğitim bölümü; özel Kurgu rehberlerinde en az 12 özel eğitim bloğu; Edebiyat sayfalarında en az 4 tür özgü eğitim bölümü; Senaryo ve Sahne sayfalarında en az 5 format özgü eğitim bölümü; Akademik sayfalarda en az 3 konuya özgü eğitim bölümü zorunlu.");
+console.log("[EĞİTİM BOMBE DERİNLİK] Kurgu batch: Roman üstü ≥4; özel Kurgu: ≥12 özel blok; Edebiyat: ≥4; Senaryo ve Sahne: ≥5; Akademik: ≥3; Bilgilendirici: konu/risk düzeyine göre ≥4–6 ek eğitim bölümü zorunlu.");
 console.log(`[EĞİTİM BOMBE İLERLEME] HUMAN_PASS: ${humanPass.length}/${allGenres.length}.`);
 if (pendingHumanPass) console.log(`[EĞİTİM BOMBE BEKLİYOR] İlk HUMAN_PASS/görsel kuyruğu: ${pendingHumanPass.label} (${pendingHumanPass.slug}) · ${pendingHumanPass.category}.`);
 if (pendingTechnicalReview > 0) console.log(`[EĞİTİM BOMBE BATCH] ${pendingTechnicalReview} teknik canlı tür görsel + canlı kullanıcı kontrolü + HUMAN_PASS bekliyor.`);

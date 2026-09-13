@@ -3,6 +3,7 @@ import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
 import type { FictionGuideDefinition } from "@/lib/fiction-guide-batch";
+import { getFictionPedagogyParity } from "@/lib/fiction-guide-pedagogy-parity";
 
 const visualKeys = ["hero", "ideaFlow", "structure", "anatomy", "pageSetup", "project", "finalCta"] as const;
 type VisualKey = (typeof visualKeys)[number];
@@ -25,6 +26,10 @@ function splitOrText(
 ): CmsPageBlock {
   if (!imageUrl) return { id, type: "text", heading, body };
   return { id, type: "split", heading, body, imageUrl, imageAlt, imageSide };
+}
+
+function cardItems(items: { title: string; text: string }[]) {
+  return items.map((item) => ({ ...item, label: "", href: "" }));
 }
 
 export async function BatchedFictionGuidePage({ definition }: { definition: FictionGuideDefinition }) {
@@ -58,6 +63,7 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
   const genericSummary = `${definition.label} için adım adım yazarlık ve üretim rehberi.`;
   const title = guide?.title || definition.title;
   const summary = guide?.summary && guide.summary !== genericSummary ? guide.summary : definition.summary;
+  const parity = getFictionPedagogyParity(definition.slug, definition.label, definition.projectName);
 
   const blocks: CmsPageBlock[] = [
     {
@@ -79,6 +85,13 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
       heading: definition.orientationHeading,
       body: definition.orientationBody,
     },
+    {
+      id: `${definition.slug}-fikir-kaynaklari`,
+      type: "cards",
+      heading: parity.ideaHeading,
+      intro: parity.ideaIntro,
+      items: cardItems(parity.ideaItems),
+    },
     splitOrText(
       `${definition.slug}-idea-flow`,
       definition.ideaHeading,
@@ -87,6 +100,20 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
       alts.ideaFlow,
       "right",
     ),
+    {
+      id: `${definition.slug}-tur-farki`,
+      type: "cards",
+      heading: parity.contrastHeading,
+      intro: "Türü doğru konumlandırmak, fikrin hangi anlatı sözünü vermesi gerektiğini netleştirir.",
+      items: cardItems(parity.contrastItems),
+    },
+    {
+      id: `${definition.slug}-tam-yazim-rotasi`,
+      type: "steps",
+      heading: parity.routeHeading,
+      intro: parity.routeIntro,
+      items: parity.routeItems,
+    },
     {
       id: `${definition.slug}-structure`,
       type: "steps",
@@ -122,10 +149,24 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
       definition.pageSetupCaption,
     ),
     {
+      id: `${definition.slug}-yazim-duzeni`,
+      type: "cards",
+      heading: parity.workspaceHeading,
+      intro: parity.workspaceIntro,
+      items: cardItems(parity.workspaceItems),
+    },
+    {
       id: `${definition.slug}-character`,
       type: "text",
       heading: definition.characterHeading,
       body: definition.characterBody,
+    },
+    {
+      id: `${definition.slug}-ilk-taslak`,
+      type: "steps",
+      heading: parity.draftHeading,
+      intro: parity.draftIntro,
+      items: parity.draftItems,
     },
     {
       id: `${definition.slug}-revision`,
@@ -151,6 +192,20 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
       type: "text",
       heading: definition.sceneHeading,
       body: definition.sceneBody,
+    },
+    {
+      id: `${definition.slug}-yayina-hazirlik`,
+      type: "steps",
+      heading: parity.finalHeading,
+      intro: parity.finalIntro,
+      items: parity.finalItems,
+    },
+    {
+      id: `${definition.slug}-uygulama-ciktisi`,
+      type: "cards",
+      heading: parity.outputsHeading,
+      intro: parity.outputsIntro,
+      items: cardItems(parity.outputItems),
     },
     {
       id: `${definition.slug}-masters`,

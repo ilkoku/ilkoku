@@ -75,11 +75,6 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
     "/yayinevleri-icin",
     "/yardim",
     "/iletisim",
-    "/yasal/kullanim-sartlari",
-    "/yasal/gizlilik-politikasi",
-    "/yasal/kvkk",
-    "/yasal/cerez-politikasi",
-    "/yasal/telif-hakki-politikasi",
   ]) {
     assertContains(sitemap, route, `${route} sitemap route`);
   }
@@ -105,9 +100,11 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
     "cerez-politikasi",
     "telif-hakki-politikasi",
   ]) {
+    assertContains(sitemap, `"${slug}"`, `${slug} legal sitemap inventory`);
     assertContains(legalStore, `"${slug}"`, `${slug} always-index legal policy`);
   }
 
+  assertContains(sitemap, 'url: `${baseUrl}/yasal/${slug}`', "legal sitemap URL template");
   assertContains(publicStore, "const noIndex = alwaysIndexPublicTrustSlugs.has(slugPart) ? false : row.noIndex", "public trust CMS noindex override");
   assertContains(legalStore, 'locale === "tr" && alwaysIndexTurkishLegalSlugs.has(definition.slug)', "Turkish legal CMS noindex override");
   assertNotContains(sitemap, "if (row?.noIndex)", "code-owned public trust and legal sitemap exclusion");

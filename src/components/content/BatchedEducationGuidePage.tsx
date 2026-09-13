@@ -58,8 +58,9 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
     finalCta: source.finalCta?.altText || definition.alts.finalCta,
   };
 
+  const genericSummary = `${definition.label} için adım adım yazarlık ve üretim rehberi.`;
   const title = guide?.title || definition.title;
-  const summary = guide?.summary || definition.summary;
+  const summary = guide?.summary && guide.summary !== genericSummary ? guide.summary : definition.summary;
 
   const blocks: CmsPageBlock[] = [
     {

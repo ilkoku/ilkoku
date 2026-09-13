@@ -298,7 +298,8 @@ function buildNovellaBlocks(
 export const metadata: Metadata = {
   title: "Novella Nasıl Yazılır? | İlkOku",
   description: "Novella fikrinden karakter dönüşümüne, orta kırılmadan sahne ve bölüm planına kadar adım adım novella yazarlık rehberi.",
-  robots: { index: false, follow: false },
+  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/novella" },
+  robots: { index: true, follow: true },
 };
 
 export default async function NovellaYazarlikRehberiPage() {

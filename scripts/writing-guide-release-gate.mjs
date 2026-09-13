@@ -12,6 +12,7 @@ const pedagogyParityPath = path.join(root, "src/lib/fiction-guide-pedagogy-parit
 const educationRendererPath = path.join(root, "src/components/content/BatchedEducationGuidePage.tsx");
 const educationDefinitionsPath = path.join(root, "src/lib/education-guide-batch.ts");
 const stageDefinitionsPath = path.join(root, "src/lib/stage-guide-batch.ts");
+const stageDepthPath = path.join(root, "src/lib/stage-guide-depth.ts");
 const academicDefinitionsPath = path.join(root, "src/lib/academic-guide-batch.ts");
 
 function read(filePath) {
@@ -36,6 +37,7 @@ const pedagogyParitySource = fs.existsSync(pedagogyParityPath) ? read(pedagogyPa
 const educationRendererSource = fs.existsSync(educationRendererPath) ? read(educationRendererPath) : "";
 const educationDefinitionsSource = fs.existsSync(educationDefinitionsPath) ? read(educationDefinitionsPath) : "";
 const stageDefinitionsSource = fs.existsSync(stageDefinitionsPath) ? read(stageDefinitionsPath) : "";
+const stageDepthSource = fs.existsSync(stageDepthPath) ? read(stageDepthPath) : "";
 const academicDefinitionsSource = fs.existsSync(academicDefinitionsPath) ? read(academicDefinitionsPath) : "";
 const allEducationDefinitionsSource = `${educationDefinitionsSource}\n${stageDefinitionsSource}\n${academicDefinitionsSource}`;
 
@@ -95,6 +97,22 @@ function academicDefinitionSlice(slug) {
   return academicDefinitionsSource.slice(start, next < 0 ? academicDefinitionsSource.length : next);
 }
 
+function stageDepthSlice(slug) {
+  const quotedMarker = `"${slug}": [`;
+  const plainMarker = `${slug}: [`;
+  let marker = quotedMarker;
+  let start = stageDepthSource.indexOf(quotedMarker);
+  if (start < 0) {
+    marker = plainMarker;
+    start = stageDepthSource.indexOf(plainMarker);
+  }
+  if (start < 0) return "";
+  const after = stageDepthSource.slice(start + marker.length);
+  const nextMatch = after.match(/\n  (?:(?:"[a-z0-9-]+")|(?:[a-z0-9-]+)): \[/);
+  const end = nextMatch?.index ?? after.length;
+  return after.slice(0, end);
+}
+
 for (const { slug, href } of liveGuides) {
   const pagePath = path.join(root, "src/app", href.replace(/^\//, ""), "page.tsx");
   if (!fs.existsSync(pagePath)) {
@@ -133,6 +151,21 @@ for (const { slug, href } of liveGuides) {
     }
   }
 
+  if (genre?.category === "Senaryo ve Sahne") {
+    const depthSource = stageDepthSlice(slug);
+    if (!depthSource) {
+      errors.push(`${slug}: Senaryo ve Sahne için Roman-parity üstü derinleştirme tanımı stage-guide-depth.ts içinde bulunamadı.`);
+    } else {
+      const depthSectionCount = [...depthSource.matchAll(/\bid:\s*"/g)].length;
+      if (depthSectionCount < 5) {
+        errors.push(`${slug}: Senaryo ve Sahne türünde en az 5 konu/format özgü derinleştirme bölümü bekleniyor; mevcut ${depthSectionCount}.`);
+      }
+    }
+    if (!educationRendererSource.includes("getStageGuideExtraSections") || !educationRendererSource.includes("stageExtraSections")) {
+      errors.push(`${slug}: Senaryo ve Sahne derinleştirme bölümleri renderer tarafından sayfaya bağlanmıyor.`);
+    }
+  }
+
   if (genre?.category === "Akademik") {
     const academicSource = academicDefinitionSlice(slug);
     if (!academicSource) {
@@ -159,7 +192,7 @@ for (const { slug, href } of liveGuides) {
     : isFictionBatched
       ? `${page}\n${fictionRendererSource}\n${fictionDefinitionsSource}\n${pedagogyParitySource}`
       : isEducationBatched
-        ? `${page}\n${educationRendererSource}\n${allEducationDefinitionsSource}`
+        ? `${page}\n${educationRendererSource}\n${allEducationDefinitionsSource}\n${stageDepthSource}`
         : page;
 
   const rendererSource = isFictionBatched ? fictionRendererSource : isEducationBatched ? educationRendererSource : "";
@@ -199,7 +232,7 @@ const nextGenre = allGenres[liveGuides.length] ?? null;
 
 console.log(`[EĞİTİM BOMBE GATE] PASS — ${liveGuides.length}/${allGenres.length} teknik canlı tür doğrulandı: ${liveGuides.map((item) => item.slug).join(", ")}`);
 console.log("[EĞİTİM BOMBE PEDAGOJİ] Batch sayfalarda Roman-parity modülleri doğrulandı: fikir kaynakları + tür farkı + tam yazım rotası + yazım düzeni + ilk taslak + yayına hazırlık + uygulama çıktısı.");
-console.log("[EĞİTİM BOMBE DERİNLİK] Akademik sayfalarda Roman-parity üstü en az 3 konuya özgü eğitim bölümü zorunlu.");
+console.log("[EĞİTİM BOMBE DERİNLİK] Senaryo ve Sahne sayfalarında Roman-parity üstü en az 5 format özgü eğitim bölümü; Akademik sayfalarda en az 3 konuya özgü eğitim bölümü zorunlu.");
 console.log(`[EĞİTİM BOMBE İLERLEME] HUMAN_PASS: ${humanPass.length}/${allGenres.length}.`);
 if (pendingHumanPass) console.log(`[EĞİTİM BOMBE BEKLİYOR] İlk HUMAN_PASS/görsel kuyruğu: ${pendingHumanPass.label} (${pendingHumanPass.slug}) · ${pendingHumanPass.category}.`);
 if (pendingTechnicalReview > 0) console.log(`[EĞİTİM BOMBE BATCH] ${pendingTechnicalReview} teknik canlı tür görsel + canlı kullanıcı kontrolü + HUMAN_PASS bekliyor.`);

@@ -76,6 +76,9 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   mimarlik: "/yazarlar-icin/bilgilendirici/mimarlik",
   saglik: "/yazarlar-icin/bilgilendirici/saglik",
   spor: "/yazarlar-icin/bilgilendirici/spor",
+  "yemek-ve-gastronomi": "/yazarlar-icin/bilgilendirici/yemek-ve-gastronomi",
+  seyahat: "/yazarlar-icin/bilgilendirici/seyahat",
+  "din-ve-inanc": "/yazarlar-icin/bilgilendirici/din-ve-inanc",
 };
 
 type WritingGuideShellProps = {

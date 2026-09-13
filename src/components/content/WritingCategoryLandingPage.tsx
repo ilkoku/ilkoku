@@ -126,7 +126,7 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
             <p className="inline-flex rounded-full bg-[#211746] px-4 py-2.5 text-sm font-extrabold text-white shadow-sm">
               {genres.length} tür eğitimi soldaki menüde →
             </p>
-            <p className="text-sm font-semibold text-[#77707f]">Kart tekrarı yok; tür seçimi sol menüden yapılır.</p>
+            <p className="text-sm font-semibold text-[#77707f]">Bir tür seçtiğinde doğrudan o türe özel eğitime geçersin.</p>
           </div>
         </section>
       </article>

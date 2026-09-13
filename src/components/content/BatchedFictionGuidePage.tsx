@@ -3,6 +3,7 @@ import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
 import type { FictionGuideDefinition } from "@/lib/fiction-guide-batch";
+import { getFictionGuideExtraSections } from "@/lib/fiction-guide-depth";
 import { getFictionPedagogyParity } from "@/lib/fiction-guide-pedagogy-parity";
 
 const visualKeys = ["hero", "ideaFlow", "structure", "anatomy", "pageSetup", "project", "finalCta"] as const;
@@ -64,6 +65,7 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
   const title = guide?.title || definition.title;
   const summary = guide?.summary && guide.summary !== genericSummary ? guide.summary : definition.summary;
   const parity = getFictionPedagogyParity(definition.slug, definition.label, definition.projectName);
+  const extraSections = getFictionGuideExtraSections(definition.slug);
 
   const blocks: CmsPageBlock[] = [
     {
@@ -161,6 +163,12 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
       heading: definition.characterHeading,
       body: definition.characterBody,
     },
+    ...extraSections.map((section) => ({
+      id: `${definition.slug}-${section.id}`,
+      type: "text" as const,
+      heading: section.heading,
+      body: section.body,
+    })),
     {
       id: `${definition.slug}-ilk-taslak`,
       type: "steps",

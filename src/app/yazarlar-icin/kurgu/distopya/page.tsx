@@ -287,7 +287,8 @@ function buildDistopyaBlocks(
 export const metadata: Metadata = {
   title: "Distopya Nasıl Yazılır? | İlkOku",
   description: "Toplumsal korkudan kontrol sistemine, normalleşmeden karakter suç ortaklığına, direniş ve revizyona kadar adım adım distopya yazarlık rehberi.",
-  robots: { index: false, follow: false },
+  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/distopya" },
+  robots: { index: true, follow: true },
 };
 
 export default async function DistopyaYazarlikRehberiPage() {

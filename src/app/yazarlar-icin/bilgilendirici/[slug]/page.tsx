@@ -19,6 +19,16 @@ const LIVE_INFORMATIONAL_SLUGS = [
   "finans",
   "ekonomi",
   "teknoloji",
+  "yapay-zeka",
+  "programlama",
+  "hukuk",
+  "egitim",
+  "siyaset",
+  "iletisim",
+  "sanat",
+  "mimarlik",
+  "saglik",
+  "spor",
 ] as const;
 
 type LiveInformationalSlug = (typeof LIVE_INFORMATIONAL_SLUGS)[number];

@@ -32,6 +32,14 @@ export type PublishedLegalDocumentState =
   | { state: "corrupt"; updatedAt: Date }
   | { state: "unavailable" };
 
+const alwaysIndexTurkishLegalSlugs = new Set([
+  "kullanim-sartlari",
+  "gizlilik-politikasi",
+  "kvkk",
+  "cerez-politikasi",
+  "telif-hakki-politikasi",
+]);
+
 function parseBody(valueJson: string) {
   try {
     const raw = JSON.parse(valueJson) as unknown;
@@ -66,6 +74,10 @@ export async function getPublishedLegalDocumentState(slug: string, locale: CmsLo
     const body = parseBody(row.bodyJson);
     if (!body || !row.title.trim()) return { state: "corrupt", updatedAt: row.updatedAt };
 
+    const noIndex = locale === "tr" && alwaysIndexTurkishLegalSlugs.has(definition.slug)
+      ? false
+      : row.noIndex;
+
     return {
       state: "valid",
       document: {
@@ -76,7 +88,7 @@ export async function getPublishedLegalDocumentState(slug: string, locale: CmsLo
         seoTitle: row.seoTitle,
         seoDescription: row.seoDescription,
         canonicalUrl: row.canonicalUrl,
-        noIndex: row.noIndex,
+        noIndex,
         updatedAt: row.updatedAt,
       },
     };

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { GENRE_CATEGORIES, getGenresByCategory } from "@/lib/genres";
+import { getGenresByCategory, type GenreCategory } from "@/lib/genres";
+import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   roman: "/yazarlar-icin/kurgu/roman",
@@ -33,7 +34,7 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
 
 type WritingGuideShellProps = {
   children: ReactNode;
-  activeCategory: (typeof GENRE_CATEGORIES)[number];
+  activeCategory: GenreCategory;
   activeGenreSlug: string;
 };
 
@@ -44,18 +45,19 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
     <div className="bg-[#f8f6f0] text-[#171426]">
       <nav aria-label="Yazarlık rehberi kategorileri" className="border-b border-[#2a2338]/10 bg-[#fffdf8] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto pb-1">
-          {GENRE_CATEGORIES.map((category) => {
-            const active = category === activeCategory;
+          {WRITING_CATEGORY_HUBS.map((category) => {
+            const active = category.category === activeCategory;
             return (
-              <span
+              <Link
                 aria-current={active ? "page" : undefined}
                 className={active
-                  ? "shrink-0 rounded-full bg-[#211746] px-4 py-2 text-sm font-extrabold text-white"
-                  : "shrink-0 rounded-full border border-[#2a2338]/10 bg-white px-4 py-2 text-sm font-bold text-[#6c6575]"}
-                key={category}
+                  ? "shrink-0 rounded-full bg-[#211746] px-4 py-2 text-sm font-extrabold text-white shadow-sm transition"
+                  : "shrink-0 rounded-full border border-[#2a2338]/10 bg-white px-4 py-2 text-sm font-bold text-[#6c6575] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/30 hover:text-[#211746] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6b52c7] focus-visible:ring-offset-2"}
+                href={category.href}
+                key={category.slug}
               >
-                {category}
-              </span>
+                {category.title}
+              </Link>
             );
           })}
         </div>

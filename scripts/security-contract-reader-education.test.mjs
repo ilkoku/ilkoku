@@ -15,6 +15,7 @@ test("reader education keeps eight categories, six optional visual slots and sit
   const inventory = source("src/lib/reader-education.ts");
   const publicRoute = source("src/app/okurlar-icin/[slug]/page.tsx");
   const renderer = source("src/components/content/ReaderEducationPage.tsx");
+  const shell = source("src/components/content/ReaderEducationShell.tsx");
   const gateway = source("src/components/content/ReaderEducationGateway.tsx");
   const howItWorks = source("src/components/content/HowItWorksExperience.tsx");
   const dashboard = source("src/app/icerik/egitim/page.tsx");
@@ -45,6 +46,14 @@ test("reader education keeps eight categories, six optional visual slots and sit
   assertContains(gateway, "READER_EDUCATION_CATEGORIES.map", "eight-card gateway generation");
   assertContains(gateway, "Okuma eğitimini kendi yolundan keşfet.", "reader education gateway heading");
   assertContains(gateway, 'className="how-related__grid"', "existing four platform cards remain below education cards");
+  assert.equal(gateway.includes("category.number"), false, "gateway category cards must not show 01-08 numbering");
+
+  assertContains(renderer, '<ReaderEducationShell activeCategory={category}>', "reader education shell wrapper");
+  assert.equal(renderer.includes("{category.number}"), false, "reader hero must not show category numbering");
+  assert.equal(renderer.includes("{item.number}"), false, "reader related cards must not show category numbering");
+  assertContains(shell, "READER_EDUCATION_CATEGORIES.map", "reader left menu contains all eight categories");
+  assertContains(shell, "<header", "reader education shell header");
+  assertContains(shell, "<LiveHomepageFooter", "reader education original footer");
 
   assertContains(dashboard, "Okurluk Okulu", "CMS reader education section");
   assertContains(dashboard, "48 slot", "CMS future visual slot total");

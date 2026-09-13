@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
+import { ReaderEducationGateway } from "@/components/content/ReaderEducationGateway";
 
 type ContentSection = {
   body: string;
@@ -173,7 +174,7 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
 
       {sectionMap.get("Nereden başlamalısınız?") ? <section className="how-start" id="nereden-baslamalisiniz"><div className="how-container how-start__grid"><div><span className="how-eyebrow">Sıra sende</span><h2>Nereden başlamalısınız?</h2><EditorialBody body={sectionMap.get("Nereden başlamalısınız?")!.body} /></div><aside><strong>İlk eserinin yolculuğunu başlat.</strong><p>Taslağını oluştur; hazır olduğunda keşfe aç ve gerçek okurla buluş.</p><Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar olarak katıl <span aria-hidden="true">→</span></Link><Link href="/kayit?rol=reader">Okur olarak katıl</Link></aside></div></section> : null}
 
-      <aside className="how-related how-container" aria-label="İlkOku içinde devam et"><SectionHeading eyebrow="İlkOku içinde devam et" title="Platformu kendi yolundan keşfet." /><div className="how-related__grid"><Link href="/kayit?rol=reader"><strong>Okur olarak katıl</strong><span>Yeni eserleri okumaya hazır olduğunda üyelikle devam et.</span></Link><Link href="/yazarlar-icin"><strong>Yazarlar İçin</strong><span>Eserini nasıl geliştirip yayımlayacağını incele.</span></Link><Link href="/editorler"><strong>Editörleri incele</strong><span>Herkese açık editör profillerini ve uzmanlıklarını gör.</span></Link><Link href="/yardim"><strong>Yardım Merkezi</strong><span>Hesap, roller ve platform kullanımı hakkında yanıt bul.</span></Link></div></aside>
+      <ReaderEducationGateway />
 
       <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link></nav></div></footer>
     </main>

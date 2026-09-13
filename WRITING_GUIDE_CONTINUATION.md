@@ -66,6 +66,39 @@ Education Bombe bu nedenle güncellendi:
 
 ---
 
+# 13.09.2026 ROMAN-PARITY PEDAGOJİ KİLİDİ
+
+Roman referans sayfası ile kalan Kurgu eğitimleri görsel hariç karşılaştırıldı. Teknik route ve 7 slot bulunması artık eğitim tamlığı için yeterli sayılmayacak.
+
+Özellikle batch türlerde aşağıdaki eğitim halkaları zorunludur:
+
+1. **Türe özgü fikir kaynakları** — öğrenci ilham beklemek yerine o türün motorundan fikir üretebilmeli.
+2. **Komşu türlerden farkı** — öğrenci yazdığı eserin neden bu tür olduğunu anlayabilmeli.
+3. **Fikirden bitmiş taslağa tam yazım rotası** — çekirdek → plan → sahne → ilk taslak → revizyon → bitmiş eser.
+4. **Görselden bağımsız yazım / çalışma düzeni** — `pageSetup` görseli olmasa bile hangi dosya, tablo, çizelge veya kayıtların tutulacağı metinle öğretilmeli.
+5. **İlk taslak yöntemi** — ilk taslakta neye öncelik verileceği, neyin erteleneceği ve taslağın ne zaman “bittiği” açık olmalı.
+6. **Yayıma / paylaşmaya hazırlık** — türe özgü son kontrol, biçim/süreklilik ve ilk okur testi yapılmalı.
+7. **Şimdi sen yap / uygulama çıktıları** — öğrenci sayfayı yalnız okumamalı; en az çekirdek, plan, ilk sahne ve revizyon notu üretmeli.
+
+Ana pedagojik kural:
+
+> **Bilgi veren sayfa yetmez; öğrenci sayfadan somut bir eser parçası üreterek çıkmalı.**
+
+Batch Kurgu sayfalarında bu katman `src/lib/fiction-guide-pedagogy-parity.ts` üzerinden türe özgü olarak tanımlanır ve `BatchedFictionGuidePage` içinde gerçek eğitim bloklarına dönüşür.
+
+Education Bombe, batch sayfalarda şu marker’ları ayrıca doğrular:
+- `fikir-kaynaklari`
+- `tur-farki`
+- `tam-yazim-rotasi`
+- `yazim-duzeni`
+- `ilk-taslak`
+- `yayina-hazirlik`
+- `uygulama-ciktisi`
+
+Bu katman tür adını değiştirerek aynı metni tekrar etmek için kullanılamaz. Her türün fikir motoru, plan odağı, sahne motoru, ilk taslak disiplini, çalışma dosyaları ve final kontrolü türe özgü olmalıdır.
+
+---
+
 # KURGU KANONİK SIRASI
 
 1. Roman ✅ HUMAN_PASS
@@ -250,6 +283,10 @@ HUMAN_PASS sırası Distopya’dan devam eder.
 
 > **83 SEO sayfası değil, 83 ayrı yazarlık eğitimi.**
 
+Pedagoji:
+
+> **Bilgi → uygulama → somut eser çıktısı.**
+
 Görsel:
 
 > **Standart değişmez; yalnız konu değişir.**
@@ -257,7 +294,3 @@ Görsel:
 Kalite:
 
 > **Teknik PASS, HUMAN_PASS değildir.**
-
-Batch modu:
-
-> **Önce kalan Kurgu eğitim sayfalarını teknik olarak tamamla; sonra Distopya’dan başlayarak görsel ve HUMAN_PASS kuyruğunu kapat.**

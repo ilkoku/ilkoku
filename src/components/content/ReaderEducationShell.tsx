@@ -1,9 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
-import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
+import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader";
 import {
   READER_EDUCATION_CATEGORIES,
   readerEducationPublicPath,
@@ -19,20 +18,7 @@ export function ReaderEducationShell({ children, activeCategory }: ReaderEducati
   return (
     <>
       <div className="min-h-screen bg-[#f8f6f0] text-[#171426]">
-        <header className="border-b border-[#2a2338]/10 bg-[#fffdf8]">
-          <div className="mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-            <div className="flex min-w-0 items-center gap-4">
-              <Link href="/" aria-label="İlkOku ana sayfa" className="shrink-0">
-                <Image src={logo} alt="İlkOku" priority className="h-auto w-[150px] sm:w-[170px]" />
-              </Link>
-              <span className="hidden border-l border-[#2a2338]/10 pl-4 text-sm font-extrabold text-[#746d7d] sm:inline">Okurluk Okulu</span>
-            </div>
-            <nav aria-label="Okurluk Okulu üst menüsü" className="flex items-center gap-2 text-sm font-bold">
-              <Link href="/nasil-calisir#okur-egitimi" className="rounded-full px-3 py-2 text-[#5f5869] transition hover:bg-[#f1edf8] hover:text-[#211746]">Eğitimler</Link>
-              <Link href="/giris" className="rounded-full bg-[#211746] px-4 py-2 text-white shadow-sm transition hover:-translate-y-0.5">Giriş Yap</Link>
-            </nav>
-          </div>
-        </header>
+        <PublicSiteHeader />
 
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:py-10">
           <aside aria-label="Okur eğitimleri" className="lg:sticky lg:top-6 lg:self-start">

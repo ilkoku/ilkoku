@@ -306,7 +306,8 @@ function buildBilimKurguBlocks(
 export const metadata: Metadata = {
   title: "Bilim Kurgu Nasıl Yazılır? | İlkOku",
   description: "Spekülatif fikirden bilimsel kurala, araştırmadan nedensellik zincirine ve karakter bedeline kadar adım adım bilim kurgu yazarlık rehberi.",
-  robots: { index: false, follow: false },
+  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu" },
+  robots: { index: true, follow: true },
 };
 
 export default async function BilimKurguYazarlikRehberiPage() {

@@ -2,12 +2,25 @@ import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
-import type { EducationGuideDefinition } from "@/lib/education-guide-batch";
+import type { EducationGuideDefinition, GuideItem } from "@/lib/education-guide-batch";
 
 const visualKeys = ["hero", "ideaFlow", "structure", "anatomy", "pageSetup", "project", "finalCta"] as const;
 type VisualKey = (typeof visualKeys)[number];
 type VisualMap = Record<VisualKey, string>;
 type AltMap = Record<VisualKey, string>;
+
+type ExtraEducationSection = {
+  id: string;
+  type: "text" | "cards" | "steps";
+  heading: string;
+  intro?: string;
+  body?: string;
+  items?: GuideItem[];
+};
+
+type ExtendedEducationGuideDefinition = EducationGuideDefinition & {
+  extraSections?: ExtraEducationSection[];
+};
 
 function visualBlock(id: string, imageUrl: string, alt: string, caption: string): CmsPageBlock[] {
   if (!imageUrl) return [];
@@ -28,6 +41,31 @@ function splitOrText(
 
 function cards(items: { title: string; text: string }[]) {
   return items.map((item) => ({ ...item, label: "", href: "" }));
+}
+
+function extraEducationBlocks(definition: ExtendedEducationGuideDefinition): CmsPageBlock[] {
+  return (definition.extraSections ?? []).map((section) => {
+    const id = `${definition.slug}-${section.id}`;
+    if (section.type === "text") {
+      return { id, type: "text", heading: section.heading, body: section.body ?? "" };
+    }
+    if (section.type === "steps") {
+      return {
+        id,
+        type: "steps",
+        heading: section.heading,
+        intro: section.intro ?? "",
+        items: section.items ?? [],
+      };
+    }
+    return {
+      id,
+      type: "cards",
+      heading: section.heading,
+      intro: section.intro ?? "",
+      items: cards(section.items ?? []),
+    };
+  });
 }
 
 export async function BatchedEducationGuidePage({ definition }: { definition: EducationGuideDefinition }) {
@@ -61,6 +99,7 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
   const genericSummary = `${definition.label} için adım adım yazarlık ve üretim rehberi.`;
   const title = guide?.title || definition.title;
   const summary = guide?.summary && guide.summary !== genericSummary ? guide.summary : definition.summary;
+  const extendedDefinition = definition as ExtendedEducationGuideDefinition;
 
   const blocks: CmsPageBlock[] = [
     {
@@ -138,6 +177,7 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       items: cards(definition.workspaceItems),
     },
     { id: `${definition.slug}-craft`, type: "text", heading: definition.craftHeading, body: definition.craftBody },
+    ...extraEducationBlocks(extendedDefinition),
     {
       id: `${definition.slug}-ilk-taslak`,
       type: "steps",

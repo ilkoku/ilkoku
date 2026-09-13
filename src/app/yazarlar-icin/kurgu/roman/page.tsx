@@ -121,7 +121,8 @@ function buildRomanBlocks(romanVisuals: RomanVisuals, romanAlts: RomanAlts, titl
 export const metadata: Metadata = {
   title: "Roman Nasıl Yazılır? | İlkOku",
   description: "Roman fikrinden karaktere, olay örgüsünden sayfa düzenine, ilk taslaktan revizyona kadar örneklerle adım adım roman yazarlık rehberi.",
-  robots: { index: false, follow: false },
+  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/roman" },
+  robots: { index: true, follow: true },
 };
 
 export default async function RomanYazarlikRehberiPage() {

@@ -29,6 +29,9 @@ const LIVE_INFORMATIONAL_SLUGS = [
   "mimarlik",
   "saglik",
   "spor",
+  "yemek-ve-gastronomi",
+  "seyahat",
+  "din-ve-inanc",
 ] as const;
 
 type LiveInformationalSlug = (typeof LIVE_INFORMATIONAL_SLUGS)[number];

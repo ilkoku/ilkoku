@@ -85,6 +85,11 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   "cocuk-romani": "/yazarlar-icin/cocuk-ve-genclik/cocuk-romani",
   "genc-yetiskin": "/yazarlar-icin/cocuk-ve-genclik/genc-yetiskin",
   "egitici-cocuk-kitabi": "/yazarlar-icin/cocuk-ve-genclik/egitici-cocuk-kitabi",
+  "cizgi-roman": "/yazarlar-icin/cizgi-anlati/cizgi-roman",
+  "grafik-roman": "/yazarlar-icin/cizgi-anlati/grafik-roman",
+  manga: "/yazarlar-icin/cizgi-anlati/manga",
+  webtoon: "/yazarlar-icin/cizgi-anlati/webtoon",
+  karikatur: "/yazarlar-icin/cizgi-anlati/karikatur",
 };
 
 type WritingGuideShellProps = {

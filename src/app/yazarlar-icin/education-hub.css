@@ -1,0 +1,45 @@
+.writers-education .how-section-heading {
+  max-width: 45rem;
+}
+
+.writers-education__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.writers-education__grid > a {
+  min-height: 8.2rem;
+  border-color: rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 88% 12%, rgba(120, 92, 235, 0.28), transparent 7rem),
+    linear-gradient(145deg, #17122f, #24194b);
+  box-shadow: 0 1rem 2.5rem rgba(17, 16, 47, 0.14);
+}
+
+.writers-education__grid > a::after {
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.writers-education__grid > a:hover {
+  border-color: rgba(171, 150, 255, 0.45);
+  box-shadow: 0 1.25rem 3rem rgba(30, 21, 69, 0.25);
+}
+
+.writers-education__grid strong {
+  color: #fff;
+}
+
+.writers-education__grid span {
+  color: #d8d1eb;
+}
+
+@media (max-width: 64rem) {
+  .writers-education__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 36rem) {
+  .writers-education__grid {
+    grid-template-columns: 1fr;
+  }
+}

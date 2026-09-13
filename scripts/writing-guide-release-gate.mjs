@@ -8,6 +8,7 @@ const genresPath = path.join(root, "src/lib/genres.ts");
 const progressPath = path.join(root, "src/lib/writing-guide-progress.json");
 const fictionRendererPath = path.join(root, "src/components/content/BatchedFictionGuidePage.tsx");
 const fictionDefinitionsPath = path.join(root, "src/lib/fiction-guide-batch.ts");
+const fictionDepthPath = path.join(root, "src/lib/fiction-guide-depth.ts");
 const pedagogyParityPath = path.join(root, "src/lib/fiction-guide-pedagogy-parity.ts");
 const educationRendererPath = path.join(root, "src/components/content/BatchedEducationGuidePage.tsx");
 const educationDefinitionsPath = path.join(root, "src/lib/education-guide-batch.ts");
@@ -34,6 +35,7 @@ const genresSource = read(genresPath);
 const progress = JSON.parse(read(progressPath));
 const fictionRendererSource = fs.existsSync(fictionRendererPath) ? read(fictionRendererPath) : "";
 const fictionDefinitionsSource = fs.existsSync(fictionDefinitionsPath) ? read(fictionDefinitionsPath) : "";
+const fictionDepthSource = fs.existsSync(fictionDepthPath) ? read(fictionDepthPath) : "";
 const pedagogyParitySource = fs.existsSync(pedagogyParityPath) ? read(pedagogyParityPath) : "";
 const educationRendererSource = fs.existsSync(educationRendererPath) ? read(educationRendererPath) : "";
 const educationDefinitionsSource = fs.existsSync(educationDefinitionsPath) ? read(educationDefinitionsPath) : "";
@@ -153,6 +155,28 @@ for (const { slug, href } of liveGuides) {
     }
   }
 
+  if (genre?.category === "Kurgu") {
+    if (isFictionBatched) {
+      const depthSource = depthSlice(fictionDepthSource, slug);
+      if (!depthSource) {
+        errors.push(`${slug}: Kurgu batch türü için Roman-parity üstü derinleştirme tanımı fiction-guide-depth.ts içinde bulunamadı.`);
+      } else {
+        const depthSectionCount = [...depthSource.matchAll(/\bid:\s*"/g)].length;
+        if (depthSectionCount < 4) {
+          errors.push(`${slug}: Kurgu batch türünde en az 4 tür özgü derinleştirme bölümü bekleniyor; mevcut ${depthSectionCount}.`);
+        }
+      }
+      if (!fictionRendererSource.includes("getFictionGuideExtraSections") || !fictionRendererSource.includes("extraSections")) {
+        errors.push(`${slug}: Kurgu derinleştirme bölümleri batch renderer tarafından sayfaya bağlanmıyor.`);
+      }
+    } else if (slug !== "roman") {
+      const customBlockCount = [...page.matchAll(new RegExp(`id:\\s*"${slug}-`, "g"))].length;
+      if (customBlockCount < 12) {
+        errors.push(`${slug}: özel Kurgu rehberinde Roman tabanının üzerinde yeterli türe özgü eğitim bloğu görünmüyor; en az 12 özel blok bekleniyor, mevcut ${customBlockCount}.`);
+      }
+    }
+  }
+
   if (genre?.category === "Edebiyat") {
     const depthSource = depthSlice(literatureDepthSource, slug);
     if (!depthSource) {
@@ -207,7 +231,7 @@ for (const { slug, href } of liveGuides) {
   const effectiveSource = page.includes('getCmsPageTemplate("ornek-roman")')
     ? `${page}\n${templateSource}`
     : isFictionBatched
-      ? `${page}\n${fictionRendererSource}\n${fictionDefinitionsSource}\n${pedagogyParitySource}`
+      ? `${page}\n${fictionRendererSource}\n${fictionDefinitionsSource}\n${fictionDepthSource}\n${pedagogyParitySource}`
       : isEducationBatched
         ? `${page}\n${educationRendererSource}\n${allEducationDefinitionsSource}\n${literatureDepthSource}\n${stageDepthSource}`
         : page;
@@ -249,7 +273,7 @@ const nextGenre = allGenres[liveGuides.length] ?? null;
 
 console.log(`[EĞİTİM BOMBE GATE] PASS — ${liveGuides.length}/${allGenres.length} teknik canlı tür doğrulandı: ${liveGuides.map((item) => item.slug).join(", ")}`);
 console.log("[EĞİTİM BOMBE PEDAGOJİ] Batch sayfalarda Roman-parity modülleri doğrulandı: fikir kaynakları + tür farkı + tam yazım rotası + yazım düzeni + ilk taslak + yayına hazırlık + uygulama çıktısı.");
-console.log("[EĞİTİM BOMBE DERİNLİK] Edebiyat sayfalarında Roman-parity üstü en az 4 tür özgü eğitim bölümü; Senaryo ve Sahne sayfalarında en az 5 format özgü eğitim bölümü; Akademik sayfalarda en az 3 konuya özgü eğitim bölümü zorunlu.");
+console.log("[EĞİTİM BOMBE DERİNLİK] Kurgu batch sayfalarında Roman-parity üstü en az 4 tür özgü eğitim bölümü; özel Kurgu rehberlerinde en az 12 özel eğitim bloğu; Edebiyat sayfalarında en az 4 tür özgü eğitim bölümü; Senaryo ve Sahne sayfalarında en az 5 format özgü eğitim bölümü; Akademik sayfalarda en az 3 konuya özgü eğitim bölümü zorunlu.");
 console.log(`[EĞİTİM BOMBE İLERLEME] HUMAN_PASS: ${humanPass.length}/${allGenres.length}.`);
 if (pendingHumanPass) console.log(`[EĞİTİM BOMBE BEKLİYOR] İlk HUMAN_PASS/görsel kuyruğu: ${pendingHumanPass.label} (${pendingHumanPass.slug}) · ${pendingHumanPass.category}.`);
 if (pendingTechnicalReview > 0) console.log(`[EĞİTİM BOMBE BATCH] ${pendingTechnicalReview} teknik canlı tür görsel + canlı kullanıcı kontrolü + HUMAN_PASS bekliyor.`);

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Akademik Yazarlık Eğitimleri | İlkOku",
   description: "Makale, tez, araştırma, bildiri ve diğer akademik çalışma türlerinin farklı yazım mantıklarını keşfet.",
   alternates: { canonical: "https://ilkoku.com/yazarlar-icin/akademik" },
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
 };
 
 export default function AkademikCategoryPage() {

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Senaryo ve Sahne Yazarlığı Eğitimleri | İlkOku",
   description: "Film, dizi, tiyatro, podcast ve diğer senaryo-sahne türlerinin farklı yazarlık mantıklarını keşfet.",
   alternates: { canonical: "https://ilkoku.com/yazarlar-icin/senaryo-ve-sahne" },
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
 };
 
 export default function SenaryoVeSahneCategoryPage() {

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Edebiyat Yazarlığı ve Eğitimleri | İlkOku",
   description: "Şiir, deneme, anı, biyografi ve diğer edebiyat türlerinin farklı yazarlık mantıklarını keşfet.",
   alternates: { canonical: "https://ilkoku.com/yazarlar-icin/edebiyat" },
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
 };
 
 export default function EdebiyatCategoryPage() {

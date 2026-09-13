@@ -5,5 +5,5 @@ import "../../batched-education-guide.css";
 
 export const dynamic = "force-dynamic";
 const definition = getEducationGuideDefinition("cocuk-hikayesi");
-export const metadata: Metadata = { title: `${definition.title} | İlkOku`, description: definition.description, robots: { index: false, follow: false } };
-export default async function CocukHikayesiPage() { return <BatchedEducationGuidePage definition={definition} />; }
+export const metadata: Metadata = { title: `${definition.title} | İlkOku`, description: definition.description, alternates: { canonical: "https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik/cocuk-hikayesi" }, robots: { index: true, follow: true } };
+export default async function EducationGenrePage() { return <BatchedEducationGuidePage definition={definition} />; }

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Çocuk ve Gençlik Yazarlığı Eğitimleri | İlkOku",
   description: "Masal, çocuk hikâyesi, çocuk romanı ve genç yetişkin türlerinin farklı yazarlık mantıklarını keşfet.",
   alternates: { canonical: "https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik" },
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
 };
 
 export default function CocukVeGenclikCategoryPage() {

@@ -51,8 +51,11 @@ test("reader education keeps eight categories, six optional visual slots and sit
   assertContains(renderer, '<ReaderEducationShell activeCategory={category}>', "reader education shell wrapper");
   assert.equal(renderer.includes("{category.number}"), false, "reader hero must not show category numbering");
   assert.equal(renderer.includes("{item.number}"), false, "reader related cards must not show category numbering");
+  assert.equal(renderer.includes("Diğer eğitim alanlarını keşfet."), false, "reader page must not duplicate the left education navigation at the bottom");
   assertContains(shell, "READER_EDUCATION_CATEGORIES.map", "reader left menu contains all eight categories");
-  assertContains(shell, "<header", "reader education shell header");
+  assertContains(shell, 'import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader"', "reader education uses original public site header");
+  assertContains(shell, "<PublicSiteHeader />", "reader education renders original public site header");
+  assert.equal(shell.includes("Okurluk Okulu üst menüsü"), false, "reader education must not create a custom duplicate header");
   assertContains(shell, "<LiveHomepageFooter", "reader education original footer");
 
   assertContains(dashboard, "Okurluk Okulu", "CMS reader education section");

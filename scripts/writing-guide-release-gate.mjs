@@ -8,6 +8,7 @@ const genresPath = path.join(root, "src/lib/genres.ts");
 const progressPath = path.join(root, "src/lib/writing-guide-progress.json");
 const batchRendererPath = path.join(root, "src/components/content/BatchedFictionGuidePage.tsx");
 const batchDefinitionsPath = path.join(root, "src/lib/fiction-guide-batch.ts");
+const pedagogyParityPath = path.join(root, "src/lib/fiction-guide-pedagogy-parity.ts");
 
 function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -16,7 +17,7 @@ function read(filePath) {
 function fail(errors) {
   console.error("\n[EĞİTİM BOMBE GATE] FAIL\n");
   for (const error of errors) console.error(`- ${error}`);
-  console.error("\nKural: teknik hazırlık toplu yapılabilir; fakat eksik teknik kalite release gate'i geçemez ve HUMAN_PASS yalnız gerçek kullanıcı onayıyla verilir.\n");
+  console.error("\nKural: teknik hazırlık toplu yapılabilir; fakat eksik teknik/pedagojik kalite release gate'i geçemez ve HUMAN_PASS yalnız gerçek kullanıcı onayıyla verilir.\n");
   process.exit(1);
 }
 
@@ -27,6 +28,7 @@ const genresSource = read(genresPath);
 const progress = JSON.parse(read(progressPath));
 const batchRendererSource = fs.existsSync(batchRendererPath) ? read(batchRendererPath) : "";
 const batchDefinitionsSource = fs.existsSync(batchDefinitionsPath) ? read(batchDefinitionsPath) : "";
+const pedagogyParitySource = fs.existsSync(pedagogyParityPath) ? read(pedagogyParityPath) : "";
 
 const allGenres = [...genresSource.matchAll(/\{\s*slug:\s*"([^"]+)",\s*label:\s*"([^"]+)",\s*category:\s*"([^"]+)"\s*\}/g)]
   .map((match) => ({ slug: match[1], label: match[2], category: match[3] }));
@@ -73,6 +75,15 @@ if (JSON.stringify(humanPass) !== JSON.stringify(expectedPassPrefix)) {
 }
 
 const visualKeys = ["hero", "ideaFlow", "structure", "anatomy", "pageSetup", "project", "finalCta"];
+const batchPedagogyMarkers = [
+  "fikir-kaynaklari",
+  "tur-farki",
+  "tam-yazim-rotasi",
+  "yazim-duzeni",
+  "ilk-taslak",
+  "yayina-hazirlik",
+  "uygulama-ciktisi",
+];
 
 for (const { slug, href } of liveGuides) {
   const pagePath = path.join(root, "src/app", href.replace(/^\//, ""), "page.tsx");
@@ -87,10 +98,26 @@ for (const { slug, href } of liveGuides) {
     errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı fiction-guide-batch.ts içinde yok.`);
   }
 
+  if (isBatched) {
+    if (!batchRendererSource.includes("getFictionPedagogyParity")) {
+      errors.push(`${slug}: batch renderer Roman-parity pedagojik tamamlama katmanına bağlı değil.`);
+    }
+    const quoted = `\"${slug}\"`;
+    const plain = `${slug}: {`;
+    if (!pedagogyParitySource.includes(quoted) && !pedagogyParitySource.includes(plain)) {
+      errors.push(`${slug}: fiction-guide-pedagogy-parity.ts içinde türe özgü pedagojik tamamlama tanımı yok.`);
+    }
+    for (const marker of batchPedagogyMarkers) {
+      if (!batchRendererSource.includes(marker)) {
+        errors.push(`${slug}: Roman-parity eğitim bölümü '${marker}' batch renderer içinde eksik.`);
+      }
+    }
+  }
+
   const effectiveSource = page.includes('getCmsPageTemplate("ornek-roman")')
     ? `${page}\n${templateSource}`
     : isBatched
-      ? `${page}\n${batchRendererSource}\n${batchDefinitionsSource}`
+      ? `${page}\n${batchRendererSource}\n${batchDefinitionsSource}\n${pedagogyParitySource}`
       : page;
 
   const cmsConnected = isBatched
@@ -133,6 +160,7 @@ const pendingTechnicalReview = Math.max(0, liveGuides.length - humanPass.length)
 const nextGenre = allGenres[liveGuides.length] ?? null;
 
 console.log(`[EĞİTİM BOMBE GATE] PASS — ${liveGuides.length}/${allGenres.length} teknik canlı tür doğrulandı: ${liveGuides.map((item) => item.slug).join(", ")}`);
+console.log(`[EĞİTİM BOMBE PEDAGOJİ] Batch Kurgu sayfalarında Roman-parity modülleri doğrulandı: fikir kaynakları + tür farkı + tam yazım rotası + yazım düzeni + ilk taslak + yayına hazırlık + uygulama çıktısı.`);
 console.log(`[EĞİTİM BOMBE İLERLEME] HUMAN_PASS: ${humanPass.length}/${allGenres.length}.`);
 if (pendingHumanPass) {
   console.log(`[EĞİTİM BOMBE BEKLİYOR] İlk HUMAN_PASS/görsel kuyruğu: ${pendingHumanPass.label} (${pendingHumanPass.slug}) · ${pendingHumanPass.category}.`);
@@ -145,5 +173,5 @@ if (nextGenre) {
 } else {
   console.log("[EĞİTİM BOMBE SIRADAKİ] Tüm GENRES eğitimleri teknik olarak canlı.");
 }
-console.log("Kontrol: GENRES sırası + route + dynamic + CMS + sol menü + 7 slot + örnek proje + ustalar + SSS + final CTA.");
+console.log("Kontrol: GENRES sırası + route + dynamic + CMS + sol menü + 7 slot + pedagojik parity + örnek proje + ustalar + SSS + final CTA.");
 console.log("Not: Teknik batch hazırlığı HUMAN_PASS değildir. HUMAN_PASS yalnız gerçek kullanıcı onayıyla writing-guide-progress.json dosyasına eklenir.");

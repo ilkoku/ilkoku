@@ -71,13 +71,14 @@ test("publisher page follows the proven /yazarlar-icin public-page shell without
   for (const hook of [
     'className="how-page',
     'className="how-header"',
-    'className="how-related how-container"',
     'className="how-footer"',
   ]) {
     contains(writer, hook, `writer reference ${hook}`);
     contains(publisher, hook, `publisher reuse ${hook}`);
   }
 
+  contains(writer, 'className="how-related how-container', "writer related-section shell classes");
+  contains(publisher, 'className="how-related how-container"', "publisher related-section shell classes");
   contains(publisher, 'className="publishers-start how-container"', "writer-style final CTA container");
   contains(styles, ".publishers-start { display:grid", "publisher CTA local style");
   contains(styles, "margin-block:clamp(5rem,9vw,8rem)", "writer-style CTA rhythm");

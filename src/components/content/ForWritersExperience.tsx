@@ -4,6 +4,7 @@ import Link from "next/link";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
+import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 type Section = { body: string; title: string };
 
@@ -251,13 +252,15 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
 
       {extras.length ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
-      <aside className="how-related how-container" aria-label="İlkOku içinde devam et">
-        <SectionHeading eyebrow="İlkOku içinde devam et" title="Yazar yolculuğunu güçlendiren diğer alanları keşfet." />
-        <div className="how-related__grid">
-          <Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Fikirden okur ve yayınevi keşfine uzanan eser yolculuğunu gör.</span></Link>
-          <Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>İki bağımsız profesyonel görüşün esere nasıl değer kattığını öğren.</span></Link>
-          <Link href="/icerik-ve-yas-politikasi"><strong>İçerik ve Yaş Politikası</strong><span>Eserini doğru okur beklentisiyle nasıl keşfe açacağını incele.</span></Link>
-          <Link href="/telif-bildirimi"><strong>Telif Bildirimi</strong><span>İzinsiz kullanım şüphesinde somut kayıtla nasıl bildirim yapılacağını öğren.</span></Link>
+      <aside className="how-related how-container writers-education" aria-label="Eğitim kategorileri">
+        <SectionHeading eyebrow="Eğitim" title="Yazmak istediğin alanı seç, türüne özel eğitime geç." description="İlkOku Yazarlık Okulu'nda her ana kategori, kendi eser türlerine ve yazarlık mantığına açılır." />
+        <div className="how-related__grid writers-education__grid">
+          {WRITING_CATEGORY_HUBS.map((hub) => (
+            <Link href={hub.href} key={hub.slug}>
+              <strong>{hub.title}</strong>
+              <span>{hub.cardText}</span>
+            </Link>
+          ))}
         </div>
       </aside>
 

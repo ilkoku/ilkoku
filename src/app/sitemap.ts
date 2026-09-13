@@ -225,45 +225,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const pageBySlug = new Map(
       pages.map((row) => [row.slug, row]),
     );
-    const publicPageEntries: MetadataRoute.Sitemap = bundledPublicPages.flatMap((page) => {
+    const publicPageEntries: MetadataRoute.Sitemap = bundledPublicPages.map((page) => {
       const row = pageBySlug.get(page.canonical);
 
-      if (row?.noIndex) {
-        return [];
-      }
-
-      return [{
+      return {
         url: page.url,
         lastModified: row?.updatedAt ?? new Date(page.updatedAt),
         changeFrequency: "monthly" as const,
         priority: page.priority,
-      }];
+      };
     });
 
     const legalBySlug = new Map(
       legalRows.map((row) => [row.slug, row]),
     );
     const legalEntries: MetadataRoute.Sitemap =
-      legalSlugs.flatMap((slug) => {
+      legalSlugs.map((slug) => {
         const path = `/yasal/${slug}`;
         const row = legalBySlug.get(path);
 
-        if (row?.noIndex) {
-          return [];
-        }
-
-        return [
-          {
-            url: `${baseUrl}${path}`,
-            ...(row
-              ? {
-                  lastModified: row.updatedAt,
-                }
-              : {}),
-            changeFrequency: "monthly" as const,
-            priority: 0.4,
-          },
-        ];
+        return {
+          url: `${baseUrl}${path}`,
+          ...(row
+            ? {
+                lastModified: row.updatedAt,
+              }
+            : {}),
+          changeFrequency: "monthly" as const,
+          priority: 0.4,
+        };
       });
 
     return [

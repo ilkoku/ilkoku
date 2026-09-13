@@ -53,6 +53,18 @@ type LegacyTrustCopyBridge = {
   legacyMarkers: readonly string[];
 };
 
+const alwaysIndexPublicTrustSlugs = new Set([
+  "hakkimizda",
+  "nasil-calisir",
+  "yazarlar-icin",
+  "editorler-icin",
+  "yayinevleri-icin",
+  "editoryal-standartlar",
+  "icerik-ve-yas-politikasi",
+  "topluluk-kurallari",
+  "telif-bildirimi",
+]);
+
 const legacyTrustCopyBySlug: Partial<Record<string, LegacyTrustCopyBridge>> = {
   "nasil-calisir": {
     bundled: howItWorksPageContent,
@@ -148,6 +160,8 @@ export async function getPublishedCmsPublicPageState(
       return { state: "corrupt", updatedAt: row.updatedAt };
     }
 
+    const noIndex = alwaysIndexPublicTrustSlugs.has(slugPart) ? false : row.noIndex;
+
     // The eight public trust pages were already published in CMS before their
     // discovery-first rewrite. Keep CMS authoritative for all future edits,
     // but bridge only the unmistakable legacy copy so deploys do not continue
@@ -160,7 +174,7 @@ export async function getPublishedCmsPublicPageState(
         page: {
           body: bundled.body,
           canonicalUrl: row.canonicalUrl || bundled.canonical,
-          noIndex: row.noIndex,
+          noIndex,
           seoDescription: bundled.seoDescription,
           seoTitle: bundled.seoTitle,
           summary: bundled.summary,
@@ -175,7 +189,7 @@ export async function getPublishedCmsPublicPageState(
       page: {
         body: cmsBody,
         canonicalUrl: row.canonicalUrl,
-        noIndex: row.noIndex,
+        noIndex,
         seoDescription: row.seoDescription,
         seoTitle: row.seoTitle,
         summary: parsed.summary.trim(),

@@ -58,10 +58,13 @@ test("robots isolates private content management without blocking the public con
   assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");
 });
 
-test("sitemap keeps all public trust routes synchronized with CMS indexability and update time", () => {
+test("sitemap keeps public trust and legal routes always indexable while preserving CMS noindex elsewhere", () => {
   const sitemap = source("src/app/sitemap.ts");
+  const publicStore = source("src/lib/cms-public-page-store.ts");
+  const legalStore = source("src/lib/cms-legal-public-store.ts");
 
   for (const route of [
+    "/hakkimizda",
     "/nasil-calisir",
     "/editoryal-standartlar",
     "/icerik-ve-yas-politikasi",
@@ -70,15 +73,45 @@ test("sitemap keeps all public trust routes synchronized with CMS indexability a
     "/yazarlar-icin",
     "/editorler-icin",
     "/yayinevleri-icin",
+    "/yardim",
+    "/iletisim",
   ]) {
     assertContains(sitemap, route, `${route} sitemap route`);
   }
 
+  for (const slug of [
+    "hakkimizda",
+    "nasil-calisir",
+    "yazarlar-icin",
+    "editorler-icin",
+    "yayinevleri-icin",
+    "editoryal-standartlar",
+    "icerik-ve-yas-politikasi",
+    "topluluk-kurallari",
+    "telif-bildirimi",
+  ]) {
+    assertContains(publicStore, `"${slug}"`, `${slug} always-index public trust policy`);
+  }
+
+  for (const slug of [
+    "kullanim-sartlari",
+    "gizlilik-politikasi",
+    "kvkk",
+    "cerez-politikasi",
+    "telif-hakki-politikasi",
+  ]) {
+    assertContains(sitemap, `"${slug}"`, `${slug} legal sitemap inventory`);
+    assertContains(legalStore, `"${slug}"`, `${slug} always-index legal policy`);
+  }
+
+  assertContains(sitemap, 'url: `${baseUrl}/yasal/${slug}`', "legal sitemap URL template");
+  assertContains(publicStore, "const noIndex = alwaysIndexPublicTrustSlugs.has(slugPart) ? false : row.noIndex", "public trust CMS noindex override");
+  assertContains(legalStore, 'locale === "tr" && alwaysIndexTurkishLegalSlugs.has(definition.slug)', "Turkish legal CMS noindex override");
+  assertNotContains(sitemap, "if (row?.noIndex)", "code-owned public trust and legal sitemap exclusion");
   assertNotContains(sitemap, "contentKey LIKE 'guide:%'", "retired guide sitemap inventory");
   assertNotContains(sitemap, "foundationalGuides", "retired foundational guide sitemap source");
   assertContains(sitemap, "contentKey LIKE 'page:tr:%'", "TR generic page sitemap coverage");
   assertContains(sitemap, "SELECT slug, noIndex, updatedAt", "CMS sitemap reads indexability and freshness together");
-  assertContains(sitemap, "if (row?.noIndex)", "static public CMS noindex exclusion");
   assertContains(sitemap, "lastModified: row?.updatedAt ?? new Date(page.updatedAt)", "CMS update time overrides bundled public freshness");
   assertContains(sitemap, ".filter((page) => !page.noIndex && !staticCmsPageSlugs.has(page.slug))", "dynamic CMS noindex exclusion");
   assertContains(sitemap, "status = 'published'", "published-only CMS sitemap boundary");

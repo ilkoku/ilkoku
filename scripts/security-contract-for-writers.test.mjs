@@ -151,6 +151,6 @@ test("seven writing category hubs stay deep, category-specific and avoid duplica
   contains(landing, "Türünü seçmeden önce", "category choice guidance section");
   contains(landing, "Eğitim yolculuğu", "category learning journey section");
   contains(landing, "Somut çıktı", "category output section");
-  contains(landing, "Kart tekrarı yok; tür seçimi sol menüden yapılır.", "single genre navigation instruction");
+  contains(landing, "Bir tür seçtiğinde doğrudan o türe özel eğitime geçersin.", "single genre navigation instruction");
   notContains(landing, "WRITING_CATEGORY_HUBS.map", "duplicate seven-category card navigation");
 });

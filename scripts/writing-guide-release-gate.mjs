@@ -12,6 +12,7 @@ const pedagogyParityPath = path.join(root, "src/lib/fiction-guide-pedagogy-parit
 const educationRendererPath = path.join(root, "src/components/content/BatchedEducationGuidePage.tsx");
 const educationDefinitionsPath = path.join(root, "src/lib/education-guide-batch.ts");
 const stageDefinitionsPath = path.join(root, "src/lib/stage-guide-batch.ts");
+const academicDefinitionsPath = path.join(root, "src/lib/academic-guide-batch.ts");
 
 function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -35,13 +36,15 @@ const pedagogyParitySource = fs.existsSync(pedagogyParityPath) ? read(pedagogyPa
 const educationRendererSource = fs.existsSync(educationRendererPath) ? read(educationRendererPath) : "";
 const educationDefinitionsSource = fs.existsSync(educationDefinitionsPath) ? read(educationDefinitionsPath) : "";
 const stageDefinitionsSource = fs.existsSync(stageDefinitionsPath) ? read(stageDefinitionsPath) : "";
-const allEducationDefinitionsSource = `${educationDefinitionsSource}\n${stageDefinitionsSource}`;
+const academicDefinitionsSource = fs.existsSync(academicDefinitionsPath) ? read(academicDefinitionsPath) : "";
+const allEducationDefinitionsSource = `${educationDefinitionsSource}\n${stageDefinitionsSource}\n${academicDefinitionsSource}`;
 
 const allGenres = [...genresSource.matchAll(/\{\s*slug:\s*"([^"]+)",\s*label:\s*"([^"]+)",\s*category:\s*"([^"]+)"\s*\}/g)]
   .map((match) => ({ slug: match[1], label: match[2], category: match[3] }));
 
 if (allGenres.length === 0) fail(["GENRES listesi okunamadı; eğitim sırası kaynaksız çalışamaz."]);
 
+const genreBySlug = new Map(allGenres.map((genre) => [genre.slug, genre]));
 const liveMapMatch = shell.match(/const LIVE_WRITING_GUIDE_HREFS:[\s\S]*?=\s*\{([\s\S]*?)\};/);
 if (!liveMapMatch) fail(["WritingGuideShell içindeki LIVE_WRITING_GUIDE_HREFS haritası bulunamadı."]);
 
@@ -84,6 +87,14 @@ const romanParityMarkers = [
   "uygulama-ciktisi",
 ];
 
+function academicDefinitionSlice(slug) {
+  const marker = `slug: "${slug}"`;
+  const start = academicDefinitionsSource.indexOf(marker);
+  if (start < 0) return "";
+  const next = academicDefinitionsSource.indexOf('\n  {\n    category: "Akademik"', start + marker.length);
+  return academicDefinitionsSource.slice(start, next < 0 ? academicDefinitionsSource.length : next);
+}
+
 for (const { slug, href } of liveGuides) {
   const pagePath = path.join(root, "src/app", href.replace(/^\//, ""), "page.tsx");
   if (!fs.existsSync(pagePath)) {
@@ -92,6 +103,7 @@ for (const { slug, href } of liveGuides) {
   }
 
   const page = read(pagePath);
+  const genre = genreBySlug.get(slug);
   const isFictionBatched = page.includes("BatchedFictionGuidePage") && page.includes(`getFictionGuideDefinition("${slug}")`);
   const isEducationBatched = page.includes("BatchedEducationGuidePage") && page.includes(`getEducationGuideDefinition("${slug}")`);
   const isBatched = isFictionBatched || isEducationBatched;
@@ -100,7 +112,7 @@ for (const { slug, href } of liveGuides) {
     errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı fiction-guide-batch.ts içinde yok.`);
   }
   if (isEducationBatched && !allEducationDefinitionsSource.includes(`slug: "${slug}"`)) {
-    errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı education/stage batch kaynaklarında yok.`);
+    errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı education/stage/academic batch kaynaklarında yok.`);
   }
 
   if (isFictionBatched) {
@@ -118,6 +130,27 @@ for (const { slug, href } of liveGuides) {
     const rendererSource = isFictionBatched ? fictionRendererSource : educationRendererSource;
     for (const marker of romanParityMarkers) {
       if (!rendererSource.includes(marker)) errors.push(`${slug}: Roman-parity eğitim bölümü '${marker}' batch renderer içinde eksik.`);
+    }
+  }
+
+  if (genre?.category === "Akademik") {
+    const academicSource = academicDefinitionSlice(slug);
+    if (!academicSource) {
+      errors.push(`${slug}: Akademik türe özgü tanım academic-guide-batch.ts içinde bulunamadı.`);
+    } else {
+      if (!academicSource.includes("extraSections:")) {
+        errors.push(`${slug}: Akademik tür Roman-parity üstü ek eğitim bölümleri içermiyor.`);
+      }
+      const extraStart = academicSource.indexOf("extraSections:");
+      const extraEnd = academicSource.indexOf("draftHeading:", extraStart);
+      const extraSource = academicSource.slice(extraStart, extraEnd < 0 ? academicSource.length : extraEnd);
+      const extraSectionCount = [...extraSource.matchAll(/\bid:\s*"/g)].length;
+      if (extraSectionCount < 3) {
+        errors.push(`${slug}: Akademik türde en az 3 konuya özgü derinleştirme bölümü bekleniyor; mevcut ${extraSectionCount}.`);
+      }
+    }
+    if (!educationRendererSource.includes("extraEducationBlocks")) {
+      errors.push(`${slug}: Akademik ek eğitim bölümleri renderer tarafından sayfaya bağlanmıyor.`);
     }
   }
 
@@ -166,10 +199,11 @@ const nextGenre = allGenres[liveGuides.length] ?? null;
 
 console.log(`[EĞİTİM BOMBE GATE] PASS — ${liveGuides.length}/${allGenres.length} teknik canlı tür doğrulandı: ${liveGuides.map((item) => item.slug).join(", ")}`);
 console.log("[EĞİTİM BOMBE PEDAGOJİ] Batch sayfalarda Roman-parity modülleri doğrulandı: fikir kaynakları + tür farkı + tam yazım rotası + yazım düzeni + ilk taslak + yayına hazırlık + uygulama çıktısı.");
+console.log("[EĞİTİM BOMBE DERİNLİK] Akademik sayfalarda Roman-parity üstü en az 3 konuya özgü eğitim bölümü zorunlu.");
 console.log(`[EĞİTİM BOMBE İLERLEME] HUMAN_PASS: ${humanPass.length}/${allGenres.length}.`);
 if (pendingHumanPass) console.log(`[EĞİTİM BOMBE BEKLİYOR] İlk HUMAN_PASS/görsel kuyruğu: ${pendingHumanPass.label} (${pendingHumanPass.slug}) · ${pendingHumanPass.category}.`);
 if (pendingTechnicalReview > 0) console.log(`[EĞİTİM BOMBE BATCH] ${pendingTechnicalReview} teknik canlı tür görsel + canlı kullanıcı kontrolü + HUMAN_PASS bekliyor.`);
 if (nextGenre) console.log(`[EĞİTİM BOMBE SIRADAKİ TEKNİK] ${nextGenre.label} (${nextGenre.slug}) · ${nextGenre.category}.`);
 else console.log("[EĞİTİM BOMBE SIRADAKİ] Tüm GENRES eğitimleri teknik olarak canlı.");
-console.log("Kontrol: GENRES sırası + route + dynamic + CMS + sol menü + 7 slot + Roman-parity pedagojik tamlık + örnek proje + ustalar + SSS + final CTA.");
+console.log("Kontrol: GENRES sırası + route + dynamic + CMS + sol menü + 7 slot + Roman-parity pedagojik tamlık + türe özgü derinleştirme + örnek proje + ustalar + SSS + final CTA.");
 console.log("Not: Teknik batch hazırlığı HUMAN_PASS değildir. HUMAN_PASS yalnız gerçek kullanıcı onayıyla writing-guide-progress.json dosyasına eklenir.");

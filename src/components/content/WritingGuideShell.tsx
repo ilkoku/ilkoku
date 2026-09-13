@@ -50,6 +50,12 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   "radyo-tiyatrosu": "/yazarlar-icin/senaryo-ve-sahne/radyo-tiyatrosu",
   "podcast-senaryosu": "/yazarlar-icin/senaryo-ve-sahne/podcast-senaryosu",
   "belgesel-senaryosu": "/yazarlar-icin/senaryo-ve-sahne/belgesel-senaryosu",
+  makale: "/yazarlar-icin/akademik/makale",
+  arastirma: "/yazarlar-icin/akademik/arastirma",
+  tez: "/yazarlar-icin/akademik/tez",
+  bildiri: "/yazarlar-icin/akademik/bildiri",
+  "vaka-analizi": "/yazarlar-icin/akademik/vaka-analizi",
+  "akademik-inceleme": "/yazarlar-icin/akademik/akademik-inceleme",
 };
 
 type WritingGuideShellProps = {

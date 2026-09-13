@@ -1,3 +1,4 @@
+import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import { getGenresByCategory } from "@/lib/genres";
 import type { WritingCategoryHub } from "@/lib/writing-category-hubs";
@@ -6,6 +7,7 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
   const genres = getGenresByCategory(hub.category);
 
   return (
+    <>
     <WritingGuideShell activeCategory={hub.category} activeGenreSlug="">
       <article className="mx-auto max-w-5xl pb-6 sm:pb-10">
         <header className="overflow-hidden rounded-[2.5rem] border border-black/[0.06] bg-white px-7 py-10 shadow-[0_20px_70px_rgba(34,23,70,0.09)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
@@ -131,5 +133,11 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
         </section>
       </article>
     </WritingGuideShell>
+    <LiveHomepageFooter
+      signedIn={false}
+      slogan="İlk cümle, ilk okurun, ilk adımın."
+      copyright={`© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
+    />
+    </>
   );
 }

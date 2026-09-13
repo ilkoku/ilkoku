@@ -4,9 +4,7 @@ import Link from "next/link";
 import { ReaderEducationShell } from "@/components/content/ReaderEducationShell";
 import type { ReaderEducationGuideRecord } from "@/lib/cms-reader-education";
 import {
-  READER_EDUCATION_CATEGORIES,
   READER_EDUCATION_VISUAL_SLOTS,
-  readerEducationPublicPath,
   type ReaderEducationCategory,
   type ReaderEducationVisualSlotKey,
 } from "@/lib/reader-education";
@@ -141,18 +139,6 @@ export function ReaderEducationPage({ category, guide }: { category: ReaderEduca
           <p className="mt-5 max-w-3xl text-base leading-8 text-[#d8d2e8]">{category.application.text}</p>
           <Link className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#211746] shadow-sm transition hover:-translate-y-0.5" href={category.application.href}>{category.application.label} →</Link>
           <ReaderVisual guide={guide} slotKey="finalCta" fallbackAlt={`${category.title} eğitimi kapanış görseli`} />
-        </section>
-
-        <section className="mt-6 rounded-[2.25rem] border border-black/[0.06] bg-white px-7 py-9 shadow-[0_14px_48px_rgba(34,23,70,0.06)] sm:px-10 sm:py-11" aria-labelledby={`${category.slug}-diger`}>
-          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#8a78c8]">Okurluk Okulu</span>
-          <h2 id={`${category.slug}-diger`} className="mt-3 font-serif text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Diğer eğitim alanlarını keşfet.</h2>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {READER_EDUCATION_CATEGORIES.filter((item) => item.slug !== category.slug).map((item) => (
-              <Link className="rounded-[1.35rem] border border-black/[0.06] bg-[#fffdf8] p-4 transition hover:-translate-y-0.5 hover:border-[#6b52c7]/30" href={readerEducationPublicPath(item)} key={item.slug}>
-                <strong className="block text-sm leading-6">{item.title}</strong>
-              </Link>
-            ))}
-          </div>
         </section>
       </article>
     </ReaderEducationShell>

@@ -269,7 +269,8 @@ function buildOykuBlocks(visuals: OykuVisuals, alts: OykuAlts, title: string, su
 export const metadata: Metadata = {
   title: "Öykü Nasıl Yazılır? | İlkOku",
   description: "Öykü fikrinden karaktere, kısa form yapısından sahne ekonomisine, finalden revizyona kadar örneklerle adım adım öykü yazarlık rehberi.",
-  robots: { index: false, follow: false },
+  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/oyku" },
+  robots: { index: true, follow: true },
 };
 
 export default async function OykuYazarlikRehberiPage() {

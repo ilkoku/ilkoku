@@ -51,10 +51,11 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
               <Link
                 aria-current={active ? "page" : undefined}
                 className={active
-                  ? "shrink-0 rounded-full bg-[#211746] px-4 py-2 text-sm font-extrabold text-white shadow-sm transition"
+                  ? "shrink-0 rounded-full bg-[#211746] px-4 py-2 text-sm font-extrabold !text-white shadow-sm transition"
                   : "shrink-0 rounded-full border border-[#2a2338]/10 bg-white px-4 py-2 text-sm font-bold text-[#6c6575] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/30 hover:text-[#211746] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6b52c7] focus-visible:ring-offset-2"}
                 href={category.href}
                 key={category.slug}
+                style={active ? { color: "#fff" } : undefined}
               >
                 {category.title}
               </Link>
@@ -72,7 +73,7 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
                 const active = genre.slug === activeGenreSlug;
                 const href = LIVE_WRITING_GUIDE_HREFS[genre.slug];
                 const className = active
-                  ? "shrink-0 rounded-xl bg-[#5b35dd] px-3 py-2.5 text-sm font-extrabold text-white lg:block"
+                  ? "shrink-0 rounded-xl bg-[#5b35dd] px-3 py-2.5 text-sm font-extrabold !text-white lg:block"
                   : "shrink-0 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#5f5869] lg:block";
 
                 if (href) {
@@ -82,6 +83,7 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
                       className={className}
                       href={href}
                       key={genre.slug}
+                      style={active ? { color: "#fff" } : undefined}
                     >
                       {genre.label}
                     </Link>
@@ -89,7 +91,7 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
                 }
 
                 return (
-                  <div className={className} key={genre.slug}>
+                  <div className={className} key={genre.slug} style={active ? { color: "#fff" } : undefined}>
                     {genre.label}
                   </div>
                 );

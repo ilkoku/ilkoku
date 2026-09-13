@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
 import { getGenresByCategory, type GenreCategory } from "@/lib/genres";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
@@ -92,6 +93,8 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   karikatur: "/yazarlar-icin/cizgi-anlati/karikatur",
 };
 
+const ORIGINAL_FOOTER_GENRE_CATEGORIES: ReadonlySet<GenreCategory> = new Set(["Kurgu"]);
+
 type WritingGuideShellProps = {
   children: ReactNode;
   activeCategory: GenreCategory;
@@ -100,8 +103,10 @@ type WritingGuideShellProps = {
 
 export function WritingGuideShell({ children, activeCategory, activeGenreSlug }: WritingGuideShellProps) {
   const genres = getGenresByCategory(activeCategory);
+  const showOriginalFooter = activeGenreSlug.length > 0 && ORIGINAL_FOOTER_GENRE_CATEGORIES.has(activeCategory);
 
   return (
+    <>
     <div className="bg-[#f8f6f0] text-[#171426]">
       <nav aria-label="Yazarlık rehberi kategorileri" className="border-b border-[#2a2338]/10 bg-[#fffdf8] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto pb-1">
@@ -163,5 +168,13 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
         <div className="min-w-0">{children}</div>
       </div>
     </div>
+    {showOriginalFooter ? (
+      <LiveHomepageFooter
+        signedIn={false}
+        slogan="İlk cümle, ilk okurun, ilk adımın."
+        copyright={`© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
+      />
+    ) : null}
+    </>
   );
 }

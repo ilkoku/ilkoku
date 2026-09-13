@@ -9,6 +9,7 @@ import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
 
 import "@/app/nasil-calisir/how-it-works.css";
 import "@/app/nasil-calisir/public-trust-footer.css";
+import "./education-hub.css";
 import "./for-writers.css";
 import "./role-illustrations.css";
 

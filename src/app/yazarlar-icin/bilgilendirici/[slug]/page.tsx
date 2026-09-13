@@ -50,7 +50,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${definition.title} | İlkOku`,
     description: definition.description,
-    robots: { index: false, follow: false },
+    alternates: { canonical: `https://ilkoku.com/yazarlar-icin/bilgilendirici/${slug}` },
+    robots: { index: true, follow: true },
   };
 }
 

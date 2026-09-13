@@ -92,6 +92,8 @@ export const WRITING_CATEGORY_HUBS: readonly WritingCategoryHub[] = [
   },
 ] as const;
 
-export function getWritingCategoryHub(slug: string) {
-  return WRITING_CATEGORY_HUBS.find((hub) => hub.slug === slug);
+export function getWritingCategoryHub(slug: string): WritingCategoryHub {
+  const hub = WRITING_CATEGORY_HUBS.find((item) => item.slug === slug);
+  if (!hub) throw new Error(`Writing category hub definition missing: ${slug}`);
+  return hub;
 }

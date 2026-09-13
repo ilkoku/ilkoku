@@ -4,27 +4,31 @@ import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/re
 
 export function ReaderEducationGateway() {
   return (
-    <aside className="how-reader-education how-container" id="okur-egitimi" aria-labelledby="okur-egitimi-title">
+    <aside className="how-container py-12 sm:py-16" id="okur-egitimi" aria-labelledby="okur-egitimi-title">
       <header className="how-section-heading">
         <span>Okudukça daha fazlasını gör.</span>
         <h2 id="okur-egitimi-title">Okuma eğitimini kendi yolundan keşfet.</h2>
         <p>Bir eseri yalnızca okumayı değil; anlamayı, çözümlemeyi, sorgulamayı ve kendi yorumunu oluşturmayı öğren. Okuma alışkanlığından edebi çözümlemeye, karakter analizinden eleştiri yazmaya kadar geliştirmek istediğin alanı seç.</p>
       </header>
 
-      <div className="how-reader-education__grid">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {READER_EDUCATION_CATEGORIES.map((category) => (
-          <Link className="how-reader-education__card" href={readerEducationPublicPath(category)} key={category.slug}>
-            <span className="how-reader-education__number">{category.number}</span>
-            <strong>{category.title}</strong>
-            <p>{category.shortDescription}</p>
-            <em>Eğitime başla <span aria-hidden="true">→</span></em>
+          <Link
+            className="group flex min-h-64 flex-col rounded-[1.55rem] border border-white/10 bg-[#17122f] p-6 text-white shadow-[0_16px_42px_rgba(23,18,47,0.16)] transition hover:-translate-y-1 hover:border-[#8d79ef]/50 hover:shadow-[0_22px_54px_rgba(23,18,47,0.24)]"
+            href={readerEducationPublicPath(category)}
+            key={category.slug}
+          >
+            <span className="text-xs font-black tracking-[0.14em] text-[#b7a8ff]">{category.number}</span>
+            <strong className="mt-5 font-serif text-2xl font-semibold leading-tight tracking-[-0.025em] text-white">{category.title}</strong>
+            <p className="mt-3 text-sm leading-7 text-[#d8d2e8]">{category.shortDescription}</p>
+            <em className="mt-auto pt-5 text-xs font-extrabold not-italic text-[#c7baff]">Eğitime başla <span className="inline-block transition group-hover:translate-x-1" aria-hidden="true">→</span></em>
           </Link>
         ))}
       </div>
 
-      <div className="how-reader-education__platform-label">
-        <span>İlkOku’da devam et</span>
-        <p>Eğitimden sonra platformun diğer alanlarına geç.</p>
+      <div className="mb-4 mt-9 flex flex-wrap items-end justify-between gap-2 border-t border-black/[0.07] pt-7">
+        <strong className="font-serif text-xl font-semibold text-[#211746]">İlkOku’da devam et</strong>
+        <p className="m-0 text-sm text-[#69667e]">Eğitimden sonra platformun diğer alanlarına geç.</p>
       </div>
       <div className="how-related__grid">
         <Link href="/kayit?rol=reader"><strong>Okur olarak katıl</strong><span>Yeni eserleri okumaya hazır olduğunda üyelikle devam et.</span></Link>

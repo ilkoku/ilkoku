@@ -24,13 +24,13 @@ const LIVE_INFORMATIONAL_SLUGS = [
 type LiveInformationalSlug = (typeof LIVE_INFORMATIONAL_SLUGS)[number];
 type PageProps = { params: Promise<{ slug: string }> };
 
-function isLiveInformationalSlug(slug: string): slug is LiveInformationalSlug {
+function isInformationalGuideSlug(slug: string): slug is LiveInformationalSlug {
   return LIVE_INFORMATIONAL_SLUGS.includes(slug as LiveInformationalSlug);
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  if (!isLiveInformationalSlug(slug)) {
+  if (!isInformationalGuideSlug(slug)) {
     return { title: "Eğitim bulunamadı | İlkOku", robots: { index: false, follow: false } };
   }
   const definition = getEducationGuideDefinition(slug);
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function InformationalGuidePage({ params }: PageProps) {
   const { slug } = await params;
-  if (!isLiveInformationalSlug(slug)) notFound();
+  if (!isInformationalGuideSlug(slug)) notFound();
   const definition = getEducationGuideDefinition(slug);
   return <BatchedEducationGuidePage definition={definition} />;
 }

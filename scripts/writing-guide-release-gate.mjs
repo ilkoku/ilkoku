@@ -11,6 +11,7 @@ const fictionDefinitionsPath = path.join(root, "src/lib/fiction-guide-batch.ts")
 const pedagogyParityPath = path.join(root, "src/lib/fiction-guide-pedagogy-parity.ts");
 const educationRendererPath = path.join(root, "src/components/content/BatchedEducationGuidePage.tsx");
 const educationDefinitionsPath = path.join(root, "src/lib/education-guide-batch.ts");
+const literatureDepthPath = path.join(root, "src/lib/literature-guide-depth.ts");
 const stageDefinitionsPath = path.join(root, "src/lib/stage-guide-batch.ts");
 const stageDepthPath = path.join(root, "src/lib/stage-guide-depth.ts");
 const academicDefinitionsPath = path.join(root, "src/lib/academic-guide-batch.ts");
@@ -36,6 +37,7 @@ const fictionDefinitionsSource = fs.existsSync(fictionDefinitionsPath) ? read(fi
 const pedagogyParitySource = fs.existsSync(pedagogyParityPath) ? read(pedagogyParityPath) : "";
 const educationRendererSource = fs.existsSync(educationRendererPath) ? read(educationRendererPath) : "";
 const educationDefinitionsSource = fs.existsSync(educationDefinitionsPath) ? read(educationDefinitionsPath) : "";
+const literatureDepthSource = fs.existsSync(literatureDepthPath) ? read(literatureDepthPath) : "";
 const stageDefinitionsSource = fs.existsSync(stageDefinitionsPath) ? read(stageDefinitionsPath) : "";
 const stageDepthSource = fs.existsSync(stageDepthPath) ? read(stageDepthPath) : "";
 const academicDefinitionsSource = fs.existsSync(academicDefinitionsPath) ? read(academicDefinitionsPath) : "";
@@ -97,17 +99,17 @@ function academicDefinitionSlice(slug) {
   return academicDefinitionsSource.slice(start, next < 0 ? academicDefinitionsSource.length : next);
 }
 
-function stageDepthSlice(slug) {
+function depthSlice(source, slug) {
   const quotedMarker = `"${slug}": [`;
   const plainMarker = `${slug}: [`;
   let marker = quotedMarker;
-  let start = stageDepthSource.indexOf(quotedMarker);
+  let start = source.indexOf(quotedMarker);
   if (start < 0) {
     marker = plainMarker;
-    start = stageDepthSource.indexOf(plainMarker);
+    start = source.indexOf(plainMarker);
   }
   if (start < 0) return "";
-  const after = stageDepthSource.slice(start + marker.length);
+  const after = source.slice(start + marker.length);
   const nextMatch = after.match(/\n  (?:(?:"[a-z0-9-]+")|(?:[a-z0-9-]+)): \[/);
   const end = nextMatch?.index ?? after.length;
   return after.slice(0, end);
@@ -151,8 +153,23 @@ for (const { slug, href } of liveGuides) {
     }
   }
 
+  if (genre?.category === "Edebiyat") {
+    const depthSource = depthSlice(literatureDepthSource, slug);
+    if (!depthSource) {
+      errors.push(`${slug}: Edebiyat için Roman-parity üstü derinleştirme tanımı literature-guide-depth.ts içinde bulunamadı.`);
+    } else {
+      const depthSectionCount = [...depthSource.matchAll(/\bid:\s*"/g)].length;
+      if (depthSectionCount < 4) {
+        errors.push(`${slug}: Edebiyat türünde en az 4 tür özgü derinleştirme bölümü bekleniyor; mevcut ${depthSectionCount}.`);
+      }
+    }
+    if (!educationRendererSource.includes("getLiteratureGuideExtraSections") || !educationRendererSource.includes("literatureExtraSections")) {
+      errors.push(`${slug}: Edebiyat derinleştirme bölümleri renderer tarafından sayfaya bağlanmıyor.`);
+    }
+  }
+
   if (genre?.category === "Senaryo ve Sahne") {
-    const depthSource = stageDepthSlice(slug);
+    const depthSource = depthSlice(stageDepthSource, slug);
     if (!depthSource) {
       errors.push(`${slug}: Senaryo ve Sahne için Roman-parity üstü derinleştirme tanımı stage-guide-depth.ts içinde bulunamadı.`);
     } else {
@@ -192,7 +209,7 @@ for (const { slug, href } of liveGuides) {
     : isFictionBatched
       ? `${page}\n${fictionRendererSource}\n${fictionDefinitionsSource}\n${pedagogyParitySource}`
       : isEducationBatched
-        ? `${page}\n${educationRendererSource}\n${allEducationDefinitionsSource}\n${stageDepthSource}`
+        ? `${page}\n${educationRendererSource}\n${allEducationDefinitionsSource}\n${literatureDepthSource}\n${stageDepthSource}`
         : page;
 
   const rendererSource = isFictionBatched ? fictionRendererSource : isEducationBatched ? educationRendererSource : "";
@@ -232,7 +249,7 @@ const nextGenre = allGenres[liveGuides.length] ?? null;
 
 console.log(`[EĞİTİM BOMBE GATE] PASS — ${liveGuides.length}/${allGenres.length} teknik canlı tür doğrulandı: ${liveGuides.map((item) => item.slug).join(", ")}`);
 console.log("[EĞİTİM BOMBE PEDAGOJİ] Batch sayfalarda Roman-parity modülleri doğrulandı: fikir kaynakları + tür farkı + tam yazım rotası + yazım düzeni + ilk taslak + yayına hazırlık + uygulama çıktısı.");
-console.log("[EĞİTİM BOMBE DERİNLİK] Senaryo ve Sahne sayfalarında Roman-parity üstü en az 5 format özgü eğitim bölümü; Akademik sayfalarda en az 3 konuya özgü eğitim bölümü zorunlu.");
+console.log("[EĞİTİM BOMBE DERİNLİK] Edebiyat sayfalarında Roman-parity üstü en az 4 tür özgü eğitim bölümü; Senaryo ve Sahne sayfalarında en az 5 format özgü eğitim bölümü; Akademik sayfalarda en az 3 konuya özgü eğitim bölümü zorunlu.");
 console.log(`[EĞİTİM BOMBE İLERLEME] HUMAN_PASS: ${humanPass.length}/${allGenres.length}.`);
 if (pendingHumanPass) console.log(`[EĞİTİM BOMBE BEKLİYOR] İlk HUMAN_PASS/görsel kuyruğu: ${pendingHumanPass.label} (${pendingHumanPass.slug}) · ${pendingHumanPass.category}.`);
 if (pendingTechnicalReview > 0) console.log(`[EĞİTİM BOMBE BATCH] ${pendingTechnicalReview} teknik canlı tür görsel + canlı kullanıcı kontrolü + HUMAN_PASS bekliyor.`);

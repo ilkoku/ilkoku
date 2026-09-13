@@ -79,6 +79,12 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   "yemek-ve-gastronomi": "/yazarlar-icin/bilgilendirici/yemek-ve-gastronomi",
   seyahat: "/yazarlar-icin/bilgilendirici/seyahat",
   "din-ve-inanc": "/yazarlar-icin/bilgilendirici/din-ve-inanc",
+  masal: "/yazarlar-icin/cocuk-ve-genclik/masal",
+  fabl: "/yazarlar-icin/cocuk-ve-genclik/fabl",
+  "cocuk-hikayesi": "/yazarlar-icin/cocuk-ve-genclik/cocuk-hikayesi",
+  "cocuk-romani": "/yazarlar-icin/cocuk-ve-genclik/cocuk-romani",
+  "genc-yetiskin": "/yazarlar-icin/cocuk-ve-genclik/genc-yetiskin",
+  "egitici-cocuk-kitabi": "/yazarlar-icin/cocuk-ve-genclik/egitici-cocuk-kitabi",
 };
 
 type WritingGuideShellProps = {

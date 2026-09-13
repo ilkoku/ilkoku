@@ -127,3 +127,30 @@ test("writer history real covers stay visible, portrait-safe and free of known b
   notContains(realCovers, "covers.storytel.com", "square Storytel Orhan cover source removed");
   contains(css, ".writers-history__card:nth-child(even)::before", "alternating large cover composition");
 });
+
+test("seven writing category hubs stay deep, category-specific and avoid duplicate navigation", () => {
+  const hubs = source("src/lib/writing-category-hubs.ts");
+  const landing = source("src/components/content/WritingCategoryLandingPage.tsx");
+
+  for (const category of [
+    'category: "Kurgu"',
+    'category: "Edebiyat"',
+    'category: "Senaryo ve Sahne"',
+    'category: "Akademik"',
+    'category: "Bilgilendirici"',
+    'category: "Çocuk ve Gençlik"',
+    'category: "Çizgi Anlatı"',
+  ]) contains(hubs, category, `${category} category hub`);
+
+  for (const field of ["\n    promise:", "\n    foundations:", "\n    choiceSignals:", "\n    learningPath:", "\n    outcomes:"]) {
+    assert.equal(hubs.split(field).length - 1, 7, `${field.trim()} must exist once per category hub`);
+  }
+
+  contains(landing, "getGenresByCategory", "real canonical category genre count");
+  contains(landing, "Bu kategoride ne öğreneceksin?", "category learning foundation section");
+  contains(landing, "Türünü seçmeden önce", "category choice guidance section");
+  contains(landing, "Eğitim yolculuğu", "category learning journey section");
+  contains(landing, "Somut çıktı", "category output section");
+  contains(landing, "Bir tür seçtiğinde doğrudan o türe özel eğitime geçersin.", "single genre navigation instruction");
+  notContains(landing, "WRITING_CATEGORY_HUBS.map", "duplicate seven-category card navigation");
+});

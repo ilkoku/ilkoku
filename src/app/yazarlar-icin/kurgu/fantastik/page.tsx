@@ -304,7 +304,8 @@ function buildFantastikBlocks(
 export const metadata: Metadata = {
   title: "Fantastik Nasıl Yazılır? | İlkOku",
   description: "Dünya kurmadan büyü sistemine, haritadan kültür ve karakter bedeline kadar adım adım fantastik yazarlık rehberi.",
-  robots: { index: false, follow: false },
+  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/fantastik" },
+  robots: { index: true, follow: true },
 };
 
 export default async function FantastikYazarlikRehberiPage() {

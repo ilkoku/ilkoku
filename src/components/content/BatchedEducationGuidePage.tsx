@@ -3,6 +3,7 @@ import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
 import type { EducationGuideDefinition, GuideItem } from "@/lib/education-guide-batch";
+import { getLiteratureGuideExtraSections } from "@/lib/literature-guide-depth";
 import { getStageGuideExtraSections } from "@/lib/stage-guide-depth";
 
 const visualKeys = ["hero", "ideaFlow", "structure", "anatomy", "pageSetup", "project", "finalCta"] as const;
@@ -101,10 +102,15 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
   const title = guide?.title || definition.title;
   const summary = guide?.summary && guide.summary !== genericSummary ? guide.summary : definition.summary;
   const baseExtendedDefinition = definition as ExtendedEducationGuideDefinition;
+  const literatureExtraSections = definition.category === "Edebiyat" ? getLiteratureGuideExtraSections(definition.slug) : [];
   const stageExtraSections = definition.category === "Senaryo ve Sahne" ? getStageGuideExtraSections(definition.slug) : [];
   const extendedDefinition: ExtendedEducationGuideDefinition = {
     ...baseExtendedDefinition,
-    extraSections: [...(baseExtendedDefinition.extraSections ?? []), ...stageExtraSections],
+    extraSections: [
+      ...(baseExtendedDefinition.extraSections ?? []),
+      ...literatureExtraSections,
+      ...stageExtraSections,
+    ],
   };
 
   const blocks: CmsPageBlock[] = [

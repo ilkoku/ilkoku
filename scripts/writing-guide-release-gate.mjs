@@ -11,6 +11,7 @@ const fictionDefinitionsPath = path.join(root, "src/lib/fiction-guide-batch.ts")
 const pedagogyParityPath = path.join(root, "src/lib/fiction-guide-pedagogy-parity.ts");
 const educationRendererPath = path.join(root, "src/components/content/BatchedEducationGuidePage.tsx");
 const educationDefinitionsPath = path.join(root, "src/lib/education-guide-batch.ts");
+const stageDefinitionsPath = path.join(root, "src/lib/stage-guide-batch.ts");
 
 function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -33,6 +34,8 @@ const fictionDefinitionsSource = fs.existsSync(fictionDefinitionsPath) ? read(fi
 const pedagogyParitySource = fs.existsSync(pedagogyParityPath) ? read(pedagogyParityPath) : "";
 const educationRendererSource = fs.existsSync(educationRendererPath) ? read(educationRendererPath) : "";
 const educationDefinitionsSource = fs.existsSync(educationDefinitionsPath) ? read(educationDefinitionsPath) : "";
+const stageDefinitionsSource = fs.existsSync(stageDefinitionsPath) ? read(stageDefinitionsPath) : "";
+const allEducationDefinitionsSource = `${educationDefinitionsSource}\n${stageDefinitionsSource}`;
 
 const allGenres = [...genresSource.matchAll(/\{\s*slug:\s*"([^"]+)",\s*label:\s*"([^"]+)",\s*category:\s*"([^"]+)"\s*\}/g)]
   .map((match) => ({ slug: match[1], label: match[2], category: match[3] }));
@@ -96,8 +99,8 @@ for (const { slug, href } of liveGuides) {
   if (isFictionBatched && !fictionDefinitionsSource.includes(`slug: "${slug}"`)) {
     errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı fiction-guide-batch.ts içinde yok.`);
   }
-  if (isEducationBatched && !educationDefinitionsSource.includes(`slug: "${slug}"`)) {
-    errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı education-guide-batch.ts içinde yok.`);
+  if (isEducationBatched && !allEducationDefinitionsSource.includes(`slug: "${slug}"`)) {
+    errors.push(`${slug}: batch route var ama türe özgü eğitim tanımı education/stage batch kaynaklarında yok.`);
   }
 
   if (isFictionBatched) {
@@ -123,7 +126,7 @@ for (const { slug, href } of liveGuides) {
     : isFictionBatched
       ? `${page}\n${fictionRendererSource}\n${fictionDefinitionsSource}\n${pedagogyParitySource}`
       : isEducationBatched
-        ? `${page}\n${educationRendererSource}\n${educationDefinitionsSource}`
+        ? `${page}\n${educationRendererSource}\n${allEducationDefinitionsSource}`
         : page;
 
   const rendererSource = isFictionBatched ? fictionRendererSource : isEducationBatched ? educationRendererSource : "";

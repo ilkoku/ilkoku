@@ -31,16 +31,22 @@ type Props = {
   items: EducationWorkbenchItem[];
   categories: EducationWorkbenchCategory[];
   lockedCategory?: string;
+  visualTarget?: number;
+  entityLabel?: string;
+  itemColumnLabel?: string;
+  searchPlaceholder?: string;
+  inventoryLabel?: string;
+  showLockedCategoryBar?: boolean;
 };
 
-function statusFor(count: number): Exclude<StatusFilter, "all"> {
-  if (count >= 7) return "complete";
+function statusFor(count: number, target: number): Exclude<StatusFilter, "all"> {
+  if (count >= target) return "complete";
   if (count > 0) return "in-progress";
   return "not-started";
 }
 
-function statusLabel(count: number) {
-  if (count >= 7) return "HAZIR";
+function statusLabel(count: number, target: number) {
+  if (count >= target) return "HAZIR";
   if (count > 0) return "DEVAM";
   return "BEKLİYOR";
 }
@@ -50,7 +56,17 @@ function formatUpdatedAt(value: string | null) {
   return new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 }
 
-export function EducationWorkbench({ items, categories, lockedCategory }: Props) {
+export function EducationWorkbench({
+  items,
+  categories,
+  lockedCategory,
+  visualTarget = 7,
+  entityLabel = "tür",
+  itemColumnLabel = "Tür",
+  searchPlaceholder = "Roman, şiir, senaryo…",
+  inventoryLabel = "Eğitim envanteri",
+  showLockedCategoryBar = true,
+}: Props) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState(lockedCategory ?? "all");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -64,22 +80,23 @@ export function EducationWorkbench({ items, categories, lockedCategory }: Props)
     const needle = search.trim().toLocaleLowerCase("tr-TR");
     return scopedItems.filter((item) => {
       if (!lockedCategory && category !== "all" && item.category !== category) return false;
-      if (status !== "all" && statusFor(item.visualCount) !== status) return false;
+      if (status !== "all" && statusFor(item.visualCount, visualTarget) !== status) return false;
       if (!needle) return true;
       return `${item.label} ${item.slug} ${item.category}`.toLocaleLowerCase("tr-TR").includes(needle);
     });
-  }, [category, lockedCategory, scopedItems, search, status]);
+  }, [category, lockedCategory, scopedItems, search, status, visualTarget]);
 
   const metrics = useMemo(() => {
-    const complete = scopedItems.filter((item) => item.visualCount >= 7).length;
-    const inProgress = scopedItems.filter((item) => item.visualCount > 0 && item.visualCount < 7).length;
+    const complete = scopedItems.filter((item) => item.visualCount >= visualTarget).length;
+    const inProgress = scopedItems.filter((item) => item.visualCount > 0 && item.visualCount < visualTarget).length;
     const notStarted = scopedItems.length - complete - inProgress;
     return { total: scopedItems.length, complete, inProgress, notStarted };
-  }, [scopedItems]);
+  }, [scopedItems, visualTarget]);
 
   const currentCategory = lockedCategory
     ? categories.find((item) => item.label === lockedCategory) ?? null
     : null;
+  const progressEnd = Math.max(1, visualTarget - 1);
 
   function resetFilters() {
     setSearch("");
@@ -90,19 +107,19 @@ export function EducationWorkbench({ items, categories, lockedCategory }: Props)
   return (
     <div className={styles.workbench}>
       <div className={styles.metrics} aria-label="Eğitim durumu özeti">
-        <article className={styles.metric}><strong>{metrics.total}</strong><span>Toplam tür</span><small>{lockedCategory ?? "Eğitim envanteri"}</small></article>
-        <article className={styles.metric}><strong>{metrics.complete}</strong><span>Tamamlanan</span><small>7/7 görsel</small></article>
-        <article className={styles.metric}><strong>{metrics.inProgress}</strong><span>Devam eden</span><small>1–6/7 görsel</small></article>
-        <article className={styles.metric}><strong>{metrics.notStarted}</strong><span>Başlanmamış</span><small>0/7 görsel</small></article>
+        <article className={styles.metric}><strong>{metrics.total}</strong><span>Toplam {entityLabel}</span><small>{lockedCategory ?? inventoryLabel}</small></article>
+        <article className={styles.metric}><strong>{metrics.complete}</strong><span>Tamamlanan</span><small>{visualTarget}/{visualTarget} görsel</small></article>
+        <article className={styles.metric}><strong>{metrics.inProgress}</strong><span>Devam eden</span><small>1–{progressEnd}/{visualTarget} görsel</small></article>
+        <article className={styles.metric}><strong>{metrics.notStarted}</strong><span>Başlanmamış</span><small>0/{visualTarget} görsel</small></article>
       </div>
 
       <section className={`${styles.toolbar} ${lockedCategory ? styles.toolbarLocked : ""}`} aria-label="Eğitim filtreleri">
         <label className={styles.field}>
-          <span>Tür ara · {filtered.length} sonuç</span>
+          <span>{itemColumnLabel} ara · {filtered.length} sonuç</span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value.slice(0, 120))}
-            placeholder="Roman, şiir, senaryo…"
+            placeholder={searchPlaceholder}
           />
         </label>
         {!lockedCategory ? (
@@ -118,9 +135,9 @@ export function EducationWorkbench({ items, categories, lockedCategory }: Props)
           <span>Hazırlık</span>
           <select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)}>
             <option value="all">Tüm durumlar</option>
-            <option value="not-started">Başlanmamış · 0/7</option>
-            <option value="in-progress">Devam · 1–6/7</option>
-            <option value="complete">Tamamlandı · 7/7</option>
+            <option value="not-started">Başlanmamış · 0/{visualTarget}</option>
+            <option value="in-progress">Devam · 1–{progressEnd}/{visualTarget}</option>
+            <option value="complete">Tamamlandı · {visualTarget}/{visualTarget}</option>
           </select>
         </label>
         <button className={styles.resetButton} type="button" onClick={resetFilters}>Temizle</button>
@@ -131,22 +148,22 @@ export function EducationWorkbench({ items, categories, lockedCategory }: Props)
           {categories.map((item) => (
             <Link key={item.path} href={`/icerik/egitim/kategori/${item.path}`} className={styles.categoryCard}>
               <strong>{item.label}</strong>
-              <span>{item.total} tür</span>
+              <span>{item.total} {entityLabel}</span>
               <small>{item.complete} hazır · {item.inProgress} devam</small>
             </Link>
           ))}
         </nav>
-      ) : (
+      ) : showLockedCategoryBar ? (
         <nav className={styles.categoryBar} aria-label="Kategori gezinmesi">
           <Link className={styles.compactLink} href="/icerik/egitim">← Tüm Eğitim</Link>
-          {currentCategory ? <strong>{currentCategory.label} · {currentCategory.total} tür</strong> : null}
+          {currentCategory ? <strong>{currentCategory.label} · {currentCategory.total} {entityLabel}</strong> : null}
         </nav>
-      )}
+      ) : null}
 
-      <section className={styles.table} aria-label={lockedCategory ? `${lockedCategory} türleri` : "Eğitim türleri"}>
+      <section className={styles.table} aria-label={lockedCategory ? `${lockedCategory} ${entityLabel}leri` : `Eğitim ${entityLabel}leri`}>
         <div className={styles.tableHeader} aria-hidden="true">
           <span>Durum</span>
-          <span>Tür</span>
+          <span>{itemColumnLabel}</span>
           <span>Kategori</span>
           <span>Son işlem</span>
           <span style={{ textAlign: "right" }}>Aksiyon</span>
@@ -154,15 +171,15 @@ export function EducationWorkbench({ items, categories, lockedCategory }: Props)
 
         {filtered.length === 0 ? (
           <div className={styles.empty}>
-            Bu filtrelerle eşleşen tür yok. <button className={styles.resetButton} type="button" onClick={resetFilters}>Filtreleri temizle</button>
+            Bu filtrelerle eşleşen {entityLabel} yok. <button className={styles.resetButton} type="button" onClick={resetFilters}>Filtreleri temizle</button>
           </div>
         ) : filtered.map((item) => {
-          const rowStatus = statusFor(item.visualCount);
+          const rowStatus = statusFor(item.visualCount, visualTarget);
           return (
             <div className={styles.row} key={item.slug}>
               <div className={styles.statusCell}>
-                <span className={styles.statusCount}>{item.visualCount}/7</span>
-                <span className={styles.statusPill} data-status={rowStatus}>{statusLabel(item.visualCount)}</span>
+                <span className={styles.statusCount}>{item.visualCount}/{visualTarget}</span>
+                <span className={styles.statusPill} data-status={rowStatus}>{statusLabel(item.visualCount, visualTarget)}</span>
               </div>
               <div className={styles.typeCell}>
                 <strong>{item.label}</strong>

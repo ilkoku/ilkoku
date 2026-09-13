@@ -18,7 +18,10 @@ test("reader education keeps eight categories, six optional visual slots and sit
   const shell = source("src/components/content/ReaderEducationShell.tsx");
   const gateway = source("src/components/content/ReaderEducationGateway.tsx");
   const howItWorks = source("src/components/content/HowItWorksExperience.tsx");
-  const dashboard = source("src/app/icerik/egitim/page.tsx");
+  const writerDashboard = source("src/app/icerik/egitim/page.tsx");
+  const readerDashboard = source("src/app/icerik/okur-egitim/page.tsx");
+  const workbench = source("src/components/content/EducationWorkbench.tsx");
+  const cmsModules = source("src/lib/cms-modules.ts");
   const editor = source("src/app/icerik/egitim/okur/[slug]/page.tsx");
   const upload = source("src/app/api/cms-reader-education-media-upload/route.ts");
   const sitemap = source("src/app/sitemap.ts");
@@ -59,8 +62,25 @@ test("reader education keeps eight categories, six optional visual slots and sit
   assert.equal(shell.includes("Okurluk Okulu üst menüsü"), false, "reader education must not create a custom duplicate header");
   assertContains(shell, "<LiveHomepageFooter", "reader education original footer");
 
-  assertContains(dashboard, "Okurluk Okulu", "CMS reader education section");
-  assertContains(dashboard, "48 slot", "CMS future visual slot total");
+  assertContains(readerDashboard, 'import {\n  EducationWorkbench,', "reader center uses shared education workbench");
+  assertContains(readerDashboard, "<h1>Okur Eğitim Merkezi</h1>", "reader center heading");
+  assertContains(readerDashboard, "visualTarget={6}", "reader center six-slot target");
+  assertContains(readerDashboard, 'entityLabel="eğitim"', "reader workbench education terminology");
+  assertContains(readerDashboard, 'editHref: `/icerik/egitim/okur/${category.slug}`', "reader center editor links");
+  assertContains(readerDashboard, "readerEducationPublicPath(category)", "reader center live links");
+  assert.equal(readerDashboard.includes("48 slot"), false, "reader center must not use the old custom slot-card dashboard");
+  assert.equal(readerDashboard.includes("category.number"), false, "reader center must not show 01-08 category numbers");
+
+  assertContains(writerDashboard, '<Link href="/icerik/okur-egitim">Okur Eğitim Merkezi</Link>', "writer center links separate reader center");
+  assert.equal(writerDashboard.includes('id="okur-egitimleri"'), false, "writer center must not embed a second custom reader dashboard");
+  assert.equal(writerDashboard.includes("48 slot"), false, "writer center must not show reader slot summary");
+  assertContains(workbench, "visualTarget = 7", "shared workbench preserves writer seven-slot default");
+  assertContains(workbench, "{item.visualCount}/{visualTarget}", "shared workbench renders configurable slot target");
+  assertContains(cmsModules, '{ href: "/icerik/okur-egitim", label: "Okur Eğitim Merkezi"', "reader center CMS navigation item");
+
+  assertContains(editor, '<span className={styles.eyebrow}>Okur Eğitimi · Okurluk Okulu</span>', "reader editor removes 01-08 category numbering");
+  assert.equal(editor.includes("category.number"), false, "reader editor must not render category numbering");
+  assertContains(editor, '<Link href="/icerik/okur-egitim">← Okur Eğitim Merkezi</Link>', "reader editor returns to reader center");
   assertContains(editor, "6 gelecekteki görsel slotu", "reader CMS six-slot editor");
   assertContains(editor, "Canlı sayfada bu slot boşluk oluşturmaz.", "reader empty visual no-gap contract");
   assertContains(upload, "isSameOriginRequest(request)", "reader upload same-origin guard");

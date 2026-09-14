@@ -9,6 +9,7 @@ export type SiteAnalyticsSettings = {
 };
 
 export const ILKOKU_GTM_ID = "GTM-W6NVSMNV";
+export const ILKOKU_GA4_ID = "G-MCF2YN9SL8";
 
 export const defaultSiteAnalyticsSettings: SiteAnalyticsSettings = {
   enabled: false,

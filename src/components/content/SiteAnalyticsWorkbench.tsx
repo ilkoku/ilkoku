@@ -13,17 +13,171 @@ type Props = {
   firstRun: boolean;
 };
 
+type ProbeResult = {
+  ok: boolean;
+  status: number | null;
+  contentType: string | null;
+  error?: string;
+} | null;
+
+type VerifyPayload = {
+  ok?: boolean;
+  state?: string;
+  consentRequired?: boolean;
+  providers?: { gtm?: boolean; ga4?: boolean };
+  checks?: {
+    config?: { ok?: boolean };
+    gtm?: ProbeResult;
+    ga4?: ProbeResult;
+  };
+  note?: string;
+};
+
+type Verification = {
+  tone: "success" | "warning" | "danger";
+  title: string;
+  detail: string;
+  checkedAt: string;
+};
+
 function same(a: SiteAnalyticsSettings, b: SiteAnalyticsSettings) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+function readAnalyticsConsent() {
+  try {
+    const raw = window.localStorage.getItem("ilkoku:consent:v1");
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as { version?: number; analytics?: boolean; expiresAt?: number };
+    return parsed.version === 1 && parsed.analytics === true && typeof parsed.expiresAt === "number" && parsed.expiresAt > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function readRuntimeState(provider: "Gtm" | "Ga4") {
+  return document.documentElement.dataset[`ilkokuAnalytics${provider}`] || "unknown";
+}
+
+function formatTime() {
+  return new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date());
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
   const [settings, setSettings] = useState(initialSettings);
+  const [verifying, setVerifying] = useState(false);
+  const [verification, setVerification] = useState<Verification | null>(null);
   const dirty = useMemo(() => !same(settings, initialSettings), [settings, initialSettings]);
   const gtmValid = isValidGtmId(settings.gtmId) && (!settings.gtmEnabled || Boolean(settings.gtmId));
   const ga4Valid = isValidGa4MeasurementId(settings.ga4MeasurementId) && (!settings.ga4Enabled || Boolean(settings.ga4MeasurementId));
   const activeProviderCount = [settings.gtmEnabled, settings.ga4Enabled].filter(Boolean).length;
   const canSave = gtmValid && ga4Valid && (!settings.enabled || activeProviderCount > 0);
+
+  async function verifyLiveConnection() {
+    if (dirty) {
+      setVerification({
+        tone: "warning",
+        title: "Önce değişiklikleri kaydedin.",
+        detail: "Canlı doğrulama yalnız veritabanında kayıtlı ve public loader tarafından kullanılan yapılandırmayı test eder.",
+        checkedAt: formatTime(),
+      });
+      return;
+    }
+
+    setVerifying(true);
+    setVerification(null);
+
+    try {
+      const response = await fetch("/api/site-analytics/verify", {
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      });
+      const payload = (await response.json().catch(() => null)) as VerifyPayload | null;
+
+      if (!response.ok || !payload) {
+        setVerification({
+          tone: "danger",
+          title: "Canlı doğrulama servisi yanıt vermedi.",
+          detail: "Admin oturumu, kayıtlı yapılandırma veya doğrulama endpointi kontrol edilmeli.",
+          checkedAt: formatTime(),
+        });
+        return;
+      }
+
+      if (payload.state === "disabled") {
+        setVerification({
+          tone: "warning",
+          title: "Analytics global olarak kapalı.",
+          detail: "Google bağlantısı test edilmedi; önce Analytics / Tag yüklemeyi etkinleştirip kaydedin.",
+          checkedAt: formatTime(),
+        });
+        return;
+      }
+
+      if (!payload.ok) {
+        const failed: string[] = [];
+        if (settings.gtmEnabled && payload.checks?.gtm && !payload.checks.gtm.ok) failed.push(`GTM (${payload.checks.gtm.status ?? payload.checks.gtm.error ?? "erişim hatası"})`);
+        if (settings.ga4Enabled && payload.checks?.ga4 && !payload.checks.ga4.ok) failed.push(`GA4 (${payload.checks.ga4.status ?? payload.checks.ga4.error ?? "erişim hatası"})`);
+        setVerification({
+          tone: "danger",
+          title: "Google tag erişim kontrolü başarısız.",
+          detail: failed.length > 0 ? `${failed.join(", ")} kontrol edilemedi.` : "Google tag script uçlarına erişilemedi.",
+          checkedAt: formatTime(),
+        });
+        return;
+      }
+
+      await wait(700);
+
+      const consentGranted = settings.consentRequired ? readAnalyticsConsent() : true;
+      const gtmRuntime = readRuntimeState("Gtm");
+      const ga4Runtime = readRuntimeState("Ga4");
+
+      if (settings.consentRequired && !consentGranted) {
+        setVerification({
+          tone: "warning",
+          title: "Google bağlantısı erişilebilir · Analitik izni bekleniyor.",
+          detail: `Sunucu kontrolü geçti. Tarayıcı loaderı consent-first nedeniyle etiketi bilinçli olarak yüklemiyor. Runtime: GTM ${gtmRuntime}, GA4 ${ga4Runtime}. Analitik izni verip tekrar doğrulayın.`,
+          checkedAt: formatTime(),
+        });
+        return;
+      }
+
+      const runtimeFailures: string[] = [];
+      if (settings.gtmEnabled && gtmRuntime !== "loaded") runtimeFailures.push(`GTM runtime=${gtmRuntime}`);
+      if (settings.ga4Enabled && ga4Runtime !== "loaded") runtimeFailures.push(`GA4 runtime=${ga4Runtime}`);
+
+      if (runtimeFailures.length > 0) {
+        setVerification({
+          tone: "danger",
+          title: "Google erişimi var fakat public loader tamamlanmadı.",
+          detail: `${runtimeFailures.join(", ")}. Sayfayı yenileyip yeniden deneyin; devam ederse loader/network davranışı incelenmeli.`,
+          checkedAt: formatTime(),
+        });
+        return;
+      }
+
+      setVerification({
+        tone: "success",
+        title: "Canlı Analytics bağlantısı doğrulandı.",
+        detail: `Google tag endpoint erişimi ve tarayıcı runtime yüklemesi geçti. GTM ${gtmRuntime}, GA4 ${ga4Runtime}. Bu kontrol property sahipliğini veya eventin Google tarafından işlendiğini doğrulamaz.`,
+        checkedAt: formatTime(),
+      });
+    } catch {
+      setVerification({
+        tone: "danger",
+        title: "Canlı doğrulama sırasında ağ hatası oluştu.",
+        detail: "Yapılandırma değiştirilmedi. Tekrar deneyebilir veya tarayıcı/network engellerini kontrol edebilirsiniz.",
+        checkedAt: formatTime(),
+      });
+    } finally {
+      setVerifying(false);
+    }
+  }
 
   return (
     <form action="/api/site-analytics" method="post" className={styles.workbench}>
@@ -50,7 +204,7 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
           <p>Bu anahtar kapalıysa GTM ve GA4 kimlikleri kayıtlı kalsa bile public sitede hiçbir analytics etiketi yüklenmez.</p>
           <label className={styles.toggleRow}>
             <span><strong>Analytics / Tag yüklemeyi etkinleştir</strong><small>Canlı davranışı tek noktadan kapatır veya açar.</small></span>
-            <span className={styles.toggle}><input type="checkbox" name="enabled" checked={settings.enabled} onChange={(event) => setSettings((s) => ({ ...s, enabled: event.target.checked }))} /><i /></span>
+            <span className={styles.toggle}><input type="checkbox" name="enabled" checked={settings.enabled} onChange={(event) => { setSettings((s) => ({ ...s, enabled: event.target.checked })); setVerification(null); }} /><i /></span>
           </label>
         </section>
 
@@ -62,7 +216,7 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
           <p>Açıkken analytics scriptleri ziyaretçi Analitik kategorisine izin verene kadar yüklenmez. İlkOku için önerilen güvenli mod budur.</p>
           <label className={styles.toggleRow}>
             <span><strong>Analitik izni verilene kadar etiketleri beklet</strong><small>Açık tutulması önerilir.</small></span>
-            <span className={styles.toggle}><input type="checkbox" name="consentRequired" checked={settings.consentRequired} onChange={(event) => setSettings((s) => ({ ...s, consentRequired: event.target.checked }))} /><i /></span>
+            <span className={styles.toggle}><input type="checkbox" name="consentRequired" checked={settings.consentRequired} onChange={(event) => { setSettings((s) => ({ ...s, consentRequired: event.target.checked })); setVerification(null); }} /><i /></span>
           </label>
         </section>
 
@@ -74,12 +228,12 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
           <p>Google Tag Manager kullanıyorsanız container kimliğini buraya girin. Örnek biçim: GTM-XXXXXXX.</p>
           <label className="content-field">
             <span>GTM Container ID</span>
-            <input name="gtmId" type="text" maxLength={32} placeholder="GTM-XXXXXXX" value={settings.gtmId} onChange={(event) => setSettings((s) => ({ ...s, gtmId: event.target.value.toUpperCase().trim() }))} aria-invalid={!gtmValid} />
+            <input name="gtmId" type="text" maxLength={32} placeholder="GTM-XXXXXXX" value={settings.gtmId} onChange={(event) => { setSettings((s) => ({ ...s, gtmId: event.target.value.toUpperCase().trim() })); setVerification(null); }} aria-invalid={!gtmValid} />
           </label>
           {!gtmValid ? <small>GTM ID boş veya biçimi geçersiz.</small> : null}
           <label className={styles.toggleRow}>
             <span><strong>GTM containerını kullan</strong><small>Container içindeki tag kurallarını GTM hesabınız yönetir.</small></span>
-            <span className={styles.toggle}><input type="checkbox" name="gtmEnabled" checked={settings.gtmEnabled} onChange={(event) => setSettings((s) => ({ ...s, gtmEnabled: event.target.checked }))} /><i /></span>
+            <span className={styles.toggle}><input type="checkbox" name="gtmEnabled" checked={settings.gtmEnabled} onChange={(event) => { setSettings((s) => ({ ...s, gtmEnabled: event.target.checked })); setVerification(null); }} /><i /></span>
           </label>
         </section>
 
@@ -91,12 +245,12 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
           <p>GTM kullanmadan doğrudan GA4 ölçümü isterseniz Measurement ID girin. Örnek biçim: G-XXXXXXXXXX.</p>
           <label className="content-field">
             <span>GA4 Measurement ID</span>
-            <input name="ga4MeasurementId" type="text" maxLength={32} placeholder="G-XXXXXXXXXX" value={settings.ga4MeasurementId} onChange={(event) => setSettings((s) => ({ ...s, ga4MeasurementId: event.target.value.toUpperCase().trim() }))} aria-invalid={!ga4Valid} />
+            <input name="ga4MeasurementId" type="text" maxLength={32} placeholder="G-XXXXXXXXXX" value={settings.ga4MeasurementId} onChange={(event) => { setSettings((s) => ({ ...s, ga4MeasurementId: event.target.value.toUpperCase().trim() })); setVerification(null); }} aria-invalid={!ga4Valid} />
           </label>
           {!ga4Valid ? <small>GA4 Measurement ID boş veya biçimi geçersiz.</small> : null}
           <label className={styles.toggleRow}>
             <span><strong>Doğrudan GA4 ölçümünü kullan</strong><small>GTM içinde zaten GA4 varsa çift ölçüm yapmadığınızdan emin olun.</small></span>
-            <span className={styles.toggle}><input type="checkbox" name="ga4Enabled" checked={settings.ga4Enabled} onChange={(event) => setSettings((s) => ({ ...s, ga4Enabled: event.target.checked }))} /><i /></span>
+            <span className={styles.toggle}><input type="checkbox" name="ga4Enabled" checked={settings.ga4Enabled} onChange={(event) => { setSettings((s) => ({ ...s, ga4Enabled: event.target.checked })); setVerification(null); }} /><i /></span>
           </label>
         </section>
 
@@ -108,28 +262,44 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
           <p>Doğrudan GA4 entegrasyonunda debug_mode parametresini gönderir. Kurulum kontrolünden sonra kapatılması önerilir.</p>
           <label className={styles.toggleRow}>
             <span><strong>DebugView için test sinyali gönder</strong><small>Yalnız doğrudan GA4 yapılandırmasını etkiler.</small></span>
-            <span className={styles.toggle}><input type="checkbox" name="debugMode" checked={settings.debugMode} onChange={(event) => setSettings((s) => ({ ...s, debugMode: event.target.checked }))} /><i /></span>
+            <span className={styles.toggle}><input type="checkbox" name="debugMode" checked={settings.debugMode} onChange={(event) => { setSettings((s) => ({ ...s, debugMode: event.target.checked })); setVerification(null); }} /><i /></span>
           </label>
         </section>
 
         <section className={styles.settingCard}>
           <div className={styles.settingTop}>
-            <div><span className={styles.kicker}>Kurulum kontrolü</span><h3>Yayın öncesi kontrol listesi</h3></div>
-            <span className={styles.badge} data-tone={canSave ? "success" : "warning"}>{canSave ? "Geçerli" : "Eksik"}</span>
+            <div><span className={styles.kicker}>Kurulum kontrolü</span><h3>Canlı bağlantı doğrulaması</h3></div>
+            <span className={styles.badge} data-tone={verification?.tone === "success" ? "success" : verification?.tone ? "warning" : undefined}>
+              {verifying ? "Kontrol ediliyor" : verification?.tone === "success" ? "Doğrulandı" : verification?.tone === "danger" ? "Hata" : verification?.tone === "warning" ? "Bekliyor" : "Çalıştırılmadı"}
+            </span>
           </div>
-          <p>Panel yalnız kimlik biçimi ve yapılandırma tutarlılığını doğrular. Google hesabındaki container/property sahipliğini değiştirmez.</p>
+          <p>Biçim kontrolünden farklı olarak kayıtlı ayarı, Google tag script erişimini ve bu tarayıcıdaki public loader durumunu test eder.</p>
           <ul>
-            <li>GTM kimliği: {gtmValid ? "geçerli" : "kontrol gerekli"}</li>
-            <li>GA4 kimliği: {ga4Valid ? "geçerli" : "kontrol gerekli"}</li>
+            <li>GTM kimliği biçimi: {gtmValid ? "geçerli" : "kontrol gerekli"}</li>
+            <li>GA4 kimliği biçimi: {ga4Valid ? "geçerli" : "kontrol gerekli"}</li>
             <li>Consent-first: {settings.consentRequired ? "aktif" : "kapalı"}</li>
             <li>Aktif sağlayıcı: {activeProviderCount}</li>
           </ul>
+          <div className="content-form-actions">
+            <button type="button" onClick={verifyLiveConnection} disabled={verifying || dirty || !settings.enabled || !canSave}>
+              {verifying ? "Doğrulanıyor…" : dirty ? "Önce ayarları kaydet" : "Canlı bağlantıyı doğrula"}
+            </button>
+          </div>
+          {verification ? (
+            <div className={`content-notice ${verification.tone === "success" ? "content-notice-success" : verification.tone === "danger" ? "content-notice-danger" : "content-notice-warning"}`}>
+              <strong>{verification.title}</strong>
+              <p>{verification.detail}</p>
+              <small>Son kontrol: {verification.checkedAt}</small>
+            </div>
+          ) : (
+            <small>Henüz canlı doğrulama çalıştırılmadı. “Geçerli” kimlik biçimi tek başına Google bağlantısının çalıştığı anlamına gelmez.</small>
+          )}
         </section>
       </div>
 
       <div className={styles.saveBar}>
         <div><strong>{dirty ? "Kaydedilmemiş Analytics değişiklikleri var" : firstRun ? "Analytics yapılandırması henüz kaydedilmedi" : "Analytics yapılandırması güncel"}</strong><small>Kimlikler public tag yüklemek için kullanılır; parola veya servis hesabı anahtarı değildir.</small></div>
-        <div className="content-form-actions"><button type="button" disabled={!dirty} onClick={() => setSettings(initialSettings)}>Değişiklikleri geri al</button><button type="submit" disabled={!canSave || (!dirty && !firstRun)}>Analytics Ayarlarını Kaydet</button></div>
+        <div className="content-form-actions"><button type="button" disabled={!dirty} onClick={() => { setSettings(initialSettings); setVerification(null); }}>Değişiklikleri geri al</button><button type="submit" disabled={!canSave || (!dirty && !firstRun)}>Analytics Ayarlarını Kaydet</button></div>
       </div>
     </form>
   );

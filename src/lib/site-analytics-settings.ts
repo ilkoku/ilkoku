@@ -8,6 +8,8 @@ export type SiteAnalyticsSettings = {
   debugMode: boolean;
 };
 
+export const ILKOKU_GTM_ID = "GTM-W6NVSMNV";
+
 export const defaultSiteAnalyticsSettings: SiteAnalyticsSettings = {
   enabled: false,
   gtmEnabled: false,
@@ -27,6 +29,17 @@ export function isValidGtmId(value: string) {
 
 export function isValidGa4MeasurementId(value: string) {
   return !value || GA4_PATTERN.test(value.trim());
+}
+
+function applyIlkOkuGtmBootstrap(settings: SiteAnalyticsSettings): SiteAnalyticsSettings {
+  if (settings.gtmId) return settings;
+
+  return {
+    ...settings,
+    enabled: true,
+    gtmEnabled: true,
+    gtmId: ILKOKU_GTM_ID,
+  };
 }
 
 export function parseSiteAnalyticsSettings(raw: string): SiteAnalyticsSettings {
@@ -73,7 +86,7 @@ export function parseSiteAnalyticsSettingsStrict(raw: string): SiteAnalyticsSett
     };
 
     if (!isValidGtmId(settings.gtmId) || !isValidGa4MeasurementId(settings.ga4MeasurementId)) return null;
-    return settings;
+    return applyIlkOkuGtmBootstrap(settings);
   } catch {
     return null;
   }

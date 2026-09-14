@@ -131,22 +131,11 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
         return;
       }
 
-      await wait(700);
+      await wait(900);
 
       const consentGranted = settings.consentRequired ? readAnalyticsConsent() : true;
       const gtmRuntime = readRuntimeState("Gtm");
       const ga4Runtime = readRuntimeState("Ga4");
-
-      if (settings.consentRequired && !consentGranted) {
-        setVerification({
-          tone: "warning",
-          title: "Google bağlantısı erişilebilir · Analitik izni bekleniyor.",
-          detail: `Sunucu kontrolü geçti. Tarayıcı loaderı consent-first nedeniyle etiketi bilinçli olarak yüklemiyor. Runtime: GTM ${gtmRuntime}, GA4 ${ga4Runtime}. Analitik izni verip tekrar doğrulayın.`,
-          checkedAt: formatTime(),
-        });
-        return;
-      }
-
       const runtimeFailures: string[] = [];
       if (settings.gtmEnabled && gtmRuntime !== "loaded") runtimeFailures.push(`GTM runtime=${gtmRuntime}`);
       if (settings.ga4Enabled && ga4Runtime !== "loaded") runtimeFailures.push(`GA4 runtime=${ga4Runtime}`);
@@ -156,6 +145,16 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
           tone: "danger",
           title: "Google erişimi var fakat public loader tamamlanmadı.",
           detail: `${runtimeFailures.join(", ")}. Sayfayı yenileyip yeniden deneyin; devam ederse loader/network davranışı incelenmeli.`,
+          checkedAt: formatTime(),
+        });
+        return;
+      }
+
+      if (settings.consentRequired && !consentGranted) {
+        setVerification({
+          tone: "success",
+          title: "Google tag teknik olarak doğrulandı.",
+          detail: `GTM/GA4 script erişimi ve tarayıcı runtime yüklemesi geçti. Consent Mode şu anda analytics_storage=denied durumunda; ziyaretçi Analitik izni verirse granted olur. Runtime: GTM ${gtmRuntime}, GA4 ${ga4Runtime}. Bu kontrol eventin Google Analytics tarafından işlendiğini doğrulamaz.`,
           checkedAt: formatTime(),
         });
         return;
@@ -185,7 +184,7 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
         <article className={styles.summaryCard}><span>Analytics</span><strong>{settings.enabled ? "Açık" : "Kapalı"}</strong><small>global yükleme anahtarı</small></article>
         <article className={styles.summaryCard}><span>GTM</span><strong>{settings.gtmEnabled ? "Etkin" : "Kapalı"}</strong><small>{settings.gtmId || "Container ID yok"}</small></article>
         <article className={styles.summaryCard}><span>GA4</span><strong>{settings.ga4Enabled ? "Etkin" : "Kapalı"}</strong><small>{settings.ga4MeasurementId || "Measurement ID yok"}</small></article>
-        <article className={styles.summaryCard}><span>Consent</span><strong>{settings.consentRequired ? "Zorunlu" : "Beklemeden"}</strong><small>etiket yükleme politikası</small></article>
+        <article className={styles.summaryCard}><span>Consent</span><strong>{settings.consentRequired ? "Consent Mode" : "Doğrudan"}</strong><small>Google tag gizlilik politikası</small></article>
       </div>
 
       {settings.gtmEnabled && settings.ga4Enabled ? (
@@ -210,12 +209,12 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
 
         <section className={styles.settingCard} data-changed={settings.consentRequired !== initialSettings.consentRequired}>
           <div className={styles.settingTop}>
-            <div><span className={styles.kicker}>Gizlilik</span><h3>Consent kapısı</h3></div>
+            <div><span className={styles.kicker}>Gizlilik</span><h3>Google Consent Mode</h3></div>
             <span className={styles.badge} data-tone={settings.consentRequired ? "success" : "warning"}>{settings.consentRequired ? "Consent-first" : "Doğrudan"}</span>
           </div>
-          <p>Açıkken analytics scriptleri ziyaretçi Analitik kategorisine izin verene kadar yüklenmez. İlkOku için önerilen güvenli mod budur.</p>
+          <p>Açıkken Google tag teknik olarak yüklenebilir; fakat analytics_storage varsayılan olarak denied başlar. Ziyaretçi Analitik izni verirse granted olur.</p>
           <label className={styles.toggleRow}>
-            <span><strong>Analitik izni verilene kadar etiketleri beklet</strong><small>Açık tutulması önerilir.</small></span>
+            <span><strong>Google tag'i varsayılan denied consent ile başlat</strong><small>GTM/GA4 doğrulanabilir kalırken izinsiz analytics storage verilmez.</small></span>
             <span className={styles.toggle}><input type="checkbox" name="consentRequired" checked={settings.consentRequired} onChange={(event) => { setSettings((s) => ({ ...s, consentRequired: event.target.checked })); setVerification(null); }} /><i /></span>
           </label>
         </section>
@@ -277,7 +276,7 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
           <ul>
             <li>GTM kimliği biçimi: {gtmValid ? "geçerli" : "kontrol gerekli"}</li>
             <li>GA4 kimliği biçimi: {ga4Valid ? "geçerli" : "kontrol gerekli"}</li>
-            <li>Consent-first: {settings.consentRequired ? "aktif" : "kapalı"}</li>
+            <li>Consent Mode: {settings.consentRequired ? "aktif" : "kapalı"}</li>
             <li>Aktif sağlayıcı: {activeProviderCount}</li>
           </ul>
           <div className="content-form-actions">

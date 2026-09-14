@@ -59,6 +59,17 @@ function updateConsentMode(settings: SiteConsentSettings, choice: ConsentChoice)
   });
 }
 
+function deniedChoice(retentionDays: number): ConsentChoice {
+  const now = Date.now();
+  return {
+    version: 1,
+    analytics: false,
+    marketing: false,
+    savedAt: now,
+    expiresAt: now + retentionDays * 24 * 60 * 60 * 1000,
+  };
+}
+
 function dispatchChoice(choice: ConsentChoice) {
   window.dispatchEvent(new CustomEvent("ilkoku:consent-changed", { detail: choice }));
 }
@@ -87,6 +98,7 @@ export function SiteConsentBanner() {
           return;
         }
 
+        updateConsentMode(nextSettings, deniedChoice(nextSettings.retentionDays));
         setVisible(true);
       })
       .catch(() => undefined);
@@ -97,13 +109,16 @@ export function SiteConsentBanner() {
   if (!settings || !visible) return null;
 
   function saveChoice(nextAnalytics: boolean, nextMarketing: boolean) {
+    const activeSettings = settings;
+    if (!activeSettings) return;
+
     const now = Date.now();
     const choice: ConsentChoice = {
       version: 1,
-      analytics: settings?.analyticsEnabled === true && nextAnalytics,
-      marketing: settings?.marketingEnabled === true && nextMarketing,
+      analytics: activeSettings.analyticsEnabled && nextAnalytics,
+      marketing: activeSettings.marketingEnabled && nextMarketing,
       savedAt: now,
-      expiresAt: now + settings.retentionDays * 24 * 60 * 60 * 1000,
+      expiresAt: now + activeSettings.retentionDays * 24 * 60 * 60 * 1000,
     };
 
     try {
@@ -112,7 +127,7 @@ export function SiteConsentBanner() {
       // Consent still applies for the current page even if storage is unavailable.
     }
 
-    updateConsentMode(settings, choice);
+    updateConsentMode(activeSettings, choice);
     dispatchChoice(choice);
     setVisible(false);
   }

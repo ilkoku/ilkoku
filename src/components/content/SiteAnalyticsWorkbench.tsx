@@ -214,7 +214,7 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
           </div>
           <p>Açıkken Google tag teknik olarak yüklenebilir; fakat analytics_storage varsayılan olarak denied başlar. Ziyaretçi Analitik izni verirse granted olur.</p>
           <label className={styles.toggleRow}>
-            <span><strong>Google tag'i varsayılan denied consent ile başlat</strong><small>GTM/GA4 doğrulanabilir kalırken izinsiz analytics storage verilmez.</small></span>
+            <span><strong>Google tag varsayılan denied consent ile başlasın</strong><small>GTM/GA4 doğrulanabilir kalırken izinsiz analytics storage verilmez.</small></span>
             <span className={styles.toggle}><input type="checkbox" name="consentRequired" checked={settings.consentRequired} onChange={(event) => { setSettings((s) => ({ ...s, consentRequired: event.target.checked })); setVerification(null); }} /><i /></span>
           </label>
         </section>

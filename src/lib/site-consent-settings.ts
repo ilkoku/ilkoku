@@ -60,28 +60,34 @@ export function parseSiteConsentSettingsStrict(value: string): SiteConsentSettin
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
     const settings = parsed as Record<string, unknown>;
 
-    for (const key of [
-      "bannerEnabled",
-      "analyticsEnabled",
-      "marketingEnabled",
-      "consentModeEnabled",
-      "rejectAllEnabled",
-    ] as const) {
-      if (typeof settings[key] !== "boolean") return null;
-    }
+    const bannerEnabled = settings.bannerEnabled;
+    const analyticsEnabled = settings.analyticsEnabled;
+    const marketingEnabled = settings.marketingEnabled;
+    const consentModeEnabled = settings.consentModeEnabled;
+    const rejectAllEnabled = settings.rejectAllEnabled;
+    const policyPath = settings.policyPath;
+    const retentionDays = settings.retentionDays;
 
-    if (typeof settings.policyPath !== "string") return null;
-    if (!settings.policyPath.startsWith("/") || settings.policyPath.startsWith("//") || settings.policyPath.length > 240) return null;
-    if (typeof settings.retentionDays !== "number" || !Number.isInteger(settings.retentionDays) || settings.retentionDays < 1 || settings.retentionDays > 365) return null;
+    if (
+      typeof bannerEnabled !== "boolean" ||
+      typeof analyticsEnabled !== "boolean" ||
+      typeof marketingEnabled !== "boolean" ||
+      typeof consentModeEnabled !== "boolean" ||
+      typeof rejectAllEnabled !== "boolean"
+    ) return null;
+
+    if (typeof policyPath !== "string") return null;
+    if (!policyPath.startsWith("/") || policyPath.startsWith("//") || policyPath.length > 240) return null;
+    if (typeof retentionDays !== "number" || !Number.isInteger(retentionDays) || retentionDays < 1 || retentionDays > 365) return null;
 
     return {
-      bannerEnabled: settings.bannerEnabled,
-      analyticsEnabled: settings.analyticsEnabled,
-      marketingEnabled: settings.marketingEnabled,
-      consentModeEnabled: settings.consentModeEnabled,
-      rejectAllEnabled: settings.rejectAllEnabled,
-      policyPath: settings.policyPath,
-      retentionDays: settings.retentionDays,
+      bannerEnabled,
+      analyticsEnabled,
+      marketingEnabled,
+      consentModeEnabled,
+      rejectAllEnabled,
+      policyPath,
+      retentionDays,
     };
   } catch {
     return null;

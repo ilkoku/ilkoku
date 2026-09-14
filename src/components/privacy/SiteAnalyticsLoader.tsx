@@ -49,6 +49,26 @@ function ensureDataLayer() {
   window.gtag = window.gtag || ((...args: unknown[]) => window.dataLayer?.push(args));
 }
 
+function setDefaultDeniedConsent() {
+  ensureDataLayer();
+  setRuntimeState("consent", "denied");
+  window.gtag?.("consent", "default", {
+    analytics_storage: "denied",
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+    wait_for_update: 500,
+  });
+}
+
+function updateAnalyticsConsent(granted: boolean) {
+  ensureDataLayer();
+  setRuntimeState("consent", granted ? "granted" : "denied");
+  window.gtag?.("consent", "update", {
+    analytics_storage: granted ? "granted" : "denied",
+  });
+}
+
 function loadGtm(id: string) {
   if (!id) return;
   const existing = document.getElementById(GTM_SCRIPT_ID) as HTMLScriptElement | null;
@@ -105,27 +125,12 @@ function loadGa4(id: string, debugMode: boolean) {
   document.head.appendChild(script);
 }
 
-function applyConsent(granted: boolean) {
-  ensureDataLayer();
-  setRuntimeState("consent", granted ? "granted" : "denied");
-  window.gtag?.("consent", "update", {
-    analytics_storage: granted ? "granted" : "denied",
-  });
-}
-
-function markProviderWaiting(settings: SiteAnalyticsSettings) {
-  if (settings.gtmEnabled && settings.gtmId) setRuntimeState("gtm", "waiting-consent");
-  else setRuntimeState("gtm", "disabled");
-
-  if (settings.ga4Enabled && settings.ga4MeasurementId) setRuntimeState("ga4", "waiting-consent");
-  else setRuntimeState("ga4", "disabled");
-}
-
-function activate(settings: SiteAnalyticsSettings) {
+function loadProviders(settings: SiteAnalyticsSettings) {
   if (!settings.enabled) return;
-  applyConsent(true);
+
   if (settings.gtmEnabled && settings.gtmId) loadGtm(settings.gtmId);
   else setRuntimeState("gtm", "disabled");
+
   if (settings.ga4Enabled && settings.ga4MeasurementId) loadGa4(settings.ga4MeasurementId, settings.debugMode);
   else setRuntimeState("ga4", "disabled");
 }
@@ -143,9 +148,8 @@ export function SiteAnalyticsLoader() {
       if (!settings) return;
       const detail = (event as CustomEvent<ConsentChoice>).detail;
       const granted = Boolean(detail?.analytics);
-      applyConsent(granted);
-      if (granted) activate(settings);
-      else if (settings.consentRequired) markProviderWaiting(settings);
+      updateAnalyticsConsent(granted);
+      loadProviders(settings);
     }
 
     window.addEventListener("ilkoku:consent-changed", onConsentChanged as EventListener);
@@ -155,6 +159,7 @@ export function SiteAnalyticsLoader() {
       .then((payload: { settings?: SiteAnalyticsSettings } | null) => {
         if (!active || !payload?.settings) return;
         settings = payload.settings;
+
         if (!settings.enabled) {
           setRuntimeState("consent", "disabled");
           setRuntimeState("gtm", "disabled");
@@ -163,16 +168,17 @@ export function SiteAnalyticsLoader() {
         }
 
         ensureDataLayer();
+
         if (settings.consentRequired) {
-          const granted = readAnalyticsConsent();
-          applyConsent(granted);
-          if (granted) activate(settings);
-          else markProviderWaiting(settings);
+          setDefaultDeniedConsent();
+          updateAnalyticsConsent(readAnalyticsConsent());
+          loadProviders(settings);
           return;
         }
 
         setRuntimeState("consent", "not-required");
-        activate(settings);
+        updateAnalyticsConsent(true);
+        loadProviders(settings);
       })
       .catch(() => {
         setRuntimeState("consent", "config-error");

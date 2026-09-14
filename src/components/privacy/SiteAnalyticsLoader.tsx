@@ -110,7 +110,7 @@ function loadGtm(id: string) {
   document.head.appendChild(script);
 }
 
-function useHeadGa4(id: string, debugMode: boolean) {
+function reuseHeadGa4(id: string, debugMode: boolean) {
   if (id !== ILKOKU_GA4_ID) return false;
   const headScript = document.getElementById(GA4_HEAD_SCRIPT_ID) as HTMLScriptElement | null;
   if (!headScript || typeof window.gtag !== "function") return false;
@@ -124,7 +124,7 @@ function useHeadGa4(id: string, debugMode: boolean) {
 
 function loadGa4(id: string, debugMode: boolean) {
   if (!id) return;
-  if (useHeadGa4(id, debugMode)) return;
+  if (reuseHeadGa4(id, debugMode)) return;
 
   const existing = document.getElementById(GA4_DYNAMIC_SCRIPT_ID) as HTMLScriptElement | null;
   if (existing) {

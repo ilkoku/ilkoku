@@ -69,6 +69,17 @@ function updateAnalyticsConsent(granted: boolean) {
   });
 }
 
+function applyInitialConsent(settings: SiteAnalyticsSettings) {
+  if (settings.consentRequired) {
+    setDefaultDeniedConsent();
+    updateAnalyticsConsent(readAnalyticsConsent());
+    return;
+  }
+
+  setRuntimeState("consent", "not-required");
+  updateAnalyticsConsent(true);
+}
+
 function loadGtm(id: string) {
   if (!id) return;
   const existing = document.getElementById(GTM_SCRIPT_ID) as HTMLScriptElement | null;
@@ -168,16 +179,7 @@ export function SiteAnalyticsLoader() {
         }
 
         ensureDataLayer();
-
-        if (settings.consentRequired) {
-          setDefaultDeniedConsent();
-          updateAnalyticsConsent(readAnalyticsConsent());
-          loadProviders(settings);
-          return;
-        }
-
-        setRuntimeState("consent", "not-required");
-        updateAnalyticsConsent(true);
+        applyInitialConsent(settings);
         loadProviders(settings);
       })
       .catch(() => {

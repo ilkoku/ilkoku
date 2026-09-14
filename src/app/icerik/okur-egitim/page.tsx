@@ -23,7 +23,7 @@ export default async function ReaderEducationDashboardPage() {
     categoryPath: "okurluk-okulu",
     visualCount: Object.keys(guide.visuals).length,
     updatedAt: updatedAt?.toISOString() ?? null,
-    editHref: `/icerik/egitim/okur/${category.slug}`,
+    editHref: `/icerik/okur-egitim/${category.slug}`,
     publicHref: readerEducationPublicPath(category),
   }));
 

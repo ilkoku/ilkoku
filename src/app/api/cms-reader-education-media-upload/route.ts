@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 function back(request: Request, categorySlug: string, query: string) {
-  return NextResponse.redirect(sameOriginRequestUrl(request, `/icerik/egitim/okur/${categorySlug}?${query}`), 303);
+  return NextResponse.redirect(sameOriginRequestUrl(request, `/icerik/okur-egitim/${categorySlug}?${query}`), 303);
 }
 
 function text(formData: FormData, key: string, max: number) {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   try {
     formData = await request.formData();
   } catch {
-    return NextResponse.redirect(sameOriginRequestUrl(request, "/icerik/egitim?hata=okur-form"), 303);
+    return NextResponse.redirect(sameOriginRequestUrl(request, "/icerik/okur-egitim?hata=okur-form"), 303);
   }
 
   const categorySlug = text(formData, "categorySlug", 100);
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   const category = getReaderEducationCategory(categorySlug);
   const slotInfo = READER_EDUCATION_VISUAL_SLOTS.find((item) => item.key === slot);
   if (!category || !slotInfo) {
-    return NextResponse.redirect(sameOriginRequestUrl(request, "/icerik/egitim?hata=okur-hedef"), 303);
+    return NextResponse.redirect(sameOriginRequestUrl(request, "/icerik/okur-egitim?hata=okur-hedef"), 303);
   }
 
   const entry = formData.get("file");

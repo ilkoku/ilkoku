@@ -23,11 +23,14 @@ function isEditableTarget(target: EventTarget | null) {
 
 export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
   const pathname = usePathname();
+  const navigationPathname = pathname.startsWith("/icerik/egitim/okur/")
+    ? pathname.replace("/icerik/egitim/okur/", "/icerik/okur-egitim/")
+    : pathname;
   const searchInputRef = useRef<HTMLInputElement>(null);
   const availableNavigation = contentNavigation.filter((item) => isAdmin || !item.adminOnly);
   const primaryNavigation = availableNavigation.filter((item) => item.showInNavigation);
   const currentItem = availableNavigation
-    .filter((item) => item.href !== "/icerik" && pathname.startsWith(item.href))
+    .filter((item) => item.href !== "/icerik" && navigationPathname.startsWith(item.href))
     .sort((a, b) => b.href.length - a.href.length)[0]
     ?? availableNavigation.find((item) => item.href === "/icerik");
 
@@ -84,8 +87,8 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
               <div className="content-nav-group__links">
                 {section.items.map((item) => {
                   const active = item.href === "/icerik"
-                    ? pathname === item.href
-                    : pathname.startsWith(item.href);
+                    ? navigationPathname === item.href
+                    : navigationPathname.startsWith(item.href);
 
                   return (
                     <Link

@@ -1,7 +1,13 @@
 import Link from "next/link";
+import { SiteAnalyticsWorkbench } from "@/components/content/SiteAnalyticsWorkbench";
 import { SiteConsentWorkbench } from "@/components/content/SiteConsentWorkbench";
 import { requireCmsAdmin } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
+import {
+  defaultSiteAnalyticsSettings,
+  parseSiteAnalyticsSettingsStrict,
+  type SiteAnalyticsSettings,
+} from "@/lib/site-analytics-settings";
 import {
   defaultSiteConsentSettings,
   parseSiteConsentSettingsStrict,
@@ -10,8 +16,12 @@ import {
 import styles from "./SiteHealthPage.module.css";
 
 type Row = { valueJson: string };
-type LoadState =
+type ConsentLoadState =
   | { state: "ready"; settings: SiteConsentSettings; firstRun: boolean }
+  | { state: "read-error" }
+  | { state: "invalid" };
+type AnalyticsLoadState =
+  | { state: "ready"; settings: SiteAnalyticsSettings; firstRun: boolean }
   | { state: "read-error" }
   | { state: "invalid" };
 
@@ -21,7 +31,7 @@ function hasValue(...names: string[]) {
   return names.some((name) => Boolean(process.env[name]?.trim()));
 }
 
-async function loadConsentSettings(): Promise<LoadState> {
+async function loadConsentSettings(): Promise<ConsentLoadState> {
   try {
     const rows = await prisma.$queryRaw<Row[]>`
       SELECT valueJson FROM SiteContent
@@ -37,13 +47,34 @@ async function loadConsentSettings(): Promise<LoadState> {
   }
 }
 
-export default async function SiteHealthPage({ searchParams }: { searchParams: Promise<{ durum?: string }> }) {
+async function loadAnalyticsSettings(): Promise<AnalyticsLoadState> {
+  try {
+    const rows = await prisma.$queryRaw<Row[]>`
+      SELECT valueJson FROM SiteContent
+      WHERE namespace = 'site_analytics' AND contentKey = 'global'
+      LIMIT 1
+    `;
+    const row = rows[0];
+    if (!row) return { state: "ready", settings: defaultSiteAnalyticsSettings, firstRun: true };
+    const settings = parseSiteAnalyticsSettingsStrict(row.valueJson);
+    return settings ? { state: "ready", settings, firstRun: false } : { state: "invalid" };
+  } catch {
+    return { state: "read-error" };
+  }
+}
+
+export default async function SiteHealthPage({ searchParams }: { searchParams: Promise<{ durum?: string; analytics?: string }> }) {
   await requireCmsAdmin("/icerik/site-sagligi");
   const params = await searchParams;
-  const consent = await loadConsentSettings();
+  const [consent, analytics] = await Promise.all([loadConsentSettings(), loadAnalyticsSettings()]);
 
   const siteUrlReady = hasValue("NEXT_PUBLIC_SITE_URL", "SITE_URL");
-  const analyticsConfigured = hasValue("NEXT_PUBLIC_GTM_ID", "NEXT_PUBLIC_GA_MEASUREMENT_ID", "GA_MEASUREMENT_ID");
+  const legacyAnalyticsEnv = hasValue("NEXT_PUBLIC_GTM_ID", "NEXT_PUBLIC_GA_MEASUREMENT_ID", "GA_MEASUREMENT_ID");
+  const analyticsConfigured =
+    analytics.state === "ready" &&
+    analytics.settings.enabled &&
+    ((analytics.settings.gtmEnabled && Boolean(analytics.settings.gtmId)) ||
+      (analytics.settings.ga4Enabled && Boolean(analytics.settings.ga4MeasurementId)));
   const searchConsolePropertyConfigured = hasValue("GOOGLE_SEARCH_CONSOLE_PROPERTY", "GSC_PROPERTY");
   const searchConsoleAuthConfigured =
     hasValue("GOOGLE_SERVICE_ACCOUNT_EMAIL") && hasValue("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY");
@@ -73,10 +104,12 @@ export default async function SiteHealthPage({ searchParams }: { searchParams: P
       label: "Analytics / Tag",
       ready: analyticsConfigured,
       detail: analyticsConfigured
-        ? "Analytics veya Tag Manager kimliği ortam yapılandırmasında algılandı; consent davranışı ayrıca doğrulanmalı."
-        : "GA4/GTM kimliği algılanmadı. Consent ayarı takip kodunu kendi başına yüklemez.",
-      href: "/icerik/site-sagligi#consent",
-      action: "Consent ayarlarını gör",
+        ? "Panelde kayıtlı Analytics/Tag yapılandırması aktif ve public loader tarafından kullanılmaya hazır."
+        : legacyAnalyticsEnv
+          ? "Ortam değişkenlerinde eski bir Analytics/GTM kimliği algılandı; panel yapılandırması henüz etkin değil."
+          : "GTM veya GA4 henüz panelden bağlanmamış. Kimlikleri aşağıdaki Analytics alanından yönetebilirsiniz.",
+      href: "/icerik/site-sagligi#analytics",
+      action: "Analytics ayarlarını aç",
     },
     {
       code: "BOT",
@@ -98,12 +131,12 @@ export default async function SiteHealthPage({ searchParams }: { searchParams: P
         <div className={styles.heroCopy}>
           <span className={styles.eyebrow}>Yayın & Görünürlük · Admin</span>
           <h1>Site Sağlığı</h1>
-          <p>SEO, Google görünürlüğü, çerez/consent, analytics ve teknik arama motoru sinyallerini tek merkezden izleyin. Bu ekran public içeriği otomatik değiştirmez.</p>
+          <p>SEO, Google görünürlüğü, Analytics/Tag, çerez/consent ve teknik arama motoru sinyallerini tek merkezden izleyin ve güvenli şekilde yönetin.</p>
         </div>
         <div className={styles.heroMeta} aria-label="Site sağlığı özeti">
           <div className={styles.heroMetaItem}><span>Kontrol</span><strong>{readyCount}/4 hazır</strong></div>
-          <div className={styles.heroMetaItem}><span>Public değişiklik</span><strong>Yok</strong></div>
-          <div className={styles.heroMetaItem}><span>Mod</span><strong>Güvenli</strong></div>
+          <div className={styles.heroMetaItem}><span>Public değişiklik</span><strong>Onaylı</strong></div>
+          <div className={styles.heroMetaItem}><span>Mod</span><strong>Consent-first</strong></div>
         </div>
       </header>
 
@@ -117,6 +150,18 @@ export default async function SiteHealthPage({ searchParams }: { searchParams: P
         <div className={styles.notice} data-tone="danger" role="alert">
           <strong>Consent ayarları kaydedilemedi.</strong>
           <p>Mevcut kayıt korunmuştur. Veri kaynağı doğrulanmadan varsayılanlarla üzerine yazılmadı.</p>
+        </div>
+      ) : null}
+      {params.analytics === "kaydedildi" ? (
+        <div className={styles.notice} role="status">
+          <strong>Analytics & Tag ayarları kaydedildi.</strong>
+          <p>Public yükleyici yeni yapılandırmayı consent politikasına göre kullanacak.</p>
+        </div>
+      ) : null}
+      {params.analytics === "hata" ? (
+        <div className={styles.notice} data-tone="danger" role="alert">
+          <strong>Analytics & Tag ayarları kaydedilemedi.</strong>
+          <p>Kimlik biçimini, etkin sağlayıcıları ve yetkinizi kontrol edin. Mevcut kayıt korunmuştur.</p>
         </div>
       ) : null}
 
@@ -147,6 +192,34 @@ export default async function SiteHealthPage({ searchParams }: { searchParams: P
           <Link href="/icerik/seo?mod=teknik">Teknik SEO</Link>
           <Link href="/icerik/saglik">CMS Sistem Sağlığı</Link>
         </div>
+      </section>
+
+      <section id="analytics" className={styles.consentSection}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>Ölçüm · Google</span>
+          <h2>Analytics & Tag Ayarları</h2>
+          <p>Google Tag Manager ve GA4 bağlantılarını buradan yönetin. Varsayılan politika consent-first’tür; analytics izni verilmeden etiket yüklenmez.</p>
+        </div>
+
+        {analytics.state === "ready" ? (
+          <>
+            {analytics.firstRun ? (
+              <div className={styles.firstRun}>
+                <span className={styles.firstRunMark} aria-hidden="true">01</span>
+                <div>
+                  <strong>Güvenli ilk kurulum</strong>
+                  <p>Analytics kaydı henüz yok. Global Analytics anahtarı varsayılan olarak kapalıdır; kimlik girip açıkça kaydetmeden public takip başlamaz.</p>
+                </div>
+              </div>
+            ) : null}
+            <SiteAnalyticsWorkbench initialSettings={analytics.settings} firstRun={analytics.firstRun} />
+          </>
+        ) : (
+          <div className={styles.notice} data-tone="danger" role="alert">
+            <strong>{analytics.state === "read-error" ? "Analytics ayarları okunamadı." : "Analytics ayar kaydı geçersiz."}</strong>
+            <p>Mevcut durum güvenilir biçimde doğrulanamadığı için düzenleme kapatıldı. Public loader güvenli kapalı varsayılanı kullanır.</p>
+          </div>
+        )}
       </section>
 
       <section id="consent" className={styles.consentSection}>

@@ -74,7 +74,10 @@ test("reader education keeps eight categories, six optional visual slots and sit
   assert.equal(readerDashboard.includes("48 slot"), false, "reader center must not use the old custom slot-card dashboard");
   assert.equal(readerDashboard.includes("category.number"), false, "reader center must not show 01-08 category numbers");
 
-  assertContains(readerEditorRoute, 'export { default } from "@/app/icerik/egitim/okur/[slug]/page";', "reader editor route reuses the existing editor implementation");
+  assertContains(readerEditorRoute, 'import ReaderEducationGuideEditorPage from "@/app/icerik/egitim/okur/[slug]/page";', "reader editor route reuses the existing editor implementation");
+  assertContains(readerEditorRoute, 'export const dynamic = "force-dynamic";', "reader editor route keeps local static route config");
+  assertContains(readerEditorRoute, "export default ReaderEducationGuideEditorPage;", "reader editor route exports shared editor implementation");
+  assert.equal(readerEditorRoute.includes("export { dynamic }"), false, "reader editor route must not re-export Next route config");
   assertContains(contentShell, 'pathname.startsWith("/icerik/egitim/okur/")', "legacy reader editor routes are recognized");
   assertContains(contentShell, '"/icerik/okur-egitim/"', "legacy reader editor routes select reader center navigation");
 
@@ -87,6 +90,7 @@ test("reader education keeps eight categories, six optional visual slots and sit
 
   assertContains(editor, '<span className={styles.eyebrow}>Okur Eğitimi · Okurluk Okulu</span>', "reader editor removes 01-08 category numbering");
   assert.equal(editor.includes("category.number"), false, "reader editor must not render category numbering");
+  assertContains(editor, 'requireCmsManager(`/icerik/okur-egitim/${category.slug}`)', "reader editor authentication returns to reader center route");
   assertContains(editor, '<Link href="/icerik/okur-egitim">← Okur Eğitim Merkezi</Link>', "reader editor returns to reader center");
   assertContains(editor, "6 gelecekteki görsel slotu", "reader CMS six-slot editor");
   assertContains(editor, "Canlı sayfada bu slot boşluk oluşturmaz.", "reader empty visual no-gap contract");

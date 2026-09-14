@@ -7,6 +7,7 @@ import {
   parseSiteConsentSettingsStrict,
   type SiteConsentSettings,
 } from "@/lib/site-consent-settings";
+import styles from "./SiteHealthPage.module.css";
 
 type Row = { valueJson: string };
 type LoadState =
@@ -50,6 +51,7 @@ export default async function SiteHealthPage({ searchParams }: { searchParams: P
 
   const healthItems = [
     {
+      code: "SEO",
       label: "SEO denetim merkezi",
       ready: true,
       detail: "CMS yayın sayfalarında title, description, canonical, noindex ve teknik SEO denetimleri aktif.",
@@ -57,6 +59,7 @@ export default async function SiteHealthPage({ searchParams }: { searchParams: P
       action: "SEO Merkezini aç",
     },
     {
+      code: "GSC",
       label: "Google görünürlüğü",
       ready: searchConsoleReady,
       detail: searchConsoleReady
@@ -66,6 +69,7 @@ export default async function SiteHealthPage({ searchParams }: { searchParams: P
       action: "Teknik SEO'ya git",
     },
     {
+      code: "GA",
       label: "Analytics / Tag",
       ready: analyticsConfigured,
       detail: analyticsConfigured
@@ -75,6 +79,7 @@ export default async function SiteHealthPage({ searchParams }: { searchParams: P
       action: "Consent ayarlarını gör",
     },
     {
+      code: "BOT",
       label: "Robots & Sitemap",
       ready: siteUrlReady,
       detail: siteUrlReady
@@ -85,75 +90,92 @@ export default async function SiteHealthPage({ searchParams }: { searchParams: P
     },
   ];
 
+  const readyCount = healthItems.filter((item) => item.ready).length;
+
   return (
-    <section className="content-editor-page">
-      <div className="content-page-heading">
-        <div>
-          <span>Yayın & Görünürlük · Admin</span>
+    <section className={styles.page}>
+      <header className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <span className={styles.eyebrow}>Yayın & Görünürlük · Admin</span>
           <h1>Site Sağlığı</h1>
-          <p>SEO, Google görünürlüğü, çerez/consent, analytics ve teknik arama motoru sinyallerini tek merkezden yönetin. Public içeriği otomatik değiştirmez.</p>
+          <p>SEO, Google görünürlüğü, çerez/consent, analytics ve teknik arama motoru sinyallerini tek merkezden izleyin. Bu ekran public içeriği otomatik değiştirmez.</p>
         </div>
-      </div>
+        <div className={styles.heroMeta} aria-label="Site sağlığı özeti">
+          <div className={styles.heroMetaItem}><span>Kontrol</span><strong>{readyCount}/4 hazır</strong></div>
+          <div className={styles.heroMetaItem}><span>Public değişiklik</span><strong>Yok</strong></div>
+          <div className={styles.heroMetaItem}><span>Mod</span><strong>Güvenli</strong></div>
+        </div>
+      </header>
 
       {params.durum === "kaydedildi" ? (
-        <div className="content-panel" style={{ marginBottom: "1rem" }} role="status">
+        <div className={styles.notice} role="status">
           <strong>Consent ayarları kaydedildi.</strong>
           <p>Yeni yapılandırma yalnız consent katmanında kullanılacak; SEO içerik alanlarına dokunulmadı.</p>
         </div>
       ) : null}
       {params.durum === "hata" ? (
-        <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert">
+        <div className={styles.notice} data-tone="danger" role="alert">
           <strong>Consent ayarları kaydedilemedi.</strong>
           <p>Mevcut kayıt korunmuştur. Veri kaynağı doğrulanmadan varsayılanlarla üzerine yazılmadı.</p>
         </div>
       ) : null}
 
-      <div className="content-dashboard-grid" style={{ marginBottom: "1rem" }}>
+      <section className={styles.healthGrid} aria-label="Site sağlığı kontrolleri">
         {healthItems.map((item) => (
-          <article className="content-panel" key={item.label}>
-            <span className="content-status-badge" data-status={item.ready ? "published" : "draft"}>{item.ready ? "Hazır" : "Bağlantı gerekli"}</span>
-            <h2>{item.label}</h2>
-            <p>{item.detail}</p>
-            <div className="content-form-actions"><Link href={item.href} target={item.href.startsWith("/sitemap") ? "_blank" : undefined}>{item.action}</Link></div>
+          <article className={styles.healthCard} key={item.label}>
+            <div className={styles.healthIcon} aria-hidden="true">{item.code}</div>
+            <div className={styles.healthBody}>
+              <div className={styles.cardTop}>
+                <h2>{item.label}</h2>
+                <span className={styles.status} data-ready={item.ready}>{item.ready ? "Hazır" : "Bağlantı gerekli"}</span>
+              </div>
+              <p>{item.detail}</p>
+              <Link className={styles.cardAction} href={item.href} target={item.href.startsWith("/sitemap") ? "_blank" : undefined}>{item.action} →</Link>
+            </div>
           </article>
         ))}
-      </div>
+      </section>
 
-      <div className="content-panel" style={{ marginBottom: "1rem" }}>
-        <h2>Teknik hızlı kontrol</h2>
-        <p>Bu bağlantılar canlı çıktıyı doğrudan açar. SEO merkezi içerik verisini; bu alan ise altyapı sinyallerini ayırır.</p>
-        <div className="content-form-actions" style={{ flexWrap: "wrap" }}>
+      <section className={styles.quickPanel}>
+        <div>
+          <h2>Teknik hızlı kontrol</h2>
+          <p>Canlı robots ve sitemap uçlarını ya da CMS teknik SEO ekranını tek tıkla açın.</p>
+        </div>
+        <div className={styles.quickLinks}>
           <Link href="/robots.txt" target="_blank">robots.txt ↗</Link>
           <Link href="/sitemap.xml" target="_blank">sitemap.xml ↗</Link>
           <Link href="/icerik/seo?mod=teknik">Teknik SEO</Link>
           <Link href="/icerik/saglik">CMS Sistem Sağlığı</Link>
         </div>
-      </div>
+      </section>
 
-      <div id="consent" className="content-page-heading" style={{ marginTop: "1.5rem" }}>
-        <div>
-          <span>Gizlilik · Consent</span>
+      <section id="consent" className={styles.consentSection}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>Gizlilik · Consent</span>
           <h2>Çerez & Consent Ayarları</h2>
           <p>Zorunlu teknik saklama ayrı kalır. Analitik ve pazarlama kategorileri ziyaretçi tercihi olmadan granted durumuna geçirilmez.</p>
         </div>
-      </div>
 
-      {consent.state === "ready" ? (
-        <>
-          {consent.firstRun ? (
-            <div className="content-panel" style={{ marginBottom: "1rem" }}>
-              <strong>Güvenli ilk kurulum.</strong>
-              <p>Consent kaydı henüz yok. Public banner varsayılan olarak kapalıdır; açıkça kaydetmeden canlı site davranışı değişmez.</p>
-            </div>
-          ) : null}
-          <SiteConsentWorkbench initialSettings={consent.settings} firstRun={consent.firstRun} />
-        </>
-      ) : (
-        <div className="content-panel" role="alert">
-          <strong>{consent.state === "read-error" ? "Consent ayarları okunamadı." : "Consent ayar kaydı geçersiz."}</strong>
-          <p>Mevcut durum güvenilir biçimde doğrulanamadığı için düzenleme kapatıldı. Public API bu durumda güvenli kapalı varsayılanı kullanır.</p>
-        </div>
-      )}
+        {consent.state === "ready" ? (
+          <>
+            {consent.firstRun ? (
+              <div className={styles.firstRun}>
+                <span className={styles.firstRunMark} aria-hidden="true">01</span>
+                <div>
+                  <strong>Güvenli ilk kurulum</strong>
+                  <p>Consent kaydı henüz yok. Public banner varsayılan olarak kapalıdır; açıkça kaydetmeden canlı site davranışı değişmez.</p>
+                </div>
+              </div>
+            ) : null}
+            <SiteConsentWorkbench initialSettings={consent.settings} firstRun={consent.firstRun} />
+          </>
+        ) : (
+          <div className={styles.notice} data-tone="danger" role="alert">
+            <strong>{consent.state === "read-error" ? "Consent ayarları okunamadı." : "Consent ayar kaydı geçersiz."}</strong>
+            <p>Mevcut durum güvenilir biçimde doğrulanamadığı için düzenleme kapatıldı. Public API bu durumda güvenli kapalı varsayılanı kullanır.</p>
+          </div>
+        )}
+      </section>
     </section>
   );
 }

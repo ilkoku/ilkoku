@@ -7,8 +7,11 @@
   gap: 1rem;
 }
 
-.writers-education__grid > a {
+.writers-education__grid > :is(a, article) {
+  position: relative;
   min-height: 11.5rem;
+  display: flex;
+  flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.9rem;
   background:
@@ -23,7 +26,7 @@
   color: rgba(255, 255, 255, 0.82);
 }
 
-.writers-education__grid > a:hover {
+.writers-education__grid > :is(a, article):hover {
   transform: translateY(-4px);
   border-color: rgba(183, 168, 255, 0.42);
   box-shadow: 0 1.45rem 3.4rem rgba(30, 21, 69, 0.24);
@@ -53,7 +56,7 @@
     grid-template-columns: 1fr;
   }
 
-  .writers-education__grid > a {
+  .writers-education__grid > :is(a, article) {
     min-height: 9.75rem;
     border-radius: 1.6rem;
   }

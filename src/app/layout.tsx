@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncementBanner";
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { PublicNavigationHistory } from "@/components/layout/PublicNavigationHistory";
@@ -116,15 +117,17 @@ const websiteSchema = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr" data-scroll-behavior="smooth">
-      <head>
-        <script
+      <body>
+        <Script
+          id="ilkoku-ga4-head-config"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: googleTagBootstrap }}
+        />
+        <Script
           id="ilkoku-ga4-head-script"
-          async
+          strategy="beforeInteractive"
           src={`https://www.googletagmanager.com/gtag/js?id=${ILKOKU_GA4_ID}`}
         />
-        <script id="ilkoku-ga4-head-config" dangerouslySetInnerHTML={{ __html: googleTagBootstrap }} />
-      </head>
-      <body>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema).replace(/</g, "\\u003c") }}

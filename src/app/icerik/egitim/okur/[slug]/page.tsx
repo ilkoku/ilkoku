@@ -38,7 +38,7 @@ export default async function ReaderEducationGuideEditorPage({ params, searchPar
   const category = getReaderEducationCategory(slug);
   if (!category) notFound();
 
-  await requireCmsManager(`/icerik/egitim/okur/${category.slug}`);
+  await requireCmsManager(`/icerik/okur-egitim/${category.slug}`);
   const guide = await getReaderEducationGuideRecord(category.slug) ?? readerEducationGuideDefault(category);
   const uploaded = queryValue(query.yuklendi);
   const removed = queryValue(query.kaldirildi);

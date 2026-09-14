@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncementBanner";
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { PublicNavigationHistory } from "@/components/layout/PublicNavigationHistory";
+import { SiteAnalyticsLoader } from "@/components/privacy/SiteAnalyticsLoader";
 import { SiteConsentBanner } from "@/components/privacy/SiteConsentBanner";
 import {
   publicBrandDescription,
@@ -113,6 +114,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <PublicAnnouncementBanner />
         {children}
         <PublicCmsHydrator />
+        <SiteAnalyticsLoader />
         <SiteConsentBanner />
       </body>
     </html>

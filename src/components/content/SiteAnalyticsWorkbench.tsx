@@ -23,14 +23,10 @@ type ProbeResult = {
 type VerifyPayload = {
   ok?: boolean;
   state?: string;
-  consentRequired?: boolean;
-  providers?: { gtm?: boolean; ga4?: boolean };
   checks?: {
-    config?: { ok?: boolean };
     gtm?: ProbeResult;
     ga4?: ProbeResult;
   };
-  note?: string;
 };
 
 type Verification = {
@@ -67,6 +63,27 @@ function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+async function waitForProviderRuntime(settings: SiteAnalyticsSettings) {
+  const deadline = Date.now() + 6000;
+  let gtmRuntime = readRuntimeState("Gtm");
+  let ga4Runtime = readRuntimeState("Ga4");
+
+  while (Date.now() < deadline) {
+    const gtmReady = !settings.gtmEnabled || gtmRuntime === "loaded";
+    const ga4Ready = !settings.ga4Enabled || ga4Runtime === "loaded";
+    const providerFailed =
+      (settings.gtmEnabled && gtmRuntime === "error") ||
+      (settings.ga4Enabled && ga4Runtime === "error");
+
+    if ((gtmReady && ga4Ready) || providerFailed) break;
+    await wait(250);
+    gtmRuntime = readRuntimeState("Gtm");
+    ga4Runtime = readRuntimeState("Ga4");
+  }
+
+  return { gtmRuntime, ga4Runtime };
+}
+
 export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
   const [settings, setSettings] = useState(initialSettings);
   const [verifying, setVerifying] = useState(false);
@@ -83,6 +100,26 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
         tone: "warning",
         title: "Önce değişiklikleri kaydedin.",
         detail: "Canlı doğrulama yalnız veritabanında kayıtlı ve public loader tarafından kullanılan yapılandırmayı test eder.",
+        checkedAt: formatTime(),
+      });
+      return;
+    }
+
+    if (!settings.enabled) {
+      setVerification({
+        tone: "warning",
+        title: "Analytics global olarak kapalı.",
+        detail: "Önce Analytics / Tag yüklemeyi etkinleştirip ayarları kaydedin.",
+        checkedAt: formatTime(),
+      });
+      return;
+    }
+
+    if (!canSave) {
+      setVerification({
+        tone: "warning",
+        title: "Analytics yapılandırması eksik.",
+        detail: "Etkin sağlayıcının GTM veya GA4 kimliğini düzeltip ayarları kaydedin.",
         checkedAt: formatTime(),
       });
       return;
@@ -131,11 +168,8 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
         return;
       }
 
-      await wait(900);
-
       const consentGranted = settings.consentRequired ? readAnalyticsConsent() : true;
-      const gtmRuntime = readRuntimeState("Gtm");
-      const ga4Runtime = readRuntimeState("Ga4");
+      const { gtmRuntime, ga4Runtime } = await waitForProviderRuntime(settings);
       const runtimeFailures: string[] = [];
       if (settings.gtmEnabled && gtmRuntime !== "loaded") runtimeFailures.push(`GTM runtime=${gtmRuntime}`);
       if (settings.ga4Enabled && ga4Runtime !== "loaded") runtimeFailures.push(`GA4 runtime=${ga4Runtime}`);
@@ -144,7 +178,7 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
         setVerification({
           tone: "danger",
           title: "Google erişimi var fakat public loader tamamlanmadı.",
-          detail: `${runtimeFailures.join(", ")}. Sayfayı yenileyip yeniden deneyin; devam ederse loader/network davranışı incelenmeli.`,
+          detail: `${runtimeFailures.join(", ")}. Tarayıcı Google Tag Manager isteğini engelliyor olabilir; sayfayı yenileyip tekrar deneyin.`,
           checkedAt: formatTime(),
         });
         return;
@@ -280,7 +314,7 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
             <li>Aktif sağlayıcı: {activeProviderCount}</li>
           </ul>
           <div className="content-form-actions">
-            <button type="button" onClick={verifyLiveConnection} disabled={verifying || dirty || !settings.enabled || !canSave}>
+            <button type="button" onClick={verifyLiveConnection} disabled={verifying}>
               {verifying ? "Doğrulanıyor…" : dirty ? "Önce ayarları kaydet" : "Canlı bağlantıyı doğrula"}
             </button>
           </div>

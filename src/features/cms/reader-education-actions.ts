@@ -38,36 +38,36 @@ async function upsertGuide(userId: string, categorySlug: string, payload: unknow
 }
 
 export async function saveReaderEducationGuideMetaAction(formData: FormData) {
-  const { user } = await requireCmsManager("/icerik/egitim");
+  const { user } = await requireCmsManager("/icerik/okur-egitim");
   const categorySlug = field(formData, "categorySlug", 100);
   const category = getReaderEducationCategory(categorySlug);
-  if (!category) redirect("/icerik/egitim?hata=okur-egitimi");
+  if (!category) redirect("/icerik/okur-egitim?hata=okur-egitimi");
 
   const current = await getReaderEducationGuideRecord(category.slug) ?? readerEducationGuideDefault(category);
   const title = field(formData, "title", 220) || current.title;
   const summary = field(formData, "summary", 1200) || current.summary;
 
   await upsertGuide(user!.id, category.slug, { ...current, title, summary });
-  revalidatePath("/icerik/egitim");
-  revalidatePath(`/icerik/egitim/okur/${category.slug}`);
+  revalidatePath("/icerik/okur-egitim");
+  revalidatePath(`/icerik/okur-egitim/${category.slug}`);
   revalidatePath(readerEducationPublicPath(category));
-  redirect(`/icerik/egitim/okur/${category.slug}?kaydedildi=1`);
+  redirect(`/icerik/okur-egitim/${category.slug}?kaydedildi=1`);
 }
 
 export async function removeReaderEducationGuideVisualAction(formData: FormData) {
-  const { user } = await requireCmsManager("/icerik/egitim");
+  const { user } = await requireCmsManager("/icerik/okur-egitim");
   const categorySlug = field(formData, "categorySlug", 100);
   const slot = field(formData, "slot", 40);
   const category = getReaderEducationCategory(categorySlug);
-  if (!category || !isReaderEducationVisualSlotKey(slot)) redirect("/icerik/egitim?hata=okur-gorsel");
+  if (!category || !isReaderEducationVisualSlotKey(slot)) redirect("/icerik/okur-egitim?hata=okur-gorsel");
 
   const current = await getReaderEducationGuideRecord(category.slug) ?? readerEducationGuideDefault(category);
   const visuals = { ...current.visuals };
   delete visuals[slot];
   await upsertGuide(user!.id, category.slug, { ...current, visuals });
 
-  revalidatePath("/icerik/egitim");
-  revalidatePath(`/icerik/egitim/okur/${category.slug}`);
+  revalidatePath("/icerik/okur-egitim");
+  revalidatePath(`/icerik/okur-egitim/${category.slug}`);
   revalidatePath(readerEducationPublicPath(category));
-  redirect(`/icerik/egitim/okur/${category.slug}?kaldirildi=${slot}`);
+  redirect(`/icerik/okur-egitim/${category.slug}?kaldirildi=${slot}`);
 }

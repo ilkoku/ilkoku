@@ -1,0 +1,144 @@
+.shell {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1200;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.card {
+  width: min(980px, 100%);
+  padding: 1rem;
+  border: 1px solid rgba(45, 38, 33, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 252, 247, 0.98);
+  box-shadow: 0 18px 60px rgba(31, 24, 20, 0.18);
+  color: #27211d;
+  pointer-events: auto;
+  backdrop-filter: blur(14px);
+}
+
+.copy strong {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 1rem;
+}
+
+.copy p {
+  margin: 0;
+  color: #625750;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.copy a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.categories {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(45, 38, 33, 0.1);
+}
+
+.categoryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+}
+
+.categoryRow span:first-child {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.categoryRow small {
+  color: #766a62;
+}
+
+.categoryRow input {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+}
+
+.required {
+  color: #625750;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.95rem;
+}
+
+.actions button {
+  min-height: 42px;
+  padding: 0.68rem 0.95rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondary {
+  border: 1px solid rgba(45, 38, 33, 0.18);
+  background: transparent;
+  color: #403831;
+}
+
+.primary {
+  border: 1px solid #27211d;
+  background: #27211d;
+  color: #fffdf9;
+}
+
+.actions button:focus-visible,
+.copy a:focus-visible,
+.categoryRow input:focus-visible {
+  outline: 3px solid rgba(39, 33, 29, 0.35);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .shell {
+    right: 0.65rem;
+    bottom: 0.65rem;
+    left: 0.65rem;
+  }
+
+  .card {
+    max-height: min(78vh, 620px);
+    overflow: auto;
+    border-radius: 16px;
+  }
+
+  .categoryRow {
+    align-items: flex-start;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+}

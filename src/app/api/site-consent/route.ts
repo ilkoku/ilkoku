@@ -14,6 +14,16 @@ function firstForwardedValue(value: string | null) {
   return value?.split(",")[0]?.trim() || null;
 }
 
+function validHttpOrigin(value: string | null | undefined) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 function sameOrigin(request: Request) {
   const fetchSite = request.headers.get("sec-fetch-site");
   if (fetchSite) return fetchSite === "same-origin";
@@ -34,8 +44,33 @@ function sameOrigin(request: Request) {
   }
 }
 
+function getPublicOrigin(request: Request) {
+  const configuredOrigin =
+    validHttpOrigin(process.env.NEXT_PUBLIC_SITE_URL) ||
+    validHttpOrigin(process.env.SITE_URL);
+  if (configuredOrigin) return configuredOrigin;
+
+  const forwardedHost = firstForwardedValue(request.headers.get("x-forwarded-host"));
+  if (forwardedHost) {
+    const forwardedProto = firstForwardedValue(request.headers.get("x-forwarded-proto"));
+    const protocol = forwardedProto === "http" || forwardedProto === "https" ? forwardedProto : "https";
+    return `${protocol}://${forwardedHost}`;
+  }
+
+  const browserOrigin = validHttpOrigin(request.headers.get("origin"));
+  if (browserOrigin) return browserOrigin;
+
+  const host = request.headers.get("host");
+  if (host && host !== "0.0.0.0:3000" && host !== "0.0.0.0") {
+    const protocol = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+    return `${protocol}://${host}`;
+  }
+
+  return new URL(request.url).origin;
+}
+
 function redirectToHealth(request: Request, durum: "kaydedildi" | "hata") {
-  const url = new URL("/icerik/site-sagligi", request.url);
+  const url = new URL("/icerik/site-sagligi", getPublicOrigin(request));
   url.searchParams.set("durum", durum);
   url.hash = "consent";
   return NextResponse.redirect(url, 303);

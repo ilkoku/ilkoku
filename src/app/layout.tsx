@@ -4,6 +4,7 @@ import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { PublicNavigationHistory } from "@/components/layout/PublicNavigationHistory";
 import { SiteAnalyticsLoader } from "@/components/privacy/SiteAnalyticsLoader";
 import { SiteConsentBanner } from "@/components/privacy/SiteConsentBanner";
+import { ILKOKU_GA4_ID } from "@/lib/site-analytics-settings";
 import {
   publicBrandDescription,
   publicBrandName,
@@ -24,6 +25,20 @@ import "./public-discovery-paused.css";
 
 const baseUrl = "https://ilkoku.com";
 const officialEntityUrls = [...siteSocialUrls, "https://github.com/ilkoku"];
+const googleTagBootstrap = `
+window.dataLayer = window.dataLayer || [];
+function gtag(){window.dataLayer.push(arguments);}
+window.gtag = window.gtag || gtag;
+gtag('consent', 'default', {
+  analytics_storage: 'denied',
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+  wait_for_update: 500
+});
+gtag('js', new Date());
+gtag('config', '${ILKOKU_GA4_ID}');
+`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -101,6 +116,14 @@ const websiteSchema = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr" data-scroll-behavior="smooth">
+      <head>
+        <script
+          id="ilkoku-ga4-head-script"
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${ILKOKU_GA4_ID}`}
+        />
+        <script id="ilkoku-ga4-head-config" dangerouslySetInnerHTML={{ __html: googleTagBootstrap }} />
+      </head>
       <body>
         <script
           type="application/ld+json"

@@ -35,6 +35,7 @@ export const cmsModules: CmsModule[] = [
   { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", description: "Bekleyen taslakları incele, önizle ve yayınla", group: "Yayın & Görünürlük", enabled: true, mode: "controlled-write" },
   { href: "/icerik/zamanlama", label: "Yayın Zamanlama", description: "Planlı yayın ve otomatik yayından kaldırma", group: "Yayın & Görünürlük", enabled: true, mode: "controlled-write" },
   { href: "/icerik/seo", label: "SEO", description: "Meta, canonical, index ve sosyal paylaşım denetimi", group: "Yayın & Görünürlük", enabled: true, mode: "read-only-audit" },
+  { href: "/icerik/site-sagligi", label: "Site Sağlığı & Çerezler", description: "Google görünürlüğü, consent, analytics ve teknik sinyaller", group: "Yayın & Görünürlük", enabled: true, mode: "admin-control", adminOnly: true },
   { href: "/icerik/formlar", label: "Formlar & Talepler", description: "Kurumsal formlar ve gelen talepler", group: "Yayın & Görünürlük", enabled: true, mode: "controlled-write" },
   { href: "/icerik/filtreleme-merkezi", label: "Filtreleme Merkezi", description: "Eser/yazar havuzları ve rol filtreleri", group: "Yayın & Görünürlük", enabled: true, mode: "admin-control" },
   { href: "/icerik/yonlendirmeler", label: "Yönlendirmeler", description: "Eski URL ve kalıcı 308 yönlendirme kuralları", group: "Yayın & Görünürlük", enabled: true, mode: "admin-control", adminOnly: true },

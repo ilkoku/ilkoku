@@ -14,7 +14,7 @@ export const defaultSiteConsentSettings: SiteConsentSettings = {
   marketingEnabled: false,
   consentModeEnabled: true,
   rejectAllEnabled: true,
-  policyPath: "/yasal/cerez-politikasi",
+  policyPath: "/yasal/gizlilik-politikasi",
   retentionDays: 180,
 };
 

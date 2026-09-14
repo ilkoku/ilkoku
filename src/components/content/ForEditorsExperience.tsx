@@ -199,30 +199,21 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
 
       {sectionMap.get("Editör olarak başla") ? <section className="editors-start how-container"><EditorIcon name="pool" /><div><span>Sıra sende</span><h2>Yeni eserlerin gelişiminde profesyonel yerini al.</h2><EditorialBody body={sectionMap.get("Editör olarak başla")!.body} /><div className="editors-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=editor">Editör hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/editoryal-standartlar">Önce standartları oku</Link></div></div></section> : null}
 
-      <aside className="how-related how-container" id="editor-egitimi" aria-labelledby="editor-egitimi-title">
+      <aside className="how-related how-container writers-education" id="editor-egitimi" aria-labelledby="editor-egitimi-title">
         <SectionHeading
           eyebrow="Editörlüğünü geliştir."
           title="Editörlük eğitimini kendi yolundan keşfet."
           description="Bir metni yalnızca düzeltmeyi değil; değerlendirmeyi, geliştirmeyi ve yazarı daha güçlü bir esere taşımayı öğren. İhtiyacın olan eğitim alanından başlayarak profesyonel editörlüğünü adım adım güçlendir."
         />
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="how-related__grid writers-education__grid">
           {editorEducationCategories.map((category) => (
-            <article
-              className="flex min-h-64 flex-col rounded-[1.55rem] border border-white/10 bg-[#17122f] p-6 text-white shadow-[0_16px_42px_rgba(23,18,47,0.16)]"
-              key={category.title}
-            >
-              <strong className="font-serif text-2xl font-semibold leading-tight tracking-[-0.025em] text-white">{category.title}</strong>
-              <p className="mt-3 text-sm leading-7 text-[#d8d2e8]">{category.description}</p>
+            <article key={category.title}>
+              <strong>{category.title}</strong>
+              <span>{category.description}</span>
             </article>
           ))}
         </div>
-
-        <div className="mb-4 mt-9 flex flex-wrap items-end justify-between gap-2 border-t border-black/[0.07] pt-7">
-          <strong className="font-serif text-xl font-semibold text-[#211746]">İlkOku’da devam et</strong>
-          <p className="m-0 text-sm text-[#69667e]">Editörlük yolculuğundan sonra platformun diğer profesyonel alanlarına geç.</p>
-        </div>
-        <div className="how-related__grid"><Link href="/editoryal-standartlar"><strong>Editoryal Standartlar</strong><span>Rapor ölçütlerini ve iki bağımsız görüş modelini incele.</span></Link><Link href="/icerik-ve-yas-politikasi"><strong>İçerik ve Yaş</strong><span>Hedef okur ve içerik sınıflandırmasının değerlendirmedeki yerini gör.</span></Link><Link href="/topluluk-kurallari"><strong>Topluluk Kuralları</strong><span>Yazar ve okur geri bildiriminin profesyonel incelemeden nasıl ayrıldığını oku.</span></Link><Link href="/editorler"><strong>Editörleri keşfet</strong><span>Herkese açık editör profillerini ve uzmanlıklarını incele.</span></Link></div>
       </aside>
 
       <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/yazarlar-icin">Yazarlar İçin</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/telif-bildirimi">Telif Bildirimi</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link></nav></div></footer>

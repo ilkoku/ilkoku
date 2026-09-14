@@ -10,9 +10,35 @@ import {
 
 type Row = { valueJson: string };
 
+function firstForwardedValue(value: string | null) {
+  return value?.split(",")[0]?.trim() || null;
+}
+
 function sameOrigin(request: Request) {
+  const fetchSite = request.headers.get("sec-fetch-site");
+  if (fetchSite) return fetchSite === "same-origin";
+
   const origin = request.headers.get("origin");
-  return !origin || origin === new URL(request.url).origin;
+  if (!origin) return true;
+
+  try {
+    const originHost = new URL(origin).host;
+    const publicHost =
+      firstForwardedValue(request.headers.get("x-forwarded-host")) ||
+      request.headers.get("host") ||
+      new URL(request.url).host;
+
+    return originHost === publicHost;
+  } catch {
+    return false;
+  }
+}
+
+function redirectToHealth(request: Request, durum: "kaydedildi" | "hata") {
+  const url = new URL("/icerik/site-sagligi", request.url);
+  url.searchParams.set("durum", durum);
+  url.hash = "consent";
+  return NextResponse.redirect(url, 303);
 }
 
 async function loadStoredSettings() {
@@ -49,7 +75,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin" || !sameOrigin(request)) {
-    return NextResponse.json({ ok: false }, { status: 403 });
+    return redirectToHealth(request, "hata");
   }
 
   const form = await request.formData();
@@ -73,8 +99,8 @@ export async function POST(request: Request) {
       ON DUPLICATE KEY UPDATE valueJson = VALUES(valueJson), status = 'published', updatedAt = CURRENT_TIMESTAMP(3)
     `;
   } catch {
-    return NextResponse.redirect(new URL("/icerik/site-sagligi?durum=hata", request.url), 303);
+    return redirectToHealth(request, "hata");
   }
 
-  return NextResponse.redirect(new URL("/icerik/site-sagligi?durum=kaydedildi", request.url), 303);
+  return redirectToHealth(request, "kaydedildi");
 }

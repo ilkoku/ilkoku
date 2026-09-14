@@ -13,11 +13,9 @@ type ConsentChoice = {
   expiresAt: number;
 };
 
-type Gtag = (command: "consent", action: "update", params: Record<string, "granted" | "denied">) => void;
-
 declare global {
   interface Window {
-    gtag?: Gtag;
+    gtag?: (...args: unknown[]) => void;
   }
 }
 

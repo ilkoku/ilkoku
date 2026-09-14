@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { SiteAnalyticsSettings } from "@/lib/site-analytics-settings";
+import { ILKOKU_GA4_ID, type SiteAnalyticsSettings } from "@/lib/site-analytics-settings";
 
 type ConsentChoice = {
   version: 1;
@@ -22,7 +22,8 @@ declare global {
 
 const CONSENT_STORAGE_KEY = "ilkoku:consent:v1";
 const GTM_SCRIPT_ID = "ilkoku-gtm-script";
-const GA4_SCRIPT_ID = "ilkoku-ga4-script";
+const GA4_DYNAMIC_SCRIPT_ID = "ilkoku-ga4-script";
+const GA4_HEAD_SCRIPT_ID = "ilkoku-ga4-head-script";
 
 function setRuntimeState(key: "consent" | "gtm" | "ga4", value: string) {
   document.documentElement.dataset[`ilkokuAnalytics${key[0].toUpperCase()}${key.slice(1)}`] = value;
@@ -71,7 +72,9 @@ function updateAnalyticsConsent(granted: boolean) {
 
 function applyInitialConsent(settings: SiteAnalyticsSettings) {
   if (settings.consentRequired) {
-    setDefaultDeniedConsent();
+    const headConfigPresent = Boolean(document.getElementById("ilkoku-ga4-head-config"));
+    if (!headConfigPresent) setDefaultDeniedConsent();
+    else setRuntimeState("consent", "denied");
     updateAnalyticsConsent(readAnalyticsConsent());
     return;
   }
@@ -107,9 +110,23 @@ function loadGtm(id: string) {
   document.head.appendChild(script);
 }
 
+function useHeadGa4(id: string, debugMode: boolean) {
+  if (id !== ILKOKU_GA4_ID) return false;
+  const headScript = document.getElementById(GA4_HEAD_SCRIPT_ID) as HTMLScriptElement | null;
+  if (!headScript || typeof window.gtag !== "function") return false;
+
+  if (debugMode) {
+    window.gtag("config", id, { debug_mode: true, send_page_view: false });
+  }
+  setRuntimeState("ga4", "loaded");
+  return true;
+}
+
 function loadGa4(id: string, debugMode: boolean) {
   if (!id) return;
-  const existing = document.getElementById(GA4_SCRIPT_ID) as HTMLScriptElement | null;
+  if (useHeadGa4(id, debugMode)) return;
+
+  const existing = document.getElementById(GA4_DYNAMIC_SCRIPT_ID) as HTMLScriptElement | null;
   if (existing) {
     setRuntimeState("ga4", existing.dataset.analyticsState || "present");
     return;
@@ -117,7 +134,7 @@ function loadGa4(id: string, debugMode: boolean) {
 
   ensureDataLayer();
   const script = document.createElement("script");
-  script.id = GA4_SCRIPT_ID;
+  script.id = GA4_DYNAMIC_SCRIPT_ID;
   script.async = true;
   script.dataset.analyticsState = "loading";
   script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;

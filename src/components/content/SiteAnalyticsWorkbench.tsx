@@ -61,7 +61,7 @@ export function SiteAnalyticsWorkbench({ initialSettings, firstRun }: Props) {
           </div>
           <p>Açıkken analytics scriptleri ziyaretçi Analitik kategorisine izin verene kadar yüklenmez. İlkOku için önerilen güvenli mod budur.</p>
           <label className={styles.toggleRow}>
-            <span><strong>Analitik izni olmadan etiket yükleme</strong><small>Açık tutulması önerilir.</small></span>
+            <span><strong>Analitik izni verilene kadar etiketleri beklet</strong><small>Açık tutulması önerilir.</small></span>
             <span className={styles.toggle}><input type="checkbox" name="consentRequired" checked={settings.consentRequired} onChange={(event) => setSettings((s) => ({ ...s, consentRequired: event.target.checked }))} /><i /></span>
           </label>
         </section>

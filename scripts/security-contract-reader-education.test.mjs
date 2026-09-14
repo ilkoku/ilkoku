@@ -20,9 +20,12 @@ test("reader education keeps eight categories, six optional visual slots and sit
   const howItWorks = source("src/components/content/HowItWorksExperience.tsx");
   const writerDashboard = source("src/app/icerik/egitim/page.tsx");
   const readerDashboard = source("src/app/icerik/okur-egitim/page.tsx");
+  const readerEditorRoute = source("src/app/icerik/okur-egitim/[slug]/page.tsx");
   const workbench = source("src/components/content/EducationWorkbench.tsx");
+  const contentShell = source("src/components/content/ContentShell.tsx");
   const cmsModules = source("src/lib/cms-modules.ts");
   const editor = source("src/app/icerik/egitim/okur/[slug]/page.tsx");
+  const actions = source("src/features/cms/reader-education-actions.ts");
   const upload = source("src/app/api/cms-reader-education-media-upload/route.ts");
   const sitemap = source("src/app/sitemap.ts");
 
@@ -66,10 +69,14 @@ test("reader education keeps eight categories, six optional visual slots and sit
   assertContains(readerDashboard, "<h1>Okur Eğitim Merkezi</h1>", "reader center heading");
   assertContains(readerDashboard, "visualTarget={6}", "reader center six-slot target");
   assertContains(readerDashboard, 'entityLabel="eğitim"', "reader workbench education terminology");
-  assertContains(readerDashboard, 'editHref: `/icerik/egitim/okur/${category.slug}`', "reader center editor links");
+  assertContains(readerDashboard, 'editHref: `/icerik/okur-egitim/${category.slug}`', "reader center editor links stay under reader center route");
   assertContains(readerDashboard, "readerEducationPublicPath(category)", "reader center live links");
   assert.equal(readerDashboard.includes("48 slot"), false, "reader center must not use the old custom slot-card dashboard");
   assert.equal(readerDashboard.includes("category.number"), false, "reader center must not show 01-08 category numbers");
+
+  assertContains(readerEditorRoute, 'export { default } from "@/app/icerik/egitim/okur/[slug]/page";', "reader editor route reuses the existing editor implementation");
+  assertContains(contentShell, 'pathname.startsWith("/icerik/egitim/okur/")', "legacy reader editor routes are recognized");
+  assertContains(contentShell, '"/icerik/okur-egitim/"', "legacy reader editor routes select reader center navigation");
 
   assertContains(writerDashboard, '<Link href="/icerik/okur-egitim">Okur Eğitim Merkezi</Link>', "writer center links separate reader center");
   assert.equal(writerDashboard.includes('id="okur-egitimleri"'), false, "writer center must not embed a second custom reader dashboard");
@@ -83,7 +90,10 @@ test("reader education keeps eight categories, six optional visual slots and sit
   assertContains(editor, '<Link href="/icerik/okur-egitim">← Okur Eğitim Merkezi</Link>', "reader editor returns to reader center");
   assertContains(editor, "6 gelecekteki görsel slotu", "reader CMS six-slot editor");
   assertContains(editor, "Canlı sayfada bu slot boşluk oluşturmaz.", "reader empty visual no-gap contract");
+  assertContains(actions, 'requireCmsManager("/icerik/okur-egitim")', "reader actions require the reader center route");
+  assertContains(actions, 'redirect(`/icerik/okur-egitim/${category.slug}?kaydedildi=1`)', "reader save returns to reader editor route");
   assertContains(upload, "isSameOriginRequest(request)", "reader upload same-origin guard");
   assertContains(upload, "access.canManage", "reader upload CMS authorization guard");
   assertContains(upload, "MAX_CMS_MEDIA_BYTES", "reader upload media size guard");
+  assertContains(upload, '`/icerik/okur-egitim/${categorySlug}?${query}`', "reader upload returns to reader editor route");
 });

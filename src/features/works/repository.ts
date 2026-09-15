@@ -25,6 +25,7 @@ export type UpdateWorkRecord = {
   genre?: string | null;
   language?: string;
   coverUrl?: string | null;
+  isActive?: boolean;
   status?: "draft" | "in_review" | "published" | "archived";
   visibility?: "private" | "unlisted" | "public";
   publishedAt?: Date | null;
@@ -295,6 +296,7 @@ export const worksRepository = {
             status: "active",
           },
         },
+        isActive: true,
         language: "tr",
         publishedAt: {
           not: null,
@@ -355,6 +357,7 @@ export const worksRepository = {
           status: "active" as const,
         },
       },
+      isActive: true,
       language: "tr",
       publishedAt: {
         not: null,
@@ -449,6 +452,7 @@ export const worksRepository = {
             contentRating: {
               not: "adult_18",
             },
+            isActive: true,
             status: "published",
             visibility: "public",
           },

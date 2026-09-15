@@ -21,6 +21,14 @@ function snapshot(value: HeaderNavigationPayload) {
   return JSON.stringify(value);
 }
 
+function pageBadge(page: SiteMapPage, used: boolean) {
+  if (page.indexable === false) return used ? "Menüde · Noindex" : "Noindex";
+  if (used) return "Menüde";
+  if (page.kind === "education") return "Eğitim";
+  if (page.kind === "action") return "Aksiyon";
+  return "Sayfa";
+}
+
 export function HeaderNavigationWorkbench({ initial, pages }: Props) {
   const [value, setValue] = useState<HeaderNavigationPayload>(() => clone(initial));
   const [selectedMenuId, setSelectedMenuId] = useState(initial.menus[0]?.id ?? "");
@@ -173,7 +181,7 @@ export function HeaderNavigationWorkbench({ initial, pages }: Props) {
                     <label className={styles.pageRow} key={page.id} data-selected={selected}>
                       <input type="checkbox" checked={selected} onChange={() => togglePage(page.id)} />
                       <span><strong>{page.label}</strong><small>{page.href}</small></span>
-                      <em data-used={used}>{used ? "Menüde" : page.kind === "education" ? "Eğitim" : page.kind === "action" ? "Aksiyon" : "Sayfa"}</em>
+                      <em data-used={used} data-indexable={page.indexable === false ? "false" : "true"}>{pageBadge(page, used)}</em>
                     </label>
                   );
                 })}
@@ -199,8 +207,8 @@ export function HeaderNavigationWorkbench({ initial, pages }: Props) {
                       const page = pages.find((entry) => entry.id === item.pageId);
                       if (!page) return null;
                       return (
-                        <div className={styles.linkRow} key={item.pageId}>
-                          <div className={styles.linkInfo}><strong>{item.label || page.label}</strong><small>{page.href}</small></div>
+                        <div className={styles.linkRow} key={item.pageId} data-indexable={page.indexable === false ? "false" : "true"}>
+                          <div className={styles.linkInfo}><strong>{item.label || page.label}</strong><small>{page.href}{page.indexable === false ? " · Noindex" : ""}</small></div>
                           <input aria-label={`${page.label} menü adı`} placeholder={page.label} value={item.label ?? ""} onChange={(event) => updateLinkLabel(group.id, item.pageId, event.target.value)} />
                           <label className={styles.primaryToggle}><input type="checkbox" checked={Boolean(item.primary)} onChange={(event) => setPrimary(group.id, item.pageId, event.target.checked)} /><span>Büyük göster</span></label>
                           <div className={styles.rowActions}><button type="button" disabled={index === 0} onClick={() => moveLink(group.id, item.pageId, -1)}>↑</button><button type="button" disabled={index === group.links.length - 1} onClick={() => moveLink(group.id, item.pageId, 1)}>↓</button><button type="button" onClick={() => removeLink(group.id, item.pageId)}>Çıkar</button></div>

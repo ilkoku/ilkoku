@@ -50,19 +50,25 @@ async function removeOwnedCoverMedia(
   coverUrl: string | null,
 ) {
   const mediaId = uploadedMediaId(coverUrl);
-  if (!mediaId) return;
+  if (!mediaId || !coverUrl) return;
 
-  await prisma.siteContent.deleteMany({
+  const stillUsed = await prisma.work.count({
     where: {
-      contentKey: {
-        in: [`asset_${mediaId}`, `blob_${mediaId}`],
-      },
-      namespace: {
-        in: ["media", "media_blob"],
-      },
-      updatedById: writerId,
+      coverUrl,
     },
   });
+
+  if (stillUsed > 0) return;
+
+  await prisma.$executeRaw`
+    DELETE FROM SiteContent
+    WHERE updatedById = ${writerId}
+      AND (
+        (namespace = 'media' AND contentKey = ${`asset_${mediaId}`})
+        OR
+        (namespace = 'media_blob' AND contentKey = ${`blob_${mediaId}`})
+      )
+  `;
 }
 
 export async function updateAuthorWorkBasicsAction(formData: FormData) {
@@ -152,30 +158,26 @@ export async function uploadAuthorCoverAction(formData: FormData) {
   });
 
   await prisma.$transaction(async (transaction) => {
-    await transaction.siteContent.create({
-      data: {
-        id: randomUUID(),
-        namespace: "media",
-        contentKey: `asset_${mediaId}`,
-        valueJson: assetPayload,
-        valueType: "json",
-        status: "published",
-        publishedAt: new Date(),
-        updatedById: writer.id,
-      },
-    });
-    await transaction.siteContent.create({
-      data: {
-        id: randomUUID(),
-        namespace: "media_blob",
-        contentKey: `blob_${mediaId}`,
-        valueJson: blobPayload,
-        valueType: "base64",
-        status: "published",
-        publishedAt: new Date(),
-        updatedById: writer.id,
-      },
-    });
+    await transaction.$executeRaw`
+      INSERT INTO SiteContent (
+        id, namespace, contentKey, valueJson, valueType, status, publishedAt,
+        updatedById, createdAt, updatedAt
+      ) VALUES (
+        ${randomUUID()}, 'media', ${`asset_${mediaId}`}, ${assetPayload}, 'json', 'published', CURRENT_TIMESTAMP(3),
+        ${writer.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+      )
+    `;
+
+    await transaction.$executeRaw`
+      INSERT INTO SiteContent (
+        id, namespace, contentKey, valueJson, valueType, status, publishedAt,
+        updatedById, createdAt, updatedAt
+      ) VALUES (
+        ${randomUUID()}, 'media_blob', ${`blob_${mediaId}`}, ${blobPayload}, 'base64', 'published', CURRENT_TIMESTAMP(3),
+        ${writer.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+      )
+    `;
+
     await transaction.work.update({
       where: { id: work.id },
       data: { coverUrl: url },

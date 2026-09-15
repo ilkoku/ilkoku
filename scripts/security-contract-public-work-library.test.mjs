@@ -57,6 +57,11 @@ test("public work library is bounded by the canonical publication boundary", () 
   );
   contains(
     library,
+    "isActive: true",
+    "active work filter",
+  );
+  contains(
+    library,
     "publishedAt:",
     "publication timestamp filter",
   );
@@ -177,9 +182,15 @@ test("public work catalog exposes crawlable context-preserving book links and ho
   );
 });
 
-test("public work detail and related reads reject inactive author surfaces", () => {
+test("public work detail and related reads reject inactive author and work surfaces", () => {
   const repository = source(
     "src/features/works/repository.ts",
+  );
+  const memberPublic = source(
+    "src/features/works/member-public-queries.ts",
+  );
+  const commonScope = source(
+    "src/features/discovery/common-work-scope.ts",
   );
 
   contains(
@@ -196,6 +207,21 @@ test("public work detail and related reads reject inactive author surfaces", () 
     repository,
     "archivedAt: null",
     "public work archive state",
+  );
+  contains(
+    repository,
+    "isActive: true",
+    "public work active state",
+  );
+  contains(
+    memberPublic,
+    "isActive: true",
+    "member public active state",
+  );
+  contains(
+    commonScope,
+    "isActive: true",
+    "shared discovery active state",
   );
 });
 
@@ -318,6 +344,11 @@ test("landing, sitemap and production smoke preserve paused public discovery inv
     sitemap,
     "isSearchIndexExcludedPublicWorkSlug(work.slug)",
     "search-excluded sitemap work filter",
+  );
+  contains(
+    sitemap,
+    "isActive: true",
+    "sitemap active work filter",
   );
   contains(
     sitemap,

@@ -95,4 +95,6 @@ test("editor education section three adds text evaluation while preserving the s
   notContains(secondRoute, "AŞAMA 1", "text evaluation does not introduce numbered lesson cards");
 
   contains(experience, 'href: "/editorler-icin/egitim/editorluge-baslama"', "editor gateway first lesson remains linked");
+  contains(experience, 'href: "/editorler-icin/egitim/metin-degerlendirme"', "editor gateway text evaluation lesson linked");
+  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 2, "only the first two editor gateway cards may be linked in section three");
 });

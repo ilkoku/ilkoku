@@ -1,3 +1,20 @@
+export const EDITOR_EDUCATION_VISUAL_SLOTS = [
+  {
+    key: "cover",
+    number: "01",
+    label: "Eğitim Kapak Görseli",
+    description: "Editör eğitim menüsünde aktif eğitimi destekleyen kapak / kavram görseli",
+    recommendedWidth: 1200,
+    recommendedHeight: 800,
+    aspectRatio: "3:2",
+    fit: "contain",
+    automation: "Oranı korur; crop yapmaz; kaynak çözünürlüğü değiştirilmez.",
+  },
+] as const;
+
+export type EditorEducationVisualSlotKey = (typeof EDITOR_EDUCATION_VISUAL_SLOTS)[number]["key"];
+export type EditorEducationVisualFit = (typeof EDITOR_EDUCATION_VISUAL_SLOTS)[number]["fit"];
+
 export type EditorEducationCategory = {
   slug: string;
   title: string;

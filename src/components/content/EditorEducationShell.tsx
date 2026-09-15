@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
+import { getEditorEducationGuideRecord } from "@/lib/cms-editor-education";
 import {
   EDITOR_EDUCATION_CATEGORIES,
   editorEducationPublicPath,
@@ -13,7 +15,10 @@ type EditorEducationShellProps = {
   activeCategory: EditorEducationCategory;
 };
 
-export function EditorEducationShell({ children, activeCategory }: EditorEducationShellProps) {
+export async function EditorEducationShell({ children, activeCategory }: EditorEducationShellProps) {
+  const guide = await getEditorEducationGuideRecord(activeCategory.slug).catch(() => null);
+  const cover = guide?.visuals.cover;
+
   return (
     <>
       <div className="min-h-screen bg-[#f8f6f0] text-[#171426]">
@@ -52,6 +57,22 @@ export function EditorEducationShell({ children, activeCategory }: EditorEducati
                 })}
               </div>
             </div>
+
+            {cover ? (
+              <figure className="mt-4 hidden overflow-hidden rounded-[1.4rem] border border-[#2a2338]/10 bg-[#fffdf8] p-2 shadow-sm lg:block">
+                <Image
+                  src={cover.url}
+                  alt={cover.altText || `${activeCategory.title} eğitim kapak görseli`}
+                  width={cover.recommendedWidth}
+                  height={cover.recommendedHeight}
+                  className="h-auto w-full rounded-[1rem] object-contain"
+                  unoptimized
+                />
+                <figcaption className="px-2 pb-1 pt-2 text-[11px] font-semibold leading-5 text-[#7c6d94]">
+                  {activeCategory.title}
+                </figcaption>
+              </figure>
+            ) : null}
           </aside>
 
           <div className="min-w-0">{children}</div>

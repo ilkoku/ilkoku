@@ -56,7 +56,7 @@ const editorEducationCategories = [
   {
     title: "Yayıncılık ve Profesyonel Editörlük",
     description: "Dosya değerlendirmeden yayıma hazırlığa uzanan profesyonel editörlük ve yayıncılık sürecini tanı.",
-    href: null,
+    href: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk",
   },
 ] as const;
 
@@ -216,17 +216,10 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
 
         <div className="how-related__grid writers-education__grid">
           {editorEducationCategories.map((category) => (
-            category.href ? (
-              <Link href={category.href} key={category.title}>
-                <strong>{category.title}</strong>
-                <span>{category.description}</span>
-              </Link>
-            ) : (
-              <article key={category.title}>
-                <strong>{category.title}</strong>
-                <span>{category.description}</span>
-              </article>
-            )
+            <Link href={category.href} key={category.title}>
+              <strong>{category.title}</strong>
+              <span>{category.description}</span>
+            </Link>
           ))}
         </div>
       </aside>

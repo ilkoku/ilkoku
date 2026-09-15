@@ -7,7 +7,7 @@ import {
   getEditorEducationPublishedTextRecord,
 } from "@/lib/cms-editor-education";
 import { getEditorEducationCategory } from "@/lib/editor-education";
-import { getEditorEducationSourceTree } from "@/lib/editor-education-source";
+import { getEditorEducationSourcePageTree } from "@/lib/editor-education-source";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -19,7 +19,7 @@ export default async function EditorEducationPreviewPage({ params }: { params: P
   await requireCmsManager(`/icerik/onizleme/editor-egitim/${category.slug}`);
 
   const [tree, draft, published] = await Promise.all([
-    getEditorEducationSourceTree(category.slug),
+    getEditorEducationSourcePageTree(category.slug),
     getEditorEducationDraftTextRecord(category.slug),
     getEditorEducationPublishedTextRecord(category.slug),
   ]);

@@ -15,11 +15,15 @@ function notContains(text, fragment, label) {
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 }
 
-test("editor education is a real content-management surface without weakening the approved public lessons", () => {
+test("editor education CMS manages media and lesson text through a safe draft-preview-publish workflow", () => {
   const modules = source("src/lib/cms-modules.ts");
   const dashboard = source("src/app/icerik/editor-egitim/page.tsx");
   const detail = source("src/app/icerik/editor-egitim/[slug]/page.tsx");
+  const preview = source("src/app/icerik/onizleme/editor-egitim/[slug]/page.tsx");
+  const actions = source("src/features/cms/editor-education-actions.ts");
   const cmsStore = source("src/lib/cms-editor-education.ts");
+  const textEngine = source("src/lib/editor-education-text.tsx");
+  const sourceLoader = source("src/lib/editor-education-source.tsx");
   const uploadApi = source("src/app/api/cms-editor-education-media-upload/route.ts");
   const shell = source("src/components/content/EditorEducationShell.tsx");
   const writerEducation = source("src/app/icerik/egitim/page.tsx");
@@ -37,15 +41,44 @@ test("editor education is a real content-management surface without weakening th
   contains(dashboard, 'publicHref: editorEducationPublicPath(category)', "editor education live links");
 
   contains(detail, "requireCmsManager", "editor education detail access gate");
-  contains(detail, "Onaylı eğitim içeriği", "approved lesson body boundary");
-  contains(detail, "Metin gövdesi canlı eğitim sayfasında kod kontrollüdür", "approved body remains code-controlled");
+  contains(detail, "Taslak → Önizleme → Yayınla", "editor education safe text workflow");
+  contains(detail, "collectEditorEducationTextFields", "editor education source text inventory");
+  contains(detail, "saveEditorEducationTextAction", "editor education text save action");
+  contains(detail, "restoreEditorEducationTextRevisionAction", "editor education safe restore action");
+  contains(detail, "Taslağı Kaydet", "editor education draft save control");
+  contains(detail, "Taslak Önizleme", "editor education draft preview control");
+  contains(detail, 'value="publish">Yayınla', "editor education explicit publish control");
   contains(detail, "EditorEducationVisualUploadForm", "managed editor education upload form");
-  contains(detail, 'target="_blank">Canlı sayfa', "editor education live preview link");
+  contains(detail, 'target="_blank">Canlı sayfa', "editor education live page link");
+  contains(detail, "canonical ve Google index ayarları kod kontrollü kalır", "SEO boundary remains explicit");
 
-  contains(cmsStore, 'EDITOR_EDUCATION_GUIDE_NAMESPACE = "editor_education_guide"', "editor education SiteContent namespace");
-  contains(cmsStore, "FROM SiteContent", "editor education SiteContent reads");
-  contains(cmsStore, "EDITOR_EDUCATION_CATEGORIES.map", "editor education records include all categories");
-  contains(cmsStore, "editorEducationGuideDefault", "editor education safe no-record fallback");
+  contains(preview, "requireCmsManager", "draft preview CMS access gate");
+  contains(preview, "getEditorEducationDraftTextRecord", "draft preview reads draft first");
+  contains(preview, "previewMode: true", "draft preview is visibly separated from live");
+  contains(preview, "robots: { index: false, follow: false }", "draft preview is never indexable");
+
+  contains(actions, "requireCmsPublisher", "publishing requires publisher permission");
+  contains(actions, 'mode === "publish"', "draft and publish are distinct modes");
+  contains(actions, "EDITOR_EDUCATION_TEXT_DRAFT_NAMESPACE", "draft writes are separate from live writes");
+  contains(actions, "EDITOR_EDUCATION_TEXT_REVISION_NAMESPACE", "published versions create revision history");
+  contains(actions, "DELETE FROM SiteContent", "publish or discard cleans working draft");
+  contains(actions, "restoreEditorEducationTextRevisionAction", "revision restore returns to a draft");
+  contains(actions, "refreshEditorEducation", "editor text changes revalidate managed routes");
+
+  contains(cmsStore, 'EDITOR_EDUCATION_GUIDE_NAMESPACE = "editor_education_guide"', "editor education media SiteContent namespace");
+  contains(cmsStore, 'EDITOR_EDUCATION_TEXT_NAMESPACE = "editor_education_text"', "published editor education text namespace");
+  contains(cmsStore, 'EDITOR_EDUCATION_TEXT_DRAFT_NAMESPACE = "editor_education_text_draft"', "draft editor education text namespace");
+  contains(cmsStore, 'EDITOR_EDUCATION_TEXT_REVISION_NAMESPACE = "editor_education_text_revision"', "editor education revision namespace");
+  contains(cmsStore, "getEditorEducationPublishedTextRecord", "public text reader");
+  contains(cmsStore, "getEditorEducationDraftTextRecord", "draft text reader");
+  contains(cmsStore, "listEditorEducationTextRevisions", "revision history reader");
+  contains(cmsStore, "editorEducationTextDefault", "editor education text no-record fallback");
+
+  contains(textEngine, "collectEditorEducationTextFields", "source lesson text is discoverable without duplicating approved copy");
+  contains(textEngine, "applyEditorEducationTextOverrides", "published overrides preserve the existing React layout");
+  contains(textEngine, "cloneElement", "text overrides preserve lesson element structure");
+  contains(sourceLoader, '"editorluge-baslama"', "source loader includes first lesson");
+  contains(sourceLoader, '"yayincilik-ve-profesyonel-editorluk"', "source loader includes eighth lesson");
 
   contains(uploadApi, "isSameOriginRequest(request)", "editor education upload same-origin guard");
   contains(uploadApi, "getCmsAccess()", "editor education upload CMS auth");
@@ -54,10 +87,12 @@ test("editor education is a real content-management surface without weakening th
   contains(uploadApi, "'media_blob'", "editor education original media storage");
   contains(uploadApi, "EDITOR_EDUCATION_GUIDE_NAMESPACE", "editor education guide upsert");
 
-  contains(shell, "getEditorEducationGuideRecord(activeCategory.slug)", "public lesson consumes managed editor education record");
+  contains(shell, "getEditorEducationPublishedTextRecord(activeCategory.slug)", "public lesson consumes only published text overrides");
+  contains(shell, "applyEditorEducationTextOverrides", "public lesson applies managed text in-place");
+  contains(shell, "typeof textOverrides === \"undefined\"", "explicit draft preview does not fall through to published text");
+  contains(shell, "getEditorEducationGuideRecord(activeCategory.slug)", "public lesson consumes managed editor education media record");
   contains(shell, "guide?.visuals.cover", "public lesson managed cover binding");
-  contains(shell, ".catch(() => null)", "public lesson fails open when CMS read is temporarily unavailable");
-  contains(shell, "<Image", "public lesson renders managed cover when available");
+  contains(shell, ".catch(() => null)", "public lesson fails open when CMS reads are temporarily unavailable");
   contains(shell, "<LiveHomepageFooter", "original public footer remains");
   notContains(shell, "PublicSiteHeader", "public header remains owned by PublicSiteFrame");
 

@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   title: "Dil ve Anlatım Editörlüğü | İlkOku Editörlük Okulu",
   description:
     "Cümle yapısı, akıcılık, tekrar, gereksiz açıklama, ton, kelime seçimi, paragraf ritmi, üslup ve diyalog üzerinde çalışırken yazarın sesini korumayı öğren.",
-  robots: { index: false, follow: true },
+  alternates: { canonical: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu" },
+  robots: { index: true, follow: true },
 };
 
 const outcomes = [

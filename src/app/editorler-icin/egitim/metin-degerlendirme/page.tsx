@@ -7,7 +7,8 @@ import { getEditorEducationCategory } from "@/lib/editor-education";
 export const metadata: Metadata = {
   title: "Metin Değerlendirme | İlkOku Editörlük Okulu",
   description: "Bir metni ilk okumadan değerlendirme raporuna kadar sistemli biçimde çözümlemeyi; güçlü yönleri, geliştirme alanlarını, kanıtları ve öncelikleri belirlemeyi öğren.",
-  robots: { index: false, follow: true },
+  alternates: { canonical: "/editorler-icin/egitim/metin-degerlendirme" },
+  robots: { index: true, follow: true },
 };
 
 const outcomes = [

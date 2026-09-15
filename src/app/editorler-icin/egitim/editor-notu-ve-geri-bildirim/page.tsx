@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   title: "Editör Notu ve Geri Bildirim | İlkOku Editörlük Okulu",
   description:
     "Editöryal tespiti metinden kanıta, okur etkisine ve uygulanabilir revizyon seçeneğine dönüştürmeyi; editör mektubu ile satır içi notu doğru yerde kullanmayı öğren.",
-  robots: { index: false, follow: true },
+  alternates: { canonical: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim" },
+  robots: { index: true, follow: true },
 };
 
 const outcomes = [

@@ -21,8 +21,8 @@ export async function getEditorEducationSourcePageTree(categorySlug: string): Pr
   const category = getEditorEducationCategory(categorySlug);
   if (!category || !(category.slug in lessonLoaders)) return null;
   const loader = lessonLoaders[category.slug as LessonSlug];
-  const module = await loader();
-  return module.default();
+  const lessonModule = await loader();
+  return lessonModule.default();
 }
 
 export async function getEditorEducationSourceTree(categorySlug: string): Promise<ReactNode | null> {

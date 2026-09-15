@@ -28,7 +28,7 @@ export const EDITOR_EDUCATION_CATEGORIES: readonly EditorEducationCategory[] = [
     slug: "dil-ve-anlatim-editorlugu",
     title: "Dil ve Anlatım Editörlüğü",
     shortDescription: "Cümle, akıcılık, tekrar, anlatım, ton ve üslup sorunlarını metnin sesini koruyarak ele al.",
-    live: false,
+    live: true,
   },
   {
     slug: "tur-editorlugu",

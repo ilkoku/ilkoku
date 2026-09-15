@@ -46,7 +46,7 @@ export const EDITOR_EDUCATION_CATEGORIES: readonly EditorEducationCategory[] = [
     slug: "yazarla-calismak",
     title: "Yazarla Çalışmak",
     shortDescription: "Revizyon, fikir ayrılığı, iletişim ve müdahale sınırlarını profesyonel bir çalışma ilişkisine dönüştür.",
-    live: false,
+    live: true,
   },
   {
     slug: "yayincilik-ve-profesyonel-editorluk",

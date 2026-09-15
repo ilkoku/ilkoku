@@ -216,17 +216,10 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
 
         <div className="how-related__grid writers-education__grid">
           {editorEducationCategories.map((category) => (
-            category.href ? (
-              <Link href={category.href} key={category.title}>
-                <strong>{category.title}</strong>
-                <span>{category.description}</span>
-              </Link>
-            ) : (
-              <article key={category.title}>
-                <strong>{category.title}</strong>
-                <span>{category.description}</span>
-              </article>
-            )
+            <Link href={category.href} key={category.title}>
+              <strong>{category.title}</strong>
+              <span>{category.description}</span>
+            </Link>
           ))}
         </div>
       </aside>

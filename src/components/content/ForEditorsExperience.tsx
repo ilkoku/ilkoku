@@ -41,7 +41,7 @@ const editorEducationCategories = [
   {
     title: "Tür Editörlüğü",
     description: "Farklı eser türlerinin editöryal ihtiyaçlarını kendi anlatı mantığı ve okur beklentisiyle değerlendir.",
-    href: null,
+    href: "/editorler-icin/egitim/tur-editorlugu",
   },
   {
     title: "Editör Notu ve Geri Bildirim",

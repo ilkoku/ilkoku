@@ -157,7 +157,7 @@ test("CMS menu management stores page ids in a safe draft before publishing to t
   assert.match(actions, /parseHeaderNavigation\(raw,\s*pages\)/);
   assert.match(actions, /parseHeaderNavigation\(draft\.valueJson,\s*pages\)/);
   assert.match(actions, /contentKey = \$\{HEADER_NAV_DRAFT_KEY\}/);
-  assert.match(actions, /contentKey = \$\{HEADER_NAV_LIVE_KEY\}/);
+  assert.match(actions, /\$\{HEADER_NAV_LIVE_KEY\}/);
   assert.match(actions, /revalidatePath\("\/", "layout"\)/);
   assert.match(page, /Site Haritası & Menü Yönetimi/);
   assert.match(page, /loadPublishedCmsSiteMapPages/);

@@ -66,6 +66,17 @@ function revalidateWorkPaths(workId?: string) {
   }
 }
 
+function revalidatePublicWorkPaths(workSlug?: string) {
+  revalidatePath("/kesfet");
+  revalidatePath("/eserler");
+  revalidatePath("/okuyucu");
+  revalidatePath("/yazarlar");
+
+  if (workSlug) {
+    revalidatePath(`/kitap/${workSlug}`);
+  }
+}
+
 function workClassificationFromFormData(formData: FormData) {
   return {
     contentClassificationConfirmed:
@@ -339,6 +350,9 @@ export async function updateWorkAction(
     genre: formData.get("genre"),
     language: formData.get("language"),
     coverUrl: formData.get("coverUrl"),
+    isActive:
+      formData.get("isActive") === "true" ||
+      formData.get("isActive") === "on",
     status: normalizedStatus,
     ...workClassificationFromFormData(formData),
   });
@@ -361,6 +375,7 @@ export async function updateWorkAction(
   try {
     const updated = await updateWork(auth.authorId, parsed.data);
     revalidateWorkPaths(updated.id);
+    revalidatePublicWorkPaths(updated.slug);
 
     return {
       message: "Eser bilgileri güncellendi.",

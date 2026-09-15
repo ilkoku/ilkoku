@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
-import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader";
 import {
   EDITOR_EDUCATION_CATEGORIES,
   editorEducationPublicPath,
@@ -18,8 +17,6 @@ export function EditorEducationShell({ children, activeCategory }: EditorEducati
   return (
     <>
       <div className="min-h-screen bg-[#f8f6f0] text-[#171426]">
-        <PublicSiteHeader />
-
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:py-10">
           <aside aria-label="Editör eğitimleri" className="lg:sticky lg:top-6 lg:self-start">
             <div className="rounded-[1.4rem] border border-[#2a2338]/10 bg-[#fffdf8] p-3 shadow-sm">

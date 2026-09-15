@@ -22,7 +22,7 @@ export const EDITOR_EDUCATION_CATEGORIES: readonly EditorEducationCategory[] = [
     slug: "yapisal-editorluk",
     title: "Yapısal Editörlük",
     shortDescription: "Kurgu, olay örgüsü, karakter, tempo, bölüm yapısı ve anlatı bütünlüğünü değerlendirmeyi öğren.",
-    live: false,
+    live: true,
   },
   {
     slug: "dil-ve-anlatim-editorlugu",

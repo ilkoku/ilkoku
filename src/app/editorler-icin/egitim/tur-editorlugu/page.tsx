@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   title: "Tür Editörlüğü | İlkOku Editörlük Okulu",
   description:
     "Bir eseri kendi türünün okur vaadi, anlatı mantığı, alt türü, tür konvansiyonları ve hedef okur beklentileri içinde değerlendirmeyi; tür beklentisini klişeye dönüştürmeden editörlük yapmayı öğren.",
-  robots: { index: false, follow: true },
+  alternates: { canonical: "/editorler-icin/egitim/tur-editorlugu" },
+  robots: { index: true, follow: true },
 };
 
 const outcomes = [

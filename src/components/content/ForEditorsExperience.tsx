@@ -31,7 +31,7 @@ const editorEducationCategories = [
   {
     title: "Yapısal Editörlük",
     description: "Kurgu, olay örgüsü, karakter, tempo, bölüm yapısı ve anlatı bütünlüğünü değerlendirmeyi öğren.",
-    href: null,
+    href: "/editorler-icin/egitim/yapisal-editorluk",
   },
   {
     title: "Dil ve Anlatım Editörlüğü",

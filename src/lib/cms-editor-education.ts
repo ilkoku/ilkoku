@@ -9,8 +9,12 @@ import {
   type EditorEducationVisualFit,
   type EditorEducationVisualSlotKey,
 } from "@/lib/editor-education";
+import type { EditorEducationTextOverrides } from "@/lib/editor-education-text";
 
 export const EDITOR_EDUCATION_GUIDE_NAMESPACE = "editor_education_guide";
+export const EDITOR_EDUCATION_TEXT_NAMESPACE = "editor_education_text";
+export const EDITOR_EDUCATION_TEXT_DRAFT_NAMESPACE = "editor_education_text_draft";
+export const EDITOR_EDUCATION_TEXT_REVISION_NAMESPACE = "editor_education_text_revision";
 export const EDITOR_EDUCATION_GITHUB_MEDIA_ROOT = "public/media/editor-education";
 
 export type EditorEducationVisual = {
@@ -32,9 +36,28 @@ export type EditorEducationGuideRecord = {
   visuals: Partial<Record<EditorEducationVisualSlotKey, EditorEducationVisual>>;
 };
 
+export type EditorEducationTextRecord = {
+  categorySlug: string;
+  version: number;
+  overrides: EditorEducationTextOverrides;
+  savedAt?: string;
+};
+
+export type EditorEducationTextRevision = EditorEducationTextRecord & {
+  contentKey: string;
+  createdAt: Date;
+};
+
 type EditorEducationGuideRow = {
   contentKey: string;
   valueJson: string;
+  updatedAt: Date;
+};
+
+type EditorEducationTextRow = {
+  contentKey: string;
+  valueJson: string;
+  createdAt: Date;
   updatedAt: Date;
 };
 
@@ -53,8 +76,32 @@ export function editorEducationGuideDefault(category: EditorEducationCategory): 
   };
 }
 
+export function editorEducationTextDefault(category: EditorEducationCategory): EditorEducationTextRecord {
+  return {
+    categorySlug: category.slug,
+    version: 0,
+    overrides: {},
+  };
+}
+
 function safePositiveInteger(value: unknown) {
   return typeof value === "number" && Number.isInteger(value) && value > 0 && value <= 20000 ? value : undefined;
+}
+
+function safeVersion(value: unknown) {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 1000000 ? value : 0;
+}
+
+function safeOverrides(value: unknown): EditorEducationTextOverrides {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const result: EditorEducationTextOverrides = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!/^t-[a-zA-Z0-9-]+$/.test(key)) continue;
+    if (typeof raw !== "string") continue;
+    const text = raw.trim().slice(0, 12000);
+    if (text) result[key] = text;
+  }
+  return result;
 }
 
 function safeVisual(
@@ -105,6 +152,23 @@ export function parseEditorEducationGuide(valueJson: string, category: EditorEdu
   }
 }
 
+export function parseEditorEducationText(valueJson: string, category: EditorEducationCategory): EditorEducationTextRecord {
+  const fallback = editorEducationTextDefault(category);
+  try {
+    const parsed = JSON.parse(valueJson) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return fallback;
+    const raw = parsed as Record<string, unknown>;
+    return {
+      categorySlug: category.slug,
+      version: safeVersion(raw.version),
+      overrides: safeOverrides(raw.overrides),
+      savedAt: typeof raw.savedAt === "string" ? raw.savedAt.slice(0, 80) : undefined,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export async function getEditorEducationGuideRecord(categorySlug: string) {
   const category = getEditorEducationCategory(categorySlug);
   if (!category) return null;
@@ -119,6 +183,57 @@ export async function getEditorEducationGuideRecord(categorySlug: string) {
   `;
 
   return rows[0] ? parseEditorEducationGuide(rows[0].valueJson, category) : editorEducationGuideDefault(category);
+}
+
+async function getEditorEducationTextRow(
+  namespace: string,
+  categorySlug: string,
+  status: "draft" | "published",
+) {
+  const rows = await prisma.$queryRaw<EditorEducationTextRow[]>`
+    SELECT contentKey, valueJson, createdAt, updatedAt
+    FROM SiteContent
+    WHERE namespace = ${namespace}
+      AND contentKey = ${categorySlug}
+      AND status = ${status}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
+export async function getEditorEducationPublishedTextRecord(categorySlug: string) {
+  const category = getEditorEducationCategory(categorySlug);
+  if (!category) return null;
+  const row = await getEditorEducationTextRow(EDITOR_EDUCATION_TEXT_NAMESPACE, category.slug, "published");
+  return row ? parseEditorEducationText(row.valueJson, category) : editorEducationTextDefault(category);
+}
+
+export async function getEditorEducationDraftTextRecord(categorySlug: string) {
+  const category = getEditorEducationCategory(categorySlug);
+  if (!category) return null;
+  const row = await getEditorEducationTextRow(EDITOR_EDUCATION_TEXT_DRAFT_NAMESPACE, category.slug, "draft");
+  return row ? parseEditorEducationText(row.valueJson, category) : null;
+}
+
+export async function listEditorEducationTextRevisions(categorySlug: string, limit = 12) {
+  const category = getEditorEducationCategory(categorySlug);
+  if (!category) return [];
+  const pattern = `${category.slug}:%`;
+  const safeLimit = Math.max(1, Math.min(40, Math.trunc(limit)));
+  const rows = await prisma.$queryRaw<EditorEducationTextRow[]>`
+    SELECT contentKey, valueJson, createdAt, updatedAt
+    FROM SiteContent
+    WHERE namespace = ${EDITOR_EDUCATION_TEXT_REVISION_NAMESPACE}
+      AND contentKey LIKE ${pattern}
+      AND status = 'published'
+    ORDER BY createdAt DESC
+    LIMIT 40
+  `;
+  return rows.slice(0, safeLimit).map((row) => ({
+    ...parseEditorEducationText(row.valueJson, category),
+    contentKey: row.contentKey,
+    createdAt: row.createdAt,
+  } satisfies EditorEducationTextRevision));
 }
 
 export async function listEditorEducationGuideRecords() {

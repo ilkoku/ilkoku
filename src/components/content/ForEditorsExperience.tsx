@@ -56,7 +56,7 @@ const editorEducationCategories = [
   {
     title: "Yayıncılık ve Profesyonel Editörlük",
     description: "Dosya değerlendirmeden yayıma hazırlığa uzanan profesyonel editörlük ve yayıncılık sürecini tanı.",
-    href: null,
+    href: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk",
   },
 ] as const;
 

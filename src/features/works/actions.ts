@@ -343,6 +343,15 @@ export async function updateWorkAction(
     return archiveWorkAction(_state, archiveData);
   }
 
+  const activeState =
+    formData.get("hasIsActiveControl") === "true"
+      ? {
+          isActive:
+            formData.get("isActive") === "true" ||
+            formData.get("isActive") === "on",
+        }
+      : {};
+
   const parsed = updateWorkSchema.safeParse({
     id: formData.get("workId"),
     title: formData.get("title"),
@@ -350,9 +359,7 @@ export async function updateWorkAction(
     genre: formData.get("genre"),
     language: formData.get("language"),
     coverUrl: formData.get("coverUrl"),
-    isActive:
-      formData.get("isActive") === "true" ||
-      formData.get("isActive") === "on",
+    ...activeState,
     status: normalizedStatus,
     ...workClassificationFromFormData(formData),
   });

@@ -40,7 +40,7 @@ export const EDITOR_EDUCATION_CATEGORIES: readonly EditorEducationCategory[] = [
     slug: "editor-notu-ve-geri-bildirim",
     title: "Editör Notu ve Geri Bildirim",
     shortDescription: "Tespiti gerekçeye, gerekçeyi yazara yol gösterecek uygulanabilir geri bildirime dönüştür.",
-    live: false,
+    live: true,
   },
   {
     slug: "yazarla-calismak",

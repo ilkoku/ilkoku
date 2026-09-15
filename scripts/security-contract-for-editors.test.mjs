@@ -100,4 +100,6 @@ test("editor education section four adds structural editing while preserving the
 
   contains(experience, 'href: "/editorler-icin/egitim/editorluge-baslama"', "editor gateway first lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/metin-degerlendirme"', "editor gateway text evaluation lesson remains linked");
+  contains(experience, 'href: "/editorler-icin/egitim/yapisal-editorluk"', "editor gateway structural editing lesson linked");
+  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 3, "only the first three editor gateway cards may be linked in section four");
 });

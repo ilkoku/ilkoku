@@ -156,6 +156,11 @@ export function WorkEditDialog({
             type="hidden"
             value={work.id}
           />
+          <input
+            name="hasIsActiveControl"
+            type="hidden"
+            value="true"
+          />
 
           <Field
             autoFocus

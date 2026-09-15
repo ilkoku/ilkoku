@@ -107,6 +107,6 @@ test("editor education section six adds genre editing while preserving the share
   contains(experience, 'href: "/editorler-icin/egitim/metin-degerlendirme"', "editor gateway text evaluation lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/yapisal-editorluk"', "editor gateway structural editing lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu"', "editor gateway language editing lesson remains linked");
-  notContains(experience, 'href: "/editorler-icin/egitim/tur-editorlugu"', "genre editing gateway stays staged until live verification");
-  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 4, "only the first four editor gateway cards may be linked before genre editing live verification");
+  contains(experience, 'href: "/editorler-icin/egitim/tur-editorlugu"', "genre editing gateway linked after live verification");
+  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 5, "first five editor gateway cards are linked after genre editing live verification");
 });

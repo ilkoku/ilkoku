@@ -21,6 +21,7 @@ import {
   SITE_MAP_PAGES,
   validateHeaderNavigation,
 } from "@/lib/cms-header-navigation";
+import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 
 type NavigationRow = {
@@ -71,10 +72,12 @@ export default async function Page({ searchParams }: PageProps) {
     );
   }
 
+  const siteMapPages = [...SITE_MAP_PAGES, ...(await loadPublishedCmsSiteMapPages())];
+
   const headerLiveRow = rows.find((row) => row.contentKey === HEADER_NAV_LIVE_KEY) ?? null;
   const headerDraftRow = rows.find((row) => row.contentKey === HEADER_NAV_DRAFT_KEY && row.status === "draft") ?? null;
-  const headerDraftPayload = headerDraftRow ? parseHeaderNavigation(headerDraftRow.valueJson) : null;
-  const headerLivePayload = headerLiveRow ? parseHeaderNavigation(headerLiveRow.valueJson) : null;
+  const headerDraftPayload = headerDraftRow ? parseHeaderNavigation(headerDraftRow.valueJson, siteMapPages) : null;
+  const headerLivePayload = headerLiveRow ? parseHeaderNavigation(headerLiveRow.valueJson, siteMapPages) : null;
   const invalidHeaderDraft = Boolean(headerDraftRow && !headerDraftPayload);
   const invalidHeaderLive = Boolean(headerLiveRow && !headerLivePayload);
 
@@ -140,13 +143,13 @@ export default async function Page({ searchParams }: PageProps) {
       {params.menuHata === "kurallar" ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="alert"><strong>Menü yayınlanmadı.</strong><p>Boş ana menü veya aşırı kalabalık sütun bulundu. Taslak korunuyor; düzenleyip tekrar yayınlayın.</p></div> : null}
 
       <div className="content-metric-grid" style={{ marginBottom: "1rem" }}>
-        <article className="content-metric-card"><span>Site Haritası</span><strong>{SITE_MAP_PAGES.length}</strong><small>seçilebilir gerçek sayfa</small></article>
+        <article className="content-metric-card"><span>Site Haritası</span><strong>{siteMapPages.length}</strong><small>seçilebilir gerçek sayfa</small></article>
         <article className="content-metric-card"><span>Ana Menü</span><strong>{headerPayload.menus.length}</strong><small>üst başlık</small></article>
         <article className="content-metric-card"><span>Menü Bağlantısı</span><strong>{headerLinkCount}</strong><small>aktif çalışma düzeni</small></article>
         <article className="content-metric-card"><span>Blokaj</span><strong>{headerIssues.length}</strong><small>menü yayın kuralı</small></article>
       </div>
 
-      <HeaderNavigationWorkbench initial={headerPayload} pages={SITE_MAP_PAGES} />
+      <HeaderNavigationWorkbench initial={headerPayload} pages={siteMapPages} />
 
       <div className="content-publish-box" style={{ marginTop: "1rem" }}>
         <div><strong>Header menüsünü yayınla</strong><p>{!headerHasSafeDraft ? "Önce Site Haritası çalışma masasından menü taslağı kaydedin." : headerIssues.length > 0 ? `${headerIssues.length} menü blokajı düzeltilmeden canlı header değiştirilemez.` : "Kaydedilmiş menü taslağı sayfa kimlikleri ve yapı kurallarından geçti. Canlı header yalnız bu işlemle değişir."}</p></div>

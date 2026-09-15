@@ -412,11 +412,6 @@ export function WorksWorkspace({
 
                     <dl>
                       <div>
-                        <dt>Erişim</dt>
-                        <dd>{work.isActive ? "Aktif" : "Pasif"}</dd>
-                      </div>
-
-                      <div>
                         <dt>Bölüm</dt>
                         <dd>
                           {

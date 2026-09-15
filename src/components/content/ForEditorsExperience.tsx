@@ -36,7 +36,7 @@ const editorEducationCategories = [
   {
     title: "Dil ve Anlatım Editörlüğü",
     description: "Cümle, akıcılık, tekrar, anlatım, ton ve üslup sorunlarını metnin sesini koruyarak ele al.",
-    href: null,
+    href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
   },
   {
     title: "Tür Editörlüğü",

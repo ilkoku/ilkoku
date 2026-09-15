@@ -105,29 +105,29 @@ export default async function Page({ searchParams }: PageProps) {
   const headerSourceLabel = headerDraftPayload ? "Menü çalışma taslağı" : headerLivePayload && headerLiveRow?.status === "published" ? "Yayındaki menü" : "Kod başlangıç menüsü";
   const headerSourceDetail = headerDraftPayload && headerDraftRow ? `Taslak ${formatDate(headerDraftRow.updatedAt)} güncellendi; canlı menü korunuyor.` : headerLivePayload && headerLiveRow ? `Canlı menü ${formatDate(headerLiveRow.updatedAt)} güncellendi.` : "Henüz CMS menü kaydı yok; güvenli kod düzeni gösteriliyor.";
 
-  let footerPayload = defaultFooterNavigation;
-  let footerSourceLabel = "İlk kurulum";
-  let footerSourceDetail = "Henüz footer kaydı yok; kod varsayılanları gösteriliyor.";
+  let payload = defaultFooterNavigation;
+  let sourceLabel = "İlk kurulum";
+  let sourceDetail = "Henüz footer kaydı yok; kod varsayılanları gösteriliyor.";
   if (footerDraftPayload) {
-    footerPayload = footerDraftPayload;
-    footerSourceLabel = "Footer çalışma taslağı";
-    footerSourceDetail = `Canlı footer korunuyor · taslak ${formatDate(footerDraftRow!.updatedAt)} güncellendi.`;
+    payload = footerDraftPayload;
+    sourceLabel = "Footer çalışma taslağı";
+    sourceDetail = `Canlı footer korunuyor · taslak ${formatDate(footerDraftRow!.updatedAt)} güncellendi.`;
   } else if (footerLivePayload && footerLiveRow?.status === "published") {
-    footerPayload = footerLivePayload;
-    footerSourceLabel = "Yayındaki footer";
-    footerSourceDetail = `Çalışma alanı canlı değerlerden hazırlandı · ${formatDate(footerLiveRow.updatedAt)} güncellendi.`;
+    payload = footerLivePayload;
+    sourceLabel = "Yayındaki footer";
+    sourceDetail = `Çalışma alanı canlı değerlerden hazırlandı · ${formatDate(footerLiveRow.updatedAt)} güncellendi.`;
   } else if (footerLivePayload) {
-    footerPayload = footerLivePayload;
-    footerSourceLabel = "Pasif footer kaydı";
-    footerSourceDetail = "Pasif kayıt düzenleme başlangıcı olarak gösteriliyor; canlı public override aktif değil.";
+    payload = footerLivePayload;
+    sourceLabel = "Pasif footer kaydı";
+    sourceDetail = "Pasif kayıt düzenleme başlangıcı olarak gösteriliyor; canlı public override aktif değil.";
   }
 
-  const footerHasSafeDraft = Boolean(footerDraftPayload);
-  const linkAnalysis = await analyzeFooterNavigation(footerPayload).catch(() => null);
-  const footerBlockers = linkAnalysis?.blocking.length ?? 0;
+  const hasSafeDraft = Boolean(footerDraftPayload);
+  const linkAnalysis = await analyzeFooterNavigation(payload).catch(() => null);
+  const blockers = linkAnalysis?.blocking.length ?? 0;
   const verifiedCount = linkAnalysis?.diagnostics.filter((item) => item.status === "ok").length ?? 0;
   const fallbackCount = linkAnalysis?.fallbackCount ?? 0;
-  const footerCanPublish = footerHasSafeDraft && Boolean(linkAnalysis) && footerBlockers === 0;
+  const canPublish = hasSafeDraft && Boolean(linkAnalysis) && blockers === 0;
 
   return (
     <section className="content-editor-page">
@@ -157,8 +157,8 @@ export default async function Page({ searchParams }: PageProps) {
       </div>
 
       <details className="content-panel" style={{ marginTop: "1.25rem" }}>
-        <summary style={{ cursor: "pointer", fontWeight: 800 }}>Footer Yönetimi · {footerSourceLabel}</summary>
-        <p style={{ marginTop: ".5rem" }}>{footerSourceDetail}</p>
+        <summary style={{ cursor: "pointer", fontWeight: 800 }}>Footer Yönetimi · {sourceLabel}</summary>
+        <p style={{ marginTop: ".5rem" }}>{sourceDetail}</p>
 
         {params.taslak === "1" ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="status"><strong>Footer çalışma taslağı kaydedildi.</strong><p>Yayındaki footer değişmedi.</p></div> : null}
         {params.yayin === "1" ? <div className="content-panel" style={{ marginBottom: "1rem" }} role="status"><strong>Footer yayınlandı.</strong><p>Doğrulanmış çalışma taslağı canlı footer’a uygulandı.</p></div> : null}
@@ -170,14 +170,14 @@ export default async function Page({ searchParams }: PageProps) {
           <article className="content-metric-card"><span>Bağlantı</span><strong>{linkAnalysis?.diagnostics.length ?? 9}</strong><small>footer hedefi</small></article>
           <article className="content-metric-card"><span>Doğrulandı</span><strong>{verifiedCount}</strong><small>public hedef bulundu</small></article>
           <article className="content-metric-card"><span>Fallback</span><strong>{fallbackCount}</strong><small>güvenli kod hedefi</small></article>
-          <article className="content-metric-card"><span>Blokaj</span><strong>{footerBlockers}</strong><small>kırık / duplicate</small></article>
+          <article className="content-metric-card"><span>Blokaj</span><strong>{blockers}</strong><small>kırık / duplicate</small></article>
         </div>
 
-        <FooterNavigationWorkbench initial={footerPayload} diagnostics={linkAnalysis?.diagnostics ?? []} hasAnalysis={Boolean(linkAnalysis)} />
+        <FooterNavigationWorkbench initial={payload} diagnostics={linkAnalysis?.diagnostics ?? []} hasAnalysis={Boolean(linkAnalysis)} />
 
         <div className="content-publish-box" style={{ marginTop: "1rem" }}>
-          <div><strong>Footer canlı yayın</strong><p>{!footerHasSafeDraft ? "Önce footer çalışma masasından güvenli bir taslak oluşturun." : footerBlockers > 0 ? `${footerBlockers} hedef blokajı düzeltilmeden canlı footer değiştirilemez.` : !linkAnalysis ? "Hedef denetimi tamamlanamadığı için yayın kilitli." : "Kaydedilmiş footer taslağı server-side rota denetiminden geçti."}</p></div>
-          {footerCanPublish ? <form action={publishFooterNavigationAction}><button type="submit">Doğrulanmış Footer’ı Yayınla</button></form> : <span className="content-form-help">Yayın koşulları tamamlanmadı</span>}
+          <div><strong>Footer canlı yayın</strong><p>{!hasSafeDraft ? "Önce footer çalışma masasından güvenli bir taslak oluşturun." : blockers > 0 ? `${blockers} hedef blokajı düzeltilmeden canlı footer değiştirilemez.` : !linkAnalysis ? "Hedef denetimi tamamlanamadığı için yayın kilitli." : "Kaydedilmiş footer taslağı server-side rota denetiminden geçti."}</p></div>
+          {canPublish ? <form action={publishFooterNavigationAction}><button type="submit">Doğrulanmış Footer’ı Yayınla</button></form> : <span className="content-form-help">Yayın koşulları tamamlanmadı</span>}
         </div>
       </details>
     </section>

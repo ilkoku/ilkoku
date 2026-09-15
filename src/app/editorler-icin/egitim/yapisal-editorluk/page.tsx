@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   title: "Yapısal Editörlük | İlkOku Editörlük Okulu",
   description:
     "Bir eserin ana omurgasını; olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirmeyi ve yeniden yapılandırmayı öğren.",
-  robots: { index: false, follow: true },
+  alternates: { canonical: "/editorler-icin/egitim/yapisal-editorluk" },
+  robots: { index: true, follow: true },
 };
 
 const outcomes = [

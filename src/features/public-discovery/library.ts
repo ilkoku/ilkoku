@@ -27,6 +27,7 @@ const publicWorkPublicationWhere: Prisma.WorkWhereInput = {
   contentRating: {
     not: "adult_18",
   },
+  isActive: true,
   language: "tr",
   publishedAt: {
     not: null,

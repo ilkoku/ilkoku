@@ -77,16 +77,19 @@ test("public header exposes one canonical CMS-backed role mega navigation with a
   assert.match(header, /public-site-header__mobile-menu/);
   assert.match(header, /public-site-header__mega/);
   assert.match(header, /getPublishedHeaderNavigation\(\)/);
-  assert.match(header, /resolveHeaderNavigation\(navigationPayload\)/);
+  assert.match(header, /resolveHeaderNavigation\(navigation\.payload,\s*navigation\.pages\)/);
   assert.match(config, /SITE_MAP_PAGES/);
   assert.match(config, /defaultHeaderNavigation/);
   assert.match(config, /WRITING_CATEGORY_HUBS/);
   assert.match(config, /READER_EDUCATION_CATEGORIES/);
   assert.match(config, /EDITOR_EDUCATION_CATEGORIES/);
   assert.match(config, /GENRES/);
+  assert.match(config, /createCmsSiteMapPages/);
+  assert.match(server, /ContentPage/);
+  assert.match(server, /status = 'published'/);
   assert.match(server, /status !== "published"/);
-  assert.match(server, /parseHeaderNavigation\(row\.valueJson\) \?\? defaultHeaderNavigation/);
-  assert.match(server, /catch\s*\{[\s\S]*return defaultHeaderNavigation/);
+  assert.match(server, /parseHeaderNavigation\(row\.valueJson,\s*pages\) \?\? defaultHeaderNavigation/);
+  assert.match(server, /catch\s*\{[\s\S]*payload:\s*defaultHeaderNavigation/);
 
   for (const label of ["Yazar", "Okur", "Editör", "Yayınevi", "İlkOku", "Destek"]) {
     assert.ok(config.includes(`label: "${label}"`), `${label} must remain in the safe default public navigation`);
@@ -130,6 +133,7 @@ test("public header exposes one canonical CMS-backed role mega navigation with a
 
 test("CMS menu management stores page ids in a safe draft before publishing to the shared header", () => {
   const config = read(headerConfigPath);
+  const server = read(headerServerPath);
   const workbench = read(headerWorkbenchPath);
   const actions = read(navigationActionsPath);
   const page = read(menuCmsPath);
@@ -137,18 +141,27 @@ test("CMS menu management stores page ids in a safe draft before publishing to t
   assert.match(config, /HEADER_NAV_LIVE_KEY = "header_navigation"/);
   assert.match(config, /HEADER_NAV_DRAFT_KEY = "header_navigation_draft"/);
   assert.match(config, /pageId:/);
-  assert.match(config, /getSiteMapPage\(pageId\)/);
+  assert.match(config, /getSiteMapPage\(pageId,\s*pages\)/);
   assert.match(config, /parseHeaderNavigation/);
   assert.match(config, /validateHeaderNavigation/);
+  assert.match(config, /indexable\?: boolean/);
+  assert.match(server, /loadPublishedCmsSiteMapPages/);
+  assert.match(server, /createCmsSiteMapPages/);
   assert.doesNotMatch(workbench, /name="href"|name="url"/);
   assert.match(workbench, /Seçilileri Menüye Ekle/);
   assert.match(workbench, /name="headerNavigationJson"/);
+  assert.match(workbench, /Noindex/);
   assert.match(actions, /saveHeaderNavigationAction/);
   assert.match(actions, /publishHeaderNavigationAction/);
+  assert.match(actions, /completeSiteMapPages/);
+  assert.match(actions, /parseHeaderNavigation\(raw,\s*pages\)/);
+  assert.match(actions, /parseHeaderNavigation\(draft\.valueJson,\s*pages\)/);
   assert.match(actions, /contentKey = \$\{HEADER_NAV_DRAFT_KEY\}/);
   assert.match(actions, /contentKey = \$\{HEADER_NAV_LIVE_KEY\}/);
   assert.match(actions, /revalidatePath\("\/", "layout"\)/);
   assert.match(page, /Site Haritası & Menü Yönetimi/);
+  assert.match(page, /loadPublishedCmsSiteMapPages/);
+  assert.match(page, /siteMapPages/);
   assert.match(page, /<HeaderNavigationWorkbench/);
   assert.match(page, /<FooterNavigationWorkbench/);
 });

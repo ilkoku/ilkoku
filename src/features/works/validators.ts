@@ -39,6 +39,11 @@ const workClassificationSchema = z.object({
   }
 });
 
+const storedCoverUrlSchema = z.string().trim().regex(
+  /^\/api\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu,
+  "Kapak adresi geçerli değil.",
+);
+
 export const createWorkSchema = z.object({
   genre: trimmedText(1, 100, "Tür alanı 1–100 karakter olmalıdır."),
   summary: z.string().trim().max(5000, "Özet en fazla 5000 karakter olabilir.").optional(),
@@ -58,7 +63,11 @@ export const updateWorkSchema = z.object({
   summary: z.string().trim().max(5000, "Özet en fazla 5000 karakter olabilir.").optional(),
   title: trimmedText(1, 200, "Başlık alanı 1–200 karakter olmalıdır.").optional(),
   workType: workTypeSchema.optional(),
-  coverUrl: z.union([z.string().trim().url("Kapak adresi geçerli bir URL olmalıdır."), z.literal("")]).optional(),
+  coverUrl: z.union([
+    z.string().trim().url("Kapak adresi geçerli bir URL olmalıdır."),
+    storedCoverUrlSchema,
+    z.literal(""),
+  ]).optional(),
   id: z.string().uuid("Geçerli bir eser seçilmelidir."),
   language: z.string().trim().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$/, "Dil kodu geçersiz.").optional(),
   status: z.enum(["draft", "in_progress", "published"]).optional(),

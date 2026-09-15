@@ -20,6 +20,8 @@ import {
 function memberPublicWhere(canAccessAdultContent: boolean) {
   return {
     archivedAt: null,
+    deletedAt: null,
+    isActive: true,
     ...adultContentWorkVisibility(canAccessAdultContent),
     author: {
       is: {
@@ -50,6 +52,8 @@ export async function getPublicWorkAgeRating(slug: string) {
   return prisma.work.findFirst({
     where: {
       archivedAt: null,
+      deletedAt: null,
+      isActive: true,
       author: {
         is: { deletedAt: null, status: "active" },
       },

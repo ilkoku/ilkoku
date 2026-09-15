@@ -14,6 +14,8 @@ export function commonDiscoveryWorkWhereFor(
 ): Prisma.WorkWhereInput {
   return {
     archivedAt: null,
+    deletedAt: null,
+    isActive: true,
     ...adultContentWorkVisibility(canAccessAdultContent),
     publishedAt: {
       not: null,

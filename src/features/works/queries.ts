@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import { prisma } from "@/lib/prisma";
 import {
   getLatestPublicationSnapshot,
   getLatestPublicationSnapshots,
@@ -97,7 +98,9 @@ export const getAuthorWorks = cache(
         authorId,
       );
 
-    return works.map(mapAuthorWork);
+    return works
+      .filter((work) => work.deletedAt === null)
+      .map(mapAuthorWork);
   },
 );
 
@@ -170,7 +173,11 @@ export const getPublicWorkBySlug =
           slug,
         );
 
-      if (!work) {
+      if (
+        !work ||
+        !work.isActive ||
+        work.deletedAt !== null
+      ) {
         return null;
       }
 
@@ -211,6 +218,24 @@ export const getPublicWorkBySlug =
           : chapter;
       });
 
+      const relatedIds = [
+        ...relatedWorks.sameAuthor.map((related) => related.id),
+        ...relatedWorks.similar.map((related) => related.id),
+      ];
+      const visibleRelated = relatedIds.length > 0
+        ? await prisma.work.findMany({
+            where: {
+              deletedAt: null,
+              id: { in: relatedIds },
+              isActive: true,
+            },
+            select: { id: true },
+          })
+        : [];
+      const visibleRelatedIds = new Set(
+        visibleRelated.map((related) => related.id),
+      );
+
       function mapRelatedWork(
         related: (typeof relatedWorks.sameAuthor)[number],
       ): PublicWorkSummary {
@@ -240,9 +265,13 @@ export const getPublicWorkBySlug =
           work._count.chapters === publishedChapters.length,
         publicationBook,
         sameAuthorWorks:
-          relatedWorks.sameAuthor.map(mapRelatedWork),
+          relatedWorks.sameAuthor
+            .filter((related) => visibleRelatedIds.has(related.id))
+            .map(mapRelatedWork),
         similarWorks:
-          relatedWorks.similar.map(mapRelatedWork),
+          relatedWorks.similar
+            .filter((related) => visibleRelatedIds.has(related.id))
+            .map(mapRelatedWork),
       };
     },
   );

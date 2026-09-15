@@ -1,0 +1,337 @@
+/* Role-based public navigation. Imported after the legacy terminal header skin so
+   the public site has one canonical header/navigation surface. */
+
+.public-site-header__inner {
+  width: min(88rem, calc(100% - 2.5rem)) !important;
+  min-height: 86px !important;
+  grid-template-columns: 132px minmax(0, 1fr) auto !important;
+  gap: clamp(1rem, 2.2vw, 2rem) !important;
+  padding-block: 10px !important;
+}
+
+.public-site-header__brand {
+  width: 116px !important;
+  height: 66px !important;
+}
+
+.public-site-header__brand img {
+  width: auto !important;
+  height: 64px !important;
+  max-width: 116px !important;
+  max-height: 64px !important;
+}
+
+.public-site-header__navigation {
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.1rem;
+}
+
+.public-site-header__menu-item {
+  position: static;
+}
+
+.public-site-header__menu-item > summary {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.72rem;
+  border: 0;
+  border-radius: 0.65rem;
+  color: rgba(245, 240, 255, 0.82);
+  background: transparent;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 720;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  list-style: none;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.public-site-header__menu-item > summary::-webkit-details-marker,
+.public-site-header__mobile-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.public-site-header__menu-item > summary::marker,
+.public-site-header__mobile-menu > summary::marker {
+  content: "";
+}
+
+.public-site-header__menu-item > summary::after {
+  content: "⌄";
+  margin-top: -0.15rem;
+  color: rgba(203, 181, 255, 0.7);
+  font-size: 0.72rem;
+}
+
+.public-site-header__menu-item > summary:hover,
+.public-site-header__menu-item[open] > summary {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.public-site-header__mega {
+  position: absolute;
+  z-index: 1008;
+  left: 50%;
+  top: calc(100% - 1px);
+  width: min(88rem, calc(100vw - 2rem));
+  transform: translateX(-50%);
+  padding: 1.45rem;
+  border: 1px solid rgba(197, 172, 247, 0.2);
+  border-radius: 0 0 1.25rem 1.25rem;
+  background:
+    radial-gradient(circle at 22% 0%, rgba(113, 73, 202, 0.18), transparent 32%),
+    linear-gradient(180deg, rgba(27, 17, 57, 0.995), rgba(16, 11, 35, 0.995));
+  box-shadow: 0 1.8rem 4rem rgba(6, 3, 20, 0.36);
+  animation: public-site-mega-in 150ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+.public-site-header__mega-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--mega-columns, 3), minmax(0, 1fr));
+  gap: 1rem 2rem;
+}
+
+.public-site-header__mega-group {
+  min-width: 0;
+}
+
+.public-site-header__mega-group h2 {
+  margin: 0 0 0.75rem;
+  color: rgba(200, 178, 248, 0.72);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.67rem;
+  font-weight: 780;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.public-site-header__mega-links {
+  display: grid;
+  gap: 0.16rem;
+}
+
+.public-site-header__mega-links a {
+  min-height: 2.35rem;
+  display: flex;
+  align-items: center;
+  padding: 0.48rem 0.58rem;
+  border-radius: 0.58rem;
+  color: rgba(248, 245, 255, 0.88);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 620;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.public-site-header__mega-links a:hover,
+.public-site-header__mega-links a:focus-visible {
+  color: #fff;
+  background: rgba(137, 95, 229, 0.14);
+  transform: translateX(0.16rem);
+}
+
+.public-site-header__mega-links a[data-primary="true"] {
+  min-height: 2.7rem;
+  color: #fff;
+  font-size: 0.91rem;
+  font-weight: 760;
+}
+
+.public-site-header__mega-links a[data-primary="true"]::after {
+  content: "→";
+  margin-left: auto;
+  color: #cbb5ff;
+}
+
+.public-site-header__tools {
+  width: auto !important;
+  min-width: 0;
+  gap: 0.55rem;
+}
+
+.public-site-header__account summary {
+  min-width: 0 !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+
+.public-site-header__account summary::after,
+.public-site-header__account summary::before {
+  display: none !important;
+  content: none !important;
+}
+
+.public-site-header__account summary svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+.public-site-header__mobile-menu {
+  position: static;
+  display: none;
+}
+
+.public-site-header__mobile-menu > summary {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(191, 165, 242, 0.34);
+  border-radius: 50%;
+  color: #eee6ff;
+  background: rgba(15, 9, 32, 0.72);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.1rem;
+  line-height: 1;
+  list-style: none;
+  cursor: pointer;
+}
+
+.public-site-header__mobile-panel {
+  position: absolute;
+  z-index: 1009;
+  top: calc(100% - 1px);
+  left: 1rem;
+  right: 1rem;
+  max-height: calc(100vh - 7rem);
+  overflow: auto;
+  padding: 0.8rem;
+  border: 1px solid rgba(197, 172, 247, 0.2);
+  border-radius: 0 0 1rem 1rem;
+  background: rgba(18, 12, 39, 0.995);
+  box-shadow: 0 1.4rem 3.2rem rgba(6, 3, 20, 0.38);
+}
+
+.public-site-header__mobile-panel .public-site-header__menu-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.public-site-header__mobile-panel .public-site-header__menu-item:last-child {
+  border-bottom: 0;
+}
+
+.public-site-header__mobile-panel .public-site-header__menu-item > summary {
+  width: 100%;
+  justify-content: space-between;
+  padding-inline: 0.55rem;
+  font-size: 0.88rem;
+}
+
+.public-site-header__mobile-panel .public-site-header__mega {
+  position: static;
+  width: 100%;
+  transform: none;
+  padding: 0.35rem 0.25rem 0.9rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  animation: none;
+}
+
+.public-site-header__mobile-panel .public-site-header__mega-grid {
+  grid-template-columns: 1fr;
+  gap: 0.7rem;
+}
+
+.public-site-header__mobile-panel .public-site-header__mega-group h2 {
+  margin: 0.2rem 0.45rem 0.3rem;
+}
+
+/* Homepage used to render a second local header. The canonical public header now
+   owns navigation on every public surface. */
+.homepage-live .nx-header {
+  display: none !important;
+}
+
+@keyframes public-site-mega-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 1120px) {
+  .public-site-header__inner {
+    width: min(100% - 2rem, 88rem) !important;
+    grid-template-columns: 110px minmax(0, 1fr) auto !important;
+    gap: 0.8rem !important;
+  }
+
+  .public-site-header__brand {
+    width: 98px !important;
+    height: 58px !important;
+  }
+
+  .public-site-header__brand img {
+    height: 56px !important;
+    max-width: 98px !important;
+    max-height: 56px !important;
+  }
+
+  .public-site-header__menu-item > summary {
+    padding-inline: 0.48rem;
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .public-site-header__inner {
+    min-height: 72px !important;
+    grid-template-columns: 104px minmax(0, 1fr) auto !important;
+    padding-block: 7px !important;
+  }
+
+  .public-site-header__brand {
+    width: 94px !important;
+    height: 56px !important;
+  }
+
+  .public-site-header__brand img {
+    height: 54px !important;
+    max-width: 94px !important;
+    max-height: 54px !important;
+  }
+
+  .public-site-header__navigation {
+    display: none;
+  }
+
+  .public-site-header__tools {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+  }
+
+  .public-site-header__mobile-menu {
+    display: block;
+  }
+}
+
+@media (max-width: 34rem) {
+  .public-site-header__inner {
+    width: calc(100% - 1.25rem) !important;
+    grid-template-columns: 92px minmax(0, 1fr) auto !important;
+    gap: 0.55rem !important;
+  }
+
+  .public-site-header__mobile-panel {
+    left: 0.625rem;
+    right: 0.625rem;
+  }
+}

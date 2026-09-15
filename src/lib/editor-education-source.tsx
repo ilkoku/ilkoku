@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { ReactNode } from "react";
+import { isValidElement, type ReactElement, type ReactNode } from "react";
 
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
@@ -23,4 +23,11 @@ export async function getEditorEducationSourceTree(categorySlug: string): Promis
   const loader = lessonLoaders[category.slug as LessonSlug];
   const module = await loader();
   return module.default();
+}
+
+export async function getEditorEducationSourceChildren(categorySlug: string): Promise<ReactNode | null> {
+  const tree = await getEditorEducationSourceTree(categorySlug);
+  if (!tree || !isValidElement(tree)) return null;
+  const element = tree as ReactElement<{ children?: ReactNode }>;
+  return element.props.children ?? null;
 }

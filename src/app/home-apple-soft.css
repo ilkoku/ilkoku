@@ -1,0 +1,604 @@
+/*
+ * Homepage visual softening layer.
+ * Keeps the existing content/CMS structure intact and only changes presentation.
+ * Imported last from src/app/page.tsx so this experiment is easy to remove.
+ */
+
+.homepage-live .nx-home {
+  --paper: #f5f5f7;
+  --paper-soft: #fbfbfd;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --violet: #6847e8;
+  --violet-deep: #3f287f;
+  --violet-dark: #171127;
+  --line: rgba(29, 29, 31, 0.08);
+  --shell: min(1380px, calc(100% - 72px));
+  background:
+    radial-gradient(circle at 50% 0%, rgba(118, 89, 236, 0.07), transparent 26rem),
+    #f5f5f7;
+  color: var(--ink);
+}
+
+/* Shared soft surfaces */
+.homepage-live .nx-section-heading {
+  max-width: 900px;
+  margin-bottom: clamp(38px, 4.5vw, 64px);
+}
+
+.homepage-live .nx-section-heading h2,
+.homepage-live .nx-history__intro h2 {
+  color: #1d1d1f;
+  letter-spacing: -0.052em;
+  text-wrap: balance;
+}
+
+.homepage-live .nx-eyebrow,
+.homepage-live .nx-eyebrow--violet {
+  color: #6847e8;
+  letter-spacing: 0.12em;
+}
+
+.homepage-live .nx-action {
+  min-height: 50px;
+  padding-inline: 24px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 780;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.homepage-live .nx-action:hover {
+  transform: translateY(-1px);
+}
+
+/* Hero: lighter, quieter, more spacious. */
+.homepage-live .nx-hero {
+  min-height: 0;
+  padding: clamp(28px, 3vw, 44px) 0 clamp(32px, 4vw, 56px);
+  color: #1d1d1f;
+  background:
+    radial-gradient(circle at 17% 12%, rgba(116, 84, 236, 0.18), transparent 24rem),
+    radial-gradient(circle at 86% 8%, rgba(199, 183, 255, 0.34), transparent 28rem),
+    linear-gradient(180deg, #f9f7ff 0%, #f2effa 62%, #f5f5f7 100%);
+}
+
+.homepage-live .nx-hero::before {
+  display: none;
+}
+
+.homepage-live .nx-hero__layout {
+  min-height: 620px;
+  grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+  gap: clamp(28px, 4vw, 64px);
+  align-items: center;
+}
+
+.homepage-live .nx-hero__copy {
+  padding: clamp(54px, 6vw, 88px) 0;
+}
+
+.homepage-live .nx-hero .nx-eyebrow {
+  margin-bottom: 20px;
+  color: #6847e8;
+}
+
+.homepage-live .nx-hero .nx-eyebrow::before {
+  filter: drop-shadow(0 0.2rem 0.3rem rgba(72, 45, 160, 0.12));
+}
+
+.homepage-live .nx-hero h1 {
+  color: #1d1d1f;
+  font-size: clamp(4.3rem, 7vw, 7.9rem);
+  line-height: 0.86;
+  letter-spacing: -0.064em;
+  text-wrap: balance;
+}
+
+.homepage-live .nx-hero h1 span:nth-child(2) {
+  color: #6847e8;
+}
+
+.homepage-live .nx-hero h1 span:nth-child(3) {
+  color: #1d1d1f;
+}
+
+.homepage-live .nx-hero__description {
+  max-width: 590px;
+  margin-top: 30px;
+  color: #5f5f64;
+  font-size: clamp(1rem, 1.2vw, 1.13rem);
+  line-height: 1.72;
+}
+
+.homepage-live .nx-hero__actions {
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.homepage-live .nx-hero .nx-action--light {
+  color: #fff !important;
+  background: #6847e8;
+  box-shadow: 0 10px 28px rgba(75, 45, 191, 0.18);
+}
+
+.homepage-live .nx-hero .nx-action--light:hover {
+  background: #5c3dd7;
+  box-shadow: 0 14px 34px rgba(75, 45, 191, 0.23);
+}
+
+.homepage-live .nx-hero .nx-action--line {
+  border: 1px solid rgba(29, 29, 31, 0.14);
+  color: #29272d !important;
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+
+.homepage-live .nx-hero__art {
+  min-height: 570px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: clamp(26px, 3vw, 38px);
+  background: #e9e4f7;
+  box-shadow:
+    0 34px 80px rgba(55, 40, 95, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.homepage-live .nx-hero__art::after {
+  background:
+    linear-gradient(90deg, rgba(247, 244, 255, 0.18), transparent 28%),
+    linear-gradient(180deg, transparent 70%, rgba(27, 20, 48, 0.12));
+}
+
+.homepage-live .nx-hero__art img {
+  filter: saturate(0.9) contrast(1.01) brightness(1.035);
+}
+
+.homepage-live .nx-hero__art-frame {
+  inset: 18px;
+  border-color: rgba(255, 255, 255, 0.34);
+  border-radius: clamp(18px, 2.2vw, 28px);
+}
+
+.homepage-live .nx-hero__proof {
+  min-height: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+  border: 0;
+}
+
+.homepage-live .nx-hero__proof span {
+  min-height: 58px;
+  border: 1px solid rgba(29, 29, 31, 0.07) !important;
+  border-radius: 999px;
+  color: #5d5964;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+}
+
+/* Story / history */
+.homepage-live .nx-history {
+  padding: clamp(104px, 10vw, 168px) 0;
+  background: #f5f5f7;
+}
+
+.homepage-live .nx-history__intro {
+  margin-bottom: clamp(48px, 5vw, 72px);
+}
+
+.homepage-live .nx-history__intro > p {
+  color: #6e6e73;
+  line-height: 1.8;
+}
+
+.homepage-live .nx-history__eras {
+  gap: 18px;
+}
+
+.homepage-live .nx-era {
+  border: 1px solid rgba(29, 29, 31, 0.06);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 18px 46px rgba(40, 31, 72, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.homepage-live .nx-era__image {
+  background: #ece9e2;
+}
+
+.homepage-live .nx-era__content {
+  min-height: 320px;
+  padding: 30px 28px 34px;
+}
+
+.homepage-live .nx-era__content p {
+  color: #6e6a72;
+}
+
+.homepage-live .nx-now {
+  margin-top: 24px;
+  min-height: 540px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at 86% 12%, rgba(118, 88, 226, 0.24), transparent 24rem),
+    linear-gradient(135deg, #171127 0%, #231a3d 52%, #18122a 100%);
+  box-shadow: 0 28px 72px rgba(28, 20, 55, 0.13);
+}
+
+.homepage-live .nx-now__visual,
+.homepage-live .nx-now__scene {
+  min-height: 540px;
+}
+
+.homepage-live .nx-now__story {
+  padding: clamp(42px, 5vw, 70px);
+}
+
+/* Roles: clean, airy cards. */
+.homepage-live .nx-roles,
+.homepage-live .nx-home .nx-roles {
+  padding: clamp(112px, 10vw, 166px) 0;
+  border: 0;
+  color: #1d1d1f;
+  background:
+    radial-gradient(circle at 84% 12%, rgba(119, 89, 235, 0.08), transparent 24rem),
+    #fbfbfd;
+}
+
+.homepage-live .nx-roles .nx-section-heading--inverse h2,
+.homepage-live .nx-home .nx-roles .nx-section-heading--inverse h2 {
+  color: #1d1d1f;
+}
+
+.homepage-live .nx-roles .nx-section-heading--inverse > p:last-child,
+.homepage-live .nx-home .nx-roles .nx-section-heading--inverse > p:last-child {
+  color: #6e6e73;
+}
+
+.homepage-live .nx-role-grid,
+.homepage-live .nx-home .nx-roles .nx-role-grid {
+  gap: 18px;
+}
+
+.homepage-live .nx-role,
+.homepage-live .nx-home .nx-roles .nx-role {
+  min-height: 500px;
+  padding: 30px 30px 34px;
+  border: 1px solid rgba(29, 29, 31, 0.06);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow:
+    0 18px 46px rgba(40, 31, 72, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px) saturate(115%);
+  -webkit-backdrop-filter: blur(12px) saturate(115%);
+}
+
+.homepage-live .nx-role:hover,
+.homepage-live .nx-home .nx-roles .nx-role:hover {
+  transform: translateY(-2px);
+  border-color: rgba(104, 71, 232, 0.14);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24px 60px rgba(40, 31, 72, 0.085);
+}
+
+.homepage-live .nx-home .nx-roles .nx-role h3 {
+  color: #1d1d1f;
+}
+
+.homepage-live .nx-home .nx-roles .nx-role > p {
+  color: #626267;
+}
+
+.homepage-live .nx-home .nx-roles .nx-role__highlights small {
+  border-color: rgba(104, 71, 232, 0.12);
+  background: rgba(104, 71, 232, 0.055);
+  color: #5736a5;
+}
+
+.homepage-live .nx-home .nx-roles .nx-role > strong {
+  min-height: 66px;
+  margin: auto -30px -34px;
+  border-top-color: rgba(29, 29, 31, 0.06);
+  border-radius: 0 0 30px 30px;
+  background: rgba(104, 71, 232, 0.035);
+}
+
+/* Passport: keep the brand-dark moment, but turn it into one soft feature panel. */
+.homepage-live .nx-passport,
+.homepage-live .nx-home .nx-passport {
+  width: min(1540px, calc(100% - 48px));
+  margin: 0 auto clamp(92px, 8vw, 132px);
+  padding: clamp(62px, 6vw, 90px) 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 40px;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(130, 99, 239, 0.26), transparent 28rem),
+    radial-gradient(circle at 12% 100%, rgba(104, 71, 232, 0.14), transparent 30rem),
+    linear-gradient(135deg, #171127 0%, #282047 58%, #3d2a76 100%);
+  box-shadow: 0 34px 88px rgba(33, 23, 67, 0.14);
+}
+
+.homepage-live .nx-passport .nx-passport__layout,
+.homepage-live .nx-home .nx-passport .nx-passport__layout {
+  gap: clamp(44px, 5vw, 74px);
+}
+
+.homepage-live .nx-passport .nx-passport__copy h2,
+.homepage-live .nx-home .nx-passport .nx-passport__copy h2 {
+  max-width: 14ch;
+  font-size: clamp(2.8rem, 4vw, 4.35rem);
+}
+
+.homepage-live .nx-passport .nx-action--dark,
+.homepage-live .nx-home .nx-passport .nx-action--dark {
+  min-height: 48px;
+  border-radius: 999px;
+  box-shadow: 0 12px 30px rgba(8, 5, 32, 0.18);
+}
+
+.homepage-live .nx-passport .nx-passport-card,
+.homepage-live .nx-home .nx-passport .nx-passport-card {
+  border-radius: 28px;
+  box-shadow:
+    0 28px 70px rgba(7, 5, 35, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+/* Why İlkOku: remove the dashboard feeling. */
+.homepage-live .nx-why {
+  padding: clamp(104px, 9vw, 154px) 0;
+  background: #f5f5f7;
+}
+
+.homepage-live .nx-why .nx-benefit-grid {
+  width: 100%;
+  gap: 18px !important;
+}
+
+.homepage-live .nx-why .nx-benefit,
+.homepage-live .nx-why .nx-benefit--1,
+.homepage-live .nx-why .nx-benefit--2,
+.homepage-live .nx-why .nx-benefit--3,
+.homepage-live .nx-why .nx-benefit--4,
+.homepage-live .nx-why .nx-benefit--5,
+.homepage-live .nx-why .nx-benefit--6 {
+  min-height: 250px !important;
+  padding: 28px !important;
+  border: 1px solid rgba(29, 29, 31, 0.055) !important;
+  border-radius: 28px !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  box-shadow:
+    0 16px 42px rgba(40, 31, 72, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94) !important;
+}
+
+.homepage-live .nx-why .nx-benefit::before {
+  display: none;
+}
+
+.homepage-live .nx-why .nx-benefit__icon {
+  width: 82px !important;
+  height: 82px !important;
+  flex-basis: 82px !important;
+  margin-bottom: 22px !important;
+  border-radius: 24px !important;
+  background-color: rgba(104, 71, 232, 0.07) !important;
+  box-shadow: none !important;
+}
+
+.homepage-live .nx-why .nx-benefit h3,
+.homepage-live .nx-why .nx-benefit--1 h3,
+.homepage-live .nx-why .nx-benefit--2 h3,
+.homepage-live .nx-why .nx-benefit--3 h3,
+.homepage-live .nx-why .nx-benefit--4 h3,
+.homepage-live .nx-why .nx-benefit--5 h3,
+.homepage-live .nx-why .nx-benefit--6 h3 {
+  color: #1d1d1f !important;
+}
+
+.homepage-live .nx-why .nx-benefit p,
+.homepage-live .nx-why .nx-benefit--1 p,
+.homepage-live .nx-why .nx-benefit--2 p,
+.homepage-live .nx-why .nx-benefit--3 p,
+.homepage-live .nx-why .nx-benefit--4 p,
+.homepage-live .nx-why .nx-benefit--5 p,
+.homepage-live .nx-why .nx-benefit--6 p {
+  color: #6e6e73 !important;
+}
+
+.homepage-live .nx-stats {
+  overflow: hidden;
+  border: 1px solid rgba(29, 29, 31, 0.055);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 16px 42px rgba(40, 31, 72, 0.04);
+}
+
+/* Tablet */
+@media (max-width: 1100px) {
+  .homepage-live .nx-home {
+    --shell: min(100% - 40px, 1180px);
+  }
+
+  .homepage-live .nx-hero__layout {
+    min-height: 560px;
+    gap: 28px;
+  }
+
+  .homepage-live .nx-hero__art {
+    min-height: 510px;
+  }
+
+  .homepage-live .nx-passport,
+  .homepage-live .nx-home .nx-passport {
+    width: calc(100% - 32px);
+    border-radius: 34px;
+  }
+}
+
+/* Mobile: same soft language, no horizontal squeeze. */
+@media (max-width: 900px) {
+  .homepage-live .nx-home {
+    --shell: min(100% - 30px, 760px);
+  }
+
+  .homepage-live .nx-hero {
+    padding-top: 18px;
+  }
+
+  .homepage-live .nx-hero__layout {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .homepage-live .nx-hero__copy {
+    padding: 54px 0 36px;
+  }
+
+  .homepage-live .nx-hero h1 {
+    max-width: 8.5ch;
+    font-size: clamp(3.55rem, 13vw, 6.2rem);
+  }
+
+  .homepage-live .nx-hero__art {
+    min-height: min(68vh, 560px);
+    border-radius: 30px;
+  }
+
+  .homepage-live .nx-hero__proof {
+    grid-template-columns: 1fr;
+    margin-top: 14px;
+  }
+
+  .homepage-live .nx-hero__proof span {
+    min-height: 52px;
+  }
+
+  .homepage-live .nx-history {
+    padding-block: 96px;
+  }
+
+  .homepage-live .nx-now {
+    border-radius: 28px;
+  }
+
+  .homepage-live .nx-passport,
+  .homepage-live .nx-home .nx-passport {
+    width: calc(100% - 24px);
+    margin-bottom: 90px;
+    padding-block: 54px;
+    border-radius: 30px;
+  }
+
+  .homepage-live .nx-passport .nx-passport__layout,
+  .homepage-live .nx-home .nx-passport .nx-passport__layout {
+    width: min(100% - 36px, 760px);
+  }
+}
+
+@media (max-width: 620px) {
+  .homepage-live .nx-home {
+    --shell: calc(100% - 24px);
+  }
+
+  .homepage-live .nx-hero__copy {
+    padding-top: 44px;
+  }
+
+  .homepage-live .nx-hero h1 {
+    font-size: clamp(3.2rem, 16vw, 5.2rem);
+    line-height: 0.9;
+  }
+
+  .homepage-live .nx-hero__description {
+    margin-top: 24px;
+    line-height: 1.64;
+  }
+
+  .homepage-live .nx-hero__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .homepage-live .nx-hero__actions .nx-action {
+    width: 100%;
+  }
+
+  .homepage-live .nx-hero__art {
+    min-height: 430px;
+    border-radius: 26px;
+  }
+
+  .homepage-live .nx-history,
+  .homepage-live .nx-roles,
+  .homepage-live .nx-home .nx-roles,
+  .homepage-live .nx-why {
+    padding-block: 82px;
+  }
+
+  .homepage-live .nx-era {
+    border-radius: 24px;
+  }
+
+  .homepage-live .nx-now {
+    border-radius: 24px;
+  }
+
+  .homepage-live .nx-role,
+  .homepage-live .nx-home .nx-roles .nx-role {
+    min-height: 455px;
+    border-radius: 26px;
+  }
+
+  .homepage-live .nx-home .nx-roles .nx-role > strong {
+    border-radius: 0 0 26px 26px;
+  }
+
+  .homepage-live .nx-passport,
+  .homepage-live .nx-home .nx-passport {
+    width: calc(100% - 16px);
+    margin-bottom: 72px;
+    border-radius: 26px;
+  }
+
+  .homepage-live .nx-passport .nx-passport__layout,
+  .homepage-live .nx-home .nx-passport .nx-passport__layout {
+    width: calc(100% - 28px);
+  }
+
+  .homepage-live .nx-why .nx-benefit,
+  .homepage-live .nx-why .nx-benefit--1,
+  .homepage-live .nx-why .nx-benefit--2,
+  .homepage-live .nx-why .nx-benefit--3,
+  .homepage-live .nx-why .nx-benefit--4,
+  .homepage-live .nx-why .nx-benefit--5,
+  .homepage-live .nx-why .nx-benefit--6 {
+    min-height: 0 !important;
+    padding: 24px !important;
+    border-radius: 24px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homepage-live .nx-action,
+  .homepage-live .nx-role,
+  .homepage-live .nx-era__image img {
+    transition: none !important;
+  }
+}

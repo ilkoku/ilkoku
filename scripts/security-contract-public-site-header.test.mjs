@@ -5,6 +5,7 @@ import test from "node:test";
 const read = (path) => readFileSync(path, "utf8");
 
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
+const headerNavigationClientPath = "src/components/layout/PublicHeaderNavigation.tsx";
 const headerMegaCssPath = "src/components/layout/public-site-mega-menu.css";
 const headerConfigPath = "src/lib/cms-header-navigation.ts";
 const headerServerPath = "src/lib/cms-header-navigation-server.ts";
@@ -66,16 +67,26 @@ const trustRoutes = [
   "/yayinevleri-icin",
 ];
 
-test("public header exposes one canonical CMS-backed role mega navigation with a fail-safe code default", () => {
+test("public header exposes one canonical CMS-backed single-active mega navigation with a fail-safe code default", () => {
   const header = read(headerPath);
+  const navigationClient = read(headerNavigationClientPath);
   const megaCss = read(headerMegaCssPath);
   const config = read(headerConfigPath);
   const server = read(headerServerPath);
   const identity = read(identityPath);
 
-  assert.match(header, /public-site-header__navigation/);
-  assert.match(header, /public-site-header__mobile-menu/);
-  assert.match(header, /public-site-header__mega/);
+  assert.match(header, /<PublicHeaderNavigation menus=\{publicMenus\}/);
+  assert.match(navigationClient, /public-site-header__navigation/);
+  assert.match(navigationClient, /public-site-header__mobile-menu/);
+  assert.match(navigationClient, /public-site-header__mega/);
+  assert.match(navigationClient, /const \[activeId, setActiveId\] = useState<string \| null>\(null\)/);
+  assert.match(navigationClient, /onMouseEnter=\{\(\) => activate\(menu\.id\)\}/);
+  assert.match(navigationClient, /CLOSE_DELAY_MS = 140/);
+  assert.match(navigationClient, /public-site-header__mobile-track/);
+  assert.match(navigationClient, /public-site-header__mobile-back/);
+  assert.doesNotMatch(navigationClient, /<details className="public-site-header__menu-item"/);
+  assert.match(megaCss, /backdrop-filter:\s*blur\(20px\) saturate\(138%\)/);
+  assert.match(megaCss, /\.public-site-header__mobile-track\[data-detail="true"\]/);
   assert.match(header, /getPublishedHeaderNavigation\(\)/);
   assert.match(header, /resolveHeaderNavigation\(navigation\.payload,\s*navigation\.pages\)/);
   assert.match(config, /SITE_MAP_PAGES/);

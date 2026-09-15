@@ -1,0 +1,5 @@
+.public-site-header__navigation,
+.public-site-header__mobile-toggle {
+  position: relative;
+  z-index: 2;
+}

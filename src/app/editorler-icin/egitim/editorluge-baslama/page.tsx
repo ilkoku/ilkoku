@@ -7,8 +7,8 @@ import { getEditorEducationCategory } from "@/lib/editor-education";
 export const metadata: Metadata = {
   title: "Editörlüğe Başlama | İlkOku Editörlük Okulu",
   description: "Editörün rolünü, müdahale sınırını, ilk okuma yaklaşımını, editöryal geri bildirimi ve profesyonel çalışma ilkelerini adım adım öğren.",
-  // Bölüm 10'daki toplu SEO/sitemap kontrolüne kadar eğitim sayfaları indeks dışı kalır.
-  robots: { index: false, follow: true },
+  alternates: { canonical: "/editorler-icin/egitim/editorluge-baslama" },
+  robots: { index: true, follow: true },
 };
 
 const gains = [

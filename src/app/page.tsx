@@ -20,6 +20,7 @@ import "./onizleme/ana-sayfa-yeni/header-encyclopedia.css";
 import "./onizleme/ana-sayfa-yeni/header-terminal-spine.css";
 import "./onizleme/ana-sayfa-yeni/header-login-terminal.css";
 import "./home-live.css";
+import "./home-apple-soft.css";
 
 const homeTitle = publicBrandTitle;
 const homeDescription = publicBrandDescription;

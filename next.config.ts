@@ -88,6 +88,11 @@ const searchExcludedRouteHeaders = [
 
 const nextConfig: NextConfig = {
   ...(deploymentId ? { deploymentId } : {}),
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "4mb",
+    },
+  },
   async headers() {
     return searchExcludedRouteHeaders.map((source) => ({
       source,

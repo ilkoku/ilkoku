@@ -7,9 +7,11 @@ import { Field } from "@/components/ui/Field";
 import { BookCover } from "@/features/showcase/components/BookCover";
 import {
   addAuthorBookSectionAction,
+  removeAuthorCoverAction,
   saveAuthorBookSectionAction,
   setAuthorWorkActiveAction,
   updateAuthorWorkBasicsAction,
+  uploadAuthorCoverAction,
 } from "@/features/works/author-page-actions";
 import {
   bookSectionDetails,
@@ -20,6 +22,8 @@ import { WorkArchiveAction } from "@/features/works/components/WorkArchiveAction
 import { getAuthorWorkspaceWorks } from "@/features/works/queries";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { getCurrentUser } from "@/lib/auth/current-user";
+
+import "./author-work-page.css";
 
 export const dynamic = "force-dynamic";
 
@@ -134,7 +138,38 @@ export default async function AuthorWorkPage({
 
       <main id="eser-sayfasi">
         <section className="showcase-hero" aria-labelledby="eser-basligi">
-          <BookCover title={work.title} />
+          <div className="author-cover-manager">
+            <BookCover coverUrl={work.coverUrl} title={work.title} />
+
+            <form
+              action={uploadAuthorCoverAction}
+              className="author-cover-manager__upload"
+              encType="multipart/form-data"
+            >
+              <input name="workId" type="hidden" value={work.id} />
+              <label htmlFor={`cover-${work.id}`}>
+                {work.coverUrl ? "Kapağı Değiştir" : "Kapak Yükle"}
+              </label>
+              <input
+                id={`cover-${work.id}`}
+                name="cover"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                required
+              />
+              <small>JPG, PNG, WEBP, GIF veya AVIF · en fazla 3 MB</small>
+              <Button type="submit">
+                {work.coverUrl ? "Yeni Kapağı Kaydet" : "Kapağı Kaydet"}
+              </Button>
+            </form>
+
+            {work.coverUrl ? (
+              <form action={removeAuthorCoverAction} className="author-cover-manager__remove">
+                <input name="workId" type="hidden" value={work.id} />
+                <Button type="submit" variant="danger">Kapağı Sil</Button>
+              </form>
+            ) : null}
+          </div>
 
           <div className="showcase-hero__content">
             <p className="showcase-eyebrow">Eser Sayfası · Düzenle</p>
@@ -222,7 +257,7 @@ export default async function AuthorWorkPage({
           </div>
         </section>
 
-        <div className="showcase-content-grid">
+        <div className="showcase-content-grid author-work-content-grid">
           <div className="showcase-main-column">
             <section className="showcase-section" aria-labelledby="eser-bilgileri-basligi">
               <div className="showcase-section__heading">
@@ -364,19 +399,6 @@ export default async function AuthorWorkPage({
               )}
             </section>
           </div>
-
-          <aside className="showcase-aside" aria-label="Eser yönetim özeti">
-            <section className="showcase-section">
-              <div className="showcase-section__heading">
-                <p>Yazar modu</p>
-                <h2>Bu Eser Sayfası</h2>
-              </div>
-              <p>
-                Eserlerim listesindeki “Düzenle” artık bu sayfayı açar. Eser bilgileri,
-                erişim durumu, yazmaya devam etme ve kitap yapısı burada yönetilir.
-              </p>
-            </section>
-          </aside>
         </div>
       </main>
     </div>

@@ -250,7 +250,10 @@ function PublicNavigation() {
 function MobileNavigation() {
   return (
     <details className="public-site-header__mobile-menu">
-      <summary aria-label="Ana menüyü aç">☰</summary>
+      <summary aria-label="Ana menüyü aç">
+        <span aria-hidden="true">☰</span>
+        <span>Menü</span>
+      </summary>
       <div className="public-site-header__mobile-panel">
         <nav aria-label="Mobil ana menü">
           {publicMenus.map((menu) => (
@@ -280,22 +283,23 @@ export async function PublicSiteHeader() {
               priority
               width={308}
               height={76}
-              sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 116px"
+              sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
             />
           ) : (
             <Image
               src={logo}
               alt={identity.logoAlt}
               priority
-              sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 116px"
+              sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
             />
           )}
         </Link>
 
-        <PublicNavigation />
+        <span className="public-site-header__kicker">
+          {identity.headerKicker}
+        </span>
 
         <div className="public-site-header__tools">
-          <MobileNavigation />
           <details className="public-site-header__account">
             <summary aria-label="Hesap menüsünü aç">
               <AccountIcon />
@@ -307,6 +311,13 @@ export async function PublicSiteHeader() {
               <Link href="/kayit">Üye Ol</Link>
             </div>
           </details>
+        </div>
+      </div>
+
+      <div className="public-site-header__nav-band">
+        <div className="public-site-header__nav-inner">
+          <PublicNavigation />
+          <MobileNavigation />
         </div>
       </div>
     </header>

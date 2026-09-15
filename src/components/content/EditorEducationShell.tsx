@@ -3,24 +3,53 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
-import { getEditorEducationGuideRecord } from "@/lib/cms-editor-education";
+import {
+  getEditorEducationGuideRecord,
+  getEditorEducationPublishedTextRecord,
+} from "@/lib/cms-editor-education";
 import {
   EDITOR_EDUCATION_CATEGORIES,
   editorEducationPublicPath,
   type EditorEducationCategory,
 } from "@/lib/editor-education";
+import {
+  applyEditorEducationTextOverrides,
+  type EditorEducationTextOverrides,
+} from "@/lib/editor-education-text";
 
 type EditorEducationShellProps = {
   children: ReactNode;
   activeCategory: EditorEducationCategory;
+  textOverrides?: EditorEducationTextOverrides;
+  previewMode?: boolean;
 };
 
-export async function EditorEducationShell({ children, activeCategory }: EditorEducationShellProps) {
-  const guide = await getEditorEducationGuideRecord(activeCategory.slug).catch(() => null);
+export async function EditorEducationShell({
+  children,
+  activeCategory,
+  textOverrides,
+  previewMode = false,
+}: EditorEducationShellProps) {
+  const [guide, publishedText] = await Promise.all([
+    getEditorEducationGuideRecord(activeCategory.slug).catch(() => null),
+    typeof textOverrides === "undefined"
+      ? getEditorEducationPublishedTextRecord(activeCategory.slug).catch(() => null)
+      : Promise.resolve(null),
+  ]);
   const cover = guide?.visuals.cover;
+  const effectiveOverrides = typeof textOverrides === "undefined"
+    ? publishedText?.overrides ?? {}
+    : textOverrides;
+  const renderedChildren = applyEditorEducationTextOverrides(children, effectiveOverrides);
 
   return (
     <>
+      {previewMode ? (
+        <div className="sticky top-0 z-50 border-b border-[#5b35dd]/20 bg-[#efeaff] px-4 py-2 text-center text-xs font-extrabold tracking-[0.08em] text-[#4b2bc5]">
+          TASLAK ÖNİZLEME · Bu görünüm henüz canlı değildir
+        </div>
+      ) : null}
+
       <div className="min-h-screen bg-[#f8f6f0] text-[#171426]">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:py-10">
           <aside aria-label="Editör eğitimleri" className="lg:sticky lg:top-6 lg:self-start">
@@ -75,7 +104,7 @@ export async function EditorEducationShell({ children, activeCategory }: EditorE
             ) : null}
           </aside>
 
-          <div className="min-w-0">{children}</div>
+          <div className="min-w-0">{renderedChildren}</div>
         </div>
       </div>
 

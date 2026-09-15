@@ -56,7 +56,7 @@ const editorEducationCategories = [
   {
     title: "Yayıncılık ve Profesyonel Editörlük",
     description: "Dosya değerlendirmeden yayıma hazırlığa uzanan profesyonel editörlük ve yayıncılık sürecini tanı.",
-    href: null,
+    href: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk",
   },
 ] as const;
 
@@ -213,7 +213,6 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
           title="Editörlük eğitimini kendi yolundan keşfet."
           description="Bir metni yalnızca düzeltmeyi değil; değerlendirmeyi, geliştirmeyi ve yazarı daha güçlü bir esere taşımayı öğren. İhtiyacın olan eğitim alanından başlayarak profesyonel editörlüğünü adım adım güçlendir."
         />
-
         <div className="how-related__grid writers-education__grid">
           {editorEducationCategories.map((category) => (
             category.href ? (

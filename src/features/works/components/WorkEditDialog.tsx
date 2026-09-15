@@ -215,6 +215,23 @@ export function WorkEditDialog({
             placeholder="https://"
           />
 
+          <fieldset className="workspace-classification">
+            <legend>Eser erişimi</legend>
+            <p>
+              Eseri pasife almak yayın durumunu veya görünürlük ayarını değiştirmez.
+              Pasif eser yazar panelinde kalır ve düzenlenebilir; okur ve diğer dış
+              yüzeylerde görünmez.
+            </p>
+            <label className="workspace-classification__confirm">
+              <input
+                name="isActive"
+                type="checkbox"
+                defaultChecked={work.isActive}
+              />
+              <span>Eser aktif</span>
+            </label>
+          </fieldset>
+
           <Field
             control="select"
             label={

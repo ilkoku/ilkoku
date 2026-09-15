@@ -46,7 +46,7 @@ const editorEducationCategories = [
   {
     title: "Editör Notu ve Geri Bildirim",
     description: "Tespiti gerekçeye, gerekçeyi yazara gerçekten yol gösterecek uygulanabilir geri bildirime dönüştür.",
-    href: null,
+    href: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim",
   },
   {
     title: "Yazarla Çalışmak",

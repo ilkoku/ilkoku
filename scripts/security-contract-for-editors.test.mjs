@@ -59,3 +59,27 @@ test("editor public page stays CMS-compatible, value-led and truthful about assi
   notContains(content, "eseri istediği gibi kullanabilir", "fabricated editor usage right");
   notContains(content, "ikinci editör ilk raporu görür", "broken independence claim");
 });
+
+test("editor education section one adds only the shared shell and keeps unfinished lessons unavailable", () => {
+  const inventory = source("src/lib/editor-education.ts");
+  const shell = source("src/components/content/EditorEducationShell.tsx");
+  const firstRoute = source("src/app/editorler-icin/egitim/editorluge-baslama/page.tsx");
+
+  const slugs = [...inventory.matchAll(/slug: "([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(slugs.length, 8, "editor education shell must list exactly eight education categories");
+  assert.equal(new Set(slugs).size, 8, "editor education category slugs must be unique");
+  assert.equal((inventory.match(/live: true/g) ?? []).length, 1, "only the first editor education route may be live in section one");
+
+  contains(shell, 'import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader"', "editor education original public header");
+  contains(shell, "<PublicSiteHeader />", "editor education public header render");
+  contains(shell, "EDITOR_EDUCATION_CATEGORIES.map", "editor education eight-item left navigation");
+  contains(shell, 'aria-label="Editör eğitimleri"', "editor education navigation semantics");
+  contains(shell, 'aria-disabled="true"', "unfinished editor lessons stay non-clickable");
+  contains(shell, "<LiveHomepageFooter", "editor education original footer");
+
+  contains(firstRoute, '<EditorEducationShell activeCategory={category}>', "first editor education route uses shared shell");
+  contains(firstRoute, "Editörlüğe Başlama", "first editor education shell title");
+  contains(firstRoute, "robots: { index: false, follow: true }", "incomplete first lesson stays out of search index");
+  notContains(firstRoute, "Öğrenme yolu", "section one must not add detailed lesson content");
+  notContains(firstRoute, "Kendin dene", "section one must not add practice content");
+});

@@ -15,14 +15,20 @@ import {
   HEADER_NAV_DRAFT_KEY,
   HEADER_NAV_LIVE_KEY,
   parseHeaderNavigation,
+  SITE_MAP_PAGES,
   validateHeaderNavigation,
 } from "@/lib/cms-header-navigation";
+import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 
 type NavigationRow = { valueJson: string };
 
 function value(formData: FormData, key: string, max = 300) {
   return String(formData.get(key) ?? "").trim().slice(0, max);
+}
+
+async function completeSiteMapPages() {
+  return [...SITE_MAP_PAGES, ...(await loadPublishedCmsSiteMapPages())];
 }
 
 function footerPayload(formData: FormData): FooterNavigationPayload {
@@ -54,8 +60,12 @@ function footerPayload(formData: FormData): FooterNavigationPayload {
 export async function saveHeaderNavigationAction(formData: FormData) {
   const { user } = await requireCmsAdmin("/icerik/menuler");
   const raw = String(formData.get("headerNavigationJson") ?? "").slice(0, 120_000);
-  const payload = parseHeaderNavigation(raw);
+  const pages = await completeSiteMapPages();
+  const payload = parseHeaderNavigation(raw, pages);
   if (!payload) redirect("/icerik/menuler?menuHata=yapi");
+
+  const issues = validateHeaderNavigation(payload);
+  if (issues.length > 0) redirect("/icerik/menuler?menuHata=kurallar");
 
   const valueJson = JSON.stringify(payload);
   await prisma.$executeRaw`
@@ -90,7 +100,8 @@ export async function publishHeaderNavigationAction() {
     LIMIT 1
   `;
   const draft = rows[0];
-  const payload = draft ? parseHeaderNavigation(draft.valueJson) : null;
+  const pages = await completeSiteMapPages();
+  const payload = draft ? parseHeaderNavigation(draft.valueJson, pages) : null;
   if (!draft || !payload) redirect("/icerik/menuler?menuHata=taslak");
 
   const issues = validateHeaderNavigation(payload);

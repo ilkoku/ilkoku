@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   title: "Yazarla Çalışmak | İlkOku Editörlük Okulu",
   description:
     "Editör-yazar ilişkisinde hedef, kapsam, revizyon döngüsü, fikir ayrılığı, profesyonel iletişim, müdahale sınırı ve yazarın yaratıcı karar alanını korumayı öğren.",
-  robots: { index: false, follow: true },
+  alternates: { canonical: "/editorler-icin/egitim/yazarla-calismak" },
+  robots: { index: true, follow: true },
 };
 
 const outcomes = [

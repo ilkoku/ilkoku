@@ -60,19 +60,20 @@ test("editor public page stays CMS-compatible, value-led and truthful about assi
   notContains(content, "ikinci editör ilk raporu görür", "broken independence claim");
 });
 
-test("editor education section three adds text evaluation while preserving the shared shell", () => {
+test("editor education section four adds structural editing while preserving the shared shell", () => {
   const inventory = source("src/lib/editor-education.ts");
   const shell = source("src/components/content/EditorEducationShell.tsx");
   const editorLayout = source("src/app/editorler-icin/layout.tsx");
   const publicFrame = source("src/components/layout/PublicSiteFrame.tsx");
   const firstRoute = source("src/app/editorler-icin/egitim/editorluge-baslama/page.tsx");
   const secondRoute = source("src/app/editorler-icin/egitim/metin-degerlendirme/page.tsx");
+  const thirdRoute = source("src/app/editorler-icin/egitim/yapisal-editorluk/page.tsx");
   const experience = source("src/components/content/ForEditorsExperience.tsx");
 
   const slugs = [...inventory.matchAll(/slug: "([^"]+)"/g)].map((match) => match[1]);
   assert.equal(slugs.length, 8, "editor education shell must list exactly eight education categories");
   assert.equal(new Set(slugs).size, 8, "editor education category slugs must be unique");
-  assert.equal((inventory.match(/live: true/g) ?? []).length, 2, "only the first two editor education routes may be live in section three");
+  assert.equal((inventory.match(/live: true/g) ?? []).length, 3, "only the first three editor education routes may be live in section four");
 
   contains(editorLayout, "<PublicSiteFrame>{children}</PublicSiteFrame>", "editor education inherits public site frame");
   contains(publicFrame, "<PublicSiteHeader />", "public site frame owns the original public header");
@@ -83,18 +84,20 @@ test("editor education section three adds text evaluation while preserving the s
   contains(shell, "<LiveHomepageFooter", "editor education original footer");
 
   contains(firstRoute, "Bu eğitim sana ne kazandıracak?", "starting lesson remains complete");
-  contains(secondRoute, '<EditorEducationShell activeCategory={category}>', "text evaluation route uses shared shell");
-  contains(secondRoute, "Metin Değerlendirme", "text evaluation title");
-  contains(secondRoute, "İlk okumayı koru", "text evaluation first-read discipline");
-  contains(secondRoute, "Değerlendirme mercekleri", "text evaluation lenses");
-  contains(secondRoute, "Örnek vaka", "text evaluation worked example");
-  contains(secondRoute, "Önceliklendirme", "text evaluation prioritization");
-  contains(secondRoute, "Kendin dene", "text evaluation practice");
-  contains(secondRoute, "İlkOku’da uygula", "text evaluation platform application");
-  contains(secondRoute, "robots: { index: false, follow: true }", "text evaluation remains noindex until final SEO stage");
-  notContains(secondRoute, "AŞAMA 1", "text evaluation does not introduce numbered lesson cards");
+  contains(secondRoute, "Metin Değerlendirme", "text evaluation lesson remains complete");
+
+  contains(thirdRoute, '<EditorEducationShell activeCategory={category}>', "structural editing route uses shared shell");
+  contains(thirdRoute, "Yapısal Editörlük", "structural editing title");
+  contains(thirdRoute, "Omurga haritası", "structural editing macro map");
+  contains(thirdRoute, "Sahne işlevi", "structural editing scene function");
+  contains(thirdRoute, "Örnek vaka", "structural editing worked example");
+  contains(thirdRoute, "Anlatı mimarisi", "structural editing architecture checks");
+  contains(thirdRoute, "Revizyon sırası", "structural editing revision order");
+  contains(thirdRoute, "Kendin dene", "structural editing practice");
+  contains(thirdRoute, "İlkOku’da uygula", "structural editing platform application");
+  contains(thirdRoute, "robots: { index: false, follow: true }", "structural editing remains noindex until final SEO stage");
+  notContains(thirdRoute, "AŞAMA 1", "structural editing does not introduce numbered lesson cards");
 
   contains(experience, 'href: "/editorler-icin/egitim/editorluge-baslama"', "editor gateway first lesson remains linked");
-  contains(experience, 'href: "/editorler-icin/egitim/metin-degerlendirme"', "editor gateway text evaluation lesson linked");
-  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 2, "only the first two editor gateway cards may be linked in section three");
+  contains(experience, 'href: "/editorler-icin/egitim/metin-degerlendirme"', "editor gateway text evaluation lesson remains linked");
 });

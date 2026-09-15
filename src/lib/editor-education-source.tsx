@@ -17,7 +17,7 @@ const lessonLoaders = {
 
 type LessonSlug = keyof typeof lessonLoaders;
 
-export async function getEditorEducationSourceTree(categorySlug: string): Promise<ReactNode | null> {
+export async function getEditorEducationSourcePageTree(categorySlug: string): Promise<ReactNode | null> {
   const category = getEditorEducationCategory(categorySlug);
   if (!category || !(category.slug in lessonLoaders)) return null;
   const loader = lessonLoaders[category.slug as LessonSlug];
@@ -25,8 +25,8 @@ export async function getEditorEducationSourceTree(categorySlug: string): Promis
   return module.default();
 }
 
-export async function getEditorEducationSourceChildren(categorySlug: string): Promise<ReactNode | null> {
-  const tree = await getEditorEducationSourceTree(categorySlug);
+export async function getEditorEducationSourceTree(categorySlug: string): Promise<ReactNode | null> {
+  const tree = await getEditorEducationSourcePageTree(categorySlug);
   if (!tree || !isValidElement(tree)) return null;
   const element = tree as ReactElement<{ children?: ReactNode }>;
   return element.props.children ?? null;

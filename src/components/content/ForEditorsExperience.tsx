@@ -21,34 +21,42 @@ const editorEducationCategories = [
   {
     title: "Editörlüğe Başlama",
     description: "Editörün rolünü, sorumluluğunu, etik sınırlarını ve yazarla çalışma çerçevesini öğren.",
+    href: "/editorler-icin/egitim/editorluge-baslama",
   },
   {
     title: "Metin Değerlendirme",
     description: "Bir eserin güçlü ve geliştirmeye açık yönlerini ilk okumadan itibaren sistemli biçimde çözümle.",
+    href: null,
   },
   {
     title: "Yapısal Editörlük",
     description: "Kurgu, olay örgüsü, karakter, tempo, bölüm yapısı ve anlatı bütünlüğünü değerlendirmeyi öğren.",
+    href: null,
   },
   {
     title: "Dil ve Anlatım Editörlüğü",
     description: "Cümle, akıcılık, tekrar, anlatım, ton ve üslup sorunlarını metnin sesini koruyarak ele al.",
+    href: null,
   },
   {
     title: "Tür Editörlüğü",
     description: "Farklı eser türlerinin editöryal ihtiyaçlarını kendi anlatı mantığı ve okur beklentisiyle değerlendir.",
+    href: null,
   },
   {
     title: "Editör Notu ve Geri Bildirim",
     description: "Tespiti gerekçeye, gerekçeyi yazara gerçekten yol gösterecek uygulanabilir geri bildirime dönüştür.",
+    href: null,
   },
   {
     title: "Yazarla Çalışmak",
     description: "Revizyon, fikir ayrılığı, iletişim ve müdahale sınırlarını profesyonel bir çalışma ilişkisine dönüştür.",
+    href: null,
   },
   {
     title: "Yayıncılık ve Profesyonel Editörlük",
     description: "Dosya değerlendirmeden yayıma hazırlığa uzanan profesyonel editörlük ve yayıncılık sürecini tanı.",
+    href: null,
   },
 ] as const;
 
@@ -208,10 +216,17 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
 
         <div className="how-related__grid writers-education__grid">
           {editorEducationCategories.map((category) => (
-            <article key={category.title}>
-              <strong>{category.title}</strong>
-              <span>{category.description}</span>
-            </article>
+            category.href ? (
+              <Link href={category.href} key={category.title}>
+                <strong>{category.title}</strong>
+                <span>{category.description}</span>
+              </Link>
+            ) : (
+              <article key={category.title}>
+                <strong>{category.title}</strong>
+                <span>{category.description}</span>
+              </article>
+            )
           ))}
         </div>
       </aside>

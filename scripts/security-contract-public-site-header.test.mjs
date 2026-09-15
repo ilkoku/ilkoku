@@ -5,6 +5,7 @@ import test from "node:test";
 const read = (path) => readFileSync(path, "utf8");
 
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
+const headerMegaCssPath = "src/components/layout/public-site-mega-menu.css";
 const identityPath = "src/lib/site-identity.ts";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
 const frameCssPath = "src/components/layout/public-site-frame.css";
@@ -14,13 +15,10 @@ const metadataHelperPath = "src/lib/public-page-metadata.ts";
 const backPath = "src/components/layout/PublicBackNavigation.tsx";
 const historyPath = "src/components/layout/PublicNavigationHistory.tsx";
 const rootLayoutPath = "src/app/layout.tsx";
-const retiredTopNavigation = [
+const pausedDiscoveryRoutes = [
   "/eserler",
   "/yazarlar",
   "/turler",
-  "/editorler",
-  "/nasil-calisir",
-  "/yardim",
 ];
 
 const publicLayoutPaths = [
@@ -63,24 +61,47 @@ const trustRoutes = [
   "/yayinevleri-icin",
 ];
 
-test("public header matches the homepage model without a top navigation list", () => {
+test("public header exposes one canonical role mega navigation while paused discovery stays hidden", () => {
   const header = read(headerPath);
+  const megaCss = read(headerMegaCssPath);
   const identity = read(identityPath);
 
-  assert.doesNotMatch(header, /publicSiteNavigation|NavigationLinks/);
-  assert.doesNotMatch(header, /public-site-header__nav/);
-  assert.doesNotMatch(header, /public-site-header__mobile/);
+  assert.match(header, /public-site-header__navigation/);
+  assert.match(header, /public-site-header__mobile-menu/);
+  assert.match(header, /public-site-header__mega/);
+  assert.match(header, /WRITING_CATEGORY_HUBS/);
+  assert.match(header, /READER_EDUCATION_CATEGORIES/);
+  assert.match(header, /EDITOR_EDUCATION_CATEGORIES/);
 
-  for (const href of retiredTopNavigation) {
+  for (const label of ["Yazar", "Okur", "Editör", "Yayınevi", "İlkOku", "Destek"]) {
+    assert.ok(header.includes(`label: "${label}"`), `${label} must remain in the canonical public navigation`);
+  }
+
+  for (const href of [
+    "/yazarlar-icin",
+    "/editorler-icin",
+    "/yayinevleri-icin",
+    "/editorler",
+    "/hakkimizda",
+    "/nasil-calisir",
+    "/editoryal-standartlar",
+    "/kayit?rol=writer",
+    "/kayit?rol=reader",
+    "/kayit?rol=editor",
+    "/kayit?rol=publisher",
+  ]) {
+    assert.ok(header.includes(`href: "${href}"`) || header.includes(`href="${href}"`), `${href} must remain reachable from the public header`);
+  }
+
+  for (const href of pausedDiscoveryRoutes) {
     assert.doesNotMatch(
       header,
-      new RegExp(`href=["']${href.replaceAll("/", "\\/")}["']`),
-      `${href} must not appear in the top header`,
+      new RegExp(`href(?:=|:)\\s*["']${href.replaceAll("/", "\\/")}["']`),
+      `${href} must not appear in the top header while public discovery is paused`,
     );
   }
 
   assert.match(header, /getPublicSiteIdentity\(\)/);
-  assert.match(header, /identity\.headerKicker/);
   assert.match(identity, /headerKicker:\s*"Dijital yazar platformu"/);
   assert.match(identity, /normalizeLegacyHeaderKicker/);
   assert.match(identity, /dijital edebiyat platformu/);
@@ -88,6 +109,7 @@ test("public header matches the homepage model without a top navigation list", (
   assert.match(header, /href="\/giris"/);
   assert.match(header, /href="\/kayit"/);
   assert.match(header, /href="\/hesabim"/);
+  assert.match(megaCss, /\.homepage-live \.nx-header\s*\{[\s\S]*display:\s*none\s*!important/);
   assert.doesNotMatch(header, /getCurrentProfile|navigation\.workspaceHref|logoutAction/);
 });
 

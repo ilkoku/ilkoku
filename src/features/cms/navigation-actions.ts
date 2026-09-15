@@ -11,12 +11,24 @@ import {
   type FooterNavigationPayload,
 } from "@/lib/cms-footer-navigation";
 import { analyzeFooterNavigation } from "@/lib/cms-footer-validation";
+import {
+  HEADER_NAV_DRAFT_KEY,
+  HEADER_NAV_LIVE_KEY,
+  parseHeaderNavigation,
+  SITE_MAP_PAGES,
+  validateHeaderNavigation,
+} from "@/lib/cms-header-navigation";
+import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 
-type FooterRow = { valueJson: string };
+type NavigationRow = { valueJson: string };
 
 function value(formData: FormData, key: string, max = 300) {
   return String(formData.get(key) ?? "").trim().slice(0, max);
+}
+
+async function completeSiteMapPages() {
+  return [...SITE_MAP_PAGES, ...(await loadPublishedCmsSiteMapPages())];
 }
 
 function footerPayload(formData: FormData): FooterNavigationPayload {
@@ -43,6 +55,88 @@ function footerPayload(formData: FormData): FooterNavigationPayload {
     copyrightLabel: value(formData, "copyrightLabel", 100),
     copyrightHref: value(formData, "copyrightHref"),
   };
+}
+
+export async function saveHeaderNavigationAction(formData: FormData) {
+  const { user } = await requireCmsAdmin("/icerik/menuler");
+  const raw = String(formData.get("headerNavigationJson") ?? "").slice(0, 120_000);
+  const pages = await completeSiteMapPages();
+  const payload = parseHeaderNavigation(raw, pages);
+  if (!payload) redirect("/icerik/menuler?menuHata=yapi");
+
+  const issues = validateHeaderNavigation(payload);
+  if (issues.length > 0) redirect("/icerik/menuler?menuHata=kurallar");
+
+  const valueJson = JSON.stringify(payload);
+  await prisma.$executeRaw`
+    INSERT INTO SiteContent (
+      id, namespace, contentKey, valueJson, valueType, status,
+      updatedById, createdAt, updatedAt
+    ) VALUES (
+      ${randomUUID()}, 'site', ${HEADER_NAV_DRAFT_KEY}, ${valueJson}, 'json', 'draft',
+      ${user!.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+    )
+    ON DUPLICATE KEY UPDATE
+      valueJson = VALUES(valueJson),
+      valueType = 'json',
+      status = 'draft',
+      publishedAt = NULL,
+      updatedById = VALUES(updatedById),
+      updatedAt = CURRENT_TIMESTAMP(3)
+  `;
+
+  revalidatePath("/icerik/menuler");
+  redirect("/icerik/menuler?menuTaslak=1");
+}
+
+export async function publishHeaderNavigationAction() {
+  const { user } = await requireCmsAdmin("/icerik/menuler");
+  const rows = await prisma.$queryRaw<NavigationRow[]>`
+    SELECT valueJson
+    FROM SiteContent
+    WHERE namespace = 'site'
+      AND contentKey = ${HEADER_NAV_DRAFT_KEY}
+      AND status = 'draft'
+    LIMIT 1
+  `;
+  const draft = rows[0];
+  const pages = await completeSiteMapPages();
+  const payload = draft ? parseHeaderNavigation(draft.valueJson, pages) : null;
+  if (!draft || !payload) redirect("/icerik/menuler?menuHata=taslak");
+
+  const issues = validateHeaderNavigation(payload);
+  if (issues.length > 0) redirect("/icerik/menuler?menuHata=kurallar");
+
+  await prisma.$transaction([
+    prisma.$executeRaw`
+      INSERT INTO SiteContent (
+        id, namespace, contentKey, valueJson, valueType, status,
+        publishedAt, updatedById, createdAt, updatedAt
+      ) VALUES (
+        ${randomUUID()}, 'site', ${HEADER_NAV_LIVE_KEY}, ${draft.valueJson}, 'json', 'published',
+        CURRENT_TIMESTAMP(3), ${user!.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+      )
+      ON DUPLICATE KEY UPDATE
+        valueJson = VALUES(valueJson),
+        valueType = 'json',
+        status = 'published',
+        publishedAt = CURRENT_TIMESTAMP(3),
+        updatedById = VALUES(updatedById),
+        updatedAt = CURRENT_TIMESTAMP(3)
+    `,
+    prisma.$executeRaw`
+      UPDATE SiteContent
+      SET status = 'archived', publishedAt = NULL,
+          updatedById = ${user!.id}, updatedAt = CURRENT_TIMESTAMP(3)
+      WHERE namespace = 'site'
+        AND contentKey = ${HEADER_NAV_DRAFT_KEY}
+        AND status = 'draft'
+    `,
+  ]);
+
+  revalidatePath("/", "layout");
+  revalidatePath("/icerik/menuler");
+  redirect("/icerik/menuler?menuYayin=1");
 }
 
 export async function saveFooterNavigationAction(formData: FormData) {
@@ -72,7 +166,7 @@ export async function saveFooterNavigationAction(formData: FormData) {
 
 export async function publishFooterNavigationAction() {
   const { user } = await requireCmsAdmin("/icerik/menuler");
-  const rows = await prisma.$queryRaw<FooterRow[]>`
+  const rows = await prisma.$queryRaw<NavigationRow[]>`
     SELECT valueJson
     FROM SiteContent
     WHERE namespace = 'site'

@@ -237,6 +237,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
               status: "active",
             },
           },
+          isActive: true,
           language: "tr",
           publishedAt: {
             not: null,

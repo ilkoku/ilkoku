@@ -4,6 +4,7 @@ import Link from "next/link";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
+import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 
 type Section = { body: string; title: string };
 
@@ -16,41 +17,6 @@ type EditorIconName =
   | "conflict"
   | "author"
   | "record";
-
-const editorEducationCategories = [
-  {
-    title: "Editörlüğe Başlama",
-    description: "Editörün rolünü, sorumluluğunu, etik sınırlarını ve yazarla çalışma çerçevesini öğren.",
-  },
-  {
-    title: "Metin Değerlendirme",
-    description: "Bir eserin güçlü ve geliştirmeye açık yönlerini ilk okumadan itibaren sistemli biçimde çözümle.",
-  },
-  {
-    title: "Yapısal Editörlük",
-    description: "Kurgu, olay örgüsü, karakter, tempo, bölüm yapısı ve anlatı bütünlüğünü değerlendirmeyi öğren.",
-  },
-  {
-    title: "Dil ve Anlatım Editörlüğü",
-    description: "Cümle, akıcılık, tekrar, anlatım, ton ve üslup sorunlarını metnin sesini koruyarak ele al.",
-  },
-  {
-    title: "Tür Editörlüğü",
-    description: "Farklı eser türlerinin editöryal ihtiyaçlarını kendi anlatı mantığı ve okur beklentisiyle değerlendir.",
-  },
-  {
-    title: "Editör Notu ve Geri Bildirim",
-    description: "Tespiti gerekçeye, gerekçeyi yazara gerçekten yol gösterecek uygulanabilir geri bildirime dönüştür.",
-  },
-  {
-    title: "Yazarla Çalışmak",
-    description: "Revizyon, fikir ayrılığı, iletişim ve müdahale sınırlarını profesyonel bir çalışma ilişkisine dönüştür.",
-  },
-  {
-    title: "Yayıncılık ve Profesyonel Editörlük",
-    description: "Dosya değerlendirmeden yayıma hazırlığa uzanan profesyonel editörlük ve yayıncılık sürecini tanı.",
-  },
-] as const;
 
 const knownSections = new Set([
   "Editör çalışma alanına yetkili rol ile gir",
@@ -207,11 +173,11 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
         />
 
         <div className="how-related__grid writers-education__grid">
-          {editorEducationCategories.map((category) => (
-            <article key={category.title}>
+          {EDITOR_EDUCATION_CATEGORIES.map((category) => (
+            <Link href={editorEducationPublicPath(category)} key={category.slug}>
               <strong>{category.title}</strong>
-              <span>{category.description}</span>
-            </article>
+              <span>{category.shortDescription}</span>
+            </Link>
           ))}
         </div>
       </aside>

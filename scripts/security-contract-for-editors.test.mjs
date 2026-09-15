@@ -109,7 +109,6 @@ test("editor education final section adds publishing and professional editing wh
   contains(eighthRoute, "İlkOku’da uygula", "publishing platform application");
   contains(eighthRoute, "Profesyonel editör yalnız iyi not veren kişi değildir", "publishing core principle");
   contains(eighthRoute, "yayınevi kabulü", "publishing lesson rejects acceptance guarantees");
-  contains(eighthRoute, "robots: { index: false, follow: true }", "publishing lesson remains noindex until final SEO stage");
   notContains(eighthRoute, "AŞAMA 1", "publishing lesson does not introduce numbered lesson cards");
 
   contains(experience, 'href: "/editorler-icin/egitim/editorluge-baslama"', "editor gateway first lesson remains linked");
@@ -121,4 +120,31 @@ test("editor education final section adds publishing and professional editing wh
   contains(experience, 'href: "/editorler-icin/egitim/yazarla-calismak"', "working with authors gateway remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk"', "publishing gateway linked after live verification");
   assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 8, "all eight editor gateway cards are linked after publishing lesson live verification");
+});
+
+test("all editor education routes are indexable, self-canonical and included in the sitemap after final SEO release", () => {
+  const sitemap = source("src/app/sitemap.ts");
+  const lessons = [
+    ["editorluge-baslama", "src/app/editorler-icin/egitim/editorluge-baslama/page.tsx"],
+    ["metin-degerlendirme", "src/app/editorler-icin/egitim/metin-degerlendirme/page.tsx"],
+    ["yapisal-editorluk", "src/app/editorler-icin/egitim/yapisal-editorluk/page.tsx"],
+    ["dil-ve-anlatim-editorlugu", "src/app/editorler-icin/egitim/dil-ve-anlatim-editorlugu/page.tsx"],
+    ["tur-editorlugu", "src/app/editorler-icin/egitim/tur-editorlugu/page.tsx"],
+    ["editor-notu-ve-geri-bildirim", "src/app/editorler-icin/egitim/editor-notu-ve-geri-bildirim/page.tsx"],
+    ["yazarla-calismak", "src/app/editorler-icin/egitim/yazarla-calismak/page.tsx"],
+    ["yayincilik-ve-profesyonel-editorluk", "src/app/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk/page.tsx"],
+  ];
+
+  for (const [slug, path] of lessons) {
+    const route = source(path);
+    contains(route, `alternates: { canonical: "/editorler-icin/egitim/${slug}" }`, `${slug} self canonical`);
+    contains(route, "robots: { index: true, follow: true }", `${slug} indexability`);
+    notContains(route, "robots: { index: false", `${slug} must not regress to noindex`);
+  }
+
+  contains(sitemap, 'import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education"', "editor education sitemap import");
+  contains(sitemap, "const editorEducationHrefs = EDITOR_EDUCATION_CATEGORIES.map", "editor education sitemap href inventory");
+  contains(sitemap, "const editorEducationEntries: MetadataRoute.Sitemap", "editor education sitemap entries");
+  contains(sitemap, "...editorEducationEntries", "editor education entries are emitted");
+  contains(sitemap, "...editorEducationHrefs", "editor education routes are protected from CMS duplication");
 });

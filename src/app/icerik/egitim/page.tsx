@@ -64,6 +64,7 @@ export default async function EducationDashboardPage() {
 
       <nav className={styles.quickNav} aria-label="Eğitim hızlı işlemleri">
         <Link href="/icerik/okur-egitim">Okur Eğitim Merkezi</Link>
+        <Link href="/icerik/editor-egitim">Editör Eğitim Merkezi</Link>
         <Link href="/icerik/medya">Medya</Link>
         <Link href="/icerik/sayfalar/sablonlar">Şablonlar</Link>
       </nav>

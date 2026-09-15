@@ -28,6 +28,7 @@
 .pageRow small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8a8394; font-size: .66rem; }
 .pageRow em { padding: .23rem .42rem; border-radius: 999px; background: #f0edf5; color: #7e7689; font-size: .58rem; font-style: normal; font-weight: 750; }
 .pageRow em[data-used="true"] { background: #e9f7ee; color: #2f7c4b; }
+.pageRow em[data-indexable="false"] { background: #fff1dc; color: #995d18; }
 .menuPane { min-width: 0; }
 .menuTitle { display: grid; gap: .35rem; padding: .8rem 1rem 0; }
 .menuTitle span { color: #787183; font-size: .7rem; font-weight: 750; }
@@ -39,9 +40,11 @@
 .columnHeader button { border: 0; border-radius: .55rem; background: #ede6fb; color: #5b36ba; padding: .45rem .55rem; font-size: .64rem; font-weight: 750; cursor: pointer; }
 .linkList { display: grid; gap: .5rem; padding: .65rem; }
 .linkRow { display: grid; gap: .4rem; padding: .6rem; border: 1px solid #ece7f2; border-radius: .65rem; background: white; }
+.linkRow[data-indexable="false"] { border-color: #ead1ad; background: #fffbf4; }
 .linkInfo { min-width: 0; display: grid; gap: .08rem; }
 .linkInfo strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem; }
 .linkInfo small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #90899b; font-size: .63rem; }
+.linkRow[data-indexable="false"] .linkInfo small { color: #995d18; }
 .linkRow > input { min-height: 2.15rem; padding: .4rem .55rem; font-size: .72rem; }
 .primaryToggle { display: flex; align-items: center; gap: .4rem; color: #746d7f; font-size: .65rem; }
 .primaryToggle input { accent-color: #6845c8; }

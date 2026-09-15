@@ -51,7 +51,7 @@ const editorEducationCategories = [
   {
     title: "Yazarla Çalışmak",
     description: "Revizyon, fikir ayrılığı, iletişim ve müdahale sınırlarını profesyonel bir çalışma ilişkisine dönüştür.",
-    href: null,
+    href: "/editorler-icin/egitim/yazarla-calismak",
   },
   {
     title: "Yayıncılık ve Profesyonel Editörlük",

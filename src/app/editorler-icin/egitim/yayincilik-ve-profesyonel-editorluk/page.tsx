@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   title: "Yayıncılık ve Profesyonel Editörlük | İlkOku Editörlük Okulu",
   description:
     "Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, profesyonel teslim standardı, sürüm ve onay disiplini ile yayın kararı sınırlarını öğren.",
-  robots: { index: false, follow: true },
+  alternates: { canonical: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk" },
+  robots: { index: true, follow: true },
 };
 
 const outcomes = [

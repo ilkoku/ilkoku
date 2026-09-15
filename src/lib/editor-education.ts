@@ -16,7 +16,7 @@ export const EDITOR_EDUCATION_CATEGORIES: readonly EditorEducationCategory[] = [
     slug: "metin-degerlendirme",
     title: "Metin Değerlendirme",
     shortDescription: "Bir eserin güçlü ve geliştirmeye açık yönlerini ilk okumadan itibaren sistemli biçimde çözümle.",
-    live: false,
+    live: true,
   },
   {
     slug: "yapisal-editorluk",

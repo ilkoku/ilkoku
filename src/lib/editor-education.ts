@@ -52,7 +52,7 @@ export const EDITOR_EDUCATION_CATEGORIES: readonly EditorEducationCategory[] = [
     slug: "yayincilik-ve-profesyonel-editorluk",
     title: "Yayıncılık ve Profesyonel Editörlük",
     shortDescription: "Dosya değerlendirmeden yayıma hazırlığa uzanan profesyonel editörlük ve yayıncılık sürecini tanı.",
-    live: false,
+    live: true,
   },
 ] as const;
 

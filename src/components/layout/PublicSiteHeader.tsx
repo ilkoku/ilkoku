@@ -12,6 +12,7 @@ import "./public-site-header-terminal.css";
 import "./public-back-navigation.css";
 import "./public-trust-hero-proof.css";
 import "./public-site-mega-menu.css";
+import "./public-site-mega-menu-layer.css";
 
 function AccountIcon() {
   return (

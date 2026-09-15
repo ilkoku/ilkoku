@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { CSSProperties } from "react";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
+import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigation";
 import { resolveHeaderNavigation } from "@/lib/cms-header-navigation";
 import { getPublishedHeaderNavigation } from "@/lib/cms-header-navigation-server";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
@@ -12,8 +12,6 @@ import "./public-site-header-terminal.css";
 import "./public-back-navigation.css";
 import "./public-trust-hero-proof.css";
 import "./public-site-mega-menu.css";
-
-type MegaMenu = ReturnType<typeof resolveHeaderNavigation>[number];
 
 function AccountIcon() {
   return (
@@ -30,67 +28,6 @@ function AccountIcon() {
       <circle cx="12" cy="8" r="4" />
       <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
     </svg>
-  );
-}
-
-function MenuItem({ menu }: { menu: MegaMenu }) {
-  const columns = Math.min(menu.groups.length, 3);
-
-  return (
-    <details className="public-site-header__menu-item">
-      <summary>{menu.label}</summary>
-      <div className="public-site-header__mega">
-        <div
-          className="public-site-header__mega-grid"
-          style={{ "--mega-columns": columns } as CSSProperties}
-        >
-          {menu.groups.map((group) => (
-            <section className="public-site-header__mega-group" key={`${menu.id}-${group.id}`}>
-              <h2>{group.title}</h2>
-              <div className="public-site-header__mega-links">
-                {group.links.map((link) => (
-                  <Link
-                    href={link.href}
-                    data-primary={link.primary ? "true" : undefined}
-                    key={`${menu.id}-${group.id}-${link.pageId}`}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </div>
-    </details>
-  );
-}
-
-function PublicNavigation({ menus }: { menus: MegaMenu[] }) {
-  return (
-    <nav className="public-site-header__navigation" aria-label="Ana menü">
-      {menus.map((menu) => (
-        <MenuItem menu={menu} key={menu.id} />
-      ))}
-    </nav>
-  );
-}
-
-function MobileNavigation({ menus }: { menus: MegaMenu[] }) {
-  return (
-    <details className="public-site-header__mobile-menu">
-      <summary aria-label="Ana menüyü aç">
-        <span aria-hidden="true">☰</span>
-        <span>Menü</span>
-      </summary>
-      <div className="public-site-header__mobile-panel">
-        <nav aria-label="Mobil ana menü">
-          {menus.map((menu) => (
-            <MenuItem menu={menu} key={`mobile-${menu.id}`} />
-          ))}
-        </nav>
-      </div>
-    </details>
   );
 }
 
@@ -149,8 +86,7 @@ export async function PublicSiteHeader() {
 
       <div className="public-site-header__nav-band">
         <div className="public-site-header__nav-inner">
-          <PublicNavigation menus={publicMenus} />
-          <MobileNavigation menus={publicMenus} />
+          <PublicHeaderNavigation menus={publicMenus} />
         </div>
       </div>
     </header>

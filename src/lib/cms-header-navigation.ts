@@ -13,6 +13,13 @@ export type SiteMapPage = {
   area: string;
   group: string;
   kind: "page" | "education" | "action";
+  indexable?: boolean;
+};
+
+export type CmsSiteMapPageInput = {
+  slug: string;
+  title: string;
+  noIndex?: boolean;
 };
 
 export type HeaderNavigationLink = {
@@ -40,13 +47,13 @@ export type HeaderNavigationPayload = {
 const basePages: SiteMapPage[] = [
   { id: "home", label: "Ana Sayfa", href: "/", area: "İlkOku", group: "Platform", kind: "page" },
   { id: "writers-home", label: "Yazarlar İçin", href: "/yazarlar-icin", area: "Yazar", group: "Başlangıç", kind: "page" },
-  { id: "writer-register", label: "Yazar Ol", href: "/kayit?rol=writer", area: "Yazar", group: "Başlangıç", kind: "action" },
-  { id: "reader-register", label: "Okuyucu Ol", href: "/kayit?rol=reader", area: "Okur", group: "Başlangıç", kind: "action" },
+  { id: "writer-register", label: "Yazar Ol", href: "/kayit?rol=writer", area: "Yazar", group: "Başlangıç", kind: "action", indexable: false },
+  { id: "reader-register", label: "Okuyucu Ol", href: "/kayit?rol=reader", area: "Okur", group: "Başlangıç", kind: "action", indexable: false },
   { id: "editors-home", label: "Editörler İçin", href: "/editorler-icin", area: "Editör", group: "Başlangıç", kind: "page" },
   { id: "editors", label: "Editörler", href: "/editorler", area: "Editör", group: "Başlangıç", kind: "page" },
-  { id: "editor-register", label: "Editör Başvurusu", href: "/kayit?rol=editor", area: "Editör", group: "Başlangıç", kind: "action" },
+  { id: "editor-register", label: "Editör Başvurusu", href: "/kayit?rol=editor", area: "Editör", group: "Başlangıç", kind: "action", indexable: false },
   { id: "publishers-home", label: "Yayınevleri İçin", href: "/yayinevleri-icin", area: "Yayınevi", group: "Başlangıç", kind: "page" },
-  { id: "publisher-register", label: "Yayınevi Ol", href: "/kayit?rol=publisher", area: "Yayınevi", group: "Başlangıç", kind: "action" },
+  { id: "publisher-register", label: "Yayınevi Ol", href: "/kayit?rol=publisher", area: "Yayınevi", group: "Başlangıç", kind: "action", indexable: false },
   { id: "about", label: "Hakkımızda", href: "/hakkimizda", area: "İlkOku", group: "Platform", kind: "page" },
   { id: "how-it-works", label: "Nasıl Çalışır?", href: "/nasil-calisir", area: "İlkOku", group: "Platform", kind: "page" },
   { id: "editorial-standards", label: "Editoryal Standartlar", href: "/editoryal-standartlar", area: "İlkOku", group: "Güven", kind: "page" },
@@ -106,10 +113,24 @@ export const SITE_MAP_PAGES: readonly SiteMapPage[] = [
   ...editorPages,
 ];
 
-const siteMapById = new Map(SITE_MAP_PAGES.map((page) => [page.id, page]));
+export function createCmsSiteMapPages(rows: readonly CmsSiteMapPageInput[]): SiteMapPage[] {
+  return rows.flatMap((row) => {
+    const href = row.slug.startsWith("/") ? row.slug : `/${row.slug}`;
+    if (!/^\/[a-z0-9-]+$/i.test(href)) return [];
+    return [{
+      id: `cms-page:${href}`,
+      label: row.title.trim() || href,
+      href,
+      area: "Diğer Sayfalar",
+      group: "CMS Sayfaları",
+      kind: "page" as const,
+      indexable: !row.noIndex,
+    }];
+  });
+}
 
-export function getSiteMapPage(pageId: string) {
-  return siteMapById.get(pageId) ?? null;
+export function getSiteMapPage(pageId: string, pages: readonly SiteMapPage[] = SITE_MAP_PAGES) {
+  return pages.find((page) => page.id === pageId) ?? null;
 }
 
 function link(pageId: string, primary = false): HeaderNavigationLink {
@@ -177,7 +198,7 @@ function text(value: unknown, max: number) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
-export function parseHeaderNavigation(valueJson: string): HeaderNavigationPayload | null {
+export function parseHeaderNavigation(valueJson: string, pages: readonly SiteMapPage[] = SITE_MAP_PAGES): HeaderNavigationPayload | null {
   try {
     const parsed = JSON.parse(valueJson) as unknown;
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
@@ -211,8 +232,8 @@ export function parseHeaderNavigation(valueJson: string): HeaderNavigationPayloa
         for (const rawLink of rawLinks) {
           if (!rawLink || typeof rawLink !== "object" || Array.isArray(rawLink)) return null;
           const linkRecord = rawLink as Record<string, unknown>;
-          const pageId = text(linkRecord.pageId, 120);
-          if (!pageId || !getSiteMapPage(pageId) || pageIds.has(pageId)) return null;
+          const pageId = text(linkRecord.pageId, 160);
+          if (!pageId || !getSiteMapPage(pageId, pages) || pageIds.has(pageId)) return null;
           pageIds.add(pageId);
           const customLabel = text(linkRecord.label, 80);
           links.push({ pageId, ...(customLabel ? { label: customLabel } : {}), ...(linkRecord.primary === true ? { primary: true } : {}) });
@@ -227,7 +248,7 @@ export function parseHeaderNavigation(valueJson: string): HeaderNavigationPayloa
   }
 }
 
-export function resolveHeaderNavigation(payload: HeaderNavigationPayload) {
+export function resolveHeaderNavigation(payload: HeaderNavigationPayload, pages: readonly SiteMapPage[] = SITE_MAP_PAGES) {
   return payload.menus.map((menu) => ({
     id: menu.id,
     label: menu.label,
@@ -235,7 +256,7 @@ export function resolveHeaderNavigation(payload: HeaderNavigationPayload) {
       id: group.id,
       title: group.title,
       links: group.links.flatMap((item) => {
-        const page = getSiteMapPage(item.pageId);
+        const page = getSiteMapPage(item.pageId, pages);
         if (!page) return [];
         return [{ href: page.href, label: item.label || page.label, primary: Boolean(item.primary), pageId: item.pageId }];
       }),

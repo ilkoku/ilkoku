@@ -14,8 +14,17 @@ type ParentMeta = {
   href: string | null;
 };
 
-function fieldKey(path: readonly string[]) {
-  return `t-${path.join("-")}`;
+function textFingerprint(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function fieldKey(path: readonly string[], value: string) {
+  return `t-${path.join("-")}-${textFingerprint(value)}`;
 }
 
 function textKind(meta: ParentMeta): EditorEducationTextField["kind"] {
@@ -68,7 +77,7 @@ function collectNode(
     const value = String(node).trim();
     if (!value) return;
     fields.push({
-      key: fieldKey(path),
+      key: fieldKey(path, value),
       value,
       kind: textKind(parent),
       label: fieldLabel(parent, value),
@@ -102,7 +111,7 @@ function applyNode(
     const raw = String(node);
     const value = raw.trim();
     if (!value) return node;
-    const replacement = overrides[fieldKey(path)];
+    const replacement = overrides[fieldKey(path, value)];
     if (typeof replacement !== "string" || !replacement.trim()) return node;
     return preservedWhitespace(raw, replacement.trim());
   }

@@ -119,6 +119,6 @@ test("editor education final section adds publishing and professional editing wh
   contains(experience, 'href: "/editorler-icin/egitim/tur-editorlugu"', "editor gateway genre editing lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim"', "editor note gateway remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/yazarla-calismak"', "working with authors gateway remains linked");
-  notContains(experience, 'href: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk"', "publishing gateway stays staged until live verification");
-  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 7, "only the first seven editor gateway cards may be linked before publishing lesson live verification");
+  contains(experience, 'href: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk"', "publishing gateway linked after live verification");
+  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 8, "all eight editor gateway cards are linked after publishing lesson live verification");
 });

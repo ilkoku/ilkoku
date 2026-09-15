@@ -60,18 +60,19 @@ test("editor public page stays CMS-compatible, value-led and truthful about assi
   notContains(content, "ikinci editör ilk raporu görür", "broken independence claim");
 });
 
-test("editor education section two completes only the starting lesson and keeps a single inherited public header", () => {
+test("editor education section three adds text evaluation while preserving the shared shell", () => {
   const inventory = source("src/lib/editor-education.ts");
   const shell = source("src/components/content/EditorEducationShell.tsx");
   const editorLayout = source("src/app/editorler-icin/layout.tsx");
   const publicFrame = source("src/components/layout/PublicSiteFrame.tsx");
   const firstRoute = source("src/app/editorler-icin/egitim/editorluge-baslama/page.tsx");
+  const secondRoute = source("src/app/editorler-icin/egitim/metin-degerlendirme/page.tsx");
   const experience = source("src/components/content/ForEditorsExperience.tsx");
 
   const slugs = [...inventory.matchAll(/slug: "([^"]+)"/g)].map((match) => match[1]);
   assert.equal(slugs.length, 8, "editor education shell must list exactly eight education categories");
   assert.equal(new Set(slugs).size, 8, "editor education category slugs must be unique");
-  assert.equal((inventory.match(/live: true/g) ?? []).length, 1, "only the first editor education route may be live in section two");
+  assert.equal((inventory.match(/live: true/g) ?? []).length, 2, "only the first two editor education routes may be live in section three");
 
   contains(editorLayout, "<PublicSiteFrame>{children}</PublicSiteFrame>", "editor education inherits public site frame");
   contains(publicFrame, "<PublicSiteHeader />", "public site frame owns the original public header");
@@ -81,17 +82,17 @@ test("editor education section two completes only the starting lesson and keeps 
   contains(shell, 'aria-disabled="true"', "unfinished editor lessons stay non-clickable");
   contains(shell, "<LiveHomepageFooter", "editor education original footer");
 
-  contains(firstRoute, '<EditorEducationShell activeCategory={category}>', "first editor education route uses shared shell");
-  contains(firstRoute, "Bu eğitim sana ne kazandıracak?", "starting lesson learning outcomes");
-  contains(firstRoute, "Öğrenme yolu", "starting lesson learning path");
-  contains(firstRoute, "Editörlük türlerini ayır", "starting lesson role boundaries");
-  contains(firstRoute, "Örnek vaka", "starting lesson worked example");
-  contains(firstRoute, "Profesyonel sınırlar", "starting lesson ethics and scope");
-  contains(firstRoute, "Kendin dene", "starting lesson practice");
-  contains(firstRoute, "İlkOku’da uygula", "starting lesson platform application");
-  contains(firstRoute, "robots: { index: false, follow: true }", "starting lesson remains noindex until final SEO stage");
-  notContains(firstRoute, "AŞAMA 1", "editor education does not reintroduce numbered lesson cards");
+  contains(firstRoute, "Bu eğitim sana ne kazandıracak?", "starting lesson remains complete");
+  contains(secondRoute, '<EditorEducationShell activeCategory={category}>', "text evaluation route uses shared shell");
+  contains(secondRoute, "Metin Değerlendirme", "text evaluation title");
+  contains(secondRoute, "İlk okumayı koru", "text evaluation first-read discipline");
+  contains(secondRoute, "Değerlendirme mercekleri", "text evaluation lenses");
+  contains(secondRoute, "Örnek vaka", "text evaluation worked example");
+  contains(secondRoute, "Önceliklendirme", "text evaluation prioritization");
+  contains(secondRoute, "Kendin dene", "text evaluation practice");
+  contains(secondRoute, "İlkOku’da uygula", "text evaluation platform application");
+  contains(secondRoute, "robots: { index: false, follow: true }", "text evaluation remains noindex until final SEO stage");
+  notContains(secondRoute, "AŞAMA 1", "text evaluation does not introduce numbered lesson cards");
 
-  contains(experience, 'href: "/editorler-icin/egitim/editorluge-baslama"', "editor gateway first lesson link");
-  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 1, "only the first editor education gateway card may be linked in section two");
+  contains(experience, 'href: "/editorler-icin/egitim/editorluge-baslama"', "editor gateway first lesson remains linked");
 });

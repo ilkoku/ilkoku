@@ -6,6 +6,11 @@ const read = (path) => readFileSync(path, "utf8");
 
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
 const headerMegaCssPath = "src/components/layout/public-site-mega-menu.css";
+const headerConfigPath = "src/lib/cms-header-navigation.ts";
+const headerServerPath = "src/lib/cms-header-navigation-server.ts";
+const headerWorkbenchPath = "src/components/content/HeaderNavigationWorkbench.tsx";
+const navigationActionsPath = "src/features/cms/navigation-actions.ts";
+const menuCmsPath = "src/app/icerik/menuler/page.tsx";
 const identityPath = "src/lib/site-identity.ts";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
 const frameCssPath = "src/components/layout/public-site-frame.css";
@@ -61,20 +66,30 @@ const trustRoutes = [
   "/yayinevleri-icin",
 ];
 
-test("public header exposes one canonical role mega navigation while paused discovery stays hidden", () => {
+test("public header exposes one canonical CMS-backed role mega navigation with a fail-safe code default", () => {
   const header = read(headerPath);
   const megaCss = read(headerMegaCssPath);
+  const config = read(headerConfigPath);
+  const server = read(headerServerPath);
   const identity = read(identityPath);
 
   assert.match(header, /public-site-header__navigation/);
   assert.match(header, /public-site-header__mobile-menu/);
   assert.match(header, /public-site-header__mega/);
-  assert.match(header, /WRITING_CATEGORY_HUBS/);
-  assert.match(header, /READER_EDUCATION_CATEGORIES/);
-  assert.match(header, /EDITOR_EDUCATION_CATEGORIES/);
+  assert.match(header, /getPublishedHeaderNavigation\(\)/);
+  assert.match(header, /resolveHeaderNavigation\(navigationPayload\)/);
+  assert.match(config, /SITE_MAP_PAGES/);
+  assert.match(config, /defaultHeaderNavigation/);
+  assert.match(config, /WRITING_CATEGORY_HUBS/);
+  assert.match(config, /READER_EDUCATION_CATEGORIES/);
+  assert.match(config, /EDITOR_EDUCATION_CATEGORIES/);
+  assert.match(config, /GENRES/);
+  assert.match(server, /status !== "published"/);
+  assert.match(server, /parseHeaderNavigation\(row\.valueJson\) \?\? defaultHeaderNavigation/);
+  assert.match(server, /catch\s*\{[\s\S]*return defaultHeaderNavigation/);
 
   for (const label of ["Yazar", "Okur", "Editör", "Yayınevi", "İlkOku", "Destek"]) {
-    assert.ok(header.includes(`label: "${label}"`), `${label} must remain in the canonical public navigation`);
+    assert.ok(config.includes(`label: "${label}"`), `${label} must remain in the safe default public navigation`);
   }
 
   for (const href of [
@@ -90,14 +105,14 @@ test("public header exposes one canonical role mega navigation while paused disc
     "/kayit?rol=editor",
     "/kayit?rol=publisher",
   ]) {
-    assert.ok(header.includes(`href: "${href}"`) || header.includes(`href="${href}"`), `${href} must remain reachable from the public header`);
+    assert.ok(config.includes(`href: "${href}"`), `${href} must remain represented by a real site-map page id`);
   }
 
   for (const href of pausedDiscoveryRoutes) {
     assert.doesNotMatch(
-      header,
-      new RegExp(`href(?:=|:)\\s*["']${href.replaceAll("/", "\\/")}["']`),
-      `${href} must not appear in the top header while public discovery is paused`,
+      config,
+      new RegExp(`href:\\s*["']${href.replaceAll("/", "\\/")}["']`),
+      `${href} must not be selectable in the public header catalog`,
     );
   }
 
@@ -111,6 +126,31 @@ test("public header exposes one canonical role mega navigation while paused disc
   assert.match(header, /href="\/hesabim"/);
   assert.match(megaCss, /\.homepage-live \.nx-header\s*\{[\s\S]*display:\s*none\s*!important/);
   assert.doesNotMatch(header, /getCurrentProfile|navigation\.workspaceHref|logoutAction/);
+});
+
+test("CMS menu management stores page ids in a safe draft before publishing to the shared header", () => {
+  const config = read(headerConfigPath);
+  const workbench = read(headerWorkbenchPath);
+  const actions = read(navigationActionsPath);
+  const page = read(menuCmsPath);
+
+  assert.match(config, /HEADER_NAV_LIVE_KEY = "header_navigation"/);
+  assert.match(config, /HEADER_NAV_DRAFT_KEY = "header_navigation_draft"/);
+  assert.match(config, /pageId:/);
+  assert.match(config, /getSiteMapPage\(pageId\)/);
+  assert.match(config, /parseHeaderNavigation/);
+  assert.match(config, /validateHeaderNavigation/);
+  assert.doesNotMatch(workbench, /name="href"|name="url"/);
+  assert.match(workbench, /Seçilileri Menüye Ekle/);
+  assert.match(workbench, /name="headerNavigationJson"/);
+  assert.match(actions, /saveHeaderNavigationAction/);
+  assert.match(actions, /publishHeaderNavigationAction/);
+  assert.match(actions, /contentKey = \$\{HEADER_NAV_DRAFT_KEY\}/);
+  assert.match(actions, /contentKey = \$\{HEADER_NAV_LIVE_KEY\}/);
+  assert.match(actions, /revalidatePath\("\/", "layout"\)/);
+  assert.match(page, /Site Haritası & Menü Yönetimi/);
+  assert.match(page, /<HeaderNavigationWorkbench/);
+  assert.match(page, /<FooterNavigationWorkbench/);
 });
 
 test("all eight public trust routes mount the same shared homepage-style header", () => {

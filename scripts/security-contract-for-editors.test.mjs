@@ -112,6 +112,6 @@ test("editor education section seven adds editor notes and feedback while preser
   contains(experience, 'href: "/editorler-icin/egitim/yapisal-editorluk"', "editor gateway structural editing lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu"', "editor gateway language editing lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/tur-editorlugu"', "editor gateway genre editing lesson remains linked");
-  notContains(experience, 'href: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim"', "editor note gateway stays staged until live verification");
-  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 5, "only the first five editor gateway cards may be linked before editor note live verification");
+  contains(experience, 'href: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim"', "editor note gateway linked after live verification");
+  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 6, "first six editor gateway cards are linked after editor note live verification");
 });

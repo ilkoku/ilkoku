@@ -236,6 +236,7 @@ model Work {
   contentRatingConfirmedAt DateTime?
   status                  WorkStatus               @default(draft)
   visibility              WorkVisibility           @default(private)
+  isActive                Boolean                  @default(true)
   publishedAt             DateTime?
   archivedAt              DateTime?
   createdAt               DateTime                 @default(now())
@@ -269,6 +270,7 @@ model Work {
   @@index([authorId])
   @@index([status])
   @@index([visibility])
+  @@index([isActive])
   @@index([language])
   @@index([createdAt])
   @@index([updatedAt])

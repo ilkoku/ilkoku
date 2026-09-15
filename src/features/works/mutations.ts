@@ -160,6 +160,9 @@ export async function updateWork(
       contentRatingConfirmedAt: new Date(),
       status,
       title: changes.title,
+      ...(changes.isActive === undefined
+        ? {}
+        : { isActive: changes.isActive }),
       ...(keepsLivePublication
         ? {
             archivedAt: null,

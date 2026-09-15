@@ -60,6 +60,7 @@ export const updateWorkSchema = z.object({
   workType: workTypeSchema.optional(),
   coverUrl: z.union([z.string().trim().url("Kapak adresi geçerli bir URL olmalıdır."), z.literal("")]).optional(),
   id: z.string().uuid("Geçerli bir eser seçilmelidir."),
+  isActive: z.boolean().optional(),
   language: z.string().trim().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$/, "Dil kodu geçersiz.").optional(),
   status: z.enum(["draft", "in_progress", "published"]).optional(),
 }).and(workClassificationSchema);

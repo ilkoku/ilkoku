@@ -15,6 +15,7 @@ export function commonDiscoveryWorkWhereFor(
   return {
     archivedAt: null,
     ...adultContentWorkVisibility(canAccessAdultContent),
+    isActive: true,
     publishedAt: {
       not: null,
     },

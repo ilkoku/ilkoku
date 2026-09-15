@@ -27,6 +27,7 @@ function memberPublicWhere(canAccessAdultContent: boolean) {
         status: "active" as const,
       },
     },
+    isActive: true,
     language: "tr",
     publishedAt: { not: null },
     slug: { notIn: [...BLOCKED_PUBLIC_WORK_SLUGS] },
@@ -53,6 +54,7 @@ export async function getPublicWorkAgeRating(slug: string) {
       author: {
         is: { deletedAt: null, status: "active" },
       },
+      isActive: true,
       publishedAt: { not: null },
       slug,
       status: "published",

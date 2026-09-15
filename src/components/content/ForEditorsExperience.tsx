@@ -26,7 +26,7 @@ const editorEducationCategories = [
   {
     title: "Metin Değerlendirme",
     description: "Bir eserin güçlü ve geliştirmeye açık yönlerini ilk okumadan itibaren sistemli biçimde çözümle.",
-    href: null,
+    href: "/editorler-icin/egitim/metin-degerlendirme",
   },
   {
     title: "Yapısal Editörlük",

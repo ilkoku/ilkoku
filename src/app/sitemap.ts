@@ -13,6 +13,7 @@ import {
   getPublicAuthors,
   getPublicGenres,
 } from "@/features/public-discovery/library";
+import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 import { GENRES } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -119,11 +120,20 @@ const readerEducationEntries: MetadataRoute.Sitemap = readerEducationHrefs.map((
   priority: 0.7,
 }));
 
+const editorEducationHrefs = EDITOR_EDUCATION_CATEGORIES.map((category) => editorEducationPublicPath(category));
+
+const editorEducationEntries: MetadataRoute.Sitemap = editorEducationHrefs.map((href) => ({
+  url: `${baseUrl}${href}`,
+  changeFrequency: "monthly" as const,
+  priority: 0.7,
+}));
+
 const staticCmsPageSlugs = new Set<string>([
   ...bundledPublicPages.map((page) => page.canonical),
   ...WRITING_CATEGORY_HUBS.map((hub) => hub.href),
   ...writingGenreHrefs,
   ...readerEducationHrefs,
+  ...editorEducationHrefs,
 ]);
 
 const publicDiscoveryStaticEntries: MetadataRoute.Sitemap = [
@@ -162,6 +172,7 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
   },
   ...writingEducationEntries,
   ...readerEducationEntries,
+  ...editorEducationEntries,
   ...(publicDiscoveryEnabled ? publicDiscoveryStaticEntries : []),
   {
     url: `${baseUrl}/yardim`,

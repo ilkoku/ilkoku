@@ -60,7 +60,7 @@ test("editor public page stays CMS-compatible, value-led and truthful about assi
   notContains(content, "ikinci editör ilk raporu görür", "broken independence claim");
 });
 
-test("editor education section five adds language and style editing while preserving the shared shell", () => {
+test("editor education section six adds genre editing while preserving the shared shell", () => {
   const inventory = source("src/lib/editor-education.ts");
   const shell = source("src/components/content/EditorEducationShell.tsx");
   const editorLayout = source("src/app/editorler-icin/layout.tsx");
@@ -69,12 +69,13 @@ test("editor education section five adds language and style editing while preser
   const secondRoute = source("src/app/editorler-icin/egitim/metin-degerlendirme/page.tsx");
   const thirdRoute = source("src/app/editorler-icin/egitim/yapisal-editorluk/page.tsx");
   const fourthRoute = source("src/app/editorler-icin/egitim/dil-ve-anlatim-editorlugu/page.tsx");
+  const fifthRoute = source("src/app/editorler-icin/egitim/tur-editorlugu/page.tsx");
   const experience = source("src/components/content/ForEditorsExperience.tsx");
 
   const slugs = [...inventory.matchAll(/slug: "([^"]+)"/g)].map((match) => match[1]);
   assert.equal(slugs.length, 8, "editor education shell must list exactly eight education categories");
   assert.equal(new Set(slugs).size, 8, "editor education category slugs must be unique");
-  assert.equal((inventory.match(/live: true/g) ?? []).length, 4, "only the first four editor education routes may be live in section five");
+  assert.equal((inventory.match(/live: true/g) ?? []).length, 5, "only the first five editor education routes may be live in section six");
 
   contains(editorLayout, "<PublicSiteFrame>{children}</PublicSiteFrame>", "editor education inherits public site frame");
   contains(publicFrame, "<PublicSiteHeader />", "public site frame owns the original public header");
@@ -87,24 +88,25 @@ test("editor education section five adds language and style editing while preser
   contains(firstRoute, "Bu eğitim sana ne kazandıracak?", "starting lesson remains complete");
   contains(secondRoute, "Metin Değerlendirme", "text evaluation lesson remains complete");
   contains(thirdRoute, "Yapısal Editörlük", "structural editing lesson remains complete");
+  contains(fourthRoute, "Dil ve Anlatım Editörlüğü", "language editing lesson remains complete");
 
-  contains(fourthRoute, '<EditorEducationShell activeCategory={category}>', "language editing route uses shared shell");
-  contains(fourthRoute, "Dil ve Anlatım Editörlüğü", "language editing title");
-  contains(fourthRoute, "Cümle düzeyi", "language editing sentence-level diagnosis");
-  contains(fourthRoute, "Akıcılık ve paragraf ritmi", "language editing flow and paragraph rhythm");
-  contains(fourthRoute, "Örnek vaka", "language editing worked example");
-  contains(fourthRoute, "Ton, kelime seçimi ve üslup", "language editing voice and style");
-  contains(fourthRoute, "Diyalog", "language editing dialogue work");
-  contains(fourthRoute, "Line editing / rewriting sınırı", "language editing intervention boundary");
-  contains(fourthRoute, "Kendin dene", "language editing practice");
-  contains(fourthRoute, "İlkOku’da uygula", "language editing platform application");
-  contains(fourthRoute, "Editör metni kendi diline çevirmeyecek", "language editing preserves the writer voice");
-  contains(fourthRoute, "robots: { index: false, follow: true }", "language editing remains noindex until final SEO stage");
-  notContains(fourthRoute, "AŞAMA 1", "language editing does not introduce numbered lesson cards");
+  contains(fifthRoute, '<EditorEducationShell activeCategory={category}>', "genre editing route uses shared shell");
+  contains(fifthRoute, "Tür Editörlüğü", "genre editing title");
+  contains(fifthRoute, "Tür sözleşmesi", "genre editing reader contract");
+  contains(fifthRoute, "Türe göre editöryal mercek", "genre editing lenses");
+  contains(fifthRoute, "Örnek vaka", "genre editing worked example");
+  contains(fifthRoute, "Hibrit eser ve alt tür", "genre editing hybrid and subgenre method");
+  contains(fifthRoute, "Konvansiyon, klişe ve bilinçli ihlal", "genre editing convention and cliché distinction");
+  contains(fifthRoute, "Kendin dene", "genre editing practice");
+  contains(fifthRoute, "İlkOku’da uygula", "genre editing platform application");
+  contains(fifthRoute, "bu eser satmaz", "genre editing avoids fabricated commercial certainty");
+  contains(fifthRoute, "robots: { index: false, follow: true }", "genre editing remains noindex until final SEO stage");
+  notContains(fifthRoute, "AŞAMA 1", "genre editing does not introduce numbered lesson cards");
 
   contains(experience, 'href: "/editorler-icin/egitim/editorluge-baslama"', "editor gateway first lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/metin-degerlendirme"', "editor gateway text evaluation lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/yapisal-editorluk"', "editor gateway structural editing lesson remains linked");
-  contains(experience, 'href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu"', "language editing gateway linked after live verification");
-  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 4, "first four editor gateway cards are linked after language editing live verification");
+  contains(experience, 'href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu"', "editor gateway language editing lesson remains linked");
+  notContains(experience, 'href: "/editorler-icin/egitim/tur-editorlugu"', "genre editing gateway stays staged until live verification");
+  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 4, "only the first four editor gateway cards may be linked before genre editing live verification");
 });

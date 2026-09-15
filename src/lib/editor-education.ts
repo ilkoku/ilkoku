@@ -34,7 +34,7 @@ export const EDITOR_EDUCATION_CATEGORIES: readonly EditorEducationCategory[] = [
     slug: "tur-editorlugu",
     title: "Tür Editörlüğü",
     shortDescription: "Farklı eser türlerinin editöryal ihtiyaçlarını kendi anlatı mantığı ve okur beklentisiyle değerlendir.",
-    live: false,
+    live: true,
   },
   {
     slug: "editor-notu-ve-geri-bildirim",

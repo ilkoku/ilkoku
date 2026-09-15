@@ -105,6 +105,6 @@ test("editor education section five adds language and style editing while preser
   contains(experience, 'href: "/editorler-icin/egitim/editorluge-baslama"', "editor gateway first lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/metin-degerlendirme"', "editor gateway text evaluation lesson remains linked");
   contains(experience, 'href: "/editorler-icin/egitim/yapisal-editorluk"', "editor gateway structural editing lesson remains linked");
-  notContains(experience, 'href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu"', "language editing gateway stays staged until live verification");
-  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 3, "only the first three editor gateway cards may be linked before language editing live verification");
+  contains(experience, 'href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu"', "language editing gateway linked after live verification");
+  assert.equal((experience.match(/href: "\/editorler-icin\/egitim\//g) ?? []).length, 4, "first four editor gateway cards are linked after language editing live verification");
 });

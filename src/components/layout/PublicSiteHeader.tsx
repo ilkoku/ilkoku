@@ -95,11 +95,11 @@ function MobileNavigation({ menus }: { menus: MegaMenu[] }) {
 }
 
 export async function PublicSiteHeader() {
-  const [identity, navigationPayload] = await Promise.all([
+  const [identity, navigation] = await Promise.all([
     getPublicSiteIdentity(),
     getPublishedHeaderNavigation(),
   ]);
-  const publicMenus = resolveHeaderNavigation(navigationPayload);
+  const publicMenus = resolveHeaderNavigation(navigation.payload, navigation.pages);
 
   return (
     <header className="public-site-header">

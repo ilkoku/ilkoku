@@ -60,9 +60,11 @@ test("editor public page stays CMS-compatible, value-led and truthful about assi
   notContains(content, "ikinci editör ilk raporu görür", "broken independence claim");
 });
 
-test("editor education section two completes only the starting lesson and keeps the other seven unavailable", () => {
+test("editor education section two completes only the starting lesson and keeps a single inherited public header", () => {
   const inventory = source("src/lib/editor-education.ts");
   const shell = source("src/components/content/EditorEducationShell.tsx");
+  const editorLayout = source("src/app/editorler-icin/layout.tsx");
+  const publicFrame = source("src/components/layout/PublicSiteFrame.tsx");
   const firstRoute = source("src/app/editorler-icin/egitim/editorluge-baslama/page.tsx");
   const experience = source("src/components/content/ForEditorsExperience.tsx");
 
@@ -71,8 +73,9 @@ test("editor education section two completes only the starting lesson and keeps 
   assert.equal(new Set(slugs).size, 8, "editor education category slugs must be unique");
   assert.equal((inventory.match(/live: true/g) ?? []).length, 1, "only the first editor education route may be live in section two");
 
-  contains(shell, 'import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader"', "editor education original public header");
-  contains(shell, "<PublicSiteHeader />", "editor education public header render");
+  contains(editorLayout, "<PublicSiteFrame>{children}</PublicSiteFrame>", "editor education inherits public site frame");
+  contains(publicFrame, "<PublicSiteHeader />", "public site frame owns the original public header");
+  notContains(shell, "PublicSiteHeader", "editor education shell must not render a duplicate public header");
   contains(shell, "EDITOR_EDUCATION_CATEGORIES.map", "editor education eight-item left navigation");
   contains(shell, 'aria-label="Editör eğitimleri"', "editor education navigation semantics");
   contains(shell, 'aria-disabled="true"', "unfinished editor lessons stay non-clickable");

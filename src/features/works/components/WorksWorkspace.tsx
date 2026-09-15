@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import {
@@ -11,15 +12,21 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { workspaceContent } from "@/content";
-import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { submitForEditorAction } from "@/features/editor-review/actions/editor-review.actions";
+import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 import type { WorkWithChapterSummary } from "../types";
 import { WorkArchiveAction } from "./WorkArchiveAction";
+import { WorkCoverUpload } from "./WorkCoverUpload";
 import { WorkEditDialog } from "./WorkEditDialog";
+import {
+  TrashedWorkActions,
+  WorkActivationAction,
+  WorkTrashAction,
+} from "./WorkLifecycleActions";
 
-type Tab = "active" | "archived";
+type Tab = "active" | "archived" | "trash";
 
 type Sort =
   | "updated"
@@ -78,58 +85,70 @@ export function WorksWorkspace({
       setEditingWorkId(null);
     }, []);
 
+  const currentWorks = useMemo(
+    () => works.filter((work) => work.deletedAt === null),
+    [works],
+  );
+
   const activeWorks = useMemo(
     () =>
-      works.filter(
+      currentWorks.filter(
         (work) =>
           work.status !== "archived",
       ),
-    [works],
+    [currentWorks],
   );
 
   const archivedWorks = useMemo(
     () =>
-      works.filter(
+      currentWorks.filter(
         (work) =>
           work.status === "archived",
       ),
+    [currentWorks],
+  );
+
+  const trashedWorks = useMemo(
+    () => works.filter((work) => work.deletedAt !== null),
     [works],
   );
 
   const chapterCount = useMemo(
     () =>
-      works.reduce(
+      currentWorks.reduce(
         (total, work) =>
           total + work.chapterCount,
         0,
       ),
-    [works],
+    [currentWorks],
   );
 
   const wordCount = useMemo(
     () =>
-      works.reduce(
+      currentWorks.reduce(
         (total, work) =>
           total + work.totalWords,
         0,
       ),
-    [works],
+    [currentWorks],
   );
 
   const editingWork = useMemo(
     () =>
-      works.find(
+      currentWorks.find(
         (work) =>
           work.id === editingWorkId,
       ) ?? null,
-    [editingWorkId, works],
+    [editingWorkId, currentWorks],
   );
 
   const visibleWorks = useMemo(() => {
     const source =
       tab === "active"
         ? activeWorks
-        : archivedWorks;
+        : tab === "archived"
+          ? archivedWorks
+          : trashedWorks;
 
     const normalizedSearch = search
       .trim()
@@ -182,6 +201,7 @@ export function WorksWorkspace({
   }, [
     activeWorks,
     archivedWorks,
+    trashedWorks,
     search,
     sort,
     tab,
@@ -190,7 +210,7 @@ export function WorksWorkspace({
   const stats: StatItem[] = [
     [
       workspaceContent.stats.total,
-      works.length,
+      currentWorks.length,
     ],
     [
       workspaceContent.stats.active,
@@ -199,6 +219,10 @@ export function WorksWorkspace({
     [
       workspaceContent.stats.archived,
       archivedWorks.length,
+    ],
+    [
+      "Çöp Kutusu",
+      trashedWorks.length,
     ],
     [
       workspaceContent.stats.chapters,
@@ -290,6 +314,16 @@ export function WorksWorkspace({
                 {archivedWorks.length}
               </span>
             </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "trash"}
+              onClick={() => setTab("trash")}
+            >
+              Çöp Kutusu
+              <span>{trashedWorks.length}</span>
+            </button>
           </div>
 
           <label className="workspace-search">
@@ -375,19 +409,23 @@ export function WorksWorkspace({
                   <div
                     className={`workspace-cover workspace-cover--${
                       (index % 3) + 1
-                    }`}
+                    }${work.coverUrl ? " workspace-cover--image" : ""}`}
                     aria-label={`${work.title} kapak görseli`}
                     role="img"
                   >
-                    <span>✦</span>
-
-                    <strong>
-                      {work.title}
-                    </strong>
-
-                    <small>
-                      İlkOku
-                    </small>
+                    {work.coverUrl ? (
+                      <img src={work.coverUrl} alt={`${work.title} kapak görseli`} />
+                    ) : (
+                      <>
+                        <span>✦</span>
+                        <strong>
+                          {work.title}
+                        </strong>
+                        <small>
+                          İlkOku
+                        </small>
+                      </>
+                    )}
                   </div>
 
                   <div className="workspace-work-card__body">
@@ -401,13 +439,22 @@ export function WorksWorkspace({
                         {work.title}
                       </h2>
 
-                      <span className="status-badge">
-                        {
-                          workStatusLabels[
-                            work.status
-                          ]
-                        }
-                      </span>
+                      <div className="workspace-state-badges">
+                        <span className="status-badge">
+                          {
+                            workStatusLabels[
+                              work.status
+                            ]
+                          }
+                        </span>
+                        {work.deletedAt ? (
+                          <span className="status-badge status-badge--muted">Çöp Kutusunda</span>
+                        ) : (
+                          <span className={`status-badge ${work.isActive ? "status-badge--active" : "status-badge--passive"}`}>
+                            {work.isActive ? "Aktif" : "Pasif"}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <dl>
@@ -436,20 +483,18 @@ export function WorksWorkspace({
 
                       <div>
                         <dt>
-                          {
-                            workspaceContent.lastEdited
-                          }
+                          {work.deletedAt ? "Silindi" : workspaceContent.lastEdited}
                         </dt>
 
                         <dd>
                           {formatDate(
-                            work.updatedAt,
+                            work.deletedAt ?? work.updatedAt,
                           )}
                         </dd>
                       </div>
                     </dl>
 
-                    {work.status === "published" && (
+                    {!work.deletedAt && work.status === "published" && (
                       <section className="workspace-editor-review" aria-label="Profesyonel editör incelemesi">
                         <div>
                           <strong>Profesyonel Editör İncelemesi</strong>
@@ -498,49 +543,69 @@ export function WorksWorkspace({
                       </section>
                     )}
 
-                    <div className="workspace-work-card__actions">
-                      {work.status !==
-                        "archived" && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() =>
-                            setEditingWorkId(
-                              work.id,
-                            )
-                          }
-                        >
-                          {
-                            workspaceContent.edit
-                          }
-                        </Button>
-                      )}
+                    {work.deletedAt ? (
+                      <TrashedWorkActions workId={work.id} title={work.title} />
+                    ) : (
+                      <>
+                        {work.status !== "archived" ? (
+                          <WorkCoverUpload workId={work.id} />
+                        ) : null}
 
-                      {work.status !==
-                        "archived" && (
-                        <NewWorkFlow
-                          initialWork={work}
-                          triggerLabel={
-                            workspaceContent.continueWriting
-                          }
-                        />
-                      )}
+                        <div className="workspace-work-card__actions">
+                          {work.status !== "archived" && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() =>
+                                setEditingWorkId(
+                                  work.id,
+                                )
+                              }
+                            >
+                              {
+                                workspaceContent.edit
+                              }
+                            </Button>
+                          )}
 
-                      <Link
-                        className="button button--outline"
-                        href={`/eserlerim/${work.id}/pasaport`}
-                      >
-                        Eser Pasaportu
-                      </Link>
+                          {work.status !== "archived" && (
+                            <NewWorkFlow
+                              initialWork={work}
+                              triggerLabel={
+                                workspaceContent.continueWriting
+                              }
+                            />
+                          )}
 
-                      <WorkArchiveAction
-                        archived={
-                          work.status ===
-                          "archived"
-                        }
-                        workId={work.id}
-                      />
-                    </div>
+                          <Link
+                            className="button button--outline"
+                            href={`/eserlerim/${work.id}/pasaport`}
+                          >
+                            Eser Pasaportu
+                          </Link>
+
+                          {work.status !== "archived" ? (
+                            <WorkActivationAction
+                              isActive={work.isActive}
+                              workId={work.id}
+                            />
+                          ) : null}
+
+                          <WorkArchiveAction
+                            archived={
+                              work.status ===
+                              "archived"
+                            }
+                            workId={work.id}
+                          />
+
+                          <WorkTrashAction
+                            title={work.title}
+                            workId={work.id}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </Card>
               ),
@@ -551,7 +616,9 @@ export function WorksWorkspace({
             <p>
               {tab === "active"
                 ? workspaceContent.emptyActive
-                : workspaceContent.emptyArchive}
+                : tab === "archived"
+                  ? workspaceContent.emptyArchive
+                  : "Çöp kutusu boş."}
             </p>
           </Card>
         )}

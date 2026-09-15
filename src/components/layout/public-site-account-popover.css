@@ -1,0 +1,87 @@
+/* Public account popover — align below the full two-tier header and match the dark glass navigation language. */
+
+.public-site-header__inner:has(.public-site-header__account[open]) {
+  z-index: 8 !important;
+}
+
+.public-site-header__account-menu {
+  z-index: 20 !important;
+  top: calc(100% + 5.2rem) !important;
+  right: 0 !important;
+  width: min(14.25rem, calc(100vw - 2rem)) !important;
+  padding: 0.45rem !important;
+  overflow: hidden;
+  border: 1px solid rgba(205, 183, 255, 0.22) !important;
+  border-radius: 1rem !important;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(126, 85, 218, 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(29, 18, 60, 0.94), rgba(14, 9, 31, 0.97)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 1.25rem 3.2rem rgba(5, 2, 18, 0.34) !important;
+  backdrop-filter: blur(24px) saturate(138%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(138%) !important;
+}
+
+.public-site-header__account-menu a,
+.public-site-header__account-menu .public-site-header__logout {
+  min-height: 2.75rem !important;
+  padding-inline: 0.9rem !important;
+  border-radius: 0.7rem !important;
+  color: rgba(248, 245, 255, 0.9) !important;
+  background: transparent !important;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 680 !important;
+  line-height: 1.2 !important;
+}
+
+.public-site-header__account-menu a + a,
+.public-site-header__account-menu form {
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.public-site-header__account-menu a:hover,
+.public-site-header__account-menu a:focus-visible,
+.public-site-header__account-menu .public-site-header__logout:hover,
+.public-site-header__account-menu .public-site-header__logout:focus-visible {
+  color: #fff !important;
+  background: rgba(137, 95, 229, 0.14) !important;
+  transform: none !important;
+}
+
+.public-site-header__account-menu .public-site-header__identity {
+  margin: 0 0 0.35rem !important;
+  padding: 0.75rem 0.85rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+.public-site-header__account-menu .public-site-header__identity strong {
+  color: #fff !important;
+}
+
+.public-site-header__account-menu .public-site-header__identity span,
+.public-site-header__account-menu .public-site-header__identity small {
+  color: rgba(222, 209, 255, 0.72) !important;
+}
+
+@media (max-width: 1120px) {
+  .public-site-header__account-menu {
+    top: calc(100% + 5rem) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .public-site-header__account-menu {
+    top: calc(100% + 4.75rem) !important;
+    right: 0 !important;
+    width: min(15rem, calc(100vw - 1.25rem)) !important;
+    border-radius: 0.9rem !important;
+  }
+}
+
+@media (max-width: 34rem) {
+  .public-site-header__account-menu {
+    width: min(14.5rem, calc(100vw - 1rem)) !important;
+  }
+}

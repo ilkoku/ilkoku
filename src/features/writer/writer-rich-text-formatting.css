@@ -1,7 +1,7 @@
 .writer-rich-formatting-tools {
   order: 2;
   display: inline-flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   min-width: 0;
   align-items: center;
   gap: 0.35rem;
@@ -27,9 +27,19 @@
   background: var(--writer-paper);
 }
 
+.writer-rich-formatting-tools__group-label {
+  padding-inline: 0.38rem 0.12rem;
+  color: var(--writer-paper-muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .writer-rich-formatting-tools__group button {
+  min-width: 1.78rem;
   min-height: 1.7rem;
-  padding: 0.2rem 0.45rem;
+  padding: 0.2rem 0.36rem;
   color: var(--writer-paper-ink);
   border: 0;
   border-radius: 0.45rem;
@@ -39,6 +49,11 @@
   line-height: 1;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.writer-rich-formatting-tools__compact-group button {
+  min-width: 1.65rem;
+  padding-inline: 0.28rem;
 }
 
 .writer-rich-formatting-tools__group button:hover:not(:disabled),
@@ -99,21 +114,8 @@
 }
 
 @media (min-width: 48rem) {
-  .writer-screen .writer-context-bar {
-    flex-wrap: wrap;
-  }
-
-  .writer-screen .writer-editing-tools {
-    flex: 1 1 52rem;
-  }
-
   .writer-rich-formatting-tools {
-    flex: 1 1 auto;
-    flex-wrap: wrap;
-  }
-
-  .writer-text-commands {
-    flex: 0 0 auto;
+    flex-wrap: nowrap;
   }
 }
 
@@ -135,7 +137,8 @@
     width: 100%;
   }
 
-  .writer-rich-formatting-tools__select span {
+  .writer-rich-formatting-tools__select span,
+  .writer-rich-formatting-tools__group-label {
     display: none;
   }
 

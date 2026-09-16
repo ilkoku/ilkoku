@@ -1,9 +1,6 @@
 import { cache } from "react";
 
-import {
-  getChapterFormatting,
-  getChapterFormattingMap,
-} from "./chapter-formatting-repository";
+import { getChapterFormattingMap } from "./chapter-formatting-repository";
 import {
   getLatestPublicationSnapshot,
   getLatestPublicationSnapshots,
@@ -290,14 +287,15 @@ export const getPublicChapter = cache(
     const bookChapter = work.publicationBook?.items.find(
       (item) => item.type === "chapter" && item.chapterId === chapter.id,
     );
-    const liveFormatting = bookChapter?.formatting
-      ? JSON.stringify(bookChapter.formatting)
-      : await getChapterFormatting(chapter.id);
+    const publishedFormatting =
+      bookChapter?.type === "chapter" && bookChapter.formatting
+        ? JSON.stringify(bookChapter.formatting)
+        : "";
 
     return {
       ...chapter,
       content: bookChapter?.content ?? publication?.content ?? chapter.content,
-      formatting: liveFormatting,
+      formatting: publishedFormatting,
       publicationLayout: bookChapter?.layout ?? publication?.layout ?? null,
       publicationVersion: publication?.versionNumber ?? null,
       title: bookChapter?.title ?? publication?.title ?? chapter.title,

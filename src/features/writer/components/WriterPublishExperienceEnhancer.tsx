@@ -120,9 +120,14 @@ function subscribePublishExperience(onStoreChange: () => void) {
 }
 
 function bookItemLabel(item: PublishedBookItem) {
-  return item.type === "chapter"
-    ? `${item.chapterPosition}. Bölüm · ${item.title}`
-    : `${bookSectionDetails[item.kind].label} · ${item.title}`;
+  if (item.type === "chapter") {
+    return `${item.chapterPosition}. Bölüm · ${item.title}`;
+  }
+
+  const sectionLabel = bookSectionDetails[item.kind].label;
+  return item.title.trim() === sectionLabel
+    ? sectionLabel
+    : `${sectionLabel} · ${item.title}`;
 }
 
 function pageStartForItem(book: PublishedBookSnapshot, itemIndex: number) {
@@ -152,6 +157,18 @@ function WriterFullBookPublicationPreview({
   );
 
   if (!activeItem) return null;
+
+  const atLastBookItem = !showingCover && boundedIndex >= book.items.length - 1;
+  const previousBookLabel = showingCover
+    ? "Başlangıç"
+    : boundedIndex === 0
+      ? "← Kapak"
+      : "← Önceki Bölüm";
+  const nextBookLabel = showingCover
+    ? "İlk Bölüm →"
+    : atLastBookItem
+      ? "Kitabın Sonu"
+      : "Sonraki Bölüm →";
 
   return (
     <div className="writer-publication-preview__book">
@@ -201,7 +218,7 @@ function WriterFullBookPublicationPreview({
       )}
 
       <nav
-        aria-label="Yayın önizleme kitap sırası"
+        aria-label="Yayın önizleme kitap yapısı"
         className="writer-publication-preview__book-nav"
       >
         <button
@@ -219,13 +236,13 @@ function WriterFullBookPublicationPreview({
           }}
           type="button"
         >
-          ← Önceki bölüm / sayfa
+          {previousBookLabel}
         </button>
 
         <label>
-          <span>Kitap sırası</span>
+          <span>Kitap yapısı</span>
           <select
-            aria-label="Önizlenecek kitap yüzeyi, bölümü veya sayfası"
+            aria-label="Önizlenecek kitap yüzeyi veya bölümü"
             onChange={(event) => setActiveSurfaceId(event.target.value)}
             value={showingCover ? COVER_SURFACE_ID : activeItem.structureItemId}
           >
@@ -239,7 +256,7 @@ function WriterFullBookPublicationPreview({
         </label>
 
         <button
-          disabled={!showingCover && boundedIndex >= book.items.length - 1}
+          disabled={atLastBookItem}
           onClick={() => {
             if (showingCover) {
               setActiveSurfaceId(book.items[0]?.structureItemId ?? COVER_SURFACE_ID);
@@ -254,7 +271,7 @@ function WriterFullBookPublicationPreview({
           }}
           type="button"
         >
-          Sonraki bölüm / sayfa →
+          {nextBookLabel}
         </button>
       </nav>
     </div>

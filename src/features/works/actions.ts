@@ -23,6 +23,7 @@ import {
   parsePublicationLayout,
   PUBLICATION_LAYOUT_INPUT_NAME,
 } from "./publication-layout";
+import { CHAPTER_FORMATTING_INPUT_NAME } from "./rich-text-formatting";
 import {
   initialWorkActionState,
   type WorkActionState,
@@ -152,6 +153,7 @@ function parseChapterDraft(formData: FormData) {
   return chapterDraftSchema.safeParse({
     chapterId: formData.get("chapterId"),
     content: formData.get("content"),
+    formatting: formData.get(CHAPTER_FORMATTING_INPUT_NAME),
     title: formData.get("chapterTitle"),
     workId: formData.get("workId"),
   });

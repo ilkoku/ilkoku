@@ -35,7 +35,7 @@ export type PublishedBookChapterItem = {
   title: string;
   subtitle: string;
   content: string;
-  formatting: ChapterFormatting | null;
+  formatting?: ChapterFormatting | null;
   layout: PublicationLayoutSnapshot;
 };
 

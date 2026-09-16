@@ -18,12 +18,18 @@ import {
   type PublicationLayoutSnapshot,
 } from "./publication-layout";
 import type { WorkPublicationEvent } from "./publish-work-event";
+import {
+  hasChapterFormatting,
+  parseChapterFormatting,
+  serializeChapterFormatting,
+} from "./rich-text-formatting";
 import type { ChapterDraftInput } from "./validators";
 
 type StructureRow = {
   id: string;
   chapterId: string | null;
   chapterPosition: number | null;
+  formatting: string | null;
   kind: string;
   title: string | null;
   content: string | null;
@@ -80,6 +86,7 @@ export async function publishFullBookWithEvent(
         structureItem.id,
         structureItem.chapterId,
         chapter.position AS chapterPosition,
+        chapterFormatting.formatting AS formatting,
         structureItem.kind,
         CASE
           WHEN structureItem.chapterId IS NULL THEN structureItem.title
@@ -93,6 +100,8 @@ export async function publishFullBookWithEvent(
       FROM BookStructureItem AS structureItem
       LEFT JOIN Chapter AS chapter
         ON chapter.id = structureItem.chapterId
+      LEFT JOIN ChapterFormatting AS chapterFormatting
+        ON chapterFormatting.chapterId = chapter.id
       WHERE structureItem.workId = ${input.workId}
         AND structureItem.authorId = ${authorId}
         AND (
@@ -159,6 +168,11 @@ export async function publishFullBookWithEvent(
           );
         }
 
+        const formatting = parseChapterFormatting(
+          isActiveChapter ? input.formatting : row.formatting,
+          content,
+        );
+
         publishedItems.push({
           type: "chapter",
           structureItemId: row.id,
@@ -168,6 +182,7 @@ export async function publishFullBookWithEvent(
           title,
           subtitle: writerContent.editor.subtitle,
           content,
+          formatting: hasChapterFormatting(formatting) ? formatting : null,
           layout,
         });
         continue;
@@ -268,6 +283,26 @@ export async function publishFullBookWithEvent(
           title: item.title,
         },
       });
+
+      if (item.chapterId === input.chapterId) {
+        const serializedFormatting = item.formatting
+          ? serializeChapterFormatting(item.formatting)
+          : "";
+        if (serializedFormatting) {
+          await transaction.$executeRaw`
+            INSERT INTO ChapterFormatting (chapterId, formatting)
+            VALUES (${item.chapterId}, ${serializedFormatting})
+            ON DUPLICATE KEY UPDATE
+              formatting = VALUES(formatting),
+              updatedAt = CURRENT_TIMESTAMP(3)
+          `;
+        } else {
+          await transaction.$executeRaw`
+            DELETE FROM ChapterFormatting
+            WHERE chapterId = ${item.chapterId}
+          `;
+        }
+      }
     }
 
     if (!activePublicationVersion) {

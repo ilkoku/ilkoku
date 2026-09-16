@@ -242,10 +242,15 @@ export async function getMemberPublicChapter(
   const bookChapter = work.publicationBook?.items.find(
     (item) => item.type === "chapter" && item.chapterId === chapter.id,
   );
+  const publishedFormatting =
+    bookChapter?.type === "chapter" && bookChapter.formatting
+      ? JSON.stringify(bookChapter.formatting)
+      : "";
 
   return {
     ...chapter,
     content: bookChapter?.content ?? publication?.content ?? chapter.content,
+    formatting: publishedFormatting,
     publicationLayout: bookChapter?.layout ?? publication?.layout ?? null,
     publicationVersion: publication?.versionNumber ?? null,
     title: bookChapter?.title ?? publication?.title ?? chapter.title,

@@ -1,3 +1,4 @@
+import { saveChapterFormatting } from "./chapter-formatting-repository";
 import { worksRepository } from "./repository";
 import {
   deliverPublicationNotifications,
@@ -228,7 +229,7 @@ export async function saveChapterDraft(
     ownedChapter.status === "published" &&
     ownedChapter.publishedAt !== null;
 
-  return worksRepository.updateChapter(
+  const chapter = await worksRepository.updateChapter(
     authorId,
     input.chapterId,
     {
@@ -243,6 +244,9 @@ export async function saveChapterDraft(
       title: input.title,
     },
   );
+
+  await saveChapterFormatting(input.chapterId, input.formatting);
+  return chapter;
 }
 
 export async function publishWork(
@@ -255,6 +259,8 @@ export async function publishWork(
       "Boş bir bölüm yayımlanamaz. Bölüm metnini yazdıktan sonra tekrar dene.",
     );
   }
+
+  await saveChapterFormatting(input.chapterId, input.formatting);
 
   const {
     publicationEvent,

@@ -27,6 +27,31 @@ test("publish preview renders the author's exact saved publication layout", () =
   includes(css, ".preview-article:has(> .writer-publication-preview)", "legacy preview replacement");
 });
 
+test("final review covers the complete published book in physical page order", () => {
+  const gate = source(
+    "src/features/writer/components/WriterFullBookPublicationEnhancer.tsx",
+  );
+  const enhancer = source(
+    "src/features/writer/components/WriterPublishExperienceEnhancer.tsx",
+  );
+  const store = source(
+    "src/features/writer/writer-publication-preview-store.ts",
+  );
+  const css = source("src/features/writer/writer-publish-experience.css");
+
+  includes(gate, "BOOK_PUBLICATION_VERSION", "published book snapshot version");
+  includes(gate, "specialBookPageSubtitle", "special book page parity");
+  includes(gate, "setWriterBookPublicationPreview", "full-book preview snapshot handoff");
+  includes(gate, "previewItems.reduce", "continuous full-book page total");
+  includes(enhancer, "getWriterBookPublicationPreview", "full-book preview snapshot reader");
+  includes(enhancer, "WriterFullBookPublicationPreview", "complete book preview experience");
+  includes(enhancer, "bookPageStart={bookPageStart}", "continuous physical page start");
+  includes(enhancer, "bookTotalPages={book.totalPages}", "continuous physical page total");
+  includes(enhancer, "Yayın önizleme kitap sırası", "book item navigation");
+  includes(store, "PublishedBookSnapshot", "typed full-book preview cache");
+  includes(css, ".writer-publication-preview__book-nav", "full-book preview navigation styling");
+});
+
 test("direct publish is gated by a saved reader preview before final confirmation", () => {
   const gate = source(
     "src/features/writer/components/WriterFullBookPublicationEnhancer.tsx",

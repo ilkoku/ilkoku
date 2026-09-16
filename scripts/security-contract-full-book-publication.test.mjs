@@ -88,6 +88,7 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   const snapshots = source("src/features/works/publication-snapshots.ts");
   const queries = source("src/features/works/member-public-queries.ts");
   const showcase = source("src/features/showcase/components/BookShowcase.tsx");
+  const coverPage = source("src/app/oku/[slug]/kapak/page.tsx");
   const chapterReader = source(
     "src/features/reading/components/FocusedReadingExperience.tsx",
   );
@@ -109,8 +110,10 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(snapshots, "parsePublishedBookFromAuditMetadata", "audit-backed publication truth");
   includes(queries, "publicationBook", "public work full-book binding");
   includes(queries, "bookChapter?.layout", "chapter physical layout from book snapshot");
-  includes(showcase, "firstPublishedBookItem", "book starts at first authored publication item");
-  includes(showcase, "publishedBookItemHref", "front matter can be first Reader destination");
+  includes(showcase, "firstPublishedBookItem", "book discovers the first authored publication item");
+  includes(showcase, "/kapak?from=", "new Reader enters the live book through its front cover");
+  includes(coverPage, "publishedBookItemHref", "front cover opens the first authored publication item");
+  includes(coverPage, 'data-book-surface="front-cover"', "front cover stays outside numbered body pages");
   includes(showcase, "publicationBook?.totalPages", "exact physical published page count");
   includes(chapterReader, "publishedBookItemHref", "chapter-to-book-item navigation");
   includes(chapterReader, "previousBookItem", "previous authored book item");

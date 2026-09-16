@@ -131,6 +131,11 @@ function renderInlineText(
     boundaries.add(Math.max(start, mark.start));
     boundaries.add(Math.min(end, mark.end));
   }
+  for (const fontSize of formatting.fontSizes) {
+    if (fontSize.start >= end || fontSize.end <= start) continue;
+    boundaries.add(Math.max(start, fontSize.start));
+    boundaries.add(Math.min(end, fontSize.end));
+  }
 
   const ordered = [...boundaries].sort((left, right) => left - right);
   return ordered.slice(0, -1).map((segmentStart, index) => {
@@ -141,9 +146,19 @@ function renderInlineText(
       )
       .map((mark) => `writer-live-formatting-mark--${mark.type}`)
       .join(" ");
+    const fontSize = formatting.fontSizes.find(
+      (item) => item.start <= segmentStart && item.end >= segmentEnd,
+    )?.size;
+    const style = fontSize
+      ? ({ fontSize: `${fontSize}px` } satisfies CSSProperties)
+      : undefined;
 
     return (
-      <span className={classes || undefined} key={`${segmentStart}-${segmentEnd}`}>
+      <span
+        className={classes || undefined}
+        key={`${segmentStart}-${segmentEnd}`}
+        style={style}
+      >
         {content.slice(segmentStart, segmentEnd)}
       </span>
     );

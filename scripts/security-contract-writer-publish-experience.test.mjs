@@ -94,9 +94,11 @@ test("all writer flow entry routes mount the publish experience enhancer", () =>
     "src/app/yazar/layout.tsx",
     "src/app/eserlerim/layout.tsx",
     "src/app/yazmaya-devam/layout.tsx",
+    "src/app/kitap/[slug]/duzenle/layout.tsx",
   ]) {
     const layout = source(path);
     includes(layout, "WriterPublishExperienceEnhancer", `${path} publish enhancer`);
+    includes(layout, "WriterFullBookPublicationEnhancer", `${path} full-book publish gate`);
     includes(layout, "writer-publish-experience.css", `${path} publish experience CSS`);
   }
 });

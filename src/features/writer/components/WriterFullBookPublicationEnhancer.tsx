@@ -91,6 +91,21 @@ function previewButtonFromEvent(event: MouseEvent) {
   return button;
 }
 
+function publishButtonFromEvent(event: MouseEvent) {
+  const target = event.target;
+  if (!(target instanceof Element)) return null;
+
+  const form = target.closest<HTMLFormElement>("form.writer-screen");
+  if (!form) return null;
+
+  const button = target.closest<HTMLButtonElement>(
+    '.writer-toolbar__actions button[type="submit"]:not(.writer-save-button)',
+  );
+  if (!button) return null;
+
+  return { button, form };
+}
+
 function readDraftSaveState(form: HTMLFormElement) {
   return (
     form.querySelector<HTMLElement>(".writer-save-status")?.dataset.state ?? ""
@@ -415,6 +430,15 @@ export function WriterFullBookPublicationEnhancer() {
       }
     }
 
+    function handlePublishClick(event: MouseEvent) {
+      const match = publishButtonFromEvent(event);
+      if (!match) return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      void routePublishThroughFinalReview(match.form, match.button);
+    }
+
     function handleSubmit(event: SubmitEvent) {
       if (isPreviewForm(event.target)) {
         if (cachedPublicationInput) {
@@ -447,12 +471,14 @@ export function WriterFullBookPublicationEnhancer() {
     }
 
     document.addEventListener("click", handlePreviewClick, true);
+    document.addEventListener("click", handlePublishClick, true);
     document.addEventListener("submit", handleSubmit, true);
     document.addEventListener("formdata", bindPreviewFormInput, true);
 
     return () => {
       clearWriterBookPublicationPreview();
       document.removeEventListener("click", handlePreviewClick, true);
+      document.removeEventListener("click", handlePublishClick, true);
       document.removeEventListener("submit", handleSubmit, true);
       document.removeEventListener("formdata", bindPreviewFormInput, true);
     };

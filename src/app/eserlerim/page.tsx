@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { workspaceContent } from "@/content";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { WorksWorkspace } from "@/features/works/components/WorksWorkspace";
+import { getLatestPublishedBookSnapshot } from "@/features/works/publication-snapshots";
 import { getAuthorWorkspaceWorks } from "@/features/works/queries";
 
 export const metadata: Metadata = {
@@ -25,7 +26,14 @@ export default async function WorksPage() {
     redirect("/erisim-reddedildi");
   }
 
-  const works = await getAuthorWorkspaceWorks(profile.id);
+  const workspaceWorks = await getAuthorWorkspaceWorks(profile.id);
+  const works = await Promise.all(
+    workspaceWorks.map(async (work) => ({
+      ...work,
+      publishedPageCount:
+        (await getLatestPublishedBookSnapshot(work.id))?.totalPages ?? null,
+    })),
+  );
 
   return (
     <AppShell profile={profile}>

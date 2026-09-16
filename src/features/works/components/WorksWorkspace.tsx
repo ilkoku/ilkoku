@@ -19,6 +19,10 @@ import type { WorkWithChapterSummary } from "../types";
 import { WorkArchiveAction } from "./WorkArchiveAction";
 import { WorkEditDialog } from "./WorkEditDialog";
 
+type WorkspaceWork = WorkWithChapterSummary & {
+  publishedPageCount: number | null;
+};
+
 type Tab = "active" | "archived";
 
 type Sort =
@@ -57,7 +61,7 @@ function formatDate(value: Date | string) {
 export function WorksWorkspace({
   works,
 }: {
-  works: WorkWithChapterSummary[];
+  works: WorkspaceWork[];
 }) {
   const [tab, setTab] =
     useState<Tab>("active");
@@ -412,11 +416,9 @@ export function WorksWorkspace({
 
                     <dl>
                       <div>
-                        <dt>Bölüm</dt>
+                        <dt>Bölüm / Sayfa</dt>
                         <dd>
-                          {
-                            work.chapterCount
-                          }
+                          {work.chapterCount} / {work.publishedPageCount?.toLocaleString("tr-TR") ?? "—"}
                         </dd>
                       </div>
 

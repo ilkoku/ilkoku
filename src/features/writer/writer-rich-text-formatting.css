@@ -1,0 +1,145 @@
+.writer-rich-formatting-tools {
+  order: 2;
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.writer-text-commands {
+  order: 3;
+}
+
+.writer-screen .focus-mode-toggle {
+  order: 4;
+}
+
+.writer-rich-formatting-tools__group {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0.16rem;
+  border: 1px solid var(--writer-paper-border);
+  border-radius: 0.62rem;
+  background: var(--writer-paper);
+}
+
+.writer-rich-formatting-tools__group button {
+  min-height: 1.7rem;
+  padding: 0.2rem 0.45rem;
+  color: var(--writer-paper-ink);
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 750;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.writer-rich-formatting-tools__group button:hover:not(:disabled),
+.writer-rich-formatting-tools__group button[aria-pressed="true"] {
+  color: var(--writer-paper-accent);
+  background: var(--writer-paper-accent-muted);
+}
+
+.writer-rich-formatting-tools__group button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.writer-rich-formatting-tools__group button:focus-visible,
+.writer-rich-formatting-tools__select select:focus-visible {
+  outline: 2px solid rgba(167, 122, 35, 0.52);
+  outline-offset: 1px;
+}
+
+.writer-rich-formatting-tools__bold {
+  font-weight: 900 !important;
+}
+
+.writer-rich-formatting-tools__italic {
+  font-style: italic;
+}
+
+.writer-rich-formatting-tools__underline {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.writer-rich-formatting-tools__select {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.25rem 0.18rem 0.52rem;
+  color: var(--writer-paper-muted);
+  border: 1px solid var(--writer-paper-border);
+  border-radius: 0.62rem;
+  background: var(--writer-paper);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.writer-rich-formatting-tools__select select {
+  min-height: 1.55rem;
+  max-width: 7.4rem;
+  padding: 0 1.25rem 0 0.34rem;
+  color: var(--writer-paper-ink);
+  border: 0;
+  border-radius: 0.38rem;
+  background: var(--writer-paper-ui);
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (min-width: 48rem) {
+  .writer-screen .writer-context-bar {
+    flex-wrap: wrap;
+  }
+
+  .writer-screen .writer-editing-tools {
+    flex: 1 1 52rem;
+  }
+
+  .writer-rich-formatting-tools {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+  }
+
+  .writer-text-commands {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 74rem) {
+  .writer-rich-formatting-tools {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .writer-rich-formatting-tools::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .writer-rich-formatting-tools {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .writer-rich-formatting-tools__select span {
+    display: none;
+  }
+
+  .writer-rich-formatting-tools__select {
+    padding-left: 0.25rem;
+  }
+}

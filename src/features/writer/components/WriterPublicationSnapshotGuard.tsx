@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useInsertionEffect, useRef } from "react";
 
 import {
   PUBLICATION_LAYOUT_INPUT_NAME,
@@ -247,9 +247,34 @@ function nextAnimationFrame() {
 }
 
 export function WriterPublicationSnapshotGuard() {
+  const suppressBeforeUnloadUntil = useRef(0);
+
+  // Register this listener before NewWorkFlow's passive beforeunload effect.
+  // If a valid publish submit is navigating away, the editor's ordinary
+  // unsaved-change guard must never get a chance to cancel that navigation.
+  useInsertionEffect(() => {
+    function suppressUnsavedWarningDuringPublish(event: BeforeUnloadEvent) {
+      if (Date.now() >= suppressBeforeUnloadUntil.current) return;
+      event.stopImmediatePropagation();
+    }
+
+    window.addEventListener(
+      "beforeunload",
+      suppressUnsavedWarningDuringPublish,
+      true,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "beforeunload",
+        suppressUnsavedWarningDuringPublish,
+        true,
+      );
+    };
+  }, []);
+
   useEffect(() => {
     let lastPublicationLayout = "";
-    let suppressBeforeUnloadUntil = 0;
     let publishRetryToken = 0;
 
     function rememberCurrentWriterLayout() {
@@ -268,12 +293,7 @@ export function WriterPublicationSnapshotGuard() {
     }
 
     function allowPublishNavigation() {
-      suppressBeforeUnloadUntil = Date.now() + 10_000;
-    }
-
-    function suppressUnsavedWarningDuringPublish(event: BeforeUnloadEvent) {
-      if (Date.now() >= suppressBeforeUnloadUntil) return;
-      event.stopImmediatePropagation();
+      suppressBeforeUnloadUntil.current = Date.now() + 10_000;
     }
 
     async function retryEditorPublish(
@@ -389,22 +409,12 @@ export function WriterPublicationSnapshotGuard() {
     document.addEventListener("click", rememberBeforeEditorTransition, true);
     document.addEventListener("submit", prepareBeforeReactSubmit, true);
     document.addEventListener("formdata", bindLayoutToFormData, true);
-    window.addEventListener(
-      "beforeunload",
-      suppressUnsavedWarningDuringPublish,
-      true,
-    );
 
     return () => {
       publishRetryToken += 1;
       document.removeEventListener("click", rememberBeforeEditorTransition, true);
       document.removeEventListener("submit", prepareBeforeReactSubmit, true);
       document.removeEventListener("formdata", bindLayoutToFormData, true);
-      window.removeEventListener(
-        "beforeunload",
-        suppressUnsavedWarningDuringPublish,
-        true,
-      );
     };
   }, []);
 

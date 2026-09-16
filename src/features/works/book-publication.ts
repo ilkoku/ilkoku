@@ -7,6 +7,11 @@ import {
   parsePublicationLayout,
   type PublicationLayoutSnapshot,
 } from "./publication-layout";
+import {
+  hasChapterFormatting,
+  parseChapterFormatting,
+  type ChapterFormatting,
+} from "./rich-text-formatting";
 
 export const BOOK_PUBLICATION_LAYOUT_INPUT_NAME = "bookPublicationLayouts";
 export const BOOK_PUBLICATION_VERSION = 1 as const;
@@ -30,6 +35,7 @@ export type PublishedBookChapterItem = {
   title: string;
   subtitle: string;
   content: string;
+  formatting: ChapterFormatting | null;
   layout: PublicationLayoutSnapshot;
 };
 
@@ -141,6 +147,21 @@ function parsePublishedItem(value: unknown): PublishedBookItem | null {
 
     if (!chapterId || chapterPosition === null) return null;
 
+    let formatting: ChapterFormatting | null = null;
+    if (item.formatting !== undefined && item.formatting !== null) {
+      try {
+        const parsedFormatting = parseChapterFormatting(
+          JSON.stringify(item.formatting),
+          content,
+        );
+        formatting = hasChapterFormatting(parsedFormatting)
+          ? parsedFormatting
+          : null;
+      } catch {
+        return null;
+      }
+    }
+
     return {
       type: "chapter",
       structureItemId,
@@ -150,6 +171,7 @@ function parsePublishedItem(value: unknown): PublishedBookItem | null {
       title,
       subtitle,
       content,
+      formatting,
       layout,
     };
   }

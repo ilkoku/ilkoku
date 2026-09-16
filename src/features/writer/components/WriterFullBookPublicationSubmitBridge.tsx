@@ -13,19 +13,35 @@ function isPreviewPublishForm(
   );
 }
 
-function publicationLayoutFromFullBook(form: HTMLFormElement) {
+function publicationChapterFromFullBook(form: HTMLFormElement) {
   const chapterId =
     form.querySelector<HTMLInputElement>('input[name="chapterId"]')?.value ?? "";
-  const content =
-    form.querySelector<HTMLInputElement>('input[name="content"]')?.value ?? "";
   const book = getWriterBookPublicationPreview();
 
-  const chapter = book?.items.find(
+  if (!chapterId || !book?.items.length) return null;
+
+  const chapter = book.items.find(
     (item) => item.type === "chapter" && item.chapterId === chapterId,
   );
 
-  if (!chapter || chapter.content !== content) return "";
-  return JSON.stringify(chapter.layout);
+  if (!chapter || chapter.layout.pageEnds.length === 0) return null;
+  return chapter;
+}
+
+function setSnapshotContentInput(form: HTMLFormElement, content: string) {
+  let input = form.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+    '[name="content"]',
+  );
+
+  if (!input) {
+    const hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.name = "content";
+    form.append(hidden);
+    input = hidden;
+  }
+
+  input.value = content;
 }
 
 function setPublicationLayoutInput(form: HTMLFormElement, layout: string) {
@@ -44,9 +60,11 @@ function setPublicationLayoutInput(form: HTMLFormElement, layout: string) {
 }
 
 function hydratePreviewForm(form: HTMLFormElement) {
-  const layout = publicationLayoutFromFullBook(form);
-  if (!layout) return "";
+  const chapter = publicationChapterFromFullBook(form);
+  if (!chapter) return "";
 
+  const layout = JSON.stringify(chapter.layout);
+  setSnapshotContentInput(form, chapter.content);
   setPublicationLayoutInput(form, layout);
   return layout;
 }
@@ -77,12 +95,17 @@ export function WriterFullBookPublicationSubmitBridge() {
       const formDataEvent = event as FormDataEvent;
       if (!isPreviewPublishForm(event.target)) return;
 
-      const layout = hydratePreviewForm(event.target);
-      if (layout) {
-        formDataEvent.formData.set(PUBLICATION_LAYOUT_INPUT_NAME, layout);
-      } else {
+      const chapter = publicationChapterFromFullBook(event.target);
+      if (!chapter) {
         formDataEvent.formData.delete(PUBLICATION_LAYOUT_INPUT_NAME);
+        return;
       }
+
+      const layout = JSON.stringify(chapter.layout);
+      setSnapshotContentInput(event.target, chapter.content);
+      setPublicationLayoutInput(event.target, layout);
+      formDataEvent.formData.set("content", chapter.content);
+      formDataEvent.formData.set(PUBLICATION_LAYOUT_INPUT_NAME, layout);
     }
 
     hydrateMountedPreview();

@@ -87,6 +87,32 @@ test("direct publish is gated by a saved reader preview before final confirmatio
   includes(writer, 'publish: "Yayını Onayla"', "explicit final publish confirmation");
 });
 
+test("final confirmation submits the exact checked full-book snapshot", () => {
+  const bridge = source(
+    "src/features/writer/components/WriterFullBookPublicationSubmitBridge.tsx",
+  );
+
+  includes(bridge, "getWriterBookPublicationPreview", "checked full-book snapshot lookup");
+  includes(bridge, "publicationChapterFromFullBook", "matching snapshot chapter lookup");
+  includes(bridge, "setSnapshotContentInput(form, chapter.content)", "snapshot content hydration");
+  includes(
+    bridge,
+    'formDataEvent.formData.set("content", chapter.content)',
+    "snapshot content final submission",
+  );
+  includes(bridge, "JSON.stringify(chapter.layout)", "snapshot layout final submission");
+  includes(
+    bridge,
+    "chapter.layout.pageEnds.length === 0",
+    "empty snapshot layout rejection",
+  );
+  assert.equal(
+    bridge.includes("chapter.content !== content"),
+    false,
+    "final confirmation must not create a second DOM-content equality gate",
+  );
+});
+
 test("successful publish offers a direct return to Eserlerim", () => {
   const enhancer = source(
     "src/features/writer/components/WriterPublishExperienceEnhancer.tsx",

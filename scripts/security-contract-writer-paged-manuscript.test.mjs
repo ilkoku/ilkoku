@@ -126,7 +126,13 @@ test("author master becomes one immutable full-book publication snapshot for Rea
 
   includes(submitBridge, "getWriterBookPublicationPreview", "final submit reads the reviewed full-book snapshot");
   includes(submitBridge, 'item.type === "chapter" && item.chapterId === chapterId', "active chapter is selected inside the reviewed book");
-  includes(submitBridge, "chapter.content !== content", "reviewed content must match final form content");
+  includes(submitBridge, "setSnapshotContentInput(form, chapter.content)", "final form content comes from the reviewed snapshot");
+  includes(submitBridge, 'formDataEvent.formData.set("content", chapter.content)', "serialized final content comes from the reviewed snapshot");
+  assert.equal(
+    submitBridge.includes("chapter.content !== content"),
+    false,
+    "final submit must not restore a second DOM-content equality gate",
+  );
   includes(submitBridge, "PUBLICATION_LAYOUT_INPUT_NAME", "server compatibility field derives from the same reviewed book");
   includes(submitBridge, "MutationObserver", "preview form is hydrated when it mounts");
   includes(submitBridge, 'document.addEventListener("submit", handleSubmit, true)', "final confirmation is guarded before the server action");

@@ -1,6 +1,10 @@
 import { cache } from "react";
 
 import {
+  getChapterFormatting,
+  getChapterFormattingMap,
+} from "./chapter-formatting-repository";
+import {
   getLatestPublicationSnapshot,
   getLatestPublicationSnapshots,
   getLatestPublishedBookSnapshot,
@@ -26,18 +30,22 @@ function chapterSlug(position: number) {
   return `bolum-${position}`;
 }
 
-function mapChapterSummary(chapter: {
-  id: string;
-  title: string;
-  content: string;
-  position: number;
-  status: "draft" | "published" | "archived";
-  updatedAt: Date;
-}): ChapterSummary {
+function mapChapterSummary(
+  chapter: {
+    id: string;
+    title: string;
+    content: string;
+    position: number;
+    status: "draft" | "published" | "archived";
+    updatedAt: Date;
+  },
+  formattingByChapter: ReadonlyMap<string, string>,
+): ChapterSummary {
   return {
     id: chapter.id,
     title: chapter.title,
     content: chapter.content,
+    formatting: formattingByChapter.get(chapter.id) ?? "",
     position: chapter.position,
     slug: chapterSlug(chapter.position),
     status: chapter.status,
@@ -52,9 +60,10 @@ function mapAuthorWork(
       typeof worksRepository.getAuthorWorks
     >
   >[number],
+  formattingByChapter: ReadonlyMap<string, string>,
 ): WorkWithChapterSummary {
   const chapters = (work.chapters ?? [])
-    .map(mapChapterSummary)
+    .map((chapter) => mapChapterSummary(chapter, formattingByChapter))
     .sort(
       (left, right) =>
         left.position - right.position,
@@ -86,19 +95,23 @@ function mapAuthorWork(
   };
 }
 
+async function authorWorksWithFormatting(
+  authorId: string,
+  includeArchived: boolean,
+) {
+  const works = await worksRepository.getAuthorWorks(authorId, includeArchived);
+  const formattingByChapter = await getChapterFormattingMap(
+    works.flatMap((work) => (work.chapters ?? []).map((chapter) => chapter.id)),
+  );
+  return works.map((work) => mapAuthorWork(work, formattingByChapter));
+}
+
 export const getAuthorWorks = cache(
   async (
     authorId: string,
   ): Promise<
     WorkWithChapterSummary[]
-  > => {
-    const works =
-      await worksRepository.getAuthorWorks(
-        authorId,
-      );
-
-    return works.map(mapAuthorWork);
-  },
+  > => authorWorksWithFormatting(authorId, false),
 );
 
 export const getAuthorWorkspaceWorks =
@@ -107,15 +120,7 @@ export const getAuthorWorkspaceWorks =
       authorId: string,
     ): Promise<
       WorkWithChapterSummary[]
-    > => {
-      const works =
-        await worksRepository.getAuthorWorks(
-          authorId,
-          true,
-        );
-
-      return works.map(mapAuthorWork);
-    },
+    > => authorWorksWithFormatting(authorId, true),
   );
 
 export async function getContinueWritingWork(
@@ -285,10 +290,14 @@ export const getPublicChapter = cache(
     const bookChapter = work.publicationBook?.items.find(
       (item) => item.type === "chapter" && item.chapterId === chapter.id,
     );
+    const liveFormatting = bookChapter?.formatting
+      ? JSON.stringify(bookChapter.formatting)
+      : await getChapterFormatting(chapter.id);
 
     return {
       ...chapter,
       content: bookChapter?.content ?? publication?.content ?? chapter.content,
+      formatting: liveFormatting,
       publicationLayout: bookChapter?.layout ?? publication?.layout ?? null,
       publicationVersion: publication?.versionNumber ?? null,
       title: bookChapter?.title ?? publication?.title ?? chapter.title,

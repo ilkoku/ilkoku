@@ -174,9 +174,7 @@ function WriterFullBookPublicationPreview({
     <div className="writer-publication-preview__book">
       <header className="writer-publication-preview__review-heading">
         <span>Yayın öncesi son kontrol</span>
-        <strong>
-          {showingCover ? "Ön Kapak · numarasız" : bookItemLabel(activeItem)}
-        </strong>
+        <strong>{showingCover ? "Kapak" : bookItemLabel(activeItem)}</strong>
         <p>
           Okurun göreceği canlı kitabı kapaktan başlayarak kontrol et. Kapak
           sayfa numarasına dahil değildir; içerik sayfa 1’den başlar.
@@ -246,7 +244,7 @@ function WriterFullBookPublicationPreview({
             onChange={(event) => setActiveSurfaceId(event.target.value)}
             value={showingCover ? COVER_SURFACE_ID : activeItem.structureItemId}
           >
-            <option value={COVER_SURFACE_ID}>Kapak · numarasız</option>
+            <option value={COVER_SURFACE_ID}>Kapak</option>
             {book.items.map((item, index) => (
               <option key={item.structureItemId} value={item.structureItemId}>
                 {index + 1}/{book.items.length} · {bookItemLabel(item)}

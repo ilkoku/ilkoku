@@ -43,6 +43,17 @@ export function PublishedBookSpecialPageExperience({
     activeIndex >= 0 && activeIndex < publicationBook.items.length - 1
       ? publicationBook.items[activeIndex + 1]
       : null;
+  const activeBookPageStart =
+    activeIndex >= 0
+      ? publicationBook.items
+          .slice(0, activeIndex)
+          .reduce(
+            (total, candidate) => total + candidate.layout.pageEnds.length,
+            0,
+          ) + 1
+      : 1;
+  const activeBookPageEnd =
+    activeBookPageStart + item.layout.pageEnds.length - 1;
   const encodedReturnTo = encodeURIComponent(returnTo);
   const currentBookPath = `/kitap/${work.slug}`;
   const returnIsBookPage =
@@ -138,7 +149,9 @@ export function PublishedBookSpecialPageExperience({
               <span aria-hidden="true">·</span>
               <span>{readingTime} dk okuma</span>
               <span aria-hidden="true">·</span>
-              <span>Yazar yayını · {item.layout.pageEnds.length} sayfa</span>
+              <span>
+                Yazar yayını · Kitap sayfası {activeBookPageStart}–{activeBookPageEnd} / {publicationBook.totalPages}
+              </span>
             </p>
             <h1 id="bolum-basligi">{item.title}</h1>
           </header>
@@ -155,6 +168,8 @@ export function PublishedBookSpecialPageExperience({
               workId={work.id}
             >
               <PublishedManuscriptViewport
+                bookPageStart={activeBookPageStart}
+                bookTotalPages={publicationBook.totalPages}
                 chapterTitle={item.title}
                 content={item.content}
                 identity={protectionIdentity}

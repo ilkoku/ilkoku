@@ -14,6 +14,11 @@ import { prepareFullBookPublicationAction } from "@/features/works/prepare-full-
 import { parsePublicationLayout } from "@/features/works/publication-layout";
 import { measureBookPublicationLayouts } from "../book-publication-measurement";
 import {
+  getMissingPublicationRequirements,
+  publicationReadinessMessage,
+  requestPublicationReadinessAttention,
+} from "../writer-publication-readiness";
+import {
   clearWriterBookPublicationPreview,
   setWriterBookPublicationPreview,
   type WriterBookPublicationPreview,
@@ -197,15 +202,17 @@ function waitForDraftSave(
 }
 
 async function ensureDraftSaved(form: HTMLFormElement): Promise<DraftSaveResult> {
-  const saveState = readDraftSaveState(form);
-  if (saveState === "kaydedildi") return { ok: true };
-
-  if (!form.reportValidity()) {
+  const missing = getMissingPublicationRequirements(form);
+  if (missing.length > 0) {
+    requestPublicationReadinessAttention(form, missing);
     return {
       ok: false,
-      message: "Yayın öncesi gerekli eser bilgilerini tamamla.",
+      message: publicationReadinessMessage(missing),
     };
   }
+
+  const saveState = readDraftSaveState(form);
+  if (saveState === "kaydedildi") return { ok: true };
 
   const saveButton = form.querySelector<HTMLButtonElement>(
     ".writer-save-button",

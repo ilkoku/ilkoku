@@ -7,6 +7,7 @@ import { WriterFullBookPublicationSubmitBridge } from "@/features/writer/compone
 import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
 import { WriterPublishExperienceEnhancer } from "@/features/writer/components/WriterPublishExperienceEnhancer";
 import { WriterPublishFeedbackBridge } from "@/features/writer/components/WriterPublishFeedbackBridge";
+import { WriterRichTextFormattingTools } from "@/features/writer/components/WriterRichTextFormattingTools";
 import { WriterTextEditingCommands } from "@/features/writer/components/WriterTextEditingCommands";
 import "@/features/writer/writer-paper-experience.css";
 import "@/features/writer/writer-brand-purple.css";
@@ -14,6 +15,8 @@ import "@/styles/light-purple-route-fallback.css";
 import "@/features/writer/writer-editor-density.css";
 import "@/features/writer/writer-editing-tools.css";
 import "@/features/writer/writer-text-editing-commands.css";
+import "@/features/writer/writer-rich-text-formatting.css";
+import "@/features/writer/writer-toolbar-wrap.css";
 import "@/features/writer/writer-paged-manuscript.css";
 import "@/features/writer/writer-publish-experience.css";
 import "@/features/writer/writer-publish-review-contrast.css";
@@ -31,6 +34,7 @@ export default function ContinueWritingLayout({
     <>
       {children}
       <WriterEditingTools />
+      <WriterRichTextFormattingTools />
       <WriterTextEditingCommands />
       <WriterPagedManuscriptEnhancer />
       <WriterPublishExperienceEnhancer />

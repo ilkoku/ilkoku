@@ -75,9 +75,11 @@ test("writer editing tools are mounted on every writer editing route", () => {
     const layout = source(path);
 
     includes(layout, "WriterEditingTools", `${path} writer tools mount`);
+    includes(layout, "WriterRichTextFormattingTools", `${path} rich formatting mount`);
     includes(layout, "WriterTextEditingCommands", `${path} text commands mount`);
     includes(layout, "writer-editing-tools.css", `${path} writer tools CSS`);
     includes(layout, "writer-text-editing-commands.css", `${path} text commands CSS`);
+    includes(layout, "writer-rich-text-formatting.css", `${path} rich text CSS`);
   }
 });
 

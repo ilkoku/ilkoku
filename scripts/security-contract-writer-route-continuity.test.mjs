@@ -26,6 +26,29 @@ test("continue-writing list stays inside the writer content width", () => {
   includes(css, "table-layout: fixed", "desktop table fixed layout");
 });
 
+test("writer editor routes keep rich editing tools in parity", () => {
+  for (const route of ["yazar", "eserlerim", "yazmaya-devam"]) {
+    const layout = source(`src/app/${route}/layout.tsx`);
+    includes(
+      layout,
+      "WriterRichTextFormattingTools",
+      `${route} rich formatting mount`,
+    );
+    includes(
+      layout,
+      'import "@/features/writer/writer-rich-text-formatting.css"',
+      `${route} rich formatting stylesheet`,
+    );
+  }
+
+  const continueLayout = source("src/app/yazmaya-devam/layout.tsx");
+  includes(
+    continueLayout,
+    "WriterPublishFeedbackBridge",
+    "continue-writing publish feedback bridge",
+  );
+});
+
 test("feedback and publisher loading keep the authenticated writer shell mounted", () => {
   for (const route of ["geri-bildirimler", "yayinevleri"]) {
     const layout = source(`src/app/${route}/layout.tsx`);

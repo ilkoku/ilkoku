@@ -85,16 +85,18 @@ function readDraftSaveError(form: HTMLFormElement) {
   );
 }
 
-function waitForDraftSave(form: HTMLFormElement): Promise<DraftSaveResult> {
+function waitForDraftSave(
+  form: HTMLFormElement,
+  saveButton: HTMLButtonElement,
+): Promise<DraftSaveResult> {
   return new Promise((resolve) => {
-    let observedSaveMutation = false;
+    const initialErrorMessage = readDraftSaveError(form);
+    let saveWasPending =
+      readDraftSaveState(form) === "kaydediliyor" || saveButton.disabled;
     let settled = false;
     let timeout = 0;
 
-    const observer = new MutationObserver(() => {
-      observedSaveMutation = true;
-      check();
-    });
+    const observer = new MutationObserver(check);
 
     function finish(result: DraftSaveResult) {
       if (settled) return;
@@ -113,14 +115,30 @@ function waitForDraftSave(form: HTMLFormElement): Promise<DraftSaveResult> {
         return;
       }
 
-      if (readDraftSaveState(form) === "kaydedildi") {
+      const saveState = readDraftSaveState(form);
+      if (saveState === "kaydedildi") {
         finish({ ok: true });
         return;
       }
 
+      if (saveState === "kaydediliyor" || saveButton.disabled) {
+        saveWasPending = true;
+        return;
+      }
+
       const errorMessage = readDraftSaveError(form);
-      if (observedSaveMutation && errorMessage) {
+      if (errorMessage && errorMessage !== initialErrorMessage) {
         finish({ ok: false, message: errorMessage });
+        return;
+      }
+
+      if (saveWasPending) {
+        finish({
+          ok: false,
+          message:
+            errorMessage ||
+            "Taslak kaydedilemedi. Yayın önizlemesine geçmeden önce yeniden kaydet.",
+        });
       }
     }
 
@@ -165,7 +183,7 @@ async function ensureDraftSaved(form: HTMLFormElement): Promise<DraftSaveResult>
     };
   }
 
-  const pendingSave = waitForDraftSave(form);
+  const pendingSave = waitForDraftSave(form, saveButton);
 
   if (saveState !== "kaydediliyor" && !saveButton.disabled) {
     form.requestSubmit(saveButton);

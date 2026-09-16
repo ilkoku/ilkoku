@@ -370,33 +370,40 @@ export function WriterRichTextFormattingTools() {
         </select>
       </label>
 
-      <div className="writer-rich-formatting-tools__group" aria-label="Liste">
+      <div
+        className="writer-rich-formatting-tools__group writer-rich-formatting-tools__compact-group"
+        aria-label="Liste"
+      >
+        <span className="writer-rich-formatting-tools__group-label">Liste</span>
         <button
           aria-label="Madde işaretli liste"
           aria-pressed={currentParagraph?.list === "bullet"}
           onMouseDown={preventToolbarFocus}
           onClick={() => updateParagraph({ list: "bullet" as ParagraphListStyle })}
+          title="Madde işaretli liste"
           type="button"
         >
-          • Liste
+          •
         </button>
         <button
           aria-label="Numaralı liste"
           aria-pressed={currentParagraph?.list === "number"}
           onMouseDown={preventToolbarFocus}
           onClick={() => updateParagraph({ list: "number" as ParagraphListStyle })}
+          title="Numaralı liste"
           type="button"
         >
-          1. Liste
+          1.
         </button>
         <button
           aria-label="Listeyi kaldır"
           disabled={currentParagraph?.list === "none"}
           onMouseDown={preventToolbarFocus}
           onClick={() => updateParagraph({ list: "none" })}
+          title="Listeyi kaldır"
           type="button"
         >
-          Liste Yok
+          ×
         </button>
       </div>
 
@@ -416,7 +423,11 @@ export function WriterRichTextFormattingTools() {
         </select>
       </label>
 
-      <div className="writer-rich-formatting-tools__group" aria-label="Girinti">
+      <div
+        className="writer-rich-formatting-tools__group writer-rich-formatting-tools__compact-group"
+        aria-label="Girinti"
+      >
+        <span className="writer-rich-formatting-tools__group-label">Girinti</span>
         <button
           aria-label="Girintiyi azalt"
           disabled={(currentParagraph?.indent ?? 0) <= 0}
@@ -424,9 +435,10 @@ export function WriterRichTextFormattingTools() {
           onClick={() =>
             updateParagraph({ indent: Math.max(0, (currentParagraph?.indent ?? 0) - 1) })
           }
+          title="Girintiyi azalt"
           type="button"
         >
-          ← Girinti
+          ←
         </button>
         <button
           aria-label="Girintiyi artır"
@@ -435,9 +447,10 @@ export function WriterRichTextFormattingTools() {
           onClick={() =>
             updateParagraph({ indent: Math.min(6, (currentParagraph?.indent ?? 0) + 1) })
           }
+          title="Girintiyi artır"
           type="button"
         >
-          Girinti →
+          →
         </button>
       </div>
     </div>,

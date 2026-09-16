@@ -120,7 +120,7 @@ export function getMissingPublicationRequirements(form: HTMLFormElement) {
       ) ||
       element.disabled ||
       CLASSIFICATION_FIELD_NAMES.has(element.name) ||
-      element.checkValidity()
+      element.validity.valid
     ) {
       continue;
     }

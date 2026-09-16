@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
@@ -95,6 +96,7 @@ export async function updateAuthorWorkBasicsAction(formData: FormData) {
   });
 
   revalidateWorkManagement(updated.slug);
+  redirect(`/kitap/${encodeURIComponent(updated.slug)}/duzenle?kaydedildi=1#eser-bilgileri-basligi`);
 }
 
 export async function uploadAuthorCoverAction(formData: FormData) {

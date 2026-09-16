@@ -19,6 +19,10 @@ import type { WorkWithChapterSummary } from "../types";
 import { WorkArchiveAction } from "./WorkArchiveAction";
 import { WorkEditDialog } from "./WorkEditDialog";
 
+type WorkspaceWork = WorkWithChapterSummary & {
+  publishedPageCount: number | null;
+};
+
 type Tab = "active" | "archived";
 
 type Sort =
@@ -57,7 +61,7 @@ function formatDate(value: Date | string) {
 export function WorksWorkspace({
   works,
 }: {
-  works: WorkWithChapterSummary[];
+  works: WorkspaceWork[];
 }) {
   const [tab, setTab] =
     useState<Tab>("active");
@@ -412,11 +416,9 @@ export function WorksWorkspace({
 
                     <dl>
                       <div>
-                        <dt>Bölüm</dt>
+                        <dt>Bölüm / Sayfa</dt>
                         <dd>
-                          {
-                            work.chapterCount
-                          }
+                          {work.chapterCount} / {work.publishedPageCount?.toLocaleString("tr-TR") ?? "—"}
                         </dd>
                       </div>
 
@@ -449,7 +451,7 @@ export function WorksWorkspace({
                       </div>
                     </dl>
 
-                    {work.status === "published" && (
+                    {work.status !== "archived" && (
                       <section className="workspace-editor-review" aria-label="Profesyonel editör incelemesi">
                         <div>
                           <strong>Profesyonel Editör İncelemesi</strong>
@@ -464,17 +466,25 @@ export function WorksWorkspace({
                                     ? "İkinci editör eserini inceliyor."
                                     : work.editorReviewStatus === "completed"
                                       ? "Eser değerlendirmesi tamamlandı."
-                                      : "Yayımlanmış eserini bütün olarak editör incelemesine gönder."}
+                                      : work.status === "published"
+                                        ? "Yayımlanmış eserini bütün olarak editör incelemesine gönder."
+                                        : "Profesyonel editör incelemesi için önce eseri yayınla. Yayınlandıktan sonra gönder düğmesi burada açılır."}
                           </span>
                         </div>
 
                         {work.editorReviewStatus === "not_requested" ? (
-                          <form action={submitForEditorAction}>
-                            <input name="workId" type="hidden" value={work.id} />
-                            <Button type="submit" variant="outline">
-                              Editör İncelemesine Gönder
-                            </Button>
-                          </form>
+                          work.status === "published" ? (
+                            <form action={submitForEditorAction}>
+                              <input name="workId" type="hidden" value={work.id} />
+                              <Button type="submit" variant="outline">
+                                Editör İncelemesine Gönder
+                              </Button>
+                            </form>
+                          ) : (
+                            <span className="workspace-editor-review__status">
+                              Önce eseri yayınla
+                            </span>
+                          )
                         ) : work.editorReviewStatus === "completed" ? (
                           <Link
                             className="button button--outline"

@@ -172,7 +172,10 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
     "Reader must not stack multiple author pages in the DOM",
   );
   includes(renderer, "transform: `scale(${scale})`", "device scaling without reflow");
-  includes(renderer, "Yazarın yayın sayfası", "author-owned page status");
+  includes(renderer, "data-book-page-number", "whole-book page number contract");
+  includes(renderer, "data-book-page-total", "whole-book page total contract");
+  includes(renderer, "globalPageNumber", "continuous whole-book page number");
+  includes(renderer, "globalPageTotal", "continuous whole-book page total");
   includes(rendererCss, "overflow: hidden", "fixed published page containment");
   includes(rendererCss, "white-space: pre-wrap", "author line-break preservation");
   assert.equal(

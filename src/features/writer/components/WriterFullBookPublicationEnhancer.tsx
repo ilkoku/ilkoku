@@ -8,6 +8,12 @@ import {
 import { prepareFullBookPublicationAction } from "@/features/works/prepare-full-book-publication-action";
 import { measureBookPublicationLayouts } from "../book-publication-measurement";
 
+const DRAFT_SAVE_TIMEOUT_MS = 30_000;
+
+type DraftSaveResult =
+  | { ok: true }
+  | { ok: false; message: string };
+
 function isWriterForm(target: EventTarget | null): target is HTMLFormElement {
   return target instanceof HTMLFormElement && target.matches("form.writer-screen");
 }
@@ -39,23 +45,129 @@ function setBookPublicationInput(form: HTMLFormElement, value: string) {
   input.value = value;
 }
 
+function previewButtonFromForm(form: HTMLFormElement) {
+  const buttons = form.querySelectorAll<HTMLButtonElement>(
+    '.writer-toolbar__actions button[type="button"]',
+  );
+
+  return (
+    [...buttons].find((button) => button.textContent?.includes("Önizleme")) ??
+    null
+  );
+}
+
 function previewButtonFromEvent(event: MouseEvent) {
   const target = event.target;
   if (!(target instanceof Element)) return null;
 
-  const button = target.closest<HTMLButtonElement>(
-    "form.writer-screen .writer-toolbar__actions button[type=\"button\"]",
-  );
-  if (!button) return null;
+  const form = target.closest<HTMLFormElement>("form.writer-screen");
+  if (!form) return null;
 
-  return button.textContent?.includes("Önizleme") ? button : null;
+  const button = target.closest<HTMLButtonElement>(
+    '.writer-toolbar__actions button[type="button"]',
+  );
+  if (!button || !button.textContent?.includes("Önizleme")) return null;
+
+  return button;
+}
+
+function readDraftSaveState(form: HTMLFormElement) {
+  return (
+    form.querySelector<HTMLElement>(".writer-save-status")?.dataset.state ?? ""
+  );
+}
+
+function readDraftSaveError(form: HTMLFormElement) {
+  return (
+    form
+      .querySelector<HTMLElement>('.work-action-message[data-state="error"]')
+      ?.textContent?.trim() ?? ""
+  );
+}
+
+function waitForDraftSave(form: HTMLFormElement): Promise<DraftSaveResult> {
+  return new Promise((resolve) => {
+    let settled = false;
+    let timeout = 0;
+
+    const observer = new MutationObserver(check);
+
+    function finish(result: DraftSaveResult) {
+      if (settled) return;
+      settled = true;
+      observer.disconnect();
+      window.clearTimeout(timeout);
+      resolve(result);
+    }
+
+    function check() {
+      if (!document.contains(form)) {
+        finish({
+          ok: false,
+          message: "Taslak kaydı tamamlanmadan editör kapandı.",
+        });
+        return;
+      }
+
+      if (readDraftSaveState(form) === "kaydedildi") {
+        finish({ ok: true });
+        return;
+      }
+
+      const errorMessage = readDraftSaveError(form);
+      if (errorMessage) {
+        finish({ ok: false, message: errorMessage });
+      }
+    }
+
+    observer.observe(form, {
+      attributes: true,
+      characterData: true,
+      childList: true,
+      subtree: true,
+    });
+
+    timeout = window.setTimeout(() => {
+      finish({
+        ok: false,
+        message:
+          "Taslak kaydı beklenenden uzun sürdü. Yayın önizlemesine geçmeden önce yeniden kaydet.",
+      });
+    }, DRAFT_SAVE_TIMEOUT_MS);
+
+    check();
+  });
+}
+
+async function ensureDraftSaved(form: HTMLFormElement): Promise<DraftSaveResult> {
+  const saveState = readDraftSaveState(form);
+  if (saveState === "kaydedildi") return { ok: true };
+
+  const pendingSave = waitForDraftSave(form);
+
+  if (saveState !== "kaydediliyor") {
+    const saveButton = form.querySelector<HTMLButtonElement>(
+      ".writer-save-button",
+    );
+
+    if (!saveButton) {
+      return {
+        ok: false,
+        message: "Yayın öncesi taslak kaydetme düğmesi bulunamadı.",
+      };
+    }
+
+    form.requestSubmit(saveButton);
+  }
+
+  return pendingSave;
 }
 
 export function WriterFullBookPublicationEnhancer() {
   useEffect(() => {
     let cachedPublicationInput = "";
-    const submitBypass = new WeakSet<HTMLFormElement>();
     const previewButtonBypass = new WeakSet<HTMLButtonElement>();
+    const finalReviewPending = new WeakSet<HTMLFormElement>();
 
     async function prepareBookPublication(form: HTMLFormElement) {
       const workId =
@@ -136,6 +248,38 @@ export function WriterFullBookPublicationEnhancer() {
       void prepareBeforePreview(button);
     }
 
+    async function routePublishThroughFinalReview(
+      form: HTMLFormElement,
+      submitter: HTMLButtonElement,
+    ) {
+      if (finalReviewPending.has(form)) return;
+      finalReviewPending.add(form);
+      submitter.setAttribute("aria-busy", "true");
+
+      try {
+        const saved = await ensureDraftSaved(form);
+        if (!saved.ok) {
+          window.alert(saved.message);
+          return;
+        }
+
+        const previewButton = previewButtonFromForm(form);
+        if (!previewButton) {
+          window.alert(
+            "Okuyucu önizlemesi açılamadı. Editör ekranını yenileyip yeniden Yayınla.",
+          );
+          return;
+        }
+
+        previewButton.click();
+      } finally {
+        finalReviewPending.delete(form);
+        if (submitter.isConnected) {
+          submitter.removeAttribute("aria-busy");
+        }
+      }
+    }
+
     function handleSubmit(event: SubmitEvent) {
       if (isPreviewForm(event.target)) {
         if (cachedPublicationInput) {
@@ -148,28 +292,12 @@ export function WriterFullBookPublicationEnhancer() {
         return;
       }
 
-      const form = event.target;
-      if (submitBypass.has(form)) {
-        submitBypass.delete(form);
-        return;
-      }
-
       const submitter = event.submitter;
       if (!(submitter instanceof HTMLButtonElement)) return;
 
       event.preventDefault();
       event.stopImmediatePropagation();
-
-      void (async () => {
-        const prepared = await prepareBookPublication(form);
-        if (!prepared.ok) {
-          window.alert(prepared.message);
-          return;
-        }
-
-        submitBypass.add(form);
-        form.requestSubmit(submitter);
-      })();
+      void routePublishThroughFinalReview(event.target, submitter);
     }
 
     function bindPreviewFormInput(event: Event) {

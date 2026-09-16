@@ -236,30 +236,32 @@ export function WriterEditingTools() {
       return;
     }
 
-    screen.style.setProperty(
+    const writerScreen = screen;
+
+    writerScreen.style.setProperty(
       "--writer-manuscript-font-size",
       `${preferences.fontSize}px`,
     );
-    screen.style.setProperty(
+    writerScreen.style.setProperty(
       "--writer-manuscript-line-height",
       String(preferences.lineHeight),
     );
-    screen.style.setProperty(
+    writerScreen.style.setProperty(
       "--writer-manuscript-font-family",
       fontFamilies[preferences.font],
     );
-    screen.style.setProperty(
+    writerScreen.style.setProperty(
       "--writer-manuscript-width",
       manuscriptWidths[preferences.width],
     );
-    screen.style.setProperty(
+    writerScreen.style.setProperty(
       "--writer-page-zoom",
       String(preferences.zoom / 100),
     );
-    screen.dataset.writerPageFlow = preferences.pageFlow;
+    writerScreen.dataset.writerPageFlow = preferences.pageFlow;
 
     function applySpellcheck() {
-      screen
+      writerScreen
         .querySelectorAll<HTMLTextAreaElement>(".writer-textarea")
         .forEach((textarea) => {
           textarea.spellcheck = preferences.spellcheck;
@@ -272,7 +274,7 @@ export function WriterEditingTools() {
 
     applySpellcheck();
     const observer = new MutationObserver(applySpellcheck);
-    observer.observe(screen, { childList: true, subtree: true });
+    observer.observe(writerScreen, { childList: true, subtree: true });
 
     window.dispatchEvent(
       new CustomEvent("ilkoku:writer-preferences-changed"),

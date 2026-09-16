@@ -51,3 +51,17 @@
   outline: 3px solid rgba(109, 76, 155, 0.32);
   outline-offset: 2px;
 }
+
+/* Final publication preview: keep the approval action calm and aligned with the neutral toolbar tone. */
+.publish-preview:has(.writer-publication-preview) .preview-toolbar > form button {
+  color: rgba(239, 237, 232, 0.72);
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(239, 237, 232, 0.18);
+  box-shadow: none;
+}
+
+.publish-preview:has(.writer-publication-preview) .preview-toolbar > form button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(239, 237, 232, 0.3);
+}

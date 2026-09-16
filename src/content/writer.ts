@@ -47,9 +47,9 @@ export const writerContent = {
     minuteUnit: "dk",
   },
   preview: {
-    back: "Editöre Dön",
-    title: "Yayın Önizleme",
-    publish: "Yayınla",
+    back: "Düzenlemeye Dön",
+    title: "Okuyucu Önizlemesi",
+    publish: "Yayını Onayla",
   },
   success: {
     title: "Tebrikler.",

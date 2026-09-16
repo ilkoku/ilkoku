@@ -1,13 +1,4 @@
-import { WriterBookStructureRefreshBoundary } from "@/features/writer/components/WriterBookStructureRefreshBoundary";
-import { WriterBookTrashEnhancer } from "@/features/writer/components/WriterBookTrashEnhancer";
-import { WriterClassificationStatsEnhancer } from "@/features/writer/components/WriterClassificationStatsEnhancer";
-import { WriterEditingTools } from "@/features/writer/components/WriterEditingTools";
-import { WriterFullBookPublicationEnhancer } from "@/features/writer/components/WriterFullBookPublicationEnhancer";
-import { WriterFullBookPublicationSubmitBridge } from "@/features/writer/components/WriterFullBookPublicationSubmitBridge";
-import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
-import { WriterPublishExperienceEnhancer } from "@/features/writer/components/WriterPublishExperienceEnhancer";
-import { WriterRichTextFormattingTools } from "@/features/writer/components/WriterRichTextFormattingTools";
-import { WriterTextEditingCommands } from "@/features/writer/components/WriterTextEditingCommands";
+import { WriterRouteEnhancers } from "@/features/writer/components/WriterRouteEnhancers";
 import "@/features/writer/writer-paper-experience.css";
 import "@/features/writer/writer-brand-purple.css";
 import "@/styles/light-purple-route-fallback.css";
@@ -32,16 +23,7 @@ export default function WriterDashboardLayout({
   return (
     <>
       {children}
-      <WriterEditingTools />
-      <WriterRichTextFormattingTools />
-      <WriterTextEditingCommands />
-      <WriterPagedManuscriptEnhancer />
-      <WriterPublishExperienceEnhancer />
-      <WriterFullBookPublicationSubmitBridge />
-      <WriterFullBookPublicationEnhancer />
-      <WriterBookStructureRefreshBoundary />
-      <WriterBookTrashEnhancer />
-      <WriterClassificationStatsEnhancer />
+      <WriterRouteEnhancers />
     </>
   );
 }

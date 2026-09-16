@@ -3,8 +3,8 @@ import { WriterBookTrashEnhancer } from "@/features/writer/components/WriterBook
 import { WriterClassificationStatsEnhancer } from "@/features/writer/components/WriterClassificationStatsEnhancer";
 import { WriterEditingTools } from "@/features/writer/components/WriterEditingTools";
 import { WriterFullBookPublicationEnhancer } from "@/features/writer/components/WriterFullBookPublicationEnhancer";
+import { WriterFullBookPublicationSubmitBridge } from "@/features/writer/components/WriterFullBookPublicationSubmitBridge";
 import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
-import { WriterPublicationSnapshotGuard } from "@/features/writer/components/WriterPublicationSnapshotGuard";
 import { WriterPublishExperienceEnhancer } from "@/features/writer/components/WriterPublishExperienceEnhancer";
 import "@/features/writer/writer-paper-experience.css";
 import "@/features/writer/writer-brand-purple.css";
@@ -13,6 +13,7 @@ import "@/features/writer/writer-editor-density.css";
 import "@/features/writer/writer-editing-tools.css";
 import "@/features/writer/writer-paged-manuscript.css";
 import "@/features/writer/writer-publish-experience.css";
+import "@/features/writer/writer-publish-review-contrast.css";
 import "@/features/writer/writer-book-structure.css";
 import "@/features/writer/writer-sidebar-regressions.css";
 import "@/features/writer/writer-book-trash.css";
@@ -29,7 +30,7 @@ export default function WriterWorksLayout({
       <WriterEditingTools />
       <WriterPagedManuscriptEnhancer />
       <WriterPublishExperienceEnhancer />
-      <WriterPublicationSnapshotGuard />
+      <WriterFullBookPublicationSubmitBridge />
       <WriterFullBookPublicationEnhancer />
       <WriterBookStructureRefreshBoundary />
       <WriterBookTrashEnhancer />

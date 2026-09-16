@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { writerContent } from "@/content";
@@ -135,16 +135,14 @@ function WriterFullBookPublicationPreview({
 }: {
   book: PublishedBookSnapshot;
 }) {
-  const [activeItemIndex, setActiveItemIndex] = useState(0);
-
-  useEffect(() => {
-    setActiveItemIndex(0);
-  }, [book]);
-
-  const boundedIndex = Math.min(
-    Math.max(0, activeItemIndex),
-    Math.max(0, book.items.length - 1),
+  const [activeStructureItemId, setActiveStructureItemId] = useState(
+    book.items[0]?.structureItemId ?? "",
   );
+
+  const selectedIndex = book.items.findIndex(
+    (item) => item.structureItemId === activeStructureItemId,
+  );
+  const boundedIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const activeItem = book.items[boundedIndex];
   const bookPageStart = useMemo(
     () => pageStartForItem(book, boundedIndex),
@@ -181,7 +179,12 @@ function WriterFullBookPublicationPreview({
       >
         <button
           disabled={boundedIndex === 0}
-          onClick={() => setActiveItemIndex((current) => Math.max(0, current - 1))}
+          onClick={() => {
+            const previousItem = book.items[Math.max(0, boundedIndex - 1)];
+            if (previousItem) {
+              setActiveStructureItemId(previousItem.structureItemId);
+            }
+          }}
           type="button"
         >
           ← Önceki bölüm / sayfa
@@ -191,11 +194,11 @@ function WriterFullBookPublicationPreview({
           <span>Kitap sırası</span>
           <select
             aria-label="Önizlenecek kitap bölümü veya sayfası"
-            onChange={(event) => setActiveItemIndex(Number(event.target.value))}
-            value={boundedIndex}
+            onChange={(event) => setActiveStructureItemId(event.target.value)}
+            value={activeItem.structureItemId}
           >
             {book.items.map((item, index) => (
-              <option key={item.structureItemId} value={index}>
+              <option key={item.structureItemId} value={item.structureItemId}>
                 {index + 1}/{book.items.length} · {bookItemLabel(item)}
               </option>
             ))}
@@ -204,11 +207,13 @@ function WriterFullBookPublicationPreview({
 
         <button
           disabled={boundedIndex >= book.items.length - 1}
-          onClick={() =>
-            setActiveItemIndex((current) =>
-              Math.min(book.items.length - 1, current + 1),
-            )
-          }
+          onClick={() => {
+            const nextItem =
+              book.items[Math.min(book.items.length - 1, boundedIndex + 1)];
+            if (nextItem) {
+              setActiveStructureItemId(nextItem.structureItemId);
+            }
+          }}
           type="button"
         >
           Sonraki bölüm / sayfa →

@@ -105,6 +105,8 @@ export function PublishedManuscriptViewport({
   identity,
   layout,
   nextChapterHref,
+  onNextBookPage,
+  onPreviousBookPage,
   previousChapterHref,
   startAtLastPage = false,
   subtitle,
@@ -117,6 +119,8 @@ export function PublishedManuscriptViewport({
   identity: string;
   layout: PublicationLayoutSnapshot;
   nextChapterHref?: string | null;
+  onNextBookPage?: (() => void) | null;
+  onPreviousBookPage?: (() => void) | null;
   previousChapterHref?: string | null;
   startAtLastPage?: boolean;
   subtitle?: string | null;
@@ -215,12 +219,20 @@ export function PublishedManuscriptViewport({
       setPageIndex((current) => Math.max(0, current - 1));
       return;
     }
+    if (onPreviousBookPage) {
+      onPreviousBookPage();
+      return;
+    }
     if (previousChapterHref) router.push(previousChapterHref);
   }
 
   function goNext() {
     if (pageIndex < pages.length - 1) {
       setPageIndex((current) => Math.min(pages.length - 1, current + 1));
+      return;
+    }
+    if (onNextBookPage) {
+      onNextBookPage();
       return;
     }
     if (nextChapterHref) router.push(nextChapterHref);
@@ -502,7 +514,9 @@ export function PublishedManuscriptViewport({
 
       <nav aria-label="Yayın sayfası geçişleri" className={styles.controls}>
         <button
-          disabled={pageIndex === 0 && !previousChapterHref}
+          disabled={
+            pageIndex === 0 && !onPreviousBookPage && !previousChapterHref
+          }
           onClick={goPrevious}
           type="button"
         >
@@ -511,12 +525,13 @@ export function PublishedManuscriptViewport({
         </button>
 
         <div aria-live="polite" className={styles.status}>
-          <small>Kitap sayfası</small>
           <strong>{globalPageNumber} / {globalPageTotal}</strong>
         </div>
 
         <button
-          disabled={pageIndex >= pages.length - 1 && !nextChapterHref}
+          disabled={
+            pageIndex >= pages.length - 1 && !onNextBookPage && !nextChapterHref
+          }
           onClick={goNext}
           type="button"
         >

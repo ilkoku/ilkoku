@@ -15,7 +15,10 @@ import {
   PUBLICATION_LAYOUT_INPUT_NAME,
   parsePublicationLayout,
 } from "@/features/works/publication-layout";
-import { getWriterBookPublicationPreview } from "../writer-publication-preview-store";
+import {
+  getWriterBookPublicationPreview,
+  type WriterBookPublicationPreview,
+} from "../writer-publication-preview-store";
 
 type PreviewSnapshot = {
   mode: "preview";
@@ -32,6 +35,7 @@ type SuccessSnapshot = {
 type PublishExperienceSnapshot = PreviewSnapshot | SuccessSnapshot;
 
 const EMPTY_SNAPSHOT = "";
+const COVER_SURFACE_ID = "__front_cover__";
 
 function readPreviewSnapshot(): PreviewSnapshot | null {
   const preview = document.querySelector<HTMLElement>(
@@ -133,14 +137,12 @@ function pageStartForItem(book: PublishedBookSnapshot, itemIndex: number) {
 function WriterFullBookPublicationPreview({
   book,
 }: {
-  book: PublishedBookSnapshot;
+  book: WriterBookPublicationPreview;
 }) {
-  const [activeStructureItemId, setActiveStructureItemId] = useState(
-    book.items[0]?.structureItemId ?? "",
-  );
-
+  const [activeSurfaceId, setActiveSurfaceId] = useState(COVER_SURFACE_ID);
+  const showingCover = activeSurfaceId === COVER_SURFACE_ID;
   const selectedIndex = book.items.findIndex(
-    (item) => item.structureItemId === activeStructureItemId,
+    (item) => item.structureItemId === activeSurfaceId,
   );
   const boundedIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const activeItem = book.items[boundedIndex];
@@ -155,34 +157,64 @@ function WriterFullBookPublicationPreview({
     <div className="writer-publication-preview__book">
       <header className="writer-publication-preview__review-heading">
         <span>Yayın öncesi son kontrol</span>
-        <strong>{bookItemLabel(activeItem)}</strong>
+        <strong>
+          {showingCover ? "Ön Kapak · numarasız" : bookItemLabel(activeItem)}
+        </strong>
         <p>
-          Okurun göreceği fiziksel kitap sayfalarını kontrol et. Tüm kitap
-          bölümlerini ve ek sayfaları gezdikten sonra yayını onaylayabilirsin.
+          Okurun göreceği canlı kitabı kapaktan başlayarak kontrol et. Kapak
+          sayfa numarasına dahil değildir; içerik sayfa 1’den başlar.
         </p>
       </header>
 
-      <PublishedManuscriptViewport
-        bookPageStart={bookPageStart}
-        bookTotalPages={book.totalPages}
-        chapterTitle={activeItem.title}
-        content={activeItem.content}
-        identity="Yayın önizleme"
-        layout={activeItem.layout}
-        subtitle={activeItem.subtitle}
-        workTitle={book.workTitle}
-      />
+      {showingCover ? (
+        <div
+          className="writer-publication-preview__cover"
+          data-book-surface="front-cover"
+          role="img"
+          aria-label={`${book.workTitle} kapak önizlemesi`}
+        >
+          {book.coverUrl ? (
+            <img
+              className="writer-publication-preview__cover-image"
+              src={book.coverUrl}
+              alt={`${book.workTitle} kapak görseli`}
+            />
+          ) : (
+            <div className="writer-publication-preview__cover-fallback">
+              <span>İlkOku · Canlı Kitap</span>
+              <strong>{book.workTitle}</strong>
+              <small>Ön Kapak</small>
+            </div>
+          )}
+        </div>
+      ) : (
+        <PublishedManuscriptViewport
+          bookPageStart={bookPageStart}
+          bookTotalPages={book.totalPages}
+          chapterTitle={activeItem.title}
+          content={activeItem.content}
+          identity="Yayın önizleme"
+          layout={activeItem.layout}
+          subtitle={activeItem.subtitle}
+          workTitle={book.workTitle}
+        />
+      )}
 
       <nav
         aria-label="Yayın önizleme kitap sırası"
         className="writer-publication-preview__book-nav"
       >
         <button
-          disabled={boundedIndex === 0}
+          disabled={showingCover}
           onClick={() => {
-            const previousItem = book.items[Math.max(0, boundedIndex - 1)];
+            if (boundedIndex === 0) {
+              setActiveSurfaceId(COVER_SURFACE_ID);
+              return;
+            }
+
+            const previousItem = book.items[boundedIndex - 1];
             if (previousItem) {
-              setActiveStructureItemId(previousItem.structureItemId);
+              setActiveSurfaceId(previousItem.structureItemId);
             }
           }}
           type="button"
@@ -193,10 +225,11 @@ function WriterFullBookPublicationPreview({
         <label>
           <span>Kitap sırası</span>
           <select
-            aria-label="Önizlenecek kitap bölümü veya sayfası"
-            onChange={(event) => setActiveStructureItemId(event.target.value)}
-            value={activeItem.structureItemId}
+            aria-label="Önizlenecek kitap yüzeyi, bölümü veya sayfası"
+            onChange={(event) => setActiveSurfaceId(event.target.value)}
+            value={showingCover ? COVER_SURFACE_ID : activeItem.structureItemId}
           >
+            <option value={COVER_SURFACE_ID}>Kapak · numarasız</option>
             {book.items.map((item, index) => (
               <option key={item.structureItemId} value={item.structureItemId}>
                 {index + 1}/{book.items.length} · {bookItemLabel(item)}
@@ -206,12 +239,17 @@ function WriterFullBookPublicationPreview({
         </label>
 
         <button
-          disabled={boundedIndex >= book.items.length - 1}
+          disabled={!showingCover && boundedIndex >= book.items.length - 1}
           onClick={() => {
+            if (showingCover) {
+              setActiveSurfaceId(book.items[0]?.structureItemId ?? COVER_SURFACE_ID);
+              return;
+            }
+
             const nextItem =
               book.items[Math.min(book.items.length - 1, boundedIndex + 1)];
             if (nextItem) {
-              setActiveStructureItemId(nextItem.structureItemId);
+              setActiveSurfaceId(nextItem.structureItemId);
             }
           }}
           type="button"

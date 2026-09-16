@@ -48,12 +48,13 @@
 }
 
 .writer-publication-preview__cover {
-  width: min(100%, 27rem);
-  aspect-ratio: 2 / 3;
+  width: min(100%, 48rem);
+  aspect-ratio: 595 / 842;
   margin: 0 auto;
   overflow: hidden;
-  border-radius: 0.5rem 1.1rem 1.1rem 0.5rem;
-  box-shadow: 0 1.6rem 3.5rem rgba(35, 31, 26, 0.2);
+  border: 1px solid rgba(97, 82, 60, 0.24);
+  border-radius: 0.22rem;
+  box-shadow: 0 1.3rem 3.25rem rgba(20, 16, 12, 0.28);
   background: linear-gradient(145deg, #241b32, #6d4c9b 58%, #b998d9);
 }
 
@@ -140,7 +141,7 @@
   }
 
   .writer-publication-preview__cover {
-    width: min(100%, 21rem);
+    width: 100%;
   }
 }
 

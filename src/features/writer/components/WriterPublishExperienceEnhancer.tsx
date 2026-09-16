@@ -145,6 +145,7 @@ function WriterFullBookPublicationPreview({
   book: WriterBookPublicationPreview;
 }) {
   const [activeSurfaceId, setActiveSurfaceId] = useState(COVER_SURFACE_ID);
+  const [startAtLastPage, setStartAtLastPage] = useState(false);
   const showingCover = activeSurfaceId === COVER_SURFACE_ID;
   const selectedIndex = book.items.findIndex(
     (item) => item.structureItemId === activeSurfaceId,
@@ -155,6 +156,11 @@ function WriterFullBookPublicationPreview({
     () => pageStartForItem(book, boundedIndex),
     [book, boundedIndex],
   );
+
+  function showSurface(surfaceId: string, fromLastPage = false) {
+    setStartAtLastPage(fromLastPage);
+    setActiveSurfaceId(surfaceId);
+  }
 
   if (!activeItem) return null;
 
@@ -209,7 +215,27 @@ function WriterFullBookPublicationPreview({
           chapterTitle={activeItem.title}
           content={activeItem.content}
           identity="Yayın önizleme"
+          key={`${activeItem.structureItemId}:${startAtLastPage ? "last" : "first"}`}
           layout={activeItem.layout}
+          onNextBookPage={
+            boundedIndex < book.items.length - 1
+              ? () => {
+                  const nextItem = book.items[boundedIndex + 1];
+                  if (nextItem) showSurface(nextItem.structureItemId);
+                }
+              : undefined
+          }
+          onPreviousBookPage={
+            boundedIndex > 0
+              ? () => {
+                  const previousItem = book.items[boundedIndex - 1];
+                  if (previousItem) {
+                    showSurface(previousItem.structureItemId, true);
+                  }
+                }
+              : undefined
+          }
+          startAtLastPage={startAtLastPage}
           subtitle={activeItem.subtitle}
           workTitle={book.workTitle}
         />
@@ -223,13 +249,13 @@ function WriterFullBookPublicationPreview({
           disabled={showingCover}
           onClick={() => {
             if (boundedIndex === 0) {
-              setActiveSurfaceId(COVER_SURFACE_ID);
+              showSurface(COVER_SURFACE_ID);
               return;
             }
 
             const previousItem = book.items[boundedIndex - 1];
             if (previousItem) {
-              setActiveSurfaceId(previousItem.structureItemId);
+              showSurface(previousItem.structureItemId);
             }
           }}
           type="button"
@@ -241,7 +267,7 @@ function WriterFullBookPublicationPreview({
           <span>Kitap yapısı</span>
           <select
             aria-label="Önizlenecek kitap yüzeyi veya bölümü"
-            onChange={(event) => setActiveSurfaceId(event.target.value)}
+            onChange={(event) => showSurface(event.target.value)}
             value={showingCover ? COVER_SURFACE_ID : activeItem.structureItemId}
           >
             <option value={COVER_SURFACE_ID}>Kapak</option>
@@ -257,14 +283,14 @@ function WriterFullBookPublicationPreview({
           disabled={atLastBookItem}
           onClick={() => {
             if (showingCover) {
-              setActiveSurfaceId(book.items[0]?.structureItemId ?? COVER_SURFACE_ID);
+              showSurface(book.items[0]?.structureItemId ?? COVER_SURFACE_ID);
               return;
             }
 
             const nextItem =
               book.items[Math.min(book.items.length - 1, boundedIndex + 1)];
             if (nextItem) {
-              setActiveSurfaceId(nextItem.structureItemId);
+              showSurface(nextItem.structureItemId);
             }
           }}
           type="button"

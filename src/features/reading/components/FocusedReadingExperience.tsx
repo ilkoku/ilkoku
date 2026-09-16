@@ -105,6 +105,18 @@ export function FocusedReadingExperience({
     activeBookItemIndex < publishedBook.items.length - 1
       ? publishedBook.items[activeBookItemIndex + 1]
       : null;
+  const activeBookPageStart =
+    publishedBook && activeBookItemIndex >= 0
+      ? publishedBook.items
+          .slice(0, activeBookItemIndex)
+          .reduce(
+            (total, item) => total + item.layout.pageEnds.length,
+            0,
+          ) + 1
+      : 1;
+  const activeBookPageEnd = activeBookItem
+    ? activeBookPageStart + activeBookItem.layout.pageEnds.length - 1
+    : activeBookPageStart + (chapter.publicationLayout?.pageEnds.length ?? 1) - 1;
 
   const encodedReturnTo = encodeURIComponent(returnTo);
   const currentBookPath = `/kitap/${chapter.work.slug}`;
@@ -241,9 +253,15 @@ export function FocusedReadingExperience({
               <span>{readingTime} dk okuma</span>
               <span aria-hidden="true">·</span>
               {chapter.publicationLayout ? (
-                <span>
-                  Yazar yayını · {chapter.publicationLayout.pageEnds.length} sayfa
-                </span>
+                publishedBook && activeBookItem ? (
+                  <span>
+                    Yazar yayını · Kitap sayfası {activeBookPageStart}–{activeBookPageEnd} / {publishedBook.totalPages}
+                  </span>
+                ) : (
+                  <span>
+                    Yazar yayını · {chapter.publicationLayout.pageEnds.length} sayfa
+                  </span>
+                )
               ) : (
                 <ReadingPageIndicator />
               )}
@@ -269,6 +287,8 @@ export function FocusedReadingExperience({
           >
             {chapter.publicationLayout ? (
               <PublishedManuscriptViewport
+                bookPageStart={activeBookPageStart}
+                bookTotalPages={publishedBook?.totalPages}
                 chapterTitle={chapter.title}
                 content={chapter.content}
                 identity={protectionIdentity}

@@ -47,7 +47,14 @@ test("final review covers the complete published book in physical page order", (
   includes(enhancer, "WriterFullBookPublicationPreview", "complete book preview experience");
   includes(enhancer, "bookPageStart={bookPageStart}", "continuous physical page start");
   includes(enhancer, "bookTotalPages={book.totalPages}", "continuous physical page total");
-  includes(enhancer, "Yayın önizleme kitap sırası", "book item navigation");
+  includes(enhancer, "Yayın önizleme kitap yapısı", "book-structure navigation");
+  includes(enhancer, "book.items[boundedIndex - 1]", "previous book item preserves structure order");
+  includes(enhancer, "boundedIndex + 1", "next book item preserves structure order");
+  assert.equal(
+    enhancer.includes("Önceki bölüm / sayfa") || enhancer.includes("Sonraki bölüm / sayfa"),
+    false,
+    "book-structure navigation must not masquerade as physical page navigation",
+  );
   includes(store, "PublishedBookSnapshot", "typed full-book preview cache");
   includes(css, ".writer-publication-preview__book-nav", "full-book preview navigation styling");
 });

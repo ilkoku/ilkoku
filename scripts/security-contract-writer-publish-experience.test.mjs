@@ -27,6 +27,27 @@ test("publish preview renders the author's exact saved publication layout", () =
   includes(css, ".preview-article:has(> .writer-publication-preview)", "legacy preview replacement");
 });
 
+test("direct publish is gated by a saved reader preview before final confirmation", () => {
+  const gate = source(
+    "src/features/writer/components/WriterFullBookPublicationEnhancer.tsx",
+  );
+  const writer = source("src/content/writer.ts");
+
+  includes(gate, "routePublishThroughFinalReview", "mandatory final review route");
+  includes(gate, "ensureDraftSaved", "draft save gate before final review");
+  includes(gate, "form.requestSubmit(saveButton)", "existing draft save flow reuse");
+  includes(gate, "previewButton.click()", "reader preview transition");
+  includes(gate, "if (isPreviewForm(event.target))", "preview form remains the final publish path");
+  assert.equal(
+    gate.includes("form.requestSubmit(submitter)"),
+    false,
+    "direct writer publish must never bypass final reader preview",
+  );
+  includes(writer, 'back: "Düzenlemeye Dön"', "final review return action");
+  includes(writer, 'title: "Okuyucu Önizlemesi"', "final review title");
+  includes(writer, 'publish: "Yayını Onayla"', "explicit final publish confirmation");
+});
+
 test("successful publish offers a direct return to Eserlerim", () => {
   const enhancer = source(
     "src/features/writer/components/WriterPublishExperienceEnhancer.tsx",

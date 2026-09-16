@@ -48,6 +48,24 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(css, ".writer-editing-tools", "compact toolbar styling");
 });
 
+test("writer text commands provide safe plain-text editing foundations", () => {
+  const commands = source("src/features/writer/components/WriterTextEditingCommands.tsx");
+  const css = source("src/features/writer/writer-text-editing-commands.css");
+
+  includes(commands, "Geri al", "undo control");
+  includes(commands, "Yinele", "redo control");
+  includes(commands, "Bul / Değiştir", "find and replace control");
+  includes(commands, "Tümünü Değiştir", "replace all control");
+  includes(commands, "Sahne Ayracı", "scene divider control");
+  includes(commands, "Seçili metin istatistikleri", "selection statistics output");
+  includes(commands, "normalizePastedText", "plain-text paste normalization");
+  includes(commands, "HISTORY_LIMIT = 100", "bounded undo history");
+  includes(commands, ".writer-canvas > .writer-textarea", "canonical manuscript source");
+  includes(commands, ".writer-manuscript-pages .writer-page-textarea", "paged manuscript selection bridge");
+  includes(css, ".writer-find-replace", "find and replace panel styling");
+  includes(css, ".writer-selection-stats", "selection statistics styling");
+});
+
 test("writer editing tools are mounted on every writer editing route", () => {
   for (const path of [
     "src/app/yazar/layout.tsx",
@@ -57,7 +75,9 @@ test("writer editing tools are mounted on every writer editing route", () => {
     const layout = source(path);
 
     includes(layout, "WriterEditingTools", `${path} writer tools mount`);
+    includes(layout, "WriterTextEditingCommands", `${path} text commands mount`);
     includes(layout, "writer-editing-tools.css", `${path} writer tools CSS`);
+    includes(layout, "writer-text-editing-commands.css", `${path} text commands CSS`);
   }
 });
 

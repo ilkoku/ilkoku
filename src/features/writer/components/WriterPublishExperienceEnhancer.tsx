@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
@@ -287,7 +288,7 @@ export function WriterPublishExperienceEnhancer() {
     if (!successTarget) return null;
 
     return createPortal(
-      <a
+      <Link
         className="button button--primary writer-post-publish-action"
         href="/eserlerim"
         onClick={(event) => {
@@ -296,7 +297,7 @@ export function WriterPublishExperienceEnhancer() {
         }}
       >
         Eserlerime Dön
-      </a>,
+      </Link>,
       successTarget,
     );
   }

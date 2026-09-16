@@ -6,11 +6,13 @@ import { WriterFullBookPublicationEnhancer } from "@/features/writer/components/
 import { WriterFullBookPublicationSubmitBridge } from "@/features/writer/components/WriterFullBookPublicationSubmitBridge";
 import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
 import { WriterPublishExperienceEnhancer } from "@/features/writer/components/WriterPublishExperienceEnhancer";
+import { WriterTextEditingCommands } from "@/features/writer/components/WriterTextEditingCommands";
 import "@/features/writer/writer-paper-experience.css";
 import "@/features/writer/writer-brand-purple.css";
 import "@/styles/light-purple-route-fallback.css";
 import "@/features/writer/writer-editor-density.css";
 import "@/features/writer/writer-editing-tools.css";
+import "@/features/writer/writer-text-editing-commands.css";
 import "@/features/writer/writer-paged-manuscript.css";
 import "@/features/writer/writer-publish-experience.css";
 import "@/features/writer/writer-publish-review-contrast.css";
@@ -28,6 +30,7 @@ export default function WriterDashboardLayout({
     <>
       {children}
       <WriterEditingTools />
+      <WriterTextEditingCommands />
       <WriterPagedManuscriptEnhancer />
       <WriterPublishExperienceEnhancer />
       <WriterFullBookPublicationSubmitBridge />

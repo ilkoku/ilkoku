@@ -1,0 +1,45 @@
+/* Desktop writer tools may use two rows instead of compressing or hiding controls. */
+@media (min-width: 48rem) {
+  .writer-screen .writer-context-bar {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+    padding-block: 0.45rem;
+  }
+
+  .writer-screen .writer-editing-tools {
+    flex: 1 1 52rem;
+    flex-wrap: wrap;
+    align-content: center;
+    row-gap: 0.35rem;
+    overflow-x: visible;
+    overscroll-behavior-inline: auto;
+    scrollbar-width: auto;
+  }
+
+  .writer-screen .writer-editing-tools::-webkit-scrollbar {
+    display: initial;
+  }
+
+  .writer-screen .writer-text-commands {
+    flex: 0 0 auto;
+  }
+
+  .writer-screen .focus-mode-toggle {
+    flex: 0 0 auto;
+    align-self: center;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .writer-screen .writer-editing-tools {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .writer-screen .writer-editing-tools::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -186,13 +186,24 @@ export function WriterTextEditingCommands() {
   const suppressInputRef = useRef(false);
   const lastSelectionRef = useRef<TextSelection>(EMPTY_SELECTION);
   const [selection, setSelection] = useState<TextSelection>(EMPTY_SELECTION);
-  const [historyVersion, setHistoryVersion] = useState(0);
+  const [historyAvailability, setHistoryAvailability] = useState({
+    canUndo: false,
+    canRedo: false,
+  });
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [replacement, setReplacement] = useState("");
   const [matchCase, setMatchCase] = useState(false);
   const [searchStatus, setSearchStatus] = useState("");
   const [contentSnapshot, setContentSnapshot] = useState("");
+
+  function refreshHistoryAvailability() {
+    const history = historyRef.current;
+    setHistoryAvailability({
+      canUndo: history.past.length > 0,
+      canRedo: history.future.length > 0,
+    });
+  }
 
   function syncHistorySource() {
     const body = getCanonicalBody();
@@ -206,7 +217,7 @@ export function WriterTextEditingCommands() {
         future: [],
         source: body,
       };
-      setHistoryVersion((value) => value + 1);
+      refreshHistoryAvailability();
       setContentSnapshot(body.value);
     } else if (history.present !== body.value && !suppressInputRef.current) {
       historyRef.current = {
@@ -248,7 +259,7 @@ export function WriterTextEditingCommands() {
     suppressInputRef.current = true;
     setNativeTextareaValue(body, nextContent);
     setContentSnapshot(nextContent);
-    setHistoryVersion((value) => value + 1);
+    refreshHistoryAvailability();
     lastSelectionRef.current = nextSelection;
     setSelection(nextSelection);
     focusAbsoluteSelection(nextSelection);
@@ -270,7 +281,7 @@ export function WriterTextEditingCommands() {
     suppressInputRef.current = true;
     setNativeTextareaValue(body, previous);
     setContentSnapshot(previous);
-    setHistoryVersion((value) => value + 1);
+    refreshHistoryAvailability();
     const nextSelection = {
       start: Math.min(lastSelectionRef.current.start, previous.length),
       end: Math.min(lastSelectionRef.current.start, previous.length),
@@ -296,7 +307,7 @@ export function WriterTextEditingCommands() {
     suppressInputRef.current = true;
     setNativeTextareaValue(body, next);
     setContentSnapshot(next);
-    setHistoryVersion((value) => value + 1);
+    refreshHistoryAvailability();
     const nextSelection = {
       start: Math.min(lastSelectionRef.current.start, next.length),
       end: Math.min(lastSelectionRef.current.start, next.length),
@@ -404,7 +415,7 @@ export function WriterTextEditingCommands() {
         source: body,
       };
       setContentSnapshot(body.value);
-      setHistoryVersion((value) => value + 1);
+      refreshHistoryAvailability();
     }
 
     function handleSelectionEvent() {
@@ -431,7 +442,7 @@ export function WriterTextEditingCommands() {
       }
 
       setContentSnapshot(next);
-      setHistoryVersion((value) => value + 1);
+      refreshHistoryAvailability();
     }
 
     function handlePaste(event: ClipboardEvent) {
@@ -500,10 +511,7 @@ export function WriterTextEditingCommands() {
   );
   const selectedWords = countWords(selectedText);
   const selectedCharacters = selectedText.length;
-  const history = historyRef.current;
-  const canUndo = history.past.length > 0;
-  const canRedo = history.future.length > 0;
-  void historyVersion;
+  const { canUndo, canRedo } = historyAvailability;
 
   if (!target || !getCanonicalBody()) return null;
 

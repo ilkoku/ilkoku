@@ -56,6 +56,11 @@ function getPageTextareas() {
   );
 }
 
+function readPagedContent() {
+  const pages = getPageTextareas();
+  return pages.length ? pages.map((textarea) => textarea.value).join("") : null;
+}
+
 function setNativeTextareaValue(element: HTMLTextAreaElement, value: string) {
   const descriptor = Object.getOwnPropertyDescriptor(
     HTMLTextAreaElement.prototype,
@@ -424,17 +429,33 @@ export function WriterTextEditingCommands() {
 
     function handleInput(event: Event) {
       const canonical = getCanonicalBody();
-      if (!canonical || event.target !== canonical) return;
+      if (!canonical || !(event.target instanceof HTMLTextAreaElement)) return;
 
       const history = historyRef.current;
-      const next = canonical.value;
+      const isPagedInput = event.target.classList.contains("writer-page-textarea");
+      const isCanonicalInput = event.target === canonical;
+      if (!isPagedInput && !isCanonicalInput) return;
 
-      if (suppressInputRef.current) {
-        suppressInputRef.current = false;
-        historyRef.current = { ...history, present: next, source: canonical };
-      } else if (history.present !== next) {
+      const next = isPagedInput
+        ? (readPagedContent() ?? event.target.value)
+        : canonical.value;
+
+      if (history.source !== canonical) {
         historyRef.current = {
-          past: [...history.past, history.present].slice(-HISTORY_LIMIT),
+          past: [],
+          present: canonical.value,
+          future: [],
+          source: canonical,
+        };
+      }
+
+      const current = historyRef.current;
+      if (isCanonicalInput && suppressInputRef.current) {
+        suppressInputRef.current = false;
+        historyRef.current = { ...current, present: next, source: canonical };
+      } else if (current.present !== next) {
+        historyRef.current = {
+          past: [...current.past, current.present].slice(-HISTORY_LIMIT),
           present: next,
           future: [],
           source: canonical,

@@ -1,15 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { writerContent } from "@/content";
 import { PublishedManuscriptViewport } from "@/features/reading/components/PublishedManuscriptViewport";
+import type {
+  PublishedBookItem,
+  PublishedBookSnapshot,
+} from "@/features/works/book-publication";
+import { bookSectionDetails } from "@/features/works/book-structure";
 import {
   PUBLICATION_LAYOUT_INPUT_NAME,
   parsePublicationLayout,
 } from "@/features/works/publication-layout";
+import { getWriterBookPublicationPreview } from "../writer-publication-preview-store";
 
 type PreviewSnapshot = {
   mode: "preview";
@@ -109,6 +115,109 @@ function subscribePublishExperience(onStoreChange: () => void) {
   };
 }
 
+function bookItemLabel(item: PublishedBookItem) {
+  return item.type === "chapter"
+    ? `${item.chapterPosition}. Bölüm · ${item.title}`
+    : `${bookSectionDetails[item.kind].label} · ${item.title}`;
+}
+
+function pageStartForItem(book: PublishedBookSnapshot, itemIndex: number) {
+  return (
+    1 +
+    book.items
+      .slice(0, itemIndex)
+      .reduce((total, item) => total + item.layout.pageEnds.length, 0)
+  );
+}
+
+function WriterFullBookPublicationPreview({
+  book,
+}: {
+  book: PublishedBookSnapshot;
+}) {
+  const [activeItemIndex, setActiveItemIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveItemIndex(0);
+  }, [book]);
+
+  const boundedIndex = Math.min(
+    Math.max(0, activeItemIndex),
+    Math.max(0, book.items.length - 1),
+  );
+  const activeItem = book.items[boundedIndex];
+  const bookPageStart = useMemo(
+    () => pageStartForItem(book, boundedIndex),
+    [book, boundedIndex],
+  );
+
+  if (!activeItem) return null;
+
+  return (
+    <div className="writer-publication-preview__book">
+      <header className="writer-publication-preview__review-heading">
+        <span>Yayın öncesi son kontrol</span>
+        <strong>{bookItemLabel(activeItem)}</strong>
+        <p>
+          Okurun göreceği fiziksel kitap sayfalarını kontrol et. Tüm kitap
+          bölümlerini ve ek sayfaları gezdikten sonra yayını onaylayabilirsin.
+        </p>
+      </header>
+
+      <PublishedManuscriptViewport
+        bookPageStart={bookPageStart}
+        bookTotalPages={book.totalPages}
+        chapterTitle={activeItem.title}
+        content={activeItem.content}
+        identity="Yayın önizleme"
+        layout={activeItem.layout}
+        subtitle={activeItem.subtitle}
+        workTitle={book.workTitle}
+      />
+
+      <nav
+        aria-label="Yayın önizleme kitap sırası"
+        className="writer-publication-preview__book-nav"
+      >
+        <button
+          disabled={boundedIndex === 0}
+          onClick={() => setActiveItemIndex((current) => Math.max(0, current - 1))}
+          type="button"
+        >
+          ← Önceki bölüm / sayfa
+        </button>
+
+        <label>
+          <span>Kitap sırası</span>
+          <select
+            aria-label="Önizlenecek kitap bölümü veya sayfası"
+            onChange={(event) => setActiveItemIndex(Number(event.target.value))}
+            value={boundedIndex}
+          >
+            {book.items.map((item, index) => (
+              <option key={item.structureItemId} value={index}>
+                {index + 1}/{book.items.length} · {bookItemLabel(item)}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <button
+          disabled={boundedIndex >= book.items.length - 1}
+          onClick={() =>
+            setActiveItemIndex((current) =>
+              Math.min(book.items.length - 1, current + 1),
+            )
+          }
+          type="button"
+        >
+          Sonraki bölüm / sayfa →
+        </button>
+      </nav>
+    </div>
+  );
+}
+
 export function WriterPublishExperienceEnhancer() {
   const snapshot = useSyncExternalStore(
     subscribePublishExperience,
@@ -151,6 +260,19 @@ export function WriterPublishExperienceEnhancer() {
   );
 
   if (!previewTarget || !parsed.layout || !parsed.content) return null;
+
+  const fullBookPreview = getWriterBookPublicationPreview();
+  if (fullBookPreview?.items.length) {
+    return createPortal(
+      <div
+        className="writer-publication-preview"
+        aria-label="Yazarın tam kitap yayın önizlemesi"
+      >
+        <WriterFullBookPublicationPreview book={fullBookPreview} />
+      </div>,
+      previewTarget,
+    );
+  }
 
   const publicationLayout = parsePublicationLayout(
     parsed.layout,

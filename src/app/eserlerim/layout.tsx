@@ -6,6 +6,7 @@ import { WriterFullBookPublicationEnhancer } from "@/features/writer/components/
 import { WriterFullBookPublicationSubmitBridge } from "@/features/writer/components/WriterFullBookPublicationSubmitBridge";
 import { WriterPagedManuscriptEnhancer } from "@/features/writer/components/WriterPagedManuscriptEnhancer";
 import { WriterPublishExperienceEnhancer } from "@/features/writer/components/WriterPublishExperienceEnhancer";
+import { WriterTextEditingCommands } from "@/features/writer/components/WriterTextEditingCommands";
 import "@/features/writer/writer-paper-experience.css";
 import "@/features/writer/writer-brand-purple.css";
 import "@/styles/light-purple-route-fallback.css";
@@ -28,6 +29,7 @@ export default function WriterWorksLayout({
     <>
       {children}
       <WriterEditingTools />
+      <WriterTextEditingCommands />
       <WriterPagedManuscriptEnhancer />
       <WriterPublishExperienceEnhancer />
       <WriterFullBookPublicationSubmitBridge />

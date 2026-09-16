@@ -1,0 +1,38 @@
+/* Desktop writer toolbar can grow to two rows instead of compressing or hiding tools. */
+@media (min-width: 48rem) {
+  .writer-screen .writer-context-bar {
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+    padding-block: 0.45rem;
+  }
+
+  .writer-screen .writer-editing-tools {
+    flex-wrap: wrap;
+    align-content: center;
+    row-gap: 0.35rem;
+    overflow-x: visible;
+    overscroll-behavior-inline: auto;
+    scrollbar-width: auto;
+  }
+
+  .writer-screen .writer-editing-tools::-webkit-scrollbar {
+    display: initial;
+  }
+
+  .writer-screen .focus-mode-toggle {
+    align-self: center;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .writer-screen .writer-editing-tools {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .writer-screen .writer-editing-tools::-webkit-scrollbar {
+    display: none;
+  }
+}

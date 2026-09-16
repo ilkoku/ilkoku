@@ -18,6 +18,12 @@ export type ChapterInlineMark = {
   type: InlineMarkType;
 };
 
+export type ChapterInlineFontSize = {
+  end: number;
+  size: number;
+  start: number;
+};
+
 export type ChapterParagraphFormat = {
   alignment: TextAlignment;
   end: number;
@@ -29,6 +35,7 @@ export type ChapterParagraphFormat = {
 
 export type ChapterFormatting = {
   contentLength: number;
+  fontSizes: ChapterInlineFontSize[];
   marks: ChapterInlineMark[];
   paragraphs: ChapterParagraphFormat[];
   version: typeof CHAPTER_FORMATTING_VERSION;
@@ -40,12 +47,16 @@ export type ChapterParagraphRange = {
 };
 
 const INLINE_MARK_LIMIT = 4096;
+const INLINE_FONT_SIZE_LIMIT = 4096;
 const PARAGRAPH_FORMAT_LIMIT = 4096;
 const MAX_INDENT = 6;
+export const MIN_INLINE_FONT_SIZE = 12;
+export const MAX_INLINE_FONT_SIZE = 36;
 
 export function emptyChapterFormatting(contentLength: number): ChapterFormatting {
   return {
     contentLength,
+    fontSizes: [],
     marks: [],
     paragraphs: [],
     version: CHAPTER_FORMATTING_VERSION,
@@ -94,11 +105,7 @@ function normalizeMarks(marks: ChapterInlineMark[], contentLength: number) {
   const normalized: ChapterInlineMark[] = [];
   for (const mark of ordered) {
     const previous = normalized.at(-1);
-    if (
-      previous &&
-      previous.type === mark.type &&
-      mark.start <= previous.end
-    ) {
+    if (previous && previous.type === mark.type && mark.start <= previous.end) {
       previous.end = Math.max(previous.end, mark.end);
       continue;
     }
@@ -107,10 +114,30 @@ function normalizeMarks(marks: ChapterInlineMark[], contentLength: number) {
   return normalized.slice(0, INLINE_MARK_LIMIT);
 }
 
-function normalizeParagraphs(
-  paragraphs: ChapterParagraphFormat[],
-  content: string,
-) {
+function normalizeFontSizes(fontSizes: ChapterInlineFontSize[], contentLength: number) {
+  const ordered = fontSizes
+    .filter(
+      (item) =>
+        isIntegerInRange(item.start, 0, contentLength) &&
+        isIntegerInRange(item.end, 0, contentLength) &&
+        item.end > item.start &&
+        isIntegerInRange(item.size, MIN_INLINE_FONT_SIZE, MAX_INLINE_FONT_SIZE),
+    )
+    .sort((left, right) => left.start - right.start || left.end - right.end);
+
+  const normalized: ChapterInlineFontSize[] = [];
+  for (const item of ordered) {
+    const previous = normalized.at(-1);
+    if (previous && previous.size === item.size && item.start <= previous.end) {
+      previous.end = Math.max(previous.end, item.end);
+      continue;
+    }
+    normalized.push({ ...item });
+  }
+  return normalized.slice(0, INLINE_FONT_SIZE_LIMIT);
+}
+
+function normalizeParagraphs(paragraphs: ChapterParagraphFormat[], content: string) {
   const byStart = new Map<number, ChapterParagraphFormat>();
   for (const paragraph of paragraphs) {
     if (
@@ -124,18 +151,9 @@ function normalizeParagraphs(
 
     const range = paragraphRangeAt(content, paragraph.start);
     if (!range || range.end <= range.start) continue;
-
-    const normalized = {
-      ...paragraph,
-      start: range.start,
-      end: range.end,
-    };
-
-    if (isDefaultParagraphFormat(normalized)) {
-      byStart.delete(range.start);
-    } else {
-      byStart.set(range.start, normalized);
-    }
+    const normalized = { ...paragraph, start: range.start, end: range.end };
+    if (isDefaultParagraphFormat(normalized)) byStart.delete(range.start);
+    else byStart.set(range.start, normalized);
   }
 
   return [...byStart.values()]
@@ -168,8 +186,14 @@ export function parseChapterFormatting(
   if (!Array.isArray(parsed.marks) || !Array.isArray(parsed.paragraphs)) {
     throw new Error("Metin biçim bilgisi geçersiz.");
   }
+
+  const rawFontSizes = parsed.fontSizes === undefined ? [] : parsed.fontSizes;
+  if (!Array.isArray(rawFontSizes)) {
+    throw new Error("Metin boyutu biçim bilgisi geçersiz.");
+  }
   if (
     parsed.marks.length > INLINE_MARK_LIMIT ||
+    rawFontSizes.length > INLINE_FONT_SIZE_LIMIT ||
     parsed.paragraphs.length > PARAGRAPH_FORMAT_LIMIT
   ) {
     throw new Error("Metin biçim bilgisi izin verilen öğe sayısını aşıyor.");
@@ -186,6 +210,19 @@ export function parseChapterFormatting(
       throw new Error("Metin içi biçim aralığı geçersiz.");
     }
     return { type: value.type, start: value.start, end: value.end };
+  });
+
+  const fontSizes: ChapterInlineFontSize[] = rawFontSizes.map((value) => {
+    if (
+      !isRecord(value) ||
+      !isIntegerInRange(value.start, 0, content.length) ||
+      !isIntegerInRange(value.end, 0, content.length) ||
+      value.end <= value.start ||
+      !isIntegerInRange(value.size, MIN_INLINE_FONT_SIZE, MAX_INLINE_FONT_SIZE)
+    ) {
+      throw new Error("Metin boyutu biçim aralığı geçersiz.");
+    }
+    return { start: value.start, end: value.end, size: value.size };
   });
 
   const paragraphs: ChapterParagraphFormat[] = parsed.paragraphs.map((value) => {
@@ -213,6 +250,7 @@ export function parseChapterFormatting(
 
   return {
     contentLength: content.length,
+    fontSizes: normalizeFontSizes(fontSizes, content.length),
     marks: normalizeMarks(marks, content.length),
     paragraphs: normalizeParagraphs(paragraphs, content),
     version: CHAPTER_FORMATTING_VERSION,
@@ -220,20 +258,25 @@ export function parseChapterFormatting(
 }
 
 export function serializeChapterFormatting(formatting: ChapterFormatting) {
-  if (formatting.marks.length === 0 && formatting.paragraphs.length === 0) {
+  if (
+    formatting.marks.length === 0 &&
+    formatting.fontSizes.length === 0 &&
+    formatting.paragraphs.length === 0
+  ) {
     return "";
   }
   return JSON.stringify(formatting);
 }
 
 export function hasChapterFormatting(formatting: ChapterFormatting) {
-  return formatting.marks.length > 0 || formatting.paragraphs.length > 0;
+  return (
+    formatting.marks.length > 0 ||
+    formatting.fontSizes.length > 0 ||
+    formatting.paragraphs.length > 0
+  );
 }
 
-export function paragraphRangeAt(
-  content: string,
-  offset: number,
-): ChapterParagraphRange | null {
+export function paragraphRangeAt(content: string, offset: number): ChapterParagraphRange | null {
   if (offset < 0 || offset > content.length) return null;
   const safeOffset = Math.min(offset, content.length);
   const previousBreak = content.lastIndexOf("\n", Math.max(0, safeOffset - 1));
@@ -243,11 +286,7 @@ export function paragraphRangeAt(
   return { start, end };
 }
 
-export function paragraphRangesForSelection(
-  content: string,
-  start: number,
-  end: number,
-) {
+export function paragraphRangesForSelection(content: string, start: number, end: number) {
   const safeStart = Math.max(0, Math.min(start, content.length));
   const safeEnd = Math.max(safeStart, Math.min(end, content.length));
   const first = paragraphRangeAt(content, safeStart);
@@ -256,7 +295,6 @@ export function paragraphRangesForSelection(
   const ranges: ChapterParagraphRange[] = [];
   let cursor = first.start;
   const terminal = safeEnd > safeStart ? safeEnd - 1 : safeStart;
-
   while (cursor <= content.length) {
     const range = paragraphRangeAt(content, cursor);
     if (!range) break;
@@ -264,13 +302,10 @@ export function paragraphRangesForSelection(
     if (range.end >= terminal || range.end >= content.length) break;
     cursor = range.end + 1;
   }
-
   return ranges;
 }
 
-export function defaultParagraphFormat(
-  range: ChapterParagraphRange,
-): ChapterParagraphFormat {
+export function defaultParagraphFormat(range: ChapterParagraphRange): ChapterParagraphFormat {
   return {
     alignment: "left",
     end: range.end,
@@ -297,10 +332,7 @@ export function paragraphFormatAt(
 ) {
   const range = paragraphRangeAt(content, offset);
   if (!range) return null;
-  return (
-    formatting.paragraphs.find((item) => item.start === range.start) ??
-    defaultParagraphFormat(range)
-  );
+  return formatting.paragraphs.find((item) => item.start === range.start) ?? defaultParagraphFormat(range);
 }
 
 export function applyParagraphFormatting(
@@ -312,7 +344,6 @@ export function applyParagraphFormatting(
 ) {
   const ranges = paragraphRangesForSelection(content, start, end);
   const byStart = new Map(formatting.paragraphs.map((item) => [item.start, item] as const));
-
   for (const range of ranges) {
     const current = byStart.get(range.start) ?? defaultParagraphFormat(range);
     const next: ChapterParagraphFormat = {
@@ -325,7 +356,6 @@ export function applyParagraphFormatting(
     if (isDefaultParagraphFormat(next)) byStart.delete(range.start);
     else byStart.set(range.start, next);
   }
-
   return {
     ...formatting,
     contentLength: content.length,
@@ -333,15 +363,23 @@ export function applyParagraphFormatting(
   };
 }
 
-function subtractRange(
-  mark: ChapterInlineMark,
-  start: number,
-  end: number,
-): ChapterInlineMark[] {
+function subtractMarkRange(mark: ChapterInlineMark, start: number, end: number): ChapterInlineMark[] {
   if (mark.end <= start || mark.start >= end) return [mark];
   const result: ChapterInlineMark[] = [];
   if (mark.start < start) result.push({ ...mark, end: start });
   if (mark.end > end) result.push({ ...mark, start: end });
+  return result;
+}
+
+function subtractFontSizeRange(
+  item: ChapterInlineFontSize,
+  start: number,
+  end: number,
+): ChapterInlineFontSize[] {
+  if (item.end <= start || item.start >= end) return [item];
+  const result: ChapterInlineFontSize[] = [];
+  if (item.start < start) result.push({ ...item, end: start });
+  if (item.end > end) result.push({ ...item, start: end });
   return result;
 }
 
@@ -360,10 +398,9 @@ export function toggleInlineMark(
   const fullyCovered = sameType.some(
     (mark) => mark.start <= safeStart && mark.end >= safeEnd,
   );
-
   const others = formatting.marks.filter((mark) => mark.type !== type);
   const nextSameType = fullyCovered
-    ? sameType.flatMap((mark) => subtractRange(mark, safeStart, safeEnd))
+    ? sameType.flatMap((mark) => subtractMarkRange(mark, safeStart, safeEnd))
     : [...sameType, { type, start: safeStart, end: safeEnd }];
 
   return {
@@ -387,6 +424,44 @@ export function inlineMarkActive(
   return formatting.marks.some(
     (mark) => mark.type === type && mark.start <= start && mark.end >= end,
   );
+}
+
+export function inlineFontSizeAt(
+  formatting: ChapterFormatting,
+  start: number,
+  end: number,
+  fallback: number,
+) {
+  const match = formatting.fontSizes.find((item) =>
+    end > start
+      ? item.start <= start && item.end >= end
+      : item.start <= start && item.end >= start,
+  );
+  return match?.size ?? fallback;
+}
+
+export function applyInlineFontSize(
+  formatting: ChapterFormatting,
+  content: string,
+  start: number,
+  end: number,
+  size: number,
+) {
+  const safeStart = Math.max(0, Math.min(start, content.length));
+  const safeEnd = Math.max(safeStart, Math.min(end, content.length));
+  if (safeEnd <= safeStart) return formatting;
+  const safeSize = Math.max(MIN_INLINE_FONT_SIZE, Math.min(MAX_INLINE_FONT_SIZE, Math.round(size)));
+  const remaining = formatting.fontSizes.flatMap((item) =>
+    subtractFontSizeRange(item, safeStart, safeEnd),
+  );
+  return {
+    ...formatting,
+    contentLength: content.length,
+    fontSizes: normalizeFontSizes(
+      [...remaining, { start: safeStart, end: safeEnd, size: safeSize }],
+      content.length,
+    ),
+  };
 }
 
 function commonPrefixLength(left: string, right: string) {
@@ -431,6 +506,14 @@ export function adjustFormattingForContentChange(
     return [];
   });
 
+  const fontSizes = formatting.fontSizes.flatMap((item): ChapterInlineFontSize[] => {
+    if (item.end <= prefix) return [{ ...item }];
+    if (item.start >= previousEditEnd) {
+      return [{ ...item, start: item.start + delta, end: item.end + delta }];
+    }
+    return [];
+  });
+
   const paragraphs = formatting.paragraphs.flatMap(
     (paragraph): ChapterParagraphFormat[] => {
       let anchor: number;
@@ -442,8 +525,10 @@ export function adjustFormattingForContentChange(
         if (oldEdited.includes("\n") || newEdited.includes("\n")) return [];
         anchor = Math.min(paragraph.start, prefix);
       }
-
-      const range = paragraphRangeAt(nextContent, Math.max(0, Math.min(anchor, nextContent.length)));
+      const range = paragraphRangeAt(
+        nextContent,
+        Math.max(0, Math.min(anchor, nextContent.length)),
+      );
       if (!range || range.end <= range.start) return [];
       return [{ ...paragraph, start: range.start, end: range.end }];
     },
@@ -451,6 +536,7 @@ export function adjustFormattingForContentChange(
 
   return {
     contentLength: nextContent.length,
+    fontSizes: normalizeFontSizes(fontSizes, nextContent.length),
     marks: normalizeMarks(marks, nextContent.length),
     paragraphs: normalizeParagraphs(paragraphs, nextContent),
     version: CHAPTER_FORMATTING_VERSION,
@@ -463,4 +549,12 @@ export function formattingForRange(
   end: number,
 ) {
   return formatting.marks.filter((mark) => mark.start < end && mark.end > start);
+}
+
+export function fontSizesForRange(
+  formatting: ChapterFormatting,
+  start: number,
+  end: number,
+) {
+  return formatting.fontSizes.filter((item) => item.start < end && item.end > start);
 }

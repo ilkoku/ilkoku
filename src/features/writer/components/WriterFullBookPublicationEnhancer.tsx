@@ -2,11 +2,22 @@
 
 import { useEffect } from "react";
 
+import { writerContent } from "@/content";
 import {
   BOOK_PUBLICATION_LAYOUT_INPUT_NAME,
+  BOOK_PUBLICATION_VERSION,
+  specialBookPageSubtitle,
+  type PublishedBookItem,
+  type PublishedBookSnapshot,
 } from "@/features/works/book-publication";
+import { isSpecialBookSectionKind } from "@/features/works/book-structure";
 import { prepareFullBookPublicationAction } from "@/features/works/prepare-full-book-publication-action";
+import { parsePublicationLayout } from "@/features/works/publication-layout";
 import { measureBookPublicationLayouts } from "../book-publication-measurement";
+import {
+  clearWriterBookPublicationPreview,
+  setWriterBookPublicationPreview,
+} from "../writer-publication-preview-store";
 
 const DRAFT_SAVE_TIMEOUT_MS = 30_000;
 
@@ -28,6 +39,15 @@ function isWriterPublish(event: SubmitEvent) {
     event.submitter instanceof HTMLButtonElement &&
     !event.submitter.classList.contains("writer-save-button")
   );
+}
+
+function hasMeaningfulText(value: string) {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .length > 0;
 }
 
 function setBookPublicationInput(form: HTMLFormElement, value: string) {
@@ -199,6 +219,8 @@ export function WriterFullBookPublicationEnhancer() {
     const finalReviewPending = new WeakSet<HTMLFormElement>();
 
     async function prepareBookPublication(form: HTMLFormElement) {
+      clearWriterBookPublicationPreview();
+
       const workId =
         form.querySelector<HTMLInputElement>('input[name="workId"]')?.value ?? "";
       const workTitle =
@@ -209,6 +231,8 @@ export function WriterFullBookPublicationEnhancer() {
         form.querySelector<HTMLInputElement>('input[name="chapterId"]')?.value ?? "";
       const chapterTitle =
         form.querySelector<HTMLInputElement>('input[name="chapterTitle"]')?.value ?? "";
+      const chapterContent =
+        form.querySelector<HTMLTextAreaElement>('textarea[name="content"]')?.value ?? "";
 
       if (!workId || !workTitle || !chapterId || !chapterTitle.trim()) {
         return {
@@ -241,6 +265,87 @@ export function WriterFullBookPublicationEnhancer() {
             "Kitabın tüm fiziksel sayfa düzeni hazırlanamadı. Sayfalar yüklendikten sonra yeniden yayınla.",
         };
       }
+
+      const layoutByItemId = new Map(
+        measured.items.map((item) => [item.id, item.layout] as const),
+      );
+      const previewItems: PublishedBookItem[] = [];
+
+      for (const item of [...prepared.items].sort(
+        (left, right) => left.position - right.position,
+      )) {
+        const isCurrentChapter = item.chapterId === chapterId;
+        const content = isCurrentChapter ? chapterContent : item.content;
+        const title =
+          (isCurrentChapter ? chapterTitle : item.title).trim() ||
+          (item.chapterId
+            ? `Bölüm ${item.chapterPosition ?? item.position}`
+            : "Kitap Sayfası");
+        const submittedLayout = layoutByItemId.get(item.id);
+        const layout = parsePublicationLayout(
+          JSON.stringify(submittedLayout),
+          content,
+        );
+
+        if (!layout) {
+          return {
+            ok: false as const,
+            message: `${title} için okuyucu önizleme sayfaları hazırlanamadı.`,
+          };
+        }
+
+        if (item.chapterId) {
+          if (!item.chapterPosition || !hasMeaningfulText(content)) {
+            return {
+              ok: false as const,
+              message: `${title} boş olduğu için tam eser önizlemesi hazırlanamadı.`,
+            };
+          }
+
+          previewItems.push({
+            type: "chapter",
+            structureItemId: item.id,
+            position: item.position,
+            chapterId: item.chapterId,
+            chapterPosition: item.chapterPosition,
+            title,
+            subtitle: writerContent.editor.subtitle,
+            content,
+            layout,
+          });
+          continue;
+        }
+
+        if (!isSpecialBookSectionKind(item.kind)) {
+          return {
+            ok: false as const,
+            message: "Kitap yapısında tanınmayan bir ek sayfa bulundu.",
+          };
+        }
+
+        previewItems.push({
+          type: "special",
+          structureItemId: item.id,
+          position: item.position,
+          kind: item.kind,
+          title,
+          subtitle: specialBookPageSubtitle(item.kind),
+          content,
+          layout,
+        });
+      }
+
+      const previewSnapshot = {
+        version: BOOK_PUBLICATION_VERSION,
+        workTitle,
+        totalPages: previewItems.reduce(
+          (total, item) => total + item.layout.pageEnds.length,
+          0,
+        ),
+        items: previewItems,
+      } satisfies PublishedBookSnapshot;
+
+      setWriterBookPublicationPreview(previewSnapshot);
 
       const encoded = JSON.stringify(measured);
       cachedPublicationInput = encoded;
@@ -345,6 +450,7 @@ export function WriterFullBookPublicationEnhancer() {
     document.addEventListener("formdata", bindPreviewFormInput, true);
 
     return () => {
+      clearWriterBookPublicationPreview();
       document.removeEventListener("click", handlePreviewClick, true);
       document.removeEventListener("submit", handleSubmit, true);
       document.removeEventListener("formdata", bindPreviewFormInput, true);

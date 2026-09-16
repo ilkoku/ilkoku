@@ -68,14 +68,27 @@ function getCanonicalBody() {
   );
 }
 
-function readEditorIdentity(): EditorIdentity {
+function getPageTextareas() {
+  return Array.from(
+    document.querySelectorAll<HTMLTextAreaElement>(
+      ".writer-manuscript-pages .writer-page-textarea",
+    ),
+  );
+}
+
+function readPagedContent() {
+  const pages = getPageTextareas();
+  return pages.length ? pages.map((textarea) => textarea.value).join("") : null;
+}
+
+function readEditorIdentity(contentOverride?: string): EditorIdentity {
   const form = document.querySelector<HTMLFormElement>("form.writer-screen");
   const body = getCanonicalBody();
   const workId = form?.querySelector<HTMLInputElement>('input[name="workId"]')?.value ?? "";
   const chapterId = form?.querySelector<HTMLInputElement>('input[name="chapterId"]')?.value ?? "";
   return {
     chapterId,
-    content: body?.value ?? "",
+    content: contentOverride ?? body?.value ?? "",
     workId,
   };
 }
@@ -85,14 +98,6 @@ function sameIdentity(left: EditorIdentity, right: EditorIdentity) {
     left.chapterId === right.chapterId &&
     left.content === right.content &&
     left.workId === right.workId
-  );
-}
-
-function getPageTextareas() {
-  return Array.from(
-    document.querySelectorAll<HTMLTextAreaElement>(
-      ".writer-manuscript-pages .writer-page-textarea",
-    ),
   );
 }
 
@@ -163,21 +168,40 @@ export function WriterRichTextFormattingTools() {
   }, [formatting]);
 
   useEffect(() => {
-    function refreshIdentity() {
-      const next = readEditorIdentity();
+    function refreshIdentity(contentOverride?: string) {
+      const next = readEditorIdentity(contentOverride);
       setIdentity((current) => (sameIdentity(current, next) ? current : next));
     }
 
-    const observer = new MutationObserver(refreshIdentity);
+    function handleEditorInput(event: Event) {
+      if (!(event.target instanceof HTMLTextAreaElement)) {
+        refreshIdentity();
+        return;
+      }
+
+      if (event.target.classList.contains("writer-page-textarea")) {
+        refreshIdentity(readPagedContent() ?? event.target.value);
+        return;
+      }
+
+      if (event.target === getCanonicalBody()) {
+        refreshIdentity(event.target.value);
+        return;
+      }
+
+      refreshIdentity();
+    }
+
+    const observer = new MutationObserver(() => refreshIdentity());
     observer.observe(document.body, { childList: true, subtree: true });
-    document.addEventListener("input", refreshIdentity, true);
-    document.addEventListener("change", refreshIdentity, true);
+    document.addEventListener("input", handleEditorInput, true);
+    document.addEventListener("change", handleEditorInput, true);
     refreshIdentity();
 
     return () => {
       observer.disconnect();
-      document.removeEventListener("input", refreshIdentity, true);
-      document.removeEventListener("change", refreshIdentity, true);
+      document.removeEventListener("input", handleEditorInput, true);
+      document.removeEventListener("change", handleEditorInput, true);
     };
   }, []);
 
@@ -345,7 +369,7 @@ export function WriterRichTextFormattingTools() {
               key={type}
               onMouseDown={preventToolbarFocus}
               onClick={() => toggleMark(type)}
-              title={labels[type].label}
+              title={`${labels[type].label} — önce metni seç`}
               type="button"
             >
               {labels[type].short}

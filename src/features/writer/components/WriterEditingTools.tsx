@@ -231,13 +231,12 @@ export function WriterEditingTools() {
     }
 
     const screen = target.closest<HTMLElement>(".writer-screen");
-    const textarea = screen?.querySelector<HTMLTextAreaElement>(
-      ".writer-textarea",
-    );
 
-    if (!screen || !textarea) {
+    if (!screen) {
       return;
     }
+
+    const writerScreen = screen;
 
     screen.style.setProperty(
       "--writer-manuscript-font-size",
@@ -261,15 +260,27 @@ export function WriterEditingTools() {
     );
     screen.dataset.writerPageFlow = preferences.pageFlow;
 
-    textarea.spellcheck = preferences.spellcheck;
-    textarea.setAttribute(
-      "spellcheck",
-      String(preferences.spellcheck),
-    );
+    function applySpellcheck() {
+      writerScreen
+        .querySelectorAll<HTMLTextAreaElement>(".writer-textarea")
+        .forEach((textarea) => {
+          textarea.spellcheck = preferences.spellcheck;
+          textarea.setAttribute(
+            "spellcheck",
+            String(preferences.spellcheck),
+          );
+        });
+    }
+
+    applySpellcheck();
+    const observer = new MutationObserver(applySpellcheck);
+    observer.observe(writerScreen, { childList: true, subtree: true });
 
     window.dispatchEvent(
       new CustomEvent("ilkoku:writer-preferences-changed"),
     );
+
+    return () => observer.disconnect();
   }, [preferences, target]);
 
   function updatePreferences(

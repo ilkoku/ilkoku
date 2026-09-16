@@ -76,6 +76,7 @@ export async function updateAuthorWorkBasicsAction(formData: FormData) {
   const parsed = writerMetadataSchema.safeParse({
     id: formData.get("workId"),
     title: formData.get("title"),
+    subtitle: formData.get("subtitle"),
     genre: formData.get("genre"),
     summary: formData.get("summary"),
   });
@@ -86,13 +87,10 @@ export async function updateAuthorWorkBasicsAction(formData: FormData) {
     );
   }
 
-  const languageValue = String(formData.get("language") ?? "tr").trim();
-  const language = languageValue === "en" ? "en" : "tr";
-
   const updated = await worksRepository.updateWork(writer.id, parsed.data.id, {
     description: parsed.data.summary ?? null,
     genre: parsed.data.genre ?? null,
-    language,
+    subtitle: parsed.data.subtitle?.trim() || null,
     title: parsed.data.title,
   });
 

@@ -1,0 +1,96 @@
+.writer-screen .writer-manuscript-page__inner {
+  position: relative;
+}
+
+.writer-live-formatting-layer {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  padding: 1rem 0 0;
+  color: var(--writer-paper-ink);
+  overflow: visible;
+  pointer-events: none;
+  font-family: var(--writer-manuscript-font-family);
+  font-size: var(--writer-manuscript-font-size);
+  font-weight: 400;
+  line-height: var(--writer-manuscript-line-height);
+  letter-spacing: 0.012em;
+  white-space: normal;
+}
+
+.writer-manuscript-page__inner:has(> .writer-live-formatting-layer)
+  > .writer-page-textarea.writer-textarea {
+  position: relative;
+  z-index: 2;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--writer-paper-accent) !important;
+}
+
+.writer-manuscript-page__inner:has(> .writer-live-formatting-layer)
+  > .writer-page-textarea.writer-textarea::selection {
+  color: transparent;
+  background: rgba(128, 94, 225, 0.2);
+}
+
+.writer-live-formatting-line {
+  position: relative;
+  display: block;
+  min-height: 1em;
+  margin-block: 0;
+  padding: 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.writer-live-formatting-line--heading {
+  font-weight: 850;
+  letter-spacing: 0.01em;
+}
+
+.writer-live-formatting-line--subheading {
+  font-weight: 700;
+  letter-spacing: 0.006em;
+}
+
+.writer-live-formatting-line--quote {
+  color: color-mix(in srgb, var(--writer-paper-ink) 82%, var(--writer-paper-muted));
+  font-style: italic;
+}
+
+.writer-live-formatting-line[data-list="bullet"],
+.writer-live-formatting-line[data-list="number"] {
+  position: relative;
+}
+
+.writer-live-formatting-list-marker {
+  position: absolute;
+  right: calc(100% + 0.45rem);
+  min-width: 1.15rem;
+  color: var(--writer-paper-muted);
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.writer-live-formatting-mark--bold {
+  font-weight: 850;
+}
+
+.writer-live-formatting-mark--italic {
+  font-style: italic;
+}
+
+.writer-live-formatting-mark--underline {
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.13em;
+}
+
+@media (max-width: 47.99rem) {
+  .writer-live-formatting-layer {
+    font-size: var(--writer-manuscript-font-size);
+    line-height: var(--writer-manuscript-line-height);
+  }
+}

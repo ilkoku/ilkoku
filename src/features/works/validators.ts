@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { GENRE_LABELS } from "@/lib/genres";
 import {
   workContentRatings,
   workContentWarnings,
@@ -7,6 +8,14 @@ import {
 
 const trimmedText = (minimum: number, maximum: number, message: string) =>
   z.string().trim().min(minimum, message).max(maximum, message);
+
+const systemGenre = z
+  .string()
+  .trim()
+  .refine(
+    (value) => GENRE_LABELS.some((label) => label === value),
+    "Geçerli bir eser türü seçilmelidir.",
+  );
 
 export function normalizeTextareaLineEndings(value: string) {
   return value.replace(/\r\n?/gu, "\n");
@@ -47,8 +56,9 @@ export const createWorkSchema = z.object({
 }).and(workClassificationSchema);
 
 export const writerMetadataSchema = z.object({
-  genre: trimmedText(1, 100, "Tür alanı 1–100 karakter olmalıdır.").optional(),
+  genre: systemGenre.optional(),
   id: z.string().uuid("Geçerli bir eser seçilmelidir."),
+  subtitle: z.string().trim().max(280, "Alt başlık en fazla 280 karakter olabilir.").optional(),
   summary: z.string().trim().max(5000, "Özet en fazla 5000 karakter olabilir.").optional(),
   title: trimmedText(1, 200, "Başlık alanı 1–200 karakter olmalıdır.").optional(),
 });

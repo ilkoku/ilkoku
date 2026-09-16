@@ -22,6 +22,7 @@ import { WorkArchiveAction } from "@/features/works/components/WorkArchiveAction
 import { getAuthorWorkspaceWorks } from "@/features/works/queries";
 import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { GENRE_CATEGORIES, getGenresByCategory } from "@/lib/genres";
 
 import "./author-work-page.css";
 
@@ -182,8 +183,8 @@ export default async function AuthorWorkPage({
                 <dd>{work.genre ?? "Belirtilmedi"}</dd>
               </div>
               <div>
-                <dt>Dil</dt>
-                <dd>{work.language === "en" ? "İngilizce" : "Türkçe"}</dd>
+                <dt>Alt başlık</dt>
+                <dd>{work.subtitle ?? "Belirtilmedi"}</dd>
               </div>
               <div>
                 <dt>Yayın durumu</dt>
@@ -285,21 +286,31 @@ export default async function AuthorWorkPage({
 
                 <div className="workspace-edit-form__row">
                   <Field
+                    control="select"
                     label="Tür"
                     name="genre"
                     defaultValue={work.genre ?? ""}
                     required
-                  />
+                  >
+                    <option value="" disabled>Bir tür seç</option>
+                    {GENRE_CATEGORIES.map((category) => (
+                      <optgroup key={category} label={category}>
+                        {getGenresByCategory(category).map((genre) => (
+                          <option key={genre.slug} value={genre.label}>
+                            {genre.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </Field>
 
                   <Field
-                    control="select"
-                    label="Dil"
-                    name="language"
-                    defaultValue={work.language}
-                  >
-                    <option value="tr">Türkçe</option>
-                    <option value="en">İngilizce</option>
-                  </Field>
+                    label="Alt Başlık (opsiyonel)"
+                    name="subtitle"
+                    defaultValue={work.subtitle ?? ""}
+                    maxLength={280}
+                    placeholder="Eserin alt başlığı"
+                  />
                 </div>
 
                 <div className="workspace-edit-form__actions">

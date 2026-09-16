@@ -67,6 +67,13 @@ test("writer text commands provide safe plain-text editing foundations", () => {
 });
 
 test("writer editing tools are mounted on every writer editing route", () => {
+  const shared = source("src/features/writer/components/WriterRouteEnhancers.tsx");
+
+  includes(shared, "WriterEditingTools", "shared writer tools mount");
+  includes(shared, "WriterRichTextFormattingTools", "shared rich formatting mount");
+  includes(shared, "WriterTextEditingCommands", "shared text commands mount");
+  includes(shared, "WriterPagedManuscriptEnhancer", "shared paged manuscript mount");
+
   for (const path of [
     "src/app/yazar/layout.tsx",
     "src/app/eserlerim/layout.tsx",
@@ -74,10 +81,10 @@ test("writer editing tools are mounted on every writer editing route", () => {
   ]) {
     const layout = source(path);
 
-    includes(layout, "WriterEditingTools", `${path} writer tools mount`);
-    includes(layout, "WriterTextEditingCommands", `${path} text commands mount`);
+    includes(layout, "WriterRouteEnhancers", `${path} shared writer enhancer mount`);
     includes(layout, "writer-editing-tools.css", `${path} writer tools CSS`);
     includes(layout, "writer-text-editing-commands.css", `${path} text commands CSS`);
+    includes(layout, "writer-rich-text-formatting.css", `${path} rich text CSS`);
   }
 });
 

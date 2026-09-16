@@ -10,16 +10,15 @@
 }
 
 .publish-preview .preview-toolbar__brand > span,
-.writer-publication-preview__review-heading > span,
-.writer-publication-preview__review-heading > p,
 .writer-publication-preview__book-nav label > span {
   color: #54495f;
   opacity: 1;
 }
 
-.writer-publication-preview__review-heading > strong {
-  color: #211a29;
-}
+/*
+ * Full-book review copy belongs to writer-publish-experience.css.
+ * Do not override its dark-preview text hierarchy here.
+ */
 
 .publish-preview .button--ghost {
   color: #3b3145;

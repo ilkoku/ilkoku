@@ -1,13 +1,17 @@
 import type { PublishedBookSnapshot } from "@/features/works/book-publication";
 
-let currentPreview: PublishedBookSnapshot | null = null;
+export type WriterBookPublicationPreview = PublishedBookSnapshot & {
+  coverUrl: string | null;
+};
+
+let currentPreview: WriterBookPublicationPreview | null = null;
 
 export function getWriterBookPublicationPreview() {
   return currentPreview;
 }
 
 export function setWriterBookPublicationPreview(
-  preview: PublishedBookSnapshot,
+  preview: WriterBookPublicationPreview,
 ) {
   currentPreview = preview;
 }

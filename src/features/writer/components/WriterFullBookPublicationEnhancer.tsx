@@ -87,10 +87,14 @@ function readDraftSaveError(form: HTMLFormElement) {
 
 function waitForDraftSave(form: HTMLFormElement): Promise<DraftSaveResult> {
   return new Promise((resolve) => {
+    let observedSaveMutation = false;
     let settled = false;
     let timeout = 0;
 
-    const observer = new MutationObserver(check);
+    const observer = new MutationObserver(() => {
+      observedSaveMutation = true;
+      check();
+    });
 
     function finish(result: DraftSaveResult) {
       if (settled) return;
@@ -115,7 +119,7 @@ function waitForDraftSave(form: HTMLFormElement): Promise<DraftSaveResult> {
       }
 
       const errorMessage = readDraftSaveError(form);
-      if (errorMessage) {
+      if (observedSaveMutation && errorMessage) {
         finish({ ok: false, message: errorMessage });
       }
     }
@@ -143,20 +147,27 @@ async function ensureDraftSaved(form: HTMLFormElement): Promise<DraftSaveResult>
   const saveState = readDraftSaveState(form);
   if (saveState === "kaydedildi") return { ok: true };
 
+  if (!form.reportValidity()) {
+    return {
+      ok: false,
+      message: "Yayın öncesi gerekli eser bilgilerini tamamla.",
+    };
+  }
+
+  const saveButton = form.querySelector<HTMLButtonElement>(
+    ".writer-save-button",
+  );
+
+  if (!saveButton) {
+    return {
+      ok: false,
+      message: "Yayın öncesi taslak kaydetme düğmesi bulunamadı.",
+    };
+  }
+
   const pendingSave = waitForDraftSave(form);
 
-  if (saveState !== "kaydediliyor") {
-    const saveButton = form.querySelector<HTMLButtonElement>(
-      ".writer-save-button",
-    );
-
-    if (!saveButton) {
-      return {
-        ok: false,
-        message: "Yayın öncesi taslak kaydetme düğmesi bulunamadı.",
-      };
-    }
-
+  if (saveState !== "kaydediliyor" && !saveButton.disabled) {
     form.requestSubmit(saveButton);
   }
 

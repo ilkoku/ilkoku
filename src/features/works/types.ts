@@ -28,7 +28,7 @@ export interface WorkSummary {
 
 export type ChapterSummary = {
   content: ChapterModel["content"];
-  formatting: string;
+  formatting?: string;
   id: ChapterModel["id"];
   position: ChapterModel["position"];
   slug: string;

@@ -47,7 +47,7 @@ test("paged manuscript mirrors canonical writer form controls without changing t
   includes(css, ":has(> .writer-paged-manuscript)", "paged surface activation without DOM mutation");
 });
 
-test("writer routes load physical pages with scroll or page-turn movement", () => {
+test("writer routes load physical pages and the single full-book publication rule", () => {
   for (const path of [
     "src/app/yazar/layout.tsx",
     "src/app/eserlerim/layout.tsx",
@@ -56,7 +56,16 @@ test("writer routes load physical pages with scroll or page-turn movement", () =
     const layout = source(path);
 
     includes(layout, "WriterPagedManuscriptEnhancer", `${path} paged enhancer`);
-    includes(layout, "WriterPublicationSnapshotGuard", `${path} submit-time publication snapshot guard`);
+    includes(
+      layout,
+      "WriterFullBookPublicationSubmitBridge",
+      `${path} single full-book publication bridge`,
+    );
+    assert.equal(
+      layout.includes("WriterPublicationSnapshotGuard"),
+      false,
+      `${path} must not restore the legacy second publication gate`,
+    );
     includes(layout, "writer-paged-manuscript.css", `${path} paged CSS`);
   }
 
@@ -79,12 +88,15 @@ test("writer routes load physical pages with scroll or page-turn movement", () =
   includes(css, ".writer-screen.writer-screen--focus", "focus-mode paged manuscript contract");
 });
 
-test("author master becomes an immutable publication snapshot for Reader", () => {
+test("author master becomes one immutable full-book publication snapshot for Reader", () => {
   const enhancer = source(
     "src/features/writer/components/WriterPagedManuscriptEnhancer.tsx",
   );
-  const submitGuard = source(
-    "src/features/writer/components/WriterPublicationSnapshotGuard.tsx",
+  const fullBookGate = source(
+    "src/features/writer/components/WriterFullBookPublicationEnhancer.tsx",
+  );
+  const submitBridge = source(
+    "src/features/writer/components/WriterFullBookPublicationSubmitBridge.tsx",
   );
   const layout = source("src/features/works/publication-layout.ts");
   const actions = source("src/features/works/actions.ts");
@@ -105,34 +117,20 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
 
   includes(enhancer, ".writer-manuscript-pages .writer-page-textarea", "actual writer page capture");
   includes(enhancer, "pageEnds", "exact writer page boundaries");
-  includes(enhancer, "publicationLayout", "publish form layout field");
+  includes(enhancer, "publicationLayout", "legacy-compatible publish form layout field");
   includes(enhancer, "WRITER_PREFERENCES_CHANGED_EVENT", "layout preference recapture");
 
-  includes(submitGuard, "captureCurrentPublicationLayout", "submit-time layout capture");
-  includes(submitGuard, ".writer-manuscript-pages .writer-page-textarea", "submit-time exact writer page capture");
-  includes(submitGuard, 'document.addEventListener("submit", prepareBeforeReactSubmit, true)', "capture before React server action submission");
-  includes(submitGuard, 'document.addEventListener("formdata", bindLayoutToFormData, true)', "bind exact layout to serialized form data");
-  includes(submitGuard, ".publish-preview form", "preview publish form snapshot coverage");
-  includes(submitGuard, "lastPublicationLayout", "preview keeps the last exact author layout");
-  includes(submitGuard, "rememberBeforeEditorTransition", "capture author layout before preview unmounts editor");
-  includes(submitGuard, "window.alert", "preview publication cannot fail silently when layout is missing");
-  includes(submitGuard, "publicationLayoutMatchesContent", "last valid layout must match current author text");
-  includes(submitGuard, "formDataEvent.formData.delete(PUBLICATION_LAYOUT_INPUT_NAME)", "invalid layout is removed instead of replacing a valid snapshot with empty data");
-  includes(submitGuard, "pageEnds", "submit-time exact page boundaries");
-  includes(
-    submitGuard,
-    'classList.contains("writer-save-button")',
-    "direct publish intent is distinguished from draft save without relying on a DOM formaction attribute",
-  );
-  includes(submitGuard, "useInsertionEffect", "publish unload suppression registers before passive editor guards");
-  includes(submitGuard, "suppressBeforeUnloadUntil.current", "publish unload suppression deadline");
-  includes(submitGuard, "event.stopImmediatePropagation()", "publish navigation bypasses the ordinary unsaved warning");
-  includes(submitGuard, 'window.addEventListener(\n      "beforeunload"', "publish beforeunload suppression listener");
-  assert.equal(
-    submitGuard.includes('hasAttribute("formaction")'),
-    false,
-    "React Server Action publish detection must not depend on a normal DOM formaction attribute",
-  );
+  includes(fullBookGate, "measureBookPublicationLayouts", "one ordered whole-book measurement");
+  includes(fullBookGate, "setWriterBookPublicationPreview", "reviewed full-book snapshot handoff");
+  includes(fullBookGate, "BOOK_PUBLICATION_LAYOUT_INPUT_NAME", "canonical full-book layout form field");
+
+  includes(submitBridge, "getWriterBookPublicationPreview", "final submit reads the reviewed full-book snapshot");
+  includes(submitBridge, 'item.type === "chapter" && item.chapterId === chapterId', "active chapter is selected inside the reviewed book");
+  includes(submitBridge, "chapter.content !== content", "reviewed content must match final form content");
+  includes(submitBridge, "PUBLICATION_LAYOUT_INPUT_NAME", "server compatibility field derives from the same reviewed book");
+  includes(submitBridge, "MutationObserver", "preview form is hydrated when it mounts");
+  includes(submitBridge, 'document.addEventListener("submit", handleSubmit, true)', "final confirmation is guarded before the server action");
+  includes(submitBridge, 'document.addEventListener("formdata", handleFormData, true)', "reviewed layout is bound to serialized final form data");
 
   includes(layout, 'PUBLICATION_LAYOUT_INPUT_NAME = "publicationLayout"', "layout form contract");
   includes(layout, "contentLength", "layout-content integrity binding");

@@ -47,6 +47,48 @@
   opacity: 0.78;
 }
 
+.writer-publication-preview__cover {
+  width: min(100%, 27rem);
+  aspect-ratio: 2 / 3;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 0.5rem 1.1rem 1.1rem 0.5rem;
+  box-shadow: 0 1.6rem 3.5rem rgba(35, 31, 26, 0.2);
+  background: linear-gradient(145deg, #241b32, #6d4c9b 58%, #b998d9);
+}
+
+.writer-publication-preview__cover-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.writer-publication-preview__cover-fallback {
+  box-sizing: border-box;
+  display: grid;
+  align-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  color: #fff;
+}
+
+.writer-publication-preview__cover-fallback > span,
+.writer-publication-preview__cover-fallback > small {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.writer-publication-preview__cover-fallback > strong {
+  max-width: 11ch;
+  font-size: clamp(2rem, 5vw, 4.2rem);
+  line-height: 0.98;
+}
+
 .writer-publication-preview__book-nav {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(14rem, 1.2fr) minmax(0, 1fr);
@@ -95,6 +137,10 @@
 @media (max-width: 760px) {
   .writer-publication-preview__book-nav {
     grid-template-columns: 1fr;
+  }
+
+  .writer-publication-preview__cover {
+    width: min(100%, 21rem);
   }
 }
 

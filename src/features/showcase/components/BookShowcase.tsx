@@ -14,7 +14,6 @@ import {
   estimateReadingMinutes,
   getEstimatedBookPageRanges,
 } from "@/features/reading/metrics";
-import { publishedBookItemHref } from "@/features/works/book-publication";
 import type { PublicWorkDetail } from "@/features/works/types";
 import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 import {
@@ -84,13 +83,13 @@ export function BookShowcase({
   const bookContextPath = `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`;
   const encodedBookContextPath = encodeURIComponent(bookContextPath);
   const firstPublishedBookItem = work.publicationBook?.items[0] ?? null;
+  const hasReadableContent = Boolean(firstPublishedBookItem || firstChapter);
+  const coverHref = hasReadableContent
+    ? `/oku/${work.slug}/kapak?from=${encodedBookContextPath}`
+    : null;
   const startHref = readingProgress && resumeChapter
     ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
-    : firstPublishedBookItem
-      ? `${publishedBookItemHref(work.slug, firstPublishedBookItem)}?from=${encodedBookContextPath}`
-      : resumeChapter
-        ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
-        : null;
+    : coverHref;
   const contentWarnings = parseWorkContentWarnings(work.contentWarnings);
   const rating = workContentRatingDetails[work.contentRating];
   const totalWords = work.publicationBook
@@ -160,7 +159,7 @@ export function BookShowcase({
           className="showcase-hero"
           aria-labelledby="kitap-basligi"
         >
-          <BookCover title={work.title} />
+          <BookCover coverUrl={work.coverUrl} title={work.title} />
 
           <div className="showcase-hero__content">
             <p className="showcase-eyebrow">

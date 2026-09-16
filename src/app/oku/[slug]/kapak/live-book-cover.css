@@ -1,0 +1,117 @@
+.live-book-cover {
+  min-height: 100vh;
+  padding: 28px clamp(18px, 4vw, 56px) 48px;
+  background: #f5f0e8;
+  color: #231f1a;
+}
+
+.live-book-cover__toolbar {
+  width: min(100%, 1120px);
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.9rem;
+}
+
+.live-book-cover__toolbar a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.live-book-cover__toolbar span {
+  color: #766d62;
+}
+
+.live-book-cover__stage {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(260px, 430px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(32px, 7vw, 88px);
+}
+
+.live-book-cover__stage .showcase-cover {
+  width: 100%;
+  max-width: 430px;
+  min-height: min(68vh, 650px);
+  margin: 0 auto;
+}
+
+.live-book-cover__meta {
+  display: grid;
+  gap: 18px;
+  align-content: center;
+}
+
+.live-book-cover__meta > p:first-child {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #766d62;
+}
+
+.live-book-cover__meta h1 {
+  margin: 0;
+  max-width: 14ch;
+  font-size: clamp(2.2rem, 5vw, 4.8rem);
+  line-height: 0.98;
+}
+
+.live-book-cover__meta > span {
+  font-size: 1.08rem;
+  color: #62594f;
+}
+
+.live-book-cover__open {
+  width: fit-content;
+  margin-top: 12px;
+}
+
+.live-book-cover__empty {
+  max-width: 48ch;
+  color: #766d62;
+}
+
+.live-book-cover__page-note {
+  width: min(100%, 1120px);
+  margin: 28px auto 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #766d62;
+}
+
+@media (max-width: 760px) {
+  .live-book-cover {
+    padding: 18px 16px 36px;
+  }
+
+  .live-book-cover__toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+
+  .live-book-cover__stage {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .live-book-cover__stage .showcase-cover {
+    max-width: 330px;
+    min-height: 500px;
+  }
+
+  .live-book-cover__meta {
+    text-align: center;
+    justify-items: center;
+  }
+
+  .live-book-cover__meta h1 {
+    max-width: 18ch;
+  }
+}

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { prisma } from "@/lib/prisma";
 import type { BookStructureItem } from "./book-structure";
 import { prepareBookForPublication } from "./book-structure-repository";
 
@@ -11,6 +12,7 @@ type Result = {
   status: "success" | "error";
   message: string;
   items?: BookStructureItem[];
+  coverUrl?: string | null;
 };
 
 const inputSchema = z.object({
@@ -43,6 +45,24 @@ export async function prepareFullBookPublicationAction(input: {
   }
 
   try {
+    const work = await prisma.work.findFirst({
+      where: {
+        archivedAt: null,
+        authorId: writer.id,
+        id: parsed.data.workId,
+      },
+      select: {
+        coverUrl: true,
+      },
+    });
+
+    if (!work) {
+      return {
+        status: "error",
+        message: "Yayına hazırlanacak eser bulunamadı.",
+      };
+    }
+
     const prepared = await prepareBookForPublication(
       writer.id,
       parsed.data.workId,
@@ -60,6 +80,7 @@ export async function prepareFullBookPublicationAction(input: {
       status: "success",
       message: "Tam kitap yapısı yayına hazırlandı.",
       items: prepared.items,
+      coverUrl: work.coverUrl,
     };
   } catch (caughtError) {
     console.error("PREPARE_FULL_BOOK_PUBLICATION_ERROR:", caughtError);

@@ -8,7 +8,6 @@ import {
   BOOK_PUBLICATION_VERSION,
   specialBookPageSubtitle,
   type PublishedBookItem,
-  type PublishedBookSnapshot,
 } from "@/features/works/book-publication";
 import { isSpecialBookSectionKind } from "@/features/works/book-structure";
 import { prepareFullBookPublicationAction } from "@/features/works/prepare-full-book-publication-action";
@@ -17,6 +16,7 @@ import { measureBookPublicationLayouts } from "../book-publication-measurement";
 import {
   clearWriterBookPublicationPreview,
   setWriterBookPublicationPreview,
+  type WriterBookPublicationPreview,
 } from "../writer-publication-preview-store";
 
 const DRAFT_SAVE_TIMEOUT_MS = 30_000;
@@ -338,12 +338,13 @@ export function WriterFullBookPublicationEnhancer() {
       const previewSnapshot = {
         version: BOOK_PUBLICATION_VERSION,
         workTitle,
+        coverUrl: prepared.coverUrl ?? null,
         totalPages: previewItems.reduce(
           (total, item) => total + item.layout.pageEnds.length,
           0,
         ),
         items: previewItems,
-      } satisfies PublishedBookSnapshot;
+      } satisfies WriterBookPublicationPreview;
 
       setWriterBookPublicationPreview(previewSnapshot);
 

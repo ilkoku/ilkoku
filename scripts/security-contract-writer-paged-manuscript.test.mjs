@@ -124,6 +124,10 @@ test("author master becomes an immutable publication snapshot for Reader", () =>
     'classList.contains("writer-save-button")',
     "direct publish intent is distinguished from draft save without relying on a DOM formaction attribute",
   );
+  includes(submitGuard, "useInsertionEffect", "publish unload suppression registers before passive editor guards");
+  includes(submitGuard, "suppressBeforeUnloadUntil.current", "publish unload suppression deadline");
+  includes(submitGuard, "event.stopImmediatePropagation()", "publish navigation bypasses the ordinary unsaved warning");
+  includes(submitGuard, 'window.addEventListener(\n      "beforeunload"', "publish beforeunload suppression listener");
   assert.equal(
     submitGuard.includes('hasAttribute("formaction")'),
     false,

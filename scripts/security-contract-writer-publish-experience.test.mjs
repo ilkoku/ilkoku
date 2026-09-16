@@ -62,6 +62,13 @@ test("direct publish is gated by a saved reader preview before final confirmatio
   includes(gate, "ensureDraftSaved", "draft save gate before final review");
   includes(gate, "form.requestSubmit(saveButton)", "existing draft save flow reuse");
   includes(gate, "previewButton.click()", "reader preview transition");
+  includes(gate, "publishButtonFromEvent", "publish click capture lookup");
+  includes(gate, "handlePublishClick", "publish click final-review gate");
+  includes(
+    gate,
+    'document.addEventListener("click", handlePublishClick, true)',
+    "publish click intercepted before React form action",
+  );
   includes(gate, "if (isPreviewForm(event.target))", "preview form remains the final publish path");
   assert.equal(
     gate.includes("form.requestSubmit(submitter)"),

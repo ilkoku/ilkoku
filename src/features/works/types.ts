@@ -28,6 +28,7 @@ export interface WorkSummary {
 
 export type ChapterSummary = {
   content: ChapterModel["content"];
+  formatting: string;
   id: ChapterModel["id"];
   position: ChapterModel["position"];
   slug: string;
@@ -67,6 +68,7 @@ export type PublicWorkSummary = Pick<
 
 export type PublicChapterDetail =
   ChapterModel & {
+    formatting: string;
     publicationLayout: PublicationLayoutSnapshot | null;
     publicationVersion: number | null;
     work: PublicWorkDetail;

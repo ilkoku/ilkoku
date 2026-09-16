@@ -5,13 +5,18 @@ import { z } from "zod";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
+import { getChapterFormattingMap } from "./chapter-formatting-repository";
 import type { BookStructureItem } from "./book-structure";
 import { prepareBookForPublication } from "./book-structure-repository";
+
+type PreparedPublicationItem = BookStructureItem & {
+  formatting: string;
+};
 
 type Result = {
   status: "success" | "error";
   message: string;
-  items?: BookStructureItem[];
+  items?: PreparedPublicationItem[];
   coverUrl?: string | null;
 };
 
@@ -71,6 +76,16 @@ export async function prepareFullBookPublicationAction(input: {
         title: parsed.data.chapterTitle,
       },
     );
+    const chapterIds = prepared.items
+      .map((item) => item.chapterId)
+      .filter((chapterId): chapterId is string => Boolean(chapterId));
+    const formattingByChapter = await getChapterFormattingMap(chapterIds);
+    const items: PreparedPublicationItem[] = prepared.items.map((item) => ({
+      ...item,
+      formatting: item.chapterId
+        ? formattingByChapter.get(item.chapterId) ?? ""
+        : "",
+    }));
 
     revalidatePath("/yazar");
     revalidatePath("/eserlerim");
@@ -79,7 +94,7 @@ export async function prepareFullBookPublicationAction(input: {
     return {
       status: "success",
       message: "Tam kitap yapısı yayına hazırlandı.",
-      items: prepared.items,
+      items,
       coverUrl: work.coverUrl,
     };
   } catch (caughtError) {

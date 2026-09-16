@@ -16,9 +16,13 @@ import {
 } from "@/features/works/chapter-formatting-actions";
 import {
   CHAPTER_FORMATTING_INPUT_NAME,
+  MAX_INLINE_FONT_SIZE,
+  MIN_INLINE_FONT_SIZE,
   adjustFormattingForContentChange,
+  applyInlineFontSize,
   applyParagraphFormatting,
   emptyChapterFormatting,
+  inlineFontSizeAt,
   inlineMarkActive,
   paragraphFormatAt,
   parseChapterFormatting,
@@ -42,9 +46,15 @@ type EditorIdentity = {
   workId: string;
 };
 
+type WriterFontSizeStepDetail = {
+  baseFontSize: number;
+  delta: -1 | 1;
+};
+
 const EMPTY_SELECTION: TextSelection = { start: 0, end: 0 };
 const EMPTY_IDENTITY: EditorIdentity = { chapterId: "", content: "", workId: "" };
 const FORMAT_SAVE_DELAY = 700;
+export const WRITER_FONT_SIZE_STEP_EVENT = "ilkoku:writer-font-size-step";
 
 function getToolbarTarget() {
   if (typeof document === "undefined") return null;
@@ -315,6 +325,47 @@ export function WriterRichTextFormattingTools() {
       toggleInlineMark(formattingRef.current, identity.content, range.start, range.end, type),
     );
   }
+
+  function changeSelectedFontSize(detail: WriterFontSizeStepDetail) {
+    const range = activeSelection();
+    if (range.end <= range.start) return;
+    const baseFontSize = Math.max(
+      MIN_INLINE_FONT_SIZE,
+      Math.min(MAX_INLINE_FONT_SIZE, Math.round(detail.baseFontSize)),
+    );
+    const current = inlineFontSizeAt(
+      formattingRef.current,
+      range.start,
+      range.end,
+      baseFontSize,
+    );
+    const nextSize = Math.max(
+      MIN_INLINE_FONT_SIZE,
+      Math.min(MAX_INLINE_FONT_SIZE, current + detail.delta),
+    );
+    updateFormatting(
+      applyInlineFontSize(
+        formattingRef.current,
+        identity.content,
+        range.start,
+        range.end,
+        nextSize,
+      ),
+    );
+  }
+
+  useEffect(() => {
+    function handleFontSizeStep(event: Event) {
+      const customEvent = event as CustomEvent<WriterFontSizeStepDetail>;
+      if (!customEvent.detail || (customEvent.detail.delta !== -1 && customEvent.detail.delta !== 1)) {
+        return;
+      }
+      changeSelectedFontSize(customEvent.detail);
+    }
+
+    window.addEventListener(WRITER_FONT_SIZE_STEP_EVENT, handleFontSizeStep);
+    return () => window.removeEventListener(WRITER_FONT_SIZE_STEP_EVENT, handleFontSizeStep);
+  });
 
   function updateParagraph(
     patch: Parameters<typeof applyParagraphFormatting>[4],

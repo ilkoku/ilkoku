@@ -238,27 +238,27 @@ export function WriterEditingTools() {
 
     const writerScreen = screen;
 
-    writerScreen.style.setProperty(
+    screen.style.setProperty(
       "--writer-manuscript-font-size",
       `${preferences.fontSize}px`,
     );
-    writerScreen.style.setProperty(
+    screen.style.setProperty(
       "--writer-manuscript-line-height",
       String(preferences.lineHeight),
     );
-    writerScreen.style.setProperty(
+    screen.style.setProperty(
       "--writer-manuscript-font-family",
       fontFamilies[preferences.font],
     );
-    writerScreen.style.setProperty(
+    screen.style.setProperty(
       "--writer-manuscript-width",
       manuscriptWidths[preferences.width],
     );
-    writerScreen.style.setProperty(
+    screen.style.setProperty(
       "--writer-page-zoom",
       String(preferences.zoom / 100),
     );
-    writerScreen.dataset.writerPageFlow = preferences.pageFlow;
+    screen.dataset.writerPageFlow = preferences.pageFlow;
 
     function applySpellcheck() {
       writerScreen

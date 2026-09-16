@@ -5,6 +5,11 @@ import {
   workContentRatings,
   workContentWarnings,
 } from "@/lib/work-content-classification";
+import {
+  MAX_CHAPTER_FORMATTING_LENGTH,
+  parseChapterFormatting,
+  serializeChapterFormatting,
+} from "./rich-text-formatting";
 
 const trimmedText = (minimum: number, maximum: number, message: string) =>
   z.string().trim().min(minimum, message).max(maximum, message);
@@ -81,8 +86,34 @@ export const chapterDraftSchema = z.object({
     .string()
     .max(500_000, "Bölüm metni çok uzun.")
     .transform(normalizeTextareaLineEndings),
+  formatting: z
+    .string()
+    .max(
+      MAX_CHAPTER_FORMATTING_LENGTH,
+      "Metin biçim bilgisi çok uzun.",
+    )
+    .default(""),
   title: trimmedText(1, 200, "Bölüm başlığı 1–200 karakter olmalıdır."),
   workId: z.string().uuid("Geçerli bir eser seçilmelidir."),
+}).transform((value, context) => {
+  try {
+    return {
+      ...value,
+      formatting: serializeChapterFormatting(
+        parseChapterFormatting(value.formatting, value.content),
+      ),
+    };
+  } catch (caughtError) {
+    context.addIssue({
+      code: "custom",
+      message:
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Metin biçim bilgisi doğrulanamadı.",
+      path: ["formatting"],
+    });
+    return z.NEVER;
+  }
 });
 
 export const workIdSchema = z.object({

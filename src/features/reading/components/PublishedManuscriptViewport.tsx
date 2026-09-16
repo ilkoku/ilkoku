@@ -25,9 +25,9 @@ import styles from "./PublishedManuscriptViewport.module.css";
 
 const fontFamilies: Record<PublicationFont, string> = {
   typewriter:
-    '\"Courier New\", Courier, ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace',
-  serif: 'Georgia, \"Times New Roman\", Times, serif',
-  sans: 'var(--font-inter), Inter, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif',
+    '"Courier New", Courier, ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace',
+  serif: 'Georgia, "Times New Roman", Times, serif',
+  sans: 'var(--font-inter), Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 };
 
 const watermarkCopies = Array.from({ length: 24 }, (_, index) => index);
@@ -98,6 +98,8 @@ function textOffsetWithin(element: HTMLElement, node: Node, offset: number) {
 }
 
 export function PublishedManuscriptViewport({
+  bookPageStart = 1,
+  bookTotalPages,
   chapterTitle,
   content,
   identity,
@@ -108,6 +110,8 @@ export function PublishedManuscriptViewport({
   subtitle,
   workTitle,
 }: {
+  bookPageStart?: number;
+  bookTotalPages?: number;
   chapterTitle: string;
   content: string;
   identity: string;
@@ -224,6 +228,13 @@ export function PublishedManuscriptViewport({
 
   const activePage = pages[pageIndex] ?? pages[0];
   if (!activePage) return null;
+
+  const safeBookPageStart = Math.max(1, Math.floor(bookPageStart));
+  const globalPageNumber = safeBookPageStart + pageIndex;
+  const globalPageTotal = Math.max(
+    globalPageNumber,
+    Math.floor(bookTotalPages ?? pages.length),
+  );
 
   const bodyBox =
     pageIndex === 0
@@ -383,6 +394,8 @@ export function PublishedManuscriptViewport({
   return (
     <div
       className={styles.shell}
+      data-book-page-number={globalPageNumber}
+      data-book-page-total={globalPageTotal}
       data-publication-layout-version={layout.version}
       data-publication-page-count={pages.length}
     >
@@ -395,7 +408,7 @@ export function PublishedManuscriptViewport({
           }}
         >
           <article
-            aria-label={`Yayın sayfası ${pageIndex + 1} / ${pages.length}`}
+            aria-label={`Yayın sayfası ${globalPageNumber} / ${globalPageTotal}`}
             className={styles.page}
             data-personal-book-tool={activeTool ?? "none"}
             data-text-selection={textSelectionMode ? "true" : "false"}
@@ -481,7 +494,7 @@ export function PublishedManuscriptViewport({
             </div>
 
             <span aria-hidden="true" className={styles.pageNumber}>
-              {pageIndex + 1}
+              {globalPageNumber} / {globalPageTotal}
             </span>
           </article>
         </div>
@@ -498,8 +511,8 @@ export function PublishedManuscriptViewport({
         </button>
 
         <div aria-live="polite" className={styles.status}>
-          <small>Yazarın yayın sayfası</small>
-          <strong>{pageIndex + 1} / {pages.length}</strong>
+          <small>Kitap sayfası</small>
+          <strong>{globalPageNumber} / {globalPageTotal}</strong>
         </div>
 
         <button

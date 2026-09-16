@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useInsertionEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 
 import {
@@ -11,6 +17,15 @@ import {
   type WorkContentRating,
   type WorkContentWarning,
 } from "@/lib/work-content-classification";
+import {
+  getMissingClassificationRequirements,
+  getMissingPublicationRequirements,
+  publicationReadinessMessage,
+  requestPublicationReadinessAttention,
+  WRITER_PUBLICATION_READINESS_EVENT,
+  type WriterPublicationReadinessEventDetail,
+  type WriterPublicationRequirementKey,
+} from "../writer-publication-readiness";
 
 type ClassificationTarget = {
   screen: HTMLElement;
@@ -82,6 +97,7 @@ function subscribe(onStoreChange: () => void) {
 
   const handleChange = () => onStoreChange();
   document.addEventListener("change", handleChange, true);
+  document.addEventListener("input", handleChange, true);
 
   const observer = new MutationObserver(onStoreChange);
   observer.observe(document.body, {
@@ -91,6 +107,7 @@ function subscribe(onStoreChange: () => void) {
 
   return () => {
     document.removeEventListener("change", handleChange, true);
+    document.removeEventListener("input", handleChange, true);
     observer.disconnect();
   };
 }
@@ -110,6 +127,48 @@ function setNativeCheckboxValue(input: HTMLInputElement, checked: boolean) {
   input.click();
 }
 
+function publishButtonFromEvent(event: MouseEvent) {
+  const target = event.target;
+  if (!(target instanceof Element)) return null;
+
+  const form = target.closest<HTMLFormElement>("form.writer-screen");
+  if (!form) return null;
+
+  const button = target.closest<HTMLButtonElement>(
+    '.writer-toolbar__actions button[type="submit"]:not(.writer-save-button)',
+  );
+  if (!button) return null;
+
+  return { form };
+}
+
+function writerPublishFormFromSubmit(event: SubmitEvent) {
+  if (
+    !(event.target instanceof HTMLFormElement) ||
+    !event.target.matches("form.writer-screen") ||
+    !(event.submitter instanceof HTMLButtonElement) ||
+    event.submitter.classList.contains("writer-save-button")
+  ) {
+    return null;
+  }
+
+  return event.target;
+}
+
+function blockPublishWhenRequirementsAreMissing(
+  event: MouseEvent | SubmitEvent,
+  form: HTMLFormElement,
+) {
+  const missing = getMissingPublicationRequirements(form);
+  if (missing.length === 0) return false;
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  requestPublicationReadinessAttention(form, missing);
+  window.alert(publicationReadinessMessage(missing));
+  return true;
+}
+
 function ratingLabel(value: string) {
   return workContentRatings.includes(value as WorkContentRating)
     ? workContentRatingDetails[value as WorkContentRating].shortLabel
@@ -120,6 +179,34 @@ export function WriterClassificationStatsEnhancer() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const target = getTarget();
   const screen = target?.screen ?? null;
+  const panelRef = useRef<HTMLElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [attentionKey, setAttentionKey] =
+    useState<WriterPublicationRequirementKey | null>(null);
+
+  // Publish readiness must run before the passive full-book publish enhancer.
+  // This keeps all works on one rule while giving exact missing-field feedback.
+  useInsertionEffect(() => {
+    function handlePublishClick(event: MouseEvent) {
+      const match = publishButtonFromEvent(event);
+      if (!match) return;
+      blockPublishWhenRequirementsAreMissing(event, match.form);
+    }
+
+    function handlePublishSubmit(event: SubmitEvent) {
+      const form = writerPublishFormFromSubmit(event);
+      if (!form) return;
+      blockPublishWhenRequirementsAreMissing(event, form);
+    }
+
+    document.addEventListener("click", handlePublishClick, true);
+    document.addEventListener("submit", handlePublishSubmit, true);
+
+    return () => {
+      document.removeEventListener("click", handlePublishClick, true);
+      document.removeEventListener("submit", handlePublishSubmit, true);
+    };
+  }, []);
 
   useEffect(() => {
     if (!screen) return;
@@ -128,10 +215,66 @@ export function WriterClassificationStatsEnhancer() {
     return () => screen.classList.remove("writer-classification-in-stats");
   }, [screen]);
 
+  useEffect(() => {
+    function handleReadinessAttention(event: Event) {
+      const detail = (event as CustomEvent<WriterPublicationReadinessEventDetail>)
+        .detail;
+      const firstClassificationRequirement = detail?.requirements.find(
+        (requirement) => requirement.key !== "requiredField",
+      );
+      if (!firstClassificationRequirement) return;
+
+      setExpanded(true);
+      setAttentionKey(firstClassificationRequirement.key);
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          const panel = panelRef.current;
+          if (!panel) return;
+
+          const field = panel.querySelector<HTMLElement>(
+            `[data-publication-readiness-key="${firstClassificationRequirement.key}"]`,
+          );
+          if (!field) return;
+
+          field.scrollIntoView({ behavior: "smooth", block: "center" });
+          const focusTarget =
+            field instanceof HTMLInputElement || field instanceof HTMLSelectElement
+              ? field
+              : field.querySelector<HTMLElement>("input, select, button");
+          focusTarget?.focus({ preventScroll: true });
+        });
+      });
+    }
+
+    document.addEventListener(
+      WRITER_PUBLICATION_READINESS_EVENT,
+      handleReadinessAttention,
+    );
+    return () =>
+      document.removeEventListener(
+        WRITER_PUBLICATION_READINESS_EVENT,
+        handleReadinessAttention,
+      );
+  }, []);
+
   if (!target || snapshot === UNAVAILABLE) return null;
 
   const activeTarget = target;
   const state = JSON.parse(snapshot) as ClassificationSnapshot;
+  const writerForm = activeTarget.originalPanel.closest<HTMLFormElement>(
+    "form.writer-screen",
+  );
+  const classificationMissing = getMissingClassificationRequirements(state);
+  const allMissing = writerForm
+    ? getMissingPublicationRequirements(writerForm)
+    : classificationMissing;
+  const ready = allMissing.length === 0;
+  const selectedRating = workContentRatings.includes(
+    state.rating as WorkContentRating,
+  )
+    ? state.rating
+    : "";
 
   function updateWarning(warning: WorkContentWarning, checked: boolean) {
     const original = activeTarget.originalPanel.querySelector<HTMLInputElement>(
@@ -140,69 +283,115 @@ export function WriterClassificationStatsEnhancer() {
     if (original) setNativeCheckboxValue(original, checked);
   }
 
+  function toggleExpanded() {
+    setExpanded((current) => !current);
+    setAttentionKey(null);
+  }
+
   return createPortal(
-    <details className="writer-classification-panel writer-classification-panel--statistics">
-      <summary>
-        <span>İçerik sınıfı</span>
-        <strong>{ratingLabel(state.rating)}</strong>
-      </summary>
-
-      <fieldset className="work-classification work-classification--compact">
-        <legend>İçerik ve yaş sınıfı</legend>
-        <p>
-          Eserin tamamındaki en yoğun içeriği esas al. Bu bilgi okura yayın öncesinde gösterilir.
-        </p>
-
-        <label className="work-classification__rating">
-          <span>Yaş sınıfı</span>
-          <select
-            aria-label="İçerik yaş sınıfı"
-            value={state.rating}
-            onChange={(event) =>
-              setNativeSelectValue(activeTarget.rating, event.target.value)
-            }
-          >
-            <option value="" disabled>Sınıf seç</option>
-            {workContentRatings.map((rating) => (
-              <option value={rating} key={rating}>
-                {workContentRatingDetails[rating].label}
-                {rating === "adult_18" ? " — public yayın kapalı" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="work-classification__warnings" aria-label="İçerik uyarıları">
-          {workContentWarnings.map((warning) => (
-            <label key={warning}>
-              <input
-                type="checkbox"
-                checked={state.warnings.includes(warning)}
-                onChange={(event) => updateWarning(warning, event.target.checked)}
-              />
-              <span>{workContentWarningDetails[warning].label}</span>
-            </label>
-          ))}
+    <section
+      className="writer-classification-panel writer-classification-panel--statistics"
+      data-attention={attentionKey ? "true" : "false"}
+      data-state={ready ? "ready" : "missing"}
+      ref={panelRef}
+    >
+      <div className="writer-publication-readiness__summary">
+        <div className="writer-publication-readiness__copy">
+          <span>Yayın Durumu</span>
+          <small>
+            {ready
+              ? `Hazır · İçerik sınıfı ${ratingLabel(state.rating)}`
+              : publicationReadinessMessage(allMissing)}
+          </small>
         </div>
+        <strong>{ready ? "Hazır ✓" : "Eksik"}</strong>
+      </div>
 
-        <label className="work-classification__confirm">
-          <input
-            type="checkbox"
-            checked={state.confirmed}
-            onChange={(event) =>
-              setNativeCheckboxValue(activeTarget.confirmation, event.target.checked)
-            }
-          />
-          <span>
-            Sınıfı eserin en yoğun bölümüne göre seçtiğimi ve eser değişirse güncelleyeceğimi onaylıyorum.
-            {" "}
-            <a href="/icerik-ve-yas-politikasi" target="_blank" rel="noreferrer">
-              Politikayı oku
-            </a>
-          </span>
-        </label>
-      </fieldset>
-    </details>,
+      <button
+        aria-expanded={expanded}
+        className="writer-publication-readiness__toggle"
+        onClick={toggleExpanded}
+        type="button"
+      >
+        {expanded ? "Kapat" : ready ? "Düzenle" : "Tamamla"}
+      </button>
+
+      {expanded ? (
+        <fieldset className="work-classification work-classification--compact">
+          <legend>İçerik ve yaş sınıfı</legend>
+          <p>
+            Eserin tamamındaki en yoğun içeriği esas al. Bu bilgi okura yayın öncesinde gösterilir.
+          </p>
+
+          <label
+            className="work-classification__rating"
+            data-publication-readiness-key="contentRating"
+          >
+            <span>Yaş sınıfı</span>
+            <select
+              aria-label="İçerik yaş sınıfı"
+              value={selectedRating}
+              onChange={(event) => {
+                setAttentionKey(null);
+                setNativeSelectValue(activeTarget.rating, event.target.value);
+              }}
+            >
+              <option value="" disabled>Sınıf seç</option>
+              {workContentRatings.map((rating) => (
+                <option value={rating} key={rating}>
+                  {workContentRatingDetails[rating].label}
+                  {rating === "adult_18" ? " — public yayın kapalı" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div
+            className="work-classification__warnings"
+            aria-label="İçerik uyarıları"
+            data-publication-readiness-key="contentWarnings"
+          >
+            {workContentWarnings.map((warning) => (
+              <label key={warning}>
+                <input
+                  type="checkbox"
+                  checked={state.warnings.includes(warning)}
+                  onChange={(event) => {
+                    setAttentionKey(null);
+                    updateWarning(warning, event.target.checked);
+                  }}
+                />
+                <span>{workContentWarningDetails[warning].label}</span>
+              </label>
+            ))}
+          </div>
+
+          <label
+            className="work-classification__confirm"
+            data-publication-readiness-key="contentClassificationConfirmed"
+          >
+            <input
+              type="checkbox"
+              checked={state.confirmed}
+              onChange={(event) => {
+                setAttentionKey(null);
+                setNativeCheckboxValue(
+                  activeTarget.confirmation,
+                  event.target.checked,
+                );
+              }}
+            />
+            <span>
+              Sınıfı eserin en yoğun bölümüne göre seçtiğimi ve eser değişirse güncelleyeceğimi onaylıyorum.
+              {" "}
+              <a href="/icerik-ve-yas-politikasi" target="_blank" rel="noreferrer">
+                Politikayı oku
+              </a>
+            </span>
+          </label>
+        </fieldset>
+      ) : null}
+    </section>,
     activeTarget.footer,
   );
 }

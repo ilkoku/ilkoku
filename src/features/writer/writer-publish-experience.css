@@ -17,6 +17,87 @@
   margin: 0 auto;
 }
 
+.writer-publication-preview__book {
+  display: grid;
+  gap: 1rem;
+}
+
+.writer-publication-preview__review-heading {
+  display: grid;
+  gap: 0.35rem;
+  width: min(100%, 54rem);
+  margin: 0 auto;
+}
+
+.writer-publication-preview__review-heading > span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.66;
+}
+
+.writer-publication-preview__review-heading > strong {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+}
+
+.writer-publication-preview__review-heading > p {
+  margin: 0;
+  line-height: 1.6;
+  opacity: 0.78;
+}
+
+.writer-publication-preview__book-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 1.2fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: end;
+  width: min(100%, 54rem);
+  margin: 0 auto;
+}
+
+.writer-publication-preview__book-nav button,
+.writer-publication-preview__book-nav select {
+  min-height: 2.75rem;
+  border: 1px solid rgba(109, 76, 155, 0.24);
+  border-radius: 0.85rem;
+  background: var(--surface, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+.writer-publication-preview__book-nav button {
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+}
+
+.writer-publication-preview__book-nav button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.writer-publication-preview__book-nav label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.writer-publication-preview__book-nav label > span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0.72;
+}
+
+.writer-publication-preview__book-nav select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+}
+
+@media (max-width: 760px) {
+  .writer-publication-preview__book-nav {
+    grid-template-columns: 1fr;
+  }
+}
+
 .publish-success__content:has(> .writer-post-publish-action) > .button:not(.writer-post-publish-action) {
   display: none;
 }

@@ -380,6 +380,42 @@
   }
 }
 
+/* Keep physical page navigation and book-structure navigation visually distinct. */
+.writer-publication-preview__book-nav {
+  grid-template-columns: minmax(9.5rem, 1fr) minmax(14rem, 1.15fr) minmax(9.5rem, 1fr);
+  align-items: center;
+  width: min(100%, 54rem);
+  padding: 1rem 0 0;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-primary, #6847e8) 16%, var(--color-border, #ddd6cf));
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.writer-publication-preview__book-nav button {
+  min-height: 2.55rem;
+  padding-inline: 0.9rem;
+}
+
+.writer-publication-preview__book-nav label > span {
+  padding-left: 0;
+  text-align: center;
+}
+
+.writer-publication-preview__book-nav select {
+  min-height: 2.55rem;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .writer-publication-preview__book-nav {
+    grid-template-columns: 1fr;
+    width: min(100%, 30rem);
+    padding-top: 0.8rem;
+  }
+}
+
 .publish-success__content:has(> .writer-post-publish-action) > .button:not(.writer-post-publish-action) {
   display: none;
 }

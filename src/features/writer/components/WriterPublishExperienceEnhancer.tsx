@@ -16,6 +16,12 @@ import {
   parsePublicationLayout,
 } from "@/features/works/publication-layout";
 import {
+  CHAPTER_FORMATTING_INPUT_NAME,
+  hasChapterFormatting,
+  parseChapterFormatting,
+  type ChapterFormatting,
+} from "@/features/works/rich-text-formatting";
+import {
   getWriterBookPublicationPreview,
   type WriterBookPublicationPreview,
 } from "../writer-publication-preview-store";
@@ -24,6 +30,7 @@ type PreviewSnapshot = {
   mode: "preview";
   chapterTitle: string;
   content: string;
+  formatting: string;
   layout: string;
   workTitle: string;
 };
@@ -50,15 +57,21 @@ function readPreviewSnapshot(): PreviewSnapshot | null {
     preview.querySelector<HTMLElement>(":scope > span")?.textContent?.trim() ?? "";
   const content =
     preview.querySelector<HTMLElement>(":scope > .preview-article__body")?.textContent ?? "";
+  const form = document.querySelector<HTMLFormElement>(".publish-preview form");
   const layout =
-    document.querySelector<HTMLInputElement>(
-      `.publish-preview form input[name="${PUBLICATION_LAYOUT_INPUT_NAME}"]`,
+    form?.querySelector<HTMLInputElement>(
+      `input[name="${PUBLICATION_LAYOUT_INPUT_NAME}"]`,
+    )?.value ?? "";
+  const formatting =
+    form?.querySelector<HTMLInputElement>(
+      `input[name="${CHAPTER_FORMATTING_INPUT_NAME}"]`,
     )?.value ?? "";
 
   return {
     mode: "preview",
     chapterTitle,
     content,
+    formatting,
     layout,
     workTitle,
   };
@@ -139,6 +152,19 @@ function pageStartForItem(book: PublishedBookSnapshot, itemIndex: number) {
   );
 }
 
+function parsePreviewFormatting(
+  raw: string,
+  content: string,
+): ChapterFormatting | null {
+  if (!raw) return null;
+  try {
+    const formatting = parseChapterFormatting(raw, content);
+    return hasChapterFormatting(formatting) ? formatting : null;
+  } catch {
+    return null;
+  }
+}
+
 function WriterFullBookPublicationPreview({
   book,
 }: {
@@ -214,6 +240,7 @@ function WriterFullBookPublicationPreview({
           bookTotalPages={book.totalPages}
           chapterTitle={activeItem.title}
           content={activeItem.content}
+          formatting={activeItem.type === "chapter" ? activeItem.formatting : null}
           identity="Yayın önizleme"
           key={`${activeItem.structureItemId}:${startAtLastPage ? "last" : "first"}`}
           layout={activeItem.layout}
@@ -368,6 +395,7 @@ export function WriterPublishExperienceEnhancer() {
   );
 
   if (!publicationLayout) return null;
+  const formatting = parsePreviewFormatting(parsed.formatting, parsed.content);
 
   return createPortal(
     <div
@@ -377,6 +405,7 @@ export function WriterPublishExperienceEnhancer() {
       <PublishedManuscriptViewport
         chapterTitle={parsed.chapterTitle}
         content={parsed.content}
+        formatting={formatting}
         identity="Yayın önizleme"
         layout={publicationLayout}
         subtitle={writerContent.editor.subtitle}

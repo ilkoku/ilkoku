@@ -24,13 +24,13 @@
   z-index: 2;
   color: transparent !important;
   -webkit-text-fill-color: transparent;
-  caret-color: var(--writer-paper-accent) !important;
+  caret-color: transparent !important;
 }
 
 .writer-manuscript-page__inner:has(> .writer-live-formatting-layer)
   > .writer-page-textarea.writer-textarea::selection {
   color: transparent;
-  background: rgba(128, 94, 225, 0.2);
+  background: transparent;
 }
 
 .writer-live-formatting-line {
@@ -86,6 +86,42 @@
   text-decoration: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.13em;
+}
+
+.writer-live-formatting-selection {
+  border-radius: 0.12em;
+  background: rgba(128, 94, 225, 0.2);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.writer-live-formatting-caret {
+  display: inline-block;
+  width: 0;
+  height: 1em;
+  margin: 0 -1px 0 0;
+  border-left: 2px solid var(--writer-paper-accent);
+  vertical-align: -0.12em;
+  pointer-events: none;
+  animation: writer-live-formatting-caret-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes writer-live-formatting-caret-blink {
+  0%,
+  52% {
+    opacity: 1;
+  }
+
+  53%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .writer-live-formatting-caret {
+    animation: none;
+  }
 }
 
 @media (max-width: 47.99rem) {

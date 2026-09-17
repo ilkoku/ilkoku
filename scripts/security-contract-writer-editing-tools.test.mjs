@@ -117,6 +117,22 @@ test("writer semantic formatting survives preview and reader publication renderi
   includes(reader, "formatting={publicationFormatting}", "reader publication formatting handoff");
 });
 
+test("writer live formatting owns caret and selection geometry when inline size differs", () => {
+  const liveLayer = source(
+    "src/features/writer/components/WriterLiveFormattingLayer.tsx",
+  );
+  const liveCss = source("src/features/writer/writer-live-formatting-layer.css");
+
+  includes(liveLayer, "readActiveSelection", "paged editor selection tracking");
+  includes(liveLayer, "writer-live-formatting-caret", "semantic caret rendering");
+  includes(liveLayer, "writer-live-formatting-selection", "semantic selection rendering");
+  includes(liveLayer, "inlineFontSizeAtCaret", "caret inline font-size lookup");
+  includes(liveLayer, 'document.addEventListener("selectionchange", refresh)', "live selection refresh");
+  includes(liveCss, "caret-color: transparent !important", "native textarea caret suppression");
+  includes(liveCss, ".writer-live-formatting-caret", "visual caret styling");
+  includes(liveCss, ".writer-live-formatting-selection", "visual selection styling");
+});
+
 test("reader manuscript keeps canonical writer paper typography and measured pages", () => {
   const reader = source("src/features/reading/components/FocusedReadingExperience.tsx");
   const indicator = source("src/features/reading/components/ReadingPageIndicator.tsx");

@@ -22,7 +22,7 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(tools, "Seçili yazıyı büyüt", "selected font size increase control");
   includes(tools, "changeSelectedFontSize(-1)", "selected font size decrease command");
   includes(tools, "changeSelectedFontSize(1)", "selected font size increase command");
-  includes(richTools, "adjustInlineFontSize", "semantic selected font size command");
+  includes(richTools, "applyInlineFontSize", "semantic selected font size command");
   includes(formatting, "fontSizes", "semantic selected font size metadata");
   includes(formatting, "ChapterInlineFontSize", "selected font size range type");
   includes(tools, "Satır aralığını azalt", "line spacing decrease control");

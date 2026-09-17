@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import {
@@ -30,12 +30,47 @@ type ParagraphFragment = {
   text: string;
 };
 
+type TextSelection = {
+  end: number;
+  start: number;
+};
+
 const REFRESH_INTERVAL_MS = 180;
 
 function getCanonicalBody() {
   return document.querySelector<HTMLTextAreaElement>(
     ".writer-canvas > .writer-textarea",
   );
+}
+
+function getPageTextareas() {
+  return Array.from(
+    document.querySelectorAll<HTMLTextAreaElement>(
+      ".writer-manuscript-pages .writer-page-textarea",
+    ),
+  );
+}
+
+function readActiveSelection(): TextSelection | null {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLTextAreaElement)) return null;
+
+  const pages = getPageTextareas();
+  const pageIndex = pages.indexOf(active);
+  if (pageIndex < 0) return null;
+
+  const pageStart = pages
+    .slice(0, pageIndex)
+    .reduce((total, textarea) => total + textarea.value.length, 0);
+
+  return {
+    start: pageStart + (active.selectionStart ?? 0),
+    end: pageStart + (active.selectionEnd ?? active.selectionStart ?? 0),
+  };
+}
+
+function selectionsEqual(left: TextSelection | null, right: TextSelection | null) {
+  return left?.start === right?.start && left?.end === right?.end;
 }
 
 function readFormattingRaw() {
@@ -47,11 +82,7 @@ function readFormattingRaw() {
 }
 
 function readPageTargets(): PageTarget[] {
-  const textareas = Array.from(
-    document.querySelectorAll<HTMLTextAreaElement>(
-      ".writer-manuscript-pages .writer-page-textarea",
-    ),
-  );
+  const textareas = getPageTextareas();
   let start = 0;
 
   return textareas.flatMap((textarea, index) => {
@@ -117,13 +148,54 @@ function paragraphFragments(text: string, pageStart: number) {
   return fragments;
 }
 
+function inlineFontSizeAtCaret(
+  formatting: ChapterFormatting,
+  offset: number,
+) {
+  return [...formatting.fontSizes]
+    .reverse()
+    .find((item) => item.start <= offset && offset < item.end)?.size;
+}
+
+function visualCaret(
+  formatting: ChapterFormatting,
+  offset: number,
+  key: string,
+) {
+  const fontSize = inlineFontSizeAtCaret(formatting, offset);
+  const style = fontSize
+    ? ({ fontSize: `${fontSize}px` } satisfies CSSProperties)
+    : undefined;
+
+  return (
+    <span
+      className="writer-live-formatting-caret"
+      key={key}
+      style={style}
+    />
+  );
+}
+
 function renderInlineText(
   content: string,
   start: number,
   end: number,
   formatting: ChapterFormatting,
+  selection: TextSelection | null,
 ) {
-  if (end <= start) return "\u00a0";
+  const collapsedCaret =
+    selection && selection.start === selection.end ? selection.start : null;
+
+  if (end <= start) {
+    return (
+      <>
+        {collapsedCaret === start
+          ? visualCaret(formatting, start, `caret-${start}`)
+          : null}
+        {"\u00a0"}
+      </>
+    );
+  }
 
   const boundaries = new Set<number>([start, end]);
   for (const mark of formatting.marks) {
@@ -136,16 +208,41 @@ function renderInlineText(
     boundaries.add(Math.max(start, fontSize.start));
     boundaries.add(Math.min(end, fontSize.end));
   }
+  if (selection) {
+    if (selection.start > start && selection.start < end) {
+      boundaries.add(selection.start);
+    }
+    if (selection.end > start && selection.end < end) {
+      boundaries.add(selection.end);
+    }
+  }
 
   const ordered = [...boundaries].sort((left, right) => left - right);
-  return ordered.slice(0, -1).map((segmentStart, index) => {
+  const nodes: ReactNode[] = [];
+
+  ordered.slice(0, -1).forEach((segmentStart, index) => {
     const segmentEnd = ordered[index + 1] ?? segmentStart;
-    const classes = formatting.marks
+    if (collapsedCaret === segmentStart) {
+      nodes.push(
+        visualCaret(formatting, segmentStart, `caret-${segmentStart}-${index}`),
+      );
+    }
+
+    const markClasses = formatting.marks
       .filter(
         (mark) => mark.start <= segmentStart && mark.end >= segmentEnd,
       )
-      .map((mark) => `writer-live-formatting-mark--${mark.type}`)
-      .join(" ");
+      .map((mark) => `writer-live-formatting-mark--${mark.type}`);
+    const isSelected = Boolean(
+      selection &&
+        selection.end > selection.start &&
+        selection.start <= segmentStart &&
+        selection.end >= segmentEnd,
+    );
+    if (isSelected) {
+      markClasses.push("writer-live-formatting-selection");
+    }
+
     const fontSize = formatting.fontSizes.find(
       (item) => item.start <= segmentStart && item.end >= segmentEnd,
     )?.size;
@@ -153,16 +250,22 @@ function renderInlineText(
       ? ({ fontSize: `${fontSize}px` } satisfies CSSProperties)
       : undefined;
 
-    return (
+    nodes.push(
       <span
-        className={classes || undefined}
+        className={markClasses.length ? markClasses.join(" ") : undefined}
         key={`${segmentStart}-${segmentEnd}`}
         style={style}
       >
         {content.slice(segmentStart, segmentEnd)}
-      </span>
+      </span>,
     );
   });
+
+  if (collapsedCaret === end) {
+    nodes.push(visualCaret(formatting, end, `caret-${end}-end`));
+  }
+
+  return nodes;
 }
 
 function numberedListOrdinal(
@@ -179,10 +282,12 @@ function FormattedPage({
   content,
   formatting,
   page,
+  selection,
 }: {
   content: string;
   formatting: ChapterFormatting;
   page: PageTarget;
+  selection: TextSelection | null;
 }) {
   return (
     <div
@@ -233,6 +338,7 @@ function FormattedPage({
               fragment.start,
               fragment.end,
               formatting,
+              selection,
             )}
           </div>
         );
@@ -247,6 +353,7 @@ export function WriterLiveFormattingLayer() {
   );
   const [content, setContent] = useState("");
   const [pages, setPages] = useState<PageTarget[]>([]);
+  const [selection, setSelection] = useState<TextSelection | null>(null);
   const formattingKeyRef = useRef("");
 
   useEffect(() => {
@@ -280,6 +387,11 @@ export function WriterLiveFormattingLayer() {
         setPages((current) =>
           targetsEqual(current, nextPages) ? current : nextPages,
         );
+
+        const nextSelection = readActiveSelection();
+        setSelection((current) =>
+          selectionsEqual(current, nextSelection) ? current : nextSelection,
+        );
       });
     }
 
@@ -290,6 +402,12 @@ export function WriterLiveFormattingLayer() {
     document.addEventListener("input", refresh, true);
     document.addEventListener("change", refresh, true);
     document.addEventListener("click", refresh, true);
+    document.addEventListener("keyup", refresh, true);
+    document.addEventListener("mouseup", refresh, true);
+    document.addEventListener("select", refresh, true);
+    document.addEventListener("selectionchange", refresh);
+    document.addEventListener("focusin", refresh, true);
+    document.addEventListener("focusout", refresh, true);
 
     return () => {
       if (frame !== null) window.cancelAnimationFrame(frame);
@@ -299,6 +417,12 @@ export function WriterLiveFormattingLayer() {
       document.removeEventListener("input", refresh, true);
       document.removeEventListener("change", refresh, true);
       document.removeEventListener("click", refresh, true);
+      document.removeEventListener("keyup", refresh, true);
+      document.removeEventListener("mouseup", refresh, true);
+      document.removeEventListener("select", refresh, true);
+      document.removeEventListener("selectionchange", refresh);
+      document.removeEventListener("focusin", refresh, true);
+      document.removeEventListener("focusout", refresh, true);
     };
   }, []);
 
@@ -314,6 +438,7 @@ export function WriterLiveFormattingLayer() {
             content={content}
             formatting={formatting}
             page={page}
+            selection={selection}
           />,
           page.host,
           page.key,

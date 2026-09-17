@@ -25,6 +25,7 @@ import "@/features/writer/writer-book-structure.css";
 import "@/features/writer/writer-sidebar-regressions.css";
 import "@/features/writer/writer-book-trash.css";
 import "@/features/writer/writer-classification-stats.css";
+import "@/features/writer/writer-mobile-regressions.css";
 
 export default function WriterDashboardLayout({
   children,

@@ -13,11 +13,18 @@ function includes(text, fragment, label) {
 
 test("writer editing tools expose compact manuscript comfort controls", () => {
   const tools = source("src/features/writer/components/WriterEditingTools.tsx");
+  const richTools = source("src/features/writer/components/WriterRichTextFormattingTools.tsx");
+  const formatting = source("src/features/works/rich-text-formatting.ts");
   const css = source("src/features/writer/writer-editing-tools.css");
 
   includes(tools, "Yazı araçları", "writer tools label");
-  includes(tools, "Yazıyı küçült", "font size decrease control");
-  includes(tools, "Yazıyı büyüt", "font size increase control");
+  includes(tools, "Seçili yazıyı küçült", "selected font size decrease control");
+  includes(tools, "Seçili yazıyı büyüt", "selected font size increase control");
+  includes(tools, "changeSelectedFontSize(-1)", "selected font size decrease command");
+  includes(tools, "changeSelectedFontSize(1)", "selected font size increase command");
+  includes(richTools, "adjustInlineFontSize", "semantic selected font size command");
+  includes(formatting, "fontSizes", "semantic selected font size metadata");
+  includes(formatting, "ChapterInlineFontSize", "selected font size range type");
   includes(tools, "Satır aralığını azalt", "line spacing decrease control");
   includes(tools, "Satır aralığını artır", "line spacing increase control");
   includes(tools, '<option value="book">Kitap</option>', "book manuscript width preset");

@@ -73,7 +73,9 @@
 
 @media (max-width: 900px) {
   .public-site-header__account-menu {
-    top: calc(100% + 4.75rem) !important;
+    /* On mobile the account control is already icon-only. Anchor the popover to
+       that control instead of pushing it below the separate navigation band. */
+    top: calc(100% + 0.65rem) !important;
     right: 0 !important;
     width: min(15rem, calc(100vw - 1.25rem)) !important;
     border-radius: 0.9rem !important;

@@ -1,0 +1,123 @@
+/* Mobile-only guardrail for the writer dashboard/editor.
+ * Keep desktop composition untouched while preventing narrow rails and viewport overflow.
+ */
+
+@media (max-width: 47.99rem) {
+  /* Dashboard book covers need enough room to show short titles without clipping. */
+  .dashboard .book-card {
+    grid-template-columns: 5.75rem minmax(0, 1fr);
+  }
+
+  .dashboard .book-cover,
+  .dashboard .book-cover__copy {
+    min-width: 0;
+  }
+
+  .dashboard .book-cover {
+    padding: 0.65rem;
+  }
+
+  .dashboard .book-cover__copy strong {
+    display: block;
+    max-width: 100%;
+    font-size: 0.88rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Four writer actions stay in a compact 2x2 block instead of three tall rows. */
+  .writer-screen .writer-toolbar {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 0.55rem !important;
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  .writer-screen .writer-toolbar__document,
+  .writer-screen .writer-toolbar__session {
+    min-width: 0;
+  }
+
+  .writer-screen .writer-toolbar__actions {
+    grid-column: 1 / -1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
+    width: 100%;
+  }
+
+  .writer-screen .writer-toolbar__actions .button,
+  .writer-screen .writer-save-button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 2.65rem !important;
+    padding: 0.55rem !important;
+    font-size: 0.72rem !important;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .writer-screen .writer-toolbar__actions .button:last-child {
+    grid-column: auto !important;
+  }
+
+  /* Tool strips scroll inside their own row; they must never widen the page itself. */
+  .writer-screen .writer-context-bar,
+  .writer-screen.writer-screen--focus .writer-context-bar {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 0.4rem !important;
+    padding: 0.5rem 0.55rem !important;
+    overflow-x: hidden;
+  }
+
+  .writer-screen .writer-editing-tools,
+  .writer-screen .writer-rich-formatting-tools,
+  .writer-screen .writer-text-commands {
+    grid-column: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .writer-screen .focus-mode-toggle {
+    grid-column: 1 !important;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.55rem;
+    justify-content: center;
+    margin: 0 !important;
+  }
+
+  /* Flex-column mobile editor must stretch its sidebar and manuscript to the viewport. */
+  .writer-screen .writer-editor-layout {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    padding-inline: 0.55rem !important;
+  }
+
+  .writer-screen .writer-chapters {
+    align-self: stretch !important;
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .writer-screen .writer-chapters__list,
+  .writer-screen .writer-canvas {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100% !important;
+  }
+}

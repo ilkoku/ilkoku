@@ -19,6 +19,11 @@ import {
   publishedBookItemHref,
   type PublishedBookItem,
 } from "@/features/works/book-publication";
+import {
+  hasChapterFormatting,
+  parseChapterFormatting,
+  type ChapterFormatting,
+} from "@/features/works/rich-text-formatting";
 import type { PublicChapterDetail } from "@/features/works/types";
 import { ChapterSelector } from "./ChapterSelector";
 import { PagedReadingViewport } from "./PagedReadingViewport";
@@ -29,6 +34,19 @@ import { ReadingPageIndicator } from "./ReadingPageIndicator";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import styles from "./FocusedReadingExperience.module.css";
 import parityStyles from "./ReaderPublicationParity.module.css";
+
+function parseReaderFormatting(
+  raw: string | null | undefined,
+  content: string,
+): ChapterFormatting | null {
+  if (!raw) return null;
+  try {
+    const formatting = parseChapterFormatting(raw, content);
+    return hasChapterFormatting(formatting) ? formatting : null;
+  } catch {
+    return null;
+  }
+}
 
 export function FocusedReadingExperience({
   canComment = false,
@@ -117,6 +135,14 @@ export function FocusedReadingExperience({
   const activeBookPageEnd = activeBookItem
     ? activeBookPageStart + activeBookItem.layout.pageEnds.length - 1
     : activeBookPageStart + (chapter.publicationLayout?.pageEnds.length ?? 1) - 1;
+  const storedChapterFormatting = parseReaderFormatting(
+    chapter.formatting,
+    chapter.content,
+  );
+  const publicationFormatting =
+    activeBookItem?.type === "chapter"
+      ? activeBookItem.formatting ?? storedChapterFormatting
+      : storedChapterFormatting;
 
   const encodedReturnTo = encodeURIComponent(returnTo);
   const currentBookPath = `/kitap/${chapter.work.slug}`;
@@ -291,6 +317,7 @@ export function FocusedReadingExperience({
                 bookTotalPages={publishedBook?.totalPages}
                 chapterTitle={chapter.title}
                 content={chapter.content}
+                formatting={publicationFormatting}
                 identity={protectionIdentity}
                 layout={chapter.publicationLayout}
                 nextChapterHref={nextChapterHref}

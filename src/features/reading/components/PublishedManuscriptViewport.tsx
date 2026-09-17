@@ -17,6 +17,10 @@ import {
   type PublicationFont,
   type PublicationLayoutSnapshot,
 } from "@/features/works/publication-layout";
+import type {
+  ChapterFormatting,
+  InlineMarkType,
+} from "@/features/works/rich-text-formatting";
 import type { PersonalBookAnnotationRecord } from "../personal-book-annotation-types";
 import { parsePersonalPagePointAnchor } from "../personal-page-point-anchor";
 import { READING_PAGE_PROGRESS_EVENT } from "../reading-display-mode";
@@ -35,6 +39,8 @@ const watermarkCopies = Array.from({ length: 24 }, (_, index) => index);
 type PageTextSegment = {
   annotations: PersonalBookAnnotationRecord[];
   end: number;
+  fontSize: number | null;
+  marks: InlineMarkType[];
   start: number;
   text: string;
 };
@@ -46,11 +52,13 @@ function clamp01(value: number) {
 function buildPageSegments({
   annotations,
   content,
+  formatting,
   pageEnd,
   pageStart,
 }: {
   annotations: PersonalBookAnnotationRecord[];
   content: string;
+  formatting?: ChapterFormatting | null;
   pageEnd: number;
   pageStart: number;
 }) {
@@ -68,6 +76,18 @@ function buildPageSegments({
     boundaries.add(Math.min(pageEnd, annotation.endOffset as number));
   }
 
+  for (const mark of formatting?.marks ?? []) {
+    if (mark.start >= pageEnd || mark.end <= pageStart) continue;
+    boundaries.add(Math.max(pageStart, mark.start));
+    boundaries.add(Math.min(pageEnd, mark.end));
+  }
+
+  for (const fontSize of formatting?.fontSizes ?? []) {
+    if (fontSize.start >= pageEnd || fontSize.end <= pageStart) continue;
+    boundaries.add(Math.max(pageStart, fontSize.start));
+    boundaries.add(Math.min(pageEnd, fontSize.end));
+  }
+
   const sorted = [...boundaries].sort((left, right) => left - right);
   const segments: PageTextSegment[] = [];
 
@@ -75,6 +95,14 @@ function buildPageSegments({
     const start = sorted[index];
     const end = sorted[index + 1];
     if (end <= start) continue;
+
+    const activeMarks = (formatting?.marks ?? [])
+      .filter((mark) => mark.start <= start && mark.end >= end)
+      .map((mark) => mark.type);
+    const fontSize = [...(formatting?.fontSizes ?? [])]
+      .reverse()
+      .find((item) => item.start <= start && item.end >= end)?.size ?? null;
+
     segments.push({
       annotations: textAnnotations.filter(
         (annotation) =>
@@ -82,6 +110,8 @@ function buildPageSegments({
           (annotation.endOffset as number) > start,
       ),
       end,
+      fontSize,
+      marks: activeMarks,
       start,
       text: content.slice(start, end),
     });
@@ -102,6 +132,7 @@ export function PublishedManuscriptViewport({
   bookTotalPages,
   chapterTitle,
   content,
+  formatting = null,
   identity,
   layout,
   nextChapterHref,
@@ -116,6 +147,7 @@ export function PublishedManuscriptViewport({
   bookTotalPages?: number;
   chapterTitle: string;
   content: string;
+  formatting?: ChapterFormatting | null;
   identity: string;
   layout: PublicationLayoutSnapshot;
   nextChapterHref?: string | null;
@@ -268,6 +300,7 @@ export function PublishedManuscriptViewport({
   const pageSegments = buildPageSegments({
     annotations,
     content,
+    formatting,
     pageEnd: activePage.end,
     pageStart: activePage.start,
   });
@@ -381,6 +414,17 @@ export function PublishedManuscriptViewport({
       .join(" ");
   }
 
+  function segmentStyle(segment: PageTextSegment) {
+    return {
+      fontSize: segment.fontSize ? `${segment.fontSize}px` : undefined,
+      fontStyle: segment.marks.includes("italic") ? "italic" : undefined,
+      fontWeight: segment.marks.includes("bold") ? 700 : undefined,
+      textDecorationLine: segment.marks.includes("underline")
+        ? "underline"
+        : undefined,
+    } satisfies CSSProperties;
+  }
+
   function handleSegmentClick(
     event: ReactPointerEvent<HTMLSpanElement>,
     segment: PageTextSegment,
@@ -462,6 +506,7 @@ export function PublishedManuscriptViewport({
                   }
                   key={`${segment.start}-${segment.end}`}
                   onPointerUp={(event) => handleSegmentClick(event, segment)}
+                  style={segmentStyle(segment)}
                 >
                   {segment.text}
                 </span>

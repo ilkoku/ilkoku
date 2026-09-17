@@ -90,6 +90,33 @@ test("writer editing tools are mounted on every writer editing route", () => {
   }
 });
 
+test("writer semantic formatting survives preview and reader publication rendering", () => {
+  const fullBookPreview = source(
+    "src/features/writer/components/WriterFullBookPublicationEnhancer.tsx",
+  );
+  const publishExperience = source(
+    "src/features/writer/components/WriterPublishExperienceEnhancer.tsx",
+  );
+  const publishedViewport = source(
+    "src/features/reading/components/PublishedManuscriptViewport.tsx",
+  );
+  const reader = source("src/features/reading/components/FocusedReadingExperience.tsx");
+
+  includes(fullBookPreview, "currentChapterFormatting", "current semantic formatting capture");
+  includes(fullBookPreview, "parseChapterFormatting", "publication preview formatting parser");
+  includes(fullBookPreview, "formatting,", "publication preview chapter formatting snapshot");
+  includes(
+    publishExperience,
+    'formatting={activeItem.type === "chapter" ? activeItem.formatting : null}',
+    "full-book preview formatting handoff",
+  );
+  includes(publishExperience, "parsePreviewFormatting", "single-preview formatting handoff");
+  includes(publishedViewport, "formatting?.fontSizes", "published font-size range rendering");
+  includes(publishedViewport, 'fontSize: segment.fontSize ? `${segment.fontSize}px` : undefined', "published selected font size style");
+  includes(publishedViewport, 'segment.marks.includes("bold")', "published bold semantic rendering");
+  includes(reader, "formatting={publicationFormatting}", "reader publication formatting handoff");
+});
+
 test("reader manuscript keeps canonical writer paper typography and measured pages", () => {
   const reader = source("src/features/reading/components/FocusedReadingExperience.tsx");
   const indicator = source("src/features/reading/components/ReadingPageIndicator.tsx");

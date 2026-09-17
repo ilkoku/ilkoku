@@ -12,6 +12,11 @@ import {
 import { isSpecialBookSectionKind } from "@/features/works/book-structure";
 import { prepareFullBookPublicationAction } from "@/features/works/prepare-full-book-publication-action";
 import { parsePublicationLayout } from "@/features/works/publication-layout";
+import {
+  CHAPTER_FORMATTING_INPUT_NAME,
+  hasChapterFormatting,
+  parseChapterFormatting,
+} from "@/features/works/rich-text-formatting";
 import { measureBookPublicationLayouts } from "../book-publication-measurement";
 import {
   getMissingPublicationRequirements,
@@ -255,6 +260,10 @@ export function WriterFullBookPublicationEnhancer() {
         form.querySelector<HTMLInputElement>('input[name="chapterTitle"]')?.value ?? "";
       const chapterContent =
         form.querySelector<HTMLTextAreaElement>('textarea[name="content"]')?.value ?? "";
+      const currentChapterFormatting =
+        form.querySelector<HTMLInputElement>(
+          `input[name="${CHAPTER_FORMATTING_INPUT_NAME}"]`,
+        )?.value ?? "";
 
       if (!workId || !workTitle || !chapterId || !chapterTitle.trim()) {
         return {
@@ -324,6 +333,21 @@ export function WriterFullBookPublicationEnhancer() {
             };
           }
 
+          const rawFormatting = isCurrentChapter
+            ? currentChapterFormatting || item.formatting
+            : item.formatting;
+          let formatting = null;
+          if (rawFormatting) {
+            try {
+              const parsedFormatting = parseChapterFormatting(rawFormatting, content);
+              formatting = hasChapterFormatting(parsedFormatting)
+                ? parsedFormatting
+                : null;
+            } catch {
+              formatting = null;
+            }
+          }
+
           previewItems.push({
             type: "chapter",
             structureItemId: item.id,
@@ -333,6 +357,7 @@ export function WriterFullBookPublicationEnhancer() {
             title,
             subtitle: writerContent.editor.subtitle,
             content,
+            formatting,
             layout,
           });
           continue;

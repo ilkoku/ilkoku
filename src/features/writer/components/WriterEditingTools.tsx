@@ -17,10 +17,7 @@ type WriterPreferences = {
   spellcheck: boolean;
 };
 
-type StoredWriterPreferences = Omit<
-  Partial<WriterPreferences>,
-  "pageFlow"
-> & {
+type StoredWriterPreferences = Omit<Partial<WriterPreferences>, "pageFlow"> & {
   pageFlow?: WriterPageFlow | "sideBySide";
 };
 
@@ -36,6 +33,7 @@ type GoalSnapshot = {
 const STORAGE_KEY = "ilkoku.writer.preferences.v2";
 const LEGACY_STORAGE_KEY = "ilkoku.writer.preferences.v1";
 const EMPTY_GOAL_SNAPSHOT = "";
+const WRITER_FONT_SIZE_STEP_EVENT = "ilkoku:writer-font-size-step";
 
 const defaultPreferences: WriterPreferences = {
   fontSize: 17,
@@ -67,14 +65,10 @@ function clamp(value: number, min: number, max: number) {
 function loadPreferences(): WriterPreferences {
   try {
     const currentRaw = window.localStorage.getItem(STORAGE_KEY);
-    const legacyRaw = currentRaw
-      ? null
-      : window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    const legacyRaw = currentRaw ? null : window.localStorage.getItem(LEGACY_STORAGE_KEY);
     const raw = currentRaw ?? legacyRaw;
 
-    if (!raw) {
-      return defaultPreferences;
-    }
+    if (!raw) return defaultPreferences;
 
     const parsed = JSON.parse(raw) as StoredWriterPreferences;
     const migratedPageFlow = legacyRaw
@@ -116,10 +110,7 @@ function loadPreferences(): WriterPreferences {
 }
 
 function getToolbarTarget() {
-  if (typeof document === "undefined") {
-    return null;
-  }
-
+  if (typeof document === "undefined") return null;
   return document.querySelector<HTMLElement>(".writer-context-bar");
 }
 
@@ -128,16 +119,9 @@ function getServerToolbarTarget() {
 }
 
 function subscribeToolbarTarget(onStoreChange: () => void) {
-  if (typeof document === "undefined") {
-    return () => undefined;
-  }
-
+  if (typeof document === "undefined") return () => undefined;
   const observer = new MutationObserver(onStoreChange);
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-
+  observer.observe(document.body, { childList: true, subtree: true });
   return () => observer.disconnect();
 }
 
@@ -146,9 +130,7 @@ function readGoalSnapshot(screen: HTMLElement) {
   const progress = goal?.querySelector<HTMLProgressElement>("progress");
   const current = goal?.querySelector<HTMLElement>("div strong");
   const percent = goal?.querySelector<HTMLElement>(":scope > span");
-  const remaining = goal?.querySelector<HTMLElement>(
-    ".writer-goal__remaining",
-  );
+  const remaining = goal?.querySelector<HTMLElement>(".writer-goal__remaining");
 
   if (!goal || !progress || !current || !percent || !remaining) {
     return EMPTY_GOAL_SNAPSHOT;
@@ -174,7 +156,6 @@ function WriterGoalStatistics({ screen }: { screen: HTMLElement }) {
         childList: true,
         subtree: true,
       });
-
       return () => observer.disconnect();
     },
     () => readGoalSnapshot(screen),
@@ -184,17 +165,11 @@ function WriterGoalStatistics({ screen }: { screen: HTMLElement }) {
     ".writer-editor-layout > .writer-footer",
   );
 
-  if (!snapshot || !footer) {
-    return null;
-  }
-
+  if (!snapshot || !footer) return null;
   const goal = JSON.parse(snapshot) as GoalSnapshot;
 
   return createPortal(
-    <div
-      className="writer-footer__stat writer-footer__goal"
-      aria-label={goal.label}
-    >
+    <div className="writer-footer__stat writer-footer__goal" aria-label={goal.label}>
       <span>Günlük kelime hedefi</span>
       <strong>{goal.current}</strong>
       <progress max={goal.max} value={goal.progress}>
@@ -213,29 +188,17 @@ export function WriterEditingTools() {
     getServerToolbarTarget,
   );
   const [preferences, setPreferences] = useState<WriterPreferences>(() =>
-    typeof window === "undefined"
-      ? defaultPreferences
-      : loadPreferences(),
+    typeof window === "undefined" ? defaultPreferences : loadPreferences(),
   );
 
   useEffect(() => {
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(preferences),
-    );
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
   }, [preferences]);
 
   useEffect(() => {
-    if (!target) {
-      return;
-    }
-
+    if (!target) return;
     const screen = target.closest<HTMLElement>(".writer-screen");
-
-    if (!screen) {
-      return;
-    }
-
+    if (!screen) return;
     const writerScreen = screen;
 
     screen.style.setProperty(
@@ -265,93 +228,60 @@ export function WriterEditingTools() {
         .querySelectorAll<HTMLTextAreaElement>(".writer-textarea")
         .forEach((textarea) => {
           textarea.spellcheck = preferences.spellcheck;
-          textarea.setAttribute(
-            "spellcheck",
-            String(preferences.spellcheck),
-          );
+          textarea.setAttribute("spellcheck", String(preferences.spellcheck));
         });
     }
 
     applySpellcheck();
     const observer = new MutationObserver(applySpellcheck);
     observer.observe(writerScreen, { childList: true, subtree: true });
-
-    window.dispatchEvent(
-      new CustomEvent("ilkoku:writer-preferences-changed"),
-    );
-
+    window.dispatchEvent(new CustomEvent("ilkoku:writer-preferences-changed"));
     return () => observer.disconnect();
   }, [preferences, target]);
 
-  function updatePreferences(
-    update: Partial<WriterPreferences>,
-  ) {
-    setPreferences((current) => ({
-      ...current,
-      ...update,
-    }));
+  function updatePreferences(update: Partial<WriterPreferences>) {
+    setPreferences((current) => ({ ...current, ...update }));
   }
 
   function resetPreferences() {
     setPreferences(defaultPreferences);
   }
 
-  if (!target) {
-    return null;
+  function changeSelectedFontSize(delta: -1 | 1) {
+    window.dispatchEvent(
+      new CustomEvent(WRITER_FONT_SIZE_STEP_EVENT, {
+        detail: {
+          baseFontSize: preferences.fontSize,
+          delta,
+        },
+      }),
+    );
   }
 
+  if (!target) return null;
   const screen = target.closest<HTMLElement>(".writer-screen");
 
   return (
     <>
       {createPortal(
-        <div
-          className="writer-editing-tools"
-          aria-label="Yazı araçları"
-          role="toolbar"
-        >
-          <span className="writer-editing-tools__label">
-            Yazı araçları
-          </span>
+        <div className="writer-editing-tools" aria-label="Yazı araçları" role="toolbar">
+          <span className="writer-editing-tools__label">Yazı araçları</span>
 
-          <div
-            className="writer-editing-tools__group"
-            aria-label="Yazı boyutu"
-          >
+          <div className="writer-editing-tools__group" aria-label="Seçili yazı boyutu">
             <button
               type="button"
-              onClick={() =>
-                updatePreferences({
-                  fontSize: clamp(
-                    preferences.fontSize - 1,
-                    14,
-                    24,
-                  ),
-                })
-              }
-              disabled={preferences.fontSize <= 14}
-              title="Yazıyı küçült"
-              aria-label="Yazıyı küçült"
+              onClick={() => changeSelectedFontSize(-1)}
+              title="Seçili yazıyı küçült"
+              aria-label="Seçili yazıyı küçült"
             >
               A−
             </button>
-            <output aria-label="Yazı boyutu">
-              {preferences.fontSize}
-            </output>
+            <output aria-label="Yazı boyutu hedefi">Seçim</output>
             <button
               type="button"
-              onClick={() =>
-                updatePreferences({
-                  fontSize: clamp(
-                    preferences.fontSize + 1,
-                    14,
-                    24,
-                  ),
-                })
-              }
-              disabled={preferences.fontSize >= 24}
-              title="Yazıyı büyüt"
-              aria-label="Yazıyı büyüt"
+              onClick={() => changeSelectedFontSize(1)}
+              title="Seçili yazıyı büyüt"
+              aria-label="Seçili yazıyı büyüt"
             >
               A+
             </button>
@@ -361,11 +291,7 @@ export function WriterEditingTools() {
             <span>Yazı tipi</span>
             <select
               value={preferences.font}
-              onChange={(event) =>
-                updatePreferences({
-                  font: event.target.value as WriterFont,
-                })
-              }
+              onChange={(event) => updatePreferences({ font: event.target.value as WriterFont })}
               aria-label="Yazı tipi"
             >
               <option value="typewriter">Daktilo</option>
@@ -374,21 +300,14 @@ export function WriterEditingTools() {
             </select>
           </label>
 
-          <div
-            className="writer-editing-tools__group"
-            aria-label="Satır aralığı"
-          >
+          <div className="writer-editing-tools__group" aria-label="Satır aralığı">
             <span>Satır</span>
             <button
               type="button"
               onClick={() =>
                 updatePreferences({
                   lineHeight: Number(
-                    clamp(
-                      preferences.lineHeight - 0.1,
-                      1.5,
-                      2.3,
-                    ).toFixed(1),
+                    clamp(preferences.lineHeight - 0.1, 1.5, 2.3).toFixed(1),
                   ),
                 })
               }
@@ -398,19 +317,13 @@ export function WriterEditingTools() {
             >
               −
             </button>
-            <output aria-label="Satır aralığı">
-              {preferences.lineHeight.toFixed(1)}
-            </output>
+            <output aria-label="Satır aralığı">{preferences.lineHeight.toFixed(1)}</output>
             <button
               type="button"
               onClick={() =>
                 updatePreferences({
                   lineHeight: Number(
-                    clamp(
-                      preferences.lineHeight + 0.1,
-                      1.5,
-                      2.3,
-                    ).toFixed(1),
+                    clamp(preferences.lineHeight + 0.1, 1.5, 2.3).toFixed(1),
                   ),
                 })
               }
@@ -426,11 +339,7 @@ export function WriterEditingTools() {
             <span>Sayfa</span>
             <select
               value={preferences.width}
-              onChange={(event) =>
-                updatePreferences({
-                  width: event.target.value as WriterWidth,
-                })
-              }
+              onChange={(event) => updatePreferences({ width: event.target.value as WriterWidth })}
               aria-label="Yazı alanı genişliği"
             >
               <option value="book">Kitap</option>
@@ -444,9 +353,7 @@ export function WriterEditingTools() {
             <select
               value={preferences.pageFlow}
               onChange={(event) =>
-                updatePreferences({
-                  pageFlow: event.target.value as WriterPageFlow,
-                })
+                updatePreferences({ pageFlow: event.target.value as WriterPageFlow })
               }
               aria-label="Sayfa görünümü"
             >
@@ -462,27 +369,17 @@ export function WriterEditingTools() {
             <span>Yakınlaştır</span>
             <button
               type="button"
-              onClick={() =>
-                updatePreferences({
-                  zoom: clamp(preferences.zoom - 10, 50, 160),
-                })
-              }
+              onClick={() => updatePreferences({ zoom: clamp(preferences.zoom - 10, 50, 160) })}
               disabled={preferences.zoom <= 50}
               title="Uzaklaştır"
               aria-label="Uzaklaştır"
             >
               −
             </button>
-            <output aria-label="Yakınlaştırma oranı">
-              {preferences.zoom}%
-            </output>
+            <output aria-label="Yakınlaştırma oranı">{preferences.zoom}%</output>
             <button
               type="button"
-              onClick={() =>
-                updatePreferences({
-                  zoom: clamp(preferences.zoom + 10, 50, 160),
-                })
-              }
+              onClick={() => updatePreferences({ zoom: clamp(preferences.zoom + 10, 50, 160) })}
               disabled={preferences.zoom >= 160}
               title="Yakınlaştır"
               aria-label="Yakınlaştır"
@@ -495,11 +392,7 @@ export function WriterEditingTools() {
             className="writer-editing-tools__toggle"
             type="button"
             aria-pressed={preferences.spellcheck}
-            onClick={() =>
-              updatePreferences({
-                spellcheck: !preferences.spellcheck,
-              })
-            }
+            onClick={() => updatePreferences({ spellcheck: !preferences.spellcheck })}
             title="Tarayıcının yazım denetimini aç veya kapat"
           >
             Yazım Denetimi · {preferences.spellcheck ? "Açık" : "Kapalı"}

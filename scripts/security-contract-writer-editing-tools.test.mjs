@@ -13,11 +13,18 @@ function includes(text, fragment, label) {
 
 test("writer editing tools expose compact manuscript comfort controls", () => {
   const tools = source("src/features/writer/components/WriterEditingTools.tsx");
+  const richTools = source("src/features/writer/components/WriterRichTextFormattingTools.tsx");
+  const formatting = source("src/features/works/rich-text-formatting.ts");
   const css = source("src/features/writer/writer-editing-tools.css");
 
   includes(tools, "Yazı araçları", "writer tools label");
-  includes(tools, "Yazıyı küçült", "font size decrease control");
-  includes(tools, "Yazıyı büyüt", "font size increase control");
+  includes(tools, "Seçili yazıyı küçült", "selected font size decrease control");
+  includes(tools, "Seçili yazıyı büyüt", "selected font size increase control");
+  includes(tools, "changeSelectedFontSize(-1)", "selected font size decrease command");
+  includes(tools, "changeSelectedFontSize(1)", "selected font size increase command");
+  includes(richTools, "applyInlineFontSize", "semantic selected font size command");
+  includes(formatting, "fontSizes", "semantic selected font size metadata");
+  includes(formatting, "ChapterInlineFontSize", "selected font size range type");
   includes(tools, "Satır aralığını azalt", "line spacing decrease control");
   includes(tools, "Satır aralığını artır", "line spacing increase control");
   includes(tools, '<option value="book">Kitap</option>', "book manuscript width preset");
@@ -81,6 +88,33 @@ test("writer editing tools are mounted on every writer editing route", () => {
     includes(layout, "writer-text-editing-commands.css", `${path} text commands CSS`);
     includes(layout, "writer-rich-text-formatting.css", `${path} rich text CSS`);
   }
+});
+
+test("writer semantic formatting survives preview and reader publication rendering", () => {
+  const fullBookPreview = source(
+    "src/features/writer/components/WriterFullBookPublicationEnhancer.tsx",
+  );
+  const publishExperience = source(
+    "src/features/writer/components/WriterPublishExperienceEnhancer.tsx",
+  );
+  const publishedViewport = source(
+    "src/features/reading/components/PublishedManuscriptViewport.tsx",
+  );
+  const reader = source("src/features/reading/components/FocusedReadingExperience.tsx");
+
+  includes(fullBookPreview, "currentChapterFormatting", "current semantic formatting capture");
+  includes(fullBookPreview, "parseChapterFormatting", "publication preview formatting parser");
+  includes(fullBookPreview, "formatting,", "publication preview chapter formatting snapshot");
+  includes(
+    publishExperience,
+    'formatting={activeItem.type === "chapter" ? activeItem.formatting : null}',
+    "full-book preview formatting handoff",
+  );
+  includes(publishExperience, "parsePreviewFormatting", "single-preview formatting handoff");
+  includes(publishedViewport, "formatting?.fontSizes", "published font-size range rendering");
+  includes(publishedViewport, 'fontSize: segment.fontSize ? `${segment.fontSize}px` : undefined', "published selected font size style");
+  includes(publishedViewport, 'segment.marks.includes("bold")', "published bold semantic rendering");
+  includes(reader, "formatting={publicationFormatting}", "reader publication formatting handoff");
 });
 
 test("reader manuscript keeps canonical writer paper typography and measured pages", () => {

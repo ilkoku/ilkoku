@@ -149,7 +149,7 @@ export default async function PublicSiteMapPage() {
           Site Haritası
         </h1>
         <p className="mt-5 text-base leading-8 text-[#625b6d] sm:text-lg">
-          İlkOku'nun herkese açık sayfalarına, yazarlık ve okurluk eğitimlerine, editörlük okuluna,
+          İlkOku&apos;nun herkese açık sayfalarına, yazarlık ve okurluk eğitimlerine, editörlük okuluna,
           güven ve yasal bilgilere tek yerden ulaş. Bu sayfa gerçek HTML bağlantılarıyla public
           içerik yüzeyini birbirine bağlar.
         </p>

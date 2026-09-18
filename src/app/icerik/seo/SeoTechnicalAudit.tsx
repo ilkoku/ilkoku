@@ -1,9 +1,5 @@
 import Link from "next/link";
 import {
-  getPublicAuthors,
-  getPublicGenres,
-} from "@/features/public-discovery/library";
-import {
   defaultFooterNavigation,
   FOOTER_LIVE_KEY,
   parseFooterNavigation,
@@ -24,17 +20,15 @@ type SeoRow = {
 type FooterRow = { valueJson: string };
 type Tone = "ok" | "warn" | "danger";
 
-type PublicDiscoveryState = {
+type PublicIndexState = {
   state: "ok" | "unavailable";
   staticRoutes: number;
   works: number;
-  authors: number;
-  genres: number;
 };
 
 type TechnicalState = {
   pages: SeoRow[];
-  publicDiscovery: PublicDiscoveryState;
+  publicIndex: PublicIndexState;
   footer: {
     state: "ok" | "fallback" | "corrupt" | "unavailable";
     blockers: number;
@@ -88,17 +82,14 @@ async function loadTechnicalState(): Promise<TechnicalState | null> {
     return null;
   }
 
-  let publicDiscovery: PublicDiscoveryState = {
+  let publicIndex: PublicIndexState = {
     state: "unavailable",
     staticRoutes: publicCodeOwnedIndexRoutes.length,
     works: 0,
-    authors: 0,
-    genres: 0,
   };
 
   try {
-    const [works, authors, genres] = await Promise.all([
-      prisma.work.findMany({
+    const works = await prisma.work.findMany({
         where: {
           archivedAt: null,
           contentRating: {
@@ -121,21 +112,16 @@ async function loadTechnicalState(): Promise<TechnicalState | null> {
           slug: true,
         },
         take: 50_000,
-      }),
-      getPublicAuthors(),
-      getPublicGenres(),
-    ]);
+      });
 
-    publicDiscovery = {
+    publicIndex = {
       state: "ok",
       staticRoutes: publicCodeOwnedIndexRoutes.length,
       works: works.filter((work) => !isBlockedPublicWorkSlug(work.slug)).length,
-      authors: authors.length,
-      genres: genres.length,
     };
   } catch {
     // Keep the code-owned static inventory visible, but fail closed on
-    // database-backed public discovery counts.
+    // the database-backed public work count.
   }
 
   let footer: TechnicalState["footer"] = { state: "fallback", blockers: 0, fallbacks: 0 };
@@ -165,7 +151,7 @@ async function loadTechnicalState(): Promise<TechnicalState | null> {
     footer = { state: "unavailable", blockers: 1, fallbacks: 0 };
   }
 
-  return { pages: pages.filter((page) => isTrSeoPage(page.contentKey)), publicDiscovery, footer };
+  return { pages: pages.filter((page) => isTrSeoPage(page.contentKey)), publicIndex, footer };
 }
 
 function Card({ state, label, value, detail }: { state: Tone; label: string; value: string; detail: string }) {
@@ -205,14 +191,13 @@ export async function SeoTechnicalAudit() {
   const duplicateCanonical = [...canonicalCounts.values()].filter((count) => count > 1).reduce((sum, count) => sum + count - 1, 0);
   const sitemapEligible = indexable.filter((page) => sitemapFamily(page.contentKey)).length;
   const unsupportedIndexable = indexable.filter((page) => !sitemapFamily(page.contentKey)).length;
-  const dynamicDiscoveryCount = state.publicDiscovery.works + state.publicDiscovery.authors + state.publicDiscovery.genres;
-  const codeOwnedSitemapCount = state.publicDiscovery.staticRoutes + dynamicDiscoveryCount;
+  const codeOwnedSitemapCount = state.publicIndex.staticRoutes + state.publicIndex.works;
   const calculatedSitemapCoverage = sitemapEligible + codeOwnedSitemapCount;
   const canonicalBlockers = invalidCanonical + duplicateCanonical;
-  const publicDiscoveryBlockers = state.publicDiscovery.state === "unavailable" && live.sitemap.state !== "ok" ? 1 : 0;
+  const publicIndexBlockers = state.publicIndex.state === "unavailable" && live.sitemap.state !== "ok" ? 1 : 0;
   const liveEvidenceBlockers = Number(live.robots.state === "danger") + Number(live.sitemap.state === "danger") + Number(live.social.state === "danger");
   const liveEvidenceWarnings = Number(live.robots.state === "warn") + Number(live.sitemap.state === "warn") + Number(live.social.state === "warn");
-  const blockers = canonicalBlockers + publicDiscoveryBlockers + state.footer.blockers + liveEvidenceBlockers;
+  const blockers = canonicalBlockers + publicIndexBlockers + state.footer.blockers + liveEvidenceBlockers;
   // Safe code fallbacks are operational information, not SEO warnings. Only
   // missing/unsupported metadata and unreadable live evidence count here.
   const warnings = missingCanonical + unsupportedIndexable + liveEvidenceWarnings;
@@ -226,9 +211,9 @@ export async function SeoTechnicalAudit() {
         ? "Teknik SEO temiz. Footer güvenli kod fallback hedeflerini kullanıyor; bu durum indeksleme hatası değildir."
         : "Teknik SEO sözleşmeleri ile canlı sitemap/robots/social kanıtı doğrulandı; metadata kuyruğundaki içerik işlerine geçebilirsiniz.";
 
-  const runtimeSitemapDetail = state.publicDiscovery.state === "ok"
-    ? `${sitemapEligible} CMS URL · ${state.publicDiscovery.staticRoutes} kod tabanlı keşif URL'si · ${state.publicDiscovery.works} eser · ${state.publicDiscovery.authors} yazar · ${state.publicDiscovery.genres} tür.`
-    : `${sitemapEligible} CMS URL ve ${state.publicDiscovery.staticRoutes} kod tabanlı keşif URL'si biliniyor; eser/yazar/tür runtime envanteri okunamadı.`;
+  const runtimeSitemapDetail = state.publicIndex.state === "ok"
+    ? `${sitemapEligible} CMS URL · ${state.publicIndex.staticRoutes} kod tabanlı public URL · ${state.publicIndex.works} public eser.`
+    : `${sitemapEligible} CMS URL ve ${state.publicIndex.staticRoutes} kod tabanlı public URL biliniyor; public eser runtime envanteri okunamadı.`;
   const sitemapDetail = `${live.sitemap.detail} İç envanter: ${runtimeSitemapDetail}`;
   const sitemapCardState: Tone = live.sitemap.state === "danger"
     ? "danger"
@@ -239,7 +224,7 @@ export async function SeoTechnicalAudit() {
         : "ok";
   const sitemapValue = live.sitemap.count !== null
     ? `${live.sitemap.count} canlı URL`
-    : state.publicDiscovery.state === "ok"
+    : state.publicIndex.state === "ok"
       ? `${calculatedSitemapCoverage} hesaplanan URL`
       : "Canlı kontrol gerekli";
 

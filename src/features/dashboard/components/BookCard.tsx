@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/Card";
 import { dashboardContent } from "@/content";
+import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { ArchiveWorkButton } from "@/features/works/components/ArchiveWorkButton";
 import type { WorkWithChapterSummary } from "@/features/works/types";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
@@ -105,6 +106,11 @@ export function BookCard({
           >
             {dashboardContent.edit}
           </Link>
+
+          <NewWorkFlow
+            initialWork={work}
+            triggerLabel="Yazmaya Devam Et"
+          />
 
           <Link
             className="button button--outline"

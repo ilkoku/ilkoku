@@ -15,7 +15,6 @@ import {
   getEstimatedBookPageRanges,
 } from "@/features/reading/metrics";
 import type { PublicWorkDetail } from "@/features/works/types";
-import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 import {
   parseWorkContentWarnings,
   workContentRatingDetails,
@@ -170,16 +169,7 @@ export function BookShowcase({
               {work.title}
             </h1>
 
-            {publicDiscoveryEnabled ? (
-              <Link
-                className="showcase-author-link"
-                href={`/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}`}
-              >
-                {work.authorName}
-              </Link>
-            ) : (
-              <span className="showcase-author-link">{work.authorName}</span>
-            )}
+            <span className="showcase-author-link">{work.authorName}</span>
 
             <dl className="showcase-metadata">
               <div>
@@ -515,26 +505,10 @@ export function BookShowcase({
                 </div>
               </div>
 
-              {publicDiscoveryEnabled ? (
-                <>
-                  <p>
-                    Yazarın keşfe açık yayımlanan eserlerini
-                    tek sayfada inceleyin.
-                  </p>
-
-                  <Link
-                    className="showcase-text-link"
-                    href={`/yazarlar/${work.authorPublicId}?from=${encodedBookContextPath}`}
-                  >
-                    Yazarın tüm eserleri <span aria-hidden="true">→</span>
-                  </Link>
-                </>
-              ) : (
-                <p>
-                  Bu yazarın yayımlanmış diğer eserleri varsa aşağıdaki
-                  “Aynı Yazarın Diğer Eserleri” bölümünde gösterilir.
-                </p>
-              )}
+              <p>
+                Bu yazarın yayımlanmış diğer eserleri varsa aşağıdaki
+                “Aynı Yazarın Diğer Eserleri” bölümünde gösterilir.
+              </p>
             </Card>
           </aside>
         </div>

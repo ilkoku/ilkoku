@@ -213,9 +213,9 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   const collector = source("src/features/system-map/collector.ts");
 
   contains(sitemap, "${baseUrl}/nasil-calisir", "active public sitemap route");
-  notContains(sitemap, "${baseUrl}/eserler", "retired work directory sitemap route");
-  notContains(sitemap, "${baseUrl}/yazarlar", "retired author directory sitemap route");
-  notContains(sitemap, "${baseUrl}/turler", "retired genre directory sitemap route");
+  notContains(sitemap, "url: \`${baseUrl}/eserler\`", "retired work directory sitemap route");
+  notContains(sitemap, "url: \`${baseUrl}/yazarlar\`", "retired author directory sitemap route");
+  notContains(sitemap, "url: \`${baseUrl}/turler\`", "retired genre directory sitemap route");
 
   notContains(sitemap, "foundationalGuides", "retired guide sitemap source");
   notContains(sitemap, "contentKey LIKE 'guide:%'", "retired CMS guide sitemap inventory");

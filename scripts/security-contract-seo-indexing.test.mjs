@@ -75,6 +75,7 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
     "/yayinevleri-icin",
     "/yardim",
     "/iletisim",
+    "/site-haritasi",
   ]) {
     assertContains(sitemap, route, `${route} sitemap route`);
   }
@@ -156,6 +157,34 @@ test("legal pages inherit canonical OG Twitter and language-alternate metadata",
   assertContains(helper, "images: [socialImage]", "public Twitter image fallback");
 });
 
+test("public HTML site map exposes the complete crawl discovery graph", () => {
+  const page = source("src/app/site-haritasi/page.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+  const navigation = source("src/lib/public-site-navigation.ts");
+  const indexNow = source(".github/workflows/indexnow-submit.yml");
+  const smoke = source(".github/workflows/production-smoke.yml");
+
+  assertContains(page, 'alternates: { canonical: "/site-haritasi" }', "site map self canonical");
+  assertContains(page, "robots: { index: true, follow: true }", "site map index/follow");
+  assertContains(page, "SITE_MAP_PAGES", "code-owned public route inventory");
+  assertContains(page, "loadPublishedCmsSiteMapPages()", "published CMS discovery links");
+  assertContains(page, "prisma.work.findMany", "published public work discovery links");
+  assertContains(page, "isSearchIndexExcludedPublicWorkSlug", "public work search safety exclusion");
+  assertContains(page, "publicLegalLinks", "legal discovery links");
+  assertContains(navigation, '{ href: "/site-haritasi", label: "Site Haritası" }', "site map footer/support link");
+  assertContains(sitemap, 'url: `${baseUrl}/site-haritasi`', "XML sitemap includes HTML site map");
+
+  for (const cohort of [
+    "https://ilkoku.com/site-haritasi",
+    "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+    "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
+  ]) {
+    assertContains(indexNow, cohort, `IndexNow waits for live cohort ${cohort}`);
+    assertContains(smoke, cohort, `production smoke verifies live cohort ${cohort}`);
+  }
+});
+
 test("dynamic public work route keeps canonical query noindex and structured-data contracts", () => {
   const book = source("src/app/kitap/[slug]/page.tsx");
 
@@ -179,6 +208,7 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
     '"/yardim"',
     '"/editorler"',
     '"/iletisim"',
+    '"/site-haritasi"',
   ]) {
     assertContains(routes, route, `canonical code-owned SEO route ${route}`);
   }

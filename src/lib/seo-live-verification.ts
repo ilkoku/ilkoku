@@ -1,10 +1,6 @@
 import "server-only";
 
 import { cache } from "react";
-import {
-  getPublicAuthors,
-  getPublicGenres,
-} from "@/features/public-discovery/library";
 import { prisma } from "@/lib/prisma";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
 import {
@@ -12,7 +8,6 @@ import {
   publicCodeOwnedIndexRoutes,
   publicDefaultCoreSeoRoutes,
 } from "@/lib/public-seo-routes";
-import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 
 export type SeoEvidenceState = "ok" | "warn" | "danger";
 export type SeoSchemaType = "WebSite" | "Book" | "CollectionPage" | "ProfilePage" | "FAQPage" | "BreadcrumbList";
@@ -174,7 +169,7 @@ function schemaTypesFromHtml(html: string) {
 
 async function representativeRoutes() {
   try {
-    const [works, authors, genres, faqRows] = await Promise.all([
+    const [works, faqRows] = await Promise.all([
       prisma.work.findMany({
         where: {
           archivedAt: null,
@@ -189,8 +184,6 @@ async function representativeRoutes() {
         select: { slug: true },
         take: 100,
       }),
-      publicDiscoveryEnabled ? getPublicAuthors() : Promise.resolve([]),
-      publicDiscoveryEnabled ? getPublicGenres() : Promise.resolve([]),
       prisma.$queryRaw<Array<{ total: bigint }>>`
         SELECT COUNT(*) AS total
         FROM SiteContent
@@ -200,13 +193,11 @@ async function representativeRoutes() {
 
     const work = works.find((item) => !isBlockedPublicWorkSlug(item.slug));
     return {
-      author: authors[0] ? `/yazarlar/${authors[0].publicId}` : null,
       faqExpected: Number(faqRows[0]?.total ?? 0) > 0,
-      genre: genres[0] ? `/turler/${genres[0].slug}` : null,
       work: work ? `/kitap/${work.slug}` : null,
     };
   } catch {
-    return { author: null, faqExpected: null, genre: null, work: null };
+    return { faqExpected: null, work: null };
   }
 }
 
@@ -355,12 +346,8 @@ export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerificatio
   const [website, book, collectionPage, profilePage, breadcrumb] = await Promise.all([
     verifySchema("WebSite", "/", "Ana Sayfa route'u belirlenemedi."),
     verifySchema("Book", representatives.work, "Canlı doğrulama için keşfe açık eser örneği bulunamadı."),
-    publicDiscoveryEnabled
-      ? verifySchema("CollectionPage", "/eserler", "Eser koleksiyonu route'u belirlenemedi.")
-      : Promise.resolve(inactiveSchema("Public Eserler/Yazarlar/Türler keşif bölümleri geçici olarak pasif; CollectionPage doğrulaması uygulanabilir değil.")),
-    publicDiscoveryEnabled
-      ? verifySchema("ProfilePage", representatives.author, "Canlı doğrulama için public yazar örneği bulunamadı.")
-      : Promise.resolve(inactiveSchema("Public Eserler/Yazarlar/Türler keşif bölümleri geçici olarak pasif; ProfilePage doğrulaması uygulanabilir değil.")),
+    verifySchema("CollectionPage", "/editorler", "Editör dizini route'u belirlenemedi."),
+    Promise.resolve(inactiveSchema("Public ProfilePage yüzeyi etkin değil; bu şema kontrolü uygulanabilir değil.")),
     verifySchema("BreadcrumbList", "/yardim", "Yardım route'u belirlenemedi."),
   ]);
 

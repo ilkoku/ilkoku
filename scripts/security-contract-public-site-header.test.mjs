@@ -34,6 +34,7 @@ const publicLayoutPaths = [
   "src/app/editorler/layout.tsx",
   "src/app/yardim/layout.tsx",
   "src/app/iletisim/layout.tsx",
+  "src/app/site-haritasi/layout.tsx",
   "src/app/hakkimizda/layout.tsx",
   "src/app/nasil-calisir/layout.tsx",
   "src/app/editoryal-standartlar/layout.tsx",
@@ -79,6 +80,10 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(navigationClient, /public-site-header__navigation/);
   assert.match(navigationClient, /public-site-header__mobile-menu/);
   assert.match(navigationClient, /public-site-header__mega/);
+  assert.match(navigationClient, /menus\.map\(\(menu\) => \{/);
+  assert.match(navigationClient, /aria-hidden=\{!isActive\}/);
+  assert.match(navigationClient, /data-active=\{isActive \? "true" : undefined\}/);
+  assert.match(megaCss, /\.public-site-header__mega\[data-active="true"\]/);
   assert.match(navigationClient, /const \[activeId, setActiveId\] = useState<string \| null>\(null\)/);
   assert.match(navigationClient, /onMouseEnter=\{\(\) => activate\(menu\.id\)\}/);
   assert.match(navigationClient, /CLOSE_DELAY_MS = 140/);
@@ -114,6 +119,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/hakkimizda",
     "/nasil-calisir",
     "/editoryal-standartlar",
+    "/site-haritasi",
     "/kayit?rol=writer",
     "/kayit?rol=reader",
     "/kayit?rol=editor",

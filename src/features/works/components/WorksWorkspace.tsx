@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useCallback,
   useMemo,
   useState,
 } from "react";
@@ -17,7 +16,6 @@ import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 import type { WorkWithChapterSummary } from "../types";
 import { WorkArchiveAction } from "./WorkArchiveAction";
-import { WorkEditDialog } from "./WorkEditDialog";
 
 type WorkspaceWork = WorkWithChapterSummary & {
   publishedPageCount: number | null;
@@ -72,15 +70,6 @@ export function WorksWorkspace({
   const [sort, setSort] =
     useState<Sort>("updated");
 
-  const [
-    editingWorkId,
-    setEditingWorkId,
-  ] = useState<string | null>(null);
-
-  const closeEditDialog =
-    useCallback(() => {
-      setEditingWorkId(null);
-    }, []);
 
   const activeWorks = useMemo(
     () =>
@@ -120,14 +109,6 @@ export function WorksWorkspace({
     [works],
   );
 
-  const editingWork = useMemo(
-    () =>
-      works.find(
-        (work) =>
-          work.id === editingWorkId,
-      ) ?? null,
-    [editingWorkId, works],
-  );
 
   const visibleWorks = useMemo(() => {
     const source =
@@ -511,19 +492,14 @@ export function WorksWorkspace({
                     <div className="workspace-work-card__actions">
                       {work.status !==
                         "archived" && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() =>
-                            setEditingWorkId(
-                              work.id,
-                            )
-                          }
+                        <Link
+                          className="button button--outline"
+                          href={`/kitap/${work.slug}/duzenle?from=${encodeURIComponent("/eserlerim")}`}
                         >
                           {
                             workspaceContent.edit
                           }
-                        </Button>
+                        </Link>
                       )}
 
                       {work.status !==
@@ -567,13 +543,6 @@ export function WorksWorkspace({
         )}
       </div>
 
-      {editingWork ? (
-        <WorkEditDialog
-          key={editingWork.id}
-          work={editingWork}
-          onClose={closeEditDialog}
-        />
-      ) : null}
     </>
   );
 }

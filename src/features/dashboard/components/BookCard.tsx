@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/Card";
 import { dashboardContent } from "@/content";
-import { NewWorkFlow } from "@/features/writer/components/NewWorkFlow";
 import { ArchiveWorkButton } from "@/features/works/components/ArchiveWorkButton";
 import type { WorkWithChapterSummary } from "@/features/works/types";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
@@ -100,10 +99,12 @@ export function BookCard({
         />
 
         <div className="book-card__actions">
-          <NewWorkFlow
-            initialWork={work}
-            triggerLabel={dashboardContent.edit}
-          />
+          <Link
+            className="button button--outline"
+            href={`/kitap/${work.slug}/duzenle?from=${encodeURIComponent("/yazar")}`}
+          >
+            {dashboardContent.edit}
+          </Link>
 
           <Link
             className="button button--outline"

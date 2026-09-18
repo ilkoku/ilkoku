@@ -214,7 +214,7 @@ export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerificatio
     representativeRoutes(),
     coreSitemapExpectation(),
   ]);
-  const dynamicSocialRoutes = [representatives.work, representatives.author, representatives.genre]
+  const dynamicSocialRoutes = [representatives.work]
     .filter((route): route is string => Boolean(route));
   const socialRoutes = Array.from(new Set<string>([
     ...publicDefaultCoreSeoRoutes,

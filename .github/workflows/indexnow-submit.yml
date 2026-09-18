@@ -38,11 +38,22 @@ jobs:
 
           for attempt in $(seq 1 20); do
             key_body="$(curl --silent --show-error --location --max-time 20 "$KEY_URL" || true)"
-            sitemap_code="$(curl --silent --show-error --location --max-time 20 --output /dev/null --write-out '%{http_code}' "$SITEMAP_URL" || true)"
+            sitemap_body="$(curl --silent --show-error --location --max-time 20 "$SITEMAP_URL" || true)"
+            sitemap_ready=1
 
-            if [[ "$key_body" == "$KEY" && "$sitemap_code" == "200" ]]; then
+            for required in \
+              'https://ilkoku.com/site-haritasi' \
+              'https://ilkoku.com/yazarlar-icin/kurgu/roman' \
+              'https://ilkoku.com/okurlar-icin/okumaya-baslama' \
+              'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama'; do
+              if [[ "$sitemap_body" != *"<loc>${required}</loc>"* ]]; then
+                sitemap_ready=0
+              fi
+            done
+
+            if [[ "$key_body" == "$KEY" && "$sitemap_ready" == "1" ]]; then
               READY=1
-              echo "Production IndexNow key and sitemap are ready."
+              echo "Production IndexNow key and current public sitemap cohorts are ready."
               break
             fi
 

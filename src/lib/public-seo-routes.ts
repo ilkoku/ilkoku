@@ -1,23 +1,11 @@
 import {
-  publicDiscoveryEnabled,
   publicLegalLinks,
   publicPlatformLinks,
   publicTrustLinks,
 } from "@/lib/public-site-navigation";
 
-export const publicDiscoveryStaticIndexRoutes = [
-  "/eserler",
-  "/eserler/yeni",
-  "/eserler/guncellenen",
-  "/yazarlar",
-  "/turler",
-] as const;
-
-export const publicPausedDiscoveryReservedRoutes = publicDiscoveryStaticIndexRoutes;
-
 export const publicCodeOwnedIndexRoutes = [
   "/",
-  ...(publicDiscoveryEnabled ? publicDiscoveryStaticIndexRoutes : []),
   "/yardim",
   "/editorler",
   "/iletisim",

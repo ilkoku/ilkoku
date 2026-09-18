@@ -262,7 +262,7 @@ test("demo showcase works stay usable but are excluded from search indexing", ()
   );
 });
 
-test("landing, sitemap and production smoke preserve paused public discovery inventory without exposing it", () => {
+test("landing, sitemap and production smoke keep retired public discovery closed", () => {
   const homepage = source("src/app/page.tsx");
   const homepageExperience = source(
     "src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx",
@@ -318,27 +318,22 @@ test("landing, sitemap and production smoke preserve paused public discovery inv
     "export const publicDiscoveryEnabled = false",
     "shared public discovery pause flag",
   );
-  contains(
-    publicNavigation,
-    "export const publicDiscoveryNavigationEnabled = publicDiscoveryEnabled",
-    "navigation consumes shared public discovery flag",
-  );
-  for (const route of ["/eserler", "/yazarlar", "/turler", "/nasil-calisir"]) {
-    contains(
+  for (const route of ["/eserler", "/yazarlar", "/turler"]) {
+    notContains(
       publicNavigation,
       `href: "${route}"`,
-      `reserved public discovery link ${route}`,
+      `retired public discovery link ${route}`,
+    );
+    notContains(
+      sitemap,
+      "url: `${baseUrl}" + route + "`",
+      `retired sitemap route ${route}`,
     );
   }
   contains(
-    sitemap,
-    'url: `${baseUrl}/eserler`',
-    "catalog sitemap inventory entry",
-  );
-  contains(
-    sitemap,
-    "...(publicDiscoveryEnabled ? publicDiscoveryStaticEntries : [])",
-    "paused discovery sitemap gate",
+    publicNavigation,
+    'href: "/nasil-calisir"',
+    "active public navigation route",
   );
   contains(
     sitemap,
@@ -395,18 +390,23 @@ test("landing, sitemap and production smoke preserve paused public discovery inv
   );
   contains(
     bookPage,
-    'return publicDiscoveryEnabled ? "/eserler" : "/"',
+    'return "/";',
     "public book safe fallback inventory",
+  );
+  notContains(
+    bookPage,
+    "publicDiscoveryEnabled",
+    "retired book discovery gate",
   );
   contains(
     showcase,
     'returnTo = "/"',
     "public showcase safe fallback inventory",
   );
-  contains(
+  notContains(
     showcase,
-    "publicDiscoveryEnabled ? (",
-    "paused author link rendering gate",
+    "publicDiscoveryEnabled",
+    "retired author link rendering gate",
   );
   for (const route of [
     '"/eserler/:path*"',

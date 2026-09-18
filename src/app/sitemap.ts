@@ -9,15 +9,10 @@ import { forPublishersPageContent } from "@/content/for-publishers";
 import { forWritersPageContent } from "@/content/for-writers";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
-import {
-  getPublicAuthors,
-  getPublicGenres,
-} from "@/features/public-discovery/library";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 import { GENRES } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
-import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
@@ -136,34 +131,6 @@ const staticCmsPageSlugs = new Set<string>([
   ...editorEducationHrefs,
 ]);
 
-const publicDiscoveryStaticEntries: MetadataRoute.Sitemap = [
-  {
-    url: `${baseUrl}/eserler`,
-    changeFrequency: "daily",
-    priority: 0.9,
-  },
-  {
-    url: `${baseUrl}/eserler/yeni`,
-    changeFrequency: "daily",
-    priority: 0.8,
-  },
-  {
-    url: `${baseUrl}/eserler/guncellenen`,
-    changeFrequency: "daily",
-    priority: 0.8,
-  },
-  {
-    url: `${baseUrl}/yazarlar`,
-    changeFrequency: "daily",
-    priority: 0.75,
-  },
-  {
-    url: `${baseUrl}/turler`,
-    changeFrequency: "daily",
-    priority: 0.75,
-  },
-];
-
 const staticDiscoveryEntries: MetadataRoute.Sitemap = [
   {
     url: `${baseUrl}/`,
@@ -173,7 +140,6 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
   ...writingEducationEntries,
   ...readerEducationEntries,
   ...editorEducationEntries,
-  ...(publicDiscoveryEnabled ? publicDiscoveryStaticEntries : []),
   {
     url: `${baseUrl}/yardim`,
     changeFrequency: "weekly",
@@ -220,8 +186,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const [
       works,
-      authors,
-      genres,
       pages,
       legalRows,
     ] = await Promise.all([
@@ -254,8 +218,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
         take: 50_000,
       }),
-      publicDiscoveryEnabled ? getPublicAuthors() : Promise.resolve([]),
-      publicDiscoveryEnabled ? getPublicGenres() : Promise.resolve([]),
       prisma.$queryRaw<CmsSitemapRow[]>`
         SELECT slug, noIndex, updatedAt
         FROM ContentPage
@@ -313,16 +275,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...staticDiscoveryEntries,
       ...publicPageEntries,
       ...legalEntries,
-      ...authors.map((author) => ({
-        url: `${baseUrl}/yazarlar/${author.publicId}`,
-        changeFrequency: "weekly" as const,
-        priority: 0.7,
-      })),
-      ...genres.map((genre) => ({
-        url: `${baseUrl}/turler/${genre.slug}`,
-        changeFrequency: "daily" as const,
-        priority: 0.7,
-      })),
       ...works
         .filter(
           (work) =>

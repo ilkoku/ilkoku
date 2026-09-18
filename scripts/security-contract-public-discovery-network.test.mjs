@@ -200,89 +200,6 @@ test("content and age policy is enforced from work creation to the public readin
   notContains(source("src/features/works/repository.ts"), "async publishChapter(", "legacy chapter publication bypass");
 });
 
-test("public authors and genres are derived only from the publication boundary", () => {
-  const library = source(
-    "src/features/public-discovery/library.ts",
-  );
-  const authorIndex = source("src/app/yazarlar/page.tsx");
-  const authorDetail = source(
-    "src/app/yazarlar/[publicId]/page.tsx",
-  );
-  const genreIndex = source("src/app/turler/page.tsx");
-  const genreDetail = source(
-    "src/app/turler/[slug]/page.tsx",
-  );
-
-  contains(
-    library,
-    "publicWorkPublicationWhere",
-    "shared publication boundary",
-  );
-  contains(
-    library,
-    "works: {\n        some: publicWorkPublicationWhere",
-    "author existence boundary",
-  );
-  contains(
-    library,
-    "genresBySlug",
-    "normalized genre deduplication",
-  );
-  contains(library, "prisma.work.groupBy", "genre work counts from publication rows");
-  contains(library, "getPublicAuthors(search?: string)", "author search boundary");
-  notContains(library, "email: true", "private author email");
-  notContains(library, "bio: true", "unreviewed author biography");
-  contains(authorIndex, "getPublicAuthors(search)", "live author filtering");
-  contains(authorIndex, "Keşfe açık", "author discovery terminology");
-  contains(authorIndex, "encodeURIComponent(returnPath)", "author discovery return context");
-  contains(authorDetail, "getPublicAuthorById", "author detail boundary");
-  contains(authorDetail, "Geldiğin sayfaya dön", "author return path");
-  contains(authorDetail, "profileContextPath", "author nested return context");
-  contains(authorDetail, "MAX_RETURN_PATH_LENGTH", "bounded author return context");
-  contains(genreIndex, "getPublicGenres(search)", "live genre filtering");
-  contains(genreIndex, "Keşfe açık", "genre discovery terminology");
-  contains(genreIndex, "genre.count", "genre work counts");
-  contains(genreIndex, "encodeURIComponent(returnPath)", "genre discovery return context");
-  contains(genreDetail, "getPublicGenreBySlug", "genre detail boundary");
-  contains(genreDetail, "Geldiğin sayfaya dön", "genre return path");
-  contains(genreDetail, "MAX_RETURN_PATH_LENGTH", "bounded genre return context");
-});
-
-test("discovery feeds and RSS expose links but never chapter content", () => {
-  const libraryPage = source("src/app/eserler/page.tsx");
-  const feedPage = source(
-    "src/features/public-discovery/PublicWorkFeedPage.tsx",
-  );
-  const stream = source(
-    "src/features/public-discovery/PublicWorkStream.tsx",
-  );
-  const rss = source("src/app/eserler/rss.xml/route.ts");
-  const library = source(
-    "src/features/public-discovery/library.ts",
-  );
-
-  contains(libraryPage, "Keşfe açık eserler", "main discovery terminology");
-  contains(libraryPage, "currentPath = pageHref", "main filtered context");
-  contains(libraryPage, "encodeURIComponent(currentPath)", "main card return context");
-  contains(feedPage, '"@type": "ItemList"', "feed item list");
-  contains(feedPage, "PUBLIC_WORK_PAGE_SIZE", "feed pagination");
-  contains(feedPage, 'className="public-hub__filters"', "feed live filter surface");
-  contains(feedPage, "Keşfe açık eserler", "feed discovery terminology");
-  contains(feedPage, "{ genre, search, sort }", "feed filters reach publication query");
-  contains(feedPage, "returnPath={currentPath}", "feed keeps filtered return context");
-  contains(stream, "withReturnPath", "context-preserving public links");
-  contains(stream, "encodeURIComponent(returnPath)", "safe nested return parameter");
-  contains(stream, "bookHref", "work links preserve origin");
-  contains(stream, "authorHref", "author links preserve origin");
-  contains(stream, "genreHref", "genre links preserve origin");
-  contains(rss, "application/rss+xml; charset=utf-8", "RSS content type");
-  contains(rss, "Keşfe Açık Eserler", "RSS discovery terminology");
-  contains(rss, "getPublicWorkFeed", "RSS publication query");
-  contains(rss, "<guid isPermaLink", "RSS stable GUID");
-  notContains(library, "content: true", "chapter content projection");
-  notContains(rss, "chapter.content", "chapter content in RSS");
-});
-
 test("sitemap, homepage and book pages form a truthful public graph", () => {
   const sitemap = source("src/app/sitemap.ts");
   const homepage = source("src/app/page.tsx");
@@ -295,37 +212,32 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   const retiredMap = source("src/app/harita/kesif/page.tsx");
   const collector = source("src/features/system-map/collector.ts");
 
-  for (const route of [
-    "/eserler/yeni",
-    "/eserler/guncellenen",
-    "/yazarlar",
-    "/turler",
-    "/nasil-calisir",
-  ]) {
-    contains(sitemap, `\${baseUrl}${route}`, `reserved sitemap route ${route}`);
-  }
+  contains(sitemap, "${baseUrl}/nasil-calisir", "active public sitemap route");
+  notContains(sitemap, "url: \`${baseUrl}/eserler\`", "retired work directory sitemap route");
+  notContains(sitemap, "url: \`${baseUrl}/yazarlar\`", "retired author directory sitemap route");
+  notContains(sitemap, "url: \`${baseUrl}/turler\`", "retired genre directory sitemap route");
 
   notContains(sitemap, "foundationalGuides", "retired guide sitemap source");
   notContains(sitemap, "contentKey LIKE 'guide:%'", "retired CMS guide sitemap inventory");
-  contains(sitemap, "publicDiscoveryEnabled ? getPublicAuthors() : Promise.resolve([])", "paused author sitemap gate");
-  contains(sitemap, "publicDiscoveryEnabled ? getPublicGenres() : Promise.resolve([])", "paused genre sitemap gate");
   contains(homepage, 'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"', "homepage neutral experience boundary");
   notContains(homepage, 'from "./onizleme/ana-sayfa-yeni/page"', "homepage must not import the preview route module");
   contains(homepageExperience, '|| "/nasil-calisir"', "homepage live public fallback");
   notContains(homepageExperience, '|| "/eserler"', "homepage paused discovery fallback");
   contains(publicNavigation, "export const publicDiscoveryEnabled = false", "shared discovery pause");
-  contains(publicNavigation, 'href: "/eserler"', "reserved work catalog route");
-  contains(publicNavigation, 'href: "/yazarlar"', "reserved author route");
-  contains(publicNavigation, 'href: "/turler"', "reserved genre route");
+  notContains(publicNavigation, 'href: "/eserler"', "retired work catalog route");
+  notContains(publicNavigation, 'href: "/yazarlar"', "retired author route");
+  notContains(publicNavigation, 'href: "/turler"', "retired genre route");
   notContains(homepageExperience, "2.847+", "fabricated writer count");
   notContains(homepageExperience, "18.592+", "fabricated reader count");
-  contains(book, "publicDiscoveryEnabled", "book schema discovery gate");
-  contains(book, "work.authorPublicId", "book author schema source");
+  notContains(book, "publicDiscoveryEnabled", "retired book discovery gate");
+  notContains(book, "/eserler", "retired book directory breadcrumb");
+  notContains(book, "/yazarlar/", "retired book author route");
   contains(book, '"@type": "BreadcrumbList"', "book breadcrumbs");
-  contains(book, 'name: "Ana Sayfa"', "book fallback breadcrumb");
+  contains(book, 'name: "Ana Sayfa"', "book public breadcrumb");
   contains(showcase, "bookContextPath", "book preserves reading origin");
   contains(showcase, "encodedBookContextPath", "nested book return context");
-  contains(showcase, "publicDiscoveryEnabled ? (", "book author links are discovery-gated");
+  notContains(showcase, "publicDiscoveryEnabled", "retired showcase discovery gate");
+  notContains(showcase, "/yazarlar/", "retired showcase author route");
   contains(showcase, "Yayında · Üyelikle okunabilir", "truthful chapter access label");
   contains(retiredMap, 'permanentRedirect("/harita")', "retired discovery map redirect");
   contains(collector, '"/icerik/sayfalar", "/icerik/onizleme/sayfa/[id]"', "trust page CMS workflow map");

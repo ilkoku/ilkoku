@@ -1,8 +1,5 @@
 import { normalizeCmsPageBlocks, type CmsPageBlock } from "@/lib/cms-page-blocks";
-import {
-  publicCodeOwnedIndexRoutes,
-  publicPausedDiscoveryReservedRoutes,
-} from "@/lib/public-seo-routes";
+import { publicCodeOwnedIndexRoutes } from "@/lib/public-seo-routes";
 
 export type CmsPageBody = {
   summary: string;
@@ -10,10 +7,7 @@ export type CmsPageBody = {
   blocks: CmsPageBlock[];
 };
 
-const codeOwnedPublicRoots = [
-  ...publicCodeOwnedIndexRoutes,
-  ...publicPausedDiscoveryReservedRoutes,
-].flatMap((route) => {
+const codeOwnedPublicRoots = publicCodeOwnedIndexRoutes.flatMap((route) => {
   const root = route.split("/").filter(Boolean)[0];
   return root ? [root] : [];
 });
@@ -36,6 +30,11 @@ const reservedRoots = new Set([
   "yayinevleri",
   "kitap",
   "kesfet",
+  // Retired public discovery filesystem roots stay reserved so CMS pages
+  // cannot collide with routes that intentionally return 404/noindex.
+  "eserler",
+  "yazarlar",
+  "turler",
   "tamamlanan-eserler",
   "okumaya-devam",
   "yorumlarim",

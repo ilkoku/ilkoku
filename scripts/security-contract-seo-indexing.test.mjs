@@ -118,9 +118,9 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertNotContains(sitemap, '`${baseUrl}/en`', "no EN static sitemap URL");
   assertContains(sitemap, "contentKey NOT LIKE 'legal:en:%'", "EN legal sitemap exclusion");
   assertNotContains(sitemap, "page:en:%", "no EN generic sitemap inventory");
-  assertNotContains(sitemap, '${baseUrl}/eserler', "retired work directory sitemap route");
-  assertNotContains(sitemap, '${baseUrl}/yazarlar', "retired author directory sitemap route");
-  assertNotContains(sitemap, '${baseUrl}/turler', "retired genre directory sitemap route");
+  assertNotContains(sitemap, 'url: \`${baseUrl}/eserler\`', "retired work directory sitemap route");
+  assertNotContains(sitemap, 'url: \`${baseUrl}/yazarlar\`', "retired author directory sitemap route");
+  assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
 });
 
 test("active public help surfaces expose canonical social metadata", () => {

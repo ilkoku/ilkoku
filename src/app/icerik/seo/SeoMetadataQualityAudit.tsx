@@ -79,7 +79,7 @@ async function StructuredDataAudit() {
           />
         ))}
       </div>
-      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>{blockers > 0 ? `${blockers} schema tipi canlı HTML içinde beklenen kanıtı vermiyor.` : warnings > 0 ? `${warnings} uygulanabilir schema tipi canlı olarak doğrulanamadı; yeniden kontrol edin.` : waitingForContent > 0 ? `${verified} schema tipi canlı doğrulandı. ${waitingForContent} schema tipi için henüz uygun public içerik örneği yok; bunlar hata değildir.` : "Beklenen schema tiplerinin seçili canlı örnekleri doğrulandı."}</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/eserler" target="_blank">Keşfe açık eserler ↗</Link></div></div>
+      <div className={styles.focus}><div><strong>Kontrol noktası</strong><p>{blockers > 0 ? `${blockers} schema tipi canlı HTML içinde beklenen kanıtı vermiyor.` : warnings > 0 ? `${warnings} uygulanabilir schema tipi canlı olarak doğrulanamadı; yeniden kontrol edin.` : waitingForContent > 0 ? `${verified} schema tipi canlı doğrulandı. ${waitingForContent} schema tipi için henüz uygun public içerik örneği yok; bunlar hata değildir.` : "Beklenen schema tiplerinin seçili canlı örnekleri doğrulandı."}</p></div><div className={styles.actions}><Link href="/" target="_blank">Ana Sayfa ↗</Link><Link href="/editorler" target="_blank">Editörler ↗</Link></div></div>
     </section>
   );
 }

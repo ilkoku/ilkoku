@@ -202,7 +202,7 @@ export async function CmsPageEditor({ id, publishQualityBlocked = false }: CmsPa
 
             <div className="cms-editor-section-label"><span>İçerik</span><small>Public sayfanın metin alanları</small></div>
             <label><span>URL kısa adı</span><input name="slug" required maxLength={120} defaultValue={slugPart} readOnly={Boolean(page)} placeholder="hakkimizda" /></label>
-            <p className="content-form-help">Yalnız a-z, 0-9 ve tire. İlk kayıttan sonra URL sabitlenir. Yönetim alanları ile /eserler, /yazarlar, /turler gibi kodla sahip olunan public rotalar otomatik olarak rezerve edilir ve kullanılamaz.</p>
+            <p className="content-form-help">Yalnız a-z, 0-9 ve tire. İlk kayıttan sonra URL sabitlenir. Yönetim, ürün ve kod tarafından ayrılmış rota kökleri otomatik olarak rezerve edilir ve kullanılamaz.</p>
             <label><span>Başlık</span><input name="title" required maxLength={220} defaultValue={currentTitle} /></label>
             <label><span>Kısa özet</span><textarea name="summary" rows={4} maxLength={500} defaultValue={currentSummary} /></label>
             <p className="content-form-help">Yayın standardı için özet en az 40 karakterle sayfanın amacını anlatmalı.</p>

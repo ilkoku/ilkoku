@@ -29,7 +29,12 @@ test("authenticated product routes stay outside search while paused discovery fa
     assert.ok(nextConfig.includes(route), `${route} private family must remain covered by X-Robots-Tag`);
   }
 
-  assert.match(sitemap, /\.\.\.\(publicDiscoveryEnabled \? publicDiscoveryStaticEntries : \[\]\)/u);
+  for (const route of pausedFamilies) {
+    assert.ok(
+      !sitemap.includes("url: `${baseUrl}" + route + "`"),
+      `${route} must not be emitted by sitemap source`,
+    );
+  }
   assert.match(sitemap, /visibility: "public"/u);
   assert.match(sitemap, /status: "published"/u);
   assert.match(sitemap, /publishedAt: \{\s*not: null/u);

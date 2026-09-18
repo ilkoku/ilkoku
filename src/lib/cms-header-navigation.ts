@@ -62,6 +62,7 @@ const basePages: SiteMapPage[] = [
   { id: "copyright", label: "Telif Bildirimi", href: "/telif-bildirimi", area: "İlkOku", group: "Güven", kind: "page" },
   { id: "help", label: "Yardım Merkezi", href: "/yardim", area: "Destek", group: "Destek", kind: "page" },
   { id: "contact", label: "İletişim", href: "/iletisim", area: "Destek", group: "Destek", kind: "page" },
+  { id: "site-map", label: "Site Haritası", href: "/site-haritasi", area: "Destek", group: "Destek", kind: "page" },
 ];
 
 const writerHubPages: SiteMapPage[] = WRITING_CATEGORY_HUBS.map((hub) => ({
@@ -189,7 +190,7 @@ export const defaultHeaderNavigation: HeaderNavigationPayload = {
     {
       id: "support",
       label: "Destek",
-      groups: [{ id: "support-main", title: "Destek", links: [link("help", true), link("contact")] }],
+      groups: [{ id: "support-main", title: "Destek", links: [link("help", true), link("contact"), link("site-map")] }],
     },
   ],
 };

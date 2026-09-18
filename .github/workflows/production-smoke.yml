@@ -168,17 +168,18 @@ jobs:
           # Give the Hostinger deployment a quiet window before the first probe.
           sleep 45
 
-          # Automatic main-push smoke: six requests total. This is intentionally
+          # Automatic main-push smoke: seven requests total. Keep this deliberately
           # small because Hostinger rate-limits Azure/GitHub automation traffic.
-          check_body "https://ilkoku.com/" "İlk cümle"
+          check_body "https://ilkoku.com/" "İlk cümle" "/site-haritasi"
           check_status "https://ilkoku.com/nasil-calisir" "200"
           check_body "https://ilkoku.com/robots.txt" "Allow: /" "Sitemap: https://ilkoku.com/sitemap.xml"
-          check_body "https://ilkoku.com/sitemap.xml" "https://ilkoku.com/" "https://ilkoku.com/nasil-calisir"
+          check_body "https://ilkoku.com/sitemap.xml" "https://ilkoku.com/" "https://ilkoku.com/nasil-calisir" "https://ilkoku.com/site-haritasi" "https://ilkoku.com/yazarlar-icin/kurgu/roman" "https://ilkoku.com/okurlar-icin/okumaya-baslama" "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama"
+          check_body "https://ilkoku.com/site-haritasi" "/yazarlar-icin/kurgu/roman" "/okurlar-icin/okumaya-baslama" "/editorler-icin/egitim/editorluge-baslama"
           check_redirect_and_noindex "https://ilkoku.com/hesabim" "/giris"
           check_status "https://ilkoku.com/eserler" "404"
 
           if [[ "$REQUESTED_MODE" != "deep" ]]; then
-            echo "PASS: low-impact production smoke completed with 6 requests."
+            echo "PASS: low-impact production smoke completed with 7 requests."
             exit 0
           fi
 

@@ -25,6 +25,7 @@ export const publicTrustLinks = [
 export const publicSupportLinks = [
   { href: "/yardim", label: "Yardım Merkezi" },
   { href: "/iletisim", label: "İletişim" },
+  { href: "/site-haritasi", label: "Site Haritası" },
 ] as const satisfies readonly PublicSiteLink[];
 
 export const publicLegalLinks = [

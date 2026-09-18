@@ -150,7 +150,7 @@ export function PublicHeaderNavigation({ menus }: { menus: PublicHeaderMenu[] })
                 key={menu.id}
                 data-active={isActive ? "true" : undefined}
                 aria-expanded={isActive}
-                aria-controls="public-site-header-mega-panel"
+                aria-controls={`public-site-header-mega-panel-${menu.id}`}
                 onMouseEnter={() => activate(menu.id)}
                 onFocus={() => activate(menu.id)}
                 onClick={() => setActiveId(isActive ? null : menu.id)}
@@ -161,16 +161,22 @@ export function PublicHeaderNavigation({ menus }: { menus: PublicHeaderMenu[] })
           })}
         </nav>
 
-        {activeMenu ? (
-          <div
-            className="public-site-header__mega"
-            id="public-site-header-mega-panel"
-            role="region"
-            aria-label={`${activeMenu.label} menüsü`}
-          >
-            <MenuGroups menu={activeMenu} onNavigate={closeDesktop} />
-          </div>
-        ) : null}
+        {menus.map((menu) => {
+          const isActive = menu.id === activeId;
+          return (
+            <div
+              aria-hidden={!isActive}
+              aria-label={`${menu.label} menüsü`}
+              className="public-site-header__mega"
+              data-active={isActive ? "true" : undefined}
+              id={`public-site-header-mega-panel-${menu.id}`}
+              key={`desktop-panel-${menu.id}`}
+              role="region"
+            >
+              <MenuGroups menu={menu} onNavigate={closeDesktop} />
+            </div>
+          );
+        })}
       </div>
 
       <div className="public-site-header__mobile-menu" data-open={mobileOpen ? "true" : undefined}>

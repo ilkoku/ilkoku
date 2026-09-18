@@ -1,0 +1,15 @@
+import type { ReactNode } from "react";
+
+import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
+import { PublicSiteFrame } from "@/components/layout/PublicSiteFrame";
+
+import "@/app/nasil-calisir/public-trust-footer.css";
+
+export default function SiteMapLayout({ children }: { children: ReactNode }) {
+  return (
+    <PublicSiteFrame>
+      {children}
+      <PublicTrustFooter />
+    </PublicSiteFrame>
+  );
+}

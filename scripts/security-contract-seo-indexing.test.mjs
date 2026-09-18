@@ -118,16 +118,15 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertNotContains(sitemap, '`${baseUrl}/en`', "no EN static sitemap URL");
   assertContains(sitemap, "contentKey NOT LIKE 'legal:en:%'", "EN legal sitemap exclusion");
   assertNotContains(sitemap, "page:en:%", "no EN generic sitemap inventory");
+  assertNotContains(sitemap, '${baseUrl}/eserler', "retired work directory sitemap route");
+  assertNotContains(sitemap, '${baseUrl}/yazarlar', "retired author directory sitemap route");
+  assertNotContains(sitemap, '${baseUrl}/turler', "retired genre directory sitemap route");
 });
 
-test("new public discovery and help surfaces expose canonical social metadata", () => {
+test("active public help surfaces expose canonical social metadata", () => {
   for (const [path, canonical] of [
     ["src/app/yardim/page.tsx", "/yardim"],
     ["src/app/editorler/page.tsx", "/editorler"],
-    ["src/app/yazarlar/page.tsx", "/yazarlar"],
-    ["src/app/turler/page.tsx", "/turler"],
-    ["src/app/eserler/yeni/page.tsx", "/eserler/yeni"],
-    ["src/app/eserler/guncellenen/page.tsx", "/eserler/guncellenen"],
   ]) {
     const page = source(path);
     assertContains(page, `canonical: "${canonical}"`, `${canonical} canonical`);
@@ -136,20 +135,13 @@ test("new public discovery and help surfaces expose canonical social metadata", 
     assertContains(page, 'const socialImage = "/opengraph-image"', `${canonical} social image fallback`);
   }
 
-  const works = source("src/app/eserler/page.tsx");
   const help = source("src/app/yardim/page.tsx");
   const editors = source("src/app/editorler/page.tsx");
-  assertContains(works, 'canonical: "/eserler"', "work library canonical");
-  assertContains(works, "robots:", "work library robots metadata");
-  assertContains(works, "openGraph:", "work library Open Graph metadata");
-  assertContains(works, "twitter:", "work library Twitter metadata");
-  assertContains(works, '"@type": "CollectionPage"', "work library structured data");
   assertContains(help, '"@type": "FAQPage"', "help FAQ structured data");
   assertContains(help, '"@type": "BreadcrumbList"', "help breadcrumb structured data");
   assertContains(editors, '"@type": "CollectionPage"', "editor directory structured data");
   assertContains(editors, '"@type": "BreadcrumbList"', "editor directory breadcrumb structured data");
 });
-
 test("legal pages inherit canonical OG Twitter and language-alternate metadata", () => {
   const legal = source("src/app/yasal/[slug]/page.tsx");
   const helper = source("src/lib/public-page-metadata.ts");
@@ -164,30 +156,18 @@ test("legal pages inherit canonical OG Twitter and language-alternate metadata",
   assertContains(helper, "images: [socialImage]", "public Twitter image fallback");
 });
 
-test("dynamic public work author and genre routes keep canonical query noindex and structured-data contracts", () => {
+test("dynamic public work route keeps canonical query noindex and structured-data contracts", () => {
   const book = source("src/app/kitap/[slug]/page.tsx");
-  const author = source("src/app/yazarlar/[publicId]/page.tsx");
-  const genre = source("src/app/turler/[slug]/page.tsx");
 
   assertContains(book, "const canonical = `/kitap/${work.slug}`", "book self canonical");
   assertContains(book, "index: !query.from", "book return-path noindex");
   assertContains(book, "twitter:", "book Twitter metadata");
   assertContains(book, '"@type": "Book"', "book schema");
   assertContains(book, '"@type": "BreadcrumbList"', "book breadcrumb schema");
-
-  assertContains(author, "const canonical = `/yazarlar/${author.publicId}`", "author self canonical");
-  assertContains(author, "index: !query.from", "author return-path noindex");
-  assertContains(author, "twitter:", "author Twitter metadata");
-  assertContains(author, '"@type": "ProfilePage"', "author profile schema");
-  assertContains(author, '"@type": "BreadcrumbList"', "author breadcrumb schema");
-
-  assertContains(genre, "const canonical = `/turler/${genre.slug}`", "genre self canonical");
-  assertContains(genre, "index: page === 1 && !query.from", "genre pagination and return-path noindex");
-  assertContains(genre, "twitter:", "genre Twitter metadata");
-  assertContains(genre, '"@type": "CollectionPage"', "genre collection schema");
-  assertContains(genre, '"@type": "BreadcrumbList"', "genre breadcrumb schema");
+  assertContains(book, 'name: "Ana Sayfa"', "book public breadcrumb root");
+  assertNotContains(book, "/eserler", "retired work directory route");
+  assertNotContains(book, "/yazarlar/", "retired public author route");
 });
-
 test("SEO center uses one core route catalog and verifies exact live coverage", () => {
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
   const metadata = source("src/app/icerik/seo/SeoMetadataQualityAudit.tsx");
@@ -196,11 +176,6 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
   const live = source("src/lib/seo-live-verification.ts");
 
   for (const route of [
-    '"/eserler"',
-    '"/eserler/yeni"',
-    '"/eserler/guncellenen"',
-    '"/yazarlar"',
-    '"/turler"',
     '"/yardim"',
     '"/editorler"',
     '"/iletisim"',
@@ -214,8 +189,6 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
   assertContains(navigation, 'href: "/hakkimizda"', "about route in canonical public navigation");
   assertContains(navigation, 'href: "/yasal/kullanim-sartlari"', "legal routes in canonical public navigation");
   assertContains(technical, "publicCodeOwnedIndexRoutes", "technical SEO consumes canonical code-owned routes");
-  assertContains(technical, "getPublicAuthors()", "technical SEO public author inventory");
-  assertContains(technical, "getPublicGenres()", "technical SEO public genre inventory");
   assertContains(technical, 'not: "adult_18"', "technical SEO adult work exclusion");
   assertContains(technical, 'visibility: "public"', "technical SEO discovery visibility boundary");
   assertContains(technical, "isBlockedPublicWorkSlug", "technical SEO blocked work slug exclusion");
@@ -230,8 +203,12 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
   for (const schemaType of ["CollectionPage", "ProfilePage", "FAQPage", "BreadcrumbList"]) {
     assertContains(metadata, schemaType, `structured-data inventory ${schemaType}`);
   }
-  assertContains(metadata, 'href="/eserler"', "structured-data discovery link");
-  assertNotContains(metadata, 'href="/kesfet"', "retired discovery link");
+  assertContains(metadata, 'href="/editorler"', "active structured-data collection link");
+  assertNotContains(metadata, 'href="/kesfet"', "member discovery route is not a public SEO action");
+  for (const retired of ['"/eserler"', '"/yazarlar"', '"/turler"']) {
+    assertNotContains(routes, retired, `retired public SEO route ${retired}`);
+    assertNotContains(navigation, retired, `retired public navigation route ${retired}`);
+  }
 });
 
 test("SEO center and audit API stay Turkish-only", () => {

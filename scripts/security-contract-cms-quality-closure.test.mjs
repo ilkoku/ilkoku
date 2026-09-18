@@ -107,7 +107,7 @@ test("new CMS pages inherit the standard public template and cannot shadow code-
   assertContains(editor, "ortak İlkOku header/footer yapısı", "shared public identity guidance");
   assertContains(editor, "slug tabanlı canonical", "automatic canonical guidance");
   assertContains(editor, "OG/Twitter sosyal görsel fallback", "automatic social metadata guidance");
-  assertContains(editor, "/eserler, /yazarlar, /turler", "reserved public route guidance");
+  assertContains(editor, "Yönetim, ürün ve kod tarafından ayrılmış rota kökleri", "reserved route guidance");
 
   assertContains(cmsPages, "publicCodeOwnedIndexRoutes", "CMS slug safety consumes code-owned public route inventory");
   assertContains(cmsPages, "codeOwnedPublicRoots", "CMS derives reserved roots from canonical public SEO catalog");
@@ -115,7 +115,10 @@ test("new CMS pages inherit the standard public template and cannot shadow code-
   assertContains(cmsPages, '"opengraph-image"', "Open Graph metadata route remains reserved");
   assertContains(cmsPages, '"twitter-image"', "Twitter metadata route remains reserved");
   for (const route of ['"/eserler"', '"/yazarlar"', '"/turler"']) {
-    assertContains(seoRoutes, route, `${route} code-owned SEO route`);
+    assertNotContains(seoRoutes, route, `${route} retired SEO route`);
+  }
+  for (const root of ['"eserler"', '"yazarlar"', '"turler"']) {
+    assertContains(cmsPages, root, `${root} retired filesystem root reservation`);
   }
 });
 

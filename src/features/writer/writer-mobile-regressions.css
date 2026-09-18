@@ -26,6 +26,29 @@
     word-break: break-word;
   }
 
+  /* Archive is a real card action; do not let the ghost variant look like missing text. */
+  .dashboard .book-card__actions > form .button {
+    border: 1px solid var(--color-primary);
+    background: transparent;
+    color: var(--color-primary);
+    border-radius: var(--radius-medium);
+  }
+
+  .dashboard .book-card__actions > form .button:hover {
+    background: var(--color-primary-muted);
+  }
+
+  /* The editor is a fixed dialog, but its mobile contents must form one vertical scroll surface. */
+  .writer-screen,
+  .writer-screen.writer-screen--focus {
+    grid-template-rows: auto auto auto !important;
+    align-content: start;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* Four writer actions stay in a compact 2x2 block instead of three tall rows. */
   .writer-screen .writer-toolbar {
     width: 100%;
@@ -100,10 +123,13 @@
 
   /* Flex-column mobile editor must stretch its sidebar and manuscript to the viewport. */
   .writer-screen .writer-editor-layout {
+    flex: 0 0 auto;
     width: 100% !important;
     min-width: 0;
+    min-height: auto !important;
     max-width: 100%;
     padding-inline: 0.55rem !important;
+    overflow: visible !important;
   }
 
   .writer-screen .writer-chapters {

@@ -4,11 +4,6 @@ import {
   publicTrustLinks,
 } from "@/lib/public-site-navigation";
 
-// Compatibility exports stay empty so older internal consumers cannot
-// accidentally reintroduce the retired public discovery routes.
-export const publicDiscoveryStaticIndexRoutes = [] as const;
-export const publicPausedDiscoveryReservedRoutes = publicDiscoveryStaticIndexRoutes;
-
 export const publicCodeOwnedIndexRoutes = [
   "/",
   "/yardim",

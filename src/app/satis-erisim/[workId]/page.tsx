@@ -16,6 +16,7 @@ import {
   getAuthorPublicationAgreementStatus,
 } from "@/features/commerce/agreement";
 import { getAuthorCommerceWork } from "@/features/commerce/repository";
+import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import styles from "@/features/commerce/commerce.module.css";
 
@@ -94,6 +95,8 @@ export default async function WriterCommerceWorkPage({
     getActiveAuthorPublicationAgreement(),
     getAuthorPublicationAgreementStatus(),
   ]);
+  const paymentProviderReady = hasOperationalPaymentProvider();
+  const paidPricingEnabled = checkoutEnabled && paymentProviderReady;
 
   if (!work) notFound();
 
@@ -114,7 +117,7 @@ export default async function WriterCommerceWorkPage({
   const saleModelReady = Boolean(work.saleConfiguration);
   const paidPriceReady =
     currentModel !== "paid" ||
-    !checkoutEnabled ||
+    !paidPricingEnabled ||
     (work.saleConfiguration?.priceAmount ?? BigInt(0)) > BigInt(0);
   const finalReady =
     Boolean(acceptedAgreement) &&
@@ -142,11 +145,12 @@ export default async function WriterCommerceWorkPage({
 
         {flash ? <div className={styles.flash}>{flash}</div> : null}
 
-        {!checkoutEnabled ? (
+        {!paidPricingEnabled ? (
           <div className={styles.notice}>
             Hazırlık modu açık. Ücretli model ve kilitli bölümler kaydedilir,
-            fakat ödeme sistemi açılana kadar okur tarafında erişim kilidi
-            uygulanmaz. Ücretli fiyatı bu aşamada sabit 0 TL&apos;dir.
+            fakat gerçek ödeme yolu ve operasyonel provider birlikte hazır
+            olana kadar okur tarafında erişim kilidi uygulanmaz. Ücretli fiyatı
+            bu aşamada sabit 0 TL&apos;dir.
           </div>
         ) : null}
 
@@ -258,7 +262,7 @@ export default async function WriterCommerceWorkPage({
               />
               <span>
                 <strong>Ücretli</strong>
-                {!checkoutEnabled ? (
+                {!paidPricingEnabled ? (
                   <>
                     <span className={styles.paidPrice}>0 TL</span>
                     <small>
@@ -371,7 +375,7 @@ export default async function WriterCommerceWorkPage({
               <span>Fiyat</span>
               <strong>
                 {currentModel === "paid"
-                  ? checkoutEnabled
+                  ? paidPricingEnabled
                     ? formatPrice(
                         work.saleConfiguration?.priceAmount,
                         work.saleConfiguration?.currency,

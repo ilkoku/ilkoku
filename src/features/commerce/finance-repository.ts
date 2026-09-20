@@ -575,6 +575,7 @@ export async function getWriterFinanceOverview(authorId: string) {
       title: string;
       grossSales: bigint;
       authorEarnings: bigint;
+      authorCouponDiscounts: bigint;
       providerFees: bigint;
       platformCommission: bigint;
       refunds: bigint;
@@ -596,6 +597,7 @@ export async function getWriterFinanceOverview(authorId: string) {
       title: work.title,
       grossSales: BigInt(0),
       authorEarnings: BigInt(0),
+      authorCouponDiscounts: BigInt(0),
       providerFees: BigInt(0),
       platformCommission: BigInt(0),
       refunds: BigInt(0),
@@ -617,6 +619,8 @@ export async function getWriterFinanceOverview(authorId: string) {
     if (entry.entryType === "sale_gross") current.grossSales += amount;
     if (entry.entryType === "author_earning")
       current.authorEarnings += amount;
+    if (entry.entryType === "author_coupon_discount")
+      current.authorCouponDiscounts += amount;
     if (entry.entryType === "payment_provider_fee")
       current.providerFees += amount;
     if (entry.entryType === "platform_commission")
@@ -635,6 +639,8 @@ export async function getWriterFinanceOverview(authorId: string) {
     refunds: totals.get("refund") ?? BigInt(0),
     taxWithholding: totals.get("tax_withholding") ?? BigInt(0),
     authorEarnings: totals.get("author_earning") ?? BigInt(0),
+    authorCouponDiscounts:
+      totals.get("author_coupon_discount") ?? BigInt(0),
     balance: balance ?? {
       pendingAmount: BigInt(0),
       availableAmount: BigInt(0),

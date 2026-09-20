@@ -953,3 +953,13 @@ test("author-funded coupon discount is visible in writer deductions without char
   contains(page, "Yazar kupon indirimi", "author coupon deduction field");
   notContains(page, "platformCampaignCost", "platform-funded coupon cost excluded from writer deductions");
 });
+
+
+test("new chapters still require explicit access while a previously paid work has an unconfirmed free draft", () => {
+  const guard = source("src/features/commerce/publication-guard.ts");
+
+  contains(guard, "const previouslyActivatedPaid = Boolean(configuration.activatedAt)", "publication guard activation history");
+  contains(guard, 'configuration.saleModel !== "paid" && !previouslyActivatedPaid', "draft free cannot bypass confirmed paid publication guard");
+  contains(guard, "!paymentPathReady && !previouslyActivatedPaid", "never-activated staged work may stay fail-open");
+  contains(guard, "!chapter.commerceAccess", "explicit chapter access remains required");
+});

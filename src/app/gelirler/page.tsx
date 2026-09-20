@@ -139,6 +139,18 @@ export default async function WriterIncomePage() {
                   <div>
                     <h3>{work.title}</h3>
                     <span>
+                      Güncel fiyat
+                      <strong>
+                        {work.priceAmount === null
+                          ? "—"
+                          : formatMoney(work.priceAmount, work.currency)}
+                      </strong>
+                    </span>
+                    <span>
+                      Satış adedi
+                      <strong>{work.unitsSold.toLocaleString("tr-TR")}</strong>
+                    </span>
+                    <span>
                       Brüt satış
                       <strong>
                         {formatMoney(work.grossSales, finance.currency)}
@@ -171,6 +183,12 @@ export default async function WriterIncomePage() {
                       Vergi / stopaj
                       <strong>
                         {formatMoney(work.taxWithholding, finance.currency)}
+                      </strong>
+                    </span>
+                    <span>
+                      Diğer düzeltmeler
+                      <strong>
+                        {formatMoney(work.adjustments, finance.currency)}
                       </strong>
                     </span>
                     <span>

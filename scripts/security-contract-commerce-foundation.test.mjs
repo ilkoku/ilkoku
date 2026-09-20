@@ -165,3 +165,12 @@ test("writer commerce step order matches frozen flow", () => {
   contains(detailPage, ">5. adım<", "step five work confirmation");
   contains(productContract, "3. Select publication model: Free or Paid.", "frozen step three publication model");
 });
+
+
+test("agreement evidence is immutable across same-version content changes", () => {
+  const actions = source("src/features/commerce/actions.ts");
+
+  contains(actions, "existing.documentHash !== agreement.documentHash", "same-version document hash conflict");
+  contains(actions, '"sozlesme-surum-uyusmazligi"', "hash conflict fail-closed status");
+  notContains(actions, "documentHash: agreement.documentHash,\n        status: \"accepted\",\n        acceptedAt,\n        revokedAt: null", "agreement evidence overwrite path");
+});

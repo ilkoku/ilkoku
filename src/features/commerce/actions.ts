@@ -11,6 +11,7 @@ import {
   getActiveAuthorPublicationAgreement,
   getAuthorAgreementAcceptance,
 } from "./agreement";
+import { hasOperationalPaymentProvider } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
 
 const workIdSchema = z.string().uuid();
@@ -353,8 +354,10 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
   }
 
   const now = new Date();
+  const paymentProviderReady = hasOperationalPaymentProvider();
   const nextStatus =
-    work.saleConfiguration.saleModel === "free" || checkoutEnabled
+    work.saleConfiguration.saleModel === "free" ||
+    (checkoutEnabled && paymentProviderReady)
       ? "active"
       : "ready";
 

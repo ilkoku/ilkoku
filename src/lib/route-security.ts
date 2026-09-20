@@ -47,6 +47,7 @@ export const protectedPaths = [
   "/satis-erisim",
   "/gelirler",
   "/satinal",
+  "/kutuphanem",
   "/yayinevi",
   "/rol-secimi",
 ] as const;
@@ -68,6 +69,7 @@ export const routeRoleRules: RouteRoleRule[] = [
   { approved: false, path: "/satis-erisim", roles: ["writer"] },
   { approved: false, path: "/gelirler", roles: ["writer"] },
   { approved: false, path: "/satinal", roles: [...readerWorkspaceRoles] },
+  { approved: false, path: "/kutuphanem", roles: [...readerWorkspaceRoles] },
   { approved: true, path: "/editor", roles: ["editor"] },
 ];
 

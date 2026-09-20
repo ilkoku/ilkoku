@@ -913,3 +913,22 @@ test("paid activation history survives a draft model toggle until confirmation",
   contains(checkout, "Boolean(configuration?.activatedAt)", "checkout activation history");
   notContains(actions, 'saleModel === "paid" &&\n    Boolean(work.saleConfiguration.activatedAt)', "draft model must not erase prior paid history");
 });
+
+
+test("unconfirmed writer edits cannot interrupt purchases at the last confirmed paid price", () => {
+  const effective = source("src/features/commerce/effective-state.ts");
+  const memberQuery = source("src/features/works/member-public-queries.ts");
+  const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
+  const paidCheckout = source("src/features/commerce/paid-checkout.ts");
+  const zeroTotal = source("src/features/commerce/zero-total-checkout.ts");
+
+  contains(effective, 'status: "active" as const', "last confirmed paid snapshot remains live");
+  contains(memberQuery, "effectiveCommerce.status === \"active\"", "public purchase availability uses confirmed status");
+  contains(memberQuery, "effectiveCommerce.priceAmount > BigInt(0)", "public purchase availability uses confirmed price");
+  contains(checkoutPage, "effectiveCommerce.priceAmount ?? BigInt(0)", "checkout displays confirmed price");
+  contains(checkoutPage, "effectiveCommerce.currency", "checkout displays confirmed currency");
+  contains(paidCheckout, "resolveEffectiveCommerceState", "paid provider checkout resolves confirmed state");
+  contains(paidCheckout, "effectiveCommerce.priceAmount", "paid provider checkout charges confirmed price");
+  contains(zeroTotal, "resolveEffectiveCommerceState", "zero-total checkout resolves confirmed state");
+  contains(zeroTotal, "effectiveCommerce.priceAmount", "zero-total checkout prices confirmed state");
+});

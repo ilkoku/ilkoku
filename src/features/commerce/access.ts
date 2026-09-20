@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { getActiveReaderPurchaseTerms } from "./checkout-terms";
 import { hasOperationalPaymentProvider } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
 
@@ -65,6 +66,13 @@ export async function getCommerceChapterAccessDecision(input: {
 
   if (!previouslyActivatedPaid && configuration.status !== "active") {
     return { allowed: true, reason: "staged_paid_work" };
+  }
+
+  if (!previouslyActivatedPaid) {
+    const readerPurchaseTerms = await getActiveReaderPurchaseTerms();
+    if (!readerPurchaseTerms) {
+      return { allowed: true, reason: "staged_paid_work" };
+    }
   }
 
   if (chapter.commerceAccess?.accessType === "preview") {

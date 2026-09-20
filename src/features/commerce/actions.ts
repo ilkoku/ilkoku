@@ -342,8 +342,17 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
     commerceStatusRedirect(parsedWorkId.data, "erisim-plani-gerekli");
   }
 
-  const now = new Date();
   const checkoutEnabled = isCommerceCheckoutEnabled();
+  if (
+    checkoutEnabled &&
+    work.saleConfiguration.saleModel === "paid" &&
+    (work.saleConfiguration.priceAmount === null ||
+      work.saleConfiguration.priceAmount <= BigInt(0))
+  ) {
+    commerceStatusRedirect(parsedWorkId.data, "fiyat-gerekli");
+  }
+
+  const now = new Date();
   const nextStatus =
     work.saleConfiguration.saleModel === "free" || checkoutEnabled
       ? "active"

@@ -44,6 +44,8 @@ export const protectedPaths = [
   "/yorumlarim",
   "/yayinevleri",
   "/sayfa-renkleri",
+  "/satis-erisim",
+  "/gelirler",
   "/yayinevi",
   "/rol-secimi",
 ] as const;
@@ -62,6 +64,8 @@ export const routeRoleRules: RouteRoleRule[] = [
   { approved: false, path: "/yorumlarim", roles: ["writer"] },
   { approved: false, path: "/yayinevleri", roles: ["writer"] },
   { approved: false, path: "/sayfa-renkleri", roles: ["writer"] },
+  { approved: false, path: "/satis-erisim", roles: ["writer"] },
+  { approved: false, path: "/gelirler", roles: ["writer"] },
   { approved: true, path: "/editor", roles: ["editor"] },
 ];
 

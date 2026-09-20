@@ -42,11 +42,17 @@ export async function assertPaidWorkAccessPlanReadyForPublication(input: {
     },
   });
 
-  if (!work || work.saleConfiguration?.saleModel !== "paid") {
+  const configuration = work?.saleConfiguration;
+  if (!work || !configuration) {
     return;
   }
 
-  if (!paymentPathReady && !work.saleConfiguration.activatedAt) {
+  const previouslyActivatedPaid = Boolean(configuration.activatedAt);
+  if (configuration.saleModel !== "paid" && !previouslyActivatedPaid) {
+    return;
+  }
+
+  if (!paymentPathReady && !previouslyActivatedPaid) {
     return;
   }
 

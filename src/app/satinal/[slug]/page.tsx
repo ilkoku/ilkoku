@@ -134,11 +134,15 @@ export default async function CheckoutPreparationPage({
       (checkoutEnabled &&
         hasAvailableProvider &&
         Boolean(purchaseTerms) &&
-        configuration?.status === "active"));
+        effectiveCommerce.status === "active"));
   const checkoutConfigurationActive =
     checkoutEnabled &&
-    configuration?.saleModel === "paid" &&
-    configuration.status === "active";
+    hasAvailableProvider &&
+    Boolean(purchaseTerms) &&
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "active" &&
+    effectiveCommerce.priceAmount !== null &&
+    effectiveCommerce.priceAmount > BigInt(0);
 
   if (!paidAccessEnforced) {
     return (
@@ -195,7 +199,7 @@ export default async function CheckoutPreparationPage({
     );
   }
 
-  const originalAmount = configuration.priceAmount ?? BigInt(0);
+  const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
   const requestedCouponCode = query.kupon?.trim() ?? "";
   const coupon = requestedCouponCode
     ? await getApplicableCheckoutCoupon({
@@ -244,7 +248,7 @@ export default async function CheckoutPreparationPage({
             <div>
               <span>Eser fiyatı</span>
               <strong>
-                {formatMoney(originalAmount, configuration.currency)}
+                {formatMoney(originalAmount, effectiveCommerce.currency)}
               </strong>
             </div>
             <div>
@@ -386,7 +390,7 @@ export default async function CheckoutPreparationPage({
                 type="submit"
               >
                 {hasAvailableProvider
-                  ? `${formatMoney(pricing.finalAmount, configuration.currency)} ÖDE`
+                  ? `${formatMoney(pricing.finalAmount, effectiveCommerce.currency)} ÖDE`
                   : "Ödeme sağlayıcısı bekleniyor"}
               </button>
             </form>

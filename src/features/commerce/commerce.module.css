@@ -504,3 +504,33 @@
   color: #332b39;
   font-size: 0.98rem;
 }
+
+
+.financeWorkList {
+  display: grid;
+  gap: 14px;
+}
+
+.financeWorkCard {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #e7e2ef;
+  border-radius: 16px;
+  background: #fcfbfe;
+}
+
+.financeWorkCard h3 {
+  margin: 0 0 10px;
+}
+
+.financeWorkCard > div:first-child > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #6b6571;
+}
+
+.financeWorkCard > div:first-child strong {
+  color: #332b39;
+}

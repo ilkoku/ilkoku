@@ -136,6 +136,12 @@ export async function getMemberPublicWorkBySlug(
     saleConfiguration?.saleModel === "paid" &&
     (Boolean(saleConfiguration.activatedAt) ||
       (paymentPathReady && saleConfiguration.status === "active"));
+  const purchaseAvailable =
+    paymentPathReady &&
+    saleConfiguration?.saleModel === "paid" &&
+    saleConfiguration.status === "active" &&
+    saleConfiguration.priceAmount !== null &&
+    saleConfiguration.priceAmount > BigInt(0);
 
   const entitlement =
     commerceEnforcementActive && userId && !options.bypassCommerce
@@ -301,6 +307,7 @@ export async function getMemberPublicWorkBySlug(
       enforcementActive: commerceEnforcementActive,
       hasEntitlement,
       priceAmount: saleConfiguration?.priceAmount ?? null,
+      purchaseAvailable,
       saleModel: saleConfiguration?.saleModel ?? "free",
       saleStatus: saleConfiguration?.status ?? "draft",
     },

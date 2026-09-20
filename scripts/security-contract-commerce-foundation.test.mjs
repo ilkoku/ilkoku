@@ -693,3 +693,45 @@ test("commerce settings remain read-only and require rollout provider and active
   notContains(settings, 'action={', "settings page remains read-only");
   contains(readerTerms, "getReaderPurchaseTermsStatus", "reader terms status query");
 });
+
+
+test("public work queries redact locked paid chapter content before rendering", () => {
+  const query = source("src/features/works/member-public-queries.ts");
+  const showcase = source("src/features/showcase/components/BookShowcase.tsx");
+  const bookPage = source("src/app/kitap/[slug]/page.tsx");
+
+  contains(query, "commerceEnforcementActive", "paid public work enforcement state");
+  contains(query, 'content: readable ? bookChapter.content : ""', "published-book locked content redaction");
+  contains(query, 'content: readable ? snapshot.content : ""', "chapter snapshot locked content redaction");
+  contains(query, "safePublicationBook", "published book safe projection");
+  contains(query, 'content: ""', "locked book item content removal");
+  contains(query, "formatting: null", "locked book formatting removal");
+
+  contains(showcase, "Kilitli · Ücretli erişime dahildir", "generic locked chapter copy");
+  contains(showcase, "Ön İzleme · Ücretsiz okunabilir", "preview chapter copy");
+  contains(showcase, "purchaseHref", "locked chapter purchase route");
+  contains(showcase, "İçerik satın alma sonrasında açılır", "locked chapter hides content-derived timing");
+  contains(bookPage, "isAccessibleForFree: !work.commerce?.enforcementActive", "structured-data paid access state");
+  notContains(bookPage, "isAccessibleForFree: true", "no hardcoded free structured-data claim");
+});
+
+
+test("chapter reading resolves editor review bypass before commerce redaction", () => {
+  const page = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
+  const query = source("src/features/works/member-public-queries.ts");
+
+  contains(page, "getPublicWorkAgeRating", "minimal work reference before chapter load");
+  contains(page, "getActiveEditorReviewAssignment", "review assignment lookup");
+  contains(page, "{ bypassCommerce: isReviewReading }", "verified review bypass passed to chapter query");
+
+  const assignmentIndex = page.indexOf("getActiveEditorReviewAssignment");
+  const chapterIndex = page.indexOf("const chapter = await getMemberPublicChapter");
+  assert.ok(
+    assignmentIndex >= 0 && chapterIndex > assignmentIndex,
+    "editor review assignment must be resolved before full chapter query",
+  );
+
+  contains(query, "options.bypassCommerce", "member query explicit bypass");
+  contains(query, "commerceAllowsContent", "chapter content commerce gate");
+  contains(query, 'content: ""', "denied chapter returns no content");
+});

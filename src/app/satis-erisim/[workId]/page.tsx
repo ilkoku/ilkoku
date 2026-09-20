@@ -52,6 +52,7 @@ const statusMessages: Record<string, string> = {
   "yayin-modeli-gerekli": "Önce Ücretsiz veya Ücretli yayın modelini kaydetmelisin.",
   "bolum-gerekli": "Son onay için eserde en az bir bölüm bulunmalı.",
   "erisim-plani-gerekli": "Son onaydan önce tüm bölümlerin erişim planını kaydetmelisin.",
+  "fiyat-gerekli": "Gerçek ödeme sistemi açıkken ücretli eser için 0 TL dışında geçerli bir fiyat gerekir.",
   "yayin-onaylandi": "Eserin yayın ve erişim ayarları onaylandı.",
   "satis-hazir": "Ücretli eser satışa hazır durumda kaydedildi. Tahsilat açılana kadar okur erişimi kapanmaz.",
 };
@@ -111,8 +112,15 @@ export default async function WriterCommerceWorkPage({
   const accessPlanComplete =
     work.chapters.length > 0 && plannedChapters.length === work.chapters.length;
   const saleModelReady = Boolean(work.saleConfiguration);
+  const paidPriceReady =
+    currentModel !== "paid" ||
+    !checkoutEnabled ||
+    (work.saleConfiguration?.priceAmount ?? BigInt(0)) > BigInt(0);
   const finalReady =
-    Boolean(acceptedAgreement) && accessPlanComplete && saleModelReady;
+    Boolean(acceptedAgreement) &&
+    accessPlanComplete &&
+    saleModelReady &&
+    paidPriceReady;
   const flash = query.durum ? statusMessages[query.durum] ?? query.durum : null;
 
   return (

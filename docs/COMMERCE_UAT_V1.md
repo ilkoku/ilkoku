@@ -26,6 +26,7 @@ does **not** mark browser/human UAT as complete.
 | W-04 | Checkout flag is on but no operational provider exists | Work remains staged, price stays 0 TL for never-activated paid work, reader access remains open. |
 | W-05 | Writer accepts active agreement | Version/hash/time/audit evidence is stored; same-version hash mismatch is not overwritten. |
 | W-06 | Writer confirms a never-activated paid work without payment path | Configuration becomes ready/staged, not live paid access. |
+| W-07 | Writer edits an already activated paid work but has not given the next work-level confirmation yet | Reader-facing sale model, price/access enforcement and chapter access continue from the last confirmed snapshot; draft edits do not leak live. |
 
 ## B. First real paid activation
 

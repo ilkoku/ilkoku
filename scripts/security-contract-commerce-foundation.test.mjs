@@ -109,3 +109,16 @@ test("writer commerce agreement is fail-closed and final consent snapshots the f
   contains(page, "Hukuki inceleme ve gerekli onaylar tamamlanıp aktif", "inactive agreement writer notice");
   contains(page, "Eser bazlı son onay", "work-level confirmation UI");
 });
+
+
+test("author coupon workspace is restricted to the writer's paid works", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  const page = source("src/app/satis-erisim/kuponlar/page.tsx");
+
+  contains(actions, 'owner: "author"', "author-funded coupon owner");
+  contains(actions, 'authorId: writer.id', "coupon author ownership");
+  contains(actions, 'scope: "selected_works"', "work-scoped author coupon");
+  contains(actions, 'work.saleConfiguration?.saleModel !== "paid"', "paid-work coupon gate");
+  contains(page, "Yazar kuponundaki indirim yazar tarafından finanse edilir", "author-funded coupon explanation");
+  contains(page, "paidWorks.map", "paid works only in coupon selector");
+});

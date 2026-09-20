@@ -50,9 +50,14 @@ export default async function WriterCommercePage() {
               ücretsiz veya ücretli modelini hazırla.
             </p>
           </div>
-          <span className={styles.badge}>
-            {checkoutEnabled ? "Tahsilat aktif" : "Altyapı hazırlık modu"}
-          </span>
+          <div className={styles.heroActions}>
+            <Link className={styles.secondaryAction} href="/satis-erisim/kuponlar">
+              Kuponlar
+            </Link>
+            <span className={styles.badge}>
+              {checkoutEnabled ? "Tahsilat aktif" : "Altyapı hazırlık modu"}
+            </span>
+          </div>
         </header>
 
         {!checkoutEnabled ? (

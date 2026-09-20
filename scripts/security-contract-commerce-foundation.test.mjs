@@ -86,7 +86,8 @@ test("staged paid setup fixes the author price at zero and exposes no manual pri
   const productContract = source("docs/COMMERCE_FOUNDATION_V1.md");
 
   contains(actions, 'parsedModel.data === "paid" ? 0n : null', "fixed zero staged paid price");
-  contains(page, "Fiyat: 0 TL", "writer paid option zero-price display");
+  contains(page, "<strong>Ücretli</strong>", "writer paid option label");
+  contains(page, '<span className={styles.paidPrice}>0 TL</span>', "zero price visually belongs to paid option");
   notContains(page, 'name="price"', "manual author price input");
   contains(productContract, "fixed **0 TRY** price", "staged zero-price product rule");
 });
@@ -149,4 +150,18 @@ test("commerce routes are private and writer-gated", () => {
   contains(proxy, '"/gelirler/:path*"', "income proxy enforcement");
   contains(nextConfig, '"/satis-erisim/:path*"', "sales access noindex header");
   contains(nextConfig, '"/gelirler/:path*"', "income noindex header");
+});
+
+
+test("writer commerce step order matches frozen flow", () => {
+  const listPage = source("src/app/satis-erisim/page.tsx");
+  const detailPage = source("src/app/satis-erisim/[workId]/page.tsx");
+  const productContract = source("docs/COMMERCE_FOUNDATION_V1.md");
+
+  contains(listPage, "1. adım · Eser seç", "step one work selection");
+  contains(detailPage, ">2. adım<", "step two access plan");
+  contains(detailPage, ">3. adım<", "step three free/paid selection");
+  contains(detailPage, ">4. adım<", "step four agreement");
+  contains(detailPage, ">5. adım<", "step five work confirmation");
+  contains(productContract, "3. Select publication model: Free or Paid.", "frozen step three publication model");
 });

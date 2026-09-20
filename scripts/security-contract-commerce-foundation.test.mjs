@@ -192,7 +192,7 @@ test("reader commerce gate is fail-open only before first paid activation", () =
   contains(access, 'reason: "purchase_required"', "locked paid purchase gate");
   contains(readingPage, "getCommerceChapterAccessDecision", "reading route commerce access check");
   contains(readingPage, "/satinal/", "purchase redirect");
-  contains(checkoutPage, "Satın alma altyapısı hazır, ancak gerçek tahsilat henüz aktif", "staged checkout notice");
+  contains(checkoutPage, "Bu ücretli yapılandırma henüz gerçek paid access olarak aktive", "staged checkout notice");
 });
 
 
@@ -804,4 +804,18 @@ test("public paid showcase distinguishes access enforcement from purchase availa
   contains(showcase, "Mevcut erişim hakları korunur", "existing entitlement outage copy");
   contains(showcase, "purchaseAvailable", "locked chapter purchase availability");
   contains(bookPage, "work.commerce?.purchaseAvailable", "structured offer purchase availability");
+});
+
+
+test("checkout distinguishes never-activated staging from post-activation outage", () => {
+  const repository = source("src/features/commerce/checkout-repository.ts");
+  const page = source("src/app/satinal/[slug]/page.tsx");
+
+  contains(repository, "activatedAt: true", "checkout activation history");
+  contains(page, "previouslyActivatedPaid", "checkout historical paid state");
+  contains(page, "paidAccessEnforced", "paid access enforcement state");
+  contains(page, "checkoutConfigurationActive", "checkout transaction readiness");
+  contains(page, "Mevcut okuma erişimi açık kalır", "never-activated staging remains open");
+  contains(page, "eser bu nedenle ücretsiz erişime açılmaz", "post-activation outage stays locked");
+  contains(page, "Erişim korunuyor", "post-activation outage status");
 });

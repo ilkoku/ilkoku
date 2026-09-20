@@ -1,15 +1,10 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import type { VerifiedProviderWebhookEvent } from "./payment-providers";
 
-export type VerifiedProviderPaymentEvent = {
-  amount: bigint;
-  currency: string;
-  failureCode?: string | null;
-  failureMessage?: string | null;
-  outcome: "succeeded" | "failed" | "cancelled";
+export type VerifiedProviderPaymentEvent = VerifiedProviderWebhookEvent & {
   providerCode: string;
-  providerTransactionId: string;
 };
 
 export type ProviderPaymentCompletionResult =

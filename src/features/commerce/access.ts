@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { getActiveReaderPurchaseTerms } from "./checkout-terms";
+import { resolveEffectiveCommerceState } from "./effective-state";
 import { hasOperationalPaymentProvider } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
 
@@ -23,8 +24,20 @@ export async function getCommerceChapterAccessDecision(input: {
       saleConfiguration: {
         select: {
           saleModel: true,
+          priceAmount: true,
+          currency: true,
           status: true,
           activatedAt: true,
+        },
+      },
+      publicationConsents: {
+        orderBy: { confirmedAt: "desc" },
+        take: 1,
+        select: {
+          publicationModel: true,
+          priceAmount: true,
+          currency: true,
+          accessPlanSnapshot: true,
         },
       },
       chapters: {
@@ -51,7 +64,13 @@ export async function getCommerceChapterAccessDecision(input: {
   }
 
   const configuration = work.saleConfiguration;
-  if (!configuration || configuration.saleModel === "free") {
+  const latestConsent = work.publicationConsents[0] ?? null;
+  const effective = resolveEffectiveCommerceState({
+    configuration,
+    latestConsent,
+  });
+
+  if (!configuration || effective.saleModel === "free") {
     return { allowed: true, reason: "free_work" };
   }
 
@@ -75,7 +94,11 @@ export async function getCommerceChapterAccessDecision(input: {
     }
   }
 
-  if (chapter.commerceAccess?.accessType === "preview") {
+  const chapterAccessType = effective.useConfirmedSnapshot
+    ? effective.accessPlan[chapter.id] ?? "locked"
+    : chapter.commerceAccess?.accessType;
+
+  if (chapterAccessType === "preview") {
     return { allowed: true, reason: "preview" };
   }
 

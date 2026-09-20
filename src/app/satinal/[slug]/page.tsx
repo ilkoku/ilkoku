@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { completeZeroTotalCheckoutAction } from "@/features/commerce/checkout-actions";
@@ -67,6 +68,13 @@ export default async function CheckoutPreparationPage({
   if (!canAccessReaderWorkspace(profile.role)) {
     redirect("/erisim-reddedildi?kaynak=reader");
   }
+
+  const checkoutReturnTo = `/satinal/${slug}${query.from ? `?from=${encodeURIComponent(query.from)}` : ""}`;
+  await enforceAdultWorkGate({
+    returnTo: checkoutReturnTo,
+    slug,
+    user: profile,
+  });
 
   const work = await getCheckoutWorkBySlug(slug, profile.id);
   if (!work) notFound();

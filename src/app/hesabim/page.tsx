@@ -59,6 +59,8 @@ function getAccountSections(role: keyof typeof roleLabels) {
     : role === "writer"
       ? { href: "#yazdiginiz-turler", label: "Yazdığınız Türler", helper: "Eserlerinizden otomatik oluşur" }
       : null;
+  const hasReaderCommerce =
+    role === "reader" || role === "editor_pending" || role === "editor";
 
   return [
     { href: "#genel-bakis", label: "Genel Bakış", helper: "Hesap ve rol özeti" },
@@ -67,6 +69,7 @@ function getAccountSections(role: keyof typeof roleLabels) {
     { href: "#rol-basvurusu", label: "Rol & Başvurular", helper: "Başvuru ve doğrulama durumu" },
     { href: "#yetiskin-icerik", label: "18+ İçerik Erişimi", helper: "Yaş ve içerik tercihi" },
     { href: "#bildirim-tercihleri", label: "Bildirim Tercihleri", helper: "E-posta ve bildirim ayarları" },
+    ...(hasReaderCommerce ? [{ href: "/hesabim/odeme-gecmisi", label: "Ödeme Geçmişi", helper: "Sipariş ve ödeme durumları" }] : []),
     { href: "#guvenlik", label: "Güvenlik", helper: "Şifre ve oturum işlemleri" },
   ];
 }

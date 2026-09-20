@@ -941,3 +941,15 @@ test("previously activated paid work remains active when a confirmed edit occurs
   contains(actions, 'work.saleConfiguration.saleModel === "free"', "free confirmation remains active");
   contains(actions, 'nextStatus === "active"', "confirmed active state persistence");
 });
+
+
+test("author-funded coupon discount is visible in writer deductions without charging platform subsidy", () => {
+  const repository = source("src/features/commerce/finance-repository.ts");
+  const page = source("src/app/gelirler/page.tsx");
+
+  contains(repository, 'totals.get("author_coupon_discount")', "author coupon deduction total");
+  contains(repository, 'entry.entryType === "author_coupon_discount"', "author coupon work rollup");
+  contains(page, "finance.authorCouponDiscount", "author coupon included in writer deductions");
+  contains(page, "Yazar kupon indirimi", "author coupon deduction field");
+  notContains(page, "platformCampaignCost", "platform-funded coupon cost excluded from writer deductions");
+});

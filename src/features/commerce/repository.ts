@@ -75,6 +75,7 @@ export async function getAuthorCommerceWork(authorId: string, workId: string) {
           status: true,
           agreementVersion: true,
           confirmedAt: true,
+          activatedAt: true,
         },
       },
     },

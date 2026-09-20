@@ -31,6 +31,7 @@ export async function getAuthorCommerceWorks(authorId: string) {
           priceAmount: true,
           currency: true,
           status: true,
+          activatedAt: true,
         },
       },
     },

@@ -52,3 +52,23 @@ export async function getActiveReaderPurchaseTerms() {
     version: String(Number(row.version)),
   };
 }
+
+
+export async function getReaderPurchaseTermsStatus() {
+  const rows = await prisma.$queryRaw<RawReaderPurchaseTerms[]>`
+    SELECT id, code, title, body, version, active, lifecycleStatus, activatedAt
+    FROM ContractTemplate
+    WHERE code = ${READER_DIGITAL_CONTENT_TERMS_CODE}
+    LIMIT 1
+  `;
+
+  const row = rows[0];
+  if (!row) return null;
+
+  return {
+    active: row.active === true || row.active === 1,
+    lifecycleStatus: row.lifecycleStatus,
+    title: row.title,
+    version: String(Number(row.version)),
+  };
+}

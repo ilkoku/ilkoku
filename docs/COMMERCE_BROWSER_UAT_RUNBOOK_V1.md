@@ -21,12 +21,15 @@ with separate writer, reader and admin identities.
 - A provider-dependent scenario that cannot safely run is **BLOCKED-BY-DESIGN**, not PASS.
 - A missing/incorrect UI result is FAIL; do not change the frozen product rule just to pass UAT.
 
-Allowed result values:
+Project-standard status vocabulary:
 
-- `PASS`
-- `FAIL`
-- `BLOCKED-BY-DESIGN`
-- `NOT-RUN`
+- `AUTOMATED_PASS` — repository/CI/code-level evidence covers the technical boundary.
+- `HUMAN_PENDING` — the browser flow has not yet been completed by the required real role/account, including cases where an intentionally inactive provider prerequisite prevents safe execution.
+- `HUMAN_PASS` — the exact browser flow was completed successfully by the required real role/account.
+- `BLOCKED` — the browser flow was actually attempted and failed; a corrective change is required before acceptance.
+
+An intentionally inactive payment/provider prerequisite is **not** a failure. Keep
+that row `HUMAN_PENDING` with the prerequisite recorded.
 
 ## 2. Required environment record
 
@@ -76,11 +79,11 @@ For every executed scenario record:
 
 | Field | Requirement |
 | --- | --- |
-| Result | PASS / FAIL / BLOCKED-BY-DESIGN |
+| Result | HUMAN_PENDING / HUMAN_PASS / BLOCKED |
 | Account role | Writer / Reader / Admin |
 | URL | Exact tested route |
 | Work/order/coupon reference | Non-secret identifier only |
-| Evidence | Screenshot or screen recording reference |
+| Evidence | Dated human acceptance note; optional screenshot/recording may be retained outside the repository |
 | Notes | What was observed |
 | Defect | GitHub issue/PR note if FAIL |
 
@@ -134,7 +137,7 @@ operational provider exists.
 Expected: never-activated paid work remains staged, not live-paid; reader access
 does not close.
 
-If this environment state cannot be represented safely: `BLOCKED-BY-DESIGN`.
+If this environment state cannot be represented safely: keep the row `HUMAN_PENDING` and record the missing prerequisite.
 
 ### W-05 — Writer agreement evidence
 
@@ -173,7 +176,7 @@ Precondition: previously activated paid fixture exists safely.
 Expected: Reader still sees the last confirmed paid snapshot. Draft model, price
 and chapter-access changes do not become live before the next final confirmation.
 
-If no safe previously-activated fixture exists: `BLOCKED-BY-DESIGN`.
+If no safe previously-activated fixture exists: keep the row `HUMAN_PENDING` and record the missing prerequisite.
 
 ## 6. Reader browser UAT
 
@@ -238,7 +241,7 @@ Account: an editor with a valid active review assignment, only if such a fixture
 Expected: editor review reading works through the explicit review path without
 opening ordinary reader access.
 
-If no approved editor fixture exists: `BLOCKED-BY-DESIGN`.
+If no approved editor fixture exists: keep the row `HUMAN_PENDING` and record the missing prerequisite.
 
 ### R-09 — 18+ gate
 
@@ -271,8 +274,7 @@ Expected: shared payment settlement lifecycle is not reached.
 ### C-06 — Missing provider adapter
 Expected: paid Order is not created.
 
-Until a safe operational provider exists, record C-01 through C-05 as
-`BLOCKED-BY-DESIGN`. C-06 may be observed in a safe provider-unavailable
+Until a safe operational provider exists, keep C-01 through C-05 `HUMAN_PENDING` and record the provider prerequisite. C-06 may be observed in a safe provider-unavailable
 environment without creating real payments.
 
 ## 8. Coupon browser UAT
@@ -298,8 +300,7 @@ Requires a safe active-paid checkout fixture.
 Expected: reader total is 0; no external Payment/provider handoff occurs; order,
 coupon redemption, entitlement and campaign ledger complete.
 
-If the payment rollout prerequisites needed to reach this state are not safely
-available: `BLOCKED-BY-DESIGN`.
+If the payment rollout prerequisites needed to reach this state are not safely available, keep the row `HUMAN_PENDING` and record the prerequisite.
 
 ### K-04 — Limits
 
@@ -364,14 +365,24 @@ Presence of an executable mutation for an undecided rule is a FAIL.
 
 ## 11. Exit criteria
 
-Browser/human UAT can be marked PASS only when:
+There are two distinct acceptance boundaries:
+
+### Commerce Foundation browser acceptance
+
+This foundation-level browser pass can be recorded when:
 
 1. the exact tested branch SHA is recorded;
-2. all safely executable Writer, Reader, Coupon and Finance scenarios are PASS;
-3. every provider-dependent scenario is either actually PASS on an intentionally
-   configured safe payment path or explicitly `BLOCKED-BY-DESIGN`;
-4. no FAIL remains unresolved;
-5. evidence references are recorded;
+2. every safely executable Writer, Reader, Coupon and Finance row is `HUMAN_PASS`;
+3. provider-dependent rows that cannot yet run safely remain explicitly `HUMAN_PENDING` with the prerequisite recorded;
+4. no attempted row is `BLOCKED`;
+5. human acceptance evidence is recorded without credentials, session data or PII;
 6. PR #945 remains unmerged until explicit merge approval is given.
 
-A code-level PASS or CI PASS alone is not sufficient to mark browser/human UAT complete.
+### Production paid-activation acceptance
+
+Before real payment rollout is intentionally activated, every provider-dependent
+checkout/payment row must also reach `HUMAN_PASS` on the approved safe payment
+path. A foundation merge does not itself authorize production payment activation.
+
+A code-level `AUTOMATED_PASS` or green CI alone is never sufficient to claim
+`HUMAN_PASS`.

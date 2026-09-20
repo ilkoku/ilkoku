@@ -176,7 +176,7 @@ Order statuses:
 
 Payment providers remain provider-agnostic in this phase.
 
-Paid access enforcement is additionally fail-open when no operational payment provider exists. Enabling the commerce rollout flag by itself must not lock a reader out of a paid work. A paid configuration becomes ACTIVE only when checkout is enabled and at least one production-safe provider adapter is operational.
+Before a work has ever been activated for real paid access, missing checkout/provider infrastructure is fail-open: staging must not lock the reader out. Enabling the commerce rollout flag by itself is not enough; first activation requires checkout plus at least one production-safe provider adapter. After a work has been activated as paid at least once, a temporary checkout/provider outage does **not** unlock its locked chapters; existing entitlements remain valid while new purchase availability may be temporarily unavailable.
 
 ### Normal paid orders
 

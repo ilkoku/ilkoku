@@ -50,7 +50,7 @@ export default async function WriterCommercePage() {
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.writerCommercePage}`}>
         <header className={`${styles.hero} ${styles.writerIndexHero}`}>
           <div>
             <span className={styles.eyebrow}>1. adım · Eser seç</span>

@@ -122,3 +122,31 @@ test("author coupon workspace is restricted to the writer's paid works", () => {
   contains(page, "Yazar kuponundaki indirim yazar tarafından finanse edilir", "author-funded coupon explanation");
   contains(page, "paidWorks.map", "paid works only in coupon selector");
 });
+
+
+test("platform coupon workspace preserves author earning base and supports explicit scopes", () => {
+  const actions = source("src/features/commerce/admin-actions.ts");
+  const page = source("src/app/admin/odeme-sistemi/kuponlar/page.tsx");
+  const navigation = source("src/lib/admin-navigation.ts");
+
+  contains(actions, 'owner: "platform"', "platform-funded coupon owner");
+  contains(actions, 'scopeSchema = z.enum(["all_paid_works", "selected_works", "selected_authors"])', "platform coupon scopes");
+  contains(page, "yazar hakedişi eserin", "protected author earning explanation");
+  contains(page, "kuponsuz/orijinal fiyatı üzerinden korunur", "original price earning base");
+  contains(navigation, 'label: "Ödeme Sistemi"', "payment system admin navigation");
+  contains(navigation, 'label: "Finans & Gelirler"', "finance admin navigation");
+});
+
+
+test("commerce routes are private and writer-gated", () => {
+  const security = source("src/lib/route-security.ts");
+  const proxy = source("src/proxy.ts");
+  const nextConfig = source("next.config.ts");
+
+  contains(security, '{ approved: false, path: "/satis-erisim", roles: ["writer"] }', "sales access writer gate");
+  contains(security, '{ approved: false, path: "/gelirler", roles: ["writer"] }', "writer income gate");
+  contains(proxy, '"/satis-erisim/:path*"', "sales access proxy enforcement");
+  contains(proxy, '"/gelirler/:path*"', "income proxy enforcement");
+  contains(nextConfig, '"/satis-erisim/:path*"', "sales access noindex header");
+  contains(nextConfig, '"/gelirler/:path*"', "income noindex header");
+});

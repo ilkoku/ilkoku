@@ -932,3 +932,12 @@ test("unconfirmed writer edits cannot interrupt purchases at the last confirmed 
   contains(zeroTotal, "resolveEffectiveCommerceState", "zero-total checkout resolves confirmed state");
   contains(zeroTotal, "effectiveCommerce.priceAmount", "zero-total checkout prices confirmed state");
 });
+
+
+test("previously activated paid work remains active when a confirmed edit occurs during payment outage", () => {
+  const actions = source("src/features/commerce/actions.ts");
+
+  contains(actions, "previouslyActivatedPaid ||\n    paidActivationReady", "post-activation paid configuration stays active through provider outage");
+  contains(actions, 'work.saleConfiguration.saleModel === "free"', "free confirmation remains active");
+  contains(actions, 'nextStatus === "active"', "confirmed active state persistence");
+});

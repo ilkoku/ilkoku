@@ -76,10 +76,13 @@ test("UAT C: non-zero checkout persists pending state before provider handoff", 
   has(checkout, 'status: "reserved"', "coupon reservation");
   has(checkout, "adapter.createPayment", "provider handoff");
 
-  const orderIndex = checkout.indexOf('status: "pending_payment"');
-  const paymentIndex = checkout.indexOf('status: "pending"');
+  const orderIndex = checkout.indexOf("const order = await transaction.order.create");
+  const paymentIndex = checkout.indexOf("const payment = await transaction.payment.create");
   const providerIndex = checkout.indexOf("adapter.createPayment");
-  assert.ok(orderIndex >= 0 && paymentIndex > orderIndex && providerIndex > paymentIndex);
+  assert.ok(
+    orderIndex >= 0 && paymentIndex > orderIndex && providerIndex > paymentIndex,
+    "order and payment persistence must precede provider handoff",
+  );
 });
 
 test("UAT C: provider webhook is verified before settlement and settlement is idempotent", () => {

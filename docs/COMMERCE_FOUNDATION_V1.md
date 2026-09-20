@@ -252,6 +252,19 @@ Author reviews access plan, sets price, satisfies agreement requirement, and giv
 
 The work becomes readable without purchase. Historical orders, earnings, ledger entries, confirmations, and entitlements are not deleted or rewritten.
 
+## 13. Rollout safety
+
+Until a real checkout path is intentionally enabled, paid configurations are **staged only**.
+
+- Writers may prepare a paid model, price, chapter access plan and agreement/consent records.
+- A paid configuration must not lock reader access while checkout is disabled.
+- The current reader experience therefore remains effectively free/open during the infrastructure phase.
+- Checkout activation is controlled server-side with `COMMERCE_CHECKOUT_ENABLED=true`.
+- Default and missing value is treated as disabled.
+- When payment is later activated, the existing paid configuration can be promoted without rewriting the author model.
+
+This is a rollout rule, not a change to the frozen product model.
+
 ## 13. Current implementation boundary
 
 Included now:

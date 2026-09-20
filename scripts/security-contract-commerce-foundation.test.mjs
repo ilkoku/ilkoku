@@ -544,3 +544,18 @@ test("admin operations avoid exposing payment credentials", () => {
   notContains(repository, "cvv", "no cvv field");
   notContains(repository, "pan", "no payment PAN field");
 });
+
+
+test("admin entitlement operations remain entitlement-driven", () => {
+  const overview = source("src/app/admin/odeme-sistemi/page.tsx");
+  const repository = source("src/features/commerce/admin-operations-repository.ts");
+  const page = source("src/app/admin/odeme-sistemi/erisim-haklari/page.tsx");
+
+  contains(overview, 'href="/sistem-yonetimi/odeme-sistemi/erisim-haklari"', "entitlement operations link");
+  contains(repository, "prisma.workEntitlement.findMany", "entitlement repository");
+  contains(repository, "prisma.workEntitlement.groupBy", "entitlement status counts");
+  contains(page, "Fiyat hiçbir zaman erişim kararı olarak", "access is not price-derived");
+  contains(page, "entitlement.order", "order linkage visibility");
+  contains(page, "saleConfiguration", "work sale-state visibility");
+  notContains(page, 'action={', "entitlement admin is read-only");
+});

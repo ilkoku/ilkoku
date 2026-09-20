@@ -559,3 +559,18 @@ test("admin entitlement operations remain entitlement-driven", () => {
   contains(page, "saleConfiguration", "work sale-state visibility");
   notContains(page, 'action={', "entitlement admin is read-only");
 });
+
+
+test("admin provider readiness is read-only and production-safe", () => {
+  const overview = source("src/app/admin/odeme-sistemi/page.tsx");
+  const page = source("src/app/admin/odeme-sistemi/saglayicilar/page.tsx");
+  const providers = source("src/features/commerce/payment-providers.ts");
+
+  contains(overview, 'href="/sistem-yonetimi/odeme-sistemi/saglayicilar"', "provider readiness link");
+  contains(page, "COMMERCE_CHECKOUT_ENABLED", "rollout state visibility");
+  contains(page, "hasOperationalPaymentProvider", "operational provider state");
+  contains(page, "Secret, kart verisi veya operatör kimlik bilgisi", "credential privacy");
+  contains(page, "Test-mode adapter production", "test provider production warning");
+  notContains(page, 'action={', "provider readiness page is read-only");
+  contains(providers, 'adapter.mode === "test" && process.env.NODE_ENV !== "production"', "test provider remains production-blocked");
+});

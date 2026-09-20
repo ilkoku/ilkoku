@@ -21,10 +21,11 @@ Commerce controls are not embedded inside **Eserlerim**.
 1. Select a work.
 2. Plan chapter access.
 3. Select publication model: Free or Paid.
-4. If Paid, set the work price.
-5. Accept the current **İlkOku Yazar Yayın ve Erişim Sözleşmesi**.
-6. Confirm the work-specific publication/sale configuration.
-7. Publish or open for sale.
+   - If Paid, the price is automatically stored as **0 TRY** during the infrastructure phase.
+   - The author does not enter a price in this phase.
+4. Accept the current **İlkOku Yazar Yayın ve Erişim Sözleşmesi**.
+5. Confirm the work-specific publication/sale configuration.
+6. Publish or mark the paid setup as ready.
 
 ### Chapter access
 
@@ -246,7 +247,7 @@ Old orders preserve their original price snapshot. Only new purchases use the ne
 
 ### Free → Paid
 
-Author reviews access plan, sets price, satisfies agreement requirement, and gives a new work-level confirmation before sale activation.
+During the infrastructure phase, the author reviews the access plan and selects Paid. The system automatically stores the staged price as **0 TRY**. The author then satisfies the agreement requirement and gives a new work-level confirmation. Real price entry is introduced only when actual checkout/payment is explicitly enabled.
 
 ### Paid → Free
 

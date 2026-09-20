@@ -27,7 +27,7 @@ export default async function FinanceIncomePage() {
   const sum = (type: (typeof ledger)[number]["entryType"]) =>
     ledger
       .filter((entry) => entry.entryType === type)
-      .reduce((total, entry) => total + entry.amount, 0n);
+      .reduce((total, entry) => total + entry.amount, BigInt(0));
 
   const platformCampaignCost = sum("platform_coupon_discount");
   const grossSales = sum("sale_gross");
@@ -36,11 +36,11 @@ export default async function FinanceIncomePage() {
 
   const pendingAuthor = balances.reduce(
     (total, balance) => total + balance.pendingAmount,
-    0n,
+    BigInt(0),
   );
   const availableAuthor = balances.reduce(
     (total, balance) => total + balance.availableAmount,
-    0n,
+    BigInt(0),
   );
 
   return (

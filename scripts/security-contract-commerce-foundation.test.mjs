@@ -607,7 +607,7 @@ test("writer income dashboard is ledger and balance driven without reader paymen
   contains(page, "Bekleyen", "writer pending balance");
   contains(page, "Ödenebilir", "writer available balance");
   contains(page, "Ödenen", "writer paid balance");
-  contains(page, "Okur ödeme bilgileri gösterilmez", "writer reader-payment privacy");
+  contains(page, "Okurun ödeme bilgileri gösterilmez", "writer reader-payment privacy");
   notContains(repository, "cardNumber", "no reader card data in writer finance");
   notContains(repository, "providerTransactionId", "no provider transaction id in writer finance");
 });
@@ -664,7 +664,7 @@ test("writer work income detail matches the frozen finance fields", () => {
 
   contains(page, "Güncel fiyat", "writer work price field");
   contains(page, "Satış adedi", "writer work units sold field");
-  contains(page, "Provider ücreti", "writer provider fee field");
+  contains(page, "Ödeme hizmeti ücreti", "writer provider fee field");
   contains(page, "İlkOku hizmet payı", "writer platform share field");
   contains(page, "İade", "writer refund field");
   contains(page, "Vergi / stopaj", "writer tax field");

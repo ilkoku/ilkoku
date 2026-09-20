@@ -135,7 +135,7 @@ test("UAT F: gross sales, platform income and writer earnings remain separate le
   has(repository, 'platformCommission: totals.get("platform_commission")', "platform income source");
   has(repository, 'authorEarnings: totals.get("author_earning")', "writer earning source");
   has(overview, "İlkOku geliri değildir", "gross versus platform income disclosure");
-  has(writer, "Okur ödeme bilgileri gösterilmez", "writer payment-data privacy");
+  has(writer, "Okurun ödeme bilgileri gösterilmez", "writer payment-data privacy");
 });
 
 test("UAT G: unresolved refund and payout policy stays non-mutating", () => {

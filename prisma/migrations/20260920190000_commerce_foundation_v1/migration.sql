@@ -320,3 +320,31 @@ CREATE TABLE `Refund` (
   CONSTRAINT `Refund_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `Refund_paymentId_fkey` FOREIGN KEY (`paymentId`) REFERENCES `Payment`(`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+-- Commerce-specific writer agreement starts as a draft. Existing contract
+-- lifecycle controls must review/approve/activate it before writers can accept.
+INSERT INTO `ContractTemplate` (
+  `id`, `code`, `title`, `description`, `targetRole`, `body`,
+  `version`, `active`, `lifecycleStatus`,
+  `sourceTemplateId`, `approvedById`, `approvedAt`, `activatedAt`,
+  `createdById`, `updatedById`, `createdAt`, `updatedAt`
+) VALUES (
+  'c5000000-0000-4000-8000-000000000001',
+  'ILKOKU_AUTHOR_PUBLICATION_ACCESS',
+  'İlkOku Yazar Yayın ve Erişim Sözleşmesi',
+  'Ücretsiz ve ücretli eserlerin İlkOku üzerinde yayın, erişim ve satış hazırlığı için kullanılan yazar sözleşmesi.',
+  'writer',
+  'ÇALIŞMA TASLAĞI — Hukuki inceleme ve ürün sahibi onayı tamamlanmadan aktive edilmemelidir.\n\nBu şablon; taraflar, sözleşmenin konusu, eser üzerindeki haklar, İlkOku’ya verilen sınırlı yayın/erişim yetkisi, ücretsiz/ücretli yayın modeli, fiyatlandırma ve kampanya ilkeleri, yazar hakedişi, ödeme kuruluşu maliyetleri, iadeler, vergi/mali yükümlülükler, eserin yayından kaldırılması, telif ve üçüncü taraf hakları, yasak içerik, hesap/süreç güvenliği, elektronik onay ve kayıtlar, fesih, uyuşmazlık ve yürürlük başlıkları için nihai metin hazırlanacak çalışma alanıdır.',
+  1,
+  false,
+  'draft',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  CURRENT_TIMESTAMP(3),
+  CURRENT_TIMESTAMP(3)
+);

@@ -80,15 +80,17 @@ test("commerce rollout defaults to disabled so staged paid works do not lock rea
 });
 
 
-test("staged paid setup fixes the author price at zero and exposes no manual price input", () => {
+test("staged paid setup remains zero-priced until checkout enables real pricing", () => {
   const actions = source("src/features/commerce/actions.ts");
   const page = source("src/app/satis-erisim/[workId]/page.tsx");
   const productContract = source("docs/COMMERCE_FOUNDATION_V1.md");
 
-  contains(actions, 'parsedModel.data === "paid" ? 0n : null', "fixed zero staged paid price");
+  contains(actions, "const checkoutEnabled = isCommerceCheckoutEnabled();", "server-side checkout pricing gate");
+  contains(actions, 'formData.get("price")', "future real price input parser");
   contains(page, "<strong>Ücretli</strong>", "writer paid option label");
   contains(page, '<span className={styles.paidPrice}>0 TL</span>', "zero price visually belongs to paid option");
-  notContains(page, 'name="price"', "manual author price input");
+  contains(page, "!checkoutEnabled ? (", "staged UI branch");
+  contains(page, 'name="price"', "real price input remains prepared behind checkout gate");
   contains(productContract, "fixed **0 TRY** price", "staged zero-price product rule");
 });
 

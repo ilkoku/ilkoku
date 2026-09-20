@@ -121,12 +121,19 @@ export default async function CheckoutPreparationPage({
     );
   }
 
-  const paidAndActive =
+  const previouslyActivatedPaid =
+    configuration?.saleModel === "paid" &&
+    Boolean(configuration.activatedAt);
+  const paidAccessEnforced =
+    configuration?.saleModel === "paid" &&
+    (previouslyActivatedPaid ||
+      (checkoutEnabled && configuration.status === "active"));
+  const checkoutConfigurationActive =
     checkoutEnabled &&
     configuration?.saleModel === "paid" &&
     configuration.status === "active";
 
-  if (!paidAndActive) {
+  if (!paidAccessEnforced) {
     return (
       <AppShell profile={profile}>
         <div className={styles.page}>
@@ -135,20 +142,50 @@ export default async function CheckoutPreparationPage({
               <span className={styles.eyebrow}>Hazırlık modu</span>
               <h1>{work.title}</h1>
               <p>
-                Satın alma altyapısı hazır, ancak gerçek tahsilat henüz aktif
-                değil. Eser mevcut okuma düzeninde erişilebilir.
+                Bu ücretli yapılandırma henüz gerçek paid access olarak aktive
+                edilmedi. Mevcut okuma erişimi açık kalır.
               </p>
             </div>
-            <span className={styles.badge}>Tahsilat kapalı</span>
+            <span className={styles.badge}>Tahsilat hazırlıkta</span>
           </header>
 
           <div className={styles.notice}>
-            Ücretli eser hazırlığı yazar tarafında saklanıyor; bu aşamada
-            okurdan ödeme istenmez ve okuma erişimi kilitlenmez.
+            Yazarın ücretli eser ayarları ve bölüm planı saklanıyor; ilk gerçek
+            aktivasyon tamamlanana kadar okurdan ödeme istenmez.
           </div>
 
           <Link className={styles.action} href={returnTo}>
             Okumaya dön
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!checkoutConfigurationActive) {
+    return (
+      <AppShell profile={profile}>
+        <div className={styles.page}>
+          <header className={styles.hero}>
+            <div>
+              <span className={styles.eyebrow}>Satın alma geçici olarak kapalı</span>
+              <h1>{work.title}</h1>
+              <p>
+                Bu eser daha önce ücretli erişimde aktive edildi. Mevcut satın
+                alma yolu şu anda kullanılamıyor; eser bu nedenle ücretsiz
+                erişime açılmaz.
+              </p>
+            </div>
+            <span className={styles.badge}>Erişim korunuyor</span>
+          </header>
+
+          <div className={styles.notice}>
+            Aktif erişim hakkı olan okurlar okumaya devam eder. Yeni erişim
+            edinmek için satın alma yolu yeniden açılana kadar beklemek gerekir.
+          </div>
+
+          <Link className={styles.action} href={`/kitap/${work.slug}`}>
+            Eser sayfasına dön
           </Link>
         </div>
       </AppShell>

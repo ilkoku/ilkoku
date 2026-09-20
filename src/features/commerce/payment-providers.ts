@@ -16,7 +16,7 @@ export type ProviderCreatePaymentInput = {
 
 export type ProviderCreatePaymentResult = {
   providerTransactionId: string;
-  redirectUrl?: string | null;
+  redirectUrl: string;
 };
 
 export type PaymentProviderAdapter = {

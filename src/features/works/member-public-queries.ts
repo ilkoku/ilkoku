@@ -133,10 +133,6 @@ export async function getMemberPublicWorkBySlug(
   const saleConfiguration = work.saleConfiguration;
   const paymentPathReady =
     isCommerceCheckoutEnabled() && hasOperationalPaymentProvider();
-  const commerceEnforcementActive =
-    saleConfiguration?.saleModel === "paid" &&
-    (Boolean(saleConfiguration.activatedAt) ||
-      (paymentPathReady && saleConfiguration.status === "active"));
   const readerPurchaseTerms =
     paymentPathReady &&
     saleConfiguration?.saleModel === "paid" &&
@@ -145,6 +141,12 @@ export async function getMemberPublicWorkBySlug(
     saleConfiguration.priceAmount > BigInt(0)
       ? await getActiveReaderPurchaseTerms()
       : null;
+  const commerceEnforcementActive =
+    saleConfiguration?.saleModel === "paid" &&
+    (Boolean(saleConfiguration.activatedAt) ||
+      (paymentPathReady &&
+        Boolean(readerPurchaseTerms) &&
+        saleConfiguration.status === "active"));
   const purchaseAvailable =
     paymentPathReady &&
     Boolean(readerPurchaseTerms) &&

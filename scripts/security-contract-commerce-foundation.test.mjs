@@ -353,3 +353,17 @@ test("zero-total checkout requires reader consent and never bypasses rollout", (
   contains(service, 'configuration.status !== "active"', "active paid configuration requirement");
   contains(service, "configuration.priceAmount <= BigInt(0)", "positive real price requirement");
 });
+
+
+test("coupon preview and coupon consumption share one eligibility engine", () => {
+  const repository = source("src/features/commerce/checkout-repository.ts");
+  const completion = source("src/features/commerce/zero-total-checkout.ts");
+  const rules = source("src/features/commerce/coupon-rules.ts");
+
+  contains(repository, "validateCouponRules", "checkout coupon preview rule engine");
+  contains(completion, "validateCouponRules", "coupon consumption rule engine");
+  contains(rules, 'input.status !== "active"', "coupon active-state rule");
+  contains(rules, "input.userUsageCount >= input.perUserUsageLimit", "per-user limit rule");
+  contains(rules, 'input.scope === "selected_works"', "selected work scope rule");
+  contains(rules, 'input.scope === "selected_authors"', "selected author scope rule");
+});

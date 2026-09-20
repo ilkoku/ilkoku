@@ -13,7 +13,7 @@ export type CommercePricingBreakdown = {
 };
 
 function clampDiscount(discount: bigint, originalAmount: bigint) {
-  if (discount <= 0n) return 0n;
+  if (discount <= BigInt(0)) return BigInt(0);
   return discount > originalAmount ? originalAmount : discount;
 }
 
@@ -21,32 +21,32 @@ export function calculateCommercePricing(
   originalAmount: bigint,
   coupon?: CommerceCouponPricing | null,
 ): CommercePricingBreakdown {
-  if (originalAmount < 0n) {
+  if (originalAmount < BigInt(0)) {
     throw new Error("Original amount cannot be negative.");
   }
 
   if (!coupon) {
     return {
       authorEarningBaseAmount: originalAmount,
-      discountAmount: 0n,
+      discountAmount: BigInt(0),
       finalAmount: originalAmount,
       originalAmount,
-      platformCouponSubsidyAmount: 0n,
+      platformCouponSubsidyAmount: BigInt(0),
     };
   }
 
-  if (coupon.discountValue <= 0n) {
+  if (coupon.discountValue <= BigInt(0)) {
     throw new Error("Coupon discount value must be positive.");
   }
 
   let rawDiscount: bigint;
 
   if (coupon.discountType === "percent") {
-    if (coupon.discountValue > 100n) {
+    if (coupon.discountValue > BigInt(100)) {
       throw new Error("Percentage discount cannot exceed 100.");
     }
 
-    rawDiscount = (originalAmount * coupon.discountValue) / 100n;
+    rawDiscount = (originalAmount * coupon.discountValue) / BigInt(100);
   } else {
     rawDiscount = coupon.discountValue;
   }
@@ -61,6 +61,6 @@ export function calculateCommercePricing(
     finalAmount,
     originalAmount,
     platformCouponSubsidyAmount:
-      coupon.owner === "platform" ? discountAmount : 0n,
+      coupon.owner === "platform" ? discountAmount : BigInt(0),
   };
 }

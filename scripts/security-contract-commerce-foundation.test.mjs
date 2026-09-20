@@ -819,3 +819,15 @@ test("checkout distinguishes never-activated staging from post-activation outage
   contains(page, "eser bu nedenle ücretsiz erişime açılmaz", "post-activation outage stays locked");
   contains(page, "Erişim korunuyor", "post-activation outage status");
 });
+
+
+test("writer final confirmation copy follows the frozen free paid and staged states", () => {
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+
+  contains(page, "Bu eserin yukarıdaki koşullarla yayımlanmasını onaylıyorum.", "free work confirmation copy");
+  contains(page, "satış fiyatıyla satışa açılmasını onaylıyorum.", "live paid work confirmation copy");
+  contains(page, "0 TL hazırlık fiyatı", "staged paid confirmation copy");
+  contains(page, '"SATIŞA AÇ"', "live paid confirmation button");
+  contains(page, '"SATIŞA HAZIRLA"', "staged paid confirmation button");
+  contains(page, '"YAYINA AÇ"', "free confirmation button");
+});

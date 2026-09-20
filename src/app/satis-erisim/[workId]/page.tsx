@@ -128,7 +128,7 @@ export default async function WriterCommerceWorkPage({
         <form action={saveChapterAccessPlanAction} className={styles.panel}>
           <div className={styles.panelHeader}>
             <div>
-              <span className={styles.eyebrow}>5. adım</span>
+              <span className={styles.eyebrow}>2. adım</span>
               <h2>Erişimleri planla</h2>
               <p>
                 Her bölümü bağımsız olarak Ön İzleme veya Kilitli seçebilirsin.
@@ -195,7 +195,7 @@ export default async function WriterCommerceWorkPage({
         <form action={saveWorkSaleModelAction} className={styles.panel}>
           <div className={styles.panelHeader}>
             <div>
-              <span className={styles.eyebrow}>2. adım</span>
+              <span className={styles.eyebrow}>3. adım</span>
               <h2>Yayın modelini seç</h2>
               <p>
                 Ücretli modeli seçebilirsin. Ödeme sistemi devreye alınana
@@ -249,7 +249,7 @@ export default async function WriterCommerceWorkPage({
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
             <div>
-              <span className={styles.eyebrow}>3. adım</span>
+              <span className={styles.eyebrow}>4. adım</span>
               <h2>Yazar sözleşmesi</h2>
               <p>
                 Ücretsiz ve ücretli eserlerde güncel İlkOku Yazar Yayın ve
@@ -310,7 +310,7 @@ export default async function WriterCommerceWorkPage({
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
             <div>
-              <span className={styles.eyebrow}>4. adım</span>
+              <span className={styles.eyebrow}>5. adım</span>
               <h2>Eser bazlı son onay</h2>
               <p>
                 Bu onay, eserin o andaki erişim planını, yayın modelini ve

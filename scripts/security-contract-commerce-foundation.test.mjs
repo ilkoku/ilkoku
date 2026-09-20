@@ -340,3 +340,16 @@ test("paid activation requires a positive real price once checkout is enabled", 
   contains(actions, '"fiyat-gerekli"', "paid price fail-closed state");
   contains(page, "paidPriceReady", "writer final confirmation price readiness");
 });
+
+
+test("zero-total checkout requires reader consent and never bypasses rollout", () => {
+  const action = source("src/features/commerce/checkout-actions.ts");
+  const service = source("src/features/commerce/zero-total-checkout.ts");
+
+  contains(action, 'formData.get("acceptDigitalContent") !== "on"', "reader consent gate");
+  contains(action, '"kosul-onayi-gerekli"', "consent fail-closed status");
+  contains(service, "if (!isCommerceCheckoutEnabled())", "checkout rollout gate");
+  contains(service, '"checkout_disabled"', "disabled checkout result");
+  contains(service, 'configuration.status !== "active"', "active paid configuration requirement");
+  contains(service, "configuration.priceAmount <= BigInt(0)", "positive real price requirement");
+});

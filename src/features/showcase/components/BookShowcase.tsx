@@ -314,6 +314,13 @@ export function BookShowcase({
               </div>
             )}
 
+            {paidAccessActive && !hasPaidAccess && !purchaseAvailable ? (
+              <p className="showcase-commerce-notice">
+                Satış geçici olarak kullanılamıyor. Mevcut erişim hakları korunur;
+                yeni satın alma işlemi ödeme yolu yeniden açıldığında yapılabilir.
+              </p>
+            ) : null}
+
             <div className="book-card__actions">
               {startHref && (
                 <Link
@@ -441,7 +448,7 @@ export function BookShowcase({
                             : "Kilitli · Satış geçici olarak kullanılamıyor"
                         : hasPaidAccess && paidAccessActive
                           ? "Satın alındı · Okunabilir"
-                          : "Yayında · Okunabilir";
+                          : "Yayında · Üyelikle okunabilir";
 
                     return (
                       <article

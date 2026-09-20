@@ -574,3 +574,71 @@ test("admin provider readiness is read-only and production-safe", () => {
   notContains(page, 'action={', "provider readiness page is read-only");
   contains(providers, 'adapter.mode === "test" && process.env.NODE_ENV !== "production"', "test provider remains production-blocked");
 });
+
+
+test("finance admin separates sales volume from platform income", () => {
+  const overview = source("src/app/admin/finans-gelirler/page.tsx");
+  const repository = source("src/features/commerce/finance-repository.ts");
+  const platformIncome = source("src/app/admin/finans-gelirler/ilkoku-gelirleri/page.tsx");
+
+  contains(overview, "Toplam satış hacmi", "gross sales metric");
+  contains(overview, "İlkOku geliri değildir", "sales volume is not platform income");
+  contains(repository, 'sum("sale_gross")', "gross sales ledger source");
+  contains(repository, 'sum("platform_commission")', "platform income ledger source");
+  contains(platformIncome, "platform_commission", "platform income page only uses commission movements");
+  contains(platformIncome, "Net kâr hesabı yapılmıyor", "no invented net profit");
+});
+
+
+test("writer income dashboard is ledger and balance driven without reader payment data", () => {
+  const page = source("src/app/gelirler/page.tsx");
+  const repository = source("src/features/commerce/finance-repository.ts");
+
+  contains(page, "getWriterFinanceOverview", "writer finance repository");
+  contains(repository, "prisma.financialLedger.findMany", "writer ledger source");
+  contains(repository, "prisma.authorBalance.findUnique", "writer balance projection");
+  contains(page, "Toplam satış", "writer gross sales");
+  contains(page, "Kesintiler", "writer deductions");
+  contains(page, "Net kazancım", "writer earning");
+  contains(page, "Bekleyen", "writer pending balance");
+  contains(page, "Ödenebilir", "writer available balance");
+  contains(page, "Ödenen", "writer paid balance");
+  contains(page, "Okur ödeme bilgileri gösterilmez", "writer reader-payment privacy");
+  notContains(repository, "cardNumber", "no reader card data in writer finance");
+  notContains(repository, "providerTransactionId", "no provider transaction id in writer finance");
+});
+
+
+test("finance ledger remains the source of truth while author balance is a projection", () => {
+  const overview = source("src/app/admin/finans-gelirler/page.tsx");
+  const balances = source("src/app/admin/finans-gelirler/yazar-bakiyeleri/page.tsx");
+  const ledger = source("src/app/admin/finans-gelirler/finans-hareketleri/page.tsx");
+
+  contains(overview, "Finansal gerçek kaynak ledger", "ledger truth notice");
+  contains(balances, "operasyonel projeksiyondur", "balance projection notice");
+  contains(ledger, "Ledger İlkOku commerce finansının", "ledger operations source");
+});
+
+
+test("payout and reconciliation screens remain non-mutating until finance policy is frozen", () => {
+  const payouts = source("src/app/admin/finans-gelirler/yazar-odemeleri/page.tsx");
+  const reconciliation = source("src/app/admin/finans-gelirler/mutabakat/page.tsx");
+  const repository = source("src/features/commerce/finance-repository.ts");
+
+  contains(payouts, "Gerçek payout yürütümü kapalı", "payout execution disabled");
+  notContains(payouts, 'action={', "no payout mutation action");
+  contains(reconciliation, "otomatik düzeltme yapmaz", "reconciliation is diagnostic");
+  notContains(reconciliation, 'action={', "no reconciliation mutation action");
+  notContains(repository, "prisma.payout.update", "no payout mutation repository");
+  notContains(repository, "prisma.financialLedger.update", "ledger is not rewritten");
+});
+
+
+test("platform campaign costs preserve the writer earning-base concept", () => {
+  const page = source("src/app/admin/finans-gelirler/kampanya-maliyetleri/page.tsx");
+  const repository = source("src/features/commerce/finance-repository.ts");
+
+  contains(repository, 'entryType: "platform_coupon_discount"', "platform campaign ledger source");
+  contains(page, "yazarın normal hakediş matrahını azaltmaz", "writer earning base protection");
+  contains(page, "authorEarningBaseAmount", "order earning base visibility");
+});

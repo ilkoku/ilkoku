@@ -188,7 +188,7 @@ test("reader commerce gate is fail-open only before first paid activation", () =
   contains(access, 'if (!previouslyActivatedPaid && !checkoutEnabled)', "prelaunch checkout fail-open only");
   contains(access, 'if (!previouslyActivatedPaid && !paymentProviderReady)', "prelaunch provider fail-open only");
   contains(access, 'configuration.status !== "active"', "staged paid work fail-open");
-  contains(access, 'chapter.commerceAccess?.accessType === "preview"', "preview access");
+  contains(access, 'chapterAccessType === "preview"', "preview access");
   contains(access, 'entitlement?.status === "active"', "purchased entitlement access");
   contains(access, 'reason: "purchase_required"', "locked paid purchase gate");
   contains(readingPage, "getCommerceChapterAccessDecision", "reading route commerce access check");
@@ -787,7 +787,7 @@ test("previously activated paid work never becomes free because checkout or prov
   contains(access, "if (!previouslyActivatedPaid && !checkoutEnabled)", "checkout outage cannot open activated paid work");
   contains(access, "if (!previouslyActivatedPaid && !paymentProviderReady)", "provider outage cannot open activated paid work");
 
-  contains(memberQuery, "Boolean(saleConfiguration.activatedAt)", "public work activation history guard");
+  contains(memberQuery, "Boolean(saleConfiguration?.activatedAt)", "public work activation history guard");
   contains(memberQuery, "commerceEnforcementActive", "public work locked content remains enforced");
 
   contains(actions, "const nextActivatedAt = work.saleConfiguration?.activatedAt ?? null", "draft edit preserves paid activation history");

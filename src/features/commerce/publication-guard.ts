@@ -1,13 +1,14 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { hasOperationalPaymentProvider } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
 
 export async function assertPaidWorkAccessPlanReadyForPublication(input: {
   authorId: string;
   workId: string;
 }) {
-  if (!isCommerceCheckoutEnabled()) {
+  if (!isCommerceCheckoutEnabled() || !hasOperationalPaymentProvider()) {
     return;
   }
 

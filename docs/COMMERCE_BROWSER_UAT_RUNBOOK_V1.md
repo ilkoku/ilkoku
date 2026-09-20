@@ -1,12 +1,12 @@
 # İlkOku Commerce Browser / Human UAT Runbook v1
 
-Status: **Prepared / execution pending**
+Status: **AUTOMATED_PASS / HUMAN_PENDING**
 
 This runbook is the browser/human validation layer for the frozen model in
 `docs/COMMERCE_FOUNDATION_V1.md` and the implementation matrix in
 `docs/COMMERCE_UAT_V1.md`.
 
-It does **not** replace CI or the code-level audit. It must not be marked PASS
+It does **not** replace CI or the code-level audit. It must not be marked `HUMAN_PASS`
 unless the scenarios below are executed against the exact Commerce branch build
 with separate writer, reader and admin identities.
 
@@ -95,7 +95,7 @@ For every executed scenario record:
 | Work/order/coupon reference | Non-secret identifier only |
 | Evidence | Dated human acceptance note; optional screenshot/recording may be retained outside the repository |
 | Notes | What was observed |
-| Defect | GitHub issue/PR note if FAIL |
+| Defect | GitHub issue/PR note if `BLOCKED` |
 
 Never capture passwords, session cookies, provider secrets, full IP evidence,
 card information or other credentials in screenshots.
@@ -371,7 +371,7 @@ Verify there is no executable UI for:
 - payout threshold/provider transfer execution;
 - production card/carrier secret entry.
 
-Presence of an executable mutation for an undecided rule is a FAIL.
+Presence of an executable mutation for an undecided rule is `BLOCKED`.
 
 ## 11. Exit criteria
 
@@ -379,7 +379,7 @@ There are two distinct acceptance boundaries:
 
 ### Commerce Foundation browser acceptance
 
-This foundation-level browser pass can be recorded when:
+This foundation-level browser acceptance can be recorded when:
 
 1. the exact tested branch SHA is recorded;
 2. every safely executable Writer, Reader, Coupon and Finance row is `HUMAN_PASS`;

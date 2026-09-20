@@ -100,6 +100,7 @@ export async function getApplicableCheckoutCoupon(input: {
       redemptions: {
         where: {
           readerId: input.readerId,
+          status: { in: ["reserved", "used"] },
         },
         select: {
           id: true,
@@ -109,6 +110,13 @@ export async function getApplicableCheckoutCoupon(input: {
   });
 
   if (!coupon) return null;
+
+  const reservedCount = await prisma.couponRedemption.count({
+    where: {
+      couponId: coupon.id,
+      status: "reserved",
+    },
+  });
 
   const validation = validateCouponRules(
     {
@@ -121,7 +129,7 @@ export async function getApplicableCheckoutCoupon(input: {
       startsAt: coupon.startsAt,
       status: coupon.status,
       totalUsageLimit: coupon.totalUsageLimit,
-      usageCount: coupon.usageCount,
+      usageCount: coupon.usageCount + reservedCount,
       userUsageCount: coupon.redemptions.length,
       workAuthorId: input.authorId,
       workScopeMatch: coupon.workScopes.length > 0,

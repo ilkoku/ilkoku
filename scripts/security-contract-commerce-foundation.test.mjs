@@ -789,3 +789,19 @@ test("previously activated paid work never becomes free because checkout or prov
   contains(actions, "modelChanged", "free-paid transition resets stale activation history");
   contains(actions, "work.saleConfiguration!.activatedAt ?? now", "confirmation preserves existing activation timestamp");
 });
+
+
+test("public paid showcase distinguishes access enforcement from purchase availability", () => {
+  const types = source("src/features/works/types.ts");
+  const query = source("src/features/works/member-public-queries.ts");
+  const showcase = source("src/features/showcase/components/BookShowcase.tsx");
+  const bookPage = source("src/app/kitap/[slug]/page.tsx");
+
+  contains(types, "purchaseAvailable: boolean", "public commerce purchase availability contract");
+  contains(query, "const purchaseAvailable =", "purchase availability resolver");
+  contains(query, "paymentPathReady", "purchase requires live payment path");
+  contains(showcase, "Satış geçici olarak kullanılamıyor", "outage paid-work state");
+  contains(showcase, "Mevcut erişim hakları korunur", "existing entitlement outage copy");
+  contains(showcase, "purchaseAvailable", "locked chapter purchase availability");
+  contains(bookPage, "work.commerce?.purchaseAvailable", "structured offer purchase availability");
+});

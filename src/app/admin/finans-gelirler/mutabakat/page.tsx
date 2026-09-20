@@ -17,7 +17,9 @@ export default async function FinanceReconciliationPage() {
           <h1>Mutabakat</h1>
           <p>
             Paid sipariş, sale_gross ledger, entitlement ve provider ödeme
-            kayıtlarını operasyonel olarak çapraz kontrol edin.
+            kayıtlarını operasyonel olarak çapraz kontrol edin. Uyarı listeleri
+            performans için son 500 paid sipariş üzerinde taranır; üst sayaçlar
+            tam veritabanı toplamıdır.
           </p>
         </div>
         <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler">

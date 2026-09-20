@@ -237,3 +237,40 @@ test("staged paid price display stays zero across writer surfaces", () => {
   contains(detailPage, '<span className={styles.paidPrice}>0 TL</span>', "paid option staged price");
   contains(detailPage, 'currentModel === "paid" ? "0 TL" : "—"', "final confirmation staged price");
 });
+
+
+test("reader purchase surfaces stay in library and account instead of a payment top-level", () => {
+  const navigation = source("src/content/navigation.ts");
+  const account = source("src/app/hesabim/page.tsx");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const history = source("src/app/hesabim/odeme-gecmisi/page.tsx");
+
+  contains(navigation, '{ label: "Kütüphanem", href: "/kutuphanem/satin-aldiklarim" }', "reader library navigation");
+  notContains(navigation, '{ label: "Ödemeler"', "no reader top-level payments menu");
+  contains(account, 'label: "Ödeme Geçmişi"', "payment history nested under account");
+  contains(library, "<h1>Satın Aldıklarım</h1>", "purchased library surface");
+  contains(history, "<h1>Ödeme Geçmişi</h1>", "account payment history surface");
+});
+
+
+test("reader library is entitlement-driven and payment history is order-driven", () => {
+  const repository = source("src/features/commerce/reader-repository.ts");
+
+  contains(repository, "prisma.workEntitlement.findMany", "purchased library entitlement source");
+  contains(repository, 'status: "active"', "active entitlement filter");
+  contains(repository, "prisma.order.findMany", "payment history order source");
+  contains(repository, "originalAmount: true", "original price history");
+  contains(repository, "discountAmount: true", "discount history");
+  contains(repository, "finalAmount: true", "final paid amount history");
+});
+
+
+test("reader library route is private and reader-role gated", () => {
+  const security = source("src/lib/route-security.ts");
+  const proxy = source("src/proxy.ts");
+  const nextConfig = source("next.config.ts");
+
+  contains(security, '{ approved: false, path: "/kutuphanem", roles: [...readerWorkspaceRoles] }', "library reader-role gate");
+  contains(proxy, '"/kutuphanem/:path*"', "library proxy enforcement");
+  contains(nextConfig, '"/kutuphanem/:path*"', "library noindex header");
+});

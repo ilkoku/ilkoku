@@ -15,10 +15,35 @@ import { isCommerceCheckoutEnabled } from "./runtime";
 
 const workIdSchema = z.string().uuid();
 const publicationModelSchema = z.enum(["free", "paid"]);
+const couponDiscountTypeSchema = z.enum(["percent", "fixed"]);
 
 async function authenticatedWriter() {
   const user = await getCurrentUser();
   return user?.role === "writer" ? user : null;
+}
+
+
+function parsePositiveInteger(value: FormDataEntryValue | null) {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) return null;
+  if (!/^\\d+$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function parseFixedMinorUnits(value: FormDataEntryValue | null) {
+  const normalized = String(value ?? "").trim().replace(",", ".");
+  if (!/^\\d+(?:\\.\\d{1,2})?$/.test(normalized)) return null;
+  const [whole, fraction = ""] = normalized.split(".");
+  const amount = BigInt(`${whole}${fraction.padEnd(2, "0")}`);
+  return amount > 0n ? amount : null;
+}
+
+function parseOptionalDate(value: FormDataEntryValue | null) {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) return null;
+  const parsed = new Date(`${normalized}T00:00:00+03:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 function commerceStatusRedirect(workId: string, status: string): never {
@@ -321,4 +346,120 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
     work.id,
     nextStatus === "active" ? "yayin-onaylandi" : "satis-hazir",
   );
+}
+
+export async function createAuthorCouponAction(formData: FormData) {
+  const writer = await authenticatedWriter();
+  if (!writer) redirect("/giris?sonraki=/satis-erisim/kuponlar");
+
+  const parsedWorkId = workIdSchema.safeParse(formData.get("workId"));
+  const parsedDiscountType = couponDiscountTypeSchema.safeParse(
+    formData.get("discountType"),
+  );
+
+  if (!parsedWorkId.success || !parsedDiscountType.success) {
+    redirect("/satis-erisim/kuponlar?durum=eksik-bilgi");
+  }
+
+  const code = String(formData.get("code") ?? "")
+    .trim()
+    .toLocaleUpperCase("tr-TR")
+    .replace(/\\s+/g, "");
+
+  if (!/^[A-Z0-9_-]{3,32}$/.test(code)) {
+    redirect("/satis-erisim/kuponlar?durum=gecersiz-kod");
+  }
+
+  const work = await prisma.work.findFirst({
+    where: {
+      id: parsedWorkId.data,
+      authorId: writer.id,
+      archivedAt: null,
+    },
+    select: { id: true },
+  });
+
+  if (!work) redirect("/satis-erisim/kuponlar?durum=eser-bulunamadi");
+
+  const discountValue =
+    parsedDiscountType.data === "percent"
+      ? BigInt(parsePositiveInteger(formData.get("discountValue")) ?? 0)
+      : parseFixedMinorUnits(formData.get("discountValue")) ?? 0n;
+
+  if (
+    discountValue <= 0n ||
+    (parsedDiscountType.data === "percent" && discountValue > 100n)
+  ) {
+    redirect("/satis-erisim/kuponlar?durum=gecersiz-indirim");
+  }
+
+  const startsAt = parseOptionalDate(formData.get("startsAt"));
+  const endsAt = parseOptionalDate(formData.get("endsAt"));
+  if (startsAt && endsAt && endsAt < startsAt) {
+    redirect("/satis-erisim/kuponlar?durum=gecersiz-tarih");
+  }
+
+  const totalUsageLimit = parsePositiveInteger(formData.get("totalUsageLimit"));
+  const perUserUsageLimit =
+    parsePositiveInteger(formData.get("perUserUsageLimit")) ?? 1;
+
+  try {
+    await prisma.$transaction(async (transaction) => {
+      const coupon = await transaction.coupon.create({
+        data: {
+          code,
+          owner: "author",
+          authorId: writer.id,
+          creatorId: writer.id,
+          discountType: parsedDiscountType.data,
+          discountValue,
+          scope: "selected_works",
+          status: "active",
+          startsAt,
+          endsAt,
+          totalUsageLimit,
+          perUserUsageLimit,
+        },
+      });
+
+      await transaction.couponWorkScope.create({
+        data: {
+          couponId: coupon.id,
+          workId: work.id,
+        },
+      });
+    });
+  } catch (error) {
+    console.error("CREATE_AUTHOR_COUPON_ERROR", error);
+    redirect("/satis-erisim/kuponlar?durum=kupon-kodu-kullaniliyor");
+  }
+
+  revalidatePath("/satis-erisim/kuponlar");
+  redirect("/satis-erisim/kuponlar?durum=kupon-olusturuldu");
+}
+
+export async function toggleAuthorCouponAction(formData: FormData) {
+  const writer = await authenticatedWriter();
+  if (!writer) redirect("/giris?sonraki=/satis-erisim/kuponlar");
+
+  const couponId = String(formData.get("couponId") ?? "").trim();
+  const nextStatus = formData.get("nextStatus") === "active" ? "active" : "paused";
+
+  if (!couponId) redirect("/satis-erisim/kuponlar?durum=kupon-bulunamadi");
+
+  const updated = await prisma.coupon.updateMany({
+    where: {
+      id: couponId,
+      authorId: writer.id,
+      owner: "author",
+    },
+    data: { status: nextStatus },
+  });
+
+  if (updated.count === 0) {
+    redirect("/satis-erisim/kuponlar?durum=kupon-bulunamadi");
+  }
+
+  revalidatePath("/satis-erisim/kuponlar");
+  redirect("/satis-erisim/kuponlar?durum=kupon-guncellendi");
 }

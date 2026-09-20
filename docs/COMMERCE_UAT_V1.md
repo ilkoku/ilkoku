@@ -1,6 +1,6 @@
 # İlkOku Commerce UAT v1
 
-Status: **Implementation audit PASS / human browser UAT pending**
+Status: **AUTOMATED_PASS / HUMAN_PENDING**
 
 This checklist validates the frozen model in `docs/COMMERCE_FOUNDATION_V1.md`.
 Automated contract/build checks can prove code invariants, but they do not replace
@@ -18,6 +18,8 @@ does **not** mark browser/human UAT as complete.
 
 Browser execution procedure and evidence rules are defined in
 `docs/COMMERCE_BROWSER_UAT_RUNBOOK_V1.md`.
+
+The status vocabulary follows the existing Final Release UAT convention: code/CI evidence is `AUTOMATED_PASS`; a browser row becomes `HUMAN_PASS` only after the real role/account flow is exercised. An intentionally inactive provider prerequisite remains `HUMAN_PENDING`, not `BLOCKED`.
 
 
 ## Implementation audit result — 20.09.2026

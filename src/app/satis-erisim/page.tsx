@@ -78,10 +78,10 @@ export default async function WriterCommercePage() {
               const configuration = work.saleConfiguration;
               const modelLabel =
                 configuration?.saleModel === "paid"
-                  ? configuration.priceAmount === 0n
+                  ? configuration.priceAmount === BigInt(0)
                     ? "Ücretli · 0 TL"
                     : `Ücretli · ${formatMinorUnits(
-                        configuration.priceAmount ?? 0n,
+                        configuration.priceAmount ?? BigInt(0),
                         configuration.currency,
                       )}`
                   : configuration?.saleModel === "free"

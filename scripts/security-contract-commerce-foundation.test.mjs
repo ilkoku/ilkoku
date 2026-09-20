@@ -300,7 +300,7 @@ test("paid publication requires explicit chapter access once payment is live or 
   const workActions = source("src/features/works/actions.ts");
 
   contains(guard, "paymentPathReady", "current payment path readiness");
-  contains(guard, "!work.saleConfiguration.activatedAt", "prelaunch-only publication bypass");
+  contains(guard, "!paymentPathReady && !previouslyActivatedPaid", "prelaunch-only publication bypass");
   contains(guard, 'work.saleConfiguration?.saleModel !== "paid"', "free work publication bypass");
   contains(guard, "!chapter.commerceAccess", "explicit chapter access requirement");
   contains(guard, "Ön İzleme veya Kilitli", "writer-facing access choice requirement");
@@ -356,8 +356,8 @@ test("zero-total checkout requires reader consent and never bypasses rollout", (
   contains(action, '"kosul-onayi-gerekli"', "consent fail-closed status");
   contains(service, "if (!isCommerceCheckoutEnabled())", "checkout rollout gate");
   contains(service, '"checkout_disabled"', "disabled checkout result");
-  contains(service, 'configuration.status !== "active"', "active paid configuration requirement");
-  contains(service, "configuration.priceAmount <= BigInt(0)", "positive real price requirement");
+  contains(service, 'effectiveCommerce.status !== "active"', "active paid configuration requirement");
+  contains(service, "effectiveCommerce.priceAmount <= BigInt(0)", "positive real price requirement");
 });
 
 
@@ -479,7 +479,7 @@ test("new paid work activation stays staged without a provider while previously 
   contains(actions, "(checkoutEnabled && paymentProviderReady)", "new paid activation requires checkout plus provider");
   contains(actions, "previouslyActivatedPaid", "existing paid activation history");
   contains(access, "previouslyActivatedPaid", "reader paid activation history");
-  contains(guard, "work.saleConfiguration.activatedAt", "publication guard activation history");
+  contains(guard, "const previouslyActivatedPaid = Boolean(configuration.activatedAt)", "publication guard activation history");
 });
 
 

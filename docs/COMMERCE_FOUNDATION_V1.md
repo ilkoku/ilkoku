@@ -296,7 +296,7 @@ Initial ledger entry types:
 
 ### Price change
 
-Old orders preserve their original price snapshot. Only new purchases use the new price. Price history is retained.
+Old orders preserve their original price snapshot. A changed price remains draft until the next work-level confirmation; only purchases after that confirmation use the new price. Price history is retained.
 
 ### Free → Paid
 
@@ -304,7 +304,7 @@ During the infrastructure phase, the author reviews the access plan and selects 
 
 ### Paid → Free
 
-The work becomes readable without purchase. Historical orders, earnings, ledger entries, confirmations, and entitlements are not deleted or rewritten.
+After the author completes the new work-level confirmation, the work becomes readable without purchase. Merely saving a draft Free selection does not alter the previously confirmed reader-facing paid state. Historical orders, earnings, ledger entries, confirmations, and entitlements are not deleted or rewritten.
 
 ## 13. Rollout safety
 

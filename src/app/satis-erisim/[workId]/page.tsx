@@ -128,7 +128,7 @@ export default async function WriterCommerceWorkPage({
         <form action={saveChapterAccessPlanAction} className={styles.panel}>
           <div className={styles.panelHeader}>
             <div>
-              <span className={styles.eyebrow}>1. adım</span>
+              <span className={styles.eyebrow}>5. adım</span>
               <h2>Erişimleri planla</h2>
               <p>
                 Her bölümü bağımsız olarak Ön İzleme veya Kilitli seçebilirsin.

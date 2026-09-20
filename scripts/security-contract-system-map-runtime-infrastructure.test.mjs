@@ -129,6 +129,23 @@ test("manifest and supply-chain generation are mandatory before lint development
   contains(gitignore, "/src/features/system-map/supply-chain.generated.ts", "generated supply-chain report ignore rule");
 });
 
+test("build identity exposes only the build-time git commit without ENV or database access", () => {
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
+  const types = source("src/features/system-map/build-manifest-types.ts");
+  const route = source("src/app/api/build-info/route.ts");
+
+  contains(generator, 'import { execFileSync } from "node:child_process"', "build identity git dependency");
+  contains(generator, 'execFileSync("git", ["rev-parse", "HEAD"]', "build identity git sha source");
+  contains(generator, "buildIdentity: { commitSha: resolveBuildCommitSha() }", "build identity manifest projection");
+  contains(types, "buildIdentity:", "build identity manifest type");
+  contains(types, "commitSha: string | null", "nullable git sha type");
+  contains(route, "runtimeInfrastructureManifest.buildIdentity.commitSha", "build info response source");
+  contains(route, '"Cache-Control": "no-store, max-age=0"', "build info no-cache");
+  contains(route, '"X-Robots-Tag": "noindex, nofollow"', "build info noindex");
+  notContains(route, "process.env", "build info route must not read ENV");
+  notContains(route, "prisma", "build info route must not access database");
+});
+
 test("runtime infrastructure UI stays server-rendered while specialist pages share the canonical loader", () => {
   const loader = source("src/features/system-map/workspace-data.ts");
   const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");

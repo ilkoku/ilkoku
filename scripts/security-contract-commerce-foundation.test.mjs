@@ -178,13 +178,14 @@ test("agreement evidence is immutable across same-version content changes", () =
 });
 
 
-test("reader commerce gate stays open until checkout, provider and paid activation are all ready", () => {
+test("reader commerce gate is fail-open only before first paid activation", () => {
   const access = source("src/features/commerce/access.ts");
   const readingPage = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
   const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
 
-  contains(access, 'return { allowed: true, reason: "checkout_disabled" }', "checkout-disabled reader fail-open");
-  contains(access, 'return { allowed: true, reason: "provider_unavailable" }', "provider-unavailable reader fail-open");
+  contains(access, "previouslyActivatedPaid = Boolean(configuration.activatedAt)", "paid activation history");
+  contains(access, 'if (!previouslyActivatedPaid && !checkoutEnabled)', "prelaunch checkout fail-open only");
+  contains(access, 'if (!previouslyActivatedPaid && !paymentProviderReady)', "prelaunch provider fail-open only");
   contains(access, 'configuration.status !== "active"', "staged paid work fail-open");
   contains(access, 'chapter.commerceAccess?.accessType === "preview"', "preview access");
   contains(access, 'entitlement?.status === "active"', "purchased entitlement access");
@@ -240,7 +241,7 @@ test("staged paid price display stays zero across writer surfaces", () => {
 
   contains(listPage, '"Ücretli · 0 TL"', "writer work card staged price");
   contains(detailPage, '<span className={styles.paidPrice}>0 TL</span>', "paid option staged price");
-  contains(detailPage, "checkoutEnabled", "final confirmation rollout state");
+  contains(detailPage, "paidPricingEnabled", "final confirmation real-price readiness");
   contains(detailPage, "formatPrice(", "future real price display");
   contains(detailPage, ': "0 TL"', "staged final confirmation price");
 });
@@ -293,11 +294,12 @@ test("checkout keeps digital-content acceptance in the frozen purchase surface",
 });
 
 
-test("paid publication requires explicit chapter access only after checkout and provider activation", () => {
+test("paid publication requires explicit chapter access once payment is live or the work was activated before", () => {
   const guard = source("src/features/commerce/publication-guard.ts");
   const workActions = source("src/features/works/actions.ts");
 
-  contains(guard, "if (!isCommerceCheckoutEnabled() || !hasOperationalPaymentProvider())", "current publication remains unaffected without a live payment path");
+  contains(guard, "paymentPathReady", "current payment path readiness");
+  contains(guard, "!work.saleConfiguration.activatedAt", "prelaunch-only publication bypass");
   contains(guard, 'work.saleConfiguration?.saleModel !== "paid"', "free work publication bypass");
   contains(guard, "!chapter.commerceAccess", "explicit chapter access requirement");
   contains(guard, "Ön İzleme veya Kilitli", "writer-facing access choice requirement");
@@ -334,7 +336,7 @@ test("platform 100 percent coupon protects author earning base", () => {
 });
 
 
-test("paid activation requires a positive real price once checkout is enabled", () => {
+test("paid activation requires a positive real price once checkout and provider are operational or the work was activated before", () => {
   const actions = source("src/features/commerce/actions.ts");
   const page = source("src/app/satis-erisim/[workId]/page.tsx");
 
@@ -467,15 +469,16 @@ test("verified provider success is the only paid path that grants entitlement", 
 });
 
 
-test("paid work activation stays staged without an operational provider", () => {
+test("new paid work activation stays staged without a provider while previously activated work stays protected", () => {
   const actions = source("src/features/commerce/actions.ts");
   const access = source("src/features/commerce/access.ts");
   const guard = source("src/features/commerce/publication-guard.ts");
 
   contains(actions, "hasOperationalPaymentProvider", "writer activation provider readiness");
-  contains(actions, "(checkoutEnabled && paymentProviderReady)", "paid activation requires checkout plus provider");
-  contains(access, "!hasOperationalPaymentProvider()", "reader access provider readiness");
-  contains(guard, "!hasOperationalPaymentProvider()", "publication guard provider readiness");
+  contains(actions, "(checkoutEnabled && paymentProviderReady)", "new paid activation requires checkout plus provider");
+  contains(actions, "previouslyActivatedPaid", "existing paid activation history");
+  contains(access, "previouslyActivatedPaid", "reader paid activation history");
+  contains(guard, "work.saleConfiguration.activatedAt", "publication guard activation history");
 });
 
 
@@ -767,4 +770,22 @@ test("author coupon numeric parsers accept normal digit input", () => {
   contains(actions, 'if (!/^\\d+$/.test(normalized)) return null;', "positive integer regex");
   contains(actions, 'if (!/^\\d+(?:\\.\\d{1,2})?$/.test(normalized)) return null;', "fixed amount regex");
   notContains(actions, 'if (!/^\\\\d+$/.test(normalized)) return null;', "no double-escaped digit regex");
+});
+
+
+test("previously activated paid work never becomes free because checkout or provider is temporarily unavailable", () => {
+  const access = source("src/features/commerce/access.ts");
+  const memberQuery = source("src/features/works/member-public-queries.ts");
+  const actions = source("src/features/commerce/actions.ts");
+
+  contains(access, "previouslyActivatedPaid", "reader activation history guard");
+  contains(access, "if (!previouslyActivatedPaid && !checkoutEnabled)", "checkout outage cannot open activated paid work");
+  contains(access, "if (!previouslyActivatedPaid && !paymentProviderReady)", "provider outage cannot open activated paid work");
+
+  contains(memberQuery, "Boolean(saleConfiguration.activatedAt)", "public work activation history guard");
+  contains(memberQuery, "commerceEnforcementActive", "public work locked content remains enforced");
+
+  contains(actions, "nextActivatedAt", "model edit activation-history handling");
+  contains(actions, "modelChanged", "free-paid transition resets stale activation history");
+  contains(actions, "work.saleConfiguration!.activatedAt ?? now", "confirmation preserves existing activation timestamp");
 });

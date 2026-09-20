@@ -230,7 +230,7 @@ export default async function WriterCommerceWorkPage({
           <div className={styles.panelHeader}>
             <div>
               <span className={styles.eyebrow}>3. adım</span>
-              <h2>Yayın modelini seç</h2>
+              <h2>Ücretsiz / Ücretli seç</h2>
               <p>
                 Ücretli modeli seçebilirsin. Ödeme sistemi devreye alınana
                 kadar ücretli alanı sabit 0 TL olarak hazırlanır.

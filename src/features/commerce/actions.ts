@@ -35,14 +35,14 @@ function parseTryMinorUnits(value: FormDataEntryValue | null) {
 function parsePositiveInteger(value: FormDataEntryValue | null) {
   const normalized = String(value ?? "").trim();
   if (!normalized) return null;
-  if (!/^\\d+$/.test(normalized)) return null;
+  if (!/^\d+$/.test(normalized)) return null;
   const parsed = Number(normalized);
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 function parseFixedMinorUnits(value: FormDataEntryValue | null) {
   const normalized = String(value ?? "").trim().replace(",", ".");
-  if (!/^\\d+(?:\\.\\d{1,2})?$/.test(normalized)) return null;
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return null;
   const [whole, fraction = ""] = normalized.split(".");
   const amount = BigInt(`${whole}${fraction.padEnd(2, "0")}`);
   return amount > BigInt(0) ? amount : null;

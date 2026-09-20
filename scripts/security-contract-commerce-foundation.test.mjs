@@ -76,7 +76,7 @@ test("commerce rollout defaults to disabled so staged paid works do not lock rea
 
   contains(runtime, 'process.env.COMMERCE_CHECKOUT_ENABLED === "true"', "explicit opt-in commerce flag");
   contains(envExample, 'COMMERCE_CHECKOUT_ENABLED="false"', "disabled default example");
-  contains(productContract, "A paid configuration must not lock reader access while checkout is disabled.", "staged paid access rule");
+  contains(productContract, "has **never been activated for real paid access** must not lock reader access", "staged paid access rule");
 });
 
 

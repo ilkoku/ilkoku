@@ -198,8 +198,8 @@ test("coupon pricing preserves the two frozen funding models", () => {
   const pricing = source("src/features/commerce/pricing.ts");
 
   contains(pricing, 'coupon.owner === "author" ? finalAmount : originalAmount', "author coupon discounted earning base");
-  contains(pricing, 'coupon.owner === "platform" ? discountAmount : 0n', "platform-funded subsidy amount");
-  contains(pricing, "discountValue > 100n", "percentage cap");
+  contains(pricing, 'coupon.owner === "platform" ? discountAmount : BigInt(0)', "platform-funded subsidy amount");
+  contains(pricing, "discountValue > BigInt(100)", "percentage cap");
   contains(pricing, "discount > originalAmount ? originalAmount : discount", "discount cannot create negative checkout");
 });
 
@@ -299,4 +299,44 @@ test("paid publication requires explicit chapter access only after checkout acti
   contains(guard, "!chapter.commerceAccess", "explicit chapter access requirement");
   contains(guard, "Ön İzleme veya Kilitli", "writer-facing access choice requirement");
   contains(workActions, "assertPaidWorkAccessPlanReadyForPublication", "publication flow commerce guard");
+});
+
+
+test("zero-total order completion is atomic and provider-free", () => {
+  const service = source("src/features/commerce/zero-total-checkout.ts");
+  const snapshot = source("src/features/commerce/order-snapshot.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+
+  contains(service, "return prisma.$transaction", "atomic zero-total transaction");
+  contains(service, "FOR UPDATE", "coupon redemption serialization");
+  contains(service, 'status: "paid"', "zero-total order completion state");
+  contains(service, "couponRedemption.create", "coupon redemption record");
+  contains(service, "workEntitlement.create", "entitlement grant");
+  contains(service, 'source: "purchase"', "order-backed entitlement source");
+  contains(service, "financialLedger.create", "zero-total finance ledger");
+  notContains(service, "transaction.payment.create", "zero-total checkout skips external payment record");
+  contains(snapshot, "authorEarningBaseAmount", "immutable author earning base snapshot");
+  contains(checkout, "0 TL ile erişimi aç", "reader zero-total completion action");
+});
+
+
+test("platform 100 percent coupon protects author earning base", () => {
+  const pricing = source("src/features/commerce/pricing.ts");
+  const zeroTotal = source("src/features/commerce/zero-total-checkout.ts");
+
+  contains(pricing, 'coupon.owner === "author" ? finalAmount : originalAmount', "platform coupon preserves original earning base");
+  contains(pricing, 'coupon.owner === "platform" ? discountAmount : BigInt(0)', "platform subsidy equals discount");
+  contains(zeroTotal, "authorEarningBaseAmount", "protected earning base reaches ledger metadata");
+  contains(zeroTotal, "platformCouponSubsidyAmount", "platform subsidy reaches ledger metadata");
+});
+
+
+test("paid activation requires a positive real price once checkout is enabled", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+
+  contains(actions, 'work.saleConfiguration.saleModel === "paid"', "paid activation branch");
+  contains(actions, "work.saleConfiguration.priceAmount <= BigInt(0)", "positive paid price gate");
+  contains(actions, '"fiyat-gerekli"', "paid price fail-closed state");
+  contains(page, "paidPriceReady", "writer final confirmation price readiness");
 });

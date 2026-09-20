@@ -38,6 +38,11 @@ export type PaymentMethodAvailability = {
 
 const adapters: PaymentProviderAdapter[] = [];
 
+function isAdapterOperational(adapter: PaymentProviderAdapter) {
+  if (adapter.mode === "active") return true;
+  return adapter.mode === "test" && process.env.NODE_ENV !== "production";
+}
+
 /**
  * Provider adapters are intentionally empty in Commerce Foundation v1.
  * Real card / carrier implementations must be registered here only after
@@ -46,7 +51,7 @@ const adapters: PaymentProviderAdapter[] = [];
 export function getPaymentProviderAdapter(
   method: CommercePaymentMethod,
 ): PaymentProviderAdapter | null {
-  return adapters.find((adapter) => adapter.method === method) ?? null;
+  return adapters.find((adapter) => adapter.method === method && isAdapterOperational(adapter)) ?? null;
 }
 
 export function getPaymentMethodAvailability(): PaymentMethodAvailability[] {
@@ -68,5 +73,5 @@ export function getPaymentMethodAvailability(): PaymentMethodAvailability[] {
 
 
 export function hasOperationalPaymentProvider() {
-  return adapters.length > 0;
+  return adapters.some(isAdapterOperational);
 }

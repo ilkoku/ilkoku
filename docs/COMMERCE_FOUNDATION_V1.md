@@ -251,6 +251,12 @@ Operational payment domain:
 - entitlements,
 - settings.
 
+The first operational screens are wired directly to commerce records:
+
+- **Siparişler** shows order status, immutable price/coupon snapshot, writer earning base, payment/refund counts, entitlement state and reader terms evidence.
+- **Ödemeler** shows provider-neutral payment attempts, provider transaction id, terminal status and failure diagnostics without storing or exposing card/carrier credentials.
+- **İadeler** is intentionally read-only in this phase. No approve/process action is exposed until partial-refund policy, coupon reuse after refund, and provider refund adapters are explicitly defined.
+
 ### Finans & Gelirler
 
 Accounting domain:

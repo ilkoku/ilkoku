@@ -790,9 +790,9 @@ test("previously activated paid work never becomes free because checkout or prov
   contains(memberQuery, "Boolean(saleConfiguration.activatedAt)", "public work activation history guard");
   contains(memberQuery, "commerceEnforcementActive", "public work locked content remains enforced");
 
-  contains(actions, "nextActivatedAt", "model edit activation-history handling");
-  contains(actions, "modelChanged", "free-paid transition resets stale activation history");
-  contains(actions, "work.saleConfiguration!.activatedAt ?? now", "confirmation preserves existing activation timestamp");
+  contains(actions, "const nextActivatedAt = work.saleConfiguration?.activatedAt ?? null", "draft edit preserves paid activation history");
+  contains(actions, 'work.saleConfiguration!.saleModel === "free"', "confirmed free transition clears paid activation history");
+  contains(actions, "work.saleConfiguration!.activatedAt ?? now", "confirmed paid activation preserves existing timestamp");
 });
 
 
@@ -860,4 +860,25 @@ test("writer deductions include author-funded coupons but not platform-funded ca
   contains(page, "finance.authorCouponDiscounts", "author coupon included in writer deductions");
   contains(page, "Yazar kupon indirimi", "author coupon work detail");
   notContains(page, "platformCampaignCost", "platform-funded coupon is not writer deduction");
+});
+
+
+test("writer draft edits do not leak into confirmed reader commerce state", () => {
+  const effective = source("src/features/commerce/effective-state.ts");
+  const access = source("src/features/commerce/access.ts");
+  const memberQuery = source("src/features/works/member-public-queries.ts");
+  const checkoutRepository = source("src/features/commerce/checkout-repository.ts");
+  const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
+
+  contains(effective, "shouldUseConfirmedPaidSnapshot", "confirmed paid snapshot resolver");
+  contains(effective, 'configuration.status !== "active"', "draft/ready snapshot boundary");
+  contains(effective, 'latestConsent?.publicationModel === "paid"', "last confirmed paid model");
+  contains(effective, "parseAccessPlanSnapshot", "confirmed access plan parser");
+
+  contains(access, "publicationConsents", "reader access loads last confirmation");
+  contains(access, "effective.useConfirmedSnapshot", "reader chapter access uses confirmed plan during draft edit");
+  contains(memberQuery, "resolveEffectiveCommerceState", "public showcase effective commerce state");
+  contains(memberQuery, "effectiveCommerce.accessPlan", "public chapter plan from confirmed snapshot");
+  contains(checkoutRepository, "publicationConsents", "checkout loads confirmed state");
+  contains(checkoutPage, "effectiveCommerce.saleModel", "checkout preserves confirmed paid enforcement");
 });

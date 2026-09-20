@@ -18,8 +18,8 @@ with separate writer, reader and admin identities.
 - Do not enable a production payment provider only for testing convenience.
 - Do not invent refund, payout, tax/withholding or commission behavior.
 - Do not use one account for multiple roles when validating role boundaries.
-- A provider-dependent scenario that cannot safely run is **BLOCKED-BY-DESIGN**, not PASS.
-- A missing/incorrect UI result is FAIL; do not change the frozen product rule just to pass UAT.
+- A provider-dependent scenario that cannot safely run remains **HUMAN_PENDING**; do not claim HUMAN_PASS.
+- A missing/incorrect UI result in an actually attempted browser flow is **BLOCKED**; do not change the frozen product rule just to pass UAT.
 
 Project-standard status vocabulary:
 
@@ -49,7 +49,7 @@ Record these before any browser test:
 | Date/time | |
 
 The branch SHA shown in the environment must match the SHA recorded here. If it
-cannot be proven, stop and keep all scenarios `NOT-RUN`.
+cannot be proven, stop and keep all browser rows `HUMAN_PENDING`.
 
 ## 3. Required test identities and data
 

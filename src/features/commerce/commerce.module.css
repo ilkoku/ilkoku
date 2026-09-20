@@ -447,3 +447,18 @@
   color: #746d7b;
   line-height: 1.45;
 }
+
+
+.couponApplyForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin: 18px 0;
+}
+
+@media (max-width: 720px) {
+  .couponApplyForm {
+    grid-template-columns: 1fr;
+  }
+}

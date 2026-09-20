@@ -77,6 +77,7 @@ model User {
   authorBalances               AuthorBalance[]              @relation("AuthorBalanceAuthor")
   payouts                      Payout[]                     @relation("PayoutAuthor")
   workPriceHistory             WorkPriceHistory[]           @relation("WorkPriceHistoryAuthor")
+  orderConsents                OrderConsent[]               @relation("OrderConsentReader")
 
   publisherWorkLikesCreated        PublisherWorkLike[]       @relation("PublisherWorkLikeCreator")
   publisherWorkFavoritesCreated    PublisherWorkFavorite[]   @relation("PublisherWorkFavoriteCreator")
@@ -1048,12 +1049,31 @@ model Order {
   couponRedemption         CouponRedemption?
   refunds                  Refund[]
   financialLedgerEntries   FinancialLedger[]
+  consent                  OrderConsent?
 
   @@index([readerId, createdAt])
   @@index([authorId, createdAt])
   @@index([workId, createdAt])
   @@index([status, createdAt])
   @@index([couponId, createdAt])
+}
+
+model OrderConsent {
+  id              String           @id @default(uuid()) @db.Char(36)
+  orderId         String           @unique @db.Char(36)
+  readerId        String           @db.Char(36)
+  consentType     OrderConsentType @default(digital_content_purchase)
+  documentVersion String           @db.VarChar(40)
+  documentHash    String           @db.Char(64)
+  acceptedAt      DateTime         @default(now())
+  ipAddress       String?          @db.VarChar(45)
+  userAgent       String?          @db.VarChar(500)
+  createdAt       DateTime         @default(now())
+  order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reader          User             @relation("OrderConsentReader", fields: [readerId], references: [id], onDelete: Restrict)
+
+  @@index([readerId, acceptedAt])
+  @@index([consentType, acceptedAt])
 }
 
 model Payment {
@@ -1177,6 +1197,10 @@ model Refund {
   @@index([orderId, createdAt])
   @@index([paymentId, createdAt])
   @@index([status, createdAt])
+}
+
+enum OrderConsentType {
+  digital_content_purchase
 }
 
 enum PublicationModel {

@@ -882,3 +882,13 @@ test("writer draft edits do not leak into confirmed reader commerce state", () =
   contains(checkoutRepository, "publicationConsents", "checkout loads confirmed state");
   contains(checkoutPage, "effectiveCommerce.saleModel", "checkout preserves confirmed paid enforcement");
 });
+
+
+test("chapter access edits mark the work configuration draft before reader state can change", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  const effective = source("src/features/commerce/effective-state.ts");
+
+  contains(actions, "prisma.workSaleConfiguration.updateMany", "chapter access draft transition");
+  contains(actions, 'status: "draft"', "chapter access edit marks commerce configuration draft");
+  contains(effective, 'configuration.status !== "active"', "reader uses confirmed snapshot outside active state");
+});

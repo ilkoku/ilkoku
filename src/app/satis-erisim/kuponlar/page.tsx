@@ -28,6 +28,7 @@ const messages: Record<string, string> = {
   "gecersiz-indirim": "İndirim değeri geçerli değil.",
   "gecersiz-tarih": "Bitiş tarihi başlangıç tarihinden önce olamaz.",
   "eser-bulunamadi": "Seçilen eser bulunamadı.",
+  "ucretli-eser-gerekli": "Kupon yalnız ücretli olarak hazırlanmış bir eser için oluşturulabilir.",
   "kupon-kodu-kullaniliyor": "Bu kupon kodu zaten kullanılıyor.",
   "kupon-olusturuldu": "Kupon oluşturuldu.",
   "kupon-guncellendi": "Kupon durumu güncellendi.",
@@ -76,6 +77,9 @@ export default async function AuthorCouponsPage({
   ]);
 
   const flash = query.durum ? messages[query.durum] ?? query.durum : null;
+  const paidWorks = works.filter(
+    (work) => work.saleConfiguration?.saleModel === "paid",
+  );
 
   return (
     <AppShell profile={profile}>
@@ -117,9 +121,9 @@ export default async function AuthorCouponsPage({
             <span className={styles.badge}>Yazar finansmanlı</span>
           </div>
 
-          {works.length === 0 ? (
+          {paidWorks.length === 0 ? (
             <div className={styles.empty}>
-              Kupon oluşturmak için önce bir eserin olmalı.
+              Kupon oluşturmak için önce eserini Ücretli modelde hazırlamalısın.
             </div>
           ) : (
             <form action={createAuthorCouponAction} className={styles.formGrid}>
@@ -127,7 +131,7 @@ export default async function AuthorCouponsPage({
                 <span>Eser</span>
                 <select name="workId" required>
                   <option value="">Eser seç</option>
-                  {works.map((work) => (
+                  {paidWorks.map((work) => (
                     <option key={work.id} value={work.id}>
                       {work.title}
                     </option>

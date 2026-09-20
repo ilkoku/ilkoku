@@ -31,6 +31,16 @@ Project-standard status vocabulary:
 An intentionally inactive payment/provider prerequisite is **not** a failure. Keep
 that row `HUMAN_PENDING` with the prerequisite recorded.
 
+## Current execution note — 21.09.2026
+
+- Current review branch: `feature/commerce-foundation-v1`.
+- Current reviewed HEAD: `96b2ad1cc93a00c5b50a6fb677606b8592ae9b80` at the time of this note.
+- CI Run `#2814` completed successfully for that HEAD.
+- Repository contains a Hostinger preview target used by load-test tooling, but the available GitHub/Hostinger integrations do not provide evidence that the preview currently serves this exact Commerce branch SHA.
+- The preview host could not be opened from the available browser/web environment during this UAT preparation session.
+- Therefore no browser row is promoted to `HUMAN_PASS`; affected rows remain `HUMAN_PENDING` until the exact deployed SHA and real role/account session are verified.
+- This is an evidence/prerequisite gap, not a product failure; no row is marked `BLOCKED` on this basis.
+
 ## 2. Required environment record
 
 Record these before any browser test:

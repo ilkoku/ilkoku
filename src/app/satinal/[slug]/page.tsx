@@ -173,11 +173,7 @@ export default async function CheckoutPreparationPage({
             <div>
               <span className={styles.eyebrow}>Satın alma geçici olarak kapalı</span>
               <h1>{work.title}</h1>
-              <p>
-                Bu eser daha önce ücretli erişimde aktive edildi. Mevcut satın
-                alma yolu şu anda kullanılamıyor; eser bu nedenle ücretsiz
-                erişime açılmaz.
-              </p>
+              <p>Bu eser daha önce ücretli erişimde aktive edildi. Mevcut satın alma yolu şu anda kullanılamıyor; eser bu nedenle ücretsiz erişime açılmaz.</p>
             </div>
             <span className={styles.badge}>Erişim korunuyor</span>
           </header>

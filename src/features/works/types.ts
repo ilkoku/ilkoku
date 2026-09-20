@@ -52,6 +52,7 @@ export type PublicWorkCommerceState = {
   enforcementActive: boolean;
   hasEntitlement: boolean;
   priceAmount: bigint | null;
+  purchaseAvailable: boolean;
   saleModel: "free" | "paid";
   saleStatus: "draft" | "ready" | "active" | "paused";
 };

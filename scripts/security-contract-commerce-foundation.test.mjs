@@ -667,3 +667,13 @@ test("writer work income detail matches the frozen finance fields", () => {
   contains(page, "Diğer düzeltmeler", "writer other deductions field");
   contains(page, "Net hakediş", "writer net earning field");
 });
+
+
+test("writer finance totals aggregate full ledger history instead of a capped recent slice", () => {
+  const repository = source("src/features/commerce/finance-repository.ts");
+
+  contains(repository, 'prisma.financialLedger.groupBy({', "writer finance ledger aggregation");
+  contains(repository, 'by: ["entryType"]', "writer total aggregation by ledger type");
+  contains(repository, 'by: ["workId", "entryType"]', "writer work aggregation by ledger type");
+  notContains(repository, 'where: { authorId, currency: "TRY" },\n      select:', "writer totals do not rely on a capped findMany slice");
+});

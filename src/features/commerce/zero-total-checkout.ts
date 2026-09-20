@@ -47,6 +47,12 @@ export async function completeZeroTotalCheckout(input: {
         publishedAt: { not: null },
         status: "published",
         visibility: "public",
+        author: {
+          is: {
+            deletedAt: null,
+            status: "active",
+          },
+        },
       },
       select: {
         id: true,

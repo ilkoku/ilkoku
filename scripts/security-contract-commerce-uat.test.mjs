@@ -177,3 +177,16 @@ test("UAT W: unconfirmed edits keep the last confirmed paid reader state", () =>
   has(publicQuery, "effectiveCommerce.accessPlan", "public showcase confirmed chapter plan");
   has(checkout, "effectiveCommerce.saleModel", "checkout confirmed paid state");
 });
+
+
+test("UAT C: active paid sales continue on the last confirmed price while new writer edits are draft", () => {
+  const effective = source("src/features/commerce/effective-state.ts");
+  const publicQuery = source("src/features/works/member-public-queries.ts");
+  const page = source("src/app/satinal/[slug]/page.tsx");
+  const paid = source("src/features/commerce/paid-checkout.ts");
+
+  has(effective, 'status: "active" as const', "confirmed snapshot live status");
+  has(publicQuery, "effectiveCommerce.status === \"active\"", "public purchase remains available");
+  has(page, "effectiveCommerce.priceAmount ?? BigInt(0)", "reader sees confirmed price");
+  has(paid, "effectiveCommerce.priceAmount", "order charges confirmed price");
+});

@@ -12,6 +12,7 @@ import {
 } from "./publication-snapshots";
 import { prisma } from "@/lib/prisma";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
+import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
@@ -125,12 +126,27 @@ export async function getMemberPublicWorkBySlug(
           activatedAt: true,
         },
       },
+      publicationConsents: {
+        orderBy: { confirmedAt: "desc" },
+        take: 1,
+        select: {
+          publicationModel: true,
+          priceAmount: true,
+          currency: true,
+          accessPlanSnapshot: true,
+        },
+      },
     },
   });
 
   if (!work) return null;
 
   const saleConfiguration = work.saleConfiguration;
+  const latestConsent = work.publicationConsents[0] ?? null;
+  const effectiveCommerce = resolveEffectiveCommerceState({
+    configuration: saleConfiguration,
+    latestConsent,
+  });
   const paymentPathReady =
     isCommerceCheckoutEnabled() && hasOperationalPaymentProvider();
   const readerPurchaseTerms =
@@ -142,11 +158,11 @@ export async function getMemberPublicWorkBySlug(
       ? await getActiveReaderPurchaseTerms()
       : null;
   const commerceEnforcementActive =
-    saleConfiguration?.saleModel === "paid" &&
-    (Boolean(saleConfiguration.activatedAt) ||
+    effectiveCommerce.saleModel === "paid" &&
+    (Boolean(saleConfiguration?.activatedAt) ||
       (paymentPathReady &&
         Boolean(readerPurchaseTerms) &&
-        saleConfiguration.status === "active"));
+        saleConfiguration?.status === "active"));
   const purchaseAvailable =
     paymentPathReady &&
     Boolean(readerPurchaseTerms) &&
@@ -174,7 +190,9 @@ export async function getMemberPublicWorkBySlug(
   const chapterAccess = Object.fromEntries(
     work.chapters.map((chapter) => [
       chapter.id,
-      chapter.commerceAccess?.accessType ?? "locked",
+      effectiveCommerce.useConfirmedSnapshot
+        ? effectiveCommerce.accessPlan[chapter.id] ?? "locked"
+        : chapter.commerceAccess?.accessType ?? "locked",
     ]),
   ) as Record<string, "preview" | "locked">;
 
@@ -304,6 +322,7 @@ export async function getMemberPublicWorkBySlug(
   const {
     chapters: _rawChapters,
     saleConfiguration: _saleConfiguration,
+    publicationConsents: _publicationConsents,
     ...publicWork
   } = work;
 
@@ -315,12 +334,12 @@ export async function getMemberPublicWorkBySlug(
     chapterCount: publishedChapters.length,
     commerce: {
       chapterAccess,
-      currency: saleConfiguration?.currency ?? "TRY",
+      currency: effectiveCommerce.currency,
       enforcementActive: commerceEnforcementActive,
       hasEntitlement,
-      priceAmount: saleConfiguration?.priceAmount ?? null,
+      priceAmount: effectiveCommerce.priceAmount,
       purchaseAvailable,
-      saleModel: saleConfiguration?.saleModel ?? "free",
+      saleModel: effectiveCommerce.saleModel,
       saleStatus: saleConfiguration?.status ?? "draft",
     },
     isCompleted:

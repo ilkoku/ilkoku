@@ -104,6 +104,12 @@ export default async function PaymentSystemPage() {
               ? `${operationalProviderCount} ödeme sağlayıcısı operasyonel.`
               : "Gerçek kart ve mobil ödeme sağlayıcıları henüz aktif değildir."}
           </p>
+          <Link
+            className="admin-button"
+            href="/sistem-yonetimi/odeme-sistemi/saglayicilar"
+          >
+            Sağlayıcı durumunu aç
+          </Link>
           <div className="admin-stack">
             {paymentMethods.map((method) => (
               <div key={method.method}>

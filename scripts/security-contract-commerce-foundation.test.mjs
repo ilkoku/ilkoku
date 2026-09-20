@@ -301,7 +301,7 @@ test("paid publication requires explicit chapter access once payment is live or 
 
   contains(guard, "paymentPathReady", "current payment path readiness");
   contains(guard, "!paymentPathReady && !previouslyActivatedPaid", "prelaunch-only publication bypass");
-  contains(guard, 'work.saleConfiguration?.saleModel !== "paid"', "free work publication bypass");
+  contains(guard, 'configuration.saleModel !== "paid" && !previouslyActivatedPaid', "free work publication bypass");
   contains(guard, "!chapter.commerceAccess", "explicit chapter access requirement");
   contains(guard, "Ön İzleme veya Kilitli", "writer-facing access choice requirement");
   contains(workActions, "assertPaidWorkAccessPlanReadyForPublication", "publication flow commerce guard");

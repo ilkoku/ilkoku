@@ -1,11 +1,13 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
+import { getActiveReaderPurchaseTerms } from "./checkout-terms";
 import { completeZeroTotalCheckout } from "./zero-total-checkout";
 
 function destination(slug: string, status: string, from?: string) {
@@ -36,6 +38,11 @@ export async function completeZeroTotalCheckoutAction(formData: FormData) {
     redirect(destination(slug, "kosul-onayi-gerekli", returnTo));
   }
 
+  const terms = await getActiveReaderPurchaseTerms();
+  if (!terms) {
+    redirect(destination(slug, "satin-alma-kosullari-hazir-degil", returnTo));
+  }
+
   const work = await prisma.work.findFirst({
     where: {
       slug,
@@ -58,7 +65,18 @@ export async function completeZeroTotalCheckoutAction(formData: FormData) {
     user,
   });
 
+  const requestHeaders = await headers();
+  const forwardedFor = requestHeaders.get("x-forwarded-for");
+  const ipAddress = forwardedFor?.split(",")[0]?.trim() || null;
+  const userAgent = requestHeaders.get("user-agent");
+
   const result = await completeZeroTotalCheckout({
+    consent: {
+      documentHash: terms.documentHash,
+      documentVersion: terms.version,
+      ipAddress,
+      userAgent,
+    },
     couponCode,
     readerId: user.id,
     workId: work.id,

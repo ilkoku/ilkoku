@@ -431,3 +431,19 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+
+
+.paidPrice {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #4c1d95;
+}
+
+.saleOption small {
+  display: block;
+  margin-top: 4px;
+  color: #746d7b;
+  line-height: 1.45;
+}

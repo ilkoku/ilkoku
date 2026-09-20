@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { readingContent } from "@/content";
 import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
+import { canAccessReaderWorkspace } from "@/features/auth/data";
+import { getCommerceChapterAccessDecision } from "@/features/commerce/access";
 import { EditorReviewReadingMode } from "@/features/editor-workspace/components/EditorReviewReadingMode";
 import {
   getActiveEditorReviewAssignment,
@@ -89,6 +91,24 @@ export default async function DynamicReadingPage({
 
   const isReviewReading =
     isEditorReadingContext && Boolean(reviewAssignment);
+
+  if (canAccessReaderWorkspace(user.role) && !isReviewReading) {
+    const commerceAccess = await getCommerceChapterAccessDecision({
+      chapterId: chapter.id,
+      readerId: user.id,
+      workId: chapter.work.id,
+    });
+
+    if (!commerceAccess.allowed) {
+      if (commerceAccess.reason === "chapter_not_found") {
+        notFound();
+      }
+
+      redirect(
+        `/satinal/${encodeURIComponent(chapter.work.slug)}?from=${encodeURIComponent(returnPath)}`,
+      );
+    }
+  }
 
   const requestHeaders = await headers();
 

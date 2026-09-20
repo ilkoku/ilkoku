@@ -149,6 +149,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
         select: {
           priceAmount: true,
           saleModel: true,
+          activatedAt: true,
         },
       },
     },
@@ -158,7 +159,11 @@ export async function saveWorkSaleModelAction(formData: FormData) {
 
   const checkoutEnabled = isCommerceCheckoutEnabled();
   const paymentProviderReady = hasOperationalPaymentProvider();
-  const paidPricingEnabled = checkoutEnabled && paymentProviderReady;
+  const previouslyActivatedPaid =
+    work.saleConfiguration?.saleModel === "paid" &&
+    Boolean(work.saleConfiguration.activatedAt);
+  const paidPricingEnabled =
+    (checkoutEnabled && paymentProviderReady) || previouslyActivatedPaid;
   const priceAmount =
     parsedModel.data === "free"
       ? null
@@ -178,6 +183,12 @@ export async function saveWorkSaleModelAction(formData: FormData) {
     const oldPrice = work.saleConfiguration?.priceAmount ?? null;
     const oldModel = work.saleConfiguration?.saleModel ?? null;
 
+    const modelChanged =
+      oldModel !== null && oldModel !== parsedModel.data;
+    const nextActivatedAt = modelChanged
+      ? null
+      : work.saleConfiguration?.activatedAt ?? null;
+
     await transaction.workSaleConfiguration.upsert({
       where: { workId: work.id },
       create: {
@@ -193,6 +204,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
         priceAmount,
         currency: "TRY",
         status: "draft",
+        activatedAt: nextActivatedAt,
       },
     });
 

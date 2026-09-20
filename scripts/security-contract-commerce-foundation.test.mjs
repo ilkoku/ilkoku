@@ -844,3 +844,15 @@ test("step three is explicitly free paid and staged zero belongs under paid", ()
     "0 TL must render inside the paid option after its label",
   );
 });
+
+
+test("writer deductions include author-funded coupons but not platform-funded campaign cost", () => {
+  const repository = source("src/features/commerce/finance-repository.ts");
+  const page = source("src/app/gelirler/page.tsx");
+
+  contains(repository, 'totals.get("author_coupon_discount")', "author coupon deduction total");
+  contains(repository, 'entry.entryType === "author_coupon_discount"', "author coupon work rollup");
+  contains(page, "finance.authorCouponDiscounts", "author coupon included in writer deductions");
+  contains(page, "Yazar kupon indirimi", "author coupon work detail");
+  notContains(page, "platformCampaignCost", "platform-funded coupon is not writer deduction");
+});

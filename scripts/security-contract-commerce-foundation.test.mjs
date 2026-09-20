@@ -174,3 +174,56 @@ test("agreement evidence is immutable across same-version content changes", () =
   contains(actions, '"sozlesme-surum-uyusmazligi"', "hash conflict fail-closed status");
   notContains(actions, "documentHash: agreement.documentHash,\n        status: \"accepted\",\n        acceptedAt,\n        revokedAt: null", "agreement evidence overwrite path");
 });
+
+
+test("reader commerce gate stays open until checkout and paid activation are both active", () => {
+  const access = source("src/features/commerce/access.ts");
+  const readingPage = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
+  const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
+
+  contains(access, 'return { allowed: true, reason: "checkout_disabled" }', "checkout-disabled reader fail-open");
+  contains(access, 'configuration.status !== "active"', "staged paid work fail-open");
+  contains(access, 'chapter.commerceAccess?.accessType === "preview"', "preview access");
+  contains(access, 'entitlement?.status === "active"', "purchased entitlement access");
+  contains(access, 'reason: "purchase_required"', "locked paid purchase gate");
+  contains(readingPage, "getCommerceChapterAccessDecision", "reading route commerce access check");
+  contains(readingPage, '"/satinal/', "purchase redirect");
+  contains(checkoutPage, "Satın alma altyapısı hazır, ancak gerçek tahsilat henüz aktif", "staged checkout notice");
+});
+
+
+test("coupon pricing preserves the two frozen funding models", () => {
+  const pricing = source("src/features/commerce/pricing.ts");
+
+  contains(pricing, 'coupon.owner === "author" ? finalAmount : originalAmount', "author coupon discounted earning base");
+  contains(pricing, 'coupon.owner === "platform" ? discountAmount : 0n', "platform-funded subsidy amount");
+  contains(pricing, "discountValue > 100n", "percentage cap");
+  contains(pricing, "discount > originalAmount ? originalAmount : discount", "discount cannot create negative checkout");
+});
+
+
+test("checkout coupon resolution revalidates scope and usage before pricing", () => {
+  const checkoutRepository = source("src/features/commerce/checkout-repository.ts");
+  const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
+
+  contains(checkoutRepository, 'coupon.status !== "active"', "coupon active state");
+  contains(checkoutRepository, "coupon.startsAt && coupon.startsAt > now", "coupon start date");
+  contains(checkoutRepository, "coupon.endsAt && coupon.endsAt < now", "coupon end date");
+  contains(checkoutRepository, "coupon.usageCount >= coupon.totalUsageLimit", "total usage limit");
+  contains(checkoutRepository, "coupon.redemptions.length >= coupon.perUserUsageLimit", "per-user usage limit");
+  contains(checkoutRepository, 'coupon.scope === "all_paid_works"', "platform all-paid-work scope");
+  contains(checkoutRepository, 'coupon.scope === "selected_works"', "platform selected-work scope");
+  contains(checkoutRepository, 'coupon.scope === "selected_authors"', "platform selected-author scope");
+  contains(checkoutPage, "calculateCommercePricing", "checkout pricing calculation");
+});
+
+
+test("checkout route is private and reader-role gated", () => {
+  const security = source("src/lib/route-security.ts");
+  const proxy = source("src/proxy.ts");
+  const nextConfig = source("next.config.ts");
+
+  contains(security, '{ approved: false, path: "/satinal", roles: [...readerWorkspaceRoles] }', "checkout reader-role gate");
+  contains(proxy, '"/satinal/:path*"', "checkout proxy enforcement");
+  contains(nextConfig, '"/satinal/:path*"', "checkout noindex header");
+});

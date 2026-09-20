@@ -147,12 +147,21 @@ export async function completeZeroTotalCheckout(input: {
       return { ok: false, reason: "coupon_invalid" } as const;
     }
 
-    const userUsageCount = await transaction.couponRedemption.count({
-      where: {
-        couponId: coupon.id,
-        readerId: input.readerId,
-      },
-    });
+    const [userUsageCount, reservedCount] = await Promise.all([
+      transaction.couponRedemption.count({
+        where: {
+          couponId: coupon.id,
+          readerId: input.readerId,
+          status: { in: ["reserved", "used"] },
+        },
+      }),
+      transaction.couponRedemption.count({
+        where: {
+          couponId: coupon.id,
+          status: "reserved",
+        },
+      }),
+    ]);
 
     const validation = validateCouponRules({
       authorId: coupon.authorId,
@@ -164,7 +173,7 @@ export async function completeZeroTotalCheckout(input: {
       startsAt: coupon.startsAt,
       status: coupon.status,
       totalUsageLimit: coupon.totalUsageLimit,
-      usageCount: coupon.usageCount,
+      usageCount: coupon.usageCount + reservedCount,
       userUsageCount,
       workAuthorId: work.authorId,
       workScopeMatch: coupon.workScopes.length > 0,
@@ -226,6 +235,7 @@ export async function completeZeroTotalCheckout(input: {
         readerId: input.readerId,
         orderId: order.id,
         discountAmount: pricing.discountAmount,
+        status: "used",
         redeemedAt: now,
       },
     });

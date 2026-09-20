@@ -677,3 +677,19 @@ test("writer finance totals aggregate full ledger history instead of a capped re
   contains(repository, 'by: ["workId", "entryType"]', "writer work aggregation by ledger type");
   notContains(repository, 'where: { authorId, currency: "TRY" },\n      select:', "writer totals do not rely on a capped findMany slice");
 });
+
+
+test("commerce settings remain read-only and require rollout provider and active terms", () => {
+  const overview = source("src/app/admin/odeme-sistemi/page.tsx");
+  const settings = source("src/app/admin/odeme-sistemi/ayarlar/page.tsx");
+  const readerTerms = source("src/features/commerce/checkout-terms.ts");
+
+  contains(overview, 'href="/sistem-yonetimi/odeme-sistemi/ayarlar"', "commerce settings link");
+  contains(settings, "COMMERCE_CHECKOUT_ENABLED", "checkout rollout status");
+  contains(settings, "hasOperationalPaymentProvider", "provider readiness status");
+  contains(settings, "getAuthorPublicationAgreementStatus", "author agreement lifecycle");
+  contains(settings, "getReaderPurchaseTermsStatus", "reader terms lifecycle");
+  contains(settings, "paidAccessReady", "combined paid access readiness");
+  notContains(settings, 'action={', "settings page remains read-only");
+  contains(readerTerms, "getReaderPurchaseTermsStatus", "reader terms status query");
+});

@@ -348,6 +348,7 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
           currency: true,
           priceAmount: true,
           saleModel: true,
+          activatedAt: true,
         },
       },
     },
@@ -371,7 +372,11 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
 
   const checkoutEnabled = isCommerceCheckoutEnabled();
   const paymentProviderReady = hasOperationalPaymentProvider();
-  const paidPricingEnabled = checkoutEnabled && paymentProviderReady;
+  const previouslyActivatedPaid =
+    work.saleConfiguration.saleModel === "paid" &&
+    Boolean(work.saleConfiguration.activatedAt);
+  const paidPricingEnabled =
+    (checkoutEnabled && paymentProviderReady) || previouslyActivatedPaid;
   if (
     paidPricingEnabled &&
     work.saleConfiguration.saleModel === "paid" &&
@@ -414,7 +419,10 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
         status: nextStatus,
         agreementVersion: agreement.version,
         confirmedAt: now,
-        activatedAt: nextStatus === "active" ? now : null,
+        activatedAt:
+          nextStatus === "active"
+            ? work.saleConfiguration!.activatedAt ?? now
+            : work.saleConfiguration!.activatedAt,
         pausedAt: null,
       },
     });

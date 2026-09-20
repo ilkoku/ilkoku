@@ -19,6 +19,20 @@ export type ProviderCreatePaymentResult = {
   redirectUrl: string;
 };
 
+export type ProviderWebhookVerificationInput = {
+  headers: Readonly<Record<string, string>>;
+  rawBody: string;
+};
+
+export type VerifiedProviderWebhookEvent = {
+  amount: bigint;
+  currency: string;
+  failureCode?: string | null;
+  failureMessage?: string | null;
+  outcome: "succeeded" | "failed" | "cancelled";
+  providerTransactionId: string;
+};
+
 export type PaymentProviderAdapter = {
   code: string;
   label: string;
@@ -27,6 +41,9 @@ export type PaymentProviderAdapter = {
   createPayment(
     input: ProviderCreatePaymentInput,
   ): Promise<ProviderCreatePaymentResult>;
+  verifyWebhook(
+    input: ProviderWebhookVerificationInput,
+  ): Promise<VerifiedProviderWebhookEvent | null>;
 };
 
 export type PaymentMethodAvailability = {
@@ -51,7 +68,17 @@ function isAdapterOperational(adapter: PaymentProviderAdapter) {
 export function getPaymentProviderAdapter(
   method: CommercePaymentMethod,
 ): PaymentProviderAdapter | null {
-  return adapters.find((adapter) => adapter.method === method && isAdapterOperational(adapter)) ?? null;
+  return adapters.find(
+    (adapter) => adapter.method === method && isAdapterOperational(adapter),
+  ) ?? null;
+}
+
+export function getPaymentProviderAdapterByCode(
+  code: string,
+): PaymentProviderAdapter | null {
+  return adapters.find(
+    (adapter) => adapter.code === code && isAdapterOperational(adapter),
+  ) ?? null;
 }
 
 export function getPaymentMethodAvailability(): PaymentMethodAvailability[] {

@@ -174,8 +174,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
   const checkoutEnabled = isCommerceCheckoutEnabled();
   const paymentProviderReady = hasOperationalPaymentProvider();
   const previouslyActivatedPaid =
-    work.saleConfiguration?.saleModel === "paid" &&
-    Boolean(work.saleConfiguration.activatedAt);
+    Boolean(work.saleConfiguration?.activatedAt);
   const paidPricingEnabled =
     (checkoutEnabled && paymentProviderReady) || previouslyActivatedPaid;
   const priceAmount =
@@ -383,7 +382,6 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
   const checkoutEnabled = isCommerceCheckoutEnabled();
   const paymentProviderReady = hasOperationalPaymentProvider();
   const previouslyActivatedPaid =
-    work.saleConfiguration.saleModel === "paid" &&
     Boolean(work.saleConfiguration.activatedAt);
   const paidPricingEnabled =
     (checkoutEnabled && paymentProviderReady) || previouslyActivatedPaid;

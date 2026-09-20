@@ -202,7 +202,7 @@ export default async function WriterCommerceWorkPage({
           ) : (
             <div className={styles.chapterList}>
               {work.chapters.map((chapter) => {
-                const accessType = chapter.commerceAccess?.accessType ?? "preview";
+                const accessType = chapter.commerceAccess?.accessType ?? null;
                 return (
                   <div className={styles.chapterRow} key={chapter.id}>
                     <div className={styles.chapterTitle}>

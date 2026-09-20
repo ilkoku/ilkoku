@@ -139,6 +139,8 @@ Checkout contains:
 
 Real card and carrier billing are **not enabled in this foundation phase**.
 
+Reader purchase terms start as draft. Checkout must fail closed until the active terms document has completed legal/product review and is activated.
+
 Reader account surfaces:
 
 - **Kütüphanem → Satın Aldıklarım**
@@ -181,6 +183,7 @@ If a valid coupon reduces an active paid work to **0 TRY**:
 - the order is completed atomically without an external Payment record,
 - coupon usage is revalidated and serialized before consumption,
 - the coupon redemption is recorded,
+- the active reader purchase-terms version/hash and acceptance evidence are stored with the order,
 - an ACTIVE work entitlement is created,
 - immutable order pricing snapshots are stored,
 - gross sale and coupon discount movements are written to the financial ledger.

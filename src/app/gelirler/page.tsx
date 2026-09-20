@@ -169,6 +169,15 @@ export default async function WriterIncomePage() {
                       </strong>
                     </span>
                     <span>
+                      Yazar kupon indirimi
+                      <strong>
+                        {formatMoney(
+                          work.authorCouponDiscount,
+                          finance.currency,
+                        )}
+                      </strong>
+                    </span>
+                    <span>
                       Provider ücreti
                       <strong>
                         {formatMoney(work.providerFees, finance.currency)}

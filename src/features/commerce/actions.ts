@@ -23,6 +23,14 @@ async function authenticatedWriter() {
 }
 
 
+function parseTryMinorUnits(value: FormDataEntryValue | null) {
+  const normalized = String(value ?? "").trim().replace(",", ".");
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return null;
+  const [whole, fraction = ""] = normalized.split(".");
+  const amount = BigInt(`${whole}${fraction.padEnd(2, "0")}`);
+  return amount > 0n ? amount : null;
+}
+
 function parsePositiveInteger(value: FormDataEntryValue | null) {
   const normalized = String(value ?? "").trim();
   if (!normalized) return null;
@@ -135,10 +143,21 @@ export async function saveWorkSaleModelAction(formData: FormData) {
 
   if (!work) return;
 
-  // During the infrastructure phase, paid works are staged with a fixed
-  // zero price. Authors do not enter a monetary amount until real checkout
-  // is intentionally enabled in a later product decision.
-  const priceAmount = parsedModel.data === "paid" ? 0n : null;
+  const checkoutEnabled = isCommerceCheckoutEnabled();
+  const priceAmount =
+    parsedModel.data === "free"
+      ? null
+      : checkoutEnabled
+        ? parseTryMinorUnits(formData.get("price"))
+        : 0n;
+
+  if (
+    parsedModel.data === "paid" &&
+    checkoutEnabled &&
+    priceAmount === null
+  ) {
+    return;
+  }
 
   await prisma.$transaction(async (transaction) => {
     const oldPrice = work.saleConfiguration?.priceAmount ?? null;

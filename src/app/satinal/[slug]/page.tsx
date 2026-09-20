@@ -40,6 +40,7 @@ const checkoutMessages: Record<string, string> = {
   "siparis-bekliyor": "Bu eser için zaten ödeme bekleyen bir sipariş bulunuyor.",
   "sifir-toplam-akisi": "Toplam 0 TL olduğu için harici ödeme yerine 0 TL sipariş akışı kullanılmalı.",
   "odeme-baslatilamadi": "Ödeme sağlayıcısı başlatılamadı. Herhangi bir erişim hakkı verilmedi.",
+  "odeme-donus-adresi-hazir-degil": "Ödeme dönüş adresi yapılandırılmadığı için işlem başlatılamadı.",
 };
 
 function formatMoney(value: bigint, currency = "TRY") {

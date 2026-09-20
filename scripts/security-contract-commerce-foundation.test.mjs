@@ -379,3 +379,22 @@ test("checkout cannot bypass the existing adult-content gate", () => {
   contains(completion, 'status: "active"', "active author requirement");
   contains(completion, "deletedAt: null", "non-deleted author requirement");
 });
+
+
+test("zero-total checkout persists versioned reader consent evidence", () => {
+  const schema = source("prisma/schema.prisma");
+  const migration = source("prisma/migrations/20260920190000_commerce_foundation_v1/migration.sql");
+  const terms = source("src/features/commerce/checkout-terms.ts");
+  const action = source("src/features/commerce/checkout-actions.ts");
+  const completion = source("src/features/commerce/zero-total-checkout.ts");
+
+  contains(schema, "model OrderConsent {", "order consent evidence model");
+  contains(schema, "documentVersion String", "consent document version");
+  contains(schema, "documentHash    String", "consent document hash");
+  contains(migration, "ILKOKU_READER_DIGITAL_CONTENT_PURCHASE", "draft reader purchase terms template");
+  contains(migration, "'draft'", "reader purchase terms start inactive");
+  contains(terms, "lifecycleStatus = 'active'", "active terms lifecycle gate");
+  contains(action, "getActiveReaderPurchaseTerms", "checkout active terms requirement");
+  contains(completion, "transaction.orderConsent.create", "consent evidence transaction write");
+  contains(completion, 'consentType: "digital_content_purchase"', "digital purchase consent type");
+});

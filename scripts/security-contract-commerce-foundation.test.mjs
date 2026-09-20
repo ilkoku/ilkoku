@@ -293,11 +293,11 @@ test("checkout keeps digital-content acceptance in the frozen purchase surface",
 });
 
 
-test("paid publication requires explicit chapter access only after checkout activation", () => {
+test("paid publication requires explicit chapter access only after checkout and provider activation", () => {
   const guard = source("src/features/commerce/publication-guard.ts");
   const workActions = source("src/features/works/actions.ts");
 
-  contains(guard, "if (!isCommerceCheckoutEnabled())", "current publication remains unaffected while checkout is disabled");
+  contains(guard, "if (!isCommerceCheckoutEnabled() || !hasOperationalPaymentProvider())", "current publication remains unaffected without a live payment path");
   contains(guard, 'work.saleConfiguration?.saleModel !== "paid"', "free work publication bypass");
   contains(guard, "!chapter.commerceAccess", "explicit chapter access requirement");
   contains(guard, "Ön İzleme veya Kilitli", "writer-facing access choice requirement");

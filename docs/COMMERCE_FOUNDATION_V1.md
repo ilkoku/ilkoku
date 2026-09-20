@@ -63,7 +63,7 @@ The general agreement is versioned and accepted by the author. Each work also re
 - agreement version,
 - confirmation time.
 
-Historical confirmations are immutable evidence.
+Historical confirmations are immutable evidence. Unconfirmed writer edits must not alter the reader-facing state of a work that has already been activated as paid. While a new configuration is draft/ready, the last confirmed paid snapshot remains authoritative for reader-facing sale model, price display and chapter Preview/Kilitli enforcement until the next work-level confirmation is completed.
 
 ## 4. Money representation
 

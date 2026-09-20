@@ -257,6 +257,7 @@ The first operational screens are wired directly to commerce records:
 - **Ödemeler** shows provider-neutral payment attempts, provider transaction id, terminal status and failure diagnostics without storing or exposing card/carrier credentials.
 - **İadeler** is intentionally read-only in this phase. No approve/process action is exposed until partial-refund policy, coupon reuse after refund, and provider refund adapters are explicitly defined.
 - **Erişim Hakları** shows entitlement source/status, reader, work sale state and linked order without deriving access from the current work price.
+- **Ödeme Sağlayıcıları** exposes rollout/provider readiness without displaying or editing secrets. It is read-only in this phase.
 
 ### Finans & Gelirler
 

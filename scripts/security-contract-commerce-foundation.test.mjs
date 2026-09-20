@@ -477,3 +477,21 @@ test("paid work activation stays staged without an operational provider", () => 
   contains(access, "!hasOperationalPaymentProvider()", "reader access provider readiness");
   contains(guard, "!hasOperationalPaymentProvider()", "publication guard provider readiness");
 });
+
+
+test("provider webhook cannot reach payment lifecycle before adapter verification", () => {
+  const providers = source("src/features/commerce/payment-providers.ts");
+  const route = source("src/app/api/commerce/payments/[provider]/webhook/route.ts");
+
+  contains(providers, "verifyWebhook(", "provider webhook verification contract");
+  contains(route, "await request.text()", "raw webhook body preserved");
+  contains(route, "adapter.verifyWebhook", "provider-specific verification");
+  contains(route, "if (!verified)", "unverified webhook rejection");
+  contains(route, "applyVerifiedProviderPaymentEvent", "shared lifecycle after verification");
+  const verificationIndex = route.indexOf("adapter.verifyWebhook");
+  const lifecycleIndex = route.indexOf("applyVerifiedProviderPaymentEvent");
+  assert.ok(
+    verificationIndex >= 0 && lifecycleIndex > verificationIndex,
+    "payment lifecycle must run only after provider verification",
+  );
+});

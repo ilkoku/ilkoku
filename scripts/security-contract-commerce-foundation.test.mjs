@@ -759,8 +759,8 @@ test("writer paid price stays zero before first activation and preserves live pr
 test("chapter access plan rejects missing or tampered selections instead of defaulting to preview", () => {
   const actions = source("src/features/commerce/actions.ts");
 
-  contains(actions, 'raw === "preview" || raw === "locked"', "explicit chapter access choices");
-  contains(actions, "accessType:", "chapter access selection mapping");
+  contains(actions, 'value === "preview" || value === "locked"', "explicit chapter access choices");
+  contains(actions, "parseChapterAccessType(", "chapter access selection mapping");
   contains(actions, "selections.some((selection) => !selection.accessType)", "missing access selection gate");
   contains(actions, '"erisim-secimi-eksik"', "missing access selection fail-closed status");
   notContains(actions, 'const accessType = raw === "locked" ? "locked" : "preview"', "no silent preview default");

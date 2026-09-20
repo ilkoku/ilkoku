@@ -114,8 +114,8 @@ export async function saveChapterAccessPlanAction(formData: FormData) {
     commerceStatusRedirect(parsedWorkId.data, "erisim-secimi-eksik");
   }
 
-  await prisma.$transaction(
-    selections.map((selection) =>
+  await prisma.$transaction([
+    ...selections.map((selection) =>
       prisma.chapterAccess.upsert({
         where: { chapterId: selection.chapterId },
         create: {
@@ -128,7 +128,16 @@ export async function saveChapterAccessPlanAction(formData: FormData) {
         },
       }),
     ),
-  );
+    prisma.workSaleConfiguration.updateMany({
+      where: {
+        workId: parsedWorkId.data,
+        authorId: writer.id,
+      },
+      data: {
+        status: "draft",
+      },
+    }),
+  ]);
 
   revalidateCommerce(parsedWorkId.data);
 }

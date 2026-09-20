@@ -56,7 +56,8 @@ const statusMessages: Record<string, string> = {
   "erisim-secimi-eksik": "Her bölüm için Ön İzleme veya Kilitli seçimini açıkça yapmalısın.",
   "fiyat-gerekli": "Gerçek ödeme yolu ve operasyonel provider aktifken ücretli eser için 0 TL dışında geçerli bir fiyat gerekir.",
   "yayin-onaylandi": "Eserin yayın ve erişim ayarları onaylandı.",
-  "satis-hazir": "Ücretli eser satışa hazır durumda kaydedildi. Tahsilat açılana kadar okur erişimi kapanmaz.",
+  "satis-hazir": "Ücretli eser hazırlık durumunda kaydedildi. İlk gerçek paid access aktivasyonuna kadar mevcut okuma erişimi açık kalır.",
+  "satis-hazir-erisim-korunuyor": "Ücretli eser ayarları kaydedildi. Eser daha önce paid access olarak aktive edildiği için Kilitli bölümler korunur; yeni satın alma ödeme yolu yeniden hazır olduğunda açılır.",
 };
 
 function lifecycleLabel(value: string | undefined) {

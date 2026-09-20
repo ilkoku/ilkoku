@@ -224,6 +224,7 @@ export const config = {
     "/satis-erisim/:path*",
     "/gelirler/:path*",
     "/satinal/:path*",
+    "/kutuphanem/:path*",
     "/yayinevi/:path*",
     "/rol-secimi/:path*",
     "/editörler/:path*",

@@ -36,11 +36,13 @@ test("UAT A: first paid activation requires price, provider path and reader term
 });
 
 test("UAT R: previously activated paid work never becomes free during payment outage", () => {
+  const contract = source("docs/COMMERCE_FOUNDATION_V1.md");
   const access = source("src/features/commerce/access.ts");
   const query = source("src/features/works/member-public-queries.ts");
   const checkout = source("src/app/satinal/[slug]/page.tsx");
   const showcase = source("src/features/showcase/components/BookShowcase.tsx");
 
+  has(contract, "temporary checkout/provider outage does **not** unlock", "frozen outage rule");
   has(access, "previouslyActivatedPaid", "runtime activation history");
   has(query, "Boolean(saleConfiguration.activatedAt)", "public activation history");
   has(query, "commerceEnforcementActive", "public enforcement state");

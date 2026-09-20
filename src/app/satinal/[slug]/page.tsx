@@ -229,6 +229,13 @@ export default async function CheckoutPreparationPage({
             </label>
           </div>
 
+          <label className={styles.confirmation}>
+            <input name="acceptDigitalContent" type="checkbox" />
+            <span>
+              Dijital içerik satın alma koşullarını okudum ve kabul ediyorum.
+            </span>
+          </label>
+
           <button className={styles.action} disabled type="button">
             Ödeme sağlayıcısı bekleniyor
           </button>

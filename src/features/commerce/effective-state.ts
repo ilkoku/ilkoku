@@ -61,6 +61,7 @@ export function resolveEffectiveCommerceState(input: {
       currency: "TRY",
       priceAmount: null,
       saleModel: "free" as const,
+      status: "draft" as const,
       useConfirmedSnapshot: false,
     };
   }
@@ -72,6 +73,7 @@ export function resolveEffectiveCommerceState(input: {
       currency: configuration.currency,
       priceAmount: configuration.priceAmount,
       saleModel: configuration.saleModel,
+      status: configuration.status,
       useConfirmedSnapshot: false,
     };
   }
@@ -81,6 +83,7 @@ export function resolveEffectiveCommerceState(input: {
     currency: input.latestConsent.currency,
     priceAmount: input.latestConsent.priceAmount,
     saleModel: input.latestConsent.publicationModel,
+    status: "active" as const,
     useConfirmedSnapshot: true,
   };
 }

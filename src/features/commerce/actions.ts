@@ -25,6 +25,12 @@ async function authenticatedWriter() {
 }
 
 
+function parseChapterAccessType(
+  value: FormDataEntryValue | null,
+): "preview" | "locked" | null {
+  return value === "preview" || value === "locked" ? value : null;
+}
+
 function parseTryMinorUnits(value: FormDataEntryValue | null) {
   const normalized = String(value ?? "").trim().replace(",", ".");
   if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return null;
@@ -96,13 +102,11 @@ export async function saveChapterAccessPlanAction(formData: FormData) {
   if (!work) return;
 
   const selections = work.chapters.map((chapter) => {
-    const raw = formData.get(`chapter:${chapter.id}`);
     return {
       chapterId: chapter.id,
-      accessType:
-        raw === "preview" || raw === "locked"
-          ? raw
-          : null,
+      accessType: parseChapterAccessType(
+        formData.get(`chapter:${chapter.id}`),
+      ),
     };
   });
 

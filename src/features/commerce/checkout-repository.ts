@@ -39,6 +39,16 @@ export async function getCheckoutWorkBySlug(slug: string, readerId: string) {
           activatedAt: true,
         },
       },
+      publicationConsents: {
+        orderBy: { confirmedAt: "desc" },
+        take: 1,
+        select: {
+          publicationModel: true,
+          priceAmount: true,
+          currency: true,
+          accessPlanSnapshot: true,
+        },
+      },
       entitlements: {
         where: {
           readerId,

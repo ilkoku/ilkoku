@@ -178,12 +178,13 @@ test("agreement evidence is immutable across same-version content changes", () =
 });
 
 
-test("reader commerce gate stays open until checkout and paid activation are both active", () => {
+test("reader commerce gate stays open until checkout, provider and paid activation are all ready", () => {
   const access = source("src/features/commerce/access.ts");
   const readingPage = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
   const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
 
   contains(access, 'return { allowed: true, reason: "checkout_disabled" }', "checkout-disabled reader fail-open");
+  contains(access, 'return { allowed: true, reason: "provider_unavailable" }', "provider-unavailable reader fail-open");
   contains(access, 'configuration.status !== "active"', "staged paid work fail-open");
   contains(access, 'chapter.commerceAccess?.accessType === "preview"', "preview access");
   contains(access, 'entitlement?.status === "active"', "purchased entitlement access");
@@ -408,4 +409,71 @@ test("checkout shows the exact active reader terms before acceptance", () => {
   contains(checkout, "{purchaseTerms.body}", "active terms body visible to reader");
   contains(checkout, "Sürüm {purchaseTerms.version}", "active terms version visible");
   contains(checkout, 'name="acceptDigitalContent"', "reader acceptance checkbox");
+});
+
+
+test("provider registry cannot activate production through a test adapter", () => {
+  const providers = source("src/features/commerce/payment-providers.ts");
+
+  contains(providers, 'adapter.mode === "active"', "active provider mode");
+  contains(providers, 'adapter.mode === "test" && process.env.NODE_ENV !== "production"', "test provider blocked in production");
+  contains(providers, "hasOperationalPaymentProvider", "provider operational readiness helper");
+});
+
+
+test("paid checkout prepares order payment consent and coupon reservation before provider redirect", () => {
+  const checkout = source("src/features/commerce/paid-checkout.ts");
+  const schema = source("prisma/schema.prisma");
+
+  contains(checkout, "getPaymentProviderAdapter", "provider adapter lookup before order creation");
+  contains(checkout, "return { ok: false, reason: \"provider_unavailable\" }", "no order without provider");
+  contains(checkout, "SELECT id\n      FROM User", "reader serialization lock");
+  contains(checkout, 'status: "pending_payment"', "pending order creation");
+  contains(checkout, 'status: "pending"', "pending payment attempt");
+  contains(checkout, "transaction.orderConsent.create", "checkout consent evidence");
+  contains(checkout, 'status: "reserved"', "coupon reservation before provider redirect");
+  contains(checkout, "adapter.createPayment", "provider initialization after prepared DB state");
+  contains(checkout, 'status: "released"', "reservation release on provider initialization failure");
+  contains(schema, "@@unique([provider, providerTransactionId])", "provider transaction idempotency key");
+});
+
+
+test("coupon reservations count against coupon limits until payment resolves", () => {
+  const schema = source("prisma/schema.prisma");
+  const checkoutRepository = source("src/features/commerce/checkout-repository.ts");
+  const paidCheckout = source("src/features/commerce/paid-checkout.ts");
+
+  contains(schema, "enum CouponRedemptionStatus {", "coupon redemption lifecycle");
+  contains(schema, "reserved", "reserved coupon status");
+  contains(schema, "released", "released coupon status");
+  contains(checkoutRepository, 'status: { in: ["reserved", "used"] }', "reader limit includes reservation");
+  contains(checkoutRepository, 'status: "reserved"', "global coupon reservation count");
+  contains(paidCheckout, "record.usageCount + reservedCount", "paid checkout total limit includes reservations");
+});
+
+
+test("verified provider success is the only paid path that grants entitlement", () => {
+  const lifecycle = source("src/features/commerce/payment-lifecycle.ts");
+
+  contains(lifecycle, "applyVerifiedProviderPaymentEvent", "verified-event payment lifecycle");
+  contains(lifecycle, 'current.status !== "pending"', "payment state gate");
+  contains(lifecycle, "current.amount !== event.amount", "provider amount verification");
+  contains(lifecycle, "current.currency !== event.currency", "provider currency verification");
+  contains(lifecycle, 'status: "succeeded"', "provider success persistence");
+  contains(lifecycle, 'status: "paid"', "order paid transition");
+  contains(lifecycle, "workEntitlement.upsert", "entitlement only on verified success branch");
+  contains(lifecycle, "financialLedger.upsert", "idempotent sale ledger writes");
+  contains(lifecycle, 'status: "released"', "failed or cancelled payment releases coupon reservation");
+});
+
+
+test("paid work activation stays staged without an operational provider", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  const access = source("src/features/commerce/access.ts");
+  const guard = source("src/features/commerce/publication-guard.ts");
+
+  contains(actions, "hasOperationalPaymentProvider", "writer activation provider readiness");
+  contains(actions, "(checkoutEnabled && paymentProviderReady)", "paid activation requires checkout plus provider");
+  contains(access, "!hasOperationalPaymentProvider()", "reader access provider readiness");
+  contains(guard, "!hasOperationalPaymentProvider()", "publication guard provider readiness");
 });

@@ -176,7 +176,7 @@ Order statuses:
 
 Payment providers remain provider-agnostic in this phase.
 
-Before a work has ever been activated for real paid access, missing checkout/provider infrastructure is fail-open: staging must not lock the reader out. Enabling the commerce rollout flag by itself is not enough; first activation requires checkout plus at least one production-safe provider adapter. After a work has been activated as paid at least once, a temporary checkout/provider outage does **not** unlock its locked chapters; existing entitlements remain valid while new purchase availability may be temporarily unavailable.
+Before a work has ever been activated for real paid access, missing checkout/provider infrastructure is fail-open: staging must not lock the reader out. Enabling the commerce rollout flag by itself is not enough; first activation requires checkout plus at least one production-safe provider adapter. After a work has been activated as paid at least once, a temporary checkout/provider outage does **not** unlock its locked chapters; existing entitlements remain valid while new purchase availability may be temporarily unavailable. If the writer completes a new paid work-level confirmation during such an outage, the already-activated paid work remains ACTIVE; payment-path readiness controls purchase availability, not whether the confirmed paid access model remains active.
 
 ### Normal paid orders
 

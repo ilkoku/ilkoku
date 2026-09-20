@@ -83,6 +83,7 @@ export function BookShowcase({
   const paidAccessActive =
     commerce?.saleModel === "paid" && commerce.enforcementActive;
   const hasPaidAccess = Boolean(commerce?.hasEntitlement);
+  const purchaseAvailable = Boolean(commerce?.purchaseAvailable);
   const canReadChapter = (chapterId: string) =>
     !paidAccessActive ||
     hasPaidAccess ||
@@ -108,7 +109,9 @@ export function BookShowcase({
     paidAccessActive && !hasPaidAccess
       ? resumeChapter
         ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
-        : purchaseHref
+        : purchaseAvailable
+          ? purchaseHref
+          : null
       : readingProgress && resumeChapter
         ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
         : coverHref;
@@ -426,12 +429,16 @@ export function BookShowcase({
                       ? index === 0 && !readingProgress && startHref
                         ? startHref
                         : `/oku/${work.slug}/bolum-${chapter.position}?from=${encodedBookContextPath}`
-                      : purchaseHref;
+                      : purchaseAvailable
+                        ? purchaseHref
+                        : null;
                     const accessLabel =
                       paidAccessActive && !hasPaidAccess
                         ? accessType === "preview"
                           ? "Ön İzleme · Ücretsiz okunabilir"
-                          : "Kilitli · Ücretli erişime dahildir"
+                          : purchaseAvailable
+                            ? "Kilitli · Ücretli erişime dahildir"
+                            : "Kilitli · Satış geçici olarak kullanılamıyor"
                         : hasPaidAccess && paidAccessActive
                           ? "Satın alındı · Okunabilir"
                           : "Yayında · Okunabilir";
@@ -455,16 +462,25 @@ export function BookShowcase({
                           <p>{accessLabel}</p>
                         </div>
 
-                        <Link
-                          className="button button--outline"
-                          href={chapterHref}
-                        >
-                          {!readable
-                            ? "Erişimi Aç"
-                            : index === 0
-                              ? "Okumaya Başla"
-                              : "Bölümü Oku"}
-                        </Link>
+                        {chapterHref ? (
+                          <Link
+                            className="button button--outline"
+                            href={chapterHref}
+                          >
+                            {!readable
+                              ? "Erişimi Aç"
+                              : index === 0
+                                ? "Okumaya Başla"
+                                : "Bölümü Oku"}
+                          </Link>
+                        ) : (
+                          <span
+                            aria-disabled="true"
+                            className="button button--outline"
+                          >
+                            Satış geçici olarak kapalı
+                          </span>
+                        )}
                       </article>
                     );
                   })}

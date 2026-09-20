@@ -398,3 +398,12 @@ test("zero-total checkout persists versioned reader consent evidence", () => {
   contains(completion, "transaction.orderConsent.create", "consent evidence transaction write");
   contains(completion, 'consentType: "digital_content_purchase"', "digital purchase consent type");
 });
+
+
+test("checkout shows the exact active reader terms before acceptance", () => {
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+
+  contains(checkout, "{purchaseTerms.body}", "active terms body visible to reader");
+  contains(checkout, "Sürüm {purchaseTerms.version}", "active terms version visible");
+  contains(checkout, 'name="acceptDigitalContent"', "reader acceptance checkbox");
+});

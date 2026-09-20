@@ -237,7 +237,9 @@ test("staged paid price display stays zero across writer surfaces", () => {
 
   contains(listPage, '"Ücretli · 0 TL"', "writer work card staged price");
   contains(detailPage, '<span className={styles.paidPrice}>0 TL</span>', "paid option staged price");
-  contains(detailPage, 'currentModel === "paid" ? "0 TL" : "—"', "final confirmation staged price");
+  contains(detailPage, "checkoutEnabled", "final confirmation rollout state");
+  contains(detailPage, "formatPrice(", "future real price display");
+  contains(detailPage, ': "0 TL"', "staged final confirmation price");
 });
 
 

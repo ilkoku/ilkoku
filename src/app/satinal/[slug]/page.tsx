@@ -15,6 +15,7 @@ import {
   getCheckoutWorkBySlug,
 } from "@/features/commerce/checkout-repository";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
+import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
 import { getPaymentMethodAvailability } from "@/features/commerce/payment-providers";
 import { calculateCommercePricing } from "@/features/commerce/pricing";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
@@ -99,6 +100,10 @@ export default async function CheckoutPreparationPage({
   const paymentMethods = getPaymentMethodAvailability();
   const hasAvailableProvider = paymentMethods.some((item) => item.available);
   const configuration = work.saleConfiguration;
+  const effectiveCommerce = resolveEffectiveCommerceState({
+    configuration,
+    latestConsent: work.publicationConsents[0] ?? null,
+  });
   const entitlement = work.entitlements[0] ?? null;
 
   if (entitlement) {
@@ -125,12 +130,12 @@ export default async function CheckoutPreparationPage({
     configuration?.saleModel === "paid" &&
     Boolean(configuration.activatedAt);
   const paidAccessEnforced =
-    configuration?.saleModel === "paid" &&
+    effectiveCommerce.saleModel === "paid" &&
     (previouslyActivatedPaid ||
       (checkoutEnabled &&
         hasAvailableProvider &&
         Boolean(purchaseTerms) &&
-        configuration.status === "active"));
+        configuration?.status === "active"));
   const checkoutConfigurationActive =
     checkoutEnabled &&
     configuration?.saleModel === "paid" &&

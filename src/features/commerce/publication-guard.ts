@@ -8,9 +8,8 @@ export async function assertPaidWorkAccessPlanReadyForPublication(input: {
   authorId: string;
   workId: string;
 }) {
-  if (!isCommerceCheckoutEnabled() || !hasOperationalPaymentProvider()) {
-    return;
-  }
+  const paymentPathReady =
+    isCommerceCheckoutEnabled() && hasOperationalPaymentProvider();
 
   const work = await prisma.work.findFirst({
     where: {
@@ -23,6 +22,7 @@ export async function assertPaidWorkAccessPlanReadyForPublication(input: {
         select: {
           saleModel: true,
           status: true,
+          activatedAt: true,
         },
       },
       chapters: {
@@ -43,6 +43,10 @@ export async function assertPaidWorkAccessPlanReadyForPublication(input: {
   });
 
   if (!work || work.saleConfiguration?.saleModel !== "paid") {
+    return;
+  }
+
+  if (!paymentPathReady && !work.saleConfiguration.activatedAt) {
     return;
   }
 

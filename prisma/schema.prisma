@@ -1004,18 +1004,21 @@ model CouponAuthorScope {
 }
 
 model CouponRedemption {
-  id             String   @id @default(uuid()) @db.Char(36)
-  couponId       String   @db.Char(36)
-  readerId       String   @db.Char(36)
-  orderId        String   @unique @db.Char(36)
-  discountAmount BigInt   @db.UnsignedBigInt
-  redeemedAt     DateTime @default(now())
-  coupon         Coupon   @relation(fields: [couponId], references: [id], onDelete: Restrict)
-  reader         User     @relation("CouponRedemptionReader", fields: [readerId], references: [id], onDelete: Cascade)
-  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id             String                 @id @default(uuid()) @db.Char(36)
+  couponId       String                 @db.Char(36)
+  readerId       String                 @db.Char(36)
+  orderId        String                 @unique @db.Char(36)
+  discountAmount BigInt                 @db.UnsignedBigInt
+  status         CouponRedemptionStatus @default(reserved)
+  reservedAt     DateTime               @default(now())
+  redeemedAt     DateTime?
+  releasedAt     DateTime?
+  coupon         Coupon                 @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  reader         User                   @relation("CouponRedemptionReader", fields: [readerId], references: [id], onDelete: Cascade)
+  order          Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  @@index([couponId, redeemedAt])
-  @@index([readerId, redeemedAt])
+  @@index([couponId, status, reservedAt])
+  @@index([readerId, status, reservedAt])
 }
 
 model Order {
@@ -1094,7 +1097,7 @@ model Payment {
   refunds               Refund[]
 
   @@index([orderId, createdAt])
-  @@index([provider, providerTransactionId])
+  @@unique([provider, providerTransactionId])
   @@index([status, createdAt])
 }
 
@@ -1251,6 +1254,13 @@ enum CouponStatus {
   active
   paused
   expired
+}
+
+enum CouponRedemptionStatus {
+  reserved
+  used
+  released
+  refunded
 }
 
 enum OrderStatus {

@@ -94,23 +94,35 @@ export async function saveChapterAccessPlanAction(formData: FormData) {
 
   if (!work) return;
 
-  await prisma.$transaction(
-    work.chapters.map((chapter) => {
-      const raw = formData.get(`chapter:${chapter.id}`);
-      const accessType = raw === "locked" ? "locked" : "preview";
+  const selections = work.chapters.map((chapter) => {
+    const raw = formData.get(`chapter:${chapter.id}`);
+    return {
+      chapterId: chapter.id,
+      accessType:
+        raw === "preview" || raw === "locked"
+          ? raw
+          : null,
+    };
+  });
 
-      return prisma.chapterAccess.upsert({
-        where: { chapterId: chapter.id },
+  if (selections.some((selection) => !selection.accessType)) {
+    commerceStatusRedirect(parsedWorkId.data, "erisim-secimi-eksik");
+  }
+
+  await prisma.$transaction(
+    selections.map((selection) =>
+      prisma.chapterAccess.upsert({
+        where: { chapterId: selection.chapterId },
         create: {
-          chapterId: chapter.id,
+          chapterId: selection.chapterId,
           workId: parsedWorkId.data,
-          accessType,
+          accessType: selection.accessType!,
         },
         update: {
-          accessType,
+          accessType: selection.accessType!,
         },
-      });
-    }),
+      }),
+    ),
   );
 
   revalidateCommerce(parsedWorkId.data);
@@ -159,7 +171,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
     paidPricingEnabled &&
     priceAmount === null
   ) {
-    return;
+    commerceStatusRedirect(parsedWorkId.data, "fiyat-gerekli");
   }
 
   await prisma.$transaction(async (transaction) => {

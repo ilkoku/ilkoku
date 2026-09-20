@@ -663,3 +663,209 @@
 .financeWorkCard > div:first-child strong {
   color: #332b39;
 }
+
+
+/* Writer commerce surfaces inherit the canonical writer dark + gold theme. */
+.writerCommercePage {
+  color: var(--writer-custom-text, #ffffff);
+}
+
+.writerCommercePage .writerIndexHero,
+.writerCommercePage .writerFinanceHero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--writer-gold-frame-line, rgba(215, 180, 63, 0.44));
+  background: var(--writer-custom-card-surface, #1a1f27);
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.18),
+    0 0 0 1px var(--writer-gold-frame-ring, rgba(215, 180, 63, 0.06));
+}
+
+.writerCommercePage .writerIndexHero::before,
+.writerCommercePage .writerFinanceHero::before {
+  position: absolute;
+  top: -1px;
+  right: 1.5rem;
+  left: 1.5rem;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(215, 180, 63, 0.78),
+    transparent
+  );
+  content: "";
+  pointer-events: none;
+}
+
+.writerCommercePage .writerIndexHero h1,
+.writerCommercePage .writerFinanceHero h1 {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .writerIndexHero p,
+.writerCommercePage .writerFinanceHero p {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .eyebrow {
+  color: var(--writer-custom-accent, #c9a15a);
+}
+
+.writerCommercePage .badge {
+  border: 1px solid color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 34%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 10%,
+    var(--writer-custom-control-surface, #13161b)
+  );
+  color: var(--writer-custom-primary, #d4af37);
+}
+
+.writerCommercePage .quietAction {
+  color: var(--writer-custom-primary, #d4af37);
+}
+
+.writerCommercePage .writerWorkCard,
+.writerCommercePage .writerFinanceStat,
+.writerCommercePage .writerFinancePanel,
+.writerCommercePage .financeWorkCard,
+.writerCommercePage .paymentHistoryCard {
+  border-color: var(--writer-gold-frame-soft, rgba(215, 180, 63, 0.30));
+  background: var(--writer-custom-card-surface, #1a1f27);
+  color: var(--writer-custom-text, #ffffff);
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(215, 180, 63, 0.035);
+}
+
+.writerCommercePage .writerWorkCard h2,
+.writerCommercePage .writerFinancePanel h2,
+.writerCommercePage .writerFinancePanel h3,
+.writerCommercePage .paymentHistoryCard h2,
+.writerCommercePage .financeWorkCard h3 {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .writerWorkCard .cardMeta,
+.writerCommercePage .writerFinancePanel p,
+.writerCommercePage .paymentHistoryCard p,
+.writerCommercePage .financeWorkCard > div:first-child > span,
+.writerCommercePage .paymentHistoryCard small {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .writerFinanceStat span {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .writerFinanceStat strong,
+.writerCommercePage .financeWorkCard > div:first-child strong,
+.writerCommercePage .paymentAmounts strong {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .paymentAmounts span,
+.writerCommercePage .summaryGrid > div {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 20%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .notice {
+  border: 1px solid color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 38%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 8%,
+    var(--writer-custom-card-surface, #1a1f27)
+  );
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .empty {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 24%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .action {
+  background: var(--writer-custom-primary, #d4af37);
+  color: var(--writer-custom-button-text, #0b0d10);
+}
+
+.writerCommercePage .action:hover {
+  background: var(--writer-custom-primary-hover, #e5c75a);
+}
+
+.writerCommercePage .secondaryAction {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 34%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+  color: var(--writer-custom-primary, #d4af37);
+}
+
+.writerCommercePage .flash,
+.writerCommercePage .contractBox,
+.writerCommercePage .confirmation,
+.writerCommercePage .saleOption,
+.writerCommercePage .choice {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 24%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-card-surface, #1a1f27);
+  color: var(--writer-custom-text, #ffffff);
+}
+
+.writerCommercePage .contractHeading {
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 18%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+}
+
+.writerCommercePage .contractHeading span,
+.writerCommercePage .contractText,
+.writerCommercePage .helper,
+.writerCommercePage .saleOption small,
+.writerCommercePage .summaryGrid span {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .field span {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .field input,
+.writerCommercePage .field select,
+.writerCommercePage .priceField input {
+  border-color: var(--writer-custom-border, #2a2f37);
+  background: var(--writer-custom-control-surface, #13161b);
+  color: var(--writer-custom-text, #ffffff);
+}
+
+.writerCommercePage .paidPrice {
+  color: var(--writer-custom-primary, #d4af37);
+}

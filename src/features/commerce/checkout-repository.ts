@@ -36,6 +36,7 @@ export async function getCheckoutWorkBySlug(slug: string, readerId: string) {
           priceAmount: true,
           currency: true,
           status: true,
+          activatedAt: true,
         },
       },
       entitlements: {

@@ -29,51 +29,49 @@ function cleanQuery(value: string | undefined) {
 }
 
 export async function getFinanceOverview(currency = "TRY") {
-  const [ledger, balances, payoutCount] = await Promise.all([
-    prisma.financialLedger.findMany({
-      where: { currency },
-      select: {
-        amount: true,
-        entryType: true,
-      },
-    }),
-    prisma.authorBalance.findMany({
-      where: { currency },
-      select: {
-        pendingAmount: true,
-        availableAmount: true,
-        processingAmount: true,
-        paidAmount: true,
-      },
-    }),
-    prisma.payout.count({ where: { currency } }),
-  ]);
+  const [ledgerSummary, balanceSummary, payoutCount, ledgerEntryCount] =
+    await Promise.all([
+      prisma.financialLedger.groupBy({
+        by: ["entryType"],
+        where: { currency },
+        _sum: { amount: true },
+      }),
+      prisma.authorBalance.aggregate({
+        where: { currency },
+        _sum: {
+          pendingAmount: true,
+          availableAmount: true,
+          processingAmount: true,
+          paidAmount: true,
+        },
+      }),
+      prisma.payout.count({ where: { currency } }),
+      prisma.financialLedger.count({ where: { currency } }),
+    ]);
 
-  const sum = (type: (typeof ledger)[number]["entryType"]) =>
-    ledger
-      .filter((entry) => entry.entryType === type)
-      .reduce((total, entry) => total + entry.amount, BigInt(0));
-
-  const balanceSum = (
-    field: "pendingAmount" | "availableAmount" | "processingAmount" | "paidAmount",
-  ) =>
-    balances.reduce((total, balance) => total + balance[field], BigInt(0));
+  const totals = new Map(
+    ledgerSummary.map((entry) => [
+      entry.entryType,
+      entry._sum.amount ?? BigInt(0),
+    ]),
+  );
 
   return {
     currency,
-    grossSales: sum("sale_gross"),
-    authorEarnings: sum("author_earning"),
-    platformCommission: sum("platform_commission"),
-    platformCampaignCost: sum("platform_coupon_discount"),
-    providerFees: sum("payment_provider_fee"),
-    refunds: sum("refund"),
-    taxWithholding: sum("tax_withholding"),
-    pendingAuthor: balanceSum("pendingAmount"),
-    availableAuthor: balanceSum("availableAmount"),
-    processingAuthor: balanceSum("processingAmount"),
-    paidAuthor: balanceSum("paidAmount"),
+    grossSales: totals.get("sale_gross") ?? BigInt(0),
+    authorEarnings: totals.get("author_earning") ?? BigInt(0),
+    platformCommission: totals.get("platform_commission") ?? BigInt(0),
+    platformCampaignCost:
+      totals.get("platform_coupon_discount") ?? BigInt(0),
+    providerFees: totals.get("payment_provider_fee") ?? BigInt(0),
+    refunds: totals.get("refund") ?? BigInt(0),
+    taxWithholding: totals.get("tax_withholding") ?? BigInt(0),
+    pendingAuthor: balanceSummary._sum.pendingAmount ?? BigInt(0),
+    availableAuthor: balanceSummary._sum.availableAmount ?? BigInt(0),
+    processingAuthor: balanceSummary._sum.processingAmount ?? BigInt(0),
+    paidAuthor: balanceSummary._sum.paidAmount ?? BigInt(0),
     payoutCount,
-    ledgerEntryCount: ledger.length,
+    ledgerEntryCount,
   };
 }
 

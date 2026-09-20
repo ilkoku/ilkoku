@@ -12,6 +12,7 @@ import {
   getAuthorCommerceWorks,
   listAuthorCoupons,
 } from "@/features/commerce/repository";
+import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import styles from "@/features/commerce/commerce.module.css";
 
@@ -75,6 +76,8 @@ export default async function AuthorCouponsPage({
     listAuthorCoupons(profile.id),
     Promise.resolve(isCommerceCheckoutEnabled()),
   ]);
+  const paymentPathReady =
+    checkoutEnabled && hasOperationalPaymentProvider();
 
   const flash = query.durum ? messages[query.durum] ?? query.durum : null;
   const paidWorks = works.filter(
@@ -100,10 +103,11 @@ export default async function AuthorCouponsPage({
 
         {flash ? <div className={styles.flash}>{flash}</div> : null}
 
-        {!checkoutEnabled ? (
+        {!paymentPathReady ? (
           <div className={styles.notice}>
-            Kupon altyapısı hazır. Gerçek tahsilat kapalı olduğu için kuponlar
-            şu anda sipariş üretmez; ödeme sistemi açıldığında aynı kayıtlar
+            Kupon altyapısı hazır. Gerçek checkout ve operasyonel ödeme
+            sağlayıcısı birlikte hazır olmadığı için kuponlar şu anda gerçek
+            tahsilatlı sipariş üretmez; ödeme yolu açıldığında aynı kayıtlar
             kullanılacak.
           </div>
         ) : null}

@@ -311,10 +311,11 @@ The work becomes readable without purchase. Historical orders, earnings, ledger 
 Until a real checkout path is intentionally enabled, paid configurations are **staged only**.
 
 - Writers may prepare a paid model, chapter access plan and agreement/consent records.
-- A paid configuration must not lock reader access while checkout is disabled.
+- A paid configuration that has **never been activated for real paid access** must not lock reader access while checkout/provider infrastructure is unavailable.
 - During this infrastructure phase, selecting **Paid** stores/displays a fixed **0 TRY** price; the author does not enter a price yet.
-- Real price entry will be enabled only when the actual checkout/payment phase is explicitly opened.
-- The current reader experience therefore remains effectively free/open during the infrastructure phase.
+- Real price entry becomes available when the actual checkout/payment path is operational. If a work was already activated as paid before a temporary outage, its real price is preserved.
+- The current reader experience therefore remains effectively free/open during the pre-activation infrastructure phase.
+- After a work has been activated as paid at least once, a later checkout/provider outage must **not** make its locked chapters free. Existing entitlements remain valid; non-entitled readers stay locked while purchase may be temporarily unavailable.
 - Checkout activation is controlled server-side with `COMMERCE_CHECKOUT_ENABLED=true`.
 - Default and missing value is treated as disabled.
 - When payment is later activated, the existing paid configuration can be promoted without rewriting the author model.

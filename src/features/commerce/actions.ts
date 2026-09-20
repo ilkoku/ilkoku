@@ -407,7 +407,9 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
 
   const now = new Date();
   const nextStatus =
-    work.saleConfiguration.saleModel === "free" || paidActivationReady
+    work.saleConfiguration.saleModel === "free" ||
+    previouslyActivatedPaid ||
+    paidActivationReady
       ? "active"
       : "ready";
 

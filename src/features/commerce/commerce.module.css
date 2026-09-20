@@ -1,0 +1,536 @@
+.page {
+  display: grid;
+  gap: 24px;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(255, 255, 255, 0.92));
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6d28d9;
+}
+
+.hero h1,
+.panel h2,
+.card h2 {
+  margin: 0;
+}
+
+.hero p,
+.panel p,
+.card p {
+  color: #5f6470;
+  line-height: 1.6;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #f4f0ff;
+  color: #5b21b6;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.card,
+.panel {
+  border: 1px solid #e7e2ef;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(43, 27, 69, 0.05);
+}
+
+.card {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.action {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: #6d28d9;
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.secondaryAction {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #d9d1e8;
+  border-radius: 12px;
+  background: #fff;
+  color: #4c1d95;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.panel {
+  padding: 22px;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.chapterList {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.chapterRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #eeeaf3;
+}
+
+.chapterRow:last-child {
+  border-bottom: 0;
+}
+
+.chapterTitle {
+  display: grid;
+  gap: 4px;
+}
+
+.chapterTitle small {
+  color: #77717f;
+}
+
+.choices {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid #ddd5e8;
+  border-radius: 10px;
+  background: #fbfaff;
+}
+
+.saleOptions {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.saleOption {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+  padding: 15px;
+  border: 1px solid #ddd5e8;
+  border-radius: 14px;
+}
+
+.priceField {
+  display: grid;
+  gap: 7px;
+  max-width: 260px;
+  margin: 16px 0;
+}
+
+.priceField input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #cfc6dc;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.notice {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff8e7;
+  color: #6f4d00;
+  line-height: 1.55;
+}
+
+.empty {
+  padding: 34px;
+  border: 1px dashed #d7cfdf;
+  border-radius: 18px;
+  text-align: center;
+  color: #6b6571;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  padding: 18px;
+  border: 1px solid #e7e2ef;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.stat strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.35rem;
+}
+
+@media (max-width: 720px) {
+  .hero,
+  .panelHeader,
+  .chapterRow {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .chapterRow {
+    display: grid;
+  }
+
+  .choices {
+    width: 100%;
+  }
+}
+
+
+.flash {
+  padding: 14px 16px;
+  border: 1px solid #d8c9f1;
+  border-radius: 14px;
+  background: #f6f1ff;
+  color: #4c1d95;
+  line-height: 1.5;
+}
+
+.contractBox {
+  overflow: hidden;
+  margin: 18px 0;
+  border: 1px solid #e0d8eb;
+  border-radius: 16px;
+  background: #fcfbfe;
+}
+
+.contractHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e8e1ef;
+  background: #f7f3fb;
+}
+
+.contractHeading span {
+  color: #6b6571;
+  font-size: 0.9rem;
+}
+
+.contractText {
+  max-height: 360px;
+  overflow: auto;
+  padding: 18px;
+  white-space: pre-wrap;
+  color: #3f3a45;
+  line-height: 1.65;
+}
+
+.confirmation {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid #ded6e8;
+  border-radius: 14px;
+  background: #fff;
+  line-height: 1.5;
+}
+
+.confirmation input {
+  margin-top: 4px;
+}
+
+.successNotice {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #eefbf3;
+  color: #17613a;
+  line-height: 1.55;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.summaryGrid > div {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid #e7e2ef;
+  border-radius: 14px;
+  background: #fcfbfe;
+}
+
+.summaryGrid span {
+  color: #716a79;
+  font-size: 0.86rem;
+}
+
+.helper {
+  margin: 12px 0 0;
+  color: #716a79;
+  line-height: 1.5;
+}
+
+.action:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field span {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4f4658;
+}
+
+.field input,
+.field select {
+  min-height: 44px;
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid #cfc6dc;
+  border-radius: 10px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.formActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
+.couponList {
+  display: grid;
+  gap: 12px;
+}
+
+.couponCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid #e7e2ef;
+  border-radius: 16px;
+  background: #fcfbfe;
+}
+
+.couponCard h3,
+.couponCard p {
+  margin: 0;
+}
+
+.couponCard > div {
+  display: grid;
+  gap: 6px;
+}
+
+.couponCard small {
+  color: #736c79;
+}
+
+@media (max-width: 720px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .couponCard {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+
+.paidPrice {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #4c1d95;
+}
+
+.saleOption small {
+  display: block;
+  margin-top: 4px;
+  color: #746d7b;
+  line-height: 1.45;
+}
+
+
+.couponApplyForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin: 18px 0;
+}
+
+@media (max-width: 720px) {
+  .couponApplyForm {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.paymentHistoryList {
+  display: grid;
+  gap: 14px;
+}
+
+.paymentHistoryCard {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #e7e2ef;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.paymentHistoryCard h2,
+.paymentHistoryCard p {
+  margin: 0;
+}
+
+.paymentAmounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.paymentAmounts span {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid #eee9f3;
+  border-radius: 12px;
+  background: #fcfbfe;
+  color: #706879;
+  font-size: 0.86rem;
+}
+
+.paymentAmounts strong {
+  color: #332b39;
+  font-size: 0.98rem;
+}
+
+
+.financeWorkList {
+  display: grid;
+  gap: 14px;
+}
+
+.financeWorkCard {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #e7e2ef;
+  border-radius: 16px;
+  background: #fcfbfe;
+}
+
+.financeWorkCard h3 {
+  margin: 0 0 10px;
+}
+
+.financeWorkCard > div:first-child > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #6b6571;
+}
+
+.financeWorkCard > div:first-child strong {
+  color: #332b39;
+}

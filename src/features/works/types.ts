@@ -46,12 +46,24 @@ export type WorkWithChapterSummary =
     totalWords: number;
   };
 
+export type PublicWorkCommerceState = {
+  chapterAccess: Record<string, "preview" | "locked">;
+  currency: string;
+  enforcementActive: boolean;
+  hasEntitlement: boolean;
+  priceAmount: bigint | null;
+  purchaseAvailable: boolean;
+  saleModel: "free" | "paid";
+  saleStatus: "draft" | "ready" | "active" | "paused";
+};
+
 export type PublicWorkDetail =
   WorkModel & {
     authorName: string;
     authorPublicId: string;
     chapterCount: number;
     chapters: ChapterModel[];
+    commerce?: PublicWorkCommerceState;
     isCompleted: boolean;
     publicationBook: PublishedBookSnapshot | null;
     sameAuthorWorks: PublicWorkSummary[];

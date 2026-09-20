@@ -62,6 +62,9 @@ export interface RuntimeManifestSchemaModel {
 }
 
 export interface RuntimeInfrastructureManifestData {
+  buildIdentity: {
+    commitSha: string | null;
+  };
   envUsage: RuntimeManifestEnvUsage[];
   eventProducers: RuntimeManifestEventProducer[];
   externalDomains: RuntimeManifestExternalDomain[];

@@ -1,0 +1,185 @@
+.admin-commerce-summary {
+  margin-bottom: var(--space-5);
+}
+
+.admin-settings-card > a {
+  display: inline-flex;
+  margin-top: var(--space-2);
+  color: var(--color-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-commerce-toolbar {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.admin-commerce-toolbar form {
+  display: flex;
+  align-items: end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.admin-commerce-toolbar label {
+  display: grid;
+  gap: var(--space-2);
+  min-width: min(32rem, 100%);
+  flex: 1 1 22rem;
+}
+
+.admin-commerce-toolbar label > span {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.admin-commerce-toolbar input[type="search"] {
+  min-height: 2.8rem;
+  padding: 0 0.85rem;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font: inherit;
+}
+
+.admin-commerce-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.admin-commerce-tabs a {
+  padding: 0.55rem 0.75rem;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+}
+
+.admin-commerce-tabs a[aria-current="page"] {
+  color: var(--color-background);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.admin-commerce-table td {
+  vertical-align: top;
+}
+
+.admin-commerce-table td > strong,
+.admin-commerce-table td > small,
+.admin-commerce-table td > span {
+  display: block;
+}
+
+.admin-commerce-table td > small {
+  margin-top: 0.35rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.admin-commerce-table .admin-table-badge {
+  width: fit-content;
+  margin-top: 0.45rem;
+}
+
+.admin-commerce-reason {
+  min-width: 12rem;
+  max-width: 24rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+.admin-commerce-readonly {
+  margin-bottom: var(--space-5);
+}
+
+.admin-table-badge[data-status="paid"],
+.admin-table-badge[data-status="succeeded"],
+.admin-table-badge[data-status="processed"] {
+  color: #73d9a6;
+  border-color: rgb(115 217 166 / 28%);
+  background: rgb(115 217 166 / 8%);
+}
+
+.admin-table-badge[data-status="pending_payment"],
+.admin-table-badge[data-status="pending"],
+.admin-table-badge[data-status="requested"],
+.admin-table-badge[data-status="approved"],
+.admin-table-badge[data-status="processing"] {
+  color: #f1bd55;
+  border-color: rgb(241 189 85 / 28%);
+  background: rgb(241 189 85 / 8%);
+}
+
+.admin-table-badge[data-status="failed"],
+.admin-table-badge[data-status="cancelled"],
+.admin-table-badge[data-status="rejected"],
+.admin-table-badge[data-status="refunded"] {
+  color: #ef8b8b;
+  border-color: rgb(239 139 139 / 28%);
+  background: rgb(239 139 139 / 8%);
+}
+
+@media (max-width: 760px) {
+  .admin-commerce-toolbar form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-commerce-toolbar label {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+
+.admin-commerce-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-4);
+}
+
+.admin-commerce-provider-grid article {
+  padding: var(--space-4);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.admin-commerce-provider-grid h3 {
+  margin: 0;
+}
+
+.admin-commerce-provider-grid p {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.admin-commerce-provider-grid dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+}
+
+.admin-commerce-provider-grid dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-commerce-provider-grid dt {
+  color: var(--color-text-muted);
+}
+
+.admin-commerce-provider-grid dd {
+  margin: 0;
+  font-weight: 700;
+}

@@ -170,7 +170,20 @@ export default async function DynamicBookShowcasePage({
       name: "İlkOku",
       url: baseUrl,
     },
-    isAccessibleForFree: true,
+    isAccessibleForFree: !work.commerce?.enforcementActive,
+    ...(work.commerce?.purchaseAvailable &&
+    work.commerce.priceAmount &&
+    work.commerce.priceAmount > BigInt(0)
+      ? {
+          offers: {
+            "@type": "Offer",
+            priceCurrency: work.commerce.currency,
+            price: (Number(work.commerce.priceAmount) / 100).toFixed(2),
+            availability: "https://schema.org/InStock",
+            url: `${baseUrl}/satinal/${work.slug}`,
+          },
+        }
+      : {}),
   };
 
   const breadcrumbSchema = {

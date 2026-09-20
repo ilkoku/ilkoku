@@ -49,6 +49,13 @@ function getLanguageLabel(language: string) {
   return language.toLocaleUpperCase("tr");
 }
 
+function formatCommerceMoney(value: bigint, currency: string) {
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency,
+  }).format(Number(value) / 100);
+}
+
 export function BookShowcase({
   canFavorite = false,
   comments,
@@ -72,13 +79,24 @@ export function BookShowcase({
   const completion = work.isCompleted ? 100 : 75;
   const genreLabel = work.genre ?? "Eser";
   const tags = [genreLabel, "Eser"];
+  const commerce = work.commerce;
+  const paidAccessActive =
+    commerce?.saleModel === "paid" && commerce.enforcementActive;
+  const hasPaidAccess = Boolean(commerce?.hasEntitlement);
+  const purchaseAvailable = Boolean(commerce?.purchaseAvailable);
+  const canReadChapter = (chapterId: string) =>
+    !paidAccessActive ||
+    hasPaidAccess ||
+    commerce?.chapterAccess[chapterId] === "preview";
   const firstChapter = work.chapters[0] ?? null;
+  const firstReadableChapter =
+    work.chapters.find((chapter) => canReadChapter(chapter.id)) ?? null;
   const resumeChapter =
     work.chapters.find(
       (chapter) =>
-        chapter.position ===
-        readingProgress?.chapterPosition,
-    ) ?? firstChapter;
+        chapter.position === readingProgress?.chapterPosition &&
+        canReadChapter(chapter.id),
+    ) ?? firstReadableChapter;
   const bookContextPath = `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`;
   const encodedBookContextPath = encodeURIComponent(bookContextPath);
   const firstPublishedBookItem = work.publicationBook?.items[0] ?? null;
@@ -86,9 +104,17 @@ export function BookShowcase({
   const coverHref = hasReadableContent
     ? `/oku/${work.slug}/kapak?from=${encodedBookContextPath}`
     : null;
-  const startHref = readingProgress && resumeChapter
-    ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
-    : coverHref;
+  const purchaseHref = `/satinal/${work.slug}?from=${encodedBookContextPath}`;
+  const startHref =
+    paidAccessActive && !hasPaidAccess
+      ? resumeChapter
+        ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
+        : purchaseAvailable
+          ? purchaseHref
+          : null
+      : readingProgress && resumeChapter
+        ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
+        : coverHref;
   const contentWarnings = parseWorkContentWarnings(work.contentWarnings);
   const rating = workContentRatingDetails[work.contentRating];
   const totalWords = work.publicationBook
@@ -195,7 +221,11 @@ export function BookShowcase({
               </div>
 
               <div>
-                <dt>Toplam kelime</dt>
+                <dt>
+                  {paidAccessActive && !hasPaidAccess
+                    ? "Okunabilir kelime"
+                    : "Toplam kelime"}
+                </dt>
                 <dd>{totalWords.toLocaleString("tr-TR")}</dd>
               </div>
 
@@ -283,6 +313,13 @@ export function BookShowcase({
                 </progress>
               </div>
             )}
+
+            {paidAccessActive && !hasPaidAccess && !purchaseAvailable ? (
+              <p className="showcase-commerce-notice">
+                Satış geçici olarak kullanılamıyor. Mevcut erişim hakları korunur;
+                yeni satın alma işlemi ödeme yolu yeniden açıldığında yapılabilir.
+              </p>
+            ) : null}
 
             <div className="book-card__actions">
               {startHref && (
@@ -380,19 +417,38 @@ export function BookShowcase({
               {work.chapters.length > 0 ? (
                 <div className="editor-review-list">
                   {work.chapters.map((chapter, index) => {
-                    const readingMinutes = estimateReadingMinutes(
-                      chapter.content,
-                    );
-                    const pageRange = estimatedPageRanges.get(chapter.id);
+                    const readable = canReadChapter(chapter.id);
+                    const accessType =
+                      commerce?.chapterAccess[chapter.id] ?? "preview";
+                    const readingMinutes = readable
+                      ? estimateReadingMinutes(chapter.content)
+                      : null;
+                    const pageRange =
+                      readable && !(paidAccessActive && !hasPaidAccess)
+                        ? estimatedPageRanges.get(chapter.id)
+                        : null;
                     const pageLabel = pageRange
                       ? pageRange.startPage === pageRange.endPage
                         ? `tahmini kitap s. ${pageRange.startPage}`
                         : `tahmini kitap s. ${pageRange.startPage}–${pageRange.endPage}`
-                      : "tahmini sayfa hesaplanamadı";
-                    const chapterHref =
-                      index === 0 && !readingProgress && startHref
+                      : null;
+                    const chapterHref = readable
+                      ? index === 0 && !readingProgress && startHref
                         ? startHref
-                        : `/oku/${work.slug}/bolum-${chapter.position}?from=${encodedBookContextPath}`;
+                        : `/oku/${work.slug}/bolum-${chapter.position}?from=${encodedBookContextPath}`
+                      : purchaseAvailable
+                        ? purchaseHref
+                        : null;
+                    const accessLabel =
+                      paidAccessActive && !hasPaidAccess
+                        ? accessType === "preview"
+                          ? "Ön İzleme · Ücretsiz okunabilir"
+                          : purchaseAvailable
+                            ? "Kilitli · Ücretli erişime dahildir"
+                            : "Kilitli · Satış geçici olarak kullanılamıyor"
+                        : hasPaidAccess && paidAccessActive
+                          ? "Satın alındı · Okunabilir"
+                          : "Yayında · Üyelikle okunabilir";
 
                     return (
                       <article
@@ -403,20 +459,35 @@ export function BookShowcase({
                           <span>{chapter.position}. Bölüm</span>
                           <h2>{chapter.title}</h2>
                           <p>
-                            {readingMinutes} dakika okuma · {pageLabel}
+                            {readable && readingMinutes !== null
+                              ? `${readingMinutes} dakika okuma${pageLabel ? ` · ${pageLabel}` : ""}`
+                              : "İçerik satın alma sonrasında açılır"}
                           </p>
                         </div>
 
                         <div className="editor-review-row__report">
-                          <p>Yayında · Üyelikle okunabilir</p>
+                          <p>{accessLabel}</p>
                         </div>
 
-                        <Link
-                          className="button button--outline"
-                          href={chapterHref}
-                        >
-                          {index === 0 ? "Okumaya Başla" : "Bölümü Oku"}
-                        </Link>
+                        {chapterHref ? (
+                          <Link
+                            className="button button--outline"
+                            href={chapterHref}
+                          >
+                            {!readable
+                              ? "Erişimi Aç"
+                              : index === 0
+                                ? "Okumaya Başla"
+                                : "Bölümü Oku"}
+                          </Link>
+                        ) : (
+                          <span
+                            aria-disabled="true"
+                            className="button button--outline"
+                          >
+                            Satış geçici olarak kapalı
+                          </span>
+                        )}
                       </article>
                     );
                   })}

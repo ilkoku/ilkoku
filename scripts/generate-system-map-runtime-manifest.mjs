@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,6 +44,19 @@ const guardMarkers = [
   ["auth(", "auth()"],
   ["session", "session check"],
 ];
+
+function resolveBuildCommitSha() {
+  try {
+    const sha = execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    return /^[0-9a-f]{40}$/u.test(sha) ? sha : null;
+  } catch {
+    return null;
+  }
+}
 
 function unique(values) {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right, "tr"));
@@ -392,6 +406,7 @@ async function main() {
     version: 1,
   };
   const runtimeManifest = {
+    buildIdentity: { commitSha: resolveBuildCommitSha() },
     eventProducers: collectEventProducers(files),
     externalDomains: collectExternalDomains(files),
     envUsage: collectEnvUsage(files, envExample),

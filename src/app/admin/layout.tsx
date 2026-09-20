@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import "./admin.css";
+import "./commerce.css";
 import "./dashboard.css";
 import "./directory.css";
 import "./email.css";

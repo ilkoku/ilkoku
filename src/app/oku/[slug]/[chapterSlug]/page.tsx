@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { readingContent } from "@/content";
 import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
+import { canAccessReaderWorkspace } from "@/features/auth/data";
+import { getCommerceChapterAccessDecision } from "@/features/commerce/access";
 import { EditorReviewReadingMode } from "@/features/editor-workspace/components/EditorReviewReadingMode";
 import {
   getActiveEditorReviewAssignment,
@@ -17,7 +19,10 @@ import { PersonalReadingToolsProvider } from "@/features/reading/components/Pers
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
 import { getPersonalAnnotations } from "@/features/reading/personal-annotation-queries";
 import { getReadingProgress } from "@/features/reading/progress";
-import { getMemberPublicChapter } from "@/features/works/member-public-queries";
+import {
+  getMemberPublicChapter,
+  getPublicWorkAgeRating,
+} from "@/features/works/member-public-queries";
 import { getCurrentSessionContext } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
@@ -74,8 +79,8 @@ export default async function DynamicReadingPage({
     user,
   });
 
-  const chapter = await getMemberPublicChapter(slug, chapterSlug, user.id);
-  if (!chapter) notFound();
+  const workReference = await getPublicWorkAgeRating(slug);
+  if (!workReference) notFound();
 
   const isEditorReadingContext =
     user.role === "editor" && query.inceleme === "1";
@@ -83,12 +88,38 @@ export default async function DynamicReadingPage({
   const reviewAssignment = isEditorReadingContext
     ? await getActiveEditorReviewAssignment({
         editorId: user.id,
-        workId: chapter.work.id,
+        workId: workReference.id,
       })
     : null;
 
   const isReviewReading =
     isEditorReadingContext && Boolean(reviewAssignment);
+
+  const chapter = await getMemberPublicChapter(
+    slug,
+    chapterSlug,
+    user.id,
+    { bypassCommerce: isReviewReading },
+  );
+  if (!chapter) notFound();
+
+  if (canAccessReaderWorkspace(user.role) && !isReviewReading) {
+    const commerceAccess = await getCommerceChapterAccessDecision({
+      chapterId: chapter.id,
+      readerId: user.id,
+      workId: chapter.work.id,
+    });
+
+    if (!commerceAccess.allowed) {
+      if (commerceAccess.reason === "chapter_not_found") {
+        notFound();
+      }
+
+      redirect(
+        `/satinal/${encodeURIComponent(chapter.work.slug)}?from=${encodeURIComponent(returnPath)}`,
+      );
+    }
+  }
 
   const requestHeaders = await headers();
 

@@ -11,6 +11,10 @@ import {
   getLatestPublishedBookSnapshot,
 } from "./publication-snapshots";
 import { prisma } from "@/lib/prisma";
+import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
+import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
+import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
+import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
 import {
   adultContentWorkVisibility,
@@ -35,6 +39,10 @@ function memberPublicWhere(canAccessAdultContent: boolean) {
     visibility: "public" as const,
   };
 }
+
+type MemberPublicQueryOptions = {
+  bypassCommerce?: boolean;
+};
 
 async function canAccessAdult(userId: string | null | undefined) {
   if (!userId) return false;
@@ -71,6 +79,7 @@ export async function getPublicWorkAgeRating(slug: string) {
 export async function getMemberPublicWorkBySlug(
   slug: string,
   userId?: string | null,
+  options: MemberPublicQueryOptions = {},
 ): Promise<PublicWorkDetail | null> {
   const canAccessAdultContent = await canAccessAdult(userId);
   const scope = memberPublicWhere(canAccessAdultContent);
@@ -100,11 +109,100 @@ export async function getMemberPublicWorkBySlug(
           status: "published",
         },
         orderBy: { position: "asc" },
+        include: {
+          commerceAccess: {
+            select: {
+              accessType: true,
+            },
+          },
+        },
+      },
+      saleConfiguration: {
+        select: {
+          saleModel: true,
+          priceAmount: true,
+          currency: true,
+          status: true,
+          activatedAt: true,
+        },
+      },
+      publicationConsents: {
+        orderBy: { confirmedAt: "desc" },
+        take: 1,
+        select: {
+          publicationModel: true,
+          priceAmount: true,
+          currency: true,
+          accessPlanSnapshot: true,
+        },
       },
     },
   });
 
   if (!work) return null;
+
+  const saleConfiguration = work.saleConfiguration;
+  const latestConsent = work.publicationConsents[0] ?? null;
+  const effectiveCommerce = resolveEffectiveCommerceState({
+    configuration: saleConfiguration,
+    latestConsent,
+  });
+  const paymentPathReady =
+    isCommerceCheckoutEnabled() && hasOperationalPaymentProvider();
+  const readerPurchaseTerms =
+    paymentPathReady &&
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "active" &&
+    effectiveCommerce.priceAmount !== null &&
+    effectiveCommerce.priceAmount > BigInt(0)
+      ? await getActiveReaderPurchaseTerms()
+      : null;
+  const commerceEnforcementActive =
+    effectiveCommerce.saleModel === "paid" &&
+    (Boolean(saleConfiguration?.activatedAt) ||
+      (paymentPathReady &&
+        Boolean(readerPurchaseTerms) &&
+        saleConfiguration?.status === "active"));
+  const purchaseAvailable =
+    paymentPathReady &&
+    Boolean(readerPurchaseTerms) &&
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "active" &&
+    effectiveCommerce.priceAmount !== null &&
+    effectiveCommerce.priceAmount > BigInt(0);
+
+  const entitlement =
+    commerceEnforcementActive && userId && !options.bypassCommerce
+      ? await prisma.workEntitlement.findUnique({
+          where: {
+            readerId_workId: {
+              readerId: userId,
+              workId: work.id,
+            },
+          },
+          select: {
+            status: true,
+          },
+        })
+      : null;
+
+  const hasEntitlement = entitlement?.status === "active";
+  const chapterAccess = Object.fromEntries(
+    work.chapters.map((chapter) => [
+      chapter.id,
+      effectiveCommerce.useConfirmedSnapshot
+        ? effectiveCommerce.accessPlan[chapter.id] ?? "locked"
+        : chapter.commerceAccess?.accessType ?? "locked",
+    ]),
+  ) as Record<string, "preview" | "locked">;
+
+  const canReadChapter = (chapterId: string) =>
+    Boolean(
+      options.bypassCommerce ||
+        !commerceEnforcementActive ||
+        hasEntitlement ||
+        chapterAccess[chapterId] === "preview",
+    );
 
   const [publicationBook, snapshots] = await Promise.all([
     getLatestPublishedBookSnapshot(work.id),
@@ -118,11 +216,14 @@ export async function getMemberPublicWorkBySlug(
       .map((item) => [item.chapterId, item] as const),
   );
   const publishedChapters = work.chapters.map((chapter) => {
+    const { commerceAccess: _commerceAccess, ...chapterModel } = chapter;
+    const readable = canReadChapter(chapter.id);
     const bookChapter = bookChapterSnapshots.get(chapter.id);
+
     if (bookChapter) {
       return {
-        ...chapter,
-        content: bookChapter.content,
+        ...chapterModel,
+        content: readable ? bookChapter.content : "",
         title: bookChapter.title,
       };
     }
@@ -130,12 +231,30 @@ export async function getMemberPublicWorkBySlug(
     const snapshot = snapshots.get(chapter.id);
     return snapshot
       ? {
-          ...chapter,
-          content: snapshot.content,
+          ...chapterModel,
+          content: readable ? snapshot.content : "",
           title: snapshot.title,
         }
-      : chapter;
+      : {
+          ...chapterModel,
+          content: readable ? chapter.content : "",
+        };
   });
+
+  const safePublicationBook = publicationBook
+    ? {
+        ...publicationBook,
+        items: publicationBook.items.map((item) =>
+          item.type === "chapter" && !canReadChapter(item.chapterId)
+            ? {
+                ...item,
+                content: "",
+                formatting: null,
+              }
+            : item,
+        ),
+      }
+    : null;
 
   const relatedSelect = {
     _count: {
@@ -200,16 +319,33 @@ export async function getMemberPublicWorkBySlug(
     };
   }
 
+  const {
+    chapters: _rawChapters,
+    saleConfiguration: _saleConfiguration,
+    publicationConsents: _publicationConsents,
+    ...publicWork
+  } = work;
+
   return {
-    ...work,
+    ...publicWork,
     chapters: publishedChapters,
     authorName: work.author.displayName ?? work.author.fullName,
     authorPublicId: work.author.publicId,
     chapterCount: publishedChapters.length,
+    commerce: {
+      chapterAccess,
+      currency: effectiveCommerce.currency,
+      enforcementActive: commerceEnforcementActive,
+      hasEntitlement,
+      priceAmount: effectiveCommerce.priceAmount,
+      purchaseAvailable,
+      saleModel: effectiveCommerce.saleModel,
+      saleStatus: saleConfiguration?.status ?? "draft",
+    },
     isCompleted:
       publishedChapters.length > 0 &&
       work._count.chapters === publishedChapters.length,
-    publicationBook,
+    publicationBook: safePublicationBook,
     sameAuthorWorks: sameAuthor.map(mapRelated),
     similarWorks: similar.map(mapRelated),
   };
@@ -219,8 +355,13 @@ export async function getMemberPublicChapter(
   workSlug: string,
   chapterNumber: string,
   userId: string,
+  options: MemberPublicQueryOptions = {},
 ): Promise<PublicChapterDetail | null> {
-  const work = await getMemberPublicWorkBySlug(workSlug, userId);
+  const work = await getMemberPublicWorkBySlug(
+    workSlug,
+    userId,
+    options,
+  );
   if (!work) return null;
 
   const normalizedChapterNumber = chapterNumber.replace(/^bolum-/u, "");
@@ -237,6 +378,24 @@ export async function getMemberPublicChapter(
     },
   });
   if (!chapter) return null;
+
+  const commerceAllowsContent =
+    options.bypassCommerce ||
+    !work.commerce?.enforcementActive ||
+    work.commerce.hasEntitlement ||
+    work.commerce.chapterAccess[chapter.id] === "preview";
+
+  if (!commerceAllowsContent) {
+    return {
+      ...chapter,
+      content: "",
+      formatting: "",
+      publicationLayout: null,
+      publicationVersion: null,
+      title: chapter.title,
+      work,
+    };
+  }
 
   const publication = await getLatestPublicationSnapshot(chapter.id);
   const bookChapter = work.publicationBook?.items.find(

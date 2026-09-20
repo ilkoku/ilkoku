@@ -764,6 +764,8 @@ test("chapter access plan rejects missing or tampered selections instead of defa
   contains(actions, "selections.some((selection) => !selection.accessType)", "missing access selection gate");
   contains(actions, '"erisim-secimi-eksik"', "missing access selection fail-closed status");
   notContains(actions, 'const accessType = raw === "locked" ? "locked" : "preview"', "no silent preview default");
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+  contains(page, "chapter.commerceAccess?.accessType ?? null", "unconfigured chapter has no implicit access choice");
 });
 
 

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { validateCouponRules } from "./coupon-rules";
 
 export async function getCheckoutWorkBySlug(slug: string, readerId: string) {
   return prisma.work.findFirst({
@@ -107,26 +108,28 @@ export async function getApplicableCheckoutCoupon(input: {
     },
   });
 
-  if (!coupon || coupon.status !== "active") return null;
-  if (coupon.startsAt && coupon.startsAt > now) return null;
-  if (coupon.endsAt && coupon.endsAt < now) return null;
-  if (
-    coupon.totalUsageLimit !== null &&
-    coupon.usageCount >= coupon.totalUsageLimit
-  ) {
-    return null;
-  }
-  if (coupon.redemptions.length >= coupon.perUserUsageLimit) return null;
+  if (!coupon) return null;
 
-  const applies =
-    coupon.owner === "author"
-      ? coupon.authorId === input.authorId && coupon.workScopes.length > 0
-      : coupon.scope === "all_paid_works" ||
-        (coupon.scope === "selected_works" && coupon.workScopes.length > 0) ||
-        (coupon.scope === "selected_authors" &&
-          coupon.authorScopes.length > 0);
+  const validation = validateCouponRules(
+    {
+      authorId: coupon.authorId,
+      authorScopeMatch: coupon.authorScopes.length > 0,
+      endsAt: coupon.endsAt,
+      owner: coupon.owner,
+      perUserUsageLimit: coupon.perUserUsageLimit,
+      scope: coupon.scope,
+      startsAt: coupon.startsAt,
+      status: coupon.status,
+      totalUsageLimit: coupon.totalUsageLimit,
+      usageCount: coupon.usageCount,
+      userUsageCount: coupon.redemptions.length,
+      workAuthorId: input.authorId,
+      workScopeMatch: coupon.workScopes.length > 0,
+    },
+    now,
+  );
 
-  if (!applies) return null;
+  if (!validation.valid) return null;
 
   return {
     code: coupon.code,

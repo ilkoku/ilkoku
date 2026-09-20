@@ -30,12 +30,12 @@ were aligned with the confirmed-snapshot / `previouslyActivatedPaid` implementat
 
 Code-level cross-audit result:
 
-- **A — Pre-activation writer flow:** W-01 through W-07 PASS.
-- **B — First real paid activation:** A-01 through A-04 PASS.
-- **C — Reader access:** R-01 through R-09 PASS.
-- **D — Checkout and order lifecycle:** C-01 through C-06 PASS.
-- **E — Coupons:** K-01 through K-06 PASS.
-- **F — Finance:** F-01 through F-08 PASS.
+- **A — Pre-activation writer flow:** W-01 through W-07 AUTOMATED_PASS.
+- **B — First real paid activation:** A-01 through A-04 AUTOMATED_PASS.
+- **C — Reader access:** R-01 through R-09 AUTOMATED_PASS.
+- **D — Checkout and order lifecycle:** C-01 through C-06 AUTOMATED_PASS.
+- **E — Coupons:** K-01 through K-06 AUTOMATED_PASS.
+- **F — Finance:** F-01 through F-08 AUTOMATED_PASS.
 - **G — Intentionally unresolved:** remains non-mutating/read-only where applicable; no policy was invented.
 
 This result is an implementation/code audit only. Separate writer, reader and

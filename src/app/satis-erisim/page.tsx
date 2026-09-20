@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { getAuthorCommerceWorks } from "@/features/commerce/repository";
+import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import styles from "@/features/commerce/commerce.module.css";
 
@@ -37,6 +38,8 @@ export default async function WriterCommercePage() {
     getAuthorCommerceWorks(profile.id),
     Promise.resolve(isCommerceCheckoutEnabled()),
   ]);
+  const paymentProviderReady = hasOperationalPaymentProvider();
+  const paymentPathReady = checkoutEnabled && paymentProviderReady;
 
   return (
     <AppShell profile={profile}>
@@ -55,15 +58,16 @@ export default async function WriterCommercePage() {
               Kuponlar
             </Link>
             <span className={styles.badge}>
-              {checkoutEnabled ? "Tahsilat aktif" : "Altyapı hazırlık modu"}
+              {paymentPathReady ? "Tahsilat yolu aktif" : "Altyapı hazırlık modu"}
             </span>
           </div>
         </header>
 
-        {!checkoutEnabled ? (
+        {!paymentPathReady ? (
           <div className={styles.notice}>
-            Ücretli eser ayarları şimdiden hazırlanabilir. Gerçek tahsilat
-            devreye alınana kadar bu ayarlar okurun mevcut okuma erişimini
+            Ücretli eser ayarları şimdiden hazırlanabilir. Gerçek checkout ve
+            operasyonel ödeme sağlayıcısı birlikte hazır olana kadar ilk kez
+            aktive edilmemiş ücretli eserler okurun mevcut okuma erişimini
             kısıtlamaz.
           </div>
         ) : null}

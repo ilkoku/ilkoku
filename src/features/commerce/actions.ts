@@ -188,11 +188,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
     const oldPrice = work.saleConfiguration?.priceAmount ?? null;
     const oldModel = work.saleConfiguration?.saleModel ?? null;
 
-    const modelChanged =
-      oldModel !== null && oldModel !== parsedModel.data;
-    const nextActivatedAt = modelChanged
-      ? null
-      : work.saleConfiguration?.activatedAt ?? null;
+    const nextActivatedAt = work.saleConfiguration?.activatedAt ?? null;
 
     await transaction.workSaleConfiguration.upsert({
       where: { workId: work.id },
@@ -435,9 +431,11 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
         agreementVersion: agreement.version,
         confirmedAt: now,
         activatedAt:
-          nextStatus === "active"
-            ? work.saleConfiguration!.activatedAt ?? now
-            : work.saleConfiguration!.activatedAt,
+          work.saleConfiguration!.saleModel === "free"
+            ? null
+            : nextStatus === "active"
+              ? work.saleConfiguration!.activatedAt ?? now
+              : work.saleConfiguration!.activatedAt,
         pausedAt: null,
       },
     });

@@ -11,9 +11,10 @@ export default async function PaymentSystemPage() {
     (item) => item.available,
   ).length;
 
-  const [orders, payments, platformCoupons] = await Promise.all([
+  const [orders, payments, refunds, platformCoupons] = await Promise.all([
     prisma.order.count(),
     prisma.payment.count(),
+    prisma.refund.count(),
     prisma.coupon.count({ where: { owner: "platform" } }),
   ]);
 
@@ -41,16 +42,33 @@ export default async function PaymentSystemPage() {
           <span className="admin-eyebrow">Siparişler</span>
           <h2>{orders.toLocaleString("tr-TR")}</h2>
           <p>Okur satın alma siparişleri.</p>
+          <Link href="/sistem-yonetimi/odeme-sistemi/siparisler">
+            Siparişleri aç →
+          </Link>
         </article>
         <article className="admin-panel admin-settings-card">
           <span className="admin-eyebrow">Ödeme denemeleri</span>
           <h2>{payments.toLocaleString("tr-TR")}</h2>
           <p>Provider bağımsız ödeme kayıtları.</p>
+          <Link href="/sistem-yonetimi/odeme-sistemi/odemeler">
+            Ödemeleri aç →
+          </Link>
+        </article>
+        <article className="admin-panel admin-settings-card">
+          <span className="admin-eyebrow">İadeler</span>
+          <h2>{refunds.toLocaleString("tr-TR")}</h2>
+          <p>İade operasyon kayıtları.</p>
+          <Link href="/sistem-yonetimi/odeme-sistemi/iadeler">
+            İadeleri aç →
+          </Link>
         </article>
         <article className="admin-panel admin-settings-card">
           <span className="admin-eyebrow">İlkOku kuponları</span>
           <h2>{platformCoupons.toLocaleString("tr-TR")}</h2>
           <p>Platform tarafından finanse edilen kampanyalar.</p>
+          <Link href="/sistem-yonetimi/odeme-sistemi/kuponlar">
+            Kuponları aç →
+          </Link>
         </article>
       </section>
 

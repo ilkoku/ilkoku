@@ -171,7 +171,7 @@ export default async function DynamicBookShowcasePage({
       url: baseUrl,
     },
     isAccessibleForFree: !work.commerce?.enforcementActive,
-    ...(work.commerce?.enforcementActive &&
+    ...(work.commerce?.purchaseAvailable &&
     work.commerce.priceAmount &&
     work.commerce.priceAmount > BigInt(0)
       ? {

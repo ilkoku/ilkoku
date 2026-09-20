@@ -17,6 +17,7 @@ const segmentLabels: Record<string, string> = {
   "yazar-kesfet": "Yazar Keşfet",
   favoriler: "Favorilerim",
   seckiler: "Editör Seçkilerim",
+  "satis-erisim": "Satış & Erişim",
   incelemeler: "İncelemelerim",
   onerilenler: "Bana Önerilenler",
 };

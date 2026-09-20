@@ -238,6 +238,16 @@ export default async function CheckoutPreparationPage({
         <section className={styles.panel}>
           <h2>{pricing.finalAmount === BigInt(0) ? "Siparişi tamamla" : "Ödeme yöntemi"}</h2>
 
+          {purchaseTerms ? (
+            <div className={styles.contractBox}>
+              <div className={styles.contractHeading}>
+                <strong>{purchaseTerms.title}</strong>
+                <span>Sürüm {purchaseTerms.version}</span>
+              </div>
+              <div className={styles.contractText}>{purchaseTerms.body}</div>
+            </div>
+          ) : null}
+
           {!purchaseTerms ? (
             <div className={styles.notice}>
               Dijital içerik satın alma koşulları henüz aktif değil. Hukuki

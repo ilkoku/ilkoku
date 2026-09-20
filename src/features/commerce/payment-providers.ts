@@ -65,3 +65,8 @@ export function getPaymentMethodAvailability(): PaymentMethodAvailability[] {
     };
   });
 }
+
+
+export function hasOperationalPaymentProvider() {
+  return adapters.length > 0;
+}

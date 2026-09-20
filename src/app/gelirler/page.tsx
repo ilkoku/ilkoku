@@ -32,8 +32,10 @@ function formatDate(value: Date | null) {
   }).format(value);
 }
 
-function formatOrderStatus(status: "paid" | "refunded") {
-  return status === "refunded" ? "İade edildi" : "Ödendi";
+function formatOrderStatus(status: string) {
+  if (status === "refunded") return "İade edildi";
+  if (status === "paid") return "Ödendi";
+  return status;
 }
 
 export default async function WriterIncomePage() {

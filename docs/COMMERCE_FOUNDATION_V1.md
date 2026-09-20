@@ -256,8 +256,10 @@ The work becomes readable without purchase. Historical orders, earnings, ledger 
 
 Until a real checkout path is intentionally enabled, paid configurations are **staged only**.
 
-- Writers may prepare a paid model, price, chapter access plan and agreement/consent records.
+- Writers may prepare a paid model, chapter access plan and agreement/consent records.
 - A paid configuration must not lock reader access while checkout is disabled.
+- During this infrastructure phase, selecting **Paid** stores/displays a fixed **0 TRY** price; the author does not enter a price yet.
+- Real price entry will be enabled only when the actual checkout/payment phase is explicitly opened.
 - The current reader experience therefore remains effectively free/open during the infrastructure phase.
 - Checkout activation is controlled server-side with `COMMERCE_CHECKOUT_ENABLED=true`.
 - Default and missing value is treated as disabled.
@@ -265,7 +267,7 @@ Until a real checkout path is intentionally enabled, paid configurations are **s
 
 This is a rollout rule, not a change to the frozen product model.
 
-## 13. Current implementation boundary
+## 14. Current implementation boundary
 
 Included now:
 

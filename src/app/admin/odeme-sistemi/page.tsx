@@ -1,10 +1,15 @@
 import Link from "next/link";
 
+import { getPaymentMethodAvailability } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { prisma } from "@/lib/prisma";
 
 export default async function PaymentSystemPage() {
   const checkoutEnabled = isCommerceCheckoutEnabled();
+  const paymentMethods = getPaymentMethodAvailability();
+  const operationalProviderCount = paymentMethods.filter(
+    (item) => item.available,
+  ).length;
 
   const [orders, payments, platformCoupons] = await Promise.all([
     prisma.order.count(),
@@ -67,9 +72,22 @@ export default async function PaymentSystemPage() {
         <article className="admin-panel">
           <h2>Ödeme sağlayıcıları</h2>
           <p>
-            Gerçek kart ve mobil ödeme sağlayıcıları henüz aktif değildir.
-            Provider katmanı daha sonra bu omurgaya bağlanacaktır.
+            {operationalProviderCount > 0
+              ? `${operationalProviderCount} ödeme sağlayıcısı operasyonel.`
+              : "Gerçek kart ve mobil ödeme sağlayıcıları henüz aktif değildir."}
           </p>
+          <div className="admin-stack">
+            {paymentMethods.map((method) => (
+              <div key={method.method}>
+                <strong>{method.label}</strong>
+                <span>
+                  {method.available
+                    ? ` · aktif · ${method.providerCode}`
+                    : " · yapılandırılmadı"}
+                </span>
+              </div>
+            ))}
+          </div>
         </article>
       </section>
     </>

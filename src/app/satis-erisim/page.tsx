@@ -43,7 +43,7 @@ export default async function WriterCommercePage() {
       <div className={styles.page}>
         <header className={styles.hero}>
           <div>
-            <span className={styles.eyebrow}>Yazar çalışma alanı</span>
+            <span className={styles.eyebrow}>1. adım · Eser seç</span>
             <h1>Satış & Erişim</h1>
             <p>
               Önce eserini seç. Bölüm erişimlerini planla, ardından eserin

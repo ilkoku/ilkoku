@@ -89,7 +89,7 @@ test("staged paid setup remains zero-priced until checkout enables real pricing"
   contains(actions, 'formData.get("price")', "future real price input parser");
   contains(page, "<strong>Ücretli</strong>", "writer paid option label");
   contains(page, '<span className={styles.paidPrice}>0 TL</span>', "zero price visually belongs to paid option");
-  contains(page, "!checkoutEnabled ? (", "staged UI branch");
+  contains(page, "!paidPricingEnabled ? (", "staged UI branch");
   contains(page, 'name="price"', "real price input remains prepared behind checkout gate");
   contains(productContract, "fixed **0 TRY** price", "staged zero-price product rule");
 });
@@ -108,7 +108,8 @@ test("writer commerce agreement is fail-closed and final consent snapshots the f
   contains(actions, "getAuthorAgreementAcceptance", "accepted agreement requirement");
   contains(actions, "workPublicationConsent.create", "immutable work confirmation snapshot");
   contains(actions, "accessPlanSnapshot", "chapter access snapshot");
-  contains(actions, 'nextStatus === "active" ? now : null', "activation state persistence");
+  contains(actions, "work.saleConfiguration!.activatedAt ?? now", "activation timestamp is created once");
+  contains(actions, ": work.saleConfiguration!.activatedAt", "post-activation outage preserves activation history");
   contains(page, "Hukuki inceleme ve gerekli onaylar tamamlanıp aktif", "inactive agreement writer notice");
   contains(page, "Eser bazlı son onay", "work-level confirmation UI");
 });
@@ -586,8 +587,8 @@ test("finance admin separates sales volume from platform income", () => {
 
   contains(overview, "Toplam satış hacmi", "gross sales metric");
   contains(overview, "İlkOku geliri değildir", "sales volume is not platform income");
-  contains(repository, 'sum("sale_gross")', "gross sales ledger source");
-  contains(repository, 'sum("platform_commission")', "platform income ledger source");
+  contains(repository, 'grossSales: totals.get("sale_gross")', "gross sales ledger source");
+  contains(repository, 'platformCommission: totals.get("platform_commission")', "platform income ledger source");
   contains(platformIncome, "platform_commission", "platform income page only uses commission movements");
   contains(platformIncome, "Net kâr hesabı yapılmıyor", "no invented net profit");
 });
@@ -740,14 +741,16 @@ test("chapter reading resolves editor review bypass before commerce redaction", 
 });
 
 
-test("writer paid price remains zero until checkout and provider are both operational", () => {
+test("writer paid price stays zero before first activation and preserves live pricing after activation", () => {
   const actions = source("src/features/commerce/actions.ts");
   const page = source("src/app/satis-erisim/[workId]/page.tsx");
 
-  contains(actions, "const paidPricingEnabled = checkoutEnabled && paymentProviderReady", "paid pricing readiness");
-  contains(actions, "paidPricingEnabled\n        ? parseTryMinorUnits", "real price only with live payment path");
-  contains(actions, ": BigInt(0)", "staged paid price remains zero");
-  contains(page, "const paidPricingEnabled = checkoutEnabled && paymentProviderReady", "writer paid pricing UI readiness");
+  contains(actions, "const previouslyActivatedPaid =", "writer activation history");
+  contains(actions, "(checkoutEnabled && paymentProviderReady) || previouslyActivatedPaid", "paid pricing readiness");
+  contains(actions, "paidPricingEnabled\n        ? parseTryMinorUnits", "real price after live payment path or prior activation");
+  contains(actions, ": BigInt(0)", "never-activated staged paid price remains zero");
+  contains(page, "const previouslyActivatedPaid =", "writer UI activation history");
+  contains(page, "const paidPricingEnabled = paymentPathReady || previouslyActivatedPaid", "writer paid pricing UI readiness");
   contains(page, "!paidPricingEnabled", "writer staged zero-price view");
   contains(page, '<span className={styles.paidPrice}>0 TL</span>', "paid zero shown under paid choice");
 });

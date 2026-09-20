@@ -11,12 +11,14 @@ export default async function PaymentSystemPage() {
     (item) => item.available,
   ).length;
 
-  const [orders, payments, refunds, platformCoupons] = await Promise.all([
-    prisma.order.count(),
-    prisma.payment.count(),
-    prisma.refund.count(),
-    prisma.coupon.count({ where: { owner: "platform" } }),
-  ]);
+  const [orders, payments, refunds, entitlements, platformCoupons] =
+    await Promise.all([
+      prisma.order.count(),
+      prisma.payment.count(),
+      prisma.refund.count(),
+      prisma.workEntitlement.count(),
+      prisma.coupon.count({ where: { owner: "platform" } }),
+    ]);
 
   return (
     <>
@@ -60,6 +62,14 @@ export default async function PaymentSystemPage() {
           <p>İade operasyon kayıtları.</p>
           <Link href="/sistem-yonetimi/odeme-sistemi/iadeler">
             İadeleri aç →
+          </Link>
+        </article>
+        <article className="admin-panel admin-settings-card">
+          <span className="admin-eyebrow">Erişim hakları</span>
+          <h2>{entitlements.toLocaleString("tr-TR")}</h2>
+          <p>Okur-eser entitlement kayıtları.</p>
+          <Link href="/sistem-yonetimi/odeme-sistemi/erisim-haklari">
+            Erişim haklarını aç →
           </Link>
         </article>
         <article className="admin-panel admin-settings-card">

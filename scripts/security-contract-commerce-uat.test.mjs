@@ -53,7 +53,8 @@ test("UAT R: previously activated paid work never becomes free during payment ou
 test("UAT R: locked chapter content is redacted before reader rendering", () => {
   const query = source("src/features/works/member-public-queries.ts");
 
-  has(query, "commerceAllowsContent", "chapter content access decision");
+  has(query, "const canReadChapter", "chapter content access decision");
+  has(query, "const readable = canReadChapter(chapter.id)", "per-chapter commerce decision");
   has(query, 'content: ""', "locked chapter redaction");
   has(query, "safePublicationBook", "publication book redaction");
   has(query, "formatting: null", "locked publication formatting redaction");

@@ -892,3 +892,11 @@ test("chapter access edits mark the work configuration draft before reader state
   contains(actions, 'status: "draft"', "chapter access edit marks commerce configuration draft");
   contains(effective, 'configuration.status !== "active"', "reader uses confirmed snapshot outside active state");
 });
+
+
+test("writer sees when draft edits are not yet live", () => {
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+
+  contains(page, "Son onaylı ücretli", "activated paid draft notice");
+  contains(page, "eser bazlı son onay tamamlandığında", "draft changes require final confirmation");
+});

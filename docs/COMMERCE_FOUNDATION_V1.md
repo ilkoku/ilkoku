@@ -174,6 +174,19 @@ Order statuses:
 
 Payment providers remain provider-agnostic in this phase.
 
+### Zero-total coupon orders
+
+If a valid coupon reduces an active paid work to **0 TRY**:
+
+- the order is completed atomically without an external Payment record,
+- coupon usage is revalidated and serialized before consumption,
+- the coupon redemption is recorded,
+- an ACTIVE work entitlement is created,
+- immutable order pricing snapshots are stored,
+- gross sale and coupon discount movements are written to the financial ledger.
+
+For an İlkOku-funded coupon, `authorEarningBaseAmount` remains the original work price. The actual author earning amount is not invented before commission/tax rules are finalized; those later allocation rules must calculate from the preserved earning base rather than the reader-paid total.
+
 ## 9. Writer income
 
 Writer **Gelirler** displays:

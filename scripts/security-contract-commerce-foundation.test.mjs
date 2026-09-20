@@ -187,7 +187,7 @@ test("reader commerce gate stays open until checkout and paid activation are bot
   contains(access, 'entitlement?.status === "active"', "purchased entitlement access");
   contains(access, 'reason: "purchase_required"', "locked paid purchase gate");
   contains(readingPage, "getCommerceChapterAccessDecision", "reading route commerce access check");
-  contains(readingPage, '"/satinal/', "purchase redirect");
+  contains(readingPage, "/satinal/", "purchase redirect");
   contains(checkoutPage, "Satın alma altyapısı hazır, ancak gerçek tahsilat henüz aktif", "staged checkout notice");
 });
 
@@ -226,4 +226,14 @@ test("checkout route is private and reader-role gated", () => {
   contains(security, '{ approved: false, path: "/satinal", roles: [...readerWorkspaceRoles] }', "checkout reader-role gate");
   contains(proxy, '"/satinal/:path*"', "checkout proxy enforcement");
   contains(nextConfig, '"/satinal/:path*"', "checkout noindex header");
+});
+
+
+test("staged paid price display stays zero across writer surfaces", () => {
+  const listPage = source("src/app/satis-erisim/page.tsx");
+  const detailPage = source("src/app/satis-erisim/[workId]/page.tsx");
+
+  contains(listPage, '"Ücretli · 0 TL"', "writer work card staged price");
+  contains(detailPage, '<span className={styles.paidPrice}>0 TL</span>', "paid option staged price");
+  contains(detailPage, 'currentModel === "paid" ? "0 TL" : "—"', "final confirmation staged price");
 });

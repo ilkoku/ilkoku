@@ -28,7 +28,7 @@ function parseTryMinorUnits(value: FormDataEntryValue | null) {
   if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return null;
   const [whole, fraction = ""] = normalized.split(".");
   const amount = BigInt(`${whole}${fraction.padEnd(2, "0")}`);
-  return amount > 0n ? amount : null;
+  return amount > BigInt(0) ? amount : null;
 }
 
 function parsePositiveInteger(value: FormDataEntryValue | null) {
@@ -44,7 +44,7 @@ function parseFixedMinorUnits(value: FormDataEntryValue | null) {
   if (!/^\\d+(?:\\.\\d{1,2})?$/.test(normalized)) return null;
   const [whole, fraction = ""] = normalized.split(".");
   const amount = BigInt(`${whole}${fraction.padEnd(2, "0")}`);
-  return amount > 0n ? amount : null;
+  return amount > BigInt(0) ? amount : null;
 }
 
 function parseOptionalDate(
@@ -149,7 +149,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
       ? null
       : checkoutEnabled
         ? parseTryMinorUnits(formData.get("price"))
-        : 0n;
+        : BigInt(0);
 
   if (
     parsedModel.data === "paid" &&
@@ -432,11 +432,11 @@ export async function createAuthorCouponAction(formData: FormData) {
   const discountValue =
     parsedDiscountType.data === "percent"
       ? BigInt(parsePositiveInteger(formData.get("discountValue")) ?? 0)
-      : parseFixedMinorUnits(formData.get("discountValue")) ?? 0n;
+      : parseFixedMinorUnits(formData.get("discountValue")) ?? BigInt(0);
 
   if (
-    discountValue <= 0n ||
-    (parsedDiscountType.data === "percent" && discountValue > 100n)
+    discountValue <= BigInt(0) ||
+    (parsedDiscountType.data === "percent" && discountValue > BigInt(100))
   ) {
     redirect("/satis-erisim/kuponlar?durum=gecersiz-indirim");
   }

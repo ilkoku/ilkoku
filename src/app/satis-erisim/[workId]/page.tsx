@@ -162,6 +162,16 @@ export default async function WriterCommerceWorkPage({
 
         {flash ? <div className={styles.flash}>{flash}</div> : null}
 
+        {previouslyActivatedPaid &&
+        work.saleConfiguration?.status !== "active" ? (
+          <div className={styles.notice}>
+            Bu eserde kaydedilmiş taslak değişiklikler var. Son onaylı ücretli
+            durum okuyucu tarafında korunuyor; yeni model, fiyat veya bölüm
+            erişim planı ancak eser bazlı son onay tamamlandığında yürürlüğe
+            girer.
+          </div>
+        ) : null}
+
         {!paidPricingEnabled ? (
           <div className={styles.notice}>
             Hazırlık modu açık. Ücretli model ve kilitli bölümler kaydedilir,

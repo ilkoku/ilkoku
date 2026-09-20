@@ -1,10 +1,11 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { hasOperationalPaymentProvider } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
 
 export type CommerceAccessDecision =
-  | { allowed: true; reason: "checkout_disabled" | "free_work" | "staged_paid_work" | "preview" | "entitled" }
+  | { allowed: true; reason: "checkout_disabled" | "provider_unavailable" | "free_work" | "staged_paid_work" | "preview" | "entitled" }
   | { allowed: false; reason: "purchase_required" | "chapter_not_found" };
 
 export async function getCommerceChapterAccessDecision(input: {
@@ -14,6 +15,10 @@ export async function getCommerceChapterAccessDecision(input: {
 }): Promise<CommerceAccessDecision> {
   if (!isCommerceCheckoutEnabled()) {
     return { allowed: true, reason: "checkout_disabled" };
+  }
+
+  if (!hasOperationalPaymentProvider()) {
+    return { allowed: true, reason: "provider_unavailable" };
   }
 
   const work = await prisma.work.findUnique({

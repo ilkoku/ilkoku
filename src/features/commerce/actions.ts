@@ -39,10 +39,14 @@ function parseFixedMinorUnits(value: FormDataEntryValue | null) {
   return amount > 0n ? amount : null;
 }
 
-function parseOptionalDate(value: FormDataEntryValue | null) {
+function parseOptionalDate(
+  value: FormDataEntryValue | null,
+  endOfDay = false,
+) {
   const normalized = String(value ?? "").trim();
   if (!normalized) return null;
-  const parsed = new Date(`${normalized}T00:00:00+03:00`);
+  const time = endOfDay ? "23:59:59.999" : "00:00:00.000";
+  const parsed = new Date(`${normalized}T${time}+03:00`);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
@@ -363,7 +367,7 @@ export async function createAuthorCouponAction(formData: FormData) {
 
   const code = String(formData.get("code") ?? "")
     .trim()
-    .toLocaleUpperCase("tr-TR")
+    .toUpperCase()
     .replace(/\\s+/g, "");
 
   if (!/^[A-Z0-9_-]{3,32}$/.test(code)) {
@@ -376,10 +380,18 @@ export async function createAuthorCouponAction(formData: FormData) {
       authorId: writer.id,
       archivedAt: null,
     },
-    select: { id: true },
+    select: {
+      id: true,
+      saleConfiguration: {
+        select: { saleModel: true },
+      },
+    },
   });
 
   if (!work) redirect("/satis-erisim/kuponlar?durum=eser-bulunamadi");
+  if (work.saleConfiguration?.saleModel !== "paid") {
+    redirect("/satis-erisim/kuponlar?durum=ucretli-eser-gerekli");
+  }
 
   const discountValue =
     parsedDiscountType.data === "percent"
@@ -394,7 +406,7 @@ export async function createAuthorCouponAction(formData: FormData) {
   }
 
   const startsAt = parseOptionalDate(formData.get("startsAt"));
-  const endsAt = parseOptionalDate(formData.get("endsAt"));
+  const endsAt = parseOptionalDate(formData.get("endsAt"), true);
   if (startsAt && endsAt && endsAt < startsAt) {
     redirect("/satis-erisim/kuponlar?durum=gecersiz-tarih");
   }

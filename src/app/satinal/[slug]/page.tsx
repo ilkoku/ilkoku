@@ -6,12 +6,16 @@ import { AppShell } from "@/components/layout/AppShell";
 import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
-import { completeZeroTotalCheckoutAction } from "@/features/commerce/checkout-actions";
+import {
+  beginPaidCheckoutAction,
+  completeZeroTotalCheckoutAction,
+} from "@/features/commerce/checkout-actions";
 import {
   getApplicableCheckoutCoupon,
   getCheckoutWorkBySlug,
 } from "@/features/commerce/checkout-repository";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
+import { getPaymentMethodAvailability } from "@/features/commerce/payment-providers";
 import { calculateCommercePricing } from "@/features/commerce/pricing";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import styles from "@/features/commerce/commerce.module.css";
@@ -31,6 +35,11 @@ const checkoutMessages: Record<string, string> = {
   "sifir-toplam-gerekli": "Bu işlem yalnız toplam tutarı 0 TL olan kuponlu siparişlerde tamamlanabilir.",
   "eser-bulunamadi": "Eser bulunamadı.",
   "satin-alma-kosullari-hazir-degil": "Dijital içerik satın alma koşulları henüz aktif değil. Satın alma işlemi başlatılamaz.",
+  "odeme-yontemi-gerekli": "Devam etmek için bir ödeme yöntemi seçmelisin.",
+  "odeme-saglayicisi-hazir-degil": "Seçilen ödeme yöntemi henüz aktif değil.",
+  "siparis-bekliyor": "Bu eser için zaten ödeme bekleyen bir sipariş bulunuyor.",
+  "sifir-toplam-akisi": "Toplam 0 TL olduğu için harici ödeme yerine 0 TL sipariş akışı kullanılmalı.",
+  "odeme-baslatilamadi": "Ödeme sağlayıcısı başlatılamadı. Herhangi bir erişim hakkı verilmedi.",
 };
 
 function formatMoney(value: bigint, currency = "TRY") {
@@ -53,7 +62,7 @@ export default async function CheckoutPreparationPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ durum?: string; from?: string; kupon?: string }>;
+  searchParams: Promise<{ durum?: string; from?: string; kupon?: string; siparis?: string }>;
 }) {
   const profile = await getCurrentProfile();
   const { slug } = await params;
@@ -86,6 +95,8 @@ export default async function CheckoutPreparationPage({
 
   const returnTo = safeReturnPath(query.from, work.slug);
   const checkoutEnabled = isCommerceCheckoutEnabled();
+  const paymentMethods = getPaymentMethodAvailability();
+  const hasAvailableProvider = paymentMethods.some((item) => item.available);
   const configuration = work.saleConfiguration;
   const entitlement = work.entitlements[0] ?? null;
 
@@ -154,7 +165,11 @@ export default async function CheckoutPreparationPage({
       })
     : null;
 
-  const flash = query.durum ? checkoutMessages[query.durum] ?? null : null;
+  const flash = query.durum
+    ? `${checkoutMessages[query.durum] ?? query.durum}${
+        query.siparis ? ` · Sipariş ${query.siparis}` : ""
+      }`
+    : null;
 
   const pricing = calculateCommercePricing(
     originalAmount,
@@ -282,37 +297,58 @@ export default async function CheckoutPreparationPage({
               </form>
             </>
           ) : (
-            <>
+            <form action={beginPaidCheckoutAction}>
+              <input name="slug" type="hidden" value={work.slug} />
+              <input
+                name="couponCode"
+                type="hidden"
+                value={coupon?.code ?? ""}
+              />
+              <input name="returnTo" type="hidden" value={returnTo} />
+
               <div className={styles.saleOptions}>
-                <label className={styles.saleOption}>
-                  <input disabled name="paymentMethod" type="radio" />
-                  <span>
-                    <strong>Kredi / Banka Kartı</strong>
-                    <br />
-                    Provider entegrasyonu sonraki fazda bağlanacak.
-                  </span>
-                </label>
-                <label className={styles.saleOption}>
-                  <input disabled name="paymentMethod" type="radio" />
-                  <span>
-                    <strong>Telefon Faturama Yansıt</strong>
-                    <br />
-                    Mobil ödeme sağlayıcısı sonraki fazda bağlanacak.
-                  </span>
-                </label>
+                {paymentMethods.map((method) => (
+                  <label className={styles.saleOption} key={method.method}>
+                    <input
+                      disabled={!method.available || !purchaseTerms}
+                      name="paymentMethod"
+                      type="radio"
+                      value={method.method}
+                    />
+                    <span>
+                      <strong>{method.label}</strong>
+                      <br />
+                      {method.available
+                        ? "Ödeme sağlayıcısı hazır."
+                        : "Provider entegrasyonu henüz aktif değil."}
+                    </span>
+                  </label>
+                ))}
               </div>
 
               <label className={styles.confirmation}>
-                <input disabled name="acceptDigitalContent" type="checkbox" />
+                <input
+                  disabled={!hasAvailableProvider || !purchaseTerms}
+                  name="acceptDigitalContent"
+                  type="checkbox"
+                />
                 <span>
-                  Dijital içerik satın alma koşullarını okudum ve kabul ediyorum.
+                  {purchaseTerms
+                    ? `${purchaseTerms.title} (sürüm ${purchaseTerms.version}) metnini okudum ve kabul ediyorum.`
+                    : "Dijital içerik satın alma koşulları henüz aktif değil."}
                 </span>
               </label>
 
-              <button className={styles.action} disabled type="button">
-                Ödeme sağlayıcısı bekleniyor
+              <button
+                className={styles.action}
+                disabled={!hasAvailableProvider || !purchaseTerms}
+                type="submit"
+              >
+                {hasAvailableProvider
+                  ? `${formatMoney(pricing.finalAmount, configuration.currency)} ÖDE`
+                  : "Ödeme sağlayıcısı bekleniyor"}
               </button>
-            </>
+            </form>
           )}
         </section>
       </div>

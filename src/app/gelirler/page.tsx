@@ -50,6 +50,7 @@ export default async function WriterIncomePage() {
   const providerReady = hasOperationalPaymentProvider();
   const paidCommerceLive = checkoutEnabled && providerReady;
   const deductions =
+    finance.authorCouponDiscounts +
     finance.providerFees +
     finance.platformCommission +
     finance.refunds +
@@ -158,6 +159,15 @@ export default async function WriterIncomePage() {
                     </span>
                   </div>
                   <div className={styles.paymentAmounts}>
+                    <span>
+                      Yazar kupon indirimi
+                      <strong>
+                        {formatMoney(
+                          work.authorCouponDiscounts,
+                          finance.currency,
+                        )}
+                      </strong>
+                    </span>
                     <span>
                       Provider ücreti
                       <strong>

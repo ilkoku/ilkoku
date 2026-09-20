@@ -413,9 +413,10 @@ export function BookShowcase({
                     const readingMinutes = readable
                       ? estimateReadingMinutes(chapter.content)
                       : null;
-                    const pageRange = readable
-                      ? estimatedPageRanges.get(chapter.id)
-                      : null;
+                    const pageRange =
+                      readable && !(paidAccessActive && !hasPaidAccess)
+                        ? estimatedPageRanges.get(chapter.id)
+                        : null;
                     const pageLabel = pageRange
                       ? pageRange.startPage === pageRange.endPage
                         ? `tahmini kitap s. ${pageRange.startPage}`

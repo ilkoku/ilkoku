@@ -114,3 +114,112 @@ export async function listAuthorCoupons(authorId: string) {
     },
   });
 }
+
+
+export async function listPlatformCoupons() {
+  return prisma.coupon.findMany({
+    where: {
+      owner: "platform",
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      code: true,
+      discountType: true,
+      discountValue: true,
+      scope: true,
+      status: true,
+      startsAt: true,
+      endsAt: true,
+      totalUsageLimit: true,
+      perUserUsageLimit: true,
+      usageCount: true,
+      workScopes: {
+        select: {
+          work: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      },
+      authorScopes: {
+        select: {
+          author: {
+            select: {
+              id: true,
+              displayName: true,
+              fullName: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function listPlatformCouponPaidWorks() {
+  return prisma.work.findMany({
+    where: {
+      archivedAt: null,
+      saleConfiguration: {
+        is: {
+          saleModel: "paid",
+        },
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+    select: {
+      id: true,
+      title: true,
+      author: {
+        select: {
+          displayName: true,
+          fullName: true,
+        },
+      },
+      saleConfiguration: {
+        select: {
+          priceAmount: true,
+          currency: true,
+          status: true,
+        },
+      },
+    },
+    take: 500,
+  });
+}
+
+export async function listPlatformCouponWriters() {
+  return prisma.user.findMany({
+    where: {
+      role: "writer",
+      status: "active",
+      deletedAt: null,
+      works: {
+        some: {
+          archivedAt: null,
+          saleConfiguration: {
+            is: {
+              saleModel: "paid",
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      fullName: "asc",
+    },
+    select: {
+      id: true,
+      displayName: true,
+      fullName: true,
+    },
+    take: 500,
+  });
+}

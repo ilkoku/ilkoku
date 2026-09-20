@@ -24,7 +24,7 @@
   color: #241a31;
 }
 
-.writerIndexHero p {
+.hero.writerIndexHero p {
   max-width: 720px;
   margin-bottom: 0;
   color: #554e5e;
@@ -139,6 +139,23 @@
   font: inherit;
   font-weight: 700;
   text-decoration: none;
+}
+
+.quietAction {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 4px;
+  color: #5b21b6;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.quietAction:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .panel {
@@ -460,8 +477,18 @@
 .heroActions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 14px;
   flex-wrap: wrap;
+}
+
+.writerIndexHero > div:first-child {
+  min-width: 0;
+  flex: 1 1 640px;
+}
+
+.writerIndexHero .heroActions {
+  flex: 0 1 auto;
 }
 
 

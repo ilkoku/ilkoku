@@ -221,6 +221,8 @@ export const config = {
     "/yorumlarim/:path*",
     "/yayinevleri/:path*",
     "/sayfa-renkleri/:path*",
+    "/satis-erisim/:path*",
+    "/gelirler/:path*",
     "/yayinevi/:path*",
     "/rol-secimi/:path*",
     "/editörler/:path*",

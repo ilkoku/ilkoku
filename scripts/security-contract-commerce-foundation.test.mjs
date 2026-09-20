@@ -735,3 +735,36 @@ test("chapter reading resolves editor review bypass before commerce redaction", 
   contains(query, "commerceAllowsContent", "chapter content commerce gate");
   contains(query, 'content: ""', "denied chapter returns no content");
 });
+
+
+test("writer paid price remains zero until checkout and provider are both operational", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+
+  contains(actions, "const paidPricingEnabled = checkoutEnabled && paymentProviderReady", "paid pricing readiness");
+  contains(actions, "paidPricingEnabled\n        ? parseTryMinorUnits", "real price only with live payment path");
+  contains(actions, ": BigInt(0)", "staged paid price remains zero");
+  contains(page, "const paidPricingEnabled = checkoutEnabled && paymentProviderReady", "writer paid pricing UI readiness");
+  contains(page, "!paidPricingEnabled", "writer staged zero-price view");
+  contains(page, '<span className={styles.paidPrice}>0 TL</span>', "paid zero shown under paid choice");
+});
+
+
+test("chapter access plan rejects missing or tampered selections instead of defaulting to preview", () => {
+  const actions = source("src/features/commerce/actions.ts");
+
+  contains(actions, 'raw === "preview" || raw === "locked"', "explicit chapter access choices");
+  contains(actions, "accessType:", "chapter access selection mapping");
+  contains(actions, "selections.some((selection) => !selection.accessType)", "missing access selection gate");
+  contains(actions, '"erisim-secimi-eksik"', "missing access selection fail-closed status");
+  notContains(actions, 'const accessType = raw === "locked" ? "locked" : "preview"', "no silent preview default");
+});
+
+
+test("author coupon numeric parsers accept normal digit input", () => {
+  const actions = source("src/features/commerce/actions.ts");
+
+  contains(actions, 'if (!/^\\d+$/.test(normalized)) return null;', "positive integer regex");
+  contains(actions, 'if (!/^\\d+(?:\\.\\d{1,2})?$/.test(normalized)) return null;', "fixed amount regex");
+  notContains(actions, 'if (!/^\\\\d+$/.test(normalized)) return null;', "no double-escaped digit regex");
+});

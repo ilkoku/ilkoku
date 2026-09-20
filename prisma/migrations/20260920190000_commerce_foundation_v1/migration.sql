@@ -322,6 +322,25 @@ CREATE TABLE `Refund` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
+CREATE TABLE `OrderConsent` (
+  `id` CHAR(36) NOT NULL,
+  `orderId` CHAR(36) NOT NULL,
+  `readerId` CHAR(36) NOT NULL,
+  `consentType` ENUM('digital_content_purchase') NOT NULL DEFAULT 'digital_content_purchase',
+  `documentVersion` VARCHAR(40) NOT NULL,
+  `documentHash` CHAR(64) NOT NULL,
+  `acceptedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `ipAddress` VARCHAR(45) NULL,
+  `userAgent` VARCHAR(500) NULL,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  UNIQUE INDEX `OrderConsent_orderId_key`(`orderId`),
+  INDEX `OrderConsent_readerId_acceptedAt_idx`(`readerId`, `acceptedAt`),
+  INDEX `OrderConsent_consentType_acceptedAt_idx`(`consentType`, `acceptedAt`),
+  PRIMARY KEY (`id`),
+  CONSTRAINT `OrderConsent_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `OrderConsent_readerId_fkey` FOREIGN KEY (`readerId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- Commerce-specific writer agreement starts as a draft. Existing contract
 -- lifecycle controls must review/approve/activate it before writers can accept.
 INSERT INTO `ContractTemplate` (
@@ -336,6 +355,34 @@ INSERT INTO `ContractTemplate` (
   'Ücretsiz ve ücretli eserlerin İlkOku üzerinde yayın, erişim ve satış hazırlığı için kullanılan yazar sözleşmesi.',
   'writer',
   'ÇALIŞMA TASLAĞI — Hukuki inceleme ve ürün sahibi onayı tamamlanmadan aktive edilmemelidir.\n\nBu şablon; taraflar, sözleşmenin konusu, eser üzerindeki haklar, İlkOku’ya verilen sınırlı yayın/erişim yetkisi, ücretsiz/ücretli yayın modeli, fiyatlandırma ve kampanya ilkeleri, yazar hakedişi, ödeme kuruluşu maliyetleri, iadeler, vergi/mali yükümlülükler, eserin yayından kaldırılması, telif ve üçüncü taraf hakları, yasak içerik, hesap/süreç güvenliği, elektronik onay ve kayıtlar, fesih, uyuşmazlık ve yürürlük başlıkları için nihai metin hazırlanacak çalışma alanıdır.',
+  1,
+  false,
+  'draft',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  CURRENT_TIMESTAMP(3),
+  CURRENT_TIMESTAMP(3)
+);
+
+
+-- Reader checkout terms also start as draft and must be legally reviewed and
+-- activated before any checkout, including a zero-total coupon order.
+INSERT INTO `ContractTemplate` (
+  `id`, `code`, `title`, `description`, `targetRole`, `body`,
+  `version`, `active`, `lifecycleStatus`,
+  `sourceTemplateId`, `approvedById`, `approvedAt`, `activatedAt`,
+  `createdById`, `updatedById`, `createdAt`, `updatedAt`
+) VALUES (
+  'c5000000-0000-4000-8000-000000000002',
+  'ILKOKU_READER_DIGITAL_CONTENT_PURCHASE',
+  'İlkOku Dijital İçerik Satın Alma Koşulları',
+  'Okurun ücretli dijital esere erişim edinirken verdiği satın alma ve dijital içerik onayının sürümlü metni.',
+  'reader',
+  'ÇALIŞMA TASLAĞI — Hukuki inceleme ve ürün sahibi onayı tamamlanmadan aktive edilmemelidir.\n\nBu metin; dijital içerik erişimi, ücret/indirim/toplam tutar, ödeme veya 0 TL kampanya siparişi, erişimin ne zaman açıldığı, iade/iptal koşulları, tüketici bilgilendirmeleri, elektronik onay ve kayıtlar başlıkları için nihai hukuki metnin hazırlanacağı çalışma alanıdır.',
   1,
   false,
   'draft',

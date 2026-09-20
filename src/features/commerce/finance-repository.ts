@@ -473,7 +473,7 @@ export async function getFinanceReconciliationSnapshot() {
 }
 
 export async function getWriterFinanceOverview(authorId: string) {
-  const [ledger, balance, orders] = await Promise.all([
+  const [ledger, balance, orders, paidWorks] = await Promise.all([
     prisma.financialLedger.findMany({
       where: { authorId, currency: "TRY" },
       select: {
@@ -534,6 +534,36 @@ export async function getWriterFinanceOverview(authorId: string) {
         },
       },
     }),
+    prisma.work.findMany({
+      where: {
+        authorId,
+        archivedAt: null,
+        saleConfiguration: {
+          is: {
+            saleModel: "paid",
+          },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        saleConfiguration: {
+          select: {
+            priceAmount: true,
+            currency: true,
+            status: true,
+          },
+        },
+        _count: {
+          select: {
+            commerceOrders: {
+              where: { status: "paid" },
+            },
+          },
+        },
+      },
+    }),
   ]);
 
   const sum = (types: Array<(typeof ledger)[number]["entryType"]>) =>
@@ -552,8 +582,34 @@ export async function getWriterFinanceOverview(authorId: string) {
       platformCommission: bigint;
       refunds: bigint;
       taxWithholding: bigint;
+      adjustments: bigint;
+      priceAmount: bigint | null;
+      currency: string;
+      saleStatus: "draft" | "ready" | "active" | "paused";
+      unitsSold: number;
     }
   >();
+
+  for (const work of paidWorks) {
+    const configuration = work.saleConfiguration;
+    if (!configuration) continue;
+
+    workMap.set(work.id, {
+      workId: work.id,
+      title: work.title,
+      grossSales: BigInt(0),
+      authorEarnings: BigInt(0),
+      providerFees: BigInt(0),
+      platformCommission: BigInt(0),
+      refunds: BigInt(0),
+      taxWithholding: BigInt(0),
+      adjustments: BigInt(0),
+      priceAmount: configuration.priceAmount,
+      currency: configuration.currency,
+      saleStatus: configuration.status,
+      unitsSold: work._count.commerceOrders,
+    });
+  }
 
   for (const entry of ledger) {
     if (!entry.workId || !entry.work) continue;
@@ -566,6 +622,11 @@ export async function getWriterFinanceOverview(authorId: string) {
       platformCommission: BigInt(0),
       refunds: BigInt(0),
       taxWithholding: BigInt(0),
+      adjustments: BigInt(0),
+      priceAmount: null,
+      currency: "TRY",
+      saleStatus: "draft",
+      unitsSold: 0,
     };
 
     if (entry.entryType === "sale_gross") current.grossSales += entry.amount;
@@ -578,6 +639,8 @@ export async function getWriterFinanceOverview(authorId: string) {
     if (entry.entryType === "refund") current.refunds += entry.amount;
     if (entry.entryType === "tax_withholding")
       current.taxWithholding += entry.amount;
+    if (entry.entryType === "adjustment")
+      current.adjustments += entry.amount;
 
     workMap.set(entry.workId, current);
   }

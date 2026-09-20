@@ -288,7 +288,7 @@ test("checkout keeps digital-content acceptance in the frozen purchase surface",
   const productContract = source("docs/COMMERCE_FOUNDATION_V1.md");
 
   contains(checkout, 'name="acceptDigitalContent"', "digital content acceptance checkbox");
-  contains(checkout, "Dijital içerik satın alma koşullarını", "digital content acceptance copy");
+  contains(checkout, "{purchaseTerms.title}", "active digital-content terms title");
   contains(productContract, "digital-content purchase acceptance", "frozen checkout acceptance requirement");
 });
 

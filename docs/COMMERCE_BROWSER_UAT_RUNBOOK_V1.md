@@ -373,6 +373,16 @@ Verify there is no executable UI for:
 
 Presence of an executable mutation for an undecided rule is `BLOCKED`.
 
+## 10.1 Final Release production evidence boundary
+
+The pre-merge Commerce Foundation browser acceptance in this runbook and the
+repository-wide Final Release production UAT are separate evidence layers.
+
+- **Pre-merge Commerce browser acceptance:** may be executed on an exact-SHA preview/staging environment with the required real role/account identities. It is used to decide whether PR #945 is safe to leave Draft and proceed toward explicit merge approval.
+- **Final Release production acceptance:** the three Commerce rows in `docs/final-release-uat-addendum.md` remain `HUMAN_PENDING` until the corresponding flows are exercised with real production accounts under the existing Final Release rules.
+- Preview/staging evidence must not be copied into the Final Release matrix as `HUMAN_PASS`.
+- Production paid-provider activation remains an additional, separate boundary and still requires the provider-dependent scenarios defined below this runbook's paid-activation acceptance rules.
+
 ## 11. Exit criteria
 
 There are two distinct acceptance boundaries:

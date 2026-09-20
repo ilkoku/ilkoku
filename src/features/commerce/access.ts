@@ -40,16 +40,6 @@ export async function getCommerceChapterAccessDecision(input: {
         },
         take: 1,
       },
-      entitlements: input.readerId
-        ? {
-            where: {
-              readerId: input.readerId,
-              status: "active",
-            },
-            select: { id: true },
-            take: 1,
-          }
-        : false,
     },
   });
 
@@ -71,8 +61,22 @@ export async function getCommerceChapterAccessDecision(input: {
     return { allowed: true, reason: "preview" };
   }
 
-  if (input.readerId && Array.isArray(work.entitlements) && work.entitlements.length > 0) {
-    return { allowed: true, reason: "entitled" };
+  if (input.readerId) {
+    const entitlement = await prisma.workEntitlement.findUnique({
+      where: {
+        readerId_workId: {
+          readerId: input.readerId,
+          workId: input.workId,
+        },
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    if (entitlement?.status === "active") {
+      return { allowed: true, reason: "entitled" };
+    }
   }
 
   return { allowed: false, reason: "purchase_required" };

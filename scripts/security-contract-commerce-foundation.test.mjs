@@ -642,3 +642,28 @@ test("platform campaign costs preserve the writer earning-base concept", () => {
   contains(page, "yazarın normal hakediş matrahını azaltmaz", "writer earning base protection");
   contains(page, "authorEarningBaseAmount", "order earning base visibility");
 });
+
+
+test("writer work income detail matches the frozen finance fields", () => {
+  const page = source("src/app/gelirler/page.tsx");
+  const repository = source("src/features/commerce/finance-repository.ts");
+
+  contains(repository, "priceAmount: true", "writer work current price source");
+  contains(repository, 'commerceOrders: {', "writer work sales count source");
+  contains(repository, 'where: { status: "paid" }', "paid unit count");
+  contains(repository, 'entry.entryType === "payment_provider_fee"', "provider fee work rollup");
+  contains(repository, 'entry.entryType === "platform_commission"', "platform service share work rollup");
+  contains(repository, 'entry.entryType === "refund"', "refund work rollup");
+  contains(repository, 'entry.entryType === "tax_withholding"', "tax work rollup");
+  contains(repository, 'entry.entryType === "adjustment"', "other adjustment rollup");
+  contains(repository, 'entry.entryType === "author_earning"', "net writer earning rollup");
+
+  contains(page, "Güncel fiyat", "writer work price field");
+  contains(page, "Satış adedi", "writer work units sold field");
+  contains(page, "Provider ücreti", "writer provider fee field");
+  contains(page, "İlkOku hizmet payı", "writer platform share field");
+  contains(page, "İade", "writer refund field");
+  contains(page, "Vergi / stopaj", "writer tax field");
+  contains(page, "Diğer düzeltmeler", "writer other deductions field");
+  contains(page, "Net hakediş", "writer net earning field");
+});

@@ -489,7 +489,9 @@ test("provider webhook cannot reach payment lifecycle before adapter verificatio
   contains(route, "if (!verified)", "unverified webhook rejection");
   contains(route, "applyVerifiedProviderPaymentEvent", "shared lifecycle after verification");
   const verificationIndex = route.indexOf("adapter.verifyWebhook");
-  const lifecycleIndex = route.indexOf("applyVerifiedProviderPaymentEvent");
+  const lifecycleIndex = route.indexOf(
+    "const result = await applyVerifiedProviderPaymentEvent",
+  );
   assert.ok(
     verificationIndex >= 0 && lifecycleIndex > verificationIndex,
     "payment lifecycle must run only after provider verification",

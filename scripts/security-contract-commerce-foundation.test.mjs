@@ -8,6 +8,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
 const contains = (text, fragment, label) =>
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
+const notContains = (text, fragment, label) =>
+  assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
 test("commerce v1 keeps work-level sale configuration separate from chapter access", () => {
   const schema = source("prisma/schema.prisma");
@@ -75,4 +77,16 @@ test("commerce rollout defaults to disabled so staged paid works do not lock rea
   contains(runtime, 'process.env.COMMERCE_CHECKOUT_ENABLED === "true"', "explicit opt-in commerce flag");
   contains(envExample, 'COMMERCE_CHECKOUT_ENABLED="false"', "disabled default example");
   contains(productContract, "A paid configuration must not lock reader access while checkout is disabled.", "staged paid access rule");
+});
+
+
+test("staged paid setup fixes the author price at zero and exposes no manual price input", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+  const productContract = source("docs/COMMERCE_FOUNDATION_V1.md");
+
+  contains(actions, 'parsedModel.data === "paid" ? 0n : null', "fixed zero staged paid price");
+  contains(page, "Fiyat: 0 TL", "writer paid option zero-price display");
+  notContains(page, 'name="price"', "manual author price input");
+  contains(productContract, "fixed **0 TRY** price", "staged zero-price product rule");
 });

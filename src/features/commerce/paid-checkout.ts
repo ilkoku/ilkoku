@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 import { validateCouponRules } from "./coupon-rules";
+import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
 import { calculateCommercePricing } from "./pricing";
 import { getPaymentProviderAdapter, type CommercePaymentMethod } from "./payment-providers";
@@ -125,19 +126,35 @@ export async function startPaidCheckout(input: {
             priceAmount: true,
             saleModel: true,
             status: true,
+            activatedAt: true,
+          },
+        },
+        publicationConsents: {
+          orderBy: { confirmedAt: "desc" },
+          take: 1,
+          select: {
+            publicationModel: true,
+            priceAmount: true,
+            currency: true,
+            accessPlanSnapshot: true,
           },
         },
       },
     });
 
     const configuration = work?.saleConfiguration;
+    const effectiveCommerce = resolveEffectiveCommerceState({
+      configuration,
+      latestConsent: work?.publicationConsents[0] ?? null,
+    });
+
     if (
       !work ||
       !configuration ||
-      configuration.saleModel !== "paid" ||
-      configuration.status !== "active" ||
-      configuration.priceAmount === null ||
-      configuration.priceAmount <= BigInt(0)
+      effectiveCommerce.saleModel !== "paid" ||
+      effectiveCommerce.status !== "active" ||
+      effectiveCommerce.priceAmount === null ||
+      effectiveCommerce.priceAmount <= BigInt(0)
     ) {
       return { ok: false, reason: "work_unavailable" } as const;
     }
@@ -275,7 +292,7 @@ export async function startPaidCheckout(input: {
     }
 
     const pricing = calculateCommercePricing(
-      configuration.priceAmount,
+      effectiveCommerce.priceAmount,
       coupon
         ? {
             discountType: coupon.discountType,
@@ -295,7 +312,7 @@ export async function startPaidCheckout(input: {
         ...buildCommerceOrderSnapshot({
           authorId: work.authorId,
           coupon,
-          currency: configuration.currency,
+          currency: effectiveCommerce.currency,
           pricing,
           readerId: input.readerId,
           workId: work.id,
@@ -336,7 +353,7 @@ export async function startPaidCheckout(input: {
         method: input.method,
         provider: adapter.code,
         amount: pricing.finalAmount,
-        currency: configuration.currency,
+        currency: effectiveCommerce.currency,
         status: "pending",
       },
     });
@@ -344,7 +361,7 @@ export async function startPaidCheckout(input: {
     return {
       ok: true,
       amount: pricing.finalAmount,
-      currency: configuration.currency,
+      currency: effectiveCommerce.currency,
       orderId: order.id,
       orderNo: order.orderNo,
       paymentId: payment.id,

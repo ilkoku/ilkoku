@@ -137,7 +137,7 @@ Checkout contains:
 - payment method area,
 - digital-content purchase acceptance.
 
-Real card and carrier billing are **not enabled in this foundation phase**.
+Real card and carrier billing are **not enabled in this foundation phase**. Test-mode adapters must never activate paid reader locking in production.
 
 Reader purchase terms start as draft. Checkout must fail closed until the active terms document has completed legal/product review and is activated.
 
@@ -175,6 +175,34 @@ Order statuses:
 - refunded
 
 Payment providers remain provider-agnostic in this phase.
+
+Paid access enforcement is additionally fail-open when no operational payment provider exists. Enabling the commerce rollout flag by itself must not lock a reader out of a paid work. A paid configuration becomes ACTIVE only when checkout is enabled and at least one production-safe provider adapter is operational.
+
+### Normal paid orders
+
+For a non-zero checkout:
+
+1. the server revalidates the work, price, entitlement and coupon,
+2. an Order is created as `pending_payment`,
+3. the reader's current purchase-terms version/hash and acceptance evidence are stored,
+4. a Payment attempt is created as `pending`,
+5. any coupon is reserved before leaving İlkOku,
+6. only then is the provider adapter called.
+
+Coupon reservations count against total and per-user limits while the payment is pending. Provider initialization failure releases the reservation.
+
+A provider callback must be cryptographically/authentically verified by the provider-specific adapter before it reaches the shared payment lifecycle. The shared lifecycle:
+
+- identifies a payment by the unique provider + provider transaction id,
+- is idempotent for repeated terminal notifications,
+- verifies amount and currency before access is granted,
+- marks the order paid only after verified success,
+- converts a coupon reservation to used,
+- creates or reactivates the work entitlement,
+- posts idempotent sale/discount ledger movements,
+- releases coupon reservations on failed/cancelled payment.
+
+Raw card credentials or carrier billing credentials are not stored in İlkOku commerce tables.
 
 ### Zero-total coupon orders
 

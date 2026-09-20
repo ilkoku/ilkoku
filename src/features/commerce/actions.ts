@@ -11,6 +11,7 @@ import {
   getActiveAuthorPublicationAgreement,
   getAuthorAgreementAcceptance,
 } from "./agreement";
+import { getActiveReaderPurchaseTerms } from "./checkout-terms";
 import { hasOperationalPaymentProvider } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
 
@@ -386,10 +387,20 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
     commerceStatusRedirect(parsedWorkId.data, "fiyat-gerekli");
   }
 
+  const readerPurchaseTerms =
+    work.saleConfiguration.saleModel === "paid" &&
+    checkoutEnabled &&
+    paymentProviderReady
+      ? await getActiveReaderPurchaseTerms()
+      : null;
+  const paidActivationReady =
+    checkoutEnabled &&
+    paymentProviderReady &&
+    Boolean(readerPurchaseTerms);
+
   const now = new Date();
   const nextStatus =
-    work.saleConfiguration.saleModel === "free" ||
-    (checkoutEnabled && paymentProviderReady)
+    work.saleConfiguration.saleModel === "free" || paidActivationReady
       ? "active"
       : "ready";
 
@@ -435,7 +446,9 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
       ? "yayin-onaylandi"
       : previouslyActivatedPaid
         ? "satis-hazir-erisim-korunuyor"
-        : "satis-hazir",
+        : checkoutEnabled && paymentProviderReady && !readerPurchaseTerms
+          ? "satis-hazir-kosullar-bekleniyor"
+          : "satis-hazir",
   );
 }
 

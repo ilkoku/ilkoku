@@ -254,13 +254,13 @@ export default async function CheckoutPreparationPage({
             <div>
               <span>İndirim</span>
               <strong>
-                -{formatMoney(pricing.discountAmount, configuration.currency)}
+                -{formatMoney(pricing.discountAmount, effectiveCommerce.currency)}
               </strong>
             </div>
             <div>
               <span>Toplam</span>
               <strong>
-                {formatMoney(pricing.finalAmount, configuration.currency)}
+                {formatMoney(pricing.finalAmount, effectiveCommerce.currency)}
               </strong>
             </div>
           </div>

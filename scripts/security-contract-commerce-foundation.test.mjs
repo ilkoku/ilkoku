@@ -367,3 +367,15 @@ test("coupon preview and coupon consumption share one eligibility engine", () =>
   contains(rules, 'input.scope === "selected_works"', "selected work scope rule");
   contains(rules, 'input.scope === "selected_authors"', "selected author scope rule");
 });
+
+
+test("checkout cannot bypass the existing adult-content gate", () => {
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const action = source("src/features/commerce/checkout-actions.ts");
+  const completion = source("src/features/commerce/zero-total-checkout.ts");
+
+  contains(checkout, "enforceAdultWorkGate", "checkout page adult gate");
+  contains(action, "enforceAdultWorkGate", "zero-total action adult gate");
+  contains(completion, 'status: "active"', "active author requirement");
+  contains(completion, "deletedAt: null", "non-deleted author requirement");
+});

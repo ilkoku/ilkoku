@@ -13,13 +13,8 @@ export async function getCommerceChapterAccessDecision(input: {
   readerId: string | null;
   workId: string;
 }): Promise<CommerceAccessDecision> {
-  if (!isCommerceCheckoutEnabled()) {
-    return { allowed: true, reason: "checkout_disabled" };
-  }
-
-  if (!hasOperationalPaymentProvider()) {
-    return { allowed: true, reason: "provider_unavailable" };
-  }
+  const checkoutEnabled = isCommerceCheckoutEnabled();
+  const paymentProviderReady = hasOperationalPaymentProvider();
 
   const work = await prisma.work.findUnique({
     where: { id: input.workId },
@@ -28,6 +23,7 @@ export async function getCommerceChapterAccessDecision(input: {
         select: {
           saleModel: true,
           status: true,
+          activatedAt: true,
         },
       },
       chapters: {
@@ -58,7 +54,16 @@ export async function getCommerceChapterAccessDecision(input: {
     return { allowed: true, reason: "free_work" };
   }
 
-  if (configuration.status !== "active") {
+  const previouslyActivatedPaid = Boolean(configuration.activatedAt);
+  if (!previouslyActivatedPaid && !checkoutEnabled) {
+    return { allowed: true, reason: "checkout_disabled" };
+  }
+
+  if (!previouslyActivatedPaid && !paymentProviderReady) {
+    return { allowed: true, reason: "provider_unavailable" };
+  }
+
+  if (!previouslyActivatedPaid && configuration.status !== "active") {
     return { allowed: true, reason: "staged_paid_work" };
   }
 

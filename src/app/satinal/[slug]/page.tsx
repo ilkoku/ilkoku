@@ -120,7 +120,7 @@ export default async function CheckoutPreparationPage({
     );
   }
 
-  const originalAmount = configuration.priceAmount ?? 0n;
+  const originalAmount = configuration.priceAmount ?? BigInt(0);
   const requestedCouponCode = query.kupon?.trim() ?? "";
   const coupon = requestedCouponCode
     ? await getApplicableCheckoutCoupon({

@@ -27,6 +27,19 @@ export type CommerceRefundStatusFilter =
   | "processing"
   | "processed";
 
+export type CommerceEntitlementStatusFilter =
+  | "all"
+  | "active"
+  | "revoked"
+  | "refunded";
+
+export type CommerceEntitlementSourceFilter =
+  | "all"
+  | "purchase"
+  | "coupon"
+  | "admin"
+  | "promotion";
+
 function cleanQuery(value: string | undefined) {
   const normalized = value?.trim();
   return normalized ? normalized.slice(0, 120) : "";
@@ -287,4 +300,83 @@ export async function getCommerceRefundStatusCounts() {
   return Object.fromEntries(
     rows.map((row) => [row.status, row._count._all]),
   ) as Partial<Record<Exclude<CommerceRefundStatusFilter, "all">, number>>;
+}
+
+
+export async function listCommerceEntitlements(input: {
+  q?: string;
+  source: CommerceEntitlementSourceFilter;
+  status: CommerceEntitlementStatusFilter;
+}) {
+  const q = cleanQuery(input.q);
+
+  return prisma.workEntitlement.findMany({
+    where: {
+      ...(input.status === "all" ? {} : { status: input.status }),
+      ...(input.source === "all" ? {} : { source: input.source }),
+      ...(q
+        ? {
+            OR: [
+              { work: { is: { title: { contains: q } } } },
+              { reader: { is: { publicId: { contains: q } } } },
+              { reader: { is: { fullName: { contains: q } } } },
+              { reader: { is: { displayName: { contains: q } } } },
+              { order: { is: { orderNo: { contains: q } } } },
+            ],
+          }
+        : {}),
+    },
+    orderBy: { grantedAt: "desc" },
+    take: 200,
+    select: {
+      id: true,
+      source: true,
+      status: true,
+      grantedAt: true,
+      revokedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      reader: {
+        select: {
+          publicId: true,
+          fullName: true,
+          displayName: true,
+        },
+      },
+      work: {
+        select: {
+          title: true,
+          slug: true,
+          saleConfiguration: {
+            select: {
+              saleModel: true,
+              status: true,
+            },
+          },
+        },
+      },
+      order: {
+        select: {
+          orderNo: true,
+          status: true,
+          finalAmount: true,
+          currency: true,
+          paidAt: true,
+        },
+      },
+    },
+  });
+}
+
+export async function getCommerceEntitlementStatusCounts() {
+  const rows = await prisma.workEntitlement.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
+
+  return Object.fromEntries(
+    rows.map((row) => [row.status, row._count._all]),
+  ) as Partial<
+    Record<Exclude<CommerceEntitlementStatusFilter, "all">, number>
+  >;
 }

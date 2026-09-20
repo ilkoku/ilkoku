@@ -23,8 +23,7 @@ export default async function AuthorBalancesPage({
           <h1>Yazar Bakiyeleri</h1>
           <p>
             Pending, available, processing ve paid projeksiyonlarını izleyin.
-            Finansal gerçek kaynak ledger&apos;dır; bakiye tablosu operasyonel
-            projeksiyondur.
+            Finansal gerçek kaynak ledger&apos;dır; bakiye tablosu operasyonel projeksiyondur.
           </p>
         </div>
         <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler">

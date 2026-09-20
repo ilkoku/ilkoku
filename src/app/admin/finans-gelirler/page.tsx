@@ -1,47 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 
-function formatMoney(value: bigint) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-  }).format(Number(value) / 100);
-}
+import { getFinanceOverview } from "@/features/commerce/finance-repository";
+import { formatFinanceMoney } from "@/features/commerce/finance-ui";
 
 export default async function FinanceIncomePage() {
-  const [ledger, balances, payouts] = await Promise.all([
-    prisma.financialLedger.findMany({
-      select: { amount: true, entryType: true },
-    }),
-    prisma.authorBalance.findMany({
-      where: { currency: "TRY" },
-      select: {
-        pendingAmount: true,
-        availableAmount: true,
-        processingAmount: true,
-        paidAmount: true,
-      },
-    }),
-    prisma.payout.count(),
-  ]);
-
-  const sum = (type: (typeof ledger)[number]["entryType"]) =>
-    ledger
-      .filter((entry) => entry.entryType === type)
-      .reduce((total, entry) => total + entry.amount, BigInt(0));
-
-  const platformCampaignCost = sum("platform_coupon_discount");
-  const grossSales = sum("sale_gross");
-  const authorEarnings = sum("author_earning");
-  const platformCommission = sum("platform_commission");
-
-  const pendingAuthor = balances.reduce(
-    (total, balance) => total + balance.pendingAmount,
-    BigInt(0),
-  );
-  const availableAuthor = balances.reduce(
-    (total, balance) => total + balance.availableAmount,
-    BigInt(0),
-  );
+  const overview = await getFinanceOverview("TRY");
 
   return (
     <>
@@ -50,49 +13,143 @@ export default async function FinanceIncomePage() {
           <span className="admin-eyebrow">Muhasebe görünümü</span>
           <h1>Finans & Gelirler</h1>
           <p>
-            Satış hacmini, yazar hakedişini, İlkOku gelirini, kampanya
-            maliyetini ve ödeme durumlarını birbirinden ayrı izleyin.
+            Satış hacmi, yazar hakedişi, İlkOku hizmet payı, kampanya maliyeti,
+            yazar bakiyesi ve payout kayıtlarını ledger merkezli izleyin.
           </p>
         </div>
       </header>
 
-      <section className="admin-settings-grid">
+      <section className="admin-settings-grid admin-commerce-summary">
         <article className="admin-panel admin-settings-card">
           <span>Toplam satış hacmi</span>
-          <h2>{formatMoney(grossSales)}</h2>
-          <p>İlkOku geliri değildir; brüt satış hareketidir.</p>
+          <h2>{formatFinanceMoney(overview.grossSales, overview.currency)}</h2>
+          <p>İlkOku geliri değildir; brüt satış ledger hareketidir.</p>
+          <Link href="/sistem-yonetimi/finans-gelirler/finans-hareketleri">
+            Finans hareketlerini aç →
+          </Link>
         </article>
+
         <article className="admin-panel admin-settings-card">
           <span>Yazar hakedişleri</span>
-          <h2>{formatMoney(authorEarnings)}</h2>
-          <p>Ledger üzerindeki yazar kazancı hareketleri.</p>
+          <h2>
+            {formatFinanceMoney(overview.authorEarnings, overview.currency)}
+          </h2>
+          <p>Ledger üzerindeki author_earning hareketleri.</p>
+          <Link href="/sistem-yonetimi/finans-gelirler/yazar-hakedisleri">
+            Hakedişleri aç →
+          </Link>
         </article>
+
         <article className="admin-panel admin-settings-card">
-          <span>İlkOku brüt payı</span>
-          <h2>{formatMoney(platformCommission)}</h2>
-          <p>Platform komisyon hareketleri.</p>
+          <span>İlkOku hizmet payı</span>
+          <h2>
+            {formatFinanceMoney(
+              overview.platformCommission,
+              overview.currency,
+            )}
+          </h2>
+          <p>Platform komisyon hareketidir; toplam satış hacmi değildir.</p>
+          <Link href="/sistem-yonetimi/finans-gelirler/ilkoku-gelirleri">
+            İlkOku gelirlerini aç →
+          </Link>
         </article>
+
         <article className="admin-panel admin-settings-card">
           <span>Kampanya maliyeti</span>
-          <h2>{formatMoney(platformCampaignCost)}</h2>
-          <p>İlkOku tarafından finanse edilen kupon indirimleri.</p>
+          <h2>
+            {formatFinanceMoney(
+              overview.platformCampaignCost,
+              overview.currency,
+            )}
+          </h2>
+          <p>İlkOku tarafından finanse edilen kupon hareketleri.</p>
+          <Link href="/sistem-yonetimi/finans-gelirler/kampanya-maliyetleri">
+            Kampanya maliyetlerini aç →
+          </Link>
         </article>
+
         <article className="admin-panel admin-settings-card">
           <span>Yazarlara bekleyen</span>
-          <h2>{formatMoney(pendingAuthor)}</h2>
-          <p>Henüz ödenebilir duruma gelmemiş bakiye.</p>
+          <h2>
+            {formatFinanceMoney(overview.pendingAuthor, overview.currency)}
+          </h2>
+          <p>Henüz ödenebilir bakiyeye geçmemiş tutar.</p>
+          <Link href="/sistem-yonetimi/finans-gelirler/yazar-bakiyeleri">
+            Yazar bakiyelerini aç →
+          </Link>
         </article>
+
         <article className="admin-panel admin-settings-card">
           <span>Yazarlara ödenebilir</span>
-          <h2>{formatMoney(availableAuthor)}</h2>
-          <p>Ödeme için uygun yazar bakiyesi.</p>
+          <h2>
+            {formatFinanceMoney(overview.availableAuthor, overview.currency)}
+          </h2>
+          <p>Ödeme için uygun bakiye projeksiyonu.</p>
+          <Link href="/sistem-yonetimi/finans-gelirler/yazar-bakiyeleri">
+            Bakiyeleri aç →
+          </Link>
+        </article>
+
+        <article className="admin-panel admin-settings-card">
+          <span>Ödeme sürecinde</span>
+          <h2>
+            {formatFinanceMoney(overview.processingAuthor, overview.currency)}
+          </h2>
+          <p>Payout sürecine alınmış bakiye.</p>
+          <Link href="/sistem-yonetimi/finans-gelirler/yazar-odemeleri">
+            Yazar ödemelerini aç →
+          </Link>
+        </article>
+
+        <article className="admin-panel admin-settings-card">
+          <span>Ödenen</span>
+          <h2>{formatFinanceMoney(overview.paidAuthor, overview.currency)}</h2>
+          <p>Yazar bakiyesi projeksiyonundaki ödenmiş toplam.</p>
+          <Link href="/sistem-yonetimi/finans-gelirler/yazar-odemeleri">
+            Payout kayıtlarını aç →
+          </Link>
         </article>
       </section>
 
-      <section className="admin-panel">
-        <h2>Yazar ödeme kayıtları</h2>
-        <p>{payouts.toLocaleString("tr-TR")} payout kaydı bulunuyor.</p>
+      <section className="admin-detail-grid">
+        <article className="admin-panel">
+          <h2>Mutabakat</h2>
+          <p>
+            Paid sipariş, sale_gross ledger hareketi, aktif entitlement ve
+            provider sonucu arasındaki tutarsızlıkları kontrol edin.
+          </p>
+          <Link
+            className="admin-button admin-button--primary"
+            href="/sistem-yonetimi/finans-gelirler/mutabakat"
+          >
+            Mutabakatı aç
+          </Link>
+        </article>
+
+        <article className="admin-panel">
+          <h2>Finans kayıtları</h2>
+          <p>
+            {overview.ledgerEntryCount.toLocaleString("tr-TR")} ledger hareketi
+            ve {overview.payoutCount.toLocaleString("tr-TR")} payout kaydı
+            bulunuyor.
+          </p>
+          <Link
+            className="admin-button"
+            href="/sistem-yonetimi/finans-gelirler/finans-hareketleri"
+          >
+            Ledger&apos;ı aç
+          </Link>
+        </article>
       </section>
+
+      <div className="admin-readonly-notice admin-commerce-readonly">
+        <strong>Finansal gerçek kaynak ledger&apos;dır</strong>
+        <p>
+          AuthorBalance ekranı operasyonel bir projeksiyondur. Komisyon,
+          vergi/stopaj ve payout yürütüm oranları kesinleşmeden sistem yeni
+          finans kuralı üretmez.
+        </p>
+      </div>
     </>
   );
 }

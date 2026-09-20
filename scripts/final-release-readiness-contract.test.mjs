@@ -22,8 +22,8 @@ test("final release preserves historical Sprint 7 UAT and adds current product a
   const addendum = source("docs/final-release-uat-addendum.md");
 
   assert.equal(criticalRows(base).length, 33, "historical Sprint 7 matrix must remain 33 rows");
-  assert.equal(criticalRows(addendum).length, 7, "current-product addendum must contain 7 rows");
-  assert.equal(criticalRows(base).length + criticalRows(addendum).length, 40, "Final Release must cover 40 critical rows");
+  assert.equal(criticalRows(addendum).length, 10, "current-product addendum must contain 10 rows");
+  assert.equal(criticalRows(base).length + criticalRows(addendum).length, 43, "Final Release must cover 43 critical rows");
 
   for (const row of [...criticalRows(base), ...criticalRows(addendum)]) {
     assert.match(row, /\| (HUMAN_PENDING|HUMAN_PASS|BLOCKED) \|$/, `invalid human state: ${row}`);
@@ -41,19 +41,23 @@ test("current-product UAT addendum covers every new critical control surface", (
     "Contract assignment / send",
     "Recipient response and admin history",
     "Contract ownership / authority negative check",
+    "/satis-erisim",
+    "Reader commerce access boundary",
+    "/admin/odeme-sistemi",
+    "/admin/finans-gelirler",
   ]) {
     contains(addendum, fragment, "current product UAT coverage");
   }
 
-  contains(addendum, "40 kritik satır", "final critical row total");
-  contains(addendum, "7 PASS · 33 PENDING · 0 BLOCKED", "initial final UAT status");
+  contains(addendum, "43 kritik satır", "final critical row total");
+  contains(addendum, "7 PASS · 36 PENDING · 0 BLOCKED", "current final UAT status");
 });
 
 test("final release gate is fail-closed across base and addendum", () => {
   const gate = source("scripts/final-release-readiness.mjs");
 
   contains(gate, "EXPECTED_BASE_ROWS = 33", "historical row guard");
-  contains(gate, "EXPECTED_ADDENDUM_ROWS = 7", "addendum row guard");
+  contains(gate, "EXPECTED_ADDENDUM_ROWS = 10", "addendum row guard");
   contains(gate, "EXPECTED_CRITICAL_ROWS = EXPECTED_BASE_ROWS + EXPECTED_ADDENDUM_ROWS", "combined final gate");
   contains(gate, 'process.argv.includes("--strict")', "strict release flag");
   contains(gate, '"READY_TO_RELEASE"', "ready release state");

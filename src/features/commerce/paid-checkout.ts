@@ -19,7 +19,7 @@ export type PaidCheckoutStartResult =
       paymentId: string;
       providerCode: string;
       providerTransactionId: string;
-      redirectUrl: string | null;
+      redirectUrl: string;
     }
   | {
       ok: false;
@@ -382,7 +382,7 @@ export async function startPaidCheckout(input: {
       paymentId: prepared.paymentId,
       providerCode: adapter.code,
       providerTransactionId: providerResult.providerTransactionId,
-      redirectUrl: providerResult.redirectUrl ?? null,
+      redirectUrl: providerResult.redirectUrl,
     };
   } catch (error) {
     console.error("COMMERCE_PROVIDER_CREATE_PAYMENT_ERROR", {

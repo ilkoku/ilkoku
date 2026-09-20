@@ -84,6 +84,20 @@ export default async function PaymentSystemPage() {
 
       <section className="admin-detail-grid">
         <article className="admin-panel">
+          <h2>Commerce Ayarları</h2>
+          <p>
+            Rollout, sözleşme yaşam döngüsü, para birimi ve provider readiness
+            durumunu salt okunur kontrol edin.
+          </p>
+          <Link
+            className="admin-button"
+            href="/sistem-yonetimi/odeme-sistemi/ayarlar"
+          >
+            Ayar durumunu aç
+          </Link>
+        </article>
+
+        <article className="admin-panel">
           <h2>Kuponlar & Kampanyalar</h2>
           <p>
             İlkOku kuponları yazarın hakedişini azaltmaz. Kampanya indirimi

@@ -216,15 +216,31 @@ export async function acceptAuthorPublicationAgreementAction(formData: FormData)
     const forwardedFor = requestHeaders.get("x-forwarded-for");
     const ipAddress = forwardedFor?.split(",")[0]?.trim() || null;
     const userAgent = requestHeaders.get("user-agent");
+    const acceptedAt = new Date();
 
-    await prisma.authorAgreement.create({
-      data: {
+    await prisma.authorAgreement.upsert({
+      where: {
+        authorId_agreementType_agreementVersion: {
+          authorId: writer.id,
+          agreementType: "author_publication_access",
+          agreementVersion: agreement.version,
+        },
+      },
+      create: {
         authorId: writer.id,
         agreementType: "author_publication_access",
         agreementVersion: agreement.version,
         documentHash: agreement.documentHash,
         status: "accepted",
-        acceptedAt: new Date(),
+        acceptedAt,
+        ipAddress,
+        userAgent,
+      },
+      update: {
+        documentHash: agreement.documentHash,
+        status: "accepted",
+        acceptedAt,
+        revokedAt: null,
         ipAddress,
         userAgent,
       },

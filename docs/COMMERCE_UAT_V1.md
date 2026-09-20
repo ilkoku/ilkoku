@@ -16,6 +16,9 @@ areas, and private-route protection. It runs inside `npm run test:security`.
 Passing this audit means the implementation files agree on the frozen rules; it
 does **not** mark browser/human UAT as complete.
 
+Browser execution procedure and evidence rules are defined in
+`docs/COMMERCE_BROWSER_UAT_RUNBOOK_V1.md`.
+
 
 ## Implementation audit result — 20.09.2026
 

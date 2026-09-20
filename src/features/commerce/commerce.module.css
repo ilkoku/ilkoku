@@ -247,3 +247,101 @@
     width: 100%;
   }
 }
+
+
+.flash {
+  padding: 14px 16px;
+  border: 1px solid #d8c9f1;
+  border-radius: 14px;
+  background: #f6f1ff;
+  color: #4c1d95;
+  line-height: 1.5;
+}
+
+.contractBox {
+  overflow: hidden;
+  margin: 18px 0;
+  border: 1px solid #e0d8eb;
+  border-radius: 16px;
+  background: #fcfbfe;
+}
+
+.contractHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e8e1ef;
+  background: #f7f3fb;
+}
+
+.contractHeading span {
+  color: #6b6571;
+  font-size: 0.9rem;
+}
+
+.contractText {
+  max-height: 360px;
+  overflow: auto;
+  padding: 18px;
+  white-space: pre-wrap;
+  color: #3f3a45;
+  line-height: 1.65;
+}
+
+.confirmation {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid #ded6e8;
+  border-radius: 14px;
+  background: #fff;
+  line-height: 1.5;
+}
+
+.confirmation input {
+  margin-top: 4px;
+}
+
+.successNotice {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #eefbf3;
+  color: #17613a;
+  line-height: 1.55;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.summaryGrid > div {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid #e7e2ef;
+  border-radius: 14px;
+  background: #fcfbfe;
+}
+
+.summaryGrid span {
+  color: #716a79;
+  font-size: 0.86rem;
+}
+
+.helper {
+  margin: 12px 0 0;
+  color: #716a79;
+  line-height: 1.5;
+}
+
+.action:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}

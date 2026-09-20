@@ -900,3 +900,16 @@ test("writer sees when draft edits are not yet live", () => {
   contains(page, "Son onaylı ücretli", "activated paid draft notice");
   contains(page, "eser bazlı son onay tamamlandığında", "draft changes require final confirmation");
 });
+
+
+test("paid activation history survives a draft model toggle until confirmation", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+
+  contains(actions, "Boolean(work.saleConfiguration?.activatedAt)", "writer save activation history");
+  contains(actions, "Boolean(work.saleConfiguration.activatedAt)", "writer confirmation activation history");
+  contains(page, "Boolean(work.saleConfiguration?.activatedAt)", "writer UI activation history");
+  contains(checkout, "Boolean(configuration?.activatedAt)", "checkout activation history");
+  notContains(actions, 'saleModel === "paid" &&\n    Boolean(work.saleConfiguration.activatedAt)', "draft model must not erase prior paid history");
+});

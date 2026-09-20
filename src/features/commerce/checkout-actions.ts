@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
@@ -50,6 +51,12 @@ export async function completeZeroTotalCheckoutAction(formData: FormData) {
   if (!work) {
     redirect(destination(slug, "eser-bulunamadi", returnTo));
   }
+
+  await enforceAdultWorkGate({
+    returnTo: destination(slug, "yas-kontrolu", returnTo),
+    slug,
+    user,
+  });
 
   const result = await completeZeroTotalCheckout({
     couponCode,

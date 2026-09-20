@@ -1,6 +1,6 @@
 # İlkOku Commerce UAT v1
 
-Status: **Implementation audit / human UAT pending**
+Status: **Implementation audit PASS / human browser UAT pending**
 
 This checklist validates the frozen model in `docs/COMMERCE_FOUNDATION_V1.md`.
 Automated contract/build checks can prove code invariants, but they do not replace
@@ -15,6 +15,28 @@ areas, and private-route protection. It runs inside `npm run test:security`.
 
 Passing this audit means the implementation files agree on the frozen rules; it
 does **not** mark browser/human UAT as complete.
+
+
+## Implementation audit result — 20.09.2026
+
+CI Run **#2807** (`35537569339`) completed successfully on
+`feature/commerce-foundation-v1` after the frozen-model contract assertions
+were aligned with the confirmed-snapshot / `previouslyActivatedPaid` implementation.
+
+Code-level cross-audit result:
+
+- **A — Pre-activation writer flow:** W-01 through W-07 PASS.
+- **B — First real paid activation:** A-01 through A-04 PASS.
+- **C — Reader access:** R-01 through R-09 PASS.
+- **D — Checkout and order lifecycle:** C-01 through C-06 PASS.
+- **E — Coupons:** K-01 through K-06 PASS.
+- **F — Finance:** F-01 through F-08 PASS.
+- **G — Intentionally unresolved:** remains non-mutating/read-only where applicable; no policy was invented.
+
+This result is an implementation/code audit only. Separate writer, reader and
+admin browser UAT remains mandatory before merge. Provider-dependent scenarios
+must only be executed when an intentionally configured production-safe payment
+path exists.
 
 ## A. Pre-activation writer flow
 

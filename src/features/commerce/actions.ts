@@ -210,37 +210,38 @@ export async function acceptAuthorPublicationAgreementAction(formData: FormData)
     commerceStatusRedirect(parsedWorkId.data, "sozlesme-hazir-degil");
   }
 
-  const existing = await getAuthorAgreementAcceptance(writer.id, agreement);
+  const existing = await prisma.authorAgreement.findUnique({
+    where: {
+      authorId_agreementType_agreementVersion: {
+        authorId: writer.id,
+        agreementType: "author_publication_access",
+        agreementVersion: agreement.version,
+      },
+    },
+  });
+
+  if (existing && existing.documentHash !== agreement.documentHash) {
+    commerceStatusRedirect(parsedWorkId.data, "sozlesme-surum-uyusmazligi");
+  }
+
+  if (existing && existing.status !== "accepted") {
+    commerceStatusRedirect(parsedWorkId.data, "sozlesme-kaydi-kilitli");
+  }
+
   if (!existing) {
     const requestHeaders = await headers();
     const forwardedFor = requestHeaders.get("x-forwarded-for");
     const ipAddress = forwardedFor?.split(",")[0]?.trim() || null;
     const userAgent = requestHeaders.get("user-agent");
-    const acceptedAt = new Date();
 
-    await prisma.authorAgreement.upsert({
-      where: {
-        authorId_agreementType_agreementVersion: {
-          authorId: writer.id,
-          agreementType: "author_publication_access",
-          agreementVersion: agreement.version,
-        },
-      },
-      create: {
+    await prisma.authorAgreement.create({
+      data: {
         authorId: writer.id,
         agreementType: "author_publication_access",
         agreementVersion: agreement.version,
         documentHash: agreement.documentHash,
         status: "accepted",
-        acceptedAt,
-        ipAddress,
-        userAgent,
-      },
-      update: {
-        documentHash: agreement.documentHash,
-        status: "accepted",
-        acceptedAt,
-        revokedAt: null,
+        acceptedAt: new Date(),
         ipAddress,
         userAgent,
       },

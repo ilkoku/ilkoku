@@ -90,3 +90,22 @@ test("staged paid setup fixes the author price at zero and exposes no manual pri
   notContains(page, 'name="price"', "manual author price input");
   contains(productContract, "fixed **0 TRY** price", "staged zero-price product rule");
 });
+
+
+test("writer commerce agreement is fail-closed and final consent snapshots the frozen configuration", () => {
+  const agreement = source("src/features/commerce/agreement.ts");
+  const actions = source("src/features/commerce/actions.ts");
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+  const migration = source("prisma/migrations/20260920190000_commerce_foundation_v1/migration.sql");
+
+  contains(migration, "ILKOKU_AUTHOR_PUBLICATION_ACCESS", "dedicated writer commerce agreement template");
+  contains(migration, "'draft'", "agreement starts in draft lifecycle");
+  contains(agreement, "lifecycleStatus === \"active\"", "agreement active lifecycle gate");
+  contains(agreement, 'targetRole === "writer"', "writer-only agreement gate");
+  contains(actions, "getAuthorAgreementAcceptance", "accepted agreement requirement");
+  contains(actions, "workPublicationConsent.create", "immutable work confirmation snapshot");
+  contains(actions, "accessPlanSnapshot", "chapter access snapshot");
+  contains(actions, 'nextStatus === "active" ? now : null', "activation state persistence");
+  contains(page, "Hukuki inceleme ve gerekli onaylar tamamlanıp aktif", "inactive agreement writer notice");
+  contains(page, "Eser bazlı son onay", "work-level confirmation UI");
+});

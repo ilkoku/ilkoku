@@ -17,10 +17,11 @@ function parsePaymentMethod(value: FormDataEntryValue | null): CommercePaymentMe
 }
 
 function absoluteCheckoutReturnUrl(slug: string, returnTo: string) {
-  const siteUrl =
-    process.env.SITE_URL ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "http://localhost:3000";
+  const configuredSiteUrl =
+    process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? null;
+  if (!configuredSiteUrl && process.env.NODE_ENV === "production") return null;
+
+  const siteUrl = configuredSiteUrl ?? "http://localhost:3000";
   const url = new URL("/satinal/" + encodeURIComponent(slug), siteUrl);
   if (returnTo) url.searchParams.set("from", returnTo);
   return url.toString();
@@ -182,6 +183,11 @@ export async function beginPaidCheckoutAction(formData: FormData) {
   const ipAddress = forwardedFor?.split(",")[0]?.trim() || null;
   const userAgent = requestHeaders.get("user-agent");
 
+  const providerReturnUrl = absoluteCheckoutReturnUrl(slug, returnTo);
+  if (!providerReturnUrl) {
+    redirect(destination(slug, "odeme-donus-adresi-hazir-degil", returnTo));
+  }
+
   const result = await startPaidCheckout({
     consent: {
       documentHash: terms.documentHash,
@@ -192,7 +198,7 @@ export async function beginPaidCheckoutAction(formData: FormData) {
     couponCode: couponCode || null,
     method,
     readerId: user.id,
-    returnUrl: absoluteCheckoutReturnUrl(slug, returnTo),
+    returnUrl: providerReturnUrl,
     workId: work.id,
   });
 

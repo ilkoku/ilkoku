@@ -30,6 +30,8 @@ const statusMessages: Record<string, string> = {
   "sozlesme-hazir-degil": "Yazar Yayın ve Erişim Sözleşmesi henüz aktif değil.",
   "sozlesme-kabul-edildi": "Güncel sözleşme kabulün kaydedildi.",
   "sozlesme-kabul-gerekli": "Eser son onayı için önce güncel sözleşmeyi kabul etmelisin.",
+  "sozlesme-surum-uyusmazligi": "Aynı sözleşme sürümünde farklı belge içeriği tespit edildi. Kayıt değiştirilmedi; yönetim kontrolü gerekiyor.",
+  "sozlesme-kaydi-kilitli": "Bu sözleşme sürümüne ait önceki kayıt artık kabul durumunda değil. Kayıt değiştirilmedi; yönetim kontrolü gerekiyor.",
   "eser-onayi-gerekli": "Eser bazlı son onay kutusunu işaretlemelisin.",
   "eser-bulunamadi": "Eser bulunamadı veya artık bu işlem için uygun değil.",
   "yayin-modeli-gerekli": "Önce Ücretsiz veya Ücretli yayın modelini kaydetmelisin.",

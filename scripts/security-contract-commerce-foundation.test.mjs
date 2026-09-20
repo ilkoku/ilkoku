@@ -65,3 +65,14 @@ test("finance foundation is ledger-based and supports refunds and payouts", () =
   contains(productContract, "Gross sales volume is not İlkOku revenue.", "gross-vs-platform-income rule");
   contains(productContract, "A platform coupon **must not reduce the author's earning base**.", "platform coupon author protection");
 });
+
+
+test("commerce rollout defaults to disabled so staged paid works do not lock readers", () => {
+  const runtime = source("src/features/commerce/runtime.ts");
+  const envExample = source(".env.example");
+  const productContract = source("docs/COMMERCE_FOUNDATION_V1.md");
+
+  contains(runtime, 'process.env.COMMERCE_CHECKOUT_ENABLED === "true"', "explicit opt-in commerce flag");
+  contains(envExample, 'COMMERCE_CHECKOUT_ENABLED="false"', "disabled default example");
+  contains(productContract, "A paid configuration must not lock reader access while checkout is disabled.", "staged paid access rule");
+});

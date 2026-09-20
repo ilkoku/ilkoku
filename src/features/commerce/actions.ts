@@ -431,7 +431,11 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
   revalidateCommerce(work.id);
   commerceStatusRedirect(
     work.id,
-    nextStatus === "active" ? "yayin-onaylandi" : "satis-hazir",
+    nextStatus === "active"
+      ? "yayin-onaylandi"
+      : previouslyActivatedPaid
+        ? "satis-hazir-erisim-korunuyor"
+        : "satis-hazir",
   );
 }
 

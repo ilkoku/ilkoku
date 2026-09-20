@@ -129,6 +129,7 @@ export default async function CheckoutPreparationPage({
     (previouslyActivatedPaid ||
       (checkoutEnabled &&
         hasAvailableProvider &&
+        Boolean(purchaseTerms) &&
         configuration.status === "active"));
   const checkoutConfigurationActive =
     checkoutEnabled &&

@@ -265,6 +265,7 @@ export async function listPlatformCampaignCosts(q?: string) {
 
   return prisma.financialLedger.findMany({
     where: {
+      currency: "TRY",
       entryType: "platform_coupon_discount",
       ...(query
         ? {
@@ -323,6 +324,7 @@ export async function listAuthorEarningLedger(q?: string) {
 
   return prisma.financialLedger.findMany({
     where: {
+      currency: "TRY",
       entryType: "author_earning",
       ...(query
         ? {
@@ -373,6 +375,7 @@ export async function listPlatformIncomeLedger(q?: string) {
 
   return prisma.financialLedger.findMany({
     where: {
+      currency: "TRY",
       entryType: "platform_commission",
       ...(query
         ? {
@@ -418,6 +421,7 @@ export async function listPlatformIncomeLedger(q?: string) {
 
 export async function getFinanceReconciliationSnapshot() {
   const [
+    paidOrderCount,
     paidOrders,
     grossEntries,
     activeEntitlements,
@@ -425,6 +429,7 @@ export async function getFinanceReconciliationSnapshot() {
     pendingPayments,
     pendingOrders,
   ] = await Promise.all([
+    prisma.order.count({ where: { status: "paid" } }),
     prisma.order.findMany({
       where: { status: "paid" },
       select: {
@@ -456,7 +461,7 @@ export async function getFinanceReconciliationSnapshot() {
   );
 
   return {
-    paidOrderCount: paidOrders.length,
+    paidOrderCount,
     grossEntryCount: grossEntries,
     activeEntitlementCount: activeEntitlements,
     successfulPaymentCount: successfulPayments,

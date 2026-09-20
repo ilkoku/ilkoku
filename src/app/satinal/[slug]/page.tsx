@@ -127,8 +127,7 @@ export default async function CheckoutPreparationPage({
   }
 
   const previouslyActivatedPaid =
-    configuration?.saleModel === "paid" &&
-    Boolean(configuration.activatedAt);
+    Boolean(configuration?.activatedAt);
   const paidAccessEnforced =
     effectiveCommerce.saleModel === "paid" &&
     (previouslyActivatedPaid ||

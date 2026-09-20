@@ -11,6 +11,7 @@ import {
   getApplicableCheckoutCoupon,
   getCheckoutWorkBySlug,
 } from "@/features/commerce/checkout-repository";
+import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
 import { calculateCommercePricing } from "@/features/commerce/pricing";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import styles from "@/features/commerce/commerce.module.css";
@@ -29,6 +30,7 @@ const checkoutMessages: Record<string, string> = {
   "kupon-gecersiz": "Kupon artık geçerli değil veya kullanım hakkı kalmadı.",
   "sifir-toplam-gerekli": "Bu işlem yalnız toplam tutarı 0 TL olan kuponlu siparişlerde tamamlanabilir.",
   "eser-bulunamadi": "Eser bulunamadı.",
+  "satin-alma-kosullari-hazir-degil": "Dijital içerik satın alma koşulları henüz aktif değil. Satın alma işlemi başlatılamaz.",
 };
 
 function formatMoney(value: bigint, currency = "TRY") {
@@ -76,7 +78,10 @@ export default async function CheckoutPreparationPage({
     user: profile,
   });
 
-  const work = await getCheckoutWorkBySlug(slug, profile.id);
+  const [work, purchaseTerms] = await Promise.all([
+    getCheckoutWorkBySlug(slug, profile.id),
+    getActiveReaderPurchaseTerms(),
+  ]);
   if (!work) notFound();
 
   const returnTo = safeReturnPath(query.from, work.slug);
@@ -233,7 +238,15 @@ export default async function CheckoutPreparationPage({
         <section className={styles.panel}>
           <h2>{pricing.finalAmount === BigInt(0) ? "Siparişi tamamla" : "Ödeme yöntemi"}</h2>
 
-          {pricing.finalAmount === BigInt(0) && coupon ? (
+          {!purchaseTerms ? (
+            <div className={styles.notice}>
+              Dijital içerik satın alma koşulları henüz aktif değil. Hukuki
+              inceleme ve yönetim aktivasyonu tamamlanmadan sipariş
+              oluşturulmayacak.
+            </div>
+          ) : null}
+
+          {pricing.finalAmount === BigInt(0) && coupon && purchaseTerms ? (
             <>
               <div className={styles.successNotice}>
                 Kupon toplam tutarı 0 TL&apos;ye düşürdü. Harici ödeme
@@ -248,7 +261,8 @@ export default async function CheckoutPreparationPage({
                 <label className={styles.confirmation}>
                   <input name="acceptDigitalContent" type="checkbox" />
                   <span>
-                    Dijital içerik satın alma koşullarını okudum ve kabul ediyorum.
+                    {purchaseTerms.title} (sürüm {purchaseTerms.version}) metnini
+                    okudum ve kabul ediyorum.
                   </span>
                 </label>
 

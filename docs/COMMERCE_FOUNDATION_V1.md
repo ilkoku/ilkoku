@@ -258,6 +258,7 @@ The first operational screens are wired directly to commerce records:
 - **İadeler** is intentionally read-only in this phase. No approve/process action is exposed until partial-refund policy, coupon reuse after refund, and provider refund adapters are explicitly defined.
 - **Erişim Hakları** shows entitlement source/status, reader, work sale state and linked order without deriving access from the current work price.
 - **Ödeme Sağlayıcıları** exposes rollout/provider readiness without displaying or editing secrets. It is read-only in this phase.
+- **Ayarlar** exposes checkout rollout, TRY currency, author agreement lifecycle, reader purchase-terms lifecycle and provider readiness as a read-only deployment/status view.
 
 ### Finans & Gelirler
 

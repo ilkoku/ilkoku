@@ -32,6 +32,10 @@ function formatDate(value: Date | null) {
   }).format(value);
 }
 
+function formatOrderStatus(status: "paid" | "refunded") {
+  return status === "refunded" ? "İade edildi" : "Ödendi";
+}
+
 export default async function WriterIncomePage() {
   const profile = await getCurrentProfile();
 
@@ -59,7 +63,7 @@ export default async function WriterIncomePage() {
   return (
     <AppShell profile={profile}>
       <div className={styles.page}>
-        <header className={styles.hero}>
+        <header className={`${styles.hero} ${styles.writerFinanceHero}`}>
           <div>
             <span className={styles.eyebrow}>Yazar finans görünümü</span>
             <h1>Gelirler</h1>
@@ -69,44 +73,44 @@ export default async function WriterIncomePage() {
             </p>
           </div>
           <span className={styles.badge}>
-            {paidCommerceLive ? "Tahsilat aktif" : "Tahsilat hazırlıkta"}
+            {paidCommerceLive ? "Tahsilat aktif" : "Ödeme sistemi hazırlanıyor"}
           </span>
         </header>
 
-        <section className={styles.statGrid}>
-          <article className={styles.stat}>
+        <section className={`${styles.statGrid} ${styles.writerFinanceStatGrid}`}>
+          <article className={`${styles.stat} ${styles.writerFinanceStat}`}>
             <span>Toplam satış</span>
             <strong>{formatMoney(finance.grossSales, finance.currency)}</strong>
           </article>
-          <article className={styles.stat}>
+          <article className={`${styles.stat} ${styles.writerFinanceStat}`}>
             <span>Kesintiler</span>
             <strong>{formatMoney(deductions, finance.currency)}</strong>
           </article>
-          <article className={styles.stat}>
+          <article className={`${styles.stat} ${styles.writerFinanceStat}`}>
             <span>Net kazancım</span>
             <strong>
               {formatMoney(finance.authorEarnings, finance.currency)}
             </strong>
           </article>
-          <article className={styles.stat}>
+          <article className={`${styles.stat} ${styles.writerFinanceStat}`}>
             <span>Bekleyen</span>
             <strong>
               {formatMoney(finance.balance.pendingAmount, finance.currency)}
             </strong>
           </article>
-          <article className={styles.stat}>
+          <article className={`${styles.stat} ${styles.writerFinanceStat}`}>
             <span>Ödenebilir</span>
             <strong>
               {formatMoney(finance.balance.availableAmount, finance.currency)}
             </strong>
           </article>
-          <article className={styles.stat}>
+          <article className={`${styles.stat} ${styles.writerFinanceStat}`}>
             <span>Ödeme sürecinde</span>
             <strong>
               {formatMoney(finance.balance.processingAmount, finance.currency)}
             </strong>
           </article>
-          <article className={styles.stat}>
+          <article className={`${styles.stat} ${styles.writerFinanceStat}`}>
             <span>Ödenen</span>
             <strong>
               {formatMoney(finance.balance.paidAmount, finance.currency)}
@@ -115,19 +119,19 @@ export default async function WriterIncomePage() {
         </section>
 
         <div className={styles.notice}>
-          Bu ekran gerçek commerce ledger ve yazar bakiye kayıtlarından
-          beslenir. Komisyon veya vergi oranı burada yeniden hesaplanmaz;
-          yalnız sistemde oluşmuş finans hareketleri gösterilir.
+          Bu ekran İlkOku’da oluşan gerçek satış ve yazar bakiye kayıtlarını
+          gösterir. Komisyon veya vergi oranı burada yeniden hesaplanmaz;
+          yalnızca kaydedilmiş finans hareketleri görüntülenir.
         </div>
 
-        <section className={styles.panel}>
+        <section className={`${styles.panel} ${styles.writerFinancePanel}`}>
           <div className={styles.panelHeader}>
             <div>
               <span className={styles.eyebrow}>Eser bazında</span>
               <h2>Gelir özeti</h2>
               <p>
-                Brüt satış, provider ücreti, İlkOku hizmet payı, iade, vergi ve
-                net yazar hakediş hareketleri ayrı gösterilir.
+                Brüt satış, ödeme hizmeti ücreti, İlkOku hizmet payı, iade,
+                vergi / stopaj ve net hakediş ayrı gösterilir.
               </p>
             </div>
             <span className={styles.badge}>{finance.byWork.length} eser</span>
@@ -169,16 +173,7 @@ export default async function WriterIncomePage() {
                       </strong>
                     </span>
                     <span>
-                      Yazar kupon indirimi
-                      <strong>
-                        {formatMoney(
-                          work.authorCouponDiscount,
-                          finance.currency,
-                        )}
-                      </strong>
-                    </span>
-                    <span>
-                      Provider ücreti
+                      Ödeme hizmeti ücreti
                       <strong>
                         {formatMoney(work.providerFees, finance.currency)}
                       </strong>
@@ -227,14 +222,14 @@ export default async function WriterIncomePage() {
           )}
         </section>
 
-        <section className={styles.panel}>
+        <section className={`${styles.panel} ${styles.writerFinancePanel}`}>
           <div className={styles.panelHeader}>
             <div>
               <span className={styles.eyebrow}>Satış geçmişi</span>
               <h2>Son siparişler</h2>
               <p>
-                Okur ödeme bilgileri gösterilmez. Yalnız eser, sipariş ve
-                finans snapshot&apos;ı görünür.
+                Okurun ödeme bilgileri gösterilmez. Yalnızca eser, sipariş ve
+                satış anındaki finans özeti görünür.
               </p>
             </div>
             <span className={styles.badge}>
@@ -283,7 +278,7 @@ export default async function WriterIncomePage() {
                   </div>
 
                   <small>
-                    Durum: {order.status}
+                    Durum: {formatOrderStatus(order.status)}
                     {order.couponOwnerSnapshot === "platform"
                       ? " · İlkOku kuponu"
                       : order.couponOwnerSnapshot === "author"

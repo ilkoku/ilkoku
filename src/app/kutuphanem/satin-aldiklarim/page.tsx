@@ -23,7 +23,11 @@ function formatDate(value: Date) {
   }).format(value);
 }
 
-export default async function PurchasedLibraryPage() {
+export default async function PurchasedLibraryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ durum?: string; siparis?: string }>;
+}) {
   const profile = await getCurrentProfile();
 
   if (!profile) {
@@ -34,7 +38,16 @@ export default async function PurchasedLibraryPage() {
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 
-  const entitlements = await listReaderPurchasedWorks(profile.id);
+  const [entitlements, query] = await Promise.all([
+    listReaderPurchasedWorks(profile.id),
+    searchParams,
+  ]);
+  const flash =
+    query.durum === "eklendi"
+      ? `Eser erişimi açıldı${query.siparis ? ` · Sipariş ${query.siparis}` : ""}.`
+      : query.durum === "zaten-erisim-var"
+        ? "Bu eser zaten kütüphanende."
+        : null;
 
   return (
     <AppShell profile={profile}>
@@ -51,6 +64,8 @@ export default async function PurchasedLibraryPage() {
             Okuma masama dön
           </Link>
         </header>
+
+        {flash ? <div className={styles.successNotice}>{flash}</div> : null}
 
         {entitlements.length === 0 ? (
           <div className={styles.empty}>

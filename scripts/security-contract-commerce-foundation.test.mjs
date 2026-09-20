@@ -497,3 +497,50 @@ test("provider webhook cannot reach payment lifecycle before adapter verificatio
     "payment lifecycle must run only after provider verification",
   );
 });
+
+
+test("admin payment operations are backed by commerce records", () => {
+  const overview = source("src/app/admin/odeme-sistemi/page.tsx");
+  const repository = source("src/features/commerce/admin-operations-repository.ts");
+  const orders = source("src/app/admin/odeme-sistemi/siparisler/page.tsx");
+  const payments = source("src/app/admin/odeme-sistemi/odemeler/page.tsx");
+  const refunds = source("src/app/admin/odeme-sistemi/iadeler/page.tsx");
+
+  contains(overview, 'href="/sistem-yonetimi/odeme-sistemi/siparisler"', "orders operations link");
+  contains(overview, 'href="/sistem-yonetimi/odeme-sistemi/odemeler"', "payments operations link");
+  contains(overview, 'href="/sistem-yonetimi/odeme-sistemi/iadeler"', "refund operations link");
+
+  contains(repository, "prisma.order.findMany", "orders repository");
+  contains(repository, "prisma.payment.findMany", "payments repository");
+  contains(repository, "prisma.refund.findMany", "refund repository");
+  contains(repository, "take: 200", "bounded operations queries");
+
+  contains(orders, "authorEarningBaseAmount", "order author earning base visibility");
+  contains(orders, "documentVersion", "order terms evidence visibility");
+  contains(payments, "providerTransactionId", "provider transaction visibility");
+  contains(refunds, "salt okunurdur", "refund policy remains read-only");
+});
+
+
+test("refund admin does not invent execution rules before policy is frozen", () => {
+  const refundPage = source("src/app/admin/odeme-sistemi/iadeler/page.tsx");
+  const repository = source("src/features/commerce/admin-operations-repository.ts");
+
+  contains(refundPage, "İade işlemi burada yürütülmüyor", "refund read-only notice");
+  contains(refundPage, "kısmi iade politikası", "partial refund remains undecided");
+  contains(refundPage, "kupon iade sonrası", "coupon restore/reuse remains undecided");
+  notContains(refundPage, 'action={', "no refund mutation action");
+  notContains(repository, "prisma.refund.update", "no refund mutation repository");
+  notContains(repository, "prisma.refund.create", "no invented refund request creation");
+});
+
+
+test("admin operations avoid exposing payment credentials", () => {
+  const paymentPage = source("src/app/admin/odeme-sistemi/odemeler/page.tsx");
+  const repository = source("src/features/commerce/admin-operations-repository.ts");
+
+  contains(paymentPage, "Kart veya operatör kimlik bilgileri burada", "payment credential privacy explanation");
+  notContains(repository, "cardNumber", "no card number field");
+  notContains(repository, "cvv", "no cvv field");
+  notContains(repository, "pan", "no payment PAN field");
+});

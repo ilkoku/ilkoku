@@ -17,6 +17,8 @@ export const navigationContent = {
     { label: "Ana Sayfa", href: "/yazar" },
     { label: "Yazmaya Devam Et", href: "/yazmaya-devam" },
     { label: "Eserlerim", href: "/eserlerim" },
+    { label: "Satış & Erişim", href: "/satis-erisim" },
+    { label: "Gelirler", href: "/gelirler" },
     { label: "Yorumlarım", href: "/yorumlarim" },
     { label: "Geri Bildirimler", href: "/geri-bildirimler" },
     { label: "Yayınevleri", href: "/yayinevleri" },

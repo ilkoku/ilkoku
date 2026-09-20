@@ -41,6 +41,17 @@ that row `HUMAN_PENDING` with the prerequisite recorded.
 - Therefore no browser row is promoted to `HUMAN_PASS`; affected rows remain `HUMAN_PENDING` until the exact deployed SHA and real role/account session are verified.
 - This is an evidence/prerequisite gap, not a product failure; no row is marked `BLOCKED` on this basis.
 
+## 1.1 Exact deployment SHA verification
+
+Before any browser scenario:
+
+1. Read the current PR #945 HEAD SHA from GitHub.
+2. Open `/api/build-info` on the exact preview/staging host being tested.
+3. Confirm the returned `commitSha` equals the full PR HEAD SHA.
+4. If `commitSha` is `null`, missing, stale or different, do not start browser acceptance; keep the rows `HUMAN_PENDING`.
+
+The endpoint is generated from build-time `git rev-parse HEAD`; it does not read runtime ENV values, user data or the database, and its response is `no-store` / `noindex`.
+
 ## 2. Required environment record
 
 Record these before any browser test:

@@ -79,3 +79,38 @@ export async function getAuthorCommerceWork(authorId: string, workId: string) {
     },
   });
 }
+
+
+export async function listAuthorCoupons(authorId: string) {
+  return prisma.coupon.findMany({
+    where: {
+      owner: "author",
+      authorId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      code: true,
+      discountType: true,
+      discountValue: true,
+      status: true,
+      startsAt: true,
+      endsAt: true,
+      totalUsageLimit: true,
+      perUserUsageLimit: true,
+      usageCount: true,
+      workScopes: {
+        select: {
+          work: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}

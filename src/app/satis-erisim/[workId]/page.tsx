@@ -416,8 +416,14 @@ export default async function WriterCommerceWorkPage({
                 type="checkbox"
               />
               <span>
-                Bu eserin yukarıdaki yayın modeli, bölüm erişimleri ve güncel
-                sözleşme sürümüyle kaydedilmesini onaylıyorum.
+                {currentModel === "paid"
+                  ? paidPricingEnabled
+                    ? `Bu eserin ${formatPrice(
+                        work.saleConfiguration?.priceAmount,
+                        work.saleConfiguration?.currency,
+                      )} satış fiyatıyla satışa açılmasını onaylıyorum.`
+                    : "Bu eserin ücretli model, 0 TL hazırlık fiyatı ve yukarıdaki erişim planıyla satış altyapısına hazırlanmasını onaylıyorum."
+                  : "Bu eserin yukarıdaki koşullarla yayımlanmasını onaylıyorum."}
               </span>
             </label>
 
@@ -426,7 +432,11 @@ export default async function WriterCommerceWorkPage({
               disabled={!finalReady}
               type="submit"
             >
-              {currentModel === "paid" ? "Satışa hazırla" : "Yayın ayarlarını onayla"}
+              {currentModel === "paid"
+                ? paidPricingEnabled
+                  ? "SATIŞA AÇ"
+                  : "SATIŞA HAZIRLA"
+                : "YAYINA AÇ"}
             </button>
           </form>
 

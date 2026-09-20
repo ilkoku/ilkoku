@@ -44,7 +44,7 @@ test("UAT R: previously activated paid work never becomes free during payment ou
 
   has(contract, "temporary checkout/provider outage does **not** unlock", "frozen outage rule");
   has(access, "previouslyActivatedPaid", "runtime activation history");
-  has(query, "Boolean(saleConfiguration.activatedAt)", "public activation history");
+  has(query, "Boolean(saleConfiguration?.activatedAt)", "public activation history");
   has(query, "commerceEnforcementActive", "public enforcement state");
   has(checkout, "eser bu nedenle ücretsiz erişime açılmaz", "checkout outage lock copy");
   has(showcase, "Mevcut erişim hakları korunur", "public outage entitlement copy");

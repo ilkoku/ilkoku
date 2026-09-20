@@ -16,6 +16,7 @@ import {
   getAuthorPublicationAgreementStatus,
 } from "@/features/commerce/agreement";
 import { getAuthorCommerceWork } from "@/features/commerce/repository";
+import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import styles from "@/features/commerce/commerce.module.css";
@@ -58,6 +59,7 @@ const statusMessages: Record<string, string> = {
   "yayin-onaylandi": "Eserin yayın ve erişim ayarları onaylandı.",
   "satis-hazir": "Ücretli eser hazırlık durumunda kaydedildi. İlk gerçek paid access aktivasyonuna kadar mevcut okuma erişimi açık kalır.",
   "satis-hazir-erisim-korunuyor": "Ücretli eser ayarları kaydedildi. Eser daha önce paid access olarak aktive edildiği için Kilitli bölümler korunur; yeni satın alma ödeme yolu yeniden hazır olduğunda açılır.",
+  "satis-hazir-kosullar-bekleniyor": "Ücretli eser ve gerçek fiyat kaydedildi. Okur Dijital İçerik Satın Alma Koşulları henüz aktif olmadığı için eser satışa açılmadı.",
 };
 
 function lifecycleLabel(value: string | undefined) {
@@ -91,11 +93,18 @@ export default async function WriterCommerceWorkPage({
   const { workId } = await params;
   const query = await searchParams;
 
-  const [work, checkoutEnabled, agreement, agreementStatus] = await Promise.all([
+  const [
+    work,
+    checkoutEnabled,
+    agreement,
+    agreementStatus,
+    readerPurchaseTerms,
+  ] = await Promise.all([
     getAuthorCommerceWork(profile.id, workId),
     Promise.resolve(isCommerceCheckoutEnabled()),
     getActiveAuthorPublicationAgreement(),
     getAuthorPublicationAgreementStatus(),
+    getActiveReaderPurchaseTerms(),
   ]);
   const paymentProviderReady = hasOperationalPaymentProvider();
 
@@ -109,8 +118,10 @@ export default async function WriterCommerceWorkPage({
   const previouslyActivatedPaid =
     currentModel === "paid" &&
     Boolean(work.saleConfiguration?.activatedAt);
-  const paidPricingEnabled =
-    (checkoutEnabled && paymentProviderReady) || previouslyActivatedPaid;
+  const paymentPathReady = checkoutEnabled && paymentProviderReady;
+  const paidPricingEnabled = paymentPathReady || previouslyActivatedPaid;
+  const paidActivationReady =
+    paymentPathReady && Boolean(readerPurchaseTerms);
   const plannedChapters = work.chapters.filter((chapter) => chapter.commerceAccess);
   const previewCount = plannedChapters.filter(
     (chapter) => chapter.commerceAccess?.accessType === "preview",
@@ -157,6 +168,16 @@ export default async function WriterCommerceWorkPage({
             fakat gerçek ödeme yolu ve operasyonel provider birlikte hazır
             olana kadar okur tarafında erişim kilidi uygulanmaz. Ücretli fiyatı
             bu aşamada sabit 0 TL&apos;dir.
+          </div>
+        ) : null}
+
+        {currentModel === "paid" &&
+        paymentPathReady &&
+        !readerPurchaseTerms ? (
+          <div className={styles.notice}>
+            Gerçek ödeme yolu hazır ve eser fiyatı kaydedilebilir; ancak Okur
+            Dijital İçerik Satın Alma Koşulları henüz aktif değil. Eser bu
+            aşamada satışa açılmaz ve yalnız hazır durumda tutulur.
           </div>
         ) : null}
 
@@ -418,12 +439,17 @@ export default async function WriterCommerceWorkPage({
               />
               <span>
                 {currentModel === "paid"
-                  ? paidPricingEnabled
+                  ? paidActivationReady
                     ? `Bu eserin ${formatPrice(
                         work.saleConfiguration?.priceAmount,
                         work.saleConfiguration?.currency,
                       )} satış fiyatıyla satışa açılmasını onaylıyorum.`
-                    : "Bu eserin ücretli model, 0 TL hazırlık fiyatı ve yukarıdaki erişim planıyla satış altyapısına hazırlanmasını onaylıyorum."
+                    : paidPricingEnabled
+                      ? `Bu eserin ${formatPrice(
+                          work.saleConfiguration?.priceAmount,
+                          work.saleConfiguration?.currency,
+                        )} fiyatı ve yukarıdaki erişim planıyla satışa hazır durumda kaydedilmesini onaylıyorum.`
+                      : "Bu eserin ücretli model, 0 TL hazırlık fiyatı ve yukarıdaki erişim planıyla satış altyapısına hazırlanmasını onaylıyorum."
                   : "Bu eserin yukarıdaki koşullarla yayımlanmasını onaylıyorum."}
               </span>
             </label>
@@ -434,7 +460,7 @@ export default async function WriterCommerceWorkPage({
               type="submit"
             >
               {currentModel === "paid"
-                ? paidPricingEnabled
+                ? paidActivationReady
                   ? "SATIŞA AÇ"
                   : "SATIŞA HAZIRLA"
                 : "YAYINA AÇ"}

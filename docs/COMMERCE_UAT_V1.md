@@ -6,6 +6,16 @@ This checklist validates the frozen model in `docs/COMMERCE_FOUNDATION_V1.md`.
 Automated contract/build checks can prove code invariants, but they do not replace
 a real browser test with writer, reader and admin accounts.
 
+## Automated cross-file audit
+
+`scripts/security-contract-commerce-uat.test.mjs` cross-checks the main UAT
+boundaries across writer UI/actions, reader access/redaction, checkout/provider
+lifecycle, zero-total coupons, finance separation, unresolved read-only policy
+areas, and private-route protection. It runs inside `npm run test:security`.
+
+Passing this audit means the implementation files agree on the frozen rules; it
+does **not** mark browser/human UAT as complete.
+
 ## A. Pre-activation writer flow
 
 | ID | Scenario | Expected |

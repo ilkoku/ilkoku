@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 import { validateCouponRules } from "./coupon-rules";
+import { buildCommerceOrderSnapshot } from "./order-snapshot";
 import { calculateCommercePricing } from "./pricing";
 import { isCommerceCheckoutEnabled } from "./runtime";
 
@@ -174,20 +175,21 @@ export async function completeZeroTotalCheckout(input: {
     const now = new Date();
     const order = await transaction.order.create({
       data: {
+        ...buildCommerceOrderSnapshot({
+          authorId: work.authorId,
+          coupon: {
+            code: coupon.code,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue,
+            id: coupon.id,
+            owner: coupon.owner,
+          },
+          currency: configuration.currency,
+          pricing,
+          readerId: input.readerId,
+          workId: work.id,
+        }),
         orderNo: orderNumber(),
-        readerId: input.readerId,
-        workId: work.id,
-        authorId: work.authorId,
-        couponId: coupon.id,
-        originalAmount: pricing.originalAmount,
-        discountAmount: pricing.discountAmount,
-        finalAmount: pricing.finalAmount,
-        authorEarningBaseAmount: pricing.authorEarningBaseAmount,
-        currency: configuration.currency,
-        couponCodeSnapshot: coupon.code,
-        couponOwnerSnapshot: coupon.owner,
-        discountTypeSnapshot: coupon.discountType,
-        discountValueSnapshot: coupon.discountValue,
         status: "paid",
         paidAt: now,
       },

@@ -97,7 +97,6 @@ export default async function WriterCommerceWorkPage({
     getAuthorPublicationAgreementStatus(),
   ]);
   const paymentProviderReady = hasOperationalPaymentProvider();
-  const paidPricingEnabled = checkoutEnabled && paymentProviderReady;
 
   if (!work) notFound();
 
@@ -106,6 +105,11 @@ export default async function WriterCommerceWorkPage({
     : null;
 
   const currentModel = work.saleConfiguration?.saleModel ?? "free";
+  const previouslyActivatedPaid =
+    currentModel === "paid" &&
+    Boolean(work.saleConfiguration?.activatedAt);
+  const paidPricingEnabled =
+    (checkoutEnabled && paymentProviderReady) || previouslyActivatedPaid;
   const plannedChapters = work.chapters.filter((chapter) => chapter.commerceAccess);
   const previewCount = plannedChapters.filter(
     (chapter) => chapter.commerceAccess?.accessType === "preview",

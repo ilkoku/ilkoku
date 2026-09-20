@@ -462,3 +462,45 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.paymentHistoryList {
+  display: grid;
+  gap: 14px;
+}
+
+.paymentHistoryCard {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #e7e2ef;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.paymentHistoryCard h2,
+.paymentHistoryCard p {
+  margin: 0;
+}
+
+.paymentAmounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.paymentAmounts span {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid #eee9f3;
+  border-radius: 12px;
+  background: #fcfbfe;
+  color: #706879;
+  font-size: 0.86rem;
+}
+
+.paymentAmounts strong {
+  color: #332b39;
+  font-size: 0.98rem;
+}

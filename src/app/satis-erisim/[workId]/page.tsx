@@ -18,13 +18,6 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-function inputPrice(value: bigint | null | undefined) {
-  if (value === null || value === undefined) return "";
-  const whole = value / 100n;
-  const fraction = String(value % 100n).padStart(2, "0");
-  return `${whole},${fraction}`;
-}
-
 export default async function WriterCommerceWorkPage({
   params,
 }: {
@@ -142,8 +135,8 @@ export default async function WriterCommerceWorkPage({
               <span className={styles.eyebrow}>2. adım</span>
               <h2>Yayın modelini seç</h2>
               <p>
-                Ücretli modeli seçersen fiyatı burada hazırlarsın. Bu kayıt
-                tek başına eseri satışa açmaz.
+                Ücretli modeli seçebilirsin. Ödeme sistemi devreye alınana
+                kadar ücretli alanı sabit 0 TL olarak hazırlanır.
               </p>
             </div>
           </div>
@@ -175,23 +168,14 @@ export default async function WriterCommerceWorkPage({
               <span>
                 <strong>Ücretli</strong>
                 <br />
+                Fiyat: 0 TL
+                <br />
                 Ön İzleme bölümleri açık, Kilitli bölümler satın alma hakkına
                 bağlı olacak.
               </span>
             </label>
           </div>
 
-          <label className={styles.priceField}>
-            <strong>Eser satış fiyatı</strong>
-            <input
-              defaultValue={inputPrice(work.saleConfiguration?.priceAmount)}
-              inputMode="decimal"
-              name="price"
-              placeholder="149,00"
-              type="text"
-            />
-            <small>Ücretli model seçildiğinde zorunludur. Para birimi TRY.</small>
-          </label>
 
           <button className={styles.action} type="submit">
             Yayın modelini kaydet

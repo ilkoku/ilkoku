@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { assertPaidWorkAccessPlanReadyForPublication } from "@/features/commerce/publication-guard";
 import {
   BOOK_PUBLICATION_LAYOUT_INPUT_NAME,
   parseBookPublicationLayoutSubmission,
@@ -296,6 +297,10 @@ export async function publishWorkAction(
       formData,
       parsed.data.workId,
     );
+    await assertPaidWorkAccessPlanReadyForPublication({
+      authorId: auth.authorId,
+      workId: parsed.data.workId,
+    });
     await prepareBookForPublication(
       auth.authorId,
       parsed.data.workId,

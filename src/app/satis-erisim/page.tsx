@@ -54,12 +54,12 @@ export default async function WriterCommercePage() {
             </p>
           </div>
           <div className={styles.heroActions}>
-            <Link className={styles.secondaryAction} href="/satis-erisim/kuponlar">
-              Kuponlar
-            </Link>
             <span className={styles.badge}>
               {paymentPathReady ? "Satış aktif" : "Satış hazırlık modu"}
             </span>
+            <Link className={styles.quietAction} href="/satis-erisim/kuponlar">
+              Kuponları yönet
+            </Link>
           </div>
         </header>
 

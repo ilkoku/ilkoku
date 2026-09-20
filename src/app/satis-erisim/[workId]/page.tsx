@@ -116,7 +116,6 @@ export default async function WriterCommerceWorkPage({
 
   const currentModel = work.saleConfiguration?.saleModel ?? "free";
   const previouslyActivatedPaid =
-    currentModel === "paid" &&
     Boolean(work.saleConfiguration?.activatedAt);
   const paymentPathReady = checkoutEnabled && paymentProviderReady;
   const paidPricingEnabled = paymentPathReady || previouslyActivatedPaid;

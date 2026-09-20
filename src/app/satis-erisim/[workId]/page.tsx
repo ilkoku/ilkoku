@@ -233,10 +233,10 @@ export default async function WriterCommerceWorkPage({
               />
               <span>
                 <strong>Ücretli</strong>
-                <br />
-                Fiyat: 0 TL
-                <br />
-                Gerçek fiyat alanı ödeme sistemi devreye alınırken açılacak.
+                <span className={styles.paidPrice}>0 TL</span>
+                <small>
+                  Gerçek fiyat alanı ödeme sistemi devreye alınırken açılacak.
+                </small>
               </span>
             </label>
           </div>

@@ -23,6 +23,13 @@ function formatMinorUnits(value: bigint, currency: string) {
   }).format(Number(value) / 100);
 }
 
+function formatSaleStatus(status: "draft" | "ready" | "active" | "paused") {
+  if (status === "ready") return "Hazır";
+  if (status === "active") return "Aktif";
+  if (status === "paused") return "Duraklatıldı";
+  return "Taslak";
+}
+
 export default async function WriterCommercePage() {
   const profile = await getCurrentProfile();
 
@@ -105,7 +112,7 @@ export default async function WriterCommercePage() {
                     {configuration ? (
                       <>
                         <span>•</span>
-                        <span>{configuration.status}</span>
+                        <span>{formatSaleStatus(configuration.status)}</span>
                       </>
                     ) : null}
                   </div>

@@ -831,3 +831,16 @@ test("writer final confirmation copy follows the frozen free paid and staged sta
   contains(page, '"SATIŞA HAZIRLA"', "staged paid confirmation button");
   contains(page, '"YAYINA AÇ"', "free confirmation button");
 });
+
+
+test("step three is explicitly free paid and staged zero belongs under paid", () => {
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+
+  contains(page, "<h2>Ücretsiz / Ücretli seç</h2>", "frozen step-three label");
+  const paidIndex = page.indexOf("<strong>Ücretli</strong>");
+  const zeroIndex = page.indexOf('<span className={styles.paidPrice}>0 TL</span>');
+  assert.ok(
+    paidIndex >= 0 && zeroIndex > paidIndex,
+    "0 TL must render inside the paid option after its label",
+  );
+});

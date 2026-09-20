@@ -14,17 +14,6 @@ async function authenticatedWriter() {
   return user?.role === "writer" ? user : null;
 }
 
-function parseTryMinorUnits(raw: FormDataEntryValue | null) {
-  const value = String(raw ?? "").trim().replace(",", ".");
-  if (!/^\d+(?:\.\d{1,2})?$/.test(value)) return null;
-
-  const [whole, fraction = ""] = value.split(".");
-  const minorText = `${whole}${fraction.padEnd(2, "0")}`;
-  const amount = BigInt(minorText);
-
-  return amount > 0n ? amount : null;
-}
-
 function revalidateCommerce(workId: string) {
   revalidatePath("/satis-erisim");
   revalidatePath(`/satis-erisim/${workId}`);
@@ -104,14 +93,10 @@ export async function saveWorkSaleModelAction(formData: FormData) {
 
   if (!work) return;
 
-  const priceAmount =
-    parsedModel.data === "paid"
-      ? parseTryMinorUnits(formData.get("price"))
-      : null;
-
-  if (parsedModel.data === "paid" && priceAmount === null) {
-    return;
-  }
+  // During the infrastructure phase, paid works are staged with a fixed
+  // zero price. Authors do not enter a monetary amount until real checkout
+  // is intentionally enabled in a later product decision.
+  const priceAmount = parsedModel.data === "paid" ? 0n : null;
 
   await prisma.$transaction(async (transaction) => {
     const oldPrice = work.saleConfiguration?.priceAmount ?? null;

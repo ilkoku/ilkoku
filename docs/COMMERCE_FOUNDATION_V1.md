@@ -346,3 +346,18 @@ Not enabled now:
 - tax/withholding execution.
 
 External payment providers will be attached later without changing the product model above.
+
+
+### Finance operations workspaces
+
+The Finance & Gelirler domain is wired to ledger/balance/payout records without inventing commission, tax, refund or payout execution rules.
+
+- **Finans Hareketleri** is the ledger browser and financial source-of-truth view.
+- **İlkOku Gelirleri** shows only recorded `platform_commission` movements. Gross sales volume is never labeled as İlkOku income.
+- **Yazar Hakedişleri** shows only recorded `author_earning` movements and the preserved order earning base.
+- **Yazar Bakiyeleri** shows AuthorBalance as an operational projection: pending, available, processing and paid.
+- **Yazar Ödemeleri** is read-only until payout method, thresholds, tax/withholding and transfer execution are explicitly defined.
+- **Kampanya Maliyetleri** shows `platform_coupon_discount` separately and keeps author earning-base visibility.
+- **Mutabakat** cross-checks paid orders, sale_gross ledger entries and active entitlements. It diagnoses; it does not auto-repair records.
+
+The writer **Gelirler** page reads the writer's ledger, balance projection and order snapshots. It shows sales, deduction movements, author earnings, pending/available/processing/paid balances and work-level details without exposing reader payment-provider identifiers or card/carrier data.

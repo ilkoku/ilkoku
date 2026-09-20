@@ -151,10 +151,10 @@ export async function getMemberPublicWorkBySlug(
     isCommerceCheckoutEnabled() && hasOperationalPaymentProvider();
   const readerPurchaseTerms =
     paymentPathReady &&
-    saleConfiguration?.saleModel === "paid" &&
-    saleConfiguration.status === "active" &&
-    saleConfiguration.priceAmount !== null &&
-    saleConfiguration.priceAmount > BigInt(0)
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "active" &&
+    effectiveCommerce.priceAmount !== null &&
+    effectiveCommerce.priceAmount > BigInt(0)
       ? await getActiveReaderPurchaseTerms()
       : null;
   const commerceEnforcementActive =
@@ -166,10 +166,10 @@ export async function getMemberPublicWorkBySlug(
   const purchaseAvailable =
     paymentPathReady &&
     Boolean(readerPurchaseTerms) &&
-    saleConfiguration?.saleModel === "paid" &&
-    saleConfiguration.status === "active" &&
-    saleConfiguration.priceAmount !== null &&
-    saleConfiguration.priceAmount > BigInt(0);
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "active" &&
+    effectiveCommerce.priceAmount !== null &&
+    effectiveCommerce.priceAmount > BigInt(0);
 
   const entitlement =
     commerceEnforcementActive && userId && !options.bypassCommerce

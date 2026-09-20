@@ -288,3 +288,15 @@ test("checkout keeps digital-content acceptance in the frozen purchase surface",
   contains(checkout, "Dijital içerik satın alma koşullarını", "digital content acceptance copy");
   contains(productContract, "digital-content purchase acceptance", "frozen checkout acceptance requirement");
 });
+
+
+test("paid publication requires explicit chapter access only after checkout activation", () => {
+  const guard = source("src/features/commerce/publication-guard.ts");
+  const workActions = source("src/features/works/actions.ts");
+
+  contains(guard, "if (!isCommerceCheckoutEnabled())", "current publication remains unaffected while checkout is disabled");
+  contains(guard, 'work.saleConfiguration?.saleModel !== "paid"', "free work publication bypass");
+  contains(guard, "!chapter.commerceAccess", "explicit chapter access requirement");
+  contains(guard, "Ön İzleme veya Kilitli", "writer-facing access choice requirement");
+  contains(workActions, "assertPaidWorkAccessPlanReadyForPublication", "publication flow commerce guard");
+});

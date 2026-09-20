@@ -473,103 +473,102 @@ export async function getFinanceReconciliationSnapshot() {
 }
 
 export async function getWriterFinanceOverview(authorId: string) {
-  const [ledger, balance, orders, paidWorks] = await Promise.all([
-    prisma.financialLedger.findMany({
-      where: { authorId, currency: "TRY" },
-      select: {
-        amount: true,
-        entryType: true,
-        createdAt: true,
-        workId: true,
-        orderId: true,
-        work: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 1000,
-    }),
-    prisma.authorBalance.findUnique({
-      where: {
-        authorId_currency: {
+  const [ledgerSummary, workLedger, balance, orders, paidWorks] =
+    await Promise.all([
+      prisma.financialLedger.groupBy({
+        by: ["entryType"],
+        where: { authorId, currency: "TRY" },
+        _sum: { amount: true },
+      }),
+      prisma.financialLedger.groupBy({
+        by: ["workId", "entryType"],
+        where: {
           authorId,
           currency: "TRY",
+          workId: { not: null },
         },
-      },
-      select: {
-        pendingAmount: true,
-        availableAmount: true,
-        processingAmount: true,
-        paidAmount: true,
-      },
-    }),
-    prisma.order.findMany({
-      where: {
-        authorId,
-        status: { in: ["paid", "refunded"] },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      select: {
-        id: true,
-        orderNo: true,
-        originalAmount: true,
-        discountAmount: true,
-        finalAmount: true,
-        authorEarningBaseAmount: true,
-        currency: true,
-        couponOwnerSnapshot: true,
-        status: true,
-        paidAt: true,
-        refundedAt: true,
-        work: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
+        _sum: { amount: true },
+      }),
+      prisma.authorBalance.findUnique({
+        where: {
+          authorId_currency: {
+            authorId,
+            currency: "TRY",
           },
         },
-      },
-    }),
-    prisma.work.findMany({
-      where: {
-        authorId,
-        archivedAt: null,
-        saleConfiguration: {
-          is: {
-            saleModel: "paid",
-          },
+        select: {
+          pendingAmount: true,
+          availableAmount: true,
+          processingAmount: true,
+          paidAmount: true,
         },
-      },
-      orderBy: { updatedAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        saleConfiguration: {
-          select: {
-            priceAmount: true,
-            currency: true,
-            status: true,
-          },
+      }),
+      prisma.order.findMany({
+        where: {
+          authorId,
+          status: { in: ["paid", "refunded"] },
         },
-        _count: {
-          select: {
-            commerceOrders: {
-              where: { status: "paid" },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        select: {
+          id: true,
+          orderNo: true,
+          originalAmount: true,
+          discountAmount: true,
+          finalAmount: true,
+          authorEarningBaseAmount: true,
+          currency: true,
+          couponOwnerSnapshot: true,
+          status: true,
+          paidAt: true,
+          refundedAt: true,
+          work: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
             },
           },
         },
-      },
-    }),
-  ]);
+      }),
+      prisma.work.findMany({
+        where: {
+          authorId,
+          archivedAt: null,
+          saleConfiguration: {
+            is: {
+              saleModel: "paid",
+            },
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          saleConfiguration: {
+            select: {
+              priceAmount: true,
+              currency: true,
+              status: true,
+            },
+          },
+          _count: {
+            select: {
+              commerceOrders: {
+                where: { status: "paid" },
+              },
+            },
+          },
+        },
+      }),
+    ]);
 
-  const sum = (types: Array<(typeof ledger)[number]["entryType"]>) =>
-    ledger
-      .filter((entry) => types.includes(entry.entryType))
-      .reduce((total, entry) => total + entry.amount, BigInt(0));
+  const totals = new Map(
+    ledgerSummary.map((entry) => [
+      entry.entryType,
+      entry._sum.amount ?? BigInt(0),
+    ]),
+  );
 
   const workMap = new Map<
     string,
@@ -611,48 +610,33 @@ export async function getWriterFinanceOverview(authorId: string) {
     });
   }
 
-  for (const entry of ledger) {
-    if (!entry.workId || !entry.work) continue;
-    const current = workMap.get(entry.workId) ?? {
-      workId: entry.workId,
-      title: entry.work.title,
-      grossSales: BigInt(0),
-      authorEarnings: BigInt(0),
-      providerFees: BigInt(0),
-      platformCommission: BigInt(0),
-      refunds: BigInt(0),
-      taxWithholding: BigInt(0),
-      adjustments: BigInt(0),
-      priceAmount: null,
-      currency: "TRY",
-      saleStatus: "draft",
-      unitsSold: 0,
-    };
+  for (const entry of workLedger) {
+    if (!entry.workId) continue;
+    const current = workMap.get(entry.workId);
+    if (!current) continue;
 
-    if (entry.entryType === "sale_gross") current.grossSales += entry.amount;
+    const amount = entry._sum.amount ?? BigInt(0);
+    if (entry.entryType === "sale_gross") current.grossSales += amount;
     if (entry.entryType === "author_earning")
-      current.authorEarnings += entry.amount;
+      current.authorEarnings += amount;
     if (entry.entryType === "payment_provider_fee")
-      current.providerFees += entry.amount;
+      current.providerFees += amount;
     if (entry.entryType === "platform_commission")
-      current.platformCommission += entry.amount;
-    if (entry.entryType === "refund") current.refunds += entry.amount;
+      current.platformCommission += amount;
+    if (entry.entryType === "refund") current.refunds += amount;
     if (entry.entryType === "tax_withholding")
-      current.taxWithholding += entry.amount;
-    if (entry.entryType === "adjustment")
-      current.adjustments += entry.amount;
-
-    workMap.set(entry.workId, current);
+      current.taxWithholding += amount;
+    if (entry.entryType === "adjustment") current.adjustments += amount;
   }
 
   return {
     currency: "TRY",
-    grossSales: sum(["sale_gross"]),
-    providerFees: sum(["payment_provider_fee"]),
-    platformCommission: sum(["platform_commission"]),
-    refunds: sum(["refund"]),
-    taxWithholding: sum(["tax_withholding"]),
-    authorEarnings: sum(["author_earning"]),
+    grossSales: totals.get("sale_gross") ?? BigInt(0),
+    providerFees: totals.get("payment_provider_fee") ?? BigInt(0),
+    platformCommission: totals.get("platform_commission") ?? BigInt(0),
+    refunds: totals.get("refund") ?? BigInt(0),
+    taxWithholding: totals.get("tax_withholding") ?? BigInt(0),
+    authorEarnings: totals.get("author_earning") ?? BigInt(0),
     balance: balance ?? {
       pendingAmount: BigInt(0),
       availableAmount: BigInt(0),

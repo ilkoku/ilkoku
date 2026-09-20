@@ -44,7 +44,7 @@ export default async function WriterCommercePage() {
   return (
     <AppShell profile={profile}>
       <div className={styles.page}>
-        <header className={styles.hero}>
+        <header className={`${styles.hero} ${styles.writerIndexHero}`}>
           <div>
             <span className={styles.eyebrow}>1. adım · Eser seç</span>
             <h1>Satış & Erişim</h1>
@@ -58,17 +58,16 @@ export default async function WriterCommercePage() {
               Kuponlar
             </Link>
             <span className={styles.badge}>
-              {paymentPathReady ? "Tahsilat yolu aktif" : "Altyapı hazırlık modu"}
+              {paymentPathReady ? "Satış aktif" : "Satış hazırlık modu"}
             </span>
           </div>
         </header>
 
         {!paymentPathReady ? (
           <div className={styles.notice}>
-            Ücretli eser ayarları şimdiden hazırlanabilir. Gerçek checkout ve
-            operasyonel ödeme sağlayıcısı birlikte hazır olana kadar ilk kez
-            aktive edilmemiş ücretli eserler okurun mevcut okuma erişimini
-            kısıtlamaz.
+            Ücretli eser ayarlarını şimdiden hazırlayabilirsin. İlk kez satışa
+            açılacak bir eser, ödeme altyapısı aktif edilene kadar okurların
+            mevcut erişimini değiştirmez.
           </div>
         ) : null}
 
@@ -93,7 +92,7 @@ export default async function WriterCommercePage() {
                     : "Ayarlanmadı";
 
               return (
-                <article className={styles.card} key={work.id}>
+                <article className={`${styles.card} ${styles.writerWorkCard}`} key={work.id}>
                   <div>
                     <span className={styles.eyebrow}>Eser</span>
                     <h2>{work.title}</h2>

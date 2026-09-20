@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 import { validateCouponRules } from "./coupon-rules";
+import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
 import { calculateCommercePricing } from "./pricing";
 import { isCommerceCheckoutEnabled } from "./runtime";
@@ -69,19 +70,35 @@ export async function completeZeroTotalCheckout(input: {
             priceAmount: true,
             saleModel: true,
             status: true,
+            activatedAt: true,
+          },
+        },
+        publicationConsents: {
+          orderBy: { confirmedAt: "desc" },
+          take: 1,
+          select: {
+            publicationModel: true,
+            priceAmount: true,
+            currency: true,
+            accessPlanSnapshot: true,
           },
         },
       },
     });
 
     const configuration = work?.saleConfiguration;
+    const effectiveCommerce = resolveEffectiveCommerceState({
+      configuration,
+      latestConsent: work?.publicationConsents[0] ?? null,
+    });
+
     if (
       !work ||
       !configuration ||
-      configuration.saleModel !== "paid" ||
-      configuration.status !== "active" ||
-      configuration.priceAmount === null ||
-      configuration.priceAmount <= BigInt(0)
+      effectiveCommerce.saleModel !== "paid" ||
+      effectiveCommerce.status !== "active" ||
+      effectiveCommerce.priceAmount === null ||
+      effectiveCommerce.priceAmount <= BigInt(0)
     ) {
       return { ok: false, reason: "work_unavailable" } as const;
     }
@@ -183,7 +200,7 @@ export async function completeZeroTotalCheckout(input: {
       return { ok: false, reason: "coupon_invalid" } as const;
     }
 
-    const pricing = calculateCommercePricing(configuration.priceAmount, {
+    const pricing = calculateCommercePricing(effectiveCommerce.priceAmount, {
       discountType: coupon.discountType,
       discountValue: coupon.discountValue,
       owner: coupon.owner,
@@ -205,7 +222,7 @@ export async function completeZeroTotalCheckout(input: {
             id: coupon.id,
             owner: coupon.owner,
           },
-          currency: configuration.currency,
+          currency: effectiveCommerce.currency,
           pricing,
           readerId: input.readerId,
           workId: work.id,
@@ -261,7 +278,7 @@ export async function completeZeroTotalCheckout(input: {
         idempotencyKey: order.id + ":sale_gross",
         entryType: "sale_gross",
         amount: pricing.originalAmount,
-        currency: configuration.currency,
+        currency: effectiveCommerce.currency,
         orderId: order.id,
         workId: work.id,
         authorId: work.authorId,

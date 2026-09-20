@@ -53,7 +53,8 @@ const statusMessages: Record<string, string> = {
   "yayin-modeli-gerekli": "Önce Ücretsiz veya Ücretli yayın modelini kaydetmelisin.",
   "bolum-gerekli": "Son onay için eserde en az bir bölüm bulunmalı.",
   "erisim-plani-gerekli": "Son onaydan önce tüm bölümlerin erişim planını kaydetmelisin.",
-  "fiyat-gerekli": "Gerçek ödeme sistemi açıkken ücretli eser için 0 TL dışında geçerli bir fiyat gerekir.",
+  "erisim-secimi-eksik": "Her bölüm için Ön İzleme veya Kilitli seçimini açıkça yapmalısın.",
+  "fiyat-gerekli": "Gerçek ödeme yolu ve operasyonel provider aktifken ücretli eser için 0 TL dışında geçerli bir fiyat gerekir.",
   "yayin-onaylandi": "Eserin yayın ve erişim ayarları onaylandı.",
   "satis-hazir": "Ücretli eser satışa hazır durumda kaydedildi. Tahsilat açılana kadar okur erişimi kapanmaz.",
 };

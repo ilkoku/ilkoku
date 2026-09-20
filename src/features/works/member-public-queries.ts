@@ -11,6 +11,7 @@ import {
   getLatestPublishedBookSnapshot,
 } from "./publication-snapshots";
 import { prisma } from "@/lib/prisma";
+import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
@@ -136,8 +137,17 @@ export async function getMemberPublicWorkBySlug(
     saleConfiguration?.saleModel === "paid" &&
     (Boolean(saleConfiguration.activatedAt) ||
       (paymentPathReady && saleConfiguration.status === "active"));
+  const readerPurchaseTerms =
+    paymentPathReady &&
+    saleConfiguration?.saleModel === "paid" &&
+    saleConfiguration.status === "active" &&
+    saleConfiguration.priceAmount !== null &&
+    saleConfiguration.priceAmount > BigInt(0)
+      ? await getActiveReaderPurchaseTerms()
+      : null;
   const purchaseAvailable =
     paymentPathReady &&
+    Boolean(readerPurchaseTerms) &&
     saleConfiguration?.saleModel === "paid" &&
     saleConfiguration.status === "active" &&
     saleConfiguration.priceAmount !== null &&

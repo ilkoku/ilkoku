@@ -161,3 +161,19 @@ test("UAT release surface: commerce workspaces are private and admin routes rema
   has(security, "systemManagementPath", "admin system-management boundary");
   has(proxy, "isAdminOnlyPath", "admin request authorization");
 });
+
+
+test("UAT W: unconfirmed edits keep the last confirmed paid reader state", () => {
+  const effective = source("src/features/commerce/effective-state.ts");
+  const actions = source("src/features/commerce/actions.ts");
+  const access = source("src/features/commerce/access.ts");
+  const publicQuery = source("src/features/works/member-public-queries.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+
+  has(actions, "const nextActivatedAt = work.saleConfiguration?.activatedAt ?? null", "draft preserves activation history");
+  has(effective, "shouldUseConfirmedPaidSnapshot", "confirmed snapshot selector");
+  has(effective, 'configuration.status !== "active"', "draft or ready boundary");
+  has(access, "effective.useConfirmedSnapshot", "reader access confirmed chapter plan");
+  has(publicQuery, "effectiveCommerce.accessPlan", "public showcase confirmed chapter plan");
+  has(checkout, "effectiveCommerce.saleModel", "checkout confirmed paid state");
+});

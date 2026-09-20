@@ -25,6 +25,12 @@ function orderNumber() {
 }
 
 export async function completeZeroTotalCheckout(input: {
+  consent: {
+    documentHash: string;
+    documentVersion: string;
+    ipAddress: string | null;
+    userAgent: string | null;
+  };
   couponCode: string;
   readerId: string;
   workId: string;
@@ -198,6 +204,19 @@ export async function completeZeroTotalCheckout(input: {
         orderNo: orderNumber(),
         status: "paid",
         paidAt: now,
+      },
+    });
+
+    await transaction.orderConsent.create({
+      data: {
+        orderId: order.id,
+        readerId: input.readerId,
+        consentType: "digital_content_purchase",
+        documentVersion: input.consent.documentVersion,
+        documentHash: input.consent.documentHash,
+        acceptedAt: now,
+        ipAddress: input.consent.ipAddress,
+        userAgent: input.consent.userAgent,
       },
     });
 

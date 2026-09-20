@@ -121,6 +121,7 @@ export async function getMemberPublicWorkBySlug(
           priceAmount: true,
           currency: true,
           status: true,
+          activatedAt: true,
         },
       },
     },
@@ -129,11 +130,12 @@ export async function getMemberPublicWorkBySlug(
   if (!work) return null;
 
   const saleConfiguration = work.saleConfiguration;
+  const paymentPathReady =
+    isCommerceCheckoutEnabled() && hasOperationalPaymentProvider();
   const commerceEnforcementActive =
-    isCommerceCheckoutEnabled() &&
-    hasOperationalPaymentProvider() &&
     saleConfiguration?.saleModel === "paid" &&
-    saleConfiguration.status === "active";
+    (Boolean(saleConfiguration.activatedAt) ||
+      (paymentPathReady && saleConfiguration.status === "active"));
 
   const entitlement =
     commerceEnforcementActive && userId && !options.bypassCommerce

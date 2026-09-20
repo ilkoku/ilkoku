@@ -27,6 +27,8 @@ export const adminNavigation: AdminNavItem[] = [
   { href: systemPath(), label: "Genel Bakış", icon: "dashboard" },
   { href: "/harita", label: "Sistem Haritası", icon: "audit" },
   { href: "/sozlesme", label: "Sözleşme Yönetimi", icon: "applications" },
+  { href: systemPath("/odeme-sistemi"), label: "Ödeme Sistemi", icon: "applications" },
+  { href: systemPath("/finans-gelirler"), label: "Finans & Gelirler", icon: "audit" },
   { href: systemPath("/demo"), label: "Demo Veri Merkezi", icon: "applications" },
   { href: systemPath("/kullanicilar"), label: "Kullanıcılar", icon: "users" },
   { href: systemPath("/eserler"), label: "Eserler", icon: "works" },

@@ -345,3 +345,81 @@
   cursor: not-allowed;
   opacity: 0.45;
 }
+
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field span {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4f4658;
+}
+
+.field input,
+.field select {
+  min-height: 44px;
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid #cfc6dc;
+  border-radius: 10px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.formActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
+.couponList {
+  display: grid;
+  gap: 12px;
+}
+
+.couponCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid #e7e2ef;
+  border-radius: 16px;
+  background: #fcfbfe;
+}
+
+.couponCard h3,
+.couponCard p {
+  margin: 0;
+}
+
+.couponCard > div {
+  display: grid;
+  gap: 6px;
+}
+
+.couponCard small {
+  color: #736c79;
+}
+
+@media (max-width: 720px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .couponCard {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

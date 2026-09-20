@@ -145,16 +145,18 @@ export async function saveWorkSaleModelAction(formData: FormData) {
   if (!work) return;
 
   const checkoutEnabled = isCommerceCheckoutEnabled();
+  const paymentProviderReady = hasOperationalPaymentProvider();
+  const paidPricingEnabled = checkoutEnabled && paymentProviderReady;
   const priceAmount =
     parsedModel.data === "free"
       ? null
-      : checkoutEnabled
+      : paidPricingEnabled
         ? parseTryMinorUnits(formData.get("price"))
         : BigInt(0);
 
   if (
     parsedModel.data === "paid" &&
-    checkoutEnabled &&
+    paidPricingEnabled &&
     priceAmount === null
   ) {
     return;
@@ -344,8 +346,10 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
   }
 
   const checkoutEnabled = isCommerceCheckoutEnabled();
+  const paymentProviderReady = hasOperationalPaymentProvider();
+  const paidPricingEnabled = checkoutEnabled && paymentProviderReady;
   if (
-    checkoutEnabled &&
+    paidPricingEnabled &&
     work.saleConfiguration.saleModel === "paid" &&
     (work.saleConfiguration.priceAmount === null ||
       work.saleConfiguration.priceAmount <= BigInt(0))
@@ -354,7 +358,6 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
   }
 
   const now = new Date();
-  const paymentProviderReady = hasOperationalPaymentProvider();
   const nextStatus =
     work.saleConfiguration.saleModel === "free" ||
     (checkoutEnabled && paymentProviderReady)

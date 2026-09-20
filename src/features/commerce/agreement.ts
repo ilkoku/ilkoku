@@ -73,3 +73,22 @@ export async function getAuthorAgreementAcceptance(
     orderBy: { acceptedAt: "desc" },
   });
 }
+
+export async function getAuthorPublicationAgreementStatus() {
+  const rows = await prisma.$queryRaw<RawAuthorPublicationAgreement[]>`
+    SELECT id, code, title, body, version, active, lifecycleStatus, targetRole, activatedAt
+    FROM ContractTemplate
+    WHERE code = ${AUTHOR_PUBLICATION_ACCESS_CONTRACT_CODE}
+    LIMIT 1
+  `;
+
+  const row = rows[0];
+  if (!row) return null;
+
+  return {
+    active: row.active === true || row.active === 1,
+    lifecycleStatus: row.lifecycleStatus,
+    title: row.title,
+    version: String(Number(row.version)),
+  };
+}

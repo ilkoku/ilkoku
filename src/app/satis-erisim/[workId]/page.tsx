@@ -27,8 +27,8 @@ export const dynamic = "force-dynamic";
 
 function inputPrice(value: bigint | null | undefined) {
   if (value === null || value === undefined) return "";
-  const whole = value / 100n;
-  const fraction = String(value % 100n).padStart(2, "0");
+  const whole = value / BigInt(100);
+  const fraction = String(value % BigInt(100)).padStart(2, "0");
   return `${whole},${fraction}`;
 }
 

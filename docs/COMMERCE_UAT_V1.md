@@ -1,0 +1,99 @@
+# İlkOku Commerce UAT v1
+
+Status: **Implementation audit / human UAT pending**
+
+This checklist validates the frozen model in `docs/COMMERCE_FOUNDATION_V1.md`.
+Automated contract/build checks can prove code invariants, but they do not replace
+a real browser test with writer, reader and admin accounts.
+
+## A. Pre-activation writer flow
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| W-01 | Writer opens Satış & Erişim | Work selection is step 1. |
+| W-02 | Writer plans chapter access | Every chapter must explicitly be Ön İzleme or Kilitli. Missing/tampered values fail closed. |
+| W-03 | Writer selects Ücretli before a real payment path exists | Price is fixed at **0 TL**; no price input is required. |
+| W-04 | Checkout flag is on but no operational provider exists | Work remains staged, price stays 0 TL for never-activated paid work, reader access remains open. |
+| W-05 | Writer accepts active agreement | Version/hash/time/audit evidence is stored; same-version hash mismatch is not overwritten. |
+| W-06 | Writer confirms a never-activated paid work without payment path | Configuration becomes ready/staged, not live paid access. |
+
+## B. First real paid activation
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| A-01 | Checkout + production-safe provider are operational | Real price entry becomes available. |
+| A-02 | Paid price is 0 or invalid | Final paid activation fails closed. |
+| A-03 | Any chapter access choice is missing | Publication/activation fails closed. |
+| A-04 | Paid confirmation succeeds | Work records real activation history and paid access can be enforced. |
+
+## C. Reader access
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| R-01 | Free work | All published chapters remain readable. |
+| R-02 | Never-activated staged paid work | Current reading remains open. |
+| R-03 | Active paid + Ön İzleme chapter | Chapter is readable without purchase. |
+| R-04 | Active paid + Kilitli + no entitlement | Full chapter content is not returned to the public showcase; reader is directed to purchase when purchase is available. |
+| R-05 | Active paid + entitlement | Current and future locked chapters of the same work are readable. |
+| R-06 | Previously activated paid work during provider/checkout outage | Existing entitlements remain readable; non-entitled readers stay locked; the work does **not** become free. |
+| R-07 | Purchase temporarily unavailable | Public work page distinguishes locked access from checkout availability and does not advertise an active offer. |
+| R-08 | Editor with active review assignment | Review reading bypass is resolved before commerce redaction. |
+| R-09 | 18+ work | Existing adult-content gate remains mandatory before reading or checkout. |
+
+## D. Checkout and order lifecycle
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| C-01 | Non-zero checkout | Order = pending_payment, Payment = pending, consent evidence is stored, coupon is reserved before provider redirect. |
+| C-02 | Provider success | Verified amount/currency only: Payment succeeded, Order paid, entitlement active, ledger posted. |
+| C-03 | Provider failure/cancel | Order/payment terminal state is stored and coupon reservation is released. |
+| C-04 | Duplicate provider success notification | Idempotent; no duplicate entitlement or ledger postings. |
+| C-05 | Invalid/unverified webhook | Shared payment lifecycle is not reached. |
+| C-06 | No provider adapter | Paid order is not created. |
+
+## E. Coupons
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| K-01 | Author percentage/fixed coupon | Only writer-owned paid work; earning base follows reader-paid discounted amount. |
+| K-02 | İlkOku percentage/fixed coupon | Writer earning base remains original work price. |
+| K-03 | 100% İlkOku coupon | Reader total 0, no external Payment record/provider call, Order paid + entitlement active + campaign ledger movement. |
+| K-04 | Coupon total/per-user limit | Reserved + used consumption is counted transactionally. |
+| K-05 | Coupon expired/not started/paused | Checkout rejects it. |
+| K-06 | Coupon code/amount/limit numeric input | Standard digit input parses correctly; invalid input fails closed. |
+
+## F. Finance
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| F-01 | Admin overview | Gross sales volume is separate from İlkOku income. |
+| F-02 | İlkOku Gelirleri | Only recorded platform_commission movements are shown. |
+| F-03 | Yazar Hakedişleri | Only recorded author_earning movements are shown with preserved earning base. |
+| F-04 | Kampanya Maliyetleri | platform_coupon_discount is shown separately and does not reduce protected earning base. |
+| F-05 | Writer Gelirler | Ledger/balance data only; no reader card/provider-private data. |
+| F-06 | AuthorBalance | Treated as operational projection; ledger remains financial source of truth. |
+| F-07 | Payouts | Read-only until payout method, tax/withholding and transfer rules are explicitly approved. |
+| F-08 | Reconciliation | Detects paid-order/ledger/entitlement mismatches and does not auto-repair. |
+
+## G. Intentionally unresolved / do not invent
+
+- Partial refund policy.
+- Coupon reuse/restore after refund.
+- Final commission percentages.
+- Tax/withholding execution.
+- Payout thresholds/method/provider execution.
+- Production card or carrier provider credentials.
+
+These items require an explicit product/legal/finance decision before mutation
+actions are added.
+
+## Release gate
+
+Before merge:
+
+1. CI must pass lint, security contracts, disposable MariaDB schema, DB
+   integration contracts, fresh recovery validation and production build.
+2. Browser UAT should execute this matrix using separate writer, reader and
+   admin accounts.
+3. Commerce remains behind the rollout/provider readiness protections until
+   production payment/legal prerequisites are intentionally activated.

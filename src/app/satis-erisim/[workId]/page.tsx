@@ -25,6 +25,21 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+function inputPrice(value: bigint | null | undefined) {
+  if (value === null || value === undefined) return "";
+  const whole = value / 100n;
+  const fraction = String(value % 100n).padStart(2, "0");
+  return `${whole},${fraction}`;
+}
+
+function formatPrice(value: bigint | null | undefined, currency = "TRY") {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency,
+  }).format(Number(value) / 100);
+}
+
 const statusMessages: Record<string, string> = {
   "sozlesme-onayi-gerekli": "Sözleşmeyi kabul etmek için onay kutusunu işaretlemelisin.",
   "sozlesme-hazir-degil": "Yazar Yayın ve Erişim Sözleşmesi henüz aktif değil.",
@@ -235,10 +250,25 @@ export default async function WriterCommerceWorkPage({
               />
               <span>
                 <strong>Ücretli</strong>
-                <span className={styles.paidPrice}>0 TL</span>
-                <small>
-                  Gerçek fiyat alanı ödeme sistemi devreye alınırken açılacak.
-                </small>
+                {!checkoutEnabled ? (
+                  <>
+                    <span className={styles.paidPrice}>0 TL</span>
+                    <small>
+                      Gerçek fiyat alanı ödeme sistemi devreye alınırken açılacak.
+                    </small>
+                  </>
+                ) : (
+                  <span className={styles.priceField}>
+                    <span>Eser satış fiyatı</span>
+                    <input
+                      defaultValue={inputPrice(work.saleConfiguration?.priceAmount)}
+                      inputMode="decimal"
+                      name="price"
+                      placeholder="149,00"
+                      type="text"
+                    />
+                  </span>
+                )}
               </span>
             </label>
           </div>
@@ -331,7 +361,16 @@ export default async function WriterCommerceWorkPage({
             </div>
             <div>
               <span>Fiyat</span>
-              <strong>{currentModel === "paid" ? "0 TL" : "—"}</strong>
+              <strong>
+                {currentModel === "paid"
+                  ? checkoutEnabled
+                    ? formatPrice(
+                        work.saleConfiguration?.priceAmount,
+                        work.saleConfiguration?.currency,
+                      )
+                    : "0 TL"
+                  : "—"}
+              </strong>
             </div>
             <div>
               <span>Ön İzleme</span>

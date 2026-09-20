@@ -206,16 +206,18 @@ test("coupon pricing preserves the two frozen funding models", () => {
 
 test("checkout coupon resolution revalidates scope and usage before pricing", () => {
   const checkoutRepository = source("src/features/commerce/checkout-repository.ts");
+  const couponRules = source("src/features/commerce/coupon-rules.ts");
   const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
 
-  contains(checkoutRepository, 'coupon.status !== "active"', "coupon active state");
-  contains(checkoutRepository, "coupon.startsAt && coupon.startsAt > now", "coupon start date");
-  contains(checkoutRepository, "coupon.endsAt && coupon.endsAt < now", "coupon end date");
-  contains(checkoutRepository, "coupon.usageCount >= coupon.totalUsageLimit", "total usage limit");
-  contains(checkoutRepository, "coupon.redemptions.length >= coupon.perUserUsageLimit", "per-user usage limit");
-  contains(checkoutRepository, 'coupon.scope === "all_paid_works"', "platform all-paid-work scope");
-  contains(checkoutRepository, 'coupon.scope === "selected_works"', "platform selected-work scope");
-  contains(checkoutRepository, 'coupon.scope === "selected_authors"', "platform selected-author scope");
+  contains(checkoutRepository, "validateCouponRules", "shared coupon rule engine");
+  contains(couponRules, 'input.status !== "active"', "coupon active state");
+  contains(couponRules, "input.startsAt && input.startsAt > now", "coupon start date");
+  contains(couponRules, "input.endsAt && input.endsAt < now", "coupon end date");
+  contains(couponRules, "input.usageCount >= input.totalUsageLimit", "total usage limit");
+  contains(couponRules, "input.userUsageCount >= input.perUserUsageLimit", "per-user usage limit");
+  contains(couponRules, 'input.scope === "all_paid_works"', "platform all-paid-work scope");
+  contains(couponRules, 'input.scope === "selected_works"', "platform selected-work scope");
+  contains(couponRules, 'input.scope === "selected_authors"', "platform selected-author scope");
   contains(checkoutPage, "calculateCommercePricing", "checkout pricing calculation");
 });
 

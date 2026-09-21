@@ -869,3 +869,166 @@
 .writerCommercePage .paidPrice {
   color: var(--writer-custom-primary, #d4af37);
 }
+
+
+/* Writer work-level commerce flow uses the same dark + gold shell as writer home. */
+.writerCommercePage > .hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--writer-gold-frame-line, rgba(215, 180, 63, 0.44));
+  background: var(--writer-custom-card-surface, #1a1f27);
+  color: var(--writer-custom-text, #ffffff);
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.18),
+    0 0 0 1px var(--writer-gold-frame-ring, rgba(215, 180, 63, 0.06));
+}
+
+.writerCommercePage > .hero::before {
+  position: absolute;
+  top: -1px;
+  right: 1.5rem;
+  left: 1.5rem;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(215, 180, 63, 0.78),
+    transparent
+  );
+  content: "";
+  pointer-events: none;
+}
+
+.writerCommercePage > .hero h1 {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage > .hero p {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .panel {
+  border-color: var(--writer-gold-frame-soft, rgba(215, 180, 63, 0.30));
+  background: var(--writer-custom-card-surface, #1a1f27);
+  color: var(--writer-custom-text, #ffffff);
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(215, 180, 63, 0.035);
+}
+
+.writerCommercePage .panel h2 {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .panel p {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .chapterRow {
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 14%,
+    var(--writer-custom-border, #2a2f37)
+  );
+}
+
+.writerCommercePage .chapterTitle strong {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .chapterTitle small {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .choice,
+.writerCommercePage .saleOption,
+.writerCommercePage .confirmation {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 24%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+}
+
+.writerCommercePage .choice:has(input:checked),
+.writerCommercePage .saleOption:has(input:checked) {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 62%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 10%,
+    var(--writer-custom-control-surface, #13161b)
+  );
+}
+
+.writerCommercePage .choice input,
+.writerCommercePage .saleOption input,
+.writerCommercePage .confirmation input {
+  accent-color: var(--writer-custom-primary, #d4af37);
+}
+
+.writerCommercePage .contractBox {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 24%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+}
+
+.writerCommercePage .contractHeading {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .contractHeading strong {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .contractText {
+  color: color-mix(
+    in srgb,
+    var(--writer-custom-text, #ffffff) 84%,
+    var(--writer-custom-text-muted, #9ca3af)
+  );
+}
+
+.writerCommercePage .successNotice {
+  border: 1px solid rgba(74, 222, 128, 0.34);
+  background: color-mix(
+    in srgb,
+    #22c55e 8%,
+    var(--writer-custom-card-surface, #1a1f27)
+  );
+  color: #bbf7d0;
+}
+
+.writerCommercePage .summaryGrid > div {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 20%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+}
+
+.writerCommercePage .summaryGrid strong {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .priceField > span {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .action:disabled {
+  background: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 36%,
+    var(--writer-custom-control-surface, #13161b)
+  );
+  color: var(--writer-custom-text-muted, #9ca3af);
+  opacity: 1;
+}

@@ -25,6 +25,17 @@ async function authenticatedWriter() {
 }
 
 
+async function requestAuditContext() {
+  const requestHeaders = await headers();
+  const forwardedFor = requestHeaders.get("x-forwarded-for");
+
+  return {
+    ipAddress: forwardedFor?.split(",")[0]?.trim() || null,
+    userAgent: requestHeaders.get("user-agent"),
+  };
+}
+
+
 function parseChapterAccessType(
   value: FormDataEntryValue | null,
 ): "preview" | "locked" | null {
@@ -192,9 +203,12 @@ export async function saveWorkSaleModelAction(formData: FormData) {
     commerceStatusRedirect(parsedWorkId.data, "fiyat-gerekli");
   }
 
+  const auditContext = await requestAuditContext();
+
   await prisma.$transaction(async (transaction) => {
     const oldPrice = work.saleConfiguration?.priceAmount ?? null;
     const oldModel = work.saleConfiguration?.saleModel ?? null;
+    const modelChanged = oldPrice !== priceAmount || oldModel !== parsedModel.data;
 
     const nextActivatedAt = work.saleConfiguration?.activatedAt ?? null;
 
@@ -217,7 +231,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
       },
     });
 
-    if (oldPrice !== priceAmount || oldModel !== parsedModel.data) {
+    if (modelChanged) {
       await transaction.workPriceHistory.create({
         data: {
           workId: work.id,
@@ -225,6 +239,27 @@ export async function saveWorkSaleModelAction(formData: FormData) {
           oldPrice,
           newPrice: priceAmount,
           currency: "TRY",
+        },
+      });
+
+      await transaction.auditLog.create({
+        data: {
+          actorId: writer.id,
+          action: "work_status_changed",
+          entityType: "Work",
+          entityId: work.id,
+          metadata: JSON.stringify({
+            source: "writer_commerce_sale_model_saved",
+            workId: work.id,
+            previousSaleModel: oldModel,
+            saleModel: parsedModel.data,
+            previousPriceAmount: oldPrice?.toString() ?? null,
+            priceAmount: priceAmount?.toString() ?? null,
+            currency: "TRY",
+            status: "draft",
+          }),
+          ipAddress: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
         },
       });
     }
@@ -407,6 +442,7 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
     Boolean(readerPurchaseTerms);
 
   const now = new Date();
+  const auditContext = await requestAuditContext();
   const nextStatus =
     work.saleConfiguration.saleModel === "free" ||
     previouslyActivatedPaid ||
@@ -447,6 +483,27 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
               ? work.saleConfiguration!.activatedAt ?? now
               : work.saleConfiguration!.activatedAt,
         pausedAt: null,
+      },
+    });
+
+    await transaction.auditLog.create({
+      data: {
+        actorId: writer.id,
+        action: "work_status_changed",
+        entityType: "Work",
+        entityId: work.id,
+        metadata: JSON.stringify({
+          source: "writer_commerce_publication_confirmed",
+          workId: work.id,
+          saleModel: work.saleConfiguration!.saleModel,
+          priceAmount:
+            work.saleConfiguration!.priceAmount?.toString() ?? null,
+          currency: work.saleConfiguration!.currency,
+          status: nextStatus,
+          agreementVersion: agreement.version,
+        }),
+        ipAddress: auditContext.ipAddress,
+        userAgent: auditContext.userAgent,
       },
     });
   });

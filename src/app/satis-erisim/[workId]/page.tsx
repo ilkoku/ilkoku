@@ -153,7 +153,7 @@ export default async function WriterCommerceWorkPage({
   const flash = query.durum ? statusMessages[query.durum] ?? query.durum : null;
 
   return (
-    <AppShell profile={profile}>
+    <AppShell breadcrumbLabels={{ [work.id]: work.title }} profile={profile}>
       <div className={`${styles.page} ${styles.writerCommercePage}`}>
         <header className={styles.hero}>
           <div>

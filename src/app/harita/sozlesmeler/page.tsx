@@ -33,8 +33,8 @@ const completedStages = [
     evidence: "20260905053500_contract_product_policy_text_alignment · 8 etkilenen LIB şablonu · v2 · active=false",
   },
   {
-    title: "Sürüme bağlı hukukçu inceleme kanıtı",
-    description: "Şablon İncelemede aşamasındayken hukukçu/inceleyen ve sonuç notu mevcut templateVersion'a append-only kanıt olarak kaydedilir. Aynı templateVersion için legal_review kanıtı yoksa review → approved geçişi transaction içinde reddedilir; metin değişirse eski kanıt yeni sürüme taşınmaz.",
+    title: "Sürüme bağlı onay kanıtı",
+    description: "Şablon İncelemede aşamasındayken mevcut templateVersion için hukukçu inceleme kanıtı (legal_review) veya açık Admin Onayı (admin_approval) append-only kaydedilir. Bu iki kayıt ayrı tutulur; hiçbiri yoksa review → approved geçişi transaction içinde reddedilir. Metin değişirse eski kanıt yeni sürüme taşınmaz.",
     routes: ["/sozlesme/sablonlar/[templateId]"],
     evidence: "ContractTemplateReviewEvidence · review-evidence.ts · review_evidence_required",
   },
@@ -71,7 +71,7 @@ const completedStages = [
 ] as const;
 
 const remainingItems = [
-  "Her operasyon şablonunun gerçek hukukçu kontrolü; sonuç aynı templateVersion için kanıt olarak kaydedilmeden Onaylı durumuna geçilemez.",
+  "Profesyonel hukukçu incelemesi istenen şablonlarda ayrıca legal_review kanıtı kaydedilebilir; Admin Onayı bu kaydın yerine hukukçu incelemesi veya hukuki görüş iddiası taşımaz.",
   "Yayın niyeti şablonları ürün politikası çalışma metnine yansıtılmış olsa da şimdilik pasif kalır ve ayrıca aktivasyon kararı verilmeden gönderime açılmaz.",
   "Yazar–Yayınevi nihai yayın hakları sözleşmesi: ticari hak modeli kesinleşmeden bağlayıcı metin üretilmeyecek.",
   "Final Release UAT #263 sözleşme satırları: yalnız gerçek authenticated insan testiyle HUMAN_PASS olabilir.",
@@ -93,7 +93,7 @@ export default async function ContractSystemMapPage() {
           <p className="system-map-eyebrow">HARİTA · SÖZLEŞME YÖNETİMİ</p>
           <h1>Sözleşme Akışı</h1>
           <p>
-            Kayıt sözleşmesinden şablon yaşam döngüsü, ürün politikası ve sürüme bağlı hukukçu kanıtına; gönderimden kullanıcı kararına,
+            Kayıt sözleşmesinden şablon yaşam döngüsü, ürün politikası ve sürüme bağlı hukukçu/Admin onay kanıtına; gönderimden kullanıcı kararına,
             hatırlatma ve bildirim zincirine kadar sözleşme sisteminin kanonik teknik haritası.
           </p>
         </div>

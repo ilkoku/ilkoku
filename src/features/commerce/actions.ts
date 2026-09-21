@@ -231,6 +231,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
   });
 
   revalidateCommerce(work.id);
+  commerceStatusRedirect(work.id, "yayin-modeli-kaydedildi");
 }
 
 

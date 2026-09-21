@@ -73,6 +73,16 @@ function lifecycleLabel(value: string | undefined) {
   return value ? labels[value] ?? value : "Hazır değil";
 }
 
+function saleStatusLabel(value: string | undefined) {
+  const labels: Record<string, string> = {
+    draft: "Taslak",
+    ready: "Hazır",
+    active: "Aktif",
+    paused: "Duraklatıldı",
+  };
+  return value ? labels[value] ?? value : "Taslak";
+}
+
 export default async function WriterCommerceWorkPage({
   params,
   searchParams,
@@ -144,7 +154,7 @@ export default async function WriterCommerceWorkPage({
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.writerCommercePage}`}>
         <header className={styles.hero}>
           <div>
             <span className={styles.eyebrow}>Satış & Erişim</span>
@@ -398,7 +408,7 @@ export default async function WriterCommerceWorkPage({
               </p>
             </div>
             <span className={styles.badge}>
-              {work.saleConfiguration?.status ?? "draft"}
+              {saleStatusLabel(work.saleConfiguration?.status)}
             </span>
           </div>
 

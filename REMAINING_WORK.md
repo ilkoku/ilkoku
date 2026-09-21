@@ -1,5 +1,17 @@
 # İlkOku — Kalan İşler
 
+## Öncelik 0 — Sözleşme aktivasyonu ve Commerce HUMAN UAT
+
+- Tüm yönetilen sözleşme şablonlarında onay kapısı: mevcut sürüm için **hukukçu inceleme kanıtı veya ayrı Admin Onayı**. Admin Onayı hukukçu incelemesi olarak kaydedilmez.
+- Admin Onayı; aktif admin kimliği, sözleşme sürümü, tarih/saat ve zorunlu onay notuyla değişmez inceleme kanıtı olarak saklanır.
+- Metin/hedef rol/açıklama değişip sürüm arttığında önceki hukukçu veya Admin Onayı yeni sürüm için geçerli sayılmaz.
+- Soft Taslaklar doğrudan onaylanamaz/aktif edilemez; önce çalışma şablonuna dönüştürülür.
+- Main merge + Production Smoke sonrası **İlkOku Yazar Yayın ve Erişim Sözleşmesi v2** için Admin Onayı → Onaylı → Aktif canlı akışını test et.
+- Ardından W-05 sözleşme kabulü: version/hash/time/IP/UA kanıtını doğrula.
+- W-06 eser bazlı son onay: yayın modeli + fiyat + erişim planı + agreementVersion snapshot doğrula.
+- W-07 taslak düzenlemenin canlı okuyucu durumuna sızmadığını doğrula.
+- Açık W-02 negatif testi: en az iki bölümlü eserde bir bölüm erişimi boş bırakıldığında kayıt fail-closed reddedilmeli.
+
 ## Öncelik 1 — Local doğrulama
 
 1. `npm ci`

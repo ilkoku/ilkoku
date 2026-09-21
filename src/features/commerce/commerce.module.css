@@ -363,6 +363,47 @@
   line-height: 1.55;
 }
 
+.acceptedAgreementDetails {
+  margin-top: 12px;
+}
+
+.acceptedAgreementSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid #e0d8eb;
+  border-radius: 14px;
+  background: #fcfbfe;
+  color: #4f4658;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.acceptedAgreementSummary span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acceptedAgreementSummary strong {
+  color: #5b21b6;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.acceptedAgreementDetails[open] .acceptedAgreementSummary {
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.acceptedAgreementDetails .contractBox {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1006,6 +1047,20 @@
   color: #bbf7d0;
 }
 
+.writerCommercePage .acceptedAgreementSummary {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 24%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .acceptedAgreementSummary strong {
+  color: var(--writer-custom-primary, #d4af37);
+}
+
 .writerCommercePage .summaryGrid > div {
   border-color: color-mix(
     in srgb,
@@ -1066,5 +1121,14 @@
   .modelSaveFooter {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .acceptedAgreementSummary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .acceptedAgreementSummary span {
+    white-space: normal;
   }
 }

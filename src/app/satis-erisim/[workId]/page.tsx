@@ -386,21 +386,35 @@ export default async function WriterCommerceWorkPage({
           </div>
 
           {agreement ? (
-            <>
-              <div className={styles.contractBox}>
-                <div className={styles.contractHeading}>
-                  <strong>{agreement.title}</strong>
-                  <span>Sürüm {agreement.version}</span>
-                </div>
-                <div className={styles.contractText}>{agreement.body}</div>
-              </div>
-
-              {acceptedAgreement ? (
+            acceptedAgreement ? (
+              <>
                 <div className={styles.successNotice}>
                   Bu sözleşmenin güncel sürümünü kabul ettin. Kabul tarihi
                   sistem kayıtlarında saklanıyor.
                 </div>
-              ) : (
+                <details className={styles.acceptedAgreementDetails}>
+                  <summary className={styles.acceptedAgreementSummary}>
+                    <span>{agreement.title} · v{agreement.version}</span>
+                    <strong>Sözleşmeyi göster / gizle</strong>
+                  </summary>
+                  <div className={styles.contractBox}>
+                    <div className={styles.contractHeading}>
+                      <strong>{agreement.title}</strong>
+                      <span>Sürüm {agreement.version}</span>
+                    </div>
+                    <div className={styles.contractText}>{agreement.body}</div>
+                  </div>
+                </details>
+              </>
+            ) : (
+              <>
+                <div className={styles.contractBox}>
+                  <div className={styles.contractHeading}>
+                    <strong>{agreement.title}</strong>
+                    <span>Sürüm {agreement.version}</span>
+                  </div>
+                  <div className={styles.contractText}>{agreement.body}</div>
+                </div>
                 <form action={acceptAuthorPublicationAgreementAction}>
                   <input name="workId" type="hidden" value={work.id} />
                   <label className={styles.confirmation}>
@@ -414,8 +428,8 @@ export default async function WriterCommerceWorkPage({
                     Sözleşmeyi kabul et
                   </button>
                 </form>
-              )}
-            </>
+              </>
+            )
           ) : (
             <div className={styles.notice}>
               <strong>

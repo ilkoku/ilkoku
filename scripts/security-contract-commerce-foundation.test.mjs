@@ -328,12 +328,12 @@ test("zero-total order completion is atomic and provider-free", () => {
   contains(service, "FOR UPDATE", "coupon redemption serialization");
   contains(service, 'status: "paid"', "zero-total order completion state");
   contains(service, "couponRedemption.create", "coupon redemption record");
-  contains(service, "workEntitlement.create", "entitlement grant");
+  contains(service, "workEntitlement.upsert", "entitlement grant or reactivation");
   contains(service, 'source: "purchase"', "order-backed entitlement source");
   contains(service, "financialLedger.create", "zero-total finance ledger");
   notContains(service, "transaction.payment.create", "zero-total checkout skips external payment record");
   contains(snapshot, "authorEarningBaseAmount", "immutable author earning base snapshot");
-  contains(checkout, "0 TL ile erişimi aç", "reader zero-total completion action");
+  contains(checkout, "0 TL ile satın al", "reader zero-total completion action");
 });
 
 

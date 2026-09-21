@@ -117,7 +117,7 @@ test("UAT K/R: zero-total orders skip provider and grant entitlement atomically"
   has(zero, "transaction.couponRedemption.create", "coupon-derived zero consumption");
   has(zero, "transaction.workEntitlement.upsert", "entitlement grant or reactivation");
   has(zero, "transaction.financialLedger.create", "ledger posting");
-  has(checkout, '"0 TL ile satın al"', "reader purchase button");
+  has(checkout, "0 TL ile satın al", "reader purchase button");
   has(library, "Satın alma başarılı. Eser kütüphanene eklendi", "successful library redirect message");
   lacks(zero, "transaction.payment.create", "zero-total external payment");
   lacks(zero, "adapter.createPayment", "zero-total provider handoff");

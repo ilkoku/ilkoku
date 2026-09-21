@@ -38,8 +38,8 @@ export default async function ContractReviewReadinessPage() {
           <p>SÖZLEŞME İNCELEME MASASI</p>
           <h1>Aktivasyon öncesi karar ve inceleme kuyruğu</h1>
           <p>
-            Ürün politikası kararları ayrı ve sürüm kontrollü tutulur. Kararın çözülmüş olması hukuki onay anlamına gelmez;
-            çalışma şablonları gerçek hukukçu incelemesi ve ayrıca lifecycle onayı olmadan gönderime açılamaz.
+            Ürün politikası kararları ayrı ve sürüm kontrollü tutulur. Kararın çözülmüş olması aktivasyon onayı anlamına gelmez;
+            çalışma şablonları mevcut sürüme ait hukukçu inceleme kanıtı veya açık Admin Onayı ve ayrıca lifecycle onayı olmadan gönderime açılamaz.
           </p>
         </div>
         <Link href="/sozlesme/hukuk-inceleme">Hukukçu paketini aç →</Link>
@@ -57,7 +57,7 @@ export default async function ContractReviewReadinessPage() {
         <div>
           <p>ÜRÜN POLİTİKASI</p>
           <h2 id="owner-decisions-title">Ürün sahibi kararları · kaydedildi</h2>
-          <span>Bu kararlar hukuki onay değildir. Şablonlar pasif kalır; gerçek hukukçu incelemesi ayrıca kanıtlanır.</span>
+          <span>Bu kararlar tek başına aktivasyon onayı değildir. Şablonlar pasif kalır; mevcut sürüm için hukukçu incelemesi veya ayrı Admin Onayı kanıtı gerekir.</span>
         </div>
         <ol>
           {mapped.flatMap(({ record, readiness }) =>

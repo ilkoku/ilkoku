@@ -157,22 +157,32 @@ export async function recordContractTemplateReviewEvidenceAction(formData: FormD
   if (!admin) redirect("/erisim-reddedildi?kaynak=contract_management");
 
   const templateId = text(formData, "templateId", 36);
-  const reviewerLabel = text(formData, "reviewerLabel", 220);
+  const requestedReviewerLabel = text(formData, "reviewerLabel", 220);
   const note = text(formData, "note", 5000);
   const evidenceType = text(formData, "evidenceType", 40);
+  const adminApprovalConfirmed = formData.get("adminApprovalConfirmed") === "confirmed";
+  const validEvidenceType = ["legal_review", "product_owner_decision", "admin_approval"].includes(evidenceType);
+  const isAdminApproval = evidenceType === "admin_approval";
+  const reviewerLabel = isAdminApproval
+    ? `İlkOku Admin · ${admin.email}`
+    : requestedReviewerLabel;
 
   if (
     !templateId ||
     !reviewerLabel ||
     !note ||
-    !["legal_review", "product_owner_decision"].includes(evidenceType)
+    !validEvidenceType ||
+    (isAdminApproval && !adminApprovalConfirmed)
   ) {
-    redirect(templateResult(templateId, "inceleme_kaniti_eksik"));
+    redirect(templateResult(
+      templateId,
+      isAdminApproval && !adminApprovalConfirmed ? "admin_onayi_teyit_gerekli" : "inceleme_kaniti_eksik",
+    ));
   }
 
   const result = await recordContractTemplateReviewEvidence({
     actorId: admin.id,
-    evidenceType: evidenceType as "legal_review" | "product_owner_decision",
+    evidenceType: evidenceType as "legal_review" | "product_owner_decision" | "admin_approval",
     note,
     reviewerLabel,
     templateId,

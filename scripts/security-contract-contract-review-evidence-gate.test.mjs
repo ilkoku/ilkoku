@@ -14,10 +14,22 @@ test("review evidence migration binds immutable evidence to one template version
 
   contains(migration, "CREATE TABLE `ContractTemplateReviewEvidence`", "review evidence table");
   contains(migration, "`templateVersion` INTEGER UNSIGNED NOT NULL", "version binding");
-  contains(migration, "ENUM('legal_review','product_owner_decision')", "bounded evidence type");
+  contains(migration, "ENUM('legal_review','product_owner_decision')", "initial bounded evidence type");
   contains(migration, "UNIQUE INDEX `ContractTemplateReviewEvidence_version_type_key`(`templateId`,`templateVersion`,`evidenceType`)", "version/type dedupe");
   contains(migration, "FOREIGN KEY (`templateId`) REFERENCES `ContractTemplate`(`id`)", "template FK");
   contains(migration, "FOREIGN KEY (`recordedById`) REFERENCES `User`(`id`)", "actor FK");
+});
+
+test("admin approval is a distinct evidence type instead of impersonating legal review", () => {
+  const migration = source("prisma/migrations/20260921121000_contract_admin_approval_evidence/migration.sql");
+  const repository = source("src/features/contracts/review-evidence.ts");
+  const actions = source("src/features/contracts/actions.ts");
+
+  contains(migration, "'admin_approval'", "database admin approval evidence type");
+  contains(repository, '"admin_approval"', "repository evidence type");
+  contains(actions, 'evidenceType === "admin_approval"', "admin approval action branch");
+  contains(actions, 'adminApprovalConfirmed', "explicit admin responsibility confirmation");
+  contains(actions, "`İlkOku Admin · ${admin.email}`", "authenticated admin label");
 });
 
 test("review evidence writes re-authorize admin and lock the live current template version", () => {
@@ -34,20 +46,20 @@ test("review evidence writes re-authorize admin and lock the live current templa
   notContains(repository, "DELETE FROM ContractTemplateReviewEvidence", "review evidence must not be deleted");
 });
 
-test("template approval is fail-closed without current-version legal review evidence", () => {
+test("template approval is fail-closed without current-version legal review or admin approval evidence", () => {
   const lifecycle = source("src/features/contracts/template-lifecycle.ts");
 
   contains(lifecycle, 'input.transition === "approve"', "approval branch");
   contains(lifecycle, "FROM ContractTemplateReviewEvidence", "evidence query in approval transaction");
   contains(lifecycle, "templateVersion = ${template.version}", "same-version approval proof");
-  contains(lifecycle, "evidenceType = 'legal_review'", "legal evidence requirement");
+  contains(lifecycle, "evidenceType IN ('legal_review','admin_approval')", "legal-or-admin approval requirement");
   contains(lifecycle, "review_evidence_required", "fail-closed missing evidence result");
   contains(lifecycle, "approval_evidence_missing", "activation approval metadata guard");
   contains(lifecycle, "template.approvedById", "approval metadata preservation");
   contains(lifecycle, "template.approvedAt", "approval timestamp preservation");
 });
 
-test("template workbench exposes review proof while hiding approval until proof exists", () => {
+test("template workbench exposes distinct legal and admin approval proof while hiding approval until either exists", () => {
   const page = source("src/app/sozlesme/sablonlar/[templateId]/page.tsx");
   const lifecyclePanel = source("src/features/contracts/ContractTemplateLifecyclePanel.tsx");
   const evidencePanel = source("src/features/contracts/ContractTemplateReviewEvidencePanel.tsx");
@@ -55,10 +67,12 @@ test("template workbench exposes review proof while hiding approval until proof 
   const layout = source("src/app/sozlesme/layout.tsx");
 
   contains(page, "listContractTemplateReviewEvidence", "evidence loaded with template");
-  contains(page, "hasCurrentLegalEvidence", "current version proof projection");
-  contains(lifecyclePanel, "Onay için önce mevcut sürüm hukukçu kanıtını kaydet", "approval UI lock");
-  contains(lifecyclePanel, "hasCurrentLegalEvidence ?", "proof-gated approval control");
-  contains(evidencePanel, "Hukukçu inceleme kanıtını kaydet", "evidence form");
+  contains(page, "currentApprovalEvidenceType", "current version approval proof projection");
+  contains(lifecyclePanel, "hukukçu inceleme kanıtı veya Admin Onayı", "approval UI lock");
+  contains(lifecyclePanel, "hasCurrentApprovalEvidence ?", "proof-gated approval control");
+  contains(evidencePanel, "Hukukçu inceleme kanıtını kaydet", "legal evidence form");
+  contains(evidencePanel, "Admin Onayını kaydet", "admin approval form");
+  contains(evidencePanel, "hukukçu incelemesi veya hukuki görüş olmadığını", "admin approval boundary");
   contains(evidencePanel, "item.templateVersion === template.version", "current version UI proof");
   contains(actions, "recordContractTemplateReviewEvidence", "canonical evidence action");
   contains(layout, 'import "./review-evidence.css"', "evidence styling");

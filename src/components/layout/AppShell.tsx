@@ -20,11 +20,13 @@ import "@/features/writer/writer-role-gold-frame.css";
 import "@/features/writer/writer-role-gold-frame-extra.css";
 
 type AppShellProps = {
+  breadcrumbLabels?: Record<string, string>;
   children: ReactNode;
   profile: AuthProfile;
 };
 
 export async function AppShell({
+  breadcrumbLabels,
   children,
   profile,
 }: AppShellProps) {
@@ -81,7 +83,7 @@ export async function AppShell({
         ) : null}
 
         <header className="dashboard-header">
-          <Breadcrumb />
+          <Breadcrumb segmentOverrides={breadcrumbLabels} />
           <UserArea profile={profile} />
         </header>
 

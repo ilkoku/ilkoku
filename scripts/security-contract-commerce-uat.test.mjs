@@ -191,3 +191,16 @@ test("UAT C: active paid sales continue on the last confirmed price while new wr
   has(page, "effectiveCommerce.priceAmount ?? BigInt(0)", "reader sees confirmed price");
   has(paid, "effectiveCommerce.priceAmount", "order charges confirmed price");
 });
+
+
+test("UAT W: completed final commerce confirmation hides the repeat submit until a real next action exists", () => {
+  const page = source("src/app/satis-erisim/[workId]/page.tsx");
+
+  has(page, 'finalStatus === "ready"', "ready status detection");
+  has(page, "!paidActivationReady", "staged ready state stays settled until live activation is possible");
+  has(page, 'finalStatus === "active"', "active status detection");
+  has(page, "finalConfirmationSettled ? (", "completed confirmation replaces repeat form");
+  has(page, '"✓ Satışa Hazır"', "ready confirmation label");
+  has(page, "Hazırlık tamamlandı", "ready confirmation timestamp copy");
+  has(page, "Ödeme sistemi açıldığında fiyatı güncelleyip satışa", "future live activation guidance");
+});

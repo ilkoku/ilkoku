@@ -10,7 +10,7 @@ export interface ContractTemplateReviewEvidenceRecord {
   id: string;
   templateId: string;
   templateVersion: number;
-  evidenceType: ContractTemplateReviewEvidenceType;
+  evidenceType: Exclude<ContractTemplateReviewEvidenceType, "legal_review">;
   reviewerLabel: string;
   note: string;
   recordedById: string | null;

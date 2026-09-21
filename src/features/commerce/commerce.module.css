@@ -1132,3 +1132,206 @@
     white-space: normal;
   }
 }
+
+
+/* Writer coupon workspace follows the canonical writer commerce dark + gold surface. */
+.couponWorkspace {
+  gap: 22px;
+}
+
+.couponHero p {
+  max-width: 720px;
+  margin-bottom: 0;
+}
+
+.couponStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.couponStat {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid #e7e2ef;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.couponStat span {
+  color: #716a79;
+  font-size: 0.86rem;
+}
+
+.couponStat strong {
+  color: #332b39;
+  font-size: 1.35rem;
+}
+
+.fieldHint {
+  color: #746d7b;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.couponCardMain {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 14px;
+  min-width: 0;
+}
+
+.couponCardHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.couponCardHeading h3 {
+  overflow-wrap: anywhere;
+  font-size: 1.15rem;
+}
+
+.couponStatus {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.couponStatusActive {
+  border: 1px solid rgba(34, 197, 94, 0.34);
+  background: rgba(34, 197, 94, 0.09);
+  color: #16733e;
+}
+
+.couponStatusPaused {
+  border: 1px solid #ddd5e8;
+  background: #f5f2f8;
+  color: #6b6571;
+}
+
+.couponMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.couponMetrics > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #eee9f3;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.couponMetrics span {
+  color: #77717f;
+  font-size: 0.78rem;
+}
+
+.couponMetrics strong {
+  color: #332b39;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.couponCardAction {
+  flex: 0 0 auto;
+}
+
+.writerCommercePage .couponStat,
+.writerCommercePage .couponCard {
+  border-color: var(--writer-gold-frame-soft, rgba(215, 180, 63, 0.30));
+  background: var(--writer-custom-card-surface, #1a1f27);
+  color: var(--writer-custom-text, #ffffff);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(215, 180, 63, 0.03);
+}
+
+.writerCommercePage .couponStat span,
+.writerCommercePage .fieldHint,
+.writerCommercePage .couponMetrics span {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .couponStat strong,
+.writerCommercePage .couponCard h3,
+.writerCommercePage .couponMetrics strong {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .couponMetrics > div {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 18%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+}
+
+.writerCommercePage .couponStatusActive {
+  border-color: rgba(74, 222, 128, 0.34);
+  background: color-mix(
+    in srgb,
+    #22c55e 8%,
+    var(--writer-custom-card-surface, #1a1f27)
+  );
+  color: #bbf7d0;
+}
+
+.writerCommercePage .couponStatusPaused {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 18%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .couponCardActive {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 42%,
+    var(--writer-custom-border, #2a2f37)
+  );
+}
+
+.writerCommercePage .couponCardPaused {
+  opacity: 0.88;
+}
+
+@media (max-width: 980px) {
+  .couponStats,
+  .couponMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .couponStats,
+  .couponMetrics {
+    grid-template-columns: 1fr;
+  }
+
+  .couponCardHeading {
+    width: 100%;
+  }
+
+  .couponCardAction,
+  .couponCardAction .secondaryAction {
+    width: 100%;
+  }
+}

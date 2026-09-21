@@ -83,17 +83,24 @@ export default async function AuthorCouponsPage({
   const paidWorks = works.filter(
     (work) => work.saleConfiguration?.saleModel === "paid",
   );
+  const activeCouponCount = coupons.filter(
+    (coupon) => coupon.status === "active",
+  ).length;
+  const totalCouponUsage = coupons.reduce(
+    (total, coupon) => total + coupon.usageCount,
+    0,
+  );
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
-        <header className={styles.hero}>
+      <div className={`${styles.page} ${styles.writerCommercePage} ${styles.couponWorkspace}`}>
+        <header className={`${styles.hero} ${styles.couponHero}`}>
           <div>
             <span className={styles.eyebrow}>Satış & Erişim</span>
             <h1>Kuponlar</h1>
             <p>
-              Kendi eserlerin için indirim kuponu oluştur ve kullanım durumunu
-              yönet.
+              Ücretli eserlerin için indirim kuponu oluştur, kullanımını izle
+              ve gerektiğinde tek tıkla duraklat.
             </p>
           </div>
           <Link className={styles.secondaryAction} href="/satis-erisim">
@@ -102,6 +109,25 @@ export default async function AuthorCouponsPage({
         </header>
 
         {flash ? <div className={styles.flash}>{flash}</div> : null}
+
+        <section className={styles.couponStats} aria-label="Kupon özeti">
+          <div className={styles.couponStat}>
+            <span>Ücretli eser</span>
+            <strong>{paidWorks.length}</strong>
+          </div>
+          <div className={styles.couponStat}>
+            <span>Toplam kupon</span>
+            <strong>{coupons.length}</strong>
+          </div>
+          <div className={styles.couponStat}>
+            <span>Aktif kupon</span>
+            <strong>{activeCouponCount}</strong>
+          </div>
+          <div className={styles.couponStat}>
+            <span>Toplam kullanım</span>
+            <strong>{totalCouponUsage}</strong>
+          </div>
+        </section>
 
         {!paymentPathReady ? (
           <div className={styles.notice}>
@@ -118,8 +144,9 @@ export default async function AuthorCouponsPage({
               <span className={styles.eyebrow}>Yeni kupon</span>
               <h2>Yazar kuponu oluştur</h2>
               <p>
-                Yazar kuponundaki indirim yazar tarafından finanse edilir ve
-                hakediş indirimli satış tutarı üzerinden hesaplanır.
+                Yazar kuponundaki indirim yazar tarafından finanse edilir.
+                Hakediş, kupon uygulandıktan sonraki satış tutarı üzerinden
+                hesaplanır.
               </p>
             </div>
             <span className={styles.badge}>Yazar finansmanlı</span>
@@ -134,7 +161,7 @@ export default async function AuthorCouponsPage({
               <label className={styles.field}>
                 <span>Eser</span>
                 <select name="workId" required>
-                  <option value="">Eser seç</option>
+                  <option value="">Ücretli eser seç</option>
                   {paidWorks.map((work) => (
                     <option key={work.id} value={work.id}>
                       {work.title}
@@ -154,6 +181,9 @@ export default async function AuthorCouponsPage({
                   required
                   type="text"
                 />
+                <small className={styles.fieldHint}>
+                  3–32 karakter · harf, rakam, - ve _ kullanabilirsin.
+                </small>
               </label>
 
               <label className={styles.field}>
@@ -173,6 +203,9 @@ export default async function AuthorCouponsPage({
                   required
                   type="text"
                 />
+                <small className={styles.fieldHint}>
+                  Yüzde seçtiysen örn. 20; sabit tutarda TL değeri gir.
+                </small>
               </label>
 
               <label className={styles.field}>
@@ -235,27 +268,63 @@ export default async function AuthorCouponsPage({
                 const isActive = coupon.status === "active";
 
                 return (
-                  <article className={styles.couponCard} key={coupon.id}>
-                    <div>
-                      <span className={styles.eyebrow}>{workTitle}</span>
-                      <h3>{coupon.code}</h3>
-                      <p>
-                        {formatDiscount(
-                          coupon.discountType,
-                          coupon.discountValue,
-                        )}{" "}
-                        indirim · {coupon.usageCount}
-                        {coupon.totalUsageLimit
-                          ? "/" + coupon.totalUsageLimit
-                          : ""}{" "}
-                        kullanım
-                      </p>
-                      <small>
-                        {formatDate(coupon.startsAt)} — {formatDate(coupon.endsAt)}
-                      </small>
+                  <article
+                    className={`${styles.couponCard} ${
+                      isActive ? styles.couponCardActive : styles.couponCardPaused
+                    }`}
+                    key={coupon.id}
+                  >
+                    <div className={styles.couponCardMain}>
+                      <div className={styles.couponCardHeading}>
+                        <div>
+                          <span className={styles.eyebrow}>{workTitle}</span>
+                          <h3>{coupon.code}</h3>
+                        </div>
+                        <span
+                          className={`${styles.couponStatus} ${
+                            isActive
+                              ? styles.couponStatusActive
+                              : styles.couponStatusPaused
+                          }`}
+                        >
+                          {isActive ? "Aktif" : "Pasif"}
+                        </span>
+                      </div>
+
+                      <div className={styles.couponMetrics}>
+                        <div>
+                          <span>İndirim</span>
+                          <strong>
+                            {formatDiscount(
+                              coupon.discountType,
+                              coupon.discountValue,
+                            )}
+                          </strong>
+                        </div>
+                        <div>
+                          <span>Kullanım</span>
+                          <strong>
+                            {coupon.usageCount}
+                            {coupon.totalUsageLimit
+                              ? "/" + coupon.totalUsageLimit
+                              : ""}
+                          </strong>
+                        </div>
+                        <div>
+                          <span>Başlangıç</span>
+                          <strong>{formatDate(coupon.startsAt)}</strong>
+                        </div>
+                        <div>
+                          <span>Bitiş</span>
+                          <strong>{formatDate(coupon.endsAt)}</strong>
+                        </div>
+                      </div>
                     </div>
 
-                    <form action={toggleAuthorCouponAction}>
+                    <form
+                      action={toggleAuthorCouponAction}
+                      className={styles.couponCardAction}
+                    >
                       <input name="couponId" type="hidden" value={coupon.id} />
                       <input
                         name="nextStatus"

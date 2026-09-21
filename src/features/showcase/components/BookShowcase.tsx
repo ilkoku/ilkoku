@@ -84,6 +84,8 @@ export function BookShowcase({
     commerce?.saleModel === "paid" && commerce.enforcementActive;
   const hasPaidAccess = Boolean(commerce?.hasEntitlement);
   const purchaseAvailable = Boolean(commerce?.purchaseAvailable);
+  const zeroPricePurchase =
+    purchaseAvailable && commerce?.priceAmount === BigInt(0);
   const canReadChapter = (chapterId: string) =>
     !paidAccessActive ||
     hasPaidAccess ||
@@ -314,6 +316,20 @@ export function BookShowcase({
               </div>
             )}
 
+            {paidAccessActive && !hasPaidAccess && purchaseAvailable ? (
+              <p className="showcase-commerce-notice">
+                Eser erişimi:{" "}
+                <strong>
+                  {formatCommerceMoney(
+                    commerce?.priceAmount ?? BigInt(0),
+                    commerce?.currency ?? "TRY",
+                  )}
+                </strong>
+                . Ön İzleme bölümleri okunabilir; Kilitli bölümler eser erişimi
+                edinildikten sonra açılır.
+              </p>
+            ) : null}
+
             {paidAccessActive && !hasPaidAccess && !purchaseAvailable ? (
               <p className="showcase-commerce-notice">
                 Satış geçici olarak kullanılamıyor. Mevcut erişim hakları korunur;
@@ -444,7 +460,9 @@ export function BookShowcase({
                         ? accessType === "preview"
                           ? "Ön İzleme · Ücretsiz okunabilir"
                           : purchaseAvailable
-                            ? "Kilitli · Ücretli erişime dahildir"
+                            ? zeroPricePurchase
+                              ? "Kilitli · Eser erişimi 0 TL"
+                              : "Kilitli · Ücretli erişime dahildir"
                             : "Kilitli · Satış geçici olarak kullanılamıyor"
                         : hasPaidAccess && paidAccessActive
                           ? "Satın alındı · Okunabilir"
@@ -475,7 +493,9 @@ export function BookShowcase({
                             href={chapterHref}
                           >
                             {!readable
-                              ? "Erişimi Aç"
+                              ? zeroPricePurchase
+                                ? "0 TL ile satın al"
+                                : "Erişimi Aç"
                               : index === 0
                                 ? "Okumaya Başla"
                                 : "Bölümü Oku"}

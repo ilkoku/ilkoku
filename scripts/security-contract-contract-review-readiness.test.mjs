@@ -78,7 +78,7 @@ test("system map includes review readiness and legal handoff while preserving in
   const map = source("src/app/harita/sozlesmeler/page.tsx");
 
   contains(map, '"/sozlesme/inceleme", "/sozlesme/hukuk-inceleme"', "review and legal handoff routes in contract map");
-  contains(map, "gerçek hukukçu kontrolü", "legal approval remains external boundary");
+  contains(map, "Admin Onayı", "admin approval path recorded in system map");
   contains(map, "nihai yayın hakları sözleşmesi", "final publishing rights boundary");
   contains(map, "Final Release UAT #263", "human UAT boundary");
 });
@@ -136,5 +136,5 @@ test("fresh recovery validates exact policy-aligned template state before build"
   contains(map, "Ürün kararlarının çalışma metinlerine yansıtılması", "contract map policy alignment stage");
   contains(map, "20260905053500_contract_product_policy_text_alignment", "migration evidence in map");
   contains(map, "8 etkilenen LIB şablonu", "affected-template count in map");
-  contains(map, "aynı templateVersion", "legal review exact-version boundary retained");
+  contains(map, "mevcut templateVersion", "version-bound approval evidence retained");
 });

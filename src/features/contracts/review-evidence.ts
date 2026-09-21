@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
-export type ContractTemplateReviewEvidenceType = "legal_review" | "product_owner_decision";
+export type ContractTemplateReviewEvidenceType = "legal_review" | "product_owner_decision" | "admin_approval";
 
 export interface ContractTemplateReviewEvidenceRecord {
   id: string;

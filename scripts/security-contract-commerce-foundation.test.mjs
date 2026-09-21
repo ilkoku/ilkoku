@@ -963,3 +963,56 @@ test("new chapters still require explicit access while a previously paid work ha
   contains(guard, "!paymentPathReady && !previouslyActivatedPaid", "never-activated staged work may stay fail-open");
   contains(guard, "!chapter.commerceAccess", "explicit chapter access remains required");
 });
+
+
+test("author publication access v2 replaces the placeholder but remains legal-review gated", () => {
+  const migration = source(
+    "prisma/migrations/20260921114500_author_publication_access_contract_v2/migration.sql",
+  );
+
+  contains(
+    migration,
+    "İLKOKU YAZAR YAYIN VE ERİŞİM SÖZLEŞMESİ",
+    "real author commerce agreement body",
+  );
+  contains(
+    migration,
+    "BÖLÜM ERİŞİM PLANI",
+    "preview locked contract coverage",
+  );
+  contains(
+    migration,
+    "HAZIRLIK MODU VE 0 TL KURALI",
+    "staged paid contract coverage",
+  );
+  contains(
+    migration,
+    "Yazar kuponunda indirim Yazar tarafından finanse edilmiş sayılır",
+    "author coupon funding rule",
+  );
+  contains(
+    migration,
+    "bu indirim Yazarın hakediş matrahını düşürmez",
+    "platform coupon earning-base protection",
+  );
+  contains(
+    migration,
+    "kesin İlkOku komisyon oranı, vergi/stopaj oranı, ödeme eşiği, ödeme yöntemi veya Yazar para transferi kuralı belirlenmemiştir",
+    "undefined commercial terms remain undefined",
+  );
+  contains(
+    migration,
+    "`lifecycleStatus` = 'review'",
+    "agreement is submitted to legal review",
+  );
+  contains(
+    migration,
+    "`active` = false",
+    "agreement remains inactive before legal review",
+  );
+  notContains(
+    migration,
+    "`active` = true",
+    "migration cannot bypass the legal activation gate",
+  );
+});

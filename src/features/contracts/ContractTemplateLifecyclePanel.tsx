@@ -42,10 +42,10 @@ function LifecycleButton({
 }
 
 export function ContractTemplateLifecyclePanel({
-  hasCurrentLegalEvidence = false,
+  currentApprovalEvidenceType = null,
   template,
 }: {
-  hasCurrentLegalEvidence?: boolean;
+  currentApprovalEvidenceType?: "legal_review" | "admin_approval" | null;
   template: ContractTemplateWorkbenchRecord;
 }) {
   if (template.lifecycleStatus === "soft") {
@@ -68,6 +68,14 @@ export function ContractTemplateLifecyclePanel({
       </section>
     );
   }
+
+  const hasCurrentApprovalEvidence = currentApprovalEvidenceType !== null;
+  const approvalEvidenceLabel =
+    currentApprovalEvidenceType === "legal_review"
+      ? "Hukukçu incelemesi"
+      : currentApprovalEvidenceType === "admin_approval"
+        ? "Admin Onayı"
+        : "Bekleniyor";
 
   return (
     <section className="contract-lifecycle-panel" data-status={template.lifecycleStatus}>
@@ -98,7 +106,7 @@ export function ContractTemplateLifecyclePanel({
 
       <dl className="contract-lifecycle-meta">
         <div><dt>Sürüm</dt><dd>v{template.version}</dd></div>
-        <div><dt>Hukukçu kanıtı</dt><dd>{hasCurrentLegalEvidence ? "Mevcut sürüm için kayıtlı" : "Bekleniyor"}</dd></div>
+        <div><dt>Onay dayanağı</dt><dd>{approvalEvidenceLabel}</dd></div>
         <div><dt>Onay zamanı</dt><dd>{formatDate(template.approvedAt)}</dd></div>
         <div><dt>Aktivasyon</dt><dd>{formatDate(template.activatedAt)}</dd></div>
         <div><dt>Kaynak</dt><dd>{template.sourceTemplateCode ?? "Manuel oluşturuldu"}</dd></div>
@@ -111,10 +119,12 @@ export function ContractTemplateLifecyclePanel({
         {template.lifecycleStatus === "review" ? (
           <>
             <LifecycleButton label="Taslağa geri al" templateId={template.id} transition="return_draft" />
-            {hasCurrentLegalEvidence ? (
+            {hasCurrentApprovalEvidence ? (
               <LifecycleButton label="Şablonu onayla" templateId={template.id} transition="approve" tone="primary" />
             ) : (
-              <span className="contract-lifecycle-evidence-lock">Onay için önce mevcut sürüm hukukçu kanıtını kaydet</span>
+              <span className="contract-lifecycle-evidence-lock">
+                Onay için mevcut sürüme hukukçu inceleme kanıtı veya Admin Onayı kaydet
+              </span>
             )}
           </>
         ) : null}
@@ -130,7 +140,8 @@ export function ContractTemplateLifecyclePanel({
       </div>
 
       <p className="contract-lifecycle-footnote">
-        Metin, hedef rol veya açıklama değişirse sürüm artar; onaylı/aktif şablon pasife alınarak yeniden İncelemede aşamasına döner ve önceki sürümün hukukçu kanıtı yeni sürümü onaylamaz. Gönderilmiş sözleşmelerin değişmez snapshot&apos;ları etkilenmez.
+        Metin, hedef rol veya açıklama değişirse sürüm artar; onaylı/aktif şablon pasife alınarak yeniden İncelemede aşamasına döner.
+        Önceki sürümün hukukçu inceleme veya Admin Onayı kaydı yeni sürümü onaylamaz. Gönderilmiş sözleşmelerin değişmez snapshot&apos;ları etkilenmez.
       </p>
     </section>
   );

@@ -65,7 +65,8 @@ test("review workbench shows recorded owner policy separately from legal evidenc
 
   contains(page, "Ürün sahibi kararları · kaydedildi", "resolved owner decision queue");
   contains(page, "pendingOwnerDecisionCount", "explicit open decision counter");
-  contains(page, "Kararın çözülmüş olması hukuki onay anlamına gelmez", "product/legal separation");
+  contains(page, "Kararın çözülmüş olması aktivasyon onayı anlamına gelmez", "product/activation separation");
+  contains(page, "hukukçu inceleme kanıtı veya açık Admin Onayı", "legal-or-admin approval path");
   contains(page, "listContractTemplateWorkbenchRecords", "live template inventory");
   contains(page, "getContractReviewReadiness", "canonical readiness registry");
   notContains(page, "transitionContractTemplate", "review page must not mutate lifecycle");

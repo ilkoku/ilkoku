@@ -40,6 +40,6 @@ test("system map records the legal review handoff while keeping real legal appro
 
   contains(map, '"/sozlesme/inceleme", "/sozlesme/hukuk-inceleme"', "review handoff routes");
   contains(map, "yazdırılabilir/PDF teslim edilebilir", "lawyer handoff evidence");
-  contains(map, "gerçek hukukçu kontrolü", "real legal review remains external");
+  contains(map, "Profesyonel hukukçu incelemesi", "legal review remains available as external option");
   contains(map, "Final Release UAT #263", "human UAT remains external");
 });

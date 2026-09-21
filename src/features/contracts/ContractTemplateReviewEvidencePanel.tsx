@@ -86,7 +86,7 @@ export function ContractTemplateReviewEvidencePanel({
               Mevcut sözleşme sürümünü İlkOku admin yetkisiyle onay sürecine aldığımı ve bu kaydın hukukçu incelemesi veya hukuki görüş olmadığını kabul ediyorum.
             </span>
           </label>
-          <button type="submit">Admin Onayını kaydet</button>
+          <button type="submit">Admin Onayını ver ve Onaylı yap</button>
         </form>
       ) : (
         <div className="contract-review-evidence-waiting">

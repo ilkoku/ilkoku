@@ -965,7 +965,7 @@ test("new chapters still require explicit access while a previously paid work ha
 });
 
 
-test("author publication access v2 replaces the placeholder but remains legal-review gated", () => {
+test("author publication access v2 replaces the placeholder but remains inactive pending explicit approval evidence", () => {
   const migration = source(
     "prisma/migrations/20260921114500_author_publication_access_contract_v2/migration.sql",
   );
@@ -1003,16 +1003,16 @@ test("author publication access v2 replaces the placeholder but remains legal-re
   contains(
     migration,
     "`lifecycleStatus` = 'review'",
-    "agreement is submitted to legal review",
+    "agreement is submitted to review",
   );
   contains(
     migration,
     "`active` = false",
-    "agreement remains inactive before legal review",
+    "agreement remains inactive before approval",
   );
   notContains(
     migration,
     "`active` = true",
-    "migration cannot bypass the legal activation gate",
+    "migration cannot bypass the activation gate",
   );
 });

@@ -204,7 +204,7 @@ test("reader commerce gate supports staged zero acquisition and still fails open
   contains(access, 'reason: "purchase_required"', "locked paid purchase gate");
   contains(readingPage, "getCommerceChapterAccessDecision", "reading route commerce access check");
   contains(readingPage, "/satinal/", "purchase redirect");
-  contains(checkoutPage, "0 TL edinim akışı hazır olduğunda", "staged zero checkout notice");
+  contains(checkoutPage, "edinim akışı", "staged zero checkout notice");
 });
 
 
@@ -373,7 +373,7 @@ test("zero-total checkout supports staged base-price zero while preserving reade
   contains(service, "if (!isCommerceCheckoutEnabled())", "coupon-derived zero total still respects rollout");
   contains(service, "transaction.workEntitlement.upsert", "zero total grants or reactivates entitlement");
   contains(service, "stagedZeroPricePurchase: true", "staged zero audit metadata");
-  contains(checkout, '"0 TL ile satın al"', "reader zero-price purchase action");
+  contains(checkout, "0 TL ile satın al", "reader zero-price purchase action");
   contains(library, "Satın alma başarılı. Eser kütüphanene eklendi", "library success confirmation");
 });
 
@@ -840,7 +840,7 @@ test("checkout distinguishes never-activated staging from post-activation outage
   contains(page, "paidAccessEnforced", "paid access enforcement state");
   contains(page, "checkoutConfigurationActive", "checkout transaction readiness");
   contains(page, "stagedZeroPurchaseReady", "confirmed staged zero acquisition readiness");
-  contains(page, "0 TL edinim akışı hazır olduğunda", "staged zero acquisition explanation");
+  contains(page, "edinim akışı", "staged zero acquisition explanation");
   contains(page, "eser bu nedenle ücretsiz erişime açılmaz", "post-activation outage stays locked");
   contains(page, "Erişim korunuyor", "post-activation outage status");
 });

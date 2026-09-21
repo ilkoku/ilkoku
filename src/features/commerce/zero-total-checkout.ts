@@ -36,14 +36,7 @@ export async function completeZeroTotalCheckout(input: {
   readerId: string;
   workId: string;
 }): Promise<ZeroTotalCheckoutResult> {
-  if (!isCommerceCheckoutEnabled()) {
-    return { ok: false, reason: "checkout_disabled" };
-  }
-
   const normalizedCode = input.couponCode.trim().toUpperCase();
-  if (!normalizedCode) {
-    return { ok: false, reason: "coupon_invalid" };
-  }
 
   return prisma.$transaction(async (transaction) => {
     const work = await transaction.work.findFirst({
@@ -92,14 +85,20 @@ export async function completeZeroTotalCheckout(input: {
       latestConsent: work?.publicationConsents[0] ?? null,
     });
 
-    if (
-      !work ||
-      !configuration ||
-      effectiveCommerce.saleModel !== "paid" ||
-      effectiveCommerce.status !== "active" ||
-      effectiveCommerce.priceAmount === null ||
-      effectiveCommerce.priceAmount <= BigInt(0)
-    ) {
+    const stagedZeroPurchase =
+      Boolean(work && configuration) &&
+      !configuration?.activatedAt &&
+      effectiveCommerce.saleModel === "paid" &&
+      effectiveCommerce.status === "ready" &&
+      effectiveCommerce.priceAmount === BigInt(0);
+    const couponZeroPurchaseCandidate =
+      Boolean(work && configuration) &&
+      effectiveCommerce.saleModel === "paid" &&
+      effectiveCommerce.status === "active" &&
+      effectiveCommerce.priceAmount !== null &&
+      effectiveCommerce.priceAmount > BigInt(0);
+
+    if (!work || !configuration || (!stagedZeroPurchase && !couponZeroPurchaseCandidate)) {
       return { ok: false, reason: "work_unavailable" } as const;
     }
 
@@ -115,6 +114,98 @@ export async function completeZeroTotalCheckout(input: {
 
     if (entitlement?.status === "active") {
       return { ok: false, reason: "already_entitled" } as const;
+    }
+
+    if (stagedZeroPurchase) {
+      const pricing = calculateCommercePricing(
+        effectiveCommerce.priceAmount ?? BigInt(0),
+        null,
+      );
+      const now = new Date();
+      const order = await transaction.order.create({
+        data: {
+          ...buildCommerceOrderSnapshot({
+            authorId: work.authorId,
+            coupon: null,
+            currency: effectiveCommerce.currency,
+            pricing,
+            readerId: input.readerId,
+            workId: work.id,
+          }),
+          orderNo: orderNumber(),
+          status: "paid",
+          paidAt: now,
+        },
+      });
+
+      await transaction.orderConsent.create({
+        data: {
+          orderId: order.id,
+          readerId: input.readerId,
+          consentType: "digital_content_purchase",
+          documentVersion: input.consent.documentVersion,
+          documentHash: input.consent.documentHash,
+          acceptedAt: now,
+          ipAddress: input.consent.ipAddress,
+          userAgent: input.consent.userAgent,
+        },
+      });
+
+      await transaction.workEntitlement.upsert({
+        where: {
+          readerId_workId: {
+            readerId: input.readerId,
+            workId: work.id,
+          },
+        },
+        create: {
+          readerId: input.readerId,
+          workId: work.id,
+          orderId: order.id,
+          source: "purchase",
+          status: "active",
+          grantedAt: now,
+        },
+        update: {
+          orderId: order.id,
+          source: "purchase",
+          status: "active",
+          grantedAt: now,
+          revokedAt: null,
+        },
+      });
+
+      await transaction.financialLedger.create({
+        data: {
+          idempotencyKey: order.id + ":sale_gross",
+          entryType: "sale_gross",
+          amount: BigInt(0),
+          currency: effectiveCommerce.currency,
+          orderId: order.id,
+          workId: work.id,
+          authorId: work.authorId,
+          couponId: null,
+          metadata: {
+            finalAmount: "0",
+            stagedZeroPricePurchase: true,
+            zeroTotalCheckout: true,
+          },
+        },
+      });
+
+      return {
+        ok: true,
+        orderId: order.id,
+        orderNo: order.orderNo,
+      } as const;
+    }
+
+    if (!isCommerceCheckoutEnabled()) {
+      return { ok: false, reason: "checkout_disabled" } as const;
+    }
+
+    if (!normalizedCode) {
+      return { ok: false, reason: "coupon_invalid" } as const;
     }
 
     const candidate = await transaction.coupon.findUnique({
@@ -262,14 +353,27 @@ export async function completeZeroTotalCheckout(input: {
       data: { usageCount: { increment: 1 } },
     });
 
-    await transaction.workEntitlement.create({
-      data: {
+    await transaction.workEntitlement.upsert({
+      where: {
+        readerId_workId: {
+          readerId: input.readerId,
+          workId: work.id,
+        },
+      },
+      create: {
         readerId: input.readerId,
         workId: work.id,
         orderId: order.id,
         source: "purchase",
         status: "active",
         grantedAt: now,
+      },
+      update: {
+        orderId: order.id,
+        source: "purchase",
+        status: "active",
+        grantedAt: now,
+        revokedAt: null,
       },
     });
 

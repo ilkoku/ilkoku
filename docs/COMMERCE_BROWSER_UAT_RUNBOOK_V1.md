@@ -148,17 +148,20 @@ Precondition: never-activated work and no operational production-safe payment pa
 Expected: `0 TL` appears under the Paid option; no real price input is required
 for this staging state.
 
-### W-04 — Checkout flag/provider mismatch
+### W-04 — Provider-free staged 0 TL acquisition
 
 Account: Writer + Reader
 
-Precondition: only if a safe environment can represent checkout enabled while no
-operational provider exists.
+Precondition: never-activated paid work, no operational provider, active reader
+digital-content purchase terms.
 
-Expected: never-activated paid work remains staged, not live-paid; reader access
-does not close.
+Expected: the work remains staged/ready at 0 TL rather than becoming non-zero
+live paid access. Preview remains readable. Kilitli chapters require entitlement,
+and the reader can obtain that entitlement through the 0 TL purchase path without
+an external provider.
 
-If this environment state cannot be represented safely: keep the row `HUMAN_PENDING` and record the missing prerequisite.
+If reader purchase terms are not active yet, staged access remains fail-open and
+the row stays `HUMAN_PENDING` until the terms prerequisite is satisfied.
 
 ### W-05 — Writer agreement evidence
 
@@ -173,7 +176,7 @@ silently overwrites a same-version/different-hash acceptance.
 
 Hash-conflict behavior may remain code-level only unless a safe fixture exists.
 
-### W-06 — Final confirmation without payment path
+### W-06 — Final confirmation without payment provider
 
 Account: Writer
 
@@ -182,8 +185,9 @@ Precondition: never-activated paid work, no operational provider.
 1. Complete chapter access and agreement prerequisites.
 2. Give work-level final confirmation.
 
-Expected: the work remains staged/ready rather than becoming real paid access;
-reader access stays open.
+Expected: the work becomes staged/ready at 0 TL. If reader purchase terms are
+active, the reader-facing Preview/Kilitli plan is enforced through provider-free
+0 TL acquisition.
 
 ### W-07 — Draft edit must not leak live
 
@@ -207,12 +211,19 @@ Open a free published work as Reader.
 
 Expected: all published chapters remain readable.
 
-### R-02 — Never-activated staged paid work
+### R-02 — Never-activated staged paid work at 0 TL
 
-Open the staged paid work as Reader.
+Precondition: active reader digital-content purchase terms.
 
-Expected: current reading remains open; the staging selection does not create a
-paid lock.
+1. Open the staged paid work as Reader without entitlement.
+2. Confirm the Preview chapter remains readable.
+3. Confirm the Kilitli chapter shows a 0 TL purchase gate.
+4. Open the 0 TL checkout, accept the active reader purchase terms and complete.
+5. Confirm success redirects to `/kutuphanem/satin-aldiklarim`.
+6. Confirm the work appears in the library and the previously Kilitli chapter is readable.
+
+Expected: no external payment provider is used; a paid 0 TL Order, consent
+evidence and ACTIVE work entitlement are created.
 
 ### R-03 — Preview chapter
 
@@ -273,8 +284,20 @@ commerce does not bypass it.
 
 ## 7. Checkout and payment browser UAT
 
-The following scenarios require an intentionally configured safe payment path.
+The staged 0 TL acquisition scenario does **not** require a payment provider.
+Non-zero scenarios below require an intentionally configured safe payment path.
 Do **not** activate production credentials merely to complete UAT.
+
+### C-00 — Staged 0 TL acquisition
+
+Account: Reader
+
+Precondition: writer-confirmed Paid work in `ready` state at 0 TL and active
+reader purchase terms.
+
+Expected: reader sees 0 TL, accepts the purchase terms, completes without a
+Payment/provider call, receives a paid Order + ACTIVE entitlement, is redirected
+to **Kütüphanem → Satın Aldıklarım**, and sees a successful purchase message.
 
 ### C-01 — Non-zero checkout
 Expected: pending order/payment and consent are established before provider handoff.

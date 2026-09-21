@@ -307,3 +307,96 @@
     min-height: 2.85rem;
   }
 }
+
+
+.account-log__count {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  padding: 0 .7rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 32%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.account-log__list {
+  display: grid;
+  gap: .7rem;
+}
+
+.account-log__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: .95rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
+  border-radius: .9rem;
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+}
+
+.account-log__main {
+  display: grid;
+  min-width: 0;
+  gap: .25rem;
+}
+
+.account-log__main a {
+  overflow: hidden;
+  color: var(--color-text);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-log__main a:hover,
+.account-log__main a:focus-visible {
+  color: var(--color-primary);
+}
+
+.account-log__main span,
+.account-log__state span,
+.account-log__time {
+  color: var(--color-text-secondary);
+  font-size: .78rem;
+}
+
+.account-log__state {
+  display: grid;
+  gap: .2rem;
+  justify-items: end;
+}
+
+.account-log__state strong {
+  color: var(--color-text);
+}
+
+.account-log__time {
+  white-space: nowrap;
+}
+
+.account-log__empty {
+  padding: 2rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 1rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+@media (max-width: 47.99rem) {
+  .account-log__row {
+    grid-template-columns: 1fr;
+    gap: .55rem;
+  }
+
+  .account-log__state {
+    justify-items: start;
+  }
+
+  .account-log__time {
+    white-space: normal;
+  }
+}

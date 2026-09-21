@@ -81,25 +81,80 @@ export async function getAuthorCommerceWork(authorId: string, workId: string) {
       },
       publicationConsents: {
         orderBy: { confirmedAt: "desc" },
-        take: 20,
+        take: 1,
         select: {
           publicationModel: true,
-          priceAmount: true,
-          currency: true,
           confirmedAt: true,
-        },
-      },
-      priceHistory: {
-        orderBy: { changedAt: "desc" },
-        take: 20,
-        select: {
-          newPrice: true,
-          currency: true,
-          changedAt: true,
         },
       },
     },
   });
+}
+
+
+export async function listWriterCommerceLog(authorId: string) {
+  const [priceHistory, publicationConsents] = await Promise.all([
+    prisma.workPriceHistory.findMany({
+      where: { authorId },
+      orderBy: { changedAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        newPrice: true,
+        currency: true,
+        changedAt: true,
+        work: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    }),
+    prisma.workPublicationConsent.findMany({
+      where: { authorId },
+      orderBy: { confirmedAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        publicationModel: true,
+        priceAmount: true,
+        currency: true,
+        confirmedAt: true,
+        work: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  return [
+    ...priceHistory.map((entry) => ({
+      id: `price-${entry.id}`,
+      workId: entry.work.id,
+      workTitle: entry.work.title,
+      kind: "draft" as const,
+      saleModel: entry.newPrice === null ? ("free" as const) : ("paid" as const),
+      priceAmount: entry.newPrice,
+      currency: entry.currency,
+      happenedAt: entry.changedAt,
+    })),
+    ...publicationConsents.map((entry) => ({
+      id: `consent-${entry.id}`,
+      workId: entry.work.id,
+      workTitle: entry.work.title,
+      kind: "effective" as const,
+      saleModel: entry.publicationModel,
+      priceAmount: entry.priceAmount,
+      currency: entry.currency,
+      happenedAt: entry.confirmedAt,
+    })),
+  ]
+    .sort((a, b) => b.happenedAt.getTime() - a.happenedAt.getTime())
+    .slice(0, 100);
 }
 
 

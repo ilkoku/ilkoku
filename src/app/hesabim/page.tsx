@@ -70,6 +70,7 @@ function getAccountSections(role: keyof typeof roleLabels) {
     { href: "#yetiskin-icerik", label: "18+ İçerik Erişimi", helper: "Yaş ve içerik tercihi" },
     { href: "#bildirim-tercihleri", label: "Bildirim Tercihleri", helper: "E-posta ve bildirim ayarları" },
     ...(hasReaderCommerce ? [{ href: "/hesabim/odeme-gecmisi", label: "Ödeme Geçmişi", helper: "Sipariş ve ödeme durumları" }] : []),
+    ...(role === "writer" ? [{ href: "/hesabim/log", label: "Log", helper: "Yayın modeli geçmişi" }] : []),
     { href: "#guvenlik", label: "Güvenlik", helper: "Şifre ve oturum işlemleri" },
   ];
 }

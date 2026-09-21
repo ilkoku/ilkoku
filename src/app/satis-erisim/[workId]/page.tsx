@@ -155,28 +155,6 @@ export default async function WriterCommerceWorkPage({
     work.chapters.length > 0 && plannedChapters.length === work.chapters.length;
   const saleModelReady = Boolean(work.saleConfiguration);
   const latestEffectiveConsent = work.publicationConsents[0] ?? null;
-  const modelHistory = [
-    ...work.priceHistory.map((entry) => ({
-      at: entry.changedAt,
-      kind: "Taslak değişikliği",
-      model: entry.newPrice === null ? "Ücretsiz" : "Ücretli",
-      price:
-        entry.newPrice === null
-          ? "—"
-          : formatPrice(entry.newPrice, entry.currency),
-    })),
-    ...work.publicationConsents.map((entry) => ({
-      at: entry.confirmedAt,
-      kind: "Yürürlük onayı",
-      model: entry.publicationModel === "paid" ? "Ücretli" : "Ücretsiz",
-      price:
-        entry.publicationModel === "paid"
-          ? formatPrice(entry.priceAmount, entry.currency)
-          : "—",
-    })),
-  ]
-    .sort((a, b) => b.at.getTime() - a.at.getTime())
-    .slice(0, 20);
   const paidPriceReady =
     currentModel !== "paid" ||
     !paidPricingEnabled ||
@@ -389,46 +367,6 @@ export default async function WriterCommerceWorkPage({
             </div>
           </div>
         </form>
-
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <span className={styles.eyebrow}>Yayın modeli geçmişi</span>
-              <h2>Kayıt ve yürürlük geçmişi</h2>
-              <p>
-                Taslak model değişiklikleri ile eser bazlı son onayları tarih ve
-                saat sırasıyla görebilirsin.
-              </p>
-            </div>
-            <span className={styles.badge}>{modelHistory.length} kayıt</span>
-          </div>
-
-          {modelHistory.length === 0 ? (
-            <div className={styles.empty}>
-              Bu eser için henüz yayın modeli geçmişi oluşmadı.
-            </div>
-          ) : (
-            <div className={styles.modelHistoryList}>
-              {modelHistory.map((entry, index) => (
-                <div
-                  className={styles.modelHistoryRow}
-                  key={`${entry.kind}-${entry.at.toISOString()}-${index}`}
-                >
-                  <div>
-                    <strong>{entry.model}</strong>
-                    <span>{entry.kind}</span>
-                  </div>
-                  <div className={styles.modelHistoryMeta}>
-                    <span>{entry.price}</span>
-                    <time dateTime={entry.at.toISOString()}>
-                      {formatDateTime(entry.at)}
-                    </time>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
 
         <section className={styles.panel}>
           <div className={styles.panelHeader}>

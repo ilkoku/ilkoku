@@ -208,6 +208,11 @@ export async function completeZeroTotalCheckout(input: {
       return { ok: false, reason: "coupon_invalid" } as const;
     }
 
+    const couponBaseAmount = effectiveCommerce.priceAmount;
+    if (couponBaseAmount === null || couponBaseAmount <= BigInt(0)) {
+      return { ok: false, reason: "work_unavailable" } as const;
+    }
+
     const candidate = await transaction.coupon.findUnique({
       where: { code: normalizedCode },
       select: { id: true },
@@ -291,7 +296,7 @@ export async function completeZeroTotalCheckout(input: {
       return { ok: false, reason: "coupon_invalid" } as const;
     }
 
-    const pricing = calculateCommercePricing(effectiveCommerce.priceAmount, {
+    const pricing = calculateCommercePricing(couponBaseAmount, {
       discountType: coupon.discountType,
       discountValue: coupon.discountValue,
       owner: coupon.owner,

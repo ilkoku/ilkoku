@@ -10,7 +10,7 @@ export interface ContractTemplateReviewEvidenceRecord {
   id: string;
   templateId: string;
   templateVersion: number;
-  evidenceType: Exclude<ContractTemplateReviewEvidenceType, "legal_review">;
+  evidenceType: ContractTemplateReviewEvidenceType;
   reviewerLabel: string;
   note: string;
   recordedById: string | null;
@@ -64,7 +64,7 @@ export async function listContractTemplateReviewEvidence(templateId: string) {
 
 export async function recordContractTemplateReviewEvidence(input: {
   actorId: string;
-  evidenceType: ContractTemplateReviewEvidenceType;
+  evidenceType: Exclude<ContractTemplateReviewEvidenceType, "legal_review">;
   note: string;
   reviewerLabel: string;
   templateId: string;

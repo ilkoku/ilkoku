@@ -188,10 +188,28 @@ export async function recordContractTemplateReviewEvidenceAction(formData: FormD
     templateId,
   });
 
+  let finalStatus: string = result.status;
+  if (
+    isAdminApproval &&
+    (result.status === "recorded" || result.status === "already_recorded")
+  ) {
+    const approvalResult = await transitionContractTemplateLifecycle({
+      actorId: admin.id,
+      templateId,
+      transition: "approve",
+    });
+    finalStatus =
+      approvalResult.status === "transitioned"
+        ? "admin_approved"
+        : approvalResult.status;
+  }
+
+  revalidatePath("/sozlesme");
   revalidatePath("/sozlesme/inceleme");
   revalidatePath("/sozlesme/hukuk-inceleme");
+  revalidatePath("/sozlesme/sablonlar");
   revalidatePath(`/sozlesme/sablonlar/${templateId}`);
-  redirect(templateResult(templateId, result.status));
+  redirect(templateResult(templateId, finalStatus));
 }
 
 export async function transitionContractTemplateAction(formData: FormData) {

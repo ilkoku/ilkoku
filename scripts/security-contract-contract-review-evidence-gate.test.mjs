@@ -73,11 +73,23 @@ test("template workbench exposes only admin approval as the activation control",
   contains(page, 'item.evidenceType === "admin_approval"', "page ignores legal review for activation");
   contains(lifecyclePanel, "Onay için mevcut sürüme Admin Onayı kaydet", "admin-only approval UI lock");
   contains(lifecyclePanel, "hasCurrentAdminApproval ?", "admin proof-gated approval control");
-  contains(evidencePanel, "Admin Onayını kaydet", "admin approval form");
+  contains(evidencePanel, "Admin Onayını ver ve Onaylı yap", "admin approval form");
   contains(evidencePanel, "aktivasyon dayanağı sayılmaz", "historical legal review boundary");
   notContains(evidencePanel, 'value="legal_review"', "legal review write form removed");
   notContains(actions, '"legal_review"', "legal review cannot be submitted through the server action");
+  contains(actions, 'transition: "approve"', "admin approval immediately advances lifecycle");
+  contains(actions, '"admin_approved"', "admin approval redirect status");
   contains(layout, 'import "./review-evidence.css"', "evidence styling");
+});
+
+test("existing waiting admin approvals are promoted by migration without touching soft drafts", () => {
+  const migration = source("prisma/migrations/20260921132000_contract_admin_approval_auto_approve/migration.sql");
+
+  contains(migration, "evidence.evidenceType = 'admin_approval'", "admin approval evidence backfill");
+  contains(migration, "template.lifecycleStatus = 'approved'", "waiting template promotion");
+  contains(migration, "template.lifecycleStatus = 'review'", "only waiting review templates");
+  contains(migration, "evidence.templateVersion = template.version", "current-version binding");
+  contains(migration, "template.code NOT LIKE 'SOFT\\_%'", "soft draft exclusion");
 });
 
 test("new review evidence table is an acknowledged migration-only contract surface", () => {

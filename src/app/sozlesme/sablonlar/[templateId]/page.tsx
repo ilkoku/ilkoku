@@ -23,16 +23,9 @@ export default async function ContractTemplatePage({
   const softDraft = workbenchTemplate.lifecycleStatus === "soft";
   const returnHref = softDraft ? "/sozlesme/taslaklar" : "/sozlesme/sablonlar";
   const returnLabel = softDraft ? "Soft Taslaklara dön" : "Şablon Kütüphanesine dön";
-  const currentApprovalEvidenceType =
-    evidence.some(
-      (item) => item.templateVersion === workbenchTemplate.version && item.evidenceType === "legal_review",
-    )
-      ? ("legal_review" as const)
-      : evidence.some(
-          (item) => item.templateVersion === workbenchTemplate.version && item.evidenceType === "admin_approval",
-        )
-        ? ("admin_approval" as const)
-        : null;
+  const hasCurrentAdminApproval = evidence.some(
+    (item) => item.templateVersion === workbenchTemplate.version && item.evidenceType === "admin_approval",
+  );
 
   return (
     <main className="contract-admin-page contract-editor-page">
@@ -47,7 +40,7 @@ export default async function ContractTemplatePage({
 
       <ContractTemplateLifecyclePanel
         template={workbenchTemplate}
-        currentApprovalEvidenceType={currentApprovalEvidenceType}
+        hasCurrentAdminApproval={hasCurrentAdminApproval}
       />
       <ContractTemplateReviewEvidencePanel template={workbenchTemplate} evidence={evidence} />
       <ContractTemplateForm template={template} returnHref={returnHref} />

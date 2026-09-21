@@ -58,7 +58,7 @@ test("review readiness registry classifies every canonical LIB template and reso
   notContains(registry, "approvedById", "readiness registry must not fabricate legal approval evidence");
 });
 
-test("review workbench shows recorded owner policy separately from legal evidence and keeps zero open decisions", () => {
+test("review workbench keeps owner policy separate and requires admin approval for activation", () => {
   const page = source("src/app/sozlesme/inceleme/page.tsx");
   const navigation = source("src/features/contracts/ContractManagementNavigation.tsx");
   const layout = source("src/app/sozlesme/layout.tsx");
@@ -66,7 +66,7 @@ test("review workbench shows recorded owner policy separately from legal evidenc
   contains(page, "Ürün sahibi kararları · kaydedildi", "resolved owner decision queue");
   contains(page, "pendingOwnerDecisionCount", "explicit open decision counter");
   contains(page, "Kararın çözülmüş olması aktivasyon onayı anlamına gelmez", "product/activation separation");
-  contains(page, "hukukçu inceleme kanıtı veya açık Admin Onayı", "legal-or-admin approval path");
+  contains(page, "mevcut sürüme ait açık Admin Onayı", "admin-only approval path");
   contains(page, "listContractTemplateWorkbenchRecords", "live template inventory");
   contains(page, "getContractReviewReadiness", "canonical readiness registry");
   notContains(page, "transitionContractTemplate", "review page must not mutate lifecycle");
@@ -78,7 +78,7 @@ test("system map includes review readiness and legal handoff while preserving in
   const map = source("src/app/harita/sozlesmeler/page.tsx");
 
   contains(map, '"/sozlesme/inceleme", "/sozlesme/hukuk-inceleme"', "review and legal handoff routes in contract map");
-  contains(map, "Admin Onayı", "admin approval path recorded in system map");
+  contains(map, "Sürüme bağlı Admin Onayı", "admin-only approval path recorded in system map");
   contains(map, "nihai yayın hakları sözleşmesi", "final publishing rights boundary");
   contains(map, "Final Release UAT #263", "human UAT boundary");
 });

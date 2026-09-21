@@ -17,7 +17,8 @@ test("legal review packet is admin-scoped, read-only and backed by live template
   contains(page, 'record.code.startsWith("LIB_")', "canonical LIB scope");
   contains(page, "getContractReviewReadiness", "review readiness notes");
   contains(page, "template.body", "full working text included");
-  contains(page, "Hukuki onay veya elektronik imza iddiası değildir", "legal boundary notice");
+  contains(page, "Salt okunur ve opsiyoneldir", "optional legal review boundary notice");
+  contains(page, "lifecycle onayı yalnız Admin Onayı ile açılır", "admin-only activation boundary");
   notContains(page, "transitionContractTemplateLifecycle", "legal packet must not mutate lifecycle");
   notContains(page, "updateManagedContractTemplate", "legal packet must not edit templates");
   contains(navigation, 'href: "/sozlesme/hukuk-inceleme"', "legal packet navigation entry");
@@ -35,11 +36,12 @@ test("legal review packet is printable without weakening the admin-only contract
   contains(layout, 'user.role !== "admin"', "admin server guard remains canonical");
 });
 
-test("system map records the legal review handoff while keeping real legal approval and Human UAT external", () => {
+test("system map keeps legal review optional while admin approval controls activation", () => {
   const map = source("src/app/harita/sozlesmeler/page.tsx");
 
   contains(map, '"/sozlesme/inceleme", "/sozlesme/hukuk-inceleme"', "review handoff routes");
   contains(map, "yazdırılabilir/PDF teslim edilebilir", "lawyer handoff evidence");
-  contains(map, "Profesyonel hukukçu incelemesi", "legal review remains available as external option");
+  contains(map, "lifecycle kapısı değildir", "legal review is not activation gate");
+  contains(map, "Sürüme bağlı Admin Onayı", "admin approval is activation gate");
   contains(map, "Final Release UAT #263", "human UAT remains external");
 });

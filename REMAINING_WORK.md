@@ -2,9 +2,9 @@
 
 ## Öncelik 0 — Sözleşme aktivasyonu ve Commerce HUMAN UAT
 
-- Tüm yönetilen sözleşme şablonlarında onay kapısı: mevcut sürüm için **hukukçu inceleme kanıtı veya ayrı Admin Onayı**. Admin Onayı hukukçu incelemesi olarak kaydedilmez.
+- Tüm yönetilen sözleşme şablonlarında geçici onay kapısı: mevcut sürüm için yalnız **Admin Onayı**. Hukukçu incelemesi aktivasyon koşulu değildir.
 - Admin Onayı; aktif admin kimliği, sözleşme sürümü, tarih/saat ve zorunlu onay notuyla değişmez inceleme kanıtı olarak saklanır.
-- Metin/hedef rol/açıklama değişip sürüm arttığında önceki hukukçu veya Admin Onayı yeni sürüm için geçerli sayılmaz.
+- Metin/hedef rol/açıklama değişip sürüm arttığında önceki Admin Onayı yeni sürüm için geçerli sayılmaz; geçmiş hukukçu kayıtları yalnız tarihçe olarak korunur.
 - Soft Taslaklar doğrudan onaylanamaz/aktif edilemez; önce çalışma şablonuna dönüştürülür.
 - Main merge + Production Smoke sonrası **İlkOku Yazar Yayın ve Erişim Sözleşmesi v2** için Admin Onayı → Onaylı → Aktif canlı akışını test et.
 - Ardından W-05 sözleşme kabulü: version/hash/time/IP/UA kanıtını doğrula.

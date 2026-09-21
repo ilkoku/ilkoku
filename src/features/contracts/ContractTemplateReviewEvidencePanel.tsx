@@ -21,7 +21,7 @@ function EvidenceCard({
     <article className="contract-review-evidence-current">
       <strong>{title}</strong>
       <dl>
-        <div><dt>Kaydeden / inceleyen</dt><dd>{evidence.reviewerLabel}</dd></div>
+        <div><dt>Kaydeden</dt><dd>{evidence.reviewerLabel}</dd></div>
         <div><dt>Kayıt zamanı</dt><dd>{formatDate(evidence.createdAt)}</dd></div>
         <div><dt>Sürüm</dt><dd>v{evidence.templateVersion}</dd></div>
       </dl>
@@ -39,59 +39,30 @@ export function ContractTemplateReviewEvidencePanel({
 }) {
   if (template.lifecycleStatus === "soft") return null;
 
-  const currentLegalEvidence = evidence.find(
-    (item) => item.templateVersion === template.version && item.evidenceType === "legal_review",
-  );
   const currentAdminApproval = evidence.find(
     (item) => item.templateVersion === template.version && item.evidenceType === "admin_approval",
   );
-  const hasCurrentApprovalEvidence = Boolean(currentLegalEvidence || currentAdminApproval);
+  const currentLegacyLegalEvidence = evidence.find(
+    (item) => item.templateVersion === template.version && item.evidenceType === "legal_review",
+  );
 
   return (
     <section className="contract-review-evidence-panel" aria-labelledby="review-evidence-title">
       <div className="contract-review-evidence-panel__heading">
         <div>
-          <p>İNCELEME / ONAY KANITI</p>
-          <h2 id="review-evidence-title">Sürüm v{template.version} aktivasyon dayanağı</h2>
+          <p>ADMIN ONAYI</p>
+          <h2 id="review-evidence-title">Sürüm v{template.version} aktivasyon onayı</h2>
         </div>
-        <span data-ready={hasCurrentApprovalEvidence ? "true" : "false"}>
-          {hasCurrentApprovalEvidence ? "Onay dayanağı kayıtlı" : "Onay dayanağı bekleniyor"}
+        <span data-ready={currentAdminApproval ? "true" : "false"}>
+          {currentAdminApproval ? "Admin Onayı kayıtlı" : "Admin Onayı bekleniyor"}
         </span>
       </div>
 
       <p>
-        Şablonun Onaylı aşamasına geçmesi için mevcut sürüme bağlı en az bir kayıt gerekir:
-        hukukçu inceleme kanıtı veya açık Admin Onayı. Admin Onayı hukukçu incelemesi ya da hukuki görüş değildir;
-        sistemde ayrı kanıt türü olarak tutulur. Metin değişip sürüm yükselirse eski kayıt geçmişte korunur ancak yeni sürümü onaylamaz.
+        Geçici aktivasyon kuralında şablonun Onaylı aşamasına geçmesi için mevcut sürüme bağlı
+        Admin Onayı zorunludur. Hukukçu inceleme kayıtları silinmez ancak aktivasyon dayanağı sayılmaz.
+        Metin değişip sürüm yükselirse önceki Admin Onayı geçmişte korunur ve yeni sürüm için yeniden onay gerekir.
       </p>
-
-      {currentLegalEvidence ? (
-        <EvidenceCard evidence={currentLegalEvidence} title="Hukukçu inceleme kanıtı" />
-      ) : template.lifecycleStatus === "review" ? (
-        <form action={recordContractTemplateReviewEvidenceAction} className="contract-review-evidence-form">
-          <input type="hidden" name="templateId" value={template.id} />
-          <input type="hidden" name="evidenceType" value="legal_review" />
-          <label>
-            <span>Hukukçu / inceleyen kişi veya kurum</span>
-            <input name="reviewerLabel" maxLength={220} required placeholder="Örn. Av. ... / hukuk bürosu" />
-          </label>
-          <label>
-            <span>İnceleme sonucu / not</span>
-            <textarea
-              name="note"
-              maxLength={5000}
-              required
-              rows={5}
-              placeholder="İncelenen sürüm için hukukçu sonucu, gerekli düzeltmeler veya onay kapsamı"
-            />
-          </label>
-          <button type="submit">Hukukçu inceleme kanıtını kaydet</button>
-        </form>
-      ) : (
-        <div className="contract-review-evidence-waiting">
-          Hukukçu kanıtı kaydı, şablon İncelemede aşamasındayken yapılır.
-        </div>
-      )}
 
       {currentAdminApproval ? (
         <EvidenceCard evidence={currentAdminApproval} title="Admin Onayı" />
@@ -112,11 +83,21 @@ export function ContractTemplateReviewEvidencePanel({
           <label>
             <input type="checkbox" name="adminApprovalConfirmed" value="confirmed" required />
             <span>
-              Bu kaydın hukukçu incelemesi veya hukuki görüş olmadığını; mevcut sözleşme sürümünü İlkOku admin yetkisiyle onay sürecine aldığımı kabul ediyorum.
+              Mevcut sözleşme sürümünü İlkOku admin yetkisiyle onay sürecine aldığımı ve bu kaydın hukukçu incelemesi veya hukuki görüş olmadığını kabul ediyorum.
             </span>
           </label>
           <button type="submit">Admin Onayını kaydet</button>
         </form>
+      ) : (
+        <div className="contract-review-evidence-waiting">
+          Admin Onayı, şablon İncelemede aşamasındayken kaydedilir.
+        </div>
+      )}
+
+      {currentLegacyLegalEvidence ? (
+        <div className="contract-review-evidence-waiting">
+          Bu sürüm için geçmiş bir hukukçu inceleme kaydı mevcut. Kayıt tarihçe olarak korunur; mevcut geçici politikada Onaylı aşamasına geçiş için Admin Onayı yerine kullanılamaz.
+        </div>
       ) : null}
 
       {evidence.some((item) => item.templateVersion !== template.version) ? (

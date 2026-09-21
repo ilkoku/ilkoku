@@ -42,10 +42,10 @@ function LifecycleButton({
 }
 
 export function ContractTemplateLifecyclePanel({
-  currentApprovalEvidenceType = null,
+  hasCurrentAdminApproval = false,
   template,
 }: {
-  currentApprovalEvidenceType?: "legal_review" | "admin_approval" | null;
+  hasCurrentAdminApproval?: boolean;
   template: ContractTemplateWorkbenchRecord;
 }) {
   if (template.lifecycleStatus === "soft") {
@@ -69,13 +69,7 @@ export function ContractTemplateLifecyclePanel({
     );
   }
 
-  const hasCurrentApprovalEvidence = currentApprovalEvidenceType !== null;
-  const approvalEvidenceLabel =
-    currentApprovalEvidenceType === "legal_review"
-      ? "Hukukçu incelemesi"
-      : currentApprovalEvidenceType === "admin_approval"
-        ? "Admin Onayı"
-        : "Bekleniyor";
+  const approvalEvidenceLabel = hasCurrentAdminApproval ? "Admin Onayı" : "Bekleniyor";
 
   return (
     <section className="contract-lifecycle-panel" data-status={template.lifecycleStatus}>
@@ -119,11 +113,11 @@ export function ContractTemplateLifecyclePanel({
         {template.lifecycleStatus === "review" ? (
           <>
             <LifecycleButton label="Taslağa geri al" templateId={template.id} transition="return_draft" />
-            {hasCurrentApprovalEvidence ? (
+            {hasCurrentAdminApproval ? (
               <LifecycleButton label="Şablonu onayla" templateId={template.id} transition="approve" tone="primary" />
             ) : (
               <span className="contract-lifecycle-evidence-lock">
-                Onay için mevcut sürüme hukukçu inceleme kanıtı veya Admin Onayı kaydet
+                Onay için mevcut sürüme Admin Onayı kaydet
               </span>
             )}
           </>
@@ -141,7 +135,7 @@ export function ContractTemplateLifecyclePanel({
 
       <p className="contract-lifecycle-footnote">
         Metin, hedef rol veya açıklama değişirse sürüm artar; onaylı/aktif şablon pasife alınarak yeniden İncelemede aşamasına döner.
-        Önceki sürümün hukukçu inceleme veya Admin Onayı kaydı yeni sürümü onaylamaz. Gönderilmiş sözleşmelerin değişmez snapshot&apos;ları etkilenmez.
+        Önceki sürümün Admin Onayı yeni sürümü onaylamaz. Eski hukukçu kayıtları tarihçede korunur ancak aktivasyon dayanağı değildir. Gönderilmiş sözleşmelerin değişmez snapshot&apos;ları etkilenmez.
       </p>
     </section>
   );

@@ -161,7 +161,7 @@ export async function recordContractTemplateReviewEvidenceAction(formData: FormD
   const note = text(formData, "note", 5000);
   const evidenceType = text(formData, "evidenceType", 40);
   const adminApprovalConfirmed = formData.get("adminApprovalConfirmed") === "confirmed";
-  const validEvidenceType = ["legal_review", "product_owner_decision", "admin_approval"].includes(evidenceType);
+  const validEvidenceType = ["product_owner_decision", "admin_approval"].includes(evidenceType);
   const isAdminApproval = evidenceType === "admin_approval";
   const reviewerLabel = isAdminApproval
     ? `İlkOku Admin · ${admin.email}`
@@ -182,7 +182,7 @@ export async function recordContractTemplateReviewEvidenceAction(formData: FormD
 
   const result = await recordContractTemplateReviewEvidence({
     actorId: admin.id,
-    evidenceType: evidenceType as "legal_review" | "product_owner_decision" | "admin_approval",
+    evidenceType: evidenceType as "product_owner_decision" | "admin_approval",
     note,
     reviewerLabel,
     templateId,

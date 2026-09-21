@@ -31,10 +31,10 @@ export default async function ContractLegalReviewPackPage() {
       <header className="contract-legal-pack-header">
         <div>
           <p>HUKUKÇU İNCELEME PAKETİ</p>
-          <h1>İlkOku sözleşme şablonları · aktivasyon öncesi inceleme</h1>
+          <h1>İlkOku sözleşme şablonları · opsiyonel hukuk incelemesi</h1>
           <p>
             Bu paket mevcut çalışma şablonlarını, sürümlerini, tam metinlerini, çözülmüş ürün politikalarını ve açık hukuki inceleme maddelerini tek yerde toplar.
-            Hukuki onay veya elektronik imza iddiası değildir; hukukçu inceleme kanıtı ayrıca aynı şablon sürümüne kaydedilir.
+            Salt okunur ve opsiyoneldir; mevcut geçici aktivasyon kuralında hukukçu incelemesi Onaylı/Aktif geçişinin koşulu değildir ve yeni hukukçu kanıtı aktivasyon amacıyla kaydedilmez.
           </p>
         </div>
         <div className="contract-legal-pack-actions">
@@ -53,7 +53,7 @@ export default async function ContractLegalReviewPackPage() {
       <section className="contract-legal-pack-boundary">
         <strong>İnceleme sınırı</strong>
         <p>
-          Bu sayfa salt-okunur bir teslim paketidir. Şablonları Onaylı veya Aktif duruma taşımaz. Metin değişirse sürüm artar ve önceki sürüme ait hukukçu inceleme kanıtı yeni sürümü onaylamak için kullanılamaz.
+          Bu sayfa salt-okunur bir teslim paketidir. Şablonları Onaylı veya Aktif duruma taşımaz. Mevcut geçici kuralda lifecycle onayı yalnız Admin Onayı ile açılır; geçmiş hukukçu kayıtları yalnız tarihçe olarak korunur.
         </p>
       </section>
 

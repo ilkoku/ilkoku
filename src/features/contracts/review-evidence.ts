@@ -64,7 +64,7 @@ export async function listContractTemplateReviewEvidence(templateId: string) {
 
 export async function recordContractTemplateReviewEvidence(input: {
   actorId: string;
-  evidenceType: ContractTemplateReviewEvidenceType;
+  evidenceType: Exclude<ContractTemplateReviewEvidenceType, "legal_review">;
   note: string;
   reviewerLabel: string;
   templateId: string;

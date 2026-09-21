@@ -42,6 +42,18 @@ function formatPrice(value: bigint | null | undefined, currency = "TRY") {
   }).format(Number(value) / 100);
 }
 
+function formatDateTime(value: Date | string | null | undefined) {
+  if (!value) return "—";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Europe/Istanbul",
+  }).format(date);
+}
+
+
 const statusMessages: Record<string, string> = {
   "sozlesme-onayi-gerekli": "Sözleşmeyi kabul etmek için onay kutusunu işaretlemelisin.",
   "sozlesme-hazir-degil": "Yazar Yayın ve Erişim Sözleşmesi henüz aktif değil.",
@@ -52,6 +64,7 @@ const statusMessages: Record<string, string> = {
   "eser-onayi-gerekli": "Eser bazlı son onay kutusunu işaretlemelisin.",
   "eser-bulunamadi": "Eser bulunamadı veya artık bu işlem için uygun değil.",
   "yayin-modeli-gerekli": "Önce Ücretsiz veya Ücretli yayın modelini kaydetmelisin.",
+  "yayin-modeli-kaydedildi": "Yayın modeli kaydedildi.",
   "bolum-gerekli": "Son onay için eserde en az bir bölüm bulunmalı.",
   "erisim-plani-gerekli": "Son onaydan önce tüm bölümlerin erişim planını kaydetmelisin.",
   "erisim-secimi-eksik": "Her bölüm için Ön İzleme veya Kilitli seçimini açıkça yapmalısın.",
@@ -141,6 +154,7 @@ export default async function WriterCommerceWorkPage({
   const accessPlanComplete =
     work.chapters.length > 0 && plannedChapters.length === work.chapters.length;
   const saleModelReady = Boolean(work.saleConfiguration);
+  const latestEffectiveConsent = work.publicationConsents[0] ?? null;
   const paidPriceReady =
     currentModel !== "paid" ||
     !paidPricingEnabled ||
@@ -331,9 +345,27 @@ export default async function WriterCommerceWorkPage({
             </label>
           </div>
 
-          <button className={styles.action} type="submit">
-            Yayın modelini kaydet
-          </button>
+          <div className={styles.modelSaveFooter}>
+            <button className={styles.action} type="submit">
+              Yayın modelini kaydet
+            </button>
+            <div className={styles.modelSaveMeta}>
+              <span>
+                Son taslak güncelleme:{" "}
+                <strong>
+                  {formatDateTime(work.saleConfiguration?.updatedAt)}
+                </strong>
+              </span>
+              <span>
+                Son yürürlük onayı:{" "}
+                <strong>
+                  {latestEffectiveConsent
+                    ? `${latestEffectiveConsent.publicationModel === "paid" ? "Ücretli" : "Ücretsiz"} · ${formatDateTime(latestEffectiveConsent.confirmedAt)}`
+                    : "Henüz yok"}
+                </strong>
+              </span>
+            </div>
+          </div>
         </form>
 
         <section className={styles.panel}>

@@ -351,7 +351,7 @@ export default async function WriterCommerceWorkPage({
             </button>
             <div className={styles.modelSaveMeta}>
               <span>
-                Son taslak güncelleme:{" "}
+                Son kayıt güncellemesi:{" "}
                 <strong>
                   {formatDateTime(work.saleConfiguration?.updatedAt)}
                 </strong>

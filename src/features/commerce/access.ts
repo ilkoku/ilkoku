@@ -75,19 +75,39 @@ export async function getCommerceChapterAccessDecision(input: {
   }
 
   const previouslyActivatedPaid = Boolean(configuration.activatedAt);
-  if (!previouslyActivatedPaid && !checkoutEnabled) {
+  const stagedZeroCandidate =
+    !previouslyActivatedPaid &&
+    effective.saleModel === "paid" &&
+    effective.status === "ready" &&
+    effective.priceAmount === BigInt(0);
+  const stagedZeroPurchaseReady = stagedZeroCandidate
+    ? Boolean(await getActiveReaderPurchaseTerms())
+    : false;
+
+  if (!previouslyActivatedPaid && !stagedZeroPurchaseReady && !checkoutEnabled) {
     return { allowed: true, reason: "checkout_disabled" };
   }
 
-  if (!previouslyActivatedPaid && !paymentProviderReady) {
+  if (
+    !previouslyActivatedPaid &&
+    !stagedZeroPurchaseReady &&
+    !paymentProviderReady
+  ) {
     return { allowed: true, reason: "provider_unavailable" };
   }
 
-  if (!previouslyActivatedPaid && configuration.status !== "active") {
+  if (
+    !previouslyActivatedPaid &&
+    !stagedZeroPurchaseReady &&
+    configuration.status !== "active"
+  ) {
     return { allowed: true, reason: "staged_paid_work" };
   }
 
-  if (!previouslyActivatedPaid) {
+  if (
+    !previouslyActivatedPaid &&
+    !stagedZeroPurchaseReady
+  ) {
     const readerPurchaseTerms = await getActiveReaderPurchaseTerms();
     if (!readerPurchaseTerms) {
       return { allowed: true, reason: "staged_paid_work" };

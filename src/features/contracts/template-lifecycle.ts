@@ -332,7 +332,7 @@ export async function transitionContractTemplateLifecycle(input: {
         FROM ContractTemplateReviewEvidence
         WHERE templateId = ${template.id}
           AND templateVersion = ${template.version}
-          AND evidenceType IN ('legal_review','admin_approval')
+          AND evidenceType = 'admin_approval'
         LIMIT 1
         FOR UPDATE
       `;

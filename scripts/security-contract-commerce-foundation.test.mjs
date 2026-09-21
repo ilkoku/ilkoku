@@ -111,6 +111,9 @@ test("writer commerce agreement is fail-closed and final consent snapshots the f
   contains(actions, "work.saleConfiguration!.activatedAt ?? now", "activation timestamp is created once");
   contains(actions, ": work.saleConfiguration!.activatedAt", "post-activation outage preserves activation history");
   contains(page, "Hukuki inceleme ve gerekli onaylar tamamlanıp aktif", "inactive agreement writer notice");
+  contains(page, "acceptedAgreement ? (", "accepted agreement compact branch");
+  contains(page, "<details className={styles.acceptedAgreementDetails}>", "accepted agreement collapsible text");
+  contains(page, "Sözleşmeyi göster / gizle", "accepted agreement reveal control");
   contains(page, "Eser bazlı son onay", "work-level confirmation UI");
 });
 

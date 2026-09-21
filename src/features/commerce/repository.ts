@@ -76,6 +76,26 @@ export async function getAuthorCommerceWork(authorId: string, workId: string) {
           agreementVersion: true,
           confirmedAt: true,
           activatedAt: true,
+          updatedAt: true,
+        },
+      },
+      publicationConsents: {
+        orderBy: { confirmedAt: "desc" },
+        take: 20,
+        select: {
+          publicationModel: true,
+          priceAmount: true,
+          currency: true,
+          confirmedAt: true,
+        },
+      },
+      priceHistory: {
+        orderBy: { changedAt: "desc" },
+        take: 20,
+        select: {
+          newPrice: true,
+          currency: true,
+          changedAt: true,
         },
       },
     },

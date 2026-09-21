@@ -42,6 +42,18 @@ function formatPrice(value: bigint | null | undefined, currency = "TRY") {
   }).format(Number(value) / 100);
 }
 
+function formatDateTime(value: Date | string | null | undefined) {
+  if (!value) return "—";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Europe/Istanbul",
+  }).format(date);
+}
+
+
 const statusMessages: Record<string, string> = {
   "sozlesme-onayi-gerekli": "Sözleşmeyi kabul etmek için onay kutusunu işaretlemelisin.",
   "sozlesme-hazir-degil": "Yazar Yayın ve Erişim Sözleşmesi henüz aktif değil.",
@@ -52,6 +64,7 @@ const statusMessages: Record<string, string> = {
   "eser-onayi-gerekli": "Eser bazlı son onay kutusunu işaretlemelisin.",
   "eser-bulunamadi": "Eser bulunamadı veya artık bu işlem için uygun değil.",
   "yayin-modeli-gerekli": "Önce Ücretsiz veya Ücretli yayın modelini kaydetmelisin.",
+  "yayin-modeli-kaydedildi": "Yayın modeli kaydedildi.",
   "bolum-gerekli": "Son onay için eserde en az bir bölüm bulunmalı.",
   "erisim-plani-gerekli": "Son onaydan önce tüm bölümlerin erişim planını kaydetmelisin.",
   "erisim-secimi-eksik": "Her bölüm için Ön İzleme veya Kilitli seçimini açıkça yapmalısın.",
@@ -141,6 +154,29 @@ export default async function WriterCommerceWorkPage({
   const accessPlanComplete =
     work.chapters.length > 0 && plannedChapters.length === work.chapters.length;
   const saleModelReady = Boolean(work.saleConfiguration);
+  const latestEffectiveConsent = work.publicationConsents[0] ?? null;
+  const modelHistory = [
+    ...work.priceHistory.map((entry) => ({
+      at: entry.changedAt,
+      kind: "Taslak değişikliği",
+      model: entry.newPrice === null ? "Ücretsiz" : "Ücretli",
+      price:
+        entry.newPrice === null
+          ? "—"
+          : formatPrice(entry.newPrice, entry.currency),
+    })),
+    ...work.publicationConsents.map((entry) => ({
+      at: entry.confirmedAt,
+      kind: "Yürürlük onayı",
+      model: entry.publicationModel === "paid" ? "Ücretli" : "Ücretsiz",
+      price:
+        entry.publicationModel === "paid"
+          ? formatPrice(entry.priceAmount, entry.currency)
+          : "—",
+    })),
+  ]
+    .sort((a, b) => b.at.getTime() - a.at.getTime())
+    .slice(0, 20);
   const paidPriceReady =
     currentModel !== "paid" ||
     !paidPricingEnabled ||
@@ -331,10 +367,68 @@ export default async function WriterCommerceWorkPage({
             </label>
           </div>
 
-          <button className={styles.action} type="submit">
-            Yayın modelini kaydet
-          </button>
+          <div className={styles.modelSaveFooter}>
+            <button className={styles.action} type="submit">
+              Yayın modelini kaydet
+            </button>
+            <div className={styles.modelSaveMeta}>
+              <span>
+                Son kayıt güncellemesi:{" "}
+                <strong>
+                  {formatDateTime(work.saleConfiguration?.updatedAt)}
+                </strong>
+              </span>
+              <span>
+                Son yürürlük onayı:{" "}
+                <strong>
+                  {latestEffectiveConsent
+                    ? `${latestEffectiveConsent.publicationModel === "paid" ? "Ücretli" : "Ücretsiz"} · ${formatDateTime(latestEffectiveConsent.confirmedAt)}`
+                    : "Henüz yok"}
+                </strong>
+              </span>
+            </div>
+          </div>
         </form>
+
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <div>
+              <span className={styles.eyebrow}>Yayın modeli geçmişi</span>
+              <h2>Kayıt ve yürürlük geçmişi</h2>
+              <p>
+                Taslak model değişiklikleri ile eser bazlı son onayları tarih ve
+                saat sırasıyla görebilirsin.
+              </p>
+            </div>
+            <span className={styles.badge}>{modelHistory.length} kayıt</span>
+          </div>
+
+          {modelHistory.length === 0 ? (
+            <div className={styles.empty}>
+              Bu eser için henüz yayın modeli geçmişi oluşmadı.
+            </div>
+          ) : (
+            <div className={styles.modelHistoryList}>
+              {modelHistory.map((entry, index) => (
+                <div
+                  className={styles.modelHistoryRow}
+                  key={`${entry.kind}-${entry.at.toISOString()}-${index}`}
+                >
+                  <div>
+                    <strong>{entry.model}</strong>
+                    <span>{entry.kind}</span>
+                  </div>
+                  <div className={styles.modelHistoryMeta}>
+                    <span>{entry.price}</span>
+                    <time dateTime={entry.at.toISOString()}>
+                      {formatDateTime(entry.at)}
+                    </time>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className={styles.panel}>
           <div className={styles.panelHeader}>

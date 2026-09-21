@@ -1068,3 +1068,73 @@
     flex-direction: column;
   }
 }
+
+
+.modelHistoryList {
+  display: grid;
+  gap: 10px;
+}
+
+.modelHistoryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 1px solid #e7e2ef;
+  border-radius: 14px;
+  background: #fcfbfe;
+}
+
+.modelHistoryRow > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.modelHistoryRow > div:first-child span,
+.modelHistoryMeta {
+  color: #716a79;
+  font-size: 0.86rem;
+}
+
+.modelHistoryMeta {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  text-align: right;
+}
+
+.writerCommercePage .modelHistoryRow {
+  border-color: color-mix(
+    in srgb,
+    var(--writer-custom-primary, #d4af37) 20%,
+    var(--writer-custom-border, #2a2f37)
+  );
+  background: var(--writer-custom-control-surface, #13161b);
+}
+
+.writerCommercePage .modelHistoryRow strong {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+.writerCommercePage .modelHistoryRow > div:first-child span,
+.writerCommercePage .modelHistoryMeta {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .modelHistoryMeta span:first-child {
+  color: var(--writer-custom-primary, #d4af37);
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .modelHistoryRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .modelHistoryMeta {
+    justify-items: start;
+    text-align: left;
+  }
+}

@@ -1,7 +1,8 @@
 # İlkOku Commerce Foundation v1 — Frozen Product Contract
 
 Status: **Frozen for implementation**  
-Date: 2026-09-20
+Date: 2026-09-20  
+Product decision update: **2026-09-21 — staged Paid / 0 TRY reader acquisition enabled**
 
 This document is the implementation boundary for the first commerce foundation. Do not change the product model without an explicit product decision.
 
@@ -39,6 +40,8 @@ There is no system rule such as “first N chapters free”.
 For a free work, no payment is required. The saved access plan remains available if the work later becomes paid.
 
 For a paid work, preview chapters are public to eligible readers; locked chapters require a valid work entitlement.
+
+During the infrastructure phase, a writer-confirmed Paid work remains priced at **0 TRY**. Once the active reader digital-content purchase terms are available, this staged 0 TRY work uses a real acquisition gate: Preview chapters remain readable, Locked chapters require the reader to complete a **0 TRY purchase**. The 0 TRY purchase creates a paid Order, stores reader consent evidence, grants an ACTIVE work entitlement and places the work in **Kütüphanem → Satın Aldıklarım**. No external payment provider is called.
 
 ## 2. Purchase unit
 
@@ -137,7 +140,7 @@ Checkout contains:
 - payment method area,
 - digital-content purchase acceptance.
 
-Real card and carrier billing are **not enabled in this foundation phase**. Test-mode adapters must never activate paid reader locking in production.
+Real card and carrier billing are **not enabled in this foundation phase**. Test-mode adapters must never activate non-zero paid reader locking in production. The staged 0 TRY acquisition path is provider-free by design and is not a test-provider activation.
 
 Reader purchase terms start as draft. Checkout must fail closed until the active terms document has completed legal/product review and is activated.
 
@@ -176,7 +179,9 @@ Order statuses:
 
 Payment providers remain provider-agnostic in this phase.
 
-Before a work has ever been activated for real paid access, missing checkout/provider infrastructure is fail-open: staging must not lock the reader out. Enabling the commerce rollout flag by itself is not enough; first activation requires checkout plus at least one production-safe provider adapter. After a work has been activated as paid at least once, a temporary checkout/provider outage does **not** unlock its locked chapters; existing entitlements remain valid while new purchase availability may be temporarily unavailable. If the writer completes a new paid work-level confirmation during such an outage, the already-activated paid work remains ACTIVE; payment-path readiness controls purchase availability, not whether the confirmed paid access model remains active.
+Before a work has ever been activated for non-zero paid access, provider infrastructure is not required for the staged **0 TRY acquisition path**. A writer-confirmed Paid configuration in `ready` state with price 0 TRY may enforce Preview/Kilitli access once the active reader purchase terms exist. A non-entitled reader completes a 0 TRY order without a Payment record or provider call, receives an ACTIVE work entitlement and sees the work in the purchased library. If the reader purchase terms are not active yet, the staged work remains fail-open rather than creating a lock with no valid acquisition path.
+
+For later non-zero paid activation, enabling the commerce rollout flag by itself is not enough; first non-zero activation requires checkout plus at least one production-safe provider adapter. After a work has been activated as non-zero paid at least once, a temporary checkout/provider outage does **not** unlock its locked chapters; existing entitlements remain valid while new purchase availability may be temporarily unavailable. If the writer completes a new paid work-level confirmation during such an outage, the already-activated paid work remains ACTIVE; payment-path readiness controls purchase availability, not whether the confirmed paid access model remains active.
 
 ### Normal paid orders
 
@@ -204,17 +209,22 @@ A provider callback must be cryptographically/authentically verified by the prov
 
 Raw card credentials or carrier billing credentials are not stored in İlkOku commerce tables.
 
-### Zero-total coupon orders
+### Zero-total orders
 
-If a valid coupon reduces an active paid work to **0 TRY**:
+There are two supported zero-total acquisition paths:
 
-- the order is completed atomically without an external Payment record,
-- coupon usage is revalidated and serialized before consumption,
-- the coupon redemption is recorded,
+1. a valid coupon reduces an active paid work to **0 TRY**; or
+2. a writer-confirmed staged Paid work is intentionally priced at **0 TRY** during the infrastructure phase.
+
+In both cases:
+
+- the order is completed atomically without an external Payment record or provider call,
 - the active reader purchase-terms version/hash and acceptance evidence are stored with the order,
-- an ACTIVE work entitlement is created,
+- an ACTIVE work entitlement is created or reactivated,
 - immutable order pricing snapshots are stored,
-- gross sale and coupon discount movements are written to the financial ledger.
+- the work becomes visible in **Kütüphanem → Satın Aldıklarım**.
+
+For a coupon-derived zero total, coupon usage is additionally revalidated and serialized before consumption, the redemption is recorded, and applicable discount ledger movements are written. For a staged base-price 0 TRY order there is no coupon redemption and no invented discount; the order snapshots preserve original/final amount as 0 TRY.
 
 For an İlkOku-funded coupon, `authorEarningBaseAmount` remains the original work price. The actual author earning amount is not invented before commission/tax rules are finalized; those later allocation rules must calculate from the preserved earning base rather than the reader-paid total.
 
@@ -300,7 +310,7 @@ Old orders preserve their original price snapshot. A changed price remains draft
 
 ### Free → Paid
 
-During the infrastructure phase, the author reviews the access plan and selects Paid. The system automatically stores the staged price as **0 TRY**. The author then satisfies the agreement requirement and gives a new work-level confirmation. Real price entry is introduced only when actual checkout/payment is explicitly enabled.
+During the infrastructure phase, the author reviews the access plan and selects Paid. The system automatically stores the staged price as **0 TRY**. The author then satisfies the agreement requirement and gives a new work-level confirmation. Once reader purchase terms are active, the confirmed 0 TRY work may be acquired by readers without an external payment provider; Preview/Kilitli rules are enforced through the resulting entitlement. Real price entry is introduced only when actual non-zero checkout/payment is explicitly enabled.
 
 ### Paid → Free
 
@@ -308,19 +318,21 @@ After the author completes the new work-level confirmation, the work becomes rea
 
 ## 13. Rollout safety
 
-Until a real checkout path is intentionally enabled, paid configurations are **staged only**.
+Until a real non-zero checkout path is intentionally enabled, Paid configurations use the **staged 0 TRY acquisition model**.
 
 - Writers may prepare a paid model, chapter access plan and agreement/consent records.
-- A paid configuration that has **never been activated for real paid access** must not lock reader access while checkout/provider infrastructure is unavailable.
 - During this infrastructure phase, selecting **Paid** stores/displays a fixed **0 TRY** price; the author does not enter a price yet.
-- Real price entry becomes available when the actual checkout/payment path is operational. If a work was already activated as paid before a temporary outage, its real price is preserved.
-- The current reader experience therefore remains effectively free/open during the pre-activation infrastructure phase.
-- After a work has been activated as paid at least once, a later checkout/provider outage must **not** make its locked chapters free. Existing entitlements remain valid; non-entitled readers stay locked while purchase may be temporarily unavailable.
-- Checkout activation is controlled server-side with `COMMERCE_CHECKOUT_ENABLED=true`.
-- Default and missing value is treated as disabled.
+- After the writer gives the work-level confirmation and the configuration is `ready`, active reader purchase terms enable the 0 TRY acquisition path even when `COMMERCE_CHECKOUT_ENABLED` is false and no payment provider exists.
+- Preview chapters remain readable. Locked chapters require an ACTIVE work entitlement.
+- A reader without entitlement sees the 0 TRY work price and can complete a provider-free 0 TRY order. Success creates/updates the entitlement and places the work in **Kütüphanem → Satın Aldıklarım**.
+- If reader purchase terms are not active, a never-activated staged work stays fail-open so the system never creates an inaccessible lock with no valid acquisition path.
+- Real price entry becomes available when the actual non-zero checkout/payment path is operational. If a work was already activated as paid before a temporary outage, its real price is preserved.
+- After a work has been activated as non-zero paid at least once, a later checkout/provider outage must **not** make its locked chapters free. Existing entitlements remain valid; non-entitled readers stay locked while purchase may be temporarily unavailable.
+- Non-zero checkout activation is controlled server-side with `COMMERCE_CHECKOUT_ENABLED=true` plus a production-safe provider.
+- Default and missing checkout flag is treated as disabled for non-zero provider checkout; it does not disable the provider-free staged 0 TRY acquisition path.
 - When payment is later activated, the existing paid configuration can be promoted without rewriting the author model.
 
-This is a rollout rule, not a change to the frozen product model.
+This rollout rule reflects the explicit product decision made on 2026-09-21.
 
 ## 14. Current implementation boundary
 

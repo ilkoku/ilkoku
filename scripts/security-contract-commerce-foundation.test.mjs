@@ -838,6 +838,9 @@ test("writer final confirmation copy follows the frozen free paid and staged sta
   contains(page, '"SATIŞA AÇ"', "live paid confirmation button");
   contains(page, '"SATIŞA HAZIRLA"', "staged paid confirmation button");
   contains(page, '"YAYINA AÇ"', "free confirmation button");
+  contains(page, "finalConfirmationSettled", "completed final confirmation UI gate");
+  contains(page, '"✓ Satışa Hazır"', "ready-state completion label");
+  contains(page, "Ödeme sistemi açıldığında fiyatı güncelleyip satışa", "ready-state next step copy");
 });
 
 

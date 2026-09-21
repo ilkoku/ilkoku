@@ -11,17 +11,20 @@ const has = (text, fragment, label) =>
 const lacks = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("UAT W/A: staged paid work stays zero-priced until first real activation", () => {
+test("UAT W/A/R: staged paid work stays zero-priced and can use provider-free 0 TL acquisition", () => {
   const actions = source("src/features/commerce/actions.ts");
   const page = source("src/app/satis-erisim/[workId]/page.tsx");
   const access = source("src/features/commerce/access.ts");
+  const publicQuery = source("src/features/works/member-public-queries.ts");
 
   has(actions, "previouslyActivatedPaid", "writer activation history");
   has(actions, ": BigInt(0)", "staged paid zero price");
   has(page, '<span className={styles.paidPrice}>0 TL</span>', "paid zero-price UI");
   has(page, "!paidPricingEnabled", "staged paid UI gate");
-  has(access, "if (!previouslyActivatedPaid && !checkoutEnabled)", "never-activated checkout fail-open");
-  has(access, "if (!previouslyActivatedPaid && !paymentProviderReady)", "never-activated provider fail-open");
+  has(access, "stagedZeroPurchaseReady", "reader staged zero acquisition gate");
+  has(access, "getActiveReaderPurchaseTerms", "reader terms prerequisite");
+  has(publicQuery, "stagedZeroPurchaseAvailable", "public staged zero purchase availability");
+  has(publicQuery, "effectiveCommerce.priceAmount === BigInt(0)", "public zero-price gate");
 });
 
 test("UAT A: first paid activation requires price, provider path and reader terms", () => {
@@ -103,14 +106,19 @@ test("UAT C: provider webhook is verified before settlement and settlement is id
   has(lifecycle, "financialLedger.upsert", "idempotent finance posting");
 });
 
-test("UAT K: zero-total coupon order skips provider and grants entitlement atomically", () => {
+test("UAT K/R: zero-total orders skip provider and grant entitlement atomically", () => {
   const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
 
   has(zero, "prisma.$transaction", "zero-total atomic transaction");
   has(zero, 'status: "paid"', "zero-total paid order");
-  has(zero, "transaction.couponRedemption.create", "coupon consumption");
-  has(zero, "transaction.workEntitlement.create", "entitlement grant");
+  has(zero, "const stagedZeroPurchase =", "base-price zero acquisition");
+  has(zero, "transaction.couponRedemption.create", "coupon-derived zero consumption");
+  has(zero, "transaction.workEntitlement.upsert", "entitlement grant or reactivation");
   has(zero, "transaction.financialLedger.create", "ledger posting");
+  has(checkout, '"0 TL ile satın al"', "reader purchase button");
+  has(library, "Satın alma başarılı. Eser kütüphanene eklendi", "successful library redirect message");
   lacks(zero, "transaction.payment.create", "zero-total external payment");
   lacks(zero, "adapter.createPayment", "zero-total provider handoff");
 });
@@ -202,5 +210,6 @@ test("UAT W: completed final commerce confirmation hides the repeat submit until
   has(page, "finalConfirmationSettled ? (", "completed confirmation replaces repeat form");
   has(page, '"✓ Satışa Hazır"', "ready confirmation label");
   has(page, "Hazırlık tamamlandı", "ready confirmation timestamp copy");
-  has(page, "Ödeme sistemi açıldığında fiyatı güncelleyip satışa", "future live activation guidance");
+  has(page, "Eser 0 TL edinim için hazır", "current staged zero acquisition guidance");
+  has(page, "Gerçek ödeme sistemi", "future live activation guidance");
 });

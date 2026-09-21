@@ -1032,3 +1032,39 @@
   color: var(--writer-custom-text-muted, #9ca3af);
   opacity: 1;
 }
+
+
+.modelSaveFooter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.modelSaveMeta {
+  display: grid;
+  gap: 4px;
+  color: #716a79;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.modelSaveMeta strong {
+  color: #332b39;
+  font-weight: 700;
+}
+
+.writerCommercePage .modelSaveMeta {
+  color: var(--writer-custom-text-muted, #9ca3af);
+}
+
+.writerCommercePage .modelSaveMeta strong {
+  color: var(--writer-custom-heading, #f5f1e8);
+}
+
+@media (max-width: 720px) {
+  .modelSaveFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -164,6 +164,13 @@ export default async function WriterCommerceWorkPage({
     accessPlanComplete &&
     saleModelReady &&
     paidPriceReady;
+  const finalStatus = work.saleConfiguration?.status;
+  const stagedReady =
+    currentModel === "paid" &&
+    finalStatus === "ready" &&
+    !paidActivationReady;
+  const finalActive = finalStatus === "active";
+  const finalConfirmationSettled = stagedReady || finalActive;
   const flash = query.durum ? statusMessages[query.durum] ?? query.durum : null;
 
   return (
@@ -494,50 +501,85 @@ export default async function WriterCommerceWorkPage({
             </div>
           </div>
 
-          <form action={confirmWorkPublicationCommerceAction}>
-            <input name="workId" type="hidden" value={work.id} />
-            <label className={styles.confirmation}>
-              <input
-                disabled={!finalReady}
-                name="confirmWork"
-                type="checkbox"
-              />
-              <span>
-                {currentModel === "paid"
-                  ? paidActivationReady
-                    ? `Bu eserin ${formatPrice(
-                        work.saleConfiguration?.priceAmount,
-                        work.saleConfiguration?.currency,
-                      )} satış fiyatıyla satışa açılmasını onaylıyorum.`
-                    : paidPricingEnabled
-                      ? `Bu eserin ${formatPrice(
-                          work.saleConfiguration?.priceAmount,
-                          work.saleConfiguration?.currency,
-                        )} fiyatı ve yukarıdaki erişim planıyla satışa hazır durumda kaydedilmesini onaylıyorum.`
-                      : "Bu eserin ücretli model, 0 TL hazırlık fiyatı ve yukarıdaki erişim planıyla satış altyapısına hazırlanmasını onaylıyorum."
-                  : "Bu eserin yukarıdaki koşullarla yayımlanmasını onaylıyorum."}
-              </span>
-            </label>
+          {finalConfirmationSettled ? (
+            <div className={styles.successNotice}>
+              <strong>
+                {stagedReady
+                  ? "✓ Satışa Hazır"
+                  : currentModel === "paid"
+                    ? "✓ Satış Aktif"
+                    : "✓ Yayında"}
+              </strong>
+              <br />
+              {stagedReady ? (
+                <>
+                  Hazırlık tamamlandı ·{" "}
+                  {formatDateTime(
+                    work.saleConfiguration?.confirmedAt ??
+                      latestEffectiveConsent?.confirmedAt,
+                  )}
+                  <br />
+                  Ödeme sistemi açıldığında fiyatı güncelleyip satışa
+                  açabilirsin.
+                </>
+              ) : (
+                <>
+                  Son onay tamamlandı ·{" "}
+                  {formatDateTime(
+                    work.saleConfiguration?.confirmedAt ??
+                      latestEffectiveConsent?.confirmedAt,
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <>
+              <form action={confirmWorkPublicationCommerceAction}>
+                <input name="workId" type="hidden" value={work.id} />
+                <label className={styles.confirmation}>
+                  <input
+                    disabled={!finalReady}
+                    name="confirmWork"
+                    type="checkbox"
+                  />
+                  <span>
+                    {currentModel === "paid"
+                      ? paidActivationReady
+                        ? `Bu eserin ${formatPrice(
+                            work.saleConfiguration?.priceAmount,
+                            work.saleConfiguration?.currency,
+                          )} satış fiyatıyla satışa açılmasını onaylıyorum.`
+                        : paidPricingEnabled
+                          ? `Bu eserin ${formatPrice(
+                              work.saleConfiguration?.priceAmount,
+                              work.saleConfiguration?.currency,
+                            )} fiyatı ve yukarıdaki erişim planıyla satışa hazır durumda kaydedilmesini onaylıyorum.`
+                          : "Bu eserin ücretli model, 0 TL hazırlık fiyatı ve yukarıdaki erişim planıyla satış altyapısına hazırlanmasını onaylıyorum."
+                      : "Bu eserin yukarıdaki koşullarla yayımlanmasını onaylıyorum."}
+                  </span>
+                </label>
 
-            <button
-              className={styles.action}
-              disabled={!finalReady}
-              type="submit"
-            >
-              {currentModel === "paid"
-                ? paidActivationReady
-                  ? "SATIŞA AÇ"
-                  : "SATIŞA HAZIRLA"
-                : "YAYINA AÇ"}
-            </button>
-          </form>
+                <button
+                  className={styles.action}
+                  disabled={!finalReady}
+                  type="submit"
+                >
+                  {currentModel === "paid"
+                    ? paidActivationReady
+                      ? "SATIŞA AÇ"
+                      : "SATIŞA HAZIRLA"
+                    : "YAYINA AÇ"}
+                </button>
+              </form>
 
-          {!finalReady ? (
-            <p className={styles.helper}>
-              Son onay için bölüm erişim planı, yayın modeli ve güncel sözleşme
-              kabulünün tamamlanması gerekir.
-            </p>
-          ) : null}
+              {!finalReady ? (
+                <p className={styles.helper}>
+                  Son onay için bölüm erişim planı, yayın modeli ve güncel
+                  sözleşme kabulünün tamamlanması gerekir.
+                </p>
+              ) : null}
+            </>
+          )}
         </section>
       </div>
     </AppShell>

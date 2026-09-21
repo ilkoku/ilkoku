@@ -22,7 +22,8 @@ const segmentLabels: Record<string, string> = {
   onerilenler: "Bana Önerilenler",
 };
 
-function formatSegment(segment: string) {
+function formatSegment(segment: string, segmentOverrides: Record<string, string>) {
+  if (segmentOverrides[segment]) return segmentOverrides[segment];
   if (segmentLabels[segment]) return segmentLabels[segment];
 
   return decodeURIComponent(segment)
@@ -30,7 +31,11 @@ function formatSegment(segment: string) {
     .replace(/\b\p{L}/gu, (letter) => letter.toLocaleUpperCase("tr"));
 }
 
-export function Breadcrumb() {
+type BreadcrumbProps = {
+  segmentOverrides?: Record<string, string>;
+};
+
+export function Breadcrumb({ segmentOverrides = {} }: BreadcrumbProps) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
@@ -41,7 +46,7 @@ export function Breadcrumb() {
       <ol className="breadcrumb__list">
         <li>
           <Link className="breadcrumb__link" href={`/${segments[0]}`}>
-            {formatSegment(segments[0])}
+            {formatSegment(segments[0], segmentOverrides)}
           </Link>
         </li>
         {segments.slice(1).map((segment, index) => {
@@ -53,11 +58,11 @@ export function Breadcrumb() {
               <span className="breadcrumb__separator" aria-hidden="true">/</span>
               {isCurrent ? (
                 <span className="breadcrumb__current" aria-current="page">
-                  {formatSegment(segment)}
+                  {formatSegment(segment, segmentOverrides)}
                 </span>
               ) : (
                 <Link className="breadcrumb__link" href={href}>
-                  {formatSegment(segment)}
+                  {formatSegment(segment, segmentOverrides)}
                 </Link>
               )}
             </li>

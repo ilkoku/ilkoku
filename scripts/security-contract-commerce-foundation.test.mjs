@@ -69,14 +69,15 @@ test("finance foundation is ledger-based and supports refunds and payouts", () =
 });
 
 
-test("commerce rollout defaults to disabled so staged paid works do not lock readers", () => {
+test("commerce rollout keeps non-zero providers opt-in while staged zero acquisition is provider-free", () => {
   const runtime = source("src/features/commerce/runtime.ts");
   const envExample = source(".env.example");
   const productContract = source("docs/COMMERCE_FOUNDATION_V1.md");
 
-  contains(runtime, 'process.env.COMMERCE_CHECKOUT_ENABLED === "true"', "explicit opt-in commerce flag");
+  contains(runtime, 'process.env.COMMERCE_CHECKOUT_ENABLED === "true"', "explicit opt-in non-zero commerce flag");
   contains(envExample, 'COMMERCE_CHECKOUT_ENABLED="false"', "disabled default example");
-  contains(productContract, "has **never been activated for real paid access** must not lock reader access", "staged paid access rule");
+  contains(productContract, "staged **0 TRY acquisition path**", "provider-free staged zero rule");
+  contains(productContract, "it does not disable the provider-free staged 0 TRY acquisition path", "rollout flag scope");
 });
 
 
@@ -188,21 +189,22 @@ test("agreement evidence is immutable across same-version content changes", () =
 });
 
 
-test("reader commerce gate is fail-open only before first paid activation", () => {
+test("reader commerce gate supports staged zero acquisition and still fails open when its terms prerequisite is missing", () => {
   const access = source("src/features/commerce/access.ts");
   const readingPage = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
   const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
 
   contains(access, "previouslyActivatedPaid = Boolean(configuration.activatedAt)", "paid activation history");
-  contains(access, 'if (!previouslyActivatedPaid && !checkoutEnabled)', "prelaunch checkout fail-open only");
-  contains(access, 'if (!previouslyActivatedPaid && !paymentProviderReady)', "prelaunch provider fail-open only");
-  contains(access, 'configuration.status !== "active"', "staged paid work fail-open");
+  contains(access, "const stagedZeroCandidate =", "staged zero candidate");
+  contains(access, "const stagedZeroPurchaseReady =", "active reader terms gate");
+  contains(access, "!stagedZeroPurchaseReady && !checkoutEnabled", "missing staged-zero prerequisite may fail open before activation");
+  contains(access, 'configuration.status !== "active"', "non-ready staged paid work fail-open");
   contains(access, 'chapterAccessType === "preview"', "preview access");
   contains(access, 'entitlement?.status === "active"', "purchased entitlement access");
   contains(access, 'reason: "purchase_required"', "locked paid purchase gate");
   contains(readingPage, "getCommerceChapterAccessDecision", "reading route commerce access check");
   contains(readingPage, "/satinal/", "purchase redirect");
-  contains(checkoutPage, "Bu ücretli yapılandırma henüz gerçek paid access olarak aktive", "staged checkout notice");
+  contains(checkoutPage, "edinim akışı", "staged zero checkout notice");
 });
 
 
@@ -326,12 +328,12 @@ test("zero-total order completion is atomic and provider-free", () => {
   contains(service, "FOR UPDATE", "coupon redemption serialization");
   contains(service, 'status: "paid"', "zero-total order completion state");
   contains(service, "couponRedemption.create", "coupon redemption record");
-  contains(service, "workEntitlement.create", "entitlement grant");
+  contains(service, "workEntitlement.upsert", "entitlement grant or reactivation");
   contains(service, 'source: "purchase"', "order-backed entitlement source");
   contains(service, "financialLedger.create", "zero-total finance ledger");
   notContains(service, "transaction.payment.create", "zero-total checkout skips external payment record");
   contains(snapshot, "authorEarningBaseAmount", "immutable author earning base snapshot");
-  contains(checkout, "0 TL ile erişimi aç", "reader zero-total completion action");
+  contains(checkout, "0 TL ile satın al", "reader zero-total completion action");
 });
 
 
@@ -357,16 +359,22 @@ test("paid activation requires a positive real price once checkout and provider 
 });
 
 
-test("zero-total checkout requires reader consent and never bypasses rollout", () => {
+test("zero-total checkout supports staged base-price zero while preserving reader consent and non-zero rollout gates", () => {
   const action = source("src/features/commerce/checkout-actions.ts");
   const service = source("src/features/commerce/zero-total-checkout.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
 
   contains(action, 'formData.get("acceptDigitalContent") !== "on"', "reader consent gate");
   contains(action, '"kosul-onayi-gerekli"', "consent fail-closed status");
-  contains(service, "if (!isCommerceCheckoutEnabled())", "checkout rollout gate");
-  contains(service, '"checkout_disabled"', "disabled checkout result");
-  contains(service, 'effectiveCommerce.status !== "active"', "active paid configuration requirement");
-  contains(service, "effectiveCommerce.priceAmount <= BigInt(0)", "positive real price requirement");
+  contains(service, "const stagedZeroPurchase =", "staged zero purchase branch");
+  contains(service, 'effectiveCommerce.status === "ready"', "writer-confirmed ready state");
+  contains(service, "effectiveCommerce.priceAmount === BigInt(0)", "base zero-price gate");
+  contains(service, "if (!isCommerceCheckoutEnabled())", "coupon-derived zero total still respects rollout");
+  contains(service, "transaction.workEntitlement.upsert", "zero total grants or reactivates entitlement");
+  contains(service, "stagedZeroPricePurchase: true", "staged zero audit metadata");
+  contains(checkout, "0 TL ile satın al", "reader zero-price purchase action");
+  contains(library, "Satın alma başarılı. Eser kütüphanene eklendi", "library success confirmation");
 });
 
 
@@ -793,8 +801,9 @@ test("previously activated paid work never becomes free because checkout or prov
   const actions = source("src/features/commerce/actions.ts");
 
   contains(access, "previouslyActivatedPaid", "reader activation history guard");
-  contains(access, "if (!previouslyActivatedPaid && !checkoutEnabled)", "checkout outage cannot open activated paid work");
-  contains(access, "if (!previouslyActivatedPaid && !paymentProviderReady)", "provider outage cannot open activated paid work");
+  contains(access, "!stagedZeroPurchaseReady && !checkoutEnabled", "checkout outage cannot open activated paid work");
+  contains(access, "!stagedZeroPurchaseReady &&", "staged zero acquisition bypasses provider readiness only when its own gate is ready");
+  contains(access, "!paymentProviderReady", "provider outage cannot open activated paid work");
 
   contains(memberQuery, "Boolean(saleConfiguration?.activatedAt)", "public work activation history guard");
   contains(memberQuery, "commerceEnforcementActive", "public work locked content remains enforced");
@@ -813,7 +822,8 @@ test("public paid showcase distinguishes access enforcement from purchase availa
 
   contains(types, "purchaseAvailable: boolean", "public commerce purchase availability contract");
   contains(query, "const purchaseAvailable =", "purchase availability resolver");
-  contains(query, "paymentPathReady", "purchase requires live payment path");
+  contains(query, "stagedZeroPurchaseAvailable", "provider-free staged zero purchase availability");
+  contains(query, "livePaidPurchaseAvailable", "non-zero purchase still requires live payment path");
   contains(showcase, "Satış geçici olarak kullanılamıyor", "outage paid-work state");
   contains(showcase, "Mevcut erişim hakları korunur", "existing entitlement outage copy");
   contains(showcase, "purchaseAvailable", "locked chapter purchase availability");
@@ -829,7 +839,8 @@ test("checkout distinguishes never-activated staging from post-activation outage
   contains(page, "previouslyActivatedPaid", "checkout historical paid state");
   contains(page, "paidAccessEnforced", "paid access enforcement state");
   contains(page, "checkoutConfigurationActive", "checkout transaction readiness");
-  contains(page, "Mevcut okuma erişimi açık kalır", "never-activated staging remains open");
+  contains(page, "stagedZeroPurchaseReady", "confirmed staged zero acquisition readiness");
+  contains(page, "edinim akışı", "staged zero acquisition explanation");
   contains(page, "eser bu nedenle ücretsiz erişime açılmaz", "post-activation outage stays locked");
   contains(page, "Erişim korunuyor", "post-activation outage status");
 });
@@ -846,7 +857,8 @@ test("writer final confirmation copy follows the frozen free paid and staged sta
   contains(page, '"YAYINA AÇ"', "free confirmation button");
   contains(page, "finalConfirmationSettled", "completed final confirmation UI gate");
   contains(page, '"✓ Satışa Hazır"', "ready-state completion label");
-  contains(page, "Ödeme sistemi açıldığında fiyatı güncelleyip satışa", "ready-state next step copy");
+  contains(page, "Eser 0 TL edinim için hazır", "ready-state zero acquisition copy");
+  contains(page, "Gerçek ödeme sistemi", "future non-zero activation guidance");
 });
 
 

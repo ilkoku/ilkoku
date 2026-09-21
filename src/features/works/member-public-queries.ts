@@ -149,27 +149,32 @@ export async function getMemberPublicWorkBySlug(
   });
   const paymentPathReady =
     isCommerceCheckoutEnabled() && hasOperationalPaymentProvider();
-  const readerPurchaseTerms =
-    paymentPathReady &&
+  const stagedZeroCandidate =
+    !saleConfiguration?.activatedAt &&
     effectiveCommerce.saleModel === "paid" &&
-    effectiveCommerce.status === "active" &&
-    effectiveCommerce.priceAmount !== null &&
-    effectiveCommerce.priceAmount > BigInt(0)
-      ? await getActiveReaderPurchaseTerms()
-      : null;
-  const commerceEnforcementActive =
-    effectiveCommerce.saleModel === "paid" &&
-    (Boolean(saleConfiguration?.activatedAt) ||
-      (paymentPathReady &&
-        Boolean(readerPurchaseTerms) &&
-        saleConfiguration?.status === "active"));
-  const purchaseAvailable =
+    effectiveCommerce.status === "ready" &&
+    effectiveCommerce.priceAmount === BigInt(0);
+  const livePaidCandidate =
     paymentPathReady &&
-    Boolean(readerPurchaseTerms) &&
     effectiveCommerce.saleModel === "paid" &&
     effectiveCommerce.status === "active" &&
     effectiveCommerce.priceAmount !== null &&
     effectiveCommerce.priceAmount > BigInt(0);
+  const readerPurchaseTerms =
+    stagedZeroCandidate || livePaidCandidate
+      ? await getActiveReaderPurchaseTerms()
+      : null;
+  const stagedZeroPurchaseAvailable =
+    stagedZeroCandidate && Boolean(readerPurchaseTerms);
+  const livePaidPurchaseAvailable =
+    livePaidCandidate && Boolean(readerPurchaseTerms);
+  const commerceEnforcementActive =
+    effectiveCommerce.saleModel === "paid" &&
+    (Boolean(saleConfiguration?.activatedAt) ||
+      stagedZeroPurchaseAvailable ||
+      livePaidPurchaseAvailable);
+  const purchaseAvailable =
+    stagedZeroPurchaseAvailable || livePaidPurchaseAvailable;
 
   const entitlement =
     commerceEnforcementActive && userId && !options.bypassCommerce

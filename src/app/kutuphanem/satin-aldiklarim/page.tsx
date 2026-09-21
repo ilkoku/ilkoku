@@ -44,7 +44,7 @@ export default async function PurchasedLibraryPage({
   ]);
   const flash =
     query.durum === "eklendi"
-      ? `Eser erişimi açıldı${query.siparis ? ` · Sipariş ${query.siparis}` : ""}.`
+      ? `Satın alma başarılı. Eser kütüphanene eklendi${query.siparis ? ` · Sipariş ${query.siparis}` : ""}.`
       : query.durum === "zaten-erisim-var"
         ? "Bu eser zaten kütüphanende."
         : null;

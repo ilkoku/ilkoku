@@ -50,9 +50,9 @@ path exists.
 | W-01 | Writer opens Satış & Erişim | Work selection is step 1. |
 | W-02 | Writer plans chapter access | Every chapter must explicitly be Ön İzleme or Kilitli. Missing/tampered values fail closed. |
 | W-03 | Writer selects Ücretli before a real payment path exists | Price is fixed at **0 TL**; no price input is required. |
-| W-04 | Checkout flag is on but no operational provider exists | Work remains staged, price stays 0 TL for never-activated paid work, reader access remains open. |
+| W-04 | No operational provider exists | Work remains staged at 0 TL. If reader purchase terms are active, provider-free 0 TL acquisition is available; Preview stays open and Kilitli requires entitlement. If reader terms are inactive, the staged work remains fail-open. |
 | W-05 | Writer accepts active agreement | Version/hash/time/audit evidence is stored; same-version hash mismatch is not overwritten. |
-| W-06 | Writer confirms a never-activated paid work without payment path | Configuration becomes ready/staged, not live paid access. |
+| W-06 | Writer confirms a never-activated paid work without payment provider | Configuration becomes ready at 0 TL. Active reader purchase terms allow provider-free 0 TL acquisition without promoting the work to non-zero paid activation. |
 | W-07 | Writer edits an already activated paid work but has not given the next work-level confirmation yet | Reader-facing sale model, price/access enforcement and chapter access continue from the last confirmed snapshot; draft edits do not leak live. |
 
 ## B. First real paid activation
@@ -69,7 +69,7 @@ path exists.
 | ID | Scenario | Expected |
 | --- | --- | --- |
 | R-01 | Free work | All published chapters remain readable. |
-| R-02 | Never-activated staged paid work | Current reading remains open. |
+| R-02 | Never-activated staged paid work at 0 TL | With active reader purchase terms: Preview is readable, Kilitli shows a 0 TL purchase gate, and entitlement unlocks it. Without active reader terms, staged access remains fail-open. |
 | R-03 | Active paid + Ön İzleme chapter | Chapter is readable without purchase. |
 | R-04 | Active paid + Kilitli + no entitlement | Full chapter content is not returned to the public showcase; reader is directed to purchase when purchase is available. |
 | R-05 | Active paid + entitlement | Current and future locked chapters of the same work are readable. |
@@ -82,6 +82,7 @@ path exists.
 
 | ID | Scenario | Expected |
 | --- | --- | --- |
+| C-00 | Staged Paid work has confirmed 0 TL price and active reader purchase terms | No external Payment/provider call. Reader accepts terms, Order becomes paid at 0 TL, ACTIVE entitlement is created/reactivated, and the work appears in Kütüphanem → Satın Aldıklarım. |
 | C-01 | Non-zero checkout | Order = pending_payment, Payment = pending, consent evidence is stored, coupon is reserved before provider redirect. |
 | C-02 | Provider success | Verified amount/currency only: Payment succeeded, Order paid, entitlement active, ledger posted. |
 | C-03 | Provider failure/cancel | Order/payment terminal state is stored and coupon reservation is released. |
@@ -133,5 +134,7 @@ Before merge:
    integration contracts, fresh recovery validation and production build.
 2. Browser UAT should execute this matrix using separate writer, reader and
    admin accounts.
-3. Commerce remains behind the rollout/provider readiness protections until
-   production payment/legal prerequisites are intentionally activated.
+3. Staged 0 TL acquisition may run provider-free once active reader purchase
+   terms exist. Non-zero commerce remains behind rollout/provider readiness
+   protections until production payment/legal prerequisites are intentionally
+   activated.

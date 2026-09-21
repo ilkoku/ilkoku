@@ -33,7 +33,7 @@ const checkoutMessages: Record<string, string> = {
   "tahsilat-kapali": "Satın alma işlemi henüz aktif değil.",
   "eser-hazir-degil": "Bu eser henüz ücretli satın almaya hazır değil.",
   "kupon-gecersiz": "Kupon artık geçerli değil veya kullanım hakkı kalmadı.",
-  "sifir-toplam-gerekli": "Bu işlem yalnız toplam tutarı 0 TL olan kuponlu siparişlerde tamamlanabilir.",
+  "sifir-toplam-gerekli": "Bu işlem yalnız toplam tutarı 0 TL olan siparişlerde tamamlanabilir.",
   "eser-bulunamadi": "Eser bulunamadı.",
   "satin-alma-kosullari-hazir-degil": "Dijital içerik satın alma koşulları henüz aktif değil. Satın alma işlemi başlatılamaz.",
   "odeme-yontemi-gerekli": "Devam etmek için bir ödeme yöntemi seçmelisin.",
@@ -128,14 +128,13 @@ export default async function CheckoutPreparationPage({
 
   const previouslyActivatedPaid =
     Boolean(configuration?.activatedAt);
-  const paidAccessEnforced =
+  const stagedZeroPurchaseReady =
+    !previouslyActivatedPaid &&
+    Boolean(purchaseTerms) &&
     effectiveCommerce.saleModel === "paid" &&
-    (previouslyActivatedPaid ||
-      (checkoutEnabled &&
-        hasAvailableProvider &&
-        Boolean(purchaseTerms) &&
-        effectiveCommerce.status === "active"));
-  const checkoutConfigurationActive =
+    effectiveCommerce.status === "ready" &&
+    effectiveCommerce.priceAmount === BigInt(0);
+  const livePaidCheckoutActive =
     checkoutEnabled &&
     hasAvailableProvider &&
     Boolean(purchaseTerms) &&
@@ -143,6 +142,13 @@ export default async function CheckoutPreparationPage({
     effectiveCommerce.status === "active" &&
     effectiveCommerce.priceAmount !== null &&
     effectiveCommerce.priceAmount > BigInt(0);
+  const paidAccessEnforced =
+    effectiveCommerce.saleModel === "paid" &&
+    (previouslyActivatedPaid ||
+      stagedZeroPurchaseReady ||
+      livePaidCheckoutActive);
+  const checkoutConfigurationActive =
+    stagedZeroPurchaseReady || livePaidCheckoutActive;
 
   if (!paidAccessEnforced) {
     return (
@@ -153,16 +159,18 @@ export default async function CheckoutPreparationPage({
               <span className={styles.eyebrow}>Hazırlık modu</span>
               <h1>{work.title}</h1>
               <p>
-                Bu ücretli yapılandırma henüz gerçek paid access olarak aktive
-                edilmedi. Mevcut okuma erişimi açık kalır.
+                Bu ücretli yapılandırma henüz okur edinimine hazır değil.
+                Gerekli satın alma koşulları aktif olana kadar mevcut okuma
+                erişimi açık kalır.
               </p>
             </div>
             <span className={styles.badge}>Tahsilat hazırlıkta</span>
           </header>
 
           <div className={styles.notice}>
-            Yazarın ücretli eser ayarları ve bölüm planı saklanıyor; ilk gerçek
-            aktivasyon tamamlanana kadar okurdan ödeme istenmez.
+            Yazarın ücretli eser ayarları ve bölüm planı saklanıyor. 0 TL
+            edinim akışı hazır olduğunda Kilitli bölümler eser erişimi
+            edinildikten sonra açılır.
           </div>
 
           <Link className={styles.action} href={returnTo}>
@@ -201,7 +209,7 @@ export default async function CheckoutPreparationPage({
 
   const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
   const requestedCouponCode = query.kupon?.trim() ?? "";
-  const coupon = requestedCouponCode
+  const coupon = !stagedZeroPurchaseReady && requestedCouponCode
     ? await getApplicableCheckoutCoupon({
         authorId: work.authorId,
         code: requestedCouponCode,
@@ -265,34 +273,43 @@ export default async function CheckoutPreparationPage({
             </div>
           </div>
 
-          <form className={styles.couponApplyForm} method="get">
-            <input name="from" type="hidden" value={returnTo} />
-            <label className={styles.field}>
-              <span>Kupon kodunuz var mı?</span>
-              <input
-                defaultValue={requestedCouponCode}
-                name="kupon"
-                placeholder="Kupon kodu"
-                type="text"
-              />
-            </label>
-            <button className={styles.secondaryAction} type="submit">
-              Uygula
-            </button>
-          </form>
-
-          {requestedCouponCode && !coupon ? (
-            <div className={styles.notice}>
-              Kupon geçersiz, süresi dolmuş, kullanım limiti dolmuş veya bu
-              eser için geçerli değil.
-            </div>
-          ) : null}
-
-          {coupon ? (
+          {stagedZeroPurchaseReady ? (
             <div className={styles.successNotice}>
-              {coupon.code} kuponu uygulandı.
+              Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı
+              kullanılmadan sipariş tamamlanacak.
             </div>
-          ) : null}
+          ) : (
+            <>
+              <form className={styles.couponApplyForm} method="get">
+                <input name="from" type="hidden" value={returnTo} />
+                <label className={styles.field}>
+                  <span>Kupon kodunuz var mı?</span>
+                  <input
+                    defaultValue={requestedCouponCode}
+                    name="kupon"
+                    placeholder="Kupon kodu"
+                    type="text"
+                  />
+                </label>
+                <button className={styles.secondaryAction} type="submit">
+                  Uygula
+                </button>
+              </form>
+
+              {requestedCouponCode && !coupon ? (
+                <div className={styles.notice}>
+                  Kupon geçersiz, süresi dolmuş, kullanım limiti dolmuş veya bu
+                  eser için geçerli değil.
+                </div>
+              ) : null}
+
+              {coupon ? (
+                <div className={styles.successNotice}>
+                  {coupon.code} kuponu uygulandı.
+                </div>
+              ) : null}
+            </>
+          )}
         </section>
 
         <section className={styles.panel}>
@@ -316,16 +333,21 @@ export default async function CheckoutPreparationPage({
             </div>
           ) : null}
 
-          {pricing.finalAmount === BigInt(0) && coupon && purchaseTerms ? (
+          {pricing.finalAmount === BigInt(0) && purchaseTerms ? (
             <>
               <div className={styles.successNotice}>
-                Kupon toplam tutarı 0 TL&apos;ye düşürdü. Harici ödeme
-                sağlayıcısına gidilmeden eser erişimi açılacak.
+                {coupon
+                  ? "Kupon toplam tutarı 0 TL'ye düşürdü. Harici ödeme sağlayıcısına gidilmeden eser erişimi açılacak."
+                  : "Eser erişim fiyatı 0 TL. Sipariş ücretsiz olarak tamamlanacak ve eser kütüphanene eklenecek."}
               </div>
 
               <form action={completeZeroTotalCheckoutAction}>
                 <input name="slug" type="hidden" value={work.slug} />
-                <input name="couponCode" type="hidden" value={coupon.code} />
+                <input
+                  name="couponCode"
+                  type="hidden"
+                  value={coupon?.code ?? ""}
+                />
                 <input name="returnTo" type="hidden" value={returnTo} />
 
                 <label className={styles.confirmation}>
@@ -337,7 +359,7 @@ export default async function CheckoutPreparationPage({
                 </label>
 
                 <button className={styles.action} type="submit">
-                  0 TL ile erişimi aç
+                  0 TL ile satın al
                 </button>
               </form>
             </>

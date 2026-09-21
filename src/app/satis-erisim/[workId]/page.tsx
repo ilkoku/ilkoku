@@ -70,7 +70,7 @@ const statusMessages: Record<string, string> = {
   "erisim-secimi-eksik": "Her bölüm için Ön İzleme veya Kilitli seçimini açıkça yapmalısın.",
   "fiyat-gerekli": "Gerçek ödeme yolu ve operasyonel provider aktifken ücretli eser için 0 TL dışında geçerli bir fiyat gerekir.",
   "yayin-onaylandi": "Eserin yayın ve erişim ayarları onaylandı.",
-  "satis-hazir": "Ücretli eser hazırlık durumunda kaydedildi. İlk gerçek paid access aktivasyonuna kadar mevcut okuma erişimi açık kalır.",
+  "satis-hazir": "Ücretli eser 0 TL erişimle hazırlandı. Aktif okur satın alma koşulları varsa Kilitli bölümler 0 TL edinim sonrasında açılır.",
   "satis-hazir-erisim-korunuyor": "Ücretli eser ayarları kaydedildi. Eser daha önce paid access olarak aktive edildiği için Kilitli bölümler korunur; yeni satın alma ödeme yolu yeniden hazır olduğunda açılır.",
   "satis-hazir-kosullar-bekleniyor": "Ücretli eser ve gerçek fiyat kaydedildi. Okur Dijital İçerik Satın Alma Koşulları henüz aktif olmadığı için eser satışa açılmadı.",
 };
@@ -204,10 +204,11 @@ export default async function WriterCommerceWorkPage({
 
         {!paidPricingEnabled ? (
           <div className={styles.notice}>
-            Hazırlık modu açık. Ücretli model ve kilitli bölümler kaydedilir,
-            fakat gerçek ödeme yolu ve operasyonel provider birlikte hazır
-            olana kadar okur tarafında erişim kilidi uygulanmaz. Ücretli fiyatı
-            bu aşamada sabit 0 TL&apos;dir.
+            Hazırlık modu açık. Ücretli modelin fiyatı bu aşamada sabit
+            0 TL&apos;dir. Okur Dijital İçerik Satın Alma Koşulları aktifse
+            Ön İzleme bölümleri açık kalır; Kilitli bölümler 0 TL satın alma
+            işlemi tamamlandıktan sonra açılır. Harici ödeme sağlayıcısı
+            kullanılmaz.
           </div>
         ) : null}
 
@@ -519,8 +520,9 @@ export default async function WriterCommerceWorkPage({
                       latestEffectiveConsent?.confirmedAt,
                   )}
                   <br />
-                  Ödeme sistemi açıldığında fiyatı güncelleyip satışa
-                  açabilirsin.
+                  Eser 0 TL edinim için hazır. Gerçek ödeme sistemi
+                  açıldığında fiyatı güncelleyip normal ücretli satışa
+                  geçebilirsin.
                 </>
               ) : (
                 <>

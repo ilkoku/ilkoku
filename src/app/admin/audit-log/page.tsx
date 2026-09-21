@@ -52,6 +52,8 @@ const sourceLabels: Record<string, string> = {
   publisher_contract_sent: "Yayın sözleşmesi yazara gönderildi",
   publisher_publication_plan_created: "Yayın planı oluşturuldu",
   publisher_publication_plan_updated: "Yayın planı güncellendi",
+  writer_commerce_sale_model_saved: "Yazar yayın modelini değiştirdi",
+  writer_commerce_publication_confirmed: "Yazar yayın modelini son onayla yürürlüğe aldı",
 };
 
 type SearchParams = Promise<{ baslangic?: string; islem?: string; kullanici?: string; page?: string }>;
@@ -98,6 +100,9 @@ function safeMetadata(value: string | null) {
       "oldRole",
       "oldStatus",
       "publicationPlanId",
+      "previousPriceAmount",
+      "previousSaleModel",
+      "priceAmount",
       "publicId",
       "publisherFileId",
       "publisherId",
@@ -105,6 +110,7 @@ function safeMetadata(value: string | null) {
       "recipient",
       "requestedRole",
       "role",
+      "saleModel",
       "sessionsRevoked",
       "source",
       "status",
@@ -112,6 +118,9 @@ function safeMetadata(value: string | null) {
       "to",
       "toStatus",
       "userId",
+      "workId",
+      "currency",
+      "agreementVersion",
       "version",
     ];
     const source = typeof parsed.source === "string" ? parsed.source : null;

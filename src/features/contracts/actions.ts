@@ -188,7 +188,7 @@ export async function recordContractTemplateReviewEvidenceAction(formData: FormD
     templateId,
   });
 
-  let finalStatus = result.status;
+  let finalStatus: string = result.status;
   if (
     isAdminApproval &&
     (result.status === "recorded" || result.status === "already_recorded")

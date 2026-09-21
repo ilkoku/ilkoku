@@ -130,8 +130,8 @@ test("author coupon workspace is restricted to the writer's paid works", () => {
   contains(page, "paidWorks.map", "paid works only in coupon selector");
   contains(page, "styles.writerCommercePage", "writer commerce visual system");
   contains(page, 'className={styles.couponStats}', "coupon summary metrics");
-  contains(page, '"Aktif kupon"', "active coupon summary");
-  contains(page, '"Toplam kullanım"', "coupon usage summary");
+  contains(page, "Aktif kupon", "active coupon summary");
+  contains(page, "Toplam kullanım", "coupon usage summary");
   contains(page, 'styles.couponStatusActive', "active coupon state styling");
   contains(page, 'styles.couponStatusPaused', "paused coupon state styling");
 });

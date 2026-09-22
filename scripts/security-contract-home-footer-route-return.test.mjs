@@ -98,7 +98,7 @@ test("CMS affiliate editor validates code, previews safely and persists structur
   assert.match(workbench, /Kaydet ve Canlıya Uygula/);
   assert.match(workbench, /Önizlemeyi Aç/);
   assert.match(workbench, /Bu alan her zaman görünür/);
-  assert.match(workbench, /Takip pikseli önizlemede çalıştırılmaz/);
+  assert.match(workbench, /Takip pikseli çalıştırılmaz/);
   assert.match(workbench, /name="desktopCode"/);
   assert.match(workbench, /name="mobileCode"/);
   assert.match(workbench, /name="textCode"/);

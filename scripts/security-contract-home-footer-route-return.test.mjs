@@ -42,6 +42,8 @@ test("homepage affiliate banner stays after roles and before passport with respo
   assert.ok(rolesIndex >= 0);
   assert.ok(affiliateIndex > rolesIndex);
   assert.ok(passportIndex > affiliateIndex);
+  assert.match(homepage, /getHomepageAffiliateEnabled/);
+  assert.match(homepage, /affiliateEnabled \? <MagzterAffiliateBanner \/> : null/);
 
   assert.match(affiliate, /13992555/);
   assert.match(affiliate, /width: 728/);
@@ -64,4 +66,26 @@ test("homepage affiliate banner stays after roles and before passport with respo
   assert.ok(
     affiliate.indexOf("13973461") < affiliate.indexOf("İş ortağı bağlantısı"),
   );
+});
+
+
+test("CMS affiliate placement control is admin-only, persisted and invalidates homepage cache", () => {
+  const modules = readFileSync("src/lib/cms-modules.ts", "utf8");
+  const placement = readFileSync("src/lib/affiliate-placement.ts", "utf8");
+  const page = readFileSync("src/app/icerik/banner-reklam-alanlari/page.tsx", "utf8");
+  const route = readFileSync("src/app/api/affiliate-placement/route.ts", "utf8");
+
+  assert.match(modules, /Banner \/ Reklam Alanları/);
+  assert.match(modules, /banner-reklam-alanlari/);
+  assert.match(modules, /adminOnly: true/);
+
+  assert.match(placement, /HOMEPAGE_AFTER_ROLES_PLACEMENT = "homepage_after_roles"/);
+  assert.match(placement, /if \(!row\) return true/);
+  assert.match(page, /Aktif/);
+  assert.match(page, /Pasif/);
+  assert.match(page, /action="\/api\/affiliate-placement"/);
+
+  assert.match(route, /user\.role !== "admin"/);
+  assert.match(route, /ON DUPLICATE KEY UPDATE/);
+  assert.match(route, /revalidatePath\("\/"\)/);
 });

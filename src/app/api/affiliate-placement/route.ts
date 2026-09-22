@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { validateAffiliateCreativeSet } from "@/lib/affiliate-creative";
 import {
   AFFILIATE_PLACEMENT_NAMESPACE,
   HOMEPAGE_AFTER_ROLES_PLACEMENT,
@@ -11,6 +12,12 @@ import { prisma } from "@/lib/prisma";
 function sameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   return !origin || origin === new URL(request.url).origin;
+}
+
+function redirectError(request: Request, reason: string) {
+  const url = new URL("/icerik/banner-reklam-alanlari", request.url);
+  url.searchParams.set("durum", reason);
+  return NextResponse.redirect(url, 303);
 }
 
 export async function POST(request: Request) {
@@ -30,7 +37,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  const valueJson = JSON.stringify({ enabled: enabledValue === "active" });
+  const headline = String(form.get("headline") ?? "").trim();
+  const desktopCode = String(form.get("desktopCode") ?? "").trim();
+  const mobileCode = String(form.get("mobileCode") ?? "").trim();
+  const textCode = String(form.get("textCode") ?? "").trim();
+
+  if (!headline || headline.length > 140) {
+    return redirectError(request, "gecersiz-baslik");
+  }
+
+  if (
+    desktopCode.length > 10000 ||
+    mobileCode.length > 10000 ||
+    textCode.length > 10000
+  ) {
+    return redirectError(request, "kod-cok-uzun");
+  }
+
+  const validation = validateAffiliateCreativeSet({
+    desktopCode,
+    mobileCode,
+    textCode,
+  });
+
+  if (!validation.ok) {
+    return redirectError(request, `gecersiz-${validation.invalidField ?? "kod"}`);
+  }
+
+  const valueJson = JSON.stringify({
+    enabled: enabledValue === "active",
+    headline,
+    desktopCode,
+    mobileCode,
+    textCode,
+  });
   const id = randomUUID();
 
   try {
@@ -52,7 +92,7 @@ export async function POST(request: Request) {
         updatedAt = CURRENT_TIMESTAMP(3)
     `;
   } catch {
-    return NextResponse.redirect(new URL("/icerik/banner-reklam-alanlari?durum=hata", request.url), 303);
+    return redirectError(request, "hata");
   }
 
   revalidatePath("/");

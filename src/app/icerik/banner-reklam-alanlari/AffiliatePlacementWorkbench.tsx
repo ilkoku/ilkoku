@@ -31,6 +31,16 @@ function errorLabel(field: string | null) {
   return "Affiliate kodlarını kontrol edin.";
 }
 
+function previewFrom(setting: AffiliatePlacementSetting): PreviewState | null {
+  const validation = validateAffiliateCreativeSet(setting);
+  if (!validation.ok || !validation.desktop || !validation.mobile || !validation.text) return null;
+  return {
+    desktop: validation.desktop,
+    mobile: validation.mobile,
+    text: validation.text,
+  };
+}
+
 export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props) {
   const [setting, setSetting] = useState(initialSetting);
   const [editing, setEditing] = useState(false);
@@ -38,7 +48,7 @@ export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props)
   const [previewError, setPreviewError] = useState<string | null>(null);
   const dirty = useMemo(() => !same(setting, initialSetting), [setting, initialSetting]);
 
-  function buildPreview() {
+  function buildPreview(scroll = true) {
     if (!setting.headline.trim()) {
       setPreview(null);
       setPreviewError("Kampanya başlığı boş bırakılamaz.");
@@ -58,6 +68,14 @@ export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props)
       text: validation.text,
     });
     setPreviewError(null);
+    if (scroll) {
+      window.requestAnimationFrame(() => {
+        document.getElementById("affiliate-preview-heading")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    }
     return true;
   }
 
@@ -66,7 +84,7 @@ export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props)
       event.preventDefault();
       return;
     }
-    if (!buildPreview()) event.preventDefault();
+    if (!buildPreview(false)) event.preventDefault();
   }
 
   function reset() {
@@ -95,7 +113,7 @@ export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props)
           ) : (
             <button type="button" onClick={reset}>Vazgeç</button>
           )}
-          <button type="button" onClick={buildPreview}>Önizlemeyi Göster</button>
+          <button type="button" onClick={() => buildPreview(true)}>Önizlemeyi Güncelle</button>
         </div>
       </div>
 
@@ -228,16 +246,16 @@ export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props)
         </div>
       ) : null}
 
-      {preview ? (
-        <section className={styles.previewSection} aria-labelledby="affiliate-preview-heading">
+      <section className={styles.previewSection} aria-labelledby="affiliate-preview-heading">
           <div className={styles.sectionHeader}>
             <div>
               <span>Kaydetmeden önce</span>
               <h2 id="affiliate-preview-heading">Önizleme</h2>
-              <p>Takip pikseli önizlemede çalıştırılmaz. Banner görselleri yalnız bu önizleme açıldığında yüklenir.</p>
+              <p>Bu alan her zaman görünür. Takip pikseli çalıştırılmaz; banner görselleri yalnız sen önizlemeyi açtığında yüklenir.</p>
             </div>
           </div>
 
+          {preview ? (
           <div className={styles.previewGrid}>
             <article className={styles.previewCard}>
               <div className={styles.previewLabel}>Masaüstü önizleme</div>
@@ -271,8 +289,14 @@ export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props)
               </div>
             </article>
           </div>
+          ) : (
+            <div className={styles.previewEmpty}>
+              <strong>Önizleme hazır.</strong>
+              <span>Masaüstü ve mobil reklam görünümünü görmek için aşağıdaki düğmeye basın.</span>
+              <button type="button" onClick={() => buildPreview(false)}>Önizlemeyi Aç</button>
+            </div>
+          )}
         </section>
-      ) : null}
 
       <div className={styles.saveBar}>
         <div>

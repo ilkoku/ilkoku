@@ -20,6 +20,7 @@
 }
 
 .nx-affiliate__copy {
+  position: relative;
   min-width: 0;
   padding: 0.15rem 0 0.15rem 0.2rem;
 }
@@ -41,7 +42,7 @@
 }
 
 .nx-affiliate__copy-link {
-  display: inline;
+  display: block;
   max-width: 31rem;
   color: rgba(33, 26, 49, 0.68);
   font-size: 0.94rem;
@@ -141,9 +142,6 @@
 
   .nx-affiliate__copy h2 {
     margin-bottom: 0.3rem;
-  }
-
-  .nx-affiliate__copy h2 {
     font-size: 1.18rem;
   }
 

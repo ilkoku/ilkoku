@@ -33,6 +33,7 @@ export const cmsModules: CmsModule[] = [
   { href: "/icerik/editor-egitim", label: "Editör Eğitim Merkezi", description: "Editörlük Okulu’nun 8 eğitim sayfası ve kapak görselleri", group: "Medya & Eğitim", enabled: true, mode: "controlled-write" },
   { href: "/icerik/motivasyon", label: "Yazar Motivasyonları", description: "Yazar panelindeki motivasyon ve aktif gün içerikleri", group: "Medya & Eğitim", enabled: true, mode: "controlled-write" },
 
+  { href: "/icerik/banner-reklam", label: "Banner / Reklam Alanları", description: "Affiliate ve sponsorlu reklam alanlarını aktif/pasif yap ve kreatifleri değiştir", group: "Yayın & Görünürlük", enabled: true, mode: "controlled-write" },
   { href: "/icerik/yayin-kuyrugu", label: "Yayın Kuyruğu", description: "Bekleyen taslakları incele, önizle ve yayınla", group: "Yayın & Görünürlük", enabled: true, mode: "controlled-write" },
   { href: "/icerik/zamanlama", label: "Yayın Zamanlama", description: "Planlı yayın ve otomatik yayından kaldırma", group: "Yayın & Görünürlük", enabled: true, mode: "controlled-write" },
   { href: "/icerik/seo", label: "SEO", description: "Meta, canonical, index ve sosyal paylaşım denetimi", group: "Yayın & Görünürlük", enabled: true, mode: "read-only-audit" },

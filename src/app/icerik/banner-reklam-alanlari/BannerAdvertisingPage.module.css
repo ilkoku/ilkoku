@@ -1,0 +1,110 @@
+.codeSection {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(109, 70, 165, 0.14);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.codeHeader {
+  margin-bottom: 0.9rem;
+}
+
+.codeHeader span {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #6d46a5;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.codeHeader h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.codeHeader p {
+  max-width: 52rem;
+  margin: 0.35rem 0 0;
+  color: rgba(33, 26, 49, 0.66);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.codeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.codeCard {
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid rgba(84, 58, 127, 0.12);
+  border-radius: 0.85rem;
+  background: #fbfaff;
+}
+
+.codeCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.codeCardHeader span {
+  display: block;
+  color: rgba(55, 39, 79, 0.58);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.codeCardHeader strong {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.9rem;
+}
+
+.codeCardHeader small {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(109, 70, 165, 0.08);
+  color: #684797;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.codeArea {
+  width: 100%;
+  min-height: 12.5rem;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  border: 1px solid rgba(52, 37, 76, 0.14);
+  border-radius: 0.65rem;
+  background: #171222;
+  color: #f3edf9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.codeArea:focus {
+  outline: 2px solid rgba(109, 70, 165, 0.28);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1100px) {
+  .codeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .codeArea {
+    min-height: 10.5rem;
+  }
+}

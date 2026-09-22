@@ -39,12 +39,10 @@ export default function MagzterAffiliateBanner() {
       <div className="nx-shell">
         <div className="nx-affiliate__panel">
           <div className="nx-affiliate__copy">
-            <div className="nx-affiliate__meta">
-              <p className="nx-affiliate__eyebrow">Okurlar için</p>
-              <span className="nx-affiliate__disclosure">İş ortağı bağlantısı</span>
-            </div>
+            <p className="nx-affiliate__eyebrow">Okurlar için</p>
             <h2 id="nx-affiliate-title">Daha fazlasını keşfet</h2>
             <p>Dergi, gazete ve premium içerikleri Magzter üzerinden keşfedin.</p>
+            <span className="nx-affiliate__disclosure">İş ortağı bağlantısı</span>
           </div>
 
           <div

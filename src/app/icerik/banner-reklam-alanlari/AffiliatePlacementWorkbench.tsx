@@ -44,7 +44,7 @@ function previewFrom(setting: AffiliatePlacementSetting): PreviewState | null {
 export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props) {
   const [setting, setSetting] = useState(initialSetting);
   const [editing, setEditing] = useState(false);
-  const [preview, setPreview] = useState<PreviewState | null>(() => previewFrom(initialSetting));
+  const [preview, setPreview] = useState<PreviewState | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const dirty = useMemo(() => !same(setting, initialSetting), [setting, initialSetting]);
 
@@ -89,7 +89,7 @@ export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props)
 
   function reset() {
     setSetting(initialSetting);
-    setPreview(previewFrom(initialSetting));
+    setPreview(null);
     setPreviewError(null);
     setEditing(false);
   }
@@ -251,7 +251,7 @@ export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props)
             <div>
               <span>Kaydetmeden önce</span>
               <h2 id="affiliate-preview-heading">Önizleme</h2>
-              <p>Takip pikseli önizlemede çalıştırılmaz. Banner görselleri yalnız bu önizleme açıldığında yüklenir.</p>
+              <p>Bu alan her zaman görünür. Takip pikseli çalıştırılmaz; banner görselleri yalnız sen önizlemeyi açtığında yüklenir.</p>
             </div>
           </div>
 
@@ -291,8 +291,9 @@ export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props)
           </div>
           ) : (
             <div className={styles.previewEmpty}>
-              <strong>Önizleme hazırlanamadı.</strong>
-              <span>Kodları kontrol edip “Önizlemeyi Güncelle” düğmesine basın.</span>
+              <strong>Önizleme hazır.</strong>
+              <span>Masaüstü ve mobil reklam görünümünü görmek için aşağıdaki düğmeye basın.</span>
+              <button type="button" onClick={() => buildPreview(false)}>Önizlemeyi Aç</button>
             </div>
           )}
         </section>

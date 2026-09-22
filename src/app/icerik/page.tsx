@@ -36,6 +36,7 @@ const namespaceLabels: Record<string, string> = {
   cms_schedule: "Yayın Zamanlama",
   cms_draft: "Çalışma Taslağı",
   settings: "İçerik Ayarları",
+  affiliate_placement: "Banner / Reklam Alanları",
   locale: "Dil Altyapısı",
 };
 
@@ -93,6 +94,7 @@ function siteActivityTarget(item: RecentSiteRow): Pick<ActivityItem, "href" | "a
   if (item.namespace === "cms_schedule") return { href: "/icerik/zamanlama", action: "Planları aç" };
   if (item.namespace === "cms_draft") return { href: "/icerik/yayin-kuyrugu", action: "Kuyruğu aç" };
   if (item.namespace === "settings") return { href: "/icerik/ayarlar", action: "Ayarları aç" };
+  if (item.namespace === "affiliate_placement") return { href: "/icerik/banner-reklam-alanlari", action: "Reklam alanını aç" };
   if (item.namespace === "locale") return { href: "/icerik/diller", action: "Dilleri aç" };
   return null;
 }

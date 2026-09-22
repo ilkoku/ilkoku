@@ -55,8 +55,13 @@ test("homepage affiliate banner stays after roles and before passport with respo
   assert.match(affiliate, /Magzter GOLD – 7 Günlük Ücretsiz Deneme/);
   assert.match(affiliate, /İş ortağı bağlantısı/);
   assert.match(affiliate, /nx-affiliate__copy/);
+  assert.match(affiliate, /13973461/);
+  assert.match(
+    affiliate,
+    /5\.000&apos;den fazla dergi, gazete ve seçilmiş premium içeriğe ücretsiz sınırsız erişim elde edin/,
+  );
+  assert.match(affiliate, /https:\/\/www\.tqlkg\.com\/image-101886825-13973461/);
   assert.ok(
-    affiliate.indexOf("Dergi, gazete ve premium içerikleri Magzter üzerinden keşfedin.") <
-      affiliate.indexOf("İş ortağı bağlantısı"),
+    affiliate.indexOf("13973461") < affiliate.indexOf("İş ortağı bağlantısı"),
   );
 });

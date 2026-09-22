@@ -20,11 +20,12 @@
 }
 
 .nx-affiliate__copy {
+  position: relative;
   min-width: 0;
   padding: 0.15rem 0 0.15rem 0.2rem;
 }
 
- .nx-affiliate__eyebrow {
+.nx-affiliate__eyebrow {
   margin: 0 0 0.45rem;
   color: #6d46a5;
   font-size: 0.68rem;
@@ -35,17 +36,33 @@
 
 .nx-affiliate__copy h2 {
   margin: 0 0 0.35rem;
-  font-size: clamp(1.3rem, 1.9vw, 1.72rem);
+  font-size: clamp(1.12rem, 1.55vw, 1.45rem);
   line-height: 1.08;
   letter-spacing: -0.035em;
 }
 
-.nx-affiliate__copy > p {
+.nx-affiliate__copy-link {
+  display: block;
   max-width: 31rem;
-  margin: 0;
-  color: rgba(33, 26, 49, 0.66);
-  font-size: 0.95rem;
+  color: rgba(33, 26, 49, 0.68);
+  font-size: 0.94rem;
   line-height: 1.5;
+  text-decoration: none;
+}
+
+.nx-affiliate__copy-link:hover,
+.nx-affiliate__copy-link:focus-visible {
+  color: #5f3b93;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.nx-affiliate__tracking-pixel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .nx-affiliate__disclosure {
@@ -99,7 +116,7 @@
     padding-right: 0.2rem;
   }
 
-  .nx-affiliate__copy > p {
+  .nx-affiliate__copy-link {
     max-width: 42rem;
   }
 
@@ -125,10 +142,11 @@
 
   .nx-affiliate__copy h2 {
     margin-bottom: 0.3rem;
+    font-size: 1.18rem;
   }
 
-  .nx-affiliate__copy > p {
-    font-size: 0.92rem;
+  .nx-affiliate__copy-link {
+    font-size: 0.9rem;
   }
 
   .nx-affiliate__creative a {

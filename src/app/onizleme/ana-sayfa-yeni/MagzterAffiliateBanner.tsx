@@ -38,14 +38,14 @@ export default function MagzterAffiliateBanner() {
     <section className="nx-affiliate" aria-labelledby="nx-affiliate-title">
       <div className="nx-shell">
         <div className="nx-affiliate__panel">
-          <header className="nx-affiliate__heading">
-            <div>
+          <div className="nx-affiliate__copy">
+            <div className="nx-affiliate__meta">
               <p className="nx-affiliate__eyebrow">Okurlar için</p>
-              <h2 id="nx-affiliate-title">Daha fazlasını keşfet</h2>
-              <p>Dergi, gazete ve premium içerikleri Magzter üzerinden keşfedin.</p>
+              <span className="nx-affiliate__disclosure">İş ortağı bağlantısı</span>
             </div>
-            <span className="nx-affiliate__disclosure">İş ortağı bağlantısı</span>
-          </header>
+            <h2 id="nx-affiliate-title">Daha fazlasını keşfet</h2>
+            <p>Dergi, gazete ve premium içerikleri Magzter üzerinden keşfedin.</p>
+          </div>
 
           <div
             className="nx-affiliate__creative"
@@ -54,8 +54,8 @@ export default function MagzterAffiliateBanner() {
             {creative ? (
               <a
                 href={creative.href}
-                target="_top"
-                rel="sponsored nofollow"
+                target="_blank"
+                rel="sponsored nofollow noopener noreferrer"
                 aria-label="Magzter kampanyasını görüntüle"
               >
                 {/* CJ kreatifleri kendi reklam sunucusundan teslim edilir; yalnız aktif viewport kreatifi render edilir. */}

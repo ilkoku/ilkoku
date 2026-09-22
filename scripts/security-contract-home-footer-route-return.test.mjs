@@ -86,7 +86,7 @@ test("CMS affiliate editor validates code, previews safely and persists structur
   assert.match(placement, /textCode: DEFAULT_TEXT_AFFILIATE_CODE/);
 
   assert.match(creative, /javascript\\s\*:/);
-  assert.match(creative, /<(?:script\|iframe\|object\|embed\|style\|svg\|form)\\b/);
+  assert.match(creative, /script\\|iframe\\|object\\|embed\\|style\\|svg\\|form/);
   assert.match(creative, /url\.protocol === "https:"/);
   assert.match(creative, /expectedWidth/);
   assert.match(creative, /expectedHeight/);

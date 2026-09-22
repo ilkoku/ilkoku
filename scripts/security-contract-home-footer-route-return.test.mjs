@@ -50,6 +50,6 @@ test("homepage affiliate banner stays after roles and before passport with respo
   assert.match(affiliate, /width: 300/);
   assert.match(affiliate, /height: 250/);
   assert.match(affiliate, /window\.matchMedia\("\(max-width: 767px\)"\)/);
-  assert.match(affiliate, /rel="sponsored nofollow"/);
-  assert.match(affiliate, /İş ortağı bağlantısı/);
+  assert.match(affiliate, /target="_blank"/);\n  assert.match(affiliate, /rel="sponsored nofollow noopener noreferrer"/);
+  assert.match(affiliate, /İş ortağı bağlantısı/);\n  assert.match(affiliate, /nx-affiliate__copy/);\n  assert.match(affiliate, /nx-affiliate__meta/);
 });

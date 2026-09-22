@@ -434,3 +434,45 @@
     flex: 1 1 auto;
   }
 }
+
+
+.previewEmpty {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+  min-height: 10rem;
+  align-content: center;
+  padding: 1.2rem;
+  border: 1px dashed rgba(109, 70, 165, 0.24);
+  border-radius: 0.85rem;
+  background: #fbfaff;
+}
+
+.previewEmpty strong {
+  color: #211a31;
+  font-size: 0.95rem;
+}
+
+.previewEmpty span {
+  color: rgba(33, 26, 49, 0.62);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.previewEmpty button {
+  margin-top: 0.2rem;
+  min-height: 2.4rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #5f3b93;
+  border-radius: 0.7rem;
+  background: #5f3b93;
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.previewSection {
+  scroll-margin-top: 1rem;
+}

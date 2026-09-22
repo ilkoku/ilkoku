@@ -183,14 +183,14 @@ export function creativeToHtml(creative: AdvertisingCreative) {
 
 export async function getAdvertisingSlotState(slotKey: string): Promise<AdvertisingSlotState> {
   try {
-    const rows = await prisma.$queryRaw<AdvertisingRow[]>\`
+    const rows = await prisma.$queryRaw<AdvertisingRow[]>`
       SELECT valueJson, updatedAt, publishedAt
       FROM SiteContent
       WHERE namespace = ${advertisingNamespace}
         AND contentKey = ${slotKey}
         AND status = 'published'
       LIMIT 1
-    \`;
+    `;
     const row = rows[0];
     if (!row) return { state: "missing" };
     const config = parseAdvertisingSlotConfig(row.valueJson);
@@ -214,7 +214,7 @@ export async function publishAdvertisingSlot(
   config: AdvertisingSlotConfig,
 ) {
   const valueJson = JSON.stringify(config);
-  await prisma.$executeRaw\`
+  await prisma.$executeRaw`
     INSERT INTO SiteContent (
       id, namespace, contentKey, valueJson, valueType, status,
       publishedAt, updatedById, createdAt, updatedAt
@@ -228,5 +228,5 @@ export async function publishAdvertisingSlot(
       publishedAt = CURRENT_TIMESTAMP(3),
       updatedById = VALUES(updatedById),
       updatedAt = CURRENT_TIMESTAMP(3)
-  \`;
+  `;
 }

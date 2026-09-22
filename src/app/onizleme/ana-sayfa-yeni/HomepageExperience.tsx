@@ -6,7 +6,7 @@ import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
-import { getHomepageAffiliateEnabled } from "@/lib/affiliate-placement";
+import { getHomepageAffiliatePlacement } from "@/lib/affiliate-placement";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 
 import History670 from "./history-670";
@@ -74,10 +74,10 @@ const benefits = [
 const statIcons: IconName[] = ["account", "create", "editor", "publisher", "book", "message"];
 
 export default async function HomepageExperience() {
-  const [roleCardState, homepageState, affiliateEnabled] = await Promise.all([
+  const [roleCardState, homepageState, affiliatePlacement] = await Promise.all([
     getPublishedRoleCardsState("tr"),
     getPublishedHomepageState("tr"),
-    getHomepageAffiliateEnabled(),
+    getHomepageAffiliatePlacement(),
   ]);
   const homepage = homepageState.state === "valid" ? homepageState.content : {};
   const hero = homepage.hero;
@@ -150,7 +150,7 @@ export default async function HomepageExperience() {
         </div>
       </section>
 
-      {affiliateEnabled ? <MagzterAffiliateBanner /> : null}
+      {affiliatePlacement.enabled ? <MagzterAffiliateBanner placement={affiliatePlacement} /> : null}
 
       <section className="nx-passport" id="eser-pasaportu">
         <div className="nx-shell nx-passport__layout">

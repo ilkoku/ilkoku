@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "../SystemControlWorkbench.module.css";
+import pageStyles from "./BannerAdvertisingPage.module.css";
 import { requireCmsAdmin } from "@/lib/cms-access";
 import {
   AFFILIATE_PLACEMENT_NAMESPACE,
@@ -9,6 +10,37 @@ import {
 import { prisma } from "@/lib/prisma";
 
 type Row = { valueJson: string };
+
+const DESKTOP_AFFILIATE_CODE = `<a href="https://www.dpbolvw.net/click-101886825-13992555"
+   target="_blank"
+   rel="sponsored nofollow noopener noreferrer">
+  <img src="https://www.ftjcfx.com/image-101886825-13992555"
+       width="728"
+       height="90"
+       alt="Magzter dergi ve gazete okuma kampanyası"
+       border="0" />
+</a>`;
+
+const MOBILE_AFFILIATE_CODE = `<a href="https://www.jdoqocy.com/click-101886825-13992112"
+   target="_blank"
+   rel="sponsored nofollow noopener noreferrer">
+  <img src="https://www.awltovhc.com/image-101886825-13992112"
+       width="300"
+       height="250"
+       alt="Magzter dergi ve gazete okuma kampanyası"
+       border="0" />
+</a>`;
+
+const TEXT_AFFILIATE_CODE = `<a href="https://www.jdoqocy.com/click-101886825-13973461"
+   target="_blank"
+   rel="sponsored nofollow noopener noreferrer">
+  5.000'den fazla dergi, gazete ve seçilmiş premium içeriğe ücretsiz sınırsız erişim elde edin
+</a>
+<img src="https://www.tqlkg.com/image-101886825-13973461"
+     width="1"
+     height="1"
+     border="0"
+     alt="" />`;
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +99,7 @@ export default async function BannerAdvertisingPage({
         <div>
           <span>Yayın & Görünürlük · Admin</span>
           <h1>Banner / Reklam Alanları</h1>
-          <p>Şimdilik yalnızca ana sayfadaki Magzter reklam alanının görünürlüğünü yönetin.</p>
+          <p>Şimdilik yalnızca ana sayfadaki Magzter reklam alanının görünürlüğünü yönetin ve kullanılan CJ kodlarını görüntüleyin.</p>
         </div>
         <div className="content-profile">
           <strong>{loaded.enabled ? "AKTİF" : "PASİF"}</strong>
@@ -149,6 +181,69 @@ export default async function BannerAdvertisingPage({
             </div>
           </section>
         </div>
+
+        <section className={pageStyles.codeSection} aria-labelledby="affiliate-code-heading">
+          <div className={pageStyles.codeHeader}>
+            <div>
+              <span>Teknik görünüm</span>
+              <h2 id="affiliate-code-heading">Mevcut Affiliate Kodları</h2>
+              <p>Canlıda kullanılan üç CJ kreatifi burada referans olarak gösterilir. Bu kutular yalnızca görüntüleme ve kopyalama içindir.</p>
+            </div>
+          </div>
+
+          <div className={pageStyles.codeGrid}>
+            <article className={pageStyles.codeCard}>
+              <div className={pageStyles.codeCardHeader}>
+                <div>
+                  <span>Masaüstü</span>
+                  <strong>728×90 Banner</strong>
+                </div>
+                <small>AID 13992555</small>
+              </div>
+              <textarea
+                className={pageStyles.codeArea}
+                aria-label="Masaüstü 728×90 affiliate kodu"
+                readOnly
+                rows={10}
+                value={DESKTOP_AFFILIATE_CODE}
+              />
+            </article>
+
+            <article className={pageStyles.codeCard}>
+              <div className={pageStyles.codeCardHeader}>
+                <div>
+                  <span>Mobil</span>
+                  <strong>300×250 Banner</strong>
+                </div>
+                <small>AID 13992112</small>
+              </div>
+              <textarea
+                className={pageStyles.codeArea}
+                aria-label="Mobil 300×250 affiliate kodu"
+                readOnly
+                rows={10}
+                value={MOBILE_AFFILIATE_CODE}
+              />
+            </article>
+
+            <article className={pageStyles.codeCard}>
+              <div className={pageStyles.codeCardHeader}>
+                <div>
+                  <span>Metin kreatifi</span>
+                  <strong>Affiliate link + takip pikseli</strong>
+                </div>
+                <small>AID 13973461</small>
+              </div>
+              <textarea
+                className={pageStyles.codeArea}
+                aria-label="Metin affiliate kodu ve takip pikseli"
+                readOnly
+                rows={11}
+                value={TEXT_AFFILIATE_CODE}
+              />
+            </article>
+          </div>
+        </section>
 
         <div className={styles.saveBar}>
           <div>

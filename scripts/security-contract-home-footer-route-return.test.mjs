@@ -84,6 +84,11 @@ test("CMS affiliate placement control is admin-only, persisted and invalidates h
   assert.match(page, /Aktif/);
   assert.match(page, /Pasif/);
   assert.match(page, /action="\/api\/affiliate-placement"/);
+  assert.match(page, /Mevcut Affiliate Kodları/);
+  assert.match(page, /13992555/);
+  assert.match(page, /13992112/);
+  assert.match(page, /13973461/);
+  assert.match(page, /tqlkg\.com\/image-101886825-13973461/);
 
   assert.match(route, /user\.role !== "admin"/);
   assert.match(route, /ON DUPLICATE KEY UPDATE/);

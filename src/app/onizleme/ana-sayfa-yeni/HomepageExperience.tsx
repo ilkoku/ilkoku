@@ -10,6 +10,7 @@ import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 
 import History670 from "./history-670";
 import LiveHomepageFooter from "./live-footer";
+import MagzterAffiliateBanner from "./MagzterAffiliateBanner";
 import "./preview.css";
 
 type IconName =
@@ -146,6 +147,8 @@ export default async function HomepageExperience() {
           <div className="nx-role-grid">{visibleRoles.map((role) => <Link href={role.href} className={`nx-role nx-role--${role.key}`} key={role.key} aria-label={`${role.title} olarak kayıt ol`}><div className="nx-role__top"><span className="nx-role__number">{String(role.position).padStart(2, "0")}</span><span className={`nx-role__icon nx-role__icon--${role.key}`} aria-hidden="true" /></div><h3>{role.title}</h3><p>{role.description}</p><div className="nx-role__highlights">{role.highlights.map((highlight) => <small key={highlight}>{highlight}</small>)}</div><strong>{role.cta}<span aria-hidden="true">→</span></strong></Link>)}</div>
         </div>
       </section>
+
+      <MagzterAffiliateBanner />
 
       <section className="nx-passport" id="eser-pasaportu">
         <div className="nx-shell nx-passport__layout">

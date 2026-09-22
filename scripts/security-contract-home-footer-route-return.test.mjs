@@ -23,3 +23,33 @@ test("route-return hydration still rebuilds the canonical homepage footer before
   assert.ok(trustIndex > platformIndex);
   assert.ok(fetchIndex > trustIndex);
 });
+
+
+test("homepage affiliate banner stays after roles and before passport with responsive CJ creatives", () => {
+  const homepage = readFileSync(
+    "src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx",
+    "utf8",
+  );
+  const affiliate = readFileSync(
+    "src/app/onizleme/ana-sayfa-yeni/MagzterAffiliateBanner.tsx",
+    "utf8",
+  );
+
+  const rolesIndex = homepage.indexOf('className="nx-roles"');
+  const affiliateIndex = homepage.indexOf("<MagzterAffiliateBanner />");
+  const passportIndex = homepage.indexOf('className="nx-passport"');
+
+  assert.ok(rolesIndex >= 0);
+  assert.ok(affiliateIndex > rolesIndex);
+  assert.ok(passportIndex > affiliateIndex);
+
+  assert.match(affiliate, /13992555/);
+  assert.match(affiliate, /width: 728/);
+  assert.match(affiliate, /height: 90/);
+  assert.match(affiliate, /13992112/);
+  assert.match(affiliate, /width: 300/);
+  assert.match(affiliate, /height: 250/);
+  assert.match(affiliate, /window\.matchMedia\("\(max-width: 767px\)"\)/);
+  assert.match(affiliate, /rel="sponsored nofollow"/);
+  assert.match(affiliate, /İş ortağı bağlantısı/);
+});

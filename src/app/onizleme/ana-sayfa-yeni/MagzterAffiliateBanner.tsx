@@ -41,7 +41,24 @@ export default function MagzterAffiliateBanner() {
           <div className="nx-affiliate__copy">
             <p className="nx-affiliate__eyebrow">Okurlar için</p>
             <h2 id="nx-affiliate-title">Magzter GOLD – 7 Günlük Ücretsiz Deneme</h2>
-            <p>Dergi, gazete ve premium içerikleri Magzter üzerinden keşfedin.</p>
+            <a
+              className="nx-affiliate__copy-link"
+              href="https://www.jdoqocy.com/click-101886825-13973461"
+              target="_blank"
+              rel="sponsored nofollow noopener noreferrer"
+            >
+              5.000&apos;den fazla dergi, gazete ve seçilmiş premium içeriğe ücretsiz sınırsız erişim elde edin
+            </a>
+            {/* CJ metin kreatifine ait 1×1 takip pikseli. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="nx-affiliate__tracking-pixel"
+              src="https://www.tqlkg.com/image-101886825-13973461"
+              width="1"
+              height="1"
+              alt=""
+              aria-hidden="true"
+            />
             <span className="nx-affiliate__disclosure">İş ortağı bağlantısı</span>
           </div>
 

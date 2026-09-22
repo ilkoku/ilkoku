@@ -6,10 +6,10 @@
 
 .nx-affiliate__panel {
   display: grid;
-  grid-template-columns: minmax(15rem, 1fr) minmax(32rem, 45.5rem);
+  grid-template-columns: minmax(19rem, 1fr) minmax(31rem, 44rem);
   align-items: center;
   gap: clamp(1.25rem, 2vw, 2rem);
-  max-width: 76rem;
+  max-width: 80rem;
   margin: 0 auto;
   padding: 1.15rem 1.25rem;
   border: 1px solid rgba(84, 58, 127, 0.12);
@@ -24,16 +24,8 @@
   padding: 0.15rem 0 0.15rem 0.2rem;
 }
 
-.nx-affiliate__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.45rem;
-}
-
-.nx-affiliate__eyebrow {
-  margin: 0;
+ .nx-affiliate__eyebrow {
+  margin: 0 0 0.45rem;
   color: #6d46a5;
   font-size: 0.68rem;
   font-weight: 800;
@@ -49,7 +41,7 @@
 }
 
 .nx-affiliate__copy > p {
-  max-width: 28rem;
+  max-width: 31rem;
   margin: 0;
   color: rgba(33, 26, 49, 0.66);
   font-size: 0.95rem;
@@ -57,14 +49,16 @@
 }
 
 .nx-affiliate__disclosure {
-  flex: 0 0 auto;
-  padding: 0.3rem 0.52rem;
+  display: inline-flex;
+  margin-top: 0.58rem;
+  padding: 0.28rem 0.5rem;
   border-radius: 999px;
   background: rgba(109, 70, 165, 0.08);
   color: rgba(55, 39, 79, 0.68);
-  font-size: 0.64rem;
+  font-size: 0.62rem;
   font-weight: 700;
   white-space: nowrap;
+  opacity: 0.82;
 }
 
 .nx-affiliate__creative {
@@ -123,12 +117,6 @@
     gap: 0.9rem;
     padding: 1rem;
     border-radius: 1rem;
-  }
-
-  .nx-affiliate__meta {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.45rem;
   }
 
   .nx-affiliate__copy {

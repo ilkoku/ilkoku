@@ -54,5 +54,8 @@ test("homepage affiliate banner stays after roles and before passport with respo
   assert.match(affiliate, /rel="sponsored nofollow noopener noreferrer"/);
   assert.match(affiliate, /İş ortağı bağlantısı/);
   assert.match(affiliate, /nx-affiliate__copy/);
-  assert.match(affiliate, /nx-affiliate__meta/);
+  assert.ok(
+    affiliate.indexOf("Dergi, gazete ve premium içerikleri Magzter üzerinden keşfedin.") <
+      affiliate.indexOf("İş ortağı bağlantısı"),
+  );
 });

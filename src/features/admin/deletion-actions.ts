@@ -46,6 +46,7 @@ function revalidateDeletionViews() {
     "/admin/yayinevleri",
     "/admin/eserler",
     "/admin/silme-merkezi",
+    "/admin/audit-log",
   ]) {
     revalidatePath(path);
   }
@@ -150,14 +151,22 @@ export async function deleteFromAdminCenterAction(formData: FormData) {
         return { ok: false, reason: "kayit-bulunamadi" } as const;
       }
 
-      const activeAssignments = await transaction.editorReviewAssignment.count({
-        where: {
-          editorId: target.id,
-          status: { in: ["waiting", "assigned", "in_progress"] },
-        },
-      });
+      const [activeAssignments, activePublisherRequests] = await Promise.all([
+        transaction.editorReviewAssignment.count({
+          where: {
+            editorId: target.id,
+            status: { in: ["waiting", "assigned", "in_progress"] },
+          },
+        }),
+        transaction.publisherEditorRequest.count({
+          where: {
+            assignedEditorId: target.id,
+            status: { in: ["waiting", "in_progress"] },
+          },
+        }),
+      ]);
 
-      if (activeAssignments > 0) {
+      if (activeAssignments > 0 || activePublisherRequests > 0) {
         return { ok: false, reason: "editor-aktif-inceleme" } as const;
       }
 

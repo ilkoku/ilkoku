@@ -43,7 +43,10 @@ function summary(value: string | null) {
 }
 
 function withReturnPath(path: string, returnPath: string) {
-  return `${path}?from=${encodeURIComponent(returnPath)}`;
+  // Search engines should always crawl the clean canonical destination.
+  // The second argument is kept for API compatibility with the existing UI.
+  void returnPath;
+  return path;
 }
 
 export function PublicWorkStream({

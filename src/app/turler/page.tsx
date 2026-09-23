@@ -140,7 +140,7 @@ export default async function PublicGenresPage({
               {genres.map((genre) => (
                 <Link
                   className="public-hub-card"
-                  href={`/turler/${genre.slug}?from=${encodeURIComponent(returnPath)}`}
+                  href={`/turler/${genre.slug}`}
                   key={genre.slug}
                 >
                   <div className="public-hub-card__meta">

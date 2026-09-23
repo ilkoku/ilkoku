@@ -8,9 +8,9 @@ This inventory records which route families belong to the public brand/SEO surfa
 
 - Authenticated workspaces, account flows, admin/CMS surfaces and other operational routes stay outside search through authentication plus `X-Robots-Tag: noindex, nofollow, noarchive`.
 - A route is not added to the sitemap merely because code for that route exists.
-- Public discovery families that are paused stay out of sitemap/navigation and must fail closed with 404 plus an explicit noindex header guard.
-- Published public work pages under `/kitap/[slug]` are a separate publication surface and may be indexed only when the work itself satisfies public publication/privacy rules.
-- Re-enabling a paused discovery family requires an intentional product decision, route activation, sitemap/navigation activation and SEO contract update in the same change.
+- Public discovery is active only for published, active and public content; drafts, private works, archived content and blocked fixtures remain outside search.
+- Published public work pages under `/kitap/[slug]` are indexable only when the work itself satisfies public publication/privacy rules.
+- Discovery hubs and their canonical detail pages are part of the crawl graph and sitemap so search engines can reach works, authors and genres through normal HTML links as well as XML discovery.
 
 ## Canonical public routes
 
@@ -22,20 +22,20 @@ This inventory records which route families belong to the public brand/SEO surfa
 | `/yardim` | `PublicSiteFrame` via route layout | indexable help surface |
 | `/iletisim` | `PublicSiteFrame` via route layout | indexable contact surface |
 
-## Paused public discovery routes
+## Active public discovery routes
 
-These route families remain in the codebase for future activation, but they are **not** currently part of the public SEO surface.
+These route families are part of the public SEO surface. They expose only published, active and public content and provide canonical HTML links between discovery hubs and detail pages.
 
 | Route family | Current behavior | SEO/index intent |
 | --- | --- | --- |
-| `/eserler` | discovery gate returns 404 | not indexable |
-| `/eserler/yeni` | inherited discovery gate | not indexable |
-| `/eserler/guncellenen` | inherited discovery gate | not indexable |
-| `/eserler/rss.xml` | paused feed | not indexable |
-| `/yazarlar` | discovery gate returns 404 | not indexable |
-| `/yazarlar/[publicId]` | inherited discovery gate | not indexable while discovery is paused |
-| `/turler` | discovery gate returns 404 | not indexable |
-| `/turler/[slug]` | inherited discovery gate | not indexable while discovery is paused |
+| `/eserler` | public work library | indexable canonical hub |
+| `/eserler/yeni` | newest public works feed | indexable canonical hub; filtered/paginated variants noindex |
+| `/eserler/guncellenen` | recently updated public works feed | indexable canonical hub; filtered/paginated variants noindex |
+| `/eserler/rss.xml` | public discovery feed | feed discovery surface |
+| `/yazarlar` | public author directory | indexable canonical hub |
+| `/yazarlar/[publicId]` | public author profile for authors with discoverable work | indexable canonical detail |
+| `/turler` | public genre directory | indexable canonical hub |
+| `/turler/[slug]` | public genre page backed by discoverable work | indexable canonical detail |
 
 ## Platform pages
 
@@ -111,4 +111,4 @@ Preview and archived homepage routes are not canonical public destinations and m
 
 ## Maintenance rule
 
-When a new public route is introduced, update this inventory if it creates a new route family or an intentional shell/SEO exception. If the route is a normal informational CMS page, no new identity system should be created: use the existing template. Do not add unfinished, authenticated-only or product-paused routes to sitemap/search merely to increase URL count.
+When a new public route is introduced, update this inventory if it creates a new route family or an intentional shell/SEO exception. If the route is a normal informational CMS page, no new identity system should be created: use the existing template. Do not add unfinished or authenticated-only routes to sitemap/search merely to increase URL count.

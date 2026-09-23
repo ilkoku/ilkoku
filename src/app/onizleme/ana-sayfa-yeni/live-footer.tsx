@@ -4,6 +4,7 @@ import Link from "next/link";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { logoutAction } from "@/features/auth/actions";
 import {
+  publicDiscoveryLinks,
   publicLegalLinks,
   publicPlatformLinks,
   publicSupportLinks,
@@ -54,7 +55,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, slogan, co
 
           <div>
             <h3>Platform</h3>
-            {publicPlatformLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+            {[...publicPlatformLinks, ...publicDiscoveryLinks].map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
           </div>
 
           <div className="landing-footer__trust">

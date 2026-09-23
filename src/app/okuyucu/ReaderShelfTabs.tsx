@@ -105,49 +105,67 @@ function WorkCard({
           />
         )}
 
-        <div className="book-card__actions">
-          <Link
-            className="button button--outline"
-            href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent(
-              "/okuyucu",
-            )}`}
-          >
-            Eser Pasaportu
-          </Link>
+        <div className="book-card__actions reader-workdesk__card-actions">
+          <div className="reader-workdesk__utility-actions">
+            <Link
+              className="reader-workdesk__utility-action"
+              href={`/kitap/${work.slug}/pasaport?from=${encodeURIComponent(
+                "/okuyucu",
+              )}`}
+            >
+              Eser Pasaportu
+            </Link>
 
-          <form action={toggleFavoriteAction}>
-            <input name="workId" type="hidden" value={work.id} />
-            <input name="returnPath" type="hidden" value="/okuyucu" />
-            <button className="button button--outline" type="submit">
-              {work.isFavorite ? "Favoriden Çıkar" : "Favoriye Ekle"}
-            </button>
-          </form>
-
-          <Link
-            className="button button--outline"
-            href={`/kitap/${work.slug}?from=${encodeURIComponent("/okuyucu")}`}
-          >
-            Eseri İncele
-          </Link>
-
-          {work.readingState === "completed" ? (
-            <form action={restartReadingAction}>
+            <form action={toggleFavoriteAction}>
               <input name="workId" type="hidden" value={work.id} />
-              <input name="returnTo" type="hidden" value="/okuyucu" />
-              <button className="button button--outline" type="submit">
-                Yeniden Oku
+              <input name="returnPath" type="hidden" value="/okuyucu" />
+              <button
+                className="reader-workdesk__utility-action reader-workdesk__favorite-action"
+                type="submit"
+              >
+                <span aria-hidden="true">
+                  {work.isFavorite ? "♥" : "♡"}
+                </span>
+                {work.isFavorite ? "Favoriden Çıkar" : "Favoriye Ekle"}
               </button>
             </form>
-          ) : work.readingState === "in_progress" ? (
+          </div>
+
+          <div
+            className={`reader-workdesk__primary-actions${
+              work.readingState === "unread"
+                ? " reader-workdesk__primary-actions--single"
+                : ""
+            }`}
+          >
             <Link
               className="button button--outline"
-              href={`/oku/${work.slug}/bolum-${
-                work.readingProgress?.chapterPosition ?? 1
-              }?from=${encodeURIComponent("/okuyucu")}`}
+              href={`/kitap/${work.slug}?from=${encodeURIComponent(
+                "/okuyucu",
+              )}`}
             >
-              Okumaya Devam Et
+              Eseri İncele
             </Link>
-          ) : null}
+
+            {work.readingState === "completed" ? (
+              <form action={restartReadingAction}>
+                <input name="workId" type="hidden" value={work.id} />
+                <input name="returnTo" type="hidden" value="/okuyucu" />
+                <button className="button button--primary" type="submit">
+                  Yeniden Oku
+                </button>
+              </form>
+            ) : work.readingState === "in_progress" ? (
+              <Link
+                className="button button--primary"
+                href={`/oku/${work.slug}/bolum-${
+                  work.readingProgress?.chapterPosition ?? 1
+                }?from=${encodeURIComponent("/okuyucu")}`}
+              >
+                Okumaya Devam Et
+              </Link>
+            ) : null}
+          </div>
         </div>
       </div>
     </Card>

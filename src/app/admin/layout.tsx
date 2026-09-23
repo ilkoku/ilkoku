@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import "./admin.css";
 import "./commerce.css";
 import "./dashboard.css";
+import "./deletion.css";
 import "./directory.css";
 import "./email.css";
 import "./email-operations.css";

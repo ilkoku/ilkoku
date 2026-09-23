@@ -264,14 +264,15 @@ export default async function AdminDeletionCenterPage({
       })
     : [];
 
-  const publisherEditorRequestCount = new Map(
-    publisherEditorRequestGroups
-      .filter(
-        (group): group is typeof group & { assignedEditorId: string } =>
-          Boolean(group.assignedEditorId),
-      )
-      .map((group) => [group.assignedEditorId, group._count._all]),
-  );
+  const publisherEditorRequestCount = new Map<string, number>();
+  for (const group of publisherEditorRequestGroups) {
+    if (group.assignedEditorId) {
+      publisherEditorRequestCount.set(
+        group.assignedEditorId,
+        group._count._all,
+      );
+    }
+  }
 
   const total = writerCount + editorCount + workCount + publisherCount;
 

@@ -13,6 +13,7 @@ import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/ed
 import { GENRES } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
+import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
@@ -152,6 +153,31 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     priority: 0.7,
   },
   {
+    url: `${baseUrl}/eserler`,
+    changeFrequency: "daily",
+    priority: 0.85,
+  },
+  {
+    url: `${baseUrl}/eserler/yeni`,
+    changeFrequency: "daily",
+    priority: 0.75,
+  },
+  {
+    url: `${baseUrl}/eserler/guncellenen`,
+    changeFrequency: "daily",
+    priority: 0.75,
+  },
+  {
+    url: `${baseUrl}/yazarlar`,
+    changeFrequency: "daily",
+    priority: 0.8,
+  },
+  {
+    url: `${baseUrl}/turler`,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  },
+  {
     url: `${baseUrl}/iletisim`,
     changeFrequency: "monthly",
     priority: 0.6,
@@ -220,7 +246,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
         select: {
           slug: true,
+          genre: true,
           updatedAt: true,
+          author: {
+            select: {
+              publicId: true,
+            },
+          },
         },
         take: 50_000,
       }),
@@ -277,16 +309,55 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         };
       });
 
+    const searchableWorks = works.filter(
+      (work) => !isSearchIndexExcludedPublicWorkSlug(work.slug),
+    );
+
+    const authorUpdatedAt = new Map<string, Date>();
+    const genreUpdatedAt = new Map<string, Date>();
+
+    for (const work of searchableWorks) {
+      const authorId = work.author.publicId;
+      const currentAuthorDate = authorUpdatedAt.get(authorId);
+      if (!currentAuthorDate || work.updatedAt > currentAuthorDate) {
+        authorUpdatedAt.set(authorId, work.updatedAt);
+      }
+
+      const genre = work.genre?.trim();
+      if (genre) {
+        const genreSlug = publicTaxonomySlug(genre);
+        const currentGenreDate = genreUpdatedAt.get(genreSlug);
+        if (!currentGenreDate || work.updatedAt > currentGenreDate) {
+          genreUpdatedAt.set(genreSlug, work.updatedAt);
+        }
+      }
+    }
+
+    const authorEntries: MetadataRoute.Sitemap = [...authorUpdatedAt.entries()].map(
+      ([publicId, lastModified]) => ({
+        url: `${baseUrl}/yazarlar/${publicId}`,
+        lastModified,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      }),
+    );
+
+    const genreEntries: MetadataRoute.Sitemap = [...genreUpdatedAt.entries()].map(
+      ([slug, lastModified]) => ({
+        url: `${baseUrl}/turler/${slug}`,
+        lastModified,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      }),
+    );
+
     return [
       ...staticDiscoveryEntries,
       ...publicPageEntries,
       ...legalEntries,
-      ...works
-        .filter(
-          (work) =>
-            !isSearchIndexExcludedPublicWorkSlug(work.slug),
-        )
-        .map((work) => ({
+      ...authorEntries,
+      ...genreEntries,
+      ...searchableWorks.map((work) => ({
           url: `${baseUrl}/kitap/${work.slug}`,
           lastModified: work.updatedAt,
           changeFrequency: "weekly" as const,

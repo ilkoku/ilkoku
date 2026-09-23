@@ -119,9 +119,11 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertNotContains(sitemap, '`${baseUrl}/en`', "no EN static sitemap URL");
   assertContains(sitemap, "contentKey NOT LIKE 'legal:en:%'", "EN legal sitemap exclusion");
   assertNotContains(sitemap, "page:en:%", "no EN generic sitemap inventory");
-  assertNotContains(sitemap, 'url: \`${baseUrl}/eserler\`', "retired work directory sitemap route");
-  assertNotContains(sitemap, 'url: \`${baseUrl}/yazarlar\`', "retired author directory sitemap route");
-  assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
+  assertContains(sitemap, 'url: \`${baseUrl}/eserler\`', "active work directory sitemap route");
+  assertContains(sitemap, 'url: \`${baseUrl}/yazarlar\`', "active author directory sitemap route");
+  assertContains(sitemap, 'url: \`${baseUrl}/turler\`', "active genre directory sitemap route");
+  assertContains(sitemap, "authorEntries", "dynamic public author sitemap entries");
+  assertContains(sitemap, "genreEntries", "dynamic public genre sitemap entries");
 });
 
 test("active public help surfaces expose canonical social metadata", () => {
@@ -235,10 +237,10 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
   }
   assertContains(metadata, 'href="/editorler"', "active structured-data collection link");
   assertNotContains(metadata, 'href="/kesfet"', "member discovery route is not a public SEO action");
-  for (const retired of ['"/eserler"', '"/yazarlar"', '"/turler"']) {
-    assertNotContains(routes, retired, `retired public SEO route ${retired}`);
-    assertNotContains(navigation, retired, `retired public navigation route ${retired}`);
+  for (const discovery of ['"/eserler"', '"/yazarlar"', '"/turler"']) {
+    assertContains(navigation, discovery, `active public discovery navigation route ${discovery}`);
   }
+  assertContains(routes, "publicDiscoveryLinks", "active public discovery feeds core SEO route catalog");
 });
 
 test("SEO center and audit API stay Turkish-only", () => {

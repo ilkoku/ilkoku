@@ -75,3 +75,80 @@
     height: 30px;
   }
 }
+
+.reader-workdesk__card-actions {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.reader-workdesk__utility-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+}
+
+.reader-workdesk__utility-actions form {
+  margin: 0;
+}
+
+.reader-workdesk__utility-action {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(236, 239, 244, 0.66);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.reader-workdesk__utility-action:hover,
+.reader-workdesk__utility-action:focus-visible {
+  color: #f1ce58;
+  outline: none;
+}
+
+.reader-workdesk__favorite-action > span {
+  color: #dfb52f;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.reader-workdesk__primary-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 0.55rem;
+}
+
+.reader-workdesk__primary-actions--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.reader-workdesk__primary-actions form {
+  display: block;
+  margin: 0;
+}
+
+.reader-workdesk__primary-actions .button,
+.reader-workdesk__primary-actions form .button {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .reader-workdesk__card-actions {
+    gap: 0.65rem;
+  }
+
+  .reader-workdesk__primary-actions {
+    grid-template-columns: 1fr;
+  }
+}
+

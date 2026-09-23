@@ -185,7 +185,7 @@ export default async function PublicAuthorPage({
           <div className="public-hub__grid">
             {author.works.map((work) => {
               const genre = work.genre?.trim();
-              const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(profileContextPath)}`;
+              const bookHref = `/kitap/${work.slug}`;
               const passportHref = `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(profileContextPath)}`;
 
               return (
@@ -193,7 +193,7 @@ export default async function PublicAuthorPage({
                   <div className="public-hub-card__meta">
                     {genre ? (
                       <Link
-                        href={`/turler/${publicTaxonomySlug(genre)}?from=${encodeURIComponent(profileContextPath)}`}
+                        href={`/turler/${publicTaxonomySlug(genre)}`}
                       >
                         {genre}
                       </Link>

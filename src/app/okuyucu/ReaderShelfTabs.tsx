@@ -123,6 +123,13 @@ function WorkCard({
             </button>
           </form>
 
+          <Link
+            className="button button--outline"
+            href={`/kitap/${work.slug}?from=${encodeURIComponent("/okuyucu")}`}
+          >
+            Eseri İncele
+          </Link>
+
           {work.readingState === "completed" ? (
             <form action={restartReadingAction}>
               <input name="workId" type="hidden" value={work.id} />
@@ -131,24 +138,16 @@ function WorkCard({
                 Yeniden Oku
               </button>
             </form>
-          ) : (
+          ) : work.readingState === "in_progress" ? (
             <Link
               className="button button--outline"
-              href={
-                work.readingState === "in_progress"
-                  ? `/oku/${work.slug}/bolum-${
-                      work.readingProgress?.chapterPosition ?? 1
-                    }?from=${encodeURIComponent("/okuyucu")}`
-                  : `/kitap/${work.slug}?from=${encodeURIComponent(
-                      "/okuyucu",
-                    )}`
-              }
+              href={`/oku/${work.slug}/bolum-${
+                work.readingProgress?.chapterPosition ?? 1
+              }?from=${encodeURIComponent("/okuyucu")}`}
             >
-              {work.readingState === "in_progress"
-                ? "Okumaya Devam Et"
-                : "Eseri İncele"}
+              Okumaya Devam Et
             </Link>
-          )}
+          ) : null}
         </div>
       </div>
     </Card>

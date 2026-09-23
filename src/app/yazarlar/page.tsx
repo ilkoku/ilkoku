@@ -150,7 +150,7 @@ export default async function PublicAuthorsPage({
               {authors.map((author) => {
                 const name = author.displayName ?? author.fullName;
                 const isFavorite = favoriteAuthorIds.has(author.publicId);
-                const href = `/yazarlar/${author.publicId}?from=${encodeURIComponent(returnPath)}`;
+                const href = `/yazarlar/${author.publicId}`;
 
                 return (
                   <article className="public-hub-card" key={author.publicId}>

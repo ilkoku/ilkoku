@@ -3,9 +3,15 @@ export type PublicSiteLink = {
   label: string;
 };
 
-// Public Eserler/Yazarlar/Türler discovery routes are retired from the
-// public website. Keep this false for legacy route layouts that must 404.
-export const publicDiscoveryEnabled = false;
+// Public Eserler/Yazarlar/Türler discovery routes are part of the public
+// crawl graph. Only published, active and public content is exposed there.
+export const publicDiscoveryEnabled = true;
+
+export const publicDiscoveryLinks = [
+  { href: "/eserler", label: "Eserleri Keşfet" },
+  { href: "/yazarlar", label: "Yazarlar" },
+  { href: "/turler", label: "Türler" },
+] as const satisfies readonly PublicSiteLink[];
 
 export const publicPlatformLinks = [
   { href: "/hakkimizda", label: "Hakkımızda" },

@@ -1,4 +1,5 @@
 import {
+  publicDiscoveryLinks,
   publicLegalLinks,
   publicPlatformLinks,
   publicTrustLinks,
@@ -10,6 +11,7 @@ export const publicCodeOwnedIndexRoutes = [
   "/editorler",
   "/iletisim",
   "/site-haritasi",
+  ...publicDiscoveryLinks.map((link) => link.href),
 ] as const;
 
 export const publicCmsManagedCoreRoutes = [

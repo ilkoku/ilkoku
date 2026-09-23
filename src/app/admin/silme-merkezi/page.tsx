@@ -253,6 +253,26 @@ export default async function AdminDeletionCenterPage({
     }),
   ]);
 
+  const publisherEditorRequestGroups = editors.length
+    ? await prisma.publisherEditorRequest.groupBy({
+        by: ["assignedEditorId"],
+        where: {
+          assignedEditorId: { in: editors.map((editor) => editor.id) },
+          status: { in: ["waiting", "in_progress"] },
+        },
+        _count: { _all: true },
+      })
+    : [];
+
+  const publisherEditorRequestCount = new Map(
+    publisherEditorRequestGroups
+      .filter(
+        (group): group is typeof group & { assignedEditorId: string } =>
+          Boolean(group.assignedEditorId),
+      )
+      .map((group) => [group.assignedEditorId, group._count._all]),
+  );
+
   const total = writerCount + editorCount + workCount + publisherCount;
 
   return (
@@ -457,7 +477,11 @@ export default async function AdminDeletionCenterPage({
         {editors.length ? (
           <div className="admin-delete-grid">
             {editors.map((editor) => {
-              const hasActiveReview = editor._count.editorReviewAssignments > 0;
+              const publisherReviewCount =
+                publisherEditorRequestCount.get(editor.id) ?? 0;
+              const hasActiveReview =
+                editor._count.editorReviewAssignments > 0 ||
+                publisherReviewCount > 0;
               return (
                 <article className="admin-delete-card" key={editor.id}>
                   <div>
@@ -467,6 +491,7 @@ export default async function AdminDeletionCenterPage({
                   </div>
                   <dl>
                     <div><dt>Aktif inceleme</dt><dd>{editor._count.editorReviewAssignments}</dd></div>
+                    <div><dt>Yayınevi incelemesi</dt><dd>{publisherReviewCount}</dd></div>
                     <div><dt>Tamamlanan rapor</dt><dd>{editor._count.feedbackWritten}</dd></div>
                   </dl>
                   {hasActiveReview ? (

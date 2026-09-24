@@ -7,19 +7,19 @@ type HistoryRow = { valueJson: string };
 
 const historyIllustrations = [
   {
-    src: "/onizleme/ana-sayfa-yeni/history-art/enheduanna",
+    src: "/api/site-assets/home-history/enheduanna",
     alt: "Enheduanna, çivi yazılı kil tabletler ve Mezopotamya yazı kültürünü betimleyen illüstrasyon",
   },
   {
-    src: "/onizleme/ana-sayfa-yeni/history-art/zenodotos",
+    src: "/api/site-assets/home-history/zenodotos",
     alt: "Zenodotos'un antik metinleri karşılaştırıp düzenlemesini betimleyen papirüs illüstrasyonu",
   },
   {
-    src: "/onizleme/ana-sayfa-yeni/history-art/cambridge",
+    src: "/api/site-assets/home-history/cambridge",
     alt: "Cambridge University Press, eski kitaplar ve matbaa kültürünü betimleyen illüstrasyon",
   },
   {
-    src: "/onizleme/ana-sayfa-yeni/history-art/cinema",
+    src: "/api/site-assets/home-history/cinema",
     alt: "Erken dönem sinemayı, film şeridini ve hareketli görüntünün doğuşunu betimleyen illüstrasyon",
   },
 ] as const;
@@ -101,7 +101,7 @@ export default async function History670() {
             <div className="nx-now__visual">
               <img
                 className="nx-now__scene"
-                src="/onizleme/ana-sayfa-yeni/history-art/2026"
+                src="/api/site-assets/home-history/2026"
                 alt="2026 İlkOku’da bir eserin yazardan okura, editöre ve yayınevine uzanan yolculuğunu betimleyen illüstrasyon"
               />
             </div>

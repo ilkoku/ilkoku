@@ -8,7 +8,11 @@ on:
     paths:
       - "src/app/**"
       - "src/content/**"
+      - "src/features/homepage/**"
       - "src/features/public-discovery/**"
+      - "src/lib/public-site-navigation.ts"
+      - "src/lib/public-page-metadata.ts"
+      - "src/lib/public-brand.ts"
       - "public/**"
       - ".github/workflows/indexnow-submit.yml"
 
@@ -21,12 +25,45 @@ concurrency:
 
 jobs:
   submit:
-    name: Submit public URLs to IndexNow
+    name: Submit changed public URLs to IndexNow
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Wait for production and submit sitemap URLs
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Resolve changed files
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -Eeuo pipefail
+          : > /tmp/changed-files.txt
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "__FULL_SUBMIT__" > /tmp/changed-files.txt
+            exit 0
+          fi
+
+          if [[ -z "${BEFORE_SHA:-}" || "$BEFORE_SHA" =~ ^0+$ ]]; then
+            echo "__FULL_SUBMIT__" > /tmp/changed-files.txt
+            exit 0
+          fi
+
+          if ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
+          fi
+
+          git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA" > /tmp/changed-files.txt
+          echo "Changed files:"
+          cat /tmp/changed-files.txt
+
+      - name: Wait for production and prepare IndexNow payload
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -62,46 +99,116 @@ jobs:
           done
 
           test "$READY" = "1"
-
           curl --fail --silent --show-error --location --max-time 30 "$SITEMAP_URL" --output /tmp/sitemap.xml
 
           python3 - <<'PY'
           import json
+          import re
           import xml.etree.ElementTree as ET
+          from pathlib import Path
 
           key = "f4c33493caf6550560462af5a424980e"
-          root = ET.parse("/tmp/sitemap.xml").getroot()
-          urls = []
-          seen = set()
+          base = "https://ilkoku.com"
 
+          root = ET.parse("/tmp/sitemap.xml").getroot()
+          sitemap_urls = []
+          seen = set()
           for element in root.iter():
               if not element.tag.endswith("loc") or not element.text:
                   continue
               url = element.text.strip()
-              if not url.startswith("https://ilkoku.com/"):
-                  continue
-              if url in seen:
+              if not url.startswith(f"{base}/") or url in seen:
                   continue
               seen.add(url)
-              urls.append(url)
+              sitemap_urls.append(url)
+
+          if not sitemap_urls:
+              raise SystemExit("Sitemap contained no İlkOku public URLs")
+
+          sitemap_set = set(sitemap_urls)
+          changed = [
+              line.strip()
+              for line in Path("/tmp/changed-files.txt").read_text(encoding="utf-8").splitlines()
+              if line.strip()
+          ]
+
+          full_submit = "__FULL_SUBMIT__" in changed
+          candidates = set()
+
+          for file_path in changed:
+              if file_path == "__FULL_SUBMIT__":
+                  continue
+
+              if file_path == ".github/workflows/indexnow-submit.yml":
+                  full_submit = True
+                  continue
+
+              if file_path in {
+                  "src/app/sitemap.ts",
+                  "src/app/layout.tsx",
+                  "src/lib/public-site-navigation.ts",
+                  "src/lib/public-page-metadata.ts",
+                  "src/lib/public-brand.ts",
+              } or file_path.startswith("src/content/"):
+                  full_submit = True
+                  continue
+
+              if file_path == "src/app/page.tsx" or file_path.startswith("src/features/homepage/"):
+                  candidates.add(f"{base}/")
+                  continue
+
+              if file_path.startswith("public/"):
+                  candidates.add(f"{base}/")
+                  continue
+
+              match = re.fullmatch(r"src/app/(.+)/page\.tsx", file_path)
+              if not match:
+                  continue
+
+              route = match.group(1)
+              if "[" in route:
+                  full_submit = True
+                  continue
+
+              segments = [segment for segment in route.split("/") if not (segment.startswith("(") and segment.endswith(")"))]
+              candidate = f"{base}/{'/'.join(segments)}"
+              if candidate in sitemap_set:
+                  candidates.add(candidate)
+
+          urls = sitemap_urls if full_submit else sorted(candidates & sitemap_set)
 
           if not urls:
-              raise SystemExit("Sitemap contained no İlkOku public URLs")
+              print("No changed indexable public URLs; skipping IndexNow submission.")
+              Path("/tmp/indexnow-skip").write_text("1", encoding="utf-8")
+              raise SystemExit(0)
+
           if len(urls) > 10_000:
               raise SystemExit(f"IndexNow batch too large: {len(urls)}")
 
           payload = {
               "host": "ilkoku.com",
               "key": key,
-              "keyLocation": f"https://ilkoku.com/{key}.txt",
+              "keyLocation": f"{base}/{key}.txt",
               "urlList": urls,
           }
-
-          with open("/tmp/indexnow.json", "w", encoding="utf-8") as handle:
-              json.dump(payload, handle, ensure_ascii=False)
-
-          print(f"Prepared {len(urls)} URLs for IndexNow.")
+          Path("/tmp/indexnow.json").write_text(
+              json.dumps(payload, ensure_ascii=False),
+              encoding="utf-8",
+          )
+          mode = "full sitemap" if full_submit else "changed public URLs"
+          print(f"Prepared {len(urls)} URLs for IndexNow ({mode}).")
           PY
+
+      - name: Submit IndexNow payload
+        if: ${{ hashFiles('/tmp/indexnow-skip') == '' }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          if [[ ! -f /tmp/indexnow.json ]]; then
+            echo "No IndexNow payload to submit."
+            exit 0
+          fi
 
           status=""
           for attempt in 1 2 3; do

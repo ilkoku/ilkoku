@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
+import LiveHomepageFooter from "@/features/homepage/HomepageFooter";
 import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader";
 import {
   READER_EDUCATION_CATEGORIES,

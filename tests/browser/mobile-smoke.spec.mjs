@@ -175,6 +175,48 @@ const authenticatedCases = [
     role: "admin",
     viewport: viewports.tablet768,
   },
+  {
+    label: "TR SEO operations",
+    path: "/icerik/seo",
+    role: "admin",
+    viewport: viewports.tablet768,
+  },
+  {
+    label: "architecture control center",
+    path: "/harita",
+    role: "admin",
+    viewport: viewports.desktop,
+  },
+  {
+    label: "admin contract center",
+    path: "/sozlesme",
+    role: "admin",
+    viewport: viewports.desktop,
+  },
+  {
+    label: "recipient contract inbox",
+    path: "/sozlesmelerim",
+    role: "reader",
+    viewport: viewports.phone390,
+  },
+  {
+    label: "writer commerce configuration",
+    path: "/satis-erisim",
+    role: "writer",
+    viewport: viewports.phone430,
+  },
+  {
+    label: "admin payment operations",
+    path: "/admin/odeme-sistemi",
+    role: "admin",
+    viewport: viewports.phone390,
+  },
+  {
+    label: "admin finance operations",
+    path: "/admin/finans-gelirler",
+    role: "admin",
+    viewport: viewports.tablet768,
+  },
 ];
 
 for (const scenario of authenticatedCases) {
@@ -215,6 +257,9 @@ const crossRoleNegativeCases = [
   { role: "writer", path: "/admin", label: "writer cannot enter admin workspace" },
   { role: "editor", path: "/yayinevi", label: "editor cannot enter publisher workspace" },
   { role: "editor", path: "/admin", label: "editor cannot enter admin workspace" },
+  { role: "reader", path: "/harita", label: "reader cannot enter architecture control center" },
+  { role: "writer", path: "/sozlesme", label: "writer cannot enter admin contract center" },
+  { role: "reader", path: "/icerik/seo", label: "reader cannot enter CMS SEO operations" },
 ];
 
 for (const scenario of crossRoleNegativeCases) {

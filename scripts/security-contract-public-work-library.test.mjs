@@ -279,7 +279,6 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   const showcase = source(
     "src/features/showcase/components/BookShowcase.tsx",
   );
-  const nextConfig = source("next.config.ts");
 
   contains(
     homepage,
@@ -298,8 +297,13 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   );
   contains(
     nextConfig,
-    "index: false",
-    "preview route noindex",
+    'source: "/onizleme/ana-sayfa-yeni"',
+    "legacy homepage preview redirect",
+  );
+  contains(
+    nextConfig,
+    'destination: "/"',
+    "legacy homepage preview redirect target",
   );
   contains(
     homepageExperience,

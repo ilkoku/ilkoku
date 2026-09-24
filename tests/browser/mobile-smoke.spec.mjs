@@ -253,6 +253,58 @@ for (const scenario of authenticatedCases) {
 }
 
 
+test("authenticated writer commerce configuration mutation smoke: writer stages paid access with agreement and final confirmation", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.writer;
+  const workId = authFixture.workIds?.writerCommerceConfiguration;
+  expect(token, "Missing writer session fixture").toBeTruthy();
+  expect(workId, "Missing writer commerce work fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+  await page.setViewportSize(viewports.desktop);
+  await page.goto(`/satis-erisim/${workId}`, {
+    waitUntil: "domcontentloaded",
+  });
+
+  await expect(
+    page.getByRole("heading", { name: "CI Browser Writer Commerce Draft" }),
+  ).toBeVisible();
+
+  await page.getByLabel("Kilitli", { exact: true }).check();
+  await page.getByRole("button", { name: "Erişim planını kaydet" }).click();
+  await expect(page.getByText("Kaydedildi: Kilitli", { exact: true })).toBeVisible();
+
+  await page.locator('input[name="saleModel"][value="paid"]').check();
+  await page.getByRole("button", { name: "Yayın modelini kaydet" }).click();
+  await expect(page.getByText("Yayın modeli kaydedildi.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Ücretli", { exact: true }).first()).toBeVisible();
+
+  await page.locator('input[name="acceptAgreement"]').check();
+  await page.getByRole("button", { name: "Sözleşmeyi kabul et" }).click();
+  await expect(
+    page.getByText("Güncel sözleşme kabulün kaydedildi.", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Kabul edildi · v1", { exact: true })).toBeVisible();
+
+  const finalConfirmation = page.locator('input[name="confirmWork"]');
+  await expect(finalConfirmation).toBeEnabled();
+  await finalConfirmation.check();
+  await page.getByRole("button", { name: "SATIŞA HAZIRLA" }).click();
+
+  await expect(
+    page.getByText(/Ücretli eser 0 TL erişimle hazırlandı/),
+  ).toBeVisible();
+  await expect(page.getByText("✓ Satışa Hazır", { exact: true })).toBeVisible();
+  await expectResponsiveDocument(page);
+});
+
 test("authenticated zero-total commerce mutation smoke: reader completes provider-free purchase and receives entitlement", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

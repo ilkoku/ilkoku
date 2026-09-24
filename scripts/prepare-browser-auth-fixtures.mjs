@@ -205,6 +205,38 @@ try {
     [randomUUID(), publisherId, userIds.publisher, now, now],
   );
 
+  const publisherMemberUserId = randomUUID();
+  await client.execute(
+    `INSERT INTO \`User\`
+      (id, publicId, email, passwordHash, fullName, role, status,
+       emailVerified, termsAcceptedAt, lastLoginAt, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, 'publisher', 'active', ?, ?, ?, ?, ?)`,
+    [
+      publisherMemberUserId,
+      "CI26PUBMEMBER01",
+      "ci-browser-publisher-member@example.invalid",
+      "ci-browser-session-only",
+      "CI Publisher Member",
+      now,
+      now,
+      now,
+      now,
+      now,
+    ],
+  );
+  await client.execute(
+    `INSERT INTO \`RoleRequest\`
+      (id, userId, requestedRole, status, reviewedAt, createdAt, updatedAt)
+     VALUES (?, ?, 'publisher', 'approved', ?, ?, ?)`,
+    [randomUUID(), publisherMemberUserId, now, now, now],
+  );
+  await client.execute(
+    `INSERT INTO \`PublisherMembership\`
+      (id, publisherId, userId, role, active, createdAt, updatedAt)
+     VALUES (?, ?, ?, 'viewer', true, ?, ?)`,
+    [randomUUID(), publisherId, publisherMemberUserId, now, now],
+  );
+
   await client.commit();
 } catch (error) {
   await client.rollback();

@@ -200,7 +200,6 @@ jobs:
           PY
 
       - name: Submit IndexNow payload
-        if: ${{ hashFiles('/tmp/indexnow-skip') == '' }}
         shell: bash
         run: |
           set -Eeuo pipefail

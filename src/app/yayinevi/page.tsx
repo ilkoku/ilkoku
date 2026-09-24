@@ -14,6 +14,9 @@ export const dynamic = "force-dynamic";
 export default async function PublisherPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/giris?sonraki=/yayinevi");
+  if (profile.role !== "publisher") {
+    redirect("/erisim-reddedildi?kaynak=publisher");
+  }
 
   const filters = normalizePublisherFilters(await searchParams);
   const workspace = await getPublisherWorkspace(profile.id, filters);

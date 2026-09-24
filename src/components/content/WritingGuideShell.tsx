@@ -129,8 +129,8 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
         </div>
       </nav>
 
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:py-10">
-        <aside aria-label={`${activeCategory} eser türleri`} className="lg:sticky lg:top-6 lg:self-start">
+      <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:py-10">
+        <aside aria-label={`${activeCategory} eser türleri`} className="min-w-0 lg:sticky lg:top-6 lg:self-start">
           <div className="rounded-[1.4rem] border border-[#2a2338]/10 bg-[#fffdf8] p-3 shadow-sm">
             <div className="px-3 pb-3 pt-2 text-xs font-extrabold uppercase tracking-[.16em] text-[#7c6d94]">{activeCategory}</div>
             <div className="flex gap-2 overflow-x-auto lg:block lg:space-y-1 lg:overflow-visible">

@@ -300,6 +300,67 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expectResponsiveDocument(page);
 });
 
+test("authenticated platform coupon mutation smoke: admin creates and pauses İlkOku campaign", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+  await page.setViewportSize(viewports.tablet768);
+  await page.goto("/sistem-yonetimi/odeme-sistemi/kuponlar", {
+    waitUntil: "domcontentloaded",
+  });
+
+  await expect(
+    page.getByRole("heading", { name: "Kuponlar & Kampanyalar" }),
+  ).toBeVisible();
+
+  await page.locator('input[name="code"]').fill("CI_BROWSER20");
+  await page.locator('select[name="discountType"]').selectOption("percent");
+  await page.locator('input[name="discountValue"]').fill("20");
+  await page.locator('select[name="scope"]').selectOption("all_paid_works");
+  await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+
+  await expect(page).toHaveURL(
+    /\/sistem-yonetimi\/odeme-sistemi\/kuponlar\?durum=kupon-olusturuldu$/,
+  );
+  await expect(
+    page.getByText("İlkOku kampanya kuponu oluşturuldu.", { exact: true }),
+  ).toBeVisible();
+
+  let couponCard = page
+    .locator("article")
+    .filter({ hasText: "CI_BROWSER20" });
+  await expect(couponCard).toBeVisible();
+  await expect(
+    couponCard.getByRole("button", { name: "Pasife al" }),
+  ).toBeVisible();
+
+  await couponCard.getByRole("button", { name: "Pasife al" }).click();
+
+  await expect(page).toHaveURL(
+    /\/sistem-yonetimi\/odeme-sistemi\/kuponlar\?durum=kupon-guncellendi$/,
+  );
+  await expect(
+    page.getByText("Kupon durumu güncellendi.", { exact: true }),
+  ).toBeVisible();
+
+  couponCard = page
+    .locator("article")
+    .filter({ hasText: "CI_BROWSER20" });
+  await expect(
+    couponCard.getByRole("button", { name: "Aktif et" }),
+  ).toBeVisible();
+  await expectResponsiveDocument(page);
+});
+
 test("authenticated publisher member mutation smoke: owner updates member while owner stays protected", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

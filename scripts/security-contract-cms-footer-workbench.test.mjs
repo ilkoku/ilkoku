@@ -53,7 +53,7 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
 
 test("homepage footer keeps its brand and separates platform from trust navigation", () => {
   const homepage = source("src/app/page.tsx");
-  const liveFooter = source("src/app/onizleme/ana-sayfa-yeni/live-footer.tsx");
+  const liveFooter = source("src/features/homepage/HomepageFooter.tsx");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
   const navigation = source("src/lib/public-site-navigation.ts");
   const styles = source("src/app/landing-footer-tight.css");

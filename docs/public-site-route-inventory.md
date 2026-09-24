@@ -102,12 +102,6 @@ These are not governed by the public marketing header because they are operation
 
 The separation is intentional: public brand identity stays coherent without exposing private application state to search engines.
 
-## Hidden/preview routes
-
-Preview and archived homepage routes are not canonical public destinations and must remain outside sitemap/navigation/indexing.
-
-- `/onizleme/ana-sayfa-yeni` — retired preview path; canonical experience is `/`.
-
 ## Maintenance rule
 
 When a new public route is introduced, update this inventory if it creates a new route family or an intentional shell/SEO exception. If the route is a normal informational CMS page, no new identity system should be created: use the existing template. Do not add unfinished, authenticated-only or product-paused routes to sitemap/search merely to increase URL count.

@@ -4,7 +4,7 @@ import { editorsContent, tr } from "@/content";
 import { EditorProfile } from "@/features/editors/components/EditorProfile";
 import { editors, findEditorBySlug } from "@/features/editors/data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 interface EditorProfilePageProps {
   params: Promise<{ slug: string }>;

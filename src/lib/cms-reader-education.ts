@@ -120,16 +120,22 @@ export async function getReaderEducationGuideRecord(categorySlug: string) {
   const category = getReaderEducationCategory(categorySlug);
   if (!category) return null;
 
-  const rows = await prisma.$queryRaw<ReaderEducationGuideRow[]>`
-    SELECT contentKey, valueJson, updatedAt
-    FROM SiteContent
-    WHERE namespace = ${READER_EDUCATION_GUIDE_NAMESPACE}
-      AND contentKey = ${category.slug}
-      AND status = 'published'
-    LIMIT 1
-  `;
+  try {
+    const rows = await prisma.$queryRaw<ReaderEducationGuideRow[]>`
+      SELECT contentKey, valueJson, updatedAt
+      FROM SiteContent
+      WHERE namespace = ${READER_EDUCATION_GUIDE_NAMESPACE}
+        AND contentKey = ${category.slug}
+        AND status = 'published'
+      LIMIT 1
+    `;
 
-  return rows[0] ? parseReaderEducationGuide(rows[0].valueJson, category) : readerEducationGuideDefault(category);
+    return rows[0] ? parseReaderEducationGuide(rows[0].valueJson, category) : readerEducationGuideDefault(category);
+  } catch {
+    // Reader education is public code-owned content. CMS visuals are optional,
+    // so a CMS/storage failure must not make the public page unavailable.
+    return readerEducationGuideDefault(category);
+  }
 }
 
 export async function listReaderEducationGuideRecords() {

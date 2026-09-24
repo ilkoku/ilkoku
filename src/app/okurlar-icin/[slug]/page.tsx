@@ -9,7 +9,7 @@ import {
   readerEducationPublicPath,
 } from "@/lib/reader-education";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type PageProps = {
   params: Promise<{ slug: string }>;

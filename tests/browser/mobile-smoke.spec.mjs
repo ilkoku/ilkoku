@@ -194,6 +194,7 @@ const authenticatedCases = [
     viewport: viewports.desktop,
   },
   {
+    expectedHeading: "Sözleşmelerim",
     label: "recipient contract inbox",
     path: "/sozlesmelerim",
     role: "reader",
@@ -242,10 +243,91 @@ for (const scenario of authenticatedCases) {
     expect(response?.status()).toBeLessThan(400);
     await expect(page).not.toHaveURL(/\/giris(?:\?|$)/);
     await expect(page).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+    if (scenario.expectedHeading) {
+      await expect(
+        page.getByRole("heading", { name: scenario.expectedHeading }),
+      ).toBeVisible();
+    }
     await expectResponsiveDocument(page);
   });
 }
 
+
+test("authenticated contract mutation smoke: admin send, recipient response, ownership denial, admin history", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  async function useRole(role) {
+    const token = authFixture.sessions?.[role];
+    expect(token, `Missing ${role} session fixture`).toBeTruthy();
+    await page.context().clearCookies();
+    await page.context().addCookies([
+      {
+        name: authFixture.cookieName,
+        value: token,
+        url: authCookieUrl,
+      },
+    ]);
+  }
+
+  await useRole("admin");
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sozlesme", { waitUntil: "domcontentloaded" });
+
+  await page.locator("select").filter({ has: page.locator('option[value="reader"]') }).selectOption("reader");
+  await page.locator('select[name="recipientUserId"]').selectOption({
+    label: "CI reader · ci-browser-reader@example.invalid",
+  });
+  await page.locator('select[name="templateId"]').selectOption({
+    label: "CI Browser Reader Contract · v1",
+  });
+  await page.locator('textarea[name="adminNote"]').fill("CI browser admin dispatch note");
+  await page.locator('input[name="dispatchConfirmed"]').check();
+  await expect(page.getByRole("button", { name: "Sözleşmeyi gönder" })).toBeEnabled();
+  await page.getByRole("button", { name: "Sözleşmeyi gönder" }).click();
+
+  await expect(page).toHaveURL(
+    /\/sozlesme\?durum=(?:gonderildi|aktif_sozlesme_var)&sozlesme=/,
+  );
+  const contractId = new URL(page.url()).searchParams.get("sozlesme");
+  expect(contractId, "Contract dispatch must return the created contract id").toBeTruthy();
+
+  await useRole("writer");
+  const foreignResponse = await page.goto(`/sozlesmelerim/${contractId}`, {
+    waitUntil: "domcontentloaded",
+  });
+  expect(foreignResponse?.status()).toBe(404);
+
+  await useRole("reader");
+  await page.goto("/sozlesmelerim", {
+    waitUntil: "domcontentloaded",
+  });
+  const recipientContractLink = page.getByRole("link", {
+    name: /CI Browser Reader Contract/,
+  });
+  await expect(recipientContractLink).toBeVisible();
+  await recipientContractLink.click();
+  await expect(page).toHaveURL(new RegExp(`/sozlesmelerim/${contractId}$`));
+  await expect(page.getByRole("heading", { name: "CI Browser Reader Contract" })).toBeVisible();
+  await expect(page.getByText("Yanıt bekliyor", { exact: true })).toBeVisible();
+
+  await page.locator('textarea[name="responseNote"]').fill("CI browser recipient accepted");
+  await page.locator('input[name="responseConfirmed"]').check();
+  await page.getByRole("button", { name: "Kabul et" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/sozlesmelerim/${contractId}\\?durum=accepted`));
+  await expect(page.getByText("Sözleşme kabulünüz kaydedildi.")).toBeVisible();
+  await expect(page.getByText("Sözleşme durumu: Kabul edildi")).toBeVisible();
+
+  await useRole("admin");
+  await page.goto(`/sozlesme/${contractId}`, {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByText("Kabul edildi", { exact: true })).toBeVisible();
+  await expect(page.getByText("Kullanıcı kabul etti")).toBeVisible();
+  await expect(page.getByText("Admin gönderdi")).toBeVisible();
+  await expect(page.getByText("CI browser recipient accepted")).toBeVisible();
+  await expectResponsiveDocument(page);
+});
 
 const crossRoleNegativeCases = [
   { role: "reader", path: "/yazar", label: "reader cannot enter writer workspace" },

@@ -6,8 +6,7 @@ import type { EducationGuideDefinition, GuideItem } from "@/lib/education-guide-
 import { getLiteratureGuideExtraSections } from "@/lib/literature-guide-depth";
 import { getStageGuideExtraSections } from "@/lib/stage-guide-depth";
 
-const visualKeys = ["hero", "ideaFlow", "structure", "anatomy", "pageSetup", "project", "finalCta"] as const;
-type VisualKey = (typeof visualKeys)[number];
+type VisualKey = "hero" | "ideaFlow" | "structure" | "anatomy" | "pageSetup" | "project" | "finalCta";
 type VisualMap = Record<VisualKey, string>;
 type AltMap = Record<VisualKey, string>;
 

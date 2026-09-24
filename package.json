@@ -9,6 +9,8 @@
     "db:recover:fresh": "node scripts/recover-fresh-database.mjs",
     "release:measure": "node scripts/release-measurement-report.mjs",
     "release:measure:strict": "node scripts/release-measurement-report.mjs --strict",
+    "release:sprint7:status": "npm run release:final:status",
+    "release:sprint7:close": "npm run release:final:close",
     "release:final:status": "node scripts/final-release-readiness.mjs",
     "release:final:close": "node scripts/final-release-readiness.mjs --strict",
     "build": "npm run system-map:generate && prisma migrate deploy && prisma generate && next build",

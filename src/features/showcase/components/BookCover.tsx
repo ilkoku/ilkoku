@@ -20,6 +20,10 @@ export function BookCover({
       aria-label={readingContent.common.bookCover(title)}
     >
       {coverUrl ? (
+        // Cover URLs are intentionally provider-agnostic; forcing next/image here
+        // would require trusting/configuring arbitrary remote hosts and could break
+        // existing reader-visible covers.
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           className="showcase-cover__image"
           src={coverUrl}

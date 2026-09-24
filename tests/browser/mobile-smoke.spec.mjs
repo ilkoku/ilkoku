@@ -253,6 +253,60 @@ for (const scenario of authenticatedCases) {
 }
 
 
+test("authenticated publisher member mutation smoke: owner updates member while owner stays protected", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.publisher;
+  expect(token, "Missing publisher session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/yayinevi/uyeler", {
+    waitUntil: "domcontentloaded",
+  });
+
+  const ownerCard = page
+    .locator(".publisher-member-card")
+    .filter({ hasText: "ci-browser-publisher@example.invalid" });
+  await expect(ownerCard.getByText("Sahip hesabı korunuyor")).toBeVisible();
+  await expect(
+    ownerCard.getByText("Rol ve yetkileri düzenle", { exact: true }),
+  ).toHaveCount(0);
+
+  let memberCard = page
+    .locator(".publisher-member-card")
+    .filter({ hasText: "ci-browser-publisher-member@example.invalid" });
+  await expect(memberCard).toBeVisible();
+  await memberCard
+    .getByText("Rol ve yetkileri düzenle", { exact: true })
+    .click();
+
+  await memberCard.locator('select[name="role"]').selectOption("reviewer");
+  await memberCard.locator('select[name="active"]').selectOption("false");
+  await memberCard.getByRole("button", { name: "Kaydet" }).click();
+
+  await expect(
+    memberCard.getByText("Üye yetkisi güncellendi.", { exact: true }),
+  ).toBeVisible();
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+
+  memberCard = page
+    .locator(".publisher-member-card")
+    .filter({ hasText: "ci-browser-publisher-member@example.invalid" });
+  await expect(memberCard.getByText("Pasif", { exact: true })).toBeVisible();
+  await expect(
+    memberCard.getByText("Değerlendirici", { exact: true }),
+  ).toBeVisible();
+  await expectResponsiveDocument(page);
+});
+
 test("authenticated contract mutation smoke: admin send, recipient response, ownership denial, admin history", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

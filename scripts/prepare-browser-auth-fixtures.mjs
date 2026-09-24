@@ -122,28 +122,30 @@ try {
   sessions.cmsManager = cmsManagerToken;
   userIds.cmsManager = cmsManagerId;
 
-  await client.execute(
-    `INSERT INTO \`Profile\`
-      (id, userId, birthYear, createdAt, updatedAt)
-     VALUES (?, ?, 1990, ?, ?)`,
-    [randomUUID(), userIds.reader, now, now],
-  );
-  await client.execute(
-    `INSERT INTO \`AuditLog\`
-      (id, actorId, action, entityType, entityId, metadata, createdAt)
-     VALUES (?, ?, 'profile_updated', 'AgeVerification', ?, ?, ?)`,
-    [
-      randomUUID(),
-      userIds.reader,
-      userIds.reader,
-      JSON.stringify({
-        adultEligibleAt: "2008-01-01T00:00:00.000Z",
-        birthYear: 1990,
-        source: "ci_browser_fixture",
-      }),
-      now,
-    ],
-  );
+  for (const role of ["reader", "publisher"]) {
+    await client.execute(
+      `INSERT INTO \`Profile\`
+        (id, userId, birthYear, createdAt, updatedAt)
+       VALUES (?, ?, 1990, ?, ?)`,
+      [randomUUID(), userIds[role], now, now],
+    );
+    await client.execute(
+      `INSERT INTO \`AuditLog\`
+        (id, actorId, action, entityType, entityId, metadata, createdAt)
+       VALUES (?, ?, 'profile_updated', 'AgeVerification', ?, ?, ?)`,
+      [
+        randomUUID(),
+        userIds[role],
+        userIds[role],
+        JSON.stringify({
+          adultEligibleAt: "2008-01-01T00:00:00.000Z",
+          birthYear: 1990,
+          source: "ci_browser_fixture",
+        }),
+        now,
+      ],
+    );
+  }
 
   const contractTemplateId = randomUUID();
   await client.execute(

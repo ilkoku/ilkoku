@@ -74,26 +74,45 @@ test("final release status lists every open human UAT item with source flow and 
   });
 
   assert.equal(result.status, 0, result.stderr || "status command must succeed");
+
+  const sources = [
+    ["Sprint 7", source("docs/sprint-7-production-uat.md")],
+    ["Final Release addendum", source("docs/final-release-uat-addendum.md")],
+  ];
+  const expectedOpen = [];
+
+  for (const [sourceLabel, text] of sources) {
+    for (const row of criticalRows(text)) {
+      const cells = row.split("|").slice(1, -1).map((cell) => cell.trim());
+      const human = cells.at(-1);
+      if (human === "HUMAN_PASS") continue;
+
+      expectedOpen.push({
+        flow: cells[0],
+        human,
+        path: cells.length >= 5 ? cells[1] : "n/a (cross-role check)",
+        source: sourceLabel,
+      });
+    }
+  }
+
   const openLines = result.stdout
     .split("\n")
     .filter((line) => line.startsWith("  - ["));
 
-  assert.equal(openLines.length, 36, "status must list all pending or blocked Final Release rows");
-  contains(
-    result.stdout,
-    "[HUMAN_PENDING] Sprint 7 · Sign in · /giris",
-    "historical UAT diagnostic",
+  assert.equal(
+    openLines.length,
+    expectedOpen.length,
+    "status must list every pending or blocked Final Release row",
   );
-  contains(
-    result.stdout,
-    "[HUMAN_PENDING] Final Release addendum · TR SEO operations · /icerik/seo",
-    "addendum UAT diagnostic",
-  );
-  contains(
-    result.stdout,
-    "Sprint 7 · Reader cannot enter writer/editor/publisher/admin workspaces · n/a (cross-role check)",
-    "cross-role diagnostic without a production-path column",
-  );
+
+  for (const item of expectedOpen) {
+    contains(
+      result.stdout,
+      `[${item.human}] ${item.source} · ${item.flow} · ${item.path}`,
+      `open UAT diagnostic for ${item.source} / ${item.flow}`,
+    );
+  }
 });
 
 test("package scripts expose final release status and strict closure and register the contract", () => {

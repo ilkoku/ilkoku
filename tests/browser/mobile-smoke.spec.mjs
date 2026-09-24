@@ -294,6 +294,7 @@ test("authenticated contract mutation smoke: admin send, recipient response, own
     waitUntil: "domcontentloaded",
   });
   await expect(page.getByRole("heading", { name: "CI Browser Reader Contract" })).toBeVisible();
+  await expect(page.getByText("Yanıt bekliyor", { exact: true })).toBeVisible();
   await page.locator('textarea[name="responseNote"]').fill("CI browser recipient accepted");
   await page.locator('input[name="responseConfirmed"]').check();
   await page.getByRole("button", { name: "Kabul et" }).click();

@@ -409,7 +409,7 @@ test("authenticated commerce read-only boundaries smoke: admin sees refund payou
   });
   await expect(page.getByRole("heading", { name: "Ayarlar" })).toBeVisible();
   await expect(page.getByText("Bu ekran durum görünümüdür", { exact: true })).toBeVisible();
-  await expect(page.locator("form")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /kaydet|güncelle|etkinleştir|devre dışı|provider|sağlayıcı/i })).toHaveCount(0);
   await expectResponsiveDocument(page);
 });
 

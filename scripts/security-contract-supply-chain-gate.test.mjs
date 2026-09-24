@@ -126,6 +126,25 @@ test("CI and system-map generation both execute the generic supply-chain gate", 
   contains(gitignore, "/src/features/system-map/supply-chain.generated.ts", "generated report ignore rule");
 });
 
+test("CI runs supply-chain audit and system-map generation once before direct lint and build", () => {
+  const ci = source(".github/workflows/ci.yml");
+
+  assert.equal(
+    ci.split("npm run audit:supply-chain").length - 1,
+    1,
+    "CI must execute the supply-chain policy exactly once",
+  );
+  assert.equal(
+    ci.split("node scripts/generate-system-map-runtime-manifest.mjs").length - 1,
+    1,
+    "CI must generate the system-map runtime manifest exactly once",
+  );
+  contains(ci, "run: npx eslint", "prepared CI lint command");
+  contains(ci, "{ npx prisma generate && npx next build; }", "prepared CI build command");
+  assert.ok(!ci.includes("run: npm run lint"), "CI must not re-enter the lint wrapper after preparing the system map");
+  assert.ok(!ci.includes("npm run build:ci"), "CI must not re-enter the build wrapper after preparing the system map");
+});
+
 test("CI keeps independent quality gates visible after a dependency audit failure", () => {
   const ci = source(".github/workflows/ci.yml");
   const independentSteps = [

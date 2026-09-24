@@ -65,6 +65,7 @@ test("API evidence classification distinguishes public, CMS-protected and intern
     "/api/content-faq",
     "/api/media",
     "/api/public-announcements",
+    "/api/site-assets/home-history",
     "/api/site-contact",
     "/api/site-content",
   ]) {

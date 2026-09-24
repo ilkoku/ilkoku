@@ -253,6 +253,53 @@ for (const scenario of authenticatedCases) {
 }
 
 
+test("authenticated zero-total commerce mutation smoke: reader completes provider-free purchase and receives entitlement", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.reader;
+  expect(token, "Missing reader session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+  await page.setViewportSize(viewports.phone430);
+  await page.goto("/satinal/ci-browser-zero-total-work", {
+    waitUntil: "domcontentloaded",
+  });
+
+  await expect(
+    page.getByRole("heading", { name: "CI Browser 0 TL Eser" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak/),
+  ).toBeVisible();
+  await expect(
+    page.getByText("CI Browser Reader Purchase Terms", { exact: true }),
+  ).toBeVisible();
+
+  await page.locator('input[name="acceptDigitalContent"]').check();
+  await page.getByRole("button", { name: "0 TL ile satın al" }).click();
+
+  await expect(page).toHaveURL(
+    /\/kutuphanem\/satin-aldiklarim\?durum=eklendi&siparis=ILK-/,
+  );
+  await expect(page.getByText(/Satın alma başarılı/)).toBeVisible();
+
+  const purchasedCard = page
+    .locator("article")
+    .filter({ hasText: "CI Browser 0 TL Eser" });
+  await expect(purchasedCard).toBeVisible();
+  await expect(purchasedCard.getByText("Satın alındı", { exact: true })).toBeVisible();
+  await expect(
+    purchasedCard.getByRole("link", { name: "Okumaya devam et" }),
+  ).toBeVisible();
+  await expectResponsiveDocument(page);
+});
+
 test("authenticated publisher member mutation smoke: owner updates member while owner stays protected", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

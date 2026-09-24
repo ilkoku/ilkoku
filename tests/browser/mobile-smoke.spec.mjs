@@ -319,9 +319,18 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     },
   ]);
   await page.setViewportSize(viewports.phone430);
-  await page.goto("/satinal/ci-browser-zero-total-work", {
+
+  await page.goto("/oku/ci-browser-zero-total-work/bolum-1", {
     waitUntil: "domcontentloaded",
   });
+  await expect(page).toHaveURL(
+    /\/satinal\/ci-browser-zero-total-work\?from=/,
+  );
+  await expect(
+    page.getByText("Provider-free zero total checkout browser fixture content.", {
+      exact: true,
+    }),
+  ).toHaveCount(0);
 
   await expect(
     page.getByRole("heading", { name: "CI Browser 0 TL Eser" }),
@@ -348,6 +357,18 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(purchasedCard.getByText("Satın alındı", { exact: true })).toBeVisible();
   await expect(
     purchasedCard.getByRole("link", { name: "Okumaya devam et" }),
+  ).toBeVisible();
+
+  await page.goto("/oku/ci-browser-zero-total-work/bolum-1", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page).toHaveURL(
+    /\/oku\/ci-browser-zero-total-work\/bolum-1(?:\?|$)/,
+  );
+  await expect(
+    page.getByText("Provider-free zero total checkout browser fixture content.", {
+      exact: true,
+    }),
   ).toBeVisible();
   await expectResponsiveDocument(page);
 });

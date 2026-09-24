@@ -106,12 +106,17 @@ const workflows: SystemMapWorkflow[] = [
 ];
 
 const publicApiPaths = [
+  "/api/build-info",
   "/api/content-faq",
   "/api/media",
   "/api/public-announcements",
   "/api/site-assets/about-hero",
   "/api/site-contact",
   "/api/site-content",
+] as const;
+
+const signedWebhookApiPaths = [
+  "/api/commerce/payments/[provider]/webhook",
 ] as const;
 
 const cmsProtectedApiPaths = [
@@ -209,6 +214,9 @@ function accessForRoute(route: string, kind: SystemMapRouteKind): {
     }
     if (publicApiPaths.some((prefix) => matchesPath(route, prefix))) {
       return { accessLabel: "Public API · yayınlanmış/public veri veya public form yüzeyi", accessMode: "public", approvedRoleRequired: false, roles: [] };
+    }
+    if (signedWebhookApiPaths.some((prefix) => matchesPath(route, prefix))) {
+      return { accessLabel: "Signed webhook · provider signature doğrulaması", accessMode: "public", approvedRoleRequired: false, roles: [] };
     }
     if (matchesPath(route, "/api/internal")) {
       return { accessLabel: "Internal API · bearer/secret guard", accessMode: "authenticated", approvedRoleRequired: false, roles: [] };

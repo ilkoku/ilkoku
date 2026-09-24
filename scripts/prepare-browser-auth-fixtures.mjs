@@ -239,6 +239,90 @@ try {
     [randomUUID(), publisherId, publisherMemberUserId, now, now],
   );
 
+  const commerceWorkId = randomUUID();
+  const commerceChapterId = randomUUID();
+  const commerceAgreementVersion = "ci-browser-v1";
+
+  await client.execute(
+    `UPDATE \`ContractTemplate\`
+       SET title = 'CI Browser Reader Purchase Terms',
+           body = 'CI-only reader digital content purchase terms for authenticated browser mutation QA.',
+           version = 1,
+           active = true,
+           lifecycleStatus = 'active',
+           approvedById = ?,
+           approvedAt = ?,
+           activatedAt = ?,
+           updatedById = ?,
+           updatedAt = ?
+     WHERE code = 'ILKOKU_READER_DIGITAL_CONTENT_PURCHASE'`,
+    [userIds.admin, now, now, userIds.admin, now],
+  );
+
+  await client.execute(
+    `INSERT INTO \`Work\`
+      (id, publicId, authorId, title, slug, status, visibility, isActive,
+       publishedAt, createdAt, updatedAt)
+     VALUES (?, 'CI26COMMERCE01', ?, 'CI Browser 0 TL Eser',
+       'ci-browser-zero-total-work', 'published', 'public', true, ?, ?, ?)`,
+    [commerceWorkId, userIds.writer, now, now, now],
+  );
+
+  await client.execute(
+    `INSERT INTO \`Chapter\`
+      (id, workId, authorId, title, content, position, status, publishedAt,
+       createdAt, updatedAt)
+     VALUES (?, ?, ?, 'CI Kilitli Bölüm',
+       'Provider-free zero total checkout browser fixture content.',
+       1, 'published', ?, ?, ?)`,
+    [commerceChapterId, commerceWorkId, userIds.writer, now, now, now],
+  );
+
+  await client.execute(
+    `INSERT INTO \`ChapterAccess\`
+      (id, chapterId, workId, accessType, createdAt, updatedAt)
+     VALUES (?, ?, ?, 'locked', ?, ?)`,
+    [randomUUID(), commerceChapterId, commerceWorkId, now, now],
+  );
+
+  await client.execute(
+    `INSERT INTO \`WorkSaleConfiguration\`
+      (id, workId, authorId, saleModel, priceAmount, currency, status,
+       agreementVersion, confirmedAt, activatedAt, createdAt, updatedAt)
+     VALUES (?, ?, ?, 'paid', 0, 'TRY', 'ready', ?, ?, NULL, ?, ?)`,
+    [
+      randomUUID(),
+      commerceWorkId,
+      userIds.writer,
+      commerceAgreementVersion,
+      now,
+      now,
+      now,
+    ],
+  );
+
+  await client.execute(
+    `INSERT INTO \`WorkPublicationConsent\`
+      (id, workId, authorId, publicationModel, priceAmount, currency,
+       accessPlanSnapshot, agreementVersion, confirmedAt, createdAt)
+     VALUES (?, ?, ?, 'paid', 0, 'TRY', ?, ?, ?, ?)`,
+    [
+      randomUUID(),
+      commerceWorkId,
+      userIds.writer,
+      JSON.stringify([
+        {
+          chapterId: commerceChapterId,
+          accessType: "locked",
+          position: 1,
+        },
+      ]),
+      commerceAgreementVersion,
+      now,
+      now,
+    ],
+  );
+
   await client.commit();
 } catch (error) {
   await client.rollback();

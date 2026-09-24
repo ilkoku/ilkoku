@@ -219,8 +219,8 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
 
   notContains(sitemap, "foundationalGuides", "retired guide sitemap source");
   notContains(sitemap, "contentKey LIKE 'guide:%'", "retired CMS guide sitemap inventory");
-  contains(homepage, 'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"', "homepage neutral experience boundary");
-  notContains(homepage, 'from "./onizleme/ana-sayfa-yeni/page"', "homepage must not import the preview route module");
+  contains(homepage, 'import HomepageExperience from "@/features/homepage/HomepageExperience"', "homepage canonical experience boundary");
+  notContains(homepage, "onizleme/ana-sayfa-yeni", "homepage must not depend on the retired preview workspace");
   contains(homepageExperience, '|| "/nasil-calisir"', "homepage live public fallback");
   notContains(homepageExperience, '|| "/eserler"', "homepage paused discovery fallback");
   contains(publicNavigation, "export const publicDiscoveryEnabled = false", "shared discovery pause");

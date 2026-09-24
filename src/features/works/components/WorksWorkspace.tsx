@@ -362,19 +362,26 @@ export function WorksWorkspace({
                   <div
                     className={`workspace-cover workspace-cover--${
                       (index % 3) + 1
-                    }`}
+                    }${work.coverUrl ? " workspace-cover--image" : ""}`}
                     aria-label={`${work.title} kapak görseli`}
                     role="img"
                   >
-                    <span>✦</span>
-
-                    <strong>
-                      {work.title}
-                    </strong>
-
-                    <small>
-                      İlkOku
-                    </small>
+                    {work.coverUrl ? (
+                      <Image
+                        alt={`${work.title} kapak görseli`}
+                        className="workspace-cover__image"
+                        height={360}
+                        src={work.coverUrl}
+                        unoptimized
+                        width={240}
+                      />
+                    ) : (
+                      <>
+                        <span>✦</span>
+                        <strong>{work.title}</strong>
+                        <small>İlkOku</small>
+                      </>
+                    )}
                   </div>
 
                   <div className="workspace-work-card__body">

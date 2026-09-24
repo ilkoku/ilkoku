@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -64,6 +65,35 @@ test("final release gate is fail-closed across base and addendum", () => {
   contains(gate, '"OPEN_HUMAN_UAT"', "open human UAT state");
   contains(gate, "Final Release cannot close until every critical production UAT row is HUMAN_PASS.", "fail-closed release message");
   contains(gate, "process.exit(1)", "strict failure exit");
+});
+
+test("final release status lists every open human UAT item with source flow and path", () => {
+  const result = spawnSync(process.execPath, ["scripts/final-release-readiness.mjs"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 0, result.stderr || "status command must succeed");
+  const openLines = result.stdout
+    .split("\n")
+    .filter((line) => line.startsWith("  - ["));
+
+  assert.equal(openLines.length, 36, "status must list all pending or blocked Final Release rows");
+  contains(
+    result.stdout,
+    "[HUMAN_PENDING] Sprint 7 · Sign in · /giris",
+    "historical UAT diagnostic",
+  );
+  contains(
+    result.stdout,
+    "[HUMAN_PENDING] Final Release addendum · TR SEO operations · /icerik/seo",
+    "addendum UAT diagnostic",
+  );
+  contains(
+    result.stdout,
+    "Sprint 7 · Reader cannot enter writer/editor/publisher/admin workspaces · n/a (cross-role check)",
+    "cross-role diagnostic without a production-path column",
+  );
 });
 
 test("package scripts expose final release status and strict closure and register the contract", () => {

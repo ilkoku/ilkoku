@@ -25,9 +25,9 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 
 | Flow | Production path | Expected result | Automated | Human |
 | --- | --- | --- | --- | --- |
-| Sign in | `/giris` | Reader reaches reader workspace without role leakage | AUTOMATED_PASS | HUMAN_PENDING |
-| Discover works | `/kesfet` | Search/filter/pagination returns only public eligible works | AUTOMATED_PASS | HUMAN_PENDING |
-| Open work | `/kitap/{slug}` | Public work detail opens and blocked/non-public works stay unavailable | AUTOMATED_PASS | HUMAN_PENDING |
+| Sign in | `/giris` | Reader reaches reader workspace without role leakage | AUTOMATED_PASS | HUMAN_PASS |
+| Discover works | `/kesfet` | Search/filter/pagination returns only public eligible works | AUTOMATED_PASS | HUMAN_PASS |
+| Open work | `/kitap/{slug}` | Public work detail opens and blocked/non-public works stay unavailable | AUTOMATED_PASS | HUMAN_PASS |
 | Read chapter | `/oku/{slug}/{chapterSlug}` | Published chapter opens and reading state can progress | AUTOMATED_PASS | HUMAN_PENDING |
 | Reader notifications | `/bildirimler` | Card opens, becomes read, envelope state changes, related record is separate | AUTOMATED_PASS | HUMAN_PENDING |
 
@@ -94,6 +94,9 @@ Automated CI, MariaDB contracts, recovery, strict release measurement and Produc
 - 2026-08-19 — Writer `/hesabim`: account navigation, personal data, writing genres, notification preferences and security sections were exercised and accepted.
 - 2026-08-19 — Writer `/yayinevleri`: discovery/process tracking, filters and retirement of the new direct legacy application CTA were accepted in production.
 - 2026-08-19 — Writer `/geri-bildirimler` corrective UAT: after PRs #258 and #259, a visible single professional report was successfully marked read in production; the unread card/status/count cleared as expected. This is supporting regression evidence and is not an additional closure-matrix row.
+- 2026-09-09 — Reader `/giris`: a real production Reader account signed in successfully, reached the Reader workspace and showed no writer/editor/publisher/admin role leakage. Recorded in Issue #263 comment #5598403691.
+- 2026-09-09 — Reader `/kesfet`: real production search/filter/pagination and navigation to the expected work target were exercised and accepted. Recorded in Issue #263 comment #5598578859.
+- 2026-09-09 — Reader `/kitap/{slug}`: a real production public work detail opened from discovery and chapter navigation worked; the flow was accepted. Recorded in Issue #263 comment #5598650601.
 
 ## Closure record
 

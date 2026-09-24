@@ -51,5 +51,5 @@ Bu bölüm yalnız Commerce Foundation'ın provider-bağımsız browser kabul y�
 - Tarihsel Sprint 7 matrisi: 33 kritik satır.
 - Güncel ürün addendum: 10 kritik satır.
 - Final Release toplamı: **43 kritik satır**.
-- Tarihsel matriste 7 `HUMAN_PASS`, 26 `HUMAN_PENDING` vardır; addendumdaki 10 satır `HUMAN_PENDING` başlar.
-- Commerce Foundation eklendikten sonraki Final Release durumu: **7 PASS · 36 PENDING · 0 BLOCKED**.
+- Tarihsel matriste 10 `HUMAN_PASS`, 23 `HUMAN_PENDING` vardır; addendumdaki 10 satır `HUMAN_PENDING` başlar.
+- Commerce Foundation eklendikten sonraki Final Release durumu: **10 PASS · 33 PENDING · 0 BLOCKED**.

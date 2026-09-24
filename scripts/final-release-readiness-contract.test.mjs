@@ -51,7 +51,25 @@ test("current-product UAT addendum covers every new critical control surface", (
   }
 
   contains(addendum, "43 kritik satır", "final critical row total");
-  contains(addendum, "7 PASS · 36 PENDING · 0 BLOCKED", "current final UAT status");
+
+  const finalRows = [
+    ...criticalRows(source("docs/sprint-7-production-uat.md")),
+    ...criticalRows(addendum),
+  ];
+  const humanCounts = finalRows.reduce(
+    (counts, row) => {
+      const human = row.split("|").slice(1, -1).map((cell) => cell.trim()).at(-1);
+      counts[human] = (counts[human] ?? 0) + 1;
+      return counts;
+    },
+    { HUMAN_PASS: 0, HUMAN_PENDING: 0, BLOCKED: 0 },
+  );
+
+  contains(
+    addendum,
+    `${humanCounts.HUMAN_PASS} PASS · ${humanCounts.HUMAN_PENDING} PENDING · ${humanCounts.BLOCKED} BLOCKED`,
+    "current final UAT status",
+  );
 });
 
 test("final release gate is fail-closed across base and addendum", () => {

@@ -102,6 +102,15 @@ These are not governed by the public marketing header because they are operation
 
 The separation is intentional: public brand identity stays coherent without exposing private application state to search engines.
 
+## Legacy compatibility redirects
+
+The retired homepage preview implementation no longer exists under `src/app/onizleme/ana-sayfa-yeni`. Historical preview URLs remain redirect-only compatibility surfaces:
+
+- `/onizleme/ana-sayfa-yeni` → `/`
+- `/onizleme/ana-sayfa-yeni/history-art/*` → canonical `/api/site-assets/home-history/*`
+
+These redirects must not be treated as active public page families or added to sitemap/navigation.
+
 ## Maintenance rule
 
 When a new public route is introduced, update this inventory if it creates a new route family or an intentional shell/SEO exception. If the route is a normal informational CMS page, no new identity system should be created: use the existing template. Do not add unfinished, authenticated-only or product-paused routes to sitemap/search merely to increase URL count.

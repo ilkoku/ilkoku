@@ -15,10 +15,6 @@ on:
     branches:
       - main
       - test-branch-chatgpt-2
-  pull_request:
-    branches:
-      - main
-
 permissions:
   contents: read
 
@@ -28,7 +24,6 @@ concurrency:
 
 jobs:
   smoke:
-    if: github.event_name != 'pull_request'
     name: Verify live İlkOku routes
     runs-on: ubuntu-latest
     timeout-minutes: 8

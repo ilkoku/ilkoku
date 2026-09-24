@@ -342,6 +342,50 @@ test("authenticated admin platform coupon mutation smoke: admin creates and paus
   await expectResponsiveDocument(page);
 });
 
+test("authenticated author coupon mutation smoke: writer creates and pauses own-work coupon", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.writer;
+  expect(token, "Missing writer session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+  await page.setViewportSize(viewports.phone430);
+  await page.goto("/satis-erisim/kuponlar", {
+    waitUntil: "domcontentloaded",
+  });
+
+  await expect(
+    page.getByRole("heading", { name: "Yazar kuponu oluştur" }),
+  ).toBeVisible();
+
+  const couponCode = `CIWRITER${Date.now().toString(36).toUpperCase()}`;
+  await page.locator('select[name="workId"]').selectOption({
+    label: "CI Browser 0 TL Eser",
+  });
+  await page.locator('input[name="code"]').fill(couponCode);
+  await page.locator('input[name="discountValue"]').fill("10");
+  await page.getByRole("button", { name: "Kupon oluştur" }).click();
+
+  let couponCard = page.locator("article").filter({ hasText: couponCode });
+  await expect(couponCard).toBeVisible();
+  await expect(couponCard.getByText("CI Browser 0 TL Eser", { exact: true })).toBeVisible();
+  await expect(couponCard.getByText("%10", { exact: true })).toBeVisible();
+  await expect(couponCard.getByText("Aktif", { exact: true })).toBeVisible();
+
+  await couponCard.getByRole("button", { name: "Pasife al" }).click();
+
+  couponCard = page.locator("article").filter({ hasText: couponCode });
+  await expect(couponCard.getByText("Pasif", { exact: true })).toBeVisible();
+  await expect(couponCard.getByRole("button", { name: "Aktif et" })).toBeVisible();
+  await expectResponsiveDocument(page);
+});
+
 test("authenticated publisher member mutation smoke: owner updates member while owner stays protected", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

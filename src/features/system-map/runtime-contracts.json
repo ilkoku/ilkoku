@@ -24,7 +24,6 @@
     "WriterDailySummaryDelivery"
   ],
   "acknowledgedUnlinkedRoutes": [
-    "/harita/kesif",
-    "/onizleme/ana-sayfa-eski"
+    "/harita/kesif"
   ]
 }

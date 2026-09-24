@@ -162,6 +162,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           BROWSER_AUTH_FIXTURE_PATH: /tmp/ilkoku-browser-auth.json
+          DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
         run: node scripts/prepare-browser-auth-fixtures.mjs
 
       - name: Install Playwright test runner
@@ -176,6 +177,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           BROWSER_AUTH_FIXTURE_PATH: /tmp/ilkoku-browser-auth.json
+          DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"
         run: npx playwright test tests/browser/mobile-smoke.spec.mjs
 
       - name: Upload browser QA diagnostics

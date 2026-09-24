@@ -373,6 +373,46 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expectResponsiveDocument(page);
 });
 
+test("authenticated commerce read-only boundaries smoke: admin sees refund payout and settings surfaces without execution controls", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+  await page.setViewportSize(viewports.desktop);
+
+  await page.goto("/admin/odeme-sistemi/iadeler", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("heading", { name: "İadeler" })).toBeVisible();
+  await expect(page.getByText("İade işlemi burada yürütülmüyor", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /iade/i })).toHaveCount(0);
+  await expectResponsiveDocument(page);
+
+  await page.goto("/admin/finans-gelirler/yazar-odemeleri", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("heading", { name: "Yazar Ödemeleri" })).toBeVisible();
+  await expect(page.getByText("Gerçek payout yürütümü kapalı", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /ödeme|payout|başlat/i })).toHaveCount(0);
+  await expectResponsiveDocument(page);
+
+  await page.goto("/admin/odeme-sistemi/ayarlar", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("heading", { name: "Ayarlar" })).toBeVisible();
+  await expect(page.getByText("Bu ekran durum görünümüdür", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /kaydet|güncelle|etkinleştir|devre dışı|provider|sağlayıcı/i })).toHaveCount(0);
+  await expectResponsiveDocument(page);
+});
+
 test("authenticated admin platform coupon mutation smoke: admin creates and pauses provider-independent campaign", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

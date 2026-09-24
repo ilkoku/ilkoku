@@ -241,6 +241,8 @@ try {
 
   const commerceWorkId = randomUUID();
   const commerceChapterId = randomUUID();
+  const writerCommerceWorkId = randomUUID();
+  const writerCommerceChapterId = randomUUID();
   const commerceAgreementVersion = "ci-browser-v1";
 
   await client.execute(
@@ -257,6 +259,49 @@ try {
            updatedAt = ?
      WHERE code = 'ILKOKU_READER_DIGITAL_CONTENT_PURCHASE'`,
     [userIds.admin, now, now, userIds.admin, now],
+  );
+
+  await client.execute(
+    `UPDATE \`ContractTemplate\`
+       SET title = 'CI Browser Writer Publication Agreement',
+           body = 'CI-only writer publication and access agreement for authenticated browser mutation QA.',
+           version = 1,
+           active = true,
+           lifecycleStatus = 'active',
+           approvedById = ?,
+           approvedAt = ?,
+           activatedAt = ?,
+           updatedById = ?,
+           updatedAt = ?
+     WHERE code = 'ILKOKU_AUTHOR_PUBLICATION_ACCESS'`,
+    [userIds.admin, now, now, userIds.admin, now],
+  );
+  await client.execute(
+    `INSERT INTO \`ContractTemplateReviewEvidence\`
+      (id, templateId, templateVersion, evidenceType, reviewerLabel, note, recordedById, createdAt)
+     SELECT ?, id, 1, 'admin_approval', 'CI Browser Admin',
+       'Ephemeral CI-only admin approval evidence for writer commerce mutation QA.', ?, ?
+     FROM \`ContractTemplate\`
+     WHERE code = 'ILKOKU_AUTHOR_PUBLICATION_ACCESS'`,
+    [randomUUID(), userIds.admin, now],
+  );
+
+  await client.execute(
+    `INSERT INTO \`Work\`
+      (id, publicId, authorId, title, slug, status, visibility, isActive,
+       publishedAt, createdAt, updatedAt)
+     VALUES (?, 'CI26COMMERCE02', ?, 'CI Browser Writer Commerce Draft',
+       'ci-browser-writer-commerce-config', 'draft', 'private', true, NULL, ?, ?)`,
+    [writerCommerceWorkId, userIds.writer, now, now],
+  );
+  await client.execute(
+    `INSERT INTO \`Chapter\`
+      (id, workId, authorId, title, content, position, status, publishedAt,
+       createdAt, updatedAt)
+     VALUES (?, ?, ?, 'CI Commerce Config Bölümü',
+       'Writer commerce configuration browser fixture content.',
+       1, 'draft', NULL, ?, ?)`,
+    [writerCommerceChapterId, writerCommerceWorkId, userIds.writer, now, now],
   );
 
   await client.execute(
@@ -336,6 +381,9 @@ await writeFile(
   JSON.stringify({
     cookieName: "ilkoku_session",
     sessions,
+    workIds: {
+      writerCommerceConfiguration: writerCommerceWorkId,
+    },
   }),
   { mode: 0o600 },
 );

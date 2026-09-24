@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -64,6 +65,54 @@ test("final release gate is fail-closed across base and addendum", () => {
   contains(gate, '"OPEN_HUMAN_UAT"', "open human UAT state");
   contains(gate, "Final Release cannot close until every critical production UAT row is HUMAN_PASS.", "fail-closed release message");
   contains(gate, "process.exit(1)", "strict failure exit");
+});
+
+test("final release status lists every open human UAT item with source flow and path", () => {
+  const result = spawnSync(process.execPath, ["scripts/final-release-readiness.mjs"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 0, result.stderr || "status command must succeed");
+
+  const sources = [
+    ["Sprint 7", source("docs/sprint-7-production-uat.md")],
+    ["Final Release addendum", source("docs/final-release-uat-addendum.md")],
+  ];
+  const expectedOpen = [];
+
+  for (const [sourceLabel, text] of sources) {
+    for (const row of criticalRows(text)) {
+      const cells = row.split("|").slice(1, -1).map((cell) => cell.trim());
+      const human = cells.at(-1);
+      if (human === "HUMAN_PASS") continue;
+
+      expectedOpen.push({
+        flow: cells[0],
+        human,
+        path: cells.length >= 5 ? cells[1] : "n/a (cross-role check)",
+        source: sourceLabel,
+      });
+    }
+  }
+
+  const openLines = result.stdout
+    .split("\n")
+    .filter((line) => line.startsWith("  - ["));
+
+  assert.equal(
+    openLines.length,
+    expectedOpen.length,
+    "status must list every pending or blocked Final Release row",
+  );
+
+  for (const item of expectedOpen) {
+    contains(
+      result.stdout,
+      `[${item.human}] ${item.source} · ${item.flow} · ${item.path}`,
+      `open UAT diagnostic for ${item.source} / ${item.flow}`,
+    );
+  }
 });
 
 test("package scripts expose final release status and strict closure and register the contract", () => {

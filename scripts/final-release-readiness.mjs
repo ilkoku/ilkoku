@@ -11,16 +11,19 @@ const EXPECTED_CRITICAL_ROWS = EXPECTED_BASE_ROWS + EXPECTED_ADDENDUM_ROWS;
 const ALLOWED_HUMAN_STATUSES = new Set(["HUMAN_PENDING", "HUMAN_PASS", "BLOCKED"]);
 const strict = process.argv.includes("--strict");
 
-function parseCriticalRows(filePath) {
+function parseCriticalRows(filePath, source) {
   const text = readFileSync(filePath, "utf8");
   return text
     .split("\n")
     .filter((line) => line.startsWith("|") && line.includes("| AUTOMATED_PASS |"))
-    .map((line) => line.split("|").slice(1, -1).map((cell) => cell.trim()));
+    .map((line) => ({
+      cells: line.split("|").slice(1, -1).map((cell) => cell.trim()),
+      source,
+    }));
 }
 
-const baseRows = parseCriticalRows(BASE_UAT_PATH);
-const addendumRows = parseCriticalRows(ADDENDUM_UAT_PATH);
+const baseRows = parseCriticalRows(BASE_UAT_PATH, "Sprint 7");
+const addendumRows = parseCriticalRows(ADDENDUM_UAT_PATH, "Final Release addendum");
 
 if (baseRows.length !== EXPECTED_BASE_ROWS) {
   console.error(
@@ -45,7 +48,7 @@ const counts = {
 const invalid = [];
 const openItems = [];
 
-for (const cells of rows) {
+for (const { cells, source } of rows) {
   const human = cells.at(-1);
   const flow = cells[0] ?? "unknown flow";
 
@@ -55,6 +58,15 @@ for (const cells of rows) {
   }
 
   counts[human] += 1;
+
+  if (human !== "HUMAN_PASS") {
+    openItems.push({
+      flow,
+      human,
+      path: cells.length >= 5 ? (cells[1] ?? "unknown path") : "n/a (cross-role check)",
+      source,
+    });
+  }
 }
 
 if (invalid.length > 0) {

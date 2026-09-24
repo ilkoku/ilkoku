@@ -12,12 +12,43 @@ const viewports = {
 async function expectResponsiveDocument(page) {
   await expect(page.locator("body")).toBeVisible();
 
-  const horizontalOverflow = await page.evaluate(() => {
+  const overflowState = await page.evaluate(() => {
     const root = document.documentElement;
-    return root.scrollWidth - root.clientWidth;
+    const viewportWidth = root.clientWidth;
+    const offenders = [...document.querySelectorAll("*")]
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          className:
+            typeof element.className === "string" ? element.className : "",
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+          scrollWidth: element.scrollWidth,
+          tag: element.tagName.toLowerCase(),
+          width: Math.round(rect.width),
+        };
+      })
+      .filter(
+        (item) =>
+          item.right > viewportWidth + 1 ||
+          item.left < -1 ||
+          item.scrollWidth > Math.max(item.width + 1, viewportWidth + 1),
+      )
+      .sort((a, b) => Math.max(b.right - viewportWidth, b.scrollWidth - b.width) - Math.max(a.right - viewportWidth, a.scrollWidth - a.width))
+      .slice(0, 12);
+
+    return {
+      horizontalOverflow: root.scrollWidth - root.clientWidth,
+      offenders,
+      scrollWidth: root.scrollWidth,
+      viewportWidth,
+    };
   });
 
-  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+  expect(
+    overflowState.horizontalOverflow,
+    `Horizontal overflow diagnostics: ${JSON.stringify(overflowState)}`,
+  ).toBeLessThanOrEqual(1);
 }
 
 const publicCases = [

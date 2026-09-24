@@ -30,7 +30,7 @@ type LockedManualTemplate = {
   lifecycleStatus: string;
   targetRole: string;
   title: string;
-  version: number;
+  version: bigint | number;
 };
 
 const validTargetRoles = new Set<ContractTargetRole>([
@@ -239,6 +239,7 @@ export async function sendManualAdminContract(input: {
       recipient,
       workTitle,
     });
+    const templateVersion = Number(template.version);
 
     await transaction.$executeRaw`
       INSERT INTO UserContract (
@@ -246,7 +247,7 @@ export async function sendManualAdminContract(input: {
         status, titleSnapshot, bodySnapshot, adminNote, relatedWorkId,
         sentById, activeKey, sentAt, createdAt, updatedAt
       ) VALUES (
-        ${id}, ${template.id}, ${template.version}, ${recipient.id}, ${recipient.role},
+        ${id}, ${template.id}, ${templateVersion}, ${recipient.id}, ${recipient.role},
         'sent', ${template.title}, ${bodySnapshot}, ${input.adminNote}, ${input.relatedWorkId},
         ${actor.id}, ${activeKey}, ${now}, ${now}, ${now}
       )
@@ -261,7 +262,7 @@ export async function sendManualAdminContract(input: {
           recipientRole: recipient.role,
           source: "manual_admin",
           templateCode: template.code,
-          templateVersion: template.version,
+          templateVersion,
         })},
         ${now}
       )

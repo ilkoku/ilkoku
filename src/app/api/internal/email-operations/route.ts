@@ -5,8 +5,14 @@ import { runEmailOperationsCheck } from "@/features/email-operations/service";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+function configuredSecret() {
+  return process.env.EMAIL_OPERATIONS_SECRET?.trim()
+    || process.env.WRITER_DAILY_SUMMARY_SECRET?.trim()
+    || "";
+}
+
 function authorized(request: NextRequest) {
-  const configured = process.env.WRITER_DAILY_SUMMARY_SECRET?.trim();
+  const configured = configuredSecret();
   const authorization = request.headers.get("authorization")?.trim() ?? "";
   const supplied = authorization.startsWith("Bearer ")
     ? authorization.slice("Bearer ".length).trim()
@@ -24,9 +30,9 @@ function authorized(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.WRITER_DAILY_SUMMARY_SECRET?.trim()) {
+  if (!configuredSecret()) {
     return NextResponse.json(
-      { error: "WRITER_DAILY_SUMMARY_SECRET_MISSING" },
+      { error: "EMAIL_OPERATIONS_SECRET_MISSING" },
       { status: 503 },
     );
   }

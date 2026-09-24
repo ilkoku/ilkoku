@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { parseSitemapUrls, selectIndexNowUrls } from "./prepare-indexnow-payload.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -155,6 +156,99 @@ test("legal pages inherit canonical OG Twitter and language-alternate metadata",
   assertContains(helper, "twitter:", "public Twitter metadata");
   assertContains(helper, 'card: "summary_large_image"', "public Twitter large image card");
   assertContains(helper, "images: [socialImage]", "public Twitter image fallback");
+});
+
+test("IndexNow selects narrow public routes and keeps conservative full-batch fallbacks", () => {
+  const sitemapUrls = [
+    "https://ilkoku.com/",
+    "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/hakkimizda",
+    "https://ilkoku.com/kitap/ornek-bir",
+    "https://ilkoku.com/kitap/ornek-iki",
+    "https://ilkoku.com/yasal/kvkk",
+  ];
+
+  const parsed = parseSitemapUrls(
+    `<?xml version="1.0"?><urlset>
+      <url><loc>https://ilkoku.com/</loc></url>
+      <url><loc>https://ilkoku.com/nasil-calisir</loc></url>
+      <url><loc>https://example.com/disarida</loc></url>
+    </urlset>`,
+  );
+  assert.deepEqual(parsed, [
+    "https://ilkoku.com/",
+    "https://ilkoku.com/nasil-calisir",
+  ]);
+
+  const staticPage = selectIndexNowUrls({
+    sitemapUrls,
+    changedFiles: ["src/app/nasil-calisir/page.tsx"],
+    repoRoot: ROOT,
+  });
+  assert.equal(staticPage.mode, "diff");
+  assert.deepEqual(staticPage.urls, ["https://ilkoku.com/nasil-calisir"]);
+
+  const contentPage = selectIndexNowUrls({
+    sitemapUrls,
+    changedFiles: ["src/content/how-it-works.ts"],
+    repoRoot: ROOT,
+  });
+  assert.equal(contentPage.mode, "diff");
+  assert.deepEqual(contentPage.urls, ["https://ilkoku.com/nasil-calisir"]);
+
+  const homepage = selectIndexNowUrls({
+    sitemapUrls,
+    changedFiles: ["src/features/homepage/HomepageExperience.tsx"],
+    repoRoot: ROOT,
+  });
+  assert.equal(homepage.mode, "diff");
+  assert.deepEqual(homepage.urls, ["https://ilkoku.com/"]);
+
+  const dynamicFamily = selectIndexNowUrls({
+    sitemapUrls,
+    changedFiles: ["src/app/kitap/[slug]/page.tsx"],
+    repoRoot: ROOT,
+  });
+  assert.equal(dynamicFamily.mode, "diff");
+  assert.deepEqual(dynamicFamily.urls, [
+    "https://ilkoku.com/kitap/ornek-bir",
+    "https://ilkoku.com/kitap/ornek-iki",
+  ]);
+
+  for (const changedFile of [
+    "src/app/sitemap.ts",
+    "src/app/landing-footer-tight.css",
+    "src/lib/public-site-navigation.ts",
+    "src/components/content/PublicCmsHydrator.tsx",
+    "public/trust-pages/editorial-standards.webp",
+  ]) {
+    const selection = selectIndexNowUrls({
+      sitemapUrls,
+      changedFiles: [changedFile],
+      repoRoot: ROOT,
+    });
+    assert.equal(selection.mode, "full", `${changedFile} must keep conservative full IndexNow coverage`);
+    assert.deepEqual(selection.urls, sitemapUrls);
+  }
+
+  const unrelated = selectIndexNowUrls({
+    sitemapUrls,
+    changedFiles: ["src/features/contracts/repository.ts"],
+    repoRoot: ROOT,
+  });
+  assert.equal(unrelated.mode, "diff");
+  assert.deepEqual(unrelated.urls, []);
+
+  const workflow = source(".github/workflows/indexnow-submit.yml");
+  assertContains(workflow, "uses: actions/checkout@v6", "IndexNow repository checkout");
+  assertContains(workflow, "fetch-depth: 0", "IndexNow complete push diff");
+  assertContains(workflow, 'git diff --name-only "$BEFORE_SHA" "$AFTER_SHA"', "IndexNow changed-file inventory");
+  assertContains(workflow, 'echo "__FULL__" > /tmp/indexnow-changed-files.txt', "IndexNow manual/fallback full marker");
+  assertContains(workflow, "node scripts/prepare-indexnow-payload.mjs", "IndexNow diff-aware payload selector");
+  assertContains(workflow, '"src/features/homepage/**"', "homepage feature IndexNow trigger");
+  assertContains(workflow, '"src/lib/public-site-navigation.ts"', "global navigation IndexNow trigger");
+  assertContains(workflow, '"src/components/content/PublicCmsHydrator.tsx"', "shared public layout IndexNow trigger");
+  assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");
 });
 
 test("public HTML site map exposes the complete crawl discovery graph", () => {

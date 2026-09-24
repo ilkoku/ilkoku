@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Trigger weekly discovery summaries
         env:
-          SUMMARY_SECRET: ${{ secrets.WRITER_DAILY_SUMMARY_SECRET }}
+          SUMMARY_SECRET: ${{ secrets.WEEKLY_DISCOVERY_SUMMARY_SECRET || secrets.SUMMARY_JOBS_SECRET || secrets.WRITER_DAILY_SUMMARY_SECRET }}
         run: |
           set -euo pipefail
           test -n "$SUMMARY_SECRET"

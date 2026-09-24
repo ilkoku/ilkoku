@@ -194,6 +194,7 @@ const authenticatedCases = [
     viewport: viewports.desktop,
   },
   {
+    expectedHeading: "Sözleşmelerim",
     label: "recipient contract inbox",
     path: "/sozlesmelerim",
     role: "reader",
@@ -242,6 +243,11 @@ for (const scenario of authenticatedCases) {
     expect(response?.status()).toBeLessThan(400);
     await expect(page).not.toHaveURL(/\/giris(?:\?|$)/);
     await expect(page).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+    if (scenario.expectedHeading) {
+      await expect(
+        page.getByRole("heading", { name: scenario.expectedHeading }),
+      ).toBeVisible();
+    }
     await expectResponsiveDocument(page);
   });
 }

@@ -300,10 +300,12 @@ test("authenticated publisher member mutation smoke: owner updates member while 
   memberCard = page
     .locator(".publisher-member-card")
     .filter({ hasText: "ci-browser-publisher-member@example.invalid" });
-  await expect(memberCard.getByText("Pasif", { exact: true })).toBeVisible();
   await expect(
-    memberCard.getByText("Değerlendirici", { exact: true }),
-  ).toBeVisible();
+    memberCard.locator('span[data-active="false"]'),
+  ).toHaveText("Pasif");
+  await expect(
+    memberCard.locator(".publisher-member-card__role strong"),
+  ).toHaveText("Değerlendirici");
   await expectResponsiveDocument(page);
 });
 

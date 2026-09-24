@@ -194,7 +194,6 @@ await writeFile(
   outputPath,
   JSON.stringify({
     cookieName: "ilkoku_session",
-    contractTemplateId,
     sessions,
   }),
   { mode: 0o600 },

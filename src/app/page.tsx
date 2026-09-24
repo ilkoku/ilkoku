@@ -8,17 +8,17 @@ import {
   publicBrandTitle,
 } from "@/lib/public-brand";
 
-import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience";
+import HomepageExperience from "@/features/homepage/HomepageExperience";
 
 import "./landing.css";
-import "./onizleme/ana-sayfa-yeni/history-pr670.css";
-import "./onizleme/ana-sayfa-yeni/roles-light.css";
-import "./onizleme/ana-sayfa-yeni/passport-dark.css";
-import "./onizleme/ana-sayfa-yeni/passport-dark-priority.css";
-import "./onizleme/ana-sayfa-yeni/why-uniform.css";
-import "./onizleme/ana-sayfa-yeni/header-encyclopedia.css";
-import "./onizleme/ana-sayfa-yeni/header-terminal-spine.css";
-import "./onizleme/ana-sayfa-yeni/header-login-terminal.css";
+import "@/features/homepage/history.css";
+import "@/features/homepage/roles-light.css";
+import "@/features/homepage/passport-dark.css";
+import "@/features/homepage/passport-dark-priority.css";
+import "@/features/homepage/why-uniform.css";
+import "@/features/homepage/header-encyclopedia.css";
+import "@/features/homepage/header-terminal-spine.css";
+import "@/features/homepage/header-login-terminal.css";
 import "./home-live.css";
 import "./home-apple-soft.css";
 

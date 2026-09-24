@@ -265,11 +265,9 @@ test("demo showcase works stay usable but are excluded from search indexing", ()
 test("landing, sitemap and production smoke keep retired public discovery closed", () => {
   const homepage = source("src/app/page.tsx");
   const homepageExperience = source(
-    "src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx",
+    "src/features/homepage/HomepageExperience.tsx",
   );
-  const homepagePreview = source(
-    "src/app/onizleme/ana-sayfa-yeni/page.tsx",
-  );
+  const nextConfig = source("next.config.ts");
   const publicNavigation = source("src/lib/public-site-navigation.ts");
   const sitemap = source("src/app/sitemap.ts");
   const smoke = source(
@@ -281,17 +279,16 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   const showcase = source(
     "src/features/showcase/components/BookShowcase.tsx",
   );
-  const nextConfig = source("next.config.ts");
 
   contains(
     homepage,
-    'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"',
+    'import HomepageExperience from "@/features/homepage/HomepageExperience"',
     "live homepage neutral experience import",
   );
   notContains(
     homepage,
-    'from "./onizleme/ana-sayfa-yeni/page"',
-    "live homepage preview route coupling",
+    "onizleme/ana-sayfa-yeni",
+    "live homepage preview namespace coupling",
   );
   contains(
     homepage,
@@ -299,9 +296,14 @@ test("landing, sitemap and production smoke keep retired public discovery closed
     "live homepage explicit indexability",
   );
   contains(
-    homepagePreview,
-    "index: false",
-    "preview route noindex",
+    nextConfig,
+    'source: "/onizleme/ana-sayfa-yeni"',
+    "legacy homepage preview redirect",
+  );
+  contains(
+    nextConfig,
+    'destination: "/"',
+    "legacy homepage preview redirect target",
   );
   contains(
     homepageExperience,

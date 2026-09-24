@@ -6,7 +6,7 @@ const read = (path) => fs.readFileSync(path, "utf8");
 
 test("public SEO shell stays cacheable and session-neutral", () => {
   const homepage = read("src/app/page.tsx");
-  const experience = read("src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx");
+  const experience = read("src/features/homepage/HomepageExperience.tsx");
   const header = read("src/components/layout/PublicSiteHeader.tsx");
   const footer = read("src/components/content/PublicTrustFooter.tsx");
   const readerEducation = read("src/app/okurlar-icin/[slug]/page.tsx");

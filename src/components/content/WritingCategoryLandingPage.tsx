@@ -1,4 +1,4 @@
-import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
+import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import { getGenresByCategory } from "@/lib/genres";
 import type { WritingCategoryHub } from "@/lib/writing-category-hubs";

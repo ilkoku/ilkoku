@@ -17,7 +17,7 @@ function assertNotContains(text, fragment, label) {
 
 test("TR homepage publishes CMS body content in first server HTML", () => {
   const page = source("src/app/page.tsx");
-  const experience = source("src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx");
+  const experience = source("src/features/homepage/HomepageExperience.tsx");
   const store = source("src/lib/cms-homepage-store.ts");
   const hydrator = source("src/components/content/PublicCmsHydrator.tsx");
 
@@ -26,7 +26,7 @@ test("TR homepage publishes CMS body content in first server HTML", () => {
   assertContains(store, 'state: "corrupt"', "malformed homepage fail-safe state");
   assertContains(store, 'state: "unavailable"', "unavailable homepage fail-safe state");
 
-  assertContains(page, 'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"', "live homepage experience boundary");
+  assertContains(page, 'import HomepageExperience from "@/features/homepage/HomepageExperience"', "live homepage experience boundary");
   assertNotContains(page, 'from "./onizleme/ana-sayfa-yeni/page"', "preview route must not power the live homepage");
   assertNotContains(experience, "export const metadata", "shared homepage experience must stay route-metadata neutral");
   assertNotContains(experience, "export const dynamic", "shared homepage experience must stay route-config neutral");

@@ -8,8 +8,15 @@ on:
     paths:
       - "src/app/**"
       - "src/content/**"
+      - "src/features/homepage/**"
       - "src/features/public-discovery/**"
+      - "src/components/layout/PublicSiteHeader.tsx"
+      - "src/components/content/PublicTrustFooter.tsx"
+      - "src/lib/public-site-navigation.ts"
+      - "src/lib/public-brand.ts"
+      - "src/lib/public-page-metadata.ts"
       - "public/**"
+      - "scripts/prepare-indexnow-payload.mjs"
       - ".github/workflows/indexnow-submit.yml"
 
 permissions:
@@ -26,7 +33,38 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Wait for production and submit sitemap URLs
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Collect changed files
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -Eeuo pipefail
+          : > /tmp/indexnow-changed-files.txt
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "__FULL__" > /tmp/indexnow-changed-files.txt
+            echo "Manual run: full IndexNow batch requested."
+            exit 0
+          fi
+
+          if [[ -z "$BEFORE_SHA" || "$BEFORE_SHA" =~ ^0+$ ]] || ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            echo "__FULL__" > /tmp/indexnow-changed-files.txt
+            echo "Previous commit is unavailable: falling back to a full IndexNow batch."
+            exit 0
+          fi
+
+          git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" > /tmp/indexnow-changed-files.txt
+          echo "Changed files considered by IndexNow:"
+          cat /tmp/indexnow-changed-files.txt
+
+      - name: Wait for production and submit affected sitemap URLs
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -65,43 +103,18 @@ jobs:
 
           curl --fail --silent --show-error --location --max-time 30 "$SITEMAP_URL" --output /tmp/sitemap.xml
 
-          python3 - <<'PY'
-          import json
-          import xml.etree.ElementTree as ET
+          node scripts/prepare-indexnow-payload.mjs \
+            --sitemap /tmp/sitemap.xml \
+            --changed-files /tmp/indexnow-changed-files.txt \
+            --output /tmp/indexnow.json \
+            --key "$KEY"
 
-          key = "f4c33493caf6550560462af5a424980e"
-          root = ET.parse("/tmp/sitemap.xml").getroot()
-          urls = []
-          seen = set()
+          URL_COUNT="$(node -e 'const fs=require("node:fs"); const payload=JSON.parse(fs.readFileSync("/tmp/indexnow.json","utf8")); process.stdout.write(String(payload.urlList.length));')"
 
-          for element in root.iter():
-              if not element.tag.endswith("loc") or not element.text:
-                  continue
-              url = element.text.strip()
-              if not url.startswith("https://ilkoku.com/"):
-                  continue
-              if url in seen:
-                  continue
-              seen.add(url)
-              urls.append(url)
-
-          if not urls:
-              raise SystemExit("Sitemap contained no İlkOku public URLs")
-          if len(urls) > 10_000:
-              raise SystemExit(f"IndexNow batch too large: {len(urls)}")
-
-          payload = {
-              "host": "ilkoku.com",
-              "key": key,
-              "keyLocation": f"https://ilkoku.com/{key}.txt",
-              "urlList": urls,
-          }
-
-          with open("/tmp/indexnow.json", "w", encoding="utf-8") as handle:
-              json.dump(payload, handle, ensure_ascii=False)
-
-          print(f"Prepared {len(urls)} URLs for IndexNow.")
-          PY
+          if [[ "$URL_COUNT" == "0" ]]; then
+            echo "PASS: This push did not affect a public URL currently present in the production sitemap."
+            exit 0
+          fi
 
           status=""
           for attempt in 1 2 3; do

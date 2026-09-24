@@ -9,8 +9,8 @@ import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { getHomepageAffiliatePlacement } from "@/lib/affiliate-placement";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 
-import History670 from "./history-670";
-import LiveHomepageFooter from "./live-footer";
+import History670 from "./history";
+import LiveHomepageFooter from "./HomepageFooter";
 import MagzterAffiliateBanner from "./MagzterAffiliateBanner";
 import "./homepage.css";
 

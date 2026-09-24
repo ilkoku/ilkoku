@@ -5,6 +5,7 @@
   "acknowledgedMigrationOnlyTables": [
     "BookStructureItem",
     "BookTrashItem",
+    "ChapterFormatting",
     "ContentManagerAccess",
     "ContentPage",
     "ContentRevision",

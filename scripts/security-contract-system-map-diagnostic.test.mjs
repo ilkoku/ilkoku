@@ -16,6 +16,7 @@ const publicApiPrefixes = [
   "/api/media",
   "/api/public-announcements",
   "/api/site-assets/about-hero",
+  "/api/site-assets/home-history",
   "/api/site-contact",
   "/api/site-content",
 ];

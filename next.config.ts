@@ -121,6 +121,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/onizleme/ana-sayfa-yeni/history-art/:path*",
+        destination: "/home-history-art/:path*",
+        permanent: true,
+      },
+      {
         source: "/onizleme/ana-sayfa-yeni",
         destination: "/",
         permanent: false,

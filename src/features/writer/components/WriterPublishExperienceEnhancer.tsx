@@ -359,10 +359,6 @@ export function WriterPublishExperienceEnhancer() {
       <Link
         className="button button--primary writer-post-publish-action"
         href="/eserlerim"
-        onClick={(event) => {
-          event.preventDefault();
-          window.location.assign("/eserlerim");
-        }}
       >
         Eserlerime Dön
       </Link>,

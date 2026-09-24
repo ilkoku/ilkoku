@@ -79,6 +79,7 @@ test("API evidence classification distinguishes public, CMS-protected and intern
   contains(generator, '["getCmsAccess", "CMS access"]', "CMS access guard evidence");
   contains(generator, '["isSameOriginRequest", "same-origin check"]', "same-origin guard evidence");
   contains(generator, '["timingSafeEqual", "timing-safe secret check"]', "timing-safe secret guard evidence");
+  contains(generator, '["verifyWebhook", "provider signature verification"]', "provider webhook signature guard evidence");
 });
 
 test("operations report cross-checks menu targets, workflows, route dependencies and API guards", () => {

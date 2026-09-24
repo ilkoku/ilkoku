@@ -170,15 +170,15 @@ const authenticatedCases = [
     viewport: viewports.phone390,
   },
   {
-    label: "CMS workspace",
+    label: "CMS manager workspace",
     path: "/icerik",
-    role: "admin",
+    role: "cmsManager",
     viewport: viewports.tablet768,
   },
   {
-    label: "TR SEO operations",
+    label: "TR SEO operations as CMS manager",
     path: "/icerik/seo",
-    role: "admin",
+    role: "cmsManager",
     viewport: viewports.tablet768,
   },
   {

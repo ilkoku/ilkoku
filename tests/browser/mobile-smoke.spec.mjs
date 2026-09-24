@@ -252,7 +252,7 @@ test("authenticated contract mutation smoke: admin send, recipient response, own
 
   async function useRole(role) {
     const token = authFixture.sessions?.[role];
-    expect(token, \`Missing \${role} session fixture\`).toBeTruthy();
+    expect(token, `Missing ${role} session fixture`).toBeTruthy();
     await page.context().clearCookies();
     await page.context().addCookies([
       {
@@ -286,7 +286,7 @@ test("authenticated contract mutation smoke: admin send, recipient response, own
   expect(contractId, "Contract dispatch must return the created contract id").toBeTruthy();
 
   await useRole("writer");
-  const foreignResponse = await page.goto(\`/sozlesmelerim/\${contractId}\`, {
+  const foreignResponse = await page.goto(`/sozlesmelerim/${contractId}`, {
     waitUntil: "domcontentloaded",
   });
   expect(foreignResponse?.status()).toBe(404);
@@ -300,7 +300,7 @@ test("authenticated contract mutation smoke: admin send, recipient response, own
   });
   await expect(recipientContractLink).toBeVisible();
   await recipientContractLink.click();
-  await expect(page).toHaveURL(new RegExp(\`/sozlesmelerim/\${contractId}$\`));
+  await expect(page).toHaveURL(new RegExp(`/sozlesmelerim/${contractId}$`));
   await expect(page.getByRole("heading", { name: "CI Browser Reader Contract" })).toBeVisible();
   await expect(page.getByText("Yanıt bekliyor", { exact: true })).toBeVisible();
 
@@ -308,12 +308,12 @@ test("authenticated contract mutation smoke: admin send, recipient response, own
   await page.locator('input[name="responseConfirmed"]').check();
   await page.getByRole("button", { name: "Kabul et" }).click();
 
-  await expect(page).toHaveURL(new RegExp(\`/sozlesmelerim/\${contractId}\\\\?durum=accepted\`));
+  await expect(page).toHaveURL(new RegExp(`/sozlesmelerim/${contractId}\\?durum=accepted`));
   await expect(page.getByText("Sözleşme kabulünüz kaydedildi.")).toBeVisible();
   await expect(page.getByText("Sözleşme durumu: Kabul edildi")).toBeVisible();
 
   await useRole("admin");
-  await page.goto(\`/sozlesme/\${contractId}\`, {
+  await page.goto(`/sozlesme/${contractId}`, {
     waitUntil: "domcontentloaded",
   });
   await expect(page.getByText("Kabul edildi", { exact: true })).toBeVisible();
@@ -322,7 +322,6 @@ test("authenticated contract mutation smoke: admin send, recipient response, own
   await expect(page.getByText("CI browser recipient accepted")).toBeVisible();
   await expectResponsiveDocument(page);
 });
-
 
 const crossRoleNegativeCases = [
   { role: "reader", path: "/yazar", label: "reader cannot enter writer workspace" },

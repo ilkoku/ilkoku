@@ -300,6 +300,48 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expectResponsiveDocument(page);
 });
 
+test("authenticated admin platform coupon mutation smoke: admin creates and pauses provider-independent campaign", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/admin/odeme-sistemi/kuponlar", {
+    waitUntil: "domcontentloaded",
+  });
+
+  await expect(
+    page.getByRole("heading", { name: "Kuponlar & Kampanyalar" }),
+  ).toBeVisible();
+
+  const couponCode = `CIADMIN${Date.now().toString(36).toUpperCase()}`;
+  await page.locator('input[name="code"]').fill(couponCode);
+  await page.locator('input[name="discountValue"]').fill("15");
+  await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+
+  await expect(page.getByText("İlkOku kampanya kuponu oluşturuldu.")).toBeVisible();
+
+  let couponCard = page.locator("article").filter({ hasText: couponCode });
+  await expect(couponCard).toBeVisible();
+  await expect(couponCard.getByText("%15 indirim", { exact: false })).toBeVisible();
+  await expect(couponCard.getByRole("button", { name: "Pasife al" })).toBeVisible();
+
+  await couponCard.getByRole("button", { name: "Pasife al" }).click();
+
+  await expect(page.getByText("Kupon durumu güncellendi.")).toBeVisible();
+  couponCard = page.locator("article").filter({ hasText: couponCode });
+  await expect(couponCard.getByRole("button", { name: "Aktif et" })).toBeVisible();
+  await expectResponsiveDocument(page);
+});
+
 test("authenticated publisher member mutation smoke: owner updates member while owner stays protected", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

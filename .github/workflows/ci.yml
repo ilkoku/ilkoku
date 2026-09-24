@@ -22,7 +22,7 @@ jobs:
   quality:
     name: Lint, security contracts, DB recovery/contracts and build
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     services:
       mariadb:
         image: mariadb:11.4
@@ -157,3 +157,26 @@ jobs:
             echo "::error title=Production build compiler diagnostic::$diagnostic"
             exit "$status"
           fi
+
+      - name: Install Playwright test runner
+        if: ${{ !cancelled() }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+
+      - name: Install Chromium for browser QA
+        if: ${{ !cancelled() }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Run mobile and browser QA gate
+        if: ${{ !cancelled() }}
+        run: npx playwright test tests/browser/mobile-smoke.spec.mjs
+
+      - name: Upload browser QA diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-qa-diagnostics
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 2

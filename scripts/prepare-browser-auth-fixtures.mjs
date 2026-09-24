@@ -27,6 +27,7 @@ const roles = ["reader", "writer", "editor", "publisher", "admin"];
 const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 const now = new Date();
 const sessions = {};
+const userIds = {};
 
 function hashToken(token) {
   return createHash("sha256").update(token).digest("hex");
@@ -78,7 +79,38 @@ try {
     );
 
     sessions[role] = token;
+    userIds[role] = userId;
   }
+
+  for (const role of ["editor", "publisher"]) {
+    await client.execute(
+      `INSERT INTO \`RoleRequest\`
+        (id, userId, requestedRole, status, reviewedAt, createdAt, updatedAt)
+       VALUES (?, ?, ?, 'approved', ?, ?, ?)`,
+      [randomUUID(), userIds[role], role, now, now, now],
+    );
+  }
+
+  const publisherId = randomUUID();
+  await client.execute(
+    `INSERT INTO \`Publisher\`
+      (id, publicId, companyName, slug, verified, active, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, true, true, ?, ?)`,
+    [
+      publisherId,
+      "CI26PUBLISHER01",
+      "CI Browser Publisher",
+      "ci-browser-publisher",
+      now,
+      now,
+    ],
+  );
+  await client.execute(
+    `INSERT INTO \`PublisherMembership\`
+      (id, publisherId, userId, role, active, createdAt, updatedAt)
+     VALUES (?, ?, ?, 'owner', true, ?, ?)`,
+    [randomUUID(), publisherId, userIds.publisher, now, now],
+  );
 
   await client.commit();
 } catch (error) {

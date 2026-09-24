@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -202,15 +203,15 @@ export function WriterTextEditingCommands() {
   const [searchStatus, setSearchStatus] = useState("");
   const [contentSnapshot, setContentSnapshot] = useState("");
 
-  function refreshHistoryAvailability() {
+  const refreshHistoryAvailability = useCallback(() => {
     const history = historyRef.current;
     setHistoryAvailability({
       canUndo: history.past.length > 0,
       canRedo: history.future.length > 0,
     });
-  }
+  }, []);
 
-  function syncHistorySource() {
+  const syncHistorySource = useCallback(() => {
     const body = getCanonicalBody();
     const history = historyRef.current;
 
@@ -233,44 +234,47 @@ export function WriterTextEditingCommands() {
     }
 
     return body;
-  }
+  }, [refreshHistoryAvailability]);
 
-  function captureSelection() {
+  const captureSelection = useCallback(() => {
     const next = readActiveSelection();
     if (!next) return;
     lastSelectionRef.current = next;
     setSelection(next);
-  }
+  }, []);
 
-  function applyContent(nextContent: string, nextSelection: TextSelection) {
-    const body = syncHistorySource();
-    if (!body) return;
+  const applyContent = useCallback(
+    (nextContent: string, nextSelection: TextSelection) => {
+      const body = syncHistorySource();
+      if (!body) return;
 
-    const history = historyRef.current;
-    if (nextContent === body.value) {
+      const history = historyRef.current;
+      if (nextContent === body.value) {
+        lastSelectionRef.current = nextSelection;
+        setSelection(nextSelection);
+        focusAbsoluteSelection(nextSelection);
+        return;
+      }
+
+      const past = [...history.past, body.value].slice(-HISTORY_LIMIT);
+      historyRef.current = {
+        past,
+        present: nextContent,
+        future: [],
+        source: body,
+      };
+      suppressInputRef.current = true;
+      setNativeTextareaValue(body, nextContent);
+      setContentSnapshot(nextContent);
+      refreshHistoryAvailability();
       lastSelectionRef.current = nextSelection;
       setSelection(nextSelection);
       focusAbsoluteSelection(nextSelection);
-      return;
-    }
+    },
+    [refreshHistoryAvailability, syncHistorySource],
+  );
 
-    const past = [...history.past, body.value].slice(-HISTORY_LIMIT);
-    historyRef.current = {
-      past,
-      present: nextContent,
-      future: [],
-      source: body,
-    };
-    suppressInputRef.current = true;
-    setNativeTextareaValue(body, nextContent);
-    setContentSnapshot(nextContent);
-    refreshHistoryAvailability();
-    lastSelectionRef.current = nextSelection;
-    setSelection(nextSelection);
-    focusAbsoluteSelection(nextSelection);
-  }
-
-  function undo() {
+  const undo = useCallback(() => {
     const body = syncHistorySource();
     if (!body) return;
     const history = historyRef.current;
@@ -294,9 +298,9 @@ export function WriterTextEditingCommands() {
     lastSelectionRef.current = nextSelection;
     setSelection(nextSelection);
     focusAbsoluteSelection(nextSelection);
-  }
+  }, [refreshHistoryAvailability, syncHistorySource]);
 
-  function redo() {
+  const redo = useCallback(() => {
     const body = syncHistorySource();
     if (!body) return;
     const history = historyRef.current;
@@ -320,7 +324,7 @@ export function WriterTextEditingCommands() {
     lastSelectionRef.current = nextSelection;
     setSelection(nextSelection);
     focusAbsoluteSelection(nextSelection);
-  }
+  }, [refreshHistoryAvailability, syncHistorySource]);
 
   function insertSceneDivider() {
     const body = syncHistorySource();
@@ -524,7 +528,7 @@ export function WriterTextEditingCommands() {
       document.removeEventListener("paste", handlePaste, true);
       document.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [target]);
+  }, [applyContent, captureSelection, redo, refreshHistoryAvailability, target, undo]);
 
   const selectedText = useMemo(
     () => contentSnapshot.slice(selection.start, selection.end),

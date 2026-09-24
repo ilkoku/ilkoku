@@ -158,6 +158,12 @@ jobs:
             exit "$status"
           fi
 
+      - name: Prepare authenticated browser fixtures
+        if: ${{ !cancelled() }}
+        env:
+          BROWSER_AUTH_FIXTURE_PATH: /tmp/ilkoku-browser-auth.json
+        run: node scripts/prepare-browser-auth-fixtures.mjs
+
       - name: Install Playwright test runner
         if: ${{ !cancelled() }}
         run: npm install --no-save --package-lock=false @playwright/test@1.55.0
@@ -168,6 +174,8 @@ jobs:
 
       - name: Run mobile and browser QA gate
         if: ${{ !cancelled() }}
+        env:
+          BROWSER_AUTH_FIXTURE_PATH: /tmp/ilkoku-browser-auth.json
         run: npx playwright test tests/browser/mobile-smoke.spec.mjs
 
       - name: Upload browser QA diagnostics

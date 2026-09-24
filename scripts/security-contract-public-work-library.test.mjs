@@ -265,7 +265,7 @@ test("demo showcase works stay usable but are excluded from search indexing", ()
 test("landing, sitemap and production smoke keep retired public discovery closed", () => {
   const homepage = source("src/app/page.tsx");
   const homepageExperience = source(
-    "src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx",
+    "src/features/homepage/HomepageExperience.tsx",
   );
   const homepagePreview = source(
     "src/app/onizleme/ana-sayfa-yeni/page.tsx",

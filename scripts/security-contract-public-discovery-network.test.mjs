@@ -203,7 +203,7 @@ test("content and age policy is enforced from work creation to the public readin
 test("sitemap, homepage and book pages form a truthful public graph", () => {
   const sitemap = source("src/app/sitemap.ts");
   const homepage = source("src/app/page.tsx");
-  const homepageExperience = source("src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx");
+  const homepageExperience = source("src/features/homepage/HomepageExperience.tsx");
   const publicNavigation = source("src/lib/public-site-navigation.ts");
   const book = source("src/app/kitap/[slug]/page.tsx");
   const showcase = source(

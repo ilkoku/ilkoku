@@ -106,7 +106,6 @@ The separation is intentional: public brand identity stays coherent without expo
 
 Preview and archived homepage routes are not canonical public destinations and must remain outside sitemap/navigation/indexing.
 
-- `/onizleme/ana-sayfa-eski` — preserved legacy homepage archive, noindex/unlinked.
 - `/onizleme/ana-sayfa-yeni` — retired preview path; canonical experience is `/`.
 
 ## Maintenance rule

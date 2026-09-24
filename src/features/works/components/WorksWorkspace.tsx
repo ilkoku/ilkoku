@@ -5,6 +5,7 @@ import {
   useState,
 } from "react";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
@@ -16,6 +17,7 @@ import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 import type { WorkWithChapterSummary } from "../types";
 import { WorkArchiveAction } from "./WorkArchiveAction";
+import { WorkCoverUpload } from "./WorkCoverUpload";
 
 type WorkspaceWork = WorkWithChapterSummary & {
   publishedPageCount: number | null;
@@ -431,6 +433,10 @@ export function WorksWorkspace({
                         </dd>
                       </div>
                     </dl>
+
+                    {work.status !== "archived" ? (
+                      <WorkCoverUpload workId={work.id} />
+                    ) : null}
 
                     {work.status !== "archived" && (
                       <section className="workspace-editor-review" aria-label="Profesyonel editör incelemesi">

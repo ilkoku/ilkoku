@@ -17,8 +17,8 @@ test("public SEO shell stays cacheable and session-neutral", () => {
     assert.match(publicRoute, /export const revalidate = 300;/u);
     assert.doesNotMatch(publicRoute, /force-dynamic/u);
   }
-  assert.match(readerStore, /catch \\{/u);
-  assert.match(readerStore, /return readerEducationGuideDefault\\(category\\);/u);
+  assert.match(readerStore, /catch \{/u);
+  assert.match(readerStore, /return readerEducationGuideDefault\(category\);/u);
 
   for (const source of [experience, header, footer]) {
     assert.doesNotMatch(source, /getCurrentProfile/u);

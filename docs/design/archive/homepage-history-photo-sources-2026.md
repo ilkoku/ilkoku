@@ -1,4 +1,8 @@
-# History card photo sources
+# Archived history-card source note
+
+Status: **ARCHIVED / preview-phase reference**
+
+This file preserves the original source-research note from the isolated homepage design phase. The production homepage no longer runs from the `/onizleme/ana-sayfa-yeni` namespace, and current history artwork is served from the canonical homepage feature/site-asset path.
 
 These sources are used only by the isolated `/onizleme/ana-sayfa-yeni` History preview.
 

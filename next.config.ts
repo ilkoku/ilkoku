@@ -121,11 +121,6 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: "/onizleme/ana-sayfa-yeni",
-        destination: "/",
-        permanent: false,
-      },
-      {
         source: "/admin",
         destination: "/sistem-yonetimi",
         permanent: true,

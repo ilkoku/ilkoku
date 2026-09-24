@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
+import LiveHomepageFooter from "@/features/homepage/HomepageFooter";
 import { getGenresByCategory, type GenreCategory } from "@/lib/genres";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 

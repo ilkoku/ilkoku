@@ -27,11 +27,11 @@ test("route-return hydration still rebuilds the canonical homepage footer before
 
 test("homepage affiliate banner stays after roles and before passport with responsive validated creatives", () => {
   const homepage = readFileSync(
-    "src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx",
+    "src/features/homepage/HomepageExperience.tsx",
     "utf8",
   );
   const affiliate = readFileSync(
-    "src/app/onizleme/ana-sayfa-yeni/MagzterAffiliateBanner.tsx",
+    "src/features/homepage/MagzterAffiliateBanner.tsx",
     "utf8",
   );
   const placement = readFileSync("src/lib/affiliate-placement.ts", "utf8");

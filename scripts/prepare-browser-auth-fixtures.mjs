@@ -122,6 +122,36 @@ try {
   sessions.cmsManager = cmsManagerToken;
   userIds.cmsManager = cmsManagerId;
 
+  const contractTemplateId = randomUUID();
+  await client.execute(
+    `INSERT INTO \`ContractTemplate\`
+      (id, code, title, description, targetRole, body, version, active,
+       lifecycleStatus, sourceTemplateId, approvedById, approvedAt, activatedAt,
+       createdById, updatedById, createdAt, updatedAt)
+     VALUES (?, 'CI_BROWSER_READER_CONTRACT', 'CI Browser Reader Contract',
+       'Ephemeral active contract template for browser mutation QA.',
+       'reader',
+       'Taraf: {{ad_soyad}}\\nE-posta: {{eposta}}\\nRol: {{rol}}\\nTarih: {{tarih}}\\n\\nCI browser mutation acceptance fixture.',
+       1, true, 'active', NULL, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      contractTemplateId,
+      userIds.admin,
+      now,
+      now,
+      userIds.admin,
+      userIds.admin,
+      now,
+      now,
+    ],
+  );
+  await client.execute(
+    `INSERT INTO \`ContractTemplateReviewEvidence\`
+      (id, templateId, templateVersion, evidenceType, reviewerLabel, note, recordedById, createdAt)
+     VALUES (?, ?, 1, 'admin_approval', 'CI Browser Admin',
+       'Ephemeral CI-only admin approval evidence for browser mutation QA.', ?, ?)`,
+    [randomUUID(), contractTemplateId, userIds.admin, now],
+  );
+
   for (const role of ["editor", "publisher"]) {
     await client.execute(
       `INSERT INTO \`RoleRequest\`
@@ -164,6 +194,7 @@ await writeFile(
   outputPath,
   JSON.stringify({
     cookieName: "ilkoku_session",
+    contractTemplateId,
     sessions,
   }),
   { mode: 0o600 },

@@ -221,7 +221,8 @@ export async function getMemberPublicWorkBySlug(
       .map((item) => [item.chapterId, item] as const),
   );
   const publishedChapters = work.chapters.map((chapter) => {
-    const { commerceAccess: _commerceAccess, ...chapterModel } = chapter;
+    const { commerceAccess, ...chapterModel } = chapter;
+    void commerceAccess;
     const readable = canReadChapter(chapter.id);
     const bookChapter = bookChapterSnapshots.get(chapter.id);
 
@@ -325,11 +326,14 @@ export async function getMemberPublicWorkBySlug(
   }
 
   const {
-    chapters: _rawChapters,
-    saleConfiguration: _saleConfiguration,
-    publicationConsents: _publicationConsents,
+    chapters,
+    saleConfiguration,
+    publicationConsents,
     ...publicWork
   } = work;
+  void chapters;
+  void saleConfiguration;
+  void publicationConsents;
 
   return {
     ...publicWork,

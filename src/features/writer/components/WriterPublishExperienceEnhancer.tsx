@@ -221,6 +221,9 @@ function WriterFullBookPublicationPreview({
           aria-label={`${book.workTitle} kapak önizlemesi`}
         >
           {book.coverUrl ? (
+            // Publication preview must render the exact stored remote cover URL;
+            // keep this provider-agnostic instead of imposing next/image host rules.
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               className="writer-publication-preview__cover-image"
               src={book.coverUrl}

@@ -35,6 +35,8 @@ test("manual dispatch service is fail closed at database boundaries", () => {
   contains(dispatch, "activeKey", "duplicate active key");
   contains(dispatch, "titleSnapshot", "immutable title snapshot");
   contains(dispatch, "bodySnapshot", "immutable body snapshot");
+  contains(dispatch, "const templateVersion = Number(template.version)", "raw SQL template version normalization");
+  contains(dispatch, "templateVersion,", "JSON-safe audit template version");
   contains(dispatch, 'source: "manual_admin"', "manual dispatch audit source");
   contains(dispatch, "transaction.notification.create", "recipient notification");
 });

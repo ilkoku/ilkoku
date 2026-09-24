@@ -82,6 +82,46 @@ try {
     userIds[role] = userId;
   }
 
+  const cmsManagerId = randomUUID();
+  const cmsManagerToken = randomBytes(32).toString("base64url");
+  const cmsManagerTokenHash = hashToken(cmsManagerToken);
+
+  await client.execute(
+    `INSERT INTO \`User\`
+      (id, publicId, email, passwordHash, fullName, role, status,
+       emailVerified, termsAcceptedAt, lastLoginAt, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, 'reader', 'active', ?, ?, ?, ?, ?)`,
+    [
+      cmsManagerId,
+      "CI26CMSMGR01",
+      "ci-browser-cms-manager@example.invalid",
+      "ci-browser-session-only",
+      "CI CMS Manager",
+      now,
+      now,
+      now,
+      now,
+      now,
+    ],
+  );
+
+  await client.execute(
+    `INSERT INTO \`Session\`
+      (id, tokenHash, userId, expiresAt, createdAt)
+     VALUES (?, ?, ?, ?, ?)`,
+    [randomUUID(), cmsManagerTokenHash, cmsManagerId, expiresAt, now],
+  );
+
+  await client.execute(
+    `INSERT INTO \`ContentManagerAccess\`
+      (id, userId, active, canPublish, grantedAt, createdAt, updatedAt)
+     VALUES (?, ?, true, false, ?, ?, ?)`,
+    [randomUUID(), cmsManagerId, now, now, now],
+  );
+
+  sessions.cmsManager = cmsManagerToken;
+  userIds.cmsManager = cmsManagerId;
+
   for (const role of ["editor", "publisher"]) {
     await client.execute(
       `INSERT INTO \`RoleRequest\`
@@ -129,4 +169,4 @@ await writeFile(
   { mode: 0o600 },
 );
 
-console.log(`Prepared ${roles.length} ephemeral authenticated browser roles.`);
+console.log(`Prepared ${roles.length + 1} ephemeral authenticated browser identities.`);

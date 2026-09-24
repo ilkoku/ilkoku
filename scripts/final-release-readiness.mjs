@@ -43,6 +43,7 @@ const counts = {
   BLOCKED: 0,
 };
 const invalid = [];
+const openItems = [];
 
 for (const cells of rows) {
   const human = cells.at(-1);
@@ -76,6 +77,13 @@ console.log(`- Current-product addendum rows: ${EXPECTED_ADDENDUM_ROWS}`);
 console.log(`- HUMAN_PASS: ${counts.HUMAN_PASS}`);
 console.log(`- HUMAN_PENDING: ${counts.HUMAN_PENDING}`);
 console.log(`- BLOCKED: ${counts.BLOCKED}`);
+
+if (openItems.length > 0) {
+  console.log("- Open human UAT:");
+  for (const item of openItems) {
+    console.log(`  - [${item.human}] ${item.source} · ${item.flow} · ${item.path}`);
+  }
+}
 
 if (strict && status !== "READY_TO_RELEASE") {
   console.error("Final Release cannot close until every critical production UAT row is HUMAN_PASS.");

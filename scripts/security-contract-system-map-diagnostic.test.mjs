@@ -11,6 +11,7 @@ const ADMIN_NAVIGATION = path.join(ROOT, "src", "lib", "admin-navigation.ts");
 const SYSTEM_MANAGEMENT_PATH = "/sistem-yonetimi";
 
 const publicApiPrefixes = [
+  "/api/build-info",
   "/api/content-faq",
   "/api/media",
   "/api/public-announcements",

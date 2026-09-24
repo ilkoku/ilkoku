@@ -267,9 +267,6 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   const homepageExperience = source(
     "src/features/homepage/HomepageExperience.tsx",
   );
-  const homepagePreview = source(
-    "src/app/onizleme/ana-sayfa-yeni/page.tsx",
-  );
   const publicNavigation = source("src/lib/public-site-navigation.ts");
   const sitemap = source("src/app/sitemap.ts");
   const smoke = source(
@@ -285,8 +282,8 @@ test("landing, sitemap and production smoke keep retired public discovery closed
 
   contains(
     homepage,
-    'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"',
-    "live homepage neutral experience import",
+    'import HomepageExperience from "@/features/homepage/HomepageExperience"',
+    "live homepage canonical experience import",
   );
   notContains(
     homepage,
@@ -299,9 +296,14 @@ test("landing, sitemap and production smoke keep retired public discovery closed
     "live homepage explicit indexability",
   );
   contains(
-    homepagePreview,
-    "index: false",
-    "preview route noindex",
+    nextConfig,
+    'source: "/onizleme/ana-sayfa-yeni"',
+    "retired preview route compatibility redirect",
+  );
+  contains(
+    nextConfig,
+    'destination: "/"',
+    "retired preview route canonical destination",
   );
   contains(
     homepageExperience,

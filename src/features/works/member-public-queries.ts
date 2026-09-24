@@ -326,14 +326,14 @@ export async function getMemberPublicWorkBySlug(
   }
 
   const {
-    chapters,
-    saleConfiguration,
-    publicationConsents,
+    chapters: omittedChapters,
+    saleConfiguration: omittedSaleConfiguration,
+    publicationConsents: omittedPublicationConsents,
     ...publicWork
   } = work;
-  void chapters;
-  void saleConfiguration;
-  void publicationConsents;
+  void omittedChapters;
+  void omittedSaleConfiguration;
+  void omittedPublicationConsents;
 
   return {
     ...publicWork,

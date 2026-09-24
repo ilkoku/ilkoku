@@ -12,7 +12,7 @@ import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 import History670 from "./history-670";
 import LiveHomepageFooter from "./live-footer";
 import MagzterAffiliateBanner from "./MagzterAffiliateBanner";
-import "./preview.css";
+import "./homepage.css";
 
 type IconName =
   | "writer"

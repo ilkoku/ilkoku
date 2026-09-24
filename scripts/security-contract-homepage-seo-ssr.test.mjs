@@ -18,6 +18,8 @@ function assertNotContains(text, fragment, label) {
 test("TR homepage publishes CMS body content in first server HTML", () => {
   const page = source("src/app/page.tsx");
   const experience = source("src/features/homepage/HomepageExperience.tsx");
+  const history = source("src/features/homepage/history-670.tsx");
+  const nextConfig = source("next.config.ts");
   const store = source("src/lib/cms-homepage-store.ts");
   const hydrator = source("src/components/content/PublicCmsHydrator.tsx");
 
@@ -27,7 +29,11 @@ test("TR homepage publishes CMS body content in first server HTML", () => {
   assertContains(store, 'state: "unavailable"', "unavailable homepage fail-safe state");
 
   assertContains(page, 'import HomepageExperience from "@/features/homepage/HomepageExperience"', "live homepage experience boundary");
-  assertNotContains(page, 'from "./onizleme/ana-sayfa-yeni/page"', "preview route must not power the live homepage");
+  assertNotContains(page, "onizleme/ana-sayfa-yeni", "live homepage must not import the preview namespace");
+  assertContains(history, "/api/site-assets/homepage-history/", "canonical homepage history asset route");
+  assertNotContains(history, "/onizleme/ana-sayfa-yeni/history-art/", "legacy preview history asset route");
+  assertContains(nextConfig, 'source: "/onizleme/ana-sayfa-yeni"', "legacy homepage preview redirect");
+  assertContains(nextConfig, 'destination: "/"', "legacy homepage preview redirect target");
   assertNotContains(experience, "export const metadata", "shared homepage experience must stay route-metadata neutral");
   assertNotContains(experience, "export const dynamic", "shared homepage experience must stay route-config neutral");
   assertContains(experience, 'getPublishedHomepageState("tr")', "TR published homepage server read");

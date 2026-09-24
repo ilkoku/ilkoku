@@ -125,6 +125,123 @@ for (const scenario of protectedCases) {
   });
 }
 
+const authFixturePath = process.env.BROWSER_AUTH_FIXTURE_PATH;
+const authFixture = authFixturePath
+  ? JSON.parse(readFileSync(authFixturePath, "utf8"))
+  : null;
+const authCookieUrl =
+  process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
+
+if (process.env.CI && !authFixture) {
+  throw new Error(
+    "BROWSER_AUTH_FIXTURE_PATH is required for authenticated browser QA in CI.",
+  );
+}
+
+const authenticatedCases = [
+  {
+    label: "reader workspace",
+    path: "/kesfet",
+    role: "reader",
+    viewport: viewports.phone390,
+  },
+  {
+    label: "writer workspace",
+    path: "/yazar",
+    role: "writer",
+    viewport: viewports.phone430,
+  },
+  {
+    label: "editor workspace",
+    path: "/editor/kesfet",
+    role: "editor",
+    viewport: viewports.tablet768,
+  },
+  {
+    label: "publisher workspace",
+    path: "/yayinevi",
+    role: "publisher",
+    viewport: viewports.desktop,
+  },
+  {
+    label: "admin workspace",
+    path: "/admin",
+    role: "admin",
+    viewport: viewports.phone390,
+  },
+  {
+    label: "CMS workspace",
+    path: "/icerik",
+    role: "admin",
+    viewport: viewports.tablet768,
+  },
+];
+
+for (const scenario of authenticatedCases) {
+  test(`authenticated role smoke: ${scenario.label}`, async ({ page }) => {
+    test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+    const token = authFixture.sessions?.[scenario.role];
+    expect(token, `Missing ${scenario.role} session fixture`).toBeTruthy();
+
+    await page.context().addCookies([
+      {
+        name: authFixture.cookieName,
+        value: token,
+        url: authCookieUrl,
+      },
+    ]);
+    await page.setViewportSize(scenario.viewport);
+
+    const response = await page.goto(scenario.path, {
+      waitUntil: "domcontentloaded",
+    });
+
+    expect(response?.status()).toBeLessThan(400);
+    await expect(page).not.toHaveURL(/\/giris(?:\?|$)/);
+    await expect(page).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+    await expectResponsiveDocument(page);
+  });
+}
+
+
+const crossRoleNegativeCases = [
+  { role: "reader", path: "/yazar", label: "reader cannot enter writer workspace" },
+  { role: "reader", path: "/editor/kesfet", label: "reader cannot enter editor workspace" },
+  { role: "reader", path: "/yayinevi", label: "reader cannot enter publisher workspace" },
+  { role: "reader", path: "/admin", label: "reader cannot enter admin workspace" },
+  { role: "writer", path: "/editor/kesfet", label: "writer cannot enter editor workspace" },
+  { role: "writer", path: "/yayinevi", label: "writer cannot enter publisher workspace" },
+  { role: "writer", path: "/admin", label: "writer cannot enter admin workspace" },
+  { role: "editor", path: "/yayinevi", label: "editor cannot enter publisher workspace" },
+  { role: "editor", path: "/admin", label: "editor cannot enter admin workspace" },
+];
+
+for (const scenario of crossRoleNegativeCases) {
+  test(`cross-role negative smoke: ${scenario.label}`, async ({ page }) => {
+    test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+    const token = authFixture.sessions?.[scenario.role];
+    expect(token, `Missing ${scenario.role} session fixture`).toBeTruthy();
+
+    await page.context().addCookies([
+      {
+        name: authFixture.cookieName,
+        value: token,
+        url: authCookieUrl,
+      },
+    ]);
+
+    await page.goto(scenario.path, {
+      waitUntil: "domcontentloaded",
+    });
+
+    await expect(page).toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+    await expectResponsiveDocument(page);
+  });
+}
+
+
 
 const writingGuideShellSource = readFileSync(
   new URL("../../src/components/content/WritingGuideShell.tsx", import.meta.url),

@@ -9,9 +9,14 @@ test("public SEO shell stays cacheable and session-neutral", () => {
   const experience = read("src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx");
   const header = read("src/components/layout/PublicSiteHeader.tsx");
   const footer = read("src/components/content/PublicTrustFooter.tsx");
+  const informationalGuide = read("src/app/yazarlar-icin/bilgilendirici/[slug]/page.tsx");
+  const readerEducation = read("src/app/okurlar-icin/[slug]/page.tsx");
+  const editorProfile = read("src/app/editorler/[slug]/page.tsx");
 
-  assert.match(homepage, /export const revalidate = 300;/u);
-  assert.doesNotMatch(homepage, /force-dynamic/u);
+  for (const publicRoute of [homepage, informationalGuide, readerEducation, editorProfile]) {
+    assert.match(publicRoute, /export const revalidate = 300;/u);
+    assert.doesNotMatch(publicRoute, /force-dynamic/u);
+  }
   for (const source of [experience, header, footer]) {
     assert.doesNotMatch(source, /getCurrentProfile/u);
     assert.doesNotMatch(source, /getRoleNavigation/u);

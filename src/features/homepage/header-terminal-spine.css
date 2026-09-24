@@ -1,0 +1,186 @@
+/* İlkOku homepage preview — book-spine + terminal hybrid header */
+
+.nx-header__label {
+  width: min(100%, 680px) !important;
+  min-height: 82px !important;
+  gap: 0.72em !important;
+  padding: 0 72px !important;
+  border: 1px solid rgba(191, 165, 242, 0.4) !important;
+  border-radius: 9px / 20px !important;
+  color: #f0e8ff !important;
+  background:
+    repeating-linear-gradient(180deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px),
+    linear-gradient(90deg,
+      rgba(12, 7, 29, .99) 0%,
+      rgba(43, 27, 82, .98) 5%,
+      rgba(22, 14, 45, .99) 9%,
+      rgba(12, 9, 24, .995) 15%,
+      rgba(10, 8, 20, .995) 50%,
+      rgba(12, 9, 24, .995) 85%,
+      rgba(22, 14, 45, .99) 91%,
+      rgba(43, 27, 82, .98) 95%,
+      rgba(12, 7, 29, .99) 100%) !important;
+  box-shadow:
+    inset 0 0 0 4px rgba(7, 4, 18, .72),
+    inset 0 0 0 6px rgba(167, 135, 232, .12),
+    inset 26px 0 20px -22px rgba(142, 99, 229, .34),
+    inset -26px 0 20px -22px rgba(142, 99, 229, .34),
+    inset 0 10px 24px rgba(122, 82, 206, .06),
+    inset 0 -16px 26px rgba(0, 0, 0, .34),
+    0 15px 32px rgba(5, 2, 18, .28) !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+  font-size: clamp(1rem, 1.22vw, 1.16rem) !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+  letter-spacing: .095em !important;
+  text-transform: uppercase !important;
+  text-shadow:
+    0 1px 0 rgba(0,0,0,.82),
+    0 0 12px rgba(203, 179, 255, .18),
+    0 0 26px rgba(128, 88, 217, .08) !important;
+}
+
+/* The old pseudo-elements were decorative raised bands. The binding now lives
+   in the layered spine background, so these can become the terminal prompt/cursor. */
+.nx-header__label::before,
+.nx-header__label::after {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  width: auto !important;
+  height: auto !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  line-height: 1 !important;
+  color: #cbb5ff !important;
+  text-shadow: 0 0 12px rgba(172, 134, 255, .36) !important;
+}
+
+.nx-header__label::before {
+  content: ">" !important;
+  margin-right: .08em !important;
+}
+
+.nx-header__label::after {
+  content: "_" !important;
+  margin-left: -.16em !important;
+  animation: nxTerminalCursor 1.15s steps(1, end) infinite;
+}
+
+@keyframes nxTerminalCursor {
+  0%, 48% { opacity: 1; }
+  50%, 100% { opacity: .18; }
+}
+
+/* Login becomes the terminal command paired with the center spine. */
+.nx-account summary {
+  min-width: 166px !important;
+  height: 54px !important;
+  gap: 10px !important;
+  padding: 0 18px !important;
+  border: 1px solid rgba(188, 159, 244, .4) !important;
+  border-radius: 7px !important;
+  color: #efe7ff !important;
+  background:
+    repeating-linear-gradient(180deg, rgba(255,255,255,.016) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, rgba(28, 19, 55, .98) 0%, rgba(13, 9, 29, .995) 100%) !important;
+  box-shadow:
+    inset 0 0 0 3px rgba(7, 4, 18, .5),
+    inset 0 1px 0 rgba(255,255,255,.055),
+    inset 0 -12px 20px rgba(0,0,0,.2),
+    0 10px 24px rgba(5,2,18,.24) !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+  font-size: .72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .065em !important;
+  text-transform: uppercase !important;
+}
+
+.nx-account summary::after {
+  content: "> GİRİŞ YAP_" !important;
+  color: #eee5ff !important;
+  white-space: nowrap !important;
+  text-shadow: 0 0 10px rgba(174, 135, 255, .18) !important;
+}
+
+.nx-account:has(.nx-account__identity) summary::after {
+  content: "> HESABIM_" !important;
+}
+
+.nx-account summary:hover,
+.nx-account[open] summary {
+  transform: translateY(-1px) !important;
+  border-color: rgba(208, 185, 255, .62) !important;
+  background:
+    repeating-linear-gradient(180deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, rgba(40, 27, 76, .99) 0%, rgba(17, 11, 36, 1) 100%) !important;
+  box-shadow:
+    inset 0 0 0 3px rgba(7, 4, 18, .46),
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 13px 28px rgba(5,2,18,.3),
+    0 0 20px rgba(126, 85, 218, .12) !important;
+}
+
+.nx-account summary svg {
+  color: #cbb5ff !important;
+  filter: drop-shadow(0 0 7px rgba(172, 134, 255, .16));
+}
+
+@media (max-width: 1100px) {
+  .nx-header__label {
+    width: min(100%, 560px) !important;
+    min-height: 68px !important;
+    padding-inline: 52px !important;
+    font-size: .88rem !important;
+    letter-spacing: .075em !important;
+  }
+
+  .nx-account summary {
+    min-width: 146px !important;
+    height: 49px !important;
+    padding-inline: 14px !important;
+    font-size: .66rem !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .nx-header__label {
+    min-height: 52px !important;
+    padding-inline: 22px !important;
+    gap: .5em !important;
+    border-radius: 6px / 13px !important;
+    font-size: .59rem !important;
+    letter-spacing: .045em !important;
+    white-space: normal !important;
+    line-height: 1.2 !important;
+  }
+
+  .nx-account summary {
+    min-width: 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    border-radius: 7px !important;
+  }
+
+  .nx-account summary::after {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .nx-header__label {
+    min-height: 48px !important;
+    padding-inline: 16px !important;
+    font-size: .52rem !important;
+    letter-spacing: .03em !important;
+  }
+
+  .nx-account summary {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+  }
+}

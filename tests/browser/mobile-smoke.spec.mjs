@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { expect, test } from "@playwright/test";
 
 const viewports = {
@@ -88,6 +90,40 @@ for (const scenario of protectedCases) {
     });
 
     await expect(page).toHaveURL(/\/giris(?:\?|$)/);
+    await expectResponsiveDocument(page);
+  });
+}
+
+
+const writingGuideShellSource = readFileSync(
+  new URL("../../src/components/content/WritingGuideShell.tsx", import.meta.url),
+  "utf8",
+);
+const writingGuideMapMatch = writingGuideShellSource.match(
+  /const LIVE_WRITING_GUIDE_HREFS:[\s\S]*?=\s*\{([\s\S]*?)\};/,
+);
+const writingGuideRoutes = writingGuideMapMatch
+  ? [...writingGuideMapMatch[1].matchAll(/^\s*"?([a-z0-9-]+)"?:\s*"([^"]+)",?\s*$/gm)]
+      .map((match) => ({ slug: match[1], path: match[2] }))
+      .filter(({ path }) => path.startsWith("/yazarlar-icin/"))
+  : [];
+
+test("writing guide mobile route inventory is available", async () => {
+  expect(writingGuideRoutes.length).toBeGreaterThan(0);
+  expect(new Set(writingGuideRoutes.map(({ path }) => path)).size).toBe(
+    writingGuideRoutes.length,
+  );
+});
+
+for (const guide of writingGuideRoutes) {
+  test(`writing guide 390px smoke: ${guide.slug}`, async ({ page }) => {
+    await page.setViewportSize(viewports.phone390);
+
+    const response = await page.goto(guide.path, {
+      waitUntil: "domcontentloaded",
+    });
+
+    expect(response?.status()).toBe(200);
     await expectResponsiveDocument(page);
   });
 }

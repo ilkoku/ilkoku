@@ -31,24 +31,25 @@ Project-standard status vocabulary:
 An intentionally inactive payment/provider prerequisite is **not** a failure. Keep
 that row `HUMAN_PENDING` with the prerequisite recorded.
 
-## Current execution note — 21.09.2026
+## Current execution note — 24.09.2026
 
-- Current review branch: `feature/commerce-foundation-v1`.
-- Current reviewed HEAD: `96b2ad1cc93a00c5b50a6fb677606b8592ae9b80` at the time of this note.
-- CI Run `#2814` completed successfully for that HEAD.
-- Repository contains a Hostinger preview target used by load-test tooling, but the available GitHub/Hostinger integrations do not provide evidence that the preview currently serves this exact Commerce branch SHA.
-- The preview host could not be opened from the available browser/web environment during this UAT preparation session.
-- Therefore no browser row is promoted to `HUMAN_PASS`; affected rows remain `HUMAN_PENDING` until the exact deployed SHA and real role/account session are verified.
-- This is an evidence/prerequisite gap, not a product failure; no row is marked `BLOCKED` on this basis.
+- Commerce Foundation PR #945 is merged; the frozen Commerce model is now part of `main`.
+- Current validated `main` baseline at the time of this note: `949e8269da55a078f0f28e17196eb13362b86aa4`.
+- Main CI run `36021229299`: **SUCCESS**.
+- Production Smoke run `36021229025`: **SUCCESS**.
+- Repository/code-level Commerce controls remain **AUTOMATED_PASS**.
+- Production browser/human acceptance remains **HUMAN_PENDING** until each required Writer, Reader and Admin flow is actually exercised with the required real role/account identities and dated evidence is recorded.
+- Provider-dependent payment scenarios remain **HUMAN_PENDING** because no operational production-safe payment provider adapter is registered.
+- Green CI, browser automation or Production Smoke is technical evidence only; none of them promotes a human row to `HUMAN_PASS`.
 
 ## 1.1 Exact deployment SHA verification
 
-Before any browser scenario:
+Before any production browser scenario:
 
-1. Read the current PR #945 HEAD SHA from GitHub.
-2. Open `/api/build-info` on the exact preview/staging host being tested.
-3. Confirm the returned `commitSha` equals the full PR HEAD SHA.
-4. If `commitSha` is `null`, missing, stale or different, do not start browser acceptance; keep the rows `HUMAN_PENDING`.
+1. Read the current `main` HEAD SHA from GitHub and record the exact build intended for testing.
+2. Open `/api/build-info` on `https://ilkoku.com`.
+3. Confirm the returned `commitSha` equals the exact recorded `main` SHA.
+4. If `commitSha` is `null`, missing, stale or different, do not promote the scenario to `HUMAN_PASS`; keep it `HUMAN_PENDING` until build identity is proven.
 
 The endpoint is generated from build-time `git rev-parse HEAD`; it does not read runtime ENV values, user data or the database, and its response is `no-store` / `noindex`.
 
@@ -58,9 +59,9 @@ Record these before any browser test:
 
 | Field | Value |
 | --- | --- |
-| Branch | `feature/commerce-foundation-v1` |
+| Branch | `main` |
 | Commit SHA | |
-| Preview / staging URL | |
+| Production URL | `https://ilkoku.com` |
 | Database/environment | |
 | Checkout flag | |
 | Operational production-safe provider | |
@@ -69,8 +70,8 @@ Record these before any browser test:
 | Tester | |
 | Date/time | |
 
-The branch SHA shown in the environment must match the SHA recorded here. If it
-cannot be proven, stop and keep all browser rows `HUMAN_PENDING`.
+The production build SHA shown by `/api/build-info` must match the SHA recorded here. If it
+cannot be proven, keep the affected browser rows `HUMAN_PENDING` and do not infer acceptance from CI, browser automation or smoke results.
 
 ## 3. Required test identities and data
 
@@ -409,28 +410,27 @@ Presence of an executable mutation for an undecided rule is `BLOCKED`.
 
 ## 10.1 Final Release production evidence boundary
 
-The pre-merge Commerce Foundation browser acceptance in this runbook and the
-repository-wide Final Release production UAT are separate evidence layers.
+Commerce Foundation code acceptance and repository-wide Final Release production UAT
+are separate evidence layers even though the foundation is already merged to `main`.
 
-- **Pre-merge Commerce browser acceptance:** may be executed on an exact-SHA preview/staging environment with the required real role/account identities. It is used to decide whether PR #945 is safe to leave Draft and proceed toward explicit merge approval.
-- **Final Release production acceptance:** the three Commerce rows in `docs/final-release-uat-addendum.md` remain `HUMAN_PENDING` until the corresponding flows are exercised with real production accounts under the existing Final Release rules.
-- Preview/staging evidence must not be copied into the Final Release matrix as `HUMAN_PASS`.
+- **Commerce production browser acceptance:** execute the safely available Writer, Reader, Coupon and Finance scenarios on an exact-SHA production build with the required real role/account identities.
+- **Final Release production acceptance:** the Commerce rows in `docs/final-release-uat-addendum.md` remain `HUMAN_PENDING` until their corresponding production flows are exercised with real production accounts under the existing Final Release rules.
+- Automated CI/browser evidence must not be copied into the Final Release matrix as `HUMAN_PASS`.
 - Production paid-provider activation remains an additional, separate boundary and still requires the provider-dependent scenarios defined below this runbook's paid-activation acceptance rules.
 
 ## 11. Exit criteria
 
 There are two distinct acceptance boundaries:
 
-### Commerce Foundation browser acceptance
+### Commerce production browser acceptance
 
-This foundation-level browser acceptance can be recorded when:
+This browser acceptance can be recorded when:
 
-1. the exact tested branch SHA is recorded;
+1. the exact tested production `main` SHA is recorded and matches `/api/build-info`;
 2. every safely executable Writer, Reader, Coupon and Finance row is `HUMAN_PASS`;
 3. provider-dependent rows that cannot yet run safely remain explicitly `HUMAN_PENDING` with the prerequisite recorded;
 4. no attempted row is `BLOCKED`;
-5. human acceptance evidence is recorded without credentials, session data or PII;
-6. PR #945 remains unmerged until explicit merge approval is given.
+5. human acceptance evidence is recorded without credentials, session data or PII.
 
 ### Production paid-activation acceptance
 

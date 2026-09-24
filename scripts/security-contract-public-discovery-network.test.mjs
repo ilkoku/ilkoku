@@ -203,7 +203,7 @@ test("content and age policy is enforced from work creation to the public readin
 test("sitemap, homepage and book pages form a truthful public graph", () => {
   const sitemap = source("src/app/sitemap.ts");
   const homepage = source("src/app/page.tsx");
-  const homepageExperience = source("src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx");
+  const homepageExperience = source("src/features/homepage/HomepageExperience.tsx");
   const publicNavigation = source("src/lib/public-site-navigation.ts");
   const book = source("src/app/kitap/[slug]/page.tsx");
   const showcase = source(
@@ -219,7 +219,7 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
 
   notContains(sitemap, "foundationalGuides", "retired guide sitemap source");
   notContains(sitemap, "contentKey LIKE 'guide:%'", "retired CMS guide sitemap inventory");
-  contains(homepage, 'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"', "homepage neutral experience boundary");
+  contains(homepage, 'import HomepageExperience from "@/features/homepage/HomepageExperience"', "homepage neutral experience boundary");
   notContains(homepage, 'from "./onizleme/ana-sayfa-yeni/page"', "homepage must not import the preview route module");
   contains(homepageExperience, '|| "/nasil-calisir"', "homepage live public fallback");
   notContains(homepageExperience, '|| "/eserler"', "homepage paused discovery fallback");

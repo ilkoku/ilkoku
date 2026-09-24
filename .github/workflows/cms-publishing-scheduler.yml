@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Run CMS publishing scheduler
         env:
-          SCHEDULER_SECRET: ${{ secrets.WRITER_DAILY_SUMMARY_SECRET }}
+          SCHEDULER_SECRET: ${{ secrets.CMS_SCHEDULER_SECRET || secrets.WRITER_DAILY_SUMMARY_SECRET }}
         run: |
           set -euo pipefail
           test -n "$SCHEDULER_SECRET"

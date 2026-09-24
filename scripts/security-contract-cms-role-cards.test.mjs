@@ -111,7 +111,7 @@ test("role cards are a dedicated CMS module with fail-safe TR server-rendered pu
   assertContains(modules, 'href: "/icerik/rol-kartlari"', "role card CMS navigation");
   assertContains(api, "getPublishedRoleCardsState(locale)", "role card public published-state read");
   assertContains(api, 'status: 503', "role card corrupt/unavailable fail-safe response");
-  assertContains(homepage, 'import HomepageExperience from "./onizleme/ana-sayfa-yeni/HomepageExperience"', "TR live homepage experience boundary");
+  assertContains(homepage, 'import HomepageExperience from "@/features/homepage/HomepageExperience"', "TR live homepage experience boundary");
   assertContains(turkish, 'getPublishedRoleCardsState("tr")', "TR server-side published role card read");
   assertContains(turkish, 'roleCardState.state === "valid"', "TR strict published-state fallback boundary");
   assertContains(turkish, 'roleCardsFromPayload("tr", roleCardState.payload)', "TR canonical role card payload render");

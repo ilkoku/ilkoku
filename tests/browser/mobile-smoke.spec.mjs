@@ -205,6 +205,43 @@ for (const scenario of authenticatedCases) {
 }
 
 
+const crossRoleNegativeCases = [
+  { role: "reader", path: "/yazar", label: "reader cannot enter writer workspace" },
+  { role: "reader", path: "/editor/kesfet", label: "reader cannot enter editor workspace" },
+  { role: "reader", path: "/yayinevi", label: "reader cannot enter publisher workspace" },
+  { role: "reader", path: "/admin", label: "reader cannot enter admin workspace" },
+  { role: "writer", path: "/editor/kesfet", label: "writer cannot enter editor workspace" },
+  { role: "writer", path: "/yayinevi", label: "writer cannot enter publisher workspace" },
+  { role: "writer", path: "/admin", label: "writer cannot enter admin workspace" },
+  { role: "editor", path: "/yayinevi", label: "editor cannot enter publisher workspace" },
+  { role: "editor", path: "/admin", label: "editor cannot enter admin workspace" },
+];
+
+for (const scenario of crossRoleNegativeCases) {
+  test(`cross-role negative smoke: ${scenario.label}`, async ({ page }) => {
+    test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+    const token = authFixture.sessions?.[scenario.role];
+    expect(token, `Missing ${scenario.role} session fixture`).toBeTruthy();
+
+    await page.context().addCookies([
+      {
+        name: authFixture.cookieName,
+        value: token,
+        url: authCookieUrl,
+      },
+    ]);
+
+    await page.goto(scenario.path, {
+      waitUntil: "domcontentloaded",
+    });
+
+    await expect(page).toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+    await expectResponsiveDocument(page);
+  });
+}
+
+
 
 const writingGuideShellSource = readFileSync(
   new URL("../../src/components/content/WritingGuideShell.tsx", import.meta.url),

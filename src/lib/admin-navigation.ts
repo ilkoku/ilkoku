@@ -40,6 +40,7 @@ export const adminNavigation: AdminNavItem[] = [
   { href: systemPath("/basvurular"), label: "Başvurular", icon: "applications" },
   { href: systemPath("/roller"), label: "Rol ve Yetkiler", icon: "settings" },
   { href: systemPath("/arsiv"), label: "Arşiv Merkezi", icon: "audit" },
+  { href: systemPath("/silme-merkezi"), label: "Silme Merkezi", icon: "audit" },
   { href: systemPath("/epostalar"), label: "E-postalar", icon: "email" },
   { href: systemPath("/eposta-operasyonlari"), label: "E-posta Operasyonları", icon: "email" },
   { href: systemPath("/okuma-guvenligi"), label: "Okuma Güvenliği", icon: "audit" },

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import LiveHomepageFooter from "@/app/onizleme/ana-sayfa-yeni/live-footer";
+import LiveHomepageFooter from "@/features/homepage/live-footer";
 import {
   getEditorEducationGuideRecord,
   getEditorEducationPublishedTextRecord,

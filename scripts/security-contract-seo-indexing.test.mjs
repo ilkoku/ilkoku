@@ -217,7 +217,9 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
 
   for (const changedFile of [
     "src/app/sitemap.ts",
+    "src/app/landing-footer-tight.css",
     "src/lib/public-site-navigation.ts",
+    "src/components/content/PublicCmsHydrator.tsx",
     "public/trust-pages/editorial-standards.webp",
   ]) {
     const selection = selectIndexNowUrls({
@@ -245,6 +247,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   assertContains(workflow, "node scripts/prepare-indexnow-payload.mjs", "IndexNow diff-aware payload selector");
   assertContains(workflow, '"src/features/homepage/**"', "homepage feature IndexNow trigger");
   assertContains(workflow, '"src/lib/public-site-navigation.ts"', "global navigation IndexNow trigger");
+  assertContains(workflow, '"src/components/content/PublicCmsHydrator.tsx"', "shared public layout IndexNow trigger");
   assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");
 });
 

@@ -5,6 +5,7 @@
   "acknowledgedMigrationOnlyTables": [
     "BookStructureItem",
     "BookTrashItem",
+    "ChapterFormatting",
     "ContentManagerAccess",
     "ContentPage",
     "ContentRevision",
@@ -24,7 +25,6 @@
     "WriterDailySummaryDelivery"
   ],
   "acknowledgedUnlinkedRoutes": [
-    "/harita/kesif",
-    "/onizleme/ana-sayfa-eski"
+    "/harita/kesif"
   ]
 }

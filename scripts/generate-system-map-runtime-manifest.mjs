@@ -41,6 +41,7 @@ const guardMarkers = [
   ["getCmsAccess", "CMS access"],
   ["isSameOriginRequest", "same-origin check"],
   ["timingSafeEqual", "timing-safe secret check"],
+  ["verifyWebhook", "provider signature verification"],
   ["auth(", "auth()"],
   ["session", "session check"],
 ];

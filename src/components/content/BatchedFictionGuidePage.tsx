@@ -6,8 +6,7 @@ import type { FictionGuideDefinition } from "@/lib/fiction-guide-batch";
 import { getFictionGuideExtraSections } from "@/lib/fiction-guide-depth";
 import { getFictionPedagogyParity } from "@/lib/fiction-guide-pedagogy-parity";
 
-const visualKeys = ["hero", "ideaFlow", "structure", "anatomy", "pageSetup", "project", "finalCta"] as const;
-type VisualKey = (typeof visualKeys)[number];
+type VisualKey = "hero" | "ideaFlow" | "structure" | "anatomy" | "pageSetup" | "project" | "finalCta";
 
 type VisualMap = Record<VisualKey, string>;
 type AltMap = Record<VisualKey, string>;

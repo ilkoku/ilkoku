@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -236,21 +237,24 @@ export function WriterRichTextFormattingTools() {
     };
   }, []);
 
-  function scheduleSave(nextFormatting: ChapterFormatting, editor = identity) {
-    if (!editor.workId || !editor.chapterId) return;
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+  const scheduleSave = useCallback(
+    (nextFormatting: ChapterFormatting, editor = identity) => {
+      if (!editor.workId || !editor.chapterId) return;
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
-    const raw = serializeChapterFormatting(nextFormatting);
-    syncFormattingInputs(raw);
-    saveTimeoutRef.current = setTimeout(() => {
-      void saveWriterChapterFormattingAction({
-        chapterId: editor.chapterId,
-        content: editor.content,
-        formatting: raw,
-        workId: editor.workId,
-      });
-    }, FORMAT_SAVE_DELAY);
-  }
+      const raw = serializeChapterFormatting(nextFormatting);
+      syncFormattingInputs(raw);
+      saveTimeoutRef.current = setTimeout(() => {
+        void saveWriterChapterFormattingAction({
+          chapterId: editor.chapterId,
+          content: editor.content,
+          formatting: raw,
+          workId: editor.workId,
+        });
+      }, FORMAT_SAVE_DELAY);
+    },
+    [identity],
+  );
 
   useEffect(() => {
     if (!identity.workId || !identity.chapterId) return;
@@ -292,7 +296,7 @@ export function WriterRichTextFormattingTools() {
       setFormatting(next);
       scheduleSave(next, identity);
     }
-  }, [identity]);
+  }, [identity, scheduleSave]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {

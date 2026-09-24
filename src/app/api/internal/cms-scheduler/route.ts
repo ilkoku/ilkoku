@@ -6,8 +6,14 @@ import { runCmsPublishingScheduler } from "@/lib/cms-scheduler";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+function configuredSecret() {
+  return process.env.CMS_SCHEDULER_SECRET?.trim()
+    || process.env.WRITER_DAILY_SUMMARY_SECRET?.trim()
+    || "";
+}
+
 function authorized(request: NextRequest) {
-  const configured = process.env.WRITER_DAILY_SUMMARY_SECRET?.trim();
+  const configured = configuredSecret();
   const authorization = request.headers.get("authorization")?.trim() ?? "";
   const supplied = authorization.startsWith("Bearer ")
     ? authorization.slice("Bearer ".length).trim()
@@ -21,7 +27,7 @@ function authorized(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.WRITER_DAILY_SUMMARY_SECRET?.trim()) {
+  if (!configuredSecret()) {
     return NextResponse.json({ ok: false, error: "CMS_SCHEDULER_SECRET_MISSING" }, { status: 503 });
   }
   if (!authorized(request)) {

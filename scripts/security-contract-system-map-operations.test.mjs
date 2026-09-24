@@ -61,6 +61,7 @@ test("API evidence classification distinguishes public, CMS-protected and intern
   const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
 
   for (const path of [
+    "/api/build-info",
     "/api/content-faq",
     "/api/media",
     "/api/public-announcements",
@@ -70,11 +71,15 @@ test("API evidence classification distinguishes public, CMS-protected and intern
     contains(collector, `"${path}"`, `${path} public API classification`);
   }
   contains(collector, "publicApiPaths", "public API registry");
+  contains(collector, "signedWebhookApiPaths", "signed webhook registry");
+  contains(collector, '"/api/commerce/payments/[provider]/webhook"', "commerce webhook classification");
+  contains(collector, "provider signature doğrulaması", "signed webhook access label");
   contains(collector, "cmsProtectedApiPaths", "CMS API registry");
   contains(collector, 'matchesPath(route, "/api/internal")', "internal secret API classification");
   contains(generator, '["getCmsAccess", "CMS access"]', "CMS access guard evidence");
   contains(generator, '["isSameOriginRequest", "same-origin check"]', "same-origin guard evidence");
   contains(generator, '["timingSafeEqual", "timing-safe secret check"]', "timing-safe secret guard evidence");
+  contains(generator, '["verifyWebhook", "provider signature verification"]', "provider webhook signature guard evidence");
 });
 
 test("operations report cross-checks menu targets, workflows, route dependencies and API guards", () => {

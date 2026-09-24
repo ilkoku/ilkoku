@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Check email delivery operations
         env:
-          SUMMARY_SECRET: ${{ secrets.WRITER_DAILY_SUMMARY_SECRET }}
+          SUMMARY_SECRET: ${{ secrets.EMAIL_OPERATIONS_SECRET || secrets.WRITER_DAILY_SUMMARY_SECRET }}
         run: |
           set -euo pipefail
           test -n "$SUMMARY_SECRET"

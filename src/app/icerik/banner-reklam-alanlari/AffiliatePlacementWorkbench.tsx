@@ -31,16 +31,6 @@ function errorLabel(field: string | null) {
   return "Affiliate kodlarını kontrol edin.";
 }
 
-function previewFrom(setting: AffiliatePlacementSetting): PreviewState | null {
-  const validation = validateAffiliateCreativeSet(setting);
-  if (!validation.ok || !validation.desktop || !validation.mobile || !validation.text) return null;
-  return {
-    desktop: validation.desktop,
-    mobile: validation.mobile,
-    text: validation.text,
-  };
-}
-
 export function AffiliatePlacementWorkbench({ initialSetting, firstRun }: Props) {
   const [setting, setSetting] = useState(initialSetting);
   const [editing, setEditing] = useState(false);

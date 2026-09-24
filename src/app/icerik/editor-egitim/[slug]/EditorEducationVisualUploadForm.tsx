@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useRef, useState } from "react";
 
@@ -50,6 +51,7 @@ export default function EditorEducationVisualUploadForm({
   defaultAltText,
   hasVisual,
 }: Props) {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [filename, setFilename] = useState("Dosya seçilmedi");
   const [check, setCheck] = useState<ImageCheck | null>(null);
@@ -136,11 +138,14 @@ export default function EditorEducationVisualUploadForm({
       if (xhr.status >= 200 && xhr.status < 300) {
         setProgress(100);
         const target = xhr.responseURL;
-        if (target && new URL(target).origin === window.location.origin) {
-          window.location.assign(target);
-          return;
+        if (target) {
+          const targetUrl = new URL(target);
+          if (targetUrl.origin === window.location.origin) {
+            router.push(`${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`);
+            return;
+          }
         }
-        window.location.assign(`/icerik/editor-egitim/${categorySlug}?yuklendi=${slotKey}`);
+        router.push(`/icerik/editor-egitim/${categorySlug}?yuklendi=${slotKey}`);
         return;
       }
       setUploading(false);

@@ -29,6 +29,6 @@ test("writer work cover upload stays ownership-bound and fail-closed", () => {
   assert.match(inspector, /image\/webp/);
 
   assert.match(workspace, /<WorkCoverUpload workId=\{work\.id\} \/>/);
-  assert.match(workspace, /work\.coverUrl \?/);
+  assert.ok(workspace.includes("work.coverUrl ?"), "workspace must render stored coverUrl when present");
   assert.match(workspace, /unoptimized/);
 });

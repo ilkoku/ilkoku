@@ -28,6 +28,7 @@ const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 const now = new Date();
 const sessions = {};
 const userIds = {};
+let writerCommerceWorkId = null;
 
 function hashToken(token) {
   return createHash("sha256").update(token).digest("hex");
@@ -241,7 +242,7 @@ try {
 
   const commerceWorkId = randomUUID();
   const commerceChapterId = randomUUID();
-  const writerCommerceWorkId = randomUUID();
+  writerCommerceWorkId = randomUUID();
   const writerCommerceChapterId = randomUUID();
   const commerceAgreementVersion = "ci-browser-v1";
 

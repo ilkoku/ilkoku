@@ -103,7 +103,7 @@ test("role cards are a dedicated CMS module with fail-safe TR server-rendered pu
   const modules = source("src/lib/cms-modules.ts");
   const api = source("src/app/api/site-content/role-cards/route.ts");
   const hydrator = source("src/components/content/PublicCmsHydrator.tsx");
-  const turkish = source("src/app/onizleme/ana-sayfa-yeni/HomepageExperience.tsx");
+  const turkish = source("src/features/homepage/HomepageExperience.tsx");
   const homepage = source("src/app/page.tsx");
   const localeState = source("src/lib/cms-locale-state.ts");
   const queue = source("src/app/icerik/yayin-kuyrugu/page.tsx");

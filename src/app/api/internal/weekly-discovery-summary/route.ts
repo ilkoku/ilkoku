@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 function configuredSecret() {
-  return process.env.SUMMARY_JOBS_SECRET?.trim()
+  return process.env.WEEKLY_DISCOVERY_SUMMARY_SECRET?.trim()
+    || process.env.SUMMARY_JOBS_SECRET?.trim()
     || process.env.WRITER_DAILY_SUMMARY_SECRET?.trim()
     || "";
 }

@@ -121,6 +121,16 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/onizleme/ana-sayfa-yeni/history-art/:path*",
+        destination: "/api/site-assets/home-history/:path*",
+        permanent: true,
+      },
+      {
+        source: "/onizleme/ana-sayfa-yeni",
+        destination: "/",
+        permanent: true,
+      },
+      {
         source: "/admin",
         destination: "/sistem-yonetimi",
         permanent: true,

@@ -1,6 +1,8 @@
 name: SEO indexability smoke
 
 on:
+  schedule:
+    - cron: "15 6 * * 2"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -23,6 +25,7 @@ jobs:
 
     steps:
       - name: Validate explicit confirmation
+        if: github.event_name == 'workflow_dispatch'
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |
@@ -135,4 +138,4 @@ jobs:
             echo "Book Index is not published in sitemap; gated SEO checks remain skipped."
           fi
 
-          echo "PASS: manually requested low-impact SEO diagnostic completed."
+          echo "PASS: low-impact SEO indexability diagnostic completed."

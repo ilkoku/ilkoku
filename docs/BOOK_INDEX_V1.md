@@ -288,3 +288,20 @@ bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplan�
 - Mevcut `1 kaynak = 1 oy` ve minimum 3 bağımsız kaynak kuralı aynen korunur.
 - Bu görünüm yalnız admin içindir; public route ve sitemap açılımı hâlâ kapalıdır.
 
+### KitapSepeti
+
+- `https://www.kitapsepeti.com/cok-satan-kitaplar` şeffaf
+  `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent ile HTTP 200
+  döndürüyor.
+- Çok satanlar sayfası ürünleri server-rendered HTML içinde sıralı
+  `product-item` kartları olarak veriyor; headless browser gerekmiyor.
+- Kart içinde başlık `product-title`, yayınevi `brand-title`, yazar
+  `model-title`, fiyat `product-price` ve ürün/görsel URL'leri bulunuyor.
+- İlk sayfadaki görünür sıralama kaynak sırası olarak korunur; V1 collector
+  Top 30 ile sınırlıdır ve en az 20 geçerli kart yoksa fail-closed davranır.
+- ISBN listing üzerinde güvenilir biçimde görünmediği için ilk eşleştirme
+  normalize başlık+yazar üzerinden yapılır; gerektiğinde manuel eşleştirme
+  kuyruğu kullanılır.
+- Kaynak V1 Türkiye Endeksi'ne dahil edilir; ancak sponsorlu/özel yerleşim
+  sinyali ileride tespit edilirse organik ranktan ayrılmalıdır.
+

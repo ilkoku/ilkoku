@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { BookIndexOverviewView } from "@/features/book-index/public/BookIndexPublicView";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexInsights } from "@/lib/book-index/insights";
 import { createBookIndexItemListSchema, getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
@@ -33,7 +34,10 @@ export default async function BestsellersPage() {
   const context = await getBookIndexPublicPageContext(30);
   if (!context) notFound();
 
-  const lastObservedAt = getBookIndexLastObservedAt(context.model);
+  const [lastObservedAt, insights] = await Promise.all([
+    Promise.resolve(getBookIndexLastObservedAt(context.model)),
+    getBookIndexInsights(20),
+  ]);
   const schema = [
     {
       "@context": "https://schema.org",
@@ -89,7 +93,7 @@ export default async function BestsellersPage() {
           __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
         }}
       />
-      <BookIndexOverviewView model={context.model} />
+      <BookIndexOverviewView model={context.model} insights={insights} />
     </>
   );
 }

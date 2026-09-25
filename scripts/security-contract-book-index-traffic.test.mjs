@@ -88,3 +88,25 @@ test("scheduled IndexNow refresh remains fail-closed while Book Index is absent 
   assert.equal(result.mode, "book-index");
   assert.deepEqual(result.urls, []);
 });
+
+
+test("Book Index uses a dedicated social preview for result-sharing CTR", () => {
+  const overview = source("src/app/en-cok-satanlar/page.tsx");
+  const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
+  const image = source("src/app/en-cok-satanlar/opengraph-image.tsx");
+
+  contains(
+    overview,
+    'image: "/en-cok-satanlar/opengraph-image"',
+    "overview social image",
+  );
+  contains(
+    turkey,
+    'image: "/en-cok-satanlar/opengraph-image"',
+    "Turkey social image",
+  );
+  contains(image, "1200", "social image width");
+  contains(image, "630", "social image height");
+  contains(image, "En Çok Satan Kitaplar", "search-intent social headline");
+  contains(image, "1 kaynak = 1 oy", "trust signal");
+});

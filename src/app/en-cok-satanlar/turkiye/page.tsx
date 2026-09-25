@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { TurkeyBookIndexView } from "@/features/book-index/public/BookIndexPublicView";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { createBookIndexItemListSchema, getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 const baseUrl = "https://ilkoku.com";
@@ -28,6 +29,7 @@ export default async function TurkeyBestsellersPage() {
   const context = await getBookIndexPublicPageContext(100);
   if (!context || context.model.turkey.availability !== "available") notFound();
 
+  const lastObservedAt = getBookIndexLastObservedAt(context.model);
   const schema = [
     {
       "@context": "https://schema.org",
@@ -36,11 +38,23 @@ export default async function TurkeyBestsellersPage() {
       description,
       url: `${baseUrl}${canonical}`,
       inLanguage: "tr-TR",
+      ...(lastObservedAt ? { dateModified: lastObservedAt.toISOString() } : {}),
+      mainEntity: {
+        "@id": `${baseUrl}${canonical}#ranking`,
+      },
       isPartOf: {
         "@type": "WebSite",
         name: "İlkOku",
         url: baseUrl,
       },
+    },
+    {
+      ...createBookIndexItemListSchema({
+        name: "Türkiye'de En Çok Satan Kitaplar",
+        url: `${baseUrl}${canonical}#ranking`,
+        items: context.model.turkey.items,
+      }),
+      "@id": `${baseUrl}${canonical}#ranking`,
     },
     {
       "@context": "https://schema.org",

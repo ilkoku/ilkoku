@@ -15,67 +15,59 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect BKM page bundle for public list transport
+      - name: Inspect rendered BKM bestseller DOM once
         shell: bash
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
-          page="https://www.bkmkitap.com/cok-satan-kitaplar"
-          curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/bkm.html "$page"
+          url="https://www.bkmkitap.com/cok-satan-kitaplar"
 
-          bundle="$(python3 - <<'PY'
-          from pathlib import Path
-          import re
-          text=Path("/tmp/bkm.html").read_text(errors="replace")
-          m=re.search(r'<script[^>]+src=["\']([^"\']*/srv/compressed/load/v5/js/tr/17/0\.js[^"\']*)["\']', text, re.I)
-          print(m.group(1) if m else "")
-          PY
-          )"
-
-          if [[ -z "$bundle" ]]; then
-            echo "BUNDLE_NOT_FOUND"
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [[ -z "$chrome" ]]; then
+            echo "CHROME_NOT_FOUND"
             exit 1
           fi
+          echo "CHROME=$chrome"
 
-          if [[ "$bundle" == //* ]]; then
-            bundle="https:$bundle"
-          fi
-          echo "BUNDLE=$bundle"
-          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/bkm.js -w "%{http_code}" "$bundle")"
-          echo "BUNDLE_HTTP=$code BYTES=$(wc -c < /tmp/bkm.js)"
+          "$chrome"             --headless=new             --no-sandbox             --disable-gpu             --disable-dev-shm-usage             --user-agent="$ua"             --virtual-time-budget=10000             --dump-dom "$url" > /tmp/bkm-rendered.html 2>/tmp/chrome.err || true
+
+          echo "BYTES=$(wc -c < /tmp/bkm-rendered.html)"
+          echo "PRODUCT_ITEM_COUNT=$(grep -Eo 'class="[^"]*product-item[^"]*"' /tmp/bkm-rendered.html | wc -l || true)"
+          echo "PRODUCTITEM_COUNT=$(grep -Eo 'class="[^"]*productItem[^"]*"' /tmp/bkm-rendered.html | wc -l || true)"
 
           python3 - <<'PY'
           from pathlib import Path
-          import re
-          text=Path("/tmp/bkm.js").read_text(errors="replace")
+          import re, html
 
-          patterns=[
-            r"ajax\.php.{0,1600}",
-            r"/srv/service/.{0,1800}",
-            r"product-item.{0,1800}",
-            r"productItem.{0,1800}",
-            r"dynamic.{0,2200}",
-            r"loadMore.{0,2200}",
-            r"PAGE_ID.{0,1800}",
-            r"page_id.{0,1800}",
-          ]
-          for p in patterns:
-            print("\n---",p,"---")
-            shown=0
-            for m in re.finditer(p,text,re.I|re.S):
-              print(m.group(0)[:2600].replace("\n"," "))
-              shown+=1
-              if shown>=12: break
-            print("COUNT_SHOWN",shown)
+          text=Path("/tmp/bkm-rendered.html").read_text(errors="replace")
+          print("--- CLASSES ---")
+          classes=[]
+          for m in re.finditer(r'class=["\']([^"\']*(?:product-item|productItem)[^"\']*)["\']', text, re.I):
+            if m.group(1) not in classes: classes.append(m.group(1))
+          for c in classes[:50]: print(c)
 
-          print("\n--- URL-LIKE STRINGS ---")
-          urls=[]
-          for m in re.finditer(r'["\']([^"\']{1,500})["\']',text):
-            value=m.group(1)
-            low=value.casefold()
-            if any(k in low for k in ["ajax","product","category","srv/service","load"]):
-              if value not in urls:
-                urls.append(value)
-          for value in urls[:150]:
-            print(value)
+          print("--- PRODUCT CARD WINDOWS ---")
+          positions=[]
+          for token in ['class="product-item','class="productItem']:
+            start=0
+            while len(positions)<12:
+              p=text.find(token,start)
+              if p<0: break
+              positions.append(p); start=p+len(token)
+          for p in sorted(positions)[:12]:
+            print("\n###",p)
+            print(text[p:p+4000])
+
+          print("--- VISIBLE BOOK-LIKE ANCHORS ---")
+          seen=set()
+          for href, body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,900}?)</a>', text, re.I):
+            clean=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',body))).strip()
+            if href in seen or not clean: continue
+            if 'bkmkitap.com' in href and not any(x in href for x in ['/kitap/', '/kategori/', '/yayinevi/', '/yazar/']):
+              seen.add(href)
+              print(href, "=>", clean[:220])
+              if len(seen)>=60: break
           PY
+
+          echo "--- CHROME STDERR TAIL ---"
+          tail -n 30 /tmp/chrome.err || true

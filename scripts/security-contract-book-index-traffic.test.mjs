@@ -197,3 +197,34 @@ test("Book Index source SEO pages publish only from real available snapshots", (
     "source pages receive dedicated analytics classification",
   );
 });
+
+
+test("manual SEO indexability smoke validates Book Index only after sitemap publication", () => {
+  const workflow = source(".github/workflows/seo-indexability-smoke.yml");
+
+  contains(
+    workflow,
+    "Published Book Index detected in sitemap; validating gated SEO surfaces.",
+    "Book Index sitemap detection",
+  );
+  contains(
+    workflow,
+    "check_page '/en-cok-satanlar' 'https://ilkoku.com/en-cok-satanlar'",
+    "overview canonical/indexability check",
+  );
+  contains(
+    workflow,
+    "check_page '/en-cok-satanlar/turkiye' 'https://ilkoku.com/en-cok-satanlar/turkiye'",
+    "Turkey canonical/indexability check",
+  );
+  contains(
+    workflow,
+    "/en-cok-satanlar/kaynak/",
+    "representative source-page discovery",
+  );
+  contains(
+    workflow,
+    "Book Index is not published in sitemap; gated SEO checks remain skipped.",
+    "fail-closed pre-publication behavior",
+  );
+});

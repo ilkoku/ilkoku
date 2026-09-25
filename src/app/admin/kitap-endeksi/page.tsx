@@ -6,6 +6,7 @@ import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
 import { getBookIndexOperationsSnapshot } from "@/lib/book-index/operations";
 import { getTurkeyBookIndexPreview } from "@/lib/book-index/read-model";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
+import { BOOK_INDEX_SPONSOR_SLOTS } from "@/lib/book-index/sponsor";
 import {
   BOOK_INDEX_SOURCES,
   BOOK_INDEX_V1_SOURCES,
@@ -257,11 +258,12 @@ export default async function BookIndexAdminPage({
 
         <article className="admin-panel">
           <span className="admin-eyebrow">Sponsor</span>
-          <h2>Kapalı / hazır</h2>
+          <h2>{BOOK_INDEX_SPONSOR_SLOTS.length} slot · default OFF</h2>
           <p>
-            Sponsor slotları daha sonra eğitim ve endeks yüzeylerine
-            bağlanabilir. Sponsorlu içerik organik rankı değiştiremez ve sıra
-            numarası alamaz.
+            Genel endeks, kategori ve kaynak yüzeyi için entegrasyon noktaları
+            tanımlıdır. Aktivasyon Banner / Reklam Alanları üzerinden
+            yapılacaktır; sponsor organik rankı değiştiremez ve sıra numarası
+            alamaz.
           </p>
         </article>
       </section>

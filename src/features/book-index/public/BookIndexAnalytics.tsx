@@ -8,9 +8,11 @@ type AnalyticsEvent = {
   [key: string]: string | number | boolean | undefined;
 };
 
+type DataLayerItem = unknown[] | Record<string, unknown>;
+
 declare global {
   interface Window {
-    dataLayer?: Array<unknown>;
+    dataLayer?: DataLayerItem[];
     gtag?: (...args: unknown[]) => void;
   }
 }
@@ -54,7 +56,7 @@ export function BookIndexAnalytics() {
 
     const key = pathname;
     let cancelled = false;
-    const timers: Array<ReturnType<typeof window.setTimeout>> = [];
+    const timers: number[] = [];
 
     function trySendView() {
       if (cancelled || sentViewKey.current === key) return;

@@ -132,6 +132,24 @@ Public rollout ancak gerçek veri biriktikten sonra yapılır:
 
 Sitemap açılımı ayrı bir kalite kapısından geçmelidir.
 
+### Public read-model sözleşmesi
+
+Public route açılmadan önce server-side veri sözleşmesi dört yüzeyi hazırlar:
+
+- **Türkiye:** mevcut bileşik Türkiye Endeksi read-model'i kullanılır.
+- **Amazon Türkiye:** sanctioned/stabil collector oluşana kadar `researching`
+  availability döner; sahte/boş bestseller listesi üretilmez.
+- **Amazon ABD:** erişim engeli sürdüğü sürece `blocked` availability döner.
+- **Kaynak listeleri:** her listenin yalnız son başarılı/`no_change`
+  snapshot'ı, kaynağın kendi `rank` sırasıyla döner.
+
+Kaynak rankı ile İlkOku Türkiye Endeksi puanı aynı veri alanına karıştırılmaz.
+Public fiyat alanı JSON-safe string olarak taşınır; `BigInt` doğrudan public
+katmana sızdırılmaz.
+
+Bu read-model tek başına route veya sitemap açmaz; `publicRolloutState=gated`
+kalır.
+
 ### İçgörü read-model sözleşmesi
 
 Public yüzeyler açılmadan önce dört türe ait read-model hazırlanır:

@@ -13,6 +13,7 @@ import {
 type PublicHeaderMenu = {
   id: string;
   label: string;
+  directHref?: string;
   groups: Array<{
     id: string;
     title: string;
@@ -143,6 +144,22 @@ export function PublicHeaderNavigation({ menus }: { menus: PublicHeaderMenu[] })
         <nav className="public-site-header__navigation" aria-label="Ana menü">
           {menus.map((menu) => {
             const isActive = menu.id === activeId;
+
+            if (menu.directHref) {
+              return (
+                <Link
+                  className="public-site-header__menu-trigger"
+                  data-direct="true"
+                  href={menu.directHref}
+                  key={menu.id}
+                  onFocus={closeDesktop}
+                  onMouseEnter={closeDesktop}
+                >
+                  {menu.label}
+                </Link>
+              );
+            }
+
             return (
               <button
                 className="public-site-header__menu-trigger"
@@ -161,7 +178,7 @@ export function PublicHeaderNavigation({ menus }: { menus: PublicHeaderMenu[] })
           })}
         </nav>
 
-        {menus.map((menu) => {
+        {menus.filter((menu) => !menu.directHref).map((menu) => {
           const isActive = menu.id === activeId;
           return (
             <div
@@ -213,17 +230,29 @@ export function PublicHeaderNavigation({ menus }: { menus: PublicHeaderMenu[] })
               >
                 <section className="public-site-header__mobile-root" aria-label="Mobil ana menü">
                   <nav>
-                    {menus.map((menu) => (
-                      <button
-                        className="public-site-header__mobile-category"
-                        type="button"
-                        key={`mobile-root-${menu.id}`}
-                        onClick={() => setMobileMenuId(menu.id)}
-                      >
-                        <span>{menu.label}</span>
-                        <span aria-hidden="true">›</span>
-                      </button>
-                    ))}
+                    {menus.map((menu) =>
+                      menu.directHref ? (
+                        <Link
+                          className="public-site-header__mobile-category"
+                          data-direct="true"
+                          href={menu.directHref}
+                          key={`mobile-root-${menu.id}`}
+                          onClick={closeMobile}
+                        >
+                          <span>{menu.label}</span>
+                        </Link>
+                      ) : (
+                        <button
+                          className="public-site-header__mobile-category"
+                          type="button"
+                          key={`mobile-root-${menu.id}`}
+                          onClick={() => setMobileMenuId(menu.id)}
+                        >
+                          <span>{menu.label}</span>
+                          <span aria-hidden="true">›</span>
+                        </button>
+                      ),
+                    )}
                   </nav>
                 </section>
 

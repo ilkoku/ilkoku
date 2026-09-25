@@ -15,46 +15,67 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect BKM dynamic-loading signals once
+      - name: Inspect BKM page bundle for public list transport
         shell: bash
         run: |
           set -euo pipefail
-          url="https://www.bkmkitap.com/cok-satan-kitaplar"
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
-          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/bkm.html -w "%{http_code}" "$url")"
-          echo "HTTP_STATUS=$code"
-          echo "BYTES=$(wc -c < /tmp/bkm.html)"
+          page="https://www.bkmkitap.com/cok-satan-kitaplar"
+          curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/bkm.html "$page"
+
+          bundle="$(python3 - <<'PY'
+          from pathlib import Path
+          import re
+          text=Path("/tmp/bkm.html").read_text(errors="replace")
+          m=re.search(r'<script[^>]+src=["\']([^"\']*/srv/compressed/load/v5/js/tr/17/0\.js[^"\']*)["\']', text, re.I)
+          print(m.group(1) if m else "")
+          PY
+          )"
+
+          if [[ -z "$bundle" ]]; then
+            echo "BUNDLE_NOT_FOUND"
+            exit 1
+          fi
+
+          if [[ "$bundle" == //* ]]; then
+            bundle="https:$bundle"
+          fi
+          echo "BUNDLE=$bundle"
+          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/bkm.js -w "%{http_code}" "$bundle")"
+          echo "BUNDLE_HTTP=$code BYTES=$(wc -c < /tmp/bkm.js)"
 
           python3 - <<'PY'
           from pathlib import Path
           import re
+          text=Path("/tmp/bkm.js").read_text(errors="replace")
 
-          text = Path("/tmp/bkm.html").read_text(errors="replace")
-          print("PRODUCT_DATA occurrences:", len(re.findall(r"PRODUCT_DATA", text)))
-
-          patterns = [
-              r"PRODUCT_DATA\s*=\s*[^;]{0,1000}",
-              r"PRODUCT_DATA\.push\([^)]{0,1800}\)",
-              r"ajax\.php[^\"'\s<]{0,500}",
-              r"/srv/[^\"'\s<]{1,500}",
-              r"fetch\([^)]{0,1000}\)",
-              r"XMLHttpRequest[^;]{0,1500}",
-              r"DYNAMIC_LOADING[^;]{0,1200}",
-              r"PAGE_ID\s*=\s*17[^;]{0,1200}",
+          patterns=[
+            r"ajax\.php.{0,1600}",
+            r"/srv/service/.{0,1800}",
+            r"product-item.{0,1800}",
+            r"productItem.{0,1800}",
+            r"dynamic.{0,2200}",
+            r"loadMore.{0,2200}",
+            r"PAGE_ID.{0,1800}",
+            r"page_id.{0,1800}",
           ]
+          for p in patterns:
+            print("\n---",p,"---")
+            shown=0
+            for m in re.finditer(p,text,re.I|re.S):
+              print(m.group(0)[:2600].replace("\n"," "))
+              shown+=1
+              if shown>=12: break
+            print("COUNT_SHOWN",shown)
 
-          for pattern in patterns:
-              print("\n---", pattern, "---")
-              count = 0
-              for m in re.finditer(pattern, text, re.I | re.S):
-                  print(m.group(0)[:2200].replace("\n", " "))
-                  count += 1
-                  if count >= 20:
-                      break
-              print("COUNT_SHOWN", count)
-
-          print("\n--- script src values containing product/list/category ---")
-          for src in re.findall(r'<script[^>]+src=["\']([^"\']+)["\']', text, re.I):
-              if any(k in src.casefold() for k in ["product", "list", "category", "tsoft"]):
-                  print(src)
+          print("\n--- URL-LIKE STRINGS ---")
+          urls=[]
+          for m in re.finditer(r'["\']([^"\']{1,500})["\']',text):
+            value=m.group(1)
+            low=value.casefold()
+            if any(k in low for k in ["ajax","product","category","srv/service","load"]):
+              if value not in urls:
+                urls.append(value)
+          for value in urls[:150]:
+            print(value)
           PY

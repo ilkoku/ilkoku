@@ -13,6 +13,8 @@ import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/ed
 import { GENRES } from "@/lib/genres";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
+import { getBookIndexInsights } from "@/lib/book-index/insights";
+import { getPublishedBookIndexInsightPages } from "@/lib/book-index/insight-pages";
 import { getBookIndexPublishedSourcePages } from "@/lib/book-index/source-pages";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -208,6 +210,15 @@ async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
         priority: 0.75,
       }));
 
+    const insights = await getBookIndexInsights(50);
+    const insightEntries: MetadataRoute.Sitemap =
+      getPublishedBookIndexInsightPages(insights).map((page) => ({
+        url: `${baseUrl}/en-cok-satanlar/${page.slug}`,
+        ...(lastModified ? { lastModified } : {}),
+        changeFrequency: "daily" as const,
+        priority: 0.78,
+      }));
+
     return [
       {
         url: `${baseUrl}/en-cok-satanlar`,
@@ -221,6 +232,7 @@ async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "daily",
         priority: 0.85,
       },
+      ...insightEntries,
       ...sourceEntries,
     ];
   } catch {

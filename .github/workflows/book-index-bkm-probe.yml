@@ -15,60 +15,34 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Capture exact WAW request used by BKM bestseller page
+      - name: Inspect BKM top-sellers JSON once
         shell: bash
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
-          url="https://www.bkmkitap.com/cok-satan-kitaplar"
-          chrome="$(command -v google-chrome || command -v google-chrome-stable)"
-
-          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage             --user-agent="$ua" --virtual-time-budget=10000             --log-net-log=/tmp/netlog.json --net-log-capture-mode=IncludeSensitive             --dump-dom "$url" >/tmp/bkm-rendered.html 2>/tmp/chrome.err || true
+          url="https://bkm-best.wawlabs.com/top_sellers?span=week"
+          code="$(curl -L --silent --show-error --max-time 25 -A "$ua"             -H 'Content-Type: application/json' -o /tmp/bkm.json -w "%{http_code}" "$url")"
+          echo "HTTP_STATUS=$code BYTES=$(wc -c < /tmp/bkm.json)"
 
           python3 - <<'PY'
           from pathlib import Path
           import json
-          data=json.loads(Path("/tmp/netlog.json").read_text(errors="replace"))
-
-          matches=[]
-          for event in data.get("events",[]):
-              params=event.get("params") or {}
-              blob=json.dumps(params,ensure_ascii=False)
-              if "wawlabs.com" in blob:
-                  matches.append((event.get("type"), event.get("phase"), params))
-
-          print("MATCH_EVENT_COUNT",len(matches))
-          shown=0
-          seen=set()
-          for typ,phase,params in matches:
-              url=params.get("url") or params.get("original_url") or params.get("redirect_url")
-              method=params.get("method")
-              key=(url,method)
-              if url and key not in seen:
-                  seen.add(key)
-                  print("\nURL_EVENT",typ,phase)
-                  print("METHOD",method)
-                  print("URL",url)
-                  for k in [
-                      "headers","request_headers","upload_data_stream",
-                      "source_dependency","initiator","load_flags"
-                  ]:
-                      if k in params:
-                          value=params[k]
-                          out=json.dumps(value,ensure_ascii=False) if not isinstance(value,str) else value
-                          print(k.upper(),out[:12000])
-                  shown+=1
-                  if shown>=50:
-                      break
-
-          print("\n--- RAW EVENTS CONTAINING search_v2 ---")
-          raw=Path("/tmp/netlog.json").read_text(errors="replace")
-          needle="search_v2"
-          pos=0
-          for i in range(10):
-              p=raw.find(needle,pos)
-              if p<0: break
-              print(f"\n### {i+1} pos={p}")
-              print(raw[max(0,p-1800):p+5000])
-              pos=p+len(needle)
+          data=json.loads(Path("/tmp/bkm.json").read_text(errors="replace"))
+          print("ROOT_TYPE",type(data).__name__)
+          if isinstance(data,dict):
+              print("ROOT_KEYS",list(data.keys()))
+              for key,value in data.items():
+                  if isinstance(value,list):
+                      print("LIST",key,"LEN",len(value))
+                      for item in value[:5]:
+                          print(json.dumps(item,ensure_ascii=False)[:5000])
+                  elif isinstance(value,dict):
+                      print("DICT",key,"KEYS",list(value.keys())[:50])
+                      print(json.dumps(value,ensure_ascii=False)[:12000])
+                  else:
+                      print(key,repr(value))
+          elif isinstance(data,list):
+              print("LEN",len(data))
+              for item in data[:10]:
+                  print(json.dumps(item,ensure_ascii=False)[:5000])
           PY

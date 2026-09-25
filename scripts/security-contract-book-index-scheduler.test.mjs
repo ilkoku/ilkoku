@@ -58,7 +58,7 @@ test("Book Index automatic cron is enabled only after the OIDC canary pass", () 
   contains(rollout, "AUTOMATIC_CRON_ENABLED / CANARY_PASS", "activated rollout state");
 });
 
-test("Book Index admin exposes scheduler readiness without enabling cron", () => {
+test("Book Index admin exposes active scheduler readiness after canary pass", () => {
   const operations = source("src/lib/book-index/operations.ts");
   const page = source("src/app/admin/kitap-endeksi/page.tsx");
 
@@ -69,6 +69,6 @@ test("Book Index admin exposes scheduler readiness without enabling cron", () =>
   contains(page, "Operasyon görünümü", "admin operations section");
   contains(page, "Son başarılı", "last-success column");
   contains(page, "Sonraki due", "next-due column");
-  contains(page, "Canary kimliği hazır", "OIDC canary readiness state");
-  contains(page, "Saatlik scheduler aktif", "admin truthfulness");
+  contains(page, "GitHub OIDC hazır", "OIDC authentication readiness state");
+  contains(page, "Saatlik scheduler aktif", "active scheduler state");
 });

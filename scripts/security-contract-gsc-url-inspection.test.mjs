@@ -17,13 +17,17 @@ test("GSC URL Inspection diagnostic is manual and read-only", () => {
   assert.match(workflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
 });
 
-test("inspection script only calls the Search Console inspection endpoint", () => {
+test("inspection script only calls read-only Search Console diagnostics", () => {
   assert.match(script, /https:\/\/searchconsole\.googleapis\.com\/v1\/urlInspection\/index:inspect/u);
+  assert.match(script, /https:\/\/www\.googleapis\.com\/webmasters\/v3\/sites\/\$\{encodeURIComponent\(SITE_URL\)\}\/sitemaps/u);
   assert.match(script, /https:\/\/oauth2\.googleapis\.com\/token/u);
   assert.doesNotMatch(script, /indexing\.googleapis\.com/u);
   assert.match(script, /sc-domain:ilkoku\.com/u);
   assert.match(script, /MAX_URLS = 10/u);
+  assert.match(script, /GSC sitemaps:/u);
+  assert.match(script, /lastDownloaded/u);
   assert.match(script, /Diagnostic only/u);
+  assert.doesNotMatch(script, /requestIndexing|indexing\.googleapis\.com/u);
 });
 
 test("package and docs expose the official diagnostic path", () => {

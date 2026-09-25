@@ -1,10 +1,18 @@
-import { prisma } from "@/lib/prisma";
+import { collectBookIndexListAction } from "@/features/book-index/admin-actions";
+import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
 import {
   BOOK_INDEX_SOURCES,
   BOOK_INDEX_V1_SOURCES,
   TURKEY_INDEX_MIN_SOURCES,
   TURKEY_INDEX_V1_SOURCES,
 } from "@/lib/book-index/sources";
+import { prisma } from "@/lib/prisma";
+
+type SearchParams = Promise<{
+  adet?: string;
+  durum?: string;
+  liste?: string;
+}>;
 
 function stateLabel(state: (typeof BOOK_INDEX_SOURCES)[number]["collectionState"]) {
   switch (state) {
@@ -16,12 +24,51 @@ function stateLabel(state: (typeof BOOK_INDEX_SOURCES)[number]["collectionState"
       return "Araştırılıyor";
     case "paused":
       return "Beklemede";
+    case "blocked":
+      return "Engelli";
     default:
       return "Planlandı";
   }
 }
 
-export default async function BookIndexAdminPage() {
+function runStatusLabel(status: string) {
+  switch (status) {
+    case "success":
+      return "Başarılı";
+    case "no_change":
+      return "Değişiklik yok";
+    case "partial":
+      return "Kısmi";
+    case "failed":
+      return "Hata";
+    default:
+      return "Çalışıyor";
+  }
+}
+
+function feedbackMessage(params: Awaited<SearchParams>) {
+  switch (params.durum) {
+    case "toplandi":
+      return `${params.liste ?? "Liste"} başarıyla toplandı · ${params.adet ?? "0"} kayıt snapshot'a eklendi.`;
+    case "degisiklik-yok":
+      return `${params.liste ?? "Liste"} kontrol edildi · kaynak sıralaması değişmedi.`;
+    case "toplama-hatasi":
+      return `${params.liste ?? "Liste"} için toplama başarısız. Son fetch run hata kaydını aşağıdan kontrol edin.`;
+    case "liste-bulunamadi":
+      return "İstenen Kitap Endeksi listesi aktif değil veya bulunamadı.";
+    default:
+      return null;
+  }
+}
+
+export default async function BookIndexAdminPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = await searchParams;
+  const feedback = feedbackMessage(params);
+
   const [
     sourceRows,
     listCount,
@@ -31,6 +78,7 @@ export default async function BookIndexAdminPage() {
     unmatchedCount,
     successfulRuns,
     failedRuns,
+    recentRuns,
   ] = await Promise.all([
     prisma.bookIndexSource.findMany({
       orderBy: { code: "asc" },
@@ -53,10 +101,26 @@ export default async function BookIndexAdminPage() {
     prisma.bookIndexFetchRun.count({
       where: { status: "failed" },
     }),
+    prisma.bookIndexFetchRun.findMany({
+      orderBy: { startedAt: "desc" },
+      take: 8,
+      include: {
+        list: {
+          select: {
+            code: true,
+            title: true,
+            source: { select: { name: true } },
+          },
+        },
+      },
+    }),
   ]);
 
   const dbSourceByCode = new Map(
     sourceRows.map((source) => [source.code, source] as const),
+  );
+  const remziList = BOOK_INDEX_LISTS.find(
+    (list) => list.code === "remzi-tr-weekly",
   );
 
   return (
@@ -71,9 +135,15 @@ export default async function BookIndexAdminPage() {
           </p>
         </div>
         <span className="admin-table-badge" data-status="pending">
-          Foundation
+          Collector V1
         </span>
       </header>
+
+      {feedback ? (
+        <section className="admin-panel">
+          <strong>{feedback}</strong>
+        </section>
+      ) : null}
 
       <section className="admin-settings-grid">
         <article className="admin-panel admin-settings-card">
@@ -129,8 +199,8 @@ export default async function BookIndexAdminPage() {
             {failedRuns.toLocaleString("tr-TR")} hata
           </h2>
           <p>
-            Adaptörler kaynak bazında izole çalışacak; tek kaynağın bozulması
-            diğer kaynakları durdurmayacak.
+            Adaptörler kaynak bazında izole çalışır; tek kaynağın bozulması
+            diğer kaynakları durdurmaz.
           </p>
         </article>
 
@@ -144,6 +214,28 @@ export default async function BookIndexAdminPage() {
           </p>
         </article>
       </section>
+
+      {remziList ? (
+        <section className="admin-panel">
+          <span className="admin-eyebrow">İlk canlı kaynak</span>
+          <h2>Remzi Kitabevi · Haftalık Türkçe</h2>
+          <p>
+            Public çok satanlar listesi tek istekle okunur. Sonuçlar mevcut
+            kayıtların üzerine yazılmaz; her kontrol ayrı rank snapshot&apos;ı
+            oluşturur.
+          </p>
+          <form action={collectBookIndexListAction}>
+            <input type="hidden" name="listCode" value={remziList.code} />
+            <button className="admin-button admin-button--primary" type="submit">
+              Remzi listesini şimdi kontrol et
+            </button>
+          </form>
+          <small>
+            Otomatik scheduler bu aşamada kapalıdır; ilk canlı veri doğrulaması
+            yönetim ekranından yapılır.
+          </small>
+        </section>
+      ) : null}
 
       <section className="admin-panel admin-directory-panel">
         <header className="admin-page-heading">
@@ -207,6 +299,58 @@ export default async function BookIndexAdminPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="admin-panel admin-directory-panel">
+        <header className="admin-page-heading">
+          <div>
+            <span className="admin-eyebrow">Fetch geçmişi</span>
+            <h2>Son kaynak kontrolleri</h2>
+          </div>
+        </header>
+
+        {recentRuns.length ? (
+          <div className="admin-table-wrap">
+            <table className="admin-data-table">
+              <thead>
+                <tr>
+                  <th>Kaynak</th>
+                  <th>Liste</th>
+                  <th>Durum</th>
+                  <th>Kayıt</th>
+                  <th>Başlangıç</th>
+                  <th>Hata</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentRuns.map((run) => (
+                  <tr key={run.id}>
+                    <td>{run.list.source.name}</td>
+                    <td>
+                      <strong>{run.list.title}</strong>
+                      <small>{run.list.code}</small>
+                    </td>
+                    <td>{runStatusLabel(run.status)}</td>
+                    <td>{run.itemsStored}</td>
+                    <td>
+                      {new Intl.DateTimeFormat("tr-TR", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                        timeZone: "Europe/Istanbul",
+                      }).format(run.startedAt)}
+                    </td>
+                    <td>{run.errorCode ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="admin-empty-state">
+            <strong>Henüz kaynak kontrolü yapılmadı.</strong>
+            <p>İlk Remzi kontrolünden sonra fetch run geçmişi burada görünür.</p>
+          </div>
+        )}
       </section>
     </>
   );

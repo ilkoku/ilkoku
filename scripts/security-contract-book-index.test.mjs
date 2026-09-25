@@ -264,3 +264,24 @@ test("D&R access protection remains fail-closed", () => {
     "D&R collector is not activated",
   );
 });
+
+test("idefix collector reads server-side Next data and excludes source-sponsored cards", () => {
+  const adapter = source("src/lib/book-index/sources/idefix.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+
+  contains(adapter, "__NEXT_DATA__", "idefix server-side data source");
+  contains(adapter, "sourceVariant.isSponsored === true", "source-sponsored cards excluded");
+  contains(adapter, "rank: index + 1", "organic idefix order is contiguous");
+  contains(adapter, "BOOK_INDEX_IDEFIX_RESULT_TOO_SMALL", "idefix suspicious result gate");
+  contains(lists, 'code: "idefix-tr-live"', "idefix list registry");
+  contains(lists, 'sourceUrl: "https://www.idefix.com/cok-satanlar-l-162"', "verified idefix URL");
+  contains(collector, "[idefixBookIndexAdapter.sourceCode, idefixBookIndexAdapter]", "idefix adapter activation");
+  contains(
+    sources,
+    'baseUrl: "https://www.idefix.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "idefix ready state",
+  );
+});
+

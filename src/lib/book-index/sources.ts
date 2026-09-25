@@ -60,7 +60,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.idefix.com",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "planned",
+    collectionState: "ready",
   },
   {
     code: "penguen",

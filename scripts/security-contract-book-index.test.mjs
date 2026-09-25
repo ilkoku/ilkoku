@@ -382,3 +382,28 @@ test("only Kitapzen weekly contributes to the Turkey composite", () => {
   );
 });
 
+test("Inkilap collector parses verified bestseller cards with safe ISBN handling", () => {
+  const adapter = source("src/lib/book-index/sources/inkilap.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(adapter, 'const MAX_BOOKS = 20;', "Inkilap Top 20 cap");
+  contains(adapter, 'const MIN_EXPECTED_BOOKS = 15;', "Inkilap fail-closed minimum");
+  contains(adapter, '\\bproductBox\\b', "Inkilap product card selector");
+  contains(adapter, 'data-barcode', "Inkilap barcode source");
+  contains(adapter, '/^(?:978|979)[0-9]{10}$/u', "only ISBN prefixes become isbn13");
+  contains(adapter, '\\bitem-product-name\\b', "Inkilap title field");
+  contains(adapter, '\\bitem-product-brand\\b', "Inkilap publisher field");
+  contains(adapter, "splitTitleAndAuthor", "Inkilap title-author split");
+  contains(adapter, "BOOK_INDEX_INKILAP_RESULT_TOO_SMALL", "Inkilap suspicious result rejection");
+  contains(adapter, "BOOK_INDEX_INKILAP_DUPLICATE_SOURCE_KEY", "Inkilap duplicate protection");
+  contains(lists, 'code: "inkilap-tr-live"', "Inkilap list registry");
+  contains(collector, "[inkilapBookIndexAdapter.sourceCode, inkilapBookIndexAdapter]", "Inkilap adapter activation");
+  contains(
+    sources,
+    'baseUrl: "https://www.inkilap.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "Inkilap promoted to V1 ready",
+  );
+});
+

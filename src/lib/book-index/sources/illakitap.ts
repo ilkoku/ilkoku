@@ -14,12 +14,17 @@ function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
 }
 
+function isbn13(value: string) {
+  const normalized = value.replace(/[^0-9]/gu, "");
+  return /^(?:978|979)[0-9]{10}$/u.test(normalized) ? normalized : null;
+}
+
 export function parseIllaKitapWeeklyBestsellers(
   html: string,
 ): BookIndexCollectionResult {
   const starts = [
     ...html.matchAll(
-      /<div\b(?=[^>]*\bclass=["'][^"']*\bProduct_([0-9]+)\b[^"']*["'])[^>]*>/giu,
+      /<div\b(?=[^>]*\bclass=["'][^"']*\bProduct_([0-9]+)\b[^"']*["'])(?=[^>]*\bdata-prd-barcode=["']([^"']*)["'])[^>]*>/giu,
     ),
   ];
 
@@ -29,6 +34,7 @@ export function parseIllaKitapWeeklyBestsellers(
       const end = starts[index + 1]?.index ?? html.length;
       const card = html.slice(start, end);
       const productId = match[1]?.trim() ?? "";
+      const barcode = match[2]?.trim() ?? "";
 
       const titleMatch = card.match(
         /<a\b(?=[^>]*\bclass=["'][^"']*\btooltip-ajax\b[^"']*["'])(?=[^>]*\bhref=["']([^"']+)["'])[^>]*>([\s\S]*?)<\/a>/iu,
@@ -54,11 +60,12 @@ export function parseIllaKitapWeeklyBestsellers(
       }
 
       return {
-        sourceKey: productId,
+        sourceKey: isbn13(barcode) || productId,
         sourceExternalId: productId,
         title,
         authorName: author ? decodeBookIndexHtml(author) : null,
         publisherName: publisher ? decodeBookIndexHtml(publisher) : null,
+        isbn13: isbn13(barcode),
         productUrl: absoluteUrl(productUrl),
         imageUrl: image ? absoluteUrl(image) : null,
         rank: index + 1,

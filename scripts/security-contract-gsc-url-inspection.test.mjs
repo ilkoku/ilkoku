@@ -29,6 +29,12 @@ test("inspection script only calls read-only Search Console diagnostics", () => 
   assert.doesNotMatch(script, /indexing\.googleapis\.com/u);
   assert.match(script, /sc-domain:ilkoku\.com/u);
   assert.match(script, /MAX_URLS = 10/u);
+  assert.match(script, /SITEMAP_MAX_URLS = 50_000/u);
+  assert.match(script, /SITEMAP_MAX_BYTES = 50 \* 1024 \* 1024/u);
+  assert.match(script, /Buffer\.byteLength\(xml, "utf8"\)/u);
+  assert.match(script, /Sitemap exceeds the 50,000 URL limit/u);
+  assert.match(script, /Sitemap exceeds the 50 MB uncompressed limit/u);
+  assert.match(script, /Sitemap contains duplicate URLs/u);
   assert.match(script, /GSC sitemaps:/u);
   assert.match(script, /discoverPublicSitemapUrls/u);
   assert.match(script, /en-cok-satanlar/u);

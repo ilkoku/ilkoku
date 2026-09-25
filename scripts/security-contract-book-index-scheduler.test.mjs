@@ -19,10 +19,10 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(workflow, "workflow_dispatch:", "manual operations trigger");
   contains(workflow, "schedule:", "automatic scheduler trigger");
   contains(workflow, 'cron: "17 * * * *"', "hourly cron remains active");
-  notContains(workflow, "workflow_run:", "temporary production trigger removed");
+  contains(workflow, "workflow_run:", "temporary Illa Kitap probe trigger");
   notContains(workflow, "?matchPending=1", "one-time backfill request removed");
   contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");
-  notContains(route, '"workflow_run"', "temporary workflow-run authorization removed");
+  contains(route, '"workflow_run"', "temporary Illa Kitap probe authorization");
   notContains(route, "matchPendingBookIndexBooks", "one-time matching backfill removed");
   notContains(route, 'searchParams.get("matchPending")', "maintenance switch removed");
   contains(readiness, "splitMasterCollisionCount", "collision diagnostic retained");
@@ -31,3 +31,19 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
 });
 
 
+
+
+test("Book Index one-time Illa Kitap production probe is tightly scoped", () => {
+  const route = source("src/app/api/internal/book-index-scheduler/route.ts");
+  const workflow = source(".github/workflows/book-index-scheduler.yml");
+
+  contains(workflow, "workflow_run:", "temporary production-smoke trigger");
+  contains(workflow, "Production smoke", "probe source workflow");
+  contains(workflow, "github.event.workflow_run.conclusion == 'success'", "success-only probe");
+  contains(workflow, "github.event.workflow_run.head_branch == 'main'", "main-only probe");
+  contains(workflow, "?forceIlla=1", "explicit Illa Kitap force flag");
+  contains(route, 'collectBookIndexListByCode("illakitap-tr-weekly")', "single forced list");
+  contains(route, "forcedIllaRun", "forced collection result reporting");
+  notContains(route, "kitapzen-tr-weekly", "probe does not force unrelated sources");
+  notContains(route, "inkilap-tr-live", "probe does not force unrelated sources");
+});

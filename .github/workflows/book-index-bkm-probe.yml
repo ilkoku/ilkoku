@@ -15,35 +15,60 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect WAW request payload construction once
+      - name: Capture exact WAW request used by BKM bestseller page
         shell: bash
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
-          curl -L --silent --show-error --max-time 25 -A "$ua"             -o /tmp/waw.js "https://collector.wawlabs.com/bkmkitapv2.js"
+          url="https://www.bkmkitap.com/cok-satan-kitaplar"
+          chrome="$(command -v google-chrome || command -v google-chrome-stable)"
+
+          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage             --user-agent="$ua" --virtual-time-budget=10000             --log-net-log=/tmp/netlog.json --net-log-capture-mode=IncludeSensitive             --dump-dom "$url" >/tmp/bkm-rendered.html 2>/tmp/chrome.err || true
 
           python3 - <<'PY'
           from pathlib import Path
-          import re
-          text=Path("/tmp/waw.js").read_text(errors="replace")
+          import json
+          data=json.loads(Path("/tmp/netlog.json").read_text(errors="replace"))
 
-          for token in [
-            "serviceUrl",
-            "search_v2",
-            "search_params",
-            "top_searches",
-            "page_number",
-            "page_size",
-            "companyID",
-            "KNZWB-1614254422",
-          ]:
-              print(f"\n=== {token} ===")
-              positions=[m.start() for m in re.finditer(re.escape(token),text)]
-              print("COUNT",len(positions))
-              for p in positions[:20]:
-                  print(text[max(0,p-1800):p+3600])
+          matches=[]
+          for event in data.get("events",[]):
+              params=event.get("params") or {}
+              blob=json.dumps(params,ensure_ascii=False)
+              if "wawlabs.com" in blob:
+                  matches.append((event.get("type"), event.get("phase"), params))
 
-          print("\n=== OBJECT ASSIGNMENTS NEAR serviceUrl ===")
-          for m in re.finditer(r'\{[^{}]{0,5000}serviceUrl[^{}]{0,5000}\}',text,re.I|re.S):
-              print(m.group(0)[:10000])
+          print("MATCH_EVENT_COUNT",len(matches))
+          shown=0
+          seen=set()
+          for typ,phase,params in matches:
+              url=params.get("url") or params.get("original_url") or params.get("redirect_url")
+              method=params.get("method")
+              key=(url,method)
+              if url and key not in seen:
+                  seen.add(key)
+                  print("\nURL_EVENT",typ,phase)
+                  print("METHOD",method)
+                  print("URL",url)
+                  for k in [
+                      "headers","request_headers","upload_data_stream",
+                      "source_dependency","initiator","load_flags"
+                  ]:
+                      if k in params:
+                          value=params[k]
+                          out=json.dumps(value,ensure_ascii=False) if not isinstance(value,str) else value
+                          print(k.upper(),out[:12000])
+                  shown+=1
+                  if shown>=50:
+                      break
+
+          print("\n--- RAW EVENTS CONTAINING search_v2 ---")
+          raw=Path("/tmp/netlog.json").read_text(errors="replace")
+          needle="search_v2"
+          pos=0
+          for i in range(10):
+              p=raw.find(needle,pos)
+              if p<0: break
+              print(f"\n### {i+1} pos={p}")
+              print(raw[max(0,p-1800):p+5000])
+              pos=p+len(needle)
           PY

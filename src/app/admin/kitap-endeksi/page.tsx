@@ -1,6 +1,7 @@
 import {
   collectBookIndexListAction,
   matchPendingBookIndexBooksAction,
+  runBookIndexSchedulerCanaryAction,
 } from "@/features/book-index/admin-actions";
 import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
 import { getBookIndexOperationsSnapshot } from "@/lib/book-index/operations";
@@ -22,6 +23,12 @@ type SearchParams = Promise<{
   liste?: string;
   eslesen?: string;
   bekleyen?: string;
+  kontrol?: string;
+  due?: string;
+  basarili?: string;
+  degismedi?: string;
+  hata?: string;
+  atlandi?: string;
 }>;
 
 function stateLabel(state: (typeof BOOK_INDEX_SOURCES)[number]["collectionState"]) {
@@ -99,6 +106,12 @@ function feedbackMessage(params: Awaited<SearchParams>) {
       return `Eşleştirme tamamlandı · ${params.adet ?? "0"} kayıt işlendi · ${params.eslesen ?? "0"} eşleşti · ${params.bekleyen ?? "0"} manuel inceleme bekliyor.`;
     case "eslestirme-hatasi":
       return "Kitap eşleştirme işlemi tamamlanamadı. Sistem kayıtlarını kontrol edin.";
+    case "scheduler-canary-tamamlandi":
+      return `Scheduler canary tamamlandı · ${params.kontrol ?? "0"} liste kontrol edildi · ${params.due ?? "0"} due · ${params.basarili ?? "0"} başarılı · ${params.degismedi ?? "0"} değişiklik yok · ${params.atlandi ?? "0"} atlandı · ${params.adet ?? "0"} kayıt işlendi.`;
+    case "scheduler-canary-kismi":
+      return `Scheduler canary tamamlandı ancak ${params.hata ?? "0"} liste hata verdi · ${params.basarili ?? "0"} başarılı · ${params.degismedi ?? "0"} değişiklik yok. Fetch geçmişini aşağıdan kontrol edin.`;
+    case "scheduler-canary-hatasi":
+      return "Scheduler canary başlatılamadı. Sistem kayıtlarını kontrol edin.";
     default:
       return null;
   }
@@ -269,6 +282,11 @@ export default async function BookIndexAdminPage({
             zamanında. Otomatik cron kapalıdır; dedicated-secret canary PASS
             olmadan açılmaz.
           </p>
+          <form action={runBookIndexSchedulerCanaryAction}>
+            <button className="admin-button admin-button--primary" type="submit">
+              Scheduler canary çalıştır
+            </button>
+          </form>
         </article>
 
         <article className="admin-panel">

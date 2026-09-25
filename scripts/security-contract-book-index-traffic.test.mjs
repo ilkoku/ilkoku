@@ -78,6 +78,34 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
   ]);
 });
 
+test("Book Index code changes immediately map to the published Book Index URL family", () => {
+  const sitemapUrls = [
+    "https://ilkoku.com/",
+    "https://ilkoku.com/en-cok-satanlar",
+    "https://ilkoku.com/en-cok-satanlar/turkiye",
+    "https://ilkoku.com/en-cok-satanlar/kaynak/bkm-kitap",
+    "https://ilkoku.com/hakkimizda",
+  ];
+
+  for (const changedFile of [
+    "src/lib/book-index/ranking.ts",
+    "src/lib/book-index/public-read-model.ts",
+    "src/features/book-index/public/BookIndexPublicView.tsx",
+  ]) {
+    const result = selectIndexNowUrls({
+      sitemapUrls,
+      changedFiles: [changedFile],
+    });
+
+    assert.equal(result.mode, "diff");
+    assert.deepEqual(result.urls, [
+      "https://ilkoku.com/en-cok-satanlar",
+      "https://ilkoku.com/en-cok-satanlar/turkiye",
+      "https://ilkoku.com/en-cok-satanlar/kaynak/bkm-kitap",
+    ]);
+  }
+});
+
 test("scheduled IndexNow refresh remains fail-closed while Book Index is absent from sitemap", () => {
   const result = selectIndexNowUrls({
     sitemapUrls: [

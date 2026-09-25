@@ -202,6 +202,9 @@ GTM'dedir; doğrudan GA4 yalnız fallback olarak kullanılır ve çift event
 Sitemap aktivasyonundan sonra:
 
 - IndexNow yalnız sitemap'te gerçekten yayınlanan Book Index URL'lerine uygulanır;
+- `src/lib/book-index/**` ve `src/features/book-index/**` değişiklikleri,
+  canlı sitemap'te mevcutsa doğrudan `/en-cok-satanlar/**` URL ailesine
+  eşlenir; alakasız public URL'ler yeniden gönderilmez;
 - günlük Book Index IndexNow yenilemesi ana, Türkiye ve yayınlanmış kaynak
   sayfalarını `/en-cok-satanlar*` kapsamıyla taşır;
 - haftalık GSC performans raporu aynı Book Index prefix'ini izler;

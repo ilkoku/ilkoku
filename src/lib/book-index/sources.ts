@@ -5,7 +5,8 @@ export type BookIndexCollectionState =
   | "researching"
   | "ready"
   | "active"
-  | "paused";
+  | "paused"
+  | "blocked";
 
 export type BookIndexSourceDefinition = {
   code: string;
@@ -29,7 +30,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.kitapyurdu.com",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "planned",
+    collectionState: "blocked",
   },
   {
     code: "bkm",
@@ -39,7 +40,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.bkmkitap.com",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "planned",
+    collectionState: "researching",
   },
   {
     code: "dr",
@@ -69,7 +70,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://penguenkitabevi.com",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "planned",
+    collectionState: "researching",
   },
   {
     code: "remzi",
@@ -79,7 +80,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.remzi.com.tr",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "planned",
+    collectionState: "ready",
   },
   {
     code: "amazon-tr",

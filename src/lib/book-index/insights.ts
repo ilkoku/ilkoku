@@ -240,9 +240,8 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
   const bestRankByBook = new Map<string, number>();
   const bookById = new Map<string, { title: string; authorName: string | null }>();
 
-  const newSourceCount = new Map<string, number>();
-  const improvingSources = new Map<string, Set<string>>();
-  const totalRankGain = new Map<string, number>();
+  const newSourcesByBook = new Map<string, Set<string>>();
+  const rankGainByBookSource = new Map<string, Map<string, number>>();
 
   for (const snapshot of snapshots) {
     for (const [masterBookId, current] of snapshot.current) {
@@ -265,29 +264,28 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
 
       const previous = snapshot.previous.get(masterBookId);
       if (!previous) {
-        newSourceCount.set(
-          masterBookId,
-          (newSourceCount.get(masterBookId) ?? 0) + 1,
-        );
+        const newSources =
+          newSourcesByBook.get(masterBookId) ?? new Set<string>();
+        newSources.add(snapshot.sourceCode);
+        newSourcesByBook.set(masterBookId, newSources);
         continue;
       }
 
       const gain = previous.rank - current.rank;
       if (gain <= 0) continue;
 
-      const sourcesImproving =
-        improvingSources.get(masterBookId) ?? new Set<string>();
-      sourcesImproving.add(snapshot.sourceCode);
-      improvingSources.set(masterBookId, sourcesImproving);
-      totalRankGain.set(
-        masterBookId,
-        (totalRankGain.get(masterBookId) ?? 0) + gain,
-      );
+      const gains =
+        rankGainByBookSource.get(masterBookId) ?? new Map<string, number>();
+      const existingGain = gains.get(snapshot.sourceCode) ?? 0;
+      if (gain > existingGain) {
+        gains.set(snapshot.sourceCode, gain);
+      }
+      rankGainByBookSource.set(masterBookId, gains);
     }
   }
 
-  const newEntries = [...newSourceCount.entries()]
-    .flatMap(([masterBookId, count]) => {
+  const newEntries = [...newSourcesByBook.entries()]
+    .flatMap(([masterBookId, newSources]) => {
       const book = bookById.get(masterBookId);
       const sources = currentSourcesByBook.get(masterBookId);
       const bestRank = bestRankByBook.get(masterBookId);
@@ -297,7 +295,7 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
         masterBookId,
         title: book.title,
         authorName: book.authorName,
-        newSourceCount: count,
+        newSourceCount: newSources.size,
         currentSourceCount: sources.size,
         bestRank,
       } satisfies BookIndexNewEntry];
@@ -311,8 +309,8 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
     )
     .slice(0, safeLimit);
 
-  const risers = [...improvingSources.entries()]
-    .flatMap(([masterBookId, sources]) => {
+  const risers = [...rankGainByBookSource.entries()]
+    .flatMap(([masterBookId, gains]) => {
       const book = bookById.get(masterBookId);
       const bestCurrentRank = bestRankByBook.get(masterBookId);
       if (!book || bestCurrentRank === undefined) return [];
@@ -321,8 +319,8 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
         masterBookId,
         title: book.title,
         authorName: book.authorName,
-        improvingSourceCount: sources.size,
-        totalRankGain: totalRankGain.get(masterBookId) ?? 0,
+        improvingSourceCount: gains.size,
+        totalRankGain: [...gains.values()].reduce((sum, gain) => sum + gain, 0),
         bestCurrentRank,
       } satisfies BookIndexRiser];
     })

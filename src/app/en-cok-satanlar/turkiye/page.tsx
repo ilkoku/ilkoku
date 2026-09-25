@@ -8,7 +8,10 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 const baseUrl = "https://ilkoku.com";
 const canonical = "/en-cok-satanlar/turkiye";
-const title = "Türkiye'de En Çok Satan Kitaplar | İlkOku";
+function pageTitle() {
+  return `Türkiye'de En Çok Satan Kitaplar ${new Date().getFullYear()} | İlkOku`;
+}
+
 const description =
   "Birden fazla bağımsız Türkiye kaynağındaki çok satan sıralamalarından oluşturulan İlkOku Türkiye Kitap Endeksi'ni inceleyin.";
 
@@ -18,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const context = await getBookIndexPublicPageContext(100);
 
   return createPublicPageMetadata({
-    title,
+    title: pageTitle(),
     description,
     canonical,
     noIndex: !context,
@@ -34,7 +37,7 @@ export default async function TurkeyBestsellersPage() {
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: "İlkOku Türkiye Kitap Endeksi",
+      name: `İlkOku Türkiye Kitap Endeksi · ${new Date().getFullYear()}`,
       description,
       url: `${baseUrl}${canonical}`,
       inLanguage: "tr-TR",

@@ -1,4 +1,7 @@
-import { collectBookIndexListAction } from "@/features/book-index/admin-actions";
+import {
+  collectBookIndexListAction,
+  matchPendingBookIndexBooksAction,
+} from "@/features/book-index/admin-actions";
 import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
 import {
   BOOK_INDEX_SOURCES,
@@ -12,6 +15,8 @@ type SearchParams = Promise<{
   adet?: string;
   durum?: string;
   liste?: string;
+  eslesen?: string;
+  bekleyen?: string;
 }>;
 
 function stateLabel(state: (typeof BOOK_INDEX_SOURCES)[number]["collectionState"]) {
@@ -56,6 +61,10 @@ function feedbackMessage(params: Awaited<SearchParams>) {
       return `${params.liste ?? "Liste"} için toplama başarısız. Son fetch run hata kaydını aşağıdan kontrol edin.`;
     case "liste-bulunamadi":
       return "İstenen Kitap Endeksi listesi aktif değil veya bulunamadı.";
+    case "eslestirme-tamamlandi":
+      return `Eşleştirme tamamlandı · ${params.adet ?? "0"} kayıt işlendi · ${params.eslesen ?? "0"} eşleşti · ${params.bekleyen ?? "0"} manuel inceleme bekliyor.`;
+    case "eslestirme-hatasi":
+      return "Kitap eşleştirme işlemi tamamlanamadı. Sistem kayıtlarını kontrol edin.";
     default:
       return null;
   }
@@ -188,6 +197,11 @@ export default async function BookIndexAdminPage({
             Dış kitap kaydı: {externalBookCount.toLocaleString("tr-TR")} ·
             Liste: {listCount.toLocaleString("tr-TR")}
           </small>
+          <form action={matchPendingBookIndexBooksAction}>
+            <button className="admin-button admin-button--secondary" type="submit">
+              Bekleyenleri eşleştir
+            </button>
+          </form>
         </article>
 
         <article className="admin-panel">

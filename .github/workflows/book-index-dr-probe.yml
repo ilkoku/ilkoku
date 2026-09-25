@@ -1,0 +1,50 @@
+name: Book Index DR Probe
+
+on:
+  push:
+    branches:
+      - feature/book-index-dr-collector
+    paths:
+      - ".github/workflows/book-index-dr-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Probe D&R bestseller page
+        shell: bash
+        run: |
+          set -euo pipefail
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          url="https://www.dr.com.tr/kataloglar_/drcoksatankitaplar/4020"
+
+          code="$(curl -L --silent --show-error --max-time 30 -A "$ua"             -H 'Accept: text/html,application/xhtml+xml'             -o /tmp/dr.html -w "%{http_code}" "$url" || true)"
+          echo "HTTP=$code BYTES=$(wc -c < /tmp/dr.html 2>/dev/null || echo 0)"
+          echo "TITLE=$(grep -oim1 '<title[^>]*>[^<]*' /tmp/dr.html | sed -E 's/<title[^>]*>//I' || true)"
+          echo "ROBOT_CHECK=$(grep -Eoi 'captcha|automated access|access denied|forbidden' /tmp/dr.html | head -n 5 | tr '\n' ' ' || true)"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,html
+          text=Path("/tmp/dr.html").read_text(errors="replace")
+          for token in ["product", "catalog", "data-product", "product-card", "product-title", "__NEXT_DATA__", "api/"]:
+              print("\nTOKEN",token,"COUNT",text.casefold().count(token.casefold()))
+              p=text.casefold().find(token.casefold())
+              if p>=0: print(text[max(0,p-900):p+4500])
+
+          print("\n--- BOOK-LIKE LINKS ---")
+          seen=[]
+          for href,body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,1000}?)</a>',text,re.I):
+              clean=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',body))).strip()
+              if href in seen or not clean: continue
+              if any(k in href.casefold() for k in ["/kitap/", "/urun/", "/product/"]):
+                  seen.append(href); print(href,"=>",clean[:220])
+                  if len(seen)>=40: break
+          PY
+
+          echo "=== ROBOTS ==="
+          curl -L --silent --show-error --max-time 20 -A "$ua"             "https://www.dr.com.tr/robots.txt" | head -n 260 || true

@@ -287,6 +287,7 @@ test("dynamic public work route keeps canonical query noindex and structured-dat
   assertContains(book, "const canonical = `/kitap/${work.slug}`", "book self canonical");
   assertContains(book, "index: !query.from && !isSearchIndexExcludedPublicWorkSlug(slug)", "book return-path and test-work noindex");
   assertContains(safety, '"yeni-test209-30820c6a"', "Reader UAT work exact search exclusion");
+  assertContains(safety, '"test2-7b0fbe47"', "secondary test work exact search exclusion");
   assertContains(safety, "searchIndexExcludedPublicWorkSlugs.has(normalizedSlug)", "exact work search exclusion");
   assertContains(sitemap, "isSearchIndexExcludedPublicWorkSlug(work.slug)", "sitemap search exclusion contract");
   assertContains(book, "twitter:", "book Twitter metadata");

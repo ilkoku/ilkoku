@@ -133,3 +133,54 @@ test("sponsorship is kept separate from organic book index rank", () => {
     "sponsored card separation",
   );
 });
+
+test("first live collector is fail-closed and source-isolated", () => {
+  const collector = source("src/lib/book-index/collector.ts");
+  const remzi = source("src/lib/book-index/sources/remzi.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(lists, 'code: "remzi-tr-weekly"', "Remzi weekly list");
+  contains(lists, 'collectionEveryMinutes: 1440', "daily check ceiling for weekly source");
+  contains(collector, "const adapters = new Map<string, BookIndexSourceAdapter>", "source-local adapter registry");
+  contains(collector, 'status: "running"', "fetch run begins before remote collection");
+  contains(collector, 'status: "failed"', "collector failure is persisted");
+  contains(collector, "BookIndexObservation.create", "rank snapshots are append-only");
+  contains(remzi, 'class=["\'][^"\']*\\bturkish-books', "Remzi Turkish bestseller selector");
+  contains(remzi, "\\bbook-name\\b", "Remzi book anchor selector");
+  contains(remzi, "BOOK_INDEX_REMZI_RESULT_TOO_SMALL", "parser fails closed on suspiciously small result");
+  contains(remzi, '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"', "transparent collector user agent");
+  contains(remzi, "AbortSignal.timeout(20_000)", "bounded remote request");
+});
+
+test("blocked sources are not bypassed by the book index collector", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(sources, 'code: "kitapyurdu"', "Kitapyurdu registry entry");
+  contains(
+    sources,
+    'baseUrl: "https://www.kitapyurdu.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "blocked"',
+    "Kitapyurdu automated access block is explicit",
+  );
+  contains(
+    collector,
+    'sourceDefinition.collectionState === "blocked" ? "blocked" : "active"',
+    "blocked source persistence",
+  );
+  contains(
+    collector,
+    'source.status !== "active"',
+    "blocked source execution gate",
+  );
+});
+
+test("book index collection stays admin-controlled before scheduler rollout", () => {
+  const action = source("src/features/book-index/admin-actions.ts");
+  const page = source("src/app/admin/kitap-endeksi/page.tsx");
+
+  contains(action, 'admin.role !== "admin"', "admin-only manual collection");
+  contains(action, "collectBookIndexListByCode", "manual collector action");
+  contains(page, "Remzi listesini şimdi kontrol et", "manual source verification control");
+  contains(page, "Otomatik scheduler bu aşamada kapalıdır", "scheduler remains off");
+});
+

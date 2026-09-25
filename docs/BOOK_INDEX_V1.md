@@ -358,5 +358,16 @@ bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplan�
   oy vermez. `includeInComposite=false` zorunludur.
 - Kaynak KitapSeç kaynak görünümü, Edebiyat kategori endeksi ve tarihsel SEO
   verisi için toplanabilir.
-- Çocuk ve Gençlik çok satanlar yüzeyi ayrı ikinci parçadır.
+- Çocuk ve Gençlik bestseller canonical'ı:
+  `https://www.kitapsec.com/Products/Cocuk-ve-Genclik-Kitaplari/Cok-Satan-Kitaplar/`.
+- 25 Eylül 2026 canlı doğrulamasında sayfa HTTP 200 döndü ve Edebiyat
+  collector'ıyla aynı server-rendered `schema.org/ItemList` kontratını
+  sağladı.
+- Sayfa `numberOfItems=48` bildiriyor; `Ks_UrunSatir` kartları açık
+  `position=1..48`, 978/979 ISBN-13 `sku`, ürün URL/görseli,
+  `price/priceCurrency` ve yayınevi bilgisini sağlıyor.
+- Bu nedenle ikinci bir parser yazılmaz; mevcut KitapSeç adaptörü ayrı
+  `BookIndexList` üzerinden tekrar kullanılır.
+- Kapsam **Çocuk ve Gençlik** kategorisi olduğu için liste
+  `includeInComposite=false` kalır ve Türkiye genel endeksine oy vermez.
 

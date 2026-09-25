@@ -180,7 +180,48 @@ test("book index collection stays admin-controlled before scheduler rollout", ()
 
   contains(action, 'admin.role !== "admin"', "admin-only manual collection");
   contains(action, "collectBookIndexListByCode", "manual collector action");
-  contains(page, "Remzi listesini şimdi kontrol et", "manual source verification control");
+  contains(page, "Şimdi kontrol et", "manual source verification control");
   contains(page, "Otomatik scheduler bu aşamada kapalıdır", "scheduler remains off");
 });
 
+
+
+test("BKM collector uses verified public bestseller feed and caps the V1 list at Top 50", () => {
+  const bkm = source("src/lib/book-index/sources/bkm.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+
+  contains(bkm, 'const ENDPOINT = "https://bkm-best.wawlabs.com/top_sellers";', "verified BKM feed");
+  contains(bkm, 'case "bkm-tr-weekly"', "weekly span");
+  contains(bkm, 'case "bkm-tr-monthly"', "monthly span");
+  contains(bkm, 'case "bkm-tr-yearly"', "yearly span");
+  contains(bkm, "const MAX_BOOKS = 50;", "Top 50 cap");
+  contains(bkm, "BOOK_INDEX_BKM_RESULT_TOO_SMALL", "fail-closed minimum result");
+  contains(bkm, "BOOK_INDEX_BKM_RANK_ORDER_MISMATCH", "feed order validation");
+  contains(bkm, "BOOK_INDEX_BKM_DUPLICATE_SOURCE_KEY", "source identity validation");
+  contains(lists, 'code: "bkm-tr-weekly"', "BKM weekly list registry");
+  contains(lists, 'code: "bkm-tr-monthly"', "BKM monthly list registry");
+  contains(lists, 'code: "bkm-tr-yearly"', "BKM yearly list registry");
+  contains(collector, "[bkmBookIndexAdapter.sourceCode, bkmBookIndexAdapter]", "BKM adapter activation");
+  contains(
+    sources,
+    'baseUrl: "https://www.bkmkitap.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "BKM source ready state",
+  );
+});
+
+test("only BKM weekly contributes to the Turkey composite in V1", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(
+    lists,
+    'code: "bkm-tr-weekly",\n    sourceCode: "bkm",\n    title: "BKM Kitap · Haftalık Çok Satanlar",\n    categoryKey: "general",\n    period: "weekly",\n    sourceUrl: "https://www.bkmkitap.com/cok-satan-kitaplar",\n    maxRank: 50,\n    includeInComposite: true',
+    "weekly BKM composite vote",
+  );
+  contains(
+    lists,
+    'code: "bkm-tr-monthly",\n    sourceCode: "bkm",\n    title: "BKM Kitap · Aylık Çok Satanlar",\n    categoryKey: "general",\n    period: "monthly",\n    sourceUrl: "https://www.bkmkitap.com/cok-satan-kitaplar",\n    maxRank: 50,\n    includeInComposite: false',
+    "monthly BKM source-only list",
+  );
+});

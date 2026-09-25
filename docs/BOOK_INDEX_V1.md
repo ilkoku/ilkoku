@@ -188,3 +188,21 @@ erişim ile kaynak kullanım koşulları ayrı değerlendirilir.
 - Kaynak `researching` durumunda kalır; tahmin edilen/uydurulan liste
   collector'ı yazılmaz.
 
+
+
+### BKM Kitap collector
+
+25 Eylül 2026 teknik doğrulamasında BKM Çok Satanlar sayfasının tarayıcıda
+`https://bkm-best.wawlabs.com/top_sellers` public JSON beslemesini kullandığı
+doğrudan network kaydından doğrulandı.
+
+- `span=week` → 500 kayıt, `tip=Hafta`
+- `span=month` → 500 kayıt, `tip=Ay`
+- `span=year` → 500 kayıt, `tip=Yil`
+- Feed; başlık, yazar, yayınevi/marka, GTIN/ISBN, ürün linki, görsel ve fiyat
+  alanlarını sağlıyor.
+- V1 public/read model için her dönemden yalnızca **Top 50** saklanır.
+- Türkiye bileşik endeksine BKM'den yalnız **haftalık genel liste** oy verir.
+  Aylık ve yıllık listeler kaynak görünümü/tarihçe içindir.
+- Feed içindeki satış miktarı alanları public İlkOku yüzeyinde gösterilmez ve
+  V1 veri modelinde ayrıca saklanmaz.

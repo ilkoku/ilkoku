@@ -1,0 +1,61 @@
+name: Book Index Inkilap Probe
+
+on:
+  push:
+    branches:
+      - feature/book-index-inkilap-collector
+    paths:
+      - ".github/workflows/book-index-inkilap-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect Inkilap bestseller markup
+        shell: bash
+        run: |
+          set -euo pipefail
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          url="https://www.inkilap.com/cok-satanlar"
+          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/page.html -w "%{http_code}" "$url")"
+          echo "HTTP_STATUS=$code"
+          echo "BYTES=$(wc -c < /tmp/page.html)"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html
+
+          text=Path("/tmp/page.html").read_text(errors="replace")
+          print("TITLE", re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S).group(1)[:300] if re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S) else "")
+
+          classes=[]
+          for m in re.finditer(r'class=["\']([^"\']*(?:product|urun|item|card)[^"\']*)["\']',text,re.I):
+              v=m.group(1)
+              if v not in classes:
+                  classes.append(v)
+          print("--- CLASSES ---")
+          for c in classes[:120]:
+              print(c)
+
+          for needle in ["Yeşil Gece","Serenad","Pembe Fili Düşünme"]:
+              p=text.find(needle)
+              print(f"--- {needle} pos={p} ---")
+              if p>=0:
+                  print(text[max(0,p-2500):p+5000])
+
+          print("--- BOOK LINKS ---")
+          seen=0
+          for href,body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,1200}?)</a>',text,re.I):
+              clean=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',body))).strip()
+              if not clean:
+                  continue
+              if any(x.casefold() in clean.casefold() for x in ["Yeşil Gece","Serenad","Pembe Fili"]):
+                  print(href,"=>",clean[:240])
+                  seen+=1
+                  if seen>=20:
+                      break
+          PY

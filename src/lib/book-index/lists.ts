@@ -135,6 +135,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "kitapsec-cocuk-genclik-live",
+    sourceCode: "kitapsec",
+    title: "KitapSeç · Çocuk ve Gençlik Çok Satan Kitaplar",
+    categoryKey: "cocuk-genclik",
+    period: "live",
+    sourceUrl: "https://www.kitapsec.com/Products/Cocuk-ve-Genclik-Kitaplari/Cok-Satan-Kitaplar/",
+    maxRank: 48,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    enabled: true,
+  },
+  {
     code: "idefix-tr-live",
     sourceCode: "idefix",
     title: "idefix · Çok Satan Kitaplar",

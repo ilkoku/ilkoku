@@ -326,7 +326,7 @@ test("KitapSepeti collector parses the verified server-rendered bestseller catal
 
   contains(adapter, 'const MAX_BOOKS = 30;', "KitapSepeti Top 30 cap");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 20;', "KitapSepeti fail-closed minimum");
-  contains(adapter, '\\bproduct-item\\b', "product card selector");
+  contains(adapter, '\\sproduct-item', "product card selector");
   contains(adapter, '\\bproduct-title\\b', "title selector");
   contains(adapter, '\\bbrand-title\\b', "publisher selector");
   contains(adapter, '\\bmodel-title\\b', "author selector");

@@ -32,7 +32,7 @@ export const BOOK_INDEX_INSIGHT_PAGES: readonly BookIndexInsightPageDefinition[]
     heading: "Çok Satan Listelerinde Yükselen Kitaplar",
     searchTitle: "Yükselen Kitaplar",
     description:
-      "Birden fazla bağımsız kaynakta sırası yükselen kitapları, toplam sıra kazanımı ve kaynak sayısıyla inceleyin.",
+      "Bağımsız kaynaklardaki çok satan listelerinde önceki başarılı snapshot'a göre sırası yükselen kitapları, toplam sıra kazanımı ve kaynak sayısıyla inceleyin.",
   },
   {
     slug: "her-yerde-satanlar",

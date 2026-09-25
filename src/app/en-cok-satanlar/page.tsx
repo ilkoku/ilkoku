@@ -42,6 +42,7 @@ export default async function BestsellersPage() {
       description,
       url: `${baseUrl}${canonical}`,
       inLanguage: "tr-TR",
+      image: `${baseUrl}/en-cok-satanlar/opengraph-image`,
       ...(lastObservedAt ? { dateModified: lastObservedAt.toISOString() } : {}),
       mainEntity: {
         "@id": `${baseUrl}${canonical}#turkey-preview`,

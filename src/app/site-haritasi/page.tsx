@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SITE_MAP_PAGES, type SiteMapPage } from "@/lib/cms-header-navigation";
+import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -108,19 +109,33 @@ async function getPublicWorkLinks(): Promise<PublicWorkLink[]> {
 }
 
 export default async function PublicSiteMapPage() {
-  const [cmsPages, publicWorks] = await Promise.all([
+  const [cmsPages, publicWorks, bookIndexContext] = await Promise.all([
     loadPublishedCmsSiteMapPages(),
     getPublicWorkLinks(),
+    getBookIndexPublicPageContext(30).catch(() => null),
   ]);
 
-  const codeOwnedPages = SITE_MAP_PAGES.filter((page) => page.indexable !== false);
+  const bookIndexPublished = Boolean(bookIndexContext);
+  const codeOwnedPages = SITE_MAP_PAGES.filter(
+    (page) =>
+      page.indexable !== false
+      && (bookIndexPublished || page.id !== "book-index"),
+  );
   const knownHrefs = new Set([
     ...codeOwnedPages.map((page) => page.href),
     ...publicLegalLinks.map((link) => link.href),
   ]);
 
   const cmsOnlyPages = cmsPages
-    .filter((page) => page.indexable !== false && !knownHrefs.has(page.href))
+    .filter(
+      (page) =>
+        page.indexable !== false
+        && !knownHrefs.has(page.href)
+        && (
+          bookIndexPublished
+          || !page.href.startsWith("/en-cok-satanlar")
+        ),
+    )
     .map((page) => ({ href: page.href, label: page.label }));
 
   const groups = groupedSitePages(codeOwnedPages);

@@ -11,6 +11,7 @@ import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 import { GENRES } from "@/lib/genres";
+import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
@@ -186,6 +187,30 @@ type CmsSitemapRow = {
 
 type CmsLegalSitemapRow = CmsSitemapRow;
 
+async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+  try {
+    const context = await getBookIndexPublicPageContext(100);
+    if (!context || context.model.turkey.availability !== "available") {
+      return [];
+    }
+
+    return [
+      {
+        url: `${baseUrl}/en-cok-satanlar`,
+        changeFrequency: "daily",
+        priority: 0.85,
+      },
+      {
+        url: `${baseUrl}/en-cok-satanlar/turkiye`,
+        changeFrequency: "daily",
+        priority: 0.85,
+      },
+    ];
+  } catch {
+    return [];
+  }
+}
+
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -194,6 +219,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       works,
       pages,
       legalRows,
+      bookIndexEntries,
     ] = await Promise.all([
       prisma.work.findMany({
         where: {
@@ -241,6 +267,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ORDER BY updatedAt DESC
         LIMIT 100
       `,
+      loadBookIndexSitemapEntries(),
     ]);
 
     const pageBySlug = new Map(
@@ -279,6 +306,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [
       ...staticDiscoveryEntries,
+      ...bookIndexEntries,
       ...publicPageEntries,
       ...legalEntries,
       ...works

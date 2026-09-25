@@ -112,4 +112,21 @@ jobs:
           check_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi'
           check_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin'
 
+          if grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar</loc>' "$sitemap"; then
+            echo "Published Book Index detected in sitemap; validating gated SEO surfaces."
+            check_page '/en-cok-satanlar' 'https://ilkoku.com/en-cok-satanlar'
+
+            if grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar/turkiye</loc>' "$sitemap"; then
+              check_page '/en-cok-satanlar/turkiye' 'https://ilkoku.com/en-cok-satanlar/turkiye'
+            fi
+
+            source_url="$(grep -Eo '<loc>https://ilkoku\.com/en-cok-satanlar/kaynak/[^<]+</loc>' "$sitemap" | head -1 | sed -e 's#<loc>##' -e 's#</loc>##' || true)"
+            if [[ -n "$source_url" ]]; then
+              source_path="${source_url#https://ilkoku.com}"
+              check_page "$source_path" "$source_url"
+            fi
+          else
+            echo "Book Index is not published in sitemap; gated SEO checks remain skipped."
+          fi
+
           echo "PASS: manually requested low-impact SEO diagnostic completed."

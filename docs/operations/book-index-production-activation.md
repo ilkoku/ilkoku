@@ -201,7 +201,15 @@ GTM'dedir; doğrudan GA4 yalnız fallback olarak kullanılır ve çift event
 
 Sitemap aktivasyonundan sonra:
 
-- IndexNow yalnız yeni public URL'lere uygulanır;
+- IndexNow yalnız sitemap'te gerçekten yayınlanan Book Index URL'lerine uygulanır;
+- günlük Book Index IndexNow yenilemesi ana, Türkiye ve yayınlanmış kaynak
+  sayfalarını `/en-cok-satanlar*` kapsamıyla taşır;
+- haftalık GSC performans raporu aynı Book Index prefix'ini izler;
+- haftalık GSC URL Inspection ana + Türkiye + sitemap'te yayınlanan kaynak
+  sayfalarından temsilî URL'leri otomatik örnekler;
+- manuel SEO indexability smoke Book Index sitemap'te yoksa onu atlar; varsa
+  ana, Türkiye ve temsilî bir kaynak sayfasında HTTP 200, robots ve canonical
+  sözleşmesini doğrular;
 - sitemap Google Search Console'da yeniden okunur;
 - ilk günlerde "URL is unknown to Google" tek başına hata sayılmaz;
 - canonical/indexability değişimleri takip edilir.

@@ -37,10 +37,12 @@ test("Book Index scheduler endpoint accepts scoped GitHub OIDC and keeps secret 
   contains(route, "timingSafeEqual", "timing-safe legacy fallback");
   contains(route, "configured.length < 32", "minimum legacy secret length");
   contains(route, "runBookIndexScheduler", "scheduler execution");
+  contains(route, "getBookIndexReadinessSnapshot", "readiness evidence in scheduler response");
+  contains(route, "getBookIndexSeoGateSnapshot", "SEO gate evidence in scheduler response");
   contains(env, 'BOOK_INDEX_SCHEDULER_SECRET="CHANGE_ME_WITH_AT_LEAST_32_RANDOM_CHARACTERS"', "legacy environment contract");
 });
 
-test("Book Index automatic cron is enabled only after the OIDC canary pass", () => {
+test("Book Index automatic cron stays active while a temporary post-smoke readiness probe runs", () => {
   const workflow = source(".github/workflows/book-index-scheduler.yml");
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
   const rollout = source("docs/operations/book-index-scheduler-rollout.md");
@@ -48,7 +50,8 @@ test("Book Index automatic cron is enabled only after the OIDC canary pass", () 
   contains(workflow, "workflow_dispatch:", "manual operations trigger");
   contains(workflow, "schedule:", "automatic scheduler trigger");
   contains(workflow, 'cron: "17 * * * *"', "hourly scheduler cadence");
-  notContains(workflow, "workflow_run:", "temporary bootstrap trigger removed");
+  contains(workflow, "workflow_run:", "temporary post-smoke readiness probe");
+  contains(workflow, "Production smoke", "deployment-aware readiness probe");
   contains(workflow, "id-token: write", "OIDC token permission");
   contains(workflow, "ACTIONS_ID_TOKEN_REQUEST_URL", "OIDC token request");
   contains(workflow, "ilkoku-book-index-scheduler", "dedicated OIDC audience");

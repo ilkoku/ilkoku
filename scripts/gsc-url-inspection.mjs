@@ -34,7 +34,7 @@ function validateInspectionUrl(value) {
   return url.toString();
 }
 
-async function discoverRepresentativeWorkUrl() {
+async function discoverPublicSitemapUrls() {
   try {
     const response = await fetch(`${BASE_URL}/sitemap.xml`, {
       headers: {
@@ -43,13 +43,22 @@ async function discoverRepresentativeWorkUrl() {
       },
       signal: AbortSignal.timeout(15_000),
     });
-    if (!response.ok) return null;
+    if (!response.ok) return [];
     const xml = await response.text();
-    const locations = [...xml.matchAll(/<loc>([^<]+)<\/loc>/giu)]
-      .map((match) => match[1].trim());
-    return locations.find((location) => /^https:\/\/ilkoku\.com\/kitap\//u.test(location)) || null;
+
+    return [...new Set(
+      [...xml.matchAll(/<loc>([^<]+)<\/loc>/giu)]
+        .map((match) => match[1].trim())
+        .filter((location) => {
+          try {
+            return new URL(location).origin === BASE_URL;
+          } catch {
+            return false;
+          }
+        }),
+    )];
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -228,13 +237,28 @@ async function main() {
     `${BASE_URL}/yazarlar-icin/kurgu/roman`,
   ];
 
-  const representativeWork = requested.length === 0
-    ? await discoverRepresentativeWorkUrl()
-    : null;
+  const discoveredSitemapUrls = requested.length === 0
+    ? await discoverPublicSitemapUrls()
+    : [];
+
+  const representativeWork = discoveredSitemapUrls.find(
+    (location) => /^https:\/\/ilkoku\.com\/kitap\//u.test(location),
+  ) || null;
+
+  const bookIndexUrls = discoveredSitemapUrls
+    .filter(
+      (location) =>
+        location === `${BASE_URL}/en-cok-satanlar`
+        || location === `${BASE_URL}/en-cok-satanlar/turkiye`,
+    )
+    .slice(0, 2);
 
   const urls = [...new Set(
-    (requested.length > 0 ? requested : [...defaults, representativeWork].filter(Boolean))
-      .map(validateInspectionUrl),
+    (
+      requested.length > 0
+        ? requested
+        : [...defaults, representativeWork, ...bookIndexUrls].filter(Boolean)
+    ).map(validateInspectionUrl),
   )];
 
   if (urls.length === 0) throw new Error("No inspection URLs were selected.");

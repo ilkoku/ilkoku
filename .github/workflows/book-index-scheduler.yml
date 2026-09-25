@@ -4,11 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "17 * * * *"
-  workflow_run:
-    workflows:
-      - Production smoke
-    types:
-      - completed
 
 permissions:
   contents: read
@@ -20,12 +15,6 @@ concurrency:
 
 jobs:
   run:
-    if: >-
-      github.event_name != 'workflow_run' ||
-      (
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'main'
-      )
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -59,8 +48,6 @@ jobs:
               if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); raise SystemExit(0 if "readiness" in payload and "seoGate" in payload else 1)'; then
                 exit 0
               fi
-
-              echo "Readiness payload not deployed yet; retrying." >&2
             fi
 
             if [ "$attempt" -lt 12 ]; then

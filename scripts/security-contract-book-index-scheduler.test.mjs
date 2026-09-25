@@ -33,6 +33,7 @@ test("Book Index scheduler endpoint accepts scoped GitHub OIDC and keeps secret 
   contains(route, 'GITHUB_REPOSITORY_ID = "1304046004"', "immutable repository identity");
   contains(route, "book-index-scheduler.yml@refs/heads/main", "main scheduler workflow restriction");
   contains(route, "ALLOWED_GITHUB_EVENTS", "scheduler event allowlist");
+  notContains(route, '"workflow_run"', "temporary workflow-run trust removed");
   contains(route, "BOOK_INDEX_SCHEDULER_SECRET", "legacy dedicated secret fallback");
   contains(route, "timingSafeEqual", "timing-safe legacy fallback");
   contains(route, "configured.length < 32", "minimum legacy secret length");
@@ -42,7 +43,7 @@ test("Book Index scheduler endpoint accepts scoped GitHub OIDC and keeps secret 
   contains(env, 'BOOK_INDEX_SCHEDULER_SECRET="CHANGE_ME_WITH_AT_LEAST_32_RANDOM_CHARACTERS"', "legacy environment contract");
 });
 
-test("Book Index automatic cron stays active while a temporary post-smoke readiness probe runs", () => {
+test("Book Index automatic cron remains active after the production readiness probe", () => {
   const workflow = source(".github/workflows/book-index-scheduler.yml");
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
   const rollout = source("docs/operations/book-index-scheduler-rollout.md");
@@ -50,14 +51,13 @@ test("Book Index automatic cron stays active while a temporary post-smoke readin
   contains(workflow, "workflow_dispatch:", "manual operations trigger");
   contains(workflow, "schedule:", "automatic scheduler trigger");
   contains(workflow, 'cron: "17 * * * *"', "hourly scheduler cadence");
-  contains(workflow, "workflow_run:", "temporary post-smoke readiness probe");
-  contains(workflow, "Production smoke", "deployment-aware readiness probe");
+  notContains(workflow, "workflow_run:", "temporary post-smoke probe removed");
   contains(workflow, "id-token: write", "OIDC token permission");
   contains(workflow, "ACTIONS_ID_TOKEN_REQUEST_URL", "OIDC token request");
   contains(workflow, "ilkoku-book-index-scheduler", "dedicated OIDC audience");
   contains(workflow, "/api/internal/book-index-scheduler", "internal scheduler endpoint");
-  contains(workflow, '"readiness" in payload', "deployment-aware readiness response guard");
-  contains(workflow, '"seoGate" in payload', "deployment-aware SEO gate response guard");
+  contains(workflow, '"readiness" in payload', "readiness response guard");
+  contains(workflow, '"seoGate" in payload', "SEO gate response guard");
   contains(admin, "GitHub OIDC hazır", "admin authentication readiness");
   contains(admin, "Saatlik scheduler aktif", "admin automatic scheduling state");
   contains(rollout, "AUTOMATIC_CRON_ENABLED / CANARY_PASS", "activated rollout state");

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { collectBookIndexListByCode } from "@/lib/book-index/collector";
 import { getBookIndexList } from "@/lib/book-index/lists";
+import { matchPendingBookIndexBooks } from "@/lib/book-index/matching";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
 function destination(status: string, listCode?: string, items?: number) {
@@ -46,4 +47,32 @@ export async function collectBookIndexListAction(formData: FormData) {
       result.items,
     ),
   );
+}
+
+
+export async function matchPendingBookIndexBooksAction() {
+  const admin = await getCurrentUser();
+  if (!admin || admin.role !== "admin") {
+    redirect("/erisim-reddedildi?kaynak=system_management_book_index_matching");
+  }
+
+  let result: Awaited<ReturnType<typeof matchPendingBookIndexBooks>>;
+
+  try {
+    result = await matchPendingBookIndexBooks(200);
+  } catch (error) {
+    console.error("BOOK_INDEX_ADMIN_MATCH_FAILED", {
+      error: error instanceof Error ? error.message : "UNKNOWN",
+    });
+    redirect(destination("eslestirme-hatasi"));
+  }
+
+  revalidatePath("/sistem-yonetimi/kitap-endeksi");
+  const params = new URLSearchParams({
+    durum: "eslestirme-tamamlandi",
+    adet: String(result.processed),
+    eslesen: String(result.matched),
+    bekleyen: String(result.pending),
+  });
+  redirect(`/sistem-yonetimi/kitap-endeksi?${params.toString()}`);
 }

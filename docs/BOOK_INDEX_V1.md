@@ -246,3 +246,13 @@ Amazon kaynakları V1'de iki ayrı pazar olarak tutulur.
 - Anti-bot/erişim koruması aşılmayacak.
 - D&R V1 registry içinde **blocked** tutulur; resmi feed/API veya açık izinli
   erişim yolu doğrulanmadan collector aktive edilmez.
+
+### idefix
+
+- `https://www.idefix.com/cok-satanlar-l-162` şeffaf İlkOku user-agent ile HTTP 200 döndürüyor.
+- `robots.txt` bu exact çok-satanlar yolunu açıkça `Allow` ediyor.
+- Sayfa server-rendered `__NEXT_DATA__` JSON içinde güncel kitap kartlarını veriyor; bu nedenle headless browser gerekmiyor.
+- Kaynak JSON içinde sponsorlu kartlar `isSponsored=true` olarak işaretleniyor.
+- İlkOku Türkiye Endeksi'nde kaynak sponsorlu kartlar oy kullanmaz; yalnız organik sıra korunur ve bitişik rank olarak yeniden numaralanır.
+- V1 listesi ilk sayfadaki organik kitaplarla sınırlıdır; otomatik pagination eklenmeden önce ayrıca doğrulama yapılacaktır.
+

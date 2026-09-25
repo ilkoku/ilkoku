@@ -564,3 +564,17 @@ test("Book Index sponsor integration points default off and never alter organic 
   contains(page, "default OFF", "truthful sponsor state");
   contains(page, "Banner / Reklam Alanları", "existing ad management surface");
 });
+
+
+test("Book Index reconciliation only merges safe auto-matched duplicate masters", () => {
+  const reconciliation = source("src/lib/book-index/reconciliation.ts");
+  const scheduler = source("src/lib/book-index/scheduler.ts");
+
+  contains(reconciliation, 'matchStatus: "auto_matched"', "auto-match-only reconciliation scope");
+  contains(reconciliation, 'book.matchStatus !== "auto_matched"', "manual and non-auto decisions are protected");
+  contains(reconciliation, "isbn13s.length > 1 || isbn10s.length > 1", "conflicting ISBN groups are skipped");
+  contains(reconciliation, "group.sourceIds.size < 2 || group.masterIds.size < 2", "cross-source duplicate requirement");
+  contains(reconciliation, "masterBookId: canonical.id", "duplicate external books are relinked");
+  contains(reconciliation, "bookIndexBook.deleteMany", "orphan donor masters are removed only after relinking");
+  contains(scheduler, "reconcileAutoMatchedBookIndexMasters", "scheduler executes bounded reconciliation");
+});

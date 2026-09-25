@@ -1788,3 +1788,171 @@ model PublisherEditorReview {
   @@index([editorId, status, updatedAt])
   @@index([status, updatedAt])
 }
+
+// -----------------------------------------------------------------------------
+// Book Index foundation (v1)
+// External bestseller observations are preserved as immutable snapshots.
+// Source-native ranks stay separate from İlkOku's composite Turkey index.
+// -----------------------------------------------------------------------------
+
+enum BookIndexSourceStatus {
+  active
+  paused
+  blocked
+}
+
+enum BookIndexPeriod {
+  live
+  daily
+  weekly
+  monthly
+  yearly
+}
+
+enum BookIndexMatchStatus {
+  unmatched
+  auto_matched
+  manual_matched
+  rejected
+}
+
+enum BookIndexFetchStatus {
+  running
+  success
+  no_change
+  partial
+  failed
+}
+
+model BookIndexSource {
+  id                   String                @id @default(uuid()) @db.Char(36)
+  code                 String                @unique @db.VarChar(40)
+  name                 String                @db.VarChar(120)
+  marketCode           String                @db.VarChar(16)
+  countryCode          String                @db.Char(2)
+  baseUrl              String                @db.VarChar(500)
+  includeInTurkeyIndex Boolean               @default(false)
+  status               BookIndexSourceStatus @default(active)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  lists                BookIndexList[]
+  externalBooks        BookIndexExternalBook[]
+
+  @@index([marketCode, status])
+  @@index([includeInTurkeyIndex, status])
+}
+
+model BookIndexList {
+  id                     String                 @id @default(uuid()) @db.Char(36)
+  sourceId               String                 @db.Char(36)
+  code                   String                 @db.VarChar(80)
+  title                  String                 @db.VarChar(180)
+  categoryKey            String                 @default("general") @db.VarChar(120)
+  period                 BookIndexPeriod
+  sourceUrl              String                 @db.VarChar(1000)
+  maxRank                Int?                   @db.UnsignedSmallInt
+  includeInComposite     Boolean                @default(false)
+  collectionEveryMinutes Int?                   @db.UnsignedSmallInt
+  active                 Boolean                @default(true)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  source                 BookIndexSource        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  fetchRuns              BookIndexFetchRun[]
+
+  @@unique([sourceId, code])
+  @@index([sourceId, active, period])
+  @@index([categoryKey, period, active])
+  @@index([includeInComposite, active])
+}
+
+model BookIndexBook {
+  id               String                  @id @default(uuid()) @db.Char(36)
+  slug             String                  @unique @db.VarChar(260)
+  title            String                  @db.VarChar(300)
+  normalizedTitle  String                  @db.VarChar(300)
+  authorName       String?                 @db.VarChar(220)
+  normalizedAuthor String?                 @db.VarChar(220)
+  publisherName    String?                 @db.VarChar(220)
+  isbn13           String?                 @unique @db.Char(13)
+  isbn10           String?                 @unique @db.Char(10)
+  coverUrl         String?                 @db.VarChar(1000)
+  firstSeenAt      DateTime                @default(now())
+  lastSeenAt       DateTime                @default(now())
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  externalBooks    BookIndexExternalBook[]
+
+  @@index([normalizedTitle])
+  @@index([normalizedAuthor])
+  @@index([lastSeenAt])
+}
+
+model BookIndexExternalBook {
+  id               String               @id @default(uuid()) @db.Char(36)
+  sourceId         String               @db.Char(36)
+  sourceKey        String               @db.VarChar(255)
+  sourceExternalId String?              @db.VarChar(180)
+  title            String               @db.VarChar(300)
+  normalizedTitle  String               @db.VarChar(300)
+  authorName       String?              @db.VarChar(220)
+  normalizedAuthor String?              @db.VarChar(220)
+  publisherName    String?              @db.VarChar(220)
+  isbn13           String?              @db.Char(13)
+  isbn10           String?              @db.Char(10)
+  productUrl       String               @db.VarChar(1200)
+  imageUrl         String?              @db.VarChar(1200)
+  masterBookId     String?              @db.Char(36)
+  matchStatus      BookIndexMatchStatus @default(unmatched)
+  matchConfidence  Float?
+  firstSeenAt      DateTime             @default(now())
+  lastSeenAt       DateTime             @default(now())
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  source           BookIndexSource      @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  masterBook       BookIndexBook?       @relation(fields: [masterBookId], references: [id], onDelete: SetNull)
+  observations     BookIndexObservation[]
+
+  @@unique([sourceId, sourceKey])
+  @@index([sourceId, matchStatus, lastSeenAt])
+  @@index([masterBookId, lastSeenAt])
+  @@index([isbn13])
+  @@index([normalizedTitle, normalizedAuthor])
+}
+
+model BookIndexFetchRun {
+  id          String               @id @default(uuid()) @db.Char(36)
+  listId      String               @db.Char(36)
+  status      BookIndexFetchStatus @default(running)
+  startedAt   DateTime             @default(now())
+  completedAt DateTime?
+  itemsFound  Int                  @default(0) @db.UnsignedSmallInt
+  itemsStored Int                  @default(0) @db.UnsignedSmallInt
+  fingerprint String?              @db.Char(64)
+  errorCode   String?              @db.VarChar(80)
+  errorMessage String?             @db.VarChar(1000)
+  createdAt   DateTime             @default(now())
+  list        BookIndexList        @relation(fields: [listId], references: [id], onDelete: Cascade)
+  observations BookIndexObservation[]
+
+  @@index([listId, startedAt])
+  @@index([status, startedAt])
+}
+
+model BookIndexObservation {
+  id             String                @id @default(uuid()) @db.Char(36)
+  fetchRunId     String                @db.Char(36)
+  externalBookId String                @db.Char(36)
+  rank           Int                   @db.UnsignedSmallInt
+  priceAmount    BigInt?               @db.UnsignedBigInt
+  currency       String?               @db.Char(3)
+  observedAt     DateTime              @default(now())
+  createdAt      DateTime              @default(now())
+  fetchRun       BookIndexFetchRun     @relation(fields: [fetchRunId], references: [id], onDelete: Cascade)
+  externalBook   BookIndexExternalBook @relation(fields: [externalBookId], references: [id], onDelete: Cascade)
+
+  @@unique([fetchRunId, externalBookId])
+  @@index([fetchRunId, rank])
+  @@index([externalBookId, observedAt])
+  @@index([observedAt])
+}
+

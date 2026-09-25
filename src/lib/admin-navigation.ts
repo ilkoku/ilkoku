@@ -32,6 +32,7 @@ export const adminNavigation: AdminNavItem[] = [
   { href: systemPath("/demo"), label: "Demo Veri Merkezi", icon: "applications" },
   { href: systemPath("/kullanicilar"), label: "Kullanıcılar", icon: "users" },
   { href: systemPath("/eserler"), label: "Eserler", icon: "works" },
+  { href: systemPath("/kitap-endeksi"), label: "Kitap Endeksi", icon: "works" },
   { href: systemPath("/yazarlar"), label: "Yazarlar", icon: "authors" },
   { href: systemPath("/editorler"), label: "Editörler", icon: "editors" },
   { href: systemPath("/yayinevleri"), label: "Yayınevleri", icon: "publishers" },

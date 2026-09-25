@@ -159,6 +159,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "nobelkitap-tr-live",
+    sourceCode: "nobelkitap",
+    title: "NobelKitap · Çok Satanlar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.nobelkitap.com/cok-satanlar",
+    maxRank: 50,
+    includeInComposite: true,
+    collectionEveryMinutes: 360,
+    enabled: true,
+  },
+  {
     code: "idefix-tr-live",
     sourceCode: "idefix",
     title: "idefix · Çok Satan Kitaplar",

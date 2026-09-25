@@ -6,27 +6,32 @@ Bu belge Kitap Endeksi kodu hazırlandıktan sonra production aktivasyonunun
 hangi sırayla yapılacağını tanımlar. Adımların sırası bilinçlidir; sonraki
 kapıya önceki kapı doğrulanmadan geçilmez.
 
-## 1. Scheduler secret pair
+## 1. Scheduler authentication
 
-Production ve GitHub Actions için aynı isimde, yalnız bu işe ait ayrı bir
-secret oluştur:
+Birincil scheduler kimliği **GitHub Actions OIDC**'dir. GitHub Actions kısa
+ömürlü imzalı JWT üretir; production endpoint GitHub'ın public JWKS anahtarları
+ile token'ı doğrular.
 
-- Production: `BOOK_INDEX_SCHEDULER_SECRET`
-- GitHub Actions: `BOOK_INDEX_SCHEDULER_SECRET`
+Sabit güven sınırları:
 
-Kurallar:
+- audience: `ilkoku-book-index-scheduler`
+- repository: `ilkoku/ilkoku`
+- repository id: `1304046004`
+- workflow: `.github/workflows/book-index-scheduler.yml@refs/heads/main`
+- ref: `refs/heads/main`
 
-- en az 32 rastgele byte;
-- başka job secret'larıyla aynı değer kullanılmaz;
-- değer repo, PR, issue, log veya chat içine yazılmaz;
-- iki yüzeydeki değer birebir aynı olmalıdır.
+Bu yol için GitHub Actions veya production tarafında yeni bir static scheduler
+secret oluşturmak gerekmez.
 
-Bu adım tamamlanmadan otomatik scheduler açılmaz.
+`BOOK_INDEX_SCHEDULER_SECRET` kodda yalnız legacy/acil durum fallback olarak
+kalır. Kullanılırsa en az 32 random byte olmalı ve değeri hiçbir log, issue, PR
+veya chat içine yazılmamalıdır.
 
-## 2. Manual scheduler canary
+## 2. Scheduler canary
 
-GitHub Actions içindeki **Book Index scheduler canary** workflow'unu yalnız
-manuel çalıştır.
+İlk production doğrulaması için workflow manuel çalıştırılabilir. Bootstrap
+sırasında ayrıca başarılı **Production smoke** sonrasında geçici
+`workflow_run` tetikleyicisi aynı canary'yi otomatik başlatabilir.
 
 PASS kriterleri:
 
@@ -41,7 +46,7 @@ Canary başarısızsa cron açılmaz.
 
 ## 3. Automatic scheduler activation
 
-Manual canary PASS sonrasında scheduler cron'u ayrı ve küçük bir PR ile açılır.
+OIDC canary PASS sonrasında geçici `workflow_run` tetikleyicisi kaldırılır ve scheduler cron'u ayrı, küçük bir PR ile açılır.
 
 Hedef kontrol periyodu:
 
@@ -246,7 +251,7 @@ Kaynak erişim problemi:
 
 Sıra:
 
-**Secret → Manual Canary → Cron → Snapshot Birikimi → Matching → Readiness
+**GitHub OIDC → Canary → Cron → Snapshot Birikimi → Matching → Readiness
 Kanıtı → SEO Policy → Gate Dry-run → Publish → Sitemap/Navigation → GSC**
 
 Bu sıra dışında otomatik public yayın yapılmaz.

@@ -1,73 +1,80 @@
 # Book Index scheduler rollout
 
-Status: **AUTOMATIC_CRON_DISABLED / CANARY_READY**
+Status: **AUTOMATIC_CRON_DISABLED / OIDC_CANARY_READY**
 
-The Book Index scheduler foundation uses the same internal-job pattern already
-used elsewhere in İlkOku, but it has its own dedicated secret and does not
-reuse another job's credentials.
+The Book Index scheduler keeps its protected internal-job boundary, but GitHub
+Actions authentication now prefers GitHub OIDC instead of a duplicated static
+secret pair.
 
 ## Runtime behavior
 
-- The scheduler iterates only enabled Book Index lists with a
-  `collectionEveryMinutes` value.
-- The last fetch-run start time is the cadence boundary. A failed run therefore
-  cannot cause immediate repeated requests to the same external source.
-- Due lists execute sequentially.
-- A failure in one list is captured in that list's result and does not stop
-  later lists from running.
-- Collector-level immutable fetch runs and observations remain authoritative;
-  the scheduler does not overwrite snapshot history.
+- Only enabled lists with a `collectionEveryMinutes` value are considered.
+- The last fetch-run start time is the cadence boundary.
+- Due lists execute sequentially and failures stay isolated per list.
+- Collector fetch runs and observations remain append-only history.
+- Blocked/paused sources are not forced into collection.
 
-## Secret boundary
+## Authentication
 
-Create one independent secret pair:
+Primary path: **GitHub Actions OIDC**.
 
-| Surface | Name |
-| --- | --- |
-| GitHub Actions | `BOOK_INDEX_SCHEDULER_SECRET` |
-| Production environment | `BOOK_INDEX_SCHEDULER_SECRET` |
+The scheduler workflow requests a short-lived token with:
 
-Requirements:
+- issuer: `https://token.actions.githubusercontent.com`
+- audience: `ilkoku-book-index-scheduler`
+- repository: `ilkoku/ilkoku`
+- repository id: `1304046004`
+- workflow ref: `ilkoku/ilkoku/.github/workflows/book-index-scheduler.yml@refs/heads/main`
+- ref: `refs/heads/main`
+- allowed events: `workflow_dispatch`, temporary `workflow_run` canary, and
+  final `schedule`.
 
-- use a unique high-entropy value of at least 32 random bytes;
-- the GitHub and production values must match;
-- do not reuse CMS, email, writer-summary or other job secrets;
-- never commit or paste the value into logs, issues, PRs or chat.
+The production endpoint verifies GitHub's signed token through its public JWKS.
+No GitHub Actions repository secret is required for the primary path.
+
+`BOOK_INDEX_SCHEDULER_SECRET` remains only as a legacy emergency fallback.
+If used, it must still be unique, at least 32 random bytes, and identical in
+GitHub Actions and production.
 
 ## Canary sequence
 
-1. Deploy the scheduler endpoint to production.
-2. Configure the dedicated secret pair.
-3. Run the **Book Index scheduler canary** workflow manually.
-4. Confirm the workflow succeeds.
-5. Confirm due Book Index lists created isolated `BookIndexFetchRun` rows.
-6. Confirm one source failure does not prevent later due lists from running.
-7. Confirm no source is called again before its configured
-   `collectionEveryMinutes` window.
+1. Deploy the OIDC-capable scheduler endpoint.
+2. Let **Production smoke** complete successfully on the same main push.
+3. The temporary `workflow_run` trigger starts **Book Index scheduler canary**.
+4. Confirm the OIDC token is accepted by production.
+5. Confirm due lists create isolated `BookIndexFetchRun` rows.
+6. Confirm a source failure does not prevent later due lists.
+7. Confirm no list runs again before its `collectionEveryMinutes` boundary.
+
+The temporary `workflow_run` trigger is only a bootstrap mechanism. It is
+removed after the first production canary PASS.
 
 ## Automatic activation
 
-Automatic cron is intentionally not enabled in the foundation PR.
+Automatic cron remains disabled until the canary passes.
 
-After the canary passes, activate the GitHub Actions schedule in a separate,
-small PR. Intended scheduler-check cadence: **hourly**. The per-list
-`collectionEveryMinutes` value remains the real collection cadence, so an
-hourly scheduler check does not mean hourly collection of every source.
-
-Suggested cron after approval:
+After PASS, replace the temporary `workflow_run` bootstrap trigger with:
 
 `17 * * * *`
 
-Keep workflow concurrency at `book-index-scheduler` with
-`cancel-in-progress: false`.
+Keep:
+
+- concurrency group: `book-index-scheduler`
+- `cancel-in-progress: false`
+- `id-token: write`
+- the same OIDC audience and production verification policy.
+
+The hourly workflow check does not mean hourly collection of every source;
+per-list `collectionEveryMinutes` stays authoritative.
 
 ## Rollback
 
-If the canary fails:
+If the OIDC canary fails:
 
 1. keep automatic cron disabled;
-2. inspect the affected list's latest `BookIndexFetchRun`;
-3. fix only that source or scheduler defect;
-4. do not bypass source protection or shorten the configured collection
-   interval to force retries;
-5. rerun the manual canary only after the cause is understood.
+2. inspect the workflow job result and production response;
+3. if authentication failed, fix only OIDC trust/claim handling;
+4. if collection failed, inspect only the affected list's latest fetch run;
+5. do not bypass source protection or shorten cadence to force retries.
+
+Snapshot history is never deleted as part of scheduler rollback.

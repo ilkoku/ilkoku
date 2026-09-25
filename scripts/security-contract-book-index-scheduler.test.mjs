@@ -23,63 +23,52 @@ test("Book Index scheduler respects list cadence and isolates source failures", 
   contains(scheduler, "continue;", "list isolation");
 });
 
-test("Book Index scheduler endpoint requires its own timing-safe bearer secret", () => {
+test("Book Index scheduler endpoint accepts scoped GitHub OIDC and keeps secret fallback", () => {
   const route = source("src/app/api/internal/book-index-scheduler/route.ts");
   const env = source(".env.example");
 
-  contains(route, "BOOK_INDEX_SCHEDULER_SECRET", "dedicated scheduler secret");
-  contains(route, "timingSafeEqual", "timing-safe auth");
-  contains(route, "configured.length < 32", "minimum secret length");
+  contains(route, "createRemoteJWKSet", "GitHub OIDC JWKS verification");
+  contains(route, "jwtVerify", "GitHub OIDC JWT verification");
+  contains(route, 'GITHUB_OIDC_AUDIENCE = "ilkoku-book-index-scheduler"', "dedicated audience");
+  contains(route, 'GITHUB_REPOSITORY_ID = "1304046004"', "immutable repository identity");
+  contains(route, "book-index-scheduler.yml@refs/heads/main", "main scheduler workflow restriction");
+  contains(route, "ALLOWED_GITHUB_EVENTS", "scheduler event allowlist");
+  contains(route, "BOOK_INDEX_SCHEDULER_SECRET", "legacy dedicated secret fallback");
+  contains(route, "timingSafeEqual", "timing-safe legacy fallback");
+  contains(route, "configured.length < 32", "minimum legacy secret length");
   contains(route, "runBookIndexScheduler", "scheduler execution");
-  contains(route, "BOOK_INDEX_SCHEDULER_SECRET_MISSING", "missing-secret fail closed");
-  contains(env, 'BOOK_INDEX_SCHEDULER_SECRET="CHANGE_ME_WITH_AT_LEAST_32_RANDOM_CHARACTERS"', "environment contract");
+  contains(env, 'BOOK_INDEX_SCHEDULER_SECRET="CHANGE_ME_WITH_AT_LEAST_32_RANDOM_CHARACTERS"', "legacy environment contract");
 });
 
-test("Book Index automatic cron stays off until the manual canary passes", () => {
+test("Book Index automatic cron stays off until the OIDC canary passes", () => {
   const workflow = source(".github/workflows/book-index-scheduler.yml");
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
   const rollout = source("docs/operations/book-index-scheduler-rollout.md");
 
   contains(workflow, "workflow_dispatch:", "manual canary trigger");
-  contains(workflow, "secrets.BOOK_INDEX_SCHEDULER_SECRET", "dedicated GitHub secret");
+  contains(workflow, "workflow_run:", "post-production-smoke canary trigger");
+  contains(workflow, "Production smoke", "deployment-aware canary trigger");
+  contains(workflow, "id-token: write", "OIDC token permission");
+  contains(workflow, "ACTIONS_ID_TOKEN_REQUEST_URL", "OIDC token request");
+  contains(workflow, "ilkoku-book-index-scheduler", "dedicated OIDC audience");
   contains(workflow, "/api/internal/book-index-scheduler", "internal scheduler endpoint");
   notContains(workflow, "schedule:", "no premature automatic cron");
-  contains(admin, "Otomatik scheduler bu aşamada kapalıdır", "admin truthfulness");
-  contains(rollout, "AUTOMATIC_CRON_DISABLED / CANARY_READY", "staged rollout state");
+  contains(admin, "GitHub OIDC hazır", "admin authentication readiness");
+  contains(admin, "OIDC canary PASS", "admin does not claim automatic scheduling before canary");
+  contains(rollout, "AUTOMATIC_CRON_DISABLED / OIDC_CANARY_READY", "staged rollout state");
 });
-
 
 test("Book Index admin exposes scheduler readiness without enabling cron", () => {
   const operations = source("src/lib/book-index/operations.ts");
   const page = source("src/app/admin/kitap-endeksi/page.tsx");
 
-  contains(
-    operations,
-    "getBookIndexOperationsSnapshot",
-    "operations read model",
-  );
-  contains(
-    operations,
-    "latest.startedAt.getTime() + cadenceMinutes * 60_000",
-    "next-due calculation",
-  );
-  contains(
-    operations,
-    'status: { in: ["success", "no_change"] }',
-    "last-success calculation",
-  );
-  contains(
-    operations,
-    "BOOK_INDEX_SCHEDULER_SECRET",
-    "secret readiness without exposing secret value",
-  );
+  contains(operations, "getBookIndexOperationsSnapshot", "operations read model");
+  contains(operations, "latest.startedAt.getTime() + cadenceMinutes * 60_000", "next-due calculation");
+  contains(operations, 'status: { in: ["success", "no_change"] }', "last-success calculation");
+  contains(operations, 'schedulerAuthMode: "github_oidc"', "OIDC readiness mode");
   contains(page, "Operasyon görünümü", "admin operations section");
   contains(page, "Son başarılı", "last-success column");
   contains(page, "Sonraki due", "next-due column");
-  contains(page, "Secret bekleniyor", "safe scheduler readiness state");
-  contains(
-    page,
-    "Otomatik cron kapalıdır; dedicated-secret canary PASS",
-    "admin does not claim automatic scheduling before canary",
-  );
+  contains(page, "Canary kimliği hazır", "OIDC canary readiness state");
+  contains(page, "Otomatik cron kapalıdır; OIDC canary PASS", "admin truthfulness");
 });

@@ -116,6 +116,11 @@
   background: rgba(255, 255, 255, 0.065);
 }
 
+.public-site-header__menu-trigger[data-direct="true"] {
+  cursor: pointer;
+  text-decoration: none;
+}
+
 .public-site-header__mega {
   position: absolute;
   z-index: 5;
@@ -320,6 +325,10 @@
   font-weight: 720;
   text-align: left;
   cursor: pointer;
+}
+
+.public-site-header__mobile-category[data-direct="true"] {
+  text-decoration: none;
 }
 
 .public-site-header__mobile-category span:last-child {

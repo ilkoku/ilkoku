@@ -5,6 +5,7 @@ import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigation";
 import { resolveHeaderNavigation } from "@/lib/cms-header-navigation";
 import { getPublishedHeaderNavigation } from "@/lib/cms-header-navigation-server";
+import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 import "./public-site-header.css";
@@ -14,6 +15,63 @@ import "./public-trust-hero-proof.css";
 import "./public-site-mega-menu.css";
 import "./public-site-mega-menu-layer.css";
 import "./public-site-account-popover.css";
+
+type ResolvedHeaderMenu = ReturnType<typeof resolveHeaderNavigation>[number] & {
+  directHref?: string;
+};
+
+function withBookIndexMenu(
+  menus: ReturnType<typeof resolveHeaderNavigation>,
+  enabled: boolean,
+): ResolvedHeaderMenu[] {
+  const withoutBookIndex = menus.flatMap((menu) => {
+    if (menu.id === "book-index") return [];
+
+    const groups = menu.groups
+      .map((group) => ({
+        ...group,
+        links: group.links.filter((item) => item.pageId !== "book-index"),
+      }))
+      .filter((group) => group.links.length > 0);
+
+    if (groups.length === 0) return [];
+    return [{ ...menu, groups }];
+  });
+
+  if (!enabled) return withoutBookIndex;
+
+  const bookIndexMenu: ResolvedHeaderMenu = {
+    id: "book-index",
+    label: "En Çok Satanlar",
+    directHref: "/en-cok-satanlar",
+    groups: [
+      {
+        id: "book-index-main",
+        title: "Kitap Endeksi",
+        links: [
+          {
+            href: "/en-cok-satanlar",
+            label: "En Çok Satanlar",
+            primary: true,
+            pageId: "book-index",
+          },
+        ],
+      },
+    ],
+  };
+
+  const supportIndex = withoutBookIndex.findIndex(
+    (menu) => menu.id === "support",
+  );
+
+  if (supportIndex < 0) return [...withoutBookIndex, bookIndexMenu];
+
+  return [
+    ...withoutBookIndex.slice(0, supportIndex),
+    bookIndexMenu,
+    ...withoutBookIndex.slice(supportIndex),
+  ];
+}
 
 function AccountIcon() {
   return (
@@ -34,11 +92,15 @@ function AccountIcon() {
 }
 
 export async function PublicSiteHeader() {
-  const [identity, navigation] = await Promise.all([
+  const [identity, navigation, bookIndexContext] = await Promise.all([
     getPublicSiteIdentity(),
     getPublishedHeaderNavigation(),
+    getBookIndexPublicPageContext(100).catch(() => null),
   ]);
-  const publicMenus = resolveHeaderNavigation(navigation.payload, navigation.pages);
+  const publicMenus = withBookIndexMenu(
+    resolveHeaderNavigation(navigation.payload, navigation.pages),
+    Boolean(bookIndexContext),
+  );
 
   return (
     <header className="public-site-header">

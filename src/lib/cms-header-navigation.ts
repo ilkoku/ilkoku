@@ -56,6 +56,7 @@ const basePages: SiteMapPage[] = [
   { id: "publisher-register", label: "Yayınevi Ol", href: "/kayit?rol=publisher", area: "Yayınevi", group: "Başlangıç", kind: "action", indexable: false },
   { id: "about", label: "Hakkımızda", href: "/hakkimizda", area: "İlkOku", group: "Platform", kind: "page" },
   { id: "how-it-works", label: "Nasıl Çalışır?", href: "/nasil-calisir", area: "İlkOku", group: "Platform", kind: "page" },
+  { id: "book-index", label: "En Çok Satanlar", href: "/en-cok-satanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "editorial-standards", label: "Editoryal Standartlar", href: "/editoryal-standartlar", area: "İlkOku", group: "Güven", kind: "page" },
   { id: "content-age", label: "İçerik ve Yaş Politikası", href: "/icerik-ve-yas-politikasi", area: "İlkOku", group: "Güven", kind: "page" },
   { id: "community-rules", label: "Topluluk Kuralları", href: "/topluluk-kurallari", area: "İlkOku", group: "Güven", kind: "page" },
@@ -186,6 +187,11 @@ export const defaultHeaderNavigation: HeaderNavigationPayload = {
         { id: "ilkoku-about", title: "İlkOku'yu tanı", links: [link("about", true), link("how-it-works")] },
         { id: "ilkoku-trust", title: "Güven", links: [link("editorial-standards"), link("content-age"), link("community-rules"), link("copyright")] },
       ],
+    },
+    {
+      id: "book-index",
+      label: "En Çok Satanlar",
+      groups: [{ id: "book-index-main", title: "Kitap Endeksi", links: [link("book-index", true)] }],
     },
     {
       id: "support",

@@ -9,6 +9,13 @@ export type BookIndexCollisionCandidate = {
   authorName: string | null;
   sourceCodes: string[];
   masterBookCount: number;
+  variants: Array<{
+    sourceCode: string;
+    masterBookId: string | null;
+    isbn13: string | null;
+    isbn10: string | null;
+    publisherName: string | null;
+  }>;
 };
 
 export type BookIndexReadinessSnapshot = {
@@ -75,6 +82,9 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
                       normalizedTitle: true,
                       normalizedAuthor: true,
                       masterBookId: true,
+                      isbn13: true,
+                      isbn10: true,
+                      publisherName: true,
                     },
                   },
                 },
@@ -97,6 +107,13 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     authorName: string | null;
     sourceCodes: Set<string>;
     masterBookIds: Set<string>;
+    variants: Array<{
+      sourceCode: string;
+      masterBookId: string | null;
+      isbn13: string | null;
+      isbn10: string | null;
+      publisherName: string | null;
+    }>;
   }>();
 
   for (const list of persistedCompositeLists) {
@@ -119,9 +136,17 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
           authorName: book.authorName,
           sourceCodes: new Set<string>(),
           masterBookIds: new Set<string>(),
+          variants: [],
         };
         bucket.sourceCodes.add(list.source.code);
         if (book.masterBookId) bucket.masterBookIds.add(book.masterBookId);
+        bucket.variants.push({
+          sourceCode: list.source.code,
+          masterBookId: book.masterBookId,
+          isbn13: book.isbn13,
+          isbn10: book.isbn10,
+          publisherName: book.publisherName,
+        });
         identityBuckets.set(key, bucket);
       }
     }
@@ -158,6 +183,15 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       authorName: bucket.authorName,
       sourceCodes: [...bucket.sourceCodes].sort(),
       masterBookCount: bucket.masterBookIds.size,
+      variants: bucket.variants
+        .sort((a, b) => a.sourceCode.localeCompare(b.sourceCode, "tr"))
+        .map((variant) => ({
+          sourceCode: variant.sourceCode,
+          masterBookId: variant.masterBookId,
+          isbn13: variant.isbn13,
+          isbn10: variant.isbn10,
+          publisherName: variant.publisherName,
+        })),
     })),
     firstObservationAt,
     lastObservationAt,

@@ -162,7 +162,6 @@ export async function reconcileAutoMatchedBookIndexMasters(limit = 2000) {
         },
         data: {
           masterBookId: canonical.id,
-          matchConfidence: 0.92,
         },
       });
 

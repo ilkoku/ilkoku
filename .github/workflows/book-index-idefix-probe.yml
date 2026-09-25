@@ -1,0 +1,69 @@
+name: Book Index idefix Probe
+
+on:
+  push:
+    branches:
+      - feature/book-index-idefix-collector
+    paths:
+      - ".github/workflows/book-index-idefix-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe idefix bestseller source once
+        shell: bash
+        run: |
+          set -euo pipefail
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          url="https://www.idefix.com/cok-satanlar-l-162"
+          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/idefix.html -w "%{http_code}" "$url" || true)"
+          echo "HTTP_STATUS=$code"
+          echo "BYTES=$(wc -c < /tmp/idefix.html 2>/dev/null || echo 0)"
+          echo "TITLE=$(grep -oim1 '<title[^>]*>[^<]*' /tmp/idefix.html 2>/dev/null | sed -E 's/<title[^>]*>//I' || true)"
+          echo "ROBOTS:"
+          curl -L --silent --show-error --max-time 20 -A "$ua" https://www.idefix.com/robots.txt | head -n 120 || true
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html, json
+
+          text=Path("/tmp/idefix.html").read_text(errors="replace")
+          print("NEXT_DATA", "__NEXT_DATA__" in text)
+          print("NEXT_SCRIPT", "/_next/" in text)
+          print("RANK_SIGNAL_COUNT", len(re.findall(r"En Çok Satan", text, re.I)))
+          print("PRODUCT_JSON_COUNT", len(re.findall(r'"product', text, re.I)))
+
+          for marker in ["En Çok Satan", "__NEXT_DATA__", "productList", "products", "listing"]:
+              p=text.find(marker)
+              print(f"MARKER {marker!r} pos={p}")
+              if p>=0:
+                  print(text[max(0,p-1000):p+5000])
+
+          print("--- JSON SCRIPT TYPES ---")
+          for typ, body in re.findall(r'<script[^>]*type=["\']([^"\']+)["\'][^>]*>([\s\S]*?)</script>', text, re.I):
+              if "json" in typ.lower():
+                  print("TYPE", typ, "LEN", len(body), "HEAD", body[:1200].replace("\n"," "))
+          PY
+
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          if [[ -n "$chrome" ]]; then
+            "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage               --user-agent="$ua" --virtual-time-budget=8000 --dump-dom "$url"               > /tmp/idefix-rendered.html 2>/tmp/chrome.err || true
+            echo "RENDERED_BYTES=$(wc -c < /tmp/idefix-rendered.html)"
+            echo "RENDERED_RANKS=$(grep -Eoi 'En Çok Satan[^<]{0,80}' /tmp/idefix-rendered.html | head -n 30 || true)"
+            python3 - <<'PY'
+            from pathlib import Path
+            import re
+            text=Path("/tmp/idefix-rendered.html").read_text(errors="replace")
+            print("RENDERED_RANK_SIGNAL_COUNT", len(re.findall(r"En Çok Satan", text, re.I)))
+            for marker in ["En Çok Satan 1", "En Çok Satan 2", "product-card", "productCard"]:
+                p=text.find(marker)
+                print(f"RENDERED MARKER {marker!r} pos={p}")
+                if p>=0:
+                    print(text[max(0,p-1200):p+6000])
+            PY
+          fi

@@ -96,7 +96,7 @@ function parseBkmResponse(payload: unknown): BookIndexCollectionResult {
     }
 
     return {
-      sourceKey: gtin ?? productCode ?? productId ?? productUrl,
+      sourceKey: gtin || productCode || productId || productUrl,
       sourceExternalId: productId || null,
       title,
       authorName: stringValue(item.writer) || null,

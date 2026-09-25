@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { collectBookIndexListByCode } from "@/lib/book-index/collector";
 import { getBookIndexList } from "@/lib/book-index/lists";
 import { matchPendingBookIndexBooks } from "@/lib/book-index/matching";
+import { runBookIndexScheduler } from "@/lib/book-index/scheduler";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
 function destination(status: string, listCode?: string, items?: number) {
@@ -73,6 +74,40 @@ export async function matchPendingBookIndexBooksAction() {
     adet: String(result.processed),
     eslesen: String(result.matched),
     bekleyen: String(result.pending),
+  });
+  redirect(`/sistem-yonetimi/kitap-endeksi?${params.toString()}`);
+}
+
+
+export async function runBookIndexSchedulerCanaryAction() {
+  const admin = await getCurrentUser();
+  if (!admin || admin.role !== "admin") {
+    redirect("/erisim-reddedildi?kaynak=system_management_book_index_scheduler");
+  }
+
+  let result: Awaited<ReturnType<typeof runBookIndexScheduler>>;
+
+  try {
+    result = await runBookIndexScheduler();
+  } catch (error) {
+    console.error("BOOK_INDEX_ADMIN_SCHEDULER_CANARY_FAILED", {
+      error: error instanceof Error ? error.message : "UNKNOWN",
+    });
+    redirect(destination("scheduler-canary-hatasi"));
+  }
+
+  revalidatePath("/sistem-yonetimi/kitap-endeksi");
+  const params = new URLSearchParams({
+    durum: result.failed > 0
+      ? "scheduler-canary-kismi"
+      : "scheduler-canary-tamamlandi",
+    kontrol: String(result.checked),
+    due: String(result.due),
+    basarili: String(result.succeeded),
+    degismedi: String(result.unchanged),
+    hata: String(result.failed),
+    atlandi: String(result.skipped),
+    adet: String(result.itemsStored),
   });
   redirect(`/sistem-yonetimi/kitap-endeksi?${params.toString()}`);
 }

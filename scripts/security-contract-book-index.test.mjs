@@ -107,11 +107,31 @@ test("book index lives inside the existing system management shell", () => {
   );
 });
 
-test("foundation does not publish indexable bestseller routes before data readiness", () => {
+test("foundation does not publish Book Index sitemap entries before the public gate passes", () => {
   const sitemap = source("src/app/sitemap.ts");
   const contract = source("docs/BOOK_INDEX_V1.md");
 
-  notContains(sitemap, "/en-cok-satanlar", "no premature bestseller sitemap");
+  contains(
+    sitemap,
+    "loadBookIndexSitemapEntries",
+    "Book Index sitemap entries are isolated behind a gate helper",
+  );
+  contains(
+    sitemap,
+    "if (!context || context.model.turkey.availability !== \"available\")",
+    "Book Index sitemap fails closed without publishable Turkey data",
+  );
+
+  const fallbackStart = sitemap.indexOf("const staticFallbackEntries");
+  const fallbackEnd = sitemap.indexOf("type CmsSitemapRow", fallbackStart);
+  assert.ok(fallbackStart >= 0 && fallbackEnd > fallbackStart, "static fallback block must exist");
+  const fallbackBlock = sitemap.slice(fallbackStart, fallbackEnd);
+  notContains(
+    fallbackBlock,
+    "/en-cok-satanlar",
+    "fallback sitemap never publishes Book Index",
+  );
+
   contains(
     contract,
     "İlk foundation PR public indexable sayfa oluşturmaz.",
@@ -511,7 +531,11 @@ test("Book Index public readiness stays evidence-based and non-publishing", () =
     "kalite eşikleri ayrıca",
     "no invented readiness threshold",
   );
-  notContains(sitemap, "/en-cok-satanlar", "no premature bestseller sitemap");
+  contains(
+    sitemap,
+    "loadBookIndexSitemapEntries",
+    "public readiness can only feed the gated sitemap helper",
+  );
 });
 
 

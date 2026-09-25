@@ -215,6 +215,20 @@ export function selectIndexNowUrls({
     };
   }
 
+  if (changedFiles.includes("__BOOK_INDEX__")) {
+    return {
+      mode: "book-index",
+      reason: "scheduled Book Index freshness refresh",
+      urls: urls.filter((url) => {
+        const pathname = urlPath(url);
+        return (
+          pathname === "/en-cok-satanlar"
+          || pathname.startsWith("/en-cok-satanlar/")
+        );
+      }),
+    };
+  }
+
   const impacts = [];
   let fullReason = null;
 

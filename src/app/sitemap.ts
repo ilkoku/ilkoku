@@ -12,6 +12,7 @@ import { howItWorksPageContent } from "@/content/how-it-works";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 import { GENRES } from "@/lib/genres";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
@@ -194,14 +195,18 @@ async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
       return [];
     }
 
+    const lastModified = getBookIndexLastObservedAt(context.model) ?? undefined;
+
     return [
       {
         url: `${baseUrl}/en-cok-satanlar`,
+        ...(lastModified ? { lastModified } : {}),
         changeFrequency: "daily",
         priority: 0.85,
       },
       {
         url: `${baseUrl}/en-cok-satanlar/turkiye`,
+        ...(lastModified ? { lastModified } : {}),
         changeFrequency: "daily",
         priority: 0.85,
       },

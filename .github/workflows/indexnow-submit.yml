@@ -2,6 +2,8 @@ name: IndexNow submit
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "37 4 * * *"
   push:
     branches:
       - main
@@ -10,7 +12,10 @@ on:
       - "src/content/**"
       - "src/features/homepage/**"
       - "src/features/public-discovery/**"
+      - "src/features/book-index/**"
+      - "src/lib/book-index/**"
       - "src/components/layout/PublicSiteHeader.tsx"
+      - "src/components/layout/PublicHeaderNavigation.tsx"
       - "src/components/layout/PublicNavigationHistory.tsx"
       - "src/components/content/PublicAnnouncementBanner.tsx"
       - "src/components/content/PublicCmsHydrator.tsx"
@@ -55,6 +60,12 @@ jobs:
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             echo "__FULL__" > /tmp/indexnow-changed-files.txt
             echo "Manual run: full IndexNow batch requested."
+            exit 0
+          fi
+
+          if [[ "$EVENT_NAME" == "schedule" ]]; then
+            echo "__BOOK_INDEX__" > /tmp/indexnow-changed-files.txt
+            echo "Scheduled run: refresh currently published Book Index URLs only."
             exit 0
           fi
 

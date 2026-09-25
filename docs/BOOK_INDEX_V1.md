@@ -200,6 +200,24 @@ verirse boş liste döner. Genel sitemap DB/CMS fallback'i de Kitap Endeksi
 URL'lerini içermez. Ana menü bağlantısı aynı gate geçildiğinde **Destek** ana
 menüsünün hemen yanında görünür ve doğrudan `/en-cok-satanlar` sayfasına gider.
 
+### Trafik ve arama görünürlüğü sinyalleri
+
+Public gate geçildiğinde Kitap Endeksi iki katmanda arama motorlarına güncel
+sinyal verir:
+
+- ranking satırları `ItemList` + `Book` structured data ile işaretlenir;
+- `CollectionPage.dateModified` ve sitemap `lastModified` gerçek son
+  snapshot zamanından üretilir;
+- sayfada son veri güncellemesi kullanıcıya görünür;
+- yöntem/metodoloji metni organik sıralamayı, bağımsız kaynak kuralını ve
+  sponsor ayrımını açıklar;
+- IndexNow, kod değişikliklerinde mevcut sitemap seçimini kullanmaya devam eder;
+- ayrıca günlük scheduled refresh yalnız sitemap'te gerçekten yayınlanmış
+  `/en-cok-satanlar` URL'lerini gönderir.
+
+Gate kapalıyken URL'ler sitemap'te olmadığı için scheduled IndexNow refresh
+boş liste üretir; publication gate bypass edilmez.
+
 ### Public read-model sözleşmesi
 
 Public route açılmadan önce server-side veri sözleşmesi dört yüzeyi hazırlar:

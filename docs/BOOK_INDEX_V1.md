@@ -132,6 +132,29 @@ Public rollout ancak gerçek veri biriktikten sonra yapılır:
 
 Sitemap açılımı ayrı bir kalite kapısından geçmelidir.
 
+### SEO kalite kapısı foundation
+
+SEO kalite kapısı iki ayrı anahtar kullanır:
+
+1. **Gate evaluation:** `BOOK_INDEX_SEO_GATE_ENABLED=true`
+2. **Publication:** `BOOK_INDEX_SEO_PUBLISH_ENABLED=true`
+
+Gate için gereken minimum composite kaynak, eşleşme kapsamı, tarihsel gün ve
+Türkiye Endeksi sonuç sayısı kod içinde varsayılan olarak belirlenmez.
+Eşiklerin tamamı ve `BOOK_INDEX_SEO_POLICY_VERSION` açıkça yapılandırılmadan
+durum `policy_incomplete` kalır.
+
+Gate ancak şu gerçek readiness ölçümlerini değerlendirir:
+
+- başarılı composite kaynak sayısı,
+- master kitap eşleşme yüzdesi,
+- tarihsel snapshot gün sayısı,
+- üretilebilen Türkiye Endeksi kayıt sayısı.
+
+Kanıtlar eşikleri geçse bile ayrı publication anahtarı açılmadıkça
+`canPublish=false` kalır. Bu foundation PR sitemap veya public route
+yayınlamaz.
+
 ### Public read-model sözleşmesi
 
 Public route açılmadan önce server-side veri sözleşmesi dört yüzeyi hazırlar:

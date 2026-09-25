@@ -119,9 +119,7 @@ export default async function BookIndexAdminPage({
   const dbSourceByCode = new Map(
     sourceRows.map((source) => [source.code, source] as const),
   );
-  const remziList = BOOK_INDEX_LISTS.find(
-    (list) => list.code === "remzi-tr-weekly",
-  );
+  const manualLists = BOOK_INDEX_LISTS.filter((list) => list.enabled);
 
   return (
     <>
@@ -215,25 +213,55 @@ export default async function BookIndexAdminPage({
         </article>
       </section>
 
-      {remziList ? (
-        <section className="admin-panel">
-          <span className="admin-eyebrow">İlk canlı kaynak</span>
-          <h2>Remzi Kitabevi · Haftalık Türkçe</h2>
-          <p>
-            Public çok satanlar listesi tek istekle okunur. Sonuçlar mevcut
-            kayıtların üzerine yazılmaz; her kontrol ayrı rank snapshot&apos;ı
-            oluşturur.
-          </p>
-          <form action={collectBookIndexListAction}>
-            <input type="hidden" name="listCode" value={remziList.code} />
-            <button className="admin-button admin-button--primary" type="submit">
-              Remzi listesini şimdi kontrol et
-            </button>
-          </form>
-          <small>
-            Otomatik scheduler bu aşamada kapalıdır; ilk canlı veri doğrulaması
-            yönetim ekranından yapılır.
-          </small>
+      {manualLists.length ? (
+        <section className="admin-panel admin-directory-panel">
+          <header className="admin-page-heading">
+            <div>
+              <span className="admin-eyebrow">Canlı kaynak doğrulaması</span>
+              <h2>Kaynak listelerini manuel kontrol et</h2>
+              <p>
+                Her kontrol ayrı rank snapshot&apos;ı üretir; önceki veriler
+                overwrite edilmez. Otomatik scheduler bu aşamada kapalıdır.
+              </p>
+            </div>
+          </header>
+          <div className="admin-table-wrap">
+            <table className="admin-data-table">
+              <thead>
+                <tr>
+                  <th>Kaynak liste</th>
+                  <th>Dönem</th>
+                  <th>Top</th>
+                  <th>Türkiye bileşik</th>
+                  <th>İşlem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {manualLists.map((list) => (
+                  <tr key={list.code}>
+                    <td>
+                      <strong>{list.title}</strong>
+                      <small>{list.code}</small>
+                    </td>
+                    <td>{list.period}</td>
+                    <td>{list.maxRank ?? "—"}</td>
+                    <td>{list.includeInComposite ? "Dahil" : "Kaynak görünümü"}</td>
+                    <td>
+                      <form action={collectBookIndexListAction}>
+                        <input type="hidden" name="listCode" value={list.code} />
+                        <button
+                          className="admin-button admin-button--primary"
+                          type="submit"
+                        >
+                          Şimdi kontrol et
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       ) : null}
 

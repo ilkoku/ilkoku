@@ -4,6 +4,11 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "17 * * * *"
+  workflow_run:
+    workflows:
+      - Production smoke
+    types:
+      - completed
 
 permissions:
   contents: read
@@ -15,6 +20,12 @@ concurrency:
 
 jobs:
   run:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main'
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -23,6 +34,11 @@ jobs:
           OIDC_AUDIENCE: ilkoku-book-index-scheduler
         run: |
           set -euo pipefail
+
+          endpoint="https://ilkoku.com/api/internal/book-index-scheduler"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            endpoint="$endpoint?forceDepth=1"
+          fi
 
           for attempt in {1..12}; do
             oidc_response="$(curl \
@@ -42,7 +58,7 @@ jobs:
               --max-time 300 \
               --request POST \
               --header "Authorization: Bearer $oidc_token" \
-              https://ilkoku.com/api/internal/book-index-scheduler)"; then
+              "$endpoint")"; then
               printf '%s\n' "$response"
 
               if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); raise SystemExit(0 if "seoGate" in payload and "splitMasterCollisionCount" in readiness else 1)'; then

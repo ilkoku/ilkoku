@@ -88,3 +88,24 @@ test("scheduled IndexNow refresh remains fail-closed while Book Index is absent 
   assert.equal(result.mode, "book-index");
   assert.deepEqual(result.urls, []);
 });
+
+
+test("Book Index gains a gated site-wide footer discovery link after publication", () => {
+  const footer = source("src/components/content/PublicTrustFooter.tsx");
+
+  contains(
+    footer,
+    "getBookIndexPublicPageContext(10).catch(() => null)",
+    "footer uses the same fail-closed public gate",
+  );
+  contains(
+    footer,
+    '{ href: "/en-cok-satanlar", label: "En Çok Satanlar" }',
+    "footer Book Index discovery link",
+  );
+  contains(
+    footer,
+    "const platformLinks = bookIndexContext",
+    "footer link only appears when publication is actually allowed",
+  );
+});

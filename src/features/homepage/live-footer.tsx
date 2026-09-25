@@ -16,6 +16,7 @@ import "./live-footer.css";
 type LiveHomepageFooterProps = {
   signedIn: boolean;
   workspaceHref?: string;
+  bookIndexPublished?: boolean;
   slogan: string;
   copyright: string;
 };
@@ -40,7 +41,7 @@ function SocialIcon({ id }: { id: (typeof siteContact.socialLinks)[number]["id"]
   return <svg className="site-social-icon site-social-icon--linkedin" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6.94 8.5H3.56V19h3.38V8.5ZM5.25 3a1.95 1.95 0 1 0 0 3.9 1.95 1.95 0 0 0 0-3.9ZM20.44 13.08c0-3.16-1.69-4.63-3.94-4.63-1.82 0-2.63 1-3.09 1.7V8.5h-3.38V19h3.38v-5.2c0-1.37.26-2.7 1.96-2.7 1.68 0 1.7 1.57 1.7 2.79V19h3.37v-5.92Z" /></svg>;
 }
 
-export default function LiveHomepageFooter({ signedIn, workspaceHref, slogan, copyright }: LiveHomepageFooterProps) {
+export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexPublished = false, slogan, copyright }: LiveHomepageFooterProps) {
   return (
     <div className="landing-page nx-live-footer-scope">
       <footer className="landing-footer" id="iletisim">
@@ -55,6 +56,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, slogan, co
           <div>
             <h3>Platform</h3>
             {publicPlatformLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+            {bookIndexPublished ? <Link href="/en-cok-satanlar">En Çok Satanlar</Link> : null}
           </div>
 
           <div className="landing-footer__trust">

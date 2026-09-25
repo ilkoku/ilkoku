@@ -320,3 +320,25 @@ test("Book Index insight search-intent pages publish only with real evidence", (
     "SEO smoke samples a published insight page",
   );
 });
+
+
+test("homepage footer exposes Book Index only after the shared public gate passes", () => {
+  const homepage = source("src/features/homepage/HomepageExperience.tsx");
+  const footer = source("src/features/homepage/live-footer.tsx");
+
+  contains(
+    homepage,
+    "getBookIndexPublicPageContext(10).catch(() => null)",
+    "homepage uses the shared fail-closed Book Index gate",
+  );
+  contains(
+    homepage,
+    "bookIndexPublished={Boolean(bookIndexContext)}",
+    "homepage passes gate state to footer",
+  );
+  contains(
+    footer,
+    'bookIndexPublished ? <Link href="/en-cok-satanlar">En Çok Satanlar</Link> : null',
+    "homepage footer Book Index internal link is gated",
+  );
+});

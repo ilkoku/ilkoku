@@ -41,6 +41,7 @@ Bu ürün dış kaynak listesini İlkOku satışı gibi göstermemelidir.
 - Amazon ABD — ayrı pazar
 - KitapSepeti
 - Kitapzen
+- İnkılâp Kitabevi
 
 ## Faz 2 kaynak adayları
 
@@ -324,4 +325,21 @@ bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplan�
   yıllık listeler kaynak görünümü ve tarihsel analiz içindir.
 - V1 collector ilk sayfadaki Top 20 ile sınırlıdır; 15'ten az geçerli kart
   görülürse parser fail-closed davranır.
+
+### İnkılâp Kitabevi
+
+- `https://www.inkilap.com/cok-satanlar` şeffaf
+  `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent ile HTTP 200
+  döndürüyor.
+- İlk sayfa server-rendered HTML içinde 20 sıralı `productBox` kartı veriyor.
+- Kartta barcode, yayınevi/marka, kitap başlığı + yazar, ürün URL'si, görsel
+  ve satış fiyatı bulunuyor.
+- Başlık satırı `Kitap Başlığı | Yazar` biçiminde olduğu için kaynak başlığı
+  ve yazar ayrı alanlara bölünür.
+- 13 haneli her barcode ISBN değildir; yalnız 978/979 ile başlayan barkodlar
+  `isbn13` olarak kabul edilir. Diğer barkodlar kaynak kimliği olarak
+  korunabilir fakat ISBN eşleştirmesine girmez.
+- V1 collector ilk sayfadaki Top 20 ile sınırlıdır ve 15'ten az geçerli kartta
+  fail-closed davranır.
+- Kaynak Türkiye bileşik endeksine dahil edilir.
 

@@ -6,6 +6,7 @@ import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
 import { getBookIndexOperationsSnapshot } from "@/lib/book-index/operations";
 import { getTurkeyBookIndexPreview } from "@/lib/book-index/read-model";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
+import { getBookIndexSeoGateSnapshot } from "@/lib/book-index/seo-gate";
 import { BOOK_INDEX_SPONSOR_SLOTS } from "@/lib/book-index/sponsor";
 import {
   BOOK_INDEX_SOURCES,
@@ -69,6 +70,19 @@ function cadenceLabel(minutes: number | null) {
   if (minutes % 1440 === 0) return `${minutes / 1440} gün`;
   if (minutes % 60 === 0) return `${minutes / 60} saat`;
   return `${minutes} dk`;
+}
+
+function seoGateStateLabel(state: string) {
+  switch (state) {
+    case "eligible":
+      return "Kanıt yeterli";
+    case "insufficient_evidence":
+      return "Kanıt yetersiz";
+    case "policy_incomplete":
+      return "Politika eksik";
+    default:
+      return "Gate kapalı";
+  }
 }
 
 function feedbackMessage(params: Awaited<SearchParams>) {
@@ -145,10 +159,11 @@ export default async function BookIndexAdminPage({
     }),
   ]);
 
-  const [turkeyPreview, operations, readiness] = await Promise.all([
+  const [turkeyPreview, operations, readiness, seoGate] = await Promise.all([
     getTurkeyBookIndexPreview(30),
     getBookIndexOperationsSnapshot(),
     getBookIndexReadinessSnapshot(),
+    getBookIndexSeoGateSnapshot(),
   ]);
 
   const dbSourceByCode = new Map(
@@ -403,8 +418,11 @@ export default async function BookIndexAdminPage({
               kilitlenecektir.
             </p>
           </div>
-          <span className="admin-table-badge" data-status="pending">
-            Public kapalı
+          <span
+            className="admin-table-badge"
+            data-status={seoGate.canPublish ? "active" : "pending"}
+          >
+            {seoGate.canPublish ? "Publish uygun" : "Public kapalı"}
           </span>
         </header>
 
@@ -445,14 +463,81 @@ export default async function BookIndexAdminPage({
           </article>
 
           <article className="admin-panel admin-settings-card">
-            <span className="admin-eyebrow">SEO yayın durumu</span>
-            <h2>Kapalı</h2>
+            <span className="admin-eyebrow">SEO kalite kapısı</span>
+            <h2>{seoGateStateLabel(seoGate.state)}</h2>
             <p>
-              /en-cok-satanlar ve sitemap açılımı kalite kapısı geçilene kadar
-              devre dışıdır.
+              Politika: {seoGate.policy.policyVersion ?? "tanımsız"} · Yayın:{" "}
+              {seoGate.canPublish ? "açılabilir" : "kapalı"}
             </p>
+            <small>
+              Gate {seoGate.policy.enabled ? "aktif" : "kapalı"} · Publish switch{" "}
+              {seoGate.policy.publicationEnabled ? "açık" : "kapalı"}
+            </small>
           </article>
         </section>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
+                <th>SEO gate kanıtı</th>
+                <th>Mevcut</th>
+                <th>Eşik</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Composite kaynak</td>
+                <td>{seoGate.evidence.observedCompositeSources}</td>
+                <td>{seoGate.policy.minCompositeSources ?? "Tanımsız"}</td>
+                <td>
+                  {seoGate.failures.includes("composite_sources")
+                    ? "Yetersiz"
+                    : "—"}
+                </td>
+              </tr>
+              <tr>
+                <td>Master eşleşme</td>
+                <td>%{seoGate.evidence.matchCoveragePercent.toLocaleString("tr-TR")}</td>
+                <td>
+                  {seoGate.policy.minMatchCoveragePercent === null
+                    ? "Tanımsız"
+                    : `%${seoGate.policy.minMatchCoveragePercent.toLocaleString("tr-TR")}`}
+                </td>
+                <td>
+                  {seoGate.failures.includes("match_coverage")
+                    ? "Yetersiz"
+                    : "—"}
+                </td>
+              </tr>
+              <tr>
+                <td>Tarihsel kapsam</td>
+                <td>{seoGate.evidence.historySpanDays} gün</td>
+                <td>
+                  {seoGate.policy.minHistoryDays === null
+                    ? "Tanımsız"
+                    : `${seoGate.policy.minHistoryDays} gün`}
+                </td>
+                <td>
+                  {seoGate.failures.includes("history_span")
+                    ? "Yetersiz"
+                    : "—"}
+                </td>
+              </tr>
+              <tr>
+                <td>Türkiye Endeksi kayıt</td>
+                <td>{seoGate.evidence.turkeyItemCount}</td>
+                <td>{seoGate.policy.minTurkeyItems ?? "Tanımsız"}</td>
+                <td>
+                  {seoGate.failures.includes("turkey_items")
+                    ? "Yetersiz"
+                    : "—"}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {manualLists.length ? (

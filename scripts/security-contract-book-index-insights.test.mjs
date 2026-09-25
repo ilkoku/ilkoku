@@ -18,6 +18,7 @@ test("Book Index insights derive from historical snapshots without publishing ro
     "successful snapshot gate",
   );
   contains(insights, "take: 2", "current and previous snapshot comparison");
+  contains(insights, "if (!snapshot.hasPrevious) continue;", "new-entry baseline requirement");
   contains(insights, "previous.rank - current.rank", "riser rank gain");
   contains(insights, "newSourceCount", "new-entry source evidence");
   contains(

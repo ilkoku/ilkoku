@@ -109,7 +109,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(server, /parseHeaderNavigation\(row\.valueJson,\s*pages\) \?\? defaultHeaderNavigation/);
   assert.match(server, /catch\s*\{[\s\S]*payload:\s*defaultHeaderNavigation/);
 
-  for (const label of ["Yazar", "Okur", "Editör", "Yayınevi", "İlkOku", "Destek"]) {
+  for (const label of ["Yazar", "Okur", "Editör", "Yayınevi", "İlkOku", "En Çok Satanlar", "Destek"]) {
     assert.ok(config.includes(`label: "${label}"`), `${label} must remain in the safe default public navigation`);
   }
 
@@ -122,6 +122,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/nasil-calisir",
     "/editoryal-standartlar",
     "/site-haritasi",
+    "/en-cok-satanlar",
     "/kayit?rol=writer",
     "/kayit?rol=reader",
     "/kayit?rol=editor",
@@ -143,6 +144,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(header, /label: "En Çok Satanlar"/);
   assert.match(header, /directHref: "\/en-cok-satanlar"/);
   assert.match(header, /menu\.id === "support"/);
+  assert.match(config, /id: "book-index"[\s\S]*label: "En Çok Satanlar"[\s\S]*id: "support"/);
   assert.match(config, /id: "book-index"/);
   assert.match(config, /href: "\/en-cok-satanlar"/);
   assert.match(navigationClient, /directHref\?: string/);

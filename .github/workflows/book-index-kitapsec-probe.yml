@@ -20,7 +20,7 @@ jobs:
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
-          url="https://www.kitapsec.com/mobil/cok-satan-kitaplar_kt-alt532/1-6-0a0-0-0-0-1-0.html"
+          url="https://www.kitapsec.com/Products/Edebiyat/Cok-Satan-Kitaplar/1-6-0a0-0-0-0-0-0.xhtml"
           code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/page.html -w "%{http_code}" "$url")"
           echo "HTTP_STATUS=$code"
           echo "BYTES=$(wc -c < /tmp/page.html)"

@@ -249,9 +249,17 @@ async function main() {
     .filter(
       (location) =>
         location === `${BASE_URL}/en-cok-satanlar`
-        || location === `${BASE_URL}/en-cok-satanlar/turkiye`,
+        || location.startsWith(`${BASE_URL}/en-cok-satanlar/`),
     )
-    .slice(0, 2);
+    .sort((a, b) => {
+      const priority = (value) => {
+        if (value === `${BASE_URL}/en-cok-satanlar`) return 0;
+        if (value === `${BASE_URL}/en-cok-satanlar/turkiye`) return 1;
+        return 2;
+      };
+      return priority(a) - priority(b) || a.localeCompare(b, "tr");
+    })
+    .slice(0, 5);
 
   const urls = [...new Set(
     (

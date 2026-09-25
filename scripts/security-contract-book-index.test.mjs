@@ -318,3 +318,27 @@ test("Turkey Index admin preview uses only latest composite lists and matched ma
   );
 });
 
+test("KitapSepeti collector parses the verified server-rendered bestseller catalog", () => {
+  const adapter = source("src/lib/book-index/sources/kitapsepeti.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(adapter, 'const MAX_BOOKS = 30;', "KitapSepeti Top 30 cap");
+  contains(adapter, 'const MIN_EXPECTED_BOOKS = 20;', "KitapSepeti fail-closed minimum");
+  contains(adapter, '\\bproduct-item\\b', "product card selector");
+  contains(adapter, '\\bproduct-title\\b', "title selector");
+  contains(adapter, '\\bbrand-title\\b', "publisher selector");
+  contains(adapter, '\\bmodel-title\\b', "author selector");
+  contains(adapter, "BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL", "small result rejection");
+  contains(adapter, "BOOK_INDEX_KITAPSEPETI_DUPLICATE_SOURCE_KEY", "duplicate source protection");
+  contains(lists, 'code: "kitapsepeti-tr-live"', "KitapSepeti list registry");
+  contains(lists, 'maxRank: 30', "KitapSepeti current-page rank cap");
+  contains(collector, "[kitapSepetiBookIndexAdapter.sourceCode, kitapSepetiBookIndexAdapter]", "KitapSepeti adapter activation");
+  contains(
+    sources,
+    'baseUrl: "https://www.kitapsepeti.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "KitapSepeti promoted to V1 ready",
+  );
+});
+

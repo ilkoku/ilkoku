@@ -256,3 +256,21 @@ Amazon kaynakları V1'de iki ayrı pazar olarak tutulur.
 - İlkOku Türkiye Endeksi'nde kaynak sponsorlu kartlar oy kullanmaz; yalnız organik sıra korunur ve bitişik rank olarak yeniden numaralanır.
 - V1 listesi ilk sayfadaki organik kitaplarla sınırlıdır; otomatik pagination eklenmeden önce ayrıca doğrulama yapılacaktır.
 
+## Master kitap eşleştirme V1
+
+Collector artık güçlü kimliği olan dış kitap kayıtlarını otomatik olarak master
+kitaba bağlar:
+
+1. ISBN-13 tam eşleşme — confidence 1.00.
+2. ISBN-10 tam eşleşme — confidence 0.98.
+3. Normalize başlık + normalize yazar tam eşleşme — confidence 0.92.
+4. Yukarıdakilerden hiçbiri güvenli değilse kayıt `unmatched` kalır ve admin
+   kuyruğuna gider.
+
+Aynı normalize başlık+yazar için birden fazla master aday varsa sistem tahmin
+yapmaz; kayıt manuel incelemeye bırakılır. `manual_matched` ve `rejected`
+kararları sonraki collector çalışmaları tarafından ezilmez.
+
+Admin Kitap Endeksi ekranındaki **Bekleyenleri eşleştir** işlemi daha önce
+toplanmış `unmatched` kayıtları da aynı kurallarla yeniden işler.
+

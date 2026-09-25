@@ -3,7 +3,9 @@ import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
+import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import { runBookIndexScheduler } from "@/lib/book-index/scheduler";
+import { getBookIndexSeoGateSnapshot } from "@/lib/book-index/seo-gate";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -88,7 +90,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await runBookIndexScheduler();
-    return NextResponse.json({ ok: true, ...result });
+    const [readiness, seoGate] = await Promise.all([
+      getBookIndexReadinessSnapshot(),
+      getBookIndexSeoGateSnapshot(),
+    ]);
+
+    return NextResponse.json({
+      ok: true,
+      ...result,
+      readiness,
+      seoGate,
+    });
   } catch (error) {
     const message = error instanceof Error
       ? error.message

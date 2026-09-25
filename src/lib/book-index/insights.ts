@@ -15,6 +15,7 @@ type SourceSnapshot = {
   sourceCode: string;
   current: Map<string, SnapshotBook>;
   previous: Map<string, SnapshotBook>;
+  hasPrevious: boolean;
 };
 
 export type BookIndexNewEntry = {
@@ -165,6 +166,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
       sourceCode: list.source.code,
       current: toSnapshotMap(list.fetchRuns[0]?.observations ?? []),
       previous: toSnapshotMap(list.fetchRuns[1]?.observations ?? []),
+      hasPrevious: list.fetchRuns.length >= 2,
     }));
 }
 
@@ -258,6 +260,8 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
         masterBookId,
         currentBest === undefined ? current.rank : Math.min(currentBest, current.rank),
       );
+
+      if (!snapshot.hasPrevious) continue;
 
       const previous = snapshot.previous.get(masterBookId);
       if (!previous) {

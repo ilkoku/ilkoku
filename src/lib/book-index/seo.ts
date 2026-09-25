@@ -100,3 +100,39 @@ export function createBookIndexSourceItemListSchema({
     })),
   };
 }
+
+
+export function createBookIndexGenericItemListSchema({
+  name,
+  url,
+  items,
+}: {
+  name: string;
+  url: string;
+  items: readonly { title: string; authorName: string | null }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    url,
+    numberOfItems: items.length,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    itemListElement: items.map((book, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Book",
+        name: book.title,
+        ...(book.authorName
+          ? {
+              author: {
+                "@type": "Person",
+                name: book.authorName,
+              },
+            }
+          : {}),
+      },
+    })),
+  };
+}

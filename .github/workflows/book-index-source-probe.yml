@@ -1,0 +1,30 @@
+name: Book Index Source Probe
+
+on:
+  push:
+    branches:
+      - feature/book-index-collector-wave1
+    paths:
+      - ".github/workflows/book-index-source-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-kitapyurdu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe Kitapyurdu bestseller HTML once
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://www.kitapyurdu.com/cok-satan-kitaplar/haftalik/1.html"
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/source.html -w "%{http_code}" "$url")"
+          echo "HTTP_STATUS=$code"
+          echo "BYTES=$(wc -c < /tmp/source.html)"
+          echo "TITLE=$(grep -oim1 '<title[^>]*>[^<]*' /tmp/source.html | sed -E 's/<title[^>]*>//I' || true)"
+          echo "--- candidate product markup ---"
+          grep -Eoi '.{0,180}(product-cr|product-name|product-title|/urun/|product_id=).{0,420}' /tmp/source.html | head -n 120 || true

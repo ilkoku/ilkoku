@@ -141,3 +141,50 @@ Sponsor altyapısı default OFF kalır. İleride:
 için slotlar açılabilir.
 
 Sponsorlu kartlar organik rank dizisine eklenmez ve sıra numarası almaz.
+
+## Collector rollout notları — 25 Eylül 2026
+
+İlk canlı collector dalgası kaynak başına ayrı doğrulanır. Anti-bot veya erişim
+engeli görülen kaynaklarda korumayı aşmaya çalışılmaz; kaynak `blocked` kalır
+ve resmi API/feed/izin yolu araştırılır.
+
+### Remzi Kitabevi
+
+- `https://www.remzi.com.tr/robots.txt`: `User-agent: * / Disallow:`
+- `https://www.remzi.com.tr/anasayfa`: şeffaf İlkOku user-agent ile HTTP 200.
+- Çok satan bölümü server-rendered HTML içinde `#best-sellers` altında yer
+  alıyor.
+- Güncel Türkçe liste `ol.turkish-books` içinde; kitap linki
+  `a.book-name`, yazar `/yazar/...` altında `h4`, yayınevi parantezli
+  `span` içinde bulunuyor.
+- Liste haftalık olduğu için V1 kontrol tavanı günde 1 kezdir.
+- İlk aşamada otomatik scheduler yoktur; admin üzerinden kontrollü canlı
+  doğrulama yapılır.
+
+Robots erişimi tek başına içerik kullanım lisansı anlamına gelmez. Operasyonel
+erişim ile kaynak kullanım koşulları ayrı değerlendirilir.
+
+### Kitapyurdu
+
+- Public çok satan sayfası normal arama motorlarında görünür.
+- `robots.txt` public çok satan yolunu kapatmıyor.
+- Buna rağmen şeffaf `IlkOkuBookIndex` user-agent ile yapılan doğrudan sunucu
+  isteği HTTP 403 döndürdü.
+- Koruma aşılmayacak. Kaynak V1 registry içinde `blocked` kalacak; resmi
+  erişim/API/feed veya açık izin yolu bulunmadan collector aktive edilmeyecek.
+
+### BKM Kitap
+
+- Public çok satan sayfası şeffaf user-agent ile HTTP 200 döndürüyor.
+- `robots.txt` genel erişime `Allow: /` veriyor ve Cloudflare content signal
+  satırında `search=yes, ai-train=no, use=reference` bildiriyor.
+- Collector henüz aktive edilmedi; ürün markup parser'ı ayrıca doğrulanacak.
+
+### Penguen Kitabevi
+
+- `robots.txt` genel erişimi engellemiyor.
+- Ana sayfa HTTP 200 dönüyor fakat doğruladığımız HTML'de güvenilir ayrı
+  bestseller işareti bulunmadı.
+- Kaynak `researching` durumunda kalır; tahmin edilen/uydurulan liste
+  collector'ı yazılmaz.
+

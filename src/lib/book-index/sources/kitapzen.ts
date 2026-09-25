@@ -29,6 +29,7 @@ function priceToMinorUnits(value: string) {
 
 export function parseKitapzenBestsellers(
   html: string,
+  rankOffset = 0,
 ): BookIndexCollectionResult {
   const starts = [
     ...html.matchAll(
@@ -80,7 +81,7 @@ export function parseKitapzenBestsellers(
         isbn13: isbn13(barcode),
         productUrl: absoluteUrl(productUrl),
         imageUrl: image ? absoluteUrl(image) : null,
-        rank: index + 1,
+        rank: rankOffset + index + 1,
         priceAmount: salePrice ? priceToMinorUnits(salePrice) : null,
         currency: "TRY",
       };
@@ -99,24 +100,50 @@ export function parseKitapzenBestsellers(
   return { books };
 }
 
+async function fetchKitapzenPage(url: string) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+  }
+
+  return response.text();
+}
+
 export const kitapzenBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const response = await fetch(context.sourceUrl, {
-      cache: "no-store",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
-      },
-      signal: AbortSignal.timeout(20_000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+    if (context.listCode !== "kitapzen-tr-weekly") {
+      return parseKitapzenBestsellers(
+        await fetchKitapzenPage(context.sourceUrl),
+      );
     }
 
-    return parseKitapzenBestsellers(await response.text());
+    const books = [];
+    for (let page = 1; page <= 3; page += 1) {
+      const url = new URL(context.sourceUrl);
+      url.searchParams.set("page", String(page));
+      const parsed = parseKitapzenBestsellers(
+        await fetchKitapzenPage(url.toString()),
+        (page - 1) * MAX_BOOKS,
+      );
+      books.push(...parsed.books);
+    }
+
+    const uniqueKeys = new Set(books.map((book) => book.sourceKey));
+    if (uniqueKeys.size !== books.length) {
+      throw new Error("BOOK_INDEX_KITAPZEN_DUPLICATE_SOURCE_KEY");
+    }
+
+    return { books };
   },
 };

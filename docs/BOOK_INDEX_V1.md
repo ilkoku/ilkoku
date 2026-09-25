@@ -206,3 +206,32 @@ doğrudan network kaydından doğrulandı.
   Aylık ve yıllık listeler kaynak görünümü/tarihçe içindir.
 - Feed içindeki satış miktarı alanları public İlkOku yüzeyinde gösterilmez ve
   V1 veri modelinde ayrıca saklanmaz.
+
+
+### Amazon Türkiye / Amazon ABD erişim kararı — 25 Eylül 2026
+
+Amazon kaynakları V1'de iki ayrı pazar olarak tutulur.
+
+**Amazon Türkiye**
+
+- `https://www.amazon.com.tr/gp/bestsellers/books` şeffaf
+  `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent ile HTTP 200
+  döndürüyor.
+- Headless browser doğrulamasında aynı user-agent ile 30 görünür bestseller
+  kartı, ASIN ve `#1..#30` rank işaretleri görüldü.
+- Sayfada `data-client-recs-list` içinde rank metadata'sı bulunuyor; ancak
+  düz sunucu isteği ile tarayıcı çıktısı aynı veri yoğunluğunu kararlı biçimde
+  vermedi.
+- Network kaydında ayrı, basit ve üretimde headless gerektirmeden
+  kullanılabilecek bestseller JSON endpoint'i doğrulanmadı.
+- Bu nedenle Amazon TR **researching** kalır. Üretim collector'ı sırf
+  headless browser gerektiren kırılgan bir akışa bağlanmaz.
+
+**Amazon ABD**
+
+- `https://www.amazon.com/Best-Sellers-Books/zgbs/books` şeffaf kaynak
+  isteğinde Amazon'un `automated access` / CAPTCHA sayfasını döndürdü.
+- CAPTCHA, stealth user-agent, proxy veya başka anti-bot aşma yöntemi
+  kullanılmayacak.
+- Kaynak V1 registry içinde **blocked** tutulur. Resmi/sanctioned veri yolu
+  bulunursa yeniden değerlendirilir.

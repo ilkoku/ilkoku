@@ -12,6 +12,7 @@ import { getBookIndexList } from "./lists";
 import { getBookIndexSource } from "./sources";
 import { bkmBookIndexAdapter } from "./sources/bkm";
 import { kitapSepetiBookIndexAdapter } from "./sources/kitapsepeti";
+import { inkilapBookIndexAdapter } from "./sources/inkilap";
 import { kitapzenBookIndexAdapter } from "./sources/kitapzen";
 import { idefixBookIndexAdapter } from "./sources/idefix";
 import { remziBookIndexAdapter } from "./sources/remzi";
@@ -20,6 +21,7 @@ const adapters = new Map<string, BookIndexSourceAdapter>([
   [remziBookIndexAdapter.sourceCode, remziBookIndexAdapter],
   [bkmBookIndexAdapter.sourceCode, bkmBookIndexAdapter],
   [kitapSepetiBookIndexAdapter.sourceCode, kitapSepetiBookIndexAdapter],
+  [inkilapBookIndexAdapter.sourceCode, inkilapBookIndexAdapter],
   [kitapzenBookIndexAdapter.sourceCode, kitapzenBookIndexAdapter],
   [idefixBookIndexAdapter.sourceCode, idefixBookIndexAdapter],
 ]);

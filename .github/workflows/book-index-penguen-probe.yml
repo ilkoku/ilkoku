@@ -1,0 +1,60 @@
+name: Book Index Penguen Probe
+
+on:
+  push:
+    branches:
+      - research/book-index-penguen-probe
+    paths:
+      - ".github/workflows/book-index-penguen-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect Penguen bestseller surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          for url in             "https://penguenkitabevi.com/"             "https://penguenkitabevi.com/robots.txt"             "https://penguenkitabevi.com/sitemap.xml"; do
+            name="$(echo "$url" | sed 's#https://penguenkitabevi.com/##; s#[^A-Za-z0-9]#_#g')"
+            [[ -z "$name" ]] && name="home"
+            code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o "/tmp/$name" -w "%{http_code}" "$url" || true)"
+            echo "=== $url ==="
+            echo "HTTP_STATUS=$code"
+            echo "BYTES=$(wc -c < "/tmp/$name" 2>/dev/null || echo 0)"
+          done
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html, glob
+
+          for path in glob.glob("/tmp/*"):
+              name=Path(path).name
+              try:
+                  text=Path(path).read_text(errors="replace")
+              except Exception:
+                  continue
+              low=text.casefold()
+              if "penguen" not in low and name not in {"robots_txt","sitemap_xml","home"}:
+                  continue
+              print(f"--- FILE {name} ---")
+              for needle in ["çok satan","cok satan","bestseller","best seller"]:
+                  pos=low.find(needle)
+                  print(needle,pos)
+                  if pos>=0:
+                      print(text[max(0,pos-1200):pos+3200])
+              if "<a" in text:
+                  links=[]
+                  for href,body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,600}?)</a>',text,re.I):
+                      clean=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',body))).strip()
+                      combined=(href+" "+clean).casefold()
+                      if any(k in combined for k in ["cok-satan","çok satan","bestseller","best-seller"]):
+                          links.append((href,clean))
+                  for href,clean in links[:80]:
+                      print("LINK",href,"=>",clean[:220])
+          PY

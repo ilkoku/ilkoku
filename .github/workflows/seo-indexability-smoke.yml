@@ -120,6 +120,12 @@ jobs:
               check_page '/en-cok-satanlar/turkiye' 'https://ilkoku.com/en-cok-satanlar/turkiye'
             fi
 
+            insight_url="$(grep -Eo '<loc>https://ilkoku\.com/en-cok-satanlar/(yeni-girisler|yukselenler|her-yerde-satanlar|uzun-satanlar)</loc>' "$sitemap" | head -1 | sed -e 's#<loc>##' -e 's#</loc>##' || true)"
+            if [[ -n "$insight_url" ]]; then
+              insight_path="${insight_url#https://ilkoku.com}"
+              check_page "$insight_path" "$insight_url"
+            fi
+
             source_url="$(grep -Eo '<loc>https://ilkoku\.com/en-cok-satanlar/kaynak/[^<]+</loc>' "$sitemap" | head -1 | sed -e 's#<loc>##' -e 's#</loc>##' || true)"
             if [[ -n "$source_url" ]]; then
               source_path="${source_url#https://ilkoku.com}"

@@ -15,56 +15,58 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Extract real rendered BKM product cards
+      - name: Capture BKM public list network transport once
         shell: bash
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
           url="https://www.bkmkitap.com/cok-satan-kitaplar"
           chrome="$(command -v google-chrome || command -v google-chrome-stable)"
-          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage             --user-agent="$ua" --virtual-time-budget=10000 --dump-dom "$url"             > /tmp/bkm-rendered.html 2>/tmp/chrome.err || true
+
+          "$chrome"             --headless=new             --no-sandbox             --disable-gpu             --disable-dev-shm-usage             --user-agent="$ua"             --virtual-time-budget=10000             --log-net-log=/tmp/netlog.json             --net-log-capture-mode=IncludeSensitive             --dump-dom "$url"             > /tmp/bkm-rendered.html 2>/tmp/chrome.err || true
 
           python3 - <<'PY'
           from pathlib import Path
-          import re, html
+          import json, re
 
-          text=Path("/tmp/bkm-rendered.html").read_text(errors="replace")
+          path=Path("/tmp/netlog.json")
+          print("NETLOG_BYTES", path.stat().st_size if path.exists() else 0)
+          if not path.exists():
+              raise SystemExit(1)
 
-          tags=list(re.finditer(
-            r'<(?:div|li)\b[^>]*class=["\'][^"\']*\bwaw-product-item-area\b[^"\']*["\'][^>]*>',
-            text,
-            re.I
-          ))
-          print("REAL_CARD_TAGS", len(tags))
+          data=json.loads(path.read_text(errors="replace"))
+          urls=[]
+          for event in data.get("events",[]):
+              params=event.get("params") or {}
+              candidates=[]
+              for key in ("url","original_url","redirect_url"):
+                  value=params.get(key)
+                  if isinstance(value,str):
+                      candidates.append(value)
+              for value in candidates:
+                  low=value.casefold()
+                  if "bkmkitap.com" not in low and "cdn.bkmkitap.com" not in low:
+                      continue
+                  if any(token in low for token in [
+                      "waw","best","product","search","filter","sort","category",
+                      "service","ajax","api","cok-satan"
+                  ]):
+                      if value not in urls:
+                          urls.append(value)
 
-          for idx,m in enumerate(tags[:6],1):
-            start=m.start()
-            window=text[start:start+7500]
-            print(f"\n=== REAL CARD {idx} ===")
-            print(window)
+          print("--- CANDIDATE NETWORK URLS ---")
+          for value in urls[:200]:
+              print(value)
 
-            hrefs=re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>',window,re.I)
-            titles=re.findall(r'<[^>]*class=["\'][^"\']*\bproduct-title\b[^"\']*["\'][^>]*>([\s\S]{0,800}?)</[^>]+>',window,re.I)
-            spans=re.findall(r'<span\b[^>]*>([\s\S]{0,500}?)</span>',window,re.I)
-
-            print("--- SUMMARY ---")
-            print("HREFS", hrefs[:10])
-            print("TITLES", [html.unescape(re.sub(r'<[^>]+>',' ',x)).strip() for x in titles[:5]])
-            clean_spans=[]
-            for x in spans[:20]:
-              y=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',x))).strip()
-              if y: clean_spans.append(y)
-            print("SPANS", clean_spans[:20])
-
-          print("\n=== DISTINCT PRODUCT LINKS ===")
+          rendered=Path("/tmp/bkm-rendered.html").read_text(errors="replace")
+          print("--- INLINE WAW URL SIGNALS ---")
           seen=[]
-          for m in tags:
-            window=text[m.start():m.start()+6000]
-            for href in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>',window,re.I):
-              if href.startswith("https://www.bkmkitap.com/") and href not in seen:
-                seen.append(href)
-                break
-          print("COUNT",len(seen))
-          for href in seen[:30]:
-            print(href)
+          for m in re.finditer(r'["\']([^"\']{1,600})["\']', rendered):
+              value=m.group(1)
+              low=value.casefold()
+              if "waw" in low or ("bkmkitap.com" in low and any(k in low for k in ["api","service","search","product"])):
+                  if value not in seen:
+                      seen.append(value)
+          for value in seen[:200]:
+              print(value)
           PY

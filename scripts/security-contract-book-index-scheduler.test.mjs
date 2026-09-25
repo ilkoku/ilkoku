@@ -29,3 +29,15 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(readiness, "splitMasterCollisionSamples", "collision samples retained");
   contains(readiness, "normalizedIdentityKeysOnAtLeast2Sources", "cross-source identity diagnostic retained");
 });
+
+
+test("Book Index temporary reconciliation probe is production-smoke gated", () => {
+  const route = source("src/app/api/internal/book-index-scheduler/route.ts");
+  const workflow = source(".github/workflows/book-index-scheduler.yml");
+
+  contains(workflow, "workflow_run:", "temporary production-smoke trigger");
+  contains(workflow, "Production smoke", "probe source workflow");
+  contains(workflow, "github.event.workflow_run.conclusion == 'success'", "success-only probe");
+  contains(workflow, "github.event.workflow_run.head_branch == 'main'", "main-only probe");
+  contains(route, '"workflow_run"', "temporary OIDC event authorization");
+});

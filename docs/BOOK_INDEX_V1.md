@@ -155,6 +155,28 @@ Kanıtlar eşikleri geçse bile ayrı publication anahtarı açılmadıkça
 `canPublish=false` kalır. Bu foundation PR sitemap veya public route
 yayınlamaz.
 
+### Gated public route kabuğu
+
+İlk public route kabuğu iki yüzey için hazırlanır:
+
+- `/en-cok-satanlar`
+- `/en-cok-satanlar/turkiye`
+
+Bu route'lar kodda bulunsa da yayın kapısı açık değilse public sayfa olarak
+davranmaz:
+
+1. `BOOK_INDEX_SEO_GATE_ENABLED=true`
+2. `BOOK_INDEX_SEO_PUBLISH_ENABLED=true`
+3. Policy version ve dört kalite eşiği eksiksiz
+4. Güncel readiness kanıtları tüm eşikleri geçiyor
+
+Bu zincirin herhangi bir adımı sağlanmazsa route `notFound()` ile 404 döner
+ve metadata `noindex` kalır. Ayrıca sitemap ve public navigation'a henüz link
+eklenmez.
+
+Türkiye route'u ayrıca gerçekten üretilebilir Türkiye Endeksi verisi yoksa
+404 davranışını korur.
+
 ### Public read-model sözleşmesi
 
 Public route açılmadan önce server-side veri sözleşmesi dört yüzeyi hazırlar:

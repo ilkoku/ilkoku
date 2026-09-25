@@ -143,6 +143,16 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     collectionState: "ready",
   },
   {
+    code: "illakitap",
+    name: "İlla Kitap",
+    market: "TR",
+    countryCode: "TR",
+    baseUrl: "https://www.illakitap.com",
+    includeInTurkeyIndex: true,
+    phase: "v1",
+    collectionState: "ready",
+  },
+  {
     code: "hepsiburada",
     name: "Hepsiburada",
     market: "TR",

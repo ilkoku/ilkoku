@@ -7,6 +7,7 @@ import {
   collectBookIndexListByCode,
 } from "./collector";
 import { BOOK_INDEX_LISTS } from "./lists";
+import { reconcileAutoMatchedBookIndexMasters } from "./reconciliation";
 
 type SchedulerResultStatus =
   | "not_due"
@@ -124,6 +125,8 @@ export async function runBookIndexScheduler(now = new Date()) {
     }
   }
 
+  const reconciliation = await reconcileAutoMatchedBookIndexMasters();
+
   return {
     checkedAt: now.toISOString(),
     checked,
@@ -134,5 +137,6 @@ export async function runBookIndexScheduler(now = new Date()) {
     skipped,
     itemsStored,
     results,
+    reconciliation,
   };
 }

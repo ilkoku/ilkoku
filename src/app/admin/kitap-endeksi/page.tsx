@@ -259,16 +259,16 @@ export default async function BookIndexAdminPage({
 
         <article className="admin-panel">
           <span className="admin-eyebrow">Scheduler hazırlığı</span>
-          <h2>
-            {operations.schedulerSecretConfigured
-              ? "Secret hazır"
-              : "Secret bekleniyor"}
-          </h2>
+          <h2>GitHub OIDC hazır</h2>
           <p>
             {operations.dueCount.toLocaleString("tr-TR")} liste şu anda kontrol
-            zamanında. Otomatik cron kapalıdır; dedicated-secret canary PASS
-            olmadan açılmaz.
+            zamanında. Otomatik cron kapalıdır; OIDC canary PASS olmadan
+            açılmaz.
           </p>
+          <small>
+            Kısa ömürlü GitHub kimliği kullanılır. Legacy secret fallback:{" "}
+            {operations.schedulerSecretConfigured ? "hazır" : "tanımsız"}.
+          </small>
         </article>
 
         <article className="admin-panel">
@@ -351,11 +351,9 @@ export default async function BookIndexAdminPage({
           </div>
           <span
             className="admin-table-badge"
-            data-status={operations.schedulerSecretConfigured ? "active" : "pending"}
+            data-status="active"
           >
-            {operations.schedulerSecretConfigured
-              ? "Canary yapılandırılabilir"
-              : "Secret bekleniyor"}
+            Canary kimliği hazır
           </span>
         </header>
 

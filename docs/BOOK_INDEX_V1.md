@@ -343,3 +343,20 @@ bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplan�
   fail-closed davranır.
 - Kaynak Türkiye bileşik endeksine dahil edilir.
 
+### KitapSeç — kategori kaynağı
+
+- Resmî Edebiyat çok satanlar canonical'ı:
+  `https://www.kitapsec.com/Products/Edebiyat/Cok-Satan-Kitaplar/1-6-0a0-0-0-0-0-0.xhtml`.
+- Şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent ile HTTP 200
+  dönüyor ve server-rendered `schema.org/ItemList` sağlıyor.
+- Sayfa `numberOfItems=48` bildiriyor; her `Ks_UrunSatir` kartında açık
+  `position`, Product `name/url/image/sku` ve Offer `price/currency`
+  metadatası var.
+- `sku` alanı 978/979 ISBN-13 ise master kitap eşleştirmesinde doğrudan
+  kullanılabilir.
+- Sayfa kapsamı **Edebiyat** olduğu için V1 Türkiye genel bileşik endeksine
+  oy vermez. `includeInComposite=false` zorunludur.
+- Kaynak KitapSeç kaynak görünümü, Edebiyat kategori endeksi ve tarihsel SEO
+  verisi için toplanabilir.
+- Çocuk ve Gençlik çok satanlar yüzeyi ayrı ikinci parçadır.
+

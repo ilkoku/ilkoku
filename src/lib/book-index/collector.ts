@@ -7,6 +7,7 @@ import type {
   BookIndexSourceAdapter,
 } from "./adapter";
 import { normalizeBookIndexText } from "./html";
+import { autoMatchBookIndexExternalBook } from "./matching";
 import { getBookIndexList } from "./lists";
 import { getBookIndexSource } from "./sources";
 import { bkmBookIndexAdapter } from "./sources/bkm";
@@ -190,8 +191,24 @@ export async function collectBookIndexListByCode(listCode: string) {
             imageUrl: book.imageUrl ?? null,
             lastSeenAt: startedAt,
           },
-          select: { id: true },
+          select: {
+            id: true,
+            title: true,
+            authorName: true,
+            publisherName: true,
+            isbn13: true,
+            isbn10: true,
+            imageUrl: true,
+            matchStatus: true,
+            masterBookId: true,
+          },
         });
+
+        await autoMatchBookIndexExternalBook(
+          transaction,
+          externalBook,
+          startedAt,
+        );
 
         await transaction.bookIndexObservation.create({
           data: {

@@ -61,7 +61,7 @@ jobs:
               "$endpoint")"; then
               printf '%s\n' "$response"
 
-              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); raise SystemExit(0 if "readiness" in payload and "seoGate" in payload else 1)'; then
+              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); raise SystemExit(0 if "seoGate" in payload and "splitMasterCollisionCount" in readiness else 1)'; then
                 exit 0
               fi
             fi

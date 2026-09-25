@@ -4,6 +4,7 @@ export const BLOCKED_PUBLIC_WORK_SLUGS = [
 
 export const SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS = [
   "yeni-test209-30820c6a",
+  "test2-7b0fbe47",
 ] as const;
 
 export const SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES = [

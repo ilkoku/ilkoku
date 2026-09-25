@@ -12,6 +12,9 @@ export type BookIndexReadinessSnapshot = {
   matchedExternalBookCount: number;
   unmatchedExternalBookCount: number;
   matchCoveragePercent: number;
+  maxCompositeSourcesPerBook: number;
+  booksOnAtLeast2CompositeSources: number;
+  booksOnAtLeast3CompositeSources: number;
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
   historySpanDays: number;
@@ -76,6 +79,15 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
           take: 1,
           select: {
             id: true,
+            observations: {
+              select: {
+                externalBook: {
+                  select: {
+                    masterBookId: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -89,6 +101,27 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         .map((list) => list.source.code),
     ),
   ].sort((a, b) => a.localeCompare(b, "tr"));
+
+  const sourceCodesByMasterBook = new Map<string, Set<string>>();
+
+  for (const list of persistedCompositeLists) {
+    const latestRun = list.fetchRuns[0];
+    if (!latestRun) continue;
+
+    for (const observation of latestRun.observations) {
+      const masterBookId = observation.externalBook.masterBookId;
+      if (!masterBookId) continue;
+
+      const sourceCodes =
+        sourceCodesByMasterBook.get(masterBookId) ?? new Set<string>();
+      sourceCodes.add(list.source.code);
+      sourceCodesByMasterBook.set(masterBookId, sourceCodes);
+    }
+  }
+
+  const compositeSourceCounts = [...sourceCodesByMasterBook.values()].map(
+    (sourceCodes) => sourceCodes.size,
+  );
 
   const firstObservationAt = observationRange._min.observedAt ?? null;
   const lastObservationAt = observationRange._max.observedAt ?? null;
@@ -105,6 +138,15 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     matchCoveragePercent: externalBookCount
       ? Math.round((matchedExternalBookCount / externalBookCount) * 1000) / 10
       : 0,
+    maxCompositeSourcesPerBook: compositeSourceCounts.length
+      ? Math.max(...compositeSourceCounts)
+      : 0,
+    booksOnAtLeast2CompositeSources: compositeSourceCounts.filter(
+      (count) => count >= 2,
+    ).length,
+    booksOnAtLeast3CompositeSources: compositeSourceCounts.filter(
+      (count) => count >= 3,
+    ).length,
     firstObservationAt,
     lastObservationAt,
     historySpanDays: historySpanDays(firstObservationAt, lastObservationAt),

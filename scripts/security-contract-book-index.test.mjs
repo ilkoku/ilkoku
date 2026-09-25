@@ -180,7 +180,7 @@ test("book index collection stays admin-controlled before scheduler rollout", ()
 
   contains(action, 'admin.role !== "admin"', "admin-only manual collection");
   contains(action, "collectBookIndexListByCode", "manual collector action");
-  contains(page, "Remzi listesini şimdi kontrol et", "manual source verification control");
+  contains(page, "Şimdi kontrol et", "manual source verification control");
   contains(page, "Otomatik scheduler bu aşamada kapalıdır", "scheduler remains off");
 });
 

@@ -41,8 +41,29 @@ test("Book Index SEO gate requires evidence and a separate publication switch", 
   contains(gate, '"insufficient_evidence"', "evidence failure state");
 });
 
-test("Book Index SEO gate foundation does not publish routes or sitemap entries", () => {
+test("Book Index public routes fail closed before sitemap publication", () => {
+  const access = source("src/lib/book-index/public-access.ts");
+  const overview = source("src/app/en-cok-satanlar/page.tsx");
+  const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
   const sitemap = source("src/app/sitemap.ts");
+  const navigation = source("src/lib/public-site-navigation.ts");
+
+  contains(
+    access,
+    "policy.enabled\n        && policy.publicationEnabled",
+    "two-key route precondition",
+  );
+  contains(access, "if (!configured) return null;", "route access fails closed before DB work");
+  contains(overview, "getBookIndexPublicPageContext(30)", "overview gate context");
+  contains(overview, "if (!context) notFound();", "overview 404 gate");
+  contains(turkey, "getBookIndexPublicPageContext(100)", "Turkey gate context");
+  contains(
+    turkey,
+    'context.model.turkey.availability !== "available"',
+    "Turkey data availability gate",
+  );
+  contains(turkey, "notFound();", "Turkey 404 gate");
 
   notContains(sitemap, "/en-cok-satanlar", "bestseller sitemap remains closed");
+  notContains(navigation, "/en-cok-satanlar", "public navigation remains closed");
 });

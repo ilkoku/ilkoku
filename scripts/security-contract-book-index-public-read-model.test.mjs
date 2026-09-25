@@ -74,12 +74,14 @@ test("Amazon TR and US public states fail closed until sanctioned data exists", 
   );
 });
 
-test("Book Index public read model does not create public routes or sitemap entries", () => {
+test("Book Index public read model stays independent from conditional sitemap publication", () => {
+  const model = source("src/lib/book-index/public-read-model.ts");
   const sitemap = source("src/app/sitemap.ts");
 
-  notContains(
+  contains(model, 'publicRolloutState: "gated"', "read model remains gated");
+  contains(
     sitemap,
-    "/en-cok-satanlar",
-    "bestseller sitemap remains closed",
+    "loadBookIndexSitemapEntries",
+    "sitemap publication is handled by an explicit gate helper",
   );
 });

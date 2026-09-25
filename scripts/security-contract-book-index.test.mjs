@@ -648,3 +648,41 @@ test("Illa Kitap weekly bestseller collector is a bounded independent Turkey com
     "3-source eligibility remains unchanged",
   );
 });
+
+
+test("NobelKitap bestseller collector is a bounded independent Turkey composite voter", () => {
+  const adapter = source("src/lib/book-index/sources/nobelkitap.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(adapter, 'const MAX_BOOKS = 50;', "NobelKitap native bestseller cap");
+  contains(adapter, 'const MIN_EXPECTED_BOOKS = 40;', "NobelKitap fail-closed minimum");
+  contains(adapter, '\\bgroup\\b', "NobelKitap product anchor selector");
+  contains(adapter, '\\bh-full\\b', "NobelKitap product anchor scope");
+  contains(adapter, '\\/kitap\\/', "NobelKitap product URL scope");
+  contains(adapter, '/-(97[89][0-9]{10})$/u', "ISBN-13 extraction from canonical product URL");
+  contains(adapter, '\\bfont-medium\\b', "NobelKitap title field");
+  contains(adapter, '\\btext-gray-600\\b', "NobelKitap author field");
+  contains(adapter, "BOOK_INDEX_NOBELKITAP_RESULT_TOO_SMALL", "NobelKitap suspicious result rejection");
+  contains(adapter, "BOOK_INDEX_NOBELKITAP_DUPLICATE_SOURCE_KEY", "NobelKitap duplicate key protection");
+  contains(lists, 'code: "nobelkitap-tr-live"', "NobelKitap list registry");
+  contains(lists, 'sourceUrl: "https://www.nobelkitap.com/cok-satanlar"', "NobelKitap canonical bestseller page");
+  contains(lists, 'maxRank: 50', "NobelKitap native rank ceiling");
+  contains(lists, 'includeInComposite: true', "NobelKitap independent composite vote");
+  contains(
+    sources,
+    'baseUrl: "https://www.nobelkitap.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "NobelKitap ready source state",
+  );
+  contains(
+    collector,
+    "[nobelKitapBookIndexAdapter.sourceCode, nobelKitapBookIndexAdapter]",
+    "NobelKitap adapter activation",
+  );
+  contains(
+    sources,
+    "export const TURKEY_INDEX_MIN_SOURCES = 3;",
+    "3-source eligibility remains unchanged",
+  );
+});

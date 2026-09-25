@@ -184,7 +184,20 @@ Production görünürlüğü açılmadan önce doğrulanacaklar:
 Amazon TR/US veya başka bir kaynak availability `researching`/`blocked`
 ise sitemap'te sahte kaynak sayfası oluşturulmaz.
 
-## 11. IndexNow / GSC
+## 11. Analytics / trafik ölçümü
+
+Book Index public yayın açıldığında mevcut site analytics altyapısı kullanılır;
+ayrı tracker veya consent sistemi kurulmaz.
+
+- `book_index_view`: overview veya Türkiye yüzeyi görüntülendiğinde;
+- `book_index_navigation_click`: Book Index içindeki overview/Türkiye
+  navigasyonu kullanıldığında.
+
+Event'ler yalnız analytics consent uygunsa gönderilir. GTM yüklüyse öncelik
+GTM'dedir; doğrudan GA4 yalnız fallback olarak kullanılır ve çift event
+üretilmez.
+
+## 12. IndexNow / GSC
 
 Sitemap aktivasyonundan sonra:
 
@@ -193,7 +206,7 @@ Sitemap aktivasyonundan sonra:
 - ilk günlerde "URL is unknown to Google" tek başına hata sayılmaz;
 - canonical/indexability değişimleri takip edilir.
 
-## 12. Rollback
+## 13. Rollback
 
 Herhangi bir aşamada sorun görülürse en küçük geri dönüş uygulanır.
 

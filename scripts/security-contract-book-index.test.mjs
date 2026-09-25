@@ -597,3 +597,16 @@ test("composite collectors use deeper native bestseller pagination without chang
   contains(inkilap, '(page - 1) * MAX_BOOKS', "Inkilap contiguous native rank offsets");
   contains(kitapsepeti, 'const MAX_BOOKS = 60;', "KitapSepeti accepts the full current native page within a bounded ceiling");
 });
+
+
+test("Book Index readiness measures edition-family overlap without mutating matching", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const matching = source("src/lib/book-index/matching.ts");
+
+  contains(readiness, "EDITION_FAMILY_SUFFIXES", "bounded edition-family suffix diagnostics");
+  contains(readiness, "editionFamilyTitle", "edition-family diagnostic normalizer");
+  contains(readiness, "editionFamilyIdentityKeysOnAtLeast2Sources", "2-source edition-family metric");
+  contains(readiness, "editionFamilyIdentityKeysOnAtLeast3Sources", "3-source edition-family metric");
+  contains(readiness, "editionFamilyVariantOverlapSamples", "edition-family diagnostic samples");
+  notContains(matching, "editionFamilyTitle", "edition-family diagnostic does not change matching");
+});

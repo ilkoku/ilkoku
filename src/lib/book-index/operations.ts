@@ -24,6 +24,7 @@ export type BookIndexListOperationsRow = {
 
 export type BookIndexOperationsSnapshot = {
   checkedAt: Date;
+  schedulerAuthMode: "github_oidc";
   schedulerSecretConfigured: boolean;
   dueCount: number;
   rows: BookIndexListOperationsRow[];
@@ -131,6 +132,7 @@ export async function getBookIndexOperationsSnapshot(
 
   return {
     checkedAt: now,
+    schedulerAuthMode: "github_oidc",
     schedulerSecretConfigured: Boolean(
       process.env.BOOK_INDEX_SCHEDULER_SECRET?.trim(),
     ),

@@ -26,16 +26,10 @@ export async function collectBookIndexListAction(formData: FormData) {
     redirect(destination("liste-bulunamadi"));
   }
 
+  let result: Awaited<ReturnType<typeof collectBookIndexListByCode>>;
+
   try {
-    const result = await collectBookIndexListByCode(listCode);
-    revalidatePath("/sistem-yonetimi/kitap-endeksi");
-    redirect(
-      destination(
-        result.status === "no_change" ? "degisiklik-yok" : "toplandi",
-        listCode,
-        result.items,
-      ),
-    );
+    result = await collectBookIndexListByCode(listCode);
   } catch (error) {
     console.error("BOOK_INDEX_ADMIN_COLLECT_FAILED", {
       listCode,
@@ -43,4 +37,13 @@ export async function collectBookIndexListAction(formData: FormData) {
     });
     redirect(destination("toplama-hatasi", listCode));
   }
+
+  revalidatePath("/sistem-yonetimi/kitap-endeksi");
+  redirect(
+    destination(
+      result.status === "no_change" ? "degisiklik-yok" : "toplandi",
+      listCode,
+      result.items,
+    ),
+  );
 }

@@ -171,7 +171,8 @@ davranmaz:
 4. Güncel readiness kanıtları tüm eşikleri geçiyor
 
 Bu zincirin herhangi bir adımı sağlanmazsa route `notFound()` ile 404 döner
-ve metadata `noindex` kalır. Public navigation'a henüz link eklenmez.
+ve metadata `noindex` kalır. Ana menüdeki **En Çok Satanlar** bağlantısı da
+aynı public access gate'ine bağlıdır; gate geçmeden gösterilmez.
 
 Türkiye route'u ayrıca gerçekten üretilebilir Türkiye Endeksi verisi yoksa
 404 davranışını korur.
@@ -196,7 +197,8 @@ Bu durumda:
 
 eklenir. Gate kapalıysa, policy eksikse, veri yetersizse veya helper hata
 verirse boş liste döner. Genel sitemap DB/CMS fallback'i de Kitap Endeksi
-URL'lerini içermez. Public navigation ayrıca kapalı kalır.
+URL'lerini içermez. Ana menü bağlantısı aynı gate geçildiğinde **Destek** ana
+menüsünün hemen yanında görünür ve doğrudan `/en-cok-satanlar` sayfasına gider.
 
 ### Public read-model sözleşmesi
 

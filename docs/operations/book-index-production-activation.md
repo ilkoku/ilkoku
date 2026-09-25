@@ -160,10 +160,18 @@ davranışını korur.
 
 ## 10. Sitemap ve navigation activation
 
-Sitemap ve public navigation aktivasyonu publication kararından sonra ayrı,
-küçük bir PR olmalıdır.
+Sitemap ve public navigation kodu fail-closed olarak önceden hazırlanmıştır.
+Gerçek görünürlük yalnız publication gate geçildiğinde açılır.
 
-Bu PR'dan önce doğrulanacaklar:
+Ana menü davranışı:
+
+- **En Çok Satanlar** üst menüsü **Destek** menüsünün hemen yanında görünür;
+- masaüstü ve mobilde doğrudan `/en-cok-satanlar` sayfasına gider;
+- gate/publish/policy/evidence zincirinden biri eksikse menü bağlantısı hiç
+  gösterilmez;
+- route 404 iken kullanıcıya kırık ana menü bağlantısı sunulmaz.
+
+Production görünürlüğü açılmadan önce doğrulanacaklar:
 
 - public route HTTP 200;
 - canonical doğru;

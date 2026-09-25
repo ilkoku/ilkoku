@@ -173,6 +173,9 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
     "https://ilkoku.com/hakkimizda",
     "https://ilkoku.com/kitap/ornek-bir",
     "https://ilkoku.com/kitap/ornek-iki",
+    "https://ilkoku.com/en-cok-satanlar",
+    "https://ilkoku.com/en-cok-satanlar/turkiye",
+    "https://ilkoku.com/en-cok-satanlar/kaynak/bkm-kitap",
     "https://ilkoku.com/yasal/kvkk",
   ];
 
@@ -224,6 +227,35 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   ]);
 
   for (const changedFile of [
+    "src/lib/book-index/ranking.ts",
+    "src/features/book-index/public/BookIndexPublicView.tsx",
+  ]) {
+    const bookIndexFamily = selectIndexNowUrls({
+      sitemapUrls,
+      changedFiles: [changedFile],
+      repoRoot: ROOT,
+    });
+    assert.equal(bookIndexFamily.mode, "diff");
+    assert.deepEqual(bookIndexFamily.urls, [
+      "https://ilkoku.com/en-cok-satanlar",
+      "https://ilkoku.com/en-cok-satanlar/turkiye",
+      "https://ilkoku.com/en-cok-satanlar/kaynak/bkm-kitap",
+    ]);
+  }
+
+  const scheduledBookIndex = selectIndexNowUrls({
+    sitemapUrls,
+    changedFiles: ["__BOOK_INDEX__"],
+    repoRoot: ROOT,
+  });
+  assert.equal(scheduledBookIndex.mode, "book-index");
+  assert.deepEqual(scheduledBookIndex.urls, [
+    "https://ilkoku.com/en-cok-satanlar",
+    "https://ilkoku.com/en-cok-satanlar/turkiye",
+    "https://ilkoku.com/en-cok-satanlar/kaynak/bkm-kitap",
+  ]);
+
+  for (const changedFile of [
     "src/app/sitemap.ts",
     "src/app/landing-footer-tight.css",
     "src/lib/public-site-navigation.ts",
@@ -254,6 +286,8 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   assertContains(workflow, 'echo "__FULL__" > /tmp/indexnow-changed-files.txt', "IndexNow manual/fallback full marker");
   assertContains(workflow, "node scripts/prepare-indexnow-payload.mjs", "IndexNow diff-aware payload selector");
   assertContains(workflow, '"src/features/homepage/**"', "homepage feature IndexNow trigger");
+  assertContains(workflow, '"src/features/book-index/**"', "Book Index feature IndexNow trigger");
+  assertContains(workflow, '"src/lib/book-index/**"', "Book Index library IndexNow trigger");
   assertContains(workflow, '"src/lib/public-site-navigation.ts"', "global navigation IndexNow trigger");
   assertContains(workflow, '"src/components/content/PublicCmsHydrator.tsx"', "shared public layout IndexNow trigger");
   assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");

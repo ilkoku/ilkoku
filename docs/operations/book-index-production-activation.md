@@ -210,6 +210,8 @@ Sitemap aktivasyonundan sonra:
 - manuel SEO indexability smoke Book Index sitemap'te yoksa onu atlar; varsa
   ana, Türkiye ve temsilî bir kaynak sayfasında HTTP 200, robots ve canonical
   sözleşmesini doğrular;
+- haftalık GSC diagnostic aynı sitemap fetch'i üzerinde 50.000 URL,
+  50 MB uncompressed boyut ve duplicate `<loc>` guard'larını çalıştırır;
 - sitemap Google Search Console'da yeniden okunur;
 - ilk günlerde "URL is unknown to Google" tek başına hata sayılmaz;
 - canonical/indexability değişimleri takip edilir.

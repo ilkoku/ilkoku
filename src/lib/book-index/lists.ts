@@ -111,6 +111,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "inkilap-tr-live",
+    sourceCode: "inkilap",
+    title: "İnkılâp Kitabevi · Çok Satanlar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.inkilap.com/cok-satanlar",
+    maxRank: 20,
+    includeInComposite: true,
+    collectionEveryMinutes: 360,
+    enabled: true,
+  },
+  {
     code: "idefix-tr-live",
     sourceCode: "idefix",
     title: "idefix · Çok Satan Kitaplar",

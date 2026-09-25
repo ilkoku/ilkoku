@@ -44,7 +44,9 @@ function emitBookIndexEvent(payload: AnalyticsEvent) {
 }
 
 function surfaceFromPath(pathname: string) {
-  return pathname === "/en-cok-satanlar/turkiye" ? "turkey" : "overview";
+  if (pathname === "/en-cok-satanlar/turkiye") return "turkey";
+  if (pathname.startsWith("/en-cok-satanlar/kaynak/")) return "source";
+  return "overview";
 }
 
 export function BookIndexAnalytics() {
@@ -64,6 +66,9 @@ export function BookIndexAnalytics() {
         event: "book_index_view",
         book_index_surface: surfaceFromPath(pathname),
         page_path: pathname,
+        ...(pathname.startsWith("/en-cok-satanlar/kaynak/")
+          ? { book_index_source_slug: pathname.split("/").at(-1) ?? "" }
+          : {}),
       });
       if (sent) sentViewKey.current = key;
     }
@@ -115,6 +120,9 @@ export function BookIndexAnalytics() {
         book_index_surface: surfaceFromPath(pathname),
         page_path: pathname,
         target_path: destination.pathname,
+        ...(pathname.startsWith("/en-cok-satanlar/kaynak/")
+          ? { book_index_source_slug: pathname.split("/").at(-1) ?? "" }
+          : {}),
       });
     }
 

@@ -343,6 +343,22 @@ bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplan�
   fail-closed davranır.
 - Kaynak Türkiye bileşik endeksine dahil edilir.
 
+
+### Hepsiburada erişim kararı — 25 Eylül 2026
+
+- Kitap ana kategorisinde `?order=4` görünümü **Çok satanlar** sıralamasını
+  temsil ediyor ve normal tarayıcı çıktısında ürün JSON'u bulunuyor.
+- Görünür ilk sayfa 36 ürün sağlıyor; `productId`, ürün URL'si,
+  yayınevi/brand, fiyat, görsel ve `isPromoted` işareti mevcut.
+- Listing üzerinde güvenilir ISBN/barcode alanı doğrulanmadı.
+- Buna rağmen şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent
+  ile yapılan doğrudan sunucu isteği HTTP **403** döndürdü.
+- Koruma aşılmayacak; proxy/stealth/CAPTCHA yaklaşımı kullanılmayacak.
+- Bu nedenle Hepsiburada `phase_2` registry içinde **blocked** tutulur.
+  Resmî API/feed veya açık izinli erişim yolu doğrulanırsa yeniden
+  değerlendirilebilir.
+
+
 ### KitapSeç — kategori kaynağı
 
 - Resmî Edebiyat çok satanlar canonical'ı:

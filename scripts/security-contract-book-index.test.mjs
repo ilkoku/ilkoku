@@ -440,3 +440,20 @@ test("KitapSec category collector parses explicit ItemList ranks and ISBN metada
   );
 });
 
+
+
+test("Hepsiburada protected bestseller surface remains fail-closed", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'baseUrl: "https://www.hepsiburada.com",\n    includeInTurkeyIndex: true,\n    phase: "phase_2",\n    collectionState: "blocked"',
+    "Hepsiburada transparent request block",
+  );
+  notContains(
+    collector,
+    'sourceCode: "hepsiburada"',
+    "Hepsiburada collector is not activated",
+  );
+});

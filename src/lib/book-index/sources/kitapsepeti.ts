@@ -7,7 +7,7 @@ import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "kitapsepeti";
 const SOURCE_ORIGIN = "https://www.kitapsepeti.com";
-const MAX_BOOKS = 30;
+const MAX_BOOKS = 60;
 const MIN_EXPECTED_BOOKS = 20;
 
 function absoluteUrl(href: string) {

@@ -48,6 +48,7 @@ function splitTitleAndAuthor(value: string) {
 
 export function parseInkilapBestsellers(
   html: string,
+  rankOffset = 0,
 ): BookIndexCollectionResult {
   const starts = [
     ...html.matchAll(
@@ -100,7 +101,7 @@ export function parseInkilapBestsellers(
         isbn13: normalizedIsbn,
         productUrl: absoluteUrl(productUrl),
         imageUrl: image ? absoluteUrl(image) : null,
-        rank: index + 1,
+        rank: rankOffset + index + 1,
         priceAmount: salePrice
           ? priceToMinorUnits(decodeBookIndexHtml(salePrice))
           : null,
@@ -121,24 +122,46 @@ export function parseInkilapBestsellers(
   return { books };
 }
 
+async function fetchInkilapPage(url: string) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+  }
+
+  return response.text();
+}
+
 export const inkilapBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const response = await fetch(context.sourceUrl, {
-      cache: "no-store",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
-      },
-      signal: AbortSignal.timeout(20_000),
-    });
+    const books = [];
 
-    if (!response.ok) {
-      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+    for (let page = 1; page <= 3; page += 1) {
+      const url = page === 1
+        ? context.sourceUrl
+        : `${context.sourceUrl}/sayfa/${page}`;
+      const parsed = parseInkilapBestsellers(
+        await fetchInkilapPage(url),
+        (page - 1) * MAX_BOOKS,
+      );
+      books.push(...parsed.books);
     }
 
-    return parseInkilapBestsellers(await response.text());
+    const uniqueKeys = new Set(books.map((book) => book.sourceKey));
+    if (uniqueKeys.size !== books.length) {
+      throw new Error("BOOK_INDEX_INKILAP_DUPLICATE_SOURCE_KEY");
+    }
+
+    return { books };
   },
 };

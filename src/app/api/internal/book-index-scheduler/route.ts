@@ -4,6 +4,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
+import { repairSafeSplitBookIndexMasters } from "@/lib/book-index/matching";
 import { runBookIndexScheduler } from "@/lib/book-index/scheduler";
 import { getBookIndexSeoGateSnapshot } from "@/lib/book-index/seo-gate";
 
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await runBookIndexScheduler();
+    const splitMasterRepair = await repairSafeSplitBookIndexMasters();
     const [readiness, seoGate] = await Promise.all([
       getBookIndexReadinessSnapshot(),
       getBookIndexSeoGateSnapshot(),
@@ -97,6 +99,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       ...result,
+      splitMasterRepair,
       readiness,
       seoGate,
     });

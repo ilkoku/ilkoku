@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect rendered BKM product card structure once
+      - name: Extract real rendered BKM product cards
         shell: bash
         run: |
           set -euo pipefail
@@ -27,39 +27,44 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re, html
+
           text=Path("/tmp/bkm-rendered.html").read_text(errors="replace")
 
-          print("WAW_PRODUCT_ITEM_OCCURRENCES", len(re.findall(r"waw-product-item", text, re.I)))
-          pos=0
-          shown=0
-          while shown < 8:
-            p=text.find("waw-product-item", pos)
-            if p<0: break
-            print(f"\n### CARD WINDOW {shown+1} pos={p}")
-            print(text[max(0,p-500):p+5500])
-            pos=p+20
-            shown+=1
+          tags=list(re.finditer(
+            r'<(?:div|li)\b[^>]*class=["\'][^"\']*\bwaw-product-item-area\b[^"\']*["\'][^>]*>',
+            text,
+            re.I
+          ))
+          print("REAL_CARD_TAGS", len(tags))
 
-          print("\n--- LI/DIV CLASS COUNTS around products ---")
-          for cls in [
-            "waw-product-item-area",
-            "waw-product-item",
-            "productName",
-            "product-name",
-            "product-title",
-            "detailLink",
-            "brand-name",
-            "product-price",
-          ]:
-            print(cls, text.casefold().count(cls.casefold()))
+          for idx,m in enumerate(tags[:6],1):
+            start=m.start()
+            window=text[start:start+7500]
+            print(f"\n=== REAL CARD {idx} ===")
+            print(window)
 
-          print("\n--- PRODUCT-LIKE JSON/ATTRIBUTES ---")
-          for pattern in [
-            r'data-product-id=["\']([^"\']+)',
-            r'data-id=["\']([^"\']+)',
-            r'data-name=["\']([^"\']+)',
-            r'data-url=["\']([^"\']+)',
-          ]:
-            vals=re.findall(pattern,text,re.I)
-            print(pattern, vals[:25])
+            hrefs=re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>',window,re.I)
+            titles=re.findall(r'<[^>]*class=["\'][^"\']*\bproduct-title\b[^"\']*["\'][^>]*>([\s\S]{0,800}?)</[^>]+>',window,re.I)
+            spans=re.findall(r'<span\b[^>]*>([\s\S]{0,500}?)</span>',window,re.I)
+
+            print("--- SUMMARY ---")
+            print("HREFS", hrefs[:10])
+            print("TITLES", [html.unescape(re.sub(r'<[^>]+>',' ',x)).strip() for x in titles[:5]])
+            clean_spans=[]
+            for x in spans[:20]:
+              y=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',x))).strip()
+              if y: clean_spans.append(y)
+            print("SPANS", clean_spans[:20])
+
+          print("\n=== DISTINCT PRODUCT LINKS ===")
+          seen=[]
+          for m in tags:
+            window=text[m.start():m.start()+6000]
+            for href in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>',window,re.I):
+              if href.startswith("https://www.bkmkitap.com/") and href not in seen:
+                seen.append(href)
+                break
+          print("COUNT",len(seen))
+          for href in seen[:30]:
+            print(href)
           PY

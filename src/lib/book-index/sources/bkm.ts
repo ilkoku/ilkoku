@@ -56,7 +56,7 @@ function priceToMinorUnits(value: unknown) {
   if (!/^[0-9]+(?:\.[0-9]{1,2})?$/u.test(normalized)) return null;
 
   const [whole, fraction = ""] = normalized.split(".");
-  return BigInt(whole) * 100n + BigInt((fraction + "00").slice(0, 2));
+  return BigInt(whole) * BigInt(100) + BigInt((fraction + "00").slice(0, 2));
 }
 
 function parseBkmResponse(payload: unknown): BookIndexCollectionResult {

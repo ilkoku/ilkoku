@@ -67,3 +67,23 @@ test("Book Index public routes fail closed before sitemap publication", () => {
   notContains(sitemap, "/en-cok-satanlar", "bestseller sitemap remains closed");
   notContains(navigation, "/en-cok-satanlar", "public navigation remains closed");
 });
+
+
+test("Book Index admin shows SEO gate evidence without publishing", () => {
+  const page = source("src/app/admin/kitap-endeksi/page.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+  const navigation = source("src/lib/public-site-navigation.ts");
+
+  contains(page, "getBookIndexSeoGateSnapshot", "admin reads SEO gate snapshot");
+  contains(page, "SEO kalite kapısı", "admin SEO gate card");
+  contains(page, "SEO gate kanıtı", "admin evidence table");
+  contains(page, "Composite kaynak", "composite source evidence");
+  contains(page, "Master eşleşme", "matching evidence");
+  contains(page, "Tarihsel kapsam", "history evidence");
+  contains(page, "Türkiye Endeksi kayıt", "Turkey result evidence");
+  contains(page, "Publish switch", "separate publication state");
+  contains(page, "Public kapalı", "truthful default public state");
+
+  notContains(sitemap, "/en-cok-satanlar", "admin status does not publish sitemap");
+  notContains(navigation, "/en-cok-satanlar", "admin status does not publish navigation");
+});

@@ -39,6 +39,7 @@ Bu ürün dış kaynak listesini İlkOku satışı gibi göstermemelidir.
 - Remzi Kitabevi
 - Amazon Türkiye
 - Amazon ABD — ayrı pazar
+- KitapSepeti
 
 ## Faz 2 kaynak adayları
 

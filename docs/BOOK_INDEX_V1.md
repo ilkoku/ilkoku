@@ -132,6 +132,23 @@ Public rollout ancak gerçek veri biriktikten sonra yapılır:
 
 Sitemap açılımı ayrı bir kalite kapısından geçmelidir.
 
+
+### İçgörü read-model sözleşmesi
+
+Public yüzeyler açılmadan önce dört türe ait read-model hazırlanır:
+
+- **Yeni girişler:** son başarılı snapshot'ta görünen, aynı listenin bir önceki
+  başarılı snapshot'ında bulunmayan eşleşmiş master kitaplar.
+- **Yükselenler:** aynı listede önceki başarılı snapshot'a göre rankı iyileşen
+  eşleşmiş master kitaplar; artış kaynak ve sıra farkıyla ölçülür.
+- **Her yerde satanlar:** mevcut composite snapshot'larda en az
+  `TURKEY_INDEX_MIN_SOURCES` bağımsız Türkiye kaynağında bulunan kitaplar.
+- **Uzun satanlar:** composite observation geçmişindeki ilk/son görülme zamanı,
+  tarihsel gün sayısı, bağımsız kaynak ve observation sayısıyla sıralanır.
+
+Bu modeller sabit “7 gün/30 gün” gibi henüz kanıtlanmamış eşikler üretmez.
+Gerçek snapshot geçmişi biriktikçe public ürün etiketleri ayrıca kilitlenir.
+
 ### Public readiness ölçümleri
 
 Public açılım öncesi admin ekranında yalnız ölçülebilir durum gösterilir:

@@ -3,7 +3,6 @@ import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
-import { collectBookIndexListByCode } from "@/lib/book-index/collector";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import { runBookIndexScheduler } from "@/lib/book-index/scheduler";
 import { getBookIndexSeoGateSnapshot } from "@/lib/book-index/seo-gate";
@@ -23,14 +22,8 @@ const GITHUB_WORKFLOW_REF =
 const ALLOWED_GITHUB_EVENTS = new Set([
   "workflow_dispatch",
   "schedule",
-  "workflow_run",
 ]);
 
-const DEPTH_PROBE_LIST_CODES = [
-  "kitapsepeti-tr-live",
-  "kitapzen-tr-weekly",
-  "inkilap-tr-live",
-] as const;
 
 function configuredSecret() {
   return process.env.BOOK_INDEX_SCHEDULER_SECRET?.trim() ?? "";
@@ -96,32 +89,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const forceDepth = request.nextUrl.searchParams.get("forceDepth") === "1";
-    const forcedDepthRuns = [];
-
-    if (forceDepth) {
-      for (const listCode of DEPTH_PROBE_LIST_CODES) {
-        try {
-          const collected = await collectBookIndexListByCode(listCode);
-          forcedDepthRuns.push({
-            listCode,
-            status: collected.status,
-            items: collected.items,
-          });
-        } catch (error) {
-          forcedDepthRuns.push({
-            listCode,
-            status: "failed",
-            error: error instanceof Error ? error.message : "UNKNOWN",
-          });
-        }
-      }
-
-      if (forcedDepthRuns.some((run) => run.status === "failed")) {
-        throw new Error("BOOK_INDEX_DEPTH_PROBE_FAILED");
-      }
-    }
-
     const result = await runBookIndexScheduler();
     const [readiness, seoGate] = await Promise.all([
       getBookIndexReadinessSnapshot(),
@@ -131,7 +98,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       ...result,
-      forcedDepthRuns,
       readiness,
       seoGate,
     });

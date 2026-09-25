@@ -1,0 +1,45 @@
+name: Book Index KitapSec Child Probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapsec-child-probe
+    paths:
+      - ".github/workflows/book-index-kitapsec-child-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect KitapSec child bestseller category
+        shell: bash
+        run: |
+          set -euo pipefail
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          url="https://www.kitapsec.com/Products/Cocuk-ve-Genclik-Kitaplari/Cok-Satan-Kitaplar/"
+          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/page.html -w "%{http_code}" "$url")"
+          final="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /dev/null -w "%{url_effective}" "$url")"
+          echo "HTTP_STATUS=$code"
+          echo "FINAL_URL=$final"
+          echo "BYTES=$(wc -c < /tmp/page.html)"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html
+          raw=Path("/tmp/page.html").read_bytes()
+          text=raw.decode("windows-1254",errors="replace")
+          title=re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S)
+          print("TITLE",html.unescape(re.sub(r'\s+',' ',title.group(1))).strip()[:300] if title else "")
+          n=re.search(r'<meta\s+itemprop=["\']numberOfItems["\']\s+content=["\']([0-9]+)["\']',text,re.I)
+          print("NUMBER_OF_ITEMS",n.group(1) if n else "")
+          positions=re.findall(r'<meta\s+itemprop=["\']position["\']\s+content=["\']([0-9]+)["\']',text,re.I)
+          skus=re.findall(r'<meta\s+itemprop=["\']sku["\']\s+content=["\']([^"\']+)["\']',text,re.I)
+          names=re.findall(r'<meta\s+itemprop=["\']name["\']\s+content=["\']([^"\']+)["\']',text,re.I)
+          print("POSITIONS",positions[:10])
+          print("SKUS",skus[:10])
+          print("NAMES",names[:10])
+          PY

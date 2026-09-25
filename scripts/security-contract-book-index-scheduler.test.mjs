@@ -19,26 +19,13 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(workflow, "workflow_dispatch:", "manual operations trigger");
   contains(workflow, "schedule:", "automatic scheduler trigger");
   contains(workflow, 'cron: "17 * * * *"', "hourly cron remains active");
-  contains(workflow, "workflow_run:", "temporary verification trigger");
-  notContains(workflow, "?matchPending=1", "one-time backfill request remains removed");
+  notContains(workflow, "workflow_run:", "temporary production trigger removed");
+  notContains(workflow, "?matchPending=1", "one-time backfill request removed");
   contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");
-  contains(route, '"workflow_run"', "temporary verification OIDC event");
+  notContains(route, '"workflow_run"', "temporary workflow-run authorization removed");
   notContains(route, "matchPendingBookIndexBooks", "one-time matching backfill removed");
   notContains(route, 'searchParams.get("matchPending")', "maintenance switch removed");
   contains(readiness, "splitMasterCollisionCount", "collision diagnostic retained");
   contains(readiness, "splitMasterCollisionSamples", "collision samples retained");
   contains(readiness, "normalizedIdentityKeysOnAtLeast2Sources", "cross-source identity diagnostic retained");
-});
-
-
-test("Book Index one-time post-reconcile probe is tightly scoped", () => {
-  const route = source("src/app/api/internal/book-index-scheduler/route.ts");
-  const workflow = source(".github/workflows/book-index-scheduler.yml");
-
-  contains(workflow, "workflow_run:", "temporary production-smoke probe");
-  contains(workflow, "Production smoke", "probe source workflow");
-  contains(workflow, "github.event.workflow_run.conclusion == 'success'", "probe success guard");
-  contains(workflow, "github.event.workflow_run.head_branch == 'main'", "probe main-branch guard");
-  contains(route, '"workflow_run"', "temporary OIDC event allowlist entry");
-  notContains(workflow, "?matchPending=1", "no maintenance query on verification probe");
 });

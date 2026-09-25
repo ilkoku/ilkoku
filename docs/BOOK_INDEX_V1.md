@@ -274,3 +274,17 @@ kararları sonraki collector çalışmaları tarafından ezilmez.
 Admin Kitap Endeksi ekranındaki **Bekleyenleri eşleştir** işlemi daha önce
 toplanmış `unmatched` kayıtları da aynı kurallarla yeniden işler.
 
+## Türkiye Endeksi yönetim önizlemesi
+
+İlk üç canlı Türkiye kaynağı olan Remzi, BKM ve idefix aynı master kitaba
+bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplanır.
+
+Önizleme kuralları:
+
+- Yalnız `includeInComposite=true` listeler kullanılır.
+- Her listenin son başarılı veya `no_change` fetch run'ı kullanılır.
+- Yalnız master kitaba bağlanmış dış kayıtlar hesaba girer.
+- Normalizasyon için o run'da gerçekten saklanan kayıt sayısı kullanılır.
+- Mevcut `1 kaynak = 1 oy` ve minimum 3 bağımsız kaynak kuralı aynen korunur.
+- Bu görünüm yalnız admin içindir; public route ve sitemap açılımı hâlâ kapalıdır.
+

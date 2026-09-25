@@ -15,31 +15,39 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 7
     steps:
-      - name: Probe Amazon bestseller pages transparently
+      - name: Inspect Amazon TR rendered bestseller DOM
         shell: bash
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          url="https://www.amazon.com.tr/gp/bestsellers/books"
+          chrome="$(command -v google-chrome || command -v google-chrome-stable)"
+          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage             --user-agent="$ua" --virtual-time-budget=10000 --dump-dom "$url"             > /tmp/amazon-tr.html 2>/tmp/chrome.err || true
 
-          probe() {
-            name="$1"
-            url="$2"
-            out="/tmp/$name.html"
-            code="$(curl -L --silent --show-error --max-time 30 -A "$ua"               -H 'Accept: text/html,application/xhtml+xml'               -o "$out" -w "%{http_code}" "$url" || true)"
-            echo "=== $name ==="
-            echo "URL=$url"
-            echo "HTTP=$code BYTES=$(wc -c < "$out" 2>/dev/null || echo 0)"
-            echo "TITLE=$(grep -oim1 '<title[^>]*>[^<]*' "$out" 2>/dev/null | sed -E 's/<title[^>]*>//I' || true)"
-            echo "ROBOT_CHECK=$(grep -Eoi 'robot check|automated access|captcha|sorry|api-services-support@amazon' "$out" 2>/dev/null | head -n 5 | tr '\n' ' ' || true)"
-            echo "RANK_MARKERS=$(grep -Eo '#[0-9]{1,3}' "$out" 2>/dev/null | head -n 10 | tr '\n' ' ' || true)"
-            echo "ASIN_MARKERS=$(grep -Eo 'data-asin=["'"'"'][A-Z0-9]{10}["'"'"']' "$out" 2>/dev/null | head -n 10 | tr '\n' ' ' || true)"
-          }
+          echo "BYTES=$(wc -c < /tmp/amazon-tr.html)"
+          echo "ROBOT_CHECK=$(grep -Eoi 'robot check|automated access|captcha|api-services-support@amazon' /tmp/amazon-tr.html | head -n 5 | tr '\n' ' ' || true)"
+          echo "ASIN_COUNT=$(grep -Eo 'data-asin=["'"'"'][A-Z0-9]{10}["'"'"']' /tmp/amazon-tr.html | wc -l || true)"
+          echo "RANK_COUNT=$(grep -Eo 'zg-bdg-text[^>]*>#[0-9]+' /tmp/amazon-tr.html | wc -l || true)"
+          echo "DP_LINK_COUNT=$(grep -Eo 'href=["'"'"'][^"'"'"']*/dp/[A-Z0-9]{10}[^"'"'"']*["'"'"']' /tmp/amazon-tr.html | wc -l || true)"
 
-          probe amazon-tr "https://www.amazon.com.tr/gp/bestsellers/books"
-          probe amazon-us "https://www.amazon.com/Best-Sellers-Books/zgbs/books"
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html
+          text=Path("/tmp/amazon-tr.html").read_text(errors="replace")
 
-          echo "=== ROBOTS TR ==="
-          curl -L --silent --show-error --max-time 20 -A "$ua"             "https://www.amazon.com.tr/robots.txt" | head -n 220 || true
+          for token in ["zg-grid-general-faceout", "zg-bdg-text", "data-asin=", "/dp/"]:
+              print("\nTOKEN",token,"COUNT",text.count(token))
+              p=text.find(token)
+              if p>=0:
+                  print(text[max(0,p-1200):p+6000])
 
-          echo "=== ROBOTS US ==="
-          curl -L --silent --show-error --max-time 20 -A "$ua"             "https://www.amazon.com/robots.txt" | head -n 220 || true
+          print("\n--- FIRST 20 ASINS ---")
+          asins=[]
+          for asin in re.findall(r'data-asin=["\']([A-Z0-9]{10})["\']',text):
+              if asin not in asins: asins.append(asin)
+          print(asins[:20])
+
+          print("\n--- FIRST 20 RANKS ---")
+          ranks=re.findall(r'class=["\'][^"\']*zg-bdg-text[^"\']*["\'][^>]*>\s*#([0-9]+)',text,re.I)
+          print(ranks[:20])
+          PY

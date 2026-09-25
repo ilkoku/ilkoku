@@ -359,6 +359,31 @@ bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplan�
   değerlendirilebilir.
 
 
+
+### Trendyol ve PttAVM erişim kararı — 25 Eylül 2026
+
+**Trendyol**
+
+- Genel `/kitap-x-c91` kitap kategorisi arama motoru görünümünde
+  `En Çok Satan N. Ürün` işaretleri gösterebiliyor; yani platform içinde
+  bestseller sinyali bulunduğu doğrulandı.
+- Buna rağmen şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent
+  ile doğrudan sunucu isteği HTTP **403** döndü.
+- Koruma aşılmayacak. Trendyol `phase_2` kaynağı **blocked** kalır ve
+  collector aktive edilmez.
+
+**PttAVM**
+
+- Ana kitap kategorisi `https://www.pttavm.com/kitap-c-15` normal tarayıcı
+  görünümünde ürün kartları ve bazı `Çok Satan` rozetleri sağlıyor.
+- Ancak ürün kartlarında güvenilir, bitişik `1..N` bestseller rank dizisi
+  doğrulanmadı.
+- Şeffaf İlkOku user-agent ile doğrudan istek HTTP **403** ve Cloudflare
+  challenge cevabı döndürdü.
+- Hem açık rank eksikliği hem de erişim koruması nedeniyle PttAVM
+  `phase_2` kaynağı **blocked** kalır; collector yazılmaz.
+
+
 ### KitapSeç — kategori kaynağı
 
 - Resmî Edebiyat çok satanlar canonical'ı:

@@ -457,3 +457,23 @@ test("Hepsiburada protected bestseller surface remains fail-closed", () => {
     "Hepsiburada collector is not activated",
   );
 });
+
+
+test("Trendyol and PttAVM protected book surfaces remain fail-closed", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  for (const [baseUrl, label] of [
+    ["https://www.trendyol.com", "Trendyol"],
+    ["https://www.pttavm.com", "PttAVM"],
+  ]) {
+    contains(
+      sources,
+      `baseUrl: "${baseUrl}",\n    includeInTurkeyIndex: true,\n    phase: "phase_2",\n    collectionState: "blocked"`,
+      `${label} protected source state`,
+    );
+  }
+
+  notContains(collector, 'sourceCode: "trendyol"', "Trendyol collector is not activated");
+  notContains(collector, 'sourceCode: "pttavm"', "PttAVM collector is not activated");
+});

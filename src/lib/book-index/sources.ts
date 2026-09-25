@@ -160,7 +160,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.trendyol.com",
     includeInTurkeyIndex: true,
     phase: "phase_2",
-    collectionState: "planned",
+    collectionState: "blocked",
   },
   {
     code: "pttavm",
@@ -170,7 +170,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.pttavm.com",
     includeInTurkeyIndex: true,
     phase: "phase_2",
-    collectionState: "planned",
+    collectionState: "blocked",
   },
 ] as const;
 

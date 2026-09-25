@@ -144,7 +144,7 @@ test("first live collector is fail-closed and source-isolated", () => {
   contains(collector, "const adapters = new Map<string, BookIndexSourceAdapter>", "source-local adapter registry");
   contains(collector, 'status: "running"', "fetch run begins before remote collection");
   contains(collector, 'status: "failed"', "collector failure is persisted");
-  contains(collector, "BookIndexObservation.create", "rank snapshots are append-only");
+  contains(collector, "transaction.bookIndexObservation.create", "rank snapshots are append-only");
   contains(remzi, 'class=["\'][^"\']*\\bturkish-books', "Remzi Turkish bestseller selector");
   contains(remzi, "\\bbook-name\\b", "Remzi book anchor selector");
   contains(remzi, "BOOK_INDEX_REMZI_RESULT_TOO_SMALL", "parser fails closed on suspiciously small result");

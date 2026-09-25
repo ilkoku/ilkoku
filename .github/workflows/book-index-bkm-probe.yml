@@ -1,0 +1,85 @@
+name: Book Index BKM Probe
+
+on:
+  push:
+    branches:
+      - feature/book-index-bkm-collector
+    paths:
+      - ".github/workflows/book-index-bkm-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect BKM bestseller markup once
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://www.bkmkitap.com/cok-satan-kitaplar"
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/bkm.html -w "%{http_code}" "$url")"
+          echo "HTTP_STATUS=$code"
+          echo "BYTES=$(wc -c < /tmp/bkm.html)"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html
+
+          text = Path("/tmp/bkm.html").read_text(errors="replace")
+
+          classes = []
+          for m in re.finditer(r'class=["\']([^"\']*product[^"\']*)["\']', text, re.I):
+              value = m.group(1)
+              if value not in classes:
+                  classes.append(value)
+          print("--- PRODUCT CLASSES ---")
+          for value in classes[:80]:
+              print(value)
+
+          markers = [
+              "productItem",
+              "product-item",
+              "productName",
+              "product-name",
+              "productTitle",
+              "product-title",
+              "data-product",
+              "col-product",
+              "productList",
+              "product-list",
+              "catalog",
+          ]
+          folded = text.casefold()
+          print("--- MARKER WINDOWS ---")
+          emitted = 0
+          for marker in markers:
+              start = 0
+              while emitted < 15:
+                  pos = folded.find(marker.casefold(), start)
+                  if pos < 0:
+                      break
+                  print(f"\n### marker={marker} pos={pos}")
+                  print(text[max(0,pos-500):pos+1800])
+                  emitted += 1
+                  start = pos + len(marker)
+              if emitted >= 15:
+                  break
+
+          print("--- BOOK-LIKE HREFS ---")
+          hrefs = re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,500}?)</a>', text, re.I)
+          seen = set()
+          for href, body in hrefs:
+              clean = re.sub(r'<[^>]+>', ' ', body)
+              clean = html.unescape(re.sub(r'\s+', ' ', clean)).strip()
+              if not clean or href in seen:
+                  continue
+              if any(token in href.casefold() for token in ["/kitap", "/urun", "-p-", "product"]):
+                  seen.add(href)
+                  print(href, "=>", clean[:180])
+                  if len(seen) >= 50:
+                      break
+          PY

@@ -46,7 +46,7 @@ Canary başarısızsa cron açılmaz.
 
 ## 3. Automatic scheduler activation
 
-OIDC canary PASS sonrasında geçici `workflow_run` tetikleyicisi kaldırılır ve scheduler cron'u ayrı, küçük bir PR ile açılır.
+OIDC canary PASS tamamlandı. Geçici `workflow_run` tetikleyicisi kaldırıldı ve scheduler cron'u `17 * * * *` olarak aktive edildi.
 
 Hedef kontrol periyodu:
 
@@ -61,7 +61,7 @@ Workflow concurrency:
 - group: `book-index-scheduler`
 - `cancel-in-progress: false`
 
-## 4. Snapshot birikimi
+## 4. Snapshot birikimi — AKTİF AŞAMA
 
 Cron açıldıktan sonra admin **Kitap Endeksi** ekranından şu alanlar izlenir:
 
@@ -251,7 +251,7 @@ Kaynak erişim problemi:
 
 Sıra:
 
-**GitHub OIDC → Canary → Cron → Snapshot Birikimi → Matching → Readiness
+**GitHub OIDC ✅ → Canary ✅ → Cron ✅ → Snapshot Birikimi → Matching → Readiness
 Kanıtı → SEO Policy → Gate Dry-run → Publish → Sitemap/Navigation → GSC**
 
 Bu sıra dışında otomatik public yayın yapılmaz.

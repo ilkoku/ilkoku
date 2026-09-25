@@ -262,8 +262,8 @@ export default async function BookIndexAdminPage({
           <h2>GitHub OIDC hazır</h2>
           <p>
             {operations.dueCount.toLocaleString("tr-TR")} liste şu anda kontrol
-            zamanında. Otomatik cron kapalıdır; OIDC canary PASS olmadan
-            açılmaz.
+            zamanında. Saatlik scheduler aktif; gerçek çekim sıklığını her
+            listenin kendi cadence değeri belirler.
           </p>
           <small>
             Kısa ömürlü GitHub kimliği kullanılır. Legacy secret fallback:{" "}
@@ -353,7 +353,7 @@ export default async function BookIndexAdminPage({
             className="admin-table-badge"
             data-status="active"
           >
-            Canary kimliği hazır
+            Saatlik scheduler aktif
           </span>
         </header>
 

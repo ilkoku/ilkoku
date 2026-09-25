@@ -1,24 +1,15 @@
 # Book Index scheduler rollout
 
-Status: **AUTOMATIC_CRON_DISABLED / OIDC_CANARY_READY**
+Status: **AUTOMATIC_CRON_ENABLED / CANARY_PASS**
 
-The Book Index scheduler keeps its protected internal-job boundary, but GitHub
-Actions authentication now prefers GitHub OIDC instead of a duplicated static
-secret pair.
-
-## Runtime behavior
-
-- Only enabled lists with a `collectionEveryMinutes` value are considered.
-- The last fetch-run start time is the cadence boundary.
-- Due lists execute sequentially and failures stay isolated per list.
-- Collector fetch runs and observations remain append-only history.
-- Blocked/paused sources are not forced into collection.
+Book Index scheduler production aktivasyonu 25.09.2026 tarihinde gerçek
+production canary ile doğrulandı.
 
 ## Authentication
 
-Primary path: **GitHub Actions OIDC**.
+Primary authentication is **GitHub Actions OIDC**.
 
-The scheduler workflow requests a short-lived token with:
+Production endpoint validates:
 
 - issuer: `https://token.actions.githubusercontent.com`
 - audience: `ilkoku-book-index-scheduler`
@@ -26,55 +17,75 @@ The scheduler workflow requests a short-lived token with:
 - repository id: `1304046004`
 - workflow ref: `ilkoku/ilkoku/.github/workflows/book-index-scheduler.yml@refs/heads/main`
 - ref: `refs/heads/main`
-- allowed events: `workflow_dispatch`, temporary `workflow_run` canary, and
-  final `schedule`.
-
-The production endpoint verifies GitHub's signed token through its public JWKS.
-No GitHub Actions repository secret is required for the primary path.
+- allowed event: `workflow_dispatch` or `schedule`
 
 `BOOK_INDEX_SCHEDULER_SECRET` remains only as a legacy emergency fallback.
-If used, it must still be unique, at least 32 random bytes, and identical in
-GitHub Actions and production.
 
-## Canary sequence
+## Production canary evidence
 
-1. Deploy the OIDC-capable scheduler endpoint.
-2. Let **Production smoke** complete successfully on the same main push.
-3. The temporary `workflow_run` trigger starts **Book Index scheduler canary**.
-4. Confirm the OIDC token is accepted by production.
-5. Confirm due lists create isolated `BookIndexFetchRun` rows.
-6. Confirm a source failure does not prevent later due lists.
-7. Confirm no list runs again before its `collectionEveryMinutes` boundary.
+Successful canary:
 
-The temporary `workflow_run` trigger is only a bootstrap mechanism. It is
-removed after the first production canary PASS.
+- workflow: **Book Index scheduler canary #1**
+- run id: `36180534656`
+- auth: GitHub OIDC
+- checked lists: 12
+- due lists: 12
+- succeeded: 12
+- unchanged: 0
+- failed: 0
+- skipped: 0
+- items stored: 392
 
-## Automatic activation
+Per-list stored items:
 
-Automatic cron remains disabled until the canary passes.
+- Remzi weekly: 15
+- BKM weekly/monthly/yearly: 50 / 50 / 50
+- KitapSepeti: 30
+- Kitapzen weekly/monthly/yearly: 20 / 20 / 20
+- İnkılâp: 20
+- KitapSeç Edebiyat: 48
+- KitapSeç Çocuk ve Gençlik: 48
+- idefix: 21
 
-After PASS, replace the temporary `workflow_run` bootstrap trigger with:
+The temporary `workflow_run` bootstrap trigger used for the first production
+canary has been removed.
+
+## Automatic scheduler
+
+Active GitHub Actions schedule:
 
 `17 * * * *`
 
-Keep:
+This means the scheduler checks due state hourly. It does **not** mean every
+source is fetched hourly. Each list's `collectionEveryMinutes` remains the
+authoritative collection cadence.
 
-- concurrency group: `book-index-scheduler`
+Concurrency remains:
+
+- group: `book-index-scheduler`
 - `cancel-in-progress: false`
-- `id-token: write`
-- the same OIDC audience and production verification policy.
 
-The hourly workflow check does not mean hourly collection of every source;
-per-list `collectionEveryMinutes` stays authoritative.
+A failed source stays isolated and does not stop later due lists.
+
+## Next operational gate
+
+Scheduler activation is complete. The next phase is evidence accumulation and
+readiness:
+
+1. accumulate multiple production snapshots;
+2. run/verify master-book matching;
+3. measure composite-source coverage;
+4. measure match coverage;
+5. measure first/last observation and history span;
+6. measure Turkey composite item count;
+7. only then set SEO policy thresholds and run the SEO gate dry-run.
 
 ## Rollback
 
-If the OIDC canary fails:
+If scheduled collection becomes unhealthy:
 
-1. keep automatic cron disabled;
-2. inspect the workflow job result and production response;
-3. if authentication failed, fix only OIDC trust/claim handling;
-4. if collection failed, inspect only the affected list's latest fetch run;
-5. do not bypass source protection or shorten cadence to force retries.
-
-Snapshot history is never deleted as part of scheduler rollback.
+1. remove/disable the `schedule` trigger;
+2. retain manual `workflow_dispatch`;
+3. keep all historical observations and fetch runs;
+4. isolate only the affected source;
+5. do not bypass anti-bot/source protections.

@@ -156,6 +156,11 @@ test("legal pages inherit canonical OG Twitter and language-alternate metadata",
   assertContains(helper, "twitter:", "public Twitter metadata");
   assertContains(helper, 'card: "summary_large_image"', "public Twitter large image card");
   assertContains(helper, "images: [socialImage]", "public Twitter image fallback");
+  assertContains(helper, '"max-image-preview": "large"', "large Google image previews");
+  assertContains(helper, '"max-snippet": -1', "unlimited Google text snippet preview");
+  assertContains(helper, '"max-video-preview": -1', "unlimited Google video preview");
+  assertContains(helper, "index: false", "noindex pages remain blocked");
+  assertContains(helper, "follow: true", "noindex pages may still follow links");
 });
 
 test("IndexNow selects narrow public routes and keeps conservative full-batch fallbacks", () => {

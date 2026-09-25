@@ -35,7 +35,7 @@ export function parseKitapSepetiBestsellers(
 
   const cardStarts = [
     ...catalog.matchAll(
-      /<div\b[^>]*class=["'][^"']*\bproduct-item\b[^"']*["'][^>]*>/giu,
+      /<div\b[^>]*class=["'][^"']*\sproduct-item(?:\s[^"']*)?["'][^>]*>/giu,
     ),
   ];
 

@@ -15,34 +15,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect BKM top-sellers JSON once
+      - name: Extract rendered BKM product cards
         shell: bash
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
-          url="https://bkm-best.wawlabs.com/top_sellers?span=week"
-          code="$(curl -L --silent --show-error --max-time 25 -A "$ua"             -H 'Content-Type: application/json' -o /tmp/bkm.json -w "%{http_code}" "$url")"
-          echo "HTTP_STATUS=$code BYTES=$(wc -c < /tmp/bkm.json)"
+          url="https://www.bkmkitap.com/cok-satan-kitaplar"
+          chrome="$(command -v google-chrome || command -v google-chrome-stable)"
+          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage             --user-agent="$ua" --virtual-time-budget=12000 --dump-dom "$url"             > /tmp/bkm-rendered.html 2>/tmp/chrome.err || true
 
           python3 - <<'PY'
           from pathlib import Path
-          import json
-          data=json.loads(Path("/tmp/bkm.json").read_text(errors="replace"))
-          print("ROOT_TYPE",type(data).__name__)
-          if isinstance(data,dict):
-              print("ROOT_KEYS",list(data.keys()))
-              for key,value in data.items():
-                  if isinstance(value,list):
-                      print("LIST",key,"LEN",len(value))
-                      for item in value[:5]:
-                          print(json.dumps(item,ensure_ascii=False)[:5000])
-                  elif isinstance(value,dict):
-                      print("DICT",key,"KEYS",list(value.keys())[:50])
-                      print(json.dumps(value,ensure_ascii=False)[:12000])
-                  else:
-                      print(key,repr(value))
-          elif isinstance(data,list):
-              print("LEN",len(data))
-              for item in data[:10]:
-                  print(json.dumps(item,ensure_ascii=False)[:5000])
+          import re
+
+          text=Path("/tmp/bkm-rendered.html").read_text(errors="replace")
+
+          start_tags=list(re.finditer(
+            r'<(?:div|li|article)\b[^>]*class=["\'][^"\']*\bwaw-product-item-area\b[^"\']*["\'][^>]*>',
+            text,
+            re.I,
+          ))
+          print("CARD_START_TAGS", len(start_tags))
+          for i,m in enumerate(start_tags[:8],1):
+            print(f"\n### ACTUAL CARD {i} pos={m.start()}")
+            print(text[m.start():m.start()+6500])
+
+          print("\n--- FILTER SELECTS ---")
+          for m in re.finditer(r'<(?:select|option)\b[^>]*data-name=["\']([^"\']+)["\'][^>]*>', text, re.I):
+            print(m.group(0)[:1200])
+
+          print("\n--- BEST RESULTS ROOT WINDOWS ---")
+          for token in ['id="waw-best-results"', 'class="waw-product-list']:
+            p=text.find(token)
+            print("TOKEN", token, "POS", p)
+            if p>=0:
+              print(text[max(0,p-500):p+4500])
+
+          print("\n--- SOURCE LINKS IN FIRST CARD WINDOW ---")
+          if start_tags:
+            chunk=text[start_tags[0].start():start_tags[0].start()+10000]
+            for href in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\']', chunk, re.I):
+              print(href)
           PY

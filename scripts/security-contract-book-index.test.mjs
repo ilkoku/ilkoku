@@ -610,3 +610,39 @@ test("Book Index readiness measures edition-family overlap without mutating matc
   contains(readiness, "editionFamilyVariantOverlapSamples", "edition-family diagnostic samples");
   notContains(matching, "editionFamilyTitle", "edition-family diagnostic does not change matching");
 });
+
+
+test("Illa Kitap weekly bestseller collector is a bounded independent Turkey composite voter", () => {
+  const adapter = source("src/lib/book-index/sources/illakitap.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(adapter, 'const MAX_BOOKS = 100;', "Illa Kitap native result ceiling");
+  contains(adapter, 'const MIN_EXPECTED_BOOKS = 40;', "Illa Kitap fail-closed minimum");
+  contains(adapter, '\\bProduct_([0-9]+)', "stable product id class");
+  contains(adapter, '\\btooltip-ajax\\b', "title link selector");
+  contains(adapter, '\\bwriter\\b', "author selector");
+  contains(adapter, '\\bpublisher\\b', "publisher selector");
+  contains(adapter, "BOOK_INDEX_ILLAKITAP_RESULT_TOO_SMALL", "small result rejection");
+  contains(adapter, "BOOK_INDEX_ILLAKITAP_DUPLICATE_SOURCE_KEY", "duplicate source protection");
+  contains(lists, 'code: "illakitap-tr-weekly"', "Illa Kitap weekly list");
+  contains(lists, 'period: "weekly"', "weekly source period");
+  contains(lists, 'maxRank: 100', "bounded weekly rank ceiling");
+  contains(lists, 'includeInComposite: true', "Illa Kitap independent composite vote");
+  contains(
+    sources,
+    'baseUrl: "https://www.illakitap.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "Illa Kitap ready source state",
+  );
+  contains(
+    collector,
+    "[illaKitapBookIndexAdapter.sourceCode, illaKitapBookIndexAdapter]",
+    "Illa Kitap adapter activation",
+  );
+  contains(
+    sources,
+    "export const TURKEY_INDEX_MIN_SOURCES = 3;",
+    "3-source eligibility remains unchanged",
+  );
+});

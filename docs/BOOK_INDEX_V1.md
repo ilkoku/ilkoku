@@ -277,6 +277,10 @@ Bu şartlar yoksa route 404/noindex kalır ve sitemap/site haritasında link
 SEO sayfası üretilmez. Kaynak sırası değiştirilmez; Türkiye Endeksi puanı
 kaynak-native rank yerine gösterilmez.
 
+Yayınlanan kaynak sayfaları Book Index URL prefix'i altında kaldığı için mevcut
+IndexNow ve GSC performans raporu kapsamına otomatik girer; ayrı submit veya
+ayrı Search Console property oluşturulmaz.
+
 ### Public readiness ölçümleri
 
 Public açılım öncesi admin ekranında yalnız ölçülebilir durum gösterilir:

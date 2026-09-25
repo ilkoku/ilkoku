@@ -89,6 +89,17 @@ export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: publicBrandTitle,
   description: publicBrandDescription,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
     type: "website",
     locale: "tr_TR",

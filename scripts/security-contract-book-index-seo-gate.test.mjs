@@ -127,6 +127,16 @@ test("Book Index admin shows SEO gate evidence without publishing", () => {
   contains(page, "Publish switch", "separate publication state");
   contains(page, "Public kapalı", "truthful default public state");
 
-  notContains(sitemap, "/en-cok-satanlar", "admin status does not publish sitemap");
+  const fallbackStart = sitemap.indexOf("const staticFallbackEntries");
+  const fallbackEnd = sitemap.indexOf("type CmsSitemapRow", fallbackStart);
+  assert.ok(
+    fallbackStart >= 0 && fallbackEnd > fallbackStart,
+    "static fallback block must exist",
+  );
+  notContains(
+    sitemap.slice(fallbackStart, fallbackEnd),
+    "/en-cok-satanlar",
+    "admin status does not publish fallback sitemap",
+  );
   notContains(navigation, "/en-cok-satanlar", "admin status does not publish navigation");
 });

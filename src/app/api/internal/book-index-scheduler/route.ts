@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
 import { runBookIndexScheduler } from "@/lib/book-index/scheduler";
@@ -7,16 +8,35 @@ import { runBookIndexScheduler } from "@/lib/book-index/scheduler";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+const GITHUB_OIDC_ISSUER = "https://token.actions.githubusercontent.com";
+const GITHUB_OIDC_AUDIENCE = "ilkoku-book-index-scheduler";
+const GITHUB_OIDC_JWKS = createRemoteJWKSet(
+  new URL(`${GITHUB_OIDC_ISSUER}/.well-known/jwks`),
+);
+const GITHUB_REPOSITORY = "ilkoku/ilkoku";
+const GITHUB_REPOSITORY_ID = "1304046004";
+const GITHUB_WORKFLOW_REF =
+  "ilkoku/ilkoku/.github/workflows/book-index-scheduler.yml@refs/heads/main";
+const ALLOWED_GITHUB_EVENTS = new Set([
+  "workflow_dispatch",
+  "workflow_run",
+  "schedule",
+]);
+
 function configuredSecret() {
   return process.env.BOOK_INDEX_SCHEDULER_SECRET?.trim() ?? "";
 }
 
-function authorized(request: NextRequest) {
-  const configured = configuredSecret();
+function bearerToken(request: NextRequest) {
   const authorization = request.headers.get("authorization")?.trim() ?? "";
-  const supplied = authorization.startsWith("Bearer ")
+
+  return authorization.startsWith("Bearer ")
     ? authorization.slice("Bearer ".length).trim()
     : "";
+}
+
+function authorizedWithSecret(supplied: string) {
+  const configured = configuredSecret();
 
   if (!configured || configured.length < 32 || !supplied) {
     return false;
@@ -29,15 +49,37 @@ function authorized(request: NextRequest) {
     && timingSafeEqual(expectedBuffer, suppliedBuffer);
 }
 
-export async function POST(request: NextRequest) {
-  if (!configuredSecret()) {
-    return NextResponse.json(
-      { ok: false, error: "BOOK_INDEX_SCHEDULER_SECRET_MISSING" },
-      { status: 503 },
-    );
-  }
+async function authorizedWithGithubOidc(supplied: string) {
+  if (!supplied) return false;
 
-  if (!authorized(request)) {
+  try {
+    const { payload } = await jwtVerify(supplied, GITHUB_OIDC_JWKS, {
+      issuer: GITHUB_OIDC_ISSUER,
+      audience: GITHUB_OIDC_AUDIENCE,
+    });
+
+    return payload.repository === GITHUB_REPOSITORY
+      && payload.repository_id === GITHUB_REPOSITORY_ID
+      && payload.workflow_ref === GITHUB_WORKFLOW_REF
+      && payload.ref === "refs/heads/main"
+      && typeof payload.event_name === "string"
+      && ALLOWED_GITHUB_EVENTS.has(payload.event_name);
+  } catch {
+    return false;
+  }
+}
+
+async function authorized(request: NextRequest) {
+  const supplied = bearerToken(request);
+
+  if (!supplied) return false;
+  if (authorizedWithSecret(supplied)) return true;
+
+  return authorizedWithGithubOidc(supplied);
+}
+
+export async function POST(request: NextRequest) {
+  if (!(await authorized(request))) {
     return NextResponse.json(
       { ok: false, error: "UNAUTHORIZED" },
       { status: 401 },

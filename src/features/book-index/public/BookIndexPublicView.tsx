@@ -8,6 +8,11 @@ import {
   getBookIndexPublishedSourcePages,
   type BookIndexPublishedSourcePage,
 } from "@/lib/book-index/source-pages";
+import {
+  getBookIndexInsightItems,
+  type BookIndexInsightPageDefinition,
+} from "@/lib/book-index/insight-pages";
+import type { BookIndexInsights } from "@/lib/book-index/insights";
 
 import styles from "./BookIndexPublicView.module.css";
 
@@ -359,6 +364,110 @@ export function TurkeyBookIndexView({
           Gösterilen puan satış adedi değildir. Kaynak sıralamalarından
           türetilen bileşik bir görünürlük puanıdır ve her kitap için kullanılan
           bağımsız kaynak sayısı ayrıca gösterilir.
+        </p>
+      </section>
+    </main>
+  );
+}
+
+
+function insightMetric(
+  key: BookIndexInsightPageDefinition["key"],
+  item: ReturnType<typeof getBookIndexInsightItems>[number],
+) {
+  switch (key) {
+    case "newEntries":
+      return {
+        primary: `${item.newSourceCount} yeni kaynak`,
+        secondary: `${item.currentSourceCount} güncel kaynak · en iyi sıra #${item.bestRank}`,
+      };
+    case "risers":
+      return {
+        primary: `+${item.totalRankGain} sıra`,
+        secondary: `${item.improvingSourceCount} yükselen kaynak · en iyi sıra #${item.bestCurrentRank}`,
+      };
+    case "everywhereSellers":
+      return {
+        primary: `${item.sourceCount} bağımsız kaynak`,
+        secondary: `en iyi sıra #${item.bestRank}`,
+      };
+    case "longSellers":
+      return {
+        primary: `${item.historyDays} gün`,
+        secondary: `${item.sourceCount} kaynak · ${item.observationCount} gözlem`,
+      };
+  }
+}
+
+export function BookIndexInsightView({
+  definition,
+  insights,
+}: {
+  definition: BookIndexInsightPageDefinition;
+  insights: BookIndexInsights;
+}) {
+  const items = getBookIndexInsightItems(insights, definition.key);
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <main className={styles.page}>
+      <header className={styles.hero}>
+        <span className={styles.eyebrow}>İlkOku Kitap Endeksi · {definition.eyebrow}</span>
+        <h1>{definition.heading} {currentYear}</h1>
+        <p>{definition.description}</p>
+        <p className={styles.freshness}>
+          Son hesaplama:{" "}
+          <time dateTime={insights.generatedAt.toISOString()}>
+            {formattedObservedAt(insights.generatedAt)}
+          </time>
+        </p>
+        <Link className={styles.backLink} href="/en-cok-satanlar">
+          ← En Çok Satanlar ana sayfası
+        </Link>
+      </header>
+
+      <section className={styles.section} id="liste">
+        <div className={styles.sectionHeading}>
+          <div>
+            <span className={styles.eyebrow}>{definition.eyebrow}</span>
+            <h2>{definition.heading}</h2>
+            <p>
+              Liste yalnız eşleşmiş master kitaplardan ve doğrulanmış başarılı
+              snapshot geçmişinden üretilir.
+            </p>
+          </div>
+        </div>
+
+        <ol className={styles.rankingList}>
+          {items.map((item, index) => {
+            const metric = insightMetric(definition.key, item);
+            return (
+              <li className={styles.rankingItem} key={item.masterBookId}>
+                <span className={styles.rank}>{index + 1}</span>
+                <div className={styles.book}>
+                  <strong>{item.title}</strong>
+                  <span>{item.authorName ?? "Yazar bilgisi bekleniyor"}</span>
+                </div>
+                <div className={styles.score}>
+                  <strong>{metric.primary}</strong>
+                  <span>{metric.secondary}</span>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <section className={styles.explainer} aria-labelledby="insight-methodology">
+        <span className={styles.eyebrow}>Nasıl hesaplanıyor?</span>
+        <h2 id="insight-methodology">{definition.eyebrow} neyi gösterir?</h2>
+        <p>
+          Bu görünüm satış adedi açıklamaz. Kaynakların başarılı snapshot
+          geçmişindeki sıralama ve görünürlük değişimlerinden türetilir.
+        </p>
+        <p>
+          Aynı satış platformu bir kitaba birden fazla bağımsız kaynak kanıtı
+          kazandıramaz; kaynak bazında tekilleştirme korunur.
         </p>
       </section>
     </main>

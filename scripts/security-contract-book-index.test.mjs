@@ -477,3 +477,39 @@ test("Trendyol and PttAVM protected book surfaces remain fail-closed", () => {
   notContains(collector, 'sourceCode: "trendyol"', "Trendyol collector is not activated");
   notContains(collector, 'sourceCode: "pttavm"', "PttAVM collector is not activated");
 });
+
+
+test("Book Index public readiness stays evidence-based and non-publishing", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const page = source("src/app/admin/kitap-endeksi/page.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+
+  contains(
+    readiness,
+    "observedCompositeSourceCodes",
+    "observed composite-source metric",
+  );
+  contains(
+    readiness,
+    "matchedExternalBookCount",
+    "master matching coverage metric",
+  );
+  contains(
+    readiness,
+    "historySpanDays",
+    "historical coverage metric",
+  );
+  contains(
+    readiness,
+    'publicRolloutState: "gated"',
+    "public rollout remains gated",
+  );
+  contains(page, "Public / SEO readiness", "admin readiness section");
+  contains(page, "Public kapalı", "truthful public state");
+  contains(
+    page,
+    "kalite eşikleri ayrıca",
+    "no invented readiness threshold",
+  );
+  notContains(sitemap, "/en-cok-satanlar", "no premature bestseller sitemap");
+});

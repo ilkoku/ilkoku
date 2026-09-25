@@ -132,6 +132,23 @@ Public rollout ancak gerçek veri biriktikten sonra yapılır:
 
 Sitemap açılımı ayrı bir kalite kapısından geçmelidir.
 
+### Public readiness ölçümleri
+
+Public açılım öncesi admin ekranında yalnız ölçülebilir durum gösterilir:
+
+- başarılı snapshot üretmiş bağımsız composite kaynak sayısı,
+- dış kitapların master kitap eşleşme kapsamı,
+- ilk ve son observation zamanı,
+- birikmiş tarihsel veri süresi.
+
+Bu metrikler tek başına public yayın kararı vermez. Henüz gerçek tarihsel veri
+oluşmadan keyfî yüzde/gün eşiği tanımlanmaz. Eşikler, üretim verisi
+gözlemlendikten sonra ayrı ve versiyonlanabilir bir kalite kapısı kararı olarak
+belirlenecektir.
+
+`/en-cok-satanlar` ve ilgili sitemap kayıtları bu karar verilene kadar kapalı
+kalır.
+
 ## Sponsor entegrasyonu
 
 Sponsor altyapısı default OFF kalır. İleride:

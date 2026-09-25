@@ -1,0 +1,33 @@
+name: Book Index scheduler push canary
+
+on:
+  push:
+    branches:
+      - ops/book-index-canary-push-20260925
+
+permissions:
+  contents: read
+
+concurrency:
+  group: book-index-scheduler
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Run Book Index scheduler canary
+        env:
+          SCHEDULER_SECRET: ${{ secrets.BOOK_INDEX_SCHEDULER_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$SCHEDULER_SECRET"
+          curl \
+            --fail-with-body \
+            --max-time 300 \
+            --retry 1 \
+            --retry-all-errors \
+            --request POST \
+            --header "Authorization: Bearer $SCHEDULER_SECRET" \
+            https://ilkoku.com/api/internal/book-index-scheduler

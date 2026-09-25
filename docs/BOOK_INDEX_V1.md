@@ -235,3 +235,14 @@ Amazon kaynakları V1'de iki ayrı pazar olarak tutulur.
   kullanılmayacak.
 - Kaynak V1 registry içinde **blocked** tutulur. Resmi/sanctioned veri yolu
   bulunursa yeniden değerlendirilir.
+
+
+### D&R erişim kararı — 25 Eylül 2026
+
+- Çok satan kataloğu için şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)`
+  sunucu isteği HTTP 403 döndürdü.
+- Aynı erişim katmanı `robots.txt` isteğini de normal robots metni yerine
+  "Sizin İçin Çalışıyoruz" bakım/koruma sayfasına yönlendirdi.
+- Anti-bot/erişim koruması aşılmayacak.
+- D&R V1 registry içinde **blocked** tutulur; resmi feed/API veya açık izinli
+  erişim yolu doğrulanmadan collector aktive edilmez.

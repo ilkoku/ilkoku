@@ -247,3 +247,20 @@ test("Amazon sources remain fail-closed until a stable sanctioned collector path
     "Amazon US collector is not activated",
   );
 });
+
+
+test("D&R access protection remains fail-closed", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "blocked"',
+    "D&R protected source state",
+  );
+  notContains(
+    collector,
+    'sourceCode: "dr"',
+    "D&R collector is not activated",
+  );
+});

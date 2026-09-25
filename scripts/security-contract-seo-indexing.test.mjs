@@ -281,9 +281,14 @@ test("public HTML site map exposes the complete crawl discovery graph", () => {
 
 test("dynamic public work route keeps canonical query noindex and structured-data contracts", () => {
   const book = source("src/app/kitap/[slug]/page.tsx");
+  const safety = source("src/lib/public-content-safety.ts");
+  const sitemap = source("src/app/sitemap.ts");
 
   assertContains(book, "const canonical = `/kitap/${work.slug}`", "book self canonical");
-  assertContains(book, "index: !query.from", "book return-path noindex");
+  assertContains(book, "index: !query.from && !isSearchIndexExcludedPublicWorkSlug(slug)", "book return-path and test-work noindex");
+  assertContains(safety, '"yeni-test209-30820c6a"', "Reader UAT work exact search exclusion");
+  assertContains(safety, "searchIndexExcludedPublicWorkSlugs.has(normalizedSlug)", "exact work search exclusion");
+  assertContains(sitemap, "isSearchIndexExcludedPublicWorkSlug(work.slug)", "sitemap search exclusion contract");
   assertContains(book, "twitter:", "book Twitter metadata");
   assertContains(book, '"@type": "Book"', "book schema");
   assertContains(book, '"@type": "BreadcrumbList"', "book breadcrumb schema");

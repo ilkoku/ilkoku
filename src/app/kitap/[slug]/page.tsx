@@ -9,7 +9,10 @@ import { BookShowcase } from "@/features/showcase/components/BookShowcase";
 import { getMemberPublicWorkBySlug } from "@/features/works/member-public-queries";
 import { getPublicWorkBySlug } from "@/features/works/queries";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
+import {
+  isBlockedPublicWorkSlug,
+  isSearchIndexExcludedPublicWorkSlug,
+} from "@/lib/public-content-safety";
 
 const baseUrl = "https://ilkoku.com";
 const MAX_RETURN_PATH_LENGTH = 1500;
@@ -87,7 +90,7 @@ export async function generateMetadata({
       canonical,
     },
     robots: {
-      index: !query.from,
+      index: !query.from && !isSearchIndexExcludedPublicWorkSlug(slug),
       follow: true,
     },
     openGraph: {

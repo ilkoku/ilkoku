@@ -1,0 +1,68 @@
+name: Book Index BKM DOM Probe
+
+on:
+  push:
+    branches:
+      - feature/book-index-bkm-collector
+    paths:
+      - ".github/workflows/book-index-bkm-dom-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Extract rendered BKM product cards
+        shell: bash
+        run: |
+          set -euo pipefail
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          url="https://www.bkmkitap.com/cok-satan-kitaplar"
+          chrome="$(command -v google-chrome || command -v google-chrome-stable)"
+
+          "$chrome"             --headless=new             --no-sandbox             --disable-gpu             --disable-dev-shm-usage             --user-agent="$ua"             --virtual-time-budget=10000             --dump-dom "$url" > /tmp/bkm.html 2>/dev/null || true
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html
+
+          text = Path("/tmp/bkm.html").read_text(errors="replace")
+
+          cards = re.findall(
+              r'<div[^>]+class=["\'][^"\']*waw-product-item-area[^"\']*["\'][^>]*>([\s\S]*?)(?=<div[^>]+class=["\'][^"\']*waw-product-item-area|</section>|$)',
+              text,
+              re.I,
+          )
+
+          print("CARD_COUNT", len(cards))
+          for i, card in enumerate(cards[:8], start=1):
+              title = None
+              m = re.search(r'<[^>]+class=["\'][^"\']*product-title[^"\']*["\'][^>]*>([\s\S]*?)</[^>]+>', card, re.I)
+              if m:
+                  title = html.unescape(re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', m.group(1)))).strip()
+
+              href = None
+              links = re.findall(r'<a[^>]+href=["\']([^"\']+)["\']', card, re.I)
+              for link in links:
+                  if link.startswith("http") and "bkmkitap.com" in link:
+                      href = link
+                      break
+                  if link.startswith("/"):
+                      href = "https://www.bkmkitap.com" + link
+                      break
+
+              texts = []
+              for raw in re.findall(r'<(?:span|div|a|p|h[1-6])[^>]*>([^<>]{2,200})</(?:span|div|a|p|h[1-6])>', card, re.I):
+                  clean = html.unescape(re.sub(r'\s+', ' ', raw)).strip()
+                  if clean and clean not in texts:
+                      texts.append(clean)
+
+              print(f"--- CARD {i} ---")
+              print("TITLE", title)
+              print("HREF", href)
+              print("TEXTS", texts[:20])
+              print("HTML", card[:5000].replace("\n", " "))
+          PY

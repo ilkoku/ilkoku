@@ -16,6 +16,7 @@ const identityPath = "src/lib/site-identity.ts";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
 const frameCssPath = "src/components/layout/public-site-frame.css";
 const publicPageTemplatePath = "src/components/layout/PublicPageTemplate.tsx";
+const bookIndexLayoutPath = "src/app/en-cok-satanlar/layout.tsx";
 const cmsFallbackPath = "src/app/[...path]/page.tsx";
 const metadataHelperPath = "src/lib/public-page-metadata.ts";
 const backPath = "src/components/layout/PublicBackNavigation.tsx";
@@ -44,6 +45,7 @@ const publicLayoutPaths = [
   "src/app/yazarlar-icin/layout.tsx",
   "src/app/editorler-icin/layout.tsx",
   "src/app/yayinevleri-icin/layout.tsx",
+  "src/app/en-cok-satanlar/layout.tsx",
 ];
 
 const trustLayoutPaths = [
@@ -136,6 +138,16 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     );
   }
 
+  assert.match(header, /getBookIndexPublicPageContext\(100\)\.catch\(\(\) => null\)/);
+  assert.match(header, /withBookIndexMenu/);
+  assert.match(header, /label: "En Çok Satanlar"/);
+  assert.match(header, /directHref: "\/en-cok-satanlar"/);
+  assert.match(header, /menu\.id === "support"/);
+  assert.match(config, /id: "book-index"/);
+  assert.match(config, /href: "\/en-cok-satanlar"/);
+  assert.match(navigationClient, /directHref\?: string/);
+  assert.match(navigationClient, /data-direct="true"/);
+  assert.match(navigationClient, /href=\{menu\.directHref\}/);
   assert.match(header, /getPublicSiteIdentity\(\)/);
   assert.match(identity, /headerKicker:\s*"Dijital yazar platformu"/);
   assert.match(identity, /normalizeLegacyHeaderKicker/);
@@ -265,6 +277,10 @@ test("existing public route frames remain isolated from root layout and workspac
   for (const path of publicLayoutPaths) {
     assert.match(read(path), /<PublicSiteFrame>/, `${path} must mount PublicSiteFrame`);
   }
+
+  const bookIndexLayout = read(bookIndexLayoutPath);
+  assert.match(bookIndexLayout, /<PublicSiteFrame>/);
+  assert.match(bookIndexLayout, /<PublicTrustFooter\s*\/>/);
 
   assert.doesNotMatch(read(rootLayoutPath), /PublicSiteHeader|PublicSiteFrame/);
 });

@@ -111,7 +111,22 @@ test("foundation does not publish indexable bestseller routes before data readin
   const sitemap = source("src/app/sitemap.ts");
   const contract = source("docs/BOOK_INDEX_V1.md");
 
-  notContains(sitemap, "/en-cok-satanlar", "no premature bestseller sitemap");
+  contains(
+    sitemap,
+    "async function loadBookIndexSitemapEntries()",
+    "Book Index sitemap stays behind an explicit gate helper",
+  );
+  const fallbackStart = sitemap.indexOf("const staticFallbackEntries");
+  const fallbackEnd = sitemap.indexOf("type CmsSitemapRow", fallbackStart);
+  assert.ok(
+    fallbackStart >= 0 && fallbackEnd > fallbackStart,
+    "static fallback block must exist",
+  );
+  notContains(
+    sitemap.slice(fallbackStart, fallbackEnd),
+    "/en-cok-satanlar",
+    "fallback sitemap cannot prematurely publish Book Index",
+  );
   contains(
     contract,
     "İlk foundation PR public indexable sayfa oluşturmaz.",
@@ -511,7 +526,22 @@ test("Book Index public readiness stays evidence-based and non-publishing", () =
     "kalite eşikleri ayrıca",
     "no invented readiness threshold",
   );
-  notContains(sitemap, "/en-cok-satanlar", "no premature bestseller sitemap");
+  contains(
+    sitemap,
+    "loadBookIndexSitemapEntries()",
+    "public readiness is consumed through gated sitemap wiring",
+  );
+  const fallbackStart = sitemap.indexOf("const staticFallbackEntries");
+  const fallbackEnd = sitemap.indexOf("type CmsSitemapRow", fallbackStart);
+  assert.ok(
+    fallbackStart >= 0 && fallbackEnd > fallbackStart,
+    "static fallback block must exist",
+  );
+  notContains(
+    sitemap.slice(fallbackStart, fallbackEnd),
+    "/en-cok-satanlar",
+    "fallback sitemap stays non-publishing",
+  );
 });
 
 

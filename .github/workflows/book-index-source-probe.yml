@@ -12,19 +12,31 @@ permissions:
   contents: read
 
 jobs:
-  probe-kitapyurdu:
+  probe-sources:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Probe Kitapyurdu bestseller HTML once
+      - name: Probe candidate public bestseller sources once
         shell: bash
         run: |
           set -euo pipefail
-          url="https://www.kitapyurdu.com/cok-satan-kitaplar/haftalik/1.html"
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
-          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/source.html -w "%{http_code}" "$url")"
-          echo "HTTP_STATUS=$code"
-          echo "BYTES=$(wc -c < /tmp/source.html)"
-          echo "TITLE=$(grep -oim1 '<title[^>]*>[^<]*' /tmp/source.html | sed -E 's/<title[^>]*>//I' || true)"
-          echo "--- candidate product markup ---"
-          grep -Eoi '.{0,180}(product-cr|product-name|product-title|/urun/|product_id=).{0,420}' /tmp/source.html | head -n 120 || true
+          probe() {
+            name="$1"
+            url="$2"
+            file="/tmp/$name.html"
+            code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o "$file" -w "%{http_code}" "$url" || true)"
+            echo "=== $name ==="
+            echo "URL=$url"
+            echo "HTTP_STATUS=$code"
+            echo "BYTES=$(wc -c < "$file" 2>/dev/null || echo 0)"
+            echo "TITLE=$(grep -oim1 '<title[^>]*>[^<]*' "$file" 2>/dev/null | sed -E 's/<title[^>]*>//I' || true)"
+            echo "SIGNALS=$(grep -Eoi 'çok satanlar|çok satan|REMZİ.D[E|e] ÇOK SATANLAR|Haftalık 7 Gün' "$file" 2>/dev/null | head -n 5 | tr '\n' ' ' || true)"
+          }
+
+          probe remzi-robots "https://www.remzi.com.tr/robots.txt"
+          probe remzi-page "https://www.remzi.com.tr/anasayfa"
+          probe bkm-robots "https://www.bkmkitap.com/robots.txt"
+          probe bkm-page "https://www.bkmkitap.com/cok-satan-kitaplar"
+          probe penguen-robots "https://penguenkitabevi.com/robots.txt"
+          probe penguen-page "https://penguenkitabevi.com/"

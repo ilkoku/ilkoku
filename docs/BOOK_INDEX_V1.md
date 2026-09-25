@@ -162,6 +162,17 @@ için slotlar açılabilir.
 
 Sponsorlu kartlar organik rank dizisine eklenmez ve sıra numarası almaz.
 
+Book Index entegrasyon noktaları üç yüzey için sözleşme olarak tanımlanır:
+
+- genel endeks,
+- kategori endeksi,
+- kaynak görünümü.
+
+Bu slotların tamamı `default OFF` durumundadır. Slot tanımı tek başına
+reklam/kreatif yayınlamaz. Aktivasyon ve kreatif yönetimi mevcut
+**Banner / Reklam Alanları** yönetim yüzeyiyle birleştirilecektir; ikinci bir
+reklam yönetim sistemi kurulmaz.
+
 ## Collector rollout notları — 25 Eylül 2026
 
 İlk canlı collector dalgası kaynak başına ayrı doğrulanır. Anti-bot veya erişim

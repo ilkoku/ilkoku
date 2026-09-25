@@ -415,11 +415,14 @@ test("KitapSec category collector parses explicit ItemList ranks and ISBN metada
 
   contains(adapter, 'const MAX_BOOKS = 48;', "KitapSec source page cap");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 20;', "KitapSec fail-closed minimum");
+  contains(adapter, '\\bKs_ContentUrunList\\b', "KitapSec canonical ItemList scope");
   contains(adapter, '\\bKs_UrunSatir\\b', "KitapSec ranked card selector");
   contains(adapter, 'itemprop=["\']position', "KitapSec explicit rank metadata");
   contains(adapter, 'itemprop=["\']sku', "KitapSec ISBN metadata");
   contains(adapter, 'new TextDecoder("windows-1254")', "KitapSec source encoding");
+  contains(adapter, "BOOK_INDEX_KITAPSEC_LIST_NOT_FOUND", "KitapSec list scope failure");
   contains(adapter, "BOOK_INDEX_KITAPSEC_RESULT_TOO_SMALL", "KitapSec suspicious result rejection");
+  contains(adapter, "BOOK_INDEX_KITAPSEC_RANK_SEQUENCE_INVALID", "KitapSec rank continuity validation");
   contains(adapter, "BOOK_INDEX_KITAPSEC_DUPLICATE_ITEM", "KitapSec duplicate rank/source protection");
   contains(lists, 'code: "kitapsec-edebiyat-live"', "KitapSec Edebiyat list");
   contains(lists, 'categoryKey: "edebiyat"', "KitapSec category scope");

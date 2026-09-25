@@ -46,6 +46,14 @@ function emitBookIndexEvent(payload: AnalyticsEvent) {
 function surfaceFromPath(pathname: string) {
   if (pathname === "/en-cok-satanlar/turkiye") return "turkey";
   if (pathname.startsWith("/en-cok-satanlar/kaynak/")) return "source";
+  if (
+    pathname === "/en-cok-satanlar/yeni-girisler"
+    || pathname === "/en-cok-satanlar/yukselenler"
+    || pathname === "/en-cok-satanlar/her-yerde-satanlar"
+    || pathname === "/en-cok-satanlar/uzun-satanlar"
+  ) {
+    return "insight";
+  }
   return "overview";
 }
 

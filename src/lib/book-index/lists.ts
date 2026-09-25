@@ -63,6 +63,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "kitapsepeti-tr-live",
+    sourceCode: "kitapsepeti",
+    title: "KitapSepeti · Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.kitapsepeti.com/cok-satan-kitaplar",
+    maxRank: 30,
+    includeInComposite: true,
+    collectionEveryMinutes: 360,
+    enabled: true,
+  },
+  {
     code: "idefix-tr-live",
     sourceCode: "idefix",
     title: "idefix · Çok Satan Kitaplar",

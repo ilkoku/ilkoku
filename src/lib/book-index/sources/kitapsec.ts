@@ -30,8 +30,16 @@ function priceToMinorUnits(value: string) {
 export function parseKitapSecBestsellers(
   html: string,
 ): BookIndexCollectionResult {
+  const listSection = html.match(
+    /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_ContentUrunList\b[^"']*\burunListeleDiv\b[^"']*["'])(?=[^>]*\bitemtype=["']https:\/\/schema\.org\/ItemList["'])[^>]*>([\s\S]*?)<\/table>/iu,
+  )?.[1];
+
+  if (!listSection) {
+    throw new Error("BOOK_INDEX_KITAPSEC_LIST_NOT_FOUND");
+  }
+
   const starts = [
-    ...html.matchAll(
+    ...listSection.matchAll(
       /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_UrunSatir\b[^"']*["'])(?=[^>]*\bitemprop=["']itemListElement["'])(?=[^>]*\bid=["']([^"']+)["'])[^>]*>/giu,
     ),
   ];
@@ -39,8 +47,8 @@ export function parseKitapSecBestsellers(
   const books = starts
     .map((match, index) => {
       const start = match.index ?? 0;
-      const end = starts[index + 1]?.index ?? html.length;
-      const card = html.slice(start, end);
+      const end = starts[index + 1]?.index ?? listSection.length;
+      const card = listSection.slice(start, end);
       const productId = match[1]?.trim() ?? "";
 
       const rankText = card.match(
@@ -101,6 +109,10 @@ export function parseKitapSecBestsellers(
   const uniqueRanks = new Set(books.map((book) => book.rank));
   if (uniqueKeys.size !== books.length || uniqueRanks.size !== books.length) {
     throw new Error("BOOK_INDEX_KITAPSEC_DUPLICATE_ITEM");
+  }
+
+  if (books.some((book, index) => book.rank !== index + 1)) {
+    throw new Error("BOOK_INDEX_KITAPSEC_RANK_SEQUENCE_INVALID");
   }
 
   return { books };

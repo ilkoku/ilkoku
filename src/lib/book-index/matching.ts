@@ -292,3 +292,164 @@ export async function matchPendingBookIndexBooks(limit = 200) {
     pending,
   };
 }
+
+
+export async function repairSafeSplitBookIndexMasters(limit = 100) {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 500);
+  const externalBooks = await prisma.bookIndexExternalBook.findMany({
+    where: {
+      masterBookId: { not: null },
+      normalizedAuthor: { not: null },
+      source: {
+        includeInTurkeyIndex: true,
+        status: "active",
+      },
+    },
+    select: {
+      id: true,
+      masterBookId: true,
+      normalizedTitle: true,
+      normalizedAuthor: true,
+      isbn13: true,
+      isbn10: true,
+      matchStatus: true,
+      lastSeenAt: true,
+      source: {
+        select: {
+          code: true,
+        },
+      },
+    },
+  });
+
+  const buckets = new Map<string, typeof externalBooks>();
+  for (const book of externalBooks) {
+    const key = `${book.normalizedTitle}|${book.normalizedAuthor}`;
+    const bucket = buckets.get(key) ?? [];
+    bucket.push(book);
+    buckets.set(key, bucket);
+  }
+
+  let considered = 0;
+  let mergedGroups = 0;
+  let reassignedExternalBooks = 0;
+  let deletedMasters = 0;
+  let skippedManual = 0;
+  let skippedAmbiguous = 0;
+
+  for (const bucket of buckets.values()) {
+    if (considered >= safeLimit) break;
+
+    const sourceCodes = new Set(bucket.map((book) => book.source.code));
+    const masterIds = [...new Set(
+      bucket
+        .map((book) => book.masterBookId)
+        .filter((value): value is string => Boolean(value)),
+    )];
+
+    if (sourceCodes.size < 2 || masterIds.length < 2) continue;
+    considered += 1;
+
+    if (bucket.some((book) =>
+      book.matchStatus === "manual_matched" || book.matchStatus === "rejected"
+    )) {
+      skippedManual += 1;
+      continue;
+    }
+
+    const masters = await prisma.bookIndexBook.findMany({
+      where: { id: { in: masterIds } },
+      select: {
+        id: true,
+        isbn13: true,
+        isbn10: true,
+        firstSeenAt: true,
+        lastSeenAt: true,
+      },
+    });
+
+    const mastersWithIsbn = masters.filter((master) => master.isbn13 || master.isbn10);
+    if (mastersWithIsbn.length !== 1) {
+      skippedAmbiguous += 1;
+      continue;
+    }
+
+    const target = mastersWithIsbn[0];
+    const loserIds = masterIds.filter((id) => id !== target.id);
+
+    const loserExternalBooks = bucket.filter((book) =>
+      book.masterBookId && loserIds.includes(book.masterBookId)
+    );
+    if (loserExternalBooks.some((book) => book.isbn13 || book.isbn10)) {
+      skippedAmbiguous += 1;
+      continue;
+    }
+
+    const targetIsbn13 = target.isbn13;
+    const targetIsbn10 = target.isbn10;
+    const conflictingExternalIsbn = bucket.some((book) =>
+      (book.isbn13 && targetIsbn13 && book.isbn13 !== targetIsbn13)
+      || (book.isbn10 && targetIsbn10 && book.isbn10 !== targetIsbn10)
+    );
+    if (conflictingExternalIsbn) {
+      skippedAmbiguous += 1;
+      continue;
+    }
+
+    const firstSeenAt = masters.reduce(
+      (earliest, master) =>
+        master.firstSeenAt < earliest ? master.firstSeenAt : earliest,
+      target.firstSeenAt,
+    );
+    const lastSeenAt = bucket.reduce(
+      (latest, book) => book.lastSeenAt > latest ? book.lastSeenAt : latest,
+      target.lastSeenAt,
+    );
+
+    const reassigned = await prisma.$transaction(async (transaction) => {
+      const updated = await transaction.bookIndexExternalBook.updateMany({
+        where: {
+          masterBookId: { in: loserIds },
+        },
+        data: {
+          masterBookId: target.id,
+          matchStatus: "auto_matched",
+          matchConfidence: 0.92,
+        },
+      });
+
+      await transaction.bookIndexBook.update({
+        where: { id: target.id },
+        data: {
+          firstSeenAt,
+          lastSeenAt,
+        },
+      });
+
+      const deleted = await transaction.bookIndexBook.deleteMany({
+        where: {
+          id: { in: loserIds },
+          externalBooks: { none: {} },
+        },
+      });
+
+      return {
+        reassigned: updated.count,
+        deleted: deleted.count,
+      };
+    });
+
+    mergedGroups += 1;
+    reassignedExternalBooks += reassigned.reassigned;
+    deletedMasters += reassigned.deleted;
+  }
+
+  return {
+    considered,
+    mergedGroups,
+    reassignedExternalBooks,
+    deletedMasters,
+    skippedManual,
+    skippedAmbiguous,
+  };
+}

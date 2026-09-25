@@ -201,6 +201,13 @@ GTM'dedir; doğrudan GA4 yalnız fallback olarak kullanılır ve çift event
 
 Sitemap aktivasyonundan sonra:
 
+- Book Index uygulama/read-model değişiklikleri IndexNow payload seçicisinde
+  doğrudan `/en-cok-satanlar/**` URL ailesine eşlenir; tüm siteyi gereksiz
+  yeniden göndermeden yalnız sitemap'te gerçekten yayınlanmış Book Index
+  URL'leri bildirilir;
+- günlük scheduled IndexNow yenilemesi aynı yayınlanmış URL ailesini tekrar
+  bildirir ve gate kapalıysa boş batch ile no-op kalır;
+
 - IndexNow yalnız sitemap'te gerçekten yayınlanan Book Index URL'lerine uygulanır;
 - günlük Book Index IndexNow yenilemesi ana, Türkiye ve yayınlanmış kaynak
   sayfalarını `/en-cok-satanlar*` kapsamıyla taşır;

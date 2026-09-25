@@ -246,6 +246,14 @@ export function selectIndexNowUrls({
       continue;
     }
 
+    if (
+      file.startsWith("src/lib/book-index/")
+      || file.startsWith("src/features/book-index/")
+    ) {
+      impacts.push({ type: "subtree", path: "/en-cok-satanlar" });
+      continue;
+    }
+
     const contentRoute = contentRouteByFile.get(file);
     if (contentRoute) {
       impacts.push({ type: "exact", path: contentRoute });

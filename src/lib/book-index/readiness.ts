@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 
+import { normalizeBookIndexText } from "./html";
 import { BOOK_INDEX_LISTS } from "./lists";
 
 export type BookIndexCollisionCandidate = {
@@ -25,6 +26,13 @@ export type BookIndexTitleOverlapSample = {
   isbn13s: string[];
 };
 
+export type BookIndexEditionFamilySample = {
+  familyTitle: string;
+  authorName: string | null;
+  sourceCodes: string[];
+  titles: string[];
+};
+
 export type BookIndexReadinessSnapshot = {
   compositeSourceTarget: number;
   observedCompositeSources: number;
@@ -46,11 +54,50 @@ export type BookIndexReadinessSnapshot = {
   normalizedTitleDifferentAuthorSamples: BookIndexTitleOverlapSample[];
   isbn13KeysOnAtLeast2Sources: number;
   isbn13KeysOnAtLeast3Sources: number;
+  editionFamilyIdentityKeysOnAtLeast2Sources: number;
+  editionFamilyIdentityKeysOnAtLeast3Sources: number;
+  editionFamilyVariantOverlapCount: number;
+  editionFamilyVariantOverlapSamples: BookIndexEditionFamilySample[];
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
   historySpanDays: number;
   publicRolloutState: "gated";
 };
+
+const EDITION_FAMILY_SUFFIXES = [
+  "yan boyamalı ciltli özel baskı",
+  "özel baskı hediyeli kutu",
+  "ciltli hediyeli kutu",
+  "hediyeli kutu özel baskı",
+  "kutulu özel set",
+  "hediyeli kutu",
+  "ciltli özel baskı",
+  "özel baskı",
+  "yan boyamalı",
+  "kutulu set",
+  "kutulu",
+  "ciltli",
+] as const;
+
+function editionFamilyTitle(value: string) {
+  let normalized = normalizeBookIndexText(value);
+  let changed = true;
+
+  while (changed && normalized) {
+    changed = false;
+
+    for (const suffix of EDITION_FAMILY_SUFFIXES) {
+      const ending = ` ${suffix}`;
+      if (!normalized.endsWith(ending)) continue;
+
+      normalized = normalized.slice(0, -ending.length).trim();
+      changed = true;
+      break;
+    }
+  }
+
+  return normalized;
+}
 
 function historySpanDays(first: Date | null, last: Date | null) {
   if (!first || !last) return 0;
@@ -123,6 +170,13 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     isbn13s: Set<string>;
   }>();
   const isbn13Buckets = new Map<string, Set<string>>();
+  const editionFamilyBuckets = new Map<string, {
+    familyTitle: string;
+    authorName: string | null;
+    sourceCodes: Set<string>;
+    titles: Set<string>;
+    normalizedTitles: Set<string>;
+  }>();
   const identityBuckets = new Map<string, {
     title: string;
     authorName: string | null;
@@ -171,6 +225,24 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         isbn13Buckets.set(book.isbn13, isbnSources);
       }
 
+      if (book.normalizedAuthor) {
+        const familyTitle = editionFamilyTitle(book.title);
+        if (familyTitle) {
+          const key = `${familyTitle}|${book.normalizedAuthor}`;
+          const bucket = editionFamilyBuckets.get(key) ?? {
+            familyTitle,
+            authorName: book.authorName,
+            sourceCodes: new Set<string>(),
+            titles: new Set<string>(),
+            normalizedTitles: new Set<string>(),
+          };
+          bucket.sourceCodes.add(list.source.code);
+          bucket.titles.add(book.title);
+          bucket.normalizedTitles.add(book.normalizedTitle);
+          editionFamilyBuckets.set(key, bucket);
+        }
+      }
+
       if (book.normalizedTitle && book.normalizedAuthor) {
         const key = `${book.normalizedTitle}|${book.normalizedAuthor}`;
         const bucket = identityBuckets.get(key) ?? {
@@ -206,6 +278,17 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     .filter((bucket) => bucket.authorNames.size + Number(bucket.hasNullAuthor) > 1)
     .sort((a, b) => b.sourceCodes.size - a.sourceCodes.size || a.title.localeCompare(b.title, "tr"));
   const isbn13Values = [...isbn13Buckets.values()];
+  const editionFamilyValues = [...editionFamilyBuckets.values()];
+  const editionFamilyCrossSource = editionFamilyValues.filter(
+    (bucket) => bucket.sourceCodes.size >= 2,
+  );
+  const editionFamilyVariantOverlaps = editionFamilyCrossSource
+    .filter((bucket) => bucket.normalizedTitles.size > 1)
+    .sort(
+      (a, b) =>
+        b.sourceCodes.size - a.sourceCodes.size
+        || a.familyTitle.localeCompare(b.familyTitle, "tr"),
+    );
 
   const firstObservationAt = observationRange._min.observedAt ?? null;
   const lastObservationAt = observationRange._max.observedAt ?? null;
@@ -264,6 +347,19 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     isbn13KeysOnAtLeast3Sources: isbn13Values.filter(
       (sourceCodes) => sourceCodes.size >= 3,
     ).length,
+    editionFamilyIdentityKeysOnAtLeast2Sources: editionFamilyCrossSource.length,
+    editionFamilyIdentityKeysOnAtLeast3Sources: editionFamilyCrossSource.filter(
+      (bucket) => bucket.sourceCodes.size >= 3,
+    ).length,
+    editionFamilyVariantOverlapCount: editionFamilyVariantOverlaps.length,
+    editionFamilyVariantOverlapSamples: editionFamilyVariantOverlaps.slice(0, 12).map(
+      (bucket) => ({
+        familyTitle: bucket.familyTitle,
+        authorName: bucket.authorName,
+        sourceCodes: [...bucket.sourceCodes].sort(),
+        titles: [...bucket.titles].sort((a, b) => a.localeCompare(b, "tr")),
+      }),
+    ),
     firstObservationAt,
     lastObservationAt,
     historySpanDays: historySpanDays(firstObservationAt, lastObservationAt),

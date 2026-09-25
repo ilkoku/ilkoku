@@ -111,6 +111,16 @@ test("Book Index uses a dedicated social preview for result-sharing CTR", () => 
   contains(image, "630", "social image height");
   contains(image, "En Çok Satan Kitaplar", "search-intent social headline");
   contains(image, "1 kaynak = 1 oy", "trust signal");
+  contains(
+    overview,
+    'image: `${baseUrl}/en-cok-satanlar/opengraph-image`',
+    "overview structured preferred image",
+  );
+  contains(
+    turkey,
+    'image: `${baseUrl}/en-cok-satanlar/opengraph-image`',
+    "Turkey structured preferred image",
+  );
 });
 
 
@@ -174,6 +184,11 @@ test("Book Index source SEO pages publish only from real available snapshots", (
     route,
     'image: "/en-cok-satanlar/opengraph-image"',
     "source pages reuse dedicated social preview",
+  );
+  contains(
+    route,
+    'image: `${baseUrl}/en-cok-satanlar/opengraph-image`',
+    "source pages expose structured preferred image",
   );
   contains(route, "createBookIndexSourceItemListSchema", "source ranking schema");
   contains(

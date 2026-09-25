@@ -153,6 +153,16 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     collectionState: "ready",
   },
   {
+    code: "nobelkitap",
+    name: "NobelKitap",
+    market: "TR",
+    countryCode: "TR",
+    baseUrl: "https://www.nobelkitap.com",
+    includeInTurkeyIndex: true,
+    phase: "v1",
+    collectionState: "ready",
+  },
+  {
     code: "hepsiburada",
     name: "Hepsiburada",
     market: "TR",

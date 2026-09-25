@@ -62,6 +62,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     collectionEveryMinutes: 1440,
     enabled: true,
   },
+  {
+    code: "idefix-tr-live",
+    sourceCode: "idefix",
+    title: "idefix · Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.idefix.com/cok-satanlar-l-162",
+    maxRank: 24,
+    includeInComposite: true,
+    collectionEveryMinutes: 360,
+    enabled: true,
+  },
 ] as const;
 
 export function getBookIndexList(code: string) {

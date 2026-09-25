@@ -407,3 +407,31 @@ test("Inkilap collector parses verified bestseller cards with safe ISBN handling
   );
 });
 
+test("KitapSec category collector parses explicit ItemList ranks and ISBN metadata", () => {
+  const adapter = source("src/lib/book-index/sources/kitapsec.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(adapter, 'const MAX_BOOKS = 48;', "KitapSec source page cap");
+  contains(adapter, 'const MIN_EXPECTED_BOOKS = 20;', "KitapSec fail-closed minimum");
+  contains(adapter, '\\bKs_ContentUrunList\\b', "KitapSec canonical ItemList scope");
+  contains(adapter, '\\bKs_UrunSatir\\b', "KitapSec ranked card selector");
+  contains(adapter, 'itemprop=["\']position', "KitapSec explicit rank metadata");
+  contains(adapter, 'itemprop=["\']sku', "KitapSec ISBN metadata");
+  contains(adapter, 'new TextDecoder("windows-1254")', "KitapSec source encoding");
+  contains(adapter, "BOOK_INDEX_KITAPSEC_LIST_NOT_FOUND", "KitapSec list scope failure");
+  contains(adapter, "BOOK_INDEX_KITAPSEC_RESULT_TOO_SMALL", "KitapSec suspicious result rejection");
+  contains(adapter, "BOOK_INDEX_KITAPSEC_RANK_SEQUENCE_INVALID", "KitapSec rank continuity validation");
+  contains(adapter, "BOOK_INDEX_KITAPSEC_DUPLICATE_ITEM", "KitapSec duplicate rank/source protection");
+  contains(lists, 'code: "kitapsec-edebiyat-live"', "KitapSec Edebiyat list");
+  contains(lists, 'categoryKey: "edebiyat"', "KitapSec category scope");
+  contains(lists, 'includeInComposite: false', "KitapSec category excluded from general composite");
+  contains(collector, "[kitapSecBookIndexAdapter.sourceCode, kitapSecBookIndexAdapter]", "KitapSec adapter activation");
+  contains(
+    sources,
+    'baseUrl: "https://www.kitapsec.com",\n    includeInTurkeyIndex: true,\n    phase: "phase_2",\n    collectionState: "ready"',
+    "KitapSec category source ready",
+  );
+});
+

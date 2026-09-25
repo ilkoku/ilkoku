@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
+import { matchPendingBookIndexBooks } from "@/lib/book-index/matching";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import { runBookIndexScheduler } from "@/lib/book-index/scheduler";
 import { getBookIndexSeoGateSnapshot } from "@/lib/book-index/seo-gate";
@@ -21,6 +22,7 @@ const GITHUB_WORKFLOW_REF =
   "ilkoku/ilkoku/.github/workflows/book-index-scheduler.yml@refs/heads/main";
 const ALLOWED_GITHUB_EVENTS = new Set([
   "workflow_dispatch",
+  "workflow_run",
   "schedule",
 ]);
 
@@ -89,6 +91,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await runBookIndexScheduler();
+    const matchingBackfill =
+      request.nextUrl.searchParams.get("matchPending") === "1"
+        ? await matchPendingBookIndexBooks(500)
+        : null;
     const [readiness, seoGate] = await Promise.all([
       getBookIndexReadinessSnapshot(),
       getBookIndexSeoGateSnapshot(),
@@ -97,6 +103,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       ...result,
+      matchingBackfill,
       readiness,
       seoGate,
     });

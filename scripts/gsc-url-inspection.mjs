@@ -6,6 +6,8 @@ const CLIENT_SECRET = process.env.GSC_OAUTH_CLIENT_SECRET;
 const REFRESH_TOKEN = process.env.GSC_OAUTH_REFRESH_TOKEN;
 const MAX_URLS = 10;
 const BASE_URL = "https://ilkoku.com";
+const SITEMAP_MAX_URLS = 50_000;
+const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
 
 function requireSecret(name, value) {
   if (!value) {
@@ -35,6 +37,8 @@ function validateInspectionUrl(value) {
 }
 
 async function discoverPublicSitemapUrls() {
+  let xml = "";
+
   try {
     const response = await fetch(`${BASE_URL}/sitemap.xml`, {
       headers: {
@@ -44,22 +48,46 @@ async function discoverPublicSitemapUrls() {
       signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) return [];
-    const xml = await response.text();
-
-    return [...new Set(
-      [...xml.matchAll(/<loc>([^<]+)<\/loc>/giu)]
-        .map((match) => match[1].trim())
-        .filter((location) => {
-          try {
-            return new URL(location).origin === BASE_URL;
-          } catch {
-            return false;
-          }
-        }),
-    )];
+    xml = await response.text();
   } catch {
     return [];
   }
+
+  const sitemapBytes = Buffer.byteLength(xml, "utf8");
+  if (sitemapBytes > SITEMAP_MAX_BYTES) {
+    throw new Error(
+      `Sitemap exceeds the 50 MB uncompressed limit: ${sitemapBytes} bytes`,
+    );
+  }
+
+  const locations = [...xml.matchAll(/<loc>([^<]+)<\/loc>/giu)]
+    .map((match) => match[1].trim())
+    .filter((location) => {
+      try {
+        return new URL(location).origin === BASE_URL;
+      } catch {
+        return false;
+      }
+    });
+
+  if (locations.length > SITEMAP_MAX_URLS) {
+    throw new Error(
+      `Sitemap exceeds the 50,000 URL limit: ${locations.length} URLs`,
+    );
+  }
+
+  const uniqueLocations = [...new Set(locations)];
+  if (uniqueLocations.length !== locations.length) {
+    throw new Error(
+      `Sitemap contains duplicate URLs: ${locations.length - uniqueLocations.length} duplicate entry/entries`,
+    );
+  }
+
+  console.log(
+    `Sitemap envelope: ${uniqueLocations.length} URL(s), ${sitemapBytes} byte(s)`,
+  );
+
+  return uniqueLocations;
 }
 
 async function getAccessToken() {

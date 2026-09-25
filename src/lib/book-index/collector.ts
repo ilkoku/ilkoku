@@ -125,9 +125,10 @@ export async function collectBookIndexListByCode(listCode: string) {
       throw new Error("BOOK_INDEX_EMPTY_RESULT");
     }
 
+    const maxRank = list.maxRank;
     if (
-      list.maxRank &&
-      result.books.some((book) => book.rank > list.maxRank)
+      maxRank !== null &&
+      result.books.some((book) => book.rank > maxRank)
     ) {
       throw new Error("BOOK_INDEX_RANK_EXCEEDS_LIST_LIMIT");
     }

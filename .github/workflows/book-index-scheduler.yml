@@ -46,13 +46,21 @@ jobs:
             oidc_token="$(printf '%s' "$oidc_response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
             test -n "$oidc_token"
 
-            if curl \
+            if response="$(curl \
               --fail-with-body \
+              --silent \
+              --show-error \
               --max-time 300 \
               --request POST \
               --header "Authorization: Bearer $oidc_token" \
-              https://ilkoku.com/api/internal/book-index-scheduler; then
-              exit 0
+              https://ilkoku.com/api/internal/book-index-scheduler)"; then
+              printf '%s\n' "$response"
+
+              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); raise SystemExit(0 if "readiness" in payload and "seoGate" in payload else 1)'; then
+                exit 0
+              fi
+
+              echo "Readiness payload not deployed yet; retrying." >&2
             fi
 
             if [ "$attempt" -lt 12 ]; then

@@ -56,6 +56,8 @@ test("Book Index automatic cron stays active while a temporary post-smoke readin
   contains(workflow, "ACTIONS_ID_TOKEN_REQUEST_URL", "OIDC token request");
   contains(workflow, "ilkoku-book-index-scheduler", "dedicated OIDC audience");
   contains(workflow, "/api/internal/book-index-scheduler", "internal scheduler endpoint");
+  contains(workflow, '"readiness" in payload', "deployment-aware readiness response guard");
+  contains(workflow, '"seoGate" in payload', "deployment-aware SEO gate response guard");
   contains(admin, "GitHub OIDC hazır", "admin authentication readiness");
   contains(admin, "Saatlik scheduler aktif", "admin automatic scheduling state");
   contains(rollout, "AUTOMATIC_CRON_ENABLED / CANARY_PASS", "activated rollout state");

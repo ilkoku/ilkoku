@@ -225,3 +225,25 @@ test("only BKM weekly contributes to the Turkey composite in V1", () => {
     "monthly BKM source-only list",
   );
 });
+
+
+test("Amazon sources remain fail-closed until a stable sanctioned collector path exists", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "Amazon TR remains research-only",
+  );
+  contains(
+    sources,
+    'baseUrl: "https://www.amazon.com",\n    includeInTurkeyIndex: false,\n    phase: "v1",\n    collectionState: "blocked"',
+    "Amazon US automated access block",
+  );
+  notContains(
+    collector,
+    'sourceCode: "amazon-us"',
+    "Amazon US collector is not activated",
+  );
+});

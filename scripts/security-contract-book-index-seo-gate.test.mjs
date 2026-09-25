@@ -64,6 +64,42 @@ test("Book Index public routes fail closed before sitemap publication", () => {
   );
   contains(turkey, "notFound();", "Turkey 404 gate");
 
-  notContains(sitemap, "/en-cok-satanlar", "bestseller sitemap remains closed");
+  contains(
+    sitemap,
+    'import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";',
+    "sitemap consumes the same public gate",
+  );
+  contains(sitemap, "async function loadBookIndexSitemapEntries()", "isolated sitemap gate helper");
+  contains(
+    sitemap,
+    "const context = await getBookIndexPublicPageContext(100);",
+    "sitemap gate context",
+  );
+  contains(
+    sitemap,
+    'context.model.turkey.availability !== "available"',
+    "sitemap requires usable Turkey data",
+  );
+  contains(
+    sitemap,
+    'url: `${baseUrl}/en-cok-satanlar`',
+    "gated bestseller sitemap URL",
+  );
+  contains(
+    sitemap,
+    'url: `${baseUrl}/en-cok-satanlar/turkiye`',
+    "gated Turkey sitemap URL",
+  );
+  contains(sitemap, "...bookIndexEntries", "conditional sitemap insertion");
+
+  const fallbackStart = sitemap.indexOf("const staticFallbackEntries");
+  const fallbackEnd = sitemap.indexOf("type CmsSitemapRow", fallbackStart);
+  assert.ok(fallbackStart >= 0 && fallbackEnd > fallbackStart, "static fallback block must exist");
+  const fallbackBlock = sitemap.slice(fallbackStart, fallbackEnd);
+  notContains(
+    fallbackBlock,
+    "/en-cok-satanlar",
+    "database/error fallback must never publish Book Index",
+  );
   notContains(navigation, "/en-cok-satanlar", "public navigation remains closed");
 });

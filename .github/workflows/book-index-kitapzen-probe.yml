@@ -1,0 +1,66 @@
+name: Book Index Kitapzen Probe
+
+on:
+  push:
+    branches:
+      - feature/book-index-kitapzen-collector
+    paths:
+      - ".github/workflows/book-index-kitapzen-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect Kitapzen bestseller markup
+        shell: bash
+        run: |
+          set -euo pipefail
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          url="https://www.kitapzen.com/index.php?mod_id=41&p=ProductBestsellers&page=1&period=weekly"
+          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/page.html -w "%{http_code}" "$url")"
+          echo "HTTP_STATUS=$code"
+          echo "BYTES=$(wc -c < /tmp/page.html)"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html
+
+          text=Path("/tmp/page.html").read_text(errors="replace")
+          print("TITLE", re.search(r'<title[^>]*>(.*?)</title>', text, re.I|re.S).group(1)[:300] if re.search(r'<title[^>]*>(.*?)</title>', text, re.I|re.S) else "")
+          classes=[]
+          for m in re.finditer(r'class=["\']([^"\']*(?:product|urun|item|catalog)[^"\']*)["\']', text, re.I):
+              v=m.group(1)
+              if v not in classes:
+                  classes.append(v)
+          print("--- CLASSES ---")
+          for c in classes[:120]:
+              print(c)
+
+          print("--- FIRST BOOK-LIKE WINDOWS ---")
+          patterns=[
+            "Yan Karakter 2",
+            "Kutsal Temeller",
+            "Kan Meridyeni",
+          ]
+          for needle in patterns:
+              p=text.find(needle)
+              print(f"### {needle} pos={p}")
+              if p>=0:
+                  print(text[max(0,p-2400):p+4200])
+
+          print("--- LINK/TEXT SAMPLE ---")
+          seen=0
+          for href, body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,1000}?)</a>', text, re.I):
+              clean=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',body))).strip()
+              if not clean:
+                  continue
+              if any(token in href.casefold() for token in [".htm","product","urun"]) and len(clean) > 2:
+                  print(href, "=>", clean[:220])
+                  seen += 1
+                  if seen >= 40:
+                      break
+          PY

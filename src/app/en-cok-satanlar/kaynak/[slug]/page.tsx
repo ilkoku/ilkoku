@@ -77,6 +77,7 @@ export default async function BookIndexSourcePage({ params }: PageProps) {
       description: description(definition.sourceName),
       url: pageUrl,
       inLanguage: "tr-TR",
+      image: `${baseUrl}/en-cok-satanlar/opengraph-image`,
       ...(sourcePage.lastObservedAt
         ? { dateModified: sourcePage.lastObservedAt.toISOString() }
         : {}),

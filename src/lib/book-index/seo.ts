@@ -1,4 +1,7 @@
-import type { BookIndexPublicReadModel } from "./public-read-model";
+import type {
+  BookIndexPublicReadModel,
+  BookIndexSourceRankRow,
+} from "./public-read-model";
 import type { TurkeyBookIndexPreviewRow } from "./read-model";
 
 export function getBookIndexLastObservedAt(
@@ -45,6 +48,53 @@ export function createBookIndexItemListSchema({
                 name: book.authorName,
               },
             }
+          : {}),
+      },
+    })),
+  };
+}
+
+
+export function createBookIndexSourceItemListSchema({
+  name,
+  url,
+  items,
+}: {
+  name: string;
+  url: string;
+  items: readonly BookIndexSourceRankRow[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    url,
+    numberOfItems: items.length,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    itemListElement: items.map((book) => ({
+      "@type": "ListItem",
+      position: book.rank,
+      item: {
+        "@type": "Book",
+        name: book.title,
+        ...(book.authorName
+          ? {
+              author: {
+                "@type": "Person",
+                name: book.authorName,
+              },
+            }
+          : {}),
+        ...(book.publisherName
+          ? {
+              publisher: {
+                "@type": "Organization",
+                name: book.publisherName,
+              },
+            }
+          : {}),
+        ...(book.isbn13 || book.isbn10
+          ? { isbn: book.isbn13 ?? book.isbn10 ?? undefined }
           : {}),
       },
     })),

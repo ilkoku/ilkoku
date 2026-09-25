@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Discover KitapSec bestseller entry points
+      - name: Inspect KitapSec bestseller category markup
         shell: bash
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
-          url="https://www.kitapsec.com/"
+          url="https://www.kitapsec.com/mobil/cok-satan-kitaplar_kt-alt532/1-6-0a0-0-0-0-1-0.html"
           code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/page.html -w "%{http_code}" "$url")"
           echo "HTTP_STATUS=$code"
           echo "BYTES=$(wc -c < /tmp/page.html)"
@@ -29,25 +29,36 @@ jobs:
           from pathlib import Path
           import re, html
 
-          text=Path("/tmp/page.html").read_text(errors="replace")
-          print("TITLE", re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S).group(1)[:300] if re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S) else "")
+          raw=Path("/tmp/page.html").read_bytes()
+          text=raw.decode("windows-1254", errors="replace")
+          title=re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S)
+          print("TITLE", html.unescape(re.sub(r'\s+',' ',title.group(1))).strip()[:300] if title else "")
 
-          print("--- COK SATAN LINKS ---")
-          seen=[]
-          for href,body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,700}?)</a>',text,re.I):
+          classes=[]
+          for m in re.finditer(r'class=["\']([^"\']*(?:product|urun|item|book|kitap)[^"\']*)["\']',text,re.I):
+              v=m.group(1)
+              if v not in classes:
+                  classes.append(v)
+          print("--- CLASSES ---")
+          for c in classes[:140]:
+              print(c)
+
+          print("--- SORT LINKS ---")
+          for href,body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,500}?)</a>',text,re.I):
               clean=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',body))).strip()
-              low=(href+" "+clean).casefold()
-              if "çok satan" in low or "cok satan" in low or "coksatan" in low:
-                  if (href,clean) not in seen:
-                      seen.append((href,clean))
-          for href,clean in seen[:80]:
-              print(href,"=>",clean[:240])
+              if "Çok Satan" in clean or "Cok Satan" in clean:
+                  print(href,"=>",clean)
 
-          print("--- NAV TEXT AROUND COK SATAN ---")
-          folded=text.casefold()
-          for needle in ["çok satanlar","cok satanlar","çok satan"]:
-              p=folded.find(needle)
-              print(needle,p)
-              if p>=0:
-                  print(text[max(0,p-2200):p+5000])
+          print("--- FIRST PRODUCT WINDOWS ---")
+          markers=["Sepete At","Hemen Al"]
+          pos=0
+          shown=0
+          while shown<5:
+              candidates=[p for m in markers if (p:=text.find(m,pos))>=0]
+              if not candidates: break
+              p=min(candidates)
+              print(f"\n### WINDOW {shown+1} pos={p}")
+              print(text[max(0,p-2200):p+5000])
+              pos=p+100
+              shown+=1
           PY

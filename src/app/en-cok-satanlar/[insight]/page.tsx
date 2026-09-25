@@ -8,7 +8,10 @@ import {
 } from "@/lib/book-index/insight-pages";
 import { getBookIndexInsights } from "@/lib/book-index/insights";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
-import { createBookIndexGenericItemListSchema } from "@/lib/book-index/seo";
+import {
+  createBookIndexGenericItemListSchema,
+  getBookIndexLastObservedAt,
+} from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 const baseUrl = "https://ilkoku.com";
@@ -71,6 +74,7 @@ export default async function BookIndexInsightPage({ params }: PageProps) {
   if (items.length === 0) notFound();
 
   const pageUrl = `${baseUrl}${canonical(slug)}`;
+  const lastObservedAt = getBookIndexLastObservedAt(context.model);
   const schemas = [
     {
       "@context": "https://schema.org",
@@ -80,7 +84,7 @@ export default async function BookIndexInsightPage({ params }: PageProps) {
       url: pageUrl,
       image: `${baseUrl}/en-cok-satanlar/opengraph-image`,
       inLanguage: "tr-TR",
-      dateModified: insights.generatedAt.toISOString(),
+      ...(lastObservedAt ? { dateModified: lastObservedAt.toISOString() } : {}),
       isPartOf: {
         "@type": "WebSite",
         name: "İlkOku",
@@ -132,7 +136,11 @@ export default async function BookIndexInsightPage({ params }: PageProps) {
           __html: JSON.stringify(schemas).replace(/</g, "\\u003c"),
         }}
       />
-      <BookIndexInsightView definition={definition} insights={insights} />
+      <BookIndexInsightView
+        definition={definition}
+        insights={insights}
+        lastObservedAt={lastObservedAt}
+      />
     </>
   );
 }

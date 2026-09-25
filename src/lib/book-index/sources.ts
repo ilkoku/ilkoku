@@ -150,7 +150,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.hepsiburada.com",
     includeInTurkeyIndex: true,
     phase: "phase_2",
-    collectionState: "planned",
+    collectionState: "blocked",
   },
   {
     code: "trendyol",

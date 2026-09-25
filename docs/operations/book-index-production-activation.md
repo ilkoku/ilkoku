@@ -210,9 +210,10 @@ Sitemap aktivasyonundan sonra:
 - haftalık GSC performans raporu aynı Book Index prefix'ini izler;
 - haftalık GSC URL Inspection ana + Türkiye + sitemap'te yayınlanan kaynak
   sayfalarından temsilî URL'leri otomatik örnekler;
-- manuel SEO indexability smoke Book Index sitemap'te yoksa onu atlar; varsa
-  ana, Türkiye ve temsilî bir kaynak sayfasında HTTP 200, robots ve canonical
-  sözleşmesini doğrular;
+- haftalık otomatik SEO indexability smoke (Salı 09:15 Türkiye) Book Index
+  sitemap'te yoksa onu atlar; varsa ana, Türkiye ve temsilî yayınlanmış
+  Book Index sayfalarında HTTP 200, robots ve canonical sözleşmesini doğrular;
+- aynı workflow gerektiğinde explicit confirmation ile manuel de çalıştırılabilir;
 - haftalık GSC diagnostic aynı sitemap fetch'i üzerinde 50.000 URL,
   50 MB uncompressed boyut ve duplicate `<loc>` guard'larını çalıştırır;
 - sitemap Google Search Console'da yeniden okunur;

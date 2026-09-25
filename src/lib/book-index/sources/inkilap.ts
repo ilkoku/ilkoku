@@ -7,8 +7,9 @@ import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "inkilap";
 const SOURCE_ORIGIN = "https://www.inkilap.com";
-const MAX_BOOKS = 20;
-const MIN_EXPECTED_BOOKS = 15;
+const PAGE_SIZE = 20;
+const MAX_PAGES = 3;
+const MAX_BOOKS = PAGE_SIZE * MAX_PAGES;
 
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
@@ -48,6 +49,7 @@ function splitTitleAndAuthor(value: string) {
 
 export function parseInkilapBestsellers(
   html: string,
+  rankOffset = 0,
 ): BookIndexCollectionResult {
   const starts = [
     ...html.matchAll(
@@ -100,17 +102,17 @@ export function parseInkilapBestsellers(
         isbn13: normalizedIsbn,
         productUrl: absoluteUrl(productUrl),
         imageUrl: image ? absoluteUrl(image) : null,
-        rank: index + 1,
+        rank: rankOffset + index + 1,
         priceAmount: salePrice
           ? priceToMinorUnits(decodeBookIndexHtml(salePrice))
           : null,
         currency: "TRY",
       };
     })
-    .slice(0, MAX_BOOKS);
+    .slice(0, PAGE_SIZE);
 
-  if (books.length < MIN_EXPECTED_BOOKS) {
-    throw new Error("BOOK_INDEX_INKILAP_RESULT_TOO_SMALL");
+  if (books.length !== PAGE_SIZE) {
+    throw new Error("BOOK_INDEX_INKILAP_RESULT_SIZE_MISMATCH");
   }
 
   const uniqueKeys = new Set(books.map((book) => book.sourceKey));
@@ -121,24 +123,52 @@ export function parseInkilapBestsellers(
   return { books };
 }
 
+function pageUrl(sourceUrl: string, page: number) {
+  if (page === 1) return sourceUrl;
+
+  const url = new URL(sourceUrl);
+  url.pathname = `${url.pathname.replace(/\/+$/u, "")}/sayfa/${page}`;
+  return url.toString();
+}
+
 export const inkilapBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const response = await fetch(context.sourceUrl, {
-      cache: "no-store",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
-      },
-      signal: AbortSignal.timeout(20_000),
-    });
+    const books = [];
 
-    if (!response.ok) {
-      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+    for (let page = 1; page <= MAX_PAGES; page += 1) {
+      const response = await fetch(pageUrl(context.sourceUrl, page), {
+        cache: "no-store",
+        headers: {
+          Accept: "text/html,application/xhtml+xml",
+          "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+        },
+        signal: AbortSignal.timeout(20_000),
+      });
+
+      if (!response.ok) {
+        throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+      }
+
+      const parsed = parseInkilapBestsellers(
+        await response.text(),
+        (page - 1) * PAGE_SIZE,
+      );
+      books.push(...parsed.books);
     }
 
-    return parseInkilapBestsellers(await response.text());
+    const cappedBooks = books.slice(0, MAX_BOOKS);
+    if (cappedBooks.length !== MAX_BOOKS) {
+      throw new Error("BOOK_INDEX_INKILAP_RESULT_TOO_SMALL");
+    }
+
+    const uniqueKeys = new Set(cappedBooks.map((book) => book.sourceKey));
+    if (uniqueKeys.size !== cappedBooks.length) {
+      throw new Error("BOOK_INDEX_INKILAP_DUPLICATE_SOURCE_KEY");
+    }
+
+    return { books: cappedBooks };
   },
 };

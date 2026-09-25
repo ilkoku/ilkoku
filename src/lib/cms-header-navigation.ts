@@ -189,6 +189,11 @@ export const defaultHeaderNavigation: HeaderNavigationPayload = {
       ],
     },
     {
+      id: "book-index",
+      label: "En Çok Satanlar",
+      groups: [{ id: "book-index-main", title: "Kitap Endeksi", links: [link("book-index", true)] }],
+    },
+    {
       id: "support",
       label: "Destek",
       groups: [{ id: "support-main", title: "Destek", links: [link("help", true), link("contact"), link("site-map")] }],

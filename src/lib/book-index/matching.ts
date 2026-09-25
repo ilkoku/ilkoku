@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 
 import type { PrismaClient } from "@prisma/client";
 
+import { prisma } from "@/lib/prisma";
+
 import { normalizeBookIndexText } from "./html";
 
 type BookIndexMatchDb = Pick<
@@ -185,4 +187,51 @@ export async function autoMatchBookIndexExternalBook(
     confidence,
     seenAt,
   );
+}
+
+
+export async function matchPendingBookIndexBooks(limit = 200) {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 500);
+  const candidates = await prisma.bookIndexExternalBook.findMany({
+    where: {
+      masterBookId: null,
+      matchStatus: "unmatched",
+    },
+    orderBy: { lastSeenAt: "desc" },
+    take: safeLimit,
+    select: {
+      id: true,
+      title: true,
+      authorName: true,
+      publisherName: true,
+      isbn13: true,
+      isbn10: true,
+      imageUrl: true,
+      matchStatus: true,
+      masterBookId: true,
+      lastSeenAt: true,
+    },
+  });
+
+  let matched = 0;
+  let pending = 0;
+
+  for (const candidate of candidates) {
+    const result = await prisma.$transaction((transaction) =>
+      autoMatchBookIndexExternalBook(
+        transaction,
+        candidate,
+        candidate.lastSeenAt,
+      ),
+    );
+
+    if (result.matched) matched += 1;
+    else pending += 1;
+  }
+
+  return {
+    processed: candidates.length,
+    matched,
+    pending,
+  };
 }

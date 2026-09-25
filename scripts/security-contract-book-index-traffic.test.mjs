@@ -31,6 +31,26 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   contains(sitemap, "lastModified", "sitemap lastModified");
 });
 
+test("public site map never exposes gated Book Index links early", () => {
+  const siteMapPage = source("src/app/site-haritasi/page.tsx");
+
+  contains(
+    siteMapPage,
+    "getBookIndexPublicPageContext(30).catch(() => null)",
+    "site-map Book Index gate",
+  );
+  contains(
+    siteMapPage,
+    'bookIndexPublished || page.id !== "book-index"',
+    "code-owned Book Index site-map filter",
+  );
+  contains(
+    siteMapPage,
+    '!page.href.startsWith("/en-cok-satanlar")',
+    "CMS Book Index backdoor filter",
+  );
+});
+
 test("scheduled IndexNow refresh targets only published Book Index URLs", () => {
   const workflow = source(".github/workflows/indexnow-submit.yml");
 

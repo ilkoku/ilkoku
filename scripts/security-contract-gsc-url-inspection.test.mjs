@@ -33,6 +33,9 @@ test("inspection script only calls read-only Search Console diagnostics", () => 
   assert.match(script, /discoverPublicSitemapUrls/u);
   assert.match(script, /en-cok-satanlar/u);
   assert.match(script, /en-cok-satanlar\/turkiye/u);
+  assert.match(script, /location\.startsWith/u);
+  assert.match(script, /en-cok-satanlar\//u);
+  assert.match(script, /\.slice\(0, 5\)/u);
   assert.match(script, /discoveredSitemapUrls/u);
   assert.match(script, /lastDownloaded/u);
   assert.match(script, /Diagnostic only/u);

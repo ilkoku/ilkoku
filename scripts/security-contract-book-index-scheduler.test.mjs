@@ -29,3 +29,18 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(readiness, "splitMasterCollisionSamples", "collision samples retained");
   contains(readiness, "normalizedIdentityKeysOnAtLeast2Sources", "cross-source identity diagnostic retained");
 });
+
+
+test("Book Index scheduler repairs only conservative legacy split masters", () => {
+  const route = source("src/app/api/internal/book-index-scheduler/route.ts");
+  const matching = source("src/lib/book-index/matching.ts");
+
+  contains(route, "repairSafeSplitBookIndexMasters", "scheduler self-healing");
+  contains(route, "splitMasterRepair", "repair result reporting");
+  contains(matching, 'book.matchStatus === "manual_matched"', "manual match protection");
+  contains(matching, 'mastersWithIsbn.length !== 1', "single authoritative ISBN master guard");
+  contains(matching, "loserExternalBooks.some", "loser ISBN guard");
+  contains(matching, "conflictingExternalIsbn", "ISBN conflict guard");
+  contains(matching, "masterBookId: target.id", "safe external-book reassignment");
+  contains(matching, "externalBooks: { none: {} }", "delete only orphaned duplicate masters");
+});

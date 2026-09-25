@@ -317,7 +317,7 @@ test("Book Index matching follows ISBN then exact title-author and preserves man
   contains(matching, "isbnCompatible", "conflicting ISBN protection");
   contains(matching, 'externalBook.matchStatus === "manual_matched"', "manual match preservation");
   contains(matching, 'externalBook.matchStatus === "rejected"', "manual rejection preservation");
-  contains(matching, "if (candidates.length > 1)", "ambiguous title-author remains pending");
+  contains(matching, "if (compatibleCandidates.length > 1)", "ambiguous compatible title-author remains pending");
   contains(matching, 'matchConfidence: confidence', "matching confidence persistence");
   contains(collector, "autoMatchBookIndexExternalBook(", "matching runs during collection");
   contains(page, "Bekleyenleri eşleştir", "admin matching backfill control");

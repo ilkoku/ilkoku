@@ -36,6 +36,9 @@ test("global public routes share one canonical SEO and social brand identity", (
   assertContains(layout, "title: publicBrandTitle", "global Open Graph/Twitter title source");
   assertContains(layout, "images: [{ url: publicBrandSocialImage", "global Open Graph image");
   assertContains(layout, "images: [publicBrandSocialImage]", "global Twitter image");
+  assertContains(layout, '"max-image-preview": "large"', "global large Google image previews");
+  assertContains(layout, '"max-snippet": -1', "global unlimited Google snippet preview");
+  assertContains(layout, '"max-video-preview": -1', "global unlimited Google video preview");
 
   assertContains(openGraph, 'import { ImageResponse } from "next/og"', "Open Graph image response");
   assertContains(openGraph, "width: 1200", "Open Graph width");

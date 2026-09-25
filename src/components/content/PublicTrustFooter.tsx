@@ -8,10 +8,17 @@ import {
   publicSupportLinks,
   publicTrustLinks,
 } from "@/lib/public-site-navigation";
+import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 export async function PublicTrustFooter() {
-  const identity = await getPublicSiteIdentity();
+  const [identity, bookIndexContext] = await Promise.all([
+    getPublicSiteIdentity(),
+    getBookIndexPublicPageContext(10).catch(() => null),
+  ]);
+  const platformLinks = bookIndexContext
+    ? [...publicPlatformLinks, { href: "/en-cok-satanlar", label: "En Çok Satanlar" }]
+    : publicPlatformLinks;
 
   return (
     <footer className="public-trust-footer">
@@ -29,7 +36,7 @@ export async function PublicTrustFooter() {
 
         <nav className="public-trust-footer__column" aria-label="Platform bağlantıları">
           <h3>Platform</h3>
-          {publicPlatformLinks.map((item) => (
+          {platformLinks.map((item) => (
             <Link href={item.href} key={item.href}>{item.label}</Link>
           ))}
         </nav>

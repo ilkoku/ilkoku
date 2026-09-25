@@ -24,6 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: pageTitle(),
     description,
     canonical,
+    image: "/en-cok-satanlar/opengraph-image",
     noIndex: !context,
   });
 }

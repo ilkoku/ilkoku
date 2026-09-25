@@ -4,6 +4,28 @@ import type { BookIndexPublicReadModel } from "@/lib/book-index/public-read-mode
 
 import styles from "./BookIndexPublicView.module.css";
 
+function latestObservedAt(model: BookIndexPublicReadModel) {
+  let latest: Date | null = null;
+
+  for (const list of model.sourceLists) {
+    if (!list.observedAt) continue;
+    if (!latest || list.observedAt.getTime() > latest.getTime()) {
+      latest = list.observedAt;
+    }
+  }
+
+  return latest;
+}
+
+function formattedObservedAt(value: Date | null) {
+  if (!value) return null;
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "Europe/Istanbul",
+  }).format(value);
+}
+
 function availabilityLabel(value: string) {
   switch (value) {
     case "available":
@@ -54,6 +76,9 @@ export function BookIndexOverviewView({
 }: {
   model: BookIndexPublicReadModel;
 }) {
+  const observedAt = latestObservedAt(model);
+  const observedAtLabel = formattedObservedAt(observedAt);
+
   return (
     <main className={styles.page}>
       <header className={styles.hero}>
@@ -62,8 +87,15 @@ export function BookIndexOverviewView({
         <p>
           Farklı kitap satış platformlarının kendi çok satan sıralamalarını
           izliyor, kaynakları birbirine karıştırmadan ayrı bir Türkiye Endeksi
-          üretiyoruz.
+          üretiyoruz. Böylece tek bir mağazanın listesi yerine birden fazla
+          bağımsız kaynağın ortak satış sinyalini görebilirsiniz.
         </p>
+        {observedAt && observedAtLabel ? (
+          <p className={styles.freshness}>
+            Son veri güncellemesi:{" "}
+            <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
+          </p>
+        ) : null}
       </header>
 
       <section className={styles.cards} aria-label="Endeks kapsamı">
@@ -84,7 +116,7 @@ export function BookIndexOverviewView({
         </article>
       </section>
 
-      <section className={styles.section}>
+      <section className={styles.section} id="turkey-preview">
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.eyebrow}>Türkiye</span>
@@ -98,6 +130,21 @@ export function BookIndexOverviewView({
         </div>
         <TurkeyRows model={model} limit={10} />
       </section>
+
+      <section className={styles.explainer} aria-labelledby="book-index-methodology">
+        <span className={styles.eyebrow}>Nasıl hesaplanıyor?</span>
+        <h2 id="book-index-methodology">Türkiye&apos;de en çok satan kitaplar nasıl belirleniyor?</h2>
+        <p>
+          İlkOku Kitap Endeksi, farklı satış kaynaklarındaki sıralamaları
+          normalize eder. Aynı kaynak bir kitaba yalnız bir oy verir ve Türkiye
+          Endeksi&apos;ne girebilmek için kitap en az üç bağımsız Türkiye
+          kaynağında görünmelidir.
+        </p>
+        <p>
+          Kaynakların kendi sıralaması değiştirilmez; İlkOku bileşik puanı ayrı
+          hesaplanır. Sponsorlu alanlar organik sıralamaya dahil edilmez.
+        </p>
+      </section>
     </main>
   );
 }
@@ -107,6 +154,9 @@ export function TurkeyBookIndexView({
 }: {
   model: BookIndexPublicReadModel;
 }) {
+  const observedAt = latestObservedAt(model);
+  const observedAtLabel = formattedObservedAt(observedAt);
+
   return (
     <main className={styles.page}>
       <header className={styles.hero}>
@@ -117,12 +167,18 @@ export function TurkeyBookIndexView({
           bağımsız Türkiye kaynaklarındaki görünürlüğü normalize edilerek
           oluşturulan İlkOku bileşik endeksidir.
         </p>
+        {observedAt && observedAtLabel ? (
+          <p className={styles.freshness}>
+            Son veri güncellemesi:{" "}
+            <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
+          </p>
+        ) : null}
         <Link className={styles.backLink} href="/en-cok-satanlar">
           ← En Çok Satanlar ana sayfası
         </Link>
       </header>
 
-      <section className={styles.section}>
+      <section className={styles.section} id="ranking">
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.eyebrow}>Şeffaf sıralama</span>
@@ -133,6 +189,21 @@ export function TurkeyBookIndexView({
           </div>
         </div>
         <TurkeyRows model={model} />
+      </section>
+
+      <section className={styles.explainer} aria-labelledby="turkey-index-methodology">
+        <span className={styles.eyebrow}>Metodoloji</span>
+        <h2 id="turkey-index-methodology">İlkOku Türkiye Kitap Endeksi neyi gösterir?</h2>
+        <p>
+          Endeks, kitapların birden fazla bağımsız Türkiye kaynağındaki
+          görünürlüğünü karşılaştırır. Her kaynak eşit oy hakkına sahiptir;
+          aynı platformdaki birden fazla liste aynı kitaba ek oy kazandırmaz.
+        </p>
+        <p>
+          Gösterilen puan satış adedi değildir. Kaynak sıralamalarından
+          türetilen bileşik bir görünürlük puanıdır ve her kitap için kullanılan
+          bağımsız kaynak sayısı ayrıca gösterilir.
+        </p>
       </section>
     </main>
   );

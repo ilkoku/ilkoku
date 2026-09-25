@@ -90,7 +90,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.amazon.com.tr",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "planned",
+    collectionState: "researching",
   },
   {
     code: "amazon-us",
@@ -100,7 +100,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.amazon.com",
     includeInTurkeyIndex: false,
     phase: "v1",
-    collectionState: "planned",
+    collectionState: "blocked",
   },
   {
     code: "kitapsepeti",

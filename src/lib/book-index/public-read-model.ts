@@ -28,7 +28,7 @@ export type BookIndexSourceRankRow = {
   isbn10: string | null;
   productUrl: string;
   imageUrl: string | null;
-  priceAmount: bigint | null;
+  priceAmount: string | null;
   currency: string | null;
   masterBookId: string | null;
 };
@@ -237,7 +237,7 @@ export async function getBookIndexSourceListSnapshot(
       isbn10: observation.externalBook.isbn10,
       productUrl: observation.externalBook.productUrl,
       imageUrl: observation.externalBook.imageUrl,
-      priceAmount: observation.priceAmount,
+      priceAmount: observation.priceAmount?.toString() ?? null,
       currency: observation.currency,
       masterBookId: observation.externalBook.masterBookId,
     })),

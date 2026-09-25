@@ -22,6 +22,7 @@ const GITHUB_WORKFLOW_REF =
 const ALLOWED_GITHUB_EVENTS = new Set([
   "workflow_dispatch",
   "schedule",
+  "workflow_run",
 ]);
 
 function configuredSecret() {

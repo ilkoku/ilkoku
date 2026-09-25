@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { SITE_MAP_PAGES, type SiteMapPage } from "@/lib/cms-header-navigation";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexPublishedSourcePages } from "@/lib/book-index/source-pages";
 import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -116,6 +117,12 @@ export default async function PublicSiteMapPage() {
   ]);
 
   const bookIndexPublished = Boolean(bookIndexContext);
+  const bookIndexSourceLinks = bookIndexContext
+    ? getBookIndexPublishedSourcePages(bookIndexContext.model).map((sourcePage) => ({
+        href: `/en-cok-satanlar/kaynak/${sourcePage.slug}`,
+        label: sourcePage.searchTitle,
+      }))
+    : [];
   const codeOwnedPages = SITE_MAP_PAGES.filter(
     (page) =>
       page.indexable !== false
@@ -139,6 +146,13 @@ export default async function PublicSiteMapPage() {
     .map((page) => ({ href: page.href, label: page.label }));
 
   const groups = groupedSitePages(codeOwnedPages);
+  if (bookIndexSourceLinks.length > 0) {
+    groups.push({
+      id: "book-index:sources",
+      title: "Kitap Endeksi · Kaynak Listeleri",
+      links: bookIndexSourceLinks,
+    });
+  }
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",

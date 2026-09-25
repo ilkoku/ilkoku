@@ -64,6 +64,7 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
       "https://ilkoku.com/",
       "https://ilkoku.com/en-cok-satanlar",
       "https://ilkoku.com/en-cok-satanlar/turkiye",
+      "https://ilkoku.com/en-cok-satanlar/kaynak/bkm-kitap",
       "https://ilkoku.com/hakkimizda",
     ],
     changedFiles: ["__BOOK_INDEX__"],
@@ -73,6 +74,7 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
   assert.deepEqual(result.urls, [
     "https://ilkoku.com/en-cok-satanlar",
     "https://ilkoku.com/en-cok-satanlar/turkiye",
+    "https://ilkoku.com/en-cok-satanlar/kaynak/bkm-kitap",
   ]);
 });
 
@@ -129,5 +131,69 @@ test("Book Index gains a gated site-wide footer discovery link after publication
     footer,
     "const platformLinks = bookIndexContext",
     "footer link only appears when publication is actually allowed",
+  );
+});
+
+
+test("Book Index source SEO pages publish only from real available snapshots", () => {
+  const sourcePages = source("src/lib/book-index/source-pages.ts");
+  const route = source("src/app/en-cok-satanlar/kaynak/[slug]/page.tsx");
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+  const analytics = source("src/features/book-index/public/BookIndexAnalytics.tsx");
+
+  for (const slug of [
+    "bkm-kitap",
+    "remzi-kitabevi",
+    "idefix",
+    "kitapsepeti",
+    "kitapzen",
+    "inkilap-kitabevi",
+    "kitapsec",
+  ]) {
+    contains(sourcePages, `slug: "${slug}"`, `${slug} source SEO slug`);
+  }
+
+  contains(
+    sourcePages,
+    'list.availability === "available"',
+    "only available source lists can publish",
+  );
+  contains(
+    sourcePages,
+    "list.items.length > 0",
+    "empty source lists stay unpublished",
+  );
+  contains(
+    route,
+    "getBookIndexPublicPageContext(100)",
+    "source pages use the shared public publication gate",
+  );
+  contains(route, "if (!sourcePage) notFound()", "missing source snapshot fails closed");
+  contains(
+    route,
+    'image: "/en-cok-satanlar/opengraph-image"',
+    "source pages reuse dedicated social preview",
+  );
+  contains(route, "createBookIndexSourceItemListSchema", "source ranking schema");
+  contains(
+    sitemap,
+    "getBookIndexPublishedSourcePages(context.model)",
+    "sitemap only receives publishable source pages",
+  );
+  contains(
+    sitemap,
+    "/en-cok-satanlar/kaynak/",
+    "source pages join the gated Book Index sitemap",
+  );
+  contains(
+    view,
+    "Mağazalara göre çok satan kitaplar",
+    "overview links source-search intents",
+  );
+  contains(
+    analytics,
+    'pathname.startsWith("/en-cok-satanlar/kaynak/")',
+    "source pages receive dedicated analytics classification",
   );
 });

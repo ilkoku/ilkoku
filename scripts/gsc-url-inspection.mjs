@@ -74,6 +74,52 @@ async function getAccessToken() {
   return body.access_token;
 }
 
+async function listSitemaps(accessToken) {
+  const response = await fetch(
+    `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/sitemaps`,
+    {
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+      },
+      signal: AbortSignal.timeout(20_000),
+    },
+  );
+
+  const body = await response.json();
+  if (!response.ok) {
+    const message = body?.error?.message || `HTTP ${response.status}`;
+    throw new Error(`Search Console sitemap list failed: ${message}`);
+  }
+
+  return (Array.isArray(body.sitemap) ? body.sitemap : []).map((item) => ({
+    path: item.path ?? null,
+    lastSubmitted: item.lastSubmitted ?? null,
+    isPending: item.isPending ?? null,
+    isSitemapsIndex: item.isSitemapsIndex ?? null,
+    type: item.type ?? null,
+    lastDownloaded: item.lastDownloaded ?? null,
+    warnings: item.warnings ?? null,
+    errors: item.errors ?? null,
+    contents: Array.isArray(item.contents)
+      ? item.contents.map((entry) => ({
+          type: entry.type ?? null,
+          submitted: entry.submitted ?? null,
+          indexed: entry.indexed ?? null,
+        }))
+      : [],
+  }));
+}
+
+function sitemapTotals(item) {
+  return item.contents.reduce(
+    (totals, entry) => ({
+      submitted: totals.submitted + (Number(entry.submitted) || 0),
+      indexed: totals.indexed + (Number(entry.indexed) || 0),
+    }),
+    { submitted: 0, indexed: 0 },
+  );
+}
+
 async function inspectUrl(accessToken, inspectionUrl) {
   const response = await fetch(
     "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
@@ -119,14 +165,34 @@ async function inspectUrl(accessToken, inspectionUrl) {
   };
 }
 
-function writeStepSummary(results) {
+function writeStepSummary(results, sitemaps) {
   const path = process.env.GITHUB_STEP_SUMMARY;
   if (!path) return;
+
+  const sitemapRows = sitemaps.map((item) => {
+    const totals = sitemapTotals(item);
+    return [
+      item.path ?? "—",
+      item.lastSubmitted ?? "—",
+      item.lastDownloaded ?? "—",
+      item.isPending === null ? "—" : String(item.isPending),
+      item.errors ?? "—",
+      item.warnings ?? "—",
+      totals.submitted,
+      totals.indexed,
+    ].join(" | ");
+  });
 
   const lines = [
     "## Google Search Console URL Inspection",
     "",
     `Property: \`${SITE_URL}\``,
+    "",
+    "### Sitemap status",
+    "",
+    "| Path | Last submitted | Last downloaded | Pending | Errors | Warnings | Submitted | Indexed |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ...(sitemapRows.length > 0 ? sitemapRows : ["_No sitemap returned by Search Console._"]),
     "",
     "| URL | Verdict | Coverage | Robots | Indexing | Fetch | Last crawl | Google canonical | User canonical |",
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
@@ -180,6 +246,12 @@ async function main() {
   console.log(`Inspection cohort: ${urls.length} URL(s)`);
 
   const accessToken = await getAccessToken();
+  const sitemaps = await listSitemaps(accessToken);
+  console.log(`GSC sitemaps: ${sitemaps.length}`);
+  for (const sitemap of sitemaps) {
+    console.log(JSON.stringify({ searchConsoleSitemap: sitemap }));
+  }
+
   const results = [];
   for (const inspectionUrl of urls) {
     const result = await inspectUrl(accessToken, inspectionUrl);
@@ -187,7 +259,7 @@ async function main() {
     console.log(JSON.stringify(result));
   }
 
-  writeStepSummary(results);
+  writeStepSummary(results, sitemaps);
   console.log(`Completed ${results.length} URL Inspection request(s).`);
 }
 

@@ -8,8 +8,6 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
 const contains = (text, fragment, label) =>
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
-const notContains = (text, fragment, label) =>
-  assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
 test("Book Index public read model keeps source ranks separate from the Turkey composite", () => {
   const model = source("src/lib/book-index/public-read-model.ts");

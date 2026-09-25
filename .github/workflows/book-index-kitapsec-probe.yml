@@ -1,0 +1,53 @@
+name: Book Index KitapSec Probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapsec-probe
+    paths:
+      - ".github/workflows/book-index-kitapsec-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Discover KitapSec bestseller entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
+          url="https://www.kitapsec.com/"
+          code="$(curl -L --silent --show-error --max-time 25 -A "$ua" -o /tmp/page.html -w "%{http_code}" "$url")"
+          echo "HTTP_STATUS=$code"
+          echo "BYTES=$(wc -c < /tmp/page.html)"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html
+
+          text=Path("/tmp/page.html").read_text(errors="replace")
+          print("TITLE", re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S).group(1)[:300] if re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S) else "")
+
+          print("--- COK SATAN LINKS ---")
+          seen=[]
+          for href,body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,700}?)</a>',text,re.I):
+              clean=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',body))).strip()
+              low=(href+" "+clean).casefold()
+              if "çok satan" in low or "cok satan" in low or "coksatan" in low:
+                  if (href,clean) not in seen:
+                      seen.append((href,clean))
+          for href,clean in seen[:80]:
+              print(href,"=>",clean[:240])
+
+          print("--- NAV TEXT AROUND COK SATAN ---")
+          folded=text.casefold()
+          for needle in ["çok satanlar","cok satanlar","çok satan"]:
+              p=folded.find(needle)
+              print(needle,p)
+              if p>=0:
+                  print(text[max(0,p-2200):p+5000])
+          PY

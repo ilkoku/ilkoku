@@ -12,7 +12,13 @@ import {
   getBookIndexInsightItems,
   type BookIndexInsightPageDefinition,
 } from "@/lib/book-index/insight-pages";
-import type { BookIndexInsights } from "@/lib/book-index/insights";
+import type {
+  BookIndexEverywhereSeller,
+  BookIndexInsights,
+  BookIndexLongSeller,
+  BookIndexNewEntry,
+  BookIndexRiser,
+} from "@/lib/book-index/insights";
 
 import styles from "./BookIndexPublicView.module.css";
 
@@ -372,31 +378,37 @@ export function TurkeyBookIndexView({
 
 
 function insightMetric(
-  key: BookIndexInsightPageDefinition["key"],
-  item: ReturnType<typeof getBookIndexInsightItems>[number],
+  item:
+    | BookIndexNewEntry
+    | BookIndexRiser
+    | BookIndexEverywhereSeller
+    | BookIndexLongSeller,
 ) {
-  switch (key) {
-    case "newEntries":
-      return {
-        primary: `${item.newSourceCount} yeni kaynak`,
-        secondary: `${item.currentSourceCount} güncel kaynak · en iyi sıra #${item.bestRank}`,
-      };
-    case "risers":
-      return {
-        primary: `+${item.totalRankGain} sıra`,
-        secondary: `${item.improvingSourceCount} yükselen kaynak · en iyi sıra #${item.bestCurrentRank}`,
-      };
-    case "everywhereSellers":
-      return {
-        primary: `${item.sourceCount} bağımsız kaynak`,
-        secondary: `en iyi sıra #${item.bestRank}`,
-      };
-    case "longSellers":
-      return {
-        primary: `${item.historyDays} gün`,
-        secondary: `${item.sourceCount} kaynak · ${item.observationCount} gözlem`,
-      };
+  if ("newSourceCount" in item) {
+    return {
+      primary: `${item.newSourceCount} yeni kaynak`,
+      secondary: `${item.currentSourceCount} güncel kaynak · en iyi sıra #${item.bestRank}`,
+    };
   }
+
+  if ("totalRankGain" in item) {
+    return {
+      primary: `+${item.totalRankGain} sıra`,
+      secondary: `${item.improvingSourceCount} yükselen kaynak · en iyi sıra #${item.bestCurrentRank}`,
+    };
+  }
+
+  if ("historyDays" in item) {
+    return {
+      primary: `${item.historyDays} gün`,
+      secondary: `${item.sourceCount} kaynak · ${item.observationCount} gözlem`,
+    };
+  }
+
+  return {
+    primary: `${item.sourceCount} bağımsız kaynak`,
+    secondary: `en iyi sıra #${item.bestRank}`,
+  };
 }
 
 export function BookIndexInsightView({
@@ -440,7 +452,7 @@ export function BookIndexInsightView({
 
         <ol className={styles.rankingList}>
           {items.map((item, index) => {
-            const metric = insightMetric(definition.key, item);
+            const metric = insightMetric(item);
             return (
               <li className={styles.rankingItem} key={item.masterBookId}>
                 <span className={styles.rank}>{index + 1}</span>

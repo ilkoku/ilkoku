@@ -346,7 +346,7 @@ test("KitapSepeti collector parses the verified server-rendered bestseller catal
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(adapter, 'const MAX_BOOKS = 30;', "KitapSepeti Top 30 cap");
+  contains(adapter, 'const MAX_BOOKS = 60;', "KitapSepeti native page cap");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 20;', "KitapSepeti fail-closed minimum");
   contains(adapter, '\\sproduct-item', "product card selector");
   contains(adapter, '\\bproduct-title\\b', "title selector");
@@ -355,7 +355,7 @@ test("KitapSepeti collector parses the verified server-rendered bestseller catal
   contains(adapter, "BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL", "small result rejection");
   contains(adapter, "BOOK_INDEX_KITAPSEPETI_DUPLICATE_SOURCE_KEY", "duplicate source protection");
   contains(lists, 'code: "kitapsepeti-tr-live"', "KitapSepeti list registry");
-  contains(lists, 'maxRank: 30', "KitapSepeti current-page rank cap");
+  contains(lists, 'maxRank: 60', "KitapSepeti current-page rank ceiling");
   contains(collector, "[kitapSepetiBookIndexAdapter.sourceCode, kitapSepetiBookIndexAdapter]", "KitapSepeti adapter activation");
   contains(
     sources,
@@ -370,7 +370,7 @@ test("Kitapzen collector parses verified bestseller cards with ISBN and period l
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(adapter, 'const MAX_BOOKS = 20;', "Kitapzen Top 20 cap");
+  contains(adapter, 'const MAX_BOOKS = 20;', "Kitapzen page size");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 15;', "Kitapzen fail-closed minimum");
   contains(adapter, 'data-prd-barcode', "Kitapzen ISBN source");
   contains(adapter, '\\bProduct_b\\b', "Kitapzen product card selector");
@@ -410,7 +410,7 @@ test("Inkilap collector parses verified bestseller cards with safe ISBN handling
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(adapter, 'const MAX_BOOKS = 20;', "Inkilap Top 20 cap");
+  contains(adapter, 'const MAX_BOOKS = 20;', "Inkilap page size");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 15;', "Inkilap fail-closed minimum");
   contains(adapter, '\\bproductBox\\b', "Inkilap product card selector");
   contains(adapter, 'data-barcode', "Inkilap barcode source");
@@ -577,4 +577,23 @@ test("Book Index reconciliation only merges safe auto-matched duplicate masters"
   contains(reconciliation, "masterBookId: canonical.id", "duplicate external books are relinked");
   contains(reconciliation, "bookIndexBook.deleteMany", "orphan donor masters are removed only after relinking");
   contains(scheduler, "reconcileAutoMatchedBookIndexMasters", "scheduler executes bounded reconciliation");
+});
+
+
+test("composite collectors use deeper native bestseller pagination without changing the 3-source threshold", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+  const kitapzen = source("src/lib/book-index/sources/kitapzen.ts");
+  const inkilap = source("src/lib/book-index/sources/inkilap.ts");
+  const kitapsepeti = source("src/lib/book-index/sources/kitapsepeti.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+
+  contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "3-source eligibility remains unchanged");
+  contains(lists, 'code: "kitapzen-tr-weekly"', "Kitapzen weekly composite");
+  contains(lists, 'maxRank: 60', "expanded composite rank ceiling");
+  contains(kitapzen, "for (let page = 1; page <= 3; page += 1)", "Kitapzen first three native pages");
+  contains(kitapzen, '(page - 1) * MAX_BOOKS', "Kitapzen contiguous native rank offsets");
+  contains(inkilap, "for (let page = 1; page <= 3; page += 1)", "Inkilap first three native pages");
+  contains(inkilap, '/sayfa/${page}', "Inkilap native pagination path");
+  contains(inkilap, '(page - 1) * MAX_BOOKS', "Inkilap contiguous native rank offsets");
+  contains(kitapsepeti, 'const MAX_BOOKS = 60;', "KitapSepeti accepts the full current native page within a bounded ceiling");
 });

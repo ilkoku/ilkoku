@@ -18,6 +18,13 @@ export type BookIndexCollisionCandidate = {
   }>;
 };
 
+export type BookIndexTitleOverlapSample = {
+  title: string;
+  sourceCodes: string[];
+  authorNames: Array<string | null>;
+  isbn13s: string[];
+};
+
 export type BookIndexReadinessSnapshot = {
   compositeSourceTarget: number;
   observedCompositeSources: number;
@@ -33,6 +40,12 @@ export type BookIndexReadinessSnapshot = {
   normalizedIdentityKeysOnAtLeast3Sources: number;
   splitMasterCollisionCount: number;
   splitMasterCollisionSamples: BookIndexCollisionCandidate[];
+  normalizedTitleKeysOnAtLeast2Sources: number;
+  normalizedTitleKeysOnAtLeast3Sources: number;
+  normalizedTitleDifferentAuthorCount: number;
+  normalizedTitleDifferentAuthorSamples: BookIndexTitleOverlapSample[];
+  isbn13KeysOnAtLeast2Sources: number;
+  isbn13KeysOnAtLeast3Sources: number;
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
   historySpanDays: number;
@@ -102,6 +115,14 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   )].sort((a, b) => a.localeCompare(b, "tr"));
 
   const sourceCodesByMasterBook = new Map<string, Set<string>>();
+  const titleBuckets = new Map<string, {
+    title: string;
+    sourceCodes: Set<string>;
+    authorNames: Set<string>;
+    hasNullAuthor: boolean;
+    isbn13s: Set<string>;
+  }>();
+  const isbn13Buckets = new Map<string, Set<string>>();
   const identityBuckets = new Map<string, {
     title: string;
     authorName: string | null;
@@ -127,6 +148,27 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         const sourceCodes = sourceCodesByMasterBook.get(book.masterBookId) ?? new Set<string>();
         sourceCodes.add(list.source.code);
         sourceCodesByMasterBook.set(book.masterBookId, sourceCodes);
+      }
+
+      if (book.normalizedTitle) {
+        const titleBucket = titleBuckets.get(book.normalizedTitle) ?? {
+          title: book.title,
+          sourceCodes: new Set<string>(),
+          authorNames: new Set<string>(),
+          hasNullAuthor: false,
+          isbn13s: new Set<string>(),
+        };
+        titleBucket.sourceCodes.add(list.source.code);
+        if (book.authorName) titleBucket.authorNames.add(book.authorName);
+        else titleBucket.hasNullAuthor = true;
+        if (book.isbn13) titleBucket.isbn13s.add(book.isbn13);
+        titleBuckets.set(book.normalizedTitle, titleBucket);
+      }
+
+      if (book.isbn13) {
+        const isbnSources = isbn13Buckets.get(book.isbn13) ?? new Set<string>();
+        isbnSources.add(list.source.code);
+        isbn13Buckets.set(book.isbn13, isbnSources);
       }
 
       if (book.normalizedTitle && book.normalizedAuthor) {
@@ -157,6 +199,13 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   const splitMasterCollisions = identityValues
     .filter((bucket) => bucket.sourceCodes.size >= 2 && bucket.masterBookIds.size > 1)
     .sort((a, b) => b.sourceCodes.size - a.sourceCodes.size || b.masterBookIds.size - a.masterBookIds.size);
+
+  const titleValues = [...titleBuckets.values()];
+  const crossSourceTitles = titleValues.filter((bucket) => bucket.sourceCodes.size >= 2);
+  const differentAuthorTitles = crossSourceTitles
+    .filter((bucket) => bucket.authorNames.size + Number(bucket.hasNullAuthor) > 1)
+    .sort((a, b) => b.sourceCodes.size - a.sourceCodes.size || a.title.localeCompare(b.title, "tr"));
+  const isbn13Values = [...isbn13Buckets.values()];
 
   const firstObservationAt = observationRange._min.observedAt ?? null;
   const lastObservationAt = observationRange._max.observedAt ?? null;
@@ -193,6 +242,28 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
           publisherName: variant.publisherName,
         })),
     })),
+    normalizedTitleKeysOnAtLeast2Sources: crossSourceTitles.length,
+    normalizedTitleKeysOnAtLeast3Sources: crossSourceTitles.filter(
+      (bucket) => bucket.sourceCodes.size >= 3,
+    ).length,
+    normalizedTitleDifferentAuthorCount: differentAuthorTitles.length,
+    normalizedTitleDifferentAuthorSamples: differentAuthorTitles.slice(0, 12).map(
+      (bucket) => ({
+        title: bucket.title,
+        sourceCodes: [...bucket.sourceCodes].sort(),
+        authorNames: [
+          ...[...bucket.authorNames].sort((a, b) => a.localeCompare(b, "tr")),
+          ...(bucket.hasNullAuthor ? [null] : []),
+        ],
+        isbn13s: [...bucket.isbn13s].sort(),
+      }),
+    ),
+    isbn13KeysOnAtLeast2Sources: isbn13Values.filter(
+      (sourceCodes) => sourceCodes.size >= 2,
+    ).length,
+    isbn13KeysOnAtLeast3Sources: isbn13Values.filter(
+      (sourceCodes) => sourceCodes.size >= 3,
+    ).length,
     firstObservationAt,
     lastObservationAt,
     historySpanDays: historySpanDays(firstObservationAt, lastObservationAt),

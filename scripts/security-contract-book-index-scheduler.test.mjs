@@ -8,20 +8,24 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
 const contains = (text, fragment, label) =>
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
+const notContains = (text, fragment, label) =>
+  assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Book Index scheduler supports an OIDC-protected one-time matching backfill", () => {
+test("Book Index scheduler keeps production cron and read-only diagnostics after one-time maintenance", () => {
   const route = source("src/app/api/internal/book-index-scheduler/route.ts");
   const workflow = source(".github/workflows/book-index-scheduler.yml");
   const readiness = source("src/lib/book-index/readiness.ts");
 
-  contains(route, "matchPendingBookIndexBooks", "matching backfill service");
-  contains(route, 'searchParams.get("matchPending") === "1"', "explicit backfill switch");
-  contains(route, "matchingBackfill", "backfill result reporting");
-  contains(workflow, "workflow_run:", "temporary production backfill trigger");
-  contains(workflow, "?matchPending=1", "one-time backfill request");
+  contains(workflow, "workflow_dispatch:", "manual operations trigger");
+  contains(workflow, "schedule:", "automatic scheduler trigger");
   contains(workflow, 'cron: "17 * * * *"', "hourly cron remains active");
-  contains(workflow, '"splitMasterCollisionCount" in readiness', "collision deployment guard");
-  contains(readiness, "maxCompositeSourcesPerBook", "maximum overlap diagnostic");
-  contains(readiness, "booksOnAtLeast2CompositeSources", "two-source overlap diagnostic");
-  contains(readiness, "booksOnAtLeast3CompositeSources", "three-source overlap diagnostic");
+  notContains(workflow, "workflow_run:", "temporary production trigger removed");
+  notContains(workflow, "?matchPending=1", "one-time backfill request removed");
+  contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");
+  notContains(route, '"workflow_run"', "temporary workflow-run authorization removed");
+  notContains(route, "matchPendingBookIndexBooks", "one-time matching backfill removed");
+  notContains(route, 'searchParams.get("matchPending")', "maintenance switch removed");
+  contains(readiness, "splitMasterCollisionCount", "collision diagnostic retained");
+  contains(readiness, "splitMasterCollisionSamples", "collision samples retained");
+  contains(readiness, "normalizedIdentityKeysOnAtLeast2Sources", "cross-source identity diagnostic retained");
 });

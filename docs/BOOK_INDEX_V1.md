@@ -177,6 +177,28 @@ eklenmez.
 Türkiye route'u ayrıca gerçekten üretilebilir Türkiye Endeksi verisi yoksa
 404 davranışını korur.
 
+### Kontrollü sitemap wiring
+
+Sitemap, Kitap Endeksi URL'lerini statik olarak yayınlamaz. Ayrı
+`loadBookIndexSitemapEntries()` helper'ı aynı public access gate'ini
+değerlendirir.
+
+Yalnız şu koşullarda iki URL sitemap'e eklenebilir:
+
+- public gate ve publication anahtarları açık,
+- policy eksiksiz,
+- readiness kanıtları eşikleri geçmiş,
+- Türkiye Endeksi gerçekten `available`.
+
+Bu durumda:
+
+- `/en-cok-satanlar`
+- `/en-cok-satanlar/turkiye`
+
+eklenir. Gate kapalıysa, policy eksikse, veri yetersizse veya helper hata
+verirse boş liste döner. Genel sitemap DB/CMS fallback'i de Kitap Endeksi
+URL'lerini içermez. Public navigation ayrıca kapalı kalır.
+
 ### Public read-model sözleşmesi
 
 Public route açılmadan önce server-side veri sözleşmesi dört yüzeyi hazırlar:

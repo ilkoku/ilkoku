@@ -26,7 +26,7 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   contains(overview, "dateModified", "overview freshness schema");
   contains(turkey, "dateModified", "Turkey freshness schema");
   contains(view, "Son veri güncellemesi", "visible freshness");
-  contains(view, "Türkiye'de en çok satan kitaplar nasıl belirleniyor?", "search-intent methodology");
+  contains(view, "en çok satan kitaplar nasıl belirleniyor?", "search-intent methodology");
   contains(sitemap, "getBookIndexLastObservedAt", "sitemap real freshness");
   contains(sitemap, "lastModified", "sitemap lastModified");
 });

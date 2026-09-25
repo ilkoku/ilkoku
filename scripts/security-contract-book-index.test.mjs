@@ -513,3 +513,28 @@ test("Book Index public readiness stays evidence-based and non-publishing", () =
   );
   notContains(sitemap, "/en-cok-satanlar", "no premature bestseller sitemap");
 });
+
+
+test("Book Index sponsor integration points default off and never alter organic rank", () => {
+  const sponsor = source("src/lib/book-index/sponsor.ts");
+  const page = source("src/app/admin/kitap-endeksi/page.tsx");
+
+  for (const code of [
+    "book-index-general-sponsor",
+    "book-index-category-sponsor",
+    "book-index-source-sponsor",
+  ]) {
+    contains(sponsor, `code: "${code}"`, `${code} slot contract`);
+  }
+
+  contains(sponsor, "enabledByDefault: false", "sponsor slots default off");
+  contains(sponsor, "affectsOrganicRank: false", "sponsor cannot alter rank");
+  contains(sponsor, "takesOrganicRankNumber: false", "sponsor has no organic rank number");
+  contains(
+    sponsor,
+    'managementSurface: "banner-advertising"',
+    "existing banner management integration boundary",
+  );
+  contains(page, "default OFF", "truthful sponsor state");
+  contains(page, "Banner / Reklam Alanları", "existing ad management surface");
+});

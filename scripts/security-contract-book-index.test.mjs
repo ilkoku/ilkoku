@@ -426,6 +426,11 @@ test("KitapSec category collector parses explicit ItemList ranks and ISBN metada
   contains(adapter, "BOOK_INDEX_KITAPSEC_DUPLICATE_ITEM", "KitapSec duplicate rank/source protection");
   contains(lists, 'code: "kitapsec-edebiyat-live"', "KitapSec Edebiyat list");
   contains(lists, 'categoryKey: "edebiyat"', "KitapSec category scope");
+  contains(
+    lists,
+    'code: "kitapsec-cocuk-genclik-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Çocuk ve Gençlik Çok Satan Kitaplar",\n    categoryKey: "cocuk-genclik",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Products/Cocuk-ve-Genclik-Kitaplari/Cok-Satan-Kitaplar/",\n    maxRank: 48,\n    includeInComposite: false',
+    "KitapSec child and youth category list",
+  );
   contains(lists, 'includeInComposite: false', "KitapSec category excluded from general composite");
   contains(collector, "[kitapSecBookIndexAdapter.sourceCode, kitapSecBookIndexAdapter]", "KitapSec adapter activation");
   contains(

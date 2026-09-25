@@ -5,6 +5,7 @@ import {
 import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
 import { getBookIndexOperationsSnapshot } from "@/lib/book-index/operations";
 import { getTurkeyBookIndexPreview } from "@/lib/book-index/read-model";
+import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import {
   BOOK_INDEX_SOURCES,
   BOOK_INDEX_V1_SOURCES,
@@ -143,9 +144,10 @@ export default async function BookIndexAdminPage({
     }),
   ]);
 
-  const [turkeyPreview, operations] = await Promise.all([
+  const [turkeyPreview, operations, readiness] = await Promise.all([
     getTurkeyBookIndexPreview(30),
     getBookIndexOperationsSnapshot(),
+    getBookIndexReadinessSnapshot(),
   ]);
 
   const dbSourceByCode = new Map(
@@ -386,6 +388,69 @@ export default async function BookIndexAdminPage({
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="admin-panel admin-directory-panel">
+        <header className="admin-page-heading">
+          <div>
+            <span className="admin-eyebrow">Public / SEO readiness</span>
+            <h2>Veri kalitesi ölçümleri</h2>
+            <p>
+              Bu metrikler public açılım kararını otomatik vermez. Yeterli
+              gerçek veri biriktikten sonra kalite eşikleri ayrıca
+              kilitlenecektir.
+            </p>
+          </div>
+          <span className="admin-table-badge" data-status="pending">
+            Public kapalı
+          </span>
+        </header>
+
+        <section className="admin-settings-grid">
+          <article className="admin-panel admin-settings-card">
+            <span className="admin-eyebrow">Composite kaynak</span>
+            <h2>
+              {readiness.observedCompositeSources} /{" "}
+              {readiness.compositeSourceTarget}
+            </h2>
+            <p>
+              En az bir başarılı snapshot üretmiş genel Türkiye kaynakları.
+            </p>
+            <small>
+              {readiness.observedCompositeSourceCodes.length
+                ? readiness.observedCompositeSourceCodes.join(" · ")
+                : "Henüz başarılı composite snapshot yok"}
+            </small>
+          </article>
+
+          <article className="admin-panel admin-settings-card">
+            <span className="admin-eyebrow">Master eşleşme</span>
+            <h2>%{readiness.matchCoveragePercent.toLocaleString("tr-TR")}</h2>
+            <p>
+              {readiness.matchedExternalBookCount.toLocaleString("tr-TR")} eşleşmiş ·{" "}
+              {readiness.unmatchedExternalBookCount.toLocaleString("tr-TR")} eşleşmemiş
+            </p>
+          </article>
+
+          <article className="admin-panel admin-settings-card">
+            <span className="admin-eyebrow">Tarihsel kapsam</span>
+            <h2>{readiness.historySpanDays.toLocaleString("tr-TR")} gün</h2>
+            <p>
+              İlk snapshot: {formatDateTime(readiness.firstObservationAt)}
+              <br />
+              Son snapshot: {formatDateTime(readiness.lastObservationAt)}
+            </p>
+          </article>
+
+          <article className="admin-panel admin-settings-card">
+            <span className="admin-eyebrow">SEO yayın durumu</span>
+            <h2>Kapalı</h2>
+            <p>
+              /en-cok-satanlar ve sitemap açılımı kalite kapısı geçilene kadar
+              devre dışıdır.
+            </p>
+          </article>
+        </section>
       </section>
 
       {manualLists.length ? (

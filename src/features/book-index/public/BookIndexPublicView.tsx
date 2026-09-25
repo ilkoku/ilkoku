@@ -446,9 +446,11 @@ function insightMetric(
 export function BookIndexInsightView({
   definition,
   insights,
+  lastObservedAt,
 }: {
   definition: BookIndexInsightPageDefinition;
   insights: BookIndexInsights;
+  lastObservedAt: Date | null;
 }) {
   const items = getBookIndexInsightItems(insights, definition.key);
   const currentYear = new Date().getFullYear();
@@ -459,12 +461,14 @@ export function BookIndexInsightView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · {definition.eyebrow}</span>
         <h1>{definition.heading} {currentYear}</h1>
         <p>{definition.description}</p>
-        <p className={styles.freshness}>
-          Son hesaplama:{" "}
-          <time dateTime={insights.generatedAt.toISOString()}>
-            {formattedObservedAt(insights.generatedAt)}
-          </time>
-        </p>
+        {lastObservedAt ? (
+          <p className={styles.freshness}>
+            Son veri güncellemesi:{" "}
+            <time dateTime={lastObservedAt.toISOString()}>
+              {formattedObservedAt(lastObservedAt)}
+            </time>
+          </p>
+        ) : null}
         <Link className={styles.backLink} href="/en-cok-satanlar">
           ← En Çok Satanlar ana sayfası
         </Link>

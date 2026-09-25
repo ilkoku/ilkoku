@@ -10,6 +10,7 @@ import {
 } from "@/lib/book-index/source-pages";
 import {
   getBookIndexInsightItems,
+  getPublishedBookIndexInsightPages,
   type BookIndexInsightPageDefinition,
 } from "@/lib/book-index/insight-pages";
 import type {
@@ -207,13 +208,16 @@ export function BookIndexSourceView({
 
 export function BookIndexOverviewView({
   model,
+  insights,
 }: {
   model: BookIndexPublicReadModel;
+  insights: BookIndexInsights;
 }) {
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
   const currentYear = new Date().getFullYear();
   const publishedSourcePages = getBookIndexPublishedSourcePages(model);
+  const publishedInsightPages = getPublishedBookIndexInsightPages(insights);
 
   return (
     <main className={styles.page}>
@@ -251,6 +255,34 @@ export function BookIndexOverviewView({
           <small>Türkiye Endeksi&apos;nden ayrı pazar olarak tutulur.</small>
         </article>
       </section>
+
+      {publishedInsightPages.length ? (
+        <section className={styles.section} aria-labelledby="insight-pages-heading">
+          <div className={styles.sectionHeading}>
+            <div>
+              <span className={styles.eyebrow}>Trendler</span>
+              <h2 id="insight-pages-heading">Çok satan kitap trendleri</h2>
+              <p>
+                Snapshot geçmişinden türetilen yeni giriş, yükseliş, çoklu
+                kaynak görünürlüğü ve uzun dönem sinyallerini ayrı ayrı inceleyin.
+              </p>
+            </div>
+          </div>
+          <div className={styles.cards}>
+            {publishedInsightPages.map((page) => (
+              <Link
+                className={styles.card}
+                href={`/en-cok-satanlar/${page.slug}`}
+                key={page.slug}
+              >
+                <span>{page.eyebrow}</span>
+                <strong>{page.searchTitle}</strong>
+                <small>{page.description}</small>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {publishedSourcePages.length ? (
         <section className={styles.section} aria-labelledby="source-lists-heading">

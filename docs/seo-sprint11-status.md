@@ -19,6 +19,8 @@ Remaining external indexing step:
 - Required GitHub Actions secrets: `GSC_OAUTH_CLIENT_ID`, `GSC_OAUTH_CLIENT_SECRET`, and `GSC_OAUTH_REFRESH_TOKEN`.
 - The default cohort checks the homepage, `/nasil-calisir`, `/yazarlar-icin`, the Roman writing guide, the first public `/kitap/` URL discoverable from the live sitemap, and any Book Index URLs that are actually published in the live sitemap.
 - The weekly diagnostic runs Tuesday 08:23 Türkiye time (05:23 UTC), remains read-only, and never adds gated Book Index URLs that are absent from the sitemap.
+- A separate weekly **Book Index GSC performance** report runs Tuesday 08:45 Türkiye time (05:45 UTC), after the inspection diagnostic. It compares the latest finalized 28-day Search period with the previous 28 days and reports clicks, impressions, CTR, average position, plus the top Book Index page/query rows.
+- The performance report filters the Search Analytics API to `/en-cok-satanlar*`, uses finalized data with a three-day reporting lag, and treats zero rows as a valid state while the Book Index is gated or newly published.
 - Sitemap submission remains the bulk discovery path. Any manual Search Console "Request indexing" action remains a separate human operation.
 
 Final production UAT #263 remains deferred until the end.

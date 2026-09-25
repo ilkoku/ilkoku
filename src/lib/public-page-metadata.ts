@@ -43,8 +43,25 @@ export function createPublicPageMetadata({
       ...(languageAlternates ? { languages: languageAlternates } : {}),
     },
     robots: noIndex
-      ? { index: false, follow: true }
-      : { index: true, follow: true },
+      ? {
+          index: false,
+          follow: true,
+          googleBot: {
+            index: false,
+            follow: true,
+          },
+        }
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            "max-video-preview": -1,
+            "max-image-preview": "large",
+            "max-snippet": -1,
+          },
+        },
     openGraph: {
       title,
       description: safeDescription,

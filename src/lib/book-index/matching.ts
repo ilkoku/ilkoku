@@ -11,6 +11,12 @@ type BookIndexMatchDb = Pick<
   "bookIndexBook" | "bookIndexExternalBook"
 >;
 
+type BookIndexMasterMatch = {
+  id: string;
+  isbn13: string | null;
+  isbn10: string | null;
+};
+
 export type BookIndexMatchCandidate = {
   id: string;
   title: string;
@@ -50,22 +56,53 @@ function masterSlug(input: {
   return `${slugPart(input.title) || "kitap"}-${digest}`;
 }
 
+function isbnCompatible(
+  externalBook: BookIndexMatchCandidate,
+  master: BookIndexMasterMatch,
+) {
+  if (
+    externalBook.isbn13 &&
+    master.isbn13 &&
+    externalBook.isbn13 !== master.isbn13
+  ) {
+    return false;
+  }
+
+  if (
+    externalBook.isbn10 &&
+    master.isbn10 &&
+    externalBook.isbn10 !== master.isbn10
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 async function linkMaster(
   db: BookIndexMatchDb,
-  externalBookId: string,
-  masterBookId: string,
+  externalBook: BookIndexMatchCandidate,
+  master: BookIndexMasterMatch,
   confidence: number,
   seenAt: Date,
 ) {
   await db.bookIndexBook.update({
-    where: { id: masterBookId },
-    data: { lastSeenAt: seenAt },
+    where: { id: master.id },
+    data: {
+      lastSeenAt: seenAt,
+      ...(!master.isbn13 && externalBook.isbn13
+        ? { isbn13: externalBook.isbn13 }
+        : {}),
+      ...(!master.isbn10 && externalBook.isbn10
+        ? { isbn10: externalBook.isbn10 }
+        : {}),
+    },
   });
 
   await db.bookIndexExternalBook.update({
-    where: { id: externalBookId },
+    where: { id: externalBook.id },
     data: {
-      masterBookId,
+      masterBookId: master.id,
       matchStatus: "auto_matched",
       matchConfidence: confidence,
     },
@@ -73,7 +110,7 @@ async function linkMaster(
 
   return {
     matched: true as const,
-    masterBookId,
+    masterBookId: master.id,
     confidence,
   };
 }
@@ -100,36 +137,46 @@ export async function autoMatchBookIndexExternalBook(
     ? normalizeBookIndexText(externalBook.authorName)
     : null;
 
-  let existing:
-    | {
-        id: string;
-      }
-    | null = null;
+  let existing: BookIndexMasterMatch | null = null;
   let confidence = 0;
 
   if (externalBook.isbn13) {
     existing = await db.bookIndexBook.findUnique({
       where: { isbn13: externalBook.isbn13 },
-      select: { id: true },
+      select: { id: true, isbn13: true, isbn10: true },
     });
-    confidence = 1;
-  } else if (externalBook.isbn10) {
+
+    if (existing) confidence = 1;
+  }
+
+  if (!existing && externalBook.isbn10) {
     existing = await db.bookIndexBook.findUnique({
       where: { isbn10: externalBook.isbn10 },
-      select: { id: true },
+      select: { id: true, isbn13: true, isbn10: true },
     });
-    confidence = 0.98;
-  } else if (normalizedAuthor) {
+
+    if (existing) confidence = 0.98;
+  }
+
+  if (!existing && normalizedAuthor) {
     const candidates = await db.bookIndexBook.findMany({
       where: {
         normalizedTitle,
         normalizedAuthor,
       },
-      select: { id: true },
-      take: 2,
+      select: {
+        id: true,
+        isbn13: true,
+        isbn10: true,
+      },
+      take: 3,
     });
 
-    if (candidates.length > 1) {
+    const compatibleCandidates = candidates.filter((candidate) =>
+      isbnCompatible(externalBook, candidate),
+    );
+
+    if (compatibleCandidates.length > 1) {
       return {
         matched: false as const,
         masterBookId: null,
@@ -137,9 +184,16 @@ export async function autoMatchBookIndexExternalBook(
       };
     }
 
-    existing = candidates[0] ?? null;
-    confidence = 0.92;
-  } else {
+    existing = compatibleCandidates[0] ?? null;
+    if (existing) confidence = 0.92;
+  }
+
+  if (
+    !existing &&
+    !externalBook.isbn13 &&
+    !externalBook.isbn10 &&
+    !normalizedAuthor
+  ) {
     return {
       matched: false as const,
       masterBookId: null,
@@ -150,8 +204,8 @@ export async function autoMatchBookIndexExternalBook(
   if (existing) {
     return linkMaster(
       db,
-      externalBook.id,
-      existing.id,
+      externalBook,
+      existing,
       confidence,
       seenAt,
     );
@@ -177,18 +231,21 @@ export async function autoMatchBookIndexExternalBook(
       firstSeenAt: seenAt,
       lastSeenAt: seenAt,
     },
-    select: { id: true },
+    select: {
+      id: true,
+      isbn13: true,
+      isbn10: true,
+    },
   });
 
   return linkMaster(
     db,
-    externalBook.id,
-    master.id,
+    externalBook,
+    master,
     confidence,
     seenAt,
   );
 }
-
 
 export async function matchPendingBookIndexBooks(limit = 200) {
   const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 500);

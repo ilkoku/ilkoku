@@ -123,6 +123,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "kitapsec-edebiyat-live",
+    sourceCode: "kitapsec",
+    title: "KitapSeç · Edebiyat Çok Satan Kitaplar",
+    categoryKey: "edebiyat",
+    period: "live",
+    sourceUrl: "https://www.kitapsec.com/Products/Edebiyat/Cok-Satan-Kitaplar/1-6-0a0-0-0-0-0-0.xhtml",
+    maxRank: 48,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    enabled: true,
+  },
+  {
     code: "idefix-tr-live",
     sourceCode: "idefix",
     title: "idefix · Çok Satan Kitaplar",

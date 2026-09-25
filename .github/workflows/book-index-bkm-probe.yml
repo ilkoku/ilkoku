@@ -15,59 +15,51 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect rendered BKM bestseller DOM once
+      - name: Inspect rendered BKM product card structure once
         shell: bash
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
           url="https://www.bkmkitap.com/cok-satan-kitaplar"
-
-          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
-          if [[ -z "$chrome" ]]; then
-            echo "CHROME_NOT_FOUND"
-            exit 1
-          fi
-          echo "CHROME=$chrome"
-
-          "$chrome"             --headless=new             --no-sandbox             --disable-gpu             --disable-dev-shm-usage             --user-agent="$ua"             --virtual-time-budget=10000             --dump-dom "$url" > /tmp/bkm-rendered.html 2>/tmp/chrome.err || true
-
-          echo "BYTES=$(wc -c < /tmp/bkm-rendered.html)"
-          echo "PRODUCT_ITEM_COUNT=$(grep -Eo 'class="[^"]*product-item[^"]*"' /tmp/bkm-rendered.html | wc -l || true)"
-          echo "PRODUCTITEM_COUNT=$(grep -Eo 'class="[^"]*productItem[^"]*"' /tmp/bkm-rendered.html | wc -l || true)"
+          chrome="$(command -v google-chrome || command -v google-chrome-stable)"
+          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage             --user-agent="$ua" --virtual-time-budget=10000 --dump-dom "$url"             > /tmp/bkm-rendered.html 2>/tmp/chrome.err || true
 
           python3 - <<'PY'
           from pathlib import Path
           import re, html
-
           text=Path("/tmp/bkm-rendered.html").read_text(errors="replace")
-          print("--- CLASSES ---")
-          classes=[]
-          for m in re.finditer(r'class=["\']([^"\']*(?:product-item|productItem)[^"\']*)["\']', text, re.I):
-            if m.group(1) not in classes: classes.append(m.group(1))
-          for c in classes[:50]: print(c)
 
-          print("--- PRODUCT CARD WINDOWS ---")
-          positions=[]
-          for token in ['class="product-item','class="productItem']:
-            start=0
-            while len(positions)<12:
-              p=text.find(token,start)
-              if p<0: break
-              positions.append(p); start=p+len(token)
-          for p in sorted(positions)[:12]:
-            print("\n###",p)
-            print(text[p:p+4000])
+          print("WAW_PRODUCT_ITEM_OCCURRENCES", len(re.findall(r"waw-product-item", text, re.I)))
+          pos=0
+          shown=0
+          while shown < 8:
+            p=text.find("waw-product-item", pos)
+            if p<0: break
+            print(f"\n### CARD WINDOW {shown+1} pos={p}")
+            print(text[max(0,p-500):p+5500])
+            pos=p+20
+            shown+=1
 
-          print("--- VISIBLE BOOK-LIKE ANCHORS ---")
-          seen=set()
-          for href, body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>([\s\S]{0,900}?)</a>', text, re.I):
-            clean=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',body))).strip()
-            if href in seen or not clean: continue
-            if 'bkmkitap.com' in href and not any(x in href for x in ['/kitap/', '/kategori/', '/yayinevi/', '/yazar/']):
-              seen.add(href)
-              print(href, "=>", clean[:220])
-              if len(seen)>=60: break
+          print("\n--- LI/DIV CLASS COUNTS around products ---")
+          for cls in [
+            "waw-product-item-area",
+            "waw-product-item",
+            "productName",
+            "product-name",
+            "product-title",
+            "detailLink",
+            "brand-name",
+            "product-price",
+          ]:
+            print(cls, text.casefold().count(cls.casefold()))
+
+          print("\n--- PRODUCT-LIKE JSON/ATTRIBUTES ---")
+          for pattern in [
+            r'data-product-id=["\']([^"\']+)',
+            r'data-id=["\']([^"\']+)',
+            r'data-name=["\']([^"\']+)',
+            r'data-url=["\']([^"\']+)',
+          ]:
+            vals=re.findall(pattern,text,re.I)
+            print(pattern, vals[:25])
           PY
-
-          echo "--- CHROME STDERR TAIL ---"
-          tail -n 30 /tmp/chrome.err || true

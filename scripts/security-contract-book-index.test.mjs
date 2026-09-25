@@ -342,3 +342,43 @@ test("KitapSepeti collector parses the verified server-rendered bestseller catal
   );
 });
 
+test("Kitapzen collector parses verified bestseller cards with ISBN and period lists", () => {
+  const adapter = source("src/lib/book-index/sources/kitapzen.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(adapter, 'const MAX_BOOKS = 20;', "Kitapzen Top 20 cap");
+  contains(adapter, 'const MIN_EXPECTED_BOOKS = 15;', "Kitapzen fail-closed minimum");
+  contains(adapter, 'data-prd-barcode', "Kitapzen ISBN source");
+  contains(adapter, '\\bProduct_b\\b', "Kitapzen product card selector");
+  contains(adapter, '\\bwriter\\b', "Kitapzen author selector");
+  contains(adapter, '\\bpublisher\\b', "Kitapzen publisher selector");
+  contains(adapter, "BOOK_INDEX_KITAPZEN_RESULT_TOO_SMALL", "Kitapzen suspicious result rejection");
+  contains(adapter, "BOOK_INDEX_KITAPZEN_DUPLICATE_SOURCE_KEY", "Kitapzen duplicate protection");
+  contains(lists, 'code: "kitapzen-tr-weekly"', "Kitapzen weekly list");
+  contains(lists, 'code: "kitapzen-tr-monthly"', "Kitapzen monthly list");
+  contains(lists, 'code: "kitapzen-tr-yearly"', "Kitapzen yearly list");
+  contains(collector, "[kitapzenBookIndexAdapter.sourceCode, kitapzenBookIndexAdapter]", "Kitapzen adapter activation");
+  contains(
+    sources,
+    'baseUrl: "https://www.kitapzen.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "Kitapzen promoted to V1 ready",
+  );
+});
+
+test("only Kitapzen weekly contributes to the Turkey composite", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(
+    lists,
+    'code: "kitapzen-tr-weekly",\n    sourceCode: "kitapzen",\n    title: "Kitapzen · Haftalık Çok Satanlar",\n    categoryKey: "general",\n    period: "weekly"',
+    "Kitapzen weekly composite list",
+  );
+  contains(
+    lists,
+    'code: "kitapzen-tr-monthly",\n    sourceCode: "kitapzen",\n    title: "Kitapzen · Aylık Çok Satanlar",\n    categoryKey: "general",\n    period: "monthly"',
+    "Kitapzen monthly source-only list",
+  );
+});
+

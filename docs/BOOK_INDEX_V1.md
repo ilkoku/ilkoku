@@ -40,6 +40,7 @@ Bu ürün dış kaynak listesini İlkOku satışı gibi göstermemelidir.
 - Amazon Türkiye
 - Amazon ABD — ayrı pazar
 - KitapSepeti
+- Kitapzen
 
 ## Faz 2 kaynak adayları
 
@@ -305,4 +306,22 @@ bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplan�
   kuyruğu kullanılır.
 - Kaynak V1 Türkiye Endeksi'ne dahil edilir; ancak sponsorlu/özel yerleşim
   sinyali ileride tespit edilirse organik ranktan ayrılmalıdır.
+
+### Kitapzen
+
+- `https://www.kitapzen.com/index.php?mod_id=41&p=ProductBestsellers&page=1&period=weekly`
+  şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent ile HTTP 200
+  döndürüyor.
+- Çok satan sayfası server-rendered HTML içinde 20 sıralı `Product_b` kartı
+  veriyor; headless browser gerekmiyor.
+- Kart açılışında `data-prd-id` ve 13 haneli `data-prd-barcode` bulunuyor.
+  Bu nedenle ISBN-13 eşleştirmesi doğrudan yapılabiliyor.
+- Kartta başlık, yazar, yayınevi, ürün URL'si, görsel ve satış fiyatı
+  bulunuyor.
+- Aynı endpoint `period=weekly`, `period=monthly` ve `period=yearly`
+  dönemlerini destekliyor.
+- Türkiye bileşik endeksinde yalnız haftalık genel liste oy verir; aylık ve
+  yıllık listeler kaynak görünümü ve tarihsel analiz içindir.
+- V1 collector ilk sayfadaki Top 20 ile sınırlıdır; 15'ten az geçerli kart
+  görülürse parser fail-closed davranır.
 

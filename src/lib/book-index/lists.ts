@@ -147,6 +147,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "illakitap-tr-weekly",
+    sourceCode: "illakitap",
+    title: "İlla Kitap · Haftalık Çok Satanlar",
+    categoryKey: "general",
+    period: "weekly",
+    sourceUrl: "https://www.illakitap.com/en-cok-satanlar?period=weekly&rec_per_page=100&page=1",
+    maxRank: 100,
+    includeInComposite: true,
+    collectionEveryMinutes: 360,
+    enabled: true,
+  },
+  {
     code: "idefix-tr-live",
     sourceCode: "idefix",
     title: "idefix · Çok Satan Kitaplar",

@@ -3,6 +3,7 @@ import {
   matchPendingBookIndexBooksAction,
 } from "@/features/book-index/admin-actions";
 import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
+import { getTurkeyBookIndexPreview } from "@/lib/book-index/read-model";
 import {
   BOOK_INDEX_SOURCES,
   BOOK_INDEX_V1_SOURCES,
@@ -125,6 +126,8 @@ export default async function BookIndexAdminPage({
     }),
   ]);
 
+  const turkeyPreview = await getTurkeyBookIndexPreview(30);
+
   const dbSourceByCode = new Map(
     sourceRows.map((source) => [source.code, source] as const),
   );
@@ -225,6 +228,62 @@ export default async function BookIndexAdminPage({
             numarası alamaz.
           </p>
         </article>
+      </section>
+
+      <section className="admin-panel admin-directory-panel">
+        <header className="admin-page-heading">
+          <div>
+            <span className="admin-eyebrow">Türkiye Endeksi önizleme</span>
+            <h2>Kaynaklar arası bileşik sıralama</h2>
+            <p>
+              Yalnız eşleşmiş master kitaplar ve en az {TURKEY_INDEX_MIN_SOURCES}
+              bağımsız Türkiye kaynağı bulunan kayıtlar gösterilir. Bu ekran
+              yönetim önizlemesidir; henüz public veya sitemap&apos;te değildir.
+            </p>
+          </div>
+        </header>
+
+        {turkeyPreview.length ? (
+          <div className="admin-table-wrap">
+            <table className="admin-data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Kitap</th>
+                  <th>Endeks</th>
+                  <th>Kaynak</th>
+                  <th>Kaynak sıraları</th>
+                </tr>
+              </thead>
+              <tbody>
+                {turkeyPreview.map((row, index) => (
+                  <tr key={row.masterBookId}>
+                    <td><strong>{index + 1}</strong></td>
+                    <td>
+                      <strong>{row.title}</strong>
+                      <small>{row.authorName ?? "Yazar bilgisi bekleniyor"}</small>
+                    </td>
+                    <td><strong>{row.score.toLocaleString("tr-TR")}</strong></td>
+                    <td>{row.sourceCount}</td>
+                    <td>
+                      {row.sources
+                        .map((source) => `${source.sourceName} #${source.rank}`)
+                        .join(" · ")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="admin-empty-state">
+            <strong>Türkiye Endeksi için henüz yeterli ortak kitap yok.</strong>
+            <p>
+              Canlı listeleri kontrol edin ve bekleyen eşleştirmeleri çalıştırın.
+              En az üç bağımsız kaynakta eşleşen kitaplar burada görünür.
+            </p>
+          </div>
+        )}
       </section>
 
       {manualLists.length ? (

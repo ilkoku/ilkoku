@@ -301,3 +301,20 @@ test("Book Index matching follows ISBN then exact title-author and preserves man
   contains(page, "Bekleyenleri eşleştir", "admin matching backfill control");
 });
 
+test("Turkey Index admin preview uses only latest composite lists and matched master books", () => {
+  const readModel = source("src/lib/book-index/read-model.ts");
+  const page = source("src/app/admin/kitap-endeksi/page.tsx");
+
+  contains(readModel, "includeInComposite: true", "composite-only list query");
+  contains(readModel, 'status: { in: ["success", "no_change"] }', "latest successful run gate");
+  contains(readModel, "masterBookId", "master-book identity requirement");
+  contains(readModel, "computeTurkeyBookIndexScore", "shared scoring contract");
+  contains(readModel, "itemsStored", "actual observed list size normalization");
+  contains(page, "Türkiye Endeksi önizleme", "admin-only composite preview");
+  contains(
+    page,
+    "henüz public veya sitemap",
+    "public rollout remains gated",
+  );
+});
+

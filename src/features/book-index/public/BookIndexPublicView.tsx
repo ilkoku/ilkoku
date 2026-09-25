@@ -78,12 +78,13 @@ export function BookIndexOverviewView({
 }) {
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
+  const currentYear = new Date().getFullYear();
 
   return (
     <main className={styles.page}>
       <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi</span>
-        <h1>En Çok Satan Kitaplar</h1>
+        <h1>En Çok Satan Kitaplar {currentYear}</h1>
         <p>
           Farklı kitap satış platformlarının kendi çok satan sıralamalarını
           izliyor, kaynakları birbirine karıştırmadan ayrı bir Türkiye Endeksi
@@ -156,12 +157,13 @@ export function TurkeyBookIndexView({
 }) {
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
+  const currentYear = new Date().getFullYear();
 
   return (
     <main className={styles.page}>
       <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
-        <h1>Türkiye&apos;de En Çok Satan Kitaplar</h1>
+        <h1>Türkiye&apos;de En Çok Satan Kitaplar {currentYear}</h1>
         <p>
           Bu liste tek bir mağazanın satış listesi değildir. Aynı kitabın
           bağımsız Türkiye kaynaklarındaki görünürlüğü normalize edilerek

@@ -3,6 +3,7 @@ import {
   matchPendingBookIndexBooksAction,
 } from "@/features/book-index/admin-actions";
 import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
+import { getBookIndexOperationsSnapshot } from "@/lib/book-index/operations";
 import { getTurkeyBookIndexPreview } from "@/lib/book-index/read-model";
 import {
   BOOK_INDEX_SOURCES,
@@ -50,6 +51,22 @@ function runStatusLabel(status: string) {
     default:
       return "Çalışıyor";
   }
+}
+
+function formatDateTime(value: Date | null) {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Europe/Istanbul",
+  }).format(value);
+}
+
+function cadenceLabel(minutes: number | null) {
+  if (minutes === null) return "Manuel";
+  if (minutes % 1440 === 0) return `${minutes / 1440} gün`;
+  if (minutes % 60 === 0) return `${minutes / 60} saat`;
+  return `${minutes} dk`;
 }
 
 function feedbackMessage(params: Awaited<SearchParams>) {
@@ -126,7 +143,10 @@ export default async function BookIndexAdminPage({
     }),
   ]);
 
-  const turkeyPreview = await getTurkeyBookIndexPreview(30);
+  const [turkeyPreview, operations] = await Promise.all([
+    getTurkeyBookIndexPreview(30),
+    getBookIndexOperationsSnapshot(),
+  ]);
 
   const dbSourceByCode = new Map(
     sourceRows.map((source) => [source.code, source] as const),
@@ -220,6 +240,20 @@ export default async function BookIndexAdminPage({
         </article>
 
         <article className="admin-panel">
+          <span className="admin-eyebrow">Scheduler hazırlığı</span>
+          <h2>
+            {operations.schedulerSecretConfigured
+              ? "Secret hazır"
+              : "Secret bekleniyor"}
+          </h2>
+          <p>
+            {operations.dueCount.toLocaleString("tr-TR")} liste şu anda kontrol
+            zamanında. Otomatik cron kapalıdır; dedicated-secret canary PASS
+            olmadan açılmaz.
+          </p>
+        </article>
+
+        <article className="admin-panel">
           <span className="admin-eyebrow">Sponsor</span>
           <h2>Kapalı / hazır</h2>
           <p>
@@ -284,6 +318,74 @@ export default async function BookIndexAdminPage({
             </p>
           </div>
         )}
+      </section>
+
+      <section className="admin-panel admin-directory-panel">
+        <header className="admin-page-heading">
+          <div>
+            <span className="admin-eyebrow">Operasyon görünümü</span>
+            <h2>Liste cadence ve scheduler hazırlığı</h2>
+            <p>
+              Son kontrol, son başarılı snapshot ve bir sonraki kontrol zamanı
+              tek tabloda izlenir. Bu görünüm otomatik cron&apos;u çalıştırmaz.
+            </p>
+          </div>
+          <span
+            className="admin-table-badge"
+            data-status={operations.schedulerSecretConfigured ? "active" : "pending"}
+          >
+            {operations.schedulerSecretConfigured
+              ? "Canary yapılandırılabilir"
+              : "Secret bekleniyor"}
+          </span>
+        </header>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
+                <th>Kaynak liste</th>
+                <th>Cadence</th>
+                <th>Son kontrol</th>
+                <th>Son başarılı</th>
+                <th>Sonraki due</th>
+                <th>Operasyon durumu</th>
+              </tr>
+            </thead>
+            <tbody>
+              {operations.rows.map((row) => (
+                <tr key={row.listCode}>
+                  <td>
+                    <strong>{row.title}</strong>
+                    <small>{row.listCode}</small>
+                  </td>
+                  <td>{cadenceLabel(row.cadenceMinutes)}</td>
+                  <td>
+                    <strong>
+                      {row.latestRunStatus
+                        ? runStatusLabel(row.latestRunStatus)
+                        : "Henüz çalışmadı"}
+                    </strong>
+                    <small>{formatDateTime(row.latestRunAt)}</small>
+                    {row.latestRunErrorCode ? (
+                      <small>{row.latestRunErrorCode}</small>
+                    ) : null}
+                  </td>
+                  <td>{formatDateTime(row.lastSuccessfulRunAt)}</td>
+                  <td>{formatDateTime(row.nextDueAt)}</td>
+                  <td>
+                    <strong>{row.due ? "Kontrol zamanı" : "Bekliyor"}</strong>
+                    <small>
+                      {row.persisted
+                        ? `${row.latestRunItems ?? 0} son kayıt`
+                        : "İlk bootstrap bekleniyor"}
+                    </small>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {manualLists.length ? (

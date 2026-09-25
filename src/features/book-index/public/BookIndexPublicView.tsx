@@ -4,7 +4,10 @@ import type {
   BookIndexPublicReadModel,
   BookIndexSourceListSnapshot,
 } from "@/lib/book-index/public-read-model";
-import type { BookIndexPublishedSourcePage } from "@/lib/book-index/source-pages";
+import {
+  getBookIndexPublishedSourcePages,
+  type BookIndexPublishedSourcePage,
+} from "@/lib/book-index/source-pages";
 
 import styles from "./BookIndexPublicView.module.css";
 
@@ -199,6 +202,7 @@ export function BookIndexOverviewView({
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
   const currentYear = new Date().getFullYear();
+  const publishedSourcePages = getBookIndexPublishedSourcePages(model);
 
   return (
     <main className={styles.page}>
@@ -236,6 +240,36 @@ export function BookIndexOverviewView({
           <small>Türkiye Endeksi&apos;nden ayrı pazar olarak tutulur.</small>
         </article>
       </section>
+
+      {publishedSourcePages.length ? (
+        <section className={styles.section} aria-labelledby="source-lists-heading">
+          <div className={styles.sectionHeading}>
+            <div>
+              <span className={styles.eyebrow}>Kaynak listeleri</span>
+              <h2 id="source-lists-heading">Mağazalara göre çok satan kitaplar</h2>
+              <p>
+                Her kaynak kendi sıralamasıyla gösterilir; İlkOku Türkiye
+                Endeksi ile karıştırılmaz.
+              </p>
+            </div>
+          </div>
+          <div className={styles.cards}>
+            {publishedSourcePages.map((sourcePage) => (
+              <Link
+                className={styles.card}
+                href={`/en-cok-satanlar/kaynak/${sourcePage.slug}`}
+                key={sourcePage.sourceCode}
+              >
+                <span>{sourcePage.sourceName}</span>
+                <strong>{sourcePage.searchTitle}</strong>
+                <small>
+                  {sourcePage.lists.length} güncel liste · kaynak sırası korunur
+                </small>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className={styles.section} id="turkey-preview">
         <div className={styles.sectionHeading}>

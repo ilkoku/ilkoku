@@ -109,8 +109,8 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     countryCode: "TR",
     baseUrl: "https://www.kitapsepeti.com",
     includeInTurkeyIndex: true,
-    phase: "phase_2",
-    collectionState: "planned",
+    phase: "v1",
+    collectionState: "ready",
   },
   {
     code: "kitapsec",

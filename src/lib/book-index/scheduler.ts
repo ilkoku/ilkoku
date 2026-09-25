@@ -65,7 +65,6 @@ export async function runBookIndexScheduler(now = new Date()) {
         orderBy: { startedAt: "desc" },
         select: {
           startedAt: true,
-          status: true,
         },
       });
 

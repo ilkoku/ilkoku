@@ -20,6 +20,7 @@ test("Book Index scheduler supports an OIDC-protected one-time matching backfill
   contains(workflow, "workflow_run:", "temporary production backfill trigger");
   contains(workflow, "?matchPending=1", "one-time backfill request");
   contains(workflow, 'cron: "17 * * * *"', "hourly cron remains active");
+  contains(workflow, '"splitMasterCollisionCount" in readiness', "collision deployment guard");
   contains(readiness, "maxCompositeSourcesPerBook", "maximum overlap diagnostic");
   contains(readiness, "booksOnAtLeast2CompositeSources", "two-source overlap diagnostic");
   contains(readiness, "booksOnAtLeast3CompositeSources", "three-source overlap diagnostic");

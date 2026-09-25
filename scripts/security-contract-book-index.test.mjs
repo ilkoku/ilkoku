@@ -285,3 +285,19 @@ test("idefix collector reads server-side Next data and excludes source-sponsored
   );
 });
 
+test("Book Index matching follows ISBN then exact title-author and preserves manual decisions", () => {
+  const matching = source("src/lib/book-index/matching.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const page = source("src/app/admin/kitap-endeksi/page.tsx");
+
+  contains(matching, "if (externalBook.isbn13)", "ISBN-13 first matching");
+  contains(matching, "else if (externalBook.isbn10)", "ISBN-10 second matching");
+  contains(matching, "normalizedTitle,\n        normalizedAuthor", "exact normalized title-author fallback");
+  contains(matching, 'externalBook.matchStatus === "manual_matched"', "manual match preservation");
+  contains(matching, 'externalBook.matchStatus === "rejected"', "manual rejection preservation");
+  contains(matching, "if (candidates.length > 1)", "ambiguous title-author remains pending");
+  contains(matching, 'matchConfidence: confidence', "matching confidence persistence");
+  contains(collector, "autoMatchBookIndexExternalBook(", "matching runs during collection");
+  contains(page, "Bekleyenleri eşleştir", "admin matching backfill control");
+});
+

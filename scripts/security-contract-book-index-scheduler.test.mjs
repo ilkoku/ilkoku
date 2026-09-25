@@ -47,3 +47,39 @@ test("Book Index automatic cron stays off until the manual canary passes", () =>
   contains(admin, "Otomatik scheduler bu aşamada kapalıdır", "admin truthfulness");
   contains(rollout, "AUTOMATIC_CRON_DISABLED / CANARY_READY", "staged rollout state");
 });
+
+
+test("Book Index admin exposes scheduler readiness without enabling cron", () => {
+  const operations = source("src/lib/book-index/operations.ts");
+  const page = source("src/app/admin/kitap-endeksi/page.tsx");
+
+  contains(
+    operations,
+    "getBookIndexOperationsSnapshot",
+    "operations read model",
+  );
+  contains(
+    operations,
+    "latest.startedAt.getTime() + cadenceMinutes * 60_000",
+    "next-due calculation",
+  );
+  contains(
+    operations,
+    'status: { in: ["success", "no_change"] }',
+    "last-success calculation",
+  );
+  contains(
+    operations,
+    "BOOK_INDEX_SCHEDULER_SECRET",
+    "secret readiness without exposing secret value",
+  );
+  contains(page, "Operasyon görünümü", "admin operations section");
+  contains(page, "Son başarılı", "last-success column");
+  contains(page, "Sonraki due", "next-due column");
+  contains(page, "Secret bekleniyor", "safe scheduler readiness state");
+  contains(
+    page,
+    "Otomatik cron kapalıdır; dedicated-secret canary PASS",
+    "admin does not claim automatic scheduling before canary",
+  );
+});

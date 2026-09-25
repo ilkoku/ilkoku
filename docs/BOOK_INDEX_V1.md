@@ -252,6 +252,31 @@ Public yüzeyler açılmadan önce dört türe ait read-model hazırlanır:
 Bu modeller sabit “7 gün/30 gün” gibi henüz kanıtlanmamış eşikler üretmez.
 Gerçek snapshot geçmişi biriktikçe public ürün etiketleri ayrıca kilitlenir.
 
+### Kaynak bazlı SEO sayfaları
+
+Public gate geçtikten sonra yalnız gerçek başarılı snapshot içeren kaynaklar
+için kaynak-native arama sayfaları yayınlanabilir.
+
+İlk slug sözleşmesi:
+
+- BKM Kitap → `/en-cok-satanlar/kaynak/bkm-kitap`
+- Remzi Kitabevi → `/en-cok-satanlar/kaynak/remzi-kitabevi`
+- idefix → `/en-cok-satanlar/kaynak/idefix`
+- KitapSepeti → `/en-cok-satanlar/kaynak/kitapsepeti`
+- Kitapzen → `/en-cok-satanlar/kaynak/kitapzen`
+- İnkılâp Kitabevi → `/en-cok-satanlar/kaynak/inkilap-kitabevi`
+- KitapSeç → `/en-cok-satanlar/kaynak/kitapsec`
+
+Kaynak sayfası için iki koşul zorunludur:
+
+1. ortak Book Index public gate geçmiş olmalı;
+2. ilgili kaynakta en az bir `available` ve boş olmayan liste snapshot'ı bulunmalı.
+
+Bu şartlar yoksa route 404/noindex kalır ve sitemap/site haritasında link
+üretilmez. `blocked`, `researching`, `paused` veya boş kaynaklar için
+SEO sayfası üretilmez. Kaynak sırası değiştirilmez; Türkiye Endeksi puanı
+kaynak-native rank yerine gösterilmez.
+
 ### Public readiness ölçümleri
 
 Public açılım öncesi admin ekranında yalnız ölçülebilir durum gösterilir:

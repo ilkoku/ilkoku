@@ -117,7 +117,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     categoryKey: "general",
     period: "live",
     sourceUrl: "https://www.inkilap.com/cok-satanlar",
-    maxRank: 20,
+    maxRank: 60,
     includeInComposite: true,
     collectionEveryMinutes: 360,
     enabled: true,

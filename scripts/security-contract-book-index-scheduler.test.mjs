@@ -40,22 +40,22 @@ test("Book Index scheduler endpoint accepts scoped GitHub OIDC and keeps secret 
   contains(env, 'BOOK_INDEX_SCHEDULER_SECRET="CHANGE_ME_WITH_AT_LEAST_32_RANDOM_CHARACTERS"', "legacy environment contract");
 });
 
-test("Book Index automatic cron stays off until the OIDC canary passes", () => {
+test("Book Index automatic cron is enabled only after the OIDC canary pass", () => {
   const workflow = source(".github/workflows/book-index-scheduler.yml");
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
   const rollout = source("docs/operations/book-index-scheduler-rollout.md");
 
-  contains(workflow, "workflow_dispatch:", "manual canary trigger");
-  contains(workflow, "workflow_run:", "post-production-smoke canary trigger");
-  contains(workflow, "Production smoke", "deployment-aware canary trigger");
+  contains(workflow, "workflow_dispatch:", "manual operations trigger");
+  contains(workflow, "schedule:", "automatic scheduler trigger");
+  contains(workflow, 'cron: "17 * * * *"', "hourly scheduler cadence");
+  notContains(workflow, "workflow_run:", "temporary bootstrap trigger removed");
   contains(workflow, "id-token: write", "OIDC token permission");
   contains(workflow, "ACTIONS_ID_TOKEN_REQUEST_URL", "OIDC token request");
   contains(workflow, "ilkoku-book-index-scheduler", "dedicated OIDC audience");
   contains(workflow, "/api/internal/book-index-scheduler", "internal scheduler endpoint");
-  notContains(workflow, "schedule:", "no premature automatic cron");
   contains(admin, "GitHub OIDC hazır", "admin authentication readiness");
-  contains(admin, "OIDC canary PASS", "admin does not claim automatic scheduling before canary");
-  contains(rollout, "AUTOMATIC_CRON_DISABLED / OIDC_CANARY_READY", "staged rollout state");
+  contains(admin, "Saatlik scheduler aktif", "admin automatic scheduling state");
+  contains(rollout, "AUTOMATIC_CRON_ENABLED / CANARY_PASS", "activated rollout state");
 });
 
 test("Book Index admin exposes scheduler readiness without enabling cron", () => {
@@ -70,5 +70,5 @@ test("Book Index admin exposes scheduler readiness without enabling cron", () =>
   contains(page, "Son başarılı", "last-success column");
   contains(page, "Sonraki due", "next-due column");
   contains(page, "Canary kimliği hazır", "OIDC canary readiness state");
-  contains(page, "Otomatik cron kapalıdır; OIDC canary PASS", "admin truthfulness");
+  contains(page, "Saatlik scheduler aktif", "admin truthfulness");
 });

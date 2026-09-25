@@ -9,10 +9,12 @@ import type {
 import { normalizeBookIndexText } from "./html";
 import { getBookIndexList } from "./lists";
 import { getBookIndexSource } from "./sources";
+import { bkmBookIndexAdapter } from "./sources/bkm";
 import { remziBookIndexAdapter } from "./sources/remzi";
 
 const adapters = new Map<string, BookIndexSourceAdapter>([
   [remziBookIndexAdapter.sourceCode, remziBookIndexAdapter],
+  [bkmBookIndexAdapter.sourceCode, bkmBookIndexAdapter],
 ]);
 
 function fingerprint(result: BookIndexCollectionResult) {

@@ -243,3 +243,52 @@ test("manual SEO indexability smoke validates Book Index only after sitemap publ
     "fail-closed pre-publication behavior",
   );
 });
+
+
+test("Book Index insight search-intent pages publish only with real evidence", () => {
+  const definitions = source("src/lib/book-index/insight-pages.ts");
+  const route = source("src/app/en-cok-satanlar/[insight]/page.tsx");
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+  const analytics = source("src/features/book-index/public/BookIndexAnalytics.tsx");
+  const smoke = source(".github/workflows/seo-indexability-smoke.yml");
+
+  for (const slug of [
+    "yeni-girisler",
+    "yukselenler",
+    "her-yerde-satanlar",
+    "uzun-satanlar",
+  ]) {
+    contains(definitions, `slug: "${slug}"`, `${slug} insight slug`);
+  }
+
+  contains(
+    definitions,
+    'item.historyDays > 0',
+    "long-seller route requires real historical duration",
+  );
+  contains(
+    route,
+    "getBookIndexPublicPageContext(100)",
+    "insight pages use shared publication gate",
+  );
+  contains(route, "if (items.length === 0) notFound()", "empty insight page fails closed");
+  contains(route, "createBookIndexGenericItemListSchema", "insight ranking schema");
+  contains(route, "getBookIndexLastObservedAt", "real snapshot freshness");
+  contains(view, "Çok satan kitap trendleri", "overview insight discovery section");
+  contains(
+    sitemap,
+    "getPublishedBookIndexInsightPages(insights)",
+    "sitemap only receives evidence-backed insight pages",
+  );
+  contains(
+    analytics,
+    'return "insight"',
+    "insight pages receive dedicated analytics classification",
+  );
+  contains(
+    smoke,
+    "yeni-girisler|yukselenler|her-yerde-satanlar|uzun-satanlar",
+    "SEO smoke samples a published insight page",
+  );
+});

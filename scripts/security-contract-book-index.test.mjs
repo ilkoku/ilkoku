@@ -311,8 +311,10 @@ test("Book Index matching follows ISBN then exact title-author and preserves man
   const page = source("src/app/admin/kitap-endeksi/page.tsx");
 
   contains(matching, "if (externalBook.isbn13)", "ISBN-13 first matching");
-  contains(matching, "else if (externalBook.isbn10)", "ISBN-10 second matching");
-  contains(matching, "normalizedTitle,\n        normalizedAuthor", "exact normalized title-author fallback");
+  contains(matching, "if (!existing && externalBook.isbn10)", "ISBN-10 fallback matching");
+  contains(matching, "if (!existing && normalizedAuthor)", "title-author fallback after ISBN misses");
+  contains(matching, "compatibleCandidates", "ISBN-compatible title-author fallback");
+  contains(matching, "isbnCompatible", "conflicting ISBN protection");
   contains(matching, 'externalBook.matchStatus === "manual_matched"', "manual match preservation");
   contains(matching, 'externalBook.matchStatus === "rejected"', "manual rejection preservation");
   contains(matching, "if (candidates.length > 1)", "ambiguous title-author remains pending");

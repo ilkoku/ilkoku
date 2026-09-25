@@ -621,6 +621,8 @@ test("Illa Kitap weekly bestseller collector is a bounded independent Turkey com
   contains(adapter, 'const MAX_BOOKS = 100;', "Illa Kitap native result ceiling");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 40;', "Illa Kitap fail-closed minimum");
   contains(adapter, '\\bProduct_([0-9]+)', "stable product id class");
+  contains(adapter, 'data-prd-barcode', "Illa Kitap ISBN metadata");
+  contains(adapter, '/^(?:978|979)[0-9]{10}$/u', "only ISBN prefixes become isbn13");
   contains(adapter, '\\btooltip-ajax\\b', "title link selector");
   contains(adapter, '\\bwriter\\b', "author selector");
   contains(adapter, '\\bpublisher\\b', "publisher selector");

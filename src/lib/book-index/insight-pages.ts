@@ -62,6 +62,9 @@ export function getBookIndexInsightItems(
   insights: BookIndexInsights,
   key: BookIndexInsightKey,
 ) {
+  if (key === "longSellers") {
+    return insights.longSellers.filter((item) => item.historyDays > 0);
+  }
   return insights[key];
 }
 

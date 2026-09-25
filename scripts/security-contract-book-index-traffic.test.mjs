@@ -88,3 +88,46 @@ test("scheduled IndexNow refresh remains fail-closed while Book Index is absent 
   assert.equal(result.mode, "book-index");
   assert.deepEqual(result.urls, []);
 });
+
+
+test("Book Index uses a dedicated social preview for result-sharing CTR", () => {
+  const overview = source("src/app/en-cok-satanlar/page.tsx");
+  const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
+  const image = source("src/app/en-cok-satanlar/opengraph-image.tsx");
+
+  contains(
+    overview,
+    'image: "/en-cok-satanlar/opengraph-image"',
+    "overview social image",
+  );
+  contains(
+    turkey,
+    'image: "/en-cok-satanlar/opengraph-image"',
+    "Turkey social image",
+  );
+  contains(image, "1200", "social image width");
+  contains(image, "630", "social image height");
+  contains(image, "En Çok Satan Kitaplar", "search-intent social headline");
+  contains(image, "1 kaynak = 1 oy", "trust signal");
+});
+
+
+test("Book Index gains a gated site-wide footer discovery link after publication", () => {
+  const footer = source("src/components/content/PublicTrustFooter.tsx");
+
+  contains(
+    footer,
+    "getBookIndexPublicPageContext(10).catch(() => null)",
+    "footer uses the same fail-closed public gate",
+  );
+  contains(
+    footer,
+    '{ href: "/en-cok-satanlar", label: "En Çok Satanlar" }',
+    "footer Book Index discovery link",
+  );
+  contains(
+    footer,
+    "const platformLinks = bookIndexContext",
+    "footer link only appears when publication is actually allowed",
+  );
+});

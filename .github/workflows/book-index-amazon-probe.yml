@@ -15,39 +15,55 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 7
     steps:
-      - name: Inspect Amazon TR rendered bestseller DOM
+      - name: Inspect Amazon TR network transport
         shell: bash
         run: |
           set -euo pipefail
           ua="IlkOkuBookIndex/0.1 (+https://ilkoku.com)"
           url="https://www.amazon.com.tr/gp/bestsellers/books"
           chrome="$(command -v google-chrome || command -v google-chrome-stable)"
-          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage             --user-agent="$ua" --virtual-time-budget=10000 --dump-dom "$url"             > /tmp/amazon-tr.html 2>/tmp/chrome.err || true
 
-          echo "BYTES=$(wc -c < /tmp/amazon-tr.html)"
-          echo "ROBOT_CHECK=$(grep -Eoi 'robot check|automated access|captcha|api-services-support@amazon' /tmp/amazon-tr.html | head -n 5 | tr '\n' ' ' || true)"
-          echo "ASIN_COUNT=$(grep -Eo 'data-asin=["'"'"'][A-Z0-9]{10}["'"'"']' /tmp/amazon-tr.html | wc -l || true)"
-          echo "RANK_COUNT=$(grep -Eo 'zg-bdg-text[^>]*>#[0-9]+' /tmp/amazon-tr.html | wc -l || true)"
-          echo "DP_LINK_COUNT=$(grep -Eo 'href=["'"'"'][^"'"'"']*/dp/[A-Z0-9]{10}[^"'"'"']*["'"'"']' /tmp/amazon-tr.html | wc -l || true)"
+          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage             --user-agent="$ua" --virtual-time-budget=10000             --log-net-log=/tmp/amazon-netlog.json             --net-log-capture-mode=IncludeSensitive             --dump-dom "$url" >/tmp/amazon-tr.html 2>/tmp/chrome.err || true
 
           python3 - <<'PY'
           from pathlib import Path
-          import re, html
-          text=Path("/tmp/amazon-tr.html").read_text(errors="replace")
+          import json,re
 
-          for token in ["zg-grid-general-faceout", "zg-bdg-text", "data-asin=", "/dp/"]:
-              print("\nTOKEN",token,"COUNT",text.count(token))
-              p=text.find(token)
+          data=json.loads(Path("/tmp/amazon-netlog.json").read_text(errors="replace"))
+          urls=[]
+          interesting=[]
+          for event in data.get("events",[]):
+              params=event.get("params") or {}
+              url=params.get("url") or params.get("original_url") or params.get("redirect_url")
+              method=params.get("method")
+              if not url or url in urls:
+                  continue
+              urls.append(url)
+              low=url.casefold()
+              if any(k in low for k in [
+                  "bestseller","zg","zeitgeist","p13n","carousel","ajax",
+                  "api","recommend","ranking","rank","books","dp/"
+              ]):
+                  interesting.append((method,url,event.get("type"),event.get("phase")))
+
+          print("INTERESTING_URL_COUNT",len(interesting))
+          for method,url,typ,phase in interesting[:180]:
+              print("REQ",method,typ,phase,url)
+
+          raw=Path("/tmp/amazon-tr.html").read_text(errors="replace")
+          print("\n--- HTML TRANSPORT TOKENS ---")
+          for token in [
+              "data-client-recs-list",
+              "data-a-carousel-options",
+              "p13n",
+              "zeitgeist",
+              "ajax",
+              "api/",
+              "data-asin",
+              "render.zg.rank",
+          ]:
+              print(token, raw.casefold().count(token.casefold()))
+              p=raw.casefold().find(token.casefold())
               if p>=0:
-                  print(text[max(0,p-1200):p+6000])
-
-          print("\n--- FIRST 20 ASINS ---")
-          asins=[]
-          for asin in re.findall(r'data-asin=["\']([A-Z0-9]{10})["\']',text):
-              if asin not in asins: asins.append(asin)
-          print(asins[:20])
-
-          print("\n--- FIRST 20 RANKS ---")
-          ranks=re.findall(r'class=["\'][^"\']*zg-bdg-text[^"\']*["\'][^>]*>\s*#([0-9]+)',text,re.I)
-          print(ranks[:20])
+                  print(raw[max(0,p-700):p+2200])
           PY

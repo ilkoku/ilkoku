@@ -29,6 +29,27 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   contains(view, "en çok satan kitaplar nasıl belirleniyor?", "search-intent methodology");
   contains(sitemap, "getBookIndexLastObservedAt", "sitemap real freshness");
   contains(sitemap, "lastModified", "sitemap lastModified");
+  contains(
+    overview,
+    'image: "/en-cok-satanlar/opengraph-image"',
+    "overview Book Index social card",
+  );
+  contains(
+    turkey,
+    'image: "/en-cok-satanlar/opengraph-image"',
+    "Turkey Book Index social card",
+  );
+});
+
+test("Book Index owns a dedicated evergreen social share image", () => {
+  const image = source("src/app/en-cok-satanlar/opengraph-image.tsx");
+
+  contains(image, "ImageResponse", "social image renderer");
+  contains(image, "En Çok Satan Kitaplar", "social search intent");
+  contains(image, "new Date().getFullYear()", "current-year social freshness");
+  contains(image, "Kitap Endeksi", "Book Index brand");
+  contains(image, "1200", "OpenGraph width");
+  contains(image, "630", "OpenGraph height");
 });
 
 test("public site map never exposes gated Book Index links early", () => {

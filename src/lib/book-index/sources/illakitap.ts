@@ -37,7 +37,7 @@ export function parseIllaKitapWeeklyBestsellers(
       const barcode = match[2]?.trim() ?? "";
 
       const titleMatch = card.match(
-        /<a\b(?=[^>]*\bclass=["'][^"']*\btooltip-ajax\b[^"']*["'])(?=[^>]*\bhref=["']([^"']+)["'])[^>]*>([\s\S]*?)<\/a>/iu,
+        /<div\b[^>]*\bclass=["'][^"']*\bname\b[^"']*["'][^>]*>\s*<a\b[^>]*\bhref=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/iu,
       );
       const author = card.match(
         /<div\b[^>]*\bclass=["'][^"']*\bwriter\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/iu,

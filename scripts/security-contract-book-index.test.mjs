@@ -64,7 +64,7 @@ test("book index source registry separates Amazon US from the Turkey composite",
   );
 });
 
-test("Turkey score normalizes rank and collapses duplicate source votes", () => {
+test("Turkey score normalizes rank and collapses duplicate storefront and operator votes", () => {
   const ranking = source("src/lib/book-index/ranking.ts");
 
   contains(
@@ -80,7 +80,22 @@ test("Turkey score normalizes rank and collapses duplicate source votes", () => 
   contains(
     ranking,
     "sourceCount < TURKEY_INDEX_MIN_SOURCES",
-    "minimum source eligibility gate",
+    "minimum independent-source eligibility gate",
+  );
+  contains(
+    ranking,
+    "const byIndependenceGroup = new Map<string, BookIndexSourceVote[]>();",
+    "one-vote-per-independent-operator grouping",
+  );
+  contains(
+    ranking,
+    "getBookIndexSourceIndependenceGroup",
+    "operator independence lookup",
+  );
+  contains(
+    ranking,
+    "groupVotes.reduce(",
+    "same-operator storefront scores are averaged into one vote",
   );
   contains(
     ranking,
@@ -703,7 +718,11 @@ test("Book Index readiness distinguishes storefront sources from independent ope
   contains(readiness, "booksOnAtLeast3IndependentCompositeSources", "independent 3-source overlap metric");
   contains(readiness, "sameIndependenceGroup", "pair matrix operator relationship");
   contains(readiness, "independentSourceCount", "near-3 independent-source count");
-  notContains(ranking, "independenceGroup", "diagnostic phase does not change ranking");
+  contains(
+    ranking,
+    "getBookIndexSourceIndependenceGroup",
+    "ranking enforces independent operator votes",
+  );
   contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "3-source threshold stays unchanged");
 });
 

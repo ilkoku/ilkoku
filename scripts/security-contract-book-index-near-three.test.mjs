@@ -72,7 +72,7 @@ test("Book Index readiness measures storefront eligibility lost after operator g
 });
 
 
-test("KitaplarSepette canary has documented independent operator metadata", () => {
+test("KitaplarSepette qualified voter keeps documented independent operator metadata", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
 
@@ -83,12 +83,17 @@ test("KitaplarSepette canary has documented independent operator metadata", () =
   );
   contains(
     lists,
-    'code: "kitaplarsepette-tr-live-canary"',
-    "KitaplarSepette remains a named canary",
+    'code: "kitaplarsepette-tr-live"',
+    "KitaplarSepette qualified live voter",
   );
   contains(
     lists,
-    'includeInComposite: false',
-    "operator metadata does not activate the canary vote",
+    'includeInComposite: true',
+    "qualified KitaplarSepette vote is active",
+  );
+  notContains(
+    lists,
+    'code: "kitaplarsepette-tr-live-canary"',
+    "qualified canary registry entry is retired",
   );
 });

@@ -751,7 +751,10 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         authorName: book.authorName,
         currentSourceCodes,
         currentIndependenceGroups,
-        projectedStorefrontSourceCount: currentSourceCodes.length + 1,
+        projectedStorefrontSourceCount: new Set([
+          ...currentSourceCodes,
+          "kitaplarsepette",
+        ]).size,
         projectedIndependentSourceCount: projectedIndependenceGroups.size,
       };
     })

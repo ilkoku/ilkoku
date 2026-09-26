@@ -43,7 +43,16 @@ export function parseKitaplarSepetteBestsellerCards(
   });
 
   if (starts.length < MIN_EXPECTED_BOOKS) {
-    throw new Error("BOOK_INDEX_KITAPLARSEPETTE_CARD_STARTS_TOO_SMALL");
+    const productIdSignals = new Set(
+      [...html.matchAll(/\\baddCart\\(\\s*([0-9]+)\\s*,\\s*["']card["']\\s*\\)/giu)]
+        .map((match) => match[1]),
+    );
+
+    throw new Error(
+      productIdSignals.size >= MIN_EXPECTED_BOOKS
+        ? "BOOK_INDEX_KITAPLARSEPETTE_CARD_WRAPPERS_TOO_SMALL"
+        : "BOOK_INDEX_KITAPLARSEPETTE_SERVER_PRODUCT_SIGNALS_TOO_SMALL",
+    );
   }
 
   const cards = starts

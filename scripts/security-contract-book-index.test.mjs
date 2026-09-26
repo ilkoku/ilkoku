@@ -721,8 +721,11 @@ test("KitaplarSepette canary collects daily without contributing to the composit
   contains(adapter, '\\bc-p-i-link\\b', "canonical product link selector");
   contains(adapter, "\\baddCart\\(", "stable product id extraction");
   contains(adapter, "\\bBarkod\\s*:", "ISBN detail metadata");
-  contains(adapter, "\\bYazar\\s*:", "author detail metadata");
-  contains(adapter, "\\bYayınevi\\s*:", "publisher detail metadata");
+  contains(adapter, 'label: "Yazar" | "Yayınevi"', "bounded metadata labels");
+  contains(adapter, 'detailLabelValue(html, "Yazar")', "author detail metadata");
+  contains(adapter, 'detailLabelValue(html, "Yayınevi")', "publisher detail metadata");
+  contains(adapter, "anchorValue", "linked metadata variant remains supported");
+  contains(adapter, "plainValue", "plain-text metadata fallback");
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_RESULT_TOO_SMALL", "small-list rejection");
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DUPLICATE_PRODUCT_ID", "duplicate-id protection");
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DETAIL_METADATA_MISSING", "minimum identity metadata gate");

@@ -92,23 +92,37 @@ export function parseKitaplarSepetteBestsellerCards(
   return cards;
 }
 
+function detailLabelValue(
+  html: string,
+  label: "Yazar" | "Yayınevi",
+) {
+  const anchorValue = html.match(
+    new RegExp(`\\b${label}\\s*:\\s*<a\\b[^>]*>([\\s\\S]*?)<\\/a>`, "iu"),
+  )?.[1];
+
+  if (anchorValue) return decodeBookIndexHtml(anchorValue);
+
+  const plainValue = html.match(
+    new RegExp(
+      `\\b${label}\\s*:\\s*(?:<[^>]+>\\s*)*([^<\\r\\n][^<\\r\\n]*)`,
+      "iu",
+    ),
+  )?.[1];
+
+  return plainValue ? decodeBookIndexHtml(plainValue) : null;
+}
+
 export function parseKitaplarSepetteProductDetails(
   html: string,
 ): KitaplarSepetteDetail {
   const barcode = html.match(
     /\bBarkod\s*:\s*(?:<[^>]+>\s*)*((?:978|979)[0-9\s-]{10,20})/iu,
   )?.[1];
-  const author = html.match(
-    /\bYazar\s*:\s*<a\b[^>]*>([\s\S]*?)<\/a>/iu,
-  )?.[1];
-  const publisher = html.match(
-    /\bYayınevi\s*:\s*<a\b[^>]*>([\s\S]*?)<\/a>/iu,
-  )?.[1];
 
   return {
     isbn13: validIsbn13(barcode),
-    authorName: author ? decodeBookIndexHtml(author) : null,
-    publisherName: publisher ? decodeBookIndexHtml(publisher) : null,
+    authorName: detailLabelValue(html, "Yazar"),
+    publisherName: detailLabelValue(html, "Yayınevi"),
   };
 }
 

@@ -75,6 +75,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "kitaplarsepette-tr-live-canary",
+    sourceCode: "kitaplarsepette",
+    title: "KitaplarSepette · Çok Satanlar · Canary",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.kitaplarsepette.com/cok-satanlar",
+    maxRank: 30,
+    includeInComposite: false,
+    collectionEveryMinutes: 1440,
+    enabled: true,
+  },
+  {
     code: "kitapzen-tr-weekly",
     sourceCode: "kitapzen",
     title: "Kitapzen · Haftalık Çok Satanlar",

@@ -71,7 +71,8 @@ Cron açıldıktan sonra admin **Kitap Endeksi** ekranından şu alanlar izlenir
 - kaynak hata kodu;
 - başarılı/hatalı run sayısı;
 - ilk ve son observation zamanı;
-- tarihsel veri süresi.
+- kesin `historySpanHours` ve tamamlanmış gün olarak `historySpanDays`;
+- due listeler için en uzun cadence gecikmesi (`maxOverdueMinutes`).
 
 Tek bir başarılı run public yayın için yeterli kabul edilmez.
 

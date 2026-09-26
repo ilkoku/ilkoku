@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "17 * * * *"
+    # Due-aware fallback if GitHub delays or drops the primary scheduled event.
+    - cron: "47 * * * *"
 
 permissions:
   contents: read

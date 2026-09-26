@@ -13,9 +13,9 @@ Bu ürün dış kaynak listesini İlkOku satışı gibi göstermemelidir.
 1. Kaynak sıralaması kaynak adına gösterilir; İlkOku tarafından yeniden
    adlandırılmaz.
 2. İlkOku Türkiye Endeksi ayrı bir bileşik sıralamadır.
-3. Türkiye Endeksi'nde **1 kaynak = 1 oy**.
-4. Başlangıç uygunluk eşiği **en az 3 bağımsız Türkiye kaynağıdır**.
-5. Kaynaklar başlangıçta eşit ağırlıklıdır.
+3. Türkiye Endeksi'nde **1 bağımsız işletmeci grubu = en fazla 1 oy**. Aynı işletmeciye ait birden fazla storefront veya liste ekstra oy üretmez.
+4. Uygunluk eşiği **en az 3 bağımsız işletmeci grubudur**.
+5. Bağımsız işletmeci grupları eşit ağırlıklıdır.
 6. Amazon Türkiye Türkiye Endeksi'ne katılabilir.
 7. Amazon ABD ayrı pazardır ve Türkiye Endeksi'ne katılmaz.
 8. Ham gözlemler overwrite edilmez; her fetch run kendi snapshot'ını korur.
@@ -92,10 +92,10 @@ alıyorsa bu storefront puanlarının aritmetik ortalaması o işletmeci grubunu
 tek oyunu oluşturur. Böylece aynı işletmeci ek storefront ile ağırlığını
 artıramaz.
 
-En az üç bağımsız Türkiye kaynağı / işletmeci grubu bulunmadığında kitap
+En az üç bağımsız işletmeci grubu bulunmadığında kitap
 Türkiye Endeksi için uygun değildir.
 
-İlk V1'de bağımsız kaynak ağırlıkları eşittir. İleride ağırlık değişecekse algoritma
+İlk V1'de bağımsız işletmeci grubu ağırlıkları eşittir. İleride ağırlık değişecekse algoritma
 versiyonlanmalı ve geçmiş endeks sonuçlarının hangi versiyonla hesaplandığı
 saklanmalıdır.
 
@@ -144,14 +144,14 @@ SEO kalite kapısı iki ayrı anahtar kullanır:
 1. **Gate evaluation:** `BOOK_INDEX_SEO_GATE_ENABLED=true`
 2. **Publication:** `BOOK_INDEX_SEO_PUBLISH_ENABLED=true`
 
-Gate için gereken minimum composite kaynak, eşleşme kapsamı, tarihsel gün ve
+Gate için gereken minimum bağımsız composite işletmeci grubu, eşleşme kapsamı, tarihsel gün ve
 Türkiye Endeksi sonuç sayısı kod içinde varsayılan olarak belirlenmez.
 Eşiklerin tamamı ve `BOOK_INDEX_SEO_POLICY_VERSION` açıkça yapılandırılmadan
 durum `policy_incomplete` kalır.
 
 Gate ancak şu gerçek readiness ölçümlerini değerlendirir:
 
-- başarılı composite kaynak sayısı,
+- başarılı bağımsız composite işletmeci grubu sayısı,
 - master kitap eşleşme yüzdesi,
 - tarihsel snapshot gün sayısı,
 - üretilebilen Türkiye Endeksi kayıt sayısı.
@@ -250,7 +250,7 @@ Public yüzeyler açılmadan önce dört türe ait read-model hazırlanır:
 - **Yükselenler:** aynı listede önceki başarılı snapshot'a göre rankı iyileşen
   eşleşmiş master kitaplar; artış kaynak ve sıra farkıyla ölçülür.
 - **Her yerde satanlar:** mevcut composite snapshot'larda en az
-  `TURKEY_INDEX_MIN_SOURCES` bağımsız Türkiye kaynağında bulunan kitaplar.
+  `TURKEY_INDEX_MIN_SOURCES` bağımsız işletmeci grubunda bulunan kitaplar.
 - **Uzun satanlar:** composite observation geçmişindeki ilk/son görülme zamanı,
   tarihsel gün sayısı, bağımsız kaynak ve observation sayısıyla sıralanır.
 
@@ -290,7 +290,7 @@ ayrı Search Console property oluşturulmaz.
 
 Public açılım öncesi admin ekranında yalnız ölçülebilir durum gösterilir:
 
-- başarılı snapshot üretmiş bağımsız composite kaynak sayısı,
+- başarılı snapshot üretmiş bağımsız composite işletmeci grubu sayısı,
 - dış kitapların master kitap eşleşme kapsamı,
 - ilk ve son observation zamanı,
 - birikmiş tarihsel veri süresi.
@@ -343,8 +343,8 @@ ve resmi API/feed/izin yolu araştırılır.
   `a.book-name`, yazar `/yazar/...` altında `h4`, yayınevi parantezli
   `span` içinde bulunuyor.
 - Liste haftalık olduğu için V1 kontrol tavanı günde 1 kezdir.
-- İlk aşamada otomatik scheduler yoktur; admin üzerinden kontrollü canlı
-  doğrulama yapılır.
+- Production scheduler GitHub Actions + OIDC ile aktiftir; Remzi listesinin kendi
+  collection cadence değeri scheduler tarafından korunur.
 
 Robots erişimi tek başına içerik kullanım lisansı anlamına gelmez. Operasyonel
 erişim ile kaynak kullanım koşulları ayrı değerlendirilir.
@@ -363,7 +363,7 @@ erişim ile kaynak kullanım koşulları ayrı değerlendirilir.
 - Public çok satan sayfası şeffaf user-agent ile HTTP 200 döndürüyor.
 - `robots.txt` genel erişime `Allow: /` veriyor ve Cloudflare content signal
   satırında `search=yes, ai-train=no, use=reference` bildiriyor.
-- Collector henüz aktive edilmedi; ürün markup parser'ı ayrıca doğrulanacak.
+- Production collector aktiftir; haftalık genel liste composite'e oy verir, aylık/yıllık listeler tarihçe ve kaynak görünümü içindir.
 
 ### Penguen Kitabevi
 
@@ -470,7 +470,7 @@ bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplan�
 - Her listenin son başarılı veya `no_change` fetch run'ı kullanılır.
 - Yalnız master kitaba bağlanmış dış kayıtlar hesaba girer.
 - Normalizasyon için o run'da gerçekten saklanan kayıt sayısı kullanılır.
-- Mevcut `1 bağımsız kaynak = 1 oy` ve minimum 3 bağımsız kaynak kuralı aynen korunur.
+- Mevcut `1 bağımsız işletmeci grubu = en fazla 1 oy` ve minimum 3 bağımsız işletmeci grubu kuralı aynen korunur.
 - Bu görünüm yalnız admin içindir; public route ve sitemap açılımı hâlâ kapalıdır.
 
 ### KitapSepeti

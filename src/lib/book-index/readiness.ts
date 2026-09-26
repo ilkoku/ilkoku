@@ -167,6 +167,9 @@ export type BookIndexReadinessSnapshot = {
   kitaplarSepetteCanaryShadowPairOverlap: BookIndexCanaryShadowPairOverlap[];
   kitaplarSepetteCanaryShadowSamples: BookIndexCanaryShadowSample[];
   sourceHistoryMaturity: BookIndexSourceHistoryMaturity[];
+  minimumSourceSuccessfulRunCount: number;
+  minimumSourceHistorySpanHours: number;
+  leastMatureSourceCodes: string[];
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
   historySpanHours: number;
@@ -400,6 +403,21 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         };
       })
       .sort((a, b) => a.sourceCode.localeCompare(b.sourceCode, "tr"));
+
+  const minimumSourceSuccessfulRunCount = sourceHistoryMaturity.length
+    ? Math.min(...sourceHistoryMaturity.map((source) => source.successfulRunCount))
+    : 0;
+  const minimumSourceHistorySpanHours = sourceHistoryMaturity.length
+    ? Math.min(...sourceHistoryMaturity.map((source) => source.historySpanHours))
+    : 0;
+  const leastMatureSourceCodes = sourceHistoryMaturity
+    .filter(
+      (source) =>
+        source.successfulRunCount === minimumSourceSuccessfulRunCount
+        && source.historySpanHours === minimumSourceHistorySpanHours,
+    )
+    .map((source) => source.sourceCode)
+    .sort((a, b) => a.localeCompare(b, "tr"));
 
   const observedCompositeSourceCodes = [...new Set(
     persistedCompositeLists
@@ -998,6 +1016,9 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         .filter((sample) => sample.currentSourceCodes.length > 0)
         .slice(0, 20),
     sourceHistoryMaturity,
+    minimumSourceSuccessfulRunCount,
+    minimumSourceHistorySpanHours,
+    leastMatureSourceCodes,
     firstObservationAt,
     lastObservationAt,
     historySpanHours: historySpanHoursBetween(firstObservationAt, lastObservationAt),

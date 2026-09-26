@@ -1,4 +1,7 @@
-import { TURKEY_INDEX_MIN_SOURCES } from "./sources";
+import {
+  getBookIndexSourceIndependenceGroup,
+  TURKEY_INDEX_MIN_SOURCES,
+} from "./sources";
 
 export type BookIndexSourceVoteInput = {
   sourceCode: string;
@@ -76,11 +79,40 @@ export function collapseBookIndexSourceVotes(
     .sort((a, b) => a.sourceCode.localeCompare(b.sourceCode));
 }
 
+function independentOperatorScores(votes: BookIndexSourceVote[]) {
+  const byIndependenceGroup = new Map<string, BookIndexSourceVote[]>();
+
+  for (const vote of votes) {
+    const independenceGroup = getBookIndexSourceIndependenceGroup(
+      vote.sourceCode,
+    );
+    const groupVotes = byIndependenceGroup.get(independenceGroup) ?? [];
+    groupVotes.push(vote);
+    byIndependenceGroup.set(independenceGroup, groupVotes);
+  }
+
+  return [...byIndependenceGroup.entries()]
+    .map(([independenceGroup, groupVotes]) => ({
+      independenceGroup,
+      sourceCodes: groupVotes
+        .map((vote) => vote.sourceCode)
+        .sort((a, b) => a.localeCompare(b)),
+      normalizedScore: roundScore(
+        groupVotes.reduce(
+          (total, vote) => total + vote.normalizedScore,
+          0,
+        ) / groupVotes.length,
+      ),
+    }))
+    .sort((a, b) => a.independenceGroup.localeCompare(b.independenceGroup));
+}
+
 export function computeTurkeyBookIndexScore(
   inputs: BookIndexSourceVoteInput[],
 ): TurkeyIndexScore {
   const votes = collapseBookIndexSourceVotes(inputs);
-  const sourceCount = votes.length;
+  const operatorScores = independentOperatorScores(votes);
+  const sourceCount = operatorScores.length;
 
   if (sourceCount < TURKEY_INDEX_MIN_SOURCES) {
     return {
@@ -92,8 +124,10 @@ export function computeTurkeyBookIndexScore(
   }
 
   const average =
-    votes.reduce((total, vote) => total + vote.normalizedScore, 0) /
-    sourceCount;
+    operatorScores.reduce(
+      (total, operator) => total + operator.normalizedScore,
+      0,
+    ) / sourceCount;
 
   return {
     eligible: true,

@@ -8,6 +8,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
 const contains = (text, fragment, label) =>
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
+const notContains = (text, fragment, label) =>
+  assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
 test("Book Index insights derive from historical snapshots without publishing routes", () => {
   const insights = source("src/lib/book-index/insights.ts");
@@ -25,8 +27,23 @@ test("Book Index insights derive from historical snapshots without publishing ro
   contains(insights, "gains.set(snapshot.sourceCode, gain)", "riser source dedupe");
   contains(
     insights,
+    "currentIndependenceGroupsByBook",
+    "everywhere-seller independent operator evidence",
+  );
+  contains(
+    insights,
+    "independenceGroups.size >= TURKEY_INDEX_MIN_SOURCES",
+    "everywhere-seller independent-operator threshold",
+  );
+  contains(
+    insights,
+    "getBookIndexSourceIndependenceGroup",
+    "operator-group mapping",
+  );
+  notContains(
+    insights,
     "sources.size >= TURKEY_INDEX_MIN_SOURCES",
-    "everywhere-seller independent-source threshold",
+    "raw storefront threshold",
   );
   contains(
     insights,
@@ -40,8 +57,18 @@ test("Book Index insights derive from historical snapshots without publishing ro
   );
   contains(
     insights,
+    "GROUP_CONCAT(DISTINCT source.code",
+    "long-seller source-code evidence",
+  );
+  contains(
+    insights,
+    "sourceCount: independenceGroups.size",
+    "long-seller independent operator count",
+  );
+  notContains(
+    insights,
     "COUNT(DISTINCT list.sourceId)",
-    "long-seller independent source count",
+    "raw storefront long-seller count",
   );
 });
 

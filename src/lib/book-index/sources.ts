@@ -15,6 +15,8 @@ export type BookIndexSourceDefinition = {
   countryCode: "TR" | "US";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
+  independenceGroup?: string;
+  operatorName?: string;
   phase: BookIndexSourcePhase;
   collectionState: BookIndexCollectionState;
 };
@@ -39,6 +41,8 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     countryCode: "TR",
     baseUrl: "https://www.bkmkitap.com",
     includeInTurkeyIndex: true,
+    independenceGroup: "point-internet",
+    operatorName: "Point İnternet Teknolojileri ve Lojistik A.Ş.",
     phase: "v1",
     collectionState: "ready",
   },
@@ -109,6 +113,8 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     countryCode: "TR",
     baseUrl: "https://www.kitapsepeti.com",
     includeInTurkeyIndex: true,
+    independenceGroup: "point-internet",
+    operatorName: "Point İnternet Teknolojileri ve Lojistik A.Ş.",
     phase: "v1",
     collectionState: "ready",
   },
@@ -204,4 +210,14 @@ export const TURKEY_INDEX_V1_SOURCES = BOOK_INDEX_V1_SOURCES.filter(
 
 export function getBookIndexSource(code: string) {
   return BOOK_INDEX_SOURCES.find((source) => source.code === code) ?? null;
+}
+
+export function getBookIndexSourceIndependenceGroup(code: string) {
+  const source = getBookIndexSource(code);
+  return source?.independenceGroup ?? source?.code ?? code;
+}
+
+export function getBookIndexSourceOperatorName(code: string) {
+  const source = getBookIndexSource(code);
+  return source?.operatorName ?? source?.name ?? code;
 }

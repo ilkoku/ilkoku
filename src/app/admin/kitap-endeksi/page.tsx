@@ -219,11 +219,12 @@ export default async function BookIndexAdminPage({
       <section className="admin-detail-grid">
         <article className="admin-panel">
           <span className="admin-eyebrow">Endeks kontratı</span>
-          <h2>1 kaynak = 1 oy</h2>
+          <h2>1 bağımsız işletmeci grubu = 1 oy</h2>
           <p>
             Türkiye Endeksi için en az {TURKEY_INDEX_MIN_SOURCES} bağımsız
-            Türkiye kaynağı gerekir. Kaynak rankları 1–100 bandına normalize
-            edilir ve V1&apos;de eşit ağırlıkla hesaplanır.
+            işletmeci grubu gerekir. Aynı işletmeciye ait storefront kaynakları
+            tek oyda birleşir; grup rankı 1–100 bandında normalize edilir ve
+            bağımsız işletmeci oyları eşit ağırlıkla hesaplanır.
           </p>
         </article>
 
@@ -442,6 +443,18 @@ export default async function BookIndexAdminPage({
           </article>
 
           <article className="admin-panel admin-settings-card">
+            <span className="admin-eyebrow">Bağımsız işletmeci</span>
+            <h2>
+              {readiness.observedCompositeIndependenceGroups} /{" "}
+              {readiness.compositeIndependenceGroupTarget}
+            </h2>
+            <p>Composite kaynakların gerçek bağımsız oy grupları.</p>
+            <small>
+              {readiness.observedCompositeIndependenceGroupCodes.join(" · ")}
+            </small>
+          </article>
+
+          <article className="admin-panel admin-settings-card">
             <span className="admin-eyebrow">Master eşleşme</span>
             <h2>%{readiness.matchCoveragePercent.toLocaleString("tr-TR")}</h2>
             <p>
@@ -461,6 +474,15 @@ export default async function BookIndexAdminPage({
           </article>
 
           <article className="admin-panel admin-settings-card">
+            <span className="admin-eyebrow">3+ bağımsız kaynak</span>
+            <h2>{readiness.booksOnAtLeast3IndependentCompositeSources}</h2>
+            <p>
+              En az üç bağımsız işletmeci grubunda aynı anda bulunan güncel
+              master kitap sayısı.
+            </p>
+          </article>
+
+          <article className="admin-panel admin-settings-card">
             <span className="admin-eyebrow">SEO kalite kapısı</span>
             <h2>{seoGateStateLabel(seoGate.state)}</h2>
             <p>
@@ -473,6 +495,34 @@ export default async function BookIndexAdminPage({
             </small>
           </article>
         </section>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
+                <th>Kaynak geçmişi</th>
+                <th>Başarılı run</th>
+                <th>İlk başarılı</th>
+                <th>Son başarılı</th>
+                <th>Kapsam</th>
+              </tr>
+            </thead>
+            <tbody>
+              {readiness.sourceHistoryMaturity.map((source) => (
+                <tr key={source.sourceCode}>
+                  <td>
+                    <strong>{source.sourceCode}</strong>
+                    <small>{source.listCodes.join(" · ")}</small>
+                  </td>
+                  <td>{source.successfulRunCount}</td>
+                  <td>{formatDateTime(source.firstSuccessfulRunAt)}</td>
+                  <td>{formatDateTime(source.lastSuccessfulRunAt)}</td>
+                  <td>{source.historySpanHours.toLocaleString("tr-TR")} saat</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <div className="admin-table-wrap">
           <table className="admin-data-table">

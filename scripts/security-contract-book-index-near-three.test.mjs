@@ -113,3 +113,17 @@ test("Book Index readiness exposes source history maturity without inventing pub
   contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "eligibility threshold stays unchanged");
   notContains(readiness, "minHistoryDays =", "readiness does not invent a publication history threshold");
 });
+
+
+test("Book Index admin exposes source history maturity without publish judgments", () => {
+  const admin = source("src/app/admin/kitap-endeksi/page.tsx");
+
+  contains(admin, "readiness.sourceHistoryMaturity", "admin source history maturity table");
+  contains(admin, "Başarılı snapshot", "successful snapshot column");
+  contains(admin, "İlk başarılı", "first successful run column");
+  contains(admin, "Son başarılı", "last successful run column");
+  contains(admin, "Biriken süre", "history span column");
+  contains(admin, "source.historySpanHours", "history span value");
+  notContains(admin, "Tarihçe yeterli", "admin does not invent maturity verdicts");
+  notContains(admin, "Tarihçe yetersiz", "admin does not invent maturity verdicts");
+});

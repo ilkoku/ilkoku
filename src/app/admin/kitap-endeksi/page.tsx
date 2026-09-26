@@ -478,6 +478,37 @@ export default async function BookIndexAdminPage({
           <table className="admin-data-table">
             <thead>
               <tr>
+                <th>Kaynak tarihçesi</th>
+                <th>Başarılı snapshot</th>
+                <th>İlk başarılı</th>
+                <th>Son başarılı</th>
+                <th>Biriken süre</th>
+                <th>Listeler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {readiness.sourceHistoryMaturity.map((source) => (
+                <tr key={source.sourceCode}>
+                  <td><strong>{source.sourceCode}</strong></td>
+                  <td>{source.successfulRunCount.toLocaleString("tr-TR")}</td>
+                  <td>{formatDateTime(source.firstSuccessfulRunAt)}</td>
+                  <td>{formatDateTime(source.lastSuccessfulRunAt)}</td>
+                  <td>
+                    {source.historySpanHours.toLocaleString("tr-TR", {
+                      maximumFractionDigits: 1,
+                    })} saat
+                  </td>
+                  <td>{source.listCodes.join(" · ") || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
                 <th>SEO gate kanıtı</th>
                 <th>Mevcut</th>
                 <th>Eşik</th>

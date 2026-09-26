@@ -785,6 +785,8 @@ test("Book Index admin reflects independent-operator voting and history maturity
   contains(admin, "readiness.compositeIndependenceGroupTarget", "independent operator target");
   contains(admin, "readiness.booksOnAtLeast3IndependentCompositeSources", "3+ independent-book count");
   contains(admin, "readiness.sourceHistoryMaturity.map", "source history maturity table");
+  contains(admin, "Saatlik scheduler aktiftir", "scheduler status copy");
+  notContains(admin, "Otomatik scheduler bu aşamada kapalıdır", "stale scheduler-off copy removed");
   contains(admin, "source.successfulRunCount", "per-source successful run count");
   contains(admin, "source.historySpanHours", "per-source history span");
 });

@@ -78,7 +78,7 @@ test("KitaplarSepette canary has documented independent operator metadata", () =
 
   contains(
     sources,
-    'baseUrl: "https://www.kitaplarsepette.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "iklim-grup",\n    operatorName: "İklim Grup Kitap Satış Dağıtım Ltd. Şti."',
+    'collectionState: "ready",\n    independenceGroup: "iklim-grup",\n    operatorName: "İklim Grup Kitap Satış Dağıtım Ltd. Şti."',
     "KitaplarSepette documented operator group",
   );
   contains(

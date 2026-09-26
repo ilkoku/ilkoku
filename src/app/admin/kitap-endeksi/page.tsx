@@ -267,7 +267,9 @@ export default async function BookIndexAdminPage({
             listenin kendi cadence değeri belirler.
           </p>
           <small>
-            Kısa ömürlü GitHub kimliği kullanılır. Legacy secret fallback:{" "}
+            En uzun cadence gecikmesi:{" "}
+            {operations.maxOverdueMinutes.toLocaleString("tr-TR")} dk · Kısa
+            ömürlü GitHub kimliği kullanılır. Legacy secret fallback:{" "}
             {operations.schedulerSecretConfigured ? "hazır" : "tanımsız"}.
           </small>
         </article>

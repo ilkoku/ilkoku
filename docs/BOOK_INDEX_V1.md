@@ -83,14 +83,19 @@ Bir listenin rankı `1..N` aralığında 1–100 ölçeğine normalize edilir:
 
 `score = ((N - rank + 1) / N) * 100`
 
-Aynı kaynak birden fazla uygun gözlem üretirse önce explicit list priority,
-eşitlikte en güncel gözlem seçilir. Böylece tek kaynak birden fazla oy
+Aynı storefront kaynağı birden fazla uygun gözlem üretirse önce explicit list priority,
+eşitlikte en güncel gözlem seçilir. Böylece tek storefront birden fazla oy
 üretemez.
 
-En az üç benzersiz Türkiye kaynağı bulunmadığında kitap Türkiye Endeksi için
-uygun değildir.
+Aynı bağımsız işletmeci grubuna ait birden fazla storefront aynı kitapta yer
+alıyorsa bu storefront puanlarının aritmetik ortalaması o işletmeci grubunun
+tek oyunu oluşturur. Böylece aynı işletmeci ek storefront ile ağırlığını
+artıramaz.
 
-İlk V1'de kaynak ağırlıkları eşittir. İleride ağırlık değişecekse algoritma
+En az üç bağımsız Türkiye kaynağı / işletmeci grubu bulunmadığında kitap
+Türkiye Endeksi için uygun değildir.
+
+İlk V1'de bağımsız kaynak ağırlıkları eşittir. İleride ağırlık değişecekse algoritma
 versiyonlanmalı ve geçmiş endeks sonuçlarının hangi versiyonla hesaplandığı
 saklanmalıdır.
 

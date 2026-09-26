@@ -33,3 +33,40 @@ test("Book Index readiness exposes read-only source-pair and near-3 diagnostics"
   notContains(matching, "nearThreeSourceSamples", "diagnostics do not mutate matching");
   notContains(matching, "sourcePairOverlapMatrix", "pair matrix does not mutate matching");
 });
+
+
+test("Book Index readiness measures storefront eligibility lost after operator grouping", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const ranking = source("src/lib/book-index/ranking.ts");
+
+  contains(
+    readiness,
+    "storefrontEligibleButOperatorIneligibleCount",
+    "operator-group eligibility delta count",
+  );
+  contains(
+    readiness,
+    "storefrontEligibleButOperatorIneligibleSamples",
+    "operator-group eligibility delta samples",
+  );
+  contains(
+    readiness,
+    "sample.storefrontSourceCount >= 3",
+    "current storefront eligibility boundary",
+  );
+  contains(
+    readiness,
+    "sample.independentSourceCount < 3",
+    "independent operator ineligibility boundary",
+  );
+  contains(
+    readiness,
+    "getBookIndexSourceIndependenceGroup",
+    "operator grouping source",
+  );
+  notContains(
+    ranking,
+    "getBookIndexSourceIndependenceGroup",
+    "measurement does not change scoring yet",
+  );
+});

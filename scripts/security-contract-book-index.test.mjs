@@ -708,7 +708,7 @@ test("Book Index readiness distinguishes storefront sources from independent ope
 });
 
 
-test("KitaplarSepette research adapter stays inactive until production qualification", () => {
+test("KitaplarSepette canary collects daily without contributing to the composite", () => {
   const adapter = source("src/lib/book-index/sources/kitaplarsepette.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
@@ -728,17 +728,17 @@ test("KitaplarSepette research adapter stays inactive until production qualifica
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DETAIL_METADATA_MISSING", "minimum identity metadata gate");
   contains(
     sources,
-    'baseUrl: "https://www.kitaplarsepette.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "KitaplarSepette remains research-only",
+    'baseUrl: "https://www.kitaplarsepette.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "KitaplarSepette canary source ready",
   );
-  notContains(
+  contains(
     collector,
-    "kitaplarSepetteBookIndexAdapter",
-    "research adapter is not activated",
+    "[kitaplarSepetteBookIndexAdapter.sourceCode, kitaplarSepetteBookIndexAdapter]",
+    "canary adapter is active",
   );
-  notContains(
-    lists,
-    'sourceCode: "kitaplarsepette"',
-    "research source has no scheduled list",
-  );
+  contains(lists, 'code: "kitaplarsepette-tr-live-canary"', "canary list registry");
+  contains(lists, 'sourceUrl: "https://www.kitaplarsepette.com/cok-satanlar"', "canonical bestseller page");
+  contains(lists, 'maxRank: 30', "bounded canary rank ceiling");
+  contains(lists, 'collectionEveryMinutes: 1440', "daily canary cadence");
+  contains(lists, 'includeInComposite: false', "canary cannot vote in the composite");
 });

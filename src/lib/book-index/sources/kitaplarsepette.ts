@@ -37,9 +37,9 @@ function validIsbn13(value: string | undefined) {
 export function parseKitaplarSepetteBestsellerCards(
   html: string,
 ): KitaplarSepetteCard[] {
-  const starts = [...html.matchAll(/<div\\b[^>]*>/giu)].filter((match) => {
-    const className = match[0].match(/\\bclass=["']([^"']*)["']/iu)?.[1] ?? "";
-    return className.split(/\\s+/u).includes("card-product");
+  const starts = [...html.matchAll(/<div\b[^>]*>/giu)].filter((match) => {
+    const className = match[0].match(/\bclass=["']([^"']*)["']/iu)?.[1] ?? "";
+    return className.split(/\s+/u).includes("card-product");
   });
 
   const cards = starts

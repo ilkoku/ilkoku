@@ -84,6 +84,18 @@ export type BookIndexNearThreeSample = {
   historicalThirdSourceEvidence: BookIndexNearThreeHistoricalEvidence[];
 };
 
+export type BookIndexCanaryHealth = {
+  listCode: string;
+  found: boolean;
+  latestStatus: string | null;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  itemsFound: number | null;
+  itemsStored: number | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+};
+
 export type BookIndexReadinessSnapshot = {
   compositeSourceTarget: number;
   compositeIndependenceGroupTarget: number;
@@ -123,6 +135,7 @@ export type BookIndexReadinessSnapshot = {
   nearThreeSourceCount: number;
   nearThreeWithHistoricalThirdSourceCount: number;
   nearThreeSourceSamples: BookIndexNearThreeSample[];
+  kitaplarSepetteCanaryHealth: BookIndexCanaryHealth;
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
   historySpanDays: number;
@@ -180,8 +193,13 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     compositeSourceCodes.map((sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode)),
   )].sort((a, b) => a.localeCompare(b, "tr"));
 
-  const [externalBookCount, matchedExternalBookCount, observationRange, persistedCompositeLists] =
-    await Promise.all([
+  const [
+    externalBookCount,
+    matchedExternalBookCount,
+    observationRange,
+    persistedCompositeLists,
+    kitaplarSepetteCanaryList,
+  ] = await Promise.all([
       prisma.bookIndexExternalBook.count(),
       prisma.bookIndexExternalBook.count({ where: { masterBookId: { not: null } } }),
       prisma.bookIndexObservation.aggregate({
@@ -218,6 +236,25 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
                   },
                 },
               },
+            },
+          },
+        },
+      }),
+      prisma.bookIndexList.findFirst({
+        where: { code: "kitaplarsepette-tr-live-canary" },
+        select: {
+          code: true,
+          fetchRuns: {
+            orderBy: { startedAt: "desc" },
+            take: 1,
+            select: {
+              status: true,
+              startedAt: true,
+              completedAt: true,
+              itemsFound: true,
+              itemsStored: true,
+              errorCode: true,
+              errorMessage: true,
             },
           },
         },
@@ -631,6 +668,18 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   const firstObservationAt = observationRange._min.observedAt ?? null;
   const lastObservationAt = observationRange._max.observedAt ?? null;
   const unmatchedExternalBookCount = externalBookCount - matchedExternalBookCount;
+  const latestKitaplarSepetteCanaryRun = kitaplarSepetteCanaryList?.fetchRuns[0] ?? null;
+  const kitaplarSepetteCanaryHealth: BookIndexCanaryHealth = {
+    listCode: "kitaplarsepette-tr-live-canary",
+    found: Boolean(kitaplarSepetteCanaryList),
+    latestStatus: latestKitaplarSepetteCanaryRun?.status ?? null,
+    startedAt: latestKitaplarSepetteCanaryRun?.startedAt ?? null,
+    completedAt: latestKitaplarSepetteCanaryRun?.completedAt ?? null,
+    itemsFound: latestKitaplarSepetteCanaryRun?.itemsFound ?? null,
+    itemsStored: latestKitaplarSepetteCanaryRun?.itemsStored ?? null,
+    errorCode: latestKitaplarSepetteCanaryRun?.errorCode ?? null,
+    errorMessage: latestKitaplarSepetteCanaryRun?.errorMessage ?? null,
+  };
 
   return {
     compositeSourceTarget: compositeSourceCodes.length,
@@ -722,6 +771,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       (sample) => sample.historicalThirdSourceCodes.length > 0,
     ).length,
     nearThreeSourceSamples,
+    kitaplarSepetteCanaryHealth,
     firstObservationAt,
     lastObservationAt,
     historySpanDays: historySpanDays(firstObservationAt, lastObservationAt),

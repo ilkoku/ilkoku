@@ -83,7 +83,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     sourceUrl: "https://www.kitaplarsepette.com/cok-satanlar",
     maxRank: 30,
     includeInComposite: false,
-    collectionEveryMinutes: 1,
+    collectionEveryMinutes: 1440,
     enabled: true,
   },
   {

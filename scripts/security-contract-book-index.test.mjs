@@ -708,7 +708,7 @@ test("Book Index readiness distinguishes storefront sources from independent ope
 });
 
 
-test("KitaplarSepette retry probe stays non-composite and tightly bounded", () => {
+test("KitaplarSepette canary collects daily without contributing to the composite", () => {
   const adapter = source("src/lib/book-index/sources/kitaplarsepette.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
@@ -743,6 +743,6 @@ test("KitaplarSepette retry probe stays non-composite and tightly bounded", () =
   contains(lists, 'code: "kitaplarsepette-tr-live-canary"', "canary list registry");
   contains(lists, 'sourceUrl: "https://www.kitaplarsepette.com/cok-satanlar"', "canonical bestseller page");
   contains(lists, 'maxRank: 30', "bounded canary rank ceiling");
-  contains(lists, 'collectionEveryMinutes: 1', "temporary retry cadence");
+  contains(lists, 'collectionEveryMinutes: 1440', "daily canary cadence");
   contains(lists, 'includeInComposite: false', "canary cannot vote in the composite");
 });

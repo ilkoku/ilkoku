@@ -169,6 +169,16 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     collectionState: "ready",
   },
   {
+    code: "kitaplarsepette",
+    name: "KitaplarSepette",
+    market: "TR",
+    countryCode: "TR",
+    baseUrl: "https://www.kitaplarsepette.com",
+    includeInTurkeyIndex: true,
+    phase: "v1",
+    collectionState: "researching",
+  },
+  {
     code: "hepsiburada",
     name: "Hepsiburada",
     market: "TR",

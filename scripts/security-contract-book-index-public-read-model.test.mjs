@@ -89,10 +89,11 @@ test("Book Index public read model stays independent from conditional sitemap pu
 
 test("Book Index public methodology describes independent operator voting", () => {
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const normalizedView = view.replace(/\s+/g, " ");
 
-  contains(view, "aynı bağımsız işletmeci grubu bir kitaba yalnız bir", "independent operator one-vote rule");
-  contains(view, "Bağımsız işletmeci grupları eşit ağırlıkla değerlendirilir", "independent operator weighting");
-  contains(view, "en az üç bağımsız işletmeci grubunda görünmelidir", "three independent operator eligibility");
-  contains(view, "işletmeci grubu bazında tekilleştirme korunur", "insight operator deduplication");
-  notContains(view, "aynı platform bir\n              kitaba birden fazla oy veremez", "stale platform-only vote copy");
+  contains(normalizedView, "aynı bağımsız işletmeci grubu bir kitaba yalnız bir", "independent operator one-vote rule");
+  contains(normalizedView, "Bağımsız işletmeci grupları eşit ağırlıkla değerlendirilir", "independent operator weighting");
+  contains(normalizedView, "en az üç bağımsız işletmeci grubunda görünmelidir", "three independent operator eligibility");
+  contains(normalizedView, "işletmeci grubu bazında tekilleştirme korunur", "insight operator deduplication");
+  notContains(normalizedView, "aynı platform bir kitaba birden fazla oy veremez", "stale platform-only vote copy");
 });

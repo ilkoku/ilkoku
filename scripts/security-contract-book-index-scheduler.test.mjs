@@ -19,10 +19,10 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(workflow, "workflow_dispatch:", "manual operations trigger");
   contains(workflow, "schedule:", "automatic scheduler trigger");
   contains(workflow, 'cron: "17 * * * *"', "hourly cron remains active");
-  contains(workflow, "workflow_run:", "temporary KitaplarSepette canary trigger");
+  notContains(workflow, "workflow_run:", "temporary production trigger removed");
   notContains(workflow, "?matchPending=1", "one-time backfill request removed");
   contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");
-  contains(route, '"workflow_run"', "temporary workflow-run authorization");
+  notContains(route, '"workflow_run"', "temporary workflow-run authorization removed");
   notContains(route, "matchPendingBookIndexBooks", "one-time matching backfill removed");
   notContains(route, 'searchParams.get("matchPending")', "maintenance switch removed");
   contains(readiness, "splitMasterCollisionCount", "collision diagnostic retained");
@@ -32,24 +32,3 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
 
 
 
-
-
-
-test("Book Index one-time KitaplarSepette canary probe is tightly scoped", () => {
-  const route = source("src/app/api/internal/book-index-scheduler/route.ts");
-  const workflow = source(".github/workflows/book-index-scheduler.yml");
-
-  contains(workflow, "workflow_run:", "temporary production-smoke trigger");
-  contains(workflow, "Production smoke", "probe source workflow");
-  contains(workflow, "github.event.workflow_run.conclusion == 'success'", "success-only probe");
-  contains(workflow, "github.event.workflow_run.head_branch == 'main'", "main-only probe");
-  contains(workflow, "?forceKitaplarSepetteCanary=1", "explicit canary force flag");
-  contains(
-    route,
-    'collectBookIndexListByCode(\n        "kitaplarsepette-tr-live-canary",',
-    "single KitaplarSepette canary list",
-  );
-  contains(route, "forcedKitaplarSepetteCanaryRun", "forced canary result reporting");
-  notContains(route, 'collectBookIndexListByCode("illakitap-tr-weekly")', "probe does not force Illa Kitap");
-  notContains(route, 'collectBookIndexListByCode("nobelkitap-tr-live")', "probe does not force NobelKitap");
-});

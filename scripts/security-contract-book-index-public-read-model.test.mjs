@@ -85,3 +85,15 @@ test("Book Index public read model stays independent from conditional sitemap pu
     "sitemap publication is handled by an explicit gate helper",
   );
 });
+
+
+test("Book Index public methodology describes independent operator voting", () => {
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const normalizedView = view.replace(/\s+/g, " ");
+
+  contains(normalizedView, "aynı bağımsız işletmeci grubu bir kitaba yalnız bir", "independent operator one-vote rule");
+  contains(normalizedView, "Bağımsız işletmeci grupları eşit ağırlıkla değerlendirilir", "independent operator weighting");
+  contains(normalizedView, "en az üç bağımsız işletmeci grubunda görünmelidir", "three independent operator eligibility");
+  contains(normalizedView, "işletmeci grubu bazında tekilleştirme korunur", "insight operator deduplication");
+  notContains(normalizedView, "aynı platform bir kitaba birden fazla oy veremez", "stale platform-only vote copy");
+});

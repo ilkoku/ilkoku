@@ -197,9 +197,10 @@ export function BookIndexSourceView({
           içerikle değiştirmez.
         </p>
         <p>
-          Türkiye Endeksi oluşturulurken aynı satış kaynağı bir kitaba yalnız
-          bir oy verebilir. Böylece aynı platformdaki haftalık, aylık veya
-          kategori listeleri bileşik sonuçta birden fazla oy üretmez.
+          Türkiye Endeksi oluşturulurken aynı bağımsız işletmeci grubu bir
+          kitaba yalnız bir oy verebilir. Aynı işletmeciye ait farklı mağazalar
+          veya aynı mağazadaki haftalık, aylık ve kategori listeleri bileşik
+          sonuçta ek oy üretmez.
         </p>
       </section>
     </main>
@@ -320,8 +321,8 @@ export function BookIndexOverviewView({
             <span className={styles.eyebrow}>Türkiye</span>
             <h2>Güncel bileşik sıralama</h2>
             <p>
-              Kaynaklar eşit ağırlıkla değerlendirilir; aynı platform bir
-              kitaba birden fazla oy veremez.
+              Bağımsız işletmeci grupları eşit ağırlıkla değerlendirilir; aynı
+              işletmeciye ait birden fazla mağaza kitaba ek oy veremez.
             </p>
           </div>
           <Link href="/en-cok-satanlar/turkiye">Tüm sıralamayı gör →</Link>
@@ -334,9 +335,9 @@ export function BookIndexOverviewView({
         <h2 id="book-index-methodology">Türkiye&apos;de en çok satan kitaplar nasıl belirleniyor?</h2>
         <p>
           İlkOku Kitap Endeksi, farklı satış kaynaklarındaki sıralamaları
-          normalize eder. Aynı kaynak bir kitaba yalnız bir oy verir ve Türkiye
-          Endeksi&apos;ne girebilmek için kitap en az üç bağımsız Türkiye
-          kaynağında görünmelidir.
+          normalize eder. Aynı bağımsız işletmeci grubu bir kitaba yalnız bir
+          oy verir ve Türkiye Endeksi&apos;ne girebilmek için kitap en az üç
+          bağımsız işletmeci grubunda görünmelidir.
         </p>
         <p>
           Kaynakların kendi sıralaması değiştirilmez; İlkOku bileşik puanı ayrı
@@ -394,9 +395,10 @@ export function TurkeyBookIndexView({
         <span className={styles.eyebrow}>Metodoloji</span>
         <h2 id="turkey-index-methodology">İlkOku Türkiye Kitap Endeksi neyi gösterir?</h2>
         <p>
-          Endeks, kitapların birden fazla bağımsız Türkiye kaynağındaki
-          görünürlüğünü karşılaştırır. Her kaynak eşit oy hakkına sahiptir;
-          aynı platformdaki birden fazla liste aynı kitaba ek oy kazandırmaz.
+          Endeks, kitapların birden fazla bağımsız Türkiye satış işletmecisindeki
+          görünürlüğünü karşılaştırır. Her bağımsız işletmeci grubu eşit oy
+          hakkına sahiptir; aynı işletmeciye ait mağazalar veya listeler aynı
+          kitaba ek oy kazandırmaz.
         </p>
         <p>
           Gösterilen puan satış adedi değildir. Kaynak sıralamalarından
@@ -514,8 +516,8 @@ export function BookIndexInsightView({
           geçmişindeki sıralama ve görünürlük değişimlerinden türetilir.
         </p>
         <p>
-          Aynı satış platformu bir kitaba birden fazla bağımsız kaynak kanıtı
-          kazandıramaz; kaynak bazında tekilleştirme korunur.
+          Aynı satış işletmecisi bir kitaba birden fazla bağımsız kaynak kanıtı
+          kazandıramaz; işletmeci grubu bazında tekilleştirme korunur.
         </p>
       </section>
     </main>

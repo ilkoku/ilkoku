@@ -774,3 +774,17 @@ test("KitaplarSepette qualification evidence remains observable after voter acti
   contains(lists, 'code: "kitaplarsepette-tr-live"', "qualified live voter list");
   contains(lists, 'includeInComposite: true', "qualified composite vote");
 });
+
+
+test("Book Index admin reflects independent-operator voting and history maturity", () => {
+  const admin = source("src/app/admin/kitap-endeksi/page.tsx");
+
+  contains(admin, "1 bağımsız işletmeci grubu = 1 oy", "independent operator vote contract");
+  notContains(admin, "<h2>1 kaynak = 1 oy</h2>", "stale storefront vote copy removed");
+  contains(admin, "readiness.observedCompositeIndependenceGroups", "independent operator count");
+  contains(admin, "readiness.compositeIndependenceGroupTarget", "independent operator target");
+  contains(admin, "readiness.booksOnAtLeast3IndependentCompositeSources", "3+ independent-book count");
+  contains(admin, "readiness.sourceHistoryMaturity.map", "source history maturity table");
+  contains(admin, "source.successfulRunCount", "per-source successful run count");
+  contains(admin, "source.historySpanHours", "per-source history span");
+});

@@ -727,7 +727,8 @@ test("KitaplarSepette canary collects daily without contributing to the composit
   contains(adapter, 'detailLabelValue(html, "Yayınevi")', "publisher detail metadata");
   contains(adapter, "anchorValue", "linked metadata variant remains supported");
   contains(adapter, "plainValue", "plain-text metadata fallback");
-  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_RESULT_TOO_SMALL", "small-list rejection");
+  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_CARD_STARTS_TOO_SMALL", "server HTML card-start minimum");
+  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_PARSED_CARDS_TOO_SMALL", "parsed-card minimum");
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DUPLICATE_PRODUCT_ID", "duplicate-id protection");
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DETAIL_METADATA_MISSING", "minimum identity metadata gate");
   contains(

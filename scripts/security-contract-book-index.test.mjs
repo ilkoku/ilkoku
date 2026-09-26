@@ -209,14 +209,15 @@ test("blocked sources are not bypassed by the book index collector", () => {
   );
 });
 
-test("book index collection stays admin-controlled before scheduler rollout", () => {
+test("book index manual collection stays admin-controlled while scheduler is active", () => {
   const action = source("src/features/book-index/admin-actions.ts");
   const page = source("src/app/admin/kitap-endeksi/page.tsx");
 
   contains(action, 'admin.role !== "admin"', "admin-only manual collection");
   contains(action, "collectBookIndexListByCode", "manual collector action");
   contains(page, "Şimdi kontrol et", "manual source verification control");
-  contains(page, "Otomatik scheduler bu aşamada kapalıdır", "scheduler remains off");
+  contains(page, "Saatlik scheduler aktiftir", "active scheduler status");
+  notContains(page, "Otomatik scheduler bu aşamada kapalıdır", "stale scheduler-off status removed");
 });
 
 

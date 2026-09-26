@@ -139,6 +139,12 @@ test("Book Index SEO gate source threshold cannot be inflated by sibling storefr
     "readiness.observedCompositeIndependenceGroups",
     "gate evidence derives independent operator groups from readiness",
   );
+  const access = source("src/lib/book-index/public-access.ts");
+  contains(
+    access,
+    "readiness.observedCompositeIndependenceGroups",
+    "public route gate uses the same independent source evidence",
+  );
   notContains(
     gate,
     "if (evidence.observedCompositeSources < policy.minCompositeSources!)",

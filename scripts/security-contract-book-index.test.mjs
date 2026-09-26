@@ -706,3 +706,39 @@ test("Book Index readiness distinguishes storefront sources from independent ope
   notContains(ranking, "independenceGroup", "diagnostic phase does not change ranking");
   contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "3-source threshold stays unchanged");
 });
+
+
+test("KitaplarSepette research adapter stays inactive until production qualification", () => {
+  const adapter = source("src/lib/book-index/sources/kitaplarsepette.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(adapter, 'const MAX_BOOKS = 30;', "bounded KitaplarSepette Top 30");
+  contains(adapter, 'const MIN_EXPECTED_BOOKS = 25;', "fail-closed list minimum");
+  contains(adapter, 'const DETAIL_CONCURRENCY = 6;', "bounded detail-page concurrency");
+  contains(adapter, '\\bcard-product\\b', "server-rendered bestseller card selector");
+  contains(adapter, '\\bc-p-i-link\\b', "canonical product link selector");
+  contains(adapter, "\\baddCart\\(", "stable product id extraction");
+  contains(adapter, "\\bBarkod\\s*:", "ISBN detail metadata");
+  contains(adapter, "\\bYazar\\s*:", "author detail metadata");
+  contains(adapter, "\\bYayınevi\\s*:", "publisher detail metadata");
+  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_RESULT_TOO_SMALL", "small-list rejection");
+  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DUPLICATE_PRODUCT_ID", "duplicate-id protection");
+  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DETAIL_METADATA_MISSING", "minimum identity metadata gate");
+  contains(
+    sources,
+    'baseUrl: "https://www.kitaplarsepette.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "KitaplarSepette remains research-only",
+  );
+  notContains(
+    collector,
+    "kitaplarSepetteBookIndexAdapter",
+    "research adapter is not activated",
+  );
+  notContains(
+    lists,
+    'sourceCode: "kitaplarsepette"',
+    "research source has no scheduled list",
+  );
+});

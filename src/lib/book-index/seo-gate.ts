@@ -27,6 +27,7 @@ export type BookIndexSeoGatePolicy = {
 
 export type BookIndexSeoGateEvidence = {
   observedCompositeSources: number;
+  observedIndependentCompositeSources: number;
   matchCoveragePercent: number;
   historySpanDays: number;
   turkeyItemCount: number;
@@ -112,7 +113,7 @@ export function evaluateBookIndexSeoGate(
 
   const failures: BookIndexSeoGateFailure[] = [];
 
-  if (evidence.observedCompositeSources < policy.minCompositeSources!) {
+  if (evidence.observedIndependentCompositeSources < policy.minCompositeSources!) {
     failures.push("composite_sources");
   }
   if (evidence.matchCoveragePercent < policy.minMatchCoveragePercent!) {
@@ -147,6 +148,8 @@ export async function getBookIndexSeoGateSnapshot(): Promise<BookIndexSeoGateSna
 
   return evaluateBookIndexSeoGate(policy, {
     observedCompositeSources: readiness.observedCompositeSources,
+    observedIndependentCompositeSources:
+      readiness.observedCompositeIndependenceGroups,
     matchCoveragePercent: readiness.matchCoveragePercent,
     historySpanDays: readiness.historySpanDays,
     turkeyItemCount: publicReadModel.turkey.items.length,

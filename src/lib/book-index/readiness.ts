@@ -39,6 +39,15 @@ export type BookIndexSourcePairOverlap = {
   sharedBookCount: number;
 };
 
+export type BookIndexNearThreeHistoricalEvidence = {
+  sourceCode: string;
+  matchedBy: "master_book" | "isbn13" | "normalized_identity";
+  listCodes: string[];
+  periods: string[];
+  firstObservedAt: Date;
+  lastObservedAt: Date;
+};
+
 export type BookIndexNearThreeSample = {
   masterBookId: string;
   title: string;
@@ -46,6 +55,8 @@ export type BookIndexNearThreeSample = {
   isbn13s: string[];
   sourceCodes: string[];
   absentObservedSourceCodes: string[];
+  historicalThirdSourceCodes: string[];
+  historicalThirdSourceEvidence: BookIndexNearThreeHistoricalEvidence[];
 };
 
 export type BookIndexReadinessSnapshot = {
@@ -75,6 +86,7 @@ export type BookIndexReadinessSnapshot = {
   editionFamilyVariantOverlapSamples: BookIndexEditionFamilySample[];
   sourcePairOverlapMatrix: BookIndexSourcePairOverlap[];
   nearThreeSourceCount: number;
+  nearThreeWithHistoricalThirdSourceCount: number;
   nearThreeSourceSamples: BookIndexNearThreeSample[];
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
@@ -183,6 +195,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   const masterBookDetails = new Map<string, {
     title: string;
     authorName: string | null;
+    normalizedTitle: string;
+    normalizedAuthor: string | null;
     isbn13s: Set<string>;
     sourceCodes: Set<string>;
   }>();
@@ -230,6 +244,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         const detail = masterBookDetails.get(book.masterBookId) ?? {
           title: book.title,
           authorName: book.authorName,
+          normalizedTitle: book.normalizedTitle,
+          normalizedAuthor: book.normalizedAuthor,
           isbn13s: new Set<string>(),
           sourceCodes: new Set<string>(),
         };
@@ -324,6 +340,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       masterBookId,
       title: detail.title,
       authorName: detail.authorName,
+      normalizedTitle: detail.normalizedTitle,
+      normalizedAuthor: detail.normalizedAuthor,
       isbn13s: [...detail.isbn13s].sort(),
       sourceCodes: [...detail.sourceCodes].sort((a, b) => a.localeCompare(b, "tr")),
       absentObservedSourceCodes: observedCompositeSourceCodes.filter(
@@ -335,6 +353,140 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         a.title.localeCompare(b.title, "tr")
         || a.masterBookId.localeCompare(b.masterBookId),
     );
+
+  const nearThreeHistoryWhere = nearThreeSourceCandidates.flatMap((candidate) => [
+    { masterBookId: candidate.masterBookId },
+    ...(candidate.isbn13s.length > 0 ? [{ isbn13: { in: candidate.isbn13s } }] : []),
+    ...(candidate.normalizedAuthor
+      ? [{
+          normalizedTitle: candidate.normalizedTitle,
+          normalizedAuthor: candidate.normalizedAuthor,
+        }]
+      : []),
+  ]);
+
+  const nearThreeHistoricalBooks = nearThreeHistoryWhere.length > 0
+    ? await prisma.bookIndexExternalBook.findMany({
+        where: { OR: nearThreeHistoryWhere },
+        select: {
+          masterBookId: true,
+          isbn13: true,
+          normalizedTitle: true,
+          normalizedAuthor: true,
+          source: { select: { code: true } },
+          observations: {
+            select: {
+              observedAt: true,
+              fetchRun: {
+                select: {
+                  list: {
+                    select: {
+                      code: true,
+                      period: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+    : [];
+
+  const nearThreeSourceSamples = nearThreeSourceCandidates.slice(0, 20).map((candidate) => {
+    type EvidenceAccumulator = {
+      sourceCode: string;
+      matchedBy: BookIndexNearThreeHistoricalEvidence["matchedBy"];
+      listCodes: Set<string>;
+      periods: Set<string>;
+      firstObservedAt: Date;
+      lastObservedAt: Date;
+    };
+
+    const evidenceBySource = new Map<string, EvidenceAccumulator>();
+    const matchPriority: Record<BookIndexNearThreeHistoricalEvidence["matchedBy"], number> = {
+      master_book: 3,
+      isbn13: 2,
+      normalized_identity: 1,
+    };
+
+    for (const book of nearThreeHistoricalBooks) {
+      const sourceCode = book.source.code;
+      if (!candidate.absentObservedSourceCodes.includes(sourceCode)) continue;
+      if (book.observations.length === 0) continue;
+
+      let matchedBy: BookIndexNearThreeHistoricalEvidence["matchedBy"] | null = null;
+      if (book.masterBookId === candidate.masterBookId) {
+        matchedBy = "master_book";
+      } else if (book.isbn13 && candidate.isbn13s.includes(book.isbn13)) {
+        matchedBy = "isbn13";
+      } else if (
+        candidate.normalizedAuthor
+        && book.normalizedTitle === candidate.normalizedTitle
+        && book.normalizedAuthor === candidate.normalizedAuthor
+      ) {
+        matchedBy = "normalized_identity";
+      }
+
+      if (!matchedBy) continue;
+
+      const observedTimes = book.observations.map((observation) => observation.observedAt);
+      const firstObservedAt = new Date(
+        Math.min(...observedTimes.map((value) => value.getTime())),
+      );
+      const lastObservedAt = new Date(
+        Math.max(...observedTimes.map((value) => value.getTime())),
+      );
+      const existing = evidenceBySource.get(sourceCode) ?? {
+        sourceCode,
+        matchedBy,
+        listCodes: new Set<string>(),
+        periods: new Set<string>(),
+        firstObservedAt,
+        lastObservedAt,
+      };
+
+      if (matchPriority[matchedBy] > matchPriority[existing.matchedBy]) {
+        existing.matchedBy = matchedBy;
+      }
+      if (firstObservedAt < existing.firstObservedAt) {
+        existing.firstObservedAt = firstObservedAt;
+      }
+      if (lastObservedAt > existing.lastObservedAt) {
+        existing.lastObservedAt = lastObservedAt;
+      }
+
+      for (const observation of book.observations) {
+        existing.listCodes.add(observation.fetchRun.list.code);
+        existing.periods.add(observation.fetchRun.list.period);
+      }
+      evidenceBySource.set(sourceCode, existing);
+    }
+
+    const historicalThirdSourceEvidence = [...evidenceBySource.values()]
+      .sort((a, b) => a.sourceCode.localeCompare(b.sourceCode, "tr"))
+      .map((evidence) => ({
+        sourceCode: evidence.sourceCode,
+        matchedBy: evidence.matchedBy,
+        listCodes: [...evidence.listCodes].sort((a, b) => a.localeCompare(b, "tr")),
+        periods: [...evidence.periods].sort((a, b) => a.localeCompare(b, "tr")),
+        firstObservedAt: evidence.firstObservedAt,
+        lastObservedAt: evidence.lastObservedAt,
+      }));
+
+    return {
+      masterBookId: candidate.masterBookId,
+      title: candidate.title,
+      authorName: candidate.authorName,
+      isbn13s: candidate.isbn13s,
+      sourceCodes: candidate.sourceCodes,
+      absentObservedSourceCodes: candidate.absentObservedSourceCodes,
+      historicalThirdSourceCodes: historicalThirdSourceEvidence.map(
+        (evidence) => evidence.sourceCode,
+      ),
+      historicalThirdSourceEvidence,
+    };
+  });
 
   const identityValues = [...identityBuckets.values()];
   const splitMasterCollisions = identityValues
@@ -431,7 +583,10 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     ),
     sourcePairOverlapMatrix,
     nearThreeSourceCount: nearThreeSourceCandidates.length,
-    nearThreeSourceSamples: nearThreeSourceCandidates.slice(0, 20),
+    nearThreeWithHistoricalThirdSourceCount: nearThreeSourceSamples.filter(
+      (sample) => sample.historicalThirdSourceCodes.length > 0,
+    ).length,
+    nearThreeSourceSamples,
     firstObservationAt,
     lastObservationAt,
     historySpanDays: historySpanDays(firstObservationAt, lastObservationAt),

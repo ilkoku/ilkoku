@@ -483,6 +483,11 @@ export default async function BookIndexAdminPage({
               Kesin süre:{" "}
               {readiness.historySpanHours.toLocaleString("tr-TR", {
                 maximumFractionDigits: 1,
+              })} saat · En genç kaynak:{" "}
+              {readiness.leastMatureSourceCodes.join(" · ") || "—"} ·{" "}
+              {readiness.minimumSourceSuccessfulRunCount.toLocaleString("tr-TR")} snapshot /{" "}
+              {readiness.minimumSourceHistorySpanHours.toLocaleString("tr-TR", {
+                maximumFractionDigits: 1,
               })} saat
             </small>
           </article>

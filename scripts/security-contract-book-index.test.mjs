@@ -708,7 +708,7 @@ test("Book Index readiness distinguishes storefront sources from independent ope
 });
 
 
-test("KitaplarSepette research adapter stays inactive until production qualification", () => {
+test("KitaplarSepette live collector is an independent Turkey composite voter", () => {
   const adapter = source("src/lib/book-index/sources/kitaplarsepette.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
@@ -717,28 +717,28 @@ test("KitaplarSepette research adapter stays inactive until production qualifica
   contains(adapter, 'const MAX_BOOKS = 30;', "bounded KitaplarSepette Top 30");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 25;', "fail-closed list minimum");
   contains(adapter, 'const DETAIL_CONCURRENCY = 6;', "bounded detail-page concurrency");
-  contains(adapter, '\\bcard-product\\b', "server-rendered bestseller card selector");
-  contains(adapter, '\\bc-p-i-link\\b', "canonical product link selector");
-  contains(adapter, "\\baddCart\\(", "stable product id extraction");
+  contains(adapter, "\\bcard-product\\b", "server-rendered bestseller card selector");
+  contains(adapter, "\\bc-p-i-link\\b", "canonical product link selector");
   contains(adapter, "\\bBarkod\\s*:", "ISBN detail metadata");
   contains(adapter, "\\bYazar\\s*:", "author detail metadata");
   contains(adapter, "\\bYayınevi\\s*:", "publisher detail metadata");
-  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_RESULT_TOO_SMALL", "small-list rejection");
-  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DUPLICATE_PRODUCT_ID", "duplicate-id protection");
-  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DETAIL_METADATA_MISSING", "minimum identity metadata gate");
+  contains(lists, 'code: "kitaplarsepette-tr-live"', "KitaplarSepette list registry");
+  contains(lists, 'sourceUrl: "https://www.kitaplarsepette.com/cok-satanlar"', "canonical bestseller page");
+  contains(lists, 'maxRank: 30', "native rank ceiling");
+  contains(lists, 'includeInComposite: true', "independent composite vote");
   contains(
     sources,
-    'baseUrl: "https://www.kitaplarsepette.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "KitaplarSepette remains research-only",
+    'baseUrl: "https://www.kitaplarsepette.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "iklim-grup",\n    operatorName: "İklim Grup Kitap Satış Dağıtım Ltd. Şti.",\n    phase: "v1",\n    collectionState: "ready"',
+    "KitaplarSepette independent ready source",
   );
-  notContains(
+  contains(
     collector,
-    "kitaplarSepetteBookIndexAdapter",
-    "research adapter is not activated",
+    "[kitaplarSepetteBookIndexAdapter.sourceCode, kitaplarSepetteBookIndexAdapter]",
+    "KitaplarSepette adapter activation",
   );
-  notContains(
-    lists,
-    'sourceCode: "kitaplarsepette"',
-    "research source has no scheduled list",
+  contains(
+    sources,
+    "export const TURKEY_INDEX_MIN_SOURCES = 3;",
+    "3-source eligibility remains unchanged",
   );
 });

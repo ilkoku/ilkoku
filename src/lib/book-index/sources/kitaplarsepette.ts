@@ -116,7 +116,7 @@ export function parseKitaplarSepetteProductDetails(
   html: string,
 ): KitaplarSepetteDetail {
   const barcode = html.match(
-    /\\bBarkod\\s*:\\s*(?:<[^>]+>\\s*)*((?:978|979)[0-9\\s-]{10,20})/iu,
+    /\bBarkod\s*:\s*(?:<[^>]+>\s*)*((?:978|979)[0-9\s-]{10,20})/iu,
   )?.[1];
 
   return {

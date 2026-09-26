@@ -14,11 +14,15 @@ const notContains = (text, fragment, label) =>
 test("Book Index scheduler keeps production cron and read-only diagnostics after one-time maintenance", () => {
   const route = source("src/app/api/internal/book-index-scheduler/route.ts");
   const workflow = source(".github/workflows/book-index-scheduler.yml");
+  const scheduler = source("src/lib/book-index/scheduler.ts");
   const readiness = source("src/lib/book-index/readiness.ts");
 
   contains(workflow, "workflow_dispatch:", "manual operations trigger");
   contains(workflow, "schedule:", "automatic scheduler trigger");
-  contains(workflow, 'cron: "17 * * * *"', "hourly cron remains active");
+  contains(workflow, 'cron: "17 * * * *"', "primary hourly cron remains active");
+  contains(workflow, 'cron: "47 * * * *"', "fallback hourly cron protects missed GitHub schedule windows");
+  contains(scheduler, "nextDueAt.getTime() > now.getTime()", "fallback remains cadence due-aware");
+  contains(scheduler, 'status: "not_due"', "fallback skips lists that are not due");
   notContains(workflow, "workflow_run:", "one-time KitaplarSepette trigger removed");
   notContains(workflow, "?matchPending=1", "one-time backfill request removed");
   contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");

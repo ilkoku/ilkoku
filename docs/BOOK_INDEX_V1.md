@@ -470,7 +470,7 @@ bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplan�
 - Her listenin son başarılı veya `no_change` fetch run'ı kullanılır.
 - Yalnız master kitaba bağlanmış dış kayıtlar hesaba girer.
 - Normalizasyon için o run'da gerçekten saklanan kayıt sayısı kullanılır.
-- Mevcut `1 kaynak = 1 oy` ve minimum 3 bağımsız kaynak kuralı aynen korunur.
+- Mevcut `1 bağımsız kaynak = 1 oy` ve minimum 3 bağımsız kaynak kuralı aynen korunur.
 - Bu görünüm yalnız admin içindir; public route ve sitemap açılımı hâlâ kapalıdır.
 
 ### KitapSepeti

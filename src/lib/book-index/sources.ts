@@ -177,6 +177,8 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     includeInTurkeyIndex: true,
     phase: "v1",
     collectionState: "ready",
+    independenceGroup: "iklim-grup",
+    operatorName: "İklim Grup Kitap Satış Dağıtım Ltd. Şti.",
   },
   {
     code: "hepsiburada",

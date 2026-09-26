@@ -70,3 +70,25 @@ test("Book Index readiness measures storefront eligibility lost after operator g
     "measurement does not change scoring yet",
   );
 });
+
+
+test("KitaplarSepette canary has documented independent operator metadata", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(
+    sources,
+    'collectionState: "ready",\n    independenceGroup: "iklim-grup",\n    operatorName: "İklim Grup Kitap Satış Dağıtım Ltd. Şti."',
+    "KitaplarSepette documented operator group",
+  );
+  contains(
+    lists,
+    'code: "kitaplarsepette-tr-live-canary"',
+    "KitaplarSepette remains a named canary",
+  );
+  contains(
+    lists,
+    'includeInComposite: false',
+    "operator metadata does not activate the canary vote",
+  );
+});

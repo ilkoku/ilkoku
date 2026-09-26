@@ -746,16 +746,14 @@ test("KitaplarSepette is a bounded independent Turkey composite voter", () => {
 });
 
 
-test("KitaplarSepette shadow overlap stays read-only before voter activation", () => {
+test("KitaplarSepette qualification evidence remains observable after voter activation", () => {
   const readiness = source("src/lib/book-index/readiness.ts");
   const lists = source("src/lib/book-index/lists.ts");
 
-  contains(readiness, "kitaplarSepetteCanaryShadowBookCount", "shadow book count");
-  contains(readiness, "kitaplarSepetteCanaryShadowOverlapWithCompositeCount", "shadow overlap count");
-  contains(readiness, "kitaplarSepetteCanaryShadowWouldReach3StorefrontCount", "projected storefront threshold");
-  contains(readiness, "kitaplarSepetteCanaryShadowWouldReach3IndependentCount", "projected independent threshold");
-  contains(readiness, "kitaplarSepetteCanaryShadowPairOverlap", "shadow pair overlap");
-  contains(readiness, "kitaplarSepetteCanaryShadowSamples", "shadow overlap samples");
-  contains(readiness, "projectedIndependentSourceCount", "projected independent source count");
-  contains(lists, 'includeInComposite: false', "shadow measurement cannot activate canary vote");
+  contains(readiness, "kitaplarSepetteCanaryHealth", "retained canary health evidence");
+  contains(readiness, "kitaplarSepetteCanaryShadowBookCount", "retained shadow book count");
+  contains(readiness, "kitaplarSepetteCanaryShadowWouldReach3IndependentCount", "retained projected independent threshold evidence");
+  contains(readiness, "kitaplarSepetteCanaryShadowSamples", "retained shadow overlap samples");
+  contains(lists, 'code: "kitaplarsepette-tr-live"', "qualified live voter list");
+  contains(lists, 'includeInComposite: true', "qualified composite vote");
 });

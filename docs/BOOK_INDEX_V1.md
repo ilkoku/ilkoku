@@ -223,7 +223,7 @@ sinyal verir:
 - `CollectionPage.dateModified` ve sitemap `lastModified` gerçek son
   snapshot zamanından üretilir;
 - sayfada son veri güncellemesi kullanıcıya görünür;
-- yöntem/metodoloji metni organik sıralamayı, bağımsız kaynak kuralını ve
+- yöntem/metodoloji metni organik sıralamayı, bağımsız işletmeci grubu kuralını ve
   sponsor ayrımını açıklar;
 - IndexNow, kod değişikliklerinde mevcut sitemap seçimini kullanmaya devam eder;
 - ayrıca günlük scheduled refresh yalnız sitemap'te gerçekten yayınlanmış
@@ -261,7 +261,7 @@ Public yüzeyler açılmadan önce dört türe ait read-model hazırlanır:
 - **Her yerde satanlar:** mevcut composite snapshot'larda en az
   `TURKEY_INDEX_MIN_SOURCES` bağımsız işletmeci grubunda bulunan kitaplar.
 - **Uzun satanlar:** composite observation geçmişindeki ilk/son görülme zamanı,
-  tarihsel gün sayısı, bağımsız kaynak ve observation sayısıyla sıralanır.
+  tarihsel gün sayısı, bağımsız işletmeci grubu sayısı ve observation sayısıyla sıralanır.
 
 Bu modeller sabit “7 gün/30 gün” gibi henüz kanıtlanmamış eşikler üretmez.
 Gerçek snapshot geçmişi biriktikçe public ürün etiketleri ayrıca kilitlenir.
@@ -470,8 +470,8 @@ toplanmış `unmatched` kayıtları da aynı kurallarla yeniden işler.
 
 ## Türkiye Endeksi yönetim önizlemesi
 
-İlk üç canlı Türkiye kaynağı olan Remzi, BKM ve idefix aynı master kitaba
-bağlanabildiğinde yönetim ekranında bileşik sıralama önizlemesi hesaplanır.
+Yönetim ekranındaki Türkiye Endeksi önizlemesi, güncel production composite
+snapshot'larında aynı master kitaba bağlanan kayıtlar üzerinden hesaplanır.
 
 Önizleme kuralları:
 

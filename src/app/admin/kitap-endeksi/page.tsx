@@ -122,10 +122,12 @@ export default async function BookIndexAdminPage({
     successfulRuns,
     failedRuns,
     recentRuns,
+    unmatchedBySource,
   ] = await Promise.all([
     prisma.bookIndexSource.findMany({
       orderBy: { code: "asc" },
       select: {
+        id: true,
         code: true,
         status: true,
         updatedAt: true,
@@ -157,6 +159,11 @@ export default async function BookIndexAdminPage({
         },
       },
     }),
+    prisma.bookIndexExternalBook.groupBy({
+      by: ["sourceId"],
+      where: { matchStatus: "unmatched" },
+      _count: { _all: true },
+    }),
   ]);
 
   const [turkeyPreview, operations, readiness, seoGate] = await Promise.all([
@@ -169,6 +176,15 @@ export default async function BookIndexAdminPage({
   const dbSourceByCode = new Map(
     sourceRows.map((source) => [source.code, source] as const),
   );
+  const sourceCodeById = new Map(
+    sourceRows.map((source) => [source.id, source.code] as const),
+  );
+  const unmatchedBySourceRows = unmatchedBySource
+    .map((row) => ({
+      sourceCode: sourceCodeById.get(row.sourceId) ?? row.sourceId,
+      count: row._count._all,
+    }))
+    .sort((a, b) => b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"));
   const manualLists = BOOK_INDEX_LISTS.filter((list) => list.enabled);
 
   return (
@@ -293,7 +309,7 @@ export default async function BookIndexAdminPage({
             <h2>Kaynaklar arası bileşik sıralama</h2>
             <p>
               Yalnız eşleşmiş master kitaplar ve en az {TURKEY_INDEX_MIN_SOURCES}
-              bağımsız Türkiye kaynağı bulunan kayıtlar gösterilir. Bu ekran
+              bağımsız işletmeci grubu bulunan kayıtlar gösterilir. Bu ekran
               yönetim önizlemesidir; henüz public veya sitemap&apos;te değildir.
             </p>
           </div>
@@ -336,7 +352,7 @@ export default async function BookIndexAdminPage({
             <strong>Türkiye Endeksi için henüz yeterli ortak kitap yok.</strong>
             <p>
               Canlı listeleri kontrol edin ve bekleyen eşleştirmeleri çalıştırın.
-              En az üç bağımsız kaynakta eşleşen kitaplar burada görünür.
+              En az üç bağımsız işletmeci grubunda eşleşen kitaplar burada görünür.
             </p>
           </div>
         )}
@@ -514,6 +530,31 @@ export default async function BookIndexAdminPage({
             </small>
           </article>
         </section>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
+                <th>Eşleşmeyen kaynak</th>
+                <th>Bekleyen kayıt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {unmatchedBySourceRows.length ? (
+                unmatchedBySourceRows.map((source) => (
+                  <tr key={source.sourceCode}>
+                    <td><strong>{source.sourceCode}</strong></td>
+                    <td>{source.count.toLocaleString("tr-TR")}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2}>Eşleşmeyen dış kitap kaydı yok.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <div className="admin-table-wrap">
           <table className="admin-data-table">

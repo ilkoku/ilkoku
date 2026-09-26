@@ -52,6 +52,16 @@ export type BookIndexIndependenceGroupSample = {
   sourceCodes: string[];
 };
 
+export type BookIndexOperatorEligibilityDeltaSample = {
+  masterBookId: string;
+  title: string;
+  authorName: string | null;
+  sourceCodes: string[];
+  independenceGroups: string[];
+  storefrontSourceCount: number;
+  independentSourceCount: number;
+};
+
 export type BookIndexNearThreeHistoricalEvidence = {
   sourceCode: string;
   matchedBy: "master_book" | "isbn13" | "normalized_identity";
@@ -93,6 +103,8 @@ export type BookIndexReadinessSnapshot = {
   maxIndependentCompositeSourcesPerBook: number;
   booksOnAtLeast2IndependentCompositeSources: number;
   booksOnAtLeast3IndependentCompositeSources: number;
+  storefrontEligibleButOperatorIneligibleCount: number;
+  storefrontEligibleButOperatorIneligibleSamples: BookIndexOperatorEligibilityDeltaSample[];
   normalizedIdentityKeysOnAtLeast2Sources: number;
   normalizedIdentityKeysOnAtLeast3Sources: number;
   splitMasterCollisionCount: number;
@@ -375,6 +387,37 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         ),
       ).size,
   );
+  const storefrontEligibleButOperatorIneligible = [...masterBookDetails.entries()]
+    .map(([masterBookId, detail]) => {
+      const sourceCodes = [...detail.sourceCodes].sort((a, b) => a.localeCompare(b, "tr"));
+      const independenceGroups = [...new Set(
+        sourceCodes.map(
+          (sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode),
+        ),
+      )].sort((a, b) => a.localeCompare(b, "tr"));
+
+      return {
+        masterBookId,
+        title: detail.title,
+        authorName: detail.authorName,
+        sourceCodes,
+        independenceGroups,
+        storefrontSourceCount: sourceCodes.length,
+        independentSourceCount: independenceGroups.length,
+      };
+    })
+    .filter(
+      (sample) =>
+        sample.storefrontSourceCount >= 3
+        && sample.independentSourceCount < 3,
+    )
+    .sort(
+      (a, b) =>
+        b.storefrontSourceCount - a.storefrontSourceCount
+        || b.independentSourceCount - a.independentSourceCount
+        || a.title.localeCompare(b.title, "tr")
+        || a.masterBookId.localeCompare(b.masterBookId),
+    );
 
   const sourcePairOverlapMatrix: BookIndexSourcePairOverlap[] = [];
   for (let leftIndex = 0; leftIndex < observedCompositeSourceCodes.length; leftIndex += 1) {
@@ -616,6 +659,10 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     booksOnAtLeast3IndependentCompositeSources: independentCompositeSourceCounts.filter(
       (count) => count >= 3,
     ).length,
+    storefrontEligibleButOperatorIneligibleCount:
+      storefrontEligibleButOperatorIneligible.length,
+    storefrontEligibleButOperatorIneligibleSamples:
+      storefrontEligibleButOperatorIneligible.slice(0, 20),
     normalizedIdentityKeysOnAtLeast2Sources: identityValues.filter((bucket) => bucket.sourceCodes.size >= 2).length,
     normalizedIdentityKeysOnAtLeast3Sources: identityValues.filter((bucket) => bucket.sourceCodes.size >= 3).length,
     splitMasterCollisionCount: splitMasterCollisions.length,

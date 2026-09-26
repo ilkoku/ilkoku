@@ -777,7 +777,7 @@ test("KitaplarSepette qualification evidence remains observable after voter acti
 });
 
 
-test("Book Index admin reflects independent-operator voting and history maturity", () => {
+test("Book Index admin reflects independent-operator voting, active scheduling, and history maturity", () => {
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
 
   contains(admin, "1 bağımsız işletmeci grubu = 1 oy", "independent operator vote contract");

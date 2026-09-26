@@ -757,6 +757,7 @@ test("KitaplarSepette shadow overlap stays read-only before voter activation", (
   contains(readiness, "kitaplarSepetteCanaryShadowWouldReach3StorefrontCount", "projected storefront threshold");
   contains(readiness, "kitaplarSepetteCanaryShadowWouldReach3IndependentCount", "projected independent threshold");
   contains(readiness, "kitaplarSepetteCanaryShadowPairOverlap", "shadow pair overlap");
+  contains(readiness, "kitaplarSepetteCanaryShadowSamples", "shadow overlap samples");
   contains(readiness, "projectedIndependentSourceCount", "projected independent source count");
   contains(lists, 'includeInComposite: false', "shadow measurement cannot activate canary vote");
 });

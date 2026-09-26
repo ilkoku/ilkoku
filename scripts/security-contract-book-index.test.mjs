@@ -754,6 +754,7 @@ test("KitaplarSepette qualification evidence remains observable after voter acti
   contains(readiness, "kitaplarSepetteCanaryShadowBookCount", "retained shadow book count");
   contains(readiness, "kitaplarSepetteCanaryShadowWouldReach3IndependentCount", "retained projected independent threshold evidence");
   contains(readiness, "kitaplarSepetteCanaryShadowSamples", "retained shadow overlap samples");
+  contains(readiness, '"kitaplarsepette",', "shadow projection deduplicates the activated storefront");
   contains(lists, 'code: "kitaplarsepette-tr-live"', "qualified live voter list");
   contains(lists, 'includeInComposite: true', "qualified composite vote");
 });

@@ -209,14 +209,15 @@ test("blocked sources are not bypassed by the book index collector", () => {
   );
 });
 
-test("book index collection stays admin-controlled before scheduler rollout", () => {
+test("book index manual collection stays admin-controlled while scheduler is active", () => {
   const action = source("src/features/book-index/admin-actions.ts");
   const page = source("src/app/admin/kitap-endeksi/page.tsx");
 
   contains(action, 'admin.role !== "admin"', "admin-only manual collection");
   contains(action, "collectBookIndexListByCode", "manual collector action");
   contains(page, "Şimdi kontrol et", "manual source verification control");
-  contains(page, "Otomatik scheduler bu aşamada kapalıdır", "scheduler remains off");
+  contains(page, "Saatlik scheduler aktiftir", "active scheduler status");
+  notContains(page, "Otomatik scheduler bu aşamada kapalıdır", "stale scheduler-off status removed");
 });
 
 
@@ -773,4 +774,15 @@ test("KitaplarSepette qualification evidence remains observable after voter acti
   contains(readiness, '"kitaplarsepette",', "shadow projection adds the qualified storefront once");
   contains(lists, 'code: "kitaplarsepette-tr-live"', "qualified live voter list");
   contains(lists, 'includeInComposite: true', "qualified composite vote");
+});
+
+
+test("Book Index admin shows independent-operator voting truth", () => {
+  const admin = source("src/app/admin/kitap-endeksi/page.tsx");
+
+  contains(admin, "1 bağımsız işletmeci grubu = 1 oy", "independent operator vote contract");
+  notContains(admin, "<h2>1 kaynak = 1 oy</h2>", "stale storefront-vote copy removed");
+  contains(admin, "readiness.observedCompositeIndependenceGroups", "independent operator count");
+  contains(admin, "readiness.compositeIndependenceGroupTarget", "independent operator target");
+  contains(admin, "readiness.booksOnAtLeast3IndependentCompositeSources", "3+ independent-book count");
 });

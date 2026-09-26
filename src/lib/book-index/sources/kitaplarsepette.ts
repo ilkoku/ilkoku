@@ -42,6 +42,10 @@ export function parseKitaplarSepetteBestsellerCards(
     return className.split(/\\s+/u).includes("card-product");
   });
 
+  if (starts.length < MIN_EXPECTED_BOOKS) {
+    throw new Error("BOOK_INDEX_KITAPLARSEPETTE_CARD_STARTS_TOO_SMALL");
+  }
+
   const cards = starts
     .map((match, index) => {
       const start = match.index ?? 0;
@@ -75,7 +79,7 @@ export function parseKitaplarSepetteBestsellerCards(
     .slice(0, MAX_BOOKS);
 
   if (cards.length < MIN_EXPECTED_BOOKS) {
-    throw new Error("BOOK_INDEX_KITAPLARSEPETTE_RESULT_TOO_SMALL");
+    throw new Error("BOOK_INDEX_KITAPLARSEPETTE_PARSED_CARDS_TOO_SMALL");
   }
 
   const uniqueIds = new Set(cards.map((card) => card.productId));

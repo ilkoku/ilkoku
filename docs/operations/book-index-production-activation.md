@@ -1,6 +1,6 @@
 # Book Index production activation checklist
 
-Status: **CODE READY / PRODUCTION ACTIVATION GATED**
+Status: **SCHEDULER ACTIVE / SNAPSHOT ACCUMULATION / PUBLICATION GATED**
 
 Bu belge Kitap Endeksi kodu hazırlandıktan sonra production aktivasyonunun
 hangi sırayla yapılacağını tanımlar. Adımların sırası bilinçlidir; sonraki
@@ -99,8 +99,9 @@ Admin readiness ekranında özellikle şu metrik izlenir:
 
 Public açılımdan önce doğrulanması gereken ürün kuralları:
 
-- en az 3 bağımsız Türkiye kaynağı;
-- 1 kaynak = 1 oy;
+- en az 3 bağımsız işletmeci grubu;
+- 1 bağımsız işletmeci grubu = en fazla 1 oy;
+- aynı işletmeciye ait birden fazla storefront veya liste ekstra oy üretmez;
 - kaynak-native rank ile İlkOku composite score ayrıdır;
 - sponsorlu içerik composite oyu kullanmaz;
 - kategori kaynakları genel composite'e yanlışlıkla oy vermez.
@@ -116,7 +117,7 @@ Yeterli production geçmişi görüldükten sonra aşağıdaki değerler ayrıca
 kararlaştırılır ve policy version ile birlikte production env'e girilir:
 
 - `BOOK_INDEX_SEO_POLICY_VERSION`
-- `BOOK_INDEX_SEO_MIN_COMPOSITE_SOURCES`
+- `BOOK_INDEX_SEO_MIN_COMPOSITE_SOURCES` — bağımsız işletmeci grubu sayısı üzerinden değerlendirilir
 - `BOOK_INDEX_SEO_MIN_MATCH_COVERAGE_PERCENT`
 - `BOOK_INDEX_SEO_MIN_HISTORY_DAYS`
 - `BOOK_INDEX_SEO_MIN_TURKEY_ITEMS`

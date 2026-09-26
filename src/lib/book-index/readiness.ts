@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 
 import { normalizeBookIndexText } from "./html";
 import { BOOK_INDEX_LISTS } from "./lists";
+import {
+  getBookIndexSourceIndependenceGroup,
+  getBookIndexSourceOperatorName,
+} from "./sources";
 
 export type BookIndexCollisionCandidate = {
   title: string;
@@ -36,7 +40,16 @@ export type BookIndexEditionFamilySample = {
 export type BookIndexSourcePairOverlap = {
   sourceCodeA: string;
   sourceCodeB: string;
+  independenceGroupA: string;
+  independenceGroupB: string;
+  sameIndependenceGroup: boolean;
   sharedBookCount: number;
+};
+
+export type BookIndexIndependenceGroupSample = {
+  independenceGroup: string;
+  operatorName: string;
+  sourceCodes: string[];
 };
 
 export type BookIndexNearThreeHistoricalEvidence = {
@@ -54,6 +67,8 @@ export type BookIndexNearThreeSample = {
   authorName: string | null;
   isbn13s: string[];
   sourceCodes: string[];
+  independenceGroups: string[];
+  independentSourceCount: number;
   absentObservedSourceCodes: string[];
   historicalThirdSourceCodes: string[];
   historicalThirdSourceEvidence: BookIndexNearThreeHistoricalEvidence[];
@@ -61,8 +76,13 @@ export type BookIndexNearThreeSample = {
 
 export type BookIndexReadinessSnapshot = {
   compositeSourceTarget: number;
+  compositeIndependenceGroupTarget: number;
   observedCompositeSources: number;
   observedCompositeSourceCodes: string[];
+  observedCompositeIndependenceGroups: number;
+  observedCompositeIndependenceGroupCodes: string[];
+  sharedOperatorGroupCount: number;
+  sharedOperatorGroups: BookIndexIndependenceGroupSample[];
   externalBookCount: number;
   matchedExternalBookCount: number;
   unmatchedExternalBookCount: number;
@@ -70,6 +90,9 @@ export type BookIndexReadinessSnapshot = {
   maxCompositeSourcesPerBook: number;
   booksOnAtLeast2CompositeSources: number;
   booksOnAtLeast3CompositeSources: number;
+  maxIndependentCompositeSourcesPerBook: number;
+  booksOnAtLeast2IndependentCompositeSources: number;
+  booksOnAtLeast3IndependentCompositeSources: number;
   normalizedIdentityKeysOnAtLeast2Sources: number;
   normalizedIdentityKeysOnAtLeast3Sources: number;
   splitMasterCollisionCount: number;
@@ -141,6 +164,10 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       .map((list) => list.sourceCode),
   )];
 
+  const compositeIndependenceGroupCodes = [...new Set(
+    compositeSourceCodes.map((sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode)),
+  )].sort((a, b) => a.localeCompare(b, "tr"));
+
   const [externalBookCount, matchedExternalBookCount, observationRange, persistedCompositeLists] =
     await Promise.all([
       prisma.bookIndexExternalBook.count(),
@@ -190,6 +217,29 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       .filter((list) => list.fetchRuns.length > 0)
       .map((list) => list.source.code),
   )].sort((a, b) => a.localeCompare(b, "tr"));
+
+  const observedCompositeIndependenceGroupCodes = [...new Set(
+    observedCompositeSourceCodes.map(
+      (sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode),
+    ),
+  )].sort((a, b) => a.localeCompare(b, "tr"));
+
+  const observedSourcesByIndependenceGroup = new Map<string, Set<string>>();
+  for (const sourceCode of observedCompositeSourceCodes) {
+    const independenceGroup = getBookIndexSourceIndependenceGroup(sourceCode);
+    const sourceCodes =
+      observedSourcesByIndependenceGroup.get(independenceGroup) ?? new Set<string>();
+    sourceCodes.add(sourceCode);
+    observedSourcesByIndependenceGroup.set(independenceGroup, sourceCodes);
+  }
+  const sharedOperatorGroups = [...observedSourcesByIndependenceGroup.entries()]
+    .filter(([, sourceCodes]) => sourceCodes.size > 1)
+    .map(([independenceGroup, sourceCodes]) => ({
+      independenceGroup,
+      operatorName: getBookIndexSourceOperatorName([...sourceCodes][0]),
+      sourceCodes: [...sourceCodes].sort((a, b) => a.localeCompare(b, "tr")),
+    }))
+    .sort((a, b) => a.independenceGroup.localeCompare(b.independenceGroup, "tr"));
 
   const sourceCodesByMasterBook = new Map<string, Set<string>>();
   const masterBookDetails = new Map<string, {
@@ -317,6 +367,14 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   }
 
   const compositeSourceCounts = [...sourceCodesByMasterBook.values()].map((sourceCodes) => sourceCodes.size);
+  const independentCompositeSourceCounts = [...sourceCodesByMasterBook.values()].map(
+    (sourceCodes) =>
+      new Set(
+        [...sourceCodes].map(
+          (sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode),
+        ),
+      ).size,
+  );
 
   const sourcePairOverlapMatrix: BookIndexSourcePairOverlap[] = [];
   for (let leftIndex = 0; leftIndex < observedCompositeSourceCodes.length; leftIndex += 1) {
@@ -327,10 +385,19 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     ) {
       const sourceCodeA = observedCompositeSourceCodes[leftIndex];
       const sourceCodeB = observedCompositeSourceCodes[rightIndex];
+      const independenceGroupA = getBookIndexSourceIndependenceGroup(sourceCodeA);
+      const independenceGroupB = getBookIndexSourceIndependenceGroup(sourceCodeB);
       const sharedBookCount = [...sourceCodesByMasterBook.values()].filter(
         (sourceCodes) => sourceCodes.has(sourceCodeA) && sourceCodes.has(sourceCodeB),
       ).length;
-      sourcePairOverlapMatrix.push({ sourceCodeA, sourceCodeB, sharedBookCount });
+      sourcePairOverlapMatrix.push({
+        sourceCodeA,
+        sourceCodeB,
+        independenceGroupA,
+        independenceGroupB,
+        sameIndependenceGroup: independenceGroupA === independenceGroupB,
+        sharedBookCount,
+      });
     }
   }
 
@@ -344,6 +411,11 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       normalizedAuthor: detail.normalizedAuthor,
       isbn13s: [...detail.isbn13s].sort(),
       sourceCodes: [...detail.sourceCodes].sort((a, b) => a.localeCompare(b, "tr")),
+      independenceGroups: [...new Set(
+        [...detail.sourceCodes].map(
+          (sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode),
+        ),
+      )].sort((a, b) => a.localeCompare(b, "tr")),
       absentObservedSourceCodes: observedCompositeSourceCodes.filter(
         (sourceCode) => !detail.sourceCodes.has(sourceCode),
       ),
@@ -480,6 +552,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       authorName: candidate.authorName,
       isbn13s: candidate.isbn13s,
       sourceCodes: candidate.sourceCodes,
+      independenceGroups: candidate.independenceGroups,
+      independentSourceCount: candidate.independenceGroups.length,
       absentObservedSourceCodes: candidate.absentObservedSourceCodes,
       historicalThirdSourceCodes: historicalThirdSourceEvidence.map(
         (evidence) => evidence.sourceCode,
@@ -517,8 +591,13 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
 
   return {
     compositeSourceTarget: compositeSourceCodes.length,
+    compositeIndependenceGroupTarget: compositeIndependenceGroupCodes.length,
     observedCompositeSources: observedCompositeSourceCodes.length,
     observedCompositeSourceCodes,
+    observedCompositeIndependenceGroups: observedCompositeIndependenceGroupCodes.length,
+    observedCompositeIndependenceGroupCodes,
+    sharedOperatorGroupCount: sharedOperatorGroups.length,
+    sharedOperatorGroups,
     externalBookCount,
     matchedExternalBookCount,
     unmatchedExternalBookCount,
@@ -528,6 +607,15 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     maxCompositeSourcesPerBook: compositeSourceCounts.length ? Math.max(...compositeSourceCounts) : 0,
     booksOnAtLeast2CompositeSources: compositeSourceCounts.filter((count) => count >= 2).length,
     booksOnAtLeast3CompositeSources: compositeSourceCounts.filter((count) => count >= 3).length,
+    maxIndependentCompositeSourcesPerBook: independentCompositeSourceCounts.length
+      ? Math.max(...independentCompositeSourceCounts)
+      : 0,
+    booksOnAtLeast2IndependentCompositeSources: independentCompositeSourceCounts.filter(
+      (count) => count >= 2,
+    ).length,
+    booksOnAtLeast3IndependentCompositeSources: independentCompositeSourceCounts.filter(
+      (count) => count >= 3,
+    ).length,
     normalizedIdentityKeysOnAtLeast2Sources: identityValues.filter((bucket) => bucket.sourceCodes.size >= 2).length,
     normalizedIdentityKeysOnAtLeast3Sources: identityValues.filter((bucket) => bucket.sourceCodes.size >= 3).length,
     splitMasterCollisionCount: splitMasterCollisions.length,

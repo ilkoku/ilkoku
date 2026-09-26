@@ -19,10 +19,10 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(workflow, "workflow_dispatch:", "manual operations trigger");
   contains(workflow, "schedule:", "automatic scheduler trigger");
   contains(workflow, 'cron: "17 * * * *"', "hourly cron remains active");
-  contains(workflow, "workflow_run:", "temporary KitaplarSepette canary trigger");
+  notContains(workflow, "workflow_run:", "one-time KitaplarSepette trigger removed");
   notContains(workflow, "?matchPending=1", "one-time backfill request removed");
   contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");
-  contains(route, '"workflow_run"', "temporary workflow-run authorization");
+  notContains(route, '"workflow_run"', "one-time workflow-run authorization removed");
   notContains(route, "matchPendingBookIndexBooks", "one-time matching backfill removed");
   notContains(route, 'searchParams.get("matchPending")', "maintenance switch removed");
   contains(readiness, "splitMasterCollisionCount", "collision diagnostic retained");
@@ -35,21 +35,21 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
 
 
 
-test("Book Index one-time KitaplarSepette canary probe is tightly scoped", () => {
+
+
+
+test("Book Index KitaplarSepette canary health is read-only and the one-time probe is removed", () => {
   const route = source("src/app/api/internal/book-index-scheduler/route.ts");
   const workflow = source(".github/workflows/book-index-scheduler.yml");
+  const readiness = source("src/lib/book-index/readiness.ts");
 
-  contains(workflow, "workflow_run:", "temporary production-smoke trigger");
-  contains(workflow, "Production smoke", "probe source workflow");
-  contains(workflow, "github.event.workflow_run.conclusion == 'success'", "success-only probe");
-  contains(workflow, "github.event.workflow_run.head_branch == 'main'", "main-only probe");
-  contains(workflow, "?forceKitaplarSepetteCanary=1", "explicit canary force flag");
-  contains(
-    route,
-    'collectBookIndexListByCode(\n        "kitaplarsepette-tr-live-canary",',
-    "single KitaplarSepette canary list",
-  );
-  contains(route, "forcedKitaplarSepetteCanaryRun", "forced canary result reporting");
-  notContains(route, 'collectBookIndexListByCode("illakitap-tr-weekly")', "probe does not force Illa Kitap");
-  notContains(route, 'collectBookIndexListByCode("nobelkitap-tr-live")', "probe does not force NobelKitap");
+  notContains(workflow, "workflow_run:", "temporary production-smoke trigger removed");
+  notContains(workflow, "?forceKitaplarSepetteCanary=1", "force canary query removed");
+  notContains(route, "forceKitaplarSepetteCanary", "force canary route removed");
+  notContains(route, "forcedKitaplarSepetteCanaryRun", "force canary response removed");
+  contains(readiness, "kitaplarSepetteCanaryHealth", "canary health snapshot");
+  contains(readiness, 'where: { code: "kitaplarsepette-tr-live-canary" }', "canary list lookup");
+  contains(readiness, "errorCode: true", "canary error code diagnostic");
+  contains(readiness, "errorMessage: true", "canary error message diagnostic");
+  contains(readiness, "itemsStored: true", "canary item count diagnostic");
 });

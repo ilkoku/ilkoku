@@ -596,7 +596,8 @@ export default async function BookIndexAdminPage({
               <h2>Kaynak listelerini manuel kontrol et</h2>
               <p>
                 Her kontrol ayrı rank snapshot&apos;ı üretir; önceki veriler
-                overwrite edilmez. Otomatik scheduler bu aşamada kapalıdır.
+                overwrite edilmez. Saatlik scheduler aktiftir; bu buton yalnız
+                kontrollü manuel doğrulama için kullanılır.
               </p>
             </div>
           </header>

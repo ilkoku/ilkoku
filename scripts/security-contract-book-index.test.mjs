@@ -746,3 +746,17 @@ test("KitaplarSepette canary collects daily without contributing to the composit
   contains(lists, 'collectionEveryMinutes: 1440', "daily canary cadence");
   contains(lists, 'includeInComposite: false', "canary cannot vote in the composite");
 });
+
+
+test("KitaplarSepette shadow overlap stays read-only before voter activation", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(readiness, "kitaplarSepetteCanaryShadowBookCount", "shadow book count");
+  contains(readiness, "kitaplarSepetteCanaryShadowOverlapWithCompositeCount", "shadow overlap count");
+  contains(readiness, "kitaplarSepetteCanaryShadowWouldReach3StorefrontCount", "projected storefront threshold");
+  contains(readiness, "kitaplarSepetteCanaryShadowWouldReach3IndependentCount", "projected independent threshold");
+  contains(readiness, "kitaplarSepetteCanaryShadowPairOverlap", "shadow pair overlap");
+  contains(readiness, "projectedIndependentSourceCount", "projected independent source count");
+  contains(lists, 'includeInComposite: false', "shadow measurement cannot activate canary vote");
+});

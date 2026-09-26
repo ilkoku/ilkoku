@@ -33,6 +33,21 @@ export type BookIndexEditionFamilySample = {
   titles: string[];
 };
 
+export type BookIndexSourcePairOverlap = {
+  sourceCodeA: string;
+  sourceCodeB: string;
+  sharedBookCount: number;
+};
+
+export type BookIndexNearThreeSample = {
+  masterBookId: string;
+  title: string;
+  authorName: string | null;
+  isbn13s: string[];
+  sourceCodes: string[];
+  absentObservedSourceCodes: string[];
+};
+
 export type BookIndexReadinessSnapshot = {
   compositeSourceTarget: number;
   observedCompositeSources: number;
@@ -58,6 +73,9 @@ export type BookIndexReadinessSnapshot = {
   editionFamilyIdentityKeysOnAtLeast3Sources: number;
   editionFamilyVariantOverlapCount: number;
   editionFamilyVariantOverlapSamples: BookIndexEditionFamilySample[];
+  sourcePairOverlapMatrix: BookIndexSourcePairOverlap[];
+  nearThreeSourceCount: number;
+  nearThreeSourceSamples: BookIndexNearThreeSample[];
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
   historySpanDays: number;
@@ -162,6 +180,12 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   )].sort((a, b) => a.localeCompare(b, "tr"));
 
   const sourceCodesByMasterBook = new Map<string, Set<string>>();
+  const masterBookDetails = new Map<string, {
+    title: string;
+    authorName: string | null;
+    isbn13s: Set<string>;
+    sourceCodes: Set<string>;
+  }>();
   const titleBuckets = new Map<string, {
     title: string;
     sourceCodes: Set<string>;
@@ -202,6 +226,16 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         const sourceCodes = sourceCodesByMasterBook.get(book.masterBookId) ?? new Set<string>();
         sourceCodes.add(list.source.code);
         sourceCodesByMasterBook.set(book.masterBookId, sourceCodes);
+
+        const detail = masterBookDetails.get(book.masterBookId) ?? {
+          title: book.title,
+          authorName: book.authorName,
+          isbn13s: new Set<string>(),
+          sourceCodes: new Set<string>(),
+        };
+        detail.sourceCodes.add(list.source.code);
+        if (book.isbn13) detail.isbn13s.add(book.isbn13);
+        masterBookDetails.set(book.masterBookId, detail);
       }
 
       if (book.normalizedTitle) {
@@ -267,6 +301,41 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   }
 
   const compositeSourceCounts = [...sourceCodesByMasterBook.values()].map((sourceCodes) => sourceCodes.size);
+
+  const sourcePairOverlapMatrix: BookIndexSourcePairOverlap[] = [];
+  for (let leftIndex = 0; leftIndex < observedCompositeSourceCodes.length; leftIndex += 1) {
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < observedCompositeSourceCodes.length;
+      rightIndex += 1
+    ) {
+      const sourceCodeA = observedCompositeSourceCodes[leftIndex];
+      const sourceCodeB = observedCompositeSourceCodes[rightIndex];
+      const sharedBookCount = [...sourceCodesByMasterBook.values()].filter(
+        (sourceCodes) => sourceCodes.has(sourceCodeA) && sourceCodes.has(sourceCodeB),
+      ).length;
+      sourcePairOverlapMatrix.push({ sourceCodeA, sourceCodeB, sharedBookCount });
+    }
+  }
+
+  const nearThreeSourceCandidates = [...masterBookDetails.entries()]
+    .filter(([, detail]) => detail.sourceCodes.size === 2)
+    .map(([masterBookId, detail]) => ({
+      masterBookId,
+      title: detail.title,
+      authorName: detail.authorName,
+      isbn13s: [...detail.isbn13s].sort(),
+      sourceCodes: [...detail.sourceCodes].sort((a, b) => a.localeCompare(b, "tr")),
+      absentObservedSourceCodes: observedCompositeSourceCodes.filter(
+        (sourceCode) => !detail.sourceCodes.has(sourceCode),
+      ),
+    }))
+    .sort(
+      (a, b) =>
+        a.title.localeCompare(b.title, "tr")
+        || a.masterBookId.localeCompare(b.masterBookId),
+    );
+
   const identityValues = [...identityBuckets.values()];
   const splitMasterCollisions = identityValues
     .filter((bucket) => bucket.sourceCodes.size >= 2 && bucket.masterBookIds.size > 1)
@@ -360,6 +429,9 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         titles: [...bucket.titles].sort((a, b) => a.localeCompare(b, "tr")),
       }),
     ),
+    sourcePairOverlapMatrix,
+    nearThreeSourceCount: nearThreeSourceCandidates.length,
+    nearThreeSourceSamples: nearThreeSourceCandidates.slice(0, 20),
     firstObservationAt,
     lastObservationAt,
     historySpanDays: historySpanDays(firstObservationAt, lastObservationAt),

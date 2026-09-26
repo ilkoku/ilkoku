@@ -52,11 +52,12 @@ canary has been removed.
 
 ## Automatic scheduler
 
-Active GitHub Actions schedule:
+Active GitHub Actions schedule windows:
 
-`17 * * * *`
+- primary: `17 * * * *`
+- fallback: `47 * * * *`
 
-This means the scheduler checks due state hourly. It does **not** mean every
+The fallback protects against delayed or dropped GitHub scheduled events. Both windows call the same due-aware scheduler; they do not bypass collection cadence. This means the scheduler checks due state up to twice per hour. It does **not** mean every
 source is fetched hourly. Each list's `collectionEveryMinutes` remains the
 authoritative collection cadence.
 
@@ -76,9 +77,10 @@ readiness:
 2. run/verify master-book matching;
 3. measure storefront coverage and independent-operator-group coverage separately;
 4. measure match coverage;
-5. measure first/last observation and history span;
-6. measure Turkey composite item count;
-7. only then set SEO policy thresholds and run the SEO gate dry-run.
+5. measure first/last observation, global history span, and per-source history floor;
+6. track `minimumSourceSuccessfulRunCount`, `minimumSourceHistorySpanHours`, and `leastMatureSourceCodes`;
+7. measure Turkey composite item count;
+8. only then set SEO policy thresholds and run the SEO gate dry-run.
 
 ## Rollback
 

@@ -111,6 +111,15 @@ export type BookIndexCanaryShadowSample = {
   projectedIndependentSourceCount: number;
 };
 
+export type BookIndexSourceHistoryMaturity = {
+  sourceCode: string;
+  successfulRunCount: number;
+  firstSuccessfulRunAt: Date | null;
+  lastSuccessfulRunAt: Date | null;
+  historySpanHours: number;
+  listCodes: string[];
+};
+
 export type BookIndexReadinessSnapshot = {
   compositeSourceTarget: number;
   compositeIndependenceGroupTarget: number;
@@ -157,6 +166,7 @@ export type BookIndexReadinessSnapshot = {
   kitaplarSepetteCanaryShadowWouldReach3IndependentCount: number;
   kitaplarSepetteCanaryShadowPairOverlap: BookIndexCanaryShadowPairOverlap[];
   kitaplarSepetteCanaryShadowSamples: BookIndexCanaryShadowSample[];
+  sourceHistoryMaturity: BookIndexSourceHistoryMaturity[];
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
   historySpanDays: number;
@@ -235,6 +245,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
           source: { includeInTurkeyIndex: true, status: "active" },
         },
         select: {
+          id: true,
+          code: true,
           source: { select: { code: true } },
           fetchRuns: {
             where: { status: { in: ["success", "no_change"] } },
@@ -305,6 +317,86 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         },
       }),
     ]);
+
+  const successfulRunStats = persistedCompositeLists.length
+    ? await prisma.bookIndexFetchRun.groupBy({
+        by: ["listId"],
+        where: {
+          listId: { in: persistedCompositeLists.map((list) => list.id) },
+          status: { in: ["success", "no_change"] },
+        },
+        _count: { _all: true },
+        _min: { startedAt: true },
+        _max: { startedAt: true },
+      })
+    : [];
+
+  const runStatsByListId = new Map(
+    successfulRunStats.map((stats) => [stats.listId, stats]),
+  );
+  const sourceHistoryAccumulator = new Map<string, {
+    successfulRunCount: number;
+    firstSuccessfulRunAt: Date | null;
+    lastSuccessfulRunAt: Date | null;
+    listCodes: Set<string>;
+  }>();
+
+  for (const list of persistedCompositeLists) {
+    const stats = runStatsByListId.get(list.id);
+    if (!stats) continue;
+
+    const sourceCode = list.source.code;
+    const current = sourceHistoryAccumulator.get(sourceCode) ?? {
+      successfulRunCount: 0,
+      firstSuccessfulRunAt: null,
+      lastSuccessfulRunAt: null,
+      listCodes: new Set<string>(),
+    };
+
+    current.successfulRunCount += stats._count._all;
+    current.listCodes.add(list.code);
+
+    const first = stats._min.startedAt;
+    const last = stats._max.startedAt;
+    if (first && (!current.firstSuccessfulRunAt || first < current.firstSuccessfulRunAt)) {
+      current.firstSuccessfulRunAt = first;
+    }
+    if (last && (!current.lastSuccessfulRunAt || last > current.lastSuccessfulRunAt)) {
+      current.lastSuccessfulRunAt = last;
+    }
+
+    sourceHistoryAccumulator.set(sourceCode, current);
+  }
+
+  const sourceHistoryMaturity: BookIndexSourceHistoryMaturity[] =
+    compositeSourceCodes
+      .map((sourceCode) => {
+        const maturity = sourceHistoryAccumulator.get(sourceCode);
+        const firstSuccessfulRunAt = maturity?.firstSuccessfulRunAt ?? null;
+        const lastSuccessfulRunAt = maturity?.lastSuccessfulRunAt ?? null;
+        const historySpanHours =
+          firstSuccessfulRunAt && lastSuccessfulRunAt
+            ? Math.max(
+                0,
+                Math.round(
+                  ((lastSuccessfulRunAt.getTime() - firstSuccessfulRunAt.getTime())
+                    / 3_600_000) * 10,
+                ) / 10,
+              )
+            : 0;
+
+        return {
+          sourceCode,
+          successfulRunCount: maturity?.successfulRunCount ?? 0,
+          firstSuccessfulRunAt,
+          lastSuccessfulRunAt,
+          historySpanHours,
+          listCodes: [...(maturity?.listCodes ?? new Set<string>())].sort(
+            (a, b) => a.localeCompare(b, "tr"),
+          ),
+        };
+      })
+      .sort((a, b) => a.sourceCode.localeCompare(b.sourceCode, "tr"));
 
   const observedCompositeSourceCodes = [...new Set(
     persistedCompositeLists
@@ -902,6 +994,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       kitaplarSepetteCanaryShadowSamples
         .filter((sample) => sample.currentSourceCodes.length > 0)
         .slice(0, 20),
+    sourceHistoryMaturity,
     firstObservationAt,
     lastObservationAt,
     historySpanDays: historySpanDays(firstObservationAt, lastObservationAt),

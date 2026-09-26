@@ -53,3 +53,18 @@ test("Book Index KitaplarSepette canary health is read-only and the one-time pro
   contains(readiness, "errorMessage: true", "canary error message diagnostic");
   contains(readiness, "itemsStored: true", "canary item count diagnostic");
 });
+
+test("Book Index scheduler exposes overdue duration as read-only operations evidence", () => {
+  const operations = source("src/lib/book-index/operations.ts");
+  const admin = source("src/app/admin/kitap-endeksi/page.tsx");
+  const workflow = source(".github/workflows/book-index-scheduler.yml");
+
+  contains(operations, "maxOverdueMinutes", "scheduler overdue duration diagnostic");
+  contains(operations, "dueRows.reduce", "overdue duration derives from due rows");
+  contains(operations, "now.getTime() - row.nextDueAt.getTime()", "overdue duration uses cadence due time");
+  contains(admin, "operations.maxOverdueMinutes", "admin overdue duration evidence");
+  contains(admin, "En uzun cadence gecikmesi", "admin overdue duration label");
+  contains(workflow, 'cron: "17 * * * *"', "steady-state cron stays unchanged");
+  notContains(admin, "Scheduler bozuk", "admin does not invent scheduler failure verdict");
+});
+

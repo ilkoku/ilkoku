@@ -74,7 +74,7 @@ readiness:
 
 1. accumulate multiple production snapshots;
 2. run/verify master-book matching;
-3. measure composite-source coverage;
+3. measure storefront coverage and independent-operator-group coverage separately;
 4. measure match coverage;
 5. measure first/last observation and history span;
 6. measure Turkey composite item count;

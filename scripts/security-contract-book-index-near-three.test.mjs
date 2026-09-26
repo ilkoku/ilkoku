@@ -64,10 +64,10 @@ test("Book Index readiness measures storefront eligibility lost after operator g
     "getBookIndexSourceIndependenceGroup",
     "operator grouping source",
   );
-  notContains(
+  contains(
     ranking,
     "getBookIndexSourceIndependenceGroup",
-    "measurement does not change scoring yet",
+    "operator grouping now also governs scoring",
   );
 });
 

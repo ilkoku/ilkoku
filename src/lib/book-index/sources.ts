@@ -175,8 +175,10 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     countryCode: "TR",
     baseUrl: "https://www.kitaplarsepette.com",
     includeInTurkeyIndex: true,
+    independenceGroup: "iklim-grup",
+    operatorName: "İklim Grup Kitap Satış Dağıtım Ltd. Şti.",
     phase: "v1",
-    collectionState: "researching",
+    collectionState: "ready",
   },
   {
     code: "hepsiburada",

@@ -429,7 +429,7 @@ export default async function BookIndexAdminPage({
 
         <section className="admin-settings-grid">
           <article className="admin-panel admin-settings-card">
-            <span className="admin-eyebrow">Composite kaynak</span>
+            <span className="admin-eyebrow">Composite storefront</span>
             <h2>
               {readiness.observedCompositeSources} /{" "}
               {readiness.compositeSourceTarget}
@@ -450,7 +450,7 @@ export default async function BookIndexAdminPage({
               {readiness.observedCompositeIndependenceGroups} /{" "}
               {readiness.compositeIndependenceGroupTarget}
             </h2>
-            <p>Composite kaynakların gerçek bağımsız oy grupları.</p>
+            <p>Composite storefront kaynakların gerçek bağımsız oy grupları.</p>
             <small>
               {readiness.observedCompositeIndependenceGroupCodes.join(" · ")}
             </small>
@@ -493,7 +493,7 @@ export default async function BookIndexAdminPage({
           </article>
 
           <article className="admin-panel admin-settings-card">
-            <span className="admin-eyebrow">3+ bağımsız kaynak</span>
+            <span className="admin-eyebrow">3+ bağımsız işletmeci</span>
             <h2>{readiness.booksOnAtLeast3IndependentCompositeSources}</h2>
             <p>
               En az üç bağımsız işletmeci grubunda aynı anda bulunan güncel
@@ -583,8 +583,8 @@ export default async function BookIndexAdminPage({
             </thead>
             <tbody>
               <tr>
-                <td>Composite kaynak</td>
-                <td>{seoGate.evidence.observedCompositeSources}</td>
+                <td>Bağımsız işletmeci</td>
+                <td>{seoGate.evidence.observedIndependentCompositeSources}</td>
                 <td>{seoGate.policy.minCompositeSources ?? "Tanımsız"}</td>
                 <td>
                   {seoGate.failures.includes("composite_sources")

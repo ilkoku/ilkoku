@@ -132,6 +132,10 @@ export type BookIndexReadinessSnapshot = {
   externalBookCount: number;
   matchedExternalBookCount: number;
   unmatchedExternalBookCount: number;
+  unmatchedExternalBooksBySource: Array<{
+    sourceCode: string;
+    count: number;
+  }>;
   matchCoveragePercent: number;
   maxCompositeSourcesPerBook: number;
   booksOnAtLeast2CompositeSources: number;
@@ -243,6 +247,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     persistedCompositeLists,
     kitaplarSepetteCanaryList,
     kitaplarSepetteCanaryShadowList,
+    unmatchedExternalBookGroups,
   ] = await Promise.all([
       prisma.bookIndexExternalBook.count(),
       prisma.bookIndexExternalBook.count({ where: { masterBookId: { not: null } } }),
@@ -328,7 +333,36 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
           },
         },
       }),
+      prisma.bookIndexExternalBook.groupBy({
+        by: ["sourceId"],
+        where: { matchStatus: "unmatched" },
+        _count: { _all: true },
+      }),
     ]);
+
+  const unmatchedSourceRows = unmatchedExternalBookGroups.length
+    ? await prisma.bookIndexSource.findMany({
+        where: {
+          id: { in: unmatchedExternalBookGroups.map((group) => group.sourceId) },
+        },
+        select: {
+          id: true,
+          code: true,
+        },
+      })
+    : [];
+  const sourceCodeById = new Map(
+    unmatchedSourceRows.map((source) => [source.id, source.code] as const),
+  );
+  const unmatchedExternalBooksBySource = unmatchedExternalBookGroups
+    .map((group) => ({
+      sourceCode: sourceCodeById.get(group.sourceId) ?? group.sourceId,
+      count: group._count._all,
+    }))
+    .sort(
+      (a, b) =>
+        b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
+    );
 
   const successfulRunStats = persistedCompositeLists.length
     ? await prisma.bookIndexFetchRun.groupBy({
@@ -918,6 +952,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     externalBookCount,
     matchedExternalBookCount,
     unmatchedExternalBookCount,
+    unmatchedExternalBooksBySource,
     matchCoveragePercent: externalBookCount
       ? Math.round((matchedExternalBookCount / externalBookCount) * 1000) / 10
       : 0,

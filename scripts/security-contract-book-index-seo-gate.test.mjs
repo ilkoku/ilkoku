@@ -119,7 +119,12 @@ test("Book Index admin shows SEO gate evidence without publishing", () => {
   contains(page, "getBookIndexSeoGateSnapshot", "admin reads SEO gate snapshot");
   contains(page, "SEO kalite kapısı", "admin SEO gate card");
   contains(page, "SEO gate kanıtı", "admin evidence table");
-  contains(page, "Composite kaynak", "composite source evidence");
+  contains(page, "Bağımsız işletmeci", "independent operator evidence label");
+  contains(
+    page,
+    "seoGate.evidence.observedIndependentCompositeSources",
+    "admin shows the same independent operator evidence used by the gate",
+  );
   contains(page, "Master eşleşme", "matching evidence");
   contains(page, "Tarihsel kapsam", "history evidence");
   contains(page, "Türkiye Endeksi kayıt", "Turkey result evidence");

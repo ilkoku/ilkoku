@@ -293,7 +293,7 @@ export default async function BookIndexAdminPage({
             <h2>Kaynaklar arası bileşik sıralama</h2>
             <p>
               Yalnız eşleşmiş master kitaplar ve en az {TURKEY_INDEX_MIN_SOURCES}
-              bağımsız Türkiye kaynağı bulunan kayıtlar gösterilir. Bu ekran
+              bağımsız işletmeci grubu bulunan kayıtlar gösterilir. Bu ekran
               yönetim önizlemesidir; henüz public veya sitemap&apos;te değildir.
             </p>
           </div>
@@ -336,7 +336,7 @@ export default async function BookIndexAdminPage({
             <strong>Türkiye Endeksi için henüz yeterli ortak kitap yok.</strong>
             <p>
               Canlı listeleri kontrol edin ve bekleyen eşleştirmeleri çalıştırın.
-              En az üç bağımsız kaynakta eşleşen kitaplar burada görünür.
+              En az üç bağımsız işletmeci grubunda eşleşen kitaplar burada görünür.
             </p>
           </div>
         )}
@@ -429,7 +429,7 @@ export default async function BookIndexAdminPage({
 
         <section className="admin-settings-grid">
           <article className="admin-panel admin-settings-card">
-            <span className="admin-eyebrow">Composite kaynak</span>
+            <span className="admin-eyebrow">Composite storefront</span>
             <h2>
               {readiness.observedCompositeSources} /{" "}
               {readiness.compositeSourceTarget}
@@ -450,7 +450,7 @@ export default async function BookIndexAdminPage({
               {readiness.observedCompositeIndependenceGroups} /{" "}
               {readiness.compositeIndependenceGroupTarget}
             </h2>
-            <p>Composite kaynakların gerçek bağımsız oy grupları.</p>
+            <p>Composite storefront kaynakların gerçek bağımsız oy grupları.</p>
             <small>
               {readiness.observedCompositeIndependenceGroupCodes.join(" · ")}
             </small>
@@ -493,7 +493,7 @@ export default async function BookIndexAdminPage({
           </article>
 
           <article className="admin-panel admin-settings-card">
-            <span className="admin-eyebrow">3+ bağımsız kaynak</span>
+            <span className="admin-eyebrow">3+ bağımsız işletmeci</span>
             <h2>{readiness.booksOnAtLeast3IndependentCompositeSources}</h2>
             <p>
               En az üç bağımsız işletmeci grubunda aynı anda bulunan güncel
@@ -514,6 +514,31 @@ export default async function BookIndexAdminPage({
             </small>
           </article>
         </section>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
+                <th>Eşleşmeyen kaynak</th>
+                <th>Bekleyen kayıt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {readiness.unmatchedExternalBooksBySource.length ? (
+                readiness.unmatchedExternalBooksBySource.map((source) => (
+                  <tr key={source.sourceCode}>
+                    <td><strong>{source.sourceCode}</strong></td>
+                    <td>{source.count.toLocaleString("tr-TR")}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2}>Eşleşmeyen dış kitap kaydı yok.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <div className="admin-table-wrap">
           <table className="admin-data-table">
@@ -558,8 +583,8 @@ export default async function BookIndexAdminPage({
             </thead>
             <tbody>
               <tr>
-                <td>Composite kaynak</td>
-                <td>{seoGate.evidence.observedCompositeSources}</td>
+                <td>Bağımsız işletmeci</td>
+                <td>{seoGate.evidence.observedIndependentCompositeSources}</td>
                 <td>{seoGate.policy.minCompositeSources ?? "Tanımsız"}</td>
                 <td>
                   {seoGate.failures.includes("composite_sources")

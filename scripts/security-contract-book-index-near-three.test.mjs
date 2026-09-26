@@ -120,6 +120,20 @@ test("Book Index readiness exposes source history maturity without inventing pub
 });
 
 
+test("Book Index readiness exposes unmatched external books by source without mutating matching", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const admin = source("src/app/admin/kitap-endeksi/page.tsx");
+  const matching = source("src/lib/book-index/matching.ts");
+
+  contains(readiness, 'by: ["sourceId"]', "unmatched grouping stays source-scoped");
+  contains(readiness, 'where: { matchStatus: "unmatched" }', "unmatched-only diagnostic");
+  contains(readiness, "unmatchedExternalBooksBySource", "readiness unmatched-by-source evidence");
+  contains(admin, "readiness.unmatchedExternalBooksBySource", "admin uses readiness diagnostic");
+  contains(admin, "Eşleşmeyen kaynak", "unmatched source table label");
+  contains(admin, "Bekleyen kayıt", "unmatched count table label");
+  notContains(matching, "unmatchedExternalBooksBySource", "diagnostic does not change matching");
+});
+
 test("Book Index admin exposes source history maturity without publish judgments", () => {
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
 

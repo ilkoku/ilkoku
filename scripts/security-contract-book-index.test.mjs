@@ -786,4 +786,5 @@ test("Book Index admin shows independent-operator voting truth", () => {
   contains(admin, "readiness.compositeIndependenceGroupTarget", "independent operator target");
   contains(admin, "readiness.booksOnAtLeast3IndependentCompositeSources", "3+ independent-book count");
   contains(admin, "<th>Bağımsız oy</th>", "preview independent-vote header");
+  contains(admin, "<td>{row.sourceCount}</td>", "preview independent-vote value");
 });

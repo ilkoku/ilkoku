@@ -219,11 +219,11 @@ export default async function BookIndexAdminPage({
       <section className="admin-detail-grid">
         <article className="admin-panel">
           <span className="admin-eyebrow">Endeks kontratı</span>
-          <h2>1 kaynak = 1 oy</h2>
+          <h2>1 bağımsız işletmeci grubu = 1 oy</h2>
           <p>
             Türkiye Endeksi için en az {TURKEY_INDEX_MIN_SOURCES} bağımsız
-            Türkiye kaynağı gerekir. Kaynak rankları 1–100 bandına normalize
-            edilir ve V1&apos;de eşit ağırlıkla hesaplanır.
+            işletmeci grubu gerekir. Aynı işletmeciye ait storefront kaynakları
+            tek oyda birleşir; bağımsız işletmeci oyları eşit ağırlıkla hesaplanır.
           </p>
         </article>
 
@@ -442,6 +442,24 @@ export default async function BookIndexAdminPage({
           </article>
 
           <article className="admin-panel admin-settings-card">
+            <span className="admin-eyebrow">Bağımsız işletmeci</span>
+            <h2>
+              {readiness.observedCompositeIndependenceGroups} /{" "}
+              {readiness.compositeIndependenceGroupTarget}
+            </h2>
+            <p>Composite kaynakların gerçek bağımsız oy grupları.</p>
+            <small>
+              {readiness.observedCompositeIndependenceGroupCodes.join(" · ")}
+            </small>
+          </article>
+
+          <article className="admin-panel admin-settings-card">
+            <span className="admin-eyebrow">3+ bağımsız kaynak</span>
+            <h2>{readiness.booksOnAtLeast3IndependentCompositeSources}</h2>
+            <p>En az üç bağımsız işletmeci grubunda bulunan güncel kitap sayısı.</p>
+          </article>
+
+          <article className="admin-panel admin-settings-card">
             <span className="admin-eyebrow">Master eşleşme</span>
             <h2>%{readiness.matchCoveragePercent.toLocaleString("tr-TR")}</h2>
             <p>
@@ -577,7 +595,8 @@ export default async function BookIndexAdminPage({
               <h2>Kaynak listelerini manuel kontrol et</h2>
               <p>
                 Her kontrol ayrı rank snapshot&apos;ı üretir; önceki veriler
-                overwrite edilmez. Otomatik scheduler bu aşamada kapalıdır.
+                overwrite edilmez. Saatlik scheduler aktiftir; bu buton yalnız
+                kontrollü manuel doğrulama için kullanılır.
               </p>
             </div>
           </header>

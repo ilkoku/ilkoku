@@ -31,22 +31,31 @@ Bu ürün dış kaynak listesini İlkOku satışı gibi göstermemelidir.
 
 ## V1 çekirdek kaynaklar
 
-- Kitapyurdu
-- BKM Kitap
-- D&R
-- idefix
-- Penguen Kitabevi
-- Remzi Kitabevi
-- Amazon Türkiye
-- Amazon ABD — ayrı pazar
-- KitapSepeti
-- Kitapzen
-- İnkılâp Kitabevi
+Registry'de `phase="v1"` olarak tanımlı kaynaklar:
 
-## Faz 2 kaynak adayları
+- Kitapyurdu — blocked
+- BKM Kitap — ready
+- D&R — blocked
+- idefix — ready
+- Penguen Kitabevi — researching
+- Remzi Kitabevi — ready
+- Amazon Türkiye — researching
+- Amazon ABD — blocked, ayrı pazar
+- KitapSepeti — ready
+- Kitapzen — ready
+- İnkılâp Kitabevi — ready
+- İlla Kitap — ready
+- NobelKitap — ready
+- KitaplarSepette — ready
 
-KitapSepeti, KitapSeç, Kitapzen, İnkılâp Kitabevi, Hepsiburada, Trendyol,
-PttAVM.
+## Faz 2 kaynakları
+
+Registry'de `phase="phase_2"` olarak tanımlı kaynaklar:
+
+- KitapSeç — ready; kategori listeleri genel Türkiye composite'ine oy vermez
+- Hepsiburada — blocked
+- Trendyol — blocked
+- PttAVM — blocked
 
 ## Veri katmanları
 

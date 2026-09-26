@@ -47,6 +47,8 @@ export const getBookIndexPublicPageContext = cache(
 
     const gate = evaluateBookIndexSeoGate(policy, {
       observedCompositeSources: readiness.observedCompositeSources,
+      observedIndependentCompositeSources:
+        readiness.observedCompositeIndependenceGroups,
       matchCoveragePercent: readiness.matchCoveragePercent,
       historySpanDays: readiness.historySpanDays,
       turkeyItemCount: model.turkey.items.length,

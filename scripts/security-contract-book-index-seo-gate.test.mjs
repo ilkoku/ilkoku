@@ -33,7 +33,13 @@ test("Book Index SEO gate has no invented default quality thresholds", () => {
 test("Book Index SEO gate requires evidence and a separate publication switch", () => {
   const gate = source("src/lib/book-index/seo-gate.ts");
 
-  contains(gate, "observedCompositeSources", "source evidence");
+  contains(gate, "observedCompositeSources", "storefront source evidence");
+  contains(gate, "observedIndependentCompositeSources", "independent source evidence");
+  contains(
+    gate,
+    "evidence.observedIndependentCompositeSources < policy.minCompositeSources!",
+    "source threshold uses independent operator groups",
+  );
   contains(gate, "matchCoveragePercent", "matching evidence");
   contains(gate, "historySpanDays", "history evidence");
   contains(gate, "turkeyItemCount", "Turkey result evidence");
@@ -122,4 +128,26 @@ test("Book Index admin shows SEO gate evidence without publishing", () => {
 
   contains(sitemap, "loadBookIndexSitemapEntries", "admin status does not bypass gated sitemap helper");
   notContains(navigation, "/en-cok-satanlar", "admin status does not publish navigation");
+});
+
+
+test("Book Index SEO gate source threshold cannot be inflated by sibling storefronts", () => {
+  const gate = source("src/lib/book-index/seo-gate.ts");
+
+  contains(
+    gate,
+    "readiness.observedCompositeIndependenceGroups",
+    "gate evidence derives independent operator groups from readiness",
+  );
+  const access = source("src/lib/book-index/public-access.ts");
+  contains(
+    access,
+    "readiness.observedCompositeIndependenceGroups",
+    "public route gate uses the same independent source evidence",
+  );
+  notContains(
+    gate,
+    "if (evidence.observedCompositeSources < policy.minCompositeSources!)",
+    "storefront count does not satisfy the source quality threshold",
+  );
 });

@@ -3,7 +3,6 @@ import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
-import { collectBookIndexListByCode } from "@/lib/book-index/collector";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import { runBookIndexScheduler } from "@/lib/book-index/scheduler";
 import { getBookIndexSeoGateSnapshot } from "@/lib/book-index/seo-gate";
@@ -23,7 +22,6 @@ const GITHUB_WORKFLOW_REF =
 const ALLOWED_GITHUB_EVENTS = new Set([
   "workflow_dispatch",
   "schedule",
-  "workflow_run",
 ]);
 
 
@@ -91,17 +89,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const forceKitaplarSepetteCanary =
-      request.nextUrl.searchParams.get("forceKitaplarSepetteCanary") === "1";
-    let forcedKitaplarSepetteCanaryRun:
-      Awaited<ReturnType<typeof collectBookIndexListByCode>> | null = null;
-
-    if (forceKitaplarSepetteCanary) {
-      forcedKitaplarSepetteCanaryRun = await collectBookIndexListByCode(
-        "kitaplarsepette-tr-live-canary",
-      );
-    }
-
     const result = await runBookIndexScheduler();
     const [readiness, seoGate] = await Promise.all([
       getBookIndexReadinessSnapshot(),
@@ -111,7 +98,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       ...result,
-      forcedKitaplarSepetteCanaryRun,
       readiness,
       seoGate,
     });

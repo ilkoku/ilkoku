@@ -307,7 +307,7 @@ export default async function BookIndexAdminPage({
                   <th>#</th>
                   <th>Kitap</th>
                   <th>Endeks</th>
-                  <th>Kaynak</th>
+                  <th>Bağımsız işletmeci</th>
                   <th>Kaynak sıraları</th>
                 </tr>
               </thead>

@@ -2,7 +2,10 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 
-import { TURKEY_INDEX_MIN_SOURCES } from "./sources";
+import {
+  getBookIndexSourceIndependenceGroup,
+  TURKEY_INDEX_MIN_SOURCES,
+} from "./sources";
 
 type SnapshotBook = {
   masterBookId: string;
@@ -67,7 +70,7 @@ type LongSellerRow = {
   masterBookId: string;
   firstObservedAt: Date;
   lastObservedAt: Date;
-  sourceCount: bigint | number;
+  sourceCodes: string | null;
   observationCount: bigint | number;
 };
 
@@ -176,7 +179,7 @@ async function loadLongSellers(limit: number) {
       externalBook.masterBookId AS masterBookId,
       MIN(observation.observedAt) AS firstObservedAt,
       MAX(observation.observedAt) AS lastObservedAt,
-      COUNT(DISTINCT list.sourceId) AS sourceCount,
+      GROUP_CONCAT(DISTINCT source.code ORDER BY source.code SEPARATOR ',') AS sourceCodes,
       COUNT(*) AS observationCount
     FROM BookIndexObservation observation
     INNER JOIN BookIndexExternalBook externalBook
@@ -196,9 +199,7 @@ async function loadLongSellers(limit: number) {
     GROUP BY externalBook.masterBookId
     ORDER BY
       DATEDIFF(MAX(observation.observedAt), MIN(observation.observedAt)) DESC,
-      COUNT(DISTINCT list.sourceId) DESC,
       COUNT(*) DESC
-    LIMIT ${limit}
   `;
 
   if (!rows.length) return [];
@@ -215,21 +216,37 @@ async function loadLongSellers(limit: number) {
   });
   const bookById = new Map(books.map((book) => [book.id, book] as const));
 
-  return rows.flatMap((row) => {
-    const book = bookById.get(row.masterBookId);
-    if (!book) return [];
+  return rows
+    .flatMap((row) => {
+      const book = bookById.get(row.masterBookId);
+      if (!book) return [];
 
-    return [{
-      masterBookId: row.masterBookId,
-      title: book.title,
-      authorName: book.authorName,
-      firstObservedAt: row.firstObservedAt,
-      lastObservedAt: row.lastObservedAt,
-      historyDays: historyDays(row.firstObservedAt, row.lastObservedAt),
-      sourceCount: Number(row.sourceCount),
-      observationCount: Number(row.observationCount),
-    } satisfies BookIndexLongSeller];
-  });
+      const independenceGroups = new Set(
+        (row.sourceCodes ?? "")
+          .split(",")
+          .filter(Boolean)
+          .map((sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode)),
+      );
+
+      return [{
+        masterBookId: row.masterBookId,
+        title: book.title,
+        authorName: book.authorName,
+        firstObservedAt: row.firstObservedAt,
+        lastObservedAt: row.lastObservedAt,
+        historyDays: historyDays(row.firstObservedAt, row.lastObservedAt),
+        sourceCount: independenceGroups.size,
+        observationCount: Number(row.observationCount),
+      } satisfies BookIndexLongSeller];
+    })
+    .sort(
+      (a, b) =>
+        b.historyDays - a.historyDays
+        || b.sourceCount - a.sourceCount
+        || b.observationCount - a.observationCount
+        || a.title.localeCompare(b.title, "tr"),
+    )
+    .slice(0, limit);
 }
 
 export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsights> {
@@ -237,6 +254,7 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
   const snapshots = await loadSourceSnapshots();
 
   const currentSourcesByBook = new Map<string, Set<string>>();
+  const currentIndependenceGroupsByBook = new Map<string, Set<string>>();
   const bestRankByBook = new Map<string, number>();
   const bookById = new Map<string, { title: string; authorName: string | null }>();
 
@@ -253,6 +271,13 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
       const sources = currentSourcesByBook.get(masterBookId) ?? new Set<string>();
       sources.add(snapshot.sourceCode);
       currentSourcesByBook.set(masterBookId, sources);
+
+      const independenceGroups =
+        currentIndependenceGroupsByBook.get(masterBookId) ?? new Set<string>();
+      independenceGroups.add(
+        getBookIndexSourceIndependenceGroup(snapshot.sourceCode),
+      );
+      currentIndependenceGroupsByBook.set(masterBookId, independenceGroups);
 
       const currentBest = bestRankByBook.get(masterBookId);
       bestRankByBook.set(
@@ -333,9 +358,12 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
     )
     .slice(0, safeLimit);
 
-  const everywhereSellers = [...currentSourcesByBook.entries()]
-    .filter(([, sources]) => sources.size >= TURKEY_INDEX_MIN_SOURCES)
-    .flatMap(([masterBookId, sources]) => {
+  const everywhereSellers = [...currentIndependenceGroupsByBook.entries()]
+    .filter(
+      ([, independenceGroups]) =>
+        independenceGroups.size >= TURKEY_INDEX_MIN_SOURCES,
+    )
+    .flatMap(([masterBookId, independenceGroups]) => {
       const book = bookById.get(masterBookId);
       const bestRank = bestRankByBook.get(masterBookId);
       if (!book || bestRank === undefined) return [];
@@ -344,7 +372,7 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
         masterBookId,
         title: book.title,
         authorName: book.authorName,
-        sourceCount: sources.size,
+        sourceCount: independenceGroups.size,
         bestRank,
       } satisfies BookIndexEverywhereSeller];
     })

@@ -32,7 +32,7 @@ export const BOOK_INDEX_INSIGHT_PAGES: readonly BookIndexInsightPageDefinition[]
     heading: "Çok Satan Listelerinde Yükselen Kitaplar",
     searchTitle: "Yükselen Kitaplar",
     description:
-      "Bağımsız kaynaklardaki çok satan listelerinde önceki başarılı snapshot'a göre sırası yükselen kitapları, toplam sıra kazanımı ve kaynak sayısıyla inceleyin.",
+      "Kaynak listelerinde önceki başarılı snapshot'a göre sırası yükselen kitapları, toplam sıra kazanımı ve kaynak sayısıyla inceleyin.",
   },
   {
     slug: "her-yerde-satanlar",
@@ -41,7 +41,7 @@ export const BOOK_INDEX_INSIGHT_PAGES: readonly BookIndexInsightPageDefinition[]
     heading: "Birden Fazla Kaynakta Çok Satan Kitaplar",
     searchTitle: "Birden Fazla Listede Çok Satan Kitaplar",
     description:
-      "Aynı anda en az üç bağımsız Türkiye kaynağında görünen çok satan kitapları karşılaştırın.",
+      "Aynı anda en az üç bağımsız işletmeci grubunda görünen çok satan kitapları karşılaştırın.",
   },
   {
     slug: "uzun-satanlar",

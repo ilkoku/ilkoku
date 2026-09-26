@@ -97,7 +97,7 @@ function TurkeyRows({
           </div>
           <div className={styles.score}>
             <strong>{row.score.toLocaleString("tr-TR")}</strong>
-            <span>{row.sourceCount} bağımsız kaynak</span>
+            <span>{row.sourceCount} bağımsız işletmeci</span>
           </div>
         </li>
       ))}
@@ -435,12 +435,12 @@ function insightMetric(
   if ("historyDays" in item) {
     return {
       primary: `${item.historyDays} gün`,
-      secondary: `${item.sourceCount} kaynak · ${item.observationCount} gözlem`,
+      secondary: `${item.sourceCount} bağımsız işletmeci · ${item.observationCount} gözlem`,
     };
   }
 
   return {
-    primary: `${item.sourceCount} bağımsız kaynak`,
+    primary: `${item.sourceCount} bağımsız işletmeci`,
     secondary: `en iyi sıra #${item.bestRank}`,
   };
 }

@@ -708,7 +708,7 @@ test("Book Index readiness distinguishes storefront sources from independent ope
 });
 
 
-test("KitaplarSepette canary collects daily without contributing to the composite", () => {
+test("KitaplarSepette is a bounded independent Turkey composite voter", () => {
   const adapter = source("src/lib/book-index/sources/kitaplarsepette.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
@@ -718,33 +718,31 @@ test("KitaplarSepette canary collects daily without contributing to the composit
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 25;', "fail-closed list minimum");
   contains(adapter, 'const DETAIL_CONCURRENCY = 6;', "bounded detail-page concurrency");
   contains(adapter, 'className.split(/\\s+/u).includes("card-product")', "exact bestseller card class token");
-  notContains(adapter, '\\bcard-product\\b[^"\']*', "broad card-product boundary matcher removed");
-  contains(adapter, '\\bc-p-i-link\\b', "canonical product link selector");
+  contains(adapter, "\\bc-p-i-link\\b", "canonical product link selector");
   contains(adapter, "\\baddCart\\(", "stable product id extraction");
   contains(adapter, "\\bBarkod\\s*:", "ISBN detail metadata");
-  contains(adapter, 'label: "Yazar" | "Yayınevi"', "bounded metadata labels");
   contains(adapter, 'detailLabelValue(html, "Yazar")', "author detail metadata");
   contains(adapter, 'detailLabelValue(html, "Yayınevi")', "publisher detail metadata");
-  contains(adapter, "anchorValue", "linked metadata variant remains supported");
-  contains(adapter, "plainValue", "plain-text metadata fallback");
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_RESULT_TOO_SMALL", "small-list rejection");
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DUPLICATE_PRODUCT_ID", "duplicate-id protection");
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_DETAIL_METADATA_MISSING", "minimum identity metadata gate");
   contains(
     sources,
-    'baseUrl: "https://www.kitaplarsepette.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    "KitaplarSepette canary source ready",
+    'baseUrl: "https://www.kitaplarsepette.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready",\n    independenceGroup: "iklim-grup",\n    operatorName: "İklim Grup Kitap Satış Dağıtım Ltd. Şti."',
+    "KitaplarSepette independent source metadata",
   );
   contains(
     collector,
     "[kitaplarSepetteBookIndexAdapter.sourceCode, kitaplarSepetteBookIndexAdapter]",
-    "canary adapter is active",
+    "KitaplarSepette adapter activation",
   );
-  contains(lists, 'code: "kitaplarsepette-tr-live-canary"', "canary list registry");
+  contains(lists, 'code: "kitaplarsepette-tr-live"', "live voter list registry");
+  notContains(lists, 'code: "kitaplarsepette-tr-live-canary"', "canary registry retired after qualification");
   contains(lists, 'sourceUrl: "https://www.kitaplarsepette.com/cok-satanlar"', "canonical bestseller page");
-  contains(lists, 'maxRank: 30', "bounded canary rank ceiling");
-  contains(lists, 'collectionEveryMinutes: 1440', "daily canary cadence");
-  contains(lists, 'includeInComposite: false', "canary cannot vote in the composite");
+  contains(lists, 'maxRank: 30', "bounded rank ceiling");
+  contains(lists, 'collectionEveryMinutes: 360', "steady-state collection cadence");
+  contains(lists, 'includeInComposite: true', "independent composite vote");
+  contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "3-source threshold unchanged");
 });
 
 

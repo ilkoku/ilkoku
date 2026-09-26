@@ -169,6 +169,7 @@ export type BookIndexReadinessSnapshot = {
   sourceHistoryMaturity: BookIndexSourceHistoryMaturity[];
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
+  historySpanHours: number;
   historySpanDays: number;
   publicRolloutState: "gated";
 };
@@ -206,6 +207,14 @@ function editionFamilyTitle(value: string) {
   }
 
   return normalized;
+}
+
+function historySpanHoursBetween(first: Date | null, last: Date | null) {
+  if (!first || !last) return 0;
+  return Math.max(
+    0,
+    Math.round(((last.getTime() - first.getTime()) / 3_600_000) * 10) / 10,
+  );
 }
 
 function historySpanDays(first: Date | null, last: Date | null) {
@@ -374,16 +383,10 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         const maturity = sourceHistoryAccumulator.get(sourceCode);
         const firstSuccessfulRunAt = maturity?.firstSuccessfulRunAt ?? null;
         const lastSuccessfulRunAt = maturity?.lastSuccessfulRunAt ?? null;
-        const historySpanHours =
-          firstSuccessfulRunAt && lastSuccessfulRunAt
-            ? Math.max(
-                0,
-                Math.round(
-                  ((lastSuccessfulRunAt.getTime() - firstSuccessfulRunAt.getTime())
-                    / 3_600_000) * 10,
-                ) / 10,
-              )
-            : 0;
+        const historySpanHours = historySpanHoursBetween(
+          firstSuccessfulRunAt,
+          lastSuccessfulRunAt,
+        );
 
         return {
           sourceCode,
@@ -997,6 +1000,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     sourceHistoryMaturity,
     firstObservationAt,
     lastObservationAt,
+    historySpanHours: historySpanHoursBetween(firstObservationAt, lastObservationAt),
     historySpanDays: historySpanDays(firstObservationAt, lastObservationAt),
     publicRolloutState: "gated",
   };

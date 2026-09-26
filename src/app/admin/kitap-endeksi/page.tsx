@@ -465,12 +465,24 @@ export default async function BookIndexAdminPage({
 
           <article className="admin-panel admin-settings-card">
             <span className="admin-eyebrow">Tarihsel kapsam</span>
-            <h2>{readiness.historySpanDays.toLocaleString("tr-TR")} gün</h2>
+            <h2>
+              {readiness.historySpanHours < 24
+                ? `${readiness.historySpanHours.toLocaleString("tr-TR", {
+                    maximumFractionDigits: 1,
+                  })} saat`
+                : `${readiness.historySpanDays.toLocaleString("tr-TR")} gün`}
+            </h2>
             <p>
               İlk snapshot: {formatDateTime(readiness.firstObservationAt)}
               <br />
               Son snapshot: {formatDateTime(readiness.lastObservationAt)}
             </p>
+            <small>
+              Kesin süre:{" "}
+              {readiness.historySpanHours.toLocaleString("tr-TR", {
+                maximumFractionDigits: 1,
+              })} saat
+            </small>
           </article>
 
           <article className="admin-panel admin-settings-card">

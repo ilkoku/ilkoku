@@ -96,6 +96,21 @@ export type BookIndexCanaryHealth = {
   errorMessage: string | null;
 };
 
+export type BookIndexCanaryShadowPairOverlap = {
+  sourceCode: string;
+  sharedBookCount: number;
+};
+
+export type BookIndexCanaryShadowSample = {
+  masterBookId: string;
+  title: string;
+  authorName: string | null;
+  currentSourceCodes: string[];
+  currentIndependenceGroups: string[];
+  projectedStorefrontSourceCount: number;
+  projectedIndependentSourceCount: number;
+};
+
 export type BookIndexReadinessSnapshot = {
   compositeSourceTarget: number;
   compositeIndependenceGroupTarget: number;
@@ -136,6 +151,12 @@ export type BookIndexReadinessSnapshot = {
   nearThreeWithHistoricalThirdSourceCount: number;
   nearThreeSourceSamples: BookIndexNearThreeSample[];
   kitaplarSepetteCanaryHealth: BookIndexCanaryHealth;
+  kitaplarSepetteCanaryShadowBookCount: number;
+  kitaplarSepetteCanaryShadowOverlapWithCompositeCount: number;
+  kitaplarSepetteCanaryShadowWouldReach3StorefrontCount: number;
+  kitaplarSepetteCanaryShadowWouldReach3IndependentCount: number;
+  kitaplarSepetteCanaryShadowPairOverlap: BookIndexCanaryShadowPairOverlap[];
+  kitaplarSepetteCanaryShadowSamples: BookIndexCanaryShadowSample[];
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
   historySpanDays: number;
@@ -199,6 +220,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     observationRange,
     persistedCompositeLists,
     kitaplarSepetteCanaryList,
+    kitaplarSepetteCanaryShadowList,
   ] = await Promise.all([
       prisma.bookIndexExternalBook.count(),
       prisma.bookIndexExternalBook.count({ where: { masterBookId: { not: null } } }),
@@ -255,6 +277,29 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
               itemsStored: true,
               errorCode: true,
               errorMessage: true,
+            },
+          },
+        },
+      }),
+      prisma.bookIndexList.findFirst({
+        where: { code: "kitaplarsepette-tr-live-canary" },
+        select: {
+          fetchRuns: {
+            where: { status: { in: ["success", "no_change"] } },
+            orderBy: { startedAt: "desc" },
+            take: 1,
+            select: {
+              observations: {
+                select: {
+                  externalBook: {
+                    select: {
+                      masterBookId: true,
+                      title: true,
+                      authorName: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -665,6 +710,66 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         || a.familyTitle.localeCompare(b.familyTitle, "tr"),
     );
 
+  const latestKitaplarSepetteCanaryShadowRun =
+    kitaplarSepetteCanaryShadowList?.fetchRuns[0] ?? null;
+  const kitaplarSepetteCanaryShadowBooks = new Map<string, {
+    title: string;
+    authorName: string | null;
+  }>();
+
+  for (const observation of latestKitaplarSepetteCanaryShadowRun?.observations ?? []) {
+    const book = observation.externalBook;
+    if (!book.masterBookId) continue;
+    if (!kitaplarSepetteCanaryShadowBooks.has(book.masterBookId)) {
+      kitaplarSepetteCanaryShadowBooks.set(book.masterBookId, {
+        title: book.title,
+        authorName: book.authorName,
+      });
+    }
+  }
+
+  const kitaplarSepetteIndependenceGroup =
+    getBookIndexSourceIndependenceGroup("kitaplarsepette");
+  const kitaplarSepetteCanaryShadowSamples = [...kitaplarSepetteCanaryShadowBooks.entries()]
+    .map(([masterBookId, book]) => {
+      const currentSourceCodes = [
+        ...(sourceCodesByMasterBook.get(masterBookId) ?? new Set<string>()),
+      ].sort((a, b) => a.localeCompare(b, "tr"));
+      const currentIndependenceGroups = [...new Set(
+        currentSourceCodes.map(
+          (sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode),
+        ),
+      )].sort((a, b) => a.localeCompare(b, "tr"));
+      const projectedIndependenceGroups = new Set([
+        ...currentIndependenceGroups,
+        kitaplarSepetteIndependenceGroup,
+      ]);
+
+      return {
+        masterBookId,
+        title: book.title,
+        authorName: book.authorName,
+        currentSourceCodes,
+        currentIndependenceGroups,
+        projectedStorefrontSourceCount: currentSourceCodes.length + 1,
+        projectedIndependentSourceCount: projectedIndependenceGroups.size,
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.currentSourceCodes.length - a.currentSourceCodes.length
+        || a.title.localeCompare(b.title, "tr")
+        || a.masterBookId.localeCompare(b.masterBookId),
+    );
+
+  const kitaplarSepetteCanaryShadowPairOverlap =
+    observedCompositeSourceCodes.map((sourceCode) => ({
+      sourceCode,
+      sharedBookCount: kitaplarSepetteCanaryShadowSamples.filter(
+        (sample) => sample.currentSourceCodes.includes(sourceCode),
+      ).length,
+    }));
+
   const firstObservationAt = observationRange._min.observedAt ?? null;
   const lastObservationAt = observationRange._max.observedAt ?? null;
   const unmatchedExternalBookCount = externalBookCount - matchedExternalBookCount;
@@ -772,6 +877,24 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     ).length,
     nearThreeSourceSamples,
     kitaplarSepetteCanaryHealth,
+    kitaplarSepetteCanaryShadowBookCount: kitaplarSepetteCanaryShadowSamples.length,
+    kitaplarSepetteCanaryShadowOverlapWithCompositeCount:
+      kitaplarSepetteCanaryShadowSamples.filter(
+        (sample) => sample.currentSourceCodes.length >= 1,
+      ).length,
+    kitaplarSepetteCanaryShadowWouldReach3StorefrontCount:
+      kitaplarSepetteCanaryShadowSamples.filter(
+        (sample) => sample.projectedStorefrontSourceCount >= 3,
+      ).length,
+    kitaplarSepetteCanaryShadowWouldReach3IndependentCount:
+      kitaplarSepetteCanaryShadowSamples.filter(
+        (sample) => sample.projectedIndependentSourceCount >= 3,
+      ).length,
+    kitaplarSepetteCanaryShadowPairOverlap,
+    kitaplarSepetteCanaryShadowSamples:
+      kitaplarSepetteCanaryShadowSamples
+        .filter((sample) => sample.currentSourceCodes.length > 0)
+        .slice(0, 20),
     firstObservationAt,
     lastObservationAt,
     historySpanDays: historySpanDays(firstObservationAt, lastObservationAt),

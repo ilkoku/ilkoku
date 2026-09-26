@@ -734,7 +734,9 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     .map(([masterBookId, book]) => {
       const currentSourceCodes = [
         ...(sourceCodesByMasterBook.get(masterBookId) ?? new Set<string>()),
-      ].sort((a, b) => a.localeCompare(b, "tr"));
+      ]
+        .filter((sourceCode) => sourceCode !== "kitaplarsepette")
+        .sort((a, b) => a.localeCompare(b, "tr"));
       const currentIndependenceGroups = [...new Set(
         currentSourceCodes.map(
           (sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode),
@@ -766,12 +768,14 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     );
 
   const kitaplarSepetteCanaryShadowPairOverlap =
-    observedCompositeSourceCodes.map((sourceCode) => ({
-      sourceCode,
-      sharedBookCount: kitaplarSepetteCanaryShadowSamples.filter(
-        (sample) => sample.currentSourceCodes.includes(sourceCode),
-      ).length,
-    }));
+    observedCompositeSourceCodes
+      .filter((sourceCode) => sourceCode !== "kitaplarsepette")
+      .map((sourceCode) => ({
+        sourceCode,
+        sharedBookCount: kitaplarSepetteCanaryShadowSamples.filter(
+          (sample) => sample.currentSourceCodes.includes(sourceCode),
+        ).length,
+      }));
 
   const firstObservationAt = observationRange._min.observedAt ?? null;
   const lastObservationAt = observationRange._max.observedAt ?? null;

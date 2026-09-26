@@ -27,6 +27,7 @@ export type BookIndexOperationsSnapshot = {
   schedulerAuthMode: "github_oidc";
   schedulerSecretConfigured: boolean;
   dueCount: number;
+  maxOverdueMinutes: number;
   rows: BookIndexListOperationsRow[];
 };
 
@@ -130,13 +131,24 @@ export async function getBookIndexOperationsSnapshot(
     } satisfies BookIndexListOperationsRow;
   });
 
+  const dueRows = rows.filter((row) => row.due);
+  const maxOverdueMinutes = dueRows.reduce((maxMinutes, row) => {
+    if (!row.nextDueAt) return maxMinutes;
+
+    return Math.max(
+      maxMinutes,
+      Math.max(0, Math.floor((now.getTime() - row.nextDueAt.getTime()) / 60_000)),
+    );
+  }, 0);
+
   return {
     checkedAt: now,
     schedulerAuthMode: "github_oidc",
     schedulerSecretConfigured: Boolean(
       process.env.BOOK_INDEX_SCHEDULER_SECRET?.trim(),
     ),
-    dueCount: rows.filter((row) => row.due).length,
+    dueCount: dueRows.length,
+    maxOverdueMinutes,
     rows,
   };
 }

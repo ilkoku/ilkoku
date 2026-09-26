@@ -46,13 +46,14 @@ Canary başarısızsa cron açılmaz.
 
 ## 3. Automatic scheduler activation
 
-OIDC canary PASS tamamlandı. Geçici `workflow_run` tetikleyicisi kaldırıldı ve scheduler cron'u `17 * * * *` olarak aktive edildi.
+OIDC canary PASS tamamlandı. Geçici `workflow_run` tetikleyicisi kaldırıldı. Scheduler'ın birincil penceresi `17 * * * *`, GitHub scheduled-event gecikmesi/kaçırmasına karşı fallback penceresi `47 * * * *` olarak aktiftir.
 
-Hedef kontrol periyodu:
+Hedef kontrol pencereleri:
 
-`17 * * * *`
+- birincil: `17 * * * *`
+- fallback: `47 * * * *`
 
-Bu saatlik kontrol, her kaynağın saatlik çekileceği anlamına gelmez.
+İki pencere de yalnız scheduler kontrolünü tetikler; bu, her kaynağın yarım saatte veya saatlik çekileceği anlamına gelmez.
 Gerçek cadence her `BookIndexList.collectionEveryMinutes` değeri tarafından
 belirlenir.
 
@@ -72,6 +73,8 @@ Cron açıldıktan sonra admin **Kitap Endeksi** ekranından şu alanlar izlenir
 - başarılı/hatalı run sayısı;
 - ilk ve son observation zamanı;
 - kesin `historySpanHours` ve tamamlanmış gün olarak `historySpanDays`;
+- composite kaynaklar içindeki minimum başarılı snapshot sayısı (`minimumSourceSuccessfulRunCount`);
+- minimum kaynak geçmişi (`minimumSourceHistorySpanHours`) ve en genç kaynak kodları (`leastMatureSourceCodes`);
 - due listeler için en uzun cadence gecikmesi (`maxOverdueMinutes`).
 
 Tek bir başarılı run public yayın için yeterli kabul edilmez.

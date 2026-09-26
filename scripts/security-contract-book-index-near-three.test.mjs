@@ -97,3 +97,19 @@ test("KitaplarSepette qualified voter keeps documented independent operator meta
     "qualified canary registry entry is retired",
   );
 });
+
+
+test("Book Index readiness exposes source history maturity without inventing publish thresholds", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+
+  contains(readiness, "sourceHistoryMaturity", "source history maturity diagnostics");
+  contains(readiness, "successfulRunCount", "successful snapshot count");
+  contains(readiness, "firstSuccessfulRunAt", "first successful run timestamp");
+  contains(readiness, "lastSuccessfulRunAt", "last successful run timestamp");
+  contains(readiness, "historySpanHours", "source history span hours");
+  contains(readiness, 'status: { in: ["success", "no_change"] }', "history only counts successful snapshots");
+  contains(readiness, 'groupBy({', "history aggregation stays database-side");
+  contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "eligibility threshold stays unchanged");
+  notContains(readiness, "minHistoryDays =", "readiness does not invent a publication history threshold");
+});

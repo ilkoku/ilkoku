@@ -717,7 +717,8 @@ test("KitaplarSepette canary collects daily without contributing to the composit
   contains(adapter, 'const MAX_BOOKS = 30;', "bounded KitaplarSepette Top 30");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 25;', "fail-closed list minimum");
   contains(adapter, 'const DETAIL_CONCURRENCY = 6;', "bounded detail-page concurrency");
-  contains(adapter, '\\bcard-product\\b', "server-rendered bestseller card selector");
+  contains(adapter, 'className.split(/\\\\s+/u).includes("card-product")', "exact bestseller card class token");
+  notContains(adapter, '\\bcard-product\\b[^"\']*', "broad card-product boundary matcher removed");
   contains(adapter, '\\bc-p-i-link\\b', "canonical product link selector");
   contains(adapter, "\\baddCart\\(", "stable product id extraction");
   contains(adapter, "\\bBarkod\\s*:", "ISBN detail metadata");

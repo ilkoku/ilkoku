@@ -686,3 +686,23 @@ test("NobelKitap bestseller collector is a bounded independent Turkey composite 
     "3-source eligibility remains unchanged",
   );
 });
+
+
+test("Book Index readiness distinguishes storefront sources from independent operators", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const ranking = source("src/lib/book-index/ranking.ts");
+
+  contains(sources, 'independenceGroup: "point-internet"', "shared Point operator group");
+  contains(sources, 'operatorName: "Point İnternet Teknolojileri ve Lojistik A.Ş."', "documented Point operator");
+  contains(sources, "getBookIndexSourceIndependenceGroup", "source independence lookup");
+  contains(readiness, "compositeIndependenceGroupTarget", "independent operator target");
+  contains(readiness, "observedCompositeIndependenceGroups", "observed independent operator count");
+  contains(readiness, "sharedOperatorGroups", "shared-operator collision samples");
+  contains(readiness, "maxIndependentCompositeSourcesPerBook", "per-book independent source ceiling");
+  contains(readiness, "booksOnAtLeast3IndependentCompositeSources", "independent 3-source overlap metric");
+  contains(readiness, "sameIndependenceGroup", "pair matrix operator relationship");
+  contains(readiness, "independentSourceCount", "near-3 independent-source count");
+  notContains(ranking, "independenceGroup", "diagnostic phase does not change ranking");
+  contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "3-source threshold stays unchanged");
+});

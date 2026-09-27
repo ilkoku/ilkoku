@@ -540,13 +540,13 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
   );
   contains(
     lists,
-    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
-    "KitapSec general source-only list is schedulable and public-eligible without voting",
+    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "KitapSec general voter remains disabled",
   );
   contains(
     lists,
-    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "qualified KitapSec general canary is retired but retained privately for audit",
+    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    "KitapSec general shadow canary",
   );
   contains(collector, "[kitapSecBookIndexAdapter.sourceCode, kitapSecBookIndexAdapter]", "KitapSec adapter activation");
   contains(
@@ -888,7 +888,7 @@ test("KitaplarSepette qualification evidence remains observable after voter acti
 });
 
 
-test("KitapSec general qualification evidence remains observable after source-only activation", () => {
+test("KitapSec general shadow canary qualification evidence is observable without voting", () => {
   const readiness = source("src/lib/book-index/readiness.ts");
   const route = source("src/app/api/internal/book-index-readiness/route.ts");
   const workflow = source(".github/workflows/book-index-readiness.yml");
@@ -923,17 +923,12 @@ test("KitapSec general qualification evidence remains observable after source-on
     "passive observer prints KitapSec independent projection",
   );
 
-  contains(lists, 'code: "kitapsec-general-live-canary"', "KitapSec general retired canary list");
-  contains(lists, 'code: "kitapsec-general-live"', "KitapSec general source-only live registry");
+  contains(lists, 'code: "kitapsec-general-live-canary"', "KitapSec general shadow canary list");
+  contains(lists, 'code: "kitapsec-general-live"', "KitapSec general voter registry");
   contains(
     lists,
-    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
-    "KitapSec general source-only list is public-eligible without voting",
-  );
-  contains(
-    lists,
-    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "qualified KitapSec general canary is retired but retained privately",
+    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "KitapSec general voter remains disabled",
   );
 });
 
@@ -951,10 +946,12 @@ test("Book Index public read model excludes shadow, research and disabled candid
   );
 
   for (const listCode of [
+    "kitapsec-general-live",
     "kitapsec-general-live-canary",
+    "kitapstore-tr-live",
     "kitapstore-tr-live-canary",
-    "pandora-tr-live-canary",
-    "kitapambari-tr-live-canary",
+    "pandora-tr-live",
+    "kitapambari-tr-live",
     "amazon-tr-live",
   ]) {
     const marker = `code: "${listCode}"`;
@@ -973,13 +970,9 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitaplarsepette-tr-live",
     "kitapzen-tr-weekly",
     "inkilap-tr-live",
-    "kitapsec-general-live",
     "illakitap-tr-weekly",
     "nobelkitap-tr-live",
     "idefix-tr-live",
-    "pandora-tr-live",
-    "kitapambari-tr-live",
-    "kitapstore-tr-live",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);
@@ -1163,7 +1156,7 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
 });
 
 
-test("Pandora source-only live publication stays fail-closed and non-voting", () => {
+test("Pandora source canary is fail-closed, private and non-voting", () => {
   const adapter = source("src/lib/book-index/sources/pandora.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
@@ -1191,25 +1184,25 @@ test("Pandora source-only live publication stays fail-closed and non-voting", ()
 
   contains(
     lists,
-    'code: "pandora-tr-live",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
-    "Pandora source-only live list is schedulable and public-eligible without voting",
+    'code: "pandora-tr-live",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "Pandora voter remains disabled",
   );
 
   contains(
     lists,
-    'code: "pandora-tr-live-canary",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "qualified Pandora canary is retired but retained privately for audit",
+    'code: "pandora-tr-live-canary",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    "Pandora source-only canary remains private and non-voting",
   );
 
   contains(
     collector,
     "[pandoraBookIndexAdapter.sourceCode, pandoraBookIndexAdapter]",
-    "Pandora adapter remains registered for source-only live collection",
+    "Pandora adapter is registered only for enabled private canary collection",
   );
 });
 
 
-test("Kitap Ambari source-only live publication stays non-voting", () => {
+test("Kitap Ambari private canary collects source history without composite voting", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
@@ -1217,28 +1210,28 @@ test("Kitap Ambari source-only live publication stays non-voting", () => {
   contains(
     sources,
     'name: "Kitap Ambarı",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapambari.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "kitapambari",\n    operatorName: "Ötüken Neşriyat A.Ş.",\n    phase: "phase_2",\n    collectionState: "ready"',
-    "Kitap Ambari adapter remains ready for source-only collection",
+    "Kitap Ambari adapter is ready for private canary collection",
   );
 
   contains(
     lists,
-    'code: "kitapambari-tr-live",\n    sourceCode: "kitapambari",\n    title: "Kitap Ambarı · Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
-    "Kitap Ambari source-only live list is schedulable and public-eligible without voting",
+    'code: "kitapambari-tr-live",\n    sourceCode: "kitapambari",\n    title: "Kitap Ambarı · Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "Kitap Ambari voter stays disabled",
   );
 
   contains(
     lists,
-    'code: "kitapambari-tr-live-canary",\n    sourceCode: "kitapambari",\n    title: "Kitap Ambarı · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "qualified Kitap Ambari canary is retired but retained privately for audit",
+    'code: "kitapambari-tr-live-canary",\n    sourceCode: "kitapambari",\n    title: "Kitap Ambarı · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    "Kitap Ambari canary is private and non-voting",
   );
 
   contains(
     collector,
     "[kitapAmbariBookIndexAdapter.sourceCode, kitapAmbariBookIndexAdapter]",
-    "Kitap Ambari adapter remains registered for source-only live collection",
+    "Kitap Ambari adapter is registered for the private canary",
   );
 });
-test("KitapStore source-only live publication stays non-voting", () => {
+test("KitapStore canary collects shadow evidence while voter activation stays off", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const adapter = source("src/lib/book-index/sources/kitapstore.ts");
@@ -1247,20 +1240,20 @@ test("KitapStore source-only live publication stays non-voting", () => {
   contains(sources, 'code: "kitapstore"', "KitapStore research source");
   contains(
     sources,
-    'name: "KitapStore",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    // Current seller identity. Source-only collection is ready; Turkey-general voter eligibility remains separately gated.\n    independenceGroup: "vedat-akoglu-kitapstore",\n    operatorName: "Vedat Akoğlu - KitapStore",\n    phase: "phase_2",\n    collectionState: "ready"',
-    "KitapStore source-only collector is ready while Turkey voter stays gated",
+    'name: "KitapStore",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    // Current seller identity. Turkey-general voter eligibility remains separately gated.\n    independenceGroup: "vedat-akoglu-kitapstore",\n    operatorName: "Vedat Akoğlu - KitapStore",\n    phase: "phase_2",\n    collectionState: "researching"',
+    "KitapStore remains research-only",
   );
   contains(lists, 'code: "kitapstore-tr-live"', "KitapStore research list");
   contains(
     lists,
-    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
-    "KitapStore source-only live list is schedulable and public-eligible without voting",
+    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "KitapStore voter list stays disabled and outside composite",
   );
   contains(lists, 'code: "kitapstore-tr-live-canary"', "KitapStore canary list");
   contains(
     lists,
-    'title: "KitapStore · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "qualified KitapStore canary is retired but retained privately for audit",
+    'title: "KitapStore · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    "KitapStore canary is schedulable but outside composite",
   );
 
   contains(adapter, 'const PAGE_COUNT = 4;', "four-page Top 100 bound");

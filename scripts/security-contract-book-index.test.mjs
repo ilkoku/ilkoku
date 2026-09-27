@@ -1090,6 +1090,21 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL", "duplicate URL gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_RANK", "duplicate rank gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_RANK_GAP", "cross-page rank-gap gate");
+  contains(
+    adapter,
+    'const VERIFIED_NON_BOOK_PRODUCT_IDS = new Set(["776749", "773082"]);',
+    "only verified non-book product ids are excluded",
+  );
+  contains(
+    adapter,
+    "!VERIFIED_NON_BOOK_PRODUCT_IDS.has(book.sourceKey)",
+    "non-book exclusion is exact source-key based",
+  );
+  notContains(
+    adapter,
+    ".map((book, index) => ({",
+    "KitapStore exclusions must not renumber native ranks",
+  );
   contains(adapter, '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"', "transparent user agent");
   contains(adapter, "AbortSignal.timeout(20_000)", "bounded request timeout");
 

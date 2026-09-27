@@ -1018,3 +1018,68 @@ test("Pandora bestseller candidate stays research-only until a direct collection
     "Pandora has no production collector before direct-fetch proof",
   );
 });
+
+
+test("KitapStore Top 100 candidate remains fail-closed and production-disabled", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const adapter = source("src/lib/book-index/sources/kitapstore.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(sources, 'code: "kitapstore"', "KitapStore research source");
+  contains(
+    sources,
+    'baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "bilge-kitap-kulubu",\n    operatorName: "Bilge Kitap Kulübü",\n    phase: "phase_2",\n    collectionState: "researching"',
+    "KitapStore stays research-only with an independent operator identity",
+  );
+  contains(lists, 'code: "kitapstore-tr-live"', "KitapStore research list");
+  contains(
+    lists,
+    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    enabled: false',
+    "KitapStore Top 100 remains disabled and outside the composite",
+  );
+  contains(adapter, 'const PAGE_SIZE = 25;', "native 25-item pagination");
+  contains(adapter, 'const FETCH_PAGES = 5;', "one bounded overflow page for verified exclusions");
+  contains(adapter, 'const MAX_BOOKS = 100;', "Top 100 output ceiling");
+  contains(
+    adapter,
+    'const VERIFIED_NON_BOOK_PRODUCT_IDS = new Set(["773082"]);',
+    "verified Naber periodical exclusion",
+  );
+  contains(adapter, "\\bIcBaslik\\b", "bestseller heading boundary");
+  contains(adapter, "ÇOK SATANLAR", "native bestseller section marker");
+  contains(adapter, "\\bIslemliL\\b", "native bestseller list container");
+  contains(adapter, 'id=["\']Urun-([0-9]+)["\']', "stable numeric product id");
+  contains(adapter, 'itemtype=["\']http:\\/\\/schema\\.org\\/Book["\']', "schema Book card scope");
+  contains(adapter, "\\bitemprop=[\"']url[\"']", "canonical product URL metadata");
+  contains(adapter, "\\bitemprop=[\"']author[\"']", "author metadata");
+  contains(adapter, "\\bitemprop=[\"']publisher[\"']", "publisher metadata");
+  contains(adapter, "\\bitemprop=[\"']serialNumber[\"']", "product serial identity check");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_PAGE_SIZE_INVALID", "25-card page fail-closed guard");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY", "duplicate source-key guard");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_RANK_GAP", "cross-page rank continuity guard");
+  contains(
+    adapter,
+    ".filter(\n      (book) =>\n        !VERIFIED_NON_BOOK_PRODUCT_IDS.has(book.sourceExternalId ?? \"\"),",
+    "bounded exclusion is keyed only by verified source product id",
+  );
+  contains(adapter, ".map((book, index) => ({\n      ...book,\n      rank: index + 1,", "eligible books are reranked after exclusion");
+  notContains(adapter, 'title.includes("Dergi")', "no broad title keyword exclusion");
+  notContains(adapter, 'title.toLowerCase().includes("dergi")', "no broad case-folded keyword exclusion");
+  contains(
+    adapter,
+    '/liste/2/cok-satanlar/!Sayfa=${page}&Siralama=&GosterimSayisi=25&Satista=0&',
+    "native KitapStore pagination contract",
+  );
+  contains(
+    adapter,
+    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
+    "transparent collector user agent",
+  );
+  contains(adapter, "AbortSignal.timeout(20_000)", "bounded public requests");
+  notContains(
+    collector,
+    "kitapStoreBookIndexResearchAdapter",
+    "research adapter is not production-registered",
+  );
+});

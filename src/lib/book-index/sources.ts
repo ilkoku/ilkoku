@@ -193,6 +193,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     collectionState: "researching",
   },
   {
+    code: "kitapambari",
+    name: "Kitap Ambarı",
+    market: "TR",
+    countryCode: "TR",
+    baseUrl: "https://www.kitapambari.com",
+    includeInTurkeyIndex: true,
+    independenceGroup: "kitapambari",
+    operatorName: "Ötüken Neşriyat A.Ş.",
+    phase: "phase_2",
+    collectionState: "researching",
+  },
+  {
     code: "hepsiburada",
     name: "Hepsiburada",
     market: "TR",

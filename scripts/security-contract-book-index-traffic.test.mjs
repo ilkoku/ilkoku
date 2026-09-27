@@ -285,6 +285,44 @@ test("Book Index source SEO pages publish only from real available snapshots", (
 });
 
 
+
+test("phase-one source hub publishes only approved source definitions", () => {
+  const sourcePages = source("src/lib/book-index/source-pages.ts");
+
+  const approved = [
+    "bkm",
+    "remzi",
+    "idefix",
+    "kitapsepeti",
+    "kitapzen",
+    "inkilap",
+    "kitapsec",
+    "kitaplarsepette",
+    "illakitap",
+    "nobelkitap",
+  ];
+
+  for (const sourceCode of approved) {
+    contains(
+      sourcePages,
+      `sourceCode: "${sourceCode}"`,
+      `${sourceCode} phase-one source page`,
+    );
+  }
+
+  for (const privateSource of [
+    "kitapstore",
+    "amazon-tr",
+    "pandora",
+    "kitapambari",
+  ]) {
+    assert.ok(
+      !sourcePages.includes(`sourceCode: "${privateSource}"`),
+      `${privateSource} must stay off the phase-one source hub`,
+    );
+  }
+});
+
 test("manual SEO indexability smoke validates Book Index only after sitemap publication", () => {
   const workflow = source(".github/workflows/seo-indexability-smoke.yml");
 

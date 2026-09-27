@@ -12,59 +12,42 @@ permissions:
 
 jobs:
   probe:
-    name: Observe public KitapStore bestseller HTML contract
+    name: Locate KitapStore bestseller list boundary
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 3
     steps:
-      - name: Fetch four public bestseller pages
+      - name: Inspect public page-one semantic boundary
         shell: bash
         run: |
           set -euo pipefail
-          tmpdir="$(mktemp -d)"
-          trap 'rm -rf "$tmpdir"' EXIT
+          body="$(mktemp)"
+          trap 'rm -f "$body"' EXIT
+          code="$(curl --silent --show-error --compressed --max-time 25             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: text/html,application/xhtml+xml'             --output "$body" --write-out '%{http_code}'             'https://www.kitapstore.com/liste/2/cok-satanlar/' || true)"
+          printf 'http_status=%s\n' "$code"
+          test "$code" = "200"
 
-          urls=(
-            'https://www.kitapstore.com/liste/2/cok-satanlar/'
-            'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=2&Siralama=&GosterimSayisi=25&Satista=0&'
-            'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=3&Siralama=&GosterimSayisi=25&Satista=0&'
-            'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=4&Siralama=&GosterimSayisi=25&Satista=0&'
-          )
-
-          for page in 1 2 3 4; do
-            body="$tmpdir/page-$page.html"
-            url="${urls[$((page - 1))]}"
-            code="$(curl --silent --show-error --compressed --max-time 25               --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'               --header 'Accept: text/html,application/xhtml+xml'               --output "$body" --write-out '%{http_code}' "$url" || true)"
-            bytes="$(wc -c < "$body" | tr -d ' ')"
-            printf 'page=%s http_status=%s body_bytes=%s\n' "$page" "$code" "$bytes"
-            test "$code" = "200"
-
-            node - "$body" "$page" <<'NODE'
+          node - "$body" <<'NODE'
           const fs = require("node:fs");
           const html = fs.readFileSync(process.argv[2], "utf8");
-          const page = Number(process.argv[3]);
+          const target = html.indexOf('id="Urun-616428"');
+          if (target < 0) throw new Error("target_missing");
 
-          const ids = [...html.matchAll(/\/urun\/([0-9]+)\//g)].map(m => m[1]);
-          const uniqueIds = [...new Set(ids)];
-          console.log(`page=${page} product_id_occurrences=${ids.length} unique_product_ids=${uniqueIds.length}`);
-          console.log(`page=${page} first_ids=${uniqueIds.slice(0,30).join(",")}`);
+          const start = Math.max(0, target - 12000);
+          const prefix = html.slice(start, target);
+          const semanticLines = prefix
+            .replace(/></g, ">\n<")
+            .split(/\n/)
+            .filter(line =>
+              /ÇOK SATANLAR|COK SATANLAR|Cok Satanlar|Liste|Urun|ul\b|ol\b|section\b|class=|id=/i.test(line)
+            )
+            .slice(-100);
+          console.log("--- semantic_boundary_start ---");
+          console.log(semanticLines.join("\n"));
+          console.log("--- semantic_boundary_end ---");
 
-          const target = page === 1 ? "/urun/616428/" : page === 4 ? "/urun/773082/" : null;
-          if (target) {
-            const at = html.indexOf(target);
-            console.log(`page=${page} target_found=${at >= 0}`);
-            if (at >= 0) {
-              const snippet = html.slice(Math.max(0, at - 1800), Math.min(html.length, at + 2600))
-                .replace(/\s+/g, " ")
-                .replace(/</g, "\n<");
-              console.log(`--- page=${page} target_snippet_start ---`);
-              console.log(snippet);
-              console.log(`--- page=${page} target_snippet_end ---`);
-            }
-          }
-
-          const pageLinks = [...html.matchAll(/href=["']([^"']*!Sayfa=[^"']+)["']/g)]
-            .map(m => m[1])
-            .slice(0, 15);
-          console.log(`page=${page} pagination_links=${JSON.stringify(pageLinks)}`);
+          const bookStarts = [...html.matchAll(/<li\b(?=[^>]*itemtype=["']http:\/\/schema\.org\/Book["'])(?=[^>]*id=["']Urun-([0-9]+)["'])[^>]*>/giu)];
+          const targetIndex = bookStarts.findIndex(m => m[1] === "616428");
+          console.log(`book_card_count=${bookStarts.length}`);
+          console.log(`target_card_index=${targetIndex}`);
+          console.log(`book_ids=${bookStarts.map(m=>m[1]).join(",")}`);
           NODE
-          done

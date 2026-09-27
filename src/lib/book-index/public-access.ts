@@ -11,11 +11,20 @@ import {
   getBookIndexPublicReadModel,
   type BookIndexPublicReadModel,
 } from "./public-read-model";
+import {
+  getBookIndexPublishedSourcePages,
+  type BookIndexPublishedSourcePage,
+} from "./source-pages";
 import { getBookIndexReadinessSnapshot } from "./readiness";
 
 export type BookIndexPublicPageContext = {
   gate: BookIndexSeoGateSnapshot;
   model: BookIndexPublicReadModel;
+};
+
+export type BookIndexPublicSourcePageContext = {
+  model: BookIndexPublicReadModel;
+  sourcePages: BookIndexPublishedSourcePage[];
 };
 
 function policyConfigured() {
@@ -57,5 +66,15 @@ export const getBookIndexPublicPageContext = cache(
     if (!gate.canPublish) return null;
 
     return { gate, model };
+  },
+);
+
+
+export const getBookIndexPublicSourcePageContext = cache(
+  async (limit = 100): Promise<BookIndexPublicSourcePageContext | null> => {
+    const model = await getBookIndexPublicReadModel(limit);
+    const sourcePages = getBookIndexPublishedSourcePages(model);
+    if (!sourcePages.length) return null;
+    return { model, sourcePages };
   },
 );

@@ -1,6 +1,6 @@
 # Book Index scheduler rollout
 
-Status: **GITHUB_SCHEDULE_CONFIGURED / DELIVERY_DEGRADED / CANARY_PASS**
+Status: **GITHUB_SCHEDULE_CONFIGURED / DELIVERY_RECOVERY_OBSERVATION / CANARY_PASS**
 
 Book Index scheduler production aktivasyonu 25.09.2026 tarihinde gerçek
 production canary ile doğrulandı.
@@ -66,20 +66,29 @@ event.
 
 Current production evidence on 27.09.2026:
 
-- latest natural Book Index scheduler run: **#22**, created at
-  `2026-09-27T06:37:03Z`;
-- no natural Book Index scheduler run #23 had been delivered by the latest
-  production check after the later configured windows;
-- the independent CMS publishing scheduler also stopped receiving natural
-  scheduled runs after **#680**, created at `2026-09-27T06:47:23Z`;
-- readiness reported overdue Book Index lists while no later natural scheduler
-  event had arrived;
-- `BOOK_INDEX_SCHEDULER_SECRET` was **not configured** in production readiness
-  evidence.
+- after the earlier delivery gap, natural Book Index scheduler **#23**
+  (`2026-09-27T12:27:27Z`) and **#24**
+  (`2026-09-27T13:02:09Z`) were both delivered by GitHub as `schedule`
+  events and completed successfully;
+- #23 found 12 due lists and completed them with 7 `success`, 5
+  `no_change`, 0 `failed`;
+- #24 found `due=0` and correctly created no artificial observations;
+- CMS publishing scheduler also resumed natural delivery with **#681**
+  (`2026-09-27T12:30:21Z`);
+- the shared database scheduler lease was acquired successfully by the Book
+  Index scheduler;
+- historical idefix recovery completed separately without creating
+  `BookIndexFetchRun` or `BookIndexObservation` history, leaving final
+  readiness at 673/683 historical matched (%98.5) and 414/416 latest composite
+  matched (%99.5);
+- an independent external bearer-secret trigger is still not considered active
+  without explicit production configuration and invocation evidence.
 
-This pattern is treated as **scheduled-event delivery degradation**, not as
-proof of a Book Index collector failure. Manual scheduler runs must not be used
-to manufacture history or hide delivery gaps.
+The earlier delivery degradation has therefore shown recovery, but the system
+remains in **delivery recovery observation** until additional natural schedule
+windows provide enough evidence to call GitHub delivery consistently healthy.
+Manual scheduler runs must not be used to manufacture history or hide delivery
+gaps.
 
 Concurrency remains:
 
@@ -118,7 +127,7 @@ shows it is configured and successfully invoking the endpoint.
 ## Next operational gate
 
 Canary authentication and collector behavior are proven. The current operating
-phase is **delivery recovery + evidence accumulation + readiness**:
+phase is **delivery recovery observation + evidence accumulation + readiness**:
 
 1. accumulate multiple production snapshots;
 2. run/verify master-book matching;

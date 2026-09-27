@@ -1,0 +1,46 @@
+name: Book Index KitapSec general bestseller probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapsec-general-01ak-al4bd
+    paths:
+      - ".github/workflows/book-index-kitapsec-general-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Discover public KitapSec general bestseller link
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Fetch public KitapSec homepage without collecting
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          trap 'rm -f "$body"' EXIT
+
+          code="$(curl --silent --show-error --compressed --max-time 20             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: text/html,application/xhtml+xml'             --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5'             --output "$body" --write-out '%{http_code}'             'https://www.kitapsec.com/' || true)"
+          printf 'http_status=%s body_bytes=%s\n' "$code" "$(wc -c < "$body" | tr -d ' ')"
+          test "$code" = "200"
+
+          node - "$body" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "latin1");
+
+          const anchors = [...html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu)]
+            .map((m) => ({
+              href: m[1],
+              text: m[2]
+                .replace(/<[^>]+>/gu, " ")
+                .replace(/&nbsp;/giu, " ")
+                .replace(/\s+/gu, " ")
+                .trim(),
+            }))
+            .filter((item) => /(?:ÇOK|COK)\s+SATAN/iu.test(item.text) || /cok-satan/iu.test(item.href));
+
+          console.log("bestseller_links=" + JSON.stringify(anchors.slice(0, 60)));
+          NODE

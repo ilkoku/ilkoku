@@ -823,6 +823,26 @@ test("KitaplarSepette qualification evidence remains observable after voter acti
 });
 
 
+test("KitapStore shadow canary qualification evidence is observable without voting", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(readiness, "kitapStoreCanaryHealth", "KitapStore canary health evidence");
+  contains(readiness, "kitapStoreCanaryShadowBookCount", "KitapStore shadow book count");
+  contains(
+    readiness,
+    "kitapStoreCanaryShadowWouldReach3IndependentCount",
+    "KitapStore projected independent threshold evidence",
+  );
+  contains(readiness, "kitapStoreCanaryShadowPairOverlap", "KitapStore pair-overlap evidence");
+  contains(readiness, "kitapStoreCanaryShadowSamples", "KitapStore shadow overlap samples");
+  contains(readiness, 'sourceCode !== "kitapstore"', "shadow baseline excludes KitapStore");
+  contains(readiness, '"kitapstore",', "shadow projection adds KitapStore once");
+  contains(lists, 'code: "kitapstore-tr-live-canary"', "KitapStore shadow canary list");
+  contains(lists, 'includeInComposite: false', "KitapStore shadow never votes");
+});
+
+
 test("Book Index admin reflects independent-operator voting", () => {
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
 

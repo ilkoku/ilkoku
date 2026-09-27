@@ -491,23 +491,31 @@ test("Inkilap collector parses verified bestseller cards with safe ISBN handling
   );
 });
 
-test("KitapSec category collector parses explicit ItemList ranks and ISBN metadata", () => {
+test("KitapSec category and general collectors preserve bounded native ranks", () => {
   const adapter = source("src/lib/book-index/sources/kitapsec.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(adapter, 'const MAX_BOOKS = 48;', "KitapSec source page cap");
-  contains(adapter, 'const MIN_EXPECTED_BOOKS = 20;', "KitapSec fail-closed minimum");
-  contains(adapter, '\\bKs_ContentUrunList\\b', "KitapSec canonical ItemList scope");
+  contains(adapter, 'const CATEGORY_MAX_BOOKS = 48;', "KitapSec category page cap");
+  contains(adapter, 'const GENERAL_MAX_BOOKS = 56;', "KitapSec general page cap");
+  contains(adapter, 'const CATEGORY_MIN_EXPECTED_BOOKS = 20;', "KitapSec category fail-closed minimum");
+  contains(adapter, 'const GENERAL_MIN_EXPECTED_BOOKS = 40;', "KitapSec general fail-closed minimum");
+  contains(adapter, '\\bKs_ContentUrunList\\b', "KitapSec canonical list scope");
+  contains(adapter, '\\burunListeleDiv\\b', "KitapSec stable list container");
   contains(adapter, '\\bKs_UrunSatir\\b', "KitapSec ranked card selector");
   contains(adapter, 'itemprop=["\']position', "KitapSec explicit rank metadata");
   contains(adapter, 'itemprop=["\']sku', "KitapSec ISBN metadata");
+  contains(adapter, "parseKitapSecGeneralBestsellers", "KitapSec bounded general parser");
+  contains(adapter, "GENERAL_LIST_CODES", "KitapSec general list routing");
+  contains(adapter, "CATEGORY_LIST_CODES", "KitapSec category list routing");
+  contains(adapter, "BOOK_INDEX_KITAPSEC_LIST_NOT_SUPPORTED", "KitapSec unknown-list rejection");
   contains(adapter, 'new TextDecoder("windows-1254")', "KitapSec source encoding");
   contains(adapter, "BOOK_INDEX_KITAPSEC_LIST_NOT_FOUND", "KitapSec list scope failure");
   contains(adapter, "BOOK_INDEX_KITAPSEC_RESULT_TOO_SMALL", "KitapSec suspicious result rejection");
   contains(adapter, "BOOK_INDEX_KITAPSEC_RANK_SEQUENCE_INVALID", "KitapSec rank continuity validation");
   contains(adapter, "BOOK_INDEX_KITAPSEC_DUPLICATE_ITEM", "KitapSec duplicate rank/source protection");
+
   contains(lists, 'code: "kitapsec-edebiyat-live"', "KitapSec Edebiyat list");
   contains(lists, 'categoryKey: "edebiyat"', "KitapSec category scope");
   contains(
@@ -515,12 +523,21 @@ test("KitapSec category collector parses explicit ItemList ranks and ISBN metada
     'code: "kitapsec-cocuk-genclik-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Çocuk ve Gençlik Çok Satan Kitaplar",\n    categoryKey: "cocuk-genclik",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Products/Cocuk-ve-Genclik-Kitaplari/Cok-Satan-Kitaplar/",\n    maxRank: 48,\n    includeInComposite: false',
     "KitapSec child and youth category list",
   );
-  contains(lists, 'includeInComposite: false', "KitapSec category excluded from general composite");
+  contains(
+    lists,
+    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    "KitapSec general voter remains disabled",
+  );
+  contains(
+    lists,
+    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    enabled: true',
+    "KitapSec general shadow canary",
+  );
   contains(collector, "[kitapSecBookIndexAdapter.sourceCode, kitapSecBookIndexAdapter]", "KitapSec adapter activation");
   contains(
     sources,
-    'baseUrl: "https://www.kitapsec.com",\n    includeInTurkeyIndex: true,\n    phase: "phase_2",\n    collectionState: "ready"',
-    "KitapSec category source ready",
+    'baseUrl: "https://www.kitapsec.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "kitapsec",\n    operatorName: "KİTAPSEÇ YAYINCILIK ELEKTRONİK NAKLİYE MAKİNA İNŞAAT TAAHHÜT SANAYİ VE TİCARET LİMİTED ŞİRKETİ",\n    phase: "phase_2",\n    collectionState: "ready"',
+    "KitapSec source/operator contract",
   );
 });
 

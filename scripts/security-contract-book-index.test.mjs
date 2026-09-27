@@ -1051,10 +1051,10 @@ test("KitapStore Top 100 candidate remains fail-closed and production-disabled",
   contains(adapter, "\\bIslemliL\\b", "native bestseller list container");
   contains(adapter, 'id=["\']Urun-([0-9]+)["\']', "stable numeric product id");
   contains(adapter, 'itemtype=["\']http:\\/\\/schema\\.org\\/Book["\']', "schema Book card scope");
-  contains(adapter, "\\bitemprop=[\"']url[\"']", "canonical product URL metadata");
-  contains(adapter, "\\bitemprop=[\"']author[\"']", "author metadata");
-  contains(adapter, "\\bitemprop=[\"']publisher[\"']", "publisher metadata");
-  contains(adapter, "\\bitemprop=[\"']serialNumber[\"']", "product serial identity check");
+  contains(adapter, 'itemprop=["\']url["\']', "canonical product URL metadata");
+  contains(adapter, 'itemprop=["\']author["\']', "author metadata");
+  contains(adapter, 'itemprop=["\']publisher["\']', "publisher metadata");
+  contains(adapter, 'itemprop=["\']serialNumber["\']', "product serial identity check");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_PAGE_SIZE_INVALID", "25-card page fail-closed guard");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY", "duplicate source-key guard");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_RANK_GAP", "cross-page rank continuity guard");

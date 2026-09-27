@@ -26,7 +26,7 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(workflow, "workflow_run:", "automated cross-workflow delivery relay");
   contains(workflow, "workflows:", "relay workflow allowlist");
   contains(workflow, "- Email operations", "relay follows natural Email operations delivery");
-  contains(workflow, "- CMS publishing scheduler", "relay follows natural CMS scheduler delivery");
+  contains(workflow, "- Book Index readiness probe", "relay follows natural readiness probe delivery");
   contains(workflow, "- completed", "relay waits for workflow completion");
   contains(
     workflow,
@@ -83,7 +83,7 @@ test("Book Index KitaplarSepette canary health is read-only and the one-time pro
 
   notContains(workflow, "Production smoke", "temporary production-smoke relay remains removed");
   contains(workflow, "- Email operations", "steady-state relay keeps Email operations");
-  contains(workflow, "- CMS publishing scheduler", "steady-state relay also uses CMS scheduler");
+  contains(workflow, "- Book Index readiness probe", "steady-state relay also uses readiness probe");
   notContains(workflow, "?forceKitaplarSepetteCanary=1", "force canary query removed");
   notContains(route, "forceKitaplarSepetteCanary", "force canary route removed");
   notContains(route, "forcedKitaplarSepetteCanaryRun", "force canary response removed");
@@ -319,7 +319,7 @@ test("Book Index retries unsuccessful runs without resetting the full source cad
   contains(workflow, 'cron: "17 * * * *"', "primary hourly scheduler remains");
   contains(workflow, 'cron: "47 * * * *"', "half-hour fallback remains");
   contains(workflow, "- Email operations", "successful Email operations relay remains");
-  contains(workflow, "- CMS publishing scheduler", "successful CMS scheduler relay remains");
+  contains(workflow, "- Book Index readiness probe", "successful readiness probe relay remains");
   contains(
     workflow,
     "github.event.workflow_run.conclusion == 'success'",

@@ -1164,7 +1164,7 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
   contains(sources, 'code: "kitapstore"', "KitapStore research source");
   contains(
     sources,
-    'name: "KitapStore",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "bilge-kitap-kulubu",\n    operatorName: "Bilge Kitap Kulübü",\n    phase: "phase_2",\n    collectionState: "researching"',
+    'name: "KitapStore",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    // Current seller identity. Turkey-general voter eligibility remains separately gated.\n    independenceGroup: "vedat-akoglu-kitapstore",\n    operatorName: "Vedat Akoğlu - KitapStore",\n    phase: "phase_2",\n    collectionState: "researching"',
     "KitapStore remains research-only",
   );
   contains(lists, 'code: "kitapstore-tr-live"', "KitapStore research list");

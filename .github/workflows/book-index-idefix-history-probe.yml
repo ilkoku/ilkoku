@@ -1,0 +1,59 @@
+name: Book Index idefix history probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/book-index-idefix-history-probe.yml"
+      - "src/app/api/internal/book-index-idefix-history-probe/route.ts"
+      - "src/lib/book-index/idefix-history-probe.ts"
+      - "src/lib/book-index/sources/idefix.ts"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: book-index-idefix-history-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    name: Probe historical idefix metadata without writes
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Read bounded historical recoverability with GitHub OIDC
+        env:
+          OIDC_AUDIENCE: ilkoku-book-index-idefix-history-probe
+        run: |
+          set -euo pipefail
+
+          for attempt in {1..20}; do
+            oidc_response="$(curl --fail-with-body --silent --show-error --header "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$OIDC_AUDIENCE")"
+            oidc_token="$(printf '%s' "$oidc_response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+            test -n "$oidc_token"
+
+            if response="$(curl --fail-with-body --silent --show-error --max-time 280 --header "Authorization: Bearer $oidc_token" https://ilkoku.com/api/internal/book-index-idefix-history-probe)"; then
+              if printf '%s' "$response" | python3 -c 'import json,sys; p=json.load(sys.stdin); required=("mode","candidateCount","fetchSuccessCount","fetchErrorCount","recoverableAuthorCount","recoverableIsbn13Count","recoverableIdentityCount","stillIdentityPoorCount","recoverableSamples","unresolvedSamples"); raise SystemExit(0 if p.get("ok") is True and p.get("mode") == "read_only" and all(k in p for k in required) else 1)'; then
+                printf '%s' "$response" > probe.json
+                python3 - <<'PY'
+          import json
+
+          with open("probe.json", "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+
+          print(json.dumps(payload, ensure_ascii=False, indent=2))
+          PY
+                exit 0
+              fi
+            fi
+
+            if [ "$attempt" -lt 20 ]; then
+              sleep 15
+            fi
+          done
+
+          exit 1

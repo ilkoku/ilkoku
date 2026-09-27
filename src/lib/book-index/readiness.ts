@@ -197,6 +197,14 @@ export type BookIndexReadinessSnapshot = {
   }>;
   unmatchedAmbiguousIdentitySamples: BookIndexUnmatchedAmbiguousIdentitySample[];
   matchCoveragePercent: number;
+  latestCompositeExternalBookCount: number;
+  latestCompositeMatchedExternalBookCount: number;
+  latestCompositeUnmatchedExternalBookCount: number;
+  latestCompositeUnmatchedBooksBySource: Array<{
+    sourceCode: string;
+    count: number;
+  }>;
+  latestCompositeMatchCoveragePercent: number;
   maxCompositeSourcesPerBook: number;
   booksOnAtLeast2CompositeSources: number;
   booksOnAtLeast3CompositeSources: number;
@@ -337,6 +345,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
                 select: {
                   externalBook: {
                     select: {
+                      id: true,
                       title: true,
                       authorName: true,
                       normalizedTitle: true,
@@ -865,6 +874,10 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     }))
     .sort((a, b) => a.independenceGroup.localeCompare(b.independenceGroup, "tr"));
 
+  const latestCompositeExternalBooks = new Map<string, {
+    sourceCode: string;
+    matched: boolean;
+  }>();
   const sourceCodesByMasterBook = new Map<string, Set<string>>();
   const masterBookDetails = new Map<string, {
     title: string;
@@ -909,6 +922,11 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
 
     for (const observation of latestRun.observations) {
       const book = observation.externalBook;
+
+      latestCompositeExternalBooks.set(book.id, {
+        sourceCode: list.source.code,
+        matched: Boolean(book.masterBookId),
+      });
 
       if (book.masterBookId) {
         const sourceCodes = sourceCodesByMasterBook.get(book.masterBookId) ?? new Set<string>();
@@ -989,6 +1007,36 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       }
     }
   }
+
+  const latestCompositeBookValues = [...latestCompositeExternalBooks.values()];
+  const latestCompositeExternalBookCount = latestCompositeBookValues.length;
+  const latestCompositeMatchedExternalBookCount =
+    latestCompositeBookValues.filter((book) => book.matched).length;
+  const latestCompositeUnmatchedExternalBookCount =
+    latestCompositeExternalBookCount - latestCompositeMatchedExternalBookCount;
+  const latestCompositeUnmatchedBySourceMap = new Map<string, number>();
+
+  for (const book of latestCompositeBookValues) {
+    if (book.matched) continue;
+    latestCompositeUnmatchedBySourceMap.set(
+      book.sourceCode,
+      (latestCompositeUnmatchedBySourceMap.get(book.sourceCode) ?? 0) + 1,
+    );
+  }
+
+  const latestCompositeUnmatchedBooksBySource =
+    [...latestCompositeUnmatchedBySourceMap.entries()]
+      .map(([sourceCode, count]) => ({ sourceCode, count }))
+      .sort(
+        (a, b) =>
+          b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
+      );
+  const latestCompositeMatchCoveragePercent = latestCompositeExternalBookCount
+    ? Math.round(
+        (latestCompositeMatchedExternalBookCount / latestCompositeExternalBookCount)
+          * 1000,
+      ) / 10
+    : 0;
 
   const compositeSourceCounts = [...sourceCodesByMasterBook.values()].map((sourceCodes) => sourceCodes.size);
   const independentCompositeSourceCounts = [...sourceCodesByMasterBook.values()].map(
@@ -1349,6 +1397,11 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     matchCoveragePercent: externalBookCount
       ? Math.round((matchedExternalBookCount / externalBookCount) * 1000) / 10
       : 0,
+    latestCompositeExternalBookCount,
+    latestCompositeMatchedExternalBookCount,
+    latestCompositeUnmatchedExternalBookCount,
+    latestCompositeUnmatchedBooksBySource,
+    latestCompositeMatchCoveragePercent,
     maxCompositeSourcesPerBook: compositeSourceCounts.length ? Math.max(...compositeSourceCounts) : 0,
     booksOnAtLeast2CompositeSources: compositeSourceCounts.filter((count) => count >= 2).length,
     booksOnAtLeast3CompositeSources: compositeSourceCounts.filter((count) => count >= 3).length,

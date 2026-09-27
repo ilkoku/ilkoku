@@ -23,6 +23,7 @@ const GITHUB_WORKFLOW_REF =
 const ALLOWED_GITHUB_EVENTS = new Set([
   "push",
   "workflow_dispatch",
+  "schedule",
 ]);
 
 function bearerToken(request: NextRequest) {

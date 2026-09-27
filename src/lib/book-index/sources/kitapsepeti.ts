@@ -7,8 +7,9 @@ import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "kitapsepeti";
 const SOURCE_ORIGIN = "https://www.kitapsepeti.com";
-const MAX_BOOKS = 60;
-const MIN_EXPECTED_BOOKS = 20;
+const MAX_BOOKS = 100;
+const PAGE_COUNT = 2;
+const MIN_EXPECTED_BOOKS = 50;
 const VERIFIED_NON_BOOK_SOURCE_KEYS = new Set(["/3-in-1-puzzle"]);
 
 function absoluteUrl(href: string) {
@@ -108,24 +109,60 @@ export function parseKitapSepetiBestsellers(
   return { books };
 }
 
+function bestsellerPageUrl(sourceUrl: string, page: number) {
+  if (page === 1) return sourceUrl;
+
+  const url = new URL(sourceUrl);
+  url.searchParams.set("pg", String(page));
+  return url.toString();
+}
+
+async function fetchHtml(url: string) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+  }
+
+  return response.text();
+}
+
 export const kitapSepetiBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const response = await fetch(context.sourceUrl, {
-      cache: "no-store",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
-      },
-      signal: AbortSignal.timeout(20_000),
-    });
+    const pageResults = await Promise.all(
+      Array.from({ length: PAGE_COUNT }, (_, index) =>
+        fetchHtml(bestsellerPageUrl(context.sourceUrl, index + 1))
+          .then(parseKitapSepetiBestsellers),
+      ),
+    );
 
-    if (!response.ok) {
-      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+    const books = pageResults
+      .flatMap((result) => result.books)
+      .slice(0, MAX_BOOKS)
+      .map((book, index) => ({
+        ...book,
+        rank: index + 1,
+      }));
+
+    if (books.length < MAX_BOOKS) {
+      throw new Error("BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL");
     }
 
-    return parseKitapSepetiBestsellers(await response.text());
+    const uniqueKeys = new Set(books.map((book) => book.sourceKey));
+    if (uniqueKeys.size !== books.length) {
+      throw new Error("BOOK_INDEX_KITAPSEPETI_DUPLICATE_SOURCE_KEY");
+    }
+
+    return { books };
   },
 };

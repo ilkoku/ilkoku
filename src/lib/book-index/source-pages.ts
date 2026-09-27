@@ -88,6 +88,12 @@ export const BOOK_INDEX_PUBLIC_SOURCE_PAGES: readonly BookIndexPublicSourcePageD
     sourceName: "Kitap Ambarı",
     searchTitle: "Kitap Ambarı En Çok Satan Kitaplar",
   },
+  {
+    sourceCode: "kitapstore",
+    slug: "kitapstore",
+    sourceName: "KitapStore",
+    searchTitle: "KitapStore En Çok Satan Kitaplar",
+  },
 ] as const;
 
 const periodOrder = new Map([

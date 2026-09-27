@@ -9,6 +9,7 @@ const SOURCE_CODE = "illakitap";
 const SOURCE_ORIGIN = "https://www.illakitap.com";
 const MAX_BOOKS = 100;
 const MIN_EXPECTED_BOOKS = 40;
+const VERIFIED_NON_BOOK_PRODUCT_IDS = new Set(["941554"]);
 
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
@@ -35,6 +36,9 @@ export function parseIllaKitapWeeklyBestsellers(
       const card = html.slice(start, end);
       const productId = match[1]?.trim() ?? "";
       const barcode = match[2]?.trim() ?? "";
+
+      // Verified live catalogue exception: this source item is a periodical, not a book.
+      if (VERIFIED_NON_BOOK_PRODUCT_IDS.has(productId)) return null;
 
       const titleMatch = card.match(
         /<div\b[^>]*\bclass=["'][^"']*\bname\b[^"']*["'][^>]*>\s*<a\b[^>]*\bhref=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/iu,
@@ -72,6 +76,7 @@ export function parseIllaKitapWeeklyBestsellers(
         currency: "TRY",
       };
     })
+    .filter((book): book is NonNullable<typeof book> => Boolean(book))
     .slice(0, MAX_BOOKS);
 
   if (books.length < MIN_EXPECTED_BOOKS) {

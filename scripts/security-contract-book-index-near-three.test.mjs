@@ -130,10 +130,32 @@ test("Book Index readiness exposes unmatched external books by source without mu
   contains(readiness, 'by: ["sourceId"]', "unmatched grouping stays source-scoped");
   contains(readiness, 'where: { matchStatus: "unmatched" }', "unmatched-only diagnostic");
   contains(readiness, "unmatchedExternalBooksBySource", "readiness unmatched-by-source evidence");
+  contains(
+    readiness,
+    "unmatchedDuplicateIdentityGroupCount",
+    "duplicate unmatched identity group count",
+  );
+  contains(
+    readiness,
+    "unmatchedDuplicateIdentitySamples",
+    "duplicate unmatched identity samples",
+  );
+  contains(
+    readiness,
+    'by: ["sourceId", "normalizedTitle", "normalizedAuthor"]',
+    "duplicate identity grouping stays source-scoped",
+  );
   contains(admin, "readiness.unmatchedExternalBooksBySource", "admin uses readiness diagnostic");
+  contains(
+    admin,
+    "readiness.unmatchedDuplicateIdentitySamples",
+    "admin duplicate identity diagnostic",
+  );
   contains(admin, "Eşleşmeyen kaynak", "unmatched source table label");
   contains(admin, "Bekleyen kayıt", "unmatched count table label");
-  notContains(matching, "unmatchedExternalBooksBySource", "diagnostic does not change matching");
+  contains(admin, "Olası sourceKey churn", "source-key churn diagnostic label");
+  notContains(matching, "unmatchedExternalBooksBySource", "source-count diagnostic does not change matching");
+  notContains(matching, "unmatchedDuplicateIdentitySamples", "identity diagnostic does not change matching");
 });
 
 test("Book Index admin exposes source history maturity without publish judgments", () => {

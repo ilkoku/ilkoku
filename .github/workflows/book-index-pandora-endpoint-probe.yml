@@ -442,3 +442,72 @@ jobs:
           for (const [value, group] of duplicateIds) printGroup("id", value, group);
           for (const [value, group] of duplicateEans) printGroup("ean", value, group);
           NODE
+
+
+      - name: Infer Pandora public product URL construction
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          page='https://www.pandora.com.tr/Cok_Satan_Kitaplar'
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir" 2>/dev/null || true' EXIT
+          html="$tmpdir/page.html"
+
+          code="$(curl             --silent             --show-error             --compressed             --max-time 20             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --output "$html"             --write-out '%{http_code}'             "$page" || true)"
+          echo "pandora_url_contract_page_status=$code"
+          [ "$code" = "200" ] || exit 0
+
+          node - "$html" > "$tmpdir/scripts.txt" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "utf8");
+          const base = new URL("https://www.pandora.com.tr/Cok_Satan_Kitaplar");
+          const scripts = [];
+
+          for (const match of html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/giu)) {
+            try {
+              const url = new URL(match[1], base);
+              if (url.protocol === "https:" && (url.hostname === "www.pandora.com.tr" || url.hostname === "pandora.com.tr")) {
+                scripts.push(url.toString());
+              }
+            } catch {}
+          }
+
+          for (const value of [...new Set(scripts)]) console.log(value);
+          NODE
+
+          i=0
+          while IFS= read -r script; do
+            [ -n "$script" ] || continue
+            i=$((i + 1))
+            body="$tmpdir/script-$i.js"
+            status="$(curl               --silent               --show-error               --compressed               --max-time 20               --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'               --output "$body"               --write-out '%{http_code}'               "$script" || true)"
+            [ "$status" = "200" ] || continue
+
+            node - "$body" "$i" <<'NODE'
+          const fs = require("node:fs");
+          const js = fs.readFileSync(process.argv[2], "utf8");
+          const index = Number(process.argv[3]);
+
+          if (!js.includes("/api/coksatanlar")) process.exit(0);
+
+          const occurrences = [];
+          let cursor = 0;
+          while (occurrences.length < 8) {
+            const found = js.indexOf("/kitap/", cursor);
+            if (found < 0) break;
+            const start = Math.max(0, found - 180);
+            const end = Math.min(js.length, found + 260);
+            const context = js.slice(start, end)
+              .replace(/\s+/gu, " ")
+              .replace(/[A-Za-z0-9_-]{80,}/gu, "{LONG_LITERAL}");
+            occurrences.push(context);
+            cursor = found + 7;
+          }
+
+          console.log(`pandora_product_url_script_index=${index} occurrences=${occurrences.length}`);
+          occurrences.forEach((value, position) => {
+            console.log(`pandora_product_url_context_${position + 1}=${value}`);
+          });
+          NODE
+          done < "$tmpdir/scripts.txt"

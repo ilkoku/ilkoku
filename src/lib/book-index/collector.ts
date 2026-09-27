@@ -21,6 +21,7 @@ import { illaKitapBookIndexAdapter } from "./sources/illakitap";
 import { nobelKitapBookIndexAdapter } from "./sources/nobelkitap";
 import { kitapzenBookIndexAdapter } from "./sources/kitapzen";
 import { idefixBookIndexAdapter } from "./sources/idefix";
+import { pandoraBookIndexAdapter } from "./sources/pandora";
 import { remziBookIndexAdapter } from "./sources/remzi";
 
 const adapters = new Map<string, BookIndexSourceAdapter>([
@@ -36,6 +37,7 @@ const adapters = new Map<string, BookIndexSourceAdapter>([
   [nobelKitapBookIndexAdapter.sourceCode, nobelKitapBookIndexAdapter],
   [kitapzenBookIndexAdapter.sourceCode, kitapzenBookIndexAdapter],
   [idefixBookIndexAdapter.sourceCode, idefixBookIndexAdapter],
+  [pandoraBookIndexAdapter.sourceCode, pandoraBookIndexAdapter],
 ]);
 
 function fingerprint(result: BookIndexCollectionResult) {

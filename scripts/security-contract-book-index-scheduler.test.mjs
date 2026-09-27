@@ -192,4 +192,24 @@ test("Book Index readiness probe exposes overdue operations evidence without col
   contains(workflow, '"dueCount"', "workflow requires due-count evidence");
   contains(workflow, '"maxOverdueMinutes"', "workflow requires overdue duration");
   contains(workflow, '"dueLists"', "workflow prints overdue list evidence");
+  contains(
+    route,
+    "unmatchedMissingAuthorWithIsbnBooksBySource",
+    "probe exposes missing-author records with ISBN",
+  );
+  contains(
+    route,
+    "unmatchedMissingAuthorWithoutIsbnBooksBySource",
+    "probe exposes missing-author records without ISBN",
+  );
+  contains(
+    workflow,
+    '"unmatchedMissingAuthorWithIsbnBooksBySource"',
+    "workflow prints missing-author ISBN-present evidence",
+  );
+  contains(
+    workflow,
+    '"unmatchedMissingAuthorWithoutIsbnBooksBySource"',
+    "workflow prints missing-author ISBN-absent evidence",
+  );
 });

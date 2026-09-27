@@ -1116,7 +1116,7 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
   );
   notContains(
     adapter,
-    ".map((book, index) => ({",
+    "rank: index + 1",
     "KitapStore exclusions must not renumber native ranks",
   );
   contains(adapter, '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"', "transparent user agent");

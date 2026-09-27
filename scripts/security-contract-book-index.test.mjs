@@ -893,3 +893,40 @@ test("Book Index readiness diagnoses missing authors among unmatched records wit
     "ambiguous-master diagnostic does not alter matching behavior",
   );
 });
+
+
+test("Book Index source adapters exclude only verified non-book catalogue entries", () => {
+  const illakitap = source("src/lib/book-index/sources/illakitap.ts");
+  const kitapsepeti = source("src/lib/book-index/sources/kitapsepeti.ts");
+
+  contains(
+    illakitap,
+    'const VERIFIED_NON_BOOK_PRODUCT_IDS = new Set(["941554"]);',
+    "verified İlla Kitap periodical exclusion",
+  );
+  contains(
+    illakitap,
+    "VERIFIED_NON_BOOK_PRODUCT_IDS.has(productId)",
+    "İlla Kitap exclusion uses stable source product id",
+  );
+  contains(
+    kitapsepeti,
+    'const VERIFIED_NON_BOOK_SOURCE_KEYS = new Set(["/3-in-1-puzzle"]);',
+    "verified KitapSepeti puzzle exclusion",
+  );
+  contains(
+    kitapsepeti,
+    "VERIFIED_NON_BOOK_SOURCE_KEYS.has(href)",
+    "KitapSepeti exclusion uses stable source key",
+  );
+  notContains(
+    illakitap,
+    'title.includes("Dergi")',
+    "İlla Kitap does not broadly exclude books by title word",
+  );
+  notContains(
+    kitapsepeti,
+    'title.toLowerCase().includes("puzzle")',
+    "KitapSepeti does not broadly exclude books by title word",
+  );
+});

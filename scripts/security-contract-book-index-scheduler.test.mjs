@@ -112,7 +112,9 @@ test("Book Index readiness probe is OIDC-protected and collection-free", () => {
   contains(route, '"workflow_dispatch"', "manual read-only authorization");
   contains(route, "export async function GET", "read-only HTTP method");
   contains(route, "getBookIndexReadinessSnapshot", "readiness snapshot query");
-  contains(route, "getBookIndexSeoGateSnapshot", "SEO gate query");
+  contains(route, "getBookIndexSeoGatePolicy", "SEO gate policy query");
+  contains(route, "evaluateBookIndexSeoGate", "SEO gate evaluation");
+  contains(route, "getBookIndexPublicReadModel", "Turkey item evidence query");
   notContains(route, "runBookIndexScheduler", "readiness route never runs collection");
   notContains(route, "collectBookIndex", "readiness route never invokes collector");
 

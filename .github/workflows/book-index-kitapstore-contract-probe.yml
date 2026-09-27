@@ -1,0 +1,70 @@
+name: Book Index KitapStore contract probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapstore-contract-01ak-ah
+    paths:
+      - ".github/workflows/book-index-kitapstore-contract-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Observe public KitapStore bestseller HTML contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Fetch four public bestseller pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+
+          urls=(
+            'https://www.kitapstore.com/liste/2/cok-satanlar/'
+            'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=2&Siralama=&GosterimSayisi=25&Satista=0&'
+            'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=3&Siralama=&GosterimSayisi=25&Satista=0&'
+            'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=4&Siralama=&GosterimSayisi=25&Satista=0&'
+          )
+
+          for page in 1 2 3 4; do
+            body="$tmpdir/page-$page.html"
+            url="${urls[$((page - 1))]}"
+            code="$(curl --silent --show-error --compressed --max-time 25               --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'               --header 'Accept: text/html,application/xhtml+xml'               --output "$body" --write-out '%{http_code}' "$url" || true)"
+            bytes="$(wc -c < "$body" | tr -d ' ')"
+            printf 'page=%s http_status=%s body_bytes=%s\n' "$page" "$code" "$bytes"
+            test "$code" = "200"
+
+            node - "$body" "$page" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "utf8");
+          const page = Number(process.argv[3]);
+
+          const ids = [...html.matchAll(/\/urun\/([0-9]+)\//g)].map(m => m[1]);
+          const uniqueIds = [...new Set(ids)];
+          console.log(`page=${page} product_id_occurrences=${ids.length} unique_product_ids=${uniqueIds.length}`);
+          console.log(`page=${page} first_ids=${uniqueIds.slice(0,30).join(",")}`);
+
+          const target = page === 1 ? "/urun/616428/" : page === 4 ? "/urun/773082/" : null;
+          if (target) {
+            const at = html.indexOf(target);
+            console.log(`page=${page} target_found=${at >= 0}`);
+            if (at >= 0) {
+              const snippet = html.slice(Math.max(0, at - 1800), Math.min(html.length, at + 2600))
+                .replace(/\s+/g, " ")
+                .replace(/</g, "\n<");
+              console.log(`--- page=${page} target_snippet_start ---`);
+              console.log(snippet);
+              console.log(`--- page=${page} target_snippet_end ---`);
+            }
+          }
+
+          const pageLinks = [...html.matchAll(/href=["']([^"']*!Sayfa=[^"']+)["']/g)]
+            .map(m => m[1])
+            .slice(0, 15);
+          console.log(`page=${page} pagination_links=${JSON.stringify(pageLinks)}`);
+          NODE
+          done

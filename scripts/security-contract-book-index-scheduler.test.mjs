@@ -224,6 +224,16 @@ test("Book Index readiness probe exposes overdue operations evidence without col
     contains(route, metric, `readiness probe safety metric ${metric}`);
     contains(workflow, `"${metric}"`, `workflow safety metric ${metric}`);
   }
+  contains(
+    route,
+    "normalizedTitleDifferentAuthorSamples",
+    "probe exposes bounded title-author overlap samples",
+  );
+  contains(
+    workflow,
+    '"normalizedTitleDifferentAuthorSamples"',
+    "workflow prints bounded title-author overlap samples",
+  );
   contains(route, "failures: seoGate.failures", "probe SEO failure evidence");
   contains(route, "evidence: seoGate.evidence", "probe SEO evidence payload");
 });

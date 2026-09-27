@@ -1045,9 +1045,10 @@ test("Kitap Ambarı candidate stays research-only until ordering and operator-in
 });
 
 
-test("KitapStore candidate stays research-only until a bounded parser contract is proven", () => {
+test("KitapStore candidate has a bounded fail-closed parser but stays research-only", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
+  const adapter = source("src/lib/book-index/sources/kitapstore.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
   contains(sources, 'code: "kitapstore"', "KitapStore research source");
@@ -1062,9 +1063,29 @@ test("KitapStore candidate stays research-only until a bounded parser contract i
     'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
     "KitapStore list stays disabled and outside composite",
   );
+
+  contains(adapter, 'const PAGE_COUNT = 4;', "four-page Top 100 bound");
+  contains(adapter, 'const EXPECTED_PAGE_BOOKS = 25;', "25 native ranks per page");
+  contains(adapter, 'const MAX_BOOKS = PAGE_COUNT * EXPECTED_PAGE_BOOKS;', "Top 100 result cap");
+  contains(adapter, 'itemtype=["\']http:\\/\\/schema\\.org\\/Book["\']', "schema.org Book card scope");
+  contains(adapter, 'id=["\']Urun-([0-9]+)["\']', "stable product-id scope");
+  contains(adapter, '\\bNo\\b', "native rank field");
+  contains(adapter, '\\bUrunAdi\\b', "canonical title field");
+  contains(adapter, 'itemprop=["\']author["\']', "schema.org author field");
+  contains(adapter, 'itemprop=["\']publisher["\']', "schema.org publisher field");
+  contains(adapter, 'itemPropTag(card, "meta", "serialNumber")', "product-id cross-check");
+  contains(adapter, 'itemPropTag(html, "span", "isbn")', "detail ISBN parser");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_PAGE_SIZE_MISMATCH", "page-size fail-closed gate");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY", "duplicate source-key gate");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL", "duplicate URL gate");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_RANK", "duplicate rank gate");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_RANK_GAP", "cross-page rank-gap gate");
+  contains(adapter, '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"', "transparent user agent");
+  contains(adapter, "AbortSignal.timeout(20_000)", "bounded request timeout");
+
   notContains(
     collector,
-    "kitapstoreBookIndexAdapter",
-    "KitapStore has no production collector before parser proof",
+    "kitapStoreBookIndexResearchAdapter",
+    "research parser is not production-registered",
   );
 });

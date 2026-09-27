@@ -129,7 +129,7 @@ jobs:
               check_page "$insight_path" "$insight_url"
             fi
           else
-            echo "Aggregate Book Index remains gated; aggregate SEO checks skipped."
+            echo "Book Index is not published in sitemap; gated SEO checks remain skipped."
           fi
 
           echo "PASS: low-impact SEO indexability diagnostic completed."

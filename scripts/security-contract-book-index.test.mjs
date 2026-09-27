@@ -873,6 +873,51 @@ test("KitaplarSepette qualification evidence remains observable after voter acti
 });
 
 
+test("KitapSec general shadow canary qualification evidence is observable without voting", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(readiness, "kitapSecGeneralCanaryHealth", "KitapSec canary health evidence");
+  contains(readiness, "kitapSecGeneralCanaryShadowBookCount", "KitapSec shadow book count");
+  contains(
+    readiness,
+    "kitapSecGeneralCanaryShadowWouldReach3IndependentCount",
+    "KitapSec projected independent threshold evidence",
+  );
+  contains(readiness, "kitapSecGeneralCanaryShadowPairOverlap", "KitapSec pair-overlap evidence");
+  contains(readiness, "kitapSecGeneralCanaryShadowSamples", "KitapSec shadow overlap samples");
+  contains(readiness, 'sourceCode !== "kitapsec"', "shadow baseline excludes KitapSec");
+  contains(readiness, '"kitapsec",', "shadow projection adds KitapSec once");
+
+  contains(route, "readiness.kitapSecGeneralCanaryHealth", "readiness API exposes KitapSec canary health");
+  contains(
+    route,
+    "readiness.kitapSecGeneralCanaryShadowWouldReach3IndependentCount",
+    "readiness API exposes KitapSec independent projection",
+  );
+  contains(
+    workflow,
+    '"kitapSecGeneralCanaryHealth": readiness.get("kitapSecGeneralCanaryHealth")',
+    "passive observer prints KitapSec canary health",
+  );
+  contains(
+    workflow,
+    '"kitapSecGeneralCanaryShadowWouldReach3IndependentCount": readiness.get("kitapSecGeneralCanaryShadowWouldReach3IndependentCount")',
+    "passive observer prints KitapSec independent projection",
+  );
+
+  contains(lists, 'code: "kitapsec-general-live-canary"', "KitapSec general shadow canary list");
+  contains(lists, 'code: "kitapsec-general-live"', "KitapSec general voter registry");
+  contains(
+    lists,
+    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    "KitapSec general voter remains disabled",
+  );
+});
+
+
 test("Book Index admin reflects independent-operator voting", () => {
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
 

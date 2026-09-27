@@ -1077,8 +1077,11 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   contains(adapter, 'id=["\']Urun-([0-9]+)["\']', "stable product-id scope");
   contains(adapter, '\\bNo\\b', "native rank field");
   contains(adapter, '\\bUrunAdi\\b', "canonical title field");
-  contains(adapter, 'itemprop=["\']author["\']', "schema.org author field");
-  contains(adapter, 'itemprop=["\']publisher["\']', "schema.org publisher field");
+  contains(adapter, '\\bKisiAdi\\b', "optional author field scope");
+  contains(adapter, '\\bFirmaAdi\\b', "optional publisher field scope");
+  contains(adapter, 'attributeValue(anchor[0], "title")', "full author/publisher value prefers anchor title");
+  notContains(adapter, "BOOK_INDEX_KITAPSTORE_AUTHOR_MISSING", "missing author must not reject a valid ranked product");
+  notContains(adapter, "BOOK_INDEX_KITAPSTORE_PUBLISHER_MISSING", "missing publisher must not reject a valid ranked product");
   contains(adapter, 'itemPropTag(card, "meta", "serialNumber")', "product-id cross-check");
   contains(adapter, 'itemPropTag(html, "span", "isbn")', "detail ISBN parser");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_PAGE_SIZE_MISMATCH", "page-size fail-closed gate");

@@ -1,0 +1,56 @@
+name: Book Index KitapStore depth continuation probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapstore-depth-01ak-aj
+    paths:
+      - ".github/workflows/book-index-kitapstore-depth-continuation-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Observe KitapStore ranks 51 through 100
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Fetch public bestseller pages three and four without collecting
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+
+          for page in 3 4; do
+            body="$tmpdir/page-$page.html"
+            url="https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=$page"
+            code="$(curl --silent --show-error --compressed --max-time 20               --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'               --header 'Accept: text/html,application/xhtml+xml'               --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5'               --output "$body" --write-out '%{http_code}' "$url" || true)"
+            printf 'page=%s http_status=%s body_bytes=%s\n' "$page" "$code" "$(wc -c < "$body" | tr -d ' ')"
+
+            if [ "$code" = "200" ]; then
+              node - "$body" "$page" <<'NODE'
+          const fs = require("node:fs");
+          const path = process.argv[2];
+          const page = Number(process.argv[3]);
+          const html = fs.readFileSync(path, "utf8");
+          const text = html
+            .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, " ")
+            .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, " ")
+            .replace(/<[^>]+>/gu, " ")
+            .replace(/&nbsp;/giu, " ")
+            .replace(/\s+/gu, " ");
+
+          const start = page === 3 ? 51 : 76;
+          const end = page === 3 ? 75 : 100;
+          const present = [];
+          for (let rank=start; rank<=end; rank+=1) {
+            if (new RegExp(`(?:^|\\s)${rank}(?:\\s|$)`, "u").test(text)) present.push(rank);
+          }
+          const total100 = /TOPLAM\s*100\s*ADET\s*SONUÇ/iu.test(text);
+          console.log(`page=${page} total_100_marker=${total100}`);
+          console.log(`page=${page} expected_rank_markers=${present.join(",") || "NONE"}`);
+          NODE
+            fi
+          done

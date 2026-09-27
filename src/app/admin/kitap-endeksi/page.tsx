@@ -546,6 +546,89 @@ export default async function BookIndexAdminPage({
           <table className="admin-data-table">
             <thead>
               <tr>
+                <th>Yazar bilgisi eksik unmatched</th>
+                <th>Kayıt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {readiness.unmatchedMissingAuthorBooksBySource.length ? (
+                readiness.unmatchedMissingAuthorBooksBySource.map((source) => (
+                  <tr key={source.sourceCode}>
+                    <td><strong>{source.sourceCode}</strong></td>
+                    <td>{source.count.toLocaleString("tr-TR")}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2}>Yazar bilgisi eksik unmatched kayıt yok.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          {readiness.unmatchedMissingAuthorSamples.length ? (
+            <small>
+              Son örnekler:{" "}
+              {readiness.unmatchedMissingAuthorSamples
+                .slice(0, 8)
+                .map(
+                  (sample) =>
+                    `${sample.sourceCode} · ${sample.title} · ${sample.sourceKey}`,
+                )
+                .join(" | ")}
+            </small>
+          ) : null}
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
+                <th>Belirsiz master adayı</th>
+                <th>Kitap</th>
+                <th>Master candidate</th>
+                <th>Source key</th>
+                <th>İlk / son görülme</th>
+              </tr>
+            </thead>
+            <tbody>
+              {readiness.unmatchedAmbiguousIdentitySamples.length ? (
+                readiness.unmatchedAmbiguousIdentitySamples.map((sample) => (
+                  <tr
+                    key={`${sample.sourceCode}:${sample.sourceKey}:${sample.normalizedTitle}`}
+                  >
+                    <td><strong>{sample.sourceCode}</strong></td>
+                    <td>
+                      <strong>{sample.title}</strong>
+                      <small>{sample.authorName}</small>
+                    </td>
+                    <td>{sample.masterCandidateCount.toLocaleString("tr-TR")}</td>
+                    <td>{sample.sourceKey}</td>
+                    <td>
+                      {formatDateTime(sample.firstSeenAt)} /{" "}
+                      {formatDateTime(sample.lastSeenAt)}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5}>
+                    ISBN olmadan aynı title+yazar için birden fazla master candidate bekleyen kayıt yok.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <small>
+            Belirsiz unmatched identity grubu:{" "}
+            {readiness.unmatchedAmbiguousIdentityGroupCount.toLocaleString("tr-TR")}.
+            Bu tablo yalnız tanı amaçlıdır; matching davranışını değiştirmez.
+          </small>
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
                 <th>Olası sourceKey churn</th>
                 <th>Kitap kimliği</th>
                 <th>Dış kayıt</th>

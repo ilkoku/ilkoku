@@ -243,13 +243,13 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     categoryKey: "general",
     period: "live",
     sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",
-    maxRank: null,
+    maxRank: 50,
     includeInComposite: false,
-    collectionEveryMinutes: null,
-    publiclyVisible: false,
-    enabled: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: true,
+    enabled: true,
   },
-  // Source-only qualification canary. It collects native history but never votes.
+  // Historical qualification canary retained for audit; live source-only collection now uses pandora-tr-live.
   {
     code: "pandora-tr-live-canary",
     sourceCode: "pandora",
@@ -259,9 +259,9 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",
     maxRank: 50,
     includeInComposite: false,
-    collectionEveryMinutes: 360,
+    collectionEveryMinutes: null,
     publiclyVisible: false,
-    enabled: true,
+    enabled: false,
   },
   {
     code: "kitapambari-tr-live",

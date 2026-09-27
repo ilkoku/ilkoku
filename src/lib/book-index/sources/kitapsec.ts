@@ -7,8 +7,20 @@ import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "kitapsec";
 const SOURCE_ORIGIN = "https://www.kitapsec.com";
-const MAX_BOOKS = 48;
-const MIN_EXPECTED_BOOKS = 20;
+const CATEGORY_MAX_BOOKS = 48;
+const GENERAL_MAX_BOOKS = 56;
+const CATEGORY_MIN_EXPECTED_BOOKS = 20;
+const GENERAL_MIN_EXPECTED_BOOKS = 40;
+
+const CATEGORY_LIST_CODES = new Set([
+  "kitapsec-edebiyat-live",
+  "kitapsec-cocuk-genclik-live",
+]);
+
+const GENERAL_LIST_CODES = new Set([
+  "kitapsec-general-live",
+  "kitapsec-general-live-canary",
+]);
 
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
@@ -27,12 +39,23 @@ function priceToMinorUnits(value: string) {
   return BigInt(whole) * BigInt(100) + BigInt((fraction + "00").slice(0, 2));
 }
 
-export function parseKitapSecBestsellers(
+function parseKitapSecRankedList(
   html: string,
+  {
+    maxBooks,
+    minExpectedBooks,
+    requireItemListScope,
+  }: {
+    maxBooks: number;
+    minExpectedBooks: number;
+    requireItemListScope: boolean;
+  },
 ): BookIndexCollectionResult {
-  const listSection = html.match(
-    /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_ContentUrunList\b[^"']*\burunListeleDiv\b[^"']*["'])(?=[^>]*\bitemtype=["']https:\/\/schema\.org\/ItemList["'])[^>]*>([\s\S]*?)<\/table>/iu,
-  )?.[1];
+  const listPattern = requireItemListScope
+    ? /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_ContentUrunList\b[^"']*\burunListeleDiv\b[^"']*["'])(?=[^>]*\bitemtype=["']https:\/\/schema\.org\/ItemList["'])[^>]*>([\s\S]*?)<\/table>/iu
+    : /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_ContentUrunList\b[^"']*\burunListeleDiv\b[^"']*["'])[^>]*>([\s\S]*?)<\/table>/iu;
+
+  const listSection = html.match(listPattern)?.[1];
 
   if (!listSection) {
     throw new Error("BOOK_INDEX_KITAPSEC_LIST_NOT_FOUND");
@@ -99,9 +122,9 @@ export function parseKitapSecBestsellers(
       };
     })
     .sort((a, b) => a.rank - b.rank)
-    .slice(0, MAX_BOOKS);
+    .slice(0, maxBooks);
 
-  if (books.length < MIN_EXPECTED_BOOKS) {
+  if (books.length < minExpectedBooks) {
     throw new Error("BOOK_INDEX_KITAPSEC_RESULT_TOO_SMALL");
   }
 
@@ -116,6 +139,26 @@ export function parseKitapSecBestsellers(
   }
 
   return { books };
+}
+
+export function parseKitapSecBestsellers(
+  html: string,
+): BookIndexCollectionResult {
+  return parseKitapSecRankedList(html, {
+    maxBooks: CATEGORY_MAX_BOOKS,
+    minExpectedBooks: CATEGORY_MIN_EXPECTED_BOOKS,
+    requireItemListScope: true,
+  });
+}
+
+export function parseKitapSecGeneralBestsellers(
+  html: string,
+): BookIndexCollectionResult {
+  return parseKitapSecRankedList(html, {
+    maxBooks: GENERAL_MAX_BOOKS,
+    minExpectedBooks: GENERAL_MIN_EXPECTED_BOOKS,
+    requireItemListScope: false,
+  });
 }
 
 export const kitapSecBookIndexAdapter: BookIndexSourceAdapter = {
@@ -138,6 +181,15 @@ export const kitapSecBookIndexAdapter: BookIndexSourceAdapter = {
 
     const bytes = await response.arrayBuffer();
     const html = new TextDecoder("windows-1254").decode(bytes);
-    return parseKitapSecBestsellers(html);
+
+    if (GENERAL_LIST_CODES.has(context.listCode)) {
+      return parseKitapSecGeneralBestsellers(html);
+    }
+
+    if (CATEGORY_LIST_CODES.has(context.listCode)) {
+      return parseKitapSecBestsellers(html);
+    }
+
+    throw new Error("BOOK_INDEX_KITAPSEC_LIST_NOT_SUPPORTED");
   },
 };

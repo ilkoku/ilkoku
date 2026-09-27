@@ -1071,6 +1071,8 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   contains(adapter, "\\bIslemliL\\b", "main bestseller list scope");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_BESTSELLER_HEADING_MISSING", "missing heading fail-closed gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_BESTSELLER_LIST_MISSING", "missing list fail-closed gate");
+  contains(adapter, "listBody.slice(start, end)", "cards are sliced from the scoped bestseller list");
+  notContains(adapter, "html.slice(start, end)", "card offsets must not be applied to the full document");
   contains(adapter, 'itemtype=["\']http:\\/\\/schema\\.org\\/Book["\']', "schema.org Book card scope");
   contains(adapter, 'id=["\']Urun-([0-9]+)["\']', "stable product-id scope");
   contains(adapter, '\\bNo\\b', "native rank field");

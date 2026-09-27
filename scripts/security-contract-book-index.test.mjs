@@ -1045,7 +1045,7 @@ test("Kitap Ambarı candidate stays research-only until ordering and operator-in
 });
 
 
-test("KitapStore candidate has a bounded fail-closed parser but stays research-only", () => {
+test("KitapStore canary collects shadow evidence while voter activation stays off", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const adapter = source("src/lib/book-index/sources/kitapstore.ts");
@@ -1061,7 +1061,13 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   contains(
     lists,
     'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
-    "KitapStore list stays disabled and outside composite",
+    "KitapStore voter list stays disabled and outside composite",
+  );
+  contains(lists, 'code: "kitapstore-tr-live-canary"', "KitapStore canary list");
+  contains(
+    lists,
+    'title: "KitapStore · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    enabled: true',
+    "KitapStore canary is schedulable but outside composite",
   );
 
   contains(adapter, 'const PAGE_COUNT = 4;', "four-page Top 100 bound");
@@ -1090,6 +1096,8 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL", "duplicate URL gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_RANK", "duplicate rank gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_RANK_GAP", "cross-page rank-gap gate");
+  contains(adapter, 'context.listCode !== "kitapstore-tr-live"', "disabled voter list remains an explicit adapter target");
+  contains(adapter, 'context.listCode !== "kitapstore-tr-live-canary"', "canary list is the only additional adapter target");
   contains(adapter, 'const MAX_IDENTITY_ENRICHMENTS = 8;', "bounded missing-author enrichment cap");
   contains(adapter, 'const DETAIL_CONCURRENCY = 3;', "bounded detail concurrency");
   contains(adapter, '.filter(({ book }) => !book.authorName)', "only missing-author books are detail-enriched");
@@ -1114,9 +1122,14 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   contains(adapter, '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"', "transparent user agent");
   contains(adapter, "AbortSignal.timeout(20_000)", "bounded request timeout");
 
-  notContains(
+  contains(
     collector,
-    "kitapStoreBookIndexResearchAdapter",
-    "research parser is not production-registered",
+    'import { kitapStoreBookIndexResearchAdapter } from "./sources/kitapstore";',
+    "KitapStore canary adapter import",
+  );
+  contains(
+    collector,
+    "[kitapStoreBookIndexResearchAdapter.sourceCode, kitapStoreBookIndexResearchAdapter]",
+    "KitapStore adapter registered for canary collection",
   );
 });

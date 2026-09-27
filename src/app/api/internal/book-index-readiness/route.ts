@@ -113,6 +113,10 @@ export async function GET(request: NextRequest) {
           readiness.unmatchedDuplicateIdentityGroupsBySource,
         unmatchedMissingAuthorBooksBySource:
           readiness.unmatchedMissingAuthorBooksBySource,
+        unmatchedMissingAuthorWithIsbnBooksBySource:
+          readiness.unmatchedMissingAuthorWithIsbnBooksBySource,
+        unmatchedMissingAuthorWithoutIsbnBooksBySource:
+          readiness.unmatchedMissingAuthorWithoutIsbnBooksBySource,
         unmatchedAmbiguousIdentityGroupsBySource:
           readiness.unmatchedAmbiguousIdentityGroupsBySource,
       },

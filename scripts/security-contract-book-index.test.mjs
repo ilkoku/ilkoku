@@ -693,7 +693,7 @@ test("composite collectors use deeper native bestseller pagination without chang
   contains(inkilap, "for (let page = 1; page <= 5; page += 1)", "Inkilap first five native pages");
   contains(inkilap, '/sayfa/${page}', "Inkilap native pagination path");
   contains(inkilap, '(page - 1) * MAX_BOOKS', "Inkilap contiguous native rank offsets");
-  contains(kitapsepeti, 'const MAX_BOOKS = 60;', "KitapSepeti accepts the full current native page within a bounded ceiling");
+  contains(kitapsepeti, 'const MAX_BOOKS = 100;', "KitapSepeti accepts the verified native Top 100 within a bounded ceiling");
 });
 
 

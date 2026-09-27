@@ -1018,3 +1018,28 @@ test("Pandora bestseller candidate stays research-only until a direct collection
     "Pandora has no production collector before direct-fetch proof",
   );
 });
+
+
+test("Kitap Ambarı candidate stays research-only until ordering and operator-independence are proven", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(sources, 'code: "kitapambari"', "Kitap Ambarı research source");
+  contains(
+    sources,
+    'name: "Kitap Ambarı",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapambari.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "kitapambari",\n    operatorName: "Ötüken Neşriyat A.Ş.",\n    phase: "phase_2",\n    collectionState: "researching"',
+    "Kitap Ambarı remains research-only",
+  );
+  contains(lists, 'code: "kitapambari-tr-live"', "Kitap Ambarı research list");
+  contains(
+    lists,
+    'sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    "Kitap Ambarı list stays disabled and outside composite",
+  );
+  notContains(
+    collector,
+    "kitapambariBookIndexAdapter",
+    "Kitap Ambarı has no production collector before rank/independence proof",
+  );
+});

@@ -1,0 +1,55 @@
+name: Book Index KitapStore DOM probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapstore-dom-01ak-ak
+    paths:
+      - ".github/workflows/book-index-kitapstore-dom-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Observe KitapStore bestseller card markup
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Fetch first public bestseller page without collecting
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          trap 'rm -f "$body"' EXIT
+
+          code="$(curl --silent --show-error --compressed --max-time 20             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: text/html,application/xhtml+xml'             --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5'             --output "$body" --write-out '%{http_code}'             'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1' || true)"
+
+          printf 'http_status=%s\n' "$code"
+          test "$code" = "200"
+
+          node - "$body" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "utf8");
+
+          const productNeedle = "/urun/678647/";
+          const productIndex = html.indexOf(productNeedle);
+          if (productIndex < 0) throw new Error("verified first product URL not found");
+
+          const start = Math.max(0, productIndex - 1800);
+          const end = Math.min(html.length, productIndex + 3200);
+          const snippet = html.slice(start, end)
+            .replace(/\r?\n/g, " ")
+            .replace(/\s+/g, " ")
+            .replace(/<!--([\s\S]*?)-->/g, "");
+          console.log("FIRST_PRODUCT_SNIPPET_START");
+          console.log(snippet);
+          console.log("FIRST_PRODUCT_SNIPPET_END");
+
+          const hrefs = [...html.matchAll(/href=["']([^"']*\/urun\/([0-9]+)\/[^"']+)["']/giu)]
+            .slice(0, 80)
+            .map((m) => ({ href: m[1], id: m[2], index: m.index }));
+          const afterHeading = html.search(/ÇOK\s*SATANLAR/iu);
+          console.log("first_bestseller_heading_index=" + afterHeading);
+          console.log("first_product_href_records=" + JSON.stringify(hrefs.filter((h) => h.index > afterHeading).slice(0, 12)));
+          NODE

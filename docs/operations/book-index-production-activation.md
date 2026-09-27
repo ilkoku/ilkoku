@@ -1,6 +1,6 @@
 # Book Index production activation checklist
 
-Status: **SCHEDULE CONFIGURED / DELIVERY RECOVERY / SNAPSHOT ACCUMULATION / PUBLICATION GATED**
+Status: **SCHEDULE CONFIGURED / DELIVERY RECOVERY OBSERVATION / SNAPSHOT ACCUMULATION / PUBLICATION GATED**
 
 Bu belge Kitap Endeksi kodu hazırlandıktan sonra production aktivasyonunun
 hangi sırayla yapılacağını tanımlar. Adımların sırası bilinçlidir; sonraki
@@ -55,18 +55,30 @@ GitHub Actions üzerinde iki schedule penceresi tanımlıdır:
 Bu iki pencere aynı due-aware scheduler'ı çağırır ve kaynak cadence'ini
 bypass etmez. Ancak GitHub scheduled-event teslimatı garanti değildir.
 
-27.09.2026 production kanıtında:
+27.09.2026 güncel production kanıtında:
 
-- Book Index doğal scheduler son run'ı **#22 / 06:37:03Z**;
-- CMS publishing scheduler doğal son run'ı **#680 / 06:47:23Z**;
-- daha sonraki beklenen pencerelerde iki scheduler'da da yeni doğal event
-  görülmemiştir;
-- readiness overdue listeler göstermeye devam etmiştir;
-- `BOOK_INDEX_SCHEDULER_SECRET` production'da configured değildir.
+- önceki scheduled-event delivery boşluğundan sonra Book Index doğal
+  scheduler **#23** (`2026-09-27T12:27:27Z`) ve **#24**
+  (`2026-09-27T13:02:09Z`) `schedule` event ile SUCCESS tamamlanmıştır;
+- #23 due olan 12 listeyi işlemiş, 7 `success`, 5 `no_change`, 0
+  `failed` sonucu üretmiştir;
+- #24 due-aware kontrolünde `due=0` görmüş ve yapay observation/history
+  üretmeden tüm listeleri güvenli biçimde `not_due` bırakmıştır;
+- CMS publishing scheduler da **#681** ile doğal `schedule` teslimatı
+  almıştır;
+- cross-trigger database lease production scheduler çağrısında başarıyla
+  acquire edilmiştir;
+- historical idefix metadata recovery tamamlandıktan sonra readiness
+  historical coverage **673/683 = %98,5**, latest composite coverage
+  **414/416 = %99,5** olarak doğrulanmıştır;
+- `BOOK_INDEX_SCHEDULER_SECRET` için bağımsız external trigger hâlâ
+  production kanıtıyla aktif sayılmaz.
 
-Bu nedenle scheduler kodu/canary doğrulanmış olsa da mevcut operasyon durumu
-**delivery recovery** olarak izlenir. Manuel scheduler çalıştırmaları history
-üretmek veya delivery boşluğunu gizlemek için kullanılmaz.
+Dolayısıyla önceki tam teslimat boşluğu kırılmıştır; ancak birkaç doğal pencere
+daha gözlenmeden GitHub scheduled-event delivery için kalıcı olarak "healthy"
+hükmü verilmez. Operasyon durumu **delivery recovery observation** olarak
+izlenir. Manuel scheduler çalıştırmaları history üretmek veya delivery
+boşluğunu gizlemek için kullanılmaz.
 
 Workflow concurrency:
 
@@ -272,7 +284,7 @@ Kaynak erişim problemi:
 
 Sıra:
 
-**GitHub OIDC ✅ → Canary ✅ → Schedule Configured ⚠️ → Delivery Recovery →
+**GitHub OIDC ✅ → Canary ✅ → Schedule Configured ⚠️ → Delivery Recovery Observation →
 Snapshot Birikimi → Matching → Readiness Kanıtı → SEO Policy → Gate Dry-run →
 Publish → Sitemap/Navigation → GSC**
 

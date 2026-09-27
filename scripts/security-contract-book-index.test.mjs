@@ -888,7 +888,7 @@ test("KitaplarSepette qualification evidence remains observable after voter acti
 });
 
 
-test("KitapSec general shadow canary qualification evidence is observable without voting", () => {
+test("KitapSec general qualification evidence remains observable after source-only activation", () => {
   const readiness = source("src/lib/book-index/readiness.ts");
   const route = source("src/app/api/internal/book-index-readiness/route.ts");
   const workflow = source(".github/workflows/book-index-readiness.yml");
@@ -923,12 +923,17 @@ test("KitapSec general shadow canary qualification evidence is observable withou
     "passive observer prints KitapSec independent projection",
   );
 
-  contains(lists, 'code: "kitapsec-general-live-canary"', "KitapSec general shadow canary list");
-  contains(lists, 'code: "kitapsec-general-live"', "KitapSec general voter registry");
+  contains(lists, 'code: "kitapsec-general-live-canary"', "KitapSec general retired canary list");
+  contains(lists, 'code: "kitapsec-general-live"', "KitapSec general source-only live registry");
   contains(
     lists,
-    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "KitapSec general voter remains disabled",
+    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
+    "KitapSec general source-only list is public-eligible without voting",
+  );
+  contains(
+    lists,
+    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "qualified KitapSec general canary is retired but retained privately",
   );
 });
 

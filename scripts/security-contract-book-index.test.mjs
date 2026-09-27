@@ -788,3 +788,41 @@ test("Book Index admin reflects independent-operator voting", () => {
   contains(admin, "Saatlik scheduler aktiftir", "scheduler status copy");
   notContains(admin, "Otomatik scheduler bu aşamada kapalıdır", "stale scheduler-off copy removed");
 });
+
+
+test("Book Index readiness diagnoses missing authors among unmatched records without mutating matching", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const admin = source("src/app/admin/kitap-endeksi/page.tsx");
+  const matching = source("src/lib/book-index/matching.ts");
+
+  contains(
+    readiness,
+    "unmatchedMissingAuthorBooksBySource",
+    "source-level unmatched missing-author count",
+  );
+  contains(
+    readiness,
+    "unmatchedMissingAuthorSamples",
+    "bounded unmatched missing-author samples",
+  );
+  contains(
+    readiness,
+    "normalizedAuthor: null",
+    "missing-author diagnostic is scoped to normalized author absence",
+  );
+  contains(
+    readiness,
+    'matchStatus: "unmatched"',
+    "missing-author diagnostic remains unmatched-only",
+  );
+  contains(
+    admin,
+    "Yazar bilgisi eksik unmatched",
+    "admin exposes missing-author evidence",
+  );
+  notContains(
+    matching,
+    "unmatchedMissingAuthor",
+    "diagnostic does not alter matching behavior",
+  );
+});

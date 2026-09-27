@@ -6,6 +6,7 @@ on:
       - research/book-index-kitapstore-parser-live-01ak-ak
     paths:
       - ".github/workflows/book-index-kitapstore-parser-live-probe.yml"
+      - "src/lib/book-index/sources/kitapstore.ts"
 
 permissions:
   contents: read

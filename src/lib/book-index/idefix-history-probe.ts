@@ -7,7 +7,7 @@ import { parseIdefixProductDetails } from "./sources/idefix";
 const SOURCE_CODE = "idefix";
 const MAX_CANDIDATES = 100;
 const DETAIL_CONCURRENCY = 6;
-const SAMPLE_LIMIT = 30;
+const SAMPLE_LIMIT = 100;
 
 type Candidate = {
   sourceKey: string;

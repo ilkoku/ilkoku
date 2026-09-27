@@ -202,6 +202,11 @@ test("temporary idefix schema probe is OIDC-protected and collection-free", () =
     "https://ilkoku.com/api/internal/book-index-idefix-schema",
     "idefix production schema endpoint",
   );
+  contains(
+    workflow,
+    "printf '%s\\\\n' \"$response\" | python3 -m json.tool",
+    "idefix probe JSON print remains one shell line",
+  );
   notContains(
     workflow,
     "api/internal/book-index-scheduler",

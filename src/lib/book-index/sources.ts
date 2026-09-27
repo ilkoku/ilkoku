@@ -125,6 +125,8 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     countryCode: "TR",
     baseUrl: "https://www.kitapsec.com",
     includeInTurkeyIndex: true,
+    independenceGroup: "kitapsec",
+    operatorName: "KİTAPSEÇ YAYINCILIK ELEKTRONİK NAKLİYE MAKİNA İNŞAAT TAAHHÜT SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
     phase: "phase_2",
     collectionState: "ready",
   },

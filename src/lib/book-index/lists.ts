@@ -230,6 +230,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     collectionEveryMinutes: null,
     enabled: false,
   },
+  // Shadow-only qualification list. It collects natural history but never votes.
   {
     code: "kitapstore-tr-live-canary",
     sourceCode: "kitapstore",

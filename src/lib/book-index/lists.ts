@@ -219,6 +219,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: false,
   },
   {
+    code: "kitapstore-tr-live",
+    sourceCode: "kitapstore",
+    title: "KitapStore · Çok Satanlar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",
+    maxRank: null,
+    includeInComposite: false,
+    collectionEveryMinutes: null,
+    enabled: false,
+  },
+  {
     code: "amazon-tr-live",
     sourceCode: "amazon-tr",
     title: "Amazon Türkiye · Kitap Çok Satanlar",

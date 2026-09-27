@@ -6,8 +6,8 @@ import type {
 
 const SOURCE_CODE = "bkm";
 const ENDPOINT = "https://bkm-best.wawlabs.com/top_sellers";
-const MAX_BOOKS = 50;
-const MIN_EXPECTED_BOOKS = 50;
+const DEFAULT_MAX_BOOKS = 50;
+const WEEKLY_MAX_BOOKS = 100;
 
 type BkmSpan = "week" | "month" | "year";
 
@@ -59,7 +59,10 @@ function priceToMinorUnits(value: unknown) {
   return BigInt(whole) * BigInt(100) + BigInt((fraction + "00").slice(0, 2));
 }
 
-function parseBkmResponse(payload: unknown): BookIndexCollectionResult {
+function parseBkmResponse(
+  payload: unknown,
+  maxBooks = DEFAULT_MAX_BOOKS,
+): BookIndexCollectionResult {
   if (!payload || typeof payload !== "object") {
     throw new Error("BOOK_INDEX_BKM_INVALID_RESPONSE");
   }
@@ -69,8 +72,8 @@ function parseBkmResponse(payload: unknown): BookIndexCollectionResult {
     throw new Error("BOOK_INDEX_BKM_RESULTS_NOT_FOUND");
   }
 
-  const sourceItems = response.res.slice(0, MAX_BOOKS);
-  if (sourceItems.length < MIN_EXPECTED_BOOKS) {
+  const sourceItems = response.res.slice(0, maxBooks);
+  if (sourceItems.length < maxBooks) {
     throw new Error("BOOK_INDEX_BKM_RESULT_TOO_SMALL");
   }
 
@@ -141,7 +144,12 @@ export const bkmBookIndexAdapter: BookIndexSourceAdapter = {
       throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
     }
 
-    return parseBkmResponse(await response.json());
+    return parseBkmResponse(
+      await response.json(),
+      context.listCode === "bkm-tr-weekly"
+        ? WEEKLY_MAX_BOOKS
+        : DEFAULT_MAX_BOOKS,
+    );
   },
 };
 

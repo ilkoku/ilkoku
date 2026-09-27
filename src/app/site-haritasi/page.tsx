@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SITE_MAP_PAGES, type SiteMapPage } from "@/lib/cms-header-navigation";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
-import { getBookIndexPublishedSourcePages } from "@/lib/book-index/source-pages";
+import {
+  getBookIndexPublicPageContext,
+  getBookIndexPublicSourcePageContext,
+} from "@/lib/book-index/public-access";
 import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -110,18 +112,25 @@ async function getPublicWorkLinks(): Promise<PublicWorkLink[]> {
 }
 
 export default async function PublicSiteMapPage() {
-  const [cmsPages, publicWorks, bookIndexContext] = await Promise.all([
+  const [cmsPages, publicWorks, bookIndexContext, bookIndexSourceContext] = await Promise.all([
     loadPublishedCmsSiteMapPages(),
     getPublicWorkLinks(),
     getBookIndexPublicPageContext(30).catch(() => null),
+    getBookIndexPublicSourcePageContext(100).catch(() => null),
   ]);
 
   const bookIndexPublished = Boolean(bookIndexContext);
-  const bookIndexSourceLinks = bookIndexContext
-    ? getBookIndexPublishedSourcePages(bookIndexContext.model).map((sourcePage) => ({
-        href: `/en-cok-satanlar/kaynak/${sourcePage.slug}`,
-        label: sourcePage.searchTitle,
-      }))
+  const bookIndexSourceLinks = bookIndexSourceContext
+    ? [
+        {
+          href: "/en-cok-satanlar/kaynak",
+          label: "Kaynaklara göre çok satan kitaplar",
+        },
+        ...bookIndexSourceContext.sourcePages.map((sourcePage) => ({
+          href: `/en-cok-satanlar/kaynak/${sourcePage.slug}`,
+          label: sourcePage.searchTitle,
+        })),
+      ]
     : [];
   const codeOwnedPages = SITE_MAP_PAGES.filter(
     (page) =>
@@ -149,7 +158,7 @@ export default async function PublicSiteMapPage() {
   if (bookIndexSourceLinks.length > 0) {
     groups.push({
       id: "book-index:sources",
-      title: "Kitap Endeksi · Kaynak Listeleri",
+      title: "Çok Satanlar · Kaynak Listeleri",
       links: bookIndexSourceLinks,
     });
   }

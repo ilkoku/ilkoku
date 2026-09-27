@@ -303,7 +303,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: false,
   },
-  // Historical qualification canary retained for audit; Turkey composite voting remains off.
+  // Shadow-only qualification list. It collects natural history but never votes.
   {
     code: "kitapstore-tr-live-canary",
     sourceCode: "kitapstore",

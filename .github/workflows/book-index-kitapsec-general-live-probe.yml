@@ -89,11 +89,16 @@ jobs:
             console.log("suspicious_title_count=" + suspiciousBooks.length);
             console.log("suspicious_titles=" + JSON.stringify(suspiciousBooks));
 
+            const expectedRanks = Array.from({ length: 56 }, (_, index) => index + 1)
+              .filter((rank) => rank !== 30);
+            const actualRanks = books.map((book) => book.rank);
+
             if (
-              books.length < 40 ||
-              books.length > 56 ||
+              books.length !== 55 ||
               books[0]?.rank !== 1 ||
-              books.some((book, index) => book.rank !== index + 1)
+              books.at(-1)?.rank !== 56 ||
+              actualRanks.length !== expectedRanks.length ||
+              actualRanks.some((rank, index) => rank !== expectedRanks[index])
             ) {
               throw new Error("KITAPSEC_GENERAL_LIVE_CONTRACT_FAILED");
             }

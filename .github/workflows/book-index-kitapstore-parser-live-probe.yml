@@ -121,6 +121,28 @@ jobs:
             console.log("first_book=" + json(books[0]));
             console.log("last_book=" + json(books.at(-1)));
 
+            const missingAuthors = books
+              .filter((book) => !book.authorName)
+              .map((book) => ({
+                rank: book.rank,
+                sourceKey: book.sourceKey,
+                title: book.title,
+                productUrl: book.productUrl,
+              }));
+            const missingPublishers = books
+              .filter((book) => !book.publisherName)
+              .map((book) => ({
+                rank: book.rank,
+                sourceKey: book.sourceKey,
+                title: book.title,
+                productUrl: book.productUrl,
+              }));
+
+            console.log("missing_author_count=" + missingAuthors.length);
+            console.log("missing_author_books=" + JSON.stringify(missingAuthors));
+            console.log("missing_publisher_count=" + missingPublishers.length);
+            console.log("missing_publisher_books=" + JSON.stringify(missingPublishers));
+
             if (
               books.length !== 100 ||
               books[0]?.rank !== 1 ||

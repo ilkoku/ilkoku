@@ -6,6 +6,7 @@ on:
       - research/book-index-kitapsec-general-live-probe-01ak-al3ah-e1
     paths:
       - ".github/workflows/book-index-kitapsec-general-live-probe.yml"
+      - "src/lib/book-index/sources/kitapsec.ts"
 
 permissions:
   contents: read

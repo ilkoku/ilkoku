@@ -181,6 +181,14 @@ export type BookIndexReadinessSnapshot = {
     sourceCode: string;
     count: number;
   }>;
+  unmatchedMissingAuthorWithIsbnBooksBySource: Array<{
+    sourceCode: string;
+    count: number;
+  }>;
+  unmatchedMissingAuthorWithoutIsbnBooksBySource: Array<{
+    sourceCode: string;
+    count: number;
+  }>;
   unmatchedMissingAuthorSamples: BookIndexUnmatchedMissingAuthorSample[];
   unmatchedAmbiguousIdentityGroupCount: number;
   unmatchedAmbiguousIdentityGroupsBySource: Array<{
@@ -440,6 +448,61 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       (a, b) =>
         b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
     );
+  const unmatchedMissingAuthorWithIsbnGroups = unmatchedMissingAuthorGroups.length
+    ? await prisma.bookIndexExternalBook.groupBy({
+        by: ["sourceId"],
+        where: {
+          matchStatus: "unmatched",
+          normalizedAuthor: null,
+          OR: [
+            { isbn13: { not: null } },
+            { isbn10: { not: null } },
+          ],
+          sourceId: {
+            in: unmatchedMissingAuthorGroups.map((group) => group.sourceId),
+          },
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const missingAuthorWithIsbnCountBySourceId = new Map(
+    unmatchedMissingAuthorWithIsbnGroups.map((group) => [
+      group.sourceId,
+      group._count._all,
+    ] as const),
+  );
+  const unmatchedMissingAuthorWithIsbnBooksBySource =
+    unmatchedMissingAuthorGroups
+      .flatMap((group) => {
+        const count = missingAuthorWithIsbnCountBySourceId.get(group.sourceId) ?? 0;
+        return count
+          ? [{
+              sourceCode: sourceCodeById.get(group.sourceId) ?? group.sourceId,
+              count,
+            }]
+          : [];
+      })
+      .sort(
+        (a, b) =>
+          b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
+      );
+  const unmatchedMissingAuthorWithoutIsbnBooksBySource =
+    unmatchedMissingAuthorGroups
+      .flatMap((group) => {
+        const withIsbnCount =
+          missingAuthorWithIsbnCountBySourceId.get(group.sourceId) ?? 0;
+        const count = group._count._all - withIsbnCount;
+        return count
+          ? [{
+              sourceCode: sourceCodeById.get(group.sourceId) ?? group.sourceId,
+              count,
+            }]
+          : [];
+      })
+      .sort(
+        (a, b) =>
+          b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
+      );
   const unmatchedMissingAuthorRows = unmatchedMissingAuthorGroups.length
     ? await prisma.bookIndexExternalBook.findMany({
         where: {
@@ -1277,6 +1340,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     unmatchedDuplicateIdentityGroupsBySource,
     unmatchedDuplicateIdentitySamples,
     unmatchedMissingAuthorBooksBySource,
+    unmatchedMissingAuthorWithIsbnBooksBySource,
+    unmatchedMissingAuthorWithoutIsbnBooksBySource,
     unmatchedMissingAuthorSamples,
     unmatchedAmbiguousIdentityGroupCount,
     unmatchedAmbiguousIdentityGroupsBySource,

@@ -111,10 +111,15 @@ jobs:
             console.log("book_count=" + books.length);
             console.log("first_rank=" + books[0]?.rank);
             console.log("last_rank=" + books.at(-1)?.rank);
+            const json = (value) =>
+              JSON.stringify(value, (_key, item) =>
+                typeof item === "bigint" ? item.toString() : item,
+              );
+
             console.log("unique_source_keys=" + keys.size);
             console.log("unique_product_urls=" + urls.size);
-            console.log("first_book=" + JSON.stringify(books[0]));
-            console.log("last_book=" + JSON.stringify(books.at(-1)));
+            console.log("first_book=" + json(books[0]));
+            console.log("last_book=" + json(books.at(-1)));
 
             if (
               books.length !== 100 ||

@@ -181,7 +181,7 @@ export function BookIndexOverviewView({
         <h2 id="book-index-methodology">Türkiye&apos;de en çok satan kitaplar nasıl belirleniyor?</h2>
         <p>
           İlkOku Kitap Endeksi, farklı satış kaynaklarındaki sıralamaları
-          normalize eder. Aynı bağımsız işletmeci grubu bir kitaba yalnız bir
+          normalize eder; aynı bağımsız işletmeci grubu bir kitaba yalnız bir
           oy verir ve Türkiye Endeksi&apos;ne girebilmek için kitap en az üç
           bağımsız işletmeci grubunda görünmelidir.
         </p>

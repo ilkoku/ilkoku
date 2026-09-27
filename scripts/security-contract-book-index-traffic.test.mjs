@@ -182,23 +182,33 @@ test("Book Index uses a dedicated social preview for result-sharing CTR", () => 
 });
 
 
-test("Book Index gains a gated site-wide footer discovery link after publication", () => {
+test("Book Index footer discovery follows aggregate or source-only publication", () => {
   const footer = source("src/components/content/PublicTrustFooter.tsx");
 
   contains(
     footer,
     "getBookIndexPublicPageContext(10).catch(() => null)",
-    "footer uses the same fail-closed public gate",
+    "footer checks aggregate publication",
   );
   contains(
     footer,
-    '{ href: "/en-cok-satanlar", label: "En Çok Satanlar" }',
-    "footer Book Index discovery link",
+    "getBookIndexPublicSourcePageContext(100).catch(() => null)",
+    "footer checks source-only publication",
   );
   contains(
     footer,
-    "const platformLinks = bookIndexContext",
-    "footer link only appears when publication is actually allowed",
+    '? "/en-cok-satanlar"',
+    "aggregate publication keeps the aggregate href",
+  );
+  contains(
+    footer,
+    '? "/en-cok-satanlar/kaynak"',
+    "source-only publication falls back to the source hub",
+  );
+  contains(
+    footer,
+    'label: "En Çok Satanlar"',
+    "footer keeps the discovery label",
   );
 });
 
@@ -355,23 +365,28 @@ test("Book Index insight search-intent pages publish only with real evidence", (
 });
 
 
-test("homepage footer exposes Book Index only after the shared public gate passes", () => {
+test("homepage footer resolves aggregate or source-only Book Index destination", () => {
   const homepage = source("src/features/homepage/HomepageExperience.tsx");
   const footer = source("src/features/homepage/live-footer.tsx");
 
   contains(
     homepage,
     "getBookIndexPublicPageContext(10).catch(() => null)",
-    "homepage uses the shared fail-closed Book Index gate",
+    "homepage checks aggregate Book Index publication",
   );
   contains(
     homepage,
-    "bookIndexPublished={Boolean(bookIndexContext)}",
-    "homepage passes gate state to footer",
+    "getBookIndexPublicSourcePageContext(100).catch(() => null)",
+    "homepage checks source-only Book Index publication",
+  );
+  contains(
+    homepage,
+    'bookIndexHref={',
+    "homepage resolves the published Book Index destination",
   );
   contains(
     footer,
-    'bookIndexPublished ? <Link href="/en-cok-satanlar">En Çok Satanlar</Link> : null',
-    "homepage footer Book Index internal link is gated",
+    'bookIndexHref ? <Link href={bookIndexHref}>En Çok Satanlar</Link> : null',
+    "homepage footer renders only a resolved live Book Index destination",
   );
 });

@@ -1,10 +1,17 @@
 # Book Index production activation checklist
 
-Status: **SCHEDULE HEALTHY / SNAPSHOT ACCUMULATION / SOURCE PAGES PHASE 1 APPROVED / AGGREGATE PUBLICATION GATED**
+Status: **SCHEDULE CONFIGURED / DELIVERY RECOVERY OBSERVATION / SNAPSHOT ACCUMULATION / PUBLICATION GATED**
 
 Bu belge Kitap Endeksi kodu hazırlandıktan sonra production aktivasyonunun
 hangi sırayla yapılacağını tanımlar. Adımların sırası bilinçlidir; sonraki
 kapıya önceki kapı doğrulanmadan geçilmez.
+
+### Public ürün kapsamı
+
+Public hedef **tek aggregate "En Çok Satanlar" deneyimidir**. Kaynak siteler veri toplama,
+matching ve composite hesap için kullanılır; her mağaza için ayrı public sayfa, URL,
+SEO landing page veya navigation yüzeyi oluşturulmaz. Böyle bir genişleme ancak ayrıca
+açık ürün kararıyla yapılabilir.
 
 ## 1. Scheduler authentication
 
@@ -165,43 +172,6 @@ Public açılımdan önce doğrulanması gereken ürün kuralları:
 Admin Türkiye Endeksi önizlemesi gerçek production snapshot'larıyla kontrol
 edilir.
 
-## 6A. Faz 1 kaynak sayfaları — kullanıcı onayıyla kademeli yayın
-
-27.09.2026 tarihli kullanıcı kararıyla hazır kaynak sayfalarının Türkiye bileşik
-endeksinden bağımsız olarak kademeli yayınlanması onaylandı.
-
-Kaynak sayfası publication kontratı:
-
-- liste `enabled=true` olmalı;
-- liste `publiclyVisible=true` olmalı;
-- production veritabanında aktif olmalı;
-- en az bir gerçek başarılı/no-change snapshot bulunmalı;
-- snapshot en az bir sıralı kayıt içermeli;
-- canary, research-only ve disabled candidate listeleri public modele giremez;
-- kaynak-native rank aynen korunur;
-- bu yayın Türkiye Endeksi, insight/trend sayfaları veya aggregate SEO gate'i açmaz.
-
-Faz 1 kaynak hub'ı:
-
-- `/en-cok-satanlar/kaynak`
-
-İlk canlı kaynak sayfası adayları:
-
-- BKM Kitap
-- Remzi Kitabevi
-- idefix
-- KitapSepeti
-- Kitapzen
-- İnkılâp Kitabevi
-- KitapSeç (yalnız doğrulanmış kategori listeleri; general canary private)
-- KitaplarSepette
-- İlla Kitap
-- NobelKitap
-
-Kaynak hub ve gerçekten publishable source URL'leri sitemap/site-haritasına
-eklenebilir. Aggregate `/en-cok-satanlar`, `/en-cok-satanlar/turkiye` ve
-insight sayfaları aşağıdaki SEO kalite kapısından geçmeden 404/noindex kalır.
-
 ## 7. SEO policy belirleme
 
 Kod içinde varsayılan kalite eşiği yoktur.
@@ -280,8 +250,8 @@ Production görünürlüğü açılmadan önce doğrulanacaklar:
 - production smoke PASS;
 - sitemap yalnız gerçekten yayınlanan Book Index URL'lerini içeriyor.
 
-Amazon TR/US veya başka bir kaynak availability `researching`/`blocked`
-ise sitemap'te sahte kaynak sayfası oluşturulmaz.
+Kaynak availability durumu `researching`/`blocked` olsa bile bu durum ayrı bir
+public mağaza sayfası üretmez; kaynaklar yalnız veri toplama/readiness katmanında izlenir.
 
 ## 11. Analytics / trafik ölçümü
 
@@ -304,14 +274,12 @@ Sitemap aktivasyonundan sonra:
 - `src/lib/book-index/**` ve `src/features/book-index/**` değişiklikleri,
   canlı sitemap'te mevcutsa doğrudan `/en-cok-satanlar/**` URL ailesine
   eşlenir; alakasız public URL'ler yeniden gönderilmez;
-- günlük Book Index IndexNow yenilemesi ana, Türkiye ve yayınlanmış kaynak
-  sayfalarını `/en-cok-satanlar*` kapsamıyla taşır;
+- günlük Book Index IndexNow yenilemesi yalnız gerçekten yayınlanmış aggregate Book Index URL'lerini `/en-cok-satanlar*` kapsamıyla taşır;
 - haftalık GSC performans raporu aynı Book Index prefix'ini izler;
-- haftalık GSC URL Inspection ana + Türkiye + sitemap'te yayınlanan kaynak
-  sayfalarından temsilî URL'leri otomatik örnekler;
+- haftalık GSC URL Inspection ana + Türkiye ve varsa yayınlanmış aggregate alt yüzeylerinden temsilî URL'leri otomatik örnekler;
 - haftalık otomatik SEO indexability smoke (Salı 09:15 Türkiye) Book Index
-  sitemap'te yoksa onu atlar; varsa ana, Türkiye ve temsilî yayınlanmış
-  Book Index sayfalarında HTTP 200, robots ve canonical sözleşmesini doğrular;
+  sitemap'te yoksa onu atlar; varsa yalnız yayınlanmış aggregate Book Index
+  yüzeylerinde HTTP 200, robots ve canonical sözleşmesini doğrular;
 - aynı workflow gerektiğinde explicit confirmation ile manuel de çalıştırılabilir;
 - haftalık GSC diagnostic aynı sitemap fetch'i üzerinde 50.000 URL,
   50 MB uncompressed boyut ve duplicate `<loc>` guard'larını çalıştırır;

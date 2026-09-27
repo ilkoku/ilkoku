@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SITE_MAP_PAGES, type SiteMapPage } from "@/lib/cms-header-navigation";
-import {
-  getBookIndexPublicPageContext,
-  getBookIndexPublicSourcePageContext,
-} from "@/lib/book-index/public-access";
+import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -112,26 +109,13 @@ async function getPublicWorkLinks(): Promise<PublicWorkLink[]> {
 }
 
 export default async function PublicSiteMapPage() {
-  const [cmsPages, publicWorks, bookIndexContext, bookIndexSourceContext] = await Promise.all([
+  const [cmsPages, publicWorks, bookIndexContext] = await Promise.all([
     loadPublishedCmsSiteMapPages(),
     getPublicWorkLinks(),
     getBookIndexPublicPageContext(30).catch(() => null),
-    getBookIndexPublicSourcePageContext(100).catch(() => null),
   ]);
 
   const bookIndexPublished = Boolean(bookIndexContext);
-  const bookIndexSourceLinks = bookIndexSourceContext
-    ? [
-        {
-          href: "/en-cok-satanlar/kaynak",
-          label: "Kaynaklara göre çok satan kitaplar",
-        },
-        ...bookIndexSourceContext.sourcePages.map((sourcePage) => ({
-          href: `/en-cok-satanlar/kaynak/${sourcePage.slug}`,
-          label: sourcePage.searchTitle,
-        })),
-      ]
-    : [];
   const codeOwnedPages = SITE_MAP_PAGES.filter(
     (page) =>
       page.indexable !== false
@@ -155,13 +139,6 @@ export default async function PublicSiteMapPage() {
     .map((page) => ({ href: page.href, label: page.label }));
 
   const groups = groupedSitePages(codeOwnedPages);
-  if (bookIndexSourceLinks.length > 0) {
-    groups.push({
-      id: "book-index:sources",
-      title: "Çok Satanlar · Kaynak Listeleri",
-      links: bookIndexSourceLinks,
-    });
-  }
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",

@@ -11,10 +11,7 @@ import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 import { GENRES } from "@/lib/genres";
-import {
-  getBookIndexPublicPageContext,
-  getBookIndexPublicSourcePageContext,
-} from "@/lib/book-index/public-access";
+import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { getBookIndexInsights } from "@/lib/book-index/insights";
 import { getPublishedBookIndexInsightPages } from "@/lib/book-index/insight-pages";
@@ -193,45 +190,6 @@ type CmsSitemapRow = {
 
 type CmsLegalSitemapRow = CmsSitemapRow;
 
-async function loadBookIndexSourceSitemapEntries(): Promise<MetadataRoute.Sitemap> {
-  try {
-    const context = await getBookIndexPublicSourcePageContext(100);
-    if (!context) return [];
-
-    const sourceEntries: MetadataRoute.Sitemap = context.sourcePages.map((sourcePage) => ({
-      url: `${baseUrl}/en-cok-satanlar/kaynak/${sourcePage.slug}`,
-      ...(sourcePage.lastObservedAt
-        ? { lastModified: sourcePage.lastObservedAt }
-        : {}),
-      changeFrequency: "daily" as const,
-      priority: 0.75,
-    }));
-
-    const latestSourceUpdate = context.sourcePages.reduce<Date | null>(
-      (latest, sourcePage) => {
-        if (!sourcePage.lastObservedAt) return latest;
-        if (!latest || sourcePage.lastObservedAt.getTime() > latest.getTime()) {
-          return sourcePage.lastObservedAt;
-        }
-        return latest;
-      },
-      null,
-    );
-
-    return [
-      {
-        url: `${baseUrl}/en-cok-satanlar/kaynak`,
-        ...(latestSourceUpdate ? { lastModified: latestSourceUpdate } : {}),
-        changeFrequency: "daily",
-        priority: 0.82,
-      },
-      ...sourceEntries,
-    ];
-  } catch {
-    return [];
-  }
-}
-
 async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   try {
     const context = await getBookIndexPublicPageContext(100);
@@ -278,7 +236,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       pages,
       legalRows,
       bookIndexEntries,
-      bookIndexSourceEntries,
     ] = await Promise.all([
       prisma.work.findMany({
         where: {
@@ -327,7 +284,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         LIMIT 100
       `,
       loadBookIndexSitemapEntries(),
-      loadBookIndexSourceSitemapEntries(),
     ]);
 
     const pageBySlug = new Map(
@@ -366,7 +322,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [
       ...staticDiscoveryEntries,
-      ...bookIndexSourceEntries,
       ...bookIndexEntries,
       ...publicPageEntries,
       ...legalEntries,

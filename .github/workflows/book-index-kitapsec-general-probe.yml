@@ -63,7 +63,36 @@ jobs:
             /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_ContentUrunList\b[^"']*\burunListeleDiv\b[^"']*["'])(?=[^>]*\bitemtype=["']https:\/\/schema\.org\/ItemList["'])[^>]*>([\s\S]*?)<\/table>/iu,
           )?.[1];
           console.log("general_list_section_found=" + Boolean(section));
-          if (!section) process.exit(1);
+
+          if (!section) {
+            const markers = [
+              "itemListElement",
+              "Ks_ContentUrunList",
+              "urunListeleDiv",
+              "Ks_UrunSatir",
+              "itemprop=\"position\"",
+            ];
+            for (const marker of markers) {
+              const index = html.indexOf(marker);
+              console.log("marker=" + marker + " index=" + index);
+              if (index >= 0) {
+                console.log(
+                  "marker_snippet=" +
+                    html
+                      .slice(Math.max(0, index - 1600), index + 3600)
+                      .replace(/\\r?\\n/g, " ")
+                      .replace(/\\s+/g, " ")
+                      .slice(0, 5200),
+                );
+              }
+            }
+
+            const itemListTags = [...html.matchAll(/<[^>]+itemListElement[^>]*>/giu)]
+              .slice(0, 30)
+              .map((m) => m[0]);
+            console.log("item_list_tags=" + JSON.stringify(itemListTags));
+            process.exit(0);
+          }
 
           const cards = [...section.matchAll(
             /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_UrunSatir\b[^"']*["'])(?=[^>]*\bitemprop=["']itemListElement["'])(?=[^>]*\bid=["']([^"']+)["'])[^>]*>/giu,

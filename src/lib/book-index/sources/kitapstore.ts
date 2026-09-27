@@ -67,7 +67,7 @@ function anchorValueFromClass(card: string, classToken: "KisiAdi" | "FirmaAdi") 
   );
 }
 
-function parseCard(card: string, productId: string, expectedRank: number) {
+function parseCard(card: string, productId: string) {
   const rankValue = card.match(
     /<div\b[^>]*class=["'][^"']*\bNo\b[^"']*["'][^>]*>\s*([0-9]{1,3})\s*<\/div>/iu,
   )?.[1];
@@ -103,8 +103,8 @@ function parseCard(card: string, productId: string, expectedRank: number) {
     ? attributeValue(priceCurrencyTag, "content")
     : "";
 
-  if (!Number.isInteger(rank) || rank !== expectedRank) {
-    throw new Error("BOOK_INDEX_KITAPSTORE_RANK_MISMATCH");
+  if (!Number.isInteger(rank) || rank < 1 || rank > MAX_BOOKS) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_INVALID_RANK");
   }
   if (!productHref) {
     throw new Error("BOOK_INDEX_KITAPSTORE_PRODUCT_URL_MISSING");
@@ -140,12 +140,7 @@ function parseCard(card: string, productId: string, expectedRank: number) {
 
 export function parseKitapStoreBestsellerPage(
   html: string,
-  expectedStartRank: number,
 ): BookIndexCollectionResult {
-  if (!Number.isInteger(expectedStartRank) || expectedStartRank < 1) {
-    throw new Error("BOOK_INDEX_KITAPSTORE_INVALID_EXPECTED_RANK");
-  }
-
   const headings = [
     ...html.matchAll(
       /<div\b[^>]*class=["'][^"']*\bIcBaslik\b[^"']*["'][^>]*>\s*ÇOK\s+SATANLAR\s*<\/div>/giu,
@@ -188,13 +183,11 @@ export function parseKitapStoreBestsellerPage(
     return parseCard(
       listBody.slice(start, end),
       productId,
-      expectedStartRank + index,
     );
   });
 
   const sourceKeys = new Set(books.map((book) => book.sourceKey));
   const productUrls = new Set(books.map((book) => book.productUrl));
-  const ranks = new Set(books.map((book) => book.rank));
 
   if (sourceKeys.size !== books.length) {
     throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY");
@@ -204,8 +197,14 @@ export function parseKitapStoreBestsellerPage(
     throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL");
   }
 
-  if (ranks.size !== books.length) {
-    throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_RANK");
+  if (
+    books.some((book, index) => {
+      if (index === 0) return false;
+      const previousRank = books[index - 1]?.rank ?? 0;
+      return book.rank < previousRank || book.rank > previousRank + 1;
+    })
+  ) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_RANK_SEQUENCE_MISMATCH");
   }
 
   return { books };
@@ -218,9 +217,10 @@ export function combineKitapStoreBestsellerPages(
     throw new Error("BOOK_INDEX_KITAPSTORE_PAGE_COUNT_MISMATCH");
   }
 
-  const books = pages.flatMap((page) => page.books).sort(
-    (left, right) => left.rank - right.rank,
-  );
+  // Keep source/page order intact. KitapStore can publish multiple products
+  // at the same native rank; sorting or ordinal re-ranking would destroy that
+  // source semantics.
+  const books = pages.flatMap((page) => page.books);
 
   if (books.length !== MAX_BOOKS) {
     throw new Error("BOOK_INDEX_KITAPSTORE_RESULT_SIZE_MISMATCH");
@@ -228,7 +228,6 @@ export function combineKitapStoreBestsellerPages(
 
   const sourceKeys = new Set(books.map((book) => book.sourceKey));
   const productUrls = new Set(books.map((book) => book.productUrl));
-  const ranks = new Set(books.map((book) => book.rank));
 
   if (sourceKeys.size !== books.length) {
     throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY");
@@ -238,12 +237,20 @@ export function combineKitapStoreBestsellerPages(
     throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL");
   }
 
-  if (ranks.size !== books.length) {
-    throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_RANK");
+  if (books[0]?.rank !== 1) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_RANK_SEQUENCE_MISMATCH");
   }
 
-  if (books.some((book, index) => book.rank !== index + 1)) {
-    throw new Error("BOOK_INDEX_KITAPSTORE_RANK_GAP");
+  // Dense native ranking is valid: ties may repeat a rank, while the next
+  // distinct rank may advance by exactly one. Reject decreases and gaps.
+  if (
+    books.some((book, index) => {
+      if (index === 0) return false;
+      const previousRank = books[index - 1]?.rank ?? 0;
+      return book.rank < previousRank || book.rank > previousRank + 1;
+    })
+  ) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_RANK_SEQUENCE_MISMATCH");
   }
 
   // Validate the complete native Top 100 first, then exclude only explicitly
@@ -358,11 +365,8 @@ export const kitapStoreBookIndexResearchAdapter: BookIndexSourceAdapter = {
     );
 
     const combined = combineKitapStoreBestsellerPages(
-      htmlPages.map((html, index) =>
-        parseKitapStoreBestsellerPage(
-          html,
-          index * EXPECTED_PAGE_BOOKS + 1,
-        ),
+      htmlPages.map((html) =>
+        parseKitapStoreBestsellerPage(html),
       ),
     );
 

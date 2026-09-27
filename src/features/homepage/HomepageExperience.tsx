@@ -7,7 +7,10 @@ import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { getHomepageAffiliatePlacement } from "@/lib/affiliate-placement";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import {
+  getBookIndexPublicPageContext,
+  getBookIndexPublicSourcePageContext,
+} from "@/lib/book-index/public-access";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 
 import History670 from "./history-670";
@@ -75,11 +78,18 @@ const benefits = [
 const statIcons: IconName[] = ["account", "create", "editor", "publisher", "book", "message"];
 
 export default async function HomepageExperience() {
-  const [roleCardState, homepageState, affiliatePlacement, bookIndexContext] = await Promise.all([
+  const [
+    roleCardState,
+    homepageState,
+    affiliatePlacement,
+    bookIndexContext,
+    bookIndexSourceContext,
+  ] = await Promise.all([
     getPublishedRoleCardsState("tr"),
     getPublishedHomepageState("tr"),
     getHomepageAffiliatePlacement(),
     getBookIndexPublicPageContext(10).catch(() => null),
+    getBookIndexPublicSourcePageContext(100).catch(() => null),
   ]);
   const homepage = homepageState.state === "valid" ? homepageState.content : {};
   const hero = homepage.hero;
@@ -167,7 +177,13 @@ export default async function HomepageExperience() {
 
       <LiveHomepageFooter
         signedIn={false}
-        bookIndexPublished={Boolean(bookIndexContext)}
+        bookIndexHref={
+          bookIndexContext
+            ? "/en-cok-satanlar"
+            : bookIndexSourceContext
+              ? "/en-cok-satanlar/kaynak"
+              : null
+        }
         slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
         copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
       />

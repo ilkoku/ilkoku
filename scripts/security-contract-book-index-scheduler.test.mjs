@@ -92,3 +92,77 @@ test("Book Index scheduler exposes overdue duration as read-only operations evid
   notContains(admin, "Scheduler bozuk", "admin does not invent scheduler failure verdict");
 });
 
+
+
+test("Book Index readiness probe is OIDC-protected and collection-free", () => {
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+
+  contains(
+    route,
+    'GITHUB_OIDC_AUDIENCE = "ilkoku-book-index-readiness"',
+    "dedicated readiness OIDC audience",
+  );
+  contains(
+    route,
+    'book-index-readiness.yml@refs/heads/main',
+    "readiness workflow identity binding",
+  );
+  contains(route, '"push"', "push event authorization");
+  contains(route, '"workflow_dispatch"', "manual read-only authorization");
+  contains(route, "export async function GET", "read-only HTTP method");
+  contains(route, "getBookIndexReadinessSnapshot", "readiness snapshot query");
+  contains(route, "getBookIndexSeoGateSnapshot", "SEO gate query");
+  notContains(route, "runBookIndexScheduler", "readiness route never runs collection");
+  notContains(route, "collectBookIndex", "readiness route never invokes collector");
+
+  contains(workflow, "id-token: write", "OIDC token permission");
+  contains(workflow, "push:", "post-merge production probe trigger");
+  contains(workflow, "workflow_dispatch:", "manual read-only probe trigger");
+  contains(
+    workflow,
+    "https://ilkoku.com/api/internal/book-index-readiness",
+    "production readiness endpoint",
+  );
+  notContains(
+    workflow,
+    "book-index-scheduler",
+    "readiness workflow never calls scheduler endpoint",
+  );
+});
+
+test("Book Index readiness exposes source-level unmatched cause aggregates", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+
+  contains(
+    readiness,
+    "unmatchedDuplicateIdentityGroupsBySource",
+    "source-level duplicate identity aggregate",
+  );
+  contains(
+    readiness,
+    "unmatchedMissingAuthorBooksBySource",
+    "source-level missing-author aggregate",
+  );
+  contains(
+    readiness,
+    "unmatchedAmbiguousIdentityGroupsBySource",
+    "source-level ambiguous-master aggregate",
+  );
+  contains(
+    route,
+    "unmatchedDuplicateIdentityGroupsBySource",
+    "probe returns duplicate-identity aggregate",
+  );
+  contains(
+    route,
+    "unmatchedMissingAuthorBooksBySource",
+    "probe returns missing-author aggregate",
+  );
+  contains(
+    route,
+    "unmatchedAmbiguousIdentityGroupsBySource",
+    "probe returns ambiguous-master aggregate",
+  );
+});

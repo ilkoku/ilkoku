@@ -106,6 +106,7 @@ export async function GET(request: NextRequest) {
           try {
             const detail = parseIdefixProductDetails(
               await fetchHtml(book.productUrl),
+              book.title,
             );
 
             details[index] = {
@@ -133,6 +134,9 @@ export async function GET(request: NextRequest) {
     const missingIdentity = successfulDetails.filter(
       (detail) => !detail.authorName && !detail.isbn13,
     );
+    const missingIdentityRanks = new Set(
+      missingIdentity.map((detail) => detail.rank),
+    );
 
     return NextResponse.json({
       ok: true,
@@ -154,6 +158,15 @@ export async function GET(request: NextRequest) {
       ).length,
       missingIdentityCount: missingIdentity.length,
       missingIdentityRanks: missingIdentity.map((detail) => detail.rank),
+      missingIdentitySamples: parsed.books
+        .filter((book) => missingIdentityRanks.has(book.rank))
+        .slice(0, 20)
+        .map((book) => ({
+          rank: book.rank,
+          sourceKey: book.sourceKey,
+          title: book.title,
+          productUrl: book.productUrl,
+        })),
       duplicateSourceKeyCount:
         parsed.books.length
         - new Set(parsed.books.map((book) => book.sourceKey)).size,

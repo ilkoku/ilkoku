@@ -119,8 +119,46 @@ function detailAuthorName(text: string) {
   return match?.[1]?.trim() || null;
 }
 
+function htmlTagText(html: string, tagName: "title" | "h1") {
+  const match = html.match(
+    new RegExp(`<${tagName}\\b[^>]*>([\\s\\S]*?)<\\/${tagName}>`, "iu"),
+  );
+
+  return match?.[1] ? decodeBookIndexHtml(match[1]) : "";
+}
+
+function documentTitleAuthorName(html: string) {
+  const title = htmlTagText(html, "title");
+  const match = title.match(
+    /\s+-\s+(.+?)\s+Kitabı(?:\s+Fiyatları)?\s*&?\s*Satın\s+Al(?:\s*\|.*)?$/iu,
+  );
+
+  return match?.[1]?.trim() || null;
+}
+
+function headingAuthorName(html: string, expectedTitle: string) {
+  const title = decodeBookIndexHtml(expectedTitle);
+  const heading = htmlTagText(html, "h1");
+
+  if (!title || !heading.startsWith(title)) return null;
+
+  const suffix = heading.slice(title.length).trim();
+
+  if (
+    !suffix
+    || suffix.length > 120
+    || !/\p{L}/u.test(suffix)
+    || /^(?:Sepette|Ürün|TL\b)/iu.test(suffix)
+  ) {
+    return null;
+  }
+
+  return suffix;
+}
+
 export function parseIdefixProductDetails(
   html: string,
+  expectedTitle = "",
 ): IdefixProductDetail {
   const text = decodeBookIndexHtml(html);
   const isbn = text.match(
@@ -128,7 +166,10 @@ export function parseIdefixProductDetails(
   )?.[1];
 
   return {
-    authorName: detailAuthorName(text),
+    authorName:
+      detailAuthorName(text)
+      || documentTitleAuthorName(html)
+      || headingAuthorName(html, expectedTitle),
     isbn13: validIsbn13(isbn),
   };
 }
@@ -166,6 +207,7 @@ async function enrichBooks(
 
         details[index] = parseIdefixProductDetails(
           await fetchHtml(books[index].productUrl),
+          books[index].title,
         );
       }
     },

@@ -36,7 +36,7 @@ jobs:
             test -n "$oidc_token"
 
             if response="$(curl --fail-with-body --silent --show-error --max-time 180 --header "Authorization: Bearer $oidc_token" https://ilkoku.com/api/internal/book-index-idefix-dry-run)"; then
-              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); required=("bookCount","detailSuccessCount","detailErrorCount","detailErrorSamples","withAuthorCount","withIsbn13Count","missingIdentityCount","missingIdentityRanks","duplicateSourceKeyCount","rankMin","rankMax"); raise SystemExit(0 if payload.get("ok") is True and all(key in payload for key in required) else 1)'; then
+              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); required=("bookCount","detailSuccessCount","detailErrorCount","detailErrorSamples","withAuthorCount","withIsbn13Count","missingIdentityCount","missingIdentityRanks","missingIdentitySamples","duplicateSourceKeyCount","rankMin","rankMax"); raise SystemExit(0 if payload.get("ok") is True and all(key in payload for key in required) else 1)'; then
                 printf '%s\n' "$response" | python3 -m json.tool
                 exit 0
               fi

@@ -317,6 +317,26 @@ test("idefix collector reads server-side Next data and excludes source-sponsored
   contains(adapter, "detailAuthorName", "idefix detail author extraction");
   contains(
     adapter,
+    "documentTitleAuthorName",
+    "idefix document-title author fallback",
+  );
+  contains(
+    adapter,
+    "headingAuthorName",
+    "idefix H1 author fallback",
+  );
+  contains(
+    adapter,
+    "books[index].title",
+    "idefix H1 fallback is anchored to the list title",
+  );
+  contains(
+    adapter,
+    "expectedTitle = \"\"",
+    "idefix detail parser accepts the verified list title as optional context",
+  );
+  contains(
+    adapter,
     "identifiedBookCount",
     "idefix tracks successfully identified books after detail enrichment",
   );

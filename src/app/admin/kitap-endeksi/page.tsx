@@ -546,6 +546,43 @@ export default async function BookIndexAdminPage({
           <table className="admin-data-table">
             <thead>
               <tr>
+                <th>Yazar bilgisi eksik unmatched</th>
+                <th>Kayıt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {readiness.unmatchedMissingAuthorBooksBySource.length ? (
+                readiness.unmatchedMissingAuthorBooksBySource.map((source) => (
+                  <tr key={source.sourceCode}>
+                    <td><strong>{source.sourceCode}</strong></td>
+                    <td>{source.count.toLocaleString("tr-TR")}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2}>Yazar bilgisi eksik unmatched kayıt yok.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          {readiness.unmatchedMissingAuthorSamples.length ? (
+            <small>
+              Son örnekler:{" "}
+              {readiness.unmatchedMissingAuthorSamples
+                .slice(0, 8)
+                .map(
+                  (sample) =>
+                    `${sample.sourceCode} · ${sample.title} · ${sample.sourceKey}`,
+                )
+                .join(" | ")}
+            </small>
+          ) : null}
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
                 <th>Olası sourceKey churn</th>
                 <th>Kitap kimliği</th>
                 <th>Dış kayıt</th>

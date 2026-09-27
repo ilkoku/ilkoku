@@ -1,13 +1,6 @@
 import Link from "next/link";
 
-import type {
-  BookIndexPublicReadModel,
-  BookIndexSourceListSnapshot,
-} from "@/lib/book-index/public-read-model";
-import {
-  getBookIndexPublishedSourcePages,
-  type BookIndexPublishedSourcePage,
-} from "@/lib/book-index/source-pages";
+import type { BookIndexPublicReadModel } from "@/lib/book-index/public-read-model";
 import {
   getBookIndexInsightItems,
   getPublishedBookIndexInsightPages,
@@ -43,21 +36,6 @@ function formattedObservedAt(value: Date | null) {
     timeStyle: "short",
     timeZone: "Europe/Istanbul",
   }).format(value);
-}
-
-function periodLabel(value: BookIndexSourceListSnapshot["period"]) {
-  switch (value) {
-    case "live":
-      return "Güncel";
-    case "weekly":
-      return "Haftalık";
-    case "monthly":
-      return "Aylık";
-    case "yearly":
-      return "Yıllık";
-    default:
-      return value;
-  }
 }
 
 function availabilityLabel(value: string) {
@@ -105,108 +83,6 @@ function TurkeyRows({
   );
 }
 
-function SourceRows({
-  list,
-}: {
-  list: BookIndexSourceListSnapshot;
-}) {
-  return (
-    <ol className={styles.rankingList}>
-      {list.items.map((row) => (
-        <li className={styles.rankingItem} key={`${list.listCode}-${row.rank}-${row.productUrl}`}>
-          <span className={styles.rank}>{row.rank}</span>
-          <div className={styles.book}>
-            <strong>{row.title}</strong>
-            <span>{row.authorName ?? "Yazar bilgisi bekleniyor"}</span>
-          </div>
-          <div className={styles.score}>
-            <strong>{periodLabel(list.period)}</strong>
-            <span>{row.publisherName ?? list.sourceName}</span>
-          </div>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-export function BookIndexSourceView({
-  sourcePage,
-}: {
-  sourcePage: BookIndexPublishedSourcePage;
-}) {
-  const currentYear = new Date().getFullYear();
-  const observedAtLabel = formattedObservedAt(sourcePage.lastObservedAt);
-
-  return (
-    <main className={styles.page}>
-      <header className={styles.hero}>
-        <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Kaynak Listesi</span>
-        <h1>{sourcePage.searchTitle} {currentYear}</h1>
-        <p>
-          {sourcePage.sourceName} tarafından yayınlanan çok satan sıralamalarını
-          kaynak sırasını değiştirmeden gösteriyoruz. Bu sayfa İlkOku Türkiye
-          Endeksi&apos;nden ayrıdır; burada görülen sıra ilgili kaynağın kendi
-          sıralamasıdır.
-        </p>
-        {sourcePage.lastObservedAt && observedAtLabel ? (
-          <p className={styles.freshness}>
-            Son veri güncellemesi:{" "}
-            <time dateTime={sourcePage.lastObservedAt.toISOString()}>
-              {observedAtLabel}
-            </time>
-          </p>
-        ) : null}
-        <Link className={styles.backLink} href="/en-cok-satanlar/kaynak">
-          ← Çok Satan Kaynakları
-        </Link>
-      </header>
-
-      {sourcePage.lists.map((list, index) => (
-        <section className={styles.section} id={`liste-${list.listCode}`} key={list.listCode}>
-          <div className={styles.sectionHeading}>
-            <div>
-              <span className={styles.eyebrow}>{periodLabel(list.period)}</span>
-              <h2>{list.title}</h2>
-              <p>
-                Kaynak sıralaması aynen korunur; sponsor veya İlkOku bileşik
-                puanı bu sırayı değiştirmez.
-              </p>
-            </div>
-            <a href={list.sourceUrl} target="_blank" rel="noopener noreferrer">
-              Orijinal kaynak ↗
-            </a>
-          </div>
-          <SourceRows list={list} />
-          {index === 0 ? (
-            <p className={styles.freshness}>
-              Bu liste satış adedi açıklamaz; kaynağın yayınladığı sıralamayı
-              gösterir.
-            </p>
-          ) : null}
-        </section>
-      ))}
-
-      <section className={styles.explainer} aria-labelledby="source-index-methodology">
-        <span className={styles.eyebrow}>Kaynak şeffaflığı</span>
-        <h2 id="source-index-methodology">
-          {sourcePage.sourceName} çok satan listesi nasıl kullanılıyor?
-        </h2>
-        <p>
-          Bu sayfadaki sıralama {sourcePage.sourceName} kaynağının kendi
-          sıralamasıdır. İlkOku bu sırayı yeniden puanlamaz veya sponsor
-          içerikle değiştirmez.
-        </p>
-        <p>
-          Türkiye Endeksi oluşturulurken aynı bağımsız işletmeci grubu bir
-          kitaba yalnız bir oy verebilir. Aynı işletmeciye ait farklı mağazalar
-          veya aynı mağazadaki haftalık, aylık ve kategori listeleri bileşik
-          sonuçta ek oy üretmez.
-        </p>
-      </section>
-    </main>
-  );
-}
-
 export function BookIndexOverviewView({
   model,
   insights,
@@ -217,7 +93,6 @@ export function BookIndexOverviewView({
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
   const currentYear = new Date().getFullYear();
-  const publishedSourcePages = getBookIndexPublishedSourcePages(model);
   const publishedInsightPages = getPublishedBookIndexInsightPages(insights);
 
   return (
@@ -279,36 +154,6 @@ export function BookIndexOverviewView({
                 <span>{page.eyebrow}</span>
                 <strong>{page.searchTitle}</strong>
                 <small>{page.description}</small>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {publishedSourcePages.length ? (
-        <section className={styles.section} aria-labelledby="source-lists-heading">
-          <div className={styles.sectionHeading}>
-            <div>
-              <span className={styles.eyebrow}>Kaynak listeleri</span>
-              <h2 id="source-lists-heading">Mağazalara göre çok satan kitaplar</h2>
-              <p>
-                Her kaynak kendi sıralamasıyla gösterilir; İlkOku Türkiye
-                Endeksi ile karıştırılmaz.
-              </p>
-            </div>
-          </div>
-          <div className={styles.cards}>
-            {publishedSourcePages.map((sourcePage) => (
-              <Link
-                className={styles.card}
-                href={`/en-cok-satanlar/kaynak/${sourcePage.slug}`}
-                key={sourcePage.sourceCode}
-              >
-                <span>{sourcePage.sourceName}</span>
-                <strong>{sourcePage.searchTitle}</strong>
-                <small>
-                  {sourcePage.lists.length} güncel liste · kaynak sırası korunur
-                </small>
               </Link>
             ))}
           </div>

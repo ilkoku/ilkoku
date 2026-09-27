@@ -227,3 +227,37 @@ test("Book Index readiness probe exposes overdue operations evidence without col
   contains(route, "failures: seoGate.failures", "probe SEO failure evidence");
   contains(route, "evidence: seoGate.evidence", "probe SEO evidence payload");
 });
+
+
+test("temporary idefix dry-run probe executes adapter without persistence", () => {
+  const route = source("src/app/api/internal/book-index-idefix-dry-run/route.ts");
+  const workflow = source(".github/workflows/book-index-idefix-dry-run.yml");
+
+  contains(
+    route,
+    'GITHUB_OIDC_AUDIENCE = "ilkoku-idefix-dry-run"',
+    "dedicated idefix dry-run OIDC audience",
+  );
+  contains(
+    route,
+    "idefixBookIndexAdapter.collect",
+    "dry run executes the production idefix adapter",
+  );
+  contains(route, "missingIdentityCount", "aggregate identity gap evidence");
+  contains(route, "duplicateSourceKeyCount", "aggregate source-key evidence");
+  notContains(route, "prisma", "dry run does not access Book Index database");
+  notContains(route, "runBookIndexScheduler", "dry run never invokes scheduler");
+  notContains(route, "collectBookIndexListByCode", "dry run bypasses persistence collector");
+
+  contains(workflow, "id-token: write", "dry run OIDC permission");
+  contains(
+    workflow,
+    "https://ilkoku.com/api/internal/book-index-idefix-dry-run",
+    "dry run production endpoint",
+  );
+  notContains(
+    workflow,
+    "api/internal/book-index-scheduler",
+    "dry run never calls scheduler endpoint",
+  );
+});

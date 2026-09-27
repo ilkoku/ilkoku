@@ -9,6 +9,7 @@ const SOURCE_CODE = "kitapsepeti";
 const SOURCE_ORIGIN = "https://www.kitapsepeti.com";
 const MAX_BOOKS = 60;
 const MIN_EXPECTED_BOOKS = 20;
+const VERIFIED_NON_BOOK_SOURCE_KEYS = new Set(["/3-in-1-puzzle"]);
 
 function absoluteUrl(href: string) {
   return new URL(href, SOURCE_ORIGIN).toString();
@@ -72,6 +73,9 @@ export function parseKitapSepetiBestsellers(
       if (!href || !title) {
         throw new Error("BOOK_INDEX_KITAPSEPETI_INVALID_ITEM");
       }
+
+      // Verified live catalogue exception: this source item is a physical puzzle, not a book.
+      if (VERIFIED_NON_BOOK_SOURCE_KEYS.has(href)) return null;
 
       return {
         sourceKey: href,

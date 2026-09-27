@@ -950,7 +950,7 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapsec-general-live-canary",
     "kitapstore-tr-live",
     "kitapstore-tr-live-canary",
-    "pandora-tr-live",
+    "pandora-tr-live-canary",
     "kitapambari-tr-live",
     "amazon-tr-live",
   ]) {
@@ -973,6 +973,7 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "illakitap-tr-weekly",
     "nobelkitap-tr-live",
     "idefix-tr-live",
+    "pandora-tr-live",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);
@@ -1156,7 +1157,7 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
 });
 
 
-test("Pandora source canary is fail-closed, private and non-voting", () => {
+test("Pandora source-only live publication stays fail-closed and non-voting", () => {
   const adapter = source("src/lib/book-index/sources/pandora.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
@@ -1184,20 +1185,20 @@ test("Pandora source canary is fail-closed, private and non-voting", () => {
 
   contains(
     lists,
-    'code: "pandora-tr-live",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "Pandora voter remains disabled",
+    'code: "pandora-tr-live",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
+    "Pandora source-only live list is schedulable and public-eligible without voting",
   );
 
   contains(
     lists,
-    'code: "pandora-tr-live-canary",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
-    "Pandora source-only canary remains private and non-voting",
+    'code: "pandora-tr-live-canary",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "qualified Pandora canary is retired but retained privately for audit",
   );
 
   contains(
     collector,
     "[pandoraBookIndexAdapter.sourceCode, pandoraBookIndexAdapter]",
-    "Pandora adapter is registered only for enabled private canary collection",
+    "Pandora adapter remains registered for source-only live collection",
   );
 });
 

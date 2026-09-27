@@ -993,3 +993,28 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
     "research adapter is not production-registered",
   );
 });
+
+
+test("Pandora bestseller candidate stays research-only until a direct collection contract is proven", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(sources, 'code: "pandora"', "Pandora research source");
+  contains(
+    sources,
+    'name: "Pandora Kitabevi",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.pandora.com.tr",\n    includeInTurkeyIndex: true,\n    independenceGroup: "pandora",\n    operatorName: "Pandora Yayın ve Kitap Hizmetleri A.Ş.",\n    phase: "phase_2",\n    collectionState: "researching"',
+    "Pandora remains research-only",
+  );
+  contains(lists, 'code: "pandora-tr-live"', "Pandora research list");
+  contains(
+    lists,
+    'sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    "Pandora list stays disabled and outside composite",
+  );
+  notContains(
+    collector,
+    "pandoraBookIndexAdapter",
+    "Pandora has no production collector before direct-fetch proof",
+  );
+});

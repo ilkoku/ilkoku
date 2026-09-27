@@ -195,6 +195,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "pandora-tr-live",
+    sourceCode: "pandora",
+    title: "Pandora Kitabevi · Çok Satanlar · Türkçe",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",
+    maxRank: null,
+    includeInComposite: false,
+    collectionEveryMinutes: null,
+    enabled: false,
+  },
+  {
     code: "amazon-tr-live",
     sourceCode: "amazon-tr",
     title: "Amazon Türkiye · Kitap Çok Satanlar",

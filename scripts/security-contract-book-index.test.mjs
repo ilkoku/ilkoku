@@ -1051,10 +1051,10 @@ test("KitapStore Top 100 candidate remains fail-closed and production-disabled",
   contains(adapter, "\\bIslemliL\\b", "native bestseller list container");
   contains(adapter, "Urun-([0-9]+)", "stable numeric product id");
   contains(adapter, "schema\\.org", "schema Book card scope");
-  contains(adapter, 'itemprop=["\']url["\']', "canonical product URL metadata");
-  contains(adapter, 'itemprop=["\']author["\']', "author metadata");
-  contains(adapter, 'itemprop=["\']publisher["\']', "publisher metadata");
-  contains(adapter, 'itemprop=["\']serialNumber["\']', "product serial identity check");
+  contains(adapter, "productUrl: absoluteUrl(productUrl)", "canonical product URL metadata");
+  contains(adapter, 'itempropTitle(card, "author")', "author metadata");
+  contains(adapter, 'itempropTitle(card, "publisher")', "publisher metadata");
+  contains(adapter, "serialNumber !== productId", "product serial identity check");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_PAGE_SIZE_INVALID", "25-card page fail-closed guard");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY", "duplicate source-key guard");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_RANK_GAP", "cross-page rank continuity guard");

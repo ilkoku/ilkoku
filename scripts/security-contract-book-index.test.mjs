@@ -683,10 +683,10 @@ test("composite collectors use deeper native bestseller pagination without chang
 
   contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "3-source eligibility remains unchanged");
   contains(lists, 'code: "kitapzen-tr-weekly"', "Kitapzen weekly composite");
-  contains(lists, 'maxRank: 60', "expanded composite rank ceiling");
-  contains(kitapzen, "for (let page = 1; page <= 3; page += 1)", "Kitapzen first three native pages");
+  contains(lists, 'maxRank: 100', "expanded composite rank ceiling");
+  contains(kitapzen, "for (let page = 1; page <= 5; page += 1)", "Kitapzen first five native pages");
   contains(kitapzen, '(page - 1) * MAX_BOOKS', "Kitapzen contiguous native rank offsets");
-  contains(inkilap, "for (let page = 1; page <= 3; page += 1)", "Inkilap first three native pages");
+  contains(inkilap, "for (let page = 1; page <= 5; page += 1)", "Inkilap first five native pages");
   contains(inkilap, '/sayfa/${page}', "Inkilap native pagination path");
   contains(inkilap, '(page - 1) * MAX_BOOKS', "Inkilap contiguous native rank offsets");
   contains(kitapsepeti, 'const MAX_BOOKS = 60;', "KitapSepeti accepts the full current native page within a bounded ceiling");

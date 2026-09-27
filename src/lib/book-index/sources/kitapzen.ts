@@ -129,7 +129,7 @@ export const kitapzenBookIndexAdapter: BookIndexSourceAdapter = {
     }
 
     const books = [];
-    for (let page = 1; page <= 3; page += 1) {
+    for (let page = 1; page <= 5; page += 1) {
       const url = new URL(context.sourceUrl);
       url.searchParams.set("page", String(page));
       const parsed = parseKitapzenBestsellers(

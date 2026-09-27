@@ -146,7 +146,7 @@ export const inkilapBookIndexAdapter: BookIndexSourceAdapter = {
   ): Promise<BookIndexCollectionResult> {
     const books = [];
 
-    for (let page = 1; page <= 3; page += 1) {
+    for (let page = 1; page <= 5; page += 1) {
       const url = page === 1
         ? context.sourceUrl
         : `${context.sourceUrl}/sayfa/${page}`;

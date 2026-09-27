@@ -1077,8 +1077,9 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   contains(adapter, 'id=["\']Urun-([0-9]+)["\']', "stable product-id scope");
   contains(adapter, '\\bNo\\b', "native rank field");
   contains(adapter, '\\bUrunAdi\\b', "canonical title field");
-  contains(adapter, '\\bKisiAdi\\b', "optional author field scope");
-  contains(adapter, '\\bFirmaAdi\\b', "optional publisher field scope");
+  contains(adapter, 'classToken: "KisiAdi" | "FirmaAdi"', "bounded optional metadata classes");
+  contains(adapter, 'anchorValueFromClass(card, "KisiAdi")', "optional author field scope");
+  contains(adapter, 'anchorValueFromClass(card, "FirmaAdi")', "optional publisher field scope");
   contains(adapter, 'attributeValue(anchor[0], "title")', "full author/publisher value prefers anchor title");
   notContains(adapter, "BOOK_INDEX_KITAPSTORE_AUTHOR_MISSING", "missing author must not reject a valid ranked product");
   notContains(adapter, "BOOK_INDEX_KITAPSTORE_PUBLISHER_MISSING", "missing publisher must not reject a valid ranked product");

@@ -23,10 +23,18 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(workflow, 'cron: "47 * * * *"', "fallback hourly cron protects missed GitHub schedule windows");
   contains(scheduler, "nextDueAt.getTime() > now.getTime()", "fallback remains cadence due-aware");
   contains(scheduler, 'status: "not_due"', "fallback skips lists that are not due");
-  notContains(workflow, "workflow_run:", "one-time KitaplarSepette trigger removed");
+  contains(workflow, "workflow_run:", "automated cross-workflow delivery relay");
+  contains(workflow, "workflows:", "relay workflow allowlist");
+  contains(workflow, "- Email operations", "relay only follows the hourly Email operations workflow");
+  contains(workflow, "- completed", "relay waits for workflow completion");
+  contains(
+    workflow,
+    "github.event.workflow_run.conclusion == 'success'",
+    "relay only runs after a successful upstream workflow",
+  );
   notContains(workflow, "?matchPending=1", "one-time backfill request removed");
   contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");
-  notContains(route, '"workflow_run"', "one-time workflow-run authorization removed");
+  contains(route, '"workflow_run"', "relay workflow-run OIDC event authorization");
   notContains(route, "matchPendingBookIndexBooks", "one-time matching backfill removed");
   notContains(route, 'searchParams.get("matchPending")', "maintenance switch removed");
   contains(readiness, "splitMasterCollisionCount", "collision diagnostic retained");
@@ -67,7 +75,8 @@ test("Book Index KitaplarSepette canary health is read-only and the one-time pro
   const workflow = source(".github/workflows/book-index-scheduler.yml");
   const readiness = source("src/lib/book-index/readiness.ts");
 
-  notContains(workflow, "workflow_run:", "temporary production-smoke trigger removed");
+  notContains(workflow, "Production smoke", "temporary production-smoke relay remains removed");
+  contains(workflow, "- Email operations", "steady-state relay uses Email operations only");
   notContains(workflow, "?forceKitaplarSepetteCanary=1", "force canary query removed");
   notContains(route, "forceKitaplarSepetteCanary", "force canary route removed");
   notContains(route, "forcedKitaplarSepetteCanaryRun", "force canary response removed");
@@ -302,6 +311,12 @@ test("Book Index retries unsuccessful runs without resetting the full source cad
   );
   contains(workflow, 'cron: "17 * * * *"', "primary hourly scheduler remains");
   contains(workflow, 'cron: "47 * * * *"', "half-hour fallback remains");
+  contains(workflow, "- Email operations", "successful hourly relay remains");
+  contains(
+    workflow,
+    "github.event.workflow_run.conclusion == 'success'",
+    "relay ignores unsuccessful upstream workflow runs",
+  );
 });
 
 

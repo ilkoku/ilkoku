@@ -6,6 +6,7 @@ import {
   bootstrapBookIndexList,
   collectBookIndexListByCode,
 } from "./collector";
+import { nextBookIndexDueAt } from "./due";
 import { BOOK_INDEX_LISTS } from "./lists";
 import { reconcileAutoMatchedBookIndexMasters } from "./reconciliation";
 
@@ -66,12 +67,16 @@ export async function runBookIndexScheduler(now = new Date()) {
         orderBy: { startedAt: "desc" },
         select: {
           startedAt: true,
+          status: true,
         },
       });
 
-      const intervalMs = listDefinition.collectionEveryMinutes * 60_000;
       const nextDueAt = latest
-        ? new Date(latest.startedAt.getTime() + intervalMs)
+        ? nextBookIndexDueAt({
+            startedAt: latest.startedAt,
+            status: latest.status,
+            cadenceMinutes: listDefinition.collectionEveryMinutes,
+          })
         : null;
 
       if (latest && nextDueAt && nextDueAt.getTime() > now.getTime()) {

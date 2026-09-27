@@ -168,3 +168,62 @@ test("Book Index readiness exposes source-level unmatched cause aggregates", () 
     "probe returns ambiguous-master aggregate",
   );
 });
+
+
+test("Book Index readiness probe exposes overdue operations evidence without collection", () => {
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+
+  contains(
+    route,
+    "getBookIndexOperationsSnapshot",
+    "read-only Book Index operations snapshot",
+  );
+  contains(route, "dueCount: operations.dueCount", "probe due-list count");
+  contains(
+    route,
+    "maxOverdueMinutes: operations.maxOverdueMinutes",
+    "probe maximum overdue duration",
+  );
+  contains(route, "dueLists: operations.rows", "probe bounded due-list evidence");
+  notContains(route, "runBookIndexScheduler", "readiness probe never runs scheduler");
+  notContains(route, "collectBookIndexListByCode", "readiness probe never collects sources");
+
+  contains(workflow, '"dueCount"', "workflow requires due-count evidence");
+  contains(workflow, '"maxOverdueMinutes"', "workflow requires overdue duration");
+  contains(workflow, '"dueLists"', "workflow prints overdue list evidence");
+  contains(
+    route,
+    "unmatchedMissingAuthorWithIsbnBooksBySource",
+    "probe exposes missing-author records with ISBN",
+  );
+  contains(
+    route,
+    "unmatchedMissingAuthorWithoutIsbnBooksBySource",
+    "probe exposes missing-author records without ISBN",
+  );
+  contains(
+    workflow,
+    '"unmatchedMissingAuthorWithIsbnBooksBySource"',
+    "workflow prints missing-author ISBN-present evidence",
+  );
+  contains(
+    workflow,
+    '"unmatchedMissingAuthorWithoutIsbnBooksBySource"',
+    "workflow prints missing-author ISBN-absent evidence",
+  );
+  for (const metric of [
+    "normalizedIdentityKeysOnAtLeast2Sources",
+    "normalizedIdentityKeysOnAtLeast3Sources",
+    "isbn13KeysOnAtLeast2Sources",
+    "isbn13KeysOnAtLeast3Sources",
+    "splitMasterCollisionCount",
+    "normalizedTitleDifferentAuthorCount",
+    "editionFamilyVariantOverlapCount",
+  ]) {
+    contains(route, metric, `readiness probe safety metric ${metric}`);
+    contains(workflow, `"${metric}"`, `workflow safety metric ${metric}`);
+  }
+  contains(route, "failures: seoGate.failures", "probe SEO failure evidence");
+  contains(route, "evidence: seoGate.evidence", "probe SEO evidence payload");
+});

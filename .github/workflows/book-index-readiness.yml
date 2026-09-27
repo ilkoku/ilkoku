@@ -37,7 +37,7 @@ jobs:
             test -n "$oidc_token"
 
             if response="$(curl --fail-with-body --silent --show-error --max-time 60 --header "Authorization: Bearer $oidc_token" https://ilkoku.com/api/internal/book-index-readiness)"; then
-              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) else 1)'; then
+              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); operations=payload.get("operations", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedMissingAuthorWithIsbnBooksBySource","unmatchedMissingAuthorWithoutIsbnBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours"); operation_required=("dueCount","maxOverdueMinutes","dueLists"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) and all(key in operations for key in operation_required) else 1)'; then
                 printf '%s' "$response" > readiness.json
                 python3 - <<'PY'
           import json
@@ -47,6 +47,7 @@ jobs:
 
           readiness = payload["readiness"]
           seo_gate = payload["seoGate"]
+          operations = payload["operations"]
 
           print(json.dumps({
               "generatedAt": payload.get("generatedAt"),
@@ -61,15 +62,27 @@ jobs:
               "booksOnAtLeast3IndependentCompositeSources": readiness.get("booksOnAtLeast3IndependentCompositeSources"),
               "nearThreeSourceCount": readiness.get("nearThreeSourceCount"),
               "nearThreeWithHistoricalThirdSourceCount": readiness.get("nearThreeWithHistoricalThirdSourceCount"),
+              "normalizedIdentityKeysOnAtLeast2Sources": readiness.get("normalizedIdentityKeysOnAtLeast2Sources"),
+              "normalizedIdentityKeysOnAtLeast3Sources": readiness.get("normalizedIdentityKeysOnAtLeast3Sources"),
+              "isbn13KeysOnAtLeast2Sources": readiness.get("isbn13KeysOnAtLeast2Sources"),
+              "isbn13KeysOnAtLeast3Sources": readiness.get("isbn13KeysOnAtLeast3Sources"),
+              "splitMasterCollisionCount": readiness.get("splitMasterCollisionCount"),
+              "normalizedTitleDifferentAuthorCount": readiness.get("normalizedTitleDifferentAuthorCount"),
+              "editionFamilyVariantOverlapCount": readiness.get("editionFamilyVariantOverlapCount"),
               "historySpanHours": readiness.get("historySpanHours"),
               "historySpanDays": readiness.get("historySpanDays"),
               "minimumSourceSuccessfulRunCount": readiness.get("minimumSourceSuccessfulRunCount"),
               "minimumSourceHistorySpanHours": readiness.get("minimumSourceHistorySpanHours"),
               "leastSuccessfulRunCountSourceCodes": readiness.get("leastSuccessfulRunCountSourceCodes"),
               "shortestHistorySpanSourceCodes": readiness.get("shortestHistorySpanSourceCodes"),
+              "dueCount": operations.get("dueCount"),
+              "maxOverdueMinutes": operations.get("maxOverdueMinutes"),
+              "dueLists": operations.get("dueLists"),
               "unmatchedExternalBooksBySource": readiness.get("unmatchedExternalBooksBySource"),
               "unmatchedDuplicateIdentityGroupsBySource": readiness.get("unmatchedDuplicateIdentityGroupsBySource"),
               "unmatchedMissingAuthorBooksBySource": readiness.get("unmatchedMissingAuthorBooksBySource"),
+              "unmatchedMissingAuthorWithIsbnBooksBySource": readiness.get("unmatchedMissingAuthorWithIsbnBooksBySource"),
+              "unmatchedMissingAuthorWithoutIsbnBooksBySource": readiness.get("unmatchedMissingAuthorWithoutIsbnBooksBySource"),
               "unmatchedAmbiguousIdentityGroupsBySource": readiness.get("unmatchedAmbiguousIdentityGroupsBySource"),
           }, ensure_ascii=False, indent=2))
           PY

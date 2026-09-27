@@ -1,6 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
+import { getBookIndexOperationsSnapshot } from "@/lib/book-index/operations";
 import { getBookIndexPublicReadModel } from "@/lib/book-index/public-read-model";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import {
@@ -62,9 +63,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [readiness, publicReadModel] = await Promise.all([
+    const [readiness, publicReadModel, operations] = await Promise.all([
       getBookIndexReadinessSnapshot(),
       getBookIndexPublicReadModel(100),
+      getBookIndexOperationsSnapshot(),
     ]);
     const seoGate = evaluateBookIndexSeoGate(
       getBookIndexSeoGatePolicy(),
@@ -95,6 +97,20 @@ export async function GET(request: NextRequest) {
         nearThreeSourceCount: readiness.nearThreeSourceCount,
         nearThreeWithHistoricalThirdSourceCount:
           readiness.nearThreeWithHistoricalThirdSourceCount,
+        normalizedIdentityKeysOnAtLeast2Sources:
+          readiness.normalizedIdentityKeysOnAtLeast2Sources,
+        normalizedIdentityKeysOnAtLeast3Sources:
+          readiness.normalizedIdentityKeysOnAtLeast3Sources,
+        isbn13KeysOnAtLeast2Sources:
+          readiness.isbn13KeysOnAtLeast2Sources,
+        isbn13KeysOnAtLeast3Sources:
+          readiness.isbn13KeysOnAtLeast3Sources,
+        splitMasterCollisionCount:
+          readiness.splitMasterCollisionCount,
+        normalizedTitleDifferentAuthorCount:
+          readiness.normalizedTitleDifferentAuthorCount,
+        editionFamilyVariantOverlapCount:
+          readiness.editionFamilyVariantOverlapCount,
         historySpanHours: readiness.historySpanHours,
         historySpanDays: readiness.historySpanDays,
         minimumSourceSuccessfulRunCount:
@@ -111,12 +127,30 @@ export async function GET(request: NextRequest) {
           readiness.unmatchedDuplicateIdentityGroupsBySource,
         unmatchedMissingAuthorBooksBySource:
           readiness.unmatchedMissingAuthorBooksBySource,
+        unmatchedMissingAuthorWithIsbnBooksBySource:
+          readiness.unmatchedMissingAuthorWithIsbnBooksBySource,
+        unmatchedMissingAuthorWithoutIsbnBooksBySource:
+          readiness.unmatchedMissingAuthorWithoutIsbnBooksBySource,
         unmatchedAmbiguousIdentityGroupsBySource:
           readiness.unmatchedAmbiguousIdentityGroupsBySource,
+      },
+      operations: {
+        dueCount: operations.dueCount,
+        maxOverdueMinutes: operations.maxOverdueMinutes,
+        dueLists: operations.rows
+          .filter((row) => row.due)
+          .map((row) => ({
+            listCode: row.listCode,
+            sourceCode: row.sourceCode,
+            nextDueAt: row.nextDueAt,
+            latestRunStatus: row.latestRunStatus,
+          })),
       },
       seoGate: {
         state: seoGate.state,
         canPublish: seoGate.canPublish,
+        failures: seoGate.failures,
+        evidence: seoGate.evidence,
       },
     });
   } catch (error) {

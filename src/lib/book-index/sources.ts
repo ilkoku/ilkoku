@@ -205,6 +205,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     collectionState: "researching",
   },
   {
+    code: "kitapstore",
+    name: "KitapStore",
+    market: "TR",
+    countryCode: "TR",
+    baseUrl: "https://www.kitapstore.com",
+    includeInTurkeyIndex: true,
+    independenceGroup: "bilge-kitap-kulubu",
+    operatorName: "Bilge Kitap Kulübü",
+    phase: "phase_2",
+    collectionState: "researching",
+  },
+  {
     code: "hepsiburada",
     name: "Hepsiburada",
     market: "TR",

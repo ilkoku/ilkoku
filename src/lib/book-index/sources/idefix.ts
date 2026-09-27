@@ -173,14 +173,10 @@ async function enrichBooks(
 
   await Promise.all(workers);
 
-  return books.map((book, index) => {
+  const enrichedBooks = books.map((book, index) => {
     const detail = details[index];
     const authorName = book.authorName || detail?.authorName || null;
     const isbn13 = detail?.isbn13 || book.isbn13 || null;
-
-    if (!authorName && !isbn13) {
-      throw new Error("BOOK_INDEX_IDEFIX_DETAIL_METADATA_MISSING");
-    }
 
     return {
       ...book,
@@ -188,6 +184,16 @@ async function enrichBooks(
       isbn13,
     };
   });
+
+  const identifiedBookCount = enrichedBooks.filter(
+    (book) => Boolean(book.authorName || book.isbn13 || book.isbn10),
+  ).length;
+
+  if (identifiedBookCount === 0) {
+    throw new Error("BOOK_INDEX_IDEFIX_DETAIL_METADATA_MISSING");
+  }
+
+  return enrichedBooks;
 }
 
 export function parseIdefixBestsellers(

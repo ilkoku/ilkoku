@@ -317,8 +317,23 @@ test("idefix collector reads server-side Next data and excludes source-sponsored
   contains(adapter, "detailAuthorName", "idefix detail author extraction");
   contains(
     adapter,
+    "identifiedBookCount",
+    "idefix tracks successfully identified books after detail enrichment",
+  );
+  contains(
+    adapter,
+    "identifiedBookCount === 0",
+    "idefix fails closed only when detail identity enrichment fully collapses",
+  );
+  contains(
+    adapter,
     "BOOK_INDEX_IDEFIX_DETAIL_METADATA_MISSING",
-    "idefix detail metadata fails closed",
+    "idefix total identity loss remains fail closed",
+  );
+  notContains(
+    adapter,
+    "if (!authorName && !isbn13)",
+    "one identity-poor book no longer rejects the entire idefix list",
   );
   contains(adapter, "books: await enrichBooks(parsed.books)", "idefix parsed books are enriched before persistence");
   contains(adapter, "BOOK_INDEX_IDEFIX_RESULT_TOO_SMALL", "idefix suspicious result gate");

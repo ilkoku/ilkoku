@@ -1,0 +1,116 @@
+name: Book Index Pandora endpoint probe
+
+on:
+  push:
+    branches:
+      - research/book-index-pandora-endpoint-01ak-ae-ab-aa
+    paths:
+      - ".github/workflows/book-index-pandora-endpoint-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Observe public Pandora bestseller loading contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Compare static and rendered public page
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          url='https://www.pandora.com.tr/Cok_Satan_Kitaplar'
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir" 2>/dev/null || true' EXIT
+
+          static="$tmpdir/static.html"
+          code="$(curl             --silent             --show-error             --compressed             --max-time 20             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: text/html,application/xhtml+xml'             --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5'             --output "$static"             --write-out '%{http_code}'             "$url" || true)"
+
+          bytes="$(wc -c < "$static" | tr -d ' ')"
+          if grep -Fqi 'Türkçe çok satan kitaplar yükleniyor' "$static"; then
+            loading_marker=true
+          else
+            loading_marker=false
+          fi
+          printf 'static_http_status=%s static_bytes=%s loading_marker=%s\n' "$code" "$bytes" "$loading_marker"
+
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [ -z "$chrome" ]; then
+            echo 'render_probe=browser_unavailable'
+            exit 0
+          fi
+
+          rendered="$tmpdir/rendered.html"
+          netlog="$tmpdir/net.json"
+
+          "$chrome"             --headless=new             --disable-gpu             --disable-dev-shm-usage             --no-sandbox             --lang=tr-TR             --window-size=1920,20000             --virtual-time-budget=10000             --log-net-log="$netlog"             --net-log-capture-mode=Everything             --dump-dom             "$url" > "$rendered" 2>/dev/null || true
+
+          node - "$rendered" "$netlog" <<'NODE'
+          const fs = require("node:fs");
+
+          const renderedPath = process.argv[2];
+          const netlogPath = process.argv[3];
+          const html = fs.existsSync(renderedPath) ? fs.readFileSync(renderedPath, "utf8") : "";
+
+          const normalized = html
+            .replace(/<script\b[\s\S]*?<\/script>/giu, " ")
+            .replace(/<style\b[\s\S]*?<\/style>/giu, " ")
+            .replace(/<[^>]+>/gu, " ")
+            .replace(/&nbsp;/giu, " ")
+            .replace(/&amp;/giu, "&")
+            .replace(/\s+/gu, " ")
+            .trim();
+
+          const hasLoading = /Türkçe çok satan kitaplar yükleniyor/iu.test(normalized);
+          const hasBestsellersHeading = /Çok Satanlar\s*-\s*Türkçe Kitaplar/iu.test(normalized);
+          const textAfterHeading = normalized.match(/Çok Satanlar\s*-\s*Türkçe Kitaplar([\s\S]{0,5000})/iu)?.[1] ?? "";
+          const tlPriceCount = [...textAfterHeading.matchAll(/\b\d[\d.]*,\d{2}\s*TL\b/giu)].length;
+
+          console.log(`render_bytes=${Buffer.byteLength(html)} render_loading_marker=${hasLoading} render_bestseller_heading=${hasBestsellersHeading} render_tl_price_count_after_heading=${tlPriceCount}`);
+
+          if (!fs.existsSync(netlogPath)) {
+            console.log("network_paths=NETLOG_MISSING");
+            process.exit(0);
+          }
+
+          let payload;
+          try {
+            payload = JSON.parse(fs.readFileSync(netlogPath, "utf8"));
+          } catch {
+            console.log("network_paths=NETLOG_INVALID");
+            process.exit(0);
+          }
+
+          const paths = new Set();
+          function visit(value) {
+            if (typeof value === "string" && /^https?:\/\//iu.test(value)) {
+              try {
+                const parsed = new URL(value);
+                if (parsed.hostname === "www.pandora.com.tr" || parsed.hostname === "pandora.com.tr") {
+                  const queryKeys = [...parsed.searchParams.keys()].sort();
+                  const normalizedUrl = `${parsed.origin}${parsed.pathname}${queryKeys.length ? `?${queryKeys.join("&")}` : ""}`;
+                  paths.add(normalizedUrl);
+                }
+              } catch {}
+              return;
+            }
+            if (Array.isArray(value)) {
+              for (const item of value) visit(item);
+              return;
+            }
+            if (value && typeof value === "object") {
+              for (const item of Object.values(value)) visit(item);
+            }
+          }
+
+          visit(payload?.events ?? []);
+          const interesting = [...paths]
+            .filter((value) => !/\.(?:css|js|png|jpe?g|gif|svg|ico|woff2?)(?:\?|$)/iu.test(value))
+            .filter((value) => value !== "https://www.pandora.com.tr/Cok_Satan_Kitaplar")
+            .sort();
+
+          console.log(`pandora_same_origin_path_count=${paths.size}`);
+          console.log(`pandora_interesting_paths=${interesting.join(" | ") || "NONE"}`);
+          NODE

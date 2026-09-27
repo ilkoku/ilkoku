@@ -112,7 +112,9 @@ test("Book Index readiness exposes source history maturity without inventing pub
   contains(readiness, "historySpanHours: historySpanHoursBetween(firstObservationAt, lastObservationAt)", "global readiness history hours");
   contains(readiness, "minimumSourceSuccessfulRunCount", "minimum successful source snapshot count");
   contains(readiness, "minimumSourceHistorySpanHours", "minimum source history span");
-  contains(readiness, "leastMatureSourceCodes", "least mature source diagnostics");
+  contains(readiness, "leastSuccessfulRunCountSourceCodes", "minimum snapshot source diagnostics");
+  contains(readiness, "shortestHistorySpanSourceCodes", "shortest history source diagnostics");
+  contains(readiness, "leastMatureSourceCodes", "combined least mature source diagnostics");
   contains(readiness, 'status: { in: ["success", "no_change"] }', "history only counts successful snapshots");
   contains(readiness, 'groupBy({', "history aggregation stays database-side");
   contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "eligibility threshold stays unchanged");
@@ -144,10 +146,12 @@ test("Book Index admin exposes source history maturity without publish judgments
   contains(admin, "Biriken süre", "history span column");
   contains(admin, "source.historySpanHours", "source history span value");
   contains(admin, "readiness.historySpanHours", "global history span value");
-  contains(admin, "readiness.leastMatureSourceCodes", "least mature source evidence");
+  contains(admin, "readiness.leastSuccessfulRunCountSourceCodes", "minimum snapshot source evidence");
+  contains(admin, "readiness.shortestHistorySpanSourceCodes", "shortest history source evidence");
   contains(admin, "readiness.minimumSourceSuccessfulRunCount", "minimum source snapshot evidence");
   contains(admin, "readiness.minimumSourceHistorySpanHours", "minimum source history evidence");
-  contains(admin, "En genç kaynak", "least mature source label");
+  contains(admin, "En az snapshot", "minimum snapshot source label");
+  contains(admin, "En kısa history", "shortest history source label");
   contains(admin, "Kesin süre", "precise global history span label");
   notContains(admin, "Tarihçe yeterli", "admin does not invent maturity verdicts");
   notContains(admin, "Tarihçe yetersiz", "admin does not invent maturity verdicts");

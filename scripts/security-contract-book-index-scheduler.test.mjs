@@ -212,4 +212,18 @@ test("Book Index readiness probe exposes overdue operations evidence without col
     '"unmatchedMissingAuthorWithoutIsbnBooksBySource"',
     "workflow prints missing-author ISBN-absent evidence",
   );
+  for (const metric of [
+    "normalizedIdentityKeysOnAtLeast2Sources",
+    "normalizedIdentityKeysOnAtLeast3Sources",
+    "isbn13KeysOnAtLeast2Sources",
+    "isbn13KeysOnAtLeast3Sources",
+    "splitMasterCollisionCount",
+    "normalizedTitleDifferentAuthorCount",
+    "editionFamilyVariantOverlapCount",
+  ]) {
+    contains(route, metric, `readiness probe safety metric ${metric}`);
+    contains(workflow, `"${metric}"`, `workflow safety metric ${metric}`);
+  }
+  contains(route, "failures: seoGate.failures", "probe SEO failure evidence");
+  contains(route, "evidence: seoGate.evidence", "probe SEO evidence payload");
 });

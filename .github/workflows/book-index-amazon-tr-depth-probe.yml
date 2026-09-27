@@ -169,48 +169,70 @@ jobs:
             process.exit(0);
           }
 
-          const urls = [];
-          const seen = new Set();
+          const events = Array.isArray(payload?.events) ? payload.events : [];
+          const nextPageMatcher = /\/acp\/eu-south-2\/p13n-zg-list-grid-desktop\/[^/]+\/nextPage/iu;
+          const seeds = events.filter((event) => {
+            const url = event?.params?.url;
+            return typeof url === "string" && nextPageMatcher.test(url);
+          });
 
-          function visit(value) {
-            if (typeof value === "string" && /^https?:\/\//iu.test(value)) {
-              try {
-                const parsed = new URL(value);
-                if (
-                  parsed.hostname === "www.amazon.com.tr"
-                  || parsed.hostname.endsWith(".amazon.com.tr")
-                ) {
-                  const queryKeys = [...parsed.searchParams.keys()]
-                    .filter((key) => !/^session/i.test(key))
-                    .sort();
-                  const normalized = `${parsed.origin}${parsed.pathname}${queryKeys.length ? `?${queryKeys.join("&")}` : ""}`;
-                  if (!seen.has(normalized)) {
-                    seen.add(normalized);
-                    urls.push(normalized);
-                  }
-                }
-              } catch {}
-              return;
-            }
-
-            if (Array.isArray(value)) {
-              for (const item of value) visit(item);
-              return;
-            }
-
-            if (value && typeof value === "object") {
-              for (const item of Object.values(value)) visit(item);
-            }
-          }
-
-          visit(payload?.events ?? []);
-
-          const interesting = urls.filter((url) =>
-            /(best|zg|p13n|ajax|api|query|load|hz|gp\/)/iu.test(url)
-            && !/\/dp\//iu.test(url),
+          const typeMap = new Map(
+            Object.entries(payload?.constants?.logEventTypes ?? {}).map(([name, value]) => [value, name]),
           );
 
-          console.log(`render_page=${page} amazon_request_path_count=${urls.length}`);
-          console.log(`render_page=${page} interesting_request_paths=${interesting.join(" | ") || "NONE"}`);
+          if (seeds.length === 0) {
+            console.log(`render_page=${page} next_page_request=NOT_FOUND`);
+            process.exit(0);
+          }
+
+          const seenSourceIds = new Set();
+          for (const seed of seeds) {
+            const sourceId = seed?.source?.id;
+            if (sourceId == null || seenSourceIds.has(sourceId)) continue;
+            seenSourceIds.add(sourceId);
+
+            const sourceEvents = events.filter((event) => event?.source?.id === sourceId);
+            const rawUrl = seed.params.url;
+            const parsed = new URL(rawUrl);
+            const queryKeys = [...parsed.searchParams.keys()].sort();
+            const safePath = parsed.pathname.replace(
+              /\/p13n-zg-list-grid-desktop\/[^/]+\/nextPage$/iu,
+              "/p13n-zg-list-grid-desktop/{dynamic}/nextPage",
+            );
+
+            const methods = [...new Set(
+              sourceEvents
+                .map((event) => event?.params?.method)
+                .filter((value) => typeof value === "string"),
+            )];
+
+            const responseCodes = new Set();
+            for (const event of sourceEvents) {
+              const directCode = event?.params?.response_code ?? event?.params?.status_code;
+              if (Number.isInteger(directCode)) responseCodes.add(directCode);
+
+              const headers = event?.params?.headers;
+              if (Array.isArray(headers)) {
+                for (const header of headers) {
+                  if (typeof header !== "string") continue;
+                  const match = header.match(/^HTTP\/\S+\s+(\d{3})\b/iu);
+                  if (match) responseCodes.add(Number(match[1]));
+                }
+              }
+            }
+
+            const eventNames = [...new Set(
+              sourceEvents
+                .map((event) => typeMap.get(event.type))
+                .filter(Boolean),
+            )].sort();
+
+            console.log(
+              `render_page=${page} next_page_request=FOUND method=${methods.join(",") || "UNKNOWN"} status=${[...responseCodes].join(",") || "UNKNOWN"} path=${parsed.origin}${safePath} query_keys=${queryKeys.join(",") || "NONE"} source_event_count=${sourceEvents.length}`,
+            );
+            console.log(
+              `render_page=${page} next_page_event_types=${eventNames.join(",") || "UNKNOWN"}`,
+            );
+          }
           NODE
           done

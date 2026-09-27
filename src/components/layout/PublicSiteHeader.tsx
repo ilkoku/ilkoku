@@ -5,7 +5,10 @@ import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigation";
 import { resolveHeaderNavigation } from "@/lib/cms-header-navigation";
 import { getPublishedHeaderNavigation } from "@/lib/cms-header-navigation-server";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import {
+  getBookIndexPublicPageContext,
+  getBookIndexPublicSourcePageContext,
+} from "@/lib/book-index/public-access";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 import "./public-site-header.css";
@@ -22,7 +25,7 @@ type ResolvedHeaderMenu = ReturnType<typeof resolveHeaderNavigation>[number] & {
 
 function withBookIndexMenu(
   menus: ReturnType<typeof resolveHeaderNavigation>,
-  enabled: boolean,
+  href: string | null,
 ): ResolvedHeaderMenu[] {
   const withoutBookIndex = menus.flatMap((menu) => {
     if (menu.id === "book-index") return [];
@@ -38,19 +41,19 @@ function withBookIndexMenu(
     return [{ ...menu, groups }];
   });
 
-  if (!enabled) return withoutBookIndex;
+  if (!href) return withoutBookIndex;
 
   const bookIndexMenu: ResolvedHeaderMenu = {
     id: "book-index",
     label: "En Çok Satanlar",
-    directHref: "/en-cok-satanlar",
+    directHref: href,
     groups: [
       {
         id: "book-index-main",
         title: "Kitap Endeksi",
         links: [
           {
-            href: "/en-cok-satanlar",
+            href,
             label: "En Çok Satanlar",
             primary: true,
             pageId: "book-index",
@@ -92,14 +95,20 @@ function AccountIcon() {
 }
 
 export async function PublicSiteHeader() {
-  const [identity, navigation, bookIndexContext] = await Promise.all([
+  const [identity, navigation, bookIndexContext, bookIndexSourceContext] = await Promise.all([
     getPublicSiteIdentity(),
     getPublishedHeaderNavigation(),
     getBookIndexPublicPageContext(100).catch(() => null),
+    getBookIndexPublicSourcePageContext(100).catch(() => null),
   ]);
+  const bookIndexHref = bookIndexContext
+    ? "/en-cok-satanlar"
+    : bookIndexSourceContext
+      ? "/en-cok-satanlar/kaynak"
+      : null;
   const publicMenus = withBookIndexMenu(
     resolveHeaderNavigation(navigation.payload, navigation.pages),
-    Boolean(bookIndexContext),
+    bookIndexHref,
   );
 
   return (

@@ -156,8 +156,8 @@ export function BookIndexSourceView({
             </time>
           </p>
         ) : null}
-        <Link className={styles.backLink} href="/en-cok-satanlar">
-          ← En Çok Satanlar ana sayfası
+        <Link className={styles.backLink} href="/en-cok-satanlar/kaynak">
+          ← Çok Satan Kaynakları
         </Link>
       </header>
 

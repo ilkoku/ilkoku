@@ -2,14 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { BookIndexSourceView } from "@/features/book-index/public/BookIndexPublicView";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexPublicSourcePageContext } from "@/lib/book-index/public-access";
 import {
   createBookIndexSourceItemListSchema,
 } from "@/lib/book-index/seo";
-import {
-  getBookIndexPublishedSourcePages,
-  getBookIndexSourcePageBySlug,
-} from "@/lib/book-index/source-pages";
+import { getBookIndexSourcePageBySlug } from "@/lib/book-index/source-pages";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 const baseUrl = "https://ilkoku.com";
@@ -39,11 +36,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     });
   }
 
-  const context = await getBookIndexPublicPageContext(100);
+  const context = await getBookIndexPublicSourcePageContext(100);
   const sourcePage = context
-    ? getBookIndexPublishedSourcePages(context.model).find(
-        (page) => page.slug === slug,
-      ) ?? null
+    ? context.sourcePages.find((page) => page.slug === slug) ?? null
     : null;
 
   return createPublicPageMetadata({
@@ -60,10 +55,10 @@ export default async function BookIndexSourcePage({ params }: PageProps) {
   const definition = getBookIndexSourcePageBySlug(slug);
   if (!definition) notFound();
 
-  const context = await getBookIndexPublicPageContext(100);
+  const context = await getBookIndexPublicSourcePageContext(100);
   if (!context) notFound();
 
-  const sourcePage = getBookIndexPublishedSourcePages(context.model).find(
+  const sourcePage = context.sourcePages.find(
     (page) => page.slug === slug,
   );
   if (!sourcePage) notFound();
@@ -108,8 +103,8 @@ export default async function BookIndexSourcePage({ params }: PageProps) {
         {
           "@type": "ListItem",
           position: 2,
-          name: "En Çok Satanlar",
-          item: `${baseUrl}/en-cok-satanlar`,
+          name: "Çok Satan Kaynakları",
+          item: `${baseUrl}/en-cok-satanlar/kaynak`,
         },
         {
           "@type": "ListItem",

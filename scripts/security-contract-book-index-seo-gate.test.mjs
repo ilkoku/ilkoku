@@ -72,8 +72,8 @@ test("Book Index public routes fail closed before sitemap publication", () => {
 
   contains(
     sitemap,
-    'import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";',
-    "sitemap consumes the same public gate",
+    "getBookIndexPublicPageContext,",
+    "sitemap imports the aggregate public gate",
   );
   contains(sitemap, "async function loadBookIndexSitemapEntries()", "isolated sitemap gate helper");
   contains(
@@ -110,6 +110,34 @@ test("Book Index public routes fail closed before sitemap publication", () => {
   notContains(navigation, "/en-cok-satanlar", "public navigation remains closed");
 });
 
+
+
+test("phased source publication does not unlock the aggregate Book Index", () => {
+  const access = source("src/lib/book-index/public-access.ts");
+  const overview = source("src/app/en-cok-satanlar/page.tsx");
+  const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
+  const sourceHub = source("src/app/en-cok-satanlar/kaynak/page.tsx");
+  const sourceRoute = source("src/app/en-cok-satanlar/kaynak/[slug]/page.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+
+  contains(access, "getBookIndexPublicSourcePageContext", "source-only page context");
+  contains(
+    access,
+    "getBookIndexPublishedSourcePages(model)",
+    "source-only context requires real publishable source pages",
+  );
+  contains(sourceHub, "getBookIndexPublicSourcePageContext(100)", "source hub uses source-only context");
+  contains(sourceRoute, "getBookIndexPublicSourcePageContext(100)", "source detail uses source-only context");
+  contains(overview, "getBookIndexPublicPageContext(30)", "overview remains aggregate-gated");
+  contains(turkey, "getBookIndexPublicPageContext(100)", "Turkey page remains aggregate-gated");
+  contains(sitemap, "loadBookIndexSourceSitemapEntries", "source sitemap has an independent helper");
+  contains(sitemap, "loadBookIndexSitemapEntries", "aggregate sitemap keeps its existing helper");
+  contains(
+    sitemap,
+    'url: `${baseUrl}/en-cok-satanlar/kaynak`',
+    "source hub may publish independently",
+  );
+});
 
 test("Book Index admin shows SEO gate evidence without publishing", () => {
   const page = source("src/app/admin/kitap-endeksi/page.tsx");

@@ -56,7 +56,25 @@ export const BOOK_INDEX_PUBLIC_SOURCE_PAGES: readonly BookIndexPublicSourcePageD
     sourceCode: "kitapsec",
     slug: "kitapsec",
     sourceName: "KitapSeç",
-    searchTitle: "KitapSeç En Çok Satan Kitaplar",
+    searchTitle: "KitapSeç Çok Satan Kitap Listeleri",
+  },
+  {
+    sourceCode: "kitaplarsepette",
+    slug: "kitaplarsepette",
+    sourceName: "KitaplarSepette",
+    searchTitle: "KitaplarSepette En Çok Satan Kitaplar",
+  },
+  {
+    sourceCode: "illakitap",
+    slug: "illa-kitap",
+    sourceName: "İlla Kitap",
+    searchTitle: "İlla Kitap En Çok Satan Kitaplar",
+  },
+  {
+    sourceCode: "nobelkitap",
+    slug: "nobel-kitap",
+    sourceName: "NobelKitap",
+    searchTitle: "NobelKitap En Çok Satan Kitaplar",
   },
 ] as const;
 

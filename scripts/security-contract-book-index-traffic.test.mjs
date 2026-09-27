@@ -31,13 +31,23 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   contains(sitemap, "lastModified", "sitemap lastModified");
 });
 
-test("public site map never exposes gated Book Index links early", () => {
+test("public site map keeps aggregate Book Index gated while exposing approved source pages", () => {
   const siteMapPage = source("src/app/site-haritasi/page.tsx");
 
   contains(
     siteMapPage,
     "getBookIndexPublicPageContext(30).catch(() => null)",
-    "site-map Book Index gate",
+    "site-map aggregate Book Index gate",
+  );
+  contains(
+    siteMapPage,
+    "getBookIndexPublicSourcePageContext(100).catch(() => null)",
+    "site-map source-page publication context",
+  );
+  contains(
+    siteMapPage,
+    'href: "/en-cok-satanlar/kaynak"',
+    "source hub is independently discoverable",
   );
   contains(
     siteMapPage,
@@ -120,6 +130,26 @@ test("scheduled IndexNow refresh remains fail-closed while Book Index is absent 
 });
 
 
+
+test("source-only Book Index sitemap refresh can run before the aggregate index opens", () => {
+  const result = selectIndexNowUrls({
+    sitemapUrls: [
+      "https://ilkoku.com/",
+      "https://ilkoku.com/en-cok-satanlar/kaynak",
+      "https://ilkoku.com/en-cok-satanlar/kaynak/bkm-kitap",
+      "https://ilkoku.com/en-cok-satanlar/kaynak/idefix",
+    ],
+    changedFiles: ["__BOOK_INDEX__"],
+  });
+
+  assert.equal(result.mode, "book-index");
+  assert.deepEqual(result.urls, [
+    "https://ilkoku.com/en-cok-satanlar/kaynak",
+    "https://ilkoku.com/en-cok-satanlar/kaynak/bkm-kitap",
+    "https://ilkoku.com/en-cok-satanlar/kaynak/idefix",
+  ]);
+});
+
 test("Book Index uses a dedicated social preview for result-sharing CTR", () => {
   const overview = source("src/app/en-cok-satanlar/page.tsx");
   const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
@@ -188,6 +218,9 @@ test("Book Index source SEO pages publish only from real available snapshots", (
     "kitapzen",
     "inkilap-kitabevi",
     "kitapsec",
+    "kitaplarsepette",
+    "illa-kitap",
+    "nobel-kitap",
   ]) {
     contains(sourcePages, `slug: "${slug}"`, `${slug} source SEO slug`);
   }
@@ -204,8 +237,8 @@ test("Book Index source SEO pages publish only from real available snapshots", (
   );
   contains(
     route,
-    "getBookIndexPublicPageContext(100)",
-    "source pages use the shared public publication gate",
+    "getBookIndexPublicSourcePageContext(100)",
+    "source pages use the source-only publication context",
   );
   contains(route, "if (!sourcePage) notFound()", "missing source snapshot fails closed");
   contains(
@@ -221,8 +254,8 @@ test("Book Index source SEO pages publish only from real available snapshots", (
   contains(route, "createBookIndexSourceItemListSchema", "source ranking schema");
   contains(
     sitemap,
-    "getBookIndexPublishedSourcePages(context.model)",
-    "sitemap only receives publishable source pages",
+    "loadBookIndexSourceSitemapEntries",
+    "sitemap publishes source pages independently from the aggregate gate",
   );
   contains(
     sitemap,
@@ -247,8 +280,8 @@ test("manual SEO indexability smoke validates Book Index only after sitemap publ
 
   contains(
     workflow,
-    "Published Book Index detected in sitemap; validating gated SEO surfaces.",
-    "Book Index sitemap detection",
+    "Published Book Index source hub detected; validating phased source surfaces.",
+    "source-only Book Index sitemap detection",
   );
   contains(
     workflow,
@@ -267,8 +300,8 @@ test("manual SEO indexability smoke validates Book Index only after sitemap publ
   );
   contains(
     workflow,
-    "Book Index is not published in sitemap; gated SEO checks remain skipped.",
-    "fail-closed pre-publication behavior",
+    "Aggregate Book Index remains gated; aggregate SEO checks skipped.",
+    "aggregate fail-closed behavior during phased source launch",
   );
 });
 

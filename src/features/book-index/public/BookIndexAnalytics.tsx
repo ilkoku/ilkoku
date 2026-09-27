@@ -45,6 +45,7 @@ function emitBookIndexEvent(payload: AnalyticsEvent) {
 
 function surfaceFromPath(pathname: string) {
   if (pathname === "/en-cok-satanlar/turkiye") return "turkey";
+  if (pathname === "/en-cok-satanlar/kaynak") return "source_hub";
   if (pathname.startsWith("/en-cok-satanlar/kaynak/")) return "source";
   if (
     pathname === "/en-cok-satanlar/yeni-girisler"

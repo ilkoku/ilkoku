@@ -1,0 +1,80 @@
+name: Book Index Kitapyurdu access probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/book-index-kitapyurdu-access-probe.yml"
+      - "scripts/security-contract-book-index-kitapyurdu-probe.test.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe transparent Kitapyurdu bestseller access
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Make one transparent public request
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          url='https://www.kitapyurdu.com/index.php?limit=100&list_id=5&page=1&route=product%2Flist'
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          trap 'rm -f "$headers" "$body"' EXIT
+
+          code="$(curl \
+            --silent \
+            --show-error \
+            --compressed \
+            --max-time 20 \
+            --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)' \
+            --header 'Accept: text/html,application/xhtml+xml' \
+            --dump-header "$headers" \
+            --output "$body" \
+            --write-out '%{http_code}' \
+            "$url" || true)"
+
+          bytes="$(wc -c < "$body" | tr -d ' ')"
+          content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+          server="$(awk 'BEGIN{IGNORECASE=1} /^server:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+
+          if grep -Fqi 'Çok Satanlar' "$body"; then
+            bestseller_marker=true
+          else
+            bestseller_marker=false
+          fi
+
+          if grep -Fqi 'Son 30 gün' "$body"; then
+            monthly_marker=true
+          else
+            monthly_marker=false
+          fi
+
+          printf 'http_status=%s\n' "$code"
+          printf 'body_bytes=%s\n' "$bytes"
+          printf 'content_type=%s\n' "${content_type:-YOK}"
+          printf 'server=%s\n' "${server:-YOK}"
+          printf 'bestseller_marker=%s\n' "$bestseller_marker"
+          printf 'monthly_marker=%s\n' "$monthly_marker"
+
+          case "$code" in
+            200)
+              printf 'access_state=http_200\n'
+              ;;
+            403|429)
+              printf 'access_state=blocked\n'
+              ;;
+            000|'')
+              printf 'access_state=request_failed\n' >&2
+              exit 1
+              ;;
+            *)
+              printf 'access_state=http_%s\n' "$code"
+              ;;
+          esac

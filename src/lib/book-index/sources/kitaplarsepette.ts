@@ -7,8 +7,10 @@ import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "kitaplarsepette";
 const SOURCE_ORIGIN = "https://www.kitaplarsepette.com";
-const MAX_BOOKS = 30;
-const MIN_EXPECTED_BOOKS = 25;
+const MAX_BOOKS = 100;
+const PAGE_SIZE = 30;
+const MAX_PAGES = Math.ceil(MAX_BOOKS / PAGE_SIZE);
+const MIN_EXPECTED_BOOKS = 60;
 const DETAIL_CONCURRENCY = 6;
 
 type KitaplarSepetteCard = {
@@ -36,6 +38,7 @@ function validIsbn13(value: string | undefined) {
 
 export function parseKitaplarSepetteBestsellerCards(
   html: string,
+  rankOffset = 0,
 ): KitaplarSepetteCard[] {
   const starts = [...html.matchAll(/<div\b[^>]*>/giu)].filter((match) => {
     const className = match[0].match(/\bclass=["']([^"']*)["']/iu)?.[1] ?? "";
@@ -68,15 +71,11 @@ export function parseKitaplarSepetteBestsellerCards(
         title,
         productUrl: absoluteUrl(link[1]),
         imageUrl: image ? absoluteUrl(image) : null,
-        rank: index + 1,
+        rank: rankOffset + index + 1,
       };
     })
     .filter((card): card is KitaplarSepetteCard => card !== null)
-    .slice(0, MAX_BOOKS);
-
-  if (cards.length < MIN_EXPECTED_BOOKS) {
-    throw new Error("BOOK_INDEX_KITAPLARSEPETTE_RESULT_TOO_SMALL");
-  }
+    .slice(0, PAGE_SIZE);
 
   const uniqueIds = new Set(cards.map((card) => card.productId));
   if (uniqueIds.size !== cards.length) {
@@ -125,6 +124,15 @@ export function parseKitaplarSepetteProductDetails(
   };
 }
 
+function bestsellerPageUrl(sourceUrl: string, page: number) {
+  if (page === 1) return sourceUrl;
+
+  const url = new URL(sourceUrl);
+  url.searchParams.set("etiket", "3");
+  url.searchParams.set("sayfa", String(page));
+  return url.toString();
+}
+
 async function fetchHtml(url: string) {
   const response = await fetch(url, {
     cache: "no-store",
@@ -170,9 +178,46 @@ export const kitaplarSepetteBookIndexAdapter: BookIndexSourceAdapter = {
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const cards = parseKitaplarSepetteBestsellerCards(
-      await fetchHtml(context.sourceUrl),
+    const pageHtml = await Promise.all(
+      Array.from({ length: MAX_PAGES }, (_, index) =>
+        fetchHtml(bestsellerPageUrl(context.sourceUrl, index + 1)),
+      ),
     );
+
+    const pageCards = pageHtml.map((html, index) =>
+      parseKitaplarSepetteBestsellerCards(html, index * PAGE_SIZE),
+    );
+
+    const terminalPageIndex = pageCards.findIndex(
+      (cards) => cards.length < PAGE_SIZE,
+    );
+    if (
+      terminalPageIndex >= 0
+      && pageCards.slice(terminalPageIndex + 1).some((cards) => cards.length > 0)
+    ) {
+      throw new Error("BOOK_INDEX_KITAPLARSEPETTE_PAGINATION_GAP");
+    }
+
+    const contiguousPages =
+      terminalPageIndex >= 0
+        ? pageCards.slice(0, terminalPageIndex + 1)
+        : pageCards;
+    const cards = contiguousPages.flat().slice(0, MAX_BOOKS);
+
+    if (cards.length < MIN_EXPECTED_BOOKS) {
+      throw new Error("BOOK_INDEX_KITAPLARSEPETTE_RESULT_TOO_SMALL");
+    }
+
+    const uniqueIds = new Set(cards.map((card) => card.productId));
+    if (uniqueIds.size !== cards.length) {
+      throw new Error("BOOK_INDEX_KITAPLARSEPETTE_DUPLICATE_PRODUCT_ID");
+    }
+
+    const uniqueUrls = new Set(cards.map((card) => card.productUrl));
+    if (uniqueUrls.size !== cards.length) {
+      throw new Error("BOOK_INDEX_KITAPLARSEPETTE_DUPLICATE_PRODUCT_URL");
+    }
+
     const details = await enrichCards(cards);
 
     const books = cards.map((card, index) => {

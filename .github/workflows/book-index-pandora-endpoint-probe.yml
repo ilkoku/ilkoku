@@ -511,3 +511,24 @@ jobs:
           });
           NODE
           done < "$tmpdir/scripts.txt"
+
+      - name: Verify Pandora product URL slug dependence
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_url() {
+            label="$1"
+            url="$2"
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --compressed --max-time 20 --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)' --header 'Accept: text/html,application/xhtml+xml' --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            marker=false
+            if grep -Fqi 'Yanlış Hedef' "$body" || grep -Fqi 'Yanl&#305;&#351; Hedef' "$body"; then marker=true; fi
+            printf 'pandora_product_url_case=%s status=%s location_present=%s title_marker=%s\n' "$label" "$code" "$([ -n "$location" ] && echo true || echo false)" "$marker"
+            rm -f "$headers" "$body"
+          }
+
+          check_url canonical 'https://www.pandora.com.tr/kitap/yanlis-hedef/978808'
+          check_url wrong_slug 'https://www.pandora.com.tr/kitap/x/978808'

@@ -345,3 +345,28 @@ test("Book Index readiness distinguishes historical coverage from latest composi
     "diagnostic does not silently switch SEO gate coverage semantics",
   );
 });
+
+
+test("Book Index scheduler uses a database lease across GitHub and external triggers", () => {
+  const schema = source("prisma/schema.prisma");
+  const lease = source("src/lib/book-index/scheduler-lease.ts");
+  const scheduler = source("src/lib/book-index/scheduler.ts");
+  const migration = source(
+    "prisma/migrations/20260927121500_book_index_scheduler_lease/migration.sql",
+  );
+
+  contains(schema, "model BookIndexSchedulerLease {", "scheduler lease model");
+  contains(schema, "leaseKey    String   @id", "one row per scheduler lease key");
+  contains(schema, "lockedUntil DateTime", "crash-safe expiring lease");
+  contains(migration, "CREATE TABLE `BookIndexSchedulerLease`", "scheduler lease migration");
+  contains(lease, 'const LEASE_KEY = "book-index-scheduler";', "stable lease key");
+  contains(lease, "const LEASE_DURATION_MS = 10 * 60_000;", "bounded lease duration");
+  contains(lease, "lockedUntil: { lte: now }", "expired lease takeover is conditional");
+  contains(lease, '(error as { code?: unknown }).code === "P2002"', "concurrent insert collision is treated as busy");
+  contains(lease, "deleteMany", "lease release uses a bounded delete");
+  contains(lease, "token,", "lease ownership token");
+  contains(scheduler, "acquireBookIndexSchedulerLease(now)", "scheduler acquires cross-trigger lease");
+  contains(scheduler, "if (!lease.acquired)", "busy scheduler exits without collection");
+  contains(scheduler, "runBookIndexSchedulerUnlocked(now)", "collector runs only under the lease");
+  contains(scheduler, "releaseBookIndexSchedulerLease(lease.token)", "scheduler releases its own lease");
+});

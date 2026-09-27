@@ -25,7 +25,12 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(scheduler, 'status: "not_due"', "fallback skips lists that are not due");
   contains(workflow, "workflow_run:", "automated cross-workflow delivery relay");
   contains(workflow, "workflows:", "relay workflow allowlist");
-  contains(workflow, "- Email operations", "relay only follows the hourly Email operations workflow");
+  contains(workflow, "- Email operations", "relay follows the hourly Email operations workflow");
+  contains(
+    workflow,
+    "- Book Index readiness probe",
+    "relay also follows the passive Book Index readiness workflow",
+  );
   contains(workflow, "- completed", "relay waits for workflow completion");
   contains(
     workflow,
@@ -81,7 +86,12 @@ test("Book Index KitaplarSepette canary health is read-only and the one-time pro
   const readiness = source("src/lib/book-index/readiness.ts");
 
   notContains(workflow, "Production smoke", "temporary production-smoke relay remains removed");
-  contains(workflow, "- Email operations", "steady-state relay uses Email operations only");
+  contains(workflow, "- Email operations", "steady-state relay includes Email operations");
+  contains(
+    workflow,
+    "- Book Index readiness probe",
+    "steady-state relay includes passive readiness delivery",
+  );
   notContains(workflow, "?forceKitaplarSepetteCanary=1", "force canary query removed");
   notContains(route, "forceKitaplarSepetteCanary", "force canary route removed");
   notContains(route, "forcedKitaplarSepetteCanaryRun", "force canary response removed");
@@ -316,7 +326,12 @@ test("Book Index retries unsuccessful runs without resetting the full source cad
   );
   contains(workflow, 'cron: "17 * * * *"', "primary hourly scheduler remains");
   contains(workflow, 'cron: "47 * * * *"', "half-hour fallback remains");
-  contains(workflow, "- Email operations", "successful hourly relay remains");
+  contains(workflow, "- Email operations", "successful Email operations relay remains");
+  contains(
+    workflow,
+    "- Book Index readiness probe",
+    "successful readiness relay remains",
+  );
   contains(
     workflow,
     "github.event.workflow_run.conclusion == 'success'",

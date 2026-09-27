@@ -1202,31 +1202,35 @@ test("Pandora source canary is fail-closed, private and non-voting", () => {
 });
 
 
-test("Kitap Ambarı candidate stays research-only until ordering and operator-independence are proven", () => {
+test("Kitap Ambari private canary collects source history without composite voting", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(sources, 'code: "kitapambari"', "Kitap Ambarı research source");
   contains(
     sources,
-    'name: "Kitap Ambarı",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapambari.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "kitapambari",\n    operatorName: "Ötüken Neşriyat A.Ş.",\n    phase: "phase_2",\n    collectionState: "researching"',
-    "Kitap Ambarı remains research-only",
+    'name: "Kitap Ambarı",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapambari.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "kitapambari",\n    operatorName: "Ötüken Neşriyat A.Ş.",\n    phase: "phase_2",\n    collectionState: "ready"',
+    "Kitap Ambari adapter is ready for private canary collection",
   );
-  contains(lists, 'code: "kitapambari-tr-live"', "Kitap Ambarı research list");
+
   contains(
     lists,
-    'sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "Kitap Ambarı list stays disabled and outside composite",
+    'code: "kitapambari-tr-live",\n    sourceCode: "kitapambari",\n    title: "Kitap Ambarı · Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "Kitap Ambari voter stays disabled",
   );
-  notContains(
+
+  contains(
+    lists,
+    'code: "kitapambari-tr-live-canary",\n    sourceCode: "kitapambari",\n    title: "Kitap Ambarı · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    "Kitap Ambari canary is private and non-voting",
+  );
+
+  contains(
     collector,
-    "kitapambariBookIndexAdapter",
-    "Kitap Ambarı has no production collector before rank/independence proof",
+    "[kitapAmbariBookIndexAdapter.sourceCode, kitapAmbariBookIndexAdapter]",
+    "Kitap Ambari adapter is registered for the private canary",
   );
 });
-
-
 test("KitapStore canary collects shadow evidence while voter activation stays off", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");

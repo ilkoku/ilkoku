@@ -1183,3 +1183,18 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
     "KitapStore adapter registered for canary collection",
   );
 });
+
+
+test("Book Index scheduler keeps three due-aware natural delivery windows", () => {
+  const workflow = source(".github/workflows/book-index-scheduler.yml");
+
+  contains(workflow, 'cron: "17 * * * *"', "primary natural schedule");
+  contains(workflow, 'cron: "37 * * * *"', "first due-aware fallback");
+  contains(workflow, 'cron: "57 * * * *"', "second due-aware fallback");
+  contains(
+    workflow,
+    "https://ilkoku.com/api/internal/book-index-scheduler",
+    "all schedule windows use the same due-aware scheduler endpoint",
+  );
+  contains(workflow, "cancel-in-progress: false", "natural runs are serialized rather than cancelled");
+});

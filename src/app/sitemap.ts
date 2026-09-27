@@ -18,7 +18,6 @@ import {
 import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { getBookIndexInsights } from "@/lib/book-index/insights";
 import { getPublishedBookIndexInsightPages } from "@/lib/book-index/insight-pages";
-import { getBookIndexPublishedSourcePages } from "@/lib/book-index/source-pages";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";

@@ -124,6 +124,20 @@ export async function GET(request: NextRequest) {
           readiness.kitapStoreCanaryShadowPairOverlap,
         kitapStoreCanaryShadowSamples:
           readiness.kitapStoreCanaryShadowSamples,
+        kitapSecGeneralCanaryHealth:
+          readiness.kitapSecGeneralCanaryHealth,
+        kitapSecGeneralCanaryShadowBookCount:
+          readiness.kitapSecGeneralCanaryShadowBookCount,
+        kitapSecGeneralCanaryShadowOverlapWithCompositeCount:
+          readiness.kitapSecGeneralCanaryShadowOverlapWithCompositeCount,
+        kitapSecGeneralCanaryShadowWouldReach3StorefrontCount:
+          readiness.kitapSecGeneralCanaryShadowWouldReach3StorefrontCount,
+        kitapSecGeneralCanaryShadowWouldReach3IndependentCount:
+          readiness.kitapSecGeneralCanaryShadowWouldReach3IndependentCount,
+        kitapSecGeneralCanaryShadowPairOverlap:
+          readiness.kitapSecGeneralCanaryShadowPairOverlap,
+        kitapSecGeneralCanaryShadowSamples:
+          readiness.kitapSecGeneralCanaryShadowSamples,
         normalizedIdentityKeysOnAtLeast2Sources:
           readiness.normalizedIdentityKeysOnAtLeast2Sources,
         normalizedIdentityKeysOnAtLeast3Sources:

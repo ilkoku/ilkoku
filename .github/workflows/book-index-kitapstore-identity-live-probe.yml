@@ -1,0 +1,86 @@
+name: Book Index KitapStore identity enrichment live probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapstore-identity-live-01ak-am
+    paths:
+      - ".github/workflows/book-index-kitapstore-identity-live-probe.yml"
+      - "src/lib/book-index/sources/kitapstore.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Verify bounded missing-author ISBN enrichment
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Compile research parser
+        run: |
+          rm -rf /tmp/kitapstore-parser
+          npx tsc \
+            src/lib/book-index/adapter.ts \
+            src/lib/book-index/html.ts \
+            src/lib/book-index/sources/kitapstore.ts \
+            --target ES2022 \
+            --module commonjs \
+            --moduleResolution node \
+            --skipLibCheck \
+            --esModuleInterop \
+            --outDir /tmp/kitapstore-parser
+
+      - name: Verify live identity enrichment without collecting
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const {
+            kitapStoreBookIndexResearchAdapter,
+          } = require("/tmp/kitapstore-parser/sources/kitapstore.js");
+
+          (async () => {
+            const result = await kitapStoreBookIndexResearchAdapter.collect({
+              listCode: "kitapstore-tr-live",
+              sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",
+              observedAt: new Date(),
+            });
+
+            const books = result.books;
+            const missingAuthors = books.filter((book) => !book.authorName);
+            const readerAtWork = books.find((book) => book.sourceKey === "339068");
+            const keys = new Set(books.map((book) => book.sourceKey));
+
+            console.log("book_count=" + books.length);
+            console.log("missing_author_count=" + missingAuthors.length);
+            console.log("missing_author_source_keys=" + missingAuthors.map((book) => book.sourceKey).join(","));
+            console.log("reader_at_work_isbn13=" + (readerAtWork?.isbn13 || "NONE"));
+            console.log("has_776749=" + keys.has("776749"));
+            console.log("has_773082=" + keys.has("773082"));
+
+            if (
+              books.length !== 98 ||
+              missingAuthors.length !== 1 ||
+              missingAuthors[0]?.sourceKey !== "339068" ||
+              readerAtWork?.isbn13 !== "9789754293982" ||
+              keys.has("776749") ||
+              keys.has("773082")
+            ) {
+              throw new Error("KITAPSTORE_IDENTITY_ENRICHMENT_CONTRACT_FAILED");
+            }
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE

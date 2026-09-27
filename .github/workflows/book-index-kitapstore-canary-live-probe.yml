@@ -1,0 +1,84 @@
+name: Book Index KitapStore canary live probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapstore-canary-live-01ak-an
+    paths:
+      - ".github/workflows/book-index-kitapstore-canary-live-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Verify canary list code against public Top 100
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Compile research parser
+        run: |
+          rm -rf /tmp/kitapstore-parser
+          npx tsc \
+            src/lib/book-index/adapter.ts \
+            src/lib/book-index/html.ts \
+            src/lib/book-index/sources/kitapstore.ts \
+            --target ES2022 \
+            --module commonjs \
+            --moduleResolution node \
+            --skipLibCheck \
+            --esModuleInterop \
+            --outDir /tmp/kitapstore-parser
+
+      - name: Run canary parser read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const {
+            kitapStoreBookIndexResearchAdapter,
+          } = require("/tmp/kitapstore-parser/sources/kitapstore.js");
+
+          (async () => {
+            const result = await kitapStoreBookIndexResearchAdapter.collect({
+              listCode: "kitapstore-tr-live-canary",
+              sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",
+              observedAt: new Date(),
+            });
+
+            const books = result.books;
+            const keys = new Set(books.map((book) => book.sourceKey));
+            const readerAtWork = books.find((book) => book.sourceKey === "339068");
+
+            console.log("book_count=" + books.length);
+            console.log("first_rank=" + books[0]?.rank);
+            console.log("last_rank=" + books.at(-1)?.rank);
+            console.log("reader_at_work_isbn13=" + (readerAtWork?.isbn13 || "NONE"));
+            console.log("excluded_776749=" + !keys.has("776749"));
+            console.log("excluded_773082=" + !keys.has("773082"));
+
+            if (
+              books.length !== 98 ||
+              books[0]?.rank !== 1 ||
+              books.at(-1)?.rank !== 100 ||
+              readerAtWork?.isbn13 !== "9789754293982" ||
+              keys.has("776749") ||
+              keys.has("773082")
+            ) {
+              throw new Error("KITAPSTORE_CANARY_LIVE_CONTRACT_FAILED");
+            }
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE

@@ -1228,3 +1228,30 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
     "KitapStore adapter registered for canary collection",
   );
 });
+
+
+test("Every enabled general Book Index source has a dedicated public source page", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+  const sourcePages = source("src/lib/book-index/source-pages.ts");
+
+  const enabledGeneralSources = [
+    ...lists.matchAll(/\{\n\s*code:\s*"[^"]+",([\s\S]*?)\n\s*\},/gu),
+  ]
+    .map((match) => match[1])
+    .filter(
+      (listBlock) =>
+        /categoryKey:\s*"general"/u.test(listBlock)
+        && /enabled:\s*true/u.test(listBlock)
+        && !/Canary/u.test(listBlock),
+    )
+    .map((listBlock) => listBlock.match(/sourceCode:\s*"([^"]+)"/u)?.[1])
+    .filter(Boolean);
+
+  for (const sourceCode of new Set(enabledGeneralSources)) {
+    contains(
+      sourcePages,
+      `sourceCode: "${sourceCode}"`,
+      `dedicated source page for enabled general source ${sourceCode}`,
+    );
+  }
+});

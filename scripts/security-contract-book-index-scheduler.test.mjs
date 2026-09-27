@@ -168,3 +168,28 @@ test("Book Index readiness exposes source-level unmatched cause aggregates", () 
     "probe returns ambiguous-master aggregate",
   );
 });
+
+
+test("Book Index readiness probe exposes overdue operations evidence without collection", () => {
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+
+  contains(
+    route,
+    "getBookIndexOperationsSnapshot",
+    "read-only Book Index operations snapshot",
+  );
+  contains(route, "dueCount: operations.dueCount", "probe due-list count");
+  contains(
+    route,
+    "maxOverdueMinutes: operations.maxOverdueMinutes",
+    "probe maximum overdue duration",
+  );
+  contains(route, "dueLists: operations.rows", "probe bounded due-list evidence");
+  notContains(route, "runBookIndexScheduler", "readiness probe never runs scheduler");
+  notContains(route, "collectBookIndexListByCode", "readiness probe never collects sources");
+
+  contains(workflow, '"dueCount"', "workflow requires due-count evidence");
+  contains(workflow, '"maxOverdueMinutes"', "workflow requires overdue duration");
+  contains(workflow, '"dueLists"', "workflow prints overdue list evidence");
+});

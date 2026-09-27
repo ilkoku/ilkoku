@@ -300,6 +300,7 @@ test("phase-one source hub publishes only approved source definitions", () => {
     "kitaplarsepette",
     "illakitap",
     "nobelkitap",
+    "pandora",
   ];
 
   for (const sourceCode of approved) {
@@ -313,7 +314,6 @@ test("phase-one source hub publishes only approved source definitions", () => {
   for (const privateSource of [
     "kitapstore",
     "amazon-tr",
-    "pandora",
     "kitapambari",
   ]) {
     assert.ok(

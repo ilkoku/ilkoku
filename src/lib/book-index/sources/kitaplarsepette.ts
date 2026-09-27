@@ -188,17 +188,21 @@ export const kitaplarSepetteBookIndexAdapter: BookIndexSourceAdapter = {
       parseKitaplarSepetteBestsellerCards(html, index * PAGE_SIZE),
     );
 
-    const firstEmptyPage = pageCards.findIndex((cards) => cards.length === 0);
+    const terminalPageIndex = pageCards.findIndex(
+      (cards) => cards.length < PAGE_SIZE,
+    );
     if (
-      firstEmptyPage >= 0
-      && pageCards.slice(firstEmptyPage + 1).some((cards) => cards.length > 0)
+      terminalPageIndex >= 0
+      && pageCards.slice(terminalPageIndex + 1).some((cards) => cards.length > 0)
     ) {
       throw new Error("BOOK_INDEX_KITAPLARSEPETTE_PAGINATION_GAP");
     }
 
-    const nonEmptyPages =
-      firstEmptyPage >= 0 ? pageCards.slice(0, firstEmptyPage) : pageCards;
-    const cards = nonEmptyPages.flat().slice(0, MAX_BOOKS);
+    const contiguousPages =
+      terminalPageIndex >= 0
+        ? pageCards.slice(0, terminalPageIndex + 1)
+        : pageCards;
+    const cards = contiguousPages.flat().slice(0, MAX_BOOKS);
 
     if (cards.length < MIN_EXPECTED_BOOKS) {
       throw new Error("BOOK_INDEX_KITAPLARSEPETTE_RESULT_TOO_SMALL");

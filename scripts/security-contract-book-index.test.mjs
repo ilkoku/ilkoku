@@ -1067,6 +1067,10 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   contains(adapter, 'const PAGE_COUNT = 4;', "four-page Top 100 bound");
   contains(adapter, 'const EXPECTED_PAGE_BOOKS = 25;', "25 native ranks per page");
   contains(adapter, 'const MAX_BOOKS = PAGE_COUNT * EXPECTED_PAGE_BOOKS;', "Top 100 result cap");
+  contains(adapter, "\\bIcBaslik\\b", "main bestseller heading scope");
+  contains(adapter, "\\bIslemliL\\b", "main bestseller list scope");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_BESTSELLER_HEADING_MISSING", "missing heading fail-closed gate");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_BESTSELLER_LIST_MISSING", "missing list fail-closed gate");
   contains(adapter, 'itemtype=["\']http:\\/\\/schema\\.org\\/Book["\']', "schema.org Book card scope");
   contains(adapter, 'id=["\']Urun-([0-9]+)["\']', "stable product-id scope");
   contains(adapter, '\\bNo\\b', "native rank field");

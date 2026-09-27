@@ -349,3 +349,38 @@ test("Book Index retries unsuccessful runs without resetting the full source cad
   contains(workflow, 'cron: "17 * * * *"', "primary hourly scheduler remains");
   contains(workflow, 'cron: "47 * * * *"', "half-hour fallback remains");
 });
+
+
+test("Book Index readiness distinguishes historical coverage from latest composite snapshot coverage", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+
+  for (const metric of [
+    "latestCompositeExternalBookCount",
+    "latestCompositeMatchedExternalBookCount",
+    "latestCompositeUnmatchedExternalBookCount",
+    "latestCompositeUnmatchedBooksBySource",
+    "latestCompositeMatchCoveragePercent",
+  ]) {
+    contains(readiness, metric, `readiness latest composite metric ${metric}`);
+    contains(route, metric, `probe latest composite metric ${metric}`);
+    contains(workflow, `"${metric}"`, `workflow latest composite metric ${metric}`);
+  }
+
+  contains(
+    readiness,
+    "latestCompositeExternalBooks.set(book.id",
+    "latest composite coverage deduplicates external books by record id",
+  );
+  contains(
+    route,
+    "matchCoveragePercent: readiness.matchCoveragePercent",
+    "SEO evidence keeps the existing historical coverage input in this diagnostic change",
+  );
+  notContains(
+    route,
+    "matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent",
+    "diagnostic does not silently switch SEO gate coverage semantics",
+  );
+});

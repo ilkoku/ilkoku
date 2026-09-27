@@ -37,7 +37,7 @@ jobs:
             test -n "$oidc_token"
 
             if response="$(curl --fail-with-body --silent --show-error --max-time 60 --header "Authorization: Bearer $oidc_token" https://ilkoku.com/api/internal/book-index-readiness)"; then
-              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); operations=payload.get("operations", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedMissingAuthorWithIsbnBooksBySource","unmatchedMissingAuthorWithoutIsbnBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours"); operation_required=("dueCount","maxOverdueMinutes","dueLists"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) and all(key in operations for key in operation_required) else 1)'; then
+              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); operations=payload.get("operations", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedMissingAuthorWithIsbnBooksBySource","unmatchedMissingAuthorWithoutIsbnBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours","normalizedTitleDifferentAuthorSamples"); operation_required=("dueCount","maxOverdueMinutes","dueLists"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) and all(key in operations for key in operation_required) else 1)'; then
                 printf '%s' "$response" > readiness.json
                 python3 - <<'PY'
           import json
@@ -68,6 +68,7 @@ jobs:
               "isbn13KeysOnAtLeast3Sources": readiness.get("isbn13KeysOnAtLeast3Sources"),
               "splitMasterCollisionCount": readiness.get("splitMasterCollisionCount"),
               "normalizedTitleDifferentAuthorCount": readiness.get("normalizedTitleDifferentAuthorCount"),
+              "normalizedTitleDifferentAuthorSamples": readiness.get("normalizedTitleDifferentAuthorSamples"),
               "editionFamilyVariantOverlapCount": readiness.get("editionFamilyVariantOverlapCount"),
               "historySpanHours": readiness.get("historySpanHours"),
               "historySpanDays": readiness.get("historySpanDays"),

@@ -1090,6 +1090,12 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL", "duplicate URL gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_RANK", "duplicate rank gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_RANK_GAP", "cross-page rank-gap gate");
+  contains(adapter, 'const MAX_IDENTITY_ENRICHMENTS = 8;', "bounded missing-author enrichment cap");
+  contains(adapter, 'const DETAIL_CONCURRENCY = 3;', "bounded detail concurrency");
+  contains(adapter, '.filter(({ book }) => !book.authorName)', "only missing-author books are detail-enriched");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_IDENTITY_ENRICHMENT_TOO_LARGE", "detail-enrichment volume fails closed");
+  contains(adapter, "BOOK_INDEX_KITAPSTORE_IDENTITY_METADATA_MISSING", "missing detail ISBN fails closed");
+  contains(adapter, "return enrichMissingAuthorIdentity(combined);", "bounded enrichment runs after native Top-100 validation");
   contains(
     adapter,
     'const VERIFIED_NON_BOOK_PRODUCT_IDS = new Set(["776749", "773082"]);',
@@ -1102,7 +1108,7 @@ test("KitapStore candidate has a bounded fail-closed parser but stays research-o
   );
   notContains(
     adapter,
-    ".map((book, index) => ({",
+    "rank: index + 1",
     "KitapStore exclusions must not renumber native ranks",
   );
   contains(adapter, '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"', "transparent user agent");

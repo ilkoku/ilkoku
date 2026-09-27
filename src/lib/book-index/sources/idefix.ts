@@ -111,12 +111,28 @@ function validIsbn13(value: string | undefined) {
   return /^(?:978|979)[0-9]{10}$/u.test(normalized) ? normalized : null;
 }
 
+function safeIdefixAuthorName(value: string | null | undefined) {
+  const candidate = (value ?? "").replace(/\s+/gu, " ").trim();
+
+  if (!candidate || candidate.length > 120 || !/\p{L}/u.test(candidate)) {
+    return null;
+  }
+
+  const wordCount = candidate.split(/\s+/u).filter(Boolean).length;
+  if (wordCount > 12) return null;
+
+  if (/[-–—:;,]\s*$/u.test(candidate)) return null;
+  if (/(?:Yayınları|Yayınevi|Yayıncılık)\s*$/iu.test(candidate)) return null;
+
+  return candidate;
+}
+
 function detailAuthorName(text: string) {
   const match = text.match(
     /\bYazar\s*:\s*(.+?)(?=\s+(?:(?:Çevirmen|Editör|Hazırlayan|Yayına Hazırlayan|Derleyen|Çizer|Çizimler|Resimleyen|Kapak|Yayınevi|ISBN-13|Basım Yılı|Baskı Yılı|Sayfa Sayısı|Kağıt Türü|Ebat|Dil|Cilt Durumu)\s*:|Neden\s+idefix\b)|$)/iu,
   );
 
-  return match?.[1]?.trim() || null;
+  return safeIdefixAuthorName(match?.[1]);
 }
 
 function htmlTagText(html: string, tagName: "title" | "h1") {
@@ -127,33 +143,37 @@ function htmlTagText(html: string, tagName: "title" | "h1") {
   return match?.[1] ? decodeBookIndexHtml(match[1]) : "";
 }
 
-function documentTitleAuthorName(html: string) {
-  const title = htmlTagText(html, "title");
-  const match = title.match(
-    /\s+-\s+(.+?)\s+Kitabı(?:\s+Fiyatları)?\s*&?\s*Satın\s+Al(?:\s*\|.*)?$/iu,
+function documentTitleAuthorName(html: string, expectedTitle: string) {
+  const title = htmlTagText(html, "title").replace(/\s+/gu, " ").trim();
+  const expected = decodeBookIndexHtml(expectedTitle)
+    .replace(/\s+/gu, " ")
+    .trim();
+
+  if (!expected || !title.startsWith(expected)) return null;
+
+  const suffix = title.slice(expected.length).trim();
+  const match = suffix.match(
+    /^-\s*(.+?)\s+Kitabı(?:\s+Fiyatları)?\s*&?\s*Satın\s+Al(?:\s*\|.*)?$/iu,
   );
 
-  return match?.[1]?.trim() || null;
+  return safeIdefixAuthorName(match?.[1]);
 }
 
 function headingAuthorName(html: string, expectedTitle: string) {
-  const title = decodeBookIndexHtml(expectedTitle);
-  const heading = htmlTagText(html, "h1");
+  const title = decodeBookIndexHtml(expectedTitle)
+    .replace(/\s+/gu, " ")
+    .trim();
+  const heading = htmlTagText(html, "h1").replace(/\s+/gu, " ").trim();
 
   if (!title || !heading.startsWith(title)) return null;
 
   const suffix = heading.slice(title.length).trim();
 
-  if (
-    !suffix
-    || suffix.length > 120
-    || !/\p{L}/u.test(suffix)
-    || /^(?:Sepette|Ürün|TL\b)/iu.test(suffix)
-  ) {
+  if (/^(?:Sepette|Ürün|TL\b)/iu.test(suffix)) {
     return null;
   }
 
-  return suffix;
+  return safeIdefixAuthorName(suffix);
 }
 
 export function parseIdefixProductDetails(
@@ -168,7 +188,7 @@ export function parseIdefixProductDetails(
   return {
     authorName:
       detailAuthorName(text)
-      || documentTitleAuthorName(html)
+      || documentTitleAuthorName(html, expectedTitle)
       || headingAuthorName(html, expectedTitle),
     isbn13: validIsbn13(isbn),
   };

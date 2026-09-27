@@ -494,11 +494,26 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         },
       })
     : [];
-  const masterIdentityGroups = unmatchedNoIsbnAuthorRows.length
+  const unmatchedNoIsbnIdentities = [
+    ...new Map(
+      unmatchedNoIsbnAuthorRows.flatMap((row) =>
+        row.normalizedAuthor
+          ? [[
+              `${row.normalizedTitle}|${row.normalizedAuthor}`,
+              {
+                normalizedTitle: row.normalizedTitle,
+                normalizedAuthor: row.normalizedAuthor,
+              },
+            ] as const]
+          : [],
+      ),
+    ).values(),
+  ];
+  const masterIdentityGroups = unmatchedNoIsbnIdentities.length
     ? await prisma.bookIndexBook.groupBy({
         by: ["normalizedTitle", "normalizedAuthor"],
         where: {
-          normalizedAuthor: { not: null },
+          OR: unmatchedNoIsbnIdentities,
         },
         _count: { _all: true },
       })

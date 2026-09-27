@@ -1029,8 +1029,8 @@ test("KitapStore Top 100 candidate remains fail-closed and production-disabled",
   contains(sources, 'code: "kitapstore"', "KitapStore research source");
   contains(
     sources,
-    'baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "bilge-kitap-kulubu",\n    operatorName: "Bilge Kitap Kulübü",\n    phase: "phase_2",\n    collectionState: "researching"',
-    "KitapStore stays research-only with an independent operator identity",
+    'baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "vedat-akoglu-kitapstore",\n    operatorName: "Vedat Akoğlu - KitapStore",\n    phase: "phase_2",\n    collectionState: "researching"',
+    "KitapStore stays research-only with its current seller identity",
   );
   contains(lists, 'code: "kitapstore-tr-live"', "KitapStore research list");
   contains(

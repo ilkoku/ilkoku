@@ -249,6 +249,20 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: false,
   },
+  // Source-only qualification canary. It collects native history but never votes.
+  {
+    code: "pandora-tr-live-canary",
+    sourceCode: "pandora",
+    title: "Pandora Kitabevi · Çok Satanlar · Türkçe · Canary",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",
+    maxRank: 50,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: false,
+    enabled: true,
+  },
   {
     code: "kitapambari-tr-live",
     sourceCode: "kitapambari",

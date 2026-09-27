@@ -1156,27 +1156,48 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
 });
 
 
-test("Pandora bestseller candidate stays research-only until a direct collection contract is proven", () => {
+test("Pandora source canary is fail-closed, private and non-voting", () => {
+  const adapter = source("src/lib/book-index/sources/pandora.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(sources, 'code: "pandora"', "Pandora research source");
+  contains(
+    adapter,
+    'const API_URL = "https://www.pandora.com.tr/api/coksatanlar";',
+    "Pandora first-party bestseller API",
+  );
+  contains(adapter, "const EXPECTED_NATIVE_ROWS = 50;", "Pandora exact native slot contract");
+  contains(adapter, "rank !== index + 1", "Pandora native rank continuity");
+  contains(adapter, "BOOK_INDEX_PANDORA_PRODUCT_ID_COLLISION", "Pandora product collision guard");
+  contains(adapter, "BOOK_INDEX_PANDORA_ISBN_COLLISION", "Pandora ISBN collision guard");
+  contains(adapter, "Keep the first/best native rank", "exact duplicate keeps native best rank");
+  contains(adapter, "never renumber", "duplicate collapse never invents ranks");
+  contains(adapter, '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"', "transparent Pandora user agent");
+  contains(adapter, "AbortSignal.timeout(20_000)", "bounded Pandora request");
+
   contains(
     sources,
-    'name: "Pandora Kitabevi",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.pandora.com.tr",\n    includeInTurkeyIndex: true,\n    independenceGroup: "pandora",\n    operatorName: "Pandora Yayın ve Kitap Hizmetleri A.Ş.",\n    phase: "phase_2",\n    collectionState: "researching"',
-    "Pandora remains research-only",
+    'name: "Pandora Kitabevi",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.pandora.com.tr",\n    includeInTurkeyIndex: true,\n    independenceGroup: "pandora",\n    operatorName: "Pandora Yayın ve Kitap Hizmetleri A.Ş.",\n    phase: "phase_2",\n    collectionState: "ready"',
+    "Pandora adapter is ready for private canary collection",
   );
-  contains(lists, 'code: "pandora-tr-live"', "Pandora research list");
+
   contains(
     lists,
-    'sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "Pandora list stays disabled and outside composite",
+    'code: "pandora-tr-live",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "Pandora voter remains disabled",
   );
-  notContains(
+
+  contains(
+    lists,
+    'code: "pandora-tr-live-canary",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    "Pandora source-only canary remains private and non-voting",
+  );
+
+  contains(
     collector,
-    "pandoraBookIndexAdapter",
-    "Pandora has no production collector before direct-fetch proof",
+    "[pandoraBookIndexAdapter.sourceCode, pandoraBookIndexAdapter]",
+    "Pandora adapter is registered only for enabled private canary collection",
   );
 });
 

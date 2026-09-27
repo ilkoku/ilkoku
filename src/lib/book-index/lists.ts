@@ -207,6 +207,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: false,
   },
   {
+    code: "kitapambari-tr-live",
+    sourceCode: "kitapambari",
+    title: "Kitap Ambarı · Çok Satanlar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",
+    maxRank: null,
+    includeInComposite: false,
+    collectionEveryMinutes: null,
+    enabled: false,
+  },
+  {
     code: "kitapstore-tr-live",
     sourceCode: "kitapstore",
     title: "KitapStore · Çok Satanlar",

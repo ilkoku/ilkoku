@@ -173,7 +173,7 @@ export function parseKitapStoreBestsellerPage(
     }
 
     return parseCard(
-      html.slice(start, end),
+      listBody.slice(start, end),
       productId,
       expectedStartRank + index,
     );

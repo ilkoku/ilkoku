@@ -35,12 +35,7 @@ test("SEO indexability smoke runs weekly without weakening manual confirmation",
   );
   contains(
     workflow,
-    "Published Book Index source hub detected; validating phased source surfaces.",
-    "source-only rollout is validated when published",
-  );
-  contains(
-    workflow,
-    "Aggregate Book Index remains gated; aggregate SEO checks skipped.",
-    "aggregate Book Index remains fail-closed before publication",
+    "Book Index is not published in sitemap; gated SEO checks remain skipped.",
+    "Book Index remains fail-closed before publication",
   );
 });

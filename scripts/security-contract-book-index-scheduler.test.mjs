@@ -111,6 +111,7 @@ test("Book Index readiness probe is OIDC-protected and collection-free", () => {
   );
   contains(route, '"push"', "push event authorization");
   contains(route, '"workflow_dispatch"', "manual read-only authorization");
+  contains(route, '"schedule"', "scheduled read-only authorization");
   contains(route, "export async function GET", "read-only HTTP method");
   contains(route, "getBookIndexReadinessSnapshot", "readiness snapshot query");
   contains(route, "getBookIndexSeoGatePolicy", "SEO gate policy query");
@@ -122,6 +123,9 @@ test("Book Index readiness probe is OIDC-protected and collection-free", () => {
   contains(workflow, "id-token: write", "OIDC token permission");
   contains(workflow, "push:", "post-merge production probe trigger");
   contains(workflow, "workflow_dispatch:", "manual read-only probe trigger");
+  contains(workflow, "schedule:", "passive scheduled readiness observer trigger");
+  contains(workflow, 'cron: "7 * * * *"', "first passive readiness observation window");
+  contains(workflow, 'cron: "37 * * * *"', "second passive readiness observation window");
   contains(
     workflow,
     "https://ilkoku.com/api/internal/book-index-readiness",

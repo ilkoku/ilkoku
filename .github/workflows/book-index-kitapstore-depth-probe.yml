@@ -1,0 +1,90 @@
+name: Book Index KitapStore depth probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapstore-depth-01ak-ah
+    paths:
+      - ".github/workflows/book-index-kitapstore-depth-probe.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/book-index-kitapstore-depth-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Observe public KitapStore bestseller ranks
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Fetch two public bestseller pages without collecting
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+
+          urls=(
+            'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1'
+            'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=2'
+          )
+
+          for page in 1 2; do
+            body="$tmpdir/page-$page.html"
+            code="$(curl               --silent               --show-error               --compressed               --max-time 20               --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'               --header 'Accept: text/html,application/xhtml+xml'               --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5'               --output "$body"               --write-out '%{http_code}'               "${urls[$((page - 1))]}" || true)"
+
+            bytes="$(wc -c < "$body" | tr -d ' ')"
+            printf 'page=%s http_status=%s body_bytes=%s\n' "$page" "$code" "$bytes"
+
+            case "$code" in
+              200)
+                node - "$body" "$page" <<'NODE'
+          const fs = require("node:fs");
+          const path = process.argv[2];
+          const page = Number(process.argv[3]);
+          const html = fs.readFileSync(path, "utf8");
+
+          const text = html
+            .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, " ")
+            .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, " ")
+            .replace(/<[^>]+>/gu, " ")
+            .replace(/&nbsp;/giu, " ")
+            .replace(/\s+/gu, " ");
+
+          const expectedStart = page === 1 ? 1 : 26;
+          const expectedEnd = page === 1 ? 25 : 50;
+          const visibleExpected = [];
+          for (let rank = expectedStart; rank <= expectedEnd; rank += 1) {
+            const re = new RegExp(`(?:^|\\s)${rank}(?:\\s|$)`, "u");
+            if (re.test(text)) visibleExpected.push(rank);
+          }
+
+          const productLinks = [...html.matchAll(/href=["']([^"']*\/urun\/\d+\/[^"']+)["']/giu)]
+            .map((match) => match[1]);
+          const uniqueLinks = [...new Set(productLinks)];
+
+          const hasBestsellerHeading = /ÇOK\s*SATANLAR|Çok\s*Satanlar/iu.test(text);
+          const total250 = /TOPLAM\s*250\s*ADET\s*SONUÇ/iu.test(text);
+
+          console.log(`page=${page} bestseller_heading=${hasBestsellerHeading}`);
+          console.log(`page=${page} total_250_marker=${total250}`);
+          console.log(`page=${page} expected_rank_markers=${visibleExpected.join(",") || "NONE"}`);
+          console.log(`page=${page} product_link_count=${productLinks.length} unique_product_link_count=${uniqueLinks.length}`);
+          NODE
+                ;;
+              403|429|503)
+                printf 'page=%s access_state=blocked_or_unavailable\n' "$page"
+                ;;
+              000|'')
+                printf 'page=%s access_state=request_failed\n' "$page"
+                ;;
+              *)
+                printf 'page=%s access_state=http_%s\n' "$page" "$code"
+                ;;
+            esac
+          done

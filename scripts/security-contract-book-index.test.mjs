@@ -310,6 +310,17 @@ test("idefix collector reads server-side Next data and excludes source-sponsored
   contains(adapter, "__NEXT_DATA__", "idefix server-side data source");
   contains(adapter, "sourceVariant.isSponsored === true", "source-sponsored cards excluded");
   contains(adapter, "rank: index + 1", "organic idefix order is contiguous");
+  contains(adapter, "sourceKey: externalId", "idefix sourceKey remains the source variant id");
+  contains(adapter, "DETAIL_CONCURRENCY = 6", "idefix detail enrichment stays bounded");
+  contains(adapter, "parseIdefixProductDetails", "idefix detail metadata parser");
+  contains(adapter, "ISBN-13", "idefix detail ISBN-13 extraction");
+  contains(adapter, "detailAuthorName", "idefix detail author extraction");
+  contains(
+    adapter,
+    "BOOK_INDEX_IDEFIX_DETAIL_METADATA_MISSING",
+    "idefix detail metadata fails closed",
+  );
+  contains(adapter, "books: await enrichBooks(parsed.books)", "idefix parsed books are enriched before persistence");
   contains(adapter, "BOOK_INDEX_IDEFIX_RESULT_TOO_SMALL", "idefix suspicious result gate");
   contains(lists, 'code: "idefix-tr-live"', "idefix list registry");
   contains(lists, 'sourceUrl: "https://www.idefix.com/cok-satanlar-l-162"', "verified idefix URL");

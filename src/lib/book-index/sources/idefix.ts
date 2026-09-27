@@ -212,6 +212,16 @@ async function fetchHtml(url: string) {
   return response.text();
 }
 
+export async function fetchIdefixProductDetails(
+  productUrl: string,
+  expectedTitle = "",
+): Promise<IdefixProductDetail> {
+  return parseIdefixProductDetails(
+    await fetchHtml(productUrl),
+    expectedTitle,
+  );
+}
+
 async function enrichBooks(
   books: BookIndexCollectionResult["books"],
 ): Promise<BookIndexCollectionResult["books"]> {

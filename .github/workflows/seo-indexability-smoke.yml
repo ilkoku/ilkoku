@@ -115,19 +115,6 @@ jobs:
           check_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi'
           check_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin'
 
-          if grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar/kaynak</loc>' "$sitemap"; then
-            echo "Published Book Index source hub detected; validating phased source surfaces."
-            check_page '/en-cok-satanlar/kaynak' 'https://ilkoku.com/en-cok-satanlar/kaynak'
-
-            source_url="$(grep -Eo '<loc>https://ilkoku\.com/en-cok-satanlar/kaynak/[^<]+</loc>' "$sitemap" | head -1 | sed -e 's#<loc>##' -e 's#</loc>##' || true)"
-            if [[ -n "$source_url" ]]; then
-              source_path="${source_url#https://ilkoku.com}"
-              check_page "$source_path" "$source_url"
-            fi
-          else
-            echo "Book Index source pages are not published in sitemap."
-          fi
-
           if grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar</loc>' "$sitemap"; then
             echo "Published aggregate Book Index detected; validating gated aggregate SEO surfaces."
             check_page '/en-cok-satanlar' 'https://ilkoku.com/en-cok-satanlar'

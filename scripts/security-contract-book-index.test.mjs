@@ -820,9 +820,29 @@ test("Book Index readiness diagnoses missing authors among unmatched records wit
     "Yazar bilgisi eksik unmatched",
     "admin exposes missing-author evidence",
   );
+  contains(
+    readiness,
+    "unmatchedAmbiguousIdentityGroupCount",
+    "ambiguous unmatched identity count",
+  );
+  contains(
+    readiness,
+    "unmatchedAmbiguousIdentitySamples",
+    "bounded ambiguous unmatched identity samples",
+  );
+  contains(
+    admin,
+    "Belirsiz master adayı",
+    "admin exposes ambiguous-master evidence",
+  );
   notContains(
     matching,
     "unmatchedMissingAuthor",
-    "diagnostic does not alter matching behavior",
+    "missing-author diagnostic does not alter matching behavior",
+  );
+  notContains(
+    matching,
+    "unmatchedAmbiguousIdentity",
+    "ambiguous-master diagnostic does not alter matching behavior",
   );
 });

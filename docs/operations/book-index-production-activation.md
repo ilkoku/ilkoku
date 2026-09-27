@@ -1,6 +1,6 @@
 # Book Index production activation checklist
 
-Status: **SCHEDULER ACTIVE / SNAPSHOT ACCUMULATION / PUBLICATION GATED**
+Status: **SCHEDULE CONFIGURED / DELIVERY RECOVERY / SNAPSHOT ACCUMULATION / PUBLICATION GATED**
 
 Bu belge Kitap Endeksi kodu hazırlandıktan sonra production aktivasyonunun
 hangi sırayla yapılacağını tanımlar. Adımların sırası bilinçlidir; sonraki
@@ -46,23 +46,39 @@ Canary başarısızsa cron açılmaz.
 
 ## 3. Automatic scheduler activation
 
-OIDC canary PASS tamamlandı. Geçici `workflow_run` tetikleyicisi kaldırıldı. Scheduler'ın birincil penceresi `17 * * * *`, GitHub scheduled-event gecikmesi/kaçırmasına karşı fallback penceresi `47 * * * *` olarak aktiftir.
-
-Hedef kontrol pencereleri:
+OIDC canary PASS tamamlandı. Geçici `workflow_run` tetikleyicisi kaldırıldı.
+GitHub Actions üzerinde iki schedule penceresi tanımlıdır:
 
 - birincil: `17 * * * *`
 - fallback: `47 * * * *`
 
-İki pencere de yalnız scheduler kontrolünü tetikler; bu, her kaynağın yarım saatte veya saatlik çekileceği anlamına gelmez.
-Gerçek cadence her `BookIndexList.collectionEveryMinutes` değeri tarafından
-belirlenir.
+Bu iki pencere aynı due-aware scheduler'ı çağırır ve kaynak cadence'ini
+bypass etmez. Ancak GitHub scheduled-event teslimatı garanti değildir.
+
+27.09.2026 production kanıtında:
+
+- Book Index doğal scheduler son run'ı **#22 / 06:37:03Z**;
+- CMS publishing scheduler doğal son run'ı **#680 / 06:47:23Z**;
+- daha sonraki beklenen pencerelerde iki scheduler'da da yeni doğal event
+  görülmemiştir;
+- readiness overdue listeler göstermeye devam etmiştir;
+- `BOOK_INDEX_SCHEDULER_SECRET` production'da configured değildir.
+
+Bu nedenle scheduler kodu/canary doğrulanmış olsa da mevcut operasyon durumu
+**delivery recovery** olarak izlenir. Manuel scheduler çalıştırmaları history
+üretmek veya delivery boşluğunu gizlemek için kullanılmaz.
 
 Workflow concurrency:
 
 - group: `book-index-scheduler`
 - `cancel-in-progress: false`
 
-## 4. Snapshot birikimi — AKTİF AŞAMA
+Failed/partial run'lar shared due helper ile en fazla 30 dakika sonra yeniden
+due olur. GitHub'dan bağımsız bir trigger ancak production operatoru tarafından
+repo dışında güçlü secret + bağımsız scheduler konfigürasyonu yapılıp kanıt
+üretildikten sonra aktif sayılır.
+
+## 4. Snapshot birikimi — DELIVERY RECOVERY İLE BİRLİKTE AKTİF
 
 Cron açıldıktan sonra admin **Kitap Endeksi** ekranından şu alanlar izlenir:
 
@@ -256,7 +272,8 @@ Kaynak erişim problemi:
 
 Sıra:
 
-**GitHub OIDC ✅ → Canary ✅ → Cron ✅ → Snapshot Birikimi → Matching → Readiness
-Kanıtı → SEO Policy → Gate Dry-run → Publish → Sitemap/Navigation → GSC**
+**GitHub OIDC ✅ → Canary ✅ → Schedule Configured ⚠️ → Delivery Recovery →
+Snapshot Birikimi → Matching → Readiness Kanıtı → SEO Policy → Gate Dry-run →
+Publish → Sitemap/Navigation → GSC**
 
 Bu sıra dışında otomatik public yayın yapılmaz.

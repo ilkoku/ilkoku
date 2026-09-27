@@ -6,8 +6,8 @@ import type {
 
 const SOURCE_CODE = "bkm";
 const ENDPOINT = "https://bkm-best.wawlabs.com/top_sellers";
-const MAX_BOOKS = 50;
-const MIN_EXPECTED_BOOKS = 50;
+const MAX_BOOKS = 100;
+const MIN_EXPECTED_BOOKS = 100;
 
 type BkmSpan = "week" | "month" | "year";
 

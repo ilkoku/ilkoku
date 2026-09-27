@@ -143,6 +143,18 @@ export type BookIndexUnmatchedMissingAuthorSample = {
   lastSeenAt: Date;
 };
 
+export type BookIndexUnmatchedAmbiguousIdentitySample = {
+  sourceCode: string;
+  title: string;
+  authorName: string;
+  normalizedTitle: string;
+  normalizedAuthor: string;
+  sourceKey: string;
+  masterCandidateCount: number;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+};
+
 export type BookIndexReadinessSnapshot = {
   compositeSourceTarget: number;
   compositeIndependenceGroupTarget: number;
@@ -166,6 +178,8 @@ export type BookIndexReadinessSnapshot = {
     count: number;
   }>;
   unmatchedMissingAuthorSamples: BookIndexUnmatchedMissingAuthorSample[];
+  unmatchedAmbiguousIdentityGroupCount: number;
+  unmatchedAmbiguousIdentitySamples: BookIndexUnmatchedAmbiguousIdentitySample[];
   matchCoveragePercent: number;
   maxCompositeSourcesPerBook: number;
   booksOnAtLeast2CompositeSources: number;
@@ -452,6 +466,75 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     firstSeenAt: row.firstSeenAt,
     lastSeenAt: row.lastSeenAt,
   })) satisfies BookIndexUnmatchedMissingAuthorSample[];
+
+  const unmatchedNoIsbnAuthorRows = unmatchedExternalBookGroups.length
+    ? await prisma.bookIndexExternalBook.findMany({
+        where: {
+          matchStatus: "unmatched",
+          isbn13: null,
+          isbn10: null,
+          normalizedAuthor: { not: null },
+          sourceId: {
+            in: unmatchedExternalBookGroups.map((group) => group.sourceId),
+          },
+        },
+        orderBy: [
+          { lastSeenAt: "desc" },
+          { firstSeenAt: "desc" },
+        ],
+        select: {
+          sourceId: true,
+          sourceKey: true,
+          title: true,
+          authorName: true,
+          normalizedTitle: true,
+          normalizedAuthor: true,
+          firstSeenAt: true,
+          lastSeenAt: true,
+        },
+      })
+    : [];
+  const masterIdentityGroups = unmatchedNoIsbnAuthorRows.length
+    ? await prisma.bookIndexBook.groupBy({
+        by: ["normalizedTitle", "normalizedAuthor"],
+        where: {
+          normalizedAuthor: { not: null },
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const ambiguousMasterCountByIdentity = new Map(
+    masterIdentityGroups
+      .filter((group) => group.normalizedAuthor && group._count._all > 1)
+      .map((group) => [
+        `${group.normalizedTitle}|${group.normalizedAuthor}`,
+        group._count._all,
+      ] as const),
+  );
+  const unmatchedAmbiguousIdentityRows = unmatchedNoIsbnAuthorRows.flatMap((row) => {
+    if (!row.normalizedAuthor || !row.authorName) return [];
+    const identityKey = `${row.normalizedTitle}|${row.normalizedAuthor}`;
+    const masterCandidateCount = ambiguousMasterCountByIdentity.get(identityKey) ?? 0;
+    if (masterCandidateCount <= 1) return [];
+
+    return [{
+      sourceCode: sourceCodeById.get(row.sourceId) ?? row.sourceId,
+      title: row.title,
+      authorName: row.authorName,
+      normalizedTitle: row.normalizedTitle,
+      normalizedAuthor: row.normalizedAuthor,
+      sourceKey: row.sourceKey,
+      masterCandidateCount,
+      firstSeenAt: row.firstSeenAt,
+      lastSeenAt: row.lastSeenAt,
+    } satisfies BookIndexUnmatchedAmbiguousIdentitySample];
+  });
+  const unmatchedAmbiguousIdentityGroupCount = new Set(
+    unmatchedAmbiguousIdentityRows.map(
+      (row) => `${row.sourceCode}|${row.normalizedTitle}|${row.normalizedAuthor}`,
+    ),
+  ).size;
+  const unmatchedAmbiguousIdentitySamples = unmatchedAmbiguousIdentityRows.slice(0, 20);
 
   const unmatchedIdentityGroups = unmatchedExternalBookGroups.length
     ? await prisma.bookIndexExternalBook.groupBy({
@@ -1137,6 +1220,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     unmatchedDuplicateIdentitySamples,
     unmatchedMissingAuthorBooksBySource,
     unmatchedMissingAuthorSamples,
+    unmatchedAmbiguousIdentityGroupCount,
+    unmatchedAmbiguousIdentitySamples,
     matchCoveragePercent: externalBookCount
       ? Math.round((matchedExternalBookCount / externalBookCount) * 1000) / 10
       : 0,

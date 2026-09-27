@@ -195,6 +195,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "kitapstore-tr-live",
+    sourceCode: "kitapstore",
+    title: "KitapStore · Çok Satanlar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/",
+    maxRank: 100,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    enabled: false,
+  },
+  {
     code: "pandora-tr-live",
     sourceCode: "pandora",
     title: "Pandora Kitabevi · Çok Satanlar · Türkçe",

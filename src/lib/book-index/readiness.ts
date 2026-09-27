@@ -518,7 +518,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         _count: { _all: true },
       })
     : [];
-  const ambiguousMasterCountByIdentity = new Map(
+  const ambiguousMasterCountByIdentity = new Map<string, number>(
     masterIdentityGroups
       .filter((group) => group.normalizedAuthor && group._count._all > 1)
       .map((group) => [

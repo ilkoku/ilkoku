@@ -76,6 +76,12 @@ export const BOOK_INDEX_PUBLIC_SOURCE_PAGES: readonly BookIndexPublicSourcePageD
     sourceName: "NobelKitap",
     searchTitle: "NobelKitap En Çok Satan Kitaplar",
   },
+  {
+    sourceCode: "pandora",
+    slug: "pandora-kitabevi",
+    sourceName: "Pandora Kitabevi",
+    searchTitle: "Pandora Kitabevi En Çok Satan Türkçe Kitaplar",
+  },
 ] as const;
 
 const periodOrder = new Map([

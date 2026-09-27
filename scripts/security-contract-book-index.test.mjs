@@ -515,6 +515,21 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
   contains(adapter, "BOOK_INDEX_KITAPSEC_RESULT_TOO_SMALL", "KitapSec suspicious result rejection");
   contains(adapter, "BOOK_INDEX_KITAPSEC_RANK_SEQUENCE_INVALID", "KitapSec rank continuity validation");
   contains(adapter, "BOOK_INDEX_KITAPSEC_DUPLICATE_ITEM", "KitapSec duplicate rank/source protection");
+  contains(
+    adapter,
+    'const VERIFIED_GENERAL_NON_BOOK_PRODUCT_IDS = new Set(["712938"]);',
+    "KitapSec exact verified general non-book exclusion",
+  );
+  contains(
+    adapter,
+    "excludedProductIds: VERIFIED_GENERAL_NON_BOOK_PRODUCT_IDS",
+    "KitapSec exclusion applies only to general parser",
+  );
+  contains(
+    adapter,
+    '!excludedProductIds.has(book.sourceExternalId ?? "")',
+    "KitapSec preserves native ranks after exact exclusion",
+  );
 
   contains(lists, 'code: "kitapsec-edebiyat-live"', "KitapSec Edebiyat list");
   contains(lists, 'categoryKey: "edebiyat"', "KitapSec category scope");

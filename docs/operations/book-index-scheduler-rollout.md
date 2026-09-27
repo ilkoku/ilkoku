@@ -90,6 +90,24 @@ windows provide enough evidence to call GitHub delivery consistently healthy.
 Manual scheduler runs must not be used to manufacture history or hide delivery
 gaps.
 
+### Passive readiness observer
+
+A separate read-only readiness workflow observes delivery health without
+running any collector or creating Book Index history:
+
+- workflow: `book-index-readiness.yml`;
+- observation windows: `7 * * * *` and `37 * * * *`;
+- authentication: dedicated GitHub OIDC audience
+  `ilkoku-book-index-readiness`;
+- allowed scheduled action: GET
+  `/api/internal/book-index-readiness` only;
+- evidence: `dueCount`, `maxOverdueMinutes`, due-list details, history
+  maturity, matching safety and SEO gate state;
+- it never invokes `runBookIndexScheduler` or a source collector.
+
+This observer is diagnostic, not a fallback collector. A successful readiness
+probe must never be counted as a snapshot/history run.
+
 Concurrency remains:
 
 - group: `book-index-scheduler`

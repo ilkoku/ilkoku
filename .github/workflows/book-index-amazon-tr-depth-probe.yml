@@ -236,3 +236,238 @@ jobs:
           }
           NODE
           done
+
+
+      - name: Characterize nextPage request and response without sensitive values
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [ -z "$chrome" ]; then
+            echo "cdp_probe=browser_unavailable"
+            exit 0
+          fi
+
+          tmpdir="$(mktemp -d)"
+          profile="$tmpdir/profile"
+          mkdir -p "$profile"
+
+          "$chrome"             --headless=new             --disable-gpu             --disable-dev-shm-usage             --no-sandbox             --user-data-dir="$profile"             --remote-debugging-port=9222             about:blank >"$tmpdir/chrome.log" 2>&1 &
+          chrome_pid=$!
+
+          cleanup() {
+            kill "$chrome_pid" 2>/dev/null || true
+            rm -rf "$tmpdir"
+          }
+          trap cleanup EXIT
+
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:9222/json/version >/dev/null 2>&1; then
+              break
+            fi
+            sleep 0.2
+          done
+
+          node <<'NODE'
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+          if (typeof WebSocket !== "function") {
+            console.log("cdp_probe=websocket_unavailable");
+            process.exit(0);
+          }
+
+          const tabs = await fetch("http://127.0.0.1:9222/json/list").then((response) => response.json());
+          const tab = tabs.find((candidate) => candidate.type === "page");
+          if (!tab?.webSocketDebuggerUrl) {
+            console.log("cdp_probe=page_target_unavailable");
+            process.exit(0);
+          }
+
+          const ws = new WebSocket(tab.webSocketDebuggerUrl);
+          await new Promise((resolve, reject) => {
+            ws.onopen = resolve;
+            ws.onerror = reject;
+          });
+
+          let commandId = 0;
+          const pending = new Map();
+          const pageState = new Map();
+
+          ws.onmessage = (message) => {
+            const payload = JSON.parse(message.data);
+            if (payload.id) {
+              const waiter = pending.get(payload.id);
+              if (!waiter) return;
+              pending.delete(payload.id);
+              if (payload.error) waiter.reject(new Error(payload.error.message));
+              else waiter.resolve(payload.result ?? {});
+              return;
+            }
+
+            if (payload.method === "Network.requestWillBeSent") {
+              const request = payload.params?.request;
+              const url = request?.url ?? "";
+              if (!/\/acp\/eu-south-2\/p13n-zg-list-grid-desktop\/[^/]+\/nextPage/iu.test(url)) return;
+
+              pageState.set(payload.params.requestId, {
+                requestId: payload.params.requestId,
+                url,
+                method: request.method,
+                postData: request.postData ?? null,
+                hasPostData: Boolean(request.hasPostData || request.postData),
+                headers: request.headers ?? {},
+                responseStatus: null,
+                mimeType: null,
+                finished: false,
+              });
+              return;
+            }
+
+            if (payload.method === "Network.responseReceived") {
+              const item = pageState.get(payload.params?.requestId);
+              if (!item) return;
+              item.responseStatus = payload.params?.response?.status ?? null;
+              item.mimeType = payload.params?.response?.mimeType ?? null;
+              return;
+            }
+
+            if (payload.method === "Network.loadingFinished") {
+              const item = pageState.get(payload.params?.requestId);
+              if (item) item.finished = true;
+            }
+          };
+
+          function send(method, params = {}) {
+            const id = ++commandId;
+            return new Promise((resolve, reject) => {
+              pending.set(id, { resolve, reject });
+              ws.send(JSON.stringify({ id, method, params }));
+            });
+          }
+
+          function bodyShape(item) {
+            const body = item.postData ?? "";
+            if (!body) return { format: "none", keys: [], suspiciousKeys: [], bytes: 0 };
+
+            const contentTypeEntry = Object.entries(item.headers ?? {}).find(
+              ([key]) => key.toLowerCase() === "content-type",
+            );
+            const contentType = String(contentTypeEntry?.[1] ?? "").toLowerCase();
+
+            let format = contentType.split(";")[0] || "unknown";
+            let keys = [];
+
+            try {
+              if (contentType.includes("application/json") || body.trim().startsWith("{")) {
+                const parsed = JSON.parse(body);
+                keys = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+                  ? Object.keys(parsed).sort()
+                  : [];
+                format = "json";
+              } else {
+                const params = new URLSearchParams(body);
+                keys = [...new Set([...params.keys()])].sort();
+                if (keys.length) format = "form";
+              }
+            } catch {
+              format = format || "unparsed";
+            }
+
+            const suspiciousKeys = keys.filter((key) => /auth|csrf|nonce|session|token|credential|signature|secret/iu.test(key));
+            return { format, keys, suspiciousKeys, bytes: Buffer.byteLength(body) };
+          }
+
+          async function summarizePage(page, url) {
+            pageState.clear();
+
+            await send("Emulation.setDeviceMetricsOverride", {
+              width: 1920,
+              height: 20000,
+              deviceScaleFactor: 1,
+              mobile: false,
+            });
+            await send("Page.navigate", { url });
+            await sleep(7000);
+            await send("Runtime.evaluate", {
+              expression: "window.scrollTo(0, document.body.scrollHeight)",
+            });
+            await sleep(4000);
+
+            const requests = [...pageState.values()];
+            console.log(`cdp_page=${page} next_page_request_count=${requests.length}`);
+
+            for (let index = 0; index < requests.length; index += 1) {
+              const item = requests[index];
+              const parsedUrl = new URL(item.url);
+              const queryKeys = [...parsedUrl.searchParams.keys()].sort();
+              const shape = bodyShape(item);
+
+              let responseBytes = null;
+              let responseRankCount = null;
+              let responseAsinCount = null;
+              let responseRankMin = null;
+              let responseRankMax = null;
+
+              if (item.finished) {
+                try {
+                  const response = await send("Network.getResponseBody", { requestId: item.requestId });
+                  const body = response.base64Encoded
+                    ? Buffer.from(response.body ?? "", "base64").toString("utf8")
+                    : String(response.body ?? "");
+
+                  responseBytes = Buffer.byteLength(body);
+                  const ranks = [...body.matchAll(/zg-bdg-text[^#]{0,300}#(\d{1,3})/giu)]
+                    .map((match) => Number(match[1]))
+                    .filter(Number.isInteger);
+                  const asins = [...body.matchAll(/data-asin(?:\\?"|["'])?\s*[:=]\s*(?:\\?"|["'])([A-Z0-9]{10})/giu)]
+                    .map((match) => match[1]);
+
+                  const uniqueRanks = [...new Set(ranks)].sort((a, b) => a - b);
+                  const uniqueAsins = [...new Set(asins)];
+
+                  responseRankCount = uniqueRanks.length;
+                  responseAsinCount = uniqueAsins.length;
+                  responseRankMin = uniqueRanks[0] ?? null;
+                  responseRankMax = uniqueRanks.at(-1) ?? null;
+                } catch {
+                  responseBytes = -1;
+                }
+              }
+
+              const safePath = parsedUrl.pathname.replace(
+                /\/p13n-zg-list-grid-desktop\/[^/]+\/nextPage$/iu,
+                "/p13n-zg-list-grid-desktop/{dynamic}/nextPage",
+              );
+
+              console.log(
+                [
+                  `cdp_page=${page}`,
+                  `request_index=${index + 1}`,
+                  `method=${item.method || "UNKNOWN"}`,
+                  `status=${item.responseStatus ?? "UNKNOWN"}`,
+                  `mime=${item.mimeType || "UNKNOWN"}`,
+                  `path=${parsedUrl.origin}${safePath}`,
+                  `query_keys=${queryKeys.join(",") || "NONE"}`,
+                  `post_format=${shape.format}`,
+                  `post_keys=${shape.keys.join(",") || "NONE"}`,
+                  `post_bytes=${shape.bytes}`,
+                  `suspicious_post_keys=${shape.suspiciousKeys.join(",") || "NONE"}`,
+                  `response_bytes=${responseBytes ?? "UNKNOWN"}`,
+                  `response_rank_count=${responseRankCount ?? "UNKNOWN"}`,
+                  `response_rank_min=${responseRankMin ?? "NONE"}`,
+                  `response_rank_max=${responseRankMax ?? "NONE"}`,
+                  `response_asin_count=${responseAsinCount ?? "UNKNOWN"}`,
+                ].join(" "),
+              );
+            }
+          }
+
+          await send("Network.enable", { maxPostDataSize: 1048576 });
+          await send("Page.enable");
+
+          await summarizePage(1, "https://www.amazon.com.tr/gp/bestsellers/books");
+          await summarizePage(2, "https://www.amazon.com.tr/gp/bestsellers/books/ref=zg_bs_pg_2_books?ie=UTF8&pg=2");
+
+          ws.close();
+          NODE

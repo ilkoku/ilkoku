@@ -74,7 +74,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     categoryKey: "general",
     period: "live",
     sourceUrl: "https://www.kitapsepeti.com/cok-satan-kitaplar",
-    maxRank: 60,
+    maxRank: 100,
     includeInComposite: true,
     collectionEveryMinutes: 360,
     publiclyVisible: true,

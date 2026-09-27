@@ -110,6 +110,20 @@ export async function GET(request: NextRequest) {
         nearThreeSourceCount: readiness.nearThreeSourceCount,
         nearThreeWithHistoricalThirdSourceCount:
           readiness.nearThreeWithHistoricalThirdSourceCount,
+        kitapStoreCanaryHealth:
+          readiness.kitapStoreCanaryHealth,
+        kitapStoreCanaryShadowBookCount:
+          readiness.kitapStoreCanaryShadowBookCount,
+        kitapStoreCanaryShadowOverlapWithCompositeCount:
+          readiness.kitapStoreCanaryShadowOverlapWithCompositeCount,
+        kitapStoreCanaryShadowWouldReach3StorefrontCount:
+          readiness.kitapStoreCanaryShadowWouldReach3StorefrontCount,
+        kitapStoreCanaryShadowWouldReach3IndependentCount:
+          readiness.kitapStoreCanaryShadowWouldReach3IndependentCount,
+        kitapStoreCanaryShadowPairOverlap:
+          readiness.kitapStoreCanaryShadowPairOverlap,
+        kitapStoreCanaryShadowSamples:
+          readiness.kitapStoreCanaryShadowSamples,
         normalizedIdentityKeysOnAtLeast2Sources:
           readiness.normalizedIdentityKeysOnAtLeast2Sources,
         normalizedIdentityKeysOnAtLeast3Sources:

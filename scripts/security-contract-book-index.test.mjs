@@ -808,6 +808,39 @@ test("KitaplarSepette is a bounded independent Turkey composite voter", () => {
 });
 
 
+test("KitapStore canary qualification evidence is observable while voter stays off", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(readiness, "kitapStoreCanaryHealth", "KitapStore canary health evidence");
+  contains(readiness, "kitapStoreCanaryShadowBookCount", "KitapStore shadow book count");
+  contains(readiness, "kitapStoreCanaryShadowOverlapWithCompositeCount", "KitapStore overlap evidence");
+  contains(readiness, "kitapStoreCanaryShadowWouldReach3StorefrontCount", "KitapStore projected storefront threshold");
+  contains(readiness, "kitapStoreCanaryShadowWouldReach3IndependentCount", "KitapStore projected independent threshold");
+  contains(readiness, "kitapStoreCanaryShadowPairOverlap", "KitapStore pair-overlap evidence");
+  contains(readiness, "kitapStoreCanaryShadowSamples", "KitapStore shadow overlap samples");
+  contains(readiness, 'sourceCode !== "kitapstore"', "shadow baseline excludes KitapStore");
+  contains(readiness, '"kitapstore",', "shadow projection adds KitapStore once");
+
+  contains(route, "readiness.kitapStoreCanaryHealth", "readiness API exposes canary health");
+  contains(route, "readiness.kitapStoreCanaryShadowBookCount", "readiness API exposes shadow book count");
+  contains(route, "readiness.kitapStoreCanaryShadowWouldReach3IndependentCount", "readiness API exposes independent projection");
+  contains(route, "readiness.kitapStoreCanaryShadowSamples", "readiness API exposes shadow samples");
+
+  contains(workflow, '"kitapStoreCanaryHealth": readiness.get("kitapStoreCanaryHealth")', "passive observer prints canary health");
+  contains(workflow, '"kitapStoreCanaryShadowWouldReach3IndependentCount": readiness.get("kitapStoreCanaryShadowWouldReach3IndependentCount")', "passive observer prints independent projection");
+  contains(workflow, '"kitapStoreCanaryShadowSamples": readiness.get("kitapStoreCanaryShadowSamples")', "passive observer prints shadow samples");
+
+  contains(lists, 'code: "kitapstore-tr-live-canary"', "KitapStore canary registry");
+  contains(lists, 'includeInComposite: false', "canary remains outside composite");
+  contains(lists, 'code: "kitapstore-tr-live"', "KitapStore voter registry remains separate");
+  contains(lists, 'maxRank: null', "voter rank stays unset before qualification");
+  contains(lists, 'enabled: false', "voter list stays disabled before qualification");
+});
+
+
 test("KitaplarSepette qualification evidence remains observable after voter activation", () => {
   const readiness = source("src/lib/book-index/readiness.ts");
   const lists = source("src/lib/book-index/lists.ts");

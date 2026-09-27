@@ -3,10 +3,12 @@ import type {
   BookIndexCollectionResult,
   BookIndexSourceAdapter,
 } from "../adapter";
+import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "idefix";
 const SOURCE_ORIGIN = "https://www.idefix.com";
 const MIN_EXPECTED_ORGANIC_BOOKS = 15;
+const DETAIL_CONCURRENCY = 6;
 
 type IdefixCategory = {
   id?: unknown;
@@ -98,6 +100,96 @@ function extractNextData(html: string): IdefixNextData {
   }
 }
 
+
+type IdefixProductDetail = {
+  authorName: string | null;
+  isbn13: string | null;
+};
+
+function validIsbn13(value: string | undefined) {
+  const normalized = (value ?? "").replace(/[^0-9]/gu, "");
+  return /^(?:978|979)[0-9]{10}$/u.test(normalized) ? normalized : null;
+}
+
+function detailAuthorName(text: string) {
+  const match = text.match(
+    /\bYazar\s*:\s*(.+?)(?=\s+(?:(?:Çevirmen|Editör|Hazırlayan|Yayına Hazırlayan|Derleyen|Çizer|Çizimler|Resimleyen|Kapak|Yayınevi|ISBN-13|Basım Yılı|Baskı Yılı|Sayfa Sayısı|Kağıt Türü|Ebat|Dil|Cilt Durumu)\s*:|Neden\s+idefix\b)|$)/iu,
+  );
+
+  return match?.[1]?.trim() || null;
+}
+
+export function parseIdefixProductDetails(
+  html: string,
+): IdefixProductDetail {
+  const text = decodeBookIndexHtml(html);
+  const isbn = text.match(
+    /\bISBN-13\s*:\s*((?:978|979)[0-9\s-]{10,20})/iu,
+  )?.[1];
+
+  return {
+    authorName: detailAuthorName(text),
+    isbn13: validIsbn13(isbn),
+  };
+}
+
+async function fetchHtml(url: string) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+  }
+
+  return response.text();
+}
+
+async function enrichBooks(
+  books: BookIndexCollectionResult["books"],
+): Promise<BookIndexCollectionResult["books"]> {
+  const details = new Array<IdefixProductDetail>(books.length);
+  let nextIndex = 0;
+
+  const workers = Array.from(
+    { length: Math.min(DETAIL_CONCURRENCY, books.length) },
+    async () => {
+      while (true) {
+        const index = nextIndex;
+        nextIndex += 1;
+        if (index >= books.length) return;
+
+        details[index] = parseIdefixProductDetails(
+          await fetchHtml(books[index].productUrl),
+        );
+      }
+    },
+  );
+
+  await Promise.all(workers);
+
+  return books.map((book, index) => {
+    const detail = details[index];
+    const authorName = book.authorName || detail?.authorName || null;
+    const isbn13 = detail?.isbn13 || book.isbn13 || null;
+
+    if (!authorName && !isbn13) {
+      throw new Error("BOOK_INDEX_IDEFIX_DETAIL_METADATA_MISSING");
+    }
+
+    return {
+      ...book,
+      authorName,
+      isbn13,
+    };
+  });
+}
+
 export function parseIdefixBestsellers(
   html: string,
 ): BookIndexCollectionResult {
@@ -184,19 +276,12 @@ export const idefixBookIndexAdapter: BookIndexSourceAdapter = {
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const response = await fetch(context.sourceUrl, {
-      cache: "no-store",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
-      },
-      signal: AbortSignal.timeout(20_000),
-    });
+    const parsed = parseIdefixBestsellers(
+      await fetchHtml(context.sourceUrl),
+    );
 
-    if (!response.ok) {
-      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
-    }
-
-    return parseIdefixBestsellers(await response.text());
+    return {
+      books: await enrichBooks(parsed.books),
+    };
   },
 };

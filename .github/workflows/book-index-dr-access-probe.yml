@@ -1,0 +1,56 @@
+name: Book Index DR access probe
+
+on:
+  push:
+    branches:
+      - research/book-index-dr-access-01ak-al4bc
+    paths:
+      - ".github/workflows/book-index-dr-access-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Observe public DR book surfaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Fetch bounded public DR candidates without collecting
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+
+          urls=(
+            'https://www.dr.com.tr/kategori/kitap'
+            'https://www.dr.com.tr/kategori/kitap/cok-satanlar'
+            'https://www.dr.com.tr/'
+          )
+
+          for i in 0 1 2; do
+            body="$tmpdir/page-$i.html"
+            code="$(curl --silent --show-error --compressed --max-time 20               --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'               --header 'Accept: text/html,application/xhtml+xml'               --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5'               --output "$body" --write-out '%{http_code}' "${urls[$i]}" || true)"
+            printf 'candidate=%s http_status=%s body_bytes=%s\n' "$i" "$code" "$(wc -c < "$body" | tr -d ' ')"
+
+            if [ "$code" = "200" ]; then
+              node - "$body" "$i" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "utf8");
+          const i = process.argv[3];
+          const text = html
+            .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, " ")
+            .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, " ")
+            .replace(/<[^>]+>/gu, " ")
+            .replace(/&nbsp;/giu, " ")
+            .replace(/\s+/gu, " ");
+          console.log("candidate=" + i + " contains_cok_satan=" + /(?:Çok|Cok)\s+Satan/iu.test(text));
+          console.log("candidate=" + i + " title=" + (html.match(/<title[^>]*>([\s\S]*?)<\/title>/iu)?.[1] || "").replace(/\s+/g, " ").slice(0, 240));
+          const links = [...html.matchAll(/href=["']([^"']+)["']/giu)]
+            .map(m => m[1])
+            .filter(href => /cok|çok|satan|kitap/iu.test(href));
+          console.log("candidate=" + i + " relevant_links=" + JSON.stringify([...new Set(links)].slice(0, 40)));
+          NODE
+            fi
+          done

@@ -591,6 +591,104 @@ export default async function BookIndexAdminPage({
           <table className="admin-data-table">
             <thead>
               <tr>
+                <th>Kapsam dışı inceleme</th>
+                <th>Kaynak</th>
+                <th>Kimlik</th>
+                <th>Son görülme</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              {unmatchedReviewRows.length ? (
+                unmatchedReviewRows.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <strong>{row.title}</strong>
+                      <small>
+                        <a href={row.productUrl} target="_blank" rel="noreferrer">
+                          Kaynak ürünü aç
+                        </a>
+                      </small>
+                    </td>
+                    <td>{row.source.code}</td>
+                    <td>{row.isbn13 ?? row.isbn10 ?? "Yazar / ISBN yok"}</td>
+                    <td>{formatDateTime(row.lastSeenAt)}</td>
+                    <td>
+                      <form action={rejectBookIndexExternalBookAction}>
+                        <input type="hidden" name="externalBookId" value={row.id} />
+                        <button
+                          className="admin-button admin-button--secondary"
+                          type="submit"
+                        >
+                          Kapsam dışı
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5}>Kapsam dışı inceleme bekleyen kimliksiz kayıt yok.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <small>
+            Bu işlem kaydı silmez. Kaynak geçmişi korunur ve otomatik eşleştirme
+            kararı değiştirmez. Yalnız kaynağı doğruladıktan sonra kullanın.
+          </small>
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
+                <th>Kapsam dışı kayıtlar</th>
+                <th>Kaynak</th>
+                <th>Son görülme</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rejectedRows.length ? (
+                rejectedRows.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <strong>{row.title}</strong>
+                      <small>
+                        <a href={row.productUrl} target="_blank" rel="noreferrer">
+                          Kaynak ürünü aç
+                        </a>
+                      </small>
+                    </td>
+                    <td>{row.source.code}</td>
+                    <td>{formatDateTime(row.lastSeenAt)}</td>
+                    <td>
+                      <form action={restoreBookIndexExternalBookAction}>
+                        <input type="hidden" name="externalBookId" value={row.id} />
+                        <button
+                          className="admin-button admin-button--secondary"
+                          type="submit"
+                        >
+                          Geri al
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4}>Kapsam dışı olarak işaretlenmiş kayıt yok.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
                 <th>Yazar bilgisi eksik unmatched</th>
                 <th>Kayıt</th>
               </tr>

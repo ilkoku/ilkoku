@@ -10,6 +10,10 @@ const SOURCE_ORIGIN = "https://www.kitapstore.com";
 const PAGE_COUNT = 4;
 const EXPECTED_PAGE_BOOKS = 25;
 const MAX_BOOKS = PAGE_COUNT * EXPECTED_PAGE_BOOKS;
+// Verified current bestseller-surface exceptions:
+// 776749 = Socrates Dergi No:99 (Dergi category)
+// 773082 = Naber Defter Özel Edisyon / Naber Sayı 17 (magazine issue special edition)
+const VERIFIED_NON_BOOK_PRODUCT_IDS = new Set(["776749", "773082"]);
 
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
@@ -240,7 +244,13 @@ export function combineKitapStoreBestsellerPages(
     throw new Error("BOOK_INDEX_KITAPSTORE_RANK_GAP");
   }
 
-  return { books };
+  // Validate the complete native Top 100 first, then exclude only explicitly
+  // verified non-book products. Preserve native ranks; never renumber gaps.
+  return {
+    books: books.filter(
+      (book) => !VERIFIED_NON_BOOK_PRODUCT_IDS.has(book.sourceKey),
+    ),
+  };
 }
 
 export function parseKitapStoreProductIsbn13(html: string) {

@@ -97,6 +97,20 @@ export async function GET(request: NextRequest) {
         nearThreeSourceCount: readiness.nearThreeSourceCount,
         nearThreeWithHistoricalThirdSourceCount:
           readiness.nearThreeWithHistoricalThirdSourceCount,
+        normalizedIdentityKeysOnAtLeast2Sources:
+          readiness.normalizedIdentityKeysOnAtLeast2Sources,
+        normalizedIdentityKeysOnAtLeast3Sources:
+          readiness.normalizedIdentityKeysOnAtLeast3Sources,
+        isbn13KeysOnAtLeast2Sources:
+          readiness.isbn13KeysOnAtLeast2Sources,
+        isbn13KeysOnAtLeast3Sources:
+          readiness.isbn13KeysOnAtLeast3Sources,
+        splitMasterCollisionCount:
+          readiness.splitMasterCollisionCount,
+        normalizedTitleDifferentAuthorCount:
+          readiness.normalizedTitleDifferentAuthorCount,
+        editionFamilyVariantOverlapCount:
+          readiness.editionFamilyVariantOverlapCount,
         historySpanHours: readiness.historySpanHours,
         historySpanDays: readiness.historySpanDays,
         minimumSourceSuccessfulRunCount:
@@ -135,6 +149,8 @@ export async function GET(request: NextRequest) {
       seoGate: {
         state: seoGate.state,
         canPublish: seoGate.canPublish,
+        failures: seoGate.failures,
+        evidence: seoGate.evidence,
       },
     });
   } catch (error) {

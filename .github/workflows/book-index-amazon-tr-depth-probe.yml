@@ -117,7 +117,7 @@ jobs:
             netlog="$tmpdir/net-$page.json"
             url="${urls[$((page - 1))]}"
 
-            "$chrome"               --headless=new               --disable-gpu               --disable-dev-shm-usage               --no-sandbox               --lang=tr-TR               --window-size=1920,20000               --virtual-time-budget=10000               --dump-dom               "$url" > "$body" 2>/dev/null || true
+            "$chrome"               --headless=new               --disable-gpu               --disable-dev-shm-usage               --no-sandbox               --lang=tr-TR               --window-size=1920,20000               --virtual-time-budget=10000               --log-net-log="$netlog"               --net-log-capture-mode=Everything               --dump-dom               "$url" > "$body" 2>/dev/null || true
 
             node - "$body" "$page" <<'NODE'
           const fs = require("node:fs");

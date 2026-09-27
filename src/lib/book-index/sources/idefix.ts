@@ -121,7 +121,8 @@ function safeIdefixAuthorName(value: string | null | undefined) {
   const wordCount = candidate.split(/\s+/u).filter(Boolean).length;
   if (wordCount > 12) return null;
 
-  if (/[-–—:;,]\s*$/u.test(candidate)) return null;
+  if (/[:]/u.test(candidate)) return null;
+  if (/[-–—;,]\s*$/u.test(candidate)) return null;
   if (/(?:Yayınları|Yayınevi|Yayıncılık)\s*$/iu.test(candidate)) return null;
 
   return candidate;
@@ -129,7 +130,7 @@ function safeIdefixAuthorName(value: string | null | undefined) {
 
 function detailAuthorName(text: string) {
   const match = text.match(
-    /\bYazar\s*:\s*(.+?)(?=\s+(?:(?:Çevirmen|Editör|Hazırlayan|Yayına Hazırlayan|Derleyen|Çizer|Çizimler|Resimleyen|Kapak|Yayınevi|ISBN-13|Basım Yılı|Baskı Yılı|Sayfa Sayısı|Kağıt Türü|Ebat|Dil|Cilt Durumu)\s*:|Neden\s+idefix\b)|$)/iu,
+    /\bYazar\s*:\s*(.+?)(?=\s+(?:(?:Çevirmen|Editör|Hazırlayan|Yayına Hazırlayan|Derleyen|Çizer|Çizimler|Resimleyen|Kapak|Kapak Tasarımı|Grafik Tasarım|Yayınevi|Genel Yayın Yönetmeni|Yayın Yönetmeni|Sayfa Düzeni|Redaksiyon|Düzelti|ISBN-13|Basım Yılı|Baskı Yılı|Sayfa Sayısı|Kağıt Türü|Ebat|Dil|Cilt Durumu)\s*:|Neden\s+idefix\b)|$)/iu,
   );
 
   return safeIdefixAuthorName(match?.[1]);

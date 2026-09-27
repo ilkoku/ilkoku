@@ -39,6 +39,8 @@ test("idefix historical metadata probe is bounded and read-only", () => {
   assert.match(idefix, /function safeIdefixAuthorName/u);
   assert.match(idefix, /candidate\.length > 120/u);
   assert.match(idefix, /wordCount > 12/u);
+  assert.match(idefix, /Genel Yayın Yönetmeni\|Yayın Yönetmeni\|Sayfa Düzeni/u);
+  assert.match(idefix, /if \(\/\[:\]\/u\.test\(candidate\)\) return null;/u);
   assert.match(idefix, /Yayınları\|Yayınevi\|Yayıncılık/u);
   assert.match(idefix, /title\.startsWith\(expected\)/u);
   assert.match(idefix, /documentTitleAuthorName\(html, expectedTitle\)/u);

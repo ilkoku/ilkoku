@@ -222,7 +222,7 @@ test("book index manual collection stays admin-controlled while scheduler is act
 
 
 
-test("BKM collector uses verified public bestseller feed and caps the V1 list at Top 50", () => {
+test("BKM collector keeps monthly/yearly at Top 50 and expands the weekly composite to native Top 100", () => {
   const bkm = source("src/lib/book-index/sources/bkm.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
@@ -232,7 +232,9 @@ test("BKM collector uses verified public bestseller feed and caps the V1 list at
   contains(bkm, 'case "bkm-tr-weekly"', "weekly span");
   contains(bkm, 'case "bkm-tr-monthly"', "monthly span");
   contains(bkm, 'case "bkm-tr-yearly"', "yearly span");
-  contains(bkm, "const MAX_BOOKS = 50;", "Top 50 cap");
+  contains(bkm, "const DEFAULT_MAX_BOOKS = 50;", "monthly/yearly Top 50 cap");
+  contains(bkm, "const WEEKLY_MAX_BOOKS = 100;", "weekly Top 100 cap");
+  contains(bkm, 'context.listCode === "bkm-tr-weekly"', "weekly-only deeper collection");
   contains(bkm, "BOOK_INDEX_BKM_RESULT_TOO_SMALL", "fail-closed minimum result");
   contains(bkm, "BOOK_INDEX_BKM_RANK_ORDER_MISMATCH", "feed order validation");
   contains(bkm, "BOOK_INDEX_BKM_DUPLICATE_SOURCE_KEY", "source identity validation");
@@ -252,7 +254,7 @@ test("only BKM weekly contributes to the Turkey composite in V1", () => {
 
   contains(
     lists,
-    'code: "bkm-tr-weekly",\n    sourceCode: "bkm",\n    title: "BKM Kitap · Haftalık Çok Satanlar",\n    categoryKey: "general",\n    period: "weekly",\n    sourceUrl: "https://www.bkmkitap.com/cok-satan-kitaplar",\n    maxRank: 50,\n    includeInComposite: true',
+    'code: "bkm-tr-weekly",\n    sourceCode: "bkm",\n    title: "BKM Kitap · Haftalık Çok Satanlar",\n    categoryKey: "general",\n    period: "weekly",\n    sourceUrl: "https://www.bkmkitap.com/cok-satan-kitaplar",\n    maxRank: 100,\n    includeInComposite: true',
     "weekly BKM composite vote",
   );
   contains(

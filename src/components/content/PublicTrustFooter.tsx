@@ -8,16 +8,25 @@ import {
   publicSupportLinks,
   publicTrustLinks,
 } from "@/lib/public-site-navigation";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import {
+  getBookIndexPublicPageContext,
+  getBookIndexPublicSourcePageContext,
+} from "@/lib/book-index/public-access";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 export async function PublicTrustFooter() {
-  const [identity, bookIndexContext] = await Promise.all([
+  const [identity, bookIndexContext, bookIndexSourceContext] = await Promise.all([
     getPublicSiteIdentity(),
     getBookIndexPublicPageContext(10).catch(() => null),
+    getBookIndexPublicSourcePageContext(100).catch(() => null),
   ]);
-  const platformLinks = bookIndexContext
-    ? [...publicPlatformLinks, { href: "/en-cok-satanlar", label: "En Çok Satanlar" }]
+  const bookIndexHref = bookIndexContext
+    ? "/en-cok-satanlar"
+    : bookIndexSourceContext
+      ? "/en-cok-satanlar/kaynak"
+      : null;
+  const platformLinks = bookIndexHref
+    ? [...publicPlatformLinks, { href: bookIndexHref, label: "En Çok Satanlar" }]
     : publicPlatformLinks;
 
   return (

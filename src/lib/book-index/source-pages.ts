@@ -58,6 +58,24 @@ export const BOOK_INDEX_PUBLIC_SOURCE_PAGES: readonly BookIndexPublicSourcePageD
     sourceName: "KitapSeç",
     searchTitle: "KitapSeç En Çok Satan Kitaplar",
   },
+  {
+    sourceCode: "illakitap",
+    slug: "illa-kitap",
+    sourceName: "İlla Kitap",
+    searchTitle: "İlla Kitap En Çok Satan Kitaplar",
+  },
+  {
+    sourceCode: "kitaplarsepette",
+    slug: "kitaplarsepette",
+    sourceName: "KitaplarSepette",
+    searchTitle: "KitaplarSepette En Çok Satan Kitaplar",
+  },
+  {
+    sourceCode: "nobelkitap",
+    slug: "nobelkitap",
+    sourceName: "NobelKitap",
+    searchTitle: "NobelKitap En Çok Satan Kitaplar",
+  },
 ] as const;
 
 const periodOrder = new Map([

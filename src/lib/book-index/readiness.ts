@@ -172,6 +172,10 @@ export type BookIndexReadinessSnapshot = {
     count: number;
   }>;
   unmatchedDuplicateIdentityGroupCount: number;
+  unmatchedDuplicateIdentityGroupsBySource: Array<{
+    sourceCode: string;
+    count: number;
+  }>;
   unmatchedDuplicateIdentitySamples: BookIndexUnmatchedIdentityDuplicateSample[];
   unmatchedMissingAuthorBooksBySource: Array<{
     sourceCode: string;
@@ -179,6 +183,10 @@ export type BookIndexReadinessSnapshot = {
   }>;
   unmatchedMissingAuthorSamples: BookIndexUnmatchedMissingAuthorSample[];
   unmatchedAmbiguousIdentityGroupCount: number;
+  unmatchedAmbiguousIdentityGroupsBySource: Array<{
+    sourceCode: string;
+    count: number;
+  }>;
   unmatchedAmbiguousIdentitySamples: BookIndexUnmatchedAmbiguousIdentitySample[];
   matchCoveragePercent: number;
   maxCompositeSourcesPerBook: number;
@@ -544,11 +552,29 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       lastSeenAt: row.lastSeenAt,
     } satisfies BookIndexUnmatchedAmbiguousIdentitySample];
   });
-  const unmatchedAmbiguousIdentityGroupCount = new Set(
+  const unmatchedAmbiguousIdentityKeys = new Set(
     unmatchedAmbiguousIdentityRows.map(
       (row) => `${row.sourceCode}|${row.normalizedTitle}|${row.normalizedAuthor}`,
     ),
-  ).size;
+  );
+  const unmatchedAmbiguousIdentityGroupCount = unmatchedAmbiguousIdentityKeys.size;
+  const unmatchedAmbiguousIdentityGroupSetsBySource = new Map<string, Set<string>>();
+  for (const row of unmatchedAmbiguousIdentityRows) {
+    const identities = unmatchedAmbiguousIdentityGroupSetsBySource.get(row.sourceCode)
+      ?? new Set<string>();
+    identities.add(`${row.normalizedTitle}|${row.normalizedAuthor}`);
+    unmatchedAmbiguousIdentityGroupSetsBySource.set(row.sourceCode, identities);
+  }
+  const unmatchedAmbiguousIdentityGroupsBySource =
+    [...unmatchedAmbiguousIdentityGroupSetsBySource.entries()]
+      .map(([sourceCode, identities]) => ({
+        sourceCode,
+        count: identities.size,
+      }))
+      .sort(
+        (a, b) =>
+          b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
+      );
   const unmatchedAmbiguousIdentitySamples = unmatchedAmbiguousIdentityRows.slice(0, 20);
 
   const unmatchedIdentityGroups = unmatchedExternalBookGroups.length
@@ -576,6 +602,22 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         )
         || a.normalizedTitle.localeCompare(b.normalizedTitle, "tr"),
     );
+  const duplicateIdentityGroupsBySourceMap = new Map<string, number>();
+  for (const group of duplicateUnmatchedIdentityGroups) {
+    const sourceCode = sourceCodeById.get(group.sourceId) ?? group.sourceId;
+    duplicateIdentityGroupsBySourceMap.set(
+      sourceCode,
+      (duplicateIdentityGroupsBySourceMap.get(sourceCode) ?? 0) + 1,
+    );
+  }
+  const unmatchedDuplicateIdentityGroupsBySource =
+    [...duplicateIdentityGroupsBySourceMap.entries()]
+      .map(([sourceCode, count]) => ({ sourceCode, count }))
+      .sort(
+        (a, b) =>
+          b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
+      );
+
   const duplicateIdentitySampleGroups = duplicateUnmatchedIdentityGroups.slice(0, 12);
   const duplicateIdentityRows = duplicateIdentitySampleGroups.length
     ? await prisma.bookIndexExternalBook.findMany({
@@ -1232,10 +1274,12 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     unmatchedExternalBookCount,
     unmatchedExternalBooksBySource,
     unmatchedDuplicateIdentityGroupCount: duplicateUnmatchedIdentityGroups.length,
+    unmatchedDuplicateIdentityGroupsBySource,
     unmatchedDuplicateIdentitySamples,
     unmatchedMissingAuthorBooksBySource,
     unmatchedMissingAuthorSamples,
     unmatchedAmbiguousIdentityGroupCount,
+    unmatchedAmbiguousIdentityGroupsBySource,
     unmatchedAmbiguousIdentitySamples,
     matchCoveragePercent: externalBookCount
       ? Math.round((matchedExternalBookCount / externalBookCount) * 1000) / 10

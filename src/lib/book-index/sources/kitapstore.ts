@@ -122,8 +122,28 @@ export function parseKitapStoreBestsellerPage(
     throw new Error("BOOK_INDEX_KITAPSTORE_INVALID_EXPECTED_RANK");
   }
 
-  const starts = [
+  const headings = [
     ...html.matchAll(
+      /<div\b[^>]*class=["'][^"']*\bIcBaslik\b[^"']*["'][^>]*>\s*ÇOK\s+SATANLAR\s*<\/div>/giu,
+    ),
+  ];
+  const headingIndex = headings.at(-1)?.index;
+
+  if (headingIndex === undefined) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_BESTSELLER_HEADING_MISSING");
+  }
+
+  const afterHeading = html.slice(headingIndex);
+  const listBody = afterHeading.match(
+    /<ul\b[^>]*class=["'][^"']*\bIslemliL\b[^"']*["'][^>]*>([\s\S]*?)<\/ul>/iu,
+  )?.[1];
+
+  if (!listBody) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_BESTSELLER_LIST_MISSING");
+  }
+
+  const starts = [
+    ...listBody.matchAll(
       /<li\b(?=[^>]*\bitemtype=["']http:\/\/schema\.org\/Book["'])(?=[^>]*\bid=["']Urun-([0-9]+)["'])[^>]*>/giu,
     ),
   ];
@@ -135,7 +155,7 @@ export function parseKitapStoreBestsellerPage(
   const books = starts.map((match, index) => {
     const productId = match[1]?.trim() ?? "";
     const start = match.index ?? 0;
-    const end = starts[index + 1]?.index ?? html.length;
+    const end = starts[index + 1]?.index ?? listBody.length;
 
     if (!productId) {
       throw new Error("BOOK_INDEX_KITAPSTORE_INVALID_ITEM");

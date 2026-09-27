@@ -100,6 +100,8 @@ export async function GET(request: NextRequest) {
           readiness.latestCompositeUnmatchedExternalBookCount,
         latestCompositeUnmatchedBooksBySource:
           readiness.latestCompositeUnmatchedBooksBySource,
+        latestCompositeUnmatchedSamples:
+          readiness.latestCompositeUnmatchedSamples,
         latestCompositeMatchCoveragePercent:
           readiness.latestCompositeMatchCoveragePercent,
         booksOnAtLeast3IndependentCompositeSources:

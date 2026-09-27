@@ -931,12 +931,12 @@ test("Book Index source adapters exclude only verified non-book catalogue entrie
   );
   contains(
     illakitap,
-    ".slice(0, MAX_BOOKS)\\n    .map((book, index) => ({\\n      ...book,\\n      rank: index + 1,",
-    "İlla Kitap keeps eligible book ranks contiguous after exclusions",
+    ".map((book, index) => ({",
+    "İlla Kitap reranks eligible books after exclusions",
   );
   contains(
     kitapsepeti,
-    ".slice(0, MAX_BOOKS)\\n    .map((book, index) => ({\\n      ...book,\\n      rank: index + 1,",
-    "KitapSepeti keeps eligible book ranks contiguous after exclusions",
+    ".map((book, index) => ({",
+    "KitapSepeti reranks eligible books after exclusions",
   );
 });

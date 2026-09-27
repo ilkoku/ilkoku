@@ -5,6 +5,7 @@ on:
   workflow_run:
     workflows:
       - Email operations
+      - CMS publishing scheduler
     types:
       - completed
   schedule:

@@ -43,7 +43,8 @@ jobs:
             if [ "$code" = "200" ]; then
               node - "$body" "$index" <<'NODE'
           const fs = require("node:fs");
-          const html = fs.readFileSync(process.argv[2], "utf8");
+          const bytes = fs.readFileSync(process.argv[2]);
+          const html = new TextDecoder("windows-1254").decode(bytes);
           const index = process.argv[3];
           const text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, " ")
             .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, " ")
@@ -56,11 +57,11 @@ jobs:
             || html.match(/itemprop=["']isbn["'][^>]*>([^<]+)</iu)?.[1]
             || null;
           const anyIsbn = text.match(/(?:ISBN(?:-13)?\s*[:\-]?\s*)?(97[89][0-9]{10})/iu)?.[1] || null;
-          const authorTitle = html.match(/(?:Yazar|Yazarlar)[\s\S]{0,1200}?<a\b[^>]*title=["']([^"']+)["']/iu)?.[1]
-            || html.match(/itemprop=["']author["'][\s\S]{0,600}?title=["']([^"']+)["']/iu)?.[1]
-            || null;
+          const authorLabel = text.match(
+            /\bYazar\s*:\s*(.+?)\s+(?:Kazancınız|Kazanacağınız Puan|Sayfa Sayısı|Kitap Ebatı|Toplam Satılan)\s*:/iu,
+          )?.[1]?.trim() || null;
 
-          console.log(`detail_index=${index} schema_isbn=${schemaIsbn || "NONE"} any_isbn13=${anyIsbn || "NONE"} author=${authorTitle || "NONE"}`);
+          console.log(`detail_index=${index} schema_isbn=${schemaIsbn || "NONE"} any_isbn13=${anyIsbn || "NONE"} parsed_author=${authorLabel || "NONE"}`);
 
           for (const marker of ["ISBN", "Yazar"]) {
             const pos = text.search(new RegExp(marker, "iu"));

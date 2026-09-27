@@ -84,18 +84,29 @@ function parseCard(card: string, productId: string, expectedRank: number) {
     ? attributeValue(priceCurrencyTag, "content")
     : "";
 
-  if (
-    !Number.isInteger(rank) ||
-    rank !== expectedRank ||
-    !productHref ||
-    !title ||
-    !author ||
-    !publisher ||
-    serialNumber !== productId ||
-    !new RegExp(`/urun/${productId}/`, "u").test(productHref) ||
-    priceCurrency !== "TRY"
-  ) {
-    throw new Error("BOOK_INDEX_KITAPSTORE_INVALID_ITEM");
+  if (!Number.isInteger(rank) || rank !== expectedRank) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_RANK_MISMATCH");
+  }
+  if (!productHref) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_PRODUCT_URL_MISSING");
+  }
+  if (!title) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_TITLE_MISSING");
+  }
+  if (!author) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_AUTHOR_MISSING");
+  }
+  if (!publisher) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_PUBLISHER_MISSING");
+  }
+  if (serialNumber !== productId) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_SERIAL_MISMATCH");
+  }
+  if (!new RegExp(`/urun/${productId}/`, "u").test(productHref)) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_PRODUCT_URL_ID_MISMATCH");
+  }
+  if (priceCurrency !== "TRY") {
+    throw new Error("BOOK_INDEX_KITAPSTORE_CURRENCY_MISMATCH");
   }
 
   return {

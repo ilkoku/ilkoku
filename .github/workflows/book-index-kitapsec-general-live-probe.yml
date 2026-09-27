@@ -1,0 +1,91 @@
+name: Book Index KitapSec general live probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapsec-general-live-probe-01ak-al3ah-e1
+    paths:
+      - ".github/workflows/book-index-kitapsec-general-live-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Run KitapSec general parser without collecting
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Compile parser dependencies
+        run: |
+          rm -rf /tmp/kitapsec-parser
+          npx tsc \
+            src/lib/book-index/adapter.ts \
+            src/lib/book-index/html.ts \
+            src/lib/book-index/sources/kitapsec.ts \
+            --target ES2022 \
+            --module commonjs \
+            --moduleResolution node \
+            --skipLibCheck \
+            --esModuleInterop \
+            --outDir /tmp/kitapsec-parser
+
+      - name: Run parser against official public general bestseller page
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const { kitapSecBookIndexAdapter } = require("/tmp/kitapsec-parser/sources/kitapsec.js");
+
+          const suspicious = /(dergi|puzzle|yapboz|defter|ajanda|boyama|poster|kart|oyun|seti|magnet|sticker)/iu;
+
+          (async () => {
+            const result = await kitapSecBookIndexAdapter.collect({
+              listCode: "kitapsec-general-live-canary",
+              sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",
+              observedAt: new Date(),
+            });
+
+            const books = result.books;
+            const isbnCount = books.filter((book) => book.isbn13).length;
+            const suspiciousBooks = books
+              .filter((book) => suspicious.test(book.title))
+              .map((book) => ({
+                rank: book.rank,
+                sourceKey: book.sourceKey,
+                title: book.title,
+                productUrl: book.productUrl,
+                isbn13: book.isbn13 ?? null,
+              }));
+
+            console.log("book_count=" + books.length);
+            console.log("first_rank=" + books[0]?.rank);
+            console.log("last_rank=" + books.at(-1)?.rank);
+            console.log("isbn13_count=" + isbnCount);
+            console.log("missing_isbn_count=" + (books.length - isbnCount));
+            console.log("suspicious_title_count=" + suspiciousBooks.length);
+            console.log("suspicious_titles=" + JSON.stringify(suspiciousBooks));
+
+            if (
+              books.length < 40 ||
+              books.length > 56 ||
+              books[0]?.rank !== 1 ||
+              books.some((book, index) => book.rank !== index + 1)
+            ) {
+              throw new Error("KITAPSEC_GENERAL_LIVE_CONTRACT_FAILED");
+            }
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE

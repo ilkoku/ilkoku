@@ -190,7 +190,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     independenceGroup: "pandora",
     operatorName: "Pandora Yayın ve Kitap Hizmetleri A.Ş.",
     phase: "phase_2",
-    collectionState: "researching",
+    collectionState: "ready",
   },
   {
     code: "hepsiburada",

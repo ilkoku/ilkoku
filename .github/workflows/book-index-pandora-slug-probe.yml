@@ -1,0 +1,81 @@
+name: Book Index Pandora slug probe
+
+on:
+  push:
+    branches:
+      - research/book-index-pandora-endpoint-01ak-ae-ab-aa
+    paths:
+      - ".github/workflows/book-index-pandora-slug-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Inspect Pandora public slug helper
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Find slug-helper evidence in public bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir" 2>/dev/null || true' EXIT
+
+          page="$tmpdir/page.html"
+          curl --silent --show-error --compressed --max-time 20             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --output "$page"             'https://www.pandora.com.tr/Cok_Satan_Kitaplar'
+
+          node - "$page" > "$tmpdir/scripts.txt" <<'NODE'
+          const fs=require("node:fs");
+          const html=fs.readFileSync(process.argv[2],"utf8");
+          const base=new URL("https://www.pandora.com.tr/Cok_Satan_Kitaplar");
+          const out=[];
+          for(const m of html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/giu)){
+            try{
+              const u=new URL(m[1],base);
+              if(u.protocol==="https:"&&(u.hostname==="www.pandora.com.tr"||u.hostname==="pandora.com.tr")) out.push(u.toString());
+            }catch{}
+          }
+          for(const u of [...new Set(out)]) console.log(u);
+          NODE
+
+          i=0
+          while IFS= read -r script; do
+            [ -n "$script" ] || continue
+            i=$((i+1))
+            body="$tmpdir/$i.js"
+            status="$(curl --silent --show-error --compressed --max-time 20               --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'               --output "$body" --write-out '%{http_code}' "$script" || true)"
+            [ "$status" = "200" ] || continue
+
+            node - "$body" "$i" <<'NODE'
+          const fs=require("node:fs");
+          const js=fs.readFileSync(process.argv[2],"utf8");
+          const index=process.argv[3];
+          if(!js.includes("/api/coksatanlar")) process.exit(0);
+
+          const needles=[
+            "toLocaleLowerCase",
+            "normalize(",
+            "encodeURIComponent",
+            "replace(/ı",
+            "replace(/ş",
+            "replace(/ğ",
+            "replace(/ü",
+            "replace(/ö",
+            "replace(/ç",
+            ".concat("/",",
+            "+"/"+",
+          ];
+
+          console.log(`pandora_slug_bundle_index=${index}`);
+          for(const needle of needles){
+            let at=js.indexOf(needle);
+            if(at<0) continue;
+            const start=Math.max(0,at-260);
+            const end=Math.min(js.length,at+500);
+            const ctx=js.slice(start,end).replace(/\s+/gu," ");
+            console.log(`pandora_slug_evidence needle=${needle} context=${ctx}`);
+          }
+          NODE
+          done < "$tmpdir/scripts.txt"

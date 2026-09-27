@@ -546,6 +546,52 @@ export default async function BookIndexAdminPage({
           <table className="admin-data-table">
             <thead>
               <tr>
+                <th>Olası sourceKey churn</th>
+                <th>Kitap kimliği</th>
+                <th>Dış kayıt</th>
+                <th>Source key örnekleri</th>
+                <th>İlk / son görülme</th>
+              </tr>
+            </thead>
+            <tbody>
+              {readiness.unmatchedDuplicateIdentitySamples.length ? (
+                readiness.unmatchedDuplicateIdentitySamples.map((sample) => (
+                  <tr
+                    key={`${sample.sourceCode}:${sample.normalizedTitle}:${sample.normalizedAuthor ?? ""}`}
+                  >
+                    <td><strong>{sample.sourceCode}</strong></td>
+                    <td>
+                      <strong>{sample.title}</strong>
+                      <small>{sample.authorName ?? "Yazar bilgisi yok"}</small>
+                    </td>
+                    <td>{sample.externalRecordCount.toLocaleString("tr-TR")}</td>
+                    <td>{sample.sourceKeys.join(" · ") || "—"}</td>
+                    <td>
+                      {formatDateTime(sample.firstSeenAt)} /{" "}
+                      {formatDateTime(sample.lastSeenAt)}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5}>
+                    Aynı normalized kimlik altında birden fazla unmatched external kayıt yok.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <small>
+            Duplicate unmatched identity grubu:{" "}
+            {readiness.unmatchedDuplicateIdentityGroupCount.toLocaleString("tr-TR")}.
+            Bu tablo yalnız tanı amaçlıdır; otomatik eşleştirme veya sourceKey değişikliği yapmaz.
+          </small>
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
                 <th>Kaynak tarihçesi</th>
                 <th>Başarılı snapshot</th>
                 <th>İlk başarılı</th>

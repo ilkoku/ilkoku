@@ -32,24 +32,39 @@ jobs:
           const fs = require("node:fs");
           const html = fs.readFileSync(process.argv[2], "utf8");
 
-          const productNeedle = "/urun/678647/";
-          const productIndex = html.indexOf(productNeedle);
-          if (productIndex < 0) throw new Error("verified first product URL not found");
+          const headings = [...html.matchAll(/ÇOK\s*SATANLAR/giu)];
+          const headingIndex = headings.at(-1)?.index ?? -1;
+          console.log("bestseller_heading_count=" + headings.length);
+          console.log("last_bestseller_heading_index=" + headingIndex);
+          if (headingIndex < 0) throw new Error("bestseller heading not found");
 
-          const start = Math.max(0, productIndex - 1800);
-          const end = Math.min(html.length, productIndex + 3200);
+          const hrefRe = /href=["']([^"']*\/urun\/([0-9]+)\/[^"']+)["']/giu;
+          const hrefs = [...html.matchAll(hrefRe)]
+            .map((m) => ({ href: m[1], id: m[2], index: m.index }))
+            .filter((h) => h.index > headingIndex);
+
+          const unique = [];
+          const seen = new Set();
+          for (const item of hrefs) {
+            if (seen.has(item.href)) continue;
+            seen.add(item.href);
+            unique.push(item);
+          }
+
+          console.log("unique_product_links_after_heading=" + unique.length);
+          console.log("first_unique_product_links=" + JSON.stringify(unique.slice(0, 12)));
+
+          const first = unique[0];
+          if (!first) throw new Error("no product link after bestseller heading");
+
+          const start = Math.max(0, first.index - 2200);
+          const end = Math.min(html.length, first.index + 5200);
           const snippet = html.slice(start, end)
             .replace(/\r?\n/g, " ")
             .replace(/\s+/g, " ")
             .replace(/<!--([\s\S]*?)-->/g, "");
+
           console.log("FIRST_PRODUCT_SNIPPET_START");
           console.log(snippet);
           console.log("FIRST_PRODUCT_SNIPPET_END");
-
-          const hrefs = [...html.matchAll(/href=["']([^"']*\/urun\/([0-9]+)\/[^"']+)["']/giu)]
-            .slice(0, 80)
-            .map((m) => ({ href: m[1], id: m[2], index: m.index }));
-          const afterHeading = html.search(/ÇOK\s*SATANLAR/iu);
-          console.log("first_bestseller_heading_index=" + afterHeading);
-          console.log("first_product_href_records=" + JSON.stringify(hrefs.filter((h) => h.index > afterHeading).slice(0, 12)));
           NODE

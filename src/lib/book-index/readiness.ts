@@ -133,6 +133,16 @@ export type BookIndexUnmatchedIdentityDuplicateSample = {
   lastSeenAt: Date | null;
 };
 
+export type BookIndexUnmatchedMissingAuthorSample = {
+  sourceCode: string;
+  title: string;
+  normalizedTitle: string;
+  sourceKey: string;
+  productUrl: string;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+};
+
 export type BookIndexReadinessSnapshot = {
   compositeSourceTarget: number;
   compositeIndependenceGroupTarget: number;
@@ -151,6 +161,11 @@ export type BookIndexReadinessSnapshot = {
   }>;
   unmatchedDuplicateIdentityGroupCount: number;
   unmatchedDuplicateIdentitySamples: BookIndexUnmatchedIdentityDuplicateSample[];
+  unmatchedMissingAuthorBooksBySource: Array<{
+    sourceCode: string;
+    count: number;
+  }>;
+  unmatchedMissingAuthorSamples: BookIndexUnmatchedMissingAuthorSample[];
   matchCoveragePercent: number;
   maxCompositeSourcesPerBook: number;
   booksOnAtLeast2CompositeSources: number;
@@ -380,6 +395,63 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       (a, b) =>
         b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
     );
+
+  const unmatchedMissingAuthorGroups = unmatchedExternalBookGroups.length
+    ? await prisma.bookIndexExternalBook.groupBy({
+        by: ["sourceId"],
+        where: {
+          matchStatus: "unmatched",
+          normalizedAuthor: null,
+          sourceId: {
+            in: unmatchedExternalBookGroups.map((group) => group.sourceId),
+          },
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const unmatchedMissingAuthorBooksBySource = unmatchedMissingAuthorGroups
+    .map((group) => ({
+      sourceCode: sourceCodeById.get(group.sourceId) ?? group.sourceId,
+      count: group._count._all,
+    }))
+    .sort(
+      (a, b) =>
+        b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
+    );
+  const unmatchedMissingAuthorRows = unmatchedMissingAuthorGroups.length
+    ? await prisma.bookIndexExternalBook.findMany({
+        where: {
+          matchStatus: "unmatched",
+          normalizedAuthor: null,
+          sourceId: {
+            in: unmatchedMissingAuthorGroups.map((group) => group.sourceId),
+          },
+        },
+        orderBy: [
+          { lastSeenAt: "desc" },
+          { firstSeenAt: "desc" },
+        ],
+        take: 20,
+        select: {
+          sourceId: true,
+          sourceKey: true,
+          title: true,
+          normalizedTitle: true,
+          productUrl: true,
+          firstSeenAt: true,
+          lastSeenAt: true,
+        },
+      })
+    : [];
+  const unmatchedMissingAuthorSamples = unmatchedMissingAuthorRows.map((row) => ({
+    sourceCode: sourceCodeById.get(row.sourceId) ?? row.sourceId,
+    title: row.title,
+    normalizedTitle: row.normalizedTitle,
+    sourceKey: row.sourceKey,
+    productUrl: row.productUrl,
+    firstSeenAt: row.firstSeenAt,
+    lastSeenAt: row.lastSeenAt,
+  })) satisfies BookIndexUnmatchedMissingAuthorSample[];
 
   const unmatchedIdentityGroups = unmatchedExternalBookGroups.length
     ? await prisma.bookIndexExternalBook.groupBy({
@@ -1063,6 +1135,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     unmatchedExternalBooksBySource,
     unmatchedDuplicateIdentityGroupCount: duplicateUnmatchedIdentityGroups.length,
     unmatchedDuplicateIdentitySamples,
+    unmatchedMissingAuthorBooksBySource,
+    unmatchedMissingAuthorSamples,
     matchCoveragePercent: externalBookCount
       ? Math.round((matchedExternalBookCount / externalBookCount) * 1000) / 10
       : 0,

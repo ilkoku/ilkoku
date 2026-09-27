@@ -6,10 +6,7 @@ import { getBookIndexPublicSourcePageContext } from "@/lib/book-index/public-acc
 import {
   createBookIndexSourceItemListSchema,
 } from "@/lib/book-index/seo";
-import {
-  getBookIndexPublishedSourcePages,
-  getBookIndexSourcePageBySlug,
-} from "@/lib/book-index/source-pages";
+import { getBookIndexSourcePageBySlug } from "@/lib/book-index/source-pages";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 const baseUrl = "https://ilkoku.com";

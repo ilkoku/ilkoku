@@ -11,6 +11,7 @@ const CATEGORY_MAX_BOOKS = 48;
 const GENERAL_MAX_BOOKS = 56;
 const CATEGORY_MIN_EXPECTED_BOOKS = 20;
 const GENERAL_MIN_EXPECTED_BOOKS = 40;
+const VERIFIED_GENERAL_NON_BOOK_PRODUCT_IDS = new Set(["712938"]);
 
 const CATEGORY_LIST_CODES = new Set([
   "kitapsec-edebiyat-live",
@@ -45,10 +46,12 @@ function parseKitapSecRankedList(
     maxBooks,
     minExpectedBooks,
     requireItemListScope,
+    excludedProductIds = new Set<string>(),
   }: {
     maxBooks: number;
     minExpectedBooks: number;
     requireItemListScope: boolean;
+    excludedProductIds?: ReadonlySet<string>;
   },
 ): BookIndexCollectionResult {
   const listPattern = requireItemListScope
@@ -138,7 +141,11 @@ function parseKitapSecRankedList(
     throw new Error("BOOK_INDEX_KITAPSEC_RANK_SEQUENCE_INVALID");
   }
 
-  return { books };
+  return {
+    books: books.filter(
+      (book) => !excludedProductIds.has(book.sourceExternalId ?? ""),
+    ),
+  };
 }
 
 export function parseKitapSecBestsellers(
@@ -158,6 +165,7 @@ export function parseKitapSecGeneralBestsellers(
     maxBooks: GENERAL_MAX_BOOKS,
     minExpectedBooks: GENERAL_MIN_EXPECTED_BOOKS,
     requireItemListScope: false,
+    excludedProductIds: VERIFIED_GENERAL_NON_BOOK_PRODUCT_IDS,
   });
 }
 

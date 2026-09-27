@@ -995,26 +995,46 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
 });
 
 
-test("Pandora bestseller candidate stays research-only until a direct collection contract is proven", () => {
+test("Pandora bestseller collector is a fail-closed independent Turkey composite voter", () => {
+  const adapter = source("src/lib/book-index/sources/pandora.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(sources, 'code: "pandora"', "Pandora research source");
+  contains(
+    adapter,
+    'const API_URL = "https://www.pandora.com.tr/api/coksatanlar";',
+    "Pandora first-party bestseller API",
+  );
+  contains(adapter, "const EXPECTED_NATIVE_ROWS = 50;", "Pandora exact native slot contract");
+  contains(adapter, "rank !== index + 1", "Pandora cokid order must stay contiguous");
+  contains(adapter, "sourceKey: ean", "Pandora ISBN-13 source identity");
+  contains(adapter, "BOOK_INDEX_PANDORA_PRODUCT_ID_COLLISION", "conflicting product-id duplicates fail closed");
+  contains(adapter, "BOOK_INDEX_PANDORA_ISBN_COLLISION", "conflicting ISBN duplicates fail closed");
+  contains(adapter, "Keep the first/best native rank", "exact duplicate keeps the best native rank only");
+  contains(adapter, "never renumber", "Pandora duplicate collapse never invents ranks");
+  contains(adapter, '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"', "transparent Pandora collector user agent");
+  contains(adapter, "AbortSignal.timeout(20_000)", "bounded Pandora API request");
+
   contains(
     sources,
-    'name: "Pandora Kitabevi",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.pandora.com.tr",\n    includeInTurkeyIndex: true,\n    independenceGroup: "pandora",\n    operatorName: "Pandora Yayın ve Kitap Hizmetleri A.Ş.",\n    phase: "phase_2",\n    collectionState: "researching"',
-    "Pandora remains research-only",
+    'name: "Pandora Kitabevi",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.pandora.com.tr",\n    includeInTurkeyIndex: true,\n    independenceGroup: "pandora",\n    operatorName: "Pandora Yayın ve Kitap Hizmetleri A.Ş.",\n    phase: "phase_2",\n    collectionState: "ready"',
+    "Pandora ready independent source state",
   );
-  contains(lists, 'code: "pandora-tr-live"', "Pandora research list");
+  contains(lists, 'code: "pandora-tr-live"', "Pandora live list registry");
   contains(
     lists,
-    'sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
-    "Pandora list stays disabled and outside composite",
+    'sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: true,\n    collectionEveryMinutes: 360,\n    enabled: true',
+    "Pandora activated as bounded composite voter",
   );
-  notContains(
+  contains(
     collector,
-    "pandoraBookIndexAdapter",
-    "Pandora has no production collector before direct-fetch proof",
+    "[pandoraBookIndexAdapter.sourceCode, pandoraBookIndexAdapter]",
+    "Pandora production adapter registration",
+  );
+  contains(
+    sources,
+    "export const TURKEY_INDEX_MIN_SOURCES = 3;",
+    "3-source eligibility remains unchanged",
   );
 });

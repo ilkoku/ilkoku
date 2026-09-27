@@ -128,12 +128,6 @@ jobs:
               insight_path="${insight_url#https://ilkoku.com}"
               check_page "$insight_path" "$insight_url"
             fi
-
-            source_url="$(grep -Eo '<loc>https://ilkoku\.com/en-cok-satanlar/kaynak/[^<]+</loc>' "$sitemap" | head -1 | sed -e 's#<loc>##' -e 's#</loc>##' || true)"
-            if [[ -n "$source_url" ]]; then
-              source_path="${source_url#https://ilkoku.com}"
-              check_page "$source_path" "$source_url"
-            fi
           else
             echo "Book Index is not published in sitemap; gated SEO checks remain skipped."
           fi

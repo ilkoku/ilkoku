@@ -10,6 +10,8 @@ const SOURCE_ORIGIN = "https://www.kitapstore.com";
 const PAGE_COUNT = 4;
 const EXPECTED_PAGE_BOOKS = 25;
 const MAX_BOOKS = PAGE_COUNT * EXPECTED_PAGE_BOOKS;
+const MAX_IDENTITY_ENRICHMENTS = 8;
+const DETAIL_CONCURRENCY = 3;
 // Verified current bestseller-surface exceptions:
 // 776749 = Socrates Dergi No:99 (Dergi category)
 // 773082 = Naber Defter Özel Edisyon / Naber Sayı 17 (magazine issue special edition)
@@ -265,6 +267,58 @@ export function parseKitapStoreProductIsbn13(html: string) {
   return /^(?:978|979)[0-9]{10}$/u.test(normalized) ? normalized : null;
 }
 
+async function enrichMissingAuthorIdentity(
+  result: BookIndexCollectionResult,
+): Promise<BookIndexCollectionResult> {
+  const candidates = result.books
+    .map((book, index) => ({ book, index }))
+    .filter(({ book }) => !book.authorName);
+
+  if (candidates.length === 0) return result;
+
+  if (candidates.length > MAX_IDENTITY_ENRICHMENTS) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_IDENTITY_ENRICHMENT_TOO_LARGE");
+  }
+
+  const isbnByIndex = new Map<number, string>();
+  let nextCandidate = 0;
+
+  const workers = Array.from(
+    { length: Math.min(DETAIL_CONCURRENCY, candidates.length) },
+    async () => {
+      while (true) {
+        const candidateIndex = nextCandidate;
+        nextCandidate += 1;
+        if (candidateIndex >= candidates.length) return;
+
+        const candidate = candidates[candidateIndex];
+        const isbn13 = parseKitapStoreProductIsbn13(
+          await fetchHtml(candidate.book.productUrl),
+        );
+
+        if (!isbn13) {
+          throw new Error("BOOK_INDEX_KITAPSTORE_IDENTITY_METADATA_MISSING");
+        }
+
+        isbnByIndex.set(candidate.index, isbn13);
+      }
+    },
+  );
+
+  await Promise.all(workers);
+
+  return {
+    books: result.books.map((book, index) =>
+      isbnByIndex.has(index)
+        ? {
+            ...book,
+            isbn13: isbnByIndex.get(index) ?? null,
+          }
+        : book,
+    ),
+  };
+}
+
 function pageUrl(page: number) {
   return `${SOURCE_ORIGIN}/liste/2/cok-satanlar/!Sayfa=${page}`;
 }
@@ -300,7 +354,7 @@ export const kitapStoreBookIndexResearchAdapter: BookIndexSourceAdapter = {
       Array.from({ length: PAGE_COUNT }, (_, index) => fetchHtml(pageUrl(index + 1))),
     );
 
-    return combineKitapStoreBestsellerPages(
+    const combined = combineKitapStoreBestsellerPages(
       htmlPages.map((html, index) =>
         parseKitapStoreBestsellerPage(
           html,
@@ -308,5 +362,7 @@ export const kitapStoreBookIndexResearchAdapter: BookIndexSourceAdapter = {
         ),
       ),
     );
+
+    return enrichMissingAuthorIdentity(combined);
   },
 };

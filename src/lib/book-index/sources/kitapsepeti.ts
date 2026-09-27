@@ -90,7 +90,11 @@ export function parseKitapSepetiBestsellers(
       };
     })
     .filter((book): book is NonNullable<typeof book> => Boolean(book))
-    .slice(0, MAX_BOOKS);
+    .slice(0, MAX_BOOKS)
+    .map((book, index) => ({
+      ...book,
+      rank: index + 1,
+    }));
 
   if (books.length < MIN_EXPECTED_BOOKS) {
     throw new Error("BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL");

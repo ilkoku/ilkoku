@@ -1454,6 +1454,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     errorMessage: latestKitaplarSepetteCanaryRun?.errorMessage ?? null,
   };
 
+  // Read-only shadow qualification evidence; this never promotes KitapStore into the composite.
   const latestKitapStoreCanaryShadowRun =
     kitapStoreCanaryShadowList?.fetchRuns[0] ?? null;
   const kitapStoreCanaryShadowBooks = new Map<string, {

@@ -929,4 +929,14 @@ test("Book Index source adapters exclude only verified non-book catalogue entrie
     'title.toLowerCase().includes("puzzle")',
     "KitapSepeti does not broadly exclude books by title word",
   );
+  contains(
+    illakitap,
+    ".slice(0, MAX_BOOKS)\\n    .map((book, index) => ({\\n      ...book,\\n      rank: index + 1,",
+    "İlla Kitap keeps eligible book ranks contiguous after exclusions",
+  );
+  contains(
+    kitapsepeti,
+    ".slice(0, MAX_BOOKS)\\n    .map((book, index) => ({\\n      ...book,\\n      rank: index + 1,",
+    "KitapSepeti keeps eligible book ranks contiguous after exclusions",
+  );
 });

@@ -24,6 +24,52 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Inspect live rank 14 card authorship shape
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          trap 'rm -f "$body"' EXIT
+
+          code="$(curl --silent --show-error --compressed --max-time 20 \
+            --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)' \
+            --header 'Accept: text/html,application/xhtml+xml' \
+            --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5' \
+            --output "$body" --write-out '%{http_code}' \
+            'https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1' || true)"
+          printf 'rank14_probe_http_status=%s\n' "$code"
+          test "$code" = "200"
+
+          node - "$body" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "utf8");
+          const headings = [...html.matchAll(/<div\b[^>]*class=["'][^"']*\bIcBaslik\b[^"']*["'][^>]*>\s*ÇOK\s+SATANLAR\s*<\/div>/giu)];
+          const headingIndex = headings.at(-1)?.index;
+          if (headingIndex === undefined) throw new Error("heading missing");
+
+          const listBody = html.slice(headingIndex).match(
+            /<ul\b[^>]*class=["'][^"']*\bIslemliL\b[^"']*["'][^>]*>([\s\S]*?)<\/ul>/iu,
+          )?.[1];
+          if (!listBody) throw new Error("list missing");
+
+          const starts = [...listBody.matchAll(
+            /<li\b(?=[^>]*\bitemtype=["']http:\/\/schema\.org\/Book["'])(?=[^>]*\bid=["']Urun-([0-9]+)["'])[^>]*>/giu,
+          )];
+          const index = 13;
+          const start = starts[index]?.index;
+          const end = starts[index + 1]?.index ?? listBody.length;
+          if (start === undefined) throw new Error("rank 14 card missing");
+
+          const card = listBody.slice(start, end);
+          console.log("rank14_product_id=" + (starts[index]?.[1] || "NONE"));
+          console.log("rank14_has_author_itemprop=" + /itemprop=["']author["']/iu.test(card));
+          console.log("rank14_has_kisiadi=" + /class=["'][^"']*\bKisiAdi\b[^"']*["']/iu.test(card));
+          console.log("rank14_has_publisher_itemprop=" + /itemprop=["']publisher["']/iu.test(card));
+          console.log("RANK14_SNIPPET_START");
+          console.log(card.replace(/\r?\n/g, " ").replace(/\s+/g, " ").slice(0, 4500));
+          console.log("RANK14_SNIPPET_END");
+          NODE
+
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
 

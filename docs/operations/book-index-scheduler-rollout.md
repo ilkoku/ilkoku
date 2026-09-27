@@ -58,7 +58,9 @@ Configured GitHub Actions schedule windows:
 - fallback: `47 * * * *`
 
 Both windows call the same due-aware scheduler and never bypass each list's
-`collectionEveryMinutes`. The fallback reduces exposure to a missed primary
+`collectionEveryMinutes`. Scheduler execution is additionally guarded by a
+cross-trigger database lease, so GitHub and an independent external trigger
+cannot collect the same due window concurrently. The fallback reduces exposure to a missed primary
 event, but it does **not** guarantee that GitHub will deliver either scheduled
 event.
 
@@ -103,9 +105,11 @@ Recovery guardrails:
    force/backfill endpoint;
 4. keep source cadence authoritative so an external trigger cannot create
    artificial observations;
-5. verify the independent trigger with readiness/operations evidence before
+5. keep the database scheduler lease enabled so GitHub and external triggers
+   cannot enter collection concurrently;
+6. verify the independent trigger with readiness/operations evidence before
    treating scheduler delivery as recovered;
-6. do not enable Book Index public/SEO publication merely because trigger
+7. do not enable Book Index public/SEO publication merely because trigger
    delivery is restored.
 
 No independent external trigger is considered active until production evidence

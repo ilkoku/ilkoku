@@ -213,8 +213,9 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     countryCode: "TR",
     baseUrl: "https://www.kitapstore.com",
     includeInTurkeyIndex: true,
-    independenceGroup: "bilge-kitap-kulubu",
-    operatorName: "Bilge Kitap Kulübü",
+    // Current seller identity. Turkey-general voter eligibility remains separately gated.
+    independenceGroup: "vedat-akoglu-kitapstore",
+    operatorName: "Vedat Akoğlu - KitapStore",
     phase: "phase_2",
     collectionState: "researching",
   },

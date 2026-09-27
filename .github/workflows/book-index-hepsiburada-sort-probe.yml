@@ -1,0 +1,65 @@
+name: Book Index Hepsiburada sort probe
+
+on:
+  push:
+    branches:
+      - research/book-index-hepsiburada-sort-01ak-al4bb
+    paths:
+      - ".github/workflows/book-index-hepsiburada-sort-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Observe public Hepsiburada book sort contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Fetch public book category without collecting
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          trap 'rm -f "$body"' EXIT
+
+          code="$(curl --silent --show-error --compressed --max-time 25             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: text/html,application/xhtml+xml'             --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5'             --output "$body" --write-out '%{http_code}'             'https://www.hepsiburada.com/kitaplar-c-2147483645' || true)"
+
+          printf 'http_status=%s body_bytes=%s\n' "$code" "$(wc -c < "$body" | tr -d ' ')"
+
+          if [ "$code" = "200" ]; then
+            node - "$body" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "utf8");
+
+          const text = html
+            .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, " ")
+            .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, " ")
+            .replace(/<[^>]+>/gu, " ")
+            .replace(/&nbsp;/giu, " ")
+            .replace(/\s+/gu, " ");
+
+          console.log("contains_cok_satanlar=" + /Çok\s+satanlar/iu.test(text));
+
+          const patterns = [
+            /<option\b[^>]*>[\s\S]{0,300}?Çok\s+satanlar[\s\S]{0,300}?<\/option>/giu,
+            /<a\b[^>]*href=["'][^"']+["'][^>]*>[\s\S]{0,300}?Çok\s+satanlar[\s\S]{0,300}?<\/a>/giu,
+            /["'][^"']{0,200}(?:çok|cok)[-_ ]?satan[^"']{0,200}["']/giu,
+            /(?:sort|siralama|sorting)[^\n<]{0,240}/giu,
+          ];
+
+          for (let i = 0; i < patterns.length; i += 1) {
+            const values = [...html.matchAll(patterns[i])]
+              .slice(0, 30)
+              .map((m) => m[0].replace(/\s+/g, " ").slice(0, 700));
+            console.log("pattern_" + (i + 1) + "=" + JSON.stringify(values));
+          }
+
+          const productLinks = [...html.matchAll(/href=["']([^"']+-p-[A-Za-z0-9]+[^"']*)["']/giu)]
+            .map((m) => m[1]);
+          const unique = [...new Set(productLinks)];
+          console.log("product_link_count=" + productLinks.length);
+          console.log("unique_product_link_count=" + unique.length);
+          console.log("first_product_links=" + JSON.stringify(unique.slice(0, 20)));
+          NODE
+          fi

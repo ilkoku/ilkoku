@@ -109,6 +109,8 @@ export async function GET(request: NextRequest) {
           readiness.splitMasterCollisionCount,
         normalizedTitleDifferentAuthorCount:
           readiness.normalizedTitleDifferentAuthorCount,
+        normalizedTitleDifferentAuthorSamples:
+          readiness.normalizedTitleDifferentAuthorSamples.slice(0, 4),
         editionFamilyVariantOverlapCount:
           readiness.editionFamilyVariantOverlapCount,
         historySpanHours: readiness.historySpanHours,

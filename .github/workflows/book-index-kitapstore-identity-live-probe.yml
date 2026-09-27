@@ -69,6 +69,27 @@ jobs:
             console.log("has_776749=" + keys.has("776749"));
             console.log("has_773082=" + keys.has("773082"));
 
+            const categoryCounts = {};
+            for (const book of books) {
+              const parts = new URL(book.productUrl).pathname.split("/").filter(Boolean);
+              const category = parts[2] || "unknown";
+              categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+            }
+
+            const reviewPattern = /(dergi|defter|magnet|sticker|puzzle|ajanda|takvim|poster|oyun)/iu;
+            const reviewCandidates = books
+              .filter((book) => reviewPattern.test(book.title))
+              .map((book) => ({
+                rank: book.rank,
+                sourceKey: book.sourceKey,
+                title: book.title,
+                productUrl: book.productUrl,
+              }));
+
+            console.log("category_counts=" + JSON.stringify(categoryCounts));
+            console.log("review_candidate_count=" + reviewCandidates.length);
+            console.log("review_candidates=" + JSON.stringify(reviewCandidates));
+
             if (
               books.length !== 98 ||
               missingAuthors.length !== 1 ||

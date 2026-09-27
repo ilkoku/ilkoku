@@ -114,3 +114,98 @@ jobs:
           console.log(`pandora_same_origin_path_count=${paths.size}`);
           console.log(`pandora_interesting_paths=${interesting.join(" | ") || "NONE"}`);
           NODE
+
+
+      - name: Inspect public JavaScript references from static shell
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          url='https://www.pandora.com.tr/Cok_Satan_Kitaplar'
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir" 2>/dev/null || true' EXIT
+          html="$tmpdir/page.html"
+
+          code="$(curl             --silent             --show-error             --compressed             --max-time 20             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: text/html,application/xhtml+xml'             --output "$html"             --write-out '%{http_code}'             "$url" || true)"
+          echo "js_probe_page_status=$code"
+          [ "$code" = "200" ] || exit 0
+
+          node - "$html" > "$tmpdir/scripts.txt" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "utf8");
+          const base = new URL("https://www.pandora.com.tr/Cok_Satan_Kitaplar");
+          const scripts = [];
+
+          for (const match of html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/giu)) {
+            try {
+              const resolved = new URL(match[1], base);
+              if (
+                resolved.protocol === "https:"
+                && (resolved.hostname === "www.pandora.com.tr" || resolved.hostname === "pandora.com.tr")
+              ) {
+                resolved.hash = "";
+                scripts.push(resolved.toString());
+              }
+            } catch {}
+          }
+
+          for (const script of [...new Set(scripts)]) console.log(script);
+          NODE
+
+          script_count="$(wc -l < "$tmpdir/scripts.txt" | tr -d ' ')"
+          echo "same_origin_script_count=$script_count"
+
+          i=0
+          while IFS= read -r script; do
+            [ -n "$script" ] || continue
+            i=$((i + 1))
+            [ "$i" -le 30 ] || break
+
+            body="$tmpdir/script-$i.js"
+            status="$(curl               --silent               --show-error               --compressed               --max-time 20               --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'               --header 'Accept: application/javascript,text/javascript,*/*'               --output "$body"               --write-out '%{http_code}'               "$script" || true)"
+
+            node - "$body" "$i" "$status" <<'NODE'
+          const fs = require("node:fs");
+          const path = process.argv[2];
+          const index = Number(process.argv[3]);
+          const status = process.argv[4];
+          const js = fs.existsSync(path) ? fs.readFileSync(path, "utf8") : "";
+
+          const candidates = new Set();
+
+          const urlLike = /["'`](https?:\/\/[^"'\`\s]+|\/[^"'\`\s]{2,180})["'`]/gu;
+          for (const match of js.matchAll(urlLike)) {
+            const value = match[1];
+            if (/(cok[_-]?satan|çok[_-]?satan|bestsell|best-sell|\/api\/|ajax|product|kitap)/iu.test(value)) {
+              try {
+                const resolved = new URL(value, "https://www.pandora.com.tr/");
+                if (
+                  resolved.hostname === "www.pandora.com.tr"
+                  || resolved.hostname === "pandora.com.tr"
+                ) {
+                  const keys = [...resolved.searchParams.keys()].sort();
+                  candidates.add(`${resolved.pathname}${keys.length ? `?${keys.join("&")}` : ""}`);
+                }
+              } catch {}
+            }
+          }
+
+          const keywordHits = [
+            "Cok_Satan_Kitaplar",
+            "CokSatan",
+            "cokSatan",
+            "bestseller",
+            "bestSeller",
+            "fetch(",
+            "$.ajax",
+            "axios.",
+            "XMLHttpRequest",
+          ].filter((keyword) => js.includes(keyword));
+
+          if (candidates.size || keywordHits.length) {
+            console.log(
+              `script_index=${index} http_status=${status} bytes=${Buffer.byteLength(js)} keyword_hits=${keywordHits.join(",") || "NONE"} candidate_paths=${[...candidates].join(" | ") || "NONE"}`,
+            );
+          }
+          NODE
+          done < "$tmpdir/scripts.txt"

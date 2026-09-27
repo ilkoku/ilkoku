@@ -2,6 +2,10 @@ name: Book Index readiness probe
 
 on:
   workflow_dispatch:
+  # Passive observer only: reads readiness/overdue evidence and never runs collection.
+  schedule:
+    - cron: "7 * * * *"
+    - cron: "37 * * * *"
   push:
     branches:
       - main

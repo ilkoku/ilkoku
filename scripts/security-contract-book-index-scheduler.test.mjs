@@ -271,3 +271,49 @@ test("temporary idefix dry-run probe executes adapter without persistence", () =
     "dry run never calls scheduler endpoint",
   );
 });
+
+
+test("Book Index retries unsuccessful runs without resetting the full source cadence", () => {
+  const due = source("src/lib/book-index/due.ts");
+  const scheduler = source("src/lib/book-index/scheduler.ts");
+  const operations = source("src/lib/book-index/operations.ts");
+  const workflow = source(".github/workflows/book-index-scheduler.yml");
+
+  contains(
+    due,
+    "BOOK_INDEX_UNSUCCESSFUL_RETRY_MINUTES = 30",
+    "bounded unsuccessful-run retry backoff",
+  );
+  contains(
+    due,
+    'status === "success" || status === "no_change"',
+    "successful runs keep the configured cadence",
+  );
+  contains(
+    due,
+    "Math.min(cadenceMinutes, BOOK_INDEX_UNSUCCESSFUL_RETRY_MINUTES)",
+    "unsuccessful retry never exceeds the source cadence",
+  );
+  contains(
+    scheduler,
+    "nextBookIndexDueAt",
+    "scheduler uses shared due-time semantics",
+  );
+  contains(
+    scheduler,
+    "status: true",
+    "scheduler reads the latest run status for retry timing",
+  );
+  notContains(
+    scheduler,
+    "const intervalMs = listDefinition.collectionEveryMinutes * 60_000",
+    "scheduler no longer resets the full cadence after failed attempts",
+  );
+  contains(
+    operations,
+    "nextBookIndexDueAt",
+    "operations evidence uses the same retry timing",
+  );
+  contains(workflow, 'cron: "17 * * * *"', "primary hourly scheduler remains");
+  contains(workflow, 'cron: "47 * * * *"', "half-hour fallback remains");
+});

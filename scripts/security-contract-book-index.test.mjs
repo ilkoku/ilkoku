@@ -216,7 +216,7 @@ test("book index manual collection stays admin-controlled while scheduler is act
   contains(action, 'admin.role !== "admin"', "admin-only manual collection");
   contains(action, "collectBookIndexListByCode", "manual collector action");
   contains(page, "Şimdi kontrol et", "manual source verification control");
-  contains(page, "Saatlik scheduler aktiftir", "active scheduler status");
+  contains(page, "Saatlik GitHub schedule tanımlıdır", "truthful scheduler configuration status");
   notContains(page, "Otomatik scheduler bu aşamada kapalıdır", "stale scheduler-off status removed");
 });
 
@@ -796,8 +796,9 @@ test("Book Index admin reflects independent-operator voting", () => {
   contains(admin, "readiness.observedCompositeIndependenceGroups", "independent operator count");
   contains(admin, "readiness.compositeIndependenceGroupTarget", "independent operator target");
   contains(admin, "readiness.booksOnAtLeast3IndependentCompositeSources", "3+ independent-book count");
-  contains(admin, "Saatlik scheduler aktiftir", "scheduler status copy");
+  contains(admin, "Saatlik GitHub schedule tanımlıdır", "truthful scheduler status copy");
   notContains(admin, "Otomatik scheduler bu aşamada kapalıdır", "stale scheduler-off copy removed");
+  notContains(admin, "Saatlik scheduler aktif", "scheduler delivery is not overstated");
 });
 
 

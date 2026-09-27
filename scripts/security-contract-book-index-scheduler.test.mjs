@@ -89,6 +89,7 @@ test("Book Index scheduler exposes overdue duration as read-only operations evid
   contains(admin, "operations.maxOverdueMinutes", "admin overdue duration evidence");
   contains(admin, "En uzun cadence gecikmesi", "admin overdue duration label");
   contains(workflow, 'cron: "17 * * * *"', "steady-state cron stays unchanged");
+  contains(admin, "GitHub schedule tanımlı", "admin reports configured schedule without claiming delivery");
   notContains(admin, "Scheduler bozuk", "admin does not invent scheduler failure verdict");
 });
 

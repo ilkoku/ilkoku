@@ -41,7 +41,7 @@ jobs:
             test -n "$oidc_token"
 
             if response="$(curl --fail-with-body --silent --show-error --max-time 60 --header "Authorization: Bearer $oidc_token" https://ilkoku.com/api/internal/book-index-readiness)"; then
-              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); operations=payload.get("operations", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedMissingAuthorWithIsbnBooksBySource","unmatchedMissingAuthorWithoutIsbnBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours","normalizedTitleDifferentAuthorSamples","latestCompositeExternalBookCount","latestCompositeMatchedExternalBookCount","latestCompositeUnmatchedExternalBookCount","latestCompositeUnmatchedBooksBySource","latestCompositeUnmatchedSamples","latestCompositeMatchCoveragePercent"); operation_required=("schedulerSecretConfigured","dueCount","maxOverdueMinutes","dueLists"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) and all(key in operations for key in operation_required) else 1)'; then
+              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); operations=payload.get("operations", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedMissingAuthorWithIsbnBooksBySource","unmatchedMissingAuthorWithoutIsbnBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours","normalizedTitleDifferentAuthorSamples","latestCompositeExternalBookCount","latestCompositeMatchedExternalBookCount","latestCompositeUnmatchedExternalBookCount","latestCompositeUnmatchedBooksBySource","latestCompositeUnmatchedSamples","latestCompositeMatchCoveragePercent","kitapStoreCanaryHealth","kitapStoreCanaryShadowBookCount","kitapStoreCanaryShadowOverlapWithCompositeCount","kitapStoreCanaryShadowWouldReach3StorefrontCount","kitapStoreCanaryShadowWouldReach3IndependentCount","kitapStoreCanaryShadowPairOverlap","kitapStoreCanaryShadowSamples"); operation_required=("schedulerSecretConfigured","dueCount","maxOverdueMinutes","dueLists"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) and all(key in operations for key in operation_required) else 1)'; then
                 printf '%s' "$response" > readiness.json
                 python3 - <<'PY'
           import json
@@ -72,6 +72,13 @@ jobs:
               "booksOnAtLeast3IndependentCompositeSources": readiness.get("booksOnAtLeast3IndependentCompositeSources"),
               "nearThreeSourceCount": readiness.get("nearThreeSourceCount"),
               "nearThreeWithHistoricalThirdSourceCount": readiness.get("nearThreeWithHistoricalThirdSourceCount"),
+              "kitapStoreCanaryHealth": readiness.get("kitapStoreCanaryHealth"),
+              "kitapStoreCanaryShadowBookCount": readiness.get("kitapStoreCanaryShadowBookCount"),
+              "kitapStoreCanaryShadowOverlapWithCompositeCount": readiness.get("kitapStoreCanaryShadowOverlapWithCompositeCount"),
+              "kitapStoreCanaryShadowWouldReach3StorefrontCount": readiness.get("kitapStoreCanaryShadowWouldReach3StorefrontCount"),
+              "kitapStoreCanaryShadowWouldReach3IndependentCount": readiness.get("kitapStoreCanaryShadowWouldReach3IndependentCount"),
+              "kitapStoreCanaryShadowPairOverlap": readiness.get("kitapStoreCanaryShadowPairOverlap"),
+              "kitapStoreCanaryShadowSamples": readiness.get("kitapStoreCanaryShadowSamples"),
               "normalizedIdentityKeysOnAtLeast2Sources": readiness.get("normalizedIdentityKeysOnAtLeast2Sources"),
               "normalizedIdentityKeysOnAtLeast3Sources": readiness.get("normalizedIdentityKeysOnAtLeast3Sources"),
               "isbn13KeysOnAtLeast2Sources": readiness.get("isbn13KeysOnAtLeast2Sources"),

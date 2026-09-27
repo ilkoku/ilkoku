@@ -1,6 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
+import { getBookIndexOperationsSnapshot } from "@/lib/book-index/operations";
 import { getBookIndexPublicReadModel } from "@/lib/book-index/public-read-model";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import {
@@ -62,9 +63,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [readiness, publicReadModel] = await Promise.all([
+    const [readiness, publicReadModel, operations] = await Promise.all([
       getBookIndexReadinessSnapshot(),
       getBookIndexPublicReadModel(100),
+      getBookIndexOperationsSnapshot(),
     ]);
     const seoGate = evaluateBookIndexSeoGate(
       getBookIndexSeoGatePolicy(),
@@ -113,6 +115,18 @@ export async function GET(request: NextRequest) {
           readiness.unmatchedMissingAuthorBooksBySource,
         unmatchedAmbiguousIdentityGroupsBySource:
           readiness.unmatchedAmbiguousIdentityGroupsBySource,
+      },
+      operations: {
+        dueCount: operations.dueCount,
+        maxOverdueMinutes: operations.maxOverdueMinutes,
+        dueLists: operations.rows
+          .filter((row) => row.due)
+          .map((row) => ({
+            listCode: row.listCode,
+            sourceCode: row.sourceCode,
+            nextDueAt: row.nextDueAt,
+            latestRunStatus: row.latestRunStatus,
+          })),
       },
       seoGate: {
         state: seoGate.state,

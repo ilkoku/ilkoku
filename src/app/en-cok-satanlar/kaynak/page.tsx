@@ -95,7 +95,35 @@ export default async function BookIndexSourcesHubPage() {
       </header>
 
       <section className="mt-10 overflow-hidden rounded-[1.8rem] border border-black/[0.07] bg-white shadow-[0_14px_44px_rgba(34,23,70,0.05)]">
-        <div className="overflow-x-auto">
+        <div className="grid gap-3 p-4 md:hidden">
+          {sourcePages.map((sourcePage) => (
+            <article
+              className="rounded-2xl border border-black/[0.06] bg-[#faf8f3] p-4"
+              key={sourcePage.sourceCode}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <strong className="text-base text-[#211746]">{sourcePage.sourceName}</strong>
+                <span className="shrink-0 rounded-full bg-[#edf8ef] px-3 py-1 text-xs font-extrabold text-[#2f7040]">
+                  Canlı
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[#625b6d]">
+                {sourcePage.lists.map((list) => list.title).join(" · ")}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-[#756d80]">
+                Son veri: {formattedObservedAt(sourcePage.lastObservedAt)}
+              </p>
+              <Link
+                className="mt-4 inline-flex min-h-11 items-center text-sm font-extrabold text-[#4b2bc5]"
+                href={`/en-cok-satanlar/kaynak/${sourcePage.slug}`}
+              >
+                Listeyi aç →
+              </Link>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[760px] border-collapse text-left">
             <thead className="bg-[#f7f4ff] text-xs uppercase tracking-[0.08em] text-[#655b75]">
               <tr>
@@ -128,7 +156,7 @@ export default async function BookIndexSourcesHubPage() {
                   </td>
                   <td className="px-5 py-5">
                     <Link
-                      className="text-sm font-extrabold text-[#4b2bc5] hover:underline"
+                      className="inline-flex min-h-11 items-center text-sm font-extrabold text-[#4b2bc5] hover:underline"
                       href={`/en-cok-satanlar/kaynak/${sourcePage.slug}`}
                     >
                       Listeyi aç →

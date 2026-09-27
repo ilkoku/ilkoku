@@ -1,0 +1,89 @@
+name: Book Index KitapSec general parser live probe
+
+on:
+  push:
+    branches:
+      - research/book-index-kitapsec-general-live-01ak-al4be1d
+    paths:
+      - ".github/workflows/book-index-kitapsec-general-live-probe.yml"
+      - "src/lib/book-index/sources/kitapsec.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Run KitapSec general parser against public ranking
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Compile research parser and dependencies
+        run: |
+          rm -rf /tmp/kitapsec-parser
+          npx tsc \
+            src/lib/book-index/adapter.ts \
+            src/lib/book-index/html.ts \
+            src/lib/book-index/sources/kitapsec.ts \
+            --target ES2022 \
+            --module commonjs \
+            --moduleResolution node \
+            --skipLibCheck \
+            --esModuleInterop \
+            --outDir /tmp/kitapsec-parser
+
+      - name: Run production parser read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const {
+            kitapSecBookIndexAdapter,
+          } = require("/tmp/kitapsec-parser/sources/kitapsec.js");
+
+          (async () => {
+            const result = await kitapSecBookIndexAdapter.collect({
+              listCode: "kitapsec-general-live-canary",
+              sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",
+              observedAt: new Date(),
+            });
+
+            const books = result.books;
+            const ranks = books.map((book) => book.rank);
+            const keys = new Set(books.map((book) => book.sourceKey));
+            const ids = new Set(books.map((book) => book.sourceExternalId));
+            const isbnCount = books.filter((book) => book.isbn13).length;
+
+            console.log("book_count=" + books.length);
+            console.log("first_rank=" + books[0]?.rank);
+            console.log("last_rank=" + books.at(-1)?.rank);
+            console.log("unique_source_keys=" + keys.size);
+            console.log("unique_external_ids=" + ids.size);
+            console.log("isbn13_count=" + isbnCount);
+            console.log("first_title=" + books[0]?.title);
+            console.log("last_title=" + books.at(-1)?.title);
+
+            if (
+              books.length !== 56 ||
+              books[0]?.rank !== 1 ||
+              books.at(-1)?.rank !== 56 ||
+              keys.size !== 56 ||
+              ids.size !== 56 ||
+              ranks.some((rank, index) => rank !== index + 1)
+            ) {
+              throw new Error("KITAPSEC_GENERAL_LIVE_PARSER_CONTRACT_FAILED");
+            }
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE

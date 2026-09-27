@@ -540,13 +540,13 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
   );
   contains(
     lists,
-    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "KitapSec general voter remains disabled",
+    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
+    "KitapSec general source-only list is schedulable and public-eligible without voting",
   );
   contains(
     lists,
-    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
-    "KitapSec general shadow canary",
+    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "qualified KitapSec general canary is retired but retained privately for audit",
   );
   contains(collector, "[kitapSecBookIndexAdapter.sourceCode, kitapSecBookIndexAdapter]", "KitapSec adapter activation");
   contains(
@@ -946,7 +946,6 @@ test("Book Index public read model excludes shadow, research and disabled candid
   );
 
   for (const listCode of [
-    "kitapsec-general-live",
     "kitapsec-general-live-canary",
     "kitapstore-tr-live-canary",
     "pandora-tr-live-canary",
@@ -969,6 +968,7 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitaplarsepette-tr-live",
     "kitapzen-tr-weekly",
     "inkilap-tr-live",
+    "kitapsec-general-live",
     "illakitap-tr-weekly",
     "nobelkitap-tr-live",
     "idefix-tr-live",

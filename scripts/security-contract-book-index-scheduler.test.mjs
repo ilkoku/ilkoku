@@ -32,6 +32,26 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   contains(readiness, "splitMasterCollisionCount", "collision diagnostic retained");
   contains(readiness, "splitMasterCollisionSamples", "collision samples retained");
   contains(readiness, "normalizedIdentityKeysOnAtLeast2Sources", "cross-source identity diagnostic retained");
+  contains(
+    workflow,
+    '"unmatchedDuplicateIdentityGroupCount"',
+    "scheduler waits for sourceKey-churn diagnostic schema",
+  );
+  contains(
+    workflow,
+    '"leastSuccessfulRunCountSourceCodes"',
+    "scheduler waits for history-floor source diagnostics",
+  );
+  contains(
+    workflow,
+    '"unmatchedMissingAuthorBooksBySource"',
+    "scheduler waits for missing-author diagnostic schema",
+  );
+  contains(
+    workflow,
+    '"unmatchedAmbiguousIdentityGroupCount"',
+    "scheduler waits for ambiguous-master diagnostic schema",
+  );
 });
 
 

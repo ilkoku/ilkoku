@@ -209,3 +209,103 @@ jobs:
           }
           NODE
           done < "$tmpdir/scripts.txt"
+
+
+      - name: Probe discovered public Pandora bestseller API
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          api='https://www.pandora.com.tr/api/coksatanlar'
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir" 2>/dev/null || true' EXIT
+          body="$tmpdir/body"
+
+          code="$(curl             --silent             --show-error             --compressed             --max-time 20             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: application/json,text/plain,*/*'             --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5'             --output "$body"             --write-out '%{http_code}'             "$api" || true)"
+
+          bytes="$(wc -c < "$body" | tr -d ' ')"
+          echo "pandora_api_status=$code pandora_api_bytes=$bytes"
+          [ "$code" = "200" ] || exit 0
+
+          node - "$body" <<'NODE'
+          const fs = require("node:fs");
+          const raw = fs.readFileSync(process.argv[2], "utf8");
+
+          let data;
+          try {
+            data = JSON.parse(raw);
+          } catch {
+            console.log("pandora_api_json=false");
+            process.exit(0);
+          }
+
+          console.log("pandora_api_json=true");
+
+          let items = null;
+          let container = "unknown";
+
+          if (Array.isArray(data)) {
+            items = data;
+            container = "root_array";
+          } else if (data && typeof data === "object") {
+            const arrays = Object.entries(data).filter(([, value]) => Array.isArray(value));
+            if (arrays.length) {
+              const [key, value] = arrays.sort((a, b) => b[1].length - a[1].length)[0];
+              items = value;
+              container = `object.${key}`;
+            }
+            console.log(`pandora_api_top_level_keys=${Object.keys(data).sort().join(",") || "NONE"}`);
+          }
+
+          if (!items) {
+            console.log("pandora_api_items=NOT_FOUND");
+            process.exit(0);
+          }
+
+          console.log(`pandora_api_container=${container} pandora_api_item_count=${items.length}`);
+
+          const first = items.find((item) => item && typeof item === "object" && !Array.isArray(item));
+          if (!first) {
+            console.log("pandora_api_item_keys=NONE");
+            process.exit(0);
+          }
+
+          const keys = Object.keys(first).sort();
+          console.log(`pandora_api_item_keys=${keys.join(",")}`);
+
+          const rankLike = keys.filter((key) => /(rank|sira|sıra|order|position|index)/iu.test(key));
+          const idLike = keys.filter((key) => /(^id$|id$|isbn|stock|stok|product|urun|ürün|code|kod|slug)/iu.test(key));
+          const titleLike = keys.filter((key) => /(title|name|ad|isim|kitap)/iu.test(key));
+          const authorLike = keys.filter((key) => /(author|yazar)/iu.test(key));
+          const publisherLike = keys.filter((key) => /(publisher|yayinevi|yayınevi|yayinci|yayıncı)/iu.test(key));
+          const priceLike = keys.filter((key) => /(price|fiyat)/iu.test(key));
+          const urlLike = keys.filter((key) => /(url|link|href)/iu.test(key));
+
+          console.log(`pandora_api_rank_like_keys=${rankLike.join(",") || "NONE"}`);
+          console.log(`pandora_api_id_like_keys=${idLike.join(",") || "NONE"}`);
+          console.log(`pandora_api_title_like_keys=${titleLike.join(",") || "NONE"}`);
+          console.log(`pandora_api_author_like_keys=${authorLike.join(",") || "NONE"}`);
+          console.log(`pandora_api_publisher_like_keys=${publisherLike.join(",") || "NONE"}`);
+          console.log(`pandora_api_price_like_keys=${priceLike.join(",") || "NONE"}`);
+          console.log(`pandora_api_url_like_keys=${urlLike.join(",") || "NONE"}`);
+
+          function scalarValue(item, candidates) {
+            for (const key of candidates) {
+              const value = item?.[key];
+              if (typeof value === "string" || typeof value === "number") return String(value);
+            }
+            return "";
+          }
+
+          const titleCandidates = [...titleLike, "title", "name"];
+          const idCandidates = [...idLike, "id", "isbn"];
+
+          for (let index = 0; index < Math.min(items.length, 5); index += 1) {
+            const item = items[index];
+            if (!item || typeof item !== "object") continue;
+            const title = scalarValue(item, titleCandidates).replace(/\s+/gu, " ").trim().slice(0, 120);
+            const id = scalarValue(item, idCandidates).replace(/\s+/gu, " ").trim().slice(0, 80);
+            const rank = scalarValue(item, rankLike).replace(/\s+/gu, " ").trim().slice(0, 20);
+            console.log(`pandora_api_order=${index + 1} explicit_rank=${rank || "NONE"} id=${id || "NONE"} title=${title || "NONE"}`);
+          }
+          NODE

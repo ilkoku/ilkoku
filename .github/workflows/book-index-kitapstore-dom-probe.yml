@@ -68,19 +68,10 @@ jobs:
           console.log(snippet);
           console.log("FIRST_PRODUCT_SNIPPET_END");
           console.log("FIRST_PRODUCT_PATH=" + first.href);
+          fs.writeFileSync("first-product-path.txt", first.href, "utf8");
           NODE
 
-          first_path="$(node - "$body" <<'NODE'
-          const fs = require("node:fs");
-          const html = fs.readFileSync(process.argv[2], "utf8");
-          const headings = [...html.matchAll(/ÇOK\\s*SATANLAR/giu)];
-          const headingIndex = headings.at(-1)?.index ?? -1;
-          const match = [...html.matchAll(/href=["']([^"']*\\/urun\\/[0-9]+\\/[^"']+)["']/giu)]
-            .find((m) => (m.index ?? -1) > headingIndex);
-          if (!match?.[1]) process.exit(1);
-          process.stdout.write(match[1]);
-          NODE
-          )"
+          first_path="$(cat first-product-path.txt)"
 
           detail="$(mktemp)"
           detail_code="$(curl --silent --show-error --compressed --max-time 20 \

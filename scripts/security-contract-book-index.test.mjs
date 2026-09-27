@@ -808,7 +808,11 @@ test("KitaplarSepette is a bounded independent Turkey composite voter", () => {
   const collector = source("src/lib/book-index/collector.ts");
   const lists = source("src/lib/book-index/lists.ts");
 
-  contains(adapter, 'const MAX_BOOKS = 30;', "bounded KitaplarSepette Top 30");
+  contains(adapter, 'const MAX_BOOKS = 100;', "bounded KitaplarSepette Top 100");
+  contains(adapter, 'const PAGE_SIZE = 30;', "source-native page size");
+  contains(adapter, 'const MAX_PAGES = Math.ceil(MAX_BOOKS / PAGE_SIZE);', "bounded page count");
+  contains(adapter, 'url.searchParams.set("sayfa", String(page))', "source-native pagination");
+  contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_PAGINATION_GAP", "pagination gap rejection");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 25;', "fail-closed list minimum");
   contains(adapter, 'const DETAIL_CONCURRENCY = 6;', "bounded detail-page concurrency");
   contains(adapter, 'className.split(/\\s+/u).includes("card-product")', "exact bestseller card class token");
@@ -833,7 +837,7 @@ test("KitaplarSepette is a bounded independent Turkey composite voter", () => {
   contains(lists, 'code: "kitaplarsepette-tr-live"', "live voter list registry");
   notContains(lists, 'code: "kitaplarsepette-tr-live-canary"', "canary registry retired after qualification");
   contains(lists, 'sourceUrl: "https://www.kitaplarsepette.com/cok-satanlar"', "canonical bestseller page");
-  contains(lists, 'maxRank: 30', "bounded rank ceiling");
+  contains(lists, 'maxRank: 100', "bounded rank ceiling");
   contains(lists, 'collectionEveryMinutes: 360', "steady-state collection cadence");
   contains(lists, 'includeInComposite: true', "independent composite vote");
   contains(sources, "export const TURKEY_INDEX_MIN_SOURCES = 3;", "3-source threshold unchanged");

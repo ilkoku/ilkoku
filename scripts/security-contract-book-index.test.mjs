@@ -857,3 +857,58 @@ test("Book Index readiness diagnoses missing authors among unmatched records wit
     "ambiguous-master diagnostic does not alter matching behavior",
   );
 });
+
+
+test("Book Index admin can reject and restore verified non-book external records without deletion", () => {
+  const actions = source("src/features/book-index/admin-actions.ts");
+  const page = source("src/app/admin/kitap-endeksi/page.tsx");
+  const matching = source("src/lib/book-index/matching.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    actions,
+    'admin.role !== "admin"',
+    "Book Index reject actions remain admin-only",
+  );
+  contains(
+    actions,
+    'matchStatus: "unmatched"',
+    "reject action only accepts unmatched records",
+  );
+  contains(
+    actions,
+    'matchStatus: "rejected"',
+    "reject and restore use explicit rejected status",
+  );
+  contains(
+    actions,
+    "masterBookId: null",
+    "reject and restore do not detach matched master books",
+  );
+  contains(
+    actions,
+    "prisma.bookIndexExternalBook.updateMany",
+    "reject state transition is bounded to one external record condition",
+  );
+  notContains(
+    actions,
+    "bookIndexExternalBook.delete",
+    "reject workflow never deletes source history",
+  );
+
+  contains(page, "Kapsam dışı inceleme", "admin review queue");
+  contains(page, "Kaynak ürünü aç", "admin verifies the source before rejection");
+  contains(page, "Kapsam dışı kayıtlar", "rejected queue remains visible");
+  contains(page, "Geri al", "rejected decision is reversible");
+
+  contains(
+    matching,
+    'externalBook.matchStatus === "rejected"',
+    "auto matching preserves rejected admin decisions",
+  );
+  notContains(
+    collector,
+    "matchStatus: book.",
+    "collector does not overwrite manual match status during upsert",
+  );
+});

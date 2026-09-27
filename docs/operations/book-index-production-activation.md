@@ -47,13 +47,19 @@ Canary başarısızsa cron açılmaz.
 ## 3. Automatic scheduler activation
 
 OIDC canary PASS tamamlandı. Geçici `workflow_run` tetikleyicisi kaldırıldı.
-GitHub Actions üzerinde iki schedule penceresi tanımlıdır:
+GitHub Actions üzerinde iki doğrudan schedule penceresi ve bir otomatik relay tanımlıdır:
 
 - birincil: `17 * * * *`
 - fallback: `47 * * * *`
+- relay: başarılı saatlik **Email operations** workflow'u tamamlandığında
+  `workflow_run` event'i ile aynı Book Index scheduler workflow'u çağrılır.
 
-Bu iki pencere aynı due-aware scheduler'ı çağırır ve kaynak cadence'ini
-bypass etmez. Ancak GitHub scheduled-event teslimatı garanti değildir.
+Üç tetik de aynı due-aware scheduler'ı çağırır; kaynak cadence'ini bypass etmez.
+Database scheduler lease eşzamanlı tetiklerde yalnız tek collector akışına izin
+verir. Relay yalnız upstream Email operations run'ı `success` olduğunda çalışır.
+GitHub scheduled-event teslimatı garanti edilmediği için relay, farklı bir
+schedule workflow'unun başarılı teslimatını ek repo-içi otomatik sinyal olarak
+kullanır; manuel history üretmez.
 
 27.09.2026 güncel production kanıtında:
 
@@ -74,11 +80,14 @@ bypass etmez. Ancak GitHub scheduled-event teslimatı garanti değildir.
 - `BOOK_INDEX_SCHEDULER_SECRET` için bağımsız external trigger hâlâ
   production kanıtıyla aktif sayılmaz.
 
-Dolayısıyla önceki tam teslimat boşluğu kırılmıştır; ancak birkaç doğal pencere
-daha gözlenmeden GitHub scheduled-event delivery için kalıcı olarak "healthy"
-hükmü verilmez. Operasyon durumu **delivery recovery observation** olarak
-izlenir. Manuel scheduler çalıştırmaları history üretmek veya delivery
-boşluğunu gizlemek için kullanılmaz.
+Dolayısıyla önceki tam teslimat boşluğu kırılmıştır; ancak sonraki pencerelerde
+Book Index'in iki doğrudan schedule event'inin tekrar geciktiği ve aynı zaman
+aralığında Email operations'ın doğal schedule event aldığı da gözlenmiştir.
+Bu nedenle başarılı Email operations tamamlanmasına bağlı due-aware relay
+steady-state teslimat yedeği olarak eklenmiştir. Operasyon durumu doğal run
+kanıtı birikene kadar **delivery recovery observation** olarak izlenir. Manuel
+scheduler çalıştırmaları history üretmek veya delivery boşluğunu gizlemek için
+kullanılmaz.
 
 Pasif delivery gözlemi için ayrı Book Index readiness workflow'u yalnız
 read-only çalışır:
@@ -294,8 +303,8 @@ Kaynak erişim problemi:
 
 Sıra:
 
-**GitHub OIDC ✅ → Canary ✅ → Schedule Configured ⚠️ → Delivery Recovery Observation →
-Snapshot Birikimi → Matching → Readiness Kanıtı → SEO Policy → Gate Dry-run →
-Publish → Sitemap/Navigation → GSC**
+**GitHub OIDC ✅ → Canary ✅ → Schedule + Automated Relay Configured ⚠️ →
+Delivery Recovery Observation → Snapshot Birikimi → Matching → Readiness Kanıtı →
+SEO Policy → Gate Dry-run → Publish → Sitemap/Navigation → GSC**
 
 Bu sıra dışında otomatik public yayın yapılmaz.

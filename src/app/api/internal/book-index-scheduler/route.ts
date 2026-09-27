@@ -21,6 +21,7 @@ const GITHUB_WORKFLOW_REF =
   "ilkoku/ilkoku/.github/workflows/book-index-scheduler.yml@refs/heads/main";
 const ALLOWED_GITHUB_EVENTS = new Set([
   "workflow_dispatch",
+  "workflow_run",
   "schedule",
 ]);
 

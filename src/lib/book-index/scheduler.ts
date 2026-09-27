@@ -7,6 +7,10 @@ import {
   collectBookIndexListByCode,
 } from "./collector";
 import { nextBookIndexDueAt } from "./due";
+import {
+  acquireBookIndexSchedulerLease,
+  releaseBookIndexSchedulerLease,
+} from "./scheduler-lease";
 import { BOOK_INDEX_LISTS } from "./lists";
 import { reconcileAutoMatchedBookIndexMasters } from "./reconciliation";
 
@@ -32,7 +36,7 @@ function safeErrorMessage(error: unknown) {
   return "BOOK_INDEX_SCHEDULER_UNKNOWN_ERROR";
 }
 
-export async function runBookIndexScheduler(now = new Date()) {
+async function runBookIndexSchedulerUnlocked(now: Date) {
   const results: SchedulerResult[] = [];
   let checked = 0;
   let due = 0;
@@ -144,4 +148,41 @@ export async function runBookIndexScheduler(now = new Date()) {
     results,
     reconciliation,
   };
+}
+
+export async function runBookIndexScheduler(now = new Date()) {
+  const lease = await acquireBookIndexSchedulerLease(now);
+
+  if (!lease.acquired) {
+    return {
+      checkedAt: now.toISOString(),
+      checked: 0,
+      due: 0,
+      succeeded: 0,
+      unchanged: 0,
+      failed: 0,
+      skipped: 0,
+      itemsStored: 0,
+      results: [] as SchedulerResult[],
+      reconciliation: null,
+      schedulerLease: {
+        acquired: false as const,
+        lockedUntil: lease.lockedUntil?.toISOString() ?? null,
+      },
+    };
+  }
+
+  try {
+    const result = await runBookIndexSchedulerUnlocked(now);
+
+    return {
+      ...result,
+      schedulerLease: {
+        acquired: true as const,
+        lockedUntil: lease.lockedUntil.toISOString(),
+      },
+    };
+  } finally {
+    await releaseBookIndexSchedulerLease(lease.token);
+  }
 }

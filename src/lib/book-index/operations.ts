@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 
+import { nextBookIndexDueAt } from "./due";
 import { BOOK_INDEX_LISTS } from "./lists";
 
 export type BookIndexListOperationsRow = {
@@ -100,7 +101,11 @@ export async function getBookIndexOperationsSnapshot(
 
     const nextDueAt =
       latest && cadenceMinutes !== null
-        ? new Date(latest.startedAt.getTime() + cadenceMinutes * 60_000)
+        ? nextBookIndexDueAt({
+            startedAt: latest.startedAt,
+            status: latest.status,
+            cadenceMinutes,
+          })
         : null;
 
     const runnable =

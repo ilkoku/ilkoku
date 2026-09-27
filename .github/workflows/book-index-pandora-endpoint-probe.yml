@@ -385,3 +385,60 @@ jobs:
             );
           }
           NODE
+
+
+      - name: Diagnose Pandora duplicate identity rows
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          api='https://www.pandora.com.tr/api/coksatanlar'
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir" 2>/dev/null || true' EXIT
+          body="$tmpdir/body"
+
+          code="$(curl             --silent             --show-error             --compressed             --max-time 20             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: application/json,text/plain,*/*'             --output "$body"             --write-out '%{http_code}'             "$api" || true)"
+          echo "pandora_duplicate_status=$code"
+          [ "$code" = "200" ] || exit 0
+
+          node - "$body" <<'NODE'
+          const fs = require("node:fs");
+          const rows = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          if (!Array.isArray(rows)) process.exit(0);
+
+          function groupsFor(key, normalize = (value) => String(value ?? "").trim()) {
+            const groups = new Map();
+            for (const row of rows) {
+              const value = normalize(row[key]);
+              if (!value) continue;
+              if (!groups.has(value)) groups.set(value, []);
+              groups.get(value).push(row);
+            }
+            return [...groups.entries()].filter(([, group]) => group.length > 1);
+          }
+
+          const duplicateIds = groupsFor("id");
+          const duplicateEans = groupsFor("ean", (value) => String(value ?? "").replace(/\D/gu, ""));
+
+          console.log(`pandora_duplicate_id_groups=${duplicateIds.length} pandora_duplicate_ean_groups=${duplicateEans.length}`);
+
+          function printGroup(kind, value, group) {
+            for (const row of group) {
+              console.log(
+                [
+                  `pandora_duplicate_kind=${kind}`,
+                  `duplicate_value=${value}`,
+                  `rank=${row.cokid}`,
+                  `product_id=${String(row.id ?? "").slice(0, 40)}`,
+                  `ean=${String(row.ean ?? "").replace(/\D/gu, "").slice(0, 20) || "NONE"}`,
+                  `title=${String(row.adi ?? "").replace(/\s+/gu, " ").trim().slice(0, 120) || "NONE"}`,
+                  `author=${String(row.yazar ?? "").replace(/\s+/gu, " ").trim().slice(0, 100) || "NONE"}`,
+                  `publisher=${String(row.yayinci ?? "").replace(/\s+/gu, " ").trim().slice(0, 100) || "NONE"}`,
+                ].join(" "),
+              );
+            }
+          }
+
+          for (const [value, group] of duplicateIds) printGroup("id", value, group);
+          for (const [value, group] of duplicateEans) printGroup("ean", value, group);
+          NODE

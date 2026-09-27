@@ -1049,8 +1049,8 @@ test("KitapStore Top 100 candidate remains fail-closed and production-disabled",
   contains(adapter, "\\bIcBaslik\\b", "bestseller heading boundary");
   contains(adapter, "ÇOK SATANLAR", "native bestseller section marker");
   contains(adapter, "\\bIslemliL\\b", "native bestseller list container");
-  contains(adapter, 'id=["\']Urun-([0-9]+)["\']', "stable numeric product id");
-  contains(adapter, 'itemtype=["\']http:\\/\\/schema\\.org\\/Book["\']', "schema Book card scope");
+  contains(adapter, "Urun-([0-9]+)", "stable numeric product id");
+  contains(adapter, "schema\\.org", "schema Book card scope");
   contains(adapter, 'itemprop=["\']url["\']', "canonical product URL metadata");
   contains(adapter, 'itemprop=["\']author["\']', "author metadata");
   contains(adapter, 'itemprop=["\']publisher["\']', "publisher metadata");

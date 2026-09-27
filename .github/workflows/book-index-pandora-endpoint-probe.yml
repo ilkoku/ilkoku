@@ -173,7 +173,7 @@ jobs:
 
           const candidates = new Set();
 
-          const urlLike = /["'`](https?:\/\/[^"'\`\s]+|\/[^"'\`\s]{2,180})["'`]/gu;
+          const urlLike = /["'`](https?:\/\/[^"'`\s]+|\/[^"'`\s]{2,180})["'`]/gu;
           for (const match of js.matchAll(urlLike)) {
             const value = match[1];
             if (/(cok[_-]?satan|çok[_-]?satan|bestsell|best-sell|\/api\/|ajax|product|kitap)/iu.test(value)) {

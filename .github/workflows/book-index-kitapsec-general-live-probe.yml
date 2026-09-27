@@ -71,8 +71,20 @@ jobs:
             console.log("book_count=" + books.length);
             console.log("first_rank=" + books[0]?.rank);
             console.log("last_rank=" + books.at(-1)?.rank);
+            const missingIsbnBooks = books
+              .filter((book) => !book.isbn13)
+              .map((book) => ({
+                rank: book.rank,
+                sourceKey: book.sourceKey,
+                sourceExternalId: book.sourceExternalId ?? null,
+                title: book.title,
+                publisherName: book.publisherName ?? null,
+                productUrl: book.productUrl,
+              }));
+
             console.log("isbn13_count=" + isbnCount);
-            console.log("missing_isbn_count=" + (books.length - isbnCount));
+            console.log("missing_isbn_count=" + missingIsbnBooks.length);
+            console.log("missing_isbn_books=" + JSON.stringify(missingIsbnBooks));
             console.log("suspicious_title_count=" + suspiciousBooks.length);
             console.log("suspicious_titles=" + JSON.stringify(suspiciousBooks));
 

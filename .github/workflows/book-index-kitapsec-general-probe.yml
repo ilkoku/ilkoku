@@ -44,3 +44,47 @@ jobs:
 
           console.log("bestseller_links=" + JSON.stringify(anchors.slice(0, 60)));
           NODE
+
+          general="$(mktemp)"
+          general_code="$(curl --silent --show-error --compressed --max-time 20 \
+            --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)' \
+            --header 'Accept: text/html,application/xhtml+xml' \
+            --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5' \
+            --output "$general" --write-out '%{http_code}' \
+            'https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml' || true)"
+          printf 'general_http_status=%s general_body_bytes=%s\n' "$general_code" "$(wc -c < "$general" | tr -d ' ')"
+          test "$general_code" = "200"
+
+          node - "$general" <<'NODE'
+          const fs = require("node:fs");
+          const html = new TextDecoder("windows-1254").decode(fs.readFileSync(process.argv[2]));
+
+          const section = html.match(
+            /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_ContentUrunList\b[^"']*\burunListeleDiv\b[^"']*["'])(?=[^>]*\bitemtype=["']https:\/\/schema\.org\/ItemList["'])[^>]*>([\s\S]*?)<\/table>/iu,
+          )?.[1];
+          console.log("general_list_section_found=" + Boolean(section));
+          if (!section) process.exit(1);
+
+          const cards = [...section.matchAll(
+            /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_UrunSatir\b[^"']*["'])(?=[^>]*\bitemprop=["']itemListElement["'])(?=[^>]*\bid=["']([^"']+)["'])[^>]*>/giu,
+          )];
+
+          const rows = cards.map((match, index) => {
+            const start = match.index ?? 0;
+            const end = cards[index + 1]?.index ?? section.length;
+            const card = section.slice(start, end);
+            const rank = Number(card.match(/<meta\b[^>]*\bitemprop=["']position["'][^>]*\bcontent=["']([0-9]+)["'][^>]*>/iu)?.[1]);
+            const title = card.match(/<meta\b[^>]*\bitemprop=["']name["'][^>]*\bcontent=["']([^"']+)["'][^>]*>/iu)?.[1] || "";
+            const url = card.match(/<meta\b[^>]*\bitemprop=["']url["'][^>]*\bcontent=["']([^"']+)["'][^>]*>/iu)?.[1] || "";
+            const sku = card.match(/<meta\b[^>]*\bitemprop=["']sku["'][^>]*\bcontent=["']([^"']+)["'][^>]*>/iu)?.[1] || "";
+            return { rank, id: match[1], title, url, sku };
+          });
+
+          console.log("general_card_count=" + rows.length);
+          console.log("general_first_rank=" + rows[0]?.rank);
+          console.log("general_last_rank=" + rows.at(-1)?.rank);
+          console.log("general_unique_ids=" + new Set(rows.map(r => r.id)).size);
+          console.log("general_unique_ranks=" + new Set(rows.map(r => r.rank)).size);
+          console.log("general_first_20=" + JSON.stringify(rows.slice(0, 20)));
+          console.log("general_last_5=" + JSON.stringify(rows.slice(-5)));
+          NODE

@@ -189,6 +189,21 @@ test("Book Index readiness probe exposes overdue operations evidence without col
   notContains(route, "runBookIndexScheduler", "readiness probe never runs scheduler");
   notContains(route, "collectBookIndexListByCode", "readiness probe never collects sources");
 
+  contains(
+    route,
+    "schedulerSecretConfigured",
+    "probe exposes scheduler secret configured state only",
+  );
+  contains(
+    workflow,
+    '"schedulerSecretConfigured"',
+    "workflow prints scheduler secret configured state",
+  );
+  notContains(
+    route,
+    "BOOK_INDEX_SCHEDULER_SECRET",
+    "readiness probe never reads or exposes the scheduler secret value",
+  );
   contains(workflow, '"dueCount"', "workflow requires due-count evidence");
   contains(workflow, '"maxOverdueMinutes"', "workflow requires overdue duration");
   contains(workflow, '"dueLists"', "workflow prints overdue list evidence");

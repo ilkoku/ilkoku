@@ -137,6 +137,8 @@ export async function GET(request: NextRequest) {
           readiness.unmatchedAmbiguousIdentityGroupsBySource,
       },
       operations: {
+        schedulerSecretConfigured:
+          operations.schedulerSecretConfigured,
         dueCount: operations.dueCount,
         maxOverdueMinutes: operations.maxOverdueMinutes,
         dueLists: operations.rows

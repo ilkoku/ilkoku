@@ -346,7 +346,10 @@ export const kitapStoreBookIndexResearchAdapter: BookIndexSourceAdapter = {
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    if (context.listCode !== "kitapstore-tr-live") {
+    if (
+      context.listCode !== "kitapstore-tr-live" &&
+      context.listCode !== "kitapstore-tr-live-canary"
+    ) {
       throw new Error("BOOK_INDEX_KITAPSTORE_LIST_NOT_SUPPORTED");
     }
 

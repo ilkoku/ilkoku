@@ -204,7 +204,7 @@ test("temporary idefix schema probe is OIDC-protected and collection-free", () =
   );
   contains(
     workflow,
-    "printf '%s\\\\n' \"$response\" | python3 -m json.tool",
+    "printf '%s' \"$response\" | python3 -m json.tool",
     "idefix probe JSON print remains one shell line",
   );
   notContains(

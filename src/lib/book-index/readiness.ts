@@ -204,6 +204,15 @@ export type BookIndexReadinessSnapshot = {
     sourceCode: string;
     count: number;
   }>;
+  latestCompositeUnmatchedSamples: Array<{
+    sourceCode: string;
+    sourceKey: string;
+    title: string;
+    authorName: string | null;
+    isbn13: string | null;
+    isbn10: string | null;
+    productUrl: string;
+  }>;
   latestCompositeMatchCoveragePercent: number;
   maxCompositeSourcesPerBook: number;
   booksOnAtLeast2CompositeSources: number;
@@ -346,6 +355,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
                   externalBook: {
                     select: {
                       id: true,
+                      sourceKey: true,
+                      productUrl: true,
                       title: true,
                       authorName: true,
                       normalizedTitle: true,
@@ -876,6 +887,12 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
 
   const latestCompositeExternalBooks = new Map<string, {
     sourceCode: string;
+    sourceKey: string;
+    title: string;
+    authorName: string | null;
+    isbn13: string | null;
+    isbn10: string | null;
+    productUrl: string;
     matched: boolean;
   }>();
   const sourceCodesByMasterBook = new Map<string, Set<string>>();
@@ -925,6 +942,12 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
 
       latestCompositeExternalBooks.set(book.id, {
         sourceCode: list.source.code,
+        sourceKey: book.sourceKey,
+        title: book.title,
+        authorName: book.authorName,
+        isbn13: book.isbn13,
+        isbn10: book.isbn10,
+        productUrl: book.productUrl,
         matched: Boolean(book.masterBookId),
       });
 
@@ -1031,6 +1054,15 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         (a, b) =>
           b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
       );
+  const latestCompositeUnmatchedSamples = latestCompositeBookValues
+    .filter((book) => !book.matched)
+    .sort(
+      (a, b) =>
+        a.sourceCode.localeCompare(b.sourceCode, "tr")
+        || a.title.localeCompare(b.title, "tr"),
+    )
+    .slice(0, 30)
+    .map(({ matched: _matched, ...book }) => book);
   const latestCompositeMatchCoveragePercent = latestCompositeExternalBookCount
     ? Math.round(
         (latestCompositeMatchedExternalBookCount / latestCompositeExternalBookCount)
@@ -1401,6 +1433,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     latestCompositeMatchedExternalBookCount,
     latestCompositeUnmatchedExternalBookCount,
     latestCompositeUnmatchedBooksBySource,
+    latestCompositeUnmatchedSamples,
     latestCompositeMatchCoveragePercent,
     maxCompositeSourcesPerBook: compositeSourceCounts.length ? Math.max(...compositeSourceCounts) : 0,
     booksOnAtLeast2CompositeSources: compositeSourceCounts.filter((count) => count >= 2).length,

@@ -1018,3 +1018,28 @@ test("Pandora bestseller candidate stays research-only until a direct collection
     "Pandora has no production collector before direct-fetch proof",
   );
 });
+
+
+test("KitapStore candidate stays research-only until a bounded parser contract is proven", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(sources, 'code: "kitapstore"', "KitapStore research source");
+  contains(
+    sources,
+    'name: "KitapStore",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "bilge-kitap-kulubu",\n    operatorName: "Bilge Kitap Kulübü",\n    phase: "phase_2",\n    collectionState: "researching"',
+    "KitapStore remains research-only",
+  );
+  contains(lists, 'code: "kitapstore-tr-live"', "KitapStore research list");
+  contains(
+    lists,
+    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    "KitapStore list stays disabled and outside composite",
+  );
+  notContains(
+    collector,
+    "kitapstoreBookIndexAdapter",
+    "KitapStore has no production collector before parser proof",
+  );
+});

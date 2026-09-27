@@ -11,10 +11,6 @@ import {
   getBookIndexPublicReadModel,
   type BookIndexPublicReadModel,
 } from "./public-read-model";
-import {
-  getBookIndexPublishedSourcePages,
-  type BookIndexPublishedSourcePage,
-} from "./source-pages";
 import { getBookIndexReadinessSnapshot } from "./readiness";
 
 export type BookIndexPublicPageContext = {
@@ -22,10 +18,6 @@ export type BookIndexPublicPageContext = {
   model: BookIndexPublicReadModel;
 };
 
-export type BookIndexPublicSourcePageContext = {
-  model: BookIndexPublicReadModel;
-  sourcePages: BookIndexPublishedSourcePage[];
-};
 
 function policyConfigured() {
   const policy = getBookIndexSeoGatePolicy();
@@ -69,12 +61,3 @@ export const getBookIndexPublicPageContext = cache(
   },
 );
 
-
-export const getBookIndexPublicSourcePageContext = cache(
-  async (limit = 100): Promise<BookIndexPublicSourcePageContext | null> => {
-    const model = await getBookIndexPublicReadModel(limit);
-    const sourcePages = getBookIndexPublishedSourcePages(model);
-    if (!sourcePages.length) return null;
-    return { model, sourcePages };
-  },
-);

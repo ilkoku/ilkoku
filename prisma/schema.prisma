@@ -1955,4 +1955,14 @@ model BookIndexObservation {
   @@index([externalBookId, observedAt])
   @@index([observedAt])
 }
+model BookIndexSchedulerLease {
+  leaseKey    String   @id @db.VarChar(80)
+  token       String   @db.Char(36)
+  lockedUntil DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([lockedUntil])
+}
+
 

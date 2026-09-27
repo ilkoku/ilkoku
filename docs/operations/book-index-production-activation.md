@@ -1,6 +1,6 @@
 # Book Index production activation checklist
 
-Status: **SCHEDULE HEALTHY / SNAPSHOT ACCUMULATION / SOURCE PAGES PHASE 1 APPROVED / AGGREGATE PUBLICATION GATED**
+Status: **SCHEDULE CONFIGURED / DELIVERY RECOVERY OBSERVATION / SNAPSHOT ACCUMULATION / PUBLICATION GATED**
 
 Bu belge Kitap Endeksi kodu hazırlandıktan sonra production aktivasyonunun
 hangi sırayla yapılacağını tanımlar. Adımların sırası bilinçlidir; sonraki
@@ -164,43 +164,6 @@ Public açılımdan önce doğrulanması gereken ürün kuralları:
 
 Admin Türkiye Endeksi önizlemesi gerçek production snapshot'larıyla kontrol
 edilir.
-
-## 6A. Faz 1 kaynak sayfaları — kullanıcı onayıyla kademeli yayın
-
-27.09.2026 tarihli kullanıcı kararıyla hazır kaynak sayfalarının Türkiye bileşik
-endeksinden bağımsız olarak kademeli yayınlanması onaylandı.
-
-Kaynak sayfası publication kontratı:
-
-- liste `enabled=true` olmalı;
-- liste `publiclyVisible=true` olmalı;
-- production veritabanında aktif olmalı;
-- en az bir gerçek başarılı/no-change snapshot bulunmalı;
-- snapshot en az bir sıralı kayıt içermeli;
-- canary, research-only ve disabled candidate listeleri public modele giremez;
-- kaynak-native rank aynen korunur;
-- bu yayın Türkiye Endeksi, insight/trend sayfaları veya aggregate SEO gate'i açmaz.
-
-Faz 1 kaynak hub'ı:
-
-- `/en-cok-satanlar/kaynak`
-
-İlk canlı kaynak sayfası adayları:
-
-- BKM Kitap
-- Remzi Kitabevi
-- idefix
-- KitapSepeti
-- Kitapzen
-- İnkılâp Kitabevi
-- KitapSeç (yalnız doğrulanmış kategori listeleri; general canary private)
-- KitaplarSepette
-- İlla Kitap
-- NobelKitap
-
-Kaynak hub ve gerçekten publishable source URL'leri sitemap/site-haritasına
-eklenebilir. Aggregate `/en-cok-satanlar`, `/en-cok-satanlar/turkiye` ve
-insight sayfaları aşağıdaki SEO kalite kapısından geçmeden 404/noindex kalır.
 
 ## 7. SEO policy belirleme
 

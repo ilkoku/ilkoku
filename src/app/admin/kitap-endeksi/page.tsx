@@ -483,9 +483,11 @@ export default async function BookIndexAdminPage({
               Kesin süre:{" "}
               {readiness.historySpanHours.toLocaleString("tr-TR", {
                 maximumFractionDigits: 1,
-              })} saat · En genç kaynak:{" "}
-              {readiness.leastMatureSourceCodes.join(" · ") || "—"} ·{" "}
-              {readiness.minimumSourceSuccessfulRunCount.toLocaleString("tr-TR")} snapshot /{" "}
+              })} saat · En az snapshot:{" "}
+              {readiness.leastSuccessfulRunCountSourceCodes.join(" · ") || "—"} ·{" "}
+              {readiness.minimumSourceSuccessfulRunCount.toLocaleString("tr-TR")} snapshot ·{" "}
+              En kısa history:{" "}
+              {readiness.shortestHistorySpanSourceCodes.join(" · ") || "—"} ·{" "}
               {readiness.minimumSourceHistorySpanHours.toLocaleString("tr-TR", {
                 maximumFractionDigits: 1,
               })} saat

@@ -173,6 +173,8 @@ export type BookIndexReadinessSnapshot = {
   sourceHistoryMaturity: BookIndexSourceHistoryMaturity[];
   minimumSourceSuccessfulRunCount: number;
   minimumSourceHistorySpanHours: number;
+  leastSuccessfulRunCountSourceCodes: string[];
+  shortestHistorySpanSourceCodes: string[];
   leastMatureSourceCodes: string[];
   firstObservationAt: Date | null;
   lastObservationAt: Date | null;
@@ -444,14 +446,24 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   const minimumSourceHistorySpanHours = sourceHistoryMaturity.length
     ? Math.min(...sourceHistoryMaturity.map((source) => source.historySpanHours))
     : 0;
-  const leastMatureSourceCodes = sourceHistoryMaturity
+  const leastSuccessfulRunCountSourceCodes = sourceHistoryMaturity
     .filter(
       (source) =>
-        source.successfulRunCount === minimumSourceSuccessfulRunCount
-        && source.historySpanHours === minimumSourceHistorySpanHours,
+        source.successfulRunCount === minimumSourceSuccessfulRunCount,
     )
     .map((source) => source.sourceCode)
     .sort((a, b) => a.localeCompare(b, "tr"));
+  const shortestHistorySpanSourceCodes = sourceHistoryMaturity
+    .filter(
+      (source) =>
+        source.historySpanHours === minimumSourceHistorySpanHours,
+    )
+    .map((source) => source.sourceCode)
+    .sort((a, b) => a.localeCompare(b, "tr"));
+  const leastMatureSourceCodes = [...new Set([
+    ...leastSuccessfulRunCountSourceCodes,
+    ...shortestHistorySpanSourceCodes,
+  ])].sort((a, b) => a.localeCompare(b, "tr"));
 
   const observedCompositeSourceCodes = [...new Set(
     persistedCompositeLists
@@ -1053,6 +1065,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     sourceHistoryMaturity,
     minimumSourceSuccessfulRunCount,
     minimumSourceHistorySpanHours,
+    leastSuccessfulRunCountSourceCodes,
+    shortestHistorySpanSourceCodes,
     leastMatureSourceCodes,
     firstObservationAt,
     lastObservationAt,

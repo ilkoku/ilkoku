@@ -1,8 +1,12 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
+import { getBookIndexPublicReadModel } from "@/lib/book-index/public-read-model";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
-import { getBookIndexSeoGateSnapshot } from "@/lib/book-index/seo-gate";
+import {
+  evaluateBookIndexSeoGate,
+  getBookIndexSeoGatePolicy,
+} from "@/lib/book-index/seo-gate";
 
 export const dynamic = "force-dynamic";
 
@@ -58,10 +62,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [readiness, seoGate] = await Promise.all([
+    const [readiness, publicReadModel] = await Promise.all([
       getBookIndexReadinessSnapshot(),
-      getBookIndexSeoGateSnapshot(),
+      getBookIndexPublicReadModel(100),
     ]);
+    const seoGate = evaluateBookIndexSeoGate(
+      getBookIndexSeoGatePolicy(),
+      {
+        observedCompositeSources: readiness.observedCompositeSources,
+        observedIndependentCompositeSources:
+          readiness.observedCompositeIndependenceGroups,
+        matchCoveragePercent: readiness.matchCoveragePercent,
+        historySpanDays: readiness.historySpanDays,
+        turkeyItemCount: publicReadModel.turkey.items.length,
+      },
+    );
 
     return NextResponse.json({
       ok: true,

@@ -140,9 +140,10 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   }
 
   assert.match(header, /getBookIndexPublicPageContext\(100\)\.catch\(\(\) => null\)/);
+  assert.match(header, /getBookIndexPublicSourcePageContext\(100\)\.catch\(\(\) => null\)/);
   assert.match(header, /withBookIndexMenu/);
   assert.match(header, /label: "En Çok Satanlar"/);
-  assert.match(header, /directHref: "\/en-cok-satanlar"/);
+  assert.match(header, /bookIndexContext[\s\S]*"\/en-cok-satanlar"[\s\S]*bookIndexSourceContext[\s\S]*"\/en-cok-satanlar\/kaynak"/);
   assert.match(header, /menu\.id === "support"/);
   assert.match(config, /id: "book-index"[\s\S]*label: "En Çok Satanlar"[\s\S]*id: "support"/);
   assert.match(config, /id: "book-index"/);

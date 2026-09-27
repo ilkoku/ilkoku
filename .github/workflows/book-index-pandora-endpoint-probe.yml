@@ -309,3 +309,79 @@ jobs:
             console.log(`pandora_api_order=${index + 1} explicit_rank=${rank || "NONE"} id=${id || "NONE"} title=${title || "NONE"}`);
           }
           NODE
+
+
+      - name: Verify Pandora bestseller rank and identity integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          api='https://www.pandora.com.tr/api/coksatanlar'
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir" 2>/dev/null || true' EXIT
+          body="$tmpdir/body"
+
+          code="$(curl             --silent             --show-error             --compressed             --max-time 20             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: application/json,text/plain,*/*'             --output "$body"             --write-out '%{http_code}'             "$api" || true)"
+          echo "pandora_integrity_status=$code"
+          [ "$code" = "200" ] || exit 0
+
+          node - "$body" <<'NODE'
+          const fs = require("node:fs");
+          const data = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          if (!Array.isArray(data)) {
+            console.log("pandora_integrity_array=false");
+            process.exit(0);
+          }
+
+          const rows = data.filter((item) => item && typeof item === "object" && !Array.isArray(item));
+          const cokids = rows.map((item) => Number(item.cokid));
+          const ids = rows.map((item) => String(item.id ?? "").trim()).filter(Boolean);
+          const eans = rows.map((item) => String(item.ean ?? "").replace(/\D/gu, "")).filter(Boolean);
+
+          const cokidSequential = rows.length > 0 && cokids.every((value, index) => Number.isInteger(value) && value === index + 1);
+          const cokidUnique = new Set(cokids).size === rows.length;
+          const idComplete = ids.length === rows.length;
+          const idUnique = new Set(ids).size === ids.length;
+          const ean13Count = eans.filter((value) => /^\d{13}$/u.test(value)).length;
+          const ean13UniqueCount = new Set(eans.filter((value) => /^\d{13}$/u.test(value))).size;
+
+          function complete(key) {
+            return rows.filter((item) => {
+              const value = item[key];
+              return value !== null && value !== undefined && String(value).trim() !== "";
+            }).length;
+          }
+
+          console.log(
+            [
+              `pandora_integrity_items=${rows.length}`,
+              `cokid_sequential=${cokidSequential}`,
+              `cokid_unique=${cokidUnique}`,
+              `cokid_min=${Math.min(...cokids)}`,
+              `cokid_max=${Math.max(...cokids)}`,
+              `id_complete=${idComplete}`,
+              `id_unique=${idUnique}`,
+              `ean13_count=${ean13Count}`,
+              `ean13_unique_count=${ean13UniqueCount}`,
+              `title_complete=${complete("adi")}`,
+              `author_complete=${complete("yazar")}`,
+              `publisher_complete=${complete("yayinci")}`,
+              `price_complete=${complete("fiyat")}`,
+              `image_complete=${complete("gorselUrl")}`,
+            ].join(" "),
+          );
+
+          for (let index = 0; index < Math.min(rows.length, 3); index += 1) {
+            const item = rows[index];
+            console.log(
+              [
+                `pandora_sample_rank=${item.cokid}`,
+                `product_id=${String(item.id ?? "").slice(0, 40)}`,
+                `ean=${String(item.ean ?? "").replace(/\D/gu, "").slice(0, 20) || "NONE"}`,
+                `title=${String(item.adi ?? "").replace(/\s+/gu, " ").trim().slice(0, 100) || "NONE"}`,
+                `author=${String(item.yazar ?? "").replace(/\s+/gu, " ").trim().slice(0, 80) || "NONE"}`,
+                `publisher=${String(item.yayinci ?? "").replace(/\s+/gu, " ").trim().slice(0, 80) || "NONE"}`,
+              ].join(" "),
+            );
+          }
+          NODE

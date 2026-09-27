@@ -181,6 +181,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     operatorName: "İklim Grup Kitap Satış Dağıtım Ltd. Şti.",
   },
   {
+    code: "pandora",
+    name: "Pandora Kitabevi",
+    market: "TR",
+    countryCode: "TR",
+    baseUrl: "https://www.pandora.com.tr",
+    includeInTurkeyIndex: true,
+    independenceGroup: "pandora",
+    operatorName: "Pandora Yayın ve Kitap Hizmetleri A.Ş.",
+    phase: "phase_2",
+    collectionState: "researching",
+  },
+  {
     code: "hepsiburada",
     name: "Hepsiburada",
     market: "TR",

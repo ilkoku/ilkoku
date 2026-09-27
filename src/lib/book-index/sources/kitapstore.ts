@@ -43,6 +43,24 @@ function itemPropTag(card: string, tagName: "meta" | "span", itemProp: string) {
   )?.[0];
 }
 
+function anchorValueFromClass(card: string, classToken: "KisiAdi" | "FirmaAdi") {
+  const section = card.match(
+    new RegExp(
+      `<div\\b[^>]*class=["'][^"']*\\b${classToken}\\b[^"']*["'][^>]*>([\\s\\S]*?)<\\/div>`,
+      "iu",
+    ),
+  )?.[1];
+  const anchor = section?.match(/<a\b[^>]*>([\s\S]*?)<\/a>/iu);
+
+  if (!anchor) return null;
+
+  return (
+    attributeValue(anchor[0], "title") ||
+    decodeBookIndexHtml(anchor[1] ?? "") ||
+    null
+  );
+}
+
 function parseCard(card: string, productId: string, expectedRank: number) {
   const rankValue = card.match(
     /<div\b[^>]*class=["'][^"']*\bNo\b[^"']*["'][^>]*>\s*([0-9]{1,3})\s*<\/div>/iu,
@@ -61,13 +79,8 @@ function parseCard(card: string, productId: string, expectedRank: number) {
     attributeValue(titleTag, "title") ||
     decodeBookIndexHtml(titleLink?.[1] ?? "");
 
-  const author = card.match(
-    /<span\b(?=[^>]*\bitemprop=["']author["'])[^>]*>[\s\S]*?<a\b[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/span>/iu,
-  )?.[1];
-
-  const publisher = card.match(
-    /<span\b(?=[^>]*\bitemprop=["']publisher["'])[^>]*>[\s\S]*?<span\b[^>]*\bitemprop=["']name["'][^>]*>([\s\S]*?)<\/span>[\s\S]*?<\/span>/iu,
-  )?.[1];
+  const author = anchorValueFromClass(card, "KisiAdi");
+  const publisher = anchorValueFromClass(card, "FirmaAdi");
 
   const imageTag = card.match(
     /<img\b(?=[^>]*\bitemprop=["']image["'])[^>]*>/iu,
@@ -93,12 +106,6 @@ function parseCard(card: string, productId: string, expectedRank: number) {
   if (!title) {
     throw new Error("BOOK_INDEX_KITAPSTORE_TITLE_MISSING");
   }
-  if (!author) {
-    throw new Error("BOOK_INDEX_KITAPSTORE_AUTHOR_MISSING");
-  }
-  if (!publisher) {
-    throw new Error("BOOK_INDEX_KITAPSTORE_PUBLISHER_MISSING");
-  }
   if (serialNumber !== productId) {
     throw new Error("BOOK_INDEX_KITAPSTORE_SERIAL_MISMATCH");
   }
@@ -113,8 +120,8 @@ function parseCard(card: string, productId: string, expectedRank: number) {
     sourceKey: productId,
     sourceExternalId: productId,
     title,
-    authorName: decodeBookIndexHtml(author),
-    publisherName: decodeBookIndexHtml(publisher),
+    authorName: author,
+    publisherName: publisher,
     productUrl: absoluteUrl(productHref),
     imageUrl: imageSrc ? absoluteUrl(imageSrc) : null,
     rank,

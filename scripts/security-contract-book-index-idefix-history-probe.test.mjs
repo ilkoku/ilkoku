@@ -45,3 +45,40 @@ test("idefix historical metadata probe is bounded and read-only", () => {
   assert.match(idefix, /title\.startsWith\(expected\)/u);
   assert.match(idefix, /documentTitleAuthorName\(html, expectedTitle\)/u);
 });
+
+
+test("idefix historical backfill is bounded, leased and history-safe", () => {
+  const backfill = source("src/lib/book-index/idefix-history-backfill.ts");
+  const route = source("src/app/api/internal/book-index-idefix-history-backfill/route.ts");
+  const workflow = source(".github/workflows/book-index-idefix-history-backfill.yml");
+
+  assert.match(backfill, /const MAX_CANDIDATES = 100;/u);
+  assert.match(backfill, /const DETAIL_CONCURRENCY = 6;/u);
+  assert.match(backfill, /matchStatus: "unmatched"/u);
+  assert.match(backfill, /masterBookId: null/u);
+  assert.match(backfill, /acquireBookIndexSchedulerLease/u);
+  assert.match(backfill, /releaseBookIndexSchedulerLease/u);
+  assert.match(backfill, /BOOK_INDEX_IDEFIX_HISTORY_BACKFILL_FETCH_FAILED_/u);
+  assert.match(backfill, /parseIdefixProductDetails/u);
+  assert.match(backfill, /autoMatchBookIndexExternalBook/u);
+  assert.match(backfill, /normalizeBookIndexText\(recoveredAuthorName\)/u);
+  assert.match(backfill, /_min: \{ firstSeenAt: true \}/u);
+  assert.match(backfill, /_max: \{ lastSeenAt: true \}/u);
+
+  assert.doesNotMatch(backfill, /bookIndexObservation\.(?:create|update|upsert|delete)/u);
+  assert.doesNotMatch(backfill, /bookIndexFetchRun\.(?:create|update|upsert|delete)/u);
+  assert.doesNotMatch(backfill, /bookIndexExternalBook\.(?:create|upsert|delete)/u);
+  assert.doesNotMatch(backfill, /sourceKey:\s*recovered/u);
+  assert.doesNotMatch(backfill, /rank:/u);
+  assert.doesNotMatch(backfill, /deleteMany/u);
+
+  assert.match(route, /ilkoku-book-index-idefix-history-backfill/u);
+  assert.match(route, /book-index-idefix-history-backfill\.yml@refs\/heads\/main/u);
+  assert.match(route, /getBookIndexReadinessSnapshot/u);
+  assert.match(route, /maxDuration = 300/u);
+
+  assert.match(workflow, /id-token: write/u);
+  assert.match(workflow, /Backfill bounded historical idefix metadata/u);
+  assert.match(workflow, /--request POST/u);
+  assert.doesNotMatch(workflow, /schedule:/u);
+});

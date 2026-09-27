@@ -47,18 +47,19 @@ Canary başarısızsa cron açılmaz.
 ## 3. Automatic scheduler activation
 
 OIDC canary PASS tamamlandı. Geçici `workflow_run` tetikleyicisi kaldırıldı.
-GitHub Actions üzerinde iki doğrudan schedule penceresi ve bir otomatik relay tanımlıdır:
+GitHub Actions üzerinde iki doğrudan schedule penceresi ve iki bağımsız doğal upstream sinyalini kabul eden bir otomatik relay tanımlıdır:
 
 - birincil: `17 * * * *`
 - fallback: `47 * * * *`
-- relay: doğal `schedule` event'iyle başlayan saatlik **Email operations**
-  workflow'u başarıyla tamamlandığında `workflow_run` event'i ile aynı
-  Book Index scheduler workflow'u çağrılır.
+- relay: doğal `schedule` event'iyle başlayan **Email operations** veya
+  **Book Index readiness probe** workflow'larından biri başarıyla tamamlandığında
+  `workflow_run` event'i ile aynı Book Index scheduler workflow'u çağrılır.
 
-Üç tetik de aynı due-aware scheduler'ı çağırır; kaynak cadence'ini bypass etmez.
-Database scheduler lease eşzamanlı tetiklerde yalnız tek collector akışına izin
-verir. Relay yalnız upstream Email operations run'ı hem `success` hem de
-`schedule` kaynaklı olduğunda çalışır; manuel `workflow_dispatch` relay üretmez.
+Doğrudan cron pencereleri ve relay aynı due-aware scheduler'ı çağırır; kaynak
+cadence'ini bypass etmez. Database scheduler lease eşzamanlı tetiklerde yalnız
+tek collector akışına izin verir. Relay yalnız allowlist'teki upstream run hem
+`success` hem de `schedule` kaynaklı olduğunda çalışır; manuel
+`workflow_dispatch` relay üretmez.
 GitHub scheduled-event teslimatı garanti edilmediği için relay, farklı bir
 schedule workflow'unun başarılı teslimatını ek repo-içi otomatik sinyal olarak
 kullanır; manuel history üretmez.
@@ -72,8 +73,9 @@ kullanır; manuel history üretmez.
   `failed` sonucu üretmiştir;
 - #24 due-aware kontrolünde `due=0` görmüş ve yapay observation/history
   üretmeden tüm listeleri güvenli biçimde `not_due` bırakmıştır;
-- CMS publishing scheduler da **#681** ile doğal `schedule` teslimatı
-  almıştır;
+- Book Index readiness probe doğrudan scheduler pencereleri kaçırılırken doğal
+  `schedule` teslimatı almış; **#15** (`2026-09-27T19:13:36Z`) SUCCESS
+  tamamlanmış ve 12 due liste / 46 dakika maksimum gecikme raporlamıştır;
 - cross-trigger database lease production scheduler çağrısında başarıyla
   acquire edilmiştir;
 - historical idefix metadata recovery tamamlandıktan sonra readiness
@@ -85,8 +87,9 @@ kullanır; manuel history üretmez.
 Dolayısıyla önceki tam teslimat boşluğu kırılmıştır; ancak sonraki pencerelerde
 Book Index'in iki doğrudan schedule event'inin tekrar geciktiği ve aynı zaman
 aralığında Email operations'ın doğal schedule event aldığı da gözlenmiştir.
-Bu nedenle doğal schedule-event Email operations tamamlanmasına bağlı due-aware
-relay steady-state teslimat yedeği olarak eklenmiştir. Operasyon durumu doğal run
+Bu nedenle doğal schedule-event **Email operations** ve **Book Index readiness probe**
+tamamlanmalarına bağlı due-aware relay steady-state teslimat yedeği olarak
+genişletilmiştir. Operasyon durumu doğal run
 kanıtı birikene kadar **delivery recovery observation** olarak izlenir. Manuel
 scheduler çalıştırmaları history üretmek veya delivery boşluğunu gizlemek için
 kullanılmaz.

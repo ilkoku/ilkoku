@@ -82,6 +82,12 @@ export const BOOK_INDEX_PUBLIC_SOURCE_PAGES: readonly BookIndexPublicSourcePageD
     sourceName: "Pandora Kitabevi",
     searchTitle: "Pandora Kitabevi En Çok Satan Türkçe Kitaplar",
   },
+  {
+    sourceCode: "kitapambari",
+    slug: "kitap-ambari",
+    sourceName: "Kitap Ambarı",
+    searchTitle: "Kitap Ambarı En Çok Satan Kitaplar",
+  },
 ] as const;
 
 const periodOrder = new Map([

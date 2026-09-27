@@ -231,6 +231,7 @@ test("Book Index source SEO pages publish only from real available snapshots", (
     "kitaplarsepette",
     "illa-kitap",
     "nobel-kitap",
+    "kitap-ambari",
   ]) {
     contains(sourcePages, `slug: "${slug}"`, `${slug} source SEO slug`);
   }
@@ -301,6 +302,7 @@ test("phase-one source hub publishes only approved source definitions", () => {
     "illakitap",
     "nobelkitap",
     "pandora",
+    "kitapambari",
   ];
 
   for (const sourceCode of approved) {
@@ -314,7 +316,6 @@ test("phase-one source hub publishes only approved source definitions", () => {
   for (const privateSource of [
     "kitapstore",
     "amazon-tr",
-    "kitapambari",
   ]) {
     assert.ok(
       !sourcePages.includes(`sourceCode: "${privateSource}"`),

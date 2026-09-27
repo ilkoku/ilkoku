@@ -24,6 +24,55 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Inspect two missing-ISBN product details
+        shell: bash
+        run: |
+          set -euo pipefail
+          urls=(
+            'https://www.kitapsec.com/Products/2026-MEB-AGS-Egitim-Bilimleri-ve-Turk-Milli-Egitim-Sistemi-Video-Ders-Notlari-Soru-Bankasi-2-li-Set-Indeks-Akademi-Yayincilik-930456.html'
+            'https://www.kitapsec.com/Products/2026-KPSS-MEB-AGS-35-Gunde-Haritalarla-Kodlamalarla-Cografyanin-Kodlari-Video-Ders-Notlari-Kitabi-Soru-Bankasi-2-li-Set-Yunus-Turan-EDU-Kariyer-926943.html'
+          )
+
+          for index in 0 1; do
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --compressed --max-time 20 \
+              --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)' \
+              --header 'Accept: text/html,application/xhtml+xml' \
+              --output "$body" --write-out '%{http_code}' "${urls[$index]}" || true)"
+            printf 'detail_index=%s http_status=%s\n' "$index" "$code"
+            if [ "$code" = "200" ]; then
+              node - "$body" "$index" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "utf8");
+          const index = process.argv[3];
+          const text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, " ")
+            .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, " ")
+            .replace(/<[^>]+>/gu, " ")
+            .replace(/&nbsp;/giu, " ")
+            .replace(/\s+/gu, " ");
+
+          const schemaIsbn = html.match(/itemprop=["']isbn["'][^>]*content=["']([^"']+)["']/iu)?.[1]
+            || html.match(/content=["']([^"']+)["'][^>]*itemprop=["']isbn["']/iu)?.[1]
+            || html.match(/itemprop=["']isbn["'][^>]*>([^<]+)</iu)?.[1]
+            || null;
+          const anyIsbn = text.match(/(?:ISBN(?:-13)?\s*[:\-]?\s*)?(97[89][0-9]{10})/iu)?.[1] || null;
+          const authorTitle = html.match(/(?:Yazar|Yazarlar)[\s\S]{0,1200}?<a\b[^>]*title=["']([^"']+)["']/iu)?.[1]
+            || html.match(/itemprop=["']author["'][\s\S]{0,600}?title=["']([^"']+)["']/iu)?.[1]
+            || null;
+
+          console.log(`detail_index=${index} schema_isbn=${schemaIsbn || "NONE"} any_isbn13=${anyIsbn || "NONE"} author=${authorTitle || "NONE"}`);
+
+          for (const marker of ["ISBN", "Yazar"]) {
+            const pos = text.search(new RegExp(marker, "iu"));
+            if (pos >= 0) {
+              console.log(`detail_index=${index} marker=${marker} snippet=${text.slice(Math.max(0, pos - 250), pos + 700)}`);
+            }
+          }
+          NODE
+            fi
+            rm -f "$body"
+          done
+
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
 

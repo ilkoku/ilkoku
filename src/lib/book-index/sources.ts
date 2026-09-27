@@ -204,7 +204,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     independenceGroup: "kitapambari",
     operatorName: "Ötüken Neşriyat A.Ş.",
     phase: "phase_2",
-    collectionState: "researching",
+    collectionState: "ready",
   },
   {
     code: "kitapstore",

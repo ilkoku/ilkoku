@@ -276,6 +276,20 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: false,
   },
+  // Source-only qualification canary. Operator bias keeps Turkey composite voting off.
+  {
+    code: "kitapambari-tr-live-canary",
+    sourceCode: "kitapambari",
+    title: "Kitap Ambarı · Çok Satanlar · Canary",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",
+    maxRank: 100,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: false,
+    enabled: true,
+  },
   {
     code: "kitapstore-tr-live",
     sourceCode: "kitapstore",

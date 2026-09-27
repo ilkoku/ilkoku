@@ -36,7 +36,7 @@ jobs:
 
             if response="$(curl --fail-with-body --silent --show-error --max-time 60 --header "Authorization: Bearer $oidc_token" https://ilkoku.com/api/internal/book-index-idefix-schema)"; then
               if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); raise SystemExit(0 if payload.get("ok") is True and payload.get("sampleCount", 0) > 0 else 1)'; then
-                printf '%s\\n' "$response" | python3 -m json.tool
+                printf '%s' "$response" | python3 -m json.tool
                 exit 0
               fi
             fi

@@ -60,7 +60,7 @@ jobs:
           const html = new TextDecoder("windows-1254").decode(fs.readFileSync(process.argv[2]));
 
           const section = html.match(
-            /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_ContentUrunList\b[^"']*\burunListeleDiv\b[^"']*["'])(?=[^>]*\bitemtype=["']https:\/\/schema\.org\/ItemList["'])[^>]*>([\s\S]*?)<\/table>/iu,
+            /<div\b(?=[^>]*\bclass=["'][^"']*\bKs_ContentUrunList\b[^"']*\burunListeleDiv\b[^"']*["'])[^>]*>([\s\S]*?)<\/table>/iu,
           )?.[1];
           console.log("general_list_section_found=" + Boolean(section));
 

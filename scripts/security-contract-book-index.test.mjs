@@ -1228,3 +1228,32 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
     "KitapStore adapter registered for canary collection",
   );
 });
+
+
+test("Book Index public read model excludes canary and research-only lists", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+  const publicReadModel = source("src/lib/book-index/public-read-model.ts");
+
+  contains(lists, "publiclyVisible: boolean;", "list registry has explicit public visibility");
+  contains(
+    publicReadModel,
+    "list.enabled && list.publiclyVisible",
+    "public model requires enabled and explicitly public lists",
+  );
+
+  for (const listCode of [
+    "kitapsec-general-live-canary",
+    "kitapstore-tr-live-canary",
+    "pandora-tr-live",
+    "kitapambari-tr-live",
+    "amazon-tr-live",
+  ]) {
+    const marker = `code: "${listCode}"`;
+    const start = lists.indexOf(marker);
+    assert.ok(start >= 0, `missing list definition: ${listCode}`);
+    const end = lists.indexOf("\n  },", start);
+    assert.ok(end > start, `invalid list definition block: ${listCode}`);
+    const listBlock = lists.slice(start, end);
+    contains(listBlock, "publiclyVisible: false", `${listCode} stays private`);
+  }
+});

@@ -540,12 +540,12 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
   );
   contains(
     lists,
-    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
     "KitapSec general voter remains disabled",
   );
   contains(
     lists,
-    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    enabled: true',
+    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
     "KitapSec general shadow canary",
   );
   contains(collector, "[kitapSecBookIndexAdapter.sourceCode, kitapSecBookIndexAdapter]", "KitapSec adapter activation");
@@ -927,11 +927,62 @@ test("KitapSec general shadow canary qualification evidence is observable withou
   contains(lists, 'code: "kitapsec-general-live"', "KitapSec general voter registry");
   contains(
     lists,
-    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    'code: "kitapsec-general-live",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
     "KitapSec general voter remains disabled",
   );
 });
 
+
+
+test("Book Index public read model excludes shadow, research and disabled candidate lists", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+  const publicReadModel = source("src/lib/book-index/public-read-model.ts");
+
+  contains(lists, "publiclyVisible: boolean;", "list registry has explicit public visibility");
+  contains(
+    publicReadModel,
+    "list.enabled && list.publiclyVisible",
+    "public model requires enabled and explicitly public lists",
+  );
+
+  for (const listCode of [
+    "kitapsec-general-live",
+    "kitapsec-general-live-canary",
+    "kitapstore-tr-live",
+    "kitapstore-tr-live-canary",
+    "pandora-tr-live",
+    "kitapambari-tr-live",
+    "amazon-tr-live",
+  ]) {
+    const marker = `code: "${listCode}"`;
+    const start = lists.indexOf(marker);
+    assert.ok(start >= 0, `missing list definition: ${listCode}`);
+    const end = lists.indexOf("\n  },", start);
+    assert.ok(end > start, `invalid list definition block: ${listCode}`);
+    const block = lists.slice(start, end);
+    contains(block, "publiclyVisible: false", `${listCode} stays private`);
+  }
+
+  for (const listCode of [
+    "remzi-tr-weekly",
+    "bkm-tr-weekly",
+    "kitapsepeti-tr-live",
+    "kitaplarsepette-tr-live",
+    "kitapzen-tr-weekly",
+    "inkilap-tr-live",
+    "illakitap-tr-weekly",
+    "nobelkitap-tr-live",
+    "idefix-tr-live",
+  ]) {
+    const marker = `code: "${listCode}"`;
+    const start = lists.indexOf(marker);
+    assert.ok(start >= 0, `missing public list definition: ${listCode}`);
+    const end = lists.indexOf("\n  },", start);
+    assert.ok(end > start, `invalid public list definition block: ${listCode}`);
+    const block = lists.slice(start, end);
+    contains(block, "publiclyVisible: true", `${listCode} remains public-eligible`);
+  }
+});
 
 test("Book Index admin reflects independent-operator voting", () => {
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
@@ -1071,7 +1122,7 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
   contains(lists, 'code: "amazon-tr-live"', "Amazon TR research list");
   contains(
     lists,
-    'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    enabled: false',
+    'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: false',
     "Amazon TR research list stays disabled and outside composite",
   );
   contains(amazon, 'data-asin=["\']([^"\']+)["\']', "ASIN source identity");
@@ -1119,7 +1170,7 @@ test("Pandora bestseller candidate stays research-only until a direct collection
   contains(lists, 'code: "pandora-tr-live"', "Pandora research list");
   contains(
     lists,
-    'sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    'sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
     "Pandora list stays disabled and outside composite",
   );
   notContains(
@@ -1144,7 +1195,7 @@ test("Kitap Ambarı candidate stays research-only until ordering and operator-in
   contains(lists, 'code: "kitapambari-tr-live"', "Kitap Ambarı research list");
   contains(
     lists,
-    'sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    'sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
     "Kitap Ambarı list stays disabled and outside composite",
   );
   notContains(
@@ -1170,13 +1221,13 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
   contains(lists, 'code: "kitapstore-tr-live"', "KitapStore research list");
   contains(
     lists,
-    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    enabled: false',
+    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
     "KitapStore voter list stays disabled and outside composite",
   );
   contains(lists, 'code: "kitapstore-tr-live-canary"', "KitapStore canary list");
   contains(
     lists,
-    'title: "KitapStore · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    enabled: true',
+    'title: "KitapStore · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
     "KitapStore canary is schedulable but outside composite",
   );
 

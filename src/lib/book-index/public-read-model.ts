@@ -254,7 +254,10 @@ async function getMarketSourceState(
   }
 
   const configuredLists = BOOK_INDEX_LISTS.filter(
-    (list) => list.sourceCode === sourceCode && list.enabled,
+    (list) =>
+      list.sourceCode === sourceCode
+      && list.enabled
+      && list.publiclyVisible,
   );
   const availableListCount = sourceLists.filter(
     (list) =>
@@ -280,7 +283,9 @@ async function getMarketSourceState(
 export async function getBookIndexPublicReadModel(
   limit = 100,
 ): Promise<BookIndexPublicReadModel> {
-  const enabledLists = BOOK_INDEX_LISTS.filter((list) => list.enabled);
+  const enabledLists = BOOK_INDEX_LISTS.filter(
+    (list) => list.enabled && list.publiclyVisible,
+  );
   const [turkeyItems, sourceLists] = await Promise.all([
     getTurkeyBookIndexPreview(Math.min(limit, 100)),
     Promise.all(

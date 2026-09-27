@@ -10,6 +10,7 @@ export type BookIndexListDefinition = {
   maxRank: number | null;
   includeInComposite: boolean;
   collectionEveryMinutes: number | null;
+  publiclyVisible: boolean;
   enabled: boolean;
 };
 
@@ -24,6 +25,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 15,
     includeInComposite: true,
     collectionEveryMinutes: 1440,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -36,6 +38,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 50,
     includeInComposite: true,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -48,6 +51,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 50,
     includeInComposite: false,
     collectionEveryMinutes: 720,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -60,6 +64,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 50,
     includeInComposite: false,
     collectionEveryMinutes: 1440,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -72,6 +77,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 60,
     includeInComposite: true,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -84,6 +90,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 30,
     includeInComposite: true,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -96,6 +103,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 60,
     includeInComposite: true,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -108,6 +116,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 20,
     includeInComposite: false,
     collectionEveryMinutes: 720,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -120,6 +129,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 20,
     includeInComposite: false,
     collectionEveryMinutes: 1440,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -132,6 +142,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 60,
     includeInComposite: true,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -144,6 +155,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 48,
     includeInComposite: false,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -156,6 +168,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 48,
     includeInComposite: false,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -168,6 +181,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 56,
     includeInComposite: false,
     collectionEveryMinutes: null,
+    publiclyVisible: false,
     enabled: false,
   },
   {
@@ -180,6 +194,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 56,
     includeInComposite: false,
     collectionEveryMinutes: 360,
+    publiclyVisible: false,
     enabled: true,
   },
   {
@@ -192,6 +207,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 100,
     includeInComposite: true,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -204,6 +220,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 50,
     includeInComposite: true,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -216,6 +233,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 24,
     includeInComposite: true,
     collectionEveryMinutes: 360,
+    publiclyVisible: true,
     enabled: true,
   },
   {
@@ -228,6 +246,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: null,
     includeInComposite: false,
     collectionEveryMinutes: null,
+    publiclyVisible: false,
     enabled: false,
   },
   {
@@ -240,6 +259,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: null,
     includeInComposite: false,
     collectionEveryMinutes: null,
+    publiclyVisible: false,
     enabled: false,
   },
   {
@@ -252,6 +272,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: null,
     includeInComposite: false,
     collectionEveryMinutes: null,
+    publiclyVisible: false,
     enabled: false,
   },
   // Shadow-only qualification list. It collects natural history but never votes.
@@ -265,6 +286,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: 100,
     includeInComposite: false,
     collectionEveryMinutes: 360,
+    publiclyVisible: false,
     enabled: true,
   },
   {
@@ -277,6 +299,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     maxRank: null,
     includeInComposite: false,
     collectionEveryMinutes: 360,
+    publiclyVisible: false,
     enabled: false,
   },
 ] as const;

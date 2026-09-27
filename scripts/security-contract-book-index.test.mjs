@@ -813,6 +813,7 @@ test("KitaplarSepette is a bounded independent Turkey composite voter", () => {
   contains(adapter, 'const MAX_PAGES = Math.ceil(MAX_BOOKS / PAGE_SIZE);', "bounded page count");
   contains(adapter, 'url.searchParams.set("sayfa", String(page))', "source-native pagination");
   contains(adapter, "BOOK_INDEX_KITAPLARSEPETTE_PAGINATION_GAP", "pagination gap rejection");
+  contains(adapter, "cards.length < PAGE_SIZE", "short page terminates native pagination");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 60;', "fail-closed multi-page minimum");
   contains(adapter, 'const DETAIL_CONCURRENCY = 6;', "bounded detail-page concurrency");
   contains(adapter, 'className.split(/\\s+/u).includes("card-product")', "exact bestseller card class token");

@@ -231,6 +231,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: false,
   },
   {
+    code: "kitapstore-tr-live-canary",
+    sourceCode: "kitapstore",
+    title: "KitapStore · Çok Satanlar · Canary",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",
+    maxRank: 100,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    enabled: true,
+  },
+  {
     code: "amazon-tr-live",
     sourceCode: "amazon-tr",
     title: "Amazon Türkiye · Kitap Çok Satanlar",

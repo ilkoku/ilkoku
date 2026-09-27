@@ -92,6 +92,16 @@ export async function GET(request: NextRequest) {
         matchedExternalBookCount: readiness.matchedExternalBookCount,
         unmatchedExternalBookCount: readiness.unmatchedExternalBookCount,
         matchCoveragePercent: readiness.matchCoveragePercent,
+        latestCompositeExternalBookCount:
+          readiness.latestCompositeExternalBookCount,
+        latestCompositeMatchedExternalBookCount:
+          readiness.latestCompositeMatchedExternalBookCount,
+        latestCompositeUnmatchedExternalBookCount:
+          readiness.latestCompositeUnmatchedExternalBookCount,
+        latestCompositeUnmatchedBooksBySource:
+          readiness.latestCompositeUnmatchedBooksBySource,
+        latestCompositeMatchCoveragePercent:
+          readiness.latestCompositeMatchCoveragePercent,
         booksOnAtLeast3IndependentCompositeSources:
           readiness.booksOnAtLeast3IndependentCompositeSources,
         nearThreeSourceCount: readiness.nearThreeSourceCount,

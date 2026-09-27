@@ -5,6 +5,7 @@ on:
   workflow_run:
     workflows:
       - Email operations
+      - Book Index readiness probe
     types:
       - completed
   schedule:

@@ -311,6 +311,7 @@ test("Book Index readiness distinguishes historical coverage from latest composi
     "latestCompositeMatchedExternalBookCount",
     "latestCompositeUnmatchedExternalBookCount",
     "latestCompositeUnmatchedBooksBySource",
+    "latestCompositeUnmatchedSamples",
     "latestCompositeMatchCoveragePercent",
   ]) {
     contains(readiness, metric, `readiness latest composite metric ${metric}`);
@@ -322,6 +323,16 @@ test("Book Index readiness distinguishes historical coverage from latest composi
     readiness,
     "latestCompositeExternalBooks.set(book.id",
     "latest composite coverage deduplicates external books by record id",
+  );
+  contains(
+    readiness,
+    ".slice(0, 30)",
+    "latest composite unmatched evidence stays bounded",
+  );
+  contains(
+    readiness,
+    "productUrl: book.productUrl",
+    "latest composite unmatched samples retain source evidence",
   );
   contains(
     route,

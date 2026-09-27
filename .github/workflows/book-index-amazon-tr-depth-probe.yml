@@ -114,6 +114,7 @@ jobs:
 
           for page in 1 2; do
             body="$tmpdir/rendered-$page.html"
+            netlog="$tmpdir/net-$page.json"
             url="${urls[$((page - 1))]}"
 
             "$chrome"               --headless=new               --disable-gpu               --disable-dev-shm-usage               --no-sandbox               --lang=tr-TR               --window-size=1920,20000               --virtual-time-budget=10000               --dump-dom               "$url" > "$body" 2>/dev/null || true
@@ -148,5 +149,68 @@ jobs:
           console.log(`render_page=${page} ranks=${uniqueRanks.join(",") || "NONE"}`);
           console.log(`render_page=${page} missing_expected=${missing.join(",") || "NONE"}`);
           console.log(`render_page=${page} asin_count=${asins.length} unique_asin_count=${uniqueAsins.length}`);
+          NODE
+
+            node - "$netlog" "$page" <<'NODE'
+          const fs = require("node:fs");
+
+          const path = process.argv[2];
+          const page = Number(process.argv[3]);
+          if (!fs.existsSync(path)) {
+            console.log(`render_page=${page} netlog=missing`);
+            process.exit(0);
+          }
+
+          let payload;
+          try {
+            payload = JSON.parse(fs.readFileSync(path, "utf8"));
+          } catch {
+            console.log(`render_page=${page} netlog=invalid_json`);
+            process.exit(0);
+          }
+
+          const urls = [];
+          const seen = new Set();
+
+          function visit(value) {
+            if (typeof value === "string" && /^https?:\/\//iu.test(value)) {
+              try {
+                const parsed = new URL(value);
+                if (
+                  parsed.hostname === "www.amazon.com.tr"
+                  || parsed.hostname.endsWith(".amazon.com.tr")
+                ) {
+                  const queryKeys = [...parsed.searchParams.keys()]
+                    .filter((key) => !/^session/i.test(key))
+                    .sort();
+                  const normalized = `${parsed.origin}${parsed.pathname}${queryKeys.length ? `?${queryKeys.join("&")}` : ""}`;
+                  if (!seen.has(normalized)) {
+                    seen.add(normalized);
+                    urls.push(normalized);
+                  }
+                }
+              } catch {}
+              return;
+            }
+
+            if (Array.isArray(value)) {
+              for (const item of value) visit(item);
+              return;
+            }
+
+            if (value && typeof value === "object") {
+              for (const item of Object.values(value)) visit(item);
+            }
+          }
+
+          visit(payload?.events ?? []);
+
+          const interesting = urls.filter((url) =>
+            /(best|zg|p13n|ajax|api|query|load|hz|gp\/)/iu.test(url)
+            && !/\/dp\//iu.test(url),
+          );
+
+          console.log(`render_page=${page} amazon_request_path_count=${urls.length}`);
+          console.log(`render_page=${page} interesting_request_paths=${interesting.join(" | ") || "NONE"}`);
           NODE
           done

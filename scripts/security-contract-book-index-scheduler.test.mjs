@@ -239,7 +239,7 @@ test("Book Index readiness probe exposes overdue operations evidence without col
 });
 
 
-test("temporary idefix dry-run probe executes adapter without persistence", () => {
+test("temporary idefix dry-run probe inspects item-level parser evidence without persistence", () => {
   const route = source("src/app/api/internal/book-index-idefix-dry-run/route.ts");
   const workflow = source(".github/workflows/book-index-idefix-dry-run.yml");
 
@@ -250,11 +250,25 @@ test("temporary idefix dry-run probe executes adapter without persistence", () =
   );
   contains(
     route,
-    "idefixBookIndexAdapter.collect",
-    "dry run executes the production idefix adapter",
+    "parseIdefixBestsellers",
+    "dry run uses the production idefix list parser",
   );
+  contains(
+    route,
+    "parseIdefixProductDetails",
+    "dry run uses the production idefix detail parser",
+  );
+  contains(route, "DETAIL_CONCURRENCY = 6", "dry run detail reads stay bounded");
+  contains(route, "detailErrorCount", "aggregate detail error evidence");
+  contains(route, "detailErrorSamples", "bounded detail error samples");
   contains(route, "missingIdentityCount", "aggregate identity gap evidence");
+  contains(route, "missingIdentityRanks", "bounded rank evidence");
   contains(route, "duplicateSourceKeyCount", "aggregate source-key evidence");
+  notContains(
+    route,
+    "idefixBookIndexAdapter.collect",
+    "diagnostic does not fail before item-level evidence can be returned",
+  );
   notContains(route, "prisma", "dry run does not access Book Index database");
   notContains(route, "runBookIndexScheduler", "dry run never invokes scheduler");
   notContains(route, "collectBookIndexListByCode", "dry run bypasses persistence collector");
@@ -265,6 +279,8 @@ test("temporary idefix dry-run probe executes adapter without persistence", () =
     "https://ilkoku.com/api/internal/book-index-idefix-dry-run",
     "dry run production endpoint",
   );
+  contains(workflow, '"detailErrorCount"', "workflow requires detail error evidence");
+  contains(workflow, '"detailErrorSamples"', "workflow requires bounded error samples");
   notContains(
     workflow,
     "api/internal/book-index-scheduler",

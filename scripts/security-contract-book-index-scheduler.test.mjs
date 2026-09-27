@@ -32,6 +32,11 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
     "github.event.workflow_run.conclusion == 'success'",
     "relay only runs after a successful upstream workflow",
   );
+  contains(
+    workflow,
+    "github.event.workflow_run.event == 'schedule'",
+    "relay only accepts natural scheduled upstream runs",
+  );
   notContains(workflow, "?matchPending=1", "one-time backfill request removed");
   contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");
   contains(route, '"workflow_run"', "relay workflow-run OIDC event authorization");
@@ -316,6 +321,11 @@ test("Book Index retries unsuccessful runs without resetting the full source cad
     workflow,
     "github.event.workflow_run.conclusion == 'success'",
     "relay ignores unsuccessful upstream workflow runs",
+  );
+  contains(
+    workflow,
+    "github.event.workflow_run.event == 'schedule'",
+    "relay ignores manually dispatched upstream runs",
   );
 });
 

@@ -94,7 +94,9 @@ function parseCard(card: string, productId: string, expectedRank: number) {
     throw new Error("BOOK_INDEX_KITAPSTORE_TITLE_MISSING");
   }
   if (!author) {
-    throw new Error("BOOK_INDEX_KITAPSTORE_AUTHOR_MISSING");
+    throw new Error(
+      `BOOK_INDEX_KITAPSTORE_AUTHOR_MISSING:rank=${expectedRank}:product=${productId}`,
+    );
   }
   if (!publisher) {
     throw new Error("BOOK_INDEX_KITAPSTORE_PUBLISHER_MISSING");

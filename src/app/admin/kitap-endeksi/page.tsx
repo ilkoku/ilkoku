@@ -263,13 +263,13 @@ export default async function BookIndexAdminPage({
           <h2>GitHub OIDC hazır</h2>
           <p>
             {operations.dueCount.toLocaleString("tr-TR")} liste şu anda kontrol
-            zamanında. Saatlik scheduler aktif; gerçek çekim sıklığını her
-            listenin kendi cadence değeri belirler.
+            zamanında. Saatlik GitHub schedule tanımlıdır; gerçek çalıştırmalar
+            GitHub olay teslimatına ve her listenin cadence değerine bağlıdır.
           </p>
           <small>
             En uzun cadence gecikmesi:{" "}
             {operations.maxOverdueMinutes.toLocaleString("tr-TR")} dk · Kısa
-            ömürlü GitHub kimliği kullanılır. Legacy secret fallback:{" "}
+            ömürlü GitHub kimliği kullanılır. Bağımsız secret fallback:{" "}
             {operations.schedulerSecretConfigured ? "hazır" : "tanımsız"}.
           </small>
         </article>
@@ -356,7 +356,7 @@ export default async function BookIndexAdminPage({
             className="admin-table-badge"
             data-status="active"
           >
-            Saatlik scheduler aktif
+            GitHub schedule tanımlı
           </span>
         </header>
 
@@ -774,8 +774,8 @@ export default async function BookIndexAdminPage({
               <h2>Kaynak listelerini manuel kontrol et</h2>
               <p>
                 Her kontrol ayrı rank snapshot&apos;ı üretir; önceki veriler
-                overwrite edilmez. Saatlik scheduler aktiftir; bu buton yalnız
-                kontrollü manuel doğrulama için kullanılır.
+                overwrite edilmez. Saatlik GitHub schedule tanımlıdır; bu buton
+                yalnız kontrollü manuel doğrulama için kullanılır.
               </p>
             </div>
           </header>

@@ -13,6 +13,7 @@ test("idefix historical metadata probe is bounded and read-only", () => {
 
   assert.match(probe, /const MAX_CANDIDATES = 100;/u);
   assert.match(probe, /const DETAIL_CONCURRENCY = 6;/u);
+  assert.match(probe, /const SAMPLE_LIMIT = 100;/u);
   assert.match(probe, /matchStatus: "unmatched"/u);
   assert.match(probe, /masterBookId: null/u);
   assert.match(probe, /parseIdefixProductDetails/u);
@@ -33,4 +34,12 @@ test("idefix historical metadata probe is bounded and read-only", () => {
   assert.match(workflow, /id-token: write/u);
   assert.match(workflow, /Probe historical idefix metadata without writes/u);
   assert.doesNotMatch(workflow, /schedule:/u);
+
+  const idefix = source("src/lib/book-index/sources/idefix.ts");
+  assert.match(idefix, /function safeIdefixAuthorName/u);
+  assert.match(idefix, /candidate\.length > 120/u);
+  assert.match(idefix, /wordCount > 12/u);
+  assert.match(idefix, /Yayınları\|Yayınevi\|Yayıncılık/u);
+  assert.match(idefix, /title\.startsWith\(expected\)/u);
+  assert.match(idefix, /documentTitleAuthorName\(html, expectedTitle\)/u);
 });

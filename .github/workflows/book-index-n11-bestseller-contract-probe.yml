@@ -1,0 +1,78 @@
+name: Book Index n11 bestseller contract probe
+
+on:
+  push:
+    branches:
+      - research/book-index-n11-bestseller-contract-01ak-aj
+    paths:
+      - ".github/workflows/book-index-n11-bestseller-contract-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Observe public n11 bestseller category contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Fetch official public bestseller page
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          trap 'rm -f "$body"' EXIT
+
+          code="$(curl --silent --show-error --compressed --max-time 25             --user-agent 'IlkOkuBookIndex/0.1 (+https://ilkoku.com)'             --header 'Accept: text/html,application/xhtml+xml'             --header 'Accept-Language: tr-TR,tr;q=0.9,en;q=0.5'             --output "$body" --write-out '%{http_code}'             'https://www.n11.com/cok-satanlar/' || true)"
+
+          bytes="$(wc -c < "$body" | tr -d ' ')"
+          printf 'http_status=%s body_bytes=%s\n' "$code" "$bytes"
+          test "$code" = "200"
+
+          node - "$body" <<'NODE'
+          const fs = require("node:fs");
+          const html = fs.readFileSync(process.argv[2], "utf8");
+
+          const hrefs = [...html.matchAll(/href=["']([^"']+)["']/giu)]
+            .map(m => m[1].replace(/&amp;/g, "&"));
+          const bestsellerHrefs = [...new Set(hrefs.filter(h =>
+            /cok-satan|çok-satan|best.?sell/i.test(h)
+          ))];
+          console.log("bestseller_hrefs=" + JSON.stringify(bestsellerHrefs.slice(0, 100)));
+
+          const scripts = [...html.matchAll(/<script\b[^>]*src=["']([^"']+)["'][^>]*>/giu)]
+            .map(m => m[1]);
+          console.log("script_src_count=" + scripts.length);
+          console.log("script_srcs=" + JSON.stringify(scripts.slice(0, 80)));
+
+          const needles = [
+            "Kitap, Müzik, Film, Oyun",
+            ">Kitap<",
+            "cok-satanlar",
+            "bestSeller",
+            "bestseller",
+            "best-seller",
+            "categoryId",
+            "category-id",
+            "data-category",
+            "/api/",
+            "xhr",
+            "ajax"
+          ];
+
+          for (const needle of needles) {
+            const lower = html.toLocaleLowerCase("tr-TR");
+            const pos = lower.indexOf(needle.toLocaleLowerCase("tr-TR"));
+            console.log("needle=" + JSON.stringify(needle) + " found=" + (pos >= 0));
+            if (pos >= 0) {
+              const snippet = html.slice(Math.max(0, pos - 900), Math.min(html.length, pos + 1800))
+                .replace(/\s+/g, " ");
+              console.log("snippet_" + needle.replace(/[^a-z0-9]+/gi, "_") + "=" + snippet);
+            }
+          }
+
+          const tags = [...html.matchAll(/<(?:a|li|div|button)\b[^>]*(?:Kitap|kitap|category|Category|cok-satan|best)[^>]*>/giu)]
+            .map(m => m[0].replace(/\s+/g, " "))
+            .filter(t => /Kitap|kitap|category|Category|cok-satan|best/i.test(t));
+          console.log("candidate_tags=" + JSON.stringify([...new Set(tags)].slice(0, 120)));
+          NODE

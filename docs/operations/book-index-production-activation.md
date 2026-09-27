@@ -80,6 +80,16 @@ hükmü verilmez. Operasyon durumu **delivery recovery observation** olarak
 izlenir. Manuel scheduler çalıştırmaları history üretmek veya delivery
 boşluğunu gizlemek için kullanılmaz.
 
+Pasif delivery gözlemi için ayrı Book Index readiness workflow'u yalnız
+read-only çalışır:
+
+- `7 * * * *` ve `37 * * * *` pencerelerinde readiness endpoint'ini GET
+  ile okur;
+- `dueCount` ve `maxOverdueMinutes` dahil operations kanıtını raporlar;
+- collector/scheduler çağırmaz;
+- `BookIndexFetchRun` veya `BookIndexObservation` üretmez;
+- bir readiness run'ı snapshot/history run'ı sayılmaz.
+
 Workflow concurrency:
 
 - group: `book-index-scheduler`

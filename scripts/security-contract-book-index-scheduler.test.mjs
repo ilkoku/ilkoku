@@ -168,3 +168,43 @@ test("Book Index readiness exposes source-level unmatched cause aggregates", () 
     "probe returns ambiguous-master aggregate",
   );
 });
+
+
+test("temporary idefix schema probe is OIDC-protected and collection-free", () => {
+  const route = source("src/app/api/internal/book-index-idefix-schema/route.ts");
+  const workflow = source(".github/workflows/book-index-idefix-schema-probe.yml");
+
+  contains(
+    route,
+    'GITHUB_OIDC_AUDIENCE = "ilkoku-idefix-schema-probe"',
+    "dedicated idefix schema probe audience",
+  );
+  contains(
+    route,
+    'book-index-idefix-schema-probe.yml@refs/heads/main',
+    "idefix probe workflow identity binding",
+  );
+  contains(route, "export async function GET", "read-only idefix schema method");
+  contains(
+    route,
+    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
+    "probe mirrors production collector user agent",
+  );
+  contains(route, "__NEXT_DATA__", "probe inspects collector data source");
+  contains(route, "collectRelevantNodes", "probe limits output to schema evidence");
+  notContains(route, "runBookIndexScheduler", "probe never runs scheduler");
+  notContains(route, "autoMatchBookIndexExternalBook", "probe never mutates matching");
+  notContains(route, "prisma.", "probe never writes or reads Book Index database");
+
+  contains(workflow, "id-token: write", "idefix probe OIDC permission");
+  contains(
+    workflow,
+    "https://ilkoku.com/api/internal/book-index-idefix-schema",
+    "idefix production schema endpoint",
+  );
+  notContains(
+    workflow,
+    "api/internal/book-index-scheduler",
+    "idefix probe never calls scheduler endpoint",
+  );
+});

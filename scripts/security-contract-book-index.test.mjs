@@ -1257,7 +1257,7 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
   );
 
   contains(adapter, 'const PAGE_COUNT = 4;', "four-page Top 100 bound");
-  contains(adapter, 'const EXPECTED_PAGE_BOOKS = 25;', "25 native ranks per page");
+  contains(adapter, 'const EXPECTED_PAGE_BOOKS = 25;', "25 source cards per page");
   contains(adapter, 'const MAX_BOOKS = PAGE_COUNT * EXPECTED_PAGE_BOOKS;', "Top 100 result cap");
   contains(adapter, "\\bIcBaslik\\b", "main bestseller heading scope");
   contains(adapter, "\\bIslemliL\\b", "main bestseller list scope");
@@ -1280,8 +1280,31 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
   contains(adapter, "BOOK_INDEX_KITAPSTORE_PAGE_SIZE_MISMATCH", "page-size fail-closed gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY", "duplicate source-key gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL", "duplicate URL gate");
-  contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_RANK", "duplicate rank gate");
-  contains(adapter, "BOOK_INDEX_KITAPSTORE_RANK_GAP", "cross-page rank-gap gate");
+  notContains(
+    adapter,
+    "BOOK_INDEX_KITAPSTORE_DUPLICATE_RANK",
+    "native tied ranks must not be rejected",
+  );
+  notContains(
+    adapter,
+    "BOOK_INDEX_KITAPSTORE_RANK_MISMATCH",
+    "native rank must not be forced to equal ordinal slot",
+  );
+  contains(
+    adapter,
+    "BOOK_INDEX_KITAPSTORE_RANK_SEQUENCE_MISMATCH",
+    "native dense-rank sequence remains fail-closed",
+  );
+  contains(
+    adapter,
+    "book.rank < previousRank || book.rank > previousRank + 1",
+    "native ties are accepted while decreases and gaps are rejected",
+  );
+  notContains(
+    adapter,
+    ".sort(\n    (left, right) => left.rank - right.rank,\n  )",
+    "source/page order must not be hidden by rank sorting",
+  );
   contains(adapter, 'context.listCode !== "kitapstore-tr-live"', "disabled voter list remains an explicit adapter target");
   contains(adapter, 'context.listCode !== "kitapstore-tr-live-canary"', "canary list is the only additional adapter target");
   contains(adapter, 'const MAX_IDENTITY_ENRICHMENTS = 8;', "bounded missing-author enrichment cap");

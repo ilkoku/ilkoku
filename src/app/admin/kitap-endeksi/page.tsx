@@ -1,6 +1,8 @@
 import {
   collectBookIndexListAction,
   matchPendingBookIndexBooksAction,
+  rejectBookIndexExternalBookAction,
+  restoreBookIndexExternalBookAction,
 } from "@/features/book-index/admin-actions";
 import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
 import { getBookIndexOperationsSnapshot } from "@/lib/book-index/operations";
@@ -99,6 +101,14 @@ function feedbackMessage(params: Awaited<SearchParams>) {
       return `Eşleştirme tamamlandı · ${params.adet ?? "0"} kayıt işlendi · ${params.eslesen ?? "0"} eşleşti · ${params.bekleyen ?? "0"} manuel inceleme bekliyor.`;
     case "eslestirme-hatasi":
       return "Kitap eşleştirme işlemi tamamlanamadı. Sistem kayıtlarını kontrol edin.";
+    case "kapsam-disi-isaretlendi":
+      return "Kayıt Book Index kapsam dışı olarak işaretlendi. Kaynak geçmişi korunur ve otomatik eşleştirme bu kararı değiştirmez.";
+    case "kapsam-disi-geri-alindi":
+      return "Kapsam dışı kararı geri alındı. Kayıt yeniden unmatched inceleme kuyruğuna alındı.";
+    case "kapsam-disi-hatasi":
+      return "Kayıt kapsam dışı olarak işaretlenemedi. Kayıt durumu değişmiş olabilir.";
+    case "kapsam-disi-geri-al-hatasi":
+      return "Kapsam dışı karar geri alınamadı. Kayıt durumu değişmiş olabilir.";
     default:
       return null;
   }
@@ -122,6 +132,8 @@ export default async function BookIndexAdminPage({
     successfulRuns,
     failedRuns,
     recentRuns,
+    unmatchedReviewRows,
+    rejectedRows,
   ] = await Promise.all([
     prisma.bookIndexSource.findMany({
       orderBy: { code: "asc" },
@@ -155,6 +167,39 @@ export default async function BookIndexAdminPage({
             source: { select: { name: true } },
           },
         },
+      },
+    }),
+    prisma.bookIndexExternalBook.findMany({
+      where: {
+        matchStatus: "unmatched",
+        masterBookId: null,
+        normalizedAuthor: null,
+      },
+      orderBy: { lastSeenAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        title: true,
+        productUrl: true,
+        isbn13: true,
+        isbn10: true,
+        lastSeenAt: true,
+        source: { select: { code: true } },
+      },
+    }),
+    prisma.bookIndexExternalBook.findMany({
+      where: {
+        matchStatus: "rejected",
+        masterBookId: null,
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        title: true,
+        productUrl: true,
+        lastSeenAt: true,
+        source: { select: { code: true } },
       },
     }),
   ]);

@@ -948,7 +948,6 @@ test("Book Index public read model excludes shadow, research and disabled candid
   for (const listCode of [
     "kitapsec-general-live",
     "kitapsec-general-live-canary",
-    "kitapstore-tr-live",
     "kitapstore-tr-live-canary",
     "pandora-tr-live-canary",
     "kitapambari-tr-live-canary",
@@ -975,6 +974,7 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "idefix-tr-live",
     "pandora-tr-live",
     "kitapambari-tr-live",
+    "kitapstore-tr-live",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);
@@ -1233,7 +1233,7 @@ test("Kitap Ambari source-only live publication stays non-voting", () => {
     "Kitap Ambari adapter remains registered for source-only live collection",
   );
 });
-test("KitapStore canary collects shadow evidence while voter activation stays off", () => {
+test("KitapStore source-only live publication stays non-voting", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const adapter = source("src/lib/book-index/sources/kitapstore.ts");
@@ -1242,20 +1242,20 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
   contains(sources, 'code: "kitapstore"', "KitapStore research source");
   contains(
     sources,
-    'name: "KitapStore",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    // Current seller identity. Turkey-general voter eligibility remains separately gated.\n    independenceGroup: "vedat-akoglu-kitapstore",\n    operatorName: "Vedat Akoğlu - KitapStore",\n    phase: "phase_2",\n    collectionState: "researching"',
-    "KitapStore remains research-only",
+    'name: "KitapStore",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    // Current seller identity. Source-only collection is ready; Turkey-general voter eligibility remains separately gated.\n    independenceGroup: "vedat-akoglu-kitapstore",\n    operatorName: "Vedat Akoğlu - KitapStore",\n    phase: "phase_2",\n    collectionState: "ready"',
+    "KitapStore source-only collector is ready while Turkey voter stays gated",
   );
   contains(lists, 'code: "kitapstore-tr-live"', "KitapStore research list");
   contains(
     lists,
-    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "KitapStore voter list stays disabled and outside composite",
+    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
+    "KitapStore source-only live list is schedulable and public-eligible without voting",
   );
   contains(lists, 'code: "kitapstore-tr-live-canary"', "KitapStore canary list");
   contains(
     lists,
-    'title: "KitapStore · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
-    "KitapStore canary is schedulable but outside composite",
+    'title: "KitapStore · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "qualified KitapStore canary is retired but retained privately for audit",
   );
 
   contains(adapter, 'const PAGE_COUNT = 4;', "four-page Top 100 bound");

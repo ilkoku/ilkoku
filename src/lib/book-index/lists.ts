@@ -194,6 +194,18 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     collectionEveryMinutes: 360,
     enabled: true,
   },
+  {
+    code: "amazon-tr-live",
+    sourceCode: "amazon-tr",
+    title: "Amazon Türkiye · Kitap Çok Satanlar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",
+    maxRank: null,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    enabled: false,
+  },
 ] as const;
 
 export function getBookIndexList(code: string) {

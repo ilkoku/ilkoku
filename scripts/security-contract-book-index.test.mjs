@@ -940,3 +940,56 @@ test("Book Index source adapters exclude only verified non-book catalogue entrie
     "KitapSepeti reranks eligible books after exclusions",
   );
 });
+
+
+test("Amazon TR research parser remains fail-closed and production-disabled", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const amazon = source("src/lib/book-index/sources/amazon-tr.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "amazon-tr"',
+    "Amazon TR source registry entry",
+  );
+  contains(
+    sources,
+    'name: "Amazon Türkiye",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "Amazon TR remains researching",
+  );
+  contains(lists, 'code: "amazon-tr-live"', "Amazon TR research list");
+  contains(
+    lists,
+    'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    enabled: false',
+    "Amazon TR research list stays disabled and outside composite",
+  );
+  contains(amazon, 'data-asin=["\']([^"\']+)["\']', "ASIN source identity");
+  contains(amazon, "\\bzg-bdg-text\\b", "Amazon native rank badge");
+  contains(
+    amazon,
+    "BOOK_INDEX_AMAZON_TR_PAGE_RANK_GAP",
+    "page-level rank-gap guard",
+  );
+  contains(
+    amazon,
+    "BOOK_INDEX_AMAZON_TR_RANK_GAP",
+    "cross-page rank-gap guard",
+  );
+  contains(
+    amazon,
+    "BOOK_INDEX_AMAZON_TR_DUPLICATE_SOURCE_KEY",
+    "duplicate ASIN guard",
+  );
+  contains(
+    amazon,
+    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
+    "transparent collector user agent",
+  );
+  contains(amazon, "AbortSignal.timeout(20_000)", "bounded Amazon requests");
+  notContains(
+    collector,
+    "amazonTrBookIndexResearchAdapter",
+    "research adapter is not production-registered",
+  );
+});

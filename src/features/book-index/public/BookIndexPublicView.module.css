@@ -171,10 +171,9 @@
   min-width: 260px;
 }
 
-.movementCell {
-  width: 110px;
-  white-space: nowrap;
-  font-weight: 750;
+.sourceCell {
+  min-width: 220px;
+  font-weight: 700;
 }
 
 @media (max-width: 760px) {

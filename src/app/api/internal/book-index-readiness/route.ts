@@ -112,6 +112,14 @@ export async function GET(request: NextRequest) {
           readiness.nearThreeWithHistoricalThirdSourceCount,
         kitapStoreCanaryHealth:
           readiness.kitapStoreCanaryHealth,
+        kitapStoreCanaryObservationCount:
+          readiness.kitapStoreCanaryObservationCount,
+        kitapStoreCanaryMatchedObservationCount:
+          readiness.kitapStoreCanaryMatchedObservationCount,
+        kitapStoreCanaryUnmatchedObservationCount:
+          readiness.kitapStoreCanaryUnmatchedObservationCount,
+        kitapStoreCanaryDuplicateMasterObservationCount:
+          readiness.kitapStoreCanaryDuplicateMasterObservationCount,
         kitapStoreCanaryShadowBookCount:
           readiness.kitapStoreCanaryShadowBookCount,
         kitapStoreCanaryShadowOverlapWithCompositeCount:

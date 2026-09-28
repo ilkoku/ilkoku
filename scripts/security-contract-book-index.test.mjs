@@ -416,8 +416,8 @@ test("public Turkey table preserves source rank instead of inventing an İlkOku 
   );
   contains(
     sourceRankTable,
-    "current.sources.set(entry.list.source.code, entry.list.source.name);",
-    "same-rank sources are combined on one row",
+    "current.sources.set(entry.list.source.code, {",
+    "same-rank sources are combined on one row with source movement",
   );
   contains(
     sourceRankTable,
@@ -431,7 +431,7 @@ test("public Turkey table preserves source rank instead of inventing an İlkOku 
   );
   contains(rankTable, '<th scope="col">Sıra</th>', "plain Turkish rank heading");
   contains(rankTable, '<th scope="col">Kaynak</th>', "source heading");
-  contains(rankTable, "{row.rank}", "source rank rendered directly");
+  contains(rankTable, "const showRank = !previousRow || previousRow.rank !== row.rank;", "repeated visible rank labels collapse by rank group");
   contains(
     rankTable,
     'row.sources.map((source) => source.sourceName).join(" · ")',
@@ -439,7 +439,9 @@ test("public Turkey table preserves source rank instead of inventing an İlkOku 
   );
   notContains(`${view}\n${rankTable}`, "İlkOku Sırası", "no invented İlkOku public rank");
   notContains(rankTable, "<th scope=\"col\">Kaynak Sayısı</th>", "no composite source-count column");
-  notContains(rankTable, "<th scope=\"col\">Hareket</th>", "no movement column in source-rank table");
+  contains(rankTable, '<th scope="col">Hareket</th>', "source-rank movement heading");
+  contains(rankTable, "rowMovementLabel(row)", "movement is rendered from source snapshot history");
+  contains(rankTable, "styles.rankGroupStart", "rank changes render a visual group separator");
 });
 
 

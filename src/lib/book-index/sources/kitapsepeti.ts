@@ -106,7 +106,7 @@ export function parseKitapSepetiBestsellers(
     }));
 
   if (books.length < MIN_EXPECTED_BOOKS) {
-    throw new Error("BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL");
+    throw new Error(`BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL:${books.length}`);
   }
 
   const uniqueKeys = new Set(books.map((book) => book.sourceKey));
@@ -163,7 +163,7 @@ export const kitapSepetiBookIndexAdapter: BookIndexSourceAdapter = {
       }));
 
     if (books.length < MAX_BOOKS) {
-      throw new Error("BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL");
+      throw new Error(`BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL:${books.length}`);
     }
 
     const uniqueKeys = new Set(books.map((book) => book.sourceKey));

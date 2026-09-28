@@ -32,7 +32,7 @@ export function createBookIndexItemListSchema({
     url,
     numberOfItems: items.length,
     itemListOrder: "https://schema.org/ItemListOrderAscending",
-    itemListElement: items.map((book, index) => ({
+    itemListElement: items.map((book) => ({
       "@type": "ListItem",
       position: book.rank,
       item: {

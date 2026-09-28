@@ -39,6 +39,21 @@ test("Book Index public read model keeps source ranks separate from the Turkey c
     "observation.priceAmount?.toString() ?? null",
     "JSON-safe public price",
   );
+  contains(
+    model,
+    "const highestObservedRank = entry.run.observations.reduce(",
+    "observed rank span guard",
+  );
+  contains(
+    model,
+    "entry.run.itemsStored,\n      highestObservedRank,\n      1,",
+    "gap-safe list size normalization",
+  );
+  notContains(
+    model,
+    "const listSize = Math.max(entry.run.itemsStored, 1);",
+    "stale stored-count-only normalization",
+  );
 });
 
 test("Amazon TR and US public states fail closed until sanctioned data exists", () => {

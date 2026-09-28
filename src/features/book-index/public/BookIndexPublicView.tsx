@@ -62,12 +62,12 @@ function movementLabel(
   const newEntry = insights.newEntries.find(
     (item) => item.masterBookId === masterBookId,
   );
-  if (newEntry) return "Yeni";
+  if (newEntry) return `+${newEntry.newSourceCount} yeni kaynak`;
 
   const riser = insights.risers.find(
     (item) => item.masterBookId === masterBookId,
   );
-  if (riser) return `↑ +${riser.totalRankGain}`;
+  if (riser) return `↑ ${riser.totalRankGain} sıra`;
 
   return "—";
 }

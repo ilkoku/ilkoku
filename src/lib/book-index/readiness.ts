@@ -265,6 +265,13 @@ export type BookIndexReadinessSnapshot = {
   kitapSecGeneralCanaryShadowWouldReach3IndependentCount: number;
   kitapSecGeneralCanaryShadowPairOverlap: BookIndexCanaryShadowPairOverlap[];
   kitapSecGeneralCanaryShadowSamples: BookIndexCanaryShadowSample[];
+  pandoraCanaryHealth: BookIndexCanaryHealth;
+  pandoraCanaryShadowBookCount: number;
+  pandoraCanaryShadowOverlapWithCompositeCount: number;
+  pandoraCanaryShadowWouldReach3StorefrontCount: number;
+  pandoraCanaryShadowWouldReach3IndependentCount: number;
+  pandoraCanaryShadowPairOverlap: BookIndexCanaryShadowPairOverlap[];
+  pandoraCanaryShadowSamples: BookIndexCanaryShadowSample[];
   sourceHistoryMaturity: BookIndexSourceHistoryMaturity[];
   minimumSourceSuccessfulRunCount: number;
   minimumSourceHistorySpanHours: number;
@@ -348,6 +355,8 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     kitapStoreCanaryShadowList,
     kitapSecGeneralCanaryList,
     kitapSecGeneralCanaryShadowList,
+    pandoraCanaryList,
+    pandoraCanaryShadowList,
     unmatchedExternalBookGroups,
   ] = await Promise.all([
       prisma.bookIndexExternalBook.count(),
@@ -500,6 +509,48 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
       }),
       prisma.bookIndexList.findFirst({
         where: { code: "kitapsec-general-live-canary" },
+        select: {
+          fetchRuns: {
+            where: { status: { in: ["success", "no_change"] } },
+            orderBy: { startedAt: "desc" },
+            take: 1,
+            select: {
+              observations: {
+                select: {
+                  externalBook: {
+                    select: {
+                      masterBookId: true,
+                      title: true,
+                      authorName: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.bookIndexList.findFirst({
+        where: { code: "pandora-tr-live-canary" },
+        select: {
+          code: true,
+          fetchRuns: {
+            orderBy: { startedAt: "desc" },
+            take: 1,
+            select: {
+              status: true,
+              startedAt: true,
+              completedAt: true,
+              itemsFound: true,
+              itemsStored: true,
+              errorCode: true,
+              errorMessage: true,
+            },
+          },
+        },
+      }),
+      prisma.bookIndexList.findFirst({
+        where: { code: "pandora-tr-live-canary" },
         select: {
           fetchRuns: {
             where: { status: { in: ["success", "no_change"] } },
@@ -1683,6 +1734,86 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     errorMessage: latestKitapSecGeneralCanaryRun?.errorMessage ?? null,
   };
 
+  const latestPandoraCanaryShadowRun =
+    pandoraCanaryShadowList?.fetchRuns[0] ?? null;
+  const pandoraCanaryShadowBooks = new Map<string, {
+    title: string;
+    authorName: string | null;
+  }>();
+
+  for (const observation of latestPandoraCanaryShadowRun?.observations ?? []) {
+    const book = observation.externalBook;
+    if (!book.masterBookId) continue;
+    if (!pandoraCanaryShadowBooks.has(book.masterBookId)) {
+      pandoraCanaryShadowBooks.set(book.masterBookId, {
+        title: book.title,
+        authorName: book.authorName,
+      });
+    }
+  }
+
+  const pandoraIndependenceGroup =
+    getBookIndexSourceIndependenceGroup("pandora");
+  const pandoraCanaryShadowSamples = [...pandoraCanaryShadowBooks.entries()]
+    .map(([masterBookId, book]) => {
+      const currentSourceCodes = [
+        ...(sourceCodesByMasterBook.get(masterBookId) ?? new Set<string>()),
+      ]
+        .filter((sourceCode) => sourceCode !== "pandora")
+        .sort((a, b) => a.localeCompare(b, "tr"));
+      const currentIndependenceGroups = [...new Set(
+        currentSourceCodes.map(
+          (sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode),
+        ),
+      )].sort((a, b) => a.localeCompare(b, "tr"));
+      const projectedIndependenceGroups = new Set([
+        ...currentIndependenceGroups,
+        pandoraIndependenceGroup,
+      ]);
+
+      return {
+        masterBookId,
+        title: book.title,
+        authorName: book.authorName,
+        currentSourceCodes,
+        currentIndependenceGroups,
+        projectedStorefrontSourceCount: new Set([
+          ...currentSourceCodes,
+          "pandora",
+        ]).size,
+        projectedIndependentSourceCount: projectedIndependenceGroups.size,
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.currentSourceCodes.length - a.currentSourceCodes.length
+        || a.title.localeCompare(b.title, "tr")
+        || a.masterBookId.localeCompare(b.masterBookId),
+    );
+
+  const pandoraCanaryShadowPairOverlap =
+    observedCompositeSourceCodes
+      .filter((sourceCode) => sourceCode !== "pandora")
+      .map((sourceCode) => ({
+        sourceCode,
+        sharedBookCount: pandoraCanaryShadowSamples.filter(
+          (sample) => sample.currentSourceCodes.includes(sourceCode),
+        ).length,
+      }));
+
+  const latestPandoraCanaryRun = pandoraCanaryList?.fetchRuns[0] ?? null;
+  const pandoraCanaryHealth: BookIndexCanaryHealth = {
+    listCode: "pandora-tr-live-canary",
+    found: Boolean(pandoraCanaryList),
+    latestStatus: latestPandoraCanaryRun?.status ?? null,
+    startedAt: latestPandoraCanaryRun?.startedAt ?? null,
+    completedAt: latestPandoraCanaryRun?.completedAt ?? null,
+    itemsFound: latestPandoraCanaryRun?.itemsFound ?? null,
+    itemsStored: latestPandoraCanaryRun?.itemsStored ?? null,
+    errorCode: latestPandoraCanaryRun?.errorCode ?? null,
+    errorMessage: latestPandoraCanaryRun?.errorMessage ?? null,
+  };
+
   return {
     compositeSourceTarget: compositeSourceCodes.length,
     compositeIndependenceGroupTarget: compositeIndependenceGroupCodes.length,
@@ -1850,6 +1981,25 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     kitapSecGeneralCanaryShadowPairOverlap,
     kitapSecGeneralCanaryShadowSamples:
       kitapSecGeneralCanaryShadowSamples
+        .filter((sample) => sample.currentSourceCodes.length > 0)
+        .slice(0, 20),
+    pandoraCanaryHealth,
+    pandoraCanaryShadowBookCount: pandoraCanaryShadowSamples.length,
+    pandoraCanaryShadowOverlapWithCompositeCount:
+      pandoraCanaryShadowSamples.filter(
+        (sample) => sample.currentSourceCodes.length >= 1,
+      ).length,
+    pandoraCanaryShadowWouldReach3StorefrontCount:
+      pandoraCanaryShadowSamples.filter(
+        (sample) => sample.projectedStorefrontSourceCount >= 3,
+      ).length,
+    pandoraCanaryShadowWouldReach3IndependentCount:
+      pandoraCanaryShadowSamples.filter(
+        (sample) => sample.projectedIndependentSourceCount >= 3,
+      ).length,
+    pandoraCanaryShadowPairOverlap,
+    pandoraCanaryShadowSamples:
+      pandoraCanaryShadowSamples
         .filter((sample) => sample.currentSourceCodes.length > 0)
         .slice(0, 20),
     sourceHistoryMaturity,

@@ -82,6 +82,11 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
     "context.gate.canPublish ? (",
     "overview structured data stays off during soft launch",
   );
+  contains(
+    overview,
+    "showInsightPages={context.gate.canPublish}",
+    "overview hides unpublished trend links during soft launch",
+  );
 
   contains(
     turkey,
@@ -118,6 +123,11 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   contains(view, 'return `+${newEntry.newSourceCount} yeni kaynak`;', "movement labels verified new-source signal");
   contains(view, 'return `↑ ${riser.totalRankGain} sıra`;', "movement labels verified source-rank rise signal");
   contains(view, 'return "—";', "movement stays neutral without verified signal");
+  contains(
+    view,
+    "showInsightPages && publishedInsightPages.length",
+    "trend links render only after the full publication gate passes",
+  );
 
   contains(
     sitemap,

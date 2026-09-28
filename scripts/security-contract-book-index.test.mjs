@@ -1015,6 +1015,50 @@ test("Pandora canary qualification evidence is observable while voter stays off"
 });
 
 
+test("Kitap Ambari canary qualification evidence is observable while voter stays off", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(readiness, "kitapAmbariCanaryHealth", "Kitap Ambari canary health evidence");
+  contains(readiness, "kitapAmbariCanaryShadowBookCount", "Kitap Ambari shadow book count");
+  contains(readiness, "kitapAmbariCanaryShadowOverlapWithCompositeCount", "Kitap Ambari overlap evidence");
+  contains(readiness, "kitapAmbariCanaryShadowWouldReach3StorefrontCount", "Kitap Ambari projected storefront threshold");
+  contains(readiness, "kitapAmbariCanaryShadowWouldReach3IndependentCount", "Kitap Ambari projected independent threshold");
+  contains(readiness, "kitapAmbariCanaryShadowPairOverlap", "Kitap Ambari pair-overlap evidence");
+  contains(readiness, "kitapAmbariCanaryShadowSamples", "Kitap Ambari shadow overlap samples");
+  contains(readiness, 'sourceCode !== "kitapambari"', "shadow baseline excludes Kitap Ambari");
+  contains(readiness, '"kitapambari",', "shadow projection adds Kitap Ambari once");
+
+  contains(route, "readiness.kitapAmbariCanaryHealth", "readiness API exposes Kitap Ambari canary health");
+  contains(
+    route,
+    "readiness.kitapAmbariCanaryShadowWouldReach3IndependentCount",
+    "readiness API exposes Kitap Ambari independent projection",
+  );
+  contains(
+    workflow,
+    '"kitapAmbariCanaryHealth": readiness.get("kitapAmbariCanaryHealth")',
+    "passive observer prints Kitap Ambari canary health",
+  );
+  contains(
+    workflow,
+    '"kitapAmbariCanaryShadowWouldReach3IndependentCount": readiness.get("kitapAmbariCanaryShadowWouldReach3IndependentCount")',
+    "passive observer prints Kitap Ambari independent projection",
+  );
+
+  contains(lists, 'code: "kitapambari-tr-live-canary"', "Kitap Ambari shadow canary list");
+  contains(lists, 'code: "kitapambari-tr-live"', "Kitap Ambari voter registry");
+  const marker = 'code: "kitapambari-tr-live"';
+  const start = lists.indexOf(marker);
+  const end = lists.indexOf("\n  },", start);
+  const voterBlock = lists.slice(start, end);
+  contains(voterBlock, "includeInComposite: false", "Kitap Ambari voter remains outside composite");
+  contains(voterBlock, "enabled: false", "Kitap Ambari voter remains disabled");
+});
+
+
 test("Book Index public read model excludes shadow, research and disabled candidate lists", () => {
   const lists = source("src/lib/book-index/lists.ts");
   const publicReadModel = source("src/lib/book-index/public-read-model.ts");

@@ -403,6 +403,44 @@ test("Turkey Index admin preview uses only latest composite lists and matched ma
   );
 });
 
+test("public Turkey table preserves source rank instead of inventing an İlkOku rank", () => {
+  const sourceRankTable = source("src/lib/book-index/source-rank-table.ts");
+  const publicModel = source("src/lib/book-index/public-read-model.ts");
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+
+  contains(
+    sourceRankTable,
+    "const rowKey = \`\${observation.rank}|\${identity}\`;",
+    "same book is grouped only inside the same source rank",
+  );
+  contains(
+    sourceRankTable,
+    "current.sources.set(entry.list.source.code, entry.list.source.name);",
+    "same-rank sources are combined on one row",
+  );
+  contains(
+    sourceRankTable,
+    "a.rank - b.rank",
+    "public rows stay ordered by source rank",
+  );
+  contains(
+    publicModel,
+    "getTurkeySourceRankRows(limit)",
+    "public model uses source-rank rows",
+  );
+  contains(view, '<th scope="col">Sıra</th>', "plain Turkish rank heading");
+  contains(view, '<th scope="col">Kaynak</th>', "source heading");
+  contains(view, "{row.rank}", "source rank rendered directly");
+  contains(
+    view,
+    'row.sources.map((source) => source.sourceName).join(" · ")',
+    "same-rank source names shown together",
+  );
+  notContains(view, "İlkOku Sırası", "no invented İlkOku public rank");
+  notContains(view, "<th scope=\"col\">Kaynak Sayısı</th>", "no composite source-count column");
+  notContains(view, "<th scope=\"col\">Hareket</th>", "no movement column in source-rank table");
+});
+
 test("KitapSepeti collector parses the verified server-rendered bestseller catalog", () => {
   const adapter = source("src/lib/book-index/sources/kitapsepeti.ts");
   const lists = source("src/lib/book-index/lists.ts");

@@ -32,6 +32,15 @@ function row({
   };
 }
 
+function nativePayload(books = fixtureBooks()) {
+  return {
+    books,
+    categoryId: "yenikitaplar",
+    categoryName: "Yeni Kitaplar",
+    language: "1",
+  };
+}
+
 function fixtureBooks() {
   const priority = [
     row({ id: 1, title: "A1", date: "2026-09-28T10:00:00", active: 5, publisher: "A" }),
@@ -64,7 +73,7 @@ test("Pandora new releases reproduce native smart order before rank assignment",
 });
 
 test("Pandora new-release parser preserves native positions and requires an explicit limit", () => {
-  const result = parsePandoraNewReleases({ books: fixtureBooks() }, 6);
+  const result = parsePandoraNewReleases(nativePayload(), 6);
 
   assert.deepEqual(
     result.books.map((book) => book.sourceExternalId),
@@ -80,7 +89,7 @@ test("Pandora new-release parser preserves native positions and requires an expl
   assert.match(result.books[0]?.productUrl ?? "", /\/kitap\/a1\/1$/u);
 
   assert.throws(
-    () => parsePandoraNewReleases({ books: fixtureBooks() }, 0),
+    () => parsePandoraNewReleases(nativePayload(), 0),
     /BOOK_INDEX_PANDORA_NEW_RELEASE_LIMIT_INVALID/u,
   );
 });
@@ -89,14 +98,14 @@ test("Pandora new-release parser fails closed on language drift and duplicate id
   const wrongLanguage = fixtureBooks();
   wrongLanguage[0] = { ...wrongLanguage[0], dil: 2 };
   assert.throws(
-    () => parsePandoraNewReleases({ books: wrongLanguage }, 6),
+    () => parsePandoraNewReleases(nativePayload(wrongLanguage), 6),
     /BOOK_INDEX_PANDORA_NEW_RELEASE_INVALID_ITEM/u,
   );
 
   const duplicateKey = fixtureBooks();
   duplicateKey[2] = { ...duplicateKey[2], ean: duplicateKey[0].ean };
   assert.throws(
-    () => parsePandoraNewReleases({ books: duplicateKey }, 6),
+    () => parsePandoraNewReleases(nativePayload(duplicateKey), 6),
     /BOOK_INDEX_PANDORA_NEW_RELEASE_DUPLICATE_SOURCE_KEY/u,
   );
 });
@@ -107,7 +116,11 @@ test("Pandora new-release parser rejects malformed or undersized native payloads
     /BOOK_INDEX_PANDORA_NEW_RELEASE_INVALID_RESPONSE/u,
   );
   assert.throws(
-    () => parsePandoraNewReleases({ books: [] }, 1),
+    () => parsePandoraNewReleases(nativePayload([]), 1),
     /BOOK_INDEX_PANDORA_NEW_RELEASE_RESULT_TOO_SMALL/u,
+  );
+  assert.throws(
+    () => parsePandoraNewReleases({ ...nativePayload(), categoryId: "other" }, 1),
+    /BOOK_INDEX_PANDORA_NEW_RELEASE_NATIVE_LIST_MISMATCH/u,
   );
 });

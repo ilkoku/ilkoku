@@ -502,6 +502,11 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
 
   contains(adapter, 'const CATEGORY_MAX_BOOKS = 48;', "KitapSec category page cap");
   contains(adapter, 'const GENERAL_MAX_BOOKS = 56;', "KitapSec general page cap");
+  contains(adapter, 'const GENERAL_CANARY_MAX_RANK = 100;', "KitapSec general canary Top 100 cap");
+  contains(adapter, 'const GENERAL_CANARY_PAGE_COUNT = 2;', "KitapSec general canary two-page bound");
+  contains(adapter, "generalPageUrl(sourceUrl, page)", "KitapSec general canary follows native pagination");
+  contains(adapter, "pageIndex * GENERAL_MAX_BOOKS", "KitapSec page-local ranks use deterministic page offset");
+  contains(adapter, "BOOK_INDEX_KITAPSEC_GENERAL_CROSS_PAGE_DUPLICATE", "KitapSec cross-page duplicates fail closed");
   contains(adapter, 'const CATEGORY_MIN_EXPECTED_BOOKS = 20;', "KitapSec category fail-closed minimum");
   contains(adapter, 'const GENERAL_MIN_EXPECTED_BOOKS = 40;', "KitapSec general fail-closed minimum");
   contains(adapter, '\\bKs_ContentUrunList\\b', "KitapSec canonical list scope");
@@ -548,7 +553,7 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
   );
   contains(
     lists,
-    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 56,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    'code: "kitapsec-general-live-canary",\n    sourceCode: "kitapsec",\n    title: "KitapSeç · Genel Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
     "KitapSec general shadow canary",
   );
   contains(collector, "[kitapSecBookIndexAdapter.sourceCode, kitapSecBookIndexAdapter]", "KitapSec adapter activation");

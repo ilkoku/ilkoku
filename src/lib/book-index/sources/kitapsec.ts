@@ -9,6 +9,9 @@ const SOURCE_CODE = "kitapsec";
 const SOURCE_ORIGIN = "https://www.kitapsec.com";
 const CATEGORY_MAX_BOOKS = 48;
 const GENERAL_MAX_BOOKS = 56;
+const GENERAL_CANARY_MAX_RANK = 100;
+const GENERAL_CANARY_PAGE_COUNT = 2;
+const GENERAL_CANARY_MIN_BOOKS_PER_PAGE = 55;
 const CATEGORY_MIN_EXPECTED_BOOKS = 20;
 const GENERAL_MIN_EXPECTED_BOOKS = 40;
 const VERIFIED_GENERAL_NON_BOOK_PRODUCT_IDS = new Set(["712938"]);
@@ -22,6 +25,8 @@ const GENERAL_LIST_CODES = new Set([
   "kitapsec-general-live",
   "kitapsec-general-live-canary",
 ]);
+
+const GENERAL_CANARY_LIST_CODE = "kitapsec-general-live-canary";
 
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
@@ -169,26 +174,81 @@ export function parseKitapSecGeneralBestsellers(
   });
 }
 
+function generalPageUrl(sourceUrl: string, page: number) {
+  const url = new URL(sourceUrl);
+  const pageSuffix = /\/[0-9]+-6-0a0-0-0-0-0-0-4\.xhtml$/u;
+
+  if (!pageSuffix.test(url.pathname) || !Number.isInteger(page) || page < 1) {
+    throw new Error("BOOK_INDEX_KITAPSEC_GENERAL_PAGE_URL_INVALID");
+  }
+
+  url.pathname = url.pathname.replace(
+    pageSuffix,
+    `/${page}-6-0a0-0-0-0-0-0-4.xhtml`,
+  );
+  return url.toString();
+}
+
+async function fetchKitapSecHtml(sourceUrl: string) {
+  const response = await fetch(sourceUrl, {
+    cache: "no-store",
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+  }
+
+  const bytes = await response.arrayBuffer();
+  return new TextDecoder("windows-1254").decode(bytes);
+}
+
+async function collectKitapSecGeneralCanary(sourceUrl: string) {
+  const pages: BookIndexCollectionResult[] = [];
+
+  for (let page = 1; page <= GENERAL_CANARY_PAGE_COUNT; page += 1) {
+    const html = await fetchKitapSecHtml(generalPageUrl(sourceUrl, page));
+    const parsed = parseKitapSecGeneralBestsellers(html);
+
+    if (parsed.books.length < GENERAL_CANARY_MIN_BOOKS_PER_PAGE) {
+      throw new Error("BOOK_INDEX_KITAPSEC_GENERAL_PAGE_TOO_SMALL");
+    }
+
+    pages.push(parsed);
+  }
+
+  const books = pages
+    .flatMap((result, pageIndex) =>
+      result.books.map((book) => ({
+        ...book,
+        rank: book.rank + pageIndex * GENERAL_MAX_BOOKS,
+      })),
+    )
+    .filter((book) => book.rank <= GENERAL_CANARY_MAX_RANK);
+
+  const uniqueKeys = new Set(books.map((book) => book.sourceKey));
+  const uniqueRanks = new Set(books.map((book) => book.rank));
+  if (uniqueKeys.size !== books.length || uniqueRanks.size !== books.length) {
+    throw new Error("BOOK_INDEX_KITAPSEC_GENERAL_CROSS_PAGE_DUPLICATE");
+  }
+
+  return { books };
+}
+
 export const kitapSecBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const response = await fetch(context.sourceUrl, {
-      cache: "no-store",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
-      },
-      signal: AbortSignal.timeout(20_000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+    if (context.listCode === GENERAL_CANARY_LIST_CODE) {
+      return collectKitapSecGeneralCanary(context.sourceUrl);
     }
 
-    const bytes = await response.arrayBuffer();
-    const html = new TextDecoder("windows-1254").decode(bytes);
+    const html = await fetchKitapSecHtml(context.sourceUrl);
 
     if (GENERAL_LIST_CODES.has(context.listCode)) {
       return parseKitapSecGeneralBestsellers(html);

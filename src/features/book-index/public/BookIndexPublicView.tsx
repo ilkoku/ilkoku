@@ -87,13 +87,13 @@ export function BookIndexOverviewView({
           <strong>{turkeySourceCount} kaynağın sıralamalarını karşılaştır</strong>
           <small>2–4 kaynağı yan yana seçerek aynı sıradaki kitapları karşılaştır.</small>
         </Link>
-        <article className={styles.card}>
+        <Link className={styles.card} href="/yeni-cikanlar">
           <span>Yeni Çıkanlar</span>
           <strong>Yeni çıkan kitapları keşfet</strong>
           <small>
             Türkiye kaynaklarının doğrulanmış yeni çıkan ve yeni gelen listeleri.
           </small>
-        </article>
+        </Link>
         <article className={styles.card}>
           <span>Dünya Genelinde</span>
           <strong>Dünyada çok satan kitaplar</strong>

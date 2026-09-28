@@ -7,6 +7,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ilkoku_build_check
+          MARIADB_USER: build_user
+          MARIADB_PASSWORD: build_password
+          MARIADB_ROOT_PASSWORD: build_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: "mysql://build_user:build_password@127.0.0.1:3306/ilkoku_build_check"
 
     steps:
       - name: Repository'i indir
@@ -21,12 +38,5 @@ jobs:
       - name: Bağımlılıkları yükle
         run: npm ci
 
-      - name: Prisma Client oluştur
-        run: npx prisma generate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Production build
-        run: npm run build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Hostinger compiler check
+        run: npm run system-map:generate && npx prisma generate && npx next build --webpack

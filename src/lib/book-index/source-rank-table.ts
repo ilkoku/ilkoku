@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+export type SourceRankMovement = "up" | "down" | "same" | "new" | "unknown";
+
 export type TurkeySourceRankRow = {
   rowKey: string;
   rank: number;
@@ -9,6 +11,8 @@ export type TurkeySourceRankRow = {
   sources: Array<{
     sourceCode: string;
     sourceName: string;
+    movement: SourceRankMovement;
+    rankDelta: number | null;
   }>;
 };
 
@@ -39,12 +43,13 @@ export async function getTurkeySourceRankRows(limit = 1000) {
 
   const latestRuns = await Promise.all(
     lists.map(async (list) => {
-      const run = await prisma.bookIndexFetchRun.findFirst({
+      const runs = await prisma.bookIndexFetchRun.findMany({
         where: {
           listId: list.id,
           status: { in: ["success", "no_change"] },
         },
         orderBy: { startedAt: "desc" },
+        take: 2,
         select: {
           observations: {
             orderBy: { rank: "asc" },
@@ -69,12 +74,20 @@ export async function getTurkeySourceRankRows(limit = 1000) {
         },
       });
 
-      return run ? { list, run } : null;
+      const currentRun = runs[0];
+      if (!currentRun) return null;
+
+      return {
+        list,
+        currentRun,
+        previousRun: runs[1] ?? null,
+      };
     }),
   );
 
+  type SourceState = TurkeySourceRankRow["sources"][number];
   type RowAccumulator = Omit<TurkeySourceRankRow, "sources"> & {
-    sources: Map<string, string>;
+    sources: Map<string, SourceState>;
   };
 
   const rowsByRankAndBook = new Map<string, RowAccumulator>();
@@ -82,7 +95,23 @@ export async function getTurkeySourceRankRows(limit = 1000) {
   for (const entry of latestRuns) {
     if (!entry) continue;
 
-    for (const observation of entry.run.observations) {
+    const previousRanks = new Map<string, number>();
+
+    if (entry.previousRun) {
+      for (const observation of entry.previousRun.observations) {
+        const externalBook = observation.externalBook;
+        const identity = externalBook.masterBookId
+          ? `master:${externalBook.masterBookId}`
+          : `external:${entry.list.source.code}:${externalBook.id}`;
+        const previousRank = previousRanks.get(identity);
+
+        if (previousRank === undefined || observation.rank < previousRank) {
+          previousRanks.set(identity, observation.rank);
+        }
+      }
+    }
+
+    for (const observation of entry.currentRun.observations) {
       const externalBook = observation.externalBook;
       const identity = externalBook.masterBookId
         ? `master:${externalBook.masterBookId}`
@@ -91,6 +120,19 @@ export async function getTurkeySourceRankRows(limit = 1000) {
       const title = externalBook.masterBook?.title ?? externalBook.title;
       const authorName =
         externalBook.masterBook?.authorName ?? externalBook.authorName ?? null;
+      const previousRank = previousRanks.get(identity);
+
+      let movement: SourceRankMovement = "unknown";
+      let rankDelta: number | null = null;
+
+      if (entry.previousRun) {
+        if (previousRank === undefined) {
+          movement = "new";
+        } else {
+          rankDelta = previousRank - observation.rank;
+          movement = rankDelta > 0 ? "up" : rankDelta < 0 ? "down" : "same";
+        }
+      }
 
       const current =
         rowsByRankAndBook.get(rowKey) ?? {
@@ -99,10 +141,15 @@ export async function getTurkeySourceRankRows(limit = 1000) {
           masterBookId: externalBook.masterBookId,
           title,
           authorName,
-          sources: new Map<string, string>(),
+          sources: new Map<string, SourceState>(),
         };
 
-      current.sources.set(entry.list.source.code, entry.list.source.name);
+      current.sources.set(entry.list.source.code, {
+        sourceCode: entry.list.source.code,
+        sourceName: entry.list.source.name,
+        movement,
+        rankDelta,
+      });
       rowsByRankAndBook.set(rowKey, current);
     }
   }
@@ -114,9 +161,9 @@ export async function getTurkeySourceRankRows(limit = 1000) {
       masterBookId: row.masterBookId,
       title: row.title,
       authorName: row.authorName,
-      sources: [...row.sources.entries()]
-        .map(([sourceCode, sourceName]) => ({ sourceCode, sourceName }))
-        .sort((a, b) => a.sourceName.localeCompare(b.sourceName, "tr")),
+      sources: [...row.sources.values()].sort((a, b) =>
+        a.sourceName.localeCompare(b.sourceName, "tr"),
+      ),
     }))
     .sort(
       (a, b) =>

@@ -2,12 +2,41 @@
 
 import { useMemo, useState } from "react";
 
-import type { TurkeySourceRankRow } from "@/lib/book-index/source-rank-table";
+import type {
+  SourceRankMovement,
+  TurkeySourceRankRow,
+} from "@/lib/book-index/source-rank-table";
 
 import styles from "./BookIndexPublicView.module.css";
 
 function normalized(value: string) {
   return value.toLocaleLowerCase("tr-TR").trim();
+}
+
+function movementLabel(
+  movement: SourceRankMovement,
+  rankDelta: number | null,
+) {
+  if (movement === "new") return "Yeni";
+  if (movement === "up" && rankDelta !== null) return `↑ ${rankDelta} sıra`;
+  if (movement === "down" && rankDelta !== null) {
+    return `↓ ${Math.abs(rankDelta)} sıra`;
+  }
+  return "—";
+}
+
+function rowMovementLabel(row: TurkeySourceRankRow) {
+  if (row.sources.length === 1) {
+    const source = row.sources[0];
+    return source ? movementLabel(source.movement, source.rankDelta) : "—";
+  }
+
+  return row.sources
+    .map(
+      (source) =>
+        `${source.sourceName}: ${movementLabel(source.movement, source.rankDelta)}`,
+    )
+    .join(" · ");
 }
 
 export function BookIndexRankTable({
@@ -133,25 +162,44 @@ export function BookIndexRankTable({
               <th scope="col">Kitap</th>
               <th scope="col">Yazar</th>
               <th scope="col">Kaynak</th>
+              <th scope="col">Hareket</th>
             </tr>
           </thead>
           <tbody>
             {filteredRows.length ? (
-              filteredRows.map((row) => (
-                <tr key={row.rowKey}>
-                  <td className={styles.rankCell}>{row.rank}</td>
-                  <td className={styles.titleCell}>
-                    <strong>{row.title}</strong>
-                  </td>
-                  <td>{row.authorName ?? "Yazar bilgisi bekleniyor"}</td>
-                  <td className={styles.sourceCell}>
-                    {row.sources.map((source) => source.sourceName).join(" · ")}
-                  </td>
-                </tr>
-              ))
+              filteredRows.map((row, index) => {
+                const previousRow = filteredRows[index - 1];
+                const showRank = !previousRow || previousRow.rank !== row.rank;
+                const startsNewRankGroup = index > 0 && showRank;
+
+                return (
+                  <tr
+                    key={row.rowKey}
+                    className={startsNewRankGroup ? styles.rankGroupStart : undefined}
+                  >
+                    <td className={styles.rankCell}>
+                      {showRank ? (
+                        row.rank
+                      ) : (
+                        <span className={styles.visuallyHidden}>{row.rank}</span>
+                      )}
+                    </td>
+                    <td className={styles.titleCell}>
+                      <strong>{row.title}</strong>
+                    </td>
+                    <td>{row.authorName ?? "Yazar bilgisi bekleniyor"}</td>
+                    <td className={styles.sourceCell}>
+                      {row.sources.map((source) => source.sourceName).join(" · ")}
+                    </td>
+                    <td className={styles.movementCell}>
+                      {rowMovementLabel(row)}
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
-                <td className={styles.emptyState} colSpan={4}>
+                <td className={styles.emptyState} colSpan={5}>
                   Bu filtrelere uyan sonuç bulunamadı.
                 </td>
               </tr>

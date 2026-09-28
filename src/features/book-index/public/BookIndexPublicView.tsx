@@ -55,30 +55,11 @@ function availabilityLabel(value: string) {
   }
 }
 
-function movementLabel(
-  masterBookId: string,
-  insights: BookIndexInsights,
-) {
-  const newEntry = insights.newEntries.find(
-    (item) => item.masterBookId === masterBookId,
-  );
-  if (newEntry) return `+${newEntry.newSourceCount} yeni kaynak`;
-
-  const riser = insights.risers.find(
-    (item) => item.masterBookId === masterBookId,
-  );
-  if (riser) return `↑ ${riser.totalRankGain} sıra`;
-
-  return "—";
-}
-
 function TurkeyRows({
   model,
-  insights,
   limit,
 }: {
   model: BookIndexPublicReadModel;
-  insights: BookIndexInsights;
   limit?: number;
 }) {
   const rows = limit ? model.turkey.items.slice(0, limit) : model.turkey.items;
@@ -88,24 +69,22 @@ function TurkeyRows({
       <table className={styles.rankingTable}>
         <thead>
           <tr>
-            <th scope="col">İlkOku Sırası</th>
+            <th scope="col">Sıra</th>
             <th scope="col">Kitap</th>
             <th scope="col">Yazar</th>
-            <th scope="col">Kaynak Sayısı</th>
-            <th scope="col">Hareket</th>
+            <th scope="col">Kaynak</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
-            <tr key={row.masterBookId}>
-              <td className={styles.rankCell}>{index + 1}</td>
+          {rows.map((row) => (
+            <tr key={row.rowKey}>
+              <td className={styles.rankCell}>{row.rank}</td>
               <td className={styles.titleCell}>
                 <strong>{row.title}</strong>
               </td>
               <td>{row.authorName ?? "Yazar bilgisi bekleniyor"}</td>
-              <td>{row.sourceCount}</td>
-              <td className={styles.movementCell}>
-                {movementLabel(row.masterBookId, insights)}
+              <td className={styles.sourceCell}>
+                {row.sources.map((source) => source.sourceName).join(" · ")}
               </td>
             </tr>
           ))}
@@ -135,10 +114,10 @@ export function BookIndexOverviewView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi</span>
         <h1>En Çok Satan Kitaplar {currentYear}</h1>
         <p>
-          Farklı kitap satış platformlarının kendi çok satan sıralamalarını
-          izliyor, kaynakları birbirine karıştırmadan ayrı bir Türkiye Endeksi
-          üretiyoruz. Böylece tek bir mağazanın listesi yerine birden fazla
-          bağımsız kaynağın ortak satış sinyalini görebilirsiniz.
+          Türkiye&apos;deki kitap satış platformlarının çok satan listelerini
+          aynı tabloda karşılaştırıyoruz. Her kaynağın kendi sıra numarası
+          korunur; aynı kitap aynı sırada birden fazla kaynakta yer alıyorsa
+          kaynaklar aynı satırda birlikte gösterilir.
         </p>
         {observedAt && observedAtLabel ? (
           <p className={styles.freshness}>
@@ -150,9 +129,9 @@ export function BookIndexOverviewView({
 
       <section className={styles.cards} aria-label="Endeks kapsamı">
         <Link className={styles.card} href="/en-cok-satanlar/turkiye">
-          <span>İlkOku Türkiye Kitap Endeksi</span>
-          <strong>{model.turkey.items.length} kitap</strong>
-          <small>En az üç bağımsız Türkiye kaynağının ortak sinyali</small>
+          <span>Türkiye Çok Satan Listeleri</span>
+          <strong>Kaynak sıralamalarını karşılaştır</strong>
+          <small>Her sitenin kendi sırası değiştirilmeden gösterilir.</small>
         </Link>
         <article className={styles.card}>
           <span>Amazon Türkiye</span>
@@ -199,29 +178,28 @@ export function BookIndexOverviewView({
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.eyebrow}>Türkiye</span>
-            <h2>Güncel bileşik sıralama</h2>
+            <h2>Güncel çok satan sıralamaları</h2>
             <p>
-              Bağımsız işletmeci grupları eşit ağırlıkla değerlendirilir; aynı
-              işletmeciye ait birden fazla mağaza kitaba ek oy veremez.
+              Aynı kitap aynı sırada birden fazla kaynakta yer alıyorsa
+              kaynaklar tek satırda birlikte gösterilir.
             </p>
           </div>
           <Link href="/en-cok-satanlar/turkiye">Tüm sıralamayı gör →</Link>
         </div>
-        <TurkeyRows model={model} insights={insights} limit={10} />
+        <TurkeyRows model={model} limit={10} />
       </section>
 
       <section className={styles.explainer} aria-labelledby="book-index-methodology">
-        <span className={styles.eyebrow}>Nasıl hesaplanıyor?</span>
-        <h2 id="book-index-methodology">Türkiye&apos;de en çok satan kitaplar nasıl belirleniyor?</h2>
+        <span className={styles.eyebrow}>Nasıl gösteriliyor?</span>
+        <h2 id="book-index-methodology">Kaynak sıralamaları nasıl birleştiriliyor?</h2>
         <p>
-          İlkOku Kitap Endeksi, farklı satış kaynaklarındaki sıralamaları
-          normalize eder; aynı bağımsız işletmeci grubu bir kitaba yalnız bir
-          oy verir ve Türkiye Endeksi&apos;ne girebilmek için kitap en az üç
-          bağımsız işletmeci grubunda görünmelidir.
+          İlkOku yeni bir sıra veya bileşik puan üretmez. Her satış kaynağının
+          kendi çok satan sırası aynen korunur.
         </p>
         <p>
-          Kaynakların kendi sıralaması değiştirilmez; İlkOku bileşik puanı ayrı
-          hesaplanır. Sponsorlu alanlar organik sıralamaya dahil edilmez.
+          Aynı kitap aynı sıra numarasında birden fazla kaynakta yer alıyorsa
+          yalnızca kaynak adları aynı satırda birleştirilir. Aynı kitap farklı
+          sıra numaralarındaysa tabloda ayrı satırlarda görünür.
         </p>
       </section>
     </main>
@@ -230,10 +208,8 @@ export function BookIndexOverviewView({
 
 export function TurkeyBookIndexView({
   model,
-  insights,
 }: {
   model: BookIndexPublicReadModel;
-  insights: BookIndexInsights;
 }) {
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
@@ -245,9 +221,9 @@ export function TurkeyBookIndexView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>Türkiye&apos;de En Çok Satan Kitaplar {currentYear}</h1>
         <p>
-          Bu liste tek bir mağazanın satış listesi değildir. Aynı kitabın
-          bağımsız Türkiye kaynaklarındaki görünürlüğü normalize edilerek
-          oluşturulan İlkOku bileşik endeksidir.
+          Türkiye&apos;deki farklı kitap satış kaynaklarının çok satan
+          listelerini tek tabloda karşılaştırır. Her kaynağın verdiği sıra
+          numarası değiştirilmeden gösterilir.
         </p>
         {observedAt && observedAtLabel ? (
           <p className={styles.freshness}>
@@ -263,29 +239,27 @@ export function TurkeyBookIndexView({
       <section className={styles.section} id="ranking">
         <div className={styles.sectionHeading}>
           <div>
-            <span className={styles.eyebrow}>Şeffaf sıralama</span>
-            <h2>Türkiye Endeksi</h2>
+            <span className={styles.eyebrow}>Kaynak listeleri</span>
+            <h2>Çok Satan Kitaplar Sıralaması</h2>
             <p>
-              Her satırda kullanılan bağımsız kaynak sayısını görebilirsin.
+              Hangi kaynağın hangi kitabı hangi sıraya koyduğunu görebilirsin.
             </p>
           </div>
         </div>
-        <TurkeyRows model={model} insights={insights} />
+        <TurkeyRows model={model} />
       </section>
 
       <section className={styles.explainer} aria-labelledby="turkey-index-methodology">
         <span className={styles.eyebrow}>Metodoloji</span>
-        <h2 id="turkey-index-methodology">İlkOku Türkiye Kitap Endeksi neyi gösterir?</h2>
+        <h2 id="turkey-index-methodology">Bu tablo neyi gösterir?</h2>
         <p>
-          Endeks, kitapların birden fazla bağımsız Türkiye satış işletmecisindeki
-          görünürlüğünü karşılaştırır. Her bağımsız işletmeci grubu eşit oy
-          hakkına sahiptir; aynı işletmeciye ait mağazalar veya listeler aynı
-          kitaba ek oy kazandırmaz.
+          Tablo, kaynak sitelerin kendi çok satan sıralamalarını karşılaştırmalı
+          olarak gösterir. İlkOku kaynakların sıra numarasını değiştirmez.
         </p>
         <p>
-          Gösterilen puan satış adedi değildir. Kaynak sıralamalarından
-          türetilen bileşik bir görünürlük puanıdır ve her kitap için kullanılan
-          bağımsız kaynak sayısı ayrıca gösterilir.
+          Aynı eser aynı sırada birden fazla kaynakta görünüyorsa kaynaklar aynı
+          satırda birlikte yazılır; eser farklı bir kaynakta farklı sıradaysa
+          ayrı bir satır olarak yeniden görünür.
         </p>
       </section>
     </main>

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  pandoraBookIndexAdapter,
   parsePandoraNewReleases,
   sortPandoraNewReleasesNative,
 } from "../src/lib/book-index/sources/pandora.ts";
@@ -123,4 +124,63 @@ test("Pandora new-release parser rejects malformed or undersized native payloads
     () => parsePandoraNewReleases({ ...nativePayload(), categoryId: "other" }, 1),
     /BOOK_INDEX_PANDORA_NEW_RELEASE_NATIVE_LIST_MISMATCH/u,
   );
+});
+
+test("Pandora new-release collector is disabled by configuration and requires an explicit native limit", async () => {
+  await assert.rejects(
+    () =>
+      pandoraBookIndexAdapter.collect({
+        listCode: "pandora-tr-new-releases",
+        sourceUrl: "https://www.pandora.com.tr/Yeni_Kitaplar/Turkce",
+        observedAt: new Date("2026-09-29T00:00:00Z"),
+        maxRank: null,
+      }),
+    /BOOK_INDEX_PANDORA_NEW_RELEASE_LIMIT_NOT_CONFIGURED/u,
+  );
+
+  await assert.rejects(
+    () =>
+      pandoraBookIndexAdapter.collect({
+        listCode: "pandora-tr-new-releases",
+        sourceUrl: "https://www.pandora.com.tr/Yeni_Kitaplar/Ingilizce",
+        observedAt: new Date("2026-09-29T00:00:00Z"),
+        maxRank: 6,
+      }),
+    /BOOK_INDEX_PANDORA_NEW_RELEASE_SOURCE_URL_MISMATCH/u,
+  );
+});
+
+test("Pandora new-release collector calls the verified first-party API only after scope is configured", async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url: String(url), options });
+    return new Response(JSON.stringify(nativePayload()), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const result = await pandoraBookIndexAdapter.collect({
+      listCode: "pandora-tr-new-releases",
+      sourceUrl: "https://www.pandora.com.tr/Yeni_Kitaplar/Turkce",
+      observedAt: new Date("2026-09-29T00:00:00Z"),
+      maxRank: 6,
+    });
+
+    assert.equal(calls.length, 1);
+    assert.equal(
+      calls[0]?.url,
+      "https://www.pandora.com.tr/api/yenikitaplar?dil=1",
+    );
+    assert.equal(result.books.length, 6);
+    assert.deepEqual(
+      result.books.map((book) => book.rank),
+      [1, 2, 3, 4, 5, 6],
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

@@ -292,3 +292,33 @@ test("Yeni Çıkanlar page stays noindex and source-native during soft launch", 
   );
 });
 
+test("Global bestseller research stays market-native and unpublished", () => {
+  const registry = source("src/lib/book-index/global-bestseller-sources.ts");
+  const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
+
+  for (const market of ["US", "GB", "DE", "FR", "ES", "JP"]) {
+    contains(registry, `marketCode: "${market}"`, `global source market ${market}`);
+  }
+
+  contains(
+    registry,
+    'status: "verified_ranked_list"',
+    "ranked global sources are distinguished from page-only research",
+  );
+  contains(
+    registry,
+    'status: "verified_bestseller_page"',
+    "bestseller pages without proven rank extraction stay distinct",
+  );
+  contains(
+    registry,
+    "BOOK_INDEX_GLOBAL_DUPLICATE_PRIMARY_MARKET",
+    "one primary research source per market is enforced",
+  );
+  notContains(
+    overview,
+    'href="/en-cok-satanlar/dunya"',
+    "world card remains unpublished until collectors/read model are verified",
+  );
+});
+

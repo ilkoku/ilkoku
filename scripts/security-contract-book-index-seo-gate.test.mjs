@@ -115,8 +115,8 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   ]) {
     contains(view, `<th scope="col">${heading}</th>`, `ranking table heading: ${heading}`);
   }
-  contains(view, 'if (newEntry) return "Yeni";', "movement shows verified new-entry signal");
-  contains(view, 'return `↑ +${riser.totalRankGain}`;', "movement shows verified rise signal");
+  contains(view, 'return `+${newEntry.newSourceCount} yeni kaynak`;', "movement labels verified new-source signal");
+  contains(view, 'return `↑ ${riser.totalRankGain} sıra`;', "movement labels verified source-rank rise signal");
   contains(view, 'return "—";', "movement stays neutral without verified signal");
 
   contains(

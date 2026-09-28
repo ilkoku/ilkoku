@@ -15,6 +15,9 @@ const NEW_RELEASE_LANGUAGE_ID = 1;
 type PandoraApiRow = Record<string, unknown>;
 type PandoraNewReleasePayload = {
   books?: unknown;
+  categoryId?: unknown;
+  categoryName?: unknown;
+  language?: unknown;
 };
 
 function textValue(value: unknown) {
@@ -228,6 +231,13 @@ export function parsePandoraNewReleases(
   }
 
   const response = payload as PandoraNewReleasePayload;
+  if (
+    textValue(response.categoryId) !== "yenikitaplar"
+    || integerValue(response.language) !== NEW_RELEASE_LANGUAGE_ID
+  ) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_NATIVE_LIST_MISMATCH");
+  }
+
   if (!Array.isArray(response.books)) {
     throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_RESULTS_NOT_FOUND");
   }

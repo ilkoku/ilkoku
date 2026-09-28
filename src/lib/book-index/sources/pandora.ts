@@ -410,16 +410,21 @@ export const pandoraBookIndexAdapter: BookIndexSourceAdapter = {
     const isNewReleaseList = context.listCode === "pandora-tr-new-releases";
     const endpoint = isNewReleaseList ? NEW_RELEASE_API_URL : API_URL;
 
+    let newReleaseLimit: number | null = null;
     if (isNewReleaseList) {
       if (context.sourceUrl !== NEW_RELEASE_SOURCE_URL) {
         throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_SOURCE_URL_MISMATCH");
       }
+
+      const configuredLimit = context.maxRank;
       if (
-        !Number.isSafeInteger(context.maxRank)
-        || (context.maxRank ?? 0) < 1
+        typeof configuredLimit !== "number"
+        || !Number.isSafeInteger(configuredLimit)
+        || configuredLimit < 1
       ) {
         throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_LIMIT_NOT_CONFIGURED");
       }
+      newReleaseLimit = configuredLimit;
     }
 
     const response = await fetch(endpoint, {
@@ -448,7 +453,10 @@ export const pandoraBookIndexAdapter: BookIndexSourceAdapter = {
     }
 
     if (isNewReleaseList) {
-      return parsePandoraNewReleases(payload, context.maxRank as number);
+      if (newReleaseLimit === null) {
+        throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_LIMIT_NOT_CONFIGURED");
+      }
+      return parsePandoraNewReleases(payload, newReleaseLimit);
     }
 
     return parsePandoraBestsellers(payload);

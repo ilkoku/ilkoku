@@ -266,6 +266,21 @@ test("Yeni Çıkanlar page stays noindex and source-native during soft launch", 
   );
   contains(
     view,
+    "Kayıtlar kitap adına göre alfabetik gösterilir.",
+    "Yeni Çıkanlar uses a neutral visible order",
+  );
+  contains(
+    model,
+    'a.title.localeCompare(b.title, "tr")',
+    "new-release rows use title as the primary cross-source sort",
+  );
+  notContains(
+    model,
+    "b.latestObservedAt.getTime() - a.latestObservedAt.getTime()\n        || a.title",
+    "collector timing cannot become the apparent new-release ranking",
+  );
+  contains(
+    view,
     "İlkOku katalog",
     "native new-release methodology is explained",
   );

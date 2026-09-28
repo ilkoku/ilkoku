@@ -160,6 +160,20 @@ export async function GET(request: NextRequest) {
           readiness.pandoraCanaryShadowPairOverlap,
         pandoraCanaryShadowSamples:
           readiness.pandoraCanaryShadowSamples,
+        kitapAmbariCanaryHealth:
+          readiness.kitapAmbariCanaryHealth,
+        kitapAmbariCanaryShadowBookCount:
+          readiness.kitapAmbariCanaryShadowBookCount,
+        kitapAmbariCanaryShadowOverlapWithCompositeCount:
+          readiness.kitapAmbariCanaryShadowOverlapWithCompositeCount,
+        kitapAmbariCanaryShadowWouldReach3StorefrontCount:
+          readiness.kitapAmbariCanaryShadowWouldReach3StorefrontCount,
+        kitapAmbariCanaryShadowWouldReach3IndependentCount:
+          readiness.kitapAmbariCanaryShadowWouldReach3IndependentCount,
+        kitapAmbariCanaryShadowPairOverlap:
+          readiness.kitapAmbariCanaryShadowPairOverlap,
+        kitapAmbariCanaryShadowSamples:
+          readiness.kitapAmbariCanaryShadowSamples,
         normalizedIdentityKeysOnAtLeast2Sources:
           readiness.normalizedIdentityKeysOnAtLeast2Sources,
         normalizedIdentityKeysOnAtLeast3Sources:

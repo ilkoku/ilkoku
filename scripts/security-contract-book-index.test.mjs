@@ -1087,9 +1087,8 @@ test("Book Index public read model excludes shadow, research and disabled candid
   for (const listCode of [
     "kitapsec-general-live",
     "kitapsec-general-live-canary",
-    "kitapstore-tr-live",
     "kitapstore-tr-live-canary",
-    "pandora-tr-live",
+    "pandora-tr-live-canary",
     "kitapambari-tr-live",
     "amazon-tr-live",
   ]) {
@@ -1112,6 +1111,8 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "illakitap-tr-weekly",
     "nobelkitap-tr-live",
     "idefix-tr-live",
+    "pandora-tr-live",
+    "kitapstore-tr-live",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);

@@ -17,6 +17,7 @@ export type BookIndexCollectionContext = {
   listCode: string;
   sourceUrl: string;
   observedAt: Date;
+  maxRank?: number | null;
 };
 
 export type BookIndexCollectionResult = {

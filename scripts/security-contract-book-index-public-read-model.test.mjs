@@ -176,3 +176,61 @@ test("New-release read model stays source-native and private until publication i
   );
 });
 
+test("New-release production exceptions stay source-specific and fail closed", () => {
+  const inkilap = source("src/lib/book-index/sources/inkilap.ts");
+  const illakitap = source("src/lib/book-index/sources/illakitap.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const registry = source("src/lib/book-index/new-release-sources.ts");
+
+  contains(
+    inkilap,
+    'context.listCode === "inkilap-tr-new-releases"',
+    "İnkılâp native new-release path is explicitly isolated",
+  );
+  contains(
+    inkilap,
+    "await fetchInkilapPage(context.sourceUrl)",
+    "İnkılâp new releases use the verified single native page",
+  );
+  contains(
+    illakitap,
+    "const MIN_EXPECTED_BOOKS = 40;",
+    "İlla Kitap bestseller fail-closed minimum is preserved",
+  );
+  contains(
+    illakitap,
+    "const NEW_RELEASE_MIN_EXPECTED_BOOKS = 8;",
+    "İlla Kitap has a separate bounded new-release minimum",
+  );
+  contains(
+    illakitap,
+    'context.listCode === "illakitap-tr-new-releases"',
+    "İlla Kitap new releases use the source-specific parser path",
+  );
+
+  const kitapsepetiMarker = 'code: "kitapsepeti-tr-new-releases"';
+  const kitapsepetiStart = lists.indexOf(kitapsepetiMarker);
+  assert.ok(kitapsepetiStart >= 0, "missing KitapSepeti new-release list");
+  const kitapsepetiEnd = lists.indexOf("\n  },", kitapsepetiStart);
+  const kitapsepetiBlock = lists.slice(kitapsepetiStart, kitapsepetiEnd);
+  contains(
+    kitapsepetiBlock,
+    "collectionEveryMinutes: null",
+    "unverified KitapSepeti new-release collection is paused",
+  );
+  contains(
+    kitapsepetiBlock,
+    "enabled: false",
+    "unverified KitapSepeti new-release list is disabled",
+  );
+
+  const registryMarker = 'sourceCode: "kitapsepeti"';
+  const registryStart = registry.indexOf(registryMarker);
+  assert.ok(registryStart >= 0, "missing KitapSepeti new-release source registry");
+  const registryEnd = registry.indexOf("\n  },", registryStart);
+  const registryBlock = registry.slice(registryStart, registryEnd);
+  contains(registryBlock, "sourceUrl: null", "KitapSepeti unverified URL is not trusted");
+  contains(registryBlock, "collectionMode: null", "KitapSepeti unverified mode is not trusted");
+  contains(registryBlock, 'status: "researching"', "KitapSepeti new releases return to research");
+});
+

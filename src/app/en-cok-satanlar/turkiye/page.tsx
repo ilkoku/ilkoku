@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { TurkeyBookIndexView } from "@/features/book-index/public/BookIndexPublicView";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexInsights } from "@/lib/book-index/insights";
 import { createBookIndexItemListSchema, getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
@@ -18,22 +19,25 @@ const description =
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const context = await getBookIndexPublicPageContext(100);
+  const context = await getBookIndexSoftLaunchPageContext(100);
 
   return createPublicPageMetadata({
     title: pageTitle(),
     description,
     canonical,
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: !context,
+    noIndex: !context.gate.canPublish,
   });
 }
 
 export default async function TurkeyBestsellersPage() {
-  const context = await getBookIndexPublicPageContext(100);
-  if (!context || context.model.turkey.availability !== "available") notFound();
+  const context = await getBookIndexSoftLaunchPageContext(100);
+  if (context.model.turkey.availability !== "available") notFound();
 
-  const lastObservedAt = getBookIndexLastObservedAt(context.model);
+  const [lastObservedAt, insights] = await Promise.all([
+    Promise.resolve(getBookIndexLastObservedAt(context.model)),
+    getBookIndexInsights(100),
+  ]);
   const schema = [
     {
       "@context": "https://schema.org",
@@ -89,13 +93,15 @@ export default async function TurkeyBestsellersPage() {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
-        }}
-      />
-      <TurkeyBookIndexView model={context.model} />
+      {context.gate.canPublish ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
+          }}
+        />
+      ) : null}
+      <TurkeyBookIndexView model={context.model} insights={insights} />
     </>
   );
 }

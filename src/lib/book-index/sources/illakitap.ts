@@ -84,7 +84,7 @@ export function parseIllaKitapWeeklyBestsellers(
     }));
 
   if (books.length < MIN_EXPECTED_BOOKS) {
-    throw new Error("BOOK_INDEX_ILLAKITAP_RESULT_TOO_SMALL");
+    throw new Error(`BOOK_INDEX_ILLAKITAP_RESULT_TOO_SMALL:${books.length}`);
   }
 
   const uniqueKeys = new Set(books.map((book) => book.sourceKey));

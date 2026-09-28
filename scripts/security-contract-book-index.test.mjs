@@ -862,6 +862,10 @@ test("KitapStore canary qualification evidence is observable while voter stays o
   const lists = source("src/lib/book-index/lists.ts");
 
   contains(readiness, "kitapStoreCanaryHealth", "KitapStore canary health evidence");
+  contains(readiness, "kitapStoreCanaryObservationCount", "KitapStore canary observation count");
+  contains(readiness, "kitapStoreCanaryMatchedObservationCount", "KitapStore matched observation count");
+  contains(readiness, "kitapStoreCanaryUnmatchedObservationCount", "KitapStore unmatched observation count");
+  contains(readiness, "kitapStoreCanaryDuplicateMasterObservationCount", "KitapStore duplicate-master observation count");
   contains(readiness, "kitapStoreCanaryShadowBookCount", "KitapStore shadow book count");
   contains(readiness, "kitapStoreCanaryShadowOverlapWithCompositeCount", "KitapStore overlap evidence");
   contains(readiness, "kitapStoreCanaryShadowWouldReach3StorefrontCount", "KitapStore projected storefront threshold");
@@ -872,11 +876,17 @@ test("KitapStore canary qualification evidence is observable while voter stays o
   contains(readiness, '"kitapstore",', "shadow projection adds KitapStore once");
 
   contains(route, "readiness.kitapStoreCanaryHealth", "readiness API exposes canary health");
+  contains(route, "readiness.kitapStoreCanaryObservationCount", "readiness API exposes observation count");
+  contains(route, "readiness.kitapStoreCanaryMatchedObservationCount", "readiness API exposes matched observation count");
+  contains(route, "readiness.kitapStoreCanaryUnmatchedObservationCount", "readiness API exposes unmatched observation count");
+  contains(route, "readiness.kitapStoreCanaryDuplicateMasterObservationCount", "readiness API exposes duplicate-master observation count");
   contains(route, "readiness.kitapStoreCanaryShadowBookCount", "readiness API exposes shadow book count");
   contains(route, "readiness.kitapStoreCanaryShadowWouldReach3IndependentCount", "readiness API exposes independent projection");
   contains(route, "readiness.kitapStoreCanaryShadowSamples", "readiness API exposes shadow samples");
 
   contains(workflow, '"kitapStoreCanaryHealth": readiness.get("kitapStoreCanaryHealth")', "passive observer prints canary health");
+  contains(workflow, '"kitapStoreCanaryObservationCount": readiness.get("kitapStoreCanaryObservationCount")', "passive observer prints observation count");
+  contains(workflow, '"kitapStoreCanaryDuplicateMasterObservationCount": readiness.get("kitapStoreCanaryDuplicateMasterObservationCount")', "passive observer prints duplicate-master observation count");
   contains(workflow, '"kitapStoreCanaryShadowWouldReach3IndependentCount": readiness.get("kitapStoreCanaryShadowWouldReach3IndependentCount")', "passive observer prints independent projection");
   contains(workflow, '"kitapStoreCanaryShadowSamples": readiness.get("kitapStoreCanaryShadowSamples")', "passive observer prints shadow samples");
 

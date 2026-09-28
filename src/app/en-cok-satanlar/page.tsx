@@ -29,7 +29,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BestsellersPage() {
-  const context = await getBookIndexSoftLaunchPageContext(30);
+  const context = await getBookIndexSoftLaunchPageContext(100);
+  const previewItems = context.model.turkey.items.filter((item) => item.rank <= 3);
   const [lastObservedAt, insights] = await Promise.all([
     Promise.resolve(getBookIndexLastObservedAt(context.model)),
     getBookIndexInsights(20),
@@ -57,7 +58,7 @@ export default async function BestsellersPage() {
       ...createBookIndexItemListSchema({
         name: "Türkiye Çok Satan Kaynak Sıralamaları · Güncel Görünüm",
         url: `${baseUrl}${canonical}#turkey-preview`,
-        items: context.model.turkey.items,
+        items: previewItems,
       }),
       "@id": `${baseUrl}${canonical}#turkey-preview`,
     },

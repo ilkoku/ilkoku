@@ -146,6 +146,7 @@ export async function collectBookIndexListByCode(listCode: string) {
       listCode: list.code,
       sourceUrl: list.sourceUrl,
       observedAt: startedAt,
+      maxRank: list.maxRank,
     });
 
     if (result.books.length === 0) {

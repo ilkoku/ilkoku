@@ -66,6 +66,74 @@ export function parseRemziWeeklyBestsellers(
   return { books };
 }
 
+export function parseRemziNewReleases(
+  html: string,
+): BookIndexCollectionResult {
+  const headingIndex = html.search(
+    /<h3\b[^>]*>\s*En\s+Yeniler\s*<\/h3>/iu,
+  );
+
+  if (headingIndex < 0) {
+    throw new Error("BOOK_INDEX_REMZI_NEW_RELEASE_HEADING_MISSING");
+  }
+
+  const afterHeading = html.slice(headingIndex);
+  const listEnd = afterHeading.search(
+    /<div\b[^>]*class=["'][^"']*\bpagination\b[^"']*["'][^>]*>/iu,
+  );
+  const listBody = listEnd >= 0 ? afterHeading.slice(0, listEnd) : afterHeading;
+
+  const starts = [
+    ...listBody.matchAll(
+      /<div\b[^>]*class=["']book["'][^>]*>/giu,
+    ),
+  ];
+
+  const books = starts.map((match, index) => {
+    const start = match.index ?? 0;
+    const end = starts[index + 1]?.index ?? listBody.length;
+    const card = listBody.slice(start, end);
+
+    const titleAnchor = card.match(
+      /<h4\b[^>]*>\s*<a\b[^>]*href=["'](\/kitap\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>\s*<\/h4>/iu,
+    );
+    const author = card.match(
+      /<a\b[^>]*href=["']\/yazar\/[^"']+["'][^>]*>\s*<h4\b[^>]*>([\s\S]*?)<\/h4>\s*<\/a>/iu,
+    )?.[1];
+    const image = card.match(
+      /<div\b[^>]*class=["'][^"']*\bbook-image\b[^"']*["'][^>]*>[\s\S]*?<img\b[^>]*src=["']([^"']+)["'][^>]*>/iu,
+    )?.[1];
+
+    const href = titleAnchor?.[1] ?? "";
+    const title = decodeBookIndexHtml(titleAnchor?.[2] ?? "");
+
+    if (!href || !title) {
+      throw new Error("BOOK_INDEX_REMZI_NEW_RELEASE_INVALID_ITEM");
+    }
+
+    return {
+      sourceKey: href,
+      title,
+      authorName: author ? decodeBookIndexHtml(author) : null,
+      publisherName: null,
+      productUrl: absoluteUrl(href),
+      imageUrl: image ? absoluteUrl(image) : null,
+      rank: index + 1,
+    };
+  });
+
+  if (books.length < MIN_EXPECTED_BOOKS) {
+    throw new Error("BOOK_INDEX_REMZI_NEW_RELEASE_RESULT_TOO_SMALL");
+  }
+
+  const uniqueKeys = new Set(books.map((book) => book.sourceKey));
+  if (uniqueKeys.size !== books.length) {
+    throw new Error("BOOK_INDEX_REMZI_NEW_RELEASE_DUPLICATE_SOURCE_KEY");
+  }
+
+  return { books };
+}
+
 export const remziBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
@@ -85,6 +153,11 @@ export const remziBookIndexAdapter: BookIndexSourceAdapter = {
     }
 
     const html = await response.text();
+
+    if (context.listCode === "remzi-tr-new-releases") {
+      return parseRemziNewReleases(html);
+    }
+
     return parseRemziWeeklyBestsellers(html);
   },
 };

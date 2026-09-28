@@ -9,8 +9,13 @@ const SOURCE_ORIGIN = "https://www.pandora.com.tr";
 const API_URL = "https://www.pandora.com.tr/api/coksatanlar";
 const EXPECTED_NATIVE_ROWS = 50;
 const MIN_UNIQUE_BOOKS = 40;
+const NEW_RELEASE_MIN_EXPECTED_BOOKS = 40;
+const NEW_RELEASE_LANGUAGE_ID = 1;
 
 type PandoraApiRow = Record<string, unknown>;
+type PandoraNewReleasePayload = {
+  books?: unknown;
+};
 
 function textValue(value: unknown) {
   if (typeof value === "string") return value.trim();
@@ -115,6 +120,186 @@ function sameIdentity(
     && left.isbn13 === right.isbn13
   );
 }
+
+function newReleaseDate(row: PandoraApiRow) {
+  const raw = textValue(row.yayintarih);
+  if (!raw) return null;
+
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function newReleaseWeekKey(row: PandoraApiRow) {
+  const date = newReleaseDate(row);
+  if (!date) return null;
+
+  const monday = new Date(date);
+  const day = monday.getDay();
+  monday.setDate(monday.getDate() - day + (day === 0 ? -6 : 1));
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split("T")[0] ?? null;
+}
+
+function balancePandoraNewReleasePublishers(rows: PandoraApiRow[]) {
+  const invalidDateRows = rows.filter((row) => newReleaseDate(row) === null);
+  const weeks = new Map<string, PandoraApiRow[]>();
+
+  for (const row of rows) {
+    const weekKey = newReleaseWeekKey(row);
+    if (!weekKey) continue;
+
+    const weekRows = weeks.get(weekKey) ?? [];
+    weekRows.push(row);
+    weeks.set(weekKey, weekRows);
+  }
+
+  const balanced: PandoraApiRow[] = [];
+
+  for (const weekRows of weeks.values()) {
+    if (weekRows.length <= 1) {
+      balanced.push(...weekRows);
+      continue;
+    }
+
+    const publishers = new Map<string, PandoraApiRow[]>();
+    for (const row of weekRows) {
+      const publisher = textValue(row.yayinci) || "Bilinmeyen";
+      const publisherRows = publishers.get(publisher) ?? [];
+      publisherRows.push(row);
+      publishers.set(publisher, publisherRows);
+    }
+
+    const maxRows = Math.max(
+      ...Array.from(publishers.values(), (publisherRows) => publisherRows.length),
+    );
+
+    for (let index = 0; index < maxRows; index += 1) {
+      for (const publisherRows of publishers.values()) {
+        const row = publisherRows[index];
+        if (row) balanced.push(row);
+      }
+    }
+  }
+
+  balanced.push(...invalidDateRows);
+  return balanced;
+}
+
+export function sortPandoraNewReleasesNative(rows: readonly PandoraApiRow[]) {
+  const byNewest = (items: PandoraApiRow[]) =>
+    items.sort((left, right) => {
+      const leftDate = newReleaseDate(left)?.getTime() ?? Number.NEGATIVE_INFINITY;
+      const rightDate = newReleaseDate(right)?.getTime() ?? Number.NEGATIVE_INFINITY;
+      return rightDate - leftDate;
+    });
+
+  const activeFive = byNewest(
+    rows.filter((row) => integerValue(row.aktif) === 5).map((row) => ({ ...row })),
+  );
+  const activeFour = byNewest(
+    rows.filter((row) => integerValue(row.aktif) === 4).map((row) => ({ ...row })),
+  );
+  const remaining = byNewest(
+    rows
+      .filter((row) => {
+        const active = integerValue(row.aktif);
+        return active !== 5 && active !== 4;
+      })
+      .map((row) => ({ ...row })),
+  );
+
+  return [
+    ...balancePandoraNewReleasePublishers(activeFive),
+    ...balancePandoraNewReleasePublishers(activeFour),
+    ...balancePandoraNewReleasePublishers(remaining),
+  ];
+}
+
+export function parsePandoraNewReleases(
+  payload: unknown,
+  maxBooks: number,
+): BookIndexCollectionResult {
+  if (!Number.isSafeInteger(maxBooks) || maxBooks < 1) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_LIMIT_INVALID");
+  }
+
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_INVALID_RESPONSE");
+  }
+
+  const response = payload as PandoraNewReleasePayload;
+  if (!Array.isArray(response.books)) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_RESULTS_NOT_FOUND");
+  }
+
+  if (
+    response.books.length < NEW_RELEASE_MIN_EXPECTED_BOOKS
+    || response.books.length < maxBooks
+  ) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_RESULT_TOO_SMALL");
+  }
+
+  const rows = response.books.map((raw) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_INVALID_ITEM");
+    }
+    return raw as PandoraApiRow;
+  });
+
+  const selected = sortPandoraNewReleasesNative(rows).slice(0, maxBooks);
+  const books = selected.map((row, index) => {
+    const productId = textValue(row.id);
+    const title = textValue(row.adi);
+    const authorName = textValue(row.yazar) || null;
+    const publisherName = textValue(row.yayinci) || null;
+    const ean = isbn13(row.ean);
+    const languageId = integerValue(row.dil);
+    const priceAmount = priceToMinorUnits(row.fiyat);
+
+    if (
+      !productId
+      || !title
+      || languageId !== NEW_RELEASE_LANGUAGE_ID
+      || priceAmount === null
+    ) {
+      throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_INVALID_ITEM");
+    }
+
+    return {
+      sourceKey: ean || productId,
+      sourceExternalId: productId,
+      title,
+      authorName,
+      publisherName,
+      isbn13: ean,
+      productUrl: productUrl(title, productId),
+      imageUrl: imageUrl(row.gorselUrl),
+      rank: index + 1,
+      priceAmount,
+      currency: "TRY",
+    };
+  });
+
+  const sourceKeys = new Set<string>();
+  const productIds = new Set<string>();
+
+  for (const book of books) {
+    if (sourceKeys.has(book.sourceKey)) {
+      throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_DUPLICATE_SOURCE_KEY");
+    }
+    if (!book.sourceExternalId || productIds.has(book.sourceExternalId)) {
+      throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_DUPLICATE_PRODUCT_ID");
+    }
+
+    sourceKeys.add(book.sourceKey);
+    productIds.add(book.sourceExternalId);
+  }
+
+  return { books };
+}
+
+// This parser is intentionally not wired into collect() yet.
+// The native scope/limit must be explicitly selected before scheduler activation.
 
 export function parsePandoraBestsellers(
   payload: unknown,

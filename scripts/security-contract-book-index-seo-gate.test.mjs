@@ -117,10 +117,15 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
     "Kitap",
     "Yazar",
     "Kaynak",
+    "Hareket",
   ]) {
     contains(rankTable, `<th scope="col">${heading}</th>`, `ranking table heading: ${heading}`);
   }
-  contains(rankTable, "{row.rank}", "source rank is rendered directly");
+  contains(
+    rankTable,
+    "const showRank = !previousRow || previousRow.rank !== row.rank;",
+    "source rank remains in every row while duplicate visible labels are collapsed",
+  );
   contains(
     rankTable,
     'row.sources.map((source) => source.sourceName).join(" · ")',
@@ -128,7 +133,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   notContains(`${view}\n${rankTable}`, "İlkOku Sırası", "no invented public rank heading");
   notContains(`${view}\n${rankTable}`, "Kaynak Sayısı", "no composite source-count column");
-  notContains(rankTable, "<th scope=\"col\">Hareket</th>", "no movement column");
+  contains(rankTable, "rowMovementLabel(row)", "movement uses verified source snapshot history");
   contains(
     view,
     "showInsightPages && publishedInsightPages.length",

@@ -244,3 +244,35 @@ test("New-release production exceptions stay source-specific and fail closed", (
   contains(registryBlock, 'status: "researching"', "KitapSepeti new releases return to research");
 });
 
+test("Yeni Çıkanlar page stays noindex and source-native during soft launch", () => {
+  const page = source("src/app/yeni-cikanlar/page.tsx");
+  const view = source("src/features/book-index/public/NewReleasePublicView.tsx");
+  const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
+
+  contains(page, 'canonical = "/yeni-cikanlar"', "stable Yeni Çıkanlar canonical");
+  contains(page, "noIndex: true", "Yeni Çıkanlar remains noindex during soft launch");
+  contains(page, "getTurkeyNewReleaseRows(500)", "Yeni Çıkanlar uses the isolated read model");
+  notContains(page, "application/ld+json", "no JSON-LD is published while the page is gated");
+
+  contains(
+    view,
+    "İlkOku bu kitaplara yeni bir sıra veya puan vermez.",
+    "Yeni Çıkanlar avoids an İlkOku composite ranking",
+  );
+  contains(
+    view,
+    "Bu değer satış sırası değildir",
+    "source position is not represented as a sales rank",
+  );
+  contains(
+    view,
+    "İlkOku katalog",
+    "native new-release methodology is explained",
+  );
+  contains(
+    overview,
+    'href="/yeni-cikanlar"',
+    "Book Index overview links to Yeni Çıkanlar",
+  );
+});
+

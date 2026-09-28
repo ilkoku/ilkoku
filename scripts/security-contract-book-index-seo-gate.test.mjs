@@ -47,56 +47,85 @@ test("Book Index SEO gate requires evidence and a separate publication switch", 
   contains(gate, '"insufficient_evidence"', "evidence failure state");
 });
 
-test("Book Index public routes fail closed before sitemap publication", () => {
+test("Book Index soft-launch routes stay noindex while sitemap publication remains gated", () => {
   const access = source("src/lib/book-index/public-access.ts");
   const overview = source("src/app/en-cok-satanlar/page.tsx");
   const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
   const sitemap = source("src/app/sitemap.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
+  const header = source("src/components/layout/PublicSiteHeader.tsx");
 
   contains(
     access,
     "policy.enabled\n        && policy.publicationEnabled",
-    "two-key route precondition",
+    "two-key indexed publication precondition",
   );
-  contains(access, "if (!configured) return null;", "route access fails closed before DB work");
-  contains(overview, "getBookIndexPublicPageContext(30)", "overview gate context");
-  contains(overview, "if (!context) notFound();", "overview 404 gate");
-  contains(turkey, "getBookIndexPublicPageContext(100)", "Turkey gate context");
+  contains(access, "if (!configured) return null;", "indexed publication fails closed before DB work");
+  contains(
+    access,
+    "getBookIndexSoftLaunchPageContext",
+    "route-only soft-launch context exists",
+  );
+
+  contains(
+    overview,
+    "getBookIndexSoftLaunchPageContext(30)",
+    "overview uses route-only soft-launch context",
+  );
+  contains(
+    overview,
+    "noIndex: !context.gate.canPublish",
+    "overview stays noindex until full publish gate passes",
+  );
+  contains(
+    overview,
+    "context.gate.canPublish ? (",
+    "overview structured data stays off during soft launch",
+  );
+
+  contains(
+    turkey,
+    "getBookIndexSoftLaunchPageContext(100)",
+    "Turkey route uses route-only soft-launch context",
+  );
   contains(
     turkey,
     'context.model.turkey.availability !== "available"',
-    "Turkey data availability gate",
+    "Turkey still requires usable data",
   );
-  contains(turkey, "notFound();", "Turkey 404 gate");
+  contains(
+    turkey,
+    "noIndex: !context.gate.canPublish",
+    "Turkey route stays noindex until full publish gate passes",
+  );
+  contains(
+    turkey,
+    "context.gate.canPublish ? (",
+    "Turkey structured data stays off during soft launch",
+  );
 
   contains(
     sitemap,
     'import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";',
-    "sitemap consumes the same public gate",
+    "sitemap still consumes the strict publication gate",
   );
   contains(sitemap, "async function loadBookIndexSitemapEntries()", "isolated sitemap gate helper");
   contains(
     sitemap,
     "const context = await getBookIndexPublicPageContext(100);",
-    "sitemap gate context",
+    "sitemap remains on strict publish context",
   );
   contains(
     sitemap,
     'context.model.turkey.availability !== "available"',
     "sitemap requires usable Turkey data",
   );
+
   contains(
-    sitemap,
-    'url: `${baseUrl}/en-cok-satanlar`',
-    "gated bestseller sitemap URL",
+    header,
+    "getBookIndexPublicPageContext(100).catch(() => null)",
+    "public header remains on strict publish context",
   );
-  contains(
-    sitemap,
-    'url: `${baseUrl}/en-cok-satanlar/turkiye`',
-    "gated Turkey sitemap URL",
-  );
-  contains(sitemap, "...bookIndexEntries", "conditional sitemap insertion");
 
   const fallbackStart = sitemap.indexOf("const staticFallbackEntries");
   const fallbackEnd = sitemap.indexOf("type CmsSitemapRow", fallbackStart);
@@ -107,8 +136,9 @@ test("Book Index public routes fail closed before sitemap publication", () => {
     "/en-cok-satanlar",
     "database/error fallback must never publish Book Index",
   );
-  notContains(navigation, "/en-cok-satanlar", "public navigation remains closed");
+  notContains(navigation, "/en-cok-satanlar", "public navigation remains closed during soft launch");
 });
+
 
 
 test("Book Index admin shows SEO gate evidence without publishing", () => {

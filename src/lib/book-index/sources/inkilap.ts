@@ -144,6 +144,12 @@ export const inkilapBookIndexAdapter: BookIndexSourceAdapter = {
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
+    if (context.listCode === "inkilap-tr-new-releases") {
+      return parseInkilapBestsellers(
+        await fetchInkilapPage(context.sourceUrl),
+      );
+    }
+
     const books = [];
 
     for (let page = 1; page <= 5; page += 1) {

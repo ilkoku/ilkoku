@@ -21,8 +21,8 @@ const GITHUB_REPOSITORY_ID = "1304046004";
 const GITHUB_WORKFLOW_REF =
   "ilkoku/ilkoku/.github/workflows/book-index-readiness.yml@refs/heads/main";
 const ALLOWED_GITHUB_EVENTS = new Set([
-  "push",
   "workflow_dispatch",
+  "workflow_run",
   "schedule",
 ]);
 

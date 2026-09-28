@@ -12,6 +12,7 @@ const PAGE_SIZE = 30;
 const MAX_PAGES = Math.ceil(MAX_BOOKS / PAGE_SIZE);
 const MIN_EXPECTED_BOOKS = 60;
 const DETAIL_CONCURRENCY = 6;
+const NEW_RELEASE_MIN_EXPECTED_BOOKS = 8;
 
 type KitaplarSepetteCard = {
   productId: string;
@@ -85,6 +86,37 @@ export function parseKitaplarSepetteBestsellerCards(
   const uniqueUrls = new Set(cards.map((card) => card.productUrl));
   if (uniqueUrls.size !== cards.length) {
     throw new Error("BOOK_INDEX_KITAPLARSEPETTE_DUPLICATE_PRODUCT_URL");
+  }
+
+  return cards;
+}
+
+export function parseKitaplarSepetteNewReleaseCards(
+  html: string,
+): KitaplarSepetteCard[] {
+  const heading = html.match(
+    /<div\b[^>]*class=["'][^"']*\bp-g-m-h-i-title\b[^"']*["'][^>]*>\s*Yeni\s+Çıkanlar\s*<\/div>/iu,
+  );
+
+  if (heading?.index === undefined) {
+    throw new Error("BOOK_INDEX_KITAPLARSEPETTE_NEW_RELEASE_HEADING_MISSING");
+  }
+
+  const afterHeading = html.slice(heading.index + heading[0].length);
+  const nextHeading = afterHeading.search(
+    /<div\b[^>]*class=["'][^"']*\bp-g-m-h-i-title\b[^"']*["'][^>]*>\s*Çok\s+Satanlar\s*<\/div>/iu,
+  );
+
+  if (nextHeading < 0) {
+    throw new Error("BOOK_INDEX_KITAPLARSEPETTE_NEW_RELEASE_BOUNDARY_MISSING");
+  }
+
+  const cards = parseKitaplarSepetteBestsellerCards(
+    afterHeading.slice(0, nextHeading),
+  );
+
+  if (cards.length < NEW_RELEASE_MIN_EXPECTED_BOOKS) {
+    throw new Error("BOOK_INDEX_KITAPLARSEPETTE_NEW_RELEASE_RESULT_TOO_SMALL");
   }
 
   return cards;
@@ -173,11 +205,43 @@ async function enrichCards(cards: KitaplarSepetteCard[]) {
   return details;
 }
 
+async function booksFromCards(cards: KitaplarSepetteCard[]) {
+  const details = await enrichCards(cards);
+
+  return cards.map((card, index) => {
+    const detail = details[index];
+
+    if (!detail?.isbn13 && !detail?.authorName) {
+      throw new Error("BOOK_INDEX_KITAPLARSEPETTE_DETAIL_METADATA_MISSING");
+    }
+
+    return {
+      sourceKey: detail.isbn13 || card.productId,
+      sourceExternalId: card.productId,
+      title: card.title,
+      authorName: detail.authorName,
+      publisherName: detail.publisherName,
+      isbn13: detail.isbn13,
+      productUrl: card.productUrl,
+      imageUrl: card.imageUrl,
+      rank: card.rank,
+      currency: "TRY",
+    };
+  });
+}
+
 export const kitaplarSepetteBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
+    if (context.listCode === "kitaplarsepette-tr-new-releases") {
+      const cards = parseKitaplarSepetteNewReleaseCards(
+        await fetchHtml(context.sourceUrl),
+      );
+      return { books: await booksFromCards(cards) };
+    }
+
     const pageHtml = await Promise.all(
       Array.from({ length: MAX_PAGES }, (_, index) =>
         fetchHtml(bestsellerPageUrl(context.sourceUrl, index + 1)),
@@ -218,29 +282,6 @@ export const kitaplarSepetteBookIndexAdapter: BookIndexSourceAdapter = {
       throw new Error("BOOK_INDEX_KITAPLARSEPETTE_DUPLICATE_PRODUCT_URL");
     }
 
-    const details = await enrichCards(cards);
-
-    const books = cards.map((card, index) => {
-      const detail = details[index];
-
-      if (!detail?.isbn13 && !detail?.authorName) {
-        throw new Error("BOOK_INDEX_KITAPLARSEPETTE_DETAIL_METADATA_MISSING");
-      }
-
-      return {
-        sourceKey: detail.isbn13 || card.productId,
-        sourceExternalId: card.productId,
-        title: card.title,
-        authorName: detail.authorName,
-        publisherName: detail.publisherName,
-        isbn13: detail.isbn13,
-        productUrl: card.productUrl,
-        imageUrl: card.imageUrl,
-        rank: card.rank,
-        currency: "TRY",
-      };
-    });
-
-    return { books };
+    return { books: await booksFromCards(cards) };
   },
 };

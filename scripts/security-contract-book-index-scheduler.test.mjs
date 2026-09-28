@@ -316,6 +316,48 @@ test("Book Index readiness probe exposes overdue operations evidence without col
 });
 
 
+
+test("Book Index readiness exposes read-only new-release collector health", () => {
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+
+  contains(
+    route,
+    'list.categoryKey === "new-releases"',
+    "new-release diagnostics are scoped by registry category",
+  );
+  contains(
+    route,
+    'row.listCode.endsWith("-new-releases")',
+    "new-release operations rows are isolated",
+  );
+  contains(
+    route,
+    "latestRunErrorCode: row.latestRunErrorCode",
+    "new-release diagnostic exposes latest failure code",
+  );
+  contains(
+    route,
+    "lastSuccessfulRunAt: row.lastSuccessfulRunAt",
+    "new-release diagnostic exposes last success",
+  );
+  contains(
+    route,
+    "newReleaseLists,",
+    "readiness operations response includes new-release list diagnostics",
+  );
+  contains(
+    workflow,
+    '"newReleaseLists"',
+    "readiness workflow requires new-release diagnostics",
+  );
+  notContains(
+    route,
+    "collectBookIndexListByCode",
+    "new-release readiness diagnostics remain collection-free",
+  );
+});
+
 test("Book Index retries unsuccessful runs without resetting the full source cadence", () => {
   const due = source("src/lib/book-index/due.ts");
   const scheduler = source("src/lib/book-index/scheduler.ts");

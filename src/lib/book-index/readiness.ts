@@ -248,6 +248,10 @@ export type BookIndexReadinessSnapshot = {
   kitaplarSepetteCanaryShadowPairOverlap: BookIndexCanaryShadowPairOverlap[];
   kitaplarSepetteCanaryShadowSamples: BookIndexCanaryShadowSample[];
   kitapStoreCanaryHealth: BookIndexCanaryHealth;
+  kitapStoreCanaryObservationCount: number;
+  kitapStoreCanaryMatchedObservationCount: number;
+  kitapStoreCanaryUnmatchedObservationCount: number;
+  kitapStoreCanaryDuplicateMasterObservationCount: number;
   kitapStoreCanaryShadowBookCount: number;
   kitapStoreCanaryShadowOverlapWithCompositeCount: number;
   kitapStoreCanaryShadowWouldReach3StorefrontCount: number;
@@ -1524,6 +1528,17 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     }
   }
 
+  const kitapStoreCanaryObservationCount =
+    latestKitapStoreCanaryShadowRun?.observations.length ?? 0;
+  const kitapStoreCanaryMatchedObservationCount =
+    latestKitapStoreCanaryShadowRun?.observations.filter(
+      (observation) => Boolean(observation.externalBook.masterBookId),
+    ).length ?? 0;
+  const kitapStoreCanaryUnmatchedObservationCount =
+    kitapStoreCanaryObservationCount - kitapStoreCanaryMatchedObservationCount;
+  const kitapStoreCanaryDuplicateMasterObservationCount =
+    kitapStoreCanaryMatchedObservationCount - kitapStoreCanaryShadowBooks.size;
+
   const kitapStoreIndependenceGroup =
     getBookIndexSourceIndependenceGroup("kitapstore");
   const kitapStoreCanaryShadowSamples = [...kitapStoreCanaryShadowBooks.entries()]
@@ -1795,6 +1810,10 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         .filter((sample) => sample.currentSourceCodes.length > 0)
         .slice(0, 20),
     kitapStoreCanaryHealth,
+    kitapStoreCanaryObservationCount,
+    kitapStoreCanaryMatchedObservationCount,
+    kitapStoreCanaryUnmatchedObservationCount,
+    kitapStoreCanaryDuplicateMasterObservationCount,
     kitapStoreCanaryShadowBookCount: kitapStoreCanaryShadowSamples.length,
     kitapStoreCanaryShadowOverlapWithCompositeCount:
       kitapStoreCanaryShadowSamples.filter(

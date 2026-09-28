@@ -13,6 +13,7 @@ const notContains = (text, fragment, label) =>
 
 test("Book Index public read model keeps source ranks separate from the Turkey composite", () => {
   const model = source("src/lib/book-index/public-read-model.ts");
+  const composite = source("src/lib/book-index/read-model.ts");
 
   contains(
     model,
@@ -40,17 +41,17 @@ test("Book Index public read model keeps source ranks separate from the Turkey c
     "JSON-safe public price",
   );
   contains(
-    model,
+    composite,
     "const highestObservedRank = entry.run.observations.reduce(",
     "observed rank span guard",
   );
   contains(
-    model,
+    composite,
     "entry.run.itemsStored,\n      highestObservedRank,\n      1,",
     "gap-safe list size normalization",
   );
   notContains(
-    model,
+    composite,
     "const listSize = Math.max(entry.run.itemsStored, 1);",
     "stale stored-count-only normalization",
   );

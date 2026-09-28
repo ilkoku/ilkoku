@@ -21,8 +21,8 @@ const GITHUB_REPOSITORY_ID = "1304046004";
 const GITHUB_WORKFLOW_REF =
   "ilkoku/ilkoku/.github/workflows/book-index-readiness.yml@refs/heads/main";
 const ALLOWED_GITHUB_EVENTS = new Set([
-  "push",
   "workflow_dispatch",
+  "workflow_run",
   "schedule",
 ]);
 
@@ -146,6 +146,20 @@ export async function GET(request: NextRequest) {
           readiness.kitapSecGeneralCanaryShadowPairOverlap,
         kitapSecGeneralCanaryShadowSamples:
           readiness.kitapSecGeneralCanaryShadowSamples,
+        pandoraCanaryHealth:
+          readiness.pandoraCanaryHealth,
+        pandoraCanaryShadowBookCount:
+          readiness.pandoraCanaryShadowBookCount,
+        pandoraCanaryShadowOverlapWithCompositeCount:
+          readiness.pandoraCanaryShadowOverlapWithCompositeCount,
+        pandoraCanaryShadowWouldReach3StorefrontCount:
+          readiness.pandoraCanaryShadowWouldReach3StorefrontCount,
+        pandoraCanaryShadowWouldReach3IndependentCount:
+          readiness.pandoraCanaryShadowWouldReach3IndependentCount,
+        pandoraCanaryShadowPairOverlap:
+          readiness.pandoraCanaryShadowPairOverlap,
+        pandoraCanaryShadowSamples:
+          readiness.pandoraCanaryShadowSamples,
         normalizedIdentityKeysOnAtLeast2Sources:
           readiness.normalizedIdentityKeysOnAtLeast2Sources,
         normalizedIdentityKeysOnAtLeast3Sources:

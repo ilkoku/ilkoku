@@ -959,6 +959,62 @@ test("KitapSec general shadow canary qualification evidence is observable withou
 
 
 
+test("Book Index readiness waits for main CI before probing production", () => {
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+
+  contains(workflow, "workflow_run:", "readiness uses workflow_run trigger");
+  contains(workflow, "- CI", "readiness waits for CI workflow");
+  contains(workflow, "types:\n      - completed", "readiness waits for completed CI");
+  notContains(workflow, "  push:\n", "readiness does not race production on push");
+  contains(route, '"workflow_run"', "OIDC route authorizes workflow_run readiness probes");
+});
+
+
+test("Pandora canary qualification evidence is observable while voter stays off", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(readiness, "pandoraCanaryHealth", "Pandora canary health evidence");
+  contains(readiness, "pandoraCanaryShadowBookCount", "Pandora shadow book count");
+  contains(readiness, "pandoraCanaryShadowOverlapWithCompositeCount", "Pandora overlap evidence");
+  contains(readiness, "pandoraCanaryShadowWouldReach3StorefrontCount", "Pandora projected storefront threshold");
+  contains(readiness, "pandoraCanaryShadowWouldReach3IndependentCount", "Pandora projected independent threshold");
+  contains(readiness, "pandoraCanaryShadowPairOverlap", "Pandora pair-overlap evidence");
+  contains(readiness, "pandoraCanaryShadowSamples", "Pandora shadow overlap samples");
+  contains(readiness, 'sourceCode !== "pandora"', "shadow baseline excludes Pandora");
+  contains(readiness, '"pandora",', "shadow projection adds Pandora once");
+
+  contains(route, "readiness.pandoraCanaryHealth", "readiness API exposes Pandora canary health");
+  contains(
+    route,
+    "readiness.pandoraCanaryShadowWouldReach3IndependentCount",
+    "readiness API exposes Pandora independent projection",
+  );
+  contains(
+    workflow,
+    '"pandoraCanaryHealth": readiness.get("pandoraCanaryHealth")',
+    "passive observer prints Pandora canary health",
+  );
+  contains(
+    workflow,
+    '"pandoraCanaryShadowWouldReach3IndependentCount": readiness.get("pandoraCanaryShadowWouldReach3IndependentCount")',
+    "passive observer prints Pandora independent projection",
+  );
+
+  contains(lists, 'code: "pandora-tr-live-canary"', "Pandora shadow canary list");
+  contains(lists, 'code: "pandora-tr-live"', "Pandora voter registry");
+  const marker = 'code: "pandora-tr-live"';
+  const start = lists.indexOf(marker);
+  const end = lists.indexOf("\n  },", start);
+  const voterBlock = lists.slice(start, end);
+  contains(voterBlock, "includeInComposite: false", "Pandora voter remains outside composite");
+  contains(voterBlock, "enabled: false", "Pandora voter remains disabled");
+});
+
+
 test("Book Index public read model excludes shadow, research and disabled candidate lists", () => {
   const lists = source("src/lib/book-index/lists.ts");
   const publicReadModel = source("src/lib/book-index/public-read-model.ts");

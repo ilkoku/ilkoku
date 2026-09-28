@@ -6,14 +6,13 @@ on:
   schedule:
     - cron: "7 * * * *"
     - cron: "37 * * * *"
-  push:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
     branches:
       - main
-    paths:
-      - ".github/workflows/book-index-readiness.yml"
-      - "src/app/api/internal/book-index-readiness/route.ts"
-      - "src/lib/book-index/readiness.ts"
-      - "src/lib/book-index/seo-gate.ts"
 
 permissions:
   contents: read
@@ -41,7 +40,7 @@ jobs:
             test -n "$oidc_token"
 
             if response="$(curl --fail-with-body --silent --show-error --max-time 60 --header "Authorization: Bearer $oidc_token" https://ilkoku.com/api/internal/book-index-readiness)"; then
-              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); operations=payload.get("operations", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedMissingAuthorWithIsbnBooksBySource","unmatchedMissingAuthorWithoutIsbnBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours","normalizedTitleDifferentAuthorSamples","latestCompositeExternalBookCount","latestCompositeMatchedExternalBookCount","latestCompositeUnmatchedExternalBookCount","latestCompositeUnmatchedBooksBySource","latestCompositeUnmatchedSamples","latestCompositeMatchCoveragePercent","kitapStoreCanaryHealth","kitapStoreCanaryObservationCount","kitapStoreCanaryMatchedObservationCount","kitapStoreCanaryUnmatchedObservationCount","kitapStoreCanaryDuplicateMasterObservationCount","kitapStoreCanaryShadowBookCount","kitapStoreCanaryShadowOverlapWithCompositeCount","kitapStoreCanaryShadowWouldReach3StorefrontCount","kitapStoreCanaryShadowWouldReach3IndependentCount","kitapStoreCanaryShadowPairOverlap","kitapStoreCanaryShadowSamples","kitapSecGeneralCanaryHealth","kitapSecGeneralCanaryShadowBookCount","kitapSecGeneralCanaryShadowOverlapWithCompositeCount","kitapSecGeneralCanaryShadowWouldReach3StorefrontCount","kitapSecGeneralCanaryShadowWouldReach3IndependentCount","kitapSecGeneralCanaryShadowPairOverlap","kitapSecGeneralCanaryShadowSamples"); operation_required=("schedulerSecretConfigured","dueCount","maxOverdueMinutes","dueLists"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) and all(key in operations for key in operation_required) else 1)'; then
+              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); operations=payload.get("operations", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedMissingAuthorWithIsbnBooksBySource","unmatchedMissingAuthorWithoutIsbnBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours","normalizedTitleDifferentAuthorSamples","latestCompositeExternalBookCount","latestCompositeMatchedExternalBookCount","latestCompositeUnmatchedExternalBookCount","latestCompositeUnmatchedBooksBySource","latestCompositeUnmatchedSamples","latestCompositeMatchCoveragePercent","kitapStoreCanaryHealth","kitapStoreCanaryObservationCount","kitapStoreCanaryMatchedObservationCount","kitapStoreCanaryUnmatchedObservationCount","kitapStoreCanaryDuplicateMasterObservationCount","kitapStoreCanaryShadowBookCount","kitapStoreCanaryShadowOverlapWithCompositeCount","kitapStoreCanaryShadowWouldReach3StorefrontCount","kitapStoreCanaryShadowWouldReach3IndependentCount","kitapStoreCanaryShadowPairOverlap","kitapStoreCanaryShadowSamples","kitapSecGeneralCanaryHealth","kitapSecGeneralCanaryShadowBookCount","kitapSecGeneralCanaryShadowOverlapWithCompositeCount","kitapSecGeneralCanaryShadowWouldReach3StorefrontCount","kitapSecGeneralCanaryShadowWouldReach3IndependentCount","kitapSecGeneralCanaryShadowPairOverlap","kitapSecGeneralCanaryShadowSamples","pandoraCanaryHealth","pandoraCanaryShadowBookCount","pandoraCanaryShadowOverlapWithCompositeCount","pandoraCanaryShadowWouldReach3StorefrontCount","pandoraCanaryShadowWouldReach3IndependentCount","pandoraCanaryShadowPairOverlap","pandoraCanaryShadowSamples"); operation_required=("schedulerSecretConfigured","dueCount","maxOverdueMinutes","dueLists"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) and all(key in operations for key in operation_required) else 1)'; then
                 printf '%s' "$response" > readiness.json
                 python3 - <<'PY'
           import json
@@ -90,6 +89,13 @@ jobs:
               "kitapSecGeneralCanaryShadowWouldReach3IndependentCount": readiness.get("kitapSecGeneralCanaryShadowWouldReach3IndependentCount"),
               "kitapSecGeneralCanaryShadowPairOverlap": readiness.get("kitapSecGeneralCanaryShadowPairOverlap"),
               "kitapSecGeneralCanaryShadowSamples": readiness.get("kitapSecGeneralCanaryShadowSamples"),
+              "pandoraCanaryHealth": readiness.get("pandoraCanaryHealth"),
+              "pandoraCanaryShadowBookCount": readiness.get("pandoraCanaryShadowBookCount"),
+              "pandoraCanaryShadowOverlapWithCompositeCount": readiness.get("pandoraCanaryShadowOverlapWithCompositeCount"),
+              "pandoraCanaryShadowWouldReach3StorefrontCount": readiness.get("pandoraCanaryShadowWouldReach3StorefrontCount"),
+              "pandoraCanaryShadowWouldReach3IndependentCount": readiness.get("pandoraCanaryShadowWouldReach3IndependentCount"),
+              "pandoraCanaryShadowPairOverlap": readiness.get("pandoraCanaryShadowPairOverlap"),
+              "pandoraCanaryShadowSamples": readiness.get("pandoraCanaryShadowSamples"),
               "normalizedIdentityKeysOnAtLeast2Sources": readiness.get("normalizedIdentityKeysOnAtLeast2Sources"),
               "normalizedIdentityKeysOnAtLeast3Sources": readiness.get("normalizedIdentityKeysOnAtLeast3Sources"),
               "isbn13KeysOnAtLeast2Sources": readiness.get("isbn13KeysOnAtLeast2Sources"),

@@ -125,7 +125,7 @@ test("Book Index readiness probe is OIDC-protected and collection-free", () => {
     'book-index-readiness.yml@refs/heads/main',
     "readiness workflow identity binding",
   );
-  contains(route, '"push"', "push event authorization");
+  contains(route, '"workflow_run"', "post-CI workflow-run authorization");
   contains(route, '"workflow_dispatch"', "manual read-only authorization");
   contains(route, '"schedule"', "scheduled read-only authorization");
   contains(route, "export async function GET", "read-only HTTP method");
@@ -137,7 +137,8 @@ test("Book Index readiness probe is OIDC-protected and collection-free", () => {
   notContains(route, "collectBookIndex", "readiness route never invokes collector");
 
   contains(workflow, "id-token: write", "OIDC token permission");
-  contains(workflow, "push:", "post-merge production probe trigger");
+  contains(workflow, "workflow_run:", "post-CI production probe trigger");
+  contains(workflow, "- CI", "readiness waits for main CI completion");
   contains(workflow, "workflow_dispatch:", "manual read-only probe trigger");
   contains(workflow, "schedule:", "passive scheduled readiness observer trigger");
   contains(workflow, 'cron: "7 * * * *"', "first passive readiness observation window");

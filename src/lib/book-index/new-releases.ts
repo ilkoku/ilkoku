@@ -164,8 +164,9 @@ export async function getTurkeyNewReleaseRows(limit = 500) {
     }))
     .sort(
       (a, b) =>
-        b.latestObservedAt.getTime() - a.latestObservedAt.getTime()
-        || a.title.localeCompare(b.title, "tr"),
+        a.title.localeCompare(b.title, "tr")
+        || (a.authorName ?? "").localeCompare(b.authorName ?? "", "tr")
+        || b.latestObservedAt.getTime() - a.latestObservedAt.getTime(),
     )
     .slice(0, safeLimit);
 }

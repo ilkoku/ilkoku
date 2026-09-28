@@ -61,7 +61,12 @@ jobs:
           PY
             fi
 
-            if response="$(curl --fail-with-body --silent --show-error --max-time 60 --header "X-IlkOku-GitHub-OIDC: $oidc_token" https://ilkoku.com/api/internal/book-index-readiness)"; then
+            response_file="$(mktemp)"
+            http_status="$(curl --silent --show-error --max-time 60 --output "$response_file" --write-out "%{http_code}" --header "X-IlkOku-GitHub-OIDC: $oidc_token" https://ilkoku.com/api/internal/book-index-readiness || true)"
+            response="$(cat "$response_file")"
+            rm -f "$response_file"
+
+            if [[ "$http_status" =~ ^2[0-9][0-9]$ ]]; then
               if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); operations=payload.get("operations", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedMissingAuthorWithIsbnBooksBySource","unmatchedMissingAuthorWithoutIsbnBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours","normalizedTitleDifferentAuthorSamples","latestCompositeExternalBookCount","latestCompositeMatchedExternalBookCount","latestCompositeUnmatchedExternalBookCount","latestCompositeUnmatchedBooksBySource","latestCompositeUnmatchedSamples","latestCompositeMatchCoveragePercent","kitapStoreCanaryHealth","kitapStoreCanaryObservationCount","kitapStoreCanaryMatchedObservationCount","kitapStoreCanaryUnmatchedObservationCount","kitapStoreCanaryDuplicateMasterObservationCount","kitapStoreCanaryDuplicateMasterSamples","kitapStoreCanaryShadowBookCount","kitapStoreCanaryShadowOverlapWithCompositeCount","kitapStoreCanaryShadowWouldReach3StorefrontCount","kitapStoreCanaryShadowWouldReach3IndependentCount","kitapStoreCanaryShadowPairOverlap","kitapStoreCanaryShadowSamples","kitapSecGeneralCanaryHealth","kitapSecGeneralCanaryShadowBookCount","kitapSecGeneralCanaryShadowOverlapWithCompositeCount","kitapSecGeneralCanaryShadowWouldReach3StorefrontCount","kitapSecGeneralCanaryShadowWouldReach3IndependentCount","kitapSecGeneralCanaryShadowPairOverlap","kitapSecGeneralCanaryShadowSamples","pandoraCanaryHealth","pandoraCanaryShadowBookCount","pandoraCanaryShadowOverlapWithCompositeCount","pandoraCanaryShadowWouldReach3StorefrontCount","pandoraCanaryShadowWouldReach3IndependentCount","pandoraCanaryShadowPairOverlap","pandoraCanaryShadowSamples","kitapAmbariCanaryHealth","kitapAmbariCanaryShadowBookCount","kitapAmbariCanaryShadowOverlapWithCompositeCount","kitapAmbariCanaryShadowWouldReach3StorefrontCount","kitapAmbariCanaryShadowWouldReach3IndependentCount","kitapAmbariCanaryShadowPairOverlap","kitapAmbariCanaryShadowSamples"); operation_required=("schedulerSecretConfigured","dueCount","maxOverdueMinutes","dueLists"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) and all(key in operations for key in operation_required) else 1)'; then
                 printf '%s' "$response" > readiness.json
                 python3 - <<'PY'
@@ -154,6 +159,29 @@ jobs:
           PY
                 exit 0
               fi
+            fi
+
+            if [[ ! "$http_status" =~ ^2[0-9][0-9]$ ]]; then
+              HTTP_STATUS="$http_status" RESPONSE_BODY="$response" python3 - <<'PY'
+          import json
+          import os
+
+          status = os.environ.get("HTTP_STATUS", "")
+          body = os.environ.get("RESPONSE_BODY", "")
+          try:
+              payload = json.loads(body)
+              diagnostic = {
+                  "status": status,
+                  "ok": payload.get("ok"),
+                  "error": payload.get("error"),
+              }
+          except Exception:
+              diagnostic = {
+                  "status": status,
+                  "bodyPrefix": body[:500],
+              }
+          print("READINESS_HTTP_ERROR=" + json.dumps(diagnostic, ensure_ascii=False))
+          PY
             fi
 
             if [ "$attempt" -lt 20 ]; then

@@ -15,6 +15,7 @@ import type {
 } from "@/lib/book-index/insights";
 
 import { BookIndexRankTable } from "./BookIndexRankTable";
+import { BookIndexSourceComparison } from "./BookIndexSourceComparison";
 import styles from "./BookIndexPublicView.module.css";
 
 function latestObservedAt(model: BookIndexPublicReadModel) {
@@ -39,23 +40,6 @@ function formattedObservedAt(value: Date | null) {
   }).format(value);
 }
 
-function availabilityLabel(value: string) {
-  switch (value) {
-    case "available":
-      return "Veri hazır";
-    case "researching":
-      return "Kaynak araştırılıyor";
-    case "blocked":
-      return "Erişim engelli";
-    case "paused":
-      return "Geçici olarak duraklatıldı";
-    case "no_snapshot":
-      return "İlk snapshot bekleniyor";
-    default:
-      return "Veri bekleniyor";
-  }
-}
-
 export function BookIndexOverviewView({
   model,
   insights,
@@ -69,6 +53,11 @@ export function BookIndexOverviewView({
   const observedAtLabel = formattedObservedAt(observedAt);
   const currentYear = new Date().getFullYear();
   const publishedInsightPages = getPublishedBookIndexInsightPages(insights);
+  const turkeySourceCount = new Set(
+    model.turkey.items.flatMap((row) =>
+      row.sources.map((source) => source.sourceCode),
+    ),
+  ).size;
 
   return (
     <main className={styles.page}>
@@ -90,20 +79,25 @@ export function BookIndexOverviewView({
       </header>
 
       <section className={styles.cards} aria-label="Endeks kapsamı">
-        <Link className={styles.card} href="/en-cok-satanlar/turkiye">
+        <Link
+          className={styles.card}
+          href="/en-cok-satanlar/turkiye#karsilastir"
+        >
           <span>Türkiye Çok Satan Listeleri</span>
-          <strong>Kaynak sıralamalarını karşılaştır</strong>
-          <small>Her sitenin kendi sırası değiştirilmeden gösterilir.</small>
+          <strong>{turkeySourceCount} kaynağın sıralamalarını karşılaştır</strong>
+          <small>2–4 kaynağı yan yana seçerek aynı sıradaki kitapları karşılaştır.</small>
         </Link>
         <article className={styles.card}>
-          <span>Amazon Türkiye</span>
-          <strong>{availabilityLabel(model.amazonTr.availability)}</strong>
-          <small>Doğrulanmış ve sürdürülebilir veri yolu şarttır.</small>
+          <span>Yeni Çıkanlar</span>
+          <strong>Yeni çıkan kitapları keşfet</strong>
+          <small>
+            Türkiye kaynaklarının doğrulanmış yeni çıkan ve yeni gelen listeleri.
+          </small>
         </article>
         <article className={styles.card}>
-          <span>Amazon ABD</span>
-          <strong>{availabilityLabel(model.amazonUs.availability)}</strong>
-          <small>Türkiye Endeksi&apos;nden ayrı pazar olarak tutulur.</small>
+          <span>Dünya Genelinde</span>
+          <strong>Dünyada çok satan kitaplar</strong>
+          <small>Uluslararası çok satan listelerini ayrı pazar olarak karşılaştır.</small>
         </article>
       </section>
 
@@ -198,6 +192,20 @@ export function TurkeyBookIndexView({
           ← En Çok Satanlar ana sayfası
         </Link>
       </header>
+
+      <section className={styles.section} id="karsilastir">
+        <div className={styles.sectionHeading}>
+          <div>
+            <span className={styles.eyebrow}>Kaynak karşılaştırması</span>
+            <h2>Kaynakları yan yana karşılaştır</h2>
+            <p>
+              İki, üç veya dört kaynağı seç. Aynı sıra numarasında her sitenin
+              hangi kitabı gösterdiğini yan yana incele.
+            </p>
+          </div>
+        </div>
+        <BookIndexSourceComparison rows={model.turkey.items} />
+      </section>
 
       <section className={styles.section} id="ranking">
         <div className={styles.sectionHeading}>

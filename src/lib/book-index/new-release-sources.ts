@@ -27,7 +27,7 @@ export const BOOK_INDEX_NEW_RELEASE_SOURCES: readonly BookIndexNewReleaseSourceD
   {
     sourceCode: "bkm",
     nativeLabel: "Yeni Çıkan Kitaplar",
-    sourceUrl: "https://www.bkmkitap.com/yeni-cikan-kitaplar-0703",
+    sourceUrl: "https://www.bkmkitap.com/yeni-cikan-kitaplar",
     collectionMode: "dedicated_page",
     status: "verified_native_list",
   },

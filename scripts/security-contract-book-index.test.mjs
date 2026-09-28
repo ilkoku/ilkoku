@@ -1429,6 +1429,27 @@ test("Pandora source is fail-closed and promoted to Turkey composite", () => {
     "[pandoraBookIndexAdapter.sourceCode, pandoraBookIndexAdapter]",
     "Pandora adapter is registered for the active production voter",
   );
+
+  contains(
+    lists,
+    'code: "pandora-tr-new-releases",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Yeni Kitaplar · Türkçe",\n    categoryKey: "new-releases",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Yeni_Kitaplar/Turkce",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: false',
+    "Pandora new-release collector remains disabled until native scope is selected",
+  );
+  contains(
+    adapter,
+    'const NEW_RELEASE_API_URL = "https://www.pandora.com.tr/api/yenikitaplar?dil=1";',
+    "Pandora verified first-party new-release API",
+  );
+  contains(
+    adapter,
+    "BOOK_INDEX_PANDORA_NEW_RELEASE_LIMIT_NOT_CONFIGURED",
+    "Pandora new-release collection fails closed without an explicit rank limit",
+  );
+  contains(
+    collector,
+    "maxRank: list.maxRank",
+    "collector passes configured native rank limits to source adapters",
+  );
 });
 
 

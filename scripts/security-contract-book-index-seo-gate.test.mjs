@@ -104,6 +104,21 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
     "Turkey structured data stays off during soft launch",
   );
 
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  contains(view, '<table className={styles.rankingTable}>', "Turkey ranking uses a real table");
+  for (const heading of [
+    "İlkOku Sırası",
+    "Kitap",
+    "Yazar",
+    "Kaynak Sayısı",
+    "Hareket",
+  ]) {
+    contains(view, `<th scope="col">${heading}</th>`, `ranking table heading: ${heading}`);
+  }
+  contains(view, 'if (newEntry) return "Yeni";', "movement shows verified new-entry signal");
+  contains(view, 'return `↑ +${riser.totalRankGain}`;', "movement shows verified rise signal");
+  contains(view, 'return "—";', "movement stays neutral without verified signal");
+
   contains(
     sitemap,
     'import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";',

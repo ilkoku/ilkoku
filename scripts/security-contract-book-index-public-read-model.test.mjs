@@ -11,14 +11,25 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Book Index public read model keeps source ranks separate from the Turkey composite", () => {
+test("Book Index public read model preserves source ranks without public composite ordering", () => {
   const model = source("src/lib/book-index/public-read-model.ts");
+  const sourceRankTable = source("src/lib/book-index/source-rank-table.ts");
   const composite = source("src/lib/book-index/read-model.ts");
 
   contains(
     model,
-    "getTurkeyBookIndexPreview",
-    "Turkey composite read model",
+    "getTurkeySourceRankRows",
+    "Turkey source-rank public model",
+  );
+  contains(
+    sourceRankTable,
+    "rowsByRankAndBook",
+    "rank-and-book grouping",
+  );
+  contains(
+    sourceRankTable,
+    "const rowKey = \`\${observation.rank}|\${identity}\`;",
+    "same book merges only at the same rank",
   );
   contains(
     model,
@@ -103,13 +114,13 @@ test("Book Index public read model stays independent from conditional sitemap pu
 });
 
 
-test("Book Index public methodology describes independent operator voting", () => {
+test("Book Index public methodology describes source-rank comparison", () => {
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
   const normalizedView = view.replace(/\s+/g, " ");
 
-  contains(normalizedView, "aynı bağımsız işletmeci grubu bir kitaba yalnız bir", "independent operator one-vote rule");
-  contains(normalizedView, "Bağımsız işletmeci grupları eşit ağırlıkla değerlendirilir", "independent operator weighting");
-  contains(normalizedView, "en az üç bağımsız işletmeci grubunda görünmelidir", "three independent operator eligibility");
-  contains(normalizedView, "işletmeci grubu bazında tekilleştirme korunur", "insight operator deduplication");
-  notContains(normalizedView, "aynı platform bir kitaba birden fazla oy veremez", "stale platform-only vote copy");
+  contains(normalizedView, "İlkOku yeni bir sıra veya bileşik puan üretmez", "no invented public ranking");
+  contains(normalizedView, "Aynı kitap aynı sıra numarasında birden fazla kaynakta", "same-rank merge rule");
+  contains(normalizedView, "Aynı kitap farklı sıra numaralarındaysa", "different-rank separation rule");
+  contains(normalizedView, "işletmeci grubu bazında tekilleştirme korunur", "internal insight operator deduplication");
+  notContains(normalizedView, "en az üç bağımsız işletmeci grubunda görünmelidir", "stale public composite threshold copy");
 });

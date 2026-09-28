@@ -26,7 +26,7 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   contains(overview, "dateModified", "overview freshness schema");
   contains(turkey, "dateModified", "Turkey freshness schema");
   contains(view, "Son veri güncellemesi", "visible freshness");
-  contains(view, "en çok satan kitaplar nasıl belirleniyor?", "search-intent methodology");
+  contains(view, "Hangi kaynağın hangi kitabı hangi sıraya koyduğunu", "source-rank comparison intent");
   contains(sitemap, "getBookIndexLastObservedAt", "sitemap real freshness");
   contains(sitemap, "lastModified", "sitemap lastModified");
 });
@@ -108,7 +108,7 @@ test("Book Index uses a dedicated social preview for result-sharing CTR", () => 
   contains(image, "1200", "social image width");
   contains(image, "630", "social image height");
   contains(image, "En Çok Satan Kitaplar", "search-intent social headline");
-  contains(image, "1 kaynak = 1 oy", "trust signal");
+  contains(image, "Kaynak sıraları değiştirilmez", "source-rank trust signal");
 });
 
 

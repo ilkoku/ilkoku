@@ -54,7 +54,7 @@ export default function BookIndexOpenGraphImage() {
             opacity: 0.96,
           }}
         >
-          Türkiye&apos;de birden fazla bağımsız kaynağın ortak satış sinyali
+          Türkiye&apos;deki çok satan listelerini kaynak sırasıyla karşılaştır
         </div>
         <div
           style={{
@@ -65,8 +65,7 @@ export default function BookIndexOpenGraphImage() {
             opacity: 0.82,
           }}
         >
-          Şeffaf kaynak yaklaşımı · 1 kaynak = 1 oy · sponsor organik sıralamaya
-          etki etmez
+          Kaynak sıraları değiştirilmez · aynı kitap aynı sıradaysa kaynaklar birleşir
         </div>
       </div>
 

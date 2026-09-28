@@ -112,17 +112,22 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
   contains(view, '<table className={styles.rankingTable}>', "Turkey ranking uses a real table");
   for (const heading of [
-    "İlkOku Sırası",
+    "Sıra",
     "Kitap",
     "Yazar",
-    "Kaynak Sayısı",
-    "Hareket",
+    "Kaynak",
   ]) {
     contains(view, `<th scope="col">${heading}</th>`, `ranking table heading: ${heading}`);
   }
-  contains(view, 'return `+${newEntry.newSourceCount} yeni kaynak`;', "movement labels verified new-source signal");
-  contains(view, 'return `↑ ${riser.totalRankGain} sıra`;', "movement labels verified source-rank rise signal");
-  contains(view, 'return "—";', "movement stays neutral without verified signal");
+  contains(view, "{row.rank}", "source rank is rendered directly");
+  contains(
+    view,
+    'row.sources.map((source) => source.sourceName).join(" · ")',
+    "same-rank sources are shown together",
+  );
+  notContains(view, "İlkOku Sırası", "no invented public rank heading");
+  notContains(view, "Kaynak Sayısı", "no composite source-count column");
+  notContains(view, "<th scope=\"col\">Hareket</th>", "no movement column");
   contains(
     view,
     "showInsightPages && publishedInsightPages.length",

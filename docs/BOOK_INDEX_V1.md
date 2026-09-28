@@ -4,20 +4,25 @@
 
 İlkOku Kitap Endeksi, dış kitap satış platformlarının kendi çok satan
 listelerini kaynak bazında takip eder, sıralama snapshot'larını tarihsel olarak
-saklar ve ayrı bir **İlkOku Türkiye Kitap Endeksi** üretir.
+saklar ve public Türkiye görünümünde kaynakların gerçek sıralarını karşılaştırır.
 
 Bu ürün dış kaynak listesini İlkOku satışı gibi göstermemelidir.
 
 ## Değişmez ürün kuralları
 
-1. Kaynak sıralaması kaynak adına gösterilir; İlkOku tarafından yeniden
-   adlandırılmaz.
-2. İlkOku Türkiye Endeksi ayrı bir bileşik sıralamadır.
-3. Türkiye Endeksi'nde **1 bağımsız işletmeci grubu = en fazla 1 oy**. Aynı işletmeciye ait birden fazla storefront veya liste ekstra oy üretmez.
-4. Uygunluk eşiği **en az 3 bağımsız işletmeci grubudur**.
-5. Bağımsız işletmeci grupları eşit ağırlıklıdır.
-6. Amazon Türkiye Türkiye Endeksi'ne katılabilir.
-7. Amazon ABD ayrı pazardır ve Türkiye Endeksi'ne katılmaz.
+1. Public tabloda kaynakların gerçek sıra numarası korunur; İlkOku yeni bir
+   public sıra veya bileşik puan üretmez.
+2. Aynı kitap aynı sıra numarasında birden fazla kaynakta yer alıyorsa yalnız
+   kaynak adları aynı satırda birleştirilir.
+3. Aynı kitap farklı kaynaklarda farklı sıra numaralarındaysa her sıra ayrı
+   satır olarak gösterilir.
+4. Aynı sıra numarası tabloda birden fazla kez bulunabilir; satırlar kaynak
+   sırasına göre artan düzende gösterilir.
+5. İç composite/bağımsız işletmeci hesapları readiness, geçmiş ve kalite
+   ölçümü için korunabilir; public tablonun sırasını belirlemez.
+6. Amazon Türkiye, doğrulanmış ve sürdürülebilir veri yolu oluştuğunda Türkiye
+   kaynak görünümüne katılabilir.
+7. Amazon ABD ayrı pazardır ve Türkiye kaynak görünümüne katılmaz.
 8. Ham gözlemler overwrite edilmez; her fetch run kendi snapshot'ını korur.
 9. Eşleştirme önceliği: ISBN-13 → ISBN-10 → normalize başlık+yazar →
    admin manuel eşleştirme.
@@ -236,14 +241,17 @@ boş liste üretir; publication gate bypass edilmez.
 
 Public route açılmadan önce server-side veri sözleşmesi dört yüzeyi hazırlar:
 
-- **Türkiye:** mevcut bileşik Türkiye Endeksi read-model'i kullanılır.
+- **Türkiye:** aktif/onaylı kaynakların son başarılı snapshot'ları kaynak
+  sırasıyla birleştirilir. Aynı kitap + aynı sıra kaynak adlarını tek satırda
+  toplar; farklı sıra ayrı satırdır.
 - **Amazon Türkiye:** sanctioned/stabil collector oluşana kadar `researching`
   availability döner; sahte/boş bestseller listesi üretilmez.
 - **Amazon ABD:** erişim engeli sürdüğü sürece `blocked` availability döner.
 - **Kaynak listeleri:** her listenin yalnız son başarılı/`no_change`
   snapshot'ı, kaynağın kendi `rank` sırasıyla döner.
 
-Kaynak rankı ile İlkOku Türkiye Endeksi puanı aynı veri alanına karıştırılmaz.
+Public tabloda yalnız kaynak rankı gösterilir. İç composite puanı varsa
+readiness/kalite hesaplarında kalır ve public sıra olarak kullanılmaz.
 Public fiyat alanı JSON-safe string olarak taşınır; `BigInt` doğrudan public
 katmana sızdırılmaz.
 

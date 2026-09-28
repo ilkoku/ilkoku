@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { TurkeyBookIndexView } from "@/features/book-index/public/BookIndexPublicView";
 import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
-import { getBookIndexInsights } from "@/lib/book-index/insights";
 import { createBookIndexItemListSchema, getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
@@ -14,7 +13,7 @@ function pageTitle() {
 }
 
 const description =
-  "Birden fazla bağımsız Türkiye kaynağındaki çok satan sıralamalarından oluşturulan İlkOku Türkiye Kitap Endeksi'ni inceleyin.";
+  "Türkiye'deki kitap satış kaynaklarının çok satan listelerinde hangi kitabın hangi sırada yer aldığını karşılaştırın.";
 
 export const dynamic = "force-dynamic";
 
@@ -31,13 +30,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TurkeyBestsellersPage() {
-  const context = await getBookIndexSoftLaunchPageContext(100);
+  const context = await getBookIndexSoftLaunchPageContext(1200);
   if (context.model.turkey.availability !== "available") notFound();
 
-  const [lastObservedAt, insights] = await Promise.all([
-    Promise.resolve(getBookIndexLastObservedAt(context.model)),
-    getBookIndexInsights(100),
-  ]);
+  const lastObservedAt = getBookIndexLastObservedAt(context.model);
   const schema = [
     {
       "@context": "https://schema.org",
@@ -101,7 +97,7 @@ export default async function TurkeyBestsellersPage() {
           }}
         />
       ) : null}
-      <TurkeyBookIndexView model={context.model} insights={insights} />
+      <TurkeyBookIndexView model={context.model} />
     </>
   );
 }

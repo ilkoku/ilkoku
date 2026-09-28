@@ -12,7 +12,7 @@ function pageTitle() {
 }
 
 const description =
-  "Türkiye'deki bağımsız kitap satış kaynaklarının çok satan sinyallerini ve İlkOku Türkiye Kitap Endeksi'ni şeffaf biçimde inceleyin.";
+  "Türkiye'deki kitap satış kaynaklarının çok satan listelerinde hangi kitabın hangi sırada yer aldığını karşılaştırın.";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +55,7 @@ export default async function BestsellersPage() {
     },
     {
       ...createBookIndexItemListSchema({
-        name: "İlkOku Türkiye Kitap Endeksi · Güncel İlk 30",
+        name: "Türkiye Çok Satan Kaynak Sıralamaları · Güncel Görünüm",
         url: `${baseUrl}${canonical}#turkey-preview`,
         items: context.model.turkey.items,
       }),

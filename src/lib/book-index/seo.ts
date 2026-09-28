@@ -1,5 +1,5 @@
 import type { BookIndexPublicReadModel } from "./public-read-model";
-import type { TurkeyBookIndexPreviewRow } from "./read-model";
+import type { TurkeySourceRankRow } from "./source-rank-table";
 
 export function getBookIndexLastObservedAt(
   model: BookIndexPublicReadModel,
@@ -23,7 +23,7 @@ export function createBookIndexItemListSchema({
 }: {
   name: string;
   url: string;
-  items: readonly TurkeyBookIndexPreviewRow[];
+  items: readonly TurkeySourceRankRow[];
 }) {
   return {
     "@context": "https://schema.org",
@@ -32,9 +32,9 @@ export function createBookIndexItemListSchema({
     url,
     numberOfItems: items.length,
     itemListOrder: "https://schema.org/ItemListOrderAscending",
-    itemListElement: items.map((book, index) => ({
+    itemListElement: items.map((book) => ({
       "@type": "ListItem",
-      position: index + 1,
+      position: book.rank,
       item: {
         "@type": "Book",
         name: book.title,

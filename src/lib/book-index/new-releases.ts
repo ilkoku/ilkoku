@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+import { BOOK_INDEX_LISTS } from "./lists";
+
 export type TurkeyNewReleaseSource = {
   sourceCode: string;
   sourceName: string;
@@ -20,10 +22,16 @@ export type TurkeyNewReleaseRow = {
 
 export async function getTurkeyNewReleaseRows(limit = 500) {
   const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 1000);
+  const enabledNewReleaseListCodes = BOOK_INDEX_LISTS
+    .filter((list) => list.enabled && list.categoryKey === "new-releases")
+    .map((list) => list.code);
+
+  if (enabledNewReleaseListCodes.length === 0) return [];
 
   const lists = await prisma.bookIndexList.findMany({
     where: {
       active: true,
+      code: { in: enabledNewReleaseListCodes },
       categoryKey: "new-releases",
       source: {
         status: "active",

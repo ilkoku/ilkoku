@@ -9,6 +9,7 @@ const SOURCE_CODE = "illakitap";
 const SOURCE_ORIGIN = "https://www.illakitap.com";
 const MAX_BOOKS = 100;
 const MIN_EXPECTED_BOOKS = 40;
+const NEW_RELEASE_MIN_EXPECTED_BOOKS = 8;
 const VERIFIED_NON_BOOK_PRODUCT_IDS = new Set(["941554"]);
 
 function absoluteUrl(value: string) {
@@ -20,8 +21,9 @@ function isbn13(value: string) {
   return /^(?:978|979)[0-9]{10}$/u.test(normalized) ? normalized : null;
 }
 
-export function parseIllaKitapWeeklyBestsellers(
+function parseIllaKitapPage(
   html: string,
+  minimumExpectedBooks: number,
 ): BookIndexCollectionResult {
   const starts = [
     ...html.matchAll(
@@ -83,7 +85,7 @@ export function parseIllaKitapWeeklyBestsellers(
       rank: index + 1,
     }));
 
-  if (books.length < MIN_EXPECTED_BOOKS) {
+  if (books.length < minimumExpectedBooks) {
     throw new Error(`BOOK_INDEX_ILLAKITAP_RESULT_TOO_SMALL:${books.length}`);
   }
 
@@ -93,6 +95,18 @@ export function parseIllaKitapWeeklyBestsellers(
   }
 
   return { books };
+}
+
+export function parseIllaKitapWeeklyBestsellers(
+  html: string,
+): BookIndexCollectionResult {
+  return parseIllaKitapPage(html, MIN_EXPECTED_BOOKS);
+}
+
+export function parseIllaKitapNewReleases(
+  html: string,
+): BookIndexCollectionResult {
+  return parseIllaKitapPage(html, NEW_RELEASE_MIN_EXPECTED_BOOKS);
 }
 
 export const illaKitapBookIndexAdapter: BookIndexSourceAdapter = {
@@ -113,6 +127,12 @@ export const illaKitapBookIndexAdapter: BookIndexSourceAdapter = {
       throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
     }
 
-    return parseIllaKitapWeeklyBestsellers(await response.text());
+    const html = await response.text();
+
+    if (context.listCode === "illakitap-tr-new-releases") {
+      return parseIllaKitapNewReleases(html);
+    }
+
+    return parseIllaKitapWeeklyBestsellers(html);
   },
 };

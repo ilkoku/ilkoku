@@ -6,14 +6,13 @@ on:
   schedule:
     - cron: "7 * * * *"
     - cron: "37 * * * *"
-  push:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
     branches:
       - main
-    paths:
-      - ".github/workflows/book-index-readiness.yml"
-      - "src/app/api/internal/book-index-readiness/route.ts"
-      - "src/lib/book-index/readiness.ts"
-      - "src/lib/book-index/seo-gate.ts"
 
 permissions:
   contents: read

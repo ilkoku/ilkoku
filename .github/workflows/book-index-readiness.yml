@@ -39,6 +39,28 @@ jobs:
             oidc_token="$(printf '%s' "$oidc_response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
             test -n "$oidc_token"
 
+            if [ "$attempt" -eq 1 ]; then
+              OIDC_TOKEN="$oidc_token" python3 - <<'PY'
+          import base64
+          import json
+          import os
+
+          token = os.environ["OIDC_TOKEN"]
+          encoded_payload = token.split(".")[1]
+          encoded_payload += "=" * (-len(encoded_payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(encoded_payload))
+          safe_claim_keys = (
+              "repository",
+              "repository_id",
+              "workflow_ref",
+              "ref",
+              "event_name",
+          )
+          safe_claims = {key: claims.get(key) for key in safe_claim_keys}
+          print("OIDC_SAFE_CLAIMS=" + json.dumps(safe_claims, sort_keys=True))
+          PY
+            fi
+
             if response="$(curl --fail-with-body --silent --show-error --max-time 60 --header "Authorization: Bearer $oidc_token" https://ilkoku.com/api/internal/book-index-readiness)"; then
               if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); operations=payload.get("operations", {}); required=("unmatchedExternalBooksBySource","unmatchedDuplicateIdentityGroupsBySource","unmatchedMissingAuthorBooksBySource","unmatchedMissingAuthorWithIsbnBooksBySource","unmatchedMissingAuthorWithoutIsbnBooksBySource","unmatchedAmbiguousIdentityGroupsBySource","minimumSourceSuccessfulRunCount","minimumSourceHistorySpanHours","normalizedTitleDifferentAuthorSamples","latestCompositeExternalBookCount","latestCompositeMatchedExternalBookCount","latestCompositeUnmatchedExternalBookCount","latestCompositeUnmatchedBooksBySource","latestCompositeUnmatchedSamples","latestCompositeMatchCoveragePercent","kitapStoreCanaryHealth","kitapStoreCanaryObservationCount","kitapStoreCanaryMatchedObservationCount","kitapStoreCanaryUnmatchedObservationCount","kitapStoreCanaryDuplicateMasterObservationCount","kitapStoreCanaryDuplicateMasterSamples","kitapStoreCanaryShadowBookCount","kitapStoreCanaryShadowOverlapWithCompositeCount","kitapStoreCanaryShadowWouldReach3StorefrontCount","kitapStoreCanaryShadowWouldReach3IndependentCount","kitapStoreCanaryShadowPairOverlap","kitapStoreCanaryShadowSamples","kitapSecGeneralCanaryHealth","kitapSecGeneralCanaryShadowBookCount","kitapSecGeneralCanaryShadowOverlapWithCompositeCount","kitapSecGeneralCanaryShadowWouldReach3StorefrontCount","kitapSecGeneralCanaryShadowWouldReach3IndependentCount","kitapSecGeneralCanaryShadowPairOverlap","kitapSecGeneralCanaryShadowSamples","pandoraCanaryHealth","pandoraCanaryShadowBookCount","pandoraCanaryShadowOverlapWithCompositeCount","pandoraCanaryShadowWouldReach3StorefrontCount","pandoraCanaryShadowWouldReach3IndependentCount","pandoraCanaryShadowPairOverlap","pandoraCanaryShadowSamples","kitapAmbariCanaryHealth","kitapAmbariCanaryShadowBookCount","kitapAmbariCanaryShadowOverlapWithCompositeCount","kitapAmbariCanaryShadowWouldReach3StorefrontCount","kitapAmbariCanaryShadowWouldReach3IndependentCount","kitapAmbariCanaryShadowPairOverlap","kitapAmbariCanaryShadowSamples"); operation_required=("schedulerSecretConfigured","dueCount","maxOverdueMinutes","dueLists"); raise SystemExit(0 if payload.get("ok") is True and "seoGate" in payload and all(key in readiness for key in required) and all(key in operations for key in operation_required) else 1)'; then
                 printf '%s' "$response" > readiness.json

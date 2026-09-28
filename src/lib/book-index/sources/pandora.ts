@@ -7,6 +7,8 @@ import type {
 const SOURCE_CODE = "pandora";
 const SOURCE_ORIGIN = "https://www.pandora.com.tr";
 const API_URL = "https://www.pandora.com.tr/api/coksatanlar";
+const NEW_RELEASE_SOURCE_URL = "https://www.pandora.com.tr/Yeni_Kitaplar/Turkce";
+const NEW_RELEASE_API_URL = "https://www.pandora.com.tr/api/yenikitaplar?dil=1";
 const EXPECTED_NATIVE_ROWS = 50;
 const MIN_UNIQUE_BOOKS = 40;
 const NEW_RELEASE_MIN_EXPECTED_BOOKS = 40;
@@ -308,9 +310,6 @@ export function parsePandoraNewReleases(
   return { books };
 }
 
-// This parser is intentionally not wired into collect() yet.
-// The native scope/limit must be explicitly selected before scheduler activation.
-
 export function parsePandoraBestsellers(
   payload: unknown,
 ): BookIndexCollectionResult {
@@ -406,9 +405,24 @@ export function parsePandoraBestsellers(
 export const pandoraBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
-    _context: BookIndexCollectionContext,
+    context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const response = await fetch(API_URL, {
+    const isNewReleaseList = context.listCode === "pandora-tr-new-releases";
+    const endpoint = isNewReleaseList ? NEW_RELEASE_API_URL : API_URL;
+
+    if (isNewReleaseList) {
+      if (context.sourceUrl !== NEW_RELEASE_SOURCE_URL) {
+        throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_SOURCE_URL_MISMATCH");
+      }
+      if (
+        !Number.isSafeInteger(context.maxRank)
+        || (context.maxRank ?? 0) < 1
+      ) {
+        throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_LIMIT_NOT_CONFIGURED");
+      }
+    }
+
+    const response = await fetch(endpoint, {
       cache: "no-store",
       headers: {
         Accept: "application/json,text/plain,*/*",
@@ -426,7 +440,15 @@ export const pandoraBookIndexAdapter: BookIndexSourceAdapter = {
     try {
       payload = await response.json();
     } catch {
-      throw new Error("BOOK_INDEX_PANDORA_INVALID_RESPONSE");
+      throw new Error(
+        isNewReleaseList
+          ? "BOOK_INDEX_PANDORA_NEW_RELEASE_INVALID_RESPONSE"
+          : "BOOK_INDEX_PANDORA_INVALID_RESPONSE",
+      );
+    }
+
+    if (isNewReleaseList) {
+      return parsePandoraNewReleases(payload, context.maxRank as number);
     }
 
     return parsePandoraBestsellers(payload);

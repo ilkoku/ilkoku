@@ -83,7 +83,7 @@ export const BOOK_INDEX_NEW_RELEASE_SOURCES: readonly BookIndexNewReleaseSourceD
   {
     sourceCode: "pandora",
     nativeLabel: "Yeni Gelenler - Türkçe Kitaplar",
-    sourceUrl: "https://www.pandora.com.tr/Yeni_Kitaplar",
+    sourceUrl: "https://www.pandora.com.tr/Yeni_Kitaplar/Turkce",
     collectionMode: "dedicated_page",
     status: "verified_native_list",
   },

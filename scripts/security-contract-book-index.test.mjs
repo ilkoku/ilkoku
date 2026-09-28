@@ -407,6 +407,7 @@ test("public Turkey table preserves source rank instead of inventing an İlkOku 
   const sourceRankTable = source("src/lib/book-index/source-rank-table.ts");
   const publicModel = source("src/lib/book-index/public-read-model.ts");
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const rankTable = source("src/features/book-index/public/BookIndexRankTable.tsx");
 
   contains(
     sourceRankTable,
@@ -428,17 +429,51 @@ test("public Turkey table preserves source rank instead of inventing an İlkOku 
     "getTurkeySourceRankRows(limit)",
     "public model uses source-rank rows",
   );
-  contains(view, '<th scope="col">Sıra</th>', "plain Turkish rank heading");
-  contains(view, '<th scope="col">Kaynak</th>', "source heading");
-  contains(view, "{row.rank}", "source rank rendered directly");
+  contains(rankTable, '<th scope="col">Sıra</th>', "plain Turkish rank heading");
+  contains(rankTable, '<th scope="col">Kaynak</th>', "source heading");
+  contains(rankTable, "{row.rank}", "source rank rendered directly");
   contains(
-    view,
+    rankTable,
     'row.sources.map((source) => source.sourceName).join(" · ")',
     "same-rank source names shown together",
   );
-  notContains(view, "İlkOku Sırası", "no invented İlkOku public rank");
-  notContains(view, "<th scope=\"col\">Kaynak Sayısı</th>", "no composite source-count column");
-  notContains(view, "<th scope=\"col\">Hareket</th>", "no movement column in source-rank table");
+  notContains(`${view}\n${rankTable}`, "İlkOku Sırası", "no invented İlkOku public rank");
+  notContains(rankTable, "<th scope=\"col\">Kaynak Sayısı</th>", "no composite source-count column");
+  notContains(rankTable, "<th scope=\"col\">Hareket</th>", "no movement column in source-rank table");
+});
+
+
+test("Book Index public pages expose source-rank filters and overview keeps complete ranks 1-3", () => {
+  const rankTable = source("src/features/book-index/public/BookIndexRankTable.tsx");
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const overview = source("src/app/en-cok-satanlar/page.tsx");
+
+  contains(rankTable, 'type="search"', "book/author search filter");
+  contains(rankTable, "<span>Kaynak</span>", "source filter");
+  contains(rankTable, "<span>Sıra</span>", "rank filter");
+  contains(rankTable, "Tüm kaynaklar", "all-source option");
+  contains(rankTable, "Tüm sıralar", "all-rank option");
+  contains(rankTable, "setQuery(\"\")", "filter reset");
+  contains(
+    rankTable,
+    "rows.filter((row) => row.rank <= maxRank)",
+    "rank-group preview keeps all rows inside the requested ranks",
+  );
+  contains(
+    view,
+    "<BookIndexRankTable rows={model.turkey.items} maxRank={3} />",
+    "overview renders complete source ranks 1 through 3",
+  );
+  contains(
+    view,
+    "<BookIndexRankTable rows={model.turkey.items} />",
+    "Turkey page exposes the full filterable table",
+  );
+  contains(
+    overview,
+    "context.model.turkey.items.filter((item) => item.rank <= 3)",
+    "overview structured data matches the visible first three rank groups",
+  );
 });
 
 test("KitapSepeti collector parses the verified server-rendered bestseller catalog", () => {

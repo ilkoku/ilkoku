@@ -14,6 +14,7 @@ import type {
   BookIndexRiser,
 } from "@/lib/book-index/insights";
 
+import { BookIndexRankTable } from "./BookIndexRankTable";
 import styles from "./BookIndexPublicView.module.css";
 
 function latestObservedAt(model: BookIndexPublicReadModel) {
@@ -53,45 +54,6 @@ function availabilityLabel(value: string) {
     default:
       return "Veri bekleniyor";
   }
-}
-
-function TurkeyRows({
-  model,
-  limit,
-}: {
-  model: BookIndexPublicReadModel;
-  limit?: number;
-}) {
-  const rows = limit ? model.turkey.items.slice(0, limit) : model.turkey.items;
-
-  return (
-    <div className={styles.tableScroll}>
-      <table className={styles.rankingTable}>
-        <thead>
-          <tr>
-            <th scope="col">Sıra</th>
-            <th scope="col">Kitap</th>
-            <th scope="col">Yazar</th>
-            <th scope="col">Kaynak</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.rowKey}>
-              <td className={styles.rankCell}>{row.rank}</td>
-              <td className={styles.titleCell}>
-                <strong>{row.title}</strong>
-              </td>
-              <td>{row.authorName ?? "Yazar bilgisi bekleniyor"}</td>
-              <td className={styles.sourceCell}>
-                {row.sources.map((source) => source.sourceName).join(" · ")}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
 }
 
 export function BookIndexOverviewView({
@@ -178,15 +140,16 @@ export function BookIndexOverviewView({
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.eyebrow}>Türkiye</span>
-            <h2>Güncel çok satan sıralamaları</h2>
+            <h2>Güncel ilk 3 sıra</h2>
             <p>
+              Kaynakların 1., 2. ve 3. sıralarındaki kitapları karşılaştır.
               Aynı kitap aynı sırada birden fazla kaynakta yer alıyorsa
               kaynaklar tek satırda birlikte gösterilir.
             </p>
           </div>
           <Link href="/en-cok-satanlar/turkiye">Tüm sıralamayı gör →</Link>
         </div>
-        <TurkeyRows model={model} limit={10} />
+        <BookIndexRankTable rows={model.turkey.items} maxRank={3} />
       </section>
 
       <section className={styles.explainer} aria-labelledby="book-index-methodology">
@@ -246,7 +209,7 @@ export function TurkeyBookIndexView({
             </p>
           </div>
         </div>
-        <TurkeyRows model={model} />
+        <BookIndexRankTable rows={model.turkey.items} />
       </section>
 
       <section className={styles.explainer} aria-labelledby="turkey-index-methodology">

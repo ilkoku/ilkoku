@@ -110,24 +110,25 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
 
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
-  contains(view, '<table className={styles.rankingTable}>', "Turkey ranking uses a real table");
+  const rankTable = source("src/features/book-index/public/BookIndexRankTable.tsx");
+  contains(rankTable, '<table className={styles.rankingTable}>', "Turkey ranking uses a real table");
   for (const heading of [
     "Sıra",
     "Kitap",
     "Yazar",
     "Kaynak",
   ]) {
-    contains(view, `<th scope="col">${heading}</th>`, `ranking table heading: ${heading}`);
+    contains(rankTable, `<th scope="col">${heading}</th>`, `ranking table heading: ${heading}`);
   }
-  contains(view, "{row.rank}", "source rank is rendered directly");
+  contains(rankTable, "{row.rank}", "source rank is rendered directly");
   contains(
-    view,
+    rankTable,
     'row.sources.map((source) => source.sourceName).join(" · ")',
     "same-rank sources are shown together",
   );
-  notContains(view, "İlkOku Sırası", "no invented public rank heading");
-  notContains(view, "Kaynak Sayısı", "no composite source-count column");
-  notContains(view, "<th scope=\"col\">Hareket</th>", "no movement column");
+  notContains(`${view}\n${rankTable}`, "İlkOku Sırası", "no invented public rank heading");
+  notContains(`${view}\n${rankTable}`, "Kaynak Sayısı", "no composite source-count column");
+  notContains(rankTable, "<th scope=\"col\">Hareket</th>", "no movement column");
   contains(
     view,
     "showInsightPages && publishedInsightPages.length",

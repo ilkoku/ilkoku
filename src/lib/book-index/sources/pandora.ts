@@ -7,8 +7,11 @@ import type {
 const SOURCE_CODE = "pandora";
 const SOURCE_ORIGIN = "https://www.pandora.com.tr";
 const API_URL = "https://www.pandora.com.tr/api/coksatanlar";
+const NEW_RELEASE_API_URL = "https://www.pandora.com.tr/api/yenikitaplar?dil=1";
 const EXPECTED_NATIVE_ROWS = 50;
 const MIN_UNIQUE_BOOKS = 40;
+const NEW_RELEASE_NATIVE_PAGE_SIZE = 40;
+const NEW_RELEASE_MIN_API_ROWS = 40;
 
 type PandoraApiRow = Record<string, unknown>;
 
@@ -208,12 +211,191 @@ export function parsePandoraBestsellers(
   return { books };
 }
 
+
+type PandoraNewReleasePayload = {
+  books?: unknown;
+  categoryId?: unknown;
+  categoryName?: unknown;
+  language?: unknown;
+};
+
+function pandoraDateTimestamp(value: unknown) {
+  const raw = textValue(value);
+  if (!raw) return null;
+
+  const parsed = new Date(raw);
+  const timestamp = parsed.getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function pandoraWeekKey(value: unknown) {
+  const raw = textValue(value);
+  if (!raw) return null;
+
+  const parsed = new Date(raw);
+  if (!Number.isFinite(parsed.getTime())) return null;
+
+  const day = parsed.getDay();
+  parsed.setDate(parsed.getDate() - day + (day === 0 ? -6 : 1));
+  parsed.setHours(0, 0, 0, 0);
+  return parsed.toISOString().slice(0, 10);
+}
+
+function publisherRoundRobinByWeek(rows: PandoraApiRow[]) {
+  const weeks = new Map<string, PandoraApiRow[]>();
+  const invalidDateRows: PandoraApiRow[] = [];
+
+  for (const row of rows) {
+    const weekKey = pandoraWeekKey(row.yayintarih);
+    if (!weekKey) {
+      invalidDateRows.push(row);
+      continue;
+    }
+
+    const bucket = weeks.get(weekKey) ?? [];
+    bucket.push(row);
+    weeks.set(weekKey, bucket);
+  }
+
+  const ordered: PandoraApiRow[] = [];
+
+  for (const weekRows of weeks.values()) {
+    if (weekRows.length <= 1) {
+      ordered.push(...weekRows);
+      continue;
+    }
+
+    const publishers = new Map<string, PandoraApiRow[]>();
+    for (const row of weekRows) {
+      const publisher = textValue(row.yayinci) || "Bilinmeyen";
+      const bucket = publishers.get(publisher) ?? [];
+      bucket.push(row);
+      publishers.set(publisher, bucket);
+    }
+
+    const maxPublisherRows = Math.max(
+      ...[...publishers.values()].map((bucket) => bucket.length),
+    );
+
+    for (let index = 0; index < maxPublisherRows; index += 1) {
+      for (const bucket of publishers.values()) {
+        const row = bucket[index];
+        if (row) ordered.push(row);
+      }
+    }
+  }
+
+  ordered.push(...invalidDateRows);
+  return ordered;
+}
+
+function pandoraNewReleaseSmartOrder(rows: PandoraApiRow[]) {
+  const groups = [
+    rows.filter((row) => integerValue(row.aktif) === 5),
+    rows.filter((row) => integerValue(row.aktif) === 4),
+    rows.filter((row) => {
+      const status = integerValue(row.aktif);
+      return status !== 4 && status !== 5;
+    }),
+  ];
+
+  return groups.flatMap((group) =>
+    publisherRoundRobinByWeek(
+      [...group].sort(
+        (left, right) =>
+          (pandoraDateTimestamp(right.yayintarih) ?? Number.NEGATIVE_INFINITY)
+          - (pandoraDateTimestamp(left.yayintarih) ?? Number.NEGATIVE_INFINITY),
+      ),
+    ),
+  );
+}
+
+export function parsePandoraNewReleases(
+  payload: unknown,
+): BookIndexCollectionResult {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_INVALID_RESPONSE");
+  }
+
+  const response = payload as PandoraNewReleasePayload;
+  if (
+    textValue(response.categoryId) !== "yenikitaplar"
+    || textValue(response.categoryName) !== "Yeni Kitaplar"
+    || textValue(response.language) !== "1"
+    || !Array.isArray(response.books)
+  ) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_NATIVE_FEED_MISMATCH");
+  }
+
+  if (response.books.length < NEW_RELEASE_MIN_API_ROWS) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_RESULT_TOO_SMALL");
+  }
+
+  const rows = response.books.map((raw) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_INVALID_ITEM");
+    }
+    return raw as PandoraApiRow;
+  });
+
+  const nativeFirstPage = pandoraNewReleaseSmartOrder(rows)
+    .slice(0, NEW_RELEASE_NATIVE_PAGE_SIZE);
+
+  if (nativeFirstPage.length !== NEW_RELEASE_NATIVE_PAGE_SIZE) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_PAGE_SIZE_MISMATCH");
+  }
+
+  const books = nativeFirstPage.map((row, index) => {
+    const productId = textValue(row.id);
+    const title = textValue(row.adi);
+    const authorName = textValue(row.yazar) || null;
+    const publisherName = textValue(row.yayinci);
+    const ean = isbn13(row.ean);
+
+    if (
+      !productId
+      || !title
+      || !publisherName
+      || integerValue(row.dil) !== 1
+      || textValue(row.dili) !== "Türkçe"
+      || textValue(row.yeniUrun) !== "yeniUrun"
+      || pandoraDateTimestamp(row.yayintarih) === null
+    ) {
+      throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_INVALID_ITEM");
+    }
+
+    return {
+      sourceKey: ean || productId,
+      sourceExternalId: productId,
+      title,
+      authorName,
+      publisherName,
+      isbn13: ean,
+      productUrl: productUrl(title, productId),
+      imageUrl: imageUrl(row.gorselUrl),
+      rank: index + 1,
+      priceAmount: priceToMinorUnits(row.fiyat),
+      currency: "TRY",
+    };
+  });
+
+  const sourceKeys = new Set(books.map((book) => book.sourceKey));
+  const productIds = new Set(books.map((book) => book.sourceExternalId));
+
+  if (sourceKeys.size !== books.length || productIds.size !== books.length) {
+    throw new Error("BOOK_INDEX_PANDORA_NEW_RELEASE_DUPLICATE_IDENTITY");
+  }
+
+  return { books };
+}
+
 export const pandoraBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
-    _context: BookIndexCollectionContext,
+    context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const response = await fetch(API_URL, {
+    const isNewReleaseList = context.listCode === "pandora-tr-new-releases";
+    const response = await fetch(isNewReleaseList ? NEW_RELEASE_API_URL : API_URL, {
       cache: "no-store",
       headers: {
         Accept: "application/json,text/plain,*/*",
@@ -234,6 +416,8 @@ export const pandoraBookIndexAdapter: BookIndexSourceAdapter = {
       throw new Error("BOOK_INDEX_PANDORA_INVALID_RESPONSE");
     }
 
-    return parsePandoraBestsellers(payload);
+    return isNewReleaseList
+      ? parsePandoraNewReleases(payload)
+      : parsePandoraBestsellers(payload);
   },
 };

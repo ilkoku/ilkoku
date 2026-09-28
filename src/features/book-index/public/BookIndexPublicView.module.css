@@ -2,6 +2,8 @@
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
   padding: 72px 0 96px;
+  color: #1d1b38;
+  --muted: #69667e;
 }
 
 .hero {

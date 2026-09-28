@@ -124,3 +124,55 @@ test("Book Index public methodology describes source-rank comparison", () => {
   contains(normalizedView, "işletmeci grubu bazında tekilleştirme korunur", "internal insight operator deduplication");
   notContains(normalizedView, "en az üç bağımsız işletmeci grubunda görünmelidir", "stale public composite threshold copy");
 });
+
+test("New-release read model stays source-native and private until publication is approved", () => {
+  const model = source("src/lib/book-index/new-releases.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(
+    model,
+    'categoryKey: "new-releases"',
+    "new-release lists are isolated by category",
+  );
+  contains(
+    model,
+    'status: { in: ["success", "no_change"] }',
+    "new-release model uses successful snapshots only",
+  );
+  contains(
+    model,
+    'position: observation.rank',
+    "source-native new-release order is preserved as source position",
+  );
+  contains(
+    model,
+    'const identity = externalBook.masterBookId',
+    "cross-source grouping uses canonical matched identity",
+  );
+  contains(
+    model,
+    '`external:${entry.list.source.code}:${externalBook.id}`',
+    "unmatched books remain source-specific",
+  );
+  notContains(
+    model,
+    "includeInComposite: true",
+    "new-release read model does not create a composite ranking",
+  );
+  contains(
+    lists,
+    'categoryKey: "new-releases"',
+    "new-release collector registry",
+  );
+  contains(
+    lists,
+    "includeInComposite: false",
+    "new-release collectors remain non-voting",
+  );
+  contains(
+    lists,
+    "publiclyVisible: false",
+    "new-release collectors remain private before public approval",
+  );
+});
+

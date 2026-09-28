@@ -2,6 +2,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getBookIndexOperationsSnapshot } from "@/lib/book-index/operations";
+import { BOOK_INDEX_LISTS } from "@/lib/book-index/lists";
 import { getBookIndexPublicReadModel } from "@/lib/book-index/public-read-model";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import {
@@ -73,6 +74,30 @@ export async function GET(request: NextRequest) {
       getBookIndexPublicReadModel(100),
       getBookIndexOperationsSnapshot(),
     ]);
+    const enabledNewReleaseCodes = new Set(
+      BOOK_INDEX_LISTS
+        .filter((list) => list.enabled && list.categoryKey === "new-releases")
+        .map((list) => list.code),
+    );
+    const newReleaseLists = operations.rows
+      .filter((row) => row.listCode.endsWith("-new-releases"))
+      .map((row) => ({
+        listCode: row.listCode,
+        sourceCode: row.sourceCode,
+        enabled: enabledNewReleaseCodes.has(row.listCode),
+        cadenceMinutes: row.cadenceMinutes,
+        persisted: row.persisted,
+        active: row.active,
+        sourceStatus: row.sourceStatus,
+        latestRunStatus: row.latestRunStatus,
+        latestRunAt: row.latestRunAt,
+        latestRunCompletedAt: row.latestRunCompletedAt,
+        latestRunItems: row.latestRunItems,
+        latestRunErrorCode: row.latestRunErrorCode,
+        lastSuccessfulRunAt: row.lastSuccessfulRunAt,
+        nextDueAt: row.nextDueAt,
+        due: row.due,
+      }));
     const seoGate = evaluateBookIndexSeoGate(
       getBookIndexSeoGatePolicy(),
       {
@@ -232,6 +257,7 @@ export async function GET(request: NextRequest) {
             nextDueAt: row.nextDueAt,
             latestRunStatus: row.latestRunStatus,
           })),
+        newReleaseLists,
       },
       seoGate: {
         state: seoGate.state,

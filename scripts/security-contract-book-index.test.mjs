@@ -959,6 +959,18 @@ test("KitapSec general shadow canary qualification evidence is observable withou
 
 
 
+test("Book Index readiness waits for main CI before probing production", () => {
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+  const workflow = source(".github/workflows/book-index-readiness.yml");
+
+  contains(workflow, "workflow_run:", "readiness uses workflow_run trigger");
+  contains(workflow, "- CI", "readiness waits for CI workflow");
+  contains(workflow, "types:\n      - completed", "readiness waits for completed CI");
+  notContains(workflow, "  push:\n", "readiness does not race production on push");
+  contains(route, '"workflow_run"', "OIDC route authorizes workflow_run readiness probes");
+});
+
+
 test("Pandora canary qualification evidence is observable while voter stays off", () => {
   const readiness = source("src/lib/book-index/readiness.ts");
   const route = source("src/app/api/internal/book-index-readiness/route.ts");

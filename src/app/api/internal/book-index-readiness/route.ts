@@ -120,6 +120,8 @@ export async function GET(request: NextRequest) {
           readiness.kitapStoreCanaryUnmatchedObservationCount,
         kitapStoreCanaryDuplicateMasterObservationCount:
           readiness.kitapStoreCanaryDuplicateMasterObservationCount,
+        kitapStoreCanaryDuplicateMasterSamples:
+          readiness.kitapStoreCanaryDuplicateMasterSamples,
         kitapStoreCanaryShadowBookCount:
           readiness.kitapStoreCanaryShadowBookCount,
         kitapStoreCanaryShadowOverlapWithCompositeCount:

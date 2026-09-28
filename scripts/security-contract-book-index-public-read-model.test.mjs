@@ -136,6 +136,16 @@ test("New-release read model stays source-native and private until publication i
   );
   contains(
     model,
+    "list.enabled && list.categoryKey === \"new-releases\"",
+    "disabled new-release definitions cannot leak through stale database state",
+  );
+  contains(
+    model,
+    "code: { in: enabledNewReleaseListCodes }",
+    "new-release database reads are constrained to enabled registry codes",
+  );
+  contains(
+    model,
     'status: { in: ["success", "no_change"] }',
     "new-release model uses successful snapshots only",
   );

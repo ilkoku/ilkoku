@@ -409,8 +409,10 @@ test("KitapSepeti collector parses the verified server-rendered bestseller catal
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(adapter, 'const MAX_BOOKS = 60;', "KitapSepeti native page cap");
-  contains(adapter, 'const MIN_EXPECTED_BOOKS = 20;', "KitapSepeti fail-closed minimum");
+  contains(adapter, 'const MAX_BOOKS = 100;', "KitapSepeti Top 100 cap");
+  contains(adapter, 'const PAGE_COUNT = 4;', "four verified native bestseller pages");
+  contains(adapter, 'url.searchParams.set("pg", String(page))', "verified native pg pagination");
+  contains(adapter, 'const MIN_EXPECTED_BOOKS = 20;', "KitapSepeti per-page fail-closed minimum");
   contains(adapter, '\\sproduct-item', "product card selector");
   contains(adapter, '\\bproduct-title\\b', "title selector");
   contains(adapter, '\\bbrand-title\\b', "publisher selector");
@@ -418,7 +420,7 @@ test("KitapSepeti collector parses the verified server-rendered bestseller catal
   contains(adapter, "BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL", "small result rejection");
   contains(adapter, "BOOK_INDEX_KITAPSEPETI_DUPLICATE_SOURCE_KEY", "duplicate source protection");
   contains(lists, 'code: "kitapsepeti-tr-live"', "KitapSepeti list registry");
-  contains(lists, 'maxRank: 60', "KitapSepeti current-page rank ceiling");
+  contains(lists, 'maxRank: 100', "KitapSepeti Top 100 rank ceiling");
   contains(collector, "[kitapSepetiBookIndexAdapter.sourceCode, kitapSepetiBookIndexAdapter]", "KitapSepeti adapter activation");
   contains(
     sources,
@@ -690,7 +692,9 @@ test("composite collectors use deeper native bestseller pagination without chang
   contains(inkilap, "for (let page = 1; page <= 5; page += 1)", "Inkilap first five native pages");
   contains(inkilap, '/sayfa/${page}', "Inkilap native pagination path");
   contains(inkilap, '(page - 1) * MAX_BOOKS', "Inkilap contiguous native rank offsets");
-  contains(kitapsepeti, 'const MAX_BOOKS = 60;', "KitapSepeti accepts the full current native page within a bounded ceiling");
+  contains(kitapsepeti, 'const MAX_BOOKS = 100;', "KitapSepeti bounded Top 100 target");
+  contains(kitapsepeti, 'const PAGE_COUNT = 4;', "KitapSepeti first four verified native pages");
+  contains(kitapsepeti, 'url.searchParams.set("pg", String(page))', "KitapSepeti native pagination query");
 });
 
 

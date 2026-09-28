@@ -867,7 +867,7 @@ test("KitaplarSepette is a bounded independent Turkey composite voter", () => {
 });
 
 
-test("KitapStore canary qualification evidence is observable while voter stays off", () => {
+test("KitapStore qualification evidence remains observable after voter activation", () => {
   const readiness = source("src/lib/book-index/readiness.ts");
   const route = source("src/app/api/internal/book-index-readiness/route.ts");
   const workflow = source(".github/workflows/book-index-readiness.yml");
@@ -905,11 +905,22 @@ test("KitapStore canary qualification evidence is observable while voter stays o
   contains(workflow, '"kitapStoreCanaryShadowWouldReach3IndependentCount": readiness.get("kitapStoreCanaryShadowWouldReach3IndependentCount")', "passive observer prints independent projection");
   contains(workflow, '"kitapStoreCanaryShadowSamples": readiness.get("kitapStoreCanaryShadowSamples")', "passive observer prints shadow samples");
 
-  contains(lists, 'code: "kitapstore-tr-live-canary"', "KitapStore canary registry");
-  contains(lists, 'includeInComposite: false', "canary remains outside composite");
-  contains(lists, 'code: "kitapstore-tr-live"', "KitapStore voter registry remains separate");
-  contains(lists, 'maxRank: null', "voter rank stays unset before qualification");
-  contains(lists, 'enabled: false', "voter list stays disabled before qualification");
+  contains(lists, 'code: "kitapstore-tr-live-canary"', "KitapStore historical canary registry");
+  const voterMarker = 'code: "kitapstore-tr-live"';
+  const voterStart = lists.indexOf(voterMarker);
+  const voterEnd = lists.indexOf("\n  },", voterStart);
+  const voterBlock = lists.slice(voterStart, voterEnd);
+  contains(voterBlock, "maxRank: 100", "KitapStore voter keeps verified Top 100 bound");
+  contains(voterBlock, "includeInComposite: true", "KitapStore voter contributes to Turkey composite");
+  contains(voterBlock, "collectionEveryMinutes: 360", "KitapStore voter keeps qualified cadence");
+  contains(voterBlock, "enabled: true", "KitapStore voter is active");
+  const canaryMarker = 'code: "kitapstore-tr-live-canary"';
+  const canaryStart = lists.indexOf(canaryMarker);
+  const canaryEnd = lists.indexOf("\n  },", canaryStart);
+  const canaryBlock = lists.slice(canaryStart, canaryEnd);
+  contains(canaryBlock, "includeInComposite: false", "KitapStore canary never votes");
+  contains(canaryBlock, "collectionEveryMinutes: null", "KitapStore canary stops new collection after promotion");
+  contains(canaryBlock, "enabled: false", "KitapStore canary is retired after promotion");
 });
 
 
@@ -986,7 +997,7 @@ test("Book Index readiness waits for main CI before probing production", () => {
 });
 
 
-test("Pandora canary qualification evidence is observable while voter stays off", () => {
+test("Pandora qualification evidence remains observable after voter activation", () => {
   const readiness = source("src/lib/book-index/readiness.ts");
   const route = source("src/app/api/internal/book-index-readiness/route.ts");
   const workflow = source(".github/workflows/book-index-readiness.yml");
@@ -1025,8 +1036,10 @@ test("Pandora canary qualification evidence is observable while voter stays off"
   const start = lists.indexOf(marker);
   const end = lists.indexOf("\n  },", start);
   const voterBlock = lists.slice(start, end);
-  contains(voterBlock, "includeInComposite: false", "Pandora voter remains outside composite");
-  contains(voterBlock, "enabled: false", "Pandora voter remains disabled");
+  contains(voterBlock, "maxRank: 50", "Pandora voter keeps verified native bound");
+  contains(voterBlock, "includeInComposite: true", "Pandora voter contributes to Turkey composite");
+  contains(voterBlock, "collectionEveryMinutes: 360", "Pandora voter keeps qualified cadence");
+  contains(voterBlock, "enabled: true", "Pandora voter is active");
 });
 
 test("Kitap Ambari canary qualification evidence is observable while voter stays off", () => {
@@ -1074,9 +1087,8 @@ test("Book Index public read model excludes shadow, research and disabled candid
   for (const listCode of [
     "kitapsec-general-live",
     "kitapsec-general-live-canary",
-    "kitapstore-tr-live",
     "kitapstore-tr-live-canary",
-    "pandora-tr-live",
+    "pandora-tr-live-canary",
     "kitapambari-tr-live",
     "amazon-tr-live",
   ]) {
@@ -1099,6 +1111,8 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "illakitap-tr-weekly",
     "nobelkitap-tr-live",
     "idefix-tr-live",
+    "pandora-tr-live",
+    "kitapstore-tr-live",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);
@@ -1297,7 +1311,7 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
 });
 
 
-test("Pandora source canary is fail-closed, private and non-voting", () => {
+test("Pandora source is fail-closed and promoted to Turkey composite", () => {
   const adapter = source("src/lib/book-index/sources/pandora.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
@@ -1320,25 +1334,25 @@ test("Pandora source canary is fail-closed, private and non-voting", () => {
   contains(
     sources,
     'name: "Pandora Kitabevi",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.pandora.com.tr",\n    includeInTurkeyIndex: true,\n    independenceGroup: "pandora",\n    operatorName: "Pandora Yayın ve Kitap Hizmetleri A.Ş.",\n    phase: "phase_2",\n    collectionState: "ready"',
-    "Pandora adapter is ready for private canary collection",
+    "Pandora adapter is ready for production collection",
   );
 
   contains(
     lists,
-    'code: "pandora-tr-live",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "Pandora voter remains disabled",
+    'code: "pandora-tr-live",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: true,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
+    "Pandora voter is active in the Turkey composite",
   );
 
   contains(
     lists,
-    'code: "pandora-tr-live-canary",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
-    "Pandora source-only canary remains private and non-voting",
+    'code: "pandora-tr-live-canary",\n    sourceCode: "pandora",\n    title: "Pandora Kitabevi · Çok Satanlar · Türkçe · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",\n    maxRank: 50,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "Pandora canary history is retained but new canary collection is retired",
   );
 
   contains(
     collector,
     "[pandoraBookIndexAdapter.sourceCode, pandoraBookIndexAdapter]",
-    "Pandora adapter is registered only for enabled private canary collection",
+    "Pandora adapter is registered for the active production voter",
   );
 });
 
@@ -1372,7 +1386,7 @@ test("Kitap Ambari private canary collects source history without composite voti
     "Kitap Ambari adapter is registered for the private canary",
   );
 });
-test("KitapStore canary collects shadow evidence while voter activation stays off", () => {
+test("KitapStore qualified voter preserves fail-closed Top 100 collection", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const adapter = source("src/lib/book-index/sources/kitapstore.ts");
@@ -1381,20 +1395,20 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
   contains(sources, 'code: "kitapstore"', "KitapStore research source");
   contains(
     sources,
-    'name: "KitapStore",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    // Current seller identity. Turkey-general voter eligibility remains separately gated.\n    independenceGroup: "vedat-akoglu-kitapstore",\n    operatorName: "Vedat Akoğlu - KitapStore",\n    phase: "phase_2",\n    collectionState: "researching"',
-    "KitapStore remains research-only",
+    'name: "KitapStore",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.kitapstore.com",\n    includeInTurkeyIndex: true,\n    independenceGroup: "vedat-akoglu-kitapstore",\n    operatorName: "Vedat Akoğlu - KitapStore",\n    phase: "phase_2",\n    collectionState: "ready"',
+    "KitapStore source is ready for production collection",
   );
   contains(lists, 'code: "kitapstore-tr-live"', "KitapStore research list");
   contains(
     lists,
-    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "KitapStore voter list stays disabled and outside composite",
+    'sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: true,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
+    "KitapStore voter is active in the Turkey composite",
   );
   contains(lists, 'code: "kitapstore-tr-live-canary"', "KitapStore canary list");
   contains(
     lists,
-    'title: "KitapStore · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
-    "KitapStore canary is schedulable but outside composite",
+    'title: "KitapStore · Çok Satanlar · Canary",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "KitapStore canary history is retained but new canary collection is retired",
   );
 
   contains(adapter, 'const PAGE_COUNT = 4;', "four-page Top 100 bound");
@@ -1446,8 +1460,8 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
     ".sort(\n    (left, right) => left.rank - right.rank,\n  )",
     "source/page order must not be hidden by rank sorting",
   );
-  contains(adapter, 'context.listCode !== "kitapstore-tr-live"', "disabled voter list remains an explicit adapter target");
-  contains(adapter, 'context.listCode !== "kitapstore-tr-live-canary"', "canary list is the only additional adapter target");
+  contains(adapter, 'context.listCode !== "kitapstore-tr-live"', "active voter list is an explicit adapter target");
+  contains(adapter, 'context.listCode !== "kitapstore-tr-live-canary"', "historical canary remains an explicit adapter target");
   contains(adapter, 'const MAX_IDENTITY_ENRICHMENTS = 8;', "bounded missing-author enrichment cap");
   contains(adapter, 'const DETAIL_CONCURRENCY = 3;', "bounded detail concurrency");
   contains(adapter, '.filter(({ book }) => !book.authorName)', "only missing-author books are detail-enriched");
@@ -1480,6 +1494,6 @@ test("KitapStore canary collects shadow evidence while voter activation stays of
   contains(
     collector,
     "[kitapStoreBookIndexResearchAdapter.sourceCode, kitapStoreBookIndexResearchAdapter]",
-    "KitapStore adapter registered for canary collection",
+    "KitapStore adapter registered for production collection",
   );
 });

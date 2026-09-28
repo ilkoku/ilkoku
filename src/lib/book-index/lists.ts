@@ -243,13 +243,13 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     categoryKey: "general",
     period: "live",
     sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",
-    maxRank: null,
-    includeInComposite: false,
-    collectionEveryMinutes: null,
-    publiclyVisible: false,
-    enabled: false,
+    maxRank: 50,
+    includeInComposite: true,
+    collectionEveryMinutes: 360,
+    publiclyVisible: true,
+    enabled: true,
   },
-  // Source-only qualification canary. It collects native history but never votes.
+  // Historical qualification canary retained for evidence; live voter now owns collection.
   {
     code: "pandora-tr-live-canary",
     sourceCode: "pandora",
@@ -259,9 +259,9 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     sourceUrl: "https://www.pandora.com.tr/Cok_Satan_Kitaplar",
     maxRank: 50,
     includeInComposite: false,
-    collectionEveryMinutes: 360,
+    collectionEveryMinutes: null,
     publiclyVisible: false,
-    enabled: true,
+    enabled: false,
   },
   {
     code: "kitapambari-tr-live",
@@ -297,13 +297,13 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     categoryKey: "general",
     period: "live",
     sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",
-    maxRank: null,
-    includeInComposite: false,
-    collectionEveryMinutes: null,
-    publiclyVisible: false,
-    enabled: false,
+    maxRank: 100,
+    includeInComposite: true,
+    collectionEveryMinutes: 360,
+    publiclyVisible: true,
+    enabled: true,
   },
-  // Shadow-only qualification list. It collects natural history but never votes.
+  // Historical qualification canary retained for evidence; live voter now owns collection.
   {
     code: "kitapstore-tr-live-canary",
     sourceCode: "kitapstore",
@@ -313,9 +313,9 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     sourceUrl: "https://www.kitapstore.com/liste/2/cok-satanlar/!Sayfa=1",
     maxRank: 100,
     includeInComposite: false,
-    collectionEveryMinutes: 360,
+    collectionEveryMinutes: null,
     publiclyVisible: false,
-    enabled: true,
+    enabled: false,
   },
   {
     code: "amazon-tr-live",

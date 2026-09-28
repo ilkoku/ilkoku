@@ -137,6 +137,26 @@ test("Book Index readiness probe is OIDC-protected and collection-free", () => {
   notContains(route, "collectBookIndex", "readiness route never invokes collector");
 
   contains(workflow, "id-token: write", "OIDC token permission");
+  contains(workflow, "OIDC_SAFE_CLAIMS=", "readiness logs only a labelled safe OIDC claim summary");
+  for (const safeClaim of [
+    "repository",
+    "repository_id",
+    "workflow_ref",
+    "ref",
+    "event_name",
+  ]) {
+    contains(workflow, `"${safeClaim}"`, `safe OIDC diagnostic claim: ${safeClaim}`);
+  }
+  notContains(
+    workflow,
+    'print(os.environ["OIDC_TOKEN"])',
+    "raw OIDC token must never be printed",
+  );
+  notContains(
+    workflow,
+    'print("OIDC_TOKEN="',
+    "raw OIDC token must never be labelled into logs",
+  );
   contains(workflow, "workflow_run:", "post-CI production probe trigger");
   contains(workflow, "- CI", "readiness waits for main CI completion");
   contains(workflow, "workflow_dispatch:", "manual read-only probe trigger");

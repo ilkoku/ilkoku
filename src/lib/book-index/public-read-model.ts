@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 
 import { BOOK_INDEX_LISTS, getBookIndexList } from "./lists";
-import { getTurkeyBookIndexPreview } from "./read-model";
+import { getTurkeySourceRankRows } from "./source-rank-table";
 import {
   BOOK_INDEX_SOURCES,
   getBookIndexSource,
@@ -61,7 +61,7 @@ export type BookIndexPublicReadModel = {
   publicRolloutState: "gated";
   turkey: {
     availability: "available" | "insufficient_data";
-    items: Awaited<ReturnType<typeof getTurkeyBookIndexPreview>>;
+    items: Awaited<ReturnType<typeof getTurkeySourceRankRows>>;
   };
   amazonTr: BookIndexMarketSourceState;
   amazonUs: BookIndexMarketSourceState;
@@ -287,7 +287,7 @@ export async function getBookIndexPublicReadModel(
     (list) => list.enabled && list.publiclyVisible,
   );
   const [turkeyItems, sourceLists] = await Promise.all([
-    getTurkeyBookIndexPreview(Math.min(limit, 100)),
+    getTurkeySourceRankRows(limit),
     Promise.all(
       enabledLists.map((list) =>
         getBookIndexSourceListSnapshot(list.code, limit),

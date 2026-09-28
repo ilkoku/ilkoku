@@ -105,7 +105,15 @@ export async function getTurkeyBookIndexPreview(limit = 50) {
   for (const entry of latestRuns) {
     if (!entry) continue;
 
-    const listSize = Math.max(entry.run.itemsStored, 1);
+    const highestObservedRank = entry.run.observations.reduce(
+      (maxRank, observation) => Math.max(maxRank, observation.rank),
+      0,
+    );
+    const listSize = Math.max(
+      entry.run.itemsStored,
+      highestObservedRank,
+      1,
+    );
 
     for (const observation of entry.run.observations) {
       const master = observation.externalBook.masterBook;

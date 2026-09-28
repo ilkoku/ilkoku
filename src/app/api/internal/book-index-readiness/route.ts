@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 const GITHUB_OIDC_ISSUER = "https://token.actions.githubusercontent.com";
 const GITHUB_OIDC_AUDIENCE = "ilkoku-book-index-readiness";
+const GITHUB_OIDC_HEADER = "x-ilkoku-github-oidc";
 const GITHUB_OIDC_JWKS = createRemoteJWKSet(
   new URL(`${GITHUB_OIDC_ISSUER}/.well-known/jwks`),
 );
@@ -26,7 +27,10 @@ const ALLOWED_GITHUB_EVENTS = new Set([
   "schedule",
 ]);
 
-function bearerToken(request: NextRequest) {
+function oidcToken(request: NextRequest) {
+  const forwarded = request.headers.get(GITHUB_OIDC_HEADER)?.trim() ?? "";
+  if (forwarded) return forwarded;
+
   const authorization = request.headers.get("authorization")?.trim() ?? "";
 
   return authorization.startsWith("Bearer ")
@@ -35,7 +39,7 @@ function bearerToken(request: NextRequest) {
 }
 
 async function authorized(request: NextRequest) {
-  const supplied = bearerToken(request);
+  const supplied = oidcToken(request);
   if (!supplied) return false;
 
   try {

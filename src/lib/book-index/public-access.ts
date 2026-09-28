@@ -35,27 +35,40 @@ function policyConfigured() {
   };
 }
 
+async function buildBookIndexPageContext(
+  limit: number,
+  policy = getBookIndexSeoGatePolicy(),
+): Promise<BookIndexPublicPageContext> {
+  const [readiness, model] = await Promise.all([
+    getBookIndexReadinessSnapshot(),
+    getBookIndexPublicReadModel(limit),
+  ]);
+
+  const gate = evaluateBookIndexSeoGate(policy, {
+    observedCompositeSources: readiness.observedCompositeSources,
+    observedIndependentCompositeSources:
+      readiness.observedCompositeIndependenceGroups,
+    matchCoveragePercent: readiness.matchCoveragePercent,
+    historySpanDays: readiness.historySpanDays,
+    turkeyItemCount: model.turkey.items.length,
+  });
+
+  return { gate, model };
+}
+
 export const getBookIndexPublicPageContext = cache(
   async (limit = 100): Promise<BookIndexPublicPageContext | null> => {
     const { policy, configured } = policyConfigured();
     if (!configured) return null;
 
-    const [readiness, model] = await Promise.all([
-      getBookIndexReadinessSnapshot(),
-      getBookIndexPublicReadModel(limit),
-    ]);
+    const context = await buildBookIndexPageContext(limit, policy);
+    if (!context.gate.canPublish) return null;
 
-    const gate = evaluateBookIndexSeoGate(policy, {
-      observedCompositeSources: readiness.observedCompositeSources,
-      observedIndependentCompositeSources:
-        readiness.observedCompositeIndependenceGroups,
-      matchCoveragePercent: readiness.matchCoveragePercent,
-      historySpanDays: readiness.historySpanDays,
-      turkeyItemCount: model.turkey.items.length,
-    });
-
-    if (!gate.canPublish) return null;
-
-    return { gate, model };
+    return context;
   },
+);
+
+export const getBookIndexSoftLaunchPageContext = cache(
+  async (limit = 100): Promise<BookIndexPublicPageContext> =>
+    buildBookIndexPageContext(limit),
 );

@@ -111,6 +111,17 @@ export type BookIndexCanaryShadowSample = {
   projectedIndependentSourceCount: number;
 };
 
+export type BookIndexCanaryDuplicateMasterSample = {
+  masterBookId: string;
+  observations: Array<{
+    rank: number;
+    sourceKey: string;
+    title: string;
+    authorName: string | null;
+    isbn13: string | null;
+  }>;
+};
+
 export type BookIndexSourceHistoryMaturity = {
   sourceCode: string;
   successfulRunCount: number;
@@ -252,6 +263,7 @@ export type BookIndexReadinessSnapshot = {
   kitapStoreCanaryMatchedObservationCount: number;
   kitapStoreCanaryUnmatchedObservationCount: number;
   kitapStoreCanaryDuplicateMasterObservationCount: number;
+  kitapStoreCanaryDuplicateMasterSamples: BookIndexCanaryDuplicateMasterSample[];
   kitapStoreCanaryShadowBookCount: number;
   kitapStoreCanaryShadowOverlapWithCompositeCount: number;
   kitapStoreCanaryShadowWouldReach3StorefrontCount: number;
@@ -484,11 +496,14 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
             select: {
               observations: {
                 select: {
+                  rank: true,
                   externalBook: {
                     select: {
                       masterBookId: true,
+                      sourceKey: true,
                       title: true,
                       authorName: true,
+                      isbn13: true,
                     },
                   },
                 },
@@ -1641,6 +1656,35 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   const kitapStoreCanaryDuplicateMasterObservationCount =
     kitapStoreCanaryMatchedObservationCount - kitapStoreCanaryShadowBooks.size;
 
+  const kitapStoreObservationsByMaster = new Map<
+    string,
+    BookIndexCanaryDuplicateMasterSample["observations"]
+  >();
+  for (const observation of latestKitapStoreCanaryShadowRun?.observations ?? []) {
+    const book = observation.externalBook;
+    if (!book.masterBookId) continue;
+    const rows = kitapStoreObservationsByMaster.get(book.masterBookId) ?? [];
+    rows.push({
+      rank: observation.rank,
+      sourceKey: book.sourceKey,
+      title: book.title,
+      authorName: book.authorName,
+      isbn13: book.isbn13,
+    });
+    kitapStoreObservationsByMaster.set(book.masterBookId, rows);
+  }
+  const kitapStoreCanaryDuplicateMasterSamples =
+    [...kitapStoreObservationsByMaster.entries()]
+      .filter(([, observations]) => observations.length > 1)
+      .map(([masterBookId, observations]) => ({
+        masterBookId,
+        observations: observations
+          .slice()
+          .sort((a, b) => a.rank - b.rank || a.sourceKey.localeCompare(b.sourceKey)),
+      }))
+      .sort((a, b) => a.masterBookId.localeCompare(b.masterBookId))
+      .slice(0, 10);
+
   const kitapStoreIndependenceGroup =
     getBookIndexSourceIndependenceGroup("kitapstore");
   const kitapStoreCanaryShadowSamples = [...kitapStoreCanaryShadowBooks.entries()]
@@ -2077,6 +2121,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     kitapStoreCanaryMatchedObservationCount,
     kitapStoreCanaryUnmatchedObservationCount,
     kitapStoreCanaryDuplicateMasterObservationCount,
+    kitapStoreCanaryDuplicateMasterSamples,
     kitapStoreCanaryShadowBookCount: kitapStoreCanaryShadowSamples.length,
     kitapStoreCanaryShadowOverlapWithCompositeCount:
       kitapStoreCanaryShadowSamples.filter(

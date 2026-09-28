@@ -866,6 +866,7 @@ test("KitapStore canary qualification evidence is observable while voter stays o
   contains(readiness, "kitapStoreCanaryMatchedObservationCount", "KitapStore matched observation count");
   contains(readiness, "kitapStoreCanaryUnmatchedObservationCount", "KitapStore unmatched observation count");
   contains(readiness, "kitapStoreCanaryDuplicateMasterObservationCount", "KitapStore duplicate-master observation count");
+  contains(readiness, "kitapStoreCanaryDuplicateMasterSamples", "KitapStore duplicate-master samples");
   contains(readiness, "kitapStoreCanaryShadowBookCount", "KitapStore shadow book count");
   contains(readiness, "kitapStoreCanaryShadowOverlapWithCompositeCount", "KitapStore overlap evidence");
   contains(readiness, "kitapStoreCanaryShadowWouldReach3StorefrontCount", "KitapStore projected storefront threshold");
@@ -880,6 +881,7 @@ test("KitapStore canary qualification evidence is observable while voter stays o
   contains(route, "readiness.kitapStoreCanaryMatchedObservationCount", "readiness API exposes matched observation count");
   contains(route, "readiness.kitapStoreCanaryUnmatchedObservationCount", "readiness API exposes unmatched observation count");
   contains(route, "readiness.kitapStoreCanaryDuplicateMasterObservationCount", "readiness API exposes duplicate-master observation count");
+  contains(route, "readiness.kitapStoreCanaryDuplicateMasterSamples", "readiness API exposes duplicate-master samples");
   contains(route, "readiness.kitapStoreCanaryShadowBookCount", "readiness API exposes shadow book count");
   contains(route, "readiness.kitapStoreCanaryShadowWouldReach3IndependentCount", "readiness API exposes independent projection");
   contains(route, "readiness.kitapStoreCanaryShadowSamples", "readiness API exposes shadow samples");
@@ -887,6 +889,7 @@ test("KitapStore canary qualification evidence is observable while voter stays o
   contains(workflow, '"kitapStoreCanaryHealth": readiness.get("kitapStoreCanaryHealth")', "passive observer prints canary health");
   contains(workflow, '"kitapStoreCanaryObservationCount": readiness.get("kitapStoreCanaryObservationCount")', "passive observer prints observation count");
   contains(workflow, '"kitapStoreCanaryDuplicateMasterObservationCount": readiness.get("kitapStoreCanaryDuplicateMasterObservationCount")', "passive observer prints duplicate-master observation count");
+  contains(workflow, '"kitapStoreCanaryDuplicateMasterSamples": readiness.get("kitapStoreCanaryDuplicateMasterSamples")', "passive observer prints duplicate-master samples");
   contains(workflow, '"kitapStoreCanaryShadowWouldReach3IndependentCount": readiness.get("kitapStoreCanaryShadowWouldReach3IndependentCount")', "passive observer prints independent projection");
   contains(workflow, '"kitapStoreCanaryShadowSamples": readiness.get("kitapStoreCanaryShadowSamples")', "passive observer prints shadow samples");
 

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-
 import { BookIndexOverviewView } from "@/features/book-index/public/BookIndexPublicView";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexInsights } from "@/lib/book-index/insights";
 import { createBookIndexItemListSchema, getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
@@ -19,21 +17,19 @@ const description =
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const context = await getBookIndexPublicPageContext(30);
+  const context = await getBookIndexSoftLaunchPageContext(30);
 
   return createPublicPageMetadata({
     title: pageTitle(),
     description,
     canonical,
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: !context,
+    noIndex: !context.gate.canPublish,
   });
 }
 
 export default async function BestsellersPage() {
-  const context = await getBookIndexPublicPageContext(30);
-  if (!context) notFound();
-
+  const context = await getBookIndexSoftLaunchPageContext(30);
   const [lastObservedAt, insights] = await Promise.all([
     Promise.resolve(getBookIndexLastObservedAt(context.model)),
     getBookIndexInsights(20),
@@ -87,12 +83,14 @@ export default async function BestsellersPage() {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
-        }}
-      />
+      {context.gate.canPublish ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
+          }}
+        />
+      ) : null}
       <BookIndexOverviewView model={context.model} insights={insights} />
     </>
   );

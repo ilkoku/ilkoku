@@ -122,6 +122,21 @@ test("Book Index readiness probe is OIDC-protected and collection-free", () => {
   );
   contains(
     route,
+    'GITHUB_OIDC_HEADER = "x-ilkoku-github-oidc"',
+    "dedicated readiness OIDC forwarding header",
+  );
+  contains(
+    route,
+    'request.headers.get(GITHUB_OIDC_HEADER)',
+    "readiness accepts OIDC from the forwarding-safe header",
+  );
+  contains(
+    route,
+    'authorization.startsWith("Bearer ")',
+    "readiness retains Bearer authorization fallback",
+  );
+  contains(
+    route,
     'book-index-readiness.yml@refs/heads/main',
     "readiness workflow identity binding",
   );
@@ -137,6 +152,11 @@ test("Book Index readiness probe is OIDC-protected and collection-free", () => {
   notContains(route, "collectBookIndex", "readiness route never invokes collector");
 
   contains(workflow, "id-token: write", "OIDC token permission");
+  contains(
+    workflow,
+    'X-IlkOku-GitHub-OIDC: $oidc_token',
+    "readiness sends OIDC through the dedicated forwarding header",
+  );
   contains(workflow, "OIDC_SAFE_CLAIMS=", "readiness logs only a labelled safe OIDC claim summary");
   for (const safeClaim of [
     "repository",

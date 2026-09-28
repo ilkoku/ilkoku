@@ -3,11 +3,13 @@ import type {
   BookIndexCollectionResult,
   BookIndexSourceAdapter,
 } from "../adapter";
+import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "bkm";
 const ENDPOINT = "https://bkm-best.wawlabs.com/top_sellers";
 const MAX_BOOKS = 100;
 const MIN_EXPECTED_BOOKS = 100;
+const NEW_RELEASE_MIN_EXPECTED_BOOKS = 8;
 
 type BkmSpan = "week" | "month" | "year";
 
@@ -118,11 +120,96 @@ function parseBkmResponse(payload: unknown): BookIndexCollectionResult {
   return { books };
 }
 
+export function parseBkmNewReleases(
+  html: string,
+): BookIndexCollectionResult {
+  const starts = [
+    ...html.matchAll(
+      /<div\b[^>]*class=["'][^"']*\bproduct-item\b[^"']*\bproduct-item-catalog\b[^"']*["'][^>]*>/giu,
+    ),
+  ];
+
+  const books = starts
+    .map((match, index) => {
+      const start = match.index ?? 0;
+      const end = starts[index + 1]?.index ?? html.length;
+      const card = html.slice(start, end);
+
+      const productId = card.match(
+        /\baddToCart\(\s*([0-9]+)\s*,/iu,
+      )?.[1] ?? "";
+      const titleAnchor = card.match(
+        /<a\b(?=[^>]*class=["'][^"']*\bproduct-title\b[^"']*["'])(?=[^>]*href=["']([^"']+)["'])[^>]*>([\s\S]*?)<\/a>/iu,
+      );
+      const publisher = card.match(
+        /<a\b[^>]*class=["'][^"']*\bbrand-title\b[^"']*["'][^>]*>([\s\S]*?)<\/a>/iu,
+      )?.[1];
+      const author = card.match(
+        /<a\b[^>]*class=["'][^"']*\bmodel-title\b[^"']*["'][^>]*>([\s\S]*?)<\/a>/iu,
+      )?.[1];
+      const image = card.match(
+        /<img\b[^>]*\bdata-src=["']([^"']+)["'][^>]*>/iu,
+      )?.[1];
+      const price = card.match(
+        /<span\b[^>]*class=["'][^"']*\bproduct-price\b[^"']*["'][^>]*>([^<]+)<\/span>/iu,
+      )?.[1];
+
+      const href = titleAnchor?.[1]?.trim() ?? "";
+      const title = decodeBookIndexHtml(titleAnchor?.[2] ?? "");
+
+      if (!productId || !href || !title) {
+        throw new Error("BOOK_INDEX_BKM_NEW_RELEASE_INVALID_ITEM");
+      }
+
+      return {
+        sourceKey: productId,
+        sourceExternalId: productId,
+        title,
+        authorName: author ? decodeBookIndexHtml(author) : null,
+        publisherName: publisher ? decodeBookIndexHtml(publisher) : null,
+        productUrl: new URL(href, "https://www.bkmkitap.com").toString(),
+        imageUrl: image ? new URL(image, "https://www.bkmkitap.com").toString() : null,
+        rank: index + 1,
+        priceAmount: priceToMinorUnits(price),
+        currency: "TRY",
+      };
+    })
+    .slice(0, MAX_BOOKS);
+
+  if (books.length < NEW_RELEASE_MIN_EXPECTED_BOOKS) {
+    throw new Error("BOOK_INDEX_BKM_NEW_RELEASE_RESULT_TOO_SMALL");
+  }
+
+  const uniqueSourceKeys = new Set(books.map((book) => book.sourceKey));
+  if (uniqueSourceKeys.size !== books.length) {
+    throw new Error("BOOK_INDEX_BKM_NEW_RELEASE_DUPLICATE_SOURCE_KEY");
+  }
+
+  return { books };
+}
+
 export const bkmBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
+    if (context.listCode === "bkm-tr-new-releases") {
+      const response = await fetch(context.sourceUrl, {
+        cache: "no-store",
+        headers: {
+          Accept: "text/html,application/xhtml+xml",
+          "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+        },
+        signal: AbortSignal.timeout(20_000),
+      });
+
+      if (!response.ok) {
+        throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+      }
+
+      return parseBkmNewReleases(await response.text());
+    }
+
     const span = spanForList(context.listCode);
     const url = new URL(ENDPOINT);
     url.searchParams.set("span", span);

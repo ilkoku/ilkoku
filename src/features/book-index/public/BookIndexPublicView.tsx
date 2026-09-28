@@ -55,31 +55,63 @@ function availabilityLabel(value: string) {
   }
 }
 
+function movementLabel(
+  masterBookId: string,
+  insights: BookIndexInsights,
+) {
+  const newEntry = insights.newEntries.find(
+    (item) => item.masterBookId === masterBookId,
+  );
+  if (newEntry) return "Yeni";
+
+  const riser = insights.risers.find(
+    (item) => item.masterBookId === masterBookId,
+  );
+  if (riser) return `↑ +${riser.totalRankGain}`;
+
+  return "—";
+}
+
 function TurkeyRows({
   model,
+  insights,
   limit,
 }: {
   model: BookIndexPublicReadModel;
+  insights: BookIndexInsights;
   limit?: number;
 }) {
   const rows = limit ? model.turkey.items.slice(0, limit) : model.turkey.items;
 
   return (
-    <ol className={styles.rankingList}>
-      {rows.map((row, index) => (
-        <li className={styles.rankingItem} key={row.masterBookId}>
-          <span className={styles.rank}>{index + 1}</span>
-          <div className={styles.book}>
-            <strong>{row.title}</strong>
-            <span>{row.authorName ?? "Yazar bilgisi bekleniyor"}</span>
-          </div>
-          <div className={styles.score}>
-            <strong>{row.score.toLocaleString("tr-TR")}</strong>
-            <span>{row.sourceCount} bağımsız işletmeci</span>
-          </div>
-        </li>
-      ))}
-    </ol>
+    <div className={styles.tableScroll}>
+      <table className={styles.rankingTable}>
+        <thead>
+          <tr>
+            <th scope="col">İlkOku Sırası</th>
+            <th scope="col">Kitap</th>
+            <th scope="col">Yazar</th>
+            <th scope="col">Kaynak Sayısı</th>
+            <th scope="col">Hareket</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={row.masterBookId}>
+              <td className={styles.rankCell}>{index + 1}</td>
+              <td className={styles.titleCell}>
+                <strong>{row.title}</strong>
+              </td>
+              <td>{row.authorName ?? "Yazar bilgisi bekleniyor"}</td>
+              <td>{row.sourceCount}</td>
+              <td className={styles.movementCell}>
+                {movementLabel(row.masterBookId, insights)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -173,7 +205,7 @@ export function BookIndexOverviewView({
           </div>
           <Link href="/en-cok-satanlar/turkiye">Tüm sıralamayı gör →</Link>
         </div>
-        <TurkeyRows model={model} limit={10} />
+        <TurkeyRows model={model} insights={insights} limit={10} />
       </section>
 
       <section className={styles.explainer} aria-labelledby="book-index-methodology">
@@ -196,8 +228,10 @@ export function BookIndexOverviewView({
 
 export function TurkeyBookIndexView({
   model,
+  insights,
 }: {
   model: BookIndexPublicReadModel;
+  insights: BookIndexInsights;
 }) {
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
@@ -234,7 +268,7 @@ export function TurkeyBookIndexView({
             </p>
           </div>
         </div>
-        <TurkeyRows model={model} />
+        <TurkeyRows model={model} insights={insights} />
       </section>
 
       <section className={styles.explainer} aria-labelledby="turkey-index-methodology">

@@ -111,7 +111,7 @@ export function parseInkilapBestsellers(
     .slice(0, MAX_BOOKS);
 
   if (books.length < MIN_EXPECTED_BOOKS) {
-    throw new Error("BOOK_INDEX_INKILAP_RESULT_TOO_SMALL");
+    throw new Error(`BOOK_INDEX_INKILAP_RESULT_TOO_SMALL:${books.length}`);
   }
 
   const uniqueKeys = new Set(books.map((book) => book.sourceKey));

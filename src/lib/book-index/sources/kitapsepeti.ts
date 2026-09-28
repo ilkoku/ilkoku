@@ -7,9 +7,18 @@ import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "kitapsepeti";
 const SOURCE_ORIGIN = "https://www.kitapsepeti.com";
-const MAX_BOOKS = 60;
+const MAX_BOOKS = 100;
+const PAGE_COUNT = 4;
 const MIN_EXPECTED_BOOKS = 20;
-const VERIFIED_NON_BOOK_SOURCE_KEYS = new Set(["/3-in-1-puzzle"]);
+const VERIFIED_NON_BOOK_SOURCE_KEYS = new Set([
+  "/3-in-1-puzzle",
+  "/ntt-magnum-jel-kalem-hediyeli-6-li-defter-love",
+  "/ntt-magnum-jel-kalem-hediyeli-6-li-defter-geometri",
+  "/kuromi-1006-10-renk-tukenmez-kalem",
+  "/note-the-time-2li-defter-set-soft-pastel-buyuk-ve-kucuk-cizgisiz",
+  "/kenko-kk-613d-dijital-kucuk-masa-araba-saati-alarm-kronometre",
+  "/canli-cicek-kitap-ayraci",
+]);
 
 function absoluteUrl(href: string) {
   return new URL(href, SOURCE_ORIGIN).toString();
@@ -108,24 +117,60 @@ export function parseKitapSepetiBestsellers(
   return { books };
 }
 
+function bestsellerPageUrl(sourceUrl: string, page: number) {
+  if (page === 1) return sourceUrl;
+
+  const url = new URL(sourceUrl);
+  url.searchParams.set("pg", String(page));
+  return url.toString();
+}
+
+async function fetchHtml(url: string) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+  }
+
+  return response.text();
+}
+
 export const kitapSepetiBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const response = await fetch(context.sourceUrl, {
-      cache: "no-store",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
-      },
-      signal: AbortSignal.timeout(20_000),
-    });
+    const pageResults = [];
 
-    if (!response.ok) {
-      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+    for (let page = 1; page <= PAGE_COUNT; page += 1) {
+      const html = await fetchHtml(bestsellerPageUrl(context.sourceUrl, page));
+      pageResults.push(parseKitapSepetiBestsellers(html));
     }
 
-    return parseKitapSepetiBestsellers(await response.text());
+    const books = pageResults
+      .flatMap((result) => result.books)
+      .slice(0, MAX_BOOKS)
+      .map((book, index) => ({
+        ...book,
+        rank: index + 1,
+      }));
+
+    if (books.length < MAX_BOOKS) {
+      throw new Error("BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL");
+    }
+
+    const uniqueKeys = new Set(books.map((book) => book.sourceKey));
+    if (uniqueKeys.size !== books.length) {
+      throw new Error("BOOK_INDEX_KITAPSEPETI_DUPLICATE_SOURCE_KEY");
+    }
+
+    return { books };
   },
 };

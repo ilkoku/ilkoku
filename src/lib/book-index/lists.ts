@@ -191,7 +191,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     categoryKey: "general",
     period: "live",
     sourceUrl: "https://www.kitapsec.com/Cok-Satanlar/1-6-0a0-0-0-0-0-0-4.xhtml",
-    maxRank: 56,
+    maxRank: 100,
     includeInComposite: false,
     collectionEveryMinutes: 360,
     publiclyVisible: false,

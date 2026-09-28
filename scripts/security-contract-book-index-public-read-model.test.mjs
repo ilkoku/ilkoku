@@ -191,6 +191,7 @@ test("New-release production exceptions stay source-specific and fail closed", (
   const illakitap = source("src/lib/book-index/sources/illakitap.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const registry = source("src/lib/book-index/new-release-sources.ts");
+  const pandora = source("src/lib/book-index/sources/pandora.ts");
 
   contains(
     inkilap,
@@ -216,6 +217,64 @@ test("New-release production exceptions stay source-specific and fail closed", (
     illakitap,
     'context.listCode === "illakitap-tr-new-releases"',
     "İlla Kitap new releases use the source-specific parser path",
+  );
+
+  contains(
+    pandora,
+    'context.listCode === "pandora-tr-new-releases"',
+    "Pandora native new-release path is explicitly isolated",
+  );
+  contains(
+    pandora,
+    'const NEW_RELEASE_API_URL = "https://www.pandora.com.tr/api/yenikitaplar?dil=1";',
+    "Pandora new releases use the verified native Turkish API",
+  );
+  contains(
+    pandora,
+    "const NEW_RELEASE_NATIVE_PAGE_SIZE = 40;",
+    "Pandora collection stays aligned with the verified native desktop first page",
+  );
+  contains(
+    pandora,
+    'textValue(response.categoryName) !== "Yeni Kitaplar"',
+    "Pandora native category metadata fails closed",
+  );
+  contains(
+    pandora,
+    'textValue(response.language) !== "1"',
+    "Pandora Turkish language metadata fails closed",
+  );
+  contains(
+    pandora,
+    'textValue(row.yeniUrun) !== "yeniUrun"',
+    "Pandora collected rows retain the verified native new-book marker",
+  );
+  contains(
+    pandora,
+    "pandoraNewReleaseSmartOrder(rows)",
+    "Pandora first-page position is reconstructed from the source-native smart order",
+  );
+
+  const pandoraMarker = 'code: "pandora-tr-new-releases"';
+  const pandoraStart = lists.indexOf(pandoraMarker);
+  assert.ok(pandoraStart >= 0, "missing Pandora new-release list");
+  const pandoraEnd = lists.indexOf("\n  },", pandoraStart);
+  const pandoraBlock = lists.slice(pandoraStart, pandoraEnd);
+  contains(pandoraBlock, "maxRank: 40", "Pandora native first-page size is bounded");
+  contains(
+    pandoraBlock,
+    "includeInComposite: false",
+    "Pandora new releases do not vote in a composite ranking",
+  );
+  contains(
+    pandoraBlock,
+    "publiclyVisible: false",
+    "Pandora collector stays private during soft launch",
+  );
+  contains(
+    pandoraBlock,
+    "enabled: true",
+    "verified Pandora new-release collection is scheduler-eligible",
   );
 
   const kitapsepetiMarker = 'code: "kitapsepeti-tr-new-releases"';

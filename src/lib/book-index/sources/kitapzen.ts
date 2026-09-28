@@ -10,6 +10,12 @@ const SOURCE_ORIGIN = "https://www.kitapzen.com";
 const MAX_BOOKS = 20;
 const MIN_EXPECTED_BOOKS = 15;
 
+const PAGINATED_LIST_CODES = new Set([
+  "kitapzen-tr-weekly",
+  "kitapzen-tr-monthly",
+  "kitapzen-tr-yearly",
+]);
+
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
 }
@@ -122,7 +128,7 @@ export const kitapzenBookIndexAdapter: BookIndexSourceAdapter = {
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    if (context.listCode !== "kitapzen-tr-weekly") {
+    if (!PAGINATED_LIST_CODES.has(context.listCode)) {
       return parseKitapzenBestsellers(
         await fetchKitapzenPage(context.sourceUrl),
       );

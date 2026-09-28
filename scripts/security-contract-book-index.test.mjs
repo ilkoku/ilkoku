@@ -437,6 +437,10 @@ test("Kitapzen collector parses verified bestseller cards with ISBN and period l
 
   contains(adapter, 'const MAX_BOOKS = 20;', "Kitapzen page size");
   contains(adapter, 'const MIN_EXPECTED_BOOKS = 15;', "Kitapzen fail-closed minimum");
+  contains(adapter, 'const PAGINATED_LIST_CODES = new Set([', "Kitapzen paginated period registry");
+  contains(adapter, '"kitapzen-tr-weekly"', "Kitapzen weekly uses native pagination");
+  contains(adapter, '"kitapzen-tr-monthly"', "Kitapzen monthly uses native pagination");
+  contains(adapter, '"kitapzen-tr-yearly"', "Kitapzen yearly uses native pagination");
   contains(adapter, 'data-prd-barcode', "Kitapzen ISBN source");
   contains(adapter, '\\bProduct_b\\b', "Kitapzen product card selector");
   contains(adapter, '\\bwriter\\b', "Kitapzen author selector");
@@ -446,6 +450,14 @@ test("Kitapzen collector parses verified bestseller cards with ISBN and period l
   contains(lists, 'code: "kitapzen-tr-weekly"', "Kitapzen weekly list");
   contains(lists, 'code: "kitapzen-tr-monthly"', "Kitapzen monthly list");
   contains(lists, 'code: "kitapzen-tr-yearly"', "Kitapzen yearly list");
+  for (const listCode of ["kitapzen-tr-weekly", "kitapzen-tr-monthly", "kitapzen-tr-yearly"]) {
+    const marker = `code: "${listCode}"`;
+    const start = lists.indexOf(marker);
+    assert.ok(start >= 0, `missing Kitapzen list: ${listCode}`);
+    const end = lists.indexOf("\n  },", start);
+    const block = lists.slice(start, end);
+    contains(block, "maxRank: 100", `${listCode} keeps Top 100 rank ceiling`);
+  }
   contains(collector, "[kitapzenBookIndexAdapter.sourceCode, kitapzenBookIndexAdapter]", "Kitapzen adapter activation");
   contains(
     sources,

@@ -118,9 +118,11 @@ function TurkeyRows({
 export function BookIndexOverviewView({
   model,
   insights,
+  showInsightPages,
 }: {
   model: BookIndexPublicReadModel;
   insights: BookIndexInsights;
+  showInsightPages: boolean;
 }) {
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
@@ -164,7 +166,7 @@ export function BookIndexOverviewView({
         </article>
       </section>
 
-      {publishedInsightPages.length ? (
+      {showInsightPages && publishedInsightPages.length ? (
         <section className={styles.section} aria-labelledby="insight-pages-heading">
           <div className={styles.sectionHeading}>
             <div>

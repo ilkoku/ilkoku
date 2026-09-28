@@ -91,7 +91,11 @@ export default async function BestsellersPage() {
           }}
         />
       ) : null}
-      <BookIndexOverviewView\n        model={context.model}\n        insights={insights}\n        showInsightPages={context.gate.canPublish}\n      />
+      <BookIndexOverviewView
+        model={context.model}
+        insights={insights}
+        showInsightPages={context.gate.canPublish}
+      />
     </>
   );
 }

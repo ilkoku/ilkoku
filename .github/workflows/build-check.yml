@@ -38,5 +38,5 @@ jobs:
       - name: Bağımlılıkları yükle
         run: npm ci
 
-      - name: Production build
-        run: npm run build
+      - name: Hostinger compiler check
+        run: npm run system-map:generate && npx prisma generate && npx next build --webpack

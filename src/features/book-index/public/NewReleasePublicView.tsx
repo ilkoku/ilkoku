@@ -63,9 +63,10 @@ export function NewReleasePublicView({
             <span className={styles.eyebrow}>Türkiye</span>
             <h2>Kaynakların yeni çıkan kitapları</h2>
             <p>
-              Kaynak sütunundaki sayı, kitabın ilgili sitenin kendi yeni çıkanlar
-              listesindeki konumudur. Bu değer satış sırası değildir ve kaynaklar
-              arasında ortak bir İlkOku sıralaması oluşturmaz.
+              Kayıtlar kitap adına göre alfabetik gösterilir. Kaynak sütunundaki
+              sayı, kitabın ilgili sitenin kendi yeni çıkanlar listesindeki konumudur.
+              Bu değer satış sırası değildir ve kaynaklar arasında ortak bir İlkOku
+              sıralaması oluşturmaz.
             </p>
           </div>
         </div>

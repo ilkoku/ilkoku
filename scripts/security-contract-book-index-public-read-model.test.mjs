@@ -248,6 +248,7 @@ test("Yeni Çıkanlar page stays noindex and source-native during soft launch", 
   const page = source("src/app/yeni-cikanlar/page.tsx");
   const view = source("src/features/book-index/public/NewReleasePublicView.tsx");
   const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const model = source("src/lib/book-index/new-releases.ts");
 
   contains(page, 'canonical = "/yeni-cikanlar"', "stable Yeni Çıkanlar canonical");
   contains(page, "noIndex: true", "Yeni Çıkanlar remains noindex during soft launch");
@@ -263,6 +264,21 @@ test("Yeni Çıkanlar page stays noindex and source-native during soft launch", 
     view,
     "Bu değer satış sırası değildir",
     "source position is not represented as a sales rank",
+  );
+  contains(
+    view,
+    "Kayıtlar kitap adına göre alfabetik gösterilir.",
+    "Yeni Çıkanlar uses a neutral visible order",
+  );
+  contains(
+    model,
+    'a.title.localeCompare(b.title, "tr")',
+    "new-release rows use title as the primary cross-source sort",
+  );
+  notContains(
+    model,
+    "b.latestObservedAt.getTime() - a.latestObservedAt.getTime()\n        || a.title",
+    "collector timing cannot become the apparent new-release ranking",
   );
   contains(
     view,

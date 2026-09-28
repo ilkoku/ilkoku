@@ -82,9 +82,9 @@ export const BOOK_INDEX_NEW_RELEASE_SOURCES: readonly BookIndexNewReleaseSourceD
   },
   {
     sourceCode: "pandora",
-    nativeLabel: "Yeni Gelenler - Türkçe Kitaplar",
-    sourceUrl: "https://www.pandora.com.tr/",
-    collectionMode: "homepage_section",
+    nativeLabel: "Son Ayın Kitapları",
+    sourceUrl: "https://www.pandora.com.tr/Konu/son-ayin-kitaplari/1014",
+    collectionMode: "dedicated_page",
     status: "verified_native_list",
   },
   {

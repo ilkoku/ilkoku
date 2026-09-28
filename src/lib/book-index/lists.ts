@@ -1,3 +1,4 @@
+import { validateBookIndexNewReleaseSourceRegistry } from "./new-release-sources";
 import { getBookIndexSource } from "./sources";
 
 export type BookIndexListDefinition = {
@@ -337,6 +338,8 @@ export function getBookIndexList(code: string) {
 }
 
 export function validateBookIndexListRegistry() {
+  validateBookIndexNewReleaseSourceRegistry();
+
   for (const list of BOOK_INDEX_LISTS) {
     if (!getBookIndexSource(list.sourceCode)) {
       throw new Error(`BOOK_INDEX_UNKNOWN_SOURCE:${list.sourceCode}`);

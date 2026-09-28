@@ -67,11 +67,15 @@ function anchorValueFromClass(card: string, classToken: "KisiAdi" | "FirmaAdi") 
   );
 }
 
-function parseCard(card: string, productId: string) {
+function parseCard(
+  card: string,
+  productId: string,
+  fallbackRank?: number,
+) {
   const rankValue = card.match(
     /<div\b[^>]*class=["'][^"']*\bNo\b[^"']*["'][^>]*>\s*([0-9]{1,3})\s*<\/div>/iu,
   )?.[1];
-  const rank = rankValue ? Number(rankValue) : Number.NaN;
+  const rank = rankValue ? Number(rankValue) : fallbackRank ?? Number.NaN;
 
   const titleSection = card.match(
     /<div\b[^>]*class=["'][^"']*\bUrunAdi\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/iu,
@@ -210,6 +214,105 @@ export function parseKitapStoreBestsellerPage(
   return { books };
 }
 
+export function parseKitapStoreNewReleasePage(
+  html: string,
+  rankOffset = 0,
+): BookIndexCollectionResult {
+  const headings = [
+    ...html.matchAll(
+      /<div\b[^>]*class=["'][^"']*\bIcBaslik\b[^"']*["'][^>]*>\s*YENİ\s+ÇIKANLAR\s*<\/div>/giu,
+    ),
+  ];
+  const headingIndex = headings.at(-1)?.index;
+
+  if (headingIndex === undefined) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_NEW_RELEASE_HEADING_MISSING");
+  }
+
+  const afterHeading = html.slice(headingIndex);
+  const listBody = afterHeading.match(
+    /<ul\b[^>]*class=["'][^"']*\bIslemliL\b[^"']*["'][^>]*>([\s\S]*?)<\/ul>/iu,
+  )?.[1];
+
+  if (!listBody) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_NEW_RELEASE_LIST_MISSING");
+  }
+
+  const starts = [
+    ...listBody.matchAll(
+      /<li\b(?=[^>]*\bitemtype=["']http:\/\/schema\.org\/Book["'])(?=[^>]*\bid=["']Urun-([0-9]+)["'])[^>]*>/giu,
+    ),
+  ];
+
+  if (starts.length !== EXPECTED_PAGE_BOOKS) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_NEW_RELEASE_PAGE_SIZE_MISMATCH");
+  }
+
+  const books = starts.map((match, index) => {
+    const productId = match[1]?.trim() ?? "";
+    const start = match.index ?? 0;
+    const end = starts[index + 1]?.index ?? listBody.length;
+
+    if (!productId) {
+      throw new Error("BOOK_INDEX_KITAPSTORE_INVALID_ITEM");
+    }
+
+    return parseCard(
+      listBody.slice(start, end),
+      productId,
+      rankOffset + index + 1,
+    );
+  });
+
+  const sourceKeys = new Set(books.map((book) => book.sourceKey));
+  const productUrls = new Set(books.map((book) => book.productUrl));
+
+  if (sourceKeys.size !== books.length) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY");
+  }
+
+  if (productUrls.size !== books.length) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL");
+  }
+
+  return { books };
+}
+
+export function combineKitapStoreNewReleasePages(
+  pages: BookIndexCollectionResult[],
+): BookIndexCollectionResult {
+  if (pages.length !== PAGE_COUNT) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_NEW_RELEASE_PAGE_COUNT_MISMATCH");
+  }
+
+  const books = pages.flatMap((page) => page.books);
+
+  if (books.length !== MAX_BOOKS) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_NEW_RELEASE_RESULT_SIZE_MISMATCH");
+  }
+
+  const sourceKeys = new Set(books.map((book) => book.sourceKey));
+  const productUrls = new Set(books.map((book) => book.productUrl));
+
+  if (sourceKeys.size !== books.length) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY");
+  }
+
+  if (productUrls.size !== books.length) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL");
+  }
+
+  if (
+    books.some(
+      (book, index) => book.rank !== index + 1,
+    )
+  ) {
+    throw new Error("BOOK_INDEX_KITAPSTORE_NEW_RELEASE_ORDER_MISMATCH");
+  }
+
+  return { books };
+}
+
 export function combineKitapStoreBestsellerPages(
   pages: BookIndexCollectionResult[],
 ): BookIndexCollectionResult {
@@ -330,6 +433,10 @@ function pageUrl(page: number) {
   return `${SOURCE_ORIGIN}/liste/2/cok-satanlar/!Sayfa=${page}`;
 }
 
+function newReleasePageUrl(page: number) {
+  return `${SOURCE_ORIGIN}/liste/1/yeni-cikanlar/!Sayfa=${page}`;
+}
+
 async function fetchHtml(url: string) {
   const response = await fetch(url, {
     cache: "no-store",
@@ -353,6 +460,24 @@ export const kitapStoreBookIndexResearchAdapter: BookIndexSourceAdapter = {
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
+    if (context.listCode === "kitapstore-tr-new-releases") {
+      const htmlPages = await Promise.all(
+        Array.from(
+          { length: PAGE_COUNT },
+          (_, index) => fetchHtml(newReleasePageUrl(index + 1)),
+        ),
+      );
+
+      return combineKitapStoreNewReleasePages(
+        htmlPages.map((html, index) =>
+          parseKitapStoreNewReleasePage(
+            html,
+            index * EXPECTED_PAGE_BOOKS,
+          ),
+        ),
+      );
+    }
+
     if (
       context.listCode !== "kitapstore-tr-live" &&
       context.listCode !== "kitapstore-tr-live-canary"

@@ -1082,9 +1082,24 @@ test("Book Index source adapters exclude only verified non-book catalogue entrie
   );
   contains(
     kitapsepeti,
-    'const VERIFIED_NON_BOOK_SOURCE_KEYS = new Set(["/3-in-1-puzzle"]);',
-    "verified KitapSepeti puzzle exclusion",
+    "const VERIFIED_NON_BOOK_SOURCE_KEYS = new Set([",
+    "verified KitapSepeti exact non-book exclusion set",
   );
+  for (const sourceKey of [
+    "/3-in-1-puzzle",
+    "/ntt-magnum-jel-kalem-hediyeli-6-li-defter-love",
+    "/ntt-magnum-jel-kalem-hediyeli-6-li-defter-geometri",
+    "/kuromi-1006-10-renk-tukenmez-kalem",
+    "/note-the-time-2li-defter-set-soft-pastel-buyuk-ve-kucuk-cizgisiz",
+    "/kenko-kk-613d-dijital-kucuk-masa-araba-saati-alarm-kronometre",
+    "/canli-cicek-kitap-ayraci",
+  ]) {
+    contains(
+      kitapsepeti,
+      `"${sourceKey}"`,
+      `verified KitapSepeti non-book exclusion: ${sourceKey}`,
+    );
+  }
   contains(
     kitapsepeti,
     "VERIFIED_NON_BOOK_SOURCE_KEYS.has(href)",

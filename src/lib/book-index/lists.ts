@@ -586,17 +586,17 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
 
 
   {
-    code: "amazon-tr-new-releases",
+    code: "amazon-tr-new-releases-research",
     sourceCode: "amazon-tr",
-    title: "Amazon Türkiye · Kitap Yeni Çıkanlar",
+    title: "Amazon Türkiye · Kitap Yeni Çıkanlar · Research",
     categoryKey: "new-releases",
     period: "live",
     sourceUrl: "https://www.amazon.com.tr/gp/new-releases/books",
     maxRank: 100,
     includeInComposite: false,
-    collectionEveryMinutes: 360,
+    collectionEveryMinutes: null,
     publiclyVisible: false,
-    enabled: true,
+    enabled: false,
   },
   {
     code: "amazon-tr-live",
@@ -605,12 +605,11 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     categoryKey: "general",
     period: "live",
     sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",
-    maxRank: 100,
-    includeInComposite: true,
-    includeInTurkeyDisplay: true,
+    maxRank: null,
+    includeInComposite: false,
     collectionEveryMinutes: 360,
-    publiclyVisible: true,
-    enabled: true,
+    publiclyVisible: false,
+    enabled: false,
   },
 ] as const;
 

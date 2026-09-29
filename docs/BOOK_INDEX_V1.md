@@ -169,7 +169,7 @@ Gate ancak şu gerçek readiness ölçümlerini değerlendirir:
 
 - başarılı bağımsız composite işletmeci grubu sayısı,
 - master kitap eşleşme yüzdesi,
-- tarihsel snapshot gün sayısı,
+- aktif Türkiye composite kaynakları içindeki en kısa başarılı tarihsel snapshot gün sayısı,
 - üretilebilen Türkiye Endeksi kayıt sayısı.
 
 Kanıtlar eşikleri geçse bile ayrı publication anahtarı açılmadıkça

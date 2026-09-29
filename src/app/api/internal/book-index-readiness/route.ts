@@ -8,6 +8,7 @@ import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import {
   evaluateBookIndexSeoGate,
   getBookIndexSeoGatePolicy,
+  getBookIndexSeoHistorySpanDays,
 } from "@/lib/book-index/seo-gate";
 
 export const dynamic = "force-dynamic";
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
         observedIndependentCompositeSources:
           readiness.observedCompositeIndependenceGroups,
         matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent,
-        historySpanDays: readiness.historySpanDays,
+        historySpanDays: getBookIndexSeoHistorySpanDays(readiness),
         turkeyItemCount: publicReadModel.turkey.items.length,
       },
     );

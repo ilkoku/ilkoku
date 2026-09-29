@@ -5,6 +5,7 @@ import { cache } from "react";
 import {
   evaluateBookIndexSeoGate,
   getBookIndexSeoGatePolicy,
+  getBookIndexSeoHistorySpanDays,
   type BookIndexSeoGateSnapshot,
 } from "./seo-gate";
 import {
@@ -49,7 +50,7 @@ async function buildBookIndexPageContext(
     observedIndependentCompositeSources:
       readiness.observedCompositeIndependenceGroups,
     matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent,
-    historySpanDays: readiness.historySpanDays,
+    historySpanDays: getBookIndexSeoHistorySpanDays(readiness),
     turkeyItemCount: model.turkey.items.length,
   });
 

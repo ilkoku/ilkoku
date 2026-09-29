@@ -54,12 +54,12 @@ test("Amazon TR production adapter preserves native ranked book surfaces", () =>
   contains(
     adapter,
     '"amazon-tr-live"',
-    "bestseller research list boundary",
+    "bestseller production list boundary",
   );
   contains(
     adapter,
     '"amazon-tr-new-releases"',
-    "new-release research list boundary",
+    "new-release production list boundary",
   );
   contains(
     adapter,
@@ -69,7 +69,7 @@ test("Amazon TR production adapter preserves native ranked book surfaces", () =>
   contains(
     adapter,
     "Collector adapter for the verified native ranked book surfaces:",
-    "research-only rollout boundary",
+    "production rollout boundary",
   );
 
   contains(
@@ -85,7 +85,7 @@ test("Amazon TR production adapter preserves native ranked book surfaces", () =>
   contains(
     sources,
     'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    Amazon TR source is ready,
+    "Amazon TR source is ready",
   );
   contains(
     lists,
@@ -95,6 +95,6 @@ test("Amazon TR production adapter preserves native ranked book surfaces", () =>
   contains(
     lists,
     'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books"',
-    "disabled list uses the verified native bestseller surface",
+    "live list uses the verified native bestseller surface",
   );
 });

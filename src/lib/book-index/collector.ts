@@ -22,6 +22,7 @@ import { illaKitapBookIndexAdapter } from "./sources/illakitap";
 import { nobelKitapBookIndexAdapter } from "./sources/nobelkitap";
 import { kitapzenBookIndexAdapter } from "./sources/kitapzen";
 import { idefixBookIndexAdapter } from "./sources/idefix";
+import { imgeBookIndexAdapter } from "./sources/imge";
 import { pandoraBookIndexAdapter } from "./sources/pandora";
 import { remziBookIndexAdapter } from "./sources/remzi";
 
@@ -39,6 +40,7 @@ const adapters = new Map<string, BookIndexSourceAdapter>([
   [nobelKitapBookIndexAdapter.sourceCode, nobelKitapBookIndexAdapter],
   [kitapzenBookIndexAdapter.sourceCode, kitapzenBookIndexAdapter],
   [idefixBookIndexAdapter.sourceCode, idefixBookIndexAdapter],
+  [imgeBookIndexAdapter.sourceCode, imgeBookIndexAdapter],
   [pandoraBookIndexAdapter.sourceCode, pandoraBookIndexAdapter],
 ]);
 

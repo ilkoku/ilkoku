@@ -56,11 +56,11 @@ test("Amazon Türkiye production supports verified ranked book surfaces", () => 
     "amazonTrBookIndexAdapter",
     "Amazon Türkiye adapter is registered in collector",
   );
-  contains(lists, 'code: "amazon-tr-live"', "existing bestseller placeholder remains");
+  contains(lists, 'code: "amazon-tr-live"', "Amazon TR bestseller list remains registered");
   contains(
     lists,
     'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books"',
-    "existing bestseller source URL remains",
+    "Amazon TR bestseller source URL",
   );
   contains(
     lists,
@@ -75,7 +75,7 @@ test("Amazon Türkiye production supports verified ranked book surfaces", () => 
   contains(
     sources,
     'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    Amazon Türkiye source is ready,
+    "Amazon Türkiye source is ready",
   );
 });
 

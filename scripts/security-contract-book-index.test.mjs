@@ -1410,6 +1410,7 @@ test("Kitap Ambari qualification evidence remains observable after non-voting li
   const liveEnd = lists.indexOf("\n  },", liveStart);
   const liveBlock = lists.slice(liveStart, liveEnd);
   contains(liveBlock, "includeInComposite: false", "Kitap Ambari remains non-voting");
+  contains(liveBlock, "includeInTurkeyDisplay: true", "Kitap Ambari remains visible in public Turkey source rows");
   contains(liveBlock, "publiclyVisible: true", "Kitap Ambari live source is public");
   contains(liveBlock, "enabled: true", "Kitap Ambari live collection is enabled");
 });
@@ -1713,7 +1714,7 @@ test("Kitap Ambari live source collects publicly without composite voting", () =
 
   contains(
     lists,
-    'code: "kitapambari-tr-live",\n    sourceCode: "kitapambari",\n    title: "Kitap Ambarı · Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: 100,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
+    'code: "kitapambari-tr-live",\n    sourceCode: "kitapambari",\n    title: "Kitap Ambarı · Çok Satanlar",\n    categoryKey: "general",\n    period: "live",\n    sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",\n    maxRank: 100,\n    includeInComposite: false,\n    includeInTurkeyDisplay: true,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
     "Kitap Ambari live source is active but non-voting",
   );
 

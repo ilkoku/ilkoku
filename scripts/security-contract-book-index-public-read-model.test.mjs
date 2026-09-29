@@ -28,6 +28,21 @@ test("Book Index public read model preserves source ranks without public composi
   );
   contains(
     sourceRankTable,
+    "list.includeInComposite || list.includeInTurkeyDisplay === true",
+    "public Turkey rows allow explicitly displayed non-voting sources",
+  );
+  contains(
+    sourceRankTable,
+    "code: { in: publicTurkeyListCodes }",
+    "public Turkey query is constrained to registry-approved display lists",
+  );
+  notContains(
+    sourceRankTable,
+    "includeInComposite: true,",
+    "public Turkey source table is no longer identical to composite voting",
+  );
+  contains(
+    sourceRankTable,
     "const rowKey = \`\${observation.rank}|\${identity}\`;",
     "same book merges only at the same rank",
   );
@@ -476,4 +491,24 @@ test("bestseller full list and comparison expose distinct view modes", () => {
     "comparison current-page state",
   );
   contains(styles, ".viewModeNav", "visible mode navigation styling");
+});
+
+
+test("Kitap Ambari is displayable without gaining a Turkey composite vote", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+  const sourceRankTable = source("src/lib/book-index/source-rank-table.ts");
+  const readModel = source("src/lib/book-index/read-model.ts");
+
+  const marker = 'code: "kitapambari-tr-live"';
+  const start = lists.indexOf(marker);
+  assert.ok(start >= 0, "missing Kitap Ambari live list");
+  const end = lists.indexOf("\n  },", start);
+  const block = lists.slice(start, end);
+
+  contains(block, "includeInComposite: false", "Kitap Ambari remains non-voting");
+  contains(block, "includeInTurkeyDisplay: true", "Kitap Ambari is explicitly visible in Turkey source rows");
+  contains(block, "publiclyVisible: true", "Kitap Ambari is a public source");
+  contains(sourceRankTable, "includeInTurkeyDisplay === true", "source-rank table honors display-only sources");
+  contains(readModel, "includeInComposite: true", "composite scoring still uses the independent voting gate");
+  notContains(readModel, "includeInTurkeyDisplay", "display-only flag cannot affect composite scoring");
 });

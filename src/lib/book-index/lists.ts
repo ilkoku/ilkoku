@@ -10,6 +10,7 @@ export type BookIndexListDefinition = {
   sourceUrl: string;
   maxRank: number | null;
   includeInComposite: boolean;
+  includeInTurkeyDisplay?: boolean;
   collectionEveryMinutes: number | null;
   publiclyVisible: boolean;
   enabled: boolean;
@@ -274,6 +275,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",
     maxRank: 100,
     includeInComposite: false,
+    includeInTurkeyDisplay: true,
     collectionEveryMinutes: 360,
     publiclyVisible: true,
     enabled: true,

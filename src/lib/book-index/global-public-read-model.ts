@@ -18,17 +18,11 @@ export type GlobalBestsellerListCode =
   (typeof GLOBAL_BESTSELLER_LIST_CODES)[number];
 
 export type GlobalBestsellerReadModel = {
-  rolloutState: "gated";
+  rolloutState: "public";
   lists: BookIndexSourceListSnapshot[];
   availableListCount: number;
   latestObservedAt: Date | null;
 };
-
-export function isGlobalBestsellerPreviewEnabled(
-  env: NodeJS.ProcessEnv = process.env,
-) {
-  return env.BOOK_INDEX_GLOBAL_PREVIEW_ENABLED === "true";
-}
 
 export async function getGlobalBestsellerReadModel(
   limit = 100,
@@ -52,7 +46,7 @@ export async function getGlobalBestsellerReadModel(
   }, null);
 
   return {
-    rolloutState: "gated",
+    rolloutState: "public",
     lists,
     availableListCount: lists.filter(
       (list) => list.availability === "available",

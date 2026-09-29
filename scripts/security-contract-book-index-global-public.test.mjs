@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("global bestseller preview reads only the six approved native source lists", () => {
+test("global bestseller public page reads only the six approved source lists", () => {
   const model = source("src/lib/book-index/global-public-read-model.ts");
 
   for (const listCode of [
@@ -28,42 +28,34 @@ test("global bestseller preview reads only the six approved native source lists"
   contains(
     model,
     "getBookIndexSourceListSnapshot(listCode, limit)",
-    "global preview reuses successful native snapshot reads",
+    "global page reuses successful source snapshot reads",
   );
-  contains(
-    model,
-    'rolloutState: "gated"',
-    "global rollout remains explicitly gated",
-  );
-  contains(
-    model,
-    'BOOK_INDEX_GLOBAL_PREVIEW_ENABLED === "true"',
-    "global preview requires an explicit environment switch",
-  );
+  contains(model, 'rolloutState: "public"', "global rollout is public");
   notContains(
     model,
     "includeInComposite",
-    "global preview does not build a cross-market composite rank",
+    "global page does not build a cross-market composite rank",
   );
   notContains(
     model,
     "getTurkeySourceRankRows",
-    "global preview stays independent from Turkey ranking aggregation",
+    "global page stays independent from Turkey ranking aggregation",
   );
 });
 
 
-test("global bestseller page is gated, noindex and source-native", () => {
+test("global bestseller page is indexable, discoverable and source-native", () => {
   const page = source("src/app/en-cok-satanlar/dunya/page.tsx");
   const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
   const sitemap = source("src/app/sitemap.ts");
 
+  notContains(page, "notFound()", "global route is no longer gated");
+  contains(page, "noIndex: false", "global page is indexable");
   contains(
-    page,
-    "if (!isGlobalBestsellerPreviewEnabled()) notFound();",
-    "global route remains behind explicit preview gate",
+    sitemap,
+    "/en-cok-satanlar/dunya",
+    "global page is included in the XML sitemap",
   );
-  contains(page, "noIndex: true", "global preview stays noindex");
   contains(
     view,
     "İlkOku ülkeler arasında ortak bir dünya sırası",
@@ -72,80 +64,39 @@ test("global bestseller page is gated, noindex and source-native", () => {
   contains(
     view,
     "Sıra numaraları İlkOku tarafından yeniden",
-    "source-native rank methodology",
+    "source rank methodology",
   );
-  contains(view, "item.rank", "native source rank rendering");
-  notContains(
-    sitemap,
-    "/en-cok-satanlar/dunya",
-    "global preview is absent from sitemap before SEO approval",
-  );
+  contains(view, "item.rank", "source rank rendering");
 });
 
 
-test("global bestseller overview link appears only when preview gate is enabled", () => {
+test("global bestseller overview links to the public world page", () => {
   const page = source("src/app/en-cok-satanlar/page.tsx");
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
 
   contains(
     page,
-    "const showGlobalPreview = isGlobalBestsellerPreviewEnabled();",
-    "overview resolves global preview gate on the server",
-  );
-  contains(
-    view,
-    "showGlobalPreview ? (",
-    "global overview link is conditionally rendered",
+    "showGlobalPreview",
+    "overview explicitly enables the global card",
   );
   contains(
     view,
     'href="/en-cok-satanlar/dunya"',
-    "approved global preview route",
-  );
-  contains(
-    view,
-    "<article className={styles.card}>",
-    "disabled gate keeps the current non-link card fallback",
+    "overview links to the public global page",
   );
 });
 
 
-test("global preview defaults to OFF in environment contract", () => {
+test("global public launch no longer depends on a preview environment flag", () => {
   const env = source(".env.example");
   const model = source("src/lib/book-index/global-public-read-model.ts");
+  const page = source("src/app/en-cok-satanlar/dunya/page.tsx");
 
-  contains(
-    env,
-    'BOOK_INDEX_GLOBAL_PREVIEW_ENABLED="false"',
-    "global preview example default stays explicitly disabled",
-  );
-  contains(
-    model,
-    'env.BOOK_INDEX_GLOBAL_PREVIEW_ENABLED === "true"',
-    "runtime activation remains explicit opt-in only",
-  );
+  notContains(env, "BOOK_INDEX_GLOBAL_PREVIEW_ENABLED", "obsolete preview env flag is removed");
+  notContains(model, "BOOK_INDEX_GLOBAL_PREVIEW_ENABLED", "global read model has no preview gate");
+  notContains(page, "isGlobalBestsellerPreviewEnabled", "global route has no preview gate");
 });
 
-
-test("global preview cannot leak into public discovery surfaces", () => {
-  const navigation = source("src/lib/public-site-navigation.ts");
-  const header = source("src/components/layout/PublicSiteHeader.tsx");
-  const sitemap = source("src/app/sitemap.ts");
-  const siteMapPage = source("src/app/site-haritasi/page.tsx");
-
-  for (const [label, surface] of [
-    ["public navigation", navigation],
-    ["public header", header],
-    ["XML sitemap", sitemap],
-    ["HTML site map", siteMapPage],
-  ]) {
-    notContains(
-      surface,
-      "/en-cok-satanlar/dunya",
-      `${label} must not publish the gated global preview route`,
-    );
-  }
-});
 
 test("global preview copy avoids internal collector terminology", () => {
   const page = source("src/app/en-cok-satanlar/dunya/page.tsx");

@@ -31,6 +31,7 @@ import { idefixBookIndexAdapter } from "./sources/idefix";
 import { imgeBookIndexAdapter } from "./sources/imge";
 import { pandoraBookIndexAdapter } from "./sources/pandora";
 import { remziBookIndexAdapter } from "./sources/remzi";
+import { drBookIndexAdapter } from "./sources/dr";
 
 const adapters = new Map<string, BookIndexSourceAdapter>([
   [amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter],
@@ -40,6 +41,7 @@ const adapters = new Map<string, BookIndexSourceAdapter>([
   [kyoboKoreaBookIndexAdapter.sourceCode, kyoboKoreaBookIndexAdapter],
   [readingsAustraliaBookIndexAdapter.sourceCode, readingsAustraliaBookIndexAdapter],
   [remziBookIndexAdapter.sourceCode, remziBookIndexAdapter],
+  [drBookIndexAdapter.sourceCode, drBookIndexAdapter],
   [bkmBookIndexAdapter.sourceCode, bkmBookIndexAdapter],
   [kitapSepetiBookIndexAdapter.sourceCode, kitapSepetiBookIndexAdapter],
   [kitapStoreBookIndexResearchAdapter.sourceCode, kitapStoreBookIndexResearchAdapter],

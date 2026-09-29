@@ -264,7 +264,7 @@ test("only BKM weekly contributes to the Turkey composite in V1", () => {
 });
 
 
-test("Amazon sources remain fail-closed until a stable sanctioned collector path exists", () => {
+test("Amazon TR stays research-only while global Amazon US and UK collectors are isolated", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
@@ -275,16 +275,48 @@ test("Amazon sources remain fail-closed until a stable sanctioned collector path
   );
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com",\n    includeInTurkeyIndex: false,\n    phase: "v1",\n    collectionState: "blocked"',
-    "Amazon US automated access block",
+    'baseUrl: "https://www.amazon.com",\n    includeInTurkeyIndex: false,\n    independenceGroup: "amazon-us",\n    operatorName: "Amazon US",\n    phase: "v1",\n    collectionState: "ready"',
+    "Amazon US global source is ready and excluded from Turkey",
   );
-  notContains(
+  contains(
     collector,
-    'sourceCode: "amazon-us"',
-    "Amazon US collector is not activated",
+    "[amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter]",
+    "Amazon US collector is isolated and active",
   );
 });
 
+
+test("Amazon US global source preserves native bestseller rank without joining Turkey", () => {
+  const adapter = source("src/lib/book-index/sources/amazon-us.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "amazon-us",\n    name: "Amazon ABD",\n    market: "US",\n    countryCode: "US",\n    baseUrl: "https://www.amazon.com",\n    includeInTurkeyIndex: false',
+    "Amazon US stays outside Turkey",
+  );
+  contains(lists, 'code: "amazon-us-live"', "Amazon US list registry");
+  contains(lists, 'sourceUrl: "https://www.amazon.com/Best-Sellers-Books/zgbs/books"', "Amazon US native bestseller URL");
+  contains(lists, 'maxRank: 30', "Amazon US Top 30 cap");
+  contains(lists, 'publiclyVisible: false', "global source stays unpublished before global UI approval");
+  contains(adapter, "p13n-asin-index-", "isolated Amazon US bestseller cards");
+  contains(adapter, "BOOK_INDEX_AMAZON_US_RESULT_SIZE_MISMATCH", "exact page-size guard");
+  contains(adapter, "BOOK_INDEX_AMAZON_US_ACCESS_CHALLENGE", "access challenge fail-closed guard");
+  contains(adapter, "rank !== index + 1", "native rank continuity");
+  contains(adapter, "authorName: null", "unverified author text is not guessed");
+  contains(
+    adapter,
+    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
+    "transparent Amazon US collector identity",
+  );
+  contains(
+    collector,
+    "[amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter]",
+    "Amazon US adapter activation",
+  );
+});
 
 test("Amazon UK global source preserves native bestseller rank without joining Turkey", () => {
   const adapter = source("src/lib/book-index/sources/amazon-uk.ts");
@@ -292,7 +324,7 @@ test("Amazon UK global source preserves native bestseller rank without joining T
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK";', "UK market type");
+  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU";', "global market types include Italy, Japan, Korea and Australia");
   contains(
     sources,
     'code: "amazon-uk",\n    name: "Amazon UK",\n    market: "UK",\n    countryCode: "UK",\n    baseUrl: "https://www.amazon.co.uk",\n    includeInTurkeyIndex: false',
@@ -316,6 +348,171 @@ test("Amazon UK global source preserves native bestseller rank without joining T
     "[amazonUkBookIndexAdapter.sourceCode, amazonUkBookIndexAdapter]",
     "Amazon UK adapter activation",
   );
+});
+
+test("IBS Italy global source preserves the native daily Top 40", () => {
+  const adapter = source("src/lib/book-index/sources/ibs-it.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "ibs-it",\n    name: "IBS İtalya",\n    market: "IT",\n    countryCode: "IT",\n    baseUrl: "https://www.ibs.it",\n    includeInTurkeyIndex: false',
+    "IBS Italy stays outside Turkey",
+  );
+  contains(lists, 'code: "ibs-it-daily"', "IBS daily list registry");
+  contains(
+    lists,
+    'sourceUrl: "https://www.ibs.it/classifica/libri/1day/sold?defaultPage=1"',
+    "IBS native daily bestseller URL",
+  );
+  contains(lists, 'period: "daily"', "IBS native daily period");
+  contains(lists, 'maxRank: 40', "IBS first-page Top 40 cap");
+  contains(lists, 'publiclyVisible: false', "global IBS list stays unpublished before global UI approval");
+  contains(adapter, "cc-product-list-item--ranking", "IBS native ranking card boundary");
+  contains(adapter, "Classifica Libri - 1day", "IBS daily list identity");
+  contains(adapter, "BOOK_INDEX_IBS_IT_RESULT_SIZE_MISMATCH", "IBS exact page-size guard");
+  contains(adapter, "BOOK_INDEX_IBS_IT_RANK_ORDER_MISMATCH", "IBS native rank continuity guard");
+  contains(adapter, "BOOK_INDEX_IBS_IT_DUPLICATE_ISBN", "IBS ISBN uniqueness guard");
+  contains(adapter, "isbn13", "IBS ISBN-13 identity");
+  contains(
+    collector,
+    "[ibsItalyBookIndexAdapter.sourceCode, ibsItalyBookIndexAdapter]",
+    "IBS adapter activation",
+  );
+});
+
+test("Rakuten Japan global source preserves the native weekly Top 30", () => {
+  const adapter = source("src/lib/book-index/sources/rakuten-jp.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "rakuten-jp",\n    name: "Rakuten Books Japonya",\n    market: "JP",\n    countryCode: "JP",\n    baseUrl: "https://books.rakuten.co.jp",\n    includeInTurkeyIndex: false',
+    "Rakuten Japan stays outside Turkey",
+  );
+  contains(lists, 'code: "rakuten-jp-weekly"', "Rakuten weekly list registry");
+  contains(
+    lists,
+    'sourceUrl: "https://rdc-api-catalog-gateway-api.rakuten.co.jp/books/rank/001/weekly.json?hits=30&page=1&period=0&sid=10"',
+    "Rakuten native weekly ranking endpoint",
+  );
+  contains(lists, 'period: "weekly"', "Rakuten native weekly period");
+  contains(lists, 'maxRank: 30', "Rakuten Top 30 cap");
+  contains(lists, 'publiclyVisible: false', "global Rakuten list stays unpublished before global UI approval");
+  contains(adapter, 'payload.genre_id !== "001"', "Rakuten books genre guard");
+  contains(adapter, "payload.data.length !== EXPECTED_BOOKS", "Rakuten exact result-size guard");
+  contains(adapter, "rank !== index + 1", "Rakuten native rank continuity");
+  contains(adapter, "isbn_jan", "Rakuten ISBN/JAN identity");
+  contains(adapter, "BOOK_INDEX_RAKUTEN_JP_DUPLICATE_SOURCE_KEY", "Rakuten duplicate identity guard");
+  contains(
+    collector,
+    "[rakutenJapanBookIndexAdapter.sourceCode, rakutenJapanBookIndexAdapter]",
+    "Rakuten adapter activation",
+  );
+});
+
+test("Kyobo Korea global source preserves the native weekly Top 20", () => {
+  const adapter = source("src/lib/book-index/sources/kyobo-kr.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "kyobo-kr",\n    name: "Kyobo Book Centre Güney Kore",\n    market: "KR",\n    countryCode: "KR",\n    baseUrl: "https://store.kyobobook.co.kr",\n    includeInTurkeyIndex: false',
+    "Kyobo Korea stays outside Turkey",
+  );
+  contains(lists, 'code: "kyobo-kr-weekly"', "Kyobo weekly list registry");
+  contains(lists, 'period: "weekly"', "Kyobo native weekly period");
+  contains(lists, 'maxRank: 20', "Kyobo Top 20 cap");
+  contains(lists, 'publiclyVisible: false', "global Kyobo list stays unpublished before global UI approval");
+  contains(adapter, "payload.data?.bestSeller", "Kyobo native bestseller response path");
+  contains(adapter, "presentRank !== rowNum", "Kyobo native rank consistency guard");
+  contains(adapter, "BOOK_INDEX_KYOBO_KR_RESPONSE_MISMATCH", "Kyobo exact result-size guard");
+  contains(adapter, "BOOK_INDEX_KYOBO_KR_DUPLICATE_PRODUCT", "Kyobo product identity guard");
+  contains(adapter, "BOOK_INDEX_KYOBO_KR_DUPLICATE_ISBN", "Kyobo ISBN uniqueness guard");
+  contains(adapter, "gunzipSync", "Kyobo gzip payload support");
+  contains(
+    collector,
+    "[kyoboKoreaBookIndexAdapter.sourceCode, kyoboKoreaBookIndexAdapter]",
+    "Kyobo adapter activation",
+  );
+});
+
+test("Readings Australia discovers and preserves the native monthly Top 20", () => {
+  const adapter = source("src/lib/book-index/sources/readings-au.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "readings-au",\n    name: "Readings Avustralya",\n    market: "AU",\n    countryCode: "AU",\n    baseUrl: "https://www.readings.com.au",\n    includeInTurkeyIndex: false',
+    "Readings Australia stays outside Turkey",
+  );
+  contains(lists, 'code: "readings-au-monthly"', "Readings monthly list registry");
+  contains(lists, 'period: "monthly"', "Readings native monthly period");
+  contains(lists, 'maxRank: 20', "Readings Top 20 cap");
+  contains(lists, 'publiclyVisible: false', "global Readings list stays unpublished before global UI approval");
+  contains(adapter, "discoverReadingsMonthlyBestsellerUrl", "Readings latest-article discovery");
+  contains(adapter, "/news\\/our-[a-z]+-20\\d{2}-bestsellers", "Readings general monthly article pattern");
+  contains(adapter, "BOOK_INDEX_READINGS_AU_ARTICLE_NOT_FOUND", "Readings discovery fail-closed guard");
+  contains(adapter, "BOOK_INDEX_READINGS_AU_RESULT_SIZE_MISMATCH", "Readings exact result-size guard");
+  contains(adapter, "BOOK_INDEX_READINGS_AU_RANK_ORDER_MISMATCH", "Readings native rank continuity guard");
+  contains(adapter, "BOOK_INDEX_READINGS_AU_DUPLICATE_ISBN", "Readings ISBN uniqueness guard");
+  contains(
+    collector,
+    "[readingsAustraliaBookIndexAdapter.sourceCode, readingsAustraliaBookIndexAdapter]",
+    "Readings adapter activation",
+  );
+});
+
+test("global bestseller source set stays native, non-composite and unpublished", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  const globalSources = [
+    ["amazon-us", "amazon-us-live"],
+    ["amazon-uk", "amazon-uk-live"],
+    ["ibs-it", "ibs-it-daily"],
+    ["rakuten-jp", "rakuten-jp-weekly"],
+    ["kyobo-kr", "kyobo-kr-weekly"],
+    ["readings-au", "readings-au-monthly"],
+  ];
+
+  for (const [sourceCode, listCode] of globalSources) {
+    const sourceStart = sources.indexOf(`code: "${sourceCode}"`);
+    assert.ok(sourceStart >= 0, `${sourceCode} source must exist`);
+    const sourceBlock = sources.slice(sourceStart, sourceStart + 650);
+    contains(
+      sourceBlock,
+      "includeInTurkeyIndex: false",
+      `${sourceCode} must stay outside Turkey`,
+    );
+
+    const listStart = lists.indexOf(`code: "${listCode}"`);
+    assert.ok(listStart >= 0, `${listCode} list must exist`);
+    const listBlock = lists.slice(listStart, listStart + 700);
+    contains(
+      listBlock,
+      "includeInComposite: false",
+      `${listCode} must not create a global composite rank`,
+    );
+    contains(
+      listBlock,
+      "publiclyVisible: false",
+      `${listCode} must remain hidden until global UI approval`,
+    );
+    contains(
+      listBlock,
+      "enabled: true",
+      `${listCode} collector must be enabled`,
+    );
+  }
 });
 
 test("D&R access protection remains fail-closed", () => {

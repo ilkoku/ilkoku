@@ -10,7 +10,12 @@ import { normalizeBookIndexText } from "./html";
 import { autoMatchBookIndexExternalBook } from "./matching";
 import { getBookIndexList } from "./lists";
 import { getBookIndexSource } from "./sources";
+import { amazonUsBookIndexAdapter } from "./sources/amazon-us";
 import { amazonUkBookIndexAdapter } from "./sources/amazon-uk";
+import { ibsItalyBookIndexAdapter } from "./sources/ibs-it";
+import { rakutenJapanBookIndexAdapter } from "./sources/rakuten-jp";
+import { kyoboKoreaBookIndexAdapter } from "./sources/kyobo-kr";
+import { readingsAustraliaBookIndexAdapter } from "./sources/readings-au";
 import { bkmBookIndexAdapter } from "./sources/bkm";
 import { kitapSepetiBookIndexAdapter } from "./sources/kitapsepeti";
 import { kitapStoreBookIndexResearchAdapter } from "./sources/kitapstore";
@@ -28,7 +33,12 @@ import { pandoraBookIndexAdapter } from "./sources/pandora";
 import { remziBookIndexAdapter } from "./sources/remzi";
 
 const adapters = new Map<string, BookIndexSourceAdapter>([
+  [amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter],
   [amazonUkBookIndexAdapter.sourceCode, amazonUkBookIndexAdapter],
+  [ibsItalyBookIndexAdapter.sourceCode, ibsItalyBookIndexAdapter],
+  [rakutenJapanBookIndexAdapter.sourceCode, rakutenJapanBookIndexAdapter],
+  [kyoboKoreaBookIndexAdapter.sourceCode, kyoboKoreaBookIndexAdapter],
+  [readingsAustraliaBookIndexAdapter.sourceCode, readingsAustraliaBookIndexAdapter],
   [remziBookIndexAdapter.sourceCode, remziBookIndexAdapter],
   [bkmBookIndexAdapter.sourceCode, bkmBookIndexAdapter],
   [kitapSepetiBookIndexAdapter.sourceCode, kitapSepetiBookIndexAdapter],

@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -103,8 +103,10 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     countryCode: "US",
     baseUrl: "https://www.amazon.com",
     includeInTurkeyIndex: false,
+    independenceGroup: "amazon-us",
+    operatorName: "Amazon US",
     phase: "v1",
-    collectionState: "blocked",
+    collectionState: "ready",
   },
   {
     code: "amazon-uk",
@@ -118,6 +120,58 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     phase: "phase_2",
     collectionState: "ready",
   },
+  {
+    code: "ibs-it",
+    name: "IBS İtalya",
+    market: "IT",
+    countryCode: "IT",
+    baseUrl: "https://www.ibs.it",
+    includeInTurkeyIndex: false,
+    independenceGroup: "ibs-it",
+    operatorName: "IBS.it",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "rakuten-jp",
+    name: "Rakuten Books Japonya",
+    market: "JP",
+    countryCode: "JP",
+    baseUrl: "https://books.rakuten.co.jp",
+    includeInTurkeyIndex: false,
+    independenceGroup: "rakuten-jp",
+    operatorName: "Rakuten Books",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "kyobo-kr",
+    name: "Kyobo Book Centre Güney Kore",
+    market: "KR",
+    countryCode: "KR",
+    baseUrl: "https://store.kyobobook.co.kr",
+    includeInTurkeyIndex: false,
+    independenceGroup: "kyobo-kr",
+    operatorName: "Kyobo Book Centre",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "readings-au",
+    name: "Readings Avustralya",
+    market: "AU",
+    countryCode: "AU",
+    baseUrl: "https://www.readings.com.au",
+    includeInTurkeyIndex: false,
+    independenceGroup: "readings-au",
+    operatorName: "Readings",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+
+
+
+
   {
     code: "kitapsepeti",
     name: "KitapSepeti",

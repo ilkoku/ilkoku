@@ -394,6 +394,75 @@ doğrudan network kaydından doğrulandı.
 - Global görünümde Amazon UK kendi native listesi olarak gösterilecek; Amazon US veya diğer ülkelerle ortak bir İlkOku dünya sırası üretilmeyecektir.
 
 
+### Global kaynak dönem kuralı — 29 Eylül 2026
+
+- Global kaynakların native dönemleri korunur; günlük, haftalık, aylık ve canlı
+  listeler birbirine çevrilmez.
+- İlkOku bu kaynaklardan birleşik bir "dünya sırası" veya ortak puan üretmez.
+- Public global görünüm açıldığında her kaynak kendi adı ve native dönemiyle
+  gösterilir.
+
+### Rakuten Books Japonya global kaynak — 29 Eylül 2026
+
+- Resmî haftalık kitap ranking feed'i:
+  `https://rdc-api-catalog-gateway-api.rakuten.co.jp/books/rank/001/weekly.json?hits=30&page=1&period=0&sid=10`.
+- Feed doğrudan JSON verir; `genre_id=001` kitap kategorisini doğrular.
+- 29 Eylül 2026 doğrulamasında **30 kayıt**, native **1..30** sıra ve benzersiz
+  ürün URL'leri görüldü.
+- `isbn_jan`, başlık, yayıncı, ürün URL'si ve native rank kullanılabilir.
+- Bazı dergi/kollektif kayıtlarda yazar alanı boş olabildiği için collector
+  yazar bilgisini zorunlu tutmaz ve tahmin etmez.
+- Türkiye Endeksi'ne katılmaz; global public görünüm onaylanana kadar
+  `publiclyVisible=false` kalır.
+
+### Kyobo Book Centre Güney Kore global kaynak — 29 Eylül 2026
+
+- Resmî haftalık online domestic book endpoint'i:
+  `/api/gw/best/best-seller/online`.
+- Parametreler: `period=002`, `dsplDvsnCode=001`,
+  `dsplTrgtDvsnCode=002`, `saleCmdtDsplDvsnCode=TOT`, `per=20`.
+- Response `data.bestSeller` altında **20 kayıt** verir.
+- `rowNum` ve `prstRnkn` native sıra olarak birlikte doğrulanır;
+  `frmrRnkn` önceki sıra bilgisini ayrıca taşır.
+- `cmdtCode` ISBN-13, `saleCmdtid` kaynak ürün kimliği,
+  `cmdtName` başlık, `chrcName` yazar ve `pbcmName` yayınevidir.
+- Kaynak zaman zaman GZIP gövde verdiği için collector GZIP magic byte'ını
+  fail-closed biçimde destekler.
+- Türkiye Endeksi'ne katılmaz; global public görünüm onaylanana kadar
+  `publiclyVisible=false` kalır.
+
+### Readings Avustralya global kaynak — 29 Eylül 2026
+
+- Readings her ay genel **Our <Month> <Year> Bestsellers** yazısı yayımlar.
+- Collector sabit bir ay URL'sine bağlanmaz; önce Readings blog kategori
+  akışında en güncel genel aylık bestseller yazısını keşfeder.
+- Kids/YA listeleri farklı URL kalıbına sahip olduğu için genel aylık listeyle
+  karıştırılmaz.
+- 29 Eylül 2026 doğrulamasında Ağustos 2026 genel listesinde **20/20** native
+  sıra, **20/20** ISBN-13, başlık ve yazar doğrulandı.
+- Native dönem **aylık** olarak korunur; haftalık/günlük bir değere
+  dönüştürülmez.
+- Türkiye Endeksi'ne katılmaz; global public görünüm onaylanana kadar
+  `publiclyVisible=false` kalır.
+
+### IBS İtalya global kaynak — 29 Eylül 2026
+
+- Resmî günlük kitap sıralaması:
+  `https://www.ibs.it/classifica/libri/1day/sold?defaultPage=1`.
+- Şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` isteği HTTP 200 döndürüyor.
+- İlk sayfa server-rendered HTML içinde
+  `cc-product-list-item cc-product-list-item--ranking` kartları sağlıyor.
+- Kartlar `Classifica Libri - 1day` liste kimliğini, açık native rankı,
+  ISBN-13, başlık, yazar, ürün URL'si ve görseli birlikte taşıyor.
+- 29 Eylül 2026 doğrulamasında ilk sayfada **40/40** kayıt, kesintisiz
+  **1..40** rank, **40 benzersiz ISBN-13**, eksik başlık **0** ve eksik yazar
+  **0** görüldü.
+- Kaynak 3 sayfalık pagination sunuyor; ilk production collector yalnız
+  doğrulanmış ilk sayfayı, yani native Top 40'ı toplar. Pagination ayrı
+  fail-closed doğrulama tamamlanmadan genişletilmez.
+- IBS İtalya Türkiye Endeksi'ne katılmaz ve global public görünüm
+  onaylanana kadar `publiclyVisible=false` kalır.
+
 ### Amazon Türkiye / Amazon ABD erişim kararı — 25 Eylül 2026
 
 Amazon kaynakları V1'de iki ayrı pazar olarak tutulur.
@@ -415,12 +484,20 @@ Amazon kaynakları V1'de iki ayrı pazar olarak tutulur.
 
 **Amazon ABD**
 
-- `https://www.amazon.com/Best-Sellers-Books/zgbs/books` şeffaf kaynak
-  isteğinde Amazon'un `automated access` / CAPTCHA sayfasını döndürdü.
-- CAPTCHA, stealth user-agent, proxy veya başka anti-bot aşma yöntemi
-  kullanılmayacak.
-- Kaynak V1 registry içinde **blocked** tutulur. Resmi/sanctioned veri yolu
-  bulunursa yeniden değerlendirilir.
+- 29 Eylül 2026 yeniden doğrulamasında
+  `https://www.amazon.com/Best-Sellers-Books/zgbs/books` şeffaf
+  `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` isteğiyle HTTP 200 döndü.
+- 30 bestseller kartı, 30 benzersiz ASIN ve kesintisiz `#1..#30` native sıra
+  doğrulandı; automated-access/CAPTCHA sayfası görülmedi.
+- Collector kartları `p13n-asin-index-N` sınırında izole eder; komşu karttan
+  ASIN veya başlık sızdırmaz.
+- Başlık, ASIN, native rank, ürün URL'si ve görsel güvenilir alanlardır.
+- Yazar metni sayfada review/sayı alanlarıyla karışabildiği için ilk sürümde
+  tahmin edilmez; `authorName=null` kalır.
+- Amazon ABD Türkiye Endeksi'ne katılmaz ve global public görünüm onaylanana
+  kadar `publiclyVisible=false` kalır.
+- Erişim yeniden challenge/CAPTCHA döndürürse collector fail-closed olur; proxy,
+  stealth veya CAPTCHA aşma yöntemi kullanılmaz.
 
 
 ### D&R erişim kararı — 25 Eylül 2026

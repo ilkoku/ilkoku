@@ -53,6 +53,26 @@ test("Amazon TR research adapter preserves native ranked book surfaces without a
   );
   contains(
     adapter,
+    "isOptionalSecondPageAccessError",
+    "page-two access fallback is explicit",
+  );
+  contains(
+    adapter,
+    "/^BOOK_INDEX_SOURCE_HTTP_(403|429|503)$/u",
+    "only access-protection statuses may fall back to page one",
+  );
+  contains(
+    adapter,
+    "return combineAmazonTrRankedBookPages([firstPage]);",
+    "validated first-page ranks survive page-two access protection",
+  );
+  contains(
+    adapter,
+    "if (!isOptionalSecondPageAccessError(error)) throw error;",
+    "parser and integrity failures remain fail-closed",
+  );
+  contains(
+    adapter,
     '"amazon-tr-bestsellers-research"',
     "bestseller research list boundary",
   );

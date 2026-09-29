@@ -1,0 +1,37 @@
+name: Probe global public 04
+
+on:
+  push:
+    branches:
+      - probe/global-source-parsers
+    paths:
+      - .github/workflows/probe-global-public-04.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout global public feature
+        uses: actions/checkout@v6
+        with:
+          ref: feature/global-bestsellers-public-gated-04
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run global public security contract
+        run: node --test scripts/security-contract-book-index-global-public.test.mjs
+
+      - name: Run TypeScript compiler check
+        run: npx tsc --noEmit

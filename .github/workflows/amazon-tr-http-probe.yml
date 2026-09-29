@@ -51,8 +51,10 @@ jobs:
                 const start = match.index ?? 0;
                 const end = starts[index + 1]?.index ?? body.length;
                 const card = body.slice(start, end);
-                const rank = card.match(/<span\\b[^>]*class=["'][^"']*\\bzg-bdg-text\\b[^"']*["'][^>]*>\\s*#(\\d{1,3})\\s*<\\/span>/iu)?.[1];
-                const href = card.match(new RegExp("<a\\\\b(?=[^>]*\\\\bhref=[\\\"']([^\\\"']*\\\\/dp\\\\/" + asin + "(?:\\\\/[^\\\"']*)?)[\\\"'])[^>]*>", "iu"))?.[1];
+                const rank = card.match(/zg-bdg-text[^>]*>\\s*#(\\d{1,3})/iu)?.[1];
+                const href = [...card.matchAll(/<a\\b[^>]*href=["']([^"']+)["'][^>]*>/giu)]
+                  .map(m => m[1])
+                  .find(value => value.includes("/dp/" + asin));
                 const imageTag = card.match(/<img\\b[^>]*\\bclass=["'][^"']*\\bp13n-product-image\\b[^"']*["'][^>]*>/iu)?.[0] ?? "";
                 const title = imageTag.match(/\\balt=["']([^"']+)["']/iu)?.[1] ?? "";
                 return Boolean(rank && href && title);

@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK" | "IT";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK" | "IT";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -132,6 +132,19 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     phase: "phase_2",
     collectionState: "ready",
   },
+  {
+    code: "rakuten-jp",
+    name: "Rakuten Books Japonya",
+    market: "JP",
+    countryCode: "JP",
+    baseUrl: "https://books.rakuten.co.jp",
+    includeInTurkeyIndex: false,
+    independenceGroup: "rakuten-jp",
+    operatorName: "Rakuten Books",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+
 
   {
     code: "kitapsepeti",

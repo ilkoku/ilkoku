@@ -394,6 +394,24 @@ doğrudan network kaydından doğrulandı.
 - Global görünümde Amazon UK kendi native listesi olarak gösterilecek; Amazon US veya diğer ülkelerle ortak bir İlkOku dünya sırası üretilmeyecektir.
 
 
+### IBS İtalya global kaynak — 29 Eylül 2026
+
+- Resmî günlük kitap sıralaması:
+  `https://www.ibs.it/classifica/libri/1day/sold?defaultPage=1`.
+- Şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` isteği HTTP 200 döndürüyor.
+- İlk sayfa server-rendered HTML içinde
+  `cc-product-list-item cc-product-list-item--ranking` kartları sağlıyor.
+- Kartlar `Classifica Libri - 1day` liste kimliğini, açık native rankı,
+  ISBN-13, başlık, yazar, ürün URL'si ve görseli birlikte taşıyor.
+- 29 Eylül 2026 doğrulamasında ilk sayfada **40/40** kayıt, kesintisiz
+  **1..40** rank, **40 benzersiz ISBN-13**, eksik başlık **0** ve eksik yazar
+  **0** görüldü.
+- Kaynak 3 sayfalık pagination sunuyor; ilk production collector yalnız
+  doğrulanmış ilk sayfayı, yani native Top 40'ı toplar. Pagination ayrı
+  fail-closed doğrulama tamamlanmadan genişletilmez.
+- IBS İtalya Türkiye Endeksi'ne katılmaz ve global public görünüm
+  onaylanana kadar `publiclyVisible=false` kalır.
+
 ### Amazon Türkiye / Amazon ABD erişim kararı — 25 Eylül 2026
 
 Amazon kaynakları V1'de iki ayrı pazar olarak tutulur.

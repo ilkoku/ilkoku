@@ -257,14 +257,14 @@ test("only BKM weekly contributes to the Turkey composite in V1", () => {
 });
 
 
-test("Amazon TR and global Amazon collectors remain isolated by market", () => {
+test("Amazon TR collector stays staged while global Amazon collectors remain isolated by market", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    "Amazon TR verified source is ready",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "Amazon TR source remains researching",
   );
   contains(
     sources,
@@ -1433,6 +1433,7 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapsec-general-live-canary",
     "kitapstore-tr-live-canary",
     "pandora-tr-live-canary",
+    "amazon-tr-live",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);
@@ -1457,7 +1458,6 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapstore-tr-live",
     "kitapsec-general-live",
     "kitapambari-tr-live",
-    "amazon-tr-live",
     "kitapyurdu-tr-weekly",
   ]) {
     const marker = `code: "${listCode}"`;
@@ -1604,7 +1604,7 @@ test("Book Index source adapters exclude only verified non-book catalogue entrie
 });
 
 
-test("Amazon TR production parser remains fail-closed while rollout is active", () => {
+test("Amazon TR parser remains fail-closed while rollout is staged", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const amazon = source("src/lib/book-index/sources/amazon-tr.ts");
@@ -1617,16 +1617,20 @@ test("Amazon TR production parser remains fail-closed while rollout is active", 
   );
   contains(
     sources,
-    'name: "Amazon Türkiye",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    "Amazon TR source is ready",
+    'name: "Amazon Türkiye",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "Amazon TR remains researching",
   );
-  contains(lists, 'code: "amazon-tr-live"', "Amazon TR bestseller list");
+  contains(lists, 'code: "amazon-tr-live"', "Amazon TR staged bestseller list");
   contains(
     lists,
-    'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",\n    maxRank: 100,\n    includeInComposite: true,\n    includeInTurkeyDisplay: true,\n    collectionEveryMinutes: 360,\n    publiclyVisible: true,\n    enabled: true',
-    "Amazon TR bestseller list is active and public",
+    'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: false',
+    "Amazon TR bestseller list remains disabled and private",
   );
-  contains(lists, 'code: "amazon-tr-new-releases"', "Amazon TR new-release list is active");
+  contains(
+    lists,
+    'code: "amazon-tr-new-releases-research"',
+    "Amazon TR new-release research list remains staged",
+  );
   contains(amazon, 'data-asin=["\']([^"\']+)["\']', "ASIN source identity");
   contains(amazon, "\\bzg-bdg-text\\b", "Amazon native rank badge");
   contains(

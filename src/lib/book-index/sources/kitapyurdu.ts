@@ -8,6 +8,7 @@ import { decodeBookIndexHtml } from "../html";
 const SOURCE_CODE = "kitapyurdu";
 const SOURCE_ORIGIN = "https://www.kitapyurdu.com";
 const WEEKLY_GENERAL_PATH = "/cok-satan-kitaplar/haftalik/1.html";
+const WEEKLY_NEW_RELEASES_PATH = "/yeni-cikan-kitaplar/haftalik/2.html";
 const EXACT_EXPECTED_BOOKS = 20;
 
 function absoluteUrl(value: string) {
@@ -25,10 +26,10 @@ function attributeValue(fragment: string, name: string) {
   return match?.[2] ? decodeBookIndexHtml(match[2]) : "";
 }
 
-function weeklyGeneralUrl(sourceUrl: string) {
+function verifiedResearchUrl(sourceUrl: string, expectedPath: string) {
   const url = new URL(sourceUrl);
 
-  if (url.origin !== SOURCE_ORIGIN || url.pathname !== WEEKLY_GENERAL_PATH) {
+  if (url.origin !== SOURCE_ORIGIN || url.pathname !== expectedPath) {
     throw new Error("BOOK_INDEX_KITAPYURDU_SOURCE_URL_MISMATCH");
   }
 
@@ -41,7 +42,6 @@ type ProductAnchor = {
   index: number;
   href: string;
   productId: string;
-  body: string;
 };
 
 function productAnchors(html: string): ProductAnchor[] {
@@ -61,7 +61,6 @@ function productAnchors(html: string): ProductAnchor[] {
       index: match.index ?? 0,
       href,
       productId,
-      body: match[4] ?? "",
     });
   }
 
@@ -81,15 +80,15 @@ function linkedTexts(card: string, pathPrefix: "yazar" | "yayinevi") {
     .filter(Boolean);
 }
 
-export function parseKitapyurduWeeklyBestsellers(
+function parseVerifiedBookPage(
   html: string,
+  marker: string,
+  description: string,
+  markerError: string,
 ): BookIndexCollectionResult {
   const pageText = normalizeText(html);
-  if (
-    !pageText.includes("Çok Satanlar (Genel, Haftalık)")
-    || !pageText.includes("Son 7 gün içerisinde en çok satın alınan ürünler")
-  ) {
-    throw new Error("BOOK_INDEX_KITAPYURDU_WEEKLY_GENERAL_MARKER_MISSING");
+  if (!pageText.includes(marker) || !pageText.includes(description)) {
+    throw new Error(markerError);
   }
 
   const anchors = productAnchors(html);
@@ -149,8 +148,30 @@ export function parseKitapyurduWeeklyBestsellers(
   return { books };
 }
 
-async function fetchHtml(sourceUrl: string) {
-  const response = await fetch(weeklyGeneralUrl(sourceUrl), {
+export function parseKitapyurduWeeklyBestsellers(
+  html: string,
+): BookIndexCollectionResult {
+  return parseVerifiedBookPage(
+    html,
+    "Çok Satanlar (Genel, Haftalık)",
+    "Son 7 gün içerisinde en çok satın alınan ürünler",
+    "BOOK_INDEX_KITAPYURDU_WEEKLY_GENERAL_MARKER_MISSING",
+  );
+}
+
+export function parseKitapyurduWeeklyNewReleases(
+  html: string,
+): BookIndexCollectionResult {
+  return parseVerifiedBookPage(
+    html,
+    "Yeni Çıkanlar (Genel, Haftalık)",
+    "Son 7 gün içerisindeki yeni çıkan ürünler",
+    "BOOK_INDEX_KITAPYURDU_NEW_RELEASE_MARKER_MISSING",
+  );
+}
+
+async function fetchHtml(sourceUrl: string, expectedPath: string) {
+  const response = await fetch(verifiedResearchUrl(sourceUrl, expectedPath), {
     cache: "no-store",
     headers: {
       Accept: "text/html,application/xhtml+xml",
@@ -174,10 +195,18 @@ export const kitapyurduBookIndexResearchAdapter: BookIndexSourceAdapter = {
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    if (context.listCode !== "kitapyurdu-tr-weekly-research") {
-      throw new Error("BOOK_INDEX_KITAPYURDU_LIST_NOT_SUPPORTED");
+    if (context.listCode === "kitapyurdu-tr-weekly-research") {
+      return parseKitapyurduWeeklyBestsellers(
+        await fetchHtml(context.sourceUrl, WEEKLY_GENERAL_PATH),
+      );
     }
 
-    return parseKitapyurduWeeklyBestsellers(await fetchHtml(context.sourceUrl));
+    if (context.listCode === "kitapyurdu-tr-new-releases-research") {
+      return parseKitapyurduWeeklyNewReleases(
+        await fetchHtml(context.sourceUrl, WEEKLY_NEW_RELEASES_PATH),
+      );
+    }
+
+    throw new Error("BOOK_INDEX_KITAPYURDU_LIST_NOT_SUPPORTED");
   },
 };

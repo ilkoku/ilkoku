@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Kitapyurdu research parser preserves the verified weekly native list without activating rollout", () => {
+test("Kitapyurdu research parsers preserve verified native lists without activating rollout", () => {
   const adapter = source("src/lib/book-index/sources/kitapyurdu.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -20,7 +20,12 @@ test("Kitapyurdu research parser preserves the verified weekly native list witho
   contains(
     adapter,
     'const WEEKLY_GENERAL_PATH = "/cok-satan-kitaplar/haftalik/1.html"',
-    "verified weekly general path",
+    "verified weekly bestseller path",
+  );
+  contains(
+    adapter,
+    'const WEEKLY_NEW_RELEASES_PATH = "/yeni-cikan-kitaplar/haftalik/2.html"',
+    "verified weekly new-release path",
   );
   contains(adapter, 'const EXACT_EXPECTED_BOOKS = 20', "first-page fail-closed size");
   contains(adapter, "/kitap/", "book-only product URL contract");
@@ -28,7 +33,22 @@ test("Kitapyurdu research parser preserves the verified weekly native list witho
   contains(
     adapter,
     "BOOK_INDEX_KITAPYURDU_WEEKLY_GENERAL_MARKER_MISSING",
-    "weekly general surface guard",
+    "weekly bestseller surface guard",
+  );
+  contains(
+    adapter,
+    "BOOK_INDEX_KITAPYURDU_NEW_RELEASE_MARKER_MISSING",
+    "weekly new-release surface guard",
+  );
+  contains(
+    adapter,
+    '"Yeni Çıkanlar (Genel, Haftalık)"',
+    "native weekly new-release marker",
+  );
+  contains(
+    adapter,
+    '"Son 7 gün içerisindeki yeni çıkan ürünler"',
+    "native weekly new-release definition",
   );
   contains(
     adapter,
@@ -61,11 +81,16 @@ test("Kitapyurdu research parser preserves the verified weekly native list witho
     "kitapyurduBookIndexResearchAdapter",
     "Kitapyurdu research adapter stays out of production collector registry",
   );
-  notContains(
-    lists,
-    'code: "kitapyurdu-tr-weekly-research"',
-    "research parser does not activate a list",
-  );
+  for (const code of [
+    "kitapyurdu-tr-weekly-research",
+    "kitapyurdu-tr-new-releases-research",
+  ]) {
+    notContains(
+      lists,
+      `code: "${code}"`,
+      `${code} research list stays inactive`,
+    );
+  }
   contains(
     sources,
     'code: "kitapyurdu"',

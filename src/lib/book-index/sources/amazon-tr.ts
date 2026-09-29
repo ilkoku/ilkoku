@@ -7,147 +7,90 @@ import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "amazon-tr";
 const SOURCE_ORIGIN = "https://www.amazon.com.tr";
-const PAGE_TWO_URL =
-  "https://www.amazon.com.tr/gp/bestsellers/books/ref=zg_bs_pg_2_books?ie=UTF8&pg=2";
-const MIN_EXPECTED_PAGE_BOOKS = 25;
+const EXPECTED_BOOKS = 30;
 
 function attributeValue(fragment: string, name: string) {
   const match = fragment.match(
-    new RegExp(`\\b${name}=["']([^"']+)["']`, "iu"),
+    new RegExp(`\\b${name}=(["'])([\\s\\S]*?)\\1`, "iu"),
   );
-  return match?.[1] ? decodeBookIndexHtml(match[1]) : "";
-}
-
-function priceToMinorUnits(value: string | undefined) {
-  const decoded = decodeBookIndexHtml(value ?? "")
-    .replace(/\u00a0/gu, " ")
-    .replace(/\s*TL\s*$/iu, "")
-    .replace(/\./gu, "")
-    .replace(/,/gu, ".")
-    .trim();
-
-  if (!/^\d+(?:\.\d{1,2})?$/u.test(decoded)) return null;
-
-  const amount = Number(decoded);
-  if (!Number.isFinite(amount) || amount < 0) return null;
-  return BigInt(Math.round(amount * 100));
+  return match?.[2] ? decodeBookIndexHtml(match[2]) : "";
 }
 
 function canonicalProductUrl(asin: string) {
   return new URL(`/dp/${asin}`, SOURCE_ORIGIN).toString();
 }
 
-function parseCard(card: string, asin: string) {
-  const rankValue = card.match(
-    /<span\b[^>]*class=["'][^"']*\bzg-bdg-text\b[^"']*["'][^>]*>\s*#(\d{1,3})\s*<\/span>/iu,
-  )?.[1];
-  const rank = rankValue ? Number(rankValue) : Number.NaN;
-
-  const productHref = card.match(
-    new RegExp(
-      `<a\\b(?=[^>]*\\bhref=["']([^"']*\\/dp\\/${asin}(?:\\/[^"']*)?)["'])[^>]*>`,
-      "iu",
-    ),
-  )?.[1];
-
-  const imageTag = card.match(
-    /<img\b[^>]*\bclass=["'][^"']*\bp13n-product-image\b[^"']*["'][^>]*>/iu,
-  )?.[0];
-
-  const title = imageTag ? attributeValue(imageTag, "alt") : "";
-  const imageUrl = imageTag ? attributeValue(imageTag, "src") : "";
-
-  const author = card.match(
-    /<div\b[^>]*class=["'][^"']*\ba-row\b[^"']*\ba-size-small\b[^"']*["'][^>]*>[\s\S]*?<span\b[^>]*class=["'][^"']*\ba-size-small\b[^"']*\ba-color-base\b[^"']*["'][^>]*>[\s\S]*?<div\b[^>]*>([\s\S]*?)<\/div>[\s\S]*?<\/span>/iu,
-  )?.[1];
-
-  const price = card.match(
-    /<span\b[^>]*class=["'][^"']*\ba-color-price\b[^"']*["'][^>]*>[\s\S]*?<span\b[^>]*>([^<]*TL)\s*<\/span>/iu,
-  )?.[1];
-
-  if (
-    !Number.isInteger(rank)
-    || rank < 1
-    || !productHref
-    || !title
-  ) {
-    throw new Error("BOOK_INDEX_AMAZON_TR_INVALID_ITEM");
-  }
-
-  return {
-    sourceKey: asin,
-    sourceExternalId: asin,
-    title,
-    authorName: author ? decodeBookIndexHtml(author) : null,
-    publisherName: null,
-    productUrl: canonicalProductUrl(asin),
-    imageUrl: imageUrl || null,
-    rank,
-    priceAmount: priceToMinorUnits(price),
-    currency: "TRY",
-  };
-}
-
 export function parseAmazonTrBestsellerPage(
   html: string,
 ): BookIndexCollectionResult {
+  if (/automated access|captcha|robot check/iu.test(html)) {
+    throw new Error("BOOK_INDEX_AMAZON_TR_ACCESS_CHALLENGE");
+  }
+
   const starts = [
     ...html.matchAll(
-      /<div\b(?=[^>]*\bdata-asin=["']([^"']+)["'])[^>]*>/giu,
+      /<div\b(?=[^>]*\bid=["']p13n-asin-index-(\d+)["'])[^>]*>/giu,
     ),
-  ].filter((match) => Boolean(match[1]?.trim()));
+  ];
+
+  if (starts.length !== EXPECTED_BOOKS) {
+    throw new Error(
+      `BOOK_INDEX_AMAZON_TR_RESULT_SIZE_MISMATCH:${starts.length}`,
+    );
+  }
 
   const books = starts.map((match, index) => {
-    const asin = match[1].trim();
+    const cardIndex = Number(match[1]);
     const start = match.index ?? 0;
     const end = starts[index + 1]?.index ?? html.length;
-    return parseCard(html.slice(start, end), asin);
+    const card = html.slice(start, end);
+
+    const asin = card.match(
+      /\bdata-asin=["']([A-Z0-9]{10})["']/iu,
+    )?.[1];
+
+    const rankValue = card.match(
+      /<span\b[^>]*class=["'][^"']*\bzg-bdg-text\b[^"']*["'][^>]*>\s*#(\d{1,3})\s*<\/span>/iu,
+    )?.[1];
+    const rank = rankValue ? Number(rankValue) : Number.NaN;
+
+    const imageTag = card.match(
+      /<img\b[^>]*class=["'][^"']*\bp13n-product-image\b[^"']*["'][^>]*>/iu,
+    )?.[0];
+
+    const title = imageTag ? attributeValue(imageTag, "alt") : "";
+    const imageUrl = imageTag ? attributeValue(imageTag, "src") : "";
+
+    if (
+      cardIndex !== index
+      || !asin
+      || !Number.isInteger(rank)
+      || rank !== index + 1
+      || !title
+    ) {
+      throw new Error("BOOK_INDEX_AMAZON_TR_INVALID_ITEM");
+    }
+
+    return {
+      sourceKey: asin,
+      sourceExternalId: asin,
+      title,
+      authorName: null,
+      publisherName: null,
+      productUrl: canonicalProductUrl(asin),
+      imageUrl: imageUrl || null,
+      rank,
+      currency: "TRY",
+    };
   });
 
-  if (books.length < MIN_EXPECTED_PAGE_BOOKS) {
-    throw new Error("BOOK_INDEX_AMAZON_TR_RESULT_TOO_SMALL");
-  }
-
   const sourceKeys = new Set(books.map((book) => book.sourceKey));
   if (sourceKeys.size !== books.length) {
-    throw new Error("BOOK_INDEX_AMAZON_TR_DUPLICATE_SOURCE_KEY");
-  }
-
-  const ranks = books.map((book) => book.rank);
-  if (
-    new Set(ranks).size !== ranks.length
-    || ranks.some((rank, index) => index > 0 && rank !== ranks[index - 1] + 1)
-  ) {
-    throw new Error("BOOK_INDEX_AMAZON_TR_PAGE_RANK_GAP");
-  }
-
-  return { books };
-}
-
-export function combineAmazonTrBestsellerPages(
-  pages: BookIndexCollectionResult[],
-): BookIndexCollectionResult {
-  const books = pages.flatMap((page) => page.books).sort(
-    (left, right) => left.rank - right.rank,
-  );
-
-  if (books.length === 0 || books[0]?.rank !== 1) {
-    throw new Error("BOOK_INDEX_AMAZON_TR_RANK_GAP");
-  }
-
-  const sourceKeys = new Set(books.map((book) => book.sourceKey));
-  const ranks = new Set(books.map((book) => book.rank));
-
-  if (sourceKeys.size !== books.length) {
-    throw new Error("BOOK_INDEX_AMAZON_TR_DUPLICATE_SOURCE_KEY");
-  }
-
-  if (ranks.size !== books.length) {
-    throw new Error("BOOK_INDEX_AMAZON_TR_DUPLICATE_RANK");
+    throw new Error("BOOK_INDEX_AMAZON_TR_DUPLICATE_ASIN");
   }
 
   if (books.some((book, index) => book.rank !== index + 1)) {
-    throw new Error("BOOK_INDEX_AMAZON_TR_RANK_GAP");
+    throw new Error("BOOK_INDEX_AMAZON_TR_RANK_ORDER_MISMATCH");
   }
 
   return { books };
@@ -171,19 +114,17 @@ async function fetchHtml(url: string) {
   return response.text();
 }
 
-export const amazonTrBookIndexResearchAdapter: BookIndexSourceAdapter = {
+export const amazonTrBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const [firstPage, secondPage] = await Promise.all([
-      fetchHtml(context.sourceUrl),
-      fetchHtml(PAGE_TWO_URL),
-    ]);
+    if (context.listCode !== "amazon-tr-live") {
+      throw new Error("BOOK_INDEX_AMAZON_TR_LIST_NOT_SUPPORTED");
+    }
 
-    return combineAmazonTrBestsellerPages([
-      parseAmazonTrBestsellerPage(firstPage),
-      parseAmazonTrBestsellerPage(secondPage),
-    ]);
+    return parseAmazonTrBestsellerPage(
+      await fetchHtml(context.sourceUrl),
+    );
   },
 };

@@ -81,6 +81,34 @@ test("default inspection samples every public cohort without confusing the cohor
   ]);
 });
 
+test("default inspection fills an unused cohort slot from the sitemap", () => {
+  const sitemapUrls = [
+    "https://ilkoku.com/en-cok-satanlar/dunya",
+    "https://ilkoku.com/yasal/kullanim-sartlari",
+    "https://ilkoku.com/",
+    "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+    "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
+    "https://ilkoku.com/site-haritasi",
+    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
+  ];
+
+  assert.deepEqual(selectDefaultInspectionUrls(sitemapUrls), [
+    "https://ilkoku.com/",
+    "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+    "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
+    "https://ilkoku.com/site-haritasi",
+    "https://ilkoku.com/en-cok-satanlar/dunya",
+    "https://ilkoku.com/yasal/kullanim-sartlari",
+    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
+  ]);
+});
+
 test("package and docs expose the official diagnostic path", () => {
   assert.equal(pkg.scripts["seo:gsc:inspect"], "node scripts/gsc-url-inspection.mjs");
   assert.match(docs, /GSC URL Inspection diagnostic/u);

@@ -130,7 +130,7 @@ async function fetchHtml(url: string) {
     throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
   }
 
-  return decodeBookIndexHtml(await response.text());
+  return response.text();
 }
 
 async function discoverLatestArticle(primaryUrl: string) {

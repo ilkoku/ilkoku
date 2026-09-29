@@ -376,6 +376,7 @@ test("IBS Italy global source preserves the native daily Top 40", () => {
   contains(adapter, "BOOK_INDEX_IBS_IT_RANK_ORDER_MISMATCH", "IBS native rank continuity guard");
   contains(adapter, "BOOK_INDEX_IBS_IT_DUPLICATE_ISBN", "IBS ISBN uniqueness guard");
   contains(adapter, "isbn13", "IBS ISBN-13 identity");
+  contains(adapter, "return response.text();", "IBS full-page HTML markup is preserved for parser boundaries");
   contains(
     collector,
     "[ibsItalyBookIndexAdapter.sourceCode, ibsItalyBookIndexAdapter]",
@@ -464,6 +465,7 @@ test("Readings Australia discovers and preserves the native monthly Top 20", () 
   contains(adapter, "BOOK_INDEX_READINGS_AU_RESULT_SIZE_MISMATCH", "Readings exact result-size guard");
   contains(adapter, "BOOK_INDEX_READINGS_AU_RANK_ORDER_MISMATCH", "Readings native rank continuity guard");
   contains(adapter, "BOOK_INDEX_READINGS_AU_DUPLICATE_ISBN", "Readings ISBN uniqueness guard");
+  contains(adapter, "return response.text();", "Readings full-page HTML markup is preserved for discovery and parsing");
   contains(
     collector,
     "[readingsAustraliaBookIndexAdapter.sourceCode, readingsAustraliaBookIndexAdapter]",

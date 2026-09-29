@@ -87,15 +87,15 @@ export function BookIndexSourceComparison({
 
   return (
     <div className={styles.comparisonPanel}>
-      <div className={styles.comparisonControls} aria-label="Karşılaştırılacak kaynaklar">
+      <div className={styles.comparisonControls} aria-label="Karşılaştırılacak satış siteleri">
         {selectedSources.map((sourceCode, index) => (
           <label className={styles.comparisonField} key={index}>
-            <span>Kaynak {index + 1}</span>
+            <span>Site {index + 1}</span>
             <select
               value={sourceCode}
               onChange={(event) => updateSource(index, event.target.value)}
             >
-              <option value="">Kaynak seç</option>
+              <option value="">Site seç</option>
               {sourceOptions.map((source) => (
                 <option
                   key={source.code}
@@ -162,7 +162,7 @@ export function BookIndexSourceComparison({
         </div>
       ) : (
         <p className={styles.comparisonHint}>
-          Karşılaştırmak için en az iki kaynak seç.
+          Karşılaştırmak için en az iki site seç.
         </p>
       )}
     </div>

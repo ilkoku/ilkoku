@@ -488,6 +488,20 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
+    code: "ibs-it-daily",
+    sourceCode: "ibs-it",
+    title: "IBS İtalya · Günlük Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "daily",
+    sourceUrl: "https://www.ibs.it/classifica/libri/1day/sold?defaultPage=1",
+    maxRank: 40,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: false,
+    enabled: true,
+  },
+
+  {
     code: "amazon-tr-live",
     sourceCode: "amazon-tr",
     title: "Amazon Türkiye · Kitap Çok Satanlar",

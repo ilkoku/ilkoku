@@ -1,14 +1,12 @@
 import type {
-  BookIndexCollectionContext,
+  BookIndexCollectedBook,
   BookIndexCollectionResult,
-  BookIndexSourceAdapter,
 } from "../adapter";
 import { decodeBookIndexHtml } from "../html";
 
-const SOURCE_CODE = "dr";
 const SOURCE_ORIGIN = "https://www.dr.com.tr";
 const BESTSELLER_PATH = "/kategori_/kitap/cok-satanlar/10001/12";
-const EXACT_EXPECTED_BOOKS = 40;
+const EXACT_EXPECTED_CANDIDATES = 40;
 
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
@@ -25,155 +23,160 @@ function attributeValue(fragment: string, name: string) {
   return match?.[2] ? decodeBookIndexHtml(match[2]) : "";
 }
 
-function bestsellerUrl(sourceUrl: string) {
-  const url = new URL(sourceUrl);
-
-  if (url.origin !== SOURCE_ORIGIN || url.pathname !== BESTSELLER_PATH) {
-    throw new Error("BOOK_INDEX_DR_SOURCE_URL_MISMATCH");
+function productIdFromUrl(productUrl: string) {
+  const decoded = decodeURIComponent(productUrl);
+  const match = decoded.match(/\/urunno=(\d+)/u);
+  if (!match?.[1]) {
+    throw new Error("BOOK_INDEX_DR_PRODUCT_ID_MISSING");
   }
-
-  url.search = "";
-  url.hash = "";
-  return url.toString();
+  return match[1];
 }
 
-type ProductAnchor = {
-  index: number;
-  href: string;
-  productId: string;
-};
-
-function productAnchors(html: string): ProductAnchor[] {
+function productAnchors(html: string) {
   const matches = [
     ...html.matchAll(
-      /<a\b(?=[^>]*\bhref=(["'])([^"']*\/kitap\/[^"']*\/urunno(?:=|%3D)(\d+)[^"']*)\1)[^>]*>([\s\S]*?)<\/a>/giu,
+      /<a\b(?=[^>]*\bhref=(["'])([^"']*\/kitap\/[^"']*\/urunno(?:=|%3D)(\d+)[^"']*)\1)[^>]*>/giu,
     ),
   ];
 
-  const firstByProduct = new Map<string, ProductAnchor>();
+  const firstByProduct = new Map<string, string>();
   for (const match of matches) {
     const productId = match[3]?.trim() ?? "";
     const href = match[2]?.trim() ?? "";
     if (!productId || !href || firstByProduct.has(productId)) continue;
-
-    firstByProduct.set(productId, {
-      index: match.index ?? 0,
-      href,
-      productId,
-    });
+    firstByProduct.set(productId, absoluteUrl(href));
   }
 
-  return [...firstByProduct.values()].sort((left, right) => left.index - right.index);
+  return [...firstByProduct.values()];
 }
 
-function linkedTexts(card: string, pathPrefix: "yazar" | "yayinevi") {
-  return [
-    ...card.matchAll(
-      new RegExp(
-        `<a\\b(?=[^>]*\\bhref=(["'])[^"']*/${pathPrefix}/[^"']+/s=[^"']+\\1)[^>]*>([\\s\\S]*?)<\\/a>`,
-        "giu",
-      ),
-    ),
-  ]
-    .map((match) => normalizeText(match[2]))
-    .filter(Boolean);
-}
-
-export function parseDrBestsellers(html: string): BookIndexCollectionResult {
+/**
+ * Research step 1:
+ * Extract candidate product URLs from D&R's native "Çok Satanlar" surface.
+ *
+ * IMPORTANT: candidate position is deliberately NOT treated as bestseller rank.
+ * D&R can hide/unhide products while product detail pages expose an explicit
+ * "Haftanın En Çok Satan N.Kitabı" rank badge.
+ */
+export function parseDrBestsellerCandidateUrls(html: string) {
   const pageText = normalizeText(html);
   if (!pageText.includes("Çok Satanlar")) {
     throw new Error("BOOK_INDEX_DR_BESTSELLER_MARKER_MISSING");
   }
 
-  const anchors = productAnchors(html);
-  const books = anchors.map((anchor, index) => {
-    const next = anchors[index + 1];
-    const card = html.slice(anchor.index, next?.index ?? html.length);
-
-    const sameProductTitles = [
-      ...card.matchAll(
-        new RegExp(
-          `<a\\b(?=[^>]*\\bhref=(["'])[^"']*/kitap/[^"']*/urunno(?:=|%3D)${anchor.productId}[^"']*\\1)[^>]*>([\\s\\S]*?)<\\/a>`,
-          "giu",
-        ),
-      ),
-    ]
-      .map((match) => normalizeText(match[2]))
-      .filter(Boolean);
-
-    const imageTag = card.match(/<img\b[^>]*>/iu)?.[0] ?? "";
-    const imageAlt = attributeValue(imageTag, "alt");
-    const imageSrc = attributeValue(imageTag, "src");
-    const title =
-      sameProductTitles.sort((left, right) => right.length - left.length)[0]
-      || imageAlt;
-
-    const authors = [...new Set(linkedTexts(card, "yazar"))];
-    const publishers = [...new Set(linkedTexts(card, "yayinevi"))];
-
-    if (!title || authors.length === 0 || publishers.length !== 1) {
-      throw new Error("BOOK_INDEX_DR_INVALID_ITEM");
-    }
-
-    return {
-      sourceKey: anchor.productId,
-      sourceExternalId: anchor.productId,
-      title,
-      authorName: authors.join(";"),
-      publisherName: publishers[0],
-      productUrl: absoluteUrl(anchor.href),
-      imageUrl: imageSrc ? absoluteUrl(imageSrc) : null,
-      rank: index + 1,
-      currency: "TRY",
-    };
-  });
-
-  if (books.length !== EXACT_EXPECTED_BOOKS) {
-    throw new Error(`BOOK_INDEX_DR_UNEXPECTED_PAGE_SIZE:${books.length}`);
+  const candidates = productAnchors(html);
+  if (candidates.length !== EXACT_EXPECTED_CANDIDATES) {
+    throw new Error(
+      `BOOK_INDEX_DR_UNEXPECTED_CANDIDATE_SIZE:${candidates.length}`,
+    );
   }
 
-  const sourceKeys = new Set(books.map((book) => book.sourceKey));
-  if (sourceKeys.size !== books.length) {
+  return candidates;
+}
+
+function labeledLinkedText(
+  html: string,
+  label: "Yazar" | "Yayınevi",
+) {
+  const match = html.match(
+    new RegExp(
+      `${label}:\\s*(?:<[^>]+>\\s*)*<a\\b[^>]*>([\\s\\S]*?)<\\/a>`,
+      "iu",
+    ),
+  );
+  return normalizeText(match?.[1]);
+}
+
+function titleFromDetail(html: string) {
+  return normalizeText(
+    html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/iu)?.[1],
+  );
+}
+
+function isbn13FromDetail(html: string) {
+  const text = normalizeText(html);
+  const match = text.match(/\bBarkod:\s*((?:978|979)\d{10})\b/u);
+  return match?.[1] ?? null;
+}
+
+function weeklyRankFromDetail(html: string) {
+  const text = normalizeText(html);
+  const match = text.match(
+    /Haftanın En Çok Satan\s+(\d+)\.?\s*Kitabı/iu,
+  );
+
+  if (!match?.[1]) {
+    throw new Error("BOOK_INDEX_DR_WEEKLY_RANK_BADGE_MISSING");
+  }
+
+  const rank = Number.parseInt(match[1], 10);
+  if (!Number.isInteger(rank) || rank < 1) {
+    throw new Error("BOOK_INDEX_DR_WEEKLY_RANK_INVALID");
+  }
+
+  return rank;
+}
+
+/**
+ * Research step 2:
+ * Parse one D&R product detail page and trust only the explicit native
+ * "Haftanın En Çok Satan N.Kitabı" badge for rank.
+ */
+export function parseDrWeeklyRankedProduct(
+  html: string,
+  productUrl: string,
+): BookIndexCollectedBook {
+  const canonicalProductUrl = absoluteUrl(productUrl);
+  const sourceKey = productIdFromUrl(canonicalProductUrl);
+  const rank = weeklyRankFromDetail(html);
+  const title = titleFromDetail(html);
+  const authorName = labeledLinkedText(html, "Yazar");
+  const publisherName = labeledLinkedText(html, "Yayınevi");
+  const isbn13 = isbn13FromDetail(html);
+
+  const imageTag = html.match(/<img\b[^>]*>/iu)?.[0] ?? "";
+  const imageSrc = attributeValue(imageTag, "src");
+
+  if (!title || !authorName || !publisherName) {
+    throw new Error("BOOK_INDEX_DR_INVALID_DETAIL_ITEM");
+  }
+
+  return {
+    sourceKey,
+    sourceExternalId: sourceKey,
+    title,
+    authorName,
+    publisherName,
+    isbn13,
+    productUrl: canonicalProductUrl,
+    imageUrl: imageSrc ? absoluteUrl(imageSrc) : null,
+    rank,
+    currency: "TRY",
+  };
+}
+
+export function buildDrWeeklyBestsellerResearchResult(
+  products: readonly BookIndexCollectedBook[],
+): BookIndexCollectionResult {
+  if (products.length === 0) {
+    throw new Error("BOOK_INDEX_DR_EMPTY_EXPLICIT_RANK_SET");
+  }
+
+  const sourceKeys = new Set(products.map((book) => book.sourceKey));
+  const ranks = new Set(products.map((book) => book.rank));
+
+  if (sourceKeys.size !== products.length) {
     throw new Error("BOOK_INDEX_DR_DUPLICATE_SOURCE_KEY");
   }
-
-  if (books.some((book, index) => book.rank !== index + 1)) {
-    throw new Error("BOOK_INDEX_DR_RANK_ORDER_MISMATCH");
+  if (ranks.size !== products.length) {
+    throw new Error("BOOK_INDEX_DR_DUPLICATE_WEEKLY_RANK");
   }
 
-  return { books };
+  return {
+    books: [...products].sort((left, right) => left.rank - right.rank),
+  };
 }
 
-async function fetchHtml(sourceUrl: string) {
-  const response = await fetch(bestsellerUrl(sourceUrl), {
-    cache: "no-store",
-    headers: {
-      Accept: "text/html,application/xhtml+xml",
-      "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.5",
-      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
-    },
-    signal: AbortSignal.timeout(20_000),
-  });
-
-  if (!response.ok) {
-    throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
-  }
-
-  return response.text();
-}
-
-// Research-only adapter. Deliberately not registered in collector.ts.
-// Browser inspection verified D&R's native "Çok Satanlar" selection and card order.
-// Source state, list activation and production rollout remain separate decisions.
-export const drBookIndexResearchAdapter: BookIndexSourceAdapter = {
-  sourceCode: SOURCE_CODE,
-  async collect(
-    context: BookIndexCollectionContext,
-  ): Promise<BookIndexCollectionResult> {
-    if (context.listCode !== "dr-tr-bestsellers-research") {
-      throw new Error("BOOK_INDEX_DR_LIST_NOT_SUPPORTED");
-    }
-
-    return parseDrBestsellers(await fetchHtml(context.sourceUrl));
-  },
-};
+// Research-only helpers. Deliberately no BookIndexSourceAdapter export here.
+// The catalog position is not accepted as rank, and D&R's direct server fetch
+// path remains unverified for production collection.

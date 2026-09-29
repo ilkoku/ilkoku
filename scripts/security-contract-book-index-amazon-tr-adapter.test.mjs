@@ -68,7 +68,7 @@ test("Amazon TR collector-registered adapter preserves native ranked book surfac
   );
   contains(
     adapter,
-    "Collector adapter for the verified native ranked book surfaces:",
+    "Collector-registered adapter for the verified native ranked book surfaces.",
     "staged rollout boundary",
   );
 

@@ -404,16 +404,17 @@ doğrudan network kaydından doğrulandı.
 
 ### Rakuten Books Japonya global kaynak — 29 Eylül 2026
 
-- Resmî haftalık kitap ranking feed'i:
+- Resmî haftalık kitap sıralaması JSON feed üzerinden alınır:
   `https://rdc-api-catalog-gateway-api.rakuten.co.jp/books/rank/001/weekly.json?hits=30&page=1&period=0&sid=10`.
-- Feed doğrudan JSON verir; `genre_id=001` kitap kategorisini doğrular.
-- 29 Eylül 2026 doğrulamasında **30 kayıt**, native **1..30** sıra ve benzersiz
-  ürün URL'leri görüldü.
-- `isbn_jan`, başlık, yayıncı, ürün URL'si ve native rank kullanılabilir.
-- Bazı dergi/kollektif kayıtlarda yazar alanı boş olabildiği için collector
-  yazar bilgisini zorunlu tutmaz ve tahmin etmez.
-- Türkiye Endeksi'ne katılmaz; global public görünüm onaylanana kadar
-  `publiclyVisible=false` kalır.
+- Feed `genre_id=001` ile kitap kategorisini doğrular ve ilk sayfada **30**
+  kayıt döndürür.
+- 29 Eylül 2026 doğrulamasında `rank` alanı kesintisiz **1..30**, ürün
+  URL'leri benzersiz ve başlık alanları eksiksizdi.
+- ISBN/JAN alanı `isbn_jan`; varsa ISBN-13 kimliği olarak saklanır.
+- Bazı dergi/kollektif kayıtlarda yazar alanı boş olabildiği için yazar
+  zorunlu tutulmaz ve tahmin edilmez.
+- Rakuten Japonya Türkiye Endeksi'ne katılmaz; global public görünüm
+  onaylanana kadar `publiclyVisible=false` kalır.
 
 ### Kyobo Book Centre Güney Kore global kaynak — 29 Eylül 2026
 
@@ -445,19 +446,6 @@ doğrudan network kaydından doğrulandı.
 - Türkiye Endeksi'ne katılmaz; global public görünüm onaylanana kadar
   `publiclyVisible=false` kalır.
 
-### Rakuten Books Japonya global kaynak — 29 Eylül 2026
-
-- Resmî haftalık kitap sıralaması native JSON feed üzerinden alınır:
-  `https://rdc-api-catalog-gateway-api.rakuten.co.jp/books/rank/001/weekly.json?hits=30&page=1&period=0&sid=10`.
-- Feed `genre_id=001` ile kitap kategorisini doğrular ve ilk sayfada **30**
-  kayıt döndürür.
-- 29 Eylül 2026 doğrulamasında native `rank` alanı kesintisiz **1..30**,
-  ürün URL'leri benzersiz ve başlık alanları eksiksizdi.
-- ISBN/JAN alanı `isbn_jan`; varsa ISBN-13 kimliği olarak saklanır.
-- Bazı dergi/kollektif kayıtlarda yazar alanı boş olabildiği için yazar zorunlu
-  tutulmaz ve tahmin edilmez.
-- Rakuten Japonya Türkiye Endeksi'ne katılmaz ve global public görünüm
-  onaylanana kadar `publiclyVisible=false` kalır.
 
 ### IBS İtalya global kaynak — 29 Eylül 2026
 

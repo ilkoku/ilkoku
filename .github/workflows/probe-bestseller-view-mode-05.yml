@@ -1,0 +1,30 @@
+name: Probe bestseller view mode 05
+
+on:
+  push:
+    branches:
+      - probe/global-source-parsers
+    paths:
+      - .github/workflows/probe-bestseller-view-mode-05.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout bestseller view-mode feature
+        uses: actions/checkout@v6
+        with:
+          ref: fix/bestseller-list-comparison-separation-05
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Run Book Index public read-model contract
+        run: node --test scripts/security-contract-book-index-public-read-model.test.mjs

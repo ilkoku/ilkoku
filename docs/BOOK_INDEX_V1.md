@@ -176,27 +176,23 @@ Kanıtlar eşikleri geçse bile ayrı publication anahtarı açılmadıkça
 `canPublish=false` kalır. Bu foundation PR sitemap veya public route
 yayınlamaz.
 
-### Gated public route kabuğu
+### Soft-launch route kabuğu ve publication gate
 
-İlk public route kabuğu iki yüzey için hazırlanır:
+İlkOku Kitap Endeksi'nin mevcut rollout modeli iki ayrı erişim seviyesini
+birbirinden ayırır:
 
-- `/en-cok-satanlar`
-- `/en-cok-satanlar/turkiye`
+- **Soft launch:** `/en-cok-satanlar` ve `/en-cok-satanlar/turkiye` gerçek
+  production verisiyle çalışabilir; ancak publication gate geçmedikçe metadata
+  `noindex` kalır, structured data yayınlanmaz, içgörü bağlantıları açılmaz ve
+  public navigasyona eklenmez.
+- **Tam publication:** `BOOK_INDEX_SEO_GATE_ENABLED=true`,
+  `BOOK_INDEX_SEO_PUBLISH_ENABLED=true`, policy version + dört kalite eşiği
+  eksiksiz ve güncel readiness kanıtları eşikleri geçmiş olmalıdır.
 
-Bu route'lar kodda bulunsa da yayın kapısı açık değilse public sayfa olarak
-davranmaz:
-
-1. `BOOK_INDEX_SEO_GATE_ENABLED=true`
-2. `BOOK_INDEX_SEO_PUBLISH_ENABLED=true`
-3. Policy version ve dört kalite eşiği eksiksiz
-4. Güncel readiness kanıtları tüm eşikleri geçiyor
-
-Bu zincirin herhangi bir adımı sağlanmazsa route `notFound()` ile 404 döner
-ve metadata `noindex` kalır. Ana menüdeki **En Çok Satanlar** bağlantısı da
-aynı public access gate'ine bağlıdır; gate geçmeden gösterilmez.
-
+Soft launch route erişimini publication kararından ayırır; sitemap/indexleme
+kararı yine sıkı `getBookIndexPublicPageContext()` kapısında kalır.
 Türkiye route'u ayrıca gerçekten üretilebilir Türkiye Endeksi verisi yoksa
-404 davranışını korur.
+`notFound()` davranışını korur.
 
 ### Kontrollü sitemap wiring
 
@@ -204,22 +200,26 @@ Sitemap, Kitap Endeksi URL'lerini statik olarak yayınlamaz. Ayrı
 `loadBookIndexSitemapEntries()` helper'ı aynı public access gate'ini
 değerlendirir.
 
-Yalnız şu koşullarda iki URL sitemap'e eklenebilir:
+Yalnız şu koşullarda Kitap Endeksi URL'leri sitemap'e eklenebilir:
 
 - public gate ve publication anahtarları açık,
 - policy eksiksiz,
 - readiness kanıtları eşikleri geçmiş,
 - Türkiye Endeksi gerçekten `available`.
 
-Bu durumda:
+Bu durumda ana sayfa ve Türkiye görünümüne ek olarak karşılaştırma sayfası ve
+yayın koşullarını geçen içgörü sayfaları aynı gated helper üzerinden sitemap'e
+girebilir:
 
 - `/en-cok-satanlar`
 - `/en-cok-satanlar/turkiye`
+- `/en-cok-satanlar/turkiye/karsilastirma`
+- yayınlanabilir içgörü route'ları
 
-eklenir. Gate kapalıysa, policy eksikse, veri yetersizse veya helper hata
-verirse boş liste döner. Genel sitemap DB/CMS fallback'i de Kitap Endeksi
-URL'lerini içermez. Ana menü bağlantısı aynı gate geçildiğinde **Destek** ana
-menüsünün hemen yanında görünür ve doğrudan `/en-cok-satanlar` sayfasına gider.
+Gate kapalıysa, policy eksikse, veri yetersizse veya helper hata verirse boş
+liste döner. Genel sitemap DB/CMS fallback'i de Kitap Endeksi URL'lerini
+publication gate'i dışında yayınlamaz. Soft launch boyunca public navigasyon
+bağlantısı kapalı kalır.
 
 ### Trafik ve arama görünürlüğü sinyalleri
 
@@ -290,8 +290,7 @@ oluşmadan keyfî yüzde/gün eşiği tanımlanmaz. Eşikler, üretim verisi
 gözlemlendikten sonra ayrı ve versiyonlanabilir bir kalite kapısı kararı olarak
 belirlenecektir.
 
-`/en-cok-satanlar` ve ilgili sitemap kayıtları bu karar verilene kadar kapalı
-kalır.
+`/en-cok-satanlar` soft-launch olarak erişilebilir olsa da ilgili sitemap, structured data ve public navigasyon açılımı bu karar verilene kadar kapalı kalır.
 
 ## Sponsor entegrasyonu
 

@@ -188,20 +188,19 @@ async function fetchHtml(sourceUrl: string, expectedPath: string) {
   return response.text();
 }
 
-// Research-only adapter. Deliberately not registered in collector.ts.
-// Source state, list activation and production rollout remain separate decisions.
-export const kitapyurduBookIndexResearchAdapter: BookIndexSourceAdapter = {
+// Collector adapter for the verified weekly bestseller and new-release surfaces.
+export const kitapyurduBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    if (context.listCode === "kitapyurdu-tr-weekly-research") {
+    if (context.listCode === "kitapyurdu-tr-weekly") {
       return parseKitapyurduWeeklyBestsellers(
         await fetchHtml(context.sourceUrl, WEEKLY_GENERAL_PATH),
       );
     }
 
-    if (context.listCode === "kitapyurdu-tr-new-releases-research") {
+    if (context.listCode === "kitapyurdu-tr-new-releases") {
       return parseKitapyurduWeeklyNewReleases(
         await fetchHtml(context.sourceUrl, WEEKLY_NEW_RELEASES_PATH),
       );

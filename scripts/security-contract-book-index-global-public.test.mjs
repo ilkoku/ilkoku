@@ -125,3 +125,24 @@ test("global preview defaults to OFF in environment contract", () => {
     "runtime activation remains explicit opt-in only",
   );
 });
+
+
+test("global preview cannot leak into public discovery surfaces", () => {
+  const navigation = source("src/lib/public-site-navigation.ts");
+  const header = source("src/components/layout/PublicSiteHeader.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+  const siteMapPage = source("src/app/site-haritasi/page.tsx");
+
+  for (const [label, surface] of [
+    ["public navigation", navigation],
+    ["public header", header],
+    ["XML sitemap", sitemap],
+    ["HTML site map", siteMapPage],
+  ]) {
+    notContains(
+      surface,
+      "/en-cok-satanlar/dunya",
+      `${label} must not publish the gated global preview route`,
+    );
+  }
+});

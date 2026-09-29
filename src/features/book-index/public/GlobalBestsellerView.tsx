@@ -101,7 +101,7 @@ export function GlobalBestsellerView({
               {list.items.map((item) => (
                 <li
                   className={styles.rankingItem}
-                  key={`${list.listCode}-${item.rank}-${item.sourceKey ?? item.productUrl}`}
+                  key={`${list.listCode}-${item.rank}-${item.isbn13 ?? item.isbn10 ?? item.productUrl}`}
                 >
                   <span className={styles.rank}>#{item.rank}</span>
                   <div className={styles.book}>

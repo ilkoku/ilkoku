@@ -150,7 +150,7 @@ export async function getBookIndexSeoGateSnapshot(): Promise<BookIndexSeoGateSna
     observedCompositeSources: readiness.observedCompositeSources,
     observedIndependentCompositeSources:
       readiness.observedCompositeIndependenceGroups,
-    matchCoveragePercent: readiness.matchCoveragePercent,
+    matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent,
     historySpanDays: readiness.historySpanDays,
     turkeyItemCount: publicReadModel.turkey.items.length,
   });

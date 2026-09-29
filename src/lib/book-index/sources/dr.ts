@@ -288,6 +288,34 @@ export function buildDrWeeklyBestsellerResearchResult(
   };
 }
 
+export const drBookIndexAdapter: BookIndexSourceAdapter = {
+  sourceCode: "dr",
+  async collect(
+    context: BookIndexCollectionContext,
+  ): Promise<BookIndexCollectionResult> {
+    const response = await fetch(context.sourceUrl, {
+      cache: "no-store",
+      headers: {
+        Accept: "text/html,application/xhtml+xml",
+        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+      },
+      signal: AbortSignal.timeout(20_000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+    }
+
+    const html = await response.text();
+
+    if (context.listCode === "dr-tr-new-releases-research") {
+      return parseDrNewReleases(html);
+    }
+
+    throw new Error("BOOK_INDEX_DR_LIST_UNSUPPORTED");
+  },
+};
+
 // Research-only helpers. Deliberately no BookIndexSourceAdapter export here.
 // Bestseller catalog position is not accepted as weekly rank.
 // New Releases may preserve the native /en-yeniler card order only; no date

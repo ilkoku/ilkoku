@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Amazon TR collector-registered adapter preserves native ranked book surfaces while rollout stays staged", () => {
+test("Amazon TR bestseller Top 30 canary preserves native ranks while public rollout stays staged", () => {
   const adapter = source("src/lib/book-index/sources/amazon-tr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -90,11 +90,16 @@ test("Amazon TR collector-registered adapter preserves native ranked book surfac
   contains(
     lists,
     'code: "amazon-tr-live"',
-    "Amazon TR bestseller list remains staged",
+    "Amazon TR bestseller canary remains registered",
   );
   contains(
     lists,
     'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books"',
-    "live list uses the verified native bestseller surface",
+    "canary uses the verified native bestseller surface",
+  );
+  contains(
+    adapter,
+    'BOOK_INDEX_AMAZON_TR_TOP30_MISMATCH',
+    "Top 30 exact native-rank guard",
   );
 });

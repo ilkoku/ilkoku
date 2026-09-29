@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import type { TurkeyNewReleaseRow } from "@/lib/book-index/new-releases";
 
+import { NewReleaseFilterTable } from "./NewReleaseFilterTable";
+
 import styles from "./BookIndexPublicView.module.css";
 
 function formattedObservedAt(value: Date | null) {
@@ -71,47 +73,7 @@ export function NewReleasePublicView({
           </div>
         </div>
 
-        <div className={styles.tableScroll}>
-          <table className={styles.newReleaseTable}>
-            <thead>
-              <tr>
-                <th scope="col">Kitap</th>
-                <th scope="col">Yazar</th>
-                <th scope="col">Yayınevi</th>
-                <th scope="col">Kaynak · listedeki konum</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length ? (
-                rows.map((row) => (
-                  <tr key={row.rowKey}>
-                    <td className={styles.titleCell}>
-                      <strong>{row.title}</strong>
-                    </td>
-                    <td>{row.authorName ?? "—"}</td>
-                    <td>{row.publisherName ?? "—"}</td>
-                    <td className={styles.newReleaseSourcesCell}>
-                      {row.sources.map((source) => (
-                        <span
-                          className={styles.newReleaseSourceTag}
-                          key={source.sourceCode}
-                        >
-                          {source.sourceName}: {source.position}
-                        </span>
-                      ))}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td className={styles.emptyState} colSpan={4}>
-                    Yeni çıkan kitap verileri hazırlanıyor.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <NewReleaseFilterTable rows={rows} />
       </section>
 
       <section

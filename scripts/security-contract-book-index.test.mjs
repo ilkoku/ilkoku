@@ -264,7 +264,7 @@ test("only BKM weekly contributes to the Turkey composite in V1", () => {
 });
 
 
-test("Amazon sources remain fail-closed until a stable sanctioned collector path exists", () => {
+test("Amazon TR stays research-only while global Amazon US and UK collectors are isolated", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
@@ -275,16 +275,48 @@ test("Amazon sources remain fail-closed until a stable sanctioned collector path
   );
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com",\n    includeInTurkeyIndex: false,\n    phase: "v1",\n    collectionState: "blocked"',
-    "Amazon US automated access block",
+    'baseUrl: "https://www.amazon.com",\n    includeInTurkeyIndex: false,\n    independenceGroup: "amazon-us",\n    operatorName: "Amazon US",\n    phase: "v1",\n    collectionState: "ready"',
+    "Amazon US global source is ready and excluded from Turkey",
   );
-  notContains(
+  contains(
     collector,
-    'sourceCode: "amazon-us"',
-    "Amazon US collector is not activated",
+    "[amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter]",
+    "Amazon US collector is isolated and active",
   );
 });
 
+
+test("Amazon US global source preserves native bestseller rank without joining Turkey", () => {
+  const adapter = source("src/lib/book-index/sources/amazon-us.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "amazon-us",\n    name: "Amazon ABD",\n    market: "US",\n    countryCode: "US",\n    baseUrl: "https://www.amazon.com",\n    includeInTurkeyIndex: false',
+    "Amazon US stays outside Turkey",
+  );
+  contains(lists, 'code: "amazon-us-live"', "Amazon US list registry");
+  contains(lists, 'sourceUrl: "https://www.amazon.com/Best-Sellers-Books/zgbs/books"', "Amazon US native bestseller URL");
+  contains(lists, 'maxRank: 30', "Amazon US Top 30 cap");
+  contains(lists, 'publiclyVisible: false', "global source stays unpublished before global UI approval");
+  contains(adapter, "p13n-asin-index-", "isolated Amazon US bestseller cards");
+  contains(adapter, "BOOK_INDEX_AMAZON_US_RESULT_SIZE_MISMATCH", "exact page-size guard");
+  contains(adapter, "BOOK_INDEX_AMAZON_US_ACCESS_CHALLENGE", "access challenge fail-closed guard");
+  contains(adapter, "rank !== index + 1", "native rank continuity");
+  contains(adapter, "authorName: null", "unverified author text is not guessed");
+  contains(
+    adapter,
+    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
+    "transparent Amazon US collector identity",
+  );
+  contains(
+    collector,
+    "[amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter]",
+    "Amazon US adapter activation",
+  );
+});
 
 test("Amazon UK global source preserves native bestseller rank without joining Turkey", () => {
   const adapter = source("src/lib/book-index/sources/amazon-uk.ts");

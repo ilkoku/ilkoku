@@ -74,6 +74,13 @@ export const BOOK_INDEX_NEW_RELEASE_SOURCES: readonly BookIndexNewReleaseSourceD
     status: "verified_native_list",
   },
   {
+    sourceCode: "dr",
+    nativeLabel: "Yeni Çıkanlar",
+    sourceUrl: "https://www.dr.com.tr/kategori_/kitap/en-yeniler/10001/3",
+    collectionMode: "dedicated_page",
+    status: "verified_native_list",
+  },
+  {
     sourceCode: "idefix",
     nativeLabel: "Yeni Çıkanlar",
     sourceUrl: null,

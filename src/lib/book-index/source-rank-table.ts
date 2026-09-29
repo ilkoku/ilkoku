@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+import { BOOK_INDEX_LISTS } from "./lists";
+
 export type SourceRankMovement = "up" | "down" | "same" | "new" | "unknown";
 
 export type TurkeySourceRankRow = {
@@ -18,11 +20,19 @@ export type TurkeySourceRankRow = {
 
 export async function getTurkeySourceRankRows(limit = 1000) {
   const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 2000);
+  const publicTurkeyListCodes = BOOK_INDEX_LISTS
+    .filter(
+      (list) =>
+        list.enabled
+        && list.categoryKey === "general"
+        && (list.includeInComposite || list.includeInTurkeyDisplay === true),
+    )
+    .map((list) => list.code);
 
   const lists = await prisma.bookIndexList.findMany({
     where: {
       active: true,
-      includeInComposite: true,
+      code: { in: publicTurkeyListCodes },
       source: {
         includeInTurkeyIndex: true,
         status: "active",

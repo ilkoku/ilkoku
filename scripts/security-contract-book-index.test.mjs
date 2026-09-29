@@ -1605,7 +1605,7 @@ test("Book Index source adapters exclude only verified non-book catalogue entrie
 });
 
 
-test("Amazon TR parser remains fail-closed while rollout is staged", () => {
+test("Amazon TR Top 30 bestseller canary remains fail-closed and private", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const amazon = source("src/lib/book-index/sources/amazon-tr.ts");
@@ -1621,11 +1621,11 @@ test("Amazon TR parser remains fail-closed while rollout is staged", () => {
     'name: "Amazon Türkiye",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
     "Amazon TR remains researching",
   );
-  contains(lists, 'code: "amazon-tr-live"', "Amazon TR staged bestseller list");
+  contains(lists, 'code: "amazon-tr-live"', "Amazon TR private bestseller canary");
   contains(
     lists,
-    'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: false',
-    "Amazon TR bestseller list remains disabled and private",
+    'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",\n    maxRank: 30,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    "Amazon TR Top 30 canary is enabled but private and non-composite",
   );
   contains(
     lists,
@@ -1643,6 +1643,11 @@ test("Amazon TR parser remains fail-closed while rollout is staged", () => {
     amazon,
     "BOOK_INDEX_AMAZON_TR_RANK_GAP",
     "cross-page rank-gap guard",
+  );
+  contains(
+    amazon,
+    "BOOK_INDEX_AMAZON_TR_TOP30_MISMATCH",
+    "Top 30 canary exact-rank guard",
   );
   contains(
     amazon,

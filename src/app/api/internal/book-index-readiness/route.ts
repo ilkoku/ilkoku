@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
         observedCompositeSources: readiness.observedCompositeSources,
         observedIndependentCompositeSources:
           readiness.observedCompositeIndependenceGroups,
-        matchCoveragePercent: readiness.matchCoveragePercent,
+        matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent,
         historySpanDays: readiness.historySpanDays,
         turkeyItemCount: publicReadModel.turkey.items.length,
       },

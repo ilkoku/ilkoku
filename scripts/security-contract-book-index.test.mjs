@@ -1434,6 +1434,8 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapstore-tr-live-canary",
     "pandora-tr-live-canary",
     "amazon-tr-live",
+    "kitapyurdu-tr-weekly",
+    "kitapyurdu-tr-new-releases",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);
@@ -1458,7 +1460,6 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapstore-tr-live",
     "kitapsec-general-live",
     "kitapambari-tr-live",
-    "kitapyurdu-tr-weekly",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);

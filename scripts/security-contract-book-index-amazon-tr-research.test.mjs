@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Amazon Türkiye production supports verified ranked book surfaces", () => {
+test("Amazon Türkiye collector-registered research supports verified ranked book surfaces", () => {
   const adapter = source("src/lib/book-index/sources/amazon-tr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const lists = source("src/lib/book-index/lists.ts");
@@ -69,23 +69,23 @@ test("Amazon Türkiye production supports verified ranked book surfaces", () => 
   );
   contains(
     lists,
-    'code: "amazon-tr-new-releases"',
-    "Amazon TR new-release list is active",
+    'code: "amazon-tr-new-releases-research"',
+    "Amazon TR new-release research list remains staged",
   );
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    "Amazon Türkiye source is ready",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "Amazon Türkiye source remains researching",
   );
 });
 
-test("Amazon Türkiye bestseller list is live and public", () => {
+test("Amazon Türkiye bestseller list remains staged and private", () => {
   const lists = source("src/lib/book-index/lists.ts");
   const start = lists.indexOf('code: "amazon-tr-live"');
   assert.ok(start >= 0, "amazon-tr-live must exist");
   const block = lists.slice(start, start + 700);
 
-  contains(block, "includeInComposite: true", "Amazon Türkiye is included in the Turkey source-rank table");
-  contains(block, "publiclyVisible: true", "Amazon Türkiye public visibility is on");
-  contains(block, "enabled: true", "Amazon Türkiye collection is enabled");
+  contains(block, "includeInComposite: false", "Amazon Türkiye composite participation remains off");
+  contains(block, "publiclyVisible: false", "Amazon Türkiye public visibility remains off");
+  contains(block, "enabled: false", "Amazon Türkiye collection remains disabled");
 });

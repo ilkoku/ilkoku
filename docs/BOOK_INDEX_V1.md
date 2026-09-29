@@ -415,12 +415,20 @@ Amazon kaynakları V1'de iki ayrı pazar olarak tutulur.
 
 **Amazon ABD**
 
-- `https://www.amazon.com/Best-Sellers-Books/zgbs/books` şeffaf kaynak
-  isteğinde Amazon'un `automated access` / CAPTCHA sayfasını döndürdü.
-- CAPTCHA, stealth user-agent, proxy veya başka anti-bot aşma yöntemi
-  kullanılmayacak.
-- Kaynak V1 registry içinde **blocked** tutulur. Resmi/sanctioned veri yolu
-  bulunursa yeniden değerlendirilir.
+- 29 Eylül 2026 yeniden doğrulamasında
+  `https://www.amazon.com/Best-Sellers-Books/zgbs/books` şeffaf
+  `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` isteğiyle HTTP 200 döndü.
+- 30 bestseller kartı, 30 benzersiz ASIN ve kesintisiz `#1..#30` native sıra
+  doğrulandı; automated-access/CAPTCHA sayfası görülmedi.
+- Collector kartları `p13n-asin-index-N` sınırında izole eder; komşu karttan
+  ASIN veya başlık sızdırmaz.
+- Başlık, ASIN, native rank, ürün URL'si ve görsel güvenilir alanlardır.
+- Yazar metni sayfada review/sayı alanlarıyla karışabildiği için ilk sürümde
+  tahmin edilmez; `authorName=null` kalır.
+- Amazon ABD Türkiye Endeksi'ne katılmaz ve global public görünüm onaylanana
+  kadar `publiclyVisible=false` kalır.
+- Erişim yeniden challenge/CAPTCHA döndürürse collector fail-closed olur; proxy,
+  stealth veya CAPTCHA aşma yöntemi kullanılmaz.
 
 
 ### D&R erişim kararı — 25 Eylül 2026

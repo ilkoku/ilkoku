@@ -1,0 +1,29 @@
+name: Probe global source parsers
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - probe/global-source-parsers
+    paths:
+      - scripts/probe-global-source-parsers.mjs
+      - .github/workflows/probe-global-source-parsers.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout probe branch
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Probe six global bestseller sources
+        run: node scripts/probe-global-source-parsers.mjs

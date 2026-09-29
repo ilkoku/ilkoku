@@ -27,6 +27,18 @@ function listPeriod(list: BookIndexSourceListSnapshot) {
   return periodLabel[list.period] ?? list.period;
 }
 
+function GlobalListFreshness({ observedAt }: { observedAt: Date | null }) {
+  const label = formattedObservedAt(observedAt);
+  if (!observedAt || !label) return null;
+
+  return (
+    <p className={styles.freshness}>
+      Liste güncellemesi:{" "}
+      <time dateTime={observedAt.toISOString()}>{label}</time>
+    </p>
+  );
+}
+
 export function GlobalBestsellerView({
   model,
 }: {
@@ -86,6 +98,7 @@ export function GlobalBestsellerView({
                 sıralamasını gösterir. Sıra numaraları İlkOku tarafından yeniden
                 hesaplanmaz.
               </p>
+              <GlobalListFreshness observedAt={list.observedAt} />
             </div>
             <a
               href={list.sourceUrl}

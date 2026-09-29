@@ -10,6 +10,7 @@ import { normalizeBookIndexText } from "./html";
 import { autoMatchBookIndexExternalBook } from "./matching";
 import { getBookIndexList } from "./lists";
 import { getBookIndexSource } from "./sources";
+import { amazonUsBookIndexAdapter } from "./sources/amazon-us";
 import { amazonUkBookIndexAdapter } from "./sources/amazon-uk";
 import { bkmBookIndexAdapter } from "./sources/bkm";
 import { kitapSepetiBookIndexAdapter } from "./sources/kitapsepeti";
@@ -28,6 +29,7 @@ import { pandoraBookIndexAdapter } from "./sources/pandora";
 import { remziBookIndexAdapter } from "./sources/remzi";
 
 const adapters = new Map<string, BookIndexSourceAdapter>([
+  [amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter],
   [amazonUkBookIndexAdapter.sourceCode, amazonUkBookIndexAdapter],
   [remziBookIndexAdapter.sourceCode, remziBookIndexAdapter],
   [bkmBookIndexAdapter.sourceCode, bkmBookIndexAdapter],

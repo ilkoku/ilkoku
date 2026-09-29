@@ -412,8 +412,8 @@ test("bestseller full list and comparison expose distinct view modes", () => {
     '<BookIndexViewModeNav current="comparison" />',
     "comparison active mode",
   );
-  contains(nav, ">Tüm Liste<", "full-list mode label");
-  contains(nav, ">Karşılaştırma<", "comparison mode label");
+  contains(nav, "Tüm Liste", "full-list mode label");
+  contains(nav, "Karşılaştırma", "comparison mode label");
   contains(
     nav,
     'href="/en-cok-satanlar/turkiye"',

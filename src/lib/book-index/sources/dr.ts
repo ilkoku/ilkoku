@@ -310,7 +310,7 @@ export const drBookIndexAdapter: BookIndexSourceAdapter = {
 
     const html = await response.text();
 
-    if (context.listCode === "dr-tr-new-releases-research") {
+    if (context.listCode === "dr-tr-new-releases") {
       return parseDrNewReleases(html);
     }
 

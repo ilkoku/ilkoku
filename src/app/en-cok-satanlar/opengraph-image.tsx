@@ -54,7 +54,7 @@ export default function BookIndexOpenGraphImage() {
             opacity: 0.96,
           }}
         >
-          Türkiye&apos;deki çok satan listelerini kaynak sırasıyla karşılaştır
+          Türkiye&apos;deki çok satan listelerini satış sitelerine göre karşılaştır
         </div>
         <div
           style={{
@@ -65,7 +65,7 @@ export default function BookIndexOpenGraphImage() {
             opacity: 0.82,
           }}
         >
-          Kaynak sıraları değiştirilmez · aynı kitap aynı sıradaysa kaynaklar birleşir
+          Site sıraları değiştirilmez · aynı kitap aynı sıradaysa site adları birleşir
         </div>
       </div>
 

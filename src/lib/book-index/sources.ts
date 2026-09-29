@@ -54,7 +54,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.dr.com.tr",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "blocked",
+    collectionState: "ready",
   },
   {
     code: "idefix",

@@ -74,6 +74,27 @@ export const BOOK_INDEX_NEW_RELEASE_SOURCES: readonly BookIndexNewReleaseSourceD
     status: "verified_native_list",
   },
   {
+    sourceCode: "dr",
+    nativeLabel: "Yeni Çıkanlar",
+    sourceUrl: "https://www.dr.com.tr/kategori_/kitap/en-yeniler/10001/3",
+    collectionMode: "dedicated_page",
+    status: "verified_native_list",
+  },
+  {
+    sourceCode: "kitapyurdu",
+    nativeLabel: "Yeni Çıkanlar (Genel, Haftalık)",
+    sourceUrl: "https://www.kitapyurdu.com/yeni-cikan-kitaplar/haftalik/2.html",
+    collectionMode: "dedicated_page",
+    status: "verified_native_list",
+  },
+  {
+    sourceCode: "amazon-tr",
+    nativeLabel: "New Releases in Books",
+    sourceUrl: "https://www.amazon.com.tr/gp/new-releases/books",
+    collectionMode: "dedicated_page",
+    status: "verified_native_list",
+  },
+  {
     sourceCode: "idefix",
     nativeLabel: "Yeni Çıkanlar",
     sourceUrl: null,

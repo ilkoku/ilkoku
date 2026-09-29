@@ -107,8 +107,8 @@ export function parseDrNewReleases(html: string): BookIndexCollectionResult {
     );
   }
 
-  const books = anchors.map((anchor, index) => {
-    const next = anchors[index + 1];
+  const books = anchors.map((anchor, nativeIndex) => {
+    const next = anchors[nativeIndex + 1];
     const card = html.slice(anchor.index, next?.index ?? html.length);
 
     const sameProductTitles = [
@@ -144,7 +144,7 @@ export function parseDrNewReleases(html: string): BookIndexCollectionResult {
       publisherName: publishers[0],
       productUrl: absoluteUrl(anchor.href),
       imageUrl: imageSrc ? absoluteUrl(imageSrc) : null,
-      rank: index + 1,
+      rank: nativeIndex + 1,
       currency: "TRY",
     };
   });

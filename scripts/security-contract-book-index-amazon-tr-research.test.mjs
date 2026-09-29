@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Amazon Türkiye research supports verified ranked book surfaces without activating rollout", () => {
+test("Amazon Türkiye production supports verified ranked book surfaces", () => {
   const adapter = source("src/lib/book-index/sources/amazon-tr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const lists = source("src/lib/book-index/lists.ts");
@@ -51,10 +51,10 @@ test("Amazon Türkiye research supports verified ranked book surfaces without ac
   notContains(adapter, "isbn13: asin", "ASIN must never be converted into ISBN-13");
   notContains(adapter, "isbn10: asin", "ASIN must never be converted into ISBN-10");
 
-  notContains(
+  contains(
     collector,
-    "amazonTrBookIndexResearchAdapter",
-    "Amazon Türkiye remains out of production collector registry",
+    "amazonTrBookIndexAdapter",
+    "Amazon Türkiye adapter is registered in collector",
   );
   contains(lists, 'code: "amazon-tr-live"', "existing bestseller placeholder remains");
   contains(
@@ -67,25 +67,25 @@ test("Amazon Türkiye research supports verified ranked book surfaces without ac
     'title: "Amazon Türkiye · Kitap Çok Satanlar"',
     "existing bestseller list identity remains",
   );
-  notContains(
+  contains(
     lists,
     'code: "amazon-tr-new-releases"',
-    "no production new-release list is activated",
+    "Amazon TR new-release list is active",
   );
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "Amazon Türkiye source state remains researching",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    Amazon Türkiye source is ready,
   );
 });
 
-test("Amazon Türkiye live placeholder stays disabled and non-public", () => {
+test("Amazon Türkiye bestseller list is live and public", () => {
   const lists = source("src/lib/book-index/lists.ts");
   const start = lists.indexOf('code: "amazon-tr-live"');
   assert.ok(start >= 0, "amazon-tr-live must exist");
   const block = lists.slice(start, start + 700);
 
-  contains(block, "includeInComposite: false", "Amazon Türkiye composite remains off");
-  contains(block, "publiclyVisible: false", "Amazon Türkiye public visibility remains off");
-  contains(block, "enabled: false", "Amazon Türkiye collection remains disabled");
+  contains(block, "includeInComposite: true", "Amazon Türkiye is included in the Turkey source-rank table");
+  contains(block, "publiclyVisible: true", "Amazon Türkiye public visibility is on");
+  contains(block, "enabled: true", "Amazon Türkiye collection is enabled");
 });

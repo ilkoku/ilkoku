@@ -64,8 +64,8 @@ test("Amazon Türkiye collector-registered research supports verified ranked boo
   );
   contains(
     lists,
-    'title: "Amazon Türkiye · Kitap Çok Satanlar"',
-    "existing bestseller list identity remains",
+    'title: "Amazon Türkiye · Kitap Çok Satanlar · Top 30 Canary"',
+    "private Top 30 canary list identity",
   );
   contains(
     lists,
@@ -79,13 +79,14 @@ test("Amazon Türkiye collector-registered research supports verified ranked boo
   );
 });
 
-test("Amazon Türkiye bestseller list remains staged and private", () => {
+test("Amazon Türkiye bestseller Top 30 canary remains private and non-composite", () => {
   const lists = source("src/lib/book-index/lists.ts");
   const start = lists.indexOf('code: "amazon-tr-live"');
   assert.ok(start >= 0, "amazon-tr-live must exist");
   const block = lists.slice(start, start + 700);
 
+  contains(block, "maxRank: 30", "Amazon Türkiye canary is bounded to Top 30");
   contains(block, "includeInComposite: false", "Amazon Türkiye composite participation remains off");
   contains(block, "publiclyVisible: false", "Amazon Türkiye public visibility remains off");
-  contains(block, "enabled: false", "Amazon Türkiye collection remains disabled");
+  contains(block, "enabled: true", "Amazon Türkiye private canary collection is enabled");
 });

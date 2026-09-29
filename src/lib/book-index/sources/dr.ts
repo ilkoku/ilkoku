@@ -320,7 +320,3 @@ export const drBookIndexAdapter: BookIndexSourceAdapter = {
 // Bestseller catalog position is not accepted as weekly rank.
 // New Releases preserves the native /en-yeniler card order only; no date
 // derivation or synthetic recency score is introduced.
-// Bestseller catalog position is not accepted as weekly rank.
-// New Releases may preserve the native /en-yeniler card order only; no date
-// derivation or synthetic recency score is introduced.
-// D&R's direct server fetch path remains unverified for production collection.

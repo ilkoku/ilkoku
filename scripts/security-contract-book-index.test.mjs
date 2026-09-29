@@ -324,7 +324,7 @@ test("Amazon UK global source preserves native bestseller rank without joining T
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR";', "global market types include Italy, Japan and Korea");
+  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU";', "global market types include Italy, Japan, Korea and Australia");
   contains(
     sources,
     'code: "amazon-uk",\n    name: "Amazon UK",\n    market: "UK",\n    countryCode: "UK",\n    baseUrl: "https://www.amazon.co.uk",\n    includeInTurkeyIndex: false',
@@ -440,6 +440,34 @@ test("Kyobo Korea global source preserves the native weekly Top 20", () => {
     collector,
     "[kyoboKoreaBookIndexAdapter.sourceCode, kyoboKoreaBookIndexAdapter]",
     "Kyobo adapter activation",
+  );
+});
+
+test("Readings Australia discovers and preserves the native monthly Top 20", () => {
+  const adapter = source("src/lib/book-index/sources/readings-au.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "readings-au",\n    name: "Readings Avustralya",\n    market: "AU",\n    countryCode: "AU",\n    baseUrl: "https://www.readings.com.au",\n    includeInTurkeyIndex: false',
+    "Readings Australia stays outside Turkey",
+  );
+  contains(lists, 'code: "readings-au-monthly"', "Readings monthly list registry");
+  contains(lists, 'period: "monthly"', "Readings native monthly period");
+  contains(lists, 'maxRank: 20', "Readings Top 20 cap");
+  contains(lists, 'publiclyVisible: false', "global Readings list stays unpublished before global UI approval");
+  contains(adapter, "discoverReadingsMonthlyBestsellerUrl", "Readings latest-article discovery");
+  contains(adapter, "/news\\/our-[a-z]+-20\\d{2}-bestsellers", "Readings general monthly article pattern");
+  contains(adapter, "BOOK_INDEX_READINGS_AU_ARTICLE_NOT_FOUND", "Readings discovery fail-closed guard");
+  contains(adapter, "BOOK_INDEX_READINGS_AU_RESULT_SIZE_MISMATCH", "Readings exact result-size guard");
+  contains(adapter, "BOOK_INDEX_READINGS_AU_RANK_ORDER_MISMATCH", "Readings native rank continuity guard");
+  contains(adapter, "BOOK_INDEX_READINGS_AU_DUPLICATE_ISBN", "Readings ISBN uniqueness guard");
+  contains(
+    collector,
+    "[readingsAustraliaBookIndexAdapter.sourceCode, readingsAustraliaBookIndexAdapter]",
+    "Readings adapter activation",
   );
 });
 

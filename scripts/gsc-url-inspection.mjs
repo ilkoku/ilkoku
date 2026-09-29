@@ -177,10 +177,16 @@ export function selectDefaultInspectionUrls(sitemapUrls) {
     sitemapUrls.find((location) => /^https:\/\/ilkoku\.com\/yasal\//u.test(location)),
   ].filter(Boolean);
 
-  return [...new Set([
+  const selectedUrls = [...new Set([
     ...DEFAULT_CORE_INSPECTION_URLS,
     ...preferredSitemapUrls,
-  ])].slice(0, MAX_URLS);
+  ])];
+  const selectedUrlSet = new Set(selectedUrls);
+
+  return [
+    ...selectedUrls,
+    ...sitemapUrls.filter((location) => !selectedUrlSet.has(location)),
+  ].slice(0, MAX_URLS);
 }
 
 async function inspectUrl(accessToken, inspectionUrl) {

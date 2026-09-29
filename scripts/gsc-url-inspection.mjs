@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { pathToFileURL } from "node:url";
 
 const SITE_URL = process.env.GSC_SITE_URL || "sc-domain:ilkoku.com";
 const CLIENT_ID = process.env.GSC_OAUTH_CLIENT_ID;
@@ -8,6 +9,15 @@ const MAX_URLS = 10;
 const BASE_URL = "https://ilkoku.com";
 const SITEMAP_MAX_URLS = 50_000;
 const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
+const DEFAULT_CORE_INSPECTION_URLS = [
+  `${BASE_URL}/`,
+  `${BASE_URL}/nasil-calisir`,
+  `${BASE_URL}/yazarlar-icin`,
+  `${BASE_URL}/yazarlar-icin/kurgu/roman`,
+  `${BASE_URL}/okurlar-icin/okumaya-baslama`,
+  `${BASE_URL}/editorler-icin/egitim/editorluge-baslama`,
+  `${BASE_URL}/site-haritasi`,
+];
 
 function requireSecret(name, value) {
   if (!value) {
@@ -157,6 +167,22 @@ function sitemapTotals(item) {
   );
 }
 
+export function selectDefaultInspectionUrls(sitemapUrls) {
+  const preferredSitemapUrls = [
+    sitemapUrls.find(
+      (location) => location === `${BASE_URL}/en-cok-satanlar/dunya`,
+    ),
+    sitemapUrls.find((location) => location === `${BASE_URL}/en-cok-satanlar`),
+    sitemapUrls.find((location) => /^https:\/\/ilkoku\.com\/kitap\//u.test(location)),
+    sitemapUrls.find((location) => /^https:\/\/ilkoku\.com\/yasal\//u.test(location)),
+  ].filter(Boolean);
+
+  return [...new Set([
+    ...DEFAULT_CORE_INSPECTION_URLS,
+    ...preferredSitemapUrls,
+  ])].slice(0, MAX_URLS);
+}
+
 async function inspectUrl(accessToken, inspectionUrl) {
   const response = await fetch(
     "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
@@ -202,7 +228,7 @@ async function inspectUrl(accessToken, inspectionUrl) {
   };
 }
 
-function writeStepSummary(results, sitemaps) {
+function writeStepSummary(results, sitemaps, scope) {
   const path = process.env.GITHUB_STEP_SUMMARY;
   if (!path) return;
 
@@ -224,6 +250,10 @@ function writeStepSummary(results, sitemaps) {
     "## Google Search Console URL Inspection",
     "",
     `Property: \`${SITE_URL}\``,
+    "",
+    "### Inspection scope",
+    "",
+    scope,
     "",
     "### Sitemap status",
     "",
@@ -258,42 +288,15 @@ async function main() {
   requireSecret("GSC_OAUTH_REFRESH_TOKEN", REFRESH_TOKEN);
 
   const requested = parseRequestedUrls(process.env.GSC_INSPECTION_URLS);
-  const defaults = [
-    `${BASE_URL}/`,
-    `${BASE_URL}/nasil-calisir`,
-    `${BASE_URL}/yazarlar-icin`,
-    `${BASE_URL}/yazarlar-icin/kurgu/roman`,
-  ];
-
   const discoveredSitemapUrls = requested.length === 0
     ? await discoverPublicSitemapUrls()
     : [];
-
-  const representativeWork = discoveredSitemapUrls.find(
-    (location) => /^https:\/\/ilkoku\.com\/kitap\//u.test(location),
-  ) || null;
-
-  const bookIndexUrls = discoveredSitemapUrls
-    .filter(
-      (location) =>
-        location === `${BASE_URL}/en-cok-satanlar`
-        || location.startsWith(`${BASE_URL}/en-cok-satanlar/`),
-    )
-    .sort((a, b) => {
-      const priority = (value) => {
-        if (value === `${BASE_URL}/en-cok-satanlar`) return 0;
-        if (value === `${BASE_URL}/en-cok-satanlar/turkiye`) return 1;
-        return 2;
-      };
-      return priority(a) - priority(b) || a.localeCompare(b, "tr");
-    })
-    .slice(0, 5);
 
   const urls = [...new Set(
     (
       requested.length > 0
         ? requested
-        : [...defaults, representativeWork, ...bookIndexUrls].filter(Boolean)
+        : selectDefaultInspectionUrls(discoveredSitemapUrls)
     ).map(validateInspectionUrl),
   )];
 
@@ -302,8 +305,12 @@ async function main() {
     throw new Error(`Refusing to inspect more than ${MAX_URLS} URLs in one diagnostic run.`);
   }
 
+  const scope = requested.length > 0
+    ? `Manual inspection: ${urls.length} URL(s).`
+    : `Representative inspection: ${urls.length} of ${discoveredSitemapUrls.length} sitemap URL(s).`;
+
   console.log(`GSC property: ${SITE_URL}`);
-  console.log(`Inspection cohort: ${urls.length} URL(s)`);
+  console.log(`Inspection cohort: ${scope}`);
 
   const accessToken = await getAccessToken();
   const sitemaps = await listSitemaps(accessToken);
@@ -319,11 +326,13 @@ async function main() {
     console.log(JSON.stringify(result));
   }
 
-  writeStepSummary(results, sitemaps);
+  writeStepSummary(results, sitemaps, scope);
   console.log(`Completed ${results.length} URL Inspection request(s).`);
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });
+}

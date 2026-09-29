@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
+import { selectDefaultInspectionUrls } from "./gsc-url-inspection.mjs";
 
 const workflow = fs.readFileSync(".github/workflows/gsc-url-inspection.yml", "utf8");
 const script = fs.readFileSync("scripts/gsc-url-inspection.mjs", "utf8");
@@ -37,15 +38,47 @@ test("inspection script only calls read-only Search Console diagnostics", () => 
   assert.match(script, /Sitemap contains duplicate URLs/u);
   assert.match(script, /GSC sitemaps:/u);
   assert.match(script, /discoverPublicSitemapUrls/u);
+  assert.match(script, /selectDefaultInspectionUrls/u);
+  assert.match(script, /DEFAULT_CORE_INSPECTION_URLS/u);
+  assert.match(script, /Representative inspection:/u);
+  assert.match(script, /sitemap URL\(s\)/u);
+  assert.match(script, /editorler-icin\/egitim\/editorluge-baslama/u);
+  assert.match(script, /okurlar-icin\/okumaya-baslama/u);
+  assert.match(script, /site-haritasi/u);
   assert.match(script, /en-cok-satanlar/u);
-  assert.match(script, /en-cok-satanlar\/turkiye/u);
-  assert.match(script, /location\.startsWith/u);
-  assert.match(script, /en-cok-satanlar\//u);
-  assert.match(script, /\.slice\(0, 5\)/u);
   assert.match(script, /discoveredSitemapUrls/u);
   assert.match(script, /lastDownloaded/u);
   assert.match(script, /Diagnostic only/u);
   assert.doesNotMatch(script, /requestIndexing|indexing\.googleapis\.com/u);
+});
+
+test("default inspection samples every public cohort without confusing the cohort with sitemap coverage", () => {
+  const sitemapUrls = [
+    "https://ilkoku.com/yasal/kullanim-sartlari",
+    "https://ilkoku.com/kitap/ornek-eser",
+    "https://ilkoku.com/en-cok-satanlar/dunya",
+    "https://ilkoku.com/",
+    "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+    "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
+    "https://ilkoku.com/site-haritasi",
+    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
+  ];
+
+  assert.deepEqual(selectDefaultInspectionUrls(sitemapUrls), [
+    "https://ilkoku.com/",
+    "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+    "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
+    "https://ilkoku.com/site-haritasi",
+    "https://ilkoku.com/en-cok-satanlar/dunya",
+    "https://ilkoku.com/kitap/ornek-eser",
+    "https://ilkoku.com/yasal/kullanim-sartlari",
+  ]);
 });
 
 test("package and docs expose the official diagnostic path", () => {

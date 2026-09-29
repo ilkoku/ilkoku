@@ -322,7 +322,12 @@ export async function getBookIndexPublicReadModel(
       sourceUrl: source.baseUrl,
       hasRankingData: turkeySourceCodesWithData.has(source.code),
     }))
-    .sort((left, right) => left.sourceName.localeCompare(right.sourceName, "tr"));
+    .sort((left, right) => {
+      if (left.hasRankingData !== right.hasRankingData) {
+        return left.hasRankingData ? 1 : -1;
+      }
+      return left.sourceName.localeCompare(right.sourceName, "tr");
+    });
 
   return {
     publicRolloutState: "gated",

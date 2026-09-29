@@ -48,7 +48,7 @@ async function buildBookIndexPageContext(
     observedCompositeSources: readiness.observedCompositeSources,
     observedIndependentCompositeSources:
       readiness.observedCompositeIndependenceGroups,
-    matchCoveragePercent: readiness.matchCoveragePercent,
+    matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent,
     historySpanDays: readiness.historySpanDays,
     turkeyItemCount: model.turkey.items.length,
   });

@@ -24,6 +24,7 @@ export async function getTurkeySourceRankRows(limit = 1000) {
     .filter(
       (list) =>
         list.enabled
+        && list.publiclyVisible
         && list.categoryKey === "general"
         && (list.includeInComposite || list.includeInTurkeyDisplay === true),
     )

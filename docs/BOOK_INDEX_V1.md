@@ -58,6 +58,7 @@ Registry'de `phase="v1"` olarak tanımlı kaynaklar:
 Registry'de `phase="phase_2"` olarak tanımlı kaynaklar:
 
 - KitapSeç — ready; kategori listeleri genel Türkiye composite'ine oy vermez
+- İmge Kitabevi — ready; Çok Satanlar etiketi satış miktarı azalan sıralamayla toplanır
 
 Türkiye Kitap Endeksi kaynak kapsamı **kitap odaklı satış siteleri ve kitabevleri** ile
 sınırlıdır. Genel pazaryerleri bu registry'ye dahil edilmez. Bu nedenle
@@ -522,6 +523,16 @@ snapshot'larında aynı master kitaba bağlanan kayıtlar üzerinden hesaplanır
 - Bu karar erişim/anti-bot durumundan bağımsız bir ürün kapsamı kararıdır.
 - İleride genel pazaryerlerinden veri kullanılacaksa bu, Kitap Endeksi kaynağı olarak değil ayrı bir ürün kararıyla değerlendirilmelidir.
 
+
+### İmge Kitabevi — 29 Eylül 2026
+
+- Resmî `/etiket/cok-satanlar` sayfası şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` isteğiyle HTTP 200 döndürüyor.
+- Etiket sayfasının varsayılan görünümü satış sırası değildir; varsayılan sıralama `Yeniden Eskiye` olabilir. Bu görünüm rank olarak kullanılmaz.
+- İmge arayüzündeki `sort_type=7` değeri açıkça **Satış Miktarı (Çok > Az)** anlamına gelir.
+- Collector yalnız `sort_type=7&size=100` ile SSR sayfayı toplar ve sunucunun `sort_type="7"` uyguladığını fail-closed doğrular.
+- 29 Eylül 2026 doğrulamasında bu görünüm 62 benzersiz ürün verdi; 62/62 kayıtta ISBN-13, başlık, yazar ve yayınevi bulundu.
+- Kart sırası native satış-miktarı sırası olarak 1..N korunur; İlkOku yeni bir sıra üretmez.
+- Kaynak genel Türkiye çok satanlar tablosuna katılabilir.
 
 ### KitapSeç — kategori kaynağı
 

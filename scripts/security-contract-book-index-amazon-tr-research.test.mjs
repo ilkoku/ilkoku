@@ -67,6 +67,16 @@ test("Amazon Türkiye research supports verified ranked book surfaces without ac
     'title: "Amazon Türkiye · Kitap Çok Satanlar"',
     "existing bestseller list identity remains",
   );
+  contains(
+    lists,
+    'code: "amazon-tr-new-releases-research"',
+    "Amazon TR new-release research list exists",
+  );
+  contains(
+    lists,
+    'sourceUrl: "https://www.amazon.com.tr/gp/new-releases/books"',
+    "Amazon TR native new-release source URL is registered",
+  );
   notContains(
     lists,
     'code: "amazon-tr-new-releases"',

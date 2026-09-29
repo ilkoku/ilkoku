@@ -394,6 +394,57 @@ doğrudan network kaydından doğrulandı.
 - Global görünümde Amazon UK kendi native listesi olarak gösterilecek; Amazon US veya diğer ülkelerle ortak bir İlkOku dünya sırası üretilmeyecektir.
 
 
+### Global kaynak dönem kuralı — 29 Eylül 2026
+
+- Global kaynakların native dönemleri korunur; günlük, haftalık, aylık ve canlı
+  listeler birbirine çevrilmez.
+- İlkOku bu kaynaklardan birleşik bir "dünya sırası" veya ortak puan üretmez.
+- Public global görünüm açıldığında her kaynak kendi adı ve native dönemiyle
+  gösterilir.
+
+### Rakuten Books Japonya global kaynak — 29 Eylül 2026
+
+- Resmî haftalık kitap ranking feed'i:
+  `https://rdc-api-catalog-gateway-api.rakuten.co.jp/books/rank/001/weekly.json?hits=30&page=1&period=0&sid=10`.
+- Feed doğrudan JSON verir; `genre_id=001` kitap kategorisini doğrular.
+- 29 Eylül 2026 doğrulamasında **30 kayıt**, native **1..30** sıra ve benzersiz
+  ürün URL'leri görüldü.
+- `isbn_jan`, başlık, yayıncı, ürün URL'si ve native rank kullanılabilir.
+- Bazı dergi/kollektif kayıtlarda yazar alanı boş olabildiği için collector
+  yazar bilgisini zorunlu tutmaz ve tahmin etmez.
+- Türkiye Endeksi'ne katılmaz; global public görünüm onaylanana kadar
+  `publiclyVisible=false` kalır.
+
+### Kyobo Book Centre Güney Kore global kaynak — 29 Eylül 2026
+
+- Resmî haftalık online domestic book endpoint'i:
+  `/api/gw/best/best-seller/online`.
+- Parametreler: `period=002`, `dsplDvsnCode=001`,
+  `dsplTrgtDvsnCode=002`, `saleCmdtDsplDvsnCode=TOT`, `per=20`.
+- Response `data.bestSeller` altında **20 kayıt** verir.
+- `rowNum` ve `prstRnkn` native sıra olarak birlikte doğrulanır;
+  `frmrRnkn` önceki sıra bilgisini ayrıca taşır.
+- `cmdtCode` ISBN-13, `saleCmdtid` kaynak ürün kimliği,
+  `cmdtName` başlık, `chrcName` yazar ve `pbcmName` yayınevidir.
+- Kaynak zaman zaman GZIP gövde verdiği için collector GZIP magic byte'ını
+  fail-closed biçimde destekler.
+- Türkiye Endeksi'ne katılmaz; global public görünüm onaylanana kadar
+  `publiclyVisible=false` kalır.
+
+### Readings Avustralya global kaynak — 29 Eylül 2026
+
+- Readings her ay genel **Our <Month> <Year> Bestsellers** yazısı yayımlar.
+- Collector sabit bir ay URL'sine bağlanmaz; önce Readings blog kategori
+  akışında en güncel genel aylık bestseller yazısını keşfeder.
+- Kids/YA listeleri farklı URL kalıbına sahip olduğu için genel aylık listeyle
+  karıştırılmaz.
+- 29 Eylül 2026 doğrulamasında Ağustos 2026 genel listesinde **20/20** native
+  sıra, **20/20** ISBN-13, başlık ve yazar doğrulandı.
+- Native dönem **aylık** olarak korunur; haftalık/günlük bir değere
+  dönüştürülmez.
+- Türkiye Endeksi'ne katılmaz; global public görünüm onaylanana kadar
+  `publiclyVisible=false` kalır.
+
 ### IBS İtalya global kaynak — 29 Eylül 2026
 
 - Resmî günlük kitap sıralaması:

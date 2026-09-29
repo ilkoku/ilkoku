@@ -222,3 +222,30 @@ test("Book Index SEO gate source threshold cannot be inflated by sibling storefr
     "storefront count does not satisfy the source quality threshold",
   );
 });
+
+
+test("Turkey SEO match coverage ignores non-composite external books", () => {
+  const gate = source("src/lib/book-index/seo-gate.ts");
+  const access = source("src/lib/book-index/public-access.ts");
+
+  contains(
+    gate,
+    "matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent",
+    "SEO gate uses latest Turkey composite match coverage",
+  );
+  contains(
+    access,
+    "matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent",
+    "public route gate uses latest Turkey composite match coverage",
+  );
+  notContains(
+    gate,
+    "matchCoveragePercent: readiness.matchCoveragePercent",
+    "global and non-composite unmatched books cannot dilute SEO gate evidence",
+  );
+  notContains(
+    access,
+    "matchCoveragePercent: readiness.matchCoveragePercent",
+    "global and non-composite unmatched books cannot dilute public gate evidence",
+  );
+});

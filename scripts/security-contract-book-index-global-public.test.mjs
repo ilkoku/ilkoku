@@ -108,3 +108,21 @@ test("global bestseller overview link appears only when preview gate is enabled"
     "disabled gate keeps the current non-link card fallback",
   );
 });
+
+
+test("global preview copy avoids internal collector terminology", () => {
+  const page = source("src/app/en-cok-satanlar/dunya/page.tsx");
+  const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
+
+  notContains(view, "native sıralama", "public global view avoids English-native jargon");
+  notContains(view, "collector", "public global view avoids collector terminology");
+  notContains(view, "snapshot", "public global view avoids snapshot terminology");
+  notContains(view, "kaynak bazında", "public global view avoids technical source wording");
+  contains(view, "site site", "global overview uses natural Turkish wording");
+  contains(view, "Orijinal listeyi aç ↗", "global source link uses reader-facing wording");
+  contains(
+    page,
+    "ilgili sitelerin kendi sıralamalarıyla",
+    "global metadata description uses reader-facing site wording",
+  );
+});

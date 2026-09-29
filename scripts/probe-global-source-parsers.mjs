@@ -25,6 +25,14 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function isValidIsbn10(value) {
+  if (!/^[0-9]{9}[0-9X]$/u.test(value)) return false;
+  const digits = [...value].map((char, index) =>
+    index === 9 && char === "X" ? 10 : Number(char)
+  );
+  return digits.reduce((sum, digit, index) => sum + digit * (10 - index), 0) % 11 === 0;
+}
+
 async function probeAmazon(label, url) {
   const { response, text } = await fetchText(url, {
     Accept: "text/html,application/xhtml+xml",
@@ -42,11 +50,16 @@ async function probeAmazon(label, url) {
   const asins = [...text.matchAll(/data-asin=["']([A-Z0-9]{10})["']/gu)].map((m) => m[1]);
   const uniqueAsins = [...new Set(asins)];
   assert(uniqueAsins.length >= 30, `${label}:ASIN_COUNT_${uniqueAsins.length}`);
+  const firstThirtyAsins = uniqueAsins.slice(0, 30);
+  const validIsbn10Asins = firstThirtyAsins.filter(isValidIsbn10);
 
   return {
     http: response.status,
     cardIndices: uniqueIndices.slice(0, 30),
     uniqueAsins: uniqueAsins.length,
+    validIsbn10AsinCount: validIsbn10Asins.length,
+    nonIsbnAsinCount: firstThirtyAsins.length - validIsbn10Asins.length,
+    validIsbn10Asins,
   };
 }
 

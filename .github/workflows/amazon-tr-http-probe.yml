@@ -54,6 +54,8 @@ jobs:
                 rankCount: ranks.length,
                 firstRanks: ranks.slice(0, 6),
                 hasRobotCheck: /robot check|captcha|validateCaptcha/i.test(body),
+                hasRank31Text: />\\s*#31\\s*</iu.test(body),
+                page2Links: [...new Set([...body.matchAll(/href=["']([^"']*pg=2[^"']*)["']/giu)].map(m => m[1]))].slice(0, 8),
               }));
             } catch (error) {
               console.log(JSON.stringify({

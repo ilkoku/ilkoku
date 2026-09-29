@@ -41,9 +41,9 @@ export function GlobalBestsellerView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Dünya</span>
         <h1>Dünyada Çok Satan Kitaplar {currentYear}</h1>
         <p>
-          Farklı ülkelerdeki doğrulanmış çok satan kitap listelerini kaynak
-          bazında gösteriyoruz. Her kaynağın kendi sıra numarası ve kendi
-          yayın dönemi korunur; İlkOku ülkeler arasında ortak bir dünya sırası
+          Farklı ülkelerdeki doğrulanmış çok satan kitap listelerini site site
+          gösteriyoruz. Her sitenin kendi sıra numarası ve kendi yayın dönemi
+          korunur; İlkOku ülkeler arasında ortak bir dünya sırası
           veya bileşik puan üretmez.
         </p>
         {model.latestObservedAt && observedAtLabel ? (
@@ -59,14 +59,14 @@ export function GlobalBestsellerView({
         </Link>
       </header>
 
-      <section className={styles.cards} aria-label="Dünya çok satan kaynakları">
+      <section className={styles.cards} aria-label="Dünya çok satan listeleri">
         {model.lists.map((list) => (
           <a className={styles.card} href={`#${list.listCode}`} key={list.listCode}>
             <span>{list.sourceName}</span>
             <strong>{listPeriod(list)} çok satanlar</strong>
             <small>
               {list.availability === "available"
-                ? `${list.items.length} kitap · native sıralama`
+                ? `${list.items.length} kitap · kendi sıralaması`
                 : "Veri bekleniyor"}
             </small>
           </a>
@@ -82,8 +82,8 @@ export function GlobalBestsellerView({
               </span>
               <h2>{list.title}</h2>
               <p>
-                Bu bölüm yalnız {list.sourceName} kaynağının kendi sıralamasını
-                gösterir. Sıra numaraları İlkOku tarafından yeniden
+                Bu bölüm yalnız {list.sourceName} tarafından yayımlanan çok satanlar
+                sıralamasını gösterir. Sıra numaraları İlkOku tarafından yeniden
                 hesaplanmaz.
               </p>
             </div>
@@ -92,7 +92,7 @@ export function GlobalBestsellerView({
               rel="noopener noreferrer"
               target="_blank"
             >
-              Kaynak listeyi aç ↗
+              Orijinal listeyi aç ↗
             </a>
           </div>
 
@@ -113,7 +113,7 @@ export function GlobalBestsellerView({
                       <strong>{item.title}</strong>
                     </a>
                     <span>
-                      {item.authorName ?? "Yazar bilgisi kaynakta doğrulanmadı"}
+                      {item.authorName ?? "Yazar bilgisi doğrulanmadı"}
                     </span>
                   </div>
                   <div className={styles.score}>
@@ -126,9 +126,9 @@ export function GlobalBestsellerView({
           ) : (
             <div className={styles.explainer}>
               <span className={styles.eyebrow}>Veri durumu</span>
-              <h2>Bu kaynak için yayınlanabilir snapshot bekleniyor</h2>
+              <h2>Bu liste için doğrulanmış güncel veri bekleniyor</h2>
               <p>
-                Kaynak collector tarafından izleniyor; başarılı native snapshot
+                Liste düzenli olarak kontrol ediliyor; doğrulanmış güncel veri
                 oluşmadan sıralama tahmin edilmiyor.
               </p>
             </div>
@@ -143,13 +143,13 @@ export function GlobalBestsellerView({
         </h2>
         <p>
           Amazon ABD, Amazon UK, IBS İtalya, Rakuten Books Japonya, Kyobo
-          Güney Kore ve Readings Avustralya ayrı kaynaklardır. Günlük,
-          haftalık, aylık veya güncel dönem bilgileri kaynakların kendi
-          tanımından gelir.
+          Güney Kore ve Readings Avustralya ayrı listeler olarak gösterilir.
+          Günlük, haftalık, aylık veya güncel dönem bilgileri ilgili sitenin
+          yayımladığı biçimde korunur.
         </p>
         <p>
           Bu sayfa ülkeler arası satış adetlerini karşılaştırmaz ve tek bir
-          dünya sıralaması oluşturmaz. Her kaynak yalnız kendi native sıra
+          dünya sıralaması oluşturmaz. Her site yalnız kendi yayımladığı sıra
           numaralarıyla gösterilir.
         </p>
       </section>

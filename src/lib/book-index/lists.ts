@@ -550,11 +550,11 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     categoryKey: "general",
     period: "live",
     sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",
-    maxRank: null,
+    maxRank: 30,
     includeInComposite: false,
     collectionEveryMinutes: 360,
     publiclyVisible: false,
-    enabled: false,
+    enabled: true,
   },
 ] as const;
 

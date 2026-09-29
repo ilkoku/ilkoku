@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Amazon TR research adapter preserves native ranked book surfaces without activating rollout", () => {
+test("Amazon TR collector registration preserves native ranked book surfaces without activating lists", () => {
   const adapter = source("src/lib/book-index/sources/amazon-tr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -68,14 +68,14 @@ test("Amazon TR research adapter preserves native ranked book surfaces without a
   );
   contains(
     adapter,
-    "Research-only adapter. Deliberately not registered in collector.ts.",
-    "research-only rollout boundary",
+    "Collector-registered adapter",
+    "collector registration boundary",
   );
 
-  notContains(
+  contains(
     collector,
     "amazonTrBookIndexResearchAdapter",
-    "Amazon TR stays out of production collector registry",
+    "Amazon TR adapter is registered while lists remain disabled",
   );
   contains(
     sources,

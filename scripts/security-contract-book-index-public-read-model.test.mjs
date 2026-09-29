@@ -399,3 +399,36 @@ test("Yeni Çıkanlar page stays noindex and source-native during soft launch", 
   );
 });
 
+
+
+test("bestseller full list and comparison expose distinct view modes", () => {
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const nav = source("src/features/book-index/public/BookIndexViewModeNav.tsx");
+  const styles = source("src/features/book-index/public/BookIndexPublicView.module.css");
+
+  contains(view, '<BookIndexViewModeNav current="list" />', "full list active mode");
+  contains(
+    view,
+    '<BookIndexViewModeNav current="comparison" />',
+    "comparison active mode",
+  );
+  contains(nav, "Tüm Liste", "full-list mode label");
+  contains(nav, "Karşılaştırma", "comparison mode label");
+  contains(
+    nav,
+    'href="/en-cok-satanlar/turkiye"',
+    "full-list dedicated route",
+  );
+  contains(
+    nav,
+    'href="/en-cok-satanlar/turkiye/karsilastirma"',
+    "comparison dedicated route",
+  );
+  contains(nav, 'aria-current={current === "list" ? "page" : undefined}', "list current-page state");
+  contains(
+    nav,
+    'aria-current={current === "comparison" ? "page" : undefined}',
+    "comparison current-page state",
+  );
+  contains(styles, ".viewModeNav", "visible mode navigation styling");
+});

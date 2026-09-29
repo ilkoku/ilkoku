@@ -16,6 +16,7 @@ import type {
 
 import { BookIndexRankTable } from "./BookIndexRankTable";
 import { BookIndexSourceComparison } from "./BookIndexSourceComparison";
+import { BookIndexViewModeNav } from "./BookIndexViewModeNav";
 import styles from "./BookIndexPublicView.module.css";
 
 function latestObservedAt(model: BookIndexPublicReadModel) {
@@ -204,14 +205,9 @@ export function TurkeyBookIndexView({
             <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
           </p>
         ) : null}
+        <BookIndexViewModeNav current="list" />
         <Link className={styles.backLink} href="/en-cok-satanlar">
           ← En Çok Satanlar ana sayfası
-        </Link>
-        <Link
-          className={styles.backLink}
-          href="/en-cok-satanlar/turkiye/karsilastirma"
-        >
-          En Çok Satanlar Karşılaştırma →
         </Link>
       </header>
 
@@ -270,8 +266,9 @@ export function TurkeyBookIndexComparisonView({
             <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
           </p>
         ) : null}
-        <Link className={styles.backLink} href="/en-cok-satanlar/turkiye">
-          ← Tüm Çok Satanlar
+        <BookIndexViewModeNav current="comparison" />
+        <Link className={styles.backLink} href="/en-cok-satanlar">
+          ← En Çok Satanlar ana sayfası
         </Link>
       </header>
 

@@ -537,3 +537,47 @@
   }
 }
 
+
+
+.viewModeNav {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 22px;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 14px;
+}
+
+.viewModeLink {
+  padding: 9px 13px;
+  border-radius: 10px;
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.viewModeLink:hover {
+  background: color-mix(in srgb, currentColor 6%, transparent);
+}
+
+.viewModeActive {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.viewModeLink:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .viewModeNav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .viewModeLink {
+    text-align: center;
+  }
+}

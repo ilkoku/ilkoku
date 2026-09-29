@@ -547,6 +547,19 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
 
 
   {
+    code: "amazon-tr-new-releases-research",
+    sourceCode: "amazon-tr",
+    title: "Amazon Türkiye · Kitap Yeni Çıkanlar · Research",
+    categoryKey: "new-releases",
+    period: "live",
+    sourceUrl: "https://www.amazon.com.tr/gp/new-releases/books",
+    maxRank: 40,
+    includeInComposite: false,
+    collectionEveryMinutes: null,
+    publiclyVisible: false,
+    enabled: false,
+  },
+  {
     code: "amazon-tr-live",
     sourceCode: "amazon-tr",
     title: "Amazon Türkiye · Kitap Çok Satanlar",

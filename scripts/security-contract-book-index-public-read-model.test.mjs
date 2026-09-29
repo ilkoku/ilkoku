@@ -101,6 +101,48 @@ test("Amazon TR and US public states fail closed until sanctioned data exists", 
   );
 });
 
+test("Global bestseller read model stays server-only, source-native and route-neutral", () => {
+  const globalModel = source("src/lib/book-index/global-read-model.ts");
+  const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
+
+  contains(globalModel, 'import "server-only";', "global read model is server-only");
+  for (const listCode of [
+    "amazon-us-live",
+    "amazon-uk-live",
+    "ibs-it-daily",
+    "rakuten-jp-weekly",
+    "kyobo-kr-weekly",
+    "readings-au-monthly",
+  ]) {
+    contains(globalModel, `"${listCode}"`, `global list ${listCode}`);
+  }
+  contains(
+    globalModel,
+    "getBookIndexSourceListSnapshot(listCode, safeLimit)",
+    "global model reads each native list snapshot independently",
+  );
+  contains(
+    globalModel,
+    'list.availability === "available"',
+    "global model reports source availability without inventing a ranking",
+  );
+  notContains(
+    globalModel,
+    "includeInComposite",
+    "global read model does not build a composite ranking",
+  );
+  notContains(
+    globalModel,
+    "score",
+    "global read model does not create a score",
+  );
+  notContains(
+    overview,
+    'href="/en-cok-satanlar/dunya"',
+    "global public route is not invented before URL/UX approval",
+  );
+});
+
 test("Book Index public read model stays independent from conditional sitemap publication", () => {
   const model = source("src/lib/book-index/public-read-model.ts");
   const sitemap = source("src/app/sitemap.ts");

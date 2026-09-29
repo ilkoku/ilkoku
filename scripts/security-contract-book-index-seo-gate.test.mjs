@@ -192,6 +192,8 @@ test("Book Index admin shows SEO gate evidence without publishing", () => {
     "admin shows the same independent operator evidence used by the gate",
   );
   contains(page, "Master eşleşme", "matching evidence");
+  contains(page, "Tüm listeler · Master eşleşme", "overall matching metric is labelled as all lists");
+  contains(page, "Türkiye Endeksi · Master eşleşme", "SEO gate matching metric is labelled as Turkey Index");
   contains(page, "Tarihsel kapsam", "history evidence");
   contains(page, "Türkiye Endeksi kayıt", "Turkey result evidence");
   contains(page, "Publish switch", "separate publication state");
@@ -220,5 +222,43 @@ test("Book Index SEO gate source threshold cannot be inflated by sibling storefr
     gate,
     "if (evidence.observedCompositeSources < policy.minCompositeSources!)",
     "storefront count does not satisfy the source quality threshold",
+  );
+});
+
+
+test("Turkey SEO match coverage ignores non-composite external books", () => {
+  const gate = source("src/lib/book-index/seo-gate.ts");
+  const access = source("src/lib/book-index/public-access.ts");
+
+  contains(
+    gate,
+    "matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent",
+    "SEO gate uses latest Turkey composite match coverage",
+  );
+  contains(
+    access,
+    "matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent",
+    "public route gate uses latest Turkey composite match coverage",
+  );
+  notContains(
+    gate,
+    "matchCoveragePercent: readiness.matchCoveragePercent",
+    "global and non-composite unmatched books cannot dilute SEO gate evidence",
+  );
+  notContains(
+    access,
+    "matchCoveragePercent: readiness.matchCoveragePercent",
+    "global and non-composite unmatched books cannot dilute public gate evidence",
+  );
+});
+
+
+test("internal readiness SEO gate uses Turkey composite match coverage", () => {
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+
+  contains(
+    route,
+    "matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent",
+    "internal readiness SEO gate uses Turkey composite match coverage",
   );
 });

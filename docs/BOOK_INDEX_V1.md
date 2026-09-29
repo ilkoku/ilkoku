@@ -394,6 +394,15 @@ doğrudan network kaydından doğrulandı.
 - Global görünümde Amazon UK kendi native listesi olarak gösterilecek; Amazon US veya diğer ülkelerle ortak bir İlkOku dünya sırası üretilmeyecektir.
 
 
+### Global / Türkiye SEO eşleşme kapsamı — 29 Eylül 2026
+
+- Türkiye SEO kalite kapısındaki master eşleşme oranı yalnız son Türkiye
+  composite snapshot'ındaki kayıtlardan hesaplanır.
+- Global ve diğer `includeInComposite=false` listelerdeki unmatched kayıtlar
+  Türkiye public/SEO yayın kararının eşleşme yüzdesini düşürmez.
+- Operasyonel readiness ekranındaki tüm-listeler eşleşme oranı ayrı bir sağlık
+  metriğidir; SEO gate kanıtı değildir.
+
 ### Global kaynak dönem kuralı — 29 Eylül 2026
 
 - Global kaynakların native dönemleri korunur; günlük, haftalık, aylık ve canlı

@@ -452,12 +452,12 @@ test("Book Index readiness distinguishes historical coverage from latest composi
   contains(
     route,
     "matchCoveragePercent: readiness.matchCoveragePercent",
-    "SEO evidence keeps the existing historical coverage input in this diagnostic change",
+    "probe response preserves the all-list operational coverage metric",
   );
-  notContains(
+  contains(
     route,
     "matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent",
-    "diagnostic does not silently switch SEO gate coverage semantics",
+    "SEO evidence uses the latest Turkey composite coverage metric",
   );
 });
 

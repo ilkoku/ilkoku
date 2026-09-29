@@ -457,7 +457,7 @@ export default async function BookIndexAdminPage({
           </article>
 
           <article className="admin-panel admin-settings-card">
-            <span className="admin-eyebrow">Master eşleşme</span>
+            <span className="admin-eyebrow">Tüm listeler · Master eşleşme</span>
             <h2>%{readiness.matchCoveragePercent.toLocaleString("tr-TR")}</h2>
             <p>
               {readiness.matchedExternalBookCount.toLocaleString("tr-TR")} eşleşmiş ·{" "}
@@ -724,7 +724,7 @@ export default async function BookIndexAdminPage({
                 </td>
               </tr>
               <tr>
-                <td>Master eşleşme</td>
+                <td>Türkiye Endeksi · Master eşleşme</td>
                 <td>%{seoGate.evidence.matchCoveragePercent.toLocaleString("tr-TR")}</td>
                 <td>
                   {seoGate.policy.minMatchCoveragePercent === null

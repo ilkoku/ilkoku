@@ -306,6 +306,9 @@ test("Amazon US global source preserves native bestseller rank without joining T
   contains(adapter, "BOOK_INDEX_AMAZON_US_ACCESS_CHALLENGE", "access challenge fail-closed guard");
   contains(adapter, "rank !== index + 1", "native rank continuity");
   contains(adapter, "authorName: null", "unverified author text is not guessed");
+  notContains(adapter, "isbn10:", "Amazon ASIN is not inferred to be ISBN-10");
+  notContains(adapter, "isbn13:", "Amazon ASIN is not inferred to be ISBN-13");
+
   contains(
     adapter,
     '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
@@ -338,6 +341,9 @@ test("Amazon UK global source preserves native bestseller rank without joining T
   contains(adapter, "BOOK_INDEX_AMAZON_UK_ACCESS_CHALLENGE", "access challenge fail-closed guard");
   contains(adapter, "rank !== index + 1", "native rank continuity");
   contains(adapter, "authorName: null", "unverified author text is not guessed");
+  notContains(adapter, "isbn10:", "Amazon ASIN is not inferred to be ISBN-10");
+  notContains(adapter, "isbn13:", "Amazon ASIN is not inferred to be ISBN-13");
+
   contains(
     adapter,
     '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',

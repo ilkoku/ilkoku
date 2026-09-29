@@ -207,6 +207,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     collectionState: "ready",
   },
   {
+    code: "imge",
+    name: "İmge Kitabevi",
+    market: "TR",
+    countryCode: "TR",
+    baseUrl: "https://www.imge.com.tr",
+    includeInTurkeyIndex: true,
+    independenceGroup: "imge",
+    operatorName: "İmge Yayıncılık Ltd. Şti.",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
     code: "kitapstore",
     name: "KitapStore",
     market: "TR",

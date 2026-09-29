@@ -513,6 +513,20 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: true,
   },
+  {
+    code: "kyobo-kr-weekly",
+    sourceCode: "kyobo-kr",
+    title: "Kyobo Güney Kore · Haftalık Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "weekly",
+    sourceUrl: "https://store.kyobobook.co.kr/api/gw/best/best-seller/online?page=1&per=20&period=002&dsplDvsnCode=001&dsplTrgtDvsnCode=002&saleCmdtDsplDvsnCode=TOT",
+    maxRank: 20,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: false,
+    enabled: true,
+  },
+
 
 
   {

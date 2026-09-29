@@ -239,6 +239,22 @@ export const amazonTrBookIndexAdapter: BookIndexSourceAdapter = {
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
     const config = amazonTrListConfig(context);
+
+    if (context.listCode === "amazon-tr-live") {
+      const firstPage = parseAmazonTrRankedBookPage(
+        await fetchHtml(config.firstPageUrl),
+      );
+
+      if (
+        firstPage.books.length !== 30
+        || firstPage.books.some((book, index) => book.rank !== index + 1)
+      ) {
+        throw new Error("BOOK_INDEX_AMAZON_TR_TOP30_MISMATCH");
+      }
+
+      return firstPage;
+    }
+
     const [firstPage, secondPage] = await Promise.all([
       fetchHtml(config.firstPageUrl),
       fetchHtml(config.secondPageUrl),

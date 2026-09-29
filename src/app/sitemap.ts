@@ -220,6 +220,12 @@ async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "daily",
         priority: 0.85,
       },
+      {
+        url: `${baseUrl}/en-cok-satanlar/turkiye/karsilastirma`,
+        ...(lastModified ? { lastModified } : {}),
+        changeFrequency: "daily",
+        priority: 0.82,
+      },
       ...insightEntries,
     ];
   } catch {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BookIndexOverviewView } from "@/features/book-index/public/BookIndexPublicView";
 import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexInsights } from "@/lib/book-index/insights";
+import { isGlobalBestsellerPreviewEnabled } from "@/lib/book-index/global-public-read-model";
 import { createBookIndexItemListSchema, getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
@@ -31,6 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function BestsellersPage() {
   const context = await getBookIndexSoftLaunchPageContext(100);
   const previewItems = context.model.turkey.items.filter((item) => item.rank <= 3);
+  const showGlobalPreview = isGlobalBestsellerPreviewEnabled();
   const [lastObservedAt, insights] = await Promise.all([
     Promise.resolve(getBookIndexLastObservedAt(context.model)),
     getBookIndexInsights(20),
@@ -96,6 +98,7 @@ export default async function BestsellersPage() {
         model={context.model}
         insights={insights}
         showInsightPages={context.gate.canPublish}
+        showGlobalPreview={showGlobalPreview}
       />
     </>
   );

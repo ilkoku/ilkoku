@@ -14,19 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
-      - name: Inspect IBS ranked product containers
+      - name: Verify IBS ranked Top 100 card fields
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import html,json,re,urllib.request
+          import html,json,re,urllib.parse,urllib.request
 
-          urls=[
-            ("p1","https://www.ibs.it/classifica/libri/1day/SOLD?page=1",["9791259856265","9788828869269"]),
-            ("p2","https://www.ibs.it/classifica/libri/1day/SOLD?page=2",["9788858037218","9781409592402"]),
-            ("p3","https://www.ibs.it/classifica/libri/1day/SOLD?page=3",["9788806274252","9788818036305"]),
-          ]
-          for key,url,isbns in urls:
+          all_rows=[]
+          for page in (1,2,3):
+            url=f"https://www.ibs.it/classifica/libri/1day/SOLD?page={page}"
             req=urllib.request.Request(url,headers={
               "User-Agent":"IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
               "Accept":"text/html,application/xhtml+xml",
@@ -34,26 +31,88 @@ jobs:
             })
             with urllib.request.urlopen(req,timeout=40) as resp:
               body=html.unescape(resp.read().decode("utf-8","replace"))
-            print("META="+json.dumps({"key":key,"bytes":len(body.encode("utf-8"))}))
+              print("META="+json.dumps({"page":page,"status":resp.status,"bytes":len(body.encode("utf-8"))}))
 
-            for isbn in isbns:
-              positions=[m.start() for m in re.finditer(isbn,body)]
-              print("ISBN_OCCURRENCES="+json.dumps({"key":key,"isbn":isbn,"count":len(positions)}))
-              for n,pos in enumerate(positions[:4]):
-                ctx=re.sub(r"\s+"," ",body[max(0,pos-5000):min(len(body),pos+6500)]).strip()
-                print("CTX="+json.dumps({"key":key,"isbn":isbn,"n":n,"text":ctx[:11000]},ensure_ascii=False))
+            starts=[*re.finditer(r'<[^>]+\bdata-item-position=["\']([0-9]{1,3})["\'][^>]*>',body,re.I)]
+            # Deduplicate repeated data-item-position elements by selecting nearest card-level occurrence
+            page_rows=[]
+            seen_rank=set()
+            for i,m in enumerate(starts):
+              rank=int(m.group(1))
+              if rank in seen_rank or not ((page-1)*40+1 <= rank <= min(page*40,100)):
+                continue
+              # Find broad surrounding product tile bounded by next native rank marker.
+              next_positions=[x.start() for x in starts if x.start()>m.start() and int(x.group(1))!=rank]
+              end=min(next_positions) if next_positions else min(len(body),m.start()+30000)
+              block=body[max(0,m.start()-3500):end]
 
-            # Explicit positions/rank field snippets anywhere.
-            tokens=[]
-            for pat in [
-              r'(?i)data-[\w-]*(?:rank|position)[\w-]*=["\'][^"\']+["\']',
-              r'(?i)(?:ranking|rank|position|posizione)[^<>{}]{0,120}[=:]["\']?[0-9]+',
-              r'(?i)"(?:rank|position|posizione)"\s*:\s*[0-9]+',
-            ]:
-              for m in re.finditer(pat,body):
-                val=re.sub(r"\s+"," ",m.group(0)).strip()
-                if val not in tokens: tokens.append(val)
-                if len(tokens)>=150: break
-              if len(tokens)>=150: break
-            print("RANK_TOKENS="+json.dumps({"key":key,"tokens":tokens},ensure_ascii=False))
+              # Only accept actual book product URL carrying ISBN-13.
+              anchors=[*re.finditer(r'<a\b[^>]*href=["\']([^"\']+/e/((?:978|979)[0-9]{10})(?:[^"\']*)?)["\'][^>]*>(.*?)</a>',block,re.I|re.S)]
+              if not anchors:
+                continue
+              a=anchors[0]
+              href=urllib.parse.urljoin(url,a.group(1))
+              isbn=a.group(2)
+
+              # Candidate title class and author by current IBS SSR classes/semantics.
+              title=None
+              author=None
+              publisher=None
+              for am in anchors:
+                tag=am.group(0)
+                cls=re.search(r'\bclass=["\']([^"\']+)["\']',tag,re.I)
+                label=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",html.unescape(am.group(3)))).strip()
+                classes=cls.group(1) if cls else ""
+                if label and ("title" in classes.lower() or "product" in classes.lower()):
+                  title=label
+                  href=urllib.parse.urljoin(url,am.group(1))
+                  isbn=am.group(2)
+                  break
+              if not title:
+                title=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",html.unescape(a.group(3)))).strip()
+
+              # Author often follows "di" in a dedicated author link.
+              auth_candidates=[]
+              for am in re.finditer(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',block,re.I|re.S):
+                h=am.group(1)
+                label=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",html.unescape(am.group(2)))).strip()
+                if not label: continue
+                if re.search(r'/autore/|/libri-autore/|/search/.*autore',h,re.I):
+                  auth_candidates.append(label)
+              if auth_candidates:
+                author=", ".join(dict.fromkeys(auth_candidates))
+
+              # Fallback visible "di Author" around ranked card.
+              visible=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",block)).strip()
+              if not author:
+                tm=re.escape(title)
+                mm=re.search(tm+r"\s+di\s+(.+?)(?=\s+(?:Recensioni:|[A-ZÀ-Ü][^ ]*\s*,?\s*20\d{2}|Disponibil|€))",visible,re.I)
+                if mm: author=mm.group(1).strip()
+
+              # Publisher/year is often adjacent text; expose card attrs and exact sample for later parser.
+              pub_candidates=[]
+              for pm in re.finditer(r'(?i)(?:publisher|editore)[^<>]{0,80}(?:>|:|=)["\']?([^<"\']{2,100})',block):
+                val=re.sub(r"\s+"," ",pm.group(1)).strip()
+                if val: pub_candidates.append(val)
+              publisher=pub_candidates[0] if pub_candidates else None
+
+              page_rows.append({
+                "rank":rank,"isbn13":isbn,"title":title or None,
+                "author":author,"publisher":publisher,"url":href,
+                "sample":visible[:900],
+              })
+              seen_rank.add(rank)
+
+            page_rows.sort(key=lambda x:x["rank"])
+            print("PAGE_ROWS="+json.dumps({"page":page,"rows":page_rows},ensure_ascii=False))
+            all_rows += page_rows
+
+          all_rows.sort(key=lambda x:x["rank"])
+          print("TOTAL="+str(len(all_rows)))
+          print("RANKS_CONTIGUOUS="+str([x["rank"] for x in all_rows]==list(range(1,101))))
+          print("UNIQUE_ISBN="+str(len({x["isbn13"] for x in all_rows})))
+          print("MISSING_TITLE="+str(sum(1 for x in all_rows if not x["title"])))
+          print("MISSING_AUTHOR="+str(sum(1 for x in all_rows if not x["author"])))
+          print("MISSING_PUBLISHER="+str(sum(1 for x in all_rows if not x["publisher"])))
+          print("FIRST10="+json.dumps(all_rows[:10],ensure_ascii=False))
           PY

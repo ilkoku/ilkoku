@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Kitapyurdu research parsers preserve verified native lists without activating rollout", () => {
+test("Kitapyurdu collector registration preserves verified native lists without activating rollout", () => {
   const adapter = source("src/lib/book-index/sources/kitapyurdu.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -72,14 +72,14 @@ test("Kitapyurdu research parsers preserve verified native lists without activat
   );
   contains(
     adapter,
-    "Research-only adapter. Deliberately not registered in collector.ts.",
-    "research-only rollout boundary",
+    "Collector-registered adapter",
+    "collector registration boundary",
   );
 
-  notContains(
+  contains(
     collector,
     "kitapyurduBookIndexResearchAdapter",
-    "Kitapyurdu research adapter stays out of production collector registry",
+    "Kitapyurdu adapter is registered while rollout stays disabled",
   );
   for (const code of [
     "kitapyurdu-tr-weekly-research",

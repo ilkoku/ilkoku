@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("D&R research parser preserves the verified native bestseller route without activating rollout", () => {
+test("D&R research refuses to infer weekly rank from visible catalog position", () => {
   const adapter = source("src/lib/book-index/sources/dr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -22,44 +22,51 @@ test("D&R research parser preserves the verified native bestseller route without
     'const BESTSELLER_PATH = "/kategori_/kitap/cok-satanlar/10001/12"',
     "verified native D&R bestseller path",
   );
-  contains(adapter, 'const EXACT_EXPECTED_BOOKS = 40', "first-page fail-closed size");
-  contains(adapter, "/urunno", "D&R stable product identity contract");
-  contains(adapter, '"yazar" | "yayinevi"', "author and publisher link scopes");
   contains(
     adapter,
-    "BOOK_INDEX_DR_BESTSELLER_MARKER_MISSING",
-    "native bestseller marker guard",
+    "parseDrBestsellerCandidateUrls",
+    "candidate URL parser",
   );
   contains(
     adapter,
-    "BOOK_INDEX_DR_UNEXPECTED_PAGE_SIZE",
-    "page-size fail-closed guard",
+    "parseDrWeeklyRankedProduct",
+    "explicit product-rank parser",
   );
   contains(
     adapter,
-    "BOOK_INDEX_DR_DUPLICATE_SOURCE_KEY",
-    "product identity uniqueness guard",
+    "Haftanın En Çok Satan",
+    "native weekly rank badge contract",
   );
   contains(
     adapter,
-    "BOOK_INDEX_DR_RANK_ORDER_MISMATCH",
-    "native order guard",
+    "BOOK_INDEX_DR_WEEKLY_RANK_BADGE_MISSING",
+    "missing native rank fails closed",
   );
   contains(
     adapter,
-    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
-    "transparent collector identity",
+    "BOOK_INDEX_DR_DUPLICATE_WEEKLY_RANK",
+    "duplicate explicit ranks fail closed",
+  );
+  notContains(
+    adapter,
+    "rank: index + 1",
+    "catalog position must never become weekly rank",
+  );
+  notContains(
+    adapter,
+    "drBookIndexResearchAdapter",
+    "no live source adapter before collection path is verified",
   );
   contains(
     adapter,
-    'Browser inspection verified D&R\'s native "Çok Satanlar" selection and card order.',
-    "browser-verified research boundary",
+    "Deliberately no BookIndexSourceAdapter export here.",
+    "research-only boundary",
   );
 
   notContains(
     collector,
     "drBookIndexResearchAdapter",
-    "D&R research adapter stays out of production collector registry",
+    "D&R remains out of production collector registry",
   );
   notContains(
     lists,
@@ -70,6 +77,6 @@ test("D&R research parser preserves the verified native bestseller route without
   contains(
     sources,
     'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "blocked"',
-    "existing source state is not silently changed by parser research",
+    "existing source state is not silently changed by parser correction",
   );
 });

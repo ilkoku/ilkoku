@@ -653,40 +653,30 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
 
 
 
-test("Hepsiburada protected bestseller surface remains fail-closed", () => {
+test("general marketplaces stay outside the Turkey Book Index source scope", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
+  const contract = source("docs/BOOK_INDEX_V1.md");
 
-  contains(
-    sources,
-    'baseUrl: "https://www.hepsiburada.com",\n    includeInTurkeyIndex: true,\n    phase: "phase_2",\n    collectionState: "blocked"',
-    "Hepsiburada transparent request block",
-  );
-  notContains(
-    collector,
-    'sourceCode: "hepsiburada"',
-    "Hepsiburada collector is not activated",
-  );
-});
-
-
-test("Trendyol and PttAVM protected book surfaces remain fail-closed", () => {
-  const sources = source("src/lib/book-index/sources.ts");
-  const collector = source("src/lib/book-index/collector.ts");
-
-  for (const [baseUrl, label] of [
-    ["https://www.trendyol.com", "Trendyol"],
-    ["https://www.pttavm.com", "PttAVM"],
+  for (const [code, label] of [
+    ["hepsiburada", "Hepsiburada"],
+    ["trendyol", "Trendyol"],
+    ["pttavm", "PttAVM"],
   ]) {
-    contains(
-      sources,
-      `baseUrl: "${baseUrl}",\n    includeInTurkeyIndex: true,\n    phase: "phase_2",\n    collectionState: "blocked"`,
-      `${label} protected source state`,
-    );
+    notContains(sources, `code: "${code}"`, `${label} source registry exclusion`);
+    notContains(collector, `sourceCode: "${code}"`, `${label} collector exclusion`);
   }
 
-  notContains(collector, 'sourceCode: "trendyol"', "Trendyol collector is not activated");
-  notContains(collector, 'sourceCode: "pttavm"', "PttAVM collector is not activated");
+  contains(
+    contract,
+    "Türkiye Kitap Endeksi yalnız kitap odaklı satış sitelerini ve kitabevlerini kaynak olarak kullanır.",
+    "book-focused Turkey source scope",
+  );
+  contains(
+    contract,
+    "Hepsiburada, Trendyol ve PttAVM genel pazaryeri oldukları için kaynak registry'sinden çıkarılmıştır.",
+    "explicit marketplace exclusion decision",
+  );
 });
 
 

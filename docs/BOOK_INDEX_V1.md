@@ -58,9 +58,11 @@ Registry'de `phase="v1"` olarak tanımlı kaynaklar:
 Registry'de `phase="phase_2"` olarak tanımlı kaynaklar:
 
 - KitapSeç — ready; kategori listeleri genel Türkiye composite'ine oy vermez
-- Hepsiburada — blocked
-- Trendyol — blocked
-- PttAVM — blocked
+- İmge Kitabevi — ready; Çok Satanlar etiketi satış miktarı azalan sıralamayla toplanır
+
+Türkiye Kitap Endeksi kaynak kapsamı **kitap odaklı satış siteleri ve kitabevleri** ile
+sınırlıdır. Genel pazaryerleri bu registry'ye dahil edilmez. Bu nedenle
+Hepsiburada, Trendyol ve PttAVM kaynak havuzundan çıkarılmıştır.
 
 ## Veri katmanları
 
@@ -514,45 +516,23 @@ snapshot'larında aynı master kitaba bağlanan kayıtlar üzerinden hesaplanır
 - Kaynak Türkiye bileşik endeksine dahil edilir.
 
 
-### Hepsiburada erişim kararı — 25 Eylül 2026
+### Türkiye kaynak kapsamı kararı — 29 Eylül 2026
 
-- Kitap ana kategorisinde `?order=4` görünümü **Çok satanlar** sıralamasını
-  temsil ediyor ve normal tarayıcı çıktısında ürün JSON'u bulunuyor.
-- Görünür ilk sayfa 36 ürün sağlıyor; `productId`, ürün URL'si,
-  yayınevi/brand, fiyat, görsel ve `isPromoted` işareti mevcut.
-- Listing üzerinde güvenilir ISBN/barcode alanı doğrulanmadı.
-- Buna rağmen şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent
-  ile yapılan doğrudan sunucu isteği HTTP **403** döndürdü.
-- Koruma aşılmayacak; proxy/stealth/CAPTCHA yaklaşımı kullanılmayacak.
-- Bu nedenle Hepsiburada `phase_2` registry içinde **blocked** tutulur.
-  Resmî API/feed veya açık izinli erişim yolu doğrulanırsa yeniden
-  değerlendirilebilir.
+- Türkiye Kitap Endeksi yalnız kitap odaklı satış sitelerini ve kitabevlerini kaynak olarak kullanır.
+- Hepsiburada, Trendyol ve PttAVM genel pazaryeri oldukları için kaynak registry'sinden çıkarılmıştır.
+- Bu karar erişim/anti-bot durumundan bağımsız bir ürün kapsamı kararıdır.
+- İleride genel pazaryerlerinden veri kullanılacaksa bu, Kitap Endeksi kaynağı olarak değil ayrı bir ürün kararıyla değerlendirilmelidir.
 
 
+### İmge Kitabevi — 29 Eylül 2026
 
-### Trendyol ve PttAVM erişim kararı — 25 Eylül 2026
-
-**Trendyol**
-
-- Genel `/kitap-x-c91` kitap kategorisi arama motoru görünümünde
-  `En Çok Satan N. Ürün` işaretleri gösterebiliyor; yani platform içinde
-  bestseller sinyali bulunduğu doğrulandı.
-- Buna rağmen şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent
-  ile doğrudan sunucu isteği HTTP **403** döndü.
-- Koruma aşılmayacak. Trendyol `phase_2` kaynağı **blocked** kalır ve
-  collector aktive edilmez.
-
-**PttAVM**
-
-- Ana kitap kategorisi `https://www.pttavm.com/kitap-c-15` normal tarayıcı
-  görünümünde ürün kartları ve bazı `Çok Satan` rozetleri sağlıyor.
-- Ancak ürün kartlarında güvenilir, bitişik `1..N` bestseller rank dizisi
-  doğrulanmadı.
-- Şeffaf İlkOku user-agent ile doğrudan istek HTTP **403** ve Cloudflare
-  challenge cevabı döndürdü.
-- Hem açık rank eksikliği hem de erişim koruması nedeniyle PttAVM
-  `phase_2` kaynağı **blocked** kalır; collector yazılmaz.
-
+- Resmî `/etiket/cok-satanlar` sayfası şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` isteğiyle HTTP 200 döndürüyor.
+- Etiket sayfasının varsayılan görünümü satış sırası değildir; varsayılan sıralama `Yeniden Eskiye` olabilir. Bu görünüm rank olarak kullanılmaz.
+- İmge arayüzündeki `sort_type=7` değeri açıkça **Satış Miktarı (Çok > Az)** anlamına gelir.
+- Collector yalnız `sort_type=7&size=100` ile SSR sayfayı toplar ve sunucunun `sort_type="7"` uyguladığını fail-closed doğrular.
+- 29 Eylül 2026 doğrulamasında bu görünüm 62 benzersiz ürün verdi; 62/62 kayıtta ISBN-13, başlık, yazar ve yayınevi bulundu.
+- Kart sırası native satış-miktarı sırası olarak 1..N korunur; İlkOku yeni bir sıra üretmez.
+- Kaynak genel Türkiye çok satanlar tablosuna katılabilir.
 
 ### KitapSeç — kategori kaynağı
 

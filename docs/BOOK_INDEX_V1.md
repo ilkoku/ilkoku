@@ -383,6 +383,17 @@ doğrudan network kaydından doğrulandı.
   V1 veri modelinde ayrıca saklanmaz.
 
 
+### Amazon UK global kaynak — 29 Eylül 2026
+
+- Resmî `https://www.amazon.co.uk/Best-Sellers-Books/zgbs/books` sayfası şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` isteğiyle HTTP 200 döndürüyor.
+- 29 Eylül 2026 doğrulamasında 30 bestseller kartı, 30 benzersiz ASIN ve kesintisiz `#1..#30` native sıra görüldü; CAPTCHA/automated-access challenge görülmedi.
+- Collector her kartı `p13n-asin-index-N` sınırı içinde izole eder; komşu kartın ASIN veya başlığını sızdırmaz.
+- Başlık, ASIN, native rank, ürün URL'si ve görsel güvenilir alanlardır.
+- Yazar metni mevcut HTML'de review/sayı alanlarıyla karışabildiği için ilk sürümde tahmin edilmez; `authorName=null` kalır.
+- Amazon UK Türkiye Endeksi'ne katılmaz ve global public görünüm onaylanana kadar `publiclyVisible=false` kalır.
+- Global görünümde Amazon UK kendi native listesi olarak gösterilecek; Amazon US veya diğer ülkelerle ortak bir İlkOku dünya sırası üretilmeyecektir.
+
+
 ### Amazon Türkiye / Amazon ABD erişim kararı — 25 Eylül 2026
 
 Amazon kaynakları V1'de iki ayrı pazar olarak tutulur.

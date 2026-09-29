@@ -83,7 +83,7 @@ test("Book Index public read model preserves source ranks without public composi
   );
 });
 
-test("Amazon TR and US public states remain market-isolated while Amazon TR is production-ready", () => {
+test("Amazon TR and US public states remain market-isolated while Amazon TR rollout is staged", () => {
   const model = source("src/lib/book-index/public-read-model.ts");
   const sources = source("src/lib/book-index/sources.ts");
 
@@ -96,8 +96,8 @@ test("Amazon TR and US public states remain market-isolated while Amazon TR is p
   );
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    "Amazon TR production-ready state",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "Amazon TR staged state",
   );
   contains(
     sources,

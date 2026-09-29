@@ -24,12 +24,6 @@ export type GlobalBestsellerReadModel = {
   latestObservedAt: Date | null;
 };
 
-export function isGlobalBestsellerPreviewEnabled(
-  env: NodeJS.ProcessEnv = process.env,
-) {
-  return env.BOOK_INDEX_GLOBAL_PREVIEW_ENABLED === "true";
-}
-
 export async function getGlobalBestsellerReadModel(
   limit = 100,
 ): Promise<GlobalBestsellerReadModel> {

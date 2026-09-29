@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("D&R research refuses to infer weekly rank from visible catalog position", () => {
+test("D&R live new releases preserves native order while bestseller research stays fail-closed", () => {
   const adapter = source("src/lib/book-index/sources/dr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -99,14 +99,14 @@ test("D&R research refuses to infer weekly rank from visible catalog position", 
   );
   contains(
     adapter,
-    "Deliberately no BookIndexSourceAdapter export here.",
-    "research-only boundary",
+    "export const drBookIndexAdapter",
+    "D&R collector adapter export",
   );
 
-  notContains(
+  contains(
     collector,
-    "drBookIndexResearchAdapter",
-    "D&R remains out of production collector registry",
+    "drBookIndexAdapter",
+    "D&R adapter is production-registered",
   );
   notContains(
     lists,
@@ -115,8 +115,8 @@ test("D&R research refuses to infer weekly rank from visible catalog position", 
   );
   contains(
     lists,
-    'code: "dr-tr-new-releases-research"',
-    "D&R verified native new-releases research list",
+    'code: "dr-tr-new-releases"',
+    "D&R live native new-releases list",
   );
   contains(
     lists,
@@ -125,13 +125,13 @@ test("D&R research refuses to infer weekly rank from visible catalog position", 
   );
   contains(
     lists,
-    'collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
-    "D&R new-releases research list remains disabled",
+    'collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    "D&R new-releases collection is enabled",
   );
   contains(sources, 'code: "dr"', "D&R source registry remains present");
   contains(
     sources,
-    'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "blocked"',
-    "existing source state is not silently changed by parser correction",
+    'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "D&R source is ready for scheduled collection",
   );
 });

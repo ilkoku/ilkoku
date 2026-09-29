@@ -286,6 +286,44 @@ test("Amazon sources remain fail-closed until a stable sanctioned collector path
 });
 
 
+test("IBS Italy global source preserves daily native Top 100 ranking", () => {
+  const adapter = source("src/lib/book-index/sources/ibs-it.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'export type BookIndexMarket = "TR" | "US" | "UK" | "IT";',
+    "Italy market type",
+  );
+  contains(
+    sources,
+    'code: "ibs-it",\n    name: "IBS Italia",\n    market: "IT",\n    countryCode: "IT",\n    baseUrl: "https://www.ibs.it",\n    includeInTurkeyIndex: false',
+    "IBS stays outside Turkey",
+  );
+  contains(lists, 'code: "ibs-it-daily"', "IBS daily list registry");
+  contains(lists, 'period: "daily"', "IBS native daily period");
+  contains(lists, 'maxRank: 100', "IBS Top 100 bound");
+  contains(lists, 'publiclyVisible: false', "IBS stays unpublished until global UX approval");
+  contains(adapter, "cc-product-list-item--ranking", "ranking-only card boundary");
+  contains(adapter, 'data-item-position=', "native rank attribute");
+  contains(adapter, "isbn13FromEan", "EAN-to-ISBN guard");
+  contains(adapter, "BOOK_INDEX_IBS_DAILY_SOLD_SEMANTICS_MISSING", "daily sold semantics guard");
+  contains(adapter, "BOOK_INDEX_IBS_PAGE_SIZE_MISMATCH", "per-page completeness guard");
+  contains(adapter, "BOOK_INDEX_IBS_DUPLICATE_SOURCE_KEY", "source identity uniqueness");
+  contains(
+    adapter,
+    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
+    "transparent IBS collector identity",
+  );
+  contains(
+    collector,
+    "[ibsItalyBookIndexAdapter.sourceCode, ibsItalyBookIndexAdapter]",
+    "IBS adapter activation",
+  );
+});
+
 test("Amazon UK global source preserves native bestseller rank without joining Turkey", () => {
   const adapter = source("src/lib/book-index/sources/amazon-uk.ts");
   const sources = source("src/lib/book-index/sources.ts");

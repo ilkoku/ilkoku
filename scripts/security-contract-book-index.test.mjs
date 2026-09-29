@@ -1845,3 +1845,19 @@ test("Amazon ASINs are never inferred as ISBNs without direct source evidence", 
     notContains(adapter, "isbn13:", `${label} must not invent ISBN-13 without direct source evidence`);
   }
 });
+
+
+test("new releases public view keeps source and discovery filters", () => {
+  const view = source("src/features/book-index/public/NewReleasePublicView.tsx");
+  const filter = source("src/features/book-index/public/NewReleaseFilterTable.tsx");
+  const styles = source("src/features/book-index/public/BookIndexPublicView.module.css");
+
+  contains(view, "<NewReleaseFilterTable rows={rows} />", "new releases server view delegates filtering");
+  contains(filter, 'option value="">Tüm siteler</option>', "source filter keeps all-sites option");
+  contains(filter, 'type="search"', "book author publisher search");
+  contains(filter, "row.publisherName", "publisher participates in search");
+  contains(filter, "row.sources.length < 2", "multi-source discovery filter");
+  contains(filter, 'aria-live="polite"', "filtered result count is announced");
+  contains(styles, ".newReleaseFilters {", "new release filter layout");
+  contains(styles, "grid-template-columns: 1fr;", "mobile filters collapse to one column");
+});

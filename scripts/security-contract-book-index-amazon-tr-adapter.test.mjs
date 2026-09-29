@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Amazon TR research adapter preserves native ranked book surfaces without activating rollout", () => {
+test("Amazon TR production adapter preserves native ranked book surfaces", () => {
   const adapter = source("src/lib/book-index/sources/amazon-tr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -53,12 +53,12 @@ test("Amazon TR research adapter preserves native ranked book surfaces without a
   );
   contains(
     adapter,
-    '"amazon-tr-bestsellers-research"',
+    '"amazon-tr-live"',
     "bestseller research list boundary",
   );
   contains(
     adapter,
-    '"amazon-tr-new-releases-research"',
+    '"amazon-tr-new-releases"',
     "new-release research list boundary",
   );
   contains(
@@ -68,14 +68,14 @@ test("Amazon TR research adapter preserves native ranked book surfaces without a
   );
   contains(
     adapter,
-    "Research-only adapter. Deliberately not registered in collector.ts.",
+    "Collector adapter for the verified native ranked book surfaces:",
     "research-only rollout boundary",
   );
 
-  notContains(
+  contains(
     collector,
-    "amazonTrBookIndexResearchAdapter",
-    "Amazon TR stays out of production collector registry",
+    "amazonTrBookIndexAdapter",
+    "Amazon TR adapter is registered in collector",
   );
   contains(
     sources,
@@ -84,13 +84,13 @@ test("Amazon TR research adapter preserves native ranked book surfaces without a
   );
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "Amazon TR source state remains researching",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    Amazon TR source is ready,
   );
   contains(
     lists,
     'code: "amazon-tr-live"',
-    "historical disabled Amazon TR list remains present",
+    "Amazon TR bestseller list is active",
   );
   contains(
     lists,

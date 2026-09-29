@@ -445,6 +445,16 @@ doğrudan network kaydından doğrulandı.
 - Türkiye Endeksi'ne katılmaz; global public görünüm onaylanana kadar
   `publiclyVisible=false` kalır.
 
+### Rakuten Books Japonya global kaynak — 29 Eylül 2026
+
+- Native haftalık kitap sıralaması JSON endpoint'i:
+  `https://rdc-api-catalog-gateway-api.rakuten.co.jp/books/rank/001/weekly.json?hits=30&page=1&period=0&sid=10`.
+- Endpoint HTTP 200 döndürüyor ve `genre_id=001` ile kitap kategorisini açıkça belirtiyor.
+- İlk sayfa **30 kayıt** taşıyor; `rank` alanı **1..30** kesintisiz.
+- Ürün nesneleri başlık, ürün URL'si, `isbn_jan`, yayınevi, görsel, release date ve önceki sıra gibi native alanları taşıyor.
+- Bazı dergi/kollektif kayıtlarda yazar boş olabildiği için `authorName` zorunlu değildir; İlkOku yazar tahmini yapmaz.
+- Kaynak Türkiye Endeksi'ne katılmaz ve global public görünüm onaylanana kadar `publiclyVisible=false` kalır.
+
 ### IBS İtalya global kaynak — 29 Eylül 2026
 
 - Resmî günlük kitap sıralaması:

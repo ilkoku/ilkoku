@@ -262,3 +262,46 @@ test("internal readiness SEO gate uses Turkey composite match coverage", () => {
     "internal readiness SEO gate uses Turkey composite match coverage",
   );
 });
+
+
+test("SEO history evidence uses the minimum Turkey composite source history floor", () => {
+  const gate = source("src/lib/book-index/seo-gate.ts");
+  const access = source("src/lib/book-index/public-access.ts");
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+
+  contains(
+    gate,
+    'readiness: Pick<BookIndexReadinessSnapshot, "minimumSourceHistorySpanHours">',
+    "SEO history helper is scoped to the composite source history floor",
+  );
+  contains(
+    gate,
+    "Math.floor(readiness.minimumSourceHistorySpanHours / 24)",
+    "SEO history days derive from the least mature composite source",
+  );
+  contains(
+    gate,
+    "historySpanDays: getBookIndexSeoHistorySpanDays(readiness)",
+    "direct SEO gate snapshot uses the composite history floor",
+  );
+  contains(
+    access,
+    "historySpanDays: getBookIndexSeoHistorySpanDays(readiness)",
+    "public page gate uses the composite history floor",
+  );
+  contains(
+    route,
+    "historySpanDays: getBookIndexSeoHistorySpanDays(readiness)",
+    "readiness API SEO gate uses the composite history floor",
+  );
+  notContains(
+    gate,
+    "historySpanDays: readiness.historySpanDays",
+    "all-observation history cannot satisfy the SEO gate",
+  );
+  notContains(
+    access,
+    "historySpanDays: readiness.historySpanDays",
+    "public gate cannot use unrelated global/new-release history",
+  );
+});

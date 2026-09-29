@@ -108,3 +108,41 @@ test("global bestseller overview link appears only when preview gate is enabled"
     "disabled gate keeps the current non-link card fallback",
   );
 });
+
+
+test("global preview defaults to OFF in environment contract", () => {
+  const env = source(".env.example");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+
+  contains(
+    env,
+    'BOOK_INDEX_GLOBAL_PREVIEW_ENABLED="false"',
+    "global preview example default stays explicitly disabled",
+  );
+  contains(
+    model,
+    'env.BOOK_INDEX_GLOBAL_PREVIEW_ENABLED === "true"',
+    "runtime activation remains explicit opt-in only",
+  );
+});
+
+
+test("global preview cannot leak into public discovery surfaces", () => {
+  const navigation = source("src/lib/public-site-navigation.ts");
+  const header = source("src/components/layout/PublicSiteHeader.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+  const siteMapPage = source("src/app/site-haritasi/page.tsx");
+
+  for (const [label, surface] of [
+    ["public navigation", navigation],
+    ["public header", header],
+    ["XML sitemap", sitemap],
+    ["HTML site map", siteMapPage],
+  ]) {
+    notContains(
+      surface,
+      "/en-cok-satanlar/dunya",
+      `${label} must not publish the gated global preview route`,
+    );
+  }
+});

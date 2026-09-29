@@ -578,6 +578,19 @@ snapshot'larında aynı master kitaba bağlanan kayıtlar üzerinden hesaplanır
 - Kaynak V1 Türkiye Endeksi'ne dahil edilir; ancak sponsorlu/özel yerleşim
   sinyali ileride tespit edilirse organik ranktan ayrılmalıdır.
 
+### KitapSepeti Yeni Çıkanlar — 29 Eylül 2026
+
+- Resmî `https://www.kitapsepeti.com/yeni-cikan-kitaplar` sayfası şeffaf
+  `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` user-agent ile HTTP 200 döndürüyor.
+- Canlı doğrulamada ilk sayfa 32, `?pg=2` ikinci sayfa 8 benzersiz ürün verdi;
+  sayfalar arasında ürün çakışması görülmedi.
+- Mevcut KitapSepeti katalog kart yapısı yeniden kullanılır; ayrı bir yapay
+  sıralama üretilmez ve kaynak sırası 1..40 olarak korunur.
+- Yeni çıkanlar listesi `includeInComposite=false` ve
+  `publiclyVisible=false` kalır; Türkiye genel çok satan endeksine oy vermez.
+- idefix yeni çıkan kitaplar için aynı seviyede doğrulanmış native liste URL'si
+  bulunmadığından `researching` kalır ve tahminî URL ile collector açılmaz.
+
 ### Kitapzen
 
 - `https://www.kitapzen.com/index.php?mod_id=41&p=ProductBestsellers&page=1&period=weekly`

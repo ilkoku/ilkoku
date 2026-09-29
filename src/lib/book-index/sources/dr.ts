@@ -6,6 +6,7 @@ import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_ORIGIN = "https://www.dr.com.tr";
 const BESTSELLER_PATH = "/kategori_/kitap/cok-satanlar/10001/12";
+const NEW_RELEASES_PATH = "/kategori_/kitap/en-yeniler/10001/3";
 const EXACT_EXPECTED_CANDIDATES = 40;
 
 function absoluteUrl(value: string) {
@@ -48,6 +49,116 @@ function productAnchors(html: string) {
   }
 
   return [...firstByProduct.values()];
+}
+
+
+type DrListAnchor = {
+  index: number;
+  href: string;
+  productId: string;
+};
+
+function listProductAnchors(html: string): DrListAnchor[] {
+  const matches = [
+    ...html.matchAll(
+      /<a\b(?=[^>]*\bhref=(["'])([^"']*\/kitap\/[^"']*\/urunno(?:=|%3D)(\d+)[^"']*)\1)[^>]*>/giu,
+    ),
+  ];
+
+  const firstByProduct = new Map<string, DrListAnchor>();
+  for (const match of matches) {
+    const productId = match[3]?.trim() ?? "";
+    const href = match[2]?.trim() ?? "";
+    if (!productId || !href || firstByProduct.has(productId)) continue;
+
+    firstByProduct.set(productId, {
+      index: match.index ?? 0,
+      href,
+      productId,
+    });
+  }
+
+  return [...firstByProduct.values()].sort((left, right) => left.index - right.index);
+}
+
+function linkedTexts(card: string, pathPrefix: "yazar" | "yayinevi") {
+  return [
+    ...card.matchAll(
+      new RegExp(
+        `<a\\b(?=[^>]*\\bhref=(["'])[^"']*/${pathPrefix}/[^"']+\\1)[^>]*>([\\s\\S]*?)<\\/a>`,
+        "giu",
+      ),
+    ),
+  ]
+    .map((match) => normalizeText(match[2]))
+    .filter(Boolean);
+}
+
+export function parseDrNewReleases(html: string): BookIndexCollectionResult {
+  const pageText = normalizeText(html);
+  if (!pageText.includes("Yeni Çıkanlar")) {
+    throw new Error("BOOK_INDEX_DR_NEW_RELEASES_MARKER_MISSING");
+  }
+
+  const anchors = listProductAnchors(html);
+  if (anchors.length !== EXACT_EXPECTED_CANDIDATES) {
+    throw new Error(
+      `BOOK_INDEX_DR_NEW_RELEASES_UNEXPECTED_PAGE_SIZE:${anchors.length}`,
+    );
+  }
+
+  const books = anchors.map((anchor, nativeIndex) => {
+    const next = anchors[nativeIndex + 1];
+    const card = html.slice(anchor.index, next?.index ?? html.length);
+
+    const sameProductTitles = [
+      ...card.matchAll(
+        new RegExp(
+          `<a\\b(?=[^>]*\\bhref=(["'])[^"']*/kitap/[^"']*/urunno(?:=|%3D)${anchor.productId}[^"']*\\1)[^>]*>([\\s\\S]*?)<\\/a>`,
+          "giu",
+        ),
+      ),
+    ]
+      .map((match) => normalizeText(match[2]))
+      .filter(Boolean);
+
+    const imageTag = card.match(/<img\b[^>]*>/iu)?.[0] ?? "";
+    const imageAlt = attributeValue(imageTag, "alt");
+    const imageSrc = attributeValue(imageTag, "src");
+    const title =
+      sameProductTitles.sort((left, right) => right.length - left.length)[0]
+      || imageAlt;
+
+    const authors = [...new Set(linkedTexts(card, "yazar"))];
+    const publishers = [...new Set(linkedTexts(card, "yayinevi"))];
+
+    if (!title || authors.length === 0 || publishers.length !== 1) {
+      throw new Error("BOOK_INDEX_DR_NEW_RELEASE_INVALID_ITEM");
+    }
+
+    return {
+      sourceKey: anchor.productId,
+      sourceExternalId: anchor.productId,
+      title,
+      authorName: authors.join(";"),
+      publisherName: publishers[0],
+      productUrl: absoluteUrl(anchor.href),
+      imageUrl: imageSrc ? absoluteUrl(imageSrc) : null,
+      rank: nativeIndex + 1,
+      currency: "TRY",
+    };
+  });
+
+  const sourceKeys = new Set(books.map((book) => book.sourceKey));
+  if (sourceKeys.size !== books.length) {
+    throw new Error("BOOK_INDEX_DR_NEW_RELEASE_DUPLICATE_SOURCE_KEY");
+  }
+
+  if (books.some((book, index) => book.rank !== index + 1)) {
+    throw new Error("BOOK_INDEX_DR_NEW_RELEASE_NATIVE_ORDER_MISMATCH");
+  }
+
+  return { books };
 }
 
 /**
@@ -178,5 +289,7 @@ export function buildDrWeeklyBestsellerResearchResult(
 }
 
 // Research-only helpers. Deliberately no BookIndexSourceAdapter export here.
-// The catalog position is not accepted as rank, and D&R's direct server fetch
-// path remains unverified for production collection.
+// Bestseller catalog position is not accepted as weekly rank.
+// New Releases may preserve the native /en-yeniler card order only; no date
+// derivation or synthetic recency score is introduced.
+// D&R's direct server fetch path remains unverified for production collection.

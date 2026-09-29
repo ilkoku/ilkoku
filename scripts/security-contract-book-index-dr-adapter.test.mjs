@@ -24,6 +24,46 @@ test("D&R research refuses to infer weekly rank from visible catalog position", 
   );
   contains(
     adapter,
+    'const NEW_RELEASES_PATH = "/kategori_/kitap/en-yeniler/10001/3"',
+    "verified native D&R new-releases path",
+  );
+  contains(
+    adapter,
+    "parseDrNewReleases",
+    "native new-releases parser",
+  );
+  contains(
+    adapter,
+    "BOOK_INDEX_DR_NEW_RELEASES_MARKER_MISSING",
+    "new-releases surface guard",
+  );
+  contains(
+    adapter,
+    "BOOK_INDEX_DR_NEW_RELEASES_UNEXPECTED_PAGE_SIZE",
+    "new-releases page-size fail-closed guard",
+  );
+  contains(
+    adapter,
+    "BOOK_INDEX_DR_NEW_RELEASE_DUPLICATE_SOURCE_KEY",
+    "new-releases identity uniqueness guard",
+  );
+  contains(
+    adapter,
+    "BOOK_INDEX_DR_NEW_RELEASE_NATIVE_ORDER_MISMATCH",
+    "native new-releases order guard",
+  );
+  contains(
+    adapter,
+    "rank: nativeIndex + 1",
+    "native en-yeniler card order is preserved explicitly",
+  );
+  contains(
+    adapter,
+    "no date",
+    "no derived-date new-release ranking",
+  );
+  contains(
+    adapter,
     "parseDrBestsellerCandidateUrls",
     "candidate URL parser",
   );
@@ -72,6 +112,11 @@ test("D&R research refuses to infer weekly rank from visible catalog position", 
     lists,
     'code: "dr-tr-bestsellers-research"',
     "D&R research list stays inactive",
+  );
+  notContains(
+    lists,
+    'code: "dr-tr-new-releases-research"',
+    "D&R new-releases research list stays inactive",
   );
   contains(sources, 'code: "dr"', "D&R source registry remains present");
   contains(

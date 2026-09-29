@@ -44,10 +44,12 @@ export function BookIndexOverviewView({
   model,
   insights,
   showInsightPages,
+  showGlobalPreview = false,
 }: {
   model: BookIndexPublicReadModel;
   insights: BookIndexInsights;
   showInsightPages: boolean;
+  showGlobalPreview?: boolean;
 }) {
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
@@ -94,11 +96,25 @@ export function BookIndexOverviewView({
             Türkiye kaynaklarının doğrulanmış yeni çıkan ve yeni gelen listeleri.
           </small>
         </Link>
-        <article className={styles.card}>
-          <span>Dünya Genelinde</span>
-          <strong>Dünyada çok satan kitaplar</strong>
-          <small>Uluslararası çok satan listelerini ayrı pazar olarak karşılaştır.</small>
-        </article>
+        {showGlobalPreview ? (
+          <Link className={styles.card} href="/en-cok-satanlar/dunya">
+            <span>Dünya Genelinde</span>
+            <strong>Dünyada çok satan kitaplar</strong>
+            <small>
+              Uluslararası çok satan listelerini kaynakların kendi native
+              sıralamalarıyla incele.
+            </small>
+          </Link>
+        ) : (
+          <article className={styles.card}>
+            <span>Dünya Genelinde</span>
+            <strong>Dünyada çok satan kitaplar</strong>
+            <small>
+              Uluslararası çok satan listelerini kaynakların kendi native
+              sıralamalarıyla incele.
+            </small>
+          </article>
+        )}
       </section>
 
       {showInsightPages && publishedInsightPages.length ? (

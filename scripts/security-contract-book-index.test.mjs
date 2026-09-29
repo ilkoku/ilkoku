@@ -1647,10 +1647,10 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
     "transparent collector user agent",
   );
   contains(amazon, "AbortSignal.timeout(20_000)", "bounded Amazon requests");
-  notContains(
+  contains(
     collector,
     "amazonTrBookIndexResearchAdapter",
-    "research adapter is not production-registered",
+    "Amazon TR adapter is registered while rollout lists remain disabled",
   );
 });
 

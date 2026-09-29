@@ -500,6 +500,20 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: true,
   },
+  {
+    code: "rakuten-jp-weekly",
+    sourceCode: "rakuten-jp",
+    title: "Rakuten Books Japonya · Haftalık Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "weekly",
+    sourceUrl: "https://rdc-api-catalog-gateway-api.rakuten.co.jp/books/rank/001/weekly.json?hits=30&page=1&period=0&sid=10",
+    maxRank: 30,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: false,
+    enabled: true,
+  },
+
 
   {
     code: "amazon-tr-live",

@@ -1,6 +1,8 @@
 import type {
   BookIndexCollectedBook,
+  BookIndexCollectionContext,
   BookIndexCollectionResult,
+  BookIndexSourceAdapter,
 } from "../adapter";
 import { decodeBookIndexHtml } from "../html";
 

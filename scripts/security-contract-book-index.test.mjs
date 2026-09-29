@@ -1833,3 +1833,15 @@ test("KitapStore qualified voter preserves fail-closed Top 100 collection", () =
     "KitapStore adapter registered for production collection",
   );
 });
+
+
+test("Amazon ASINs are never inferred as ISBNs without direct source evidence", () => {
+  const us = source("src/lib/book-index/sources/amazon-us.ts");
+  const uk = source("src/lib/book-index/sources/amazon-uk.ts");
+
+  for (const [label, adapter] of [["Amazon US", us], ["Amazon UK", uk]]) {
+    contains(adapter, "sourceExternalId: asin", `${label} preserves ASIN as source identity`);
+    notContains(adapter, "isbn10: asin", `${label} must not promote ASIN to ISBN-10 by shape alone`);
+    notContains(adapter, "isbn13:", `${label} must not invent ISBN-13 without direct source evidence`);
+  }
+});

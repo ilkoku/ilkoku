@@ -218,36 +218,6 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     phase: "phase_2",
     collectionState: "ready",
   },
-  {
-    code: "hepsiburada",
-    name: "Hepsiburada",
-    market: "TR",
-    countryCode: "TR",
-    baseUrl: "https://www.hepsiburada.com",
-    includeInTurkeyIndex: true,
-    phase: "phase_2",
-    collectionState: "blocked",
-  },
-  {
-    code: "trendyol",
-    name: "Trendyol",
-    market: "TR",
-    countryCode: "TR",
-    baseUrl: "https://www.trendyol.com",
-    includeInTurkeyIndex: true,
-    phase: "phase_2",
-    collectionState: "blocked",
-  },
-  {
-    code: "pttavm",
-    name: "PttAVM",
-    market: "TR",
-    countryCode: "TR",
-    baseUrl: "https://www.pttavm.com",
-    includeInTurkeyIndex: true,
-    phase: "phase_2",
-    collectionState: "blocked",
-  },
 ] as const;
 
 export const BOOK_INDEX_V1_SOURCES = BOOK_INDEX_SOURCES.filter(

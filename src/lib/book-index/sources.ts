@@ -103,8 +103,10 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     countryCode: "US",
     baseUrl: "https://www.amazon.com",
     includeInTurkeyIndex: false,
+    independenceGroup: "amazon-us",
+    operatorName: "Amazon US",
     phase: "v1",
-    collectionState: "blocked",
+    collectionState: "ready",
   },
   {
     code: "amazon-uk",

@@ -192,6 +192,8 @@ test("Book Index admin shows SEO gate evidence without publishing", () => {
     "admin shows the same independent operator evidence used by the gate",
   );
   contains(page, "Master eşleşme", "matching evidence");
+  contains(page, "Tüm listeler · Master eşleşme", "overall matching metric is labelled as all lists");
+  contains(page, "Türkiye Endeksi · Master eşleşme", "SEO gate matching metric is labelled as Turkey Index");
   contains(page, "Tarihsel kapsam", "history evidence");
   contains(page, "Türkiye Endeksi kayıt", "Turkey result evidence");
   contains(page, "Publish switch", "separate publication state");

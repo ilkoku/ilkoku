@@ -51,10 +51,10 @@ test("Amazon Türkiye research supports verified ranked book surfaces without ac
   notContains(adapter, "isbn13: asin", "ASIN must never be converted into ISBN-13");
   notContains(adapter, "isbn10: asin", "ASIN must never be converted into ISBN-10");
 
-  notContains(
+  contains(
     collector,
     "amazonTrBookIndexResearchAdapter",
-    "Amazon Türkiye remains out of production collector registry",
+    "Amazon Türkiye adapter is registered in collector",
   );
   contains(lists, 'code: "amazon-tr-live"', "existing bestseller placeholder remains");
   contains(

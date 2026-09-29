@@ -471,6 +471,50 @@ test("Readings Australia discovers and preserves the native monthly Top 20", () 
   );
 });
 
+test("global bestseller source set stays native, non-composite and unpublished", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  const globalSources = [
+    ["amazon-us", "amazon-us-live"],
+    ["amazon-uk", "amazon-uk-live"],
+    ["ibs-it", "ibs-it-daily"],
+    ["rakuten-jp", "rakuten-jp-weekly"],
+    ["kyobo-kr", "kyobo-kr-weekly"],
+    ["readings-au", "readings-au-monthly"],
+  ];
+
+  for (const [sourceCode, listCode] of globalSources) {
+    const sourceStart = sources.indexOf(`code: "${sourceCode}"`);
+    assert.ok(sourceStart >= 0, `${sourceCode} source must exist`);
+    const sourceBlock = sources.slice(sourceStart, sourceStart + 650);
+    contains(
+      sourceBlock,
+      "includeInTurkeyIndex: false",
+      `${sourceCode} must stay outside Turkey`,
+    );
+
+    const listStart = lists.indexOf(`code: "${listCode}"`);
+    assert.ok(listStart >= 0, `${listCode} list must exist`);
+    const listBlock = lists.slice(listStart, listStart + 700);
+    contains(
+      listBlock,
+      "includeInComposite: false",
+      `${listCode} must not create a global composite rank`,
+    );
+    contains(
+      listBlock,
+      "publiclyVisible: false",
+      `${listCode} must remain hidden until global UI approval`,
+    );
+    contains(
+      listBlock,
+      "enabled: true",
+      `${listCode} collector must be enabled`,
+    );
+  }
+});
+
 test("D&R access protection remains fail-closed", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");

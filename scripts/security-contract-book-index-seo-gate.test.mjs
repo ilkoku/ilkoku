@@ -249,3 +249,14 @@ test("Turkey SEO match coverage ignores non-composite external books", () => {
     "global and non-composite unmatched books cannot dilute public gate evidence",
   );
 });
+
+
+test("internal readiness SEO gate uses Turkey composite match coverage", () => {
+  const route = source("src/app/api/internal/book-index-readiness/route.ts");
+
+  contains(
+    route,
+    "matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent",
+    "internal readiness SEO gate uses Turkey composite match coverage",
+  );
+});

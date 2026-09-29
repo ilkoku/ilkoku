@@ -228,11 +228,10 @@ async function fetchHtml(url: string) {
   return response.text();
 }
 
-// Research-only adapter. Deliberately not registered in collector.ts.
-// Opera verified both native book-ranked surfaces:
+// Collector-registered adapter for the verified native ranked book surfaces:
 // - /gp/bestsellers/books
 // - /gp/new-releases/books
-// Production collection remains separate from surface/parser verification.
+// List activation/public rollout remains controlled separately.
 export const amazonTrBookIndexResearchAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(

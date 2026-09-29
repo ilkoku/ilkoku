@@ -1,6 +1,8 @@
 import type {
   BookIndexCollectedBook,
+  BookIndexCollectionContext,
   BookIndexCollectionResult,
+  BookIndexSourceAdapter,
 } from "../adapter";
 import { decodeBookIndexHtml } from "../html";
 
@@ -288,7 +290,36 @@ export function buildDrWeeklyBestsellerResearchResult(
   };
 }
 
-// Research-only helpers. Deliberately no BookIndexSourceAdapter export here.
+export const drBookIndexAdapter: BookIndexSourceAdapter = {
+  sourceCode: "dr",
+  async collect(
+    context: BookIndexCollectionContext,
+  ): Promise<BookIndexCollectionResult> {
+    if (context.listCode !== "dr-tr-new-releases") {
+      throw new Error("BOOK_INDEX_DR_LIST_UNSUPPORTED");
+    }
+
+    const response = await fetch(context.sourceUrl, {
+      cache: "no-store",
+      headers: {
+        Accept: "text/html,application/xhtml+xml",
+        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+      },
+      signal: AbortSignal.timeout(20_000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+    }
+
+    return parseDrNewReleases(await response.text());
+  },
+};
+
+// Collector adapter currently supports only the verified native New Releases list.
+// Bestseller catalog position is not accepted as weekly rank.
+// New Releases preserves the native /en-yeniler card order only; no date
+// derivation or synthetic recency score is introduced.
 // Bestseller catalog position is not accepted as weekly rank.
 // New Releases may preserve the native /en-yeniler card order only; no date
 // derivation or synthetic recency score is introduced.

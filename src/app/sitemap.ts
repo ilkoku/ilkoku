@@ -165,6 +165,11 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     changeFrequency: "weekly",
     priority: 0.7,
   },
+  {
+    url: `${baseUrl}/en-cok-satanlar/dunya`,
+    changeFrequency: "daily",
+    priority: 0.82,
+  },
 ];
 
 const staticFallbackEntries: MetadataRoute.Sitemap = [

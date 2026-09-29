@@ -228,25 +228,44 @@ async function fetchHtml(url: string) {
   return response.text();
 }
 
+function isOptionalSecondPageAccessError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+
+  return /^BOOK_INDEX_SOURCE_HTTP_(403|429|503)$/u.test(error.message);
+}
+
+async function collectAmazonTrResearchPages(config: ResearchListConfig) {
+  const firstPage = parseAmazonTrRankedBookPage(
+    await fetchHtml(config.firstPageUrl),
+  );
+
+  try {
+    const secondPage = parseAmazonTrRankedBookPage(
+      await fetchHtml(config.secondPageUrl),
+    );
+
+    return combineAmazonTrRankedBookPages([firstPage, secondPage]);
+  } catch (error) {
+    if (!isOptionalSecondPageAccessError(error)) throw error;
+
+    // Amazon TR page 2 can intermittently return access-protection responses.
+    // Keep only the already validated contiguous native ranks from page 1.
+    return combineAmazonTrRankedBookPages([firstPage]);
+  }
+}
+
 // Research-only adapter. Deliberately not registered in collector.ts.
-// Opera verified both native book-ranked surfaces:
+// Both native book-ranked surfaces are verified:
 // - /gp/bestsellers/books
 // - /gp/new-releases/books
+// Page 1 is mandatory. Page 2 extends coverage only when normally accessible;
+// a 403/429/503 on page 2 must not erase a valid page-1 research observation.
 // Production collection remains separate from surface/parser verification.
 export const amazonTrBookIndexResearchAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const config = researchListConfig(context);
-    const [firstPage, secondPage] = await Promise.all([
-      fetchHtml(config.firstPageUrl),
-      fetchHtml(config.secondPageUrl),
-    ]);
-
-    return combineAmazonTrRankedBookPages([
-      parseAmazonTrRankedBookPage(firstPage),
-      parseAmazonTrRankedBookPage(secondPage),
-    ]);
+    return collectAmazonTrResearchPages(researchListConfig(context));
   },
 };

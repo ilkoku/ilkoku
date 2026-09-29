@@ -94,7 +94,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.amazon.com.tr",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "researching",
+    collectionState: "ready",
   },
   {
     code: "amazon-us",

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getBookIndexPublicReadModel } from "./public-read-model";
-import { getBookIndexReadinessSnapshot } from "./readiness";
+import {\n  getBookIndexReadinessSnapshot,\n  type BookIndexReadinessSnapshot,\n} from "./readiness";
 
 export type BookIndexSeoGateState =
   | "disabled"

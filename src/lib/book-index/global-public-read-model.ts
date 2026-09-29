@@ -18,7 +18,7 @@ export type GlobalBestsellerListCode =
   (typeof GLOBAL_BESTSELLER_LIST_CODES)[number];
 
 export type GlobalBestsellerReadModel = {
-  rolloutState: "gated";
+  rolloutState: "public";
   lists: BookIndexSourceListSnapshot[];
   availableListCount: number;
   latestObservedAt: Date | null;
@@ -52,7 +52,7 @@ export async function getGlobalBestsellerReadModel(
   }, null);
 
   return {
-    rolloutState: "gated",
+    rolloutState: "public",
     lists,
     availableListCount: lists.filter(
       (list) => list.availability === "available",

@@ -59,7 +59,7 @@ export function GlobalBestsellerView({
         </Link>
       </header>
 
-      <section className={styles.cards} aria-label="Dünya çok satan kaynakları">
+      <section className={styles.cards} aria-label="Dünya çok satan listeleri">
         {model.lists.map((list) => (
           <a className={styles.card} href={`#${list.listCode}`} key={list.listCode}>
             <span>{list.sourceName}</span>
@@ -113,7 +113,7 @@ export function GlobalBestsellerView({
                       <strong>{item.title}</strong>
                     </a>
                     <span>
-                      {item.authorName ?? "Yazar bilgisi kaynakta doğrulanmadı"}
+                      {item.authorName ?? "Yazar bilgisi doğrulanmadı"}
                     </span>
                   </div>
                   <div className={styles.score}>
@@ -126,7 +126,7 @@ export function GlobalBestsellerView({
           ) : (
             <div className={styles.explainer}>
               <span className={styles.eyebrow}>Veri durumu</span>
-              <h2>Bu kaynak için yayınlanabilir snapshot bekleniyor</h2>
+              <h2>Bu liste için doğrulanmış güncel veri bekleniyor</h2>
               <p>
                 Liste düzenli olarak kontrol ediliyor; doğrulanmış güncel veri
                 oluşmadan sıralama tahmin edilmiyor.

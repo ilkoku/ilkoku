@@ -286,6 +286,38 @@ test("Amazon sources remain fail-closed until a stable sanctioned collector path
 });
 
 
+test("Amazon UK global source preserves native bestseller rank without joining Turkey", () => {
+  const adapter = source("src/lib/book-index/sources/amazon-uk.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK";', "UK market type");
+  contains(
+    sources,
+    'code: "amazon-uk",\n    name: "Amazon UK",\n    market: "UK",\n    countryCode: "UK",\n    baseUrl: "https://www.amazon.co.uk",\n    includeInTurkeyIndex: false',
+    "Amazon UK stays outside Turkey",
+  );
+  contains(lists, 'code: "amazon-uk-live"', "Amazon UK list registry");
+  contains(lists, 'maxRank: 30', "Amazon UK Top 30 cap");
+  contains(lists, 'publiclyVisible: false', "global source is not published before global UI approval");
+  contains(adapter, "p13n-asin-index-", "isolated Amazon bestseller cards");
+  contains(adapter, "BOOK_INDEX_AMAZON_UK_RESULT_SIZE_MISMATCH", "exact page-size guard");
+  contains(adapter, "BOOK_INDEX_AMAZON_UK_ACCESS_CHALLENGE", "access challenge fail-closed guard");
+  contains(adapter, "rank !== index + 1", "native rank continuity");
+  contains(adapter, "authorName: null", "unverified author text is not guessed");
+  contains(
+    adapter,
+    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
+    "transparent Amazon UK collector identity",
+  );
+  contains(
+    collector,
+    "[amazonUkBookIndexAdapter.sourceCode, amazonUkBookIndexAdapter]",
+    "Amazon UK adapter activation",
+  );
+});
+
 test("D&R access protection remains fail-closed", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");

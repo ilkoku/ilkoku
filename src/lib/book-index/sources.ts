@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US";
+export type BookIndexMarket = "TR" | "US" | "UK";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US";
+  countryCode: "TR" | "US" | "UK";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -105,6 +105,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     includeInTurkeyIndex: false,
     phase: "v1",
     collectionState: "blocked",
+  },
+  {
+    code: "amazon-uk",
+    name: "Amazon UK",
+    market: "UK",
+    countryCode: "UK",
+    baseUrl: "https://www.amazon.co.uk",
+    includeInTurkeyIndex: false,
+    independenceGroup: "amazon-uk",
+    operatorName: "Amazon UK",
+    phase: "phase_2",
+    collectionState: "ready",
   },
   {
     code: "kitapsepeti",

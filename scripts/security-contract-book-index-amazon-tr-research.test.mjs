@@ -64,8 +64,8 @@ test("Amazon Türkiye collector-registered research supports verified ranked boo
   );
   contains(
     lists,
-    'title: "Amazon Türkiye · Kitap Çok Satanlar"',
-    "existing bestseller list identity remains",
+    'title: "Amazon Türkiye · Kitap Çok Satanlar · Top 30 Canary"',
+    "private Top 30 canary list identity",
   );
   contains(
     lists,

@@ -51,3 +51,33 @@ test("global bestseller preview reads only the six approved native source lists"
     "global preview stays independent from Turkey ranking aggregation",
   );
 });
+
+
+test("global bestseller page is gated, noindex and source-native", () => {
+  const page = source("src/app/en-cok-satanlar/dunya/page.tsx");
+  const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+
+  contains(
+    page,
+    "if (!isGlobalBestsellerPreviewEnabled()) notFound();",
+    "global route remains behind explicit preview gate",
+  );
+  contains(page, "noIndex: true", "global preview stays noindex");
+  contains(
+    view,
+    "İlkOku ülkeler arasında ortak bir dünya sırası",
+    "global view explicitly rejects an invented world rank",
+  );
+  contains(
+    view,
+    "Sıra numaraları İlkOku tarafından yeniden",
+    "source-native rank methodology",
+  );
+  contains(view, "item.rank", "native source rank rendering");
+  notContains(
+    sitemap,
+    "/en-cok-satanlar/dunya",
+    "global preview is absent from sitemap before SEO approval",
+  );
+});

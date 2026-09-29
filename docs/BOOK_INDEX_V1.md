@@ -383,6 +383,19 @@ doğrudan network kaydından doğrulandı.
   V1 veri modelinde ayrıca saklanmaz.
 
 
+### IBS Italia global kaynak — 29 Eylül 2026
+
+- Resmî günlük liste: `https://www.ibs.it/classifica/libri/1day/SOLD?page=1`.
+- Sayfa açıkça **Classifica Libri del giorno** ve **I Più Venduti** semantiği taşır.
+- Sıralama üç sayfaya yayılır: `1..40`, `41..80`, `81..100`.
+- Gerçek ranking kartları `cc-product-list-item--ranking` sınıfı ve `data-item-position="N"` native sıra alanıyla öneri kartlarından ayrılır.
+- Ürün kartındaki EAN kaynak kimliği olarak korunur. Yalnız `978/979` ile başlayan 13 haneli EAN, `isbn13` alanına yazılır.
+- 29 Eylül 2026 doğrulamasında 100 native sıra kesintisiz bulundu. Rank 53 örneğinde IBS kendi EAN'ını (`2000000092539`) kullanır; bu değer ISBN gibi gösterilmez.
+- Yazar/yayınevi yalnız kartta açık ve güvenilir biçimde bulunduğunda saklanır; eksik alan tahmin edilmez.
+- Liste günlük olduğu için `period=daily`, toplama sıklığı en fazla günlük olarak ayarlanır.
+- IBS Türkiye Endeksi'ne katılmaz, global public görünüm onaylanana kadar `publiclyVisible=false` kalır.
+
+
 ### Amazon UK global kaynak — 29 Eylül 2026
 
 - Resmî `https://www.amazon.co.uk/Best-Sellers-Books/zgbs/books` sayfası şeffaf `IlkOkuBookIndex/0.1 (+https://ilkoku.com)` isteğiyle HTTP 200 döndürüyor.

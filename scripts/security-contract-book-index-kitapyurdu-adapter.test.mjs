@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Kitapyurdu production adapter preserves verified native weekly lists", () => {
+test("Kitapyurdu verified adapters remain registered while production collection is staged after HTTP 403", () => {
   const adapter = source("src/lib/book-index/sources/kitapyurdu.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -85,11 +85,16 @@ test("Kitapyurdu production adapter preserves verified native weekly lists", () 
     "kitapyurdu-tr-weekly",
     "kitapyurdu-tr-new-releases",
   ]) {
-    contains(
-      lists,
-      `code: "${code}"`,
-      `${code} production list is registered`,
-    );
+    const marker = `code: "${code}"`;
+    const start = lists.indexOf(marker);
+    assert.ok(start >= 0, `missing staged list: ${code}`);
+    const end = lists.indexOf("\n  },", start);
+    assert.ok(end > start, `invalid staged list block: ${code}`);
+    const block = lists.slice(start, end);
+    contains(block, "includeInComposite: false", `${code} composite stays off`);
+    contains(block, "collectionEveryMinutes: null", `${code} scheduler stays off`);
+    contains(block, "publiclyVisible: false", `${code} public rollout stays off`);
+    contains(block, "enabled: false", `${code} collection stays disabled`);
   }
   contains(
     sources,
@@ -98,7 +103,7 @@ test("Kitapyurdu production adapter preserves verified native weekly lists", () 
   );
   contains(
     sources,
-    'baseUrl: "https://www.kitapyurdu.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    "Kitapyurdu verified source is ready",
+    'baseUrl: "https://www.kitapyurdu.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "Kitapyurdu source is staged after production HTTP 403",
   );
 });

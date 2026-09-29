@@ -485,6 +485,74 @@
   }
 }
 
+.newReleaseFilters {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(260px, 1.4fr) minmax(220px, 1fr);
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.newReleaseFilterField {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.newReleaseFilterField > span {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.newReleaseFilterField select,
+.newReleaseFilterField input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1d1b38;
+  font: inherit;
+}
+
+.newReleaseFilterField select:focus,
+.newReleaseFilterField input:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.newReleaseCheckbox {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.newReleaseCheckbox input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.newReleaseCheckbox span {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.newReleaseFilterSummary {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  opacity: 0.78;
+}
+
 .newReleaseTable {
   width: 100%;
   min-width: 860px;
@@ -527,6 +595,10 @@
 }
 
 @media (max-width: 760px) {
+  .newReleaseFilters {
+    grid-template-columns: 1fr;
+  }
+
   .newReleaseTable {
     min-width: 760px;
   }

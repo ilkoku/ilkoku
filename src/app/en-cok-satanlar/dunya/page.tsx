@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-
 import { GlobalBestsellerView } from "@/features/book-index/public/GlobalBestsellerView";
-import {
-  getGlobalBestsellerReadModel,
-  isGlobalBestsellerPreviewEnabled,
-} from "@/lib/book-index/global-public-read-model";
+import { getGlobalBestsellerReadModel } from "@/lib/book-index/global-public-read-model";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 const canonical = "/en-cok-satanlar/dunya";
@@ -20,13 +15,11 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     canonical,
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: true,
+    noIndex: false,
   });
 }
 
 export default async function GlobalBestsellersPage() {
-  if (!isGlobalBestsellerPreviewEnabled()) notFound();
-
   const model = await getGlobalBestsellerReadModel(100);
 
   return <GlobalBestsellerView model={model} />;

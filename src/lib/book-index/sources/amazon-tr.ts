@@ -7,8 +7,12 @@ import { decodeBookIndexHtml } from "../html";
 
 const SOURCE_CODE = "amazon-tr";
 const SOURCE_ORIGIN = "https://www.amazon.com.tr";
-const PAGE_TWO_URL =
+const BESTSELLER_PATH = "/gp/bestsellers/books";
+const NEW_RELEASES_PATH = "/gp/new-releases/books";
+const BESTSELLER_PAGE_TWO_URL =
   "https://www.amazon.com.tr/gp/bestsellers/books/ref=zg_bs_pg_2_books?ie=UTF8&pg=2";
+const NEW_RELEASES_PAGE_TWO_URL =
+  "https://www.amazon.com.tr/gp/new-releases/books/ref=zg_bsnr_pg_2_books?ie=UTF8&pg=2";
 const MIN_EXPECTED_PAGE_BOOKS = 25;
 
 function attributeValue(fragment: string, name: string) {
@@ -88,7 +92,7 @@ function parseCard(card: string, asin: string) {
   };
 }
 
-export function parseAmazonTrBestsellerPage(
+export function parseAmazonTrRankedBookPage(
   html: string,
 ): BookIndexCollectionResult {
   const starts = [
@@ -124,7 +128,19 @@ export function parseAmazonTrBestsellerPage(
   return { books };
 }
 
-export function combineAmazonTrBestsellerPages(
+export function parseAmazonTrBestsellerPage(
+  html: string,
+): BookIndexCollectionResult {
+  return parseAmazonTrRankedBookPage(html);
+}
+
+export function parseAmazonTrNewReleasePage(
+  html: string,
+): BookIndexCollectionResult {
+  return parseAmazonTrRankedBookPage(html);
+}
+
+export function combineAmazonTrRankedBookPages(
   pages: BookIndexCollectionResult[],
 ): BookIndexCollectionResult {
   const books = pages.flatMap((page) => page.books).sort(
@@ -153,6 +169,47 @@ export function combineAmazonTrBestsellerPages(
   return { books };
 }
 
+export function combineAmazonTrBestsellerPages(
+  pages: BookIndexCollectionResult[],
+): BookIndexCollectionResult {
+  return combineAmazonTrRankedBookPages(pages);
+}
+
+function verifiedSourceUrl(sourceUrl: string, expectedPath: string) {
+  const url = new URL(sourceUrl);
+
+  if (url.origin !== SOURCE_ORIGIN || url.pathname !== expectedPath) {
+    throw new Error("BOOK_INDEX_AMAZON_TR_SOURCE_URL_MISMATCH");
+  }
+
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}
+
+type ResearchListConfig = {
+  firstPageUrl: string;
+  secondPageUrl: string;
+};
+
+function researchListConfig(context: BookIndexCollectionContext): ResearchListConfig {
+  if (context.listCode === "amazon-tr-bestsellers-research") {
+    return {
+      firstPageUrl: verifiedSourceUrl(context.sourceUrl, BESTSELLER_PATH),
+      secondPageUrl: BESTSELLER_PAGE_TWO_URL,
+    };
+  }
+
+  if (context.listCode === "amazon-tr-new-releases-research") {
+    return {
+      firstPageUrl: verifiedSourceUrl(context.sourceUrl, NEW_RELEASES_PATH),
+      secondPageUrl: NEW_RELEASES_PAGE_TWO_URL,
+    };
+  }
+
+  throw new Error("BOOK_INDEX_AMAZON_TR_LIST_NOT_SUPPORTED");
+}
+
 async function fetchHtml(url: string) {
   const response = await fetch(url, {
     cache: "no-store",
@@ -171,19 +228,25 @@ async function fetchHtml(url: string) {
   return response.text();
 }
 
+// Research-only adapter. Deliberately not registered in collector.ts.
+// Opera verified both native book-ranked surfaces:
+// - /gp/bestsellers/books
+// - /gp/new-releases/books
+// Production collection remains separate from surface/parser verification.
 export const amazonTrBookIndexResearchAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
+    const config = researchListConfig(context);
     const [firstPage, secondPage] = await Promise.all([
-      fetchHtml(context.sourceUrl),
-      fetchHtml(PAGE_TWO_URL),
+      fetchHtml(config.firstPageUrl),
+      fetchHtml(config.secondPageUrl),
     ]);
 
-    return combineAmazonTrBestsellerPages([
-      parseAmazonTrBestsellerPage(firstPage),
-      parseAmazonTrBestsellerPage(secondPage),
+    return combineAmazonTrRankedBookPages([
+      parseAmazonTrRankedBookPage(firstPage),
+      parseAmazonTrRankedBookPage(secondPage),
     ]);
   },
 };

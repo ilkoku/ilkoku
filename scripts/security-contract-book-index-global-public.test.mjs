@@ -108,3 +108,20 @@ test("global bestseller overview link appears only when preview gate is enabled"
     "disabled gate keeps the current non-link card fallback",
   );
 });
+
+
+test("global preview defaults to OFF in environment contract", () => {
+  const env = source(".env.example");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+
+  contains(
+    env,
+    'BOOK_INDEX_GLOBAL_PREVIEW_ENABLED="false"',
+    "global preview example default stays explicitly disabled",
+  );
+  contains(
+    model,
+    'env.BOOK_INDEX_GLOBAL_PREVIEW_ENABLED === "true"',
+    "runtime activation remains explicit opt-in only",
+  );
+});

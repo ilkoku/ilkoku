@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Amazon TR production adapter preserves native ranked book surfaces", () => {
+test("Amazon TR collector-registered adapter preserves native ranked book surfaces while rollout stays staged", () => {
   const adapter = source("src/lib/book-index/sources/amazon-tr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -54,12 +54,12 @@ test("Amazon TR production adapter preserves native ranked book surfaces", () =>
   contains(
     adapter,
     '"amazon-tr-live"',
-    "bestseller production list boundary",
+    "bestseller staged list boundary",
   );
   contains(
     adapter,
-    '"amazon-tr-new-releases"',
-    "new-release production list boundary",
+    '"amazon-tr-new-releases-research"',
+    "new-release staged list boundary",
   );
   contains(
     adapter,
@@ -69,7 +69,7 @@ test("Amazon TR production adapter preserves native ranked book surfaces", () =>
   contains(
     adapter,
     "Collector adapter for the verified native ranked book surfaces:",
-    "production rollout boundary",
+    "staged rollout boundary",
   );
 
   contains(
@@ -84,13 +84,13 @@ test("Amazon TR production adapter preserves native ranked book surfaces", () =>
   );
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    "Amazon TR source is ready",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "Amazon TR source remains researching",
   );
   contains(
     lists,
     'code: "amazon-tr-live"',
-    "Amazon TR bestseller list is active",
+    "Amazon TR bestseller list remains staged",
   );
   contains(
     lists,

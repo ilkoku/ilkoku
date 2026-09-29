@@ -26,7 +26,10 @@ const GENERAL_LIST_CODES = new Set([
   "kitapsec-general-live-canary",
 ]);
 
-const GENERAL_CANARY_LIST_CODE = "kitapsec-general-live-canary";
+const GENERAL_PAGED_LIST_CODES = new Set([
+  "kitapsec-general-live",
+  "kitapsec-general-live-canary",
+]);
 
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
@@ -207,7 +210,7 @@ async function fetchKitapSecHtml(sourceUrl: string) {
   return new TextDecoder("windows-1254").decode(bytes);
 }
 
-async function collectKitapSecGeneralCanary(sourceUrl: string) {
+async function collectKitapSecGeneralPaged(sourceUrl: string) {
   const pages: BookIndexCollectionResult[] = [];
 
   for (let page = 1; page <= GENERAL_CANARY_PAGE_COUNT; page += 1) {
@@ -244,8 +247,8 @@ export const kitapSecBookIndexAdapter: BookIndexSourceAdapter = {
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    if (context.listCode === GENERAL_CANARY_LIST_CODE) {
-      return collectKitapSecGeneralCanary(context.sourceUrl);
+    if (GENERAL_PAGED_LIST_CODES.has(context.listCode)) {
+      return collectKitapSecGeneralPaged(context.sourceUrl);
     }
 
     const html = await fetchKitapSecHtml(context.sourceUrl);

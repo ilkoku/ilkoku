@@ -187,20 +187,23 @@ function verifiedSourceUrl(sourceUrl: string, expectedPath: string) {
   return url.toString();
 }
 
-type ResearchListConfig = {
+type AmazonTrListConfig = {
   firstPageUrl: string;
   secondPageUrl: string;
 };
 
-function researchListConfig(context: BookIndexCollectionContext): ResearchListConfig {
-  if (context.listCode === "amazon-tr-bestsellers-research") {
+function amazonTrListConfig(context: BookIndexCollectionContext): AmazonTrListConfig {
+  if (context.listCode === "amazon-tr-live") {
     return {
       firstPageUrl: verifiedSourceUrl(context.sourceUrl, BESTSELLER_PATH),
       secondPageUrl: BESTSELLER_PAGE_TWO_URL,
     };
   }
 
-  if (context.listCode === "amazon-tr-new-releases-research") {
+  if (
+    context.listCode === "amazon-tr-new-releases-research"
+    || context.listCode === "amazon-tr-new-releases"
+  ) {
     return {
       firstPageUrl: verifiedSourceUrl(context.sourceUrl, NEW_RELEASES_PATH),
       secondPageUrl: NEW_RELEASES_PAGE_TWO_URL,
@@ -228,17 +231,14 @@ async function fetchHtml(url: string) {
   return response.text();
 }
 
-// Research-only adapter. Deliberately not registered in collector.ts.
-// Opera verified both native book-ranked surfaces:
-// - /gp/bestsellers/books
-// - /gp/new-releases/books
-// Production collection remains separate from surface/parser verification.
-export const amazonTrBookIndexResearchAdapter: BookIndexSourceAdapter = {
+// Collector-registered adapter for the verified native ranked book surfaces.
+// Amazon Türkiye remains staged until its direct server fetch is stable.
+export const amazonTrBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    const config = researchListConfig(context);
+    const config = amazonTrListConfig(context);
     const [firstPage, secondPage] = await Promise.all([
       fetchHtml(config.firstPageUrl),
       fetchHtml(config.secondPageUrl),

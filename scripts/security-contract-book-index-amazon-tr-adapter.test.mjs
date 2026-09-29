@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Amazon TR research adapter preserves native ranked book surfaces without activating rollout", () => {
+test("Amazon TR collector-registered adapter preserves native ranked book surfaces while rollout stays staged", () => {
   const adapter = source("src/lib/book-index/sources/amazon-tr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -53,13 +53,13 @@ test("Amazon TR research adapter preserves native ranked book surfaces without a
   );
   contains(
     adapter,
-    '"amazon-tr-bestsellers-research"',
-    "bestseller research list boundary",
+    '"amazon-tr-live"',
+    "bestseller staged list boundary",
   );
   contains(
     adapter,
     '"amazon-tr-new-releases-research"',
-    "new-release research list boundary",
+    "new-release staged list boundary",
   );
   contains(
     adapter,
@@ -68,14 +68,14 @@ test("Amazon TR research adapter preserves native ranked book surfaces without a
   );
   contains(
     adapter,
-    "Research-only adapter. Deliberately not registered in collector.ts.",
-    "research-only rollout boundary",
+    "Collector-registered adapter for the verified native ranked book surfaces.",
+    "staged rollout boundary",
   );
 
-  notContains(
+  contains(
     collector,
-    "amazonTrBookIndexResearchAdapter",
-    "Amazon TR stays out of production collector registry",
+    "amazonTrBookIndexAdapter",
+    "Amazon TR adapter is registered in collector",
   );
   contains(
     sources,
@@ -85,16 +85,16 @@ test("Amazon TR research adapter preserves native ranked book surfaces without a
   contains(
     sources,
     'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "Amazon TR source state remains researching",
+    "Amazon TR source remains researching",
   );
   contains(
     lists,
     'code: "amazon-tr-live"',
-    "historical disabled Amazon TR list remains present",
+    "Amazon TR bestseller list remains staged",
   );
   contains(
     lists,
     'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books"',
-    "disabled list uses the verified native bestseller surface",
+    "live list uses the verified native bestseller surface",
   );
 });

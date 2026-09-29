@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("D&R research refuses to infer weekly rank from visible catalog position", () => {
+test("D&R production adapter collects verified new releases without inferring bestseller rank", () => {
   const adapter = source("src/lib/book-index/sources/dr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -92,36 +92,30 @@ test("D&R research refuses to infer weekly rank from visible catalog position", 
     "rank: index + 1",
     "catalog position must never become weekly rank",
   );
-  notContains(
-    adapter,
-    "drBookIndexResearchAdapter",
-    "no live source adapter before collection path is verified",
-  );
   contains(
     adapter,
-    "Deliberately no BookIndexSourceAdapter export here.",
-    "research-only boundary",
+    "drBookIndexAdapter",
+    "D&R new-release adapter is production registered",
   );
-
-  notContains(
+  contains(
     collector,
-    "drBookIndexResearchAdapter",
-    "D&R remains out of production collector registry",
+    "drBookIndexAdapter",
+    "D&R adapter is in collector registry",
   );
   notContains(
     lists,
-    'code: "dr-tr-bestsellers-research"',
-    "D&R research list stays inactive",
+    'code: "dr-tr-bestsellers"',
+    "D&R bestseller list stays absent until native rank collection is sustainable",
   );
-  notContains(
+  contains(
     lists,
-    'code: "dr-tr-new-releases-research"',
-    "D&R new-releases research list stays inactive",
+    'code: "dr-tr-new-releases"',
+    "D&R native new-release list is active",
   );
   contains(sources, 'code: "dr"', "D&R source registry remains present");
   contains(
     sources,
-    'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "blocked"',
-    "existing source state is not silently changed by parser correction",
+    'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "D&R verified new-release source is ready",
   );
 });

@@ -187,25 +187,18 @@ test("first live collector is fail-closed and source-isolated", () => {
   contains(remzi, "AbortSignal.timeout(20_000)", "bounded remote request");
 });
 
-test("blocked sources are not bypassed by the book index collector", () => {
-  const sources = source("src/lib/book-index/sources.ts");
+test("book index collector retains fail-closed source status gates", () => {
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(sources, 'code: "kitapyurdu"', "Kitapyurdu registry entry");
-  contains(
-    sources,
-    'baseUrl: "https://www.kitapyurdu.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "blocked"',
-    "Kitapyurdu automated access block is explicit",
-  );
   contains(
     collector,
     'sourceDefinition.collectionState === "blocked" ? "blocked" : "active"',
-    "blocked source persistence",
+    "blocked source persistence remains available",
   );
   contains(
     collector,
     'source.status !== "active"',
-    "blocked source execution gate",
+    "inactive source execution gate",
   );
 });
 
@@ -264,14 +257,14 @@ test("only BKM weekly contributes to the Turkey composite in V1", () => {
 });
 
 
-test("Amazon TR stays research-only while global Amazon US and UK collectors are isolated", () => {
+test("Amazon TR collector stays staged while global Amazon collectors remain isolated by market", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
   contains(
     sources,
     'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "Amazon TR remains research-only",
+    "Amazon TR source remains researching",
   );
   contains(
     sources,
@@ -280,8 +273,13 @@ test("Amazon TR stays research-only while global Amazon US and UK collectors are
   );
   contains(
     collector,
+    "[amazonTrBookIndexAdapter.sourceCode, amazonTrBookIndexAdapter]",
+    "Amazon TR collector is active",
+  );
+  contains(
+    collector,
     "[amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter]",
-    "Amazon US collector is isolated and active",
+    "Amazon US collector remains isolated and active",
   );
 });
 
@@ -557,20 +555,23 @@ test("Rakuten Japan global source preserves the native weekly Top 30", () => {
   );
 });
 
-test("D&R access protection remains fail-closed", () => {
+test("D&R activates only the verified native new-release collector", () => {
   const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
   contains(
     sources,
-    'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "blocked"',
-    "D&R protected source state",
+    'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "D&R verified new-release source is ready",
   );
-  notContains(
+  contains(
     collector,
-    'sourceCode: "dr"',
-    "D&R collector is not activated",
+    "[drBookIndexAdapter.sourceCode, drBookIndexAdapter]",
+    "D&R new-release adapter is registered",
   );
+  contains(lists, 'code: "dr-tr-new-releases"', "D&R new-release list is active");
+  notContains(lists, 'code: "dr-tr-bestsellers"', "D&R bestseller list stays absent");
 });
 
 test("idefix collector reads server-side Next data and excludes source-sponsored cards", () => {
@@ -1457,6 +1458,7 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapstore-tr-live",
     "kitapsec-general-live",
     "kitapambari-tr-live",
+    "kitapyurdu-tr-weekly",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);
@@ -1602,7 +1604,7 @@ test("Book Index source adapters exclude only verified non-book catalogue entrie
 });
 
 
-test("Amazon TR research parser remains fail-closed and production-disabled", () => {
+test("Amazon TR parser remains fail-closed while rollout is staged", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const amazon = source("src/lib/book-index/sources/amazon-tr.ts");
@@ -1618,11 +1620,16 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
     'name: "Amazon Türkiye",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
     "Amazon TR remains researching",
   );
-  contains(lists, 'code: "amazon-tr-live"', "Amazon TR research list");
+  contains(lists, 'code: "amazon-tr-live"', "Amazon TR staged bestseller list");
   contains(
     lists,
     'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",\n    maxRank: null,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: false',
-    "Amazon TR research list stays disabled and outside composite",
+    "Amazon TR bestseller list remains disabled and private",
+  );
+  contains(
+    lists,
+    'code: "amazon-tr-new-releases-research"',
+    "Amazon TR new-release research list remains staged",
   );
   contains(amazon, 'data-asin=["\']([^"\']+)["\']', "ASIN source identity");
   contains(amazon, "\\bzg-bdg-text\\b", "Amazon native rank badge");
@@ -1647,10 +1654,10 @@ test("Amazon TR research parser remains fail-closed and production-disabled", ()
     "transparent collector user agent",
   );
   contains(amazon, "AbortSignal.timeout(20_000)", "bounded Amazon requests");
-  notContains(
+  contains(
     collector,
-    "amazonTrBookIndexResearchAdapter",
-    "research adapter is not production-registered",
+    "amazonTrBookIndexAdapter",
+    "Amazon TR production adapter is registered",
   );
 });
 

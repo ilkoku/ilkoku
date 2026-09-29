@@ -12,12 +12,14 @@ import { getBookIndexList } from "./lists";
 import { getBookIndexSource } from "./sources";
 import { amazonUsBookIndexAdapter } from "./sources/amazon-us";
 import { amazonUkBookIndexAdapter } from "./sources/amazon-uk";
+import { amazonTrBookIndexAdapter } from "./sources/amazon-tr";
 import { ibsItalyBookIndexAdapter } from "./sources/ibs-it";
 import { rakutenJapanBookIndexAdapter } from "./sources/rakuten-jp";
 import { kyoboKoreaBookIndexAdapter } from "./sources/kyobo-kr";
 import { readingsAustraliaBookIndexAdapter } from "./sources/readings-au";
 import { bkmBookIndexAdapter } from "./sources/bkm";
 import { kitapSepetiBookIndexAdapter } from "./sources/kitapsepeti";
+import { kitapyurduBookIndexAdapter } from "./sources/kitapyurdu";
 import { kitapStoreBookIndexResearchAdapter } from "./sources/kitapstore";
 
 import { kitapAmbariBookIndexAdapter } from "./sources/kitapambari";
@@ -31,17 +33,21 @@ import { idefixBookIndexAdapter } from "./sources/idefix";
 import { imgeBookIndexAdapter } from "./sources/imge";
 import { pandoraBookIndexAdapter } from "./sources/pandora";
 import { remziBookIndexAdapter } from "./sources/remzi";
+import { drBookIndexAdapter } from "./sources/dr";
 
 const adapters = new Map<string, BookIndexSourceAdapter>([
   [amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter],
   [amazonUkBookIndexAdapter.sourceCode, amazonUkBookIndexAdapter],
+  [amazonTrBookIndexAdapter.sourceCode, amazonTrBookIndexAdapter],
   [ibsItalyBookIndexAdapter.sourceCode, ibsItalyBookIndexAdapter],
   [rakutenJapanBookIndexAdapter.sourceCode, rakutenJapanBookIndexAdapter],
   [kyoboKoreaBookIndexAdapter.sourceCode, kyoboKoreaBookIndexAdapter],
   [readingsAustraliaBookIndexAdapter.sourceCode, readingsAustraliaBookIndexAdapter],
   [remziBookIndexAdapter.sourceCode, remziBookIndexAdapter],
+  [drBookIndexAdapter.sourceCode, drBookIndexAdapter],
   [bkmBookIndexAdapter.sourceCode, bkmBookIndexAdapter],
   [kitapSepetiBookIndexAdapter.sourceCode, kitapSepetiBookIndexAdapter],
+  [kitapyurduBookIndexAdapter.sourceCode, kitapyurduBookIndexAdapter],
   [kitapStoreBookIndexResearchAdapter.sourceCode, kitapStoreBookIndexResearchAdapter],
 
   [kitapAmbariBookIndexAdapter.sourceCode, kitapAmbariBookIndexAdapter],

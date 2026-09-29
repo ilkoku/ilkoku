@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Kitapyurdu research parsers preserve verified native lists without activating rollout", () => {
+test("Kitapyurdu production adapter preserves verified native weekly lists", () => {
   const adapter = source("src/lib/book-index/sources/kitapyurdu.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -72,23 +72,23 @@ test("Kitapyurdu research parsers preserve verified native lists without activat
   );
   contains(
     adapter,
-    "Research-only adapter. Deliberately not registered in collector.ts.",
-    "research-only rollout boundary",
+    "kitapyurduBookIndexAdapter",
+    "Kitapyurdu production adapter exists",
   );
 
-  notContains(
+  contains(
     collector,
-    "kitapyurduBookIndexResearchAdapter",
-    "Kitapyurdu research adapter stays out of production collector registry",
+    "kitapyurduBookIndexAdapter",
+    "Kitapyurdu adapter is registered in collector",
   );
   for (const code of [
-    "kitapyurdu-tr-weekly-research",
-    "kitapyurdu-tr-new-releases-research",
+    "kitapyurdu-tr-weekly",
+    "kitapyurdu-tr-new-releases",
   ]) {
-    notContains(
+    contains(
       lists,
       `code: "${code}"`,
-      `${code} research list stays inactive`,
+      `${code} production list is registered`,
     );
   }
   contains(
@@ -98,7 +98,7 @@ test("Kitapyurdu research parsers preserve verified native lists without activat
   );
   contains(
     sources,
-    'baseUrl: "https://www.kitapyurdu.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "blocked"',
-    "existing source state is not silently changed by parser research",
+    'baseUrl: "https://www.kitapyurdu.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "Kitapyurdu verified source is ready",
   );
 });

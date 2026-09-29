@@ -83,7 +83,7 @@ test("Book Index public read model preserves source ranks without public composi
   );
 });
 
-test("Amazon TR and US public states fail closed until sanctioned data exists", () => {
+test("Amazon TR and US public states remain market-isolated while Amazon TR rollout is staged", () => {
   const model = source("src/lib/book-index/public-read-model.ts");
   const sources = source("src/lib/book-index/sources.ts");
 
@@ -96,8 +96,8 @@ test("Amazon TR and US public states fail closed until sanctioned data exists", 
   );
   contains(
     sources,
-    'collectionState: "researching"',
-    "researching source state",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
+    "Amazon TR staged state",
   );
   contains(
     sources,
@@ -106,8 +106,8 @@ test("Amazon TR and US public states fail closed until sanctioned data exists", 
   );
   contains(
     sources,
-    'collectionState: "blocked"',
-    "blocked source state",
+    'baseUrl: "https://www.amazon.com",\n    includeInTurkeyIndex: false,\n    independenceGroup: "amazon-us",\n    operatorName: "Amazon US",\n    phase: "v1",\n    collectionState: "ready"',
+    "Amazon US ready state",
   );
   contains(
     model,

@@ -1,7 +1,10 @@
 import "server-only";
 
 import { getBookIndexPublicReadModel } from "./public-read-model";
-import {\n  getBookIndexReadinessSnapshot,\n  type BookIndexReadinessSnapshot,\n} from "./readiness";
+import {
+  getBookIndexReadinessSnapshot,
+  type BookIndexReadinessSnapshot,
+} from "./readiness";
 
 export type BookIndexSeoGateState =
   | "disabled"
@@ -40,6 +43,12 @@ export type BookIndexSeoGateSnapshot = {
   failures: BookIndexSeoGateFailure[];
   canPublish: boolean;
 };
+
+export function getBookIndexSeoHistorySpanDays(
+  readiness: Pick<BookIndexReadinessSnapshot, "minimumSourceHistorySpanHours">,
+) {
+  return Math.max(0, Math.floor(readiness.minimumSourceHistorySpanHours / 24));
+}
 
 function parseOptionalInteger(value: string | undefined) {
   if (!value?.trim()) return null;
@@ -151,7 +160,7 @@ export async function getBookIndexSeoGateSnapshot(): Promise<BookIndexSeoGateSna
     observedIndependentCompositeSources:
       readiness.observedCompositeIndependenceGroups,
     matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent,
-    historySpanDays: readiness.historySpanDays,
+    historySpanDays: getBookIndexSeoHistorySpanDays(readiness),
     turkeyItemCount: publicReadModel.turkey.items.length,
   });
 }

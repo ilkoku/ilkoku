@@ -1,0 +1,61 @@
+name: Kitapyurdu HTTP probe
+
+on:
+  push:
+    branches:
+      - diagnostic/kitapyurdu-http-probe-20260930
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Probe public Kitapyurdu list routes
+        shell: bash
+        run: |
+          node <<'NODE'
+          const urls = [
+            "https://www.kitapyurdu.com/cok-satan-kitaplar/haftalik/1.html",
+            "https://www.kitapyurdu.com/index.php?list_id=1&route=product%2Flist",
+            "https://www.kitapyurdu.com/yeni-cikan-kitaplar/haftalik/2.html",
+            "https://www.kitapyurdu.com/index.php?list_id=2&route=product%2Flist",
+          ];
+
+          const headers = {
+            Accept: "text/html,application/xhtml+xml",
+            "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.5",
+            "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+          };
+
+          for (const url of urls) {
+            try {
+              const response = await fetch(url, {
+                cache: "no-store",
+                headers,
+                redirect: "follow",
+                signal: AbortSignal.timeout(20000),
+              });
+              const body = await response.text();
+              console.log(JSON.stringify({
+                requestedUrl: url,
+                status: response.status,
+                ok: response.ok,
+                finalUrl: response.url,
+                bytes: body.length,
+                weeklyBestsellerMarker: body.includes("Çok Satanlar (Genel, Haftalık)"),
+                weeklyNewReleaseMarker: body.includes("Yeni Çıkanlar (Genel, Haftalık)"),
+              }));
+            } catch (error) {
+              console.log(JSON.stringify({
+                requestedUrl: url,
+                error: error instanceof Error ? error.message : String(error),
+              }));
+            }
+          }
+          NODE

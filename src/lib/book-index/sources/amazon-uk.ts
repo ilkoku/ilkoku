@@ -102,8 +102,7 @@ async function fetchHtml(url: string) {
     headers: {
       Accept: "text/html,application/xhtml+xml",
       "Accept-Language": "en-GB,en;q=0.9",
-      "User-Agent":
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/152 Safari/537.36",
+      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
     },
     signal: AbortSignal.timeout(20_000),
   });

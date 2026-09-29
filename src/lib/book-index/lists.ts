@@ -526,6 +526,20 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: true,
   },
+  {
+    code: "readings-au-monthly",
+    sourceCode: "readings-au",
+    title: "Readings Avustralya · Aylık Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "monthly",
+    sourceUrl: "https://www.readings.com.au/news/categories/australian-fiction",
+    maxRank: 20,
+    includeInComposite: false,
+    collectionEveryMinutes: 720,
+    publiclyVisible: false,
+    enabled: true,
+  },
+
 
 
 

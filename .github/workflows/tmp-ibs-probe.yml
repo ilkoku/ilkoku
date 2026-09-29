@@ -14,14 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
-      - name: Verify IBS ranked Top 100 card fields
+      - name: Diagnose IBS Top 100 identity anomalies
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import html,json,re,urllib.parse,urllib.request
+          import html,json,re,urllib.parse,urllib.request,collections
 
-          all_rows=[]
+          rows=[]
+          raw_by_rank={}
           for page in (1,2,3):
             url=f"https://www.ibs.it/classifica/libri/1day/SOLD?page={page}"
             req=urllib.request.Request(url,headers={
@@ -31,88 +32,58 @@ jobs:
             })
             with urllib.request.urlopen(req,timeout=40) as resp:
               body=html.unescape(resp.read().decode("utf-8","replace"))
-              print("META="+json.dumps({"page":page,"status":resp.status,"bytes":len(body.encode("utf-8"))}))
 
             starts=[*re.finditer(r'<[^>]+\bdata-item-position=["\']([0-9]{1,3})["\'][^>]*>',body,re.I)]
-            # Deduplicate repeated data-item-position elements by selecting nearest card-level occurrence
-            page_rows=[]
-            seen_rank=set()
+            seen=set()
             for i,m in enumerate(starts):
               rank=int(m.group(1))
-              if rank in seen_rank or not ((page-1)*40+1 <= rank <= min(page*40,100)):
+              if rank in seen or not ((page-1)*40+1 <= rank <= min(page*40,100)):
                 continue
-              # Find broad surrounding product tile bounded by next native rank marker.
-              next_positions=[x.start() for x in starts if x.start()>m.start() and int(x.group(1))!=rank]
-              end=min(next_positions) if next_positions else min(len(body),m.start()+30000)
+              next_m=next((x for x in starts[i+1:] if int(x.group(1))!=rank),None)
+              end=next_m.start() if next_m else min(len(body),m.start()+35000)
               block=body[max(0,m.start()-3500):end]
+              raw_by_rank[rank]=block
 
-              # Only accept actual book product URL carrying ISBN-13.
-              anchors=[*re.finditer(r'<a\b[^>]*href=["\']([^"\']+/e/((?:978|979)[0-9]{10})(?:[^"\']*)?)["\'][^>]*>(.*?)</a>',block,re.I|re.S)]
-              if not anchors:
-                continue
-              a=anchors[0]
+              links=[*re.finditer(r'<a\b[^>]*href=["\']([^"\']+/e/((?:978|979)[0-9]{10})(?:[^"\']*)?)["\'][^>]*>(.*?)</a>',block,re.I|re.S)]
+              best=None
+              for a in links:
+                tag=a.group(0)
+                cls=(re.search(r'\bclass=["\']([^"\']+)["\']',tag,re.I) or [None,""])[1]
+                label=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",html.unescape(a.group(3)))).strip()
+                if label and ("title" in cls.lower() or "product" in cls.lower()):
+                  best=(a,label,cls); break
+              if not best and links:
+                a=links[0]
+                label=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",html.unescape(a.group(3)))).strip()
+                best=(a,label,"")
+              if not best:
+                rows.append({"rank":rank,"isbn":None,"title":None,"author":None,"href":None})
+                seen.add(rank); continue
+              a,title,cls=best
               href=urllib.parse.urljoin(url,a.group(1))
               isbn=a.group(2)
-
-              # Candidate title class and author by current IBS SSR classes/semantics.
-              title=None
-              author=None
-              publisher=None
-              for am in anchors:
-                tag=am.group(0)
-                cls=re.search(r'\bclass=["\']([^"\']+)["\']',tag,re.I)
-                label=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",html.unescape(am.group(3)))).strip()
-                classes=cls.group(1) if cls else ""
-                if label and ("title" in classes.lower() or "product" in classes.lower()):
-                  title=label
-                  href=urllib.parse.urljoin(url,am.group(1))
-                  isbn=am.group(2)
-                  break
-              if not title:
-                title=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",html.unescape(a.group(3)))).strip()
-
-              # Author often follows "di" in a dedicated author link.
-              auth_candidates=[]
-              for am in re.finditer(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',block,re.I|re.S):
-                h=am.group(1)
-                label=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",html.unescape(am.group(2)))).strip()
-                if not label: continue
-                if re.search(r'/autore/|/libri-autore/|/search/.*autore',h,re.I):
-                  auth_candidates.append(label)
-              if auth_candidates:
-                author=", ".join(dict.fromkeys(auth_candidates))
-
-              # Fallback visible "di Author" around ranked card.
               visible=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",block)).strip()
-              if not author:
-                tm=re.escape(title)
-                mm=re.search(tm+r"\s+di\s+(.+?)(?=\s+(?:Recensioni:|[A-ZÀ-Ü][^ ]*\s*,?\s*20\d{2}|Disponibil|€))",visible,re.I)
-                if mm: author=mm.group(1).strip()
 
-              # Publisher/year is often adjacent text; expose card attrs and exact sample for later parser.
-              pub_candidates=[]
-              for pm in re.finditer(r'(?i)(?:publisher|editore)[^<>]{0,80}(?:>|:|=)["\']?([^<"\']{2,100})',block):
-                val=re.sub(r"\s+"," ",pm.group(1)).strip()
-                if val: pub_candidates.append(val)
-              publisher=pub_candidates[0] if pub_candidates else None
+              author=None
+              tm=re.escape(title)
+              mm=re.search(tm+r"\s+di\s+(.+?)(?=\s+Recensioni:)",visible,re.I)
+              if mm: author=mm.group(1).strip()
 
-              page_rows.append({
-                "rank":rank,"isbn13":isbn,"title":title or None,
-                "author":author,"publisher":publisher,"url":href,
-                "sample":visible[:900],
-              })
-              seen_rank.add(rank)
+              rows.append({"rank":rank,"isbn":isbn,"title":title or None,"author":author,"href":href})
+              seen.add(rank)
 
-            page_rows.sort(key=lambda x:x["rank"])
-            print("PAGE_ROWS="+json.dumps({"page":page,"rows":page_rows},ensure_ascii=False))
-            all_rows += page_rows
-
-          all_rows.sort(key=lambda x:x["rank"])
-          print("TOTAL="+str(len(all_rows)))
-          print("RANKS_CONTIGUOUS="+str([x["rank"] for x in all_rows]==list(range(1,101))))
-          print("UNIQUE_ISBN="+str(len({x["isbn13"] for x in all_rows})))
-          print("MISSING_TITLE="+str(sum(1 for x in all_rows if not x["title"])))
-          print("MISSING_AUTHOR="+str(sum(1 for x in all_rows if not x["author"])))
-          print("MISSING_PUBLISHER="+str(sum(1 for x in all_rows if not x["publisher"])))
-          print("FIRST10="+json.dumps(all_rows[:10],ensure_ascii=False))
+          rows.sort(key=lambda x:x["rank"])
+          by_isbn=collections.defaultdict(list)
+          for r in rows:
+            if r["isbn"]: by_isbn[r["isbn"]].append(r["rank"])
+          duplicates={k:v for k,v in by_isbn.items() if len(v)>1}
+          anomalies=[r for r in rows if not r["title"] or not r["author"] or (r["isbn"] in duplicates if r["isbn"] else True)]
+          print("DUPLICATES="+json.dumps(duplicates,ensure_ascii=False))
+          print("ANOMALIES="+json.dumps(anomalies,ensure_ascii=False))
+          for r in anomalies:
+            block=raw_by_rank.get(r["rank"],"")
+            print("ANOMALY_CTX="+json.dumps({
+              "rank":r["rank"],
+              "text":re.sub(r"\s+"," ",block).strip()[:9000]
+            },ensure_ascii=False))
           PY

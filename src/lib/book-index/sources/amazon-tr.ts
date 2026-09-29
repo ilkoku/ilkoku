@@ -200,7 +200,10 @@ function amazonTrListConfig(context: BookIndexCollectionContext): AmazonTrListCo
     };
   }
 
-  if (context.listCode === "amazon-tr-new-releases") {
+  if (
+    context.listCode === "amazon-tr-new-releases-research"
+    || context.listCode === "amazon-tr-new-releases"
+  ) {
     return {
       firstPageUrl: verifiedSourceUrl(context.sourceUrl, NEW_RELEASES_PATH),
       secondPageUrl: NEW_RELEASES_PAGE_TWO_URL,
@@ -228,9 +231,8 @@ async function fetchHtml(url: string) {
   return response.text();
 }
 
-// Collector adapter for the verified native ranked book surfaces:
-// - /gp/bestsellers/books
-// - /gp/new-releases/books
+// Collector-registered adapter for the verified native ranked book surfaces.
+// Amazon Türkiye remains staged until its direct server fetch is stable.
 export const amazonTrBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(

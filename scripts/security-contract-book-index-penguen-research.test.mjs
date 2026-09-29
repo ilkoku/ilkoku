@@ -29,6 +29,7 @@ test("Penguen stays research-only until a native ranked book source is verified"
   contains(note, "71 book records", "verified public catalog size evidence");
   contains(note, "12 records per page", "verified pagination evidence");
   contains(note, "did **not** expose a native book ranking control", "no native rank finding");
-  contains(note, "must **not** be relabeled as a sales or bestseller rank", "no synthetic catalog rank");
+  contains(note, "must **not** be relabeled as a sales or", "no synthetic catalog rank rule");
+  contains(note, "bestseller rank.", "no synthetic catalog rank meaning");
   contains(note, "Penguen remains `researching`", "research-only product decision");
 });

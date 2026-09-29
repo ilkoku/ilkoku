@@ -102,7 +102,7 @@ export function BookIndexOverviewView({
             <span>Dünya Genelinde</span>
             <strong>Dünyada çok satan kitaplar</strong>
             <small>
-              Uluslararası çok satan listelerini kaynakların kendi native
+              Uluslararası çok satan listelerini ilgili sitelerin kendi
               sıralamalarıyla incele.
             </small>
           </Link>
@@ -111,7 +111,7 @@ export function BookIndexOverviewView({
             <span>Dünya Genelinde</span>
             <strong>Dünyada çok satan kitaplar</strong>
             <small>
-              Uluslararası çok satan listelerini kaynakların kendi native
+              Uluslararası çok satan listelerini ilgili sitelerin kendi
               sıralamalarıyla incele.
             </small>
           </article>

@@ -54,6 +54,11 @@ test("D&R research refuses to infer weekly rank from visible catalog position", 
   );
   contains(
     adapter,
+    "rank: nativeIndex + 1",
+    "native en-yeniler card order is preserved explicitly",
+  );
+  contains(
+    adapter,
     "no date",
     "no derived-date new-release ranking",
   );

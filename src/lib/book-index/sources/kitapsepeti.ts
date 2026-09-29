@@ -10,6 +10,9 @@ const SOURCE_ORIGIN = "https://www.kitapsepeti.com";
 const MAX_BOOKS = 100;
 const PAGE_COUNT = 4;
 const MIN_EXPECTED_BOOKS = 20;
+const NEW_RELEASE_MAX_BOOKS = 40;
+const NEW_RELEASE_PAGE_COUNT = 2;
+const NEW_RELEASE_MIN_EXPECTED_BOOKS = 20;
 const VERIFIED_NON_BOOK_SOURCE_KEYS = new Set([
   "/3-in-1-puzzle",
   "/ntt-magnum-jel-kalem-hediyeli-6-li-defter-love",
@@ -32,9 +35,15 @@ function priceToMinorUnits(value: string) {
   return BigInt(whole) * BigInt(100) + BigInt((fraction + "00").slice(0, 2));
 }
 
-export function parseKitapSepetiBestsellers(
+function parseKitapSepetiCatalog(
   html: string,
+  options: {
+    minExpectedBooks?: number;
+    maxBooks?: number;
+  } = {},
 ): BookIndexCollectionResult {
+  const minExpectedBooks = options.minExpectedBooks ?? MIN_EXPECTED_BOOKS;
+  const maxBooks = options.maxBooks ?? MAX_BOOKS;
   const catalog = html.match(
     /<div\b[^>]*id=["']catalog\d+["'][^>]*>([\s\S]*?)(?=<div\b[^>]*class=["'][^"']*folder-products-bottom|<footer\b|$)/iu,
   )?.[1];
@@ -99,13 +108,13 @@ export function parseKitapSepetiBestsellers(
       };
     })
     .filter((book): book is NonNullable<typeof book> => Boolean(book))
-    .slice(0, MAX_BOOKS)
+    .slice(0, maxBooks)
     .map((book, index) => ({
       ...book,
       rank: index + 1,
     }));
 
-  if (books.length < MIN_EXPECTED_BOOKS) {
+  if (books.length < minExpectedBooks) {
     throw new Error(`BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL:${books.length}`);
   }
 
@@ -115,6 +124,12 @@ export function parseKitapSepetiBestsellers(
   }
 
   return { books };
+}
+
+export function parseKitapSepetiBestsellers(
+  html: string,
+): BookIndexCollectionResult {
+  return parseKitapSepetiCatalog(html);
 }
 
 function bestsellerPageUrl(sourceUrl: string, page: number) {
@@ -147,22 +162,37 @@ export const kitapSepetiBookIndexAdapter: BookIndexSourceAdapter = {
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
+    const isNewReleaseList = context.listCode === "kitapsepeti-tr-new-releases";
+    if (!isNewReleaseList && context.listCode !== "kitapsepeti-tr-live") {
+      throw new Error("BOOK_INDEX_KITAPSEPETI_LIST_NOT_SUPPORTED");
+    }
+
+    const pageCount = isNewReleaseList ? NEW_RELEASE_PAGE_COUNT : PAGE_COUNT;
+    const maxBooks = isNewReleaseList ? NEW_RELEASE_MAX_BOOKS : MAX_BOOKS;
+    const minExpectedBooks = isNewReleaseList
+      ? NEW_RELEASE_MIN_EXPECTED_BOOKS
+      : MAX_BOOKS;
     const pageResults = [];
 
-    for (let page = 1; page <= PAGE_COUNT; page += 1) {
+    for (let page = 1; page <= pageCount; page += 1) {
       const html = await fetchHtml(bestsellerPageUrl(context.sourceUrl, page));
-      pageResults.push(parseKitapSepetiBestsellers(html));
+      pageResults.push(
+        parseKitapSepetiCatalog(html, {
+          minExpectedBooks: 0,
+          maxBooks,
+        }),
+      );
     }
 
     const books = pageResults
       .flatMap((result) => result.books)
-      .slice(0, MAX_BOOKS)
+      .slice(0, maxBooks)
       .map((book, index) => ({
         ...book,
         rank: index + 1,
       }));
 
-    if (books.length < MAX_BOOKS) {
+    if (books.length < minExpectedBooks) {
       throw new Error(`BOOK_INDEX_KITAPSEPETI_RESULT_TOO_SMALL:${books.length}`);
     }
 

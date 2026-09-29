@@ -188,8 +188,8 @@ async function fetchHtml(sourceUrl: string, expectedPath: string) {
   return response.text();
 }
 
-// Research-only adapter. Deliberately not registered in collector.ts.
-// Source state, list activation and production rollout remain separate decisions.
+// Collector-registered adapter for the verified weekly bestseller and new-release surfaces.
+// Source state, list activation and public rollout remain controlled separately.
 export const kitapyurduBookIndexResearchAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(

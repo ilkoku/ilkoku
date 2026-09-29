@@ -119,10 +119,58 @@ test("Book Index public methodology describes source-rank comparison", () => {
   const normalizedView = view.replace(/\s+/g, " ");
 
   contains(normalizedView, "İlkOku yeni bir sıra veya bileşik puan üretmez", "no invented public ranking");
-  contains(normalizedView, "Aynı kitap aynı sıra numarasında birden fazla kaynakta", "same-rank merge rule");
+  contains(normalizedView, "Aynı kitap aynı sıra numarasında birden fazla sitede", "same-rank merge rule");
   contains(normalizedView, "Aynı kitap farklı sıra numaralarındaysa", "different-rank separation rule");
   contains(normalizedView, "işletmeci grubu bazında tekilleştirme korunur", "internal insight operator deduplication");
   notContains(normalizedView, "en az üç bağımsız işletmeci grubunda görünmelidir", "stale public composite threshold copy");
+});
+
+test("Bestseller comparison has a dedicated gated SEO route", () => {
+  const page = source("src/app/en-cok-satanlar/turkiye/karsilastirma/page.tsx");
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const comparison = source("src/features/book-index/public/BookIndexSourceComparison.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+
+  contains(
+    page,
+    'canonical = "/en-cok-satanlar/turkiye/karsilastirma"',
+    "stable bestseller comparison canonical",
+  );
+  contains(
+    page,
+    'title = "En Çok Satanlar Karşılaştırma | İlkOku"',
+    "comparison SEO title keeps the approved phrase",
+  );
+  contains(
+    page,
+    "noIndex: !context.gate.canPublish",
+    "comparison route stays noindex until Book Index publication is approved",
+  );
+  contains(
+    view,
+    "<h1>En Çok Satanlar Karşılaştırma</h1>",
+    "comparison H1 keeps the approved phrase",
+  );
+  contains(
+    view,
+    'href="/en-cok-satanlar/turkiye/karsilastirma"',
+    "overview and Turkey list link to the dedicated comparison route",
+  );
+  notContains(
+    comparison,
+    "Kaynak seç",
+    "public comparison controls avoid technical source wording",
+  );
+  contains(
+    comparison,
+    "Site seç",
+    "public comparison controls use site wording",
+  );
+  contains(
+    sitemap,
+    "/en-cok-satanlar/turkiye/karsilastirma",
+    "comparison route joins the already-gated Book Index sitemap set",
+  );
 });
 
 test("New-release read model stays source-native and private until publication is approved", () => {

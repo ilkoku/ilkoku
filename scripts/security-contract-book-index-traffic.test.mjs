@@ -26,7 +26,7 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   contains(overview, "dateModified", "overview freshness schema");
   contains(turkey, "dateModified", "Turkey freshness schema");
   contains(view, "Son veri güncellemesi", "visible freshness");
-  contains(view, "Hangi kaynağın hangi kitabı hangi sıraya koyduğunu", "source-rank comparison intent");
+  contains(view, "Hangi satış sitesinin hangi kitabı hangi sıraya koyduğunu", "sales-site rank comparison intent");
   contains(sitemap, "getBookIndexLastObservedAt", "sitemap real freshness");
   contains(sitemap, "lastModified", "sitemap lastModified");
 });
@@ -64,6 +64,7 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
       "https://ilkoku.com/",
       "https://ilkoku.com/en-cok-satanlar",
       "https://ilkoku.com/en-cok-satanlar/turkiye",
+      "https://ilkoku.com/en-cok-satanlar/turkiye/karsilastirma",
       "https://ilkoku.com/hakkimizda",
     ],
     changedFiles: ["__BOOK_INDEX__"],
@@ -73,6 +74,7 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
   assert.deepEqual(result.urls, [
     "https://ilkoku.com/en-cok-satanlar",
     "https://ilkoku.com/en-cok-satanlar/turkiye",
+    "https://ilkoku.com/en-cok-satanlar/turkiye/karsilastirma",
   ]);
 });
 
@@ -108,7 +110,7 @@ test("Book Index uses a dedicated social preview for result-sharing CTR", () => 
   contains(image, "1200", "social image width");
   contains(image, "630", "social image height");
   contains(image, "En Çok Satan Kitaplar", "search-intent social headline");
-  contains(image, "Kaynak sıraları değiştirilmez", "source-rank trust signal");
+  contains(image, "Site sıraları değiştirilmez", "site-rank trust signal");
 });
 
 

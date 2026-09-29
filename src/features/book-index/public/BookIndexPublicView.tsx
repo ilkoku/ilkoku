@@ -65,10 +65,10 @@ export function BookIndexOverviewView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi</span>
         <h1>En Çok Satan Kitaplar {currentYear}</h1>
         <p>
-          Türkiye&apos;deki kitap satış platformlarının çok satan listelerini
-          aynı tabloda karşılaştırıyoruz. Her kaynağın kendi sıra numarası
-          korunur; aynı kitap aynı sırada birden fazla kaynakta yer alıyorsa
-          kaynaklar aynı satırda birlikte gösterilir.
+          Türkiye&apos;deki kitap satış sitelerinin çok satan listelerini
+          aynı tabloda gösteriyoruz. Her sitenin kendi sıra numarası korunur;
+          aynı kitap aynı sırada birden fazla sitede yer alıyorsa site adları
+          aynı satırda birlikte gösterilir.
         </p>
         {observedAt && observedAtLabel ? (
           <p className={styles.freshness}>
@@ -81,11 +81,11 @@ export function BookIndexOverviewView({
       <section className={styles.cards} aria-label="Endeks kapsamı">
         <Link
           className={styles.card}
-          href="/en-cok-satanlar/turkiye#karsilastir"
+          href="/en-cok-satanlar/turkiye/karsilastirma"
         >
           <span>Türkiye Çok Satan Listeleri</span>
-          <strong>{turkeySourceCount} kaynağın sıralamalarını karşılaştır</strong>
-          <small>2–4 kaynağı yan yana seçerek aynı sıradaki kitapları karşılaştır.</small>
+          <strong>En Çok Satanlar Karşılaştırma</strong>
+          <small>{turkeySourceCount} satış sitesinden 2–4 tanesini yan yana karşılaştır.</small>
         </Link>
         <Link className={styles.card} href="/yeni-cikanlar">
           <span>Yeni Çıkanlar</span>
@@ -136,9 +136,9 @@ export function BookIndexOverviewView({
             <span className={styles.eyebrow}>Türkiye</span>
             <h2>Güncel ilk 3 sıra</h2>
             <p>
-              Kaynakların 1., 2. ve 3. sıralarındaki kitapları karşılaştır.
-              Aynı kitap aynı sırada birden fazla kaynakta yer alıyorsa
-              kaynaklar tek satırda birlikte gösterilir.
+              Satış sitelerinin 1., 2. ve 3. sıralarındaki kitapları incele.
+              Aynı kitap aynı sırada birden fazla sitede yer alıyorsa
+              site adları tek satırda birlikte gösterilir.
             </p>
           </div>
           <Link href="/en-cok-satanlar/turkiye">Tüm sıralamayı gör →</Link>
@@ -148,14 +148,14 @@ export function BookIndexOverviewView({
 
       <section className={styles.explainer} aria-labelledby="book-index-methodology">
         <span className={styles.eyebrow}>Nasıl gösteriliyor?</span>
-        <h2 id="book-index-methodology">Kaynak sıralamaları nasıl birleştiriliyor?</h2>
+        <h2 id="book-index-methodology">Satış sitesi sıralamaları nasıl gösteriliyor?</h2>
         <p>
-          İlkOku yeni bir sıra veya bileşik puan üretmez. Her satış kaynağının
+          İlkOku yeni bir sıra veya bileşik puan üretmez. Her satış sitesinin
           kendi çok satan sırası aynen korunur.
         </p>
         <p>
-          Aynı kitap aynı sıra numarasında birden fazla kaynakta yer alıyorsa
-          yalnızca kaynak adları aynı satırda birleştirilir. Aynı kitap farklı
+          Aynı kitap aynı sıra numarasında birden fazla sitede yer alıyorsa
+          yalnızca site adları aynı satırda birleştirilir. Aynı kitap farklı
           sıra numaralarındaysa tabloda ayrı satırlarda görünür.
         </p>
       </section>
@@ -178,9 +178,9 @@ export function TurkeyBookIndexView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>Türkiye&apos;de En Çok Satan Kitaplar {currentYear}</h1>
         <p>
-          Türkiye&apos;deki farklı kitap satış kaynaklarının çok satan
-          listelerini tek tabloda karşılaştırır. Her kaynağın verdiği sıra
-          numarası değiştirilmeden gösterilir.
+          Türkiye&apos;deki farklı kitap satış sitelerinin çok satan
+          listelerini tek tabloda gösterir. Her sitenin verdiği sıra
+          numarası değiştirilmeden korunur.
         </p>
         {observedAt && observedAtLabel ? (
           <p className={styles.freshness}>
@@ -191,29 +191,21 @@ export function TurkeyBookIndexView({
         <Link className={styles.backLink} href="/en-cok-satanlar">
           ← En Çok Satanlar ana sayfası
         </Link>
+        <Link
+          className={styles.backLink}
+          href="/en-cok-satanlar/turkiye/karsilastirma"
+        >
+          En Çok Satanlar Karşılaştırma →
+        </Link>
       </header>
-
-      <section className={styles.section} id="karsilastir">
-        <div className={styles.sectionHeading}>
-          <div>
-            <span className={styles.eyebrow}>Kaynak karşılaştırması</span>
-            <h2>Kaynakları yan yana karşılaştır</h2>
-            <p>
-              İki, üç veya dört kaynağı seç. Aynı sıra numarasında her sitenin
-              hangi kitabı gösterdiğini yan yana incele.
-            </p>
-          </div>
-        </div>
-        <BookIndexSourceComparison rows={model.turkey.items} />
-      </section>
 
       <section className={styles.section} id="ranking">
         <div className={styles.sectionHeading}>
           <div>
-            <span className={styles.eyebrow}>Kaynak listeleri</span>
+            <span className={styles.eyebrow}>Satış sitesi listeleri</span>
             <h2>Çok Satan Kitaplar Sıralaması</h2>
             <p>
-              Hangi kaynağın hangi kitabı hangi sıraya koyduğunu görebilirsin.
+              Hangi satış sitesinin hangi kitabı hangi sıraya koyduğunu görebilirsin.
             </p>
           </div>
         </div>
@@ -224,13 +216,73 @@ export function TurkeyBookIndexView({
         <span className={styles.eyebrow}>Metodoloji</span>
         <h2 id="turkey-index-methodology">Bu tablo neyi gösterir?</h2>
         <p>
-          Tablo, kaynak sitelerin kendi çok satan sıralamalarını karşılaştırmalı
-          olarak gösterir. İlkOku kaynakların sıra numarasını değiştirmez.
+          Tablo, kitap satış sitelerinin kendi çok satan sıralamalarını
+          gösterir. İlkOku sitelerin sıra numarasını değiştirmez.
         </p>
         <p>
-          Aynı eser aynı sırada birden fazla kaynakta görünüyorsa kaynaklar aynı
-          satırda birlikte yazılır; eser farklı bir kaynakta farklı sıradaysa
+          Aynı eser aynı sırada birden fazla sitede görünüyorsa site adları aynı
+          satırda birlikte yazılır; eser farklı bir sitede farklı sıradaysa
           ayrı bir satır olarak yeniden görünür.
+        </p>
+      </section>
+    </main>
+  );
+}
+
+
+export function TurkeyBookIndexComparisonView({
+  model,
+}: {
+  model: BookIndexPublicReadModel;
+}) {
+  const observedAt = latestObservedAt(model);
+  const observedAtLabel = formattedObservedAt(observedAt);
+
+  return (
+    <main className={styles.page}>
+      <header className={styles.hero}>
+        <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
+        <h1>En Çok Satanlar Karşılaştırma</h1>
+        <p>
+          Türkiye&apos;deki kitap satış sitelerinin en çok satanlar listelerini
+          yan yana karşılaştır. İki, üç veya dört site seçerek aynı sıra
+          numarasında hangi kitapların yer aldığını görebilirsin.
+        </p>
+        {observedAt && observedAtLabel ? (
+          <p className={styles.freshness}>
+            Son veri güncellemesi:{" "}
+            <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
+          </p>
+        ) : null}
+        <Link className={styles.backLink} href="/en-cok-satanlar/turkiye">
+          ← Tüm Çok Satanlar
+        </Link>
+      </header>
+
+      <section className={styles.section} id="karsilastirma">
+        <div className={styles.sectionHeading}>
+          <div>
+            <span className={styles.eyebrow}>En Çok Satanlar Karşılaştırma</span>
+            <h2>Satış sitelerini yan yana karşılaştır</h2>
+            <p>
+              İki, üç veya dört satış sitesi seç. Her sitenin kendi sıra
+              numarası korunur; İlkOku yeni bir ortak sıra veya puan üretmez.
+            </p>
+          </div>
+        </div>
+        <BookIndexSourceComparison rows={model.turkey.items} />
+      </section>
+
+      <section className={styles.explainer} aria-labelledby="comparison-methodology">
+        <span className={styles.eyebrow}>Nasıl karşılaştırılıyor?</span>
+        <h2 id="comparison-methodology">En çok satanlar karşılaştırması neyi gösterir?</h2>
+        <p>
+          Her sütun seçtiğin satış sitesinin kendi çok satan listesini gösterir.
+          Aynı sıra numarasında farklı sitelerde farklı kitaplar bulunabilir.
+        </p>
+        <p>
+          Bu görünüm satış adedi açıklamaz ve İlkOku tarafından oluşturulmuş
+          birleşik bir sıralama değildir.
         </p>
       </section>
     </main>

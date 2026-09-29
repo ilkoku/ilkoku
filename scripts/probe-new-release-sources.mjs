@@ -130,3 +130,6 @@ try {
     error: error instanceof Error ? error.message : String(error),
   };
 }
+
+
+console.log(JSON.stringify({ idefixProduct701577: out.idefixProduct701577 }, null, 2));

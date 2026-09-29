@@ -237,6 +237,7 @@ test("New-release read model stays source-native and private until publication i
 test("New-release production exceptions stay source-specific and fail closed", () => {
   const inkilap = source("src/lib/book-index/sources/inkilap.ts");
   const illakitap = source("src/lib/book-index/sources/illakitap.ts");
+  const kitapsepeti = source("src/lib/book-index/sources/kitapsepeti.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const registry = source("src/lib/book-index/new-release-sources.ts");
   const pandora = source("src/lib/book-index/sources/pandora.ts");
@@ -325,6 +326,22 @@ test("New-release production exceptions stay source-specific and fail closed", (
     "verified Pandora new-release collection is scheduler-eligible",
   );
 
+  contains(
+    kitapsepeti,
+    'context.listCode === "kitapsepeti-tr-new-releases"',
+    "KitapSepeti native new-release path is explicitly isolated",
+  );
+  contains(
+    kitapsepeti,
+    "const NEW_RELEASE_MAX_BOOKS = 40;",
+    "KitapSepeti native new-release collection is bounded to the verified 40 products",
+  );
+  contains(
+    kitapsepeti,
+    "const NEW_RELEASE_PAGE_COUNT = 2;",
+    "KitapSepeti verified native new-release pagination is bounded to two pages",
+  );
+
   const kitapsepetiMarker = 'code: "kitapsepeti-tr-new-releases"';
   const kitapsepetiStart = lists.indexOf(kitapsepetiMarker);
   assert.ok(kitapsepetiStart >= 0, "missing KitapSepeti new-release list");
@@ -332,13 +349,29 @@ test("New-release production exceptions stay source-specific and fail closed", (
   const kitapsepetiBlock = lists.slice(kitapsepetiStart, kitapsepetiEnd);
   contains(
     kitapsepetiBlock,
-    "collectionEveryMinutes: null",
-    "unverified KitapSepeti new-release collection is paused",
+    'sourceUrl: "https://www.kitapsepeti.com/yeni-cikan-kitaplar"',
+    "KitapSepeti uses the verified native new-release URL",
+  );
+  contains(kitapsepetiBlock, "maxRank: 40", "KitapSepeti native new-release size is bounded");
+  contains(
+    kitapsepetiBlock,
+    "includeInComposite: false",
+    "KitapSepeti new releases do not vote in a composite ranking",
   );
   contains(
     kitapsepetiBlock,
-    "enabled: false",
-    "unverified KitapSepeti new-release list is disabled",
+    "collectionEveryMinutes: 360",
+    "KitapSepeti verified new-release list is scheduled",
+  );
+  contains(
+    kitapsepetiBlock,
+    "publiclyVisible: false",
+    "KitapSepeti new releases remain private during soft launch",
+  );
+  contains(
+    kitapsepetiBlock,
+    "enabled: true",
+    "verified KitapSepeti new-release list is scheduler-eligible",
   );
 
   const registryMarker = 'sourceCode: "kitapsepeti"';
@@ -346,9 +379,21 @@ test("New-release production exceptions stay source-specific and fail closed", (
   assert.ok(registryStart >= 0, "missing KitapSepeti new-release source registry");
   const registryEnd = registry.indexOf("\n  },", registryStart);
   const registryBlock = registry.slice(registryStart, registryEnd);
-  contains(registryBlock, "sourceUrl: null", "KitapSepeti unverified URL is not trusted");
-  contains(registryBlock, "collectionMode: null", "KitapSepeti unverified mode is not trusted");
-  contains(registryBlock, 'status: "researching"', "KitapSepeti new releases return to research");
+  contains(
+    registryBlock,
+    'sourceUrl: "https://www.kitapsepeti.com/yeni-cikan-kitaplar"',
+    "KitapSepeti verified native new-release URL is retained",
+  );
+  contains(
+    registryBlock,
+    'collectionMode: "dedicated_page"',
+    "KitapSepeti new releases use the dedicated native page",
+  );
+  contains(
+    registryBlock,
+    'status: "verified_native_list"',
+    "KitapSepeti new releases stay verified",
+  );
 });
 
 test("Yeni Çıkanlar page stays noindex and source-native during soft launch", () => {

@@ -557,20 +557,23 @@ test("Rakuten Japan global source preserves the native weekly Top 30", () => {
   );
 });
 
-test("D&R access protection remains fail-closed", () => {
+test("D&R new releases collection is live while bestseller rank remains explicit-only", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
+  const lists = source("src/lib/book-index/lists.ts");
 
   contains(
     sources,
-    'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "blocked"',
-    "D&R protected source state",
+    'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "D&R source is ready",
   );
-  notContains(
+  contains(
     collector,
-    'sourceCode: "dr"',
-    "D&R collector is not activated",
+    "drBookIndexAdapter",
+    "D&R collector is registered",
   );
+  contains(lists, 'code: "dr-tr-new-releases"', "D&R live new releases list");
+  contains(lists, 'title: "D&R · Yeni Çıkanlar"', "D&R live list title");
 });
 
 test("idefix collector reads server-side Next data and excludes source-sponsored cards", () => {

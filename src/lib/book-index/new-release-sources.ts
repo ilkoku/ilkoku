@@ -34,9 +34,9 @@ export const BOOK_INDEX_NEW_RELEASE_SOURCES: readonly BookIndexNewReleaseSourceD
   {
     sourceCode: "kitapsepeti",
     nativeLabel: "Yeni Çıkan Kitaplar",
-    sourceUrl: null,
-    collectionMode: null,
-    status: "researching",
+    sourceUrl: "https://www.kitapsepeti.com/yeni-cikan-kitaplar",
+    collectionMode: "dedicated_page",
+    status: "verified_native_list",
   },
   {
     sourceCode: "kitaplarsepette",

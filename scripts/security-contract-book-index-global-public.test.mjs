@@ -81,3 +81,30 @@ test("global bestseller page is gated, noindex and source-native", () => {
     "global preview is absent from sitemap before SEO approval",
   );
 });
+
+
+test("global bestseller overview link appears only when preview gate is enabled", () => {
+  const page = source("src/app/en-cok-satanlar/page.tsx");
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+
+  contains(
+    page,
+    "const showGlobalPreview = isGlobalBestsellerPreviewEnabled();",
+    "overview resolves global preview gate on the server",
+  );
+  contains(
+    view,
+    "showGlobalPreview ? (",
+    "global overview link is conditionally rendered",
+  );
+  contains(
+    view,
+    'href="/en-cok-satanlar/dunya"',
+    "approved global preview route",
+  );
+  contains(
+    view,
+    "<article className={styles.card}>",
+    "disabled gate keeps the current non-link card fallback",
+  );
+});

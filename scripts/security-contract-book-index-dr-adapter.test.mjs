@@ -113,10 +113,20 @@ test("D&R research refuses to infer weekly rank from visible catalog position", 
     'code: "dr-tr-bestsellers-research"',
     "D&R research list stays inactive",
   );
-  notContains(
+  contains(
     lists,
     'code: "dr-tr-new-releases-research"',
-    "D&R new-releases research list stays inactive",
+    "D&R verified native new-releases research list",
+  );
+  contains(
+    lists,
+    'sourceUrl: "https://www.dr.com.tr/kategori_/kitap/en-yeniler/10001/3"',
+    "D&R native new-releases URL is registered",
+  );
+  contains(
+    lists,
+    'collectionEveryMinutes: null,\n    publiclyVisible: false,\n    enabled: false',
+    "D&R new-releases research list remains disabled",
   );
   contains(sources, 'code: "dr"', "D&R source registry remains present");
   contains(

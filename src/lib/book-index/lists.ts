@@ -272,13 +272,13 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     categoryKey: "general",
     period: "live",
     sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",
-    maxRank: null,
+    maxRank: 100,
     includeInComposite: false,
-    collectionEveryMinutes: null,
-    publiclyVisible: false,
-    enabled: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: true,
+    enabled: true,
   },
-  // Source-only qualification canary. Operator bias keeps Turkey composite voting off.
+  // Historical qualification canary retained for evidence. Publisher/operator bias keeps composite voting off.
   {
     code: "kitapambari-tr-live-canary",
     sourceCode: "kitapambari",
@@ -288,9 +288,9 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     sourceUrl: "https://www.kitapambari.com/cok-satanlar-1",
     maxRank: 100,
     includeInComposite: false,
-    collectionEveryMinutes: 360,
+    collectionEveryMinutes: null,
     publiclyVisible: false,
-    enabled: true,
+    enabled: false,
   },
   {
     code: "imge-tr-live",

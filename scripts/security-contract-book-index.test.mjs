@@ -324,7 +324,7 @@ test("Amazon UK global source preserves native bestseller rank without joining T
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP";', "global market types include Italy and Japan");
+  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR";', "global market types include Italy, Japan and Korea");
   contains(
     sources,
     'code: "amazon-uk",\n    name: "Amazon UK",\n    market: "UK",\n    countryCode: "UK",\n    baseUrl: "https://www.amazon.co.uk",\n    includeInTurkeyIndex: false',
@@ -412,6 +412,34 @@ test("Rakuten Japan global source preserves the native weekly Top 30", () => {
     collector,
     "[rakutenJapanBookIndexAdapter.sourceCode, rakutenJapanBookIndexAdapter]",
     "Rakuten adapter activation",
+  );
+});
+
+test("Kyobo Korea global source preserves the native weekly Top 20", () => {
+  const adapter = source("src/lib/book-index/sources/kyobo-kr.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "kyobo-kr",\n    name: "Kyobo Book Centre Güney Kore",\n    market: "KR",\n    countryCode: "KR",\n    baseUrl: "https://store.kyobobook.co.kr",\n    includeInTurkeyIndex: false',
+    "Kyobo Korea stays outside Turkey",
+  );
+  contains(lists, 'code: "kyobo-kr-weekly"', "Kyobo weekly list registry");
+  contains(lists, 'period: "weekly"', "Kyobo native weekly period");
+  contains(lists, 'maxRank: 20', "Kyobo Top 20 cap");
+  contains(lists, 'publiclyVisible: false', "global Kyobo list stays unpublished before global UI approval");
+  contains(adapter, "payload.data?.bestSeller", "Kyobo native bestseller response path");
+  contains(adapter, "presentRank !== rowNum", "Kyobo native rank consistency guard");
+  contains(adapter, "BOOK_INDEX_KYOBO_KR_RESPONSE_MISMATCH", "Kyobo exact result-size guard");
+  contains(adapter, "BOOK_INDEX_KYOBO_KR_DUPLICATE_PRODUCT", "Kyobo product identity guard");
+  contains(adapter, "BOOK_INDEX_KYOBO_KR_DUPLICATE_ISBN", "Kyobo ISBN uniqueness guard");
+  contains(adapter, "gunzipSync", "Kyobo gzip payload support");
+  contains(
+    collector,
+    "[kyoboKoreaBookIndexAdapter.sourceCode, kyoboKoreaBookIndexAdapter]",
+    "Kyobo adapter activation",
   );
 });
 

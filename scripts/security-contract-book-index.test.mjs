@@ -324,7 +324,7 @@ test("Amazon UK global source preserves native bestseller rank without joining T
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK";', "UK market type");
+  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK" | "IT";', "global market types include Italy");
   contains(
     sources,
     'code: "amazon-uk",\n    name: "Amazon UK",\n    market: "UK",\n    countryCode: "UK",\n    baseUrl: "https://www.amazon.co.uk",\n    includeInTurkeyIndex: false',
@@ -347,6 +347,39 @@ test("Amazon UK global source preserves native bestseller rank without joining T
     collector,
     "[amazonUkBookIndexAdapter.sourceCode, amazonUkBookIndexAdapter]",
     "Amazon UK adapter activation",
+  );
+});
+
+test("IBS Italy global source preserves the native daily Top 40", () => {
+  const adapter = source("src/lib/book-index/sources/ibs-it.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+
+  contains(
+    sources,
+    'code: "ibs-it",\n    name: "IBS İtalya",\n    market: "IT",\n    countryCode: "IT",\n    baseUrl: "https://www.ibs.it",\n    includeInTurkeyIndex: false',
+    "IBS Italy stays outside Turkey",
+  );
+  contains(lists, 'code: "ibs-it-daily"', "IBS daily list registry");
+  contains(
+    lists,
+    'sourceUrl: "https://www.ibs.it/classifica/libri/1day/sold?defaultPage=1"',
+    "IBS native daily bestseller URL",
+  );
+  contains(lists, 'period: "daily"', "IBS native daily period");
+  contains(lists, 'maxRank: 40', "IBS first-page Top 40 cap");
+  contains(lists, 'publiclyVisible: false', "global IBS list stays unpublished before global UI approval");
+  contains(adapter, "cc-product-list-item--ranking", "IBS native ranking card boundary");
+  contains(adapter, "Classifica Libri - 1day", "IBS daily list identity");
+  contains(adapter, "BOOK_INDEX_IBS_IT_RESULT_SIZE_MISMATCH", "IBS exact page-size guard");
+  contains(adapter, "BOOK_INDEX_IBS_IT_RANK_ORDER_MISMATCH", "IBS native rank continuity guard");
+  contains(adapter, "BOOK_INDEX_IBS_IT_DUPLICATE_ISBN", "IBS ISBN uniqueness guard");
+  contains(adapter, "isbn13", "IBS ISBN-13 identity");
+  contains(
+    collector,
+    "[ibsItalyBookIndexAdapter.sourceCode, ibsItalyBookIndexAdapter]",
+    "IBS adapter activation",
   );
 });
 

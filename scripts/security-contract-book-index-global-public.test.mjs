@@ -164,3 +164,29 @@ test("global preview copy avoids internal collector terminology", () => {
     "global metadata description uses reader-facing site wording",
   );
 });
+
+
+test("global bestseller sections show per-list freshness", () => {
+  const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
+
+  contains(
+    view,
+    "function GlobalListFreshness",
+    "global preview has a dedicated per-list freshness renderer",
+  );
+  contains(
+    view,
+    "Liste güncellemesi:",
+    "each global list exposes its own update label",
+  );
+  contains(
+    view,
+    "<GlobalListFreshness observedAt={list.observedAt} />",
+    "each list uses its own observedAt timestamp",
+  );
+  contains(
+    view,
+    'dateTime={observedAt.toISOString()}',
+    "freshness timestamp remains machine-readable",
+  );
+});

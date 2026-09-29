@@ -100,3 +100,33 @@ try {
 }
 
 console.log(JSON.stringify(out, null, 2));
+
+
+try {
+  const url = "https://www.idefix.com/stata-ile-uygulamali-zaman-serileri-p-701577";
+  const { response, text } = await fetchText(url);
+  const title = text.match(/<title\b[^>]*>([\s\S]*?)<\/title>/iu)?.[1] ?? null;
+  const h1 = text.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/iu)?.[1] ?? null;
+  const plain = text
+    .replace(/<script\b[\s\S]*?<\/script>/giu, " ")
+    .replace(/<style\b[\s\S]*?<\/style>/giu, " ")
+    .replace(/<[^>]+>/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+  const isbn13 = plain.match(/\bISBN-13\s*:\s*((?:978|979)[0-9\s-]{10,20})/iu)?.[1] ?? null;
+  const authorContext = plain.match(/\bYazar\s*:\s*(.{1,220})/iu)?.[1] ?? null;
+  out.idefixProduct701577 = {
+    url,
+    http: response.status,
+    title,
+    h1,
+    isbn13,
+    authorContext,
+    hasProductId: text.includes("701577"),
+    bodyLength: text.length,
+  };
+} catch (error) {
+  out.idefixProduct701577 = {
+    error: error instanceof Error ? error.message : String(error),
+  };
+}

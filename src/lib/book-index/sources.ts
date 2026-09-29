@@ -32,7 +32,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.kitapyurdu.com",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "blocked",
+    collectionState: "ready",
   },
   {
     code: "bkm",
@@ -54,7 +54,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.dr.com.tr",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "blocked",
+    collectionState: "ready",
   },
   {
     code: "idefix",
@@ -94,7 +94,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.amazon.com.tr",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "researching",
+    collectionState: "ready",
   },
   {
     code: "amazon-us",

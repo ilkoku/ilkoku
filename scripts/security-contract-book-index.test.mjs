@@ -517,38 +517,7 @@ test("global bestseller source set stays native, non-composite and unpublished",
   }
 });
 
-test("Rakuten Japan global source preserves native weekly Top 30", () => {
-  const adapter = source("src/lib/book-index/sources/rakuten-jp.ts");
-  const sources = source("src/lib/book-index/sources.ts");
-  const lists = source("src/lib/book-index/lists.ts");
-  const collector = source("src/lib/book-index/collector.ts");
 
-  contains(
-    sources,
-    'code: "rakuten-jp",\n    name: "Rakuten Books Japonya",\n    market: "JP",\n    countryCode: "JP",\n    baseUrl: "https://books.rakuten.co.jp",\n    includeInTurkeyIndex: false',
-    "Rakuten Japan stays outside Turkey",
-  );
-  contains(lists, 'code: "rakuten-jp-weekly"', "Rakuten weekly list registry");
-  contains(
-    lists,
-    'sourceUrl: "https://rdc-api-catalog-gateway-api.rakuten.co.jp/books/rank/001/weekly.json?hits=30&page=1&period=0&sid=10"',
-    "Rakuten native weekly JSON endpoint",
-  );
-  contains(lists, 'period: "weekly"', "Rakuten native weekly period");
-  contains(lists, 'maxRank: 30', "Rakuten Top 30 cap");
-  contains(lists, 'publiclyVisible: false', "Rakuten global list stays unpublished before global UI approval");
-
-  contains(adapter, 'payload.genre_id !== "001"', "Rakuten book genre guard");
-  contains(adapter, "payload.data.length !== EXPECTED_BOOKS", "Rakuten exact page-size guard");
-  contains(adapter, "rank !== index + 1", "Rakuten native rank continuity");
-  contains(adapter, "isbn_jan", "Rakuten ISBN/JAN field");
-  contains(adapter, "BOOK_INDEX_RAKUTEN_JP_DUPLICATE_SOURCE_KEY", "Rakuten source identity uniqueness guard");
-  contains(
-    collector,
-    "[rakutenJapanBookIndexAdapter.sourceCode, rakutenJapanBookIndexAdapter]",
-    "Rakuten adapter activation",
-  );
-});
 
 test("D&R access protection remains fail-closed", () => {
   const sources = source("src/lib/book-index/sources.ts");

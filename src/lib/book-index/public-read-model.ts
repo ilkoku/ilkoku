@@ -57,11 +57,19 @@ export type BookIndexMarketSourceState = {
   availableListCount: number;
 };
 
+export type BookIndexTurkeySourceSummary = {
+  sourceCode: string;
+  sourceName: string;
+  sourceUrl: string;
+  hasRankingData: boolean;
+};
+
 export type BookIndexPublicReadModel = {
   publicRolloutState: "gated";
   turkey: {
     availability: "available" | "insufficient_data";
     items: Awaited<ReturnType<typeof getTurkeySourceRankRows>>;
+    sources: BookIndexTurkeySourceSummary[];
   };
   amazonTr: BookIndexMarketSourceState;
   amazonUs: BookIndexMarketSourceState;
@@ -303,12 +311,25 @@ export async function getBookIndexPublicReadModel(
     getMarketSourceState("amazon-tr", nonNullSourceLists),
     getMarketSourceState("amazon-us", nonNullSourceLists),
   ]);
+  const turkeySourceCodesWithData = new Set(
+    turkeyItems.flatMap((row) => row.sources.map((source) => source.sourceCode)),
+  );
+  const turkeySources = BOOK_INDEX_SOURCES
+    .filter((source) => source.market === "TR" && source.includeInTurkeyIndex)
+    .map((source) => ({
+      sourceCode: source.code,
+      sourceName: source.name,
+      sourceUrl: source.baseUrl,
+      hasRankingData: turkeySourceCodesWithData.has(source.code),
+    }))
+    .sort((left, right) => left.sourceName.localeCompare(right.sourceName, "tr"));
 
   return {
     publicRolloutState: "gated",
     turkey: {
       availability: turkeyItems.length ? "available" : "insufficient_data",
       items: turkeyItems,
+      sources: turkeySources,
     },
     amazonTr,
     amazonUs,

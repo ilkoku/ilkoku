@@ -1,0 +1,77 @@
+name: idefix new releases probe
+
+on:
+  push:
+    branches:
+      - diagnostic/idefix-new-releases-probe-20260930
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Inspect idefix public book landing metadata
+        shell: bash
+        run: |
+          node <<'NODE'
+          const url = "https://www.idefix.com/kitap-c-3307";
+          const response = await fetch(url, {
+            headers: {
+              Accept: "text/html,application/xhtml+xml",
+              "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.5",
+              "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+            },
+            signal: AbortSignal.timeout(20000),
+          });
+          const html = await response.text();
+          const next = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/iu)?.[1] ?? "";
+          const decoded = next ? JSON.parse(next) : null;
+          const jsonText = next.toLowerCase();
+          const linkCandidates = [...new Set(
+            [...html.matchAll(/href=["']([^"']+)["']/giu)]
+              .map(m => m[1])
+              .filter(v => /(sort|order|sirala|new|yeni|created|date)/iu.test(v))
+          )].slice(0, 50);
+          const stringCandidates = [];
+          const seen = new Set();
+          function walk(value, path = "$") {
+            if (stringCandidates.length >= 80) return;
+            if (typeof value === "string") {
+              if (/(sort|order|newest|new|yeni|created|date|latest)/iu.test(value) && !seen.has(value)) {
+                seen.add(value);
+                stringCandidates.push({path, value: value.slice(0, 180)});
+              }
+              return;
+            }
+            if (Array.isArray(value)) {
+              value.slice(0, 80).forEach((item, i) => walk(item, path + "[" + i + "]"));
+              return;
+            }
+            if (value && typeof value === "object") {
+              for (const [key, child] of Object.entries(value)) {
+                if (/(sort|order|newest|new|yeni|created|date|latest)/iu.test(key)) {
+                  stringCandidates.push({path: path + "." + key, value: typeof child === "string" ? child.slice(0,180) : typeof child});
+                }
+                walk(child, path + "." + key);
+                if (stringCandidates.length >= 80) break;
+              }
+            }
+          }
+          if (decoded) walk(decoded);
+          console.log(JSON.stringify({
+            status: response.status,
+            ok: response.ok,
+            bytes: html.length,
+            hasNextData: Boolean(next),
+            hasSortToken: /sort|order|sirala|newest|latest|created/iu.test(jsonText),
+            hasYeniToken: /yeni/iu.test(jsonText),
+            linkCandidates,
+            stringCandidates,
+          }));
+          NODE

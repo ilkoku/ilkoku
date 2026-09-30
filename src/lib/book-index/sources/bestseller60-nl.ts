@@ -11,7 +11,7 @@ const EXPECTED_BOOKS = 60;
 
 function htmlToVisibleLines(html: string) {
   const withoutNoise = html
-    .replace(/<!--[sS]*?-->/gu, " ")
+    .replace(/<!--[\s\S]*?-->/gu, " ")
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, " ")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, " ")
     .replace(
@@ -36,7 +36,7 @@ export function parseNetherlandsBestseller60(
   html: string,
 ): BookIndexCollectionResult {
   const lines = htmlToVisibleLines(html);
-  const headingIndex = lines.findIndex((line) => line === "Bestseller 60");
+  const headingIndex = lines.findIndex(\n    (line) =>\n      line === "Bestseller 60"\n      || line.startsWith("Bestseller 60 "),\n  );
   if (headingIndex < 0) {
     const preview = lines.slice(0, 12).join(" | ").slice(0, 240);
     throw new Error(

@@ -136,6 +136,35 @@
   line-height: 1.25;
 }
 
+.scopeCards .card {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  background: linear-gradient(145deg, #1d1b38 0%, #2a2550 100%);
+  box-shadow: 0 0.85rem 2rem rgba(29, 27, 56, 0.14);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.scopeCards .card > span,
+.scopeCards .card > small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.scopeCards a.card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(145deg, #252044 0%, #352f63 100%);
+  box-shadow: 0 1rem 2.25rem rgba(29, 27, 56, 0.2);
+}
+
+.scopeCards a.card:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
 .section {
   margin-top: 48px;
 }
@@ -450,6 +479,16 @@
 
   .card {
     min-height: 150px;
+  }
+
+  .scopeCards {
+    gap: 12px;
+  }
+
+  .scopeCards .card {
+    min-height: 144px;
+    padding: 20px;
+    gap: 14px;
   }
 
   .sectionHeading {

@@ -138,6 +138,21 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   );
   contains(
     view,
+    '<BookIndexSectionNav current="turkey" showAnalysis={false} />',
+    "Turkey list keeps only the primary nav above the hero",
+  );
+  contains(
+    view,
+    '<BookIndexSectionNav current="turkey" showPrimary={false} />',
+    "Turkey list uses the shared analysis nav below the hero",
+  );
+  notContains(
+    view,
+    '<BookIndexViewModeNav current="list" />',
+    "Turkey list no longer renders the obsolete two-item view menu",
+  );
+  contains(
+    view,
     '<BookIndexSectionNav current="comparison" showAnalysis={false} />',
     "comparison keeps only the primary nav above the hero",
   );

@@ -15,6 +15,7 @@
 - [Nasıl Çalışır?](https://ilkoku.com/nasil-calisir)
 - [Hakkımızda](https://ilkoku.com/hakkimizda)
 - [Yazarlar İçin](https://ilkoku.com/yazarlar-icin)
+- [Okurlar İçin](https://ilkoku.com/okurlar-icin)
 - [Editörler İçin](https://ilkoku.com/editorler-icin)
 - [Yayınevleri İçin](https://ilkoku.com/yayinevleri-icin)
 - [Editoryal Standartlar](https://ilkoku.com/editoryal-standartlar)

@@ -373,3 +373,26 @@ test("SEO center and audit API stay Turkish-only", () => {
   assertNotContains(roleCards, 'getPublishedRoleCardsState("en")', "role card SEO ignores EN state");
   assertNotContains(roleCards, "TR / EN", "role card SEO has no language parity work");
 });
+
+
+test("SEO smoke reports representative raw and gzip HTML payload sizes", () => {
+  const smoke = source(".github/workflows/seo-indexability-smoke.yml");
+
+  assertContains(smoke, 'raw_bytes="$(wc -c < "$body" | tr -d', "raw HTML payload measurement");
+  assertContains(smoke, 'gzip_bytes="$(gzip -c "$body" | wc -c', "gzip HTML payload measurement");
+  assertContains(
+    smoke,
+    'echo "PAYLOAD path=$path raw_bytes=$raw_bytes gzip_bytes=$gzip_bytes"',
+    "payload diagnostic log",
+  );
+  assertContains(
+    smoke,
+    "check_page '/yazarlar-icin/kurgu/roman' 'https://ilkoku.com/yazarlar-icin/kurgu/roman'",
+    "representative writing guide payload route",
+  );
+  assertContains(
+    smoke,
+    "check_page '/en-cok-satanlar/dunya' 'https://ilkoku.com/en-cok-satanlar/dunya'",
+    "representative global Book Index payload route",
+  );
+});

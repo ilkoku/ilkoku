@@ -9,14 +9,35 @@ import {
   type ReaderEducationCategory,
 } from "@/lib/reader-education";
 
+const BASE_URL = "https://ilkoku.com";
+
 type ReaderEducationShellProps = {
   children: ReactNode;
   activeCategory: ReaderEducationCategory;
 };
 
 export function ReaderEducationShell({ children, activeCategory }: ReaderEducationShellProps) {
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { name: "İlkOku", url: "/" },
+      { name: "Okurlar İçin", url: "/okurlar-icin" },
+      { name: activeCategory.title, url: readerEducationPublicPath(activeCategory) },
+    ].map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: new URL(item.url, BASE_URL).toString(),
+    })),
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c") }}
+      />
       <div className="min-h-screen bg-[#f8f6f0] text-[#171426]">
         <PublicSiteHeader />
 

@@ -64,5 +64,5 @@ jobs:
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
           GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
-          GSC_INSPECTION_URLS: "https://ilkoku.com/okurlar-icin/aktif-okuma,https://ilkoku.com/okurlar-icin/edebi-okuma,https://ilkoku.com/okurlar-icin/karakter-ve-hikaye-analizi,https://ilkoku.com/okurlar-icin/turleri-okumak,https://ilkoku.com/okurlar-icin/elestirel-okuma,https://ilkoku.com/okurlar-icin/yorum-ve-elestiri-yazma,https://ilkoku.com/okurlar-icin/okuma-kulturu,https://ilkoku.com/editorler-icin/egitim/metin-degerlendirme,https://ilkoku.com/editorler-icin/egitim/yapisal-editorluk,https://ilkoku.com/editorler-icin/egitim/dil-ve-anlatim-editorlugu"
+          GSC_INSPECTION_URLS: "https://ilkoku.com/editorler-icin/egitim/tur-editorlugu,https://ilkoku.com/editorler-icin/egitim/editor-notu-ve-geri-bildirim,https://ilkoku.com/editorler-icin/egitim/yazarla-calismak,https://ilkoku.com/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk,https://ilkoku.com/yardim,https://ilkoku.com/editorler,https://ilkoku.com/iletisim,https://ilkoku.com/yeni-cikanlar,https://ilkoku.com/hakkimizda,https://ilkoku.com/editoryal-standartlar"
         run: node scripts/gsc-url-inspection.mjs

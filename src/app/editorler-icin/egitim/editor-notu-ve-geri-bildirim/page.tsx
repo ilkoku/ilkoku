@@ -298,7 +298,7 @@ export default function EditorNotuVeGeriBildirimPage() {
             İlkOku editör akışında değerlendirme belirli bir eser sürümüne dayanır. Bu yüzden raporunda hangi örüntüyü gördüğünü, bunun metinde nerede tekrarlandığını ve hangi revizyon önceliğini önerdiğini açık tut. İkinci editör bağımsız değerlendirme yaptığı için kendi raporunu başka bir görüşü tahmin etmeye göre değil, eserin kendisine göre kur.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link className="rounded-full bg-[#211746] px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5" href="/editor/incelemeler">Editör çalışma alanına git</Link>
+            <Link className="rounded-full bg-[#211746] px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5" href="/editor/incelemeler" rel="nofollow">Editör çalışma alanına git</Link>
             <Link className="rounded-full border border-[#211746]/15 bg-white px-5 py-3 text-sm font-extrabold text-[#211746]" href="/editoryal-standartlar">Editoryal Standartları oku</Link>
             <Link className="rounded-full border border-[#211746]/15 bg-white px-5 py-3 text-sm font-extrabold text-[#211746]" href="/editorler-icin/egitim/tur-editorlugu">Önceki eğitim: Tür Editörlüğü</Link>
           </div>

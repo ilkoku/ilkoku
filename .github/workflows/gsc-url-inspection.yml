@@ -64,5 +64,5 @@ jobs:
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
           GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
-          GSC_INSPECTION_URLS: "https://ilkoku.com/yazarlar-icin/kurgu/psikolojik-roman,https://ilkoku.com/yazarlar-icin/kurgu/romantik,https://ilkoku.com/yazarlar-icin/kurgu/dram,https://ilkoku.com/yazarlar-icin/kurgu/mizah,https://ilkoku.com/yazarlar-icin/kurgu/hiciv,https://ilkoku.com/yazarlar-icin/kurgu/alternatif-tarih,https://ilkoku.com/yazarlar-icin/kurgu/gotik,https://ilkoku.com/yazarlar-icin/kurgu/mitoloji,https://ilkoku.com/yazarlar-icin/kurgu/paranormal,https://ilkoku.com/yazarlar-icin/kurgu/post-apokaliptik"
+          GSC_INSPECTION_URLS: "https://ilkoku.com/yazarlar-icin/edebiyat/siir,https://ilkoku.com/yazarlar-icin/edebiyat/deneme,https://ilkoku.com/yazarlar-icin/edebiyat/ani,https://ilkoku.com/yazarlar-icin/edebiyat/gunluk,https://ilkoku.com/yazarlar-icin/edebiyat/mektup,https://ilkoku.com/yazarlar-icin/edebiyat/biyografi,https://ilkoku.com/yazarlar-icin/edebiyat/otobiyografi,https://ilkoku.com/yazarlar-icin/edebiyat/gezi-yazisi,https://ilkoku.com/yazarlar-icin/edebiyat/elestiri,https://ilkoku.com/yazarlar-icin/edebiyat/inceleme"
         run: node scripts/gsc-url-inspection.mjs

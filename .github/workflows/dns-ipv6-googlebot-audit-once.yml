@@ -1,0 +1,40 @@
+name: DNS IPv6 Googlebot audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/dns-ipv6-googlebot-20260930"
+    paths:
+      - ".github/workflows/dns-ipv6-googlebot-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Audit DNS and IPv4 IPv6 paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== DNS ==="
+          getent ahosts ilkoku.com || true
+          getent ahosts www.ilkoku.com || true
+          echo "A ilkoku.com"; dig +short A ilkoku.com || true
+          echo "AAAA ilkoku.com"; dig +short AAAA ilkoku.com || true
+          echo "A www.ilkoku.com"; dig +short A www.ilkoku.com || true
+          echo "AAAA www.ilkoku.com"; dig +short AAAA www.ilkoku.com || true
+          echo "CNAME www.ilkoku.com"; dig +short CNAME www.ilkoku.com || true
+          echo "NS"; dig +short NS ilkoku.com || true
+
+          echo "=== IPv4 HEAD ==="
+          curl -4 -sSIL --max-time 20 -A 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' https://ilkoku.com/ | sed -n '1,40p' || true
+          echo "=== IPv6 HEAD ==="
+          curl -6 -sSIL --max-time 20 -A 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' https://ilkoku.com/ | sed -n '1,40p' || true
+
+          echo "=== IPv4 timing ==="
+          curl -4 -sS -o /dev/null --max-time 20 -A 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'             -w 'code=%{http_code} connect=%{time_connect} tls=%{time_appconnect} start=%{time_starttransfer} total=%{time_total}\n'             https://ilkoku.com/ || true
+          echo "=== IPv6 timing ==="
+          curl -6 -sS -o /dev/null --max-time 20 -A 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'             -w 'code=%{http_code} connect=%{time_connect} tls=%{time_appconnect} start=%{time_starttransfer} total=%{time_total}\n'             https://ilkoku.com/ || true

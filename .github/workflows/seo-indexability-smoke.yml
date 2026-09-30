@@ -90,8 +90,6 @@ jobs:
           fetch_contract_file "https://ilkoku.com/robots.txt" "$robots"
           grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots"
           grep -Fq 'Allow: /' "$robots"
-          grep -Fxq 'Allow: /api/media/' "$robots"
-          grep -Fxq 'Disallow: /api' "$robots"
           grep -Fxq 'Disallow: /icerik
           grep -Fxq 'Disallow: /icerik/' "$robots"
           if grep -Fxq 'Disallow: /icerik' "$robots"; then

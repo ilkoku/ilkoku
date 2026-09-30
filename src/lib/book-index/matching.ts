@@ -79,6 +79,84 @@ function isbnCompatible(
   return true;
 }
 
+function hasExactIsbnIdentity(
+  externalBook: BookIndexMatchCandidate,
+  master: BookIndexMasterMatch,
+) {
+  return Boolean(
+    (externalBook.isbn13 &&
+      master.isbn13 &&
+      externalBook.isbn13 === master.isbn13) ||
+      (externalBook.isbn10 &&
+        master.isbn10 &&
+        externalBook.isbn10 === master.isbn10),
+  );
+}
+
+function shouldRefreshMasterTitle(
+  externalBook: BookIndexMatchCandidate,
+  masterTitle: string,
+) {
+  const incomingTitle = normalizeBookIndexText(externalBook.title);
+  const currentTitle = normalizeBookIndexText(masterTitle);
+
+  if (!incomingTitle || incomingTitle === currentTitle) return false;
+  if (!currentTitle.startsWith(`${incomingTitle} `)) return false;
+
+  const appendedMetadata = currentTitle.slice(incomingTitle.length).trim();
+  const verifiedParts = [externalBook.authorName, externalBook.publisherName]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => normalizeBookIndexText(value))
+    .filter(Boolean);
+
+  return verifiedParts.some((part) => appendedMetadata.includes(part));
+}
+
+async function refreshAutoMatchedMasterMetadata(
+  db: BookIndexMatchDb,
+  externalBook: BookIndexMatchCandidate,
+  masterBookId: string,
+  seenAt: Date,
+) {
+  const master = await db.bookIndexBook.findUnique({
+    where: { id: masterBookId },
+    select: {
+      id: true,
+      title: true,
+      authorName: true,
+      publisherName: true,
+      isbn13: true,
+      isbn10: true,
+    },
+  });
+
+  if (!master || !hasExactIsbnIdentity(externalBook, master)) return;
+
+  const refreshTitle = shouldRefreshMasterTitle(externalBook, master.title);
+
+  await db.bookIndexBook.update({
+    where: { id: master.id },
+    data: {
+      lastSeenAt: seenAt,
+      ...(refreshTitle
+        ? {
+            title: externalBook.title,
+            normalizedTitle: normalizeBookIndexText(externalBook.title),
+          }
+        : {}),
+      ...(!master.authorName && externalBook.authorName
+        ? {
+            authorName: externalBook.authorName,
+            normalizedAuthor: normalizeBookIndexText(externalBook.authorName),
+          }
+        : {}),
+      ...(!master.publisherName && externalBook.publisherName
+        ? { publisherName: externalBook.publisherName }
+        : {}),
+    },
+  });
+}
+
 async function linkMaster(
   db: BookIndexMatchDb,
   externalBook: BookIndexMatchCandidate,
@@ -98,6 +176,13 @@ async function linkMaster(
         : {}),
     },
   });
+
+  await refreshAutoMatchedMasterMetadata(
+    db,
+    externalBook,
+    master.id,
+    seenAt,
+  );
 
   await db.bookIndexExternalBook.update({
     where: { id: externalBook.id },
@@ -120,14 +205,30 @@ export async function autoMatchBookIndexExternalBook(
   externalBook: BookIndexMatchCandidate,
   seenAt: Date,
 ) {
+  if (externalBook.masterBookId) {
+    if (externalBook.matchStatus === "auto_matched") {
+      await refreshAutoMatchedMasterMetadata(
+        db,
+        externalBook,
+        externalBook.masterBookId,
+        seenAt,
+      );
+    }
+
+    return {
+      matched: true,
+      masterBookId: externalBook.masterBookId,
+      confidence: null,
+    };
+  }
+
   if (
-    externalBook.masterBookId ||
     externalBook.matchStatus === "manual_matched" ||
     externalBook.matchStatus === "rejected"
   ) {
     return {
-      matched: Boolean(externalBook.masterBookId),
-      masterBookId: externalBook.masterBookId,
+      matched: false,
+      masterBookId: null,
       confidence: null,
     };
   }

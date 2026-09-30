@@ -361,11 +361,12 @@ function insightEvidence(
 }
 
 function insightSummary(
-  items:
-    | BookIndexNewEntry[]
-    | BookIndexRiser[]
-    | BookIndexEverywhereSeller[]
-    | BookIndexLongSeller[],
+  items: Array<
+    | BookIndexNewEntry
+    | BookIndexRiser
+    | BookIndexEverywhereSeller
+    | BookIndexLongSeller
+  >,
 ) {
   if (!items.length) {
     return [

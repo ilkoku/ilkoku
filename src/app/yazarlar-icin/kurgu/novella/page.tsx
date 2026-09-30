@@ -7,7 +7,7 @@ import { getEducationGuideRecord } from "@/lib/cms-education";
 
 import "./novella-guide.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const defaultAlt = {
   hero: "Novella yazım sürecini anlatan çalışma ortamı",

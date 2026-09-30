@@ -3,7 +3,7 @@ import { BatchedEducationGuidePage } from "@/components/content/BatchedEducation
 import { getEducationGuideDefinition } from "@/lib/academic-guide-batch";
 import "../../batched-education-guide.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 const definition = getEducationGuideDefinition("vaka-analizi");
 export const metadata: Metadata = { title: `${definition.title} | İlkOku`, description: definition.description, alternates: { canonical: "https://ilkoku.com/yazarlar-icin/akademik/vaka-analizi" }, robots: { index: true, follow: true } };
 export default async function EducationGenrePage() { return <BatchedEducationGuidePage definition={definition} />; }

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -94,4 +94,37 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   assertContains(sitemap, "educationLastModifiedByUrl", "education URL freshness map");
   assertContains(sitemap, "liveStaticDiscoveryEntries", "live static sitemap freshness merge");
   assertContains(sitemap, "lastModified", "truthful sitemap lastmod output");
+});
+
+
+function collectPageFiles(directory, relativePrefix = "") {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const relativePath = relativePrefix ? `${relativePrefix}/${entry.name}` : entry.name;
+    const absolutePath = join(directory, entry.name);
+    if (entry.isDirectory()) return collectPageFiles(absolutePath, relativePath);
+    return entry.isFile() && entry.name === "page.tsx" ? [relativePath] : [];
+  });
+}
+
+test("public writing education deep routes use ISR instead of force-dynamic responses", () => {
+  const routeRoot = join(ROOT, "src/app/yazarlar-icin");
+  const pageFiles = collectPageFiles(routeRoot);
+  const deepPages = pageFiles.filter((relativePath) => relativePath.split("/").length >= 3);
+
+  assert.equal(pageFiles.length, 71, "writing public page inventory must stay explicit");
+  assert.equal(deepPages.length, 63, "deep writing education route inventory must stay explicit");
+
+  for (const relativePath of deepPages) {
+    const page = readFileSync(join(routeRoot, relativePath), "utf8");
+    assert.equal(
+      page.includes('export const dynamic = "force-dynamic";'),
+      false,
+      `${relativePath} must not force per-request dynamic rendering`,
+    );
+    assertContains(
+      page,
+      "export const revalidate = 300;",
+      `${relativePath} must use the shared 5-minute public education ISR policy`,
+    );
+  }
 });

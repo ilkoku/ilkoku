@@ -71,7 +71,7 @@ export default async function BookIndexInsightPage({
 }: PageProps) {
   const [{ insight: slug }, filters] = await Promise.all([
     params,
-    searchParams ?? Promise.resolve({}),
+    searchParams ?? Promise.resolve<{ q?: string; source?: string }>({}),
   ]);
   const definition = getBookIndexInsightPage(slug);
   if (!definition) notFound();

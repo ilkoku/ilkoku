@@ -78,10 +78,10 @@ export function GlobalBestsellerView({
             <p>
               Tüm ülke listeleri tek tabloda birleştirilir. Aynı sıra numarasındaki
               kitaplar aynı blokta gösterilir; sıra numarası yalnız bloğun ilk
-              satırında yazılır. Türkiye kaynaklarında aynı esere doğrulanmış biçimde
-              eşleşen bir baskı varsa onun Türkçe yayın adı parantez içinde gösterilir;
-              otomatik çeviri resmî kitap adı gibi sunulmaz. Her sitenin kendi sırası
-              korunur.
+              satırında yazılır. Kitap adının yanında parantez içinde Türkçe karşılığı
+              gösterilir. Türkiye kaynaklarında doğrulanmış bir yayın adı varsa o ad
+              kullanılır; yoksa yalnızca başlığın Türkçe anlamı verilir. Türkçe anlamı
+              resmî yayın adı olarak değerlendirilmez. Her sitenin kendi sırası korunur.
             </p>
           </div>
         </div>

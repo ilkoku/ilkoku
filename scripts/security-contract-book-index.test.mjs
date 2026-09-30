@@ -570,7 +570,7 @@ test("D&R activates verified new-release and explicit weekly bestseller collecto
     "D&R adapter is registered",
   );
   contains(lists, 'code: "dr-tr-new-releases"', "D&R new-release list is active");
-  contains(lists, 'code: "dr-tr-bestsellers"', "D&R bestseller list is active");
+  contains(lists, 'code: "dr-tr-bestsellers-native"', "D&R bestseller list is active");
 });
 
 test("idefix collector reads server-side Next data and excludes source-sponsored cards", () => {
@@ -1457,7 +1457,7 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapsec-general-live",
     "kitapambari-tr-live",
     "amazon-tr-live",
-    "dr-tr-bestsellers",
+    "dr-tr-bestsellers-native",
     "penguen-tr-bestsellers",
   ]) {
     const marker = `code: "${listCode}"`;

@@ -11,6 +11,10 @@ function assertContains(text, fragment, label) {
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
 }
 
+function assertNotContains(text, fragment, label) {
+  assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
+}
+
 function readWritingInventory() {
   const genresSource = source("src/lib/genres.ts");
   const hubsSource = source("src/lib/writing-category-hubs.ts");
@@ -94,4 +98,15 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   assertContains(sitemap, "educationLastModifiedByUrl", "education URL freshness map");
   assertContains(sitemap, "liveStaticDiscoveryEntries", "live static sitemap freshness merge");
   assertContains(sitemap, "lastModified", "truthful sitemap lastmod output");
+});
+
+
+test("public writing guides keep responsive Next image optimization enabled", () => {
+  const roman = source("src/app/yazarlar-icin/kurgu/roman/page.tsx");
+  const fiction = source("src/components/content/BatchedFictionGuidePage.tsx");
+  const education = source("src/components/content/BatchedEducationGuidePage.tsx");
+
+  assertNotContains(roman, "unoptimizedImages", "Roman public guide image optimization bypass");
+  assertNotContains(fiction, "unoptimizedImages", "fiction guide image optimization bypass");
+  assertNotContains(education, "unoptimizedImages", "education guide image optimization bypass");
 });

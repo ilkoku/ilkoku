@@ -1,0 +1,88 @@
+name: Google indexing full recheck diagnostic
+
+on:
+  push:
+    branches:
+      - diag/google-index-full-recheck-20261001
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Googlebot live fetch diagnostic
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          UA='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+          urls=(
+            'https://ilkoku.com/'
+            'https://ilkoku.com/nasil-calisir'
+            'https://ilkoku.com/yazarlar-icin'
+            'https://ilkoku.com/yazarlar-icin/kurgu/roman'
+            'https://ilkoku.com/okurlar-icin/okumaya-baslama'
+            'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama'
+            'https://ilkoku.com/site-haritasi'
+            'https://ilkoku.com/en-cok-satanlar/dunya'
+            'https://ilkoku.com/yeni-cikanlar'
+            'https://ilkoku.com/yasal/kullanim-sartlari'
+          )
+          for url in "${urls[@]}"; do
+            h=$(mktemp); b=$(mktemp)
+            code=$(curl -sS -L --max-time 30 -A "$UA" -D "$h" -o "$b" -w '%{http_code}' "$url")
+            xrobots=$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$h")
+            ctype=$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); v=$0} END{print v}' "$h")
+            canonical=$(grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$b" | head -1 | sed -n 's/.*href="\([^"]*\)".*/\1/p' || true)
+            noindex=$(grep -Eoi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex[^"]*"' "$b" | head -1 || true)
+            h1=$(grep -Eoi '<h1([[:space:]][^>]*)?>' "$b" | wc -l | tr -d ' ')
+            title=$(grep -Eoi '<title([[:space:]][^>]*)?>' "$b" | wc -l | tr -d ' ')
+            bytes=$(wc -c < "$b" | tr -d ' ')
+            printf 'GBCHECK|%s|HTTP=%s|CTYPE=%s|XROBOTS=%s|NOINDEX=%s|CANON=%s|H1=%s|TITLE=%s|BYTES=%s\n' \
+              "$url" "$code" "${ctype:-NONE}" "${xrobots:-NONE}" "${noindex:-NONE}" "${canonical:-NONE}" "$h1" "$title" "$bytes"
+            test "$code" = "200"
+            [[ "${xrobots,,}" != *noindex* ]]
+            test -z "$noindex"
+            test -n "$canonical"
+            test "$h1" -ge 1
+            test "$title" -ge 1
+            rm -f "$h" "$b"
+            sleep 2
+          done
+
+      - name: Validate Search Console OAuth secrets
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        run: |
+          test -n "$GSC_OAUTH_CLIENT_ID"
+          test -n "$GSC_OAUTH_CLIENT_SECRET"
+          test -n "$GSC_OAUTH_REFRESH_TOKEN"
+
+      - name: Inspect 10 representative URLs with Google API
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_SITE_URL: "sc-domain:ilkoku.com"
+          GSC_INSPECTION_URLS: |
+            https://ilkoku.com/
+            https://ilkoku.com/nasil-calisir
+            https://ilkoku.com/yazarlar-icin
+            https://ilkoku.com/yazarlar-icin/kurgu/roman
+            https://ilkoku.com/okurlar-icin/okumaya-baslama
+            https://ilkoku.com/editorler-icin/egitim/editorluge-baslama
+            https://ilkoku.com/site-haritasi
+            https://ilkoku.com/en-cok-satanlar/dunya
+            https://ilkoku.com/yeni-cikanlar
+            https://ilkoku.com/yasal/kullanim-sartlari
+        run: node scripts/gsc-url-inspection.mjs

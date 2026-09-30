@@ -1,0 +1,97 @@
+name: Google resource detail audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-discovery-graph-20260930"
+    paths:
+      - ".github/workflows/google-resource-detail-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Measure resource types, failures, and largest assets
+        shell: bash
+        run: |
+          node <<'NODE'
+          const BASE="https://ilkoku.com";
+          const pages=[
+            BASE+"/",
+            BASE+"/site-haritasi",
+            BASE+"/yazarlar-icin",
+            BASE+"/yazarlar-icin/kurgu",
+            BASE+"/yazarlar-icin/kurgu/roman",
+            BASE+"/editorler-icin",
+            BASE+"/okurlar-icin/okumaya-baslama"
+          ];
+          const ua="Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.96 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+          const norm=(v,base)=>{try{return new URL(v,base).href}catch{return null}};
+          const resourceMap=new Map();
+          const mark=(url,type)=> {
+            if(!url)return;
+            const cur=resourceMap.get(url)||new Set();
+            cur.add(type); resourceMap.set(url,cur);
+          };
+          for(const page of pages){
+            const r=await fetch(page,{headers:{"user-agent":ua}});
+            const html=await r.text();
+            for(const m of html.matchAll(/<script\b[^>]*src=["']([^"']+)["']/gi)) mark(norm(m[1],page),"script");
+            for(const m of html.matchAll(/<link\b[^>]*rel=["'][^"']*stylesheet[^"']*["'][^>]*href=["']([^"']+)["']/gi)) mark(norm(m[1],page),"style");
+            for(const m of html.matchAll(/<link\b[^>]*href=["']([^"']+)["'][^>]*rel=["'][^"']*stylesheet[^"']*["']/gi)) mark(norm(m[1],page),"style");
+            for(const m of html.matchAll(/<img\b[^>]*src=["']([^"']+)["']/gi)) mark(norm(m[1],page),"image");
+            for(const m of html.matchAll(/<(?:img|source)\b[^>]*srcset=["']([^"']+)["']/gi)){
+              for(const item of m[1].split(",")) mark(norm(item.trim().split(/\s+/)[0],page),"image-srcset");
+            }
+            for(const m of html.matchAll(/<link\b[^>]*rel=["'][^"']*preload[^"']*["'][^>]*href=["']([^"']+)["']/gi)) mark(norm(m[1],page),"preload");
+            for(const m of html.matchAll(/<link\b[^>]*href=["']([^"']+)["'][^>]*rel=["'][^"']*preload[^"']*["']/gi)) mark(norm(m[1],page),"preload");
+          }
+
+          const resources=[...resourceMap.entries()].map(([url,types])=>({url,types:[...types]}));
+          let cursor=0;
+          async function worker(){
+            while(true){
+              const i=cursor++;
+              if(i>=resources.length)return;
+              const x=resources[i];
+              try{
+                const r=await fetch(x.url,{headers:{"user-agent":ua},signal:AbortSignal.timeout(20000)});
+                const b=await r.arrayBuffer();
+                x.status=r.status;
+                x.ok=r.ok;
+                x.bytes=b.byteLength;
+                x.contentType=r.headers.get("content-type")||"";
+                x.cacheControl=r.headers.get("cache-control")||"";
+                x.cfCache=r.headers.get("cf-cache-status")||"";
+              }catch(e){
+                x.error=String(e?.message||e);
+                x.bytes=0;
+              }
+            }
+          }
+          await Promise.all(Array.from({length:8},()=>worker()));
+
+          const bucket={js:0,css:0,image:0,font:0,other:0};
+          const count={js:0,css:0,image:0,font:0,other:0};
+          for(const x of resources){
+            let k="other";
+            if(/javascript|ecmascript/.test(x.contentType)||x.url.match(/\.js(?:\?|$)/))k="js";
+            else if(/text\/css/.test(x.contentType)||x.url.match(/\.css(?:\?|$)/))k="css";
+            else if(/^image\//.test(x.contentType)||x.types.some(t=>t.startsWith("image")))k="image";
+            else if(/font|woff|ttf|otf/.test(x.contentType+x.url))k="font";
+            bucket[k]+=x.bytes||0; count[k]++;
+          }
+          const mb=Object.fromEntries(Object.entries(bucket).map(([k,v])=>[k,Number((v/1024/1024).toFixed(2))]));
+          console.log("SUMMARY",JSON.stringify({
+            resources:resources.length,
+            errors:resources.filter(x=>!x.ok).length,
+            count,
+            mb
+          }));
+          for(const x of resources.filter(x=>!x.ok)) console.log("ERROR",JSON.stringify(x));
+          for(const x of [...resources].sort((a,b)=>(b.bytes||0)-(a.bytes||0)).slice(0,25)) console.log("TOP",JSON.stringify(x));
+          NODE

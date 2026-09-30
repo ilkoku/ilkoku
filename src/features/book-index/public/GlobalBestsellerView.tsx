@@ -150,10 +150,11 @@ export function GlobalBestsellerView({
         </h2>
         <p>
           Amazon ABD, Amazon UK, IBS İtalya, Rakuten Books Japonya, Kyobo
-          Güney Kore ve Readings Avustralya tek tabloda birlikte gösterilir.
-          Aynı sıra numarasındaki kayıtlar aynı blokta gruplanır; günlük,
-          haftalık, aylık veya güncel dönem bilgileri ilgili sitenin yayımladığı
-          biçimde korunur.
+          Güney Kore, Readings Avustralya ve SPIEGEL Almanya listeleri tek tabloda
+          birlikte gösterilir. Almanya satırları SPIEGEL&apos;in haftalık kurgu
+          hardcover listesini temsil eder. Aynı sıra numarasındaki kayıtlar aynı
+          blokta gruplanır; günlük, haftalık, aylık veya güncel dönem bilgileri
+          ilgili sitenin yayımladığı biçimde korunur.
         </p>
         <p>
           Bu sayfa ülkeler arası satış adetlerini karşılaştırmaz ve tek bir

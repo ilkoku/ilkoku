@@ -1,28 +1,29 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import type { MouseEvent } from "react";
 
 import { siteContact } from "@/lib/site-contact";
 
 export function PublicEmailLink({ className }: { className?: string }) {
-  const [hydrated, setHydrated] = useState(false);
+  function openEmail(event: MouseEvent<HTMLAnchorElement>) {
+    if (
+      event.defaultPrevented
+      || event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || event.altKey
+    ) {
+      return;
+    }
 
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-
-  if (!hydrated) {
-    return (
-      <Link className={className} href="/iletisim">
-        E-posta ile ulaşın
-      </Link>
-    );
+    event.preventDefault();
+    window.location.href = `mailto:${siteContact.generalEmail}`;
   }
 
   return (
-    <a className={className} href={`mailto:${siteContact.generalEmail}`}>
-      {siteContact.generalEmail}
+    <a className={className} href="/iletisim" onClick={openEmail}>
+      E-posta ile ulaşın
     </a>
   );
 }

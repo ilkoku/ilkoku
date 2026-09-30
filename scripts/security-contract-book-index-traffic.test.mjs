@@ -41,7 +41,12 @@ test("public site map never exposes gated Book Index links early", () => {
   );
   contains(
     siteMapPage,
-    'bookIndexPublished || page.id !== "book-index"',
+    "const gatedBookIndexPageIds = new Set([",
+    "gated Book Index route inventory",
+  );
+  contains(
+    siteMapPage,
+    "bookIndexPublished || !gatedBookIndexPageIds.has(page.id)",
     "code-owned Book Index site-map filter",
   );
   contains(

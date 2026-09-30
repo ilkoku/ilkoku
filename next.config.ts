@@ -37,6 +37,7 @@ const privateRouteHeaders = [
   "/okuyucu/:path*",
   "/rol-secimi/:path*",
   "/sifre-yenile/:path*",
+  "/sifremi-unuttum",
   "/tamamlanan-eserler/:path*",
   "/yazar/:path*",
   "/satis-erisim/:path*",

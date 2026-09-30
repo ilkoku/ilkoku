@@ -1,0 +1,164 @@
+name: Internal crawl space audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/googlebot-http-headers-20260930"
+    paths:
+      - ".github/workflows/internal-crawl-space-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Audit all internal crawlable links from sitemap pages
+        shell: bash
+        run: |
+          node <<'NODE'
+          const BASE = "https://ilkoku.com";
+          const UA = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.96 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+
+          const fetchText = async (url) => {
+            const r = await fetch(url, {
+              redirect: "follow",
+              headers: { "user-agent": UA, accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+              signal: AbortSignal.timeout(30000),
+            });
+            return { r, text: await r.text() };
+          };
+
+          const sm = await fetchText(BASE + "/sitemap.xml");
+          if (!sm.r.ok) throw new Error("sitemap HTTP " + sm.r.status);
+          const sitemapUrls = [...new Set([...sm.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1].trim()))];
+          const normNoQuery = (value) => {
+            try {
+              const u = new URL(value);
+              u.hash = "";
+              u.search = "";
+              if (u.hostname === "www.ilkoku.com") u.hostname = "ilkoku.com";
+              return u.href.replace(/\/$/, "");
+            } catch { return ""; }
+          };
+          const sitemapSet = new Set(sitemapUrls.map(normNoQuery));
+
+          const linkMap = new Map();
+          let cursor = 0;
+          async function pageWorker() {
+            while (true) {
+              const i = cursor++;
+              if (i >= sitemapUrls.length) return;
+              const source = sitemapUrls[i];
+              try {
+                const {r,text} = await fetchText(source);
+                const tags = text.match(/<a\b[^>]*>/gi) || [];
+                for (const tag of tags) {
+                  const hrefMatch = tag.match(/\bhref\s*=\s*(["'])(.*?)\1/i);
+                  if (!hrefMatch) continue;
+                  const rawHref = hrefMatch[2].trim();
+                  if (!rawHref || rawHref.startsWith("#") || /^(?:mailto|tel|javascript):/i.test(rawHref)) continue;
+                  let u;
+                  try { u = new URL(rawHref, source); } catch { continue; }
+                  if (!["ilkoku.com","www.ilkoku.com"].includes(u.hostname)) continue;
+                  u.hash = "";
+                  if (u.hostname === "www.ilkoku.com") u.hostname = "ilkoku.com";
+                  const target = u.href;
+                  const rel = (tag.match(/\brel\s*=\s*(["'])(.*?)\1/i)||[])[2] || "";
+                  const rec = linkMap.get(target) || {target,sources:new Set(),count:0,nofollowCount:0};
+                  rec.sources.add(source);
+                  rec.count++;
+                  if (/\bnofollow\b/i.test(rel)) rec.nofollowCount++;
+                  linkMap.set(target,rec);
+                }
+              } catch (e) {
+                console.log("SOURCE_FETCH_ERROR", JSON.stringify({source,error:String(e?.message||e)}));
+              }
+            }
+          }
+          await Promise.all(Array.from({length:8},()=>pageWorker()));
+
+          const links = [...linkMap.values()].map(x=>({
+            target:x.target,
+            sourceCount:x.sources.size,
+            linkCount:x.count,
+            nofollowCount:x.nofollowCount,
+            sampleSources:[...x.sources].slice(0,5),
+          })).sort((a,b)=>a.target.localeCompare(b.target));
+
+          const targets = new Array(links.length);
+          cursor = 0;
+          async function targetWorker() {
+            while (true) {
+              const i = cursor++;
+              if (i >= links.length) return;
+              const link = links[i];
+              const started=Date.now();
+              try {
+                const response = await fetch(link.target, {
+                  redirect:"manual",
+                  headers:{"user-agent":UA,accept:"text/html,application/xhtml+xml,*/*;q=0.8"},
+                  signal:AbortSignal.timeout(30000),
+                });
+                const body = await response.text();
+                const canonicalTag = (body.match(/<link\b[^>]*rel=["'][^"']*canonical[^"']*["'][^>]*>/i)||[])[0] || "";
+                const canonical = (canonicalTag.match(/\bhref\s*=\s*(["'])(.*?)\1/i)||[])[2] || "";
+                const robotsTag = (body.match(/<meta\b[^>]*name=["']robots["'][^>]*>/i)||[])[0] || "";
+                const robots = (robotsTag.match(/\bcontent\s*=\s*(["'])(.*?)\1/i)||[])[2] || "";
+                targets[i] = {
+                  ...link,
+                  status:response.status,
+                  location:response.headers.get("location"),
+                  contentType:response.headers.get("content-type"),
+                  xRobots:response.headers.get("x-robots-tag"),
+                  robots,
+                  canonical,
+                  bytes:Buffer.byteLength(body),
+                  ms:Date.now()-started,
+                  inSitemap:sitemapSet.has(normNoQuery(link.target)),
+                  hasQuery:new URL(link.target).search.length>0,
+                  path:new URL(link.target).pathname,
+                };
+              } catch (e) {
+                targets[i] = {...link,error:String(e?.message||e),inSitemap:sitemapSet.has(normNoQuery(link.target)),hasQuery:new URL(link.target).search.length>0,path:new URL(link.target).pathname};
+              }
+            }
+          }
+          await Promise.all(Array.from({length:10},()=>targetWorker()));
+
+          const pathVariants = new Map();
+          for (const t of targets) {
+            const arr=pathVariants.get(t.path)||[];
+            arr.push(t.target);
+            pathVariants.set(t.path,arr);
+          }
+          const multiQueryPaths=[...pathVariants.entries()]
+            .filter(([,arr])=>arr.length>1)
+            .map(([path,arr])=>({path,count:arr.length,urls:arr.slice(0,20)}))
+            .sort((a,b)=>b.count-a.count);
+
+          const summary={
+            sitemapUrls:sitemapUrls.length,
+            uniqueInternalHrefTargets:targets.length,
+            targetsInSitemap:targets.filter(x=>x.inSitemap).length,
+            targetsOutsideSitemap:targets.filter(x=>!x.inSitemap).length,
+            queryParamTargets:targets.filter(x=>x.hasQuery).length,
+            nofollowTargets:targets.filter(x=>x.nofollowCount>0).length,
+            status200:targets.filter(x=>x.status===200).length,
+            status3xx:targets.filter(x=>x.status>=300&&x.status<400).length,
+            status4xx:targets.filter(x=>x.status>=400&&x.status<500).length,
+            status5xx:targets.filter(x=>x.status>=500).length,
+            errors:targets.filter(x=>x.error).length,
+            noindexTargets:targets.filter(x=>/noindex/i.test((x.robots||"")+" "+(x.xRobots||""))).length,
+            multiVariantPaths:multiQueryPaths.length,
+          };
+          console.log("SUMMARY",JSON.stringify(summary));
+
+          for(const t of targets.filter(x=>!x.inSitemap)) console.log("OUTSIDE_SITEMAP",JSON.stringify(t));
+          for(const t of targets.filter(x=>x.status!==200 || x.error)) console.log("BAD_TARGET",JSON.stringify(t));
+          for(const t of targets.filter(x=>x.hasQuery)) console.log("QUERY_TARGET",JSON.stringify(t));
+          for(const t of targets.filter(x=>/noindex/i.test((x.robots||"")+" "+(x.xRobots||"")))) console.log("NOINDEX_TARGET",JSON.stringify(t));
+          for(const x of multiQueryPaths.slice(0,50)) console.log("PATH_VARIANTS",JSON.stringify(x));
+          NODE

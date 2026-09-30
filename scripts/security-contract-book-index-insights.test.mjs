@@ -126,7 +126,7 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   contains(insights, "rankGain", "source-level rank gain");
   contains(insights, "sourceName: getBookIndexSource", "human-readable source names");
   contains(view, "insightEvidence(item)", "trend evidence is rendered");
-  contains(view, "Yeni liste görünümü", "new-entry summary metric");
+  contains(view, "Yeni liste girişi", "new-entry summary metric");
   contains(
     view,
     "Soldaki sıra satış sırası değildir.",
@@ -153,7 +153,11 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
     "new-entry cards label the native entry-rank metric clearly",
   );
   contains(view, "Toplam sıra kazanımı", "riser summary metric");
+  contains(view, "Liste yükselişi", "riser summary uses public list wording");
   contains(view, "En geniş görünürlük", "multi-source summary metric");
+  contains(view, "bağımsız işletmeci", "multi-source summary avoids ambiguous source wording");
+  contains(view, "Tarihsel gözlemli kitap", "long-seller count label");
+  contains(view, "En uzun gözlem aralığı", "long-seller duration label");
   contains(view, "Toplam gözlem", "long-seller summary metric");
   contains(
     view,

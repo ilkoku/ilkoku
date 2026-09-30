@@ -1,0 +1,112 @@
+name: Internal link target audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-discovery-graph-20260930"
+    paths:
+      - ".github/workflows/internal-link-target-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Audit all internal href targets from sitemap pages
+        shell: bash
+        run: |
+          node <<'NODE'
+          const BASE="https://ilkoku.com";
+          const sm=await fetch(BASE+"/sitemap.xml");
+          const xml=await sm.text();
+          const pages=[...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1].trim()))];
+          const edges=[];
+          let cursor=0;
+          async function worker(){
+            while(true){
+              const i=cursor++;
+              if(i>=pages.length)return;
+              const page=pages[i];
+              const r=await fetch(page,{headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"},signal:AbortSignal.timeout(30000)});
+              const html=await r.text();
+              const seen=new Set();
+              for(const m of html.matchAll(/<a\b[^>]*href=["']([^"']+)["']/gi)){
+                const raw=m[1].replace(/&amp;/g,"&");
+                try{
+                  const u=new URL(raw,page);
+                  if(!["http:","https:"].includes(u.protocol))continue;
+                  if(u.hostname!=="ilkoku.com" && u.hostname!=="www.ilkoku.com")continue;
+                  u.hash="";
+                  const target=u.href;
+                  if(seen.has(target))continue;
+                  seen.add(target);
+                  edges.push({source:page,target});
+                }catch{}
+              }
+            }
+          }
+          await Promise.all(Array.from({length:6},()=>worker()));
+
+          const targets=[...new Set(edges.map(e=>e.target))];
+          const checks=new Map();
+          cursor=0;
+          async function targetWorker(){
+            while(true){
+              const i=cursor++;
+              if(i>=targets.length)return;
+              const target=targets[i];
+              try{
+                const r=await fetch(target,{
+                  redirect:"manual",
+                  headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"},
+                  signal:AbortSignal.timeout(30000)
+                });
+                checks.set(target,{
+                  status:r.status,
+                  location:r.headers.get("location"),
+                  xRobots:r.headers.get("x-robots-tag")
+                });
+              }catch(e){checks.set(target,{error:String(e?.message||e)})}
+            }
+          }
+          await Promise.all(Array.from({length:8},()=>targetWorker()));
+
+          const bad=[];
+          for(const e of edges){
+            const c=checks.get(e.target);
+            if(!c)continue;
+            const u=new URL(e.target);
+            const nonCanonicalScheme=u.protocol!=="https:";
+            const nonCanonicalHost=u.hostname!=="ilkoku.com";
+            const redirect=c.status>=300&&c.status<400;
+            const non200=c.status!==200;
+            const paused=/^\/(?:eserler|yazarlar|turler)(?:\/|$)/.test(u.pathname);
+            const preview=u.pathname.startsWith("/onizleme/");
+            if(nonCanonicalScheme||nonCanonicalHost||redirect||non200||paused||preview){
+              bad.push({...e,...c,nonCanonicalScheme,nonCanonicalHost,paused,preview});
+            }
+          }
+          const uniqBad=[];
+          const key=new Set();
+          for(const x of bad){
+            const k=x.source+"|"+x.target;
+            if(!key.has(k)){key.add(k);uniqBad.push(x)}
+          }
+          const statusCounts={};
+          for(const c of checks.values()){
+            const k=c.error?"ERROR":String(c.status);
+            statusCounts[k]=(statusCounts[k]||0)+1;
+          }
+          console.log("SUMMARY",JSON.stringify({
+            pages:pages.length,
+            edges:edges.length,
+            uniqueTargets:targets.length,
+            statusCounts,
+            badEdges:uniqBad.length,
+            sourcesWithBad:[...new Set(uniqBad.map(x=>x.source))].length
+          }));
+          for(const x of uniqBad) console.log("BAD",JSON.stringify(x));
+          NODE

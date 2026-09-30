@@ -264,7 +264,7 @@ export default function TurEditorluguPage() {
             İlkOku’da bir eseri değerlendirirken tür etiketini otomatik bir kontrol listesi gibi kullanma. Önce eserin gerçek okur vaadini ve alt türünü tanımla; sonra tespitini metindeki örnek, okur üzerindeki etki ve eserin kendi hedefiyle ilişkilendir.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link className="rounded-full bg-[#5b35dd] px-5 py-3 text-sm font-extrabold text-white" href="/editor/talepler">Editör taleplerine git</Link>
+            <Link className="rounded-full bg-[#5b35dd] px-5 py-3 text-sm font-extrabold text-white" href="/editor/talepler" rel="nofollow">Editör taleplerine git</Link>
             <Link className="rounded-full border border-[#2a2338]/10 bg-[#fffdf8] px-5 py-3 text-sm font-extrabold text-[#211746]" href="/editoryal-standartlar">Editoryal standartları aç</Link>
           </div>
         </section>

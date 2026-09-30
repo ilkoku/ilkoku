@@ -24,6 +24,7 @@ test("global bestseller public page reads only the approved source lists", () =>
     "spiegel-de-fiction-hardcover-weekly",
     "amazon-fr-live",
     "amazon-es-live",
+    "amazon-ca-live",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -44,6 +45,25 @@ test("global bestseller public page reads only the approved source lists", () =>
     "getTurkeySourceRankRows",
     "global page stays independent from Turkey ranking aggregation",
   );
+});
+
+
+test("Canada Amazon bestseller source is fail-closed and source-native", () => {
+  const adapter = source("src/lib/book-index/sources/amazon-ca.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 30', "Amazon Canada exact Top 30 guard");
+  contains(adapter, "p13n-asin-index-", "Amazon Canada item parser");
+  contains(adapter, "zg-bdg-text", "Amazon Canada native rank parser");
+  contains(adapter, 'currency: "CAD"', "Amazon Canada currency");
+  contains(adapter, "BOOK_INDEX_AMAZON_CA_RANK_ORDER_MISMATCH", "Amazon Canada rank guard");
+  contains(collector, "amazonCanadaBookIndexAdapter", "Amazon Canada collector registration");
+  contains(sources, 'code: "amazon-ca"', "Canada source registry");
+  contains(sources, 'market: "CA"', "Canada market code");
+  contains(lists, 'code: "amazon-ca-live"', "Canada list registry");
+  contains(lists, "maxRank: 30", "Canada Top 30 bound");
 });
 
 

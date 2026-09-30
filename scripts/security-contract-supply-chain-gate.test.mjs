@@ -42,11 +42,11 @@ test("declarative supply-chain policy owns generic audit, advisory backports, de
   assert.ok(policy.advisoryRules.length > 0, "at least one explicit advisory/backport rule must remain configured");
   const brace = policy.advisoryRules.find((rule) => rule.package === "brace-expansion");
   assert.ok(brace, "brace-expansion scanner discrepancy policy must remain explicit");
-  assert.deepEqual(brace.advisories, ["CVE-2026-14257", "CVE-2026-69152"]);
-  assert.equal(brace.fixedByMajor["1"], "1.1.18");
-  assert.equal(brace.fixedByMajor["2"], "2.1.4");
-  assert.equal(brace.fixedByMajor["3"], "3.0.6");
-  assert.equal(brace.fixedByMajor["5"], "5.0.9");
+  assert.deepEqual(brace.advisories, ["CVE-2026-14257", "CVE-2026-69152", "CVE-2026-102276", "CVE-2026-102278"]);
+  assert.equal(brace.fixedByMajor["1"], "1.1.20");
+  assert.equal(brace.fixedByMajor["2"], "2.1.6");
+  assert.equal(brace.fixedByMajor["3"], "3.0.8");
+  assert.equal(brace.fixedByMajor["5"], "5.0.11");
   assert.equal(policy.deploymentBuildContract.platform, "Hostinger Node.js Web Application");
   assert.equal(policy.deploymentBuildContract.buildCommand, "npm run build");
   assert.deepEqual(policy.deploymentBuildContract.requiredRootDependencies, [
@@ -89,10 +89,10 @@ test("every installed package covered by an explicit advisory rule is on a patch
   }
 
   const braceV1 = Object.entries(packages)
-    .filter(([packagePath, metadata]) => packagePath && metadata?.version === "1.1.18" && packageNameFromPath(packagePath) === "brace-expansion")
+    .filter(([packagePath, metadata]) => packagePath && metadata?.version === "1.1.21" && packageNameFromPath(packagePath) === "brace-expansion")
     .map(([, metadata]) => metadata)
     .at(0);
-  assert.equal(braceV1?.dev, true, "brace-expansion@1.1.18 must remain development-only while the ESLint chain exists");
+  assert.equal(braceV1?.dev, true, "brace-expansion@1.1.21 must remain development-only while the ESLint chain exists");
 });
 
 test("lockfile audit is generic, fail-closed and produces inventory plus hygiene evidence", () => {

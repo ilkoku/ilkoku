@@ -583,6 +583,19 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: true,
   },
+  {
+    code: "spiegel-de-fiction-hardcover-weekly",
+    sourceCode: "spiegel-de",
+    title: "SPIEGEL Almanya · Kurgu Hardcover · Haftalık Çok Satanlar",
+    categoryKey: "fiction-hardcover",
+    period: "weekly",
+    sourceUrl: "https://shop.spiegel.de/buecher/spiegel-bestseller/belletristik-hardcover/",
+    maxRank: 20,
+    includeInComposite: false,
+    collectionEveryMinutes: 720,
+    publiclyVisible: false,
+    enabled: true,
+  },
 
 
 

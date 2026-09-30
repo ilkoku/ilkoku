@@ -11,7 +11,7 @@ const contains = (text, fragment, label) =>
 const notContains = (text, fragment, label) =>
   assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("global bestseller public page reads only the six approved source lists", () => {
+test("global bestseller public page reads only the approved source lists", () => {
   const model = source("src/lib/book-index/global-public-read-model.ts");
 
   for (const listCode of [
@@ -21,6 +21,7 @@ test("global bestseller public page reads only the six approved source lists", (
     "rakuten-jp-weekly",
     "kyobo-kr-weekly",
     "readings-au-monthly",
+    "spiegel-de-fiction-hardcover-weekly",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -41,6 +42,27 @@ test("global bestseller public page reads only the six approved source lists", (
     "getTurkeySourceRankRows",
     "global page stays independent from Turkey ranking aggregation",
   );
+});
+
+
+test("Germany SPIEGEL bestseller source is fail-closed and source-native", () => {
+  const adapter = source("src/lib/book-index/sources/spiegel-de.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 20', "SPIEGEL exact Top 20 guard");
+  contains(adapter, "product-box__top-seller-number", "SPIEGEL native rank parser");
+  contains(adapter, "product-box__name", "SPIEGEL title parser");
+  contains(adapter, "product-box__manufacturer", "SPIEGEL author parser");
+  contains(adapter, "BOOK_INDEX_SPIEGEL_DE_RANK_ORDER_MISMATCH", "SPIEGEL rank order guard");
+  contains(collector, "spiegelGermanyBookIndexAdapter", "SPIEGEL collector registration");
+  contains(sources, 'code: "spiegel-de"', "Germany source registry");
+  contains(sources, 'market: "DE"', "Germany market code");
+  contains(lists, 'code: "spiegel-de-fiction-hardcover-weekly"', "Germany weekly list registry");
+  contains(lists, "maxRank: 20", "Germany list rank bound");
+  contains(view, "haftalık kurgu", "Germany category scope stays visible to readers");
 });
 
 

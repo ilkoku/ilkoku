@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -157,6 +157,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     includeInTurkeyIndex: false,
     independenceGroup: "readings-au",
     operatorName: "Readings",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "spiegel-de",
+    name: "SPIEGEL Almanya · Kurgu Hardcover",
+    market: "DE",
+    countryCode: "DE",
+    baseUrl: "https://shop.spiegel.de",
+    includeInTurkeyIndex: false,
+    independenceGroup: "spiegel-de",
+    operatorName: "SPIEGEL Shop / BuchMarkt",
     phase: "phase_2",
     collectionState: "ready",
   },

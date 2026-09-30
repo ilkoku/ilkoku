@@ -16,6 +16,7 @@ export const GLOBAL_BESTSELLER_LIST_CODES = [
   "rakuten-jp-weekly",
   "kyobo-kr-weekly",
   "readings-au-monthly",
+  "spiegel-de-fiction-hardcover-weekly",
 ] as const;
 
 export type GlobalBestsellerListCode =

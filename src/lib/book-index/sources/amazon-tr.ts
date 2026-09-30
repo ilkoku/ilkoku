@@ -240,7 +240,10 @@ export const amazonTrBookIndexAdapter: BookIndexSourceAdapter = {
   ): Promise<BookIndexCollectionResult> {
     const config = amazonTrListConfig(context);
 
-    if (context.listCode === "amazon-tr-live") {
+    if (
+      context.listCode === "amazon-tr-live"
+      || context.listCode === "amazon-tr-new-releases-research"
+    ) {
       const firstPage = parseAmazonTrRankedBookPage(
         await fetchHtml(config.firstPageUrl),
       );

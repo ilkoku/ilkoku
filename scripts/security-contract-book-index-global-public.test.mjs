@@ -22,6 +22,7 @@ test("global bestseller public page reads only the approved source lists", () =>
     "kyobo-kr-weekly",
     "readings-au-monthly",
     "spiegel-de-fiction-hardcover-weekly",
+    "amazon-fr-live",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -42,6 +43,24 @@ test("global bestseller public page reads only the approved source lists", () =>
     "getTurkeySourceRankRows",
     "global page stays independent from Turkey ranking aggregation",
   );
+});
+
+
+test("France Amazon bestseller source is fail-closed and source-native", () => {
+  const adapter = source("src/lib/book-index/sources/amazon-fr.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 30', "Amazon France exact Top 30 guard");
+  contains(adapter, "p13n-asin-index-", "Amazon France item parser");
+  contains(adapter, "zg-bdg-text", "Amazon France native rank parser");
+  contains(adapter, "BOOK_INDEX_AMAZON_FR_RANK_ORDER_MISMATCH", "Amazon France rank guard");
+  contains(collector, "amazonFranceBookIndexAdapter", "Amazon France collector registration");
+  contains(sources, 'code: "amazon-fr"', "France source registry");
+  contains(sources, 'market: "FR"', "France market code");
+  contains(lists, 'code: "amazon-fr-live"', "France list registry");
+  contains(lists, "maxRank: 30", "France Top 30 bound");
 });
 
 

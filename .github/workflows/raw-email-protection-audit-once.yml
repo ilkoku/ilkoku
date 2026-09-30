@@ -1,0 +1,42 @@
+name: Raw email protection audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/internal-link-graph-20260930"
+    paths:
+      - ".github/workflows/raw-email-protection-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect raw production HTML before browser hydration
+        shell: bash
+        run: |
+          node <<'NODE'
+          const url = "https://ilkoku.com/yazarlar-icin/kurgu/roman";
+          const res = await fetch(url, {
+            headers: {
+              "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+              accept: "text/html"
+            }
+          });
+          const html = await res.text();
+          const needle = "/cdn-cgi/l/email-protection";
+          const idx = html.indexOf(needle);
+          console.log("SUMMARY", JSON.stringify({
+            status: res.status,
+            bytes: Buffer.byteLength(html),
+            hasEmailProtection: idx >= 0,
+            hasLiteralGeneralEmail: html.includes("ilkoku@ilkoku.com"),
+            hasMailto: html.includes("mailto:")
+          }));
+          if (idx >= 0) {
+            console.log("CONTEXT", html.slice(Math.max(0, idx - 1200), idx + 1800).replace(/\s+/g, " "));
+          }
+          NODE

@@ -18,81 +18,91 @@ jobs:
       - name: Compare Googlebot and browser HTTP responses
         shell: bash
         run: |
-          set -euo pipefail
-          urls=(
-            "https://ilkoku.com/"
-            "https://ilkoku.com/robots.txt"
-            "https://ilkoku.com/sitemap.xml"
-            "https://ilkoku.com/site-haritasi"
-            "https://ilkoku.com/nasil-calisir"
-            "https://ilkoku.com/yazarlar-icin"
-            "https://ilkoku.com/yazarlar-icin/kurgu"
-            "https://ilkoku.com/yazarlar-icin/kurgu/roman"
-            "https://ilkoku.com/yazarlar-icin/edebiyat/siir"
-            "https://ilkoku.com/yazarlar-icin/bilgilendirici/teknoloji"
-            "https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik/genc-yetiskin"
-            "https://ilkoku.com/okurlar-icin/okumaya-baslama"
-            "https://ilkoku.com/okurlar-icin/aktif-okuma"
-            "https://ilkoku.com/editorler-icin"
-            "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama"
-            "https://ilkoku.com/editorler-icin/egitim/metin-degerlendirme"
-            "https://ilkoku.com/hakkimizda"
-            "https://ilkoku.com/yasal/kullanim-sartlari"
+          node <<'NODE'
+          const urls = [
+            "https://ilkoku.com/",
+            "https://ilkoku.com/robots.txt",
+            "https://ilkoku.com/sitemap.xml",
+            "https://ilkoku.com/site-haritasi",
+            "https://ilkoku.com/nasil-calisir",
+            "https://ilkoku.com/yazarlar-icin",
+            "https://ilkoku.com/yazarlar-icin/kurgu",
+            "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+            "https://ilkoku.com/yazarlar-icin/edebiyat/siir",
+            "https://ilkoku.com/yazarlar-icin/bilgilendirici/teknoloji",
+            "https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik/genc-yetiskin",
+            "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+            "https://ilkoku.com/okurlar-icin/aktif-okuma",
+            "https://ilkoku.com/editorler-icin",
+            "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
+            "https://ilkoku.com/editorler-icin/egitim/metin-degerlendirme",
+            "https://ilkoku.com/hakkimizda",
+            "https://ilkoku.com/yasal/kullanim-sartlari",
             "https://ilkoku.com/en-cok-satanlar/dunya"
-          )
+          ];
 
-          for ua_name in browser googlebot googlebot_smartphone; do
-            case "$ua_name" in
-              browser)
-                ua='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/152 Safari/537.36'
-                ;;
-              googlebot)
-                ua='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-                ;;
-              googlebot_smartphone)
-                ua='Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.96 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-                ;;
-            esac
+          const uas = {
+            browser: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/152 Safari/537.36",
+            googlebot: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+            googlebot_smartphone: "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.96 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+          };
 
-            echo "UA_GROUP $ua_name"
-            for url in "${urls[@]}"; do
-              tmp_headers="$(mktemp)"
-              tmp_body="$(mktemp)"
-              set +e
-              curl -sS -L                 --max-time 25                 --connect-timeout 10                 -A "$ua"                 -D "$tmp_headers"                 -o "$tmp_body"                 -w '%{http_code}|%{url_effective}|%{time_total}|%{size_download}|%{content_type}'                 "$url" > /tmp/curl_meta.txt
-              rc=$?
-              set -e
+          const results = [];
+          for (const [uaName, ua] of Object.entries(uas)) {
+            for (const url of urls) {
+              const started = Date.now();
+              try {
+                const response = await fetch(url, {
+                  redirect: "follow",
+                  headers: {
+                    "user-agent": ua,
+                    accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+                  },
+                  signal: AbortSignal.timeout(30000)
+                });
+                const body = await response.text();
+                const challenge = /cf-chl|captcha|challenge-platform|attention required|just a moment/i.test(body);
+                const bodyNoindex = /<meta[^>]+(?:name|http-equiv)=["']robots["'][^>]+content=["'][^"']*noindex/i.test(body);
+                results.push({
+                  ua: uaName,
+                  url,
+                  status: response.status,
+                  finalUrl: response.url,
+                  ms: Date.now() - started,
+                  bytes: Buffer.byteLength(body),
+                  contentType: response.headers.get("content-type"),
+                  xRobotsTag: response.headers.get("x-robots-tag"),
+                  cacheControl: response.headers.get("cache-control"),
+                  server: response.headers.get("server"),
+                  cfCacheStatus: response.headers.get("cf-cache-status"),
+                  vary: response.headers.get("vary"),
+                  challenge,
+                  bodyNoindex
+                });
+              } catch (error) {
+                results.push({
+                  ua: uaName,
+                  url,
+                  error: String(error?.message || error),
+                  ms: Date.now() - started
+                });
+              }
+            }
+          }
 
-              meta="$(cat /tmp/curl_meta.txt 2>/dev/null || true)"
-              xrobots="$(grep -i '^x-robots-tag:' "$tmp_headers" | tail -n1 | tr -d '\r' || true)"
-              server="$(grep -i '^server:' "$tmp_headers" | tail -n1 | tr -d '\r' || true)"
-              cfstatus="$(grep -i '^cf-cache-status:' "$tmp_headers" | tail -n1 | tr -d '\r' || true)"
-              location="$(grep -i '^location:' "$tmp_headers" | tail -n1 | tr -d '\r' || true)"
-              cachecontrol="$(grep -i '^cache-control:' "$tmp_headers" | tail -n1 | tr -d '\r' || true)"
-              vary="$(grep -i '^vary:' "$tmp_headers" | tail -n1 | tr -d '\r' || true)"
-              contenttype="$(grep -i '^content-type:' "$tmp_headers" | tail -n1 | tr -d '\r' || true)"
-              challenge="$(grep -Eio 'cf-chl|captcha|challenge-platform|attention required|just a moment' "$tmp_body" | head -n5 | tr '\n' ',' || true)"
-              body_noindex="$(grep -Eio '<meta[^>]+(name|http-equiv)=["'"'"']robots["'"'"'][^>]+content=["'"'"'][^"'"'"']*noindex[^"'"'"']*["'"'"']' "$tmp_body" | head -n1 | tr '\n' ' ' || true)"
-
-              printf 'RESULT %s\n' "$(python - <<PY
-import json
-print(json.dumps({
-  "ua": "$ua_name",
-  "url": "$url",
-  "curl_rc": $rc,
-  "meta": """$meta""",
-  "x_robots": """$xrobots""",
-  "server": """$server""",
-  "cf_cache_status": """$cfstatus""",
-  "location": """$location""",
-  "cache_control": """$cachecontrol""",
-  "vary": """$vary""",
-  "content_type_header": """$contenttype""",
-  "challenge": """$challenge""",
-  "body_noindex": """$body_noindex"""
-}, ensure_ascii=False))
-PY
-)"
-              rm -f "$tmp_headers" "$tmp_body"
-            done
-          done
+          const summary = {};
+          for (const uaName of Object.keys(uas)) {
+            const rows = results.filter(r => r.ua === uaName);
+            summary[uaName] = {
+              total: rows.length,
+              errors: rows.filter(r => r.error).length,
+              non200: rows.filter(r => !r.error && r.status !== 200).length,
+              xRobotsNoindex: rows.filter(r => /noindex/i.test(r.xRobotsTag || "")).length,
+              bodyNoindex: rows.filter(r => r.bodyNoindex).length,
+              challenges: rows.filter(r => r.challenge).length,
+              avgMs: Math.round(rows.filter(r=>!r.error).reduce((a,r)=>a+r.ms,0) / Math.max(1, rows.filter(r=>!r.error).length))
+            };
+          }
+          console.log("SUMMARY", JSON.stringify(summary));
+          for (const r of results) console.log("RESULT", JSON.stringify(r));
+          NODE

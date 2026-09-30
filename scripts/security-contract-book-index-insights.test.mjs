@@ -159,3 +159,44 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   contains(view, 'name="source"', "source filter");
   contains(page, "searchParams", "trend filters are server-side URL parameters");
 });
+
+
+test("Book Index auto-matches refresh corrected metadata only through exact ISBN identity", () => {
+  const matching = source("src/lib/book-index/matching.ts");
+
+  contains(
+    matching,
+    "hasExactIsbnIdentity",
+    "linked master metadata refresh requires exact ISBN identity",
+  );
+  contains(
+    matching,
+    'externalBook.matchStatus === "auto_matched"',
+    "only existing auto-matches enter the linked-master refresh path",
+  );
+  contains(
+    matching,
+    "shouldRefreshMasterTitle",
+    "contaminated master titles are recognized conservatively",
+  );
+  contains(
+    matching,
+    "currentTitle.startsWith(`${incomingTitle} `)",
+    "title cleanup only removes verified metadata appended after the current source title",
+  );
+  contains(
+    matching,
+    "title: externalBook.title",
+    "verified current source title can repair a stale master title",
+  );
+  contains(
+    matching,
+    "authorName: externalBook.authorName",
+    "verified current source author can fill an empty master author",
+  );
+  notContains(
+    matching,
+    'externalBook.matchStatus === "manual_matched") {\n      await refreshAutoMatchedMasterMetadata',
+    "manual matches are not rewritten by automatic metadata refresh",
+  );
+});

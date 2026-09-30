@@ -3,7 +3,7 @@ import { BatchedEducationGuidePage } from "@/components/content/BatchedEducation
 import { getEducationGuideDefinition } from "@/lib/education-guide-batch";
 import "../../batched-education-guide.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 const definition = getEducationGuideDefinition("ani");
 export const metadata: Metadata = {
   title: `${definition.title} | İlkOku`,

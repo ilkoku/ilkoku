@@ -7,7 +7,7 @@ import { getEducationGuideRecord } from "@/lib/cms-education";
 
 import "./fantastik-guide.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const defaultAlt = {
   hero: "Fantastik bir dünyanın haritası, notları ve İlkOku yazar ekranıyla birlikte görünen çalışma masası",

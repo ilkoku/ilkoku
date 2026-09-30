@@ -10,7 +10,7 @@ import "./roman-guide.css";
 
 const template = getCmsPageTemplate("ornek-roman");
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const defaultRomanVisuals = {
   hero: "/writing-guides/kurgu/roman/kurgu-roman-01-hero.avif",
@@ -164,7 +164,6 @@ export default async function RomanYazarlikRehberiPage() {
           eyebrow="Yazarlar İçin · Kurgu"
           pageTitle={title}
           summary={summary}
-          unoptimizedImages
         />
       </div>
     </WritingGuideShell>

@@ -253,7 +253,6 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
           eyebrow="Yazarlar İçin · Kurgu"
           pageTitle={title}
           summary={summary}
-          unoptimizedImages
         />
       </div>
     </WritingGuideShell>

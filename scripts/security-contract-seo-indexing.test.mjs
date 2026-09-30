@@ -366,3 +366,14 @@ test("SEO center and audit API stay Turkish-only", () => {
   assertNotContains(roleCards, 'getPublishedRoleCardsState("en")', "role card SEO ignores EN state");
   assertNotContains(roleCards, "TR / EN", "role card SEO has no language parity work");
 });
+
+
+test("password reset utility route stays out of search indexing", () => {
+  const config = source("next.config.ts");
+  const page = source("src/app/sifremi-unuttum/page.tsx");
+
+  assertContains(config, '  "/sifremi-unuttum",', "forgot-password X-Robots route");
+  assertContains(config, 'key: "X-Robots-Tag"', "search exclusion header");
+  assertContains(config, 'value: "noindex, nofollow, noarchive"', "private-route noindex header");
+  assertNotContains(page, 'robots: { index: true', "forgot-password page must not opt back into indexing");
+});

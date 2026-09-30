@@ -129,8 +129,7 @@
   margin-bottom: 24px;
 }
 
-.sectionHeading a,
-.backLink {
+.sectionHeading a {
   color: inherit;
   font-weight: 700;
   text-underline-offset: 4px;
@@ -171,11 +170,6 @@
 .score {
   min-width: 150px;
   text-align: right;
-}
-
-.backLink {
-  display: inline-block;
-  margin-top: 18px;
 }
 
 .tableFilters {
@@ -679,26 +673,7 @@
 
 
 .topActions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
   margin-top: 22px;
-}
-
-.topActions .backLink {
-  display: inline-flex;
-  align-items: center;
-  color: var(--muted, #60646c);
-  font-size: 0.84rem;
-  font-weight: 750;
-  line-height: 1;
-  text-decoration: none;
-}
-
-.topActions .backLink:hover {
-  color: inherit;
-  text-decoration: underline;
 }
 
 .viewModeNav {
@@ -742,11 +717,6 @@
 @media (max-width: 760px) {
   .turkeyHero {
     padding-bottom: 12px;
-  }
-
-  .topActions {
-    align-items: stretch;
-    gap: 12px;
   }
 
   .viewModeNav {

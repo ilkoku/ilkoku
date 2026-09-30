@@ -6,7 +6,7 @@ import { LoginForm } from "@/features/auth/components/LoginForm";
 import { getAuthenticatedDestination } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
 
-export const metadata: Metadata = { title: authContent.login.metadataTitle, description: authContent.login.metadataDescription };
+export const metadata: Metadata = { title: authContent.login.metadataTitle, description: authContent.login.metadataDescription, robots: { index: false, follow: false } };
 
 const statusMessages: Record<string, string> = {
   "baglanti-gecersiz": notificationContent.routeStatus.invalidLink,

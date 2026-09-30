@@ -1,0 +1,101 @@
+name: Internal target status audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/internal-link-graph-20260930"
+    paths:
+      - ".github/workflows/internal-target-status-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Crawl all public anchors and verify every internal target
+        shell: bash
+        run: |
+          node <<'NODE'
+          const BASE="https://ilkoku.com";
+          const sm=await fetch(BASE+"/sitemap.xml",{headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"}});
+          const xml=await sm.text();
+          const sitemap=[...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1].trim()))];
+          const norm=(u,base=BASE)=>{
+            try{
+              const x=new URL(u,base); x.hash="";
+              return x.href;
+            }catch{return "";}
+          };
+          const targetSources=new Map();
+          let cursor=0;
+          async function crawlSource(){
+            while(true){
+              const i=cursor++;
+              if(i>=sitemap.length)return;
+              const src=sitemap[i];
+              try{
+                const r=await fetch(src,{redirect:"follow",headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)","accept":"text/html"}});
+                const html=await r.text();
+                for(const m of html.matchAll(/<a\b([^>]*)href=(["'])(.*?)\2([^>]*)>/gis)){
+                  const href=m[3]||"";
+                  let x;
+                  try{x=new URL(href,src);}catch{continue;}
+                  if(x.origin!==BASE)continue;
+                  x.hash="";
+                  const key=x.href;
+                  if(!targetSources.has(key)) targetSources.set(key,new Set());
+                  targetSources.get(key).add(src);
+                }
+              }catch{}
+            }
+          }
+          await Promise.all(Array.from({length:8},()=>crawlSource()));
+
+          const targets=[...targetSources.keys()];
+          const results=[];
+          cursor=0;
+          async function checkTarget(){
+            while(true){
+              const i=cursor++;
+              if(i>=targets.length)return;
+              const url=targets[i];
+              try{
+                const r=await fetch(url,{redirect:"manual",headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)","accept":"text/html,*/*"}});
+                const ct=r.headers.get("content-type")||"";
+                let body="";
+                if(/text\/html/i.test(ct) && r.status===200) body=await r.text();
+                const robots=(body.match(/<meta[^>]+name=["']robots["'][^>]+content=["']([^"']+)["']/i)||[])[1]||"";
+                results.push({
+                  url,status:r.status,location:r.headers.get("location"),contentType:ct,
+                  xRobots:r.headers.get("x-robots-tag"),metaRobots:robots,
+                  sourceCount:targetSources.get(url)?.size||0,
+                  sources:[...(targetSources.get(url)||[])].slice(0,8)
+                });
+              }catch(e){
+                results.push({url,error:String(e?.message||e),sourceCount:targetSources.get(url)?.size||0,sources:[...(targetSources.get(url)||[])].slice(0,8)});
+              }
+            }
+          }
+          await Promise.all(Array.from({length:10},()=>checkTarget()));
+
+          const bad=results.filter(r=>r.error || r.status>=400 || (r.status>=300&&r.status<400) || /noindex/i.test((r.xRobots||"")+" "+(r.metaRobots||"")));
+          const byStatus={};
+          for(const r of results){
+            const k=r.error?"ERROR":String(r.status);
+            byStatus[k]=(byStatus[k]||0)+1;
+          }
+          console.log("SUMMARY",JSON.stringify({
+            sitemapSources:sitemap.length,
+            uniqueInternalTargets:targets.length,
+            byStatus,
+            badTargets:bad.length,
+            redirects:results.filter(r=>r.status>=300&&r.status<400).length,
+            notFound:results.filter(r=>r.status===404).length,
+            serverErrors:results.filter(r=>r.status>=500).length,
+            noindexTargets:results.filter(r=>/noindex/i.test((r.xRobots||"")+" "+(r.metaRobots||""))).length
+          }));
+          for(const r of bad.sort((a,b)=>(b.sourceCount||0)-(a.sourceCount||0))) console.log("BAD_TARGET",JSON.stringify(r));
+          NODE

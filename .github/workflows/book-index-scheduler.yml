@@ -2,6 +2,9 @@ name: Book Index scheduler
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".book-index-force-refresh"
   workflow_run:
     workflows:
       - Email operations
@@ -32,13 +35,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Check out force-refresh marker
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
       - name: Run Book Index scheduler with GitHub OIDC
         env:
           OIDC_AUDIENCE: ilkoku-book-index-scheduler
         run: |
           set -euo pipefail
 
-          for attempt in {1..12}; do
+          force_lists=""
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            force_lists="$(tr -d '\r\n[:space:]' < .book-index-force-refresh)"
+            test -n "$force_lists"
+          fi
+
+          for attempt in {1..20}; do
             oidc_response="$(curl \
               --fail-with-body \
               --silent \
@@ -49,6 +62,11 @@ jobs:
             oidc_token="$(printf '%s' "$oidc_response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
             test -n "$oidc_token"
 
+            force_header=()
+            if [ -n "$force_lists" ]; then
+              force_header=(--header "X-IlkOku-Book-Index-Force-Lists: $force_lists")
+            fi
+
             if response="$(curl \
               --fail-with-body \
               --silent \
@@ -56,15 +74,16 @@ jobs:
               --max-time 300 \
               --request POST \
               --header "Authorization: Bearer $oidc_token" \
+              "${force_header[@]}" \
               https://ilkoku.com/api/internal/book-index-scheduler)"; then
               printf '%s\n' "$response"
 
-              if printf '%s' "$response" | python3 -c 'import json,sys; payload=json.load(sys.stdin); readiness=payload.get("readiness", {}); required=("splitMasterCollisionCount","unmatchedDuplicateIdentityGroupCount","leastSuccessfulRunCountSourceCodes","shortestHistorySpanSourceCodes","unmatchedMissingAuthorBooksBySource","unmatchedAmbiguousIdentityGroupCount"); raise SystemExit(0 if "seoGate" in payload and all(key in readiness for key in required) else 1)'; then
+              if printf '%s' "$response" | FORCE_LISTS="$force_lists" python3 -c 'import json,os,sys; payload=json.load(sys.stdin); force=os.environ.get("FORCE_LISTS",""); readiness=payload.get("readiness", {}); required=("splitMasterCollisionCount","unmatchedDuplicateIdentityGroupCount","leastSuccessfulRunCountSourceCodes","shortestHistorySpanSourceCodes","unmatchedMissingAuthorBooksBySource","unmatchedAmbiguousIdentityGroupCount"); expected=[x for x in force.split(",") if x]; forced_ok=(not expected) or (payload.get("forced") is True and payload.get("forceListCodes")==expected and len(payload.get("forcedResults") or [])==len(expected)); raise SystemExit(0 if forced_ok and "seoGate" in payload and all(key in readiness for key in required) else 1)'; then
                 exit 0
               fi
             fi
 
-            if [ "$attempt" -lt 12 ]; then
+            if [ "$attempt" -lt 20 ]; then
               sleep 15
             fi
           done

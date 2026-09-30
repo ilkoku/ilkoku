@@ -147,7 +147,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     );
   }
 
-  assert.doesNotMatch(header, /getBookIndexPublicPageContext/);
+  assert.match(header, /getBookIndexPublicPageContext\(100\)\.catch\(\(\) => null\)/);
   assert.match(header, /withBookIndexMenu/);
   assert.match(header, /label: "Kitap Endeksi"/);
   assert.doesNotMatch(header, /if \(!enabled\) return withoutBookIndex/);
@@ -157,16 +157,20 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
+  ]) {
+    assert.ok(header.includes(`href: "${href}"`), `${href} must remain in the injected Book Index menu`);
+  }
+  for (const href of [
     "/en-cok-satanlar/yeni-girisler",
     "/en-cok-satanlar/yukselenler",
     "/en-cok-satanlar/her-yerde-satanlar",
     "/en-cok-satanlar/uzun-satanlar",
   ]) {
-    assert.ok(header.includes(`href: "${href}"`), `${href} must remain in the injected Book Index menu`);
+    assert.ok(!header.includes(`href: "${href}"`), `${href} must not be emitted while unavailable`);
   }
   assert.match(header, /title: "Ana Listeler"/);
   assert.match(header, /title: "Karşılaştır"/);
-  assert.match(header, /title: "Trendler"/);
+  assert.doesNotMatch(header, /title: "Trendler"/);
   assert.doesNotMatch(header, /directHref: "\/en-cok-satanlar"/);
   assert.match(header, /menu\.id === "support"/);
   assert.match(config, /id: "book-index"[\s\S]*label: "Kitap Endeksi"[\s\S]*id: "support"/);
@@ -357,4 +361,43 @@ test("legacy public headers are hidden only inside the explicit public frame", (
   for (const selector of [".how-header", ".public-library__header", ".public-hub__nav", ".editors-topbar"]) {
     assert.ok(css.includes(`.public-site-frame ${selector}`), `${selector} must be scoped to public-site-frame`);
   }
+});
+
+
+test("public crawl graph excludes utility actions and unavailable Book Index routes", () => {
+  const header = read(headerPath);
+  const navigationClient = read(headerNavigationClientPath);
+  const config = read(headerConfigPath);
+  const siteMap = read("src/app/site-haritasi/page.tsx");
+  const blocks = read("src/components/content/PublicCmsPageBlocks.tsx");
+  const trustFooter = read("src/components/content/PublicTrustFooter.tsx");
+  const liveFooter = read("src/features/homepage/live-footer.tsx");
+  const nextConfig = read("next.config.ts");
+  const forgotPassword = read("src/app/sifremi-unuttum/page.tsx");
+
+  assert.match(navigationClient, /nofollow\?: boolean/);
+  assert.match(navigationClient, /rel=\{link\.nofollow \? "nofollow" : undefined\}/);
+  assert.match(config, /nofollow: page\.kind === "action" \|\| page\.indexable === false/);
+
+  for (const id of [
+    "book-index-new-entries",
+    "book-index-risers",
+    "book-index-everywhere",
+    "book-index-long-sellers",
+  ]) {
+    assert.match(
+      config,
+      new RegExp(`id: "${id}"[^\\n]+indexable: false`),
+      `${id} must remain non-indexable until its route is live`,
+    );
+  }
+
+  assert.match(siteMap, /page\.id === "book-index-global"/);
+  assert.match(siteMap, /return bookIndexPublished/);
+  assert.match(blocks, /crawlExcludedActionPrefixes/);
+  assert.match(blocks, /return "nofollow"/);
+  assert.match(trustFooter, /href="\/giris" rel="nofollow"/);
+  assert.match(liveFooter, /site-contact-footer__email[^>]+rel="nofollow"/);
+  assert.match(nextConfig, /"\/sifremi-unuttum"/);
+  assert.match(forgotPassword, /robots: \{ index: false, follow: false \}/);
 });

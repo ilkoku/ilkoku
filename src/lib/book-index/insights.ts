@@ -3,6 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 
 import {
+  getBookIndexSource,
   getBookIndexSourceIndependenceGroup,
   TURKEY_INDEX_MIN_SOURCES,
 } from "./sources";
@@ -12,6 +13,19 @@ type SnapshotBook = {
   title: string;
   authorName: string | null;
   rank: number;
+  observedAt: Date;
+};
+
+export type BookIndexSourceRankEvidence = {
+  sourceCode: string;
+  sourceName: string;
+  currentRank: number;
+  observedAt: Date;
+};
+
+export type BookIndexRiserSourceEvidence = BookIndexSourceRankEvidence & {
+  previousRank: number;
+  rankGain: number;
 };
 
 type SourceSnapshot = {
@@ -28,6 +42,7 @@ export type BookIndexNewEntry = {
   newSourceCount: number;
   currentSourceCount: number;
   bestRank: number;
+  sources: BookIndexSourceRankEvidence[];
 };
 
 export type BookIndexRiser = {
@@ -37,6 +52,7 @@ export type BookIndexRiser = {
   improvingSourceCount: number;
   totalRankGain: number;
   bestCurrentRank: number;
+  sources: BookIndexRiserSourceEvidence[];
 };
 
 export type BookIndexEverywhereSeller = {
@@ -45,6 +61,7 @@ export type BookIndexEverywhereSeller = {
   authorName: string | null;
   sourceCount: number;
   bestRank: number;
+  sources: BookIndexSourceRankEvidence[];
 };
 
 export type BookIndexLongSeller = {
@@ -56,6 +73,10 @@ export type BookIndexLongSeller = {
   historyDays: number;
   sourceCount: number;
   observationCount: number;
+  sources: Array<{
+    sourceCode: string;
+    sourceName: string;
+  }>;
 };
 
 export type BookIndexInsights = {
@@ -77,6 +98,7 @@ type LongSellerRow = {
 function toSnapshotMap(
   observations: Array<{
     rank: number;
+    observedAt: Date;
     externalBook: {
       masterBookId: string | null;
       masterBook: {
@@ -101,6 +123,7 @@ function toSnapshotMap(
         title: master.title,
         authorName: master.authorName,
         rank: observation.rank,
+        observedAt: observation.observedAt,
       });
     }
   }
@@ -144,6 +167,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
             orderBy: { rank: "asc" },
             select: {
               rank: true,
+              observedAt: true,
               externalBook: {
                 select: {
                   masterBookId: true,
@@ -237,6 +261,13 @@ async function loadLongSellers(limit: number) {
         historyDays: historyDays(row.firstObservedAt, row.lastObservedAt),
         sourceCount: independenceGroups.size,
         observationCount: Number(row.observationCount),
+        sources: (row.sourceCodes ?? "")
+          .split(",")
+          .filter(Boolean)
+          .map((sourceCode) => ({
+            sourceCode,
+            sourceName: getBookIndexSource(sourceCode)?.name ?? sourceCode,
+          })),
       } satisfies BookIndexLongSeller];
     })
     .sort(
@@ -259,7 +290,16 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
   const bookById = new Map<string, { title: string; authorName: string | null }>();
 
   const newSourcesByBook = new Map<string, Set<string>>();
-  const rankGainByBookSource = new Map<string, Map<string, number>>();
+  const currentEvidenceByBookSource = new Map<string, Map<string, SnapshotBook>>();
+  const rankGainByBookSource = new Map<
+    string,
+    Map<string, {
+      previousRank: number;
+      currentRank: number;
+      rankGain: number;
+      observedAt: Date;
+    }>
+  >();
 
   for (const snapshot of snapshots) {
     for (const [masterBookId, current] of snapshot.current) {
@@ -271,6 +311,11 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
       const sources = currentSourcesByBook.get(masterBookId) ?? new Set<string>();
       sources.add(snapshot.sourceCode);
       currentSourcesByBook.set(masterBookId, sources);
+
+      const evidenceBySource =
+        currentEvidenceByBookSource.get(masterBookId) ?? new Map<string, SnapshotBook>();
+      evidenceBySource.set(snapshot.sourceCode, current);
+      currentEvidenceByBookSource.set(masterBookId, evidenceBySource);
 
       const independenceGroups =
         currentIndependenceGroupsByBook.get(masterBookId) ?? new Set<string>();
@@ -300,10 +345,21 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
       if (gain <= 0) continue;
 
       const gains =
-        rankGainByBookSource.get(masterBookId) ?? new Map<string, number>();
-      const existingGain = gains.get(snapshot.sourceCode) ?? 0;
+        rankGainByBookSource.get(masterBookId)
+        ?? new Map<string, {
+          previousRank: number;
+          currentRank: number;
+          rankGain: number;
+          observedAt: Date;
+        }>();
+      const existingGain = gains.get(snapshot.sourceCode)?.rankGain ?? 0;
       if (gain > existingGain) {
-        gains.set(snapshot.sourceCode, gain);
+        gains.set(snapshot.sourceCode, {
+          previousRank: previous.rank,
+          currentRank: current.rank,
+          rankGain: gain,
+          observedAt: current.observedAt,
+        });
       }
       rankGainByBookSource.set(masterBookId, gains);
     }
@@ -323,6 +379,20 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
         newSourceCount: newSources.size,
         currentSourceCount: sources.size,
         bestRank,
+        sources: [...newSources]
+          .flatMap((sourceCode) => {
+            const evidence = currentEvidenceByBookSource
+              .get(masterBookId)
+              ?.get(sourceCode);
+            if (!evidence) return [];
+            return [{
+              sourceCode,
+              sourceName: getBookIndexSource(sourceCode)?.name ?? sourceCode,
+              currentRank: evidence.rank,
+              observedAt: evidence.observedAt,
+            }];
+          })
+          .sort((a, b) => a.currentRank - b.currentRank),
       } satisfies BookIndexNewEntry];
     })
     .sort(
@@ -345,8 +415,25 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
         title: book.title,
         authorName: book.authorName,
         improvingSourceCount: gains.size,
-        totalRankGain: [...gains.values()].reduce((sum, gain) => sum + gain, 0),
+        totalRankGain: [...gains.values()].reduce(
+          (sum, evidence) => sum + evidence.rankGain,
+          0,
+        ),
         bestCurrentRank,
+        sources: [...gains.entries()]
+          .map(([sourceCode, evidence]) => ({
+            sourceCode,
+            sourceName: getBookIndexSource(sourceCode)?.name ?? sourceCode,
+            currentRank: evidence.currentRank,
+            previousRank: evidence.previousRank,
+            rankGain: evidence.rankGain,
+            observedAt: evidence.observedAt,
+          }))
+          .sort(
+            (a, b) =>
+              b.rankGain - a.rankGain
+              || a.currentRank - b.currentRank,
+          ),
       } satisfies BookIndexRiser];
     })
     .sort(
@@ -374,6 +461,14 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
         authorName: book.authorName,
         sourceCount: independenceGroups.size,
         bestRank,
+        sources: [...(currentEvidenceByBookSource.get(masterBookId)?.entries() ?? [])]
+          .map(([sourceCode, evidence]) => ({
+            sourceCode,
+            sourceName: getBookIndexSource(sourceCode)?.name ?? sourceCode,
+            currentRank: evidence.rank,
+            observedAt: evidence.observedAt,
+          }))
+          .sort((a, b) => a.currentRank - b.currentRank),
       } satisfies BookIndexEverywhereSeller];
     })
     .sort(

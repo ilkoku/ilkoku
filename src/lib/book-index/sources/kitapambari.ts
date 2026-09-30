@@ -10,6 +10,14 @@ const SOURCE_ORIGIN = "https://www.kitapambari.com";
 const PAGE_SIZE = 20;
 const PAGE_COUNT = 5;
 
+// The native bestseller cards omit writer metadata for these exact editions.
+// The authors were re-verified against the same ISBN on independent book
+// catalogues / retailers before being admitted as deterministic fallbacks.
+const VERIFIED_AUTHOR_BY_ISBN13 = new Map<string, string>([
+  ["9786258992090", "Ebru Asya"],
+  ["9786258483239", "Yasemin Tuzcu Şahin"],
+]);
+
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
 }
@@ -90,7 +98,9 @@ export function parseKitapAmbariBestsellers(
       sourceKey: validIsbn13 || productId,
       sourceExternalId: productId,
       title,
-      authorName: author ? decodeBookIndexHtml(author) : null,
+      authorName:
+        (author ? decodeBookIndexHtml(author) : null)
+        || (validIsbn13 ? VERIFIED_AUTHOR_BY_ISBN13.get(validIsbn13) ?? null : null),
       publisherName: publisher ? decodeBookIndexHtml(publisher) : null,
       isbn13: validIsbn13,
       productUrl: absoluteUrl(productUrl),

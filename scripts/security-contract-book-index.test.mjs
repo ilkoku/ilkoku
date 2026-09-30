@@ -591,6 +591,11 @@ test("idefix collector reads server-side Next data and excludes source-sponsored
   contains(adapter, "detailAuthorName", "idefix detail author extraction");
   contains(
     adapter,
+    "paragraphAuthorName",
+    "idefix product-description author fallback",
+  );
+  contains(
+    adapter,
     "documentTitleAuthorName",
     "idefix document-title author fallback",
   );
@@ -880,6 +885,13 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
   contains(adapter, "CATEGORY_LIST_CODES", "KitapSec category list routing");
   contains(adapter, "BOOK_INDEX_KITAPSEC_LIST_NOT_SUPPORTED", "KitapSec unknown-list rejection");
   contains(adapter, 'new TextDecoder("windows-1254")', "KitapSec source encoding");
+  contains(adapter, "parseKitapSecProductAuthor", "KitapSec detail author parser");
+  contains(adapter, "enrichKitapSecAuthors", "KitapSec missing-author enrichment");
+  contains(
+    adapter,
+    "BOOK_INDEX_KITAPSEC_AUTHOR_ENRICHMENT_COLLAPSED",
+    "KitapSec detail author enrichment fails closed on total collapse",
+  );
   contains(adapter, "BOOK_INDEX_KITAPSEC_LIST_NOT_FOUND", "KitapSec list scope failure");
   contains(adapter, "BOOK_INDEX_KITAPSEC_RESULT_TOO_SMALL", "KitapSec suspicious result rejection");
   contains(adapter, "BOOK_INDEX_KITAPSEC_RANK_SEQUENCE_INVALID", "KitapSec rank continuity validation");
@@ -1761,6 +1773,21 @@ test("KitapStore qualified voter preserves fail-closed Top 100 collection", () =
   notContains(adapter, "BOOK_INDEX_KITAPSTORE_PUBLISHER_MISSING", "missing publisher must not reject a valid ranked product");
   contains(adapter, 'itemPropTag(card, "meta", "serialNumber")', "product-id cross-check");
   contains(adapter, 'itemPropTag(html, "span", "isbn")', "detail ISBN parser");
+  contains(
+    adapter,
+    "parseKitapStoreProductAuthorName",
+    "KitapStore direct product author parser",
+  );
+  contains(
+    adapter,
+    '["9789754293982", "Bülent Kandiller, Aysun Velioğlu"]',
+    "Reader at Work exact-ISBN author fallback",
+  );
+  contains(
+    adapter,
+    "VERIFIED_AUTHOR_BY_ISBN13.get(isbn13)",
+    "KitapStore author fallback remains exact-ISBN scoped",
+  );
   contains(adapter, "BOOK_INDEX_KITAPSTORE_PAGE_SIZE_MISMATCH", "page-size fail-closed gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_SOURCE_KEY", "duplicate source-key gate");
   contains(adapter, "BOOK_INDEX_KITAPSTORE_DUPLICATE_PRODUCT_URL", "duplicate URL gate");
@@ -1827,6 +1854,26 @@ test("KitapStore qualified voter preserves fail-closed Top 100 collection", () =
   );
 });
 
+
+test("Remzi exact new-release author fallbacks stay path-scoped", () => {
+  const adapter = source("src/lib/book-index/sources/remzi.ts");
+
+  contains(
+    adapter,
+    '["/kitap/sevimli-cikartmali-neseli-kafeler", "Kolektif"]',
+    "Neşeli Kafeler verified collective-author fallback",
+  );
+  contains(
+    adapter,
+    '["/kitap/sevimli-cikartmali-neseli-yuvalar", "Kolektif"]',
+    "Neşeli Yuvalar verified collective-author fallback",
+  );
+  contains(
+    adapter,
+    "VERIFIED_NEW_RELEASE_AUTHOR_BY_PATH.get(href)",
+    "Remzi fallback is exact product-path scoped",
+  );
+});
 
 test("Amazon ASINs are never inferred as ISBNs without direct source evidence", () => {
   const us = source("src/lib/book-index/sources/amazon-us.ts");

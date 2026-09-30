@@ -12,6 +12,7 @@ const GENERAL_MAX_BOOKS = 56;
 const GENERAL_CANARY_MAX_RANK = 100;
 const GENERAL_CANARY_PAGE_COUNT = 2;
 const GENERAL_CANARY_MIN_BOOKS_PER_PAGE = 55;
+const DETAIL_CONCURRENCY = 6;
 const CATEGORY_MIN_EXPECTED_BOOKS = 20;
 const GENERAL_MIN_EXPECTED_BOOKS = 40;
 const VERIFIED_GENERAL_NON_BOOK_PRODUCT_IDS = new Set(["712938"]);
@@ -210,6 +211,70 @@ async function fetchKitapSecHtml(sourceUrl: string) {
   return new TextDecoder("windows-1254").decode(bytes);
 }
 
+export function parseKitapSecProductAuthor(html: string) {
+  const text = decodeBookIndexHtml(html)
+    .replace(/<[^>]+>/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+
+  const candidate = text.match(
+    /\bYazar\s*:\s*(.+?)(?=\s+(?:Kazancınız|Kazanacağınız\s+Puan|Sayfa\s+Sayısı|Kitap\s+Ebatı|Stok|Toplam\s+Satılan|Kargo\s+İndirimi|Stok\s+Durumu)\b)/iu,
+  )?.[1]?.trim() ?? "";
+
+  if (
+    !candidate
+    || candidate.length > 180
+    || !/\p{L}/u.test(candidate)
+    || /^Yazar\s+Adı$/iu.test(candidate)
+  ) {
+    return null;
+  }
+
+  return candidate;
+}
+
+async function enrichKitapSecAuthors(
+  result: BookIndexCollectionResult,
+): Promise<BookIndexCollectionResult> {
+  const books = result.books.map((book) => ({ ...book }));
+  let nextIndex = 0;
+  let enrichedCount = 0;
+
+  const workers = Array.from(
+    { length: Math.min(DETAIL_CONCURRENCY, books.length) },
+    async () => {
+      while (true) {
+        const index = nextIndex;
+        nextIndex += 1;
+        if (index >= books.length) return;
+
+        const book = books[index];
+        if (book.authorName) continue;
+
+        try {
+          const authorName = parseKitapSecProductAuthor(
+            await fetchKitapSecHtml(book.productUrl),
+          );
+          if (!authorName) continue;
+
+          book.authorName = authorName;
+          enrichedCount += 1;
+        } catch {
+          // Keep the native ranked book if optional detail enrichment fails.
+        }
+      }
+    },
+  );
+
+  await Promise.all(workers);
+
+  if (books.length && enrichedCount === 0) {
+    throw new Error("BOOK_INDEX_KITAPSEC_AUTHOR_ENRICHMENT_COLLAPSED");
+  }
+
+  return { books };
+}
+
 async function collectKitapSecGeneralPaged(sourceUrl: string) {
   const pages: BookIndexCollectionResult[] = [];
 
@@ -239,7 +304,7 @@ async function collectKitapSecGeneralPaged(sourceUrl: string) {
     throw new Error("BOOK_INDEX_KITAPSEC_GENERAL_CROSS_PAGE_DUPLICATE");
   }
 
-  return { books };
+  return enrichKitapSecAuthors({ books });
 }
 
 export const kitapSecBookIndexAdapter: BookIndexSourceAdapter = {

@@ -177,6 +177,27 @@ function headingAuthorName(html: string, expectedTitle: string) {
   return safeIdefixAuthorName(suffix);
 }
 
+function paragraphAuthorName(html: string, expectedTitle: string) {
+  const expected = decodeBookIndexHtml(expectedTitle)
+    .replace(/\s+/gu, " ")
+    .trim();
+  if (!expected) return null;
+
+  for (const match of html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/giu)) {
+    const text = decodeBookIndexHtml(match[1] ?? "")
+      .replace(/<[^>]+>/gu, " ")
+      .replace(/\s+/gu, " ")
+      .trim();
+    const marker = ` - ${expected}`;
+
+    if (!text.endsWith(marker)) continue;
+
+    return safeIdefixAuthorName(text.slice(0, -marker.length));
+  }
+
+  return null;
+}
+
 export function parseIdefixProductDetails(
   html: string,
   expectedTitle = "",
@@ -189,6 +210,7 @@ export function parseIdefixProductDetails(
   return {
     authorName:
       detailAuthorName(text)
+      || paragraphAuthorName(html, expectedTitle)
       || documentTitleAuthorName(html, expectedTitle)
       || headingAuthorName(html, expectedTitle),
     isbn13: validIsbn13(isbn),

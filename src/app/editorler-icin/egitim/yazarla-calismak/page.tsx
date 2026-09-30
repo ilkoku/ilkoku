@@ -299,7 +299,7 @@ export default function YazarlaCalismakPage() {
             İlkOku editör çalışma alanında görev kapsamını ve değerlendirdiğin sürümü sabit tut; raporunu metinden kanıtla gerekçelendir ve yazarın yaratıcı karar alanına saygı göster. Fikir ayrılığı olduğunda görüşünün sınırını açık tut.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link className="rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#211746]" href="/editor/talepler">Editör görevlerine git →</Link>
+            <Link className="rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#211746]" href="/editor/talepler" rel="nofollow">Editör görevlerine git →</Link>
             <Link className="rounded-full border border-white/15 px-5 py-3 text-sm font-extrabold text-white" href="/editoryal-standartlar">Editoryal Standartlar</Link>
           </div>
         </section>

@@ -38,6 +38,16 @@ test("Penguen uses the verified penguenkitap.com.tr bestseller surface", () => {
     "authorName: item.authorName",
     "Penguen author metadata reaches the collector result",
   );
+  contains(
+    adapter,
+    '["palme-11-biyoloji-soru", "Bilgehan Peri, Banu Karaağaç"]',
+    "Palme exact-slug author fallback",
+  );
+  contains(
+    adapter,
+    "VERIFIED_AUTHOR_BY_SLUG.get(slug)",
+    "Penguen placeholder fallback stays exact-product scoped",
+  );
   contains(adapter, "BOOK_INDEX_PENGUEN_BESTSELLER_MARKER_MISSING", "page marker guard");
   contains(adapter, "BOOK_INDEX_PENGUEN_RESULT_TOO_SMALL", "minimum result guard");
   contains(collector, "penguenBookIndexAdapter", "collector registration");

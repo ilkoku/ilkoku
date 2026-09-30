@@ -389,7 +389,7 @@ for (const { slug, href } of liveGuides) {
     : page.includes(`activeGenreSlug="${slug}"`);
 
   const checks = [
-    [page.includes('export const dynamic = "force-dynamic";'), "force-dynamic eksik"],
+    [page.includes("export const revalidate = 300;"), "5 dakikalık ISR/revalidate eksik"],
     [cmsConnected, `CMS eğitim kaydı '${slug}' ile okunmuyor`],
     [activeConnected, "sol menü activeGenreSlug bağlantısı eksik"],
     [effectiveSource.includes('type: "faq"'), "SSS bölümü eksik"],
@@ -423,5 +423,5 @@ if (pendingHumanPass) console.log(`[EĞİTİM BOMBE BEKLİYOR] İlk HUMAN_PASS/g
 if (pendingTechnicalReview > 0) console.log(`[EĞİTİM BOMBE BATCH] ${pendingTechnicalReview} teknik canlı tür görsel + canlı kullanıcı kontrolü + HUMAN_PASS bekliyor.`);
 if (nextGenre) console.log(`[EĞİTİM BOMBE SIRADAKİ TEKNİK] ${nextGenre.label} (${nextGenre.slug}) · ${nextGenre.category}.`);
 else console.log("[EĞİTİM BOMBE SIRADAKİ] Tüm GENRES eğitimleri teknik olarak canlı.");
-console.log("Kontrol: GENRES sırası + route + dynamic + CMS + sol menü + 7 slot + Roman-parity pedagojik tamlık + türe özgü derinleştirme + örnek proje + ustalar + SSS + final CTA.");
+console.log("Kontrol: GENRES sırası + route + 5 dakikalık ISR + CMS + sol menü + 7 slot + Roman-parity pedagojik tamlık + türe özgü derinleştirme + örnek proje + ustalar + SSS + final CTA.");
 console.log("Not: Teknik batch hazırlığı HUMAN_PASS değildir. HUMAN_PASS yalnız gerçek kullanıcı onayıyla writing-guide-progress.json dosyasına eklenir.");

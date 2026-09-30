@@ -403,7 +403,7 @@ test("public crawl inventory excludes Cloudflare helper URLs and retired genre r
   );
   assertContains(
     emailLink,
-    'href={`mailto:${siteContact.generalEmail}`}',
-    "client-only direct email upgrade",
+    'window.location.href = `mailto:${siteContact.generalEmail}`',
+    "client-only direct email action",
   );
 });

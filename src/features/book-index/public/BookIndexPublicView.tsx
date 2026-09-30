@@ -205,10 +205,12 @@ export function TurkeyBookIndexView({
             <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
           </p>
         ) : null}
-        <BookIndexViewModeNav current="list" />
-        <Link className={styles.backLink} href="/en-cok-satanlar">
-          ← En Çok Satanlar ana sayfası
-        </Link>
+        <div className={styles.topActions}>
+          <BookIndexViewModeNav current="list" />
+          <Link className={styles.backLink} href="/en-cok-satanlar">
+            ← En Çok Satanlar ana sayfası
+          </Link>
+        </div>
       </header>
 
       <section className={styles.section} id="ranking">
@@ -266,10 +268,12 @@ export function TurkeyBookIndexComparisonView({
             <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
           </p>
         ) : null}
-        <BookIndexViewModeNav current="comparison" />
-        <Link className={styles.backLink} href="/en-cok-satanlar">
-          ← En Çok Satanlar ana sayfası
-        </Link>
+        <div className={styles.topActions}>
+          <BookIndexViewModeNav current="comparison" />
+          <Link className={styles.backLink} href="/en-cok-satanlar">
+            ← En Çok Satanlar ana sayfası
+          </Link>
+        </div>
       </header>
 
       <section className={styles.section} id="karsilastirma">

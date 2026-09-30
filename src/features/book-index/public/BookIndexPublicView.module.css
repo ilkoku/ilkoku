@@ -613,13 +613,32 @@
 
 
 
+.topActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+}
+
 .viewModeNav {
   display: inline-flex;
   gap: 6px;
-  margin-top: 22px;
+  margin-top: 0;
   padding: 5px;
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   border-radius: 14px;
+}
+
+.topActions .backLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.topActions .backLink:hover {
+  text-decoration: underline;
 }
 
 .viewModeLink {
@@ -645,6 +664,12 @@
 }
 
 @media (max-width: 760px) {
+  .topActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
   .viewModeNav {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -653,5 +678,9 @@
 
   .viewModeLink {
     text-align: center;
+  }
+
+  .topActions .backLink {
+    min-height: auto;
   }
 }

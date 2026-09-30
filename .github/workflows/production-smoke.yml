@@ -137,6 +137,26 @@ jobs:
             pace
           }
 
+          check_permanent_redirect() {
+            local url="$1"
+            local expected_location="$2"
+            local headers code location
+            headers="$(mktemp)"
+            code="$(curl --silent --show-error --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
+            echo "$url -> HTTP $code"
+            print_edge_headers "$headers"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              rm -f "$headers"
+              fail_on_edge_block "$code" "$url"
+            fi
+            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
+            rm -f "$headers"
+            echo "Location: ${location:-YOK}"
+            [[ "$code" == "301" || "$code" == "308" ]]
+            [[ "$location" == *"$expected_location"* ]]
+            pace
+          }
+
           check_redirect_and_noindex() {
             local url="$1"
             local expected_location="$2"
@@ -172,7 +192,7 @@ jobs:
           check_body "https://ilkoku.com/site-haritasi" "/yazarlar-icin/kurgu/roman" "/okurlar-icin/okumaya-baslama" "/editorler-icin/egitim/editorluge-baslama"
           check_redirect_and_noindex "https://ilkoku.com/hesabim" "/giris"
           check_status "https://ilkoku.com/eserler" "404"
-          check_status "https://ilkoku.com/en-cok-satanlar/yeni-girisler" "200"
+          check_status "https://ilkoku.com/en-cok-satanlar/cok-satanlara-yeni-girenler" "200"
 
           if [[ "$REQUESTED_MODE" != "deep" ]]; then
             echo "PASS: low-impact production smoke completed with 8 requests."
@@ -184,9 +204,13 @@ jobs:
           # Complete the Book Index trend route family. Yeni Girişler is already
           # covered by minimum mode above, so deep mode verifies the remaining
           # three slugs without repeating the first request.
-          check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/yukselenler" "200"
-          check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/her-yerde-satanlar" "200"
-          check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/uzun-satanlar" "200"
+          check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/cok-satanlarda-yukselenler" "200"
+          check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/birden-fazla-listede-cok-satanlar" "200"
+          check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/uzun-suredir-cok-satanlar" "200"
+          check_permanent_redirect "https://ilkoku.com/en-cok-satanlar/yeni-girisler" "/en-cok-satanlar/cok-satanlara-yeni-girenler"
+          check_permanent_redirect "https://ilkoku.com/en-cok-satanlar/yukselenler" "/en-cok-satanlar/cok-satanlarda-yukselenler"
+          check_permanent_redirect "https://ilkoku.com/en-cok-satanlar/her-yerde-satanlar" "/en-cok-satanlar/birden-fazla-listede-cok-satanlar"
+          check_permanent_redirect "https://ilkoku.com/en-cok-satanlar/uzun-satanlar" "/en-cok-satanlar/uzun-suredir-cok-satanlar"
 
           # Paused-discovery checks remain available, but only in explicitly
           # requested deep mode so every merge does not spend the edge budget.

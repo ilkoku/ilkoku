@@ -474,12 +474,38 @@ export function BookIndexInsightView({
   definition,
   insights,
   lastObservedAt,
+  query = "",
+  sourceCode = "",
 }: {
   definition: BookIndexInsightPageDefinition;
   insights: BookIndexInsights;
   lastObservedAt: Date | null;
+  query?: string;
+  sourceCode?: string;
 }) {
-  const items = getBookIndexInsightItems(insights, definition.key);
+  const allItems = getBookIndexInsightItems(insights, definition.key);
+  const normalizedQuery = query.trim().toLocaleLowerCase("tr-TR");
+  const sourceOptions = [...new Map(
+    allItems.flatMap((item) =>
+      item.sources.map((source) => [source.sourceCode, source.sourceName] as const),
+    ),
+  )]
+    .map(([code, name]) => ({ code, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  const items = allItems.filter((item) => {
+    if (
+      normalizedQuery
+      && !`${item.title} ${item.authorName ?? ""}`
+        .toLocaleLowerCase("tr-TR")
+        .includes(normalizedQuery)
+    ) {
+      return false;
+    }
+    if (sourceCode && !item.sources.some((source) => source.sourceCode === sourceCode)) {
+      return false;
+    }
+    return true;
+  });
   const currentYear = new Date().getFullYear();
   const summary = insightSummary(items);
 
@@ -509,6 +535,40 @@ export function BookIndexInsightView({
         ))}
       </section>
 
+      <form className={styles.insightFilters} method="get">
+        <label className={styles.filterField}>
+          <span>Kitap / yazar ara</span>
+          <input
+            defaultValue={query}
+            name="q"
+            placeholder="Kitap veya yazar"
+            type="search"
+          />
+        </label>
+        <label className={styles.filterField}>
+          <span>Satış sitesi</span>
+          <select defaultValue={sourceCode} name="source">
+            <option value="">Tüm siteler</option>
+            {sourceOptions.map((source) => (
+              <option key={source.code} value={source.code}>
+                {source.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className={styles.clearFilters} type="submit">
+          Filtrele
+        </button>
+        {query || sourceCode ? (
+          <Link
+            className={styles.insightReset}
+            href={`/en-cok-satanlar/${definition.slug}`}
+          >
+            Temizle
+          </Link>
+        ) : null}
+      </form>
+
       <section className={styles.section} id="liste">
         <div className={styles.sectionHeading}>
           <div>
@@ -521,7 +581,8 @@ export function BookIndexInsightView({
           </div>
         </div>
 
-        <ol className={styles.rankingList}>
+        {items.length ? (
+          <ol className={styles.rankingList}>
           {items.map((item, index) => {
             const metric = insightMetric(item);
             return (
@@ -541,7 +602,12 @@ export function BookIndexInsightView({
               </li>
             );
           })}
-        </ol>
+          </ol>
+        ) : (
+          <div className={styles.emptyState}>
+            Bu filtrelerle eşleşen doğrulanmış trend kaydı yok.
+          </div>
+        )}
       </section>
 
       <section className={styles.explainer} aria-labelledby="insight-methodology">

@@ -1,0 +1,69 @@
+name: GSC post-resubmit cohort one-off
+
+on:
+  push:
+    branches:
+      - "diag/gsc-fast-full-inspection-20260930"
+    paths:
+      - ".github/workflows/gsc-post-resubmit-cohort-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect resubmitted hub cohort
+        shell: bash
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        run: |
+          node <<'NODE'
+          const urls = [
+            "https://ilkoku.com/site-haritasi",
+            "https://ilkoku.com/yazarlar-icin",
+            "https://ilkoku.com/yazarlar-icin/kurgu",
+            "https://ilkoku.com/yazarlar-icin/edebiyat",
+            "https://ilkoku.com/editorler-icin",
+            "https://ilkoku.com/nasil-calisir"
+          ];
+          const tr = await fetch("https://oauth2.googleapis.com/token", {
+            method:"POST",
+            headers:{"content-type":"application/x-www-form-urlencoded"},
+            body:new URLSearchParams({
+              client_id:process.env.GSC_OAUTH_CLIENT_ID,
+              client_secret:process.env.GSC_OAUTH_CLIENT_SECRET,
+              refresh_token:process.env.GSC_OAUTH_REFRESH_TOKEN,
+              grant_type:"refresh_token"
+            })
+          });
+          const token=await tr.json();
+          if(!tr.ok||!token.access_token) throw new Error("OAuth failed");
+          for(const inspectionUrl of urls){
+            const r=await fetch("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",{
+              method:"POST",
+              headers:{authorization:`Bearer ${token.access_token}`,"content-type":"application/json"},
+              body:JSON.stringify({inspectionUrl,siteUrl:"sc-domain:ilkoku.com",languageCode:"tr-TR"})
+            });
+            const b=await r.json();
+            const x=b?.inspectionResult?.indexStatusResult||{};
+            console.log("RESULT",JSON.stringify({
+              inspectionUrl,
+              http:r.status,
+              verdict:x.verdict??null,
+              coverageState:x.coverageState??null,
+              lastCrawlTime:x.lastCrawlTime??null,
+              robotsTxtState:x.robotsTxtState??null,
+              indexingState:x.indexingState??null,
+              pageFetchState:x.pageFetchState??null,
+              sitemap:Array.isArray(x.sitemap)?x.sitemap:[],
+              referringUrls:Array.isArray(x.referringUrls)?x.referringUrls:[],
+              userCanonical:x.userCanonical??null,
+              googleCanonical:x.googleCanonical??null
+            }));
+          }
+          NODE

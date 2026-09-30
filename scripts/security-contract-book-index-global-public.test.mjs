@@ -63,7 +63,7 @@ test("global bestseller page is indexable, discoverable and source-native", () =
   );
   contains(
     view,
-    "Sıra numaraları İlkOku tarafından yeniden",
+    "Her sitenin kendi sırası korunur",
     "source rank methodology",
   );
   contains(view, "row.rank", "source rank rendering");

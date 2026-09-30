@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -183,6 +183,30 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     operatorName: "Amazon France",
     phase: "phase_2",
     collectionState: "ready",
+  },
+  {
+    code: "casadellibro-es",
+    name: "Casa del Libro İspanya",
+    market: "ES",
+    countryCode: "ES",
+    baseUrl: "https://www.casadellibro.com",
+    includeInTurkeyIndex: false,
+    independenceGroup: "casadellibro-es",
+    operatorName: "Casa del Libro",
+    phase: "phase_2",
+    collectionState: "researching",
+  },
+  {
+    code: "indigo-ca",
+    name: "Indigo Kanada · Globe and Mail",
+    market: "CA",
+    countryCode: "CA",
+    baseUrl: "https://www.indigo.ca",
+    includeInTurkeyIndex: false,
+    independenceGroup: "indigo-ca",
+    operatorName: "Indigo Books & Music",
+    phase: "phase_2",
+    collectionState: "researching",
   },
 
 

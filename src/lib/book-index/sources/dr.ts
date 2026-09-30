@@ -163,6 +163,73 @@ export function parseDrNewReleases(html: string): BookIndexCollectionResult {
   return { books };
 }
 
+export function parseDrBestsellers(html: string): BookIndexCollectionResult {
+  const pageText = normalizeText(html);
+  if (!pageText.includes("Çok Satanlar")) {
+    throw new Error("BOOK_INDEX_DR_BESTSELLER_MARKER_MISSING");
+  }
+
+  const anchors = listProductAnchors(html);
+  if (anchors.length !== EXACT_EXPECTED_CANDIDATES) {
+    throw new Error(
+      `BOOK_INDEX_DR_BESTSELLER_UNEXPECTED_PAGE_SIZE:${anchors.length}`,
+    );
+  }
+
+  const books = anchors.map((anchor, nativeIndex) => {
+    const next = anchors[nativeIndex + 1];
+    const card = html.slice(anchor.index, next?.index ?? html.length);
+
+    const sameProductTitles = [
+      ...card.matchAll(
+        new RegExp(
+          `<a\\b(?=[^>]*\\bhref=(["'])[^"']*/kitap/[^"']*/urunno(?:=|%3D)${anchor.productId}[^"']*\\1)[^>]*>([\\s\\S]*?)<\\/a>`,
+          "giu",
+        ),
+      ),
+    ]
+      .map((match) => normalizeText(match[2]))
+      .filter(Boolean);
+
+    const imageTag = card.match(/<img\b[^>]*>/iu)?.[0] ?? "";
+    const imageAlt = attributeValue(imageTag, "alt");
+    const imageSrc = attributeValue(imageTag, "src");
+    const title =
+      sameProductTitles.sort((left, right) => right.length - left.length)[0]
+      || imageAlt;
+
+    const authors = [...new Set(linkedTexts(card, "yazar"))];
+    const publishers = [...new Set(linkedTexts(card, "yayinevi"))];
+
+    if (!title) {
+      throw new Error("BOOK_INDEX_DR_BESTSELLER_INVALID_ITEM");
+    }
+
+    return {
+      sourceKey: anchor.productId,
+      sourceExternalId: anchor.productId,
+      title,
+      authorName: authors.length > 0 ? authors.join(";") : null,
+      publisherName: publishers.length === 1 ? publishers[0] : null,
+      productUrl: absoluteUrl(anchor.href),
+      imageUrl: imageSrc ? absoluteUrl(imageSrc) : null,
+      rank: nativeIndex + 1,
+      currency: "TRY",
+    };
+  });
+
+  if (new Set(books.map((book) => book.sourceKey)).size !== books.length) {
+    throw new Error("BOOK_INDEX_DR_BESTSELLER_DUPLICATE_SOURCE_KEY");
+  }
+
+  if (books.some((book, index) => book.rank !== index + 1)) {
+    throw new Error("BOOK_INDEX_DR_BESTSELLER_NATIVE_ORDER_MISMATCH");
+  }
+
+  return { books };
+}
+
+
 /**
  * Research step 1:
  * Extract candidate product URLs from D&R's native "Çok Satanlar" surface.
@@ -309,47 +376,7 @@ async function fetchDrHtml(url: string) {
 }
 
 async function collectDrWeeklyBestsellers(sourceUrl: string) {
-  const candidates = parseDrBestsellerCandidateUrls(
-    await fetchDrHtml(sourceUrl),
-  );
-  const ranked: BookIndexCollectedBook[] = [];
-  const batchSize = 6;
-
-  for (let offset = 0; offset < candidates.length; offset += batchSize) {
-    const batch = candidates.slice(offset, offset + batchSize);
-    const parsed = await Promise.all(
-      batch.map(async (productUrl) => {
-        const html = await fetchDrHtml(productUrl);
-        try {
-          return parseDrWeeklyRankedProduct(html, productUrl);
-        } catch (error) {
-          if (
-            error instanceof Error
-            && error.message === "BOOK_INDEX_DR_WEEKLY_RANK_BADGE_MISSING"
-          ) {
-            return null;
-          }
-          throw error;
-        }
-      }),
-    );
-
-    ranked.push(
-      ...parsed.filter(
-        (book): book is BookIndexCollectedBook => book !== null,
-      ),
-    );
-  }
-
-  const result = buildDrWeeklyBestsellerResearchResult(ranked);
-  if (
-    result.books.length < 10
-    || result.books.some((book) => book.rank < 1 || book.rank > 40)
-  ) {
-    throw new Error("BOOK_INDEX_DR_WEEKLY_RANK_SET_INVALID");
-  }
-
-  return result;
+  return parseDrBestsellers(await fetchDrHtml(sourceUrl));
 }
 
 export const drBookIndexAdapter: BookIndexSourceAdapter = {
@@ -369,7 +396,6 @@ export const drBookIndexAdapter: BookIndexSourceAdapter = {
   },
 };
 
-// Bestseller rank is accepted only from the explicit product-detail
-// "Haftanın En Çok Satan N. Kitabı" badge. Catalog position is never rank.
-// New Releases preserves the native /en-yeniler card order only; no date
-// derivation or synthetic recency score is introduced.
+// Best Sellers preserves the native order of D&R's dedicated Çok Satanlar page.
+// New Releases preserves the native /en-yeniler card order.
+// No synthetic cross-source score or inferred date-based ranking is introduced.

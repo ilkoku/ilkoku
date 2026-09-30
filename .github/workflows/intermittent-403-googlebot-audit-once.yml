@@ -1,0 +1,84 @@
+name: Intermittent 403 Googlebot audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/intermittent-403-googlebot-20260930"
+    paths:
+      - ".github/workflows/intermittent-403-googlebot-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe browser and Googlebot responses repeatedly
+        shell: bash
+        run: |
+          node <<'NODE'
+          const urls = [
+            "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+            "https://ilkoku.com/editorler-icin",
+            "https://ilkoku.com/nasil-calisir",
+            "https://ilkoku.com/yazarlar-icin/kurgu/roman"
+          ];
+          const uas = {
+            browser: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/152 Safari/537.36",
+            googlebot: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+          };
+          const rows=[];
+          for (let round=1; round<=12; round++) {
+            for (const [uaName,ua] of Object.entries(uas)) {
+              for (const url of urls) {
+                const started=Date.now();
+                try {
+                  const res=await fetch(url,{
+                    redirect:"follow",
+                    headers:{
+                      "user-agent":ua,
+                      accept:"text/html,application/xhtml+xml"
+                    },
+                    signal:AbortSignal.timeout(20000)
+                  });
+                  const body=await res.text();
+                  const row={
+                    round,ua:uaName,url,status:res.status,ms:Date.now()-started,
+                    bytes:Buffer.byteLength(body),
+                    server:res.headers.get("server"),
+                    cfRay:res.headers.get("cf-ray"),
+                    cfMitigated:res.headers.get("cf-mitigated"),
+                    cfCacheStatus:res.headers.get("cf-cache-status"),
+                    retryAfter:res.headers.get("retry-after"),
+                    cacheControl:res.headers.get("cache-control"),
+                    challenge:/cf-chl|captcha|challenge-platform|attention required|just a moment/i.test(body),
+                    bodyPrefix:res.status===403?body.replace(/\s+/g," ").slice(0,600):""
+                  };
+                  rows.push(row);
+                  console.log("ROW",JSON.stringify(row));
+                } catch(error) {
+                  const row={round,ua:uaName,url,error:String(error?.message||error),ms:Date.now()-started};
+                  rows.push(row);
+                  console.log("ROW",JSON.stringify(row));
+                }
+                await new Promise(r=>setTimeout(r,180));
+              }
+            }
+          }
+          const summary={};
+          for (const uaName of Object.keys(uas)) {
+            const r=rows.filter(x=>x.ua===uaName);
+            summary[uaName]={
+              total:r.length,
+              errors:r.filter(x=>x.error).length,
+              s200:r.filter(x=>x.status===200).length,
+              s403:r.filter(x=>x.status===403).length,
+              s429:r.filter(x=>x.status===429).length,
+              other:r.filter(x=>x.status && ![200,403,429].includes(x.status)).length,
+              challenges:r.filter(x=>x.challenge).length
+            };
+          }
+          console.log("SUMMARY",JSON.stringify(summary));
+          NODE

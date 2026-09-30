@@ -23,6 +23,8 @@ test("global bestseller public page reads only the approved source lists", () =>
     "readings-au-monthly",
     "spiegel-de-fiction-hardcover-weekly",
     "amazon-fr-live",
+    "amazon-es-live",
+    "amazon-ca-live",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -63,6 +65,32 @@ test("Spain and Canada research sources stay fail-closed until ranked collectors
 
   notContains(model, '"casadellibro-es-bestsellers-research"', "Spain is not public before rank verification");
   notContains(model, '"indigo-ca-globe-mail-weekly-research"', "Canada is not public before rank verification");
+});
+
+
+test("Spain and Canada Amazon bestseller sources are fail-closed and source-native", () => {
+  const spain = source("src/lib/book-index/sources/amazon-es.ts");
+  const canada = source("src/lib/book-index/sources/amazon-ca.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  for (const [label, adapter, prefix] of [
+    ["Spain", spain, "BOOK_INDEX_AMAZON_ES"],
+    ["Canada", canada, "BOOK_INDEX_AMAZON_CA"],
+  ]) {
+    contains(adapter, 'const EXPECTED_BOOKS = 30', `${label} exact Top 30 guard`);
+    contains(adapter, "p13n-asin-index-", `${label} Amazon item parser`);
+    contains(adapter, "zg-bdg-text", `${label} Amazon native rank parser`);
+    contains(adapter, `${prefix}_RANK_ORDER_MISMATCH`, `${label} rank guard`);
+  }
+
+  contains(collector, "amazonSpainBookIndexAdapter", "Spain collector registration");
+  contains(collector, "amazonCanadaBookIndexAdapter", "Canada collector registration");
+  contains(sources, 'code: "amazon-es"', "Spain live source registry");
+  contains(sources, 'code: "amazon-ca"', "Canada live source registry");
+  contains(lists, 'code: "amazon-es-live"', "Spain live list registry");
+  contains(lists, 'code: "amazon-ca-live"', "Canada live list registry");
 });
 
 
@@ -201,8 +229,13 @@ test("global bestseller Turkish titles come only from matched Turkey catalogue r
   contains(view, "row.turkishTitle", "verified Turkish title is exposed in the public world table");
   contains(
     view,
-    "Türkiye kaynaklarında doğrulanmış eşleşmesi bulunan",
+    "Türkiye kaynaklarında aynı esere doğrulanmış biçimde",
     "reader-facing copy explains when a Turkish title is shown",
+  );
+  contains(
+    view,
+    "otomatik çeviri resmî kitap adı gibi sunulmaz",
+    "world table distinguishes verified Turkish publication titles from automatic translations",
   );
 });
 

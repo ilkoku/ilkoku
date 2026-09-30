@@ -1,0 +1,70 @@
+name: Full HTTP behavior audit one-off
+on:
+  push:
+    branches: ["diag/full-http-behavior-20260930"]
+    paths: [".github/workflows/full-http-behavior-audit-once.yml"]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Audit all sitemap URLs
+        shell: bash
+        run: |
+          node <<'NODE'
+          const sm=await fetch("https://ilkoku.com/sitemap.xml",{cache:"no-store"});
+          const xml=await sm.text();
+          const urls=[...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]))];
+          const rows=[]; let cursor=0;
+          async function worker(){
+            while(true){
+              const i=cursor++;
+              if(i>=urls.length) return;
+              const url=urls[i];
+              const t=Date.now();
+              try{
+                const r=await fetch(url,{redirect:"follow",headers:{
+                  "user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+                  accept:"text/html,application/xhtml+xml"
+                },signal:AbortSignal.timeout(30000)});
+                const b=await r.arrayBuffer();
+                rows[i]={
+                  url,status:r.status,ms:Date.now()-t,bytes:b.byteLength,
+                  cacheControl:r.headers.get("cache-control")||"",
+                  etag:r.headers.get("etag")||"",
+                  lastModified:r.headers.get("last-modified")||"",
+                  cfCache:r.headers.get("cf-cache-status")||"",
+                  nextCache:r.headers.get("x-nextjs-cache")||"",
+                  contentType:r.headers.get("content-type")||""
+                };
+              }catch(e){rows[i]={url,error:String(e),ms:Date.now()-t};}
+            }
+          }
+          await Promise.all(Array.from({length:8},worker));
+          const groups={};
+          for(const r of rows){
+            const key=r.error?"ERROR":
+              /private|no-store|no-cache/i.test(r.cacheControl)?"PRIVATE_NOSTORE":
+              /s-maxage=31536000/.test(r.cacheControl)?"PUBLIC_1Y":
+              /s-maxage=300/.test(r.cacheControl)?"PUBLIC_5M":
+              r.cacheControl||"OTHER";
+            (groups[key]??=[]).push(r);
+          }
+          const sizes=rows.filter(r=>!r.error).map(r=>r.bytes).sort((a,b)=>a-b);
+          const times=rows.filter(r=>!r.error).map(r=>r.ms).sort((a,b)=>a-b);
+          const q=(a,p)=>a[Math.min(a.length-1,Math.floor((a.length-1)*p))]||0;
+          console.log("SUMMARY",JSON.stringify({
+            count:rows.length,
+            errors:rows.filter(r=>r.error).length,
+            non200:rows.filter(r=>!r.error&&r.status!==200).length,
+            groupCounts:Object.fromEntries(Object.entries(groups).map(([k,v])=>[k,v.length])),
+            bytes:{min:sizes[0]||0,p50:q(sizes,.5),p90:q(sizes,.9),max:sizes.at(-1)||0},
+            ms:{min:times[0]||0,p50:q(times,.5),p90:q(times,.9),max:times.at(-1)||0},
+            noEtag:rows.filter(r=>!r.error&&!r.etag).length,
+            noLastModified:rows.filter(r=>!r.error&&!r.lastModified).length
+          }));
+          for(const [k,v] of Object.entries(groups)) console.log("GROUP",JSON.stringify({key:k,urls:v.map(x=>x.url)}));
+          for(const r of rows.filter(r=>!r.error).sort((a,b)=>b.bytes-a.bytes).slice(0,20)) console.log("LARGE",JSON.stringify(r));
+          NODE

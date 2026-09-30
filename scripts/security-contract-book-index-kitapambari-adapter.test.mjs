@@ -19,6 +19,21 @@ test("Kitap Ambari research adapter preserves a bounded native Top 100 contract"
   contains(adapter, 'data-prd-barcode=["\']([^"\']*)["\']', "barcode metadata");
   contains(adapter, '/^(?:978|979)[0-9]{10}$/u', "ISBN-13 prefix validation");
   contains(adapter, "sourceKey: validIsbn13 || productId", "product-id fallback for non-ISBN barcode");
+  contains(
+    adapter,
+    '["9786258992090", "Ebru Asya"]',
+    "Sessiz Taşıyıcılar exact-ISBN author fallback",
+  );
+  contains(
+    adapter,
+    '["9786258483239", "Yasemin Tuzcu Şahin"]',
+    "3D Gözlüklü Horoz Zo exact-ISBN author fallback",
+  );
+  contains(
+    adapter,
+    "VERIFIED_AUTHOR_BY_ISBN13.get(validIsbn13)",
+    "missing native writer metadata may use only an exact verified ISBN fallback",
+  );
   contains(adapter, "rank: rankOffset + index + 1", "DOM order maps to bounded native page order");
   contains(adapter, 'url.searchParams.set("mod_id", "41")', "official bestseller module query");
   contains(adapter, 'url.searchParams.set("page", String(page))', "native pagination");

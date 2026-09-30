@@ -377,6 +377,33 @@ export function parseKitapStoreProductIsbn13(html: string) {
   return /^(?:978|979)[0-9]{10}$/u.test(normalized) ? normalized : null;
 }
 
+export function parseKitapStoreProductAuthorName(html: string) {
+  const relatedAuthorStart = html.search(
+    /<div\b[^>]*class=["'][^"']*\bKisiAdi\b[^"']*["'][^>]*>/iu,
+  );
+  const productHtml =
+    relatedAuthorStart >= 0 ? html.slice(0, relatedAuthorStart) : html;
+
+  const names = [
+    ...productHtml.matchAll(
+      /<a\b(?=[^>]*\bhref=["']\/kisi\/[^"']+["'])(?=[^>]*\bitemprop=["']url["'])[^>]*>([\s\S]*?)<\/a>/giu,
+    ),
+  ]
+    .map((match) =>
+      (
+        attributeValue(match[0], "title")
+        || decodeBookIndexHtml(match[1] ?? "")
+      )
+        .replace(/<[^>]+>/gu, " ")
+        .replace(/\s+/gu, " ")
+        .trim(),
+    )
+    .filter(Boolean);
+
+  const uniqueNames = [...new Set(names)];
+  return uniqueNames.length ? uniqueNames.join(", ") : null;
+}
+
 async function enrichMissingAuthorIdentity(
   result: BookIndexCollectionResult,
 ): Promise<BookIndexCollectionResult> {
@@ -390,7 +417,10 @@ async function enrichMissingAuthorIdentity(
     throw new Error("BOOK_INDEX_KITAPSTORE_IDENTITY_ENRICHMENT_TOO_LARGE");
   }
 
-  const isbnByIndex = new Map<number, string>();
+  const detailByIndex = new Map<
+    number,
+    { isbn13: string | null; authorName: string | null }
+  >();
   let nextCandidate = 0;
 
   const workers = Array.from(
@@ -402,15 +432,18 @@ async function enrichMissingAuthorIdentity(
         if (candidateIndex >= candidates.length) return;
 
         const candidate = candidates[candidateIndex];
-        const isbn13 = parseKitapStoreProductIsbn13(
-          await fetchHtml(candidate.book.productUrl),
-        );
+        const html = await fetchHtml(candidate.book.productUrl);
+        const isbn13 = parseKitapStoreProductIsbn13(html);
+        const authorName = parseKitapStoreProductAuthorName(html);
 
-        if (!isbn13) {
+        if (!isbn13 && !authorName) {
           throw new Error("BOOK_INDEX_KITAPSTORE_IDENTITY_METADATA_MISSING");
         }
 
-        isbnByIndex.set(candidate.index, isbn13);
+        detailByIndex.set(candidate.index, {
+          isbn13,
+          authorName,
+        });
       }
     },
   );
@@ -418,14 +451,16 @@ async function enrichMissingAuthorIdentity(
   await Promise.all(workers);
 
   return {
-    books: result.books.map((book, index) =>
-      isbnByIndex.has(index)
-        ? {
-            ...book,
-            isbn13: isbnByIndex.get(index) ?? null,
-          }
-        : book,
-    ),
+    books: result.books.map((book, index) => {
+      const detail = detailByIndex.get(index);
+      if (!detail) return book;
+
+      return {
+        ...book,
+        authorName: detail.authorName || book.authorName || null,
+        isbn13: detail.isbn13 || book.isbn13 || null,
+      };
+    }),
   };
 }
 
@@ -468,11 +503,13 @@ export const kitapStoreBookIndexResearchAdapter: BookIndexSourceAdapter = {
         ),
       );
 
-      return combineKitapStoreNewReleasePages(
-        htmlPages.map((html, index) =>
-          parseKitapStoreNewReleasePage(
-            html,
-            index * EXPECTED_PAGE_BOOKS,
+      return enrichMissingAuthorIdentity(
+        combineKitapStoreNewReleasePages(
+          htmlPages.map((html, index) =>
+            parseKitapStoreNewReleasePage(
+              html,
+              index * EXPECTED_PAGE_BOOKS,
+            ),
           ),
         ),
       );

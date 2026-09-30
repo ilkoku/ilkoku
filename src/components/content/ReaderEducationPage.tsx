@@ -135,7 +135,7 @@ export function ReaderEducationPage({ category, guide }: { category: ReaderEduca
           <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#b7a8ff]">İlkOku’da uygula</span>
           <h2 id={`${category.slug}-ilkoku`} className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">{category.application.heading}</h2>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[#d8d2e8]">{category.application.text}</p>
-          <Link className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#211746] shadow-sm transition hover:-translate-y-0.5" href={category.application.href}>{category.application.label} →</Link>
+          <Link className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#211746] shadow-sm transition hover:-translate-y-0.5" href={category.application.href} rel="nofollow">{category.application.label} →</Link>
           <ReaderVisual guide={guide} slotKey="finalCta" fallbackAlt={`${category.title} eğitimi kapanış görseli`} />
         </section>
       </article>

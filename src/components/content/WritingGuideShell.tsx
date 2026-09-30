@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import LiveHomepageFooter from "@/features/homepage/live-footer";
+import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader";
 import { getGenresByCategory, type GenreCategory } from "@/lib/genres";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
@@ -107,6 +108,7 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
 
   return (
     <>
+    <PublicSiteHeader />
     <div className="bg-[#f8f6f0] text-[#171426]">
       <nav aria-label="Yazarlık rehberi kategorileri" className="border-b border-[#2a2338]/10 bg-[#fffdf8] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto pb-1">

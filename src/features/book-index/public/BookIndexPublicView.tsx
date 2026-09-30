@@ -64,7 +64,7 @@ export function BookIndexOverviewView({
 
   return (
     <main className={styles.page}>
-      <header className={`${styles.hero} ${styles.turkeyHero}`}>
+      <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi</span>
         <h1>En Çok Satan Kitaplar {currentYear}</h1>
         <p>
@@ -254,7 +254,7 @@ export function TurkeyBookIndexComparisonView({
 
   return (
     <main className={styles.page}>
-      <header className={styles.hero}>
+      <header className={`${styles.hero} ${styles.turkeyHero}`}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>En Çok Satanlar Karşılaştırma</h1>
         <p>

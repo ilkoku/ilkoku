@@ -137,6 +137,56 @@
 
 
 
+.insightSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 34px;
+}
+
+.insightSummaryCard {
+  display: grid;
+  gap: 7px;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.insightSummaryCard span {
+  color: var(--muted, #60646c);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.insightSummaryCard strong {
+  font-size: 1.35rem;
+  line-height: 1.15;
+}
+
+.insightEvidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.insightEvidenceChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 999px;
+  color: #4f4a69;
+  background: rgba(248, 246, 255, 0.82);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
 .rankingList {
   display: grid;
   gap: 10px;
@@ -350,6 +400,11 @@
   .sectionHeading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .insightSummaryGrid {
+    grid-template-columns: 1fr;
+    margin-bottom: 24px;
   }
 
   .rankingItem {

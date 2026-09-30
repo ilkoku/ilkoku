@@ -32,9 +32,11 @@ test("Book Index analytics respects consent and avoids GTM/GA4 duplicate deliver
   );
 });
 
-test("Book Index analytics records view and internal navigation events", () => {
+test("Book Index analytics records views and shared-family navigation events", () => {
   const analytics = source("src/features/book-index/public/BookIndexAnalytics.tsx");
-  const layout = source("src/app/en-cok-satanlar/layout.tsx");
+  const bestsellerLayout = source("src/app/en-cok-satanlar/layout.tsx");
+  const newReleaseLayout = source("src/app/yeni-cikanlar/layout.tsx");
+  const sectionNav = source("src/features/book-index/public/BookIndexSectionNav.tsx");
 
   contains(analytics, 'event: "book_index_view"', "Book Index view event");
   contains(
@@ -44,9 +46,21 @@ test("Book Index analytics records view and internal navigation events", () => {
   );
   contains(
     analytics,
-    'destination.pathname.startsWith("/en-cok-satanlar")',
-    "Book Index click scope",
+    'pathname === "/yeni-cikanlar"',
+    "Yeni Çıkanlar joins the Book Index analytics family",
+  );
+  contains(
+    analytics,
+    'return "new_releases"',
+    "Yeni Çıkanlar has a dedicated analytics surface",
   );
   contains(analytics, '"ilkoku:consent-changed"', "late consent recovery");
-  contains(layout, "<BookIndexAnalytics />", "Book Index layout tracker");
+  contains(bestsellerLayout, "<BookIndexAnalytics />", "bestseller layout tracker");
+  contains(newReleaseLayout, "<BookIndexAnalytics />", "new-release layout tracker");
+  contains(newReleaseLayout, "<PublicSiteFrame>", "new-release public site frame");
+  contains(newReleaseLayout, "<PublicTrustFooter />", "new-release public footer");
+  contains(sectionNav, 'href="/en-cok-satanlar"', "Book Index overview navigation");
+  contains(sectionNav, 'href="/en-cok-satanlar/turkiye"', "Turkey navigation");
+  contains(sectionNav, 'href="/yeni-cikanlar"', "new-release navigation");
+  contains(sectionNav, 'href="/en-cok-satanlar/dunya"', "global navigation");
 });

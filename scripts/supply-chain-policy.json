@@ -2,21 +2,29 @@
   "schemaVersion": 1,
   "genericAuditGate": {
     "command": "node scripts/audit-high-dependencies.mjs",
-    "blockedSeverities": ["high", "critical"],
+    "blockedSeverities": [
+      "high",
+      "critical"
+    ],
     "source": "npm audit"
   },
   "advisoryRules": [
     {
       "package": "brace-expansion",
       "severity": "high",
-      "advisories": ["CVE-2026-14257", "CVE-2026-69152"],
+      "advisories": [
+        "CVE-2026-14257",
+        "CVE-2026-69152",
+        "CVE-2026-102276",
+        "CVE-2026-102278"
+      ],
       "fixedByMajor": {
-        "1": "1.1.18",
-        "2": "2.1.4",
-        "3": "3.0.6",
-        "5": "5.0.9"
+        "1": "1.1.20",
+        "2": "2.1.6",
+        "3": "3.0.8",
+        "5": "5.0.11"
       },
-      "note": "CVE-2026-14257 bazı tarayıcılarda düz <=5.0.7 aralığıyla raporlanabilir. Hat bazlı backport sürümleri ve takip eden CVE-2026-69152 birlikte değerlendirilir; politika dosyasında tanımlanmayan major sürüm fail-closed kabul edilir."
+      "note": "Hat bazlı backport eşikleri kullanılır. 28 Eylül 2026 tarihli CVE-2026-102276 ve CVE-2026-102278 yüksek seviye DoS açıkları önceki 1.1.18 / 5.0.9 eşiklerini geçersiz kıldı; tanımlanmayan major sürüm fail-closed kabul edilir."
     }
   ],
   "deploymentBuildContract": {
@@ -33,16 +41,14 @@
     "note": "Hostinger production bağımlılıklarını kurduktan sonra prisma migrate/generate ve Next.js production build çalıştırır. Bu paketler uygulama runtime kodu olmasalar da deploy build sözleşmesinin zorunlu girdileridir; devDependencies altına taşınmaları canlı dağıtımı fail-closed durdurur."
   },
   "manifestHygiene": {
-    "buildOnlyRootDependencies": ["prisma", "@tailwindcss/postcss"],
-    "buildOnlyRootPrefixes": ["@types/"],
+    "buildOnlyRootDependencies": [
+      "prisma",
+      "@tailwindcss/postcss"
+    ],
+    "buildOnlyRootPrefixes": [
+      "@types/"
+    ],
     "note": "Build/type araçlarının root dependencies altında tutulması otomatik güvenlik açığı değildir. Yalnız deploymentBuildContract tarafından zorunlu tutulmayan adaylar production install yüzeyini büyüttüğü için inceleme WARN'ı üretir."
   },
-  "scannerDiscrepancies": [
-    {
-      "scanner": "Hostinger",
-      "package": "brace-expansion@1.1.18",
-      "classification": "patched-development-instance",
-      "detail": "Hostinger'ın CVE-2026-14257 için düz <=5.0.7 aralığı kullanan sinyali 1.x backport düzeltmesini yanlış pozitif işaretleyebilir. Repo politikası 1.1.18'i yamalı eşik olarak doğrular ve instance development-only ise bunu ayrıca gösterir."
-    }
-  ]
+  "scannerDiscrepancies": []
 }

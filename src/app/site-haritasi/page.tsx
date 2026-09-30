@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SITE_MAP_PAGES, type SiteMapPage } from "@/lib/cms-header-navigation";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -11,7 +10,7 @@ import { publicLegalLinks } from "@/lib/public-site-navigation";
 const baseUrl = "https://ilkoku.com";
 const title = "Site Haritası | İlkOku";
 const description =
-  "İlkOku'nun herkese açık platform, eğitim, güven, destek, yasal ve yayımlanmış eser sayfalarına tek yerden ulaşın.";
+  "İlkOku'nun herkese açık platform, Kitap Endeksi, eğitim, güven, destek, yasal ve yayımlanmış eser sayfalarına tek yerden ulaşın.";
 
 export const metadata: Metadata = {
   title,
@@ -109,17 +108,13 @@ async function getPublicWorkLinks(): Promise<PublicWorkLink[]> {
 }
 
 export default async function PublicSiteMapPage() {
-  const [cmsPages, publicWorks, bookIndexContext] = await Promise.all([
+  const [cmsPages, publicWorks] = await Promise.all([
     loadPublishedCmsSiteMapPages(),
     getPublicWorkLinks(),
-    getBookIndexPublicPageContext(30).catch(() => null),
   ]);
 
-  const bookIndexPublished = Boolean(bookIndexContext);
   const codeOwnedPages = SITE_MAP_PAGES.filter(
-    (page) =>
-      page.indexable !== false
-      && (bookIndexPublished || page.id !== "book-index"),
+    (page) => page.indexable !== false,
   );
   const knownHrefs = new Set([
     ...codeOwnedPages.map((page) => page.href),
@@ -131,10 +126,7 @@ export default async function PublicSiteMapPage() {
       (page) =>
         page.indexable !== false
         && !knownHrefs.has(page.href)
-        && (
-          bookIndexPublished
-          || !page.href.startsWith("/en-cok-satanlar")
-        ),
+      ,
     )
     .map((page) => ({ href: page.href, label: page.label }));
 
@@ -164,9 +156,9 @@ export default async function PublicSiteMapPage() {
           Site Haritası
         </h1>
         <p className="mt-5 text-base leading-8 text-[#625b6d] sm:text-lg">
-          İlkOku&apos;nun herkese açık sayfalarına, yazarlık ve okurluk eğitimlerine, editörlük okuluna,
-          güven ve yasal bilgilere tek yerden ulaş. Bu sayfa gerçek HTML bağlantılarıyla public
-          içerik yüzeyini birbirine bağlar.
+          İlkOku&apos;nun herkese açık platform sayfalarına, Kitap Endeksi&apos;ne, yazarlık ve
+          okurluk eğitimlerine, editörlük okuluna, güven, destek ve yasal bilgilere tek yerden ulaş.
+          Aşağıdaki bağlantılar güncel herkese açık içerik alanlarını doğrudan birbirine bağlar.
         </p>
       </header>
 
@@ -183,7 +175,8 @@ export default async function PublicSiteMapPage() {
               {group.links.map((link) => (
                 <li key={link.href}>
                   <Link
-                    className="block rounded-xl border border-black/[0.05] bg-[#faf8f3] px-4 py-3 text-sm font-bold leading-6 text-[#4f4759] transition hover:border-[#6b52c7]/25 hover:bg-[#f3efff] hover:text-[#4b2bc5]"
+                    className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] hover:text-[#3f25a8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
+                    style={{ color: "#3f3657" }}
                     href={link.href}
                   >
                     {link.label}
@@ -200,7 +193,8 @@ export default async function PublicSiteMapPage() {
             {publicLegalLinks.map((link) => (
               <li key={link.href}>
                 <Link
-                  className="block rounded-xl border border-black/[0.05] bg-[#faf8f3] px-4 py-3 text-sm font-bold leading-6 text-[#4f4759] transition hover:border-[#6b52c7]/25 hover:bg-[#f3efff] hover:text-[#4b2bc5]"
+                  className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] hover:text-[#3f25a8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
+                    style={{ color: "#3f3657" }}
                   href={link.href}
                 >
                   {link.label}
@@ -219,7 +213,8 @@ export default async function PublicSiteMapPage() {
               {cmsOnlyPages.map((link) => (
                 <li key={link.href}>
                   <Link
-                    className="block rounded-xl border border-black/[0.05] bg-[#faf8f3] px-4 py-3 text-sm font-bold leading-6 text-[#4f4759] transition hover:border-[#6b52c7]/25 hover:bg-[#f3efff] hover:text-[#4b2bc5]"
+                    className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] hover:text-[#3f25a8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
+                    style={{ color: "#3f3657" }}
                     href={link.href}
                   >
                     {link.label}
@@ -233,7 +228,7 @@ export default async function PublicSiteMapPage() {
         {publicWorks.length > 0 ? (
           <section className="rounded-[1.8rem] border border-[#6b52c7]/12 bg-[#f2efff] p-6 shadow-[0_14px_44px_rgba(91,53,221,0.06)] sm:p-7 lg:col-span-2">
             <h2 className="font-serif text-2xl font-semibold tracking-[-0.025em] text-[#211746]">
-              Yayımlanmış public eserler
+              Yayımlanmış eserler
             </h2>
             <p className="mt-2 text-sm leading-7 text-[#625b6d]">
               Arama motorlarına açık, yayında olan eser sayfaları.
@@ -242,7 +237,8 @@ export default async function PublicSiteMapPage() {
               {publicWorks.map((link) => (
                 <li key={link.href}>
                   <Link
-                    className="block rounded-xl border border-[#6b52c7]/10 bg-white px-4 py-3 text-sm font-bold leading-6 text-[#4f4759] transition hover:border-[#6b52c7]/30 hover:text-[#4b2bc5]"
+                    className="block rounded-xl border border-[#6b52c7]/14 bg-white px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/35 hover:bg-[#f8f6ff] hover:text-[#3f25a8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
+                    style={{ color: "#3f3657" }}
                     href={link.href}
                   >
                     {link.label}

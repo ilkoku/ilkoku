@@ -275,6 +275,11 @@ test("public HTML site map exposes the complete crawl discovery graph", () => {
   assertContains(page, "prisma.work.findMany", "published public work discovery links");
   assertContains(page, "isSearchIndexExcludedPublicWorkSlug", "public work search safety exclusion");
   assertContains(page, "publicLegalLinks", "legal discovery links");
+  assertContains(page, 'page.indexable !== false', "all indexable code-owned public routes stay discoverable");
+  assertNotContains(page, "getBookIndexPublicPageContext", "HTML site map does not hide stable Book Index routes behind transient data availability");
+  assertContains(page, 'style={{ color: "#3f3657" }}', "site map links keep explicit readable foreground contrast");
+  assertContains(page, "Kitap Endeksi", "site map copy names the current Book Index surface");
+  assertNotContains(page, "public içerik yüzeyini", "site map avoids internal technical wording");
   assertContains(navigation, '{ href: "/site-haritasi", label: "Site Haritası" }', "site map footer/support link");
   assertContains(sitemap, 'url: `${baseUrl}/site-haritasi`', "XML sitemap includes HTML site map");
 

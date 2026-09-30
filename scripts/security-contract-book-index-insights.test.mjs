@@ -126,7 +126,7 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   contains(insights, "rankGain", "source-level rank gain");
   contains(insights, "sourceName: getBookIndexSource", "human-readable source names");
   contains(view, "insightEvidence(item)", "trend evidence is rendered");
-  contains(view, "Yeni kaynak görünümü", "new-entry summary metric");
+  contains(view, "Yeni liste girişi", "new-entry summary metric");
   contains(
     view,
     "Soldaki sıra satış sırası değildir.",
@@ -144,7 +144,7 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   );
   contains(
     view,
-    "Önce en uzun doğrulanmış gözlem süresi",
+    "Önce ilk ve son doğrulanmış gözlem arasındaki süre",
     "long-seller page explains its analysis ordering",
   );
   contains(
@@ -153,8 +153,22 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
     "new-entry cards label the native entry-rank metric clearly",
   );
   contains(view, "Toplam sıra kazanımı", "riser summary metric");
+  contains(view, "Liste yükselişi", "riser summary uses public list wording");
   contains(view, "En geniş görünürlük", "multi-source summary metric");
+  contains(view, "bağımsız işletmeci", "multi-source summary avoids ambiguous source wording");
+  contains(view, "Tarihsel gözlemli kitap", "long-seller count label");
+  contains(view, "En uzun gözlem aralığı", "long-seller duration label");
   contains(view, "Toplam gözlem", "long-seller summary metric");
+  contains(
+    view,
+    "kesintisiz listede kalma süresi değildir",
+    "long-seller ordering does not overstate continuity",
+  );
+  contains(
+    view,
+    "kesintisiz biçimde çok satan listesinde kaldığını göstermez",
+    "long-seller explainer states the observation-interval limitation",
+  );
   contains(view, 'name="q"', "book/author search filter");
   contains(view, 'name="source"', "source filter");
   contains(page, "searchParams", "trend filters are server-side URL parameters");

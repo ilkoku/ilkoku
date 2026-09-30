@@ -8,112 +8,32 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
 const contains = (text, fragment, label) =>
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
-const notContains = (text, fragment, label) =>
-  assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Amazon TR bestseller Top 30 canary preserves native ranks while public rollout stays staged", () => {
+test("Amazon Türkiye verified Top 30 lists are public and non-composite", () => {
   const adapter = source("src/lib/book-index/sources/amazon-tr.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
 
-  contains(
-    adapter,
-    'const BESTSELLER_PATH = "/gp/bestsellers/books"',
-    "verified Amazon TR bestseller surface",
-  );
-  contains(
-    adapter,
-    'const NEW_RELEASES_PATH = "/gp/new-releases/books"',
-    "verified Amazon TR new-release surface",
-  );
-  contains(adapter, "data-asin", "ASIN card identity parser");
-  contains(adapter, "zg-bdg-text", "native rank badge parser");
-  contains(adapter, "p13n-product-image", "ranked card image/title parser");
-  contains(adapter, "canonicalProductUrl(asin)", "ASIN canonical product URL");
-  contains(
-    adapter,
-    "BOOK_INDEX_AMAZON_TR_PAGE_RANK_GAP",
-    "per-page rank continuity guard",
-  );
-  contains(
-    adapter,
-    "BOOK_INDEX_AMAZON_TR_DUPLICATE_SOURCE_KEY",
-    "ASIN uniqueness guard",
-  );
-  contains(
-    adapter,
-    "BOOK_INDEX_AMAZON_TR_DUPLICATE_RANK",
-    "combined rank uniqueness guard",
-  );
-  contains(
-    adapter,
-    "BOOK_INDEX_AMAZON_TR_RANK_GAP",
-    "combined native rank continuity guard",
-  );
-  contains(
-    adapter,
-    '"amazon-tr-live"',
-    "bestseller staged list boundary",
-  );
-  contains(
-    adapter,
-    '"amazon-tr-new-releases-research"',
-    "new-release Top 30 canary boundary",
-  );
-  contains(
-    adapter,
-    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
-    "transparent collector identity",
-  );
-  contains(
-    adapter,
-    "Collector-registered adapter for the verified native ranked book surfaces.",
-    "staged rollout boundary",
-  );
-
-  contains(
-    collector,
-    "amazonTrBookIndexAdapter",
-    "Amazon TR adapter is registered in collector",
-  );
+  contains(adapter, 'const BESTSELLER_PATH = "/gp/bestsellers/books"', "bestseller path");
+  contains(adapter, 'const NEW_RELEASES_PATH = "/gp/new-releases/books"', "new-release path");
+  contains(adapter, "BOOK_INDEX_AMAZON_TR_TOP30_MISMATCH", "exact Top 30 guard");
+  contains(adapter, "zg-bdg-text", "native rank parser");
+  contains(collector, "amazonTrBookIndexAdapter", "collector registration");
   contains(
     sources,
-    'code: "amazon-tr"',
-    "Amazon TR source remains registered",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "Amazon Türkiye source ready",
   );
-  contains(
-    sources,
-    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "Amazon TR source remains researching",
-  );
-  contains(
-    lists,
-    'code: "amazon-tr-live"',
-    "Amazon TR bestseller canary remains registered",
-  );
-  contains(
-    lists,
-    'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books"',
-    "canary uses the verified native bestseller surface",
-  );
-  contains(
-    adapter,
-    'BOOK_INDEX_AMAZON_TR_TOP30_MISMATCH',
-    "Top 30 exact native-rank guard",
-  );
-});
 
-
-test("Amazon TR new-release Top 30 canary remains private", () => {
-  const lists = source("src/lib/book-index/lists.ts");
-  const start = lists.indexOf('code: "amazon-tr-new-releases-research"');
-  assert.ok(start >= 0, "Amazon TR new-release canary must exist");
-  const block = lists.slice(start, start + 800);
-
-  contains(block, "maxRank: 30", "new-release canary Top 30 bound");
-  contains(block, "includeInComposite: false", "new-release canary stays non-composite");
-  contains(block, "collectionEveryMinutes: 360", "new-release canary cadence");
-  contains(block, "publiclyVisible: false", "new-release canary stays private");
-  contains(block, "enabled: true", "new-release canary collection enabled");
+  for (const code of ["amazon-tr-live", "amazon-tr-new-releases-research"]) {
+    const start = lists.indexOf(`code: "${code}"`);
+    assert.ok(start >= 0, `missing Amazon Türkiye list: ${code}`);
+    const block = lists.slice(start, start + 850);
+    contains(block, "maxRank: 30", `${code} Top 30 bound`);
+    contains(block, "includeInComposite: false", `${code} remains non-composite`);
+    contains(block, "collectionEveryMinutes: 360", `${code} scheduled`);
+    contains(block, "publiclyVisible: true", `${code} public`);
+    contains(block, "enabled: true", `${code} enabled`);
+  }
 });

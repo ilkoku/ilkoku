@@ -7,7 +7,7 @@ import { getEducationGuideRecord } from "@/lib/cms-education";
 
 import "./bilim-kurgu-guide.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const defaultAlt = {
   hero: "Bilim kurgu yazarlığı için yörünge şeması, araştırma notları ve İlkOku yazar ekranıyla düzenlenmiş sıcak çalışma masası",

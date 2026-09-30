@@ -50,6 +50,14 @@ test("global public routes share one canonical SEO and social brand identity", (
   assertContains(twitter, 'from "./opengraph-image"', "Twitter reuses canonical social artwork");
 });
 
+test("robots keeps public render media crawlable while private API remains blocked", () => {
+  const robots = source("src/app/robots.ts");
+
+  assertContains(robots, '          "/api/media/",', "public CMS media robots allow");
+  assertContains(robots, '          "/api/site-assets/",', "public site asset robots allow");
+  assertContains(robots, '          "/api",', "private API robots block remains");
+});
+
 test("robots isolates private content management without blocking the public content policy route", () => {
   const robots = source("src/app/robots.ts");
   const liveSmoke = source(".github/workflows/seo-indexability-smoke.yml");

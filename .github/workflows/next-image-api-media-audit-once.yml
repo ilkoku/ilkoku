@@ -1,0 +1,38 @@
+name: Next image API media audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-discovery-graph-20260930"
+    paths:
+      - ".github/workflows/next-image-api-media-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify Next image optimizer against API media
+        shell: bash
+        run: |
+          node <<'NODE'
+          const urls=[
+            "https://ilkoku.com/_next/image?url=%2Fapi%2Fmedia%2Fe4b70f91-6db6-4a61-bc39-d243079be3a1&w=1080&q=75",
+            "https://ilkoku.com/_next/image?url=%2Fapi%2Fsite-assets%2Fhomepage-history%2F2026&w=1080&q=75"
+          ];
+          for(const url of urls){
+            try{
+              const r=await fetch(url,{headers:{"user-agent":"Mozilla/5.0"}});
+              const b=await r.arrayBuffer();
+              console.log("ROW",JSON.stringify({
+                url,status:r.status,bytes:b.byteLength,
+                contentType:r.headers.get("content-type"),
+                cacheControl:r.headers.get("cache-control"),
+                contentDisposition:r.headers.get("content-disposition")
+              }));
+            }catch(e){console.log("ERR",JSON.stringify({url,error:String(e?.message||e)}))}
+          }
+          NODE

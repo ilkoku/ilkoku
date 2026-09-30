@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -205,6 +205,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     includeInTurkeyIndex: false,
     independenceGroup: "amazon-ca",
     operatorName: "Amazon Canada",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "amazon-br",
+    name: "Amazon Brezilya",
+    market: "BR",
+    countryCode: "BR",
+    baseUrl: "https://www.amazon.com.br",
+    includeInTurkeyIndex: false,
+    independenceGroup: "amazon-br",
+    operatorName: "Amazon Brasil",
     phase: "phase_2",
     collectionState: "ready",
   },

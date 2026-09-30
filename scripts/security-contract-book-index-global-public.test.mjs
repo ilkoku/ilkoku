@@ -25,6 +25,7 @@ test("global bestseller public page reads only the approved source lists", () =>
     "amazon-fr-live",
     "amazon-es-live",
     "amazon-ca-live",
+    "amazon-br-live",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -65,6 +66,26 @@ test("Spain and Canada research sources stay fail-closed until ranked collectors
 
   notContains(model, '"casadellibro-es-bestsellers-research"', "Spain is not public before rank verification");
   notContains(model, '"indigo-ca-globe-mail-weekly-research"', "Canada is not public before rank verification");
+});
+
+
+test("Brazil Amazon bestseller source is source-native and part of the world table", () => {
+  const brazil = source("src/lib/book-index/sources/amazon-br.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
+
+  contains(brazil, 'const EXPECTED_BOOKS = 30', "Brazil exact Top 30 guard");
+  contains(brazil, "p13n-asin-index-", "Brazil Amazon item parser");
+  contains(brazil, "zg-bdg-text", "Brazil Amazon native rank parser");
+  contains(brazil, "BOOK_INDEX_AMAZON_BR_RANK_ORDER_MISMATCH", "Brazil rank guard");
+  contains(collector, "amazonBrazilBookIndexAdapter", "Brazil collector registration");
+  contains(sources, 'code: "amazon-br"', "Brazil source registry");
+  contains(lists, 'code: "amazon-br-live"', "Brazil list registry");
+  contains(model, '"amazon-br-live"', "Brazil public world-list inclusion");
+  contains(meanings, '"A Morte de Ivan Ilitch (2 ed.)": "İvan İlyiç\'in Ölümü"', "Brazil Turkish meaning registry");
 });
 
 

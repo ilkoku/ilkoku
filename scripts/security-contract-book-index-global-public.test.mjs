@@ -145,6 +145,8 @@ test("Netherlands Bestseller 60 collector is source-native and stays off the pub
   contains(adapter, 'line.startsWith("Bestseller 60 ")', "Netherlands heading parser tolerates inline navigation text");
   contains(adapter, '<!--[\\s\\S]*?-->', "Netherlands multiline HTML comments are stripped");
   contains(adapter, '.replace(/<[^>]+>/gu, "\\n")', "Netherlands rank boundaries remain separate lines");
+  contains(adapter, '.split(/\\n+/u)', "Netherlands splits visible lines before HTML decoding");
+  contains(adapter, '.map((line) => decodeBookIndexHtml(line))', "Netherlands decodes each visible line independently");
   contains(adapter, 'segment.join(" ").match', "Netherlands ISBN parser tolerates inline markup");
   contains(adapter, "lineIndex >= 2", "Netherlands title repetition guard tolerates extra inline markup");
 

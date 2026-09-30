@@ -221,7 +221,7 @@ test("Bestseller comparison has a dedicated gated SEO route", () => {
   );
 });
 
-test("New-release read model stays source-native and private until publication is approved", () => {
+test("New-release read model stays source-native and isolated from generic list publication", () => {
   const model = source("src/lib/book-index/new-releases.ts");
   const sitemap = source("src/app/sitemap.ts");
   const lists = source("src/lib/book-index/lists.ts");
@@ -279,7 +279,7 @@ test("New-release read model stays source-native and private until publication i
   contains(
     lists,
     "publiclyVisible: false",
-    "new-release collectors remain private before public approval",
+    "new-release collector definitions stay out of generic public list discovery",
   );
 });
 
@@ -450,6 +450,7 @@ test("Yeni Çıkanlar page is indexable and remains source-native", () => {
   const view = source("src/features/book-index/public/NewReleasePublicView.tsx");
   const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
   const model = source("src/lib/book-index/new-releases.ts");
+  const sitemap = source("src/app/sitemap.ts");
 
   contains(page, 'canonical = "/yeni-cikanlar"', "stable Yeni Çıkanlar canonical");
   contains(page, "noIndex: false", "Yeni Çıkanlar is indexable after source validation");

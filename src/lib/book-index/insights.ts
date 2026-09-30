@@ -41,7 +41,7 @@ export type BookIndexNewEntry = {
   authorName: string | null;
   newSourceCount: number;
   currentSourceCount: number;
-  bestRank: number;
+  bestNewEntryRank: number;
   sources: BookIndexSourceRankEvidence[];
 };
 
@@ -369,8 +369,24 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
     .flatMap(([masterBookId, newSources]) => {
       const book = bookById.get(masterBookId);
       const sources = currentSourcesByBook.get(masterBookId);
-      const bestRank = bestRankByBook.get(masterBookId);
-      if (!book || !sources || bestRank === undefined) return [];
+      if (!book || !sources) return [];
+
+      const newEntrySources = [...newSources]
+        .flatMap((sourceCode) => {
+          const evidence = currentEvidenceByBookSource
+            .get(masterBookId)
+            ?.get(sourceCode);
+          if (!evidence) return [];
+          return [{
+            sourceCode,
+            sourceName: getBookIndexSource(sourceCode)?.name ?? sourceCode,
+            currentRank: evidence.rank,
+            observedAt: evidence.observedAt,
+          }];
+        })
+        .sort((a, b) => a.currentRank - b.currentRank);
+
+      if (!newEntrySources.length) return [];
 
       return [{
         masterBookId,
@@ -378,28 +394,17 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
         authorName: book.authorName,
         newSourceCount: newSources.size,
         currentSourceCount: sources.size,
-        bestRank,
-        sources: [...newSources]
-          .flatMap((sourceCode) => {
-            const evidence = currentEvidenceByBookSource
-              .get(masterBookId)
-              ?.get(sourceCode);
-            if (!evidence) return [];
-            return [{
-              sourceCode,
-              sourceName: getBookIndexSource(sourceCode)?.name ?? sourceCode,
-              currentRank: evidence.rank,
-              observedAt: evidence.observedAt,
-            }];
-          })
-          .sort((a, b) => a.currentRank - b.currentRank),
+        bestNewEntryRank: Math.min(
+          ...newEntrySources.map((source) => source.currentRank),
+        ),
+        sources: newEntrySources,
       } satisfies BookIndexNewEntry];
     })
     .sort(
       (a, b) =>
         b.newSourceCount - a.newSourceCount
+        || a.bestNewEntryRank - b.bestNewEntryRank
         || b.currentSourceCount - a.currentSourceCount
-        || a.bestRank - b.bestRank
         || a.title.localeCompare(b.title, "tr"),
     )
     .slice(0, safeLimit);

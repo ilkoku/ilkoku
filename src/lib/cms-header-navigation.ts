@@ -61,10 +61,10 @@ const basePages: SiteMapPage[] = [
   { id: "book-index-turkey", label: "Türkiye", href: "/en-cok-satanlar/turkiye", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-comparison", label: "Karşılaştırma", href: "/en-cok-satanlar/turkiye/karsilastirma", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-global", label: "Dünya", href: "/en-cok-satanlar/dunya", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
-  { id: "book-index-new-entries", label: "Yeni Girişler", href: "/en-cok-satanlar/yeni-girisler", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
-  { id: "book-index-risers", label: "Yükselenler", href: "/en-cok-satanlar/yukselenler", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
-  { id: "book-index-everywhere", label: "Her Yerde Satanlar", href: "/en-cok-satanlar/her-yerde-satanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
-  { id: "book-index-long-sellers", label: "Uzun Satanlar", href: "/en-cok-satanlar/uzun-satanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
+  { id: "book-index-new-entries", label: "Yeni Girişler", href: "/en-cok-satanlar/yeni-girisler", area: "İlkOku", group: "Kitap Endeksi", kind: "page", indexable: false },
+  { id: "book-index-risers", label: "Yükselenler", href: "/en-cok-satanlar/yukselenler", area: "İlkOku", group: "Kitap Endeksi", kind: "page", indexable: false },
+  { id: "book-index-everywhere", label: "Her Yerde Satanlar", href: "/en-cok-satanlar/her-yerde-satanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page", indexable: false },
+  { id: "book-index-long-sellers", label: "Uzun Satanlar", href: "/en-cok-satanlar/uzun-satanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page", indexable: false },
   { id: "editorial-standards", label: "Editoryal Standartlar", href: "/editoryal-standartlar", area: "İlkOku", group: "Güven", kind: "page" },
   { id: "content-age", label: "İçerik ve Yaş Politikası", href: "/icerik-ve-yas-politikasi", area: "İlkOku", group: "Güven", kind: "page" },
   { id: "community-rules", label: "Topluluk Kuralları", href: "/topluluk-kurallari", area: "İlkOku", group: "Güven", kind: "page" },
@@ -299,7 +299,13 @@ export function resolveHeaderNavigation(payload: HeaderNavigationPayload, pages:
       links: group.links.flatMap((item) => {
         const page = getSiteMapPage(item.pageId, pages);
         if (!page) return [];
-        return [{ href: page.href, label: item.label || page.label, primary: Boolean(item.primary), pageId: item.pageId }];
+        return [{
+          href: page.href,
+          label: item.label || page.label,
+          primary: Boolean(item.primary),
+          pageId: item.pageId,
+          nofollow: page.kind === "action" || page.indexable === false,
+        }];
       }),
     })),
   }));

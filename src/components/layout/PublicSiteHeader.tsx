@@ -5,7 +5,6 @@ import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigation";
 import { resolveHeaderNavigation } from "@/lib/cms-header-navigation";
 import { getPublishedHeaderNavigation } from "@/lib/cms-header-navigation-server";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 import "./public-site-header.css";
@@ -22,7 +21,6 @@ type ResolvedHeaderMenu = ReturnType<typeof resolveHeaderNavigation>[number] & {
 
 function withBookIndexMenu(
   menus: ReturnType<typeof resolveHeaderNavigation>,
-  enabled: boolean,
 ): ResolvedHeaderMenu[] {
   const withoutBookIndex = menus.flatMap((menu) => {
     if (menu.id === "book-index") return [];
@@ -37,8 +35,6 @@ function withBookIndexMenu(
     if (groups.length === 0) return [];
     return [{ ...menu, groups }];
   });
-
-  if (!enabled) return withoutBookIndex;
 
   const bookIndexMenu: ResolvedHeaderMenu = {
     id: "book-index",
@@ -97,14 +93,12 @@ function AccountIcon() {
 }
 
 export async function PublicSiteHeader() {
-  const [identity, navigation, bookIndexContext] = await Promise.all([
+  const [identity, navigation] = await Promise.all([
     getPublicSiteIdentity(),
     getPublishedHeaderNavigation(),
-    getBookIndexPublicPageContext(100).catch(() => null),
   ]);
   const publicMenus = withBookIndexMenu(
     resolveHeaderNavigation(navigation.payload, navigation.pages),
-    Boolean(bookIndexContext),
   );
 
   return (

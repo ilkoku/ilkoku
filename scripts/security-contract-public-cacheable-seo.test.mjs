@@ -74,3 +74,34 @@ test("public Green routes bypass the auth proxy", () => {
     );
   }
 });
+
+
+test("all writing education detail routes use five-minute public revalidation", () => {
+  const genresSource = read("src/lib/genres.ts");
+  const hubsSource = read("src/lib/writing-category-hubs.ts");
+
+  const genres = [...genresSource.matchAll(
+    /\{ slug: "([^"]+)", label: "[^"]+", category: "([^"]+)" \}/g,
+  )].map((match) => ({ slug: match[1], category: match[2] }));
+
+  const hubs = [...hubsSource.matchAll(
+    /category: "([^"]+)",\s+slug: "([^"]+)",\s+href: "([^"]+)"/g,
+  )].map((match) => ({ category: match[1], href: match[3] }));
+
+  const hrefByCategory = new Map(hubs.map((hub) => [hub.category, hub.href]));
+  const detailFiles = new Set(
+    genres.map((genre) =>
+      genre.category === "Bilgilendirici"
+        ? "src/app/yazarlar-icin/bilgilendirici/[slug]/page.tsx"
+        : `src/app${hrefByCategory.get(genre.category)}/${genre.slug}/page.tsx`,
+    ),
+  );
+
+  assert.equal(detailFiles.size, 63, "writing detail route-file inventory must stay complete");
+
+  for (const path of detailFiles) {
+    const page = read(path);
+    assert.match(page, /export const revalidate = 300;/u, `${path} must revalidate every five minutes`);
+    assert.doesNotMatch(page, /force-dynamic/u, `${path} must not force request-time SSR`);
+  }
+});

@@ -78,9 +78,10 @@ export function GlobalBestsellerView({
             <p>
               Tüm ülke listeleri tek tabloda birleştirilir. Aynı sıra numarasındaki
               kitaplar aynı blokta gösterilir; sıra numarası yalnız bloğun ilk
-              satırında yazılır. Türkiye kaynaklarında doğrulanmış eşleşmesi bulunan
-              kitapların Türkçe adı parantez içinde gösterilir. Her sitenin kendi
-              sırası korunur.
+              satırında yazılır. Türkiye kaynaklarında aynı esere doğrulanmış biçimde
+              eşleşen bir baskı varsa onun Türkçe yayın adı parantez içinde gösterilir;
+              otomatik çeviri resmî kitap adı gibi sunulmaz. Her sitenin kendi sırası
+              korunur.
             </p>
           </div>
         </div>
@@ -149,9 +150,9 @@ export function GlobalBestsellerView({
           Dünya çok satan listeleri nasıl gösteriliyor?
         </h2>
         <p>
-          Amazon ABD, Amazon UK, Amazon Fransa, IBS İtalya, Rakuten Books
-          Japonya, Kyobo Güney Kore, Readings Avustralya ve SPIEGEL Almanya
-          listeleri tek tabloda birlikte gösterilir. Almanya satırları
+          Amazon ABD, Amazon UK, Amazon Fransa, Amazon İspanya, Amazon Kanada,
+          IBS İtalya, Rakuten Books Japonya, Kyobo Güney Kore, Readings Avustralya
+          ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Almanya satırları
           SPIEGEL&apos;in haftalık kurgu hardcover listesini temsil eder. Aynı sıra
           numarasındaki kayıtlar aynı blokta gruplanır; günlük, haftalık, aylık
           veya güncel dönem bilgileri ilgili sitenin yayımladığı biçimde korunur.

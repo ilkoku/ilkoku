@@ -51,6 +51,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   const access = source("src/lib/book-index/public-access.ts");
   const overview = source("src/app/en-cok-satanlar/page.tsx");
   const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
+  const insight = source("src/app/en-cok-satanlar/[insight]/page.tsx");
   const sitemap = source("src/app/sitemap.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
   const header = source("src/components/layout/PublicSiteHeader.tsx");
@@ -107,6 +108,32 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
     turkey,
     "context.gate.canPublish ? (",
     "Turkey structured data stays off during soft launch",
+  );
+
+  contains(
+    insight,
+    "getBookIndexSoftLaunchPageContext(100)",
+    "trend routes use route-only soft-launch context",
+  );
+  contains(
+    insight,
+    "noIndex: !context.gate.canPublish || items.length === 0",
+    "trend routes stay noindex until publish gate and data are both ready",
+  );
+  notContains(
+    insight,
+    "if (!context) notFound();",
+    "trend routes must not 404 only because the publication gate is closed",
+  );
+  notContains(
+    insight,
+    "if (items.length === 0) notFound();",
+    "known trend routes stay reachable while data is temporarily empty",
+  );
+  contains(
+    insight,
+    "context.gate.canPublish && items.length > 0 ? (",
+    "trend structured data stays off until publication is allowed",
   );
 
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");

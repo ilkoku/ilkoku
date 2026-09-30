@@ -63,3 +63,10 @@ test("TR homepage exposes canonical, conditional language alternates and social 
   assertContains(page, "images: [{ url: homeSocialImage", "Open Graph image");
   assertContains(page, "images: [homeSocialImage]", "Twitter image");
 });
+
+
+test("site identity structured data uses a real alternate site name", () => {
+  const layout = source("src/app/layout.tsx");
+  assertContains(layout, 'alternateName: "ilkoku.com"', "domain fallback alternate site name");
+  assertNotContains(layout, "alternateName: publicBrandPositioning", "positioning must not masquerade as an alternate name");
+});

@@ -126,6 +126,31 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   contains(insights, "rankGain", "source-level rank gain");
   contains(insights, "sourceName: getBookIndexSource", "human-readable source names");
   contains(view, "insightEvidence(item)", "trend evidence is rendered");
+  contains(
+    view,
+    '<BookIndexSectionNav current="overview" showAnalysis={false} />',
+    "overview keeps only the primary nav above the hero",
+  );
+  contains(
+    view,
+    '<BookIndexSectionNav current="overview" showPrimary={false} />',
+    "overview analysis nav is placed after the three scope cards",
+  );
+  contains(
+    view,
+    '<BookIndexSectionNav current="comparison" showAnalysis={false} />',
+    "comparison keeps only the primary nav above the hero",
+  );
+  contains(
+    view,
+    '<BookIndexSectionNav current="comparison" showPrimary={false} />',
+    "comparison uses the shared analysis nav below the hero",
+  );
+  notContains(
+    view,
+    '<BookIndexViewModeNav current="comparison" />',
+    "comparison no longer renders the obsolete two-item view menu",
+  );
   contains(view, "Yeni liste girişi", "new-entry summary metric");
   contains(
     view,

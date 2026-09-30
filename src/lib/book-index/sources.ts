@@ -25,16 +25,6 @@ export const TURKEY_INDEX_MIN_SOURCES = 3;
 
 export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
   {
-    code: "kitapyurdu",
-    name: "Kitapyurdu",
-    market: "TR",
-    countryCode: "TR",
-    baseUrl: "https://www.kitapyurdu.com",
-    includeInTurkeyIndex: true,
-    phase: "v1",
-    collectionState: "researching",
-  },
-  {
     code: "bkm",
     name: "BKM Kitap",
     market: "TR",
@@ -68,13 +58,15 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
   },
   {
     code: "penguen",
-    name: "Penguen Kitabevi",
+    name: "Penguen Kitap",
     market: "TR",
     countryCode: "TR",
-    baseUrl: "https://penguenkitabevi.com",
+    baseUrl: "https://www.penguenkitap.com.tr",
     includeInTurkeyIndex: true,
+    independenceGroup: "penguen-kitap",
+    operatorName: "Penguen Kitap",
     phase: "v1",
-    collectionState: "researching",
+    collectionState: "ready",
   },
   {
     code: "remzi",
@@ -94,7 +86,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.amazon.com.tr",
     includeInTurkeyIndex: true,
     phase: "v1",
-    collectionState: "researching",
+    collectionState: "ready",
   },
   {
     code: "amazon-us",

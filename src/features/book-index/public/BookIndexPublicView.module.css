@@ -137,6 +137,56 @@
 
 
 
+.insightSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 34px;
+}
+
+.insightSummaryCard {
+  display: grid;
+  gap: 7px;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.insightSummaryCard span {
+  color: var(--muted, #60646c);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.insightSummaryCard strong {
+  font-size: 1.35rem;
+  line-height: 1.15;
+}
+
+.insightEvidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.insightEvidenceChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 999px;
+  color: #4f4a69;
+  background: rgba(248, 246, 255, 0.82);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
 .rankingList {
   display: grid;
   gap: 10px;
@@ -170,6 +220,35 @@
 .score {
   min-width: 150px;
   text-align: right;
+}
+
+.insightFilters {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.4fr) minmax(210px, 0.8fr) auto auto;
+  align-items: end;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.insightReset {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  color: var(--muted, #60646c);
+  font-size: 0.88rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.insightReset:hover {
+  color: inherit;
+  text-decoration: underline;
 }
 
 .tableFilters {
@@ -352,6 +431,11 @@
     flex-direction: column;
   }
 
+  .insightSummaryGrid {
+    grid-template-columns: 1fr;
+    margin-bottom: 24px;
+  }
+
   .rankingItem {
     grid-template-columns: 42px minmax(0, 1fr);
   }
@@ -362,9 +446,16 @@
     text-align: left;
   }
 
+  .insightFilters,
   .tableFilters {
     grid-template-columns: 1fr;
     padding: 14px;
+  }
+
+  .insightReset {
+    justify-content: flex-start;
+    min-height: auto;
+    padding: 4px 0;
   }
 
   .clearFilters {

@@ -24,7 +24,7 @@ test("Book Index insights derive from historical snapshots without publishing ro
   contains(insights, "previous.rank - current.rank", "riser rank gain");
   contains(insights, "newSourceCount", "new-entry source evidence");
   contains(insights, "newSources.add(snapshot.sourceCode)", "new-entry source dedupe");
-  contains(insights, "gains.set(snapshot.sourceCode, gain)", "riser source dedupe");
+  contains(insights, "gains.set(snapshot.sourceCode, {", "riser source evidence dedupe");
   contains(
     insights,
     "currentIndependenceGroupsByBook",
@@ -79,4 +79,24 @@ test("Book Index insight labels stay descriptive rather than inventing fixed tim
   contains(insights, "totalRankGain", "measured rank improvement");
   contains(insights, "improvingSourceCount", "measured improving-source count");
   contains(insights, "currentSourceCount", "measured current-source count");
+});
+
+test("Book Index trend pages expose source-level evidence instead of summary-only claims", () => {
+  const insights = source("src/lib/book-index/insights.ts");
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const page = source("src/app/en-cok-satanlar/[insight]/page.tsx");
+
+  contains(insights, "BookIndexSourceRankEvidence", "source-rank evidence contract");
+  contains(insights, "previousRank", "riser previous-rank evidence");
+  contains(insights, "currentRank", "current-rank evidence");
+  contains(insights, "rankGain", "source-level rank gain");
+  contains(insights, "sourceName: getBookIndexSource", "human-readable source names");
+  contains(view, "insightEvidence(item)", "trend evidence is rendered");
+  contains(view, "Yeni kaynak görünümü", "new-entry summary metric");
+  contains(view, "Toplam sıra kazanımı", "riser summary metric");
+  contains(view, "En geniş görünürlük", "multi-source summary metric");
+  contains(view, "Toplam gözlem", "long-seller summary metric");
+  contains(view, 'name="q"', "book/author search filter");
+  contains(view, 'name="source"', "source filter");
+  contains(page, "searchParams", "trend filters are server-side URL parameters");
 });

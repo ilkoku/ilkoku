@@ -18,6 +18,10 @@ const baseUrl = "https://ilkoku.com";
 
 type PageProps = {
   params: Promise<{ insight: string }>;
+  searchParams?: Promise<{
+    q?: string;
+    source?: string;
+  }>;
 };
 
 function canonical(slug: string) {
@@ -61,8 +65,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   });
 }
 
-export default async function BookIndexInsightPage({ params }: PageProps) {
-  const { insight: slug } = await params;
+export default async function BookIndexInsightPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const [{ insight: slug }, filters] = await Promise.all([
+    params,
+    searchParams ?? Promise.resolve<{ q?: string; source?: string }>({}),
+  ]);
   const definition = getBookIndexInsightPage(slug);
   if (!definition) notFound();
 
@@ -140,6 +150,8 @@ export default async function BookIndexInsightPage({ params }: PageProps) {
         definition={definition}
         insights={insights}
         lastObservedAt={lastObservedAt}
+        query={filters.q ?? ""}
+        sourceCode={filters.source ?? ""}
       />
     </>
   );

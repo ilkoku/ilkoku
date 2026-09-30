@@ -6,7 +6,7 @@ import { getEducationGuideDefinition } from "@/lib/informational-guide-batch";
 
 import "../../batched-education-guide.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const LIVE_INFORMATIONAL_SLUGS = [
   "tarih",

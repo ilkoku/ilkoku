@@ -1,0 +1,63 @@
+name: Private route robots header audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/private-route-robots-headers-20260930"
+    paths:
+      - ".github/workflows/private-route-robots-header-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Audit private and soft-launch robots headers
+        shell: bash
+        run: |
+          node <<'NODE'
+          const urls = [
+            "https://ilkoku.com/giris",
+            "https://ilkoku.com/kayit",
+            "https://ilkoku.com/hesabim",
+            "https://ilkoku.com/kesfet",
+            "https://ilkoku.com/sifremi-unuttum",
+            "https://ilkoku.com/yazar",
+            "https://ilkoku.com/yayinevi",
+            "https://ilkoku.com/editor",
+            "https://ilkoku.com/en-cok-satanlar",
+            "https://ilkoku.com/en-cok-satanlar/turkiye",
+            "https://ilkoku.com/yeni-cikanlar",
+            "https://ilkoku.com/en-cok-satanlar/dunya",
+            "https://ilkoku.com/en-cok-satanlar/turkiye/karsilastirma"
+          ];
+          const ua="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+          for(const url of urls){
+            try{
+              const res=await fetch(url,{
+                redirect:"manual",
+                headers:{"user-agent":ua,accept:"text/html"},
+                signal:AbortSignal.timeout(20000)
+              });
+              const body=await res.text();
+              const meta=(body.match(/<meta[^>]+name=["']robots["'][^>]+content=["']([^"']+)["']/i)||[])[1]||"";
+              const googleMeta=(body.match(/<meta[^>]+name=["']googlebot["'][^>]+content=["']([^"']+)["']/i)||[])[1]||"";
+              console.log("RESULT",JSON.stringify({
+                url,
+                status:res.status,
+                location:res.headers.get("location"),
+                xRobotsTag:res.headers.get("x-robots-tag"),
+                metaRobots:meta,
+                metaGooglebot:googleMeta,
+                cacheControl:res.headers.get("cache-control"),
+                server:res.headers.get("server"),
+                cfCacheStatus:res.headers.get("cf-cache-status")
+              }));
+            }catch(error){
+              console.log("RESULT",JSON.stringify({url,error:String(error?.message||error)}));
+            }
+          }
+          NODE

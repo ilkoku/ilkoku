@@ -59,7 +59,7 @@ test("Amazon TR bestseller Top 30 canary preserves native ranks while public rol
   contains(
     adapter,
     '"amazon-tr-new-releases-research"',
-    "new-release staged list boundary",
+    "new-release Top 30 canary boundary",
   );
   contains(
     adapter,
@@ -102,4 +102,18 @@ test("Amazon TR bestseller Top 30 canary preserves native ranks while public rol
     'BOOK_INDEX_AMAZON_TR_TOP30_MISMATCH',
     "Top 30 exact native-rank guard",
   );
+});
+
+
+test("Amazon TR new-release Top 30 canary remains private", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+  const start = lists.indexOf('code: "amazon-tr-new-releases-research"');
+  assert.ok(start >= 0, "Amazon TR new-release canary must exist");
+  const block = lists.slice(start, start + 800);
+
+  contains(block, "maxRank: 30", "new-release canary Top 30 bound");
+  contains(block, "includeInComposite: false", "new-release canary stays non-composite");
+  contains(block, "collectionEveryMinutes: 360", "new-release canary cadence");
+  contains(block, "publiclyVisible: false", "new-release canary stays private");
+  contains(block, "enabled: true", "new-release canary collection enabled");
 });

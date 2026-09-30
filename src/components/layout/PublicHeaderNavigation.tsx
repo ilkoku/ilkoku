@@ -22,6 +22,7 @@ type PublicHeaderMenu = {
       label: string;
       primary: boolean;
       pageId: string;
+      nofollow?: boolean;
     }>;
   }>;
 };
@@ -49,6 +50,7 @@ function MenuGroups({
             {group.links.map((link) => (
               <Link
                 href={link.href}
+                rel={link.nofollow ? "nofollow" : undefined}
                 data-primary={link.primary ? "true" : undefined}
                 key={`${menu.id}-${group.id}-${link.pageId}`}
                 onClick={onNavigate}

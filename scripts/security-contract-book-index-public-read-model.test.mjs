@@ -496,6 +496,27 @@ test("Yeni Çıkanlar page is indexable and remains source-native", () => {
 
 
 
+test("Book Index secondary analysis nav stays inside bestseller routes", () => {
+  const nav = source("src/features/book-index/public/BookIndexSectionNav.tsx");
+
+  contains(
+    nav,
+    'current !== "new-releases" && current !== "global"',
+    "secondary bestseller analysis navigation is hidden from Yeni Çıkanlar and Dünya",
+  );
+  contains(
+    nav,
+    '<NavRow current={current} items={primaryItems} />',
+    "primary Book Index navigation remains available across sections",
+  );
+  contains(
+    nav,
+    '<NavRow current={current} items={analysisItems} secondary />',
+    "bestseller analysis navigation remains available on bestseller sections",
+  );
+});
+
+
 test("bestseller full list and comparison expose distinct view modes", () => {
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
   const nav = source("src/features/book-index/public/BookIndexViewModeNav.tsx");

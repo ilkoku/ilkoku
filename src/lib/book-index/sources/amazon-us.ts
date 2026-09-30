@@ -16,6 +16,13 @@ function attributeValue(fragment: string, name: string) {
   return match?.[2] ? decodeBookIndexHtml(match[2]) : "";
 }
 
+function normalizedText(fragment: string | undefined) {
+  return decodeBookIndexHtml(fragment ?? "")
+    .replace(/<[^>]+>/gu, " ")
+    .replace(/\\s+/gu, " ")
+    .trim();
+}
+
 function canonicalProductUrl(asin: string) {
   return new URL(`/dp/${asin}`, SOURCE_ORIGIN).toString();
 }
@@ -60,6 +67,10 @@ export function parseAmazonUsBestsellerPage(
 
     const title = imageTag ? attributeValue(imageTag, "alt") : "";
     const imageUrl = imageTag ? attributeValue(imageTag, "src") : "";
+    const authorHtml = card.match(
+      /<a\\b[^>]*class=["'][^"']*(?:\\ba-size-small\\b[^"']*\\ba-link-child\\b|\\ba-link-child\\b[^"']*\\ba-size-small\\b)[^"']*["'][^>]*>([\\s\\S]*?)<\\/a>/iu,
+    )?.[1];
+    const authorName = normalizedText(authorHtml);
 
     if (
       cardIndex !== index
@@ -75,7 +86,7 @@ export function parseAmazonUsBestsellerPage(
       sourceKey: asin,
       sourceExternalId: asin,
       title,
-      authorName: null,
+      authorName: authorName || null,
       publisherName: null,
       productUrl: canonicalProductUrl(asin),
       imageUrl: imageUrl || null,

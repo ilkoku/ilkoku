@@ -3,6 +3,12 @@ name: GSC URL Inspection diagnostic
 on:
   schedule:
     - cron: "23 5 * * 2"
+  push:
+    branches:
+      - "diag/gsc-full-sitemap-inspection-20260930"
+    paths:
+      - ".github/workflows/gsc-url-inspection.yml"
+      - "scripts/gsc-url-inspection.mjs"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -25,7 +31,7 @@ jobs:
   inspect:
     name: Inspect Google index status
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 25
 
     steps:
       - name: Validate explicit confirmation

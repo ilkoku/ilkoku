@@ -39,4 +39,4 @@ jobs:
         run: npm ci
 
       - name: Hostinger compiler check
-        run: npm run system-map:generate && npx prisma generate && npx next build --webpack
+        run: npm run build

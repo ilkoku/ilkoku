@@ -366,3 +366,44 @@ test("SEO center and audit API stay Turkish-only", () => {
   assertNotContains(roleCards, 'getPublishedRoleCardsState("en")', "role card SEO ignores EN state");
   assertNotContains(roleCards, "TR / EN", "role card SEO has no language parity work");
 });
+
+
+test("public crawl inventory excludes Cloudflare helper URLs and retired genre routes", () => {
+  const robots = source("src/app/robots.ts");
+  const readerEducation = source("src/lib/reader-education.ts");
+  const liveFooter = source("src/features/homepage/live-footer.tsx");
+  const emailLink = source("src/components/content/PublicEmailLink.tsx");
+
+  assertContains(robots, '"/cdn-cgi/"', "Cloudflare helper crawl exclusion");
+  assertNotContains(
+    readerEducation,
+    'href: "/turler", label: "Türleri keşfet"',
+    "retired reader genre CTA",
+  );
+  assertContains(
+    readerEducation,
+    'href: "/yazarlar-icin", label: "Tür rehberlerini keşfet"',
+    "live reader genre guide destination",
+  );
+
+  assertContains(
+    liveFooter,
+    '<PublicEmailLink className="site-contact-footer__email" />',
+    "server footer delegates public email rendering",
+  );
+  assertNotContains(
+    liveFooter,
+    'href={`mailto:${siteContact.generalEmail}`}',
+    "server footer must not expose a Cloudflare-rewritable mailto",
+  );
+  assertContains(
+    emailLink,
+    'href="/iletisim"',
+    "server-safe contact fallback",
+  );
+  assertContains(
+    emailLink,
+    'href={`mailto:${siteContact.generalEmail}`}',
+    "client-only direct email upgrade",
+  );
+});

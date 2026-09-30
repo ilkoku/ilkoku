@@ -1,3 +1,10 @@
+.lightPageSurface {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #1d1b38;
+  color-scheme: light;
+}
+
 .page {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;

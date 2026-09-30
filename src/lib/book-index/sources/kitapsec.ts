@@ -17,6 +17,12 @@ const CATEGORY_MIN_EXPECTED_BOOKS = 20;
 const GENERAL_MIN_EXPECTED_BOOKS = 40;
 const VERIFIED_GENERAL_NON_BOOK_PRODUCT_IDS = new Set(["712938"]);
 
+// Exact KitapSeç product fallback verified on the source detail page.
+// Product 923186 / ISBN 9786257582896 explicitly lists Pegem Komisyon as author.
+const VERIFIED_AUTHOR_BY_ISBN13 = new Map<string, string>([
+  ["9786257582896", "Pegem Komisyon"],
+]);
+
 const CATEGORY_LIST_CODES = new Set([
   "kitapsec-edebiyat-live",
   "kitapsec-cocuk-genclik-live",
@@ -251,15 +257,23 @@ async function enrichKitapSecAuthors(
         const book = books[index];
         if (book.authorName) continue;
 
+        const verifiedFallback = book.isbn13
+          ? VERIFIED_AUTHOR_BY_ISBN13.get(book.isbn13) ?? null
+          : null;
+
         try {
           const authorName = parseKitapSecProductAuthor(
             await fetchKitapSecHtml(book.productUrl),
-          );
+          ) || verifiedFallback;
           if (!authorName) continue;
 
           book.authorName = authorName;
           enrichedCount += 1;
         } catch {
+          if (verifiedFallback) {
+            book.authorName = verifiedFallback;
+            enrichedCount += 1;
+          }
           // Keep the native ranked book if optional detail enrichment fails.
         }
       }

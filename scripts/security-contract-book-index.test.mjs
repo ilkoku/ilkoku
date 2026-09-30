@@ -302,7 +302,8 @@ test("Amazon US global source preserves native bestseller rank without joining T
   contains(adapter, "BOOK_INDEX_AMAZON_US_RESULT_SIZE_MISMATCH", "exact page-size guard");
   contains(adapter, "BOOK_INDEX_AMAZON_US_ACCESS_CHALLENGE", "access challenge fail-closed guard");
   contains(adapter, "rank !== index + 1", "native rank continuity");
-  contains(adapter, "authorName: null", "unverified author text is not guessed");
+  contains(adapter, "a-link-child", "Amazon US native author link is parsed when present");
+  contains(adapter, "authorName: authorName || null", "Amazon US author stays null when the source omits it");
   notContains(adapter, "isbn10:", "Amazon ASIN is not inferred to be ISBN-10");
   notContains(adapter, "isbn13:", "Amazon ASIN is not inferred to be ISBN-13");
 
@@ -337,7 +338,8 @@ test("Amazon UK global source preserves native bestseller rank without joining T
   contains(adapter, "BOOK_INDEX_AMAZON_UK_RESULT_SIZE_MISMATCH", "exact page-size guard");
   contains(adapter, "BOOK_INDEX_AMAZON_UK_ACCESS_CHALLENGE", "access challenge fail-closed guard");
   contains(adapter, "rank !== index + 1", "native rank continuity");
-  contains(adapter, "authorName: null", "unverified author text is not guessed");
+  contains(adapter, "a-link-child", "Amazon UK native author link is parsed when present");
+  contains(adapter, "authorName: authorName || null", "Amazon UK author stays null when the source omits it");
   notContains(adapter, "isbn10:", "Amazon ASIN is not inferred to be ISBN-10");
   notContains(adapter, "isbn13:", "Amazon ASIN is not inferred to be ISBN-13");
 

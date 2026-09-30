@@ -78,7 +78,9 @@ export function GlobalBestsellerView({
             <p>
               Tüm ülke listeleri tek tabloda birleştirilir. Aynı sıra numarasındaki
               kitaplar aynı blokta gösterilir; sıra numarası yalnız bloğun ilk
-              satırında yazılır. Her sitenin kendi sırası korunur.
+              satırında yazılır. Türkiye kaynaklarında doğrulanmış eşleşmesi bulunan
+              kitapların Türkçe adı parantez içinde gösterilir. Her sitenin kendi
+              sırası korunur.
             </p>
           </div>
         </div>
@@ -114,7 +116,10 @@ export function GlobalBestsellerView({
                           rel="noopener noreferrer"
                           target="_blank"
                         >
-                          <strong>{row.title}</strong>
+                          <strong>
+                            {row.title}
+                            {row.turkishTitle ? ` (${row.turkishTitle})` : ""}
+                          </strong>
                         </a>
                       </td>
                       <td>{row.authorName ?? "Yazar bilgisi doğrulanmadı"}</td>

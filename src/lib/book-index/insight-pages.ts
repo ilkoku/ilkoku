@@ -50,7 +50,7 @@ export const BOOK_INDEX_INSIGHT_PAGES: readonly BookIndexInsightPageDefinition[]
     heading: "Uzun Süredir Çok Satan Kitaplar",
     searchTitle: "Uzun Süredir Çok Satan Kitaplar",
     description:
-      "Çok satan listelerinde en uzun süredir görünmeye devam eden kitapları tarihsel gözlem süresiyle inceleyin.",
+      "Çok satan listelerinde ilk ve son doğrulanmış gözlemi arasındaki süre en uzun olan kitapları tarihsel gözlem aralığıyla inceleyin.",
   },
 ] as const;
 

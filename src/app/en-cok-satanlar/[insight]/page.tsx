@@ -7,7 +7,7 @@ import {
   getBookIndexInsightPage,
 } from "@/lib/book-index/insight-pages";
 import { getBookIndexInsights } from "@/lib/book-index/insights";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import {
   createBookIndexGenericItemListSchema,
   getBookIndexLastObservedAt,
@@ -42,18 +42,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     });
   }
 
-  const context = await getBookIndexPublicPageContext(100);
-  if (!context) {
-    return createPublicPageMetadata({
-      title: `${definition.searchTitle} | İlkOku`,
-      description: definition.description,
-      canonical: canonical(slug),
-      image: "/en-cok-satanlar/opengraph-image",
-      noIndex: true,
-    });
-  }
-
-  const insights = await getBookIndexInsights(50);
+  const [context, insights] = await Promise.all([
+    getBookIndexSoftLaunchPageContext(100),
+    getBookIndexInsights(50),
+  ]);
   const items = getBookIndexInsightItems(insights, definition.key);
 
   return createPublicPageMetadata({
@@ -61,7 +53,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: definition.description,
     canonical: canonical(slug),
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: items.length === 0,
+    noIndex: !context.gate.canPublish || items.length === 0,
   });
 }
 
@@ -76,12 +68,11 @@ export default async function BookIndexInsightPage({
   const definition = getBookIndexInsightPage(slug);
   if (!definition) notFound();
 
-  const context = await getBookIndexPublicPageContext(100);
-  if (!context) notFound();
-
-  const insights = await getBookIndexInsights(50);
+  const [context, insights] = await Promise.all([
+    getBookIndexSoftLaunchPageContext(100),
+    getBookIndexInsights(50),
+  ]);
   const items = getBookIndexInsightItems(insights, definition.key);
-  if (items.length === 0) notFound();
 
   const pageUrl = `${baseUrl}${canonical(slug)}`;
   const lastObservedAt = getBookIndexLastObservedAt(context.model);
@@ -140,12 +131,14 @@ export default async function BookIndexInsightPage({
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(schemas).replace(/</g, "\\u003c"),
-        }}
-      />
+      {context.gate.canPublish && items.length > 0 ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schemas).replace(/</g, "\\u003c"),
+          }}
+        />
+      ) : null}
       <BookIndexInsightView
         definition={definition}
         insights={insights}

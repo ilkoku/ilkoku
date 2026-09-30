@@ -332,3 +332,26 @@ test("SEO history evidence uses the minimum Turkey composite source history floo
     "public gate cannot use unrelated global/new-release history",
   );
 });
+
+
+test("HTML sitemap keeps gated Book Index routes closed while retaining public routes", () => {
+  const siteMap = source("src/app/site-haritasi/page.tsx");
+  const navigationCatalog = source("src/lib/cms-header-navigation.ts");
+
+  for (const pageId of [
+    "book-index",
+    "book-index-turkey",
+    "book-index-comparison",
+    "book-index-new-entries",
+    "book-index-risers",
+    "book-index-everywhere",
+    "book-index-long-sellers",
+  ]) {
+    contains(siteMap, `"${pageId}"`, `${pageId} stays behind the strict publication gate`);
+  }
+  contains(siteMap, "!gatedBookIndexPageIds.has(page.id)", "HTML sitemap applies the strict gate to gated Book Index routes");
+  notContains(siteMap, '"book-index-global"', "world page is not placed behind the Turkey publication gate");
+  notContains(siteMap, '"book-index-new-releases"', "new releases page is not placed behind the Turkey publication gate");
+  contains(navigationCatalog, 'id: "book-index-global"', "world page remains in site-map catalog");
+  contains(navigationCatalog, 'id: "book-index-new-releases"', "new releases page remains in site-map catalog");
+});

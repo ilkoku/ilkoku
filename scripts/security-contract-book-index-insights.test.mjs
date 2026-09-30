@@ -130,7 +130,22 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   contains(
     view,
     "Soldaki sıra satış sırası değildir.",
-    "new-entry page explains that its ordinal is an analysis order",
+    "analysis pages explain that their ordinals are not sales rankings",
+  );
+  contains(
+    view,
+    "Önce daha fazla bağımsız satış sitesinde yükselen kitaplar",
+    "riser page explains its analysis ordering",
+  );
+  contains(
+    view,
+    "Önce daha fazla bağımsız satış sitesinin çok satan listesinde görünen kitaplar",
+    "multi-site page explains its analysis ordering",
+  );
+  contains(
+    view,
+    "Önce en uzun doğrulanmış gözlem süresi",
+    "long-seller page explains its analysis ordering",
   );
   contains(
     view,

@@ -1434,6 +1434,7 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapstore-tr-live-canary",
     "pandora-tr-live-canary",
     "amazon-tr-live",
+    "amazon-tr-new-releases-research",
     "kitapyurdu-tr-weekly",
     "kitapyurdu-tr-new-releases",
   ]) {
@@ -1630,7 +1631,12 @@ test("Amazon TR Top 30 bestseller canary remains fail-closed and private", () =>
   contains(
     lists,
     'code: "amazon-tr-new-releases-research"',
-    "Amazon TR new-release research list remains staged",
+    "Amazon TR new-release Top 30 private canary",
+  );
+  contains(
+    lists,
+    'sourceUrl: "https://www.amazon.com.tr/gp/new-releases/books",\n    maxRank: 30,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
+    "Amazon TR new-release Top 30 canary is enabled but private and non-composite",
   );
   contains(amazon, 'data-asin=["\']([^"\']+)["\']', "ASIN source identity");
   contains(amazon, "\\bzg-bdg-text\\b", "Amazon native rank badge");

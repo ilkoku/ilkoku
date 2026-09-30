@@ -11,7 +11,10 @@ export const publicPlatformLinks = [
   { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/nasil-calisir", label: "Nasıl Çalışır?" },
   { href: "/yazarlar-icin", label: "Yazarlar İçin" },
+  { href: "/yazarlar-icin/kurgu", label: "Yazarlık Okulu" },
+  { href: "/okurlar-icin/okumaya-baslama", label: "Okurluk Okulu" },
   { href: "/editorler-icin", label: "Editörler İçin" },
+  { href: "/editorler-icin/egitim/editorluge-baslama", label: "Editörlük Okulu" },
   { href: "/yayinevleri-icin", label: "Yayınevleri İçin" },
 ] satisfies readonly PublicSiteLink[];
 

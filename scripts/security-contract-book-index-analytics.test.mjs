@@ -62,6 +62,7 @@ test("Book Index analytics records views and shared-family navigation events", (
   contains(sectionNav, 'href: "/en-cok-satanlar"', "Book Index overview navigation");
   contains(sectionNav, 'href: "/en-cok-satanlar/turkiye"', "Turkey navigation");
   contains(sectionNav, 'href: "/yeni-cikanlar"', "new-release navigation");
+  contains(sectionNav, 'href: "/en-cok-satanlar/dunya"', "global navigation");
   contains(sectionNav, 'href: "/en-cok-satanlar/turkiye/karsilastirma"', "comparison navigation");
   contains(sectionNav, 'href: "/en-cok-satanlar/yeni-girisler"', "new-entry navigation");
   contains(sectionNav, 'href: "/en-cok-satanlar/yukselenler"', "riser navigation");

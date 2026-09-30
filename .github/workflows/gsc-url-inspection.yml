@@ -64,5 +64,5 @@ jobs:
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
           GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
-          GSC_INSPECTION_URLS: "https://ilkoku.com/editorler-icin/egitim/tur-editorlugu,https://ilkoku.com/editorler-icin/egitim/editor-notu-ve-geri-bildirim,https://ilkoku.com/editorler-icin/egitim/yazarla-calismak,https://ilkoku.com/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk,https://ilkoku.com/yardim,https://ilkoku.com/editorler,https://ilkoku.com/iletisim,https://ilkoku.com/yeni-cikanlar,https://ilkoku.com/hakkimizda,https://ilkoku.com/editoryal-standartlar"
+          GSC_INSPECTION_URLS: "https://ilkoku.com/icerik-ve-yas-politikasi,https://ilkoku.com/topluluk-kurallari,https://ilkoku.com/telif-bildirimi,https://ilkoku.com/editorler-icin,https://ilkoku.com/yayinevleri-icin,https://ilkoku.com/yasal/gizlilik-politikasi,https://ilkoku.com/yasal/kvkk,https://ilkoku.com/yasal/cerez-politikasi,https://ilkoku.com/yasal/telif-hakki-politikasi"
         run: node scripts/gsc-url-inspection.mjs

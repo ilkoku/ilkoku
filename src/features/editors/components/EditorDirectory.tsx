@@ -83,7 +83,7 @@ export function EditorDirectory() {
                 </p>
               </div>
               <div className="editors-empty__actions">
-                <Link className="editors-public-button editors-public-button--primary" href="/kayit?rol=editor">
+                <Link className="editors-public-button editors-public-button--primary" href="/kayit?rol=editor" rel="nofollow">
                   Editör olarak katıl <span aria-hidden="true">→</span>
                 </Link>
                 <Link className="editors-public-button" href="/editorler-icin">Editörler için sayfası</Link>

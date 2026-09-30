@@ -78,7 +78,7 @@ jobs:
               https://ilkoku.com/api/internal/book-index-scheduler)"; then
               printf '%s\n' "$response"
 
-              if FORCE_LISTS="$force_lists" printf '%s' "$response" | python3 -c 'import json,os,sys; payload=json.load(sys.stdin); force=os.environ.get("FORCE_LISTS",""); readiness=payload.get("readiness", {}); required=("splitMasterCollisionCount","unmatchedDuplicateIdentityGroupCount","leastSuccessfulRunCountSourceCodes","shortestHistorySpanSourceCodes","unmatchedMissingAuthorBooksBySource","unmatchedAmbiguousIdentityGroupCount"); expected=[x for x in force.split(",") if x]; forced_ok=(not expected) or (payload.get("forced") is True and payload.get("forceListCodes")==expected and len(payload.get("forcedResults") or [])==len(expected)); raise SystemExit(0 if forced_ok and "seoGate" in payload and all(key in readiness for key in required) else 1)'; then
+              if printf '%s' "$response" | FORCE_LISTS="$force_lists" python3 -c 'import json,os,sys; payload=json.load(sys.stdin); force=os.environ.get("FORCE_LISTS",""); readiness=payload.get("readiness", {}); required=("splitMasterCollisionCount","unmatchedDuplicateIdentityGroupCount","leastSuccessfulRunCountSourceCodes","shortestHistorySpanSourceCodes","unmatchedMissingAuthorBooksBySource","unmatchedAmbiguousIdentityGroupCount"); expected=[x for x in force.split(",") if x]; forced_ok=(not expected) or (payload.get("forced") is True and payload.get("forceListCodes")==expected and len(payload.get("forcedResults") or [])==len(expected)); raise SystemExit(0 if forced_ok and "seoGate" in payload and all(key in readiness for key in required) else 1)'; then
                 exit 0
               fi
             fi

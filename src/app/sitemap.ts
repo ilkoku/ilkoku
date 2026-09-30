@@ -195,6 +195,12 @@ type CmsSitemapRow = {
 
 type CmsLegalSitemapRow = CmsSitemapRow;
 
+type EducationFreshnessRow = {
+  namespace: string;
+  contentKey: string;
+  updatedAt: Date;
+};
+
 async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   try {
     const context = await getBookIndexPublicPageContext(100);
@@ -247,6 +253,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       pages,
       legalRows,
       bookIndexEntries,
+      educationFreshnessRows,
     ] = await Promise.all([
       prisma.work.findMany({
         where: {
@@ -295,7 +302,67 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         LIMIT 100
       `,
       loadBookIndexSitemapEntries(),
+      prisma.$queryRaw<EducationFreshnessRow[]>`
+        SELECT namespace, contentKey, updatedAt
+        FROM SiteContent
+        WHERE namespace IN (
+          'education_guide',
+          'reader_education_guide',
+          'editor_education_guide',
+          'editor_education_text'
+        )
+          AND status = 'published'
+        ORDER BY updatedAt DESC
+        LIMIT 1000
+      `,
     ]);
+
+    const educationFreshnessByKey = new Map<string, Date>();
+    for (const row of educationFreshnessRows) {
+      const key = `${row.namespace}:${row.contentKey}`;
+      const current = educationFreshnessByKey.get(key);
+      if (!current || row.updatedAt > current) {
+        educationFreshnessByKey.set(key, row.updatedAt);
+      }
+    }
+
+    const educationLastModifiedByUrl = new Map<string, Date>();
+    for (const genre of GENRES) {
+      const href = writingGenreHrefs.find((candidate) => candidate.endsWith(`/${genre.slug}`));
+      const updatedAt = educationFreshnessByKey.get(`education_guide:${genre.slug}`);
+      if (href && updatedAt) {
+        educationLastModifiedByUrl.set(`${baseUrl}${href}`, updatedAt);
+      }
+    }
+    for (const category of READER_EDUCATION_CATEGORIES) {
+      const updatedAt = educationFreshnessByKey.get(`reader_education_guide:${category.slug}`);
+      if (updatedAt) {
+        educationLastModifiedByUrl.set(
+          `${baseUrl}${readerEducationPublicPath(category)}`,
+          updatedAt,
+        );
+      }
+    }
+    for (const category of EDITOR_EDUCATION_CATEGORIES) {
+      const guideUpdatedAt = educationFreshnessByKey.get(`editor_education_guide:${category.slug}`);
+      const textUpdatedAt = educationFreshnessByKey.get(`editor_education_text:${category.slug}`);
+      const updatedAt =
+        guideUpdatedAt && textUpdatedAt
+          ? (guideUpdatedAt > textUpdatedAt ? guideUpdatedAt : textUpdatedAt)
+          : guideUpdatedAt ?? textUpdatedAt;
+      if (updatedAt) {
+        educationLastModifiedByUrl.set(
+          `${baseUrl}${editorEducationPublicPath(category)}`,
+          updatedAt,
+        );
+      }
+    }
+
+    const liveStaticDiscoveryEntries: MetadataRoute.Sitemap =
+      staticDiscoveryEntries.map((entry) => {
+        const lastModified = educationLastModifiedByUrl.get(entry.url);
+        return lastModified ? { ...entry, lastModified } : entry;
+      });
 
     const pageBySlug = new Map(
       pages.map((row) => [row.slug, row]),
@@ -332,7 +399,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
 
     return [
-      ...staticDiscoveryEntries,
+      ...liveStaticDiscoveryEntries,
       ...bookIndexEntries,
       ...publicPageEntries,
       ...legalEntries,

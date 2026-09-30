@@ -80,3 +80,18 @@ test("homepage and all writing education routes stay canonical indexable and sit
     assertContains(page, "robots: { index: true, follow: true }", `${canonical} index/follow`);
   }
 });
+
+
+test("education sitemap lastmod uses only truthful published CMS timestamps", () => {
+  const sitemap = source("src/app/sitemap.ts");
+
+  assertContains(sitemap, "type EducationFreshnessRow", "education freshness row contract");
+  assertContains(sitemap, "'education_guide'", "writing education freshness namespace");
+  assertContains(sitemap, "'reader_education_guide'", "reader education freshness namespace");
+  assertContains(sitemap, "'editor_education_guide'", "editor visual freshness namespace");
+  assertContains(sitemap, "'editor_education_text'", "editor text freshness namespace");
+  assertContains(sitemap, "AND status = 'published'", "published-only education freshness");
+  assertContains(sitemap, "educationLastModifiedByUrl", "education URL freshness map");
+  assertContains(sitemap, "liveStaticDiscoveryEntries", "live static sitemap freshness merge");
+  assertContains(sitemap, "lastModified", "truthful sitemap lastmod output");
+});

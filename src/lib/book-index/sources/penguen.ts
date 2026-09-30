@@ -10,6 +10,12 @@ const SOURCE_ORIGIN = "https://www.penguenkitap.com.tr";
 const BESTSELLER_PATH = "/urunler/cok-satanlar";
 const MIN_EXPECTED_BOOKS = 4;
 
+// Penguen publishes a placeholder author for this exact product. The credit is
+// re-verified against the same Palme edition across independent retailers.
+const VERIFIED_AUTHOR_BY_SLUG = new Map<string, string>([
+  ["palme-11-biyoloji-soru", "Bilgehan Peri, Banu Karaağaç"],
+]);
+
 function normalizeText(value: string | undefined) {
   return decodeBookIndexHtml(value ?? "")
     .replace(/<[^>]+>/gu, " ")
@@ -89,9 +95,11 @@ export function parsePenguenBestsellers(
       href: new URL(href, SOURCE_ORIGIN).toString(),
       title,
       authorName:
-        detailText && !/^Yazar\s+Adı$/iu.test(detailText)
+        (detailText && !/^Yazar\s+Adı$/iu.test(detailText)
           ? detailText
-          : null,
+          : null)
+        || VERIFIED_AUTHOR_BY_SLUG.get(slug)
+        || null,
       imageUrl: imageSrc ? new URL(imageSrc, SOURCE_ORIGIN).toString() : null,
     });
   }

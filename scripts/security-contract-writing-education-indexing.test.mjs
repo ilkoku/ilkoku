@@ -95,3 +95,12 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   assertContains(sitemap, "liveStaticDiscoveryEntries", "live static sitemap freshness merge");
   assertContains(sitemap, "lastModified", "truthful sitemap lastmod output");
 });
+
+
+test("public writing guides keep Next image optimization enabled", () => {
+  const fiction = source("src/components/content/BatchedFictionGuidePage.tsx");
+  const education = source("src/components/content/BatchedEducationGuidePage.tsx");
+
+  assert.equal(fiction.includes("unoptimizedImages"), false, "fiction guides must not bypass Next image optimization");
+  assert.equal(education.includes("unoptimizedImages"), false, "education guides must not bypass Next image optimization");
+});

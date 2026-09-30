@@ -3,6 +3,11 @@ name: SEO indexability smoke
 on:
   schedule:
     - cron: "15 6 * * 2"
+  push:
+    branches:
+      - "diag/seo-payload-measure-20260930"
+    paths:
+      - ".github/workflows/seo-indexability-smoke.yml"
   workflow_dispatch:
     inputs:
       confirmation:

@@ -56,8 +56,13 @@ export function parseNetherlandsBestseller60(
       (line, index) => index >= cursor && line === String(rank),
     );
     if (rankIndex < 0) {
+      const preview = lines
+        .slice(Math.max(headingIndex, cursor - 2), Math.min(lines.length, cursor + 32))
+        .map((line, index) => `${Math.max(headingIndex, cursor - 2) + index}:${line}`)
+        .join(" | ")
+        .slice(0, 1200);
       throw new Error(
-        `BOOK_INDEX_BESTSELLER60_NL_RANK_NOT_FOUND:${rank}`,
+        `BOOK_INDEX_BESTSELLER60_NL_RANK_NOT_FOUND:${rank}:${preview}`,
       );
     }
 

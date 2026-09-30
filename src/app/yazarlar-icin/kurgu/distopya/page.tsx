@@ -7,7 +7,7 @@ import { getEducationGuideRecord } from "@/lib/cms-education";
 
 import "./distopya-guide.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const defaultAlt = {
   hero: "Distopya yazarlığı için yurttaş dosyaları, kurum şeması, erişim kartları ve İlkOku yazar ekranıyla düzenlenmiş sıcak çalışma masası",

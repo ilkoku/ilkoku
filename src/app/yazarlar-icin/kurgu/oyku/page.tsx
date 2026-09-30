@@ -7,7 +7,7 @@ import { getEducationGuideRecord } from "@/lib/cms-education";
 
 import "./oyku-guide.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const defaultAlt = {
   hero: "Öykü yazma sürecini anlatan İlkOku çalışma ortamı",

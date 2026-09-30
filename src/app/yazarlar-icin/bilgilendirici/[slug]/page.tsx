@@ -6,7 +6,7 @@ import { getEducationGuideDefinition } from "@/lib/informational-guide-batch";
 
 import "../../batched-education-guide.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const LIVE_INFORMATIONAL_SLUGS = [
   "tarih",
@@ -33,6 +33,10 @@ const LIVE_INFORMATIONAL_SLUGS = [
   "seyahat",
   "din-ve-inanc",
 ] as const;
+
+export function generateStaticParams() {
+  return LIVE_INFORMATIONAL_SLUGS.map((slug) => ({ slug }));
+}
 
 type LiveInformationalSlug = (typeof LIVE_INFORMATIONAL_SLUGS)[number];
 type PageProps = { params: Promise<{ slug: string }> };

@@ -3,6 +3,8 @@ name: Book Index scheduler
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
       - ".book-index-force-refresh"
   workflow_run:

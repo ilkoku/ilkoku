@@ -1,0 +1,74 @@
+name: Robots public resource audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-discovery-graph-20260930"
+    paths:
+      - ".github/workflows/robots-public-resource-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Find indexable pages referencing robots-blocked public resources
+        shell: bash
+        run: |
+          node <<'NODE'
+          const BASE="https://ilkoku.com";
+          const sm=await fetch(BASE+"/sitemap.xml");
+          const xml=await sm.text();
+          const urls=[...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1].trim()))];
+          const affected=[];
+          let cursor=0;
+          async function worker(){
+            while(true){
+              const i=cursor++;
+              if(i>=urls.length)return;
+              const url=urls[i];
+              const r=await fetch(url,{headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"},signal:AbortSignal.timeout(30000)});
+              const html=await r.text();
+              const refs=new Set();
+              for(const m of html.matchAll(/(?:src|href)=["']([^"']+)["']/gi)){
+                const raw=m[1].replace(/&amp;/g,"&");
+                try{
+                  const u=new URL(raw,url);
+                  if(u.origin===BASE && u.pathname.startsWith("/api/")) refs.add(u.href);
+                }catch{}
+              }
+              for(const m of html.matchAll(/srcset=["']([^"']+)["']/gi)){
+                for(const item of m[1].split(",")){
+                  const raw=item.trim().split(/\s+/)[0].replace(/&amp;/g,"&");
+                  try{
+                    const u=new URL(raw,url);
+                    if(u.origin===BASE && u.pathname.startsWith("/api/")) refs.add(u.href);
+                  }catch{}
+                }
+              }
+              if(refs.size) affected.push({url,count:refs.size,refs:[...refs]});
+            }
+          }
+          await Promise.all(Array.from({length:6},()=>worker()));
+          affected.sort((a,b)=>b.count-a.count||a.url.localeCompare(b.url));
+          const families={};
+          for(const x of affected){
+            let f="other";
+            const p=new URL(x.url).pathname;
+            if(p.startsWith("/yazarlar-icin/"))f="writing";
+            else if(p.startsWith("/okurlar-icin/"))f="reader";
+            else if(p.startsWith("/editorler-icin/"))f="editor";
+            else if(p==="/")f="home";
+            families[f]=(families[f]||0)+1;
+          }
+          console.log("SUMMARY",JSON.stringify({
+            sitemap:urls.length,
+            affectedPages:affected.length,
+            totalBlockedResourceRefs:affected.reduce((n,x)=>n+x.count,0),
+            families
+          }));
+          for(const x of affected) console.log("AFFECTED",JSON.stringify(x));
+          NODE

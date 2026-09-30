@@ -6,6 +6,7 @@ import { PublicNavigationHistory } from "@/components/layout/PublicNavigationHis
 import { SiteAnalyticsLoader } from "@/components/privacy/SiteAnalyticsLoader";
 import { SiteConsentBanner } from "@/components/privacy/SiteConsentBanner";
 import {
+  publicBrandAlternateName,
   publicBrandDescription,
   publicBrandName,
   publicBrandPositioning,
@@ -129,7 +130,7 @@ const organizationSchema = {
   "@type": "Organization",
   "@id": `${baseUrl}/#organization`,
   name: publicBrandName,
-  alternateName: publicBrandPositioning,
+  alternateName: publicBrandAlternateName,
   url: baseUrl,
   email: siteContact.generalEmail,
   sameAs: officialEntityUrls,
@@ -160,7 +161,7 @@ const websiteSchema = {
   "@type": "WebSite",
   "@id": `${baseUrl}/#website`,
   name: publicBrandName,
-  alternateName: publicBrandPositioning,
+  alternateName: publicBrandAlternateName,
   url: baseUrl,
   inLanguage: "tr-TR",
   description: publicBrandDescription,

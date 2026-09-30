@@ -453,7 +453,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
-    code: "dr-tr-bestsellers",
+    code: "dr-tr-bestsellers-native",
     sourceCode: "dr",
     title: "D&R · Haftanın Çok Satan Kitapları",
     categoryKey: "general",

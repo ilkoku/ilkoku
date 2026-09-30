@@ -388,7 +388,7 @@ export const drBookIndexAdapter: BookIndexSourceAdapter = {
       return parseDrNewReleases(await fetchDrHtml(context.sourceUrl));
     }
 
-    if (context.listCode === "dr-tr-bestsellers") {
+    if (context.listCode === "dr-tr-bestsellers-native") {
       return collectDrWeeklyBestsellers(context.sourceUrl);
     }
 

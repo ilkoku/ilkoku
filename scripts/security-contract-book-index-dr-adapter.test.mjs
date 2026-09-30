@@ -21,13 +21,13 @@ test("D&R production adapter preserves native order for bestsellers and new rele
   contains(adapter, "BOOK_INDEX_DR_BESTSELLER_UNEXPECTED_PAGE_SIZE", "bestseller page-size guard");
   contains(adapter, "BOOK_INDEX_DR_BESTSELLER_NATIVE_ORDER_MISMATCH", "bestseller native-order guard");
   contains(adapter, "parseDrNewReleases", "native new-release parser");
-  contains(adapter, 'context.listCode === "dr-tr-bestsellers"', "bestseller collector activation");
+  contains(adapter, 'context.listCode === "dr-tr-bestsellers-native"', "bestseller collector activation");
   contains(adapter, 'context.listCode === "dr-tr-new-releases"', "new-release collector activation");
   contains(adapter, "rank: nativeIndex + 1", "native page order is preserved");
   contains(collector, "drBookIndexAdapter", "collector registration");
   contains(sources, 'collectionState: "ready"', "ready source state");
 
-  for (const code of ["dr-tr-bestsellers", "dr-tr-new-releases"]) {
+  for (const code of ["dr-tr-bestsellers-native", "dr-tr-new-releases"]) {
     const start = lists.indexOf(`code: "${code}"`);
     assert.ok(start >= 0, `missing D&R list: ${code}`);
     const block = lists.slice(start, start + 750);

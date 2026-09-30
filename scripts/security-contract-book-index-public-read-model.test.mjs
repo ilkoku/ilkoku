@@ -568,3 +568,35 @@ test("Kitap Ambari is displayable without gaining a Turkey composite vote", () =
   contains(readModel, "includeInComposite: true", "composite scoring still uses the independent voting gate");
   notContains(readModel, "includeInTurkeyDisplay", "display-only flag cannot affect composite scoring");
 });
+
+
+test("Book Index navigation stays scoped out of the global public header", () => {
+  const header = source("src/components/layout/PublicSiteHeader.tsx");
+  const sectionNav = source("src/features/book-index/public/BookIndexSectionNav.tsx");
+
+  contains(
+    header,
+    "withoutBookIndexMenu(",
+    "global header strips Book Index menu payloads",
+  );
+  contains(
+    header,
+    'if (menu.id === "book-index") return [];',
+    "global header removes dedicated Book Index menu",
+  );
+  contains(
+    header,
+    '!item.pageId.startsWith("book-index")',
+    "global header removes nested Book Index links",
+  );
+  notContains(
+    header,
+    'href: "/en-cok-satanlar/turkiye"',
+    "global header must not hardcode bestseller routes",
+  );
+  contains(
+    sectionNav,
+    '<NavRow current={current} items={primaryItems} />',
+    "Book Index keeps its own primary section navigation",
+  );
+});

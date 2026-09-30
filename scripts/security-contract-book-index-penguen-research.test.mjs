@@ -23,6 +23,31 @@ test("Penguen uses the verified penguenkitap.com.tr bestseller surface", () => {
   contains(sources, 'name: "Penguen Kitap"', "correct source identity");
   contains(adapter, 'const BESTSELLER_PATH = "/urunler/cok-satanlar"', "native bestseller path");
   contains(adapter, "parsePenguenBestsellers", "bestseller parser");
+  contains(
+    adapter,
+    'inner.match(/<h4\\b[^>]*>([\\s\\S]*?)<\\/h4>/iu)',
+    "Penguen title is read from the dedicated h4 field",
+  );
+  contains(
+    adapter,
+    "detailText && !/^Yazar\\s+Adı$/iu.test(detailText)",
+    "Penguen author is read separately and placeholder author text is rejected",
+  );
+  contains(
+    adapter,
+    "existing.publisherName = detailText",
+    "Penguen duplicate product card enriches publisher metadata",
+  );
+  contains(
+    adapter,
+    "authorName: item.authorName",
+    "Penguen author metadata reaches the collector result",
+  );
+  contains(
+    adapter,
+    "publisherName: item.publisherName",
+    "Penguen publisher metadata reaches the collector result",
+  );
   contains(adapter, "BOOK_INDEX_PENGUEN_BESTSELLER_MARKER_MISSING", "page marker guard");
   contains(adapter, "BOOK_INDEX_PENGUEN_RESULT_TOO_SMALL", "minimum result guard");
   contains(collector, "penguenBookIndexAdapter", "collector registration");

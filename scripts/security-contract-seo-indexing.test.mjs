@@ -366,3 +366,20 @@ test("SEO center and audit API stay Turkish-only", () => {
   assertNotContains(roleCards, 'getPublishedRoleCardsState("en")', "role card SEO ignores EN state");
   assertNotContains(roleCards, "TR / EN", "role card SEO has no language parity work");
 });
+
+
+test("authentication entry routes are consistently excluded from search indexing", () => {
+  const nextConfig = source("next.config.ts");
+  const login = source("src/app/giris/page.tsx");
+  const register = source("src/app/kayit/page.tsx");
+  const forgot = source("src/app/sifremi-unuttum/page.tsx");
+
+  assertContains(nextConfig, '"/sifremi-unuttum"', "forgot-password X-Robots defense");
+  for (const [label, page] of [
+    ["login", login],
+    ["register", register],
+    ["forgot-password", forgot],
+  ]) {
+    assertContains(page, "robots: { index: false, follow: false }", `${label} route metadata noindex`);
+  }
+});

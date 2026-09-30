@@ -36,7 +36,11 @@ export function parseNetherlandsBestseller60(
   html: string,
 ): BookIndexCollectionResult {
   const lines = htmlToVisibleLines(html);
-  const headingIndex = lines.findIndex(\n    (line) =>\n      line === "Bestseller 60"\n      || line.startsWith("Bestseller 60 "),\n  );
+  const headingIndex = lines.findIndex(
+    (line) =>
+      line === "Bestseller 60"
+      || line.startsWith("Bestseller 60 "),
+  );
   if (headingIndex < 0) {
     const preview = lines.slice(0, 12).join(" | ").slice(0, 240);
     throw new Error(

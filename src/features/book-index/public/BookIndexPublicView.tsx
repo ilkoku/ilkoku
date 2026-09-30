@@ -15,6 +15,7 @@ import type {
 } from "@/lib/book-index/insights";
 
 import { BookIndexRankTable } from "./BookIndexRankTable";
+import { BookIndexSectionNav } from "./BookIndexSectionNav";
 import { BookIndexSourceComparison } from "./BookIndexSourceComparison";
 import { BookIndexViewModeNav } from "./BookIndexViewModeNav";
 import styles from "./BookIndexPublicView.module.css";
@@ -64,6 +65,7 @@ export function BookIndexOverviewView({
 
   return (
     <main className={styles.page}>
+      <BookIndexSectionNav current="overview" />
       <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi</span>
         <h1>En Çok Satan Kitaplar {currentYear}</h1>
@@ -191,6 +193,7 @@ export function TurkeyBookIndexView({
 
   return (
     <main className={styles.page}>
+      <BookIndexSectionNav current="turkey" />
       <header className={`${styles.hero} ${styles.turkeyHero}`}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>Türkiye&apos;de En Çok Satan Kitaplar {currentYear}</h1>
@@ -254,6 +257,7 @@ export function TurkeyBookIndexComparisonView({
 
   return (
     <main className={styles.page}>
+      <BookIndexSectionNav current="turkey" />
       <header className={`${styles.hero} ${styles.turkeyHero}`}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>En Çok Satanlar Karşılaştırma</h1>
@@ -355,6 +359,7 @@ export function BookIndexInsightView({
 
   return (
     <main className={styles.page}>
+      <BookIndexSectionNav current="overview" />
       <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · {definition.eyebrow}</span>
         <h1>{definition.heading} {currentYear}</h1>

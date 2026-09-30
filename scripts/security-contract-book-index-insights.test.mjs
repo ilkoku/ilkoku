@@ -24,7 +24,7 @@ test("Book Index insights derive from historical snapshots without publishing ro
   contains(insights, "previous.rank - current.rank", "riser rank gain");
   contains(insights, "newSourceCount", "new-entry source evidence");
   contains(insights, "newSources.add(snapshot.sourceCode)", "new-entry source dedupe");
-  contains(insights, "gains.set(snapshot.sourceCode, gain)", "riser source dedupe");
+  contains(insights, "gains.set(snapshot.sourceCode, {", "riser source evidence dedupe");
   contains(
     insights,
     "currentIndependenceGroupsByBook",

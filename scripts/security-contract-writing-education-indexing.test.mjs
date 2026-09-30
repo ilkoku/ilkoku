@@ -11,6 +11,10 @@ function assertContains(text, fragment, label) {
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
 }
 
+function assertNotContains(text, fragment, label) {
+  assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
+}
+
 function readWritingInventory() {
   const genresSource = source("src/lib/genres.ts");
   const hubsSource = source("src/lib/writing-category-hubs.ts");
@@ -62,6 +66,8 @@ test("homepage and all writing education routes stay canonical indexable and sit
     "informational guide self canonical",
   );
   assertContains(informational, "robots: { index: true, follow: true }", "informational guides index/follow");
+  assertContains(informational, "export const revalidate = 300;", "informational guides use ISR");
+  assertNotContains(informational, 'export const dynamic = "force-dynamic";', "informational guides avoid per-request rendering");
   assertContains(
     informational,
     'return { title: "Eğitim bulunamadı | İlkOku", robots: { index: false, follow: false } };',
@@ -78,6 +84,8 @@ test("homepage and all writing education routes stay canonical indexable and sit
     const page = source(`src/app${canonical}/page.tsx`);
     assertContains(page, `canonical: "https://ilkoku.com${canonical}"`, `${canonical} self canonical`);
     assertContains(page, "robots: { index: true, follow: true }", `${canonical} index/follow`);
+    assertContains(page, "export const revalidate = 300;", `${canonical} uses ISR`);
+    assertNotContains(page, 'export const dynamic = "force-dynamic";', `${canonical} avoids per-request rendering`);
   }
 });
 

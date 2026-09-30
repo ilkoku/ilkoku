@@ -89,67 +89,6 @@
 }
 
 
-.sourceStatusGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.sourceStatusCard {
-  display: flex;
-  min-height: 108px;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-  border-radius: 16px;
-}
-
-.sourceStatusCard a {
-  color: inherit;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.sourceStatusCard a:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-.sourceStatusLive,
-.sourceStatusPending {
-  width: fit-content;
-  padding: 5px 8px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.sourceStatusLive {
-  background: color-mix(in srgb, currentColor 8%, transparent);
-}
-
-.sourceStatusPending {
-  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-  color: var(--muted, #60646c);
-}
-
-@media (max-width: 960px) {
-  .sourceStatusGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .sourceStatusGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .sourceStatusCard {
-    min-height: 92px;
-  }
-}
 
 .rankingList {
   display: grid;

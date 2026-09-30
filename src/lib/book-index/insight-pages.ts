@@ -17,36 +17,36 @@ export type BookIndexInsightPageDefinition = {
 
 export const BOOK_INDEX_INSIGHT_PAGES: readonly BookIndexInsightPageDefinition[] = [
   {
-    slug: "yeni-girisler",
+    slug: "cok-satanlara-yeni-girenler",
     key: "newEntries",
-    eyebrow: "Yeni Girişler",
-    heading: "Çok Satan Listelerine Yeni Giren Kitaplar",
+    eyebrow: "Çok Satanlara Yeni Girenler",
+    heading: "Çok Satanlara Yeni Giren Kitaplar",
     searchTitle: "Çok Satanlara Yeni Giren Kitaplar",
     description:
       "Bir önceki başarılı snapshotta görünmeyip güncel çok satan listelerine yeni giren kitapları, kaynak kanıtlarıyla inceleyin.",
   },
   {
-    slug: "yukselenler",
+    slug: "cok-satanlarda-yukselenler",
     key: "risers",
-    eyebrow: "Yükselenler",
+    eyebrow: "Çok Satanlarda Yükselenler",
     heading: "Çok Satan Listelerinde Yükselen Kitaplar",
-    searchTitle: "Yükselen Kitaplar",
+    searchTitle: "Çok Satanlarda Yükselen Kitaplar",
     description:
       "Kaynak listelerinde önceki başarılı snapshot'a göre sırası yükselen kitapları, toplam sıra kazanımı ve kaynak sayısıyla inceleyin.",
   },
   {
-    slug: "her-yerde-satanlar",
+    slug: "birden-fazla-listede-cok-satanlar",
     key: "everywhereSellers",
-    eyebrow: "Her Yerde Satanlar",
-    heading: "Birden Fazla Kaynakta Çok Satan Kitaplar",
+    eyebrow: "Birden Fazla Listede Çok Satanlar",
+    heading: "Birden Fazla Listede Çok Satan Kitaplar",
     searchTitle: "Birden Fazla Listede Çok Satan Kitaplar",
     description:
       "Aynı anda en az üç bağımsız işletmeci grubunda görünen çok satan kitapları karşılaştırın.",
   },
   {
-    slug: "uzun-satanlar",
+    slug: "uzun-suredir-cok-satanlar",
     key: "longSellers",
-    eyebrow: "Uzun Satanlar",
+    eyebrow: "Uzun Süredir Çok Satanlar",
     heading: "Uzun Süredir Çok Satan Kitaplar",
     searchTitle: "Uzun Süredir Çok Satan Kitaplar",
     description:

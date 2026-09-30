@@ -72,6 +72,30 @@ test("Book Index insights derive from historical snapshots without publishing ro
   );
 });
 
+test("Book Index analysis pages use descriptive canonical slugs and keep legacy redirects", () => {
+  const pages = source("src/lib/book-index/insight-pages.ts");
+  const config = source("next.config.ts");
+
+  for (const slug of [
+    "cok-satanlara-yeni-girenler",
+    "cok-satanlarda-yukselenler",
+    "birden-fazla-listede-cok-satanlar",
+    "uzun-suredir-cok-satanlar",
+  ]) {
+    contains(pages, `slug: "${slug}"`, `canonical analysis slug ${slug}`);
+  }
+
+  for (const [legacyPath, canonicalPath] of [
+    ["/en-cok-satanlar/yeni-girisler", "/en-cok-satanlar/cok-satanlara-yeni-girenler"],
+    ["/en-cok-satanlar/yukselenler", "/en-cok-satanlar/cok-satanlarda-yukselenler"],
+    ["/en-cok-satanlar/her-yerde-satanlar", "/en-cok-satanlar/birden-fazla-listede-cok-satanlar"],
+    ["/en-cok-satanlar/uzun-satanlar", "/en-cok-satanlar/uzun-suredir-cok-satanlar"],
+  ]) {
+    contains(config, `source: "${legacyPath}"`, `legacy redirect source ${legacyPath}`);
+    contains(config, `destination: "${canonicalPath}"`, `legacy redirect destination ${canonicalPath}`);
+  }
+});
+
 test("Book Index insight labels stay descriptive rather than inventing fixed time thresholds", () => {
   const insights = source("src/lib/book-index/insights.ts");
 

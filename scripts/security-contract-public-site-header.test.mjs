@@ -127,10 +127,10 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
-    "/en-cok-satanlar/yeni-girisler",
-    "/en-cok-satanlar/yukselenler",
-    "/en-cok-satanlar/her-yerde-satanlar",
-    "/en-cok-satanlar/uzun-satanlar",
+    "/en-cok-satanlar/cok-satanlara-yeni-girenler",
+    "/en-cok-satanlar/cok-satanlarda-yukselenler",
+    "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
+    "/en-cok-satanlar/uzun-suredir-cok-satanlar",
     "/kayit?rol=writer",
     "/kayit?rol=reader",
     "/kayit?rol=editor",
@@ -157,16 +157,16 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
-    "/en-cok-satanlar/yeni-girisler",
-    "/en-cok-satanlar/yukselenler",
-    "/en-cok-satanlar/her-yerde-satanlar",
-    "/en-cok-satanlar/uzun-satanlar",
+    "/en-cok-satanlar/cok-satanlara-yeni-girenler",
+    "/en-cok-satanlar/cok-satanlarda-yukselenler",
+    "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
+    "/en-cok-satanlar/uzun-suredir-cok-satanlar",
   ]) {
     assert.ok(header.includes(`href: "${href}"`), `${href} must remain in the injected Book Index menu`);
   }
   assert.match(header, /title: "Ana Listeler"/);
   assert.match(header, /title: "Karşılaştır"/);
-  assert.match(header, /title: "Trendler"/);
+  assert.match(header, /title: "Çok Satan Analizleri"/);
   assert.doesNotMatch(header, /directHref: "\/en-cok-satanlar"/);
   assert.match(header, /menu\.id === "support"/);
   assert.match(config, /id: "book-index"[\s\S]*label: "Kitap Endeksi"[\s\S]*id: "support"/);

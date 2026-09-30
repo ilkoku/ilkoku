@@ -64,8 +64,8 @@ test("Book Index analytics records views and shared-family navigation events", (
   contains(sectionNav, 'href: "/yeni-cikanlar"', "new-release navigation");
   contains(sectionNav, 'href: "/en-cok-satanlar/dunya"', "global navigation");
   contains(sectionNav, 'href: "/en-cok-satanlar/turkiye/karsilastirma"', "comparison navigation");
-  contains(sectionNav, 'href: "/en-cok-satanlar/yeni-girisler"', "new-entry navigation");
-  contains(sectionNav, 'href: "/en-cok-satanlar/yukselenler"', "riser navigation");
-  contains(sectionNav, 'href: "/en-cok-satanlar/her-yerde-satanlar"', "everywhere-seller navigation");
-  contains(sectionNav, 'href: "/en-cok-satanlar/uzun-satanlar"', "long-seller navigation");
+  contains(sectionNav, 'href: "/en-cok-satanlar/cok-satanlara-yeni-girenler"', "new-entry navigation");
+  contains(sectionNav, 'href: "/en-cok-satanlar/cok-satanlarda-yukselenler"', "riser navigation");
+  contains(sectionNav, 'href: "/en-cok-satanlar/birden-fazla-listede-cok-satanlar"', "everywhere-seller navigation");
+  contains(sectionNav, 'href: "/en-cok-satanlar/uzun-suredir-cok-satanlar"', "long-seller navigation");
 });

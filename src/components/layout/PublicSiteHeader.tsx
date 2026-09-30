@@ -84,29 +84,29 @@ function withBookIndexMenu(
       },
       {
         id: "book-index-trends",
-        title: "Trendler",
+        title: "Çok Satan Analizleri",
         links: [
           {
-            href: "/en-cok-satanlar/yeni-girisler",
-            label: "Yeni Girişler",
+            href: "/en-cok-satanlar/cok-satanlara-yeni-girenler",
+            label: "Çok Satanlara Yeni Girenler",
             primary: false,
             pageId: "book-index-new-entries",
           },
           {
-            href: "/en-cok-satanlar/yukselenler",
-            label: "Yükselenler",
+            href: "/en-cok-satanlar/cok-satanlarda-yukselenler",
+            label: "Çok Satanlarda Yükselenler",
             primary: false,
             pageId: "book-index-risers",
           },
           {
-            href: "/en-cok-satanlar/her-yerde-satanlar",
-            label: "Her Yerde Satanlar",
+            href: "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
+            label: "Birden Fazla Listede Çok Satanlar",
             primary: false,
             pageId: "book-index-everywhere",
           },
           {
-            href: "/en-cok-satanlar/uzun-satanlar",
-            label: "Uzun Satanlar",
+            href: "/en-cok-satanlar/uzun-suredir-cok-satanlar",
+            label: "Uzun Süredir Çok Satanlar",
             primary: false,
             pageId: "book-index-long-sellers",
           },

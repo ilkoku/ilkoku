@@ -116,6 +116,10 @@ function ruleMatchesRoute(destination, route) {
       if (!actual[index]) return false;
       continue;
     }
+    if (actual[index] === "[]") {
+      if (!part) return false;
+      continue;
+    }
     if (part !== actual[index]) return false;
   }
   return expected.length === actual.length;

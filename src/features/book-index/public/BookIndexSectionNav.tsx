@@ -36,23 +36,23 @@ const analysisItems: Array<{
   },
   {
     key: "new-entries",
-    href: "/en-cok-satanlar/yeni-girisler",
-    label: "Yeni Girişler",
+    href: "/en-cok-satanlar/cok-satanlara-yeni-girenler",
+    label: "Çok Satanlara Yeni Girenler",
   },
   {
     key: "risers",
-    href: "/en-cok-satanlar/yukselenler",
-    label: "Yükselenler",
+    href: "/en-cok-satanlar/cok-satanlarda-yukselenler",
+    label: "Çok Satanlarda Yükselenler",
   },
   {
     key: "everywhere",
-    href: "/en-cok-satanlar/her-yerde-satanlar",
-    label: "Her Yerde Satanlar",
+    href: "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
+    label: "Birden Fazla Listede Çok Satanlar",
   },
   {
     key: "long-sellers",
-    href: "/en-cok-satanlar/uzun-satanlar",
-    label: "Uzun Satanlar",
+    href: "/en-cok-satanlar/uzun-suredir-cok-satanlar",
+    label: "Uzun Süredir Çok Satanlar",
   },
 ];
 

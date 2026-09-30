@@ -107,6 +107,26 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/en-cok-satanlar/yeni-girisler",
+        destination: "/en-cok-satanlar/cok-satanlara-yeni-girenler",
+        permanent: true,
+      },
+      {
+        source: "/en-cok-satanlar/yukselenler",
+        destination: "/en-cok-satanlar/cok-satanlarda-yukselenler",
+        permanent: true,
+      },
+      {
+        source: "/en-cok-satanlar/her-yerde-satanlar",
+        destination: "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
+        permanent: true,
+      },
+      {
+        source: "/en-cok-satanlar/uzun-satanlar",
+        destination: "/en-cok-satanlar/uzun-suredir-cok-satanlar",
+        permanent: true,
+      },
+      {
         source: "/onizleme/ana-sayfa-yeni",
         destination: "/",
         permanent: false,

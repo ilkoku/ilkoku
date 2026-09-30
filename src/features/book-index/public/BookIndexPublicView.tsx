@@ -65,7 +65,7 @@ export function BookIndexOverviewView({
 
   return (
     <main className={styles.page}>
-      <BookIndexSectionNav current="overview" />
+      <BookIndexSectionNav current="overview" showAnalysis={false} />
       <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi</span>
         <h1>En Çok Satan Kitaplar {currentYear}</h1>
@@ -119,6 +119,8 @@ export function BookIndexOverviewView({
           </article>
         )}
       </section>
+
+      <BookIndexSectionNav current="overview" showPrimary={false} />
 
       {showInsightPages && publishedInsightPages.length ? (
         <section className={styles.section} aria-labelledby="insight-pages-heading">
@@ -254,7 +256,7 @@ export function TurkeyBookIndexComparisonView({
 
   return (
     <main className={styles.page}>
-      <BookIndexSectionNav current="comparison" />
+      <BookIndexSectionNav current="comparison" showAnalysis={false} />
       <header className={`${styles.hero} ${styles.turkeyHero}`}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>En Çok Satanlar Karşılaştırma</h1>
@@ -269,10 +271,9 @@ export function TurkeyBookIndexComparisonView({
             <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
           </p>
         ) : null}
-        <div className={styles.topActions}>
-          <BookIndexViewModeNav current="comparison" />
-        </div>
       </header>
+
+      <BookIndexSectionNav current="comparison" showPrimary={false} />
 
       <section className={styles.section} id="karsilastirma">
         <div className={styles.sectionHeading}>

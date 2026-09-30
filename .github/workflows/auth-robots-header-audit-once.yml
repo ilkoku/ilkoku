@@ -1,0 +1,33 @@
+name: Auth robots header audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/auth-robots-header-20260930"
+    paths:
+      - ".github/workflows/auth-robots-header-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify live auth/private X-Robots headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          urls=(
+            "https://ilkoku.com/giris"
+            "https://ilkoku.com/giris?sonraki=%2Fhesabim"
+            "https://ilkoku.com/kayit"
+            "https://ilkoku.com/sifremi-unuttum"
+            "https://ilkoku.com/hesabim"
+            "https://ilkoku.com/kesfet"
+          )
+          for url in "${urls[@]}"; do
+            echo "URL $url"
+            curl -sS -o /dev/null -D - --max-time 20 -A 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' "$url"               | tr -d '\r'               | grep -Ei '^(HTTP/|location:|x-robots-tag:|content-type:|cache-control:|server:)' || true
+          done

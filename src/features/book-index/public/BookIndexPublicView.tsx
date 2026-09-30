@@ -211,43 +211,6 @@ export function TurkeyBookIndexView({
         </Link>
       </header>
 
-      <section className={styles.section} aria-labelledby="turkey-source-status-heading">
-        <div className={styles.sectionHeading}>
-          <div>
-            <span className={styles.eyebrow}>Takip edilen kitap siteleri</span>
-            <h2 id="turkey-source-status-heading">Türkiye kaynakları</h2>
-            <p>
-              Sıralama verisi henüz bağlanmamış siteleri de burada gösteriyoruz.
-              Veri gelmeyen bir site için İlkOku sıra üretmez.
-            </p>
-          </div>
-        </div>
-        <div className={styles.sourceStatusGrid}>
-          {model.turkey.sources.map((source) => (
-            <article className={styles.sourceStatusCard} key={source.sourceCode}>
-              <a
-                href={source.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {source.sourceName} ↗
-              </a>
-              <span
-                className={
-                  source.hasRankingData
-                    ? styles.sourceStatusLive
-                    : styles.sourceStatusPending
-                }
-              >
-                {source.hasRankingData
-                  ? "Sıralama yayında"
-                  : "Veri bağlantısı hazırlanıyor"}
-              </span>
-            </article>
-          ))}
-        </div>
-      </section>
-
       <section className={styles.section} id="ranking">
         <div className={styles.sectionHeading}>
           <div>

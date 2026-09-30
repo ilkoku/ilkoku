@@ -1,0 +1,29 @@
+name: Image optimizer audit one-off
+on:
+  push:
+    branches: ["diag/image-optimizer-20260930"]
+    paths: [".github/workflows/image-optimizer-audit-once.yml"]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Test production image optimizer
+        shell: bash
+        run: |
+          node <<'NODE'
+          const id="e4b70f91-6db6-4a61-bc39-d243079be3a1";
+          const source="https://ilkoku.com/api/media/"+id;
+          const widths=[640,1200,1920];
+          const src=await fetch(source,{headers:{accept:"image/avif,image/webp,image/*"}});
+          const srcbuf=await src.arrayBuffer();
+          console.log("SOURCE",JSON.stringify({status:src.status,type:src.headers.get("content-type"),bytes:srcbuf.byteLength,cache:src.headers.get("cache-control")}));
+          for(const w of widths){
+            const u="https://ilkoku.com/_next/image?url="+encodeURIComponent("/api/media/"+id)+"&w="+w+"&q=75";
+            const r=await fetch(u,{headers:{accept:"image/avif,image/webp,image/*"},redirect:"follow"});
+            const b=await r.arrayBuffer();
+            console.log("OPT",JSON.stringify({w,status:r.status,type:r.headers.get("content-type"),bytes:b.byteLength,cache:r.headers.get("cache-control"),vary:r.headers.get("vary")}));
+          }
+          NODE

@@ -20,7 +20,7 @@ function htmlToVisibleLines(html: string) {
     )
     .replace(/<br\s*\/?\s*>/giu, "\n")
     .replace(/<\/(?:p|div|li|h[1-6]|section|article|a)>/giu, "\n")
-    .replace(/<[^>]+>/gu, " ");
+    .replace(/<[^>]+>/gu, "\n");
 
   return decodeBookIndexHtml(withoutNoise)
     .split(/\n+/u)

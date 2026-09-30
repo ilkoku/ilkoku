@@ -3,6 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 
 import { normalizeBookIndexText } from "./html";
+import { getBookIndexTurkishTitleMeaning } from "./turkish-title-meanings";
 import {
   getBookIndexSourceListSnapshot,
   type BookIndexSourceListSnapshot,
@@ -27,6 +28,7 @@ export type GlobalBestsellerListCode =
 
 export type GlobalBestsellerItem = BookIndexSourceRankRow & {
   turkishTitle: string | null;
+  turkishTitleKind: "publication" | "meaning" | null;
 };
 
 export type GlobalBestsellerList = Omit<BookIndexSourceListSnapshot, "items"> & {
@@ -94,12 +96,21 @@ export async function getGlobalBestsellerReadModel(
       const candidate = item.masterBookId
         ? turkishTitleByMasterBookId.get(item.masterBookId) ?? null
         : null;
-      const turkishTitle =
+      const verifiedPublicationTitle =
         candidate && normalizeBookIndexText(candidate) !== normalizeBookIndexText(item.title)
           ? candidate
           : null;
+      const turkishMeaning = verifiedPublicationTitle
+        ? null
+        : getBookIndexTurkishTitleMeaning(item.title);
+      const turkishTitle = verifiedPublicationTitle ?? turkishMeaning;
+      const turkishTitleKind = verifiedPublicationTitle
+        ? ("publication" as const)
+        : turkishMeaning
+          ? ("meaning" as const)
+          : null;
 
-      return { ...item, turkishTitle };
+      return { ...item, turkishTitle, turkishTitleKind };
     }),
   }));
 

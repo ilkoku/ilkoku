@@ -152,7 +152,7 @@ test("global bestseller page is indexable, discoverable and source-native", () =
   );
   contains(
     view,
-    "sırası korunur.",
+    "Her sitenin kendi sıra numarası",
     "source rank methodology",
   );
   contains(view, "row.rank", "source rank rendering");
@@ -214,29 +214,38 @@ test("global preview copy avoids internal collector terminology", () => {
 });
 
 
-test("global bestseller Turkish titles come only from matched Turkey catalogue records", () => {
+test("global bestseller Turkish titles prefer verified publications and fall back to Turkish meanings", () => {
   const model = source("src/lib/book-index/global-public-read-model.ts");
   const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
+  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
 
-  contains(model, 'marketCode: "TR"', "Turkish title candidates are limited to Turkey sources");
-  contains(model, "includeInTurkeyIndex: true", "Turkish title candidates use approved Turkey index sources");
-  contains(model, "masterBookId", "Turkish title lookup requires an existing matched master book");
+  contains(model, 'marketCode: "TR"', "verified Turkish title candidates are limited to Turkey sources");
+  contains(model, "includeInTurkeyIndex: true", "verified Turkish titles use approved Turkey index sources");
+  contains(model, "masterBookId", "verified Turkish publication lookup requires an existing master book");
   contains(
     model,
     "normalizeBookIndexText(candidate) !== normalizeBookIndexText(item.title)",
     "duplicate original titles are not repeated as Turkish labels",
   );
-  contains(view, "row.turkishTitle", "verified Turkish title is exposed in the public world table");
+  contains(model, "getBookIndexTurkishTitleMeaning(item.title)", "missing verified publications fall back to a Turkish meaning");
+  contains(model, '"publication" as const', "verified publication titles remain distinguishable");
+  contains(model, '"meaning" as const', "meaning-only labels remain distinguishable");
+  contains(view, "row.turkishTitle", "Turkish counterpart is rendered beside the original title");
   contains(
     view,
-    "Türkiye kaynaklarında aynı esere doğrulanmış biçimde",
-    "reader-facing copy explains when a Turkish title is shown",
+    "yoksa yalnızca başlığın Türkçe anlamı verilir",
+    "reader-facing copy explains the Turkish meaning fallback",
   );
   contains(
     view,
-    "otomatik çeviri resmî kitap adı gibi sunulmaz",
-    "world table distinguishes verified Turkish publication titles from automatic translations",
+    "resmî yayın adı olarak değerlendirilmez",
+    "reader-facing copy prevents Turkish meanings from being confused with official publication titles",
   );
+  contains(meanings, '"The Love Hypothesis": "Aşk Hipotezi"', "English title meaning registry");
+  contains(meanings, '"Le Casse du siècle": "Yüzyılın Soygunu"', "French title meaning registry");
+  contains(meanings, '"Alles wird Asche": "Her Şey Küle Dönecek"', "German title meaning registry");
+  contains(meanings, '"세네카, 오늘을 빼앗기고 있는 당신에게": "Seneca, Bugünü Elinden Alınan Sana"', "Korean title meaning registry");
+  contains(meanings, '"自分とか、ないから。 教養としての東洋哲学": "Ben Diye Bir Şey Yok: Genel Kültür Olarak Doğu Felsefesi"', "Japanese title meaning registry");
 });
 
 

@@ -230,6 +230,7 @@ function ensureFooterContactBlock(column: HTMLElement | undefined) {
   const email = document.createElement("a");
   email.className = "site-contact-footer__email";
   email.href = `mailto:${siteContact.generalEmail}`;
+  email.rel = "nofollow";
   email.textContent = siteContact.generalEmail;
   email.setAttribute("aria-label", `Genel iletişim: ${siteContact.generalEmail}`);
   block.append(email);
@@ -283,6 +284,7 @@ function ensureContactPageBlock() {
     name.textContent = label;
     const anchor = document.createElement("a");
     anchor.href = `mailto:${address}`;
+    anchor.rel = "nofollow";
     anchor.textContent = address;
     row.append(name, anchor);
     channels.append(row);

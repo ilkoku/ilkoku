@@ -46,6 +46,26 @@ test("global bestseller public page reads only the approved source lists", () =>
 });
 
 
+test("Spain and Canada research sources stay fail-closed until ranked collectors are verified", () => {
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+
+  contains(sources, 'code: "casadellibro-es"', "Spain research source registry");
+  contains(sources, 'market: "ES"', "Spain market code");
+  contains(sources, 'code: "indigo-ca"', "Canada research source registry");
+  contains(sources, 'market: "CA"', "Canada market code");
+
+  contains(lists, 'code: "casadellibro-es-bestsellers-research"', "Spain research list");
+  contains(lists, 'code: "indigo-ca-globe-mail-weekly-research"', "Canada research list");
+  contains(lists, "collectionEveryMinutes: null", "research lists are unscheduled");
+  contains(lists, "enabled: false", "research lists are disabled");
+
+  notContains(model, '"casadellibro-es-bestsellers-research"', "Spain is not public before rank verification");
+  notContains(model, '"indigo-ca-globe-mail-weekly-research"', "Canada is not public before rank verification");
+});
+
+
 test("France Amazon bestseller source is fail-closed and source-native", () => {
   const adapter = source("src/lib/book-index/sources/amazon-fr.ts");
   const collector = source("src/lib/book-index/collector.ts");

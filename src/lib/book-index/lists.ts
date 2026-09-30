@@ -609,6 +609,32 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: true,
   },
+  {
+    code: "casadellibro-es-bestsellers-research",
+    sourceCode: "casadellibro-es",
+    title: "Casa del Libro İspanya · Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.casadellibro.com/libros-mas-vendidos",
+    maxRank: 100,
+    includeInComposite: false,
+    collectionEveryMinutes: null,
+    publiclyVisible: false,
+    enabled: false,
+  },
+  {
+    code: "indigo-ca-globe-mail-weekly-research",
+    sourceCode: "indigo-ca",
+    title: "Indigo Kanada · Globe and Mail · Haftalık Çok Satanlar",
+    categoryKey: "general",
+    period: "weekly",
+    sourceUrl: "https://www.indigo.ca/collections/globe-and-mail-bestsellers",
+    maxRank: 100,
+    includeInComposite: false,
+    collectionEveryMinutes: null,
+    publiclyVisible: false,
+    enabled: false,
+  },
 
 
 

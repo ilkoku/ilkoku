@@ -519,7 +519,10 @@ export function BookIndexInsightView({
 
   return (
     <main className={styles.page}>
-      <BookIndexSectionNav current={insightNavSection[definition.key]} />
+      <BookIndexSectionNav
+        current={insightNavSection[definition.key]}
+        showAnalysis={false}
+      />
       <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · {definition.eyebrow}</span>
         <h1>{definition.heading} {currentYear}</h1>
@@ -542,6 +545,11 @@ export function BookIndexInsightView({
           </div>
         ))}
       </section>
+
+      <BookIndexSectionNav
+        current={insightNavSection[definition.key]}
+        showPrimary={false}
+      />
 
       <form className={styles.insightFilters} method="get">
         <label className={styles.filterField}>

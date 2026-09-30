@@ -496,6 +496,38 @@ test("Yeni Çıkanlar page is indexable and remains source-native", () => {
 
 
 
+test("Book Index insight pages place analysis navigation below summary cards", () => {
+  const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const nav = source("src/features/book-index/public/BookIndexSectionNav.tsx");
+  const css = source("src/features/book-index/public/BookIndexPublicView.module.css");
+
+  contains(
+    view,
+    "showAnalysis={false}",
+    "insight page keeps the primary Book Index navigation above the hero",
+  );
+  contains(
+    view,
+    "showPrimary={false}",
+    "insight page renders the analysis navigation separately below the summary cards",
+  );
+  contains(
+    nav,
+    "showPrimary?: boolean",
+    "Book Index navigation supports primary-only rendering",
+  );
+  contains(
+    nav,
+    "showAnalysis?: boolean",
+    "Book Index navigation supports analysis-only rendering",
+  );
+  contains(
+    css,
+    "background: linear-gradient(145deg, #1d1b38 0%, #2a2550 100%);",
+    "insight summary cards use the dark brand palette",
+  );
+});
+
 test("Book Index secondary analysis nav stays inside bestseller routes", () => {
   const nav = source("src/features/book-index/public/BookIndexSectionNav.tsx");
 

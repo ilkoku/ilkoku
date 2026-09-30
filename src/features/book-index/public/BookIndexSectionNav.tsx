@@ -97,15 +97,19 @@ function NavRow({
 
 export function BookIndexSectionNav({
   current,
+  showPrimary = true,
+  showAnalysis = true,
 }: {
   current: BookIndexSection;
+  showPrimary?: boolean;
+  showAnalysis?: boolean;
 }) {
   const showBestsellerAnalysisNav =
-    current !== "new-releases" && current !== "global";
+    showAnalysis && current !== "new-releases" && current !== "global";
 
   return (
     <nav className={styles.sectionNavShell} aria-label="Kitap Endeksi bölümleri">
-      <NavRow current={current} items={primaryItems} />
+      {showPrimary ? <NavRow current={current} items={primaryItems} /> : null}
       {showBestsellerAnalysisNav ? (
         <NavRow current={current} items={analysisItems} secondary />
       ) : null}

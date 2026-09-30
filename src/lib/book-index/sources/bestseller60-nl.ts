@@ -48,8 +48,17 @@ export function parseNetherlandsBestseller60(
     );
   }
 
+  const controlsEndIndex = lines.findIndex(
+    (line, index) =>
+      index > headingIndex
+      && normalizeBookIndexText(line) === "toepassen",
+  );
+  if (controlsEndIndex < 0) {
+    throw new Error("BOOK_INDEX_BESTSELLER60_NL_LIST_ANCHOR_NOT_FOUND");
+  }
+
   const books: BookIndexCollectionResult["books"] = [];
-  let cursor = headingIndex + 1;
+  let cursor = controlsEndIndex + 1;
 
   for (let rank = 1; rank <= EXPECTED_BOOKS; rank += 1) {
     const rankIndex = lines.findIndex(

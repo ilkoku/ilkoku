@@ -10,6 +10,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
 const contains = (text, fragment, label) =>
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
+const notContains = (text, fragment, label) =>
+  assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
 test("Book Index public pages expose ranking and freshness SEO signals", () => {
   const overview = source("src/app/en-cok-satanlar/page.tsx");
@@ -31,23 +33,28 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   contains(sitemap, "lastModified", "sitemap lastModified");
 });
 
-test("public site map never exposes gated Book Index links early", () => {
+test("public site map exposes stable indexable Book Index routes without a transient data gate", () => {
   const siteMapPage = source("src/app/site-haritasi/page.tsx");
 
   contains(
     siteMapPage,
-    "getBookIndexPublicPageContext(30).catch(() => null)",
-    "site-map Book Index gate",
+    "SITE_MAP_PAGES.filter",
+    "site-map uses the canonical code-owned route inventory",
   );
   contains(
     siteMapPage,
-    'bookIndexPublished || page.id !== "book-index"',
-    "code-owned Book Index site-map filter",
+    "page.indexable !== false",
+    "site-map exposes only routes marked indexable",
   );
-  contains(
+  notContains(
     siteMapPage,
-    '!page.href.startsWith("/en-cok-satanlar")',
-    "CMS Book Index backdoor filter",
+    "getBookIndexPublicPageContext",
+    "stable Book Index discovery is not hidden behind transient data availability",
+  );
+  notContains(
+    siteMapPage,
+    "bookIndexPublished",
+    "obsolete runtime Book Index publication gate remains removed",
   );
 });
 

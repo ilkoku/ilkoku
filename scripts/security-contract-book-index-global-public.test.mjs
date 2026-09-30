@@ -66,7 +66,7 @@ test("global bestseller page is indexable, discoverable and source-native", () =
     "Sıra numaraları İlkOku tarafından yeniden",
     "source rank methodology",
   );
-  contains(view, "item.rank", "source rank rendering");
+  contains(view, "row.rank", "source rank rendering");
 });
 
 
@@ -112,7 +112,7 @@ test("global preview copy avoids internal collector terminology", () => {
   );
   notContains(view, "collector", "public global view avoids collector terminology");
   notContains(view, "snapshot", "public global view avoids snapshot terminology");
-  contains(view, "Bu liste için doğrulanmış güncel veri bekleniyor", "empty-state copy stays reader-facing");
+  contains(view, "Doğrulanmış güncel dünya verisi bekleniyor", "empty-state copy stays reader-facing");
   notContains(view, "kaynak bazında", "public global view avoids technical source wording");
   contains(view, "site site", "global overview uses natural Turkish wording");
   notContains(view, "Orijinal listeyi aç ↗", "global page omits source-level outbound list links");
@@ -121,6 +121,27 @@ test("global preview copy avoids internal collector terminology", () => {
     page,
     "ilgili sitelerin kendi sıralamalarıyla",
     "global metadata description uses reader-facing site wording",
+  );
+});
+
+
+test("global bestseller Turkish titles come only from matched Turkey catalogue records", () => {
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+  const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
+
+  contains(model, 'marketCode: "TR"', "Turkish title candidates are limited to Turkey sources");
+  contains(model, "includeInTurkeyIndex: true", "Turkish title candidates use approved Turkey index sources");
+  contains(model, "masterBookId", "Turkish title lookup requires an existing matched master book");
+  contains(
+    model,
+    "normalizeBookIndexText(candidate) !== normalizeBookIndexText(item.title)",
+    "duplicate original titles are not repeated as Turkish labels",
+  );
+  contains(view, "row.turkishTitle", "verified Turkish title is exposed in the public world table");
+  contains(
+    view,
+    "Türkiye kaynaklarında doğrulanmış eşleşmesi bulunan",
+    "reader-facing copy explains when a Turkish title is shown",
   );
 });
 

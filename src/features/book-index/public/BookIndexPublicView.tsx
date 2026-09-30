@@ -64,7 +64,7 @@ export function BookIndexOverviewView({
 
   return (
     <main className={styles.page}>
-      <header className={styles.hero}>
+      <header className={`${styles.hero} ${styles.turkeyHero}`}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi</span>
         <h1>En Çok Satan Kitaplar {currentYear}</h1>
         <p>
@@ -191,7 +191,7 @@ export function TurkeyBookIndexView({
 
   return (
     <main className={styles.page}>
-      <header className={styles.hero}>
+      <header className={`${styles.hero} ${styles.turkeyHero}`}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>Türkiye&apos;de En Çok Satan Kitaplar {currentYear}</h1>
         <p>
@@ -206,10 +206,10 @@ export function TurkeyBookIndexView({
           </p>
         ) : null}
         <div className={styles.topActions}>
-          <BookIndexViewModeNav current="list" />
           <Link className={styles.backLink} href="/en-cok-satanlar">
-            ← En Çok Satanlar ana sayfası
+            ← En Çok Satanlar
           </Link>
+          <BookIndexViewModeNav current="list" />
         </div>
       </header>
 
@@ -269,10 +269,10 @@ export function TurkeyBookIndexComparisonView({
           </p>
         ) : null}
         <div className={styles.topActions}>
-          <BookIndexViewModeNav current="comparison" />
           <Link className={styles.backLink} href="/en-cok-satanlar">
-            ← En Çok Satanlar ana sayfası
+            ← En Çok Satanlar
           </Link>
+          <BookIndexViewModeNav current="comparison" />
         </div>
       </header>
 

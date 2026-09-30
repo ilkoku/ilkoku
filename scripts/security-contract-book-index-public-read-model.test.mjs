@@ -142,39 +142,34 @@ test("Book Index public methodology describes source-rank comparison", () => {
 
 
 
-test("Turkey public page keeps missing book sites visible without inventing ranks", () => {
+test("Turkey public page keeps operational source status out of the visitor UI", () => {
   const model = source("src/lib/book-index/public-read-model.ts");
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
 
   contains(
     model,
     'source.market === "TR" && source.includeInTurkeyIndex',
-    "all Turkey book-index sources are exposed to the public source catalog",
+    "Turkey source state remains available to internal read-model consumers",
   );
   contains(
     model,
     "hasRankingData: turkeySourceCodesWithData.has(source.code)",
-    "source status is derived from real ranking observations",
-  );
-  contains(
-    view,
-    "model.turkey.sources.map",
-    "Turkey page renders the complete source catalog",
-  );
-  contains(
-    view,
-    "Veri bağlantısı hazırlanıyor",
-    "sources without ranking data remain visible with a neutral pending label",
-  );
-  contains(
-    view,
-    "Sıralama yayında",
-    "sources with observed ranking data are clearly identified",
+    "source status remains derived from real ranking observations",
   );
   notContains(
     view,
-    '>blocked<',
-    "internal blocked state is not exposed as public-facing copy",
+    "model.turkey.sources.map",
+    "operational source catalog is not rendered as public cards",
+  );
+  notContains(
+    view,
+    "Veri bağlantısı hazırlanıyor",
+    "pending collector state is not visitor-facing",
+  );
+  notContains(
+    view,
+    "Sıralama yayında",
+    "collector status badge is not visitor-facing",
   );
 });
 

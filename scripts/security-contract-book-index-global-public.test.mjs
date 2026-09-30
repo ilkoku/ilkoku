@@ -115,7 +115,8 @@ test("global preview copy avoids internal collector terminology", () => {
   contains(view, "Bu liste için doğrulanmış güncel veri bekleniyor", "empty-state copy stays reader-facing");
   notContains(view, "kaynak bazında", "public global view avoids technical source wording");
   contains(view, "site site", "global overview uses natural Turkish wording");
-  contains(view, "Orijinal listeyi aç ↗", "global source link uses reader-facing wording");
+  notContains(view, "Orijinal listeyi aç ↗", "global page omits source-level outbound list links");
+  contains(view, "href={row.productUrl}", "individual book links remain available");
   contains(
     page,
     "ilgili sitelerin kendi sıralamalarıyla",
@@ -124,29 +125,16 @@ test("global preview copy avoids internal collector terminology", () => {
 });
 
 
-test("global bestseller sections show per-list freshness", () => {
+test("global bestseller table groups matching source-native ranks without repetition", () => {
   const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
 
-  contains(
-    view,
-    "function GlobalListFreshness",
-    "global preview has a dedicated per-list freshness renderer",
-  );
-  contains(
-    view,
-    "Liste güncellemesi:",
-    "each global list exposes its own update label",
-  );
-  contains(
-    view,
-    "<GlobalListFreshness observedAt={list.observedAt} />",
-    "each list uses its own observedAt timestamp",
-  );
-  contains(
-    view,
-    "dateTime={observedAt.toISOString()}",
-    "freshness timestamp remains machine-readable",
-  );
+  contains(view, "combinedRows", "global lists are combined into one table");
+  contains(view, "a.rank - b.rank", "rows are ordered by source-native rank");
+  contains(view, "combinedRows[index - 1]?.rank !== row.rank", "rank group boundaries are detected");
+  contains(view, '{startsRankGroup ? row.rank : ""}', "repeated ranks are hidden within each group");
+  contains(view, "styles.rankGroupStart", "rank groups keep a visual divider");
+  contains(view, "row.sourceName", "country/source remains visible");
+  contains(view, "row.period", "source period remains visible");
 });
 
 

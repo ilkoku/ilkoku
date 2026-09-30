@@ -609,6 +609,19 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: true,
   },
+  {
+    code: "amazon-es-live",
+    sourceCode: "amazon-es",
+    title: "Amazon İspanya · Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.amazon.es/gp/bestsellers/books",
+    maxRank: 30,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: false,
+    enabled: true,
+  },
 
 
 

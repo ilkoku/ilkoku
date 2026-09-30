@@ -121,6 +121,9 @@ test("Netherlands Bestseller 60 collector is source-native and stays off the pub
 
   contains(adapter, 'const EXPECTED_BOOKS = 60', "Netherlands exact Top 60 guard");
   contains(adapter, "ISBN", "Netherlands ISBN parser");
+  contains(adapter, 'segment.join(" ").match', "Netherlands ISBN parser tolerates inline markup");
+  contains(adapter, "lineIndex >= 2", "Netherlands title repetition guard tolerates extra inline markup");
+
   contains(adapter, "BOOK_INDEX_BESTSELLER60_NL_RANK_ORDER_MISMATCH", "Netherlands rank guard");
   contains(collector, "bestseller60NetherlandsBookIndexAdapter", "Netherlands collector registration");
   contains(sources, 'code: "bestseller60-nl"', "Netherlands source registry");

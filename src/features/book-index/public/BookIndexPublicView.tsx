@@ -388,7 +388,7 @@ function insightSummary(
       },
       {
         label: "En iyi yeni giriş",
-        value: `#${Math.min(...typed.map((item) => item.bestRank))}`,
+        value: `#${Math.min(...typed.map((item) => item.bestNewEntryRank))}`,
       },
     ];
   }
@@ -453,8 +453,8 @@ function insightMetric(
 ) {
   if ("newSourceCount" in item) {
     return {
-      primary: `${item.newSourceCount} yeni kaynak`,
-      secondary: `${item.currentSourceCount} güncel kaynak · en iyi sıra #${item.bestRank}`,
+      primary: `${item.newSourceCount} yeni liste girişi`,
+      secondary: `${item.currentSourceCount} güncel listede · en iyi yeni giriş #${item.bestNewEntryRank}`,
     };
   }
 
@@ -583,8 +583,9 @@ export function BookIndexInsightView({
             <span className={styles.eyebrow}>{definition.eyebrow}</span>
             <h2>{definition.heading}</h2>
             <p>
-              Liste yalnız eşleşmiş master kitaplardan ve doğrulanmış başarılı
-              snapshot geçmişinden üretilir.
+              {definition.key === "newEntries"
+                ? "Soldaki sıra satış sırası değildir. Önce kaç satış sitesinin çok satan listesine yeni girildiğine, eşitlikte yeni girişler içindeki en iyi konuma, ardından kitabın toplam güncel liste görünürlüğüne göre bu analiz sırası oluşturulur."
+                : "Liste yalnız doğrulanmış başarılı veri geçmişinden üretilir."}
             </p>
           </div>
         </div>

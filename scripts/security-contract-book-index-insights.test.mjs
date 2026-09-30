@@ -23,6 +23,16 @@ test("Book Index insights derive from historical snapshots without publishing ro
   contains(insights, "if (!snapshot.hasPrevious) continue;", "new-entry baseline requirement");
   contains(insights, "previous.rank - current.rank", "riser rank gain");
   contains(insights, "newSourceCount", "new-entry source evidence");
+  contains(
+    insights,
+    "bestNewEntryRank",
+    "new-entry ranking uses the rank of the newly entered source list",
+  );
+  contains(
+    insights,
+    "a.bestNewEntryRank - b.bestNewEntryRank",
+    "new-entry native position breaks ties before total current visibility",
+  );
   contains(insights, "newSources.add(snapshot.sourceCode)", "new-entry source dedupe");
   contains(insights, "gains.set(snapshot.sourceCode, {", "riser source evidence dedupe");
   contains(
@@ -117,6 +127,16 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   contains(insights, "sourceName: getBookIndexSource", "human-readable source names");
   contains(view, "insightEvidence(item)", "trend evidence is rendered");
   contains(view, "Yeni kaynak görünümü", "new-entry summary metric");
+  contains(
+    view,
+    "Soldaki sıra satış sırası değildir.",
+    "new-entry page explains that its ordinal is an analysis order",
+  );
+  contains(
+    view,
+    "en iyi yeni giriş",
+    "new-entry cards label the native entry-rank metric clearly",
+  );
   contains(view, "Toplam sıra kazanımı", "riser summary metric");
   contains(view, "En geniş görünürlük", "multi-source summary metric");
   contains(view, "Toplam gözlem", "long-seller summary metric");

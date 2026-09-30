@@ -622,6 +622,19 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: true,
   },
+  {
+    code: "amazon-ca-live",
+    sourceCode: "amazon-ca",
+    title: "Amazon Kanada · Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.amazon.ca/gp/bestsellers/books",
+    maxRank: 30,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: false,
+    enabled: true,
+  },
 
 
 

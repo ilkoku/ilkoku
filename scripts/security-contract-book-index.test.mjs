@@ -1629,8 +1629,8 @@ test("Amazon TR Top 30 bestseller canary remains fail-closed and private", () =>
   );
   contains(
     lists,
-    'code: "amazon-tr-new-releases-research"',
-    "Amazon TR new-release research list remains staged",
+    'title: "Amazon Türkiye · Kitap Yeni Çıkanlar · Top 30 Canary"',
+    "Amazon TR new-release Top 30 canary is registered",
   );
   contains(amazon, 'data-asin=["\']([^"\']+)["\']', "ASIN source identity");
   contains(amazon, "\\bzg-bdg-text\\b", "Amazon native rank badge");
@@ -1665,6 +1665,20 @@ test("Amazon TR Top 30 bestseller canary remains fail-closed and private", () =>
     "amazonTrBookIndexAdapter",
     "Amazon TR production adapter is registered",
   );
+});
+
+
+test("Amazon TR new-release canary remains private and non-composite", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+  const start = lists.indexOf('code: "amazon-tr-new-releases-research"');
+  assert.ok(start >= 0, "Amazon TR new-release canary must exist");
+  const block = lists.slice(start, start + 800);
+
+  contains(block, "maxRank: 30", "Amazon TR new-release Top 30 bound");
+  contains(block, "includeInComposite: false", "Amazon TR new-release composite stays off");
+  contains(block, "collectionEveryMinutes: 360", "Amazon TR new-release canary cadence");
+  contains(block, "publiclyVisible: false", "Amazon TR new-release canary stays private");
+  contains(block, "enabled: true", "Amazon TR new-release canary collection is enabled");
 });
 
 

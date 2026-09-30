@@ -19,7 +19,6 @@ import { kyoboKoreaBookIndexAdapter } from "./sources/kyobo-kr";
 import { readingsAustraliaBookIndexAdapter } from "./sources/readings-au";
 import { bkmBookIndexAdapter } from "./sources/bkm";
 import { kitapSepetiBookIndexAdapter } from "./sources/kitapsepeti";
-import { kitapyurduBookIndexAdapter } from "./sources/kitapyurdu";
 import { kitapStoreBookIndexResearchAdapter } from "./sources/kitapstore";
 
 import { kitapAmbariBookIndexAdapter } from "./sources/kitapambari";
@@ -34,6 +33,7 @@ import { imgeBookIndexAdapter } from "./sources/imge";
 import { pandoraBookIndexAdapter } from "./sources/pandora";
 import { remziBookIndexAdapter } from "./sources/remzi";
 import { drBookIndexAdapter } from "./sources/dr";
+import { penguenBookIndexAdapter } from "./sources/penguen";
 
 const adapters = new Map<string, BookIndexSourceAdapter>([
   [amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter],
@@ -45,9 +45,9 @@ const adapters = new Map<string, BookIndexSourceAdapter>([
   [readingsAustraliaBookIndexAdapter.sourceCode, readingsAustraliaBookIndexAdapter],
   [remziBookIndexAdapter.sourceCode, remziBookIndexAdapter],
   [drBookIndexAdapter.sourceCode, drBookIndexAdapter],
+  [penguenBookIndexAdapter.sourceCode, penguenBookIndexAdapter],
   [bkmBookIndexAdapter.sourceCode, bkmBookIndexAdapter],
   [kitapSepetiBookIndexAdapter.sourceCode, kitapSepetiBookIndexAdapter],
-  [kitapyurduBookIndexAdapter.sourceCode, kitapyurduBookIndexAdapter],
   [kitapStoreBookIndexResearchAdapter.sourceCode, kitapStoreBookIndexResearchAdapter],
 
   [kitapAmbariBookIndexAdapter.sourceCode, kitapAmbariBookIndexAdapter],

@@ -290,33 +290,86 @@ export function buildDrWeeklyBestsellerResearchResult(
   };
 }
 
+async function fetchDrHtml(url: string) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.5",
+      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+  }
+
+  return response.text();
+}
+
+async function collectDrWeeklyBestsellers(sourceUrl: string) {
+  const candidates = parseDrBestsellerCandidateUrls(
+    await fetchDrHtml(sourceUrl),
+  );
+  const ranked: BookIndexCollectedBook[] = [];
+  const batchSize = 6;
+
+  for (let offset = 0; offset < candidates.length; offset += batchSize) {
+    const batch = candidates.slice(offset, offset + batchSize);
+    const parsed = await Promise.all(
+      batch.map(async (productUrl) => {
+        const html = await fetchDrHtml(productUrl);
+        try {
+          return parseDrWeeklyRankedProduct(html, productUrl);
+        } catch (error) {
+          if (
+            error instanceof Error
+            && error.message === "BOOK_INDEX_DR_WEEKLY_RANK_BADGE_MISSING"
+          ) {
+            return null;
+          }
+          throw error;
+        }
+      }),
+    );
+
+    ranked.push(
+      ...parsed.filter(
+        (book): book is BookIndexCollectedBook => book !== null,
+      ),
+    );
+  }
+
+  const result = buildDrWeeklyBestsellerResearchResult(ranked);
+  if (
+    result.books.length < 10
+    || result.books.some((book) => book.rank < 1 || book.rank > 40)
+  ) {
+    throw new Error("BOOK_INDEX_DR_WEEKLY_RANK_SET_INVALID");
+  }
+
+  return result;
+}
+
 export const drBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: "dr",
   async collect(
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
-    if (context.listCode !== "dr-tr-new-releases") {
-      throw new Error("BOOK_INDEX_DR_LIST_UNSUPPORTED");
+    if (context.listCode === "dr-tr-new-releases") {
+      return parseDrNewReleases(await fetchDrHtml(context.sourceUrl));
     }
 
-    const response = await fetch(context.sourceUrl, {
-      cache: "no-store",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
-      },
-      signal: AbortSignal.timeout(20_000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
+    if (context.listCode === "dr-tr-bestsellers") {
+      return collectDrWeeklyBestsellers(context.sourceUrl);
     }
 
-    return parseDrNewReleases(await response.text());
+    throw new Error("BOOK_INDEX_DR_LIST_UNSUPPORTED");
   },
 };
 
-// Collector adapter currently supports only the verified native New Releases list.
-// Bestseller catalog position is not accepted as weekly rank.
+// Bestseller rank is accepted only from the explicit product-detail
+// "Haftanın En Çok Satan N. Kitabı" badge. Catalog position is never rank.
 // New Releases preserves the native /en-yeniler card order only; no date
 // derivation or synthetic recency score is introduced.

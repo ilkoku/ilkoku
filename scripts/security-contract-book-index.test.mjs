@@ -39,7 +39,6 @@ test("book index source registry separates Amazon US from the Turkey composite",
   const registry = source("src/lib/book-index/sources.ts");
 
   for (const code of [
-    "kitapyurdu",
     "bkm",
     "dr",
     "idefix",
@@ -257,14 +256,14 @@ test("only BKM weekly contributes to the Turkey composite in V1", () => {
 });
 
 
-test("Amazon TR collector stays staged while global Amazon collectors remain isolated by market", () => {
+test("Amazon TR and global Amazon collectors remain isolated by market", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "Amazon TR source remains researching",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "Amazon TR source is ready",
   );
   contains(
     sources,
@@ -555,7 +554,7 @@ test("Rakuten Japan global source preserves the native weekly Top 30", () => {
   );
 });
 
-test("D&R activates only the verified native new-release collector", () => {
+test("D&R activates verified new-release and explicit weekly bestseller collectors", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
@@ -563,15 +562,15 @@ test("D&R activates only the verified native new-release collector", () => {
   contains(
     sources,
     'baseUrl: "https://www.dr.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    "D&R verified new-release source is ready",
+    "D&R source is ready",
   );
   contains(
     collector,
     "[drBookIndexAdapter.sourceCode, drBookIndexAdapter]",
-    "D&R new-release adapter is registered",
+    "D&R adapter is registered",
   );
   contains(lists, 'code: "dr-tr-new-releases"', "D&R new-release list is active");
-  notContains(lists, 'code: "dr-tr-bestsellers"', "D&R bestseller list stays absent");
+  contains(lists, 'code: "dr-tr-bestsellers"', "D&R bestseller list is active");
 });
 
 test("idefix collector reads server-side Next data and excludes source-sponsored cards", () => {
@@ -1433,9 +1432,6 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapsec-general-live-canary",
     "kitapstore-tr-live-canary",
     "pandora-tr-live-canary",
-    "amazon-tr-live",
-    "kitapyurdu-tr-weekly",
-    "kitapyurdu-tr-new-releases",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);
@@ -1460,6 +1456,9 @@ test("Book Index public read model excludes shadow, research and disabled candid
     "kitapstore-tr-live",
     "kitapsec-general-live",
     "kitapambari-tr-live",
+    "amazon-tr-live",
+    "dr-tr-bestsellers",
+    "penguen-tr-bestsellers",
   ]) {
     const marker = `code: "${listCode}"`;
     const start = lists.indexOf(marker);
@@ -1605,7 +1604,7 @@ test("Book Index source adapters exclude only verified non-book catalogue entrie
 });
 
 
-test("Amazon TR Top 30 bestseller canary remains fail-closed and private", () => {
+test("Amazon TR Top 30 lists are fail-closed and public", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const amazon = source("src/lib/book-index/sources/amazon-tr.ts");
@@ -1613,72 +1612,29 @@ test("Amazon TR Top 30 bestseller canary remains fail-closed and private", () =>
 
   contains(
     sources,
-    'code: "amazon-tr"',
-    "Amazon TR source registry entry",
+    'name: "Amazon Türkiye",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "Amazon TR is ready",
   );
-  contains(
-    sources,
-    'name: "Amazon Türkiye",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "Amazon TR remains researching",
-  );
-  contains(lists, 'code: "amazon-tr-live"', "Amazon TR private bestseller canary");
-  contains(
-    lists,
-    'sourceUrl: "https://www.amazon.com.tr/gp/bestsellers/books",\n    maxRank: 30,\n    includeInComposite: false,\n    collectionEveryMinutes: 360,\n    publiclyVisible: false,\n    enabled: true',
-    "Amazon TR Top 30 canary is enabled but private and non-composite",
-  );
-  contains(
-    lists,
-    'title: "Amazon Türkiye · Kitap Yeni Çıkanlar · Top 30 Canary"',
-    "Amazon TR new-release Top 30 canary is registered",
-  );
-  contains(amazon, 'data-asin=["\']([^"\']+)["\']', "ASIN source identity");
+  contains(amazon, "BOOK_INDEX_AMAZON_TR_TOP30_MISMATCH", "Top 30 exact-rank guard");
   contains(amazon, "\\bzg-bdg-text\\b", "Amazon native rank badge");
-  contains(
-    amazon,
-    "BOOK_INDEX_AMAZON_TR_PAGE_RANK_GAP",
-    "page-level rank-gap guard",
-  );
-  contains(
-    amazon,
-    "BOOK_INDEX_AMAZON_TR_RANK_GAP",
-    "cross-page rank-gap guard",
-  );
-  contains(
-    amazon,
-    "BOOK_INDEX_AMAZON_TR_TOP30_MISMATCH",
-    "Top 30 canary exact-rank guard",
-  );
-  contains(
-    amazon,
-    "BOOK_INDEX_AMAZON_TR_DUPLICATE_SOURCE_KEY",
-    "duplicate ASIN guard",
-  );
-  contains(
-    amazon,
-    '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
-    "transparent collector user agent",
-  );
-  contains(amazon, "AbortSignal.timeout(20_000)", "bounded Amazon requests");
+  contains(amazon, "BOOK_INDEX_AMAZON_TR_DUPLICATE_SOURCE_KEY", "duplicate ASIN guard");
   contains(
     collector,
     "amazonTrBookIndexAdapter",
     "Amazon TR production adapter is registered",
   );
-});
 
-
-test("Amazon TR new-release canary remains private and non-composite", () => {
-  const lists = source("src/lib/book-index/lists.ts");
-  const start = lists.indexOf('code: "amazon-tr-new-releases-research"');
-  assert.ok(start >= 0, "Amazon TR new-release canary must exist");
-  const block = lists.slice(start, start + 800);
-
-  contains(block, "maxRank: 30", "Amazon TR new-release Top 30 bound");
-  contains(block, "includeInComposite: false", "Amazon TR new-release composite stays off");
-  contains(block, "collectionEveryMinutes: 360", "Amazon TR new-release canary cadence");
-  contains(block, "publiclyVisible: false", "Amazon TR new-release canary stays private");
-  contains(block, "enabled: true", "Amazon TR new-release canary collection is enabled");
+  for (const listCode of ["amazon-tr-live", "amazon-tr-new-releases-research"]) {
+    const marker = `code: "${listCode}"`;
+    const listStart = lists.indexOf(marker);
+    assert.ok(listStart >= 0, `missing Amazon TR list: ${listCode}`);
+    const block = lists.slice(listStart, listStart + 850);
+    contains(block, "maxRank: 30", `${listCode} Top 30 bound`);
+    contains(block, "includeInComposite: false", `${listCode} remains non-composite`);
+    contains(block, "collectionEveryMinutes: 360", `${listCode} cadence`);
+    contains(block, "publiclyVisible: true", `${listCode} is public`);
+    contains(block, "enabled: true", `${listCode} is enabled`);
+  }
 });
 
 

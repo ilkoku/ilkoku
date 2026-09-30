@@ -94,6 +94,7 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
 };
 
 const ORIGINAL_FOOTER_GENRE_CATEGORIES: ReadonlySet<GenreCategory> = new Set(["Kurgu", "Edebiyat", "Senaryo ve Sahne", "Akademik", "Bilgilendirici", "Çocuk ve Gençlik", "Çizgi Anlatı"]);
+const BASE_URL = "https://ilkoku.com";
 
 type WritingGuideShellProps = {
   children: ReactNode;
@@ -104,9 +105,30 @@ type WritingGuideShellProps = {
 export function WritingGuideShell({ children, activeCategory, activeGenreSlug }: WritingGuideShellProps) {
   const genres = getGenresByCategory(activeCategory);
   const showOriginalFooter = activeGenreSlug.length > 0 && ORIGINAL_FOOTER_GENRE_CATEGORIES.has(activeCategory);
+  const activeHub = WRITING_CATEGORY_HUBS.find((hub) => hub.category === activeCategory);
+  const activeGenre = genres.find((genre) => genre.slug === activeGenreSlug);
+  const breadcrumbItems = [
+    { name: "İlkOku", url: "/" },
+    { name: "Yazarlar İçin", url: "/yazarlar-icin" },
+    ...(activeHub ? [{ name: activeHub.title, url: activeHub.href }] : []),
+    ...(activeGenre && LIVE_WRITING_GUIDE_HREFS[activeGenre.slug]
+      ? [{ name: activeGenre.label, url: LIVE_WRITING_GUIDE_HREFS[activeGenre.slug] }]
+      : []),
+  ];
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: new URL(item.url, BASE_URL).toString(),
+    })),
+  };
 
   return (
     <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c") }} />
     <div className="bg-[#f8f6f0] text-[#171426]">
       <nav aria-label="Yazarlık rehberi kategorileri" className="border-b border-[#2a2338]/10 bg-[#fffdf8] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto pb-1">

@@ -60,6 +60,7 @@ test("default inspection samples every public cohort without confusing the cohor
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
     "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
@@ -71,13 +72,13 @@ test("default inspection samples every public cohort without confusing the cohor
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
     "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
     "https://ilkoku.com/site-haritasi",
     "https://ilkoku.com/en-cok-satanlar/dunya",
     "https://ilkoku.com/kitap/ornek-eser",
-    "https://ilkoku.com/yasal/kullanim-sartlari",
   ]);
 });
 
@@ -88,6 +89,7 @@ test("default inspection fills an unused cohort slot from the sitemap", () => {
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
     "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
@@ -99,13 +101,13 @@ test("default inspection fills an unused cohort slot from the sitemap", () => {
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
     "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
     "https://ilkoku.com/site-haritasi",
     "https://ilkoku.com/en-cok-satanlar/dunya",
     "https://ilkoku.com/yasal/kullanim-sartlari",
-    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
   ]);
 });
 

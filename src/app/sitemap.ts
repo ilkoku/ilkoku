@@ -134,6 +134,7 @@ const staticCmsPageSlugs = new Set<string>([
   ...readerEducationHrefs,
   ...editorEducationHrefs,
   "/site-haritasi",
+  "/okurlar-icin",
 ]);
 
 const staticDiscoveryEntries: MetadataRoute.Sitemap = [
@@ -145,6 +146,11 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
   ...writingEducationEntries,
   ...readerEducationEntries,
   ...editorEducationEntries,
+  {
+    url: `${baseUrl}/okurlar-icin`,
+    changeFrequency: "monthly",
+    priority: 0.8,
+  },
   {
     url: `${baseUrl}/yardim`,
     changeFrequency: "weekly",

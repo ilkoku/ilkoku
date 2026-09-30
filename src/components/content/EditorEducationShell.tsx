@@ -17,6 +17,8 @@ import {
   type EditorEducationTextOverrides,
 } from "@/lib/editor-education-text";
 
+const BASE_URL = "https://ilkoku.com";
+
 type EditorEducationShellProps = {
   children: ReactNode;
   activeCategory: EditorEducationCategory;
@@ -41,9 +43,24 @@ export async function EditorEducationShell({
     ? publishedText?.overrides ?? {}
     : textOverrides;
   const renderedChildren = applyEditorEducationTextOverrides(children, effectiveOverrides);
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { name: "İlkOku", url: "/" },
+      { name: "Editörler İçin", url: "/editorler-icin" },
+      { name: activeCategory.title, url: editorEducationPublicPath(activeCategory) },
+    ].map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: new URL(item.url, BASE_URL).toString(),
+    })),
+  };
 
   return (
     <>
+      {!previewMode ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c") }} /> : null}
       {previewMode ? (
         <div className="sticky top-0 z-50 border-b border-[#5b35dd]/20 bg-[#efeaff] px-4 py-2 text-center text-xs font-extrabold tracking-[0.08em] text-[#4b2bc5]">
           TASLAK ÖNİZLEME · Bu görünüm henüz canlı değildir

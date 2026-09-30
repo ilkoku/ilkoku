@@ -1,0 +1,98 @@
+name: HTTP cache validator audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/http-cache-validators-20260930"
+    paths:
+      - ".github/workflows/http-cache-validator-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Audit validators and 304 support
+        shell: bash
+        run: |
+          node <<'NODE'
+          const urls = [
+            "https://ilkoku.com/",
+            "https://ilkoku.com/site-haritasi",
+            "https://ilkoku.com/yazarlar-icin",
+            "https://ilkoku.com/yazarlar-icin/kurgu",
+            "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+            "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+            "https://ilkoku.com/editorler-icin",
+            "https://ilkoku.com/sitemap.xml",
+            "https://ilkoku.com/robots.txt"
+          ];
+          const ua = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+          for (const url of urls) {
+            const first = await fetch(url, {
+              redirect:"follow",
+              headers:{"user-agent":ua,accept:"text/html,application/xml,text/plain,*/*"},
+              signal:AbortSignal.timeout(30000)
+            });
+            const body = await first.arrayBuffer();
+            const etag = first.headers.get("etag");
+            const lastModified = first.headers.get("last-modified");
+            const headers = {"user-agent":ua,accept:"text/html,application/xml,text/plain,*/*"};
+            if (etag) headers["if-none-match"] = etag;
+            if (lastModified) headers["if-modified-since"] = lastModified;
+            let second = null;
+            if (etag || lastModified) {
+              second = await fetch(url, {
+                redirect:"manual",
+                headers,
+                signal:AbortSignal.timeout(30000)
+              });
+            }
+            console.log("RESULT", JSON.stringify({
+              url,
+              firstStatus:first.status,
+              bytes:body.byteLength,
+              etag,
+              lastModified,
+              cacheControl:first.headers.get("cache-control"),
+              cfCacheStatus:first.headers.get("cf-cache-status"),
+              xNextCache:first.headers.get("x-nextjs-cache"),
+              validatorPresent:Boolean(etag||lastModified),
+              conditionalStatus:second?.status ?? null,
+              conditionalEtag:second?.headers.get("etag") ?? null,
+              conditionalLastModified:second?.headers.get("last-modified") ?? null
+            }));
+          }
+
+          const home = await fetch("https://ilkoku.com/", {
+            headers:{"user-agent":ua,accept:"text/html"},
+            signal:AbortSignal.timeout(30000)
+          });
+          const html = await home.text();
+          const assets = [...new Set([
+            ...[...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map(m=>m[1]),
+            ...[...html.matchAll(/<link[^>]+href=["']([^"']+)["']/gi)].map(m=>m[1]).filter(x=>/_next\//.test(x))
+          ])].slice(0,12).map(x=>new URL(x,"https://ilkoku.com/").href);
+
+          for (const url of assets) {
+            const first = await fetch(url,{headers:{"user-agent":ua},signal:AbortSignal.timeout(30000)});
+            const body=await first.arrayBuffer();
+            const etag=first.headers.get("etag");
+            const lm=first.headers.get("last-modified");
+            const headers={"user-agent":ua};
+            if(etag) headers["if-none-match"]=etag;
+            if(lm) headers["if-modified-since"]=lm;
+            let second=null;
+            if(etag||lm) second=await fetch(url,{headers,redirect:"manual",signal:AbortSignal.timeout(30000)});
+            console.log("ASSET",JSON.stringify({
+              url,firstStatus:first.status,bytes:body.byteLength,etag,lastModified:lm,
+              cacheControl:first.headers.get("cache-control"),
+              cfCacheStatus:first.headers.get("cf-cache-status"),
+              validatorPresent:Boolean(etag||lm),
+              conditionalStatus:second?.status ?? null
+            }));
+          }
+          NODE

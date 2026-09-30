@@ -1,0 +1,97 @@
+name: Google content uniqueness audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-live-html-audit-20260930"
+    paths:
+      - ".github/workflows/google-content-uniqueness-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Audit current sitemap content uniqueness
+        shell: bash
+        run: |
+          node <<'NODE'
+          const BASE = "https://ilkoku.com";
+          const sm = await fetch(BASE + "/sitemap.xml");
+          if (!sm.ok) throw new Error("sitemap HTTP " + sm.status);
+          const xml = await sm.text();
+          const urls = [...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1].trim()))];
+
+          const decode = (s) => String(s||"")
+            .replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/&quot;/g,'"')
+            .replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">")
+            .replace(/&#\d+;/g," ");
+          const clean = (html) => decode(html)
+            .replace(/<script\b[\s\S]*?<\/script>/gi," ")
+            .replace(/<style\b[\s\S]*?<\/style>/gi," ")
+            .replace(/<svg\b[\s\S]*?<\/svg>/gi," ")
+            .replace(/<[^>]+>/g," ")
+            .replace(/\s+/g," ")
+            .trim();
+          const words = (s) => s.toLocaleLowerCase("tr-TR")
+            .replace(/[^a-z0-9çğıöşüâîû]+/giu," ")
+            .trim().split(/\s+/).filter(Boolean);
+          const shingles = (ws,n=5) => {
+            const set=new Set();
+            for(let i=0;i<=ws.length-n;i++) set.add(ws.slice(i,i+n).join(" "));
+            return set;
+          };
+          const jacc = (a,b) => {
+            let inter=0;
+            const small=a.size<b.size?a:b, large=a.size<b.size?b:a;
+            for(const x of small) if(large.has(x)) inter++;
+            const union=a.size+b.size-inter;
+            return union?inter/union:0;
+          };
+
+          const docs=[];
+          let cursor=0;
+          async function worker(){
+            while(true){
+              const i=cursor++;
+              if(i>=urls.length) return;
+              const url=urls[i];
+              const res=await fetch(url,{headers:{
+                "user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+                accept:"text/html"
+              }});
+              const html=await res.text();
+              const main=(html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)||[])[1]||html;
+              const text=clean(main);
+              const ws=words(text);
+              docs.push({url,status:res.status,wordCount:ws.length,sh:shingles(ws),sample:text.slice(0,180)});
+            }
+          }
+          await Promise.all(Array.from({length:6},()=>worker()));
+          docs.sort((a,b)=>a.url.localeCompare(b.url));
+
+          const pairs=[];
+          for(let i=0;i<docs.length;i++){
+            for(let j=i+1;j<docs.length;j++){
+              const score=jacc(docs[i].sh,docs[j].sh);
+              if(score>=0.18) pairs.push({a:docs[i].url,b:docs[j].url,score:Number(score.toFixed(4))});
+            }
+          }
+          pairs.sort((a,b)=>b.score-a.score);
+
+          const shallow=docs.filter(d=>d.wordCount<250).sort((a,b)=>a.wordCount-b.wordCount);
+          const veryShallow=docs.filter(d=>d.wordCount<120).sort((a,b)=>a.wordCount-b.wordCount);
+          console.log("SUMMARY",JSON.stringify({
+            audited:docs.length,
+            non200:docs.filter(d=>d.status!==200).length,
+            under120:veryShallow.length,
+            under250:shallow.length,
+            nearDuplicatePairs_018:pairs.length,
+            maxSimilarity:pairs[0]?.score||0
+          }));
+          for(const d of shallow) console.log("SHALLOW",JSON.stringify({url:d.url,words:d.wordCount,sample:d.sample}));
+          for(const p of pairs.slice(0,40)) console.log("SIMILAR",JSON.stringify(p));
+          NODE

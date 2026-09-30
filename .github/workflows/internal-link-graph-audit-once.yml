@@ -1,0 +1,129 @@
+name: Internal link graph audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/internal-link-graph-20260930"
+    paths:
+      - ".github/workflows/internal-link-graph-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Crawl sitemap and compute internal link graph
+        shell: bash
+        run: |
+          node <<'NODE'
+          const BASE = "https://ilkoku.com";
+          const sm = await fetch(BASE + "/sitemap.xml", {headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"}});
+          if (!sm.ok) throw new Error("sitemap HTTP " + sm.status);
+          const xml = await sm.text();
+          const urls = [...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1].trim()))];
+          const norm = u => {
+            try {
+              const x = new URL(u, BASE);
+              x.hash=""; x.search="";
+              return x.href.replace(/\/$/,"");
+            } catch { return ""; }
+          };
+          const sitemapSet = new Set(urls.map(norm));
+          const rows = new Map();
+          let cursor=0;
+          async function worker(){
+            while(true){
+              const i=cursor++;
+              if(i>=urls.length) return;
+              const url=urls[i];
+              try{
+                const r=await fetch(url,{
+                  redirect:"follow",
+                  headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)","accept":"text/html"}
+                });
+                const html=await r.text();
+                const anchors=[...html.matchAll(/<a\b([^>]*)href=(["'])(.*?)\2([^>]*)>/gis)];
+                const links=[];
+                let nofollow=0;
+                for(const m of anchors){
+                  const attrs=(m[1]||"")+" "+(m[4]||"");
+                  if(/\brel\s*=\s*["'][^"']*nofollow/i.test(attrs)) nofollow++;
+                  let href=m[3]||"";
+                  try{
+                    const x=new URL(href,url);
+                    if(x.origin!==BASE) continue;
+                    x.hash=""; x.search="";
+                    links.push(x.href.replace(/\/$/,""));
+                  }catch{}
+                }
+                rows.set(norm(url),{
+                  url:norm(url),status:r.status,finalUrl:norm(r.url),allAnchors:anchors.length,
+                  internalUnique:[...new Set(links)],nofollowAnchors:nofollow,
+                  bytes:Buffer.byteLength(html)
+                });
+              }catch(e){
+                rows.set(norm(url),{url:norm(url),error:String(e?.message||e),internalUnique:[]});
+              }
+            }
+          }
+          await Promise.all(Array.from({length:8},()=>worker()));
+
+          const inlinks=new Map([...sitemapSet].map(u=>[u,new Set()]));
+          for(const [src,row] of rows){
+            for(const dst of row.internalUnique||[]){
+              if(sitemapSet.has(dst) && dst!==src) inlinks.get(dst)?.add(src);
+            }
+          }
+
+          const home=norm(BASE+"/");
+          const depth=new Map([[home,0]]);
+          const q=[home];
+          while(q.length){
+            const src=q.shift();
+            const d=depth.get(src);
+            for(const dst of rows.get(src)?.internalUnique||[]){
+              if(!sitemapSet.has(dst) || depth.has(dst)) continue;
+              depth.set(dst,d+1); q.push(dst);
+            }
+          }
+
+          const siteMap=norm(BASE+"/site-haritasi");
+          const onlySiteMap=[];
+          const lowIn=[];
+          for(const u of sitemapSet){
+            if(u===home) continue;
+            const srcs=[...(inlinks.get(u)||[])];
+            if(srcs.length<=2) lowIn.push({url:u,inlinks:srcs.length,sources:srcs});
+            if(srcs.length===1 && srcs[0]===siteMap) onlySiteMap.push(u);
+          }
+
+          const dist = {};
+          for(const u of sitemapSet){
+            const n=(inlinks.get(u)||new Set()).size;
+            dist[n]=(dist[n]||0)+1;
+          }
+          const depthDist={};
+          for(const u of sitemapSet){
+            const d=depth.has(u)?depth.get(u):null;
+            const k=String(d);
+            depthDist[k]=(depthDist[k]||0)+1;
+          }
+
+          console.log("SUMMARY",JSON.stringify({
+            sitemapUrls:urls.length,
+            fetched:rows.size,
+            fetchErrors:[...rows.values()].filter(r=>r.error).length,
+            non200:[...rows.values()].filter(r=>!r.error&&r.status!==200).length,
+            totalNofollowAnchors:[...rows.values()].reduce((a,r)=>a+(r.nofollowAnchors||0),0),
+            inlinkDistribution:dist,
+            depthDistribution:depthDist,
+            unreachable:[...sitemapSet].filter(u=>!depth.has(u)).length,
+            onlySiteMap:onlySiteMap.length,
+            lowInlinksLe2:lowIn.length
+          }));
+          for(const x of lowIn.sort((a,b)=>a.inlinks-b.inlinks || a.url.localeCompare(b.url))) console.log("LOW_INLINK",JSON.stringify(x));
+          for(const u of [...sitemapSet].filter(u=>!depth.has(u))) console.log("UNREACHABLE",u);
+          NODE

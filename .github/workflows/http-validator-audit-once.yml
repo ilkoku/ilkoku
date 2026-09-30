@@ -1,0 +1,59 @@
+name: HTTP validator audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-discovery-graph-20260930"
+    paths:
+      - ".github/workflows/http-validator-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check ETag Last-Modified and conditional GET behavior
+        shell: bash
+        run: |
+          node <<'NODE'
+          const urls=[
+            "https://ilkoku.com/",
+            "https://ilkoku.com/site-haritasi",
+            "https://ilkoku.com/yazarlar-icin",
+            "https://ilkoku.com/yazarlar-icin/kurgu",
+            "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+            "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
+            "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+            "https://ilkoku.com/sitemap.xml"
+          ];
+          const ua="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+          for(const url of urls){
+            const r1=await fetch(url,{headers:{"user-agent":ua},redirect:"follow"});
+            const b1=await r1.arrayBuffer();
+            const etag=r1.headers.get("etag");
+            const lm=r1.headers.get("last-modified");
+            const h={ "user-agent":ua };
+            if(etag) h["if-none-match"]=etag;
+            if(lm) h["if-modified-since"]=lm;
+            let conditional=null;
+            if(etag||lm){
+              const r2=await fetch(url,{headers:h,redirect:"manual"});
+              const b2=await r2.arrayBuffer();
+              conditional={status:r2.status,bytes:b2.byteLength,etag:r2.headers.get("etag"),lastModified:r2.headers.get("last-modified")};
+            }
+            console.log("ROW",JSON.stringify({
+              url,
+              status:r1.status,
+              bytes:b1.byteLength,
+              etag,
+              lastModified:lm,
+              cacheControl:r1.headers.get("cache-control"),
+              cfCache:r1.headers.get("cf-cache-status"),
+              xNextCache:r1.headers.get("x-nextjs-cache"),
+              conditional
+            }));
+          }
+          NODE

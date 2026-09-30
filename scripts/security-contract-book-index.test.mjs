@@ -896,6 +896,12 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
   contains(adapter, "BOOK_INDEX_KITAPSEC_LIST_NOT_SUPPORTED", "KitapSec unknown-list rejection");
   contains(adapter, 'new TextDecoder("windows-1254")', "KitapSec source encoding");
   contains(adapter, "parseKitapSecProductAuthor", "KitapSec detail author parser");
+  contains(
+    adapter,
+    '["9786257582896", "Pegem Komisyon"]',
+    "KitapSec exact-ISBN fallback for product 923186",
+  );
+  contains(adapter, "VERIFIED_AUTHOR_BY_ISBN13.get(book.isbn13)", "KitapSec fallback remains exact-ISBN scoped");
   contains(adapter, "enrichKitapSecAuthors", "KitapSec missing-author enrichment");
   contains(
     adapter,

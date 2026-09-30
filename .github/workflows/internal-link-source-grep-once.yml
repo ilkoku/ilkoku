@@ -1,0 +1,26 @@
+name: Internal link source grep one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-discovery-graph-20260930"
+    paths:
+      - ".github/workflows/internal-link-source-grep-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Locate known crawl-waste targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for pattern in '/hesabim' '/yazar"' '/kesfet"' '/editor/talepler' '/editor/incelemeler' '/turler' 'mailto:'; do
+            echo "=== $pattern ==="
+            grep -RFn --exclude-dir=node_modules --exclude-dir=.next --exclude='*.lock' -- "$pattern" src public scripts 2>/dev/null | head -n 200 || true
+          done

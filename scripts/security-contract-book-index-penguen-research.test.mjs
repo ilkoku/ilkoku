@@ -45,6 +45,11 @@ test("Penguen uses the verified penguenkitap.com.tr bestseller surface", () => {
   );
   contains(
     adapter,
+    '["kafadengi-8-challenger-fen-soru", "Kolektif"]',
+    "Kafadengi exact-slug collective-author fallback",
+  );
+  contains(
+    adapter,
     "VERIFIED_AUTHOR_BY_SLUG.get(slug)",
     "Penguen placeholder fallback stays exact-product scoped",
   );

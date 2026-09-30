@@ -16,7 +16,7 @@ export function generateMetadata(): Metadata {
     description,
     canonical,
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: true,
+    noIndex: false,
   });
 }
 

@@ -3,6 +3,8 @@ import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
+import { collectBookIndexListByCode } from "@/lib/book-index/collector";
+import { getBookIndexList } from "@/lib/book-index/lists";
 import { getBookIndexReadinessSnapshot } from "@/lib/book-index/readiness";
 import { runBookIndexScheduler } from "@/lib/book-index/scheduler";
 import { getBookIndexSeoGateSnapshot } from "@/lib/book-index/seo-gate";
@@ -23,6 +25,7 @@ const ALLOWED_GITHUB_EVENTS = new Set([
   "workflow_dispatch",
   "workflow_run",
   "schedule",
+  "push",
 ]);
 
 
@@ -81,6 +84,51 @@ async function authorized(request: NextRequest) {
   return authorizedWithGithubOidc(supplied);
 }
 
+const FORCE_LISTS_HEADER = "x-ilkoku-book-index-force-lists";
+const MAX_FORCED_LISTS = 12;
+
+function forcedListCodes(request: NextRequest) {
+  const raw = request.headers.get(FORCE_LISTS_HEADER)?.trim() ?? "";
+  if (!raw) return [];
+
+  const listCodes = [
+    ...new Set(
+      raw
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (!listCodes.length || listCodes.length > MAX_FORCED_LISTS) {
+    throw new Error("BOOK_INDEX_FORCE_LIST_COUNT_INVALID");
+  }
+
+  for (const listCode of listCodes) {
+    const list = getBookIndexList(listCode);
+    if (!list || !list.enabled) {
+      throw new Error(`BOOK_INDEX_FORCE_LIST_INVALID:${listCode}`);
+    }
+  }
+
+  return listCodes;
+}
+
+async function collectForcedLists(listCodes: string[]) {
+  const results = [];
+
+  for (const listCode of listCodes) {
+    const result = await collectBookIndexListByCode(listCode);
+    results.push({
+      listCode,
+      status: result.status,
+      items: result.items,
+    });
+  }
+
+  return results;
+}
+
 export async function POST(request: NextRequest) {
   if (!(await authorized(request))) {
     return NextResponse.json(
@@ -90,7 +138,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await runBookIndexScheduler();
+    const forceListCodes = forcedListCodes(request);
+    const forcedResults = forceListCodes.length
+      ? await collectForcedLists(forceListCodes)
+      : null;
+    const result = forcedResults ? null : await runBookIndexScheduler();
     const [readiness, seoGate] = await Promise.all([
       getBookIndexReadinessSnapshot(),
       getBookIndexSeoGateSnapshot(),
@@ -98,7 +150,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      ...result,
+      ...(result ?? {}),
+      forced: Boolean(forcedResults),
+      forceListCodes,
+      forcedResults,
       readiness,
       seoGate,
     });

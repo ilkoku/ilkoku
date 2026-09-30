@@ -54,7 +54,6 @@ export function parsePenguenBestsellers(
       href: string;
       title: string;
       authorName: string | null;
-      publisherName: string | null;
       imageUrl: string | null;
     }
   >();
@@ -84,30 +83,17 @@ export function parsePenguenBestsellers(
     // do not contain product-card metadata. Ignore them.
     if (!title) continue;
 
-    const existing = firstBySlug.get(slug);
-    if (!existing) {
-      firstBySlug.set(slug, {
-        href: new URL(href, SOURCE_ORIGIN).toString(),
-        title,
-        authorName:
-          detailText && !/^Yazar\s+Adı$/iu.test(detailText)
-            ? detailText
-            : null,
-        publisherName: null,
-        imageUrl: imageSrc ? new URL(imageSrc, SOURCE_ORIGIN).toString() : null,
-      });
-      continue;
-    }
+    if (firstBySlug.has(slug)) continue;
 
-    // Penguen renders the same product twice: the first card carries the
-    // author in .text, while the later duplicate carries the publisher.
-    if (
-      detailText
-      && detailText !== existing.authorName
-      && !existing.publisherName
-    ) {
-      existing.publisherName = detailText;
-    }
+    firstBySlug.set(slug, {
+      href: new URL(href, SOURCE_ORIGIN).toString(),
+      title,
+      authorName:
+        detailText && !/^Yazar\s+Adı$/iu.test(detailText)
+          ? detailText
+          : null,
+      imageUrl: imageSrc ? new URL(imageSrc, SOURCE_ORIGIN).toString() : null,
+    });
   }
 
   const entries = [...firstBySlug.entries()];
@@ -122,7 +108,7 @@ export function parsePenguenBestsellers(
     sourceExternalId: slug,
     title: item.title,
     authorName: item.authorName,
-    publisherName: item.publisherName,
+    publisherName: null,
     productUrl: item.href,
     imageUrl: item.imageUrl,
     rank: index + 1,

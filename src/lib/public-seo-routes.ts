@@ -10,7 +10,6 @@ export const publicCodeOwnedIndexRoutes = [
   "/editorler",
   "/iletisim",
   "/site-haritasi",
-  "/okurlar-icin",
 ] as const;
 
 export const publicCmsManagedCoreRoutes = [

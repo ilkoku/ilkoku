@@ -1,0 +1,50 @@
+name: Security advisory refresh one-off
+
+on:
+  push:
+    branches:
+      - "fix/security-advisories-20260930"
+    paths:
+      - ".github/workflows/security-advisory-refresh-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/security-advisories-20260930
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Refresh patched dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install 'nodemailer@^10.0.12' --save
+          npm audit fix --package-lock-only || true
+          npm ci
+          node scripts/audit-high-dependencies.mjs
+          npm run audit:supply-chain
+
+      - name: Commit dependency refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "No dependency changes required."
+            exit 0
+          fi
+          git config user.name "ilkoku-security-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "Security: refresh patched dependency versions"
+          git push origin HEAD:fix/security-advisories-20260930

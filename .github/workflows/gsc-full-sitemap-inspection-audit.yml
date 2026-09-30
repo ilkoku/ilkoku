@@ -1,0 +1,106 @@
+name: GSC full sitemap URL inspection audit
+
+on:
+  push:
+    branches:
+      - diag/google-index-full-recheck-20261001
+    paths:
+      - ".github/workflows/gsc-full-sitemap-inspection-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Inspect every current sitemap URL with official Search Console API
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        shell: bash
+        run: |
+          cat > /tmp/audit.mjs <<'NODE'
+          const cid=process.env.GSC_OAUTH_CLIENT_ID;
+          const cs=process.env.GSC_OAUTH_CLIENT_SECRET;
+          const rt=process.env.GSC_OAUTH_REFRESH_TOKEN;
+          if(!cid||!cs||!rt) throw new Error("missing oauth secret");
+          const tokenRes=await fetch("https://oauth2.googleapis.com/token",{
+            method:"POST",
+            headers:{"content-type":"application/x-www-form-urlencoded"},
+            body:new URLSearchParams({client_id:cid,client_secret:cs,refresh_token:rt,grant_type:"refresh_token"})
+          });
+          const tokenBody=await tokenRes.json();
+          if(!tokenRes.ok||!tokenBody.access_token) throw new Error("oauth token failed");
+          const token=tokenBody.access_token;
+
+          const xmlRes=await fetch("https://ilkoku.com/sitemap.xml",{headers:{"user-agent":"IlkOku-GSC-Full-Audit/1.0"}});
+          if(!xmlRes.ok) throw new Error("sitemap fetch failed "+xmlRes.status);
+          const xml=await xmlRes.text();
+          const urls=[...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1].trim()))];
+          console.log("FULLAUDIT|SITEMAP_URLS="+urls.length);
+
+          let cursor=0;
+          const results=[];
+          async function worker(){
+            while(true){
+              const i=cursor++;
+              if(i>=urls.length) return;
+              const inspectionUrl=urls[i];
+              let attempts=0, body, response;
+              do{
+                attempts++;
+                response=await fetch("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",{
+                  method:"POST",
+                  headers:{authorization:"Bearer "+token,"content-type":"application/json"},
+                  body:JSON.stringify({inspectionUrl,siteUrl:"sc-domain:ilkoku.com",languageCode:"tr-TR"})
+                });
+                body=await response.json();
+                if(response.status===429||response.status>=500) await new Promise(r=>setTimeout(r,1000*attempts));
+              }while((response.status===429||response.status>=500)&&attempts<4);
+              if(!response.ok){
+                console.log("FULLAUDIT_ERROR|"+inspectionUrl+"|HTTP="+response.status+"|"+JSON.stringify(body));
+                results.push({inspectionUrl,error:"HTTP "+response.status});
+                continue;
+              }
+              const x=body?.inspectionResult?.indexStatusResult||{};
+              const row={
+                inspectionUrl,
+                verdict:x.verdict??null,
+                coverageState:x.coverageState??null,
+                robotsTxtState:x.robotsTxtState??null,
+                indexingState:x.indexingState??null,
+                pageFetchState:x.pageFetchState??null,
+                lastCrawlTime:x.lastCrawlTime??null,
+                userCanonical:x.userCanonical??null,
+                googleCanonical:x.googleCanonical??null,
+                crawledAs:x.crawledAs??null,
+                sitemap:Array.isArray(x.sitemap)?x.sitemap:[],
+                referringUrls:Array.isArray(x.referringUrls)?x.referringUrls:[]
+              };
+              results.push(row);
+              console.log("FULLAUDIT_JSON|"+JSON.stringify(row));
+            }
+          }
+          await Promise.all(Array.from({length:4},()=>worker()));
+
+          const byCoverage={};
+          let errors=0, robotsBlocked=0,indexingBlocked=0,fetchFailures=0,canonicalMismatch=0,withSitemap=0,withReferrer=0;
+          for(const r of results){
+            if(r.error){errors++;continue}
+            byCoverage[r.coverageState]=(byCoverage[r.coverageState]||0)+1;
+            if(r.robotsTxtState && r.robotsTxtState!=="ALLOWED" && r.robotsTxtState!=="ROBOTS_TXT_STATE_UNSPECIFIED") robotsBlocked++;
+            if(r.indexingState && r.indexingState!=="INDEXING_ALLOWED" && r.indexingState!=="INDEXING_STATE_UNSPECIFIED") indexingBlocked++;
+            if(r.pageFetchState && r.pageFetchState!=="SUCCESSFUL" && r.pageFetchState!=="PAGE_FETCH_STATE_UNSPECIFIED") fetchFailures++;
+            if(r.userCanonical&&r.googleCanonical&&r.userCanonical.replace(/\/$/,"")!==r.googleCanonical.replace(/\/$/,"")) canonicalMismatch++;
+            if(r.sitemap?.length) withSitemap++;
+            if(r.referringUrls?.length) withReferrer++;
+          }
+          console.log("FULLAUDIT_SUMMARY|"+JSON.stringify({
+            sitemapUrls:urls.length,results:results.length,errors,byCoverage,
+            robotsBlocked,indexingBlocked,fetchFailures,canonicalMismatch,withSitemap,withReferrer
+          }));
+          NODE
+          node /tmp/audit.mjs

@@ -1,0 +1,129 @@
+name: GSC fast full inspection one-off
+
+on:
+  push:
+    branches:
+      - "diag/gsc-fast-full-inspection-20260930"
+    paths:
+      - ".github/workflows/gsc-fast-full-inspection-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Inspect complete live sitemap with Google URL Inspection
+        shell: bash
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        run: |
+          node <<'NODE'
+          const BASE = "https://ilkoku.com";
+          const SITE_URL = "sc-domain:ilkoku.com";
+          const clientId = process.env.GSC_OAUTH_CLIENT_ID;
+          const clientSecret = process.env.GSC_OAUTH_CLIENT_SECRET;
+          const refreshToken = process.env.GSC_OAUTH_REFRESH_TOKEN;
+          if (!clientId || !clientSecret || !refreshToken) throw new Error("Missing GSC OAuth secrets");
+
+          const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "content-type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: clientId,
+              client_secret: clientSecret,
+              refresh_token: refreshToken,
+              grant_type: "refresh_token",
+            }),
+            signal: AbortSignal.timeout(20000),
+          });
+          const tokenBody = await tokenRes.json();
+          if (!tokenRes.ok || !tokenBody.access_token) throw new Error("OAuth failed");
+          const accessToken = tokenBody.access_token;
+
+          const sm = await fetch(BASE + "/sitemap.xml", {
+            headers: { accept: "application/xml,text/xml;q=0.9,*/*;q=0.8" },
+            signal: AbortSignal.timeout(20000),
+          });
+          if (!sm.ok) throw new Error("Sitemap HTTP " + sm.status);
+          const xml = await sm.text();
+          const urls = [...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1].trim()))];
+          console.log("SCOPE", JSON.stringify({urlCount:urls.length}));
+
+          async function inspect(url) {
+            const response = await fetch(
+              "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
+              {
+                method: "POST",
+                headers: {
+                  authorization: `Bearer ${accessToken}`,
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify({
+                  inspectionUrl: url,
+                  siteUrl: SITE_URL,
+                  languageCode: "tr-TR",
+                }),
+                signal: AbortSignal.timeout(30000),
+              },
+            );
+            const body = await response.json();
+            if (!response.ok) {
+              return { inspectionUrl:url, error:body?.error?.message || ("HTTP " + response.status) };
+            }
+            const x = body?.inspectionResult?.indexStatusResult || {};
+            return {
+              inspectionUrl:url,
+              verdict:x.verdict ?? null,
+              coverageState:x.coverageState ?? null,
+              robotsTxtState:x.robotsTxtState ?? null,
+              indexingState:x.indexingState ?? null,
+              pageFetchState:x.pageFetchState ?? null,
+              lastCrawlTime:x.lastCrawlTime ?? null,
+              userCanonical:x.userCanonical ?? null,
+              googleCanonical:x.googleCanonical ?? null,
+              crawledAs:x.crawledAs ?? null,
+              sitemap:Array.isArray(x.sitemap)?x.sitemap:[],
+              referringUrls:Array.isArray(x.referringUrls)?x.referringUrls:[],
+            };
+          }
+
+          const results = new Array(urls.length);
+          let cursor = 0;
+          const workerCount = 4;
+          async function worker() {
+            while (true) {
+              const i = cursor++;
+              if (i >= urls.length) return;
+              results[i] = await inspect(urls[i]);
+            }
+          }
+          await Promise.all(Array.from({length:workerCount}, () => worker()));
+
+          const byCoverage = {};
+          for (const r of results) {
+            const k = r.error ? "ERROR" : (r.coverageState || "UNSPECIFIED");
+            byCoverage[k] = (byCoverage[k] || 0) + 1;
+          }
+          const anomalies = results.filter(r =>
+            r.error ||
+            (r.robotsTxtState && r.robotsTxtState !== "ALLOWED") ||
+            (r.indexingState && r.indexingState !== "INDEXING_ALLOWED") ||
+            (r.pageFetchState && r.pageFetchState !== "SUCCESSFUL") ||
+            (r.userCanonical && r.googleCanonical && r.userCanonical !== r.googleCanonical)
+          );
+          console.log("SUMMARY", JSON.stringify({
+            inspected:results.length,
+            byCoverage,
+            anomalyCount:anomalies.length,
+            crawledCount:results.filter(r=>r.lastCrawlTime).length,
+            sitemapLinkedCount:results.filter(r=>(r.sitemap||[]).length>0).length,
+            referringUrlCount:results.filter(r=>(r.referringUrls||[]).length>0).length,
+          }));
+          for (const r of results) console.log("RESULT", JSON.stringify(r));
+          for (const r of anomalies) console.log("ANOMALY", JSON.stringify(r));
+          NODE

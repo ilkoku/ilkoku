@@ -170,6 +170,11 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     changeFrequency: "daily",
     priority: 0.82,
   },
+  {
+    url: `${baseUrl}/yeni-cikanlar`,
+    changeFrequency: "daily",
+    priority: 0.82,
+  },
 ];
 
 const staticFallbackEntries: MetadataRoute.Sitemap = [

@@ -100,10 +100,15 @@ export function BookIndexSectionNav({
 }: {
   current: BookIndexSection;
 }) {
+  const showBestsellerAnalysisNav =
+    current !== "new-releases" && current !== "global";
+
   return (
     <nav className={styles.sectionNavShell} aria-label="Kitap Endeksi bölümleri">
       <NavRow current={current} items={primaryItems} />
-      <NavRow current={current} items={analysisItems} secondary />
+      {showBestsellerAnalysisNav ? (
+        <NavRow current={current} items={analysisItems} secondary />
+      ) : null}
     </nav>
   );
 }

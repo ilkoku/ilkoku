@@ -221,8 +221,9 @@ test("Bestseller comparison has a dedicated gated SEO route", () => {
   );
 });
 
-test("New-release read model stays source-native and private until publication is approved", () => {
+test("New-release read model stays source-native and isolated from generic list publication", () => {
   const model = source("src/lib/book-index/new-releases.ts");
+  const sitemap = source("src/app/sitemap.ts");
   const lists = source("src/lib/book-index/lists.ts");
 
   contains(
@@ -278,7 +279,7 @@ test("New-release read model stays source-native and private until publication i
   contains(
     lists,
     "publiclyVisible: false",
-    "new-release collectors remain private before public approval",
+    "new-release collector definitions stay out of generic public list discovery",
   );
 });
 
@@ -444,16 +445,17 @@ test("New-release production exceptions stay source-specific and fail closed", (
   );
 });
 
-test("Yeni Çıkanlar page stays noindex and source-native during soft launch", () => {
+test("Yeni Çıkanlar page is indexable and remains source-native", () => {
   const page = source("src/app/yeni-cikanlar/page.tsx");
   const view = source("src/features/book-index/public/NewReleasePublicView.tsx");
   const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
   const model = source("src/lib/book-index/new-releases.ts");
+  const sitemap = source("src/app/sitemap.ts");
 
   contains(page, 'canonical = "/yeni-cikanlar"', "stable Yeni Çıkanlar canonical");
-  contains(page, "noIndex: true", "Yeni Çıkanlar remains noindex during soft launch");
+  contains(page, "noIndex: false", "Yeni Çıkanlar is indexable after source validation");
   contains(page, "getTurkeyNewReleaseRows(500)", "Yeni Çıkanlar uses the isolated read model");
-  notContains(page, "application/ld+json", "no JSON-LD is published while the page is gated");
+  contains(sitemap, 'url: `${baseUrl}/yeni-cikanlar`', "Yeni Çıkanlar is included in the public sitemap");
 
   contains(
     view,
@@ -492,6 +494,27 @@ test("Yeni Çıkanlar page stays noindex and source-native during soft launch", 
   );
 });
 
+
+
+test("Book Index secondary analysis nav stays inside bestseller routes", () => {
+  const nav = source("src/features/book-index/public/BookIndexSectionNav.tsx");
+
+  contains(
+    nav,
+    'current !== "new-releases" && current !== "global"',
+    "secondary bestseller analysis navigation is hidden from Yeni Çıkanlar and Dünya",
+  );
+  contains(
+    nav,
+    '<NavRow current={current} items={primaryItems} />',
+    "primary Book Index navigation remains available across sections",
+  );
+  contains(
+    nav,
+    '<NavRow current={current} items={analysisItems} secondary />',
+    "bestseller analysis navigation remains available on bestseller sections",
+  );
+});
 
 
 test("bestseller full list and comparison expose distinct view modes", () => {

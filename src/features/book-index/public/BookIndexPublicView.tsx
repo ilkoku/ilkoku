@@ -209,9 +209,6 @@ export function TurkeyBookIndexView({
           </p>
         ) : null}
         <div className={styles.topActions}>
-          <Link className={styles.backLink} href="/en-cok-satanlar">
-            ← En Çok Satanlar
-          </Link>
           <BookIndexViewModeNav current="list" />
         </div>
       </header>
@@ -273,9 +270,6 @@ export function TurkeyBookIndexComparisonView({
           </p>
         ) : null}
         <div className={styles.topActions}>
-          <Link className={styles.backLink} href="/en-cok-satanlar">
-            ← En Çok Satanlar
-          </Link>
           <BookIndexViewModeNav current="comparison" />
         </div>
       </header>
@@ -372,9 +366,6 @@ export function BookIndexInsightView({
             </time>
           </p>
         ) : null}
-        <Link className={styles.backLink} href="/en-cok-satanlar">
-          ← En Çok Satanlar ana sayfası
-        </Link>
       </header>
 
       <section className={styles.section} id="liste">

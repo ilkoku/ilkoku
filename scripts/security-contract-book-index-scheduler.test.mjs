@@ -41,6 +41,38 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   notContains(workflow, "?matchPending=1", "one-time backfill request removed");
   contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");
   contains(route, '"workflow_run"', "relay workflow-run OIDC event authorization");
+  contains(route, '"push"', "marker push OIDC event authorization");
+  contains(
+    route,
+    'FORCE_LISTS_HEADER = "x-ilkoku-book-index-force-lists"',
+    "forced refresh uses a dedicated authenticated header",
+  );
+  contains(route, "MAX_FORCED_LISTS = 12", "forced refresh remains bounded");
+  contains(
+    route,
+    "getBookIndexList(listCode)",
+    "forced refresh validates list registry membership",
+  );
+  contains(
+    route,
+    "collectBookIndexListByCode(listCode)",
+    "forced refresh uses the existing list collector",
+  );
+  contains(
+    workflow,
+    '".book-index-force-refresh"',
+    "marker file is the only push trigger",
+  );
+  contains(
+    workflow,
+    'X-IlkOku-Book-Index-Force-Lists: $force_lists',
+    "workflow forwards bounded forced list codes",
+  );
+  contains(
+    workflow,
+    'payload.get("forced") is True',
+    "workflow retries until the production forced-refresh route is deployed",
+  );
   notContains(route, "matchPendingBookIndexBooks", "one-time matching backfill removed");
   notContains(route, 'searchParams.get("matchPending")', "maintenance switch removed");
   contains(readiness, "splitMasterCollisionCount", "collision diagnostic retained");

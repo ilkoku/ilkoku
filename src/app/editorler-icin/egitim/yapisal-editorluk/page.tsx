@@ -246,7 +246,7 @@ export default function YapisalEditorlukPage() {
             İlkOku editör alanında bir eseri değerlendirirken önce büyük yapısal sorunları görünür kıl. Tespitini metinden kanıtla, okur üzerindeki etkisini açıkla ve yazara tek bir zorunlu çözüm dayatmak yerine uygulanabilir seçenekler sun.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link className="rounded-full bg-[#5b35dd] px-5 py-3 text-sm font-extrabold text-white" href="/editor/talepler">Editör taleplerine git</Link>
+            <Link className="rounded-full bg-[#5b35dd] px-5 py-3 text-sm font-extrabold text-white" href="/editor/talepler" rel="nofollow">Editör taleplerine git</Link>
             <Link className="rounded-full border border-[#2a2338]/10 bg-[#fffdf8] px-5 py-3 text-sm font-extrabold text-[#211746]" href="/editoryal-standartlar">Editoryal standartları aç</Link>
           </div>
         </section>

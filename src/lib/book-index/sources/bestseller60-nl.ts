@@ -11,7 +11,7 @@ const EXPECTED_BOOKS = 60;
 
 function htmlToVisibleLines(html: string) {
   const withoutNoise = html
-    .replace(/<!--[sS]*?-->/gu, " ")
+    .replace(/<!--[\s\S]*?-->/gu, " ")
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, " ")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, " ")
     .replace(

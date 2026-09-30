@@ -29,6 +29,14 @@ jobs:
           echo "CNAME www.ilkoku.com"; dig +short CNAME www.ilkoku.com || true
           echo "NS"; dig +short NS ilkoku.com || true
 
+          echo "=== IPv6 runner control ==="
+          ip -6 addr || true
+          ip -6 route || true
+          echo "google.com AAAA"; dig +short AAAA google.com || true
+          echo "cloudflare.com AAAA"; dig +short AAAA cloudflare.com || true
+          echo "curl6 google"; curl -6 -sSIL --max-time 10 https://www.google.com | sed -n '1,8p' || true
+          echo "curl6 cloudflare"; curl -6 -sSIL --max-time 10 https://www.cloudflare.com | sed -n '1,8p' || true
+
           echo "=== IPv4 HEAD ==="
           curl -4 -sSIL --max-time 20 -A 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' https://ilkoku.com/ | sed -n '1,40p' || true
           echo "=== IPv6 HEAD ==="

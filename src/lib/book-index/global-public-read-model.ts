@@ -18,6 +18,8 @@ export const GLOBAL_BESTSELLER_LIST_CODES = [
   "readings-au-monthly",
   "spiegel-de-fiction-hardcover-weekly",
   "amazon-fr-live",
+  "amazon-es-live",
+  "amazon-ca-live",
 ] as const;
 
 export type GlobalBestsellerListCode =

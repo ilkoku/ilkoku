@@ -193,7 +193,7 @@ export async function PublicSiteHeader() {
             </summary>
 
             <div className="public-site-header__account-menu">
-              <Link href="/hesabim">Hesabım</Link>
+              <Link href="/giris?sonraki=%2Fhesabim" rel="nofollow">Hesabım</Link>
               <Link href="/giris">Giriş Yap</Link>
               <Link href="/kayit">Üye Ol</Link>
             </div>

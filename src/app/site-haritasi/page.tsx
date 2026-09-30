@@ -47,6 +47,16 @@ type LinkGroup = {
   links: Array<{ href: string; label: string }>;
 };
 
+const gatedBookIndexPageIds = new Set([
+  "book-index",
+  "book-index-turkey",
+  "book-index-comparison",
+  "book-index-new-entries",
+  "book-index-risers",
+  "book-index-everywhere",
+  "book-index-long-sellers",
+]);
+
 function groupedSitePages(pages: readonly SiteMapPage[]): LinkGroup[] {
   const groups = new Map<string, LinkGroup>();
 
@@ -119,7 +129,7 @@ export default async function PublicSiteMapPage() {
   const codeOwnedPages = SITE_MAP_PAGES.filter(
     (page) =>
       page.indexable !== false
-      && (bookIndexPublished || page.id !== "book-index"),
+      && (bookIndexPublished || !gatedBookIndexPageIds.has(page.id)),
   );
   const knownHrefs = new Set([
     ...codeOwnedPages.map((page) => page.href),

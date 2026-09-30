@@ -1,0 +1,72 @@
+name: GSC sitemap resubmit one-off
+
+on:
+  push:
+    branches:
+      - "diag/gsc-sitemap-resubmit-20260930"
+    paths:
+      - ".github/workflows/gsc-sitemap-resubmit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resubmit sitemap to Google Search Console
+        shell: bash
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const clientId = process.env.GSC_OAUTH_CLIENT_ID;
+          const clientSecret = process.env.GSC_OAUTH_CLIENT_SECRET;
+          const refreshToken = process.env.GSC_OAUTH_REFRESH_TOKEN;
+          if (!clientId || !clientSecret || !refreshToken) {
+            throw new Error("Missing GSC OAuth secret(s)");
+          }
+
+          const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "content-type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: clientId,
+              client_secret: clientSecret,
+              refresh_token: refreshToken,
+              grant_type: "refresh_token",
+            }),
+          });
+          const tokenJson = await tokenResponse.json();
+          if (!tokenResponse.ok || !tokenJson.access_token) {
+            throw new Error(`OAuth refresh failed: ${tokenResponse.status}`);
+          }
+
+          const siteUrl = "sc-domain:ilkoku.com";
+          const feedPath = "https://ilkoku.com/sitemap.xml";
+          const endpoint =
+            "https://www.googleapis.com/webmasters/v3/sites/" +
+            encodeURIComponent(siteUrl) +
+            "/sitemaps/" +
+            encodeURIComponent(feedPath);
+
+          const response = await fetch(endpoint, {
+            method: "PUT",
+            headers: { authorization: `Bearer ${tokenJson.access_token}` },
+          });
+
+          if (!response.ok) {
+            const body = await response.text();
+            throw new Error(`Sitemap submit failed: ${response.status} ${body.slice(0, 500)}`);
+          }
+
+          console.log("GSC sitemap resubmit PASS", {
+            siteUrl,
+            feedPath,
+            status: response.status,
+          });
+          NODE

@@ -1,0 +1,56 @@
+name: Live sitemap lastmod audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-live-html-audit-20260930"
+    paths:
+      - ".github/workflows/live-sitemap-lastmod-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Audit live sitemap raw XML
+        shell: bash
+        run: |
+          sleep 60
+          node <<'NODE'
+          const url = "https://ilkoku.com/sitemap.xml";
+          const res = await fetch(url, {
+            cache: "no-store",
+            headers: {
+              "user-agent": "IlkOku-Live-Sitemap-Audit/1.0",
+              accept: "application/xml,text/xml;q=0.9,*/*;q=0.8",
+            },
+          });
+          if (!res.ok) throw new Error("sitemap HTTP " + res.status);
+          const xml = await res.text();
+          const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map(m => m[1]);
+          const parsed = entries.map(block => ({
+            loc: (block.match(/<loc>([^<]+)<\/loc>/)||[])[1] || "",
+            lastmod: (block.match(/<lastmod>([^<]+)<\/lastmod>/)||[])[1] || "",
+          }));
+          const education = parsed.filter(x =>
+            x.loc.includes("/yazarlar-icin/") ||
+            x.loc.includes("/okurlar-icin/") ||
+            x.loc.includes("/editorler-icin/egitim/")
+          );
+          const withLastmod = parsed.filter(x=>x.lastmod);
+          const eduWithLastmod = education.filter(x=>x.lastmod);
+          console.log("SUMMARY", JSON.stringify({
+            httpStatus: res.status,
+            bytes: Buffer.byteLength(xml),
+            urlCount: parsed.length,
+            lastmodCount: withLastmod.length,
+            educationCount: education.length,
+            educationLastmodCount: eduWithLastmod.length,
+          }));
+          for (const row of eduWithLastmod.slice(0, 30)) {
+            console.log("EDU_LASTMOD", JSON.stringify(row));
+          }
+          NODE

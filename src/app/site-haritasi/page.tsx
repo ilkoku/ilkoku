@@ -116,11 +116,16 @@ export default async function PublicSiteMapPage() {
   ]);
 
   const bookIndexPublished = Boolean(bookIndexContext);
-  const codeOwnedPages = SITE_MAP_PAGES.filter(
-    (page) =>
-      page.indexable !== false
-      && (bookIndexPublished || page.id !== "book-index"),
-  );
+  const independentlyIndexableBookIndexPages = new Set([
+    "book-index-new-releases",
+    "book-index-global",
+  ]);
+  const codeOwnedPages = SITE_MAP_PAGES.filter((page) => {
+    if (page.indexable === false) return false;
+    if (!page.id.startsWith("book-index")) return true;
+    if (independentlyIndexableBookIndexPages.has(page.id)) return true;
+    return bookIndexPublished;
+  });
   const knownHrefs = new Set([
     ...codeOwnedPages.map((page) => page.href),
     ...publicLegalLinks.map((link) => link.href),
@@ -133,6 +138,8 @@ export default async function PublicSiteMapPage() {
         && !knownHrefs.has(page.href)
         && (
           bookIndexPublished
+          || page.href === "/en-cok-satanlar/dunya"
+          || page.href === "/yeni-cikanlar"
           || !page.href.startsWith("/en-cok-satanlar")
         ),
     )

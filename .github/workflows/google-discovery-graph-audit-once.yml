@@ -1,0 +1,185 @@
+name: Google discovery graph audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-discovery-graph-20260930"
+    paths:
+      - ".github/workflows/google-discovery-graph-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Audit discovery graph, schemas, and cache behavior
+        shell: bash
+        run: |
+          node <<'NODE'
+          const BASE = "https://ilkoku.com";
+          const sm = await fetch(BASE + "/sitemap.xml", { headers: { accept: "application/xml" }});
+          if (!sm.ok) throw new Error("sitemap HTTP " + sm.status);
+          const xml = await sm.text();
+          const urls = [...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1].trim()))];
+
+          const normalize = (u) => {
+            try {
+              const x = new URL(u, BASE);
+              x.hash = "";
+              if (x.origin !== BASE) return null;
+              return x.href.replace(/\/$/, "");
+            } catch { return null; }
+          };
+          const sitemap = new Set(urls.map(normalize).filter(Boolean));
+          const rows = [];
+          let cursor = 0;
+          async function worker() {
+            while (true) {
+              const i = cursor++;
+              if (i >= urls.length) return;
+              const url = urls[i];
+              try {
+                const r = await fetch(url, {
+                  redirect:"follow",
+                  headers: {
+                    "user-agent":"Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.96 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+                    accept:"text/html,application/xhtml+xml"
+                  },
+                  signal: AbortSignal.timeout(30000)
+                });
+                const html = await r.text();
+                const hrefs = [];
+                for (const m of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi)) {
+                  const n = normalize(m[1]);
+                  if (n) hrefs.push(n);
+                }
+                const schemas = [];
+                for (const m of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+                  try {
+                    const obj = JSON.parse(m[1]);
+                    const walk = (v) => {
+                      if (!v) return;
+                      if (Array.isArray(v)) return v.forEach(walk);
+                      if (typeof v === "object") {
+                        if (v["@type"]) {
+                          const t = Array.isArray(v["@type"]) ? v["@type"] : [v["@type"]];
+                          for (const x of t) schemas.push(String(x));
+                        }
+                        if (v["@graph"]) walk(v["@graph"]);
+                      }
+                    };
+                    walk(obj);
+                  } catch {}
+                }
+                rows.push({
+                  url: normalize(url),
+                  status:r.status,
+                  finalUrl:normalize(r.url),
+                  cacheControl:r.headers.get("cache-control") || "",
+                  age:r.headers.get("age") || "",
+                  cfCache:r.headers.get("cf-cache-status") || "",
+                  xNextCache:r.headers.get("x-nextjs-cache") || "",
+                  htmlBytes:Buffer.byteLength(html),
+                  internalLinks:[...new Set(hrefs)],
+                  sitemapLinks:[...new Set(hrefs.filter(x=>sitemap.has(x)))],
+                  schemaTypes:[...new Set(schemas)].sort(),
+                  hasWebSite:schemas.includes("WebSite"),
+                  hasOrganization:schemas.includes("Organization"),
+                  hasBreadcrumb:schemas.includes("BreadcrumbList")
+                });
+              } catch (e) {
+                rows.push({url:normalize(url),error:String(e?.message||e),internalLinks:[],sitemapLinks:[],schemaTypes:[]});
+              }
+            }
+          }
+          await Promise.all(Array.from({length:6},()=>worker()));
+
+          const byUrl = new Map(rows.map(r=>[r.url,r]));
+          const inbound = new Map([...sitemap].map(u=>[u,0]));
+          const inboundSources = new Map([...sitemap].map(u=>[u,[]]));
+          for (const r of rows) {
+            for (const target of new Set(r.sitemapLinks || [])) {
+              if (target === r.url) continue;
+              inbound.set(target,(inbound.get(target)||0)+1);
+              inboundSources.get(target)?.push(r.url);
+            }
+          }
+
+          const home=normalize(BASE+"/");
+          const depth=new Map([[home,0]]);
+          const q=[home];
+          while(q.length){
+            const u=q.shift();
+            const row=byUrl.get(u);
+            if(!row) continue;
+            for(const v of row.sitemapLinks||[]){
+              if(!depth.has(v)){ depth.set(v,depth.get(u)+1); q.push(v); }
+            }
+          }
+
+          const orphans=[...sitemap].filter(u=>u!==home && (inbound.get(u)||0)===0);
+          const unreachable=[...sitemap].filter(u=>!depth.has(u));
+          const depthDist={};
+          for(const u of sitemap){
+            const d=depth.has(u)?String(depth.get(u)):"unreachable";
+            depthDist[d]=(depthDist[d]||0)+1;
+          }
+
+          const homeRow=byUrl.get(home);
+          const mapUrl=normalize(BASE+"/site-haritasi");
+          const mapRow=byUrl.get(mapUrl);
+
+          const lowInbound=[...sitemap]
+            .filter(u=>u!==home)
+            .map(u=>({url:u,inbound:inbound.get(u)||0,depth:depth.get(u)??null}))
+            .sort((a,b)=>a.inbound-b.inbound || (b.depth??99)-(a.depth??99))
+            .slice(0,40);
+
+          const cacheGroups={};
+          for(const r of rows){
+            const k=r.cacheControl||"(none)";
+            cacheGroups[k]=(cacheGroups[k]||0)+1;
+          }
+          const schemaCoverage={
+            WebSite:rows.filter(r=>r.hasWebSite).length,
+            Organization:rows.filter(r=>r.hasOrganization).length,
+            BreadcrumbList:rows.filter(r=>r.hasBreadcrumb).length,
+            none:rows.filter(r=>(r.schemaTypes||[]).length===0).length,
+          };
+
+          console.log("SUMMARY", JSON.stringify({
+            sitemapCount:urls.length,
+            audited:rows.length,
+            errors:rows.filter(r=>r.error).length,
+            non200:rows.filter(r=>!r.error && r.status!==200).length,
+            orphans:orphans.length,
+            unreachable:unreachable.length,
+            depthDist,
+            homeSitemapLinks:homeRow?.sitemapLinks?.length || 0,
+            siteMapSitemapLinks:mapRow?.sitemapLinks?.length || 0,
+            minInbound:Math.min(...[...sitemap].filter(u=>u!==home).map(u=>inbound.get(u)||0)),
+            maxInbound:Math.max(...[...sitemap].filter(u=>u!==home).map(u=>inbound.get(u)||0)),
+            cacheGroups,
+            schemaCoverage
+          }));
+          for(const u of orphans) console.log("ORPHAN",u);
+          for(const u of unreachable) console.log("UNREACHABLE",u);
+          for(const x of lowInbound) console.log("LOW_INBOUND",JSON.stringify(x));
+          for(const r of rows.filter(r=>r.error || r.status!==200)) console.log("FETCH_ISSUE",JSON.stringify(r));
+          for(const r of rows.filter(r=>r.xNextCache || r.cfCache)) console.log("CACHE",JSON.stringify({
+            url:r.url,cacheControl:r.cacheControl,cfCache:r.cfCache,xNextCache:r.xNextCache,age:r.age
+          }));
+          for(const r of rows.filter(r=>["https://ilkoku.com","https://ilkoku.com/site-haritasi","https://ilkoku.com/yazarlar-icin","https://ilkoku.com/editorler-icin"].includes(r.url))) {
+            console.log("KEY_PAGE",JSON.stringify({
+              url:r.url,
+              linkCount:r.internalLinks.length,
+              sitemapLinkCount:r.sitemapLinks.length,
+              schemaTypes:r.schemaTypes,
+              cacheControl:r.cacheControl,
+              htmlBytes:r.htmlBytes
+            }));
+          }
+          NODE

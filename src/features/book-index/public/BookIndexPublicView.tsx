@@ -83,7 +83,7 @@ export function BookIndexOverviewView({
         ) : null}
       </header>
 
-      <section className={styles.cards} aria-label="Endeks kapsamı">
+      <section className={`${styles.cards} ${styles.scopeCards}`} aria-label="Endeks kapsamı">
         <Link
           className={styles.card}
           href="/en-cok-satanlar/turkiye/karsilastirma"

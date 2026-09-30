@@ -23,6 +23,7 @@ test("global bestseller public page reads only the approved source lists", () =>
     "readings-au-monthly",
     "spiegel-de-fiction-hardcover-weekly",
     "amazon-fr-live",
+    "amazon-es-live",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -43,6 +44,24 @@ test("global bestseller public page reads only the approved source lists", () =>
     "getTurkeySourceRankRows",
     "global page stays independent from Turkey ranking aggregation",
   );
+});
+
+
+test("Spain Amazon bestseller source is fail-closed and source-native", () => {
+  const adapter = source("src/lib/book-index/sources/amazon-es.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 30', "Amazon Spain exact Top 30 guard");
+  contains(adapter, "p13n-asin-index-", "Amazon Spain item parser");
+  contains(adapter, "zg-bdg-text", "Amazon Spain native rank parser");
+  contains(adapter, "BOOK_INDEX_AMAZON_ES_RANK_ORDER_MISMATCH", "Amazon Spain rank guard");
+  contains(collector, "amazonSpainBookIndexAdapter", "Amazon Spain collector registration");
+  contains(sources, 'code: "amazon-es"', "Spain source registry");
+  contains(sources, 'market: "ES"', "Spain market code");
+  contains(lists, 'code: "amazon-es-live"', "Spain list registry");
+  contains(lists, "maxRank: 30", "Spain Top 30 bound");
 });
 
 

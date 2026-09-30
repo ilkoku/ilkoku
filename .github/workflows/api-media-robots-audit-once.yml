@@ -1,0 +1,50 @@
+name: API media robots audit one-off
+on:
+  push:
+    branches: ["diag/api-media-robots-20260930"]
+    paths: [".github/workflows/api-media-robots-audit-once.yml"]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Count public pages using api media
+        shell: bash
+        run: |
+          node <<'NODE'
+          const sm=await fetch("https://ilkoku.com/sitemap.xml",{cache:"no-store"});
+          const xml=await sm.text();
+          const urls=[...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]))];
+          const rows=[]; const media=new Set(); let cursor=0;
+          async function worker(){
+            while(true){
+              const i=cursor++;
+              if(i>=urls.length)return;
+              const url=urls[i];
+              try{
+                const r=await fetch(url,{headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"},signal:AbortSignal.timeout(30000)});
+                const html=await r.text();
+                const found=[...new Set([...html.matchAll(/(?:https:\/\/ilkoku\.com)?\/api\/media\/[0-9a-f-]{36}/gi)].map(m=>m[0].replace(/^https:\/\/ilkoku\.com/,"")))];
+                found.forEach(x=>media.add(x));
+                rows[i]={url,status:r.status,media:found};
+              }catch(e){rows[i]={url,error:String(e),media:[]};}
+            }
+          }
+          await Promise.all(Array.from({length:8},worker));
+          const affected=rows.filter(r=>r.media.length);
+          console.log("SUMMARY",JSON.stringify({
+            sitemapUrls:urls.length,
+            affectedPages:affected.length,
+            uniqueMedia:media.size,
+            totalReferences:affected.reduce((a,r)=>a+r.media.length,0),
+            errors:rows.filter(r=>r.error).length
+          }));
+          for(const r of affected) console.log("AFFECTED",JSON.stringify(r));
+          for(const m of [...media].slice(0,20)){
+            const u="https://ilkoku.com"+m;
+            const res=await fetch(u,{headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot-Image/1.0)"}});
+            console.log("MEDIA",JSON.stringify({url:u,status:res.status,type:res.headers.get("content-type"),cache:res.headers.get("cache-control"),bytes:(await res.arrayBuffer()).byteLength}));
+          }
+          NODE

@@ -305,6 +305,137 @@ export function TurkeyBookIndexComparisonView({
 }
 
 
+function formattedTrendDate(value: Date) {
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "medium",
+    timeZone: "Europe/Istanbul",
+  }).format(value);
+}
+
+function insightEvidence(
+  item:
+    | BookIndexNewEntry
+    | BookIndexRiser
+    | BookIndexEverywhereSeller
+    | BookIndexLongSeller,
+) {
+  if ("newSourceCount" in item) {
+    return item.sources.map((source) => (
+      <span className={styles.insightEvidenceChip} key={source.sourceCode}>
+        {source.sourceName} · #{source.currentRank} · yeni giriş
+      </span>
+    ));
+  }
+
+  if ("totalRankGain" in item) {
+    return item.sources.map((source) => (
+      <span className={styles.insightEvidenceChip} key={source.sourceCode}>
+        {source.sourceName} · #{source.previousRank} → #{source.currentRank} · +{source.rankGain}
+      </span>
+    ));
+  }
+
+  if ("historyDays" in item) {
+    return (
+      <>
+        <span className={styles.insightEvidenceChip}>
+          İlk: {formattedTrendDate(item.firstObservedAt)}
+        </span>
+        <span className={styles.insightEvidenceChip}>
+          Son: {formattedTrendDate(item.lastObservedAt)}
+        </span>
+        {item.sources.map((source) => (
+          <span className={styles.insightEvidenceChip} key={source.sourceCode}>
+            {source.sourceName}
+          </span>
+        ))}
+      </>
+    );
+  }
+
+  return item.sources.map((source) => (
+    <span className={styles.insightEvidenceChip} key={source.sourceCode}>
+      {source.sourceName} · #{source.currentRank}
+    </span>
+  ));
+}
+
+function insightSummary(
+  items:
+    | BookIndexNewEntry[]
+    | BookIndexRiser[]
+    | BookIndexEverywhereSeller[]
+    | BookIndexLongSeller[],
+) {
+  if (!items.length) {
+    return [
+      { label: "Kayıt", value: "0" },
+      { label: "Kanıt", value: "Veri bekleniyor" },
+      { label: "Durum", value: "Yayınlanmaz" },
+    ];
+  }
+
+  const first = items[0];
+
+  if ("newSourceCount" in first) {
+    const typed = items as BookIndexNewEntry[];
+    return [
+      { label: "Yeni giren kitap", value: String(typed.length) },
+      {
+        label: "Yeni kaynak görünümü",
+        value: String(typed.reduce((sum, item) => sum + item.newSourceCount, 0)),
+      },
+      {
+        label: "En iyi yeni giriş",
+        value: `#${Math.min(...typed.map((item) => item.bestRank))}`,
+      },
+    ];
+  }
+
+  if ("totalRankGain" in first) {
+    const typed = items as BookIndexRiser[];
+    return [
+      { label: "Yükselen kitap", value: String(typed.length) },
+      {
+        label: "Toplam sıra kazanımı",
+        value: `+${typed.reduce((sum, item) => sum + item.totalRankGain, 0)}`,
+      },
+      {
+        label: "Yükselen kaynak",
+        value: String(typed.reduce((sum, item) => sum + item.improvingSourceCount, 0)),
+      },
+    ];
+  }
+
+  if ("historyDays" in first) {
+    const typed = items as BookIndexLongSeller[];
+    return [
+      { label: "Uzun süre görünen", value: String(typed.length) },
+      {
+        label: "En uzun süre",
+        value: `${Math.max(...typed.map((item) => item.historyDays))} gün`,
+      },
+      {
+        label: "Toplam gözlem",
+        value: String(typed.reduce((sum, item) => sum + item.observationCount, 0)),
+      },
+    ];
+  }
+
+  const typed = items as BookIndexEverywhereSeller[];
+  return [
+    { label: "Çoklu kaynakta kitap", value: String(typed.length) },
+    {
+      label: "En geniş görünürlük",
+      value: `${Math.max(...typed.map((item) => item.sourceCount))} kaynak`,
+    },
+    {
+      label: "En iyi sıra",
+      value: `#${Math.min(...typed.map((item) => item.bestRank))}`,
+    },
+  ];
+}
+
 function insightMetric(
   item:
     | BookIndexNewEntry
@@ -350,6 +481,7 @@ export function BookIndexInsightView({
 }) {
   const items = getBookIndexInsightItems(insights, definition.key);
   const currentYear = new Date().getFullYear();
+  const summary = insightSummary(items);
 
   return (
     <main className={styles.page}>
@@ -367,6 +499,15 @@ export function BookIndexInsightView({
           </p>
         ) : null}
       </header>
+
+      <section className={styles.insightSummaryGrid} aria-label="Trend özeti">
+        {summary.map((item) => (
+          <div className={styles.insightSummaryCard} key={item.label}>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+          </div>
+        ))}
+      </section>
 
       <section className={styles.section} id="liste">
         <div className={styles.sectionHeading}>
@@ -389,6 +530,9 @@ export function BookIndexInsightView({
                 <div className={styles.book}>
                   <strong>{item.title}</strong>
                   <span>{item.authorName ?? "Yazar bilgisi bekleniyor"}</span>
+                  <div className={styles.insightEvidence}>
+                    {insightEvidence(item)}
+                  </div>
                 </div>
                 <div className={styles.score}>
                   <strong>{metric.primary}</strong>

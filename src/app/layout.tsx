@@ -9,7 +9,6 @@ import {
   publicBrandAlternateName,
   publicBrandDescription,
   publicBrandName,
-  publicBrandPositioning,
   publicBrandSocialImage,
   publicBrandTitle,
 } from "@/lib/public-brand";

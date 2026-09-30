@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { GlobalBestsellerReadModel } from "@/lib/book-index/global-public-read-model";
 import type { BookIndexSourceListSnapshot } from "@/lib/book-index/public-read-model";
 
+import { BookIndexSectionNav } from "./BookIndexSectionNav";
 import styles from "./BookIndexPublicView.module.css";
 
 const periodLabel: Record<string, string> = {
@@ -49,6 +50,7 @@ export function GlobalBestsellerView({
 
   return (
     <main className={styles.page}>
+      <BookIndexSectionNav current="global" />
       <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Dünya</span>
         <h1>Dünyada Çok Satan Kitaplar {currentYear}</h1>

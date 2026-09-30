@@ -444,6 +444,19 @@ const insightNavSection = {
   longSellers: "long-sellers",
 } as const;
 
+function insightOrderDescription(key: BookIndexInsightPageDefinition["key"]) {
+  switch (key) {
+    case "newEntries":
+      return "Soldaki sıra satış sırası değildir. Önce kaç satış sitesinin çok satan listesine yeni girildiğine, eşitlikte yeni girişler içindeki en iyi konuma, ardından kitabın toplam güncel liste görünürlüğüne göre bu analiz sırası oluşturulur.";
+    case "risers":
+      return "Soldaki sıra satış sırası değildir. Önce daha fazla bağımsız satış sitesinde yükselen kitaplar, eşitlikte bu sitelerdeki toplam sıra kazanımı, ardından en iyi güncel liste konumu dikkate alınarak bu analiz sırası oluşturulur.";
+    case "everywhereSellers":
+      return "Soldaki sıra satış sırası değildir. Önce daha fazla bağımsız satış sitesinin çok satan listesinde görünen kitaplar, eşitlikte bu listelerdeki en iyi gerçek sıra, son eşitlikte kitap adı dikkate alınarak bu analiz sırası oluşturulur.";
+    case "longSellers":
+      return "Soldaki sıra satış sırası değildir. Önce en uzun doğrulanmış gözlem süresi, eşitlikte daha fazla bağımsız satış sitesinde görünme, ardından toplam doğrulanmış gözlem sayısı; son eşitlikte kitap adı kullanılarak bu analiz sırası oluşturulur.";
+  }
+}
+
 function insightMetric(
   item:
     | BookIndexNewEntry
@@ -590,11 +603,7 @@ export function BookIndexInsightView({
           <div>
             <span className={styles.eyebrow}>{definition.eyebrow}</span>
             <h2>{definition.heading}</h2>
-            <p>
-              {definition.key === "newEntries"
-                ? "Soldaki sıra satış sırası değildir. Önce kaç satış sitesinin çok satan listesine yeni girildiğine, eşitlikte yeni girişler içindeki en iyi konuma, ardından kitabın toplam güncel liste görünürlüğüne göre bu analiz sırası oluşturulur."
-                : "Liste yalnız doğrulanmış başarılı veri geçmişinden üretilir."}
-            </p>
+            <p>{insightOrderDescription(definition.key)}</p>
           </div>
         </div>
 

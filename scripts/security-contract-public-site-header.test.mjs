@@ -140,9 +140,10 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     );
   }
 
-  assert.match(header, /getBookIndexPublicPageContext\(100\)\.catch\(\(\) => null\)/);
+  assert.doesNotMatch(header, /getBookIndexPublicPageContext/);
   assert.match(header, /withBookIndexMenu/);
   assert.match(header, /label: "Kitap Endeksi"/);
+  assert.doesNotMatch(header, /if \(!enabled\) return withoutBookIndex/);
   assert.match(header, /href: "\/en-cok-satanlar"[\s\S]*href: "\/yeni-cikanlar"/);
   assert.doesNotMatch(header, /directHref: "\/en-cok-satanlar"/);
   assert.match(header, /menu\.id === "support"/);

@@ -148,3 +148,16 @@ test("global bestseller sections show per-list freshness", () => {
     "freshness timestamp remains machine-readable",
   );
 });
+
+
+test("new releases page stays aligned across public discovery surfaces", () => {
+  const page = source("src/app/yeni-cikanlar/page.tsx");
+  const sitemap = source("src/app/sitemap.ts");
+  const navigation = source("src/lib/cms-header-navigation.ts");
+
+  contains(page, "noIndex: false", "new releases route remains indexable");
+  contains(sitemap, "/yeni-cikanlar", "new releases route remains in XML sitemap");
+  const line = navigation.split("\n").find((candidate) => candidate.includes('href: "/yeni-cikanlar"'));
+  assert.ok(line, "new releases route exists in HTML sitemap inventory");
+  assert.equal(line.includes("indexable: false"), false, "indexable new releases route is linked from HTML sitemap");
+});

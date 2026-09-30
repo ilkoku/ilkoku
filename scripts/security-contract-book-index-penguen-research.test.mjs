@@ -8,28 +8,31 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
 const contains = (text, fragment, label) =>
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
-const notContains = (text, fragment, label) =>
-  assert.ok(!text.includes(fragment), `${label} must not contain ${JSON.stringify(fragment)}`);
 
-test("Penguen stays research-only until a native ranked book source is verified", () => {
+test("Penguen uses the verified penguenkitap.com.tr bestseller surface", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
-  const note = source("docs/operations/book-index-penguen-research.md");
+  const adapter = source("src/lib/book-index/sources/penguen.ts");
 
   contains(
     sources,
-    'code: "penguen",\n    name: "Penguen Kitabevi",\n    market: "TR",\n    countryCode: "TR",\n    baseUrl: "https://penguenkitabevi.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "Penguen registry remains researching",
+    'baseUrl: "https://www.penguenkitap.com.tr"',
+    "correct Penguen domain",
   );
+  contains(sources, 'name: "Penguen Kitap"', "correct source identity");
+  contains(adapter, 'const BESTSELLER_PATH = "/urunler/cok-satanlar"', "native bestseller path");
+  contains(adapter, "parsePenguenBestsellers", "bestseller parser");
+  contains(adapter, "BOOK_INDEX_PENGUEN_BESTSELLER_MARKER_MISSING", "page marker guard");
+  contains(adapter, "BOOK_INDEX_PENGUEN_RESULT_TOO_SMALL", "minimum result guard");
+  contains(collector, "penguenBookIndexAdapter", "collector registration");
 
-  notContains(lists, 'sourceCode: "penguen"', "no Penguen ranked list is activated");
-  notContains(collector, "penguenBookIndexAdapter", "no Penguen collector is activated");
-
-  contains(note, "71 book records", "verified public catalog size evidence");
-  contains(note, "12 records per page", "verified pagination evidence");
-  contains(note, "did **not** expose a native book ranking control", "no native rank finding");
-  contains(note, "must **not** be relabeled as a sales or", "no synthetic catalog rank rule");
-  contains(note, "bestseller rank.", "no synthetic catalog rank meaning");
-  contains(note, "Penguen remains `researching`", "research-only product decision");
+  const start = lists.indexOf('code: "penguen-tr-bestsellers"');
+  assert.ok(start >= 0, "Penguen bestseller list missing");
+  const block = lists.slice(start, start + 800);
+  contains(block, 'sourceUrl: "https://www.penguenkitap.com.tr/urunler/cok-satanlar"', "correct source URL");
+  contains(block, "includeInTurkeyDisplay: true", "Turkey table inclusion");
+  contains(block, "collectionEveryMinutes: 360", "scheduler cadence");
+  contains(block, "publiclyVisible: true", "public list");
+  contains(block, "enabled: true", "enabled list");
 });

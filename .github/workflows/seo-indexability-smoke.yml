@@ -104,6 +104,7 @@ jobs:
             'https://ilkoku.com/nasil-calisir' \
             'https://ilkoku.com/hakkimizda' \
             'https://ilkoku.com/icerik-ve-yas-politikasi' \
+            'https://ilkoku.com/okurlar-icin' \
             'https://ilkoku.com/yazarlar-icin' \
             'https://ilkoku.com/editorler-icin' \
             'https://ilkoku.com/yayinevleri-icin'; do

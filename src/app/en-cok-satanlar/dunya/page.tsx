@@ -7,7 +7,7 @@ const canonical = "/en-cok-satanlar/dunya";
 const description =
   "Amazon ABD, Amazon UK, IBS İtalya, Rakuten Books Japonya, Kyobo Güney Kore ve Readings Avustralya çok satan kitap listelerini ilgili sitelerin kendi sıralamalarıyla inceleyin.";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return createPublicPageMetadata({

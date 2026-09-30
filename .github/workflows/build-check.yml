@@ -38,5 +38,10 @@ jobs:
       - name: Bağımlılıkları yükle
         run: npm ci
 
+      - name: Recover build database from version-controlled baseline
+        env:
+          RECOVERY_CONFIRM_EMPTY_DATABASE: "YES"
+        run: npm run db:recover:fresh
+
       - name: Hostinger compiler check
         run: npm run system-map:generate && npx prisma generate && npx next build --webpack

@@ -8,7 +8,7 @@ const canonical = "/yeni-cikanlar";
 const description =
   "Türkiye'deki kitap satış kaynaklarının kendi yeni çıkan ve yeni gelen listelerinde yer verdiği kitapları karşılaştırın.";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export function generateMetadata(): Metadata {
   return createPublicPageMetadata({

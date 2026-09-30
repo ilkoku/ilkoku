@@ -549,36 +549,43 @@ test("Book Index secondary analysis nav stays inside bestseller routes", () => {
 });
 
 
-test("bestseller full list and comparison expose distinct view modes", () => {
+test("bestseller full list and comparison use the shared Book Index navigation", () => {
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
-  const nav = source("src/features/book-index/public/BookIndexViewModeNav.tsx");
-  const styles = source("src/features/book-index/public/BookIndexPublicView.module.css");
+  const nav = source("src/features/book-index/public/BookIndexSectionNav.tsx");
 
-  contains(view, '<BookIndexViewModeNav current="list" />', "full list active mode");
   contains(
     view,
-    '<BookIndexViewModeNav current="comparison" />',
-    "comparison active mode",
-  );
-  contains(nav, "Tüm Liste", "full-list mode label");
-  contains(nav, "Karşılaştırma", "comparison mode label");
-  contains(
-    nav,
-    'href="/en-cok-satanlar/turkiye"',
-    "full-list dedicated route",
+    '<BookIndexSectionNav current="turkey" showAnalysis={false} />',
+    "Turkey full list keeps primary navigation above the hero",
   );
   contains(
+    view,
+    '<BookIndexSectionNav current="turkey" showPrimary={false} />',
+    "Turkey full list uses shared analysis navigation below the hero",
+  );
+  contains(
+    view,
+    '<BookIndexSectionNav current="comparison" showAnalysis={false} />',
+    "comparison keeps primary navigation above the hero",
+  );
+  contains(
+    view,
+    '<BookIndexSectionNav current="comparison" showPrimary={false} />',
+    "comparison uses shared analysis navigation below the hero",
+  );
+  contains(nav, 'href: "/en-cok-satanlar/turkiye"', "Turkey dedicated route");
+  contains(
     nav,
-    'href="/en-cok-satanlar/turkiye/karsilastirma"',
+    'href: "/en-cok-satanlar/turkiye/karsilastirma"',
     "comparison dedicated route",
   );
-  contains(nav, 'aria-current={current === "list" ? "page" : undefined}', "list current-page state");
-  contains(
-    nav,
-    'aria-current={current === "comparison" ? "page" : undefined}',
-    "comparison current-page state",
+  contains(nav, 'label: "Türkiye"', "Turkey navigation label");
+  contains(nav, 'label: "Karşılaştırma"', "comparison navigation label");
+  notContains(
+    view,
+    "BookIndexViewModeNav",
+    "obsolete two-item view-mode navigation remains removed",
   );
-  contains(styles, ".viewModeNav", "visible mode navigation styling");
 });
 
 

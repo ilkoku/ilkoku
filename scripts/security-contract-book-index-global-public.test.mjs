@@ -161,3 +161,18 @@ test("new releases page stays aligned across public discovery surfaces", () => {
   assert.ok(line, "new releases route exists in HTML sitemap inventory");
   assert.equal(line.includes("indexable: false"), false, "indexable new releases route is linked from HTML sitemap");
 });
+
+
+test("indexable Book Index discovery pages use crawl-friendly ISR", () => {
+  const globalPage = source("src/app/en-cok-satanlar/dunya/page.tsx");
+  const newReleasesPage = source("src/app/yeni-cikanlar/page.tsx");
+
+  for (const [label, page] of [
+    ["global bestsellers", globalPage],
+    ["new releases", newReleasesPage],
+  ]) {
+    contains(page, "export const revalidate = 300;", `${label} 5-minute ISR`);
+    notContains(page, 'export const dynamic = "force-dynamic";', `${label} force-dynamic regression`);
+    contains(page, "noIndex: false", `${label} remains indexable`);
+  }
+});

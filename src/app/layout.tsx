@@ -8,7 +8,6 @@ import { SiteConsentBanner } from "@/components/privacy/SiteConsentBanner";
 import {
   publicBrandDescription,
   publicBrandName,
-  publicBrandPositioning,
   publicBrandSocialImage,
   publicBrandTitle,
 } from "@/lib/public-brand";

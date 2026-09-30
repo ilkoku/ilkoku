@@ -1,0 +1,48 @@
+name: GSC sitemap resubmit trigger
+
+on:
+  push:
+    branches:
+      - diag/google-index-full-recheck-20261001
+    paths:
+      - ".github/workflows/gsc-sitemap-resubmit-trigger.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resubmit current sitemap through Search Console API
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test -n "$GSC_OAUTH_CLIENT_ID"
+          test -n "$GSC_OAUTH_CLIENT_SECRET"
+          test -n "$GSC_OAUTH_REFRESH_TOKEN"
+
+          token_json=$(curl -sS --fail-with-body --max-time 20 \
+            -X POST 'https://oauth2.googleapis.com/token' \
+            -H 'content-type: application/x-www-form-urlencoded' \
+            --data-urlencode "client_id=$GSC_OAUTH_CLIENT_ID" \
+            --data-urlencode "client_secret=$GSC_OAUTH_CLIENT_SECRET" \
+            --data-urlencode "refresh_token=$GSC_OAUTH_REFRESH_TOKEN" \
+            --data-urlencode 'grant_type=refresh_token')
+          access_token=$(printf '%s' "$token_json" | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const j=JSON.parse(s);if(!j.access_token)process.exit(1);process.stdout.write(j.access_token)})')
+
+          site='sc-domain:ilkoku.com'
+          feed='https://ilkoku.com/sitemap.xml'
+          endpoint="https://www.googleapis.com/webmasters/v3/sites/$(node -p 'encodeURIComponent(process.argv[1])' "$site")/sitemaps/$(node -p 'encodeURIComponent(process.argv[1])' "$feed")"
+
+          status=$(curl -sS -o /tmp/gsc-submit-body.txt -w '%{http_code}' --max-time 30 \
+            -X PUT "$endpoint" \
+            -H "Authorization: Bearer $access_token")
+          printf 'GSC_SITEMAP_SUBMIT|HTTP=%s|SITE=%s|FEED=%s\n' "$status" "$site" "$feed"
+          cat /tmp/gsc-submit-body.txt || true
+          test "$status" = "204"

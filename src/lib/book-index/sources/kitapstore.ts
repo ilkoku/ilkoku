@@ -17,6 +17,12 @@ const DETAIL_CONCURRENCY = 3;
 // 773082 = Naber Defter Özel Edisyon / Naber Sayı 17 (magazine issue special edition)
 const VERIFIED_NON_BOOK_PRODUCT_IDS = new Set(["776749", "773082"]);
 
+// Exact ISBN fallback verified against ODTÜ Yayıncılık and independent catalogues.
+// KitapStore's own detail page exposes the ISBN but omits the direct author block.
+const VERIFIED_AUTHOR_BY_ISBN13 = new Map<string, string>([
+  ["9789754293982", "Bülent Kandiller, Aysun Velioğlu"],
+]);
+
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
 }
@@ -434,7 +440,9 @@ async function enrichMissingAuthorIdentity(
         const candidate = candidates[candidateIndex];
         const html = await fetchHtml(candidate.book.productUrl);
         const isbn13 = parseKitapStoreProductIsbn13(html);
-        const authorName = parseKitapStoreProductAuthorName(html);
+        const authorName =
+          parseKitapStoreProductAuthorName(html)
+          || (isbn13 ? VERIFIED_AUTHOR_BY_ISBN13.get(isbn13) ?? null : null);
 
         if (!isbn13 && !authorName) {
           throw new Error("BOOK_INDEX_KITAPSTORE_IDENTITY_METADATA_MISSING");

@@ -22,9 +22,9 @@ function htmlToVisibleLines(html: string) {
     .replace(/<\/(?:p|div|li|h[1-6]|section|article|a)>/giu, "\n")
     .replace(/<[^>]+>/gu, "\n");
 
-  return decodeBookIndexHtml(withoutNoise)
+  return withoutNoise
     .split(/\n+/u)
-    .map((line) => line.replace(/\s+/gu, " ").trim())
+    .map((line) => decodeBookIndexHtml(line))
     .filter(Boolean);
 }
 

@@ -25,6 +25,7 @@ test("global bestseller public page reads only the approved source lists", () =>
     "amazon-fr-live",
     "amazon-es-live",
     "amazon-ca-live",
+    "bestseller60-nl-weekly",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -127,10 +128,10 @@ test("Netherlands Bestseller 60 collector is source-native and stays off the pub
   contains(sources, 'market: "NL"', "Netherlands market code");
   contains(lists, 'code: "bestseller60-nl-weekly"', "Netherlands weekly list registry");
   contains(lists, "maxRank: 60", "Netherlands Top 60 bound");
-  notContains(
+  contains(
     model,
     '"bestseller60-nl-weekly"',
-    "Netherlands stays off the public world table until Turkish title meanings are prepared",
+    "Netherlands is included on the public world table after title meanings are prepared",
   );
 });
 

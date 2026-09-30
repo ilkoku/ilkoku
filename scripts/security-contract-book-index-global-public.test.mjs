@@ -157,7 +157,7 @@ test("new releases page stays aligned across indexability and HTML discovery", (
 
   contains(page, "noIndex: false", "new releases route remains indexable");
   contains(sitemap, "/yeni-cikanlar", "new releases route remains in XML sitemap");
-  const line = navigation.split("\\n").find((candidate) => candidate.includes('href: "/yeni-cikanlar"'));
+  const line = navigation.split("\n").find((candidate) => candidate.includes('id: "book-index-new-releases"'));
   assert.ok(line, "new releases route exists in public site map catalog");
   assert.equal(line.includes("indexable: false"), false, "indexable route is not hidden from HTML site map");
 });

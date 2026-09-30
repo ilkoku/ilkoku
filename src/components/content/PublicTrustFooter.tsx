@@ -50,10 +50,10 @@ export async function PublicTrustFooter() {
 
         <div className="public-trust-footer__column">
           <h3>Hesap</h3>
-          <Link href="/hesabim">Hesabım</Link>
-          <Link href="/giris">Giriş Yap</Link>
-          <Link href="/kayit">Üye Ol</Link>
-          <Link href="/sifremi-unuttum">Şifremi Unuttum</Link>
+          <Link href="/hesabim" rel="nofollow">Hesabım</Link>
+          <Link href="/giris" rel="nofollow">Giriş Yap</Link>
+          <Link href="/kayit" rel="nofollow">Üye Ol</Link>
+          <Link href="/sifremi-unuttum" rel="nofollow">Şifremi Unuttum</Link>
         </div>
 
         <nav className="public-trust-footer__column" aria-label="Destek bağlantıları">

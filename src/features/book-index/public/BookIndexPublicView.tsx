@@ -383,7 +383,7 @@ function insightSummary(
     return [
       { label: "Yeni giren kitap", value: String(typed.length) },
       {
-        label: "Yeni kaynak görünümü",
+        label: "Yeni liste girişi",
         value: String(typed.reduce((sum, item) => sum + item.newSourceCount, 0)),
       },
       {
@@ -402,7 +402,7 @@ function insightSummary(
         value: `+${typed.reduce((sum, item) => sum + item.totalRankGain, 0)}`,
       },
       {
-        label: "Yükselen kaynak",
+        label: "Liste yükselişi",
         value: String(typed.reduce((sum, item) => sum + item.improvingSourceCount, 0)),
       },
     ];
@@ -411,9 +411,9 @@ function insightSummary(
   if ("historyDays" in first) {
     const typed = items as BookIndexLongSeller[];
     return [
-      { label: "Gözlem aralığı olan", value: String(typed.length) },
+      { label: "Tarihsel gözlemli kitap", value: String(typed.length) },
       {
-        label: "En uzun süre",
+        label: "En uzun gözlem aralığı",
         value: `${Math.max(...typed.map((item) => item.historyDays))} gün`,
       },
       {
@@ -428,7 +428,7 @@ function insightSummary(
     { label: "Birden fazla sitede kitap", value: String(typed.length) },
     {
       label: "En geniş görünürlük",
-      value: `${Math.max(...typed.map((item) => item.sourceCount))} satış sitesi`,
+      value: `${Math.max(...typed.map((item) => item.sourceCount))} bağımsız işletmeci`,
     },
     {
       label: "En iyi sıra",

@@ -600,3 +600,30 @@ test("Book Index navigation stays scoped out of the global public header", () =>
     "Book Index keeps its own primary section navigation",
   );
 });
+
+
+test("independently indexable Book Index pages remain in the HTML site map", () => {
+  const catalog = source("src/lib/cms-header-navigation.ts");
+  const siteMap = source("src/app/site-haritasi/page.tsx");
+
+  contains(
+    catalog,
+    '{ id: "book-index-new-releases", label: "Yeni Çıkanlar", href: "/yeni-cikanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" }',
+    "Yeni Çıkanlar public catalog entry is indexable",
+  );
+  contains(
+    siteMap,
+    '"book-index-new-releases"',
+    "HTML site map keeps Yeni Çıkanlar independently indexable",
+  );
+  contains(
+    siteMap,
+    '"book-index-global"',
+    "HTML site map keeps Dünya independently indexable",
+  );
+  contains(
+    siteMap,
+    "return bookIndexPublished;",
+    "gated bestseller pages still require the full publication gate",
+  );
+});

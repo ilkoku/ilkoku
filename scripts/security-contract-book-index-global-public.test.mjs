@@ -112,6 +112,29 @@ test("France Amazon bestseller source is fail-closed and source-native", () => {
 });
 
 
+test("Netherlands Bestseller 60 collector is source-native and stays off the public world table until title meanings are ready", () => {
+  const adapter = source("src/lib/book-index/sources/bestseller60-nl.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 60', "Netherlands exact Top 60 guard");
+  contains(adapter, "ISBN", "Netherlands ISBN parser");
+  contains(adapter, "BOOK_INDEX_BESTSELLER60_NL_RANK_ORDER_MISMATCH", "Netherlands rank guard");
+  contains(collector, "bestseller60NetherlandsBookIndexAdapter", "Netherlands collector registration");
+  contains(sources, 'code: "bestseller60-nl"', "Netherlands source registry");
+  contains(sources, 'market: "NL"', "Netherlands market code");
+  contains(lists, 'code: "bestseller60-nl-weekly"', "Netherlands weekly list registry");
+  contains(lists, "maxRank: 60", "Netherlands Top 60 bound");
+  notContains(
+    model,
+    '"bestseller60-nl-weekly"',
+    "Netherlands stays off the public world table until Turkish title meanings are prepared",
+  );
+});
+
+
 test("Germany SPIEGEL bestseller source is fail-closed and source-native", () => {
   const adapter = source("src/lib/book-index/sources/spiegel-de.ts");
   const collector = source("src/lib/book-index/collector.ts");

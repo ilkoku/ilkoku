@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { PublicEmailLink } from "@/components/content/PublicEmailLink";
+
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { logoutAction } from "@/features/auth/actions";
 import {
@@ -81,7 +83,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
             <h3>Destek</h3>
             {publicSupportLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
             <div className="site-contact-footer">
-              <a className="site-contact-footer__email" href={`mailto:${siteContact.generalEmail}`}>{siteContact.generalEmail}</a>
+              <PublicEmailLink className="site-contact-footer__email" />
               <div className="site-social-links" aria-label="İlkOku sosyal medya hesapları">
                 {siteContact.socialLinks.map((social) => <a href={social.href} target="_blank" rel="noopener noreferrer" aria-label={`${social.label} hesabımızı aç`} title={social.label} key={social.id}><SocialIcon id={social.id} /></a>)}
               </div>

@@ -1,28 +1,14 @@
-import { execFileSync } from "node:child_process";
 import type { NextConfig } from "next";
 
-function resolveDeploymentId() {
-  const configured =
-    process.env.NEXT_DEPLOYMENT_ID?.trim() ||
-    process.env.DEPLOYMENT_VERSION?.trim();
-
-  if (configured) return configured;
-
-  try {
-    const gitSha = execFileSync("git", ["rev-parse", "HEAD"], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-
-    return /^[0-9a-f]{40}$/iu.test(gitSha)
-      ? gitSha
-      : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-const deploymentId = resolveDeploymentId();
+// Keep deployment versioning opt-in. A Git-SHA fallback makes every small
+// self-hosted deploy produce a new ?dpl= query on otherwise cacheable Next.js
+// assets, which increases repeat resource fetches. Configure one of these
+// values only when the hosting topology actually needs overlapping-version
+// protection during a controlled release.
+const deploymentId =
+  process.env.NEXT_DEPLOYMENT_ID?.trim() ||
+  process.env.DEPLOYMENT_VERSION?.trim() ||
+  undefined;
 
 const privateRouteHeaders = [
   "/admin/:path*",

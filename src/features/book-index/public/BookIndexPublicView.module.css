@@ -167,13 +167,15 @@
   display: grid;
   gap: 7px;
   padding: 18px 20px;
-  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+  background: linear-gradient(145deg, #1d1b38 0%, #2a2550 100%);
+  box-shadow: 0 0.8rem 1.8rem rgba(29, 27, 56, 0.12);
 }
 
 .insightSummaryCard span {
-  color: var(--muted, #60646c);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -181,6 +183,7 @@
 }
 
 .insightSummaryCard strong {
+  color: #ffffff;
   font-size: 1.35rem;
   line-height: 1.15;
 }

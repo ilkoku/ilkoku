@@ -166,7 +166,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   }
   assert.match(header, /title: "Ana Listeler"/);
   assert.match(header, /title: "Karşılaştır"/);
-  assert.match(header, /title: "Trendler"/);
+  assert.match(header, /title: "Çok Satan Analizleri"/);
   assert.doesNotMatch(header, /directHref: "\/en-cok-satanlar"/);
   assert.match(header, /menu\.id === "support"/);
   assert.match(config, /id: "book-index"[\s\S]*label: "Kitap Endeksi"[\s\S]*id: "support"/);

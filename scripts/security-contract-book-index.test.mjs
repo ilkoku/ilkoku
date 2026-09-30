@@ -325,7 +325,7 @@ test("Amazon UK global source preserves native bestseller rank without joining T
   const lists = source("src/lib/book-index/lists.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
-  contains(sources, 'export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU";', "global market types include Italy, Japan, Korea and Australia");
+  contains(sources, '"DE" | "FR"', "global market types include Germany and France");
   contains(
     sources,
     'code: "amazon-uk",\n    name: "Amazon UK",\n    market: "UK",\n    countryCode: "UK",\n    baseUrl: "https://www.amazon.co.uk",\n    includeInTurkeyIndex: false',

@@ -12,6 +12,7 @@ import { getBookIndexList } from "./lists";
 import { getBookIndexSource } from "./sources";
 import { amazonUsBookIndexAdapter } from "./sources/amazon-us";
 import { amazonUkBookIndexAdapter } from "./sources/amazon-uk";
+import { amazonFranceBookIndexAdapter } from "./sources/amazon-fr";
 import { amazonTrBookIndexAdapter } from "./sources/amazon-tr";
 import { ibsItalyBookIndexAdapter } from "./sources/ibs-it";
 import { rakutenJapanBookIndexAdapter } from "./sources/rakuten-jp";
@@ -39,6 +40,7 @@ import { penguenBookIndexAdapter } from "./sources/penguen";
 const adapters = new Map<string, BookIndexSourceAdapter>([
   [amazonUsBookIndexAdapter.sourceCode, amazonUsBookIndexAdapter],
   [amazonUkBookIndexAdapter.sourceCode, amazonUkBookIndexAdapter],
+  [amazonFranceBookIndexAdapter.sourceCode, amazonFranceBookIndexAdapter],
   [amazonTrBookIndexAdapter.sourceCode, amazonTrBookIndexAdapter],
   [ibsItalyBookIndexAdapter.sourceCode, ibsItalyBookIndexAdapter],
   [rakutenJapanBookIndexAdapter.sourceCode, rakutenJapanBookIndexAdapter],

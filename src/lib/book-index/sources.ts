@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -169,6 +169,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     includeInTurkeyIndex: false,
     independenceGroup: "spiegel-de",
     operatorName: "SPIEGEL Shop / BuchMarkt",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "amazon-fr",
+    name: "Amazon Fransa",
+    market: "FR",
+    countryCode: "FR",
+    baseUrl: "https://www.amazon.fr",
+    includeInTurkeyIndex: false,
+    independenceGroup: "amazon-fr",
+    operatorName: "Amazon France",
     phase: "phase_2",
     collectionState: "ready",
   },

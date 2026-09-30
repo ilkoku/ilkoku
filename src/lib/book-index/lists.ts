@@ -596,6 +596,19 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     publiclyVisible: false,
     enabled: true,
   },
+  {
+    code: "amazon-fr-live",
+    sourceCode: "amazon-fr",
+    title: "Amazon Fransa · Çok Satan Kitaplar",
+    categoryKey: "general",
+    period: "live",
+    sourceUrl: "https://www.amazon.fr/gp/bestsellers/books",
+    maxRank: 30,
+    includeInComposite: false,
+    collectionEveryMinutes: 360,
+    publiclyVisible: false,
+    enabled: true,
+  },
 
 
 

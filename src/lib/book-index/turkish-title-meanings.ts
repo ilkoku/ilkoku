@@ -218,7 +218,7 @@ const TURKISH_TITLE_MEANINGS: Readonly<Record<string, string>> = {
   "A Dictionary of Color Combinations": "Renk Kombinasyonları Sözlüğü",
   "Le voleur de feuilles": "Yaprak Hırsızı",
   "La rivière à l'envers - tome 1: Tomek": "Tersine Akan Nehir – Cilt 1: Tomek",
-  "L'Odyssée": "Odysseia"
+  "L'Odyssée": "Odysseia",
   "El día de la Trilla (Empíreo) Edición limitada con cantos tintados (Planeta Internacional)": "Harman Günü",
   "Murdoku: 80 acertijos de lógica y asesinatos: 80 acertijos de lógica y asesinatos (Voces de hoy)": "Murdoku: 80 Mantık ve Cinayet Bulmacası",
   "MENTIRA: 71 (PREMIO EDEBÉ)": "YALAN",

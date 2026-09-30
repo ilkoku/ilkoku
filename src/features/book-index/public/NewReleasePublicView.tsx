@@ -1,7 +1,6 @@
-import Link from "next/link";
-
 import type { TurkeyNewReleaseRow } from "@/lib/book-index/new-releases";
 
+import { BookIndexSectionNav } from "./BookIndexSectionNav";
 import { NewReleaseFilterTable } from "./NewReleaseFilterTable";
 
 import styles from "./BookIndexPublicView.module.css";
@@ -34,8 +33,8 @@ export function NewReleasePublicView({
   ).size;
 
   return (
-    <div className={styles.lightPageSurface}>
-      <main className={styles.page}>
+    <main className={styles.page}>
+      <BookIndexSectionNav current="new-releases" />
       <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Yeni Çıkanlar</span>
         <h1>Yeni Çıkan Kitaplar</h1>
@@ -55,9 +54,6 @@ export function NewReleasePublicView({
             </>
           ) : null}
         </p>
-        <Link className={styles.backLink} href="/en-cok-satanlar">
-          ← Kitap Endeksi ana sayfası
-        </Link>
       </header>
 
       <section className={styles.section} id="liste">
@@ -94,7 +90,6 @@ export function NewReleasePublicView({
           birleştirilmez.
         </p>
       </section>
-      </main>
-    </div>
+    </main>
   );
 }

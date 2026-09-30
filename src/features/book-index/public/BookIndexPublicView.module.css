@@ -1,16 +1,53 @@
-.lightPageSurface {
-  min-height: 100vh;
-  background: #ffffff;
-  color: #1d1b38;
-  color-scheme: light;
-}
-
 .page {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 72px 0 96px;
+  padding: 48px 0 96px;
   color: #1d1b38;
   --muted: #69667e;
+}
+
+.sectionNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 30px;
+  padding: 5px;
+  border: 1px solid rgba(75, 45, 191, 0.12);
+  border-radius: 16px;
+  background: rgba(248, 246, 255, 0.88);
+  box-shadow: 0 0.55rem 1.5rem rgba(49, 31, 112, 0.04);
+}
+
+.sectionNavLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 14px;
+  border-radius: 11px;
+  color: #4f4a69;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.sectionNavLink:hover {
+  color: #34236f;
+  background: rgba(104, 71, 232, 0.08);
+}
+
+.sectionNavActive,
+.sectionNavActive:hover {
+  color: #ffffff;
+  background: #4b2dbf;
+  box-shadow: 0 0.45rem 1rem rgba(75, 45, 191, 0.18);
 }
 
 .hero {
@@ -92,8 +129,7 @@
   margin-bottom: 24px;
 }
 
-.sectionHeading a,
-.backLink {
+.sectionHeading a {
   color: inherit;
   font-weight: 700;
   text-underline-offset: 4px;
@@ -134,11 +170,6 @@
 .score {
   min-width: 150px;
   text-align: right;
-}
-
-.backLink {
-  display: inline-block;
-  margin-top: 18px;
 }
 
 .tableFilters {
@@ -287,7 +318,24 @@
 @media (max-width: 760px) {
   .page {
     width: min(100% - 24px, 1180px);
-    padding: 40px 0 72px;
+    padding: 28px 0 72px;
+  }
+
+  .sectionNav {
+    width: 100%;
+    margin-bottom: 22px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .sectionNav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sectionNavLink {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   .cards {
@@ -625,26 +673,7 @@
 
 
 .topActions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
   margin-top: 22px;
-}
-
-.topActions .backLink {
-  display: inline-flex;
-  align-items: center;
-  color: var(--muted, #60646c);
-  font-size: 0.84rem;
-  font-weight: 750;
-  line-height: 1;
-  text-decoration: none;
-}
-
-.topActions .backLink:hover {
-  color: inherit;
-  text-decoration: underline;
 }
 
 .viewModeNav {
@@ -688,11 +717,6 @@
 @media (max-width: 760px) {
   .turkeyHero {
     padding-bottom: 12px;
-  }
-
-  .topActions {
-    align-items: stretch;
-    gap: 12px;
   }
 
   .viewModeNav {

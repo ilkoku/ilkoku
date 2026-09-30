@@ -55,11 +55,14 @@ jobs:
             local path="$1"
             local expected_canonical="$2"
             local url="https://ilkoku.com${path}"
-            local headers body code robots canonical
+            local headers body code robots canonical raw_bytes gzip_bytes
             headers="$(mktemp)"
             body="$(mktemp)"
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             echo "$url -> HTTP $code"
+            raw_bytes="$(wc -c < "$body" | tr -d ' ')"
+            gzip_bytes="$(gzip -c "$body" | wc -c | tr -d ' ')"
+            echo "PAYLOAD path=$path raw_bytes=$raw_bytes gzip_bytes=$gzip_bytes"
             circuit_break "$code" "$url"
             [[ "$code" == "200" ]]
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
@@ -115,6 +118,8 @@ jobs:
           check_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir'
           check_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi'
           check_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin'
+          check_page '/yazarlar-icin/kurgu/roman' 'https://ilkoku.com/yazarlar-icin/kurgu/roman'
+          check_page '/en-cok-satanlar/dunya' 'https://ilkoku.com/en-cok-satanlar/dunya'
 
           if grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar</loc>' "$sitemap"; then
             echo "Published aggregate Book Index detected; validating gated aggregate SEO surfaces."

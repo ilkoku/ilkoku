@@ -229,7 +229,7 @@ export default function EditorlugeBaslamaPage() {
             İlkOku’daki editör akışında eser sürümü, görev kapsamı, bağımsız değerlendirme ve kayıtlı rapor mantığı birlikte çalışır. Eğitimin bir sonraki adımında bir metni ilk okumadan profesyonel değerlendirme raporuna nasıl taşıyacağını öğreneceksin.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link className="inline-flex rounded-full bg-white px-5 py-3 text-sm font-extrabold !text-[#211746] shadow-sm transition hover:-translate-y-0.5" href="/kayit?rol=editor">
+            <Link className="inline-flex rounded-full bg-white px-5 py-3 text-sm font-extrabold !text-[#211746] shadow-sm transition hover:-translate-y-0.5" href="/kayit?rol=editor" rel="nofollow">
               Editör olarak başla →
             </Link>
             <Link className="inline-flex rounded-full border border-white/15 px-5 py-3 text-sm font-extrabold !text-white transition hover:bg-white/10" href="/editorler-icin">

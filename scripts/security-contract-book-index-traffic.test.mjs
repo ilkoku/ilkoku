@@ -41,8 +41,13 @@ test("public site map never exposes gated Book Index links early", () => {
   );
   contains(
     siteMapPage,
-    'bookIndexPublished || page.id !== "book-index"',
-    "code-owned Book Index site-map filter",
+    'if (page.id === "book-index-global") return true;',
+    "always-indexed global Book Index route",
+  );
+  contains(
+    siteMapPage,
+    "return bookIndexPublished;",
+    "strict publication gate for the remaining Book Index routes",
   );
   contains(
     siteMapPage,

@@ -28,7 +28,7 @@ function withBookIndexMenu(
     const groups = menu.groups
       .map((group) => ({
         ...group,
-        links: group.links.filter((item) => item.pageId !== "book-index"),
+        links: group.links.filter((item) => !item.pageId.startsWith("book-index")),
       }))
       .filter((group) => group.links.length > 0);
 
@@ -42,7 +42,7 @@ function withBookIndexMenu(
     groups: [
       {
         id: "book-index-main",
-        title: "Kitap Endeksi",
+        title: "Ana Listeler",
         links: [
           {
             href: "/en-cok-satanlar",
@@ -51,10 +51,64 @@ function withBookIndexMenu(
             pageId: "book-index",
           },
           {
+            href: "/en-cok-satanlar/turkiye",
+            label: "Türkiye",
+            primary: false,
+            pageId: "book-index-turkey",
+          },
+          {
             href: "/yeni-cikanlar",
             label: "Yeni Çıkanlar",
             primary: false,
             pageId: "book-index-new-releases",
+          },
+          {
+            href: "/en-cok-satanlar/dunya",
+            label: "Dünya",
+            primary: false,
+            pageId: "book-index-global",
+          },
+        ],
+      },
+      {
+        id: "book-index-compare",
+        title: "Karşılaştır",
+        links: [
+          {
+            href: "/en-cok-satanlar/turkiye/karsilastirma",
+            label: "Karşılaştırma",
+            primary: false,
+            pageId: "book-index-comparison",
+          },
+        ],
+      },
+      {
+        id: "book-index-trends",
+        title: "Trendler",
+        links: [
+          {
+            href: "/en-cok-satanlar/yeni-girisler",
+            label: "Yeni Girişler",
+            primary: false,
+            pageId: "book-index-new-entries",
+          },
+          {
+            href: "/en-cok-satanlar/yukselenler",
+            label: "Yükselenler",
+            primary: false,
+            pageId: "book-index-risers",
+          },
+          {
+            href: "/en-cok-satanlar/her-yerde-satanlar",
+            label: "Her Yerde Satanlar",
+            primary: false,
+            pageId: "book-index-everywhere",
+          },
+          {
+            href: "/en-cok-satanlar/uzun-satanlar",
+            label: "Uzun Satanlar",
+            primary: false,
+            pageId: "book-index-long-sellers",
           },
         ],
       },

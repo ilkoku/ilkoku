@@ -1,0 +1,32 @@
+name: Live hreflang audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/internal-link-graph-20260930"
+    paths:
+      - ".github/workflows/live-hreflang-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect live alternate language links
+        shell: bash
+        run: |
+          node <<'NODE'
+          const res = await fetch("https://ilkoku.com/", {
+            headers: {
+              "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+              accept: "text/html"
+            }
+          });
+          const html = await res.text();
+          const links = [...html.matchAll(/<link\b[^>]*rel=["'][^"']*alternate[^"']*["'][^>]*>/gi)].map(m=>m[0]);
+          const hreflangs = links.filter(x=>/hreflang/i.test(x));
+          console.log("SUMMARY", JSON.stringify({status:res.status, alternateCount:hreflangs.length, hreflangs}));
+          NODE

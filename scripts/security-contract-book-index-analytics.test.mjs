@@ -59,8 +59,8 @@ test("Book Index analytics records views and shared-family navigation events", (
   contains(newReleaseLayout, "<BookIndexAnalytics />", "new-release layout tracker");
   contains(newReleaseLayout, "<PublicSiteFrame>", "new-release public site frame");
   contains(newReleaseLayout, "<PublicTrustFooter />", "new-release public footer");
-  contains(sectionNav, 'href="/en-cok-satanlar"', "Book Index overview navigation");
-  contains(sectionNav, 'href="/en-cok-satanlar/turkiye"', "Turkey navigation");
-  contains(sectionNav, 'href="/yeni-cikanlar"', "new-release navigation");
-  contains(sectionNav, 'href="/en-cok-satanlar/dunya"', "global navigation");
+  contains(sectionNav, 'href: "/en-cok-satanlar"', "Book Index overview navigation");
+  contains(sectionNav, 'href: "/en-cok-satanlar/turkiye"', "Turkey navigation");
+  contains(sectionNav, 'href: "/yeni-cikanlar"', "new-release navigation");
+  contains(sectionNav, 'href: "/en-cok-satanlar/dunya"', "global navigation");
 });

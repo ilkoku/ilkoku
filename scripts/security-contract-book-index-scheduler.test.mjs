@@ -65,6 +65,11 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   );
   contains(
     workflow,
+    "branches:\n      - main",
+    "marker push refresh runs only from main",
+  );
+  contains(
+    workflow,
     'X-IlkOku-Book-Index-Force-Lists: $force_lists',
     "workflow forwards bounded forced list codes",
   );

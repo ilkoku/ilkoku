@@ -125,8 +125,7 @@ export default async function PublicSiteMapPage() {
     .filter(
       (page) =>
         page.indexable !== false
-        && !knownHrefs.has(page.href)
-      ,
+        && !knownHrefs.has(page.href),
     )
     .map((page) => ({ href: page.href, label: page.label }));
 
@@ -150,7 +149,7 @@ export default async function PublicSiteMapPage() {
 
       <header className="max-w-4xl">
         <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">
-          Public keşif merkezi
+          Herkese açık keşif merkezi
         </span>
         <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em] text-[#211746] sm:text-5xl">
           Site Haritası
@@ -175,7 +174,7 @@ export default async function PublicSiteMapPage() {
               {group.links.map((link) => (
                 <li key={link.href}>
                   <Link
-                    className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] hover:text-[#3f25a8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
+                    className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
                     style={{ color: "#3f3657" }}
                     href={link.href}
                   >
@@ -193,7 +192,7 @@ export default async function PublicSiteMapPage() {
             {publicLegalLinks.map((link) => (
               <li key={link.href}>
                 <Link
-                  className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] hover:text-[#3f25a8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
+                  className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
                     style={{ color: "#3f3657" }}
                   href={link.href}
                 >
@@ -213,7 +212,7 @@ export default async function PublicSiteMapPage() {
               {cmsOnlyPages.map((link) => (
                 <li key={link.href}>
                   <Link
-                    className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] hover:text-[#3f25a8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
+                    className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
                     style={{ color: "#3f3657" }}
                     href={link.href}
                   >
@@ -237,7 +236,7 @@ export default async function PublicSiteMapPage() {
               {publicWorks.map((link) => (
                 <li key={link.href}>
                   <Link
-                    className="block rounded-xl border border-[#6b52c7]/14 bg-white px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/35 hover:bg-[#f8f6ff] hover:text-[#3f25a8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
+                    className="block rounded-xl border border-[#6b52c7]/14 bg-white px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/35 hover:bg-[#f8f6ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
                     style={{ color: "#3f3657" }}
                     href={link.href}
                   >

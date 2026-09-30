@@ -13,7 +13,6 @@ const DEFAULT_CORE_INSPECTION_URLS = [
   `${BASE_URL}/`,
   `${BASE_URL}/nasil-calisir`,
   `${BASE_URL}/yazarlar-icin`,
-  `${BASE_URL}/okurlar-icin`,
   `${BASE_URL}/yazarlar-icin/kurgu/roman`,
   `${BASE_URL}/okurlar-icin/okumaya-baslama`,
   `${BASE_URL}/editorler-icin/egitim/editorluge-baslama`,

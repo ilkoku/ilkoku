@@ -3,6 +3,11 @@ name: GSC URL Inspection diagnostic
 on:
   schedule:
     - cron: "23 5 * * 2"
+  push:
+    branches:
+      - "diag/gsc-batch-02-20260930"
+    paths:
+      - ".github/workflows/gsc-url-inspection.yml"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -59,5 +64,5 @@ jobs:
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
           GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
-          GSC_INSPECTION_URLS: ${{ inputs.urls }}
+          GSC_INSPECTION_URLS: "https://ilkoku.com/yazarlar-icin/edebiyat,https://ilkoku.com/yazarlar-icin/senaryo-ve-sahne,https://ilkoku.com/yazarlar-icin/akademik,https://ilkoku.com/yazarlar-icin/bilgilendirici,https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik,https://ilkoku.com/yazarlar-icin/cizgi-anlati,https://ilkoku.com/yazarlar-icin/kurgu/oyku,https://ilkoku.com/yazarlar-icin/kurgu/novella,https://ilkoku.com/yazarlar-icin/kurgu/fantastik,https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu"
         run: node scripts/gsc-url-inspection.mjs

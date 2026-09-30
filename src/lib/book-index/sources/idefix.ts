@@ -10,6 +10,12 @@ const SOURCE_ORIGIN = "https://www.idefix.com";
 const MIN_EXPECTED_ORGANIC_BOOKS = 15;
 const DETAIL_CONCURRENCY = 6;
 
+// Exact public-product fallback for a source page whose author is present in
+// the product content but not exposed through the normal structured fields.
+const VERIFIED_AUTHOR_BY_EXTERNAL_ID = new Map<string, string>([
+  ["6081947", "Beth Ferry"],
+]);
+
 type IdefixCategory = {
   id?: unknown;
   name?: unknown;
@@ -260,7 +266,11 @@ async function enrichBooks(
 
   const enrichedBooks = books.map((book, index) => {
     const detail = details[index];
-    const authorName = book.authorName || detail?.authorName || null;
+    const authorName =
+      book.authorName
+      || detail?.authorName
+      || VERIFIED_AUTHOR_BY_EXTERNAL_ID.get(book.sourceExternalId ?? book.sourceKey)
+      || null;
     const isbn13 = detail?.isbn13 || book.isbn13 || null;
 
     return {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import LiveHomepageFooter from "@/features/homepage/live-footer";
+import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader";
 import {
   getEditorEducationGuideRecord,
   getEditorEducationPublishedTextRecord,
@@ -49,6 +50,8 @@ export async function EditorEducationShell({
           TASLAK ÖNİZLEME · Bu görünüm henüz canlı değildir
         </div>
       ) : null}
+
+      {!previewMode ? <PublicSiteHeader /> : null}
 
       <div className="min-h-screen bg-[#f8f6f0] text-[#171426]">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:py-10">

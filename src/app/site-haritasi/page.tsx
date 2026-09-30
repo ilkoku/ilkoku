@@ -116,11 +116,12 @@ export default async function PublicSiteMapPage() {
   ]);
 
   const bookIndexPublished = Boolean(bookIndexContext);
-  const codeOwnedPages = SITE_MAP_PAGES.filter(
-    (page) =>
-      page.indexable !== false
-      && (bookIndexPublished || page.id !== "book-index"),
-  );
+  const codeOwnedPages = SITE_MAP_PAGES.filter((page) => {
+    if (page.indexable === false) return false;
+    if (!page.id.startsWith("book-index")) return true;
+    if (page.id === "book-index-global") return true;
+    return bookIndexPublished;
+  });
   const knownHrefs = new Set([
     ...codeOwnedPages.map((page) => page.href),
     ...publicLegalLinks.map((link) => link.href),

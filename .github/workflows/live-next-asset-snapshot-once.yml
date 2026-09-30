@@ -1,0 +1,54 @@
+name: Live Next asset snapshot one-off
+
+on:
+  push:
+    branches:
+      - "diag/internal-link-graph-20260930"
+    paths:
+      - ".github/workflows/live-next-asset-snapshot-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Capture current Next asset URLs
+        shell: bash
+        run: |
+          node <<'NODE'
+          const pages = [
+            "https://ilkoku.com/",
+            "https://ilkoku.com/yazarlar-icin/kurgu/roman"
+          ];
+          const assets = new Set();
+          for (const page of pages) {
+            const r = await fetch(page, {
+              headers: {
+                "user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+                accept:"text/html"
+              }
+            });
+            const html = await r.text();
+            for (const m of html.matchAll(/(?:src|href)=["']([^"']*\/_next\/static\/[^"']+)["']/gi)) {
+              const u = new URL(m[1], page);
+              assets.add(u.href);
+            }
+          }
+          console.log("SUMMARY", JSON.stringify({assetCount: assets.size}));
+          for (const asset of [...assets].sort()) {
+            const r = await fetch(asset, {
+              redirect:"follow",
+              headers:{"user-agent":"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"}
+            });
+            console.log("ASSET", JSON.stringify({
+              url:asset,
+              status:r.status,
+              cacheControl:r.headers.get("cache-control"),
+              cfCacheStatus:r.headers.get("cf-cache-status"),
+              contentType:r.headers.get("content-type")
+            }));
+          }
+          NODE

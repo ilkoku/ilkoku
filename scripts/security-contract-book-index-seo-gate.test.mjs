@@ -204,6 +204,47 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
 
 
 
+
+test("HTML site map mirrors Book Index route indexability", () => {
+  const siteMap = source("src/app/site-haritasi/page.tsx");
+  const navigation = source("src/lib/cms-header-navigation.ts");
+  const newReleases = source("src/app/yeni-cikanlar/page.tsx");
+  const global = source("src/app/en-cok-satanlar/dunya/page.tsx");
+
+  contains(newReleases, "noIndex: false", "new releases are independently indexable");
+  contains(global, "noIndex: false", "global bestsellers are independently indexable");
+  contains(
+    navigation,
+    '{ id: "book-index-new-releases", label: "Yeni Çıkanlar", href: "/yeni-cikanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" }',
+    "new releases are present in the HTML discovery inventory",
+  );
+  contains(
+    siteMap,
+    '"/en-cok-satanlar/dunya",',
+    "global bestsellers remain discoverable without the Turkey publication gate",
+  );
+  contains(
+    siteMap,
+    '"/yeni-cikanlar",',
+    "new releases remain discoverable without the Turkey publication gate",
+  );
+  contains(
+    siteMap,
+    "return bookIndexPublished;",
+    "Turkey gate-dependent pages follow the strict publication gate",
+  );
+  contains(
+    siteMap,
+    "getPublishedBookIndexInsightPages(bookIndexInsights)",
+    "trend links require actual published insight data",
+  );
+  contains(
+    siteMap,
+    "bookIndexPublished && publishedInsightHrefs.has(page.href)",
+    "empty or unpublished trend pages are excluded from the HTML discovery graph",
+  );
+});
+
 test("Book Index admin shows SEO gate evidence without publishing", () => {
   const page = source("src/app/admin/kitap-endeksi/page.tsx");
   const sitemap = source("src/app/sitemap.ts");

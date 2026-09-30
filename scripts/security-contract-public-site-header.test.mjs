@@ -123,7 +123,14 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/editoryal-standartlar",
     "/site-haritasi",
     "/en-cok-satanlar",
+    "/en-cok-satanlar/turkiye",
+    "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
+    "/en-cok-satanlar/dunya",
+    "/en-cok-satanlar/yeni-girisler",
+    "/en-cok-satanlar/yukselenler",
+    "/en-cok-satanlar/her-yerde-satanlar",
+    "/en-cok-satanlar/uzun-satanlar",
     "/kayit?rol=writer",
     "/kayit?rol=reader",
     "/kayit?rol=editor",
@@ -144,7 +151,22 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(header, /withBookIndexMenu/);
   assert.match(header, /label: "Kitap Endeksi"/);
   assert.doesNotMatch(header, /if \(!enabled\) return withoutBookIndex/);
-  assert.match(header, /href: "\/en-cok-satanlar"[\s\S]*href: "\/yeni-cikanlar"/);
+  for (const href of [
+    "/en-cok-satanlar",
+    "/en-cok-satanlar/turkiye",
+    "/en-cok-satanlar/turkiye/karsilastirma",
+    "/yeni-cikanlar",
+    "/en-cok-satanlar/dunya",
+    "/en-cok-satanlar/yeni-girisler",
+    "/en-cok-satanlar/yukselenler",
+    "/en-cok-satanlar/her-yerde-satanlar",
+    "/en-cok-satanlar/uzun-satanlar",
+  ]) {
+    assert.ok(header.includes(`href: "${href}"`), `${href} must remain in the injected Book Index menu`);
+  }
+  assert.match(header, /title: "Ana Listeler"/);
+  assert.match(header, /title: "Karşılaştır"/);
+  assert.match(header, /title: "Trendler"/);
   assert.doesNotMatch(header, /directHref: "\/en-cok-satanlar"/);
   assert.match(header, /menu\.id === "support"/);
   assert.match(config, /id: "book-index"[\s\S]*label: "Kitap Endeksi"[\s\S]*id: "support"/);

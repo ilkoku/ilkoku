@@ -1,0 +1,80 @@
+name: Google resource footprint audit one-off
+
+on:
+  push:
+    branches:
+      - "diag/google-discovery-graph-20260930"
+    paths:
+      - ".github/workflows/google-resource-footprint-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Measure key page resource footprint
+        shell: bash
+        run: |
+          node <<'NODE'
+          const BASE="https://ilkoku.com";
+          const pages=[
+            BASE+"/",
+            BASE+"/site-haritasi",
+            BASE+"/yazarlar-icin",
+            BASE+"/yazarlar-icin/kurgu",
+            BASE+"/yazarlar-icin/kurgu/roman",
+            BASE+"/editorler-icin",
+            BASE+"/okurlar-icin/okumaya-baslama"
+          ];
+          const ua="Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.96 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+          const norm=(v,base)=>{try{return new URL(v,base).href}catch{return null}};
+          const all=new Map();
+          for(const page of pages){
+            const r=await fetch(page,{headers:{"user-agent":ua}});
+            const html=await r.text();
+            const scripts=[...html.matchAll(/<script\b[^>]*src=["']([^"']+)["']/gi)].map(m=>norm(m[1],page)).filter(Boolean);
+            const styles=[...html.matchAll(/<link\b[^>]*rel=["'][^"']*stylesheet[^"']*["'][^>]*href=["']([^"']+)["']/gi),
+                          ...html.matchAll(/<link\b[^>]*href=["']([^"']+)["'][^>]*rel=["'][^"']*stylesheet[^"']*["']/gi)]
+                          .map(m=>norm(m[1],page)).filter(Boolean);
+            const imgs=[...html.matchAll(/<(?:img|source)\b[^>]*(?:src|srcset)=["']([^"']+)["']/gi)]
+              .flatMap(m=>m[1].split(",").map(x=>x.trim().split(/\s+/)[0]))
+              .map(v=>norm(v,page)).filter(Boolean);
+            const preloads=[...html.matchAll(/<link\b[^>]*rel=["'][^"']*preload[^"']*["'][^>]*href=["']([^"']+)["']/gi),
+                            ...html.matchAll(/<link\b[^>]*href=["']([^"']+)["'][^>]*rel=["'][^"']*preload[^"']*["']/gi)]
+                            .map(m=>norm(m[1],page)).filter(Boolean);
+            const unique=[...new Set([...scripts,...styles,...imgs,...preloads])];
+            for(const u of unique) all.set(u,true);
+            console.log("PAGE",JSON.stringify({
+              page,htmlBytes:Buffer.byteLength(html),
+              scripts:new Set(scripts).size,styles:new Set(styles).size,images:new Set(imgs).size,
+              preloads:new Set(preloads).size,totalUniqueResources:unique.length,
+              nextStatic:unique.filter(u=>u.includes("/_next/static/")).length
+            }));
+          }
+
+          let cursor=0,totalBytes=0,ok=0,errors=0;
+          const resources=[...all.keys()];
+          async function worker(){
+            while(true){
+              const i=cursor++;
+              if(i>=resources.length)return;
+              const u=resources[i];
+              try{
+                const r=await fetch(u,{headers:{"user-agent":ua},signal:AbortSignal.timeout(20000)});
+                const b=await r.arrayBuffer();
+                totalBytes+=b.byteLength;
+                if(r.ok)ok++;else errors++;
+              }catch{errors++}
+            }
+          }
+          await Promise.all(Array.from({length:8},()=>worker()));
+          console.log("TOTAL",JSON.stringify({
+            uniqueResources:resources.length,
+            ok,errors,totalBytes,
+            totalMB:Number((totalBytes/1024/1024).toFixed(2)),
+            nextStatic:resources.filter(u=>u.includes("/_next/static/")).length
+          }));
+          NODE

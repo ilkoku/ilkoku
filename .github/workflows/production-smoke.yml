@@ -201,7 +201,7 @@ jobs:
 
           echo "Manual deep mode selected; continuing slowly and stopping immediately on 403/429."
 
-          # Complete the Book Index trend route family. Yeni Girişler is already
+          # Complete the Book Index analysis route family. The new-entry page is already
           # covered by minimum mode above, so deep mode verifies the remaining
           # three slugs without repeating the first request.
           check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/cok-satanlarda-yukselenler" "200"

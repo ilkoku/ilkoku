@@ -70,7 +70,7 @@ test("Amazon Türkiye collector-registered research supports verified ranked boo
   contains(
     lists,
     'code: "amazon-tr-new-releases-research"',
-    "Amazon TR new-release research list remains staged",
+    "Amazon TR new-release Top 30 canary remains registered",
   );
   contains(
     sources,
@@ -89,4 +89,17 @@ test("Amazon Türkiye bestseller Top 30 canary remains private and non-composite
   contains(block, "includeInComposite: false", "Amazon Türkiye composite participation remains off");
   contains(block, "publiclyVisible: false", "Amazon Türkiye public visibility remains off");
   contains(block, "enabled: true", "Amazon Türkiye private canary collection is enabled");
+});
+
+
+test("Amazon Türkiye new releases Top 30 canary remains private and non-composite", () => {
+  const lists = source("src/lib/book-index/lists.ts");
+  const start = lists.indexOf('code: "amazon-tr-new-releases-research"');
+  assert.ok(start >= 0, "amazon-tr-new-releases-research must exist");
+  const block = lists.slice(start, start + 750);
+
+  contains(block, "maxRank: 30", "Amazon Türkiye new releases canary is bounded to Top 30");
+  contains(block, "includeInComposite: false", "Amazon Türkiye new releases composite participation remains off");
+  contains(block, "publiclyVisible: false", "Amazon Türkiye new releases public visibility remains off");
+  contains(block, "enabled: true", "Amazon Türkiye new releases private canary collection is enabled");
 });

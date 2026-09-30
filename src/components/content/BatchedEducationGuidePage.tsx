@@ -249,7 +249,6 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
           eyebrow={`Yazarlar İçin · ${definition.category}`}
           pageTitle={title}
           summary={summary}
-          unoptimizedImages
         />
       </div>
     </WritingGuideShell>

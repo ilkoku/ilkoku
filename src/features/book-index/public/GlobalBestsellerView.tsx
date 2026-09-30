@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import type { GlobalBestsellerReadModel } from "@/lib/book-index/global-public-read-model";
 import type { BookIndexSourceListSnapshot } from "@/lib/book-index/public-read-model";
 
@@ -68,9 +66,6 @@ export function GlobalBestsellerView({
             </time>
           </p>
         ) : null}
-        <Link className={styles.backLink} href="/en-cok-satanlar">
-          ← En Çok Satanlar ana sayfası
-        </Link>
       </header>
 
       <section className={styles.cards} aria-label="Dünya çok satan listeleri">

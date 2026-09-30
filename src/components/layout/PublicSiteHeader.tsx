@@ -42,8 +42,7 @@ function withBookIndexMenu(
 
   const bookIndexMenu: ResolvedHeaderMenu = {
     id: "book-index",
-    label: "En Çok Satanlar",
-    directHref: "/en-cok-satanlar",
+    label: "Kitap Endeksi",
     groups: [
       {
         id: "book-index-main",
@@ -54,6 +53,12 @@ function withBookIndexMenu(
             label: "En Çok Satanlar",
             primary: true,
             pageId: "book-index",
+          },
+          {
+            href: "/yeni-cikanlar",
+            label: "Yeni Çıkanlar",
+            primary: false,
+            pageId: "book-index-new-releases",
           },
         ],
       },

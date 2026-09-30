@@ -57,6 +57,7 @@ const basePages: SiteMapPage[] = [
   { id: "about", label: "Hakkımızda", href: "/hakkimizda", area: "İlkOku", group: "Platform", kind: "page" },
   { id: "how-it-works", label: "Nasıl Çalışır?", href: "/nasil-calisir", area: "İlkOku", group: "Platform", kind: "page" },
   { id: "book-index", label: "En Çok Satanlar", href: "/en-cok-satanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
+  { id: "book-index-new-releases", label: "Yeni Çıkanlar", href: "/yeni-cikanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page", indexable: false },
   { id: "editorial-standards", label: "Editoryal Standartlar", href: "/editoryal-standartlar", area: "İlkOku", group: "Güven", kind: "page" },
   { id: "content-age", label: "İçerik ve Yaş Politikası", href: "/icerik-ve-yas-politikasi", area: "İlkOku", group: "Güven", kind: "page" },
   { id: "community-rules", label: "Topluluk Kuralları", href: "/topluluk-kurallari", area: "İlkOku", group: "Güven", kind: "page" },
@@ -190,8 +191,14 @@ export const defaultHeaderNavigation: HeaderNavigationPayload = {
     },
     {
       id: "book-index",
-      label: "En Çok Satanlar",
-      groups: [{ id: "book-index-main", title: "Kitap Endeksi", links: [link("book-index", true)] }],
+      label: "Kitap Endeksi",
+      groups: [
+        {
+          id: "book-index-main",
+          title: "Kitap Endeksi",
+          links: [link("book-index", true), link("book-index-new-releases")],
+        },
+      ],
     },
     {
       id: "support",

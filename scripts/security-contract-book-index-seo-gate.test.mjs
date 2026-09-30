@@ -157,10 +157,10 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
     "sitemap requires usable Turkey data",
   );
 
-  contains(
+  notContains(
     header,
-    "getBookIndexPublicPageContext(100).catch(() => null)",
-    "public header remains on strict publish context",
+    "getBookIndexPublicPageContext",
+    "public header remains independent from the SEO publication gate",
   );
 
   const fallbackStart = sitemap.indexOf("const staticFallbackEntries");

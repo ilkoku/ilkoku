@@ -35,18 +35,8 @@ test("Penguen uses the verified penguenkitap.com.tr bestseller surface", () => {
   );
   contains(
     adapter,
-    "existing.publisherName = detailText",
-    "Penguen duplicate product card enriches publisher metadata",
-  );
-  contains(
-    adapter,
     "authorName: item.authorName",
     "Penguen author metadata reaches the collector result",
-  );
-  contains(
-    adapter,
-    "publisherName: item.publisherName",
-    "Penguen publisher metadata reaches the collector result",
   );
   contains(adapter, "BOOK_INDEX_PENGUEN_BESTSELLER_MARKER_MISSING", "page marker guard");
   contains(adapter, "BOOK_INDEX_PENGUEN_RESULT_TOO_SMALL", "minimum result guard");

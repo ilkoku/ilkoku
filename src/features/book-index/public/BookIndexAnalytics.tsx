@@ -43,8 +43,17 @@ function emitBookIndexEvent(payload: AnalyticsEvent) {
   return false;
 }
 
+function isBookIndexPath(pathname: string) {
+  return pathname.startsWith("/en-cok-satanlar")
+    || pathname === "/yeni-cikanlar";
+}
+
 function surfaceFromPath(pathname: string) {
-  if (pathname === "/en-cok-satanlar/turkiye") return "turkey";
+  if (pathname === "/yeni-cikanlar") return "new_releases";
+  if (
+    pathname === "/en-cok-satanlar/turkiye"
+    || pathname === "/en-cok-satanlar/turkiye/karsilastirma"
+  ) return "turkey";
   if (
     pathname === "/en-cok-satanlar/yeni-girisler"
     || pathname === "/en-cok-satanlar/yukselenler"
@@ -61,7 +70,7 @@ export function BookIndexAnalytics() {
   const sentViewKey = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!pathname.startsWith("/en-cok-satanlar")) return;
+    if (!isBookIndexPath(pathname)) return;
 
     const key = pathname;
     let cancelled = false;
@@ -101,7 +110,7 @@ export function BookIndexAnalytics() {
 
   useEffect(() => {
     function onClick(event: MouseEvent) {
-      if (!pathname.startsWith("/en-cok-satanlar")) return;
+      if (!isBookIndexPath(pathname)) return;
 
       const target = event.target;
       if (!(target instanceof Element)) return;
@@ -117,7 +126,7 @@ export function BookIndexAnalytics() {
       }
 
       if (destination.origin !== window.location.origin) return;
-      if (!destination.pathname.startsWith("/en-cok-satanlar")) return;
+      if (!isBookIndexPath(destination.pathname)) return;
 
       emitBookIndexEvent({
         event: "book_index_navigation_click",

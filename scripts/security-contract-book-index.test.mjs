@@ -256,14 +256,14 @@ test("only BKM weekly contributes to the Turkey composite in V1", () => {
 });
 
 
-test("Amazon TR collector stays staged while global Amazon collectors remain isolated by market", () => {
+test("Amazon TR and global Amazon collectors remain isolated by market", () => {
   const sources = source("src/lib/book-index/sources.ts");
   const collector = source("src/lib/book-index/collector.ts");
 
   contains(
     sources,
-    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "researching"',
-    "Amazon TR source remains researching",
+    'baseUrl: "https://www.amazon.com.tr",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
+    "Amazon TR source is ready",
   );
   contains(
     sources,

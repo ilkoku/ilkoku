@@ -24,6 +24,7 @@ The brand has several related lines with different jobs. Do not collapse them in
 
 - **Brand name:** `İlkOku`
 - **Positioning:** `Dijital Yazar Platformu`
+- **Google site-name alternate:** `ilkoku.com`
 - **Editorial slogan:** `İlk cümle, ilk okurun, ilk adımın.`
 - **Short social line:** `İlk cümle, ilk adım`
 - **Canonical homepage / social title:** `İlkOku | Dijital Yazar Platformu – İlk cümle, ilk adım`

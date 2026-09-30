@@ -163,7 +163,7 @@ jobs:
           # Give the Hostinger deployment a quiet window before the first probe.
           sleep 45
 
-          # Automatic main-push smoke: seven requests total. Keep this deliberately
+          # Automatic main-push smoke: eight requests total. Keep this deliberately
           # small because Hostinger rate-limits Azure/GitHub automation traffic.
           check_body "https://ilkoku.com/" "İlk cümle" "/site-haritasi"
           check_status "https://ilkoku.com/nasil-calisir" "200"
@@ -172,13 +172,21 @@ jobs:
           check_body "https://ilkoku.com/site-haritasi" "/yazarlar-icin/kurgu/roman" "/okurlar-icin/okumaya-baslama" "/editorler-icin/egitim/editorluge-baslama"
           check_redirect_and_noindex "https://ilkoku.com/hesabim" "/giris"
           check_status "https://ilkoku.com/eserler" "404"
+          check_status "https://ilkoku.com/en-cok-satanlar/yeni-girisler" "200"
 
           if [[ "$REQUESTED_MODE" != "deep" ]]; then
-            echo "PASS: low-impact production smoke completed with 7 requests."
+            echo "PASS: low-impact production smoke completed with 8 requests."
             exit 0
           fi
 
           echo "Manual deep mode selected; continuing slowly and stopping immediately on 403/429."
+
+          # Complete the Book Index trend route family. Yeni Girişler is already
+          # covered by minimum mode above, so deep mode verifies the remaining
+          # three slugs without repeating the first request.
+          check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/yukselenler" "200"
+          check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/her-yerde-satanlar" "200"
+          check_post_merge_public_route "https://ilkoku.com/en-cok-satanlar/uzun-satanlar" "200"
 
           # Paused-discovery checks remain available, but only in explicitly
           # requested deep mode so every merge does not spend the edge budget.

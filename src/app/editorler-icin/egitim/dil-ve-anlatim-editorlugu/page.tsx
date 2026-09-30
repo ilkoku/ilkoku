@@ -283,7 +283,7 @@ export default function DilVeAnlatimEditorluguPage() {
             İlkOku editör alanında cümle veya paragraf düzeyinde bir sorun işaretlediğinde yalnız alternatif cümle bırakma. Önce neyin okuma deneyimini zorlaştırdığını açıkla, mümkün olan en küçük müdahaleyi öner ve yaratıcı kararın yazara ait olduğunu koru.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link className="rounded-full bg-[#5b35dd] px-5 py-3 text-sm font-extrabold text-white" href="/editor/talepler">Editör taleplerine git</Link>
+            <Link className="rounded-full bg-[#5b35dd] px-5 py-3 text-sm font-extrabold text-white" href="/editor/talepler" rel="nofollow">Editör taleplerine git</Link>
             <Link className="rounded-full border border-[#2a2338]/10 bg-[#fffdf8] px-5 py-3 text-sm font-extrabold text-[#211746]" href="/editoryal-standartlar">Editoryal standartları aç</Link>
           </div>
         </section>

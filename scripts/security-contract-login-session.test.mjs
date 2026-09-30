@@ -102,13 +102,16 @@ test("production logout never leaks an internal Hostinger origin", () => {
   );
 });
 
-test("self-hosted builds expose a deployment id for version-skew protection", () => {
+test("self-hosted builds only opt into deployment ids when explicitly configured", () => {
   const config = source("next.config.ts");
 
   assertContains(config, "NEXT_DEPLOYMENT_ID", "explicit deployment id override");
   assertContains(config, "DEPLOYMENT_VERSION", "generic deployment version override");
-  assertContains(config, 'execFileSync("git", ["rev-parse", "HEAD"]', "git commit deployment fallback");
   assertContains(config, "...(deploymentId ? { deploymentId } : {})", "Next.js deployment id configuration");
+  assert.ok(
+    !config.includes('execFileSync("git", ["rev-parse", "HEAD"]'),
+    "self-hosted builds must not turn every git commit into a new public asset deployment id",
+  );
 });
 
 test("authenticated login navigation fails safely when auxiliary role-view or routing lookups fail", () => {

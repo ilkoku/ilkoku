@@ -20,7 +20,7 @@ function htmlToVisibleLines(html: string) {
     )
     .replace(/<br\s*\/?\s*>/giu, "\n")
     .replace(/<\/(?:p|div|li|h[1-6]|section|article|a)>/giu, "\n")
-    .replace(/<[^>]+>/gu, "\n");
+    .replace(/<[^>]+>/gu, " ");
 
   return decodeBookIndexHtml(withoutNoise)
     .split(/\n+/u)
@@ -67,14 +67,18 @@ export function parseNetherlandsBestseller60(
     }
 
     const segment = lines.slice(rankIndex + 1, nextRankIndex);
-    const isbnLine = segment.find((line) =>
-      /^ISBN\s+(97[89][0-9]{10})$/u.test(line),
-    );
-    const isbn13 = isbnLine?.match(/(97[89][0-9]{10})/u)?.[1] ?? "";
+    const isbn13 =
+      segment.join(" ").match(/\bISBN\s*(97[89][0-9]{10})\b/u)?.[1] ?? "";
 
     const titleFromImage = segment[0] ?? "";
     const authorName = segment[1] ?? "";
-    const repeatedTitle = segment[2] ?? "";
+    const repeatedTitle =
+      segment.find(
+        (line, lineIndex) =>
+          lineIndex >= 2
+          && normalizeBookIndexText(line)
+            === normalizeBookIndexText(titleFromImage),
+      ) ?? "";
 
     if (
       !isbn13
@@ -128,7 +132,8 @@ async function fetchHtml(url: string) {
     headers: {
       Accept: "text/html,application/xhtml+xml",
       "Accept-Language": "nl-NL,nl;q=0.9,en;q=0.5",
-      "User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)",
+      "User-Agent":
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
     },
     signal: AbortSignal.timeout(20_000),
   });

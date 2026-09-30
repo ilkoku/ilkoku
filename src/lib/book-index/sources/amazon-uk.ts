@@ -19,7 +19,7 @@ function attributeValue(fragment: string, name: string) {
 function normalizedText(fragment: string | undefined) {
   return decodeBookIndexHtml(fragment ?? "")
     .replace(/<[^>]+>/gu, " ")
-    .replace(/\\s+/gu, " ")
+    .replace(/\s+/gu, " ")
     .trim();
 }
 
@@ -68,7 +68,7 @@ export function parseAmazonUkBestsellerPage(
     const title = imageTag ? attributeValue(imageTag, "alt") : "";
     const imageUrl = imageTag ? attributeValue(imageTag, "src") : "";
     const authorHtml = card.match(
-      /<a\\b[^>]*class=["'][^"']*(?:\\ba-size-small\\b[^"']*\\ba-link-child\\b|\\ba-link-child\\b[^"']*\\ba-size-small\\b)[^"']*["'][^>]*>([\\s\\S]*?)<\\/a>/iu,
+      /<a\b[^>]*class=["'][^"']*(?:\ba-size-small\b[^"']*\ba-link-child\b|\ba-link-child\b[^"']*\ba-size-small\b)[^"']*["'][^>]*>([\s\S]*?)<\/a>/iu,
     )?.[1];
     const authorName = normalizedText(authorHtml);
 

@@ -243,6 +243,7 @@ test("global bestseller Turkish titles prefer verified publications and fall bac
   );
   contains(meanings, '"The Love Hypothesis": "Aşk Hipotezi"', "English title meaning registry");
   contains(meanings, '"Le Casse du siècle": "Yüzyılın Soygunu"', "French title meaning registry");
+  contains(meanings, '"El Hombre en busca de Sentido (fuera de colección)": "İnsanın Anlam Arayışı"', "Spain title meaning registry");
   contains(meanings, '"Alles wird Asche": "Her Şey Küle Dönecek"', "German title meaning registry");
   contains(meanings, '"세네카, 오늘을 빼앗기고 있는 당신에게": "Seneca, Bugünü Elinden Alınan Sana"', "Korean title meaning registry");
   contains(meanings, '"自分とか、ないから。 教養としての東洋哲学": "Ben Diye Bir Şey Yok: Genel Kültür Olarak Doğu Felsefesi"', "Japanese title meaning registry");

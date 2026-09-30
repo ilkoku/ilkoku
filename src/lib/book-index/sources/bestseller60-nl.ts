@@ -38,7 +38,10 @@ export function parseNetherlandsBestseller60(
   const lines = htmlToVisibleLines(html);
   const headingIndex = lines.findIndex((line) => line === "Bestseller 60");
   if (headingIndex < 0) {
-    throw new Error("BOOK_INDEX_BESTSELLER60_NL_HEADING_NOT_FOUND");
+    const preview = lines.slice(0, 12).join(" | ").slice(0, 240);
+    throw new Error(
+      `BOOK_INDEX_BESTSELLER60_NL_HEADING_NOT_FOUND:${preview}`,
+    );
   }
 
   const books: BookIndexCollectionResult["books"] = [];

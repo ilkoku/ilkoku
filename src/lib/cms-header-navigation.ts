@@ -57,7 +57,7 @@ const basePages: SiteMapPage[] = [
   { id: "about", label: "Hakkımızda", href: "/hakkimizda", area: "İlkOku", group: "Platform", kind: "page" },
   { id: "how-it-works", label: "Nasıl Çalışır?", href: "/nasil-calisir", area: "İlkOku", group: "Platform", kind: "page" },
   { id: "book-index", label: "En Çok Satanlar", href: "/en-cok-satanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
-  { id: "book-index-new-releases", label: "Yeni Çıkanlar", href: "/yeni-cikanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page", indexable: false },
+  { id: "book-index-new-releases", label: "Yeni Çıkanlar", href: "/yeni-cikanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-turkey", label: "Türkiye", href: "/en-cok-satanlar/turkiye", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-comparison", label: "Karşılaştırma", href: "/en-cok-satanlar/turkiye/karsilastirma", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-global", label: "Dünya", href: "/en-cok-satanlar/dunya", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },

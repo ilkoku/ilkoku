@@ -14,6 +14,7 @@ const MIN_EXPECTED_BOOKS = 4;
 // re-verified against the same Palme edition across independent retailers.
 const VERIFIED_AUTHOR_BY_SLUG = new Map<string, string>([
   ["palme-11-biyoloji-soru", "Bilgehan Peri, Banu Karaağaç"],
+  ["kafadengi-8-challenger-fen-soru", "Kolektif"],
 ]);
 
 function normalizeText(value: string | undefined) {

@@ -596,6 +596,16 @@ test("idefix collector reads server-side Next data and excludes source-sponsored
   );
   contains(
     adapter,
+    '["6081947", "Beth Ferry"]',
+    "idefix exact-product author fallback",
+  );
+  contains(
+    adapter,
+    "VERIFIED_AUTHOR_BY_EXTERNAL_ID.get(book.sourceExternalId ?? book.sourceKey)",
+    "idefix exact fallback is scoped to source identity",
+  );
+  contains(
+    adapter,
     "documentTitleAuthorName",
     "idefix document-title author fallback",
   );

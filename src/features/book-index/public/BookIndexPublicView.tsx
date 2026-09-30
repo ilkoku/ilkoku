@@ -254,7 +254,7 @@ export function TurkeyBookIndexComparisonView({
 
   return (
     <main className={styles.page}>
-      <BookIndexSectionNav current="turkey" />
+      <BookIndexSectionNav current="comparison" />
       <header className={`${styles.hero} ${styles.turkeyHero}`}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>En Çok Satanlar Karşılaştırma</h1>
@@ -437,6 +437,13 @@ function insightSummary(
   ];
 }
 
+const insightNavSection = {
+  newEntries: "new-entries",
+  risers: "risers",
+  everywhereSellers: "everywhere",
+  longSellers: "long-sellers",
+} as const;
+
 function insightMetric(
   item:
     | BookIndexNewEntry
@@ -512,7 +519,7 @@ export function BookIndexInsightView({
 
   return (
     <main className={styles.page}>
-      <BookIndexSectionNav current="overview" />
+      <BookIndexSectionNav current={insightNavSection[definition.key]} />
       <header className={styles.hero}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · {definition.eyebrow}</span>
         <h1>{definition.heading} {currentYear}</h1>

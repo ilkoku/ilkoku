@@ -6,18 +6,37 @@
   --muted: #69667e;
 }
 
+.sectionNavShell {
+  display: grid;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 30px;
+}
+
 .sectionNav {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   width: fit-content;
   max-width: 100%;
-  margin-bottom: 30px;
   padding: 5px;
   border: 1px solid rgba(75, 45, 191, 0.12);
   border-radius: 16px;
   background: rgba(248, 246, 255, 0.88);
   box-shadow: 0 0.55rem 1.5rem rgba(49, 31, 112, 0.04);
+}
+
+.sectionNavSecondary {
+  border-color: rgba(75, 45, 191, 0.08);
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: none;
+}
+
+.sectionNavSecondary .sectionNavLink {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
 }
 
 .sectionNavLink {
@@ -400,9 +419,13 @@
     padding: 28px 0 72px;
   }
 
-  .sectionNav {
+  .sectionNavShell {
     width: 100%;
     margin-bottom: 22px;
+  }
+
+  .sectionNav {
+    width: 100%;
     overflow-x: auto;
     flex-wrap: nowrap;
     scrollbar-width: none;

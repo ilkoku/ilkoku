@@ -17,7 +17,6 @@ import type {
 import { BookIndexRankTable } from "./BookIndexRankTable";
 import { BookIndexSectionNav } from "./BookIndexSectionNav";
 import { BookIndexSourceComparison } from "./BookIndexSourceComparison";
-import { BookIndexViewModeNav } from "./BookIndexViewModeNav";
 import styles from "./BookIndexPublicView.module.css";
 
 function latestObservedAt(model: BookIndexPublicReadModel) {
@@ -195,7 +194,7 @@ export function TurkeyBookIndexView({
 
   return (
     <main className={styles.page}>
-      <BookIndexSectionNav current="turkey" />
+      <BookIndexSectionNav current="turkey" showAnalysis={false} />
       <header className={`${styles.hero} ${styles.turkeyHero}`}>
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>Türkiye&apos;de En Çok Satan Kitaplar {currentYear}</h1>
@@ -210,10 +209,9 @@ export function TurkeyBookIndexView({
             <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
           </p>
         ) : null}
-        <div className={styles.topActions}>
-          <BookIndexViewModeNav current="list" />
-        </div>
       </header>
+
+      <BookIndexSectionNav current="turkey" showPrimary={false} />
 
       <section className={styles.section} id="ranking">
         <div className={styles.sectionHeading}>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigation";
 import { resolveHeaderNavigation } from "@/lib/cms-header-navigation";
+import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getPublishedHeaderNavigation } from "@/lib/cms-header-navigation-server";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
 
@@ -21,6 +22,7 @@ type ResolvedHeaderMenu = ReturnType<typeof resolveHeaderNavigation>[number] & {
 
 function withBookIndexMenu(
   menus: ReturnType<typeof resolveHeaderNavigation>,
+  bookIndexPublished: boolean,
 ): ResolvedHeaderMenu[] {
   const withoutBookIndex = menus.flatMap((menu) => {
     if (menu.id === "book-index") return [];
@@ -46,18 +48,21 @@ function withBookIndexMenu(
         links: [
           {
             href: "/en-cok-satanlar",
+            nofollow: !bookIndexPublished,
             label: "En Çok Satanlar",
             primary: true,
             pageId: "book-index",
           },
           {
             href: "/en-cok-satanlar/turkiye",
+            nofollow: !bookIndexPublished,
             label: "Türkiye",
             primary: false,
             pageId: "book-index-turkey",
           },
           {
             href: "/yeni-cikanlar",
+            nofollow: true,
             label: "Yeni Çıkanlar",
             primary: false,
             pageId: "book-index-new-releases",
@@ -76,42 +81,14 @@ function withBookIndexMenu(
         links: [
           {
             href: "/en-cok-satanlar/turkiye/karsilastirma",
+            nofollow: !bookIndexPublished,
             label: "Karşılaştırma",
             primary: false,
             pageId: "book-index-comparison",
           },
         ],
       },
-      {
-        id: "book-index-trends",
-        title: "Trendler",
-        links: [
-          {
-            href: "/en-cok-satanlar/yeni-girisler",
-            label: "Yeni Girişler",
-            primary: false,
-            pageId: "book-index-new-entries",
-          },
-          {
-            href: "/en-cok-satanlar/yukselenler",
-            label: "Yükselenler",
-            primary: false,
-            pageId: "book-index-risers",
-          },
-          {
-            href: "/en-cok-satanlar/her-yerde-satanlar",
-            label: "Her Yerde Satanlar",
-            primary: false,
-            pageId: "book-index-everywhere",
-          },
-          {
-            href: "/en-cok-satanlar/uzun-satanlar",
-            label: "Uzun Satanlar",
-            primary: false,
-            pageId: "book-index-long-sellers",
-          },
-        ],
-      },
+
     ],
   };
 
@@ -147,12 +124,14 @@ function AccountIcon() {
 }
 
 export async function PublicSiteHeader() {
-  const [identity, navigation] = await Promise.all([
+  const [identity, navigation, bookIndexContext] = await Promise.all([
     getPublicSiteIdentity(),
     getPublishedHeaderNavigation(),
+    getBookIndexPublicPageContext(100).catch(() => null),
   ]);
   const publicMenus = withBookIndexMenu(
     resolveHeaderNavigation(navigation.payload, navigation.pages),
+    Boolean(bookIndexContext),
   );
 
   return (
@@ -193,9 +172,9 @@ export async function PublicSiteHeader() {
             </summary>
 
             <div className="public-site-header__account-menu">
-              <Link href="/hesabim">Hesabım</Link>
-              <Link href="/giris">Giriş Yap</Link>
-              <Link href="/kayit">Üye Ol</Link>
+              <Link href="/hesabim" rel="nofollow">Hesabım</Link>
+              <Link href="/giris" rel="nofollow">Giriş Yap</Link>
+              <Link href="/kayit" rel="nofollow">Üye Ol</Link>
             </div>
           </details>
         </div>

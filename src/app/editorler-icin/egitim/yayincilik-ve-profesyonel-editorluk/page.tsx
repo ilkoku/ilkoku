@@ -332,8 +332,8 @@ export default function YayincilikVeProfesyonelEditorlukPage() {
           <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">İlkOku’da uygula</h2>
           <p className="mt-5 max-w-3xl leading-8 text-[#d8d2e8]">Bir eğitim sayfasının amacı yalnız bilgi vermek değil; gerçek editörlük görevinde daha güvenilir karar üretmektir. Görev seçerken kapsamı oku, incelemeni kayıtlı sürüm üzerinden yap ve teslimini Editoryal Standartlar ile birlikte değerlendir.</p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link className="rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#211746]" href="/editor/talepler">Editör taleplerine git</Link>
-            <Link className="rounded-full border border-white/20 px-5 py-3 text-sm font-extrabold text-white" href="/editor/incelemeler">İncelemelerimi gör</Link>
+            <Link className="rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#211746]" href="/editor/talepler" rel="nofollow">Editör taleplerine git</Link>
+            <Link className="rounded-full border border-white/20 px-5 py-3 text-sm font-extrabold text-white" href="/editor/incelemeler" rel="nofollow">İncelemelerimi gör</Link>
             <Link className="rounded-full border border-white/20 px-5 py-3 text-sm font-extrabold text-white" href="/editoryal-standartlar">Editoryal Standartlar</Link>
           </div>
         </section>

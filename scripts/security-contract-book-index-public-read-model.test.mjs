@@ -223,6 +223,7 @@ test("Bestseller comparison has a dedicated gated SEO route", () => {
 
 test("New-release read model stays source-native and private until publication is approved", () => {
   const model = source("src/lib/book-index/new-releases.ts");
+  const sitemap = source("src/app/sitemap.ts");
   const lists = source("src/lib/book-index/lists.ts");
 
   contains(
@@ -444,16 +445,16 @@ test("New-release production exceptions stay source-specific and fail closed", (
   );
 });
 
-test("Yeni Çıkanlar page stays noindex and source-native during soft launch", () => {
+test("Yeni Çıkanlar page is indexable and remains source-native", () => {
   const page = source("src/app/yeni-cikanlar/page.tsx");
   const view = source("src/features/book-index/public/NewReleasePublicView.tsx");
   const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
   const model = source("src/lib/book-index/new-releases.ts");
 
   contains(page, 'canonical = "/yeni-cikanlar"', "stable Yeni Çıkanlar canonical");
-  contains(page, "noIndex: true", "Yeni Çıkanlar remains noindex during soft launch");
+  contains(page, "noIndex: false", "Yeni Çıkanlar is indexable after source validation");
   contains(page, "getTurkeyNewReleaseRows(500)", "Yeni Çıkanlar uses the isolated read model");
-  notContains(page, "application/ld+json", "no JSON-LD is published while the page is gated");
+  contains(sitemap, 'url: `${baseUrl}/yeni-cikanlar`', "Yeni Çıkanlar is included in the public sitemap");
 
   contains(
     view,

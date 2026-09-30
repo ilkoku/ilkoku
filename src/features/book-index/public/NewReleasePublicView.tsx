@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import type { TurkeyNewReleaseRow } from "@/lib/book-index/new-releases";
 
 import { BookIndexSectionNav } from "./BookIndexSectionNav";
@@ -56,9 +54,6 @@ export function NewReleasePublicView({
             </>
           ) : null}
         </p>
-        <Link className={styles.backLink} href="/en-cok-satanlar">
-          ← Kitap Endeksi ana sayfası
-        </Link>
       </header>
 
       <section className={styles.section} id="liste">

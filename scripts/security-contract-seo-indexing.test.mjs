@@ -26,6 +26,7 @@ test("global public routes share one canonical SEO and social brand identity", (
 
   assertContains(brand, `publicBrandTitle = "${exactTitle}"`, "canonical homepage/social title");
   assertContains(brand, 'publicBrandPositioning = "Dijital Yazar Platformu"', "brand positioning");
+  assertContains(brand, 'publicBrandAlternateName = "ilkoku.com"', "Google site-name alternate");
   assertContains(brand, 'publicBrandShortSlogan = "İlk cümle, ilk adım"', "short social slogan");
   assertContains(brand, 'publicBrandEditorialSlogan = "İlk cümle, ilk okurun, ilk adımın."', "editorial slogan remains distinct");
 
@@ -33,6 +34,8 @@ test("global public routes share one canonical SEO and social brand identity", (
   assertContains(homepage, "const homeSocialImage = publicBrandSocialImage", "homepage social artwork consumes canonical brand image");
   assertContains(homepage, "title: homeTitle", "homepage Open Graph/Twitter title source");
   assertContains(layout, "title: publicBrandTitle", "global metadata default title");
+  assertContains(layout, "alternateName: publicBrandAlternateName", "structured-data alternate site name");
+  assertNotContains(layout, "alternateName: publicBrandPositioning", "positioning copy must not be used as an alternate site name");
   assertContains(layout, "title: publicBrandTitle", "global Open Graph/Twitter title source");
   assertContains(layout, "images: [{ url: publicBrandSocialImage", "global Open Graph image");
   assertContains(layout, "images: [publicBrandSocialImage]", "global Twitter image");

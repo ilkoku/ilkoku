@@ -50,30 +50,48 @@ export function parsePenguenBestsellers(
 
   const firstBySlug = new Map<
     string,
-    { href: string; title: string; imageUrl: string | null }
+    {
+      href: string;
+      title: string;
+      authorName: string | null;
+      imageUrl: string | null;
+    }
   >();
 
   for (const match of matches) {
     const href = match[2]?.trim() ?? "";
     const slug = match[3]?.trim() ?? "";
     const inner = match[4] ?? "";
-    if (!href || !slug || firstBySlug.has(slug)) continue;
+    if (!href || !slug) continue;
 
     const imageTag = inner.match(/<img\b[^>]*>/iu)?.[0] ?? "";
     const imageAlt = attributeValue(imageTag, "alt");
     const imageSrc =
       attributeValue(imageTag, "src")
       || attributeValue(imageTag, "data-src");
-    const linkedText = normalizeText(inner);
-    const title =
-      (linkedText && !/^Ürünü\s+İncele$/iu.test(linkedText) ? linkedText : "")
-      || imageAlt;
+    const heading = normalizeText(
+      inner.match(/<h4\b[^>]*>([\s\S]*?)<\/h4>/iu)?.[1],
+    );
+    const detailText = normalizeText(
+      inner.match(
+        /<div\b[^>]*class=(["'])[^"']*\btext\b[^"']*\1[^>]*>([\s\S]*?)<\/div>/iu,
+      )?.[2],
+    );
+    const title = heading || imageAlt;
 
+    // "Ürünü İncele" button links reuse the same /urun/<slug> URL but
+    // do not contain product-card metadata. Ignore them.
     if (!title) continue;
+
+    if (firstBySlug.has(slug)) continue;
 
     firstBySlug.set(slug, {
       href: new URL(href, SOURCE_ORIGIN).toString(),
       title,
+      authorName:
+        detailText && !/^Yazar\s+Adı$/iu.test(detailText)
+          ? detailText
+          : null,
       imageUrl: imageSrc ? new URL(imageSrc, SOURCE_ORIGIN).toString() : null,
     });
   }
@@ -89,7 +107,7 @@ export function parsePenguenBestsellers(
     sourceKey: slug,
     sourceExternalId: slug,
     title: item.title,
-    authorName: null,
+    authorName: item.authorName,
     publisherName: null,
     productUrl: item.href,
     imageUrl: item.imageUrl,

@@ -48,7 +48,6 @@ const basePages: SiteMapPage[] = [
   { id: "home", label: "Ana Sayfa", href: "/", area: "İlkOku", group: "Platform", kind: "page" },
   { id: "writers-home", label: "Yazarlar İçin", href: "/yazarlar-icin", area: "Yazar", group: "Başlangıç", kind: "page" },
   { id: "writer-register", label: "Yazar Ol", href: "/kayit?rol=writer", area: "Yazar", group: "Başlangıç", kind: "action", indexable: false },
-  { id: "readers-home", label: "Okurlar İçin", href: "/okurlar-icin", area: "Okur", group: "Başlangıç", kind: "page" },
   { id: "reader-register", label: "Okuyucu Ol", href: "/kayit?rol=reader", area: "Okur", group: "Başlangıç", kind: "action", indexable: false },
   { id: "editors-home", label: "Editörler İçin", href: "/editorler-icin", area: "Editör", group: "Başlangıç", kind: "page" },
   { id: "editors", label: "Editörler", href: "/editorler", area: "Editör", group: "Başlangıç", kind: "page" },
@@ -167,7 +166,7 @@ export const defaultHeaderNavigation: HeaderNavigationPayload = {
       id: "reader",
       label: "Okur",
       groups: [
-        { id: "reader-start", title: "Okurluğa başla", links: [link("readers-home", true), link("reader-register"), link(`reader-education:${READER_EDUCATION_CATEGORIES[0].slug}`)] },
+        { id: "reader-start", title: "Okurluğa başla", links: [link("reader-register", true), link(`reader-education:${READER_EDUCATION_CATEGORIES[0].slug}`)] },
         { id: "reader-school", title: "Okurluk Okulu", links: READER_EDUCATION_CATEGORIES.slice(0, readerMidpoint).map((category) => link(`reader-education:${category.slug}`)) },
         { id: "reader-advanced", title: "İleri okuma", links: READER_EDUCATION_CATEGORIES.slice(readerMidpoint).map((category) => link(`reader-education:${category.slug}`)) },
       ],

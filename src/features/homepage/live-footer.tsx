@@ -67,13 +67,13 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
           <div>
             <h3>Hesap</h3>
             {signedIn && workspaceHref ? <>
-              <Link href="/hesabim">Hesabım</Link>
-              <Link href={workspaceHref}>Çalışma Alanım</Link>
+              <Link href="/hesabim" rel="nofollow">Hesabım</Link>
+              <Link href={workspaceHref} rel="nofollow">Çalışma Alanım</Link>
               <form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form>
             </> : <>
-              <Link href="/giris">Giriş Yap</Link>
+              <Link href="/giris" rel="nofollow">Giriş Yap</Link>
               <a href="#roller">Üye Ol</a>
-              <Link href="/sifremi-unuttum">Şifremi Unuttum</Link>
+              <Link href="/sifremi-unuttum" rel="nofollow">Şifremi Unuttum</Link>
             </>}
           </div>
 
@@ -81,7 +81,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
             <h3>Destek</h3>
             {publicSupportLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
             <div className="site-contact-footer">
-              <a className="site-contact-footer__email" href={`mailto:${siteContact.generalEmail}`}>{siteContact.generalEmail}</a>
+              <a className="site-contact-footer__email" href={`mailto:${siteContact.generalEmail}`} rel="nofollow">{siteContact.generalEmail}</a>
               <div className="site-social-links" aria-label="İlkOku sosyal medya hesapları">
                 {siteContact.socialLinks.map((social) => <a href={social.href} target="_blank" rel="noopener noreferrer" aria-label={`${social.label} hesabımızı aç`} title={social.label} key={social.id}><SocialIcon id={social.id} /></a>)}
               </div>

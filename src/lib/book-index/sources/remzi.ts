@@ -9,6 +9,14 @@ const SOURCE_CODE = "remzi";
 const SOURCE_ORIGIN = "https://www.remzi.com.tr";
 const MIN_EXPECTED_BOOKS = 10;
 
+// Remzi's native detail pages omit the author field for these two exact
+// editions. Exact ISBN matches on multiple book catalogues identify them as
+// collective works; keep the fallback path-specific to avoid title guessing.
+const VERIFIED_NEW_RELEASE_AUTHOR_BY_PATH = new Map<string, string>([
+  ["/kitap/sevimli-cikartmali-neseli-kafeler", "Kolektif"],
+  ["/kitap/sevimli-cikartmali-neseli-yuvalar", "Kolektif"],
+]);
+
 function absoluteUrl(href: string) {
   return new URL(href, SOURCE_ORIGIN).toString();
 }
@@ -114,7 +122,10 @@ export function parseRemziNewReleases(
     return {
       sourceKey: href,
       title,
-      authorName: author ? decodeBookIndexHtml(author) : null,
+      authorName:
+        (author ? decodeBookIndexHtml(author) : null)
+        || VERIFIED_NEW_RELEASE_AUTHOR_BY_PATH.get(href)
+        || null,
       publisherName: null,
       productUrl: absoluteUrl(href),
       imageUrl: image ? absoluteUrl(image) : null,

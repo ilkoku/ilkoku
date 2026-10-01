@@ -13,7 +13,6 @@ const notContains = (text, fragment, label) =>
 
 test("global bestseller public page reads only the approved source lists", () => {
   const model = source("src/lib/book-index/global-public-read-model.ts");
-  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
 
   for (const listCode of [
     "amazon-us-live",
@@ -140,6 +139,7 @@ test("Netherlands Bestseller 60 collector is source-native and public only after
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const model = source("src/lib/book-index/global-public-read-model.ts");
+  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
 
   contains(adapter, 'const EXPECTED_BOOKS = 60', "Netherlands exact Top 60 guard");
   contains(adapter, "ISBN", "Netherlands ISBN parser");

@@ -133,7 +133,7 @@ test("France Amazon bestseller source is fail-closed and source-native", () => {
 });
 
 
-test("Netherlands Bestseller 60 collector is source-native and stays off the public world table until title meanings are ready", () => {
+test("Netherlands Bestseller 60 collector is source-native and approved for the public world table", () => {
   const adapter = source("src/lib/book-index/sources/bestseller60-nl.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -147,6 +147,7 @@ test("Netherlands Bestseller 60 collector is source-native and stays off the pub
   contains(adapter, '.replace(/<[^>]+>/gu, "\\n")', "Netherlands rank boundaries remain separate lines");
   contains(adapter, '.split(/\\n+/u)', "Netherlands splits visible lines before HTML decoding");
   contains(adapter, '.map((line) => decodeBookIndexHtml(line))', "Netherlands decodes each visible line independently");
+  contains(adapter, 'normalizeBookIndexText(line) === "toepassen"', "Netherlands skips archive controls before rank 1");
   contains(adapter, 'segment.join(" ").match', "Netherlands ISBN parser tolerates inline markup");
   contains(adapter, "lineIndex >= 2", "Netherlands title repetition guard tolerates extra inline markup");
 
@@ -156,10 +157,10 @@ test("Netherlands Bestseller 60 collector is source-native and stays off the pub
   contains(sources, 'market: "NL"', "Netherlands market code");
   contains(lists, 'code: "bestseller60-nl-weekly"', "Netherlands weekly list registry");
   contains(lists, "maxRank: 60", "Netherlands Top 60 bound");
-  notContains(
+  contains(
     model,
     '"bestseller60-nl-weekly"',
-    "Netherlands stays off the public world table until Turkish title meanings are prepared",
+    "Netherlands joins the public world table after collector verification and Turkish title meanings",
   );
 });
 

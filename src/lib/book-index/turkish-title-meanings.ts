@@ -401,6 +401,18 @@ const TURKISH_TITLE_MEANINGS: Readonly<Record<string, string>> = {
   "Valheiden vyyhti": "Yalanlar Yumağı",
   "Hillittömän hulluja satuja": "Çılgın mı Çılgın Masallar",
 
+  "Los huérfanos": "Yetimler",
+  "Una familia moderna": "Modern Bir Aile",
+  "La inquilina": "Kiracı",
+  "Lobos de la ruina 02": "Yıkım Kurtları 02",
+  "Comerás flores": "Çiçek Yiyeceksin",
+  "Las gratitudes": "Minnettarlıklar",
+  "El llanto de los muertos": "Ölülerin Ağıtı",
+  "Un día en la vida de Clarita": "Clarita'nın Hayatından Bir Gün",
+  "La Biblioteca de la Medianoche": "Gece Yarısı Kütüphanesi",
+  "La piel de una gota": "Bir Damlanın Derisi",
+
+
 };
 
 const NORMALIZED_TURKISH_TITLE_MEANINGS = new Map(

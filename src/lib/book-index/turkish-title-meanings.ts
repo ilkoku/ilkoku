@@ -364,6 +364,16 @@ const TURKISH_TITLE_MEANINGS: Readonly<Record<string, string>> = {
   "Muskelmad": "Kas Beslenmesi",
   "Styx": "Styx",
 
+  "Hollow Bones": "İçi Boş Kemikler",
+  "Dead Beat": "İşe Yaramaz",
+  "Exit Party": "Çıkış Partisi",
+  "We Chase Shadows": "Gölgeleri Kovalıyoruz",
+  "The Knave and the Moon": "Düzenbaz ve Ay",
+  "Our Noble Selves": "Asil Benliklerimiz",
+  "Taipei Story": "Taipei Hikâyesi",
+  "Tempest": "Fırtına",
+  "The Dungeon Anarchist's Cookbook": "Zindan Anarşistinin Yemek Kitabı",
+
   "Systrarna på Sophiahemmet": "Sophiahemmet'teki Kız Kardeşler",
   "Medusa": "Medusa",
   "Blackout": "Karartma",

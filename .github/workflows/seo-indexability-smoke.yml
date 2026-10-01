@@ -93,6 +93,7 @@ jobs:
           grep -Fq 'Allow: /api/media/' "$robots"
           grep -Fxq 'Disallow: /icerik$' "$robots"
           grep -Fxq 'Disallow: /icerik/' "$robots"
+          grep -Fxq 'Disallow: /1q6z' "$robots"
           if grep -Fxq 'Disallow: /icerik' "$robots"; then
             echo "FAIL: broad /icerik robots prefix blocks public content policy" >&2
             exit 1

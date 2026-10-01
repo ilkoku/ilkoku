@@ -39,6 +39,14 @@ jobs:
           echo "SCRIPT_SRCS_BEGIN"
           grep -o -E '<script[^>]+src="[^"]+"' /tmp/home.html | sed -E 's/.*src="([^"]+)".*/\1/' | sort -u
           echo "SCRIPT_SRCS_END"
+          echo "ONEQ6Z_HEADERS_BEGIN"
+          curl -fsSL -D /tmp/1q6z.headers -o /tmp/1q6z.js https://ilkoku.com/1q6z/
+          cat /tmp/1q6z.headers
+          echo "ONEQ6Z_HEADERS_END"
+          echo "ONEQ6Z_FINGERPRINT_BEGIN"
+          head -c 1200 /tmp/1q6z.js | tr '\n' ' '; echo
+          grep -Eio 'cloudflare|hostinger|monarx|bot|challenge|fingerprint|security|imperva|datadome|recaptcha|turnstile|akamai|sucuri' /tmp/1q6z.js | sort -u || true
+          echo "ONEQ6Z_FINGERPRINT_END"
 
       - name: Summarize mobile metrics
         shell: bash

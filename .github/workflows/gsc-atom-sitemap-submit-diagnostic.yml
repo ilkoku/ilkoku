@@ -1,0 +1,115 @@
+name: GSC Atom sitemap submit diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/gsc-atom-sitemap-submit-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    name: Submit Atom sitemap to Search Console
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate GSC OAuth secrets
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        run: |
+          test -n "$GSC_OAUTH_CLIENT_ID"
+          test -n "$GSC_OAUTH_CLIENT_SECRET"
+          test -n "$GSC_OAUTH_REFRESH_TOKEN"
+
+      - name: Submit Atom sitemap and verify
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node <<'NODE'
+          const clientId = process.env.GSC_OAUTH_CLIENT_ID;
+          const clientSecret = process.env.GSC_OAUTH_CLIENT_SECRET;
+          const refreshToken = process.env.GSC_OAUTH_REFRESH_TOKEN;
+          const siteUrl = "sc-domain:ilkoku.com";
+          const feedUrl = "https://ilkoku.com/recent-updates.atom";
+
+          async function json(url, options = {}) {
+            const response = await fetch(url, { ...options, signal: AbortSignal.timeout(20000) });
+            const text = await response.text();
+            let body = {};
+            try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
+            return { response, body };
+          }
+
+          const tokenResponse = await json("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "content-type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: clientId,
+              client_secret: clientSecret,
+              refresh_token: refreshToken,
+              grant_type: "refresh_token",
+            }),
+          });
+          if (!tokenResponse.response.ok || !tokenResponse.body.access_token) {
+            throw new Error("OAuth refresh failed: " + JSON.stringify(tokenResponse.body));
+          }
+          const accessToken = tokenResponse.body.access_token;
+
+          const tokenInfo = await json(
+            "https://oauth2.googleapis.com/tokeninfo?access_token=" + encodeURIComponent(accessToken),
+          );
+          const scopes = String(tokenInfo.body.scope || "").split(/\s+/).filter(Boolean);
+          console.log("OAuth scopes:", scopes.join(" "));
+          console.log("Has webmasters write scope:", scopes.includes("https://www.googleapis.com/auth/webmasters"));
+
+          const submitUrl =
+            "https://www.googleapis.com/webmasters/v3/sites/" +
+            encodeURIComponent(siteUrl) +
+            "/sitemaps/" +
+            encodeURIComponent(feedUrl);
+
+          const submitResponse = await fetch(submitUrl, {
+            method: "PUT",
+            headers: { authorization: "Bearer " + accessToken },
+            signal: AbortSignal.timeout(20000),
+          });
+          const submitText = await submitResponse.text();
+          console.log("Submit status:", submitResponse.status);
+          if (!submitResponse.ok) {
+            console.log("Submit response:", submitText.slice(0, 2000));
+            process.exitCode = 2;
+            return;
+          }
+
+          const list = await json(
+            "https://www.googleapis.com/webmasters/v3/sites/" +
+              encodeURIComponent(siteUrl) +
+              "/sitemaps",
+            { headers: { authorization: "Bearer " + accessToken } },
+          );
+          if (!list.response.ok) {
+            throw new Error("Sitemap list failed: " + JSON.stringify(list.body));
+          }
+
+          const found = (list.body.sitemap || []).find((item) => item.path === feedUrl);
+          console.log("Atom sitemap listed:", Boolean(found));
+          if (found) {
+            console.log(JSON.stringify({
+              path: found.path,
+              type: found.type,
+              isPending: found.isPending,
+              lastSubmitted: found.lastSubmitted,
+              lastDownloaded: found.lastDownloaded,
+              warnings: found.warnings,
+              errors: found.errors,
+              contents: found.contents,
+            }));
+          }
+          NODE

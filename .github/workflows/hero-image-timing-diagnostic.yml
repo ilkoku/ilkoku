@@ -29,6 +29,17 @@ jobs:
                 -w "run=$i code=%{http_code} type=%{content_type} size=%{size_download} dns=%{time_namelookup} connect=%{time_connect} ttfb=%{time_starttransfer} total=%{time_total}\n" \
                 "$url"
             done
+          echo "=== 1Q6Z CONTENT SIGNATURES ==="
+          n=0
+          for u in "https://ilkoku.com/1q6z/" "https://ilkoku.com/1q6z/Rj6d5n7vHGpjF2vH5hmmufZ-OnAK106gFSU3KTvafDN5BEoK"; do
+            n=$((n+1))
+            out="/tmp/1q6z-$n.js"
+            curl -sS -L --max-time 20 "$u" -o "$out"
+            echo "--- file $n bytes=$(wc -c < "$out") sha256=$(sha256sum "$out" | awk '{print $1}')"
+            head -c 800 "$out" | tr '\n' ' '; echo
+            echo "--- keywords"
+            grep -Eoih 'cloudflare|zaraz|rocket|turnstile|challenge|bot|captcha|beacon|analytics|fingerprint|sentry|datadog|segment|gtm|google|hostinger|hcaptcha|cf-ray|cf-chl|browser|telemetry|performance|web-vitals|rum' "$out" | sort | uniq -c | sort -nr | head -40 || true
+          done
           }
           test_url "source" "https://ilkoku.com/landing/ilkoku-hero-user-final.webp"
           test_url "optimized-384" "https://ilkoku.com/_next/image?url=%2Flanding%2Filkoku-hero-user-final.webp&w=384&q=60"

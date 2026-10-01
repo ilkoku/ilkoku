@@ -30,34 +30,18 @@ function normalizeAuthorCandidate(value: string | undefined) {
     .trim();
 }
 
-function extractAuthorName(segment: string, publisherName: string) {
-  const publisherToken = `(${publisherName})`;
-  const publisherIndex = segment.indexOf(publisherToken);
-  const tail =
-    publisherIndex >= 0
-      ? segment.slice(publisherIndex + publisherToken.length)
-      : segment;
-
-  const name =
-    "[A-ZÁÉÍÓÚÑÜ][\\p{L}.'’\\-]+(?:\\s+(?:de|del|la|las|los|y|[A-ZÁÉÍÓÚÑÜ][\\p{L}.'’\\-]+)){0,5}?";
-  const boundary =
-    "(?=[,.]|\\s+(?:Duodécima|Segunda|Primera|El|La|Los|Las|Un|Una|Nora)\\b)";
-
+function extractAuthorName(segment: string) {
   const patterns = [
-    new RegExp(`,\\s*de\\s+(${name})${boundary}`, "u"),
-    new RegExp(`firma\\s+como\\s+(${name})(?=\\s*,)`, "u"),
-    new RegExp(
-      `(?:La\\s+escritora(?:\\s+[\\p{L}\\-]+)?|El\\s+escritor(?:\\s+[\\p{L}\\-]+)?|La\\s+francesa|El\\s+francés)\\s+(${name})(?=\\s+(?:ha|explora|nos|firma|presenta|publica|cuenta|vuelve|es|ofrece)\\b|[,.])`,
-      "u",
-    ),
-    new RegExp(
-      `\\.\\s*(${name})(?=\\s+(?:nos|explora|cuenta|presenta|regresa|es|ha)\\b|,)`,
-      "u",
-    ),
+    /firma\s+como\s+([^,.;]+?)(?=\s*,|[.;])/iu,
+    /,\s*de\s+([^,.;]+?)(?=[.;])/iu,
+    /La\s+escritora(?:\s+[\p{L}\-]+)*\s+([^,.;]+?)\s+ha\b/iu,
+    /La\s+francesa\s+([^,.;]+?)\s+explora\b/iu,
+    /\)\.\s*([^,.;]+?)\s+nos\b/iu,
+    /\)\.\s*([^,.;]+?)(?=\s*,\s*autora\b)/iu,
   ];
 
   for (const pattern of patterns) {
-    const authorName = normalizeAuthorCandidate(tail.match(pattern)?.[1]);
+    const authorName = normalizeAuthorCandidate(segment.match(pattern)?.[1]);
     if (authorName) return authorName;
   }
 
@@ -129,7 +113,7 @@ export function parseAbcGfkSpainWeeklyFiction(
             nextRankIndex > currentIndex ? nextRankIndex : text.length,
           )
         : "";
-    const authorName = extractAuthorName(segment, publisherName);
+    const authorName = extractAuthorName(segment);
 
     if (!title || !publisherName || !authorName) {
       throw new Error(`BOOK_INDEX_ABC_GFK_ES_INVALID_ITEM:${rank}`);

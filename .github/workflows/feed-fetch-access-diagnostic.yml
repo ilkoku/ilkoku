@@ -1,0 +1,41 @@
+name: Feed fetch access diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/feed-fetch-access-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Compare feed access by user agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe feed
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          url='https://ilkoku.com/recent-updates.atom'
+          probe() {
+            label="$1"; ua="$2"; extra="$3"
+            echo "=== $label ==="
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            set +e
+            code="$(curl $extra --silent --show-error --location --max-time 20 --user-agent "$ua" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url")"
+            rc=$?
+            set -e
+            echo "curl_rc=$rc http=$code bytes=$(wc -c < "$body")"
+            grep -Ei '^(HTTP/|content-type:|content-length:|cache-control:|server:|via:|location:|x-|cf-)' "$headers" || true
+            head -c 180 "$body" | tr '\n' ' '; echo
+          }
+          probe "curl default" "curl/8.5.0" ""
+          probe "Chrome" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36" ""
+          probe "Googlebot desktop" "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" ""
+          probe "Googlebot smartphone" "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.69 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" ""
+          probe "GoogleOther" "Mozilla/5.0 (compatible; GoogleOther)" ""
+          probe "IPv4 Googlebot" "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" "-4"
+          probe "IPv6 Googlebot" "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" "-6"

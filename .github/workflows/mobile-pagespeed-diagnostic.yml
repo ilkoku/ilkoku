@@ -76,6 +76,12 @@ jobs:
           const networkItems = a["network-requests"]?.details?.items ?? [];
           const heroRequests = networkItems.filter((x) => String(x.url || "").includes("ilkoku-hero-user-final"));
           console.log("LCP_AUDITS|"+JSON.stringify(lcpAudits));
+          const bootupItems=(a["bootup-time"]?.details?.items ?? [])
+            .sort((x,y)=>(y.total??0)-(x.total??0)).slice(0,15);
+          const jsRequests=networkItems.filter((x)=>x.resourceType==="Script")
+            .sort((x,y)=>(y.transferSize??0)-(x.transferSize??0)).slice(0,15);
+          console.log("BOOTUP_TOP|"+JSON.stringify(bootupItems));
+          console.log("JS_NETWORK_TOP|"+JSON.stringify(jsRequests));
           console.log("HERO_NETWORK|"+JSON.stringify(heroRequests));
           console.log("LIGHTHOUSE_RESULT|"+JSON.stringify(out));
           NODE

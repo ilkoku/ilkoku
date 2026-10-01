@@ -1,0 +1,69 @@
+name: Google WebSub publish
+
+on:
+  workflow_run:
+    workflows:
+      - Production smoke
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish recent search updates
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout deployed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+
+      - name: Check whether discovery feed changed
+        id: changes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            git diff --name-only HEAD^ HEAD > /tmp/changed-files.txt
+          else
+            git show --pretty="" --name-only HEAD > /tmp/changed-files.txt
+          fi
+          cat /tmp/changed-files.txt
+          if grep -Eq '^(src/app/recent-updates\.atom/|src/app/robots\.ts|src/app/sitemap\.ts|src/app/yazarlar-icin/|src/components/content/Batched(Education|Fiction)GuidePage\.tsx|src/lib/(genres|search-discovery-signals|writing-category-hubs|.*guide-batch)\.ts)' /tmp/changed-files.txt; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify live Atom feed
+        if: steps.changes.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          body="$(mktemp)"
+          code="$(curl --silent --show-error --location --max-time 20 --output "$body" --write-out '%{http_code}' https://ilkoku.com/recent-updates.atom)"
+          test "$code" = "200"
+          grep -Fq 'https://pubsubhubbub.appspot.com/' "$body"
+          grep -Fq 'https://ilkoku.com/yazarlar-icin/kurgu/roman' "$body"
+          grep -Fq '<feed' "$body"
+
+      - name: Publish feed to Google WebSub hub
+        if: steps.changes.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          curl --silent --show-error --fail-with-body --max-time 20 \
+            --request POST \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'hub.mode=publish' \
+            --data-urlencode 'hub.url=https://ilkoku.com/recent-updates.atom' \
+            https://pubsubhubbub.appspot.com/
+          echo "WebSub publish request accepted."

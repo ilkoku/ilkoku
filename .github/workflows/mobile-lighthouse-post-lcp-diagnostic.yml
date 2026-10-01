@@ -14,21 +14,27 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Identify injected 1q6z resources
+      - name: Inspect production JavaScript chunks
         shell: bash
         run: |
           set -Eeuo pipefail
-          curl -sS -L --max-time 20 https://ilkoku.com/ -o /tmp/home.html
-          echo "=== HTML REFERENCES ==="
-          grep -oE 'https?://[^"'\'' <>]*1q6z[^"'\'' <>]*|/1q6z[^"'\'' <>]*' /tmp/home.html | head -50 || true
-          echo "=== HTML CONTEXT ==="
-          grep -n -C 2 '1q6z' /tmp/home.html | head -100 || true
-          base="$(grep -oE '/1q6z/[^"'\'' <>]*|/1q6z/' /tmp/home.html | head -1 || true)"
-          echo "selected=$base"
-          if [ -n "$base" ]; then
-            echo "=== RESOURCE HEADERS ==="
-            curl -sS -L --max-time 20 -D /tmp/rh -o /tmp/rbody "https://ilkoku.com$base"
-            grep -Ei '^(HTTP/|content-type:|content-length:|cache-control:|server:|x-|cf-)' /tmp/rh || true
-            echo "=== RESOURCE BODY PREFIX ==="
-            head -c 1200 /tmp/rbody | tr '\n' ' '; echo
-          fi
+          urls=(
+            'https://ilkoku.com/_next/static/chunks/93794-970b837284a0d18f.js'
+            'https://ilkoku.com/_next/static/chunks/4bd1b696-f998cba21de05210.js'
+            'https://ilkoku.com/_next/static/chunks/webpack-5c98a4720ead84ce.js'
+          )
+          i=0
+          for url in "${urls[@]}"; do
+            i=$((i+1))
+            file="/tmp/chunk-$i.js"
+            echo "=== $url ==="
+            code="$(curl -sS -L --max-time 20 -o "$file" -w '%{http_code}' "$url")"
+            echo "status=$code bytes=$(wc -c < "$file")"
+            for needle in 'consent' 'ilkoku:consent' 'mobileOpen' 'mega-menu' 'matchMedia' 'Magzter' 'gtm.js' 'site-analytics' 'footer-navigation' 'usePathname' 'requestIdleCallback' 'book-index' 'PublicHeaderNavigation'; do
+              if grep -Fqi "$needle" "$file"; then
+                echo "MATCH:$needle"
+              fi
+            done
+            echo "STRINGS:"
+            grep -oE '.{0,70}(consent|mobileOpen|matchMedia|gtm\.js|site-analytics|footer-navigation|book-index|mega).{0,100}' "$file" | head -30 || true
+          done

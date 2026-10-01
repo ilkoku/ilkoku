@@ -37,7 +37,7 @@ export function parseSwitzerlandSbvvFictionHardcover(
     normalizeBookIndexText(line).startsWith("bestseller der woche"),
   );
   if (headingIndex < 0) {
-    throw new Error("BOOK_INDEX_SBV_CH_WEEKLY_HEADING_NOT_FOUND");
+    throw new Error("BOOK_INDEX_SBVV_CH_WEEKLY_HEADING_NOT_FOUND");
   }
 
   if (
@@ -47,7 +47,7 @@ export function parseSwitzerlandSbvvFictionHardcover(
         normalizeBookIndexText("Belletristik Hardcover"),
     )
   ) {
-    throw new Error("BOOK_INDEX_SBV_CH_FICTION_HARDCOVER_ANCHOR_NOT_FOUND");
+    throw new Error("BOOK_INDEX_SBVV_CH_FICTION_HARDCOVER_ANCHOR_NOT_FOUND");
   }
 
   const books: BookIndexCollectionResult["books"] = [];
@@ -66,7 +66,7 @@ export function parseSwitzerlandSbvvFictionHardcover(
 
     if (!title || !authorName || !publisherName || !isbn13) {
       throw new Error(
-        `BOOK_INDEX_SBV_CH_INVALID_ITEM:${books.length + 1}`,
+        `BOOK_INDEX_SBVV_CH_INVALID_ITEM:${books.length + 1}`,
       );
     }
 
@@ -89,17 +89,17 @@ export function parseSwitzerlandSbvvFictionHardcover(
 
   if (books.length !== EXPECTED_BOOKS) {
     throw new Error(
-      `BOOK_INDEX_SBV_CH_RESULT_SIZE_MISMATCH:${books.length}`,
+      `BOOK_INDEX_SBVV_CH_RESULT_SIZE_MISMATCH:${books.length}`,
     );
   }
 
   if (books.some((book, index) => book.rank !== index + 1)) {
-    throw new Error("BOOK_INDEX_SBV_CH_RANK_ORDER_MISMATCH");
+    throw new Error("BOOK_INDEX_SBVV_CH_RANK_ORDER_MISMATCH");
   }
 
   const sourceKeys = new Set(books.map((book) => book.sourceKey));
   if (sourceKeys.size !== books.length) {
-    throw new Error("BOOK_INDEX_SBV_CH_DUPLICATE_ISBN");
+    throw new Error("BOOK_INDEX_SBVV_CH_DUPLICATE_ISBN");
   }
 
   return { books };
@@ -130,7 +130,7 @@ export const sbvvSwitzerlandBookIndexAdapter: BookIndexSourceAdapter = {
     context: BookIndexCollectionContext,
   ): Promise<BookIndexCollectionResult> {
     if (context.listCode !== "sbvv-ch-fiction-hardcover-weekly") {
-      throw new Error("BOOK_INDEX_SBV_CH_LIST_NOT_SUPPORTED");
+      throw new Error("BOOK_INDEX_SBVV_CH_LIST_NOT_SUPPORTED");
     }
 
     return parseSwitzerlandSbvvFictionHardcover(

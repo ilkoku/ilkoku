@@ -111,6 +111,21 @@ export function parseAmazonCanadaBestsellerPage(
   return { books };
 }
 
+export function parseAmazonCanadaProductAuthor(html: string) {
+  if (/automated access|captcha/iu.test(html)) return null;
+
+  const bylineHtml =
+    html.match(
+      /<a\b[^>]*href=["'][^"']*field-author=[^"']*["'][^>]*>([\s\S]*?)<\/a>/iu,
+    )?.[1] ??
+    html.match(
+      /<a\b[^>]*class=["'][^"']*\bcontributorNameID\b[^"']*["'][^>]*>([\s\S]*?)<\/a>/iu,
+    )?.[1];
+
+  const authorName = normalizedText(bylineHtml);
+  return authorName || null;
+}
+
 async function fetchHtml(url: string) {
   const response = await fetch(url, {
     cache: "no-store",
@@ -129,6 +144,27 @@ async function fetchHtml(url: string) {
   return response.text();
 }
 
+async function enrichMissingCanadaAuthors(
+  result: BookIndexCollectionResult,
+): Promise<BookIndexCollectionResult> {
+  const books = await Promise.all(
+    result.books.map(async (book) => {
+      if (book.authorName) return book;
+
+      try {
+        const authorName = parseAmazonCanadaProductAuthor(
+          await fetchHtml(book.productUrl),
+        );
+        return authorName ? { ...book, authorName } : book;
+      } catch {
+        return book;
+      }
+    }),
+  );
+
+  return { ...result, books };
+}
+
 export const amazonCanadaBookIndexAdapter: BookIndexSourceAdapter = {
   sourceCode: SOURCE_CODE,
   async collect(
@@ -138,8 +174,10 @@ export const amazonCanadaBookIndexAdapter: BookIndexSourceAdapter = {
       throw new Error("BOOK_INDEX_AMAZON_CA_LIST_NOT_SUPPORTED");
     }
 
-    return parseAmazonCanadaBestsellerPage(
-      await fetchHtml(context.sourceUrl),
+    return enrichMissingCanadaAuthors(
+      parseAmazonCanadaBestsellerPage(
+        await fetchHtml(context.sourceUrl),
+      ),
     );
   },
 };

@@ -207,6 +207,33 @@ test("Finland Kirjakauppaliitto collector is source-native and public only after
 });
 
 
+test("Switzerland SBVV collector is source-native and stays off the public world table until Turkish title meanings are ready", () => {
+  const adapter = source("src/lib/book-index/sources/sbvv-ch.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 20', "Switzerland exact Top 20 guard");
+  contains(adapter, 'startsWith("bestseller der woche")', "Switzerland weekly heading anchor");
+  contains(adapter, '"Belletristik Hardcover"', "Switzerland fiction hardcover anchor");
+  contains(adapter, '97[89][0-9]{10}', "Switzerland ISBN parser");
+  contains(adapter, "BOOK_INDEX_SBV_CH_RANK_ORDER_MISMATCH", "Switzerland rank guard");
+  contains(adapter, "BOOK_INDEX_SBV_CH_DUPLICATE_ISBN", "Switzerland ISBN uniqueness guard");
+  contains(collector, "sbvvSwitzerlandBookIndexAdapter", "Switzerland collector registration");
+  contains(sources, 'code: "sbvv-ch"', "Switzerland source registry");
+  contains(sources, 'market: "CH"', "Switzerland market code");
+  contains(lists, 'code: "sbvv-ch-fiction-hardcover-weekly"', "Switzerland weekly list registry");
+  contains(lists, 'period: "weekly"', "Switzerland weekly period");
+  contains(lists, "maxRank: 20", "Switzerland Top 20 bound");
+  notContains(
+    model,
+    '"sbvv-ch-fiction-hardcover-weekly"',
+    "Switzerland stays off the public world table until Turkish title meanings are prepared",
+  );
+});
+
+
 test("Germany SPIEGEL bestseller source is fail-closed and source-native", () => {
   const adapter = source("src/lib/book-index/sources/spiegel-de.ts");
   const collector = source("src/lib/book-index/collector.ts");

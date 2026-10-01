@@ -473,7 +473,7 @@ function insightMetric(
   if ("totalRankGain" in item) {
     return {
       primary: `+${item.totalRankGain} sıra`,
-      secondary: `${item.improvingSourceCount} listede yükseldi · tüm güncel listelerde en iyi sıra #${item.bestCurrentRank}`,
+      secondary: `${item.improvingSourceCount} kitap satış kanalında yükseldi · tüm güncel kitap satış kanallarındaki en iyi sıra #${item.bestCurrentRank}`,
     };
   }
 

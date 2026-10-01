@@ -30,6 +30,18 @@ jobs:
             printf '%s ' "$url"
             curl -sS -I -L --max-time 20 "$url" | awk 'BEGIN{IGNORECASE=1}/^content-length:/{gsub("\r",""); printf "bytes=%s ",$2}/^content-type:/{gsub("\r",""); printf "type=%s ",$2}END{print ""}'
           done < /tmp/css.txt
+          echo "=== STYLESHEET BODIES ==="
+          while read -r href; do
+            [ -n "$href" ] || continue
+            if [[ "$href" == /* ]]; then url="https://ilkoku.com$href"; else url="$href"; fi
+            body="$(mktemp)"
+            curl -sS -L --max-time 20 "$url" -o "$body"
+            printf '%s bytes=%s markers=' "$href" "$(wc -c < "$body")"
+            for marker in public-site-header nx-hero nx-history nx-role nx-passport nx-why nx-affiliate landing-footer site-consent; do
+              if grep -q "$marker" "$body"; then printf '%s,' "$marker"; fi
+            done
+            echo
+          done < /tmp/css.txt
           echo "=== PRELOADS ==="
           grep -oE '<link[^>]+rel="preload"[^>]*>' /tmp/home.html | head -50 || true
           echo "=== SCRIPTS ==="

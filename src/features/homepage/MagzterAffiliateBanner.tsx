@@ -38,7 +38,7 @@ export default function MagzterAffiliateBanner({ placement }: Props) {
             >
               {placement.text.text}
             </a>
-            {placement.text.trackingPixelSrc ? (
+            {mobile !== null && placement.text.trackingPixelSrc ? (
               <>
                 {/* Affiliate metin kreatifine ait 1×1 takip pikseli. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -49,6 +49,8 @@ export default function MagzterAffiliateBanner({ placement }: Props) {
                   height="1"
                   alt=""
                   aria-hidden="true"
+                  loading="lazy"
+                  fetchPriority="low"
                 />
               </>
             ) : null}

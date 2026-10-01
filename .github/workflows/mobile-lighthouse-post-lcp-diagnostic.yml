@@ -11,30 +11,43 @@ permissions:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect production JavaScript chunks
+      - name: Compare hero payload and mobile Lighthouse
         shell: bash
         run: |
           set -Eeuo pipefail
-          urls=(
-            'https://ilkoku.com/_next/static/chunks/93794-970b837284a0d18f.js'
-            'https://ilkoku.com/_next/static/chunks/4bd1b696-f998cba21de05210.js'
-            'https://ilkoku.com/_next/static/chunks/webpack-5c98a4720ead84ce.js'
-          )
-          i=0
-          for url in "${urls[@]}"; do
-            i=$((i+1))
-            file="/tmp/chunk-$i.js"
-            echo "=== $url ==="
+          for q in 75 60; do
+            url="https://ilkoku.com/_next/image?url=%2Flanding%2Filkoku-hero-user-final.webp&w=750&q=$q"
+            file="/tmp/hero-$q"
             code="$(curl -sS -L --max-time 20 -o "$file" -w '%{http_code}' "$url")"
-            echo "status=$code bytes=$(wc -c < "$file")"
-            for needle in 'consent' 'ilkoku:consent' 'mobileOpen' 'mega-menu' 'matchMedia' 'Magzter' 'gtm.js' 'site-analytics' 'footer-navigation' 'usePathname' 'requestIdleCallback' 'book-index' 'PublicHeaderNavigation'; do
-              if grep -Fqi "$needle" "$file"; then
-                echo "MATCH:$needle"
-              fi
-            done
-            echo "STRINGS:"
-            grep -oE '.{0,70}(consent|mobileOpen|matchMedia|gtm\.js|site-analytics|footer-navigation|book-index|mega).{0,100}' "$file" | head -30 || true
+            echo "HERO_Q$q|status=$code bytes=$(wc -c < "$file")"
           done
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y chromium-browser jq >/dev/null 2>&1 || sudo apt-get install -y chromium jq >/dev/null
+          CHROME_BIN="$(command -v chromium-browser || command -v chromium || command -v google-chrome || true)"
+          npx --yes lighthouse@12.8.2 'https://ilkoku.com/?lcp=5b914cec' \
+            --quiet \
+            --chrome-path="$CHROME_BIN" \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --output=json \
+            --output-path=/tmp/lighthouse.json
+          node <<'NODE'
+          const fs=require('fs');
+          const d=JSON.parse(fs.readFileSync('/tmp/lighthouse.json','utf8'));
+          const a=d.audits||{};
+          const lcpBreak=a['lcp-breakdown-insight']?.details?.items?.[0]?.items||[];
+          const hero=(a['network-requests']?.details?.items||[]).filter(x=>String(x.url||'').includes('ilkoku-hero-user-final'));
+          console.log('Q60_LIGHTHOUSE|'+JSON.stringify({
+            performance:d.categories?.performance?.score,
+            FCP:a['first-contentful-paint']?.displayValue,
+            LCP:a['largest-contentful-paint']?.displayValue,
+            TBT:a['total-blocking-time']?.displayValue,
+            CLS:a['cumulative-layout-shift']?.displayValue,
+            SpeedIndex:a['speed-index']?.displayValue,
+            TTFB:a['server-response-time']?.displayValue,
+            lcpBreak,
+            hero:hero.map(x=>({url:x.url,transferSize:x.transferSize,resourceSize:x.resourceSize,networkRequestTime:x.networkRequestTime,networkEndTime:x.networkEndTime}))
+          }));
+          NODE

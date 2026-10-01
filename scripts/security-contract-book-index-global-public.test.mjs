@@ -26,6 +26,7 @@ test("global bestseller public page reads only the approved source lists", () =>
     "amazon-es-live",
     "amazon-ca-live",
     "amazon-br-live",
+    "bestseller60-nl-weekly",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -133,12 +134,13 @@ test("France Amazon bestseller source is fail-closed and source-native", () => {
 });
 
 
-test("Netherlands Bestseller 60 collector is source-native and stays off the public world table until title meanings are ready", () => {
+test("Netherlands Bestseller 60 collector is source-native and public only after Turkish title meanings are ready", () => {
   const adapter = source("src/lib/book-index/sources/bestseller60-nl.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const model = source("src/lib/book-index/global-public-read-model.ts");
+  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
 
   contains(adapter, 'const EXPECTED_BOOKS = 60', "Netherlands exact Top 60 guard");
   contains(adapter, "ISBN", "Netherlands ISBN parser");
@@ -157,10 +159,15 @@ test("Netherlands Bestseller 60 collector is source-native and stays off the pub
   contains(sources, 'market: "NL"', "Netherlands market code");
   contains(lists, 'code: "bestseller60-nl-weekly"', "Netherlands weekly list registry");
   contains(lists, "maxRank: 60", "Netherlands Top 60 bound");
-  notContains(
+  contains(
     model,
     '"bestseller60-nl-weekly"',
-    "Netherlands stays off the public world table until Turkish title meanings are prepared",
+    "Netherlands is public after Turkish title meanings are prepared",
+  );
+  contains(
+    meanings,
+    '"De wereld rond met Project Gezond": "Project Gezond ile Dünya Turu"',
+    "Netherlands Turkish meaning registry",
   );
 });
 

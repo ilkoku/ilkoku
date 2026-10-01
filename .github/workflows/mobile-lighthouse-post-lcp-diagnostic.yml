@@ -11,73 +11,17 @@ permissions:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Run mobile Lighthouse against production
+      - name: Probe homepage delivery
         shell: bash
         run: |
           set -Eeuo pipefail
-          sudo apt-get update >/dev/null
-          sudo apt-get install -y chromium-browser jq >/dev/null 2>&1 || sudo apt-get install -y chromium jq >/dev/null
-          CHROME_BIN="$(command -v chromium-browser || command -v chromium || command -v google-chrome || true)"
-          echo "Chrome: $CHROME_BIN"
-          npx --yes lighthouse@12.8.2 https://ilkoku.com/             --quiet             --chrome-path="$CHROME_BIN"             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"             --output=json             --output-path=/tmp/lighthouse.json
-          node <<'NODE'
-          const fs = require('fs');
-          const d = JSON.parse(fs.readFileSync('/tmp/lighthouse.json','utf8'));
-          const a = d.audits || {};
-          const c = d.categories || {};
-          const lcpItem = a['largest-contentful-paint-element']?.details?.items?.[0] || null;
-          const details = {
-            performance: c.performance?.score,
-            accessibility: c.accessibility?.score,
-            bestPractices: c['best-practices']?.score,
-            seo: c.seo?.score,
-            FCP: a['first-contentful-paint']?.displayValue,
-            LCP: a['largest-contentful-paint']?.displayValue,
-            TBT: a['total-blocking-time']?.displayValue,
-            CLS: a['cumulative-layout-shift']?.displayValue,
-            SpeedIndex: a['speed-index']?.displayValue,
-            TTFB: a['server-response-time']?.displayValue,
-            LCPElement: lcpItem,
-            LCPBreakdown: Object.fromEntries(
-              Object.entries(a)
-                .filter(([key]) => key.toLowerCase().includes('lcp'))
-                .map(([key, value]) => [key, {
-                  score: value.score,
-                  displayValue: value.displayValue,
-                  numericValue: value.numericValue,
-                  details: value.details,
-                }])
-            ),
-            heroRequest: (a['network-requests']?.details?.items || []).filter((item) =>
-              String(item.url || '').includes('ilkoku-hero-user-final')
-            ).map((item) => ({
-              url: item.url,
-              statusCode: item.statusCode,
-              resourceType: item.resourceType,
-              transferSize: item.transferSize,
-              resourceSize: item.resourceSize,
-              startTime: item.startTime,
-              endTime: item.endTime,
-              networkRequestTime: item.networkRequestTime,
-              networkEndTime: item.networkEndTime,
-            })),
-            documentRequest: (a['network-requests']?.details?.items || []).filter((item) =>
-              item.resourceType === 'Document'
-            ).slice(0, 3).map((item) => ({
-              url: item.url,
-              statusCode: item.statusCode,
-              transferSize: item.transferSize,
-              startTime: item.startTime,
-              endTime: item.endTime,
-              networkRequestTime: item.networkRequestTime,
-              networkEndTime: item.networkEndTime,
-            })),
-            renderBlocking: a['render-blocking-resources']?.displayValue || null,
-            unusedJs: a['unused-javascript']?.displayValue || null,
-            unusedCss: a['unused-css-rules']?.displayValue || null,
-          };
-          console.log("LIGHTHOUSE_RESULT|" + JSON.stringify(details));
-          NODE
+          for i in 1 2 3; do
+            echo "=== REQUEST $i ==="
+            curl -sS -L --max-time 20 -D /tmp/hdr -o /dev/null \
+              -w 'http=%{http_code} dns=%{time_namelookup} connect=%{time_connect} tls=%{time_appconnect} ttfb=%{time_starttransfer} total=%{time_total}\n' \
+              https://ilkoku.com/
+            grep -Ei '^(HTTP/|cache-control:|age:|etag:|vary:|server:|x-[^:]+:|cf-[^:]+:)' /tmp/hdr || true
+          done

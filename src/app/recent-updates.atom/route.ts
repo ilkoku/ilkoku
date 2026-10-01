@@ -1,5 +1,5 @@
 import { GENRES } from "@/lib/genres";
-import { WRITING_GUIDE_SEARCH_UPDATED_AT } from "@/lib/search-discovery-signals";
+import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 const baseUrl = "https://ilkoku.com";
@@ -22,7 +22,7 @@ const categoryHrefByCategory = new Map(
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const updated = WRITING_GUIDE_SEARCH_UPDATED_AT.toISOString();
+  const updated = WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT.toISOString();
   const entries = GENRES.map((genre) => {
     const categoryHref = categoryHrefByCategory.get(genre.category);
     if (!categoryHref) {

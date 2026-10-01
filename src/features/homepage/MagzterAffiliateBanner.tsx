@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { HomepageAffiliateDisplay } from "@/lib/affiliate-placement";
 
 import "./affiliate-banner.css";
@@ -32,12 +31,15 @@ export default function MagzterAffiliateBanner({ placement }: Props) {
           </div>
 
           <div className="nx-partner-offer__creative" aria-label="Magzter GOLD kampanyası">
-            <Image
+            {/* Same-origin SVG is rendered directly so browser/privacy filters do not depend on Next image optimization. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={LOCAL_MAGZTER_CREATIVE}
-              width={728}
-              height={90}
-              sizes="(max-width: 1000px) calc(100vw - 4rem), 44rem"
+              width="728"
+              height="90"
               alt="Magzter GOLD dergi ve gazete okuma kampanyası"
+              loading="lazy"
+              decoding="async"
             />
           </div>
         </div>

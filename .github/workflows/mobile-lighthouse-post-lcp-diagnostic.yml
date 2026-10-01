@@ -11,17 +11,49 @@ permissions:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Probe homepage delivery
+      - name: Profile mobile JavaScript cost
         shell: bash
         run: |
           set -Eeuo pipefail
-          for i in 1 2 3; do
-            echo "=== REQUEST $i ==="
-            curl -sS -L --max-time 20 -D /tmp/hdr -o /dev/null \
-              -w 'http=%{http_code} dns=%{time_namelookup} connect=%{time_connect} tls=%{time_appconnect} ttfb=%{time_starttransfer} total=%{time_total}\n' \
-              https://ilkoku.com/
-            grep -Ei '^(HTTP/|cache-control:|age:|etag:|vary:|server:|x-[^:]+:|cf-[^:]+:)' /tmp/hdr || true
-          done
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y chromium-browser jq >/dev/null 2>&1 || sudo apt-get install -y chromium jq >/dev/null
+          CHROME_BIN="$(command -v chromium-browser || command -v chromium || command -v google-chrome || true)"
+          npx --yes lighthouse@12.8.2 https://ilkoku.com/ \
+            --quiet \
+            --chrome-path="$CHROME_BIN" \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --output=json \
+            --output-path=/tmp/lighthouse.json
+          node <<'NODE'
+          const fs=require('fs');
+          const d=JSON.parse(fs.readFileSync('/tmp/lighthouse.json','utf8'));
+          const a=d.audits||{};
+          const unused=(a['unused-javascript']?.details?.items||[])
+            .map(x=>({url:x.url,totalBytes:x.totalBytes,wastedBytes:x.wastedBytes,wastedPercent:x.wastedPercent}))
+            .sort((x,y)=>(y.wastedBytes||0)-(x.wastedBytes||0))
+            .slice(0,20);
+          const longTasks=(a['long-tasks']?.details?.items||[])
+            .map(x=>({url:x.url,duration:x.duration,startTime:x.startTime}))
+            .sort((x,y)=>(y.duration||0)-(x.duration||0))
+            .slice(0,20);
+          const bootup=(a['bootup-time']?.details?.items||[])
+            .map(x=>({url:x.url,total:x.total,scripting:x.scripting,scriptParseCompile:x.scriptParseCompile}))
+            .sort((x,y)=>(y.total||0)-(x.total||0))
+            .slice(0,20);
+          const blocking=(a['render-blocking-resources']?.details?.items||[])
+            .map(x=>({url:x.url,totalBytes:x.totalBytes,wastedMs:x.wastedMs}))
+            .sort((x,y)=>(y.wastedMs||0)-(x.wastedMs||0))
+            .slice(0,20);
+          console.log("JS_PROFILE|"+JSON.stringify({
+            performance:d.categories?.performance?.score,
+            LCP:a['largest-contentful-paint']?.displayValue,
+            TBT:a['total-blocking-time']?.displayValue,
+            unused,
+            longTasks,
+            bootup,
+            blocking,
+          }));
+          NODE

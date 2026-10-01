@@ -1,0 +1,62 @@
+name: Mobile PageSpeed diagnostic
+
+on:
+  push:
+    branches:
+      - diag/mobile-pagespeed-after-lcp-fix-20261001
+    paths:
+      - ".github/workflows/mobile-pagespeed-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  psi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Query Google PageSpeed Insights API
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          url='https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https%3A%2F%2Filkoku.com%2F&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo'
+          body="$(mktemp)"
+          code="$(curl --silent --show-error --location --max-time 120 --output "$body" --write-out '%{http_code}' "$url")"
+          echo "HTTP=$code"
+          head -c 500 "$body"; echo
+          test "$code" = "200"
+          node --input-type=module <<'NODE' "$body"
+          import fs from "node:fs";
+          const file = process.argv[1];
+          const j = JSON.parse(fs.readFileSync(file, "utf8"));
+          const l = j.lighthouseResult;
+          const c = l.categories;
+          const a = l.audits;
+          const out = {
+            fetchTime: l.fetchTime,
+            finalUrl: l.finalUrl,
+            scores: {
+              performance: Math.round((c.performance?.score ?? 0) * 100),
+              accessibility: Math.round((c.accessibility?.score ?? 0) * 100),
+              bestPractices: Math.round((c["best-practices"]?.score ?? 0) * 100),
+              seo: Math.round((c.seo?.score ?? 0) * 100),
+            },
+            metrics: {
+              fcp: a["first-contentful-paint"]?.displayValue,
+              lcp: a["largest-contentful-paint"]?.displayValue,
+              tbt: a["total-blocking-time"]?.displayValue,
+              cls: a["cumulative-layout-shift"]?.displayValue,
+              speedIndex: a["speed-index"]?.displayValue,
+              ttfb: a["server-response-time"]?.displayValue,
+            },
+            lcpElement: a["largest-contentful-paint-element"]?.details?.items?.[0] ?? null,
+            opportunities: Object.fromEntries(
+              Object.entries(a)
+                .filter(([_, v]) => v?.details?.type === "opportunity" && typeof v.numericValue === "number")
+                .sort((x,y)=>(y[1].numericValue??0)-(x[1].numericValue??0))
+                .slice(0,8)
+                .map(([k,v])=>[k,{title:v.title,displayValue:v.displayValue,numericValue:v.numericValue}])
+            ),
+          };
+          console.log("PAGESPEED_RESULT|"+JSON.stringify(out));
+          NODE

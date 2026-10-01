@@ -48,7 +48,7 @@ test("robots is not used as the deindex mechanism for paused discovery", () => {
     assert.ok(!robots.includes(`"${route}"`), `${route} should stay crawlable enough for Google to observe 404/noindex rather than be hidden only by robots.txt`);
   }
 
-  assert.match(robots, /sitemap: `\$\{baseUrl\}\/sitemap\.xml`/u);
+  assert.match(robots, /\$\{baseUrl\}\/sitemap\.xml/u);\n  assert.match(robots, /\$\{baseUrl\}\/recent-updates\.atom/u);
 });
 
 test("route inventory documents the gated-product search boundary", () => {

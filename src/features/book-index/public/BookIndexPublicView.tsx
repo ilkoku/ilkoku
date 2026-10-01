@@ -69,9 +69,9 @@ export function BookIndexOverviewView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi</span>
         <h1>En Çok Satan Kitaplar {currentYear}</h1>
         <p>
-          Türkiye&apos;deki kitap satış sitelerinin çok satan listelerini
+          Türkiye&apos;deki kitap satış kanallarının çok satan listelerini
           aynı tabloda gösteriyoruz. Her sitenin kendi sıra numarası korunur;
-          aynı kitap aynı sırada birden fazla sitede yer alıyorsa site adları
+          aynı kitap aynı sırada birden fazla kitap satış kanalında yer alıyorsa kanal adları
           aynı satırda birlikte gösterilir.
         </p>
         {observedAt && observedAtLabel ? (
@@ -89,13 +89,13 @@ export function BookIndexOverviewView({
         >
           <span>Türkiye Çok Satan Listeleri</span>
           <strong>En Çok Satanlar Karşılaştırma</strong>
-          <small>{turkeySourceCount} satış sitesinden 2–4 tanesini yan yana karşılaştır.</small>
+          <small>{turkeySourceCount} kitap satış kanalından 2–4 tanesini yan yana karşılaştır.</small>
         </Link>
         <Link className={styles.card} href="/yeni-cikanlar">
           <span>Yeni Çıkanlar</span>
           <strong>Yeni çıkan kitapları keşfet</strong>
           <small>
-            Türkiye kaynaklarının doğrulanmış yeni çıkan ve yeni gelen listeleri.
+            Türkiye&apos;deki kitap satış kanallarının doğrulanmış yeni çıkan ve yeni gelen listeleri.
           </small>
         </Link>
         {showGlobalPreview ? (
@@ -129,7 +129,7 @@ export function BookIndexOverviewView({
               <h2 id="insight-pages-heading">Çok satan kitap trendleri</h2>
               <p>
                 Snapshot geçmişinden türetilen yeni giriş, yükseliş, çoklu
-                kaynak görünürlüğü ve uzun dönem sinyallerini ayrı ayrı inceleyin.
+                kitap satış kanalı görünürlüğü ve uzun dönem sinyallerini ayrı ayrı inceleyin.
               </p>
             </div>
           </div>
@@ -156,9 +156,9 @@ export function BookIndexOverviewView({
             <span className={styles.eyebrow}>Türkiye</span>
             <h2>Güncel ilk 3 sıra</h2>
             <p>
-              Satış sitelerinin 1., 2. ve 3. sıralarındaki kitapları incele.
+              Kitap satış kanallarının 1., 2. ve 3. sıralarındaki kitapları incele.
               Aynı kitap aynı sırada birden fazla sitede yer alıyorsa
-              site adları tek satırda birlikte gösterilir.
+              kitap satış kanalı adları tek satırda birlikte gösterilir.
             </p>
           </div>
           <Link href="/en-cok-satanlar/turkiye">Tüm sıralamayı gör →</Link>
@@ -168,14 +168,14 @@ export function BookIndexOverviewView({
 
       <section className={styles.explainer} aria-labelledby="book-index-methodology">
         <span className={styles.eyebrow}>Nasıl gösteriliyor?</span>
-        <h2 id="book-index-methodology">Satış sitesi sıralamaları nasıl gösteriliyor?</h2>
+        <h2 id="book-index-methodology">Kitap satış kanalı sıralamaları nasıl gösteriliyor?</h2>
         <p>
-          İlkOku yeni bir sıra veya bileşik puan üretmez. Her satış sitesinin
+          İlkOku yeni bir sıra veya bileşik puan üretmez. Her kitap satış kanalının
           kendi çok satan sırası aynen korunur.
         </p>
         <p>
           Aynı kitap aynı sıra numarasında birden fazla sitede yer alıyorsa
-          yalnızca site adları aynı satırda birleştirilir. Aynı kitap farklı
+          yalnızca kitap satış kanalı adları aynı satırda birleştirilir. Aynı kitap farklı
           sıra numaralarındaysa tabloda ayrı satırlarda görünür.
         </p>
       </section>
@@ -199,7 +199,7 @@ export function TurkeyBookIndexView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>Türkiye&apos;de En Çok Satan Kitaplar {currentYear}</h1>
         <p>
-          Türkiye&apos;deki farklı kitap satış sitelerinin çok satan
+          Türkiye&apos;deki farklı kitap satış kanallarının çok satan
           listelerini tek tabloda gösterir. Her sitenin verdiği sıra
           numarası değiştirilmeden korunur.
         </p>
@@ -216,10 +216,10 @@ export function TurkeyBookIndexView({
       <section className={styles.section} id="ranking">
         <div className={styles.sectionHeading}>
           <div>
-            <span className={styles.eyebrow}>Satış sitesi listeleri</span>
+            <span className={styles.eyebrow}>Kitap satış kanalı listeleri</span>
             <h2>Çok Satan Kitaplar Sıralaması</h2>
             <p>
-              Hangi satış sitesinin hangi kitabı hangi sıraya koyduğunu görebilirsin.
+              Hangi kitap satış kanalının hangi kitabı hangi sıraya koyduğunu görebilirsin.
             </p>
           </div>
         </div>
@@ -230,11 +230,11 @@ export function TurkeyBookIndexView({
         <span className={styles.eyebrow}>Metodoloji</span>
         <h2 id="turkey-index-methodology">Bu tablo neyi gösterir?</h2>
         <p>
-          Tablo, kitap satış sitelerinin kendi çok satan sıralamalarını
+          Tablo, kitap satış kanallarının kendi çok satan sıralamalarını
           gösterir. İlkOku sitelerin sıra numarasını değiştirmez.
         </p>
         <p>
-          Aynı eser aynı sırada birden fazla sitede görünüyorsa site adları aynı
+          Aynı eser aynı sırada birden fazla kitap satış kanalında görünüyorsa kanal adları aynı
           satırda birlikte yazılır; eser farklı bir sitede farklı sıradaysa
           ayrı bir satır olarak yeniden görünür.
         </p>
@@ -259,8 +259,8 @@ export function TurkeyBookIndexComparisonView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
         <h1>En Çok Satanlar Karşılaştırma</h1>
         <p>
-          Türkiye&apos;deki kitap satış sitelerinin en çok satanlar listelerini
-          yan yana karşılaştır. İki, üç veya dört site seçerek aynı sıra
+          Türkiye&apos;deki kitap satış kanallarının en çok satanlar listelerini
+          yan yana karşılaştır. İki, üç veya dört kitap satış kanalı seçerek aynı sıra
           numarasında hangi kitapların yer aldığını görebilirsin.
         </p>
         {observedAt && observedAtLabel ? (
@@ -277,9 +277,9 @@ export function TurkeyBookIndexComparisonView({
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.eyebrow}>En Çok Satanlar Karşılaştırma</span>
-            <h2>Satış sitelerini yan yana karşılaştır</h2>
+            <h2>Kitap satış kanallarını yan yana karşılaştır</h2>
             <p>
-              İki, üç veya dört satış sitesi seç. Her sitenin kendi sıra
+              İki, üç veya dört kitap satış kanalı seç. Her kanalın kendi sıra
               numarası korunur; İlkOku yeni bir ortak sıra veya puan üretmez.
             </p>
           </div>
@@ -291,7 +291,7 @@ export function TurkeyBookIndexComparisonView({
         <span className={styles.eyebrow}>Nasıl karşılaştırılıyor?</span>
         <h2 id="comparison-methodology">En çok satanlar karşılaştırması neyi gösterir?</h2>
         <p>
-          Her sütun seçtiğin satış sitesinin kendi çok satan listesini gösterir.
+          Her sütun seçtiğin kitap satış kanalının kendi çok satan listesini gösterir.
           Aynı sıra numarasında farklı sitelerde farklı kitaplar bulunabilir.
         </p>
         <p>
@@ -424,10 +424,10 @@ function insightSummary(
 
   const typed = items as BookIndexEverywhereSeller[];
   return [
-    { label: "Birden fazla sitede kitap", value: String(typed.length) },
+    { label: "Birden fazla kitap satış kanalında", value: String(typed.length) },
     {
       label: "En geniş görünürlük",
-      value: `${Math.max(...typed.map((item) => item.sourceCount))} bağımsız işletmeci`,
+      value: `${Math.max(...typed.map((item) => item.sourceCount))} kitap satış kanalı`,
     },
     {
       label: "En iyi sıra",
@@ -446,13 +446,13 @@ const insightNavSection = {
 function insightOrderDescription(key: BookIndexInsightPageDefinition["key"]) {
   switch (key) {
     case "newEntries":
-      return "Soldaki sıra satış sırası değildir. Önce kaç satış sitesinin çok satan listesine yeni girildiğine, eşitlikte yeni girişler içindeki en iyi konuma, ardından kitabın toplam güncel liste görünürlüğüne göre bu analiz sırası oluşturulur.";
+      return "Soldaki sıra satış sırası değildir. Önce kaç kitap satış kanalının çok satan listesine yeni girildiğine, eşitlikte yeni girişler içindeki en iyi konuma, ardından kitabın toplam güncel kitap satış kanalı görünürlüğüne göre bu analiz sırası oluşturulur.";
     case "risers":
-      return "Soldaki sıra satış sırası değildir. Önce daha fazla bağımsız satış sitesinde yükselen kitaplar, eşitlikte bu sitelerdeki toplam sıra kazanımı, ardından en iyi güncel liste konumu dikkate alınarak bu analiz sırası oluşturulur.";
+      return "Soldaki sıra satış sırası değildir. Önce daha fazla kitap satış kanalında yükselen kitaplar, eşitlikte bu kanallardaki toplam sıra kazanımı, ardından en iyi güncel liste konumu dikkate alınarak bu analiz sırası oluşturulur.";
     case "everywhereSellers":
-      return "Soldaki sıra satış sırası değildir. Önce daha fazla bağımsız satış sitesinin çok satan listesinde görünen kitaplar, eşitlikte bu listelerdeki en iyi gerçek sıra, son eşitlikte kitap adı dikkate alınarak bu analiz sırası oluşturulur.";
+      return "Soldaki sıra satış sırası değildir. Önce daha fazla kitap satış kanalının çok satan listesinde görünen kitaplar, eşitlikte bu listelerdeki en iyi gerçek sıra, son eşitlikte kitap adı dikkate alınarak bu analiz sırası oluşturulur.";
     case "longSellers":
-      return "Soldaki sıra satış sırası değildir. Önce ilk ve son doğrulanmış gözlem arasındaki süre, eşitlikte daha fazla bağımsız satış sitesinde görünme, ardından toplam doğrulanmış gözlem sayısı; son eşitlikte kitap adı kullanılarak bu analiz sırası oluşturulur. Bu süre kesintisiz listede kalma süresi değildir.";
+      return "Soldaki sıra satış sırası değildir. Önce ilk ve son doğrulanmış gözlem arasındaki süre, eşitlikte daha fazla kitap satış kanalında görünme, ardından toplam doğrulanmış gözlem sayısı; son eşitlikte kitap adı kullanılarak bu analiz sırası oluşturulur. Bu süre kesintisiz listede kalma süresi değildir.";
   }
 }
 
@@ -465,8 +465,8 @@ function insightMetric(
 ) {
   if ("newSourceCount" in item) {
     return {
-      primary: `${item.newSourceCount} yeni liste girişi`,
-      secondary: `${item.currentSourceCount} güncel listede · en iyi yeni giriş #${item.bestNewEntryRank}`,
+      primary: `${item.newSourceCount} kitap satış kanalında yeni giriş`,
+      secondary: `${item.currentSourceCount} kitap satış kanalında yer alıyor · en yüksek yeni giriş sırası #${item.bestNewEntryRank}`,
     };
   }
 
@@ -480,12 +480,12 @@ function insightMetric(
   if ("historyDays" in item) {
     return {
       primary: `${item.historyDays} gün`,
-      secondary: `${item.sourceCount} bağımsız işletmeci · ${item.observationCount} gözlem`,
+      secondary: `${item.sourceCount} kitap satış kanalı · ${item.observationCount} gözlem`,
     };
   }
 
   return {
-    primary: `${item.sourceCount} bağımsız işletmeci`,
+    primary: `${item.sourceCount} kitap satış kanalı`,
     secondary: `en iyi sıra #${item.bestRank}`,
   };
 }
@@ -574,9 +574,9 @@ export function BookIndexInsightView({
           />
         </label>
         <label className={styles.filterField}>
-          <span>Satış sitesi</span>
+          <span>Kitap satış kanalı</span>
           <select defaultValue={sourceCode} name="source">
-            <option value="">Tüm siteler</option>
+            <option value="">Tüm kitap satış kanalları</option>
             {sourceOptions.map((source) => (
               <option key={source.code} value={source.code}>
                 {source.name}
@@ -639,12 +639,12 @@ export function BookIndexInsightView({
         <span className={styles.eyebrow}>Nasıl hesaplanıyor?</span>
         <h2 id="insight-methodology">{definition.eyebrow} neyi gösterir?</h2>
         <p>
-          Bu görünüm satış adedi açıklamaz. Kaynakların başarılı snapshot
+          Bu görünüm satış adedi açıklamaz. Kitap satış kanallarının başarılı snapshot
           geçmişindeki sıralama ve görünürlük değişimlerinden türetilir.
         </p>
         <p>
-          Aynı satış işletmecisi bir kitaba birden fazla bağımsız kaynak kanıtı
-          kazandıramaz; işletmeci grubu bazında tekilleştirme korunur.
+          Aynı kitap satış kanalı bir kitap için birden fazla kez
+          sayılmaz; kitap satış kanalı bazında tekilleştirme korunur.
         </p>
         {definition.key === "longSellers" ? (
           <p>

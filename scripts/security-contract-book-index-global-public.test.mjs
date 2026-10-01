@@ -316,7 +316,7 @@ test("global bestseller page is indexable, discoverable and source-native", () =
   );
   contains(
     view,
-    "Her sitenin kendi sıra numarası",
+    "Her kitap satış kanalının kendi sıra numarası",
     "source rank methodology",
   );
   contains(view, "row.rank", "source rank rendering");
@@ -360,19 +360,19 @@ test("global preview copy avoids internal collector terminology", () => {
   notContains(overview, "native", "global overview card avoids English-native jargon");
   contains(
     overview,
-    "ilgili sitelerin kendi",
+    "ilgili kitap satış kanallarının kendi",
     "global overview card uses reader-facing Turkish wording",
   );
   notContains(view, "collector", "public global view avoids collector terminology");
   notContains(view, "snapshot", "public global view avoids snapshot terminology");
   contains(view, "Doğrulanmış güncel dünya verisi bekleniyor", "empty-state copy stays reader-facing");
   notContains(view, "kaynak bazında", "public global view avoids technical source wording");
-  contains(view, "site site", "global overview uses natural Turkish wording");
+  contains(view, "kitap satış kanalı bazında", "global overview uses public book sales channel wording");
   notContains(view, "Orijinal listeyi aç ↗", "global page omits source-level outbound list links");
   contains(view, "href={row.productUrl}", "individual book links remain available");
   contains(
     page,
-    "ilgili sitelerin kendi sıralamalarıyla",
+    "ilgili kitap satış kanallarının kendi sıralamalarıyla",
     "global metadata description uses reader-facing site wording",
   );
 });

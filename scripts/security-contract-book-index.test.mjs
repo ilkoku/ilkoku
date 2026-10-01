@@ -718,7 +718,7 @@ test("public Turkey table preserves source rank instead of inventing an İlkOku 
     "public model uses source-rank rows",
   );
   contains(rankTable, '<th scope="col">Sıra</th>', "plain Turkish rank heading");
-  contains(rankTable, '<th scope="col">Kaynak</th>', "source heading");
+  contains(rankTable, '<th scope="col">Kitap satış kanalı</th>', "book sales channel heading");
   contains(rankTable, "const showRank = !previousRow || previousRow.rank !== row.rank;", "repeated visible rank labels collapse by rank group");
   contains(
     rankTable,
@@ -739,9 +739,9 @@ test("Book Index public pages expose source-rank filters and overview keeps comp
   const overview = source("src/app/en-cok-satanlar/page.tsx");
 
   contains(rankTable, 'type="search"', "book/author search filter");
-  contains(rankTable, "<span>Kaynak</span>", "source filter");
+  contains(rankTable, "<span>Kitap satış kanalı</span>", "book sales channel filter");
   contains(rankTable, "<span>Sıra</span>", "rank filter");
-  contains(rankTable, "Tüm kaynaklar", "all-source option");
+  contains(rankTable, "Tüm kitap satış kanalları", "all-channel option");
   contains(rankTable, "Tüm sıralar", "all-rank option");
   contains(rankTable, "setQuery(\"\")", "filter reset");
   contains(
@@ -1909,7 +1909,7 @@ test("new releases public view keeps source and discovery filters", () => {
   const styles = source("src/features/book-index/public/BookIndexPublicView.module.css");
 
   contains(view, "<NewReleaseFilterTable rows={rows} />", "new releases server view delegates filtering");
-  contains(filter, 'option value="">Tüm siteler</option>', "source filter keeps all-sites option");
+  contains(filter, 'option value="">Tüm kitap satış kanalları</option>', "source filter keeps all-channel option");
   contains(filter, 'type="search"', "book author publisher search");
   contains(filter, "row.publisherName", "publisher participates in search");
   contains(filter, "row.sources.length < 2", "multi-source discovery filter");

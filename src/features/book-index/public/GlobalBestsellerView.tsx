@@ -55,8 +55,8 @@ export function GlobalBestsellerView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Dünya</span>
         <h1>Dünyada Çok Satan Kitaplar {currentYear}</h1>
         <p>
-          Farklı ülkelerdeki doğrulanmış çok satan kitap listelerini site site
-          gösteriyoruz. Her sitenin kendi sıra numarası ve kendi yayın dönemi
+          Farklı ülkelerdeki doğrulanmış çok satan kitap listelerini kitap satış kanalı bazında
+          gösteriyoruz. Her kitap satış kanalının kendi sıra numarası ve kendi yayın dönemi
           korunur; İlkOku ülkeler arasında ortak bir dünya sırası
           veya bileşik puan üretmez.
         </p>
@@ -73,15 +73,15 @@ export function GlobalBestsellerView({
       <section className={styles.section} id="global-ranking">
         <div className={styles.sectionHeading}>
           <div>
-            <span className={styles.eyebrow}>Ülkeler ve satış siteleri</span>
+            <span className={styles.eyebrow}>Ülkeler ve kitap satış kanalları</span>
             <h2>Dünya Çok Satan Kitaplar Sıralaması</h2>
             <p>
               Tüm ülke listeleri tek tabloda birleştirilir. Aynı sıra numarasındaki
               kitaplar aynı blokta gösterilir; sıra numarası yalnız bloğun ilk
               satırında yazılır. Kitap adının yanında parantez içinde Türkçe karşılığı
-              gösterilir. Türkiye kaynaklarında doğrulanmış bir yayın adı varsa o ad
+              gösterilir. Türkiye&apos;deki kitap satış kanallarında doğrulanmış bir yayın adı varsa o ad
               kullanılır; yoksa yalnızca başlığın Türkçe anlamı verilir. Türkçe anlamı
-              resmî yayın adı olarak değerlendirilmez. Her sitenin kendi sırası korunur.
+              resmî yayın adı olarak değerlendirilmez. Her kitap satış kanalının kendi sırası korunur.
             </p>
           </div>
         </div>
@@ -94,7 +94,7 @@ export function GlobalBestsellerView({
                   <th>Sıra</th>
                   <th>Kitap</th>
                   <th>Yazar</th>
-                  <th>Ülke / Kaynak</th>
+                  <th>Ülke / Kitap satış kanalı</th>
                   <th>Dönem</th>
                 </tr>
               </thead>
@@ -162,11 +162,11 @@ export function GlobalBestsellerView({
           De Bestseller 60 Hollanda, Kirjakauppaliitto Finlandiya, Publizon Pubhub Danimarka ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Danimarka satırları
           Publizon&apos;un haftalık e-kitap Top 10 listesini, Almanya satırları SPIEGEL&apos;in haftalık kurgu hardcover listesini temsil eder. Aynı sıra
           numarasındaki kayıtlar aynı blokta gruplanır; günlük, haftalık, aylık
-          veya güncel dönem bilgileri ilgili sitenin yayımladığı biçimde korunur.
+          veya güncel dönem bilgileri ilgili kitap satış kanalının yayımladığı biçimde korunur.
         </p>
         <p>
           Bu sayfa ülkeler arası satış adetlerini karşılaştırmaz ve tek bir
-          dünya satış sırası oluşturmaz. Soldaki sıra, her sitenin kendi yayımladığı
+          dünya satış sırası oluşturmaz. Soldaki sıra, her kitap satış kanalının kendi yayımladığı
           sıra numarasını temsil eder; aynı sıradaki farklı ülke kayıtları birlikte
           gösterilir.
         </p>

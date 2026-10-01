@@ -89,9 +89,9 @@ export function NewReleaseFilterTable({
     <>
       <div className={styles.newReleaseFilters} aria-label="Yeni çıkan kitap filtreleri">
         <label className={styles.newReleaseFilterField}>
-          <span>Satış sitesi</span>
+          <span>Kitap satış kanalı</span>
           <select value={sourceCode} onChange={(event) => setSourceCode(event.target.value)}>
-            <option value="">Tüm siteler</option>
+            <option value="">Tüm kitap satış kanalları</option>
             {sources.map((source) => (
               <option key={source.code} value={source.code}>
                 {source.name}
@@ -116,7 +116,7 @@ export function NewReleaseFilterTable({
             checked={multiSourceOnly}
             onChange={(event) => setMultiSourceOnly(event.target.checked)}
           />
-          <span>Birden fazla sitede görünenleri göster</span>
+          <span>Birden fazla kitap satış kanalında görünenleri göster</span>
         </label>
       </div>
 
@@ -131,7 +131,7 @@ export function NewReleaseFilterTable({
               <th scope="col">Kitap</th>
               <th scope="col">Yazar</th>
               <th scope="col">Yayınevi</th>
-              <th scope="col">Site · listedeki konum</th>
+              <th scope="col">Kitap satış kanalı · listedeki konum</th>
             </tr>
           </thead>
           <tbody>

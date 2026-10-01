@@ -12,7 +12,7 @@ function pageTitle() {
 }
 
 const description =
-  "Türkiye'deki kitap satış kaynaklarının çok satan listelerinde hangi kitabın hangi sırada yer aldığını karşılaştırın.";
+  "Türkiye'deki kitap satış kanallarının çok satan listelerinde hangi kitabın hangi sırada yer aldığını karşılaştırın.";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +56,7 @@ export default async function BestsellersPage() {
     },
     {
       ...createBookIndexItemListSchema({
-        name: "Türkiye Çok Satan Kaynak Sıralamaları · Güncel Görünüm",
+        name: "Türkiye Çok Satan Kitap Satış Kanalı Sıralamaları · Güncel Görünüm",
         url: `${baseUrl}${canonical}#turkey-preview`,
         items: previewItems,
       }),

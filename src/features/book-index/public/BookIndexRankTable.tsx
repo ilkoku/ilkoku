@@ -110,12 +110,12 @@ export function BookIndexRankTable({
         </label>
 
         <label className={styles.filterField}>
-          <span>Kaynak</span>
+          <span>Kitap satış kanalı</span>
           <select
             value={sourceCode}
             onChange={(event) => setSourceCode(event.target.value)}
           >
-            <option value="">Tüm kaynaklar</option>
+            <option value="">Tüm kitap satış kanalları</option>
             {sourceOptions.map((source) => (
               <option key={source.code} value={source.code}>
                 {source.name}
@@ -161,7 +161,7 @@ export function BookIndexRankTable({
               <th scope="col">Sıra</th>
               <th scope="col">Kitap</th>
               <th scope="col">Yazar</th>
-              <th scope="col">Kaynak</th>
+              <th scope="col">Kitap satış kanalı</th>
               <th scope="col">Hareket</th>
             </tr>
           </thead>

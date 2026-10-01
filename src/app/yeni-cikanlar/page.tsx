@@ -6,7 +6,7 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 const canonical = "/yeni-cikanlar";
 const description =
-  "Türkiye'deki kitap satış kaynaklarının kendi yeni çıkan ve yeni gelen listelerinde yer verdiği kitapları karşılaştırın.";
+  "Türkiye'deki kitap satış kanallarının kendi yeni çıkan ve yeni gelen listelerinde yer verdiği kitapları karşılaştırın.";
 
 export const revalidate = 300;
 

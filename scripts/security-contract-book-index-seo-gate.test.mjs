@@ -143,7 +143,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
     "Sıra",
     "Kitap",
     "Yazar",
-    "Kaynak",
+    "Kitap satış kanalı",
     "Hareket",
   ]) {
     contains(rankTable, `<th scope="col">${heading}</th>`, `ranking table heading: ${heading}`);

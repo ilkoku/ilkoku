@@ -25,7 +25,7 @@ function CloudflareSafeEmailLink() {
   const email = siteContact.generalEmail;
   const html = `<!--email_off--><a class="site-contact-footer__email" href="mailto:${email}" aria-label="Genel iletişim: ${email}">${email}</a><!--/email_off-->`;
 
-  return <span dangerouslySetInnerHTML={{ __html: html }} />;
+  return <span style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 function FooterSlogan({ value }: { value: string }) {

@@ -364,6 +364,12 @@ const TURKISH_TITLE_MEANINGS: Readonly<Record<string, string>> = {
   "Muskelmad": "Kas Beslenmesi",
   "Styx": "Styx",
 
+  "Systrarna på Sophiahemmet": "Sophiahemmet'teki Kız Kardeşler",
+  "Medusa": "Medusa",
+  "Blackout": "Karartma",
+  "Domino": "Domino",
+  "Slam": "Çamur",
+
   "Lähtölaukaus": "Başlangıç Atışı",
   "Kätketty": "Saklı",
   "Pronssiyö": "Bronz Gece",

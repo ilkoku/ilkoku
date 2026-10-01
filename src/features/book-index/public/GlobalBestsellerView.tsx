@@ -112,7 +112,8 @@ export function GlobalBestsellerView({
                         {startsRankGroup ? row.rank : ""}
                       </td>
                       <td className={styles.titleCell}>
-                        {row.listCode === "pubhub-dk-ebooks-weekly" ? (
+                        {(row.listCode === "pubhub-dk-ebooks-weekly" ||
+                          row.listCode === "forlaggare-se-fiction-weekly") ? (
                           <strong>
                             {row.title}
                             {row.turkishTitle ? ` (${row.turkishTitle})` : ""}
@@ -159,8 +160,10 @@ export function GlobalBestsellerView({
         <p>
           Amazon ABD, Amazon UK, Amazon Fransa, Amazon İspanya, Amazon Kanada,
           Amazon Brezilya, IBS İtalya, Rakuten Books Japonya, Kyobo Güney Kore, Readings Avustralya,
-          De Bestseller 60 Hollanda, Kirjakauppaliitto Finlandiya, Publizon Pubhub Danimarka ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Danimarka satırları
-          Publizon&apos;un haftalık e-kitap Top 10 listesini, Almanya satırları SPIEGEL&apos;in haftalık kurgu hardcover listesini temsil eder. Aynı sıra
+          De Bestseller 60 Hollanda, Kirjakauppaliitto Finlandiya, Publizon Pubhub Danimarka,
+          Svenska Förläggareföreningen İsveç ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Danimarka satırları
+          Publizon&apos;un haftalık e-kitap Top 10 listesini, İsveç satırları Svenska Förläggareföreningen&apos;in
+          haftalık kurgu Top 5 listesini, Almanya satırları SPIEGEL&apos;in haftalık kurgu hardcover listesini temsil eder. Aynı sıra
           numarasındaki kayıtlar aynı blokta gruplanır; günlük, haftalık, aylık
           veya güncel dönem bilgileri ilgili kitap satış kanalının yayımladığı biçimde korunur.
         </p>

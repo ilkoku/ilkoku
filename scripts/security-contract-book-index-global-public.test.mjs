@@ -173,12 +173,14 @@ test("Netherlands Bestseller 60 collector is source-native and public only after
 });
 
 
-test("Denmark Pubhub ebook collector is source-native and stays off the public world table until live verification", () => {
+test("Denmark Pubhub ebook collector is source-native and public only after live verification and Turkish meanings", () => {
   const adapter = source("src/lib/book-index/sources/pubhub-dk.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const model = source("src/lib/book-index/global-public-read-model.ts");
+  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
+  const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
 
   contains(adapter, 'const EXPECTED_BOOKS = 10', "Denmark exact Top 10 guard");
   contains(adapter, "GridView_Bestseller", "Denmark ebook grid anchor");
@@ -196,10 +198,20 @@ test("Denmark Pubhub ebook collector is source-native and stays off the public w
   contains(lists, 'categoryKey: "ebooks"', "Denmark ebook category");
   contains(lists, 'period: "weekly"', "Denmark weekly period");
   contains(lists, "maxRank: 10", "Denmark Top 10 bound");
-  notContains(
+  contains(
     model,
     '"pubhub-dk-ebooks-weekly"',
-    "Denmark stays off the public world table until live collector verification and Turkish title meanings are ready",
+    "Denmark is public after live verification and Turkish meanings are ready",
+  );
+  contains(
+    meanings,
+    '"Tandfeen": "Diş Perisi"',
+    "Denmark Turkish meaning registry",
+  );
+  contains(
+    view,
+    'row.listCode === "pubhub-dk-ebooks-weekly"',
+    "Denmark titles stay non-clickable because Pubhub exposes no verified product URL",
   );
 });
 

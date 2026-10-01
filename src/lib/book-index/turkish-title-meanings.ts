@@ -354,6 +354,16 @@ const TURKISH_TITLE_MEANINGS: Readonly<Record<string, string>> = {
   "De beer en de piano": "Ayı ve Piyano",
   "Rust, Regelmaat, Recepten": "Dinlenme, Düzen, Tarifler",
 
+  "Tandfeen": "Diş Perisi",
+  "1%": "Yüzde 1",
+  "Ti vilde heste": "On Vahşi At",
+  "Tata": "Tata",
+  "Fra det dybe råber jeg": "Derinlerden Haykırıyorum",
+  "Skyggen af et bedrag": "Bir Aldatmacanın Gölgesi",
+  "Sommerfugleøen": "Kelebek Adası",
+  "Muskelmad": "Kas Beslenmesi",
+  "Styx": "Styx",
+
   "Lähtölaukaus": "Başlangıç Atışı",
   "Kätketty": "Saklı",
   "Pronssiyö": "Bronz Gece",

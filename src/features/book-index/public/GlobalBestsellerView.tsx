@@ -112,16 +112,23 @@ export function GlobalBestsellerView({
                         {startsRankGroup ? row.rank : ""}
                       </td>
                       <td className={styles.titleCell}>
-                        <a
-                          href={row.productUrl}
-                          rel="noopener noreferrer"
-                          target="_blank"
-                        >
+                        {row.listCode === "pubhub-dk-ebooks-weekly" ? (
                           <strong>
                             {row.title}
                             {row.turkishTitle ? ` (${row.turkishTitle})` : ""}
                           </strong>
-                        </a>
+                        ) : (
+                          <a
+                            href={row.productUrl}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            <strong>
+                              {row.title}
+                              {row.turkishTitle ? ` (${row.turkishTitle})` : ""}
+                            </strong>
+                          </a>
+                        )}
                       </td>
                       <td>{row.authorName ?? "Yazar bilgisi doğrulanmadı"}</td>
                       <td className={styles.sourceCell}>{row.sourceName}</td>
@@ -152,8 +159,8 @@ export function GlobalBestsellerView({
         <p>
           Amazon ABD, Amazon UK, Amazon Fransa, Amazon İspanya, Amazon Kanada,
           Amazon Brezilya, IBS İtalya, Rakuten Books Japonya, Kyobo Güney Kore, Readings Avustralya,
-          De Bestseller 60 Hollanda, Kirjakauppaliitto Finlandiya ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Almanya satırları
-          SPIEGEL&apos;in haftalık kurgu hardcover listesini temsil eder. Aynı sıra
+          De Bestseller 60 Hollanda, Kirjakauppaliitto Finlandiya, Publizon Pubhub Danimarka ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Danimarka satırları
+          Publizon&apos;un haftalık e-kitap Top 10 listesini, Almanya satırları SPIEGEL&apos;in haftalık kurgu hardcover listesini temsil eder. Aynı sıra
           numarasındaki kayıtlar aynı blokta gruplanır; günlük, haftalık, aylık
           veya güncel dönem bilgileri ilgili sitenin yayımladığı biçimde korunur.
         </p>

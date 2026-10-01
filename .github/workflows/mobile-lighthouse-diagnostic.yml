@@ -83,4 +83,18 @@ jobs:
           const requests=a["network-requests"]?.details?.items ?? [];
           const hero=requests.filter(x=>String(x.url||"").includes("ilkoku-hero-user-final"));
           console.log("HERO_REQUESTS|"+JSON.stringify(hero));
+          for (const [id,audit] of Object.entries(a)) {
+            if (/render.block|unused.css|unused.javascript|image.delivery|network.dependency/i.test(id+" "+(audit.title||""))) {
+              console.log("PERF_AUDIT|"+id+"|"+JSON.stringify({
+                title:audit.title,
+                score:audit.score,
+                displayValue:audit.displayValue,
+                details:audit.details,
+              }).slice(0,24000));
+            }
+          }
+          const cssRequests=requests
+            .filter(x=>String(x.mimeType||"").includes("css") || String(x.resourceType||"")==="Stylesheet")
+            .map(x=>({url:x.url,transferSize:x.transferSize,resourceSize:x.resourceSize,start:x.networkRequestTime,end:x.networkEndTime,priority:x.priority,statusCode:x.statusCode}));
+          console.log("CSS_REQUESTS|"+JSON.stringify(cssRequests));
           NODE

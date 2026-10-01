@@ -198,7 +198,7 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   contains(view, "Liste yükselişi", "riser summary uses public list wording");
   contains(
     view,
-    "listede yükseldi · tüm güncel listelerde en iyi sıra",
+    "kitap satış kanalında yükseldi · tüm güncel kitap satış kanallarındaki en iyi sıra",
     "riser card distinguishes improving-list evidence from the all-current-list tie-breaker",
   );
   contains(view, "En geniş görünürlük", "multi-source summary metric");

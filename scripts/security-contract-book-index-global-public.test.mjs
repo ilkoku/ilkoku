@@ -52,7 +52,8 @@ test("global bestseller public page reads only the approved source lists", () =>
 });
 
 
-test("Spain research stays fail-closed while Canada Globe and Mail Top 10 is public after production verification", () => {
+test("Spain ABC GfK collector stays private while Canada Globe and Mail Top 10 remains public", () => {
+  const spainAdapter = source("src/lib/book-index/sources/abc-gfk-es.ts");
   const adapter = source("src/lib/book-index/sources/globe-mail-ca.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -61,12 +62,19 @@ test("Spain research stays fail-closed while Canada Globe and Mail Top 10 is pub
   const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
   const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
 
-  contains(sources, 'code: "abc-gfk-es"', "Spain research source registry");
+  contains(spainAdapter, 'const EXPECTED_BOOKS = 10', "Spain exact Top 10 guard");
+  contains(spainAdapter, "libros-vendidos-ficcion-semana-", "Spain weekly fiction article discovery");
+  contains(spainAdapter, "BOOK_INDEX_ABC_GFK_ES_LATEST_ARTICLE_NOT_FOUND", "Spain article discovery guard");
+  contains(spainAdapter, "BOOK_INDEX_ABC_GFK_ES_RANK_NOT_FOUND", "Spain rank presence guard");
+  contains(spainAdapter, "BOOK_INDEX_ABC_GFK_ES_RANK_ORDER_MISMATCH", "Spain rank order guard");
+  contains(spainAdapter, "BOOK_INDEX_ABC_GFK_ES_DUPLICATE_IDENTITY", "Spain duplicate identity guard");
+  contains(collector, "abcGfkSpainBookIndexAdapter", "Spain collector registration");
+  contains(sources, 'code: "abc-gfk-es"', "Spain source registry");
   contains(sources, 'market: "ES"', "Spain market code");
-  contains(lists, 'code: "abc-gfk-es-fiction-weekly-research"', "Spain research list");
-  contains(lists, "collectionEveryMinutes: null", "Spain research list is unscheduled");
-  contains(lists, "enabled: false", "Spain research list is disabled");
-  notContains(model, '"abc-gfk-es-fiction-weekly-research"', "Spain is not public before transport verification");
+  contains(lists, 'code: "abc-gfk-es-fiction-weekly"', "Spain private weekly list");
+  contains(lists, "collectionEveryMinutes: 10080", "Spain weekly collection cadence");
+  contains(lists, "enabled: true", "Spain private collector is enabled");
+  notContains(model, '"abc-gfk-es-fiction-weekly"', "Spain is not public before author/title enrichment and live verification");
 
   contains(adapter, 'const EXPECTED_BOOKS = 10', "Canada exact Top 10 guard");
   contains(adapter, "ARTICLE_PATH_PREFIX", "Canada latest weekly article discovery");

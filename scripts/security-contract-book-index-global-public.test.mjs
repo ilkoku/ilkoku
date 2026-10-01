@@ -216,6 +216,32 @@ test("Denmark Pubhub ebook collector is source-native and public only after live
 });
 
 
+test("Sweden Forlaggare weekly fiction collector is source-native and private until live verification", () => {
+  const adapter = source("src/lib/book-index/sources/forlaggare-se.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 5', "Sweden exact Top 5 guard");
+  contains(adapter, "Topplista: Skönlitteratur", "Sweden fiction section anchor");
+  contains(adapter, "jet-listing-grid--13066", "Sweden desktop fiction grid anchor");
+  contains(adapter, "BOOK_INDEX_FORLAGGARE_SE_RANK_ORDER_MISMATCH", "Sweden rank guard");
+  contains(adapter, "BOOK_INDEX_FORLAGGARE_SE_DUPLICATE_IDENTITY", "Sweden identity guard");
+  contains(collector, "forlaggareSwedenBookIndexAdapter", "Sweden collector registration");
+  contains(sources, 'code: "forlaggare-se"', "Sweden source registry");
+  contains(sources, 'market: "SE"', "Sweden market code");
+  contains(lists, 'code: "forlaggare-se-fiction-weekly"', "Sweden weekly fiction list registry");
+  contains(lists, 'categoryKey: "fiction"', "Sweden fiction category");
+  contains(lists, "maxRank: 5", "Sweden Top 5 bound");
+  notContains(
+    model,
+    '"forlaggare-se-fiction-weekly"',
+    "Sweden stays private until live verification and Turkish title meanings are ready",
+  );
+});
+
+
 test("Finland Kirjakauppaliitto collector is source-native and public only after Turkish title meanings are ready", () => {
   const adapter = source("src/lib/book-index/sources/kirjakauppaliitto-fi.ts");
   const collector = source("src/lib/book-index/collector.ts");

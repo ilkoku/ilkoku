@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "DK";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "DK" | "SE";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "DK";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "DK" | "SE";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -253,6 +253,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     includeInTurkeyIndex: false,
     independenceGroup: "pubhub-dk",
     operatorName: "Publizon A/S",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "forlaggare-se",
+    name: "Svenska Förläggareföreningen İsveç · Kurgu",
+    market: "SE",
+    countryCode: "SE",
+    baseUrl: "https://forlaggare.se",
+    includeInTurkeyIndex: false,
+    independenceGroup: "forlaggare-se",
+    operatorName: "Svenska Förläggareföreningen",
     phase: "phase_2",
     collectionState: "ready",
   },

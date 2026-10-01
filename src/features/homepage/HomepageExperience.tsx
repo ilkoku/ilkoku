@@ -138,7 +138,7 @@ export default async function HomepageExperience() {
             <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
             <div className="nx-hero__actions"><Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
           </div>
-          <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority sizes="(max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
+          <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" unoptimized sizes="(max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
         </div>
         <div className="nx-shell nx-hero__proof" aria-label="İlkOku temel özellikleri"><span><LandingIcon name="shield" /> Sürüm geçmişi</span><span><LandingIcon name="editor" /> Editör incelemesi</span><span><LandingIcon name="publisher" /> Yayınevi keşfi</span></div>
       </section>

@@ -1,0 +1,49 @@
+name: Mobile Lighthouse post-LCP diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mobile-lighthouse-post-lcp-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run mobile Lighthouse against production
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y chromium-browser jq >/dev/null 2>&1 || sudo apt-get install -y chromium jq >/dev/null
+          CHROME_BIN="$(command -v chromium-browser || command -v chromium || command -v google-chrome || true)"
+          echo "Chrome: $CHROME_BIN"
+          npx --yes lighthouse@12.8.2 https://ilkoku.com/             --quiet             --chrome-path="$CHROME_BIN"             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"             --output=json             --output-path=/tmp/lighthouse.json
+          node <<'NODE'
+          const fs = require('fs');
+          const d = JSON.parse(fs.readFileSync('/tmp/lighthouse.json','utf8'));
+          const a = d.audits || {};
+          const c = d.categories || {};
+          const lcpItem = a['largest-contentful-paint-element']?.details?.items?.[0] || null;
+          const details = {
+            performance: c.performance?.score,
+            accessibility: c.accessibility?.score,
+            bestPractices: c['best-practices']?.score,
+            seo: c.seo?.score,
+            FCP: a['first-contentful-paint']?.displayValue,
+            LCP: a['largest-contentful-paint']?.displayValue,
+            TBT: a['total-blocking-time']?.displayValue,
+            CLS: a['cumulative-layout-shift']?.displayValue,
+            SpeedIndex: a['speed-index']?.displayValue,
+            TTFB: a['server-response-time']?.displayValue,
+            LCPElement: lcpItem,
+            renderBlocking: a['render-blocking-resources']?.displayValue || null,
+            unusedJs: a['unused-javascript']?.displayValue || null,
+            unusedCss: a['unused-css-rules']?.displayValue || null,
+          };
+          console.log("LIGHTHOUSE_RESULT|" + JSON.stringify(details));
+          NODE

@@ -30,18 +30,20 @@ function normalizeAuthorCandidate(value: string | undefined) {
     .trim();
 }
 
-function extractAuthorName(segment: string) {
+function extractAuthorName(postEntry: string) {
+  const localText = visibleText(postEntry).slice(0, 500);
   const patterns = [
-    /firma\s+como\s+([^,.;]+?)(?=\s*,|[.;])/iu,
-    /,\s*de\s+([^,.;]+?)(?=[.;])/iu,
-    /La\s+escritora(?:\s+[\p{L}\-]+)*\s+([^,.;]+?)\s+ha\b/iu,
-    /La\s+francesa\s+([^,.;]+?)\s+explora\b/iu,
-    /\)\.\s*([^,.;]+?)\s+nos\b/iu,
-    /\)\.\s*([^,.;]+?)(?=\s*,\s*autora\b)/iu,
+    /^\.\s*Vuelve[^.]{0,180}?\bfirma\s+como\s+([^,.;]+?)(?=\s*,)/iu,
+    /^\.\s*La\s+escritora(?:\s+[\p{Ll}\-]+)?\s+([A-ZÁÉÍÓÚÑÜ][^,.;]+?)\s+ha\b/u,
+    /^\.\s*La\s+francesa\s+([A-ZÁÉÍÓÚÑÜ][^,.;]+?)\s+explora\b/u,
+    /^\.\s*([A-ZÁÉÍÓÚÑÜ][^,.;]+?)\s+nos\b/u,
+    /^\.\s*([A-ZÁÉÍÓÚÑÜ][^,.;]+?)(?=\s*,\s*autora\b)/u,
+    /^,\s*de\s+([^,.;]+?)(?=\.\s|,\s)/iu,
+    /^,\s*de\s+(.+?)(?=\s+[A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+\s+[a-záéíóúñü])/u,
   ];
 
   for (const pattern of patterns) {
-    const authorName = normalizeAuthorCandidate(segment.match(pattern)?.[1]);
+    const authorName = normalizeAuthorCandidate(localText.match(pattern)?.[1]);
     if (authorName) return authorName;
   }
 
@@ -113,7 +115,11 @@ export function parseAbcGfkSpainWeeklyFiction(
             nextRankIndex > currentIndex ? nextRankIndex : text.length,
           )
         : "";
-    const authorName = extractAuthorName(segment);
+    const postEntry =
+      segment.length >= match[0].length
+        ? segment.slice(match[0].length)
+        : "";
+    const authorName = extractAuthorName(postEntry);
 
     if (!title || !publisherName || !authorName) {
       throw new Error(`BOOK_INDEX_ABC_GFK_ES_INVALID_ITEM:${rank}`);

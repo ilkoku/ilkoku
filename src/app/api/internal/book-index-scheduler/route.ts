@@ -25,7 +25,6 @@ const ALLOWED_GITHUB_EVENTS = new Set([
   "workflow_dispatch",
   "workflow_run",
   "schedule",
-  "push",
 ]);
 
 

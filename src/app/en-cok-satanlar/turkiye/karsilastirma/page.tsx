@@ -11,7 +11,7 @@ const canonical = "/en-cok-satanlar/turkiye/karsilastirma";
 
 const title = "En Çok Satanlar Karşılaştırma | İlkOku";
 const description =
-  "Türkiye'deki kitap satış sitelerinin en çok satanlar listelerini yan yana karşılaştırın. 2–4 site seçerek aynı sıradaki kitapları inceleyin.";
+  "Türkiye'deki kitap satış kanallarının en çok satanlar listelerini yan yana karşılaştırın. 2–4 kitap satış kanalı seçerek aynı sıradaki kitapları inceleyin.";
 
 export const dynamic = "force-dynamic";
 

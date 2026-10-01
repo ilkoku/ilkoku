@@ -11,49 +11,24 @@ permissions:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Profile mobile JavaScript cost
+      - name: Identify injected 1q6z resources
         shell: bash
         run: |
           set -Eeuo pipefail
-          sudo apt-get update >/dev/null
-          sudo apt-get install -y chromium-browser jq >/dev/null 2>&1 || sudo apt-get install -y chromium jq >/dev/null
-          CHROME_BIN="$(command -v chromium-browser || command -v chromium || command -v google-chrome || true)"
-          npx --yes lighthouse@12.8.2 https://ilkoku.com/ \
-            --quiet \
-            --chrome-path="$CHROME_BIN" \
-            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
-            --output=json \
-            --output-path=/tmp/lighthouse.json
-          node <<'NODE'
-          const fs=require('fs');
-          const d=JSON.parse(fs.readFileSync('/tmp/lighthouse.json','utf8'));
-          const a=d.audits||{};
-          const unused=(a['unused-javascript']?.details?.items||[])
-            .map(x=>({url:x.url,totalBytes:x.totalBytes,wastedBytes:x.wastedBytes,wastedPercent:x.wastedPercent}))
-            .sort((x,y)=>(y.wastedBytes||0)-(x.wastedBytes||0))
-            .slice(0,20);
-          const longTasks=(a['long-tasks']?.details?.items||[])
-            .map(x=>({url:x.url,duration:x.duration,startTime:x.startTime}))
-            .sort((x,y)=>(y.duration||0)-(x.duration||0))
-            .slice(0,20);
-          const bootup=(a['bootup-time']?.details?.items||[])
-            .map(x=>({url:x.url,total:x.total,scripting:x.scripting,scriptParseCompile:x.scriptParseCompile}))
-            .sort((x,y)=>(y.total||0)-(x.total||0))
-            .slice(0,20);
-          const blocking=(a['render-blocking-resources']?.details?.items||[])
-            .map(x=>({url:x.url,totalBytes:x.totalBytes,wastedMs:x.wastedMs}))
-            .sort((x,y)=>(y.wastedMs||0)-(x.wastedMs||0))
-            .slice(0,20);
-          console.log("JS_PROFILE|"+JSON.stringify({
-            performance:d.categories?.performance?.score,
-            LCP:a['largest-contentful-paint']?.displayValue,
-            TBT:a['total-blocking-time']?.displayValue,
-            unused,
-            longTasks,
-            bootup,
-            blocking,
-          }));
-          NODE
+          curl -sS -L --max-time 20 https://ilkoku.com/ -o /tmp/home.html
+          echo "=== HTML REFERENCES ==="
+          grep -oE 'https?://[^"'\'' <>]*1q6z[^"'\'' <>]*|/1q6z[^"'\'' <>]*' /tmp/home.html | head -50 || true
+          echo "=== HTML CONTEXT ==="
+          grep -n -C 2 '1q6z' /tmp/home.html | head -100 || true
+          base="$(grep -oE '/1q6z/[^"'\'' <>]*|/1q6z/' /tmp/home.html | head -1 || true)"
+          echo "selected=$base"
+          if [ -n "$base" ]; then
+            echo "=== RESOURCE HEADERS ==="
+            curl -sS -L --max-time 20 -D /tmp/rh -o /tmp/rbody "https://ilkoku.com$base"
+            grep -Ei '^(HTTP/|content-type:|content-length:|cache-control:|server:|x-|cf-)' /tmp/rh || true
+            echo "=== RESOURCE BODY PREFIX ==="
+            head -c 1200 /tmp/rbody | tr '\n' ' '; echo
+          fi

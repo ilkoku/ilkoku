@@ -125,6 +125,22 @@ jobs:
             audit_url "$url"
           done
 
+          echo "=== REPEAT BODY STABILITY ==="
+          for url in 'https://ilkoku.com/' 'https://ilkoku.com/yazarlar-icin/kurgu/roman'; do
+            b1="$(mktemp)"; b2="$(mktemp)"
+            curl --silent --show-error --location --max-time 30 --user-agent "$UA" --header 'Accept-Encoding: identity' --output "$b1" "$url"
+            sleep 1
+            curl --silent --show-error --location --max-time 30 --user-agent "$UA" --header 'Accept-Encoding: identity' --output "$b2" "$url"
+            h1="$(sha256sum "$b1" | awk '{print $1}')"
+            h2="$(sha256sum "$b2" | awk '{print $1}')"
+            echo "url=$url sha1=$h1 sha2=$h2 identical=$([[ "$h1" == "$h2" ]] && echo yes || echo no)"
+            echo "email-marker-1:"
+            grep -Eo 'email-protection#[0-9a-f]+|data-cfemail="[0-9a-f]+"' "$b1" | head -10 || true
+            echo "email-marker-2:"
+            grep -Eo 'email-protection#[0-9a-f]+|data-cfemail="[0-9a-f]+"' "$b2" | head -10 || true
+            rm -f "$b1" "$b2"
+          done
+
           echo "=== ACCEPT-ENCODING MATRIX ==="
           for url in 'https://ilkoku.com/' 'https://ilkoku.com/yazarlar-icin/kurgu/roman'; do
             for encoding in 'identity' 'gzip' 'br' 'gzip, br' 'gzip, br, zstd'; do

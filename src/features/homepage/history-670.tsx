@@ -84,7 +84,7 @@ export default async function History670() {
           {historyCards.map((card) => (
             <article className="nx-era" key={`${card.period}-${card.title}`}>
               <div className="nx-era__image">
-                <img src={card.image} alt={card.alt} />
+                <img src={card.image} alt={card.alt} loading="lazy" decoding="async" />
               </div>
               <div className="nx-era__content">
                 <small>{card.period}</small>
@@ -103,6 +103,8 @@ export default async function History670() {
                 className="nx-now__scene"
                 src="/api/site-assets/homepage-history/2026"
                 alt="2026 İlkOku’da bir eserin yazardan okura, editöre ve yayınevine uzanan yolculuğunu betimleyen illüstrasyon"
+                loading="lazy"
+                decoding="async"
               />
             </div>
             <div className="nx-now__story">

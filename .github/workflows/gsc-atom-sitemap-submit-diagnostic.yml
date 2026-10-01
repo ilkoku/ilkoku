@@ -84,8 +84,7 @@ jobs:
           console.log("Submit status:", submitResponse.status);
           if (!submitResponse.ok) {
             console.log("Submit response:", submitText.slice(0, 2000));
-            process.exitCode = 2;
-            return;
+            process.exit(2);
           }
 
           const list = await json(

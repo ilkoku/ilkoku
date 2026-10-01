@@ -38,8 +38,8 @@ function extractAuthorName(postEntry: string) {
     /^\.\s*La\s+francesa\s+([A-ZÁÉÍÓÚÑÜ][^,.;]+?)\s+explora\b/u,
     /^\.\s*([A-ZÁÉÍÓÚÑÜ][^,.;]+?)\s+nos\b/u,
     /^\.\s*([A-ZÁÉÍÓÚÑÜ][^,.;]+?)(?=\s*,\s*autora\b)/u,
-    /^,\s*de\s+([^,.;]+?)(?=\.\s|,\s)/iu,
     /^,\s*de\s+(.+?)(?=\s+[A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+\s+[a-záéíóúñü])/u,
+    /^,\s*de\s+([^,.;]+?)(?=\.\s|,\s)/iu,
   ];
 
   for (const pattern of patterns) {

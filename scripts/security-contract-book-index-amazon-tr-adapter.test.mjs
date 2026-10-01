@@ -19,6 +19,8 @@ test("Amazon Türkiye verified Top 30 lists are public and non-composite", () =>
   contains(adapter, 'const NEW_RELEASES_PATH = "/gp/new-releases/books"', "new-release path");
   contains(adapter, "BOOK_INDEX_AMAZON_TR_TOP30_MISMATCH", "exact Top 30 guard");
   contains(adapter, "zg-bdg-text", "native rank parser");
+  contains(adapter, "normalizeAmazonTrAuthor", "author label cleanup");
+  contains(adapter, "\\[\\s*yazar\\s*\\]", "bracketed author label cleanup");
   contains(collector, "amazonTrBookIndexAdapter", "collector registration");
   contains(
     sources,

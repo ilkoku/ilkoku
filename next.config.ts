@@ -83,15 +83,26 @@ const nextConfig: NextConfig = {
     },
   },
   async headers() {
-    return searchExcludedRouteHeaders.map((source) => ({
-      source,
-      headers: [
-        {
-          key: "X-Robots-Tag",
-          value: "noindex, nofollow, noarchive",
-        },
-      ],
-    }));
+    return [
+      ...searchExcludedRouteHeaders.map((source) => ({
+        source,
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive",
+          },
+        ],
+      })),
+      {
+        source: "/landing/ilkoku-hero-user-final.webp",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
   },
   async redirects() {
     return [

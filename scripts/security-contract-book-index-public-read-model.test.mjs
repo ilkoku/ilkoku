@@ -449,6 +449,7 @@ test("Yeni Çıkanlar page is indexable and remains source-native", () => {
   const page = source("src/app/yeni-cikanlar/page.tsx");
   const view = source("src/features/book-index/public/NewReleasePublicView.tsx");
   const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
+  const filter = source("src/features/book-index/public/NewReleaseFilterTable.tsx");
   const model = source("src/lib/book-index/new-releases.ts");
   const sitemap = source("src/app/sitemap.ts");
 
@@ -469,13 +470,33 @@ test("Yeni Çıkanlar page is indexable and remains source-native", () => {
   );
   contains(
     view,
-    "Kayıtlar kitap adına göre alfabetik gösterilir.",
-    "Yeni Çıkanlar uses a neutral visible order",
+    "Kayıtlar kaynakların kendi yeni çıkanlar listelerindeki konuma göre",
+    "Yeni Çıkanlar explains native source-position ordering",
+  );
+  contains(
+    view,
+    "Bir satış sitesi seçildiğinde o sitenin kendi liste",
+    "Yeni Çıkanlar explains per-source native ordering",
   );
   contains(
     model,
-    'a.title.localeCompare(b.title, "tr")',
-    "new-release rows use title as the primary cross-source sort",
+    "(aPrimary?.position ?? Number.MAX_SAFE_INTEGER)",
+    "combined new-release rows use native source position as the primary sort",
+  );
+  contains(
+    model,
+    "a.position - b.position",
+    "multi-source labels keep their native positions ordered",
+  );
+  contains(
+    filter,
+    "a.sources.find((source) => source.sourceCode === sourceCode)",
+    "source filter resolves the selected source position",
+  );
+  contains(
+    filter,
+    "(aSource?.position ?? Number.MAX_SAFE_INTEGER)",
+    "source-filtered rows preserve the selected source native order",
   );
   notContains(
     model,

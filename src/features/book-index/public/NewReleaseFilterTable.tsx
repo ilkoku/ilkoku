@@ -38,28 +38,52 @@ export function NewReleaseFilterTable({
 
   const normalizedQuery = normalize(query.trim());
 
-  const filteredRows = useMemo(
-    () =>
-      rows.filter((row) => {
-        if (
-          sourceCode
-          && !row.sources.some((source) => source.sourceCode === sourceCode)
-        ) {
-          return false;
-        }
+  const filteredRows = useMemo(() => {
+    const filtered = rows.filter((row) => {
+      if (
+        sourceCode
+        && !row.sources.some((source) => source.sourceCode === sourceCode)
+      ) {
+        return false;
+      }
 
-        if (multiSourceOnly && row.sources.length < 2) return false;
+      if (multiSourceOnly && row.sources.length < 2) return false;
 
-        if (!normalizedQuery) return true;
+      if (!normalizedQuery) return true;
 
-        return [
-          row.title,
-          row.authorName,
-          row.publisherName,
-        ].some((value) => normalize(value).includes(normalizedQuery));
-      }),
-    [rows, sourceCode, multiSourceOnly, normalizedQuery],
-  );
+      return [
+        row.title,
+        row.authorName,
+        row.publisherName,
+      ].some((value) => normalize(value).includes(normalizedQuery));
+    });
+
+    return filtered.sort((a, b) => {
+      if (sourceCode) {
+        const aSource = a.sources.find((source) => source.sourceCode === sourceCode);
+        const bSource = b.sources.find((source) => source.sourceCode === sourceCode);
+
+        return (
+          (aSource?.position ?? Number.MAX_SAFE_INTEGER)
+          - (bSource?.position ?? Number.MAX_SAFE_INTEGER)
+          || a.title.localeCompare(b.title, "tr")
+        );
+      }
+
+      const aPrimary = a.sources[0];
+      const bPrimary = b.sources[0];
+
+      return (
+        (aPrimary?.position ?? Number.MAX_SAFE_INTEGER)
+        - (bPrimary?.position ?? Number.MAX_SAFE_INTEGER)
+        || (aPrimary?.sourceName ?? "").localeCompare(
+          bPrimary?.sourceName ?? "",
+          "tr",
+        )
+        || a.title.localeCompare(b.title, "tr")
+      );
+    });
+  }, [rows, sourceCode, multiSourceOnly, normalizedQuery]);
 
   return (
     <>

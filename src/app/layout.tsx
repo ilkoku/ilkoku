@@ -134,6 +134,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             value: "7861fc39-02be-4052-92cd-f2e8a06e7ea2",
           }}
         />
+        <meta
+          name="mitgo-verification"
+          content="d6543479-6d21-4296-adab-845a368efdd2"
+        />
       </head>
       <body>
         <Script

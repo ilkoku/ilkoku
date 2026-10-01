@@ -1,0 +1,103 @@
+name: Homepage production coverage diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/homepage-production-coverage-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: Measure mobile CSS and JS coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Measure production homepage coverage
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node --input-type=module <<'NODE'
+          import { chromium, devices } from "@playwright/test";
+
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({
+            ...devices["Moto G4"],
+            serviceWorkers: "block",
+          });
+          const page = await context.newPage();
+
+          const insecure = new Set();
+          page.on("request", (req) => {
+            if (req.url().startsWith("http://")) insecure.add(req.url());
+          });
+
+          await page.coverage.startCSSCoverage({ resetOnNavigation: false });
+          await page.coverage.startJSCoverage({ resetOnNavigation: false });
+
+          const response = await page.goto("https://ilkoku.com/", {
+            waitUntil: "networkidle",
+            timeout: 60000,
+          });
+          console.log("PAGE_STATUS", response?.status());
+          await page.waitForTimeout(1500);
+
+          const css = await page.coverage.stopCSSCoverage();
+          const js = await page.coverage.stopJSCoverage();
+
+          const coveredBytes = (ranges) =>
+            ranges.reduce((sum, range) => sum + Math.max(0, range.end - range.start), 0);
+
+          const cssRows = css.map((entry) => {
+            const total = Buffer.byteLength(entry.text || "", "utf8");
+            const used = Math.min(total, coveredBytes(entry.ranges || []));
+            return {
+              url: entry.url || "(inline)",
+              total,
+              used,
+              unused: Math.max(0, total - used),
+              usedPct: total ? Math.round((used / total) * 1000) / 10 : 0,
+            };
+          }).sort((a,b) => b.unused - a.unused);
+
+          const jsRows = js.map((entry) => {
+            const total = Buffer.byteLength(entry.text || "", "utf8");
+            const used = Math.min(total, coveredBytes(entry.ranges || []));
+            return {
+              url: entry.url || "(inline)",
+              total,
+              used,
+              unused: Math.max(0, total - used),
+              usedPct: total ? Math.round((used / total) * 1000) / 10 : 0,
+            };
+          }).sort((a,b) => b.unused - a.unused);
+
+          console.log("=== CSS COVERAGE TOP UNUSED ===");
+          for (const row of cssRows.slice(0, 30)) console.log(JSON.stringify(row));
+          console.log("=== JS COVERAGE TOP UNUSED ===");
+          for (const row of jsRows.slice(0, 40)) console.log(JSON.stringify(row));
+          console.log("=== INSECURE REQUESTS ===");
+          if (insecure.size === 0) console.log("NONE");
+          else for (const url of insecure) console.log(url);
+
+          const cssTotal = cssRows.reduce((s,r)=>s+r.total,0);
+          const cssUnused = cssRows.reduce((s,r)=>s+r.unused,0);
+          const jsTotal = jsRows.reduce((s,r)=>s+r.total,0);
+          const jsUnused = jsRows.reduce((s,r)=>s+r.unused,0);
+          console.log("COVERAGE_SUMMARY", JSON.stringify({cssTotal,cssUnused,jsTotal,jsUnused,insecureRequests:insecure.size}));
+
+          await browser.close();
+          NODE

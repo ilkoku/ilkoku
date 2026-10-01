@@ -1,0 +1,34 @@
+name: Hero image timing diagnostic
+
+on:
+  push:
+    branches:
+      - diag/mobile-pagespeed-after-lcp-fix-20261001
+    paths:
+      - ".github/workflows/hero-image-timing-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  timing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Compare source and optimized hero timings
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test_url () {
+            label="$1"
+            url="$2"
+            echo "=== $label ==="
+            for i in 1 2 3; do
+              curl -sS -L -o /dev/null \
+                -w "run=$i code=%{http_code} type=%{content_type} size=%{size_download} dns=%{time_namelookup} connect=%{time_connect} ttfb=%{time_starttransfer} total=%{time_total}\n" \
+                "$url"
+            done
+          }
+          test_url "source" "https://ilkoku.com/landing/ilkoku-hero-user-final.webp"
+          test_url "optimized-384" "https://ilkoku.com/_next/image?url=%2Flanding%2Filkoku-hero-user-final.webp&w=384&q=60"
+          test_url "optimized-640" "https://ilkoku.com/_next/image?url=%2Flanding%2Filkoku-hero-user-final.webp&w=640&q=60"

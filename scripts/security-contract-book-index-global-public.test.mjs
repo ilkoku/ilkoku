@@ -187,6 +187,7 @@ test("Denmark Pubhub ebook collector is source-native and stays off the public w
   contains(adapter, 'cells[4]', "Denmark author column parser");
   contains(adapter, 'cells[5]', "Denmark publisher column parser");
   contains(adapter, "BOOK_INDEX_PUBHUB_DK_RANK_ORDER_MISMATCH", "Denmark rank guard");
+  contains(adapter, "rank !== previousRank && rank !== index + 1", "Denmark source-native tied-rank rule");
   contains(adapter, "BOOK_INDEX_PUBHUB_DK_DUPLICATE_ISBN", "Denmark duplicate ISBN guard");
   contains(collector, "pubhubDenmarkBookIndexAdapter", "Denmark collector registration");
   contains(sources, 'code: "pubhub-dk"', "Denmark source registry");

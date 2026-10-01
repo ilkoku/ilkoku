@@ -70,7 +70,7 @@ export function BookIndexOverviewView({
         <h1>En Çok Satan Kitaplar {currentYear}</h1>
         <p>
           Türkiye&apos;deki kitap satış kanallarının çok satan listelerini
-          aynı tabloda gösteriyoruz. Her sitenin kendi sıra numarası korunur;
+          aynı tabloda gösteriyoruz. Her kitap satış kanalının kendi sıra numarası korunur;
           aynı kitap aynı sırada birden fazla kitap satış kanalında yer alıyorsa kanal adları
           aynı satırda birlikte gösterilir.
         </p>
@@ -103,7 +103,7 @@ export function BookIndexOverviewView({
             <span>Dünya Genelinde</span>
             <strong>Dünyada çok satan kitaplar</strong>
             <small>
-              Uluslararası çok satan listelerini ilgili sitelerin kendi
+              Uluslararası çok satan listelerini ilgili kitap satış kanallarının kendi
               sıralamalarıyla incele.
             </small>
           </Link>
@@ -112,7 +112,7 @@ export function BookIndexOverviewView({
             <span>Dünya Genelinde</span>
             <strong>Dünyada çok satan kitaplar</strong>
             <small>
-              Uluslararası çok satan listelerini ilgili sitelerin kendi
+              Uluslararası çok satan listelerini ilgili kitap satış kanallarının kendi
               sıralamalarıyla incele.
             </small>
           </article>
@@ -200,7 +200,7 @@ export function TurkeyBookIndexView({
         <h1>Türkiye&apos;de En Çok Satan Kitaplar {currentYear}</h1>
         <p>
           Türkiye&apos;deki farklı kitap satış kanallarının çok satan
-          listelerini tek tabloda gösterir. Her sitenin verdiği sıra
+          listelerini tek tabloda gösterir. Her kitap satış kanalının verdiği sıra
           numarası değiştirilmeden korunur.
         </p>
         {observedAt && observedAtLabel ? (
@@ -231,11 +231,11 @@ export function TurkeyBookIndexView({
         <h2 id="turkey-index-methodology">Bu tablo neyi gösterir?</h2>
         <p>
           Tablo, kitap satış kanallarının kendi çok satan sıralamalarını
-          gösterir. İlkOku sitelerin sıra numarasını değiştirmez.
+          gösterir. İlkOku kitap satış kanallarının sıra numarasını değiştirmez.
         </p>
         <p>
           Aynı eser aynı sırada birden fazla kitap satış kanalında görünüyorsa kanal adları aynı
-          satırda birlikte yazılır; eser farklı bir sitede farklı sıradaysa
+          satırda birlikte yazılır; eser farklı bir kitap satış kanalında farklı sıradaysa
           ayrı bir satır olarak yeniden görünür.
         </p>
       </section>
@@ -292,7 +292,7 @@ export function TurkeyBookIndexComparisonView({
         <h2 id="comparison-methodology">En çok satanlar karşılaştırması neyi gösterir?</h2>
         <p>
           Her sütun seçtiğin kitap satış kanalının kendi çok satan listesini gösterir.
-          Aynı sıra numarasında farklı sitelerde farklı kitaplar bulunabilir.
+          Aynı sıra numarasında farklı kitap satış kanallarında farklı kitaplar bulunabilir.
         </p>
         <p>
           Bu görünüm satış adedi açıklamaz ve İlkOku tarafından oluşturulmuş

@@ -26,6 +26,7 @@ test("global bestseller public page reads only the approved source lists", () =>
     "amazon-es-live",
     "amazon-ca-live",
     "amazon-br-live",
+    "bestseller60-nl-weekly",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }

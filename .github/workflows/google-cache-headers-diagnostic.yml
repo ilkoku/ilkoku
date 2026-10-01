@@ -1,5 +1,4 @@
 name: Google cache headers diagnostic
-# Rerun after PR #1535 production deploy.
 
 on:
   push:
@@ -14,22 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Audit live cache and conditional GET behavior
+      - name: Audit live Googlebot HTML stability
         shell: bash
         run: |
           set -Eeuo pipefail
-
           UA='Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-          urls=(
-            'https://ilkoku.com/'
-            'https://ilkoku.com/yazarlar-icin/kurgu/roman'
-            'https://ilkoku.com/okurlar-icin/okumaya-baslama'
-            'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama'
-            'https://ilkoku.com/site-haritasi'
-            'https://ilkoku.com/en-cok-satanlar/dunya'
-            'https://ilkoku.com/yeni-cikanlar'
-            'https://ilkoku.com/sifremi-unuttum'
-          )
 
           header_value() {
             local file="$1"
@@ -39,130 +27,33 @@ jobs:
 
           audit_url() {
             local url="$1"
-            local headers body code etag lm cc age xrobots ctype vary server bytes
-            headers="$(mktemp)"
-            body="$(mktemp)"
+            local h1 h2 b1 b2 c1 c2 hash1 hash2
+            h1="$(mktemp)"; h2="$(mktemp)"; b1="$(mktemp)"; b2="$(mktemp)"
 
-            code="$(curl --silent --show-error --location --max-time 30               --user-agent "$UA"               --dump-header "$headers"               --output "$body"               --write-out '%{http_code}'               "$url" || true)"
+            c1="$(curl --silent --show-error --location --max-time 30 --user-agent "$UA" --header 'Accept-Encoding: identity' --dump-header "$h1" --output "$b1" --write-out '%{http_code}' "$url")"
+            sleep 1
+            c2="$(curl --silent --show-error --location --max-time 30 --user-agent "$UA" --header 'Accept-Encoding: identity' --dump-header "$h2" --output "$b2" --write-out '%{http_code}' "$url")"
 
-            bytes="$(wc -c < "$body" | tr -d ' ')"
-            etag="$(header_value "$headers" 'etag' || true)"
-            lm="$(header_value "$headers" 'last-modified' || true)"
-            cc="$(header_value "$headers" 'cache-control' || true)"
-            age="$(header_value "$headers" 'age' || true)"
-            xrobots="$(header_value "$headers" 'x-robots-tag' || true)"
-            ctype="$(header_value "$headers" 'content-type' || true)"
-            vary="$(header_value "$headers" 'vary' || true)"
-            server="$(header_value "$headers" 'server' || true)"
+            hash1="$(sha256sum "$b1" | awk '{print $1}')"
+            hash2="$(sha256sum "$b2" | awk '{print $1}')"
 
             echo "=== $url"
-            echo "status=$code bytes=$bytes"
-            echo "content-type=${ctype:-NONE}"
-            echo "cache-control=${cc:-NONE}"
-            echo "age=${age:-NONE}"
-            echo "etag=${etag:-NONE}"
-            echo "last-modified=${lm:-NONE}"
-            echo "x-robots-tag=${xrobots:-NONE}"
-            echo "vary=${vary:-NONE}"
-            echo "server=${server:-NONE}"
-            echo "cf-cache-status=$(header_value "$headers" 'cf-cache-status' || true)"
-            echo "cf-ray=$(header_value "$headers" 'cf-ray' || true)"
-            echo "x-nextjs-cache=$(header_value "$headers" 'x-nextjs-cache' || true)"
-
-            if [[ -n "$etag" ]]; then
-              local h2 b2 c2 n2
-              h2="$(mktemp)"; b2="$(mktemp)"
-              c2="$(curl --silent --show-error --max-time 30                 --user-agent "$UA"                 --header "If-None-Match: $etag"                 --dump-header "$h2"                 --output "$b2"                 --write-out '%{http_code}'                 "$url" || true)"
-              n2="$(wc -c < "$b2" | tr -d ' ')"
-              echo "if-none-match-status=$c2 bytes=$n2"
-              rm -f "$h2" "$b2"
-            else
-              echo "if-none-match-status=SKIP"
-            fi
-
-            if [[ -n "$lm" ]]; then
-              local h3 b3 c3 n3
-              h3="$(mktemp)"; b3="$(mktemp)"
-              c3="$(curl --silent --show-error --max-time 30                 --user-agent "$UA"                 --header "If-Modified-Since: $lm"                 --dump-header "$h3"                 --output "$b3"                 --write-out '%{http_code}'                 "$url" || true)"
-              n3="$(wc -c < "$b3" | tr -d ' ')"
-              echo "if-modified-since-status=$c3 bytes=$n3"
-              rm -f "$h3" "$b3"
-            else
-              echo "if-modified-since-status=SKIP"
-            fi
-
-            if [[ "$url" == 'https://ilkoku.com/' ]]; then
-              echo "homepage-cloudflare-markers:"
-              grep -Eoi 'cdn-cgi[^"< ]*|cloudflareinsights|beacon\.min\.js|data-cfemail|data-cf-settings|rocket-loader|challenges\.cloudflare\.com' "$body" | sort | uniq -c || true
-              echo "homepage-response-headers:"
-              cat "$headers"
-              local asset
-              asset="$(grep -Eo '(src|href)="[^"]+\.(js|css)(\?[^"]*)?"' "$body" | sed -E 's/^(src|href)="([^"]+)"/\2/' | head -1 || true)"
-              if [[ -n "$asset" ]]; then
-                if [[ "$asset" == /* ]]; then asset="https://ilkoku.com$asset"; fi
-                local ah ab ac acc aetg alm abytes
-                ah="$(mktemp)"; ab="$(mktemp)"
-                ac="$(curl --silent --show-error --location --max-time 30                   --user-agent "$UA"                   --dump-header "$ah"                   --output "$ab"                   --write-out '%{http_code}'                   "$asset" || true)"
-                acc="$(header_value "$ah" 'cache-control' || true)"
-                aetg="$(header_value "$ah" 'etag' || true)"
-                alm="$(header_value "$ah" 'last-modified' || true)"
-                abytes="$(wc -c < "$ab" | tr -d ' ')"
-                echo "asset=$asset"
-                echo "asset-status=$ac bytes=$abytes"
-                echo "asset-cache-control=${acc:-NONE}"
-                echo "asset-etag=${aetg:-NONE}"
-                echo "asset-last-modified=${alm:-NONE}"
-                rm -f "$ah" "$ab"
-              else
-                echo "asset=NONE"
-              fi
-            fi
-
-            rm -f "$headers" "$body"
+            echo "status1=$c1 status2=$c2"
+            echo "hash1=$hash1"
+            echo "hash2=$hash2"
+            if [[ "$hash1" == "$hash2" ]]; then echo "identical=yes"; else echo "identical=no"; fi
+            echo "cache-control=$(header_value "$h1" 'cache-control' || true)"
+            echo "etag=$(header_value "$h1" 'etag' || true)"
+            echo "last-modified=$(header_value "$h1" 'last-modified' || true)"
+            echo "cf-cache-status=$(header_value "$h1" 'cf-cache-status' || true)"
+            echo "x-nextjs-cache=$(header_value "$h1" 'x-nextjs-cache' || true)"
+            echo "email-markers=$(grep -Eoc 'email-protection#[0-9a-f]+|data-cfemail="[0-9a-f]+"' "$b1" || true)"
+            echo "email-script=$(grep -Ec 'email-decode\.min\.js' "$b1" || true)"
+            rm -f "$h1" "$h2" "$b1" "$b2"
             echo
           }
 
-          for url in "${urls[@]}"; do
-            audit_url "$url"
-          done
-
-          echo "=== REPEAT BODY STABILITY ==="
-          for url in 'https://ilkoku.com/' 'https://ilkoku.com/yazarlar-icin/kurgu/roman' 'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama' 'https://ilkoku.com/sifremi-unuttum'; do
-            b1="$(mktemp)"; b2="$(mktemp)"
-            curl --silent --show-error --location --max-time 30 --user-agent "$UA" --header 'Accept-Encoding: identity' --output "$b1" "$url"
-            sleep 1
-            curl --silent --show-error --location --max-time 30 --user-agent "$UA" --header 'Accept-Encoding: identity' --output "$b2" "$url"
-            h1="$(sha256sum "$b1" | awk '{print $1}')"
-            h2="$(sha256sum "$b2" | awk '{print $1}')"
-            echo "url=$url sha1=$h1 sha2=$h2 identical=$([[ "$h1" == "$h2" ]] && echo yes || echo no)"
-            echo "email-marker-1:"
-            grep -Eo 'email-protection#[0-9a-f]+|data-cfemail="[0-9a-f]+"' "$b1" | head -10 || true
-            echo "email-marker-2:"
-            grep -Eo 'email-protection#[0-9a-f]+|data-cfemail="[0-9a-f]+"' "$b2" | head -10 || true
-            echo "email-context-1:"
-            python - "$b1" <<'PY'
-import sys
-p=sys.argv[1]
-s=open(p,'rb').read().decode('utf-8','replace')
-for needle in ('email-protection','data-cfemail'):
-    i=s.find(needle)
-    if i >= 0:
-        print(s[max(0,i-500):i+900].replace('\n',' '))
-        break
-PY
-            rm -f "$b1" "$b2"
-          done
-
-          echo "=== ACCEPT-ENCODING MATRIX ==="
-          for url in 'https://ilkoku.com/' 'https://ilkoku.com/yazarlar-icin/kurgu/roman'; do
-            for encoding in 'identity' 'gzip' 'br' 'gzip, br' 'gzip, br, zstd'; do
-              h="$(mktemp)"; b="$(mktemp)"
-              code="$(curl --silent --show-error --max-time 30                 --user-agent "$UA"                 --header "Accept-Encoding: $encoding"                 --dump-header "$h"                 --output "$b"                 --write-out '%{http_code}'                 "$url" || true)"
-              echo "url=$url encoding=$encoding status=$code bytes=$(wc -c < "$b" | tr -d ' ')"
-              echo "content-encoding=$(header_value "$h" 'content-encoding' || true)"
-              echo "etag=$(header_value "$h" 'etag' || true)"
-              echo "last-modified=$(header_value "$h" 'last-modified' || true)"
-              echo "cache-control=$(header_value "$h" 'cache-control' || true)"
-              rm -f "$h" "$b"
-            done
-          done
+          audit_url 'https://ilkoku.com/'
+          audit_url 'https://ilkoku.com/yazarlar-icin/kurgu/roman'
+          audit_url 'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama'
+          audit_url 'https://ilkoku.com/sifremi-unuttum'

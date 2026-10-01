@@ -23,7 +23,7 @@ import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 const baseUrl = "https://ilkoku.com";
 
-const WRITING_CATEGORY_RELEASED_AT = new Date("2026-09-13T16:49:51Z");
+const WRITING_CATEGORY_INDEXABLE_AT = new Date("2026-09-13T19:15:11Z");
 const WRITING_GUIDE_RELEASED_AT_BY_CATEGORY: Record<GenreCategory, Date> = {
   Kurgu: new Date("2026-09-13T09:57:55Z"),
   Edebiyat: new Date("2026-09-13T13:05:02Z"),
@@ -124,7 +124,7 @@ const writingGenreHrefs = GENRES.map((genre) => {
 const writingEducationEntries: MetadataRoute.Sitemap = [
   ...WRITING_CATEGORY_HUBS.map((hub) => ({
     url: `${baseUrl}${hub.href}`,
-    lastModified: WRITING_CATEGORY_RELEASED_AT,
+    lastModified: WRITING_CATEGORY_INDEXABLE_AT,
     changeFrequency: "monthly" as const,
     priority: 0.8,
   })),

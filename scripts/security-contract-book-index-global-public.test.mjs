@@ -28,6 +28,7 @@ test("global bestseller public page reads only the approved source lists", () =>
     "amazon-br-live",
     "bestseller60-nl-weekly",
     "kirjakauppaliitto-fi-monthly",
+    "globe-mail-ca-hardcover-fiction-weekly",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -51,12 +52,14 @@ test("global bestseller public page reads only the approved source lists", () =>
 });
 
 
-test("Spain research stays fail-closed while Canada Globe and Mail collector is verified privately", () => {
+test("Spain research stays fail-closed while Canada Globe and Mail Top 10 is public after production verification", () => {
   const adapter = source("src/lib/book-index/sources/globe-mail-ca.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const model = source("src/lib/book-index/global-public-read-model.ts");
+  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
+  const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
 
   contains(sources, 'code: "casadellibro-es"', "Spain research source registry");
   contains(sources, 'market: "ES"', "Spain market code");
@@ -76,10 +79,17 @@ test("Spain research stays fail-closed while Canada Globe and Mail collector is 
   contains(lists, 'code: "globe-mail-ca-hardcover-fiction-weekly"', "Canada weekly Top 10 list registry");
   contains(lists, 'categoryKey: "fiction-hardcover"', "Canada category scope");
   contains(lists, "maxRank: 10", "Canada Top 10 bound");
-  notContains(
+  contains(
     model,
     '"globe-mail-ca-hardcover-fiction-weekly"',
-    "Canada remains private until production collection and Turkish meanings are verified",
+    "Canada is public after source-native production verification",
+  );
+  contains(meanings, '"Hollow Bones": "İçi Boş Kemikler"', "Canada Turkish meaning registry");
+  contains(meanings, '"The Dungeon Anarchist\'s Cookbook": "Zindan Anarşistinin Yemek Kitabı"', "Canada Turkish meaning fallback");
+  contains(
+    view,
+    'row.listCode === "globe-mail-ca-hardcover-fiction-weekly"',
+    "Canada titles stay non-clickable because Globe exposes no verified per-book URL",
   );
 });
 

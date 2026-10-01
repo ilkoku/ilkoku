@@ -166,7 +166,7 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
     '<BookIndexViewModeNav current="comparison" />',
     "comparison no longer renders the obsolete two-item view menu",
   );
-  contains(view, "Yeni liste girişi", "new-entry summary metric");
+  contains(view, "Yeni giriş yapılan kitap satış kanalı", "new-entry summary metric");
   contains(
     view,
     "Soldaki sıra satış sırası değildir.",
@@ -174,12 +174,12 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   );
   contains(
     view,
-    "Önce daha fazla bağımsız satış sitesinde yükselen kitaplar",
+    "Önce daha fazla kitap satış kanalında yükselen kitaplar",
     "riser page explains its analysis ordering",
   );
   contains(
     view,
-    "Önce daha fazla bağımsız satış sitesinin çok satan listesinde görünen kitaplar",
+    "Önce daha fazla kitap satış kanalının çok satan listesinde görünen kitaplar",
     "multi-site page explains its analysis ordering",
   );
   contains(
@@ -189,7 +189,7 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
   );
   contains(
     view,
-    "en iyi yeni giriş",
+    "en yüksek yeni giriş sırası",
     "new-entry cards label the native entry-rank metric clearly",
   );
   contains(view, "Toplam sıra kazanımı", "riser summary metric");
@@ -200,7 +200,7 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
     "riser card distinguishes improving-list evidence from the all-current-list tie-breaker",
   );
   contains(view, "En geniş görünürlük", "multi-source summary metric");
-  contains(view, "bağımsız işletmeci", "multi-source summary avoids ambiguous source wording");
+  contains(view, "kitap satış kanalı", "multi-source summary uses public channel wording");
   contains(view, "Tarihsel gözlemli kitap", "long-seller count label");
   contains(view, "En uzun gözlem aralığı", "long-seller duration label");
   contains(view, "Toplam gözlem", "long-seller summary metric");

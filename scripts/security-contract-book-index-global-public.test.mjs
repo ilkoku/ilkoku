@@ -173,6 +173,36 @@ test("Netherlands Bestseller 60 collector is source-native and public only after
 });
 
 
+test("Denmark Pubhub ebook collector is source-native and stays off the public world table until live verification", () => {
+  const adapter = source("src/lib/book-index/sources/pubhub-dk.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 10', "Denmark exact Top 10 guard");
+  contains(adapter, "e-bøger", "Denmark ebook table anchor");
+  contains(adapter, 'cells[2]', "Denmark title column parser");
+  contains(adapter, 'cells[3]', "Denmark ISBN column parser");
+  contains(adapter, 'cells[4]', "Denmark author column parser");
+  contains(adapter, 'cells[5]', "Denmark publisher column parser");
+  contains(adapter, "BOOK_INDEX_PUBHUB_DK_RANK_ORDER_MISMATCH", "Denmark rank guard");
+  contains(adapter, "BOOK_INDEX_PUBHUB_DK_DUPLICATE_ISBN", "Denmark duplicate ISBN guard");
+  contains(collector, "pubhubDenmarkBookIndexAdapter", "Denmark collector registration");
+  contains(sources, 'code: "pubhub-dk"', "Denmark source registry");
+  contains(sources, 'market: "DK"', "Denmark market code");
+  contains(lists, 'code: "pubhub-dk-ebooks-weekly"', "Denmark weekly ebook list registry");
+  contains(lists, 'categoryKey: "ebooks"', "Denmark ebook category");
+  contains(lists, 'period: "weekly"', "Denmark weekly period");
+  contains(lists, "maxRank: 10", "Denmark Top 10 bound");
+  notContains(
+    model,
+    '"pubhub-dk-ebooks-weekly"',
+    "Denmark stays off the public world table until live collector verification and Turkish title meanings are ready",
+  );
+});
+
+
 test("Finland Kirjakauppaliitto collector is source-native and public only after Turkish title meanings are ready", () => {
   const adapter = source("src/lib/book-index/sources/kirjakauppaliitto-fi.ts");
   const collector = source("src/lib/book-index/collector.ts");

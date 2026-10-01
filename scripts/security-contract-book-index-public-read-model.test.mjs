@@ -470,12 +470,12 @@ test("Yeni Çıkanlar page is indexable and remains source-native", () => {
   );
   contains(
     view,
-    "Kayıtlar kaynakların kendi yeni çıkanlar listelerindeki konuma göre",
+    "Kayıtlar kitap satış kanallarının kendi yeni çıkanlar listelerindeki konuma göre",
     "Yeni Çıkanlar explains native source-position ordering",
   );
   contains(
     view,
-    "Bir satış sitesi seçildiğinde o sitenin kendi liste",
+    "Bir kitap satış kanalı seçildiğinde o kanalın kendi liste",
     "Yeni Çıkanlar explains per-source native ordering",
   );
   contains(

@@ -127,6 +127,14 @@ const websiteSchema = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr" data-scroll-behavior="smooth">
+      <head>
+        <meta
+          {...{
+            name: "impact-site-verification",
+            value: "7861fc39-02be-4052-92cd-f2e8a06e7ea2",
+          }}
+        />
+      </head>
       <body>
         <Script
           id="ilkoku-gtm-early-bootstrap"

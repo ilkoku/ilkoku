@@ -10,7 +10,6 @@ import {
 
 import HomepageExperience from "@/features/homepage/HomepageExperience";
 
-import "./landing.css";
 import "@/features/homepage/history-pr670.css";
 import "@/features/homepage/roles-light.css";
 import "@/features/homepage/passport-dark.css";

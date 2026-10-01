@@ -24,6 +24,12 @@ import "./site-contact-links.css";
 import "./public-discovery-paused.css";
 
 const baseUrl = "https://ilkoku.com";
+
+function serializeStructuredData(value: unknown) {
+  return JSON.stringify(value)
+    .replaceAll("<", "\\u003c")
+    .replaceAll("@", "\\u0040");
+}
 const officialEntityUrls = [...siteSocialUrls, "https://github.com/ilkoku"];
 
 const analyticsHeadBootstrap = `
@@ -147,11 +153,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema).replace(/</g, "\\u003c") }}
+          dangerouslySetInnerHTML={{ __html: serializeStructuredData(organizationSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema).replace(/</g, "\\u003c") }}
+          dangerouslySetInnerHTML={{ __html: serializeStructuredData(websiteSchema) }}
         />
         <PublicNavigationHistory />
         <PublicAnnouncementBanner />

@@ -68,5 +68,14 @@ jobs:
               imageDelivery:a["uses-optimized-images"]?.displayValue
             }
           };
+          const lcpAudits = Object.fromEntries(
+            Object.entries(a)
+              .filter(([k]) => /lcp|largest-contentful-paint|prioritize-lcp/i.test(k))
+              .map(([k,v]) => [k, {title:v.title, displayValue:v.displayValue, numericValue:v.numericValue, details:v.details}])
+          );
+          const networkItems = a["network-requests"]?.details?.items ?? [];
+          const heroRequests = networkItems.filter((x) => String(x.url || "").includes("ilkoku-hero-user-final"));
+          console.log("LCP_AUDITS|"+JSON.stringify(lcpAudits));
+          console.log("HERO_NETWORK|"+JSON.stringify(heroRequests));
           console.log("LIGHTHOUSE_RESULT|"+JSON.stringify(out));
           NODE

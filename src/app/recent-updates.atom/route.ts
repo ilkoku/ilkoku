@@ -1,10 +1,17 @@
 import { GENRES } from "@/lib/genres";
+import { prisma } from "@/lib/prisma";
 import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 const baseUrl = "https://ilkoku.com";
 const feedUrl = `${baseUrl}/recent-updates.atom`;
 const hubUrl = "https://pubsubhubbub.appspot.com/";
+const RECENT_ENTRY_LIMIT = 20;
+
+type WritingGuideFreshnessRow = {
+  contentKey: string;
+  updatedAt: Date;
+};
 
 function escapeXml(value: string) {
   return value
@@ -19,11 +26,44 @@ const categoryHrefByCategory = new Map(
   WRITING_CATEGORY_HUBS.map((hub) => [hub.category, hub.href] as const),
 );
 
+async function loadPublishedWritingGuideFreshness() {
+  try {
+    const rows = await prisma.$queryRaw<WritingGuideFreshnessRow[]>`
+      SELECT contentKey, updatedAt
+      FROM SiteContent
+      WHERE namespace = 'education_guide'
+        AND status = 'published'
+      ORDER BY updatedAt DESC
+      LIMIT 1000
+    `;
+
+    return new Map(rows.map((row) => [row.contentKey, row.updatedAt] as const));
+  } catch {
+    return new Map<string, Date>();
+  }
+}
+
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const updated = WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT.toISOString();
-  const entries = GENRES.map((genre) => {
+  const freshnessBySlug = await loadPublishedWritingGuideFreshness();
+  const recentGuides = GENRES.map((genre) => ({
+    genre,
+    updatedAt:
+      freshnessBySlug.get(genre.slug) ??
+      WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT,
+  }))
+    .sort((a, b) => {
+      const byFreshness = b.updatedAt.getTime() - a.updatedAt.getTime();
+      if (byFreshness !== 0) return byFreshness;
+      return a.genre.slug.localeCompare(b.genre.slug, "tr");
+    })
+    .slice(0, RECENT_ENTRY_LIMIT);
+
+  const feedUpdated =
+    recentGuides[0]?.updatedAt ?? WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT;
+
+  const entries = recentGuides.map(({ genre, updatedAt }) => {
     const categoryHref = categoryHrefByCategory.get(genre.category);
     if (!categoryHref) {
       throw new Error(`Missing writing category hub for ${genre.category}`);
@@ -35,7 +75,7 @@ export async function GET() {
       `    <id>${url}</id>`,
       `    <title>${escapeXml(`${genre.label} Yazarlık Rehberi | İlkOku`)}</title>`,
       `    <link href="${url}" />`,
-      `    <updated>${updated}</updated>`,
+      `    <updated>${updatedAt.toISOString()}</updated>`,
       `    <category term="${escapeXml(genre.category)}" />`,
       `    <summary>${escapeXml(`İlkOku ${genre.label} yazarlık rehberi.`)}</summary>`,
       "  </entry>",
@@ -49,7 +89,7 @@ export async function GET() {
     `  <id>${feedUrl}</id>`,
     `  <link rel="self" href="${feedUrl}" type="application/atom+xml" />`,
     `  <link rel="hub" href="${hubUrl}" />`,
-    `  <updated>${updated}</updated>`,
+    `  <updated>${feedUpdated.toISOString()}</updated>`,
     "  <author><name>İlkOku</name></author>",
     entries,
     "</feed>",

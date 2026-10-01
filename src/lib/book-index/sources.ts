@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "CH";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "CH";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -241,6 +241,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     includeInTurkeyIndex: false,
     independenceGroup: "kirjakauppaliitto-fi",
     operatorName: "Kirjakauppaliitto",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "sbvv-ch",
+    name: "SBVV İsviçre · Kurgu Hardcover",
+    market: "CH",
+    countryCode: "CH",
+    baseUrl: "https://www.sbvv.ch",
+    includeInTurkeyIndex: false,
+    independenceGroup: "sbvv-gfk-ch",
+    operatorName: "Schweizer Buchhandels- und Verlags-Verband SBVV / GfK Entertainment AG",
     phase: "phase_2",
     collectionState: "ready",
   },

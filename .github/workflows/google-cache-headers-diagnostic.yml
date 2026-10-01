@@ -1,0 +1,119 @@
+name: Google cache headers diagnostic
+
+on:
+  push:
+    branches:
+      - diag/google-cache-headers-20261002
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Audit live cache and conditional GET behavior
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          UA='Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+          urls=(
+            'https://ilkoku.com/'
+            'https://ilkoku.com/yazarlar-icin/kurgu/roman'
+            'https://ilkoku.com/okurlar-icin/okumaya-baslama'
+            'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama'
+            'https://ilkoku.com/site-haritasi'
+            'https://ilkoku.com/en-cok-satanlar/dunya'
+            'https://ilkoku.com/yeni-cikanlar'
+            'https://ilkoku.com/sifremi-unuttum'
+          )
+
+          header_value() {
+            local file="$1"
+            local name="$2"
+            awk -v target="$name" 'BEGIN{IGNORECASE=1} $0 ~ "^" target ":" {sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$file"
+          }
+
+          audit_url() {
+            local url="$1"
+            local headers body code etag lm cc age xrobots ctype vary server bytes
+            headers="$(mktemp)"
+            body="$(mktemp)"
+
+            code="$(curl --silent --show-error --location --max-time 30               --user-agent "$UA"               --dump-header "$headers"               --output "$body"               --write-out '%{http_code}'               "$url" || true)"
+
+            bytes="$(wc -c < "$body" | tr -d ' ')"
+            etag="$(header_value "$headers" 'etag' || true)"
+            lm="$(header_value "$headers" 'last-modified' || true)"
+            cc="$(header_value "$headers" 'cache-control' || true)"
+            age="$(header_value "$headers" 'age' || true)"
+            xrobots="$(header_value "$headers" 'x-robots-tag' || true)"
+            ctype="$(header_value "$headers" 'content-type' || true)"
+            vary="$(header_value "$headers" 'vary' || true)"
+            server="$(header_value "$headers" 'server' || true)"
+
+            echo "=== $url"
+            echo "status=$code bytes=$bytes"
+            echo "content-type=${ctype:-NONE}"
+            echo "cache-control=${cc:-NONE}"
+            echo "age=${age:-NONE}"
+            echo "etag=${etag:-NONE}"
+            echo "last-modified=${lm:-NONE}"
+            echo "x-robots-tag=${xrobots:-NONE}"
+            echo "vary=${vary:-NONE}"
+            echo "server=${server:-NONE}"
+
+            if [[ -n "$etag" ]]; then
+              local h2 b2 c2 n2
+              h2="$(mktemp)"; b2="$(mktemp)"
+              c2="$(curl --silent --show-error --max-time 30                 --user-agent "$UA"                 --header "If-None-Match: $etag"                 --dump-header "$h2"                 --output "$b2"                 --write-out '%{http_code}'                 "$url" || true)"
+              n2="$(wc -c < "$b2" | tr -d ' ')"
+              echo "if-none-match-status=$c2 bytes=$n2"
+              rm -f "$h2" "$b2"
+            else
+              echo "if-none-match-status=SKIP"
+            fi
+
+            if [[ -n "$lm" ]]; then
+              local h3 b3 c3 n3
+              h3="$(mktemp)"; b3="$(mktemp)"
+              c3="$(curl --silent --show-error --max-time 30                 --user-agent "$UA"                 --header "If-Modified-Since: $lm"                 --dump-header "$h3"                 --output "$b3"                 --write-out '%{http_code}'                 "$url" || true)"
+              n3="$(wc -c < "$b3" | tr -d ' ')"
+              echo "if-modified-since-status=$c3 bytes=$n3"
+              rm -f "$h3" "$b3"
+            else
+              echo "if-modified-since-status=SKIP"
+            fi
+
+            if [[ "$url" == 'https://ilkoku.com/' ]]; then
+              local asset
+              asset="$(grep -Eo '(src|href)="[^"]+\.(js|css)(\?[^"]*)?"' "$body" | sed -E 's/^(src|href)="([^"]+)"/\2/' | head -1 || true)"
+              if [[ -n "$asset" ]]; then
+                if [[ "$asset" == /* ]]; then asset="https://ilkoku.com$asset"; fi
+                local ah ab ac acc aetg alm abytes
+                ah="$(mktemp)"; ab="$(mktemp)"
+                ac="$(curl --silent --show-error --location --max-time 30                   --user-agent "$UA"                   --dump-header "$ah"                   --output "$ab"                   --write-out '%{http_code}'                   "$asset" || true)"
+                acc="$(header_value "$ah" 'cache-control' || true)"
+                aetg="$(header_value "$ah" 'etag' || true)"
+                alm="$(header_value "$ah" 'last-modified' || true)"
+                abytes="$(wc -c < "$ab" | tr -d ' ')"
+                echo "asset=$asset"
+                echo "asset-status=$ac bytes=$abytes"
+                echo "asset-cache-control=${acc:-NONE}"
+                echo "asset-etag=${aetg:-NONE}"
+                echo "asset-last-modified=${alm:-NONE}"
+                rm -f "$ah" "$ab"
+              else
+                echo "asset=NONE"
+              fi
+            fi
+
+            rm -f "$headers" "$body"
+            echo
+          }
+
+          for url in "${urls[@]}"; do
+            audit_url "$url"
+          done

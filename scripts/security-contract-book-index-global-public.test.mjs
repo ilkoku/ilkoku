@@ -52,7 +52,7 @@ test("global bestseller public page reads only the approved source lists", () =>
 });
 
 
-test("Spain ABC GfK collector stays private while Canada Globe and Mail Top 10 remains public", () => {
+test("Spain ABC GfK and Canada Globe and Mail source-native lists are public after production verification", () => {
   const spainAdapter = source("src/lib/book-index/sources/abc-gfk-es.ts");
   const adapter = source("src/lib/book-index/sources/globe-mail-ca.ts");
   const collector = source("src/lib/book-index/collector.ts");
@@ -74,7 +74,23 @@ test("Spain ABC GfK collector stays private while Canada Globe and Mail Top 10 r
   contains(lists, 'code: "abc-gfk-es-fiction-weekly"', "Spain private weekly list");
   contains(lists, "collectionEveryMinutes: 10080", "Spain weekly collection cadence");
   contains(lists, "enabled: true", "Spain private collector is enabled");
-  notContains(model, '"abc-gfk-es-fiction-weekly"', "Spain is not public before author/title enrichment and live verification");
+  contains(
+    model,
+    '"abc-gfk-es-fiction-weekly"',
+    "Spain is public after author enrichment, Turkish meanings and production verification",
+  );
+  contains(meanings, '"Los huérfanos": "Yetimler"', "Spain Turkish meaning registry");
+  contains(meanings, '"La Biblioteca de la Medianoche": "Gece Yarısı Kütüphanesi"', "Spain Turkish meaning for Midnight Library");
+  contains(
+    view,
+    'row.listCode === "abc-gfk-es-fiction-weekly"',
+    "Spain titles stay non-clickable because ABC exposes an article URL rather than verified per-book product URLs",
+  );
+  contains(
+    view,
+    "ABC Cultural&apos;ın GfK-NIQ verisine dayalı haftalık kurgu Top 10",
+    "Spain category and ranking scope stays visible to readers",
+  );
 
   contains(adapter, 'const EXPECTED_BOOKS = 10', "Canada exact Top 10 guard");
   contains(adapter, "ARTICLE_PATH_PREFIX", "Canada latest weekly article discovery");

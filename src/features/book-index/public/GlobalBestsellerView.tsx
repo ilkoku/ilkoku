@@ -114,7 +114,8 @@ export function GlobalBestsellerView({
                       <td className={styles.titleCell}>
                         {(row.listCode === "pubhub-dk-ebooks-weekly" ||
                           row.listCode === "forlaggare-se-fiction-weekly" ||
-                          row.listCode === "globe-mail-ca-hardcover-fiction-weekly") ? (
+                          row.listCode === "globe-mail-ca-hardcover-fiction-weekly" ||
+                          row.listCode === "abc-gfk-es-fiction-weekly") ? (
                           <strong>
                             {row.title}
                             {row.turkishTitle ? ` (${row.turkishTitle})` : ""}
@@ -162,9 +163,10 @@ export function GlobalBestsellerView({
           Amazon ABD, Amazon UK, Amazon Fransa, Amazon İspanya, Amazon Kanada,
           Amazon Brezilya, IBS İtalya, Rakuten Books Japonya, Kyobo Güney Kore, Readings Avustralya,
           De Bestseller 60 Hollanda, Kirjakauppaliitto Finlandiya, Publizon Pubhub Danimarka,
-          Svenska Förläggareföreningen İsveç, The Globe and Mail Kanada ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Danimarka satırları
+          Svenska Förläggareföreningen İsveç, ABC Cultural / GfK-NIQ İspanya, The Globe and Mail Kanada ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Danimarka satırları
           Publizon&apos;un haftalık e-kitap Top 10 listesini, İsveç satırları Svenska Förläggareföreningen&apos;in
-          haftalık kurgu Top 5 listesini, Kanada satırları The Globe and Mail&apos;in haftalık Hardcover Fiction Top 10 listesini,
+          haftalık kurgu Top 5 listesini, İspanya satırları ABC Cultural&apos;ın GfK-NIQ verisine dayalı haftalık kurgu Top 10 listesini,
+          Kanada satırları The Globe and Mail&apos;in haftalık Hardcover Fiction Top 10 listesini,
           Almanya satırları SPIEGEL&apos;in haftalık kurgu hardcover listesini temsil eder. Aynı sıra
           numarasındaki kayıtlar aynı blokta gruplanır; günlük, haftalık, aylık
           veya güncel dönem bilgileri ilgili kitap satış kanalının yayımladığı biçimde korunur.

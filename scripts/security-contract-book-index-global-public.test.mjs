@@ -52,8 +52,9 @@ test("global bestseller public page reads only the approved source lists", () =>
 });
 
 
-test("Spain research stays fail-closed while Canada Globe and Mail Top 10 is public after production verification", () => {
+test("Spain TodosTusLibros collector stays private while Canada Globe and Mail Top 10 is public", () => {
   const adapter = source("src/lib/book-index/sources/globe-mail-ca.ts");
+  const spainAdapter = source("src/lib/book-index/sources/todostuslibros-es.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
@@ -61,12 +62,17 @@ test("Spain research stays fail-closed while Canada Globe and Mail Top 10 is pub
   const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
   const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
 
-  contains(sources, 'code: "casadellibro-es"', "Spain research source registry");
+  contains(spainAdapter, 'const EXPECTED_BOOKS = 20', "Spain exact first 20 guard");
+  contains(spainAdapter, 'const EXPECTED_HEADING = "Los 100 más vendidos"', "Spain source heading guard");
+  contains(spainAdapter, "BOOK_INDEX_TODOSTUSLIBROS_ES_RANK_ORDER_MISMATCH", "Spain rank guard");
+  contains(spainAdapter, "BOOK_INDEX_TODOSTUSLIBROS_ES_DUPLICATE_ISBN", "Spain duplicate ISBN guard");
+  contains(collector, "todosTusLibrosSpainBookIndexAdapter", "Spain collector registration");
+  contains(sources, 'code: "todostuslibros-es"', "Spain TodosTusLibros source registry");
   contains(sources, 'market: "ES"', "Spain market code");
-  contains(lists, 'code: "casadellibro-es-bestsellers-research"', "Spain research list");
-  contains(lists, "collectionEveryMinutes: null", "Spain research list is unscheduled");
-  contains(lists, "enabled: false", "Spain research list is disabled");
-  notContains(model, '"casadellibro-es-bestsellers-research"', "Spain is not public before rank verification");
+  contains(lists, 'code: "todostuslibros-es-weekly-top20"', "Spain weekly Top 20 list");
+  contains(lists, 'period: "weekly"', "Spain weekly period");
+  contains(lists, "maxRank: 20", "Spain Top 20 bound");
+  notContains(model, '"todostuslibros-es-weekly-top20"', "Spain remains private before production verification");
 
   contains(adapter, 'const EXPECTED_BOOKS = 10', "Canada exact Top 10 guard");
   contains(adapter, "ARTICLE_PATH_PREFIX", "Canada latest weekly article discovery");

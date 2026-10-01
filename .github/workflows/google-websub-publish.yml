@@ -37,7 +37,7 @@ jobs:
             git show --pretty="" --name-only HEAD > /tmp/changed-files.txt
           fi
           cat /tmp/changed-files.txt
-          if grep -Eq '^(src/app/recent-updates\.atom/|src/app/robots\.ts|src/app/sitemap\.ts|src/app/yazarlar-icin/|src/components/content/Batched(Education|Fiction)GuidePage\.tsx|src/lib/(genres|search-discovery-signals|writing-category-hubs|.*guide-batch)\.ts)' /tmp/changed-files.txt; then
+          if grep -Eq '^(src/app/recent-updates\.atom/|src/app/yazarlar-icin/|src/components/content/Batched(Education|Fiction)GuidePage\.tsx|src/lib/(genres|search-content-freshness|writing-category-hubs|.*guide-batch)\.ts)' /tmp/changed-files.txt; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
           else
             echo "publish=false" >> "$GITHUB_OUTPUT"
@@ -52,8 +52,8 @@ jobs:
           code="$(curl --silent --show-error --location --max-time 20 --output "$body" --write-out '%{http_code}' https://ilkoku.com/recent-updates.atom)"
           test "$code" = "200"
           grep -Fq 'https://pubsubhubbub.appspot.com/' "$body"
-          grep -Fq 'https://ilkoku.com/yazarlar-icin/kurgu/roman' "$body"
           grep -Fq '<feed' "$body"
+          grep -Fq '<entry>' "$body"
 
       - name: Publish feed to Google WebSub hub
         if: steps.changes.outputs.publish == 'true'

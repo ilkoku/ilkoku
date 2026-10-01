@@ -131,6 +131,26 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     'import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness"',
     "Atom feed shared writing guide freshness import",
   );
+  assertContains(
+    recentUpdatesAtom,
+    "const RECENT_ENTRY_LIMIT = 20",
+    "Atom feed recent-entry cap",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    "WHERE namespace = 'education_guide'",
+    "Atom feed published writing freshness source",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    "AND status = 'published'",
+    "Atom feed published-only freshness",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    ".slice(0, RECENT_ENTRY_LIMIT)",
+    "Atom feed keeps only recent guide URLs",
+  );
   assertNotContains(
     sitemap,
     "search-discovery-signals",
@@ -140,6 +160,28 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     recentUpdatesAtom,
     "search-discovery-signals",
     "Atom feed must not rely on the retired search discovery signal module",
+  );
+
+  const websubWorkflow = source(".github/workflows/google-websub-publish.yml");
+  assertContains(
+    websubWorkflow,
+    "search-content-freshness",
+    "WebSub reacts to real shared guide freshness changes",
+  );
+  assertNotContains(
+    websubWorkflow,
+    "src/app/robots\\.ts",
+    "robots-only deploy must not republish the Atom feed",
+  );
+  assertNotContains(
+    websubWorkflow,
+    "src/app/sitemap\\.ts",
+    "sitemap-only deploy must not republish the Atom feed",
+  );
+  assertNotContains(
+    websubWorkflow,
+    "search-discovery-signals",
+    "WebSub must not reference the retired freshness module",
   );
 });
 

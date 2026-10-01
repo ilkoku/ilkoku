@@ -290,7 +290,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     independenceGroup: "abc-gfk-es",
     operatorName: "ABC Cultural / GfK-NIQ",
     phase: "phase_2",
-    collectionState: "researching",
+    collectionState: "ready",
   },
   {
     code: "globe-mail-ca",

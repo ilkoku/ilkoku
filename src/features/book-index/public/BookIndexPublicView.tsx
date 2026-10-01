@@ -157,7 +157,7 @@ export function BookIndexOverviewView({
             <h2>Güncel ilk 3 sıra</h2>
             <p>
               Kitap satış kanallarının 1., 2. ve 3. sıralarındaki kitapları incele.
-              Aynı kitap aynı sırada birden fazla sitede yer alıyorsa
+              Aynı kitap aynı sırada birden fazla kitap satış kanalında yer alıyorsa
               kitap satış kanalı adları tek satırda birlikte gösterilir.
             </p>
           </div>
@@ -174,7 +174,7 @@ export function BookIndexOverviewView({
           kendi çok satan sırası aynen korunur.
         </p>
         <p>
-          Aynı kitap aynı sıra numarasında birden fazla sitede yer alıyorsa
+          Aynı kitap aynı sıra numarasında birden fazla kitap satış kanalında yer alıyorsa
           yalnızca kitap satış kanalı adları aynı satırda birleştirilir. Aynı kitap farklı
           sıra numaralarındaysa tabloda ayrı satırlarda görünür.
         </p>
@@ -382,11 +382,11 @@ function insightSummary(
     return [
       { label: "Yeni giren kitap", value: String(typed.length) },
       {
-        label: "Yeni liste girişi",
+        label: "Yeni giriş yapılan kitap satış kanalı",
         value: String(typed.reduce((sum, item) => sum + item.newSourceCount, 0)),
       },
       {
-        label: "En iyi yeni giriş",
+        label: "En yüksek yeni giriş sırası",
         value: `#${Math.min(...typed.map((item) => item.bestNewEntryRank))}`,
       },
     ];

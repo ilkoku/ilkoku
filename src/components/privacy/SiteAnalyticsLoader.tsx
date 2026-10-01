@@ -75,12 +75,14 @@ function applyInitialConsent(settings: SiteAnalyticsSettings) {
     const headConfigPresent = Boolean(document.getElementById("ilkoku-ga4-head-config"));
     if (!headConfigPresent) setDefaultDeniedConsent();
     else setRuntimeState("consent", "denied");
-    updateAnalyticsConsent(readAnalyticsConsent());
-    return;
+    const granted = readAnalyticsConsent();
+    updateAnalyticsConsent(granted);
+    return granted;
   }
 
   setRuntimeState("consent", "not-required");
   updateAnalyticsConsent(true);
+  return true;
 }
 
 function loadGtm(id: string) {
@@ -177,7 +179,12 @@ export function SiteAnalyticsLoader() {
       const detail = (event as CustomEvent<ConsentChoice>).detail;
       const granted = Boolean(detail?.analytics);
       updateAnalyticsConsent(granted);
-      loadProviders(settings);
+      if (granted || !settings.consentRequired) {
+        loadProviders(settings);
+      } else {
+        setRuntimeState("gtm", "consent-pending");
+        setRuntimeState("ga4", "consent-pending");
+      }
     }
 
     window.addEventListener("ilkoku:consent-changed", onConsentChanged as EventListener);
@@ -196,8 +203,13 @@ export function SiteAnalyticsLoader() {
         }
 
         ensureDataLayer();
-        applyInitialConsent(settings);
-        loadProviders(settings);
+        const granted = applyInitialConsent(settings);
+        if (granted) {
+          loadProviders(settings);
+        } else {
+          setRuntimeState("gtm", "consent-pending");
+          setRuntimeState("ga4", "consent-pending");
+        }
       })
       .catch(() => {
         setRuntimeState("consent", "config-error");

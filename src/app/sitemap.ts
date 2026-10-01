@@ -11,6 +11,7 @@ import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 import { GENRES } from "@/lib/genres";
+import type { GenreCategory } from "@/lib/genres";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { getBookIndexInsights } from "@/lib/book-index/insights";
@@ -19,11 +20,19 @@ import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
-import { WRITING_GUIDE_SEARCH_UPDATED_AT } from "@/lib/search-discovery-signals";
 
 const baseUrl = "https://ilkoku.com";
 
 const WRITING_CATEGORY_RELEASED_AT = new Date("2026-09-13T16:49:51Z");
+const WRITING_GUIDE_RELEASED_AT_BY_CATEGORY: Record<GenreCategory, Date> = {
+  Kurgu: new Date("2026-09-13T09:57:55Z"),
+  Edebiyat: new Date("2026-09-13T13:05:02Z"),
+  "Senaryo ve Sahne": new Date("2026-09-13T13:29:33Z"),
+  Akademik: new Date("2026-09-13T13:51:16Z"),
+  Bilgilendirici: new Date("2026-09-13T15:05:28Z"),
+  "Çocuk ve Gençlik": new Date("2026-09-13T16:10:23Z"),
+  "Çizgi Anlatı": new Date("2026-09-13T16:30:52Z"),
+};
 const READER_EDUCATION_RELEASED_AT = new Date("2026-09-13T21:02:05Z");
 const EDITOR_EDUCATION_RELEASED_AT_BY_SLUG: Record<string, Date> = {
   "editorluge-baslama": new Date("2026-09-15T05:46:22Z"),
@@ -126,7 +135,7 @@ const writingEducationEntries: MetadataRoute.Sitemap = [
     }
     return {
       url: `${baseUrl}${categoryHref}/${genre.slug}`,
-      lastModified: WRITING_GUIDE_SEARCH_UPDATED_AT,
+      lastModified: WRITING_GUIDE_RELEASED_AT_BY_CATEGORY[genre.category],
       changeFrequency: "monthly" as const,
       priority: 0.7,
     };

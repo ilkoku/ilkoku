@@ -98,6 +98,21 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   assertContains(sitemap, "educationLastModifiedByUrl", "education URL freshness map");
   assertContains(sitemap, "liveStaticDiscoveryEntries", "live static sitemap freshness merge");
   assertContains(sitemap, "lastModified", "truthful sitemap lastmod output");
+  assertContains(
+    sitemap,
+    "WRITING_GUIDE_RELEASED_AT_BY_CATEGORY",
+    "writing guide lastmod must use truthful per-category release fallback",
+  );
+  assertNotContains(
+    sitemap,
+    "WRITING_GUIDE_SEARCH_UPDATED_AT",
+    "writing guide lastmod must not use a synthetic search-trigger timestamp",
+  );
+  assertNotContains(
+    sitemap,
+    "search-discovery-signals",
+    "sitemap must not import synthetic search discovery timestamps",
+  );
 });
 
 

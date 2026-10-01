@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -229,6 +229,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     includeInTurkeyIndex: false,
     independenceGroup: "bestseller60-nl",
     operatorName: "Stichting CPNB",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "kirjakauppaliitto-fi",
+    name: "Kirjakauppaliitto Finlandiya",
+    market: "FI",
+    countryCode: "FI",
+    baseUrl: "https://kirjakauppaliitto.fi",
+    includeInTurkeyIndex: false,
+    independenceGroup: "kirjakauppaliitto-fi",
+    operatorName: "Kirjakauppaliitto",
     phase: "phase_2",
     collectionState: "ready",
   },

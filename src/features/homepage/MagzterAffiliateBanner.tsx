@@ -7,7 +7,7 @@ type Props = {
   placement: HomepageAffiliateDisplay;
 };
 
-const LOCAL_MAGZTER_CREATIVE = "/media/reader-offer-01.jpg";
+const LOCAL_MAGZTER_CREATIVE = "/media/reader-offer-01.svg";
 
 export default function MagzterAffiliateBanner({ placement }: Props) {
   return (

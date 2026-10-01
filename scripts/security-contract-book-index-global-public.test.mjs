@@ -172,6 +172,34 @@ test("Netherlands Bestseller 60 collector is source-native and public only after
 });
 
 
+test("Finland Kirjakauppaliitto collector is source-native and stays off the public world table until Turkish title meanings are ready", () => {
+  const adapter = source("src/lib/book-index/sources/kirjakauppaliitto-fi.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 20', "Finland exact Top 20 guard");
+  contains(adapter, 'text.includes("myydyimmät kaikki formaatit")', "Finland all-formats table anchor");
+  contains(adapter, 'cells[2]', "Finland author column parser");
+  contains(adapter, 'cells[3]', "Finland title column parser");
+  contains(adapter, 'cells[4]', "Finland publisher column parser");
+  contains(adapter, "BOOK_INDEX_KIRJAKAUPPALIITTO_FI_RANK_ORDER_MISMATCH", "Finland rank guard");
+  contains(adapter, "BOOK_INDEX_KIRJAKAUPPALIITTO_FI_DUPLICATE_IDENTITY", "Finland identity guard");
+  contains(collector, "kirjakauppaliittoFinlandBookIndexAdapter", "Finland collector registration");
+  contains(sources, 'code: "kirjakauppaliitto-fi"', "Finland source registry");
+  contains(sources, 'market: "FI"', "Finland market code");
+  contains(lists, 'code: "kirjakauppaliitto-fi-monthly"', "Finland monthly list registry");
+  contains(lists, 'period: "monthly"', "Finland monthly period");
+  contains(lists, "maxRank: 20", "Finland Top 20 bound");
+  notContains(
+    model,
+    '"kirjakauppaliitto-fi-monthly"',
+    "Finland stays off the public world table until Turkish title meanings are prepared",
+  );
+});
+
+
 test("Germany SPIEGEL bestseller source is fail-closed and source-native", () => {
   const adapter = source("src/lib/book-index/sources/spiegel-de.ts");
   const collector = source("src/lib/book-index/collector.ts");

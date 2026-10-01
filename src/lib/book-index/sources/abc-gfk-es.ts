@@ -24,6 +24,30 @@ function visibleText(value: string | undefined) {
     .trim();
 }
 
+function normalizeAuthorCandidate(value: string | undefined) {
+  return visibleText(value)
+    .replace(/^[,.;:\s]+|[,.;:\s]+$/gu, "")
+    .trim();
+}
+
+function extractAuthorName(segment: string) {
+  const patterns = [
+    /firma\s+como\s+([^,.;]+?)(?=\s*,|[.;])/iu,
+    /,\s*de\s+([^,.;]+?)(?=[.;])/iu,
+    /La\s+escritora(?:\s+[\p{L}\-]+)*\s+([^,.;]+?)\s+ha\b/iu,
+    /La\s+francesa\s+([^,.;]+?)\s+explora\b/iu,
+    /\)\.\s*([^,.;]+?)\s+nos\b/iu,
+    /\)\.\s*([^,.;]+?)(?=\s*,\s*autora\b)/iu,
+  ];
+
+  for (const pattern of patterns) {
+    const authorName = normalizeAuthorCandidate(segment.match(pattern)?.[1]);
+    if (authorName) return authorName;
+  }
+
+  return null;
+}
+
 function stableSourceKey(title: string, publisherName: string) {
   const identity = [
     normalizeBookIndexText(title),
@@ -77,23 +101,31 @@ export function parseAbcGfkSpainWeeklyFiction(
 
     const title = visibleText(match[1]);
     const publisherName = visibleText(match[2]);
+    const currentIndex = match.index ?? -1;
+    const nextRankIndex =
+      nextRank <= EXPECTED_BOOKS
+        ? text.search(new RegExp(`puesto\\s+${nextRank}º`, "iu"))
+        : text.length;
+    const segment =
+      currentIndex >= 0
+        ? text.slice(
+            currentIndex,
+            nextRankIndex > currentIndex ? nextRankIndex : text.length,
+          )
+        : "";
+    const authorName = extractAuthorName(segment);
 
-    if (!title || !publisherName) {
+    if (!title || !publisherName || !authorName) {
       throw new Error(`BOOK_INDEX_ABC_GFK_ES_INVALID_ITEM:${rank}`);
     }
 
-    if (nextRank <= EXPECTED_BOOKS) {
-      const currentIndex = match.index ?? -1;
-      const nextRankIndex = text.search(
-        new RegExp(`puesto\\s+${nextRank}º`, "iu"),
-      );
-      if (
-        currentIndex >= 0
-        && nextRankIndex >= 0
-        && nextRankIndex <= currentIndex
-      ) {
-        throw new Error("BOOK_INDEX_ABC_GFK_ES_RANK_ORDER_MISMATCH");
-      }
+    if (
+      nextRank <= EXPECTED_BOOKS
+      && currentIndex >= 0
+      && nextRankIndex >= 0
+      && nextRankIndex <= currentIndex
+    ) {
+      throw new Error("BOOK_INDEX_ABC_GFK_ES_RANK_ORDER_MISMATCH");
     }
 
     const sourceKey = stableSourceKey(title, publisherName);
@@ -102,7 +134,7 @@ export function parseAbcGfkSpainWeeklyFiction(
       sourceKey,
       sourceExternalId: sourceKey,
       title,
-      authorName: null,
+      authorName,
       publisherName,
       isbn13: null,
       isbn10: null,

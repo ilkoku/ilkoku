@@ -16,13 +16,23 @@ function visibleText(value: string | undefined) {
 }
 
 function ebookTable(html: string) {
-  const headingMatch = html.match(
-    /<h[1-6]\b[^>]*>\s*Bestseller\s+Top\s+10\s*-\s*uge[\s\S]*?e-bøger\s*<\/h[1-6]>/iu,
-  );
-  if (!headingMatch || headingMatch.index === undefined) return null;
+  for (const headingMatch of html.matchAll(
+    /<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/giu,
+  )) {
+    const headingText = visibleText(headingMatch[1]).toLocaleLowerCase("da-DK");
+    if (
+      !headingText.includes("bestseller top 10")
+      || !headingText.includes("e-bøger")
+    ) {
+      continue;
+    }
 
-  const afterHeading = html.slice(headingMatch.index + headingMatch[0].length);
-  return afterHeading.match(/<table\b[^>]*>([\s\S]*?)<\/table>/iu)?.[1] ?? null;
+    const headingEnd = (headingMatch.index ?? 0) + headingMatch[0].length;
+    const afterHeading = html.slice(headingEnd);
+    return afterHeading.match(/<table\b[^>]*>([\s\S]*?)<\/table>/iu)?.[1] ?? null;
+  }
+
+  return null;
 }
 
 export function parseDenmarkPubhubEbooks(

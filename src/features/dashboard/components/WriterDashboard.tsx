@@ -1,3 +1,5 @@
+import "../dashboard.css";
+
 import { Card } from "@/components/ui/Card";
 import { dashboardContent } from "@/content";
 import { DashboardFeedback } from "@/features/feedback/components/DashboardFeedback";

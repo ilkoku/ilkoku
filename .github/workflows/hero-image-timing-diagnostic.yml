@@ -33,3 +33,13 @@ jobs:
           test_url "source" "https://ilkoku.com/landing/ilkoku-hero-user-final.webp"
           test_url "optimized-384" "https://ilkoku.com/_next/image?url=%2Flanding%2Filkoku-hero-user-final.webp&w=384&q=60"
           test_url "optimized-640" "https://ilkoku.com/_next/image?url=%2Flanding%2Filkoku-hero-user-final.webp&w=640&q=60"
+          echo "=== HOMEPAGE SCRIPT TAGS ==="
+          curl -sS -L --max-time 20 https://ilkoku.com/ -o /tmp/home.html
+          grep -oE '<script[^>]+src="[^"]+"' /tmp/home.html | sed -n '1,120p'
+          echo "=== 1Q6Z CONTEXT ==="
+          grep -oE '.{0,180}1q6z.{0,260}' /tmp/home.html || true
+          echo "=== 1Q6Z HEADERS ==="
+          for u in "https://ilkoku.com/1q6z/" "https://ilkoku.com/1q6z/Rj6d5n7vHGpjF2vH5hmmufZ-OnAK106gFSU3KTvafDN5BEoK"; do
+            echo "--- $u"
+            curl -sS -L -o /dev/null -D - --max-time 20 "$u" | grep -Ei '^(HTTP/|server:|content-type:|cache-control:|cf-|x-|via:|etag:|last-modified:)'
+          done

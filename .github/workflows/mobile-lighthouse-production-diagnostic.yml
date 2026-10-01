@@ -57,4 +57,20 @@ jobs:
             server: median(metrics.map(x=>x.server ?? 0)),
             lcpElement: metrics[0].lcpElement,
           }));
+
+          const r = runs[1];
+          const interesting = {};
+          for (const [key, audit] of Object.entries(r.audits)) {
+            if (
+              /lcp|largest-contentful-paint|render-block|unused-javascript|unused-css|image-delivery|network-requests|mainthread|bootup|third-part/i.test(key)
+            ) {
+              interesting[key] = {
+                score: audit.score,
+                numericValue: audit.numericValue,
+                displayValue: audit.displayValue,
+                details: audit.details,
+              };
+            }
+          }
+          console.log("LIGHTHOUSE_DIAGNOSTICS|" + JSON.stringify(interesting));
           NODE

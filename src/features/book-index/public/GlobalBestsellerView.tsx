@@ -133,7 +133,12 @@ export function GlobalBestsellerView({
                           </a>
                         )}
                       </td>
-                      <td>{row.authorName ?? "Yazar bilgisi doğrulanmadı"}</td>
+                      <td>
+                        {row.authorName ??
+                          (row.listCode === "rakuten-jp-weekly"
+                            ? "Yazar bilgisi kitap satış kanalında yer almıyor"
+                            : "Yazar bilgisi doğrulanmadı")}
+                      </td>
                       <td className={styles.sourceCell}>{row.sourceName}</td>
                       <td>{row.period}</td>
                     </tr>

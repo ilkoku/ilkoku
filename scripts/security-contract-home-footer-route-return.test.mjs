@@ -9,7 +9,7 @@ test("server footer protects the canonical email from Cloudflare HTML rewriting"
 
   assert.match(footer, /function CloudflareSafeEmailLink/);
   assert.match(footer, /<!--email_off-->/);
-  assert.match(footer, /<!--\\/email_off-->/);
+  assert.ok(footer.includes("<!--/email_off-->"));
   assert.match(footer, /siteContact\\.generalEmail/);
   assert.match(footer, /dangerouslySetInnerHTML/);
 });

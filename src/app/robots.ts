@@ -18,6 +18,8 @@ export default function robots(): MetadataRoute.Robots {
           "/sozlesmelerim",
           "/api",
           "/auth",
+          // First-party Google Tag Gateway measurement path; analytics is not required for page rendering.
+          "/1q6z",
         ],
       },
     ],

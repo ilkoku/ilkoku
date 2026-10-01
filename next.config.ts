@@ -77,6 +77,9 @@ const searchExcludedRouteHeaders = [
 
 const nextConfig: NextConfig = {
   ...(deploymentId ? { deploymentId } : {}),
+  images: {
+    qualities: [60, 75],
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "4mb",

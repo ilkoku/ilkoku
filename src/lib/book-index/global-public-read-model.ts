@@ -20,6 +20,7 @@ export const GLOBAL_BESTSELLER_LIST_CODES = [
   "spiegel-de-fiction-hardcover-weekly",
   "amazon-fr-live",
   "amazon-es-live",
+  "abc-gfk-es-fiction-weekly",
   "amazon-ca-live",
   "amazon-br-live",
   "bestseller60-nl-weekly",

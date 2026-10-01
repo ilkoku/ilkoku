@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
@@ -74,13 +74,88 @@ const benefits = [
 
 const statIcons: IconName[] = ["account", "create", "editor", "publisher", "book", "message"];
 
+async function HomepageRoleSection({
+  roleSection,
+}: {
+  roleSection: Record<string, string> | undefined;
+}) {
+  const roleCardState = await getPublishedRoleCardsState("tr");
+  const cmsRoleCards = roleCardState.state === "valid"
+    ? roleCardsFromPayload("tr", roleCardState.payload)
+    : null;
+  const visibleRoles = cmsRoleCards
+    ? cmsRoleCards.filter((card) => card.visible).map((card) => ({
+        key: card.key,
+        title: card.title,
+        description: card.description,
+        cta: card.ctaLabel,
+        highlights: [card.highlight1, card.highlight2],
+        position: card.position,
+        href: cmsRoleMeta[card.key].fixedHref,
+      }))
+    : defaultRoles.map((role) => ({ ...role, href: cmsRoleMeta[role.key].fixedHref }));
+
+  return (
+    <section className="nx-roles" id="roller">
+      <div className="nx-shell">
+        <header className="nx-section-heading nx-section-heading--inverse">
+          <p className="nx-eyebrow">{roleSection?.eyebrow || "Topluluğa katıl"}</p>
+          <h2>{roleSection?.title || "İlkOku’ya nasıl katılmak istiyorsun?"}</h2>
+          <p>{roleSection?.description || "Rolünü seç; kayıt akışını sana uygun şekilde başlatalım."}</p>
+        </header>
+        <div className="nx-role-grid">
+          {visibleRoles.map((role) => (
+            <Link
+              href={role.href}
+              className={`nx-role nx-role--${role.key}`}
+              key={role.key}
+              aria-label={`${role.title} olarak kayıt ol`}
+            >
+              <div className="nx-role__top">
+                <span className="nx-role__number">{String(role.position).padStart(2, "0")}</span>
+                <span className={`nx-role__icon nx-role__icon--${role.key}`} aria-hidden="true" />
+              </div>
+              <h3>{role.title}</h3>
+              <p>{role.description}</p>
+              <div className="nx-role__highlights">
+                {role.highlights.map((highlight) => <small key={highlight}>{highlight}</small>)}
+              </div>
+              <strong>{role.cta}<span aria-hidden="true">→</span></strong>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+async function HomepageAffiliateSection() {
+  const affiliatePlacement = await getHomepageAffiliatePlacement();
+  return affiliatePlacement.enabled
+    ? <MagzterAffiliateBanner placement={affiliatePlacement} />
+    : null;
+}
+
+async function HomepageFooterSection({
+  slogan,
+  copyright,
+}: {
+  slogan: string;
+  copyright: string;
+}) {
+  const bookIndexContext = await getBookIndexPublicPageContext(10).catch(() => null);
+  return (
+    <LiveHomepageFooter
+      signedIn={false}
+      bookIndexPublished={Boolean(bookIndexContext)}
+      slogan={slogan}
+      copyright={copyright}
+    />
+  );
+}
+
 export default async function HomepageExperience() {
-  const [roleCardState, homepageState, affiliatePlacement, bookIndexContext] = await Promise.all([
-    getPublishedRoleCardsState("tr"),
-    getPublishedHomepageState("tr"),
-    getHomepageAffiliatePlacement(),
-    getBookIndexPublicPageContext(10).catch(() => null),
-  ]);
+  const homepageState = await getPublishedHomepageState("tr");
   const homepage = homepageState.state === "valid" ? homepageState.content : {};
   const hero = homepage.hero;
   const roleSection = homepage.roles;
@@ -96,19 +171,6 @@ export default async function HomepageExperience() {
   const secondaryLabel = cmsSecondaryHref ? (hero?.secondaryCtaLabel || "Detayları Gör") : "Nasıl Çalışır?";
   const passportHref = safeCmsInternalHref(passport?.ctaHref) || "#roller";
 
-  const cmsRoleCards = roleCardState.state === "valid" ? roleCardsFromPayload("tr", roleCardState.payload) : null;
-  const visibleRoles = cmsRoleCards
-    ? cmsRoleCards.filter((card) => card.visible).map((card) => ({
-        key: card.key,
-        title: card.title,
-        description: card.description,
-        cta: card.ctaLabel,
-        highlights: [card.highlight1, card.highlight2],
-        position: card.position,
-        href: cmsRoleMeta[card.key].fixedHref,
-      }))
-    : defaultRoles.map((role) => ({ ...role, href: cmsRoleMeta[role.key].fixedHref }));
-
   const stats = statIcons.flatMap((icon, index) => {
     const value = why?.[`stat${index + 1}Value`]?.trim();
     const label = why?.[`stat${index + 1}Label`]?.trim();
@@ -119,7 +181,7 @@ export default async function HomepageExperience() {
     <main className="nx-home">
       <header className="nx-header">
         <div className="nx-shell nx-header__inner">
-          <Link href="/" className="nx-logo" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="180px" /></Link>
+          <Link href="/" className="nx-logo" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="180px" /></Link>
           <span className="nx-header__label">Dijital yazar platformu</span>
           <details className="nx-account">
             <summary aria-label="Hesap menüsü"><LandingIcon name="account" /></summary>
@@ -138,21 +200,20 @@ export default async function HomepageExperience() {
             <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
             <div className="nx-hero__actions"><Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
           </div>
-          <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" unoptimized sizes="(max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
+          <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" sizes="(max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
         </div>
         <div className="nx-shell nx-hero__proof" aria-label="İlkOku temel özellikleri"><span><LandingIcon name="shield" /> Sürüm geçmişi</span><span><LandingIcon name="editor" /> Editör incelemesi</span><span><LandingIcon name="publisher" /> Yayınevi keşfi</span></div>
       </section>
 
       <History670 />
 
-      <section className="nx-roles" id="roller">
-        <div className="nx-shell">
-          <header className="nx-section-heading nx-section-heading--inverse"><p className="nx-eyebrow">{roleSection?.eyebrow || "Topluluğa katıl"}</p><h2>{roleSection?.title || "İlkOku’ya nasıl katılmak istiyorsun?"}</h2><p>{roleSection?.description || "Rolünü seç; kayıt akışını sana uygun şekilde başlatalım."}</p></header>
-          <div className="nx-role-grid">{visibleRoles.map((role) => <Link href={role.href} className={`nx-role nx-role--${role.key}`} key={role.key} aria-label={`${role.title} olarak kayıt ol`}><div className="nx-role__top"><span className="nx-role__number">{String(role.position).padStart(2, "0")}</span><span className={`nx-role__icon nx-role__icon--${role.key}`} aria-hidden="true" /></div><h3>{role.title}</h3><p>{role.description}</p><div className="nx-role__highlights">{role.highlights.map((highlight) => <small key={highlight}>{highlight}</small>)}</div><strong>{role.cta}<span aria-hidden="true">→</span></strong></Link>)}</div>
-        </div>
-      </section>
+      <Suspense fallback={null}>
+        <HomepageRoleSection roleSection={roleSection} />
+      </Suspense>
 
-      {affiliatePlacement.enabled ? <MagzterAffiliateBanner placement={affiliatePlacement} /> : null}
+      <Suspense fallback={null}>
+        <HomepageAffiliateSection />
+      </Suspense>
 
       <section className="nx-passport" id="eser-pasaportu">
         <div className="nx-shell nx-passport__layout">
@@ -165,12 +226,21 @@ export default async function HomepageExperience() {
         <div className="nx-shell"><header className="nx-section-heading"><p className="nx-eyebrow nx-eyebrow--violet">{why?.eyebrow || "Güven, kayıt ve keşif"}</p><h2>{why?.title || "Neden İlkOku?"}</h2></header><div className="nx-benefit-grid">{benefits.map((benefit, index) => <article className={`nx-benefit nx-benefit--${index + 1}`} key={benefit.title}><span className="nx-benefit__icon" aria-hidden="true" /><h3>{benefit.title}</h3><p>{benefit.description}</p></article>)}</div>{stats.length > 0 ? <div className="nx-stats" aria-label="İlkOku platform istatistikleri">{stats.map((stat, index) => <div className={`nx-stat nx-stat--${index + 1}`} key={`${stat.label}-${stat.icon}`}><span className="nx-stat__icon" aria-hidden="true" /><strong>{stat.value}</strong><small>{stat.label}</small></div>)}</div> : null}</div>
       </section>
 
-      <LiveHomepageFooter
-        signedIn={false}
-        bookIndexPublished={Boolean(bookIndexContext)}
-        slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
-        copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
-      />
+      <Suspense
+        fallback={
+          <LiveHomepageFooter
+            signedIn={false}
+            bookIndexPublished={false}
+            slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
+            copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
+          />
+        }
+      >
+        <HomepageFooterSection
+          slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
+          copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
+        />
+      </Suspense>
     </main>
   );
 }

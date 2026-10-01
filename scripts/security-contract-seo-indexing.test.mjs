@@ -59,6 +59,7 @@ test("robots isolates private content management without blocking the public con
   assertContains(robots, '          "/icerik/",', "private content descendant robots rule");
   assertContains(robots, 'allow: ["/", "/api/media/"]', "published public CMS media crawl allowance");
   assertContains(robots, '          "/api",', "private API robots boundary remains blocked");
+  assertContains(robots, '          "/1q6z",', "Google Tag Gateway measurement path crawl block");
   assertContains(liveSmoke, "Disallow: /icerik$", "live exact private content robots guard");
   assertContains(liveSmoke, "Disallow: /icerik/", "live private content descendant robots guard");
   assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");

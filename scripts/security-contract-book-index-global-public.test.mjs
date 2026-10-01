@@ -13,6 +13,7 @@ const notContains = (text, fragment, label) =>
 
 test("global bestseller public page reads only the approved source lists", () => {
   const model = source("src/lib/book-index/global-public-read-model.ts");
+  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
 
   for (const listCode of [
     "amazon-us-live",
@@ -133,7 +134,7 @@ test("France Amazon bestseller source is fail-closed and source-native", () => {
 });
 
 
-test("Netherlands Bestseller 60 collector is source-native and stays off the public world table until title meanings are ready", () => {
+test("Netherlands Bestseller 60 collector is source-native and public only after Turkish title meanings are ready", () => {
   const adapter = source("src/lib/book-index/sources/bestseller60-nl.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -157,10 +158,15 @@ test("Netherlands Bestseller 60 collector is source-native and stays off the pub
   contains(sources, 'market: "NL"', "Netherlands market code");
   contains(lists, 'code: "bestseller60-nl-weekly"', "Netherlands weekly list registry");
   contains(lists, "maxRank: 60", "Netherlands Top 60 bound");
-  notContains(
+  contains(
     model,
     '"bestseller60-nl-weekly"',
-    "Netherlands stays off the public world table until Turkish title meanings are prepared",
+    "Netherlands is public after Turkish title meanings are prepared",
+  );
+  contains(
+    meanings,
+    '"De wereld rond met Project Gezond": "Project Gezond ile Dünya Turu"',
+    "Netherlands Turkish meaning registry",
   );
 });
 

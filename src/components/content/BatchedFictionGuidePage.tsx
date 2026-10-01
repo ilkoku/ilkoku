@@ -245,8 +245,39 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
     },
   ];
 
+  const canonicalUrl = `https://ilkoku.com/yazarlar-icin/kurgu/${definition.slug}`;
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${canonicalUrl}#webpage`,
+      url: canonicalUrl,
+      name: title,
+      description: summary,
+      inLanguage: "tr-TR",
+      isPartOf: { "@id": "https://ilkoku.com/#website" },
+      publisher: { "@id": "https://ilkoku.com/#organization" },
+      about: [
+        { "@type": "Thing", name: definition.label },
+        { "@type": "Thing", name: "Kurgu yazarlığı" },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Yazarlar İçin", item: "https://ilkoku.com/yazarlar-icin" },
+        { "@type": "ListItem", position: 3, name: "Kurgu", item: "https://ilkoku.com/yazarlar-icin/kurgu" },
+        { "@type": "ListItem", position: 4, name: title, item: canonicalUrl },
+      ],
+    },
+  ];
+
   return (
-    <WritingGuideShell activeCategory="Kurgu" activeGenreSlug={definition.slug}>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
+      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug={definition.slug}>
       <div className="batched-fiction-writing-guide">
         <PublicCmsPageBlocks
           blocks={blocks}
@@ -255,6 +286,7 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
           summary={summary}
         />
       </div>
-    </WritingGuideShell>
+      </WritingGuideShell>
+    </>
   );
 }

@@ -3,6 +3,7 @@ import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
 import type { EducationGuideDefinition, GuideItem } from "@/lib/education-guide-batch";
+import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 import { getLiteratureGuideExtraSections } from "@/lib/literature-guide-depth";
 import { getStageGuideExtraSections } from "@/lib/stage-guide-depth";
 
@@ -241,8 +242,44 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
     },
   ];
 
+  const categoryHub = WRITING_CATEGORY_HUBS.find((hub) => hub.category === definition.category);
+  const canonicalUrl = categoryHub
+    ? `https://ilkoku.com${categoryHub.href}/${definition.slug}`
+    : `https://ilkoku.com/yazarlar-icin`;
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${canonicalUrl}#webpage`,
+      url: canonicalUrl,
+      name: title,
+      description: summary,
+      inLanguage: "tr-TR",
+      isPartOf: { "@id": "https://ilkoku.com/#website" },
+      publisher: { "@id": "https://ilkoku.com/#organization" },
+      about: [
+        { "@type": "Thing", name: definition.label },
+        { "@type": "Thing", name: `${definition.category} yazarlığı` },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Yazarlar İçin", item: "https://ilkoku.com/yazarlar-icin" },
+        ...(categoryHub
+          ? [{ "@type": "ListItem", position: 3, name: categoryHub.title, item: `https://ilkoku.com${categoryHub.href}` }]
+          : []),
+        { "@type": "ListItem", position: 4, name: title, item: canonicalUrl },
+      ],
+    },
+  ];
+
   return (
-    <WritingGuideShell activeCategory={definition.category} activeGenreSlug={definition.slug}>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
+      <WritingGuideShell activeCategory={definition.category} activeGenreSlug={definition.slug}>
       <div className="batched-education-writing-guide">
         <PublicCmsPageBlocks
           blocks={blocks}
@@ -251,6 +288,7 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
           summary={summary}
         />
       </div>
-    </WritingGuideShell>
+      </WritingGuideShell>
+    </>
   );
 }

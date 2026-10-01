@@ -158,15 +158,25 @@ export async function getTurkeyNewReleaseRows(limit = 500) {
       latestObservedAt: row.latestObservedAt,
       sources: [...row.sources.values()].sort(
         (a, b) =>
-          a.sourceName.localeCompare(b.sourceName, "tr")
-          || a.position - b.position,
+          a.position - b.position
+          || a.sourceName.localeCompare(b.sourceName, "tr"),
       ),
     }))
-    .sort(
-      (a, b) =>
-        a.title.localeCompare(b.title, "tr")
+    .sort((a, b) => {
+      const aPrimary = a.sources[0];
+      const bPrimary = b.sources[0];
+
+      return (
+        (aPrimary?.position ?? Number.MAX_SAFE_INTEGER)
+        - (bPrimary?.position ?? Number.MAX_SAFE_INTEGER)
+        || (aPrimary?.sourceName ?? "").localeCompare(
+          bPrimary?.sourceName ?? "",
+          "tr",
+        )
+        || a.title.localeCompare(b.title, "tr")
         || (a.authorName ?? "").localeCompare(b.authorName ?? "", "tr")
-        || b.latestObservedAt.getTime() - a.latestObservedAt.getTime(),
-    )
+        || b.latestObservedAt.getTime() - a.latestObservedAt.getTime()
+      );
+    })
     .slice(0, safeLimit);
 }

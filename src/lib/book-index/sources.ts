@@ -1,4 +1,4 @@
-export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "DK" | "SE";
+export type BookIndexMarket = "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "DK" | "SE" | "NO";
 export type BookIndexSourcePhase = "v1" | "phase_2";
 export type BookIndexCollectionState =
   | "planned"
@@ -12,7 +12,7 @@ export type BookIndexSourceDefinition = {
   code: string;
   name: string;
   market: BookIndexMarket;
-  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "DK" | "SE";
+  countryCode: "TR" | "US" | "UK" | "IT" | "JP" | "KR" | "AU" | "DE" | "FR" | "ES" | "CA" | "NL" | "BR" | "FI" | "DK" | "SE" | "NO";
   baseUrl: string;
   includeInTurkeyIndex: boolean;
   independenceGroup?: string;
@@ -265,6 +265,18 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     includeInTurkeyIndex: false,
     independenceGroup: "forlaggare-se",
     operatorName: "Svenska Förläggareföreningen",
+    phase: "phase_2",
+    collectionState: "ready",
+  },
+  {
+    code: "boklista-no",
+    name: "Bokhandlerforeningen Norveç · Aylık Top 50",
+    market: "NO",
+    countryCode: "NO",
+    baseUrl: "https://bokhandlerforeningen.no",
+    includeInTurkeyIndex: false,
+    independenceGroup: "boklista-no",
+    operatorName: "Bokhandlerforeningen",
     phase: "phase_2",
     collectionState: "ready",
   },

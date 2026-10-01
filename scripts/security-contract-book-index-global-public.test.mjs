@@ -244,8 +244,12 @@ test("Sweden Forlaggare weekly fiction collector is source-native and public aft
   contains(
     meanings,
     '"Systrarna på Sophiahemmet": "Sophiahemmet\'teki Kız Kardeşler"',
-    "Sweden Turkish meaning registry",
+    "Sweden Turkish meaning for Systrarna på Sophiahemmet",
   );
+  contains(meanings, '"Medusa": "Medusa"', "Sweden Turkish fallback for Medusa");
+  contains(meanings, '"Blackout": "Karartma"', "Sweden Turkish meaning for Blackout");
+  contains(meanings, '"Domino": "Domino"', "Sweden Turkish fallback for Domino");
+  contains(meanings, '"Slam": "Çamur"', "Sweden Turkish meaning for Slam");
   contains(
     view,
     'row.listCode === "forlaggare-se-fiction-weekly"',

@@ -1,0 +1,66 @@
+name: Lighthouse mobile trace diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/lighthouse-mobile-trace-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Lighthouse mobile trace
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Show Chrome
+        run: google-chrome --version || chromium --version || true
+
+      - name: Run Lighthouse mobile trace
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npx --yes lighthouse@13.0.1 https://ilkoku.com/             --quiet             --chrome-flags="--headless=new --no-sandbox"             --form-factor=mobile             --screenEmulation.mobile=true             --throttling-method=simulate             --only-categories=performance             --output=json             --output-path=/tmp/lighthouse.json
+
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const r = JSON.parse(fs.readFileSync("/tmp/lighthouse.json","utf8"));
+          const a = r.audits;
+          const itemList = (id) => a[id]?.details?.items ?? [];
+          const compact = (item) => ({
+            url: item.url,
+            totalBytes: item.totalBytes,
+            wastedBytes: item.wastedBytes,
+            wastedPercent: item.wastedPercent,
+            totalBlockingTime: item.totalBlockingTime,
+            startTime: item.startTime,
+            endTime: item.endTime,
+            transferSize: item.transferSize,
+          });
+          console.log("LH_SUMMARY", JSON.stringify({
+            lighthouseVersion:r.lighthouseVersion,
+            performance:Math.round((r.categories.performance.score||0)*100),
+            fcp:a["first-contentful-paint"]?.numericValue,
+            lcp:a["largest-contentful-paint"]?.numericValue,
+            tbt:a["total-blocking-time"]?.numericValue,
+            cls:a["cumulative-layout-shift"]?.numericValue,
+            speedIndex:a["speed-index"]?.numericValue,
+            serverResponse:a["server-response-time"]?.numericValue,
+            lcpElement:itemList("largest-contentful-paint-element").slice(0,3),
+            lcpPhases:a["lcp-breakdown-insight"]?.details ?? a["lcp-breakdown"]?.details ?? null,
+            lcpDiscovery:a["lcp-discovery-insight"]?.details ?? a["lcp-discovery"]?.details ?? null,
+            renderBlocking:(a["render-blocking-resources"]?.details?.items ?? a["render-blocking-insight"]?.details?.items ?? []).map(compact).slice(0,30),
+            unusedCss:itemList("unused-css-rules").map(compact).slice(0,30),
+            unusedJs:itemList("unused-javascript").map(compact).slice(0,30),
+            images:itemList("uses-optimized-images").map(compact).slice(0,30),
+            modernImages:itemList("modern-image-formats").map(compact).slice(0,30),
+            responsiveImages:itemList("uses-responsive-images").map(compact).slice(0,30),
+          }));
+          NODE
+
+      - name: Upload Lighthouse JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-mobile-trace
+          path: /tmp/lighthouse.json

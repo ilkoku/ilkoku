@@ -218,8 +218,8 @@ test("Switzerland SBVV collector is source-native and stays off the public world
   contains(adapter, 'startsWith("bestseller der woche")', "Switzerland weekly heading anchor");
   contains(adapter, '"Belletristik Hardcover"', "Switzerland fiction hardcover anchor");
   contains(adapter, '97[89][0-9]{10}', "Switzerland ISBN parser");
-  contains(adapter, "BOOK_INDEX_SBV_CH_RANK_ORDER_MISMATCH", "Switzerland rank guard");
-  contains(adapter, "BOOK_INDEX_SBV_CH_DUPLICATE_ISBN", "Switzerland ISBN uniqueness guard");
+  contains(adapter, "BOOK_INDEX_SBVV_CH_RANK_ORDER_MISMATCH", "Switzerland rank guard");
+  contains(adapter, "BOOK_INDEX_SBVV_CH_DUPLICATE_ISBN", "Switzerland ISBN uniqueness guard");
   contains(collector, "sbvvSwitzerlandBookIndexAdapter", "Switzerland collector registration");
   contains(sources, 'code: "sbvv-ch"', "Switzerland source registry");
   contains(sources, 'market: "CH"', "Switzerland market code");

@@ -293,16 +293,16 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     collectionState: "researching",
   },
   {
-    code: "indigo-ca",
-    name: "Indigo Kanada · Globe and Mail",
+    code: "globe-mail-ca",
+    name: "The Globe and Mail Kanada · Hardcover Fiction",
     market: "CA",
     countryCode: "CA",
-    baseUrl: "https://www.indigo.ca",
+    baseUrl: "https://www.theglobeandmail.com",
     includeInTurkeyIndex: false,
-    independenceGroup: "indigo-ca",
-    operatorName: "Indigo Books & Music",
+    independenceGroup: "globe-mail-ca",
+    operatorName: "The Globe and Mail",
     phase: "phase_2",
-    collectionState: "researching",
+    collectionState: "ready",
   },
 
 

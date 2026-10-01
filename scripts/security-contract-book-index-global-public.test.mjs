@@ -51,23 +51,36 @@ test("global bestseller public page reads only the approved source lists", () =>
 });
 
 
-test("Spain and Canada research sources stay fail-closed until ranked collectors are verified", () => {
+test("Spain research stays fail-closed while Canada Globe and Mail collector is verified privately", () => {
+  const adapter = source("src/lib/book-index/sources/globe-mail-ca.ts");
+  const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const model = source("src/lib/book-index/global-public-read-model.ts");
 
   contains(sources, 'code: "casadellibro-es"', "Spain research source registry");
   contains(sources, 'market: "ES"', "Spain market code");
-  contains(sources, 'code: "indigo-ca"', "Canada research source registry");
-  contains(sources, 'market: "CA"', "Canada market code");
-
   contains(lists, 'code: "casadellibro-es-bestsellers-research"', "Spain research list");
-  contains(lists, 'code: "indigo-ca-globe-mail-weekly-research"', "Canada research list");
-  contains(lists, "collectionEveryMinutes: null", "research lists are unscheduled");
-  contains(lists, "enabled: false", "research lists are disabled");
-
+  contains(lists, "collectionEveryMinutes: null", "Spain research list is unscheduled");
+  contains(lists, "enabled: false", "Spain research list is disabled");
   notContains(model, '"casadellibro-es-bestsellers-research"', "Spain is not public before rank verification");
-  notContains(model, '"indigo-ca-globe-mail-weekly-research"', "Canada is not public before rank verification");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 10', "Canada exact Top 10 guard");
+  contains(adapter, "ARTICLE_PATH_PREFIX", "Canada latest weekly article discovery");
+  contains(adapter, "Hardcover Fiction:", "Canada hardcover fiction table anchor");
+  contains(adapter, "BOOK_INDEX_GLOBE_MAIL_CA_RANK_ORDER_MISMATCH", "Canada rank guard");
+  contains(adapter, "BOOK_INDEX_GLOBE_MAIL_CA_DUPLICATE_IDENTITY", "Canada duplicate identity guard");
+  contains(collector, "globeMailCanadaBookIndexAdapter", "Canada collector registration");
+  contains(sources, 'code: "globe-mail-ca"', "Canada Globe and Mail source registry");
+  contains(sources, 'market: "CA"', "Canada market code");
+  contains(lists, 'code: "globe-mail-ca-hardcover-fiction-weekly"', "Canada weekly Top 10 list registry");
+  contains(lists, 'categoryKey: "fiction-hardcover"', "Canada category scope");
+  contains(lists, "maxRank: 10", "Canada Top 10 bound");
+  notContains(
+    model,
+    '"globe-mail-ca-hardcover-fiction-weekly"',
+    "Canada remains private until production collection and Turkish meanings are verified",
+  );
 });
 
 

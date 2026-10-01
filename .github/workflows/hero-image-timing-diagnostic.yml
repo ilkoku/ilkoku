@@ -1,4 +1,5 @@
 name: Hero image timing diagnostic
+# trigger
 
 on:
   push:

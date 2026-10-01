@@ -39,12 +39,12 @@ export function NewReleasePublicView({
         <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Yeni Çıkanlar</span>
         <h1>Yeni Çıkan Kitaplar</h1>
         <p>
-          Türkiye&apos;deki kitap satış kaynaklarının kendi “yeni çıkan” ve
+          Türkiye&apos;deki kitap satış kanallarının kendi “yeni çıkan” ve
           “yeni gelen” listelerinde yer verdiği kitapları tek yerde gösteriyoruz.
           İlkOku bu kitaplara yeni bir sıra veya puan vermez.
         </p>
         <p className={styles.freshness}>
-          {sourceCount} doğrulanmış kaynak · {rows.length} güncel kayıt
+          {sourceCount} doğrulanmış kitap satış kanalı · {rows.length} güncel kayıt
           {latestObservedAt && latestObservedAtLabel ? (
             <>
               {" · Son veri güncellemesi: "}
@@ -60,13 +60,13 @@ export function NewReleasePublicView({
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.eyebrow}>Türkiye</span>
-            <h2>Kaynakların yeni çıkan kitapları</h2>
+            <h2>Kitap satış kanallarındaki yeni çıkan kitaplar</h2>
             <p>
-              Kayıtlar kaynakların kendi yeni çıkanlar listelerindeki konuma göre
-              gösterilir. Tüm siteler görünümünde önce 1., sonra 2., sonra 3. konumdaki
-              kayıtlar gelir; eşit konumlarda kaynak adı yalnız sabit gösterim sırası
-              için kullanılır. Bir satış sitesi seçildiğinde o sitenin kendi liste
-              sırası korunur. Bu değer satış sırası değildir ve kaynaklar arasında
+              Kayıtlar kitap satış kanallarının kendi yeni çıkanlar listelerindeki konuma göre
+              gösterilir. Tüm kitap satış kanalları görünümünde önce 1., sonra 2., sonra 3. konumdaki
+              kayıtlar gelir; eşit konumlarda kitap satış kanalı adı yalnız sabit gösterim sırası
+              için kullanılır. Bir kitap satış kanalı seçildiğinde o kanalın kendi liste
+              sırası korunur. Bu değer satış sırası değildir ve kitap satış kanalları arasında
               ortak bir İlkOku sıralaması oluşturmaz.
             </p>
           </div>
@@ -82,12 +82,12 @@ export function NewReleasePublicView({
         <span className={styles.eyebrow}>Metodoloji</span>
         <h2 id="new-release-methodology">“Yeni çıkan” nasıl belirleniyor?</h2>
         <p>
-          Bir kitap yalnızca kaynak site onu kendi yeni çıkan, yeni gelen veya
+          Bir kitap yalnızca kitap satış kanalı onu kendi yeni çıkan, yeni gelen veya
           eşdeğer native listesinde gösteriyorsa bu sayfaya alınır. İlkOku katalog
           eklenme tarihinden tahmin üreterek kitaba “yeni” etiketi vermez.
         </p>
         <p>
-          Aynı kitap farklı kaynaklarda doğrulanmış biçimde eşleşmişse kaynaklar
+          Aynı kitap farklı kitap satış kanallarında doğrulanmış biçimde eşleşmişse kitap satış kanalları
           aynı kayıtta birlikte gösterilebilir. Emin olunmayan eşleşmeler
           birleştirilmez.
         </p>

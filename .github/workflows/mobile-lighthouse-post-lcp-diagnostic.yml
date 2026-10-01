@@ -41,6 +41,40 @@ jobs:
             SpeedIndex: a['speed-index']?.displayValue,
             TTFB: a['server-response-time']?.displayValue,
             LCPElement: lcpItem,
+            LCPBreakdown: Object.fromEntries(
+              Object.entries(a)
+                .filter(([key]) => key.toLowerCase().includes('lcp'))
+                .map(([key, value]) => [key, {
+                  score: value.score,
+                  displayValue: value.displayValue,
+                  numericValue: value.numericValue,
+                  details: value.details,
+                }])
+            ),
+            heroRequest: (a['network-requests']?.details?.items || []).filter((item) =>
+              String(item.url || '').includes('ilkoku-hero-user-final')
+            ).map((item) => ({
+              url: item.url,
+              statusCode: item.statusCode,
+              resourceType: item.resourceType,
+              transferSize: item.transferSize,
+              resourceSize: item.resourceSize,
+              startTime: item.startTime,
+              endTime: item.endTime,
+              networkRequestTime: item.networkRequestTime,
+              networkEndTime: item.networkEndTime,
+            })),
+            documentRequest: (a['network-requests']?.details?.items || []).filter((item) =>
+              item.resourceType === 'Document'
+            ).slice(0, 3).map((item) => ({
+              url: item.url,
+              statusCode: item.statusCode,
+              transferSize: item.transferSize,
+              startTime: item.startTime,
+              endTime: item.endTime,
+              networkRequestTime: item.networkRequestTime,
+              networkEndTime: item.networkEndTime,
+            })),
             renderBlocking: a['render-blocking-resources']?.displayValue || null,
             unusedJs: a['unused-javascript']?.displayValue || null,
             unusedCss: a['unused-css-rules']?.displayValue || null,

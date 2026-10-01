@@ -19,11 +19,12 @@ import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
-import { WRITING_GUIDE_SEARCH_UPDATED_AT } from "@/lib/search-discovery-signals";
+import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness";
 
 const baseUrl = "https://ilkoku.com";
 
-const WRITING_CATEGORY_RELEASED_AT = new Date("2026-09-13T16:49:51Z");
+const WRITING_CATEGORY_INDEXABLE_AT = new Date("2026-09-13T19:15:11Z");
+// PR #1450 updated shared WebPage/BreadcrumbList structured data across all writing guides.\nconst WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT = new Date("2026-10-01T08:40:42Z");
 const READER_EDUCATION_RELEASED_AT = new Date("2026-09-13T21:02:05Z");
 const EDITOR_EDUCATION_RELEASED_AT_BY_SLUG: Record<string, Date> = {
   "editorluge-baslama": new Date("2026-09-15T05:46:22Z"),
@@ -115,7 +116,7 @@ const writingGenreHrefs = GENRES.map((genre) => {
 const writingEducationEntries: MetadataRoute.Sitemap = [
   ...WRITING_CATEGORY_HUBS.map((hub) => ({
     url: `${baseUrl}${hub.href}`,
-    lastModified: WRITING_CATEGORY_RELEASED_AT,
+    lastModified: WRITING_CATEGORY_INDEXABLE_AT,
     changeFrequency: "monthly" as const,
     priority: 0.8,
   })),
@@ -126,7 +127,7 @@ const writingEducationEntries: MetadataRoute.Sitemap = [
     }
     return {
       url: `${baseUrl}${categoryHref}/${genre.slug}`,
-      lastModified: WRITING_GUIDE_SEARCH_UPDATED_AT,
+      lastModified: WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     };

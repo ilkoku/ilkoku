@@ -1,1 +1,0 @@
-export const WRITING_GUIDE_SEARCH_UPDATED_AT = new Date("2026-10-01T08:40:42Z");

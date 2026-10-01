@@ -98,6 +98,49 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   assertContains(sitemap, "educationLastModifiedByUrl", "education URL freshness map");
   assertContains(sitemap, "liveStaticDiscoveryEntries", "live static sitemap freshness merge");
   assertContains(sitemap, "lastModified", "truthful sitemap lastmod output");
+  assertContains(
+    sitemap,
+    "WRITING_CATEGORY_INDEXABLE_AT",
+    "writing category hub lastmod must use the verified indexable release time",
+  );
+  assertContains(
+    sitemap,
+    'new Date("2026-09-13T19:15:11Z")',
+    "writing category verified indexable timestamp",
+  );
+  const searchFreshness = source("src/lib/search-content-freshness.ts");
+  const recentUpdatesAtom = source("src/app/recent-updates.atom/route.ts");
+
+  assertContains(
+    sitemap,
+    'import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness"',
+    "sitemap shared writing guide freshness import",
+  );
+  assertContains(
+    sitemap,
+    "WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT",
+    "writing guide lastmod must preserve the real shared structured-data update",
+  );
+  assertContains(
+    searchFreshness,
+    'new Date("2026-10-01T08:40:42Z")',
+    "writing guide structured-data lastmod timestamp",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    'import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness"',
+    "Atom feed shared writing guide freshness import",
+  );
+  assertNotContains(
+    sitemap,
+    "search-discovery-signals",
+    "sitemap must not rely on the retired search discovery signal module",
+  );
+  assertNotContains(
+    recentUpdatesAtom,
+    "search-discovery-signals",
+    "Atom feed must not rely on the retired search discovery signal module",
+  );
 });
 
 

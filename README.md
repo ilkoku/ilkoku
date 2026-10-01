@@ -19,6 +19,17 @@
 - [Yayınevleri İçin](https://ilkoku.com/yayinevleri-icin)
 - [Editoryal Standartlar](https://ilkoku.com/editoryal-standartlar)
 - [Yardım Merkezi](https://ilkoku.com/yardim)
+- [Site Haritası](https://ilkoku.com/site-haritasi)
+
+### Yazarlık Okulu
+
+- [Kurgu](https://ilkoku.com/yazarlar-icin/kurgu)
+- [Edebiyat](https://ilkoku.com/yazarlar-icin/edebiyat)
+- [Senaryo ve Sahne](https://ilkoku.com/yazarlar-icin/senaryo-ve-sahne)
+- [Akademik](https://ilkoku.com/yazarlar-icin/akademik)
+- [Bilgilendirici](https://ilkoku.com/yazarlar-icin/bilgilendirici)
+- [Çocuk ve Gençlik](https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik)
+- [Çizgi Anlatı](https://ilkoku.com/yazarlar-icin/cizgi-anlati)
 
 ## Teknoloji
 

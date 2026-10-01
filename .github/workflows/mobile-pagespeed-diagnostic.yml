@@ -1,0 +1,50 @@
+name: Mobile PageSpeed diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mobile-pagespeed-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pagespeed:
+    name: Google PageSpeed mobile
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query PageSpeed Insights API
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          url='https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https%3A%2F%2Filkoku.com%2F&strategy=mobile&category=performance'
+          curl --silent --show-error --fail --max-time 60 "$url" -o /tmp/psi.json
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const data = JSON.parse(fs.readFileSync("/tmp/psi.json","utf8"));
+          const lhr = data.lighthouseResult;
+          const a = lhr.audits;
+          const pick = (id) => ({
+            score: a[id]?.score,
+            displayValue: a[id]?.displayValue,
+            numericValue: a[id]?.numericValue,
+          });
+          console.log(JSON.stringify({
+            fetchedAt: data.analysisUTCTimestamp,
+            lighthouseVersion: lhr.lighthouseVersion,
+            performance: Math.round((lhr.categories.performance.score || 0) * 100),
+            fcp: pick("first-contentful-paint"),
+            lcp: pick("largest-contentful-paint"),
+            tbt: pick("total-blocking-time"),
+            cls: pick("cumulative-layout-shift"),
+            speedIndex: pick("speed-index"),
+            tti: pick("interactive"),
+            serverResponse: pick("server-response-time"),
+            lcpDiscovery: a["lcp-discovery"]?.details ?? null,
+            lcpPhases: a["lcp-breakdown"]?.details ?? null,
+            renderBlocking: a["render-blocking-insight"]?.details ?? null,
+            unusedJs: a["unused-javascript"]?.details ?? null,
+            unusedCss: a["unused-css-rules"]?.details ?? null
+          }, null, 2));
+          NODE

@@ -158,6 +158,9 @@ test("Spain and Canada Amazon bestseller sources are fail-closed and source-nati
 
   contains(spain, "authorFallbackHtml", "Spain plain author fallback parser");
   contains(collector, "amazonSpainBookIndexAdapter", "Spain collector registration");
+  contains(canada, "parseAmazonCanadaProductAuthor", "Canada product-page author enrichment");
+  contains(canada, "field-author=", "Canada product-page author byline parser");
+  contains(canada, "enrichMissingCanadaAuthors", "Canada missing-author enrichment");
   contains(collector, "amazonCanadaBookIndexAdapter", "Canada collector registration");
   contains(sources, 'code: "amazon-es"', "Spain live source registry");
   contains(sources, 'code: "amazon-ca"', "Canada live source registry");

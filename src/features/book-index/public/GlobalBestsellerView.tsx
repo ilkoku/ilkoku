@@ -162,11 +162,11 @@ export function GlobalBestsellerView({
           De Bestseller 60 Hollanda, Kirjakauppaliitto Finlandiya, Publizon Pubhub Danimarka ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Danimarka satırları
           Publizon&apos;un haftalık e-kitap Top 10 listesini, Almanya satırları SPIEGEL&apos;in haftalık kurgu hardcover listesini temsil eder. Aynı sıra
           numarasındaki kayıtlar aynı blokta gruplanır; günlük, haftalık, aylık
-          veya güncel dönem bilgileri ilgili sitenin yayımladığı biçimde korunur.
+          veya güncel dönem bilgileri ilgili kitap satış kanalının yayımladığı biçimde korunur.
         </p>
         <p>
           Bu sayfa ülkeler arası satış adetlerini karşılaştırmaz ve tek bir
-          dünya satış sırası oluşturmaz. Soldaki sıra, her sitenin kendi yayımladığı
+          dünya satış sırası oluşturmaz. Soldaki sıra, her kitap satış kanalının kendi yayımladığı
           sıra numarasını temsil eder; aynı sıradaki farklı ülke kayıtları birlikte
           gösterilir.
         </p>

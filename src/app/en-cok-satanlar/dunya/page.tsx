@@ -5,7 +5,7 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 const canonical = "/en-cok-satanlar/dunya";
 const description =
-  "Amazon ABD, Amazon UK, IBS İtalya, Rakuten Books Japonya, Kyobo Güney Kore ve Readings Avustralya çok satan kitap listelerini ilgili sitelerin kendi sıralamalarıyla inceleyin.";
+  "Amazon ABD, Amazon UK, IBS İtalya, Rakuten Books Japonya, Kyobo Güney Kore ve Readings Avustralya çok satan kitap listelerini ilgili kitap satış kanallarının kendi sıralamalarıyla inceleyin.";
 
 export const revalidate = 300;
 

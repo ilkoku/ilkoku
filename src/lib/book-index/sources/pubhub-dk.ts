@@ -85,8 +85,17 @@ export function parseDenmarkPubhubEbooks(
     );
   }
 
-  if (books.some((book, index) => book.rank !== index + 1)) {
+  if (books[0]?.rank !== 1) {
     throw new Error("BOOK_INDEX_PUBHUB_DK_RANK_ORDER_MISMATCH");
+  }
+
+  for (let index = 1; index < books.length; index += 1) {
+    const previousRank = books[index - 1]?.rank;
+    const rank = books[index]?.rank;
+
+    if (rank !== previousRank && rank !== index + 1) {
+      throw new Error("BOOK_INDEX_PUBHUB_DK_RANK_ORDER_MISMATCH");
+    }
   }
 
   const sourceKeys = new Set(books.map((book) => book.sourceKey));

@@ -134,9 +134,9 @@ test("Book Index public methodology describes source-rank comparison", () => {
   const normalizedView = view.replace(/\s+/g, " ");
 
   contains(normalizedView, "İlkOku yeni bir sıra veya bileşik puan üretmez", "no invented public ranking");
-  contains(normalizedView, "Aynı kitap aynı sıra numarasında birden fazla sitede", "same-rank merge rule");
+  contains(normalizedView, "Aynı kitap aynı sıra numarasında birden fazla kitap satış kanalında", "same-rank merge rule");
   contains(normalizedView, "Aynı kitap farklı sıra numaralarındaysa", "different-rank separation rule");
-  contains(normalizedView, "işletmeci grubu bazında tekilleştirme korunur", "internal insight operator deduplication");
+  contains(normalizedView, "kitap satış kanalı bazında tekilleştirme korunur", "internal insight operator deduplication");
   notContains(normalizedView, "en az üç bağımsız işletmeci grubunda görünmelidir", "stale public composite threshold copy");
 });
 
@@ -211,8 +211,8 @@ test("Bestseller comparison has a dedicated gated SEO route", () => {
   );
   contains(
     comparison,
-    "Site seç",
-    "public comparison controls use site wording",
+    "Kitap satış kanalı seç",
+    "public comparison controls use book sales channel wording",
   );
   contains(
     sitemap,

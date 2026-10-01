@@ -602,3 +602,31 @@
     transition: none !important;
   }
 }
+
+
+/* Mobile LCP: skip layout/paint work for large below-fold homepage sections
+   until they approach the viewport. Intrinsic sizes keep scroll geometry stable. */
+@media (max-width: 900px) {
+  .homepage-live .nx-history,
+  .homepage-live .nx-roles,
+  .homepage-live .nx-affiliate,
+  .homepage-live .nx-passport,
+  .homepage-live .nx-why,
+  .homepage-live .nx-live-footer-scope {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 900px;
+  }
+
+  .homepage-live .nx-history {
+    contain-intrinsic-size: auto 2600px;
+  }
+
+  .homepage-live .nx-roles {
+    contain-intrinsic-size: auto 2300px;
+  }
+
+  .homepage-live .nx-passport,
+  .homepage-live .nx-why {
+    contain-intrinsic-size: auto 1200px;
+  }
+}

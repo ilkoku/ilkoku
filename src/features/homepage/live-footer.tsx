@@ -21,6 +21,13 @@ type LiveHomepageFooterProps = {
   copyright: string;
 };
 
+function CloudflareSafeEmailLink() {
+  const email = siteContact.generalEmail;
+  const html = `<!--email_off--><a class="site-contact-footer__email" href="mailto:${email}" aria-label="Genel iletişim: ${email}">${email}</a><!--/email_off-->`;
+
+  return <span style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
 function FooterSlogan({ value }: { value: string }) {
   const emphasis = "ilk adımın.";
   if (value.toLocaleLowerCase("tr-TR").endsWith(emphasis)) {
@@ -81,7 +88,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
             <h3>Destek</h3>
             {publicSupportLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
             <div className="site-contact-footer">
-              <a className="site-contact-footer__email" href={`mailto:${siteContact.generalEmail}`}>{siteContact.generalEmail}</a>
+              <CloudflareSafeEmailLink />
               <div className="site-social-links" aria-label="İlkOku sosyal medya hesapları">
                 {siteContact.socialLinks.map((social) => <a href={social.href} target="_blank" rel="noopener noreferrer" aria-label={`${social.label} hesabımızı aç`} title={social.label} key={social.id}><SocialIcon id={social.id} /></a>)}
               </div>

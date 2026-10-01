@@ -4,6 +4,16 @@ import test from "node:test";
 
 const source = readFileSync("src/components/content/PublicFooterHydrator.tsx", "utf8");
 
+test("server footer protects the canonical email from Cloudflare HTML rewriting", () => {
+  const footer = readFileSync("src/features/homepage/live-footer.tsx", "utf8");
+
+  assert.match(footer, /function CloudflareSafeEmailLink/);
+  assert.match(footer, /<!--email_off-->/);
+  assert.ok(footer.includes("<!--/email_off-->"));
+  assert.ok(footer.includes("siteContact.generalEmail"));
+  assert.match(footer, /dangerouslySetInnerHTML/);
+});
+
 test("homepage footer hydration reruns when client navigation returns to root", () => {
   assert.match(source, /import \{ usePathname \} from "next\/navigation";/);
   assert.match(source, /const pathname = usePathname\(\);/);

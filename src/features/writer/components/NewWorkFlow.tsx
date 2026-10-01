@@ -35,6 +35,7 @@ import {
 } from "@/lib/work-content-classification";
 
 import type { WorkDraft, WriterStep } from "../types";
+import "../writer-flow.css";
 import { WriterBrand } from "./WriterBrand";
 
 const initialDraft: WorkDraft = {

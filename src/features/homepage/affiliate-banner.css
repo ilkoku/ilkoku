@@ -1,10 +1,10 @@
-.nx-affiliate {
+.nx-partner-offer {
   padding: clamp(1.25rem, 2.5vw, 2rem) 0;
   background: #f7f5fb;
   color: #211a31;
 }
 
-.nx-affiliate__panel {
+.nx-partner-offer__panel {
   display: grid;
   grid-template-columns: minmax(19rem, 1fr) minmax(31rem, 44rem);
   align-items: center;
@@ -19,13 +19,12 @@
   box-shadow: 0 0.85rem 2.25rem rgba(47, 33, 71, 0.06);
 }
 
-.nx-affiliate__copy {
-  position: relative;
+.nx-partner-offer__copy {
   min-width: 0;
   padding: 0.15rem 0 0.15rem 0.2rem;
 }
 
-.nx-affiliate__eyebrow {
+.nx-partner-offer__eyebrow {
   margin: 0 0 0.45rem;
   color: #6d46a5;
   font-size: 0.68rem;
@@ -34,40 +33,54 @@
   text-transform: uppercase;
 }
 
-.nx-affiliate__copy h2 {
+.nx-partner-offer__copy h2 {
   margin: 0 0 0.35rem;
   font-size: clamp(1.12rem, 1.55vw, 1.45rem);
   line-height: 1.08;
   letter-spacing: -0.035em;
 }
 
-.nx-affiliate__copy-link {
-  display: block;
+.nx-partner-offer__description {
   max-width: 31rem;
+  margin: 0;
   color: rgba(33, 26, 49, 0.68);
   font-size: 0.94rem;
   line-height: 1.5;
-  text-decoration: none;
 }
 
-.nx-affiliate__copy-link:hover,
-.nx-affiliate__copy-link:focus-visible {
-  color: #5f3b93;
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
+.nx-partner-offer__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.72rem;
 }
 
-.nx-affiliate__tracking-pixel {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.nx-affiliate__disclosure {
+.nx-partner-offer__cta {
   display: inline-flex;
-  margin-top: 0.58rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.5rem 0.82rem;
+  border-radius: 999px;
+  background: #5f3b93;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.nx-partner-offer__cta:hover,
+.nx-partner-offer__cta:focus-visible {
+  background: #4e2f7d;
+  box-shadow: 0 0.45rem 1rem rgba(78, 47, 125, 0.2);
+  transform: translateY(-1px);
+}
+
+.nx-partner-offer__disclosure {
+  display: inline-flex;
   padding: 0.28rem 0.5rem;
   border-radius: 999px;
   background: rgba(109, 70, 165, 0.08);
@@ -78,84 +91,72 @@
   opacity: 0.82;
 }
 
-.nx-affiliate__creative {
+.nx-partner-offer__creative {
   display: flex;
   min-width: 0;
   align-items: center;
   justify-content: flex-end;
-}
-
-.nx-affiliate__creative a {
-  display: block;
-  max-width: 100%;
   overflow: hidden;
   border-radius: 0.55rem;
-  line-height: 0;
   box-shadow: 0 0.45rem 1.25rem rgba(32, 22, 48, 0.08);
 }
 
-.nx-affiliate__creative img {
+.nx-partner-offer__creative img {
   display: block;
-  max-width: 100%;
+  width: 100%;
+  max-width: 45.5rem;
   height: auto;
   border: 0;
 }
 
-.nx-affiliate__placeholder {
-  display: block;
-  width: min(45.5rem, 100%);
-  height: 5.625rem;
-}
-
 @media (max-width: 1000px) {
-  .nx-affiliate__panel {
+  .nx-partner-offer__panel {
     grid-template-columns: 1fr;
   }
 
-  .nx-affiliate__copy {
+  .nx-partner-offer__copy {
     padding-right: 0.2rem;
   }
 
-  .nx-affiliate__copy-link {
+  .nx-partner-offer__description {
     max-width: 42rem;
   }
 
-  .nx-affiliate__creative {
+  .nx-partner-offer__creative {
     justify-content: center;
   }
 }
 
 @media (max-width: 767px) {
-  .nx-affiliate {
+  .nx-partner-offer {
     padding: 1.15rem 0;
   }
 
-  .nx-affiliate__panel {
+  .nx-partner-offer__panel {
     gap: 0.9rem;
     padding: 1rem;
     border-radius: 1rem;
   }
 
-  .nx-affiliate__copy {
+  .nx-partner-offer__copy {
     padding: 0;
   }
 
-  .nx-affiliate__copy h2 {
+  .nx-partner-offer__copy h2 {
     margin-bottom: 0.3rem;
     font-size: 1.18rem;
   }
 
-  .nx-affiliate__copy-link {
+  .nx-partner-offer__description {
     font-size: 0.9rem;
   }
 
-  .nx-affiliate__creative a {
+  .nx-partner-offer__creative {
     border-radius: 0.5rem;
   }
 
-  .nx-affiliate__placeholder {
-    width: 18.75rem;
+  .nx-partner-offer__creative img {
+    width: 100%;
     max-width: 100%;
-    height: 15.625rem;
   }
 }

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="728" height="90" viewBox="0 0 728 90" role="img" aria-labelledby="title desc">
+  <title id="title">Magzter GOLD</title>
+  <desc id="desc">Magzter GOLD dergi ve gazete okuma kampanyası</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#08b8ef"/>
+      <stop offset="1" stop-color="#13a8e5"/>
+    </linearGradient>
+  </defs>
+  <rect width="728" height="90" rx="10" fill="url(#bg)"/>
+  <rect x="10" y="10" width="708" height="70" rx="8" fill="none" stroke="#9fe8ff" stroke-width="1.5" opacity=".9"/>
+  <text x="28" y="53" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">MAGZTER</text>
+  <g transform="translate(155 9)">
+    <rect x="0" y="8" width="42" height="64" rx="3" fill="#fff7dc"/>
+    <rect x="48" y="3" width="42" height="69" rx="3" fill="#f6d8df"/>
+    <rect x="96" y="0" width="42" height="72" rx="3" fill="#111827"/>
+    <rect x="144" y="5" width="42" height="67" rx="3" fill="#f5f5f5"/>
+    <rect x="192" y="10" width="42" height="62" rx="3" fill="#efe7d7"/>
+    <text x="7" y="31" fill="#333" font-family="Arial, Helvetica, sans-serif" font-size="7" font-weight="700">POPULAR</text>
+    <text x="55" y="29" fill="#7a2439" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="700">STYLE</text>
+    <text x="102" y="29" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="700">FORBES</text>
+    <text x="150" y="31" fill="#b11e46" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="700">ART</text>
+    <text x="198" y="33" fill="#5f4c35" font-family="Arial, Helvetica, sans-serif" font-size="7" font-weight="700">MAGAZINE</text>
+  </g>
+  <text x="425" y="33" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700">READ 12,500+ MAGAZINES</text>
+  <text x="443" y="55" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700">ANYTIME &amp; ANYWHERE</text>
+  <rect x="520" y="62" width="126" height="20" rx="4" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <text x="548" y="76" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700">EXPLORE NOW</text>
+</svg>

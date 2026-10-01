@@ -16,23 +16,9 @@ function visibleText(value: string | undefined) {
 }
 
 function ebookTable(html: string) {
-  for (const headingMatch of html.matchAll(
-    /<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/giu,
-  )) {
-    const headingText = visibleText(headingMatch[1]).toLocaleLowerCase("da-DK");
-    if (
-      !headingText.includes("bestseller top 10")
-      || !headingText.includes("e-bøger")
-    ) {
-      continue;
-    }
-
-    const headingEnd = (headingMatch.index ?? 0) + headingMatch[0].length;
-    const afterHeading = html.slice(headingEnd);
-    return afterHeading.match(/<table\b[^>]*>([\s\S]*?)<\/table>/iu)?.[1] ?? null;
-  }
-
-  return null;
+  return html.match(
+    /<table\b[^>]*\bid=["']GridView_Bestseller["'][^>]*>([\s\S]*?)<\/table>/iu,
+  )?.[1] ?? null;
 }
 
 export function parseDenmarkPubhubEbooks(

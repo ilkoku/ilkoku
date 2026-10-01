@@ -189,7 +189,7 @@ jobs:
           check_status "https://ilkoku.com/nasil-calisir" "200"
           check_body "https://ilkoku.com/robots.txt" "Allow: /" "Sitemap: https://ilkoku.com/sitemap.xml"
           check_body "https://ilkoku.com/sitemap.xml" "https://ilkoku.com/" "https://ilkoku.com/nasil-calisir" "https://ilkoku.com/site-haritasi" "https://ilkoku.com/yazarlar-icin/kurgu/roman" "https://ilkoku.com/okurlar-icin/okumaya-baslama" "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama"
-          check_body "https://ilkoku.com/recent-updates.atom" "https://pubsubhubbub.appspot.com/" "https://ilkoku.com/yazarlar-icin/kurgu/roman" "<feed"
+          check_body "https://ilkoku.com/recent-updates.atom" "https://pubsubhubbub.appspot.com/" "<feed" "<entry>"
           check_body "https://ilkoku.com/site-haritasi" "/yazarlar-icin/kurgu/roman" "/okurlar-icin/okumaya-baslama" "/editorler-icin/egitim/editorluge-baslama"
           check_redirect_and_noindex "https://ilkoku.com/hesabim" "/giris"
           check_status "https://ilkoku.com/eserler" "404"

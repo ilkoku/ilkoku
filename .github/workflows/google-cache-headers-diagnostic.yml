@@ -138,6 +138,17 @@ jobs:
             grep -Eo 'email-protection#[0-9a-f]+|data-cfemail="[0-9a-f]+"' "$b1" | head -10 || true
             echo "email-marker-2:"
             grep -Eo 'email-protection#[0-9a-f]+|data-cfemail="[0-9a-f]+"' "$b2" | head -10 || true
+            echo "email-context-1:"
+            python - "$b1" <<'PY'
+import sys
+p=sys.argv[1]
+s=open(p,'rb').read().decode('utf-8','replace')
+for needle in ('email-protection','data-cfemail'):
+    i=s.find(needle)
+    if i >= 0:
+        print(s[max(0,i-500):i+900].replace('\n',' '))
+        break
+PY
             rm -f "$b1" "$b2"
           done
 

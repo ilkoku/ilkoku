@@ -70,4 +70,8 @@ test("site identity structured data uses a real alternate site name", () => {
 
   assertContains(layout, 'alternateName: "ilkoku.com"', "domain fallback alternate site name");
   assertNotContains(layout, "alternateName: publicBrandPositioning", "positioning must not masquerade as an alternate name");
+  assertContains(layout, "function serializeStructuredData", "shared structured-data serializer");
+  assertContains(layout, '.replaceAll("@", "\\\\u0040")', "schema email Cloudflare rewrite guard");
+  assertContains(layout, "serializeStructuredData(organizationSchema)", "Organization schema safe serialization");
+  assertContains(layout, "serializeStructuredData(websiteSchema)", "WebSite schema safe serialization");
 });

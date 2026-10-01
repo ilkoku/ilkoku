@@ -8,6 +8,7 @@ import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { getHomepageAffiliatePlacement } from "@/lib/affiliate-placement";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
+import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 import History670 from "./history-670";
 import LiveHomepageFooter from "./live-footer";
@@ -192,6 +193,29 @@ export default async function HomepageExperience() {
       </section>
 
       <History670 />
+
+      <section className="border-y border-black/[0.06] bg-white" aria-labelledby="writing-school-title">
+        <div className="nx-shell py-8 sm:py-10">
+          <p className="nx-eyebrow nx-eyebrow--violet">Yazarlık Okulu</p>
+          <h2 id="writing-school-title" className="mt-2 font-serif text-3xl font-semibold tracking-[-0.03em] text-[#211746] sm:text-4xl">
+            Yazmak istediğin alanı doğrudan seç.
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-[#625b6d] sm:text-base">
+            Türüne uygun eğitim yoluna tek adımda geç; her kategori kendi yazarlık rehberlerine açılır.
+          </p>
+          <nav className="mt-5 flex flex-wrap gap-2" aria-label="Yazarlık Okulu kategorileri">
+            {WRITING_CATEGORY_HUBS.map((hub) => (
+              <Link
+                className="rounded-full border border-[#6b52c7]/20 bg-[#f7f4ff] px-4 py-2 text-sm font-bold text-[#3f3657] transition hover:border-[#6b52c7]/40 hover:bg-[#efe9ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"
+                href={hub.href}
+                key={hub.href}
+              >
+                {hub.title}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </section>
 
       <Suspense fallback={null}>
         <HomepageRoleSection roleSection={roleSection} />

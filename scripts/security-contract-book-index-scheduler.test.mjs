@@ -41,7 +41,7 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
   notContains(workflow, "?matchPending=1", "one-time backfill request removed");
   contains(route, 'ALLOWED_GITHUB_EVENTS = new Set([', "OIDC event allowlist");
   contains(route, '"workflow_run"', "relay workflow-run OIDC event authorization");
-  contains(route, '"push"', "marker push OIDC event authorization");
+  notContains(route, '"push"', "retired marker-push OIDC authorization");
   contains(
     route,
     'FORCE_LISTS_HEADER = "x-ilkoku-book-index-force-lists"',
@@ -58,15 +58,25 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
     "collectBookIndexListByCode(listCode)",
     "forced refresh uses the existing list collector",
   );
-  contains(
+  notContains(
     workflow,
-    '".book-index-force-refresh"',
-    "marker file is the only push trigger",
+    ".book-index-force-refresh",
+    "force refresh no longer depends on a repository marker",
+  );
+  notContains(
+    workflow,
+    "push:",
+    "force refresh no longer uses repository pushes",
   );
   contains(
     workflow,
-    "branches:\n      - main",
-    "marker push refresh runs only from main",
+    "force_lists:",
+    "manual dispatch exposes bounded force-list input",
+  );
+  contains(
+    workflow,
+    "DISPATCH_FORCE_LISTS:",
+    "manual dispatch forwards force-list input without a commit",
   );
   contains(
     workflow,
@@ -78,6 +88,13 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
     'payload.get("forced") is True',
     "workflow retries until the production forced-refresh route is deployed",
   );
+  const forceRequest = source(".github/workflows/book-index-force-request.yml");
+  contains(forceRequest, "issues:", "deployless force request uses issue events");
+  contains(forceRequest, "github.actor == 'ilkoku'", "force request is owner-gated");
+  contains(forceRequest, "[book-index-force] ", "force request command prefix");
+  contains(forceRequest, "gh workflow run book-index-scheduler.yml", "force request dispatches scheduler");
+  contains(forceRequest, "-f \"force_lists=$FORCE_LISTS\"", "force request passes explicit list codes");
+  contains(forceRequest, "gh issue close", "force request closes the one-shot command issue");
   notContains(route, "matchPendingBookIndexBooks", "one-time matching backfill removed");
   notContains(route, 'searchParams.get("matchPending")', "maintenance switch removed");
   contains(readiness, "splitMasterCollisionCount", "collision diagnostic retained");

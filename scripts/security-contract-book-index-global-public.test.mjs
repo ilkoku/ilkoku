@@ -181,12 +181,13 @@ test("Denmark Pubhub ebook collector is source-native and stays off the public w
   const model = source("src/lib/book-index/global-public-read-model.ts");
 
   contains(adapter, 'const EXPECTED_BOOKS = 10', "Denmark exact Top 10 guard");
-  contains(adapter, "e-bøger", "Denmark ebook table anchor");
+  contains(adapter, "GridView_Bestseller", "Denmark ebook grid anchor");
   contains(adapter, 'cells[2]', "Denmark title column parser");
   contains(adapter, 'cells[3]', "Denmark ISBN column parser");
   contains(adapter, 'cells[4]', "Denmark author column parser");
   contains(adapter, 'cells[5]', "Denmark publisher column parser");
   contains(adapter, "BOOK_INDEX_PUBHUB_DK_RANK_ORDER_MISMATCH", "Denmark rank guard");
+  contains(adapter, "rank !== previousRank && rank !== index + 1", "Denmark source-native tied-rank rule");
   contains(adapter, "BOOK_INDEX_PUBHUB_DK_DUPLICATE_ISBN", "Denmark duplicate ISBN guard");
   contains(collector, "pubhubDenmarkBookIndexAdapter", "Denmark collector registration");
   contains(sources, 'code: "pubhub-dk"', "Denmark source registry");

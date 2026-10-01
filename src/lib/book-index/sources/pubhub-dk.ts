@@ -16,13 +16,9 @@ function visibleText(value: string | undefined) {
 }
 
 function ebookTable(html: string) {
-  const headingMatch = html.match(
-    /<h[1-6]\b[^>]*>\s*Bestseller\s+Top\s+10\s*-\s*uge[\s\S]*?e-bøger\s*<\/h[1-6]>/iu,
-  );
-  if (!headingMatch || headingMatch.index === undefined) return null;
-
-  const afterHeading = html.slice(headingMatch.index + headingMatch[0].length);
-  return afterHeading.match(/<table\b[^>]*>([\s\S]*?)<\/table>/iu)?.[1] ?? null;
+  return html.match(
+    /<table\b[^>]*\bid=["']GridView_Bestseller["'][^>]*>([\s\S]*?)<\/table>/iu,
+  )?.[1] ?? null;
 }
 
 export function parseDenmarkPubhubEbooks(
@@ -85,8 +81,17 @@ export function parseDenmarkPubhubEbooks(
     );
   }
 
-  if (books.some((book, index) => book.rank !== index + 1)) {
+  if (books[0]?.rank !== 1) {
     throw new Error("BOOK_INDEX_PUBHUB_DK_RANK_ORDER_MISMATCH");
+  }
+
+  for (let index = 1; index < books.length; index += 1) {
+    const previousRank = books[index - 1]?.rank;
+    const rank = books[index]?.rank;
+
+    if (rank !== previousRank && rank !== index + 1) {
+      throw new Error("BOOK_INDEX_PUBHUB_DK_RANK_ORDER_MISMATCH");
+    }
   }
 
   const sourceKeys = new Set(books.map((book) => book.sourceKey));

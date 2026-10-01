@@ -15,9 +15,6 @@ import "@/features/homepage/roles-light.css";
 import "@/features/homepage/passport-dark.css";
 import "@/features/homepage/passport-dark-priority.css";
 import "@/features/homepage/why-uniform.css";
-import "@/features/homepage/header-encyclopedia.css";
-import "@/features/homepage/header-terminal-spine.css";
-import "@/features/homepage/header-login-terminal.css";
 import "./home-live.css";
 import "./home-apple-soft.css";
 

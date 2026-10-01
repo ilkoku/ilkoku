@@ -130,6 +130,19 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
 
 
 
+
+
+test("Book Index scheduler invalidates public Book Index ISR routes after collection", () => {
+  const route = source("src/app/api/internal/book-index-scheduler/route.ts");
+
+  contains(route, 'import { revalidatePath } from "next/cache";', "Next cache invalidation import");
+  contains(route, '"/en-cok-satanlar/dunya"', "global bestseller ISR path");
+  contains(route, '"/yeni-cikanlar"', "new releases ISR path");
+  contains(route, '"/en-cok-satanlar/turkiye"', "Turkey bestseller public path");
+  contains(route, "revalidateBookIndexPublicPages();", "scheduler invalidates public Book Index pages");
+  contains(route, "revalidatePath(path);", "bounded path revalidation loop");
+});
+
 test("Book Index KitaplarSepette canary health is read-only and the one-time probe is removed", () => {
   const route = source("src/app/api/internal/book-index-scheduler/route.ts");
   const workflow = source(".github/workflows/book-index-scheduler.yml");

@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { collectBookIndexListByCode } from "@/lib/book-index/collector";
@@ -86,6 +87,21 @@ async function authorized(request: NextRequest) {
 const FORCE_LISTS_HEADER = "x-ilkoku-book-index-force-lists";
 const MAX_FORCED_LISTS = 12;
 
+const BOOK_INDEX_PUBLIC_REVALIDATION_PATHS = [
+  "/en-cok-satanlar",
+  "/en-cok-satanlar/turkiye",
+  "/en-cok-satanlar/turkiye/karsilastirma",
+  "/en-cok-satanlar/dunya",
+  "/en-cok-satanlar/cok-satanlara-yeni-girenler",
+  "/yeni-cikanlar",
+] as const;
+
+function revalidateBookIndexPublicPages() {
+  for (const path of BOOK_INDEX_PUBLIC_REVALIDATION_PATHS) {
+    revalidatePath(path);
+  }
+}
+
 function forcedListCodes(request: NextRequest) {
   const raw = request.headers.get(FORCE_LISTS_HEADER)?.trim() ?? "";
   if (!raw) return [];
@@ -142,6 +158,7 @@ export async function POST(request: NextRequest) {
       ? await collectForcedLists(forceListCodes)
       : null;
     const result = forcedResults ? null : await runBookIndexScheduler();
+    revalidateBookIndexPublicPages();
     const [readiness, seoGate] = await Promise.all([
       getBookIndexReadinessSnapshot(),
       getBookIndexSeoGateSnapshot(),

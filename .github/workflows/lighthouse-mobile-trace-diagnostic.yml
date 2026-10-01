@@ -59,6 +59,42 @@ jobs:
           }));
           NODE
 
+      - name: Inspect live render-blocking CSS selector families
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const report=JSON.parse(fs.readFileSync("/tmp/lighthouse.json","utf8"));
+          const a=report.audits;
+          const items=a["render-blocking-resources"]?.details?.items ?? a["render-blocking-insight"]?.details?.items ?? [];
+          for(const item of items){
+            if(!item.url || !item.url.includes(".css")) continue;
+            const response=await fetch(item.url,{signal:AbortSignal.timeout(20000)});
+            const css=await response.text();
+            const count=(re)=>[...css.matchAll(re)].length;
+            console.log("CSS_LIVE_MAP",JSON.stringify({
+              url:item.url,
+              status:response.status,
+              bytes:css.length,
+              nx:count(/\\.nx-/g),
+              landing:count(/\\.landing-/g),
+              sidebar:count(/\\.sidebar/g),
+              dashboard:count(/\\.dashboard/g),
+              writer:count(/\\.writer-/g),
+              editor:count(/\\.editor-/g),
+              reading:count(/\\.reading-/g),
+              auth:count(/\\.auth-/g),
+              profile:count(/\\.profile-/g),
+              work:count(/\\.work-/g),
+              hasTailwindLayer:css.includes("@layer"),
+              hasColorBackground:css.includes("--color-background"),
+              hasNxHero:css.includes(".nx-hero"),
+              hasSidebarNav:css.includes(".sidebar__nav"),
+            }));
+          }
+          NODE
+
       - name: Upload Lighthouse JSON
         uses: actions/upload-artifact@v4
         with:

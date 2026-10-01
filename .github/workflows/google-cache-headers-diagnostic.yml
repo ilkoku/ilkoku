@@ -117,3 +117,17 @@ jobs:
           for url in "${urls[@]}"; do
             audit_url "$url"
           done
+
+          echo "=== ACCEPT-ENCODING MATRIX ==="
+          for url in 'https://ilkoku.com/' 'https://ilkoku.com/yazarlar-icin/kurgu/roman'; do
+            for encoding in 'identity' 'gzip' 'br' 'gzip, br' 'gzip, br, zstd'; do
+              h="$(mktemp)"; b="$(mktemp)"
+              code="$(curl --silent --show-error --max-time 30                 --user-agent "$UA"                 --header "Accept-Encoding: $encoding"                 --dump-header "$h"                 --output "$b"                 --write-out '%{http_code}'                 "$url" || true)"
+              echo "url=$url encoding=$encoding status=$code bytes=$(wc -c < "$b" | tr -d ' ')"
+              echo "content-encoding=$(header_value "$h" 'content-encoding' || true)"
+              echo "etag=$(header_value "$h" 'etag' || true)"
+              echo "last-modified=$(header_value "$h" 'last-modified' || true)"
+              echo "cache-control=$(header_value "$h" 'cache-control' || true)"
+              rm -f "$h" "$b"
+            done
+          done

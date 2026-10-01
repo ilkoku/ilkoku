@@ -10,7 +10,7 @@ import { forWritersPageContent } from "@/content/for-writers";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
-import { GENRES } from "@/lib/genres";
+import { GENRES, type GenreCategory } from "@/lib/genres";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { getBookIndexInsights } from "@/lib/book-index/insights";
@@ -21,6 +21,28 @@ import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/re
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 const baseUrl = "https://ilkoku.com";
+
+const WRITING_CATEGORY_RELEASED_AT = new Date("2026-09-13T16:49:51Z");
+const WRITING_GUIDE_RELEASED_AT_BY_CATEGORY: Record<GenreCategory, Date> = {
+  Kurgu: new Date("2026-09-13T09:57:55Z"),
+  Edebiyat: new Date("2026-09-13T13:05:02Z"),
+  "Senaryo ve Sahne": new Date("2026-09-13T13:29:33Z"),
+  Akademik: new Date("2026-09-13T13:51:16Z"),
+  Bilgilendirici: new Date("2026-09-13T15:05:28Z"),
+  "Çocuk ve Gençlik": new Date("2026-09-13T16:10:23Z"),
+  "Çizgi Anlatı": new Date("2026-09-13T16:30:52Z"),
+};
+const READER_EDUCATION_RELEASED_AT = new Date("2026-09-13T21:02:05Z");
+const EDITOR_EDUCATION_RELEASED_AT_BY_SLUG: Record<string, Date> = {
+  "editorluge-baslama": new Date("2026-09-15T05:46:22Z"),
+  "metin-degerlendirme": new Date("2026-09-15T06:15:14Z"),
+  "yapisal-editorluk": new Date("2026-09-15T06:36:44Z"),
+  "dil-ve-anlatim-editorlugu": new Date("2026-09-15T07:10:19Z"),
+  "tur-editorlugu": new Date("2026-09-15T07:29:51Z"),
+  "editor-notu-ve-geri-bildirim": new Date("2026-09-15T07:48:09Z"),
+  "yazarla-calismak": new Date("2026-09-15T08:08:14Z"),
+  "yayincilik-ve-profesyonel-editorluk": new Date("2026-09-15T08:28:02Z"),
+};
 const legalSlugs = [
   "kullanim-sartlari",
   "gizlilik-politikasi",
@@ -101,28 +123,38 @@ const writingGenreHrefs = GENRES.map((genre) => {
 const writingEducationEntries: MetadataRoute.Sitemap = [
   ...WRITING_CATEGORY_HUBS.map((hub) => ({
     url: `${baseUrl}${hub.href}`,
+    lastModified: WRITING_CATEGORY_RELEASED_AT,
     changeFrequency: "monthly" as const,
     priority: 0.8,
   })),
-  ...writingGenreHrefs.map((href) => ({
-    url: `${baseUrl}${href}`,
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  })),
+  ...GENRES.map((genre) => {
+    const categoryHref = writingCategoryHrefByCategory.get(genre.category);
+    if (!categoryHref) {
+      throw new Error(`Missing writing category hub for ${genre.category}`);
+    }
+    return {
+      url: `${baseUrl}${categoryHref}/${genre.slug}`,
+      lastModified: WRITING_GUIDE_RELEASED_AT_BY_CATEGORY[genre.category],
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    };
+  }),
 ];
 
 const readerEducationHrefs = READER_EDUCATION_CATEGORIES.map((category) => readerEducationPublicPath(category));
 
 const readerEducationEntries: MetadataRoute.Sitemap = readerEducationHrefs.map((href) => ({
   url: `${baseUrl}${href}`,
+  lastModified: READER_EDUCATION_RELEASED_AT,
   changeFrequency: "monthly" as const,
   priority: 0.7,
 }));
 
 const editorEducationHrefs = EDITOR_EDUCATION_CATEGORIES.map((category) => editorEducationPublicPath(category));
 
-const editorEducationEntries: MetadataRoute.Sitemap = editorEducationHrefs.map((href) => ({
-  url: `${baseUrl}${href}`,
+const editorEducationEntries: MetadataRoute.Sitemap = EDITOR_EDUCATION_CATEGORIES.map((category) => ({
+  url: `${baseUrl}${editorEducationPublicPath(category)}`,
+  lastModified: EDITOR_EDUCATION_RELEASED_AT_BY_SLUG[category.slug],
   changeFrequency: "monthly" as const,
   priority: 0.7,
 }));

@@ -27,6 +27,7 @@ test("global bestseller public page reads only the approved source lists", () =>
     "amazon-ca-live",
     "amazon-br-live",
     "bestseller60-nl-weekly",
+    "kirjakauppaliitto-fi-monthly",
   ]) {
     contains(model, `"${listCode}"`, `${listCode} approved global list`);
   }
@@ -172,12 +173,13 @@ test("Netherlands Bestseller 60 collector is source-native and public only after
 });
 
 
-test("Finland Kirjakauppaliitto collector is source-native and stays off the public world table until Turkish title meanings are ready", () => {
+test("Finland Kirjakauppaliitto collector is source-native and public only after Turkish title meanings are ready", () => {
   const adapter = source("src/lib/book-index/sources/kirjakauppaliitto-fi.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const model = source("src/lib/book-index/global-public-read-model.ts");
+  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
 
   contains(adapter, 'const EXPECTED_BOOKS = 20', "Finland exact Top 20 guard");
   contains(adapter, 'text.includes("myydyimmät kaikki formaatit")', "Finland all-formats table anchor");
@@ -192,10 +194,15 @@ test("Finland Kirjakauppaliitto collector is source-native and stays off the pub
   contains(lists, 'code: "kirjakauppaliitto-fi-monthly"', "Finland monthly list registry");
   contains(lists, 'period: "monthly"', "Finland monthly period");
   contains(lists, "maxRank: 20", "Finland Top 20 bound");
-  notContains(
+  contains(
     model,
     '"kirjakauppaliitto-fi-monthly"',
-    "Finland stays off the public world table until Turkish title meanings are prepared",
+    "Finland is public after Turkish title meanings are prepared",
+  );
+  contains(
+    meanings,
+    '"Lähtölaukaus": "Başlangıç Atışı"',
+    "Finland Turkish meaning registry",
   );
 });
 

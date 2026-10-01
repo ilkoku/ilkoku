@@ -152,7 +152,7 @@ export function GlobalBestsellerView({
         <p>
           Amazon ABD, Amazon UK, Amazon Fransa, Amazon İspanya, Amazon Kanada,
           Amazon Brezilya, IBS İtalya, Rakuten Books Japonya, Kyobo Güney Kore, Readings Avustralya,
-          De Bestseller 60 Hollanda ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Almanya satırları
+          De Bestseller 60 Hollanda, Kirjakauppaliitto Finlandiya ve SPIEGEL Almanya listeleri tek tabloda birlikte gösterilir. Almanya satırları
           SPIEGEL&apos;in haftalık kurgu hardcover listesini temsil eder. Aynı sıra
           numarasındaki kayıtlar aynı blokta gruplanır; günlük, haftalık, aylık
           veya güncel dönem bilgileri ilgili sitenin yayımladığı biçimde korunur.

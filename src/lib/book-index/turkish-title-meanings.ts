@@ -354,6 +354,27 @@ const TURKISH_TITLE_MEANINGS: Readonly<Record<string, string>> = {
   "De beer en de piano": "Ayı ve Piyano",
   "Rust, Regelmaat, Recepten": "Dinlenme, Düzen, Tarifler",
 
+  "Lähtölaukaus": "Başlangıç Atışı",
+  "Kätketty": "Saklı",
+  "Pronssiyö": "Bronz Gece",
+  "Hydra": "Hidra",
+  "Eilisvuosi": "Geçmiş Yıllar",
+  "Vuokralainen": "Kiracı",
+  "Minun Amerikkani": "Benim Amerikam",
+  "Umpikujia ja ukkoskuuroja": "Çıkmaz Sokaklar ve Gök Gürültülü Sağanaklar",
+  "Orkideahuijaus": "Orkide Dolandırıcılığı",
+  "Nico Lingman: Sodassa ja rakkaudessa": "Nico Lingman: Savaşta ve Aşkta",
+  "Kani joka tahtoi nukahtaa": "Uyumak İsteyen Tavşan",
+  "Halla": "Kırağı",
+  "Varjeltu": "Korunan",
+  "Kissa ja hiiri": "Kedi ve Fare",
+  "Joka yksin jää": "Yalnız Kalan",
+  "Itsekkyyden aika : Miten yltiöyksilöllinen kulttuurimme sai meidät voimaan pahoin": "Bencillik Çağı: Aşırı Bireyci Kültürümüz Bizi Nasıl Kötü Hissettirdi",
+  "Johtaja ja meedio - Tiina Lindforsin tarina": "Yönetici ve Medyum - Tiina Lindfors'un Hikâyesi",
+  "Sopimus": "Anlaşma",
+  "Valheiden vyyhti": "Yalanlar Yumağı",
+  "Hillittömän hulluja satuja": "Çılgın mı Çılgın Masallar",
+
 };
 
 const NORMALIZED_TURKISH_TITLE_MEANINGS = new Map(

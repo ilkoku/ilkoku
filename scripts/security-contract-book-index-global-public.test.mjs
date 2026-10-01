@@ -553,3 +553,24 @@ test("indexable Book Index discovery pages use crawl-friendly ISR", () => {
     contains(page, "noIndex: false", `${label} remains indexable`);
   }
 });
+
+
+test("Rakuten author absence uses source-accurate public copy", () => {
+  const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
+
+  contains(
+    view,
+    'row.listCode === "rakuten-jp-weekly"',
+    "Rakuten missing-author copy is source-specific",
+  );
+  contains(
+    view,
+    "Yazar bilgisi kitap satış kanalında yer almıyor",
+    "Rakuten source-empty author label",
+  );
+  contains(
+    view,
+    "Yazar bilgisi doğrulanmadı",
+    "other missing-author rows retain diagnostic fallback",
+  );
+});

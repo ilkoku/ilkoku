@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          node <<'NODE'
+          node --input-type=module <<'NODE'
           const clientId = process.env.GSC_OAUTH_CLIENT_ID;
           const clientSecret = process.env.GSC_OAUTH_CLIENT_SECRET;
           const refreshToken = process.env.GSC_OAUTH_REFRESH_TOKEN;

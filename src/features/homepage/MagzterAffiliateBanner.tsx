@@ -49,6 +49,9 @@ export default function MagzterAffiliateBanner({ placement }: Props) {
                   height="1"
                   alt=""
                   aria-hidden="true"
+                  loading="lazy"
+                  fetchPriority="low"
+                  decoding="async"
                 />
               </>
             ) : null}
@@ -73,6 +76,9 @@ export default function MagzterAffiliateBanner({ placement }: Props) {
                   width={creative.width}
                   height={creative.height}
                   alt={creative.alt}
+                  loading="lazy"
+                  fetchPriority="low"
+                  decoding="async"
                 />
               </a>
             ) : (

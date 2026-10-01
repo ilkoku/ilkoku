@@ -1,0 +1,86 @@
+name: Mobile Lighthouse diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mobile-lighthouse-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit production mobile LCP
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe live hero markup and headers
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          html="$(mktemp)"
+          curl -fsSL --max-time 30 https://ilkoku.com/ -o "$html"
+          echo "=== HERO MARKUP ==="
+          grep -oE '.{0,220}ilkoku-hero-user-final\.webp.{0,260}' "$html" | head -n 5 || true
+          echo "=== HERO HEADER ==="
+          curl -fsSI --max-time 30 https://ilkoku.com/landing/ilkoku-hero-user-final.webp |             grep -Ei '^(HTTP/|content-type:|content-length:|cache-control:|age:|cf-cache-status:|server:)'
+          echo "=== NEXT OPTIMIZER REFERENCES ==="
+          if grep -q '_next/image[^"]*ilkoku-hero-user-final' "$html"; then
+            echo "optimizer_reference=true"
+          else
+            echo "optimizer_reference=false"
+          fi
+          echo "=== PRIORITY MARKERS ==="
+          grep -oE '<link[^>]+rel="preload"[^>]+ilkoku-hero-user-final[^>]*>|<img[^>]+ilkoku-hero-user-final[^>]*>' "$html" | head -n 10 || true
+
+      - name: Install Lighthouse
+        run: npm install --global lighthouse@13.5.0
+
+      - name: Find Chrome
+        id: chrome
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$chrome" ]; then
+            echo "No Chrome found on runner." >&2
+            exit 1
+          fi
+          echo "path=$chrome" >> "$GITHUB_OUTPUT"
+          "$chrome" --version
+
+      - name: Run mobile Lighthouse
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.path }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          lighthouse https://ilkoku.com/             --only-categories=performance             --form-factor=mobile             --throttling-method=simulate             --output=json             --output-path=/tmp/lighthouse.json             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"             --quiet
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const r=JSON.parse(fs.readFileSync("/tmp/lighthouse.json","utf8"));
+          const a=r.audits;
+          const ms=(id)=>Math.round(a[id]?.numericValue ?? -1);
+          console.log("LIGHTHOUSE_SUMMARY|"+JSON.stringify({
+            performance:Math.round((r.categories.performance.score ?? 0)*100),
+            fcpMs:ms("first-contentful-paint"),
+            lcpMs:ms("largest-contentful-paint"),
+            tbtMs:ms("total-blocking-time"),
+            cls:a["cumulative-layout-shift"]?.numericValue ?? null,
+            speedIndexMs:ms("speed-index"),
+            ttiMs:ms("interactive"),
+          }));
+          for (const [id,audit] of Object.entries(a)) {
+            if (/lcp|largest-contentful/i.test(id+" "+(audit.title||""))) {
+              console.log("LCP_AUDIT|"+id+"|"+JSON.stringify({
+                title:audit.title,
+                score:audit.score,
+                displayValue:audit.displayValue,
+                details:audit.details,
+              }).slice(0,12000));
+            }
+          }
+          const requests=a["network-requests"]?.details?.items ?? [];
+          const hero=requests.filter(x=>String(x.url||"").includes("ilkoku-hero-user-final"));
+          console.log("HERO_REQUESTS|"+JSON.stringify(hero));
+          NODE

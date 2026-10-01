@@ -70,7 +70,11 @@ export function parseAmazonUkBestsellerPage(
     const authorHtml = card.match(
       /<a\b[^>]*class=["'][^"']*(?:\ba-size-small\b[^"']*\ba-link-child\b|\ba-link-child\b[^"']*\ba-size-small\b)[^"']*["'][^>]*>([\s\S]*?)<\/a>/iu,
     )?.[1];
-    const authorName = normalizedText(authorHtml);
+    const authorFallbackHtml = card.match(
+      /<div\b[^>]*class=["'][^"']*\ba-row\b[^"']*\ba-size-small\b[^"']*["'][^>]*>[\s\S]*?<span\b[^>]*class=["'][^"']*\ba-size-small\b[^"']*\ba-color-base\b[^"']*["'][^>]*>[\s\S]*?<div\b[^>]*>([\s\S]*?)<\/div>[\s\S]*?<\/span>/iu,
+    )?.[1];
+    const authorName =
+      normalizedText(authorHtml) || normalizedText(authorFallbackHtml);
 
     if (
       cardIndex !== index

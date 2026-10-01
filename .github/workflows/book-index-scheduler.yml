@@ -2,11 +2,12 @@ name: Book Index scheduler
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - ".book-index-force-refresh"
+    inputs:
+      force_lists:
+        description: "Comma-separated Book Index list codes to force refresh without a deploy"
+        required: false
+        default: ""
+        type: string
   workflow_run:
     workflows:
       - Email operations
@@ -37,20 +38,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Check out force-refresh marker
-        if: github.event_name == 'push'
-        uses: actions/checkout@v4
-
       - name: Run Book Index scheduler with GitHub OIDC
         env:
           OIDC_AUDIENCE: ilkoku-book-index-scheduler
+          DISPATCH_FORCE_LISTS: ${{ inputs.force_lists || '' }}
         run: |
           set -euo pipefail
 
           force_lists=""
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            force_lists="$(tr -d '\r\n[:space:]' < .book-index-force-refresh)"
-            test -n "$force_lists"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            force_lists="$(printf '%s' "$DISPATCH_FORCE_LISTS" | tr -d '\r\n[:space:]')"
           fi
 
           for attempt in {1..20}; do

@@ -26,6 +26,7 @@ import { bestseller60NetherlandsBookIndexAdapter } from "./sources/bestseller60-
 import { kirjakauppaliittoFinlandBookIndexAdapter } from "./sources/kirjakauppaliitto-fi";
 import { pubhubDenmarkBookIndexAdapter } from "./sources/pubhub-dk";
 import { forlaggareSwedenBookIndexAdapter } from "./sources/forlaggare-se";
+import { boklistaNorwayBookIndexAdapter } from "./sources/boklista-no";
 import { bkmBookIndexAdapter } from "./sources/bkm";
 import { kitapSepetiBookIndexAdapter } from "./sources/kitapsepeti";
 import { kitapStoreBookIndexResearchAdapter } from "./sources/kitapstore";
@@ -61,6 +62,7 @@ const adapters = new Map<string, BookIndexSourceAdapter>([
   [kirjakauppaliittoFinlandBookIndexAdapter.sourceCode, kirjakauppaliittoFinlandBookIndexAdapter],
   [pubhubDenmarkBookIndexAdapter.sourceCode, pubhubDenmarkBookIndexAdapter],
   [forlaggareSwedenBookIndexAdapter.sourceCode, forlaggareSwedenBookIndexAdapter],
+  [boklistaNorwayBookIndexAdapter.sourceCode, boklistaNorwayBookIndexAdapter],
   [remziBookIndexAdapter.sourceCode, remziBookIndexAdapter],
   [drBookIndexAdapter.sourceCode, drBookIndexAdapter],
   [penguenBookIndexAdapter.sourceCode, penguenBookIndexAdapter],

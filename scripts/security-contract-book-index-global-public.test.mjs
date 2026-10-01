@@ -258,6 +258,36 @@ test("Sweden Forlaggare weekly fiction collector is source-native and public aft
 });
 
 
+test("Norway Boklista monthly Top 50 collector is source-native and private pending republication permission", () => {
+  const adapter = source("src/lib/book-index/sources/boklista-no.ts");
+  const collector = source("src/lib/book-index/collector.ts");
+  const sources = source("src/lib/book-index/sources.ts");
+  const lists = source("src/lib/book-index/lists.ts");
+  const model = source("src/lib/book-index/global-public-read-model.ts");
+
+  contains(adapter, 'const EXPECTED_BOOKS = 50', "Norway exact Top 50 guard");
+  contains(adapter, 'const BOOK_CATEGORY = "261"', "Norway monthly bestseller category");
+  contains(adapter, 'action: "load_book_archive_list"', "Norway source-native AJAX action");
+  contains(adapter, 'method: "POST"', "Norway AJAX transport uses the site POST contract");
+  contains(adapter, 'bookweek: month', "Norway selected month is sent to the source");
+  contains(adapter, "BOOK_INDEX_BOKLISTA_NO_RANK_ORDER_MISMATCH", "Norway rank guard");
+  contains(adapter, "BOOK_INDEX_BOKLISTA_NO_DUPLICATE_ISBN", "Norway duplicate ISBN guard");
+  contains(adapter, "BOOK_INDEX_BOKLISTA_NO_PAGINATION_STALLED", "Norway pagination fail-closed guard");
+  contains(collector, "boklistaNorwayBookIndexAdapter", "Norway collector registration");
+  contains(sources, 'code: "boklista-no"', "Norway source registry");
+  contains(sources, 'market: "NO"', "Norway market code");
+  contains(lists, 'code: "boklista-no-monthly-top50"', "Norway monthly list registry");
+  contains(lists, 'period: "monthly"', "Norway monthly period");
+  contains(lists, "maxRank: 50", "Norway Top 50 bound");
+  contains(lists, "publiclyVisible: false", "Norway registry remains private");
+  notContains(
+    model,
+    '"boklista-no-monthly-top50"',
+    "Norway is not exposed on the public world table before republication permission is cleared",
+  );
+});
+
+
 test("Finland Kirjakauppaliitto collector is source-native and public only after Turkish title meanings are ready", () => {
   const adapter = source("src/lib/book-index/sources/kirjakauppaliitto-fi.ts");
   const collector = source("src/lib/book-index/collector.ts");

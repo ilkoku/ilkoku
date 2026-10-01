@@ -31,24 +31,29 @@ function normalizeAuthorCandidate(value: string | undefined) {
 }
 
 function extractAuthorName(segment: string, publisherName: string) {
-  const publisherIndex = normalizeBookIndexText(segment).indexOf(
-    normalizeBookIndexText(publisherName),
-  );
+  const publisherToken = `(${publisherName})`;
+  const publisherIndex = segment.indexOf(publisherToken);
   const tail =
     publisherIndex >= 0
-      ? segment.slice(
-          Math.min(
-            segment.length,
-            publisherIndex + publisherName.length,
-          ),
-        )
+      ? segment.slice(publisherIndex + publisherToken.length)
       : segment;
 
+  const name =
+    "[A-ZÁÉÍÓÚÑÜ][\\p{L}.'’\\-]+(?:\\s+(?:de|del|la|las|los|y|[A-ZÁÉÍÓÚÑÜ][\\p{L}.'’\\-]+)){0,5}?";
+  const boundary =
+    "(?=[,.]|\\s+(?:Duodécima|Segunda|Primera|El|La|Los|Las|Un|Una|Nora)\\b)";
+
   const patterns = [
-    /,\s*de\s+([A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+(?:\s+(?:de|del|la|las|los|y|[A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+)){0,5})/u,
-    /firma\s+como\s+([A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+(?:\s+(?:de|del|la|las|los|y|[A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+)){0,5})/u,
-    /(?:La\s+escritora(?:\s+[\p{L}\-]+)?|El\s+escritor(?:\s+[\p{L}\-]+)?|La\s+francesa|El\s+francés)\s+([A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+(?:\s+(?:de|del|la|las|los|y|[A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+)){0,5})(?=\s+(?:ha|explora|nos|firma|presenta|publica|cuenta|vuelve|es|ofrece)\b|[,.])/u,
-    /\.\s*([A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+(?:\s+(?:de|del|la|las|los|y|[A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+)){1,5})(?=\s+(?:nos|explora|cuenta|presenta|regresa|es|ha)\b|,)/u,
+    new RegExp(`,\\s*de\\s+(${name})${boundary}`, "u"),
+    new RegExp(`firma\\s+como\\s+(${name})(?=\\s*,)`, "u"),
+    new RegExp(
+      `(?:La\\s+escritora(?:\\s+[\\p{L}\\-]+)?|El\\s+escritor(?:\\s+[\\p{L}\\-]+)?|La\\s+francesa|El\\s+francés)\\s+(${name})(?=\\s+(?:ha|explora|nos|firma|presenta|publica|cuenta|vuelve|es|ofrece)\\b|[,.])`,
+      "u",
+    ),
+    new RegExp(
+      `\\.\\s*(${name})(?=\\s+(?:nos|explora|cuenta|presenta|regresa|es|ha)\\b|,)`,
+      "u",
+    ),
   ];
 
   for (const pattern of patterns) {

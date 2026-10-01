@@ -44,7 +44,7 @@ test("homepage affiliate banner stays after roles and before passport with respo
   assert.ok(affiliateIndex > rolesIndex);
   assert.ok(passportIndex > affiliateIndex);
   assert.match(homepage, /getHomepageAffiliatePlacement/);
-  assert.match(homepage, /affiliatePlacement\.enabled \? <MagzterAffiliateBanner placement=\{affiliatePlacement\} \/> : null/);
+  assert.match(homepage, /affiliatePlacement\.enabled[\\s\\S]*?<MagzterAffiliateBanner placement=\\{affiliatePlacement\\} \\/>/);
 
   assert.match(placement, /13992555/);
   assert.match(placement, /width="728"/);

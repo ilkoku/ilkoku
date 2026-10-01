@@ -216,12 +216,14 @@ test("Denmark Pubhub ebook collector is source-native and public only after live
 });
 
 
-test("Sweden Forlaggare weekly fiction collector is source-native and private until live verification", () => {
+test("Sweden Forlaggare weekly fiction collector is source-native and public after live verification and Turkish meanings", () => {
   const adapter = source("src/lib/book-index/sources/forlaggare-se.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
   const lists = source("src/lib/book-index/lists.ts");
   const model = source("src/lib/book-index/global-public-read-model.ts");
+  const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
+  const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
 
   contains(adapter, 'const EXPECTED_BOOKS = 5', "Sweden exact Top 5 guard");
   contains(adapter, "Topplista: Skönlitteratur", "Sweden fiction section anchor");
@@ -234,10 +236,20 @@ test("Sweden Forlaggare weekly fiction collector is source-native and private un
   contains(lists, 'code: "forlaggare-se-fiction-weekly"', "Sweden weekly fiction list registry");
   contains(lists, 'categoryKey: "fiction"', "Sweden fiction category");
   contains(lists, "maxRank: 5", "Sweden Top 5 bound");
-  notContains(
+  contains(
     model,
     '"forlaggare-se-fiction-weekly"',
-    "Sweden stays private until live verification and Turkish title meanings are ready",
+    "Sweden is public after live production verification",
+  );
+  contains(
+    meanings,
+    '"Systrarna på Sophiahemmet": "Sophiahemmet\'teki Kız Kardeşler"',
+    "Sweden Turkish meaning registry",
+  );
+  contains(
+    view,
+    'row.listCode === "forlaggare-se-fiction-weekly"',
+    "Sweden titles stay non-clickable because the source exposes no verified per-book URL",
   );
 });
 

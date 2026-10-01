@@ -364,7 +364,7 @@ const TURKISH_TITLE_MEANINGS: Readonly<Record<string, string>> = {
   "Muskelmad": "Kas Beslenmesi",
   "Styx": "Styx",
 
-  "Systrarna på Sophiahemmet": "Sophiahemmet\'teki Kız Kardeşler",
+  "Systrarna på Sophiahemmet": "Sophiahemmet'teki Kız Kardeşler",
   "Medusa": "Medusa",
   "Blackout": "Karartma",
   "Domino": "Domino",

@@ -100,6 +100,16 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   assertContains(sitemap, "lastModified", "truthful sitemap lastmod output");
   assertContains(
     sitemap,
+    "WRITING_CATEGORY_INDEXABLE_AT",
+    "writing category hub lastmod must use the verified indexable release time",
+  );
+  assertContains(
+    sitemap,
+    'new Date("2026-09-13T19:15:11Z")',
+    "writing category verified indexable timestamp",
+  );
+  assertContains(
+    sitemap,
     "WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT",
     "writing guide lastmod must preserve the real shared structured-data update",
   );

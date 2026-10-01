@@ -1,0 +1,63 @@
+name: Book Index force request
+
+on:
+  issues:
+    types:
+      - opened
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+jobs:
+  dispatch:
+    name: Dispatch deployless Book Index force refresh
+    if: >
+      github.actor == 'ilkoku' &&
+      startsWith(github.event.issue.title, '[book-index-force] ')
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Parse and validate force list codes
+        id: force
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          title="$ISSUE_TITLE"
+          force_lists="${title#"[book-index-force] "}"
+          force_lists="$(printf '%s' "$force_lists" | tr -d '\r\n[:space:]')"
+          test -n "$force_lists"
+          if ! printf '%s' "$force_lists" | grep -Eq '^[a-z0-9-]+(,[a-z0-9-]+){0,11}$'; then
+            echo "Invalid force list syntax: $force_lists" >&2
+            exit 1
+          fi
+          echo "force_lists=$force_lists" >> "$GITHUB_OUTPUT"
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+
+      - name: Dispatch Book Index scheduler without a repository commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_LISTS: ${{ steps.force.outputs.force_lists }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh workflow run book-index-scheduler.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f "force_lists=$FORCE_LISTS"
+
+      - name: Record request and close issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_LISTS: ${{ steps.force.outputs.force_lists }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh issue comment "$ISSUE_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --body "Deployless Book Index force refresh dispatched for: `$FORCE_LISTS`."
+          gh issue close "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY"

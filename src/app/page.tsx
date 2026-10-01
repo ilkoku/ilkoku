@@ -15,6 +15,7 @@ import "@/features/homepage/roles-light.css";
 import "@/features/homepage/passport-dark.css";
 import "@/features/homepage/passport-dark-priority.css";
 import "@/features/homepage/why-uniform.css";
+import "./home-live.css";
 import "./home-apple-soft.css";
 
 const homeTitle = publicBrandTitle;

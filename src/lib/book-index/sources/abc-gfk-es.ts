@@ -30,16 +30,35 @@ function normalizeAuthorCandidate(value: string | undefined) {
     .trim();
 }
 
+function extractDeAuthorName(localText: string) {
+  if (!/^,\s*de\s+/iu.test(localText)) return null;
+
+  const rest = localText.replace(/^,\s*de\s+/iu, "");
+  const punctuationBoundary = rest.search(
+    /[.;,](?=\s+[A-ZÁÉÍÓÚÑÜ])/u,
+  );
+  const narrativeBoundary = rest.search(
+    /\s+(?=[A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+\s+[a-záéíóúñü])/u,
+  );
+  const boundaries = [punctuationBoundary, narrativeBoundary].filter(
+    (value) => value >= 0,
+  );
+  const end = boundaries.length > 0 ? Math.min(...boundaries) : rest.length;
+
+  return normalizeAuthorCandidate(rest.slice(0, end));
+}
+
 function extractAuthorName(postEntry: string) {
   const localText = visibleText(postEntry).slice(0, 500);
+  const deAuthorName = extractDeAuthorName(localText);
+  if (deAuthorName) return deAuthorName;
+
   const patterns = [
     /^\.\s*Vuelve[^.]{0,180}?\bfirma\s+como\s+([^,.;]+?)(?=\s*,)/iu,
     /^\.\s*La\s+escritora(?:\s+[\p{Ll}\-]+)?\s+([A-ZÁÉÍÓÚÑÜ][^,.;]+?)\s+ha\b/u,
     /^\.\s*La\s+francesa\s+([A-ZÁÉÍÓÚÑÜ][^,.;]+?)\s+explora\b/u,
     /^\.\s*([A-ZÁÉÍÓÚÑÜ][^,.;]+?)\s+nos\b/u,
     /^\.\s*([A-ZÁÉÍÓÚÑÜ][^,.;]+?)(?=\s*,\s*autora\b)/u,
-    /^,\s*de\s+(.+?)(?=\s+[A-ZÁÉÍÓÚÑÜ][\p{L}.'’\-]+\s+[a-záéíóúñü])/u,
-    /^,\s*de\s+([^,.;]+?)(?=\.\s|,\s)/iu,
   ];
 
   for (const pattern of patterns) {

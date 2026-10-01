@@ -28,9 +28,6 @@ const officialEntityUrls = [...siteSocialUrls, "https://github.com/ilkoku"];
 
 const analyticsHeadBootstrap = `
 (() => {
-  const scriptId = "ilkoku-gtm-script";
-  const consentKey = "ilkoku:consent:v1";
-
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
   window.gtag("consent", "default", {
@@ -40,50 +37,8 @@ const analyticsHeadBootstrap = `
     ad_personalization: "denied",
     wait_for_update: 500
   });
-
-  function storedAnalyticsConsent() {
-    try {
-      const raw = window.localStorage.getItem(consentKey);
-      if (!raw) return false;
-      const parsed = JSON.parse(raw);
-      return Boolean(
-        parsed &&
-        parsed.version === 1 &&
-        parsed.analytics === true &&
-        typeof parsed.expiresAt === "number" &&
-        parsed.expiresAt > Date.now()
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  fetch("/api/site-analytics", { cache: "no-store", credentials: "same-origin" })
-    .then(function (response) { return response.ok ? response.json() : null; })
-    .then(function (payload) {
-      const settings = payload && payload.settings;
-      if (!settings || !settings.enabled) return;
-
-      const granted = settings.consentRequired ? storedAnalyticsConsent() : true;
-      window.gtag("consent", "update", {
-        analytics_storage: granted ? "granted" : "denied"
-      });
-
-      if (!settings.gtmEnabled || !settings.gtmId || document.getElementById(scriptId)) return;
-
-      window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
-      const script = document.createElement("script");
-      script.id = scriptId;
-      script.async = true;
-      script.dataset.analyticsState = "loading";
-      script.src = "https://www.googletagmanager.com/gtm.js?id=" + encodeURIComponent(settings.gtmId);
-      script.onload = function () { script.dataset.analyticsState = "loaded"; };
-      script.onerror = function () { script.dataset.analyticsState = "error"; };
-      document.head.appendChild(script);
-    })
-    .catch(function () {});
 })();
-`;
+`
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

@@ -41,6 +41,16 @@ function canonicalProductUrl(asin: string) {
   return new URL(`/dp/${asin}`, SOURCE_ORIGIN).toString();
 }
 
+function normalizeAmazonTrAuthor(value: string | undefined) {
+  const normalized = decodeBookIndexHtml(value ?? "")
+    .replace(/<[^>]*>/gu, " ")
+    .replace(/^\s*(?:\[\s*yazar\s*\]|yazar\s*:)\s*/iu, "")
+    .replace(/\s+/gu, " ")
+    .trim();
+
+  return normalized || null;
+}
+
 function parseCard(card: string, asin: string) {
   const rankValue = card.match(
     /<span\b[^>]*class=["'][^"']*\bzg-bdg-text\b[^"']*["'][^>]*>\s*#(\d{1,3})\s*<\/span>/iu,
@@ -82,7 +92,7 @@ function parseCard(card: string, asin: string) {
     sourceKey: asin,
     sourceExternalId: asin,
     title,
-    authorName: author ? decodeBookIndexHtml(author) : null,
+    authorName: normalizeAmazonTrAuthor(author),
     publisherName: null,
     productUrl: canonicalProductUrl(asin),
     imageUrl: imageUrl || null,

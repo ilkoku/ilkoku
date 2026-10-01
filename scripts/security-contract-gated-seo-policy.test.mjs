@@ -8,7 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
 const pausedFamilies = ["/eserler", "/yazarlar", "/turler"];
-const privateFamilies = ["/giris", "/kayit", "/yazar", "/eserlerim", "/editor", "/yayinevi", "/icerik", "/admin"];
+const privateFamilies = ["/giris", "/kayit", "/sifremi-unuttum", "/yazar", "/eserlerim", "/editor", "/yayinevi", "/icerik", "/admin"];
 
 test("authenticated product routes stay outside search while paused discovery fails closed", () => {
   const nextConfig = source("next.config.ts");
@@ -28,6 +28,9 @@ test("authenticated product routes stay outside search while paused discovery fa
   for (const route of privateFamilies) {
     assert.ok(nextConfig.includes(route), `${route} private family must remain covered by X-Robots-Tag`);
   }
+
+  assert.ok(nextConfig.includes('"/sifremi-unuttum"'), "forgot-password root must have an exact noindex header guard");
+  assert.ok(nextConfig.includes('"/sifremi-unuttum/:path*"'), "forgot-password descendants must have a noindex header guard");
 
   for (const route of pausedFamilies) {
     assert.ok(

@@ -126,7 +126,7 @@ jobs:
           done
 
           echo "=== REPEAT BODY STABILITY ==="
-          for url in 'https://ilkoku.com/' 'https://ilkoku.com/yazarlar-icin/kurgu/roman'; do
+          for url in 'https://ilkoku.com/' 'https://ilkoku.com/yazarlar-icin/kurgu/roman' 'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama' 'https://ilkoku.com/sifremi-unuttum'; do
             b1="$(mktemp)"; b2="$(mktemp)"
             curl --silent --show-error --location --max-time 30 --user-agent "$UA" --header 'Accept-Encoding: identity' --output "$b1" "$url"
             sleep 1

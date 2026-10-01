@@ -1,3 +1,7 @@
+:root {
+  scroll-behavior: smooth;
+}
+
 /* Live homepage composition: the promoted preview body keeps its proven section styles,
    while the canonical shared PublicSiteHeader owns the only visible site header. */
 .homepage-live {

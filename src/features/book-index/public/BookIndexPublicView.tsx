@@ -446,7 +446,7 @@ const insightNavSection = {
 function insightOrderDescription(key: BookIndexInsightPageDefinition["key"]) {
   switch (key) {
     case "newEntries":
-      return "Soldaki sıra satış sırası değildir. Önce kaç kitap satış kanalının çok satan listesine yeni girildiğine, eşitlikte yeni girişler içindeki en iyi konuma, ardından kitabın toplam güncel kitap satış kanalı görünürlüğüne göre bu analiz sırası oluşturulur.";
+      return "Soldaki sıra satış sırası değildir. Önce kitabın kaç kitap satış kanalının çok satan listesine yeni girdiğine, eşitlikte yeni girişler içindeki en iyi konuma, ardından kitabın toplam güncel kitap satış kanalı görünürlüğüne göre bu analiz sırası oluşturulur.";
     case "risers":
       return "Soldaki sıra satış sırası değildir. Önce daha fazla kitap satış kanalında yükselen kitaplar, eşitlikte bu kanallardaki toplam sıra kazanımı, ardından en iyi güncel liste konumu dikkate alınarak bu analiz sırası oluşturulur.";
     case "everywhereSellers":
@@ -465,8 +465,8 @@ function insightMetric(
 ) {
   if ("newSourceCount" in item) {
     return {
-      primary: `${item.newSourceCount} kitap satış kanalında yeni giriş`,
-      secondary: `${item.currentSourceCount} kitap satış kanalında yer alıyor · en yüksek yeni giriş sırası #${item.bestNewEntryRank}`,
+      primary: `${item.newSourceCount} kitap satış kanalına yeni girdi`,
+      secondary: `Toplam ${item.currentSourceCount} kitap satış kanalında yer alıyor · en yüksek yeni giriş sırası #${item.bestNewEntryRank}`,
     };
   }
 

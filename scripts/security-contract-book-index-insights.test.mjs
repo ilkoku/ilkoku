@@ -167,6 +167,8 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
     "comparison no longer renders the obsolete two-item view menu",
   );
   contains(view, "Yeni giriş yapılan kitap satış kanalı", "new-entry summary metric");
+  contains(view, "kitap satış kanalına yeni girdi", "new-entry row wording is explicit");
+  contains(view, "Toplam ${item.currentSourceCount} kitap satış kanalında yer alıyor", "new-entry row total visibility wording");
   contains(
     view,
     "Soldaki sıra satış sırası değildir.",

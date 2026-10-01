@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 
+import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
@@ -178,6 +179,19 @@ export default async function HomepageExperience() {
 
   return (
     <main className="nx-home">
+      <header className="nx-header">
+        <div className="nx-shell nx-header__inner">
+          <Link href="/" className="nx-logo" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" sizes="180px" /></Link>
+          <span className="nx-header__label">Dijital yazar platformu</span>
+          <details className="nx-account">
+            <summary aria-label="Hesap menüsü"><LandingIcon name="account" /></summary>
+            <div className="nx-account__menu">
+              <Link href="/hesabim">Hesabım</Link><Link href="/giris">Giriş Yap</Link><a href="#roller">Üye Ol</a>
+            </div>
+          </details>
+        </div>
+      </header>
+
       <section className="nx-hero" id="hakkimizda">
         <div className="nx-shell nx-hero__layout">
           <div className="nx-hero__copy">

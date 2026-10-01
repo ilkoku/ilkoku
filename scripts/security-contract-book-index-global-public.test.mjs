@@ -181,7 +181,7 @@ test("Denmark Pubhub ebook collector is source-native and stays off the public w
   const model = source("src/lib/book-index/global-public-read-model.ts");
 
   contains(adapter, 'const EXPECTED_BOOKS = 10', "Denmark exact Top 10 guard");
-  contains(adapter, "e-bøger", "Denmark ebook table anchor");
+  contains(adapter, "GridView_Bestseller", "Denmark ebook grid anchor");
   contains(adapter, 'cells[2]', "Denmark title column parser");
   contains(adapter, 'cells[3]', "Denmark ISBN column parser");
   contains(adapter, 'cells[4]', "Denmark author column parser");

@@ -360,7 +360,7 @@ test("global preview copy avoids internal collector terminology", () => {
   notContains(overview, "native", "global overview card avoids English-native jargon");
   contains(
     overview,
-    "ilgili sitelerin kendi",
+    "ilgili kitap satış kanallarının kendi",
     "global overview card uses reader-facing Turkish wording",
   );
   notContains(view, "collector", "public global view avoids collector terminology");
@@ -372,7 +372,7 @@ test("global preview copy avoids internal collector terminology", () => {
   contains(view, "href={row.productUrl}", "individual book links remain available");
   contains(
     page,
-    "ilgili sitelerin kendi sıralamalarıyla",
+    "ilgili kitap satış kanallarının kendi sıralamalarıyla",
     "global metadata description uses reader-facing site wording",
   );
 });

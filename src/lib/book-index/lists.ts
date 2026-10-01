@@ -714,7 +714,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     enabled: true,
   },
   {
-    code: "abc-gfk-es-fiction-weekly-research",
+    code: "abc-gfk-es-fiction-weekly",
     sourceCode: "abc-gfk-es",
     title: "ABC Cultural / GfK İspanya · Kurgu · Haftalık Top 10",
     categoryKey: "fiction",
@@ -722,9 +722,9 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     sourceUrl: "https://www.abc.es/cultura/cultural/",
     maxRank: 10,
     includeInComposite: false,
-    collectionEveryMinutes: null,
+    collectionEveryMinutes: 10080,
     publiclyVisible: false,
-    enabled: false,
+    enabled: true,
   },
   {
     code: "globe-mail-ca-hardcover-fiction-weekly",

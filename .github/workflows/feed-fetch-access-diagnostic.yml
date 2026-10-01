@@ -14,6 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Probe DNS
+        shell: bash
+        run: |
+          echo "=== DNS A ==="
+          dig +short A ilkoku.com || true
+          echo "=== DNS AAAA ==="
+          dig +short AAAA ilkoku.com || true
+          echo "=== RESOLVER ==="
+          getent ahosts ilkoku.com || true
+          echo "=== RUNNER IPv6 ROUTE ==="
+          ip -6 route || true
+
       - name: Probe feed
         shell: bash
         run: |

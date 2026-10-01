@@ -22,6 +22,7 @@ export const GLOBAL_BESTSELLER_LIST_CODES = [
   "amazon-es-live",
   "amazon-ca-live",
   "amazon-br-live",
+  "bestseller60-nl-weekly",
 ] as const;
 
 export type GlobalBestsellerListCode =
